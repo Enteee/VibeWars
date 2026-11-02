@@ -1,0 +1,1791 @@
+<!doctype html> <meta charset="utf-8" /><title>#2224 mockup: Team Builder, A: row expands</title
+><style>
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #080a0d;
+    color: #d7dee8;
+    font:
+      15px system-ui,
+      sans-serif;
+    width: 1366px;
+  }
+  h1 {
+    font-size: 1.2rem;
+  }
+  h2 {
+    font-size: 1rem;
+    margin: 1.8rem 0 0.3rem;
+    color: #59c2ff;
+  }
+  p.n {
+    color: #7d8899;
+    margin: 0.2rem 0 0.6rem;
+    max-width: 62rem;
+  }
+  p.n b {
+    color: #d7dee8;
+  }
+  .f {
+    position: relative;
+    overflow: hidden;
+    background: #0e1116;
+    border: 1px solid #2b3440;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  .d {
+    width: 1366px;
+    height: 768px;
+  }
+  .cap {
+    margin: 1.6rem 0 0;
+    padding: 0.8rem 1rem;
+    border: 1px solid #2b3440;
+    background: #161b22;
+    max-width: 62rem;
+  }
+  .cap p {
+    margin: 0.2rem 0;
+  }
+  .cap b {
+    color: #59c2ff;
+  }
+  .small {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .sf {
+    width: 675px;
+    height: 250px;
+  }
+  .sf .row {
+    grid-template-columns: 18px 46px 170px repeat(8, 40px) 0;
+  }
+  .sf .id .rk {
+    display: none;
+  }
+  .sf small {
+    position: absolute;
+    left: 8px;
+    bottom: 6px;
+    color: #7d8899;
+    font-size: 12px;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 20px;
+    background: #161b22;
+    border-bottom: 1px solid #2b3440;
+  }
+  .top b {
+    font-size: 18px;
+  }
+  .top .sz {
+    border: 1px solid #3b4759;
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+  .top .sp {
+    margin-left: auto;
+    color: #7d8899;
+  }
+  .btn {
+    background: #161b22;
+    border: 1px solid #59c2ff;
+    color: #59c2ff;
+    border-radius: 4px;
+    padding: 5px 12px;
+  }
+  .body {
+    display: grid;
+    grid-template-columns: 1fr 330px;
+    gap: 16px;
+    padding: 14px 20px;
+    align-items: start;
+  }
+  .grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 18px 46px 250px repeat(8, 40px) 1fr;
+    gap: 5px;
+    align-items: center;
+    padding: 5px 10px;
+    background: #161b22;
+    border: 1px solid #2b3440;
+    position: relative;
+  }
+  .row.focus {
+    border-color: #59c2ff55;
+  }
+  .row.tgt {
+    border-color: #59c2ff;
+    background: #18283a;
+    box-shadow: 0 0 0 2px #59c2ff55;
+  }
+  .row.open {
+    border-color: #59c2ff;
+  }
+  .h {
+    color: #7d8899;
+    cursor: grab;
+    font-size: 16px;
+  }
+  .ball {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #1b2a3a;
+    border: 2px solid #59c2ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+  .ball img.w {
+    width: 32px;
+    height: 32px;
+  }
+  .ball img.o {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    right: -6px;
+    bottom: -4px;
+  }
+  .ball .sets {
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+  }
+  .sets i {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #d7dee8;
+    border: 1px solid #0b0f14;
+  }
+  .sets i.off {
+    background: #3b4759;
+  }
+  .id {
+    min-width: 0;
+  }
+  .id .nm {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .id .pf {
+    color: #7d8899;
+    font-size: 11.5px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .id .pf img {
+    width: 13px;
+    height: 13px;
+  }
+  .id .rk {
+    color: #7d8899;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .id .rk.hl {
+    color: #59c2ff;
+    outline: 1px dotted #59c2ff;
+    outline-offset: 2px;
+    display: inline-block;
+  }
+  .pf.hl,
+  .ball.hl {
+    outline: 1px dotted #59c2ff;
+    outline-offset: 2px;
+  }
+  .sl {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    background: #0e1116;
+    border: 1px solid #2b3440;
+    box-sizing: border-box;
+    position: relative;
+    display: block;
+  }
+  .sl img {
+    width: 38px;
+    height: 38px;
+    display: block;
+    border-radius: 3px;
+  }
+  .sl.el {
+    border-color: #d4a72c;
+  }
+  .sl.em {
+    border-style: dashed;
+    border-color: #3b4759;
+  }
+  .sl.src {
+    opacity: 0.35;
+  }
+  .sl.drop {
+    border-color: #59c2ff;
+    box-shadow: 0 0 0 2px #59c2ff77;
+  }
+  .sl.bad {
+    border: 2px dashed #ff7b72;
+    box-shadow: none;
+  }
+  .ed {
+    color: #7d8899;
+    text-align: right;
+  }
+  .panel {
+    background: #161b22;
+    border: 1px solid #2b3440;
+    padding: 8px;
+    height: 640px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 8px;
+  }
+  .tabs span {
+    flex: 1;
+    text-align: center;
+    padding: 6px;
+    border: 1px solid #2b3440;
+    color: #7d8899;
+  }
+  .tabs span.on {
+    color: #59c2ff;
+    border-color: #59c2ff;
+    background: #0e1116;
+  }
+  .ch {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 8px;
+    align-items: center;
+    padding: 6px;
+    border: 1px solid #2b3440;
+    background: #0e1116;
+    margin-bottom: 5px;
+  }
+  .ch.drag {
+    opacity: 0.4;
+  }
+  .ch .nm {
+    font-weight: 600;
+  }
+  .ch .pf {
+    color: #7d8899;
+    font-size: 11.5px;
+  }
+  .srch {
+    padding: 6px 9px;
+    background: #0e1116;
+    border: 1px solid #3b4759;
+    border-radius: 4px;
+    color: #7d8899;
+    margin-bottom: 6px;
+  }
+  .chips {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+  .chips span {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    border: 1px solid #2b3440;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+  .chips span.on {
+    border-color: #59c2ff;
+    color: #59c2ff;
+  }
+  .chips img {
+    width: 13px;
+    height: 13px;
+  }
+  .grp {
+    border: 1px solid #2b3440;
+    margin-bottom: 4px;
+    background: #0e1116;
+  }
+  .grp .gh {
+    padding: 5px 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .grp .gh em {
+    font-style: normal;
+    color: #7d8899;
+  }
+  .grp .tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 8px;
+    border-top: 1px solid #2b3440;
+  }
+  .note {
+    color: #7d8899;
+    font-size: 12px;
+    margin-top: 6px;
+  }
+  .ghost {
+    position: absolute;
+    pointer-events: none;
+    z-index: 9;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .ghost .tip {
+    white-space: normal;
+    max-width: 300px;
+    text-align: right;
+  }
+  .ghost .gi {
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    border: 1px solid #d7dee8;
+    background: #0e1116;
+    box-shadow: 0 4px 10px #000a;
+  }
+  .ghost .gi img {
+    width: 34px;
+    height: 34px;
+    display: block;
+  }
+  .ghost .tip {
+    margin-top: 4px;
+    background: #0b0f14;
+    border: 1px solid #59c2ff;
+    color: #d7dee8;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 12.5px;
+  }
+  .ghost .tip.bad {
+    border: 1px dashed #ff7b72;
+    color: #ff7b72;
+  }
+  .ghost .tip b {
+    color: #59c2ff;
+  }
+  .ghost.cp .gi::after {
+    content: "+";
+    position: absolute;
+    right: -7px;
+    top: -7px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #59c2ff;
+    color: #0b0f14;
+    text-align: center;
+    font-weight: 700;
+    line-height: 16px;
+  }
+  .ghost .gi {
+    position: relative;
+  }
+  .bad-mark {
+    position: absolute;
+    right: -8px;
+    top: -8px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #0b0f14;
+    border: 2px solid #ff7b72;
+    color: #ff7b72;
+    text-align: center;
+    font-size: 11px;
+    line-height: 12px;
+    font-weight: 700;
+    box-sizing: border-box;
+  }
+  .pop {
+    position: absolute;
+    background: #161b22;
+    border: 1px solid #59c2ff;
+    box-shadow: 0 8px 20px #000c;
+    padding: 10px;
+    z-index: 5;
+  }
+  .pop h4 {
+    margin: 0 0 6px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #7d8899;
+  }
+  .at {
+    display: grid;
+    grid-template-columns: 1fr 24px 22px 24px 120px;
+    gap: 6px;
+    align-items: center;
+    padding: 2px 0;
+  }
+  .at b {
+    text-align: center;
+  }
+  .pm {
+    border: 1px solid #3b4759;
+    text-align: center;
+    border-radius: 3px;
+    color: #d7dee8;
+  }
+  .pm.z {
+    color: #4a5464;
+  }
+  .bar {
+    height: 6px;
+    background: #202836;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar i {
+    display: block;
+    height: 100%;
+    background: #59c2ff;
+  }
+  .pts {
+    color: #ffd866;
+    font-variant-numeric: tabular-nums;
+  }
+  .pick {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .pick span {
+    border: 1px solid #3b4759;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .pick img {
+    width: 15px;
+    height: 15px;
+  }
+  .exp {
+    margin: -1px 0 0;
+    background: #10161d;
+    border: 1px solid #59c2ff;
+    border-top: 1px dashed #2b3440;
+    padding: 12px 14px 14px 68px;
+    display: grid;
+    grid-template-columns: 230px 360px 1fr;
+    gap: 26px;
+  }
+  .exp h4 {
+    margin: 0 0 6px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #7d8899;
+  }
+  .gear {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 3px 8px;
+    font-size: 13px;
+  }
+  .gear span:nth-child(odd) {
+    color: #7d8899;
+  }
+  .setT {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .setT span {
+    border: 1px solid #2b3440;
+    padding: 2px 8px;
+    border-radius: 3px;
+    color: #7d8899;
+  }
+  .setT span.on {
+    color: #59c2ff;
+    border-color: #59c2ff;
+  }
+  .arm {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .arm span {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #3b4759;
+    background: #202836;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 28px;
+    color: #7d8899;
+    font-size: 11px;
+    box-sizing: border-box;
+  }
+  .cnt {
+    font-size: 12px;
+    color: #7d8899;
+    margin-bottom: 6px;
+  }
+  .cnt b {
+    color: #d7dee8;
+  }
+</style>
+<h1>#2224 mockup: Team Builder, A: row expands</h1>
+<h2>1. The team at rest, right panel on My characters</h2>
+<p class="n">
+  Rows: ⠿ handle, character ball with its weapons in it (set dots when the member has more than one
+  weapon set), name, professions, rank summary, 8 skill slots. No number, no arrows.
+</p>
+<div class="f d">
+  <div class="top">
+    <b>Team Builder</b><span>Team</span
+    ><span class="btn" style="color: #d7dee8; border-color: #3b4759">Sunday Wipe</span
+    ><span class="sz">4v4</span
+    ><span class="sp">Team size is fixed · drag characters and skills onto the members</span
+    ><span class="btn">Done</span>
+  </div>
+  <div class="body">
+    <div class="grid">
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+          <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
+        </div>
+        <div class="id">
+          <div class="nm">Healbow</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/monk.svg" />Monk/<img
+              src="../../apps/web/public/icons/profession/ranger.svg"
+            />Ranger
+          </div>
+          <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.protective-spirit.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/monk.remove-hex.svg" /></span
+        ><span class="sl el"><img src="../../apps/web/public/icons/skill/monk.rebirth.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ranger.lightning-reflexes.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ranger.troll-unguent.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/ranger.dodge.svg" /></span
+        ><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/shield.svg"
+          />
+        </div>
+        <div class="id">
+          <div class="nm">Hammer Tank</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/warrior.svg" />Warrior/<img
+              src="../../apps/web/public/icons/profession/monk.svg"
+            />Monk
+          </div>
+          <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.sprint.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.frenzy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.dolyak-signet.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shields-up.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="id">
+          <div class="nm">Fireball</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/elementalist.svg" />Elementalist/<img
+              src="../../apps/web/public/icons/profession/mesmer.svg"
+            />Mesmer
+          </div>
+          <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.flare.svg" /></span
+        ><span class="sl"
+          ><img
+            src="../../apps/web/public/icons/skill/elementalist.glyph-of-lesser-energy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.ether-renewal.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.power-drain.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.signet-of-illusions.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.mantra-of-recovery.svg" /></span
+        ><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/focus.svg"
+          />
+          <div class="sets"><i class=""></i><i class="off"></i></div>
+        </div>
+        <div class="id">
+          <div class="nm">Dark Ritual</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/necromancer.svg" />Necromancer/<img
+              src="../../apps/web/public/icons/profession/ritualist.svg"
+            />Ritualist
+          </div>
+          <div class="rk">Curs 12 · Blood 10 · Chan 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.vampiric-touch.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.well-of-blood.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.soul-feast.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.death-nova.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ritualist.spirit-light.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ritualist.resilient-weapon.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="tabs"><span class="on">My characters</span><span class="">Skills</span></div>
+      <div class="cnt"><b>6</b> characters · drag one onto a member to copy it there</div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+          <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
+        </div>
+        <div>
+          <div class="nm">Healbow</div>
+          <div class="pf">Monk/Ranger</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/shield.svg"
+          />
+        </div>
+        <div>
+          <div class="nm">Hammer Tank</div>
+          <div class="pf">Warrior/Monk</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div>
+          <div class="nm">Fireball</div>
+          <div class="pf">Elementalist/Mesmer</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/focus.svg"
+          />
+          <div class="sets"><i class=""></i><i class="off"></i></div>
+        </div>
+        <div>
+          <div class="nm">Dark Ritual</div>
+          <div class="pf">Necromancer/Ritualist</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        </div>
+        <div>
+          <div class="nm">Arrow Rain</div>
+          <div class="pf">Ranger/Warrior</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div>
+          <div class="nm">Cook</div>
+          <div class="pf">Elementalist/Monk</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<h2>1b. Edge case: 8v8 at rest, longest profession pair, 3-weapon-set member</h2>
+<p class="n">
+  8 rows fit 1366×768 without the page scrolling. “Elementalist/Necromancer” is the longest pair;
+  Healbow carries three weapon sets (three dots); the ball reads bow, staff, sword + shield.
+</p>
+<div class="f d">
+  <div class="top">
+    <b>Team Builder</b><span>Team</span
+    ><span class="btn" style="color: #d7dee8; border-color: #3b4759">Sunday Wipe</span
+    ><span class="sz">8v8</span
+    ><span class="sp">Team size is fixed · drag characters and skills onto the members</span
+    ><span class="btn">Done</span>
+  </div>
+  <div class="body">
+    <div class="grid">
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+          <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
+        </div>
+        <div class="id">
+          <div class="nm">Healbow</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/monk.svg" />Monk/<img
+              src="../../apps/web/public/icons/profession/ranger.svg"
+            />Ranger
+          </div>
+          <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.protective-spirit.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/monk.remove-hex.svg" /></span
+        ><span class="sl el"><img src="../../apps/web/public/icons/skill/monk.rebirth.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ranger.lightning-reflexes.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ranger.troll-unguent.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/ranger.dodge.svg" /></span
+        ><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/shield.svg"
+          />
+        </div>
+        <div class="id">
+          <div class="nm">Hammer Tank</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/warrior.svg" />Warrior/<img
+              src="../../apps/web/public/icons/profession/monk.svg"
+            />Monk
+          </div>
+          <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.sprint.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.frenzy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.dolyak-signet.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shields-up.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="id">
+          <div class="nm">Fireball</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/elementalist.svg" />Elementalist/<img
+              src="../../apps/web/public/icons/profession/mesmer.svg"
+            />Mesmer
+          </div>
+          <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.flare.svg" /></span
+        ><span class="sl"
+          ><img
+            src="../../apps/web/public/icons/skill/elementalist.glyph-of-lesser-energy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.ether-renewal.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.power-drain.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.signet-of-illusions.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.mantra-of-recovery.svg" /></span
+        ><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/focus.svg"
+          />
+          <div class="sets"><i class=""></i><i class="off"></i></div>
+        </div>
+        <div class="id">
+          <div class="nm">Dark Ritual</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/necromancer.svg" />Necromancer/<img
+              src="../../apps/web/public/icons/profession/ritualist.svg"
+            />Ritualist
+          </div>
+          <div class="rk">Curs 12 · Blood 10 · Chan 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.vampiric-touch.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.well-of-blood.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.soul-feast.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.death-nova.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ritualist.spirit-light.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ritualist.resilient-weapon.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/staff.svg" />
+          <div class="sets"><i class=""></i><i class="off"></i></div>
+        </div>
+        <div class="id">
+          <div class="nm">Frostbite</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/elementalist.svg" />Elementalist/<img
+              src="../../apps/web/public/icons/profession/necromancer.svg"
+            />Necromancer
+          </div>
+          <div class="rk">Wat 13 · Ener 10 · Curs 5</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.ice-spikes.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.flare.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
+        ><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/spear.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/shield.svg"
+          />
+        </div>
+        <div class="id">
+          <div class="nm">Spear</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/paragon.svg" />Paragon/<img
+              src="../../apps/web/public/icons/profession/warrior.svg"
+            />Warrior
+          </div>
+          <div class="rk">Lead 12 · Spear 10 · Str 5</div>
+        </div>
+        <span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/daggers.svg" />
+        </div>
+        <div class="id">
+          <div class="nm">Dagger</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/assassin.svg" />Assassin/<img
+              src="../../apps/web/public/icons/profession/mesmer.svg"
+            />Mesmer
+          </div>
+          <div class="rk">Dag 12 · Shad 10 · Ill 5</div>
+        </div>
+        <span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/scythe.svg" />
+        </div>
+        <div class="id">
+          <div class="nm">Scythe</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/dervish.svg" />Dervish/<img
+              src="../../apps/web/public/icons/profession/monk.svg"
+            />Monk
+          </div>
+          <div class="rk">Scy 12 · Mys 10 · Heal 5</div>
+        </div>
+        <span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="tabs"><span class="on">My characters</span><span class="">Skills</span></div>
+      <div class="cnt"><b>6</b> characters · drag one onto a member to copy it there</div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+          <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
+        </div>
+        <div>
+          <div class="nm">Healbow</div>
+          <div class="pf">Monk/Ranger</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/shield.svg"
+          />
+        </div>
+        <div>
+          <div class="nm">Hammer Tank</div>
+          <div class="pf">Warrior/Monk</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div>
+          <div class="nm">Fireball</div>
+          <div class="pf">Elementalist/Mesmer</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/focus.svg"
+          />
+          <div class="sets"><i class=""></i><i class="off"></i></div>
+        </div>
+        <div>
+          <div class="nm">Dark Ritual</div>
+          <div class="pf">Necromancer/Ritualist</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        </div>
+        <div>
+          <div class="nm">Arrow Rain</div>
+          <div class="pf">Ranger/Warrior</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div>
+          <div class="nm">Cook</div>
+          <div class="pf">Elementalist/Monk</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<h2>2. Right panel on Skills</h2>
+<p class="n">
+  The Character Builder library for the focused member's professions (Monk/Ranger): search,
+  attribute groups folded by default (#2161). Drag a tile onto any slot.
+</p>
+<div class="f d">
+  <div class="top">
+    <b>Team Builder</b><span>Team</span
+    ><span class="btn" style="color: #d7dee8; border-color: #3b4759">Sunday Wipe</span
+    ><span class="sz">4v4</span
+    ><span class="sp">Team size is fixed · drag characters and skills onto the members</span
+    ><span class="btn">Done</span>
+  </div>
+  <div class="body">
+    <div class="grid">
+      <div class="row focus">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+          <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
+        </div>
+        <div class="id">
+          <div class="nm">Healbow</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/monk.svg" />Monk/<img
+              src="../../apps/web/public/icons/profession/ranger.svg"
+            />Ranger
+          </div>
+          <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.protective-spirit.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/monk.remove-hex.svg" /></span
+        ><span class="sl el"><img src="../../apps/web/public/icons/skill/monk.rebirth.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ranger.lightning-reflexes.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ranger.troll-unguent.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/ranger.dodge.svg" /></span
+        ><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/shield.svg"
+          />
+        </div>
+        <div class="id">
+          <div class="nm">Hammer Tank</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/warrior.svg" />Warrior/<img
+              src="../../apps/web/public/icons/profession/monk.svg"
+            />Monk
+          </div>
+          <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.sprint.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.frenzy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.dolyak-signet.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shields-up.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="id">
+          <div class="nm">Fireball</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/elementalist.svg" />Elementalist/<img
+              src="../../apps/web/public/icons/profession/mesmer.svg"
+            />Mesmer
+          </div>
+          <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.flare.svg" /></span
+        ><span class="sl"
+          ><img
+            src="../../apps/web/public/icons/skill/elementalist.glyph-of-lesser-energy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.ether-renewal.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.power-drain.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.signet-of-illusions.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.mantra-of-recovery.svg" /></span
+        ><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/focus.svg"
+          />
+          <div class="sets"><i class=""></i><i class="off"></i></div>
+        </div>
+        <div class="id">
+          <div class="nm">Dark Ritual</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/necromancer.svg" />Necromancer/<img
+              src="../../apps/web/public/icons/profession/ritualist.svg"
+            />Ritualist
+          </div>
+          <div class="rk">Curs 12 · Blood 10 · Chan 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.vampiric-touch.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.well-of-blood.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.soul-feast.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.death-nova.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ritualist.spirit-light.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ritualist.resilient-weapon.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="tabs"><span class="">My characters</span><span class="on">Skills</span></div>
+      <div class="srch">⌕ Search skills…</div>
+      <div class="chips">
+        <span class="on"><img src="../../apps/web/public/icons/profession/monk.svg" />Monk</span
+        ><span><img src="../../apps/web/public/icons/profession/ranger.svg" />Ranger</span>
+      </div>
+      <div class="grp">
+        <div class="gh"><span>▾ Healing Prayers</span><em>28</em></div>
+        <div class="tiles">
+          <span class="sl"
+            ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+          ><span class="sl"
+            ><img src="../../apps/web/public/icons/skill/monk.heal-other.svg" /></span
+          ><span class="sl"
+            ><img src="../../apps/web/public/icons/skill/monk.healing-light.svg" /></span
+          ><span class="sl"><img src="../../apps/web/public/icons/skill/monk.mending.svg" /></span
+          ><span class="sl"
+            ><img src="../../apps/web/public/icons/skill/monk.word-of-healing.svg" /></span
+          ><span class="sl el"
+            ><img src="../../apps/web/public/icons/skill/monk.rebirth.svg" /></span
+          ><span class="sl"
+            ><img src="../../apps/web/public/icons/skill/monk.dwaynas-kiss.svg" /></span
+          ><span class="sl"
+            ><img src="../../apps/web/public/icons/skill/monk.patient-spirit.svg" /></span
+          ><span class="sl"
+            ><img src="../../apps/web/public/icons/skill/monk.healing-touch.svg" /></span
+          ><span class="sl"
+            ><img src="../../apps/web/public/icons/skill/monk.heal-area.svg"
+          /></span>
+        </div>
+      </div>
+      <div class="grp">
+        <div class="gh"><span>▸ Smiting Prayers</span><em>24</em></div>
+      </div>
+      <div class="grp">
+        <div class="gh"><span>▸ Protection Prayers</span><em>27</em></div>
+      </div>
+      <div class="grp">
+        <div class="gh"><span>▸ Divine Favor</span><em>21</em></div>
+      </div>
+      <div class="grp">
+        <div class="gh"><span>▸ Expertise</span><em>19</em></div>
+      </div>
+      <div class="grp">
+        <div class="gh"><span>▸ Marksmanship</span><em>26</em></div>
+      </div>
+      <div class="grp">
+        <div class="gh"><span>▸ Beast Mastery</span><em>24</em></div>
+      </div>
+      <div class="grp">
+        <div class="gh"><span>▸ Wilderness Survival</span><em>25</em></div>
+      </div>
+      <div class="note">Showing the focused member (Healbow). Folded by default.</div>
+    </div>
+  </div>
+</div>
+<h2>3. Inline editing open on one member (A: row expands)</h2>
+<p class="n">
+  Click the row (or ✎): it opens in place, accordion style. One member open at a time; the others
+  keep their rows. The expanded block may scroll.
+</p>
+<div class="f d">
+  <div class="top">
+    <b>Team Builder</b><span>Team</span
+    ><span class="btn" style="color: #d7dee8; border-color: #3b4759">Sunday Wipe</span
+    ><span class="sz">4v4</span
+    ><span class="sp">Team size is fixed · drag characters and skills onto the members</span
+    ><span class="btn">Done</span>
+  </div>
+  <div class="body">
+    <div class="grid">
+      <div class="row open">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+          <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
+        </div>
+        <div class="id">
+          <div class="nm">Healbow</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/monk.svg" />Monk/<img
+              src="../../apps/web/public/icons/profession/ranger.svg"
+            />Ranger
+          </div>
+          <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.protective-spirit.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/monk.remove-hex.svg" /></span
+        ><span class="sl el"><img src="../../apps/web/public/icons/skill/monk.rebirth.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ranger.lightning-reflexes.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ranger.troll-unguent.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/ranger.dodge.svg" /></span
+        ><span class="sl em"></span><span class="ed">✎ ▾</span>
+      </div>
+      <div class="exp">
+        <div>
+          <h4>Inset · professions open</h4>
+          <div class="pick">
+            <span><img src="../../apps/web/public/icons/profession/monk.svg" />Monk ▾</span
+            ><span><img src="../../apps/web/public/icons/profession/ranger.svg" />Ranger ▾</span>
+          </div>
+          <div style="height: 14px"></div>
+          <h4>Name</h4>
+          <div class="srch" style="margin: 0">Healbow</div>
+        </div>
+        <div>
+          <h4>Attributes <span class="pts" style="float: right">3 points left</span></h4>
+          <div class="at">
+            <span>Healing Prayers</span><span class="pm">−</span><b>12</b
+            ><span class="pm z">+</span>
+            <div class="bar"><i style="width: 75%"></i></div>
+          </div>
+          <div class="at">
+            <span>Protection Prayers</span><span class="pm">−</span><b>10</b
+            ><span class="pm">+</span>
+            <div class="bar"><i style="width: 62.5%"></i></div>
+          </div>
+          <div class="at">
+            <span>Divine Favor</span><span class="pm">−</span><b>0</b><span class="pm">+</span>
+            <div class="bar"><i style="width: 0%"></i></div>
+          </div>
+          <div class="at">
+            <span>Expertise</span><span class="pm">−</span><b>6</b><span class="pm">+</span>
+            <div class="bar"><i style="width: 37.5%"></i></div>
+          </div>
+          <div class="at">
+            <span>Marksmanship</span><span class="pm">−</span><b>8</b><span class="pm">+</span>
+            <div class="bar"><i style="width: 50%"></i></div>
+          </div>
+          <div class="note">Runes and headpiece add +1 where shown.</div>
+        </div>
+        <div>
+          <h4>Equipment</h4>
+          <div class="setT"><span class="on">Set 1</span><span>Set 2</span><span>Set 3</span></div>
+          <div class="gear">
+            <span>Main hand</span><span>Longbow · Zealous</span><span>Off hand</span><span>—</span
+            ><span>Armor</span><span>Radiant · Survivor</span>
+          </div>
+          <div class="arm">
+            <span>Hd</span><span>Ch</span><span>Hn</span><span>Lg</span><span>Ft</span>
+          </div>
+          <div class="note">Open in the Character screen ›</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/shield.svg"
+          />
+        </div>
+        <div class="id">
+          <div class="nm">Hammer Tank</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/warrior.svg" />Warrior/<img
+              src="../../apps/web/public/icons/profession/monk.svg"
+            />Monk
+          </div>
+          <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.sprint.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.frenzy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.dolyak-signet.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shields-up.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed">✎</span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="id">
+          <div class="nm">Fireball</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/elementalist.svg" />Elementalist/<img
+              src="../../apps/web/public/icons/profession/mesmer.svg"
+            />Mesmer
+          </div>
+          <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.flare.svg" /></span
+        ><span class="sl"
+          ><img
+            src="../../apps/web/public/icons/skill/elementalist.glyph-of-lesser-energy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.ether-renewal.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.power-drain.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.signet-of-illusions.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.mantra-of-recovery.svg" /></span
+        ><span class="sl em"></span><span class="ed">✎</span>
+      </div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/focus.svg"
+          />
+          <div class="sets"><i class=""></i><i class="off"></i></div>
+        </div>
+        <div class="id">
+          <div class="nm">Dark Ritual</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/necromancer.svg" />Necromancer/<img
+              src="../../apps/web/public/icons/profession/ritualist.svg"
+            />Ritualist
+          </div>
+          <div class="rk">Curs 12 · Blood 10 · Chan 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.vampiric-touch.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.well-of-blood.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.soul-feast.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.death-nova.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ritualist.spirit-light.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ritualist.resilient-weapon.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed">✎</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="tabs"><span class="on">My characters</span><span class="">Skills</span></div>
+      <div class="cnt"><b>6</b> characters · drag one onto a member to copy it there</div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+          <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
+        </div>
+        <div>
+          <div class="nm">Healbow</div>
+          <div class="pf">Monk/Ranger</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/shield.svg"
+          />
+        </div>
+        <div>
+          <div class="nm">Hammer Tank</div>
+          <div class="pf">Warrior/Monk</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div>
+          <div class="nm">Fireball</div>
+          <div class="pf">Elementalist/Mesmer</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/focus.svg"
+          />
+          <div class="sets"><i class=""></i><i class="off"></i></div>
+        </div>
+        <div>
+          <div class="nm">Dark Ritual</div>
+          <div class="pf">Necromancer/Ritualist</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        </div>
+        <div>
+          <div class="nm">Arrow Rain</div>
+          <div class="pf">Ranger/Warrior</div>
+        </div>
+      </div>
+      <div class="ch">
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div>
+          <div class="nm">Cook</div>
+          <div class="pf">Elementalist/Monk</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<h2>4. Drag states</h2>
+<p class="n">
+  Same in A and B. Press-and-drag; Esc cancels. A refused drop never relies on colour alone: dashed
+  outline + ⊘ badge + the reason.
+</p>
+<div class="small">
+  <div class="f sf">
+    <div style="padding: 14px 16px">
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+          <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
+        </div>
+        <div class="id">
+          <div class="nm">Healbow</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/monk.svg" />Monk/<img
+              src="../../apps/web/public/icons/profession/ranger.svg"
+            />Ranger
+          </div>
+          <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.protective-spirit.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/monk.remove-hex.svg" /></span
+        ><span class="sl el"><img src="../../apps/web/public/icons/skill/monk.rebirth.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ranger.lightning-reflexes.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ranger.troll-unguent.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/ranger.dodge.svg" /></span
+        ><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div style="height: 6px"></div>
+      <div class="row tgt">
+        <span class="h">⠿</span>
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="id">
+          <div class="nm">Fireball</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/elementalist.svg" />Elementalist/<img
+              src="../../apps/web/public/icons/profession/mesmer.svg"
+            />Mesmer
+          </div>
+          <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.flare.svg" /></span
+        ><span class="sl"
+          ><img
+            src="../../apps/web/public/icons/skill/elementalist.glyph-of-lesser-energy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.ether-renewal.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.power-drain.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.signet-of-illusions.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.mantra-of-recovery.svg" /></span
+        ><span class="sl em"></span><span class="ed"></span>
+      </div>
+    </div>
+    <div class="ghost" style="left: 270px; top: 112px; align-items: flex-start">
+      <div style="display: flex; align-items: center; gap: 6px">
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/focus.svg"
+          />
+          <div class="sets"><i class=""></i><i class="off"></i></div>
+        </div>
+      </div>
+      <div class="tip">Replace <b>Fireball</b> with <b>Dark Ritual</b></div>
+    </div>
+    <small>a character dragged onto a member: row highlighted</small>
+  </div>
+  <div class="f sf">
+    <div style="padding: 14px 16px">
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/shield.svg"
+          />
+        </div>
+        <div class="id">
+          <div class="nm">Hammer Tank</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/warrior.svg" />Warrior/<img
+              src="../../apps/web/public/icons/profession/monk.svg"
+            />Monk
+          </div>
+          <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.sprint.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.frenzy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.dolyak-signet.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shields-up.svg" /></span
+        ><span class="sl src"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div style="height: 6px"></div>
+      <div class="row tgt">
+        <span class="h">⠿</span>
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="id">
+          <div class="nm">Fireball</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/elementalist.svg" />Elementalist/<img
+              src="../../apps/web/public/icons/profession/mesmer.svg"
+            />Mesmer
+          </div>
+          <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.flare.svg" /></span
+        ><span class="sl"
+          ><img
+            src="../../apps/web/public/icons/skill/elementalist.glyph-of-lesser-energy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.ether-renewal.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.power-drain.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.signet-of-illusions.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.mantra-of-recovery.svg" /></span
+        ><span class="sl em drop"></span><span class="ed"></span>
+      </div>
+    </div>
+    <div class="ghost" style="right: 40px; top: 104px">
+      <div class="gi"><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></div>
+      <div class="tip">Move to <b>Fireball</b> slot 8</div>
+    </div>
+    <small>a skill dragged to another member's slot: origin dims, slot rings</small>
+  </div>
+  <div class="f sf">
+    <div style="padding: 14px 16px">
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/shield.svg"
+          />
+        </div>
+        <div class="id">
+          <div class="nm">Hammer Tank</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/warrior.svg" />Warrior/<img
+              src="../../apps/web/public/icons/profession/monk.svg"
+            />Monk
+          </div>
+          <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.sprint.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.frenzy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.dolyak-signet.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shields-up.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div style="height: 6px"></div>
+      <div class="row tgt">
+        <span class="h">⠿</span>
+        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="id">
+          <div class="nm">Fireball</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/elementalist.svg" />Elementalist/<img
+              src="../../apps/web/public/icons/profession/mesmer.svg"
+            />Mesmer
+          </div>
+          <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.flare.svg" /></span
+        ><span class="sl"
+          ><img
+            src="../../apps/web/public/icons/skill/elementalist.glyph-of-lesser-energy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/elementalist.ether-renewal.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.power-drain.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.signet-of-illusions.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/mesmer.mantra-of-recovery.svg" /></span
+        ><span class="sl em drop"></span><span class="ed"></span>
+      </div>
+    </div>
+    <div class="ghost cp" style="right: 40px; top: 104px">
+      <div class="gi"><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></div>
+      <div class="tip">Shift: <b>Copy</b> to Fireball slot 8 (stays on Hammer Tank)</div>
+    </div>
+    <small>Shift held, dropped on another member: origin stays, ghost gets “+”</small>
+  </div>
+  <div class="f sf">
+    <div style="padding: 14px 16px">
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/shield.svg"
+          />
+        </div>
+        <div class="id">
+          <div class="nm">Hammer Tank</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/warrior.svg" />Warrior/<img
+              src="../../apps/web/public/icons/profession/monk.svg"
+            />Monk
+          </div>
+          <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.sprint.svg" /></span
+        ><span class="sl"><img src="../../apps/web/public/icons/skill/warrior.frenzy.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.dolyak-signet.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/warrior.shields-up.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
+        ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+      <div style="height: 6px"></div>
+      <div class="row">
+        <span class="h">⠿</span>
+        <div class="ball">
+          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="o"
+            src="../../apps/web/public/icons/offhand/focus.svg"
+          />
+          <div class="sets"><i class=""></i><i class="off"></i></div>
+        </div>
+        <div class="id">
+          <div class="nm">Dark Ritual</div>
+          <div class="pf">
+            <img src="../../apps/web/public/icons/profession/necromancer.svg" />Necromancer/<img
+              src="../../apps/web/public/icons/profession/ritualist.svg"
+            />Ritualist
+          </div>
+          <div class="rk">Curs 12 · Blood 10 · Chan 6</div>
+        </div>
+        <span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.vampiric-touch.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.well-of-blood.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.soul-feast.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/necromancer.death-nova.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ritualist.spirit-light.svg" /></span
+        ><span class="sl"
+          ><img src="../../apps/web/public/icons/skill/ritualist.resilient-weapon.svg" /></span
+        ><span class="sl em bad"></span><span class="sl em"></span><span class="ed"></span>
+      </div>
+    </div>
+    <div class="ghost" style="right: 40px; top: 104px">
+      <div class="gi">
+        <img src="../../apps/web/public/icons/skill/warrior.sprint.svg" /><span class="bad-mark"
+          >⊘</span
+        >
+      </div>
+      <div class="tip bad">⊘ Necromancer/Ritualist can't use Warrior skills</div>
+    </div>
+    <small
+      >refused: dashed red slot, ⊘ badge on the ghost, reason in the tooltip; drop does
+      nothing</small
+    >
+  </div>
+</div>
+<div class="cap">
+  <p>
+    <b>Idea:</b> a row opens in place like an accordion: professions, attribute list with − / + and
+    points left, gear summary with weapon sets, all in one block under the row.
+  </p>
+  <p>
+    <b>Fixes:</b> everything about a member is visible and editable at once; no popover hunting; the
+    skills stay on screen above the edit.
+  </p>
+  <p>
+    <b>Costs:</b> the expanded row pushes the rest down (the list scrolls), and one block is a lot
+    of UI to open for a one-point change.
+  </p>
+</div>
