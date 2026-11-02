@@ -20,7 +20,8 @@ export type ProjectileSprite =
   | "water-trident"
   | "ebon-hawk"
   | "stone"
-  | "thrown-dagger";
+  | "thrown-dagger"
+  | "deathly-swarm";
 
 /** A flying spell's own sprite (#1176). A new flying spell needs a row, or the test fails. */
 export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
@@ -40,7 +41,7 @@ export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
   "assassin.crippling-dagger": "thrown-dagger",
   "assassin.dancing-daggers": "thrown-dagger",
   "monk.spear-of-light": "spear",
-  "necromancer.deathly-swarm": "bolt",
+  "necromancer.deathly-swarm": "deathly-swarm",
 };
 
 /** Every weapon's sprite. A melee weapon never shoots; it gets `bolt` rather than a throw in the render loop. */
