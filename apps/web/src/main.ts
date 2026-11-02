@@ -64,6 +64,7 @@ import { cloneCharacter } from "./storage/clone-character.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   type StoredCharacter,
+  TEAM_BUILD_SIZES,
   type StoredTeam,
   type TeamCharacter,
 } from "./storage/schema.js";
@@ -123,9 +124,9 @@ import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
 import { isAlone, lookingLabel, partyOf } from "./ui/party-strip.js";
 import {
-  DEFAULT_TEAM_SIZE,
   isModeEntry,
   loadRail,
+  loadTeamBuildSize,
   loadTeamSize,
   saveTeamSize,
   onTeamSizeChange,
@@ -133,7 +134,6 @@ import {
   redrawModeRail,
   redrawsOnLobbyChange,
   setRailParty,
-  TEAM_SIZES,
   type RailEntry,
 } from "./ui/rail.js";
 import {
@@ -162,7 +162,6 @@ import {
 import { toPlayerBuild } from "./storage/build-validation.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import {
-  isTeamArenaSize,
   teamQueueModeOf,
   teamSizeOf,
   type LobbyMode,
@@ -346,7 +345,7 @@ async function main(): Promise<void> {
     }
     // And a curated Team Build of every size that has one, each on its
     // own key (#2036, #2147).
-    for (const size of TEAM_SIZES) {
+    for (const size of TEAM_BUILD_SIZES) {
       await rollStarterTeam({
         teams,
         key: {
@@ -787,13 +786,10 @@ async function main(): Promise<void> {
     const snapshot = queue === undefined ? lobby?.getSnapshot() : undefined;
     if (isModeEntry(entry) && snapshot?.isHost === true && snapshot.mode !== entry) {
       lobby?.selectMode(entry);
-      // A Hosted Game starts at the host's sidebar team size (#2104), a
-      // Team Arena at it too, or 4v4 from 1v1 (#2107).
-      const size = loadTeamSize();
-      if (entry === "hosted-game") {
-        lobby?.selectTeamSize(size);
-      } else if (entry === "team-arena") {
-        lobby?.selectTeamSize(isTeamArenaSize(size) ? size : DEFAULT_TEAM_SIZE);
+      // A Hosted Game or a Team Arena starts at the size its host last
+      // picked in it (#2104, #2107, #2141).
+      if (entry === "hosted-game" || entry === "team-arena") {
+        lobby?.selectTeamSize(loadTeamSize(entry));
       }
     }
     showMenu();
@@ -920,7 +916,7 @@ async function main(): Promise<void> {
       const entrant = await readEntrant();
       let own: HostedLobby;
       try {
-        own = await hostLobby(name, entrant.guild, true, loadTeamSize());
+        own = await hostLobby(name, entrant.guild, true, loadTeamSize("hosted-game"));
       } catch (error) {
         opening = false;
         console.warn("[web] could not open a lobby", error);
@@ -1180,7 +1176,7 @@ async function main(): Promise<void> {
       // A new team is stored only once it is saved (#573).
       onNewTeam: () => {
         showTeamEditor(
-          openedTeam(newTeam(crypto.randomUUID(), loadTeamSize()), false),
+          openedTeam(newTeam(crypto.randomUUID(), loadTeamBuildSize()), false),
           characterList.characters,
         );
       },
@@ -1318,7 +1314,7 @@ async function main(): Promise<void> {
     editor = undefined;
     teamEditor?.dispose();
     // The sidebar comes back at the build's size, to its list (#2109).
-    saveTeamSize(state.team.size);
+    saveTeamSize("teams", state.team.size);
     teamEditor = mountTeamEditor(screenRoot, state, available, {
       onSave: (saved) => teams.save(saved),
       onDuplicate: (source) => {
@@ -1945,9 +1941,6 @@ async function main(): Promise<void> {
         onPropose: proposeTeam,
         onClaim: (slot) => {
           lobby?.claim(slot);
-        },
-        onSelectTeamSize: (size) => {
-          lobby?.selectTeamSize(size);
         },
         onToggleReady: () => {
           const self = lobby

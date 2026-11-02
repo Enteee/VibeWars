@@ -13,8 +13,7 @@ starts on its first map, and only a Hosted Game lets the host pick.
 
 Every map is made for some team sizes, and a mode only plays a map made
 for its size: an 8v8 never crowds onto an arena built for a 1v1. The
-rail's **Team size** offers 1v1, 2v2, 4v4 and 8v8; a mode greys out
-the sizes it does not play.
+rail's **Team size** steps only through the sizes the shown mode plays.
 
 | Mode           | Team sizes    | Map                                  |
 | -------------- | ------------- | ------------------------------------ |
@@ -186,15 +185,14 @@ A hosted lobby does not start the match when everyone is ready. It opens the Tea
 Build together and then splits its characters. In Heroes' Ascent and
 GvG a side is as big as the mode's team (8), which the sidebar's **Team
 size** shows, locked. In Team Arena the party leader picks 2v2, 4v4 or
-8v8 with that dropdown while the party is not queued, and the rest of
-the party sees it locked. It starts at the leader's own Team size, or
-4v4 if that is 1v1. A party never picks a size smaller than its players,
+8v8 with its arrows while the party is not queued, and the rest of
+the party sees it locked. It starts at the size the leader last picked
+in Team Arena, 4v4 at first. A party never picks a size smaller than its players,
 and a party with as many players as its size takes nobody more ("Party
 is full"). Two parties only ever meet at the same size, and the party
 strip names it: "Team Arena 2v2 — searching…". In a Hosted Game the host sets
-the team size with that dropdown, 1v1 to 8v8, before the Team Lobby and
-during its vote (from the Team Lobby's top bar), and both sides play
-exactly that many. A guest sees the host's, locked. The host's map list
+the team size with its arrows, 1v1 to 8v8, before the Team Lobby,
+and both sides play exactly that many; the Team Lobby shows no Team size. A guest sees the host's, locked. The host's map list
 shows only maps made for that size, and a size the map does not suit
 moves the lobby to the first map that does. It never goes below a side's
 players, and a side that has as many players as the team size takes
@@ -212,10 +210,7 @@ Team Builds** tab on the right: search them by name, click one to see
 its members, then **Propose this build**; on yours, **Withdraw
 proposal**. Esc closes it. Only your Team Builds of that size and with
 no problems are listed; the drawer says how many of other sizes it
-leaves out. If the host changes the team size
-during the vote, every proposal of another size is withdrawn, its
-proposer is told, everyone confirms again, and the vote's 60 seconds
-start over. Anyone may vote for one of their
+leaves out. Anyone may vote for one of their
 side's proposals, their own included. Each proposal is a card
 showing each member holding its weapons, with its skills, and the
 initials of who voted for it: click a card to vote, and click it again

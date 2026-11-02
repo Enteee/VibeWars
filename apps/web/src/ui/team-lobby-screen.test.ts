@@ -8,9 +8,10 @@ import { defaultBuildEquipment } from "@vibewars/game-core";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { StoredTeam, TeamSize } from "../storage/schema.js";
+import type { StoredTeam, TeamBuildSize } from "../storage/schema.js";
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
+import type * as Kit from "./kit.js";
 import {
   NO_PROPOSALS,
   NO_PLAYABLE_TEAM_BUILDS,
@@ -26,13 +27,24 @@ import {
   proposableTeams,
   putAwayBuildsDrawer,
   reasonLine,
+  renderTeamLobbyScreen,
   teamLobbyBody,
-  teamLobbySize,
   type TeamLobbyCallbacks,
 } from "./team-lobby-screen.js";
 
 // The figure draws on a canvas, which Node has none of: a bare one,
 // naming what it holds as the real one does.
+/** The title bar's status, as the last screen drawn put it there. */
+const bar = vi.hoisted(() => ({ status: [] as readonly unknown[] }));
+
+vi.mock("./kit.js", async (original) => ({
+  ...(await original<typeof Kit>()),
+  screenBar: (options: { readonly status?: readonly unknown[] }) => {
+    bar.status = options.status ?? [];
+    return { back: undefined, release: () => undefined };
+  },
+}));
+
 vi.mock("./character-figure.js", async (original) => ({
   ...(await original<typeof Figure>()),
   createCharacterFigure: (look: FigureLook) => {
@@ -217,7 +229,7 @@ function lobby(
 }
 
 /** A Team Build of `size`, `filled` of its slots taken: all of them unless said. */
-function team(id: string, name: string, size: TeamSize, filled: number = size): StoredTeam {
+function team(id: string, name: string, size: TeamBuildSize, filled: number = size): StoredTeam {
   const character = {
     id: "c",
     name: "Member",
@@ -268,12 +280,11 @@ describe("the Team Lobby's words (#1460)", () => {
   });
 
   it("offers only the Team Builds of the side's exact size (#2104)", () => {
-    const solo = team("a", "Solo", 1);
     const duo = team("b", "Duo", 2);
     const four = team("c", "Four", 4);
     const eight = team("d", "Eight", 8);
-    expect(proposableTeams([solo, duo, four, eight], 4)).toEqual([four]);
-    expect(proposableTeams([solo, duo, four, eight], 1)).toEqual([solo]);
+    expect(proposableTeams([duo, four, eight], 4)).toEqual([four]);
+    expect(proposableTeams([duo, four, eight], 1)).toEqual([]);
     expect(proposableTeams([duo, four], 8)).toEqual([]);
   });
 
@@ -312,7 +323,6 @@ describe("the Team Lobby's body (#1460)", () => {
     onClaim: (slot) => sent.push({ kind: "claim", value: slot }),
     onToggleReady: () => undefined,
     onLeave: () => undefined,
-    onSelectTeamSize: () => undefined,
   };
   const body = (
     shown: LobbySnapshot,
@@ -339,23 +349,34 @@ describe("the Team Lobby's body (#1460)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("shows the team size in the bar, the host's to change in a Hosted Game's vote only (#2104)", () => {
-    const picked: number[] = [];
-    const select = (shown: LobbySnapshot, stage: WireTeamLobby["stage"]): FakeElement | undefined =>
-      (
-        teamLobbySize(shown, stage, (size) => picked.push(size)) as unknown as FakeElement
-      ).children.find((child) => child.tagName === "SELECT");
-    const vote = select(lobby("aria", "vote", voteSide([])), "vote");
-    expect([vote?.value, vote?.disabled]).toEqual(["4", false]);
-    if (vote !== undefined) {
-      vote.value = "2";
+  it("puts no Team size in the bar, at any stage, host or guest (#2141)", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("HTMLInputElement", FakeElement);
+    vi.stubGlobal("document", {
+      createElement: (tag: string) =>
+        Object.assign(new FakeElement(), { tagName: tag.toUpperCase() }),
+      getElementById: () => null,
+    });
+    const screens = [
+      lobby("aria", "vote", voteSide([])),
+      lobby("aria", "claim", voteSide([])),
+      lobby("brann", "vote", voteSide([])),
+    ];
+    for (const shown of screens) {
+      const root = new FakeElement();
+      renderTeamLobbyScreen(
+        root as unknown as HTMLElement,
+        shown,
+        [],
+        undefined,
+        callbacks,
+        undefined,
+      );
+      const status = bar.status as readonly FakeElement[];
+      expect(status).toHaveLength(1);
+      expect(status[0]?.text()).not.toMatch(/Team size|\dv\d/);
     }
-    vote?.listeners.get("change")?.();
-    expect(picked).toEqual([2]);
-    expect(select(lobby("aria", "claim", voteSide([])), "claim")?.disabled).toBe(true);
-    expect(select(lobby("brann", "vote", voteSide([])), "vote")?.disabled).toBe(true);
-    const arena = { ...lobby("aria", "vote", voteSide([])), mode: "team-arena" } as const;
-    expect(select(arena, "vote")?.disabled).toBe(true);
+    vi.useRealTimers();
   });
 
   it("draws a card per proposal with its proposer, captain crown and voters' initials", () => {

@@ -2,7 +2,6 @@ import { PROFESSIONS } from "@vibewars/game-core";
 import type {
   WireProposalBuild,
   WireTeamChoice,
-  WireTeamLobby,
   WireTeamProposal,
   WireTeamSide,
 } from "@vibewars/game-protocol";
@@ -18,7 +17,6 @@ import {
 } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { button, h, screenBar } from "./kit.js";
-import { HOST_SETS_TEAM_SIZE, teamSizeSelect, type TeamSize } from "./rail.js";
 import { isTeamComplete, memberCount, validateTeam } from "./team-builder.js";
 
 /**
@@ -38,8 +36,6 @@ export interface TeamLobbyCallbacks {
   readonly onClaim: (slot: number | null) => void;
   readonly onToggleReady: () => void;
   readonly onLeave: () => void;
-  /** The host's team size (#2104), in a Hosted Game's vote. */
-  readonly onSelectTeamSize: (size: TeamSize) => void;
 }
 
 export const VOTE_TITLE = "Choose a team build";
@@ -344,7 +340,6 @@ export function renderTeamLobbyScreen(
   const side = team === null ? null : lobby.sides[team];
   const clock = h("span", "team-lobby-clock", clockText(lobby.secondsLeft));
   tickDown(clock, lobby.secondsLeft);
-  const sizes = teamLobbySize(snapshot, lobby.stage, callbacks.onSelectTeamSize);
   const status = h("div", "team-lobby-status");
   status.append(
     h("span", "team-lobby-stage", lobby.stage === "vote" ? VOTE_TITLE : CLAIM_TITLE),
@@ -362,7 +357,7 @@ export function renderTeamLobbyScreen(
     back: { label: "Leave", onBack: callbacks.onLeave },
     // Esc puts the builds drawer away before it leaves (#2116).
     putAway: putAwayBuildsDrawer,
-    status: [status, sizes],
+    status: [status],
     actions,
   });
 
@@ -387,27 +382,6 @@ export function renderTeamLobbyScreen(
   } else if (onTab) {
     panel.querySelector<HTMLElement>(".team-lobby-drawer-tab")?.focus();
   }
-}
-
-/**
- * The sidebar's Team size dropdown in the bar, which the Team Lobby has no
- * rail for (#2104): a Hosted Game's host may change it in the vote;
- * everyone else, and the claim, sees it locked.
- */
-export function teamLobbySize(
-  snapshot: LobbySnapshot,
-  stage: WireTeamLobby["stage"],
-  onSelectTeamSize: (size: TeamSize) => void,
-): HTMLElement {
-  const hosted = snapshot.mode === "hosted-game";
-  const editable = hosted && snapshot.isHost && stage === "vote";
-  const field = h("label", "team-lobby-size");
-  field.title = hosted && !snapshot.isHost ? HOST_SETS_TEAM_SIZE : "Team size";
-  field.append(
-    h("span", "field-label", "Team size"),
-    teamSizeSelect(snapshot.mode, snapshot.teamSize, !editable, onSelectTeamSize),
-  );
-  return field;
 }
 
 /**

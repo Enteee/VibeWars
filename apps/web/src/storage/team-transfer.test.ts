@@ -124,10 +124,10 @@ describe("team import", () => {
     expect(!result.ok && result.problems.join(" ")).toContain("format version 2");
   });
 
-  it("refuses a code without a size a Team Build can have (#2109)", () => {
-    for (const size of [undefined, 3, 16, "4"]) {
+  it("refuses a code without a size a Team Build can have, 1v1 too (#2109, #2141)", () => {
+    for (const size of [undefined, 1, 3, 16, "4"]) {
       const result = importTeam(code([buildPayload(ALICE)], { size }), ids(), 0);
-      expect(!result.ok && result.problems).toEqual(["size must be 1, 2, 4 or 8"]);
+      expect(!result.ok && result.problems).toEqual(["size must be 2, 4 or 8"]);
     }
   });
 

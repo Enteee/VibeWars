@@ -1,6 +1,6 @@
 import type { LobbyMode } from "@vibewars/game-protocol";
 
-import type { StoredTeam } from "../storage/schema.js";
+import { isTeamBuildSize, type StoredTeam, type TeamBuildSize } from "../storage/schema.js";
 import { loadStarterTeamId } from "../storage/starter-team.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { lookOfCharacter, teamFigureCard } from "./character-card.js";
@@ -8,7 +8,7 @@ import { professionLabel } from "./character-preview.js";
 import { button, h, listenForPaste, screenBar } from "./kit.js";
 import type { LobbyPanel } from "./lobby-screen.js";
 import {
-  loadTeamSize,
+  loadTeamBuildSize,
   onTeamSizeChange,
   railScreen,
   teamSizeLabel,
@@ -137,7 +137,7 @@ function unplayable(team: StoredTeam): HTMLElement[] {
  */
 function teamCards(
   teams: readonly StoredTeam[],
-  size: TeamSize,
+  size: TeamBuildSize,
   callbacks: TeamPlayCallbacks,
 ): HTMLElement {
   const section = h("div", "team-play-builds");
@@ -182,13 +182,16 @@ function teamBuilderBody(
   callbacks: TeamPlayCallbacks,
   rerolled: boolean,
 ): void {
-  let section = teamCards(teams, loadTeamSize(), callbacks);
+  let section = teamCards(teams, loadTeamBuildSize(), callbacks);
   body.appendChild(section);
   if (rerolled) {
     section.querySelector<HTMLElement>(".play-card-reroll")?.focus();
   }
   // Another size in the sidebar shows its builds at once (#2109).
   onTeamSizeChange((size) => {
+    if (!isTeamBuildSize(size)) {
+      return;
+    }
     const next = teamCards(teams, size, callbacks);
     section.replaceWith(next);
     section = next;

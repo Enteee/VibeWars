@@ -1,7 +1,13 @@
 import type { LobbyMode } from "@vibewars/game-protocol";
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
-import { isTeamSize, type TeamSize } from "../storage/schema.js";
+import {
+  isTeamBuildSize,
+  isTeamSize,
+  TEAM_BUILD_SIZES,
+  type TeamBuildSize,
+  type TeamSize,
+} from "../storage/schema.js";
 import { button, h } from "./kit.js";
 import { isAlone, partyStrip, type RailParty } from "./party-strip.js";
 
@@ -48,15 +54,13 @@ export function isModeEntry(entry: RailEntry): entry is LobbyMode {
 
 export type { TeamSize };
 
-/** The team size dropdown's options, smallest first. */
-export const TEAM_SIZES: readonly TeamSize[] = [1, 2, 4, 8];
-
-/** The team size every screen starts at, and an unreadable stored one means. */
+/** The size a screen starts at when it plays it, and the one others start closest to. */
 export const DEFAULT_TEAM_SIZE: TeamSize = 4;
 
 /**
- * The sizes each rail screen plays (#2022): Team Arena's its leader
- * picks from (#2107). A builder's empty list disables the dropdown.
+ * The sizes each rail screen plays (#2022), smallest first: Team Arena's
+ * its leader picks from (#2107), Team Builder's never 1v1 (#2141). A
+ * builder's empty list disables the stepper.
  */
 export const TEAM_SIZES_BY_ENTRY: Readonly<Record<RailEntry, readonly TeamSize[]>> = {
   "random-arena": [1, 2, 4],
@@ -65,44 +69,75 @@ export const TEAM_SIZES_BY_ENTRY: Readonly<Record<RailEntry, readonly TeamSize[]
   gvg: [8],
   "hosted-game": [1, 2, 4, 8],
   characters: [],
-  teams: [1, 2, 4, 8],
+  teams: TEAM_BUILD_SIZES,
 };
 
-/** The dropdown's title on a screen with no team size. */
+/** The stepper's title on a screen with no team size. */
 export const NO_TEAM_SIZE_HERE = "Team size is for team modes and Team Builds";
-/** A lobby guest's dropdown title: the host's size is everyone's. */
+/** A lobby guest's stepper title: the host's size is everyone's. */
 export const HOST_SETS_TEAM_SIZE = "The host sets the team size";
-/** A queued party's dropdown title: the queue is for the size it has (#2107). */
+/** A queued party's stepper title: the queue is for the size it has (#2107). */
 export const LEAVE_QUEUE_FOR_TEAM_SIZE = "Leave the queue to change the team size";
 
-/** `size` as the dropdown reads it, e.g. "2v2". */
-export function teamSizeLabel(size: TeamSize): string {
+/** `size` as the stepper reads it, e.g. "2v2". */
+export function teamSizeLabel(size: number): string {
   return `${String(size)}v${String(size)}`;
 }
 
-/** Why `entry`'s screen cannot play `size`, or `undefined` when it can. */
-export function teamSizeProblem(entry: RailEntry, size: TeamSize): string | undefined {
-  return TEAM_SIZES_BY_ENTRY[entry].includes(size)
-    ? undefined
-    : `${teamSizeLabel(size)} is not in ${railLabel(entry)}`;
+/**
+ * The size `entry`'s screen opens at with nothing remembered (#2141):
+ * 4v4 if it plays it, else its size closest to 4, the larger on a tie.
+ * A builder without sizes reads 4v4, never shown.
+ */
+export function defaultTeamSize(entry: RailEntry): TeamSize {
+  let best: TeamSize | undefined;
+  for (const size of TEAM_SIZES_BY_ENTRY[entry]) {
+    const distance = Math.abs(size - DEFAULT_TEAM_SIZE);
+    if (best === undefined || distance <= Math.abs(best - DEFAULT_TEAM_SIZE)) {
+      best = size;
+    }
+  }
+  return best ?? DEFAULT_TEAM_SIZE;
 }
 
-const TEAM_SIZE_STORAGE_KEY = `${STORAGE_NAMESPACE}.teamSize`;
+const TEAM_SIZE_STORAGE_KEY = `${STORAGE_NAMESPACE}.teamSizeByEntry`;
 
-/** The team size last picked; 4v4 on a first start, and for anything else stored. */
-export function loadTeamSize(): TeamSize {
+/** Every screen's last pick, as stored; empty for anything unreadable. */
+function storedTeamSizes(): Record<string, unknown> {
   try {
-    const stored = Number(localStorage.getItem(TEAM_SIZE_STORAGE_KEY));
-    return isTeamSize(stored) ? stored : DEFAULT_TEAM_SIZE;
+    const parsed: unknown = JSON.parse(localStorage.getItem(TEAM_SIZE_STORAGE_KEY) ?? "{}");
+    return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
   } catch {
-    // A convenience, like the rail entry: the menu opens at 4v4.
-    return DEFAULT_TEAM_SIZE;
+    // A convenience, like the rail entry: every screen opens at its default.
+    return {};
   }
 }
 
-export function saveTeamSize(size: TeamSize): void {
+/**
+ * The size last picked in `entry`'s screen (#2141), each screen its own;
+ * its default for nothing stored, or a size it does not play.
+ */
+export function loadTeamSize(entry: RailEntry): TeamSize {
+  const stored = storedTeamSizes()[entry];
+  return isTeamSize(stored) && TEAM_SIZES_BY_ENTRY[entry].includes(stored)
+    ? stored
+    : defaultTeamSize(entry);
+}
+
+/** Team Builder's size: a new build's, never 1v1 (#2141). */
+export function loadTeamBuildSize(): TeamBuildSize {
+  const size = loadTeamSize("teams");
+  return isTeamBuildSize(size) ? size : 4;
+}
+
+export function saveTeamSize(entry: RailEntry, size: TeamSize): void {
   try {
-    localStorage.setItem(TEAM_SIZE_STORAGE_KEY, String(size));
+    localStorage.setItem(
+      TEAM_SIZE_STORAGE_KEY,
+      JSON.stringify({ ...storedTeamSizes(), [entry]: size }),
+    );
   } catch {
     // Same reasoning as loading it.
   }
@@ -121,41 +156,69 @@ export function onTeamSizeChange(listener: (size: TeamSize) => void): void {
 }
 
 /**
- * The team size dropdown (#2022) showing `value`: the rail's, and the
- * Team Lobby bar's (#2104). A size `entry` does not play stays shown,
- * its option disabled, so nothing changes on its own. A pick is stored,
- * one value shared by every screen, then goes to `onPick`.
+ * The team size stepper (#2141), `‹ 4v4 ›`, showing `value`, or `—` with
+ * no size: ‹ steps to the next smaller size `entry` plays, › to the next
+ * larger, an end's arrow disabled. Left and Right on a focused arrow step
+ * too. A step is stored as `entry`'s own, then goes to `onPick`.
  */
-export function teamSizeSelect(
+export function teamSizeStepper(
   entry: RailEntry,
-  value: number,
+  value: number | undefined,
   disabled: boolean,
   onPick: (size: TeamSize) => void,
-): HTMLSelectElement {
-  const select = document.createElement("select");
-  select.className = "mode-rail-size-select";
-  select.setAttribute("data-entry", "team-size");
-  const supported = TEAM_SIZES_BY_ENTRY[entry];
-  for (const size of TEAM_SIZES) {
-    const option = document.createElement("option");
-    option.value = String(size);
-    const playable = supported.includes(size);
-    option.textContent = playable
-      ? teamSizeLabel(size)
-      : `${teamSizeLabel(size)} — not in ${railLabel(entry)}`;
-    option.disabled = !playable;
-    select.appendChild(option);
-  }
-  select.value = String(value);
-  select.disabled = disabled;
-  select.addEventListener("change", () => {
-    const size = Number(select.value);
-    if (isTeamSize(size)) {
-      saveTeamSize(size);
-      onPick(size);
+): HTMLElement {
+  const sizes = TEAM_SIZES_BY_ENTRY[entry];
+  const stepper = h("div", "mode-rail-stepper");
+  stepper.setAttribute("data-entry", "team-size");
+  let shown = value;
+  const next = (direction: -1 | 1): TeamSize | undefined => {
+    if (shown === undefined) {
+      return undefined;
     }
-  });
-  return select;
+    const from = shown;
+    return direction < 0
+      ? sizes.findLast((size) => size < from)
+      : sizes.find((size) => size > from);
+  };
+  const step = (direction: -1 | 1): void => {
+    const size = next(direction);
+    if (size === undefined || disabled) {
+      return;
+    }
+    shown = size;
+    saveTeamSize(entry, size);
+    draw();
+    // An arrow that reached its end hands the keys to the other one.
+    if (direction < 0 ? smaller.disabled : larger.disabled) {
+      (direction < 0 ? larger : smaller).focus();
+    }
+    onPick(size);
+  };
+  const arrow = (label: string, ariaLabel: string, direction: -1 | 1): HTMLButtonElement => {
+    const node = button(label, "mode-rail-step", () => {
+      step(direction);
+    });
+    node.setAttribute("aria-label", ariaLabel);
+    node.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        event.preventDefault();
+        step(event.key === "ArrowLeft" ? -1 : 1);
+      }
+    });
+    return node;
+  };
+  const smaller = arrow("‹", "Smaller team", -1);
+  const larger = arrow("›", "Larger team", 1);
+  const size = h("span", "mode-rail-size-value");
+  size.setAttribute("aria-live", "polite");
+  const draw = (): void => {
+    size.textContent = shown === undefined ? "—" : teamSizeLabel(shown);
+    smaller.disabled = disabled || next(-1) === undefined;
+    larger.disabled = disabled || next(1) === undefined;
+  };
+  draw();
+  stepper.append(smaller, size, larger);
+  return stepper;
 }
 
 /**
@@ -173,15 +236,15 @@ function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLEle
     (active === "hosted-game" || active === "team-arena") && party?.mode === active
       ? party.teamSize
       : undefined;
-  const select = teamSizeSelect(
+  const stepper = teamSizeStepper(
     active,
-    lobbySize ?? loadTeamSize(),
+    noSizes ? undefined : (lobbySize ?? loadTeamSize(active)),
     noSizes || guest || queued,
     (size) => {
       teamSizeListener?.(size);
     },
   );
-  const field = h("label", "mode-rail-size");
+  const field = h("div", "mode-rail-size");
   field.title = noSizes
     ? NO_TEAM_SIZE_HERE
     : guest
@@ -189,7 +252,7 @@ function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLEle
       : queued
         ? LEAVE_QUEUE_FOR_TEAM_SIZE
         : "Team size";
-  field.append(h("span", "mode-rail-label", "Team size"), select);
+  field.append(h("span", "mode-rail-label", "Team size"), stepper);
   return field;
 }
 

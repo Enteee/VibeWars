@@ -78,7 +78,7 @@ describe("addMember / removeMember / replaceMember", () => {
   });
 
   it("takes members up to its size, and no more (#2109)", () => {
-    for (const size of [1, 2, 4, 8] as const) {
+    for (const size of [2, 4, 8] as const) {
       let team = newTeam("t1", size);
       for (let i = 0; i < size + 3; i += 1) {
         team = addMember(team, member(`c${String(i)}`));
@@ -177,8 +177,11 @@ describe("isTeamComplete (#2109)", () => {
 
 describe("validateTeam over its size (#2109)", () => {
   it("flags more members than the size, as a stored record cannot hold", () => {
-    const team = addMember(addMember(newTeam("t1", 2), member("a")), member("b"));
-    const over = { ...team, size: 1 as const };
+    const team = addMember(
+      addMember(addMember(newTeam("t1", 4), member("a")), member("b")),
+      member("c"),
+    );
+    const over = { ...team, size: 2 as const };
     expect(validateTeam(over).map((p) => p.message)).toEqual(["slot count exceeds the team size"]);
   });
 });

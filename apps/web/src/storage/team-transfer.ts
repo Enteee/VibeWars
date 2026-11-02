@@ -1,6 +1,11 @@
 import { newTeam, teamCharacter } from "../ui/team-builder.js";
 import { buildPayload, readBuild, type ExportedBuild } from "./build-transfer.js";
-import { isTeamSize, type StoredTeam, type TeamCharacter, type TeamSize } from "./schema.js";
+import {
+  isTeamBuildSize,
+  type StoredTeam,
+  type TeamBuildSize,
+  type TeamCharacter,
+} from "./schema.js";
 
 /**
  * Team import/export (#577, epic #554).
@@ -26,7 +31,7 @@ export interface ExportedTeam {
   readonly formatVersion: number;
   readonly name: string;
   /** The build's fixed size (#2109): a paste is a build of this size. */
-  readonly size: TeamSize;
+  readonly size: TeamBuildSize;
   readonly members: readonly ExportedBuild[];
 }
 
@@ -103,8 +108,8 @@ export function importTeam(text: string, newId: () => string, now: number): Team
     problems.push("Give the team a name.");
   }
   const size = record.size;
-  if (!isTeamSize(size)) {
-    return { ok: false, problems: [...problems, "size must be 1, 2, 4 or 8"] };
+  if (!isTeamBuildSize(size)) {
+    return { ok: false, problems: [...problems, "size must be 2, 4 or 8"] };
   }
   if (!Array.isArray(record.members)) {
     return { ok: false, problems: [...problems, "members must be a list"] };
