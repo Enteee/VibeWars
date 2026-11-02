@@ -176,21 +176,17 @@ describe("Channeled Strike (#2212)", () => {
     return damageTo(of(cast(sim, STRIKE, "f"), STRIKE), "f");
   }
 
-  it("strikes once without an item, and again for more with ashes in hand", () => {
+  it("strikes once, the item's 29 in the same packet with ashes in hand", () => {
     const plain = strike(false);
     const held = strike(true);
     expect(plain).toHaveLength(1);
-    expect(held).toHaveLength(2);
-    expect(held[0]).toBe(plain[0]);
-    // 29 against 77 at the same armor.
-    expect((held[1] ?? 0) / (plain[0] ?? 1)).toBeCloseTo(29 / 77, 1);
+    expect(held).toHaveLength(1);
+    // 77 + 29 against 77 at the same armor.
+    expect((held[0] ?? 0) / (plain[0] ?? 1)).toBeCloseTo(106 / 77, 1);
   });
 
   it("reads as GW1 words it", () => {
-    expect(lines(STRIKE)).toEqual([
-      "Deals 77 lightning damage",
-      "If you are holding an item: deals 29 lightning damage",
-    ]);
+    expect(lines(STRIKE)).toEqual(["Deals 77 lightning damage; if you are holding an item: +29"]);
   });
 });
 

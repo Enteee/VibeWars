@@ -2958,20 +2958,13 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         },
         type: "lightning",
         armorPenetration: 0,
-      },
-      {
-        kind: "if",
-        condition: { kind: "caster-holds-item" },
-        effects: [
-          {
-            kind: "damage",
-            amount: {
-              scaling: { attributeId: "ritualist.channeling-magic", atZero: 5, atTwelve: 29 },
-            },
-            type: "lightning",
-            armorPenetration: 0,
+        // One packet, the item's 29 in it (#977).
+        conditionalBonus: {
+          condition: { kind: "caster-holds-item" },
+          amount: {
+            scaling: { attributeId: "ritualist.channeling-magic", atZero: 5, atTwelve: 29 },
           },
-        ],
+        },
       },
     ],
   },
