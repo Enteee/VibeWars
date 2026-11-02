@@ -459,6 +459,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "soldiers-defense": icon("soldiers-defense"),
   "defensive-stance": icon("defensive-stance"),
   "auspicious-parry": icon("auspicious-parry"),
+  // Mesmer energy and utility (#2132).
+  "lyssas-aura": icon("lyssas-aura"),
+  "persistence-of-memory": icon("persistence-of-memory"),
   // Warrior conditions (#2096).
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
@@ -468,6 +471,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "swirling-aura": icon("swirling-aura"),
   "magnetic-surge": icon("magnetic-surge"),
   "sliver-armor": icon("sliver-armor"),
+  // Chain and Paradox tools (#2134).
+  "way-of-the-empty-palm": icon("way-of-the-empty-palm"),
+  "mark-of-instability": icon("mark-of-instability"),
+  "deadly-paradox": icon("deadly-paradox"),
+  "unseen-fury": icon("unseen-fury"),
 };
 
 const GAP = 2;

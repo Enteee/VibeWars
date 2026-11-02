@@ -1,8 +1,10 @@
-import { getSkill } from "../../../skills/catalog.js";
 import { RANGE_MELEE } from "../../../distances.js";
+import { isAttacking } from "../../../skills/attacking.js";
+import { getSkill } from "../../../skills/catalog.js";
 import type { Skill, Surroundings } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
 import {
+  blindsUser,
   botUses,
   holdsGround,
   mirrorsStance,
@@ -26,6 +28,8 @@ const PET_SEND_UNITS = 300;
  * that only acts on a state waits for it (#2096): "You Will Die!" for a
  * foe below 90%, "Retreat!" for a dead ally. Holding Protector's Defense
  * (#2096), it swings only at a foe in reach and otherwise stands.
+ * Signet of Midnight (#2132) only at a foe attacking in melee within
+ * touch, and never by a bot whose own fight is its attacks.
  */
 const fight: BotRule = {
   order: 100,
@@ -52,6 +56,15 @@ const fight: BotRule = {
       distance(pet.position, target.position) >= PET_SEND_UNITS;
     const hasStance =
       foe?.skillBar.some((id) => id !== null && getSkill(id)?.type === "stance") ?? false;
+    // Blinding itself as well (#2132) is worth it only against a melee
+    // attacker at hand, and never to a bot with attack skills to use.
+    const blindWorth =
+      foe !== undefined &&
+      target !== undefined &&
+      isAttacking(foe) &&
+      foe.equipment.mainHand.weapon.projectileSpeed === undefined &&
+      distance(target.position, self.position) <= RANGE_MELEE &&
+      !bar.some((held) => held.attack !== undefined || botUses(held).includes("boost"));
     const holding = holdsGround(self.combatant);
     const surroundings: Surroundings = new Map(context.participants.map((body) => [body.id, body]));
     const worthUsing = (held: Skill): boolean => {
@@ -71,6 +84,7 @@ const fight: BotRule = {
     const skill = bar.find(
       (held) =>
         worthUsing(held) &&
+        (blindWorth || !blindsUser(held)) &&
         !onlyInterrupts(held) &&
         copies(held) &&
         (!sendsPet(held) || petFar) &&

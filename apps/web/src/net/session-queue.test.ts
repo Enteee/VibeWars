@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { enterQueue } from "./session.js";
 import type * as Transport from "./transport/index.js";
+import type * as TurnConfig from "./transport/turn-config.js";
 
 /** A NAT check that never comes back, as on a page whose STUN is slow. */
 vi.mock("./transport/index.js", async (original) => ({
@@ -15,7 +16,10 @@ vi.mock("./transport/index.js", async (original) => ({
   }),
 }));
 vi.mock("./transport/host-clock.js", () => ({ startHostClock: () => () => undefined }));
-vi.mock("./transport/turn-config.js", () => ({ loadTurnConfig: () => undefined }));
+vi.mock("./transport/turn-config.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof TurnConfig>()),
+  loadTurnConfig: () => undefined,
+}));
 
 afterEach(() => {
   vi.unstubAllGlobals();

@@ -60,6 +60,7 @@ describe("status definitions", () => {
         def.preventsSpells ||
         def.preventsBlocking ||
         def.unblockableBySource ||
+        def.unblockableByBlinded ||
         def.unblockableAttacks !== undefined ||
         def.attacksUnblockable ||
         def.energyPips !== 0 ||
@@ -241,6 +242,7 @@ describe("status definitions", () => {
       "the-power-is-yours": 2,
       "well-of-power": 2,
       "well-of-weariness": -1,
+      "lyssas-aura": 4,
     });
   });
 
@@ -872,6 +874,52 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     ]);
   });
 
+  it("answers a hit by its source's attack of the role it names, and no one else's (#2134)", () => {
+    const set = new StatusSet();
+    set.apply("mark-of-instability", 20, "s", NO_RANKS);
+    set.drainChanges();
+    set.recordHitByAttack("s", 30, "lead");
+    set.recordHitByAttack("s", 30, undefined);
+    set.recordHitByAttack("a", 30, "dual");
+    expect(set.drainChanges()).toEqual([]);
+    set.recordHitByAttack("s", 30, "dual");
+    expect(set.drainChanges()).toEqual([
+      {
+        kind: "hit-by-attack",
+        offenderId: "s",
+        fired: [
+          {
+            statusId: "mark-of-instability",
+            sourceId: "s",
+            trigger: getStatusDefinition("mark-of-instability").triggers[0],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("frees and hastens only the chain roles Way of the Empty Palm names (#2134)", () => {
+    const set = new StatusSet();
+    set.apply("way-of-the-empty-palm", 13, "s", NO_RANKS);
+    const boost = (id: string) => {
+      const found = getSkill(id);
+      if (found === undefined) {
+        throw new Error(`missing ${id}`);
+      }
+      return ownSkillBoost(set.active, found);
+    };
+    expect(boost("assassin.death-blossom")).toMatchObject({ energyBase: 0, rechargeFaster: 0.45 });
+    expect(boost("assassin.fox-fangs")).toMatchObject({ energyBase: 0, rechargeFaster: 0.45 });
+    expect(boost("assassin.jagged-strike")).toMatchObject({
+      energyBase: undefined,
+      rechargeFaster: 0,
+    });
+    expect(boost("assassin.shadow-prison")).toMatchObject({
+      energyBase: undefined,
+      rechargeFaster: 0,
+    });
+  });
+
   it("marks the mantras with what they do (#1964)", () => {
     expect(getStatusDefinition("mantra-of-concentration").interruptGuard).toEqual({ kind: "once" });
     expect(getStatusDefinition("mantra-of-resolve").interruptGuard).toEqual({
@@ -1333,5 +1381,33 @@ describe("onAttackBlocked (#1974)", () => {
 
   it("a sword's blocked blow fires nothing", () => {
     expect(blocked(WEAPONS.sword, false)).toEqual([]);
+  });
+});
+
+describe("StatusSet.castSpell (#1614, #2132)", () => {
+  it("renews Lyssa's Aura only for a spell at a foe, and Kinetic Armor for any", () => {
+    expect(getStatusDefinition("lyssas-aura").renewsOnBearerSpellAtFoe).toBe(true);
+    expect(getStatusDefinition("kinetic-armor").renewsOnBearerSpellAtFoe).toBe(false);
+    const set = new StatusSet();
+    set.apply("lyssas-aura", 10, "m", NO_RANKS);
+    set.apply("kinetic-armor", 12, "m", NO_RANKS);
+    set.advance(7, false);
+    set.castSpell(false);
+    expect(set.get("lyssas-aura")?.remainingSeconds).toBeCloseTo(3);
+    expect(set.get("kinetic-armor")?.remainingSeconds).toBe(12);
+    set.castSpell(true);
+    expect(set.get("lyssas-aura")?.remainingSeconds).toBe(10);
+  });
+});
+
+describe("StatusSet.recordInterrupt (#1473, #2132)", () => {
+  it("carries the skill interrupted, and none for a plain swing", () => {
+    const set = new StatusSet();
+    set.apply("persistence-of-memory", 17, "m", NO_RANKS);
+    set.recordInterrupt("foe", { skillId: "mesmer.empathy", key: "mesmer.empathy" });
+    set.recordInterrupt("foe", undefined);
+    expect(
+      set.drainChanges().map((change) => change.kind === "interrupted" && change.skill),
+    ).toEqual([{ skillId: "mesmer.empathy", key: "mesmer.empathy" }, undefined]);
   });
 });

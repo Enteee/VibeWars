@@ -46,10 +46,18 @@ import {
 } from "@vibewars/game-session";
 
 import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
-import { linkLobbyRoom } from "./lobby-room.js";
+import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
 import { arenaIds, hostMap, mapTeamSizes, modeMapIds, queueMapPool } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
-import { checkTransportNat, joinQueueBoard, joinRoom, roomSelfId } from "./transport/index.js";
+import {
+  checkTransportNat,
+  joinGuestRoom,
+  joinHostRoom,
+  joinQueueBoard,
+  joinRoom,
+  roomSelfId,
+  shareLobbyRelay,
+} from "./transport/index.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
 import { loadTurnConfig } from "./transport/turn-config.js";
@@ -223,7 +231,7 @@ export async function hostLobby(
   // A queued lobby is open from the start, and its group is on its way.
   const link =
     queued === undefined
-      ? linkLobbyRoom({ selfId: roomSelfId(), join: () => joinRoom(lobbyRoom) })
+      ? linkLobbyRoom({ selfId: roomSelfId(), join: () => joinHostRoom(lobbyRoom) })
       : undefined;
   const host = createLobbyHost({
     transport: link ?? joinRoom(lobbyRoom),
@@ -248,11 +256,15 @@ export async function hostLobby(
           },
         }),
   });
+  // Offered while the host is in its room, a match included: a guest
+  // reconnecting through the relay (#1764) needs it then too.
+  const share = queued === undefined ? shareLobbyRelay(lobbyRoom) : undefined;
   const stopFollowing =
     link === undefined
       ? () => undefined
       : host.onReach((reach) => {
           link.follow(reach);
+          share?.follow(needsRoom(reach));
         });
   const stopClock = startHostClock((seconds) => {
     host.advance(seconds);
@@ -266,6 +278,7 @@ export async function hostLobby(
     window.removeEventListener("pagehide", onPageHide);
     stopFollowing();
     stopClock();
+    share?.close();
     await host.close(moveTo);
   };
   try {
@@ -320,7 +333,8 @@ export async function joinLobbyByCode(
     void joined?.disconnect();
   };
   window.addEventListener("pagehide", onPageHide);
-  const room = joinRoom(lobbyRoom);
+  const guest = joinGuestRoom(lobbyRoom);
+  const room = guest.transport;
   try {
     joined = await joinLobby({
       transport: room,
@@ -331,6 +345,7 @@ export async function joinLobbyByCode(
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
     });
+    guest.reached(joined.getSnapshot().hostId);
     joined.onClosed(() => {
       window.removeEventListener("pagehide", onPageHide);
     });

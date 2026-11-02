@@ -26,6 +26,18 @@ import {
   type TransportTrouble,
 } from "@vibewars/game-session";
 
+import {
+  byteLength,
+  eventId,
+  HEX_128,
+  HEX_64,
+  isTags,
+  openRelayPool,
+  signEvent,
+  webSocket,
+  type NostrEvent,
+  type OpenRelaySocket,
+} from "./nostr-relays.js";
 import { APP_ID, NOSTR_RELAYS } from "./relays.js";
 import { newTicketKey, verifyTicketSig } from "./ticket-key.js";
 
@@ -37,12 +49,6 @@ export const QUEUE_EVENT_KIND = 23854;
  * 600 bytes; anything far over that is not one of ours.
  */
 export const MAX_QUEUE_MESSAGE_BYTES = 4 * 1024;
-
-/** How long a closed relay socket waits before it opens again. */
-export const RELAY_RETRY_MS = 10_000;
-
-/** Messages a socket still opening holds for when it opens; the oldest go first. */
-const PENDING_LIMIT = 16;
 
 /** Event ids remembered to drop the copy each other relay delivers. */
 const SEEN_LIMIT = 1024;
@@ -65,23 +71,10 @@ export const VERIFY_BURST = 60;
 
 const SUBSCRIPTION_ID = "vibewars-queue";
 
-/** One relay connection, as `openSocket` makes it. */
-export interface RelaySocket {
-  send(data: string): void;
-  close(): void;
-}
-
-export interface RelaySocketHandlers {
-  open(): void;
-  message(data: unknown): void;
-  /** Closed or failed; fired once per socket. */
-  close(): void;
-}
-
 /** What the board takes from the world; the unit test hands in fakes. */
 export interface NostrQueueDeps {
   readonly relays: readonly string[];
-  readonly openSocket: (url: string, handlers: RelaySocketHandlers) => RelaySocket;
+  readonly openSocket: OpenRelaySocket;
   /** ms since the epoch. */
   readonly now: () => number;
   readonly newTicketKey: () => TicketKey;
@@ -99,39 +92,6 @@ export interface NostrQueue {
   close(): void;
 }
 
-interface NostrEvent {
-  readonly id: string;
-  readonly pubkey: string;
-  readonly created_at: number;
-  readonly kind: number;
-  readonly tags: readonly (readonly string[])[];
-  readonly content: string;
-  readonly sig: string;
-}
-
-const HEX_64 = /^[0-9a-f]{64}$/;
-const HEX_128 = /^[0-9a-f]{128}$/;
-
-function webSocket(url: string, handlers: RelaySocketHandlers): RelaySocket {
-  const socket = new WebSocket(url);
-  let closed = false;
-  const close = () => {
-    if (!closed) {
-      closed = true;
-      handlers.close();
-    }
-  };
-  socket.onopen = () => {
-    handlers.open();
-  };
-  socket.onmessage = (event) => {
-    handlers.message(event.data);
-  };
-  socket.onerror = close;
-  socket.onclose = close;
-  return socket;
-}
-
 const BROWSER: NostrQueueDeps = {
   relays: NOSTR_RELAYS,
   openSocket: webSocket,
@@ -140,39 +100,20 @@ const BROWSER: NostrQueueDeps = {
   verifyTicketSig,
 };
 
-/** NIP-01's event id: sha256 of the serialised `[0, pubkey, created_at, kind, tags, content]`. */
-function eventId(event: Omit<NostrEvent, "id" | "sig">): Uint8Array {
-  const serialised = JSON.stringify([
-    0,
-    event.pubkey,
-    event.created_at,
-    event.kind,
-    event.tags,
-    event.content,
-  ]);
-  return sha256(new TextEncoder().encode(serialised));
-}
-
 function signedEvent(key: TicketKey, mode: QueueMode, content: string, at: number): NostrEvent {
-  const unsigned = {
-    pubkey: key.ticketId,
-    created_at: Math.floor(at / 1000),
-    kind: QUEUE_EVENT_KIND,
-    tags: [
-      ["t", APP_ID],
-      ["protocol", PROTOCOL_VERSION],
-      ["mode", mode],
-    ],
-    content,
-  };
-  const id = eventId(unsigned);
-  return { ...unsigned, id: bytesToHex(id), sig: key.sign(id) };
-}
-
-function isTags(value: unknown): value is readonly (readonly string[])[] {
-  return (
-    Array.isArray(value) &&
-    value.every((tag) => Array.isArray(tag) && tag.every((part) => typeof part === "string"))
+  return signEvent(
+    {
+      pubkey: key.ticketId,
+      created_at: Math.floor(at / 1000),
+      kind: QUEUE_EVENT_KIND,
+      tags: [
+        ["t", APP_ID],
+        ["protocol", PROTOCOL_VERSION],
+        ["mode", mode],
+      ],
+      content,
+    },
+    (digest) => key.sign(digest),
   );
 }
 
@@ -232,17 +173,6 @@ function boardEvent(event: NostrEvent): QueueBoardEvent | undefined {
   return { kind: "ticket", ticket };
 }
 
-function byteLength(data: string): number {
-  return new TextEncoder().encode(data).length;
-}
-
-interface Relay {
-  socket: RelaySocket | undefined;
-  open: boolean;
-  readonly pending: string[];
-  retry: ReturnType<typeof setTimeout> | undefined;
-}
-
 interface Subscriber {
   readonly mode: QueueMode;
   readonly on: (event: QueueBoardEvent) => void;
@@ -262,10 +192,7 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
    * after that, any copy of the ticket is dead anyway.
    */
   const withdrawn = new Map<string, number>();
-  const relays = new Map<string, Relay>();
   let closed = false;
-  /** Set while every relay is down and `no-relay` has been said. */
-  let saidNoRelay = false;
   let verifyTokens = VERIFY_BURST;
   let verifyRefilledAt = deps.now();
   /**
@@ -413,69 +340,20 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
     }
   }
 
-  function checkRelays(): void {
-    const anyUp = [...relays.values()].some((relay) => relay.socket !== undefined);
-    if (anyUp) {
-      return;
-    }
-    if (!saidNoRelay) {
-      saidNoRelay = true;
+  const pool = openRelayPool({
+    relays: deps.relays,
+    openSocket: deps.openSocket,
+    request,
+    hear,
+    allDown: () => {
       for (const handler of [...troubles]) {
         handler("no-relay");
       }
-    }
-  }
-
-  function connect(url: string, relay: Relay): void {
-    relay.retry = undefined;
-    relay.socket = deps.openSocket(url, {
-      open: () => {
-        if (closed) {
-          return;
-        }
-        relay.open = true;
-        saidNoRelay = false;
-        relay.socket?.send(request);
-        for (const message of relay.pending.splice(0)) {
-          relay.socket?.send(message);
-        }
-      },
-      message: (data) => {
-        if (!closed) {
-          hear(data);
-        }
-      },
-      close: () => {
-        relay.socket = undefined;
-        relay.open = false;
-        if (closed) {
-          return;
-        }
-        relay.retry = setTimeout(() => {
-          connect(url, relay);
-        }, RELAY_RETRY_MS);
-        checkRelays();
-      },
-    });
-  }
-
-  function send(event: NostrEvent): void {
-    const message = JSON.stringify(["EVENT", event]);
-    for (const relay of relays.values()) {
-      if (relay.open) {
-        relay.socket?.send(message);
-      } else {
-        relay.pending.push(message);
-        relay.pending.splice(0, relay.pending.length - PENDING_LIMIT);
-      }
-    }
-  }
-
-  for (const url of deps.relays) {
-    const relay: Relay = { socket: undefined, open: false, pending: [], retry: undefined };
-    relays.set(url, relay);
-    connect(url, relay);
-  }
+    },
+  });
+  const send = (event: NostrEvent): void => {
+    pool.send(event);
+  };
 
   const board: QueueBoard = {
     publish: (ticket: QueueTicket) => {
@@ -525,10 +403,7 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
       closed = true;
       subscribers.clear();
       troubles.clear();
-      for (const relay of relays.values()) {
-        clearTimeout(relay.retry);
-        relay.socket?.close();
-      }
+      pool.close();
     },
   };
 }

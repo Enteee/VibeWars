@@ -70,7 +70,9 @@ export interface TriggerContext {
    * The skill the bearer just used, and its key (#469), on
    * `bearer-uses-skill` (#949): what Diversion lengthens and an echo
    * copies; and the spell, on `bearer-casts-spell` (#1614), whose cost
-   * Aura of Restoration reads. `undefined` on every other event.
+   * Aura of Restoration reads; and the skill interrupted, on
+   * `bearer-interrupted` (#2132), that Persistence of Memory recharges.
+   * `undefined` on every other event.
    */
   readonly usedSkill: SlotSkill | undefined;
 }
@@ -113,7 +115,8 @@ export function fireTriggers(
 /**
  * Whether a `bearer-uses-skill` trigger answers `used` (#1437): any skill,
  * unless it names a type, a profession or an attribute (#1614) the skill
- * must have, or that it be elite (#1473) or adrenal (#1592).
+ * must have, or that it be elite (#1473), adrenal (#1592) or a spell
+ * (#2132).
  */
 function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): boolean {
   if (trigger.usedSkill === undefined) {
@@ -123,6 +126,7 @@ function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): 
   return (
     skill !== undefined &&
     (trigger.usedSkill.type === undefined || skill.type === trigger.usedSkill.type) &&
+    (trigger.usedSkill.spell === undefined || isSpell(skill.type)) &&
     (trigger.usedSkill.attributes === undefined ||
       (skill.attributeId !== undefined &&
         inScope(trigger.usedSkill.attributes, skill.attributeId))) &&
@@ -224,12 +228,21 @@ export function fireChangeTriggers(
     case "targeted-by-foe":
     case "healed-by-skill":
     case "blocked":
-    case "interrupted":
     case "health-dropped":
     case "fatal-negated":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, change.offenderId, undefined, context),
       );
+    // The skill interrupted is the one the trigger answers (#2132).
+    case "interrupted":
+      return change.fired
+        .filter(({ trigger }) => answersUsedSkill(trigger, change.skill))
+        .flatMap(({ statusId, sourceId, trigger }) =>
+          fire(trigger, statusId, sourceId, bearer, change.offenderId, undefined, {
+            ...context,
+            usedSkill: change.skill,
+          }),
+        );
     case "gained-hex-or-enchantment":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, change.sourceId, undefined, context),

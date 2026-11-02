@@ -61,12 +61,20 @@ const SDP_EXCHANGED = "after exchanging SDP";
 /** `WebSocket.OPEN`, which a fake socket in the unit test does not carry. */
 const SOCKET_OPEN = 1;
 
-/** Join `room`. `deps` is for the unit test; the app passes nothing. */
-export function joinTrysteroRoom(room: LobbyRoom, deps: TrysteroDeps = TRYSTERO): Transport {
+/**
+ * Join `room`, with `offered` the relay a lobby host shares (#2091) when
+ * Options has none. `deps` is for the unit test; the app passes nothing.
+ */
+export function joinTrysteroRoom(
+  room: LobbyRoom,
+  offered?: TurnConfig,
+  deps: TrysteroDeps = TRYSTERO,
+): Transport {
   const handlers = new HandlerSets();
-  // Read at join, so a relay saved in Options counts from the next lobby.
-  // Added to Trystero's STUN, not instead: ICE still prefers a direct path.
-  const turn = deps.turnConfig();
+  // Read at join, so a relay saved in Options counts from the next lobby,
+  // and wins over an offered one. Added to Trystero's STUN, not instead:
+  // ICE still prefers a direct path.
+  const turn = deps.turnConfig() ?? offered;
   const trystero = deps.joinRoom(
     {
       appId: APP_ID,

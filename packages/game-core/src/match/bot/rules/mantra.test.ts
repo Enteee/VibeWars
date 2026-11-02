@@ -50,6 +50,23 @@ describe("play-build raises a mantra before it is needed (#1964)", () => {
     expect(askBot(safe, "m").useSkillId).not.toBe("mesmer.mantra-of-concentration");
   });
 
+  it("Persistence of Memory as Concentration is, with a long cast and an interrupter (#2132)", () => {
+    const bar = ["mesmer.persistence-of-memory", "mesmer.backfire"];
+    const threatened = match([
+      mesmer("m", 0, vec2(0, 0), bar),
+      mesmer("e", 1, vec2(300, 0), ["mesmer.power-spike"]),
+    ]);
+    expect(askBot(threatened, "m")).toMatchObject({
+      useSkillId: "mesmer.persistence-of-memory",
+      targetId: "m",
+    });
+    const safe = match([
+      mesmer("m", 0, vec2(0, 0), bar),
+      mesmer("e", 1, vec2(300, 0), ["elementalist.flare"]),
+    ]);
+    expect(askBot(safe, "m").useSkillId).not.toBe("mesmer.persistence-of-memory");
+  });
+
   it("aims no interrupt at a foe whose guard would stop it", () => {
     const sim = match([
       fighter("ranger", 0, RANGER, vec2(400, 400), {

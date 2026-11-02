@@ -553,6 +553,13 @@ export interface RechargeFasterEffect {
  */
 export interface RechargeResetEffect {
   readonly kind: "recharge-reset";
+  /**
+   * `used-skill`: the skill the trigger answers recharges instead, by its
+   * key (#2132), as Persistence of Memory's "whenever a spell you cast is
+   * interrupted, that spell is instantly recharged". No such skill: none.
+   * Absent: this skill.
+   */
+  readonly of?: "used-skill";
 }
 
 /**
@@ -912,7 +919,8 @@ export interface LengthenRechargeEffect {
  * every skill on the bar, the one used included, as Blackout's "all of
  * your skills are disabled for 5 seconds". `attacks` (#1914): every
  * attack skill on the bar but the one used, as Focused Shot's "your other
- * attack skills are disabled". `types` (#1930): every skill on the
+ * attack skills are disabled", but those of `exceptWeapon` (#2134), as
+ * Wastrel's Collapse's "your non-dagger attack skills". `types` (#1930): every skill on the
  * bar of one of `types`, the one used included, as Shadow Walk's "your
  * enchantments and stances are disabled"; a status it keeps up runs on.
  * None on it: nothing. `seconds` scales
@@ -932,6 +940,7 @@ export type DisableOwnSkillsEffect =
   | {
       readonly kind: "disable-own-skills";
       readonly which: "attacks";
+      readonly exceptWeapon: AttackWeaponClass | undefined;
       readonly seconds: Magnitude;
     }
   | {
@@ -1416,6 +1425,12 @@ export type StateCondition =
    * Shock's "if you have more energy than target foe". Equal is not more.
    */
   | { readonly kind: "caster-more-energy" }
+  /**
+   * The caster has less Energy than `amount`, at its own rank (#2132):
+   * Ether Signet's "if you have less than 5...10 Energy". Equal is not
+   * below.
+   */
+  | { readonly kind: "caster-energy-below"; readonly amount: Magnitude }
   /**
    * The caster is overcast, above 0, as the effect resolves (#1366):
    * Flare's "if you are Overcast". A spell's own overcast is paid as its

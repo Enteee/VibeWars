@@ -1,13 +1,22 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  credentialExpiry,
   encodeTurnFragment,
+  forgetSharedRelay,
   forgetTurnConfig,
+  loadRelaySharing,
+  loadSharedRelay,
   loadTurnConfig,
+  mintTurnCredential,
   parseTurnFragment,
   relayHosts,
+  saveRelaySharing,
+  saveSharedRelay,
   saveTurnConfig,
+  validateSharedRelay,
   validateTurnConfig,
+  type SharedRelay,
   type TurnConfig,
 } from "./turn-config.js";
 
@@ -102,6 +111,89 @@ describe("a TURN relay invite link (#972)", () => {
     expect(validateTurnConfig({ ...RELAY, urls: ["turn:a.example", "turn:b.example:80"] })).toEqual(
       { ...RELAY, urls: ["turn:a.example", "turn:b.example:80"] },
     );
+  });
+});
+
+describe("the URL rule for a relay from anywhere (#2091)", () => {
+  const withHost = (host: string): TurnConfig => ({ ...RELAY, urls: [`turn:${host}:3478`] });
+
+  it.each([
+    ["IPv4 loopback", "127.0.0.1"],
+    ["IPv4 0/8", "0.0.0.0"],
+    ["RFC1918 10/8", "10.1.2.3"],
+    ["RFC1918 172.16/12", "172.31.255.1"],
+    ["RFC1918 192.168/16", "192.168.0.10"],
+    ["IPv4 link-local", "169.254.169.254"],
+    ["CGNAT 100.64/10", "100.100.1.1"],
+    ["a short IPv4 form", "127.1"],
+    ["a hex IPv4 form", "0x7f.0.0.1"],
+    ["an octal-looking IPv4 octet", "010.0.0.1"],
+    ["IPv6 loopback", "[::1]"],
+    ["IPv6 unspecified", "[::]"],
+    ["IPv6 ULA fc00::/7", "[fd12:3456::1]"],
+    ["IPv6 link-local", "[fe80::1]"],
+    ["a v4-mapped refused IPv4", "[::ffff:192.168.1.1]"],
+    ["a v4-mapped refused IPv4 in hex", "[::ffff:c0a8:101]"],
+    ["NAT64 with a refused IPv4", "[64:ff9b::10.0.0.1]"],
+    ["a malformed IPv6", "[1::2::3]"],
+    ["localhost", "localhost"],
+    ["a *.localhost name", "relay.localhost"],
+    ["a *.local name", "printer.LOCAL"],
+  ])("refuses %s", (_, host) => {
+    expect(validateTurnConfig(withHost(host))).toBeUndefined();
+  });
+
+  it.each([
+    ["a public IPv4", "203.0.113.7"],
+    ["an IPv4 just past CGNAT", "100.128.0.1"],
+    ["a public IPv6", "[2001:db8::1]"],
+    ["a v4-mapped public IPv4", "[::ffff:203.0.113.7]"],
+    ["NAT64 with a public IPv4", "[64:ff9b::203.0.113.7]"],
+    ["a name", "turn.example"],
+    ["a name with a numeric label", "1.turn.example"],
+  ])("takes %s", (_, host) => {
+    expect(validateTurnConfig(withHost(host))).toEqual(withHost(host));
+  });
+});
+
+describe("a shared relay (#2091)", () => {
+  const SHARED: SharedRelay = { urls: ["turns:turn.example:5349"], secret: "s" };
+
+  it("mints coturn's REST credential: the username's HMAC-SHA1 under the secret", () => {
+    // Computed with Node's crypto, outside `mintTurnCredential`, and pinned.
+    const minted = mintTurnCredential(SHARED, "0123456789abcdef", 1_700_000_000_000);
+    expect(minted).toEqual({
+      urls: SHARED.urls,
+      username: "1700007200:0123456789abcdef",
+      credential: "CMjsAVviRjf3czWnWgj9pgoCtDY=", // pragma: allowlist secret
+    });
+    expect(validateTurnConfig(minted)).toEqual(minted);
+    expect(credentialExpiry(minted)).toBe(1_700_007_200_000);
+  });
+
+  it.each([
+    ["an extra key", { ...SHARED, share: true }],
+    ["a missing secret", { urls: SHARED.urls }],
+    ["an empty secret", { ...SHARED, secret: "" }],
+    ["a private host", { ...SHARED, urls: ["turn:192.168.1.2"] }],
+    ["a stun: URL", { ...SHARED, urls: ["stun:turn.example"] }],
+  ])("is rejected for %s", (_, value) => {
+    expect(validateSharedRelay(value)).toBeUndefined();
+  });
+
+  it("is saved apart from the static relay, and sharing is off until ticked", () => {
+    const storage = memoryStorage();
+    vi.stubGlobal("localStorage", storage);
+    expect(loadRelaySharing()).toBe(false);
+    saveSharedRelay(SHARED);
+    saveRelaySharing(true);
+    expect(loadSharedRelay()).toEqual(SHARED);
+    expect(loadTurnConfig()).toBeUndefined();
+    expect(loadRelaySharing()).toBe(true);
+    saveRelaySharing(false);
+    forgetSharedRelay();
+    expect(storage.items.size).toBe(0);
+    vi.unstubAllGlobals();
   });
 });
 

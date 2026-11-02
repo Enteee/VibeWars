@@ -4194,7 +4194,7 @@ export class MatchSimulation {
       attributeId: undefined,
       area,
       doubleStrike: false,
-      events: [...usedEvents, ...events, ...this.#skippedEvent(record, skill, skipped)],
+      events: [...usedEvents, ...events, ...this.#skippedEvent(record, skill, skipped, ranks)],
     });
     this.#logFired(riders);
     if (borrowing !== undefined) {
@@ -4210,9 +4210,11 @@ export class MatchSimulation {
     this.#useNextSkill(record, skill, spared);
     this.#endOnUseSkill(record, skill, spared);
     if (isSpell(skill.type)) {
-      // Kinetic Armor's renewal (#1614); Aura of Restoration's gain reads
-      // the spell's cost.
-      record.combatant.statuses.castSpell();
+      // Kinetic Armor's renewal (#1614), and Lyssa's Aura's at a foe
+      // (#2132); Aura of Restoration's gain reads the spell's cost.
+      record.combatant.statuses.castSpell(
+        primary !== undefined && primary.combatant.team !== record.combatant.team,
+      );
       this.#fireTriggers(record, "bearer-casts-spell", spared, {
         skillId: skill.id,
         key: cast.key,
@@ -4223,11 +4225,15 @@ export class MatchSimulation {
     }
   }
 
-  /** What `record`'s use of `skill` that did nothing says (#1735): why, if an `if` did not hold. */
+  /**
+   * What `record`'s use of `skill` that did nothing says (#1735): why, if
+   * an `if` did not hold, its numbers at the `ranks` it went off at.
+   */
   #skippedEvent(
     record: ParticipantRecord,
     skill: Skill,
     skipped: SkippedEffect | undefined,
+    ranks: ReadonlyMap<string, number>,
   ): CombatEvent[] {
     return skipped === undefined
       ? []
@@ -4237,7 +4243,7 @@ export class MatchSimulation {
             casterId: record.id,
             targetId: skipped.targetId,
             skillId: skill.id,
-            requirement: conditionRequirementText(skipped.condition),
+            requirement: conditionRequirementText(skipped.condition, ranks),
           },
         ];
   }
@@ -5942,6 +5948,7 @@ export class MatchSimulation {
       blocks(
         target.combatant,
         projectile.attackerId,
+        attacker?.combatant.statuses.active ?? [],
         "projectile",
         skillHit !== undefined,
         this.#rng,
@@ -6026,7 +6033,7 @@ export class MatchSimulation {
         attacker.combatant,
         target.combatant,
         events,
-        skillHit !== undefined,
+        skillHit?.skill,
         projectile.weaponSnapshot.mainHand.weapon,
         Math.max(0, before - target.combatant.health),
       );
@@ -6093,7 +6100,15 @@ export class MatchSimulation {
       projectile,
       casterRecord === undefined
         ? events
-        : [...events, ...this.#skippedEvent(casterRecord, skill, skipped)],
+        : [
+            ...events,
+            ...this.#skippedEvent(
+              casterRecord,
+              skill,
+              skipped,
+              withRankLoan(caster, spell.loan, skill, () => ranksOf(caster)),
+            ),
+          ],
       area,
     );
   }

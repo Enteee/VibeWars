@@ -33,11 +33,13 @@ import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipme
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
 import type { Vec2 } from "../vec2.js";
+import type { SlotSkill } from "./cast-state.js";
 import {
   isSpell,
   type AttackWeaponClass,
   type AttributeScaling,
   type Aura,
+  type ChainRole,
   type Combatant,
   type ConditionalBonus,
   type CreatureTemplate,
@@ -522,6 +524,11 @@ export interface StatusDefinition {
    * rolls block.
    */
   readonly unblockableBySource: boolean;
+  /**
+   * A Blinded foe cannot block the bearer's attacks (#2134): Unseen Fury's
+   * "you cannot be blocked by Blinded foes". Checked as the block is rolled.
+   */
+  readonly unblockableByBlinded: boolean;
   /**
    * The bearer cannot block at all (#1332): Rigor Mortis's "cannot block".
    * Every attack, melee or projectile, from anyone, rolls no block.
@@ -1029,6 +1036,12 @@ export interface StatusDefinition {
    */
   readonly renewsOnBearerSpell: boolean;
   /**
+   * As `renewsOnBearerSpell`, only for a spell cast at a foe (#2132):
+   * Lyssa's Aura's "reapplies itself every time you cast a spell on a
+   * foe". One at the bearer itself or an ally renews nothing.
+   */
+  readonly renewsOnBearerSpellAtFoe: boolean;
+  /**
    * It ends once its triggers have fired this many times (#1423): Finale
    * of Restoration's "the next 5 times". `undefined`: no such limit.
    */
@@ -1323,6 +1336,8 @@ export interface OwnSkillFilter {
   readonly type: SkillType | "spell" | undefined;
   readonly attributeId: string | undefined;
   readonly profession: ProfessionId | undefined;
+  /** Attack skills of one of these chain roles (#2134), as Way of the Empty Palm's. */
+  readonly chainRoles: readonly ChainRole[] | undefined;
 }
 
 /** `StatusDefinition.ownSkillModifiers` (#1761). */
@@ -1411,7 +1426,9 @@ export function ownSkillAnswers(filter: OwnSkillFilter, skill: Skill): boolean {
   return (
     type &&
     (filter.attributeId === undefined || skill.attributeId === filter.attributeId) &&
-    (filter.profession === undefined || skill.profession === filter.profession)
+    (filter.profession === undefined || skill.profession === filter.profession) &&
+    (filter.chainRoles === undefined ||
+      (skill.attack?.chain !== undefined && filter.chainRoles.includes(skill.attack.chain.role)))
   );
 }
 
@@ -1528,6 +1545,13 @@ export interface StatusTrigger {
    */
   readonly healthBelow?: number;
   /**
+   * On `bearer-hit-by-attack` only (#2134): it fires only for a hit by the
+   * status's source, and with `chainRole`, only by an attack skill of that
+   * role, as Mark of Instability's "the next time you hit target foe with a
+   * dual attack". Absent: any foe's hit.
+   */
+  readonly hitBy?: { readonly fromSource: true; readonly chainRole?: ChainRole };
+  /**
    * On `bearer-applies-hex`, and only there (#1951): the hex's attribute
    * must be in `attributes`, as Elemental Flame's "Elemental hex".
    */
@@ -1540,10 +1564,14 @@ export interface StatusTrigger {
    * the Ntouka's "whenever you use an adrenal skill". With `attributes`,
    * only a skill of an attribute in that scope (#1614, #1951): Fire
    * Attunement's "each time you use Fire Magic", Mist Form's "elemental
-   * spell". On `bearer-casts-spell` too. Absent: any skill.
+   * spell". On `bearer-casts-spell` too, and on `bearer-interrupted`, for
+   * the skill interrupted (#2132), never a plain swing. With `spell`, any
+   * spell (`isSpell`), a hex or an enchantment too: Persistence of
+   * Memory's "a spell you cast". Absent: any skill.
    */
   readonly usedSkill?: {
     readonly type?: SkillType;
+    readonly spell?: true;
     readonly attributes?: AttributeScope;
     readonly profession?: ProfessionId;
     readonly elite?: true;
@@ -1784,10 +1812,13 @@ export type StatusChange =
   /**
    * `offenderId` interrupted the bearer (#1473), with the triggers that
    * answered. `undefined`: a shot whose archer has left the match.
+   * `skill`: the skill it interrupted, by its key (#2132); `undefined` for
+   * a plain swing.
    */
   | {
       readonly kind: "interrupted";
       readonly offenderId: string | undefined;
+      readonly skill: SlotSkill | undefined;
       readonly fired: readonly AnsweringTrigger[];
     }
   /**
@@ -2299,14 +2330,14 @@ export class StatusSet {
   }
 
   /**
-   * `offenderId` interrupted the bearer's skill (#1473) or swing (#1709),
-   * recorded only if a status on it answers that, with the triggers that
-   * do: once for each interrupt.
+   * `offenderId` interrupted the bearer's skill (#1473), `skill`, or swing
+   * (#1709), `undefined`, recorded only if a status on it answers that,
+   * with the triggers that do: once for each interrupt.
    */
-  public recordInterrupt(offenderId: string | undefined): void {
+  public recordInterrupt(offenderId: string | undefined, skill: SlotSkill | undefined): void {
     const fired = this.#answering("bearer-interrupted");
     if (fired.length > 0) {
-      this.#changes.push({ kind: "interrupted", offenderId, fired });
+      this.#changes.push({ kind: "interrupted", offenderId, skill, fired });
     }
   }
 
@@ -2339,9 +2370,19 @@ export class StatusSet {
    * `took` health, recorded only if a status on it answers that, with the
    * triggers that do. Every hit counts: two foes in one tick are two. Each
    * status that reflects attack damage (#1754) sends its share back.
+   * `chainRole` is the hitting attack skill's (#2134), if it has one.
    */
-  public recordHitByAttack(offenderId: string, took: number): void {
-    const fired = this.#answering("bearer-hit-by-attack");
+  public recordHitByAttack(
+    offenderId: string,
+    took: number,
+    chainRole: ChainRole | undefined,
+  ): void {
+    const fired = this.#answering("bearer-hit-by-attack").filter(
+      ({ sourceId, trigger }) =>
+        trigger.hitBy === undefined ||
+        (sourceId === offenderId &&
+          (trigger.hitBy.chainRole === undefined || trigger.hitBy.chainRole === chainRole)),
+    );
     if (fired.length > 0) {
       this.#changes.push({ kind: "hit-by-attack", offenderId, fired });
     }
@@ -2782,10 +2823,14 @@ export class StatusSet {
     return multiplier;
   }
 
-  /** The bearer cast a spell (#1614): every status that renews on that is renewed. */
-  public castSpell(): void {
+  /**
+   * The bearer cast a spell (#1614), `atFoe` if at a foe (#2132): every
+   * status that renews on that is renewed.
+   */
+  public castSpell(atFoe: boolean): void {
     for (const status of this.#statuses.values()) {
-      if (getStatusDefinition(status.id).renewsOnBearerSpell) {
+      const definition = getStatusDefinition(status.id);
+      if (definition.renewsOnBearerSpell || (atFoe && definition.renewsOnBearerSpellAtFoe)) {
         status.remainingSeconds = status.durationSeconds;
       }
     }
