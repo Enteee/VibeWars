@@ -80,11 +80,14 @@ const hex = (bytes: number): string =>
     b.toString(16).padStart(2, "0"),
   ).join("");
 
-/** An event on `ROOM`'s topic that no key opens, by a fresh author: what anyone watching can send. */
-function garbage(): object {
+/**
+ * An event on `ROOM`'s topic that no key opens, by a fresh author or one
+ * it claims: what anyone watching can send, since no signature is checked.
+ */
+function garbage(pubkey = hex(32)): object {
   return {
     id: hex(32),
-    pubkey: hex(32),
+    pubkey,
     kind: RELAY_OFFER_KIND,
     tags: [["t", ROOM.topic]],
     content: btoa("x".repeat(64)),
@@ -309,6 +312,45 @@ describe("a host's relay offers, heard by a joiner (#2091)", () => {
     expect(offers.latest()).toBeUndefined();
     host.close();
     hostile.close();
+    offers.close();
+  });
+
+  it("opens the host's offer through garbage that claims the host's key", async () => {
+    const relay = fakeRelay();
+    let now = NOW;
+    const hostKey = newTicketKey();
+    const hostDeps = (): RelayOfferDeps => ({
+      ...deps(relay.openSocket, () => now),
+      newKey: () => hostKey,
+    });
+    const offers = watchRelayOffers(
+      ROOM,
+      deps(relay.openSocket, () => now),
+    );
+    await settle();
+    for (let i = 0; i < 3; i += 1) {
+      relay.publish(garbage(hostKey.ticketId));
+    }
+    await settle();
+    const host = shareRelay(ROOM, SHARED, hostDeps());
+    host.follow(true);
+    await settle();
+    const first = offers.latest();
+    expect(first?.urls).toEqual(SHARED.urls);
+
+    // Garbage under the host's key, again and again, after its first open.
+    now += OFFER_OPEN_INTERVAL_MS;
+    for (let i = 0; i < 50; i += 1) {
+      relay.publish(garbage(hostKey.ticketId));
+    }
+    await settle();
+    now += 2 * 60 * 60 * 1000 - 60 * 1000;
+    relay.publish(garbage(hostKey.ticketId));
+    host.follow(false);
+    host.follow(true);
+    await settle();
+    expect(offers.latest()?.username).not.toBe(first?.username);
+    host.close();
     offers.close();
   });
 

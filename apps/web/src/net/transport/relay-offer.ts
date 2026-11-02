@@ -45,18 +45,18 @@ export const MAX_OFFER_CONTENT_BYTES = 2048;
 const MAX_OFFER_MESSAGE_BYTES = 4096;
 
 /**
- * A joiner opens at most one offer this often from one author. The slot
- * is the author's, not the topic's: the topic is public, so a slot any
- * event could spend is one a relay watcher's garbage, or a member's own
- * offers, would take from the host's.
+ * After an author's offer opens, a joiner opens no other from it for this
+ * long. Only an open charges it: an event's `pubkey` is not verified here,
+ * and anyone can claim the host's, so nothing short of an open may cost
+ * an author anything.
  */
 export const OFFER_OPEN_INTERVAL_MS = 5_000;
 
 /**
- * The most offers a joiner opens in a second, across every author. Opening
- * one is microseconds of AES-GCM, so this bounds the work of a flood signed
- * by fresh keys. An author whose offer has opened is not counted: once the
- * host has been heard, no flood crowds out its one offer per 5 s.
+ * The most offers a joiner opens in a second from authors none of whose
+ * offers has opened yet, and again from authors one of whose has. Opening
+ * one is microseconds of AES-GCM, so this bounds a flood's work, and a
+ * flood by unproven authors never spends a proven host's budget.
  */
 export const MAX_OFFER_OPENS_PER_SECOND = 200;
 
@@ -71,7 +71,7 @@ const TAG_BYTES = 8;
 const SUBSCRIPTION_ID = "vibewars-relay-offer";
 /** Event ids remembered to drop the copy each other relay delivers. */
 const SEEN_LIMIT = 256;
-/** Authors remembered, by their last open or a failed one, before forgetting them all. */
+/** Authors remembered by their last open, before forgetting them all. */
 const AUTHOR_LIMIT = 1024;
 
 /** The topic offers are tagged with and the key they are sealed under (`LobbyRoom.relay`). */
@@ -274,14 +274,11 @@ export function watchRelayOffers(
   const offers = new Map<string, TurnConfig>();
   const handlers = new Set<() => void>();
   const seen = new Set<string>();
-  /** When each author's last offer was opened. */
+  /** When each author's last offer opened: the one proof that it holds the key. */
   const openedAt = new Map<string, number>();
-  /** Authors whose offer did not open: none of theirs ever will. */
-  const failed = new Set<string>();
-  /** Authors whose offer opened: they hold the key, and are not counted against the flood. */
-  const opened = new Set<string>();
   let windowStart = -Infinity;
-  let windowOpens = 0;
+  /** Opens this second, by unproven and by proven authors. */
+  const windowOpens = { unproven: 0, proven: 0 };
   let closed = false;
 
   const live = (): TurnConfig[] => {
@@ -330,7 +327,6 @@ export function watchRelayOffers(
       typeof id !== "string" ||
       typeof pubkey !== "string" ||
       seen.has(id) ||
-      failed.has(pubkey) ||
       kind !== RELAY_OFFER_KIND ||
       !isTags(tags) ||
       !tags.some(([name, value]) => name === "t" && value === room.topic) ||
@@ -339,42 +335,32 @@ export function watchRelayOffers(
       return;
     }
     const now = deps.now();
-    if (now - (openedAt.get(pubkey) ?? -Infinity) < OFFER_OPEN_INTERVAL_MS) {
+    const lastOpen = openedAt.get(pubkey);
+    if (lastOpen !== undefined && now - lastOpen < OFFER_OPEN_INTERVAL_MS) {
       return;
     }
     if (now - windowStart >= 1000) {
       windowStart = now;
-      windowOpens = 0;
+      windowOpens.unproven = 0;
+      windowOpens.proven = 0;
     }
-    if (!opened.has(pubkey)) {
-      if (windowOpens >= MAX_OFFER_OPENS_PER_SECOND) {
-        return;
-      }
-      windowOpens += 1;
+    const bucket = lastOpen === undefined ? "unproven" : "proven";
+    if (windowOpens[bucket] >= MAX_OFFER_OPENS_PER_SECOND) {
+      return;
     }
+    windowOpens[bucket] += 1;
     if (seen.size >= SEEN_LIMIT) {
       seen.clear();
     }
     seen.add(id);
-    if (openedAt.size >= AUTHOR_LIMIT) {
-      openedAt.clear();
-    }
-    openedAt.set(pubkey, now);
     void openOffer(content, room.key, now).then((config) => {
-      if (closed) {
+      if (closed || config === undefined) {
         return;
       }
-      if (config === undefined) {
-        if (failed.size >= AUTHOR_LIMIT) {
-          failed.clear();
-        }
-        failed.add(pubkey);
-        return;
+      if (openedAt.size >= AUTHOR_LIMIT) {
+        openedAt.clear();
       }
-      if (opened.size >= AUTHOR_LIMIT) {
-        opened.clear();
-      }
-      opened.add(pubkey);
+      openedAt.set(pubkey, now);
       take(config);
     });
   };
