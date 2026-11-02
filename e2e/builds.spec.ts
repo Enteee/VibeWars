@@ -5,6 +5,7 @@ import { exportBuild } from "../apps/web/src/storage/build-transfer.js";
 import { CHARACTER_SCHEMA_VERSION } from "../apps/web/src/storage/schema.js";
 import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
+import { openLibraryGroup } from "./helpers/library.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { openRail, pickCharacter } from "./helpers/menu.js";
 import { expectTeamSize, setTeamSize, startSoloMatch } from "./helpers/peers.js";
@@ -252,6 +253,8 @@ async function loaded(icon: Locator): Promise<boolean> {
 test("the library, the bar and the tooltip show each skill's icon (#727)", async ({ page }) => {
   await newCharacter(page);
   await chooseProfession(page, "primary", "elementalist");
+  // Every group: the headline card below is the first of all, as it was.
+  await openLibraryGroup(page);
   const box = page.locator(".skill-box", { hasText: "Armor of Earth" });
   const rowIcon = box.locator(".skill-box-card img.skill-icon");
   await expect(rowIcon).toHaveAttribute(
@@ -781,6 +784,8 @@ test("team counters mark their cells; a cell finds its skill on the team (#575)"
   for (const [name, skills] of Object.entries(bars)) {
     await newCharacter(page);
     await page.locator("input.editor-name").fill(name);
+    // Every group, so each `.first()` below is the first of all, as it was.
+    await openLibraryGroup(page);
     for (const skill of skills) {
       await page
         .locator(".skill-box", { hasText: skill })
@@ -858,6 +863,7 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   const before = await alphaCells.count();
   await page.getByRole("button", { name: "Alpha", exact: true }).click();
   await expect(page.locator("input.editor-name")).toHaveValue("Alpha");
+  await openLibraryGroup(page);
   await page.locator(".skill-box").first().locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
@@ -888,6 +894,7 @@ test("a team member is the team's own: an edit leaves the saved character alone;
   // Rename the copy and give it a skill, then store the team.
   await page.getByRole("button", { name: "Alpha", exact: true }).click();
   await page.locator("input.editor-name").fill("Alpha Prime");
+  await openLibraryGroup(page);
   await page.locator(".skill-box").first().locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(memberNames(page)).toHaveText(["Alpha Prime"]);
@@ -1187,6 +1194,7 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
 
   await chooseProfession(page, "primary", "elementalist");
   await pip(page.locator(".editor-attribute").first(), 1).click();
+  await openLibraryGroup(page);
   await page.locator(".skill-box").first().locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
@@ -1212,6 +1220,7 @@ test("in a match, an empty slot's key does nothing; the next key casts its own s
   await page.locator("input.editor-name").fill("Gap");
   await chooseProfession(page, "primary", "elementalist");
   // Armor of Earth on E, the third slot, with nothing on Q or W.
+  await openLibraryGroup(page, "Earth Magic");
   await page
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .dragTo(page.locator(".skill-slot").nth(2));
@@ -1249,6 +1258,8 @@ test("a second elite replaces the first on the bar, framed in gold, into the mat
   await page.locator("input.editor-name").fill("Elite");
   await chooseProfession(page, "primary", "ranger");
 
+  await openLibraryGroup(page, "Marksmanship");
+  await openLibraryGroup(page, "Wilderness Survival");
   await expect(page.locator(".skill-box.is-elite", { hasText: "Barrage" })).toBeVisible();
   await expect(page.locator(".skill-box.is-elite", { hasText: "Troll Unguent" })).toHaveCount(0);
   await page.locator(".skill-elite-filter input").check();
@@ -1291,6 +1302,8 @@ test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost 
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Glyph");
   await chooseProfession(page, "primary", "elementalist");
+  await openLibraryGroup(page, "Energy Storage");
+  await openLibraryGroup(page, "Earth Magic");
   await page
     .locator(".skill-box", { hasText: "Glyph of Lesser Energy" })
     .dragTo(page.locator(".skill-slot").nth(0));
@@ -1345,6 +1358,7 @@ test("the skill library lists skills grouped by attribute", async ({ page }) => 
   expect(await groups.count()).toBeGreaterThan(1);
 
   // Every box under a heading belongs to that heading's attribute.
+  await openLibraryGroup(page, "Fire Magic");
   await expect(
     page.locator(".skill-group", { hasText: "FIRE MAGIC" }).locator(".skill-box"),
   ).toContainText(["Fireball"]);
@@ -1357,6 +1371,7 @@ test("the skill library lists skills grouped by attribute", async ({ page }) => 
 test("the library filters by name", async ({ page }) => {
   await openElementalist(page);
   const boxes = page.locator(".skill-box");
+  await openLibraryGroup(page);
   const total = await boxes.count();
   expect(total).toBeGreaterThan(1);
 
@@ -1371,9 +1386,87 @@ test("the library filters by name", async ({ page }) => {
   await expect(boxes).toHaveCount(total);
 });
 
+/** The skills tab's header of the group `name`, as the library shows it (#2161). */
+function groupHeader(page: Page, name: string): Locator {
+  return page.locator(".skill-library button.skill-group-header", {
+    has: page.locator(".skill-group-name", { hasText: new RegExp(`^${name}$`) }),
+  });
+}
+
+test("the library's groups start folded with a count, and a header opens one (#2161)", async ({
+  page,
+}) => {
+  await openElementalist(page);
+  const fire = groupHeader(page, "Fire Magic");
+  const count = fire.locator(".skill-group-count");
+  await expect(fire).toHaveAttribute("aria-expanded", "false");
+  await expect(fire.locator(".skill-group-marker")).toHaveText("▸");
+  await expect(count).toHaveText(/· \d+/);
+  // Folded, no card is laid out at all.
+  await expect(page.locator(".skill-library .skill-box")).toHaveCount(0);
+
+  await fire.click();
+  await expect(fire).toHaveAttribute("aria-expanded", "true");
+  await expect(fire.locator(".skill-group-marker")).toHaveText("▾");
+  const boxes = page
+    .locator(".skill-group", {
+      has: page.locator(".skill-group-name", { hasText: /^Fire Magic$/ }),
+    })
+    .locator(".skill-box");
+  await expect(boxes.filter({ hasText: "Fireball" })).toBeVisible();
+  // The count is the group's cards, and only this group opened.
+  const shown = Number(/\d+/.exec((await count.textContent()) ?? "")?.[0]);
+  await expect(boxes).toHaveCount(shown);
+  await expect(page.locator(".skill-library .skill-box")).toHaveCount(shown);
+  await expect(groupHeader(page, "Earth Magic")).toHaveAttribute("aria-expanded", "false");
+
+  // Again folds it.
+  await fire.click();
+  await expect(fire).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator(".skill-library .skill-box")).toHaveCount(0);
+});
+
+test("a search opens the groups it matches in, and clearing it puts back your folds (#2161)", async ({
+  page,
+}) => {
+  await openElementalist(page);
+  await openLibraryGroup(page, "Earth Magic");
+  const search = page.locator("input.skill-search");
+
+  await search.fill("fireb");
+  await expect(page.locator(".skill-box", { hasText: "Fireball" })).toBeVisible();
+  await expect(groupHeader(page, "Fire Magic")).toHaveAttribute("aria-expanded", "true");
+  // Under a filter a group does not fold.
+  await expect(groupHeader(page, "Fire Magic")).toBeDisabled();
+
+  await search.fill("");
+  await expect(groupHeader(page, "Earth Magic")).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator(".skill-box", { hasText: "Armor of Earth" })).toBeVisible();
+  await expect(groupHeader(page, "Fire Magic")).toHaveAttribute("aria-expanded", "false");
+  await expect(groupHeader(page, "Fire Magic")).toBeEnabled();
+  await expect(page.locator(".skill-box", { hasText: "Fireball" })).toHaveCount(0);
+});
+
+test("an opened group is still open after a trip to the gear tab (#2161)", async ({ page }) => {
+  await openElementalist(page);
+  await openLibraryGroup(page, "Fire Magic");
+  const fireball = page.locator('.skill-box[data-skill-id="elementalist.fireball"]');
+  await expect(fireball).toBeVisible();
+
+  await page.locator(".library-tab", { hasText: "gear" }).click();
+  await expect(page.locator(".gear-box").first()).toBeVisible();
+  await expect(fireball).toHaveCount(0);
+
+  await page.locator(".library-tab", { hasText: "skills" }).click();
+  await expect(groupHeader(page, "Fire Magic")).toHaveAttribute("aria-expanded", "true");
+  await expect(fireball).toBeVisible();
+  await expect(groupHeader(page, "Earth Magic")).toHaveAttribute("aria-expanded", "false");
+});
+
 test("hovering a skill shows a tooltip whose numbers follow the attribute", async ({ page }) => {
   await openElementalist(page);
 
+  await openLibraryGroup(page, "Fire Magic");
   const fireball = page.locator(".skill-box", { hasText: "Fireball" });
   await fireball.hover();
   const tip = page.locator(".skill-tip");
@@ -1419,6 +1512,7 @@ test("a skill can be dragged from the library onto a bar slot", async ({ page })
   const slot3 = page.locator(".skill-slot").nth(2);
   await expect(slot3).toContainText("Empty");
 
+  await openLibraryGroup(page, "Fire Magic");
   await page.locator(".skill-box", { hasText: "Fireball" }).dragTo(slot3);
 
   await expect(page.locator(".skill-slot").nth(2)).toContainText("Fireball");
@@ -1427,6 +1521,8 @@ test("a skill can be dragged from the library onto a bar slot", async ({ page })
 test("dragging one slot onto another swaps them instead of losing a skill", async ({ page }) => {
   await openElementalist(page);
 
+  await openLibraryGroup(page, "Fire Magic");
+  await openLibraryGroup(page, "Healing Prayers");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
   await page
     .locator(".skill-box", { hasText: "Orison of Healing" })
@@ -1443,6 +1539,7 @@ test("dragging one slot onto another swaps them instead of losing a skill", asyn
 
 test("a skill can be removed from the bar", async ({ page }) => {
   await openElementalist(page);
+  await openLibraryGroup(page, "Fire Magic");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
   await expect(page.locator(".skill-slot").nth(0)).toContainText("Fireball");
 
@@ -1692,6 +1789,7 @@ test("an attack skill for another weapon is flagged on its slot until the weapon
   // A new character is a warrior with a sword; Swift Chop needs an axe.
   await newCharacter(page);
   const slot = page.locator(".skill-slot").first();
+  await openLibraryGroup(page, "Axe Mastery");
   await page.locator(".skill-box", { hasText: "Swift Chop" }).dragTo(slot);
   await expect(slot).toContainText("Swift Chop");
   const warning = slot.locator(".skill-slot-warning");
@@ -1744,15 +1842,16 @@ test("the library follows your clicks; a piece's popover picks its insignia (#57
   // A hand clicked opens the gear tab, its group at the top.
   await page.locator(".gear-slot").nth(1).click();
   await expect(gearTab).toHaveClass(/is-active/);
-  const library = page.locator(".skill-library");
+  // Not the panel: the open tab's groups are what scroll (#2161).
+  const groups = page.locator(".skill-library .skill-groups");
   const offhands = page.locator('.skill-group[data-group="off-hands"]');
   const top = async (locator: Locator): Promise<number> =>
     (await locator.boundingBox())?.y ?? Number.NaN;
   // Off-hands is the tab's last group: at the top, or the list scrolled as far as it goes.
   await expect
     .poll(async () => {
-      const atTop = (await top(offhands)) - (await top(library)) < 20;
-      const atEnd = await library.evaluate(
+      const atTop = (await top(offhands)) - (await top(groups)) < 20;
+      const atEnd = await groups.evaluate(
         (node) => node.scrollTop + node.clientHeight >= node.scrollHeight - 1,
       );
       return atTop || atEnd;
@@ -1890,12 +1989,15 @@ test("an insignia applied to all five pieces survives a reload (#2059)", async (
 
 /* --- the editor updates in place (#563, ADR-0030) ------------------------- */
 
+/** What scrolls in the library (#2161): the open tab's groups, not the panel. */
+const libraryList = (page: Page): Locator => page.locator(".skill-library .skill-groups");
+
 const libraryScroll = (page: Page): Promise<number> =>
-  page.locator(".skill-library").evaluate((node) => node.scrollTop);
+  libraryList(page).evaluate((node) => node.scrollTop);
 
 /** Scroll the library to `top`, and say where it settled. */
 async function scrollLibrary(page: Page, top: number): Promise<number> {
-  return page.locator(".skill-library").evaluate((node, to) => {
+  return libraryList(page).evaluate((node, to) => {
     node.scrollTop = to;
     return node.scrollTop;
   }, top);
@@ -1907,10 +2009,11 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
   // Short, so even a two-profession library scrolls.
   await page.setViewportSize({ width: 1500, height: 500 });
   await openElementalist(page);
+  await openLibraryGroup(page);
   // Further down than the Monk groups above Fireball, which the reshuffle
   // below removes, are tall, so the library has room to hold Fireball in
   // place. Measured, so a Monk skill added to them does not break it.
-  const removed = await page.locator(".skill-library").evaluate((library) => {
+  const removed = await libraryList(page).evaluate((library) => {
     const fireball = library.querySelector('.skill-box[data-skill-id="elementalist.fireball"]');
     const below = fireball?.getBoundingClientRect().top ?? 0;
     return Array.from(library.querySelectorAll(".skill-group"))
@@ -1925,7 +2028,7 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
   expect(top).toBeGreaterThan(0);
 
   // A box already in view, so the click itself scrolls nothing.
-  const inView = await page.locator(".skill-library").evaluate((library) => {
+  const inView = await libraryList(page).evaluate((library) => {
     const frame = library.getBoundingClientRect();
     const boxes = Array.from(library.querySelectorAll<HTMLElement>(".skill-box"));
     const box = boxes.find((node) => {
@@ -1954,8 +2057,8 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
   expect(Math.abs((await onScreen()) - before)).toBeLessThanOrEqual(1);
   const reshuffled = await libraryScroll(page);
 
-  // Each tab keeps its own place. The tabs scroll with the list, so they
-  // are pressed in place: a real click would first scroll them into view.
+  // Each tab keeps its own place. The tabs are pressed in place, so the
+  // click itself scrolls nothing.
   const tab = (name: string) => page.getByRole("button", { name, exact: true });
   await tab("gear").dispatchEvent("click");
   await expect(page.locator(".gear-box").first()).toBeVisible();
@@ -2097,6 +2200,7 @@ const slotLabel = (slot: number): string => codeLabel(skillKey(slot));
 async function fullBar(page: Page): Promise<void> {
   await newCharacter(page);
   await chooseProfession(page, "secondary", "elementalist");
+  await openLibraryGroup(page);
   for (let slot = 0; slot < 8; slot++) {
     await page
       .locator(".skill-box:not(.is-equipped):not(.is-elite)")
@@ -2120,6 +2224,7 @@ test("the bar's slots carry the keymap's keys, and a library skill says where it
   await expect(slots.nth(0).locator(".skill-slot-index")).toHaveText(slotLabel(0));
   await expect(slots.nth(7).locator(".skill-slot-index")).toHaveText(slotLabel(7));
 
+  await openLibraryGroup(page);
   const first = page.locator(".skill-box").first();
   await expect(first.locator(".skill-box-equip")).toHaveText(`Equip → ${slotLabel(0)}`);
   await first.locator(".skill-box-equip").click();
@@ -2162,6 +2267,7 @@ test("a full bar with no slot picked equips nothing; a picked slot is replaced (
 
 test("a picked slot is let go by a second click or Esc (#564)", async ({ page }) => {
   await newCharacter(page);
+  await openLibraryGroup(page);
   const slot = page.locator(".skill-slot").nth(4);
   await slot.click();
   await expect(slot).toHaveClass(/is-selected/);
@@ -2191,6 +2297,7 @@ test("a skill key over a library skill equips it to that key's slot, but not whi
   page,
 }) => {
   await newCharacter(page);
+  await openLibraryGroup(page);
   const box = page.locator(".skill-box").nth(1);
   const name = (await box.locator(".skill-box-name").textContent()) ?? "";
   await box.hover();
@@ -2230,6 +2337,7 @@ test("a library card opens its details inline with Enter, one at a time, its ran
 }) => {
   await openElementalist(page);
   await pip(page.locator(".editor-attribute", { hasText: "Fire Magic" }), 3).click();
+  await openLibraryGroup(page, "Fire Magic");
   const fireball = page.locator('.skill-box[data-skill-id="elementalist.fireball"]');
   // The number that matters at this rank, on the card itself.
   await expect(fireball.locator(".skill-box-headline")).toHaveText(/^\d+ fire damage$/);
@@ -2247,7 +2355,7 @@ test("a library card opens its details inline with Enter, one at a time, its ran
   await expect(fireball).not.toHaveClass(/is-equipped/);
 
   // Another card closes the first.
-  const other = page.locator('.skill-box[data-skill-id="monk.orison-of-healing"]');
+  const other = page.locator('.skill-box[data-skill-id="elementalist.flare"]');
   await other.locator(".skill-box-card").click();
   await expect(other.locator(".skill-box-details")).toBeVisible();
   await expect(details).toBeHidden();
@@ -2262,6 +2370,7 @@ test("a library card opens its details inline with Enter, one at a time, its ran
 
 test("Tab reaches the bar's slots and the library's cards (#567)", async ({ page }) => {
   await openElementalist(page);
+  await openLibraryGroup(page);
   const slot = page.locator(".skill-slot").first();
   await slot.focus();
   await page.keyboard.press("Enter");
@@ -2271,8 +2380,9 @@ test("Tab reaches the bar's slots and the library's cards (#567)", async ({ page
 
   const firstCard = page.locator(".skill-box-card").first();
   await page.locator(".skill-search").focus();
-  // Past the elite toggle and the type chips, on to the first card. Each new
-  // skill type adds a chip, so the cap follows their count.
+  // Past the elite toggle, the type chips and the first group's header, on
+  // to the first card. Each new skill type adds a chip, so the cap follows
+  // their count.
   const presses = (await page.locator(".skill-type-chip").count()) + 10;
   for (let press = 0; press < presses; press++) {
     if (await firstCard.evaluate((node) => node === document.activeElement)) {
@@ -2288,6 +2398,7 @@ test("type chips filter the library, several at once, and search reads the text 
 }) => {
   await openElementalist(page);
   const names = page.locator(".skill-library .skill-box-name");
+  await openLibraryGroup(page);
   const all = await names.count();
   const hex = page.locator(".skill-type-chip", { hasText: /^hex$/ });
   const enchantment = page.locator(".skill-type-chip", { hasText: /^enchantment$/ });
@@ -2314,6 +2425,8 @@ test("type chips filter the library, several at once, and search reads the text 
 test("the profession grid says what each keeps, and a cell picks it (#568)", async ({ page }) => {
   await openElementalist(page);
   // Fireball (elementalist) and Orison of Healing (monk) on the bar.
+  await openLibraryGroup(page, "Fire Magic");
+  await openLibraryGroup(page, "Healing Prayers");
   for (const name of ["Fireball", "Orison of Healing"]) {
     await page.locator(".skill-box", { hasText: name }).locator(".skill-box-equip").click();
   }
@@ -2340,6 +2453,7 @@ test("a profession change toasts what it removed, and Undo puts it back (#569)",
   page,
 }) => {
   await openElementalist(page);
+  await openLibraryGroup(page, "Healing Prayers");
   await page
     .locator(".skill-box", { hasText: "Orison of Healing" })
     .locator(".skill-box-equip")
@@ -2359,6 +2473,7 @@ test("a profession change toasts what it removed, and Undo puts it back (#569)",
   // Any other edit takes the Undo away.
   await chooseProfession(page, "secondary", "ranger");
   await expect(toast).toBeVisible();
+  await openLibraryGroup(page, "Fire Magic");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
   await expect(toast).toBeHidden();
 });
@@ -2390,6 +2505,7 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   await openElementalist(page);
   const toggle = page.getByLabel("Show skills not in the game yet");
   // Off by default: the library is as it was.
+  await openLibraryGroup(page, "Fire Magic");
   await expect(toggle).not.toBeChecked();
   await expect(page.locator(".skill-corpus-box")).toHaveCount(0);
 

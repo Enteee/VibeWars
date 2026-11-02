@@ -165,6 +165,7 @@ function struck(attacker: Combatant, victim: Combatant): number {
     steady(),
     RULES.combat,
     [],
+    new Map(),
   );
   return before - victim.health;
 }

@@ -442,9 +442,12 @@ describe("the company sidecar", () => {
 
     co.send("manager", "architect", "still here");
 
-    await until(() => co.inbox("architect").length === 1, "the inbox");
-    expect(co.inbox("architect")[0]).toMatchObject({ text: "still here" });
-    fs.chmodSync(path.join(outbox, "evil.json"), 0o700);
+    try {
+      await until(() => co.inbox("architect").length === 1, "the inbox");
+      expect(co.inbox("architect")[0]).toMatchObject({ text: "still here" });
+    } finally {
+      fs.chmodSync(path.join(outbox, "evil.json"), 0o700);
+    }
   }, 20_000);
 
   it("delivers nothing from an outbox it cannot remove from, and keeps serving the others", async () => {
@@ -456,10 +459,15 @@ describe("the company sidecar", () => {
     fs.chmodSync(path.join(co.bus, "manager", "outbox"), 0o500);
     co.start();
     co.send("lead-dev", "architect", "next");
-    await until(() => co.inbox("architect").length >= 1, "the inbox");
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    fs.chmodSync(path.join(co.bus, "manager", "outbox"), 0o700);
-    expect(co.inbox("architect").map((m) => m.text)).toEqual(["next"]);
+    // Asserted while the outbox is still unremovable (#2209): restored
+    // first, a link pass could deliver "stuck" before the check.
+    try {
+      await until(() => co.inbox("architect").length >= 1, "the inbox");
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      expect(co.inbox("architect").map((m) => m.text)).toEqual(["next"]);
+    } finally {
+      fs.chmodSync(path.join(co.bus, "manager", "outbox"), 0o700);
+    }
   }, 20_000);
 
   it("resends a message Telegram refuses for its entities as plain text", async () => {

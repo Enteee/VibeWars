@@ -821,6 +821,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `damage from a single hit is capped at ${String(Math.round(definition.maxDamageFractionPerHit * 100))}% of max health`,
     );
   }
+  // Protective Bond's (#2187): "each hit it caps costs the caster 4 Energy".
+  if (definition.casterEnergyPerReduction !== undefined) {
+    parts.push(
+      `each hit it caps costs the caster ${statText(definition.casterEnergyPerReduction, ranks, whole)} Energy, and it ends when the caster cannot pay`,
+    );
+  }
   if (definition.attackDamageCapFraction !== undefined) {
     parts.push(
       `damage from a single attack is capped at ${String(Math.round(definition.attackDamageCapFraction * 100))}% of max health`,
@@ -930,6 +936,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `each second, ${hitsBearer ? "it and " : ""}${foes} take ${String(damage)}${kind} damage${more}`,
     );
   }
+  // Spotless Mind's (#2187): "every 5 seconds: removes 1 hex".
+  if (definition.pulse !== undefined) {
+    const what = definition.pulse.effects
+      .flatMap((effect) => describeEffects(effect, triggerRanks))
+      .map(({ text }) => lowerFirst(text));
+    parts.push(`every ${String(definition.pulse.everySeconds)} seconds: ${what.join(", ")}`);
+  }
   // Holy Wrath's (#1754): "66% of the damage of the next 8 attacks that
   // hit it goes back to the attacker as holy damage, up to 41".
   if (definition.reflectsAttackDamage !== undefined) {
@@ -943,6 +956,18 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.reversesNextDamage !== undefined) {
     parts.push(
       `the next damage or life steal heals for that much instead, up to ${String(definition.reversesNextDamage)}`,
+    );
+  }
+  // Reversal of Damage's (#2187).
+  if (definition.reflectsNextDamage !== undefined) {
+    parts.push(
+      `the next damage is negated and its source takes that much instead, up to ${statText(definition.reflectsNextDamage.cap, ranks, whole)}`,
+    );
+  }
+  // Mark of Protection's (#2187).
+  if (definition.damageToHealing !== undefined) {
+    parts.push(
+      `all damage heals for that much instead, up to ${statText(definition.damageToHealing.cap, ranks, whole)} a hit`,
     );
   }
   if (definition.negatesFatalDamage) {

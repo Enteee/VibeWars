@@ -154,11 +154,10 @@ describe("conditional weapon mods (#2010)", () => {
       source: "weapon",
       armorPenetration: 0,
     });
-    const unlucky = mitigate(hit("slashing"), lucky, RULES.combat, null, scripted(0.2));
-    expect(mitigate(hit("slashing"), lucky, RULES.combat, null, scripted(0.19))).toBeCloseTo(
-      unlucky - 5,
-      6,
-    );
+    const unlucky = mitigate(hit("slashing"), lucky, RULES.combat, null, scripted(0.2), new Map());
+    expect(
+      mitigate(hit("slashing"), lucky, RULES.combat, null, scripted(0.19), new Map()),
+    ).toBeCloseTo(unlucky - 5, 6);
     let draws = 0;
     const counting = Object.assign(createRng(1), {
       nextFloat: () => {
@@ -166,7 +165,7 @@ describe("conditional weapon mods (#2010)", () => {
         return 0;
       },
     });
-    mitigate(hit("fire"), lucky, RULES.combat, null, counting);
+    mitigate(hit("fire"), lucky, RULES.combat, null, counting, new Map());
     expect(draws).toBe(0);
   });
 

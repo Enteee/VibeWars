@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { key } from "./keys.js";
+import { openLibraryGroup } from "./helpers/library.js";
 import { joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
 import {
   hostLobby,
@@ -59,6 +60,7 @@ test("a maintained enchantment has no bar, its hover says maintained, costs you 
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "monk");
   await page.locator("input.editor-name").fill("Mender");
+  await openLibraryGroup(page, "Healing Prayers");
   // Exactly Mending: Mending Touch is a Monk skill too (#1039).
   await page
     .locator(".skill-box", { has: page.locator(".skill-box-name", { hasText: /^Mending$/ }) })
@@ -98,6 +100,7 @@ test("a spirit's aura shows with no bar, from the spirit, while you stand in its
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
   await page.locator("input.editor-name").fill("Winnower");
+  await openLibraryGroup(page, "Wilderness Survival");
   await page.locator(".skill-box", { hasText: "Winnowing" }).locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await pickCharacter(page, "Winnower");
@@ -124,6 +127,7 @@ test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ p
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "elementalist");
   await page.locator("input.editor-name").fill("Warder");
+  await openLibraryGroup(page, "Earth Magic");
   await page
     .locator(".skill-box", { hasText: "Ward Against Melee" })
     .locator(".skill-box-equip")
