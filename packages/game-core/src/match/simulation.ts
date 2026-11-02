@@ -3878,7 +3878,8 @@ export class MatchSimulation {
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
     if (
       this.#failsSpell(record, skill, targetRecord, cast.key) ||
-      this.#failsTouch(record, skill, targetRecord, cast.key)
+      this.#failsTouch(record, skill, targetRecord, cast.key) ||
+      this.#failsByChance(record, skill, cast.key)
     ) {
       return;
     }
@@ -4315,6 +4316,32 @@ export class MatchSimulation {
       );
     }
     this.#logFired([{ sourceId: failer.sourceId, skillId: fails.skillId, events }]);
+    return true;
+  }
+
+  /**
+   * Whether `record`'s skill fails by its own chance as it finishes
+   * (#2189, `Skill.failChanceUnless`): Withdraw Hexes' below Divine Favor
+   * 5. It is paid for and recharges, as a failed spell. At the rank or
+   * above nothing is rolled.
+   */
+  #failsByChance(record: ParticipantRecord, skill: Skill, key: string): boolean {
+    const fail = skill.failChanceUnless;
+    if (
+      fail === undefined ||
+      rankOf(record.combatant, fail.attributeId) >= fail.rank ||
+      this.#rng.nextFloat() >= fail.chance
+    ) {
+      return false;
+    }
+    beginRecharge(record.combatant.cast, skill, skill.rechargeSeconds, key);
+    this.#logFired([
+      {
+        sourceId: record.id,
+        skillId: skill.id,
+        events: [{ kind: "spell-failed", targetId: record.id, skillId: skill.id }],
+      },
+    ]);
     return true;
   }
 

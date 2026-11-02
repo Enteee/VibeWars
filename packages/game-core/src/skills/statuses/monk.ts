@@ -45,7 +45,10 @@ export type MonkStatusId =
   // Blocks that pay (#1974).
   | "shield-guardian"
   // Enchantment party moves (#1975).
-  | "air-of-enchantment";
+  | "air-of-enchantment"
+  // Monk mechanics (#2189).
+  | "spell-shield"
+  | "convert-hexes";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -500,5 +503,27 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
   "air-of-enchantment": define("air-of-enchantment", "Air of Enchantment", "enchantment", {
     profession: "monk",
     enchantmentsOnBearerCostLess: 10,
+  }),
+  // "For 5...20 seconds, while you are casting spells, foes cannot target
+  // you with spells. When Spell Shield ends, all your skills are disabled
+  // for 8...4 seconds" (#2189): 5, its rank-12 value.
+  "spell-shield": define("spell-shield", "Spell Shield", "enchantment", {
+    profession: "monk",
+    untargetableByFoeSpells: true,
+    whileCasting: true,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "disable-own-skills", which: "all", seconds: { flat: 5 } }],
+        target: "bearer",
+        skillId: "monk.spell-shield",
+      },
+    ],
+  }),
+  // "That ally gains +10 armor for each Necromancer hex that was removed"
+  // (#2189): one stack a hex.
+  "convert-hexes": define("convert-hexes", "Convert Hexes", "skill-effect", {
+    profession: "monk",
+    armorModifier: 10,
   }),
 };

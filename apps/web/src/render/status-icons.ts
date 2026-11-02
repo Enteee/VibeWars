@@ -488,6 +488,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mark-of-instability": icon("mark-of-instability"),
   "deadly-paradox": icon("deadly-paradox"),
   "unseen-fury": icon("unseen-fury"),
+  // Monk and Ranger mechanics (#2189).
+  "spell-shield": icon("spell-shield"),
+  "convert-hexes": icon("convert-hexes"),
+  "melandrus-resilience": icon("melandrus-resilience"),
+  "expert-focus": icon("expert-focus"),
+  "rapid-fire": icon("rapid-fire"),
 };
 
 const GAP = 2;

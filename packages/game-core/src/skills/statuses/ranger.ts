@@ -81,7 +81,11 @@ export type RangerStatusId =
   // Ranger staples 5 (#2133).
   | "disrupting-accuracy"
   | "marksmans-wager"
-  | "storm-chaser";
+  | "storm-chaser"
+  // Ranger mechanics (#2189).
+  | "melandrus-resilience"
+  | "expert-focus"
+  | "rapid-fire";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -686,5 +690,34 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
         skillId: "ranger.storm-chaser",
       },
     ],
+  }),
+  // "You gain +4 Health regeneration and +1 Energy regeneration for each
+  // condition and hex you are suffering" (#2189).
+  "melandrus-resilience": define("melandrus-resilience", "Melandru's Resilience", "stance", {
+    profession: "ranger",
+    healthPipsPerCondition: 4,
+    healthPipsPerHex: 4,
+    energyPipsPerCondition: 1,
+    energyPipsPerHex: 1,
+  }),
+  // "Your bow attack skills cost 1...2 less Energy and deal 1...10 extra
+  // damage" (#2189): 2 and 8, the rank-12 values, the damage an arrow's
+  // own type, and the cost never below 0.
+  "expert-focus": define("expert-focus", "Expert Focus", "preparation", {
+    profession: "ranger",
+    ownSkillModifiers: [ownSkills({ weapon: "bow" }, { energyDiscount: 2, energyFloor: 0 })],
+    onAttackHit: {
+      attackSkillsOnly: true,
+      weapon: "bow",
+      weaponDamage: undefined,
+      effects: [{ kind: "damage", amount: { flat: 8 }, type: "piercing", armorPenetration: 0 }],
+      skillId: "ranger.expert-focus",
+    },
+  }),
+  // "You attack 33% faster while wielding a bow" (#2189).
+  "rapid-fire": define("rapid-fire", "Rapid Fire", "preparation", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.67,
+    attackDurationMultiplierWeapon: "bow",
   }),
 };

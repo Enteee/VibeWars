@@ -11,6 +11,7 @@ import {
 import type { Vec2 } from "../vec2.js";
 
 import { canAffordAdrenaline, spendAdrenaline } from "./adrenaline.js";
+import { isCastingSpell } from "./attacking.js";
 import { resolvedBar } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { addOvercast } from "./overcast.js";
@@ -359,12 +360,13 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   if (!targetCheck.ok) {
     return targetCheck;
   }
-  // Spell Breaker's bearer (#1511): refused before a walk toward it starts.
+  // Spell Breaker's bearer (#1511), or Spell Shield's casting one (#2189):
+  // refused before a walk toward it starts.
   if (
     isSpell(skill.type) &&
     request.target !== undefined &&
     request.target.team !== caster.team &&
-    untargetableByFoeSpells(request.target.statuses.active)
+    untargetableByFoeSpells(request.target.statuses.active, isCastingSpell(request.target))
   ) {
     return reject("invalid-target-untargetable");
   }

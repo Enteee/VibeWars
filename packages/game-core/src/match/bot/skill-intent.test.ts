@@ -282,6 +282,11 @@ const NO_BOT_USE = new Set([
   "ranger.famine",
   "ranger.lacerate",
   "ranger.quicksand",
+  // Pips for each condition and hex on the bearer (#2189): worth most when
+  // it suffers, which no rule the bot has weighs.
+  // Untargetable only while casting, then every skill disabled (#2189).
+  "monk.spell-shield",
+  "ranger.melandrus-resilience",
 ]);
 
 function skill(id: string) {
