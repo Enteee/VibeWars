@@ -19,7 +19,7 @@ import {
 import { professionLabel } from "./character-preview.js";
 import { button, h, screenBar } from "./kit.js";
 import { HOST_SETS_TEAM_SIZE, teamSizeSelect, type TeamSize } from "./rail.js";
-import { validateTeam } from "./team-builder.js";
+import { isTeamComplete, memberCount, validateTeam } from "./team-builder.js";
 
 /**
  * The Team Lobby screen (#1460, #1449 variant B, the card table): while
@@ -54,10 +54,6 @@ export const NO_PLAYABLE_TEAM_BUILDS =
 /** None of your Team Builds is the side's size (#2104). */
 export function noTeamBuildOf(size: number): string {
   return `No ${String(size)}-player Team Builds — make one in the Team Builder.`;
-}
-/** A builds drawer row's size: "1 member", "4 members" (#2116). */
-export function memberCount(n: number): string {
-  return `${String(n)} ${n === 1 ? "member" : "members"}`;
 }
 /** The builds drawer's search found nothing (#2116). */
 export function noTeamBuildNamed(query: string): string {
@@ -119,13 +115,19 @@ export function initial(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "?";
 }
 
+/** Whether `team` is playable at its size: every slot filled (#2109) and no problems (#2110). */
+function isPlayable(team: StoredTeam): boolean {
+  return isTeamComplete(team) && validateTeam(team).length === 0;
+}
+
 /**
- * `teams` a side of `size` can propose: exactly `size` members (#2104),
- * and no problems (#2110): a team with problems saves, but is not
- * playable. The rest are left out, never shown greyed.
+ * `teams` a side of `size` can propose: Team Builds of that size
+ * (#2104, #2109), complete, and with no problems (#2110): a team with
+ * problems or an empty slot saves, but is not playable. The rest are
+ * left out, never shown greyed.
  */
 export function proposableTeams(teams: readonly StoredTeam[], size: number): readonly StoredTeam[] {
-  return teams.filter((team) => team.members.length === size && validateTeam(team).length === 0);
+  return teams.filter((team) => team.size === size && isPlayable(team));
 }
 
 /** The builds drawer's rows (#2116): `teams` a side of `size` can propose, named like `query`. */
@@ -137,16 +139,15 @@ export interface DrawerRows {
 
 /**
  * The builds drawer's rows (#2116): the proposable `teams` of `size`
- * whose names hold `query`, any case. A Team Build with problems is
- * neither a row nor counted as hidden: it is not playable (#2110).
+ * whose names hold `query`, any case. A Team Build with problems or an
+ * empty slot is neither a row nor counted as hidden: it is not playable
+ * (#2110, #2109).
  */
 export function drawerRows(teams: readonly StoredTeam[], size: number, query: string): DrawerRows {
   const needle = query.trim().toLowerCase();
   return {
     rows: proposableTeams(teams, size).filter((team) => team.name.toLowerCase().includes(needle)),
-    hiddenOtherSizes: teams.filter(
-      (team) => team.members.length !== size && validateTeam(team).length === 0,
-    ).length,
+    hiddenOtherSizes: teams.filter((team) => team.size !== size && isPlayable(team)).length,
   };
 }
 

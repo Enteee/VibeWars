@@ -2364,6 +2364,12 @@ body {
   text-transform: uppercase;
 }
 
+/* A Team Build card's filled slots of its size, "3/4" (#2109). */
+.play-card-size {
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
 .screen .play-card.is-random .play-card-open {
   border-style: dashed;
 }
@@ -2925,7 +2931,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* The sidebar's Team size, in the bar of a screen with no sidebar (#2104). */
+/* The sidebar's Team size, in the bar of a screen with no sidebar: the Team Lobby (#2104), the team editor (#2109). */
 .team-lobby-size {
   display: flex;
   align-items: center;

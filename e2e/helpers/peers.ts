@@ -57,8 +57,8 @@ export async function copyInvite(page: Page): Promise<string> {
 }
 
 /**
- * The host's Hosted Game plays `size` a side (#2104), picked with the
- * sidebar's Team size: a side proposes a Team Build of exactly that many.
+ * The sidebar's Team size, `size`: a Hosted Game host's plays that many a
+ * side (#2104), and Team Builder lists and makes Team Builds of it (#2109).
  */
 export async function setTeamSize(page: Page, size: 1 | 2 | 4 | 8): Promise<void> {
   const select = page.getByRole("combobox", { name: "Team size" });
@@ -93,15 +93,17 @@ export async function hostLobby(
  * side of one can propose it in the Team Lobby and play it (#1525): every
  * hosted lobby is a Team Lobby, and a spec plays the character it
  * brought. `size` copies of it make a side of that many with no bot
- * (#2029), in a lobby of that team size (#2104). Ends on Team Builder;
+ * (#2029), in a lobby of that team size (#2104): a Team Build of that
+ * size (#2109), picked in the sidebar first. Ends on Team Builder;
  * returns the Team Build's name.
  */
-export async function saveSoloTeam(page: Page, size = 1): Promise<string> {
+export async function saveSoloTeam(page: Page, size: 1 | 2 | 4 | 8 = 1): Promise<string> {
   await openRail(page, "Random Arena");
   const picked = page.locator('.play-card-open[aria-pressed="true"] .play-card-name');
   const name = (await picked.textContent())?.trim() ?? "";
   expect(name, "a character is picked").not.toBe("");
   await openRail(page, "Team Builder");
+  await setTeamSize(page, size);
   await page.getByRole("button", { name: "New team build", exact: true }).click();
   const teamName = size === 1 ? `Solo ${name}` : `${String(size)} × ${name}`;
   await page.getByLabel("team name").fill(teamName);
