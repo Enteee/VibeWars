@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { AREA_ADJACENT } from "../distances.js";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { getSkill } from "./catalog.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
@@ -88,6 +89,7 @@ describe("status definitions", () => {
         def.attackDurationMultiplier !== 1 ||
         def.projectileSpeedMultiplier !== 1 ||
         def.block !== undefined ||
+        def.projectsAura !== undefined ||
         def.maxDamageFractionPerHit !== undefined ||
         def.attackDamageCapFraction !== undefined ||
         def.lifeStealReduction !== 0 ||
@@ -139,6 +141,8 @@ describe("status definitions", () => {
         def.minionHitHealthLossPercent !== 0 ||
         def.redirectsConditionsToMinion ||
         def.physicalDamageDealtAs !== undefined ||
+        def.moveSpeedWhileEnchanted !== 1 ||
+        def.incomingAllySpellCastTimeMultiplier !== 1 ||
         def.interruptGuard !== undefined ||
         def.damageTypeTakenMultiplier !== undefined ||
         def.bindsCreatures;
@@ -739,6 +743,28 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.apply("stand-your-ground", 10, "p", NO_RANKS);
     expect([...set.endOnBearerAttack("melee")].sort()).toEqual(["escape", "stand-your-ground"]);
     expect(set.active).toEqual([]);
+  });
+
+  it("ends Protector's Defense when its bearer moves, and nothing else (#2096)", () => {
+    const set = new StatusSet();
+    set.apply("protectors-defense", 7, "p", NO_RANKS);
+    set.apply("stand-your-ground", 10, "p", NO_RANKS);
+    expect(set.endOnBearerMove()).toEqual(["protectors-defense"]);
+    expect(set.has("stand-your-ground")).toBe(true);
+    expect(set.endOnBearerMove()).toEqual([]);
+  });
+
+  it("has Protector's Defense project its block to adjacent allies, not its bearer (#2096)", () => {
+    expect(getStatusDefinition("protectors-defense").projectsAura).toEqual({
+      statusId: "protectors-defense-block",
+      affects: "allies",
+      radius: AREA_ADJACENT,
+      excludesSource: true,
+    });
+    expect(getStatusDefinition("protectors-defense-block").block).toEqual({
+      chance: 0.75,
+      against: "all",
+    });
   });
 
   it("ends every status on a death, each recorded with its source, in order (#940)", () => {
