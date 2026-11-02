@@ -83,13 +83,10 @@ describe("rollStarterTeam", () => {
     expect(key.value).toBeUndefined();
   });
 
-  it("rolls a team of the size picked, and none, key unset, when there is none of it (#2109)", async () => {
+  it("rolls a team of the size picked (#2109)", async () => {
     const teams = new TeamRepository(createMemoryStore());
     const key = memoryKey();
     const options = { teams, key, random: () => 0, newId: counter(), now: 5 };
-
-    expect(await rollStarterTeam({ ...options, size: 1, id: "t" })).toBeUndefined();
-    expect(key.value).toBeUndefined();
 
     const eight = await rollStarterTeam({ ...options, size: 8, id: "u" });
     expect(eight?.size).toBe(8);

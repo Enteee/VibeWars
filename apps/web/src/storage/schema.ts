@@ -45,15 +45,21 @@ export interface StoredTeamMember {
   readonly character: TeamCharacter;
 }
 
-/** A Team Build's size (#2109): the players a side it plays, as the team size dropdown offers it. */
+/** A size the sidebar's Team size offers (#2022): the players a side a mode plays. */
 export type TeamSize = LobbyTeamSize;
+
+/** A Team Build's size (#2109): the players a side it plays; never 1v1 (#2141). */
+export type TeamBuildSize = 2 | 4 | 8;
+
+/** Every Team Build size, smallest first. */
+export const TEAM_BUILD_SIZES: readonly TeamBuildSize[] = [2, 4, 8];
 
 export interface StoredTeam {
   readonly schemaVersion: number;
   readonly id: string;
   readonly name: string;
   /** Fixed when the build is made (#2109); `members` never exceeds it. */
-  readonly size: TeamSize;
+  readonly size: TeamBuildSize;
   readonly members: readonly StoredTeamMember[];
   readonly rulesetId: string;
   readonly updatedAt: number;
@@ -109,6 +115,10 @@ export function isTeamSize(value: unknown): value is TeamSize {
   return LOBBY_TEAM_SIZES.some((size) => size === value);
 }
 
+export function isTeamBuildSize(value: unknown): value is TeamBuildSize {
+  return TEAM_BUILD_SIZES.some((size) => size === value);
+}
+
 export function isStoredTeam(value: unknown): value is StoredTeam {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -118,7 +128,7 @@ export function isStoredTeam(value: unknown): value is StoredTeam {
     record.schemaVersion === TEAM_SCHEMA_VERSION &&
     typeof record.id === "string" &&
     typeof record.name === "string" &&
-    isTeamSize(record.size) &&
+    isTeamBuildSize(record.size) &&
     Array.isArray(record.members) &&
     (record.members as readonly unknown[]).every(isStoredTeamMember) &&
     record.members.length <= record.size &&

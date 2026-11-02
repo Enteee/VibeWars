@@ -6,7 +6,7 @@ import {
   TEAM_SCHEMA_VERSION,
   type StoredTeam,
   type TeamCharacter,
-  type TeamSize,
+  type TeamBuildSize,
 } from "../storage/schema.js";
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
@@ -35,7 +35,7 @@ vi.mock("./character-figure.js", async (original) => ({
   },
 }));
 
-function team(id: string, size: TeamSize = 4): StoredTeam {
+function team(id: string, size: TeamBuildSize = 4): StoredTeam {
   return {
     schemaVersion: TEAM_SCHEMA_VERSION,
     id,
@@ -148,6 +148,10 @@ class FakeElement {
   /** Every element under this one, in document order. */
   everything(): FakeElement[] {
     return this.children.flatMap((child) => [child, ...child.everything()]);
+  }
+
+  focus(): void {
+    // Nothing to show it on.
   }
 
   click(): void {
@@ -285,12 +289,8 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     expect(root.all("play-card-name").map((name) => name.textContent)).toEqual(["Team a"]);
     expect(root.all("play-card-size").map((tag) => tag.textContent)).toEqual(["1/4"]);
 
-    const [select] = root.all("mode-rail-size-select");
-    if (select === undefined) {
-      throw new Error("no team size dropdown");
-    }
-    select.value = "2";
-    select.listeners.get("change")?.();
+    // The sidebar's ‹: one size smaller.
+    root.all("mode-rail-step")[0]?.click();
     expect(root.all("play-card-name").map((name) => name.textContent)).toEqual(["Team b"]);
     expect(root.all("play-card-size").map((tag) => tag.textContent)).toEqual(["0/2"]);
     expect(root.all("play-card-new")).toHaveLength(1);
@@ -365,12 +365,8 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     expect(root.all("play-card-name").map((name) => name.textContent)).toEqual(["Team s4"]);
     expect(root.all("roster-random-tag")).toHaveLength(1);
 
-    const [select] = root.all("mode-rail-size-select");
-    if (select === undefined) {
-      throw new Error("no team size dropdown");
-    }
-    select.value = "2";
-    select.listeners.get("change")?.();
+    // The sidebar's ‹: one size smaller.
+    root.all("mode-rail-step")[0]?.click();
     expect(root.all("play-card-name").map((name) => name.textContent)).toEqual([
       "Team a",
       "Team s2",

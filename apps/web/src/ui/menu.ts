@@ -9,15 +9,7 @@ import { equippedCount, professionLabel } from "./character-preview.js";
 import { button, emptyState, h, playCard, readyButton, screenBar } from "./kit.js";
 import { loadPlayerName, playerGuild } from "./player-section.js";
 import { isAlone } from "./party-strip.js";
-import {
-  loadTeamSize,
-  onTeamSizeChange,
-  railParty,
-  railScreen,
-  teamSizeProblem,
-  type RailEntry,
-  type TeamSize,
-} from "./rail.js";
+import { loadTeamSize, railParty, railScreen, type RailEntry, type TeamSize } from "./rail.js";
 
 /**
  * The menu's character screens (brief §21, #1525): Random Arena, where
@@ -207,22 +199,18 @@ function wornCape(): ReturnType<typeof capeLook> | undefined {
 }
 
 /**
- * Why Random Arena's Ready cannot queue at `size` (#2022), or `undefined`
- * when it can: a character to show strangers, alone (#1526), at a size
- * Random Arena plays.
+ * Why Random Arena's Ready cannot queue (#2022), or `undefined` when it
+ * can: a character to show strangers, alone (#1526). Its size is always
+ * one it plays (#2141).
  */
-export function randomArenaProblem(
-  size: TeamSize,
-  hasCharacter: boolean,
-  alone: boolean,
-): string | undefined {
+export function randomArenaProblem(hasCharacter: boolean, alone: boolean): string | undefined {
   if (!hasCharacter) {
     return NO_CHARACTER_FOR_QUEUE;
   }
   if (!alone) {
     return PARTY_CANNOT_QUEUE;
   }
-  return teamSizeProblem("random-arena", size);
+  return undefined;
 }
 
 /**
@@ -240,7 +228,7 @@ export function renderRandomArena(
   // No way back from here, so Esc has nothing to do but cancel (#578).
   // Options is the top bar's ⚙ (#1272), Music its ♪ (#1453).
   const ready = readyButton(false, () => {
-    const queue = RANDOM_ARENA_MODES.find(({ size }) => size === loadTeamSize());
+    const queue = RANDOM_ARENA_MODES.find(({ size }) => size === loadTeamSize("random-arena"));
     if (queue !== undefined) {
       callbacks.onRandomArena(queue.mode, loadPlayerName());
     }
@@ -302,16 +290,11 @@ export function renderRandomArena(
   const alone = isAlone(railParty());
   const hint = h("p", "random-arena-hint");
   body.appendChild(hint);
-  /** Ready, and the hint under the cards, as `size` leaves them. */
-  const showProblem = (size: TeamSize): void => {
-    const problem = randomArenaProblem(size, activeExists, alone);
-    ready.disabled = problem !== undefined;
-    ready.title = problem ?? "";
-    hint.textContent = problem ?? "";
-    hint.hidden = problem === undefined;
-  };
-  showProblem(loadTeamSize());
-  onTeamSizeChange(showProblem);
+  const problem = randomArenaProblem(activeExists, alone);
+  ready.disabled = problem !== undefined;
+  ready.title = problem ?? "";
+  hint.textContent = problem ?? "";
+  hint.hidden = problem === undefined;
 }
 
 /**

@@ -64,6 +64,7 @@ import { cloneCharacter } from "./storage/clone-character.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   type StoredCharacter,
+  TEAM_BUILD_SIZES,
   type StoredTeam,
   type TeamCharacter,
 } from "./storage/schema.js";
@@ -123,9 +124,9 @@ import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
 import { isAlone, lookingLabel, partyOf } from "./ui/party-strip.js";
 import {
-  DEFAULT_TEAM_SIZE,
   isModeEntry,
   loadRail,
+  loadTeamBuildSize,
   loadTeamSize,
   saveTeamSize,
   onTeamSizeChange,
@@ -133,7 +134,6 @@ import {
   redrawModeRail,
   redrawsOnLobbyChange,
   setRailParty,
-  TEAM_SIZES,
   type RailEntry,
 } from "./ui/rail.js";
 import {
@@ -162,7 +162,6 @@ import {
 import { toPlayerBuild } from "./storage/build-validation.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import {
-  isTeamArenaSize,
   teamQueueModeOf,
   teamSizeOf,
   type LobbyMode,
@@ -263,6 +262,8 @@ const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
 interface TeamPicks {
   teams: readonly StoredTeam[];
   proposed: string | undefined;
+  /** At 1v1 (#2141), the active character's build this side was proposed. */
+  solo: PlayerBuild | undefined;
 }
 
 /** What a player takes into a lobby, read once when they enter it (#1070). */
@@ -346,7 +347,7 @@ async function main(): Promise<void> {
     }
     // And a curated Team Build of every size that has one, each on its
     // own key (#2036, #2147).
-    for (const size of TEAM_SIZES) {
+    for (const size of TEAM_BUILD_SIZES) {
       await rollStarterTeam({
         teams,
         key: {
@@ -787,13 +788,10 @@ async function main(): Promise<void> {
     const snapshot = queue === undefined ? lobby?.getSnapshot() : undefined;
     if (isModeEntry(entry) && snapshot?.isHost === true && snapshot.mode !== entry) {
       lobby?.selectMode(entry);
-      // A Hosted Game starts at the host's sidebar team size (#2104), a
-      // Team Arena at it too, or 4v4 from 1v1 (#2107).
-      const size = loadTeamSize();
-      if (entry === "hosted-game") {
-        lobby?.selectTeamSize(size);
-      } else if (entry === "team-arena") {
-        lobby?.selectTeamSize(isTeamArenaSize(size) ? size : DEFAULT_TEAM_SIZE);
+      // A Hosted Game or a Team Arena starts at the size its host last
+      // picked in it (#2104, #2107, #2141).
+      if (entry === "hosted-game" || entry === "team-arena") {
+        lobby?.selectTeamSize(loadTeamSize(entry));
       }
     }
     showMenu();
@@ -920,7 +918,7 @@ async function main(): Promise<void> {
       const entrant = await readEntrant();
       let own: HostedLobby;
       try {
-        own = await hostLobby(name, entrant.guild, true, loadTeamSize());
+        own = await hostLobby(name, entrant.guild, true, loadTeamSize("hosted-game"));
       } catch (error) {
         opening = false;
         console.warn("[web] could not open a lobby", error);
@@ -1180,7 +1178,7 @@ async function main(): Promise<void> {
       // A new team is stored only once it is saved (#573).
       onNewTeam: () => {
         showTeamEditor(
-          openedTeam(newTeam(crypto.randomUUID(), loadTeamSize()), false),
+          openedTeam(newTeam(crypto.randomUUID(), loadTeamBuildSize()), false),
           characterList.characters,
         );
       },
@@ -1318,7 +1316,7 @@ async function main(): Promise<void> {
     editor = undefined;
     teamEditor?.dispose();
     // The sidebar comes back at the build's size, to its list (#2109).
-    saveTeamSize(state.team.size);
+    saveTeamSize("teams", state.team.size);
     teamEditor = mountTeamEditor(screenRoot, state, available, {
       onSave: (saved) => teams.save(saved),
       onDuplicate: (source) => {
@@ -1896,6 +1894,10 @@ async function main(): Promise<void> {
       return;
     }
     lobbyEntrant = entrant;
+    // A 1v1's Team Lobby proposes the one picked now (#2141).
+    if (current.getSnapshot().phase === "team-lobby") {
+      lobbyChanged();
+    }
   };
 
   /** Propose the saved Team Build `teamId` in the Team Lobby, or withdraw with `undefined`. */
@@ -1912,13 +1914,39 @@ async function main(): Promise<void> {
   };
 
   /**
+   * At 1v1 (#2141) there are no Team Builds: a player on a side proposes
+   * its active character in the vote, and again once that changes. A
+   * size change away from 1v1 withdrew it (#2104).
+   */
+  const proposeSolo = (
+    joined: LobbyConnection,
+    snapshot: LobbySnapshot,
+    picks: TeamPicks,
+  ): void => {
+    const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
+    const onSide = self !== undefined && self.team !== null;
+    const solo =
+      snapshot.teamSize === 1 && snapshot.teamLobby?.stage === "vote" && onSide
+        ? lobbyEntrant?.build
+        : undefined;
+    if (solo === undefined) {
+      picks.solo = undefined;
+      return;
+    }
+    if (JSON.stringify(solo) !== JSON.stringify(picks.solo)) {
+      picks.solo = solo;
+      joined.propose([solo]);
+    }
+  };
+
+  /**
    * The Team Lobby screen (#1460). As it begins, the saved Team Builds
    * are read once, for its propose control; entering proposes nothing
    * (#1515).
    */
   const renderTeamLobby = (joined: LobbyConnection, snapshot: LobbySnapshot): void => {
     if (teamPicks === undefined) {
-      const picks: TeamPicks = { teams: [], proposed: undefined };
+      const picks: TeamPicks = { teams: [], proposed: undefined, solo: undefined };
       teamPicks = picks;
       void teams.list().then(({ teams: saved }) => {
         if (teamPicks !== picks || lobby !== joined) {
@@ -1933,6 +1961,7 @@ async function main(): Promise<void> {
     if (proposed !== undefined && proposed.members.length !== snapshot.teamSize) {
       teamPicks.proposed = undefined;
     }
+    proposeSolo(joined, snapshot, teamPicks);
     renderTeamLobbyScreen(
       screenRoot,
       snapshot,
@@ -1945,9 +1974,6 @@ async function main(): Promise<void> {
         onPropose: proposeTeam,
         onClaim: (slot) => {
           lobby?.claim(slot);
-        },
-        onSelectTeamSize: (size) => {
-          lobby?.selectTeamSize(size);
         },
         onToggleReady: () => {
           const self = lobby

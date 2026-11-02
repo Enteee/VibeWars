@@ -149,6 +149,7 @@ class FakeElement {
   };
 
   readonly querySelector = (): null => null;
+  readonly focus = (): void => undefined;
 
   appendChild(child: FakeElement): FakeElement {
     this.children.push(child);
@@ -271,41 +272,31 @@ describe("the character screens (#1525)", () => {
     ready().click();
     expect(queued).toEqual(["random-arena-4v4 Rurik"]);
 
-    stored.set(`${STORAGE_NAMESPACE}.teamSize`, "2");
+    stored.set(`${STORAGE_NAMESPACE}.teamSizeByEntry`, JSON.stringify({ "random-arena": 2 }));
     shown(renderRandomArena);
     ready().click();
     expect(queued).toEqual(["random-arena-4v4 Rurik", "random-arena-2v2 Rurik"]);
   });
 
-  it("Random Arena's Ready follows the sidebar: disabled at 8v8, with the reason (#2022)", () => {
+  it("Random Arena's Ready queues at the size the sidebar steps to (#2141)", () => {
     stored.set(`${STORAGE_NAMESPACE}.activeCharacterId`, "mine");
     const nodes = shown(renderRandomArena);
-    const select = nodes.find((node) => node.tagName === "select");
-    if (select === undefined) {
-      throw new Error("no team size dropdown");
+    const smaller = nodes.find((node) => node.attributes.get("aria-label") === "Smaller team");
+    if (smaller === undefined) {
+      throw new Error("no team size stepper");
     }
-    select.value = "8";
-    select.listeners.get("change")?.();
-    expect(stored.get(`${STORAGE_NAMESPACE}.teamSize`)).toBe("8");
-    expect(ready().disabled).toBe(true);
-    expect(ready().title).toBe("8v8 is not in Random Arena");
-    const hint = nodes.find((node) => node.className === "random-arena-hint");
-    expect(hint?.hidden).toBe(false);
-    expect(hint?.textContent).toBe("8v8 is not in Random Arena");
-
-    select.value = "1";
-    select.listeners.get("change")?.();
+    smaller.listeners.get("click")?.();
+    smaller.listeners.get("click")?.();
+    expect(smaller.disabled).toBe(true);
     expect(ready().disabled).toBe(false);
-    expect(hint?.hidden).toBe(true);
     ready().click();
     expect(queued).toEqual(["random-arena-1v1 Rurik"]);
   });
 
-  it("says why Random Arena cannot queue: no character, then a party, then the size (#2022)", () => {
-    expect(randomArenaProblem(8, false, false)).toBe(NO_CHARACTER_FOR_QUEUE);
-    expect(randomArenaProblem(8, true, false)).toBe(PARTY_CANNOT_QUEUE);
-    expect(randomArenaProblem(8, true, true)).toBe("8v8 is not in Random Arena");
-    expect(randomArenaProblem(2, true, true)).toBeUndefined();
+  it("says why Random Arena cannot queue: no character, then a party (#2022)", () => {
+    expect(randomArenaProblem(false, false)).toBe(NO_CHARACTER_FOR_QUEUE);
+    expect(randomArenaProblem(true, false)).toBe(PARTY_CANNOT_QUEUE);
+    expect(randomArenaProblem(true, true)).toBeUndefined();
   });
 
   it("Random Arena with no characters points to Character Builder", () => {

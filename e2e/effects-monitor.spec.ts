@@ -1,21 +1,37 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { key } from "./keys.js";
 import { openLibraryGroup } from "./helpers/library.js";
 import { joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
-import {
-  hostLobby,
-  playOwnTeams,
-  saveSoloTeam,
-  setTeamSize,
-  startSoloMatch,
-} from "./helpers/peers.js";
+import { hostLobby, playOwnTeams, startSoloMatch } from "./helpers/peers.js";
 import { chooseProfession } from "./helpers/professions.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 
 /** A starter build (#852) whose Armor of Earth puts Armor Boost on yourself (#302). */
 const ARMORED = "Elementalist/Mesmer";
 const ARMOR_OF_EARTH = starterKey(ARMORED, "elementalist.armor-of-earth");
+
+type Text = string | RegExp;
+
+/**
+ * Hover `icon` until one tooltip says every one of `says` and none of
+ * `omits`. A solo match's foe is a random starter build (#2148): a hex it
+ * lands mid-hover reflows the list and the pointer ends on another icon, so
+ * every check on the text sits inside the retry.
+ */
+async function hoverEffect(
+  page: Page,
+  icon: Locator,
+  says: readonly Text[],
+  omits: readonly Text[] = [],
+): Promise<void> {
+  const tip = page.getByRole("tooltip");
+  await expect(async () => {
+    await icon.hover();
+    for (const text of says) await expect(tip).toContainText(text, { timeout: 1000 });
+    for (const text of omits) await expect(tip).not.toContainText(text, { timeout: 1000 });
+  }).toPass();
+}
 
 /**
  * The effects monitor (#834): your statuses as icons under your bars,
@@ -44,12 +60,7 @@ test("your enchantment shows as an icon, marked yours, its bar draining; the hov
   expect(first).toBeGreaterThan(0);
   await expect.poll(width).toBeLessThan(first);
 
-  await icon.hover();
-  const tip = page.getByRole("tooltip");
-  await expect(tip).toContainText("Armor Boost");
-  await expect(tip).toContainText("Enchantment");
-  await expect(tip).toContainText("from you");
-  await expect(tip).toContainText(/\d+ s left/);
+  await hoverEffect(page, icon, ["Armor Boost", "Enchantment", "from you", /\d+ s left/]);
 });
 
 test("a maintained enchantment has no bar, its hover says maintained, costs you an energy pip, and a double-click ends it (#837, #838)", async ({
@@ -80,11 +91,7 @@ test("a maintained enchantment has no bar, its hover says maintained, costs you 
   await expect(icon.locator(".effect-bar")).toBeHidden();
   await expect(energyPips).toHaveAttribute("data-pips", "3");
 
-  await icon.hover();
-  const tip = page.getByRole("tooltip");
-  await expect(tip).toContainText("Mending");
-  await expect(tip).toContainText("maintained, −1 energy");
-  await expect(tip).not.toContainText(/s left/);
+  await hoverEffect(page, icon, ["Mending", "maintained, −1 energy"], [/s left/]);
 
   // A double-click ends it, and the pip comes back (#838).
   await icon.dblclick();
@@ -113,12 +120,12 @@ test("a spirit's aura shows with no bar, from the spirit, while you stand in its
   await expect(icon).toBeVisible({ timeout: 10_000 });
   await expect(icon.locator(".effect-bar")).toBeHidden();
 
-  await icon.hover();
-  const tip = page.getByRole("tooltip");
-  await expect(tip).toContainText("take +4 from physical damage");
-  await expect(tip).toContainText("from Winnowing");
-  await expect(tip).toContainText("while in its range");
-  await expect(tip).not.toContainText("maintained");
+  await hoverEffect(
+    page,
+    icon,
+    ["take +4 from physical damage", "from Winnowing", "while in its range"],
+    ["maintained"],
+  );
 });
 
 test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ page }) => {
@@ -153,10 +160,7 @@ test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ p
   // Hover first, while the ward still stands: each check on the loaded
   // match page can take seconds (#1659). The tooltip stays open for the
   // bar check after it.
-  await icon.hover();
-  const tip = page.getByRole("tooltip");
-  await expect(tip).toContainText("50% chance to block melee attacks");
-  await expect(tip).toContainText("while in its range");
+  await hoverEffect(page, icon, ["50% chance to block melee attacks", "while in its range"]);
   await expect(icon.locator(".effect-bar")).toBeHidden();
 });
 
@@ -167,11 +171,8 @@ test("the target frame shows a foe's enchantment, at 16 px and not marked yours 
   const foe = await page.context().newPage();
   // The pages share one storage, so the foe plays this starter too.
   await bringStarter(page, ARMORED);
-  // Each side of one plays it through a Team Build of one (#1525), saved
-  // once for both.
-  const team = await saveSoloTeam(page);
+  // Each side of one plays it, the active character, as a 1v1 does (#2141).
   const code = await hostLobby(page);
-  await setTeamSize(page, 1);
   await foe.goto("./");
   await joinFriend(foe, code);
   await foe.getByRole("button", { name: "join team 2" }).click();
@@ -179,10 +180,7 @@ test("the target frame shows a foe's enchantment, at 16 px and not marked yours 
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  await playOwnTeams([
-    { page, team },
-    { page: foe, team },
-  ]);
+  await playOwnTeams([{ page }, { page: foe }]);
 
   const effects = page.getByRole("list", { name: "your target's effects" });
   await expect(effects).toBeHidden();

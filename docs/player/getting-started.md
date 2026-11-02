@@ -10,9 +10,10 @@ on a phone or a touch-only tablet: open it on a computer.
 
 The rail down the left of the main screen holds the
 [modes](modes.md), top to bottom: **Random Arena**, **Team Arena**,
-**Heroes' Ascent**, **GvG** and **Hosted Game**. Under them is the
-**Team size**, one for every screen, which the game keeps for next
-time. Below that, at the bottom, are **Character Builder**, where you
+**Heroes' Ascent**, **GvG** and **Hosted Game**. At the bottom of the
+modes is the **Team size**, `‹ 4v4 ›`: the arrows step to the next
+smaller or larger size the screen plays. Each screen remembers its own,
+and opens at a size it plays (GvG at 8v8). Below that are **Character Builder**, where you
 make your characters, and **Team Builder**, where you make your
 [Team Builds](skills-and-builds.md#team-builds). The game opens on the
 one you used last.
@@ -56,7 +57,7 @@ team shown as your own Team Build and opens it, to change as you like.
 
 The quickest way into a fight. On **Random Arena**, click the card of
 the character you play as, pick a team size, **1v1**, **2v2** or
-**4v4**, in the rail's **Team size**, then press **Ready** in the title
+**4v4**, with the arrows of the rail's **Team size**, then press **Ready** in the title
 bar, and wait: you are put in a team with other players, against
 another team, on a random map. Closing the tab while you wait takes you
 out of the queue at once.

@@ -1379,26 +1379,41 @@ body {
   border-right: 1px solid var(--line);
 }
 
-/* The team size dropdown (#2022), under the modes it sizes. */
+/* The team size stepper (#2022, #2141), at the bottom of the modes it sizes. */
 .mode-rail-size {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
   width: 66px;
-  margin-top: 0.3rem;
+  margin-top: auto;
   color: var(--ink-dim);
 }
 
-.screen .mode-rail-size-select {
-  width: 100%;
-  padding: 0.2rem 0.1rem;
+/* ‹ 8v8 ›: fits the 56 px rail. */
+.mode-rail-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 56px;
+}
+
+.screen .mode-rail-step {
+  min-width: 0;
+  padding: 0.1rem 0.25rem;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.mode-rail-size-value {
+  color: var(--ink);
   font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .mode-rail-divider {
   width: 56px;
-  margin: auto 0 0.3rem;
+  margin: 0.3rem 0;
   border: 0;
   border-top: 1px solid var(--line);
 }
@@ -2917,7 +2932,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* The sidebar's Team size, in the bar of a screen with no sidebar: the Team Lobby (#2104), the team editor (#2109). */
+/* The sidebar's Team size, in the bar of a screen with no sidebar: the team editor (#2109). */
 .team-lobby-size {
   display: flex;
   align-items: center;

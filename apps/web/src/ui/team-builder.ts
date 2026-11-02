@@ -11,20 +11,20 @@ import {
   TEAM_SCHEMA_VERSION,
   type StoredTeam,
   type TeamCharacter,
-  type TeamSize,
+  type TeamBuildSize,
 } from "../storage/schema.js";
 
 /**
  * The team builder (brief §18, §4).
  *
- * Teams are first-class. Each has a size, 1, 2, 4 or 8, fixed when it is
+ * Teams are first-class. Each has a size, 2, 4 or 8, fixed when it is
  * made (#2109): its members never exceed it, and a lobby proposes only a
  * complete one. Each
  * member is a character of the team's own (#1452): one copied from a Solo
  * character is a copy, and editing either leaves the other alone.
  */
 
-export function newTeam(id: string, size: TeamSize): StoredTeam {
+export function newTeam(id: string, size: TeamBuildSize): StoredTeam {
   return {
     schemaVersion: TEAM_SCHEMA_VERSION,
     id,

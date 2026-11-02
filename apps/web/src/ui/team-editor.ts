@@ -8,7 +8,12 @@ import {
 } from "@vibewars/game-core";
 
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
-import type { StoredCharacter, StoredTeam, TeamCharacter, TeamSize } from "../storage/schema.js";
+import type {
+  StoredCharacter,
+  StoredTeam,
+  TeamBuildSize,
+  TeamCharacter,
+} from "../storage/schema.js";
 import { exportTeam, importTeam, looksLikeTeam } from "../storage/team-transfer.js";
 import { characterAppearance } from "./character-figure.js";
 import { characterRanks } from "./character-ranks.js";
@@ -46,7 +51,7 @@ import {
   type ProfessionMixEntry,
   type TeamCounterId,
 } from "./team-builder.js";
-import { teamSizeSelect } from "./rail.js";
+import { teamSizeStepper } from "./rail.js";
 import { createSkillTooltip } from "./skill-tooltip.js";
 
 /**
@@ -196,13 +201,13 @@ export function placesLeft(team: StoredTeam): number {
 /** The editor's team size title (#2109): the size a build was made at stays. */
 export const TEAM_SIZE_FIXED = "A Team Build's size is fixed: make a new one for another size";
 
-/** The team size dropdown in the editor's bar (#2109), locked at the build's size. */
-function lockedTeamSize(size: TeamSize): HTMLElement {
-  const field = h("label", "team-lobby-size");
+/** The team size stepper in the editor's bar (#2109, #2141), locked at the build's size. */
+function lockedTeamSize(size: TeamBuildSize): HTMLElement {
+  const field = h("div", "team-lobby-size");
   field.title = TEAM_SIZE_FIXED;
   field.append(
     h("span", "field-label", "Team size"),
-    teamSizeSelect("teams", size, true, () => undefined),
+    teamSizeStepper("teams", size, true, () => undefined),
   );
   return field;
 }
