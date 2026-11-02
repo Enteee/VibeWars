@@ -1,13 +1,16 @@
 import { RANGE_MELEE } from "../../../distances.js";
 import { isAttacking } from "../../../skills/attacking.js";
 import { getSkill } from "../../../skills/catalog.js";
+import { rankOf } from "../../../skills/tick.js";
 import type { Skill, Surroundings } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
 import {
   blindsUser,
   botUses,
+  conditionWithin,
   holdsGround,
   mirrorsStance,
+  missDisablesBar,
   onlyInterrupts,
   ownTrapBoost,
   sendsPet,
@@ -20,6 +23,9 @@ import type { BotRule } from "./types.js";
 /** A pet at least this far from the foe is worth sending to it (#1966): Strike as One. */
 const PET_SEND_UNITS = 300;
 
+/** Other skills recharging that make Oath Shot's risk worth taking (#2159). */
+const GAMBLE_RECHARGING = 2;
+
 /**
  * With a foe to fight: an offensive skill in bar order, else the weapon.
  * A copier or a stripper only at a foe with what it takes (#1928, #1954):
@@ -29,12 +35,14 @@ const PET_SEND_UNITS = 300;
  * foe below 90%, "Retreat!" for a dead ally. Holding Protector's Defense
  * (#2096), it swings only at a foe in reach and otherwise stands.
  * Signet of Midnight (#2132) only at a foe attacking in melee within
- * touch, and never by a bot whose own fight is its attacks.
+ * touch, and never by a bot whose own fight is its attacks. Oath Shot
+ * (#2159) only past the Expertise it misses at, with two other skills
+ * recharging; Screaming Shot at a foe within earshot not yet Bleeding.
  */
 const fight: BotRule = {
   order: 100,
   name: "fight",
-  decide: ({ context, self, bar, targetId, mayUse, use }) => {
+  decide: ({ context, self, bar, foes, targetId, nearestFirst, mayUse, use }) => {
     if (targetId === undefined) {
       return undefined;
     }
@@ -76,14 +84,43 @@ const fight: BotRule = {
         stateGateHolds(held, self.combatant, on, surroundings) ?? botUses(held).includes("offence")
       );
     };
+    // Oath Shot (#2159) only when it cannot miss for rank, with two others
+    // recharging for its hit to bring back; else it is held.
+    const recharging = bar.filter(
+      (held) => (self.combatant.cast.rechargeRemaining.get(held.id) ?? 0) > 0,
+    );
+    const gambleWorth = (held: Skill): boolean => {
+      const miss = held.attack?.missChanceAtOrBelowRank;
+      return (
+        !missDisablesBar(held) ||
+        ((miss === undefined || rankOf(self.combatant, miss.attributeId) > miss.rank) &&
+          recharging.filter((other) => other.id !== held.id).length >= GAMBLE_RECHARGING)
+      );
+    };
+    // Screaming Shot (#2159) at a foe within earshot not yet Bleeding, the
+    // target first; else at the target.
+    const freshFoe = (held: Skill): string | undefined => {
+      const within = conditionWithin(held);
+      if (within === undefined) {
+        return undefined;
+      }
+      const ordered = nearestFirst(foes.filter((foe) => foe.id !== targetId));
+      return [...(target === undefined ? [] : [target]), ...ordered].find(
+        (foe) =>
+          !foe.combatant.statuses.has(within.statusId) &&
+          distance(foe.position, self.position) <= within.radius &&
+          mayUse(held, foe.id),
+      )?.id;
+    };
     const castOn = (held: Skill): string =>
       held.target === "self" &&
       stateGateHolds(held, self.combatant, self.combatant, surroundings) !== undefined
         ? self.id
-        : targetId;
+        : (freshFoe(held) ?? targetId);
     const skill = bar.find(
       (held) =>
         worthUsing(held) &&
+        gambleWorth(held) &&
         (blindWorth || !blindsUser(held)) &&
         !onlyInterrupts(held) &&
         copies(held) &&

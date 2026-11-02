@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { NO_RANKS } from "../../../skills/status.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
+import type { MatchSimulation } from "../../simulation.js";
 import {
   BOT,
   DT,
@@ -149,5 +150,52 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
       moveTo: undefined,
       attackTargetId: undefined,
     });
+  });
+});
+
+describe("play-build's Ranger attacks (#2159)", () => {
+  const OATH = "ranger.oath-shot";
+  const SCREAM = "ranger.screaming-shot";
+  const oath = (expertise: number, recharging: readonly string[]): MatchSimulation => {
+    const bar = [OATH, "ranger.power-shot", "ranger.savage-shot", "ranger.distracting-shot"];
+    const sim = match([
+      fighter("r", 0, RANGER, vec2(400, 400), {
+        behaviour: undefined,
+        skillBar: bar,
+        attributeRanks: new Map([["ranger.expertise", expertise]]),
+      }),
+      fighter("foe", 1, WARRIOR, vec2(700, 400), { behaviour: undefined, skillBar: [] }),
+    ]);
+    for (const id of recharging) {
+      sim.get("r")?.combatant.cast.startRecharge(id, 10);
+    }
+    return sim;
+  };
+
+  it("holds Oath Shot at Expertise 7, or with fewer than two others recharging", () => {
+    const two = ["ranger.power-shot", "ranger.savage-shot"];
+    expect(askBot(oath(7, two), "r").useSkillId).not.toBe(OATH);
+    expect(askBot(oath(8, ["ranger.power-shot"]), "r").useSkillId).not.toBe(OATH);
+    expect(askBot(oath(8, []), "r").useSkillId).not.toBe(OATH);
+  });
+
+  it("uses Oath Shot at Expertise 8 with two others recharging", () => {
+    expect(
+      askBot(oath(8, ["ranger.power-shot", "ranger.savage-shot", "ranger.distracting-shot"]), "r"),
+    ).toMatchObject({ useSkillId: OATH, targetId: "foe" });
+  });
+
+  it("shoots Screaming Shot at a foe within earshot not yet Bleeding", () => {
+    const sim = match([
+      fighter("r", 0, RANGER, vec2(400, 400), { behaviour: undefined, skillBar: [SCREAM] }),
+      fighter("foe", 1, WARRIOR, vec2(600, 400), { behaviour: undefined, skillBar: [] }),
+      fighter("near", 1, WARRIOR, vec2(600, 440), { behaviour: undefined, skillBar: [] }),
+    ]);
+    sim.setTarget("r", "foe");
+    expect(askBot(sim, "r")).toMatchObject({ useSkillId: SCREAM, targetId: "foe" });
+    sim.get("foe")?.combatant.statuses.apply("bleeding", 10, "x", NO_RANKS);
+    expect(askBot(sim, "r")).toMatchObject({ useSkillId: SCREAM, targetId: "near" });
+    sim.get("near")?.combatant.statuses.apply("bleeding", 10, "x", NO_RANKS);
+    expect(askBot(sim, "r")).toMatchObject({ useSkillId: SCREAM, targetId: "foe" });
   });
 });

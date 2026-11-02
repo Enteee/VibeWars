@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { NO_RANKS } from "../../../skills/status.js";
 import { vec2 } from "../../../vec2.js";
 import type { MatchSimulation } from "../../simulation.js";
-import { ELEMENTALIST, MONK, WARRIOR, askBot, fighter, match } from "./test-support.js";
+import { ELEMENTALIST, MONK, RANGER, WARRIOR, askBot, fighter, match } from "./test-support.js";
 
 describe("play-build's setups (#1975)", () => {
   const DARK = "assassin.dark-apostasy";
@@ -156,5 +156,63 @@ describe("play-build's Assassin setups (#2134)", () => {
       useSkillId: FURY,
       targetId: "a",
     });
+  });
+});
+
+describe("play-build's Ranger setups (#2159)", () => {
+  const ACCURACY = "ranger.disrupting-accuracy";
+  const WAGER = "ranger.marksmans-wager";
+  const CHASER = "ranger.storm-chaser";
+  const sim = (skillBar: string[]): MatchSimulation =>
+    match([
+      fighter("r", 0, RANGER, vec2(400, 400), { behaviour: undefined, skillBar }),
+      fighter("foe", 1, ELEMENTALIST, vec2(700, 400), { behaviour: undefined, skillBar: [] }),
+    ]);
+
+  it("keeps Disrupting Accuracy up while it attacks", () => {
+    expect(askBot(sim([ACCURACY]), "r").useSkillId).toBeUndefined();
+    const shooting = sim([ACCURACY]);
+    shooting.requestAttack("r", "foe");
+    shooting.step(0.05);
+    expect(askBot(shooting, "r")).toMatchObject({ useSkillId: ACCURACY, targetId: "r" });
+    shooting.get("r")?.combatant.statuses.apply("disrupting-accuracy", 36, "r", NO_RANKS);
+    expect(askBot(shooting, "r").useSkillId).toBeUndefined();
+  });
+
+  it("skips Marksman's Wager against a block stance, Blinded, or at 10 Energy", () => {
+    expect(askBot(sim([WAGER]), "r")).toMatchObject({ useSkillId: WAGER, targetId: "r" });
+    const blocking = sim([WAGER]);
+    blocking.get("foe")?.combatant.statuses.apply("whirling-defense", 10, "foe", NO_RANKS);
+    expect(askBot(blocking, "r").useSkillId).toBeUndefined();
+    const blind = sim([WAGER]);
+    blind.get("r")?.combatant.statuses.apply("blind", 10, "foe", NO_RANKS);
+    expect(askBot(blind, "r").useSkillId).toBeUndefined();
+    const spent = sim([WAGER]);
+    const ranger = spent.get("r")?.combatant;
+    if (ranger !== undefined) ranger.energy = 10;
+    expect(askBot(spent, "r").useSkillId).toBeUndefined();
+  });
+
+  it("casts Storm Chaser on retreat, or at an Elementalist's spell at it", () => {
+    expect(askBot(sim([CHASER]), "r").useSkillId).toBeUndefined();
+    const hurt = match([
+      fighter("r", 0, RANGER, vec2(400, 400), { behaviour: undefined, skillBar: [CHASER] }),
+      fighter("foe", 1, WARRIOR, vec2(450, 400), { behaviour: undefined, skillBar: [] }),
+    ]);
+    const ranger = hurt.get("r")?.combatant;
+    if (ranger !== undefined) ranger.health = ranger.maxHealth * 0.3;
+    expect(askBot(hurt, "r")).toMatchObject({ useSkillId: CHASER, targetId: "r" });
+    const fire = match([
+      fighter("r", 0, RANGER, vec2(400, 400), { behaviour: undefined, skillBar: [CHASER] }),
+      fighter("foe", 1, ELEMENTALIST, vec2(700, 400), {
+        behaviour: undefined,
+        skillBar: ["elementalist.fireball"],
+      }),
+    ]);
+    fire.setTarget("foe", "r");
+    expect(fire.requestSkill("foe", 0)?.check).toEqual({ ok: true });
+    fire.step(0.05);
+    expect(fire.get("foe")?.combatant.cast.activeCast?.targetId).toBe("r");
+    expect(askBot(fire, "r")).toMatchObject({ useSkillId: CHASER, targetId: "r" });
   });
 });
