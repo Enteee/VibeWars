@@ -4,7 +4,7 @@ import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js"
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
-import { hostLobby, openPeers, setTeamSize } from "./helpers/peers.js";
+import { hostLobby, openPeers, proposeTeam, setTeamSize } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 
 /**
@@ -93,13 +93,20 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
       await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
     }
     await expect(host.locator(".team-lobby-empty")).toBeVisible();
-    // Proposing is a click on one of your Team Builds' cards (#1862).
-    const four = (page: Page) => page.getByRole("button", { name: "Propose Four", exact: true });
-    await expect(four(host)).toHaveAttribute("aria-pressed", "false");
+    // Proposing is from the Your Team Builds drawer (#2116): open it,
+    // expand the Four's row, and propose it.
     for (const page of [host, guest]) {
-      await four(page).click();
-      await expect(four(page)).toHaveAttribute("aria-pressed", "true");
+      await proposeTeam(page, "Four");
     }
+    // Opened again, the drawer marks it as yours, and offers to withdraw.
+    await host.getByRole("button", { name: "Your Team Builds", exact: true }).click();
+    const drawer = host.getByRole("complementary", { name: "Your Team Builds" });
+    await expect(drawer.locator(".team-lobby-drawer-row.is-proposed")).toContainText("proposed");
+    await drawer.getByRole("button", { name: "Four", exact: true }).click();
+    await expect(drawer.getByRole("button", { name: "Withdraw proposal" })).toBeVisible();
+    await host.keyboard.press("Escape");
+    await expect(drawer).toBeHidden();
+    await expect(host.locator(".screen-team-lobby")).toBeVisible();
     for (const page of [host, guest]) {
       await expect(page.locator(".team-lobby-proposals .play-card")).toHaveCount(2);
     }

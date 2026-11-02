@@ -1,3 +1,4 @@
+import { PROFESSIONS } from "@vibewars/game-core";
 import type {
   WireProposalBuild,
   WireTeamChoice,
@@ -52,8 +53,26 @@ export const NO_PLAYABLE_TEAM_BUILDS =
   "None of your Team Builds is playable. Fix one in Team Builder.";
 /** None of your Team Builds is the side's size (#2104). */
 export function noTeamBuildOf(size: number): string {
-  return `No Team Build of ${String(size)} — make one in the Team Builder.`;
+  return `No ${String(size)}-player Team Builds — make one in the Team Builder.`;
 }
+/** A builds drawer row's size: "1 member", "4 members" (#2116). */
+export function memberCount(n: number): string {
+  return `${String(n)} ${n === 1 ? "member" : "members"}`;
+}
+/** The builds drawer's search found nothing (#2116). */
+export function noTeamBuildNamed(query: string): string {
+  return `No Team Build named “${query}”.`;
+}
+/** What the builds drawer lists (#2116): the side's size, and how many it leaves out. */
+export function drawerShowing(size: number, hidden: number): string {
+  const showing = `Showing ${String(size)}-player builds`;
+  return hidden === 0
+    ? showing
+    : `${showing} · ${String(hidden)} ${hidden === 1 ? "other" : "others"} hidden`;
+}
+export const BUILDS_DRAWER = "Your Team Builds";
+export const PROPOSE_BUILD = "Propose this build";
+export const WITHDRAW_PROPOSAL = "Withdraw proposal";
 export const SEATS_LINE =
   "Unclaimed seats are filled when the clock ends: players first, then bots.";
 export const HOUSE_TEAM = "House team";
@@ -107,6 +126,28 @@ export function initial(name: string): string {
  */
 export function proposableTeams(teams: readonly StoredTeam[], size: number): readonly StoredTeam[] {
   return teams.filter((team) => team.members.length === size && validateTeam(team).length === 0);
+}
+
+/** The builds drawer's rows (#2116): `teams` a side of `size` can propose, named like `query`. */
+export interface DrawerRows {
+  readonly rows: readonly StoredTeam[];
+  /** Your playable Team Builds of other sizes, which no search shows. */
+  readonly hiddenOtherSizes: number;
+}
+
+/**
+ * The builds drawer's rows (#2116): the proposable `teams` of `size`
+ * whose names hold `query`, any case. A Team Build with problems is
+ * neither a row nor counted as hidden: it is not playable (#2110).
+ */
+export function drawerRows(teams: readonly StoredTeam[], size: number, query: string): DrawerRows {
+  const needle = query.trim().toLowerCase();
+  return {
+    rows: proposableTeams(teams, size).filter((team) => team.name.toLowerCase().includes(needle)),
+    hiddenOtherSizes: teams.filter(
+      (team) => team.members.length !== size && validateTeam(team).length === 0,
+    ).length,
+  };
 }
 
 /** The member at `sessionId`'s name, or the id itself for someone already gone. */
@@ -288,6 +329,13 @@ export function renderTeamLobbyScreen(
   if (lobby === null) {
     return;
   }
+  // The drawer's search keeps its focus and caret across the redraw (#2116).
+  const active = document.activeElement;
+  const typing =
+    active instanceof HTMLInputElement && active.classList.contains("team-lobby-drawer-search")
+      ? { start: active.selectionStart, end: active.selectionEnd }
+      : undefined;
+  const onTab = active?.classList.contains("team-lobby-drawer-tab") === true;
   root.replaceChildren();
   const panel = h("div", "screen screen-team-lobby");
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
@@ -311,6 +359,8 @@ export function renderTeamLobbyScreen(
   screenBar({
     crumbs: ["VibeWars", team === null ? "Team Lobby" : `Team Lobby · Team ${String(team + 1)}`],
     back: { label: "Leave", onBack: callbacks.onLeave },
+    // Esc puts the builds drawer away before it leaves (#2116).
+    putAway: putAwayBuildsDrawer,
     status: [status, sizes],
     actions,
   });
@@ -321,6 +371,21 @@ export function renderTeamLobbyScreen(
 
   panel.append(...teamLobbyBody(snapshot, teams, proposedTeamId, callbacks));
   root.appendChild(panel);
+  // The drawer and its tab hang just below the top bar, however tall it wraps.
+  const topbar = document.getElementById("topbar");
+  if (topbar !== null) {
+    panel.style.setProperty(
+      "--team-lobby-drawer-top",
+      `${String(topbar.getBoundingClientRect().bottom)}px`,
+    );
+  }
+  if (typing !== undefined) {
+    const search = panel.querySelector<HTMLInputElement>(".team-lobby-drawer-search");
+    search?.focus();
+    search?.setSelectionRange(typing.start, typing.end);
+  } else if (onTab) {
+    panel.querySelector<HTMLElement>(".team-lobby-drawer-tab")?.focus();
+  }
 }
 
 /**
@@ -358,12 +423,14 @@ export function teamLobbyBody(
   const team = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId)?.team ?? null;
   const side = lobby === null || team === null ? null : lobby.sides[team];
   if (lobby === null || side === null) {
+    forgetDrawer();
     return [h("div", "screen-info team-lobby-spectating", SPECTATING_LINE)];
   }
   if (lobby.stage === "vote") {
     lastProposals = side.proposals;
     return voteStage(side, snapshot, teams, proposedTeamId, callbacks);
   }
+  forgetDrawer();
   return side.chosen === null ? [] : claimStage(side, side.chosen, snapshot, callbacks);
 }
 
@@ -374,36 +441,215 @@ function humansOnSide(snapshot: LobbySnapshot): number {
 }
 
 /**
- * One of your saved Team Builds, to propose by a click (#1862), and to
- * withdraw by a click on the one you proposed. It is Team Builder's card
- * for the team, without Edit.
+ * The Your Team Builds drawer (#2116): whether it is open, its search,
+ * and its one expanded row. The lobby redraws on every snapshot, so this
+ * outlives the elements, as `lastProposals` does.
  */
-function ownCard(
+const drawerState: { open: boolean; query: string; expanded: string | undefined } = {
+  open: false,
+  query: "",
+  expanded: undefined,
+};
+/** Closes the drawer on screen, focus back on its tab; none while no vote shows one. */
+let closeDrawer: (() => void) | undefined;
+
+/** Esc's first job in the vote (#2116): put the open drawer away; true when it was. */
+export function putAwayBuildsDrawer(): boolean {
+  if (!drawerState.open || closeDrawer === undefined) {
+    return false;
+  }
+  closeDrawer();
+  return true;
+}
+
+/** The vote is over, or was never yours: the next one opens on a closed drawer. */
+function forgetDrawer(): void {
+  drawerState.open = false;
+  drawerState.query = "";
+  drawerState.expanded = undefined;
+  closeDrawer = undefined;
+}
+
+/** A member's professions as a chip: "W/Mo". */
+function professionChip({ character }: StoredTeam["members"][number]): HTMLElement {
+  const secondary = character.secondaryProfession;
+  const chip = h(
+    "span",
+    "team-lobby-drawer-chip",
+    PROFESSIONS[character.primaryProfession].abbreviation +
+      (secondary === undefined ? "" : `/${PROFESSIONS[secondary].abbreviation}`),
+  );
+  chip.title = professionLabel(character.primaryProfession, secondary);
+  return chip;
+}
+
+/**
+ * One of your Team Builds in the drawer (#2116): a compact row, which a
+ * click expands to its members, holding their weapons and skills, and
+ * the button that proposes it, or withdraws it when it is yours (#1862).
+ */
+function drawerRow(
   team: StoredTeam,
+  proposed: boolean,
+  onToggle: () => void,
+  onPropose: (teamId: string | undefined) => void,
+): { readonly row: HTMLElement; readonly head: HTMLButtonElement } {
+  const expanded = drawerState.expanded === team.id;
+  const row = h("div", "team-lobby-drawer-row");
+  row.classList.toggle("is-proposed", proposed);
+  row.classList.toggle("is-expanded", expanded);
+  const head = button("", "team-lobby-drawer-row-head", onToggle);
+  head.setAttribute("aria-expanded", String(expanded));
+  head.setAttribute("aria-label", team.name);
+  const title = h("span", "team-lobby-drawer-row-title");
+  title.appendChild(h("span", "team-lobby-drawer-row-name", team.name));
+  if (proposed) {
+    title.appendChild(h("span", "team-lobby-drawer-tag", "proposed"));
+  }
+  title.appendChild(h("span", "team-lobby-drawer-row-size", memberCount(team.members.length)));
+  const chips = h("span", "team-lobby-drawer-chips");
+  chips.append(...team.members.map(professionChip));
+  head.append(title, chips);
+  row.appendChild(head);
+  if (expanded) {
+    const members = h("div", "team-lobby-drawer-members");
+    for (const { character } of team.members) {
+      const member = h("div", "team-lobby-drawer-member");
+      member.append(
+        h("b", "team-lobby-drawer-member-name", character.name),
+        // No cape: a team's members wear none, as on Team Builder.
+        characterFigureCard(lookOfCharacter(character, undefined), { size: "card" }),
+      );
+      members.appendChild(member);
+    }
+    const action = button(
+      proposed ? WITHDRAW_PROPOSAL : PROPOSE_BUILD,
+      proposed ? "team-lobby-drawer-go" : "primary team-lobby-drawer-go",
+      () => {
+        onPropose(proposed ? undefined : team.id);
+        closeDrawer?.();
+      },
+    );
+    row.append(members, action);
+  }
+  return { row, head };
+}
+
+/**
+ * The tab on the right edge and the drawer it opens (#2116), over the
+ * lobby's right side and never dimming it: the vote stays clickable
+ * beside it. What it shows comes from `drawerState`, redrawn in place
+ * as the player types and expands, and kept across snapshots.
+ */
+function buildsDrawer(
+  teams: readonly StoredTeam[],
+  size: number,
   proposedTeamId: string | undefined,
   onPropose: (teamId: string | undefined) => void,
-): HTMLElement {
-  const proposed = team.id === proposedTeamId;
-  const footer: HTMLElement[] = [];
-  if (proposed) {
-    footer.push(h("span", "team-lobby-proposed", "Proposed ✓"));
-  }
-  const card = teamFigureCard({
-    title: team.name,
-    // No cape: a team's members wear none, as on Team Builder.
-    members: team.members.map(({ character }) => ({
-      look: lookOfCharacter(character, undefined),
-      label: `${character.name}, ${professionLabel(character.primaryProfession, character.secondaryProfession)}`,
-    })),
-    footer,
-    onOpen: () => {
-      onPropose(proposed ? undefined : team.id);
-    },
-    pressed: proposed,
-    label: `Propose ${team.name}`,
+): HTMLElement[] {
+  const drawer = h("aside", "team-lobby-drawer");
+  drawer.setAttribute("aria-label", BUILDS_DRAWER);
+  const tab = button(`${BUILDS_DRAWER} ▾`, "team-lobby-drawer-tab", () => {
+    if (drawerState.open) {
+      closeDrawer?.();
+    } else {
+      show();
+    }
   });
-  card.classList.toggle("is-proposed", proposed);
-  return card;
+  tab.setAttribute("aria-label", BUILDS_DRAWER);
+  const close = button("Esc ✕", "team-lobby-drawer-close", () => {
+    closeDrawer?.();
+  });
+  close.setAttribute("aria-label", `Close ${BUILDS_DRAWER}`);
+  const head = h("div", "team-lobby-drawer-head");
+  head.append(h("h3", "team-lobby-drawer-title", BUILDS_DRAWER), close);
+
+  const proposable = proposableTeams(teams, size);
+  const search = document.createElement("input");
+  search.type = "search";
+  search.className = "team-lobby-drawer-search";
+  search.placeholder = "Search your Team Builds…";
+  search.setAttribute("aria-label", "Search your Team Builds");
+  search.value = drawerState.query;
+  search.hidden = proposable.length === 0;
+  const body = h("div", "team-lobby-drawer-body");
+
+  const fill = (): Map<string, HTMLButtonElement> => {
+    const heads = new Map<string, HTMLButtonElement>();
+    if (proposable.length === 0) {
+      const ofSize = teams.some((team) => team.members.length === size);
+      body.replaceChildren(
+        h(
+          "div",
+          "screen-info team-lobby-no-teams",
+          teams.length === 0
+            ? NO_TEAM_BUILDS
+            : ofSize
+              ? NO_PLAYABLE_TEAM_BUILDS
+              : noTeamBuildOf(size),
+        ),
+      );
+      return heads;
+    }
+    const { rows, hiddenOtherSizes } = drawerRows(teams, size, drawerState.query);
+    const shown: HTMLElement[] = [
+      h("div", "team-lobby-drawer-showing", drawerShowing(size, hiddenOtherSizes)),
+    ];
+    if (rows.length === 0) {
+      shown.push(h("div", "team-lobby-drawer-empty", noTeamBuildNamed(drawerState.query.trim())));
+    }
+    const list = h("div", "team-lobby-drawer-list");
+    for (const team of rows) {
+      const { row, head: rowHead } = drawerRow(
+        team,
+        team.id === proposedTeamId,
+        () => {
+          drawerState.expanded = drawerState.expanded === team.id ? undefined : team.id;
+          fill().get(team.id)?.focus();
+        },
+        onPropose,
+      );
+      heads.set(team.id, rowHead);
+      list.appendChild(row);
+    }
+    shown.push(list);
+    body.replaceChildren(...shown);
+    return heads;
+  };
+
+  const place = (): void => {
+    drawer.hidden = !drawerState.open;
+    tab.setAttribute("aria-expanded", String(drawerState.open));
+    tab.classList.toggle("is-open", drawerState.open);
+  };
+  const show = (): void => {
+    drawerState.open = true;
+    place();
+    (search.hidden ? close : search).focus();
+  };
+  search.addEventListener("input", () => {
+    drawerState.query = search.value;
+    fill();
+  });
+  // A search field keeps its own Esc (kit.ts): this one's closes the drawer.
+  search.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeDrawer?.();
+    }
+  });
+  closeDrawer = () => {
+    drawerState.open = false;
+    drawerState.expanded = undefined;
+    place();
+    fill();
+    tab.focus();
+  };
+
+  fill();
+  place();
+  drawer.append(head, search, body);
+  return [tab, drawer];
 }
 
 function voteStage(
@@ -413,29 +659,7 @@ function voteStage(
   proposedTeamId: string | undefined,
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
-  const shown: HTMLElement[] = [h("h3", "menu-column-title", "Your Team Builds")];
-  const proposable = proposableTeams(teams, side.size);
-  if (proposable.length === 0) {
-    const ofSize = teams.some((team) => team.members.length === side.size);
-    shown.push(
-      h(
-        "div",
-        "screen-info team-lobby-no-teams",
-        teams.length === 0
-          ? NO_TEAM_BUILDS
-          : ofSize
-            ? NO_PLAYABLE_TEAM_BUILDS
-            : noTeamBuildOf(side.size),
-      ),
-    );
-  } else {
-    const own = h("div", "play-cards team-lobby-own-cards");
-    for (const team of proposable) {
-      own.appendChild(ownCard(team, proposedTeamId, callbacks.onPropose));
-    }
-    shown.push(own);
-  }
-
+  const shown: HTMLElement[] = buildsDrawer(teams, side.size, proposedTeamId, callbacks.onPropose);
   shown.push(h("h3", "menu-column-title", "Proposals"));
   if (humansOnSide(snapshot) > 1) {
     shown.push(h("div", "screen-info team-lobby-hint", VOTE_HINT));

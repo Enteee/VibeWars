@@ -2951,6 +2951,195 @@ body {
   text-align: center;
 }
 
+/* Your Team Builds (#2116, #2102 option C): a tab on the right edge just
+   below the top bar, and the drawer it opens there, 420 px of compact rows
+   that expand. No dimming: the vote on the left stays clickable. */
+.screen .team-lobby-drawer-tab {
+  position: fixed;
+  top: calc(var(--team-lobby-drawer-top, 3rem) + 0.9rem);
+  right: 0;
+  z-index: 29;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--accent);
+  border-right: 0;
+  border-radius: 4px 0 0 4px;
+  background: var(--panel);
+  color: var(--accent);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+}
+
+.screen .team-lobby-drawer-tab.is-open {
+  visibility: hidden;
+}
+
+.team-lobby-drawer {
+  position: fixed;
+  top: var(--team-lobby-drawer-top, 3rem);
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, 100%);
+  box-sizing: border-box;
+  border-left: 1px solid var(--accent);
+  background: var(--panel);
+  box-shadow: -10px 0 24px rgb(0 0 0 / 50%);
+}
+
+.team-lobby-drawer[hidden] {
+  display: none;
+}
+
+.team-lobby-drawer-head {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.team-lobby-drawer-title {
+  flex: 1;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.screen .team-lobby-drawer-close {
+  border: 0;
+  background: none;
+  color: var(--ink-dim);
+}
+
+.team-lobby-drawer-search {
+  margin: 0.6rem 0.9rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.team-lobby-drawer-search:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.team-lobby-drawer-search[hidden] {
+  display: none;
+}
+
+.team-lobby-drawer-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 0.9rem 0.9rem;
+}
+
+.team-lobby-drawer-showing,
+.team-lobby-drawer-empty {
+  padding-bottom: 0.5rem;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+
+.team-lobby-drawer-empty {
+  padding: 1.5rem 0;
+  font-size: inherit;
+}
+
+.team-lobby-drawer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.team-lobby-drawer-row {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--bg);
+}
+
+.team-lobby-drawer-row.is-proposed {
+  border-color: var(--accent);
+  background: #12202d;
+}
+
+.screen .team-lobby-drawer-row-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+
+.team-lobby-drawer-row-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.team-lobby-drawer-row-name {
+  font-weight: bold;
+}
+
+.team-lobby-drawer-tag {
+  padding: 0 0.35rem;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  color: var(--accent);
+  font-size: 0.7rem;
+}
+
+.team-lobby-drawer-row-size {
+  margin-left: auto;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+
+.team-lobby-drawer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.team-lobby-drawer-chip {
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink-dim);
+  font-size: 0.7rem;
+}
+
+.team-lobby-drawer-members {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin: 0 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.team-lobby-drawer-member {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  font-size: 0.75rem;
+}
+
+.screen .team-lobby-drawer-go {
+  display: block;
+  margin: 0.5rem 0.6rem 0.6rem auto;
+}
+
 /* A vote's state on the shared team card (#1864): yours, and the build
    you proposed (#1862), then the result's chosen card lifted, the rest
    faded behind it. */
