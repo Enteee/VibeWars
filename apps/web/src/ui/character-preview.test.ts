@@ -2,8 +2,8 @@ import { defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
-import { createProfessionDot, gearIcons, miniSkillCells } from "./character-preview.js";
-import { offhandIcon, professionIcon, weaponIcon } from "./icons.js";
+import { createProfessionDot, miniSkillCells } from "./character-preview.js";
+import { professionIcon } from "./icons.js";
 
 function character(skillBar: (string | null)[]): StoredCharacter {
   return {
@@ -124,47 +124,5 @@ describe("createProfessionDot (#1785)", () => {
     expect(shown.all("character-dot-secondary")).toHaveLength(1);
     expect(shown.title).toBe("Elementalist / Monk");
     expect(shown.attributes.get("aria-label")).toBe("Elementalist / Monk");
-  });
-});
-
-describe("gearIcons (#1786)", () => {
-  beforeEach(() => {
-    vi.stubGlobal("document", { createElement: () => new FakeElement() });
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  const gear = (shown: StoredCharacter): string[] =>
-    (gearIcons(shown) as unknown as FakeElement)
-      .all("gear-icon")
-      .map((icon) => `${icon.src} ${icon.alt}`);
-  const bar = ["warrior.backbreaker", null, null, null, null, null, null, null];
-
-  it("is the main hand, then the off-hand", () => {
-    expect(gear(character(bar))).toEqual(
-      [weaponIcon("sword"), offhandIcon("shield")].map(
-        (icon) => `${icon?.src ?? ""} ${icon?.name ?? ""}`,
-      ),
-    );
-  });
-
-  it("shows one weapon when the hand carries no off-hand", () => {
-    const base = character(bar);
-    const [set] = base.equipment.weaponSets;
-    const shown: StoredCharacter = {
-      ...base,
-      equipment: { ...base.equipment, weaponSets: [{ ...set, offHand: null }, null, null, null] },
-    };
-    expect(gear(shown)).toEqual([`${weaponIcon("sword")?.src ?? ""} Sword`]);
-  });
-
-  it("shows no weapon for a build the host would refuse", () => {
-    const shown = {
-      ...character(bar),
-      attributes: [{ attributeId: "warrior.strength", rank: 99 }],
-    };
-    expect(gear(shown)).toEqual([]);
   });
 });

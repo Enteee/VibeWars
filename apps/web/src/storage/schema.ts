@@ -58,7 +58,7 @@ export interface StoredTeam {
   readonly schemaVersion: number;
   readonly id: string;
   readonly name: string;
-  /** Fixed when the build is made (#2109); `members` never exceeds it. */
+  /** Fixed when the build is made (#2109); `members` is always this many (#2225). */
   readonly size: TeamBuildSize;
   readonly members: readonly StoredTeamMember[];
   readonly rulesetId: string;
@@ -131,7 +131,7 @@ export function isStoredTeam(value: unknown): value is StoredTeam {
     isTeamBuildSize(record.size) &&
     Array.isArray(record.members) &&
     (record.members as readonly unknown[]).every(isStoredTeamMember) &&
-    record.members.length <= record.size &&
+    record.members.length === record.size &&
     typeof record.rulesetId === "string" &&
     typeof record.updatedAt === "number"
   );

@@ -18,22 +18,36 @@ import {
  * The team builder (brief §18, §4).
  *
  * Teams are first-class. Each has a size, 2, 4 or 8, fixed when it is
- * made (#2109): its members never exceed it, and a lobby proposes only a
- * complete one. Each
- * member is a character of the team's own (#1452): one copied from a Solo
- * character is a copy, and editing either leaves the other alone.
+ * made (#2109), and always exactly that many members (#2225): a member is
+ * replaced, never added or taken off. Each member is a character of the
+ * team's own (#1452): one copied from a Solo character is a copy, and
+ * editing either leaves the other alone.
  */
 
-export function newTeam(id: string, size: TeamBuildSize): StoredTeam {
+/** A team of `members`, which must be `size` of them. */
+export function teamOf(
+  id: string,
+  size: TeamBuildSize,
+  members: readonly TeamCharacter[],
+): StoredTeam {
   return {
     schemaVersion: TEAM_SCHEMA_VERSION,
     id,
     name: "New Team",
     size,
-    members: [],
+    members: members.map((character) => ({ character })),
     rulesetId: "minimal-gw-inspired-pvp-v1",
     updatedAt: Date.now(),
   };
+}
+
+/** A new team: `size` blank members (#2225), each what `blank` makes. */
+export function newTeam(id: string, size: TeamBuildSize, blank: () => TeamCharacter): StoredTeam {
+  return teamOf(
+    id,
+    size,
+    Array.from({ length: size }, () => blank()),
+  );
 }
 
 /**
@@ -52,17 +66,6 @@ export function teamCharacter(character: TeamCharacter, id: string): TeamCharact
   };
 }
 
-export function addMember(team: StoredTeam, character: TeamCharacter): StoredTeam {
-  if (team.members.length >= team.size) {
-    return team;
-  }
-  return {
-    ...team,
-    members: [...team.members, { character }],
-    updatedAt: Date.now(),
-  };
-}
-
 /** The team with the member whose id is `character.id` replaced by `character`. */
 export function replaceMember(team: StoredTeam, character: TeamCharacter): StoredTeam {
   return {
@@ -70,14 +73,6 @@ export function replaceMember(team: StoredTeam, character: TeamCharacter): Store
     members: team.members.map((member) =>
       member.character.id === character.id ? { character } : member,
     ),
-    updatedAt: Date.now(),
-  };
-}
-
-export function removeMember(team: StoredTeam, index: number): StoredTeam {
-  return {
-    ...team,
-    members: team.members.filter((_member, i) => i !== index),
     updatedAt: Date.now(),
   };
 }
@@ -119,11 +114,10 @@ export function validateTeam(team: StoredTeam): TeamProblem[] {
   if (team.name.trim() === "") {
     problems.push({ message: "team name must not be empty" });
   }
-  if (team.members.length === 0) {
-    problems.push({ message: "a team needs at least one member" });
-  }
-  if (team.members.length > team.size) {
-    problems.push({ message: "slot count exceeds the team size" });
+  if (team.members.length !== team.size) {
+    problems.push({
+      message: `a team of ${String(team.size)} has ${String(team.size)} members, not ${String(team.members.length)}`,
+    });
   }
 
   team.members.forEach(({ character }, index) => {
@@ -140,11 +134,6 @@ export function validateTeam(team: StoredTeam): TeamProblem[] {
 /** "1 member", "4 members": a builds drawer row's (#2116), a full team's (#2109). */
 export function memberCount(n: number): string {
   return `${String(n)} ${n === 1 ? "member" : "members"}`;
-}
-
-/** Whether every one of the team's slots is filled: a lobby proposes only such a build (#2109). */
-export function isTeamComplete(team: StoredTeam): boolean {
-  return team.members.length === team.size;
 }
 
 /** Duplicate a team under a new id, so the original is untouched, at its size. */

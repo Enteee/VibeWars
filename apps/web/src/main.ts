@@ -144,14 +144,7 @@ import {
   type TeamPlayCallbacks,
 } from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
-import {
-  addMember,
-  duplicateTeam,
-  newTeam,
-  removeMember,
-  replaceMember,
-  teamCharacter,
-} from "./ui/team-builder.js";
+import { duplicateTeam, newTeam, replaceMember, teamCharacter } from "./ui/team-builder.js";
 import {
   mountTeamEditor,
   openedTeam,
@@ -184,6 +177,12 @@ const LOST_MATCH_NOTICE = "Lost the connection to the match.";
 const OWN_LOBBY_NOTICE = "That is your own lobby";
 /** An invite link opened over a lobby's screen or a match (#2100), which a join would leave. */
 const INVITE_IN_LOBBY_NOTICE = "Go back to the menu, then open the invite link again.";
+
+/** A new Team Build's member (#2225): what a new character is, as the team's own. */
+function blankMember(): TeamCharacter {
+  const blank = newCharacter(crypto.randomUUID());
+  return teamCharacter(blank, blank.id);
+}
 
 function requireElement(selector: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(selector);
@@ -1178,7 +1177,7 @@ async function main(): Promise<void> {
       // A new team is stored only once it is saved (#573).
       onNewTeam: () => {
         showTeamEditor(
-          openedTeam(newTeam(crypto.randomUUID(), loadTeamBuildSize()), false),
+          openedTeam(newTeam(crypto.randomUUID(), loadTeamBuildSize(), blankMember), false),
           characterList.characters,
         );
       },
@@ -1257,8 +1256,8 @@ async function main(): Promise<void> {
   /**
    * `member` of the team `left` in the build editor (#576, #1452): its
    * Save puts it in the team, which comes back as it was left and still
-   * unsaved; nothing is stored. Delete takes it off the team, Duplicate
-   * adds a copy, and Esc comes back without either.
+   * unsaved; nothing is stored. A team is always its size (#2225): no
+   * Delete, no Duplicate.
    */
   const showMemberEditor = (
     member: TeamCharacter,
@@ -1268,7 +1267,6 @@ async function main(): Promise<void> {
     const back = (team: StoredTeam): void => {
       showTeamEditor({ ...left, team }, available);
     };
-    const present = left.team.members.some((m) => m.character.id === member.id);
     // What the way out takes back: the team as left, or with Save's member in it.
     let team = left.team;
     leaveScreen();
@@ -1282,23 +1280,11 @@ async function main(): Promise<void> {
       {
         onSave: (saved) => {
           const character = teamCharacter(saved, member.id);
-          team = present ? replaceMember(left.team, character) : addMember(left.team, character);
+          team = replaceMember(left.team, character);
           return Promise.resolve();
         },
-        onDelete: () => {
-          back(
-            present
-              ? removeMember(
-                  left.team,
-                  left.team.members.findIndex((m) => m.character.id === member.id),
-                )
-              : left.team,
-          );
-        },
-        onDuplicate: (source) => {
-          const copy = teamCharacter(source, crypto.randomUUID());
-          back(addMember(left.team, { ...copy, name: `${source.name} (copy)` }));
-        },
+        onDelete: undefined,
+        onDuplicate: undefined,
         onClose: () => {
           back(team);
         },
@@ -1342,11 +1328,6 @@ async function main(): Promise<void> {
         if (member !== undefined) {
           showMemberEditor(member.character, left, available);
         }
-      },
-      // A new member joins only on the build editor's Save.
-      onNewMember: (left) => {
-        const blank = newCharacter(crypto.randomUUID());
-        showMemberEditor(teamCharacter(blank, blank.id), left, available);
       },
     });
   };

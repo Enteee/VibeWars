@@ -157,17 +157,25 @@ on a card, or its **Edit**, opens it. You propose one in the
 
 Every team build has a size, 2v2, 4v4 or 8v8 (there are no 1v1 team builds): the **Team size** in
 the sidebar. Team Builder lists the team builds of the size picked there,
-each with its slots filled, such as **3/4**, and **New team build** makes
-one of that size. A team build's size is fixed: its editor shows it
-locked, and to play another size you make another team build. A pasted
-team keeps its size, and the sidebar switches to it. A Team Lobby offers
-only a full team build of its size.
+and **New team build** makes one of that size. A team build's size is
+fixed: its editor shows it locked, and to play another size you make
+another team build. A pasted team keeps its size, and the sidebar
+switches to it.
 
-Add a member
-with **New character**, or **Add** one of your characters to copy its
-build in. A copy is the team's own: changing it, or the character it came
-from, leaves the other as it was. Each member's skills show as icons;
-hover one for its details, click it to find every copy on the team.
+A team build always has as many members as its size: a new one starts
+with a blank character in each place. You never add or remove a member,
+you replace one. Each row shows the member's character with the weapons
+it holds, a dot for each weapon set when it has more than one, its
+maximum Health and Energy, and its eight skills; drag a row by its ⠿ to
+reorder. The panel on the right has two tabs. On **My characters**, drag
+one of your characters onto a member to make that member a copy of it. A
+copy is the team's own: changing it, or the character it came from,
+leaves the other as it was. On **Skills**, the skill library shows the
+skills of the member you last clicked; drag one onto any member's slot
+to equip it there. A drop the member cannot take, a skill of another
+profession or one already on its bar, is marked with a dashed slot and
+the reason, and does nothing. Each member's skills show as icons; hover
+one for its details, click it to find every copy on the team.
 Press a member's name to edit it in the build editor;
 its **Save** puts it back in the team, and the team's own **Save** keeps it all
 and takes you back to Team Builder. **Esc** leaves

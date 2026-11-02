@@ -267,3 +267,41 @@ async function loadGlyph(profession: ProfessionId): Promise<HTMLImageElement | u
     return undefined;
   }
 }
+
+/** The character ball's scale of `FIGURE_SIZE` (#2225): a row's, so the weapon reads. */
+const BALL_SCALE = 0.75;
+
+/**
+ * The character ball (#2225), the shared icon for a character in a list:
+ * its figure holding its active weapon set, set 1, as it enters a match,
+ * and under it one dot a weapon set when it carries more than one, the
+ * active one lit.
+ */
+export function createCharacterDot(character: TeamCharacter): HTMLElement {
+  const ball = document.createElement("span");
+  ball.className = "character-ball";
+  ball.appendChild(
+    createCharacterFigure(
+      {
+        primary: character.primaryProfession,
+        secondary: character.secondaryProfession,
+        appearance: characterAppearance(character),
+        cape: undefined,
+      },
+      BALL_SCALE,
+    ),
+  );
+  const sets = character.equipment.weaponSets.filter((set) => set !== null).length;
+  if (sets > 1) {
+    const dots = document.createElement("span");
+    dots.className = "character-ball-sets";
+    dots.setAttribute("aria-label", `${String(sets)} weapon sets`);
+    for (let set = 0; set < sets; set += 1) {
+      const dot = document.createElement("span");
+      dot.className = set === 0 ? "character-ball-set is-active" : "character-ball-set";
+      dots.appendChild(dot);
+    }
+    ball.appendChild(dots);
+  }
+  return ball;
+}

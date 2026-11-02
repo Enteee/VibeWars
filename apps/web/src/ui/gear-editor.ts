@@ -56,7 +56,7 @@ import {
   type WeaponSetIndex,
 } from "@vibewars/game-core";
 
-import type { StoredCharacter } from "../storage/schema.js";
+import type { StoredCharacter, TeamCharacter } from "../storage/schema.js";
 
 /**
  * Gear editing rules (ADR-0012).
@@ -479,7 +479,7 @@ export function clearArmorUpgrades(character: StoredCharacter): StoredCharacter 
  * implementation in the web layer is the obvious way to end up with an
  * editor that promises 530 health and a match that gives 495.
  */
-export function resolveForDisplay(character: StoredCharacter): ResolvedLoadout {
+export function resolveForDisplay(character: TeamCharacter): ResolvedLoadout {
   return resolveLoadout(
     {
       primaryProfession: character.primaryProfession,
@@ -703,7 +703,7 @@ function pieceReductionLines(pieceReduction: PieceReduction): string[] {
 
 /** What set `set` comes to; `undefined` for an empty set 2-4 (#489). */
 export function summariseGear(
-  character: StoredCharacter,
+  character: TeamCharacter,
   set: WeaponSetIndex,
 ): GearSummary | undefined {
   const resolved = resolveForDisplay(character);

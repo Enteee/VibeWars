@@ -1,4 +1,4 @@
-import { newTeam, teamCharacter } from "../ui/team-builder.js";
+import { teamOf, teamCharacter } from "../ui/team-builder.js";
 import { buildPayload, readBuild, type ExportedBuild } from "./build-transfer.js";
 import {
   isTeamBuildSize,
@@ -115,17 +115,15 @@ export function importTeam(text: string, newId: () => string, now: number): Team
     return { ok: false, problems: [...problems, "members must be a list"] };
   }
   const entries = record.members as readonly unknown[];
-  if (entries.length === 0) {
-    problems.push("A team needs at least one member.");
-  }
-  if (entries.length > size) {
+  if (entries.length !== size) {
     // Before any member is read: a crafted code with thousands of members
     // must not run thousands of reads, nor list thousands of problems.
+    // A team is always its size (#2225).
     return {
       ok: false,
       problems: [
         ...problems,
-        `A team of ${String(size)} may not have ${String(entries.length)} members.`,
+        `A team of ${String(size)} has ${String(size)} members, not ${String(entries.length)}.`,
       ],
     };
   }
@@ -151,12 +149,7 @@ export function importTeam(text: string, newId: () => string, now: number): Team
     return { ok: false, problems };
   }
 
-  const team: StoredTeam = {
-    ...newTeam(newId(), size),
-    name,
-    members: characters.map((character) => ({ character })),
-    updatedAt: now,
-  };
+  const team: StoredTeam = { ...teamOf(newId(), size, characters), name, updatedAt: now };
   return { ok: true, team };
 }
 

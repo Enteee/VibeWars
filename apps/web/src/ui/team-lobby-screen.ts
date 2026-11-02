@@ -17,7 +17,7 @@ import {
 } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { button, h, screenBar } from "./kit.js";
-import { isTeamComplete, memberCount, validateTeam } from "./team-builder.js";
+import { memberCount, validateTeam } from "./team-builder.js";
 
 /**
  * The Team Lobby screen (#1460, #1449 variant B, the card table): while
@@ -114,9 +114,9 @@ export function initial(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "?";
 }
 
-/** Whether `team` is playable at its size: every slot filled (#2109) and no problems (#2110). */
+/** Whether `team` is playable: no problems (#2110). */
 function isPlayable(team: StoredTeam): boolean {
-  return isTeamComplete(team) && validateTeam(team).length === 0;
+  return validateTeam(team).length === 0;
 }
 
 /**
