@@ -98,6 +98,9 @@ describe("status definitions", () => {
         def.lifeStealReduction !== 0 ||
         def.knockdownMinSeconds !== undefined ||
         def.reversesNextDamage !== undefined ||
+        def.reflectsNextDamage !== undefined ||
+        def.damageToHealing !== undefined ||
+        def.pulse !== undefined ||
         def.reflectsAttackDamage !== undefined ||
         def.breaksNextHex !== undefined ||
         def.failsNextSpell !== undefined ||

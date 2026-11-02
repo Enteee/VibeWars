@@ -306,6 +306,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       RULES,
       "chest",
       createRng(1),
+      new Map(),
     );
     expect(events).toEqual([{ kind: "damage", targetId: "t", amount: expected, critical: false }]);
   });
@@ -363,6 +364,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
         RULES,
         "chest",
         createRng(1),
+        new Map(),
       );
 
     it("gives Swift Chop 1% armor penetration a rank: 12% at 12", () => {
@@ -444,6 +446,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
         RULES,
         "chest",
         createRng(1),
+        new Map(),
       );
     /** A target with +40 armor against `condition`. */
     const armoredVs = (condition: ArmorCondition): Combatant =>
@@ -747,7 +750,14 @@ describe("block (#534)", () => {
         {
           kind: "damage",
           targetId: "t",
-          amount: mitigate(skillDamage(16, "typeless", 0), target, RULES, null, createRng(1)),
+          amount: mitigate(
+            skillDamage(16, "typeless", 0),
+            target,
+            RULES,
+            null,
+            createRng(1),
+            new Map(),
+          ),
           critical: false,
         },
         { kind: "status-applied", targetId: "t", statusId: "deep-wound", durationSeconds: 20 },
@@ -909,6 +919,7 @@ describe("critical hits (#533)", () => {
       RULES,
       "chest",
       createRng(1),
+      new Map(),
     );
 
   it.each([0, 9, 12, 15])("crits at 1%% plus 1.37%% a rank of mastery, at rank %i", (rank) => {
@@ -1377,6 +1388,7 @@ describe("weakness (#762)", () => {
       RULES,
       "chest",
       createRng(1),
+      new Map(),
     );
 
   const weakened = (who: Combatant): Combatant => {
@@ -1479,6 +1491,7 @@ describe("a caster weapon's element (#761)", () => {
       noCrit(),
       RULES,
       events,
+      new Map(),
     );
     return damages(events);
   }
@@ -1497,6 +1510,7 @@ describe("a caster weapon's element (#761)", () => {
       RULES,
       "chest",
       createRng(1),
+      new Map(),
     );
 
   it("a Fire Magic wand meets a Ranger's 100 armor, a Domination wand its 70", () => {
@@ -1583,6 +1597,7 @@ describe("dual attacks (#885)", () => {
       RULES,
       "chest",
       createRng(1),
+      new Map(),
     );
 
   it("after an off-hand strikes twice, its bonus on each, and leaves the dual mark", () => {
@@ -1655,7 +1670,14 @@ describe("dual attacks (#885)", () => {
         [ally, vec2(40, -10)],
       ),
     });
-    const splash = mitigate(skillDamage(40, "piercing", 0), near, RULES, "chest", createRng(1));
+    const splash = mitigate(
+      skillDamage(40, "piercing", 0),
+      near,
+      RULES,
+      "chest",
+      createRng(1),
+      new Map(),
+    );
     expect(damageTo(events, "near")).toEqual([splash, splash]);
     expect(damageTo(events, "far")).toEqual([]);
     expect(damageTo(events, "ally")).toEqual([]);
@@ -2011,7 +2033,7 @@ describe("martial weapon mods on a hit (#2009)", () => {
     const plain = attacker(WEAPONS.sword, "warrior.swordsmanship");
     const blow = (who: Combatant, rng: SimulationRng): number => {
       const target = foe("dummy").combatant;
-      landBlow(weaponSnapshotOf(who), who, target, PLAIN_BLOW, false, rng, RULES, []);
+      landBlow(weaponSnapshotOf(who), who, target, PLAIN_BLOW, false, rng, RULES, [], new Map());
       return 1e6 - target.health;
     };
     // No crit, then the sunder roll: under 0.2 hits, over misses.

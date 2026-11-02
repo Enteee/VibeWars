@@ -179,6 +179,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   attackDurationMultiplier: true,
   damageTakenMultiplier: true,
   adrenalineGainFaster: true,
+  casterEnergyPerReduction: true,
 };
 
 /** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
@@ -212,7 +213,7 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   const attributes = new Set<string>();
   for (const key of Object.keys(STATUS_STAT_KEYS) as StatusStatKey[]) {
     const stat = definition[key];
-    if (typeof stat !== "number") {
+    if (stat !== undefined && typeof stat !== "number") {
       attributes.add(stat.scaling.attributeId);
     }
   }
@@ -232,6 +233,12 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
       if (typeof stat !== "number") {
         attributes.add(stat.scaling.attributeId);
       }
+    }
+  }
+  // Reversal of Damage's and Mark of Protection's caps are their caster's (#2187).
+  for (const stat of [definition.reflectsNextDamage?.cap, definition.damageToHealing?.cap]) {
+    if (stat !== undefined && typeof stat !== "number") {
+      attributes.add(stat.scaling.attributeId);
     }
   }
   // Anthem of Fury's strikes are its Paragon's, not the ally's (#2143).
@@ -919,6 +926,13 @@ export interface StatusDefinition {
    */
   readonly maxDamageFractionPerHit: number | undefined;
   /**
+   * What the bearer's `maxDamageFractionPerHit` costs its source (#2187):
+   * Protective Bond's 6...3 Energy each time it actually takes something off a
+   * hit. A source that cannot pay, or is dead or gone, ends the status and
+   * that hit is not capped by it. `undefined`: the cap is free.
+   */
+  readonly casterEnergyPerReduction: StatusStat | undefined;
+  /**
    * As `maxDamageFractionPerHit`, but only for an attack's blow (#1265):
    * Shelter's 0.1, after everything else in `mitigate`. A spell, life
    * steal and degeneration are not capped. `undefined`: no cap.
@@ -951,6 +965,21 @@ export interface StatusDefinition {
    * sacrifice are neither. `undefined`: no reversal.
    */
   readonly reversesNextDamage: number | undefined;
+  /**
+   * The next damage the bearer would take is negated, its dealer takes
+   * as much of the same type, up to the cap, from the status's source, and
+   * the status ends (#2187): Reversal of Damage's 61. Any damage, attack or
+   * spell, after `mitigate`; a packet mitigated to 0 does not spend it.
+   * A dealer dead or gone takes nothing, the damage is still negated.
+   * `undefined`: none.
+   */
+  readonly reflectsNextDamage: ReflectsNextDamage | undefined;
+  /**
+   * Every damage the bearer would take while it lasts heals it instead, up
+   * to the cap a hit (#2187): Mark of Protection's 6...60. Not spent by a hit;
+   * after `mitigate`, so a bond's cap comes first. `undefined`: none.
+   */
+  readonly damageToHealing: { readonly cap: StatusStat } | undefined;
   /**
    * The next damage or life steal that would kill the bearer is dropped
    * whole, and the status ends (#1789): Judge's Intervention's. After
@@ -1104,6 +1133,13 @@ export interface StatusDefinition {
    * ally (#1754). `undefined`: none.
    */
   readonly damagePulse: DamagePulse | undefined;
+  /**
+   * Every `everySeconds` it has been on the bearer, its effects run from
+   * its source on the bearer (#2187): Spotless Mind's hex removal every
+   * 5 s. The first at `everySeconds`, not at once; none past its
+   * duration. `undefined`: none.
+   */
+  readonly pulse: EffectPulse | undefined;
   /**
    * Whenever a chant or a shout ends on the bearer, its remaining time is
    * back to the duration it was applied with (#1423): a refrain's "this
@@ -1357,6 +1393,20 @@ export interface DamagePulse {
   readonly radius: number;
   /** Whether the bearer is hit too (#1754): a hex's is, an ally's enchantment's is not. */
   readonly hitsBearer: boolean;
+  readonly skillId: string;
+}
+
+/** `StatusDefinition.pulse` (#2187). */
+export interface EffectPulse {
+  readonly everySeconds: number;
+  /** Run from the status's source on the bearer. */
+  readonly effects: readonly SkillEffect[];
+  readonly skillId: string;
+}
+
+/** `StatusDefinition.reflectsNextDamage` (#2187). */
+export interface ReflectsNextDamage {
+  readonly cap: StatusStat;
   readonly skillId: string;
 }
 
@@ -1897,6 +1947,17 @@ export type StatusChange =
       readonly sourceId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
+  /**
+   * Status `statusId`, already ended, from `sourceId` sends `damage` back
+   * to `toId`, whose damage it negated (#2187).
+   */
+  | {
+      readonly kind: "reflected-next";
+      readonly statusId: StatusId;
+      readonly sourceId: string;
+      readonly toId: string;
+      readonly damage: number;
+    }
   /** Status `statusId` from `sourceId` sends `damage` back to `toId`, who hit the bearer (#1754). */
   | {
       readonly kind: "reflected";
@@ -2248,6 +2309,7 @@ export class StatusSet {
   readonly #statuses = new Map<StatusId, ActiveStatus>();
   #changes: StatusChange[] = [];
   #pulses: StatusPulse[] = [];
+  #effectPulses: { readonly id: StatusId; readonly sourceId: string }[] = [];
   readonly #spent: Set<string>;
 
   /**
@@ -2276,6 +2338,16 @@ export class StatusSet {
   public drainPulses(): StatusPulse[] {
     const pulses = this.#pulses;
     this.#pulses = [];
+    return pulses;
+  }
+
+  /**
+   * The effect pulses (`pulse`, #2187) that came due since the last drain,
+   * oldest first, and forget them: the simulation runs them once a tick.
+   */
+  public drainEffectPulses(): { readonly id: StatusId; readonly sourceId: string }[] {
+    const pulses = this.#effectPulses;
+    this.#effectPulses = [];
     return pulses;
   }
 
@@ -3195,6 +3267,48 @@ export class StatusSet {
   }
 
   /**
+   * Spend the newest status that reflects the next damage (#2187) on
+   * `damage` from `dealerId`, recorded as ended, and return its
+   * id; `undefined` if none is up. Up to its cap goes back to the dealer
+   * when the tick drains; nobody's damage goes back to nobody.
+   */
+  public takeNextDamageReflection(
+    dealerId: string | undefined,
+    damage: number,
+  ): StatusId | undefined {
+    for (const status of [...this.#statuses.values()].reverse()) {
+      const reflects = getStatusDefinition(status.id).reflectsNextDamage;
+      if (reflects !== undefined) {
+        this.#end([status.id]);
+        if (dealerId !== undefined) {
+          this.#changes.push({
+            kind: "reflected-next",
+            statusId: status.id,
+            sourceId: status.sourceId,
+            toId: dealerId,
+            damage: Math.min(damage, Math.round(statAt(reflects.cap, status.ranks))),
+          });
+        }
+        return status.id;
+      }
+    }
+    return undefined;
+  }
+
+  /** The cap on each hit a status turns into healing (#2187), the highest up; `undefined` if none. */
+  public damageToHealingCap(): number | undefined {
+    let cap: number | undefined;
+    for (const { id, ranks } of this.#statuses.values()) {
+      const turns = getStatusDefinition(id).damageToHealing;
+      const at = turns === undefined ? undefined : Math.round(statAt(turns.cap, ranks));
+      if (at !== undefined && (cap === undefined || at > cap)) {
+        cap = at;
+      }
+    }
+    return cap;
+  }
+
+  /**
    * Take up to `count` statuses of a category off the bearer, newest first,
    * as `removeByCategory`, with the time each had left (#944): Plague
    * Touch's "transfer ... with their remaining durations", and the ranks
@@ -3658,11 +3772,22 @@ export class StatusSet {
    * duration, so one ending between pulses deals no partial one.
    */
   #pulse(status: ActiveStatus, dt: number): void {
+    const before = status.durationSeconds - status.remainingSeconds;
+    const every = getStatusDefinition(status.id).pulse?.everySeconds;
+    if (every !== undefined) {
+      // As below, in steps of `every` (#2187).
+      const due = Math.min(
+        Math.floor((before + dt) / every + PULSE_EPSILON),
+        Math.floor(status.durationSeconds / every + PULSE_EPSILON),
+      );
+      for (let k = Math.floor(before / every + PULSE_EPSILON) + 1; k <= due; k += 1) {
+        this.#effectPulses.push({ id: status.id, sourceId: status.sourceId });
+      }
+    }
     const pulse = getStatusDefinition(status.id).damagePulse;
     if (pulse === undefined) {
       return;
     }
-    const before = status.durationSeconds - status.remainingSeconds;
     const last = Math.min(
       Math.floor(before + dt + PULSE_EPSILON),
       Math.floor(status.durationSeconds + PULSE_EPSILON),
@@ -3846,8 +3971,6 @@ export interface StatusModifiers {
   readonly damageTakenMultiplier: number;
   /** Every status's, summed (#1108). */
   readonly damageReduction: number;
-  /** The lowest single status's (#936); `undefined`: no cap. */
-  readonly maxDamageFractionPerHit: number | undefined;
   /** The lowest single status's (#1265); `undefined`: no cap. */
   readonly attackDamageCapFraction: number | undefined;
   /** Every status's, summed (#1265). */
@@ -3991,7 +4114,6 @@ export function aggregateModifiers(
   let attackSlower = 1;
   let damageTakenMultiplier = 1;
   let damageReduction = 0;
-  let maxDamageFractionPerHit: number | undefined;
   let attackDamageCapFraction: number | undefined;
   let lifeStealReduction = 0;
   let sacrificeMultiplier = 1;
@@ -4077,13 +4199,6 @@ export function aggregateModifiers(
     damageTakenMultiplier *= statAt(def.damageTakenMultiplier, ranks);
     damageReduction += def.damageReduction;
     if (
-      def.maxDamageFractionPerHit !== undefined &&
-      (maxDamageFractionPerHit === undefined ||
-        def.maxDamageFractionPerHit < maxDamageFractionPerHit)
-    ) {
-      maxDamageFractionPerHit = def.maxDamageFractionPerHit;
-    }
-    if (
       def.attackDamageCapFraction !== undefined &&
       (attackDamageCapFraction === undefined ||
         def.attackDamageCapFraction < attackDamageCapFraction)
@@ -4159,7 +4274,6 @@ export function aggregateModifiers(
     projectileSpeedMultiplier,
     damageTakenMultiplier,
     damageReduction,
-    maxDamageFractionPerHit,
     attackDamageCapFraction,
     lifeStealReduction,
     sacrificeMultiplier,
