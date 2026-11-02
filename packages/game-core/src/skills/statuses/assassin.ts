@@ -335,7 +335,15 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
       {
         on: "ends",
         target: "bearer",
-        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 12 } }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "crippled",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.shadow-arts", atZero: 1, atTwelve: 12.2 },
+            },
+          },
+        ],
         skillId: "assassin.hidden-caltrops",
       },
     ],

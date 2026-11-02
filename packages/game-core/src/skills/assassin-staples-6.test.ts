@@ -144,12 +144,12 @@ describe("Hidden Caltrops (#2233)", () => {
   const CALTROPS = 0;
 
   /** A rank-12 assassin with Hidden Caltrops, an Assassin and a Warrior skill. */
-  function arena(): MatchSimulation {
+  function arena(attributeRanks: ReadonlyMap<string, number> = RANKS): MatchSimulation {
     const sin: ParticipantSpec = {
       id: "sin",
       team: 0,
       skillBar: ["assassin.hidden-caltrops", "assassin.shadow-refuge", "warrior.sprint"],
-      attributeRanks: RANKS,
+      attributeRanks,
       equipment: unarmedResolvedEquipment(60),
       maxEnergy: 60,
       spawn: vec2(0, 0),
@@ -210,6 +210,16 @@ describe("Hidden Caltrops (#2233)", () => {
     const foe = get(match, "foe").combatant;
     expect(foe.statuses.has("hidden-caltrops")).toBe(false);
     expect(foe.statuses.get("crippled")?.remainingSeconds).toBeGreaterThan(11);
+  });
+
+  it("cripples for 1 s from a rank-0 caster", () => {
+    const match = arena(new Map());
+    get(match, "foe").combatant.statuses.remove("hidden-caltrops");
+    stepFor(match, DT);
+    expect(get(match, "foe").combatant.statuses.get("crippled")?.remainingSeconds).toBeCloseTo(
+      1,
+      0,
+    );
   });
 
   it("cripples its foe for 12 s when it is removed early", () => {
