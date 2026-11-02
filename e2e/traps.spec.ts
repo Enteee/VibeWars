@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { projection } from "./camera.js";
 import { key } from "./keys.js";
+import { openLibraryGroup } from "./helpers/library.js";
 import { openRail, pickCharacter } from "./helpers/menu.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { chooseProfession } from "./helpers/professions.js";
@@ -30,6 +31,7 @@ test("a trap you set is drawn round where you stood (#1105)", async ({ page }) =
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
   await page.locator("input.editor-name").fill("Trapper");
+  await openLibraryGroup(page, "Wilderness Survival");
   await page.locator(".skill-box", { hasText: "Barbed Trap" }).locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await pickCharacter(page, "Trapper");

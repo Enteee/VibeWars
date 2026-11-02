@@ -138,6 +138,7 @@ function taken(sim: MatchSimulation, amount = 50): number {
     RULES.combat,
     null,
     createRng(1),
+    new Map(),
   );
 }
 

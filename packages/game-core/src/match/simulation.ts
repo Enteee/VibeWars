@@ -1967,10 +1967,31 @@ export class MatchSimulation {
    * participant order: damage of its type from the status's source to the
    * source's foes within its radius of the bearer, and to the bearer if
    * it `hitsBearer` (#1754), logged as the status's skill. A bearer that died since takes none,
-   * and a source that has left the match deals none.
+   * and a source that has left the match deals none. An effect pulse
+   * (#2187) runs its effects from the source on the bearer, as its skill.
    */
   #pulseStatuses(): void {
     for (const record of this.#participants.values()) {
+      for (const { id, sourceId } of record.combatant.statuses.drainEffectPulses()) {
+        const source = this.#participants.get(sourceId);
+        const pulse = STATUS_DEFINITIONS[id].pulse;
+        if (record.combatant.dead || source === undefined || pulse === undefined) {
+          continue;
+        }
+        this.#logFired([
+          {
+            sourceId,
+            skillId: pulse.skillId,
+            events: applyEffects(pulse.effects, {
+              caster: source.combatant,
+              target: record.combatant,
+              rng: this.#rng,
+              rules: this.#ruleset.combat,
+              surroundings: this.#participants,
+            }),
+          },
+        ]);
+      }
       for (const { id, sourceId, damage } of record.combatant.statuses.drainPulses()) {
         const source = this.#participants.get(sourceId);
         const pulse = STATUS_DEFINITIONS[id].damagePulse;
@@ -6038,6 +6059,7 @@ export class MatchSimulation {
       this.#rng,
       this.#ruleset.combat,
       events,
+      this.#participants,
     );
     if (critical && attacker !== undefined) {
       landedCritical(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);

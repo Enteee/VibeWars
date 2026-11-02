@@ -398,6 +398,42 @@ describe("teamColumn: names only (#2029)", () => {
     expect(team.all("bot-tag")).toEqual([]);
     expect(team.all("lobby-ready").map((pill) => pill.textContent)).toEqual(["Ready", "Ready"]);
   });
+
+  it("offers Leave on one's own team and Join on the other (#2199)", () => {
+    const chosen: (0 | 1 | null)[] = [];
+    const choosing = { ...callbacks, onChooseTeam: (team: 0 | 1 | null) => chosen.push(team) };
+    const [own] = (
+      teamColumn(0, lobby, lobbyControls(lobby), choosing) as unknown as FakeElement
+    ).all("lobby-join");
+    const [other] = (
+      teamColumn(1, lobby, lobbyControls(lobby), choosing) as unknown as FakeElement
+    ).all("lobby-join");
+    expect([own?.textContent, own?.attributes.get("aria-label"), own?.disabled]).toEqual([
+      "Leave",
+      "Leave team 1",
+      false,
+    ]);
+    expect([other?.textContent, other?.attributes.get("aria-label")]).toEqual([
+      "Join",
+      "Join team 2",
+    ]);
+    own?.click();
+    other?.click();
+    expect(chosen).toEqual([null, 1]);
+  });
+
+  it("disables Leave as it disables Join, outside the waiting phase (#2199)", () => {
+    const starting = { ...lobby, phase: "starting" as const };
+    const buttons = ([0, 1] as const).flatMap((team) =>
+      (
+        teamColumn(team, starting, lobbyControls(starting), callbacks) as unknown as FakeElement
+      ).all("lobby-join"),
+    );
+    expect(buttons.map((shown) => [shown.textContent, shown.disabled])).toEqual([
+      ["Leave", true],
+      ["Join", true],
+    ]);
+  });
 });
 
 describe("matchmakingButtons (#1766)", () => {

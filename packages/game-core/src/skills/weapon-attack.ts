@@ -606,6 +606,7 @@ export function landBlow(
   rng: SimulationRng,
   rules: CombatRules,
   events: CombatEvent[],
+  surroundings: Surroundings,
 ): boolean {
   interruptOnHit(victim, attacker?.id, events);
   const { weapon } = snapshot.mainHand;
@@ -661,7 +662,7 @@ export function landBlow(
   const location = hitLocationOf(packet, rng);
   applyDamage(
     victim,
-    mitigate(packet, victim, rules, location, rng),
+    mitigate(packet, victim, rules, location, rng, surroundings),
     packet.type,
     critical,
     events,
@@ -1177,7 +1178,19 @@ function strike(
     owner === undefined
       ? PLAIN_BLOW
       : { ...PLAIN_BLOW, bonus: aggregateModifiers(owner.statuses.active).minionDamageBonus };
-  if (landBlow(snapshot, attacker, victim, blow, swing.exposed(victim), rng, rules, events)) {
+  if (
+    landBlow(
+      snapshot,
+      attacker,
+      victim,
+      blow,
+      swing.exposed(victim),
+      rng,
+      rules,
+      events,
+      swing.surroundings,
+    )
+  ) {
     landedCritical(attacker, snapshot.criticalStrikes, events);
     criticalHitRiders(
       attacker,
@@ -1435,6 +1448,7 @@ export function resolveAttackSkillOutcome(
           rng,
           rules,
           events,
+          surroundings,
         )
       ) {
         landedCritical(caster, snapshot.criticalStrikes, events);
