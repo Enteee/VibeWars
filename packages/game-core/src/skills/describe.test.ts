@@ -1560,4 +1560,12 @@ describe("Elementalist auras (#2095)", () => {
       "Applies Sliver Armor for 10s (45% chance to block attacks, the nearest of nearby foes takes 29 earth damage whenever it is targeted by a foe's spell or attack)",
     ]);
   });
+
+  it("says Marksman's Wager costs your energy, Oath Shot recharges the others (#2133)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(texts("ranger.marksmans-wager")).toEqual([
+      "For 18s, whenever your arrows hit: gain 9 energy. Whenever your arrows fail to hit: you lose 10 energy",
+    ]);
+    expect(texts("ranger.oath-shot")).toContain("Recharges all your other skills");
+  });
 });

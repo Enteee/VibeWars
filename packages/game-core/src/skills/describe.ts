@@ -1049,6 +1049,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     definition.endsWhenTriggered,
     definition.category === "hex" || definition.category === "condition",
     definition.category === "item",
+    definition.category === "preparation" || definition.category === "stance",
   )) {
     (clause ? parts : sentences).push(text);
   }
@@ -1286,6 +1287,7 @@ function describeTriggers(
   nextOnly: boolean,
   bearerIsFoe: boolean,
   dropped: boolean,
+  bearerIsCaster: boolean,
 ): TriggerLine[] {
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
@@ -1333,9 +1335,12 @@ function describeTriggers(
                   ? NEXT_SKILL
                   : nextOnly
                     ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
-                    : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
+                    : bearerIsCaster && trigger.weapon === "bow"
+                      ? `whenever your arrows ${on.map((event) => ARROWS_WHEN[event] ?? whenOf(event, trigger)).join(" or ")}`
+                      : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
       ranks,
       bearerIsFoe,
+      bearerIsCaster,
     );
     // A heal on the bearer and the same on the allies around (#1951):
     // Mist Form's, said once.
@@ -1368,6 +1373,15 @@ function describeTriggers(
     return [{ text: `${DROPPED}: ${what.join(", ")}`, clause: false }];
   });
 }
+
+/**
+ * A caster's own bow-bound trigger in the corpus's words (#2133):
+ * Marksman's Wager's "whenever your arrows hit".
+ */
+const ARROWS_WHEN: Partial<Record<StatusTriggerEvent, string>> = {
+  "bearer-hits": "hit",
+  "bearer-fails-to-hit": "fail to hit",
+};
 
 /**
  * What the bearer does with a weapon that a bound trigger answers
@@ -1598,6 +1612,7 @@ function describeTrigger(
   when: string,
   ranks: ReadonlyMap<string, number>,
   bearerIsFoe: boolean,
+  bearerIsCaster: boolean,
 ): TriggerLine[] {
   const amount = (magnitude: Magnitude): string => shown(describeMagnitude(magnitude, ranks));
   const clause = (text: string): TriggerLine => ({ text, clause: true });
@@ -1872,11 +1887,14 @@ function describeTrigger(
       );
     }
     // Energizing Finale's (#1485): "whenever a chant or shout ends on it:
-    // it gains 2 energy".
+    // it gains 2 energy". On the caster's own preparation or stance, a loss
+    // is yours (#2133): Marksman's Wager's "you lose 10 energy".
+    const bearer = (text: string): string =>
+      text
+        .replace(/^Target gains/, "it gains")
+        .replace(/^Target loses/, bearerIsCaster ? "you lose" : "it loses");
     return describeEffects(effect, ranks).map(({ text }) =>
-      sentence(
-        `${when}: ${lowerFirst(trigger.target === "bearer" ? text.replace(/^Target gains/, "it gains") : text)}`,
-      ),
+      sentence(`${when}: ${lowerFirst(trigger.target === "bearer" ? bearer(text) : text)}`),
     );
   });
 }
@@ -3089,7 +3107,7 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       return {
         text:
           effect.which === "all"
-            ? "Recharges all your skills"
+            ? "Recharges all your other skills"
             : "Recharges all your other attack skills",
         magnitude: undefined,
       };
