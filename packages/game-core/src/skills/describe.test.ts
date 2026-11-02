@@ -1444,7 +1444,7 @@ describe("enchantment party moves (#1975)", () => {
     return describeSkill(skill(id), ranks).effects.map(({ text }) => text);
   };
 
-  it("says what each strips, cheapens or costs, at rank 12", () => {
+  it("says what each strips, cheapens or costs, at rank 12 (#2158: 0.8s, unrounded)", () => {
     expect(texts("monk.air-of-enchantment")).toEqual([
       "Applies Air of Enchantment for 9s " +
         "(enchantments cast on the bearer cost 10 less Energy, minimum 1)",
@@ -1460,7 +1460,7 @@ describe("enchantment party moves (#1975)", () => {
     expect(texts("necromancer.jaundiced-gaze")).toEqual([
       "Removes 1 enchantment",
       "If it removes an enchantment: applies Jaundiced Gaze to you for 16s " +
-        "(your next enchantment costs 8 less Energy (minimum 0) and casts 1s faster)",
+        "(your next enchantment costs 8 less Energy (minimum 0) and casts 0.8s faster)",
     ]);
   });
 });

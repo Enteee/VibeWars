@@ -549,7 +549,7 @@ export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | un
                             ({ filter, rechargeFaster }) =>
                               filter.profession !== undefined &&
                               filter.type === undefined &&
-                              rechargeFaster > 0,
+                              statAtTwelve(rechargeFaster) > 0,
                           )
                         ? "profession-haste"
                         : status.unblockableByBlinded

@@ -456,10 +456,12 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     profession: "paragon",
     moveSpeedMultiplier: 1.25,
   }),
-  // Focused Anger at Leadership 12: 120% more adrenaline.
+  // Focused Anger: "0...150% more adrenaline" (#2158).
   "focused-anger": define("focused-anger", "Focused Anger", "skill-effect", {
     profession: "paragon",
-    adrenalineGainFaster: 1.2,
+    adrenalineGainFaster: {
+      scaling: { attributeId: "paragon.leadership", atZero: 0, atTwelve: 1.2 },
+    },
   }),
   // "You gain 33% more adrenaline while not under the effects of an
   // enchantment" (#1916).
