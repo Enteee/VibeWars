@@ -410,7 +410,7 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
 }) => {
   await saveCharacters(page, ["Alpha"]);
   await openTeamBuilder(page);
-  // A Team Build of two, the smallest there is to be (#2109, #2141).
+  // A Team Build of two, the smallest after #2141, so two members fill it (#2109).
   await setTeamSize(page, 2);
   await page.getByRole("button", { name: "new team" }).click();
 
@@ -444,6 +444,7 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("");
   await page.getByRole("button", { name: "add Alpha" }).click();
+  await page.getByRole("button", { name: "add Alpha" }).click();
   await expect(save).toHaveAttribute(
     "title",
     "Save this team (it has problems: Give the team a name.)",
@@ -453,7 +454,7 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
   await save.click();
   await expect(page.locator(".toast")).toHaveText("Saved");
   await expect(page.locator(".screen-teams")).toBeVisible();
-  await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
 
   // Edit, rename and Save: back on Team Builder, the card renamed.
   await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
@@ -471,7 +472,7 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
 
   await page.reload();
   await openTeamBuilder(page);
-  await expect.poll(() => teamList(page)).toEqual(["Trio · 1 member"]);
+  await expect.poll(() => teamList(page)).toEqual(["Trio · 2 members"]);
 });
 
 test("a toast goes with its screen; one the next screen raises stays (#710)", async ({ page }) => {
