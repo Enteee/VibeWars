@@ -288,7 +288,7 @@ describe("glyphs on the next spell (#1730)", () => {
         cost: { kind: "energy", amount: 5 },
         activationSeconds: 1,
         rechargeSeconds: recharge,
-        effects: [{ kind: "apply-status", durationSeconds: 15 }],
+        effects: [{ kind: "apply-status", durationSeconds: { flat: 15 } }],
       });
     },
   );

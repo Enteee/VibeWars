@@ -36,7 +36,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 3...7...8 seconds": 7 s, its rank-12 value; the regeneration,
     // the block and the end on attacking are the status's.
-    effects: [{ kind: "apply-status", statusId: "weapon-of-warding", durationSeconds: 7 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "weapon-of-warding",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 3, atTwelve: 7 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.mend-body-and-soul",
@@ -185,7 +193,9 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // additional 5...21...25 Health per second if that ally is within
     // earshot of a Spirit": the 21 is the status's; there are no spirits
     // yet (#467), so never the additional 21, as in GW1 with none up.
-    effects: [{ kind: "apply-status", statusId: "spirit-light-weapon", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "spirit-light-weapon", durationSeconds: { flat: 10 } },
+    ],
   },
   {
     id: "ritualist.weapon-of-quickening",
@@ -213,7 +223,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // "For 5...21...25 seconds, target ally has a Weapon of Quickening, and
     // Spells and Binding Rituals recharge 33% faster": 21 s, its rank-12
     // value. There are no binding rituals yet (#467), so spells alone.
-    effects: [{ kind: "apply-status", statusId: "weapon-of-quickening", durationSeconds: 21 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "weapon-of-quickening",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.communing", atZero: 5, atTwelve: 21 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.weapon-of-aggression",
@@ -240,7 +258,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...13...15 seconds, you attack 25% faster": 13 s, its rank-12
     // value.
-    effects: [{ kind: "apply-status", statusId: "weapon-of-aggression", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "weapon-of-aggression",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 5, atTwelve: 13 },
+        },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -274,7 +300,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // from a foe, that ally steals up to 20...68...80 health from that foe
     // and loses 2 conditions": the 2026-04-28 revision (3 energy, 68, 2
     // conditions); the steal and the removal are the status's.
-    effects: [{ kind: "apply-status", statusId: "weapon-of-remedy", durationSeconds: 8 }],
+    effects: [{ kind: "apply-status", statusId: "weapon-of-remedy", durationSeconds: { flat: 8 } }],
   },
   {
     id: "ritualist.vengeful-weapon",
@@ -302,7 +328,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // "For 8 seconds, the next time target ally takes damage or life steal
     // from a foe, that ally steals up to 15...51...60 Health from that
     // foe": the 51 is the status's.
-    effects: [{ kind: "apply-status", statusId: "vengeful-weapon", durationSeconds: 8 }],
+    effects: [{ kind: "apply-status", statusId: "vengeful-weapon", durationSeconds: { flat: 8 } }],
   },
   {
     id: "ritualist.splinter-weapon",
@@ -330,7 +356,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // "For 20 seconds, target ally has a Splinter Weapon. Target ally's next
     // 1...4...5 attacks deal 5...25...30 damage to up to 4 adjacent foes":
     // the PvP page, 726; the 4 hits and the 25 are the status's.
-    effects: [{ kind: "apply-status", statusId: "splinter-weapon", durationSeconds: 20 }],
+    effects: [{ kind: "apply-status", statusId: "splinter-weapon", durationSeconds: { flat: 20 } }],
   },
   {
     id: "ritualist.mending-grip",
@@ -540,7 +566,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
           [1, 6],
           { flat: 30 },
           { atZero: 5, atTwelve: 17 },
-          [{ kind: "apply-status", statusId: "blind", durationSeconds: 5 }],
+          [
+            {
+              kind: "apply-status",
+              statusId: "blind",
+              durationSeconds: {
+                scaling: { attributeId: "ritualist.communing", atZero: 1, atTwelve: 5 },
+              },
+            },
+          ],
         ),
       },
     ],
@@ -839,7 +873,13 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
             type: "lightning",
             armorPenetration: 0,
           },
-          { kind: "apply-status", statusId: "blind", durationSeconds: 10 },
+          {
+            kind: "apply-status",
+            statusId: "blind",
+            durationSeconds: {
+              scaling: { attributeId: "ritualist.spawning-power", atZero: 3, atTwelve: 10.2 },
+            },
+          },
         ],
       },
       { kind: "destroy-target-spirit" },
@@ -1112,7 +1152,13 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
                 type: "lightning",
                 armorPenetration: 0,
               },
-              { kind: "apply-status", statusId: "cracked-armor", durationSeconds: 16 },
+              {
+                kind: "apply-status",
+                statusId: "cracked-armor",
+                durationSeconds: {
+                  scaling: { attributeId: "ritualist.channeling-magic", atZero: 1, atTwelve: 16.2 },
+                },
+              },
             ],
           },
         },
@@ -1158,7 +1204,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "caster-spirit-within", radius: AREA_EARSHOT },
-        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 4 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "burning",
+            durationSeconds: {
+              scaling: { attributeId: "ritualist.channeling-magic", atZero: 1, atTwelve: 4.2 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -1244,7 +1298,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // "For 10...18...20 seconds, ... take 8...18...20 damage whenever hit
     // by a spirit's attack": 18 s, its rank-12 value; the damage is the
     // status's.
-    effects: [{ kind: "apply-status", statusId: "painful-bond", durationSeconds: 18 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "painful-bond",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 10, atTwelve: 18 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.lamentation",
@@ -1281,7 +1343,13 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // are within earshot of a spirit or corpse": 17 s, its rank-12 value;
     // the degeneration is the status's. GW1 names no type: typeless.
     effects: [
-      { kind: "apply-status", statusId: "lamentation", durationSeconds: 17 },
+      {
+        kind: "apply-status",
+        statusId: "lamentation",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
       {
         kind: "if",
         condition: { kind: "caster-spirit-or-corpse-within", radius: AREA_EARSHOT },
@@ -1366,7 +1434,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 15...51...60 seconds": 51, its rank-12 value. The health and
     // energy for each creature are the status's.
-    effects: [{ kind: "apply-status", statusId: "boon-of-creation", durationSeconds: 51 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "boon-of-creation",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.explosive-growth",
@@ -1393,7 +1469,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 15...51...60 seconds": 51, its rank-12 value. The lightning
     // round each new creature is the status's.
-    effects: [{ kind: "apply-status", statusId: "explosive-growth", durationSeconds: 51 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "explosive-growth",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.spirits-gift",
@@ -1420,7 +1504,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 60 seconds": the heal and cleanse round each new creature are
     // the status's.
-    effects: [{ kind: "apply-status", statusId: "spirits-gift", durationSeconds: 60 }],
+    effects: [{ kind: "apply-status", statusId: "spirits-gift", durationSeconds: { flat: 60 } }],
   },
   {
     id: "ritualist.signet-of-creation",
@@ -1489,7 +1573,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Hold Kaolai's ashes for up to 15...60 seconds": 51.
-    effects: [{ kind: "apply-status", statusId: "protective-was-kaolai", durationSeconds: 51 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "protective-was-kaolai",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.generous-was-tsungrai",
@@ -1518,7 +1610,13 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // sacrifice.
     effects: [
       { kind: "sacrifice-health", percentOfMax: 10 },
-      { kind: "apply-status", statusId: "generous-was-tsungrai", durationSeconds: 51 },
+      {
+        kind: "apply-status",
+        statusId: "generous-was-tsungrai",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 51 },
+        },
+      },
     ],
   },
   {
@@ -1545,7 +1643,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Hold Xinrae's ashes for up to 15...60 seconds": 51.
-    effects: [{ kind: "apply-status", statusId: "defiant-was-xinrae", durationSeconds: 51 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "defiant-was-xinrae",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.blind-was-mingson",
@@ -1571,7 +1677,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Hold Mingson's ashes for up to 15...60 seconds": 51.
-    effects: [{ kind: "apply-status", statusId: "blind-was-mingson", durationSeconds: 51 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "blind-was-mingson",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.grasping-was-kuurong",
@@ -1597,7 +1711,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Hold Kuurong's ashes for up to 15...60 seconds": 51.
-    effects: [{ kind: "apply-status", statusId: "grasping-was-kuurong", durationSeconds: 51 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "grasping-was-kuurong",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.energetic-was-lee-sa",
@@ -1623,7 +1745,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Hold Lee Sa's ashes for 5...15 seconds": 13.
-    effects: [{ kind: "apply-status", statusId: "energetic-was-lee-sa", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "energetic-was-lee-sa",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 13 },
+        },
+      },
+    ],
   },
   // Ritualist item spells 2 (#1464), as #1434's.
   {
@@ -1650,7 +1780,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Hold Vorizun's ashes for up to 15...60 seconds": 51.
-    effects: [{ kind: "apply-status", statusId: "mighty-was-vorizun", durationSeconds: 51 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mighty-was-vorizun",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.communing", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.cruel-was-daoshen",
@@ -1676,7 +1814,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Hold Daoshen's ashes for up to 15...60 seconds": 51.
-    effects: [{ kind: "apply-status", statusId: "cruel-was-daoshen", durationSeconds: 51 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "cruel-was-daoshen",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.destructive-was-glaive",
@@ -1702,7 +1848,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // PvP (3157): "Hold Glaive's ashes for up to 30...60 seconds": 54.
-    effects: [{ kind: "apply-status", statusId: "destructive-was-glaive", durationSeconds: 54 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "destructive-was-glaive",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 30, atTwelve: 54 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.tranquil-was-tanasen",
@@ -1728,7 +1882,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Hold Tanasen's ashes for up to 5...20 seconds": 17.
-    effects: [{ kind: "apply-status", statusId: "tranquil-was-tanasen", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "tranquil-was-tanasen",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.vengeful-was-khanhei",
@@ -1754,7 +1916,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Hold Khanhei's ashes for 5...11 seconds": 10.
-    effects: [{ kind: "apply-status", statusId: "vengeful-was-khanhei", durationSeconds: 10 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "vengeful-was-khanhei",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 5, atTwelve: 9.8 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.pure-was-li-ming",
@@ -1780,7 +1950,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Hold Li Ming's ashes for 5...20 seconds": 17.
-    effects: [{ kind: "apply-status", statusId: "pure-was-li-ming", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "pure-was-li-ming",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   // Ritualist spirits (#1550): on-hit effects past a status, and death bursts.
   bindingRitual({
@@ -1975,7 +2153,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // that damage is limited to 5% of that ally's max Health and that ally
     // steals up to 20...80 Health from that foe": the cap and the 68 are
     // the status's.
-    effects: [{ kind: "apply-status", statusId: "xinraes-weapon", durationSeconds: 8 }],
+    effects: [{ kind: "apply-status", statusId: "xinraes-weapon", durationSeconds: { flat: 8 } }],
   },
   // Ritualist weapon spells 3 (#1654).
   {
@@ -2004,7 +2182,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // "For 3...12 seconds, target ally has a Resilient Weapon. While
     // suffering from a hex or condition, that ally gains +1...6 Health
     // regeneration and +24 armor": the 5 and the 24 are the status's.
-    effects: [{ kind: "apply-status", statusId: "resilient-weapon", durationSeconds: 10 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "resilient-weapon",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 3, atTwelve: 10.2 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.ghostly-weapon",
@@ -2031,7 +2217,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...20 seconds, target other ally's next attack cannot be
     // blocked."
-    effects: [{ kind: "apply-status", statusId: "ghostly-weapon", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "ghostly-weapon",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.communing", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.guided-weapon",
@@ -2058,7 +2252,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 4...10 seconds, target ally's attacks cannot be blocked": the
     // PvP page, 3462.
-    effects: [{ kind: "apply-status", statusId: "guided-weapon", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "guided-weapon",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.communing", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.sundering-weapon",
@@ -2086,7 +2288,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // "For 4...10 seconds, target ally's next 3 attacks have 10% armor
     // penetration and cause Cracked Armor for 5...20 seconds": the 17 is
     // the status's.
-    effects: [{ kind: "apply-status", statusId: "sundering-weapon", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "sundering-weapon",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.communing", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.weapon-of-shadow",
@@ -2113,7 +2323,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 1...7 seconds, target ally has a Weapon of Shadow": what it
     // blinds is the status's.
-    effects: [{ kind: "apply-status", statusId: "weapon-of-shadow", durationSeconds: 6 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "weapon-of-shadow",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 1, atTwelve: 5.8 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.warmongers-weapon",
@@ -2140,7 +2358,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 3...13 seconds, if target ally attacks a foe who is not
     // attacking, that foe is interrupted."
-    effects: [{ kind: "apply-status", statusId: "warmongers-weapon", durationSeconds: 11 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "warmongers-weapon",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 3, atTwelve: 11 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.wailing-weapon",
@@ -2167,7 +2393,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 3...14 seconds, target ally has a Wailing Weapon. Whenever the
     // Wailing Weapon strikes an attacking foe, that foe is interrupted."
-    effects: [{ kind: "apply-status", statusId: "wailing-weapon", durationSeconds: 12 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "wailing-weapon",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 3, atTwelve: 11.8 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.nightmare-weapon",
@@ -2195,7 +2429,9 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // "For 12 seconds, target ally has a Nightmare Weapon. Target ally's
     // next 3 attacks are reduced by 10...50 damage and steal up to 10...50
     // Health": the 42 is the status's.
-    effects: [{ kind: "apply-status", statusId: "nightmare-weapon", durationSeconds: 12 }],
+    effects: [
+      { kind: "apply-status", statusId: "nightmare-weapon", durationSeconds: { flat: 12 } },
+    ],
   },
   {
     id: "ritualist.weapon-of-fury",
@@ -2222,7 +2458,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...20 seconds, target ally gains 100% more adrenaline and 1
     // Energy whenever that ally successfully hits with an attack."
-    effects: [{ kind: "apply-status", statusId: "weapon-of-fury", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "weapon-of-fury",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.weapon-of-renewal",
@@ -2249,7 +2493,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...20 seconds, the next time target ally hits with an attack
     // skill, that ally gains 1...7 Energy": the 6 is the status's.
-    effects: [{ kind: "apply-status", statusId: "weapon-of-renewal", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "weapon-of-renewal",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   // Your spirits within earshot (#1777): measured from you, whoever the
   // skill strikes.
@@ -2335,7 +2587,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         hits: "own-spirits",
         radius: AREA_EARSHOT,
         maxTargets: undefined,
-        effects: [{ kind: "apply-status", statusId: "spiritleech-aura", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "spiritleech-aura",
+            durationSeconds: {
+              scaling: { attributeId: "ritualist.restoration-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -2392,7 +2652,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // PvP: "For 10...35 seconds, you have 10 base damage reduction while
     // casting binding rituals": 30 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "armor-of-unfeeling", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "armor-of-unfeeling",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.communing", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.signet-of-ghostly-might",
@@ -2421,7 +2689,9 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // PvP: "Target allied summoned creature's attacks deal 5...35 more
     // damage. After 10 seconds, that creature is destroyed": the +29 and
     // the destroying are the status's.
-    effects: [{ kind: "apply-status", statusId: "signet-of-ghostly-might", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "signet-of-ghostly-might", durationSeconds: { flat: 10 } },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -2451,7 +2721,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 5...30 seconds": 25 s; the maximum Health is the status's.
-    effects: [{ kind: "apply-status", statusId: "vital-weapon", durationSeconds: 25 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "vital-weapon",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.communing", atZero: 5, atTwelve: 25 },
+        },
+      },
+    ],
   },
   // Suppressed while enchanted (#1916).
   {
@@ -2480,7 +2758,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // "Give target ally a Brutal Weapon for 10...34...40 seconds. The
     // bearer's weapon strikes for +5...13...15 damage as long as the bearer
     // is under no enchantments": the 13 is the status's.
-    effects: [{ kind: "apply-status", statusId: "brutal-weapon", durationSeconds: 34 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "brutal-weapon",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.communing", atZero: 10, atTwelve: 34 },
+        },
+      },
+    ],
   },
   // Attributes raised (#1941).
   {
@@ -2510,7 +2796,15 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // 2...4 for your next skill. If that skill is a Binding Ritual, it
     // recharges 10...50...60% faster and Ritual Lord recharges instantly"
     // (#1941): the status holds the rest.
-    effects: [{ kind: "apply-status", statusId: "ritual-lord", durationSeconds: 29 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "ritual-lord",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 29 },
+        },
+      },
+    ],
   },
   {
     id: "ritualist.signet-of-binding",

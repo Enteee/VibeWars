@@ -119,7 +119,7 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(leave).toBeVisible();
     await expect(host.locator(".party-strip .party-member")).toHaveCount(2);
     // A party queues in card 4: alone only.
-    await expect(guest.locator(".random-arena-tile").first()).toBeDisabled();
+    await expect(guest.locator("#topbar .screen-ready")).toBeDisabled();
 
     // The host picks the mode; the guest's rail and screen follow, its modes locked.
     await openRail(host, "GvG");
@@ -162,7 +162,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await debugger_.send("Debugger.enable");
     await debugger_.send("Debugger.pause");
     await joinByCode(guest, hostInvite);
-    await guest.locator(".random-arena-tile").first().click();
+    await guest.locator("#topbar .screen-ready").click();
     await expect(guest.locator(".queue-count")).toBeVisible();
 
     // The host answers: the join lands late, and is let go.
@@ -191,7 +191,7 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   const card = page.locator(".character-card");
   await expect(card).toHaveCount(1);
   await expect(card).toHaveClass(/is-selected/);
-  await expect(page.locator(".random-arena-tile").first()).toBeEnabled();
+  await expect(page.locator("#topbar .screen-ready")).toBeEnabled();
   const name = card.locator(".play-card-name");
   await expect(name).toHaveText(ROLLED_NAME);
   const first = await name.innerText();
@@ -284,9 +284,9 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   // Random Arena only chooses: nothing to edit there.
   await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
 
-  // Random Arena has no button of its own (#2019); Options is its ⚙ (#1272), Music its ♪ (#1453).
+  // Random Arena's one button is Ready (#2022); Options is its ⚙ (#1272), Music its ♪ (#1453).
   const own = page.locator("#topbar .topbar-screen-actions").getByRole("button");
-  await expect(own).toHaveCount(0);
+  await expect(own).toHaveText(["Ready"]);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
 

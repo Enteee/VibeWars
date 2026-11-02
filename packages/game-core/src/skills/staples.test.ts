@@ -267,7 +267,12 @@ describe("Throw Dirt (#522)", () => {
     const adjacent = foe("adjacent");
     const outside = foe("outside");
     const ally = foe("ally", 0);
-    land(makeCombatant({ id: "a", team: 0 }), "ranger.throw-dirt", at(target, vec2(40, 0)), [
+    const ranger = makeCombatant({
+      id: "a",
+      team: 0,
+      attributeRanks: new Map([["ranger.expertise", 12]]),
+    });
+    land(ranger, "ranger.throw-dirt", at(target, vec2(40, 0)), [
       at(adjacent, vec2(40 + AREA_ADJACENT, 0)),
       at(outside, vec2(40 + AREA_ADJACENT + 1, 0)),
       at(ally, vec2(40, 10)),

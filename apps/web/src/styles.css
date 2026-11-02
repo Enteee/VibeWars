@@ -1379,6 +1379,23 @@ body {
   border-right: 1px solid var(--line);
 }
 
+/* The team size dropdown (#2022), under the modes it sizes. */
+.mode-rail-size {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  width: 66px;
+  margin-top: 0.3rem;
+  color: var(--ink-dim);
+}
+
+.screen .mode-rail-size-select {
+  width: 100%;
+  padding: 0.2rem 0.1rem;
+  font-size: 0.75rem;
+}
+
 .mode-rail-divider {
   width: 56px;
   margin: auto 0 0.3rem;
@@ -6259,24 +6276,7 @@ body:has(#app > .chat) .now-playing {
   outline: none;
 }
 
-/* Random Arena's format tiles (#880, #1525): each queues for its format. */
-.random-arena-tiles {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 10rem));
-  gap: 0.7rem;
-}
-
-.screen .random-arena-tile {
-  padding: 1rem;
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
-.screen .random-arena-tile:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
+/* Why Random Arena's Ready is greyed out (#2022). */
 .random-arena-hint {
   margin: 0;
   color: var(--ink-dim);
