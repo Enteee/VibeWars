@@ -634,6 +634,7 @@ describe("describeSkill", () => {
           (rule?.conditionalBonus === undefined ? 0 : 1) +
           (rule?.bonusPer === undefined ? 0 : 1) +
           (rule?.criticalWhen === undefined ? 0 : 1) +
+          (rule?.missChanceAtOrBelowRank === undefined ? 0 : 1) +
           ((rule?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(rule?.onBlocked ?? []) +
           lines(rule?.onCritical ?? []) +

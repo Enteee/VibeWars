@@ -4,8 +4,8 @@ const rows = {
   "ranger.disrupting-accuracy": { glyph: "arrow-keen", modifier: "stun" },
   "ranger.oath-shot": { glyph: "bow-recharge", modifier: "clock" },
   "ranger.marksmans-wager": { glyph: "arrow-energy", modifier: "down" },
-  "ranger.storm-chaser": { glyph: "arrow-wind", modifier: "bolt" },
-  "ranger.screaming-shot": { glyph: "arrow-barbed", modifier: "bleed" },
+  "ranger.storm-chaser": { glyph: "arrow-wind", modifier: "up" },
+  "ranger.screaming-shot": { glyph: "arrow-pierce", modifier: "bleed" },
 };
 
 export default rows;
