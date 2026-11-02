@@ -94,6 +94,9 @@ export function botUses(skill: Skill): readonly BotUse[] {
   ) {
     uses.push("offence");
   }
+  // A shout that only acts on a state (#2096): "You Will Die!", "Retreat!".
+  // The fight rule waits for its state.
+  if (uses.length === 0 && stateGates(skill) !== undefined) uses.push("offence");
   if (uses.length === 0 && boosts(skill)) uses.push("boost");
   return uses;
 }
@@ -322,6 +325,11 @@ export function stateGateHolds(
   target: Combatant,
   surroundings: Surroundings,
 ): boolean | undefined {
+  return stateGates(skill)?.some((gate) => stateHolds(gate, caster, target, surroundings));
+}
+
+/** The states `skill` acts on, when its every effect is an `if` on one; else `undefined`. */
+function stateGates(skill: Skill): readonly StateCondition[] | undefined {
   if (skill.attack !== undefined || skill.effects.length === 0) {
     return undefined;
   }
@@ -332,7 +340,7 @@ export function stateGateHolds(
     }
     gates.push(effect.condition);
   }
-  return gates.some((gate) => stateHolds(gate, caster, target, surroundings));
+  return gates;
 }
 
 /**

@@ -3915,7 +3915,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
   {
     id: "warrior.protectors-defense",
     name: "Protector's Defense",
-    gwId: 3457,
+    gwId: 810,
     type: "skill",
     elite: false,
     flash: false,

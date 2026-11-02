@@ -117,7 +117,6 @@ const NO_BOT_USE = new Set([
   "ritualist.energetic-was-lee-sa",
   "ritualist.pure-was-li-ming",
   "ritualist.signet-of-creation",
-  "ritualist.signet-of-spirits",
   "ritualist.vengeful-was-khanhei",
   "ritualist.weapon-of-quickening",
   "warrior.balanced-stance",
@@ -136,9 +135,6 @@ const NO_BOT_USE = new Set([
   "necromancer.order-of-undeath",
   "necromancer.aura-of-the-lich",
   "necromancer.taste-of-death",
-  "necromancer.gaze-of-contempt",
-  // An enchantment strip only on a knocked-down foe (#1643).
-  "assassin.lift-enchantment",
   "necromancer.well-of-suffering",
   // A foe's Energy drained in an area (#1730): no rule for it.
   "necromancer.well-of-weariness",
@@ -248,16 +244,10 @@ const NO_BOT_USE = new Set([
   // standing is no rule the bot weighs.
   "elementalist.ward-against-foes",
   "elementalist.ward-of-stability",
-  // The not condition (#1670): energy from a foe doing nothing is no rule
-  // the bot weighs.
-  "mesmer.waste-not-want-not",
-  // Paragon staples 4 (#1677): energy and adrenaline on a condition are
-  // no rules the bot weighs.
-  "paragon.never-give-up",
+  // Paragon staples 4 (#1677): energy and adrenaline on a condition the
+  // skill does not check itself are no rules the bot weighs.
   "paragon.the-power-is-yours",
   "paragon.focused-anger",
-  "paragon.glowing-signet",
-  "paragon.signet-of-aggression",
   // Monk mechanics (#1754): a holy aura round an ally is no rule the bot
   // weighs.
   "monk.balthazars-aura",
