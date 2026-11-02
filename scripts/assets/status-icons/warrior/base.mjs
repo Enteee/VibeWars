@@ -189,6 +189,40 @@ const rows = {
       `<path d="M12 4l7 2.5v5.5c0 3.5-3 5.5-7 7.5-4-2-7-4-7-7.5V6.5z" ${stroke(c, 2.2)}/>` +
       `<path d="M9 14l3-3.5 3 3.5" ${stroke(c, 2.2)}/>`,
   ],
+  // Stance: three curved claw rakes, faster until a blow misses (#2208).
+  "tiger-stance": [
+    "stance",
+    (c) => `<path d="M5 6Q9 11 7 19M11 5Q15 10 13 19M17 6Q20 11 19 18" ${stroke(c, 2.4)}/>`,
+  ],
+  // Stance: a furious face, slanted brows over a gritted mouth, faster and double adrenaline (#2208).
+  "berserker-stance": [
+    "stance",
+    (c) =>
+      `<circle cx="12" cy="12" r="8" ${stroke(c, 2.2)}/>` +
+      `<path d="M6.5 8.5l4 2.5M17.5 8.5l-4 2.5" ${stroke(c, 2.4)}/>` +
+      `<path d="M8.5 16.5l1.8-1.5 1.7 1.5 1.7-1.5 1.8 1.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Stance: chevrons running into a ground bar, a moving foe knocked down.
+  "bulls-charge": [
+    "stance",
+    (c) =>
+      `<path d="M5 7l4.5 5L5 17M10.5 7l4.5 5-4.5 5" ${stroke(c, 2.4)}/>` +
+      `<path d="M18 6v12" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: a shield with three slashes cut into it, blocks but takes double damage (#2208).
+  "frenzied-defense": [
+    "stance",
+    (c) =>
+      `<path d="M12 4l7 2.5v5.5c0 3.5-3 5.5-7 7.5-4-2-7-4-7-7.5V6.5z" ${stroke(c, 2.2)}/>` +
+      `<path d="M8.5 15l2-6M11.5 15l2-6M14.5 15l2-6" ${stroke(c, 1.8)}/>`,
+  ],
+  // Skill: a signet ring round a sword, the next blows hit harder (#2208).
+  "signet-of-strength": [
+    "skill-effect",
+    (c) =>
+      `<circle cx="12" cy="12" r="8.5" ${stroke(c, 2)}/>` +
+      `<path d="M8 16l8-8M9 11.5l3.5 3.5" ${stroke(c, 2.2)}/>`,
+  ],
 };
 
 export default rows;

@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { openLibraryGroup } from "./helpers/library.js";
 import { openRail } from "./helpers/menu.js";
 import { chooseProfession } from "./helpers/professions.js";
 
@@ -44,6 +45,7 @@ test("(1) Skill 1 bound to Z in Controls casts on Z, not Q, and survives a reloa
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "elementalist");
+  await openLibraryGroup(page, "Fire Magic");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
   await expect(page.locator(".training-skill").first()).toHaveText("Z");
   await expect(page.locator(".training-skill").first()).toHaveAccessibleName("Fireball");

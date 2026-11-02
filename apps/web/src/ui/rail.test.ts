@@ -7,7 +7,9 @@ import {
   LEAVE_QUEUE_FOR_TEAM_SIZE,
   NO_TEAM_SIZE_HERE,
   RAIL,
+  defaultTeamSize,
   loadRail,
+  loadTeamBuildSize,
   loadTeamSize,
   onTeamSizeChange,
   modeRail,
@@ -17,12 +19,17 @@ import {
   saveRail,
   saveTeamSize,
   setRailParty,
-  teamSizeProblem,
   type RailEntry,
   type TeamSize,
 } from "./rail.js";
 
 /** Just enough DOM to render the rail; the unit tests run in Node. */
+/** A key event, as far as the stepper reads one. */
+interface FakeKey {
+  readonly key: string;
+  readonly preventDefault: () => void;
+}
+
 class FakeElement {
   className = "";
   textContent = "";
@@ -32,17 +39,27 @@ class FakeElement {
   readonly tagName: string;
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
-  readonly listeners = new Map<string, () => void>();
+  readonly listeners = new Map<string, (event: FakeKey) => void>();
+  focused = false;
 
   constructor(tagName: string) {
     this.tagName = tagName;
+  }
+
+  focus(): void {
+    this.focused = true;
+  }
+
+  /** `key` pressed while this has the focus. */
+  press(key: string): void {
+    this.listeners.get("keydown")?.({ key, preventDefault: () => undefined });
   }
 
   readonly setAttribute = (name: string, value: string): void => {
     this.attributes.set(name, value);
   };
 
-  readonly addEventListener = (type: string, listener: () => void): void => {
+  readonly addEventListener = (type: string, listener: (event: FakeKey) => void): void => {
     this.listeners.set(type, listener);
   };
 
@@ -63,7 +80,7 @@ class FakeElement {
   }
 
   click(): void {
-    this.listeners.get("click")?.();
+    this.listeners.get("click")?.({ key: "", preventDefault: () => undefined });
   }
 }
 
@@ -100,7 +117,7 @@ describe("the mode rail (#1525)", () => {
     const rail = modeRail("gvg", () => undefined) as unknown as FakeElement;
     expect(rail.children.map((child) => child.tagName)).toEqual([
       ...Array<string>(5).fill("button"),
-      "label",
+      "div",
       "hr",
       "button",
       "button",
@@ -260,63 +277,120 @@ describe("the mode rail (#1525)", () => {
     expect(loadRail()).toBe("random-arena");
   });
 
-  /** The team size dropdown of `entry`'s rail. */
-  const sizeSelect = (entry: RailEntry): FakeElement => {
+  /** The team size field of `entry`'s rail. */
+  const sizeField = (entry: RailEntry): FakeElement => {
     const rail = modeRail(entry, () => undefined) as unknown as FakeElement;
-    const select = rail.children
-      .find((child) => child.className === "mode-rail-size")
-      ?.children.find((child) => child.tagName === "select");
-    if (select === undefined) {
-      throw new Error("no team size dropdown");
+    const field = rail.children.find((child) => child.className === "mode-rail-size");
+    if (field === undefined) {
+      throw new Error("no team size field");
     }
-    return select;
+    return field;
   };
 
-  it("puts the team size dropdown after the modes, above the divider (#2022)", () => {
+  /** The team size stepper of `entry`'s rail: ‹, the size, ›. */
+  const stepper = (
+    entry: RailEntry,
+  ): { smaller: FakeElement; size: FakeElement; larger: FakeElement } => {
+    const [smaller, size, larger] =
+      sizeField(entry).children.find((child) => child.className === "mode-rail-stepper")
+        ?.children ?? [];
+    if (smaller === undefined || size === undefined || larger === undefined) {
+      throw new Error("no team size stepper");
+    }
+    return { smaller, size, larger };
+  };
+
+  /** What `entry`'s stepper shows, and which arrows are off. */
+  const shown = (entry: RailEntry): string => {
+    const { smaller, size, larger } = stepper(entry);
+    return `${smaller.disabled ? "-" : "‹"} ${size.textContent} ${larger.disabled ? "-" : "›"}`;
+  };
+
+  it("puts the team size stepper after the modes, above the divider (#2022, #2141)", () => {
     const rail = modeRail("random-arena", () => undefined) as unknown as FakeElement;
     const tags = rail.children.map((child) => child.className);
     expect(tags.indexOf("mode-rail-size")).toBe(5);
     expect(tags.indexOf("mode-rail-divider")).toBe(6);
+    const { smaller, size, larger } = stepper("random-arena");
+    expect(smaller.attributes.get("aria-label")).toBe("Smaller team");
+    expect(larger.attributes.get("aria-label")).toBe("Larger team");
+    expect(size.attributes.get("aria-live")).toBe("polite");
   });
 
-  it("offers every size, disabling those the screen does not play, with why (#2022)", () => {
-    const options = (entry: RailEntry): string[] =>
-      sizeSelect(entry).children.map(
-        (option) => `${option.textContent}${option.disabled ? " (off)" : ""}`,
-      );
-    expect(options("random-arena")).toEqual([
-      "1v1",
-      "2v2",
-      "4v4",
-      "8v8 — not in Random Arena (off)",
-    ]);
-    expect(options("hosted-game")).toEqual(["1v1", "2v2", "4v4", "8v8"]);
-    expect(options("gvg")).toEqual([
-      "1v1 — not in GvG (off)",
-      "2v2 — not in GvG (off)",
-      "4v4 — not in GvG (off)",
-      "8v8",
-    ]);
-    expect(teamSizeProblem("heroes-ascent", 4)).toBe("4v4 is not in Heroes' Ascent");
-    expect(teamSizeProblem("teams", 8)).toBeUndefined();
+  it("opens every screen at a size it plays: 4v4, else the closest to it (#2141)", () => {
+    expect(shown("random-arena")).toBe("‹ 4v4 -");
+    expect(shown("team-arena")).toBe("‹ 4v4 ›");
+    expect(shown("hosted-game")).toBe("‹ 4v4 ›");
+    expect(shown("gvg")).toBe("- 8v8 -");
+    expect(shown("heroes-ascent")).toBe("- 8v8 -");
+    expect(defaultTeamSize("gvg")).toBe(8);
+    expect(defaultTeamSize("teams")).toBe(4);
   });
 
-  it("keeps an unplayable size selected rather than changing it (#2022)", () => {
-    stored.set(`${STORAGE_NAMESPACE}.teamSize`, "8");
-    expect(sizeSelect("random-arena").value).toBe("8");
+  it("steps Team Builder through 2v2, 4v4 and 8v8 only, stopping at the ends (#2141)", () => {
+    const { smaller, size, larger } = stepper("teams");
+    smaller.click();
+    expect(size.textContent).toBe("2v2");
+    expect([smaller.disabled, larger.disabled]).toEqual([true, false]);
+    // A disabled end steps nowhere, and never wraps.
+    smaller.click();
+    expect(size.textContent).toBe("2v2");
+    larger.click();
+    larger.click();
+    expect(size.textContent).toBe("8v8");
+    expect([smaller.disabled, larger.disabled]).toEqual([false, true]);
+    expect(loadTeamSize("teams")).toBe(8);
+    expect(loadTeamBuildSize()).toBe(8);
   });
 
-  it("disables the dropdown on Character Builder, with why (#2022)", () => {
-    const select = sizeSelect("characters");
-    expect(select.disabled).toBe(true);
-    const rail = modeRail("characters", () => undefined) as unknown as FakeElement;
-    expect(rail.children.find((child) => child.className === "mode-rail-size")?.title).toBe(
-      NO_TEAM_SIZE_HERE,
+  it("steps with Left and Right on a focused arrow (#2141)", () => {
+    const { smaller, size, larger } = stepper("hosted-game");
+    smaller.press("ArrowLeft");
+    expect(size.textContent).toBe("2v2");
+    smaller.press("ArrowRight");
+    larger.press("ArrowRight");
+    expect(size.textContent).toBe("8v8");
+    larger.press("Enter");
+    expect(size.textContent).toBe("8v8");
+    // The arrow that reached its end hands the keys to the other one.
+    expect(smaller.focused).toBe(true);
+  });
+
+  it("remembers each screen's own pick (#2141)", () => {
+    stepper("random-arena").smaller.click();
+    expect(shown("gvg")).toBe("- 8v8 -");
+    expect(shown("random-arena")).toBe("‹ 2v2 ›");
+    expect(shown("team-arena")).toBe("‹ 4v4 ›");
+    expect(JSON.parse(stored.get(`${STORAGE_NAMESPACE}.teamSizeByEntry`) ?? "")).toEqual({
+      "random-arena": 2,
+    });
+    saveTeamSize("team-arena", 8);
+    expect(loadTeamSize("random-arena")).toBe(2);
+    expect(loadTeamSize("team-arena")).toBe(8);
+  });
+
+  it("reads a screen's default for anything stored it does not play, or cannot read (#2141)", () => {
+    stored.set(
+      `${STORAGE_NAMESPACE}.teamSizeByEntry`,
+      JSON.stringify({ "random-arena": 8, teams: 1, gvg: "8", "team-arena": 2 }),
     );
-    expect(sizeSelect("teams").disabled).toBe(false);
+    expect(loadTeamSize("random-arena")).toBe(4);
+    expect(loadTeamSize("teams")).toBe(4);
+    expect(loadTeamSize("gvg")).toBe(8);
+    expect(loadTeamSize("team-arena")).toBe(2);
+    for (const bad of ["{", "[2]", "4", "null"]) {
+      stored.set(`${STORAGE_NAMESPACE}.teamSizeByEntry`, bad);
+      expect(loadTeamSize("team-arena")).toBe(4);
+    }
   });
 
-  it("locks a guest's dropdown: the host sets the team size (#2022)", () => {
+  it("shows no size on Character Builder, both arrows off, with why (#2022)", () => {
+    expect(shown("characters")).toBe("- — -");
+    expect(sizeField("characters").title).toBe(NO_TEAM_SIZE_HERE);
+    expect(shown("teams")).toBe("‹ 4v4 ›");
+  });
+
+  it("locks a guest's stepper at the host's size (#2022)", () => {
     setRailParty({
       code: "ACDEFG",
       mode: "hosted-game",
@@ -326,15 +400,13 @@ describe("the mode rail (#1525)", () => {
       queuedMs: null,
       teams: undefined,
       ascentRound: null,
-      teamSize: 4,
+      teamSize: 2,
     });
-    const rail = modeRail("hosted-game", () => undefined) as unknown as FakeElement;
-    const field = rail.children.find((child) => child.className === "mode-rail-size");
-    expect(field?.title).toBe(HOST_SETS_TEAM_SIZE);
-    expect(field?.children.find((child) => child.tagName === "select")?.disabled).toBe(true);
+    expect(sizeField("hosted-game").title).toBe(HOST_SETS_TEAM_SIZE);
+    expect(shown("hosted-game")).toBe("- 2v2 -");
   });
 
-  it("locks a queued leader's dropdown: the queue is for the size it has (#2107)", () => {
+  it("locks a queued leader's stepper: the queue is for the size it has (#2107)", () => {
     const party = {
       code: "ACDEFG",
       mode: "team-arena",
@@ -346,27 +418,22 @@ describe("the mode rail (#1525)", () => {
       ascentRound: null,
       teamSize: 2,
     } as const;
-    const sizeField = (): FakeElement | undefined =>
-      (modeRail("team-arena", () => undefined) as unknown as FakeElement).children.find(
-        (child) => child.className === "mode-rail-size",
-      );
     setRailParty(party);
-    expect(sizeField()?.children.find((child) => child.tagName === "select")?.disabled).toBe(false);
+    expect(shown("team-arena")).toBe("- 2v2 ›");
 
     setRailParty({ ...party, queuedMs: 5_000 });
-    const field = sizeField();
-    expect(field?.title).toBe(LEAVE_QUEUE_FOR_TEAM_SIZE);
-    expect(field?.children.find((child) => child.tagName === "select")?.disabled).toBe(true);
+    expect(sizeField("team-arena").title).toBe(LEAVE_QUEUE_FOR_TEAM_SIZE);
+    expect(shown("team-arena")).toBe("- 2v2 -");
     // A builder's size is its own filter, queued or not.
-    expect(sizeSelect("teams").disabled).toBe(false);
+    expect(shown("teams")).toBe("‹ 4v4 ›");
   });
 
   it("shows a Hosted Game lobby's team size, the host's pick, not your own (#2104)", () => {
-    saveTeamSize(1);
+    saveTeamSize("hosted-game", 1);
     const party = {
       code: "ACDEFG",
       mode: "hosted-game",
-      isHost: false,
+      isHost: true,
       open: false,
       members: [],
       queuedMs: null,
@@ -375,15 +442,13 @@ describe("the mode rail (#1525)", () => {
       teamSize: 2,
     } as const;
     setRailParty(party);
-    expect(sizeSelect("hosted-game").value).toBe("2");
-    // Elsewhere, and in a lobby of another mode, it is your own.
-    expect(sizeSelect("teams").value).toBe("1");
+    expect(shown("hosted-game")).toBe("‹ 2v2 ›");
+    // In a lobby of another mode, it is your own.
     setRailParty({ ...party, mode: "random-arena" });
-    expect(sizeSelect("hosted-game").value).toBe("1");
+    expect(shown("hosted-game")).toBe("- 1v1 ›");
   });
 
-  it("stores the size picked, tells the shown screen, and reads 4v4 for anything else (#2022)", () => {
-    expect(loadTeamSize()).toBe(4);
+  it("tells the shown screen of a step, not of opening it (#2022)", () => {
     const heard: TeamSize[] = [];
     railScreen(
       new FakeElement("div") as unknown as HTMLElement,
@@ -392,22 +457,14 @@ describe("the mode rail (#1525)", () => {
       () => undefined,
     );
     onTeamSizeChange((size) => heard.push(size));
-    const select = sizeSelect("random-arena");
-    select.value = "2";
-    select.listeners.get("change")?.();
-    expect(stored.get(`${STORAGE_NAMESPACE}.teamSize`)).toBe("2");
-    expect(loadTeamSize()).toBe(2);
+    const { smaller } = stepper("random-arena");
+    expect(heard).toEqual([]);
+    smaller.click();
     expect(heard).toEqual([2]);
 
     // Another screen drawn: the last one hears nothing more.
     railScreen(new FakeElement("div") as unknown as HTMLElement, "teams", "", () => undefined);
-    select.value = "1";
-    select.listeners.get("change")?.();
+    smaller.click();
     expect(heard).toEqual([2]);
-
-    stored.set(`${STORAGE_NAMESPACE}.teamSize`, "3");
-    expect(loadTeamSize()).toBe(4);
-    stored.set(`${STORAGE_NAMESPACE}.teamSize`, "eight");
-    expect(loadTeamSize()).toBe(4);
   });
 });

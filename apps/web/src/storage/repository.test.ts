@@ -45,7 +45,7 @@ function team(overrides: Partial<StoredTeam> = {}): StoredTeam {
     schemaVersion: TEAM_SCHEMA_VERSION,
     id: "team-1",
     name: "Test Team",
-    size: 1,
+    size: 2,
     members: [member("char-1")],
     rulesetId: "minimal-gw-inspired-pvp-v1",
     updatedAt: 1000,
@@ -232,6 +232,17 @@ describe("TeamRepository", () => {
     expect(teams).toEqual([]);
     expect(problems).toEqual([discardedTeamsNotice(1)]);
     expect(await store.get("teams", "sizeless")).toBeUndefined();
+  });
+
+  it("discards a 1v1 team, and says so: Team Builds are 2v2 and up (#2141)", async () => {
+    const store = createMemoryStore();
+    await store.put("teams", "solo", { ...team({ id: "solo" }), size: 1 });
+    const repo = new TeamRepository(store);
+
+    const { teams, problems } = await repo.list();
+    expect(teams).toEqual([]);
+    expect(problems).toEqual([discardedTeamsNotice(1)]);
+    expect(await store.get("teams", "solo")).toBeUndefined();
   });
 });
 
