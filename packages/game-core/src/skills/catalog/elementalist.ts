@@ -3544,7 +3544,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     // regeneration" (#1984): 18; the strip first, so it never strips itself.
     effects: [
       { kind: "remove-status", category: "enchantment", count: "all" },
-      { kind: "apply-status", statusId: "ether-prodigy", durationSeconds: { flat: 18 } },
+      {
+        kind: "apply-status",
+        statusId: "ether-prodigy",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.energy-storage", atZero: 8, atTwelve: 17.6 },
+        },
+      },
     ],
   },
   {
@@ -3600,7 +3606,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     // "For 25...60 seconds, you are attuned to Air, Fire, Water, and
     // Earth" (#1984): 53; the status holds the rest.
     effects: [
-      { kind: "apply-status", statusId: "elemental-attunement", durationSeconds: { flat: 53 } },
+      {
+        kind: "apply-status",
+        statusId: "elemental-attunement",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.energy-storage", atZero: 25, atTwelve: 53 },
+        },
+      },
     ],
   },
   // Attributes raised (#1941).
