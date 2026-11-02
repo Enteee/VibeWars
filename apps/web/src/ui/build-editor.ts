@@ -111,6 +111,7 @@ import {
   lockedSkills,
   missingFromCatalog,
   skillTypesOf,
+  type SkillGroup,
 } from "./skill-library.js";
 import {
   appendParts,
@@ -1916,10 +1917,7 @@ function mountLibrary(layout: HTMLElement, context: EditorContext): LibraryRegio
   // the open one is in the page, and each keeps its own scroll.
   const skills = mountSkillLibrary(context);
   const gear = mountGearLibrary(context);
-  const bodies: Readonly<Record<LibraryTab, readonly HTMLElement[]>> = {
-    skills: skills.elements,
-    gear: gear.elements,
-  };
+  const bodies: Readonly<Record<LibraryTab, LibraryBody>> = { skills, gear };
   const scrolled: Record<LibraryTab, number> = { skills: 0, gear: 0 };
   let active: LibraryTab = "skills";
 
@@ -1928,13 +1926,13 @@ function mountLibrary(layout: HTMLElement, context: EditorContext): LibraryRegio
     if (active === tab) {
       return;
     }
-    scrolled[active] = library.scrollTop;
-    for (const element of bodies[active]) {
+    scrolled[active] = bodies[active].scroller.scrollTop;
+    for (const element of bodies[active].elements) {
       element.remove();
     }
     active = tab;
-    library.append(...bodies[tab]);
-    library.scrollTop = scrolled[tab];
+    library.append(...bodies[tab].elements);
+    bodies[tab].scroller.scrollTop = scrolled[tab];
     for (const [other, otherButton] of tabButtons) {
       otherButton.classList.toggle("is-active", other === tab);
     }
@@ -1949,7 +1947,7 @@ function mountLibrary(layout: HTMLElement, context: EditorContext): LibraryRegio
     tabs.appendChild(node);
     return [tab, node] as const;
   });
-  library.append(tabs, ...bodies[active]);
+  library.append(tabs, ...bodies[active].elements);
 
   // Dropping worn things back onto the library takes them off: a bar skill
   // on the skills tab, gear on the gear tab. The gesture players reach for
@@ -1984,16 +1982,21 @@ function mountLibrary(layout: HTMLElement, context: EditorContext): LibraryRegio
         (node) => node.dataset.group === group,
       );
       if (heading !== undefined) {
-        library.scrollTop +=
-          heading.getBoundingClientRect().top - library.getBoundingClientRect().top;
+        const scroller = bodies[tab].scroller;
+        scroller.scrollTop +=
+          heading.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
       }
     },
   };
 }
 
-/** A library tab's body: the elements it puts under the tabs. */
+/**
+ * A library tab's body: the elements it puts under the tabs, and the one
+ * of them that scrolls (#2161), under filters that stay put.
+ */
 interface LibraryBody extends Region {
   readonly elements: readonly HTMLElement[];
+  readonly scroller: HTMLElement;
 }
 
 /**
@@ -2102,7 +2105,12 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   }
   /** The card whose details are open; one at a time (#567). */
   let open: string | undefined;
-  const groupHost = h("div", "skill-groups");
+  /**
+   * The attribute groups the player opened (#2161): all start folded, and
+   * this outlives a character or tab switch but not the editor.
+   */
+  const openGroups = new Set<string>();
+  const groupList = h("div", "skill-group-list");
 
   /**
    * A click on a library skill: to the picked slot or the first empty one,
@@ -2265,11 +2273,29 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   locked.appendChild(lockedSummary);
   const lockedBoxes = h("div", "skill-group-boxes");
   locked.appendChild(lockedBoxes);
+  // Only this scrolls: the search and chips above it stay in view (#2161).
+  const groupHost = h("div", "skill-groups");
+  groupHost.append(groupList, locked);
 
-  const createGroup = (): HTMLElement => {
+  const groupKey = (group: SkillGroup): string => group.attributeId ?? group.attributeName;
+
+  /** A group: its header a button that opens and folds it (#2161). */
+  const createGroup = (group: SkillGroup): HTMLElement => {
     const section = h("div", "skill-group");
-    const header = h("div", "skill-group-header");
-    header.appendChild(h("span", "skill-group-name"));
+    const key = groupKey(group);
+    const header = button("", "skill-group-header", () => {
+      if (openGroups.has(key)) {
+        openGroups.delete(key);
+      } else {
+        openGroups.add(key);
+      }
+      render(context.current());
+    });
+    header.append(
+      h("span", "skill-group-marker"),
+      h("span", "skill-group-name"),
+      h("span", "skill-group-count"),
+    );
     section.appendChild(header);
     section.appendChild(h("div", "skill-group-boxes"));
     return section;
@@ -2298,69 +2324,85 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
       character.primaryProfession,
       character.secondaryProfession,
     );
-    // A card the filters took away closes; it does not reopen on its own.
-    if (![...matches, ...lockedMatches].some((skill) => skill.id === open)) {
+    const groups = groupSkillsByAttribute(matches, corpusMatches.open);
+    // A filter opens every group it matches in, so a search never looks
+    // empty; the player's own folds come back once it is cleared (#2161).
+    const filtering = search.value.trim() !== "" || eliteOnly.checked || types.size > 0;
+    const isOpen = (group: SkillGroup): boolean => filtering || openGroups.has(groupKey(group));
+    // A card the filters took away, or a fold hid, closes; it does not
+    // reopen on its own.
+    const shown = [...groups.filter(isOpen).flatMap((group) => group.skills), ...lockedMatches];
+    if (!shown.some((skill) => skill.id === open)) {
       open = undefined;
     }
-    const groups = groupSkillsByAttribute(matches, corpusMatches.open);
-    syncList(
-      groupHost,
-      groups,
-      (group) => group.attributeId ?? group.attributeName,
-      createGroup,
-      (section, group) => {
-        const [header, boxes] = Array.from(section.children);
-        const name = header?.querySelector(".skill-group-name");
-        if (name !== null && name !== undefined) {
-          name.textContent = group.attributeName;
+    syncList(groupList, groups, groupKey, createGroup, (section, group) => {
+      const [header, boxes] = Array.from(section.children);
+      const folded = !isOpen(group);
+      if (header instanceof HTMLButtonElement) {
+        header.setAttribute("aria-expanded", String(!folded));
+        // Under a filter every group is open, and folding one is not on.
+        header.disabled = filtering;
+      }
+      const marker = header?.querySelector(".skill-group-marker");
+      if (marker !== null && marker !== undefined) {
+        marker.textContent = folded ? "▸" : "▾";
+      }
+      const name = header?.querySelector(".skill-group-name");
+      if (name !== null && name !== undefined) {
+        name.textContent = group.attributeName;
+      }
+      const count = header?.querySelector(".skill-group-count");
+      if (count !== null && count !== undefined) {
+        count.textContent = `· ${String(group.skills.length + group.corpus.length)}`;
+      }
+      // The rank is shown here because it is exactly what makes every
+      // skill under this heading better — the reason to group this way.
+      // "No Attribute" skills have none to show.
+      let rank = header?.querySelector(".skill-group-rank");
+      if (group.attributeId === undefined) {
+        rank?.remove();
+      } else {
+        if (rank === null || rank === undefined) {
+          rank = h("span", "skill-group-rank");
+          header?.appendChild(rank);
         }
-        // The rank is shown here because it is exactly what makes every
-        // skill under this heading better — the reason to group this way.
-        // "No Attribute" skills have none to show.
-        let rank = header?.querySelector(".skill-group-rank");
-        if (group.attributeId === undefined) {
-          rank?.remove();
-        } else {
-          if (rank === null || rank === undefined) {
-            rank = h("span", "skill-group-rank");
-            header?.appendChild(rank);
-          }
-          rank.textContent = `rank ${String(ranks.get(group.attributeId) ?? 0)}`;
-        }
-        if (boxes instanceof HTMLElement) {
-          syncList(
-            boxes,
-            [...group.skills, ...group.corpus],
-            libraryKey,
-            (skill) => (isCorpus(skill) ? createCorpusBox(skill) : createBox(skill)),
-            (box, skill) => {
-              if (isCorpus(skill)) {
-                return;
+        rank.textContent = `rank ${String(ranks.get(group.attributeId) ?? 0)}`;
+      }
+      if (boxes instanceof HTMLElement) {
+        boxes.hidden = folded;
+        // A folded group's cards are not laid out: none is seen.
+        syncList(
+          boxes,
+          folded ? [] : [...group.skills, ...group.corpus],
+          libraryKey,
+          (skill) => (isCorpus(skill) ? createCorpusBox(skill) : createBox(skill)),
+          (box, skill) => {
+            if (isCorpus(skill)) {
+              return;
+            }
+            const on = character.skillBar.indexOf(skill.id);
+            box.classList.toggle("is-equipped", on >= 0);
+            // On the bar: where, and no Equip. Else where an equip goes.
+            const equip = box.querySelector<HTMLButtonElement>(".skill-box-equip");
+            const onLabel = box.querySelector(".skill-box-on");
+            if (equip !== null) {
+              equip.hidden = on >= 0;
+              equip.disabled = target === undefined;
+              if (equip.textContent !== equipText) {
+                equip.textContent = equipText;
               }
-              const on = character.skillBar.indexOf(skill.id);
-              box.classList.toggle("is-equipped", on >= 0);
-              // On the bar: where, and no Equip. Else where an equip goes.
-              const equip = box.querySelector<HTMLButtonElement>(".skill-box-equip");
-              const onLabel = box.querySelector(".skill-box-on");
-              if (equip !== null) {
-                equip.hidden = on >= 0;
-                equip.disabled = target === undefined;
-                if (equip.textContent !== equipText) {
-                  equip.textContent = equipText;
-                }
+            }
+            if (onLabel !== null) {
+              const text = on >= 0 ? `on ${context.slotLabel(on)}` : "";
+              if (onLabel.textContent !== text) {
+                onLabel.textContent = text;
               }
-              if (onLabel !== null) {
-                const text = on >= 0 ? `on ${context.slotLabel(on)}` : "";
-                if (onLabel.textContent !== text) {
-                  onLabel.textContent = text;
-                }
-              }
-              paintCard(box, skill, ranks);
-            },
-          );
-        }
-      },
-    );
+            }
+            paintCard(box, skill, ranks);
+          },
+        );
+      }
+    });
     const lockedAll = [...lockedMatches, ...corpusMatches.locked];
     lockedSummary.textContent = `Other professions (${String(lockedAll.length)})`;
     // Collapsed, the near thousand GW1 skills of other professions are
@@ -2398,7 +2440,11 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     render(context.current());
   });
 
-  return { elements: [corpusToggle, filters, chips, groupHost, locked], update: render };
+  return {
+    elements: [corpusToggle, filters, chips, groupHost],
+    scroller: groupHost,
+    update: render,
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -3075,6 +3121,7 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
 
   return {
     elements: [host],
+    scroller: host,
     update(character) {
       const held = character.equipment.weaponSets[context.weaponSet()];
       for (const { id, node } of weaponBoxes) {

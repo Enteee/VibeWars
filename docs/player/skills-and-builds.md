@@ -98,6 +98,9 @@ grouped by attribute. Search names and text, show only elites, or pick
 skill types to narrow it. Skills of other professions wait, folded, under
 **Other professions**.
 
+The attribute groups start folded: click a group's name to open it. A
+search opens every group it finds something in.
+
 **Show skills not in the game yet** adds the GW1 skills VibeWars does not
 have yet, greyed out. You can read them, not equip them.
 
