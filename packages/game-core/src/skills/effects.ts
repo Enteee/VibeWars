@@ -14,7 +14,7 @@ import { CHAIN_MARK_SECONDS } from "./chain.js";
 import { hitLocationOf, mitigate, skillDamage, withSkillArmorPenetration } from "./damage.js";
 import { guardedDamage, guardedLoss } from "./loss-guard.js";
 import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
-import { resolveMagnitude, resolveMagnitudeTimes } from "./scaling.js";
+import { resolveMagnitude, resolveMagnitudeTimes, statAt } from "./scaling.js";
 import { mimickedElite, standIn } from "./stand-in.js";
 import {
   aggregateModifiers,
@@ -397,8 +397,9 @@ function landDamage(
     events.push({ kind: "invulnerable", targetId: target.id });
     return;
   }
-  // Mist Form's (#1951), after every mitigation: what a hexed foe deals.
-  const cut = hexedSourceDamage(target, amount, dealer);
+  // Mist Form's (#1951) and Intimidating Aura's (#2207), after every
+  // mitigation: what a hexed or a weaker foe deals.
+  const cut = weakerSourceDamage(target, hexedSourceDamage(target, amount, dealer), dealer);
   if (cut <= 0 || reverse(target, cut, events)) {
     return;
   }
@@ -516,6 +517,10 @@ function healAmount(
     target,
     surroundings,
   );
+  // Imbue Health's (#2207): a share of the caster's Health, capped.
+  if (effect.ofCasterHealth !== undefined) {
+    return Math.min(effect.ofCasterHealth.max, Math.floor((base / 100) * caster.health));
+  }
   const { perAlly } = effect;
   if (perAlly === undefined) {
     return base;
@@ -1466,6 +1471,26 @@ function hexedSourceDamage(
     }
   }
   return multiplier === 1 ? amount : Math.round(amount * multiplier);
+}
+
+/**
+ * `amount` from `dealer`, less each `damageReductionFromWeakerFoe` on
+ * `target` when `dealer` is a foe with less Health than `target` (#2207):
+ * Intimidating Aura's 8 at rank 12. Never below 0.
+ */
+function weakerSourceDamage(
+  target: Combatant,
+  amount: number,
+  dealer: Combatant | undefined,
+): number {
+  if (dealer === undefined || dealer.team === target.team || dealer.health >= target.health) {
+    return amount;
+  }
+  let reduction = 0;
+  for (const { id, ranks } of target.statuses.active) {
+    reduction += Math.round(statAt(getStatusDefinition(id).damageReductionFromWeakerFoe, ranks));
+  }
+  return Math.max(0, amount - reduction);
 }
 
 /**
