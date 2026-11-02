@@ -804,7 +804,13 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     // The 33% is the cost's.
     effects: [
       { kind: "sacrifice-health", percentOfMax: 33 },
-      { kind: "apply-status", statusId: "veratas-aura", durationSeconds: 264 },
+      {
+        kind: "apply-status",
+        statusId: "veratas-aura",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 120, atTwelve: 264 },
+        },
+      },
       {
         kind: "splash",
         hits: "foe-minions",
@@ -840,7 +846,15 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     // "For 5...17...20 seconds, target foe receives 20% less from healing.
     // If that foe dies, a masterless level 1...14...17 bone horror is
     // created" (#2092): the status carries both.
-    effects: [{ kind: "apply-status", statusId: "malign-intervention", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "malign-intervention",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "necromancer.dark-bond",
