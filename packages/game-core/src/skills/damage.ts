@@ -335,12 +335,16 @@ export function mitigate(
   // armor and the multiplier, before Rune of Absorption. Union's spirit
   // pays for every cut that took something (#1265). Shield Stance's
   // (#1592) is by the bearer's rank, beside it, and Armor of Unfeeling's
-  // (#1827) only while it activates a binding ritual.
+  // (#1827) only while it activates a binding ritual, and Shield of
+  // Absorption's (#2190) grows with every packet.
   if (modifiers.damageReduction > 0 && dealt > 0) {
     target.statuses.chargeSources((definition) => definition.damageReduction > 0);
   }
   dealt -=
-    modifiers.damageReduction + rankedDamageReduction(target) + castingDamageReduction(target);
+    modifiers.damageReduction +
+    rankedDamageReduction(target) +
+    castingDamageReduction(target) +
+    target.statuses.countHitTaken();
 
   // Rune of Absorption, last and only against physical hits. After
   // mitigation on purpose: it is a flat shield against each blow, so it

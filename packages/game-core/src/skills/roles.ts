@@ -152,6 +152,8 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.armorWhileStill > 0 ||
     status.block !== undefined ||
     statAtTwelve(status.damageTakenMultiplier) < 1 ||
+    status.damageReduction > 0 ||
+    status.damageReductionPerHitTaken !== undefined ||
     status.maxDamageFractionPerHit !== undefined ||
     status.attackDamageCapFraction !== undefined ||
     status.lifeStealReduction > 0 ||
@@ -203,6 +205,8 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
                 on === "bearer-creates-creature") &&
                 target === "bearer") ||
               target === "offender" ||
+              // Shield of Judgment's smite on its attacker (#2190).
+              target === "source-on-offender" ||
               target === "created" ||
               target === "hexed-foe",
           )
