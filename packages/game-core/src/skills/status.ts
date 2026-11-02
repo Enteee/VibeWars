@@ -871,6 +871,13 @@ export interface StatusDefinition {
   readonly damageReductionFromHexedSource:
     { readonly attributeId: string; readonly fraction: number } | undefined;
   /**
+   * As `damageReductionFromHexedSource`, but from a dealer suffering status
+   * `statusId` (#2222): "They're on Fire!"'s "29% less damage from foes
+   * suffering from Burning". Read as each packet lands. `undefined`: none.
+   */
+  readonly damageReductionFromSourceWith:
+    { readonly statusId: StatusId; readonly fraction: number } | undefined;
+  /**
    * Damage of `type` the bearer takes is multiplied by `multiplier` (#1964):
    * Mantra of Flame's "fire damage you take is reduced by 45%", 0.55.
    * Read as each packet lands, after `damageTakenMultiplier`, of the type
@@ -1757,6 +1764,11 @@ export interface CriticalHitRider {
   readonly effects: readonly SkillEffect[];
   readonly energyIfRemoved: number;
   readonly skillId: string;
+  /**
+   * The status ends once it fired (#2222): "Find Their Weakness!"'s "the
+   * next time target ally criticals". `false`: every critical.
+   */
+  readonly endsWhenFired: boolean;
   /**
    * Only a critical hit made with a weapon of this class in the bearer's
    * main hand (#2133), as `AttackHitRider.weapon`: Disrupting Accuracy's

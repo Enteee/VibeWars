@@ -651,11 +651,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push("refreshes every time you land a critical hit");
   }
   if (definition.onCriticalHit !== undefined) {
-    const { effects, energyIfRemoved, weapon } = definition.onCriticalHit;
-    const when =
-      weapon === undefined
-        ? "every time you land a critical hit"
-        : `every time you land a critical hit with ${NEEDED_WEAPON[weapon]}`;
+    const { effects, energyIfRemoved, weapon, endsWhenFired } = definition.onCriticalHit;
+    const critical = endsWhenFired
+      ? "the next time you land a critical hit"
+      : "every time you land a critical hit";
+    const when = weapon === undefined ? critical : `${critical} with ${NEEDED_WEAPON[weapon]}`;
     parts.push(
       ...effects.flatMap((effect) =>
         describeEffects(effect, new Map()).map(({ text }) =>
@@ -795,6 +795,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const { attributeId, fraction } = definition.damageReductionFromHexedSource;
     parts.push(
       `${String(Math.round(fraction * 100))}% less damage from foes with a ${getAttribute(attributeId)?.name ?? attributeId} hex`,
+    );
+  }
+  // "They're on Fire!"'s (#2222).
+  if (definition.damageReductionFromSourceWith !== undefined) {
+    const { statusId, fraction } = definition.damageReductionFromSourceWith;
+    parts.push(
+      `${String(Math.round(fraction * 100))}% less damage from foes suffering from ${getStatusDefinition(statusId).name}`,
     );
   }
   if (definition.redirectsPhysicalDamage > 0) {
@@ -2941,10 +2948,23 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     }
     case "adrenaline-gain": {
-      const magnitude = describeMagnitude(effect.strikes, ranks);
+      const magnitude = countedMagnitude(effect.strikes, effect.per, ranks);
       const strikes = `${shown(magnitude)} ${magnitude.current === 1 ? "strike" : "strikes"}`;
+      const gain = effect.recipient === "owner" ? "You gain" : "Gain";
+      // "Make Your Time!"'s (#2222): "Gain 2 strikes of adrenaline for each ally in earshot".
+      const counted = withPerText(
+        `${gain} ${strikes} of adrenaline`,
+        effect.strikes,
+        effect.per,
+        ranks,
+        {
+          alone: gain,
+          unit: " strikes of adrenaline",
+          onTarget: "on them",
+        },
+      );
       return {
-        text: `${effect.recipient === "owner" ? "You gain" : "Gain"} ${strikes} of adrenaline${perFoeHit(effect)}${perOwnMeleeAttackSkill(effect)}`,
+        text: `${counted}${perFoeHit(effect)}${perOwnMeleeAttackSkill(effect)}`,
         magnitude,
       };
     }

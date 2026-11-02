@@ -168,6 +168,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.failsFoeTouchSkills !== undefined ||
     status.attacksAgainstMiss ||
     status.damageReductionFromHexedSource !== undefined ||
+    status.damageReductionFromSourceWith !== undefined ||
     status.interruptGuard !== undefined ||
     (status.damageTypeTakenMultiplier?.multiplier ?? 1) < 1 ||
     // Protector's Defense (#2096): the block its bearer projects.

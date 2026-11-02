@@ -115,6 +115,7 @@ export function define(
     damageReductionPerRank: undefined,
     damageReductionWhileCasting: undefined,
     damageReductionFromHexedSource: undefined,
+    damageReductionFromSourceWith: undefined,
     damageTypeTakenMultiplier: undefined,
     destroysBearerOnExpiry: false,
     bindsCreatures: false,

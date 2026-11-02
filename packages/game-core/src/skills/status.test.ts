@@ -151,6 +151,7 @@ describe("status definitions", () => {
         def.incomingAllySpellCastTimeMultiplier !== 1 ||
         def.interruptGuard !== undefined ||
         def.damageTypeTakenMultiplier !== undefined ||
+        def.damageReductionFromSourceWith !== undefined ||
         def.bindsCreatures;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
@@ -246,6 +247,7 @@ describe("status definitions", () => {
       "zealous-renewal": -1,
       "zealous-vow": -3,
       "power-flux": -2,
+      "song-of-power": 4,
       "the-power-is-yours": 2,
       "well-of-power": 2,
       "well-of-weariness": -1,
@@ -268,6 +270,7 @@ describe("status definitions", () => {
     expect(getStatusDefinition("dark-apostasy").onCriticalHit).toEqual({
       effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
       energyIfRemoved: 4,
+      endsWhenFired: false,
       skillId: "assassin.dark-apostasy",
     });
     expect(getStatusDefinition("jaundiced-gaze").ownSkillModifiers).toMatchObject([
