@@ -5152,7 +5152,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         amount: { scaling: { attributeId: "ranger.beast-mastery", atZero: 3, atTwelve: 8.6 } },
         recipient: "owner",
       },
-      { kind: "adrenaline-gain", strikes: 1, recipient: "owner" },
+      { kind: "adrenaline-gain", strikes: { flat: 1 }, recipient: "owner" },
     ],
   },
   {

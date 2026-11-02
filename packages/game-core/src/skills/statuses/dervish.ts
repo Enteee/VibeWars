@@ -261,7 +261,14 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
             hits: "foes",
             radius: AREA_EARSHOT,
             maxTargets: 1,
-            effects: [{ kind: "adrenaline-gain", strikes: 2 }],
+            effects: [
+              {
+                kind: "adrenaline-gain",
+                strikes: {
+                  scaling: { attributeId: "dervish.mysticism", atZero: 1, atTwelve: 1.8 },
+                },
+              },
+            ],
           },
         ],
         skillId: "dervish.balthazars-rage",

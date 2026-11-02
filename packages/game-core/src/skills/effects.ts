@@ -1721,7 +1721,11 @@ export function applyEffect(
     }
 
     case "adrenaline-gain": {
-      const strikes = effect.strikes * adrenalineGainTimes(caster, effect);
+      // Whole strikes at the caster's rank (#2143), as a duration's (#2041):
+      // Enraging Charge's "0...3" gives none at a low rank.
+      const strikes =
+        Math.max(0, resolveMagnitude(effect.strikes, context.ranksFrom ?? caster)) *
+        adrenalineGainTimes(caster, effect);
       const gainer =
         effect.recipient === "owner" ? livingOwnerOf(caster, context.surroundings) : caster;
       if (

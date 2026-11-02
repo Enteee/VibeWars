@@ -280,7 +280,12 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       {
         on: "bearer-hits",
         weapon: "melee",
-        effects: [{ kind: "adrenaline-gain", strikes: 2 }],
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            strikes: { scaling: { attributeId: "warrior.strength", atZero: 0, atTwelve: 2.4 } },
+          },
+        ],
         target: "bearer",
         skillId: "warrior.enraging-charge",
       },
@@ -367,7 +372,7 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
         on: "bearer-blocks",
         target: "bearer",
         effects: [
-          { kind: "adrenaline-gain", strikes: 1 },
+          { kind: "adrenaline-gain", strikes: { flat: 1 } },
           { kind: "energy-gain", amount: { flat: 5 } },
         ],
         skillId: "warrior.wary-stance",
@@ -386,7 +391,7 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       {
         on: "bearer-blocks",
         target: "bearer",
-        effects: [{ kind: "adrenaline-gain", strikes: 1 }],
+        effects: [{ kind: "adrenaline-gain", strikes: { flat: 1 } }],
         skillId: "warrior.soldiers-defense",
       },
     ],
@@ -402,7 +407,9 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       {
         on: "ends",
         target: "bearer",
-        effects: [{ kind: "adrenaline-gain", strikes: 1, perOwnMeleeAttackSkill: { max: 3 } }],
+        effects: [
+          { kind: "adrenaline-gain", strikes: { flat: 1 }, perOwnMeleeAttackSkill: { max: 3 } },
+        ],
         skillId: "warrior.defensive-stance",
       },
     ],
@@ -418,7 +425,12 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       {
         on: "ends",
         target: "bearer",
-        effects: [{ kind: "adrenaline-gain", strikes: 3 }],
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            strikes: { scaling: { attributeId: "warrior.tactics", atZero: 1, atTwelve: 3.4 } },
+          },
+        ],
         skillId: "warrior.auspicious-parry",
       },
     ],
