@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { key } from "./keys.js";
+import { openLibraryGroup } from "./helpers/library.js";
 import { openRail, pickCharacter } from "./helpers/menu.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { chooseProfession } from "./helpers/professions.js";
@@ -49,6 +50,7 @@ test("Call of Haste goes on your wolf and recharges (#1108)", async ({ page }) =
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
   await page.locator("input.editor-name").fill("Houndmaster");
+  await openLibraryGroup(page, "Beast Mastery");
   for (const name of ["Charm Animal", "Call of Haste"]) {
     await page.locator(".skill-box", { hasText: name }).locator(".skill-box-equip").click();
   }
