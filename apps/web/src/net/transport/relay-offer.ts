@@ -44,8 +44,21 @@ export const MAX_OFFER_CONTENT_BYTES = 2048;
 /** The largest relay message parsed: an offer's content and its event around it. */
 const MAX_OFFER_MESSAGE_BYTES = 4096;
 
-/** A joiner opens at most one offer this often, so a flood of forged ones costs it nothing. */
+/**
+ * A joiner opens at most one offer this often from one author. The slot
+ * is the author's, not the topic's: the topic is public, so a slot any
+ * event could spend is one a relay watcher's garbage, or a member's own
+ * offers, would take from the host's.
+ */
 export const OFFER_OPEN_INTERVAL_MS = 5_000;
+
+/**
+ * The most offers a joiner opens in a second, across every author. Opening
+ * one is microseconds of AES-GCM, so this bounds the work of a flood signed
+ * by fresh keys. An author whose offer has opened is not counted: once the
+ * host has been heard, no flood crowds out its one offer per 5 s.
+ */
+export const MAX_OFFER_OPENS_PER_SECOND = 200;
 
 /** A host mints a fresh credential once its current one has this little left. */
 export const REMINT_LEFT_MS = 30 * 60 * 1000;
@@ -58,6 +71,8 @@ const TAG_BYTES = 8;
 const SUBSCRIPTION_ID = "vibewars-relay-offer";
 /** Event ids remembered to drop the copy each other relay delivers. */
 const SEEN_LIMIT = 256;
+/** Authors remembered, by their last open or a failed one, before forgetting them all. */
+const AUTHOR_LIMIT = 1024;
 
 /** The topic offers are tagged with and the key they are sealed under (`LobbyRoom.relay`). */
 export interface RelayOfferRoom {
@@ -259,7 +274,14 @@ export function watchRelayOffers(
   const offers = new Map<string, TurnConfig>();
   const handlers = new Set<() => void>();
   const seen = new Set<string>();
-  let openedAt = -Infinity;
+  /** When each author's last offer was opened. */
+  const openedAt = new Map<string, number>();
+  /** Authors whose offer did not open: none of theirs ever will. */
+  const failed = new Set<string>();
+  /** Authors whose offer opened: they hold the key, and are not counted against the flood. */
+  const opened = new Set<string>();
+  let windowStart = -Infinity;
+  let windowOpens = 0;
   let closed = false;
 
   const live = (): TurnConfig[] => {
@@ -303,10 +325,12 @@ export function watchRelayOffers(
     }
     // The signature is the relays' business: the seal is what says who
     // made an offer, and any code holder can make one either way.
-    const { id, kind, tags, content } = raw as Record<string, unknown>;
+    const { id, pubkey, kind, tags, content } = raw as Record<string, unknown>;
     if (
       typeof id !== "string" ||
+      typeof pubkey !== "string" ||
       seen.has(id) ||
+      failed.has(pubkey) ||
       kind !== RELAY_OFFER_KIND ||
       !isTags(tags) ||
       !tags.some(([name, value]) => name === "t" && value === room.topic) ||
@@ -315,18 +339,43 @@ export function watchRelayOffers(
       return;
     }
     const now = deps.now();
-    if (now - openedAt < OFFER_OPEN_INTERVAL_MS) {
+    if (now - (openedAt.get(pubkey) ?? -Infinity) < OFFER_OPEN_INTERVAL_MS) {
       return;
     }
-    openedAt = now;
+    if (now - windowStart >= 1000) {
+      windowStart = now;
+      windowOpens = 0;
+    }
+    if (!opened.has(pubkey)) {
+      if (windowOpens >= MAX_OFFER_OPENS_PER_SECOND) {
+        return;
+      }
+      windowOpens += 1;
+    }
     if (seen.size >= SEEN_LIMIT) {
       seen.clear();
     }
     seen.add(id);
+    if (openedAt.size >= AUTHOR_LIMIT) {
+      openedAt.clear();
+    }
+    openedAt.set(pubkey, now);
     void openOffer(content, room.key, now).then((config) => {
-      if (!closed && config !== undefined) {
-        take(config);
+      if (closed) {
+        return;
       }
+      if (config === undefined) {
+        if (failed.size >= AUTHOR_LIMIT) {
+          failed.clear();
+        }
+        failed.add(pubkey);
+        return;
+      }
+      if (opened.size >= AUTHOR_LIMIT) {
+        opened.clear();
+      }
+      opened.add(pubkey);
+      take(config);
     });
   };
 

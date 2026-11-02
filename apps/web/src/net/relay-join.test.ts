@@ -147,6 +147,30 @@ describe("a joiner's fallback on its host's shared relay (#2091)", () => {
     expect(heard).toEqual([{ hello: true }]);
   });
 
+  it("says the host is unreachable when the relayed join fails, and rejects nothing", async () => {
+    const network = createMemoryNetwork();
+    const fake = fakeOffers();
+    const room = joinWithRelayOffers({
+      selfId: "guest",
+      join: (turn): Transport => {
+        if (turn !== undefined) {
+          throw new Error("the relayed room would not open");
+        }
+        return network.join("guest");
+      },
+      offers: fake.offers,
+      ownRelay: false,
+    });
+    const troubles: string[] = [];
+    room.onTrouble((trouble) => {
+      troubles.push(trouble);
+    });
+    fake.open(offer(1));
+    await vi.advanceTimersByTimeAsync(RELAY_REJOIN_MS);
+    expect(troubles).toEqual(["peer-unreachable"]);
+    await room.leave();
+  });
+
   it("closes the offers with the room", async () => {
     const { fake, room, inRoom } = joiner();
     await room.leave();

@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { OpenRelaySocket } from "./nostr-relays.js";
 import {
   MAX_OFFER_CONTENT_BYTES,
+  MAX_OFFER_OPENS_PER_SECOND,
   OFFER_OPEN_INTERVAL_MS,
+  RELAY_OFFER_KIND,
   openOffer,
   sealOffer,
   shareRelay,
@@ -37,6 +39,7 @@ function fakeRelay() {
     const deliver = (data: string): void => {
       handlers.message(data);
     };
+    const mine = new Set<(data: string) => void>();
     return {
       send(data) {
         const message: unknown = JSON.parse(data);
@@ -45,9 +48,11 @@ function fakeRelay() {
         }
         if (message[0] === "REQ") {
           const id = String(message[1]);
-          subscribers.add((event) => {
+          const subscriber = (event: string): void => {
             deliver(JSON.stringify(["EVENT", id, JSON.parse(event)]));
-          });
+          };
+          mine.add(subscriber);
+          subscribers.add(subscriber);
         } else if (message[0] === "EVENT") {
           for (const subscriber of [...subscribers]) {
             subscriber(JSON.stringify(message[1]));
@@ -55,11 +60,35 @@ function fakeRelay() {
         }
       },
       close() {
-        subscribers.clear();
+        for (const subscriber of mine) {
+          subscribers.delete(subscriber);
+        }
       },
     };
   };
-  return { openSocket };
+  /** Hand `event` to every subscriber, as a relay watcher republishing on the topic would. */
+  const publish = (event: object): void => {
+    for (const subscriber of [...subscribers]) {
+      subscriber(JSON.stringify(event));
+    }
+  };
+  return { openSocket, publish };
+}
+
+const hex = (bytes: number): string =>
+  Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) =>
+    b.toString(16).padStart(2, "0"),
+  ).join("");
+
+/** An event on `ROOM`'s topic that no key opens, by a fresh author: what anyone watching can send. */
+function garbage(): object {
+  return {
+    id: hex(32),
+    pubkey: hex(32),
+    kind: RELAY_OFFER_KIND,
+    tags: [["t", ROOM.topic]],
+    content: btoa("x".repeat(64)),
+  };
 }
 
 function deps(openSocket: OpenRelaySocket, now: () => number): RelayOfferDeps {
@@ -199,6 +228,88 @@ describe("a host's relay offers, heard by a joiner (#2091)", () => {
     expect(other.latest()).toBeUndefined();
     share.close();
     other.close();
+  });
+
+  it("opens the host's offer through a flood of unopenable ones by fresh authors", async () => {
+    const relay = fakeRelay();
+    const offers = watchRelayOffers(
+      ROOM,
+      deps(relay.openSocket, () => NOW),
+    );
+    await settle();
+    for (let i = 0; i < MAX_OFFER_OPENS_PER_SECOND - 1; i += 1) {
+      relay.publish(garbage());
+    }
+    const host = shareRelay(
+      ROOM,
+      SHARED,
+      deps(relay.openSocket, () => NOW),
+    );
+    host.follow(true);
+    await settle();
+    expect(offers.latest()?.urls).toEqual(SHARED.urls);
+    host.close();
+    offers.close();
+  });
+
+  it("keeps hearing a host it has heard, however hard the topic is flooded", async () => {
+    const relay = fakeRelay();
+    let now = NOW;
+    const offers = watchRelayOffers(
+      ROOM,
+      deps(relay.openSocket, () => now),
+    );
+    await settle();
+    const host = shareRelay(
+      ROOM,
+      SHARED,
+      deps(relay.openSocket, () => now),
+    );
+    host.follow(true);
+    await settle();
+    const first = offers.latest();
+    expect(first?.urls).toEqual(SHARED.urls);
+
+    // Two hours on, the host mints again while the topic is flooded.
+    now += 2 * 60 * 60 * 1000 - 60 * 1000;
+    for (let i = 0; i < MAX_OFFER_OPENS_PER_SECOND * 2; i += 1) {
+      relay.publish(garbage());
+    }
+    host.follow(false);
+    host.follow(true);
+    await settle();
+    expect(offers.latest()?.username).not.toBe(first?.username);
+    host.close();
+    offers.close();
+  });
+
+  it("still opens the host's offer right after a member's own, and uses neither", async () => {
+    const relay = fakeRelay();
+    const offers = watchRelayOffers(
+      ROOM,
+      deps(relay.openSocket, () => NOW),
+    );
+    await settle();
+    const hostile = shareRelay(
+      ROOM,
+      { urls: ["turn:hostile.example:3478"], secret: "x" },
+      deps(relay.openSocket, () => NOW),
+    );
+    hostile.follow(true);
+    await settle();
+    expect(offers.latest()?.urls).toEqual(["turn:hostile.example:3478"]);
+    // Within the same 5 s: the member spent its own slot, not the host's.
+    const host = shareRelay(
+      ROOM,
+      SHARED,
+      deps(relay.openSocket, () => NOW),
+    );
+    host.follow(true);
+    await settle();
+    expect(offers.latest()).toBeUndefined();
+    host.close();
+    hostile.close();
+    offers.close();
   });
 
   it("uses no relay when two offers on one topic name different relays", async () => {

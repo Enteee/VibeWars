@@ -104,13 +104,24 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     await transport.leave();
   };
 
+  /**
+   * Leave and join again through `turn`. Never rejects: a leave or a join
+   * that fails leaves no room, which the player hears as the host being
+   * unreachable.
+   */
   const rejoin = async (turn: TurnConfig): Promise<void> => {
     swapping = true;
     relayedWith = turn;
-    await detach();
-    swapping = false;
-    if (!left) {
-      attach(turn);
+    try {
+      await detach();
+      if (!left) {
+        attach(turn);
+      }
+    } catch {
+      room = undefined;
+      handlers.trouble("peer-unreachable");
+    } finally {
+      swapping = false;
     }
   };
 
