@@ -512,6 +512,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mark-of-instability": icon("mark-of-instability"),
   "deadly-paradox": icon("deadly-paradox"),
   "unseen-fury": icon("unseen-fury"),
+  // Assassin staples 6 (#2233).
+  "hidden-caltrops": icon("hidden-caltrops"),
   // Warrior staples 4 (#2181).
   "tiger-stance": icon("tiger-stance"),
   "berserker-stance": icon("berserker-stance"),
