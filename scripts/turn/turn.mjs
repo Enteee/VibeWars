@@ -15,7 +15,7 @@ import { DEFAULT_BASE, inviteLink, turnUrls } from "./link.mjs";
 import { filterLog, tailLines } from "./log.mjs";
 import { formatBytes, procIo, rate, scrape } from "./metrics.mjs";
 import { files, readSettings, turnNft, turnserverConf } from "./settings.mjs";
-import { HEALTH_USER, addUser, allUsers, relinkUser, removeUser, validName } from "./users.mjs";
+import { HEALTH_USER, addUser, allUsers, friendName, relinkUser, removeUser } from "./users.mjs";
 
 const HELP = {
   user: `usage: turn-user add <name> [--base <url>]   add a friend with a secret of their own; prints their invite link
@@ -70,11 +70,13 @@ function baseOption(args) {
  * @param {string | undefined} name
  * @returns {string}
  */
-function friendName(name) {
-  if (name === undefined || !validName(name)) {
-    fail("a name is letters, digits, '.', '_' or '-', at most 64, starting with a letter or digit");
-  }
+function friendArg(name) {
   if (name === HEALTH_USER) fail(`${HEALTH_USER} is turn-check's own user`);
+  if (name === undefined || !friendName(name)) {
+    fail(
+      "a name is lowercase letters, digits, '_' or '-', at most 32, starting with a letter or digit",
+    );
+  }
   return /** @type {string} */ (name);
 }
 
@@ -98,13 +100,13 @@ function user(args) {
   const { rest, base } = baseOption(args);
   const [verb, name] = rest;
   if (verb === "add") {
-    const friend = friendName(name);
+    const friend = friendArg(name);
     if (allUsers(s).includes(friend))
       fail(`${friend} exists; turn-link ${friend} gives them a new link`);
     const urls = turnUrls(s);
     printLink(friend, inviteLink(base, { urls, secret: addUser(s, friend) }));
   } else if (verb === "remove") {
-    const friend = friendName(name);
+    const friend = friendArg(name);
     if (!allUsers(s).includes(friend)) fail(`no user ${friend}`);
     removeUser(s, friend);
     process.stdout.write(
@@ -122,7 +124,7 @@ function user(args) {
 function link(args) {
   const s = readSettings(process.env);
   const { rest, base } = baseOption(args);
-  const friend = friendName(rest[0]);
+  const friend = friendArg(rest[0]);
   if (!allUsers(s).includes(friend)) fail(`no user ${friend}; turn-user add ${friend}`);
   const urls = turnUrls(s);
   printLink(friend, inviteLink(base, { urls, secret: relinkUser(s, friend) }));

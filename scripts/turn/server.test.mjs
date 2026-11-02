@@ -168,6 +168,7 @@ describe("a real turnserver", () => {
       expect(fs.statSync(file).mode & 0o777).toBe(0o600);
     }
     expect(fs.statSync(files(settings).shared).mode & 0o777).toBe(0o700);
+    expect(fs.statSync(files(settings).db).mode & 0o777).toBe(0o600);
     expect(secretOf("alice")).not.toBe(secretOf("bob"));
     expect(turn(["user", "add", "alice"]).status).not.toBe(0);
     expect(turn(["user", "list"]).stdout).toBe("alice\nbob\n");
@@ -213,12 +214,15 @@ describe("a real turnserver", () => {
 
   it("refuses new logins from a removed friend at once, without a restart", async () => {
     const alice = secretOf("alice");
-    expect(await allocate(login(alice))).toMatchObject({ ok: true });
+    // Minted before the remove, valid for ten years: coturn takes any future
+    // expiry, so only deleting the secret ends it.
+    const far = login(alice, Math.floor(Date.now() / 1000) + 10 * 365 * 86_400);
+    expect(await allocate(far)).toMatchObject({ ok: true });
     expect(await allocate(login(secretOf("bob")))).toMatchObject({ ok: true });
     const remove = turn(["user", "remove", "alice"]);
     expect(remove.status).toBe(0);
     expect(remove.stdout).not.toContain(alice);
-    expect(await allocate(login(alice))).toEqual({ ok: false, code: 401 });
+    expect(await allocate(far)).toEqual({ ok: false, code: 401 });
     expect(await allocate(login(secretOf("bob")))).toMatchObject({ ok: true });
     expect(fs.existsSync(path.join(files(settings).shared, "alice.secret"))).toBe(false);
     expect(turn(["user", "list"]).stdout).toBe("bob\n");

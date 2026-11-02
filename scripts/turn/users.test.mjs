@@ -11,7 +11,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { files, parseSettings } from "./settings.mjs";
-import { allUsers, checkSecret, mintLogin, userSecret } from "./users.mjs";
+import { HEALTH_USER, allUsers, checkSecret, friendName, mintLogin, userSecret } from "./users.mjs";
 
 const HEX64 = "0123456789abcdef".repeat(4);
 
@@ -64,6 +64,21 @@ describe("checkSecret", () => {
     ]) {
       expect(() => checkSecret(bad)).toThrow(/64 hex digits/);
     }
+  });
+});
+
+describe("friendName", () => {
+  it("takes a short lowercase name, so a name is never a path", () => {
+    for (const name of ["alice", "bob-2", "c_d", "0", "a".repeat(32)])
+      expect(friendName(name)).toBe(true);
+    for (const name of ["../x", ".", "..", "a/b", "a.b", "Alice", "-a", "_a", "", "a".repeat(33)]) {
+      expect(friendName(name)).toBe(false);
+    }
+  });
+
+  it("refuses the health user's name", () => {
+    expect(HEALTH_USER).toBe("health");
+    expect(friendName("health")).toBe(false);
   });
 });
 

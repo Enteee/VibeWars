@@ -119,6 +119,7 @@ function mountRelay(container: HTMLElement): () => void {
       link.show(relayInviteLink(relay));
     }
   });
+  copy.title = "Anyone with this link can use your relay.";
   const forget = button("Forget relay", "relay-forget", () => {
     forgetRelay();
     paint();

@@ -117,6 +117,9 @@ store.
 turn-user add alice
 ```
 
+A name is up to 32 lowercase letters, digits, `_` or `-`, and it names a
+file, so nothing else is taken. `health` is turn-check's own and refused.
+
 This gives Alice a secret of her own (coturn's REST scheme, #2240) and prints
 her invite link, which carries it. Send her the link. When she opens it, the
 game asks whether to use your relay. If she says Use, the game mints a fresh
@@ -159,9 +162,9 @@ it works from cron:
 - **process:** the server is running (its pid file names a live process).
 - **STUN binding:** the server answers a Binding request.
 - **allocation:** a real authenticated allocation succeeds, then is released.
-  It allocates with a one-minute login minted from `vibewars-health`'s
+  It allocates with a one-minute login minted from `health`'s
   secret, which `turn-check` creates the first time, in
-  `shared/vibewars-health.secret`. `turn-user list` does not show it.
+  `shared/health.secret`. `turn-user list` does not show it.
 - **permissions:** on that allocation, a permission toward `stunProbe`'s
   address and toward the host's own public address is granted, and one toward
   a private address is refused. No packet is sent to them.

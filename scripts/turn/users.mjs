@@ -15,7 +15,7 @@ import process from "node:process";
 import { files } from "./settings.mjs";
 
 /** The user turn-check mints its logins for. turn-user list does not show it. */
-export const HEALTH_USER = "vibewars-health";
+export const HEALTH_USER = "health";
 
 /** What a secret file holds: 32 random bytes, hex. */
 const SECRET = /^[0-9a-f]{64}$/;
@@ -28,7 +28,17 @@ const SUFFIX = ".secret";
  * @returns {boolean}
  */
 export function validName(name) {
-  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(name);
+  return /^[a-z0-9][a-z0-9_-]{0,31}$/.test(name);
+}
+
+/**
+ * Whether `name` may be a friend: a valid name that is not the health user.
+ *
+ * @param {string} name
+ * @returns {boolean}
+ */
+export function friendName(name) {
+  return validName(name) && name !== HEALTH_USER;
 }
 
 /** @returns {string} 32 random bytes, hex */
