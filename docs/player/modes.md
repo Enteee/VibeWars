@@ -11,6 +11,17 @@ but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points. Team Arena draws one of its maps for each match, Heroes' Ascent
 starts on its first map, and only a Hosted Game lets the host pick.
 
+Every map is made for some team sizes, and a mode only plays a map made
+for its size: an 8v8 never crowds onto an arena built for a 1v1.
+
+| Mode           | Team sizes    | Map                                  |
+| -------------- | ------------- | ------------------------------------ |
+| Random Arena   | 1v1, 2v2, 4v4 | drawn for you, one made for the size |
+| Team Arena     | 4v4           | drawn for each match, made for 4v4   |
+| Heroes' Ascent | 8v8           | its maps in order, up to the Hall    |
+| GvG            | 8v8           | Guild Hall Isle                      |
+| Hosted Game    | any           | the host picks any map               |
+
 In a Guild Battle, a Relic Run, King of the Hill or Capture Points, an
 objective off screen or under the HUD gets an outlined arrow at the
 screen edge: the stand or a shrine in its owner's colour, grey for

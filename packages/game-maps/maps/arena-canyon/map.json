@@ -2,6 +2,7 @@
   "id": "arena-canyon",
   "name": "Canyon",
   "mode": "annihilation",
+  "teamSizes": [4, 8],
   "width": 2800,
   "height": 1800,
   "walls": [
@@ -149,6 +150,34 @@
       }
     },
     {
+      "team": 0,
+      "position": {
+        "x": 220,
+        "y": 500
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 220,
+        "y": 1300
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 350,
+        "y": 700
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 350,
+        "y": 1100
+      }
+    },
+    {
       "team": 1,
       "position": {
         "x": 2580,
@@ -174,6 +203,34 @@
       "position": {
         "x": 2450,
         "y": 900
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2580,
+        "y": 1300
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2580,
+        "y": 500
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2450,
+        "y": 1100
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2450,
+        "y": 700
       }
     }
   ]
