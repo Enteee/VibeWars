@@ -160,10 +160,14 @@ function damageTo(events: readonly CombatEvent[], id: string): number {
 }
 
 /** A combatant inside the aura of `statusId`. */
-function under(statusId: StatusId, energy = 100): Combatant {
+function under(
+  statusId: StatusId,
+  energy = 100,
+  ranks: ReadonlyMap<string, number> = NO_RANKS,
+): Combatant {
   const combatant = makeCombatant({ id: "c", maxEnergy: 100 });
   combatant.energy = energy;
-  combatant.statuses.project(statusId, "r/c1", NO_RANKS);
+  combatant.statuses.project(statusId, "r/c1", ranks);
   return combatant;
 }
 
@@ -295,8 +299,12 @@ describe("Primal Echoes (#1886)", () => {
 });
 
 describe("Roaring Winds (#1886)", () => {
-  it("a shout or chant costs 4 more, a spell and an adrenal shout no more", () => {
-    const roaring = under("roaring-winds");
+  it("a shout or chant costs 1 more at its summoner's Wilderness Survival 0", () => {
+    expect(energyCostOf(skillOf("paragon.fall-back"), under("roaring-winds"))).toBe(11);
+  });
+
+  it("a shout or chant costs 4 more at 12, a spell and an adrenal shout no more", () => {
+    const roaring = under("roaring-winds", 100, new Map([["ranger.wilderness-survival", 12]]));
     expect(energyCostOf(skillOf("paragon.fall-back"), roaring)).toBe(14);
     expect(energyCostOf(skillOf("paragon.anthem-of-flame"), roaring)).toBe(9);
     expect(energyCostOf(skillOf("ranger.winnowing"), roaring)).toBe(5);

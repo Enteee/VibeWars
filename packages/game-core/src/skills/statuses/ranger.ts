@@ -2,6 +2,11 @@ import type { StatusDefinition } from "../status.js";
 import { AREA_ADJACENT } from "../../distances.js";
 import { define, ownSkills } from "./define.js";
 
+/** Roaring Winds' "1...5 more Energy" (#2158), on chants and shouts alike. */
+const ROARING_WINDS_SURCHARGE = {
+  scaling: { attributeId: "ranger.wilderness-survival", atZero: 1, atTwelve: 4.2 },
+};
+
 export type RangerStatusId =
   | "practiced-stance"
   | "regeneration"
@@ -258,12 +263,14 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       skillId: "ranger.ignite-arrows",
     },
   }),
-  // Infuriating Heat (#1540), at its rank-12 value.
-  // The spirit's aura, PvP: "Non-spirit creatures within its range gain
-  // adrenaline 33...66% as fast": 59% faster.
+  // Infuriating Heat (#1540). The spirit's aura, PvP: "Non-spirit
+  // creatures within its range gain adrenaline 33...66% as fast", read as
+  // that much faster, at its summoner's Expertise (#2158).
   "infuriating-heat": define("infuriating-heat", "Infuriating Heat", "skill-effect", {
     profession: "ranger",
-    adrenalineGainFaster: 0.59,
+    adrenalineGainFaster: {
+      scaling: { attributeId: "ranger.expertise", atZero: 0.33, atTwelve: 0.594 },
+    },
   }),
   // Ranger staples 4 (#1742), at rank 12. "For 3...14 seconds, your
   // arrows cannot be blocked. Seeking Arrows ends if you fail to hit."
@@ -380,12 +387,12 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     ownSkillModifiers: [ownSkills({ type: "signet" }, { energyBase: 10 })],
   }),
-  // "Chants and shouts cost 1...5 more Energy": 4, at rank 12.
+  // "Chants and shouts cost 1...5 more Energy", at its summoner's rank (#2158).
   "roaring-winds": define("roaring-winds", "Roaring Winds", "skill-effect", {
     profession: "ranger",
     ownSkillModifiers: [
-      ownSkills({ type: "chant" }, { energySurcharge: 4 }),
-      ownSkills({ type: "shout" }, { energySurcharge: 4 }),
+      ownSkills({ type: "chant" }, { energySurcharge: ROARING_WINDS_SURCHARGE }),
+      ownSkills({ type: "shout" }, { energySurcharge: ROARING_WINDS_SURCHARGE }),
     ],
   }),
 
@@ -459,10 +466,19 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     ],
   }),
   // PvP: "Enchantments cast by non-spirit creatures within its range expire
-  // 10...30% faster": 26% shorter.
+  // 10...30% faster", at its summoner's rank (#2158).
   tranquility: define("tranquility", "Tranquility", "skill-effect", {
     profession: "ranger",
-    ownSkillModifiers: [ownSkills({ type: "enchantment" }, { durationMultiplier: 0.74 })],
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "enchantment" },
+        {
+          durationMultiplier: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 0.9, atTwelve: 0.74 },
+          },
+        },
+      ),
+    ],
   }),
   // "Poisoned or Diseased creatures within its range suffer -2 Health
   // degeneration."
@@ -486,12 +502,20 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     { profession: "ranger", physicalDamageDealtAs: "fire" },
   ),
 
-  // "Your preparations recharge 50% faster and last 30...246...300%
-  // longer" (#1761), at rank 12.
+  // "Your preparations recharge 50% faster and last 30...300% longer"
+  // (#1761), the 300% at its Expertise (#2158).
   "practiced-stance": define("practiced-stance", "Practiced Stance", "stance", {
     profession: "ranger",
     ownSkillModifiers: [
-      ownSkills({ type: "preparation" }, { rechargeFaster: 0.5, durationMultiplier: 3.46 }),
+      ownSkills(
+        { type: "preparation" },
+        {
+          rechargeFaster: 0.5,
+          durationMultiplier: {
+            scaling: { attributeId: "ranger.expertise", atZero: 1.3, atTwelve: 3.46 },
+          },
+        },
+      ),
     ],
   }),
 
