@@ -25,7 +25,8 @@ function counter(): () => string {
   return () => `m${String(next++)}`;
 }
 
-const [FIRST, SECOND] = STARTER_TEAMS;
+// The tests roll 4v4: the first two of that size.
+const [FIRST, SECOND] = STARTER_TEAMS.filter((team) => team.members.length === 4);
 
 describe("rollStarterTeam", () => {
   it("rolls and saves a curated team once, under its own names, then never again", async () => {
@@ -87,7 +88,7 @@ describe("rollStarterTeam", () => {
     const key = memoryKey();
     const options = { teams, key, random: () => 0, newId: counter(), now: 5 };
 
-    expect(await rollStarterTeam({ ...options, size: 2, id: "t" })).toBeUndefined();
+    expect(await rollStarterTeam({ ...options, size: 1, id: "t" })).toBeUndefined();
     expect(key.value).toBeUndefined();
 
     const eight = await rollStarterTeam({ ...options, size: 8, id: "u" });

@@ -15,10 +15,12 @@ const NAME = /^[A-Z][a-z]+( [A-Z][a-z]+)+$/;
 const NAME_MAX_LENGTH = 20;
 
 describe("STARTER_TEAMS (#2035)", () => {
-  it("are four teams of 4 and two of 8", () => {
+  it("are teams of 2, 4 or 8, at least three of each Team Builder size (#2147)", () => {
     const sizes = STARTER_TEAMS.map((team) => team.members.length);
-    expect(sizes.filter((size) => size === 4)).toHaveLength(4);
-    expect(sizes.filter((size) => size === 8)).toHaveLength(2);
+    for (const size of sizes) expect([2, 4, 8]).toContain(size);
+    for (const size of [2, 4, 8]) {
+      expect(sizes.filter((each) => each === size).length, String(size)).toBeGreaterThanOrEqual(3);
+    }
   });
 
   it("have unique names", () => {
@@ -85,12 +87,6 @@ describe("STARTER_TEAMS (#2035)", () => {
 describe("pickStarterTeam (#2035)", () => {
   const FOURS = STARTER_TEAMS.filter((team) => team.members.length === 4);
 
-  it("has only teams of 1, 2, 4 or 8, a size a Team Build can have (#2109)", () => {
-    for (const team of STARTER_TEAMS) {
-      expect([1, 2, 4, 8], team.name).toContain(team.members.length);
-    }
-  });
-
   it("picks the first of the size at 0 and the last just under 1", () => {
     expect(pickStarterTeam(() => 0, 4)).toBe(FOURS[0]);
     expect(pickStarterTeam(() => 0.9999999, 4)).toBe(FOURS[FOURS.length - 1]);
@@ -99,7 +95,9 @@ describe("pickStarterTeam (#2035)", () => {
   it("picks only a team of the size asked for, and none when there is none (#2109)", () => {
     for (const r of [0, 0.5, 0.9999999]) {
       expect(pickStarterTeam(() => r, 8)?.members).toHaveLength(8);
-      expect(pickStarterTeam(() => r, 2)).toBeUndefined();
+      expect(pickStarterTeam(() => r, 2)?.members).toHaveLength(2);
+      // 1v1 is not a Team Builder size: no starter team has one member.
+      expect(pickStarterTeam(() => r, 1)).toBeUndefined();
     }
   });
 
@@ -121,6 +119,7 @@ describe("pickStarterTeam (#2035)", () => {
     };
     const seen = new Set<string | undefined>();
     for (let i = 0; i < 200; i += 1) {
+      seen.add(pickStarterTeam(random, 2)?.name);
       seen.add(pickStarterTeam(random, 4)?.name);
       seen.add(pickStarterTeam(random, 8)?.name);
     }
