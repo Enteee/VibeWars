@@ -79,7 +79,9 @@ export type NecromancerStatusId =
   | "soul-leech"
   // Enchantment party moves (#1975).
   | "order-of-apostasy"
-  | "jaundiced-gaze";
+  | "jaundiced-gaze"
+  // Necromancer staples (#2230).
+  | "vampiric-spirit";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -723,5 +725,11 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         },
       ),
     ],
+  }),
+  // Vampiric Spirit (#2230): "For 10 seconds, you have +5...10 Health
+  // regeneration", 9 at the caster's Blood Magic 12.
+  "vampiric-spirit": define("vampiric-spirit", "Vampiric Spirit", "enchantment", {
+    profession: "necromancer",
+    healthPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: 5, atTwelve: 9 } },
   }),
 };

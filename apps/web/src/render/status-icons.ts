@@ -471,6 +471,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "shield-of-judgment": icon("shield-of-judgment"),
   "order-of-apostasy": icon("order-of-apostasy"),
   "jaundiced-gaze": icon("jaundiced-gaze"),
+  "vampiric-spirit": icon("vampiric-spirit"),
   "dark-apostasy": icon("dark-apostasy"),
   // Take what another has (#1965).
   "mirrored-stance": icon("mirrored-stance"),
