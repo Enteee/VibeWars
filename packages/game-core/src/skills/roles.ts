@@ -247,6 +247,13 @@ function isPrice(effect: SkillEffect): boolean {
   return category === "hex" || category === "condition";
 }
 
+/** Whether `skill`'s area strikes foes and nobody else (#2232): Crystal Wave's. */
+export function strikesFoesOnly(skill: Skill): boolean {
+  return (
+    skill.area !== undefined && skill.area.origin !== "party" && skill.area.affects === "enemies"
+  );
+}
+
 /**
  * A skill's roles, derived from its effects only, never a hand-kept
  * list: adding a skill tags it. A blocked blow's effects count too,
@@ -266,6 +273,12 @@ export function skillRoles(skill: Skill): readonly SkillRole[] {
     ...(skill.attack?.onCritical ?? []),
     ...(skill.attack?.onFailedToHit ?? []),
   ];
-  const roles = new Set(effects.flatMap(effectRoles));
+  // Crystal Wave's cure (#2232) lands on the foes its area strikes: no removal.
+  const curesFoes = strikesFoesOnly(skill);
+  const roles = new Set(
+    effects.flatMap((effect) =>
+      curesFoes && effect.kind === "remove-status" ? [] : effectRoles(effect),
+    ),
+  );
   return SKILL_ROLES.filter((role) => roles.has(role));
 }
