@@ -2830,10 +2830,11 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     }
     case "adrenaline-gain": {
-      const strikes = effect.strikes === 1 ? "1 strike" : `${String(effect.strikes)} strikes`;
+      const magnitude = describeMagnitude(effect.strikes, ranks);
+      const strikes = `${shown(magnitude)} ${magnitude.current === 1 ? "strike" : "strikes"}`;
       return {
         text: `${effect.recipient === "owner" ? "You gain" : "Gain"} ${strikes} of adrenaline${perFoeHit(effect)}${perOwnMeleeAttackSkill(effect)}`,
-        magnitude: undefined,
+        magnitude,
       };
     }
     case "energy-loss": {

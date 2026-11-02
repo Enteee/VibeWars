@@ -284,14 +284,17 @@ describe("Shield Stance (#1592)", () => {
 });
 
 describe("Rage of the Ntouka (#1592)", () => {
-  it("is an elite of 6 strikes, each adrenal skill capped at its cost", () => {
+  it("is an elite of 6 strikes at Strength 12 (1...7), each adrenal skill capped at its cost", () => {
     expect(skill(RAGE_OF_THE_NTOUKA)).toMatchObject({
       elite: true,
       attributeId: "warrior.strength",
       cost: { kind: "energy", amount: 5 },
       rechargeSeconds: 15,
       effects: [
-        { kind: "adrenaline-gain", strikes: 6 },
+        {
+          kind: "adrenaline-gain",
+          strikes: { scaling: { attributeId: "warrior.strength", atZero: 1, atTwelve: 5.8 } },
+        },
         { kind: "apply-status", statusId: "rage-of-the-ntouka", durationSeconds: { flat: 8 } },
       ],
     });

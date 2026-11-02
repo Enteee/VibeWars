@@ -655,7 +655,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     effects: [
       { kind: "energy-gain", amount: { flat: 3 }, perTarget: true },
-      { kind: "adrenaline-gain", strikes: 1, perTarget: true },
+      { kind: "adrenaline-gain", strikes: { flat: 1 }, perTarget: true },
     ],
   },
   {
@@ -2113,7 +2113,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
         condition: { kind: "removed", category: "enchantment", from: "caster" },
         effects: [
           { kind: "remove-status", category: "enchantment", count: 1 },
-          { kind: "adrenaline-gain", strikes: 1 },
+          { kind: "adrenaline-gain", strikes: { flat: 1 } },
         ],
       },
     ],

@@ -190,11 +190,36 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
       attributes.add(stat.scaling.attributeId);
     }
   }
+  // Anthem of Fury's strikes are its Paragon's, not the ally's (#2143).
+  if (definition.nextSkill !== undefined) {
+    scalingAttributes(definition.nextSkill.effects, attributes);
+  }
   // Jagged Bones's horror stands up at its caster's rank (#1986).
   if (definition.replacedOnDeathBy !== undefined && definition.attribute !== undefined) {
     attributes.add(definition.attribute);
   }
   return [...attributes];
+}
+
+/** Every `scaling.attributeId` anywhere in `value`, into `into`. */
+function scalingAttributes(value: unknown, into: Set<string>): void {
+  if (typeof value !== "object" || value === null) {
+    return;
+  }
+  const entries: [string, unknown][] = Object.entries(value);
+  for (const [key, field] of entries) {
+    if (
+      key === "scaling" &&
+      typeof field === "object" &&
+      field !== null &&
+      "attributeId" in field &&
+      typeof field.attributeId === "string"
+    ) {
+      into.add(field.attributeId);
+    } else {
+      scalingAttributes(field, into);
+    }
+  }
 }
 
 export interface StatusDefinition {
@@ -3301,10 +3326,18 @@ export class StatusSet {
     skill: Skill,
     spared: ReadonlySet<StatusId>,
   ): {
-    readonly answered: readonly { readonly statusId: StatusId; readonly next: NextSkill }[];
+    readonly answered: readonly {
+      readonly statusId: StatusId;
+      readonly next: NextSkill;
+      readonly ranks: ReadonlyMap<string, number>;
+    }[];
     readonly ended: readonly StatusId[];
   } {
-    const answered: { statusId: StatusId; next: NextSkill }[] = [];
+    const answered: {
+      statusId: StatusId;
+      next: NextSkill;
+      ranks: ReadonlyMap<string, number>;
+    }[] = [];
     const ended: StatusId[] = [];
     for (const status of this.active) {
       const next = getStatusDefinition(status.id).nextSkill;
@@ -3316,7 +3349,7 @@ export class StatusSet {
       ) {
         continue;
       }
-      answered.push({ statusId: status.id, next });
+      answered.push({ statusId: status.id, next, ranks: status.ranks });
       status.skillsLeft -= 1;
       if (status.skillsLeft <= 0) {
         ended.push(status.id);
