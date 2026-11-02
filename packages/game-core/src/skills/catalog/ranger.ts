@@ -4725,6 +4725,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
       {
         kind: "disable-own-skills",
         which: "attacks",
+        exceptWeapon: undefined,
         seconds: { scaling: { attributeId: "ranger.marksmanship", atZero: 8, atTwelve: 4.8 } },
       },
     ],
@@ -4780,7 +4781,12 @@ export const RANGER_SKILLS: readonly Skill[] = [
         condition: { kind: "target-health-below", fraction: 0.5 },
         effects: [{ kind: "recharge-reset" }],
       },
-      { kind: "disable-own-skills", which: "attacks", seconds: { flat: 2 } },
+      {
+        kind: "disable-own-skills",
+        which: "attacks",
+        exceptWeapon: undefined,
+        seconds: { flat: 2 },
+      },
     ],
   },
   {

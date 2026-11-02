@@ -280,7 +280,7 @@ describe("in flight, and on its caster (#1761)", () => {
     boosted: boolean,
   ): number {
     const doubles = {
-      filter: { type: undefined, attributeId: undefined, profession },
+      filter: { type: undefined, attributeId: undefined, profession, chainRoles: undefined },
       energyBase: undefined,
       energyDiscount: 0,
       energyFloor: 1,

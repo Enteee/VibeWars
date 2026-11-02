@@ -59,6 +59,7 @@ describe("status definitions", () => {
         def.preventsSpells ||
         def.preventsBlocking ||
         def.unblockableBySource ||
+        def.unblockableByBlinded ||
         def.unblockableAttacks !== undefined ||
         def.attacksUnblockable ||
         def.energyPips !== 0 ||
@@ -844,6 +845,52 @@ describe("StatusSet changes, for the triggers (#887)", () => {
       { kind: "targeted-by-foe", offenderId: "f", fired },
       { kind: "targeted-by-foe", offenderId: "g", fired },
     ]);
+  });
+
+  it("answers a hit by its source's attack of the role it names, and no one else's (#2134)", () => {
+    const set = new StatusSet();
+    set.apply("mark-of-instability", 20, "s", NO_RANKS);
+    set.drainChanges();
+    set.recordHitByAttack("s", 30, "lead");
+    set.recordHitByAttack("s", 30, undefined);
+    set.recordHitByAttack("a", 30, "dual");
+    expect(set.drainChanges()).toEqual([]);
+    set.recordHitByAttack("s", 30, "dual");
+    expect(set.drainChanges()).toEqual([
+      {
+        kind: "hit-by-attack",
+        offenderId: "s",
+        fired: [
+          {
+            statusId: "mark-of-instability",
+            sourceId: "s",
+            trigger: getStatusDefinition("mark-of-instability").triggers[0],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("frees and hastens only the chain roles Way of the Empty Palm names (#2134)", () => {
+    const set = new StatusSet();
+    set.apply("way-of-the-empty-palm", 13, "s", NO_RANKS);
+    const boost = (id: string) => {
+      const found = getSkill(id);
+      if (found === undefined) {
+        throw new Error(`missing ${id}`);
+      }
+      return ownSkillBoost(set.active, found);
+    };
+    expect(boost("assassin.death-blossom")).toMatchObject({ energyBase: 0, rechargeFaster: 0.45 });
+    expect(boost("assassin.fox-fangs")).toMatchObject({ energyBase: 0, rechargeFaster: 0.45 });
+    expect(boost("assassin.jagged-strike")).toMatchObject({
+      energyBase: undefined,
+      rechargeFaster: 0,
+    });
+    expect(boost("assassin.shadow-prison")).toMatchObject({
+      energyBase: undefined,
+      rechargeFaster: 0,
+    });
   });
 
   it("marks the mantras with what they do (#1964)", () => {

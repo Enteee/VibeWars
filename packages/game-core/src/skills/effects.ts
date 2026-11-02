@@ -2796,7 +2796,11 @@ function disabledOwn(
     return skillId !== usedId && skill?.attributeId === effect.attributeId;
   }
   if (effect.which === "attacks") {
-    return skillId !== usedId && skill?.type === "attack";
+    return (
+      skillId !== usedId &&
+      skill?.type === "attack" &&
+      (effect.exceptWeapon === undefined || skill.attack?.weapon !== effect.exceptWeapon)
+    );
   }
   if (effect.which === "types") {
     return skill !== undefined && effect.types.includes(skill.type);

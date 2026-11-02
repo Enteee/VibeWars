@@ -67,6 +67,7 @@ export function define(
     preventsEnchantments: false,
     preventsShoutsAndChants: false,
     unblockableBySource: false,
+    unblockableByBlinded: false,
     preventsBlocking: false,
     renewsWhileMoving: undefined,
     preventsKnockdown: false,
@@ -164,7 +165,13 @@ export function ownSkills(
   change: Partial<Omit<OwnSkillModifier, "filter">>,
 ): OwnSkillModifier {
   return {
-    filter: { type: undefined, attributeId: undefined, profession: undefined, ...filter },
+    filter: {
+      type: undefined,
+      attributeId: undefined,
+      profession: undefined,
+      chainRoles: undefined,
+      ...filter,
+    },
     energyBase: undefined,
     energyDiscount: 0,
     energyFloor: 1,

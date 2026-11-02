@@ -37,6 +37,7 @@ import {
   isSpell,
   type AttackWeaponClass,
   type AttributeScaling,
+  type ChainRole,
   type Combatant,
   type ConditionalBonus,
   type CreatureTemplate,
@@ -515,6 +516,11 @@ export interface StatusDefinition {
    * rolls block.
    */
   readonly unblockableBySource: boolean;
+  /**
+   * A Blinded foe cannot block the bearer's attacks (#2134): Unseen Fury's
+   * "you cannot be blocked by Blinded foes". Checked as the block is rolled.
+   */
+  readonly unblockableByBlinded: boolean;
   /**
    * The bearer cannot block at all (#1332): Rigor Mortis's "cannot block".
    * Every attack, melee or projectile, from anyone, rolls no block.
@@ -1287,6 +1293,8 @@ export interface OwnSkillFilter {
   readonly type: SkillType | "spell" | undefined;
   readonly attributeId: string | undefined;
   readonly profession: ProfessionId | undefined;
+  /** Attack skills of one of these chain roles (#2134), as Way of the Empty Palm's. */
+  readonly chainRoles: readonly ChainRole[] | undefined;
 }
 
 /** `StatusDefinition.ownSkillModifiers` (#1761). */
@@ -1375,7 +1383,9 @@ export function ownSkillAnswers(filter: OwnSkillFilter, skill: Skill): boolean {
   return (
     type &&
     (filter.attributeId === undefined || skill.attributeId === filter.attributeId) &&
-    (filter.profession === undefined || skill.profession === filter.profession)
+    (filter.profession === undefined || skill.profession === filter.profession) &&
+    (filter.chainRoles === undefined ||
+      (skill.attack?.chain !== undefined && filter.chainRoles.includes(skill.attack.chain.role)))
   );
 }
 
@@ -1491,6 +1501,13 @@ export interface StatusTrigger {
    * it below, from at least that.
    */
   readonly healthBelow?: number;
+  /**
+   * On `bearer-hit-by-attack` only (#2134): it fires only for a hit by the
+   * status's source, and with `chainRole`, only by an attack skill of that
+   * role, as Mark of Instability's "the next time you hit target foe with a
+   * dual attack". Absent: any foe's hit.
+   */
+  readonly hitBy?: { readonly fromSource: true; readonly chainRole?: ChainRole };
   /**
    * On `bearer-applies-hex`, and only there (#1951): the hex's attribute
    * must be in `attributes`, as Elemental Flame's "Elemental hex".
@@ -2275,9 +2292,19 @@ export class StatusSet {
    * `took` health, recorded only if a status on it answers that, with the
    * triggers that do. Every hit counts: two foes in one tick are two. Each
    * status that reflects attack damage (#1754) sends its share back.
+   * `chainRole` is the hitting attack skill's (#2134), if it has one.
    */
-  public recordHitByAttack(offenderId: string, took: number): void {
-    const fired = this.#answering("bearer-hit-by-attack");
+  public recordHitByAttack(
+    offenderId: string,
+    took: number,
+    chainRole: ChainRole | undefined,
+  ): void {
+    const fired = this.#answering("bearer-hit-by-attack").filter(
+      ({ sourceId, trigger }) =>
+        trigger.hitBy === undefined ||
+        (sourceId === offenderId &&
+          (trigger.hitBy.chainRole === undefined || trigger.hitBy.chainRole === chainRole)),
+    );
     if (fired.length > 0) {
       this.#changes.push({ kind: "hit-by-attack", offenderId, fired });
     }
