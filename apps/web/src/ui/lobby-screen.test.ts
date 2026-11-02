@@ -50,6 +50,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     countdownSeconds: null,
     teamLobby: null,
     queueNonce: null,
+    ascentRound: null,
     proposalBuilds: new Map(),
   };
 }
@@ -397,6 +398,13 @@ describe("matchmakingButtons (#1766)", () => {
     leave?.click();
     expect(pressed).toEqual(["house", "leave"]);
   });
+  it("never offers Heroes' Ascent the house team: it waits for a side (#1996)", () => {
+    const shown = matchmakingButtons(
+      { ...matchmaking(10 * HOUSE_TEAM_AFTER_MS), onPlayHouseTeam: undefined },
+      lobbyControls(snapshot("waiting")),
+    ) as unknown as FakeElement[];
+    expect(shown.map((button) => button.textContent)).toEqual(["Leave the queue"]);
+  });
 });
 
 describe("lobbyPanel: the map (#1994)", () => {
@@ -460,5 +468,32 @@ describe("lobbyPanel: the map (#1994)", () => {
 
   it("names the mode of a map that is set", () => {
     expect(modeLines("hosted-game")).toEqual(["Annihilation: defeat every foe"]);
+  });
+
+  it("names a queued Heroes' Ascent's round map and its mode, not the lobby's (#1996)", () => {
+    const ascent = [
+      { id: "relic-temples", name: "Relic Temples", size: "medium", mode: "relic-run" },
+      {
+        id: "forgotten-shrines",
+        name: "Forgotten Shrines",
+        size: "medium",
+        mode: "capture-points",
+      },
+    ] as const;
+    const queued = {
+      ...snapshot("waiting"),
+      mode: "heroes-ascent",
+      mapId: "relic-temples",
+      ascentRound: 1,
+    } as const;
+    const { status, body } = lobbyPanel(queued, callbacks, undefined, ascent);
+    expect((status[0] as unknown as FakeElement).textContent).toBe(
+      "Map: Forgotten Shrines (medium)",
+    );
+    expect(
+      (body as unknown as FakeElement).all("lobby-mode").map((line) => line.textContent),
+    ).toEqual([
+      "Capture Points: stand on shrines to take them. Each shrine you own scores every 30 s.",
+    ]);
   });
 });

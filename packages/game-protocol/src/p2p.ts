@@ -33,7 +33,7 @@ import {
   type LobbyPhase,
   type WireChainMark,
 } from "./protocol.js";
-import { inPartyOrder, isQueueMode, type QueueMode } from "./queue.js";
+import { ASCENT_ROUNDS, inPartyOrder, isQueueMode, type QueueMode } from "./queue.js";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -1028,6 +1028,12 @@ export interface WireLobbyState {
    * before it consents. Public: the room id never is.
    */
   readonly queueNonce: string | null;
+  /**
+   * While `phase` is `"queued"` in Heroes' Ascent (#1996), the round the
+   * party queues at, the host's run: every member's ticket is at it.
+   * `null` otherwise.
+   */
+  readonly ascentRound: number | null;
 }
 
 /**
@@ -1109,9 +1115,10 @@ export type WireLobbyCommand =
   /**
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
    * queue; `leave-queue` takes it out again, `house-team` plays the house
-   * team instead, in this lobby.
+   * team instead, in this lobby. In Heroes' Ascent it queues at the
+   * host's `ascentRound` (#1996), `null` in every other mode.
    */
-  | { readonly kind: "find-match" }
+  | { readonly kind: "find-match"; readonly ascentRound: number | null }
   | { readonly kind: "leave-queue" }
   | { readonly kind: "house-team" }
   /**
@@ -1213,6 +1220,11 @@ function isNumber(value: unknown): value is number {
 
 function isCount(value: unknown): value is number {
   return isNumber(value) && Number.isInteger(value) && value >= 0;
+}
+
+/** Whether `value` is a Heroes' Ascent round (#1996), or `null` for none. */
+function isAscentRound(value: unknown): value is number | null {
+  return value === null || (isCount(value) && value < ASCENT_ROUNDS);
 }
 
 function isPips(value: unknown): value is number {
@@ -2523,6 +2535,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     !isString(raw.code) ||
     !isOneOf(raw.phase, ["waiting", "team-lobby", "queued", "starting", "in-match"] as const) ||
     !(raw.queueNonce === null || isTicketId(raw.queueNonce)) ||
+    !isAscentRound(raw.ascentRound) ||
     !isOneOf(raw.mode, LOBBY_MODES) ||
     !isString(raw.mapId) ||
     typeof raw.open !== "boolean" ||
@@ -2547,6 +2560,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         countdownSeconds: raw.countdownSeconds,
         teamLobby,
         queueNonce: raw.queueNonce,
+        ascentRound: raw.ascentRound,
       };
 }
 
@@ -2564,8 +2578,11 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return isString(raw.mapId) ? { kind: "select-map", mapId: raw.mapId } : undefined;
     case "select-mode":
       return isOneOf(raw.mode, LOBBY_MODES) ? { kind: "select-mode", mode: raw.mode } : undefined;
-    case "start":
     case "find-match":
+      return isAscentRound(raw.ascentRound)
+        ? { kind: "find-match", ascentRound: raw.ascentRound }
+        : undefined;
+    case "start":
     case "leave-queue":
     case "house-team":
       return { kind: raw.kind };

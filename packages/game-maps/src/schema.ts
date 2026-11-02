@@ -147,6 +147,15 @@ const OBJECTIVE_NAMES: Readonly<Record<Objective["kind"], string>> = {
   "capture-point": "capture point",
 };
 
+/**
+ * The team sizes a map may suit (#2108): one side's players, as the
+ * modes play them, 1v1 up to 8v8.
+ */
+export const TEAM_SIZES_ALL = [1, 2, 4, 8] as const;
+
+/** One of `TEAM_SIZES_ALL`. */
+export type TeamSize = (typeof TEAM_SIZES_ALL)[number];
+
 /** A body's radius: an objective stands clear of every wall and edge by one. */
 const BODY_RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
 
@@ -167,6 +176,11 @@ export const mapDataSchema = z
       "king-of-the-hill",
       "capture-points",
     ]),
+    /** The team sizes it suits (#2108), one or several of `TEAM_SIZES_ALL`; there is no default. */
+    teamSizes: z
+      .array(z.literal(TEAM_SIZES_ALL))
+      .min(1)
+      .refine((sizes) => new Set(sizes).size === sizes.length, "team sizes must be unique"),
     width: z.number().positive(),
     height: z.number().positive(),
     walls: z.array(wallSchema),

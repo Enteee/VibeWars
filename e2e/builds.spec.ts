@@ -402,7 +402,7 @@ test("on a phone both editors keep Save and their ⋯ in the bar, and ⋯ opens 
   await bar.getByRole("button", { name: "more actions" }).click();
   await expect(bar.getByRole("button", { name: "Share as GW1 code", exact: true })).toBeVisible();
   await bar.getByRole("button", { name: "Share", exact: true }).click();
-  await expect(bar.locator(".editor-share")).toBeVisible();
+  await expect(bar.locator(".editor-share:not([hidden])")).toBeVisible();
 });
 
 test("a new team is stored only on Save, which leaves the editor (#573, #1902)", async ({
@@ -1025,7 +1025,7 @@ test("⋯, Share and Load stay inside the window at 1100 px and on a phone (#202
     await more.click();
     await inside(bar.locator(".editor-more"), width);
     await bar.getByRole("button", { name: "Share", exact: true }).click();
-    await inside(bar.locator(".editor-share"), width);
+    await inside(bar.locator(".editor-share:not([hidden])"), width);
     await more.click();
     await bar.getByRole("button", { name: "Load GW1 code", exact: true }).click();
     await inside(bar.locator(".editor-load"), width);
@@ -1506,7 +1506,7 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
   await page.reload();
   // The page's own lobby opening redraws the roster (#1526): a click
   // before it lands on a card the redraw takes away.
-  await expect(page.locator("#topbar .topbar-lobby-code")).not.toBeEmpty();
+  await expect(page.locator("#topbar .topbar-lobby:not([hidden])")).toBeAttached();
 
   const outlaw = page.locator(".character-card", { hasText: "Outlaw" });
   await expect(outlaw).toHaveClass(/is-invalid/);

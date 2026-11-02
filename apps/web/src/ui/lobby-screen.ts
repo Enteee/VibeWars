@@ -2,6 +2,7 @@ import type { MatchMode } from "@vibewars/game-core";
 import { LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
+import { ascentMapId } from "../net/maps.js";
 import { button, h, readyButton, toast } from "./kit.js";
 import { relayLine } from "./relay-section.js";
 import { playerLabelElement } from "./player-label.js";
@@ -29,7 +30,8 @@ export interface LobbyMatchmaking {
   readonly queuedMs: number | null;
   readonly onFindMatch: () => void;
   readonly onLeaveQueue: () => void;
-  readonly onPlayHouseTeam: () => void;
+  /** `undefined` where no house team is offered: Heroes' Ascent waits for a side (#1996). */
+  readonly onPlayHouseTeam: (() => void) | undefined;
 }
 
 /** The host may play the house team after this long with no other team (Q191). */
@@ -194,7 +196,11 @@ export function lobbyPanel(
   // Only a Hosted Game's host may change the map (#1994), so everyone
   // else sees it as a label rather than a control they would be refused
   // on clicking. Team Arena draws its own at the start.
-  const current = availableMaps.find((map) => map.id === snapshot.mapId);
+  // A party queued in Heroes' Ascent is bound for its round's map, not
+  // the lobby's (#1996).
+  const shownMapId =
+    snapshot.ascentRound === null ? snapshot.mapId : ascentMapId(snapshot.ascentRound);
+  const current = availableMaps.find((map) => map.id === shownMapId);
   let mapPart: HTMLElement;
   if (snapshot.mode === "hosted-game" && snapshot.isHost && availableMaps.length > 1) {
     mapPart = h("label", "lobby-map");
@@ -218,7 +224,7 @@ export function lobbyPanel(
     mapPart = h(
       "div",
       "lobby-map",
-      `Map: ${current === undefined ? snapshot.mapId : mapLabel(current)}`,
+      `Map: ${current === undefined ? shownMapId : mapLabel(current)}`,
     );
   }
 
@@ -312,12 +318,10 @@ export function matchmakingButtons(
     return [find];
   }
   const leave = button("Leave the queue", "lobby-leave-queue", matchmaking.onLeaveQueue);
-  return matchmaking.queuedMs < HOUSE_TEAM_AFTER_MS
+  const { onPlayHouseTeam } = matchmaking;
+  return matchmaking.queuedMs < HOUSE_TEAM_AFTER_MS || onPlayHouseTeam === undefined
     ? [leave]
-    : [
-        button("Play the house team", "primary lobby-house-team", matchmaking.onPlayHouseTeam),
-        leave,
-      ];
+    : [button("Play the house team", "primary lobby-house-team", onPlayHouseTeam), leave];
 }
 
 /**

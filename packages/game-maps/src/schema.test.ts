@@ -13,6 +13,7 @@ const validMap = {
   id: "arena-test",
   name: "Arena Test",
   mode: "annihilation",
+  teamSizes: [1],
   width: 100,
   height: 100,
   walls: [
@@ -49,6 +50,19 @@ describe("validateMapData", () => {
     const { mode: _mode, ...modeless } = validMap;
     expect(() => validateMapData(modeless)).toThrow(MapValidationError);
     expect(() => validateMapData({ ...validMap, mode: "crag" })).toThrow(MapValidationError);
+  });
+
+  it("refuses a map without team sizes, or with none, a repeated one or one no mode plays (#2108)", () => {
+    const { teamSizes: _teamSizes, ...sizeless } = validMap;
+    expect(() => validateMapData(sizeless)).toThrow(MapValidationError);
+    for (const teamSizes of [[], [2, 2], [3], [16], [0], [1.5]]) {
+      expect(() => validateMapData({ ...validMap, teamSizes }), JSON.stringify(teamSizes)).toThrow(
+        MapValidationError,
+      );
+    }
+    expect(validateMapData({ ...validMap, teamSizes: [8, 1, 4, 2] }).teamSizes).toEqual([
+      8, 1, 4, 2,
+    ]);
   });
 
   it("knows exactly game-core's modes", () => {

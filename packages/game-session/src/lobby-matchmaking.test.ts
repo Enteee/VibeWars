@@ -1,4 +1,8 @@
-import { TEAM_LOBBY_STAGE_SECONDS, type WirePartyFormed } from "@vibewars/game-protocol";
+import {
+  TEAM_LOBBY_STAGE_SECONDS,
+  type LobbyMode,
+  type WirePartyFormed,
+} from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import { openLobby, type Member, type TestLobby } from "./lobby-harness.test-support.js";
@@ -39,9 +43,10 @@ async function landed(): Promise<void> {
   }
 }
 
-/** A Team Arena party lobby of the host and `guests`. */
+/** A party lobby of `mode`, Team Arena's by default, of the host and `guests`. */
 async function partyLobby(
   guests: readonly string[],
+  mode: LobbyMode = "team-arena",
 ): Promise<{ lobby: TestLobby; party: Member[] }> {
   const lobby = await openLobby({
     teamLobby: true,
@@ -51,7 +56,7 @@ async function partyLobby(
   for (const name of guests) {
     party.push(await lobby.join(name));
   }
-  lobby.host.connection.selectMode("team-arena");
+  lobby.host.connection.selectMode(mode);
   party.forEach((who, i) => {
     who.connection.chooseTeam(i % 2 === 0 ? 0 : 1);
   });
@@ -59,9 +64,9 @@ async function partyLobby(
   return { lobby, party };
 }
 
-/** Find a match, and run the Team Lobby's vote and claim out. */
-async function queue(lobby: TestLobby): Promise<void> {
-  lobby.host.connection.findMatch();
+/** Find a match, at `ascentRound` in Heroes' Ascent, and run the Team Lobby's vote and claim out. */
+async function queue(lobby: TestLobby, ascentRound: number | null = null): Promise<void> {
+  lobby.host.connection.findMatch(ascentRound);
   await settle();
   for (let stage = 0; stage < 2; stage += 1) {
     lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS);
@@ -82,7 +87,7 @@ const phaseOf = (who: Member) => who.connection.getSnapshot().phase;
 describe("a party lobby's matchmaking (#1766)", () => {
   it("runs the Team Lobby for the party's one side of the mode's size, every human on it", async () => {
     const { lobby, party } = await partyLobby(["Ann"]);
-    lobby.host.connection.findMatch();
+    lobby.host.connection.findMatch(null);
     await settle();
 
     for (const who of party) {
@@ -103,7 +108,7 @@ describe("a party lobby's matchmaking (#1766)", () => {
     const [, ann] = party as [Member, Member];
     const refused: string[] = [];
     ann.connection.onRefused((reason) => refused.push(reason));
-    ann.connection.findMatch();
+    ann.connection.findMatch(null);
     await settle();
     expect(refused).toEqual(["not-host"]);
 
@@ -257,5 +262,54 @@ describe("a party lobby's matchmaking (#1766)", () => {
       true,
     ]);
     expect(seats.filter((seat) => seat.team === 1 && seat.bot)).toHaveLength(4);
+  });
+});
+
+describe("a Heroes' Ascent party's round (#1996)", () => {
+  it("queues every member at the host's round, whatever the guest's own run was", async () => {
+    const { lobby, party } = await partyLobby(["Ann"], "heroes-ascent");
+    // Ann's own run, had she hosted, would be at round 0: the party's is the host's.
+    await queue(lobby, 2);
+
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+    expect(party.map((who) => who.connection.getSnapshot().ascentRound)).toEqual([2, 2]);
+  });
+
+  it("has no round outside Heroes' Ascent, nor once out of the queue", async () => {
+    const { lobby, party } = await partyLobby(["Ann"]);
+    await queue(lobby);
+    expect(party.map((who) => who.connection.getSnapshot().ascentRound)).toEqual([null, null]);
+
+    const ascent = await partyLobby(["Ann"], "heroes-ascent");
+    await queue(ascent.lobby, 3);
+    ascent.lobby.host.connection.leaveQueue();
+    await settle();
+    expect(ascent.party.map(phaseOf)).toEqual(["waiting", "waiting"]);
+    expect(ascent.party.map((who) => who.connection.getSnapshot().ascentRound)).toEqual([
+      null,
+      null,
+    ]);
+  });
+
+  it("finds no match in Heroes' Ascent without a round, nor with one in Team Arena", async () => {
+    const ascent = await partyLobby(["Ann"], "heroes-ascent");
+    ascent.lobby.host.connection.findMatch(null);
+    await settle();
+    expect(ascent.party.map(phaseOf)).toEqual(["waiting", "waiting"]);
+
+    const arena = await partyLobby(["Ann"]);
+    arena.lobby.host.connection.findMatch(0);
+    await settle();
+    expect(arena.party.map(phaseOf)).toEqual(["waiting", "waiting"]);
+  });
+
+  it("never plays the house team: it waits for a side at its round", async () => {
+    const { lobby, party } = await partyLobby(["Ann"], "heroes-ascent");
+    await queue(lobby, 0);
+    lobby.host.connection.playHouseTeam();
+    await settle();
+
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+    expect(lobby.matches).toHaveLength(0);
   });
 });

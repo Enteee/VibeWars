@@ -137,6 +137,7 @@ describe("the mode rail (#1525)", () => {
       members: [],
       queuedMs: null,
       teams: undefined,
+      ascentRound: null,
     });
     saveRail("hosted-game");
     const switched: RailEntry[] = [];
@@ -163,6 +164,7 @@ describe("the mode rail (#1525)", () => {
       members: [],
       queuedMs: null,
       teams: undefined,
+      ascentRound: null,
     });
     const rail = modeRail("gvg", () => undefined) as unknown as FakeElement;
     expect(rail.children.some((child) => child.attributes.has("aria-disabled"))).toBe(false);
@@ -197,6 +199,7 @@ describe("the mode rail (#1525)", () => {
       members: [],
       queuedMs: null,
       teams: undefined,
+      ascentRound: null,
     });
     redrawModeRail(root as unknown as HTMLElement, "teams", () => undefined);
     const locked = replacement?.children.filter((child) => child.attributes.has("aria-disabled"));
@@ -222,6 +225,7 @@ describe("the mode rail (#1525)", () => {
       open: true,
       queuedMs: null,
       teams: undefined,
+      ascentRound: null,
     } as const;
     const strip = (): FakeElement | undefined => {
       const root = new FakeElement("div");
