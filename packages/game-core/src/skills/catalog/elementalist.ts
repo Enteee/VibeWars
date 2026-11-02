@@ -3512,6 +3512,109 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Self-buffs (#1984).
+  // Flame recharges in 45 s, the other two in 30 (wiki).
+  conjure("flame", "Flame", 182, "fire", 45),
+  conjure("frost", "Frost", 207, "water", 30),
+  conjure("lightning", "Lightning", 221, "air", 30),
+  {
+    id: "elementalist.ether-prodigy",
+    name: "Ether Prodigy",
+    gwId: 178,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Lose all enchantments. For 8...20 seconds, you gain +6 Energy
+    // regeneration" (#1984): 18; the strip first, so it never strips itself.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: "all" },
+      {
+        kind: "apply-status",
+        statusId: "ether-prodigy",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.energy-storage", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.ether-renewal",
+    name: "Ether Renewal",
+    gwId: 181,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "For 10 seconds, each time you cast a spell..." (#1984): the
+    // status holds the rest.
+    effects: [{ kind: "apply-status", statusId: "ether-renewal", durationSeconds: { flat: 10 } }],
+  },
+  {
+    id: "elementalist.elemental-attunement",
+    name: "Elemental Attunement",
+    gwId: 164,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 25...60 seconds, you are attuned to Air, Fire, Water, and
+    // Earth" (#1984): 53; the status holds the rest.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "elemental-attunement",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.energy-storage", atZero: 25, atTwelve: 53 },
+        },
+      },
+    ],
+  },
   // Attributes raised (#1941).
   {
     id: "elementalist.glyph-of-elemental-power",
@@ -3849,6 +3952,47 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     ],
   },
 ];
+
+/**
+ * A conjure (#1984): "For 60 seconds, if you're wielding a fire weapon,
+ * your attacks strike for an additional 5...20 fire damage", of its
+ * element's attribute.
+ */
+function conjure(
+  element: "flame" | "frost" | "lightning",
+  name: string,
+  gwId: number,
+  attribute: "fire" | "water" | "air",
+  rechargeSeconds: number,
+): Skill {
+  return {
+    id: `elementalist.conjure-${element}`,
+    name: `Conjure ${name}`,
+    gwId,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: `elementalist.${attribute}-magic`,
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      { kind: "apply-status", statusId: `conjure-${element}`, durationSeconds: { flat: 60 } },
+    ],
+  };
+}
 
 /**
  * An attunement (#1614): "For 36...60 seconds, you are attuned to Fire. You

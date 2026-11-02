@@ -106,6 +106,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "if",
@@ -284,6 +285,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "if",
@@ -381,6 +383,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "if",
@@ -447,6 +450,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: true,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         { kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 9 } },
         { kind: "transfer-conditions", from: "caster", count: 3, durationMultiplier: 1 },
@@ -463,6 +467,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: true,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "if",
@@ -583,6 +588,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "splash",
