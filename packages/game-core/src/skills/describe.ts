@@ -406,9 +406,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.energyPips > 0) {
     parts.push(`+${String(definition.energyPips)} Energy regeneration`);
   }
-  // Melandru's Resilience's (#2189).
+  // Melandru's Resilience's (#2189), Conviction's scaled (#2217).
+  if (statAtTwelve(definition.healthPipsPerCondition) !== 0) {
+    parts.push(
+      `${signedStat(definition.healthPipsPerCondition, ranks)} Health regeneration for each condition on you`,
+    );
+  }
   for (const [pips, what, each] of [
-    [definition.healthPipsPerCondition, "Health", "condition"],
     [definition.healthPipsPerHex, "Health", "hex"],
     [definition.energyPipsPerCondition, "Energy", "condition"],
     [definition.energyPipsPerHex, "Energy", "hex"],

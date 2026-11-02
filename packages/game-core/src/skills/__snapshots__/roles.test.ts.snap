@@ -106,6 +106,7 @@ exports[`skillRoles > tags every dervish skill the same way every time 1`] = `
   "dervish.balthazars-rage": "condition",
   "dervish.banishing-strike": "",
   "dervish.chilling-victory": "",
+  "dervish.conviction": "removal defence",
   "dervish.crippling-sweep": "condition",
   "dervish.crippling-victory": "condition",
   "dervish.dust-cloak": "condition",
