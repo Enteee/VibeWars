@@ -85,7 +85,15 @@ export default defineConfig({
     url: BASE_URL,
     // Its own build id, served in its own `build.json`, so no spec but
     // the one that swaps it sees a newer build (#1268).
-    env: { VIBEWARS_BASE: BASE, VITE_VIBEWARS_TRANSPORT: "broadcast", VIBEWARS_BUILD: E2E_BUILD },
+    // A seeded Team Lobby (#2213): seed 11 draws a Monk/Elementalist first
+    // and second, so a solo match's foe, whichever side draws first, heals
+    // and never hexes or strips the effects a spec watches.
+    env: {
+      VIBEWARS_BASE: BASE,
+      VITE_VIBEWARS_TRANSPORT: "broadcast",
+      VITE_VIBEWARS_LOBBY_SEED: "11",
+      VIBEWARS_BUILD: E2E_BUILD,
+    },
     reuseExistingServer: false,
     // It builds the client first, which takes far longer than a start.
     timeout: 180_000,
