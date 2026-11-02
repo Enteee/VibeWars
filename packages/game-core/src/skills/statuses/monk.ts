@@ -508,10 +508,13 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
   }),
   // Protection staples (#2187). "For 8 seconds, the next time target ally
   // would take damage, the source of that damage takes that much damage
-  // instead, maximum 5...75": 61, its rank-12 cap.
+  // instead, maximum 5...75", by the caster's Smiting Prayers.
   "reversal-of-damage": define("reversal-of-damage", "Reversal of Damage", "enchantment", {
     profession: "monk",
-    reflectsNextDamage: { cap: 61, skillId: "monk.reversal-of-damage" },
+    reflectsNextDamage: {
+      cap: { scaling: { attributeId: "monk.smiting-prayers", atZero: 5, atTwelve: 61 } },
+      skillId: "monk.reversal-of-damage",
+    },
   }),
   // "...target other ally loses a hex every 5 seconds": the first after 5.
   "spotless-mind": define("spotless-mind", "Spotless Mind", "enchantment", {
@@ -532,17 +535,21 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     },
   }),
   // "For 10 seconds, whenever target ally would take damage, that ally is
-  // healed for that amount instead, maximum 6...49...60".
+  // healed for that amount instead, maximum 6...49...60", by Protection Prayers.
   "mark-of-protection": define("mark-of-protection", "Mark of Protection", "enchantment", {
     profession: "monk",
-    damageToHealing: { cap: 49 },
+    damageToHealing: {
+      cap: { scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 49 } },
+    },
   }),
   // "...cannot lose more than 5% max Health due to damage from a single
   // attack or spell. When Protective Bond prevents damage, you lose
-  // 6...4...3 Energy or the spell ends": 4, its rank-12 value.
+  // 6...4...3 Energy or the spell ends", by the caster's Protection Prayers.
   "protective-bond": define("protective-bond", "Protective Bond", "enchantment", {
     profession: "monk",
     maxDamageFractionPerHit: 0.05,
-    casterEnergyPerReduction: 4,
+    casterEnergyPerReduction: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 3.6 },
+    },
   }),
 };

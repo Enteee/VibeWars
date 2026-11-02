@@ -423,7 +423,8 @@ function reflect(
 /**
  * Reversal of Damage (#2187): the damage it negated, up to its cap, at
  * whoever dealt it, from the status's source, which ended as it took the
- * packet. An armor-ignoring hit of the negated packet's type; a dealer or
+ * packet. Typeless, so no armor step makes it more or less than that (a
+ * typed hit at armor 0 would land ~2.8 times over); a dealer or
  * source dead or gone by now takes or deals nothing.
  */
 function reflectNext(
@@ -437,7 +438,7 @@ function reflectNext(
     return [];
   }
   const events = applyEffects(
-    [{ kind: "damage", amount: { flat: change.damage }, type: change.type, armorPenetration: 1 }],
+    [{ kind: "damage", amount: { flat: change.damage }, type: "typeless", armorPenetration: 0 }],
     { caster: source, target: dealer, rng, rules, surroundings, usedSkill: undefined },
   );
   return [{ sourceId: source.id, skillId: reflects.skillId, events }];

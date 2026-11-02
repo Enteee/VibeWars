@@ -179,6 +179,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   attackDurationMultiplier: true,
   damageTakenMultiplier: true,
   adrenalineGainFaster: true,
+  casterEnergyPerReduction: true,
 };
 
 /** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
@@ -212,7 +213,7 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   const attributes = new Set<string>();
   for (const key of Object.keys(STATUS_STAT_KEYS) as StatusStatKey[]) {
     const stat = definition[key];
-    if (typeof stat !== "number") {
+    if (stat !== undefined && typeof stat !== "number") {
       attributes.add(stat.scaling.attributeId);
     }
   }
@@ -232,6 +233,12 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
       if (typeof stat !== "number") {
         attributes.add(stat.scaling.attributeId);
       }
+    }
+  }
+  // Reversal of Damage's and Mark of Protection's caps are their caster's (#2187).
+  for (const stat of [definition.reflectsNextDamage?.cap, definition.damageToHealing?.cap]) {
+    if (stat !== undefined && typeof stat !== "number") {
+      attributes.add(stat.scaling.attributeId);
     }
   }
   // Anthem of Fury's strikes are its Paragon's, not the ally's (#2143).
@@ -920,11 +927,11 @@ export interface StatusDefinition {
   readonly maxDamageFractionPerHit: number | undefined;
   /**
    * What the bearer's `maxDamageFractionPerHit` costs its source (#2187):
-   * Protective Bond's 4 Energy each time it actually takes something off a
+   * Protective Bond's 6...3 Energy each time it actually takes something off a
    * hit. A source that cannot pay, or is dead or gone, ends the status and
    * that hit is not capped by it. `undefined`: the cap is free.
    */
-  readonly casterEnergyPerReduction: number | undefined;
+  readonly casterEnergyPerReduction: StatusStat | undefined;
   /**
    * As `maxDamageFractionPerHit`, but only for an attack's blow (#1265):
    * Shelter's 0.1, after everything else in `mitigate`. A spell, life
@@ -969,10 +976,10 @@ export interface StatusDefinition {
   readonly reflectsNextDamage: ReflectsNextDamage | undefined;
   /**
    * Every damage the bearer would take while it lasts heals it instead, up
-   * to the cap a hit (#2187): Mark of Protection's 49. Not spent by a hit;
+   * to the cap a hit (#2187): Mark of Protection's 6...60. Not spent by a hit;
    * after `mitigate`, so a bond's cap comes first. `undefined`: none.
    */
-  readonly damageToHealing: { readonly cap: number } | undefined;
+  readonly damageToHealing: { readonly cap: StatusStat } | undefined;
   /**
    * The next damage or life steal that would kill the bearer is dropped
    * whole, and the status ends (#1789): Judge's Intervention's. After
@@ -1399,7 +1406,7 @@ export interface EffectPulse {
 
 /** `StatusDefinition.reflectsNextDamage` (#2187). */
 export interface ReflectsNextDamage {
-  readonly cap: number;
+  readonly cap: StatusStat;
   readonly skillId: string;
 }
 
@@ -1941,8 +1948,8 @@ export type StatusChange =
       readonly fired: readonly AnsweringTrigger[];
     }
   /**
-   * Status `statusId`, already ended, from `sourceId` sends `damage` of
-   * `type` back to `toId`, whose damage it negated (#2187).
+   * Status `statusId`, already ended, from `sourceId` sends `damage` back
+   * to `toId`, whose damage it negated (#2187).
    */
   | {
       readonly kind: "reflected-next";
@@ -1950,7 +1957,6 @@ export type StatusChange =
       readonly sourceId: string;
       readonly toId: string;
       readonly damage: number;
-      readonly type: DamageType;
     }
   /** Status `statusId` from `sourceId` sends `damage` back to `toId`, who hit the bearer (#1754). */
   | {
@@ -3262,14 +3268,13 @@ export class StatusSet {
 
   /**
    * Spend the newest status that reflects the next damage (#2187) on
-   * `damage` of `type` from `dealerId`, recorded as ended, and return its
+   * `damage` from `dealerId`, recorded as ended, and return its
    * id; `undefined` if none is up. Up to its cap goes back to the dealer
    * when the tick drains; nobody's damage goes back to nobody.
    */
   public takeNextDamageReflection(
     dealerId: string | undefined,
     damage: number,
-    type: DamageType,
   ): StatusId | undefined {
     for (const status of [...this.#statuses.values()].reverse()) {
       const reflects = getStatusDefinition(status.id).reflectsNextDamage;
@@ -3281,8 +3286,7 @@ export class StatusSet {
             statusId: status.id,
             sourceId: status.sourceId,
             toId: dealerId,
-            damage: Math.min(damage, reflects.cap),
-            type,
+            damage: Math.min(damage, Math.round(statAt(reflects.cap, status.ranks))),
           });
         }
         return status.id;
@@ -3294,10 +3298,11 @@ export class StatusSet {
   /** The cap on each hit a status turns into healing (#2187), the highest up; `undefined` if none. */
   public damageToHealingCap(): number | undefined {
     let cap: number | undefined;
-    for (const { id } of this.#statuses.values()) {
+    for (const { id, ranks } of this.#statuses.values()) {
       const turns = getStatusDefinition(id).damageToHealing;
-      if (turns !== undefined && (cap === undefined || turns.cap > cap)) {
-        cap = turns.cap;
+      const at = turns === undefined ? undefined : Math.round(statAt(turns.cap, ranks));
+      if (at !== undefined && (cap === undefined || at > cap)) {
+        cap = at;
       }
     }
     return cap;

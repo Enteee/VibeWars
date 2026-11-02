@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import type { DamageType } from "../equipment/types.js";
 import { MatchSimulation, type ParticipantSpec } from "../match/simulation.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
@@ -41,8 +42,8 @@ function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantS
   } satisfies ParticipantSpec;
 }
 
-/** A Monk with the five, rank 12 in both prayers; its ally `w`; a foe `f`. */
-function match(): MatchSimulation {
+/** A Monk with the five, `rank` in all three prayers; its ally `w`; a foe `f`. */
+function match(rank = 12): MatchSimulation {
   return new MatchSimulation({
     seed: "monk-protection",
     participants: [
@@ -55,9 +56,9 @@ function match(): MatchSimulation {
           "monk.protective-bond",
         ],
         attributeRanks: new Map([
-          ["monk.protection-prayers", 12],
-          ["monk.smiting-prayers", 12],
-          ["monk.healing-prayers", 12],
+          ["monk.protection-prayers", rank],
+          ["monk.smiting-prayers", rank],
+          ["monk.healing-prayers", rank],
         ]),
       }),
       spec("w", 0, vec2(100, 0)),
@@ -90,21 +91,21 @@ function cast(sim: MatchSimulation, slot: number, targetId: string, statusId: St
   expect(get(sim, targetId).statuses.has(statusId)).toBe(true);
 }
 
-/** `amount` typeless damage, which armor never touches, from `f` at `w`, outside any skill. */
-function hit(sim: MatchSimulation, amount: number): void {
-  applyEffects(
-    [{ kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }],
-    {
-      caster: get(sim, "f"),
-      target: get(sim, "w"),
-      rng: createRng(1),
-      rules: RULES.combat,
-      surroundings: new Map(
-        [...sim.participants()].map((participant) => [participant.id, participant]),
-      ),
-      usedSkill: undefined,
-    },
-  );
+/**
+ * `amount` damage from `f` at `w`, outside any skill: typeless, which armor
+ * never touches, unless `type` says otherwise.
+ */
+function hit(sim: MatchSimulation, amount: number, type: DamageType = "typeless"): void {
+  applyEffects([{ kind: "damage", amount: { flat: amount }, type, armorPenetration: 0 }], {
+    caster: get(sim, "f"),
+    target: get(sim, "w"),
+    rng: createRng(1),
+    rules: RULES.combat,
+    surroundings: new Map(
+      [...sim.participants()].map((participant) => [participant.id, participant]),
+    ),
+    usedSkill: undefined,
+  });
 }
 
 function count(combatant: Combatant, category: StatusCategory): number {
@@ -132,6 +133,24 @@ describe("Reversal of Damage (#2187)", () => {
     sim.step(DT);
     expect(get(sim, "w").health).toBe(w);
     expect(get(sim, "f").health).toBe(f - 61);
+  });
+
+  it("sends back a typed hit as it was negated, armor neither way (QA, #2187)", () => {
+    const sim = match();
+    cast(sim, REVERSAL_OF_DAMAGE, "w", "reversal-of-damage");
+    const f = get(sim, "f").health;
+    hit(sim, 40, "piercing");
+    sim.step(DT);
+    expect(get(sim, "f").health).toBe(f - 40);
+  });
+
+  it("caps what it sends back by the caster's Smiting Prayers, 5 at rank 0", () => {
+    const sim = match(0);
+    cast(sim, REVERSAL_OF_DAMAGE, "w", "reversal-of-damage");
+    const f = get(sim, "f").health;
+    hit(sim, 200);
+    sim.step(DT);
+    expect(get(sim, "f").health).toBe(f - 5);
   });
 
   it("is not spent by a hit for 0", () => {
@@ -235,6 +254,17 @@ describe("Mark of Protection (#2187)", () => {
   });
 });
 
+describe("Mark of Protection's cap by rank (#2187)", () => {
+  it("heals at most 6 a hit at Protection Prayers 0", () => {
+    const sim = match(0);
+    cast(sim, MARK_OF_PROTECTION, "w", "mark-of-protection");
+    const w = get(sim, "w");
+    const before = w.health;
+    hit(sim, 200);
+    expect(w.health).toBe(before + 6);
+  });
+});
+
 describe("Protective Bond (#2187)", () => {
   it("caps a hit at 5% of max Health for 4 of its caster's Energy", () => {
     const sim = match();
@@ -266,5 +296,15 @@ describe("Protective Bond (#2187)", () => {
     expect(w.health).toBe(health - 200);
     expect(monk.energy).toBe(3);
     expect(w.statuses.has("protective-bond")).toBe(false);
+  });
+
+  it("costs 6 Energy a capped hit at Protection Prayers 0", () => {
+    const sim = match(0);
+    cast(sim, PROTECTIVE_BOND, "w", "protective-bond");
+    const [w, monk] = [get(sim, "w"), get(sim, "monk")];
+    const [health, energy] = [w.health, monk.energy];
+    hit(sim, 200);
+    expect(w.health).toBe(health - 50);
+    expect(monk.energy).toBe(energy - 6);
   });
 });

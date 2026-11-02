@@ -402,7 +402,7 @@ function landDamage(
   if (
     cut <= 0 ||
     reverse(target, cut, events) ||
-    reflectNext(target, cut, type, dealer, events) ||
+    reflectNext(target, cut, dealer, events) ||
     turnToHealing(target, cut, events)
   ) {
     return;
@@ -502,12 +502,11 @@ function reverse(target: Combatant, amount: number, events: CombatEvent[]): bool
 function reflectNext(
   target: Combatant,
   amount: number,
-  type: DamageType,
   dealer: Combatant | undefined,
   events: CombatEvent[],
 ): boolean {
   const back = dealer === undefined || dealer.dead ? undefined : dealer.id;
-  const reflected = target.statuses.takeNextDamageReflection(back, amount, type);
+  const reflected = target.statuses.takeNextDamageReflection(back, amount);
   if (reflected === undefined) {
     return false;
   }

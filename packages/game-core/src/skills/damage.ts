@@ -13,6 +13,7 @@ import type { CombatRules } from "../ruleset.js";
 import { isAttacking, signetsOnBar } from "./attacking.js";
 import { getSkill } from "./catalog.js";
 import { modWhileHolds } from "./mod-conditions.js";
+import { statAt } from "./scaling.js";
 import { aggregateModifiers, getStatusDefinition } from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, raisedMaxHealth, rankOf } from "./tick.js";
 import type { Combatant, CreatureLevel, Surroundings } from "./types.js";
@@ -382,22 +383,22 @@ export function mitigate(
  */
 function cappedPerHit(dealt: number, target: Combatant, surroundings: Surroundings): number {
   const caps = target.statuses.active
-    .flatMap(({ id, sourceId }) => {
+    .flatMap(({ id, sourceId, ranks }) => {
       const definition = getStatusDefinition(id);
       return definition.maxDamageFractionPerHit === undefined
         ? []
-        : [{ id, sourceId, definition, fraction: definition.maxDamageFractionPerHit }];
+        : [{ id, sourceId, ranks, definition, fraction: definition.maxDamageFractionPerHit }];
     })
     .sort((a, b) => a.fraction - b.fraction);
-  for (const { id, sourceId, definition, fraction } of caps) {
+  for (const { id, sourceId, ranks, definition, fraction } of caps) {
     const cap = Math.floor(fraction * effectiveMaxHealth(target));
     if (Math.round(dealt) <= cap) {
       return dealt;
     }
-    const upkeep = definition.casterEnergyPerReduction;
-    if (upkeep === undefined) {
+    if (definition.casterEnergyPerReduction === undefined) {
       return cap;
     }
+    const upkeep = Math.round(statAt(definition.casterEnergyPerReduction, ranks));
     const payer = surroundings.get(sourceId)?.combatant;
     if (payer !== undefined && !payer.dead && payer.energy >= upkeep) {
       payer.energy -= upkeep;

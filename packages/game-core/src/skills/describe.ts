@@ -815,7 +815,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   // Protective Bond's (#2187): "each hit it caps costs the caster 4 Energy".
   if (definition.casterEnergyPerReduction !== undefined) {
     parts.push(
-      `each hit it caps costs the caster ${String(definition.casterEnergyPerReduction)} Energy, and it ends when the caster cannot pay`,
+      `each hit it caps costs the caster ${statText(definition.casterEnergyPerReduction, ranks, whole)} Energy, and it ends when the caster cannot pay`,
     );
   }
   if (definition.attackDamageCapFraction !== undefined) {
@@ -952,13 +952,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   // Reversal of Damage's (#2187).
   if (definition.reflectsNextDamage !== undefined) {
     parts.push(
-      `the next damage is negated and its source takes that much instead, up to ${String(definition.reflectsNextDamage.cap)}`,
+      `the next damage is negated and its source takes that much instead, up to ${statText(definition.reflectsNextDamage.cap, ranks, whole)}`,
     );
   }
   // Mark of Protection's (#2187).
   if (definition.damageToHealing !== undefined) {
     parts.push(
-      `all damage heals for that much instead, up to ${String(definition.damageToHealing.cap)} a hit`,
+      `all damage heals for that much instead, up to ${statText(definition.damageToHealing.cap, ranks, whole)} a hit`,
     );
   }
   if (definition.negatesFatalDamage) {
