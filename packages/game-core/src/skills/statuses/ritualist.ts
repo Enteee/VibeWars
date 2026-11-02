@@ -64,7 +64,10 @@ export type RitualistStatusId =
   // Suppressed while enchanted (#1916).
   | "brutal-weapon"
   // Attributes raised (#1941).
-  | "ritual-lord";
+  | "ritual-lord"
+  // Ritualist staples (#2212).
+  | "ancestors-rage"
+  | "dulled-weapon";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -737,5 +740,26 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       resetsOwnRechargeIfType: "binding-ritual",
       skillId: "ritualist.ritual-lord",
     },
+  }),
+  // "For 3 seconds all foes adjacent to target ally take 4...50 lightning
+  // damage each second" (#2212): 41, its rank-12 value, around the ally
+  // wherever it walks, read each second.
+  "ancestors-rage": define("ancestors-rage", "Ancestors' Rage", "skill-effect", {
+    profession: "ritualist",
+    damagePulse: {
+      damage: 41,
+      growth: 0,
+      type: "lightning",
+      radius: AREA_ADJACENT,
+      hitsBearer: false,
+      skillId: "ritualist.ancestors-rage",
+    },
+  }),
+  // "...cannot achieve a critical hit and deal 3...20 less damage" (#2212):
+  // 17, its rank-12 value, off each blow, never below 0.
+  "dulled-weapon": define("dulled-weapon", "Dulled Weapon", "hex", {
+    profession: "ritualist",
+    preventsCriticals: true,
+    attackDamageDelta: -17,
   }),
 };

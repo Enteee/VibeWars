@@ -652,6 +652,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onCriticalHit: {
       effects: [{ kind: "interrupt" }],
       energyIfRemoved: 0,
+      endsWhenFired: false,
       skillId: "ranger.disrupting-accuracy",
       weapon: "bow",
     },

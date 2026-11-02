@@ -213,6 +213,8 @@ export interface WeaponSnapshot {
   readonly damageMultiplier: number;
   /** Added to the chance to crit by the attacker's statuses: Critical Eye's 0.13 (#988). */
   readonly criticalChanceBonus: number;
+  /** The attacker's statuses forbid it a critical hit (#2212): Dulled Weapon's. */
+  readonly preventsCriticals: boolean;
   /**
    * The type the blow deals unless the skill names its own: a status's
    * `attackDamageType` (#1021), else the weapon's. Riders still read the
@@ -255,6 +257,7 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     requirementMet: mainHand.attributeId === undefined || rank >= mainHand.weapon.requirement.rank,
     damageMultiplier: weaponDamageMultiplierOf(attacker),
     criticalChanceBonus: modifiers.criticalChanceBonus,
+    preventsCriticals: modifiers.preventsCriticals,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
     armorPenetration: modifiers.attackArmorPenetration,
     damageDelta: attackDamageDeltaOf(attacker),
@@ -589,7 +592,8 @@ export function settleBlow(
  * `criticalMultiplier` instead of rolling; an attack skill's bonus is
  * added after, unmultiplied, and ignores armor (#760). A melee blow at an `exposed` victim always
  * crits; a projectile never does that way, however it lands. A settled
- * blow whose `criticalWhen` is `"always"` crits too (#1315). Returns
+ * blow whose `criticalWhen` is `"always"` crits too (#1315). An attacker
+ * whose statuses prevent criticals never crits at all (#2212). Returns
  * whether the blow crit.
  *
  * A dazed victim casting a spell, or one setting a trap, is
@@ -612,9 +616,10 @@ export function landBlow(
   const { weapon } = snapshot.mainHand;
   const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules);
   const critical =
-    rolledCritical ||
-    blow.criticalWhen === "always" ||
-    (exposed && weapon.projectileSpeed === undefined);
+    !snapshot.preventsCriticals &&
+    (rolledCritical ||
+      blow.criticalWhen === "always" ||
+      (exposed && weapon.projectileSpeed === undefined));
   // A victim that suffers no extra damage from crits takes a normal roll,
   // and the blow is still a critical (#1329).
   const base =
@@ -895,7 +900,7 @@ export function criticalHitRiders(
         event.kind === "status-removed" &&
         getStatusDefinition(event.statusId).category === "enchantment",
     );
-    if (removed && attacker.energy < rider.energyIfRemoved) {
+    if ((removed && attacker.energy < rider.energyIfRemoved) || rider.endsWhenFired) {
       attacker.statuses.end(status.id);
       events.push({ kind: "status-expired", targetId: attacker.id, statusId: status.id });
     } else if (removed && rider.energyIfRemoved > 0) {

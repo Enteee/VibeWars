@@ -442,6 +442,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "glyph-of-elemental-power": icon("glyph-of-elemental-power"),
   "glyph-of-energy": icon("glyph-of-energy"),
   "ritual-lord": icon("ritual-lord"),
+  // Ritualist staples (#2212).
+  "ancestors-rage": icon("ancestors-rage"),
+  "dulled-weapon": icon("dulled-weapon"),
   "experts-dexterity": icon("experts-dexterity"),
   "strike-as-one": icon("strike-as-one"),
   "strike-as-one-pet": icon("strike-as-one-pet"),
@@ -518,6 +521,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "melandrus-resilience": icon("melandrus-resilience"),
   "expert-focus": icon("expert-focus"),
   "rapid-fire": icon("rapid-fire"),
+  // Paragon staples (#2222).
+  "song-of-power": icon("song-of-power"),
+  "ballad-of-restoration": icon("ballad-of-restoration"),
+  "theyre-on-fire": icon("theyre-on-fire"),
+  "find-their-weakness": icon("find-their-weakness"),
 };
 
 const GAP = 2;

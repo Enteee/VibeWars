@@ -877,6 +877,11 @@ function countOf(
             ({ combatant, position }) =>
               !combatant.dead &&
               (combatant.team === caster.team) === allies &&
+              !(
+                rule.kind === "allies-within" &&
+                rule.excludesCaster === true &&
+                combatant === caster
+              ) &&
               distance(position, at) <= rule.radius,
           ).length;
     }
@@ -1483,8 +1488,9 @@ function destroyCreature(
 
 /**
  * `amount` from `dealer`, cut by each status on `target` that cuts damage
- * from a foe carrying a hex of its attribute (#1951): Mist Form's 33%
- * against a Water Magic hex. Rounded once, as `mitigate` rounds.
+ * from a foe carrying a hex of its attribute (#1951), Mist Form's 33%
+ * against a Water Magic hex, or suffering a given status (#2222), "They're
+ * on Fire!"'s against Burning. Rounded once, as `mitigate` rounds.
  */
 function hexedSourceDamage(
   target: Combatant,
@@ -1496,7 +1502,8 @@ function hexedSourceDamage(
   }
   let multiplier = 1;
   for (const { id } of target.statuses.active) {
-    const cut = getStatusDefinition(id).damageReductionFromHexedSource;
+    const definition = getStatusDefinition(id);
+    const cut = definition.damageReductionFromHexedSource;
     if (
       cut !== undefined &&
       dealer.statuses.active.some(
@@ -1506,6 +1513,10 @@ function hexedSourceDamage(
       )
     ) {
       multiplier *= 1 - cut.fraction;
+    }
+    const withStatus = definition.damageReductionFromSourceWith;
+    if (withStatus !== undefined && dealer.statuses.has(withStatus.statusId)) {
+      multiplier *= 1 - withStatus.fraction;
     }
   }
   return multiplier === 1 ? amount : Math.round(amount * multiplier);
@@ -1798,8 +1809,13 @@ export function applyEffect(
       // Whole strikes at the caster's rank (#2143), as a duration's (#2041):
       // Enraging Charge's "0...3" gives none at a low rank.
       const strikes =
-        Math.max(0, resolveMagnitude(effect.strikes, context.ranksFrom ?? caster)) *
-        adrenalineGainTimes(caster, effect);
+        withPerCount(
+          Math.max(0, resolveMagnitude(effect.strikes, context.ranksFrom ?? caster)),
+          effect.per,
+          caster,
+          target,
+          context.surroundings,
+        ) * adrenalineGainTimes(caster, effect);
       const gainer =
         effect.recipient === "owner" ? livingOwnerOf(caster, context.surroundings) : caster;
       if (
@@ -2586,6 +2602,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "caster-overcast":
     case "caster-wields":
     case "caster-holds-shield":
+    case "caster-holds-item":
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
@@ -2721,6 +2738,10 @@ export function stateHolds(
       return wieldsFor(caster.equipment.mainHand.weapon.id, condition.weapon);
     case "caster-holds-shield":
       return caster.equipment.offhandId === "shield";
+    case "caster-holds-item":
+      return caster.statuses.active.some(
+        (status) => getStatusDefinition(status.id).category === "item",
+      );
     case "target-less-health":
       return target.health < caster.health;
     case "target-more-health":
@@ -3044,6 +3065,7 @@ function conditionHolds(
     case "caster-overcast":
     case "caster-wields":
     case "caster-holds-shield":
+    case "caster-holds-item":
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":

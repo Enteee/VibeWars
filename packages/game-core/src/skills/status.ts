@@ -659,6 +659,12 @@ export interface StatusDefinition {
    */
   readonly ignoresCriticalDamage: boolean;
   /**
+   * No blow the bearer lands is a critical hit (#2212): Dulled Weapon's
+   * "cannot land critical hits", even a skill's that always crits. The
+   * crit roll is still drawn, so the stream does not move.
+   */
+  readonly preventsCriticals: boolean;
+  /**
    * While it is up, its bearer projects this aura as a spirit does
    * (#2096): Protector's Defense's block for the allies adjacent to it.
    * `undefined`: none.
@@ -907,6 +913,13 @@ export interface StatusDefinition {
    */
   readonly damageReductionFromHexedSource:
     { readonly attributeId: string; readonly fraction: number } | undefined;
+  /**
+   * As `damageReductionFromHexedSource`, but from a dealer suffering status
+   * `statusId` (#2222): "They're on Fire!"'s "29% less damage from foes
+   * suffering from Burning". Read as each packet lands. `undefined`: none.
+   */
+  readonly damageReductionFromSourceWith:
+    { readonly statusId: StatusId; readonly fraction: number } | undefined;
   /**
    * Taken off each packet a foe whose current Health is lower than the
    * bearer's deals (#2207): Intimidating Aura's "take 1...10 less damage
@@ -1808,6 +1821,11 @@ export interface CriticalHitRider {
   readonly effects: readonly SkillEffect[];
   readonly energyIfRemoved: number;
   readonly skillId: string;
+  /**
+   * The status ends once it fired (#2222): "Find Their Weakness!"'s "the
+   * next time target ally criticals". `false`: every critical.
+   */
+  readonly endsWhenFired: boolean;
   /**
    * Only a critical hit made with a weapon of this class in the bearer's
    * main hand (#2133), as `AttackHitRider.weapon`: Disrupting Accuracy's
@@ -4115,6 +4133,8 @@ export interface StatusModifiers {
   readonly damageFromSpiritAttacks: number;
   /** Any status's (#1329). */
   readonly ignoresCriticalDamage: boolean;
+  /** Any status's (#2212). */
+  readonly preventsCriticals: boolean;
 }
 
 /**
@@ -4235,6 +4255,7 @@ export function aggregateModifiers(
   let energyPerCritical = 0;
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
+  let preventsCriticals = false;
   const ofCategory = (category: StatusCategory): number =>
     statuses.filter((status) => getStatusDefinition(status.id).category === category).length;
   const enchantments = ofCategory("enchantment");
@@ -4349,6 +4370,7 @@ export function aggregateModifiers(
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
+    preventsCriticals ||= def.preventsCriticals;
   }
 
   return {
@@ -4399,6 +4421,7 @@ export function aggregateModifiers(
     healthPerCritical,
     damageFromSpiritAttacks,
     ignoresCriticalDamage,
+    preventsCriticals,
   };
 }
 
