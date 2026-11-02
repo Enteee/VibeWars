@@ -185,6 +185,7 @@ import {
   type SpellHit,
 } from "../skills/projectile.js";
 import {
+  aimedAt,
   attackBlockedRiders,
   attackDurationSeconds,
   attackHitRiders,
@@ -4233,6 +4234,10 @@ export class MatchSimulation {
       return false;
     }
     const bearer = record.combatant;
+    // Sliver Armor's (#2095): a spell at a foe is aimed at it before it can fail.
+    if (target.combatant.team !== bearer.team) {
+      target.combatant.statuses.recordTargetedByFoe(bearer.id);
+    }
     // Shadow Form's (#1951): a foe's spell at its bearer, checked as it finishes.
     const shield =
       target.combatant.team === bearer.team
@@ -5680,6 +5685,7 @@ export class MatchSimulation {
     if (skillHit?.kind !== "spell") {
       // Only a flying attack is released here.
       attacked = bearerAttacked(record.combatant, events, "projectile");
+      aimedAt(record.combatant, target.combatant);
       if (blindMisses(record.combatant, target.combatant, this.#rng)) {
         bearerFailedToHit(record.combatant, events);
         events.push({ kind: "attack-missed", targetId: target.id });
@@ -5853,6 +5859,10 @@ export class MatchSimulation {
     let hits = 0;
     let blocked = 0;
     for (let strike = 0; strike < strikes && !target.combatant.dead; strike += 1) {
+      // The first blow was aimed at the release; each later one is aimed now.
+      if (strike > 0 && attacker !== undefined) {
+        aimedAt(attacker.combatant, target.combatant);
+      }
       // Shadow Form's miss (#1951) is checked as each blow lands, the first too.
       if (
         attacksAgainstMiss(target.combatant.statuses.active) ||

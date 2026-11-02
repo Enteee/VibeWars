@@ -50,7 +50,12 @@ export type ElementalistStatusId =
   | "grasping-earth"
   | "master-of-magic"
   | "glyph-of-elemental-power"
-  | "glyph-of-energy";
+  | "glyph-of-energy"
+  // Elementalist auras (#2095).
+  | "magnetic-aura"
+  | "swirling-aura"
+  | "magnetic-surge"
+  | "sliver-armor";
 
 /** Mist Form's heal (#1951): 210% of the spell's cost, under 80% Health. */
 const MIST_FORM_HEAL = {
@@ -421,6 +426,79 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
           },
         ],
         skillId: "elementalist.mist-form",
+      },
+    ],
+  }),
+
+  // "For 1...8 seconds, you block the next attack against you and deal
+  // 10...50 damage to your attacker" (#2095): 42 at rank 12, from the
+  // Elementalist, a party member's copy too. A block by any status ends
+  // it, and it deals its damage; an unblockable attack leaves it up.
+  "magnetic-aura": define("magnetic-aura", "Magnetic Aura", "enchantment", {
+    profession: "elementalist",
+    block: { chance: 1, against: "all" },
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-blocks",
+        target: "source-on-offender",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 42 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+        ],
+        skillId: "elementalist.magnetic-aura",
+      },
+    ],
+  }),
+  // "...1...6 Health regeneration and a 50% chance to block projectiles"
+  // (#2095): 5 pips at rank 12. Never melee.
+  "swirling-aura": define("swirling-aura", "Swirling Aura", "enchantment", {
+    profession: "elementalist",
+    healthPips: { scaling: { attributeId: "elementalist.water-magic", atZero: 1, atTwelve: 5 } },
+    block: { chance: 0.5, against: "projectile" },
+  }),
+  // "...enchants all allies in earshot for 1...5 seconds to block the next
+  // attack against them" (#2095): an unblockable attack spends it too.
+  "magnetic-surge": define("magnetic-surge", "Magnetic Surge", "enchantment", {
+    profession: "elementalist",
+    block: { chance: 1, against: "all" },
+    endsAfterAttacks: 1,
+  }),
+  // "...25...50% chance to block attacks and whenever you are the target
+  // of a hostile spell or attack one nearby foe is struck for 5...35 earth
+  // damage" (#2095): 45% and 29 at rank 12, on the nearest foe.
+  "sliver-armor": define("sliver-armor", "Sliver Armor", "enchantment", {
+    profession: "elementalist",
+    block: { chance: 0.45, against: "all" },
+    triggers: [
+      {
+        on: "bearer-targeted-by-foe",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: 1,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 29 },
+                },
+                type: "earth",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+        skillId: "elementalist.sliver-armor",
       },
     ],
   }),

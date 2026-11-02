@@ -1,5 +1,6 @@
 import {
   AREA_ADJACENT,
+  AREA_EARSHOT,
   AREA_IN_THE_AREA,
   AREA_NEARBY,
   RANGE_MELEE,
@@ -3635,6 +3636,214 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         statusId: "mist-form",
         durationSeconds: {
           scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 38 },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.magnetic-aura",
+    name: "Magnetic Aura",
+    gwId: 168,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 1...8 seconds, you block the next attack against you and deal
+    // 10...50 damage to your attacker. If you are Overcast, all party
+    // members in earshot are also enchanted" (#2095): 7 s. The splash
+    // skips its centre, so the caster wears one.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "magnetic-aura",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 7 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "party",
+            radius: AREA_EARSHOT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "apply-status",
+                statusId: "magnetic-aura",
+                durationSeconds: {
+                  scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 7 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.swirling-aura",
+    name: "Swirling Aura",
+    gwId: 233,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3...7 seconds, you ... have 1...6 Health regeneration and a 50%
+    // chance to block projectiles. If you are Overcast ..., all party
+    // members in earshot are also enchanted" (#2095): 6 s.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "swirling-aura",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 3, atTwelve: 6 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "party",
+            radius: AREA_EARSHOT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "apply-status",
+                statusId: "swirling-aura",
+                durationSeconds: {
+                  scaling: { attributeId: "elementalist.water-magic", atZero: 3, atTwelve: 6 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.magnetic-surge",
+    name: "Magnetic Surge",
+    gwId: 2190,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe takes 15...75 damage. If you are Overcast, Magnetic Surge
+    // enchants all allies in earshot for 1...5 seconds to block the next
+    // attack against them" (#2095): 63, and 4 s on the caster too.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.earth-magic", atZero: 15, atTwelve: 63 } },
+        type: "typeless",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "allies",
+            radius: AREA_EARSHOT,
+            around: "caster",
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "apply-status",
+                statusId: "magnetic-surge",
+                durationSeconds: {
+                  scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 4 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.sliver-armor",
+    name: "Sliver Armor",
+    gwId: 1084,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...11 seconds, you have 25...50% chance to block attacks and
+    // whenever you are the target of a hostile spell or attack one nearby
+    // foe is struck for 5...35 earth damage" (#2095): 10 s.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "sliver-armor",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 10 },
         },
       },
     ],
