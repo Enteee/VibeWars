@@ -355,6 +355,11 @@ function statText(
   return marked(stat.scaling.attributeId, format(statAt(stat, ranks)));
 }
 
+/** "+5", "−8": a whole status stat with its sign, scaled as `statText` (#2191). */
+function signedStat(stat: StatusStat, ranks: ReadonlyMap<string, number> | undefined): string {
+  return `${statAtTwelve(stat) > 0 ? "+" : "−"}${statText(stat, ranks, whole)}`;
+}
+
 function whole(value: number): string {
   return String(Math.abs(Math.round(value)));
 }
@@ -854,10 +859,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       ...(attackMissChance === 0
         ? []
         : [`${String(Math.round(attackMissChance * 100))}% of attacks miss`]),
-      ...(healthPips === 0
+      ...(statAtTwelve(healthPips) === 0
         ? []
-        : [`${signed(healthPips)} Health ${healthPips > 0 ? "regeneration" : "degeneration"}`]),
-      ...(armorModifier === 0 ? [] : [`${signed(armorModifier)} armor`]),
+        : [
+            `${signedStat(healthPips, ranks)} Health ${statAtTwelve(healthPips) > 0 ? "regeneration" : "degeneration"}`,
+          ]),
+      ...(statAtTwelve(armorModifier) === 0 ? [] : [`${signedStat(armorModifier, ranks)} armor`]),
       ...(attackDurationMultiplier === 1
         ? []
         : [`attacks ${String(Math.round((1 - attackDurationMultiplier) * 100))}% faster`]),

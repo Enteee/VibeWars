@@ -26,14 +26,20 @@ const VAPOR_BLADE = "elementalist.vapor-blade";
 const lightning = (amount: number): number =>
   Math.round(amount * armorMultiplier(RULES.combat.armorReferenceLevel * 0.75, RULES.combat));
 
-function spec(id: string, team: number, x: number, skillBar: readonly string[]): ParticipantSpec {
+function spec(
+  id: string,
+  team: number,
+  x: number,
+  skillBar: readonly string[],
+  waterMagic = 12,
+): ParticipantSpec {
   return {
     id,
     team,
     skillBar,
     attributeRanks: new Map([
       ["elementalist.air-magic", 12],
-      ["elementalist.water-magic", 12],
+      ["elementalist.water-magic", waterMagic],
       ["elementalist.energy-storage", 12],
     ]),
     equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
@@ -48,11 +54,12 @@ function spec(id: string, team: number, x: number, skillBar: readonly string[]):
 function match(
   skillBar: readonly string[],
   more: readonly ParticipantSpec[] = [],
+  waterMagic = 12,
 ): MatchSimulation {
   return new MatchSimulation({
     seed: "ele-staples",
     participants: [
-      spec("c", 0, 0, skillBar),
+      spec("c", 0, 0, skillBar, waterMagic),
       spec("f", 1, 200, []),
       spec("g", 1, 220, []),
       spec("h", 1, 600, []),
@@ -166,6 +173,17 @@ describe("Teinai's Prison (#2166)", () => {
     expect(aggregateModifiers(foe.statuses.active).healthPips).toBe(0);
     foe.statuses.apply("cracked-armor", 5, "c", NO_RANKS);
     expect(aggregateModifiers(foe.statuses.active).healthPips).toBe(-8);
+  });
+
+  it.each([
+    [0, -5],
+    [15, -9],
+  ])("at Water Magic %i the degeneration is %i pips (#2191)", (waterMagic, pips) => {
+    const sim = match([TEINAIS_PRISON], [], waterMagic);
+    cast(sim, 0, "f");
+    const foe = get(sim, "f").combatant;
+    foe.statuses.apply("cracked-armor", 5, "c", NO_RANKS);
+    expect(aggregateModifiers(foe.statuses.active).healthPips).toBe(pips);
   });
 });
 
