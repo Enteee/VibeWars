@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { openRail } from "./helpers/menu.js";
-import { openPeers } from "./helpers/peers.js";
+import { expectTeamSize, expectTeamSizeAtMost, openPeers, setTeamSize } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 import { key } from "./keys.js";
@@ -52,7 +52,7 @@ async function makeCharacter(page: Page): Promise<void> {
 async function queue1v1(page: Page, name: string): Promise<void> {
   await namePlayer(page, name);
   await openRail(page, "Random Arena");
-  await page.locator(".mode-rail-size-select").selectOption("1");
+  await setTeamSize(page, 1);
   await page.locator("#topbar .screen-ready").click();
   await expect(page.locator("#topbar .topbar-crumb.is-place")).toHaveText(
     `Random Arena 1v1 · ${BUILD}`,
@@ -74,10 +74,9 @@ test("Random Arena's Ready is greyed out without a character to queue with, or a
   await expect(ready).toBeEnabled();
   await expect(hint).toBeHidden();
   // 8v8 is no Random Arena: offered, but not to pick.
-  const size = screen.locator(".mode-rail-size-select");
-  await expect(size).toHaveValue("4");
-  await expect(size.locator("option", { hasText: "8v8" })).toHaveJSProperty("disabled", true);
-  await size.selectOption("2");
+  await expectTeamSize(screen, 4);
+  await expectTeamSizeAtMost(screen, 4);
+  await setTeamSize(page, 2);
   await expect(ready).toBeEnabled();
   await page.evaluate(`
     new Promise((resolve, reject) => {
@@ -97,7 +96,7 @@ test("Random Arena's Ready is greyed out without a character to queue with, or a
   await expect(ready).toHaveAttribute("title", "Make a character first.");
   await expect(hint).toHaveText("Make a character first.");
   // The size picked survived the reload.
-  await expect(size).toHaveValue("2");
+  await expectTeamSize(screen, 2);
 });
 
 test("two players queue for a 1v1, are matched, see the versus splash, play it out and queue again", async ({
