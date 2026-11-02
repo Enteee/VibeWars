@@ -636,6 +636,12 @@ export interface StatusDefinition {
    */
   readonly ignoresCriticalDamage: boolean;
   /**
+   * No blow the bearer lands is a critical hit (#2212): Dulled Weapon's
+   * "cannot land critical hits", even a skill's that always crits. The
+   * crit roll is still drawn, so the stream does not move.
+   */
+  readonly preventsCriticals: boolean;
+  /**
    * While it is up, its bearer projects this aura as a spirit does
    * (#2096): Protector's Defense's block for the allies adjacent to it.
    * `undefined`: none.
@@ -4068,6 +4074,8 @@ export interface StatusModifiers {
   readonly damageFromSpiritAttacks: number;
   /** Any status's (#1329). */
   readonly ignoresCriticalDamage: boolean;
+  /** Any status's (#2212). */
+  readonly preventsCriticals: boolean;
 }
 
 /**
@@ -4186,6 +4194,7 @@ export function aggregateModifiers(
   let energyPerCritical = 0;
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
+  let preventsCriticals = false;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
@@ -4296,6 +4305,7 @@ export function aggregateModifiers(
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
+    preventsCriticals ||= def.preventsCriticals;
   }
 
   return {
@@ -4346,6 +4356,7 @@ export function aggregateModifiers(
     healthPerCritical,
     damageFromSpiritAttacks,
     ignoresCriticalDamage,
+    preventsCriticals,
   };
 }
 

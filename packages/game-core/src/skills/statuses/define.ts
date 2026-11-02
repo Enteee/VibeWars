@@ -75,6 +75,7 @@ export function define(
     preventsKnockdown: false,
     endsOnKnockdownPrevented: false,
     ignoresCriticalDamage: false,
+    preventsCriticals: false,
     block: undefined,
     projectsAura: undefined,
     blockBelowHealth: undefined,
