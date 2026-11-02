@@ -28,6 +28,7 @@ const TEAM: StoredTeam = {
   schemaVersion: TEAM_SCHEMA_VERSION,
   id: "team-1",
   name: "Guard Team",
+  size: 2,
   members: [{ character: { ...MEMBER, id: "member-1" } }],
   rulesetId: "minimal-gw-inspired-pvp-v1",
   updatedAt: 1000,
@@ -89,5 +90,15 @@ describe("isStoredTeam", () => {
     expect(isStoredTeam({ ...TEAM, members: [{}] })).toBe(false);
     const { skillBar: _bar, ...withoutBar } = MEMBER;
     expect(isStoredTeam({ ...TEAM, members: [{ character: withoutBar }] })).toBe(false);
+  });
+
+  it("rejects a team without a size, of another size, or over its size (#2109)", () => {
+    const { size: _size, ...sizeless } = TEAM;
+    expect(isStoredTeam(sizeless)).toBe(false);
+    expect(isStoredTeam({ ...TEAM, size: 3 })).toBe(false);
+    expect(isStoredTeam({ ...TEAM, size: 16 })).toBe(false);
+    const member = TEAM.members[0];
+    expect(isStoredTeam({ ...TEAM, members: [member, member, member] })).toBe(false);
+    expect(isStoredTeam({ ...TEAM, members: [] })).toBe(true);
   });
 });

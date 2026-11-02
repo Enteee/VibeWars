@@ -1173,6 +1173,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-health-drops-below": "has its Health dropped below a line by damage",
   "bearer-fatal-damage-negated": "has fatal damage negated",
   "bearer-hit-by-attack": "is hit by a foe's attack",
+  "bearer-targeted-by-foe": "is targeted by a foe's spell or attack",
   "bearer-healed-by-skill": "is healed by a skill",
   "bearer-blocks-melee": "blocks a melee attack",
   "bearer-blocks-projectile": "blocks a projectile attack",
@@ -1813,9 +1814,16 @@ function describeTrigger(
         const joint = effect.effects[0]?.kind === "apply-status" ? " " : ": ";
         return [sentence(`${when}: ${allies}${joint}${what.join(", ")}`)];
       }
+      // Sliver Armor's (#2095): "the nearest of nearby foes takes 29 earth damage".
+      const struck =
+        effect.maxTargets === 1
+          ? `the nearest of ${allies} takes`
+          : effect.maxTargets === undefined
+            ? `${allies} take`
+            : `up to ${String(countAt(effect.maxTargets, ranks))} ${allies} take`;
       return effect.effects.map((inner) =>
         inner.kind === "damage" && when !== DROPPED
-          ? clause(`${allies} take ${amount(inner.amount)}${typeWord(inner.type)} damage ${when}`)
+          ? clause(`${struck} ${amount(inner.amount)}${typeWord(inner.type)} damage ${when}`)
           : inner.kind === "apply-status"
             ? sentence(`${when}: ${allies} ${suffered(inner, ranks)}`)
             : sentence(`${when}: ${allies}: ${lowerFirst(describeEffect(inner, ranks).text)}`),

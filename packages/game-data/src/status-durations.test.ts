@@ -9,8 +9,12 @@ import skilldesc from "../raw/gw-skilldata/skilldesc-en.json" with { type: "json
 // scales with the skill's attribute, from N at 0 to M at 15. A split
 // skill's PvP text counts too (#2096): the catalog plays its PvP numbers.
 
-const CONCISE: ReadonlyMap<number, string> = new Map(
-  Object.values(skilldesc.skilldesc).map((record) => [record.id, record.concise]),
+// Both texts: a concise one can drop the unit ("for 1...5 and block").
+const TEXT: ReadonlyMap<number, string> = new Map(
+  Object.values(skilldesc.skilldesc).map((record) => [
+    record.id,
+    `${record.description} ${record.concise}`,
+  ]),
 );
 
 const PVP_SPLIT: ReadonlyMap<number, number> = new Map(
@@ -18,15 +22,15 @@ const PVP_SPLIT: ReadonlyMap<number, number> = new Map(
 );
 
 /**
- * Every "N...M second(s)" of `gwId`'s concise text, as [N, M], and of its
- * PvP split's when `withSplit`.
+ * Every "N...M second(s)" of `gwId`'s full and concise text, as [N, M],
+ * and of its PvP split's when `withSplit`.
  */
 function ranges(gwId: number | undefined, withSplit = false): (readonly [number, number])[] {
   if (gwId === undefined) {
     return [];
   }
   const split = withSplit ? PVP_SPLIT.get(gwId) : undefined;
-  const texts = [CONCISE.get(gwId), split === undefined ? undefined : CONCISE.get(split)];
+  const texts = [TEXT.get(gwId), split === undefined ? undefined : TEXT.get(split)];
   return texts
     .flatMap((text) => [...(text ?? "").matchAll(/(\d+)\.\.\.(\d+) seconds?/g)])
     .map(([, low, high]) => [Number(low), Number(high)] as const);

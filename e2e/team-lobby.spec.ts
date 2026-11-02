@@ -38,6 +38,7 @@ function fourCode(): string {
     format: "vibewars.team",
     formatVersion: TEAM_FORMAT_VERSION,
     name: "Four",
+    size: 4,
     members: FOUR.map((build) => ({
       format: "vibewars.character",
       formatVersion: BUILD_FORMAT_VERSION,

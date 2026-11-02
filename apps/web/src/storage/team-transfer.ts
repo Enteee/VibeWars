@@ -1,6 +1,6 @@
-import { MAX_TEAM_SIZE, newTeam, teamCharacter } from "../ui/team-builder.js";
+import { newTeam, teamCharacter } from "../ui/team-builder.js";
 import { buildPayload, readBuild, type ExportedBuild } from "./build-transfer.js";
-import type { StoredTeam, TeamCharacter } from "./schema.js";
+import { isTeamSize, type StoredTeam, type TeamCharacter, type TeamSize } from "./schema.js";
 
 /**
  * Team import/export (#577, epic #554).
@@ -19,12 +19,14 @@ export const TEAM_FORMAT = "vibewars.team";
  * What `exportTeam` writes and the only version `importTeam` reads. A
  * team code from any other version is refused, not adapted (ADR-0016).
  */
-export const TEAM_FORMAT_VERSION = 2;
+export const TEAM_FORMAT_VERSION = 3;
 
 export interface ExportedTeam {
   readonly format: typeof TEAM_FORMAT;
   readonly formatVersion: number;
   readonly name: string;
+  /** The build's fixed size (#2109): a paste is a build of this size. */
+  readonly size: TeamSize;
   readonly members: readonly ExportedBuild[];
 }
 
@@ -42,6 +44,7 @@ export function exportTeam(team: StoredTeam): string {
     format: TEAM_FORMAT,
     formatVersion: TEAM_FORMAT_VERSION,
     name: team.name,
+    size: team.size,
     members: team.members.map((member) => buildPayload(member.character)),
   };
   return JSON.stringify(payload);
@@ -99,6 +102,10 @@ export function importTeam(text: string, newId: () => string, now: number): Team
   if (name === "") {
     problems.push("Give the team a name.");
   }
+  const size = record.size;
+  if (!isTeamSize(size)) {
+    return { ok: false, problems: [...problems, "size must be 1, 2, 4 or 8"] };
+  }
   if (!Array.isArray(record.members)) {
     return { ok: false, problems: [...problems, "members must be a list"] };
   }
@@ -106,12 +113,15 @@ export function importTeam(text: string, newId: () => string, now: number): Team
   if (entries.length === 0) {
     problems.push("A team needs at least one member.");
   }
-  if (entries.length > MAX_TEAM_SIZE) {
+  if (entries.length > size) {
     // Before any member is read: a crafted code with thousands of members
     // must not run thousands of reads, nor list thousands of problems.
     return {
       ok: false,
-      problems: [...problems, `A team may not exceed ${String(MAX_TEAM_SIZE)} members.`],
+      problems: [
+        ...problems,
+        `A team of ${String(size)} may not have ${String(entries.length)} members.`,
+      ],
     };
   }
 
@@ -137,7 +147,7 @@ export function importTeam(text: string, newId: () => string, now: number): Team
   }
 
   const team: StoredTeam = {
-    ...newTeam(newId()),
+    ...newTeam(newId(), size),
     name,
     members: characters.map((character) => ({ character })),
     updatedAt: now,

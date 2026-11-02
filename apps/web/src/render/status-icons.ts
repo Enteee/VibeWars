@@ -458,6 +458,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
   "protectors-defense-block": icon("protectors-defense-block"),
+  // Elementalist auras (#2095).
+  "magnetic-aura": icon("magnetic-aura"),
+  "swirling-aura": icon("swirling-aura"),
+  "magnetic-surge": icon("magnetic-surge"),
+  "sliver-armor": icon("sliver-armor"),
 };
 
 const GAP = 2;

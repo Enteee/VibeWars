@@ -36,6 +36,7 @@ describe("rollStarterTeam", () => {
       teams,
       key,
       random: () => 0,
+      size: 4,
       id: "t",
       newId: counter(),
       now: 5,
@@ -55,6 +56,7 @@ describe("rollStarterTeam", () => {
       teams,
       key,
       random: () => 0,
+      size: 4,
       id: "u",
       newId: counter(),
       now: 6,
@@ -71,12 +73,27 @@ describe("rollStarterTeam", () => {
       },
       key,
       random: () => 0,
+      size: 4,
       id: "t",
       newId: counter(),
       now: 5,
     });
     expect(rolled).toBeUndefined();
     expect(key.value).toBeUndefined();
+  });
+
+  it("rolls a team of the size picked, and none, key unset, when there is none of it (#2109)", async () => {
+    const teams = new TeamRepository(createMemoryStore());
+    const key = memoryKey();
+    const options = { teams, key, random: () => 0, newId: counter(), now: 5 };
+
+    expect(await rollStarterTeam({ ...options, size: 2, id: "t" })).toBeUndefined();
+    expect(key.value).toBeUndefined();
+
+    const eight = await rollStarterTeam({ ...options, size: 8, id: "u" });
+    expect(eight?.size).toBe(8);
+    expect(eight?.members).toHaveLength(8);
+    expect(key.value).toBe("u");
   });
 });
 
@@ -87,6 +104,7 @@ describe("rerollStarterTeam", () => {
       teams,
       key: memoryKey(),
       random: () => 0,
+      size: 4,
       id: "t",
       newId: counter(),
       now: 5,
@@ -99,6 +117,7 @@ describe("rerollStarterTeam", () => {
     const rerolled = await rerollStarterTeam(teams, rolled, () => 0, counter(), 7);
 
     expect(rerolled.id).toBe("t");
+    expect(rerolled.size).toBe(4);
     expect(rerolled.name).toBe(SECOND?.name);
     expect(rerolled.members.map((m) => m.character.name)).toEqual(
       SECOND?.members.map((m) => m.name),
@@ -113,6 +132,7 @@ describe("rerollStarterTeam", () => {
       teams,
       key: memoryKey(),
       random: () => 0.5,
+      size: 4,
       id: "t",
       newId: counter(),
       now: 5,
@@ -135,6 +155,7 @@ describe("cloning the starter team", () => {
       teams,
       key: memoryKey(),
       random: () => 0,
+      size: 4,
       id: "t",
       newId: counter(),
       now: 5,
