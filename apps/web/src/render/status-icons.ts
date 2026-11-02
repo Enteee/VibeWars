@@ -299,6 +299,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "earth-attunement": icon("earth-attunement"),
   "aura-of-restoration": icon("aura-of-restoration"),
   "master-of-magic": icon("master-of-magic"),
+  "conjure-flame": icon("conjure-flame"),
+  "conjure-frost": icon("conjure-frost"),
+  "conjure-lightning": icon("conjure-lightning"),
+  "ether-prodigy": icon("ether-prodigy"),
+  "ether-renewal": icon("ether-renewal"),
+  "elemental-attunement": icon("elemental-attunement"),
   "kinetic-armor": icon("kinetic-armor"),
   "infuriating-heat": icon("infuriating-heat"),
   "fertile-season": icon("fertile-season"),
@@ -454,6 +460,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   distortion: icon("distortion"),
   "shield-guardian": icon("shield-guardian"),
   "glass-arrows": icon("glass-arrows"),
+  // Ranger staples 5 (#2133).
+  "disrupting-accuracy": icon("disrupting-accuracy"),
+  "marksmans-wager": icon("marksmans-wager"),
+  "storm-chaser": icon("storm-chaser"),
   // Tactics stances that pay on a block (#1978).
   "wary-stance": icon("wary-stance"),
   "soldiers-defense": icon("soldiers-defense"),

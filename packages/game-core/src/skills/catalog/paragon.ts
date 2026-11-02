@@ -2758,7 +2758,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
             { kind: "caster-has", category: "chant" },
           ],
         },
-        effects: [{ kind: "adrenaline-gain", strikes: 2 }],
+        effects: [{ kind: "adrenaline-gain", strikes: { flat: 2 } }],
       },
     ],
   },

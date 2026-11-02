@@ -352,10 +352,10 @@ describe("team modes (ADR-0042)", () => {
   }
 
   it("two team tickets of one mode form a match, each a side, bots and all", async () => {
-    const tickets = [side(1, "team-arena", 3), side(2, "team-arena", 1)];
-    const [group, ...more] = await form(tickets, "team-arena");
+    const tickets = [side(1, "team-arena-4v4", 3), side(2, "team-arena-4v4", 1)];
+    const [group, ...more] = await form(tickets, "team-arena-4v4");
     expect(more).toEqual([]);
-    expect(group?.mode).toBe("team-arena");
+    expect(group?.mode).toBe("team-arena-4v4");
     expect(group?.teams.map((seats) => [...seats])).toEqual(
       expect.arrayContaining([tickets[0]?.members, tickets[1]?.members]),
     );
@@ -413,15 +413,29 @@ describe("team modes (ADR-0042)", () => {
   });
 
   it("the earliest two are picked, and the third waits", async () => {
-    const first = side(1, "team-arena", 2);
-    const second = side(2, "team-arena", 1);
-    const groups = await form([side(3, "team-arena", 4), first, second], "team-arena");
+    const first = side(1, "team-arena-4v4", 2);
+    const second = side(2, "team-arena-4v4", 1);
+    const groups = await form([side(3, "team-arena-4v4", 4), first, second], "team-arena-4v4");
     expect(groups.map(members)).toEqual([ids([first, second])]);
   });
 
+  it("never pairs a Team Arena side with one of another size (#2107)", async () => {
+    const tickets = [
+      side(1, "team-arena-2v2", 2),
+      side(2, "team-arena-4v4", 2),
+      side(3, "team-arena-8v8", 2),
+    ];
+    for (const mode of ["team-arena-2v2", "team-arena-4v4", "team-arena-8v8"] as const) {
+      expect(await form(tickets, mode), mode).toEqual([]);
+    }
+    const twos = [side(1, "team-arena-2v2", 2), side(4, "team-arena-2v2", 1)];
+    const [group] = await form([...twos, side(2, "team-arena-4v4", 2)], "team-arena-2v2");
+    expect(group && members(group)).toEqual(ids(twos));
+  });
+
   it("a one-human side finds its group by its own key", async () => {
-    const tickets = [side(1, "team-arena", 1), side(2, "team-arena", 4)];
-    const groups = await form(tickets, "team-arena");
+    const tickets = [side(1, "team-arena-4v4", 1), side(2, "team-arena-4v4", 4)];
+    const groups = await form(tickets, "team-arena-4v4");
     const lone = tickets[0];
     expect(lone && groupOf(groups, lone.ticketId, lone.members)).toBe(groups[0]);
   });
@@ -474,7 +488,7 @@ describe("hard NAT (#2090)", () => {
   });
 
   it("two hard sides at the front of a team queue do not stop a later open one", async () => {
-    const mode = "team-arena";
+    const mode = "team-arena-4v4";
     const queued = [{ ...party(1, mode), ...hard }, { ...party(2, mode), ...hard }, party(3, mode)];
     expect(await formed(queued, mode)).toEqual([[1, 3]]);
   });

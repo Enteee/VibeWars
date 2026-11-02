@@ -844,6 +844,10 @@ function countOf(
               remaining > 0 && getSkill(skillIdOfKey(key))?.attributeId === rule.attributeId,
           ).length;
     }
+    case "energy": {
+      const bearer = rule.on === "caster" ? caster : target;
+      return bearer === undefined ? 0 : Math.floor(bearer.energy);
+    }
   }
 }
 
@@ -1721,7 +1725,11 @@ export function applyEffect(
     }
 
     case "adrenaline-gain": {
-      const strikes = effect.strikes * adrenalineGainTimes(caster, effect);
+      // Whole strikes at the caster's rank (#2143), as a duration's (#2041):
+      // Enraging Charge's "0...3" gives none at a low rank.
+      const strikes =
+        Math.max(0, resolveMagnitude(effect.strikes, context.ranksFrom ?? caster)) *
+        adrenalineGainTimes(caster, effect);
       const gainer =
         effect.recipient === "owner" ? livingOwnerOf(caster, context.surroundings) : caster;
       if (
@@ -1784,7 +1792,13 @@ export function applyEffect(
         return events;
       }
       if (effect.recipient === "target") {
-        loseHealth(target, resolveMagnitude(effect.amount, caster), "health-loss", events);
+        const amount = resolveMagnitude(effect.amount, caster);
+        loseHealth(
+          target,
+          withPerCount(amount, effect.per, caster, target, context.surroundings),
+          "health-loss",
+          events,
+        );
         return events;
       }
       const removed =
@@ -2460,6 +2474,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "caster-lacks":
     case "target-alone":
     case "target-near-caster-ally":
+    case "target-within":
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":
@@ -2579,6 +2594,11 @@ export function stateHolds(
             distance(position, at) <= condition.radius,
         )
       );
+    }
+    case "target-within": {
+      const at = surroundings.get(target.id)?.position;
+      const from = surroundings.get(caster.id)?.position;
+      return at !== undefined && from !== undefined && distance(from, at) <= condition.radius;
     }
     case "target-not-moving":
       return !target.moving;
@@ -2896,6 +2916,7 @@ function conditionHolds(
     case "caster-lacks":
     case "target-alone":
     case "target-near-caster-ally":
+    case "target-within":
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":

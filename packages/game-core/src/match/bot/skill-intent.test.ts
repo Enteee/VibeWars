@@ -86,7 +86,6 @@ const NO_BOT_USE = new Set([
   "ranger.symbiotic-bond",
   // Speed, energy, attack speed and other self-help no rule reaches for.
   "assassin.dash",
-  "dervish.arcane-zeal",
   "dervish.avatar-of-balthazar",
   "dervish.avatar-of-dwayna",
   "dervish.avatar-of-lyssa",
@@ -116,6 +115,7 @@ const NO_BOT_USE = new Set([
   "paragon.lead-the-way",
   "paragon.make-haste",
   "ranger.serpents-quickness",
+  "ranger.storm-chaser",
   "ranger.winnowing",
   "ritualist.cruel-was-daoshen",
   "ritualist.destructive-was-glaive",

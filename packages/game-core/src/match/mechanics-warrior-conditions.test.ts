@@ -131,6 +131,20 @@ describe("Thrill of Victory (#2096)", () => {
     expect(strikesOf(get(sim, "w"), ADRENAL)).toBe(1 + 2);
   });
 
+  it('gives 1 strike at Tactics 0, its "1...2" (#2143)', () => {
+    const sim = match(
+      {
+        ...body("w", 0, vec2(0, 0), ["warrior.thrill-of-victory", ADRENAL]),
+        attributeRanks: new Map(),
+      },
+      body("f", 1, vec2(RANGE_MELEE / 2, 0)),
+    );
+    get(sim, "w").health = HEALTH / 2;
+    get(sim, "f").health = HEALTH / 2 + 5;
+    expect(damageOn(cast(sim, "f"), "f")).toBeGreaterThan(5);
+    expect(strikesOf(get(sim, "w"), ADRENAL)).toBe(1 + 1);
+  });
+
   it("gives no adrenaline against a foe still with more Health", () => {
     const sim = duel();
     get(sim, "w").health = HEALTH / 2;

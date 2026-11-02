@@ -4,7 +4,7 @@ import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js"
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
-import { copyInvite, openPeers, openToFriends, proposeTeam } from "./helpers/peers.js";
+import { copyInvite, openPeers, openToFriends, proposeTeam, setTeamSize } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 
 /**
@@ -73,10 +73,14 @@ async function formParty(
   await expect(guest.locator(".lobby-panel")).toContainText("The host starts matchmaking");
 }
 
-/** The party's Team Lobby, both ready to end each stage; the host takes seat 0, the guest seat 1. */
+/**
+ * The party's Team Lobby, both ready to end each stage; the host takes
+ * seat 0, the guest seat 1, of the side's `seats`.
+ */
 async function runTeamLobby(
   [host, guest]: readonly [Page, Page],
   vote?: (guest: Page) => Promise<void>,
+  seats = 4,
 ): Promise<void> {
   await press(host, host.getByRole("button", { name: "Find a match" }));
   for (const page of [host, guest]) {
@@ -88,8 +92,8 @@ async function runTeamLobby(
   }
   for (const page of [host, guest]) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
-    // Team Arena's side is four.
-    await expect(page.locator(".team-lobby-seat")).toHaveCount(4);
+    // Team Arena's side is four, unless its leader picked another size.
+    await expect(page.locator(".team-lobby-seat")).toHaveCount(seats);
   }
   await press(host, host.locator(".team-lobby-seat").nth(0));
   await expect(guest.locator(".team-lobby-seat").nth(0)).toBeDisabled();
@@ -136,7 +140,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
       await expect(card).toHaveAttribute("aria-pressed", "true");
     });
     for (const page of [ann, bea]) {
-      await expect(page.locator(".party-queued")).toContainText("Looking for a team…");
+      await expect(page.locator(".party-queued")).toContainText("Team Arena 4v4 — searching…");
     }
     await expect(ann.getByRole("button", { name: "Leave the queue" })).toBeVisible();
 
@@ -158,6 +162,30 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await expect(bea.locator("#topbar .topbar-leave")).toBeVisible();
     await expect(bea.locator(".lobby-panel")).toContainText("Ann");
     await expect(bea.locator(".party-queued")).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
+test("#2107: a Team Arena leader picks 2v2, and the party queues for Team Arena 2v2", async ({
+  browser,
+}) => {
+  test.setTimeout(90_000);
+  const { context, pages } = await openPeers(browser, 2);
+  const [ann, bea] = pages as [Page, Page];
+  const teamSize = (page: Page) => page.getByRole("combobox", { name: "Team size" });
+
+  try {
+    await formParty([ann, bea], ["Ann", "Bea"]);
+    // The leader's size is the party's; a member's is locked to it.
+    await ann.bringToFront();
+    await setTeamSize(ann, 2);
+    await expect(teamSize(bea)).toHaveValue("2");
+    await expect(teamSize(bea)).toBeDisabled();
+    await runTeamLobby([ann, bea], undefined, 2);
+    for (const page of [ann, bea]) {
+      await expect(page.locator(".party-queued")).toContainText("Team Arena 2v2 — searching…");
+    }
   } finally {
     await context.close();
   }

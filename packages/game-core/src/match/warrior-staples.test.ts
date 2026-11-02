@@ -343,8 +343,9 @@ describe('"Charge!" (#1549)', () => {
 
 describe("Enraging Charge (#1549)", () => {
   /** Strikes `w` has toward Dismember after one hit of its own on `f`, Enraging Charge on. */
-  function strikesAfterHit(equipment: ResolvedEquipment, charging: boolean) {
-    const sim = match([], warrior({ equipment }));
+  function strikesAfterHit(equipment: ResolvedEquipment, charging: boolean, strength = 12) {
+    const attributeRanks = new Map([["warrior.strength", strength]]);
+    const sim = match([], warrior({ equipment, attributeRanks }));
     const w = get(sim, "w").combatant;
     if (charging) {
       w.statuses.apply("enraging-charge", 13, "w", NO_RANKS);
@@ -367,6 +368,14 @@ describe("Enraging Charge (#1549)", () => {
     const plain = strikesAfterHit(AXE, false);
     const charged = strikesAfterHit(AXE, true);
     expect(charged.strikes).toBe(plain.strikes + 2);
+    expect(charged.charging).toBe(false);
+  });
+
+  // "0...3 strikes" (#2143): none at Strength 0.
+  it("a melee hit at Strength 0 gives none, and the stance still ends", () => {
+    const plain = strikesAfterHit(AXE, false);
+    const charged = strikesAfterHit(AXE, true, 0);
+    expect(charged.strikes).toBe(plain.strikes);
     expect(charged.charging).toBe(false);
   });
 

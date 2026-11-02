@@ -17,7 +17,9 @@ export const QUEUE_MODES = [
   "random-arena-1v1",
   "random-arena-2v2",
   "random-arena-4v4",
-  "team-arena",
+  "team-arena-2v2",
+  "team-arena-4v4",
+  "team-arena-8v8",
   "heroes-ascent",
   "gvg",
 ] as const;
@@ -28,16 +30,46 @@ const TEAM_SIZES: Readonly<Record<QueueMode, number>> = {
   "random-arena-1v1": 1,
   "random-arena-2v2": 2,
   "random-arena-4v4": 4,
-  "team-arena": 4,
+  "team-arena-2v2": 2,
+  "team-arena-4v4": 4,
+  "team-arena-8v8": 8,
   "heroes-ascent": 8,
   gvg: 8,
 };
 
-const TEAM_QUEUE_MODES: ReadonlySet<QueueMode> = new Set(["team-arena", "heroes-ascent", "gvg"]);
+/** The sizes a Team Arena plays (#2107): its leader picks one. */
+export const TEAM_ARENA_SIZES = [2, 4, 8] as const;
+
+/** One of `TEAM_ARENA_SIZES`. */
+export type TeamArenaSize = (typeof TEAM_ARENA_SIZES)[number];
+
+const TEAM_ARENA_MODE_OF: Readonly<Record<TeamArenaSize, QueueMode>> = {
+  2: "team-arena-2v2",
+  4: "team-arena-4v4",
+  8: "team-arena-8v8",
+};
+
+const TEAM_ARENA_MODES: ReadonlySet<QueueMode> = new Set(Object.values(TEAM_ARENA_MODE_OF));
+
+const TEAM_QUEUE_MODES: ReadonlySet<QueueMode> = new Set([
+  ...TEAM_ARENA_MODES,
+  "heroes-ascent",
+  "gvg",
+]);
 
 /** Players a side in `mode`; a match is twice this. */
 export function teamSizeOf(mode: QueueMode): number {
   return TEAM_SIZES[mode];
+}
+
+/** Whether `size` is one a Team Arena plays (#2107). */
+export function isTeamArenaSize(size: number): size is TeamArenaSize {
+  return TEAM_ARENA_SIZES.some((each) => each === size);
+}
+
+/** Whether `mode` is a Team Arena of any size (#2107). */
+export function isTeamArena(mode: QueueMode): boolean {
+  return TEAM_ARENA_MODES.has(mode);
 }
 
 /**
@@ -66,9 +98,16 @@ export function inPartyOrder(members: readonly string[]): boolean {
   return true;
 }
 
-/** A lobby's `mode` as the queue mode its party queues for (#1766), if it is a team mode. */
-export function teamQueueModeOf(mode: LobbyMode): QueueMode | undefined {
-  return mode === "team-arena" || mode === "heroes-ascent" || mode === "gvg" ? mode : undefined;
+/**
+ * A lobby's `mode` as the queue mode its party queues for (#1766), if it
+ * is a team mode: a Team Arena's at its `teamSize` (#2107), none at a
+ * size it does not play.
+ */
+export function teamQueueModeOf(mode: LobbyMode, teamSize: number): QueueMode | undefined {
+  if (mode === "team-arena") {
+    return isTeamArenaSize(teamSize) ? TEAM_ARENA_MODE_OF[teamSize] : undefined;
+  }
+  return mode === "heroes-ascent" || mode === "gvg" ? mode : undefined;
 }
 
 /** A queued client re-publishes its ticket this often. */

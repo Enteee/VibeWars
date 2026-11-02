@@ -443,15 +443,24 @@ describe("the twelve chants (#1483)", () => {
         { kind: "apply-status", statusId: "anthem-of-fury", durationSeconds: { flat: 10 } },
       ],
     });
-    const pool = (withAnthem: boolean): number => {
+    // Chanted on "p" by `from`: "f" has no Leadership, "p" 12.
+    const pool = (from: "p" | "f" | undefined): number => {
       const sim = match([ATTACK, ADRENAL]);
-      if (withAnthem) {
-        put(sim, "anthem-of-fury");
+      if (from !== undefined) {
+        applyEffects(skill("paragon.anthem-of-fury").effects, {
+          surroundings: new Map(),
+          caster: get(sim, from).combatant,
+          target: get(sim, "p").combatant,
+          rng: createRng(1483),
+          rules: RULES.combat,
+        });
       }
       use(sim, 0);
       return get(sim, "p").combatant.adrenaline.get(ADRENAL) ?? 0;
     };
-    expect(pool(true) - pool(false)).toBe(4 * ADRENALINE_PER_STRIKE);
+    expect(pool("p") - pool(undefined)).toBe(4 * ADRENALINE_PER_STRIKE);
+    // The chanter's Leadership, not the bearer's (#2143): 2 at rank 0.
+    expect(pool("f") - pool(undefined)).toBe(2 * ADRENALINE_PER_STRIKE);
   });
 
   it("Anthem of Weariness: the next attack skill weakens for 13 s", () => {

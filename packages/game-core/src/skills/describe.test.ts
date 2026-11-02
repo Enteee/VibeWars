@@ -634,6 +634,7 @@ describe("describeSkill", () => {
           (rule?.conditionalBonus === undefined ? 0 : 1) +
           (rule?.bonusPer === undefined ? 0 : 1) +
           (rule?.criticalWhen === undefined ? 0 : 1) +
+          (rule?.missChanceAtOrBelowRank === undefined ? 0 : 1) +
           ((rule?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(rule?.onBlocked ?? []) +
           lines(rule?.onCritical ?? []) +
@@ -1484,6 +1485,26 @@ describe("Tactics stances that pay on a block (#1978)", () => {
   });
 });
 
+describe("Elementalist self-buffs (#1984)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(skill(id), new Map([["elementalist.energy-storage", 12]])).effects.map(
+      ({ text }) => text,
+    );
+
+  it("says the conjure's weapon, Ether Prodigy's end and Ether Renewal's count", () => {
+    expect(texts("elementalist.conjure-flame")).toEqual([
+      "Applies Conjure Flame for 60s (while you wield a fire weapon, foes your attacks hit take 17 fire damage)",
+    ]);
+    expect(texts("elementalist.ether-prodigy")).toEqual([
+      "Removes all enchantments",
+      "Applies Ether Prodigy for 18s (+6 Energy regeneration. When it ends: lose 2 Health for each point of Energy you have)",
+    ]);
+    expect(texts("elementalist.ether-renewal")).toEqual([
+      "Applies Ether Renewal for 10s (whenever it casts a spell: gain 3 energy for each enchantment on you. Whenever it casts a spell: heals 17 Health for each enchantment on you)",
+    ]);
+  });
+});
+
 describe("minion care (#1986)", () => {
   const texts = (id: string): string[] =>
     describeSkill(
@@ -1591,6 +1612,14 @@ describe("Elementalist auras (#2095)", () => {
     expect(texts("elementalist.sliver-armor")).toEqual([
       "Applies Sliver Armor for 10s (45% chance to block attacks, the nearest of nearby foes takes 29 earth damage whenever it is targeted by a foe's spell or attack)",
     ]);
+  });
+
+  it("says Marksman's Wager costs your energy, Oath Shot recharges the others (#2133)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(texts("ranger.marksmans-wager")).toEqual([
+      "For 18s, whenever your arrows hit: gain 9 energy. Whenever your arrows fail to hit: you lose 10 energy",
+    ]);
+    expect(texts("ranger.oath-shot")).toContain("Recharges all your other skills");
   });
 });
 

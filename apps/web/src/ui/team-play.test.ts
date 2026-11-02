@@ -160,7 +160,8 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
   let added: number;
   let cloned: string[];
   let rerolled: string[];
-  let starterId: string | null;
+  /** The starter team ids by size (#2147). */
+  let starterIds: Map<string, string>;
   const callbacks: TeamPlayCallbacks = {
     onSwitch: () => undefined,
     onNewTeam: () => {
@@ -193,9 +194,10 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     added = 0;
     cloned = [];
     rerolled = [];
-    starterId = null;
+    starterIds = new Map();
     vi.stubGlobal("localStorage", {
-      getItem: (key: string) => (key.endsWith(".starterTeamId") ? starterId : null),
+      getItem: (key: string) =>
+        starterIds.get(/\.starterTeamId\.(\d+)$/.exec(key)?.[1] ?? "") ?? null,
     });
     vi.stubGlobal("window", { addEventListener: () => undefined });
     vi.stubGlobal("document", {
@@ -331,7 +333,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
   });
 
   it("shows the random starter team last, with Clone and Reroll and no Edit (#2036)", () => {
-    starterId = "s";
+    starterIds.set("4", "s");
     const root = new FakeElement();
     renderTeamBuilder(
       root as unknown as HTMLElement,
@@ -354,5 +356,27 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     expect(cloned).toEqual(["s"]);
     expect(rerolled).toEqual(["s"]);
     expect(root.all("play-card-clone")).toHaveLength(1);
+  });
+
+  it("shows the random starter team of the size picked, each size its own (#2147)", () => {
+    starterIds.set("4", "s4");
+    starterIds.set("2", "s2");
+    const root = render([team("s4"), team("s2", 2), team("a", 2)]);
+    expect(root.all("play-card-name").map((name) => name.textContent)).toEqual(["Team s4"]);
+    expect(root.all("roster-random-tag")).toHaveLength(1);
+
+    const [select] = root.all("mode-rail-size-select");
+    if (select === undefined) {
+      throw new Error("no team size dropdown");
+    }
+    select.value = "2";
+    select.listeners.get("change")?.();
+    expect(root.all("play-card-name").map((name) => name.textContent)).toEqual([
+      "Team a",
+      "Team s2",
+    ]);
+    expect(root.all("roster-random-tag")).toHaveLength(1);
+    root.all("play-card-reroll")[0]?.click();
+    expect(rerolled).toEqual(["s2"]);
   });
 });

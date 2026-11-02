@@ -142,7 +142,7 @@ function teamCards(
 ): HTMLElement {
   const section = h("div", "team-play-builds");
   section.appendChild(h("h3", "menu-column-title", "Team Builds"));
-  const starter = loadStarterTeamId();
+  const starter = loadStarterTeamId(size);
   const cards = h("div", "play-cards");
   const shown = teams.filter((team) => team.size === size);
   for (const team of teamOrder(shown, starter)) {

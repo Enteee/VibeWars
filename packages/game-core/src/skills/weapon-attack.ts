@@ -58,6 +58,7 @@ import type { FiredTrigger } from "./triggers.js";
 import {
   blowRuleOf,
   type Combatant,
+  type PetAttackRule,
   type Skill,
   type SkillEffect,
   type StateCondition,
@@ -322,6 +323,25 @@ export function blindMisses(attacker: Combatant, victim: Combatant, rng: Simulat
   }
   const chance = attackMissChanceOf(attacker);
   return chance > 0 && rng.nextFloat() < chance;
+}
+
+/**
+ * Whether a blow of an attack skill with this `rule` misses for its user's
+ * low rank (#2133): Oath Shot's 50% at Expertise 7 or less, the effective
+ * rank read now. Rolled only at that rank, so no other blow moves the
+ * random stream.
+ */
+export function lowRankMisses(
+  rule: PetAttackRule | undefined,
+  attacker: Combatant,
+  rng: SimulationRng,
+): boolean {
+  const miss = rule?.missChanceAtOrBelowRank;
+  return (
+    miss !== undefined &&
+    rankOf(attacker, miss.attributeId) <= miss.rank &&
+    rng.nextFloat() < miss.chance
+  );
 }
 
 /** Whether a blow of this weapon is a projectile or a melee blow, as a block sees it. */
@@ -657,7 +677,9 @@ export function landBlow(
  * Shards' fourth hit splashes, then ends it. Returns those endings,
  * after what the weapon itself does to whoever it hits (#1239). A rider
  * for attack skills only rides a blow `withAttackSkill` (#1551), and one
- * for a weapon class only a blow of that weapon (#1629). `dealt`: the
+ * for a weapon class only a blow of that weapon (#1629), and one for a
+ * weapon element only a blow of that element, a staff's bolt included
+ * (#1984). `dealt`: the
  * Health the blow took, what a Vampiric Horror's owner gains (#1836).
  * `spent`: the statuses this attack used up (#1916), whose riders it
  * still carries, as Poison Tip Signet's poison. A status that does
@@ -773,8 +795,9 @@ function applyRiders(
       rider === undefined ||
       isSuppressed(active, status) ||
       (rider.attackSkillsOnly && !withAttackSkill) ||
-      (caster && definition.category !== "weapon-spell") ||
-      (rider.weapon !== undefined && !wieldsFor(mainHand.weapon.id, rider.weapon))
+      (caster && definition.category !== "weapon-spell" && rider.weaponDamage === undefined) ||
+      (rider.weapon !== undefined && !wieldsFor(mainHand.weapon.id, rider.weapon)) ||
+      (rider.weaponDamage !== undefined && mainHand.damageType !== rider.weaponDamage)
     ) {
       continue;
     }
@@ -826,11 +849,14 @@ function sourcePaysForRemoved(
  * statuses (#1975): each `onCriticalHit`'s effects, with the attacker as
  * caster, onto `fired` under its own skill. One that removed an
  * enchantment costs its bearer `energyIfRemoved` Energy, or, short of
- * it, ends; the removal stands. A dead attacker's do nothing.
+ * it, ends; the removal stands. One bound to a weapon class answers only
+ * a critical with `weapon`, the attacker's main hand (#2133). A dead
+ * attacker's do nothing.
  */
 export function criticalHitRiders(
   attacker: Combatant,
   victim: Combatant,
+  weapon: Weapon,
   rng: SimulationRng,
   rules: CombatRules,
   surroundings: Surroundings,
@@ -842,7 +868,11 @@ export function criticalHitRiders(
   const active = attacker.statuses.active;
   for (const status of [...active]) {
     const rider = getStatusDefinition(status.id).onCriticalHit;
-    if (rider === undefined || isSuppressed(active, status)) {
+    if (
+      rider === undefined ||
+      isSuppressed(active, status) ||
+      (rider.weapon !== undefined && !wieldsFor(weapon.id, rider.weapon))
+    ) {
       continue;
     }
     const events = applyEffects(rider.effects, {
@@ -991,11 +1021,15 @@ export function bearerHit(
 /**
  * One of the attacker's blows failed to hit (#1332): swing, attack skill
  * or arrow alike, it missed on a roll or was blocked. Recorded for what
- * answers one, as Price of Failure, and it ends what a miss ends
- * (`bearerMissed`).
+ * answers one with `weapon`, its main hand (#2133), as Price of Failure,
+ * and it ends what a miss ends (`bearerMissed`).
  */
-export function bearerFailedToHit(attacker: Combatant, events: CombatEvent[]): void {
-  attacker.statuses.recordFailedHit();
+export function bearerFailedToHit(
+  attacker: Combatant,
+  weapon: Weapon,
+  events: CombatEvent[],
+): void {
+  attacker.statuses.recordFailedHit(weapon);
   bearerMissed(attacker, events);
 }
 
@@ -1108,13 +1142,13 @@ function strike(
   aimedAt(attacker, victim);
   if (blindMisses(attacker, victim, rng)) {
     events.push({ kind: "attack-missed", targetId: victim.id });
-    bearerFailedToHit(attacker, events);
+    bearerFailedToHit(attacker, attacker.equipment.mainHand.weapon, events);
     return;
   }
   const snapshot = withEndedStatuses(weaponSnapshotOf(attacker), attacked);
   if (!unblockable && blocks(victim, attacker.id, attacker.statuses.active, "melee", false, rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
-    bearerFailedToHit(attacker, events);
+    bearerFailedToHit(attacker, attacker.equipment.mainHand.weapon, events);
     attackReached(victim, events);
     attackBlockedRiders(
       attacker,
@@ -1138,7 +1172,15 @@ function strike(
       : { ...PLAIN_BLOW, bonus: aggregateModifiers(owner.statuses.active).minionDamageBonus };
   if (landBlow(snapshot, attacker, victim, blow, swing.exposed(victim), rng, rules, events)) {
     landedCritical(attacker, snapshot.criticalStrikes, events);
-    criticalHitRiders(attacker, victim, rng, rules, swing.surroundings, fired);
+    criticalHitRiders(
+      attacker,
+      victim,
+      snapshot.mainHand.weapon,
+      rng,
+      rules,
+      swing.surroundings,
+      fired,
+    );
   }
   events.push(
     ...attackHitRiders(
@@ -1346,9 +1388,9 @@ export function resolveAttackSkillOutcome(
         continue;
       }
       aimedAt(caster, victim);
-      if (blindMisses(caster, victim, rng)) {
+      if (blindMisses(caster, victim, rng) || lowRankMisses(rule, caster, rng)) {
         events.push({ kind: "attack-missed", targetId: victim.id });
-        bearerFailedToHit(caster, events);
+        bearerFailedToHit(caster, snapshot.mainHand.weapon, events);
         failed.push(victim);
         continue;
       }
@@ -1358,7 +1400,7 @@ export function resolveAttackSkillOutcome(
         blocks(victim, caster.id, caster.statuses.active, kind, true, rng)
       ) {
         events.push({ kind: "attack-blocked", targetId: victim.id });
-        bearerFailedToHit(caster, events);
+        bearerFailedToHit(caster, snapshot.mainHand.weapon, events);
         attackReached(victim, events);
         attackBlockedRiders(
           caster,
@@ -1389,7 +1431,15 @@ export function resolveAttackSkillOutcome(
         )
       ) {
         landedCritical(caster, snapshot.criticalStrikes, events);
-        criticalHitRiders(caster, victim, rng, rules, surroundings, fired);
+        criticalHitRiders(
+          caster,
+          victim,
+          snapshot.mainHand.weapon,
+          rng,
+          rules,
+          surroundings,
+          fired,
+        );
         critical.push(victim);
       }
       events.push(

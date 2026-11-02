@@ -55,12 +55,12 @@ export const TEAM_SIZES: readonly TeamSize[] = [1, 2, 4, 8];
 export const DEFAULT_TEAM_SIZE: TeamSize = 4;
 
 /**
- * The sizes each rail screen plays (#2022). Team Arena is 4 until its
- * leader picks one (#2107); a builder's empty list disables the dropdown.
+ * The sizes each rail screen plays (#2022): Team Arena's its leader
+ * picks from (#2107). A builder's empty list disables the dropdown.
  */
 export const TEAM_SIZES_BY_ENTRY: Readonly<Record<RailEntry, readonly TeamSize[]>> = {
   "random-arena": [1, 2, 4],
-  "team-arena": [4],
+  "team-arena": [2, 4, 8],
   "heroes-ascent": [8],
   gvg: [8],
   "hosted-game": [1, 2, 4, 8],
@@ -72,6 +72,8 @@ export const TEAM_SIZES_BY_ENTRY: Readonly<Record<RailEntry, readonly TeamSize[]
 export const NO_TEAM_SIZE_HERE = "Team size is for team modes and Team Builds";
 /** A lobby guest's dropdown title: the host's size is everyone's. */
 export const HOST_SETS_TEAM_SIZE = "The host sets the team size";
+/** A queued party's dropdown title: the queue is for the size it has (#2107). */
+export const LEAVE_QUEUE_FOR_TEAM_SIZE = "Leave the queue to change the team size";
 
 /** `size` as the dropdown reads it, e.g. "2v2". */
 export function teamSizeLabel(size: TeamSize): string {
@@ -159,18 +161,34 @@ export function teamSizeSelect(
 /**
  * The rail's team size field (#2022): a builder without sizes disables
  * it all. A lobby guest's is locked, as its modes are (#1526); in a
- * Hosted Game it shows the lobby's size, the host's pick (#2104).
+ * Hosted Game or a Team Arena it shows the lobby's size, the host's pick
+ * (#2104, #2107). There, a queued party's is locked too: the queue is
+ * for the size it has.
  */
 function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLElement {
   const guest = party !== undefined && !party.isHost;
   const noSizes = TEAM_SIZES_BY_ENTRY[active].length === 0;
+  const queued = party?.mode === active && party.queuedMs !== null;
   const lobbySize =
-    active === "hosted-game" && party?.mode === "hosted-game" ? party.teamSize : undefined;
-  const select = teamSizeSelect(active, lobbySize ?? loadTeamSize(), noSizes || guest, (size) => {
-    teamSizeListener?.(size);
-  });
+    (active === "hosted-game" || active === "team-arena") && party?.mode === active
+      ? party.teamSize
+      : undefined;
+  const select = teamSizeSelect(
+    active,
+    lobbySize ?? loadTeamSize(),
+    noSizes || guest || queued,
+    (size) => {
+      teamSizeListener?.(size);
+    },
+  );
   const field = h("label", "mode-rail-size");
-  field.title = noSizes ? NO_TEAM_SIZE_HERE : guest ? HOST_SETS_TEAM_SIZE : "Team size";
+  field.title = noSizes
+    ? NO_TEAM_SIZE_HERE
+    : guest
+      ? HOST_SETS_TEAM_SIZE
+      : queued
+        ? LEAVE_QUEUE_FOR_TEAM_SIZE
+        : "Team size";
   field.append(h("span", "mode-rail-label", "Team size"), select);
   return field;
 }
