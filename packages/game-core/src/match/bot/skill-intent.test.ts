@@ -124,9 +124,11 @@ const NO_BOT_USE = new Set([
   "ritualist.vengeful-was-khanhei",
   "ritualist.weapon-of-quickening",
   "warrior.balanced-stance",
+  "warrior.battle-rage",
   "warrior.endure-pain",
   "warrior.rage-of-the-ntouka",
   "warrior.rush",
+  "warrior.shields-up",
   "warrior.sprint",
   // Minions, wells and enchantment strips: no rule for them yet.
   "necromancer.animate-bone-horror",

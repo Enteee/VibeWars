@@ -36,8 +36,15 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "remove-status":
       // Stripping a foe's enchantment helps no ally: not removal.
       return effect.category === "condition" || effect.category === "hex" ? ["removal"] : [];
+    // Desperation Blow's own knockdown (#2180) is its price, not a role.
     case "knockdown":
-      return ["knockdown"];
+      return effect.on === "caster" ? [] : ["knockdown"];
+    case "apply-random-status":
+      return [
+        ...new Set(
+          effect.choices.flatMap(({ statusId }) => statusRoles(getStatusDefinition(statusId))),
+        ),
+      ];
     case "maintain-status":
     case "apply-status":
     case "companion-gains-status":
