@@ -4,7 +4,7 @@ import type {
   WireTeamProposal,
   WireTeamSide,
 } from "@vibewars/game-protocol";
-import { defaultBuildEquipment } from "@vibewars/game-core";
+import { defaultBuildEquipment, STARTER_TEAMS } from "@vibewars/game-core";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -737,6 +737,38 @@ describe("the Team Lobby's body (#1460)", () => {
       "Balanced 4v4",
     ]);
     expect(shown.all("team-lobby-reason")[0]?.textContent).toBe("No proposals: a random preset");
+  });
+
+  it("draws the preset's job names and skill bars on its card and seats (#2148)", () => {
+    const preset = STARTER_TEAMS.find((team) => team.members.length === 4);
+    if (preset === undefined) throw new Error("no 4-member starter team");
+    const shown = body(
+      lobby("aria", "claim", {
+        ...claimSide([null, null, null, null]),
+        chosen: {
+          proposerId: null,
+          reason: "preset",
+          presetName: preset.name,
+          members: preset.members.map(({ name, build }) => ({
+            name,
+            primary: build.primaryProfession,
+            secondary: build.secondaryProfession ?? null,
+          })),
+        },
+      }),
+    );
+    const jobs = preset.members.map(({ name }) => name);
+    const rows = shown.all("is-chosen")[0]?.all("character-card-row") ?? [];
+    expect(rows.map((row) => row.attributes.get("aria-label"))).toEqual(jobs);
+    const seats = shown.all("team-lobby-seat");
+    expect(seats.map((seat) => seat.attributes.get("aria-label"))).toEqual(
+      jobs.map((job) => `${job}: Sit here`),
+    );
+    for (const seat of seats) {
+      expect(
+        seat.all("mini-skill").filter((cell) => !cell.className.includes("is-empty")),
+      ).not.toHaveLength(0);
+    }
   });
 
   it("titles a side of one's preset, which has no name, a preset team (#2148)", () => {
