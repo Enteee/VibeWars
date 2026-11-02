@@ -11,6 +11,7 @@ import mimicElite from "./mimic-elite.js";
 import minionCare from "./minion-care.js";
 import raise from "./raise.js";
 import renewSpirit from "./renew-spirit.js";
+import rider from "./rider.js";
 import type { BotRule } from "./types.js";
 import wardTouch from "./ward-touch.js";
 import setup from "./setup.js";
@@ -35,6 +36,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   minionCare,
   raise,
   renewSpirit,
+  rider,
   setup,
   takeMinion,
   wardTouch,

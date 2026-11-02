@@ -121,7 +121,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * hexes cast on it (Holy Veil, #944), or fails a foe's spells and attacks
  * at it or cuts a hexed foe's damage (Shadow Form, Mist Form, #1951) or one
  * type's (Mantra of Flame, #1964), or guards its casts from interrupts
- * (Mantra of Resolve, #1964) is defence, and one that interrupts
+ * (Mantra of Resolve, #1964), or projects such a status to the allies beside
+ * it (Protector's Defense, #2096) is defence, and one that interrupts
  * a spell (Dazed) is an interrupt.
  * What it does on each attack hit counts too: Apply Poison poisons,
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
@@ -159,7 +160,10 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.attacksAgainstMiss ||
     status.damageReductionFromHexedSource !== undefined ||
     status.interruptGuard !== undefined ||
-    (status.damageTypeTakenMultiplier?.multiplier ?? 1) < 1
+    (status.damageTypeTakenMultiplier?.multiplier ?? 1) < 1 ||
+    // Protector's Defense (#2096): the block its bearer projects.
+    (status.projectsAura !== undefined &&
+      statusRoles(getStatusDefinition(status.projectsAura.statusId)).includes("defence"))
   ) {
     roles.push("defence");
   }

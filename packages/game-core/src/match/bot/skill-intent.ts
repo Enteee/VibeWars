@@ -15,7 +15,13 @@ import {
   type StatusDefinition,
   type StatusId,
 } from "../../skills/status.js";
-import type { Combatant, Skill, SkillEffect, StateCondition } from "../../skills/types.js";
+import type {
+  Combatant,
+  Skill,
+  SkillEffect,
+  StateCondition,
+  Surroundings,
+} from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
 import { nearestFreshCorpse, type CorpseCandidate } from "../corpses.js";
 
@@ -93,6 +99,9 @@ export function botUses(skill: Skill): readonly BotUse[] {
   ) {
     uses.push("offence");
   }
+  // A shout that only acts on a state (#2096): "You Will Die!", "Retreat!".
+  // The fight rule waits for its state.
+  if (uses.length === 0 && stateGates(skill) !== undefined) uses.push("offence");
   if (uses.length === 0 && boosts(skill)) uses.push("boost");
   return uses;
 }
@@ -287,6 +296,38 @@ export function renewsSpirit(skill: Skill): boolean {
 }
 
 /**
+ * What a Paragon rider (#1955) waits for, read off the status it puts
+ * on: `last-stand`, a party's one negated death, as Angelic Bond's;
+ * `enchanted-speed`, speed for the enchanted, as Godspeed's;
+ * `speed-per-ally`, speed that lasts longer for each ally, as "Lead the
+ * Way!"'s; `brace`, an ally's next knockdown stopped, as "Brace
+ * Yourself!"'s. `undefined`: none of these.
+ */
+export type Rider = "last-stand" | "enchanted-speed" | "speed-per-ally" | "brace";
+
+export function riderOf(skill: Skill): Rider | undefined {
+  for (const effect of skill.effects) {
+    if (effect.kind !== "apply-status") {
+      continue;
+    }
+    const status = getStatusDefinition(effect.statusId);
+    if (status.negatesFatalDamage && skill.area !== undefined && skill.area.origin !== "party") {
+      return "last-stand";
+    }
+    if (status.moveSpeedWhileEnchanted > 1) {
+      return "enchanted-speed";
+    }
+    if (status.moveSpeedMultiplier > 1 && effect.per?.count.kind === "allies-within") {
+      return "speed-per-ally";
+    }
+    if (status.preventsKnockdown && skill.target === "single-other-ally") {
+      return "brace";
+    }
+  }
+  return undefined;
+}
+
+/**
  * A hex that copies its bearer's stances onto its caster (#1965), as
  * Mirrored Stance: worth a foe only while that foe has a stance to use.
  */
@@ -307,6 +348,58 @@ export function mirrorsStance(skill: Skill): boolean {
 export function onlyInterrupts(skill: Skill): boolean {
   const roles = skillRoles(skill);
   return roles.length === 1 && roles[0] === "interrupt";
+}
+
+/**
+ * Whether `skill`, used by `caster` on `target` now, does anything, when
+ * its every effect is an `if` on a state (#2096): "You Will Die!"'s foe
+ * below 90%, "You're All Alone!"'s foe alone, "Retreat!"'s dead ally.
+ * `undefined` for any other skill, which is not spent for nothing.
+ */
+export function stateGateHolds(
+  skill: Skill,
+  caster: Combatant,
+  target: Combatant,
+  surroundings: Surroundings,
+): boolean | undefined {
+  return stateGates(skill)?.some((gate) => stateHolds(gate, caster, target, surroundings));
+}
+
+/** The states `skill` acts on, when its every effect is an `if` on one; else `undefined`. */
+function stateGates(skill: Skill): readonly StateCondition[] | undefined {
+  if (skill.attack !== undefined || skill.effects.length === 0) {
+    return undefined;
+  }
+  const gates: StateCondition[] = [];
+  for (const effect of skill.effects) {
+    if (effect.kind !== "if" || !isStateCondition(effect.condition)) {
+      return undefined;
+    }
+    gates.push(effect.condition);
+  }
+  return gates;
+}
+
+/**
+ * The radius of the aura `skill`'s status makes its caster project to the
+ * allies beside it and not to itself (#2096): Protector's Defense's.
+ * `undefined` for any other skill.
+ */
+export function projectsToOthers(skill: Skill): number | undefined {
+  for (const effect of skill.effects) {
+    if (effect.kind === "apply-status") {
+      const aura = getStatusDefinition(effect.statusId).projectsAura;
+      if (aura?.excludesSource === true) {
+        return aura.radius;
+      }
+    }
+  }
+  return undefined;
+}
+
+/** Whether `combatant` bears a status that ends when it moves (#2096): Protector's Defense. */
+export function holdsGround(combatant: Combatant): boolean {
+  return combatant.statuses.active.some(({ id }) => getStatusDefinition(id).endsWhenBearerMoves);
 }
 
 /**

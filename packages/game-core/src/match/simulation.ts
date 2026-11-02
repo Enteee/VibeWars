@@ -988,6 +988,11 @@ export class MatchSimulation {
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
   /**
+   * What every participant's `StatusSet` shares as spent this tick
+   * (#1955), cleared once the tick's last drain is done.
+   */
+  readonly #spentStatuses = new Set<string>();
+  /**
    * Every team anyone was added to (#846): one whose members all left is
    * still in the standing, wiped, rather than gone.
    */
@@ -2073,15 +2078,17 @@ export class MatchSimulation {
   }
 
   /**
-   * What every living spirit and every ground effect projects (#1064,
-   * #1087), settled once a step before anyone acts, so a hit this step
-   * sees this step's auras. Every living body that is not a spirit wears
-   * an aura's status exactly while some source with it, on a side it
-   * reaches, stands within its radius; one worn from two sources is worn
-   * once, named for the first. A source gone since the last step is gone
-   * from everyone now: one step late at worst. Spirits in the order they
-   * were summoned, then ground effects in id order; bodies in match order.
-   * One pass for both, as a second would strip what the first projected.
+   * What every living spirit, every ground effect and every bearer of a
+   * projecting status projects (#1064, #1087, #2096), settled once a step
+   * before anyone acts, so a hit this step sees this step's auras. Every
+   * living body that is not a spirit wears an aura's status exactly while
+   * some source with it, on a side it reaches, stands within its radius,
+   * unless the aura spares its source and the body is it; one worn from
+   * two sources is worn once, named for the first. A source gone since the
+   * last step is gone from everyone now: one step late at worst. Spirits
+   * in the order they were summoned, then bearers in match order, then
+   * ground effects in id order; bodies in match order. One pass for all,
+   * as a second would strip what the first projected.
    */
   #projectAuras(): void {
     const sources: {
@@ -2104,6 +2111,25 @@ export class MatchSimulation {
           aura,
           ranks: statusRanks(aura.statusId, (owner ?? record).combatant),
         });
+      }
+    }
+    // A status that projects one (#2096) makes its living bearer a source,
+    // at the bearer's ranks.
+    for (const record of this.#participants.values()) {
+      if (record.combatant.dead) {
+        continue;
+      }
+      for (const { id } of record.combatant.statuses.active) {
+        const aura = getStatusDefinition(id).projectsAura;
+        if (aura !== undefined) {
+          sources.push({
+            sourceId: record.id,
+            team: record.combatant.team,
+            position: record.position,
+            aura,
+            ranks: statusRanks(aura.statusId, record.combatant),
+          });
+        }
       }
     }
     // A ward's status names its owner: whoever cast it. A trap projects nothing.
@@ -2132,6 +2158,7 @@ export class MatchSimulation {
       for (const { sourceId, team, position, aura, ranks } of sources) {
         if (
           !wears.has(aura.statusId) &&
+          !(aura.excludesSource === true && sourceId === body.id) &&
           reaches(aura.affects, team, body.combatant.team) &&
           distance(position, body.position) <= aura.radius
         ) {
@@ -4465,6 +4492,7 @@ export class MatchSimulation {
         this.#endForm(record, change);
         this.#returnSource(change);
         this.#stepToTarget(change);
+        this.#endEverywhere(record, change);
       }
     }
     const context = this.#triggerContext();
@@ -4482,6 +4510,8 @@ export class MatchSimulation {
       }
     }
     this.#settleTriggered(context, false);
+    // Every drain is done: what was spent this tick has ended everywhere.
+    this.#spentStatuses.clear();
   }
 
   /**
@@ -4519,6 +4549,7 @@ export class MatchSimulation {
         this.#endForm(record, change);
         this.#returnSource(change);
         this.#stepToTarget(change);
+        this.#endEverywhere(record, change);
         if (ownEnds && change.kind === "ended") {
           this.#logFired(fireEndTriggers(record.combatant, change, context));
           this.#logFired(fireDeathTriggers(record.combatant, change, context));
@@ -4552,6 +4583,7 @@ export class MatchSimulation {
           this.#endForm(record, change);
           this.#returnSource(change);
           this.#stepToTarget(change);
+          this.#endEverywhere(record, change);
         }
       }
     }
@@ -6785,6 +6817,28 @@ export class MatchSimulation {
   }
 
   /**
+   * A status that ends everywhere when spent negated a fatal blow on
+   * `record` (#1955): every other copy its source put up ends, Angelic
+   * Bond's "then it ends on all other allies".
+   */
+  #endEverywhere(record: ParticipantRecord, change: StatusChange): void {
+    if (
+      change.kind !== "fatal-negated" ||
+      !getStatusDefinition(change.statusId).endsEverywhereWhenSpent
+    ) {
+      return;
+    }
+    for (const other of this.#participants.values()) {
+      if (
+        other !== record &&
+        other.combatant.statuses.get(change.statusId)?.sourceId === change.sourceId
+      ) {
+        other.combatant.statuses.end(change.statusId);
+      }
+    }
+  }
+
+  /**
    * A returning status ended (#1826): its source, alive, Shadow Steps back
    * to where it put it up, ashes dropped first, facing kept, and the step
    * logged as that status's skill.
@@ -7598,6 +7652,8 @@ export class MatchSimulation {
   /**
    * Who walked this step (#921): everyone at once, after everyone acted,
    * so the order the participants resolve in cannot change who is moving.
+   * One who walked loses every status that ends when its bearer moves
+   * (#2096), logged as a status running out is.
    */
   #settleMoving(): void {
     for (const record of this.#participants.values()) {
@@ -7606,6 +7662,25 @@ export class MatchSimulation {
         !record.combatant.dead &&
         start !== undefined &&
         (start.x !== record.position.x || start.y !== record.position.y);
+      const ended = record.combatant.moving ? record.combatant.statuses.endOnBearerMove() : [];
+      if (ended.length > 0) {
+        this.#log.push({
+          tick: this.#tick,
+          atSeconds: this.#elapsedSeconds,
+          cause: "degeneration",
+          sourceId: record.id,
+          skillId: undefined,
+          weaponId: undefined,
+          attributeId: undefined,
+          area: undefined,
+          doubleStrike: false,
+          events: ended.map((statusId) => ({
+            kind: "status-expired",
+            targetId: record.id,
+            statusId,
+          })),
+        });
+      }
     }
   }
 
@@ -7635,7 +7710,7 @@ export class MatchSimulation {
 
   #combatant(spec: ParticipantSpec): Combatant {
     const maxHealth = spec.maxHealth ?? this.#ruleset.combat.baseHealth;
-    const statuses = new StatusSet();
+    const statuses = new StatusSet(this.#spentStatuses);
     return {
       id: spec.id,
       health: maxHealth * (spec.startHealthFraction ?? 1),

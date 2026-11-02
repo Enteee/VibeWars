@@ -45,7 +45,11 @@ export type WarriorStatusId =
   | "wary-stance"
   | "soldiers-defense"
   | "defensive-stance"
-  | "auspicious-parry";
+  | "auspicious-parry"
+  // Warrior conditions (#2096).
+  | "retreat"
+  | "protectors-defense"
+  | "protectors-defense-block";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -419,4 +423,32 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       },
     ],
   }),
+  // "Retreat!": "allies in earshot move 33% faster" (#2096).
+  retreat: define("retreat", "Retreat!", "shout", {
+    profession: "warrior",
+    moveSpeedMultiplier: 1.33,
+  }),
+  // Protector's Defense (PvP): "allies adjacent to you have a 75% chance to
+  // block attacks. Ends if you move" (#2096). The bearer projects the block,
+  // and does not wear it.
+  "protectors-defense": define("protectors-defense", "Protector's Defense", "skill-effect", {
+    profession: "warrior",
+    projectsAura: {
+      statusId: "protectors-defense-block",
+      affects: "allies",
+      radius: AREA_ADJACENT,
+      excludesSource: true,
+    },
+    endsWhenBearerMoves: true,
+  }),
+  // What Protector's Defense gives the allies adjacent to its bearer.
+  "protectors-defense-block": define(
+    "protectors-defense-block",
+    "Protector's Defense",
+    "skill-effect",
+    {
+      profession: "warrior",
+      block: { chance: 0.75, against: "all" },
+    },
+  ),
 };
