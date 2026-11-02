@@ -1106,6 +1106,15 @@ export type StatusTriggerEvent =
    */
   | "bearer-hit-by-attack"
   /**
+   * A foe's blow, shot or spell is aimed at the bearer (#2095): once for
+   * each blow or shot as it resolves, before its blind, block and damage
+   * rolls, so a miss and a block count; once for each spell whose chosen
+   * target is the bearer, as it finishes, before anything fails it. An
+   * area spell with no chosen target never counts. Recorded with the
+   * foe, the offender, and fired at the drain. Sliver Armor's.
+   */
+  | "bearer-targeted-by-foe"
+  /**
    * A skill's heal effect landed on the bearer (#1913), its amount above
    * 0, an overheal at full Health too: Soul Bind's. Pips, regeneration,
    * life steal and Divine Favor's bonus are no such heal. Recorded with
@@ -1699,6 +1708,12 @@ export type StatusChange =
       readonly offenderId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
+  /** A foe aimed a blow, shot or spell at the bearer (#2095); `offenderId` is the foe. */
+  | {
+      readonly kind: "targeted-by-foe";
+      readonly offenderId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    }
   /** A skill healed the bearer (#1913); `offenderId` is the healer. */
   | {
       readonly kind: "healed-by-skill";
@@ -2242,6 +2257,18 @@ export class StatusSet {
     const fired = this.#answering("bearer-interrupted");
     if (fired.length > 0) {
       this.#changes.push({ kind: "interrupted", offenderId, skill, fired });
+    }
+  }
+
+  /**
+   * `offenderId`, a foe, aimed a blow, shot or spell at the bearer
+   * (#2095), recorded only if a status on it answers that, with the
+   * triggers that do: once for each.
+   */
+  public recordTargetedByFoe(offenderId: string): void {
+    const fired = this.#answering("bearer-targeted-by-foe");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "targeted-by-foe", offenderId, fired });
     }
   }
 

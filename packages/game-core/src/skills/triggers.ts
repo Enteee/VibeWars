@@ -223,6 +223,7 @@ export function fireChangeTriggers(
       );
     case "took-damage-from-foe":
     case "hit-by-attack":
+    case "targeted-by-foe":
     case "healed-by-skill":
     case "blocked":
     case "health-dropped":

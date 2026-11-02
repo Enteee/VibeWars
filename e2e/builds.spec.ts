@@ -7,7 +7,7 @@ import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { openRail, pickCharacter } from "./helpers/menu.js";
-import { startSoloMatch } from "./helpers/peers.js";
+import { setTeamSize, startSoloMatch } from "./helpers/peers.js";
 import { bringStarter } from "./helpers/starter.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
 import { skillKey } from "./keys.js";
@@ -410,6 +410,8 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
 }) => {
   await saveCharacters(page, ["Alpha"]);
   await openTeamBuilder(page);
+  // A Team Build of one, so one member fills it (#2109).
+  await setTeamSize(page, 1);
   await page.getByRole("button", { name: "new team" }).click();
 
   // The name is the last crumb, and Save and ⋯ are the bar's only buttons.
@@ -694,6 +696,31 @@ test("the team editor's bar puts its status on a second row from 721 to 1200 px,
   }
 });
 
+test("a Team Build is made at the sidebar's size, which its editor shows locked (#2109)", async ({
+  page,
+}) => {
+  await saveCharacters(page, ["Alpha"]);
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await expect(page.locator(".team-play-hint")).toHaveText("No 2v2 Team Builds yet.");
+  await page.getByRole("button", { name: "new team" }).click();
+
+  const size = page.locator("#topbar").getByRole("combobox", { name: "Team size" });
+  await expect(size).toHaveValue("2");
+  await expect(size).toBeDisabled();
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await expect(page.locator(".team-picker-header")).toHaveText("0 places left");
+  await expect(memberRows(page)).toHaveCount(2);
+  await page.getByLabel("team name").fill("Pair");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+
+  // Back at 2v2, the build listed full; at 4v4 it is not.
+  await expect(teamRows(page).locator(".play-card-size")).toHaveText(["2/2"]);
+  await setTeamSize(page, 4);
+  await expect(teamRows(page)).toHaveCount(0);
+});
+
 test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places left (#574)", async ({
   page,
 }) => {
@@ -702,12 +729,12 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
   await page.getByRole("button", { name: "new team" }).click();
 
   const header = page.locator(".team-picker-header");
-  await expect(header).toHaveText("16 places left");
+  await expect(header).toHaveText("4 places left");
   await expect(page.locator(".team-pick-sub").first()).toHaveText(/^Warrior.* · \d\/8 skills$/);
   for (const name of ["Alpha", "Bravo", "Charlie"]) {
     await page.getByRole("button", { name: `add ${name}` }).click();
   }
-  await expect(header).toHaveText("13 places left");
+  await expect(header).toHaveText("1 place left");
   // An added character is copied (#1452): all four stay on offer.
   await expect(page.locator(".team-pick")).toHaveCount(4);
 

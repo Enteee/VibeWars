@@ -23,7 +23,7 @@ export interface StarterTeamMember {
 export interface StarterTeam {
   /** The archetype: "Balanced 4v4", "Spike". */
   readonly name: string;
-  /** 4 or 8, in slot order. */
+  /** In slot order; how many is the team's size (#2109), 4 or 8. */
   readonly members: readonly StarterTeamMember[];
 }
 
@@ -396,15 +396,18 @@ export const STARTER_TEAMS: readonly StarterTeam[] = [
 ];
 
 /**
- * A starter team by `random` ([0, 1)), never the one named like `not`, so
- * a reroll always changes it.
+ * A starter team of `size` members by `random` ([0, 1)), never the one
+ * named like `not`, so a reroll always changes it; `undefined` when there
+ * is none of that size (#2109).
  */
-export function pickStarterTeam(random: () => number, not?: StarterTeam): StarterTeam {
-  const pool = STARTER_TEAMS.filter((team) => team.name !== not?.name);
+export function pickStarterTeam(
+  random: () => number,
+  size: number,
+  not?: StarterTeam,
+): StarterTeam | undefined {
+  const pool = STARTER_TEAMS.filter(
+    (team) => team.members.length === size && team.name !== not?.name,
+  );
   // Clamped: a `random` just under 1 must not index past the end.
-  const picked = pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))];
-  if (picked === undefined) {
-    throw new Error("no starter teams to pick from");
-  }
-  return picked;
+  return pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))];
 }

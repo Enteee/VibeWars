@@ -8,7 +8,7 @@ import { defaultBuildEquipment } from "@vibewars/game-core";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { StoredTeam } from "../storage/schema.js";
+import type { StoredTeam, TeamSize } from "../storage/schema.js";
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
 import {
@@ -22,7 +22,6 @@ import {
   drawerRows,
   drawerShowing,
   initial,
-  memberCount,
   noTeamBuildNamed,
   proposableTeams,
   putAwayBuildsDrawer,
@@ -217,7 +216,8 @@ function lobby(
   };
 }
 
-function team(id: string, name: string, size: number): StoredTeam {
+/** A Team Build of `size`, `filled` of its slots taken: all of them unless said. */
+function team(id: string, name: string, size: TeamSize, filled: number = size): StoredTeam {
   const character = {
     id: "c",
     name: "Member",
@@ -231,7 +231,8 @@ function team(id: string, name: string, size: number): StoredTeam {
     schemaVersion: 1,
     id,
     name,
-    members: Array.from({ length: size }, () => ({ character })),
+    size,
+    members: Array.from({ length: filled }, () => ({ character })),
     rulesetId: "r",
     updatedAt: 0,
   };
@@ -270,10 +271,18 @@ describe("the Team Lobby's words (#1460)", () => {
     const solo = team("a", "Solo", 1);
     const duo = team("b", "Duo", 2);
     const four = team("c", "Four", 4);
-    const sixteen = team("d", "Sixteen", 16);
-    expect(proposableTeams([solo, duo, four, sixteen], 4)).toEqual([four]);
-    expect(proposableTeams([solo, duo, four, sixteen], 1)).toEqual([solo]);
-    expect(proposableTeams([duo, sixteen], 8)).toEqual([]);
+    const eight = team("d", "Eight", 8);
+    expect(proposableTeams([solo, duo, four, eight], 4)).toEqual([four]);
+    expect(proposableTeams([solo, duo, four, eight], 1)).toEqual([solo]);
+    expect(proposableTeams([duo, four], 8)).toEqual([]);
+  });
+
+  it("offers no Team Build short of its size, and counts none as hidden (#2109)", () => {
+    const four = team("a", "Four", 4);
+    const three = team("b", "Three of four", 4, 3);
+    const half = team("c", "Half of eight", 8, 4);
+    expect(proposableTeams([four, three, half], 4)).toEqual([four]);
+    expect(drawerRows([four, three, half], 4, "")).toEqual({ rows: [four], hiddenOtherSizes: 0 });
   });
 
   it("lists the drawer's Team Builds by size and name, and counts the other sizes (#2116)", () => {
@@ -291,8 +300,6 @@ describe("the Team Lobby's words (#1460)", () => {
     expect(drawerShowing(4, 0)).toBe("Showing 4-player builds");
     expect(drawerShowing(4, 1)).toBe("Showing 4-player builds · 1 other hidden");
     expect(drawerShowing(4, 2)).toBe("Showing 4-player builds · 2 others hidden");
-    expect(memberCount(1)).toBe("1 member");
-    expect(memberCount(4)).toBe("4 members");
     expect(noTeamBuildNamed("zzz")).toBe("No Team Build named “zzz”.");
   });
 });
