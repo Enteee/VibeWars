@@ -1,12 +1,15 @@
 import { getSkill } from "../../../skills/catalog.js";
-import type { Skill } from "../../../skills/types.js";
+import { RANGE_MELEE } from "../../../distances.js";
+import type { Skill, Surroundings } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
 import {
   botUses,
+  holdsGround,
   mirrorsStance,
   onlyInterrupts,
   ownTrapBoost,
   sendsPet,
+  stateGateHolds,
   takenOffFoe,
 } from "../skill-intent.js";
 import { NOTHING } from "./shared.js";
@@ -19,7 +22,10 @@ const PET_SEND_UNITS = 300;
  * With a foe to fight: an offensive skill in bar order, else the weapon.
  * A copier or a stripper only at a foe with what it takes (#1928, #1954):
  * Inspired Enchantment and Mirror of Disenchantment at an enchanted one.
- * Mirrored Stance only at a foe with a stance to use (#1965).
+ * Mirrored Stance only at a foe with a stance to use (#1965). A shout
+ * that only acts on a state waits for it (#2096): "You Will Die!" for a
+ * foe below 90%, "Retreat!" for a dead ally. Holding Protector's Defense
+ * (#2096), it swings only at a foe in reach and otherwise stands.
  */
 const fight: BotRule = {
   order: 100,
@@ -46,14 +52,31 @@ const fight: BotRule = {
       distance(pet.position, target.position) >= PET_SEND_UNITS;
     const hasStance =
       foe?.skillBar.some((id) => id !== null && getSkill(id)?.type === "stance") ?? false;
+    const holding = holdsGround(self.combatant);
+    const surroundings: Surroundings = new Map(context.participants.map((body) => [body.id, body]));
+    const worthUsing = (held: Skill): boolean => {
+      const on = held.target === "self" ? self.combatant : foe;
+      if (on === undefined) {
+        return false;
+      }
+      return (
+        stateGateHolds(held, self.combatant, on, surroundings) ?? botUses(held).includes("offence")
+      );
+    };
+    const castOn = (held: Skill): string =>
+      held.target === "self" &&
+      stateGateHolds(held, self.combatant, self.combatant, surroundings) !== undefined
+        ? self.id
+        : targetId;
     const skill = bar.find(
       (held) =>
-        botUses(held).includes("offence") &&
+        worthUsing(held) &&
         !onlyInterrupts(held) &&
         copies(held) &&
         (!sendsPet(held) || petFar) &&
         (hasStance || !mirrorsStance(held)) &&
-        mayUse(held, targetId),
+        mayUse(held, castOn(held)) &&
+        (!holding || context.check(held.id, castOn(held)).ok),
     );
     // A trap goes down under Trapper's Focus or Speed when the bar has one
     // not yet up (#1966).
@@ -69,9 +92,15 @@ const fight: BotRule = {
       }
     }
     if (skill !== undefined) {
-      return use(skill, targetId);
+      return use(skill, castOn(skill));
     }
-    // The weapon.
+    // The weapon, from where it stands while a step would end what it holds.
+    if (
+      holding &&
+      (target === undefined || distance(self.position, target.position) > RANGE_MELEE)
+    ) {
+      return { ...NOTHING, targetId };
+    }
     return { ...NOTHING, targetId, attackTargetId: targetId };
   },
 };

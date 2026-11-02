@@ -37,6 +37,7 @@ import {
   isSpell,
   type AttackWeaponClass,
   type AttributeScaling,
+  type Aura,
   type Combatant,
   type ConditionalBonus,
   type CreatureTemplate,
@@ -543,6 +544,12 @@ export interface StatusDefinition {
    * attacker.
    */
   readonly ignoresCriticalDamage: boolean;
+  /**
+   * While it is up, its bearer projects this aura as a spirit does
+   * (#2096): Protector's Defense's block for the allies adjacent to it.
+   * `undefined`: none.
+   */
+  readonly projectsAura: Aura | undefined;
   /** The bearer's chance to block attacks; `undefined`: none. */
   readonly block: BlockRule | undefined;
   /**
@@ -674,6 +681,11 @@ export interface StatusDefinition {
    * keeps it. Escape's price.
    */
   readonly endsWhenBearerAttacksInMelee: boolean;
+  /**
+   * It ends the moment the bearer starts moving (#2096): Protector's
+   * Defense's "ends if you move". Being knocked down is not moving.
+   */
+  readonly endsWhenBearerMoves: boolean;
   /**
    * It ends the moment one of the bearer's attacks hits (#919): a blow
    * lands, swing, attack skill or arrow alike. A miss or a block keeps
@@ -3283,6 +3295,15 @@ export class StatusSet {
           (kind === "melee" && definition.endsWhenBearerAttacksInMelee)
         );
       })
+      .map(({ id }) => id);
+    this.#end(ended);
+    return ended;
+  }
+
+  /** The bearer started moving (#2096): every status that ends when it does is gone. Returns their ids. */
+  public endOnBearerMove(): StatusId[] {
+    const ended = this.active
+      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerMoves)
       .map(({ id }) => id);
     this.#end(ended);
     return ended;

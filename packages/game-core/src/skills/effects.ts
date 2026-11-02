@@ -2474,6 +2474,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "caster-spirit-within":
     case "caster-controls-at-most":
     case "caster-spirit-or-corpse-within":
+    case "caster-dead-ally-within":
       return true;
   }
 }
@@ -2629,6 +2630,19 @@ export function stateHolds(
             (body) =>
               isFreshCorpse(body) && distanceWithinRange(at, body.position, condition.radius),
           ))
+      );
+    }
+    case "caster-dead-ally-within": {
+      const at = surroundings.get(caster.id)?.position;
+      return (
+        at !== undefined &&
+        [...surroundings.values()].some(
+          ({ combatant, position }) =>
+            combatant.dead &&
+            combatant.id !== caster.id &&
+            combatant.team === caster.team &&
+            distanceWithinRange(at, position, condition.radius),
+        )
       );
     }
   }
@@ -2889,6 +2903,7 @@ function conditionHolds(
     case "caster-spirit-within":
     case "caster-controls-at-most":
     case "caster-spirit-or-corpse-within":
+    case "caster-dead-ally-within":
       return held.has(condition);
   }
 }

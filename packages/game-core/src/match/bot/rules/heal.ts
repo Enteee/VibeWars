@@ -1,7 +1,7 @@
 import type { Participant } from "../../simulation.js";
 import type { Skill } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
-import { botUses, wardedDamageType } from "../skill-intent.js";
+import { botUses, projectsToOthers, wardedDamageType } from "../skill-intent.js";
 import { airFirst } from "./setup.js";
 import { HURT_FRACTION, healthFraction } from "./shared.js";
 import type { BotRule } from "./types.js";
@@ -24,10 +24,19 @@ const heal: BotRule = {
     const patient = hurt;
     // A self-targeted skill reaches the caster, unless its area spares the
     // caster (Healing Ring, #1870): then only an ally beside it, so it is
-    // never cast for the caster alone or into foes only.
+    // never cast for the caster alone or into foes only. Protector's Defense
+    // (#2096) only for an ally beside it, and never while it has a move pending.
     const reaches = (held: Skill): boolean => {
       if (held.target !== "self") {
         return true;
+      }
+      const beside = projectsToOthers(held);
+      if (beside !== undefined) {
+        return (
+          patient.id !== self.id &&
+          self.walkGoal === undefined &&
+          distance(patient.position, self.position) <= beside
+        );
       }
       const area = held.area;
       if (area?.origin !== "caster" || area.includesCaster) {
