@@ -41,7 +41,7 @@ export const VOTE_TITLE = "Choose a team build";
 export const CLAIM_TITLE = "Take a character";
 export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
-export const NO_PROPOSALS = "No proposals: the house team plays";
+export const NO_PROPOSALS = "No proposals: the house team build plays";
 export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Builder.";
 /** Every Team Build has problems (#2110): saved, but none can be proposed. */
 export const NO_PLAYABLE_TEAM_BUILDS =
