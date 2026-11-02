@@ -44,7 +44,11 @@ export type DervishStatusId =
   | "faithful-intervention"
   // "N for each X" (#1760).
   | "arcane-zeal"
-  | "mystic-vigor";
+  | "mystic-vigor"
+  // Dervish staples (#2207).
+  | "intimidating-aura"
+  | "eremites-zeal"
+  | "vow-of-silence";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -713,5 +717,45 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
         skillId: "dervish.mystic-vigor",
       },
     ],
+  }),
+  // Dervish staples (#2207). "You have +40...100 max Health and take
+  // 1...10 less damage from foes with less Health than you".
+  "intimidating-aura": define("intimidating-aura", "Intimidating Aura", "enchantment", {
+    profession: "dervish",
+    maxHealthBonus: { scaling: { attributeId: "dervish.mysticism", atZero: 40, atTwelve: 88 } },
+    damageReductionFromWeakerFoe: {
+      scaling: { attributeId: "dervish.mysticism", atZero: 1, atTwelve: 8.2 },
+    },
+  }),
+  // "For 10 seconds afterward, this enchantment does nothing. When this
+  // enchantment ends, you gain 1...3 Energy for each foe within earshot,
+  // maximum 8 Energy": by its Mysticism, as the cast's, counted as it ends.
+  "eremites-zeal": define("eremites-zeal", "Eremite's Zeal", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: { flat: 0 },
+            per: {
+              count: { kind: "foes-within", radius: AREA_EARSHOT },
+              amount: { scaling: { attributeId: "dervish.mysticism", atZero: 1, atTwelve: 2.6 } },
+              max: { flat: 8 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "dervish.eremites-zeal",
+      },
+    ],
+  }),
+  // "You cannot be the target of spells, and you cannot cast spells":
+  // an ally's spell included.
+  "vow-of-silence": define("vow-of-silence", "Vow of Silence", "enchantment", {
+    profession: "dervish",
+    untargetableBySpells: true,
+    preventsSpells: true,
   }),
 };

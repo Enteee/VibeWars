@@ -388,6 +388,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   channeling: icon("channeling"),
   "arcane-zeal": icon("arcane-zeal"),
   "mystic-vigor": icon("mystic-vigor"),
+  "intimidating-aura": icon("intimidating-aura"),
+  "eremites-zeal": icon("eremites-zeal"),
+  "vow-of-silence": icon("vow-of-silence"),
   // Pets 2 (#1865).
   "otyughs-cry": icon("otyughs-cry"),
   "predatory-bond": icon("predatory-bond"),
@@ -439,6 +442,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "glyph-of-elemental-power": icon("glyph-of-elemental-power"),
   "glyph-of-energy": icon("glyph-of-energy"),
   "ritual-lord": icon("ritual-lord"),
+  // Ritualist staples (#2212).
+  "ancestors-rage": icon("ancestors-rage"),
+  "dulled-weapon": icon("dulled-weapon"),
   "experts-dexterity": icon("experts-dexterity"),
   "strike-as-one": icon("strike-as-one"),
   "strike-as-one-pet": icon("strike-as-one-pet"),

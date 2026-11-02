@@ -236,6 +236,12 @@ export interface HealEffect {
    * healed (#1951): Mist Form's "allies under 80% Health". Absent: any.
    */
   readonly onlyBelowHealthFraction?: number;
+  /**
+   * The amount is a percentage of the caster's current Health as the heal
+   * lands, at most `max` (#2207): Imbue Health's "healed for 5...50% of
+   * your current Health (maximum 300 Health)". Rounded down.
+   */
+  readonly ofCasterHealth?: { readonly max: number };
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */
@@ -1513,6 +1519,11 @@ export type StateCondition =
    * "while wielding a shield". A focus is no shield.
    */
   | { readonly kind: "caster-holds-shield" }
+  /**
+   * The caster holds a Ritualist's ashes, an `"item"` status (#2212):
+   * Channeled Strike's and Soothing Memories' "if you are holding an item".
+   */
+  | { readonly kind: "caster-holds-item" }
   /**
    * The effect's target has less health than the caster, absolute, not a
    * share (#939): Victorious Sweep's "if target foe has less Health than

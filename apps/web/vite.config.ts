@@ -14,6 +14,15 @@ if (TRANSPORT !== undefined && TRANSPORT !== "trystero" && TRANSPORT !== "broadc
   );
 }
 
+// The e2e build's Team Lobby seed (#2213): see `src/net/session.ts`. A
+// typo would otherwise build a client whose lobbies throw on hosting.
+const LOBBY_SEED = process.env.VITE_VIBEWARS_LOBBY_SEED;
+if (LOBBY_SEED !== undefined && !/^\d+$/.test(LOBBY_SEED)) {
+  throw new Error(
+    `VITE_VIBEWARS_LOBBY_SEED must be a decimal integer, got ${JSON.stringify(LOBBY_SEED)}`,
+  );
+}
+
 // This build's id (#1268): `pages.yml` passes the commit it builds, e2e its
 // own. Without one it is `dev`, which never checks for a newer build.
 const BUILD = process.env.VIBEWARS_BUILD ?? "dev";

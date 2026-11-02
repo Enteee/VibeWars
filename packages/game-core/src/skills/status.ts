@@ -179,6 +179,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   attackDurationMultiplier: true,
   damageTakenMultiplier: true,
   adrenalineGainFaster: true,
+  damageReductionFromWeakerFoe: true,
   casterEnergyPerReduction: true,
 };
 
@@ -566,6 +567,13 @@ export interface StatusDefinition {
    */
   readonly untargetableByFoeSpells: boolean;
   /**
+   * No other character, foe or ally, can start a spell with the bearer as
+   * its target (#2207): Vow of Silence's "you cannot be the target of
+   * spells". An area or a splash still reaches the bearer, as
+   * `untargetableByFoeSpells`'s.
+   */
+  readonly untargetableBySpells: boolean;
+  /**
    * A foe's spell whose chosen target is the bearer fails as it finishes
    * (#1951): Shadow Form's "hostile spells that target you fail". It is
    * paid for and recharges, as an interrupted one, and does nothing else.
@@ -627,6 +635,12 @@ export interface StatusDefinition {
    * attacker.
    */
   readonly ignoresCriticalDamage: boolean;
+  /**
+   * No blow the bearer lands is a critical hit (#2212): Dulled Weapon's
+   * "cannot land critical hits", even a skill's that always crits. The
+   * crit roll is still drawn, so the stream does not move.
+   */
+  readonly preventsCriticals: boolean;
   /**
    * While it is up, its bearer projects this aura as a spirit does
    * (#2096): Protector's Defense's block for the allies adjacent to it.
@@ -883,6 +897,13 @@ export interface StatusDefinition {
    */
   readonly damageReductionFromSourceWith:
     { readonly statusId: StatusId; readonly fraction: number } | undefined;
+  /**
+   * Taken off each packet a foe whose current Health is lower than the
+   * bearer's deals (#2207): Intimidating Aura's "take 1...10 less damage
+   * from foes with less Health than you". Compared as the packet lands;
+   * equal Health takes nothing off. Never below 0. 0: none.
+   */
+  readonly damageReductionFromWeakerFoe: StatusStat;
   /**
    * Damage of `type` the bearer takes is multiplied by `multiplier` (#1964):
    * Mantra of Flame's "fire damage you take is reduced by 45%", 0.55.
@@ -3844,6 +3865,11 @@ export class StatusSet {
   }
 }
 
+/** Whether nobody can start a spell at a bearer of `statuses` (#2207, `untargetableBySpells`). */
+export function untargetableBySpells(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).untargetableBySpells);
+}
+
 /**
  * Whether a foe cannot start a spell at a bearer of `statuses` (#1511,
  * `untargetableByFoeSpells`).
@@ -4060,6 +4086,8 @@ export interface StatusModifiers {
   readonly damageFromSpiritAttacks: number;
   /** Any status's (#1329). */
   readonly ignoresCriticalDamage: boolean;
+  /** Any status's (#2212). */
+  readonly preventsCriticals: boolean;
 }
 
 /**
@@ -4178,6 +4206,7 @@ export function aggregateModifiers(
   let energyPerCritical = 0;
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
+  let preventsCriticals = false;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
@@ -4288,6 +4317,7 @@ export function aggregateModifiers(
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
+    preventsCriticals ||= def.preventsCriticals;
   }
 
   return {
@@ -4338,6 +4368,7 @@ export function aggregateModifiers(
     healthPerCritical,
     damageFromSpiritAttacks,
     ignoresCriticalDamage,
+    preventsCriticals,
   };
 }
 

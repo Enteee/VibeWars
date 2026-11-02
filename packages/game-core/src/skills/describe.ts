@@ -572,6 +572,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.untargetableByFoeSpells) {
     parts.push("cannot be the target of enemy spells");
   }
+  if (definition.untargetableBySpells) {
+    parts.push("cannot be the target of spells");
+  }
   // Shadow Form's (#1951).
   if (definition.foeSpellsFail) {
     parts.push("hostile spells targeting you fail");
@@ -607,6 +610,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.ignoresCriticalDamage) {
     parts.push("you do not suffer extra damage from a critical attack");
+  }
+  if (definition.preventsCriticals) {
+    parts.push("cannot land critical hits");
   }
   if (definition.block !== undefined) {
     // Wary Stance's "attack skills" (#1978).
@@ -806,6 +812,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const { statusId, fraction } = definition.damageReductionFromSourceWith;
     parts.push(
       `${String(Math.round(fraction * 100))}% less damage from foes suffering from ${getStatusDefinition(statusId).name}`,
+    );
+  }
+  // Intimidating Aura's (#2207).
+  if (statAtTwelve(definition.damageReductionFromWeakerFoe) > 0) {
+    parts.push(
+      `−${statText(definition.damageReductionFromWeakerFoe, ranks, whole)} damage taken from foes with less Health`,
     );
   }
   if (definition.redirectsPhysicalDamage > 0) {
@@ -2328,6 +2340,8 @@ function conditionText(
       return `If you wield ${NEEDED_WEAPON[condition.weapon]}`;
     case "caster-holds-shield":
       return "If you hold a shield";
+    case "caster-holds-item":
+      return "If you are holding an item";
     case "target-less-health":
       return "If target has less Health than you";
     case "target-more-health":
@@ -2451,7 +2465,9 @@ function lostInSplash(effect: RemoveStatusEffect, ranks: ReadonlyMap<string, num
 /** A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes". */
 function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>): string {
   // Hex Eater Signet's "adjacent allies with a hex" (#1954).
-  const bearing = splash.onlyBearing === undefined ? "" : ` with a ${splash.onlyBearing}`;
+  // Mystic Healing's "enchanted party members", "with an enchantment" (#2207).
+  const article = splash.onlyBearing === "enchantment" ? "an" : "a";
+  const bearing = splash.onlyBearing === undefined ? "" : ` with ${article} ${splash.onlyBearing}`;
   const who = `${foesWithin(splash.radius, splash.hits)}${splash.around === "caster" ? " around you" : ""}${bearing}`;
   return splash.maxTargets === undefined || splash.hits === "party"
     ? who
@@ -2908,13 +2924,15 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
               ? `${effect.recipient === "caster" ? "You are healed" : "Heals"} ${amount} for each point of Energy lost`
               : effect.perUsedSkillEnergy === true
                 ? `Heals for ${shown(magnitude, percentOf(magnitude.current))} of the spell's energy cost`
-                : effect.recipient === "caster"
-                  ? `You gain ${amount} health`
-                  : effect.recipient === "companion"
-                    ? `Your pet gains ${amount} health`
-                    : effect.recipient === "owner"
-                      ? `Heals its owner for ${amount}`
-                      : `Heals for ${amount}`;
+                : effect.ofCasterHealth !== undefined
+                  ? `Heals for ${shown(magnitude, `${String(magnitude.current)}%`)} of your current Health (maximum ${String(effect.ofCasterHealth.max)} Health)`
+                  : effect.recipient === "caster"
+                    ? `You gain ${amount} health`
+                    : effect.recipient === "companion"
+                      ? `Your pet gains ${amount} health`
+                      : effect.recipient === "owner"
+                        ? `Heals its owner for ${amount}`
+                        : `Heals for ${amount}`;
       const counted = withPerText(text, effect.amount, effect.per, ranks, {
         alone: effect.recipient === "caster" ? "You gain" : "Heals",
         unit: " Health",
