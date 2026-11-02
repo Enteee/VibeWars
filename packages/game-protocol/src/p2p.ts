@@ -64,6 +64,7 @@ export const CHANNELS = [
   "lobby-hello",
   "lobby-welcome",
   "lobby-leave",
+  "lobby-seat",
   "stay-together",
   "party-proposal",
   "party-consent",
@@ -873,6 +874,12 @@ export interface PeerLobbyJoin {
    * coded lobby, which refuses one.
    */
   readonly admission: WireAdmission | null;
+  /**
+   * The seat's `PeerLobbySeat.rejoinToken` on a return after a drop, sent
+   * to the host alone (#2157); `null` on a first join and on any join
+   * sent to the whole room.
+   */
+  readonly rejoinToken: string | null;
 }
 
 /**
@@ -904,6 +911,16 @@ export type PeerLobbyHello = Readonly<Record<string, never>>;
  * seat now. A peer that only drops sends nothing, and its seat is held.
  */
 export type PeerLobbyLeave = Readonly<Record<string, never>>;
+
+/**
+ * Lobby host to one admitted guest, and only to it (#2157): the token
+ * that guest's `PeerLobbyJoin` carries to get its seat back after a
+ * drop. A peer id is no proof, as every peer in the room sees it.
+ */
+export interface PeerLobbySeat {
+  /** 128 random bits as 32 hex digits. */
+  readonly rejoinToken: string;
+}
 
 /**
  * Queued lobby host to one joiner, and only to it (#871): `hostSig` is
@@ -2320,7 +2337,8 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     !isString(raw.protocolVersion) ||
     typeof raw.name !== "string" ||
     guildTag === undefined ||
-    admission === undefined
+    admission === undefined ||
+    (raw.rejoinToken !== null && !isRejoinToken(raw.rejoinToken))
   ) {
     return undefined;
   }
@@ -2331,6 +2349,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     // As the hello's.
     guildCape: parseWireCape(raw.guildCape) ?? null,
     admission,
+    rejoinToken: raw.rejoinToken,
   };
 }
 
@@ -2344,6 +2363,14 @@ export function parsePeerLobbyHello(value: unknown): PeerLobbyHello | undefined 
 export function parsePeerLobbyLeave(value: unknown): PeerLobbyLeave | undefined {
   const raw = fields(value);
   return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
+}
+
+/** The `"lobby-seat"` channel. */
+export function parsePeerLobbySeat(value: unknown): PeerLobbySeat | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isRejoinToken(raw.rejoinToken)
+    ? { rejoinToken: raw.rejoinToken }
+    : undefined;
 }
 
 /** The `"lobby-welcome"` channel. */

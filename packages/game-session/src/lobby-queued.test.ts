@@ -319,6 +319,7 @@ async function forgedJoin(
     guildTag: null,
     guildCape: null,
     admission: { seatKey: ticketId, admissionSig: keyOf(signer).sign(bytes) },
+    rejoinToken: null,
   };
 }
 
@@ -372,6 +373,7 @@ describe("a queued lobby", () => {
         name: "Bare",
         guildTag: null,
         admission: null,
+        rejoinToken: null,
       },
       "host",
     );
