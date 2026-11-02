@@ -1783,7 +1783,7 @@ export function applyEffect(
       if (
         gainer !== undefined &&
         strikes > 0 &&
-        fillPools(gainer, strikes * ADRENALINE_PER_STRIKE)
+        fillPools(gainer, strikes * ADRENALINE_PER_STRIKE, false)
       ) {
         events.push({
           kind: "adrenaline-gained",
@@ -1883,6 +1883,16 @@ export function applyEffect(
         events,
       );
       return events;
+    }
+
+    case "apply-random-status": {
+      if (target === undefined || target.dead || effect.choices.length === 0) {
+        return events;
+      }
+      const choice = effect.choices[context.rng.nextInt(0, effect.choices.length)];
+      return choice === undefined
+        ? events
+        : applyEffect({ kind: "apply-status", ...choice }, context, earlier, lostBy);
     }
 
     case "apply-status": {
@@ -2108,26 +2118,27 @@ export function applyEffect(
     }
 
     case "knockdown": {
-      if (target === undefined || !canBeKnockedDown(target)) {
+      const falls = effect.on === "caster" ? caster : target;
+      if (falls === undefined || !canBeKnockedDown(falls)) {
         return events;
       }
-      if (preventsKnockdown(target)) {
+      if (preventsKnockdown(falls)) {
         // Stopped, and what stops only one is spent (#845).
-        for (const statusId of target.statuses.endOnKnockdownPrevented()) {
-          events.push({ kind: "status-removed", targetId: target.id, statusId });
+        for (const statusId of falls.statuses.endOnKnockdownPrevented()) {
+          events.push({ kind: "status-removed", targetId: falls.id, statusId });
         }
         return events;
       }
       // Earthbind (#1265): never shorter than its minimum, and its spirit
       // pays for every knockdown, one long enough already included.
-      const minimum = aggregateModifiers(target.statuses.active).knockdownMinSeconds;
+      const minimum = aggregateModifiers(falls.statuses.active).knockdownMinSeconds;
       const durationSeconds = Math.max(effect.durationSeconds, minimum ?? 0);
       if (minimum !== undefined) {
-        target.statuses.chargeSources((definition) => definition.knockdownMinSeconds !== undefined);
+        falls.statuses.chargeSources((definition) => definition.knockdownMinSeconds !== undefined);
       }
-      knockDown(target, durationSeconds);
-      target.statuses.recordKnockdown();
-      events.push({ kind: "knocked-down", targetId: target.id, durationSeconds });
+      knockDown(falls, durationSeconds);
+      falls.statuses.recordKnockdown();
+      events.push({ kind: "knocked-down", targetId: falls.id, durationSeconds });
       return events;
     }
 
@@ -2510,6 +2521,8 @@ export function isStateCondition(condition: EffectCondition): condition is State
   switch (condition.kind) {
     case "interrupted":
     case "interrupted-spell":
+    case "interrupted-attack":
+    case "target-killed":
     case "removed":
     case "resurrected":
       return false;
@@ -2844,6 +2857,9 @@ function disabledBy(
   if (effect.which === "elite") {
     return bar.filter((slot) => getSkill(slot.skillId)?.elite === true).map(({ key }) => key);
   }
+  if (effect.which === "attacks") {
+    return bar.filter((slot) => getSkill(slot.skillId)?.type === "attack").map(({ key }) => key);
+  }
   if (interrupted === undefined) {
     return [];
   }
@@ -2948,6 +2964,15 @@ function conditionHolds(
         (event) =>
           event.kind === "interrupted" && event.targetId === target.id && isSpellId(event.skillId),
       );
+    case "interrupted-attack":
+      return earlier.some(
+        (event) =>
+          event.targetId === target.id &&
+          (event.kind === "attack-interrupted" ||
+            (event.kind === "interrupted" && getSkill(event.skillId)?.type === "attack")),
+      );
+    case "target-killed":
+      return earlier.some((event) => event.kind === "death" && event.targetId === target.id);
     case "removed": {
       const bearerId = condition.from === "caster" ? caster.id : target.id;
       return earlier.some(
@@ -3124,6 +3149,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
       return effect.from === "caster";
     case "maintain-status":
     case "apply-status":
+    case "knockdown":
       return effect.on === "caster";
     case "energy-loss":
     case "energy-steal":
@@ -3135,7 +3161,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "spread-conditions":
     case "give-health":
     case "interrupt":
-    case "knockdown":
+    case "apply-random-status":
     case "shadow-step":
     case "resurrect":
     case "pull-to-caster":

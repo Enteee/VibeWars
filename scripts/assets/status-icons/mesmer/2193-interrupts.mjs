@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Mesmer interrupts (#2165), stand-in until its art card.
+  // Mesmer interrupts (#2165, art #2193).
   // Hex: a web of three threads, crossed by a break, the second interrupt.
   "web-of-disruption": [
     "hex",

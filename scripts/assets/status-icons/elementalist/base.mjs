@@ -1,5 +1,8 @@
 import { stroke } from "../../icon-kit.mjs";
 
+const SHIELD = (/** @type {string} */ c) =>
+  `<path d="M6 4h12v7c0 4-3 7-6 9-3-2-6-5-6-9z" ${stroke(c, 2)}/>`;
+
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
   // Glyph: a bolt, your next spells cost less energy (#526).
@@ -235,6 +238,80 @@ const rows = {
   "mist-form": [
     "enchantment",
     (c) => `<path d="M4 8q4-3 8 0t8 0M4 13q4-3 8 0t8 0M4 18q4-3 8 0t8 0" ${stroke(c, 2)}/>`,
+  ],
+  // Elementalist self-buffs (#1984, #2177).
+  // Enchantment: a flame, a snowflake, a bolt over a blade.
+  "conjure-flame": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3c3 3.5 4 6.5 2.6 9.5-1.2 2-4 2-5.2 0C8 9.5 9.5 6.5 12 3z" ${stroke(c, 1.8)}/>` +
+      `<path d="M5 20l14-4" ${stroke(c, 2.2)}/>`,
+  ],
+  "conjure-frost": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3v12M7 6l10 6M17 6L7 12" ${stroke(c, 1.8)}/>` +
+      `<path d="M5 20l14-4" ${stroke(c, 2.2)}/>`,
+  ],
+  "conjure-lightning": [
+    "enchantment",
+    (c) =>
+      `<path d="M13 3l-4 7h5l-3 6" ${stroke(c, 1.8)}/>` +
+      `<path d="M5 20l14-4" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: a bolt over rising pips, and a heart it costs.
+  "ether-prodigy": [
+    "enchantment",
+    (c) =>
+      `<path d="M10 3l-3 6h4l-2 5" ${stroke(c, 1.8)}/>` +
+      `<path d="M15 20v-4M18 20v-7" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: a bolt in a ring, renewed.
+  "ether-renewal": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="8" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 6l-3 6h4l-2 5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: four elements, one diamond each corner.
+  "elemental-attunement": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3l3 3-3 3-3-3zM12 15l3 3-3 3-3-3zM6 9l3 3-3 3-3-3zM18 9l3 3-3 3-3-3z" ${stroke(c, 1.6)}/>`,
+  ],
+  // Elementalist auras (#2095, #2177).
+  // Enchantment: a horseshoe magnet in the shield, one block that strikes back.
+  "magnetic-aura": [
+    "enchantment",
+    (c) => SHIELD(c) + `<path d="M9 7v4a3 3 0 0 0 6 0V7" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: a swirl, projectiles turned and Health regained.
+  "swirling-aura": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 12a2 2 0 1 1 2-2c0 3-2 5-5 5a5 5 0 0 1-5-5 7 7 0 0 1 7-7 8 8 0 0 1 8 8 9 9 0 0 1-9 9" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: the magnet in the shield, surging out to both sides: the
+  // next attack blocked.
+  "magnetic-surge": [
+    "enchantment",
+    (c) =>
+      SHIELD(c) +
+      `<path d="M9 7v4a3 3 0 0 0 6 0V7M1.5 6l2.5 1.5M22.5 6L20 7.5M1 11.5h3M23 11.5h-3" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: stone slivers flying off a shield.
+  "sliver-armor": [
+    "enchantment",
+    (c) =>
+      SHIELD(c) +
+      `<path d="M12 7v6M9 9l1.5 2.5M15 9l-1.5 2.5M3 6l2 1M21 6l-2 1" ${stroke(c, 1.5)}/>`,
+  ],
+  // Hex: a cage of ice bars over a crack, crawling and rotting.
+  "teinais-prison": [
+    "hex",
+    (c) =>
+      `<path d="M3 4.5h18M6 6v9M12 6v11M18 6v9" ${stroke(c, 2)}/>` +
+      `<path d="M13 15l-2 3 3 2-2 3" ${stroke(c, 1.6)}/>`,
   ],
 };
 

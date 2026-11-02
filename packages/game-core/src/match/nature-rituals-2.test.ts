@@ -310,7 +310,7 @@ describe("nature rituals 2 (#1873)", () => {
       "Non-spirit creatures in its range: bow attacks deal 6 more damage, arrows move 2× as fast",
       "Non-spirit creatures in its range: takes 5 damage whenever it is knocked down. Whenever it is knocked down: applies Bleeding for 17s (−3 Health degeneration)",
       "Non-spirit creatures in its range: your enchantments last 26% shorter",
-      "Non-spirit creatures in its range: while under Poison or Disease: −2 Health regeneration",
+      "Non-spirit creatures in its range: while under Poison or Disease: −2 Health degeneration",
       "Non-spirit creatures in its range: physical damage dealt is fire damage",
     ]);
   });

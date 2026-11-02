@@ -64,7 +64,9 @@ export type ElementalistStatusId =
   | "magnetic-aura"
   | "swirling-aura"
   | "magnetic-surge"
-  | "sliver-armor";
+  | "sliver-armor"
+  // Elementalist staples (#2166).
+  | "teinais-prison";
 
 /** Mist Form's heal (#1951): 210% of the spell's cost, under 80% Health. */
 const MIST_FORM_HEAL = {
@@ -86,6 +88,25 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     profession: "elementalist",
     attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
+  }),
+  // "...causing the foe to move 66% slower. If that foe has Cracked Armor,
+  // the chill seeps through causing 5...9 Health degeneration" (#2166),
+  // scaled by Water Magic (#2191).
+  "teinais-prison": define("teinais-prison", "Teinai's Prison", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    moveSpeedMultiplier: 0.34,
+    whileUnder: {
+      categories: [],
+      statusIds: ["cracked-armor"],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: {
+        scaling: { attributeId: "elementalist.water-magic", atZero: -5, atTwelve: -8.2 },
+      },
+      armorModifier: 0,
+      attackMissChance: 0,
+    },
   }),
   // "For 10 seconds, all foes move 66% slower" (#938).
   "deep-freeze": define("deep-freeze", "Deep Freeze", "hex", {

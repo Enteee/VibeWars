@@ -650,6 +650,7 @@ export function landBlow(
         strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
         snapshot.armorPenetration,
       ) + sundered,
+    ...(weapon.projectileSpeed === undefined ? {} : { projectile: true }),
   };
   // After the crit and damage rolls: the piece it lands on (#1135).
   const location = hitLocationOf(packet, rng);

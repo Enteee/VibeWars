@@ -36,8 +36,15 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "remove-status":
       // Stripping a foe's enchantment helps no ally: not removal.
       return effect.category === "condition" || effect.category === "hex" ? ["removal"] : [];
+    // Desperation Blow's own knockdown (#2180) is its price, not a role.
     case "knockdown":
-      return ["knockdown"];
+      return effect.on === "caster" ? [] : ["knockdown"];
+    case "apply-random-status":
+      return [
+        ...new Set(
+          effect.choices.flatMap(({ statusId }) => statusRoles(getStatusDefinition(statusId))),
+        ),
+      ];
     case "maintain-status":
     case "apply-status":
     case "companion-gains-status":
@@ -141,7 +148,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     roles.push(status.category);
   } else if (
     statAtTwelve(status.armorModifier) > 0 ||
-    (status.whileUnder !== undefined && status.whileUnder.armorModifier > 0) ||
+    (status.whileUnder !== undefined && statAtTwelve(status.whileUnder.armorModifier) > 0) ||
     status.armorWhileStill > 0 ||
     status.block !== undefined ||
     statAtTwelve(status.damageTakenMultiplier) < 1 ||
@@ -173,7 +180,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   if (
     status.healthPerSecond > 0 ||
     statAtTwelve(status.healthPips) > 0 ||
-    (status.whileUnder !== undefined && status.whileUnder.healthPips > 0) ||
+    (status.whileUnder !== undefined && statAtTwelve(status.whileUnder.healthPips) > 0) ||
     status.healthPipsPerEnchantment !== undefined
   ) {
     roles.push("healing");
