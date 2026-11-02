@@ -12,6 +12,7 @@ import {
   type LobbyTeamSize,
   PROTOCOL_VERSION,
   TEAM_LOBBY_STAGE_SECONDS,
+  parsePeerLobbySeat,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
   MAX_LOBBY_PLAYERS,
@@ -1170,6 +1171,71 @@ describe("a Team Lobby (#1458)", () => {
     ]);
   });
 
+  it("lets only a Team Arena's leader pick 2v2, 4v4 or 8v8, while it waits (#2107)", async () => {
+    const { lobby, members } = await teamLobby(["Ann"], [0, 1], draws(), "team-arena");
+    const [host, ann] = members;
+    if (host === undefined || ann === undefined) {
+      throw new Error("two members");
+    }
+    expect(ann.connection.getSnapshot().teamSize).toBe(4);
+    const refused = refusals(ann);
+    ann.connection.selectTeamSize(2);
+    await settle();
+    expect(refused).toEqual(["not-host"]);
+    // The leader's pick: everyone sees it, and confirms again.
+    ann.connection.setReady(true);
+    host.connection.selectTeamSize(2);
+    await settle();
+    expect(ann.connection.getSnapshot().teamSize).toBe(2);
+    expect(playersOf(ann).map(({ ready }) => ready)).toEqual([false, false]);
+    host.connection.selectTeamSize(8);
+    await settle();
+    expect(ann.connection.getSnapshot().teamSize).toBe(8);
+    // 1v1 is no Team Arena, and once the lobby has moved on nothing changes.
+    const hostRefused = refusals(host);
+    host.connection.selectTeamSize(1);
+    await settle();
+    expect(hostRefused).toEqual(["not-pickable"]);
+    await seat([host, ann], [0, 1]);
+    await begin(lobby);
+    host.connection.selectTeamSize(4);
+    await settle();
+    expect(hostRefused).toEqual(["not-pickable", "not-pickable"]);
+    expect(sideOf(ann)?.size).toBe(8);
+  });
+
+  it("refuses a Team Arena size below its party, and tells the leader which fit (#2107)", async () => {
+    const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 0, 0], draws(), "team-arena");
+    const [host] = members;
+    if (host === undefined) {
+      throw new Error("three members");
+    }
+    const told: string[] = [];
+    host.connection.onNotice((text) => told.push(text));
+    host.connection.selectTeamSize(2);
+    await settle();
+    expect(told).toEqual(["Your party has 3 players: pick 4v4 or 8v8"]);
+    expect(lobby.host.connection.getSnapshot().teamSize).toBe(4);
+  });
+
+  it("turns a joiner away from a Team Arena whose party is its size (#2107)", async () => {
+    const { lobby } = await teamLobby(["Ann"], [0, 0], draws(), "team-arena");
+    lobby.host.connection.selectTeamSize(2);
+    await settle();
+    await expect(
+      joinLobby({
+        transport: lobby.network.join(),
+        code: CODE,
+        proofKey: PROOF_KEY,
+        name: "Late",
+        guildTag: null,
+        guildCape: null,
+        timeoutMs: 1000,
+      }),
+    ).rejects.toEqual(new LobbyRefusedError("party-full"));
+    expect(playersOf(lobby.host)).toHaveLength(2);
+  });
+
   it("withdraws each proposal of another size in the vote, and its votes, telling its proposer, and runs the clock again (#2104)", async () => {
     const { lobby, members } = await teamLobby(
       ["Ann", "Bob"],
@@ -1916,12 +1982,13 @@ describe("the key gate (#1681, ADR-0043)", () => {
   const GUEST_NONCE = "1a".repeat(16);
 
   /** A well-formed coded join, as `name`. */
-  const joinAs = (name: string) => ({
+  const joinAs = (name: string, rejoinToken: string | null = null) => ({
     protocolVersion: PROTOCOL_VERSION,
     name,
     guildTag: null,
     guildCape: null,
     admission: null,
+    rejoinToken,
   });
 
   /** The nonce `got` was challenged with. */
@@ -1988,6 +2055,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
     await until(() => proven(got));
     peer.send("lobby-join", joinAs("Proven"), "host");
     await until(() => playersOf(lobby.host).length === 2);
+    const seat = parsePeerLobbySeat(got.find(([channel]) => channel === "lobby-seat")?.[1]);
 
     got.length = 0;
     lobby.network.blip("host", peer.selfId);
@@ -2001,7 +2069,8 @@ describe("the key gate (#1681, ADR-0043)", () => {
 
     await prove(peer, got);
     await until(() => proven(got));
-    peer.send("lobby-join", joinAs("Again"), "host");
+    // Back with the seat's token (#2157).
+    peer.send("lobby-join", joinAs("Again", seat?.rejoinToken ?? null), "host");
     await until(() => playersOf(lobby.host)[1]?.name === "Again");
   });
 

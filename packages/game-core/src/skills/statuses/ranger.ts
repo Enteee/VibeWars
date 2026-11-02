@@ -72,7 +72,11 @@ export type RangerStatusId =
   | "trappers-focus"
   | "trappers-speed"
   // Blocks that pay off (#1974).
-  | "glass-arrows";
+  | "glass-arrows"
+  // Ranger staples 5 (#2133).
+  | "disrupting-accuracy"
+  | "marksmans-wager"
+  | "storm-chaser";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -610,5 +614,53 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 18 } }],
       skillId: "ranger.glass-arrows",
     },
+  }),
+  // "For 36 seconds, whenever your arrows land a critical hit, they also
+  // interrupt the target" (#2133). A sword's critical does not.
+  "disrupting-accuracy": define("disrupting-accuracy", "Disrupting Accuracy", "preparation", {
+    profession: "ranger",
+    onCriticalHit: {
+      effects: [{ kind: "interrupt" }],
+      energyIfRemoved: 0,
+      skillId: "ranger.disrupting-accuracy",
+      weapon: "bow",
+    },
+  }),
+  // "For 18 seconds, you gain 5...10 Energy whenever your arrows hit, and
+  // lose 10 Energy whenever they fail to strike" (#2133): 9 at rank 12.
+  "marksmans-wager": define("marksmans-wager", "Marksman's Wager", "preparation", {
+    profession: "ranger",
+    triggers: [
+      {
+        on: "bearer-hits",
+        weapon: "bow",
+        effects: [{ kind: "energy-gain", amount: { flat: 9 } }],
+        target: "bearer",
+        skillId: "ranger.marksmans-wager",
+      },
+      {
+        on: "bearer-fails-to-hit",
+        weapon: "bow",
+        effects: [{ kind: "energy-loss", amount: { flat: 10 } }],
+        target: "bearer",
+        skillId: "ranger.marksmans-wager",
+      },
+    ],
+  }),
+  // "For 8...20 seconds, you move 25% faster and gain 1...5 Energy whenever
+  // you take elemental damage" (#2133): 4 at rank 12, for each packet from
+  // a foe; burning's degeneration is no packet.
+  "storm-chaser": define("storm-chaser", "Storm Chaser", "stance", {
+    profession: "ranger",
+    moveSpeedMultiplier: 1.25,
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        damageType: "elemental",
+        effects: [{ kind: "energy-gain", amount: { flat: 4 } }],
+        target: "bearer",
+        skillId: "ranger.storm-chaser",
+      },
+    ],
   }),
 };

@@ -103,6 +103,8 @@ export const PEER_UNREACHABLE_MESSAGE =
 export const TURN_RELAY_HINT =
   "A TURN relay link from a friend can fix this: open it, or enter the relay in Options.";
 export const LOBBY_FULL_MESSAGE = "That lobby is full.";
+/** A Team Arena whose party has as many players as a side (#2107). */
+export const PARTY_FULL_MESSAGE = "Party is full.";
 /** Told only after the key proof (#1682): a closed lobby with guests is still in its room. */
 export const LOBBY_CLOSED_MESSAGE = "That lobby is closed. Ask the host to open it.";
 export const HOST_CLOSED_MESSAGE = "The host closed the lobby.";
@@ -685,6 +687,8 @@ export function joinFailureNotice(
         return PROTOCOL_MISMATCH_MESSAGE;
       case "lobby-full":
         return LOBBY_FULL_MESSAGE;
+      case "party-full":
+        return PARTY_FULL_MESSAGE;
       case "closed":
         return LOBBY_CLOSED_MESSAGE;
       case "host-left":
@@ -783,6 +787,8 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
   switch (reason) {
     case "lobby-full":
       return LOBBY_FULL_MESSAGE;
+    case "party-full":
+      return PARTY_FULL_MESSAGE;
     case "not-host":
       return NOT_HOST_MESSAGE;
     case "not-pickable":

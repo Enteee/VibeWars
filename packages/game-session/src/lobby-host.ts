@@ -11,8 +11,10 @@ import {
 import {
   MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
+  TEAM_ARENA_SIZES,
   TEAM_LOBBY_STAGE_SECONDS,
   helloProtocolVersion,
+  isTeamArenaSize,
   isTeamQueueMode,
   parsePeerChat,
   parsePeerLobbyHello,
@@ -26,7 +28,9 @@ import {
   type LobbyMode,
   type LobbyPhase,
   type LobbyTeamSize,
+  type TeamArenaSize,
   type PeerLobbyJoin,
+  type PeerLobbySeat,
   type LobbyRefusal,
   type WireCape,
   type WireChatLine,
@@ -308,10 +312,25 @@ interface Member {
   /** The seat key it was admitted on, in a queued lobby (#882). */
   readonly seatKey: string | null;
   /**
+   * What its `lobby-join` must carry to get the seat back after a drop
+   * (#2157); `null` for the host's own player and a bot, never re-seated so.
+   */
+  readonly rejoinToken: string | null;
+  /**
    * A bot's build (#1193): it has no peer, is always ready and plays
    * this, a slot nobody claimed (#2029).
    */
   bot: PlayerBuild | null;
+}
+
+/**
+ * A lobby rejoin token (#2157): 128 fresh random bits as 32 hex digits,
+ * never from the seeded `random`, which a peer could predict.
+ */
+function newRejoinToken(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 /** Whether `member` counts as ready: a bot always is (#1193). */
@@ -391,6 +410,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let mapId = queued?.group.mapId ?? defaultMap;
   /** A Hosted Game's players a side, the host's pick (#2104). */
   let hostedSize: LobbyTeamSize = options.hostedTeamSize;
+  /** A Team Arena's players a side, its leader's pick (#2107). */
+  let arenaSize: TeamArenaSize = 4;
   /** The host's pick on the rail (#1526). */
   let mode: LobbyMode = "random-arena";
   /** Whether a peer with the key may join (#1682). */
@@ -466,7 +487,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * else the host's pick.
    */
   const teamSize = (): number => {
-    const queueMode = queued?.group.mode ?? teamQueueModeOf(mode);
+    const queueMode = queued?.group.mode ?? teamQueueModeOf(mode, arenaSize);
     return queueMode === undefined ? hostedSize : teamSizeOf(queueMode);
   };
 
@@ -477,6 +498,18 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   /** A Hosted Game's maps for its team size (#2104), in the mode's order. */
   const hostedMaps = (): string[] =>
     options.modeMaps["hosted-game"].filter((id) => suits(id, hostedSize));
+
+  /** `of`'s maps, in its order: a Hosted Game's and a Team Arena's those its size suits (#2107). */
+  const mapsOf = (of: LobbyMode): readonly string[] => {
+    if (of === "hosted-game") {
+      return hostedMaps();
+    }
+    const ids = options.modeMaps[of];
+    return of === "team-arena" ? ids.filter((id) => suits(id, arenaSize)) : ids;
+  };
+
+  /** The humans here: a Team Arena's party (#2107). */
+  const humans = (): number => [...members.values()].filter((member) => member.bot === null).length;
 
   /** Each human on `team`, in join order. */
   const humansOn = (team: 0 | 1): Member[] =>
@@ -683,7 +716,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     // Team Arena draws its map for each match (#1994); a queued lobby's
     // is its group's.
     if (mode === "team-arena" && queued === undefined) {
-      mapId = pick(options.modeMaps[mode]) ?? mapId;
+      mapId = pick(mapsOf(mode)) ?? mapId;
     }
     const room = scopeTransport(transport);
     try {
@@ -958,7 +991,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    */
   const gatherParty = (): void => {
     const current = queueing;
-    const queueMode = teamQueueModeOf(mode);
+    const queueMode = teamQueueModeOf(mode, arenaSize);
     if (current?.groupId === undefined || queueMode === undefined) {
       return;
     }
@@ -1091,6 +1124,40 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   };
 
   /**
+   * The leader picks a Team Arena's size (#2107) while its lobby waits,
+   * not queued: 2v2, 4v4 or 8v8, never below its party, which the leader
+   * is told. A map the size does not suit moves to the first that does.
+   * Everyone re-confirms.
+   */
+  const pickArenaSize = (member: Member, size: LobbyTeamSize): boolean => {
+    if (phase !== "waiting" || !isTeamArenaSize(size)) {
+      refuse(member.id, "not-pickable");
+      return false;
+    }
+    if (size === arenaSize) {
+      return false;
+    }
+    const party = humans();
+    if (party > size) {
+      const fits = TEAM_ARENA_SIZES.filter((each) => each >= party).map(
+        (each) => `${String(each)}v${String(each)}`,
+      );
+      note(
+        "notice",
+        `Your party has ${String(party)} players: pick ${fits.join(" or ")}`,
+        member.id,
+      );
+      return false;
+    }
+    arenaSize = size;
+    if (!mapsOf(mode).includes(mapId)) {
+      mapId = mapsOf(mode)[0] ?? mapId;
+    }
+    clearReady();
+    return true;
+  };
+
+  /**
    * The host picks a Hosted Game's team size (#2104), before its Team
    * Lobby or in its vote; whether it changed. Never below a side's
    * players, which the host is told. A map the size does not suit moves
@@ -1102,6 +1169,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (member.id !== local.selfId) {
       refuse(member.id, "not-host");
       return false;
+    }
+    if (mode === "team-arena") {
+      return pickArenaSize(member, size);
     }
     // A build is chosen by the claim: its size is the side's.
     const between = phase === "waiting" || (phase === "team-lobby" && teamLobby?.stage === "vote");
@@ -1313,8 +1383,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           return false;
         }
         mode = command.mode;
-        const [first = defaultMap, ...rest] =
-          mode === "hosted-game" ? hostedMaps() : options.modeMaps[mode];
+        const [first = defaultMap, ...rest] = mapsOf(mode);
         // In the same broadcast as the mode: no member ever sees a mode
         // with a map outside it. Only a Hosted Game keeps a picked one
         // (#1994), if it suits its team size (#2104): Heroes' Ascent starts
@@ -1338,7 +1407,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           note("start-rejected", check.reason, member.id);
           return false;
         }
-        if (matchmaking !== undefined && teamQueueModeOf(mode) !== undefined) {
+        if (matchmaking !== undefined && teamQueueModeOf(mode, arenaSize) !== undefined) {
           note("start-rejected", "a team mode finds a match instead", member.id);
           return false;
         }
@@ -1353,7 +1422,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           refuse(member.id, "not-host");
           return false;
         }
-        const queueMode = teamQueueModeOf(mode);
+        const queueMode = teamQueueModeOf(mode, arenaSize);
         // Heroes' Ascent queues at a round, and no other mode does (#1996).
         if (
           matchmaking === undefined ||
@@ -1423,6 +1492,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       team,
       ready: true,
       seatKey: null,
+      rejoinToken: null,
       bot: build,
     });
     return id;
@@ -1465,7 +1535,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       refuse(from, "lobby-full");
       return;
     }
+    // A Team Arena's party is one side: no more humans than it plays (#2107).
+    if (mode === "team-arena" && queued === undefined && humans() >= arenaSize) {
+      refuse(from, "party-full");
+      return;
+    }
     joined += 1;
+    const rejoinToken = from === local.selfId ? null : newRejoinToken();
     members.set(from, {
       id: from,
       name: sanitizeName(join.name, `player-${String(joined)}`),
@@ -1473,10 +1549,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       team,
       ready: false,
       seatKey,
+      rejoinToken,
       bot: null,
     });
     beginCountdown();
     broadcast();
+    // To it alone, after the state that lists it, so it knows the host by then.
+    if (rejoinToken !== null) {
+      transport.send("lobby-seat", { rejoinToken } satisfies PeerLobbySeat, from);
+    }
   };
 
   /**
@@ -1690,6 +1771,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const returning = members.get(from);
     // Back from a drop, it was admitted already: as this peer, on its ticket.
     if (returning !== undefined) {
+      // Only with the seat's token (#2157): a peer id is seen by the whole
+      // room. Not refused, which would tell a prober the seat exists.
+      if (returning.rejoinToken === null || join.rejoinToken !== returning.rejoinToken) {
+        return;
+      }
       // Back from a drop during the match (#596): the seat it held, on its
       // team, to confirm again like everyone else when the match is over.
       away.delete(from);

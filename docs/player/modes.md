@@ -19,7 +19,7 @@ the sizes it does not play.
 | Mode           | Team sizes    | Map                                  |
 | -------------- | ------------- | ------------------------------------ |
 | Random Arena   | 1v1, 2v2, 4v4 | drawn for you, one made for the size |
-| Team Arena     | 4v4           | drawn for each match, made for 4v4   |
+| Team Arena     | 2v2, 4v4, 8v8 | drawn for each match, made for size  |
 | Heroes' Ascent | 8v8           | its maps in order, up to the Hall    |
 | GvG            | 8v8           | Guild Hall Isle                      |
 | Hosted Game    | any           | the host picks one made for the size |
@@ -183,9 +183,15 @@ Forgotten Shrines plays it.
 ## Team Lobby
 
 A hosted lobby does not start the match when everyone is ready. It opens the Team Lobby first, where each side picks one Team
-Build together and then splits its characters. In Team Arena, Heroes'
-Ascent and GvG a side is as big as the mode's team (4, 8 and 8), which
-the sidebar's **Team size** shows, locked. In a Hosted Game the host sets
+Build together and then splits its characters. In Heroes' Ascent and
+GvG a side is as big as the mode's team (8), which the sidebar's **Team
+size** shows, locked. In Team Arena the party leader picks 2v2, 4v4 or
+8v8 with that dropdown while the party is not queued, and the rest of
+the party sees it locked. It starts at the leader's own Team size, or
+4v4 if that is 1v1. A party never picks a size smaller than its players,
+and a party with as many players as its size takes nobody more ("Party
+is full"). Two parties only ever meet at the same size, and the party
+strip names it: "Team Arena 2v2 — searching…". In a Hosted Game the host sets
 the team size with that dropdown, 1v1 to 8v8, before the Team Lobby and
 during its vote (from the Team Lobby's top bar), and both sides play
 exactly that many. A guest sees the host's, locked. The host's map list
@@ -195,7 +201,7 @@ players, and a side that has as many players as the team size takes
 nobody more.
 A queued party ([Find a match](getting-started.md#host-or-join-a-match)
 on Team Arena, Heroes' Ascent or GvG) gets a Team Lobby of its own side
-only, as big as the mode's team (4 for Team Arena, 8 for the others)
+only, as big as the mode's team (Team Arena's picked size, 8 for the others)
 however many are in the party; bots play the seats nobody claims.
 Each stage lasts 60 seconds and ends early once everyone in the Team
 Lobby is ready.

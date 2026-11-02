@@ -55,6 +55,7 @@ import {
   parseWireTeamProposalBuilds,
   parsePeerLobbyHello,
   parsePeerLobbyLeave,
+  parsePeerLobbySeat,
   parseWireLobbyWelcome,
   parsePeerStayTogether,
   parseWirePartyProposal,
@@ -446,6 +447,7 @@ const lobbyJoin: PeerLobbyJoin = {
   guildTag: "vb",
   guildCape: null,
   admission: null,
+  rejoinToken: null,
 };
 
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
@@ -807,6 +809,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
   ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
   ["untagged lobby-join (#1406)", parsePeerLobbyJoin, { ...lobbyJoin, guildTag: null }],
+  ["returning lobby-join (#2157)", parsePeerLobbyJoin, { ...lobbyJoin, rejoinToken: TOKEN }],
+  ["lobby-seat (#2157)", parsePeerLobbySeat, { rejoinToken: TOKEN }],
   ["lobby-hello (#871)", parsePeerLobbyHello, {}],
   ["lobby-leave (#1764)", parsePeerLobbyLeave, {}],
   ["lobby-welcome (#871)", parseWireLobbyWelcome, { hostSig: "ef".repeat(64) }],
@@ -1789,6 +1793,23 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["lobby-hello with a field (#871)", parsePeerLobbyHello, { ticketId: "ab".repeat(32) }],
   ["lobby-leave with a field (#1764)", parsePeerLobbyLeave, { reason: "bye" }],
+  [
+    "lobby-join without a rejoin token (#2157)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, rejoinToken: undefined },
+  ],
+  [
+    "lobby-join with an upper-case rejoin token (#2157)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, rejoinToken: "0F".repeat(16) },
+  ],
+  [
+    "lobby-join with a short rejoin token (#2157)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, rejoinToken: "0f".repeat(15) },
+  ],
+  ["lobby-seat of a null token (#2157)", parsePeerLobbySeat, { rejoinToken: null }],
+  ["lobby-seat of a long token (#2157)", parsePeerLobbySeat, { rejoinToken: "0f".repeat(17) }],
   ["lobby-welcome of no signature (#871)", parseWireLobbyWelcome, {}],
   ["stay-together of no key (#882)", parsePeerStayTogether, {}],
   ["stay-together of a short key (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(31) }],

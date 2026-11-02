@@ -12,6 +12,7 @@ import {
   parseWirePartyProposal,
   parseWirePartySplit,
   parseWireLobbyMove,
+  parsePeerLobbySeat,
   teamQueueModeOf,
   type JsonValue,
   type LobbyRefusal,
@@ -122,6 +123,12 @@ function isRefusal(reason: string): reason is LobbyRefusal {
 export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const { timeoutMs, queued } = options;
   let hostId: string | undefined;
+  /**
+   * The host's token for this player's seat (#2157), sent back only to the
+   * host, only on a return after a drop. `hostId` never changes once set,
+   * so a token is never told to another host.
+   */
+  let rejoinToken: string | null = null;
   // Once the host is known, no other peer in the room is heard or told
   // anything (#1682): Trystero connects every key holder to the guests too.
   const transport =
@@ -137,7 +144,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     guildCape: options.guildCape,
   };
   /** A coded lobby's join; a queued one's is made with its proof. */
-  const codedJoin: PeerLobbyJoin = { ...base, admission: null };
+  const codedJoin: Omit<PeerLobbyJoin, "rejoinToken"> = { ...base, admission: null };
   /** A queued join, and what the planned host's welcome to this peer signs. */
   const proof =
     queued === undefined
@@ -154,7 +161,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           join: {
             ...base,
             admission: { seatKey: queued.key.ticketId, admissionSig: queued.key.sign(admit) },
-          } satisfies PeerLobbyJoin,
+          } satisfies Omit<PeerLobbyJoin, "rejoinToken">,
           hostDigest,
         }));
   /** Peers whose welcome proved them the planned host; each got the join once. */
@@ -244,14 +251,28 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     }
   };
 
-  /** Join through `to`; a coded lobby's first join may go to the whole room. */
+  /**
+   * Join through `to`; a coded lobby's first join may go to the whole room.
+   * Only a join to the known host, a return after a drop, carries the seat's
+   * token (#2157): to anyone else it would hand the seat over.
+   */
   const sendJoin = (to?: string): void => {
+    const token = (): PeerLobbyJoin["rejoinToken"] =>
+      to !== undefined && to === hostId ? rejoinToken : null;
     if (proof === undefined) {
-      transport.send("lobby-join", codedJoin, to);
+      transport.send(
+        "lobby-join",
+        { ...codedJoin, rejoinToken: token() } satisfies PeerLobbyJoin,
+        to,
+      );
     } else if (to !== undefined) {
       void proof.then(({ join }) => {
         if (!stopped) {
-          transport.send("lobby-join", join, to);
+          transport.send(
+            "lobby-join",
+            { ...join, rejoinToken: token() } satisfies PeerLobbyJoin,
+            to,
+          );
         }
       });
     }
@@ -565,6 +586,13 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           handler();
         }
       }),
+      transport.on("lobby-seat", (data, from) => {
+        // The host's alone, and only once it is known; a newer one replaces it.
+        const seat = parsePeerLobbySeat(data);
+        if (hostId !== undefined && from === hostId && seat !== undefined) {
+          rejoinToken = seat.rejoinToken;
+        }
+      }),
       transport.on("lobby-note", (data, from) => {
         // A refusal can come before the host is known: it is why it never is.
         if (hostId === undefined ? !mayHost(from) : from !== hostId) {
@@ -665,7 +693,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         if (
           current === undefined ||
           latest === undefined ||
-          mode !== teamQueueModeOf(latest.mode)
+          mode !== teamQueueModeOf(latest.mode, latest.teamSize)
         ) {
           return;
         }

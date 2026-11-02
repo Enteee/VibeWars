@@ -1522,9 +1522,10 @@ export interface StatusTrigger {
     | "healer"
     | "hexed-foe";
   /**
-   * On `bearer-attacks` and `bearer-hits` only (#1354, #1359): it fires
-   * only for an attack made with a weapon of this class in the bearer's
-   * main hand, as Hundred Blades' "whenever you attack with a sword".
+   * On `bearer-attacks`, `bearer-hits` and `bearer-fails-to-hit` only
+   * (#1354, #1359, #2133): it fires only for an attack made with a weapon
+   * of this class in the bearer's main hand, as Hundred Blades' "whenever
+   * you attack with a sword".
    * `melee` is any weapon that strikes in melee, never a bow nor a thrown
    * spear: Warrior's Endurance's "each time you hit with a melee attack".
    * Absent: any attack.
@@ -1545,10 +1546,11 @@ export interface StatusTrigger {
   /**
    * On `bearer-takes-damage-from-foe` only (#1540): it fires only for
    * damage of this type, never for a life steal, as Mark of Rodgort's
-   * "whenever each foe is struck for fire damage". Absent: any damage or
-   * steal.
+   * "whenever each foe is struck for fire damage"; `elemental` (#2133),
+   * any of cold, fire, lightning or earth, as Storm Chaser's. Absent: any
+   * damage or steal.
    */
-  readonly damageType?: DamageType;
+  readonly damageType?: DamageType | "elemental";
   /**
    * On `bearer-takes-damage-from-foe` only (#1931): it fires only while the
    * bearer is using a skill, never mid-swing nor idle, as Spinal Shivers'
@@ -1642,6 +1644,12 @@ export interface CriticalHitRider {
   readonly effects: readonly SkillEffect[];
   readonly energyIfRemoved: number;
   readonly skillId: string;
+  /**
+   * Only a critical hit made with a weapon of this class in the bearer's
+   * main hand (#2133), as `AttackHitRider.weapon`: Disrupting Accuracy's
+   * "your arrows". `undefined`: any weapon.
+   */
+  readonly weapon: AttackWeaponClass | undefined;
 }
 
 /** How many of the bearer's hits, with which weapon, a status lasts (#939). */
@@ -2132,6 +2140,24 @@ export function getStatusDefinition(id: StatusId): StatusDefinition {
 }
 
 /**
+ * Whether a trigger bound to damage of `wanted` answers damage of `type`
+ * (#1540): any, with none wanted; `elemental` any elemental type (#2133).
+ * A life steal, `undefined`, answers only a trigger that wants none.
+ */
+function damageTypeAnswers(
+  wanted: DamageType | "elemental" | undefined,
+  type: DamageType | undefined,
+): boolean {
+  if (wanted === undefined) {
+    return true;
+  }
+  if (type === undefined) {
+    return false;
+  }
+  return wanted === "elemental" ? isElementalDamage(type) : wanted === type;
+}
+
+/**
  * Whether `trigger` answers an attack with `weapon` (#1354): any, unless
  * it is bound to a class. `melee` (#1359) asks a weapon that strikes in
  * melee, so a spear, thrown, does not answer it.
@@ -2263,11 +2289,14 @@ export class StatusSet {
   }
 
   /**
-   * One of the bearer's blows missed or was blocked (#1332), recorded only
-   * if a status on it answers that, with the triggers that do.
+   * One of the bearer's blows with `weapon` missed or was blocked (#1332),
+   * recorded only if a status on it answers that, with the triggers that
+   * do: one bound to a weapon class only for that class (#2133).
    */
-  public recordFailedHit(): void {
-    const fired = this.#answering("bearer-fails-to-hit");
+  public recordFailedHit(weapon: Weapon): void {
+    const fired = this.#answering("bearer-fails-to-hit").filter(({ trigger }) =>
+      triggerAnswersWeapon(trigger, weapon),
+    );
     if (fired.length > 0) {
       this.#changes.push({ kind: "failed-to-hit", fired });
     }
@@ -2331,7 +2360,8 @@ export class StatusSet {
    * The bearer lost `amount` health to damage of `type` or, `undefined`,
    * life steal from `offenderId`, a foe (#1022), recorded only if a status
    * on it answers that, with the triggers that do: one with a `damageType`
-   * answers only that type (#1540), one with a `minDamage` only damage
+   * answers only that type (#1540), `elemental` any elemental one
+   * (#2133), one with a `minDamage` only damage
    * above it (#1754), one `whileUsingSkill` only while
    * `usingSkill` (#1931). A status already waiting to answer one, undrained,
    * does not answer another: it fires once, at the first foe.
@@ -2350,7 +2380,7 @@ export class StatusSet {
     const fired = this.#answering("bearer-takes-damage-from-foe").filter(
       ({ statusId, trigger }) =>
         !pending.has(statusId) &&
-        (trigger.damageType === undefined || trigger.damageType === type) &&
+        damageTypeAnswers(trigger.damageType, type) &&
         (trigger.minDamage === undefined || (type !== undefined && amount > trigger.minDamage)) &&
         (trigger.whileUsingSkill === undefined || usingSkill),
     );

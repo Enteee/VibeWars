@@ -324,6 +324,7 @@ async function forgedJoin(
     guildTag: null,
     guildCape: null,
     admission: { seatKey: ticketId, admissionSig: keyOf(signer).sign(bytes) },
+    rejoinToken: null,
   };
 }
 
@@ -377,6 +378,7 @@ describe("a queued lobby", () => {
         name: "Bare",
         guildTag: null,
         admission: null,
+        rejoinToken: null,
       },
       "host",
     );
@@ -648,7 +650,7 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
     ...GROUP,
     teams: [[HOST, ALLY], [FOE]],
     parties: [[FOE], [HOST, ALLY]],
-    mode: "team-arena",
+    mode: "team-arena-4v4",
   };
 
   function starter(index: number): PlayerBuild {
@@ -1142,7 +1144,7 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
   it("signs no proposal without this player's key, of another group, or for another mode (#1078, #1766)", async () => {
     const rewrites: ((proposal: WirePartyProposal) => WirePartyProposal)[] = [
       (proposal) => ({ ...proposal, groupId: "b".repeat(64) }),
-      (proposal) => ({ ...proposal, mode: "team-arena" }),
+      (proposal) => ({ ...proposal, mode: "team-arena-4v4" }),
       (proposal) => ({ ...proposal, members: [KEY_H.ticketId, "f".repeat(64)] }),
     ];
     for (const rewrite of rewrites) {

@@ -276,8 +276,9 @@ export function lobbyPanel(
   // rather than being shortened in it (#1272). Team Arena's map is a
   // placeholder until its draw, so it names what the draw can give (#1994).
   if (snapshot.mode === "team-arena") {
-    if (availableMaps.length > 0) {
-      panel.appendChild(h("div", "lobby-mode", drawnModesLine(availableMaps)));
+    // Drawn among the maps made for its size (#2107).
+    if (sized.length > 0) {
+      panel.appendChild(h("div", "lobby-mode", drawnModesLine(sized)));
     }
   } else if (current !== undefined) {
     panel.appendChild(h("div", "lobby-mode", modeLine(current)));

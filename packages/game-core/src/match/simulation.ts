@@ -196,6 +196,7 @@ import {
   bearerMissed,
   bearerHit,
   blindMisses,
+  lowRankMisses,
   blocks,
   criticalHitRiders,
   landedCritical,
@@ -5728,8 +5729,11 @@ export class MatchSimulation {
       // Only a flying attack is released here.
       attacked = bearerAttacked(record.combatant, events, "projectile");
       aimedAt(record.combatant, target.combatant);
-      if (blindMisses(record.combatant, target.combatant, this.#rng)) {
-        bearerFailedToHit(record.combatant, events);
+      if (
+        blindMisses(record.combatant, target.combatant, this.#rng) ||
+        lowRankMisses(skillHit?.skill.attack, record.combatant, this.#rng)
+      ) {
+        bearerFailedToHit(record.combatant, record.combatant.equipment.mainHand.weapon, events);
         events.push({ kind: "attack-missed", targetId: target.id });
         return [...events, ...this.#failedToHit(record.combatant, target, skillHit, events)];
       }
@@ -5910,11 +5914,12 @@ export class MatchSimulation {
         attacksAgainstMiss(target.combatant.statuses.active) ||
         (strike > 0 &&
           attacker !== undefined &&
-          blindMisses(attacker.combatant, target.combatant, this.#rng))
+          (blindMisses(attacker.combatant, target.combatant, this.#rng) ||
+            lowRankMisses(skillHit?.skill.attack, attacker.combatant, this.#rng)))
       ) {
         events.push({ kind: "attack-missed", targetId: target.id });
         if (attacker !== undefined) {
-          bearerFailedToHit(attacker.combatant, events);
+          bearerFailedToHit(attacker.combatant, projectile.weaponSnapshot.mainHand.weapon, events);
         }
         continue;
       }
@@ -5960,7 +5965,7 @@ export class MatchSimulation {
     ) {
       events.push({ kind: "attack-blocked", targetId: target.id });
       if (attacker !== undefined) {
-        bearerFailedToHit(attacker.combatant, events);
+        bearerFailedToHit(attacker.combatant, projectile.weaponSnapshot.mainHand.weapon, events);
       }
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
@@ -6012,6 +6017,7 @@ export class MatchSimulation {
       criticalHitRiders(
         attacker.combatant,
         target.combatant,
+        projectile.weaponSnapshot.mainHand.weapon,
         this.#rng,
         this.#ruleset.combat,
         this.#participants,

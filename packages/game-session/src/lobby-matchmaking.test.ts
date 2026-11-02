@@ -154,7 +154,12 @@ describe("a party lobby's matchmaking (#1766)", () => {
 
     const groupId = await partyGroupId(ROOM_ID, NONCE);
     const members = [HOST_KEY, GUEST_KEY];
-    const digest = await admissionDigest("vibewars-party", groupId, members.join(""), "team-arena");
+    const digest = await admissionDigest(
+      "vibewars-party",
+      groupId,
+      members.join(""),
+      "team-arena-4v4",
+    );
     const formed = { groupId, members, consents: members.map((key) => `${hex(digest)}${key}`) };
     expect(toHost).toEqual([formed]);
     expect(toAnn).toEqual([formed]);
@@ -226,14 +231,14 @@ describe("a party lobby's matchmaking (#1766)", () => {
     const annId = ann.transport.selfId;
     lobby.room.send(
       "party-proposal",
-      { groupId: "e".repeat(64), members, mode: "team-arena" },
+      { groupId: "e".repeat(64), members, mode: "team-arena-4v4" },
       annId,
     );
     lobby.room.send("party-proposal", { groupId, members, mode: "random-arena-4v4" }, annId);
     await landed();
     expect(signed).toBe(0);
 
-    lobby.room.send("party-proposal", { groupId, members, mode: "team-arena" }, annId);
+    lobby.room.send("party-proposal", { groupId, members, mode: "team-arena-4v4" }, annId);
     await landed();
     expect(signed).toBe(1);
   });
