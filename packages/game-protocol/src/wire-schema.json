@@ -291,6 +291,7 @@
     "mark-of-death",
     "mark-of-instability",
     "mark-of-pain",
+    "mark-of-protection",
     "mark-of-rodgort",
     "marksmans-wager",
     "master-of-magic",
@@ -341,6 +342,7 @@
     "price-of-failure",
     "price-of-pride",
     "primal-echoes",
+    "protective-bond",
     "protective-spirit",
     "protective-was-kaolai",
     "protectors-defense",
@@ -362,6 +364,7 @@
     "rending-aura",
     "resilient-weapon",
     "retreat",
+    "reversal-of-damage",
     "reversal-of-fortune",
     "rigor-mortis",
     "riposte",
@@ -422,6 +425,8 @@
     "spirits-gift",
     "spiteful-spirit",
     "splinter-weapon",
+    "spotless-mind",
+    "spotless-soul",
     "sprint",
     "staggering-force",
     "stand-your-ground",
@@ -1085,6 +1090,7 @@
                   { "literal": "mark-of-death" },
                   { "literal": "mark-of-instability" },
                   { "literal": "mark-of-pain" },
+                  { "literal": "mark-of-protection" },
                   { "literal": "mark-of-rodgort" },
                   { "literal": "marksmans-wager" },
                   { "literal": "master-of-magic" },
@@ -1135,6 +1141,7 @@
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
                   { "literal": "primal-echoes" },
+                  { "literal": "protective-bond" },
                   { "literal": "protective-spirit" },
                   { "literal": "protective-was-kaolai" },
                   { "literal": "protectors-defense" },
@@ -1156,6 +1163,7 @@
                   { "literal": "rending-aura" },
                   { "literal": "resilient-weapon" },
                   { "literal": "retreat" },
+                  { "literal": "reversal-of-damage" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
@@ -1216,6 +1224,8 @@
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "splinter-weapon" },
+                  { "literal": "spotless-mind" },
+                  { "literal": "spotless-soul" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
@@ -1588,6 +1598,7 @@
                   { "literal": "mark-of-death" },
                   { "literal": "mark-of-instability" },
                   { "literal": "mark-of-pain" },
+                  { "literal": "mark-of-protection" },
                   { "literal": "mark-of-rodgort" },
                   { "literal": "marksmans-wager" },
                   { "literal": "master-of-magic" },
@@ -1638,6 +1649,7 @@
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
                   { "literal": "primal-echoes" },
+                  { "literal": "protective-bond" },
                   { "literal": "protective-spirit" },
                   { "literal": "protective-was-kaolai" },
                   { "literal": "protectors-defense" },
@@ -1659,6 +1671,7 @@
                   { "literal": "rending-aura" },
                   { "literal": "resilient-weapon" },
                   { "literal": "retreat" },
+                  { "literal": "reversal-of-damage" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
@@ -1719,6 +1732,8 @@
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "splinter-weapon" },
+                  { "literal": "spotless-mind" },
+                  { "literal": "spotless-soul" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
@@ -2071,6 +2086,7 @@
                   { "literal": "mark-of-death" },
                   { "literal": "mark-of-instability" },
                   { "literal": "mark-of-pain" },
+                  { "literal": "mark-of-protection" },
                   { "literal": "mark-of-rodgort" },
                   { "literal": "marksmans-wager" },
                   { "literal": "master-of-magic" },
@@ -2121,6 +2137,7 @@
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
                   { "literal": "primal-echoes" },
+                  { "literal": "protective-bond" },
                   { "literal": "protective-spirit" },
                   { "literal": "protective-was-kaolai" },
                   { "literal": "protectors-defense" },
@@ -2142,6 +2159,7 @@
                   { "literal": "rending-aura" },
                   { "literal": "resilient-weapon" },
                   { "literal": "retreat" },
+                  { "literal": "reversal-of-damage" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
@@ -2202,6 +2220,8 @@
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "splinter-weapon" },
+                  { "literal": "spotless-mind" },
+                  { "literal": "spotless-soul" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
@@ -2551,6 +2571,7 @@
                   { "literal": "mark-of-death" },
                   { "literal": "mark-of-instability" },
                   { "literal": "mark-of-pain" },
+                  { "literal": "mark-of-protection" },
                   { "literal": "mark-of-rodgort" },
                   { "literal": "marksmans-wager" },
                   { "literal": "master-of-magic" },
@@ -2601,6 +2622,7 @@
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
                   { "literal": "primal-echoes" },
+                  { "literal": "protective-bond" },
                   { "literal": "protective-spirit" },
                   { "literal": "protective-was-kaolai" },
                   { "literal": "protectors-defense" },
@@ -2622,6 +2644,7 @@
                   { "literal": "rending-aura" },
                   { "literal": "resilient-weapon" },
                   { "literal": "retreat" },
+                  { "literal": "reversal-of-damage" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
@@ -2682,6 +2705,8 @@
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "splinter-weapon" },
+                  { "literal": "spotless-mind" },
+                  { "literal": "spotless-soul" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
@@ -3166,6 +3191,7 @@
                   { "literal": "mark-of-death" },
                   { "literal": "mark-of-instability" },
                   { "literal": "mark-of-pain" },
+                  { "literal": "mark-of-protection" },
                   { "literal": "mark-of-rodgort" },
                   { "literal": "marksmans-wager" },
                   { "literal": "master-of-magic" },
@@ -3216,6 +3242,7 @@
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
                   { "literal": "primal-echoes" },
+                  { "literal": "protective-bond" },
                   { "literal": "protective-spirit" },
                   { "literal": "protective-was-kaolai" },
                   { "literal": "protectors-defense" },
@@ -3237,6 +3264,7 @@
                   { "literal": "rending-aura" },
                   { "literal": "resilient-weapon" },
                   { "literal": "retreat" },
+                  { "literal": "reversal-of-damage" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
@@ -3297,6 +3325,8 @@
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "splinter-weapon" },
+                  { "literal": "spotless-mind" },
+                  { "literal": "spotless-soul" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
@@ -3638,6 +3668,7 @@
                   { "literal": "mark-of-death" },
                   { "literal": "mark-of-instability" },
                   { "literal": "mark-of-pain" },
+                  { "literal": "mark-of-protection" },
                   { "literal": "mark-of-rodgort" },
                   { "literal": "marksmans-wager" },
                   { "literal": "master-of-magic" },
@@ -3688,6 +3719,7 @@
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
                   { "literal": "primal-echoes" },
+                  { "literal": "protective-bond" },
                   { "literal": "protective-spirit" },
                   { "literal": "protective-was-kaolai" },
                   { "literal": "protectors-defense" },
@@ -3709,6 +3741,7 @@
                   { "literal": "rending-aura" },
                   { "literal": "resilient-weapon" },
                   { "literal": "retreat" },
+                  { "literal": "reversal-of-damage" },
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
@@ -3769,6 +3802,8 @@
                   { "literal": "spirits-gift" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "splinter-weapon" },
+                  { "literal": "spotless-mind" },
+                  { "literal": "spotless-soul" },
                   { "literal": "sprint" },
                   { "literal": "staggering-force" },
                   { "literal": "stand-your-ground" },
@@ -5163,12 +5198,12 @@
           ]
         },
         {
-          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "house-team" } }]
-        },
-        {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "leave-queue" } }
           ]
+        },
+        {
+          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "play-bots" } }]
         },
         {
           "properties": [
@@ -5499,6 +5534,11 @@
                                             }
                                           },
                                           {
+                                            "name": "presetName",
+                                            "optional": false,
+                                            "type": { "union": ["null", "string"] }
+                                          },
+                                          {
                                             "name": "proposerId",
                                             "optional": false,
                                             "type": { "union": ["null", "string"] }
@@ -5509,7 +5549,7 @@
                                             "type": {
                                               "union": [
                                                 { "literal": "captain" },
-                                                { "literal": "house" },
+                                                { "literal": "preset" },
                                                 { "literal": "random" },
                                                 { "literal": "votes" }
                                               ]
@@ -5614,6 +5654,11 @@
                                             }
                                           },
                                           {
+                                            "name": "presetName",
+                                            "optional": false,
+                                            "type": { "union": ["null", "string"] }
+                                          },
+                                          {
                                             "name": "proposerId",
                                             "optional": false,
                                             "type": { "union": ["null", "string"] }
@@ -5624,7 +5669,7 @@
                                             "type": {
                                               "union": [
                                                 { "literal": "captain" },
-                                                { "literal": "house" },
+                                                { "literal": "preset" },
                                                 { "literal": "random" },
                                                 { "literal": "votes" }
                                               ]
@@ -6980,6 +7025,7 @@
             }
           }
         },
+        { "name": "presetName", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "proposerId", "optional": false, "type": { "union": ["null", "string"] } },
         {
           "name": "reason",
@@ -6987,7 +7033,7 @@
           "type": {
             "union": [
               { "literal": "captain" },
-              { "literal": "house" },
+              { "literal": "preset" },
               { "literal": "random" },
               { "literal": "votes" }
             ]
@@ -7039,6 +7085,11 @@
                                   }
                                 },
                                 {
+                                  "name": "presetName",
+                                  "optional": false,
+                                  "type": { "union": ["null", "string"] }
+                                },
+                                {
                                   "name": "proposerId",
                                   "optional": false,
                                   "type": { "union": ["null", "string"] }
@@ -7049,7 +7100,7 @@
                                   "type": {
                                     "union": [
                                       { "literal": "captain" },
-                                      { "literal": "house" },
+                                      { "literal": "preset" },
                                       { "literal": "random" },
                                       { "literal": "votes" }
                                     ]
@@ -7138,6 +7189,11 @@
                                   }
                                 },
                                 {
+                                  "name": "presetName",
+                                  "optional": false,
+                                  "type": { "union": ["null", "string"] }
+                                },
+                                {
                                   "name": "proposerId",
                                   "optional": false,
                                   "type": { "union": ["null", "string"] }
@@ -7148,7 +7204,7 @@
                                   "type": {
                                     "union": [
                                       { "literal": "captain" },
-                                      { "literal": "house" },
+                                      { "literal": "preset" },
                                       { "literal": "random" },
                                       { "literal": "votes" }
                                     ]
@@ -7280,6 +7336,11 @@
                     }
                   },
                   {
+                    "name": "presetName",
+                    "optional": false,
+                    "type": { "union": ["null", "string"] }
+                  },
+                  {
                     "name": "proposerId",
                     "optional": false,
                     "type": { "union": ["null", "string"] }
@@ -7290,7 +7351,7 @@
                     "type": {
                       "union": [
                         { "literal": "captain" },
-                        { "literal": "house" },
+                        { "literal": "preset" },
                         { "literal": "random" },
                         { "literal": "votes" }
                       ]

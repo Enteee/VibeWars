@@ -198,7 +198,8 @@ exactly that many. A guest sees the host's, locked. The host's map list
 shows only maps made for that size, and a size the map does not suit
 moves the lobby to the first map that does. It never goes below a side's
 players, and a side that has as many players as the team size takes
-nobody more.
+nobody more. **Leave** on your team takes you off it without leaving the
+lobby.
 A queued party ([Find a match](getting-started.md#host-or-join-a-match)
 on Team Arena, Heroes' Ascent or GvG) gets a Team Lobby of its own side
 only, as big as the mode's team (Team Arena's picked size, 8 for the others)
@@ -224,10 +225,11 @@ makes and edits Team Builds. A new proposal replaces your old one, and
 the votes for it go back to none. The most votes wins. On a tie the captain's
 vote decides: the host on the host's side, the earliest to
 join on the other. With proposals and no votes, one is picked at random.
-With no proposal, the side plays the house team of starter builds.
-A queued party whose team plan is not accepted (a seat missing, an
-illegal build) also plays the house team, and is told so as the match
-opens.
+With no proposal, the side plays a random preset team of its size, the
+kind Team Builder starts you with; a side of one plays a random starter
+build. A queued party whose team plan is not accepted (a seat missing, an
+illegal build) also plays a random preset team, and is told so as the
+match opens. Each side rolls its own, so both may play the same one.
 Neither side sees the other's proposals, votes or choice.
 
 **Claim.** The chosen build's characters are seats, each the character

@@ -1096,8 +1096,8 @@ ellipsis), a player who proposes nothing (Dax), a side of one player (Red: Eli
 and three bots), who needs no vote. Every proposal is exactly the side's size
 (four), so Blue's four players fill four seats and draw no bot. Two rules
 the study had to guess were settled in #1458 (ADR-0040), and the frames
-follow it: a side with no proposals plays the house team (starter
-builds); and a human who has not
+follow it: a side with no proposals plays a random preset team
+(#2148); and a human who has not
 claimed a slot when the clock ends gets the lowest free one, so only slots no
 human is left to take become bots.
 

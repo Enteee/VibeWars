@@ -140,7 +140,8 @@ describe("Shield of Absorption (#2190)", () => {
       expect.objectContaining({ kind: "status-applied", statusId: "shield-of-absorption" }),
     );
     expect(remaining(a, "shield-of-absorption")).toBe(6);
-    const hit = () => mitigate(unmitigatedDamage(50, "skill"), a, RULES.combat, null, createRng(1));
+    const hit = () =>
+      mitigate(unmitigatedDamage(50, "skill"), a, RULES.combat, null, createRng(1), new Map());
     expect([hit(), hit()]).toEqual([45, 45]);
   });
 });

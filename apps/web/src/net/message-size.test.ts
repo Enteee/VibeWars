@@ -533,6 +533,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       chosen: {
         proposerId: id(0),
         reason: "captain",
+        presetName: null,
         members: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, () => ({
           name: NAME,
           primary: profession,

@@ -641,6 +641,7 @@ describe("Winnowing's +4 (#1064)", () => {
       steady(),
       RULES.combat,
       events,
+      new Map(),
     );
     return 1000 - victim.health;
   };

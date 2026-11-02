@@ -157,6 +157,8 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.attackDamageCapFraction !== undefined ||
     status.lifeStealReduction > 0 ||
     status.reversesNextDamage !== undefined ||
+    status.reflectsNextDamage !== undefined ||
+    status.damageToHealing !== undefined ||
     status.negatesFatalDamage ||
     status.breaksNextHex !== undefined ||
     status.reflectsAttackDamage !== undefined ||
@@ -223,6 +225,8 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     ...(status.onAttackBlocked?.effects ?? []),
     ...(status.nextAttackSkill ?? []),
     ...(status.nextSkill?.effects ?? []),
+    // Spotless Mind's hex removal every 5 s (#2187).
+    ...(status.pulse?.effects ?? []),
     ...forBearer,
   ];
   return [...roles, ...riders.flatMap(effectRoles)];

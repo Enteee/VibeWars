@@ -1,3 +1,4 @@
+import { pickStarterTeam } from "@vibewars/game-core";
 import {
   TEAM_LOBBY_STAGE_SECONDS,
   type LobbyMode,
@@ -133,7 +134,7 @@ describe("a party lobby's matchmaking (#1766)", () => {
       expect(who.connection.getSnapshot().phase).toBe("queued");
       expect(who.connection.getSnapshot().queueNonce).toBe(NONCE);
     }
-    // No proposal: the house team, the host and Ann in the first two
+    // No proposal: a random preset team, the host and Ann in the first two
     // seats, in join order, and two bots.
     const plan = lobby.lobby.teamPlan(HOST_KEY);
     expect(plan?.map((seat) => seat.memberKey)).toEqual([HOST_KEY, null, null, null]);
@@ -252,10 +253,10 @@ describe("a party lobby's matchmaking (#1766)", () => {
     ).toBeNull();
   });
 
-  it("plays the house team in its own lobby: the party's seats, bots in the free ones (Q191)", async () => {
+  it("plays against bots in its own lobby: the party's seats, bots in the free ones (Q191)", async () => {
     const { lobby, party } = await partyLobby(["Ann"]);
     await queue(lobby);
-    lobby.host.connection.playHouseTeam();
+    lobby.host.connection.playAgainstBots();
     await settle();
 
     expect(party.map(phaseOf)).toEqual(["in-match", "in-match"]);
@@ -267,6 +268,10 @@ describe("a party lobby's matchmaking (#1766)", () => {
       true,
     ]);
     expect(seats.filter((seat) => seat.team === 1 && seat.bot)).toHaveLength(4);
+    // The bots play the 4v4 preset team the lobby's RNG, 0.5, draws (#2148).
+    expect(seats.filter((seat) => seat.team === 1).map((seat) => seat.build?.name)).toEqual(
+      pickStarterTeam(() => 0.5, 4)?.members.map(({ name }) => name),
+    );
   });
 });
 
@@ -308,10 +313,10 @@ describe("a Heroes' Ascent party's round (#1996)", () => {
     expect(arena.party.map(phaseOf)).toEqual(["waiting", "waiting"]);
   });
 
-  it("never plays the house team: it waits for a side at its round", async () => {
+  it("never plays against bots: it waits for a side at its round", async () => {
     const { lobby, party } = await partyLobby(["Ann"], "heroes-ascent");
     await queue(lobby, 0);
-    lobby.host.connection.playHouseTeam();
+    lobby.host.connection.playAgainstBots();
     await settle();
 
     expect(party.map(phaseOf)).toEqual(["queued", "queued"]);

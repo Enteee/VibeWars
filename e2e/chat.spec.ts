@@ -112,7 +112,7 @@ test("in the lobby the closed chat is its lines, clicks go through it, and its i
   await hostLobby(page);
   await page.getByRole("button", { name: "join team 1" }).click();
   // Until the lobby re-renders, the clicked button keeps focus and takes the Enter.
-  await expect(page.getByRole("button", { name: "join team 1" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "leave team 1" })).toBeVisible();
   const box = page.getByRole("textbox", { name: "chat message" });
   await expect(box).toBeHidden();
   await say(page, "anyone up for a 2v2");

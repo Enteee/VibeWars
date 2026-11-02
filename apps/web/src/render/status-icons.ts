@@ -451,6 +451,13 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mist-form": icon("mist-form"),
   // Enchantment party moves (#1975).
   "air-of-enchantment": icon("air-of-enchantment"),
+  // Protection staples (#2187).
+  "reversal-of-damage": icon("reversal-of-damage"),
+  "spotless-mind": icon("spotless-mind"),
+  "spotless-soul": icon("spotless-soul"),
+  "mark-of-protection": icon("mark-of-protection"),
+  "protective-bond": icon("protective-bond"),
+  // Monk staples (#2190).
   "shield-of-absorption": icon("shield-of-absorption"),
   "divine-intervention": icon("divine-intervention"),
   "healing-hands": icon("healing-hands"),

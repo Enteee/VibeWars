@@ -59,7 +59,7 @@ async function joinLobby(page: Page, playerName: string, invite: string): Promis
  * Host on team 1, guest on team 2 unless `guestTeam` says, both ready, and
  * the host starts; each side proposes a Team Build as big as its players
  * (#1525), so no bot plays beside them (#2029). A side nobody is on plays
- * the house team, as many as the other.
+ * a random preset team, as many as the other.
  */
 async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
   await openMenu(host, "Host");
@@ -605,7 +605,7 @@ test("a match plays the seat the host took, not a character selected after joini
   try {
     // Both pages share one storage, so the guest selecting Blank changes
     // the host's selection too. The host proposes a Team Build of Cynn,
-    // takes Cynn's seat and plays Cynn; the guest's side plays the house team.
+    // takes Cynn's seat and plays Cynn; the guest's side plays a preset team.
     await host.goto("./");
     await openRail(host, "Character Builder");
     await host.getByRole("button", { name: "New character", exact: true }).click();
@@ -696,10 +696,25 @@ test("a bot plays every slot nobody claims, tagged BOT in the match alone (#1194
   await page.getByRole("button", { name: "start match" }).click();
   await playHouseTeams([page]);
 
-  // Every foe in the arena is a bot, playing its house team's slot under
-  // that character's name (#1458), cut short when long.
+  // Every foe in the arena is a bot, playing its preset team's slot under
+  // that member's job (#1458, #2148), cut short when long.
   await page.keyboard.press(key("target-closest"));
-  await expect(page.locator(".hud-target-text")).toHaveText(/^[A-Z][a-z]+(\/[A-Z][a-z]+|…)$/);
+  await expect(page.locator(".hud-target-text")).toHaveText(/^[A-Z][a-z]+([ /][A-Z][a-z]+|…)$/);
   await expect(page.locator(".hud-target-bot")).toBeVisible();
   await expect(page.locator(".hud-target-bot")).toHaveText("BOT");
+});
+
+test("a player leaves their team without leaving the lobby, and their Ready clears (#2199)", async ({
+  page,
+}) => {
+  await hostLobby(page, "Host");
+  await page.getByRole("button", { name: "join team 1" }).click();
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Not ready", exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "leave team 1" }).click();
+  await expect(page.locator(".lobby-spectators")).toContainText("Host");
+  await expect(page.locator(".lobby-team").first()).toContainText("Empty");
+  await expect(page.getByRole("button", { name: "Ready", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "join team 1" })).toBeEnabled();
 });

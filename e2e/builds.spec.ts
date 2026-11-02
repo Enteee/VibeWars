@@ -805,9 +805,12 @@ test("team counters mark their cells; a cell finds its skill on the team (#575)"
   // A counter marks exactly its cells; again clears it.
   await counter("interrupt").click();
   await expect(marked).toHaveCount(2);
-  await expect(marked).toHaveText([/Distracting Blow/, /Distracting Blow/]);
+  for (const cell of await marked.all()) {
+    await expect(cell).toHaveAccessibleName("Distracting Blow");
+  }
   await counter("knockdown").click();
-  await expect(marked).toHaveText([/Backbreaker/]);
+  await expect(marked).toHaveCount(1);
+  await expect(marked).toHaveAccessibleName("Backbreaker");
   await counter("knockdown").click();
   await expect(marked).toHaveCount(0);
   await expect(page.locator(".team-grid")).not.toHaveClass(/is-highlighting/);
@@ -821,6 +824,21 @@ test("team counters mark their cells; a cell finds its skill on the team (#575)"
   await page.keyboard.press("Escape");
   await expect(marked).toHaveCount(0);
   await expect(page.locator(".team-editor")).toBeVisible();
+
+  // A cell is the skill's icon (#2197); hovering it shows the Character
+  // Builder's tooltip, and leaving hides it.
+  const backbreaker = memberRows(page).first().locator(".team-skill").nth(1);
+  await expect(backbreaker).toHaveAccessibleName("Backbreaker");
+  await expect(backbreaker.locator("img.skill-icon")).toHaveCount(1);
+  await expect(backbreaker).toHaveClass(/is-elite/);
+  await expect(backbreaker).not.toHaveAttribute("title");
+  await expect(page.locator(".team-skill.is-empty").first()).toHaveAttribute("title", "empty slot");
+  const tip = page.locator(".skill-tip");
+  await backbreaker.hover();
+  await expect(tip).toBeVisible();
+  await expect(tip.locator(".tip-title")).toHaveText("Backbreaker");
+  await page.locator(".team-row-name").first().hover();
+  await expect(tip).toBeHidden();
 });
 
 test("a member opens in the build editor and comes back to the unsaved team (#576)", async ({

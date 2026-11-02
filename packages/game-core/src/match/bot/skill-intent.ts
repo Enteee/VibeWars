@@ -441,11 +441,17 @@ export function interruptAimed(
 
 /**
  * The categories `skill` takes off an ally: a `remove-status` of hexes
- * or conditions, or conditions passed on to a foe (Plague Touch, #944).
+ * or conditions, or conditions passed on to a foe (Plague Touch, #944), or one
+ * an enchantment pulses off its bearer (Spotless Mind, #2187).
  */
 export function removedCategories(skill: Skill): readonly StatusCategory[] {
   const found = new Set<StatusCategory>();
-  for (const effect of skill.effects.flatMap(flatten)) {
+  const pulsed = skill.effects.flatMap((effect) =>
+    effect.kind === "apply-status"
+      ? (getStatusDefinition(effect.statusId).pulse?.effects ?? [])
+      : [],
+  );
+  for (const effect of [...skill.effects, ...pulsed].flatMap(flatten)) {
     if (
       effect.kind === "remove-status" &&
       (effect.category === "hex" || effect.category === "condition")
