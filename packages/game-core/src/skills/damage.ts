@@ -15,7 +15,7 @@ import { getSkill } from "./catalog.js";
 import { modWhileHolds } from "./mod-conditions.js";
 import { aggregateModifiers, getStatusDefinition } from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, raisedMaxHealth, rankOf } from "./tick.js";
-import type { Combatant, CreatureLevel } from "./types.js";
+import type { Combatant, CreatureLevel, Surroundings } from "./types.js";
 
 /**
  * The damage pipeline (ADR-0012).
@@ -293,7 +293,8 @@ export function castingDamageReduction(target: Combatant): number {
  * Rounded once, at the end. Rounding earlier would make a long fight
  * drift away from the arithmetic by a few points per hit.
  * A protective spirit's status that changed the outcome records what its
- * spirit pays (#1265), so this is only for a packet that lands.
+ * spirit pays (#1265), so this is only for a packet that lands; a bond's
+ * caster pays its Energy here (#2187), found in `surroundings`.
  */
 export function mitigate(
   packet: DamagePacket,
@@ -301,6 +302,7 @@ export function mitigate(
   rules: CombatRules,
   location: HitLocation,
   rng: SimulationRng,
+  surroundings: Surroundings,
 ): number {
   if (packet.armored + packet.armorIgnoring <= 0) {
     return 0;
@@ -348,12 +350,7 @@ export function mitigate(
   // Protective Spirit (#936), after everything else: no single hit takes
   // more than its share of the target's max health, deep wound's lower
   // max included, however much armor, Frenzy or a crit gave it.
-  if (modifiers.maxDamageFractionPerHit !== undefined) {
-    dealt = Math.min(
-      dealt,
-      Math.floor(modifiers.maxDamageFractionPerHit * effectiveMaxHealth(target)),
-    );
-  }
+  dealt = cappedPerHit(dealt, target, surroundings);
 
   // Shelter (#1265), last: an attack's blow, nothing else, and its spirit
   // pays only when the cap took something off.
@@ -368,6 +365,40 @@ export function mitigate(
   }
 
   return Math.max(0, Math.round(dealt));
+}
+
+/**
+ * `dealt` under the lowest `maxDamageFractionPerHit` on `target` that
+ * holds (#936). A cap that costs its source Energy (#2187, Protective
+ * Bond) is paid only when it takes something off; a source that cannot
+ * pay, dead or gone, ends the status, and the next lowest cap is tried.
+ */
+function cappedPerHit(dealt: number, target: Combatant, surroundings: Surroundings): number {
+  const caps = target.statuses.active
+    .flatMap(({ id, sourceId }) => {
+      const definition = getStatusDefinition(id);
+      return definition.maxDamageFractionPerHit === undefined
+        ? []
+        : [{ id, sourceId, definition, fraction: definition.maxDamageFractionPerHit }];
+    })
+    .sort((a, b) => a.fraction - b.fraction);
+  for (const { id, sourceId, definition, fraction } of caps) {
+    const cap = Math.floor(fraction * effectiveMaxHealth(target));
+    if (Math.round(dealt) <= cap) {
+      return dealt;
+    }
+    const upkeep = definition.casterEnergyPerReduction;
+    if (upkeep === undefined) {
+      return cap;
+    }
+    const payer = surroundings.get(sourceId)?.combatant;
+    if (payer !== undefined && !payer.dead && payer.energy >= upkeep) {
+      payer.energy -= upkeep;
+      return cap;
+    }
+    target.statuses.end(id);
+  }
+  return dealt;
 }
 
 /**

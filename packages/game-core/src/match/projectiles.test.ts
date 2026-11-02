@@ -886,9 +886,17 @@ describe("Lightning Orb flies (#761)", () => {
       RULES.combat,
       "chest",
       createRng(1),
+      new Map(),
     );
     expect(expected).toBeGreaterThan(
-      mitigate(skillDamage(82, "lightning", 0), victim, RULES.combat, "chest", createRng(1)),
+      mitigate(
+        skillDamage(82, "lightning", 0),
+        victim,
+        RULES.combat,
+        "chest",
+        createRng(1),
+        new Map(),
+      ),
     );
     expect(landed.events).toEqual([
       expect.objectContaining({ kind: "damage", targetId: "target", amount: expected }),

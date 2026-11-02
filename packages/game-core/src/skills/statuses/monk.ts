@@ -4,6 +4,11 @@ import type { HealEffect, SkillEffect } from "../types.js";
 import { define, ownSkills } from "./define.js";
 
 export type MonkStatusId =
+  | "reversal-of-damage"
+  | "spotless-mind"
+  | "spotless-soul"
+  | "mark-of-protection"
+  | "protective-bond"
   | "divine-spirit"
   | "blessed-aura"
   | "healers-covenant"
@@ -500,5 +505,44 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
   "air-of-enchantment": define("air-of-enchantment", "Air of Enchantment", "enchantment", {
     profession: "monk",
     enchantmentsOnBearerCostLess: 10,
+  }),
+  // Protection staples (#2187). "For 8 seconds, the next time target ally
+  // would take damage, the source of that damage takes that much damage
+  // instead, maximum 5...75": 61, its rank-12 cap.
+  "reversal-of-damage": define("reversal-of-damage", "Reversal of Damage", "enchantment", {
+    profession: "monk",
+    reflectsNextDamage: { cap: 61, skillId: "monk.reversal-of-damage" },
+  }),
+  // "...target other ally loses a hex every 5 seconds": the first after 5.
+  "spotless-mind": define("spotless-mind", "Spotless Mind", "enchantment", {
+    profession: "monk",
+    pulse: {
+      everySeconds: 5,
+      effects: [{ kind: "remove-status", category: "hex", count: 1 }],
+      skillId: "monk.spotless-mind",
+    },
+  }),
+  // "...target other ally loses a condition every 3 seconds".
+  "spotless-soul": define("spotless-soul", "Spotless Soul", "enchantment", {
+    profession: "monk",
+    pulse: {
+      everySeconds: 3,
+      effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+      skillId: "monk.spotless-soul",
+    },
+  }),
+  // "For 10 seconds, whenever target ally would take damage, that ally is
+  // healed for that amount instead, maximum 6...49...60".
+  "mark-of-protection": define("mark-of-protection", "Mark of Protection", "enchantment", {
+    profession: "monk",
+    damageToHealing: { cap: 49 },
+  }),
+  // "...cannot lose more than 5% max Health due to damage from a single
+  // attack or spell. When Protective Bond prevents damage, you lose
+  // 6...4...3 Energy or the spell ends": 4, its rank-12 value.
+  "protective-bond": define("protective-bond", "Protective Bond", "enchantment", {
+    profession: "monk",
+    maxDamageFractionPerHit: 0.05,
+    casterEnergyPerReduction: 4,
   }),
 };

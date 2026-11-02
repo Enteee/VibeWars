@@ -399,7 +399,12 @@ function landDamage(
   }
   // Mist Form's (#1951), after every mitigation: what a hexed foe deals.
   const cut = hexedSourceDamage(target, amount, dealer);
-  if (cut <= 0 || reverse(target, cut, events)) {
+  if (
+    cut <= 0 ||
+    reverse(target, cut, events) ||
+    reflectNext(target, cut, type, dealer, events) ||
+    turnToHealing(target, cut, events)
+  ) {
     return;
   }
   // Symbiotic Bond (#1108) and Dark Bond (#1986): a share goes elsewhere
@@ -485,6 +490,42 @@ function reverse(target: Combatant, amount: number, events: CombatEvent[]): bool
   }
   events.push({ kind: "status-expired", targetId: target.id, statusId: reversal.id });
   applyHeal(target, Math.min(amount, reversal.cap), events);
+  return true;
+}
+
+/**
+ * Reversal of Damage (#2187): if `target` bears a status that reflects
+ * the next damage, spend it on this packet, which its dealer takes back
+ * when the tick drains. Returns whether it did, and then the caller drops
+ * the whole packet, as `reverse`'s.
+ */
+function reflectNext(
+  target: Combatant,
+  amount: number,
+  type: DamageType,
+  dealer: Combatant | undefined,
+  events: CombatEvent[],
+): boolean {
+  const back = dealer === undefined || dealer.dead ? undefined : dealer.id;
+  const reflected = target.statuses.takeNextDamageReflection(back, amount, type);
+  if (reflected === undefined) {
+    return false;
+  }
+  events.push({ kind: "status-expired", targetId: target.id, statusId: reflected });
+  return true;
+}
+
+/**
+ * Mark of Protection (#2187): while `target` bears a status that turns
+ * damage into healing, this packet heals it up to the cap instead.
+ * Returns whether it did, and then the caller drops the whole packet.
+ */
+function turnToHealing(target: Combatant, amount: number, events: CombatEvent[]): boolean {
+  const cap = target.statuses.damageToHealingCap();
+  if (cap === undefined) {
+    return false;
+  }
+  applyHeal(target, Math.min(amount, cap), events);
   return true;
 }
 
@@ -1646,7 +1687,14 @@ export function applyEffect(
       );
       applyDamage(
         target,
-        mitigate(packet, target, context.rules, hitLocationOf(packet, context.rng), context.rng),
+        mitigate(
+          packet,
+          target,
+          context.rules,
+          hitLocationOf(packet, context.rng),
+          context.rng,
+          context.surroundings,
+        ),
         packet.type,
         false,
         events,

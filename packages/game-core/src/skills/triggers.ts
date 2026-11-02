@@ -253,6 +253,8 @@ export function fireChangeTriggers(
       return breakHex(bearer, change, context);
     case "reflected":
       return reflect(bearer, change, context);
+    case "reflected-next":
+      return reflectNext(change, context);
     // Not a trigger: the simulation lands it on its own (#1108, #1265).
     case "redirected-damage":
     case "charged-source":
@@ -415,6 +417,29 @@ function reflect(
   if (bearer.statuses.spendReflection(change.statusId)) {
     events.push({ kind: "status-expired", targetId: bearer.id, statusId: change.statusId });
   }
+  return [{ sourceId: source.id, skillId: reflects.skillId, events }];
+}
+
+/**
+ * Reversal of Damage (#2187): the damage it negated, up to its cap, at
+ * whoever dealt it, from the status's source, which ended as it took the
+ * packet. An armor-ignoring hit of the negated packet's type; a dealer or
+ * source dead or gone by now takes or deals nothing.
+ */
+function reflectNext(
+  change: Extract<StatusChange, { kind: "reflected-next" }>,
+  { sourceOf, rng, rules, surroundings }: TriggerContext,
+): FiredTrigger[] {
+  const dealer = sourceOf(change.toId);
+  const source = sourceOf(change.sourceId);
+  const reflects = getStatusDefinition(change.statusId).reflectsNextDamage;
+  if (dealer === undefined || dealer.dead || source === undefined || reflects === undefined) {
+    return [];
+  }
+  const events = applyEffects(
+    [{ kind: "damage", amount: { flat: change.damage }, type: change.type, armorPenetration: 1 }],
+    { caster: source, target: dealer, rng, rules, surroundings, usedSkill: undefined },
+  );
   return [{ sourceId: source.id, skillId: reflects.skillId, events }];
 }
 
