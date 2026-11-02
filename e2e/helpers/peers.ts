@@ -114,32 +114,6 @@ export async function expectTeamSizeAtMost(scope: Page | Locator, size: 1 | 2 | 
 }
 
 /**
- * The Team size in `scope` shows `size`, and with `locked` cannot be
- * changed there: a party member's follows its leader (#2107), a Team
- * Build's editor shows the size it was made at (#2109).
- */
-export async function expectTeamSize(
-  scope: Page | Locator,
-  size: 1 | 2 | 4 | 8,
-  { locked = false }: { readonly locked?: boolean } = {},
-): Promise<void> {
-  const select = scope.getByRole("combobox", { name: "Team size" });
-  await expect(select).toHaveValue(String(size));
-  if (locked) {
-    await expect(select).toBeDisabled();
-  }
-}
-
-/** The Team size in `scope` goes no larger than `size`: 8v8 is no Random Arena (#2022). */
-export async function expectTeamSizeAtMost(scope: Page | Locator, size: 1 | 2 | 4): Promise<void> {
-  const larger = `${String(size * 2)}v${String(size * 2)}`;
-  const option = scope.getByRole("combobox", { name: "Team size" }).locator("option", {
-    hasText: larger,
-  });
-  await expect(option).toHaveJSProperty("disabled", true);
-}
-
-/**
  * The lobby every page hosts from load (#1526), on Hosted Game (#1525),
  * opened to friends (#1682); its invite link (#2100). It plays `size`
  * a side on `map`, 1v1 on arena-alpha unless said: the sidebar's
