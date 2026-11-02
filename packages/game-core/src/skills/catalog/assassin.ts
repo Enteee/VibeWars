@@ -3669,7 +3669,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         kind: "apply-status",
         statusId: "hidden-caltrops",
         durationSeconds: {
-          scaling: { attributeId: "assassin.shadow-arts", atZero: 1, atTwelve: 8 },
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 1, atTwelve: 8.2 },
         },
       },
     ],
