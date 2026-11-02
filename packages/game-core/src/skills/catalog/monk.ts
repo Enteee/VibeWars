@@ -3279,8 +3279,14 @@ export const MONK_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 5...20 seconds, while you are casting spells, foes cannot target
-    // you with spells" (#2189): 17 s, its rank-12 value; the status's.
-    effects: [{ kind: "apply-status", statusId: "spell-shield", durationSeconds: { flat: 17 } }],
+    // you with spells" (#2189): 5 s at rank 0, 17 at 12; the status's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "spell-shield",
+        durationSeconds: { scaling: { attributeId: "monk.divine-favor", atZero: 5, atTwelve: 17 } },
+      },
+    ],
   },
   {
     id: "monk.withdraw-hexes",
@@ -3345,13 +3351,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Remove all hexes from target other ally. For 8...20 seconds, that ally
-    // gains +10 armor for each Necromancer hex that was removed" (#2189): 18 s.
+    // gains +10 armor for each Necromancer hex that was removed" (#2189).
     effects: [
       { kind: "remove-status", category: "hex", count: "all" },
       {
         kind: "apply-status",
         statusId: "convert-hexes",
-        durationSeconds: { flat: 18 },
+        durationSeconds: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 8, atTwelve: 17.6 },
+        },
         stacksPerRemovedOfProfession: "necromancer",
       },
     ],

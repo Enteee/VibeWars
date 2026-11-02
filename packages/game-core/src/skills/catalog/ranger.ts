@@ -5596,9 +5596,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 8...20 seconds, you gain +4 Health regeneration and +1 Energy
-    // regeneration for each condition and hex you are suffering" (#2189): 18 s.
+    // regeneration for each condition and hex you are suffering" (#2189).
     effects: [
-      { kind: "apply-status", statusId: "melandrus-resilience", durationSeconds: { flat: 18 } },
+      {
+        kind: "apply-status",
+        statusId: "melandrus-resilience",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.wilderness-survival", atZero: 8, atTwelve: 17.6 },
+        },
+      },
     ],
   },
   {
@@ -5652,7 +5658,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 5...25 seconds, you attack 33% faster while wielding a bow"
-    // (#2189): 21 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "rapid-fire", durationSeconds: { flat: 21 } }],
+    // (#2189): 5 s at rank 0, 21 at 12.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "rapid-fire",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 21 },
+        },
+      },
+    ],
   },
 ];
