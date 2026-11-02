@@ -221,6 +221,7 @@ describe("Soul Feast (#466)", () => {
             corpsesLeft: 0,
             companionSkillId: undefined,
             leaderId: undefined,
+            bondStatusId: undefined,
             mode: "guard",
           },
         }),

@@ -13,6 +13,7 @@ import renewSpirit from "./renew-spirit.js";
 import type { BotRule } from "./types.js";
 import wardTouch from "./ward-touch.js";
 import setup from "./setup.js";
+import takeMinion from "./take-minion.js";
 import wayOut from "./way-out.js";
 
 /**
@@ -33,6 +34,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   raise,
   renewSpirit,
   setup,
+  takeMinion,
   wardTouch,
   wayOut,
 ]);

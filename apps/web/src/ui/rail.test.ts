@@ -223,7 +223,7 @@ describe("the mode rail (#1525)", () => {
       away: false,
     });
     const party = {
-      code: "ACDEFGHJKLMN",
+      code: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE", // pragma: allowlist secret
       mode: "gvg",
       isHost: true,
       open: true,

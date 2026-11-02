@@ -363,6 +363,7 @@ describe("follow-and-attack (#467)", () => {
         corpsesLeft: 0,
         companionSkillId: undefined,
         leaderId: undefined,
+        bondStatusId: undefined,
         mode: "guard",
       },
     };

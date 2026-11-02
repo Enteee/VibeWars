@@ -742,6 +742,121 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "necromancer.veratas-gaze",
+    name: "Verata's Gaze",
+    gwId: 87,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "enemy-minion",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target minion has a master, it becomes masterless. If that minion
+    // is masterless, it becomes your minion and is healed for 60...76...80
+    // Health" (#2092). Its failure chance at Death Magic 4 or less is out
+    // of reach at rank 12.
+    effects: [
+      {
+        kind: "gaze-minion",
+        heal: { scaling: { attributeId: "necromancer.death-magic", atZero: 60, atTwelve: 76 } },
+      },
+    ],
+  },
+  {
+    id: "necromancer.veratas-aura",
+    name: "Verata's Aura",
+    gwId: 88,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 120...264...300 seconds, all foe minions in the area become your
+    // minions. When Verata's Aura ends, those minions become masterless"
+    // (#2092): bound to the enchantment, so a recast refreshes them all.
+    // The 33% is the cost's.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 33 },
+      {
+        kind: "apply-status",
+        statusId: "veratas-aura",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 120, atTwelve: 264 },
+        },
+      },
+      {
+        kind: "splash",
+        hits: "foe-minions",
+        radius: AREA_IN_THE_AREA,
+        maxTargets: undefined,
+        effects: [{ kind: "take-control", bondStatusId: "veratas-aura" }],
+      },
+    ],
+  },
+  {
+    id: "necromancer.malign-intervention",
+    name: "Malign Intervention",
+    gwId: 122,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...17...20 seconds, target foe receives 20% less from healing.
+    // If that foe dies, a masterless level 1...14...17 bone horror is
+    // created" (#2092): the status carries both.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "malign-intervention",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
+  {
     id: "necromancer.dark-bond",
     name: "Dark Bond",
     gwId: 138,

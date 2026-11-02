@@ -199,6 +199,7 @@ function spirit(id: string, ownerId: string, spawn: Vec2): ParticipantSpec {
       corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
+      bondStatusId: undefined,
       mode: "guard",
     },
   };

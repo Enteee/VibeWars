@@ -279,14 +279,14 @@ describe("lobby host", () => {
       who.connection.onMove((code) => heard.push(`${name} move ${code}`));
       who.connection.onClosed((reason) => heard.push(`${name} ${reason}`));
     }
-    await lobby.lobby.close("ACDEFGHJKMNP");
+    await lobby.lobby.close("mOvEdToHeRe0123456789_-AbCdEfGhIjKlMnOpQrSw"); // pragma: allowlist secret
     await settle();
     expect(heard.filter((line) => line.startsWith("Guest"))).toEqual([
-      "Guest move ACDEFGHJKMNP",
+      "Guest move mOvEdToHeRe0123456789_-AbCdEfGhIjKlMnOpQrSw", // pragma: allowlist secret
       "Guest host-left",
     ]);
     expect(heard.filter((line) => line.startsWith("Other"))).toEqual([
-      "Other move ACDEFGHJKMNP",
+      "Other move mOvEdToHeRe0123456789_-AbCdEfGhIjKlMnOpQrSw", // pragma: allowlist secret
       "Other host-left",
     ]);
     expect(heard.filter((line) => line.startsWith("Host"))).toEqual(["Host host-left"]);
@@ -297,7 +297,11 @@ describe("lobby host", () => {
     const moves: string[] = [];
     guest.connection.onMove((code) => moves.push(code));
     const peer = await rawPeer(lobby);
-    peer.transport.send("lobby-move", { code: "ACDEFGHJKMNP" }, guest.transport.selfId);
+    peer.transport.send(
+      "lobby-move",
+      { code: "mOvEdToHeRe0123456789_-AbCdEfGhIjKlMnOpQrSw" }, // pragma: allowlist secret
+      guest.transport.selfId,
+    );
     await settle();
     expect(moves).toEqual([]);
   });
@@ -848,7 +852,7 @@ describe("joining by code", () => {
     await expect(
       joinLobby({
         transport,
-        code: "WXYKMNPQRT34",
+        code: "zYxWvUtSrQpOnMlKjIhGfEdCbA9876543210_-ZyXwA", // pragma: allowlist secret
         proofKey: PROOF_KEY,
         name: "Lost",
         guildTag: null,
@@ -863,7 +867,7 @@ describe("joining by code", () => {
     const failure = (peerId: string, troubles: readonly TransportTrouble[]): Promise<unknown> => {
       const joining = joinLobby({
         transport: lobby.network.join(peerId),
-        code: "WXYKMNPQRT34",
+        code: "zYxWvUtSrQpOnMlKjIhGfEdCbA9876543210_-ZyXwA", // pragma: allowlist secret
         proofKey: PROOF_KEY,
         name: peerId,
         guildTag: null,
@@ -881,20 +885,6 @@ describe("joining by code", () => {
     expect(told instanceof LobbyNoAnswerError && told.trouble).toBe("peer-unreachable");
     const untold = await failure("untold", []);
     expect(untold instanceof LobbyNoAnswerError && untold.trouble).toBeNull();
-  });
-
-  it("accepts a lower-case or spaced code, because players mistype them", async () => {
-    const lobby = await openLobby();
-    const connection = await joinLobby({
-      transport: lobby.network.join(),
-      code: " acde-fghj-kmnp ",
-      proofKey: PROOF_KEY,
-      name: "Typist",
-      guildTag: null,
-      guildCape: null,
-      timeoutMs: 1000,
-    });
-    expect(connection.getSnapshot().code).toBe(CODE);
   });
 
   it("gives up with no-answer when nobody in the room hosts", async () => {

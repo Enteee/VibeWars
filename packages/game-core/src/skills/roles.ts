@@ -87,6 +87,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "copy-disabled":
     case "copy-elite":
     case "take-control":
+    case "gaze-minion":
     case "lengthen-recharge":
     case "disable-own-skills":
     case "chain-mark":
