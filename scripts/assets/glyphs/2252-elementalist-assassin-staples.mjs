@@ -17,7 +17,7 @@ const glyphs = {
       "Obsidian Flame: a flame cut from glass, all straight edges and a split down the middle: fire that ignores armor.",
     draw: () =>
       inkFill("M12 2L17 8L15.5 11L20 15L16 22H8L4 15L8.5 11L7 8Z") +
-      `<path d="M12 8L10.5 14L13.5 17L12 22" ${stroke(C.bg, 1.4)} stroke-linejoin="round"/>`,
+      `<path d="M12 8L10.5 14L13.5 17L12 22" ${stroke(C.bg, 1.4)}/>`,
   },
   "bolt-strike": {
     means:
@@ -39,7 +39,7 @@ const glyphs = {
       "Crystal Wave: a cut gem riding over two waves: a crystal surge that strikes and cleanses.",
     draw: () =>
       inkFill("M7 2H17L21 7L12 15L3 7Z") +
-      `<path d="M3 7H21M9.5 2L8 7L12 15L16 7L14.5 2" ${stroke(C.bg, 1)} stroke-linejoin="round"/>` +
+      `<path d="M3 7H21M9.5 2L8 7L12 15L16 7L14.5 2" ${stroke(C.bg, 1)}/>` +
       inkLine(
         "M2.5 18.5Q5.5 16 8.5 18.5T14.5 18.5T21.5 18.5M2.5 22Q5.5 19.5 8.5 22T14.5 22T21.5 22",
         1.8,
