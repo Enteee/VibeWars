@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Ritualist staples (#2212), stand-ins until their art card.
+  // Ritualist staples (#2212), art #2253.
   // Skill: a bolt inside a ring, the ally's foes struck each second.
   "ancestors-rage": [
     "skill-effect",
