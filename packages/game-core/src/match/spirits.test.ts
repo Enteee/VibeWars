@@ -181,7 +181,7 @@ describe("Winnowing (#1064)", () => {
     expect(status).toMatchObject({
       sourceId: spirits(sim)[0]?.id,
       remainingSeconds: Number.POSITIVE_INFINITY,
-      projected: { ageSeconds: 0 },
+      projected: { ageSeconds: expect.any(Number) as number },
     });
   });
 

@@ -577,7 +577,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     // Rapid Fire's "while wielding a bow" (#2189).
     const weapon = definition.attackDurationMultiplierWeapon;
     parts.push(
-      `attacks ${change}% ${way}${weapon === undefined ? "" : ` while wielding a ${weapon}`}`,
+      `attacks ${change}% ${way}${weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`}`,
     );
   }
   if (definition.projectileSpeedMultiplier !== 1) {
@@ -677,7 +677,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     // Way of the Assassin's "while wielding daggers" (#2275).
     const weapon = definition.criticalChanceBonusWeapon;
     parts.push(
-      `${chance}% critical chance${weapon === undefined ? "" : ` while wielding a ${weapon}`}`,
+      `${chance}% critical chance${weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`}`,
     );
   }
   if (definition.energyPerCritical !== 0) {
@@ -991,6 +991,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       .flatMap((effect) => describeEffects(effect, triggerRanks))
       .map(({ text }) => lowerFirst(text));
     parts.push(`every ${String(definition.pulse.everySeconds)} seconds: ${what.join(", ")}`);
+    // Agony's (#2275): "this spirit loses 3...10 Health for each foe hurt".
+    const charge = definition.pulse.chargesSourcePerHit;
+    if (charge !== undefined) {
+      const amount = statText(charge, ranks, (value) => String(Math.round(value)));
+      parts.push(`its spirit loses ${amount} Health for each one hurt`);
+    }
   }
   // Holy Wrath's (#1754): "66% of the damage of the next 8 attacks that
   // hit it goes back to the attacker as holy damage, up to 41".
@@ -1371,6 +1377,7 @@ const SECOND_PERSON: Readonly<Record<string, string>> = {
   hits: "hit",
   is: "are",
   loses: "lose",
+  sacrifices: "sacrifice",
   takes: "take",
   uses: "use",
 };
