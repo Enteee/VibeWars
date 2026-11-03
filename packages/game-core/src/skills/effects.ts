@@ -2616,6 +2616,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "caster-controls-at-most":
     case "caster-spirit-or-corpse-within":
     case "caster-dead-ally-within":
+    case "target-near-corpse-or-dead-pet":
       return true;
   }
 }
@@ -2795,6 +2796,18 @@ export function stateHolds(
             combatant.team === caster.team &&
             distanceWithinRange(at, position, condition.radius),
         )
+      );
+    }
+    case "target-near-corpse-or-dead-pet": {
+      const at = surroundings.get(target.id)?.position;
+      return [...surroundings.values()].some(
+        (body) =>
+          (at !== undefined &&
+            isFreshCorpse(body) &&
+            distanceWithinRange(at, body.position, condition.radius)) ||
+          (body.combatant.dead &&
+            body.creature?.ownerId === target.id &&
+            body.creature.companionSkillId !== undefined),
       );
     }
   }
@@ -3079,6 +3092,7 @@ function conditionHolds(
     case "caster-controls-at-most":
     case "caster-spirit-or-corpse-within":
     case "caster-dead-ally-within":
+    case "target-near-corpse-or-dead-pet":
       return held.has(condition);
   }
 }

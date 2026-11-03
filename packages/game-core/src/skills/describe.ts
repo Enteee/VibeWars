@@ -2392,6 +2392,10 @@ function conditionText(
       return `If a spirit or a corpse is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
     case "caster-dead-ally-within":
       return `If an ally is dead ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`}`;
+    case "target-near-corpse-or-dead-pet":
+      return condition.radius === AREA_NEARBY
+        ? "If target is near a corpse or its pet is dead"
+        : `If target is within ${String(condition.radius)} of a corpse or its pet is dead`;
   }
 }
 

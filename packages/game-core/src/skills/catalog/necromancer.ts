@@ -8,6 +8,7 @@ import {
 } from "../../distances.js";
 import type { Skill } from "../types.js";
 import {
+  BONE_FIEND,
   BONE_HORROR,
   BONE_MINION,
   FLESH_GOLEM,
@@ -382,6 +383,34 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "Exploit nearest corpse to animate a level 1...14...17 Bone Horror."
     effects: [{ kind: "summon", creature: BONE_HORROR, count: 1 }],
+  },
+  {
+    id: "necromancer.animate-bone-fiend",
+    name: "Animate Bone Fiend",
+    gwId: 84,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse within cast range, as Animate Bone Horror's.
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: undefined },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse to animate a level 1...14...17 bone fiend.
+    // Bone fiends can attack at range."
+    effects: [{ kind: "summon", creature: BONE_FIEND, count: 1 }],
   },
   {
     id: "necromancer.animate-bone-minions",
@@ -2085,6 +2114,47 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
         durationSeconds: {
           scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 12.6 },
         },
+      },
+    ],
+  },
+  {
+    id: "necromancer.signet-of-sorrow",
+    name: "Signet of Sorrow",
+    gwId: 1363,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.soul-reaping",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe takes 15...63...75 damage. If target foe is near a
+    // corpse or has a dead pet, this skill recharges instantly."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "necromancer.soul-reaping", atZero: 15, atTwelve: 63 },
+        },
+        type: "typeless",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-near-corpse-or-dead-pet", radius: AREA_NEARBY },
+        effects: [{ kind: "recharge-faster", fraction: 1 }],
       },
     ],
   },
