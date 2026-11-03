@@ -1266,7 +1266,7 @@ export const MONK_SKILLS: readonly Skill[] = [
       {
         kind: "transfer-conditions",
         from: "target",
-        count: Infinity,
+        count: { flat: Infinity },
         durationMultiplier: 1,
         healPerCondition: {
           scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 22 },
@@ -3104,7 +3104,12 @@ export const MONK_SKILLS: readonly Skill[] = [
     // allies to you": the party is the team, at any distance. The caster is
     // one of it, and keeps its own.
     effects: [
-      { kind: "transfer-conditions", from: "target", count: Infinity, durationMultiplier: 1 },
+      {
+        kind: "transfer-conditions",
+        from: "target",
+        count: { flat: Infinity },
+        durationMultiplier: 1,
+      },
     ],
   },
   {

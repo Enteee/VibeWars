@@ -1960,6 +1960,41 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Condition movement (#2259).
+  {
+    id: "ritualist.resilient-was-xiko",
+    name: "Resilient Was Xiko",
+    gwId: 1221,
+    type: "item-spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Hold Xiko's ashes for up to 5...20 seconds": 17.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "resilient-was-xiko",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
   // Ritualist spirits (#1550): on-hit effects past a status, and death bursts.
   bindingRitual({
     id: "ritualist.bloodsong",

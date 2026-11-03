@@ -68,7 +68,9 @@ export type MesmerStatusId =
   // Mesmer staples 5 (#2231).
   | "conjure-nightmare"
   | "images-of-remorse"
-  | "confusing-images";
+  | "confusing-images"
+  // Condition movement (#2259).
+  | "fevered-dreams";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -796,5 +798,21 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   "confusing-images": define("confusing-images", "Confusing Images", "hex", {
     profession: "mesmer",
     skillActivationMultiplier: 2,
+  }),
+  // PvP: "whenever target foe suffers from a new condition, all foes in the
+  // area suffer from that condition as well" (#2259): the hexed foe's
+  // allies, as the Mesmer's; a copy never spreads again.
+  "fevered-dreams": define("fevered-dreams", "Fevered Dreams", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-gains-condition",
+        effects: [
+          { kind: "spread-gained-condition", radius: AREA_IN_THE_AREA, to: "bearer-allies" },
+        ],
+        target: "bearer",
+        skillId: "mesmer.fevered-dreams",
+      },
+    ],
   }),
 };

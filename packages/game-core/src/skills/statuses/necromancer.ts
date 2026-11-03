@@ -81,7 +81,9 @@ export type NecromancerStatusId =
   | "order-of-apostasy"
   | "jaundiced-gaze"
   // Necromancer staples (#2230).
-  | "vampiric-spirit";
+  | "vampiric-spirit"
+  // Condition movement (#2259).
+  | "mark-of-fury";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -146,7 +148,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       {
         on: "bearer-gains-condition",
         effects: [
-          { kind: "spread-gained-condition", radius: AREA_IN_THE_AREA },
+          { kind: "spread-gained-condition", radius: AREA_IN_THE_AREA, to: "bearer-foes" },
           { kind: "sacrifice-health", percentOfMax: 6 },
         ],
         target: "bearer",
@@ -731,5 +733,42 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   "vampiric-spirit": define("vampiric-spirit", "Vampiric Spirit", "enchantment", {
     profession: "necromancer",
     healthPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: 5, atTwelve: 9 } },
+  }),
+  // "Allies hitting target foe gain 0...2 strikes of adrenaline. When this
+  // hex ends, that foe suffers from Cracked Armor for 1...15 seconds"
+  // (#2259), each at the Necromancer's Blood Magic: 1.6 and 12.2 at 12.
+  // Any end, a strip included.
+  "mark-of-fury": define("mark-of-fury", "Mark of Fury", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-hit-by-attack",
+        target: "source-on-offender",
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            strikes: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 0, atTwelve: 1.6 },
+            },
+            recipient: "target",
+          },
+        ],
+        skillId: "necromancer.mark-of-fury",
+      },
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "cracked-armor",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 1, atTwelve: 12.2 },
+            },
+          },
+        ],
+        skillId: "necromancer.mark-of-fury",
+      },
+    ],
   }),
 };

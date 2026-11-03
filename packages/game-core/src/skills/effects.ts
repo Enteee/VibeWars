@@ -1817,7 +1817,13 @@ export function applyEffect(
           context.surroundings,
         ) * adrenalineGainTimes(caster, effect);
       const gainer =
-        effect.recipient === "owner" ? livingOwnerOf(caster, context.surroundings) : caster;
+        effect.recipient === "owner"
+          ? livingOwnerOf(caster, context.surroundings)
+          : effect.recipient === "target"
+            ? target?.dead === false
+              ? target
+              : undefined
+            : caster;
       if (
         gainer !== undefined &&
         strikes > 0 &&
@@ -2007,7 +2013,27 @@ export function applyEffect(
       if (giver === taker) {
         return events;
       }
-      const moved = giver.statuses.takeNewest("condition", effect.count);
+      // Rounded at the caster's rank (#2259): Plague Sending's "1...3".
+      const moved = giver.statuses.takeNewest(
+        "condition",
+        resolveMagnitude(effect.count, context.ranksFrom ?? caster),
+      );
+      // Plague Sending's foes adjacent to the target (#2259), found before any lands.
+      const radius = effect.copyToFoesWithin;
+      const at = context.surroundings.get(target.id)?.position;
+      const copiedTo =
+        radius === undefined || at === undefined
+          ? []
+          : nearestFirst(
+              [...context.surroundings.values()].filter(
+                ({ combatant, position }) =>
+                  !combatant.dead &&
+                  combatant.id !== target.id &&
+                  combatant.team !== caster.team &&
+                  distance(position, at) <= radius,
+              ),
+              at,
+            );
       // The caster becomes every moved condition's source: a Bleeding Draw
       // Conditions takes from an ally counts as the Monk's own from then on.
       for (const { id, remainingSeconds, ranks } of moved) {
@@ -2022,6 +2048,18 @@ export function applyEffect(
           context.surroundings,
           null,
         );
+        for (const combatant of copiedTo) {
+          landOnTaker(
+            combatant,
+            id,
+            remainingSeconds * effect.durationMultiplier,
+            caster.id,
+            ranks,
+            events,
+            context.surroundings,
+            null,
+          );
+        }
       }
       if (effect.healPerCondition !== undefined && moved.length > 0) {
         applyHeal(caster, resolveMagnitude(effect.healPerCondition, caster) * moved.length, events);
@@ -3195,7 +3233,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "energy-gain":
       return effect.perTarget !== true && effect.toTarget !== true;
     case "adrenaline-gain":
-      return effect.perTarget !== true;
+      return effect.perTarget !== true && effect.recipient !== "target";
     case "sacrifice-health":
     case "recharge-faster":
     case "recharge-reset":

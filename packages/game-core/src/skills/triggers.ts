@@ -26,13 +26,15 @@ export interface FiredTrigger {
 
 /**
  * Contagion's spread, which needs positions (#887): what it did, from
- * `bearer`, for the condition gained. Only the simulation knows where
- * everyone is.
+ * `bearer`, for the condition gained, each copy as `caster`'s, the
+ * trigger's (#2259): Fevered Dreams' Mesmer's, Contagion's bearer's own.
+ * Only the simulation knows where everyone is.
  */
 export type SpreadGainedCondition = (
   effect: SpreadGainedConditionEffect,
   bearer: Combatant,
   gained: Extract<StatusChange, { kind: "gained-condition" }>,
+  caster: Combatant,
 ) => CombatEvent[];
 
 /**
@@ -194,7 +196,7 @@ export function fireChangeTriggers(
             sourceId,
             bearer,
             undefined,
-            (effect) => spread(effect, bearer, change),
+            (effect, caster) => spread(effect, bearer, change, caster),
             context,
           ),
         );
@@ -458,7 +460,7 @@ function fire(
   sourceId: string,
   bearer: Combatant,
   otherId: string | undefined,
-  spread: ((effect: SpreadGainedConditionEffect) => CombatEvent[]) | undefined,
+  spread: ((effect: SpreadGainedConditionEffect, caster: Combatant) => CombatEvent[]) | undefined,
   { sourceOf, rng, rules, surroundings, usedSkill }: TriggerContext,
 ): FiredTrigger[] {
   const source = sourceOf(sourceId);
@@ -490,7 +492,7 @@ function fire(
   for (const effect of trigger.effects) {
     if (effect.kind === "spread-gained-condition") {
       flush();
-      events.push(...(spread?.(effect) ?? []));
+      events.push(...(spread?.(effect, caster) ?? []));
     } else if (effect.kind === "echo") {
       flush();
       echo(effect, bearer, trigger.skillId, usedSkill);

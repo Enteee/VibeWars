@@ -1906,7 +1906,9 @@ function describeTrigger(
   }
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
-      return [sentence(`${when}: foes in the area suffer it too`)];
+      // Fevered Dreams' (#2259) are the hexed foe's allies: to its caster, other foes.
+      const who = effect.to === "bearer-foes" ? "foes" : "other foes";
+      return [sentence(`${when}: ${who} in the area suffer it too`)];
     }
     // "the next time it uses a skill: if a spell, it takes this skill's
     // slot for 20 seconds" (#469).
@@ -3035,7 +3037,13 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
     case "adrenaline-gain": {
       const magnitude = countedMagnitude(effect.strikes, effect.per, ranks);
       const strikes = `${shown(magnitude)} ${magnitude.current === 1 ? "strike" : "strikes"}`;
-      const gain = effect.recipient === "owner" ? "You gain" : "Gain";
+      // Mark of Fury's attacker gains them (#2259).
+      const gain =
+        effect.recipient === "owner"
+          ? "You gain"
+          : effect.recipient === "target"
+            ? "Target gains"
+            : "Gain";
       // "Make Your Time!"'s (#2222): "Gain 2 strikes of adrenaline for each ally in earshot".
       const counted = withPerText(
         `${gain} ${strikes} of adrenaline`,
@@ -3516,7 +3524,7 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
                       : // Verata's Sacrifice's (#1986).
                         each.kind === "transfer-conditions" &&
                           each.from === "target" &&
-                          each.count === Number.POSITIVE_INFINITY
+                          resolveMagnitudeAtRanks(each.count, ranks) === Number.POSITIVE_INFINITY
                         ? "transfer all their conditions to you"
                         : lowerFirst(description.text),
       );
@@ -3742,20 +3750,27 @@ export function neededWeaponText(weapon: AttackWeaponClass): string {
  * A `transfer-conditions` line (#1511): "Moves up to 3 of your conditions
  * to the target", or "Moves all of target's conditions to you; you are
  * healed for 22 for each", or "Moves all of your conditions with 180% of
- * their remaining durations to the target" (#1540).
+ * their remaining durations to the target" (#1540), "...to the target
+ * and foes adjacent to it" (#2259).
  */
 function transferText(effect: TransferConditionsEffect, ranks: ReadonlyMap<string, number>): Line {
-  const count = effect.count === Infinity ? "all" : `up to ${String(effect.count)}`;
+  const moving = describeMagnitude(effect.count, ranks);
+  const count = moving.current === Infinity ? "all" : `up to ${shown(moving)}`;
+  const copies =
+    effect.copyToFoesWithin === undefined
+      ? ""
+      : ` and foes ${AREA_AROUND_TARGET.get(effect.copyToFoesWithin) ?? `within ${String(effect.copyToFoesWithin)} of it`}`;
   const lasting =
     effect.durationMultiplier === 1
       ? ""
       : ` with ${String(Math.round(effect.durationMultiplier * 100))}% of their remaining durations`;
   const moves =
     effect.from === "caster"
-      ? `Moves ${count} of your conditions${lasting} to the target`
+      ? `Moves ${count} of your conditions${lasting} to the target${copies}`
       : `Moves ${count} of target's conditions${lasting} to you`;
   if (effect.healPerCondition === undefined) {
-    return { text: moves, magnitude: undefined };
+    // Plague Sending's "1...3" scales (#2259).
+    return { text: moves, magnitude: moving.atZero === undefined ? undefined : moving };
   }
   const magnitude = describeMagnitude(effect.healPerCondition, ranks);
   return {
