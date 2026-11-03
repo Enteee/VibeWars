@@ -174,7 +174,11 @@ leaves the other as it was. On **Skills**, the skill library shows the
 skills of the member you last clicked; drag one onto any member's slot
 to equip it there. A drop the member cannot take, a skill of another
 profession or one already on its bar, is marked with a dashed slot and
-the reason, and does nothing. Each member's skills show as icons; hover
+the reason, and does nothing. Drag a skill already on a member's bar
+onto any slot to move it there, trading places with what it lands on;
+hold **Shift** as you drop it on another member to copy it instead. A
+bar still holds one elite and no skill twice, so a drop that would break
+that is refused the same way. Each member's skills show as icons; hover
 one for its details, click it to find every copy on the team.
 A member's **✎** opens it in place, under its row: its professions, name,
 attribute ranks and equipment change right there, and a third tab,
