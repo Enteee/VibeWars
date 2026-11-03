@@ -102,7 +102,6 @@ const NO_BOT_USE = new Set([
   "mesmer.arcane-echo",
   "mesmer.channeling",
   "mesmer.echo",
-  "mesmer.energy-tap",
   "mesmer.illusion-of-haste",
   "mesmer.mantra-of-recovery",
   "necromancer.blood-ritual",
