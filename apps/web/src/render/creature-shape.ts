@@ -78,6 +78,7 @@ export const CREATURE_DRAWN_RADIUS: Readonly<Record<CreatureLook, number>> = {
   "flesh-golem": 11.5,
   "shambling-horror": 11.5,
   "jagged-horror": 11.5,
+  "bone-fiend": 11.5,
   spirit: 10,
   priest: 12,
   "guild-lord": 15,
@@ -211,6 +212,7 @@ export function creatureOrnament(
         },
       ];
     case "bone-horror":
+    case "bone-fiend":
     case "vampiric-horror":
     case "shambling-horror":
     case "jagged-horror":
