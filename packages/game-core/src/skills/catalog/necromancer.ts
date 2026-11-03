@@ -8,6 +8,7 @@ import {
 } from "../../distances.js";
 import type { Skill } from "../types.js";
 import {
+  BONE_FIEND,
   BONE_HORROR,
   BONE_MINION,
   FLESH_GOLEM,
@@ -384,6 +385,34 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     effects: [{ kind: "summon", creature: BONE_HORROR, count: 1 }],
   },
   {
+    id: "necromancer.animate-bone-fiend",
+    name: "Animate Bone Fiend",
+    gwId: 84,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse within cast range, as Animate Bone Horror's.
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: undefined },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse to animate a level 1...14...17 bone fiend.
+    // Bone fiends can attack at range."
+    effects: [{ kind: "summon", creature: BONE_FIEND, count: 1 }],
+  },
+  {
     id: "necromancer.animate-bone-minions",
     name: "Animate Bone Minions",
     gwId: 85,
@@ -729,7 +758,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
           {
             kind: "transfer-conditions",
             from: "target",
-            count: Number.POSITIVE_INFINITY,
+            count: { flat: Number.POSITIVE_INFINITY },
             durationMultiplier: 1,
           },
         ],
@@ -1868,7 +1897,9 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "Transfer 1...3...3 negative conditions and their remaining
     // durations from yourself to target touched foe."
-    effects: [{ kind: "transfer-conditions", from: "caster", count: 3, durationMultiplier: 1 }],
+    effects: [
+      { kind: "transfer-conditions", from: "caster", count: { flat: 3 }, durationMultiplier: 1 },
+    ],
   },
   /* ---------------------------------------------------------------------- */
   /* Necromancer Blood Magic staples (#1338)                                */
@@ -2089,6 +2120,47 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "necromancer.signet-of-sorrow",
+    name: "Signet of Sorrow",
+    gwId: 1363,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.soul-reaping",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe takes 15...63...75 damage. If target foe is near a
+    // corpse or has a dead pet, this skill recharges instantly."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "necromancer.soul-reaping", atZero: 15, atTwelve: 63 },
+        },
+        type: "typeless",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-near-corpse-or-dead-pet", radius: AREA_NEARBY },
+        effects: [{ kind: "recharge-faster", fraction: 1 }],
+      },
+    ],
+  },
+  {
     id: "necromancer.offering-of-blood",
     name: "Offering of Blood",
     gwId: 146,
@@ -2276,7 +2348,12 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     // durations from yourself to target foe": 180%, its rank-12 value.
     // The failure chance at Curses 4 or less is not modelled.
     effects: [
-      { kind: "transfer-conditions", from: "caster", count: Infinity, durationMultiplier: 1.8 },
+      {
+        kind: "transfer-conditions",
+        from: "caster",
+        count: { flat: Infinity },
+        durationMultiplier: 1.8,
+      },
     ],
   },
   /* ---------------------------------------------------------------------- */
@@ -4271,6 +4348,124 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
             armorPenetration: 0,
           },
         ],
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Condition movement (#2259), at their rank-12 values                    */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.plague-sending",
+    name: "Plague Sending",
+    gwId: 149,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 1 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Transfer 1...3 negative conditions and their remaining durations
+    // from yourself to target foe and all adjacent foes": 2.6, so 3 at 12,
+    // for 10% of the caster's Health, paid with none to move.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 10 },
+      {
+        kind: "transfer-conditions",
+        from: "caster",
+        count: { scaling: { attributeId: "necromancer.curses", atZero: 1, atTwelve: 2.6 } },
+        durationMultiplier: 1,
+        copyToFoesWithin: AREA_ADJACENT,
+      },
+    ],
+  },
+  {
+    id: "necromancer.mark-of-fury",
+    name: "Mark of Fury",
+    gwId: 1360,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5 seconds, allies hitting target foe gain 0...2 strikes of
+    // adrenaline. When this hex ends, that foe suffers from Cracked Armor
+    // for 1...15 seconds": the status's.
+    effects: [{ kind: "apply-status", statusId: "mark-of-fury", durationSeconds: { flat: 5 } }],
+  },
+  {
+    id: "necromancer.foul-feast",
+    name: "Foul Feast",
+    gwId: 2057,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.soul-reaping",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All conditions are transferred from target other ally to yourself.
+    // For each condition acquired in this way, you gain 0...45 Health and
+    // 2...4 Energy. This skill recharges twice as fast if you remove
+    // Disease from your target": 36 and 3.6. Disease is read before the
+    // transfer takes it.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "disease" },
+        effects: [{ kind: "recharge-faster", fraction: 0.5 }],
+      },
+      {
+        kind: "transfer-conditions",
+        from: "target",
+        count: { flat: Number.POSITIVE_INFINITY },
+        durationMultiplier: 1,
+        healPerCondition: {
+          scaling: { attributeId: "necromancer.soul-reaping", atZero: 0, atTwelve: 36 },
+        },
+      },
+      {
+        kind: "energy-gain",
+        amount: { scaling: { attributeId: "necromancer.soul-reaping", atZero: 2, atTwelve: 3.6 } },
+        perRemoved: "condition",
       },
     ],
   },

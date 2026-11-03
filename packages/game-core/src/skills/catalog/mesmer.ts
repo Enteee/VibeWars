@@ -3786,4 +3786,43 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Condition movement (#2259), at their rank-12 values                    */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.fevered-dreams",
+    name: "Fevered Dreams",
+    gwId: 55,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "For 5...15 seconds, whenever target foe suffers from a new
+    // condition, all foes in the area suffer from that condition as well":
+    // 13 s. The PvE Daze is not the PvP skill's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "fevered-dreams",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 13 },
+        },
+      },
+    ],
+  },
 ];

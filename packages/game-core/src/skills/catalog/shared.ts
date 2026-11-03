@@ -14,6 +14,12 @@ import type { CreatureTemplate, Magnitude, OnHitEffect } from "../types.js";
 export const RANGE_LONG = 520;
 
 /**
+ * A ranged creature's shot, world units per second: a wand's (house
+ * tuning). A spirit's and a Bone Fiend's.
+ */
+export const SPIRIT_SHOT_SPEED = 900;
+
+/**
  * What a minion does (#467): heel by its master, fight what its master
  * attacks within cast range of the master, else foes in earshot of
  * itself (#1118), back to heel past cast range. House numbers.
@@ -27,12 +33,27 @@ export const MINION_BEHAVIOUR: Behaviour = {
   heelUnits: AREA_IN_THE_AREA,
 };
 
+/** How often and how far a minion strikes, and its shot's speed if it shoots. */
+interface MinionBlow {
+  readonly attackIntervalSeconds: number;
+  readonly range: number;
+  readonly projectileSpeed: number | undefined;
+}
+
+/** A minion's blow (GWW "Bone Minion"): melee, every 3.10 s. */
+const MELEE_MINION_BLOW: MinionBlow = {
+  attackIntervalSeconds: 3.1,
+  range: RANGE_MELEE,
+  projectileSpeed: undefined,
+};
+
 /**
  * A minion of Death Magic (#1836): GW1's `level a...b`, its level at ranks 0
  * and 15, gives the level at 12 unrounded, a + 0.8 (b − a), so every rank
  * lands on GW1's table (#1899). Health is 80 + 20 per whole level, and armor
  * `armor.atZero` plus `armor.perLevel` for each level it gains.
- * Its blows scale on the unrounded level.
+ * Its blows scale on the unrounded level, and come as `blow` says: a melee
+ * one every 3.10 s unless it is a ranged minion.
  */
 function deathMinion(
   look: CreatureTemplate["look"],
@@ -40,8 +61,9 @@ function deathMinion(
   level: readonly [atZero: number, atFifteen: number],
   armor: { readonly atZero: number; readonly perLevel: number },
   damage: readonly [number, number],
-  damageType: "blunt" | "slashing",
+  damageType: "blunt" | "slashing" | "piercing",
   onHit: readonly OnHitEffect[],
+  blow: MinionBlow = MELEE_MINION_BLOW,
 ): Omit<CreatureTemplate, "replacedBy" | "leavesCorpses" | "onePerOwner"> {
   const [levelAtZero, levelAtFifteen] = level;
   const levelScaling = {
@@ -70,9 +92,7 @@ function deathMinion(
         level: { atZero: levelScaling.atZero, atTwelve: levelScaling.atTwelve },
       },
       damageType,
-      attackIntervalSeconds: 3.1,
-      range: RANGE_MELEE,
-      projectileSpeed: undefined,
+      ...blow,
       onHit,
     },
     behaviour: MINION_BEHAVIOUR,
@@ -118,6 +138,29 @@ export const BONE_HORROR: CreatureTemplate = {
     [12, 24],
     "blunt",
     [],
+  ),
+  replacedBy: undefined,
+  leavesCorpses: undefined,
+  onePerOwner: false,
+};
+
+/**
+ * Level 1...17, a ranged minion (#2250). Armor about 2.84 per level plus
+ * 3.1 (GWW "Bone Fiend"); a piercing shot every 1.86 s from half a
+ * longbow's range. 12-25 is GWW's 12-35 against armor 60 at Death Magic
+ * 12, its maximum a critical's, so ÷√2 (#1131). It wears the Bone Horror's look
+ * until its art.
+ */
+export const BONE_FIEND: CreatureTemplate = {
+  ...deathMinion(
+    "bone-horror",
+    "Bone Fiend",
+    [1, 17],
+    { atZero: 5.94, perLevel: 2.84 },
+    [12, 25],
+    "piercing",
+    [],
+    { attackIntervalSeconds: 1.86, range: RANGE_LONG / 2, projectileSpeed: SPIRIT_SHOT_SPEED },
   ),
   replacedBy: undefined,
   leavesCorpses: undefined,
@@ -265,9 +308,6 @@ export function spiritHealth(
     },
   };
 }
-
-/** A spirit's shot, world units per second: a wand's (house tuning). */
-export const SPIRIT_SHOT_SPEED = 900;
 
 /**
  * A binding ritual's attacking spirit (#1239), as Pain: it stands where

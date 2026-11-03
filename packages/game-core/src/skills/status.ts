@@ -1844,12 +1844,16 @@ export interface EndsAfterHits {
 
 /**
  * Contagion's spread (#887): the condition the bearer just gained, for the
- * duration it was put on the bearer, on every living foe of the bearer
- * within `radius` of it. It needs positions, so the simulation resolves it.
+ * duration it was put on the bearer, on every living one of `to` within
+ * `radius` of it, as the trigger's caster's. `"bearer-foes"`: the
+ * bearer's foes, Contagion's; `"bearer-allies"` (#2259): the bearer's
+ * allies, the bearer aside, Fevered Dreams' "all foes in the area" of the
+ * hexed foe. It needs positions, so the simulation resolves it.
  */
 export interface SpreadGainedConditionEffect {
   readonly kind: "spread-gained-condition";
   readonly radius: number;
+  readonly to: "bearer-foes" | "bearer-allies";
 }
 
 /**

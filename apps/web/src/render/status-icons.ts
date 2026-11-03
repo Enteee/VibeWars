@@ -498,6 +498,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "conjure-nightmare": icon("conjure-nightmare"),
   "images-of-remorse": icon("images-of-remorse"),
   "confusing-images": icon("confusing-images"),
+  // Condition movement (#2259).
+  "fevered-dreams": icon("fevered-dreams"),
+  "mark-of-fury": icon("mark-of-fury"),
+  "i-will-survive": icon("i-will-survive"),
+  "resilient-was-xiko": icon("resilient-was-xiko"),
   // Warrior conditions (#2096).
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
