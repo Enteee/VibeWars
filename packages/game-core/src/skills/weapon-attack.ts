@@ -537,6 +537,7 @@ export function skillBlow(skill: Skill, caster: Combatant, surroundings: Surroun
       caster,
       undefined,
       surroundings,
+      [],
     ),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
     damageType: rule?.damageType,

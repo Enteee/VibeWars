@@ -42,6 +42,7 @@ import {
   raisedMaxHealth,
   rankOf,
   statusRanks,
+  upkeepPips,
 } from "./tick.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange } from "../geometry.js";
@@ -556,6 +557,7 @@ function healAmount(
     caster,
     target,
     surroundings,
+    earlier,
   );
   // Imbue Health's (#2207): a share of the caster's Health, capped.
   if (effect.ofCasterHealth !== undefined) {
@@ -841,21 +843,28 @@ export function withPerCount(
   caster: Combatant,
   target: Combatant | undefined,
   surroundings: Surroundings,
+  earlier: readonly CombatEvent[],
 ): number {
   if (per === undefined) {
     return base;
   }
   const total =
-    base + resolveMagnitude(per.amount, caster) * countOf(per.count, caster, target, surroundings);
+    base +
+    resolveMagnitude(per.amount, caster) *
+      countOf(per.count, caster, target, surroundings, earlier);
   return per.max === undefined ? total : Math.min(total, resolveMagnitude(per.max, caster));
 }
 
-/** What `rule` counts as an effect of `caster`'s lands on `target` (#1760). */
+/**
+ * What `rule` counts as an effect of `caster`'s lands on `target` (#1760),
+ * after `earlier` in the same use.
+ */
 function countOf(
   rule: CountRule,
   caster: Combatant,
   target: Combatant | undefined,
   surroundings: Surroundings,
+  earlier: readonly CombatEvent[],
 ): number {
   switch (rule.kind) {
     case "statuses": {
@@ -898,6 +907,16 @@ function countOf(
       const bearer = rule.on === "caster" ? caster : target;
       return bearer === undefined ? 0 : Math.floor(bearer.energy);
     }
+    case "removed":
+      return rule.categories.reduce(
+        (count, category) => count + removedByAnyone(category, earlier),
+        0,
+      );
+    case "maintained-enchantments":
+      return -upkeepPips(
+        caster.id,
+        new Set([caster, ...[...surroundings.values()].map(({ combatant }) => combatant)]),
+      );
   }
 }
 
@@ -1701,6 +1720,7 @@ export function applyEffect(
           caster,
           target,
           context.surroundings,
+          earlier,
         ),
         lostBy,
         earlier,
@@ -1790,6 +1810,7 @@ export function applyEffect(
                 caster,
                 target,
                 context.surroundings,
+                earlier,
               ),
               lostBy,
               earlier,
@@ -1815,6 +1836,7 @@ export function applyEffect(
           caster,
           target,
           context.surroundings,
+          earlier,
         ) * adrenalineGainTimes(caster, effect);
       const gainer =
         effect.recipient === "owner" ? livingOwnerOf(caster, context.surroundings) : caster;
@@ -1834,10 +1856,22 @@ export function applyEffect(
     }
 
     case "energy-loss": {
-      if (target === undefined || target.dead) {
+      const loser = effect.on === "caster" ? caster : target;
+      if (loser === undefined || loser.dead) {
         return events;
       }
-      loseEnergy(target, resolveMagnitude(effect.amount, caster), events);
+      loseEnergy(
+        loser,
+        withPerCount(
+          resolveMagnitude(effect.amount, caster),
+          effect.per,
+          caster,
+          target,
+          context.surroundings,
+          earlier,
+        ),
+        events,
+      );
       return events;
     }
 
@@ -1881,7 +1915,7 @@ export function applyEffect(
         const amount = resolveMagnitude(effect.amount, caster);
         loseHealth(
           target,
-          withPerCount(amount, effect.per, caster, target, context.surroundings),
+          withPerCount(amount, effect.per, caster, target, context.surroundings, earlier),
           "health-loss",
           events,
         );
@@ -1955,6 +1989,7 @@ export function applyEffect(
         caster,
         target,
         context.surroundings,
+        earlier,
       );
       const base =
         getStatusDefinition(effect.statusId).category === "weapon-spell"
@@ -2763,12 +2798,13 @@ export function stateHolds(
       return condition.conditions.every((each) =>
         stateHolds(each, caster, target, surroundings, firing),
       );
+    // A state is read before the use, when it has removed nothing.
     case "count-at-least":
-      return countOf(condition.count, caster, target, surroundings) >= condition.atLeast;
+      return countOf(condition.count, caster, target, surroundings, []) >= condition.atLeast;
     case "count-at-most":
       return (
-        countOf(condition.count, caster, target, surroundings) <=
-        countOf(condition.than, caster, target, surroundings)
+        countOf(condition.count, caster, target, surroundings, []) <=
+        countOf(condition.than, caster, target, surroundings, [])
       );
     case "target-casting-or-attacking": {
       const cast = target.cast.activeCast;
@@ -2838,7 +2874,7 @@ function removeCount(
   }
   // Signet of Twilight's one for each hex (#2247), counted before it removes.
   if (effect.perCount !== undefined) {
-    return countOf(effect.perCount, caster, target, surroundings);
+    return countOf(effect.perCount, caster, target, surroundings, earlier);
   }
   const count =
     effect.count === "all"

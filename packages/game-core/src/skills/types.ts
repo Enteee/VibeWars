@@ -171,7 +171,20 @@ export type CountRule =
    * Whole points of Energy, rounded down (#1984): Ether Prodigy's "lose 2
    * Health for each point of Energy you have".
    */
-  | { readonly kind: "energy"; readonly on: "target" | "caster" };
+  | { readonly kind: "energy"; readonly on: "target" | "caster" }
+  /**
+   * Statuses of `categories` an earlier effect of this same use took off
+   * anyone (#2260), inside a `splash` or not: Purge Signet's "you lose 10
+   * Energy for each hex and condition removed". Read before the use, as a
+   * state is, it is 0.
+   */
+  | { readonly kind: "removed"; readonly categories: readonly StatusCategory[] }
+  /**
+   * Enchantments the caster maintains (#2260), on anyone living, as its
+   * upkeep counts them: Blessed Signet's "for each enchantment you are
+   * maintaining". A timed one is not maintained.
+   */
+  | { readonly kind: "maintained-enchantments" };
 
 /**
  * "+`amount` for each" (#1760): the effect's own amount plus `amount`
@@ -348,10 +361,17 @@ export interface AdrenalineGainEffect {
   readonly recipient?: "owner";
 }
 
-/** The effect's target loses up to `amount` energy (never below 0). */
+/**
+ * The effect's target, or with `on: "caster"` its caster (#2260), loses
+ * up to `amount` energy (never below 0). `per`: more for each of a count,
+ * as Purge Signet's "you lose 10 Energy for each hex and condition
+ * removed".
+ */
 export interface EnergyLossEffect {
   readonly kind: "energy-loss";
   readonly amount: Magnitude;
+  readonly on?: "caster";
+  readonly per?: PerCount;
 }
 
 /**

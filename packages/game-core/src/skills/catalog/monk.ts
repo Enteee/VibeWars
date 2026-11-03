@@ -3661,4 +3661,85 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Removed and maintained counts (#2260)                                   */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.purge-signet",
+    name: "Purge Signet",
+    gwId: 295,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: undefined,
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove all hexes and conditions from target ally. You lose 10 Energy
+    // for each hex and each condition removed": what it cannot pay, it
+    // does not.
+    effects: [
+      { kind: "remove-status", category: "hex", count: "all" },
+      { kind: "remove-status", category: "condition", count: "all" },
+      {
+        kind: "energy-loss",
+        amount: { flat: 0 },
+        on: "caster",
+        per: {
+          count: { kind: "removed", categories: ["hex", "condition"] },
+          amount: { flat: 10 },
+          max: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.blessed-signet",
+    name: "Blessed Signet",
+    gwId: 297,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For each enchantment you are maintaining, you gain 3 Energy. You
+    // cannot gain more than 3...24 Energy in this way": 19.8 at rank 12.
+    effects: [
+      {
+        kind: "energy-gain",
+        amount: { flat: 0 },
+        per: {
+          count: { kind: "maintained-enchantments" },
+          amount: { flat: 3 },
+          max: { scaling: { attributeId: "monk.smiting-prayers", atZero: 3, atTwelve: 19.8 } },
+        },
+      },
+    ],
+  },
 ];
