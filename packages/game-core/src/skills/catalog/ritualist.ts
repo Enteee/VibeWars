@@ -3187,6 +3187,57 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Removed and maintained counts (#2260)                                   */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ritualist.cautery-signet",
+    name: "Cautery Signet",
+    gwId: 1588,
+    type: "signet",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: undefined,
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All party members lose all conditions. You are set on Fire for 1
+    // second for each condition removed in this way": the caster's own
+    // count, however far the party.
+    effects: [
+      { kind: "remove-status", category: "condition", count: "all" },
+      {
+        kind: "splash",
+        hits: "party",
+        radius: Number.POSITIVE_INFINITY,
+        maxTargets: undefined,
+        effects: [{ kind: "remove-status", category: "condition", count: "all" }],
+      },
+      {
+        kind: "apply-status",
+        statusId: "burning",
+        durationSeconds: { flat: 0 },
+        on: "caster",
+        per: {
+          count: { kind: "removed", categories: ["condition"] },
+          amount: { flat: 1 },
+          max: undefined,
+        },
+      },
+    ],
+  },
 ];
 
 /**

@@ -300,6 +300,9 @@ const NO_BOT_USE = new Set([
   // Untargetable only while casting, then every skill disabled (#2189).
   "monk.spell-shield",
   "ranger.melandrus-resilience",
+  // Energy only for each enchantment it maintains (#2260): no rule the bot
+  // has counts its upkeep.
+  "monk.blessed-signet",
   // Pips for each condition (and hex) on the bearer (#2259), as Melandru's
   // Resilience.
   "warrior.i-will-survive",
