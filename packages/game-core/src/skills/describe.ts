@@ -2918,7 +2918,11 @@ function countEach(count: CountRule, onTarget: string): string {
       ? `of your recharging ${getAttribute(count.attributeId)?.name ?? count.attributeId} skills`
       : count.kind === "energy"
         ? `point of Energy ${count.on === "caster" ? "you have" : "they have"}`
-        : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+        : count.kind === "removed"
+          ? `${count.categories.join(" or ")} removed`
+          : count.kind === "maintained-enchantments"
+            ? "enchantment you are maintaining"
+            : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
 }
 
 /** All of what `count` counts, as a condition names it (#2247): "target's hexes", "your enchantments". */
@@ -2938,9 +2942,13 @@ function perCountNoun(count: CountRule): string {
       ? "recharging skill"
       : count.kind === "energy"
         ? "point of Energy"
-        : count.kind === "foes-within"
-          ? "foe"
-          : "ally";
+        : count.kind === "removed"
+          ? `removed ${count.categories.join(" or ")}`
+          : count.kind === "maintained-enchantments"
+            ? "maintained enchantment"
+            : count.kind === "foes-within"
+              ? "foe"
+              : "ally";
 }
 
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
@@ -3091,7 +3099,15 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
     }
     case "energy-loss": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Target loses ${shown(magnitude)} energy`, magnitude };
+      const who = effect.on === "caster" ? "You lose" : "Target loses";
+      return {
+        text: withPerText(`${who} ${shown(magnitude)} energy`, effect.amount, effect.per, ranks, {
+          alone: who,
+          unit: " energy",
+          onTarget: "on them",
+        }),
+        magnitude,
+      };
     }
     case "energy-steal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
