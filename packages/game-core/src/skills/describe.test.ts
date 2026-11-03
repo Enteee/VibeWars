@@ -646,7 +646,7 @@ describe("describeSkill", () => {
       const rule = blowRuleOf(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         lines(entry.effects) +
-          (entry.cost?.kind === "adrenaline" && entry.cost.losesAll === true ? 1 : 0) +
+          (entry.losesAllAdrenaline === true ? 1 : 0) +
           (rule?.chain === undefined ? 0 : 1) +
           (rule?.bonusDamage === undefined && rule?.weaponDamage !== 0 ? 0 : 1) +
           (rule === undefined || rule.unblockable === false ? 0 : 1) +

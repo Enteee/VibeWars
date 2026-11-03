@@ -58,7 +58,8 @@ export type MonkStatusId =
   | "shield-of-absorption"
   | "divine-intervention"
   | "healing-hands"
-  | "shield-of-judgment";
+  | "shield-of-judgment"
+  | "zealots-fire";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -658,6 +659,45 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         ],
         target: "source-on-offender",
         skillId: "monk.shield-of-judgment",
+      },
+    ],
+  }),
+  // "...whenever you use a skill that targets an ally, all foes adjacent
+  // to that target are struck for 5...35 fire damage and you lose 1
+  // Energy" (#2282): a skill on itself too; the Energy goes with no foe near.
+  "zealots-fire": define("zealots-fire", "Zealot's Fire", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { targetsAlly: true },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 5, atTwelve: 29 },
+                },
+                type: "fire",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+        target: "skill-target",
+        skillId: "monk.zealots-fire",
+      },
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { targetsAlly: true },
+        effects: [{ kind: "energy-loss", amount: { flat: 1 } }],
+        target: "source",
+        skillId: "monk.zealots-fire",
       },
     ],
   }),

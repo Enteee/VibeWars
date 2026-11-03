@@ -1,4 +1,4 @@
-import { AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
+import { AREA_ADJACENT, AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
 import type { DamageType } from "../../equipment/types.js";
 import type { StatusDefinition } from "../status.js";
 import { KNOCKDOWN_SECONDS, type PerCount } from "../types.js";
@@ -67,6 +67,7 @@ export type ElementalistStatusId =
   | "sliver-armor"
   // Elementalist staples (#2166).
   | "teinais-prison"
+  | "glimmering-mark"
   // Staples (#2278).
   | "lightning-surge"
   | "ward-against-harm";
@@ -81,6 +82,47 @@ const MIST_FORM_HEAL = {
 
 export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, StatusDefinition>> = {
   // "...move 66% slower for 2...5...6 seconds" (#918).
+  // "...target foe and all foes adjacent to your target take 5...25 damage
+  // each second. Foes using attack skills are Blinded for 3 seconds. This
+  // hex ends if you use a skill that targets this foe" (#2282): lightning,
+  // Air Magic's, and the Blindness flat.
+  "glimmering-mark": define("glimmering-mark", "Glimmering Mark", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.air-magic",
+    endsWhenSourceTargets: true,
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          maxTargets: undefined,
+          includesCentre: true,
+          effects: [
+            {
+              kind: "damage",
+              amount: {
+                scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 21 },
+              },
+              type: "lightning",
+              armorPenetration: 0,
+            },
+          ],
+        },
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          maxTargets: undefined,
+          includesCentre: true,
+          onlyUsing: "attack",
+          effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: { flat: 3 } }],
+        },
+      ],
+      skillId: "elementalist.glimmering-mark",
+    },
+  }),
   "shard-storm": define("shard-storm", "Shard Storm", "hex", {
     profession: "elementalist",
     attribute: "elementalist.water-magic",

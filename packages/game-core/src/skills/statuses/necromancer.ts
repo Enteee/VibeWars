@@ -85,6 +85,7 @@ export type NecromancerStatusId =
   // Condition movement (#2259).
   | "mark-of-fury"
   | "masochism"
+  | "spoil-victor"
   // Staples (#2278).
   | "mark-of-subversion";
 
@@ -793,6 +794,28 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         skillId: "necromancer.masochism",
       },
     ],
+  }),
+  // "...whenever target foe attacks or casts a spell on a creature with
+  // less Health that foe loses 15...75 Health" (#2282): its Health against
+  // the victim's as the attack or the cast began.
+  "spoil-victor": define("spoil-victor", "Spoil Victor", "hex", {
+    profession: "necromancer",
+    attribute: "necromancer.blood-magic",
+    triggers: (["bearer-attacks", "bearer-casts-spell"] as const).map((on): StatusTrigger => ({
+      on,
+      victimHasLessHealth: true,
+      effects: [
+        {
+          kind: "lose-health",
+          amount: {
+            scaling: { attributeId: "necromancer.blood-magic", atZero: 15, atTwelve: 63 },
+          },
+          recipient: "target",
+        },
+      ],
+      target: "bearer",
+      skillId: "necromancer.spoil-victor",
+    })),
   }),
   // Staples (#2278). As Shame, for "a spell that targets an ally of that
   // foe", itself included: "you steal up to 10...92 Health from that foe".

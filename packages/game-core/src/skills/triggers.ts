@@ -78,6 +78,20 @@ export interface TriggerContext {
    * `undefined` on every other event.
    */
   readonly usedSkill: SlotSkill | undefined;
+  /**
+   * Whom the bearer's skill, attack or spell was aimed at, on
+   * `bearer-uses-skill`, `bearer-casts-spell` and `bearer-attacks`
+   * (#2282), and whether it had less Health than the bearer as the attack
+   * or the cast began: Zealot's Fire's ally, Spoil Victor's victim.
+   * Absent on every other event, and for a skill with no target.
+   */
+  readonly aimedAt?: AimedAt;
+}
+
+/** `TriggerContext.aimedAt` (#2282). */
+export interface AimedAt {
+  readonly id: string;
+  readonly hadLessHealth: boolean;
 }
 
 /**
@@ -89,7 +103,8 @@ export interface TriggerContext {
  * does not answer that use (#999): Song of Restoration waits for the
  * chanter's next skill. An attack trigger bound to a weapon (#1354)
  * answers only an attack with that weapon in the bearer's main hand.
- * A use trigger bound to a kind of skill (#1437) answers only that kind.
+ * A use trigger bound to a kind of skill (#1437) answers only that kind,
+ * one bound to a weaker victim (#2282) only an aim at one.
  *
  * Nothing here fires a trigger: damage from one is never an event that
  * answers another, so triggers cannot recurse.
@@ -108,11 +123,25 @@ export function fireTriggers(
         (event !== "bearer-attacks" ||
           triggerAnswersWeapon(trigger, bearer.equipment.mainHand.weapon)) &&
         ((event !== "bearer-uses-skill" && event !== "bearer-casts-spell") ||
-          answersUsedSkill(trigger, context.usedSkill)),
+          (answersUsedSkill(trigger, context.usedSkill) && answersAim(trigger, bearer, context))) &&
+        (trigger.victimHasLessHealth === undefined || context.aimedAt?.hadLessHealth === true),
     )
     .flatMap(({ statusId, sourceId, trigger }) =>
-      fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
+      fire(trigger, statusId, sourceId, bearer, context.aimedAt?.id, undefined, context),
     );
+}
+
+/**
+ * Whether a use trigger bound to a skill on an ally (#2282) answers the
+ * aim: one at the bearer or at an ally of its, a dead one too. Any other trigger
+ * answers any aim, and none.
+ */
+function answersAim(trigger: StatusTrigger, bearer: Combatant, context: TriggerContext): boolean {
+  if (trigger.usedSkill?.targetsAlly === undefined) {
+    return true;
+  }
+  const aimed = context.aimedAt === undefined ? undefined : context.sourceOf(context.aimedAt.id);
+  return aimed?.team === bearer.team;
 }
 
 /**
@@ -318,8 +347,9 @@ export function fireDeathTriggers(
  * off, or (#1316) the creature it created, or (#1403) the source on
  * `otherId`, who put the gained hex or enchantment on the bearer, or (#1789)
  * the source on `otherId`, the offender, or (#1913) the source on
- * `otherId`, the healer, only a foe of its own. `undefined` when one of them is
- * gone, or an offender's bearer is dead: then it fires nothing.
+ * `otherId`, the healer, only a foe of its own, or (#2282) the source on
+ * `otherId`, whom the bearer's skill was used on. `undefined` when one of
+ * them is gone, or an offender's bearer is dead: then it fires nothing.
  */
 function parties(
   trigger: StatusTrigger,
@@ -347,6 +377,8 @@ function parties(
         : { caster: source, target: other };
     case "hexed-foe":
       return other === undefined || other.dead ? undefined : { caster: bearer, target: other };
+    case "skill-target":
+      return other === undefined ? undefined : { caster: source, target: other };
   }
 }
 

@@ -75,6 +75,7 @@ import {
   type RemoveStatusEffect,
   type ResurrectEffect,
   type SkillEffect,
+  type SkillType,
   type SplashEffect,
   type StateCondition,
   type Surroundings,
@@ -1452,10 +1453,11 @@ function measuredFromCaster(hits: SplashEffect["hits"]): boolean {
 
 /**
  * Whom a splash reaches round its centre, nearest first, past its
- * `maxTargets` none; its target is never one of them. Your own spirits are
- * within earshot of you, not of the target (#1777); Return's adjacent foes
- * are around its caster (#1826). The resolution reads it too, for the
- * minions a nested `take-control` takes (#2092).
+ * `maxTargets` none; its target is one of them only if it `includesCentre`
+ * (#2282). Your own spirits are within earshot of you, not of the target
+ * (#1777); Return's adjacent foes are around its caster (#1826). The
+ * resolution reads it too, for the minions a nested `take-control` takes
+ * (#2092).
  */
 function splashTargets(
   effect: SplashEffect,
@@ -1470,17 +1472,24 @@ function splashTargets(
   const reached = [...context.surroundings.values()].filter(
     ({ combatant, position, creature }) =>
       !combatant.dead &&
-      combatant.id !== target.id &&
+      (combatant.id !== target.id || effect.includesCentre === true) &&
       splashReaches(effect.hits, caster, combatant, creature) &&
       distance(position, at) <= effect.radius &&
       (effect.onlyBearing === undefined ||
-        combatant.statuses.countByCategory(effect.onlyBearing) > 0),
+        combatant.statuses.countByCategory(effect.onlyBearing) > 0) &&
+      (effect.onlyUsing === undefined || usingSkillOf(combatant, effect.onlyUsing)),
   );
   const maxTargets =
     effect.maxTargets === undefined || typeof effect.maxTargets === "number"
       ? effect.maxTargets
       : resolveMagnitude(effect.maxTargets, caster);
   return { centre, reached: nearestFirst(reached, at).slice(0, maxTargets) };
+}
+
+/** Whether `combatant` is activating a skill of `type` (#2282). */
+function usingSkillOf(combatant: Combatant, type: SkillType): boolean {
+  const cast = combatant.cast.activeCast;
+  return cast !== undefined && getSkill(cast.skillId)?.type === type;
 }
 
 /**
