@@ -22,25 +22,6 @@ export function filterLog(lines) {
   return lines.filter((line) => INTERESTING.some((re) => re.test(line)));
 }
 
-const ALLOCATED =
-  /^(\S+) .* session \S+: realm <[^>]*> user <([^>]*)>: incoming packet ALLOCATE processed, success/;
-
-/**
- * The timestamp of each user's last successful allocation.
- *
- * @param {readonly string[]} lines
- * @returns {Map<string, string>}
- */
-export function lastAllocations(lines) {
-  /** @type {Map<string, string>} */
-  const last = new Map();
-  for (const line of lines) {
-    const m = ALLOCATED.exec(line);
-    if (m !== null) last.set(/** @type {string} */ (m[2]), /** @type {string} */ (m[1]));
-  }
-  return last;
-}
-
 // C0 but tab, DEL and C1: a STUN client controls the USERNAME and realm
 // coturn logs, and an escape in one would reach the operator's terminal.
 // eslint-disable-next-line no-control-regex

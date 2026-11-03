@@ -11,10 +11,10 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { unreachableV4 } from "./check.mjs";
-import { filterLog, lastAllocations, printable, tailLines } from "./log.mjs";
+import { filterLog, printable, tailLines } from "./log.mjs";
 import { formatBytes, parseProcIo, parsePrometheus, rate } from "./metrics.mjs";
 import { decode, encode, errorCode } from "./stun.mjs";
-import { parseUserList } from "./users.mjs";
+import { parseSecretList } from "./users.mjs";
 
 const LOG = [
   "2026-10-27T20:33:19.094+0100 INFO prometheus collector started successfully",
@@ -32,15 +32,6 @@ const LOG = [
 describe("filterLog", () => {
   it("keeps session starts and ends, usage, auth failures and errors", () => {
     expect(filterLog(LOG)).toEqual([LOG[1], LOG[4], LOG[5], LOG[6], LOG[7]]);
-  });
-});
-
-describe("lastAllocations", () => {
-  it("is each user's latest successful ALLOCATE", () => {
-    expect(Object.fromEntries(lastAllocations(LOG))).toEqual({
-      alice: "2026-10-27T20:37:00.000+0100",
-      bob: "2026-10-27T20:36:10.000+0100",
-    });
   });
 });
 
@@ -62,7 +53,7 @@ describe("tailLines", () => {
       expect(filterLog(lines)).toEqual([
         "2026-10-27T20:35:53.247+0100 ERROR session 006000000000000001: check_stun_auth: user ev]52;c;cHduZWQ=il2J credentials are incorrect",
       ]);
-      expect([...lastAllocations(lines).keys()]).toEqual(["m]52;c;cHduZWQ=al"]);
+      expect(lines[1]).toContain("user <m]52;c;cHduZWQ=al>");
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -110,11 +101,11 @@ describe("throughput", () => {
   });
 });
 
-describe("parseUserList", () => {
-  it("takes this realm's users from turnadmin -l", () => {
-    const out =
-      "2026-10-27T20:33:19.080+0100 INFO SQLite connection was closed.\nbob[t.local]\nalice[t.local]\neve[other]\n";
-    expect(parseUserList(out, "t.local")).toEqual(["alice", "bob"]);
+describe("parseSecretList", () => {
+  it("takes this realm's secrets from turnadmin -S", () => {
+    const [a, b, c] = ["a", "b", "c"].map((x) => x.repeat(64));
+    const out = `2026-10-27T20:33:19.080+0100 INFO SQLite connection was closed.\n${String(b)}[t.local]\n${String(a)}[t.local]\n${String(c)}[other]\n`;
+    expect(parseSecretList(out, "t.local")).toEqual([b, a]);
   });
 });
 

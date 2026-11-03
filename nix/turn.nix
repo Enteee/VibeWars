@@ -196,6 +196,8 @@ in
     (lib.mkIf cfg.enable {
       processes.turn.exec = ''
         set -euo pipefail
+        # What this writes is 0600 (#2240), whatever the caller's umask.
+        umask 077
         ${preamble}
         mkdir -p ${lib.escapeShellArg cfg.stateDir}
         chmod 700 ${lib.escapeShellArg cfg.stateDir}
@@ -210,7 +212,7 @@ in
           exec = command "user";
         };
         turn-link = {
-          description = "Print a TURN user's invite link (sets a new password)";
+          description = "Print a TURN user's invite link (sets a new secret)";
           exec = command "link";
         };
         turn-check = {

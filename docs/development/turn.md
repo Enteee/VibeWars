@@ -45,11 +45,11 @@ In `devenv.local.nix`:
   ports, the relay range, quotas, `maxBps` and `stateDir`.
 - **Starting it.** `devenv up` starts `processes.turn`.
 - **State.** The server keeps its state in `.devenv/state/turn/`:
-  - `turndb`, the users;
+  - `turndb`, each friend's secret;
   - `turn.log`;
   - `turnserver.conf`, generated on every start;
   - `turn.nft`, the firewall rules below, generated on every start;
-  - `health.secret`.
+  - `shared/`, one `<name>.secret` per friend, and `turn-check`'s own.
 
 The server is configured to be safe on the open internet:
 
@@ -117,22 +117,42 @@ store.
 turn-user add alice
 ```
 
-This prints Alice's password and her invite link, once. Neither is stored:
-the user database keeps only a key derived from the password. Send her the
-link. When she opens it, the game asks whether to use your relay.
+A name is up to 32 lowercase letters, digits, `_` or `-`, and it names a
+file, so nothing else is taken. `health` is turn-check's own and refused.
 
-| Command                  | What it does                                                                                                                   |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `turn-link alice`        | Gives Alice a new link. It sets a new password, so her old link stops working.                                                 |
-| `turn-user list`         | Lists everyone.                                                                                                                |
-| `turn-user remove alice` | Removes Alice. Her new allocations are refused at once. A session she has open runs on until it ends: coturn has no kick here. |
+This gives Alice a secret of her own (coturn's REST scheme, #2240) and prints
+her invite link, which carries it. Send her the link. When she opens it, the
+game asks whether to use your relay. If she says Use, the game mints a fresh
+login from her secret for every join, and by default her lobbies offer your
+relay to their players too, through logins that expire after 2 h (ADR-0049).
+She can untick that in Options.
 
-Each friend has their own credential, so removing one leaves the others
-alone. Links point at the game's latest `main` by default. Use
-`--base <url>` for another page, such as a release:
+To use your own relay, add yourself (`turn-user add me`) and open the link.
+
+| Command                  | What it does                                                                                                                                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `turn-link alice`        | Gives Alice a new secret and prints her new link. Her old link, and every lobby offer made from it, stops working for new allocations.                                                                        |
+| `turn-user list`         | Lists everyone. It never shows a secret.                                                                                                                                                                      |
+| `turn-user remove alice` | Removes Alice's secret. At once and without a restart, no login from it works, hers or her lobbies', whatever expiry it was minted with. A relay already open runs on until it ends: coturn has no kick here. |
+
+Each friend has their own secret, so removing one leaves the others alone.
+The secrets are in coturn's user database, which coturn reads on each
+request, and in `<stateDir>/shared/<name>.secret` (mode 0600), since
+turnadmin keeps no names. A secret in the database that no file holds, left by a
+remove or link that failed halfway, is revoked by the next `turn-user` or
+`turn-link`. coturn cannot also serve static
+username/password users once secrets are on, so there are none. Links
+point at the game's latest `main` by default. Use `--base <url>` for
+another page, such as a release:
 `--base https://enteee.github.io/VibeWars/`.
 
-turnadmin takes the password only on its command line, so while it runs,
+Whoever holds a link holds the secret, and so do the lobbies they share it
+with, through the logins it mints. Give links only to people you trust.
+Each minted username is new, so `userQuota` bounds one login only:
+`totalQuota`, `maxBps` and `bpsCapacity` are the real bound on what a
+shared relay can cost you. Set `bpsCapacity` if bandwidth matters.
+
+turnadmin takes the secret only on its command line, so while it runs,
 for a moment, any other user on the host can read it in `/proc`. Run the
 relay on a host you do not share.
 
@@ -144,9 +164,9 @@ it works from cron:
 - **process:** the server is running (its pid file names a live process).
 - **STUN binding:** the server answers a Binding request.
 - **allocation:** a real authenticated allocation succeeds, then is released.
-  It allocates as `vibewars-health`, a user `turn-check` creates the first
-  time. Its password is in `health.secret` (mode 0600), and `turn-user list`
-  does not show it.
+  It allocates with a one-minute login minted from `health`'s
+  secret, which `turn-check` creates the first time, in
+  `shared/health.secret`. `turn-user list` does not show it.
 - **permissions:** on that allocation, a permission toward `stunProbe`'s
   address and toward the host's own public address is granted, and one toward
   a private address is refused. No packet is sent to them.

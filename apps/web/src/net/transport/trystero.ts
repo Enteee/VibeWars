@@ -25,7 +25,7 @@ import type { DataPayload, MessageAction } from "trystero/nostr";
 
 import { HandlerSets } from "./handler-sets.js";
 import { oversizedCheck } from "./oversized.js";
-import { loadTurnConfig, type TurnConfig } from "./turn-config.js";
+import { loadOwnTurnConfig, type TurnConfig } from "./turn-config.js";
 import {
   APP_ID,
   MAX_RECEIVE_BYTES,
@@ -52,7 +52,7 @@ const TRYSTERO: TrysteroDeps = {
   joinRoom,
   selfId,
   relaySockets: getRelaySockets as TrysteroDeps["relaySockets"],
-  turnConfig: () => loadTurnConfig(),
+  turnConfig: () => loadOwnTurnConfig(),
 };
 
 /** Trystero's `onJoinError` text when SDP went both ways and no connection came of it. */

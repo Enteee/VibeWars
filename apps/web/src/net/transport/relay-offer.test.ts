@@ -215,6 +215,50 @@ describe("a host's relay offers, heard by a joiner (#2091)", () => {
     expect(offers.latest()).toBeUndefined();
   });
 
+  it("never puts the secret in an offer, sealed or before it is (#2240)", async () => {
+    const linked: SharedRelay = { urls: SHARED.urls, secret: "cd".repeat(32) };
+    const plains: string[] = [];
+    const encrypt = crypto.subtle.encrypt.bind(crypto.subtle);
+    vi.spyOn(crypto.subtle, "encrypt").mockImplementation((algorithm, key, data) => {
+      plains.push(new TextDecoder().decode(data));
+      return encrypt(algorithm, key, data);
+    });
+    const relay = fakeRelay();
+    const sent: string[] = [];
+    const recording: OpenRelaySocket = (url, handlers) => {
+      const socket = relay.openSocket(url, handlers);
+      return {
+        send(data) {
+          sent.push(data);
+          socket.send(data);
+        },
+        close() {
+          socket.close();
+        },
+      };
+    };
+    const share = shareRelay(
+      ROOM,
+      linked,
+      deps(recording, () => NOW),
+    );
+    share.follow(true);
+    await settle();
+    share.close();
+
+    expect(plains).toHaveLength(1);
+    expect(sent.some((data) => data.startsWith('["EVENT"'))).toBe(true);
+    for (const bytes of [...plains, ...sent]) {
+      expect(bytes).not.toContain(linked.secret);
+    }
+    // What is sealed is the minted login, and only that.
+    expect(Object.keys(JSON.parse(plains[0] ?? "{}") as object)).toEqual([
+      "urls",
+      "username",
+      "credential",
+    ]);
+  });
+
   it("is heard by no joiner of another lobby", async () => {
     const relay = fakeRelay();
     const other = watchRelayOffers(

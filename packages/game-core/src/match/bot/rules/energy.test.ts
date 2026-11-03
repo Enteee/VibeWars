@@ -45,3 +45,32 @@ describe("play-build gains its own Energy (#2132)", () => {
     expect(askBot(up, "m").useSkillId).not.toBe(LYSSA);
   });
 });
+
+describe("play-build drains a foe's Energy for its own (#2231)", () => {
+  const DRAIN = "mesmer.energy-drain";
+
+  /** A mesmer `m` with Energy Drain at `energy`, a foe with `foeEnergy`. */
+  function drainer(energy: number, foeEnergy: number, foeX = 300): MatchSimulation {
+    const sim = match([
+      fighter("m", 0, ELEMENTALIST, vec2(0, 400), { skillBar: [DRAIN] }),
+      fighter("foe", 1, WARRIOR, vec2(foeX, 400), { behaviour: undefined }),
+    ]);
+    const self = sim.get("m");
+    const foe = sim.get("foe");
+    if (self === undefined || foe === undefined) throw new Error("no m or foe");
+    self.combatant.energy = energy;
+    foe.combatant.energy = foeEnergy;
+    return sim;
+  }
+
+  it("names Energy as its use", () => {
+    expect(uses(DRAIN)).toEqual(["energy"]);
+  });
+
+  it("below half its Energy, at a foe in reach that has some to lose", () => {
+    expect(askBot(drainer(10, 20), "m")).toMatchObject({ useSkillId: DRAIN, targetId: "foe" });
+    expect(askBot(drainer(40, 20), "m").useSkillId).toBeUndefined();
+    expect(askBot(drainer(10, 0), "m").useSkillId).toBeUndefined();
+    expect(askBot(drainer(10, 20, 1200), "m").useSkillId).not.toBe(DRAIN);
+  });
+});

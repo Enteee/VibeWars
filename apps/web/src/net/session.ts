@@ -60,7 +60,7 @@ import {
 } from "./transport/index.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
-import { loadTurnConfig } from "./transport/turn-config.js";
+import { loadRelay } from "./transport/turn-config.js";
 
 /**
  * The glue between the app shell and a peer-to-peer lobby (#15, #403):
@@ -459,7 +459,7 @@ function natChecked(): Promise<boolean> {
  * the player's own (#972), which makes them reachable, else `checkTransportNat`.
  */
 function natHint(): Promise<boolean> {
-  return loadTurnConfig() === undefined ? natChecked() : Promise.resolve(false);
+  return loadRelay() === undefined ? natChecked() : Promise.resolve(false);
 }
 
 /** One player's place in the Random Arena queue (#880). */
@@ -580,7 +580,7 @@ export function enterQueue(
         (error.reason === "not-admitted" || error.reason === "ticket-used")
       ) {
         finish();
-        events.onRefused(joinFailureNotice(error, location, loadTurnConfig() !== undefined));
+        events.onRefused(joinFailureNotice(error, location, loadRelay() !== undefined));
         return;
       }
       // A host that never answered is skipped next time, as a no-show is.

@@ -1,26 +1,24 @@
 import {
   encodeTurnFragment,
-  forgetSharedRelay,
-  forgetTurnConfig,
+  forgetRelay,
+  loadRelay,
   loadRelaySharing,
-  loadSharedRelay,
-  loadTurnConfig,
   relayHosts,
+  saveRelay,
   saveRelaySharing,
-  saveSharedRelay,
-  saveTurnConfig,
-  validateSharedRelay,
-  validateTurnConfig,
-  type TurnConfig,
+  validateRelay,
+  type Relay,
+  type SharedRelay,
 } from "../net/transport/turn-config.js";
 import { button, h, shareLine, toast } from "./kit.js";
 import type { OptionsSection } from "./options-sections.js";
 
 /**
- * The Relay (TURN) section of Options (#972): the relay the player brought,
- * entered by hand or from an invite link, and the link to pass it on; and
- * the shared relay its lobbies may be offered (#2091). Credential and
- * secret are password fields; the rest of the app shows only the host.
+ * The Relay (TURN) section of Options (#972, #2240): the one relay the
+ * player keeps, from a friend's invite link or entered by hand, whether
+ * their lobbies share it, and the link to pass it on. A link's secret is
+ * never shown; a hand-entered credential is a password field; the rest
+ * of the app shows only the host.
  */
 export const relaySection: OptionsSection = {
   id: "relay",
@@ -29,19 +27,28 @@ export const relaySection: OptionsSection = {
 };
 
 /** What Options says of a relay; also how the lobby and queue screens name it. */
-export function relayLabel(config: TurnConfig | undefined): string {
-  return config === undefined ? "None" : relayHosts(config);
+export function relayLabel(relay: Relay | undefined): string {
+  return relay === undefined ? "None" : relayHosts(relay);
 }
 
-/** The link that hands `config` to a friend: this page, with it in the fragment. */
-export function relayInviteLink(config: TurnConfig, where: Location = location): string {
-  return `${where.origin}${where.pathname}${where.search}#${encodeTurnFragment(config)}`;
+/** The link that hands `shared` to a friend: this page, with it in the fragment. */
+export function relayInviteLink(shared: SharedRelay, where: Location = location): string {
+  return `${where.origin}${where.pathname}${where.search}#${encodeTurnFragment(shared)}`;
 }
 
 /** The URLs field's text as a list: commas, spaces or new lines between them. */
 export function splitRelayUrls(text: string): string[] {
   return text.split(/[\s,]+/).filter((url) => url !== "");
 }
+
+/** What Options says sharing a relay means: who gets it, for how long, and what to lock down. */
+const SHARED_RELAY_EXPLANATION =
+  "A relay from an invite link can be offered to your lobbies: anyone with a lobby's " +
+  "invite link may relay through it for up to 2 hours after its last offer, and that " +
+  "cannot be taken back early. Its operator should set denied-peer-ip for private ranges, " +
+  "no-loopback-peers, no-multicast-peers and quotas on it. Its secret came from the relay " +
+  "operator's link and never goes into a lobby offer. A relay with a username and " +
+  "credential is never shared. A relay on a LAN address is refused, here and in invite links.";
 
 function field(label: string, control: HTMLInputElement): HTMLElement {
   const wrap = h("label", "field");
@@ -66,88 +73,11 @@ function mountRelay(container: HTMLElement): () => void {
   urls.placeholder = "turn:turn.example:3478";
   const username = input("relay-username", "text");
   const credential = input("relay-credential", "password");
+  const usernameField = field("Username", username);
+  const credentialField = field("Credential", credential);
+  // A link relay's secret is never shown, nor edited (#2240).
+  const secret = h("div", "screen-info relay-secret", "Secret: from invite link");
   const problem = h("div", "screen-problem relay-problem");
-  problem.hidden = true;
-
-  const link = shareLine("relay invite link");
-  const save = button("Save relay", "primary relay-save", () => {
-    const config = validateTurnConfig({
-      urls: splitRelayUrls(urls.value),
-      username: username.value,
-      credential: credential.value,
-    });
-    if (config === undefined) {
-      problem.textContent =
-        "Not a relay: give 1 to 4 turn: or turns: URLs, a username and a credential.";
-      problem.hidden = false;
-      return;
-    }
-    saveTurnConfig(config);
-    toast("Saved");
-    paint();
-  });
-  const copy = button("Copy invite link", "relay-copy", () => {
-    const config = loadTurnConfig();
-    if (config !== undefined) {
-      link.show(relayInviteLink(config));
-    }
-  });
-  const forget = button("Forget relay", "relay-forget", () => {
-    forgetTurnConfig();
-    paint();
-  });
-  const actions = h("div", "menu-row relay-actions");
-  actions.append(save, copy, forget);
-
-  panel.append(
-    current,
-    field("URLs", urls),
-    field("Username", username),
-    field("Credential", credential),
-    problem,
-    actions,
-    link.element,
-  );
-
-  const paint = (): void => {
-    const config = loadTurnConfig();
-    current.textContent = `Relay: ${relayLabel(config)}`;
-    urls.value = config?.urls.join(", ") ?? "";
-    username.value = config?.username ?? "";
-    credential.value = config?.credential ?? "";
-    problem.hidden = true;
-    copy.disabled = config === undefined;
-    forget.disabled = config === undefined;
-    link.hide();
-  };
-  paint();
-  panel.append(sharedRelayPanel());
-  return () => {
-    link.hide();
-  };
-}
-
-/** What Options says sharing a relay means: who gets it, for how long, and what to lock down. */
-export const SHARED_RELAY_EXPLANATION =
-  "A relay with a shared secret (coturn use-auth-secret) can be offered to your lobbies: " +
-  "anyone with a lobby's invite link may relay through it for up to 2 hours after its last " +
-  "offer, and that cannot be taken back early. Set denied-peer-ip for private ranges, " +
-  "no-loopback-peers, no-multicast-peers and quotas on it. The secret stays on this device. " +
-  "A relay with a username and password above is never shared; its invite link is how. " +
-  "A relay on a LAN address is refused, here and in invite links.";
-
-/**
- * The shared relay (#2091): a TURN server's REST secret, which mints the
- * short-lived credentials a hosted lobby offers, and whether to offer
- * them at all. Off until ticked.
- */
-function sharedRelayPanel(): HTMLElement {
-  const panel = h("div", "relay-shared");
-  const current = h("div", "relay-shared-current");
-  const urls = input("relay-shared-urls", "text");
-  urls.placeholder = "turns:turn.example:5349";
-  const secret = input("relay-shared-secret", "password");
-  const problem = h("div", "screen-problem relay-shared-problem");
   problem.hidden = true;
 
   const shareField = document.createElement("label");
@@ -158,49 +88,84 @@ function sharedRelayPanel(): HTMLElement {
   share.addEventListener("change", () => {
     saveRelaySharing(share.checked);
   });
+  const shareHint = h(
+    "div",
+    "screen-info relay-share-hint",
+    "Only a relay from an invite link can be shared",
+  );
 
-  const save = button("Save shared relay", "relay-shared-save", () => {
-    const shared = validateSharedRelay({ urls: splitRelayUrls(urls.value), secret: secret.value });
-    if (shared === undefined) {
+  const link = shareLine("relay invite link");
+  // Hand entry is a static relay only: a REST secret comes from a link.
+  const save = button("Save relay", "primary relay-save", () => {
+    const relay = validateRelay({
+      kind: "static",
+      urls: splitRelayUrls(urls.value),
+      username: username.value,
+      credential: credential.value,
+    });
+    if (relay === undefined) {
       problem.textContent =
-        "Not a shared relay: give 1 to 4 public turn: or turns: URLs and its secret.";
+        "Not a relay: give 1 to 4 turn: or turns: URLs, a username and a credential.";
       problem.hidden = false;
       return;
     }
-    saveSharedRelay(shared);
+    saveRelay(relay);
     toast("Saved");
     paint();
   });
-  const forget = button("Forget shared relay", "relay-shared-forget", () => {
-    forgetSharedRelay();
-    saveRelaySharing(false);
+  const copy = button("Copy invite link", "relay-copy", () => {
+    const relay = loadRelay();
+    if (relay?.kind === "rest") {
+      link.show(relayInviteLink(relay));
+    }
+  });
+  copy.title = "Anyone with this link can use your relay.";
+  const forget = button("Forget relay", "relay-forget", () => {
+    forgetRelay();
     paint();
   });
   const actions = h("div", "menu-row relay-actions");
-  actions.append(save, forget);
+  actions.append(save, copy, forget);
 
   panel.append(
     h("div", "screen-info relay-shared-explanation", SHARED_RELAY_EXPLANATION),
     current,
-    field("Shared URLs", urls),
-    field("Shared secret", secret),
+    field("URLs", urls),
+    usernameField,
+    credentialField,
+    secret,
     shareField,
+    shareHint,
     problem,
     actions,
+    link.element,
   );
 
   const paint = (): void => {
-    const shared = loadSharedRelay();
-    current.textContent = `Shared relay: ${shared === undefined ? "None" : shared.urls.join(", ")}`;
-    urls.value = shared?.urls.join(", ") ?? "";
-    secret.value = shared?.secret ?? "";
-    share.checked = shared !== undefined && loadRelaySharing();
-    share.disabled = shared === undefined;
-    forget.disabled = shared === undefined;
+    const relay = loadRelay();
+    const rest = relay?.kind === "rest";
+    current.textContent = `Relay: ${relayLabel(relay)}`;
+    urls.value = relay?.urls.join(", ") ?? "";
+    // A link relay is replaced by Forget, then entering one: not edited in place.
+    urls.readOnly = rest;
+    username.value = relay?.kind === "static" ? relay.username : "";
+    credential.value = relay?.kind === "static" ? relay.credential : "";
+    usernameField.hidden = rest;
+    credentialField.hidden = rest;
+    secret.hidden = !rest;
+    share.checked = rest && loadRelaySharing();
+    share.disabled = !rest;
+    shareHint.hidden = rest;
+    save.disabled = rest;
     problem.hidden = true;
+    copy.disabled = !rest;
+    forget.disabled = relay === undefined;
+    link.hide();
   };
   paint();
-  return panel;
+  return () => {
+    link.hide();
+  };
 }
 
 /**
@@ -209,8 +174,8 @@ function sharedRelayPanel(): HTMLElement {
  * without it showing.
  */
 export function relayLine(): HTMLElement | undefined {
-  const config = loadTurnConfig();
-  return config === undefined
+  const relay = loadRelay();
+  return relay === undefined
     ? undefined
-    : h("div", "screen-info relay-line", `Relay: ${relayLabel(config)}`);
+    : h("div", "screen-info relay-line", `Relay: ${relayLabel(relay)}`);
 }

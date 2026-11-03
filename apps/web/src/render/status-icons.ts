@@ -494,6 +494,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "persistence-of-memory": icon("persistence-of-memory"),
   // Mesmer interrupts (#2165).
   "web-of-disruption": icon("web-of-disruption"),
+  // Mesmer staples 5 (#2231).
+  "conjure-nightmare": icon("conjure-nightmare"),
+  "images-of-remorse": icon("images-of-remorse"),
+  "confusing-images": icon("confusing-images"),
   // Warrior conditions (#2096).
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
@@ -513,6 +517,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mark-of-instability": icon("mark-of-instability"),
   "deadly-paradox": icon("deadly-paradox"),
   "unseen-fury": icon("unseen-fury"),
+  // Assassin staples 6 (#2233).
+  "hidden-caltrops": icon("hidden-caltrops"),
   // Warrior staples 4 (#2181).
   "tiger-stance": icon("tiger-stance"),
   "berserker-stance": icon("berserker-stance"),

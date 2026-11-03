@@ -12,19 +12,26 @@ import { fileURLToPath } from "node:url";
 
 import { healthy, runChecks, serverPid } from "./check.mjs";
 import { DEFAULT_BASE, inviteLink, turnUrls } from "./link.mjs";
-import { filterLog, lastAllocations, tailLines } from "./log.mjs";
+import { filterLog, tailLines } from "./log.mjs";
 import { formatBytes, procIo, rate, scrape } from "./metrics.mjs";
 import { files, readSettings, turnNft, turnserverConf } from "./settings.mjs";
-import { HEALTH_USER, allUsers, newPassword, removeUser, setUser, validName } from "./users.mjs";
+import {
+  HEALTH_USER,
+  addUser,
+  allUsers,
+  friendName,
+  reconcileUsers,
+  relinkUser,
+  removeUser,
+} from "./users.mjs";
 
 const HELP = {
-  user: `usage: turn-user add <name> [--base <url>]   add a friend; prints their password and invite link once
-       turn-user remove <name>                  remove them; their live sessions run on until they end
+  user: `usage: turn-user add <name> [--base <url>]   add a friend with a secret of their own; prints their invite link
+       turn-user remove <name>                  remove them; no login from their secret works after
        turn-user list                           every user`,
   link: `usage: turn-link <name> [--base <url>]
-  Prints <name>'s invite link. The password is not stored, so this sets a new
-  one: the user's old link stops working. --base is the game's page
-  (default ${DEFAULT_BASE}).`,
+  Gives <name> a new secret and prints their new invite link: the old link
+  stops working. --base is the game's page (default ${DEFAULT_BASE}).`,
   check: `usage: turn-check
   Checks the TURN server once: process, STUN binding, an authenticated
   allocation, which peers it may relay to, whether turn.nft is loaded, the
@@ -71,46 +78,60 @@ function baseOption(args) {
  * @param {string | undefined} name
  * @returns {string}
  */
-function friendName(name) {
-  if (name === undefined || !validName(name)) {
-    fail("a name is letters, digits, '.', '_' or '-', at most 64, starting with a letter or digit");
-  }
+function friendArg(name) {
   if (name === HEALTH_USER) fail(`${HEALTH_USER} is turn-check's own user`);
+  if (name === undefined || !friendName(name)) {
+    fail(
+      "a name is lowercase letters, digits, '_' or '-', at most 32, starting with a letter or digit",
+    );
+  }
   return /** @type {string} */ (name);
 }
 
 /**
- * Sets a fresh password for `name` and prints it with the link.
+ * Prints `name`'s invite link, which carries their secret.
+ *
+ * @param {string} name
+ * @param {string} link
+ */
+function printLink(name, link) {
+  process.stdout.write(
+    `user: ${name}\nlink: ${link}\n` +
+      "Whoever opens it can use this relay and offer it to their lobbies, until\n" +
+      `turn-user remove ${name} or turn-link ${name}.\n`,
+  );
+}
+
+/**
+ * Finishes a revoke an earlier command left half done (reconcileUsers).
  *
  * @param {import("./settings.mjs").TurnSettings} s
- * @param {string} name
- * @param {string} base
  */
-function issue(s, name, base) {
-  const urls = turnUrls(s);
-  const password = newPassword();
-  setUser(s, name, password);
-  process.stdout.write(
-    `user:     ${name}\npassword: ${password}\nlink:     ${inviteLink(base, { urls, username: name, credential: password })}\n` +
-      "Shown once: it is not stored. turn-link sets a new one.\n",
-  );
+function reconcile(s) {
+  const n = reconcileUsers(s);
+  if (n > 0) process.stderr.write(`revoked ${String(n)} secret(s) no friend holds any more\n`);
 }
 
 /** @param {string[]} args */
 function user(args) {
   const s = readSettings(process.env);
+  reconcile(s);
   const { rest, base } = baseOption(args);
   const [verb, name] = rest;
   if (verb === "add") {
-    const friend = friendName(name);
+    const friend = friendArg(name);
     if (allUsers(s).includes(friend))
       fail(`${friend} exists; turn-link ${friend} gives them a new link`);
-    issue(s, friend, base);
+    const urls = turnUrls(s);
+    printLink(friend, inviteLink(base, { urls, secret: addUser(s, friend) }));
   } else if (verb === "remove") {
-    const friend = friendName(name);
+    const friend = friendArg(name);
     if (!allUsers(s).includes(friend)) fail(`no user ${friend}`);
     removeUser(s, friend);
-    process.stdout.write(`removed ${friend}. A session they have open runs on until it ends.\n`);
+    process.stdout.write(
+      `removed ${friend}: no login from their secret works from now on, theirs or their\n` +
+        "lobbies'. Relays already open run on until they end.\n",
+    );
   } else if (verb === "list") {
     for (const n of allUsers(s)) if (n !== HEALTH_USER) process.stdout.write(`${n}\n`);
   } else {
@@ -121,10 +142,12 @@ function user(args) {
 /** @param {string[]} args */
 function link(args) {
   const s = readSettings(process.env);
+  reconcile(s);
   const { rest, base } = baseOption(args);
-  const friend = friendName(rest[0]);
+  const friend = friendArg(rest[0]);
   if (!allUsers(s).includes(friend)) fail(`no user ${friend}; turn-user add ${friend}`);
-  issue(s, friend, base);
+  const urls = turnUrls(s);
+  printLink(friend, inviteLink(base, { urls, secret: relinkUser(s, friend) }));
 }
 
 /**
@@ -272,13 +295,8 @@ function pane(which) {
       paint(`users\n\n${RED}${e instanceof Error ? e.message : String(e)}${RESET}`);
       return;
     }
-    const seen = lastAllocations(tailLines(files(s).log));
-    const rows = names.map(
-      (n) => `${n.padEnd(24)} ${seen.get(n) ?? `${DIM}no allocation in the log${RESET}`}`,
-    );
-    paint(
-      `users  ${DIM}last allocation${RESET}\n\n${rows.length === 0 ? "none: turn-user add <name>" : rows.join("\n")}`,
-    );
+    // A minted login names no friend, so the log cannot tell whose it is.
+    paint(`users\n\n${names.length === 0 ? "none: turn-user add <name>" : names.join("\n")}`);
   };
 
   const log = () => {
