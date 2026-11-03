@@ -31,6 +31,7 @@ import {
   type Guild,
   type LobbyClosedReason,
   type LobbyConnection,
+  type LobbyRelaySource,
   type MatchPlan,
   type MatchStarting,
   type MatchToWatch,
@@ -59,6 +60,7 @@ import {
   shareLobbyRelay,
 } from "./transport/index.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
+import type { RelayShare } from "./transport/relay-offer.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
 import { loadRelay } from "./transport/turn-config.js";
 
@@ -215,6 +217,22 @@ function startMatch(plan: MatchPlan) {
 }
 
 /**
+ * The login a lobby host tells its seated members (#2248): what `share`
+ * offers now, or none for a lobby that never shares.
+ */
+export function lobbyRelaySource(share: RelayShare | undefined): LobbyRelaySource {
+  return {
+    current: () => {
+      const login = share?.current();
+      return login === undefined
+        ? null
+        : { urls: login.urls, username: login.username, credential: login.credential };
+    },
+    onChange: (handler) => share?.onChange(handler) ?? (() => undefined),
+  };
+}
+
+/**
  * Host a lobby in this tab: a fresh key, the room derived from it, the
  * lobby host on it, and this player joined to it as one more peer. A
  * coded lobby starts closed, and its host is in its room only while it
@@ -256,6 +274,9 @@ export async function hostLobby(
     queued === undefined
       ? linkLobbyRoom({ selfId: roomSelfId(), join: () => joinHostRoom(lobbyRoom) })
       : undefined;
+  // Offered while the host is in its room, a match included: a guest
+  // reconnecting through the relay (#1764) needs it then too.
+  const share = queued === undefined ? shareLobbyRelay(lobbyRoom) : undefined;
   const host = createLobbyHost({
     transport: link ?? joinRoom(lobbyRoom),
     code,
@@ -267,6 +288,7 @@ export async function hostLobby(
     startMatch,
     teamLobby,
     random: lobbyRandom(import.meta.env.VITE_VIBEWARS_LOBBY_SEED),
+    relay: lobbyRelaySource(share),
     ...(queued === undefined
       ? // Its party queues for a team mode under a group its room id names (#1766).
         { matchmaking: { roomId: lobbyRoom.roomId, verifyTicketSig, newNonce: newQueueNonce } }
@@ -279,9 +301,6 @@ export async function hostLobby(
           },
         }),
   });
-  // Offered while the host is in its room, a match included: a guest
-  // reconnecting through the relay (#1764) needs it then too.
-  const share = queued === undefined ? shareLobbyRelay(lobbyRoom) : undefined;
   const stopFollowing =
     link === undefined
       ? () => undefined
@@ -369,6 +388,9 @@ export async function joinLobbyByCode(
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
     });
     guest.reached(joined.getSnapshot().hostId);
+    joined.onRelayLogin((login) => {
+      guest.fromHost(login);
+    });
     joined.onClosed(() => {
       window.removeEventListener("pagehide", onPageHide);
     });

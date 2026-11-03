@@ -56,6 +56,7 @@ import {
   parsePeerLobbyHello,
   parsePeerLobbyLeave,
   parsePeerLobbySeat,
+  parsePeerRelayLogin,
   parseWireLobbyWelcome,
   parsePeerStayTogether,
   parseWirePartyProposal,
@@ -101,6 +102,12 @@ const hello: PeerHello = {
 
 /** 128 bits of hex, as the host makes them; repeated so it reads as no secret. */
 const TOKEN = "0f".repeat(16);
+/** A host's shared relay login (#2248), at every bound. */
+const relayLogin = {
+  urls: Array.from({ length: 4 }, (_, i) => `turn:${String(i)}.example:3478`.padEnd(256, "x")),
+  username: "1".repeat(256),
+  credential: "c".repeat(256),
+};
 
 const challenge = { playerId: "peer-2", nonce: TOKEN };
 
@@ -811,6 +818,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["untagged lobby-join (#1406)", parsePeerLobbyJoin, { ...lobbyJoin, guildTag: null }],
   ["returning lobby-join (#2157)", parsePeerLobbyJoin, { ...lobbyJoin, rejoinToken: TOKEN }],
   ["lobby-seat (#2157)", parsePeerLobbySeat, { rejoinToken: TOKEN }],
+  ["relay-login (#2248)", parsePeerRelayLogin, { relay: relayLogin }],
+  ["relay-login of no relay (#2248)", parsePeerRelayLogin, { relay: null }],
   ["lobby-hello (#871)", parsePeerLobbyHello, {}],
   ["lobby-leave (#1764)", parsePeerLobbyLeave, {}],
   ["lobby-welcome (#871)", parseWireLobbyWelcome, { hostSig: "ef".repeat(64) }],
@@ -1810,6 +1819,33 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["lobby-seat of a null token (#2157)", parsePeerLobbySeat, { rejoinToken: null }],
   ["lobby-seat of a long token (#2157)", parsePeerLobbySeat, { rejoinToken: "0f".repeat(17) }],
+  ["relay-login of no relay field (#2248)", parsePeerRelayLogin, {}],
+  [
+    "relay-login of five URLs (#2248)",
+    parsePeerRelayLogin,
+    { relay: { ...relayLogin, urls: [...relayLogin.urls, "turn:e.example"] } },
+  ],
+  ["relay-login of no URL (#2248)", parsePeerRelayLogin, { relay: { ...relayLogin, urls: [] } }],
+  [
+    "relay-login of an overlong URL (#2248)",
+    parsePeerRelayLogin,
+    { relay: { ...relayLogin, urls: ["t".repeat(257)] } },
+  ],
+  [
+    "relay-login of an overlong username (#2248)",
+    parsePeerRelayLogin,
+    { relay: { ...relayLogin, username: "1".repeat(257) } },
+  ],
+  [
+    "relay-login of an overlong credential (#2248)",
+    parsePeerRelayLogin,
+    { relay: { ...relayLogin, credential: "c".repeat(257) } },
+  ],
+  [
+    "relay-login of a numeric credential (#2248)",
+    parsePeerRelayLogin,
+    { relay: { ...relayLogin, credential: 7 } },
+  ],
   ["lobby-welcome of no signature (#871)", parseWireLobbyWelcome, {}],
   ["stay-together of no key (#882)", parsePeerStayTogether, {}],
   ["stay-together of a short key (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(31) }],

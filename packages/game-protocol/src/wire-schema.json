@@ -24,6 +24,7 @@
     "lobby-welcome",
     "lobby-leave",
     "lobby-seat",
+    "relay-login",
     "stay-together",
     "party-proposal",
     "party-consent",
@@ -669,6 +670,7 @@
         { "literal": "refused" },
         { "literal": "rejoin-challenge" },
         { "literal": "rejoin-proof" },
+        { "literal": "relay-login" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
         { "literal": "stay-together" },
@@ -4529,6 +4531,26 @@
         { "name": "proof", "optional": false, "type": "string" }
       ]
     },
+    "PeerRelayLogin": {
+      "properties": [
+        {
+          "name": "relay",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "credential", "optional": false, "type": "string" },
+                  { "name": "urls", "optional": false, "type": { "array": "string" } },
+                  { "name": "username", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
     "PeerStayTogether": {
       "properties": [
         { "name": "memberKey", "optional": false, "type": { "union": ["null", "string"] } }
@@ -6178,6 +6200,13 @@
           "optional": false,
           "type": { "array": { "union": ["null", "string"] } }
         }
+      ]
+    },
+    "WireRelayLogin": {
+      "properties": [
+        { "name": "credential", "optional": false, "type": "string" },
+        { "name": "urls", "optional": false, "type": { "array": "string" } },
+        { "name": "username", "optional": false, "type": "string" }
       ]
     },
     "WireRelic": {

@@ -161,10 +161,14 @@ channels, as often as they like.
   relay lets anyone with the invite link relay through it for up to 2 h
   after the last offer they saw; a minted credential cannot be revoked
   early. The host's coturn must set `denied-peer-ip` for private ranges,
-  `no-loopback-peers`, `no-multicast-peers` and quotas. Offers are not
-  bound to the host: a hostile member can publish one for its own relay.
-  A joiner that sees two live offers naming different relays uses
-  neither, so that member gets a denied relay, not the joiners' addresses.
+  `no-loopback-peers`, `no-multicast-peers` and quotas. Any member can
+  seal an offer. A seated guest ignores them all (#2248): the host tells
+  it its login over the lobby, which only the host can, so a member's
+  offer naming the host's relay with a junk login cannot replace the real
+  one for a rejoin or a refresh. A first join is not bound to the host: a
+  hostile member can publish an offer for its own relay. A joiner that
+  sees two live offers naming different relays uses neither, so that
+  member gets a denied first relayed join, not the joiners' addresses.
   A relay _name_ that resolves to a private address cannot be checked
   from a browser; literal private and LAN addresses are refused.
   Since #2240 the secret itself travels in the relay operator's invite

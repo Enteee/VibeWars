@@ -65,6 +65,7 @@ export const CHANNELS = [
   "lobby-welcome",
   "lobby-leave",
   "lobby-seat",
+  "relay-login",
   "stay-together",
   "party-proposal",
   "party-consent",
@@ -920,6 +921,27 @@ export type PeerLobbyLeave = Readonly<Record<string, never>>;
 export interface PeerLobbySeat {
   /** 128 random bits as 32 hex digits. */
   readonly rejoinToken: string;
+}
+
+/** A TURN login a lobby host shares (#2248): what `RTCIceServer` takes. */
+export interface WireRelayLogin {
+  /** 1 to `MAX_RELAY_URLS` `turn:` / `turns:` URLs; the guest checks them. */
+  readonly urls: readonly string[];
+  readonly username: string;
+  readonly credential: string;
+}
+
+/** The most URLs a `WireRelayLogin` carries. */
+const MAX_RELAY_URLS = 4;
+
+/**
+ * Lobby host to each admitted member, one at a time (#2248): the relay
+ * login it shares, or `null` for none. Sent on admission and on every
+ * change, so a seated guest needs no Nostr offer, which any member could
+ * forge. Never leaves the lobby's data channels.
+ */
+export interface PeerRelayLogin {
+  readonly relay: WireRelayLogin | null;
 }
 
 /**
@@ -2375,6 +2397,33 @@ export function parsePeerLobbySeat(value: unknown): PeerLobbySeat | undefined {
   return raw !== undefined && isRejoinToken(raw.rejoinToken)
     ? { rejoinToken: raw.rejoinToken }
     : undefined;
+}
+
+/** The `"relay-login"` channel. Shape only: apps/web validates the relay. */
+export function parsePeerRelayLogin(value: unknown): PeerRelayLogin | undefined {
+  const raw = fields(value);
+  if (raw === undefined) {
+    return undefined;
+  }
+  if (raw.relay === null) {
+    return { relay: null };
+  }
+  const relay = fields(raw.relay);
+  if (relay === undefined) {
+    return undefined;
+  }
+  const urls = parseArray(relay.urls, MAX_RELAY_URLS, (url) =>
+    isString(url, MAX_WIRE_TEXT) ? url : undefined,
+  );
+  if (
+    urls === undefined ||
+    urls.length === 0 ||
+    !isString(relay.username, MAX_WIRE_TEXT) ||
+    !isString(relay.credential, MAX_WIRE_TEXT)
+  ) {
+    return undefined;
+  }
+  return { relay: { urls, username: relay.username, credential: relay.credential } };
 }
 
 /** The `"lobby-welcome"` channel. */

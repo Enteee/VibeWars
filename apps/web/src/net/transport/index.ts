@@ -1,3 +1,4 @@
+import type { WireRelayLogin } from "@vibewars/game-protocol";
 import type { LobbyRoom, Transport } from "@vibewars/game-session";
 
 import { checkNat } from "../nat-check.js";
@@ -14,7 +15,12 @@ import {
   type RelayShare,
 } from "./relay-offer.js";
 import { TRYSTERO_SELF_ID, joinTrysteroRoom } from "./trystero.js";
-import { loadOfferedRelay, loadRelay, onRelaySharingChange } from "./turn-config.js";
+import {
+  loadOfferedRelay,
+  loadRelay,
+  onRelaySharingChange,
+  validateTurnConfig,
+} from "./turn-config.js";
 
 /**
  * Join `room` (#403), derived from a lobby key or a queue room's name
@@ -61,10 +67,12 @@ export function checkTransportNat(): Promise<boolean> {
     : checkNat();
 }
 
-/** A guest's room, and how it is told the host answered. */
+/** A guest's room, how it is told the host answered, and the relay login the host shares. */
 export interface GuestRoom {
   readonly transport: Transport;
   reached(hostId: string): void;
+  /** The host's `relay-login` (#2248): from then on, Nostr offers are ignored. */
+  fromHost(login: WireRelayLogin | null): void;
 }
 
 /**
@@ -74,20 +82,25 @@ export interface GuestRoom {
  */
 export function joinGuestRoom(room: LobbyRoom): GuestRoom {
   if (import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast" || room.relay === null) {
-    return { transport: joinRoom(room), reached: () => undefined };
+    return { transport: joinRoom(room), reached: () => undefined, fromHost: () => undefined };
   }
+  const offers = watchRelayOffers(room.relay);
   const transport = joinWithRelayOffers({
     selfId: TRYSTERO_SELF_ID,
     // Through a relay, into the sibling room the sharing host also sits in.
     join: (turn) =>
       turn === undefined ? joinTrysteroRoom(room) : joinTrysteroRoom(relaySibling(room), turn),
-    offers: watchRelayOffers(room.relay),
+    offers,
     ownRelay: loadRelay() !== undefined,
   });
   return {
     transport,
     reached: (hostId) => {
       transport.reached(hostId);
+    },
+    // A login the guest would not use itself, such as a private address, is none.
+    fromHost: (login) => {
+      offers.fromHost(login === null ? null : (validateTurnConfig(login) ?? null));
     },
   };
 }

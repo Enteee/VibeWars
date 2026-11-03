@@ -18,6 +18,7 @@ import {
   createLobbyHost,
   type LobbyHost,
   type LobbyMatchmakingOptions,
+  type LobbyRelaySource,
   type MatchPlan,
 } from "./lobby-host.js";
 import { connectMatch, type PeerMatchConnection } from "./match-client.js";
@@ -83,6 +84,12 @@ function member(connection: LobbyConnection, transport: Transport): Member {
   return { connection, transport, starts };
 }
 
+/** A host that shares no relay (#2248). */
+export const NO_RELAY: LobbyRelaySource = {
+  current: () => null,
+  onChange: () => () => undefined,
+};
+
 export async function openLobby(
   options: {
     /** One set of rules for every match, or the rules of the `n`th, from 0. */
@@ -99,6 +106,8 @@ export async function openLobby(
     matchmaking?: LobbyMatchmakingOptions;
     /** A Hosted Game's team size to begin with (#2104): 4v4 by default. */
     hostedTeamSize?: LobbyTeamSize;
+    /** The relay login the host shares (#2248): none by default. */
+    relay?: LobbyRelaySource;
   } = {},
 ): Promise<TestLobby> {
   const network = createMemoryNetwork();
@@ -116,6 +125,7 @@ export async function openLobby(
     teamLobby: options.teamLobby ?? false,
     ...(options.matchmaking === undefined ? {} : { matchmaking: options.matchmaking }),
     random: options.random ?? (() => 0.5),
+    relay: options.relay ?? NO_RELAY,
     startMatch(plan) {
       const host =
         options.startMatch?.(plan) ??
