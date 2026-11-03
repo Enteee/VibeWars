@@ -63,7 +63,7 @@ describe("the three are the corpus's (#2260)", () => {
   it.each([
     ["monk.purge-signet", 295, undefined, 2, 20, false, "single-ally"],
     ["ritualist.cautery-signet", 1588, undefined, 2, 15, true, "self"],
-    ["monk.blessed-signet", 297, "monk.smiting-prayers", 2, 10, false, "self"],
+    ["monk.blessed-signet", 297, "monk.divine-favor", 2, 10, false, "self"],
   ] as const)(
     "%s: gwId %i, %s, %d s, %i s recharge, elite %s, %s",
     (id, gwId, attributeId, activation, recharge, elite, target) => {
@@ -135,11 +135,11 @@ describe("Cautery Signet (#2260)", () => {
 });
 
 describe("Blessed Signet (#2260)", () => {
-  /** A monk at `rank` Smiting Prayers maintaining `count` enchantments, 3 to an ally. */
+  /** A monk at `rank` Divine Favor maintaining `count` enchantments, 3 to an ally. */
   function maintaining(count: number, rank: number): { monk: Combatant; party: Combatant[] } {
     const monk = bearing("m", [], {
       energy: 0,
-      attributeRanks: new Map([["monk.smiting-prayers", rank]]),
+      attributeRanks: new Map([["monk.divine-favor", rank]]),
     });
     const party = [0, 1, 2].map((index) => bearing(`a${String(index)}`, []));
     for (let n = 0; n < count; n += 1) {

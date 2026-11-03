@@ -3714,7 +3714,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     flash: false,
     disabledAfterUseSeconds: undefined,
     profession: "monk",
-    attributeId: "monk.smiting-prayers",
+    attributeId: "monk.divine-favor",
     cost: undefined,
     overcast: 0,
     activationSeconds: 2,
@@ -3737,7 +3737,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         per: {
           count: { kind: "maintained-enchantments" },
           amount: { flat: 3 },
-          max: { scaling: { attributeId: "monk.smiting-prayers", atZero: 3, atTwelve: 19.8 } },
+          max: { scaling: { attributeId: "monk.divine-favor", atZero: 3, atTwelve: 19.8 } },
         },
       },
     ],
