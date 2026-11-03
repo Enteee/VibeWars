@@ -2021,6 +2021,11 @@ body {
   opacity: 0.5;
 }
 
+/* A skill dragged off its slot (#2227): its origin dims while it travels. */
+.team-skill.is-dragging {
+  opacity: 0.4;
+}
+
 /* A slot a dragged skill may land on, and one it may not: never colour alone. */
 .team-skill.is-drop-target {
   outline: 2px solid var(--accent);

@@ -6,13 +6,14 @@ import {
   type SkillRole,
 } from "@vibewars/game-core";
 
-import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
+import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
 import {
   TEAM_SCHEMA_VERSION,
   type StoredTeam,
   type TeamCharacter,
   type TeamBuildSize,
 } from "../storage/schema.js";
+import { professionLabel } from "./character-preview.js";
 
 /**
  * The team builder (brief §18, §4).
@@ -129,6 +130,99 @@ export function validateTeam(team: StoredTeam): TeamProblem[] {
   });
 
   return problems;
+}
+
+/** One slot of one member's bar, the member by its place on the team. */
+export interface TeamSlot {
+  readonly member: number;
+  readonly slot: number;
+}
+
+/**
+ * Why `skillId` may not go into `slot` of `member`'s bar (#2227), or
+ * `undefined` when it may: by `equipSkill`'s rules, the skill already in
+ * `slot` counting as gone. Unlike a library drop, another elite elsewhere
+ * on the bar refuses it rather than giving way.
+ */
+export function slotRefusal(
+  member: TeamCharacter,
+  slot: number,
+  skillId: string,
+): string | undefined {
+  const skill = getSkill(skillId);
+  if (skill === undefined) {
+    return "Not a skill in the game";
+  }
+  const others = member.skillBar.filter((id, index): id is string => index !== slot && id !== null);
+  if (others.includes(skillId)) {
+    return `${skill.name} is already on ${member.name}'s bar`;
+  }
+  if (!equippableSkills(member).some((each) => each.id === skillId)) {
+    return `${professionLabel(member.primaryProfession, member.secondaryProfession)} can't use ${skill.name}`;
+  }
+  const elite = skill.elite ? others.find((id) => getSkill(id)?.elite === true) : undefined;
+  if (elite !== undefined) {
+    return `${member.name} already has an elite, ${getSkill(elite)?.name ?? elite}`;
+  }
+  return undefined;
+}
+
+/**
+ * `team` after a skill is dragged from one bar slot to another (#2227):
+ * on one bar, the two slots trade places; onto another member's, it
+ * moves there, trading places with what it lands on, or with `copy` (the
+ * player held Shift) is copied there, the source keeping it. Every bar it
+ * changes must stay legal by `slotRefusal`, else the problem, and the
+ * team as it was.
+ */
+export function dragSkill(
+  team: StoredTeam,
+  from: TeamSlot,
+  to: TeamSlot,
+  copy: boolean,
+): StoredTeam | TeamProblem {
+  const source = team.members[from.member]?.character;
+  const target = team.members[to.member]?.character;
+  const skillId = source?.skillBar[from.slot] ?? null;
+  if (source === undefined || target === undefined || skillId === null) {
+    return { message: "nothing to drag" };
+  }
+  const withBar = (
+    character: TeamCharacter,
+    skillBar: readonly (string | null)[],
+  ): TeamCharacter => ({ ...character, skillBar });
+  const members = [...team.members];
+  if (from.member === to.member) {
+    if (from.slot === to.slot) {
+      return team;
+    }
+    // A bar cannot hold a skill twice, so Shift onto its own bar moves.
+    const skillBar = [...source.skillBar];
+    skillBar[from.slot] = skillBar[to.slot] ?? null;
+    skillBar[to.slot] = skillId;
+    members[from.member] = { character: withBar(source, skillBar) };
+    return { ...team, members, updatedAt: Date.now() };
+  }
+  const intoTarget = slotRefusal(target, to.slot, skillId);
+  if (intoTarget !== undefined) {
+    return { message: intoTarget };
+  }
+  const displaced = target.skillBar[to.slot] ?? null;
+  if (!copy && displaced !== null) {
+    const intoSource = slotRefusal(source, from.slot, displaced);
+    if (intoSource !== undefined) {
+      return { message: intoSource };
+    }
+  }
+  const targetBar = [...target.skillBar];
+  targetBar[to.slot] = skillId;
+  members[to.member] = { character: withBar(target, targetBar) };
+  if (!copy) {
+    const sourceBar = [...source.skillBar];
+    sourceBar[from.slot] = displaced;
+    members[from.member] = { character: withBar(source, sourceBar) };
+  }
+  return { ...team, members, updatedAt: Date.now() };
 }
 
 /** "1 member", "4 members": a builds drawer row's (#2116), a full team's (#2109). */
