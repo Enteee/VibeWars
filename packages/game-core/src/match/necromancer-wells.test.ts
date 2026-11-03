@@ -145,7 +145,7 @@ describe("the four wells (#1732)", () => {
       activationSeconds: activation,
       rechargeSeconds: recharge,
       target: "self",
-      corpse: { radius: expect.any(Number), elseSacrificePercent: 66 },
+      corpse: { radius: expect.any(Number), elseSacrificePercent: { flat: 66 } },
     });
     const sim = match();
     well(sim, [PROFANE, SILENCE, DARKNESS, RUIN].indexOf(id));

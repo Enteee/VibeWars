@@ -1079,7 +1079,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     // The nearest fresh corpse, as Soul Feast's (#1104).
-    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: { flat: 66 } },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -1120,7 +1120,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     // The nearest fresh corpse, as Well of Suffering's (#1732).
-    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: { flat: 66 } },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -1163,7 +1163,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     // The nearest fresh corpse, as Well of Suffering's (#1732). Its "target corpse" is
     // played as the nearest.
-    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: { flat: 66 } },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -1204,7 +1204,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     // The nearest fresh corpse, as Well of Suffering's (#1732).
-    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: { flat: 66 } },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -1245,7 +1245,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     // The nearest fresh corpse, as Well of Suffering's (#1732).
-    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: { flat: 66 } },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -1285,7 +1285,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
-    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: { flat: 66 } },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -1325,7 +1325,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
-    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: { flat: 66 } },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -1365,7 +1365,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
-    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: { flat: 66 } },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -4339,6 +4339,111 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
             },
             type: "typeless",
             armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "necromancer.consume-corpse",
+    name: "Consume Corpse",
+    gwId: 98,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // "Exploit a random corpse" (#2268); none in reach, no use.
+    corpse: { radius: RANGE_SPELL, pick: "random", elseSacrificePercent: undefined },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You teleport to that corpse's location and gain 25...100 Health and
+    // 5...20 Energy."
+    effects: [
+      { kind: "shadow-step", to: "corpse" },
+      {
+        kind: "heal",
+        amount: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 25, atTwelve: 85 },
+        },
+        recipient: "caster",
+      },
+      {
+        kind: "energy-gain",
+        amount: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.necrotic-traversal",
+    name: "Necrotic Traversal",
+    gwId: 97,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // "Exploit a random corpse or sacrifice 30...20% health" (#2268): the
+    // price falls as Death Magic rises.
+    corpse: {
+      radius: RANGE_SPELL,
+      pick: "random",
+      elseSacrificePercent: {
+        scaling: { attributeId: "necromancer.death-magic", atZero: 30, atTwelve: 22 },
+      },
+    },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "...to teleport to target foe's location. You become Diseased for 6
+    // seconds and all nearby foes become Poisoned for 5...20 seconds": the
+    // target, and every other foe near where you land.
+    effects: [
+      { kind: "shadow-step", to: "target" },
+      { kind: "apply-status", statusId: "disease", durationSeconds: { flat: 6 }, on: "caster" },
+      {
+        kind: "apply-status",
+        statusId: "poison",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        around: "caster",
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "poison",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.death-magic", atZero: 5, atTwelve: 17 },
+            },
           },
         ],
       },

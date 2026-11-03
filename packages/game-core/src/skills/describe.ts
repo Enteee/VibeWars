@@ -3270,7 +3270,9 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
             ? "Shadow steps to the target"
             : effect.to === "swap"
               ? "You and the target Shadow Step to each other's location"
-              : "Shadow Step to a nearby location directly away from your target",
+              : effect.to === "corpse"
+                ? "Teleports you to that corpse"
+                : "Shadow Step to a nearby location directly away from your target",
         magnitude: undefined,
       };
     case "resurrect": {
@@ -4238,11 +4240,13 @@ export function describeSkill(
                 ? "Exploits the corpse nearest your target"
                 : skill.corpse.all === true
                   ? `Exploits every fresh corpse ${AREA_TEXT.get(skill.corpse.radius) ?? `within ${String(skill.corpse.radius)}`}`
-                  : "Exploits the nearest corpse") +
-              // A well's price for none (#1730).
+                  : skill.corpse.pick === "random"
+                    ? "Exploits a random corpse"
+                    : "Exploits the nearest corpse") +
+              // A well's price for none (#1730), scaled (#2268).
               (skill.corpse.elseSacrificePercent === undefined
                 ? ""
-                : `, or sacrifices ${String(skill.corpse.elseSacrificePercent)}% Health if none is near`),
+                : `, or sacrifices ${shown(describeMagnitude(skill.corpse.elseSacrificePercent, ranks))}% Health if none is near`),
             magnitude: undefined,
           },
         ];
