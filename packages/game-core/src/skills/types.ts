@@ -34,12 +34,7 @@ export type ResourceKind = "energy" | "adrenaline";
 
 export type SkillCost =
   | { readonly kind: "energy"; readonly amount: number }
-  | {
-      readonly kind: "adrenaline";
-      readonly amount: number;
-      /** GW1 "Lose all adrenaline" (#1097): using the skill empties every pool, and its blow earns none back. */
-      readonly losesAll?: true;
-    };
+  | { readonly kind: "adrenaline"; readonly amount: number };
 
 /**
  * How a skill's magnitude scales with an attribute rank.
@@ -824,6 +819,17 @@ export interface SplashEffect {
    * spend no slot on one with none. Absent: anyone.
    */
   readonly onlyBearing?: StatusCategory;
+  /**
+   * Only those using a skill of this type as it lands, picked before
+   * `maxTargets` (#2282): Glimmering Mark's "foes using attack skills are
+   * Blinded". Absent: anyone.
+   */
+  readonly onlyUsing?: SkillType;
+  /**
+   * The target is reached too, as one of them (#2282): Glimmering Mark's
+   * "target foe and all foes adjacent". Absent: the target is not.
+   */
+  readonly includesCentre?: true;
   readonly effects: readonly UnconditionalEffect[];
 }
 
@@ -2057,6 +2063,12 @@ export interface Skill {
    */
   readonly attributeId: string | undefined;
   readonly cost: SkillCost | undefined;
+  /**
+   * GW1 "Lose all adrenaline" (#1097): using the skill empties every pool,
+   * and its blow earns none back, whatever it costs: Hammer Bash's
+   * adrenaline, Wild Blow's energy (#2282).
+   */
+  readonly losesAllAdrenaline?: true;
   /**
    * Maximum energy it takes away when activation starts, on top of its
    * cost (#461): GW1's overcast, once called exhaustion. `0` for none.

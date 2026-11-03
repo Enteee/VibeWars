@@ -83,7 +83,8 @@ export type NecromancerStatusId =
   // Necromancer staples (#2230).
   | "vampiric-spirit"
   // Condition movement (#2259).
-  | "mark-of-fury";
+  | "mark-of-fury"
+  | "spoil-victor";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -770,5 +771,27 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         skillId: "necromancer.mark-of-fury",
       },
     ],
+  }),
+  // "...whenever target foe attacks or casts a spell on a creature with
+  // less Health that foe loses 15...75 Health" (#2282): its Health against
+  // the victim's as the attack or the cast began.
+  "spoil-victor": define("spoil-victor", "Spoil Victor", "hex", {
+    profession: "necromancer",
+    attribute: "necromancer.blood-magic",
+    triggers: (["bearer-attacks", "bearer-casts-spell"] as const).map((on): StatusTrigger => ({
+      on,
+      victimHasLessHealth: true,
+      effects: [
+        {
+          kind: "lose-health",
+          amount: {
+            scaling: { attributeId: "necromancer.blood-magic", atZero: 15, atTwelve: 63 },
+          },
+          recipient: "target",
+        },
+      ],
+      target: "bearer",
+      skillId: "necromancer.spoil-victor",
+    })),
   }),
 };

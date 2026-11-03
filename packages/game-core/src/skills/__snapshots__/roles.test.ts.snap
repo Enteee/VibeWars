@@ -208,6 +208,7 @@ exports[`skillRoles > tags every elementalist skill the same way every time 1`] 
   "elementalist.freezing-gust": "hex",
   "elementalist.frozen-burst": "hex",
   "elementalist.gale": "knockdown",
+  "elementalist.glimmering-mark": "hex condition",
   "elementalist.glowing-gaze": "",
   "elementalist.glowing-ice": "",
   "elementalist.glowstone": "",
@@ -479,6 +480,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.word-of-censure": "",
   "monk.word-of-healing": "healing",
   "monk.words-of-comfort": "healing",
+  "monk.zealots-fire": "",
   "monk.zealous-benediction": "healing",
 }
 `;
@@ -572,6 +574,7 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.soul-leech": "hex",
   "necromancer.spinal-shivers": "hex",
   "necromancer.spiteful-spirit": "hex",
+  "necromancer.spoil-victor": "hex",
   "necromancer.strip-enchantment": "",
   "necromancer.suffering": "hex",
   "necromancer.taste-of-death": "",
@@ -1015,6 +1018,7 @@ exports[`skillRoles > tags every warrior skill the same way every time 1`] = `
   "warrior.warriors-endurance": "",
   "warrior.wary-stance": "defence",
   "warrior.watch-yourself": "defence",
+  "warrior.wild-blow": "",
   "warrior.you-will-die": "",
   "warrior.youre-all-alone": "condition",
 }

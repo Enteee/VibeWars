@@ -4469,4 +4469,40 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "necromancer.spoil-victor",
+    name: "Spoil Victor",
+    gwId: 1066,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The PvP split (3233): "For 3...15 seconds, whenever target foe attacks
+    // or casts a spell on a creature with less Health that foe loses
+    // 15...75 Health" (#2282); the base record is 1066.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "spoil-victor",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 12.6 },
+        },
+      },
+    ],
+  },
 ];

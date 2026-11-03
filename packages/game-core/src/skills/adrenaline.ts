@@ -72,7 +72,7 @@ export function gainStrikes(
 
 /** Whether using `skill` loses all adrenaline (#1097), GW1's Hammer Bash. */
 export function losesAllAdrenaline(skill: Skill): boolean {
-  return skill.cost?.kind === "adrenaline" && skill.cost.losesAll === true;
+  return skill.losesAllAdrenaline === true;
 }
 
 /**

@@ -4487,6 +4487,39 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "elementalist.glimmering-mark",
+    name: "Glimmering Mark",
+    gwId: 227,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, target foe and all foes adjacent to your target take
+    // 5...25 damage each second..." (#2282): the hex does it all.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "glimmering-mark",
+        durationSeconds: { flat: 10 },
+      },
+    ],
+  },
 ];
 
 /**

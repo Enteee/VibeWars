@@ -10,7 +10,7 @@ import {
 } from "../primary-attributes.js";
 import type { Vec2 } from "../vec2.js";
 
-import { canAffordAdrenaline, spendAdrenaline } from "./adrenaline.js";
+import { canAffordAdrenaline, losesAllAdrenaline, spendAdrenaline } from "./adrenaline.js";
 import { isCastingSpell } from "./attacking.js";
 import { resolvedBar } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
@@ -514,7 +514,7 @@ export function payCost(
   target?: Pick<Combatant, "statuses">,
 ): void {
   caster.energy -= energyCostOf(skill, caster, target);
-  if (skill.cost?.kind === "adrenaline") {
+  if (skill.cost?.kind === "adrenaline" || losesAllAdrenaline(skill)) {
     spendAdrenaline(caster, skill, key);
   }
   // After the energy, so a spell that lowers the ceiling below its own

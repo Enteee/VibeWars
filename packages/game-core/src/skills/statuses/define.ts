@@ -111,6 +111,7 @@ export function define(
     endsWhenBearerMisses: false,
     endsWhenBearerUsesSkill: false,
     endsWhenBearerUsesOtherSkill: false,
+    endsWhenSourceTargets: false,
     endsWhenBearerUsesAdrenalSkill: false,
     endsWhenBearerUsesNonAdrenalSkill: false,
     endsWhenBearerUsesAttackSkill: false,

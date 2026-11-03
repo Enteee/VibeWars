@@ -3666,4 +3666,38 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "monk.zealots-fire",
+    name: "Zealot's Fire",
+    gwId: 271,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 60 seconds, whenever you use a skill that targets an ally, all
+    // foes adjacent to that target are struck for 5...35 fire damage and
+    // you lose 1 Energy" (#2282).
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "zealots-fire",
+        durationSeconds: { flat: 60 },
+      },
+    ],
+  },
 ];

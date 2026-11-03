@@ -498,6 +498,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "conjure-nightmare": icon("conjure-nightmare"),
   "images-of-remorse": icon("images-of-remorse"),
   "confusing-images": icon("confusing-images"),
+  // Wild Blow, Zealot's Fire, Glimmering Mark, Spoil Victor (#2282).
+  "zealots-fire": icon("zealots-fire"),
+  "glimmering-mark": icon("glimmering-mark"),
+  "spoil-victor": icon("spoil-victor"),
   // Condition movement (#2259).
   "fevered-dreams": icon("fevered-dreams"),
   "mark-of-fury": icon("mark-of-fury"),

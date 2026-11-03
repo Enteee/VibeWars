@@ -303,6 +303,8 @@ const NO_BOT_USE = new Set([
   // Resilience.
   "warrior.i-will-survive",
   "ritualist.resilient-was-xiko",
+  // Burns only round the allies its bearer's later skills target (#2282).
+  "monk.zealots-fire",
 ]);
 
 function skill(id: string) {

@@ -850,6 +850,13 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerUsesOtherSkill: boolean;
   /**
+   * It ends the moment its source uses a skill on the bearer (#2282),
+   * before that skill's effects resolve, so they never see it: Glimmering
+   * Mark's "this hex ends if you use a skill that targets this foe".
+   * Anyone else's skill leaves it.
+   */
+  readonly endsWhenSourceTargets: boolean;
+  /**
    * It ends once one of its triggers has fired (#1022): Vengeful Weapon's
    * and Weapon of Remedy's "the next time". Ended where the trigger fires,
    * after its effects, logged as its expiry.
@@ -1688,6 +1695,8 @@ export interface StatusTrigger {
    * bearer, only a foe of the source's, as Soul Bind hurts the healer.
    * Or `hexed-foe` (#1951): the bearer turns on the foe its hex just
    * landed on, as Elemental Flame sets it on fire.
+   * Or `skill-target` (#2282): the status's source turns on whoever the
+   * bearer's skill was used on, as Zealot's Fire burns round that ally.
    */
   readonly effects: readonly TriggerEffect[];
   readonly target:
@@ -1698,7 +1707,8 @@ export interface StatusTrigger {
     | "gained-source"
     | "source-on-offender"
     | "healer"
-    | "hexed-foe";
+    | "hexed-foe"
+    | "skill-target";
   /**
    * On `bearer-attacks`, `bearer-hits` and `bearer-fails-to-hit` only
    * (#1354, #1359, #2133): it fires only for an attack made with a weapon
@@ -1772,7 +1782,9 @@ export interface StatusTrigger {
    * spell". On `bearer-casts-spell` too, and on `bearer-interrupted`, for
    * the skill interrupted (#2132), never a plain swing. With `spell`, any
    * spell (`isSpell`), a hex or an enchantment too: Persistence of
-   * Memory's "a spell you cast". Absent: any skill.
+   * Memory's "a spell you cast". With `targetsAlly` (#2282), only a skill
+   * used on an ally of the bearer's or on the bearer: Zealot's Fire's
+   * "whenever you use a skill that targets an ally". Absent: any skill.
    */
   readonly usedSkill?: {
     readonly type?: SkillType;
@@ -1781,7 +1793,15 @@ export interface StatusTrigger {
     readonly profession?: ProfessionId;
     readonly elite?: true;
     readonly adrenal?: true;
+    readonly targetsAlly?: true;
   };
+  /**
+   * On `bearer-attacks` and `bearer-casts-spell` only (#2282): it fires
+   * only when the attack's or the spell's target had less Health than
+   * the bearer as the attack or the cast began, as Spoil Victor's "attacks
+   * or casts a spell on a creature with less Health". Equal is not less.
+   */
+  readonly victimHasLessHealth?: true;
   /** The skill the log names it after: "mesmer.backfire". */
   readonly skillId: string;
 }
@@ -3724,6 +3744,21 @@ export class StatusSet {
           !spared.has(id)
         );
       })
+      .map(({ id }) => id);
+    this.#end(ended);
+    return ended;
+  }
+
+  /**
+   * `sourceId` used a skill on the bearer (#2282): every status of its
+   * that ends when its source does is gone. Returns their ids.
+   */
+  public endOnSourceTargets(sourceId: string): StatusId[] {
+    const ended = this.active
+      .filter(
+        (status) =>
+          status.sourceId === sourceId && getStatusDefinition(status.id).endsWhenSourceTargets,
+      )
       .map(({ id }) => id);
     this.#end(ended);
     return ended;

@@ -1108,6 +1108,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.endsWhenBearerUsesAttackSkill) {
     parts.push("ends if you use an attack skill");
   }
+  // Glimmering Mark's (#2282).
+  if (definition.endsWhenSourceTargets) {
+    parts.push("ends if you use a skill on it");
+  }
   if (definition.endsWhenBearerUsesOtherSkill && definition.nextSkillRule !== undefined) {
     parts.push(
       `ends if you use a skill that is not a ${NEXT_SKILL_KIND[definition.nextSkillRule.which][0]}`,
@@ -1417,6 +1421,7 @@ function describeTriggers(
       trigger.healthBelow,
       trigger.appliedHex,
       trigger.hitBy,
+      trigger.victimHasLessHealth,
     ]);
     const group = groups.get(key);
     if (group === undefined) {
@@ -1451,7 +1456,7 @@ function describeTriggers(
                     ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
                     : bearerIsCaster && trigger.weapon === "bow"
                       ? `whenever your arrows ${on.map((event) => ARROWS_WHEN[event] ?? whenOf(event, trigger)).join(" or ")}`
-                      : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
+                      : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}${trigger.victimHasLessHealth === undefined ? "" : " on a creature with less Health"}`,
       ranks,
       bearerIsFoe,
       bearerIsCaster,
@@ -1639,7 +1644,7 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     return `casts ${/^[aeiou]/i.test(words) ? "an" : "a"} ${words}`;
   }
   if (event === "bearer-uses-skill" && trigger.usedSkill !== undefined) {
-    const { type, attributes, profession, elite, adrenal } = trigger.usedSkill;
+    const { type, attributes, profession, elite, adrenal, targetsAlly } = trigger.usedSkill;
     const words = [
       ...(elite === undefined ? [] : ["elite"]),
       ...(adrenal === undefined ? [] : ["adrenal"]),
@@ -1648,7 +1653,9 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
       ...(type === undefined ? [] : [TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()]),
       "skill",
     ];
-    return `uses ${/^[aeiou]/i.test(words[0] ?? "") ? "an" : "a"} ${words.join(" ")}`;
+    // Zealot's Fire's "a skill that targets an ally" (#2282).
+    const on = targetsAlly === undefined ? "" : " on an ally";
+    return `uses ${/^[aeiou]/i.test(words[0] ?? "") ? "an" : "a"} ${words.join(" ")}${on}`;
   }
   return undefined;
 }
@@ -1923,14 +1930,15 @@ function describeTrigger(
       return [sentence(`${when}: you enter the same stance`)];
     }
     // Ether Prodigy's end (#1984): "when it ends: lose 2 Health for each
-    // point of Energy you have".
+    // point of Energy you have"; on a foe, Spoil Victor's "it loses 63
+    // Health" (#2282).
     if (
       effect.kind === "lose-health" &&
       effect.recipient === "target" &&
       trigger.target === "bearer"
     ) {
       const text = describeEffect(effect, ranks)
-        .text.replace(/^Target foe loses/, "lose")
+        .text.replace(/^Target foe loses/, bearerIsFoe ? "it loses" : "lose")
         .replace(/Energy they have/, "Energy you have");
       return [sentence(`${when}: ${text}`)];
     }
@@ -1971,6 +1979,17 @@ function describeTrigger(
       return [
         clause(`${when}, the healer takes ${amount(effect.amount)}${typeWord(effect.type)} damage`),
       ];
+    }
+    // Zealot's Fire's (#2282): "all foes adjacent to that target are struck
+    // for 29 fire damage and you lose 1 Energy".
+    if (effect.kind === "splash" && trigger.target === "skill-target") {
+      const who = upTo(effect, ranks);
+      const text = describeEffect(effect, ranks).text;
+      return [sentence(`${when}: ${lowerFirst(who)} of that target${text.slice(who.length)}`)];
+    }
+    if (effect.kind === "energy-loss" && trigger.target === "source") {
+      const who = bearerIsCaster ? "you lose" : "its caster loses";
+      return [sentence(`${when}: ${who} ${amount(effect.amount)} energy`)];
     }
     if (effect.kind === "heal" && trigger.target === "source") {
       return [clause(`heals its caster for ${amount(effect.amount)} ${when}`)];
@@ -2513,7 +2532,14 @@ function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>): string 
   // Mystic Healing's "enchanted party members", "with an enchantment" (#2207).
   const article = splash.onlyBearing === "enchantment" ? "an" : "a";
   const bearing = splash.onlyBearing === undefined ? "" : ` with ${article} ${splash.onlyBearing}`;
-  const who = `${foesWithin(splash.radius, splash.hits)}${splash.around === "caster" ? " around you" : ""}${bearing}`;
+  // Glimmering Mark's "target foe and all foes adjacent", "using attack
+  // skills" (#2282).
+  const using =
+    splash.onlyUsing === undefined
+      ? ""
+      : ` using ${TYPE_TEXT[splash.onlyUsing].replace(/\.$/, "").toLowerCase()} skills`;
+  const reached = foesWithin(splash.radius, splash.hits);
+  const who = `${splash.includesCentre === true ? `Target and ${lowerFirst(reached)}` : reached}${splash.around === "caster" ? " around you" : ""}${bearing}${using}`;
   return splash.maxTargets === undefined || splash.hits === "party"
     ? who
     : `Up to ${String(countAt(splash.maxTargets, ranks))} ${lowerFirst(who)}`;
@@ -3988,7 +4014,7 @@ export function describeSkill(
 ): SkillDescription {
   // "Lose all adrenaline" (#1097), before anything, as GW1 prints it.
   const lossLine =
-    skill.cost?.kind === "adrenaline" && skill.cost.losesAll === true
+    skill.losesAllAdrenaline === true
       ? [{ text: "Lose all adrenaline", magnitude: undefined }]
       : [];
   // A pet attack's (#1046) reads as an attack skill's.
