@@ -1,4 +1,5 @@
 import {
+  PROFESSIONS,
   SKILL_ROLES,
   getSkill,
   skillRoles,
@@ -13,7 +14,6 @@ import {
   type TeamCharacter,
   type TeamBuildSize,
 } from "../storage/schema.js";
-import { professionLabel } from "./character-preview.js";
 
 /**
  * The team builder (brief §18, §4).
@@ -158,7 +158,14 @@ export function slotRefusal(
     return `${skill.name} is already on ${member.name}'s bar`;
   }
   if (!equippableSkills(member).some((each) => each.id === skillId)) {
-    return `${professionLabel(member.primaryProfession, member.secondaryProfession)} can't use ${skill.name}`;
+    // As `professionLabel` says it: that module draws, and this one loads
+    // in Node too, through `team-transfer.ts` (e2e).
+    const { primaryProfession: primary, secondaryProfession: secondary } = member;
+    const label =
+      secondary === undefined
+        ? PROFESSIONS[primary].name
+        : `${PROFESSIONS[primary].name} / ${PROFESSIONS[secondary].name}`;
+    return `${label} can't use ${skill.name}`;
   }
   const elite = skill.elite ? others.find((id) => getSkill(id)?.elite === true) : undefined;
   if (elite !== undefined) {
