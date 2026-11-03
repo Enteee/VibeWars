@@ -143,6 +143,7 @@ const NO_BOT_USE = new Set([
   "necromancer.animate-vampiric-horror",
   "necromancer.animate-flesh-golem",
   "necromancer.animate-shambling-horror",
+  "necromancer.animate-bone-fiend",
   // Minions 3 (#1915): no minion rule yet either. Infuse Condition is a
   // defence.
   "necromancer.order-of-undeath",
