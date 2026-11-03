@@ -49,6 +49,7 @@ import {
   type InlineConfirm,
 } from "./kit.js";
 import {
+  dragSkill,
   moveMember,
   professionMix,
   replaceMember,
@@ -56,6 +57,7 @@ import {
   teamCounters,
   validateTeam,
   type TeamCounter,
+  type TeamProblem,
   type ProfessionMixEntry,
   type TeamCounterId,
 } from "./team-builder.js";
@@ -401,7 +403,8 @@ let lastPanelTab: TeamPanelTab = "characters";
 type TeamDrag =
   | { readonly kind: "member"; readonly id: string }
   | { readonly kind: "character"; readonly id: string }
-  | { readonly kind: "skill"; readonly skillId: string };
+  | { readonly kind: "skill"; readonly skillId: string }
+  | { readonly kind: "slot"; readonly id: string; readonly slot: number };
 
 /** The list key of the open member's editor (#2226), which no character id is. */
 const MEMBER_EDITOR_KEY = "member-editor";
@@ -662,7 +665,8 @@ export function mountTeamEditor(
   };
 
   // What is being dragged: a row, to reorder; one of my characters, to
-  // copy onto a member; or a library skill, to equip on a slot.
+  // copy onto a member; a library skill, to equip on a slot; or a
+  // member's skill, to move or copy to another slot (#2227).
   let dragging: TeamDrag | undefined;
   const showReason = (anchor: HTMLElement, text: string, refused: boolean): void => {
     const box = anchor.getBoundingClientRect();
@@ -693,6 +697,35 @@ export function mountTeamEditor(
     team.members.findIndex((m) => m.character.id === characterId);
   const memberOf = (characterId: string): TeamCharacter | undefined =>
     team.members[indexOfMember(characterId)]?.character;
+  // A member's skill dropped on `slot` of member `characterId` (#2227).
+  const slotDrop = (
+    drag: { readonly id: string; readonly slot: number },
+    characterId: string,
+    slot: number,
+    copy: boolean,
+  ): StoredTeam | TeamProblem =>
+    dragSkill(
+      team,
+      { member: indexOfMember(drag.id), slot: drag.slot },
+      { member: indexOfMember(characterId), slot },
+      copy,
+    );
+  // What that drop would do, as the mockup's ghost says it.
+  const slotDropText = (
+    drag: { readonly id: string; readonly slot: number },
+    characterId: string,
+    slot: number,
+    copy: boolean,
+    dropped: StoredTeam | TeamProblem,
+  ): string => {
+    if ("message" in dropped) {
+      return `⊘ ${dropped.message}`;
+    }
+    const where = `${memberOf(characterId)?.name ?? ""} slot ${String(slot + 1)}`;
+    return copy && drag.id !== characterId
+      ? `Shift: Copy to ${where} (stays on ${memberOf(drag.id)?.name ?? ""})`
+      : `Move to ${where}`;
+  };
 
   // One member at a time opens in place (#2226): its professions, name,
   // attributes and gear, by the Character Builder's own parts.
@@ -874,9 +907,40 @@ export function mountTeamEditor(
           find();
         }
       });
+      // A filled slot drags its skill to another (#2227): a move, or with
+      // Shift onto another member a copy, Shift as it is at the drop.
+      cell.addEventListener("dragstart", (event: DragEvent) => {
+        event.stopPropagation();
+        const skillId = cell.dataset.skillId;
+        if (dragging !== undefined || skillId === undefined) {
+          return;
+        }
+        tooltip.hide();
+        dragging = { kind: "slot", id: characterId, slot };
+        event.dataTransfer?.setData("text/plain", skillId);
+        if (event.dataTransfer !== null) {
+          event.dataTransfer.effectAllowed = "copyMove";
+        }
+        cell.classList.add("is-dragging");
+      });
       // A library skill dropped here is equipped, if this member may
       // hold it: checked against this member, whoever the library shows.
       cell.addEventListener("dragover", (event: DragEvent) => {
+        if (dragging?.kind === "slot") {
+          const dropped = slotDrop(dragging, characterId, slot, event.shiftKey);
+          const refused = "message" in dropped;
+          cell.classList.toggle("is-drop-refused", refused);
+          cell.classList.toggle("is-drop-target", !refused);
+          if (!refused) {
+            event.preventDefault();
+          }
+          showReason(
+            cell,
+            slotDropText(dragging, characterId, slot, event.shiftKey, dropped),
+            refused,
+          );
+          return;
+        }
         if (dragging?.kind !== "skill") {
           return;
         }
@@ -897,6 +961,16 @@ export function mountTeamEditor(
         dropReason.hidden = true;
       });
       cell.addEventListener("drop", (event: DragEvent) => {
+        if (dragging?.kind === "slot") {
+          event.preventDefault();
+          event.stopPropagation();
+          const dropped = slotDrop(dragging, characterId, slot, event.shiftKey);
+          endDrag();
+          if (!("message" in dropped)) {
+            commit(dropped);
+          }
+          return;
+        }
         if (dragging?.kind !== "skill") {
           return;
         }
@@ -949,7 +1023,7 @@ export function mountTeamEditor(
     });
     row.addEventListener("drop", (event: DragEvent) => {
       const drag = dragging;
-      if (drag === undefined || drag.kind === "skill") {
+      if (drag === undefined || drag.kind === "skill" || drag.kind === "slot") {
         return;
       }
       event.preventDefault();
@@ -994,11 +1068,13 @@ export function mountTeamEditor(
         node.removeAttribute("role");
         node.removeAttribute("tabindex");
         node.removeAttribute("aria-label");
+        node.draggable = false;
         return;
       }
       // The icon alone (#2197): the tooltip carries name, cost and type.
       node.removeAttribute("title");
       node.dataset.skillId = cell.skillId;
+      node.draggable = true;
       node.setAttribute("role", "button");
       node.setAttribute("aria-label", cell.name);
       node.tabIndex = 0;

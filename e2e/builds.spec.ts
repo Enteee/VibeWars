@@ -2701,3 +2701,32 @@ test("of Fortitude on the sword, picked on the paper-doll, adds 30 Health, and s
   await expect(page.locator('.paper-doll-row[data-slot="mainHand"]')).toContainText("of Fortitude");
   await expect(health).toHaveText(String(before + 30));
 });
+
+test("a member's skill dragged to another member moves; with Shift it is copied (#2227)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByRole("tab", { name: "Skills", exact: true }).click();
+  await openLibraryGroup(page, "Strength");
+  const box = page.locator(".team-picker-skills .skill-box").first();
+  const skillId = (await box.getAttribute("data-skill-id")) ?? "";
+  const cell = (row: number, slot: number) =>
+    memberRows(page).nth(row).locator(".team-skill").nth(slot);
+  await box.dragTo(cell(0, 0));
+  await expect(cell(0, 0)).toHaveAttribute("data-skill-id", skillId);
+
+  // A plain drag moves it: the source slot empties.
+  await cell(0, 0).dragTo(cell(1, 2));
+  await expect(cell(1, 2)).toHaveAttribute("data-skill-id", skillId);
+  await expect(cell(0, 0)).not.toHaveAttribute("data-skill-id");
+
+  // Shift held at the drop copies it back: both bars hold it.
+  await page.keyboard.down("Shift");
+  await cell(1, 2).dragTo(cell(0, 4));
+  await page.keyboard.up("Shift");
+  await expect(cell(0, 4)).toHaveAttribute("data-skill-id", skillId);
+  await expect(cell(1, 2)).toHaveAttribute("data-skill-id", skillId);
+});

@@ -4761,9 +4761,11 @@ export class MatchSimulation {
 
   /**
    * Contagion (#887): the condition its bearer gained, on each living foe
-   * of the bearer within the radius, in participant order, as the bearer's.
+   * of the bearer within the radius, in participant order, as the
+   * trigger's caster's; Fevered Dreams (#2259), on each of the bearer's
+   * allies instead, the bearer aside.
    */
-  readonly #spread: SpreadGainedCondition = (effect, bearer, gained) => {
+  readonly #spread: SpreadGainedCondition = (effect, bearer, gained, caster) => {
     const from = this.#participants.get(bearer.id);
     if (from === undefined || bearer.dead) {
       return [];
@@ -4771,7 +4773,9 @@ export class MatchSimulation {
     return [...this.#participants.values()]
       .filter(
         (other) =>
-          other.combatant.team !== bearer.team &&
+          (effect.to === "bearer-foes"
+            ? other.combatant.team !== bearer.team
+            : other.combatant.team === bearer.team && other.combatant.id !== bearer.id) &&
           !other.combatant.dead &&
           distance(from.position, other.position) <= effect.radius,
       )
@@ -4785,7 +4789,7 @@ export class MatchSimulation {
             },
           ],
           {
-            caster: bearer,
+            caster,
             target: other.combatant,
             rng: this.#rng,
             rules: this.#ruleset.combat,

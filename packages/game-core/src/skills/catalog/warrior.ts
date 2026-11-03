@@ -4645,4 +4645,38 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     effects: [],
   },
+  // Condition movement (#2259).
+  {
+    id: "warrior.i-will-survive",
+    name: '"I Will Survive!"',
+    gwId: 368,
+    type: "shout",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "warrior",
+    attributeId: "warrior.strength",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You gain +3 Health regeneration for each condition you are
+    // suffering. This regeneration expires after 5...11 seconds": 9.8 s.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "i-will-survive",
+        durationSeconds: { scaling: { attributeId: "warrior.strength", atZero: 5, atTwelve: 9.8 } },
+      },
+    ],
+  },
 ];
