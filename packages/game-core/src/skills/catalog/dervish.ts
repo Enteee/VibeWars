@@ -2797,4 +2797,46 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // this enchantment ends, you are cured of 1...2 conditions" (#2217).
     effects: [{ kind: "apply-status", statusId: "conviction", durationSeconds: { flat: 10 } }],
   },
+  {
+    id: "dervish.grenths-aura",
+    name: "Grenth's Aura",
+    gwId: 2013,
+    type: "enchantment",
+    elite: false,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20 seconds, you deal 5...25 less damage and steal 5...25 Health
+    // whenever you hit with a scythe attack. When you cast this
+    // enchantment you steal 5...25 Health from all adjacent foes."
+    effects: [
+      { kind: "apply-status", statusId: "grenths-aura", durationSeconds: { flat: 20 } },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "life-steal",
+            amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 5, atTwelve: 21 } },
+          },
+        ],
+      },
+    ],
+  },
 ];

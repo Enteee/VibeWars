@@ -102,7 +102,7 @@ describe("a P2P match (#375)", () => {
       ranks: NO_RANKS,
       outbreak: null,
       maintained: null,
-      projected: false,
+      projected: null,
       returnPoint: null,
       stepTargetId: null,
     }));
@@ -142,7 +142,7 @@ describe("a P2P match (#375)", () => {
       ranks: NO_RANKS,
       outbreak: null,
       maintained: null,
-      projected: false,
+      projected: null,
       returnPoint: null,
       stepTargetId: null,
     };

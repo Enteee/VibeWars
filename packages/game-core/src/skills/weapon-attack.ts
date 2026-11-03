@@ -30,7 +30,7 @@ import {
   type SkillOutcome,
   type SkillResolution,
 } from "./effects.js";
-import { resolveMagnitude } from "./scaling.js";
+import { resolveMagnitude, statAt } from "./scaling.js";
 import {
   aggregateModifiers,
   attacksAgainstMiss,
@@ -112,6 +112,19 @@ export function attackDurationSeconds(combatant: Combatant, baseSeconds: number)
     return weapon === undefined || wieldsFor(wielded, weapon);
   });
   return baseSeconds * aggregateModifiers(counted).attackDurationMultiplier;
+}
+
+/**
+ * Whether a status's critical chance holds for `combatant` (#2275): not
+ * one held for a weapon it is not wielding, as Way of the Assassin's off
+ * daggers.
+ */
+function gatesCritical(combatant: Combatant): (status: Pick<ActiveStatus, "id">) => boolean {
+  const wielded = combatant.equipment.mainHand.weapon.id;
+  return ({ id }) => {
+    const weapon = getStatusDefinition(id).criticalChanceBonusWeapon;
+    return weapon === undefined || wieldsFor(wielded, weapon);
+  };
 }
 
 /** The length of this combatant's swing with the weapon it holds, attack speed included. */
@@ -256,7 +269,9 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     criticalStrikes: rankIn(attacker, CRITICAL_STRIKES_ATTRIBUTE),
     requirementMet: mainHand.attributeId === undefined || rank >= mainHand.weapon.requirement.rank,
     damageMultiplier: weaponDamageMultiplierOf(attacker),
-    criticalChanceBonus: modifiers.criticalChanceBonus,
+    criticalChanceBonus: aggregateModifiers(
+      attacker.statuses.active.filter(gatesCritical(attacker)),
+    ).criticalChanceBonus,
     preventsCriticals: modifiers.preventsCriticals,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
     armorPenetration: modifiers.attackArmorPenetration,
@@ -970,18 +985,23 @@ export function bearerAttacked(
   readonly damageDelta: number;
   readonly spent: readonly StatusId[];
 } {
+  // Read before they end: an ended status's ranks go with it (#2275).
+  const before = attacker.statuses.active;
   const unblockable = attacker.statuses.spendUnblockableAttack();
   const spent = attacker.statuses.spendAttack();
-  let criticalChanceBonus = 0;
+  const ended = [...unblockable.ended, ...spent, ...attacker.statuses.endOnBearerAttack(kind)];
+  const endedBefore = before.filter(({ id }) => ended.includes(id));
+  const criticalChanceBonus = aggregateModifiers(
+    endedBefore.filter(gatesCritical(attacker)),
+  ).criticalChanceBonus;
   let damageDelta = 0;
-  for (const statusId of [
-    ...unblockable.ended,
-    ...spent,
-    ...attacker.statuses.endOnBearerAttack(kind),
-  ]) {
+  for (const status of endedBefore) {
+    damageDelta += Math.round(
+      statAt(getStatusDefinition(status.id).attackDamageDelta, status.ranks),
+    );
+  }
+  for (const statusId of ended) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
-    criticalChanceBonus += getStatusDefinition(statusId).criticalChanceBonus;
-    damageDelta += getStatusDefinition(statusId).attackDamageDelta;
   }
   return { unblockable: unblockable.unblockable, criticalChanceBonus, damageDelta, spent };
 }

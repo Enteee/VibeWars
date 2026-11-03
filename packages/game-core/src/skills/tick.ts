@@ -9,6 +9,7 @@ import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
 import { guardedDegeneration } from "./loss-guard.js";
 import { effectiveMaxEnergy, energyFloor } from "./overcast.js";
+import { statAt } from "./scaling.js";
 import {
   aggregateModifiers,
   clampPips,
@@ -480,7 +481,7 @@ export function attackDamageDeltaOf(combatant: Combatant): number {
       return sum;
     }
     return attackDamageDeltaWeapon === undefined || wieldsFor(wielded, attackDamageDeltaWeapon)
-      ? sum + attackDamageDelta
+      ? sum + Math.round(statAt(attackDamageDelta, status.ranks))
       : sum;
   }, 0);
 }
