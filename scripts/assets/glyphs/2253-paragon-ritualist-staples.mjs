@@ -47,9 +47,10 @@ const glyphs = {
   },
   "bars-rising": {
     means:
-      '"Make Your Time!": three adrenaline bars climbing, a shout\'s chevron over them: strikes of adrenaline for the party.',
+      '"Make Your Time!": three heads over three filled adrenaline bars: strikes of adrenaline for every party member in earshot.',
     draw: () =>
-      inkFill("M3 17H8V21H3ZM9.5 12H14.5V21H9.5ZM16 7H21V21H16Z") + inkLine("M3 9L7 5L11 9", 2.2),
+      `<circle cx="5.5" cy="5.5" r="2.4" fill="${C.ink}"/><circle cx="12" cy="5.5" r="2.4" fill="${C.ink}"/><circle cx="18.5" cy="5.5" r="2.4" fill="${C.ink}"/>` +
+      inkFill("M3 12H8V21H3ZM9.5 12H14.5V21H9.5ZM16 12H21V21H16Z"),
   },
   "flame-less": {
     means:
