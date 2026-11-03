@@ -652,6 +652,29 @@ test("a member opens in place: its secondary profession and a rank change there 
   );
 });
 
+test("the open member's attribute names are never cut, and its name field is styled like the team's (#2226)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto("./");
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "new team" }).click();
+  await memberRows(page).first().locator(".team-row-edit").click();
+  const editor = page.locator(".team-member-editor");
+  // Ranger: Marksmanship and Wilderness Survival, the longest one-word names.
+  await chooseProfession(page, "secondary", "ranger");
+  const names = editor.locator(".editor-attribute-name");
+  await expect(names.first()).toBeVisible();
+  const cut = await names.evaluateAll((spans) =>
+    spans.filter((span) => span.scrollWidth > span.clientWidth).map((span) => span.textContent),
+  );
+  expect(cut).toEqual([]);
+  const background = (selector: string) =>
+    page.locator(selector).evaluate((input) => getComputedStyle(input).backgroundColor);
+  expect(await background("input.team-member-name")).toBe(await background("input.editor-name"));
+});
+
 test("on a phone, a Team Build card's Edit sits below its members, never on them (#1786)", async ({
   page,
 }) => {

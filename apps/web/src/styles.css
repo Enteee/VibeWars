@@ -1191,7 +1191,8 @@ body {
 
 .field-input,
 .screen select,
-.editor-name {
+.editor-name,
+.team-member-name {
   padding: 0.5rem 0.6rem;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -1748,7 +1749,7 @@ body {
 /* The open member, in place under its row (#2226). */
 .team-member-editor {
   display: grid;
-  grid-template-columns: 10rem minmax(24rem, 1fr) minmax(21rem, 1fr);
+  grid-template-columns: 10rem minmax(27rem, 1fr) minmax(21rem, 1fr);
   gap: 1rem;
   max-height: 32rem;
   overflow-y: auto;
@@ -1771,6 +1772,12 @@ body {
   color: var(--ink-dim);
   font-size: 0.8rem;
   text-transform: uppercase;
+}
+
+/* A one-word attribute name is never cut under the pips: its column is at
+   least that word wide, and the middle column leaves room for it. */
+.team-member-editor .editor-attribute {
+  grid-template-columns: minmax(min-content, 1fr) auto 6ch 10ch;
 }
 
 .team-member-editor .editor-professions {
