@@ -28,7 +28,7 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
-import type { ConditionalArmor } from "../equipment/armor.js";
+import type { ArmorCondition } from "../equipment/insignias.js";
 import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
@@ -162,6 +162,13 @@ export interface BlockRule {
  */
 export type StatusStat = number | { readonly scaling: AttributeScaling };
 
+/** An insignia's `ConditionalArmor`, its amount a `StatusStat` (#2278): Ward Against Harm's 12...24. */
+export interface StatusConditionalArmor {
+  readonly amount: StatusStat;
+  /** Every one must hold; `[]` always does. */
+  readonly conditions: readonly ArmorCondition[];
+}
+
 /** The ranks of a status none of whose stats scale (#1976). */
 export const NO_RANKS: ReadonlyMap<string, number> = new Map();
 
@@ -237,8 +244,13 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
       }
     }
   }
-  // Reversal of Damage's and Mark of Protection's caps are their caster's (#2187).
-  for (const stat of [definition.reflectsNextDamage?.cap, definition.damageToHealing?.cap]) {
+  // Reversal of Damage's and Mark of Protection's caps are their caster's (#2187),
+  // and Ward Against Harm's elemental armor (#2278).
+  for (const stat of [
+    definition.reflectsNextDamage?.cap,
+    definition.damageToHealing?.cap,
+    ...definition.conditionalArmor.map(({ amount }) => amount),
+  ]) {
     if (stat !== undefined && typeof stat !== "number") {
       attributes.add(stat.scaling.attributeId);
     }
@@ -322,7 +334,7 @@ export interface StatusDefinition {
    * Armor added against a hit only when its conditions hold (#1437), as
    * an insignia's: Avatar of Melandru's "+30 elemental armor".
    */
-  readonly conditionalArmor: readonly ConditionalArmor[];
+  readonly conditionalArmor: readonly StatusConditionalArmor[];
   /**
    * Armor added while the bearer is not moving (#921, `Combatant.moving`):
    * "Stand Your Ground!"'s +24.

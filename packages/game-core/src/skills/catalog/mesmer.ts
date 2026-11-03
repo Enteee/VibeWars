@@ -3825,4 +3825,36 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2278), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.mantra-of-recall",
+    name: "Mantra of Recall",
+    gwId: 82,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20 seconds, you gain no benefit from it. You gain 10...25 Energy
+    // when Mantra of Recall ends." The gain is the enchantment's own end.
+    effects: [
+      { kind: "apply-status", statusId: "mantra-of-recall", durationSeconds: { flat: 20 } },
+    ],
+  },
 ];

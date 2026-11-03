@@ -3666,4 +3666,46 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2278), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.signet-of-mystic-wrath",
+    name: "Signet of Mystic Wrath",
+    gwId: 1689,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe takes 25 holy damage for each enchantment on you
+    // (maximum 30...120 holy damage)": none on you, none.
+    effects: [
+      {
+        kind: "damage",
+        amount: { flat: 0 },
+        type: "holy",
+        armorPenetration: 0,
+        per: {
+          count: { kind: "statuses", on: "caster", categories: ["enchantment"] },
+          amount: { flat: 25 },
+          max: { scaling: { attributeId: "monk.smiting-prayers", atZero: 30, atTwelve: 102 } },
+        },
+      },
+    ],
+  },
 ];

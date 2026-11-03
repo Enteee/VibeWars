@@ -4487,6 +4487,83 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2278), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.lightning-surge",
+    name: "Lightning Surge",
+    gwId: 205,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "After 3 seconds, target foe is knocked down, struck for 14...100
+    // lightning damage, and has Cracked Armor for 5...20 seconds." The
+    // strike is the hex's own expiry.
+    effects: [{ kind: "apply-status", statusId: "lightning-surge", durationSeconds: { flat: 3 } }],
+  },
+  {
+    id: "elementalist.ward-against-harm",
+    name: "Ward Against Harm",
+    // The base record; its numbers are the PvP split's (2806), disabled 30 s.
+    gwId: 239,
+    type: "ward",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: 30,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Create a Ward Against Harm at this location. For 5...15 seconds,
+    // non-spirit allies in this area have +1...3 Health regeneration,
+    // +12...24 armor, and an additional +12...24 armor against elemental
+    // damage."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 5, atTwelve: 13 },
+        },
+        act: {
+          kind: "aura",
+          aura: {
+            statusId: "ward-against-harm",
+            affects: "allies",
+            radius: AREA_IN_THE_AREA,
+          },
+        },
+      },
+    ],
+  },
 ];
 
 /**

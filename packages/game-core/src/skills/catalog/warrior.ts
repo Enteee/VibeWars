@@ -4679,4 +4679,45 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2278), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "warrior.shove",
+    name: "Shove",
+    gwId: 1146,
+    type: "skill",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "warrior",
+    attributeId: "warrior.tactics",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 10,
+    // "Target touched foe."
+    touch: true,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "...takes 15...75 damage, their stance ends, and they are knocked
+    // down."
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "warrior.tactics", atZero: 15, atTwelve: 63 } },
+        type: "typeless",
+        armorPenetration: 0,
+      },
+      { kind: "remove-status", category: "stance", count: 1 },
+      { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+    ],
+  },
 ];

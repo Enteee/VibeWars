@@ -1,7 +1,7 @@
 import { AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
 import type { DamageType } from "../../equipment/types.js";
 import type { StatusDefinition } from "../status.js";
-import type { PerCount } from "../types.js";
+import { KNOCKDOWN_SECONDS, type PerCount } from "../types.js";
 import { define } from "./define.js";
 
 export type ElementalistStatusId =
@@ -66,7 +66,10 @@ export type ElementalistStatusId =
   | "magnetic-surge"
   | "sliver-armor"
   // Elementalist staples (#2166).
-  | "teinais-prison";
+  | "teinais-prison"
+  // Staples (#2278).
+  | "lightning-surge"
+  | "ward-against-harm";
 
 /** Mist Form's heal (#1951): 210% of the spell's cost, under 80% Health. */
 const MIST_FORM_HEAL = {
@@ -593,6 +596,58 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
           },
         ],
         skillId: "elementalist.sliver-armor",
+      },
+    ],
+  }),
+  // Staples (#2278). "After 3 seconds, target foe is knocked down, struck
+  // for 14...100 lightning damage, and has Cracked Armor for 5...20
+  // seconds. This spell has 25% armor penetration": only its expiry
+  // strikes, so a strip first does nothing. Knocked down first, as the
+  // text orders; its caster's Air Magic.
+  "lightning-surge": define("lightning-surge", "Lightning Surge", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.air-magic",
+    triggers: [
+      {
+        on: "expires",
+        target: "bearer",
+        effects: [
+          { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 14, atTwelve: 82.8 },
+            },
+            type: "lightning",
+            armorPenetration: 0.25,
+          },
+          {
+            kind: "apply-status",
+            statusId: "cracked-armor",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+        skillId: "elementalist.lightning-surge",
+      },
+    ],
+  }),
+  // What the ward projects on the allies inside it: "+1...3 Health
+  // regeneration, +12...24 armor, and an additional +12...24 armor against
+  // elemental damage", at its caster's Water Magic.
+  "ward-against-harm": define("ward-against-harm", "Ward Against Harm", "skill-effect", {
+    profession: "elementalist",
+    healthPips: { scaling: { attributeId: "elementalist.water-magic", atZero: 1, atTwelve: 2.6 } },
+    armorModifier: {
+      scaling: { attributeId: "elementalist.water-magic", atZero: 12, atTwelve: 21.6 },
+    },
+    conditionalArmor: [
+      {
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 12, atTwelve: 21.6 },
+        },
+        conditions: [{ kind: "vs-elemental" }],
       },
     ],
   }),

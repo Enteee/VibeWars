@@ -234,6 +234,7 @@ describe("status definitions", () => {
       "putrid-bile": -3,
       "blood-renewal": 5,
       "vampiric-spirit": 9,
+      "ward-against-harm": 2.6,
     });
   });
 
