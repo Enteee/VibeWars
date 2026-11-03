@@ -84,7 +84,9 @@ export type NecromancerStatusId =
   | "vampiric-spirit"
   // Condition movement (#2259).
   | "mark-of-fury"
-  | "masochism";
+  | "masochism"
+  // Staples (#2278).
+  | "mark-of-subversion";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -791,5 +793,22 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         skillId: "necromancer.masochism",
       },
     ],
+  }),
+  // Staples (#2278). As Shame, for "a spell that targets an ally of that
+  // foe", itself included: "you steal up to 10...92 Health from that foe".
+  "mark-of-subversion": define("mark-of-subversion", "Mark of Subversion", "hex", {
+    profession: "necromancer",
+    failsNextSpell: {
+      on: "ally-targeted",
+      effects: [
+        {
+          kind: "life-steal",
+          amount: {
+            scaling: { attributeId: "necromancer.blood-magic", atZero: 10, atTwelve: 75.6 },
+          },
+        },
+      ],
+      skillId: "necromancer.mark-of-subversion",
+    },
   }),
 };

@@ -104,6 +104,7 @@ const NO_BOT_USE = new Set([
   "mesmer.echo",
   "mesmer.illusion-of-haste",
   "mesmer.mantra-of-recovery",
+  "mesmer.mantra-of-recall",
   "necromancer.blood-ritual",
   "necromancer.contagion",
   "necromancer.offering-of-blood",

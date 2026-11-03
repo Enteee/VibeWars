@@ -71,7 +71,9 @@ export type MesmerStatusId =
   | "confusing-images"
   // Condition movement (#2259).
   | "fevered-dreams"
-  | "keystone-signet";
+  | "keystone-signet"
+  // Staples (#2278).
+  | "mantra-of-recall";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -844,5 +846,26 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
       ],
       skillId: "mesmer.keystone-signet",
     },
+  }),
+  // Staples (#2278). "For 20 seconds, you gain no benefit from it. You
+  // gain 10...25 Energy when Mantra of Recall ends": any end, a removal
+  // included, as GW1 says "ends".
+  "mantra-of-recall": define("mantra-of-recall", "Mantra of Recall", "enchantment", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 10, atTwelve: 22 },
+            },
+          },
+        ],
+        skillId: "mesmer.mantra-of-recall",
+      },
+    ],
   }),
 };
