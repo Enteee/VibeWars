@@ -4532,4 +4532,37 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2278), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.mark-of-subversion",
+    name: "Mark of Subversion",
+    gwId: 127,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 6 seconds, the next time target foe casts a spell that targets
+    // an ally of that foe, the spell fails and you steal up to 10...92
+    // Health from that foe." The steal is the hex's own.
+    effects: [
+      { kind: "apply-status", statusId: "mark-of-subversion", durationSeconds: { flat: 6 } },
+    ],
+  },
 ];

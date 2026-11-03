@@ -2839,4 +2839,46 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2278), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "dervish.dwaynas-touch",
+    name: "Dwayna's Touch",
+    gwId: 1528,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 5,
+    // "Target touched ally."
+    touch: true,
+    range: RANGE_MELEE,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "...is healed for 60 Health for each enchantment on you (maximum
+    // 60...240)": none on you, none.
+    effects: [
+      {
+        kind: "heal",
+        amount: { flat: 0 },
+        per: {
+          count: { kind: "statuses", on: "caster", categories: ["enchantment"] },
+          amount: { flat: 60 },
+          max: { scaling: { attributeId: "dervish.wind-prayers", atZero: 60, atTwelve: 204 } },
+        },
+      },
+    ],
+  },
 ];

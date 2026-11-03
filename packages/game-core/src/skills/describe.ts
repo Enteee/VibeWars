@@ -5,7 +5,6 @@ import {
   AREA_NEARBY,
   RANGE_SPELL,
 } from "../distances.js";
-import type { ConditionalArmor } from "../equipment/armor.js";
 import type { DamageType } from "../equipment/types.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import {
@@ -30,6 +29,7 @@ import {
   type NextSkillRule,
   type OwnSkillModifier,
   type StatusCategory,
+  type StatusConditionalArmor,
   type StatusStat,
   type StatusTrigger,
   type StatusTriggerEvent,
@@ -427,7 +427,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`${sign}${statText(definition.armorModifier, ranks, whole)} armor`);
   }
   for (const bonus of definition.conditionalArmor) {
-    parts.push(statusArmorText(bonus));
+    parts.push(statusArmorText(bonus, ranks));
   }
   if (definition.armorWhileStill !== 0) {
     parts.push(`${signed(definition.armorWhileStill)} armor while not moving`);
@@ -1307,7 +1307,10 @@ function riderDamage(effect: DamageEffect, ranks: ReadonlyMap<string, number>): 
  * and projectile conditions are a status's; any other is a catalog bug,
  * not data.
  */
-function statusArmorText(bonus: ConditionalArmor): string {
+function statusArmorText(
+  bonus: StatusConditionalArmor,
+  ranks: ReadonlyMap<string, number> | undefined,
+): string {
   const projectile = bonus.conditions.some(({ kind }) => kind === "vs-projectile");
   const typed = bonus.conditions.filter(({ kind }) => kind !== "vs-projectile");
   const against = typed.map((condition) => {
@@ -1322,7 +1325,7 @@ function statusArmorText(bonus: ConditionalArmor): string {
         throw new Error(`a status's armor holds only against a damage type, not ${condition.kind}`);
     }
   });
-  const text = `${signed(bonus.amount)} ${[...against, "armor"].join(" ")}`;
+  const text = `${signedStat(bonus.amount, ranks)} ${[...against, "armor"].join(" ")}`;
   return projectile ? `${text} against projectile attacks` : text;
 }
 
