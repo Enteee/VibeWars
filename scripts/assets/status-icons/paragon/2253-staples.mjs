@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Paragon staples (#2222), stand-ins until their art card.
+  // Paragon staples (#2222), art #2253.
   // Chant: a bolt over rising bars, Energy flowing until a skill is used.
   "song-of-power": [
     "chant",
