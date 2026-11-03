@@ -3694,4 +3694,96 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // "Remove up to 2 hexes from target ally."
     effects: [{ kind: "remove-status", category: "hex", count: 2 }],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Count conditions (#2247), at their rank-12 values                       */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.accumulated-pain",
+    name: "Accumulated Pain",
+    gwId: 1052,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "Target foe takes 10...35 damage. If target foe is suffering
+    // from 2 or more hexes, that foe suffers a Deep Wound for 5...20
+    // seconds": 30 and 17 s. Hexes from anyone count.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "mesmer.illusion-magic", atZero: 10, atTwelve: 30 } },
+        type: "typeless",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: {
+          kind: "count-at-least",
+          count: { kind: "statuses", on: "target", categories: ["hex"] },
+          atLeast: 2,
+        },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.lyssas-balance",
+    name: "Lyssa's Balance",
+    gwId: 877,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe loses one enchantment. If you have more enchantments than
+    // target foe, this skill has no effect": as many still strips.
+    effects: [
+      {
+        kind: "if",
+        condition: {
+          kind: "count-at-most",
+          count: { kind: "statuses", on: "caster", categories: ["enchantment"] },
+          than: { kind: "statuses", on: "target", categories: ["enchantment"] },
+        },
+        effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
+      },
+    ],
+  },
 ];

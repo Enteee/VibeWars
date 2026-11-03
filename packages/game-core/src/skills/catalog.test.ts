@@ -194,6 +194,31 @@ describe("skill catalog integrity", () => {
     );
   });
 
+  it("counts a remove-status by at most one of perSpiritNear, perRemoved and perCount (#2247)", () => {
+    // Every remove-status, however deep inside an if, a splash or a status.
+    const removals: { id: string; set: number }[] = [];
+    const visit = (value: unknown, id: string): void => {
+      if (Array.isArray(value)) {
+        value.forEach((each) => visit(each, id));
+      } else if (typeof value === "object" && value !== null) {
+        const fields = Object.entries(value);
+        if (fields.some(([key, field]) => key === "kind" && field === "remove-status")) {
+          const set = fields.filter(
+            ([key, field]) =>
+              ["perSpiritNear", "perRemoved", "perCount"].includes(key) && field !== undefined,
+          ).length;
+          removals.push({ id, set });
+        }
+        fields.forEach(([, field]) => visit(field, id));
+      }
+    };
+    IMPLEMENTED_SKILLS.forEach((skill) => visit(skill.effects, skill.id));
+    expect(removals.some(({ id }) => id === "assassin.signet-of-twilight")).toBe(true);
+    for (const { id, set } of removals) {
+      expect(set, id).toBeLessThanOrEqual(1);
+    }
+  });
+
   it("maintains only enchantments (#837)", () => {
     const maintained = IMPLEMENTED_SKILLS.flatMap((skill) =>
       skill.effects.flatMap((effect) =>

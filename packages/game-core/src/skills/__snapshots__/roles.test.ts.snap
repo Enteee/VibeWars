@@ -70,8 +70,11 @@ exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
   "assassin.shattering-assault": "",
   "assassin.shroud-of-distress": "defence",
   "assassin.shroud-of-silence": "hex",
+  "assassin.signet-of-deadly-corruption": "",
+  "assassin.signet-of-malice": "removal",
   "assassin.signet-of-shadows": "",
   "assassin.signet-of-toxic-shock": "",
+  "assassin.signet-of-twilight": "",
   "assassin.siphon-speed": "hex",
   "assassin.spirit-walk": "",
   "assassin.swap": "",
@@ -276,6 +279,7 @@ exports[`skillRoles > tags every elementalist skill the same way every time 1`] 
 
 exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
 {
+  "mesmer.accumulated-pain": "condition",
   "mesmer.arcane-conundrum": "hex",
   "mesmer.arcane-echo": "",
   "mesmer.arcane-larceny": "",
@@ -324,6 +328,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.inspired-hex": "removal",
   "mesmer.leech-signet": "interrupt",
   "mesmer.lyssas-aura": "",
+  "mesmer.lyssas-balance": "",
   "mesmer.mantra-of-concentration": "defence",
   "mesmer.mantra-of-earth": "defence",
   "mesmer.mantra-of-flame": "defence",
@@ -510,6 +515,7 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.defile-enchantments": "",
   "necromancer.defile-flesh": "hex",
   "necromancer.desecrate-enchantments": "",
+  "necromancer.discord": "",
   "necromancer.enfeeble": "condition",
   "necromancer.enfeebling-blood": "condition",
   "necromancer.enfeebling-touch": "condition",

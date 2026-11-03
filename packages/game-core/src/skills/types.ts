@@ -539,7 +539,7 @@ export interface RemoveStatusEffect {
   /**
    * How many, newest first; `"all"` as Restore Condition's "remove all
    * conditions"; a `Magnitude` as Divert Hexes' "remove up to 1...3 hexes"
-   * (#1954). Ignored when `perRemoved` is set.
+   * (#1954). Ignored when `perRemoved` or `perCount` is set.
    */
   readonly count: number | "all" | Magnitude;
   /**
@@ -570,6 +570,13 @@ export interface RemoveStatusEffect {
    * hex (maximum 1...7...8)" (#1205). Absent: `count` as it is.
    */
   readonly perRemoved?: { readonly category: StatusCategory; readonly max: Magnitude };
+  /**
+   * The count is what this counts, read before this removal (#2247), as
+   * Signet of Twilight's "for each hex on target foe, that foe loses one
+   * enchantment". At most one of `perSpiritNear`, `perRemoved` and
+   * `perCount`. Absent: `count` as it is.
+   */
+  readonly perCount?: CountRule;
   /**
    * Only the status the newest earlier `status-removed` of `category` in
    * this use took off, whoever bore it (#1954): Mirror of Disenchantment's
@@ -1573,6 +1580,27 @@ export type StateCondition =
    * this rather than a kind of their own.
    */
   | { readonly kind: "not"; readonly condition: StateCondition }
+  /**
+   * Every one of `conditions` holds, each read as it would be alone
+   * (#2247): Discord's "suffering from a condition and under the effects
+   * of a hex or an enchantment". No `all-of` inside one. An empty list
+   * always holds.
+   */
+  | {
+      readonly kind: "all-of";
+      readonly conditions: readonly Exclude<StateCondition, { readonly kind: "all-of" }>[];
+    }
+  /**
+   * What `count` counts, read as `per` reads it, is at least `atLeast`
+   * (#2247): Accumulated Pain's "suffering from 2 or more hexes".
+   */
+  | { readonly kind: "count-at-least"; readonly count: CountRule; readonly atLeast: number }
+  /**
+   * What `count` counts is at most what `than` does (#2247): Lyssa's
+   * Balance works unless "you have more enchantments than target foe", so
+   * equal holds.
+   */
+  | { readonly kind: "count-at-most"; readonly count: CountRule; readonly than: CountRule }
   /**
    * The effect's target is a summoned creature (#1528): a minion or a
    * spirit, never a pet or a map NPC (`isSummoned`). Banish's "double
