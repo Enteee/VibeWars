@@ -4231,7 +4231,7 @@ export class MatchSimulation {
       skillId: skill.id,
       key: cast.key,
     });
-    this.#useNextSkill(record, skill, spared);
+    this.#useNextSkill(record, skill, spared, primary);
     this.#endOnUseSkill(record, skill, spared);
     if (isSpell(skill.type)) {
       // Kinetic Armor's renewal (#1614), and Lyssa's Aura's at a foe
@@ -4444,10 +4444,19 @@ export class MatchSimulation {
    * bearer that holds its next skill of this kind resolves on the bearer,
    * as its own entry, and one that counted its last ends there, but those
    * in `spared` (#999): Chorus of Restoration never answers its own cast.
+   * One `at` the skill's target resolves on `primary` (#2275), and on
+   * nothing if it is gone or dead.
    */
-  #useNextSkill(record: ParticipantRecord, skill: Skill, spared: ReadonlySet<StatusId>): void {
+  #useNextSkill(
+    record: ParticipantRecord,
+    skill: Skill,
+    spared: ReadonlySet<StatusId>,
+    primary: ParticipantRecord | undefined,
+  ): void {
     const bearer = record.combatant;
     const { answered, ended } = bearer.statuses.useNextSkill(skill, spared);
+    const atTarget =
+      primary === undefined || primary.combatant.dead ? undefined : primary.combatant;
     this.#logFired(
       answered.map(({ statusId, next, ranks }) => ({
         sourceId: record.id,
@@ -4455,14 +4464,16 @@ export class MatchSimulation {
         events: [
           // At its source's ranks as it landed (#2143): an ally's Anthem
           // of Fury gives the Paragon's strikes.
-          ...applyEffects(next.effects, {
-            caster: bearer,
-            target: bearer,
-            ranksFrom: outsideMatch(ranks),
-            rng: this.#rng,
-            rules: this.#ruleset.combat,
-            surroundings: this.#participants,
-          }),
+          ...(next.at === "skill-target" && atTarget === undefined
+            ? []
+            : applyEffects(next.effects, {
+                caster: bearer,
+                target: next.at === "skill-target" ? atTarget : bearer,
+                ranksFrom: outsideMatch(ranks),
+                rng: this.#rng,
+                rules: this.#ruleset.combat,
+                surroundings: this.#participants,
+              })),
           ...(ended.includes(statusId)
             ? [{ kind: "status-expired" as const, targetId: record.id, statusId }]
             : []),

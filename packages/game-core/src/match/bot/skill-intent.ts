@@ -225,9 +225,9 @@ function actsOnAttacks(status: StatusDefinition): boolean {
   return (
     status.onAttackHit !== undefined ||
     status.extraStrikesPerHit > 0 ||
-    status.attackDamageDelta > 0 ||
+    statAtTwelve(status.attackDamageDelta) > 0 ||
     statAtTwelve(status.attackDurationMultiplier) < 1 ||
-    status.criticalChanceBonus > 0 ||
+    statAtTwelve(status.criticalChanceBonus) > 0 ||
     status.attackArmorPenetration > 0 ||
     status.nextAttackSkill !== undefined ||
     status.triggers.some(({ on }) => on === "bearer-attacks" || on === "bearer-hits")

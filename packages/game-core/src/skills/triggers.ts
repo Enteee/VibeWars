@@ -52,6 +52,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-blocks"
   | "bearer-interrupted"
   | "bearer-knocked-down"
+  | "bearer-sacrifices-health"
   | "bearer-knockdown-prevented"
   | "bearer-health-drops-below"
   | "bearer-fatal-damage-negated"
@@ -219,6 +220,7 @@ export function fireChangeTriggers(
     case "failed-to-hit":
     case "took-physical-damage":
     case "knocked-down":
+    case "sacrificed-health":
     case "knockdown-prevented":
     case "lost-enchantment":
     case "lost-condition":

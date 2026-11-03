@@ -528,11 +528,14 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `attacks have ${String(Math.round(definition.attackArmorPenetration * 100))}% armor penetration`,
     );
   }
-  if (definition.attackDamageDelta !== 0) {
+  if (statAtTwelve(definition.attackDamageDelta) !== 0) {
     const weapon = definition.attackDamageDeltaWeapon;
-    const delta = definition.attackDamageDelta;
+    const delta = statAtTwelve(definition.attackDamageDelta);
+    const amount = statText(definition.attackDamageDelta, ranks, (value) =>
+      String(Math.abs(Math.round(value))),
+    );
     parts.push(
-      `${weapon === undefined ? "attacks" : `${weapon} attacks`} deal ${String(Math.abs(delta))} ${delta < 0 ? "less" : "more"} damage`,
+      `${weapon === undefined ? "attacks" : `${weapon} attacks`} deal ${amount} ${delta < 0 ? "less" : "more"} damage`,
     );
   }
   if (definition.immuneTo.length > 0) {
@@ -667,8 +670,15 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const around = AREA_TEXT.get(radius) ?? `within ${String(radius)}`;
     parts.push(`allies ${around} to the bearer: ${statusText(statusId, ranks)}`);
   }
-  if (definition.criticalChanceBonus !== 0) {
-    parts.push(`${signed(Math.round(definition.criticalChanceBonus * 100))}% critical chance`);
+  if (statAtTwelve(definition.criticalChanceBonus) !== 0) {
+    const chance = statText(definition.criticalChanceBonus, ranks, (bonus) =>
+      signed(Math.round(bonus * 100)),
+    );
+    // Way of the Assassin's "while wielding daggers" (#2275).
+    const weapon = definition.criticalChanceBonusWeapon;
+    parts.push(
+      `${chance}% critical chance${weapon === undefined ? "" : ` while wielding a ${weapon}`}`,
+    );
   }
   if (definition.energyPerCritical !== 0) {
     parts.push(`gain ${String(definition.energyPerCritical)} Energy per critical hit`);
@@ -1327,6 +1337,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-blocks": "blocks",
   "bearer-interrupted": "is interrupted",
   "bearer-knocked-down": "is knocked down",
+  "bearer-sacrifices-health": "sacrifices Health",
   "bearer-knockdown-prevented": "has a knockdown stopped",
   "bearer-gains-hex-or-enchantment": "gains a hex or an enchantment",
   "bearer-gains-enchantment": "gains an enchantment",
@@ -2054,18 +2065,24 @@ const NEXT_SKILL_KIND: Readonly<Record<NextSkill["which"], readonly [string, str
   "attack-skill": ["attack skill", "attack skills"],
   spell: ["spell", "spells"],
   signet: ["signet", "signets"],
+  "signet-at-foe": ["signet that targets a foe", "signets that target a foe"],
   "shout-or-chant": ["shout or chant", "shouts or chants"],
   any: ["skill", "skills"],
 };
 
 function describeNextSkill(
-  { which, count, effects }: NextSkill,
+  { which, count, effects, at }: NextSkill,
   ranks: ReadonlyMap<string, number>,
 ): string[] {
   const [one, many] = NEXT_SKILL_KIND[which];
-  const next = count === 1 ? one : `${String(count)} ${many}`;
+  const next =
+    count === 1 ? one : `${statText(count, ranks, (n) => String(Math.round(n)))} ${many}`;
+  // Keystone Signet's (#2275): around that skill's target, not the bearer.
+  const around = at === "skill-target" ? " (around its target)" : "";
   return effects.flatMap((effect) =>
-    describeEffects(effect, ranks).map(({ text }) => `with your next ${next}: ${lowerFirst(text)}`),
+    describeEffects(effect, ranks).map(
+      ({ text }) => `with your next ${next}${around}: ${lowerFirst(text)}`,
+    ),
   );
 }
 
@@ -3380,7 +3397,7 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         text:
           effect.which === "all"
             ? "Recharges all your other skills"
-            : "Recharges all your other attack skills",
+            : `Recharges all your other ${effect.which} skills`,
         magnitude: undefined,
       };
     case "summon": {
