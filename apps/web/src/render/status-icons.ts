@@ -539,6 +539,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "ballad-of-restoration": icon("ballad-of-restoration"),
   "theyre-on-fire": icon("theyre-on-fire"),
   "find-their-weakness": icon("find-their-weakness"),
+  // Sacrifice, crits, signet echoes and pulses (#2275).
+  masochism: icon("masochism"),
+  "way-of-the-assassin": icon("way-of-the-assassin"),
+  "keystone-signet": icon("keystone-signet"),
+  agony: icon("agony"),
+  "grenths-aura": icon("grenths-aura"),
 };
 
 const GAP = 2;

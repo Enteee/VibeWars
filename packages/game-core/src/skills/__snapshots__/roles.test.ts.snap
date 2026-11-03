@@ -87,6 +87,7 @@ exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
   "assassin.vipers-defense": "condition",
   "assassin.wastrels-collapse": "knockdown",
   "assassin.way-of-perfection": "",
+  "assassin.way-of-the-assassin": "",
   "assassin.way-of-the-empty-palm": "",
   "assassin.way-of-the-fox": "",
   "assassin.wild-strike": "",
@@ -123,6 +124,7 @@ exports[`skillRoles > tags every dervish skill the same way every time 1`] = `
   "dervish.faithful-intervention": "healing",
   "dervish.featherfoot-grace": "",
   "dervish.fleeting-stability": "",
+  "dervish.grenths-aura": "",
   "dervish.grenths-grasp": "removal condition",
   "dervish.guiding-hands": "removal",
   "dervish.harriers-haste": "",
@@ -327,6 +329,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.ineptitude": "hex",
   "mesmer.inspired-enchantment": "",
   "mesmer.inspired-hex": "removal",
+  "mesmer.keystone-signet": "interrupt",
   "mesmer.leech-signet": "interrupt",
   "mesmer.lyssas-aura": "",
   "mesmer.lyssas-balance": "",
@@ -540,6 +543,7 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.malign-intervention": "hex",
   "necromancer.mark-of-fury": "hex",
   "necromancer.mark-of-pain": "hex",
+  "necromancer.masochism": "",
   "necromancer.meekness": "hex",
   "necromancer.offering-of-blood": "",
   "necromancer.order-of-apostasy": "",
@@ -826,6 +830,7 @@ exports[`skillRoles > tags every ranger skill the same way every time 1`] = `
 
 exports[`skillRoles > tags every ritualist skill the same way every time 1`] = `
 {
+  "ritualist.agony": "",
   "ritualist.ancestors-rage": "",
   "ritualist.anguish": "",
   "ritualist.armor-of-unfeeling": "",

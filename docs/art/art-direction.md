@@ -1198,16 +1198,16 @@ stay; each kind also wears an ornament round its plate, upright and
 drawn under it, and is drawn at its own radius. The mockups are
 `docs/mockups/2043-companions-*.html`.
 
-| Look                   | Drawn radius | Ornament (team colour unless said)              | Arms           |
-| ---------------------- | ------------ | ----------------------------------------------- | -------------- |
-| `beast` (pet)          | 10           | two ear triangles on top                        | facing tick    |
-| `bone-minion`          | 10           | 10-point toothed rim, outer 1.34 r, inner 1.1 r | facing tick    |
-| horrors, `flesh-golem` | 11.5         | 12-point toothed rim                            | facing tick    |
-| `spirit`               | 10           | dashed ring at 1.5 r                            | facing tick    |
-| `priest`               | 12           | `ink` ring at 1.45 r                            | staff          |
-| `guard`                | 12           | thick `ink` hexagon at 1.34 r, `edge`-cased     | spear + shield |
-| `guild-lord`           | 15           | five gold (`#ffd866`) gems on a 1.5 r pentagon  | sword          |
-| `ghostly-hero`         | 13.5         | team ring at 1.4 r, 2.2 wide                    | sword          |
+| Look                                 | Drawn radius | Ornament (team colour unless said)              | Arms           |
+| ------------------------------------ | ------------ | ----------------------------------------------- | -------------- |
+| `beast` (pet)                        | 10           | two ear triangles on top                        | facing tick    |
+| `bone-minion`                        | 10           | 10-point toothed rim, outer 1.34 r, inner 1.1 r | facing tick    |
+| horrors, `bone-fiend`, `flesh-golem` | 11.5         | 12-point toothed rim                            | facing tick    |
+| `spirit`                             | 10           | dashed ring at 1.5 r                            | facing tick    |
+| `priest`                             | 12           | `ink` ring at 1.45 r                            | staff          |
+| `guard`                              | 12           | thick `ink` hexagon at 1.34 r, `edge`-cased     | spear + shield |
+| `guild-lord`                         | 15           | five gold (`#ffd866`) gems on a 1.5 r pentagon  | sword          |
+| `ghostly-hero`                       | 13.5         | team ring at 1.4 r, 2.2 wide                    | sword          |
 
 Rims are `edge`-cased; the plate stays solid team colour. The facing tick
 is a small `ink` triangle just past the plate, along the facing. Armed

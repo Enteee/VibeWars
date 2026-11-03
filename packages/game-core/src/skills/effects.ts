@@ -1585,6 +1585,9 @@ export function loseHealth(
   if (loser.health <= 0) {
     loser.dead = true;
     events.push({ kind: "death", targetId: loser.id });
+  } else if (kind === "sacrifice") {
+    // Masochism answers a sacrifice its bearer lives through (#2275).
+    loser.statuses.recordSacrifice();
   }
 }
 
@@ -1918,7 +1921,7 @@ export function applyEffect(
         return events;
       }
       if (effect.recipient === "target") {
-        const amount = resolveMagnitude(effect.amount, caster);
+        const amount = resolveMagnitude(effect.amount, context.ranksFrom ?? caster);
         loseHealth(
           target,
           withPerCount(amount, effect.per, caster, target, context.surroundings, earlier),
@@ -1954,6 +1957,7 @@ export function applyEffect(
       if (lost > 0 && !isInvulnerable(caster)) {
         caster.health -= lost;
         events.push({ kind: "sacrifice", targetId: caster.id, amount: lost });
+        caster.statuses.recordSacrifice();
       }
       applyHeal(
         target,
@@ -2303,6 +2307,7 @@ export function applyEffect(
         if (lost > 0 && !isInvulnerable(caster)) {
           caster.health -= lost;
           events.push({ kind: "sacrifice", targetId: caster.id, amount: lost });
+          caster.statuses.recordSacrifice();
         }
         health = caster.health;
       }

@@ -83,7 +83,8 @@ export type NecromancerStatusId =
   // Necromancer staples (#2230).
   | "vampiric-spirit"
   // Condition movement (#2259).
-  | "mark-of-fury";
+  | "mark-of-fury"
+  | "masochism";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -768,6 +769,26 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
           },
         ],
         skillId: "necromancer.mark-of-fury",
+      },
+    ],
+  }),
+  // PvP: "For 30 seconds, you gain 1...3 Energy whenever you sacrifice
+  // Health" (#2275), at its rank as each sacrifice lands.
+  masochism: define("masochism", "Masochism", "enchantment", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-sacrifices-health",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "necromancer.soul-reaping", atZero: 1, atTwelve: 2.6 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "necromancer.masochism",
       },
     ],
   }),
