@@ -165,7 +165,7 @@ export function statusSnapshot(
 ): StatusSnapshot {
   const endless = !Number.isFinite(status.remainingSeconds);
   const borne = endless && cast?.whileActivating === status.id ? cast : undefined;
-  if (status.maintained !== null || status.projected || (endless && borne === undefined)) {
+  if (status.maintained !== null || status.projected !== null || (endless && borne === undefined)) {
     return { id: status.id, endsAt: null, durationSeconds: null, casterId: status.sourceId };
   }
   const [remaining, duration] =

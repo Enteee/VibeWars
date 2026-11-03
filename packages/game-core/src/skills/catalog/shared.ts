@@ -148,12 +148,11 @@ export const BONE_HORROR: CreatureTemplate = {
  * Level 1...17, a ranged minion (#2250). Armor about 2.84 per level plus
  * 3.1 (GWW "Bone Fiend"); a piercing shot every 1.86 s from half a
  * longbow's range. 12-25 is GWW's 12-35 against armor 60 at Death Magic
- * 12, its maximum a critical's, so ÷√2 (#1131). It wears the Bone Horror's look
- * until its art.
+ * 12, its maximum a critical's, so ÷√2 (#1131).
  */
 export const BONE_FIEND: CreatureTemplate = {
   ...deathMinion(
-    "bone-horror",
+    "bone-fiend",
     "Bone Fiend",
     [1, 17],
     { atZero: 5.94, perLevel: 2.84 },
@@ -171,8 +170,7 @@ export const BONE_FIEND: CreatureTemplate = {
  * Blood and Death Magic's other minions (#1836), level 1...17 (Flesh Golem 3...25,
  * Jagged Horror 0...15), armor per the wiki's tables, a blow every
  * 3.10 s. Damage is the wiki's "vs. AR 60" at Death Magic 12, its maximum
- * a critical's, so ÷√2 (#1131). They wear the Bone Horror's look until
- * their art.
+ * a critical's, so ÷√2 (#1131).
  */
 
 /** Its owner gains the Health its blows take (#1836). */

@@ -84,6 +84,7 @@ export type NecromancerStatusId =
   | "vampiric-spirit"
   // Condition movement (#2259).
   | "mark-of-fury"
+  | "masochism"
   // Staples (#2278).
   | "mark-of-subversion";
 
@@ -770,6 +771,26 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
           },
         ],
         skillId: "necromancer.mark-of-fury",
+      },
+    ],
+  }),
+  // PvP: "For 30 seconds, you gain 1...3 Energy whenever you sacrifice
+  // Health" (#2275), at its rank as each sacrifice lands.
+  masochism: define("masochism", "Masochism", "enchantment", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-sacrifices-health",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "necromancer.soul-reaping", atZero: 1, atTwelve: 2.6 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "necromancer.masochism",
       },
     ],
   }),

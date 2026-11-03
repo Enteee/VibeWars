@@ -189,6 +189,8 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   damageReductionFromWeakerFoe: true,
   casterEnergyPerReduction: true,
   healthPipsPerCondition: true,
+  criticalChanceBonus: true,
+  attackDamageDelta: true,
 };
 
 /** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
@@ -255,9 +257,14 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
       attributes.add(stat.scaling.attributeId);
     }
   }
-  // Anthem of Fury's strikes are its Paragon's, not the ally's (#2143).
+  // Anthem of Fury's strikes are its Paragon's, not the ally's (#2143),
+  // and Keystone Signet's uses its Mesmer's (#2275).
   if (definition.nextSkill !== undefined) {
-    scalingAttributes(definition.nextSkill.effects, attributes);
+    scalingAttributes(definition.nextSkill, attributes);
+  }
+  // Agony's pulse hurts at its Ritualist's rank, and costs the spirit so (#2275).
+  if (definition.pulse !== undefined) {
+    scalingAttributes(definition.pulse, attributes);
   }
   // Jagged Bones's horror stands up at its caster's rank (#1986).
   if (definition.replacedOnDeathBy !== undefined && definition.attribute !== undefined) {
@@ -502,7 +509,7 @@ export interface StatusDefinition {
    * Nightmare Weapon's "-10...50 damage". A blow never goes below 0.
    * Summed over statuses. 0: none.
    */
-  readonly attackDamageDelta: number;
+  readonly attackDamageDelta: StatusStat;
   /**
    * `attackDamageDelta` holds only while the bearer wields this weapon
    * (#1873): Favorable Winds' "arrows strike for +6 damage". `undefined`:
@@ -698,7 +705,13 @@ export interface StatusDefinition {
    */
   readonly blockWhileUnder: Pick<WhileUnder, "categories" | "statusIds"> | undefined;
   /** Added to the bearer's chance to land a critical hit (#988): Critical Eye's 0.13. */
-  readonly criticalChanceBonus: number;
+  readonly criticalChanceBonus: StatusStat;
+  /**
+   * `criticalChanceBonus` holds only while the bearer wields this weapon
+   * (#2275), as `attackDurationMultiplierWeapon`: Way of the Assassin's
+   * "while wielding daggers". `undefined`: whatever it wields.
+   */
+  readonly criticalChanceBonusWeapon: AttackWeaponClass | undefined;
   /** Energy the bearer gains on each critical hit it lands, beyond Critical Strikes' (#988). */
   readonly energyPerCritical: number;
   /**
@@ -1374,6 +1387,14 @@ export type StatusTriggerEvent =
    */
   | "bearer-knocked-down"
   /**
+   * The bearer sacrificed Health and lived (#2275), once per sacrifice
+   * whatever its size: a `sacrifice-health`, a well's or corpse skill's
+   * "or sacrifice", an Infuse Health. Masochism's. Health loss that is no
+   * sacrifice does not answer. Recorded with the triggers that answered,
+   * and fired at the drain.
+   */
+  | "bearer-sacrifices-health"
+  /**
    * A knockdown on the bearer was stopped by a status that ends when it
    * stops one (#1955): "Brace Yourself!"'s. Recorded with the triggers of
    * the statuses that ended on it, and fired at the drain.
@@ -1469,9 +1490,16 @@ export interface DamagePulse {
 /** `StatusDefinition.pulse` (#2187). */
 export interface EffectPulse {
   readonly everySeconds: number;
-  /** Run from the status's source on the bearer. */
+  /** Run from the status's source on the bearer, at its ranks as it landed (#2275). */
   readonly effects: readonly SkillEffect[];
   readonly skillId: string;
+  /**
+   * The source loses this much Health, as a protective spirit's charge,
+   * for each pulse that cost the bearer Health (#2275): Agony's "the
+   * spirit loses 3...10 Health for each foe hurt". A pulse that hurt
+   * nobody costs nothing. `undefined`: none.
+   */
+  readonly chargesSourcePerHit?: StatusStat;
 }
 
 /** `StatusDefinition.reflectsNextDamage` (#2187). */
@@ -1988,7 +2016,7 @@ export type StatusChange =
   | { readonly kind: "failed-to-hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] }
   | {
-      readonly kind: "knocked-down" | "knockdown-prevented";
+      readonly kind: "knocked-down" | "knockdown-prevented" | "sacrificed-health";
       readonly fired: readonly AnsweringTrigger[];
     }
   | {
@@ -2165,12 +2193,26 @@ export interface BorrowedAttribute {
  * gains 1...6 Energy".
  */
 export interface NextSkill {
-  /** Which of the bearer's skills set it off: `spell` is any `isSpell` type. */
-  readonly which: "attack-skill" | "spell" | "signet" | "shout-or-chant" | "any";
-  /** How many such skills it answers before it ends (Song of Purification: 1...6). */
-  readonly count: number;
-  /** Resolved with the bearer as both caster and target. */
+  /**
+   * Which of the bearer's skills set it off: `spell` is any `isSpell`
+   * type; `signet-at-foe` a signet that targets a foe (#2275), Keystone
+   * Signet's.
+   */
+  readonly which: "attack-skill" | "spell" | "signet" | "signet-at-foe" | "shout-or-chant" | "any";
+  /**
+   * How many such skills it answers before it ends (Song of Purification:
+   * 1...6), at its source's rank as it landed (#2275): Keystone Signet's
+   * 0...6. None: it answers nothing.
+   */
+  readonly count: StatusStat;
+  /**
+   * Resolved with the bearer as both caster and target; `at`
+   * `skill-target` (#2275), with the skill's target as the target, so a
+   * `splash` reaches around it: Keystone Signet's "all other foes
+   * adjacent to your target". A skill with no target left resolves none.
+   */
   readonly effects: readonly SkillEffect[];
+  readonly at?: "skill-target";
   /** The skill the log names it after: "paragon.aria-of-zeal". */
   readonly skillId: string;
 }
@@ -2221,6 +2263,8 @@ export function nextSkillAnswers(which: NextSkill["which"], skill: Skill): boole
       return isSpell(skill.type);
     case "signet":
       return skill.type === "signet";
+    case "signet-at-foe":
+      return skill.type === "signet" && skill.target === "single-enemy";
     case "shout-or-chant":
       return skill.type === "shout" || skill.type === "chant";
     case "any":
@@ -2323,9 +2367,11 @@ export interface ActiveStatus {
   readonly maintained: { readonly seq: number; outOfRangeSeconds: number } | null;
   /**
    * Worn from a spirit while in its range (#1064, `project`): no end of its
-   * own, and it leaves when its bearer does. `false` for every other.
+   * own, and it leaves when its bearer does. `ageSeconds`: how long it has
+   * been worn since its bearer came into range (#2275), the clock its
+   * `pulse` keeps. `null` for every other.
    */
-  readonly projected: boolean;
+  readonly projected: { ageSeconds: number } | null;
   /**
    * Where its source stood as it put it up, for a `returnsSource` status
    * (#1826), as `apply` or `maintain` put it up; `null` for every other, and for one replaced.
@@ -2403,7 +2449,11 @@ export class StatusSet {
   readonly #statuses = new Map<StatusId, ActiveStatus>();
   #changes: StatusChange[] = [];
   #pulses: StatusPulse[] = [];
-  #effectPulses: { readonly id: StatusId; readonly sourceId: string }[] = [];
+  #effectPulses: {
+    readonly id: StatusId;
+    readonly sourceId: string;
+    readonly ranks: ReadonlyMap<string, number>;
+  }[] = [];
   readonly #spent: Set<string>;
 
   /**
@@ -2439,7 +2489,11 @@ export class StatusSet {
    * The effect pulses (`pulse`, #2187) that came due since the last drain,
    * oldest first, and forget them: the simulation runs them once a tick.
    */
-  public drainEffectPulses(): { readonly id: StatusId; readonly sourceId: string }[] {
+  public drainEffectPulses(): {
+    readonly id: StatusId;
+    readonly sourceId: string;
+    readonly ranks: ReadonlyMap<string, number>;
+  }[] {
     const pulses = this.#effectPulses;
     this.#effectPulses = [];
     return pulses;
@@ -2562,6 +2616,18 @@ export class StatusSet {
     const fired = this.#answering("bearer-knocked-down");
     if (fired.length > 0) {
       this.#changes.push({ kind: "knocked-down", fired });
+    }
+  }
+
+  /**
+   * The bearer sacrificed Health and lived (#2275), recorded only if a
+   * status on it answers that, with the triggers that do: once for each
+   * sacrifice.
+   */
+  public recordSacrifice(): void {
+    const fired = this.#answering("bearer-sacrifices-health");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "sacrificed-health", fired });
     }
   }
 
@@ -2921,7 +2987,10 @@ export class StatusSet {
       attacksMadeLeft: definition.endsAfterAttackCount,
       spellsLeft: definition.nextSpells?.count,
       castsLeft: definition.borrowsAttribute?.spells,
-      skillsLeft: definition.nextSkill?.count,
+      skillsLeft:
+        definition.nextSkill === undefined
+          ? undefined
+          : Math.round(statAt(definition.nextSkill.count, ranks)),
       ownSkillsLeft: definition.ownSkillModifiers.find(({ uses }) => uses !== undefined)?.uses,
       triggersLeft: definition.endsAfterTriggers,
       reflectionsLeft: definition.reflectsAttackDamage?.times,
@@ -2932,7 +3001,7 @@ export class StatusSet {
       ranks,
       outbreak,
       maintained: null,
-      projected: false,
+      projected: null,
       returnPoint: definition.returnsSource === undefined ? null : returnsTo,
       stepTargetId: null,
     });
@@ -3005,7 +3074,7 @@ export class StatusSet {
       ranks,
       outbreak,
       maintained: null,
-      projected: false,
+      projected: null,
       returnPoint: null,
       stepTargetId: null,
     });
@@ -3059,7 +3128,7 @@ export class StatusSet {
       ranks,
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
-      projected: false,
+      projected: null,
       returnPoint: definition.returnsSource === undefined ? null : returnPoint,
       stepTargetId: definition.stepsToTarget === undefined ? null : stepTargetId,
     });
@@ -3102,7 +3171,7 @@ export class StatusSet {
       ranks,
       outbreak: null,
       maintained: null,
-      projected: true,
+      projected: { ageSeconds: 0 },
       returnPoint: null,
       stepTargetId: null,
     });
@@ -3676,6 +3745,7 @@ export class StatusSet {
       if (
         next === undefined ||
         status.skillsLeft === undefined ||
+        status.skillsLeft <= 0 ||
         spared.has(status.id) ||
         !nextSkillAnswers(next.which, skill)
       ) {
@@ -3892,7 +3962,14 @@ export class StatusSet {
    * duration, so one ending between pulses deals no partial one.
    */
   #pulse(status: ActiveStatus, dt: number): void {
-    const before = status.durationSeconds - status.remainingSeconds;
+    // A projected one keeps its own clock (#2275): it has no duration.
+    const before =
+      status.projected === null
+        ? status.durationSeconds - status.remainingSeconds
+        : status.projected.ageSeconds;
+    if (status.projected !== null) {
+      status.projected.ageSeconds += dt;
+    }
     const every = getStatusDefinition(status.id).pulse?.everySeconds;
     if (every !== undefined) {
       // As below, in steps of `every` (#2187).
@@ -3901,7 +3978,7 @@ export class StatusSet {
         Math.floor(status.durationSeconds / every + PULSE_EPSILON),
       );
       for (let k = Math.floor(before / every + PULSE_EPSILON) + 1; k <= due; k += 1) {
-        this.#effectPulses.push({ id: status.id, sourceId: status.sourceId });
+        this.#effectPulses.push({ id: status.id, sourceId: status.sourceId, ranks: status.ranks });
       }
     }
     const pulse = getStatusDefinition(status.id).damagePulse;
@@ -4384,7 +4461,7 @@ export function aggregateModifiers(
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
     incomingAllySpellCastTimeMultiplier *= def.incomingAllySpellCastTimeMultiplier;
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
-    criticalChanceBonus += def.criticalChanceBonus;
+    criticalChanceBonus += statAt(def.criticalChanceBonus, ranks);
     attackArmorPenetration = Math.max(attackArmorPenetration, def.attackArmorPenetration);
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;

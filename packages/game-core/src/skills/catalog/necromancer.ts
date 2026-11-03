@@ -4469,6 +4469,33 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "necromancer.masochism",
+    name: "Masochism",
+    gwId: 2139,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.soul-reaping",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "For 30 seconds, you gain 1...3 Energy whenever you sacrifice
+    // Health": the status's.
+    effects: [{ kind: "apply-status", statusId: "masochism", durationSeconds: { flat: 30 } }],
+  },
   /* ---------------------------------------------------------------------- */
   /* Staples (#2278), at their rank-12 values                               */
   /* ---------------------------------------------------------------------- */

@@ -3790,4 +3790,34 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "assassin.way-of-the-assassin",
+    name: "Way of the Assassin",
+    gwId: 1649,
+    type: "stance",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For the next 20 seconds while wielding daggers, you attack 5...20%
+    // faster and have a +5...35% chance to land a critical hit": the
+    // stance's.
+    effects: [
+      { kind: "apply-status", statusId: "way-of-the-assassin", durationSeconds: { flat: 20 } },
+    ],
+  },
 ];

@@ -71,6 +71,7 @@ export type MesmerStatusId =
   | "confusing-images"
   // Condition movement (#2259).
   | "fevered-dreams"
+  | "keystone-signet"
   // Staples (#2278).
   | "mantra-of-recall";
 
@@ -816,6 +817,35 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         skillId: "mesmer.fevered-dreams",
       },
     ],
+  }),
+  // "For 20 seconds, the next 0...6 times you use a signet that targets a
+  // foe, all other foes adjacent to your target take 15...60 damage and
+  // are interrupted" (#2275), at its Mesmer's rank.
+  "keystone-signet": define("keystone-signet", "Keystone Signet", "skill-effect", {
+    profession: "mesmer",
+    nextSkill: {
+      which: "signet-at-foe",
+      count: { scaling: { attributeId: "mesmer.fast-casting", atZero: 0, atTwelve: 4.8 } },
+      at: "skill-target",
+      effects: [
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          maxTargets: undefined,
+          effects: [
+            {
+              kind: "damage",
+              amount: { scaling: { attributeId: "mesmer.fast-casting", atZero: 15, atTwelve: 51 } },
+              type: "typeless",
+              armorPenetration: 0,
+            },
+            { kind: "interrupt" },
+          ],
+        },
+      ],
+      skillId: "mesmer.keystone-signet",
+    },
   }),
   // Staples (#2278). "For 20 seconds, you gain no benefit from it. You
   // gain 10...25 Energy when Mantra of Recall ends": any end, a removal

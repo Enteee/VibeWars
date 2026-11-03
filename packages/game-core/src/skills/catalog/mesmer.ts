@@ -3825,6 +3825,39 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "mesmer.keystone-signet",
+    name: "Keystone Signet",
+    gwId: 63,
+    type: "signet",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All of your signets except Keystone Signet are recharged. For 20
+    // seconds, the next 0...6 times you use a signet that targets a foe,
+    // all other foes adjacent to your target take 15...60 damage and are
+    // interrupted": the status counts them.
+    effects: [
+      { kind: "recharge-others", which: "signet" },
+      { kind: "apply-status", statusId: "keystone-signet", durationSeconds: { flat: 20 } },
+    ],
+  },
   /* ---------------------------------------------------------------------- */
   /* Staples (#2278), at their rank-12 values                               */
   /* ---------------------------------------------------------------------- */

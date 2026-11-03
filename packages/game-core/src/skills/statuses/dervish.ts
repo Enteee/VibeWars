@@ -50,7 +50,8 @@ export type DervishStatusId =
   | "eremites-zeal"
   | "vow-of-silence"
   // Conviction (#2217).
-  | "conviction";
+  | "conviction"
+  | "grenths-aura";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -792,5 +793,27 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
         skillId: "dervish.conviction",
       },
     ],
+  }),
+  // "For 20 seconds, you deal 5...25 less damage and steal 5...25 Health
+  // whenever you hit with a scythe attack" (#2275): with another weapon,
+  // neither.
+  "grenths-aura": define("grenths-aura", "Grenth's Aura", "enchantment", {
+    profession: "dervish",
+    attackDamageDelta: {
+      scaling: { attributeId: "dervish.wind-prayers", atZero: -5, atTwelve: -21 },
+    },
+    attackDamageDeltaWeapon: "scythe",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "scythe",
+      weaponDamage: undefined,
+      effects: [
+        {
+          kind: "life-steal",
+          amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 5, atTwelve: 21 } },
+        },
+      ],
+      skillId: "dervish.grenths-aura",
+    },
   }),
 };

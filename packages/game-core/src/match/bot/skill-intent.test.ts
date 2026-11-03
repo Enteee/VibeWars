@@ -304,6 +304,9 @@ const NO_BOT_USE = new Set([
   // Resilience.
   "warrior.i-will-survive",
   "ritualist.resilient-was-xiko",
+  // Energy for each sacrifice (#2275): worth only beside a sacrifice, which
+  // no rule the bot has pairs.
+  "necromancer.masochism",
 ]);
 
 function skill(id: string) {
