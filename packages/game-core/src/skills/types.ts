@@ -335,9 +335,12 @@ export interface EnergyGainToTarget extends Omit<
  * the caster's bar, at most `max` times: Defensive Stance's "1 strike of
  * adrenaline for each melee attack skill on your bar (maximum 3)".
  * `recipient: "owner"`: the caster's living owner, a pet's, gains them
- * instead, as Ferocious Strike's (#1957); no owner, nobody. `per`: more
- * strikes for each of a count (#2222), "Make Your Time!"'s "2 strikes of
- * adrenaline for each party member within earshot (maximum 1...8)".
+ * instead, as Ferocious Strike's (#1957); no owner, nobody. `"target"`:
+ * the effect's target gains them (#2259), at the caster's rank, as Mark
+ * of Fury's "allies hitting target foe gain 0...2 strikes"; a dead one,
+ * nobody. `per`: more strikes for each of a count (#2222), "Make Your
+ * Time!"'s "2 strikes of adrenaline for each party member within earshot
+ * (maximum 1...8)".
  */
 export interface AdrenalineGainEffect {
   readonly kind: "adrenaline-gain";
@@ -345,7 +348,7 @@ export interface AdrenalineGainEffect {
   readonly perTarget?: true;
   readonly perOwnMeleeAttackSkill?: { readonly max: number };
   readonly per?: PerCount;
-  readonly recipient?: "owner";
+  readonly recipient?: "owner" | "target";
 }
 
 /** The effect's target loses up to `amount` energy (never below 0). */
@@ -441,15 +444,24 @@ export interface LoseHealthToEffect {
  * with `durationMultiplier` times the time it had left (#1540): Plague
  * Signet's "with 100...200% of their remaining durations", Plague Touch's 1.
  * `healPerCondition`: the caster is healed that much per condition moved.
- * A `count` of `Infinity` moves them all; a giver who is the taker, as
- * Martyr's caster among its party (#1954), keeps its own as they are.
+ * `count` scales with the caster's rank (#2259), as Plague Sending's
+ * "1...3"; `{ flat: Infinity }` moves them all. A giver who is the taker,
+ * as Martyr's caster among its party (#1954), keeps its own as they are.
  */
 export interface TransferConditionsEffect {
   readonly kind: "transfer-conditions";
   readonly from: "caster" | "target";
-  readonly count: number;
+  readonly count: Magnitude;
   readonly durationMultiplier: number;
   readonly healPerCondition?: Magnitude;
+  /**
+   * Only `from: "caster"` (#2259): each living foe of the caster within
+   * this radius of the target, the target aside, gets a copy of each
+   * moved condition with the same time, landing as the caster's (the
+   * longer duration wins): Plague Sending's "to target foe and all
+   * adjacent foes".
+   */
+  readonly copyToFoesWithin?: number;
 }
 
 /**

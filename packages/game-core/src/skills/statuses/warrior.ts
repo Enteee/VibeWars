@@ -56,7 +56,9 @@ export type WarriorStatusId =
   // Warrior staples 4 (#2181).
   | "tiger-stance"
   | "berserker-stance"
-  | "bulls-charge";
+  | "bulls-charge"
+  // Condition movement (#2259).
+  | "i-will-survive";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -522,5 +524,11 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       skillId: "warrior.bulls-charge",
     },
     endsWhenBearerUsesSkill: true,
+  }),
+  // "You gain +3 Health regeneration for each condition you are
+  // suffering" (#2259), counted live, as Melandru's Resilience's.
+  "i-will-survive": define("i-will-survive", "I Will Survive!", "shout", {
+    profession: "warrior",
+    healthPipsPerCondition: 3,
   }),
 };

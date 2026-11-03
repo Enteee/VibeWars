@@ -459,7 +459,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       weaponDamage: undefined,
       effects: [
         { kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 9 } },
-        { kind: "transfer-conditions", from: "caster", count: 3, durationMultiplier: 1 },
+        { kind: "transfer-conditions", from: "caster", count: { flat: 3 }, durationMultiplier: 1 },
       ],
       skillId: "dervish.grenths-grasp",
     },

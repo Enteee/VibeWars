@@ -299,6 +299,10 @@ const NO_BOT_USE = new Set([
   // Untargetable only while casting, then every skill disabled (#2189).
   "monk.spell-shield",
   "ranger.melandrus-resilience",
+  // Pips for each condition (and hex) on the bearer (#2259), as Melandru's
+  // Resilience.
+  "warrior.i-will-survive",
+  "ritualist.resilient-was-xiko",
 ]);
 
 function skill(id: string) {
