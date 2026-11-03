@@ -61,6 +61,7 @@ export const CREATURE_GLYPH: Readonly<
   beast: { family: "creature", name: "beast" },
   "bone-minion": { family: "creature", name: "bone-minion" },
   "bone-horror": { family: "creature", name: "bone-horror" },
+  "bone-fiend": { family: "creature", name: "bone-fiend" },
   "vampiric-horror": { family: "creature", name: "vampiric-horror" },
   "flesh-golem": { family: "creature", name: "flesh-golem" },
   "shambling-horror": { family: "creature", name: "shambling-horror" },

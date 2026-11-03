@@ -549,6 +549,13 @@ const creature = {
       `<path fill-rule="evenodd" d="M-3.2-6H3.2V0.4H-3.2ZM-7 1.6H7V6.4H-7Z` +
         `M-2.1-3.6H-0.7V-2.2H-2.1ZM0.7-3.6H2.1V-2.2H0.7ZM-3.2-1.2H3.2V-0.6H-3.2Z" fill="${C.ink}"/>`,
     ),
+  // The skull loosing an arrow: the ranged Bone Fiend (#2272).
+  "bone-fiend": () =>
+    creatureGlyph(
+      `<g transform="translate(-3.2 0) scale(0.8)">${SKULL}</g>` +
+        `<path d="M1.8 0.2H4.6" fill="none" stroke="${C.ink}" stroke-width="1.5" stroke-linecap="round"/>` +
+        `<path d="M6.4 0.2L3.8-2.2V2.6Z" fill="${C.ink}"/>`,
+    ),
   // The skull bristling with spikes: the Jagged Horror a Shambling Horror leaves (#1860).
   "jagged-horror": () =>
     creatureGlyph(

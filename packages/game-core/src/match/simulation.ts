@@ -358,6 +358,7 @@ export const CREATURE_LOOKS = [
   "beast",
   "bone-minion",
   "bone-horror",
+  "bone-fiend",
   "vampiric-horror",
   "flesh-golem",
   "shambling-horror",
