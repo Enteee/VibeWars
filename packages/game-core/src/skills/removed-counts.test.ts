@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2 } from "../vec2.js";
-import { applyEffects } from "./effects.js";
+import { getSkill } from "./catalog.js";
+import { applyEffects, resolveSkillEffects } from "./effects.js";
 import { NO_RANKS, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, SkillEffect } from "./types.js";
@@ -144,5 +145,35 @@ describe("energy-loss on the caster (#2260)", () => {
     apply([{ kind: "energy-loss", amount: { flat: 5 }, on: "caster" }], caster, ally);
     expect(caster.energy).toBe(0);
     expect(ally.energy).toBe(100);
+  });
+
+  it("is paid once a use, however many targets it removed from", () => {
+    const purge = getSkill("monk.purge-signet");
+    if (purge === undefined) {
+      throw new Error("no Purge Signet");
+    }
+    const caster = bearing("c", []);
+    const allies = [bearing("a", ["bleeding"]), bearing("b", ["poison"])];
+    resolveSkillEffects({
+      skill: {
+        ...purge,
+        effects: [
+          { kind: "remove-status", category: "condition", count: 1 },
+          lossPerRemoved(["condition"]),
+        ],
+      },
+      caster,
+      targets: allies,
+      rng: createRng(1),
+      rules: RULES.combat,
+      surroundings: new Map(
+        [caster, ...allies].map((combatant, index) => [
+          combatant.id,
+          { combatant, position: vec2(index * 50, 0), creature: undefined, corpseExploited: false },
+        ]),
+      ),
+    });
+    // The two removals, once: not twice for two targets.
+    expect(caster.energy).toBe(98);
   });
 });

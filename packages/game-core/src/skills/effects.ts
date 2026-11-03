@@ -3314,11 +3314,12 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
       return effect.recipient !== undefined;
     case "remove-status":
       return effect.from === "caster";
+    // A caster-side energy loss (#2260) too: paid once, however many it hit.
     case "maintain-status":
     case "apply-status":
     case "knockdown":
-      return effect.on === "caster";
     case "energy-loss":
+      return effect.on === "caster";
     case "energy-steal":
     case "life-steal":
     case "damage":
