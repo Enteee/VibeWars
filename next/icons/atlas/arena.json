@@ -3325,8 +3325,8 @@
       "h": 12
     },
     "projectile/bolt": {
-      "x": 429,
-      "y": 599,
+      "x": 372,
+      "y": 582,
       "w": 32,
       "h": 12
     },
@@ -3368,6 +3368,12 @@
     },
     "projectile/thrown-dagger": {
       "x": 363,
+      "y": 599,
+      "w": 32,
+      "h": 12
+    },
+    "projectile/deathly-swarm": {
+      "x": 429,
       "y": 599,
       "w": 32,
       "h": 12
