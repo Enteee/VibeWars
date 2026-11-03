@@ -44,6 +44,7 @@ describe("projectileSprite", () => {
     expect(projectileSprite("longbow", "elementalist.fireball")).toBe("fireball");
     expect(projectileSprite("spear", "elementalist.stoning")).toBe("stone");
     expect(projectileSprite(undefined, "elementalist.ebon-hawk")).toBe("ebon-hawk");
+    expect(projectileSprite("wand", "necromancer.deathly-swarm")).toBe("deathly-swarm");
   });
 
   it("gives a skill with no row a bolt", () => {

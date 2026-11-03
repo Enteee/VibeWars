@@ -80,7 +80,9 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (removedCategories(skill).length > 0) uses.push("removal");
   if (skill.target === "single-dead-ally") uses.push("resurrect");
   if (setupOf(skill) !== undefined) uses.push("setup");
-  if (lowEnergyGain(skill) !== undefined || energyAtFoes(skill)) uses.push("energy");
+  if (lowEnergyGain(skill) !== undefined || energyAtFoes(skill) || drainsFoeEnergy(skill)) {
+    uses.push("energy");
+  }
   if (recallsInterrupted(skill)) uses.push("guard");
   // Taste of Death's life steal (#1915) is from its own minion: no foe's.
   if (
@@ -680,6 +682,18 @@ export function energyAtFoes(skill: Skill): boolean {
     const status = getStatusDefinition(id);
     return status.renewsOnBearerSpellAtFoe && status.energyPips > 0;
   });
+}
+
+/**
+ * Whether `skill` at a foe is for its user's Energy alone (#2231): Energy
+ * Drain, a gain per point the foe loses and no damage.
+ */
+export function drainsFoeEnergy(skill: Skill): boolean {
+  return (
+    skill.target === "single-enemy" &&
+    !skill.effects.some(dealsDamage) &&
+    skill.effects.some((effect) => effect.kind === "energy-gain" && effect.perEnergyLost === true)
+  );
 }
 
 /**
