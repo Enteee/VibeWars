@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Necromancer staples (#2230), stand-ins until their art card.
+  // Necromancer staples (#2230), art #2251.
   // Enchantment: a drop over two rising arrows, Health regeneration from a theft.
   "vampiric-spirit": [
     "enchantment",

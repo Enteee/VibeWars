@@ -4222,4 +4222,56 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       { kind: "caster-gains-status", statusId: "vampiric-spirit", durationSeconds: 10 },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Count conditions (#2247), at their rank-12 values                       */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.discord",
+    name: "Discord",
+    gwId: 817,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "If target foe is suffering from a condition and under the
+    // effects of a hex or an enchantment, that foe suffers 30...110
+    // damage": 94.
+    effects: [
+      {
+        kind: "if",
+        condition: {
+          kind: "all-of",
+          conditions: [
+            { kind: "target-has", category: "condition" },
+            { kind: "target-has-any", categories: ["hex", "enchantment"] },
+          ],
+        },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "necromancer.death-magic", atZero: 30, atTwelve: 94 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
 ];

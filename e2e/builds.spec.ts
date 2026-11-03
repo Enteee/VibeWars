@@ -599,6 +599,82 @@ test("Team Builder has a random Team Build at each size, 2v2, 4v4 and 8v8 (#2147
   }
 });
 
+test("a member opens in place: its secondary profession and a rank change there and survive a reload (#2226)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByLabel("team name").fill("Duo");
+  const editor = page.locator(".team-member-editor");
+  await expect(editor).toHaveCount(0);
+  // The Gear tab has a member to equip only while one is open.
+  await expect(page.getByRole("tab", { name: "Gear", exact: true })).toBeHidden();
+
+  await memberRows(page).first().locator(".team-row-edit").click();
+  await expect(editor).toBeVisible();
+  await expect(memberRows(page).first().locator(".team-row-edit")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await chooseProfession(page, "secondary", "monk");
+  const healing = editor.getByRole("slider", { name: "Healing Prayers" });
+  await healing.locator('.attribute-pip[data-pip="3"]').click();
+  await expect(healing).toHaveAttribute("aria-valuenow", "3");
+  // The row says it at once.
+  await expect(memberRows(page).first().locator(".team-row-professions")).toContainText("Monk");
+  await expect(page.getByRole("tab", { name: "Gear", exact: true })).toBeVisible();
+
+  // One member open at a time: the second's ✎ closes the first.
+  await memberRows(page).nth(1).locator(".team-row-edit").click();
+  await expect(editor).toHaveCount(1);
+  await expect(memberRows(page).first().locator(".team-row-edit")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  // Esc closes the open member before it leaves the editor.
+  await page.keyboard.press("Escape");
+  await expect(editor).toHaveCount(0);
+  await expect(page.getByLabel("team name")).toBeVisible();
+
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
+  await page.reload();
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await memberRows(page).first().locator(".team-row-edit").click();
+  await expect(professionField(page, "secondary")).toContainText("Monk");
+  await expect(editor.getByRole("slider", { name: "Healing Prayers" })).toHaveAttribute(
+    "aria-valuenow",
+    "3",
+  );
+});
+
+test("the open member's attribute names are never cut, and its name field is styled like the team's (#2226)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto("./");
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "new team" }).click();
+  await memberRows(page).first().locator(".team-row-edit").click();
+  const editor = page.locator(".team-member-editor");
+  // Ranger: Marksmanship and Wilderness Survival, the longest one-word names.
+  await chooseProfession(page, "secondary", "ranger");
+  const names = editor.locator(".editor-attribute-name");
+  await expect(names.first()).toBeVisible();
+  const cut = await names.evaluateAll((spans) =>
+    spans.filter((span) => span.scrollWidth > span.clientWidth).map((span) => span.textContent),
+  );
+  expect(cut).toEqual([]);
+  const background = (selector: string) =>
+    page.locator(selector).evaluate((input) => getComputedStyle(input).backgroundColor);
+  expect(await background("input.team-member-name")).toBe(await background("input.editor-name"));
+});
+
 test("on a phone, a Team Build card's Edit sits below its members, never on them (#1786)", async ({
   page,
 }) => {

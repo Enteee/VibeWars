@@ -180,7 +180,13 @@ hold **Shift** as you drop it on another member to copy it instead. A
 bar still holds one elite and no skill twice, so a drop that would break
 that is refused the same way. Each member's skills show as icons; hover
 one for its details, click it to find every copy on the team.
-Press a member's name to edit it in the build editor;
+A member's **✎** opens it in place, under its row: its professions, name,
+attribute ranks and equipment change right there, and a third tab,
+**Gear**, holds the weapons and off-hands to drag onto its hands. One
+member is open at a time; **Esc** closes it. A new profession drops the
+skills and ranks it cannot use, with an **Undo**.
+Press a member's name, or **Open in the Character screen**, to edit it in
+the build editor;
 its **Save** puts it back in the team, and the team's own **Save** keeps it all
 and takes you back to Team Builder. **Esc** leaves
 without saving, and asks first. The team's **Share**, **Duplicate** and

@@ -2121,7 +2121,7 @@ export function applyEffect(
       }
       const removed = bearer.statuses.removeByCategory(
         effect.category,
-        removeCount(effect, caster, bearer, context.surroundings, earlier),
+        removeCount(effect, caster, target, bearer, context.surroundings, earlier),
         effect.profession,
         same?.kind === "status-removed" ? same.statusId : effect.statusId,
       );
@@ -2610,6 +2610,9 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "target-casting-or-attacking":
     case "any-of":
     case "not":
+    case "all-of":
+    case "count-at-least":
+    case "count-at-most":
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
@@ -2756,6 +2759,17 @@ export function stateHolds(
       );
     case "not":
       return !stateHolds(condition.condition, caster, target, surroundings, firing);
+    case "all-of":
+      return condition.conditions.every((each) =>
+        stateHolds(each, caster, target, surroundings, firing),
+      );
+    case "count-at-least":
+      return countOf(condition.count, caster, target, surroundings) >= condition.atLeast;
+    case "count-at-most":
+      return (
+        countOf(condition.count, caster, target, surroundings) <=
+        countOf(condition.than, caster, target, surroundings)
+      );
     case "target-casting-or-attacking": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
@@ -2803,12 +2817,14 @@ export function stateHolds(
 /**
  * How many a `remove-status` takes off `bearer`: its `count`, or that
  * for each living spirit within `perSpiritNear` of it (#1064), or one for
- * each `perRemoved` status `earlier` took off it, to its `max` (#1205). A
- * bearer nowhere in `surroundings` has no spirit near.
+ * each `perRemoved` status `earlier` took off it, to its `max` (#1205), or
+ * what `perCount` counts (#2247). A bearer nowhere in `surroundings` has
+ * no spirit near.
  */
 function removeCount(
   effect: RemoveStatusEffect,
   caster: Combatant,
+  target: Combatant | undefined,
   bearer: Combatant,
   surroundings: Surroundings,
   earlier: readonly CombatEvent[],
@@ -2819,6 +2835,10 @@ function removeCount(
       perRemoved(effect.perRemoved.category, bearer, earlier),
       resolveMagnitude(effect.perRemoved.max, caster),
     );
+  }
+  // Signet of Twilight's one for each hex (#2247), counted before it removes.
+  if (effect.perCount !== undefined) {
+    return countOf(effect.perCount, caster, target, surroundings);
   }
   const count =
     effect.count === "all"
@@ -3073,6 +3093,9 @@ function conditionHolds(
     case "target-casting-or-attacking":
     case "any-of":
     case "not":
+    case "all-of":
+    case "count-at-least":
+    case "count-at-most":
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
