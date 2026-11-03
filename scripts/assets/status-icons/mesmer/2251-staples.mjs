@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Mesmer staples 5 (#2231), stand-ins until their art card.
+  // Mesmer staples 5 (#2231), art #2251.
   // Hex: a closed eye over a falling drop, a nightmare's degeneration.
   "conjure-nightmare": [
     "hex",

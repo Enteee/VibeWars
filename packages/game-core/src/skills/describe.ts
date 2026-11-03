@@ -2354,6 +2354,14 @@ function conditionText(
     }
     case "not":
       return negatedText(conditionText(condition.condition, ranks));
+    case "all-of": {
+      const [first, ...rest] = condition.conditions.map((each) => conditionText(each, ranks));
+      return [first ?? "Always", ...rest.map((text) => text.replace(/^If /, ""))].join(" and ");
+    }
+    case "count-at-least":
+      return `If ${countAll(condition.count)} number ${String(condition.atLeast)} or more`;
+    case "count-at-most":
+      return `If ${countAll(condition.count)} are no more than ${countAll(condition.than)}`;
     case "target-has-status":
       return `If target has ${statusName(condition.statusId)}`;
     case "target-lacks-status":
@@ -2489,6 +2497,9 @@ function lostInSplash(effect: RemoveStatusEffect, ranks: ReadonlyMap<string, num
   }
   if (effect.count === "all" || effect.perRemoved !== undefined) {
     return `lose all ${categoryNoun("all", effect.category)}`;
+  }
+  if (effect.perCount !== undefined) {
+    return `lose one ${effect.category} for each ${countEach(effect.perCount, "on them")}`;
   }
   const count = countAt(effect.count, ranks);
   return `lose ${String(count)} ${categoryNoun(count, effect.category)}`;
@@ -2869,17 +2880,28 @@ function withPerText(
  * (#1957), "for each point of Energy you have" (#1984).
  */
 function perCountText(per: PerCount, ranks: ReadonlyMap<string, number>, onTarget: string): string {
-  const { count } = per;
-  const what =
-    count.kind === "statuses"
-      ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : onTarget}`
-      : count.kind === "recharging-skills"
-        ? `of your recharging ${getAttribute(count.attributeId)?.name ?? count.attributeId} skills`
-        : count.kind === "energy"
-          ? `point of Energy ${count.on === "caster" ? "you have" : "they have"}`
-          : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
   const max = per.max === undefined ? "" : ` (maximum ${shown(describeMagnitude(per.max, ranks))})`;
-  return `for each ${what}${max}`;
+  return `for each ${countEach(per.count, onTarget)}${max}`;
+}
+
+/** One of what `count` counts, as "for each" names it: "hex on them", "foe nearby". */
+function countEach(count: CountRule, onTarget: string): string {
+  return count.kind === "statuses"
+    ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : onTarget}`
+    : count.kind === "recharging-skills"
+      ? `of your recharging ${getAttribute(count.attributeId)?.name ?? count.attributeId} skills`
+      : count.kind === "energy"
+        ? `point of Energy ${count.on === "caster" ? "you have" : "they have"}`
+        : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+}
+
+/** All of what `count` counts, as a condition names it (#2247): "target's hexes", "your enchantments". */
+function countAll(count: CountRule): string {
+  if (count.kind === "statuses") {
+    const whose = count.on === "caster" ? "your" : "target's";
+    return `${whose} ${count.categories.map((category) => categoryNoun("all", category)).join(" and ")}`;
+  }
+  return `${perCountNoun(count)}s`;
 }
 
 /** What a `per` counts, one of it, as a headline names it (#2222): "ally", "hex". */
@@ -3175,6 +3197,14 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         const verb = effect.from === "caster" ? "Lose" : "Removes";
         return {
           text: `${verb} one ${effect.category} for each ${perRemoved.category} removed (max ${max})`,
+          magnitude: undefined,
+        };
+      }
+      // Signet of Twilight's "for each hex on target foe, ... one enchantment" (#2247).
+      if (effect.perCount !== undefined) {
+        const verb = effect.from === "caster" ? "Lose" : "Removes";
+        return {
+          text: `${verb} one ${effect.category} for each ${countEach(effect.perCount, "on target")}`,
           magnitude: undefined,
         };
       }
