@@ -43,7 +43,9 @@ export type AssassinStatusId =
   | "way-of-the-empty-palm"
   | "mark-of-instability"
   | "deadly-paradox"
-  | "unseen-fury";
+  | "unseen-fury"
+  // Assassin staples 6 (#2233).
+  | "hidden-caltrops";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -322,5 +324,28 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   "unseen-fury": define("unseen-fury", "Unseen Fury", "stance", {
     profession: "assassin",
     unblockableByBlinded: true,
+  }),
+  // "For 1...10 seconds, target foe moves 50% slower. When this hex ends
+  // that foe is crippled for 1...15 seconds" (#2233): 12 s at rank 12, on
+  // any end, a removal included.
+  "hidden-caltrops": define("hidden-caltrops", "Hidden Caltrops", "hex", {
+    profession: "assassin",
+    moveSpeedMultiplier: 0.5,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "crippled",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.shadow-arts", atZero: 1, atTwelve: 12.2 },
+            },
+          },
+        ],
+        skillId: "assassin.hidden-caltrops",
+      },
+    ],
   }),
 };

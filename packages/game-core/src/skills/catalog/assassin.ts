@@ -3550,4 +3550,128 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Assassin staples 6 (#2233)                                             */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.entangling-asp",
+    name: "Entangling Asp",
+    gwId: 784,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.deadly-arts",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Must follow a lead attack. Target foe is knocked down and becomes
+    // Poisoned for 5...20 seconds": 17 s at rank 12. As Impale, without
+    // the lead mark it is paid for, recharges and does nothing.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-chain-mark", role: "lead" },
+        effects: [
+          { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+          {
+            kind: "apply-status",
+            statusId: "poison",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.assault-enchantments",
+    name: "Assault Enchantments",
+    gwId: 1643,
+    type: "skill",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    // GW1's "No Attribute": any assassin can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 8,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Must follow a dual attack. Target foe loses all enchantments." As
+    // Impale, without the dual mark it is paid for and does nothing.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-chain-mark", role: "dual" },
+        effects: [{ kind: "remove-status", category: "enchantment", count: "all" }],
+      },
+    ],
+  },
+  {
+    id: "assassin.hidden-caltrops",
+    name: "Hidden Caltrops",
+    gwId: 1642,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Your non-Assassin skills are disabled for 3 seconds. For 1...10
+    // seconds, target foe moves 50% slower. When this hex ends that foe is
+    // crippled for 1...15 seconds": 8 s and 12 s at rank 12. The price is
+    // paid even if the hex comes off at once.
+    effects: [
+      {
+        kind: "disable-own-skills",
+        which: "other-professions",
+        profession: "assassin",
+        exceptTypes: [],
+        seconds: { flat: 3 },
+      },
+      {
+        kind: "apply-status",
+        statusId: "hidden-caltrops",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 1, atTwelve: 8.2 },
+        },
+      },
+    ],
+  },
 ];
