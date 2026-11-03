@@ -14,7 +14,7 @@ import {
   type RelayShare,
 } from "./relay-offer.js";
 import { TRYSTERO_SELF_ID, joinTrysteroRoom } from "./trystero.js";
-import { loadOfferedRelay, loadTurnConfig, onRelaySharingChange } from "./turn-config.js";
+import { loadOfferedRelay, loadRelay, onRelaySharingChange } from "./turn-config.js";
 
 /**
  * Join `room` (#403), derived from a lobby key or a queue room's name
@@ -82,7 +82,7 @@ export function joinGuestRoom(room: LobbyRoom): GuestRoom {
     join: (turn) =>
       turn === undefined ? joinTrysteroRoom(room) : joinTrysteroRoom(relaySibling(room), turn),
     offers: watchRelayOffers(room.relay),
-    ownRelay: loadTurnConfig() !== undefined,
+    ownRelay: loadRelay() !== undefined,
   });
   return {
     transport,

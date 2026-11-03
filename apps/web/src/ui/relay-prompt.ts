@@ -1,8 +1,16 @@
-import { relayHosts, saveTurnConfig, type TurnConfig } from "../net/transport/turn-config.js";
+import {
+  relayHosts,
+  saveRelay,
+  saveRelaySharing,
+  type Relay,
+} from "../net/transport/turn-config.js";
 import { button, h, toast } from "./kit.js";
 
 /** How long Use stays disabled after the prompt opens, as a browser's permission prompt does. */
 const ARM_USE_MS = 500;
+
+/** What Use means for the player's lobbies (#2240); Options can untick it. */
+const RELAY_PROMPT_SHARING = "Your lobbies will offer this relay to their players.";
 
 /** The open prompt's close, so a second link replaces it rather than stacking on it. */
 let closeOpen: (() => void) | undefined;
@@ -10,14 +18,15 @@ let closeOpen: (() => void) | undefined;
 /**
  * Asked over the menu when the page was opened from a relay invite link
  * (#972): a link from someone else never routes the player's traffic until
- * they say Use. Ignore, or Esc, saves nothing. With a relay already saved
- * it names both, and replaces only on Use. A second link replaces an open
+ * they say Use. Use also shares it with the player's lobbies, and says so
+ * (#2240). Ignore, or Esc, saves nothing. With a relay already saved it
+ * names both, and replaces only on Use. A second link replaces an open
  * prompt, Use disabled again, so closing it never uncovers an armed one.
  */
 export function openRelayPrompt(
   parent: HTMLElement,
-  offered: TurnConfig,
-  saved: TurnConfig | undefined,
+  offered: Relay,
+  saved: Relay | undefined,
 ): void {
   closeOpen?.();
   const backdrop = h("div", "relay-prompt-overlay");
@@ -37,6 +46,7 @@ export function openRelayPrompt(
       "screen-subtitle",
       "Only use a relay from someone you trust: whoever runs it sees your IP address and when you play.",
     ),
+    h("p", "screen-subtitle relay-prompt-share", RELAY_PROMPT_SHARING),
   );
 
   const close = (): void => {
@@ -53,7 +63,8 @@ export function openRelayPrompt(
     }
   };
   const use = button("Use", "primary relay-prompt-use", () => {
-    saveTurnConfig(offered);
+    saveRelay(offered);
+    saveRelaySharing(true);
     close();
     toast(`Relay: ${relayHosts(offered)}`);
   });

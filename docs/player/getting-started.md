@@ -88,11 +88,13 @@ and the strip on top of every mode screen lists who is in it.
   to go back to the menu first. If your connection drops, your seat is held
   for 30 seconds.
 - **Share your relay:** some friends can only reach you through a TURN
-  relay. If you run one with a shared secret, save it in **Options →
-  Relay (TURN)** and tick **Share my relay with my lobbies**: a friend who
-  cannot reach you directly then joins through it after a few seconds,
-  with nothing to set up. Anyone with your invite link can use it for up
-  to 2 hours.
+  relay. When a friend who runs one sends you its relay link, open it and
+  press **Use**: it becomes your relay, and your lobbies offer it to their
+  players. A friend who cannot reach you directly then joins through it
+  after a few seconds, with nothing to set up. Anyone with your invite
+  link can use it for up to 2 hours. To stop, untick **Share my relay
+  with my lobbies** in **Options → Relay (TURN)**. A relay you type in
+  there by hand is only ever yours.
 - **Your party comes along:** if you had friends in your lobby, the top
   bar asks first (**Join** to go, Esc to stay), and once you are
   in, they follow you into your friend's lobby. Anyone who cannot get in,
