@@ -187,6 +187,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
   const moveHandlers: ((code: string) => void)[] = [];
   const relayHandlers: ((relay: WireRelayLogin | null) => void)[] = [];
+  /** The host's last `relay-login`, for a handler added after it came. */
+  let relayLogin: WireRelayLogin | null | undefined;
   const chatHandlers: ((line: ChatLine) => void)[] = [];
   const throttledHandlers: (() => void)[] = [];
   const partyHandlers: ((party: WirePartyFormed | null) => void)[] = [];
@@ -492,6 +494,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       },
       onRelayLogin(handler) {
         relayHandlers.push(handler);
+        // The host sends it on admission, which can beat the handler here.
+        if (relayLogin !== undefined) {
+          handler(relayLogin);
+        }
       },
       onChat(handler) {
         chatHandlers.push(handler);
@@ -604,6 +610,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         // The host's alone, and only once it is known (#2248).
         const login = parsePeerRelayLogin(data);
         if (hostId !== undefined && from === hostId && login !== undefined) {
+          relayLogin = login.relay;
           for (const handler of [...relayHandlers]) {
             handler(login.relay);
           }

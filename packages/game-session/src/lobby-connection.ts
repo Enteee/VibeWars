@@ -179,6 +179,7 @@ export interface LobbyConnection {
   /**
    * The relay login the host shares (#2248), or `null` for none: on
    * admission and on each change, from the host alone. Shape-checked only.
+   * A handler added after one came is called with the last at once.
    */
   onRelayLogin(handler: (relay: WireRelayLogin | null) => void): void;
   /**

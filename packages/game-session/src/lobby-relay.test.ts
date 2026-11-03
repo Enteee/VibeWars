@@ -1,10 +1,11 @@
 import { PROTOCOL_VERSION, type WireRelayLogin } from "@vibewars/game-protocol";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { type Member, openLobby, provenPeer, seat, start } from "./lobby-harness.test-support.js";
 import type { LobbyRelaySource } from "./lobby-host.js";
 import { settle } from "./match-harness.test-support.js";
-import type { Transport } from "./transport.js";
+import { createMemoryNetwork } from "./memory-transport.js";
+import { MAX_MESSAGE_BYTES, sizeChecked, type Transport } from "./transport.js";
 
 /**
  * The relay login a lobby host shares with its members (#2248): to each
@@ -69,19 +70,18 @@ describe("a lobby host's relay login (#2248)", () => {
     const told: (WireRelayLogin | null)[][] = [];
     const guests: Member[] = [];
     for (const name of ["Ann", "Bo"]) {
-      // Listening before the join, as a guest's session does.
       const guest = await lobby.join(name);
       guests.push(guest);
       told.push(logins(guest));
     }
-    // Admission's login came before the listener here; a change reaches both.
+    // Admission's login came before the listener: it is handed the last at once.
     relay.set(login(2));
     await settle();
     relay.set(null);
     await settle();
     expect(told).toEqual([
-      [login(2), null],
-      [login(2), null],
+      [login(1), login(2), null],
+      [login(1), login(2), null],
     ]);
   });
 
@@ -113,7 +113,7 @@ describe("a lobby host's relay login (#2248)", () => {
       await start(lobby);
       relay.set(login(2));
       await settle();
-      expect(told).toEqual([login(2)]);
+      expect(told).toEqual([login(1), login(2)]);
     }
   });
 
@@ -148,10 +148,20 @@ describe("a lobby host's relay login (#2248)", () => {
     const member = await provenPeer(lobby);
     member.send("relay-login", { relay: login(9) }, guest.transport.selfId);
     await settle();
-    expect(told).toEqual([]);
+    expect(told).toEqual([login(1)]);
     await lobby.lobby.close();
     relay.set(login(2));
     await settle();
-    expect(told).toEqual([]);
+    expect(told).toEqual([login(1)]);
+  });
+
+  it("is never formatted into a log, even one over the size cap", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const credential = "c".repeat(MAX_MESSAGE_BYTES);
+    const transport = sizeChecked(createMemoryNetwork().join());
+    transport.send("relay-login", { relay: { ...login(1), credential } });
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(error.mock.calls)).not.toMatch(/credential-|cccc|0123456789abcdef/);
+    error.mockRestore();
   });
 });
