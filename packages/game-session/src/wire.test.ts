@@ -65,7 +65,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     ranks: NO_RANKS,
     outbreak: null,
     maintained: null,
-    projected: false,
+    projected: null,
     returnPoint: null,
     stepTargetId: null,
   };
@@ -77,7 +77,7 @@ function maintained(id: StatusId): ActiveStatus {
     ...status(id, Infinity),
     durationSeconds: Infinity,
     maintained: { seq: 0, outOfRangeSeconds: 0 },
-    projected: false,
+    projected: null,
   };
 }
 
@@ -199,7 +199,7 @@ describe("statusSnapshot (#803)", () => {
       ...status("winnowing", Infinity),
       durationSeconds: Infinity,
       sourceId: "ranger/c1",
-      projected: true,
+      projected: { ageSeconds: 0 },
     };
     expect(statusSnapshot(aura, 4, cast)).toEqual({
       id: "winnowing",

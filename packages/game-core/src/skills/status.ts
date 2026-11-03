@@ -250,6 +250,10 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   if (definition.nextSkill !== undefined) {
     scalingAttributes(definition.nextSkill, attributes);
   }
+  // Agony's pulse hurts at its Ritualist's rank, and costs the spirit so (#2275).
+  if (definition.pulse !== undefined) {
+    scalingAttributes(definition.pulse, attributes);
+  }
   // Jagged Bones's horror stands up at its caster's rank (#1986).
   if (definition.replacedOnDeathBy !== undefined && definition.attribute !== undefined) {
     attributes.add(definition.attribute);
@@ -1474,9 +1478,16 @@ export interface DamagePulse {
 /** `StatusDefinition.pulse` (#2187). */
 export interface EffectPulse {
   readonly everySeconds: number;
-  /** Run from the status's source on the bearer. */
+  /** Run from the status's source on the bearer, at its ranks as it landed (#2275). */
   readonly effects: readonly SkillEffect[];
   readonly skillId: string;
+  /**
+   * The source loses this much Health, as a protective spirit's charge,
+   * for each pulse that cost the bearer Health (#2275): Agony's "the
+   * spirit loses 3...10 Health for each foe hurt". A pulse that hurt
+   * nobody costs nothing. `undefined`: none.
+   */
+  readonly chargesSourcePerHit?: StatusStat;
 }
 
 /** `StatusDefinition.reflectsNextDamage` (#2187). */
@@ -2344,9 +2355,11 @@ export interface ActiveStatus {
   readonly maintained: { readonly seq: number; outOfRangeSeconds: number } | null;
   /**
    * Worn from a spirit while in its range (#1064, `project`): no end of its
-   * own, and it leaves when its bearer does. `false` for every other.
+   * own, and it leaves when its bearer does. `ageSeconds`: how long it has
+   * been worn since its bearer came into range (#2275), the clock its
+   * `pulse` keeps. `null` for every other.
    */
-  readonly projected: boolean;
+  readonly projected: { ageSeconds: number } | null;
   /**
    * Where its source stood as it put it up, for a `returnsSource` status
    * (#1826), as `apply` or `maintain` put it up; `null` for every other, and for one replaced.
@@ -2424,7 +2437,11 @@ export class StatusSet {
   readonly #statuses = new Map<StatusId, ActiveStatus>();
   #changes: StatusChange[] = [];
   #pulses: StatusPulse[] = [];
-  #effectPulses: { readonly id: StatusId; readonly sourceId: string }[] = [];
+  #effectPulses: {
+    readonly id: StatusId;
+    readonly sourceId: string;
+    readonly ranks: ReadonlyMap<string, number>;
+  }[] = [];
   readonly #spent: Set<string>;
 
   /**
@@ -2460,7 +2477,11 @@ export class StatusSet {
    * The effect pulses (`pulse`, #2187) that came due since the last drain,
    * oldest first, and forget them: the simulation runs them once a tick.
    */
-  public drainEffectPulses(): { readonly id: StatusId; readonly sourceId: string }[] {
+  public drainEffectPulses(): {
+    readonly id: StatusId;
+    readonly sourceId: string;
+    readonly ranks: ReadonlyMap<string, number>;
+  }[] {
     const pulses = this.#effectPulses;
     this.#effectPulses = [];
     return pulses;
@@ -2968,7 +2989,7 @@ export class StatusSet {
       ranks,
       outbreak,
       maintained: null,
-      projected: false,
+      projected: null,
       returnPoint: definition.returnsSource === undefined ? null : returnsTo,
       stepTargetId: null,
     });
@@ -3041,7 +3062,7 @@ export class StatusSet {
       ranks,
       outbreak,
       maintained: null,
-      projected: false,
+      projected: null,
       returnPoint: null,
       stepTargetId: null,
     });
@@ -3095,7 +3116,7 @@ export class StatusSet {
       ranks,
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
-      projected: false,
+      projected: null,
       returnPoint: definition.returnsSource === undefined ? null : returnPoint,
       stepTargetId: definition.stepsToTarget === undefined ? null : stepTargetId,
     });
@@ -3138,7 +3159,7 @@ export class StatusSet {
       ranks,
       outbreak: null,
       maintained: null,
-      projected: true,
+      projected: { ageSeconds: 0 },
       returnPoint: null,
       stepTargetId: null,
     });
@@ -3929,7 +3950,14 @@ export class StatusSet {
    * duration, so one ending between pulses deals no partial one.
    */
   #pulse(status: ActiveStatus, dt: number): void {
-    const before = status.durationSeconds - status.remainingSeconds;
+    // A projected one keeps its own clock (#2275): it has no duration.
+    const before =
+      status.projected === null
+        ? status.durationSeconds - status.remainingSeconds
+        : status.projected.ageSeconds;
+    if (status.projected !== null) {
+      status.projected.ageSeconds += dt;
+    }
     const every = getStatusDefinition(status.id).pulse?.everySeconds;
     if (every !== undefined) {
       // As below, in steps of `every` (#2187).
@@ -3938,7 +3966,7 @@ export class StatusSet {
         Math.floor(status.durationSeconds / every + PULSE_EPSILON),
       );
       for (let k = Math.floor(before / every + PULSE_EPSILON) + 1; k <= due; k += 1) {
-        this.#effectPulses.push({ id: status.id, sourceId: status.sourceId });
+        this.#effectPulses.push({ id: status.id, sourceId: status.sourceId, ranks: status.ranks });
       }
     }
     const pulse = getStatusDefinition(status.id).damagePulse;

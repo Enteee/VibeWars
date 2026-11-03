@@ -1887,7 +1887,7 @@ export function applyEffect(
         return events;
       }
       if (effect.recipient === "target") {
-        const amount = resolveMagnitude(effect.amount, caster);
+        const amount = resolveMagnitude(effect.amount, context.ranksFrom ?? caster);
         loseHealth(
           target,
           withPerCount(amount, effect.per, caster, target, context.surroundings),

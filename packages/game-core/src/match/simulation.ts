@@ -1968,29 +1968,35 @@ export class MatchSimulation {
    * source's foes within its radius of the bearer, and to the bearer if
    * it `hitsBearer` (#1754), logged as the status's skill. A bearer that died since takes none,
    * and a source that has left the match deals none. An effect pulse
-   * (#2187) runs its effects from the source on the bearer, as its skill.
+   * (#2187) runs its effects from the source on the bearer, as its skill,
+   * at the status's ranks; one that cost the bearer Health charges its
+   * source (#2275): Agony's spirit pays for each foe it hurt.
    */
   #pulseStatuses(): void {
     for (const record of this.#participants.values()) {
-      for (const { id, sourceId } of record.combatant.statuses.drainEffectPulses()) {
+      for (const { id, sourceId, ranks } of record.combatant.statuses.drainEffectPulses()) {
         const source = this.#participants.get(sourceId);
         const pulse = STATUS_DEFINITIONS[id].pulse;
         if (record.combatant.dead || source === undefined || pulse === undefined) {
           continue;
         }
-        this.#logFired([
-          {
-            sourceId,
-            skillId: pulse.skillId,
-            events: applyEffects(pulse.effects, {
-              caster: source.combatant,
-              target: record.combatant,
-              rng: this.#rng,
-              rules: this.#ruleset.combat,
-              surroundings: this.#participants,
-            }),
-          },
-        ]);
+        const ranksFrom = outsideMatch(ranks);
+        const events = applyEffects(pulse.effects, {
+          caster: source.combatant,
+          target: record.combatant,
+          ranksFrom,
+          rng: this.#rng,
+          rules: this.#ruleset.combat,
+          surroundings: this.#participants,
+        });
+        this.#logFired([{ sourceId, skillId: pulse.skillId, events }]);
+        const hurt = events.some(
+          (event) =>
+            event.kind === "health-loss" && event.targetId === record.id && event.amount > 0,
+        );
+        if (hurt && pulse.chargesSourcePerHit !== undefined) {
+          this.#landCharge(sourceId, id, Math.round(statAt(pulse.chargesSourcePerHit, ranks)));
+        }
       }
       for (const { id, sourceId, damage } of record.combatant.statuses.drainPulses()) {
         const source = this.#participants.get(sourceId);
@@ -2190,7 +2196,7 @@ export class MatchSimulation {
       }
       const { statuses } = body.combatant;
       for (const status of statuses.active) {
-        if (status.projected && !wears.has(status.id)) {
+        if (status.projected !== null && !wears.has(status.id)) {
           statuses.remove(status.id);
         }
       }
