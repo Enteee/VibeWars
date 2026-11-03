@@ -1641,6 +1641,13 @@ export type StateCondition =
    */
   | { readonly kind: "caster-spirit-or-corpse-within"; readonly radius: number }
   /**
+   * A fresh corpse lies within `radius` of the effect's target, or the
+   * target's pet is dead (#2250): Signet of Sorrow's "if target foe is near
+   * a corpse or its pet is dead", "near" being `AREA_NEARBY`. An exploited
+   * corpse does not count; a living target is never its own corpse.
+   */
+  | { readonly kind: "target-near-corpse-or-dead-pet"; readonly radius: number }
+  /**
    * A dead body of the caster's team other than the caster lies within
    * `radius` of it (#2096): "Retreat!"'s "if an ally is dead within
    * earshot". An exploited corpse and a dead pet count.

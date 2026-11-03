@@ -484,6 +484,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
 
 exports[`skillRoles > tags every necromancer skill the same way every time 1`] = `
 {
+  "necromancer.animate-bone-fiend": "",
   "necromancer.animate-bone-horror": "",
   "necromancer.animate-bone-minions": "",
   "necromancer.animate-flesh-golem": "",
@@ -560,6 +561,7 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.shivers-of-dread": "hex",
   "necromancer.signet-of-agony": "",
   "necromancer.signet-of-lost-souls": "healing",
+  "necromancer.signet-of-sorrow": "",
   "necromancer.soul-barbs": "hex",
   "necromancer.soul-bind": "hex",
   "necromancer.soul-feast": "healing",
