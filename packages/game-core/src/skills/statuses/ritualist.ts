@@ -69,7 +69,8 @@ export type RitualistStatusId =
   | "ancestors-rage"
   | "dulled-weapon"
   // Condition movement (#2259).
-  | "resilient-was-xiko";
+  | "resilient-was-xiko"
+  | "agony";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -788,5 +789,28 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
         skillId: "ritualist.resilient-was-xiko",
       },
     ],
+  }),
+  // PvP: "This spirit causes 3...10 Health loss each second to foes within
+  // earshot. This spirit loses 3...10 Health for each foe hurt in this
+  // way" (#2275): each foe in range keeps its own 1 s clock, from when it
+  // came in, at the Ritualist's rank.
+  agony: define("agony", "Agony", "skill-effect", {
+    profession: "ritualist",
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "lose-health",
+          recipient: "target",
+          amount: {
+            scaling: { attributeId: "ritualist.channeling-magic", atZero: 3, atTwelve: 8.6 },
+          },
+        },
+      ],
+      skillId: "ritualist.agony",
+      chargesSourcePerHit: {
+        scaling: { attributeId: "ritualist.channeling-magic", atZero: 3, atTwelve: 8.6 },
+      },
+    },
   }),
 };
