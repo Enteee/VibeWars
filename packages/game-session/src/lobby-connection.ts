@@ -7,6 +7,7 @@ import type {
   LobbyTeamSize,
   WirePartyFormed,
   WireProposalBuild,
+  WireRelayLogin,
   WireTeamLobby,
 } from "@vibewars/game-protocol";
 
@@ -175,6 +176,11 @@ export interface LobbyConnection {
    * `onClosed` comes next, as for any host leaving.
    */
   onMove(handler: (code: string) => void): void;
+  /**
+   * The relay login the host shares (#2248), or `null` for none: on
+   * admission and on each change, from the host alone. Shape-checked only.
+   */
+  onRelayLogin(handler: (relay: WireRelayLogin | null) => void): void;
   /**
    * After a queued match this player's side won (#882): stay together as
    * a party with `key`, fresh, which signs its consent to the party

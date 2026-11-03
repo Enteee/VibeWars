@@ -31,6 +31,8 @@ import {
   type TeamArenaSize,
   type PeerLobbyJoin,
   type PeerLobbySeat,
+  type PeerRelayLogin,
+  type WireRelayLogin,
   type LobbyRefusal,
   type WireCape,
   type WireChatLine,
@@ -261,6 +263,19 @@ export interface LobbyHostOptions {
   readonly matchmaking?: LobbyMatchmakingOptions;
   /** In [0, 1): what a Team Lobby picks at random. Injected, so a test can seed it. */
   readonly random: () => number;
+  /** The relay login this host shares with its members (#2248). */
+  readonly relay: LobbyRelaySource;
+}
+
+/**
+ * The relay login a lobby host shares, `null` for none, and when it
+ * changes (a remint, sharing turned on or off, another relay). Each
+ * admitted member is told it on admission and on every change.
+ */
+export interface LobbyRelaySource {
+  current(): WireRelayLogin | null;
+  /** `handler` on each change, until the returned function is called. */
+  onChange(handler: () => void): () => void;
 }
 
 /**
@@ -387,6 +402,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const { host: transport, local } = createLocalPeer(sizeChecked(gated));
   /** In the order they joined, which is the order they are listed in. */
   const members = new Map<string, Member>();
+  /** The relay login to `to`, an admitted member (#2248): never to anyone else. */
+  const tellRelay = (to: string): void => {
+    const message: PeerRelayLogin = { relay: options.relay.current() };
+    transport.send("relay-login", message, to);
+  };
   /** The member peer `peerId` is: never a bot, whatever a peer calls itself (#1193). */
   const peerMember = (peerId: string): Member | undefined => {
     const member = members.get(peerId);
@@ -433,6 +453,18 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    */
   const draining: { readonly host: MatchHost; readonly room: Transport }[] = [];
   let closed = false;
+  // To every member, one at a time: away and in a match too, which
+  // `broadcast()` skips, since a guest refreshes its login mid-match.
+  const stopRelay = options.relay.onChange(() => {
+    if (closed) {
+      return;
+    }
+    for (const member of members.values()) {
+      if (member.bot === null && member.id !== local.selfId) {
+        tellRelay(member.id);
+      }
+    }
+  });
   /** A queued lobby's countdown: when it ends, in whole ms on the lobby's clock, while it runs. */
   let countdownEndsAt: number | undefined;
   /** A queued lobby starts its match once; after it, the lobby only waits. */
@@ -1557,6 +1589,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     // To it alone, after the state that lists it, so it knows the host by then.
     if (rejoinToken !== null) {
       transport.send("lobby-seat", { rejoinToken } satisfies PeerLobbySeat, from);
+      tellRelay(from);
     }
   };
 
@@ -1798,6 +1831,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       }
       beginCountdown();
       broadcast();
+      // A change while it was away may not have reached it.
+      tellRelay(from);
       return;
     }
     if (queued !== undefined) {
@@ -2278,6 +2313,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         return;
       }
       closed = true;
+      stopRelay();
       if (moveTo !== undefined) {
         const move: WireLobbyMove = { code: moveTo };
         for (const member of members.values()) {
