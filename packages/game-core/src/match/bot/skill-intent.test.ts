@@ -50,6 +50,10 @@ const NO_BOT_USE = new Set([
   "monk.dwaynas-sorrow",
   // Death Nova (#1931), the same, a burst that waits on an ally's death.
   "necromancer.death-nova",
+  // Dark Aura and Demonic Flesh (#2313), the same, damage that waits on
+  // an ally's sacrifice or on the caster's foe-targeted skills.
+  "necromancer.dark-aura",
+  "necromancer.demonic-flesh",
   // Aura of Displacement, Shadow Meld and Shadow of Haste (#1826): a step
   // there and back is nothing the bot plans for yet.
   "assassin.aura-of-displacement",

@@ -32,7 +32,10 @@ function fakeRoom(options: { sendFails?: boolean; turn?: TurnConfig } = {}) {
     callbacks: JoinRoomCallbacks | undefined;
   }[] = [];
   let left = false;
+  /** Each connected peer's connection, as the test sets it. */
+  const peers: Record<string, RTCPeerConnection> = {};
   const room = {
+    getPeers: () => peers,
     makeAction(namespace: string) {
       const action: MessageAction = {
         send(data, sendOptions) {
@@ -74,6 +77,7 @@ function fakeRoom(options: { sendFails?: boolean; turn?: TurnConfig } = {}) {
     joins,
     sent,
     room,
+    peers,
     get left() {
       return left;
     },
@@ -341,5 +345,71 @@ describe("the Trystero transport (#392)", () => {
     fake.room.onPeerJoin?.("b");
     fake.room.onPeerLeave?.("b");
     expect(got).toEqual([]);
+  });
+});
+
+describe("moving a peer onto another relay in place (#2245)", () => {
+  const OLD: RTCIceServer = {
+    urls: ["turns:relay.example:5349"],
+    username: "1:aa",
+    credential: "o",
+  };
+  const STUN: RTCIceServer = { urls: "stun:stun.example:3478" };
+  const NEWER: TurnConfig = {
+    urls: ["turns:relay.example:5349"],
+    username: "2:bb",
+    credential: "n",
+  };
+
+  /** A connection that records what it was told, in order. */
+  function fakeConnection(restartIce = true) {
+    const calls: string[] = [];
+    let config: RTCConfiguration = { iceServers: [STUN, OLD], bundlePolicy: "max-bundle" };
+    const connection = {
+      getConfiguration: () => config,
+      setConfiguration(next: RTCConfiguration) {
+        calls.push("setConfiguration");
+        config = next;
+      },
+      ...(restartIce
+        ? {
+            restartIce() {
+              calls.push("restartIce");
+            },
+          }
+        : {}),
+    };
+    return {
+      connection: connection as unknown as RTCPeerConnection,
+      calls,
+      config: () => config,
+    };
+  }
+
+  it("swaps the TURN login, keeping STUN and the rest, then restarts ICE: that peer's only", () => {
+    const fake = fakeRoom();
+    const host = fakeConnection();
+    const other = fakeConnection();
+    fake.peers.host = host.connection;
+    fake.peers.other = other.connection;
+    const transport = joinTrysteroRoom(ROOM, undefined, fake.deps);
+    transport.swapIceServers("host", NEWER);
+    expect(host.calls).toEqual(["setConfiguration", "restartIce"]);
+    expect(host.config()).toEqual({
+      iceServers: [STUN, { urls: NEWER.urls, username: "2:bb", credential: "n" }],
+      bundlePolicy: "max-bundle",
+    });
+    expect(other.calls).toEqual([]);
+  });
+
+  it("does nothing for an unknown peer, or in a browser without restartIce", () => {
+    const fake = fakeRoom();
+    const old = fakeConnection(false);
+    fake.peers.host = old.connection;
+    const transport = joinTrysteroRoom(ROOM, undefined, fake.deps);
+    transport.swapIceServers("nobody", NEWER);
+    transport.swapIceServers("host", NEWER);
+    expect(old.calls).toEqual([]);
+    expect(old.config().iceServers).toEqual([STUN, OLD]);
   });
 });

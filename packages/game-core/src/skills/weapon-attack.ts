@@ -1062,7 +1062,7 @@ export function bearerHit(
 ): void {
   attacker.statuses.recordHit(weapon);
   if (victim.team !== attacker.team) {
-    victim.statuses.recordHitByAttack(attacker.id, took, attackSkill?.attack?.chain?.role);
+    victim.statuses.recordHitByAttack(attacker.id, took, attackSkill?.attack?.chain?.role, weapon);
   }
   for (const statusId of attacker.statuses.endOnBearerHit(attackSkill !== undefined)) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });

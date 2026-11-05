@@ -7,6 +7,7 @@ import {
   isLobbyCode,
   isTeamQueueMode,
   type JsonValue,
+  type LobbyPhase,
   type LobbyRefusal,
   type LobbyTeamSize,
   type PeerHello,
@@ -391,8 +392,12 @@ export async function joinLobbyByCode(
     joined.onRelayLogin((login) => {
       guest.fromHost(login);
     });
+    const stopRefreshing = refreshRelayInLobby(joined, () => {
+      guest.refreshRelay(Date.now());
+    });
     joined.onClosed(() => {
       window.removeEventListener("pagehide", onPageHide);
+      stopRefreshing();
     });
     return joined;
   } catch (error) {
@@ -400,6 +405,46 @@ export async function joinLobbyByCode(
     await room.leave();
     throw error;
   }
+}
+
+/** How often a guest in its lobby, between maps, checks its relay login (#2245). */
+export const RELAY_REFRESH_CHECK_MS = 60_000;
+
+/**
+ * Keep a relayed guest's login fresh (#2245): `refresh` on each return
+ * from a map to `lobby`, and every `RELAY_REFRESH_CHECK_MS` while in it,
+ * so an idle guest is covered too. Never while a map starts or runs. The
+ * returned function stops it.
+ */
+export function refreshRelayInLobby(
+  lobby: {
+    getSnapshot(): { readonly phase: LobbyPhase };
+    onChange(handler: () => void): void;
+  },
+  refresh: () => void,
+): () => void {
+  const inMap = (): boolean => {
+    const { phase } = lobby.getSnapshot();
+    return phase === "starting" || phase === "in-match";
+  };
+  let wasInMap = inMap();
+  let stopped = false;
+  const timer = setInterval(() => {
+    if (!inMap()) {
+      refresh();
+    }
+  }, RELAY_REFRESH_CHECK_MS);
+  lobby.onChange(() => {
+    const now = inMap();
+    if (wasInMap && !now && !stopped) {
+      refresh();
+    }
+    wasInMap = now;
+  });
+  return () => {
+    stopped = true;
+    clearInterval(timer);
+  };
 }
 
 /** A queued lobby's countdown, from everyone seated to the match: the versus splash's time. */

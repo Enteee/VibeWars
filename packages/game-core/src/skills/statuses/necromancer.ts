@@ -89,6 +89,13 @@ export type NecromancerStatusId =
   // Staples (#2278).
   | "mark-of-subversion"
   | "signet-of-suffering"
+  // Staples (#2313).
+  | "tainted-flesh"
+  | "dark-aura"
+  | "life-transfer"
+  | "life-transfer-regen"
+  | "demonic-flesh"
+  | "weaken-knees"
   // Staples (#2314).
   | "ulcerous-lungs"
   | "blood-bond"
@@ -865,6 +872,152 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       },
     ],
     endsWhenTriggered: true,
+  }),
+  // Staples (#2313). "...allies in the area are immune to disease, and
+  // anyone striking those allies in melee becomes Diseased for 3...15
+  // seconds", at the enchanter's Death Magic: a melee hit, never a shot,
+  // a miss or a spell.
+  "tainted-flesh": define("tainted-flesh", "Tainted Flesh", "enchantment", {
+    profession: "necromancer",
+    immuneTo: ["disease"],
+    triggers: [
+      {
+        on: "bearer-hit-by-attack",
+        weapon: "melee",
+        target: "source-on-offender",
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "disease",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.death-magic", atZero: 3, atTwelve: 12.6 },
+            },
+          },
+        ],
+        skillId: "necromancer.tainted-flesh",
+      },
+    ],
+  }),
+  // "...whenever target ally sacrifices Health, Dark Aura deals 5...50
+  // shadow damage to adjacent foes, and you lose 5...20 Health": the
+  // foes beside the ally, and the enchanter loses it, no sacrifice, so
+  // the loss never sets off a Dark Aura of its own.
+  "dark-aura": define("dark-aura", "Dark Aura", "enchantment", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-sacrifices-health",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "necromancer.death-magic", atZero: 5, atTwelve: 41 },
+                },
+                type: "shadow",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+        skillId: "necromancer.dark-aura",
+      },
+      {
+        on: "bearer-sacrifices-health",
+        target: "source",
+        effects: [
+          {
+            kind: "lose-health",
+            amount: {
+              scaling: { attributeId: "necromancer.death-magic", atZero: 5, atTwelve: 17 },
+            },
+            recipient: "target",
+          },
+        ],
+        skillId: "necromancer.dark-aura",
+      },
+    ],
+  }),
+  // "...target foe and adjacent foes suffer -3...8 Health degeneration,
+  // which you gain as Health regeneration": 7 at Blood Magic 12, the
+  // caster's once, however many foes it hexed.
+  "life-transfer": define("life-transfer", "Life Transfer", "hex", {
+    profession: "necromancer",
+    healthPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: -3, atTwelve: -7 } },
+  }),
+  "life-transfer-regen": define("life-transfer-regen", "Life Transfer", "skill-effect", {
+    profession: "necromancer",
+    healthPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 7 } },
+  }),
+  // "...whenever you use a skill that targets a foe, you deal 5...20
+  // shadow damage to all other foes adjacent to you": that foe is never
+  // struck, and a skill on an ally or on no one deals nothing.
+  "demonic-flesh": define("demonic-flesh", "Demonic Flesh", "enchantment", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        target: "skill-target",
+        effects: [
+          {
+            kind: "if",
+            condition: { kind: "target-foe" },
+            effects: [
+              {
+                kind: "splash",
+                hits: "foes",
+                radius: AREA_ADJACENT,
+                around: "caster",
+                maxTargets: undefined,
+                effects: [
+                  {
+                    kind: "damage",
+                    amount: {
+                      scaling: { attributeId: "necromancer.blood-magic", atZero: 5, atTwelve: 17 },
+                    },
+                    type: "shadow",
+                    armorPenetration: 0,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        skillId: "necromancer.demonic-flesh",
+      },
+    ],
+  }),
+  // "...target foe suffers -1...4 Health degeneration and takes 5...20
+  // damage while moving": each second it is moving as the second comes.
+  "weaken-knees": define("weaken-knees", "Weaken Knees", "hex", {
+    profession: "necromancer",
+    healthPips: { scaling: { attributeId: "necromancer.curses", atZero: -1, atTwelve: -3.4 } },
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-moving" },
+          effects: [
+            {
+              kind: "damage",
+              amount: {
+                scaling: { attributeId: "necromancer.curses", atZero: 5, atTwelve: 17 },
+              },
+              type: "typeless",
+              armorPenetration: 0,
+            },
+          ],
+        },
+      ],
+      skillId: "necromancer.weaken-knees",
+    },
   }),
   // Staples (#2314). "...suffer from -4 Health degeneration when Bleeding,
   // and whenever they use a shout or chant, they Bleed for 5...20 seconds",

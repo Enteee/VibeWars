@@ -1707,3 +1707,53 @@ describe("Mesmer interrupts (#2165)", () => {
     ]);
   });
 });
+
+describe("Necromancer steals and Demonic Flesh (#2313)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(
+      skill(id),
+      new Map([
+        ["necromancer.blood-magic", 12],
+        ["necromancer.curses", 12],
+      ]),
+    ).effects.map(({ text }) => text);
+
+  it("says a steal in a splash as the caster's, from those reached", () => {
+    expect(texts("necromancer.unholy-feast")).toEqual([
+      "Steals up to 54 Health from up to 3 foes in the area",
+    ]);
+    expect(texts("necromancer.feast-of-corruption")).toEqual([
+      "Target and adjacent foes take 67 shadow damage",
+      "Steals up to 34 Health from each of target and adjacent foes that has a hex",
+    ]);
+  });
+
+  it("says Demonic Flesh's user as you, and the foes it strikes as the others", () => {
+    expect(texts("necromancer.demonic-flesh")).toEqual([
+      "Applies Demonic Flesh for 54s " +
+        "(whenever you use a skill on a foe, other foes adjacent to you take 17 shadow damage)",
+    ]);
+  });
+
+  it("says a one-second pulse as every second", () => {
+    expect(texts("necromancer.weaken-knees")).toEqual([
+      "Applies Weaken Knees for 13s " +
+        "(−3 Health degeneration, every second: if target is moving: deals 17 damage)",
+    ]);
+  });
+});
+
+describe("a hex's own-skill modifiers name the hexed foe (#2337)", () => {
+  it("says the target's skills on a hex", () => {
+    expect(describeStatus("rust")).toBe("the target's signets take 2× as long to cast");
+    expect(describeStatus("enchanters-conundrum")).toBe(
+      "the target's enchantments take 2...2.8× as long to cast",
+    );
+  });
+
+  it("keeps your skills on anything else", () => {
+    expect(describeStatus("glyph-of-energy")).toBe(
+      "+2 to elemental attributes, your next 3 spells cost 22 less energy, no Overcast",
+    );
+  });
+});
