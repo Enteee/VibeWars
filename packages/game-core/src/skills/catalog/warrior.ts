@@ -4776,7 +4776,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
   {
     id: "warrior.charging-strike",
     name: "Charging Strike",
-    gwId: 3465,
+    gwId: 1405,
     type: "stance",
     elite: true,
     flash: false,
@@ -4937,7 +4937,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
   {
     id: "warrior.soldiers-stance",
     name: "Soldier's Stance",
-    gwId: 3156,
+    gwId: 1698,
     type: "stance",
     elite: true,
     flash: false,

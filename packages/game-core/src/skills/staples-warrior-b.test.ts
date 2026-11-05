@@ -136,7 +136,7 @@ function plainBlow(ranks: ReadonlyMap<string, number>): number {
 
 describe("the seven are the corpus's (#2316)", () => {
   it.each([
-    ["warrior.charging-strike", 3465, "stance", true, "strength", "energy", 5, 0, 5, RANGE_SPELL],
+    ["warrior.charging-strike", 1405, "stance", true, "strength", "energy", 5, 0, 5, RANGE_SPELL],
     ["warrior.headbutt", 1406, "skill", true, "strength", "energy", 10, 0.75, 10, RANGE_MELEE],
     [
       "warrior.barbarous-slice",
@@ -162,7 +162,7 @@ describe("the seven are the corpus's (#2316)", () => {
       20,
       RANGE_SPELL,
     ],
-    ["warrior.soldiers-stance", 3156, "stance", true, "tactics", "energy", 5, 0, 8, RANGE_SPELL],
+    ["warrior.soldiers-stance", 1698, "stance", true, "tactics", "energy", 5, 0, 8, RANGE_SPELL],
     ["warrior.steady-stance", 1701, "stance", true, "tactics", "energy", 5, 0, 4, RANGE_SPELL],
     ["warrior.lions-comfort", 1407, "skill", false, "strength", "adrenaline", 4, 1, 1, RANGE_SPELL],
   ] as const)(

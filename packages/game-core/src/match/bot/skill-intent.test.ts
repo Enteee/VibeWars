@@ -36,6 +36,8 @@ const NO_BOT_USE = new Set([
   "mesmer.physical-resistance",
   "monk.vital-blessing",
   "ritualist.vital-weapon",
+  // Signet of Stamina (#2316), the same: more maximum Health until a hit.
+  "warrior.signet-of-stamina",
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
@@ -132,6 +134,8 @@ const NO_BOT_USE = new Set([
   "ritualist.vengeful-was-khanhei",
   "ritualist.weapon-of-quickening",
   "warrior.balanced-stance",
+  // Steady Stance (#2316), as Balanced Stance: a knockdown turned away.
+  "warrior.steady-stance",
   "warrior.battle-rage",
   "warrior.endure-pain",
   "warrior.rage-of-the-ntouka",
@@ -209,6 +213,8 @@ const NO_BOT_USE = new Set([
   "paragon.bladeturn-refrain",
   "paragon.energizing-finale",
   "paragon.soldiers-fury",
+  // Soldier's Stance (#2316), the same: its speed waits for a shout or chant.
+  "warrior.soldiers-stance",
   // Chants (#1483) whose energy, adrenaline or cleanse waits for the
   // bearer's next skill of a kind.
   "paragon.zealous-anthem",
