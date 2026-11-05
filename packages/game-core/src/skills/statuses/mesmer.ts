@@ -89,7 +89,8 @@ export type MesmerStatusId =
   | "illusion-of-pain"
   | "ether-phantom"
   // Staples (#2367).
-  | "shared-burden";
+  | "shared-burden"
+  | "signet-of-recall";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -1058,5 +1059,26 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     moveSpeedMultiplier: 0.67,
     attackDurationMultiplier: 1.33,
     castTimeMultiplier: 1.33,
+  }),
+  // Mechanics (#2374). "...-4 Energy regeneration. When this effect ends,
+  // you gain 13...20 Energy": 19 at rank 12. Any end pays, a removal too.
+  "signet-of-recall": define("signet-of-recall", "Signet of Recall", "skill-effect", {
+    profession: "mesmer",
+    energyPips: -4,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 13, atTwelve: 18.6 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "mesmer.signet-of-recall",
+      },
+    ],
   }),
 };

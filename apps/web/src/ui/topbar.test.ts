@@ -4,14 +4,12 @@ import type * as Kit from "./kit.js";
 import type { ShownBar } from "./kit.js";
 import {
   barHasMore,
-  CLOSED_GLYPH,
   CLOSED_LABEL,
   CLOSED_NAME,
   CLOSED_TOOLTIP,
   CONNECTING_NOTICE_MS,
   JOINED_LOBBY_LABEL,
   JOINING_LOBBY_LABEL,
-  OPEN_GLYPH,
   OPEN_LABEL,
   OPEN_NAME,
   OPEN_TOOLTIP,
@@ -22,6 +20,7 @@ import {
   putsMoreAway,
   type StatusElement,
 } from "./topbar.js";
+import { LOBBY_ICON } from "./icons.js";
 import { COPIED } from "./lobby-screen.js";
 
 const toasts: string[] = [];
@@ -103,6 +102,8 @@ class FakeElement {
   maxLength = -1;
   hidden = false;
   title = "";
+  src = "";
+  alt = "";
   readonly tagName: string;
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
@@ -248,7 +249,7 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     }
     const looks = () => [
       toggle.hidden,
-      toggle.children.map((part) => part.textContent).join(" "),
+      toggle.children.map((part) => [part.tagName, part.src, part.alt, part.textContent]),
       toggle.getAttribute("aria-label"),
       toggle.title,
       toggle.getAttribute("aria-pressed"),
@@ -256,7 +257,10 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     join.setLobby({ code: OWN, isHost: true, open: false, party: 1, joining: false });
     expect(looks()).toEqual([
       false,
-      `${CLOSED_GLYPH} ${CLOSED_LABEL}`,
+      [
+        ["img", LOBBY_ICON.closed, "", ""],
+        ["span", "", "", CLOSED_LABEL],
+      ],
       CLOSED_NAME,
       CLOSED_TOOLTIP,
       "false",
@@ -265,7 +269,10 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     join.setLobby({ code: OWN, isHost: true, open: true, party: 1, joining: false });
     expect(looks()).toEqual([
       false,
-      `${OPEN_GLYPH} ${OPEN_LABEL}`,
+      [
+        ["img", LOBBY_ICON.open, "", ""],
+        ["span", "", "", OPEN_LABEL],
+      ],
       OPEN_NAME,
       OPEN_TOOLTIP,
       "true",

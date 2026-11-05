@@ -4512,6 +4512,85 @@ export const MESMER_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "mesmer.tease",
+    name: "Tease",
+    // The PvP split (3463); the base record is 1342.
+    gwId: 1342,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is using a skill, that foe and other foes in the area
+    // are interrupted and you steal 0...5 Energy from all foes in the
+    // area" (PvP, #2374): 4 at rank 12. A foe not using a skill: nothing.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-using-skill" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_IN_THE_AREA,
+            includesCentre: true,
+            maxTargets: undefined,
+            effects: [
+              { kind: "interrupt" },
+              {
+                kind: "energy-steal",
+                amount: {
+                  scaling: { attributeId: "mesmer.inspiration-magic", atZero: 0, atTwelve: 4 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.signet-of-recall",
+    name: "Signet of Recall",
+    gwId: 1993,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 6 seconds, you have -4 Energy regeneration. When this effect
+    // ends, you gain 13...20 Energy" (#2374): the energy is the status's.
+    effects: [{ kind: "apply-status", statusId: "signet-of-recall", durationSeconds: { flat: 6 } }],
+  },
+  {
     id: "mesmer.shared-burden",
     name: "Shared Burden",
     gwId: 900,

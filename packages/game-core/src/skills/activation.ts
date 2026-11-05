@@ -511,14 +511,15 @@ function raisedBaseCost(base: number, caster: RankHolder): number {
  * caller that skips validation produces an obviously-wrong negative
  * resource rather than a silently-free cast. `key` is the pool an
  * adrenaline skill empties: a copy's own (#469). `target`: the one chosen,
- * whose statuses may cut an enchantment's cost (#1975).
+ * whose statuses may cut an enchantment's cost (#1975). Returns whether it
+ * caused Overcast of its own (#2321).
  */
 export function payCost(
   skill: Skill,
   caster: Combatant,
   key: string = skill.id,
   target?: Pick<Combatant, "statuses">,
-): void {
+): boolean {
   caster.energy -= energyCostOf(skill, caster, target);
   if (skill.cost?.kind === "adrenaline" || losesAllAdrenaline(skill)) {
     spendAdrenaline(caster, skill, key);
@@ -535,6 +536,7 @@ export function payCost(
   if (!noOvercast) {
     addOvercast(caster, skill.overcast);
   }
+  return !noOvercast && skill.overcast > 0;
 }
 
 /**

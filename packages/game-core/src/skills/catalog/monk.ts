@@ -4275,6 +4275,36 @@ export const MONK_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "monk.watchful-healing",
+    name: "Watchful Healing",
+    gwId: 1392,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, target ally gains +1...4 Health regeneration. If
+    // this skill ends prematurely, that ally gains 30...120 Health"
+    // (#2374): the regeneration and the heal are the status's.
+    effects: [
+      { kind: "apply-status", statusId: "watchful-healing", durationSeconds: { flat: 10 } },
+    ],
+  },
+  {
     id: "monk.healing-ribbon",
     name: "Healing Ribbon",
     gwId: 2062,

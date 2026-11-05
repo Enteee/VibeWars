@@ -15,7 +15,8 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
  * Tactics stances that pay on a block (#1978): Wary Stance blocks attack
  * skills only, Soldier's Defense blocks only under a shout or chant,
  * Defensive Stance pays per melee attack skill on the bar when it ends,
- * and Auspicious Parry blocks one attack and pays when it ends. Nothing
+ * and Auspicious Parry blocks one attack and pays when it ends; Flashing
+ * Blades blocks only while its bearer attacks (#2374). Nothing
  * crits.
  */
 
@@ -239,5 +240,49 @@ describe("Auspicious Parry (#1978)", () => {
     expect(eventsOn(log, "w", "damage")).toBe(1);
     expect(get(sim, "w").statuses.has("auspicious-parry")).toBe(false);
     expect(strikesOf(get(sim, "w"), "warrior.backbreaker")).toBe(3);
+  });
+});
+
+describe("block while attacking (#2374)", () => {
+  it("Flashing Blades blocks while swinging, and not idle", () => {
+    const sim = duel();
+    const w = get(sim, "w");
+    w.statuses.apply("flashing-blades", 1000, "w", NO_RANKS);
+    expect(blockChanceOf(w, "melee", false)).toBe(0);
+    expect(sim.requestAttack("w", "f")).toEqual({ ok: true });
+    for (let tick = 0; tick < 0.5 / DT; tick += 1) {
+      sim.step(DT);
+    }
+    expect(blockChanceOf(w, "melee", false)).toBe(0.75);
+    expect(blockChanceOf(w, "projectile", true)).toBe(0.75);
+  });
+
+  it("blocks while activating an attack skill, and not while casting a spell", () => {
+    const sim = duel();
+    const w = get(sim, "w");
+    w.statuses.apply("flashing-blades", 1000, "w", NO_RANKS);
+    w.cast.beginCast("ranger.savage-shot", "f", 0.5, undefined);
+    expect(blockChanceOf(w, "melee", false)).toBe(0.75);
+    w.cast.cancelCast();
+    w.cast.beginCast("monk.orison-of-healing", "w", 1, undefined);
+    expect(blockChanceOf(w, "melee", false)).toBe(0);
+  });
+
+  it("beside an ungated block stance, that stance still blocks while idle", () => {
+    const sim = duel();
+    const w = get(sim, "w");
+    w.statuses.apply("flashing-blades", 1000, "w", NO_RANKS);
+    w.statuses.apply("gladiators-defense", 1000, "w", NO_RANKS);
+    expect(blockChanceOf(w, "melee", false)).toBe(0.75);
+  });
+
+  it("blocks swings while trading them, and an idle bearer's never", () => {
+    const idle = duel();
+    get(idle, "w").statuses.apply("flashing-blades", 1000, "w", NO_RANKS);
+    expect(eventsOn(swings(idle, 5), "w", "attack-blocked")).toBe(0);
+    const trading = duel();
+    get(trading, "w").statuses.apply("flashing-blades", 1000, "w", NO_RANKS);
+    expect(trading.requestAttack("w", "f")).toEqual({ ok: true });
+    expect(eventsOn(swings(trading, 5), "w", "attack-blocked")).toBeGreaterThan(0);
   });
 });

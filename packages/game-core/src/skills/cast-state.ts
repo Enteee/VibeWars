@@ -47,6 +47,11 @@ export interface CastRule {
    * cast, still lengthens what it puts on and lessens what it heals.
    */
   readonly own: OwnSkillBoost;
+  /**
+   * It caused Overcast of its own as it started (#2321): a spell that
+   * finishes takes Equinox's surcharge only then.
+   */
+  readonly causedOvercast: boolean;
 }
 
 /** A cast no chant's or glyph's rule touched. */
@@ -59,6 +64,7 @@ export const NO_CAST_RULE: CastRule = {
   resetsRecharge: [],
   heldAttributeDeltas: [],
   own: NO_OWN_SKILL_BOOST,
+  causedOvercast: false,
 };
 
 export interface ActiveCast {
@@ -182,6 +188,14 @@ export class CastState {
    */
   public get rechargeRemaining(): ReadonlyMap<string, number> {
     return this.#rechargeRemaining;
+  }
+
+  /**
+   * Whether `key` is recharging (#2321), not only disabled: what "for
+   * each of your recharging skills" counts, Doom's and Enraged Lunge's.
+   */
+  public isRecharging(key: string): boolean {
+    return (this.#recharge.get(key)?.[0] ?? 0) > 0;
   }
 
   /**
