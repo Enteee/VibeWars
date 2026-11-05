@@ -2602,7 +2602,8 @@ export function applyEffect(
       landOnTaker(
         pet,
         effect.statusId,
-        effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
+        resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster) *
+          (context.own?.durationMultiplier ?? 1),
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster),
         events,

@@ -88,6 +88,12 @@ export type RangerStatusId =
   | "rapid-fire"
   // Ranger staples (#2190).
   | "tigers-fury"
+  // Ranger staples (#2317).
+  | "choking-gas"
+  | "dryders-defenses"
+  | "bestial-fury"
+  | "scavengers-focus"
+  | "feral-aggression"
   // Ranger mechanics (#2321).
   | "natures-renewal"
   | "equinox"
@@ -748,6 +754,87 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   "tigers-fury": define("tigers-fury", "Tiger's Fury", "stance", {
     profession: "ranger",
     attackDurationMultiplier: 0.75,
+  }),
+  // Ranger staples (#2317). "For 1...12 seconds, your arrows deal 1...8
+  // more damage and spread Choking Gas to all adjacent foes on impact.
+  // Choking Gas interrupts foes attempting to cast spells": the struck foe
+  // too, as the splash skips its centre. A foe using a non-spell skill
+  // keeps it.
+  "choking-gas": define("choking-gas", "Choking Gas", "preparation", {
+    profession: "ranger",
+    attackDamageDelta: {
+      scaling: { attributeId: "ranger.wilderness-survival", atZero: 1, atTwelve: 6.6 },
+    },
+    attackDamageDeltaWeapon: "bow",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "bow",
+      weaponDamage: undefined,
+      effects: [
+        { kind: "interrupt", only: "spell" },
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          maxTargets: undefined,
+          effects: [{ kind: "interrupt", only: "spell" }],
+        },
+      ],
+      skillId: "ranger.choking-gas",
+    },
+  }),
+  // "For 5...11 seconds, you gain 75% chance to block attacks and 34...60
+  // armor against elemental damage."
+  "dryders-defenses": define("dryders-defenses", "Dryder's Defenses", "stance", {
+    profession: "ranger",
+    block: { chance: 0.75, against: "all" },
+    conditionalArmor: [
+      {
+        amount: {
+          scaling: { attributeId: "ranger.wilderness-survival", atZero: 34, atTwelve: 54.8 },
+        },
+        conditions: [{ kind: "vs-elemental" }],
+      },
+    ],
+  }),
+  // Tiger's Fury's text: "For 5...11 seconds, you attack 25% faster."
+  "bestial-fury": define("bestial-fury", "Bestial Fury", "stance", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.75,
+  }),
+  // "For 10 seconds, if you strike a foe who is suffering from a condition
+  // you gain 3...12 Energy": every such hit, a pet's none.
+  "scavengers-focus": define("scavengers-focus", "Scavenger's Focus", "skill-effect", {
+    profession: "ranger",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      weaponDamage: undefined,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-has-any", categories: ["condition"] },
+          effects: [
+            {
+              kind: "energy-gain",
+              amount: {
+                scaling: { attributeId: "ranger.wilderness-survival", atZero: 3, atTwelve: 10.2 },
+              },
+            },
+          ],
+        },
+      ],
+      skillId: "ranger.scavengers-focus",
+    },
+  }),
+  // On the pet: "your pet attacks 33% faster and deals 3...10 additional
+  // damage."
+  "feral-aggression": define("feral-aggression", "Feral Aggression", "skill-effect", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.67,
+    attackDamageDelta: {
+      scaling: { attributeId: "ranger.beast-mastery", atZero: 3, atTwelve: 8.6 },
+    },
   }),
   // Nature's Renewal's aura (#2321), PvP: "enchantments and hexes cast by
   // non-spirit creatures take 50...75% longer to cast, and it costs twice
