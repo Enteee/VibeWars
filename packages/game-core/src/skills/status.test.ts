@@ -236,6 +236,8 @@ describe("status definitions", () => {
       "blood-renewal": 5,
       "vampiric-spirit": 9,
       "ward-against-harm": 2.6,
+      succor: 1,
+      "restful-breeze": 10,
     });
   });
 
@@ -263,6 +265,7 @@ describe("status definitions", () => {
       "well-of-power": 2,
       "well-of-weariness": -1,
       "lyssas-aura": 4,
+      succor: 1,
     });
   });
 

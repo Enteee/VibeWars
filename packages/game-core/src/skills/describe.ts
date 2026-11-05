@@ -999,13 +999,19 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     }
   }
   // Holy Wrath's (#1754): "66% of the damage of the next 8 attacks that
-  // hit it goes back to the attacker as holy damage, up to 41".
+  // hit it goes back to the attacker as holy damage, up to 41"; Retribution's
+  // (#2286) "of every attack", up to its scaled cap.
   if (definition.reflectsAttackDamage !== undefined) {
     const { share, max, type, times } = definition.reflectsAttackDamage;
-    const attacks = times === 1 ? "attack" : `${String(times)} attacks`;
+    const attacks =
+      times === undefined
+        ? "every attack"
+        : times === 1
+          ? "the next attack"
+          : `the next ${String(times)} attacks`;
     const kind = type === "typeless" ? "" : ` as ${type} damage`;
     parts.push(
-      `${String(Math.round(share * 100))}% of the damage of the next ${attacks} that hit it goes back to the attacker${kind}, up to ${String(max)}`,
+      `${String(Math.round(share * 100))}% of the damage of ${attacks} that hit it goes back to the attacker${kind}, up to ${statText(max, ranks, whole)}`,
     );
   }
   if (definition.reversesNextDamage !== undefined) {
