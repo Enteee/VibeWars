@@ -130,7 +130,7 @@ describe("Attunements (#1614)", () => {
     const status = match.get("n")?.combatant.statuses.get("fire-attunement");
     expect(status?.durationSeconds).toBe(55);
     expect(describeStatus("fire-attunement")).toBe(
-      "whenever it uses a Fire Magic skill: gains 1 energy plus 30% of that skill's base energy cost",
+      "whenever you use a Fire Magic skill: gains 1 energy plus 30% of that skill's base energy cost",
     );
   });
 });
@@ -160,7 +160,7 @@ describe("Kinetic Armor (#1614)", () => {
     const match = sim();
     use(match, "elementalist.kinetic-armor");
     expect(describeStatus("kinetic-armor")).toContain("+68 armor");
-    expect(describeStatus("kinetic-armor")).toContain("renewed whenever it casts a spell");
+    expect(describeStatus("kinetic-armor")).toContain("renewed whenever you cast a spell");
     const before = remaining(match, "kinetic-armor");
     use(match, "elementalist.glyph-of-lesser-energy");
     expect(remaining(match, "kinetic-armor")).toBeLessThan(before - 3);

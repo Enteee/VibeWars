@@ -545,7 +545,7 @@ describe("describeSkill", () => {
       "you cannot be interrupted; each time you would be, lose 5 Energy or this ends",
     );
     expect(describeStatus("mantra-of-flame")).toBe(
-      "45% less fire damage. Whenever it takes fire damage from a foe: gain 2 energy",
+      "45% less fire damage. Whenever you take fire damage from a foe: gain 2 energy",
     );
   });
 
@@ -555,11 +555,11 @@ describe("describeSkill", () => {
         "When it ends: lose all but 41 Health",
     );
     expect(describeStatus("elemental-flame")).toBe(
-      "whenever it applies an elemental hex to a foe: applies Burning for 2s (−7 Health degeneration)",
+      "whenever you apply an elemental hex to a foe: applies Burning for 2s (−7 Health degeneration)",
     );
     expect(describeStatus("mist-form")).toBe(
-      "33% less damage from foes with a Water Magic hex. Whenever it casts an elemental spell: " +
-        "it and non-spirit allies in earshot: heals for 210% of the spell's energy cost, under 80% Health",
+      "33% less damage from foes with a Water Magic hex. Whenever you cast an elemental spell: " +
+        "you and non-spirit allies in earshot: heals for 210% of the spell's energy cost, under 80% Health",
     );
   });
 
@@ -894,7 +894,7 @@ describe("attack skills (#417)", () => {
       "If an ally is dead in earshot: applies Retreat! for 10s (moves at 133% speed)",
     ]);
     expect(describeStatus("protectors-defense")).toBe(
-      "allies adjacent to the bearer: 75% chance to block attacks, ends if the bearer moves",
+      "allies adjacent to you: 75% chance to block attacks, ends if you move",
     );
   });
 
@@ -908,7 +908,7 @@ describe("attack skills (#417)", () => {
       "If target has more Health than you: you gain 173 health",
     ]);
     expect(lines("assassin.shadow-refuge")).toEqual([
-      "Applies Shadow Refuge for 6s (+9 Health regeneration. When it ends, if it is attacking: heals for 88)",
+      "Applies Shadow Refuge for 6s (+9 Health regeneration. When it ends, if you are attacking: heals for 88)",
     ]);
     expect(describeStatus("shroud-of-distress")).toBe(
       "75% chance to block attacks while below 50% Health",
@@ -928,10 +928,10 @@ describe("attack skills (#417)", () => {
     );
     expect(describeStatus("endure-pain")).toBe("+90...258 maximum health");
     expect(describeStatus("warriors-endurance")).toBe(
-      "whenever it hits with a melee attack: gain 3 energy, never above 55",
+      "whenever you hit with a melee attack: gain 3 energy, never above 55",
     );
     expect(describeStatus("hundred-blades")).toBe(
-      "adjacent foes take 26 slashing damage whenever it attacks with a sword",
+      "adjacent foes take 26 slashing damage whenever you attack with a sword",
     );
   });
 
@@ -1493,10 +1493,10 @@ describe("Tactics stances that pay on a block (#1978)", () => {
 
   it("says which attacks each blocks and what it pays, at rank 12", () => {
     expect(texts("warrior.wary-stance")).toEqual([
-      "For 5s, 100% chance to block attack skills, ends if you use a skill. Whenever it blocks: gain 1 strike of adrenaline. Whenever it blocks: gain 5 energy",
+      "For 5s, 100% chance to block attack skills, ends if you use a skill. Whenever you block: gain 1 strike of adrenaline. Whenever you block: gain 5 energy",
     ]);
     expect(texts("warrior.soldiers-defense")).toEqual([
-      "For 5s, 75% chance to block attacks while under a shout or a chant. Whenever it blocks: gain 1 strike of adrenaline",
+      "For 5s, 75% chance to block attacks while under a shout or a chant. Whenever you block: gain 1 strike of adrenaline",
     ]);
     expect(texts("warrior.defensive-stance")).toEqual([
       "For 4s, 75% chance to block attacks. When it ends: gain 1 strike of adrenaline for each melee attack skill on your bar (at most 3)",
@@ -1522,7 +1522,7 @@ describe("Elementalist self-buffs (#1984)", () => {
       "Applies Ether Prodigy for 18s (+6 Energy regeneration. When it ends: lose 2 Health for each point of Energy you have)",
     ]);
     expect(texts("elementalist.ether-renewal")).toEqual([
-      "Applies Ether Renewal for 10s (whenever it casts a spell: gain 3 energy for each enchantment on you. Whenever it casts a spell: heals 17 Health for each enchantment on you)",
+      "Applies Ether Renewal for 10s (whenever you cast a spell: gain 3 energy for each enchantment on you. Whenever you cast a spell: heals 17 Health for each enchantment on you)",
     ]);
   });
 });
@@ -1565,7 +1565,7 @@ describe("minion care (#1986)", () => {
     ]);
     expect(texts("necromancer.veratas-aura")).toEqual([
       "You sacrifice 33% of your maximum health",
-      "Applies Verata's Aura for 264s (the minions it took become masterless when it ends)",
+      "Applies Verata's Aura for 264s (the minions you took become masterless when it ends)",
       "Foe minions in the area become your minions while you bear Verata's Aura",
     ]);
     expect(texts("necromancer.malign-intervention")).toEqual([
@@ -1585,16 +1585,16 @@ describe("Mesmer energy and utility (#2132)", () => {
     ]);
     expect(texts("mesmer.lyssas-aura", "mesmer.inspiration-magic")).toEqual([
       "Applies Lyssa's Aura for 10s " +
-        "(+4 Energy regeneration, reapplied whenever it casts a spell on a foe)",
+        "(+4 Energy regeneration, reapplied whenever you cast a spell on a foe)",
     ]);
     // At its caster's rank (#2328): none at Inspiration 0, a range unread.
     expect(describeStatus("lyssas-aura", new Map([["mesmer.inspiration-magic", 0]]))).toBe(
-      "reapplied whenever it casts a spell on a foe",
+      "reapplied whenever you cast a spell on a foe",
     );
     expect(describeStatus("blood-is-power")).toBe("+3...5 Energy regeneration");
     expect(texts("mesmer.persistence-of-memory", "mesmer.fast-casting")).toEqual([
       "Applies Persistence of Memory for 17s " +
-        "(whenever it has a spell interrupted: that skill recharges instantly)",
+        "(whenever you have a spell interrupted: that skill recharges instantly)",
     ]);
     expect(texts("mesmer.power-return", "mesmer.fast-casting")).toEqual([
       "Interrupts the target's spell or chant, if they are casting one",

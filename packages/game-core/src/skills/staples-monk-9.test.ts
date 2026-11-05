@@ -419,7 +419,7 @@ describe("Monk staples' tooltips (#2286)", () => {
 
   it("Divine Boon says who is healed, for which spells, in one sentence", () => {
     expect(describeStatus("divine-boon", R12)).toBe(
-      "whenever it casts a Protection Prayers or Divine Favor spell on an ally, that ally is healed for 51 and its caster loses 1 energy",
+      "whenever you cast a Protection Prayers or Divine Favor spell on an ally, that ally is healed for 51 and you lose 1 energy",
     );
   });
 
