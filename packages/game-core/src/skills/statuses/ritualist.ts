@@ -70,7 +70,10 @@ export type RitualistStatusId =
   | "dulled-weapon"
   // Condition movement (#2259).
   | "resilient-was-xiko"
-  | "agony";
+  | "agony"
+  // Staples (#2368).
+  | "spirit-channeling"
+  | "renewing-surge";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -812,5 +815,46 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
         scaling: { attributeId: "ritualist.channeling-magic", atZero: 3, atTwelve: 8.6 },
       },
     },
+  }),
+  // Staples (#2368). "For 12 seconds, you have +1...6 Energy
+  // regeneration": +5 at rank 12.
+  "spirit-channeling": define("spirit-channeling", "Spirit Channeling", "enchantment", {
+    profession: "ritualist",
+    energyPips: { scaling: { attributeId: "ritualist.spawning-power", atZero: 1, atTwelve: 5 } },
+  }),
+  // "...target foe suffers 2...12 damage each second. When this hex ends,
+  // you gain 1...8 Energy": 10 and 7 at rank 12. Any end pays, a
+  // removal too.
+  "renewing-surge": define("renewing-surge", "Renewing Surge", "hex", {
+    profession: "ritualist",
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "damage",
+          amount: {
+            scaling: { attributeId: "ritualist.channeling-magic", atZero: 2, atTwelve: 10 },
+          },
+          type: "typeless",
+          armorPenetration: 0,
+        },
+      ],
+      skillId: "ritualist.renewing-surge",
+    },
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "ritualist.channeling-magic", atZero: 1, atTwelve: 6.6 },
+            },
+          },
+        ],
+        target: "source",
+        skillId: "ritualist.renewing-surge",
+      },
+    ],
   }),
 };
