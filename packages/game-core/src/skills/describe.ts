@@ -849,6 +849,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (statAtTwelve(definition.damageTakenMultiplier) !== 1) {
     parts.push(`takes ${statText(definition.damageTakenMultiplier, ranks, damageTaken)} damage`);
   }
+  if (definition.attackDamageTakenMultiplier !== 1) {
+    parts.push(
+      `takes ${damageTaken(definition.attackDamageTakenMultiplier)} damage from the next attack`,
+    );
+  }
   if (definition.damageReduction > 0) {
     parts.push(`−${String(definition.damageReduction)} damage taken`);
   }

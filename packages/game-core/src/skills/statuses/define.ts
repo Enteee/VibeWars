@@ -129,6 +129,7 @@ export function define(
     endsWhenBearerGains: [],
     immuneTo: [],
     damageTakenMultiplier: 1,
+    attackDamageTakenMultiplier: 1,
     damageReduction: 0,
     damageReductionPerRank: undefined,
     damageReductionPerHitTaken: undefined,
