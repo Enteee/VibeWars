@@ -72,7 +72,8 @@ export type MonkStatusId =
   | "life-bond"
   | "life-attunement"
   | "aura-of-faith"
-  | "peace-and-harmony";
+  | "peace-and-harmony"
+  | "balthazars-spirit";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -909,5 +910,26 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     profession: "monk",
     conditionsExpireFaster: 0.9,
     hexesExpireFaster: 0.9,
+  }),
+  // Maintained (#2302): "target ally gains adrenaline and 1 Energy when
+  // taking damage", 2...5 points to each of its adrenaline skills by the
+  // caster's Smiting Prayers (4.4 at 12); a bar with none, the Energy.
+  "balthazars-spirit": define("balthazars-spirit", "Balthazar's Spirit", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            units: { scaling: { attributeId: "monk.smiting-prayers", atZero: 2, atTwelve: 4.4 } },
+            recipient: "target",
+          },
+          { kind: "energy-gain", amount: { flat: 1 }, toTarget: true },
+        ],
+        target: "bearer",
+        skillId: "monk.balthazars-spirit",
+      },
+    ],
   }),
 };

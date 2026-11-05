@@ -330,6 +330,9 @@ const NO_BOT_USE = new Set([
   // (#2291): no role the bot weighs.
   "monk.life-bond",
   "monk.life-attunement",
+  // Adrenaline and Energy for an ally that is being hit (#2302): no role
+  // the bot weighs.
+  "monk.balthazars-spirit",
   // Adrenaline by foes in earshot and a raised maximum (#2315), as
   // "Make Your Time!"'s and Endure Pain's: no rule the bot weighs.
   "warrior.to-the-limit",

@@ -348,16 +348,19 @@ export interface EnergyGainToTarget extends Omit<
  * of Fury's "allies hitting target foe gain 0...2 strikes"; a dead one,
  * nobody. `per`: more strikes for each of a count (#2222), "Make Your
  * Time!"'s "2 strikes of adrenaline for each party member within earshot
- * (maximum 1...8)".
+ * (maximum 1...8)". `units` instead of `strikes` (#2302): raw points, 25 to
+ * a strike, as Balthazar's Spirit's "gains 2...5 adrenaline".
  */
-export interface AdrenalineGainEffect {
+export type AdrenalineGainEffect = {
   readonly kind: "adrenaline-gain";
-  readonly strikes: Magnitude;
   readonly perTarget?: true;
   readonly perOwnMeleeAttackSkill?: { readonly max: number };
   readonly per?: PerCount;
   readonly recipient?: "owner" | "target";
-}
+} & (
+  | { readonly strikes: Magnitude; readonly units?: never }
+  | { readonly units: Magnitude; readonly strikes?: never }
+);
 
 /**
  * The effect's target, or with `on: "caster"` its caster (#2260), loses
