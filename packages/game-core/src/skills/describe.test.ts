@@ -1587,6 +1587,11 @@ describe("Mesmer energy and utility (#2132)", () => {
       "Applies Lyssa's Aura for 10s " +
         "(+4 Energy regeneration, reapplied whenever it casts a spell on a foe)",
     ]);
+    // At its caster's rank (#2328): none at Inspiration 0, a range unread.
+    expect(describeStatus("lyssas-aura", new Map([["mesmer.inspiration-magic", 0]]))).toBe(
+      "reapplied whenever it casts a spell on a foe",
+    );
+    expect(describeStatus("blood-is-power")).toBe("+3...5 Energy regeneration");
     expect(texts("mesmer.persistence-of-memory", "mesmer.fast-casting")).toEqual([
       "Applies Persistence of Memory for 17s " +
         "(whenever it has a spell interrupted: that skill recharges instantly)",

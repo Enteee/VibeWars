@@ -366,10 +366,11 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     endsWhenTriggered: true,
   }),
   // Necromancer and Elementalist staples (#1540), at their rank-12 values.
-  // "For 10 seconds, target other ally gains +3...6 Energy regeneration": 5.
+  // "For 10 seconds, target other ally gains +3...6 Energy regeneration", at
+  // the caster's Blood Magic (#2328): 5 at rank 12.
   "blood-is-power": define("blood-is-power", "Blood is Power", "enchantment", {
     profession: "necromancer",
-    energyPips: 5,
+    energyPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 5.4 } },
   }),
   // "For 5 seconds, whenever a party member hits a foe with physical
   // damage, that party member does +3...16 damage": 13, on each hit.

@@ -401,11 +401,17 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `+${String(pips)} Health regeneration for each enchantment on you (at most ${String(max)})`,
     );
   }
-  if (definition.energyPips < 0) {
-    parts.push(`−${String(-definition.energyPips)} Energy degeneration`);
+  // Blood is Power's at its caster's rank (#2328); none at a rank that
+  // gives none, Lyssa's Aura's at 0.
+  const energyPips =
+    ranks === undefined
+      ? statAtTwelve(definition.energyPips)
+      : Math.round(statAt(definition.energyPips, ranks));
+  if (energyPips < 0) {
+    parts.push(`−${statText(definition.energyPips, ranks, whole)} Energy degeneration`);
   }
-  if (definition.energyPips > 0) {
-    parts.push(`+${String(definition.energyPips)} Energy regeneration`);
+  if (energyPips > 0) {
+    parts.push(`+${statText(definition.energyPips, ranks, whole)} Energy regeneration`);
   }
   // Melandru's Resilience's (#2189), Conviction's scaled (#2217).
   if (statAtTwelve(definition.healthPipsPerCondition) !== 0) {
