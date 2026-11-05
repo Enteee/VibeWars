@@ -32,6 +32,8 @@ export async function expectCloseAtTopRight(page: Page, dialog: Locator): Promis
     expect(box.y - panel.y).toBeLessThanOrEqual(24);
   }
   await expect(page.locator("#topbar .topbar-back")).toBeEmpty();
-  await expect(page.locator("#topbar").getByRole("button", { name: "Close" })).toHaveCount(0);
+  await expect(
+    page.locator("#topbar").getByRole("button", { name: "Close", exact: true }),
+  ).toHaveCount(0);
   return close;
 }
