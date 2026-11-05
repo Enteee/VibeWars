@@ -70,7 +70,10 @@ export type ElementalistStatusId =
   | "glimmering-mark"
   // Staples (#2278).
   | "lightning-surge"
-  | "ward-against-harm";
+  | "ward-against-harm"
+  // Elementalist staples (#2288).
+  | "gust"
+  | "mirror-of-ice";
 
 /** Mist Form's heal (#1951): 210% of the spell's cost, under 80% Health. */
 const MIST_FORM_HEAL = {
@@ -692,6 +695,18 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         conditions: [{ kind: "vs-elemental" }],
       },
     ],
+  }),
+  // "For 5...11 seconds, both you and target ally move 33% faster" (#2288).
+  gust: define("gust", "Gust", "enchantment", {
+    profession: "elementalist",
+    attribute: "elementalist.air-magic",
+    moveSpeedMultiplier: 1.33,
+  }),
+  // "...and move 66% slower for 2...6 seconds" (#2288).
+  "mirror-of-ice": define("mirror-of-ice", "Mirror of Ice", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    moveSpeedMultiplier: 0.34,
   }),
 };
 
