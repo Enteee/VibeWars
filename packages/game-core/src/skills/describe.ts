@@ -1028,7 +1028,8 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const what = definition.pulse.effects
       .flatMap((effect) => describeEffects(effect, triggerRanks))
       .map(({ text }) => lowerFirst(text));
-    parts.push(`every ${String(definition.pulse.everySeconds)} seconds: ${what.join(", ")}`);
+    const every = definition.pulse.everySeconds;
+    parts.push(`every ${every === 1 ? "second" : `${String(every)} seconds`}: ${what.join(", ")}`);
     // Agony's (#2275): "this spirit loses 3...10 Health for each foe hurt".
     const charge = definition.pulse.chargesSourcePerHit;
     if (charge !== undefined) {
@@ -1665,6 +1666,12 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
   if (event === "bearer-hits") {
     return weapon === "melee" ? "hits with a melee attack" : `hits with ${NEEDED_WEAPON[weapon]}`;
   }
+  // Tainted Flesh's (#2313): the weapon is the attacker's.
+  if (event === "bearer-hit-by-attack") {
+    return weapon === "melee"
+      ? "is hit by a foe's melee attack"
+      : `is hit by a foe's attack with ${NEEDED_WEAPON[weapon]}`;
+  }
   return `${TRIGGER_WHEN[event]} with ${NEEDED_WEAPON[weapon]}`;
 }
 
@@ -2129,14 +2136,15 @@ function describeTrigger(
     }
     // Ether Prodigy's end (#1984): "when it ends: lose 2 Health for each
     // point of Energy you have"; on a foe, Spoil Victor's "it loses 63
-    // Health" (#2282).
+    // Health" (#2282); its caster's, Dark Aura's "you lose 17 Health" (#2313).
     if (
       effect.kind === "lose-health" &&
       effect.recipient === "target" &&
-      trigger.target === "bearer"
+      (trigger.target === "bearer" || trigger.target === "source")
     ) {
+      const loser = trigger.target === "source" ? "you lose" : bearerIsFoe ? "it loses" : "lose";
       const text = describeEffect(effect, ranks)
-        .text.replace(/^Target foe loses/, bearerIsFoe ? "it loses" : "lose")
+        .text.replace(/^Target foe loses/, loser)
         .replace(/Energy they have/, "Energy you have");
       return [sentence(`${when}: ${text}`)];
     }
@@ -2240,6 +2248,34 @@ function describeTrigger(
             ? sentence(`${when}: ${allies} ${suffered(inner, ranks)}`)
             : sentence(`${when}: ${allies}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
       );
+    }
+    // Demonic Flesh's (#2313): on a self-buff the user is you, as its
+    // enders say (#1841), and a splash round you that leaves the target
+    // out strikes the others: "whenever you use a skill on a foe, other
+    // foes adjacent to you take 17 shadow damage".
+    if (
+      effect.kind === "if" &&
+      effect.condition.kind === "target-foe" &&
+      trigger.target === "skill-target" &&
+      !bearerIsFoe &&
+      when.startsWith("whenever it uses ") &&
+      effect.effects.every((inner) => inner.kind === "splash" && inner.around === "caster")
+    ) {
+      const yours = `whenever you ${secondPerson(when.slice("whenever it ".length))} on a foe`;
+      return effect.effects.flatMap((inner) => {
+        if (inner.kind !== "splash") {
+          return [];
+        }
+        const area = AREA_TEXT.get(inner.radius);
+        const reached = `${inner.includesCentre === true ? "" : "other "}${SPLASH_SIDE[inner.hits]} ${area === "adjacent" ? "adjacent to you" : `${area ?? `within ${String(inner.radius)}`} around you`}`;
+        return inner.effects.map((each) =>
+          sentence(
+            each.kind === "damage"
+              ? `${yours}, ${reached} take ${amount(each.amount)}${typeWord(each.type)} damage`
+              : `${yours}, ${reached}: ${lowerFirst(describeEffect(each, ranks).text)}`,
+          ),
+        );
+      });
     }
     // The bearer is "it" in its own tooltip (#988): "when it ends, if it
     // is attacking: heals for 88".
@@ -2767,8 +2803,11 @@ function onlyIfText(condition: StateCondition, ranks: ReadonlyMap<string, number
     .replaceAll(" or target is ", " or ");
 }
 
-/** A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes". */
-function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>): string {
+/**
+ * A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes".
+ * Without `withOnlyIf`, its `onlyIf` is left for the caller to say (#2313).
+ */
+function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>, withOnlyIf = true): string {
   // Hex Eater Signet's "adjacent allies with a hex" (#1954).
   // Mystic Healing's "enchanted party members", "with an enchantment" (#2207).
   const article = splash.onlyBearing === "enchantment" ? "an" : "a";
@@ -2780,7 +2819,8 @@ function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>): string 
       ? ""
       : ` using ${TYPE_TEXT[splash.onlyUsing].replace(/\.$/, "").toLowerCase()} skills`;
   // Gust's "while attacking or moving" (#2288).
-  const onlyIf = splash.onlyIf === undefined ? "" : ` ${onlyIfText(splash.onlyIf, ranks)}`;
+  const onlyIf =
+    splash.onlyIf === undefined || !withOnlyIf ? "" : ` ${onlyIfText(splash.onlyIf, ranks)}`;
   const reached = foesWithin(splash.radius, splash.hits);
   const who = `${splash.includesCentre === true ? `Target and ${lowerFirst(reached)}` : reached}${splash.around === "caster" ? " around you" : ""}${splash.alsoAround === "caster" ? " around the target and you" : ""}${bearing}${using}${onlyIf}`;
   return splash.maxTargets === undefined || splash.hits === "party"
@@ -3807,6 +3847,23 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
           magnitude: undefined,
         };
       }
+      // A steal is the caster's, from those reached (#2313): Unholy Feast's
+      // "Steals up to 54 Health from up to 3 foes in the area", Feast of
+      // Corruption's "from each of target and adjacent foes that has a hex".
+      const [stolen] = effect.effects;
+      if (
+        effect.effects.length === 1 &&
+        (stolen?.kind === "life-steal" || stolen?.kind === "energy-steal")
+      ) {
+        const description = describeEffect(stolen, ranks);
+        const reached = lowerFirst(upTo(effect, ranks, false));
+        const condition = effect.onlyIf === undefined ? "" : onlyIfText(effect.onlyIf, ranks);
+        const from =
+          condition === ""
+            ? reached
+            : `each of ${reached} ${condition.startsWith("while ") ? "" : "that "}${condition}`;
+        return { text: `${description.text} from ${from}`, magnitude: description.magnitude };
+      }
       const paid = effect.effects.filter((each) => each.kind === "sacrifice-health");
       const inner = effect.effects
         .filter((each) => each.kind !== "sacrifice-health")
@@ -3837,12 +3894,16 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
                       ? `lose ${shown(describeMagnitude(each.amount, ranks))} Health`
                       : each.kind === "remove-status" && each.from === undefined
                         ? lostInSplash(each, ranks)
-                        : // Verata's Sacrifice's (#1986).
-                          each.kind === "transfer-conditions" &&
-                            each.from === "target" &&
-                            resolveMagnitudeAtRanks(each.count, ranks) === Number.POSITIVE_INFINITY
-                          ? "transfer all their conditions to you"
-                          : lowerFirst(description.text),
+                        : // Ravenous Gaze's (#2313): the caster steals, from each.
+                          each.kind === "life-steal" || each.kind === "energy-steal"
+                          ? `you ${lowerFirst(description.text).replace(/^steals /, "steal ")} from each`
+                          : // Verata's Sacrifice's (#1986).
+                            each.kind === "transfer-conditions" &&
+                              each.from === "target" &&
+                              resolveMagnitudeAtRanks(each.count, ranks) ===
+                                Number.POSITIVE_INFINITY
+                            ? "transfer all their conditions to you"
+                            : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;

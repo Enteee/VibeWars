@@ -200,8 +200,8 @@ describe("Shield of Judgment (#2190)", () => {
     const combatants = party();
     const a = member(combatants, "a");
     cast(combatants, "monk.shield-of-judgment");
-    a.statuses.recordHitByAttack("w", 20, undefined);
-    a.statuses.recordHitByAttack("v", 20, undefined);
+    a.statuses.recordHitByAttack("w", 20, undefined, WEAPONS.sword);
+    a.statuses.recordHitByAttack("v", 20, undefined, WEAPONS.sword);
     const events = drain(a, combatants);
     for (const id of ["w", "v"]) {
       // Holy, from the Monk's Smiting Prayers 12: armor has no say.
