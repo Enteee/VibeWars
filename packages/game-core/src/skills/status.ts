@@ -2501,6 +2501,18 @@ export function triggerAnswersWeapon(trigger: StatusTrigger, weapon: Weapon): bo
   );
 }
 
+/**
+ * Whether `trigger` answers a strike by a foe with `weapon` (#2313): as
+ * `triggerAnswersWeapon`, but any blow that flies no projectile is melee,
+ * a minion's, a pet's or a fist's too, as Tainted Flesh's "anyone
+ * striking those allies in melee".
+ */
+function strikerAnswers(trigger: StatusTrigger, weapon: Weapon): boolean {
+  return trigger.weapon === "melee"
+    ? weapon.projectileSpeed === undefined
+    : triggerAnswersWeapon(trigger, weapon);
+}
+
 /** How `StatusSet`'s `spent` names `id` from `sourceId` (#1955). */
 function spentKey(id: StatusId, sourceId: string): string {
   return `${id}/${sourceId}`;
@@ -2791,7 +2803,8 @@ export class StatusSet {
    * triggers that do. Every hit counts: two foes in one tick are two. Each
    * status that reflects attack damage (#1754) sends its share back.
    * `chainRole` is the hitting attack skill's (#2134), if it has one;
-   * `weapon` the attacker's, for a trigger bound to a class (#2313).
+   * `weapon` the attacker's, a creature's fists too, for a trigger bound
+   * to a class (#2313).
    */
   public recordHitByAttack(
     offenderId: string,
@@ -2801,7 +2814,7 @@ export class StatusSet {
   ): void {
     const fired = this.#answering("bearer-hit-by-attack").filter(
       ({ sourceId, trigger }) =>
-        triggerAnswersWeapon(trigger, weapon) &&
+        strikerAnswers(trigger, weapon) &&
         (trigger.hitBy === undefined ||
           (sourceId === offenderId &&
             (trigger.hitBy.chainRole === undefined || trigger.hitBy.chainRole === chainRole))),

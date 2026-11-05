@@ -76,9 +76,13 @@ function spec(
  * with Blood Renewal. Of team 1: `foe`, beside `c`, with an axe and Flare;
  * `foeAlly`, beside `foe` and `ally` but not `c`; `foeNear`, beside `c`
  * alone; `foeArea`, in the area of `c`, beside no one; `archer`, with a
- * longbow, and `foeFar`, out of the area.
+ * longbow, and `foeFar`, out of the area. `extra` as given.
  */
-function arena(bar: readonly string[], ranks: ReadonlyMap<string, number> = R12) {
+function arena(
+  bar: readonly string[],
+  ranks: ReadonlyMap<string, number> = R12,
+  ...extra: ParticipantSpec[]
+) {
   return new MatchSimulation({
     seed: "staples-necro-a",
     participants: [
@@ -107,6 +111,7 @@ function arena(bar: readonly string[], ranks: ReadonlyMap<string, number> = R12)
         wielding(WEAPONS.longbow, "ranger.marksmanship"),
       ),
       spec("foeFar", 1, vec2(300, 0), [], R0),
+      ...extra,
     ],
   });
 }
@@ -230,6 +235,38 @@ describe("Tainted Flesh (#2313)", () => {
     cast(match, "foe", 0, "ally", 2);
     expect(ally.health).toBeLessThan(health);
     expect(get(match, "foe").statuses.has("disease")).toBe(false);
+  });
+
+  it("diseases a minion that strikes, its blow no weapon's but melee", () => {
+    const minion: ParticipantSpec = {
+      ...spec("minion", 1, vec2(-30, 30), [], R0),
+      creature: {
+        ownerId: "foe",
+        kind: "minion",
+        look: "bone-minion",
+        name: "minion",
+        expiresInSeconds: Number.POSITIVE_INFINITY,
+        ageSeconds: 0,
+        summonedAtTick: 0,
+        skillId: undefined,
+        aura: undefined,
+        onDeath: "vanish",
+        ownerDisableSeconds: 0,
+        deathBurst: undefined,
+        onDeathInRange: undefined,
+        replacedBy: undefined,
+        corpsesLeft: 0,
+        companionSkillId: undefined,
+        leaderId: undefined,
+        bondStatusId: undefined,
+        mode: "guard",
+      },
+    };
+    const match = arena([TAINTED], R12, minion);
+    cast(match, "c", 0, "c", 1.5);
+    expect(match.requestAttack("minion", "ally")).toEqual({ ok: true });
+    stepFor(match, 3);
+    expect(get(match, "minion").statuses.has("disease")).toBe(true);
   });
 });
 
