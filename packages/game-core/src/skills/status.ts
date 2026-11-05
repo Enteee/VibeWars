@@ -767,6 +767,12 @@ export interface StatusDefinition {
    * "while wielding daggers". `undefined`: whatever it wields.
    */
   readonly criticalChanceBonusWeapon: AttackWeaponClass | undefined;
+  /**
+   * `criticalChanceBonus` holds only against a victim of this kind
+   * (#2320), read as the blow lands: "Fear Me!"'s "against foes that are
+   * not moving". `undefined`: any victim.
+   */
+  readonly criticalChanceBonusVersus: "not-moving" | undefined;
   /** Energy the bearer gains on each critical hit it lands, beyond Critical Strikes' (#988). */
   readonly energyPerCritical: number;
   /**
