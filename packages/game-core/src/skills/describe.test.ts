@@ -610,7 +610,7 @@ describe("describeSkill", () => {
           case "trap":
             return 1 + (act.trap.springsAtEnd ? 1 : 0) + act.trap.spring.effects.length;
           case "pulse":
-            return 1 + act.pulse.effects.length;
+            return 1 + act.pulse.effects.length + (act.atEnd?.effects.length ?? 0);
         }
       }
       if (effect.kind === "summon") {

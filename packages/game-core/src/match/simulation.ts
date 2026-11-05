@@ -178,7 +178,7 @@ import {
   type DeathBurst,
   type DeathInRange,
   type GroundAct,
-  type PulseRule,
+  type PulseEnd,
   type Skill,
   type SkillEffect,
 } from "../skills/types.js";
@@ -1822,7 +1822,12 @@ export class MatchSimulation {
     });
     this.#nextGroundEffect += 1;
     if (this.#groundEffects.length > MAX_GROUND_EFFECTS) {
-      this.#groundEffects.shift();
+      const ended = this.#groundEffects.shift();
+      // Ended early, a pulse effect still lands its end (#2329).
+      const owner = ended === undefined ? undefined : this.#participants.get(ended.ownerId);
+      if (ended?.act.kind === "pulse" && ended.act.atEnd !== undefined && owner !== undefined) {
+        this.#landPulse(owner, ended.skillId, ended.position, ended.act.atEnd);
+      }
     }
   }
 
@@ -1857,7 +1862,8 @@ export class MatchSimulation {
   /**
    * Every ground effect counts down `dt` (#1087); one at zero is gone,
    * except a trap that springs as its time runs out (#1113): this step's
-   * `#springTraps` springs it.
+   * `#springTraps` springs it, and a pulse effect that lands its end
+   * (#2329): this step's `#pulseGroundEffects` lands it.
    */
   #advanceGroundEffects(dt: number): void {
     if (this.#groundEffects.length === 0) {
@@ -1868,7 +1874,9 @@ export class MatchSimulation {
     }
     this.#groundEffects = this.#groundEffects.filter(
       (effect) =>
-        effect.remainingSeconds > 0 || (effect.act.kind === "trap" && effect.act.trap.springsAtEnd),
+        effect.remainingSeconds > 0 ||
+        (effect.act.kind === "trap" && effect.act.trap.springsAtEnd) ||
+        (effect.act.kind === "pulse" && effect.act.atEnd !== undefined),
     );
   }
 
@@ -1940,7 +1948,8 @@ export class MatchSimulation {
    * Every pulse effect whose next pulse is due lands it (#1113), after
    * traps spring, in id order: at most one each a step, the first the step
    * its age reaches its delay (#1270), then one every interval after.
-   * One whose owner has left the match is gone with no effect.
+   * One whose time has run out lands its end after that, once, and is
+   * gone (#2329). One whose owner has left the match is gone with no effect.
    */
   #pulseGroundEffects(): void {
     if (!this.#groundEffects.some((effect) => effect.act.kind === "pulse")) {
@@ -1956,16 +1965,19 @@ export class MatchSimulation {
         gone.add(effect.id);
         continue;
       }
-      const { pulse } = effect.act;
+      const { pulse, atEnd } = effect.act;
       const age = effect.durationSeconds - effect.remainingSeconds;
       if (
-        effect.pulsed >= pulse.count ||
-        age < pulse.delaySeconds + effect.pulsed * pulse.everySeconds - SWING_EPSILON
+        effect.pulsed < pulse.count &&
+        age >= pulse.delaySeconds + effect.pulsed * pulse.everySeconds - SWING_EPSILON
       ) {
-        continue;
+        effect.pulsed += 1;
+        this.#landPulse(owner, effect.skillId, effect.position, pulse);
       }
-      effect.pulsed += 1;
-      this.#landPulse(owner, effect.skillId, effect.position, pulse);
+      if (atEnd !== undefined && effect.remainingSeconds <= SWING_EPSILON) {
+        gone.add(effect.id);
+        this.#landPulse(owner, effect.skillId, effect.position, atEnd);
+      }
     }
     if (gone.size > 0) {
       this.#groundEffects = this.#groundEffects.filter((effect) => !gone.has(effect.id));
@@ -2071,13 +2083,13 @@ export class MatchSimulation {
   }
 
   /**
-   * One pulse of `rule` at `position` (#1113): its effects land from
+   * One pulse of `rule` at `position` (#1113), or its end (#2329): its effects land from
    * `owner` on whoever its area takes there, in line of sight of it, and
    * it is logged as a cast is, even when it hits nobody. A pulse's
    * interrupt comes free with what it lands, untimed, as Maelstrom's
    * (#1367): finding nothing to interrupt is no miss, so it says nothing.
    */
-  #landPulse(owner: ParticipantRecord, skillId: string, position: Vec2, rule: PulseRule): void {
+  #landPulse(owner: ParticipantRecord, skillId: string, position: Vec2, rule: PulseEnd): void {
     const skill = getSkill(skillId);
     if (skill === undefined) {
       return;
