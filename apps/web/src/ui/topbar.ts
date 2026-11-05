@@ -1,7 +1,7 @@
 import { isGloballyMuted, onGlobalMute, setGlobalMute } from "../audio/global-mute.js";
 import { attachFullscreenButton, fullscreenTarget } from "./fullscreen.js";
 import { paintMuteButton } from "./hud.js";
-import { helpIcon, settingsIcon } from "./icons.js";
+import { helpIcon, LOBBY_ICON, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
 import { button, h, iconButton, setTopbarSlots, shareLine, type ShownBar } from "./kit.js";
 import { copyInviteLink } from "./lobby-screen.js";
@@ -70,11 +70,9 @@ export function partyJoinsNotice(party: number): string {
 }
 
 /**
- * The host's toggle (#1682): its lock, what it says beside it while the
- * bar has the room, its name, and its tooltip, each way.
+ * The host's toggle (#1682): what it says beside its glyph (#2382) while
+ * the bar has the room, its name, and its tooltip, each way.
  */
-export const CLOSED_GLYPH = "🔒";
-export const OPEN_GLYPH = "🔓";
 export const CLOSED_LABEL = "Closed";
 export const OPEN_LABEL = "Open";
 export const CLOSED_NAME = "Lobby closed";
@@ -131,7 +129,11 @@ export function joinControls(
   const toggle = button("", "topbar-lobby-open", () => {
     onSetOpen(toggle.getAttribute("aria-pressed") !== "true");
   });
-  const toggleGlyph = h("span", "topbar-lobby-open-glyph", CLOSED_GLYPH);
+  // Decorative: the toggle's name says the state (#2382).
+  const toggleGlyph = document.createElement("img");
+  toggleGlyph.className = "topbar-lobby-open-glyph";
+  toggleGlyph.alt = "";
+  toggleGlyph.src = LOBBY_ICON.closed;
   const toggleLabel = h("span", "topbar-lobby-open-label", CLOSED_LABEL);
   toggle.append(toggleGlyph, toggleLabel);
   const leave = button("Leave", "topbar-leave", onLeave);
@@ -218,7 +220,7 @@ export function joinControls(
       leave.hidden = shown?.isHost !== false || joining;
       toggle.hidden = shown?.isHost !== true;
       const open = shown?.open === true;
-      toggleGlyph.textContent = open ? OPEN_GLYPH : CLOSED_GLYPH;
+      toggleGlyph.src = open ? LOBBY_ICON.open : LOBBY_ICON.closed;
       toggleLabel.textContent = open ? OPEN_LABEL : CLOSED_LABEL;
       // Its name whether or not the bar has room for the word (#1682).
       toggle.setAttribute("aria-label", open ? OPEN_NAME : CLOSED_NAME);
