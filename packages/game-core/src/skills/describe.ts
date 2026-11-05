@@ -693,8 +693,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
             ...definition.blockWhileUnder.categories.map(aCategory),
             ...definition.blockWhileUnder.statusIds.map(statusName),
           ].join(" or ")}`;
+    // Flashing Blades' "while attacking" (#2374).
+    const attacking = definition.blockWhileAttacking ? " while attacking" : "";
     parts.push(
-      `${String(Math.round(definition.block.chance * 100))}% chance to block ${what}${below}${under}`,
+      `${String(Math.round(definition.block.chance * 100))}% chance to block ${what}${below}${under}${attacking}`,
     );
   }
   // Protector's Defense's "allies adjacent to you" (#2096).

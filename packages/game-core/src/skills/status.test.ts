@@ -251,6 +251,7 @@ describe("status definitions", () => {
       "restful-breeze": 10,
       "vile-miasma": -4.2,
       "i-will-avenge-you": 6,
+      "watchful-healing": 3.4,
     });
   });
 
@@ -281,6 +282,7 @@ describe("status definitions", () => {
       "well-of-weariness": -1,
       "lyssas-aura": 4,
       succor: 1,
+      "signet-of-recall": -4,
     });
   });
 

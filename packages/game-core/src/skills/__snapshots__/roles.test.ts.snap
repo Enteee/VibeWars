@@ -33,6 +33,7 @@ exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
   "assassin.falling-lotus-strike": "",
   "assassin.falling-spider": "condition",
   "assassin.feigned-neutrality": "healing defence",
+  "assassin.flashing-blades": "defence",
   "assassin.fox-fangs": "",
   "assassin.golden-fang-strike": "condition",
   "assassin.golden-fox-strike": "",
@@ -296,6 +297,7 @@ exports[`skillRoles > tags every elementalist skill the same way every time 1`] 
   "elementalist.water-attunement": "",
   "elementalist.water-trident": "knockdown",
   "elementalist.windborne-speed": "",
+  "elementalist.winters-embrace": "hex",
 }
 `;
 
@@ -402,6 +404,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.signet-of-humility": "",
   "mesmer.signet-of-illusions": "",
   "mesmer.signet-of-midnight": "condition",
+  "mesmer.signet-of-recall": "",
   "mesmer.signet-of-weariness": "condition",
   "mesmer.simple-thievery": "interrupt",
   "mesmer.soothing-images": "hex",
@@ -409,6 +412,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.spirit-shackles": "hex",
   "mesmer.spiritual-pain": "",
   "mesmer.sum-of-all-fears": "hex",
+  "mesmer.tease": "interrupt",
   "mesmer.unnatural-signet": "",
   "mesmer.visions-of-regret": "hex",
   "mesmer.wandering-eye": "hex",
@@ -531,6 +535,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.vengeance": "",
   "monk.vigorous-spirit": "healing",
   "monk.vital-blessing": "",
+  "monk.watchful-healing": "healing",
   "monk.watchful-spirit": "healing",
   "monk.withdraw-hexes": "removal",
   "monk.word-of-censure": "",

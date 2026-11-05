@@ -92,6 +92,7 @@ export function define(
     projectsAura: undefined,
     blockBelowHealth: undefined,
     blockWhileUnder: undefined,
+    blockWhileAttacking: false,
     criticalChanceBonus: 0,
     criticalChanceBonusWeapon: undefined,
     criticalChanceBonusVersus: undefined,

@@ -326,6 +326,11 @@ export interface StatusDefinition {
    */
   readonly profession: ProfessionId | undefined;
   /**
+   * `block` holds only while the bearer is attacking (#2374), as
+   * `target-attacking` counts it: Flashing Blades' "while attacking".
+   */
+  readonly blockWhileAttacking: boolean;
+  /**
    * The attribute of the skill that applies it (#1765), as `profession`:
    * "if target foe is suffering from a Water Magic hex" asks this.
    * `undefined`: not tagged, which only Elementalist hexes are so far.

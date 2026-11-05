@@ -3849,4 +3849,40 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "smoke-powder-defense", durationSeconds: { flat: 8 } },
     ],
   },
+  {
+    id: "assassin.flashing-blades",
+    name: "Flashing Blades",
+    gwId: 1042,
+    type: "stance",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...30 seconds, you have a 75% chance to block incoming attacks
+    // while attacking" (#2374): 25 s at rank 12; the attacker's damage on
+    // a block is the status's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "flashing-blades",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 25 },
+        },
+      },
+    ],
+  },
 ];
