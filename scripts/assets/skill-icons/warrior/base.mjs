@@ -94,6 +94,13 @@ const rows = {
   "warrior.wild-blow": { glyph: "blade-no-bars" },
   // Stand-in art (#2294).
   "warrior.shove": { glyph: "palm-felled" },
+  // Stand-in art (#2338).
+  "warrior.to-the-limit": { glyph: "heart-steps", modifier: "up" },
+  "warrior.crude-swing": { glyph: "club-swing", modifier: "area" },
+  "warrior.whirling-axe": { glyph: "axe-whirl", modifier: "less" },
+  "warrior.forceful-blow": { glyph: "hammer-push", modifier: "less" },
+  "warrior.auspicious-blow": { glyph: "hammer-halo" },
+  "warrior.critical-chop": { glyph: "axe-crack" },
 };
 
 export default rows;
