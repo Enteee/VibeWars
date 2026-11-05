@@ -135,7 +135,7 @@ describe("Angelic Bond (#1955)", () => {
     const [a1, a2] = [get(sim, "a1").combatant, get(sim, "a2").combatant];
     // Half of x's hit goes to a1, landed as x's changes are drained.
     get(sim, "x").combatant.statuses.apply("symbiotic-bond", 10, "a1", NO_RANKS);
-    get(sim, "x").combatant.statuses.redirect(1000, true);
+    get(sim, "x").combatant.statuses.redirect(1000, true, false);
     a1.health = 100;
     sim.step(DT);
     expect(a1.dead).toBe(false);
