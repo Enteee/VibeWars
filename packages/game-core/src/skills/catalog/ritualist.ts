@@ -3238,6 +3238,133 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Staples (#2368).
+  {
+    id: "ritualist.clamor-of-souls",
+    name: "Clamor of Souls",
+    gwId: 1215,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe and all nearby foes take 10...65 lightning damage. If you
+    // are within earshot of a spirit or holding a bundle item, you gain 10
+    // Energy": 54 at rank 12; the Energy once, however many are struck.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        includesCentre: true,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "ritualist.channeling-magic", atZero: 10, atTwelve: 54 },
+            },
+            type: "lightning",
+            armorPenetration: 0,
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: {
+          kind: "any-of",
+          conditions: [
+            { kind: "caster-spirit-within", radius: AREA_EARSHOT },
+            { kind: "caster-holds-item" },
+          ],
+        },
+        effects: [{ kind: "energy-gain", amount: { flat: 10 } }],
+      },
+    ],
+  },
+  {
+    id: "ritualist.spirit-channeling",
+    name: "Spirit Channeling",
+    gwId: 1231,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 12 seconds, you have +1...6 Energy regeneration. When you cast
+    // this spell, you gain 3...12 Energy if you are within earshot of a
+    // spirit": +5 and 10 at rank 12.
+    effects: [
+      { kind: "apply-status", statusId: "spirit-channeling", durationSeconds: { flat: 12 } },
+      {
+        kind: "if",
+        condition: { kind: "caster-spirit-within", radius: AREA_EARSHOT },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "ritualist.spawning-power", atZero: 3, atTwelve: 10.2 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "ritualist.renewing-surge",
+    name: "Renewing Surge",
+    gwId: 1478,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8 seconds, target foe suffers 2...12 damage each second. When
+    // this hex ends, you gain 1...8 Energy": the status does both.
+    effects: [{ kind: "apply-status", statusId: "renewing-surge", durationSeconds: { flat: 8 } }],
+  },
 ];
 
 /**
