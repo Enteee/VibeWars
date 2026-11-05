@@ -852,10 +852,22 @@ export interface SplashEffect {
    */
   readonly onlyUsing?: SkillType;
   /**
+   * Only those for whom this holds as the splash lands, picked before
+   * `maxTargets` (#2288): Gust's "foes struck by Gust while attacking or
+   * moving are knocked down". Absent: anyone.
+   */
+  readonly onlyIf?: StateCondition;
+  /**
    * The target is reached too, as one of them (#2282): Glimmering Mark's
    * "target foe and all foes adjacent". Absent: the target is not.
    */
   readonly includesCentre?: true;
+  /**
+   * Round the caster as well as the centre, a character near both
+   * reached once (#2288): Gust's "all foes adjacent to you and your
+   * target". Absent: round the centre alone.
+   */
+  readonly alsoAround?: "caster";
   readonly effects: readonly UnconditionalEffect[];
 }
 
@@ -1042,7 +1054,9 @@ export interface LengthenRechargeEffect {
  * own, a common skill included, but those of `exceptTypes`: Unnatural
  * Signet's "all your non-Mesmer skills except signets". `all` (#1570):
  * every skill on the bar, the one used included, as Blackout's "all of
- * your skills are disabled for 5 seconds". `attacks` (#1914): every
+ * your skills are disabled for 5 seconds". `others` (#2287): every skill
+ * on the bar but the one used, as Psychic Distraction's "all of your other
+ * skills are disabled for 8 seconds". `attacks` (#1914): every
  * attack skill on the bar but the one used, as Focused Shot's "your other
  * attack skills are disabled", but those of `exceptWeapon` (#2134), as
  * Wastrel's Collapse's "your non-dagger attack skills". `types` (#1930): every skill on the
@@ -1060,6 +1074,11 @@ export type DisableOwnSkillsEffect =
   | {
       readonly kind: "disable-own-skills";
       readonly which: "all";
+      readonly seconds: Magnitude;
+    }
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "others";
       readonly seconds: Magnitude;
     }
   | {
@@ -1552,6 +1571,11 @@ export type StateCondition =
    * `Combatant.moving`): Water Trident's "a moving foe".
    */
   | { readonly kind: "target-moving" }
+  /**
+   * The effect's target is on another team than the caster (#2288): Ride
+   * the Lightning's "if your target is a foe".
+   */
+  | { readonly kind: "target-foe" }
   /**
    * The effect's target is moving and its statuses make it move faster
    * than normal (#2290): their aggregate `moveSpeedMultiplier` is above 1.
