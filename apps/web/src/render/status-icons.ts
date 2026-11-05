@@ -519,6 +519,15 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "armor-of-frost": icon("armor-of-frost"),
   "incendiary-bonds": icon("incendiary-bonds"),
   rust: icon("rust"),
+  // Staples (#2287).
+  "ether-lord": icon("ether-lord"),
+  "ether-lord-regeneration": icon("ether-lord-regeneration"),
+  "spirit-of-failure": icon("spirit-of-failure"),
+  "spirit-shackles": icon("spirit-shackles"),
+  "soothing-images": icon("soothing-images"),
+  "arcane-languor": icon("arcane-languor"),
+  "illusion-of-pain": icon("illusion-of-pain"),
+  "ether-phantom": icon("ether-phantom"),
   // Bonds and rank-scaled multipliers (#2291).
   "life-bond": icon("life-bond"),
   "life-attunement": icon("life-attunement"),
