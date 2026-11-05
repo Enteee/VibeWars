@@ -813,7 +813,8 @@ function dealsDamage(effect: SkillEffect): boolean {
       const { act } = effect;
       return act.kind === "trap"
         ? act.trap.spring.effects.some(dealsDamage)
-        : act.kind === "pulse" && act.pulse.effects.some(dealsDamage);
+        : act.kind === "pulse" &&
+            [...act.pulse.effects, ...(act.atEnd?.effects ?? [])].some(dealsDamage);
     }
     default:
       return false;

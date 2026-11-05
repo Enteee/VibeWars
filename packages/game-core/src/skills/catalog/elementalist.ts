@@ -4679,8 +4679,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     // near this location are struck for 10...40 fire damage each second.
     // When Searing Heat ends, foes in the area of effect are set on fire
     // for 3 seconds": it stays where they stood as the cast ended, as Fire
-    // Storm's, and its Burning lands on whoever is near as it ends, as
-    // Spirit Rift's late strike.
+    // Storm's, and its Burning lands on whoever is near as it ends (#2329).
     effects: [
       {
         kind: "create-ground-effect",
@@ -4710,18 +4709,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
               },
             ],
           },
-        },
-      },
-      {
-        kind: "create-ground-effect",
-        anchor: "target",
-        durationSeconds: { flat: 5.1 },
-        act: {
-          kind: "pulse",
-          pulse: {
-            count: 1,
-            everySeconds: 0.1,
-            delaySeconds: 5,
+          atEnd: {
             area: {
               radius: AREA_NEARBY,
               origin: "caster",

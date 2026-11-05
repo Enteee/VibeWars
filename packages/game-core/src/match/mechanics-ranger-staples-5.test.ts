@@ -391,7 +391,9 @@ describe("Storm Chaser and elemental damage as one type (#2133)", () => {
   });
 
   it("says so", () => {
-    expect(describeStatus("storm-chaser")).toContain("takes elemental damage from a foe");
+    expect(describeStatus("storm-chaser")).toContain(
+      "Whenever you take elemental damage from a foe",
+    );
   });
 });
 

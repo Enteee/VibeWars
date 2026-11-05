@@ -101,8 +101,8 @@ describe("Contagion (#887)", () => {
       { kind: "sacrifice", targetId: "n", amount: 30 },
     ]);
     expect(describeStatus("contagion")).toBe(
-      "whenever it gains a new condition: foes in the area suffer it too. " +
-        "Whenever it gains a new condition: you sacrifice 6% of your maximum health",
+      "whenever you gain a new condition: foes in the area suffer it too. " +
+        "Whenever you gain a new condition: you sacrifice 6% of your maximum health",
     );
   });
 

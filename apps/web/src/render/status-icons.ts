@@ -628,6 +628,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "strength-of-honor": icon("strength-of-honor"),
   "earthen-shackles": icon("earthen-shackles"),
   "ether-prism": icon("ether-prism"),
+  // Smoke Powder Defense (#2362).
+  "smoke-powder-defense": icon("smoke-powder-defense"),
 };
 
 const GAP = 2;

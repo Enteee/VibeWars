@@ -3003,6 +3003,10 @@ async function ciOutcome(pr, sha, cfg) {
       return { kind: "unreadable" };
     }
     const mine = commitRuns(listed.runs, { sha, repo: cfg.repo, file });
+    if (mine.length === 0 && OPTIONAL_WORKFLOWS.includes(file)) {
+      // A path filter left it unstarted: there is no run to wait for (#1884).
+      continue;
+    }
     if (mine.length === 0 || mine.some((run) => run.status !== "completed")) {
       return { kind: "pending" };
     }
