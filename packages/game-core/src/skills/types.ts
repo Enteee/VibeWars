@@ -567,6 +567,12 @@ export interface RemoveStatusEffect {
   readonly kind: "remove-status";
   readonly category: StatusCategory;
   /**
+   * Statuses of this category go too, newest first among both, out of the
+   * one `count` (#2291): Peace and Harmony's "loses 0...4 conditions and
+   * hexes". Absent: `category` alone.
+   */
+  readonly orCategory?: StatusCategory;
+  /**
    * How many, newest first; `"all"` as Restore Condition's "remove all
    * conditions"; a `Magnitude` as Divert Hexes' "remove up to 1...3 hexes"
    * (#1954). Ignored when `perRemoved` or `perCount` is set.

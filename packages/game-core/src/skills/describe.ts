@@ -495,9 +495,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.redirectsConditionsToMinion) {
     parts.push("conditions you would receive go to your closest minion instead");
   }
-  if (definition.healingMultiplier !== 1) {
-    const change = Math.round((definition.healingMultiplier - 1) * 100);
-    parts.push(`${change > 0 ? "+" : "−"}${String(Math.abs(change))}% healing`);
+  if (statAtTwelve(definition.healingMultiplier) !== 1) {
+    const more = statAtTwelve(definition.healingMultiplier) > 1;
+    const change = statText(definition.healingMultiplier, ranks, (value) => percent(value - 1));
+    parts.push(`${more ? "+" : "−"}${change} healing`);
   }
   if (definition.weaponDamageMultiplier !== 1) {
     const change = Math.round((definition.weaponDamageMultiplier - 1) * 100);
@@ -858,10 +859,14 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `−${statText(definition.damageReductionFromWeakerFoe, ranks, whole)} damage taken from foes with less Health`,
     );
   }
-  if (definition.redirectsPhysicalDamage > 0) {
-    parts.push(
-      `${share(definition.redirectsPhysicalDamage)} its physical damage goes to its caster`,
-    );
+  if (definition.redirectsDamage !== undefined) {
+    const { share: fraction, from, reduction } = definition.redirectsDamage;
+    const hits = from === "physical" ? "its physical damage" : "the damage it takes from attacks";
+    const less =
+      statAtTwelve(reduction) === 0
+        ? ""
+        : `, which takes ${statText(reduction, ranks, whole)} less of it`;
+    parts.push(`${share(fraction)} ${hits} goes to its caster${less}`);
   }
   if (definition.redirectsDamageToMinion > 0) {
     parts.push(
@@ -1089,6 +1094,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.conditionsExpireFaster !== 0) {
     const faster = String(Math.round(definition.conditionsExpireFaster * 100));
     parts.push(`conditions on the bearer expire ${faster}% faster`);
+  }
+  if (definition.hexesExpireFaster !== 0) {
+    const faster = String(Math.round(definition.hexesExpireFaster * 100));
+    parts.push(`hexes on the bearer expire ${faster}% faster`);
   }
   if (definition.incomingHexCastTimeMultiplier !== 1) {
     const times = String(definition.incomingHexCastTimeMultiplier);
@@ -2166,9 +2175,9 @@ function describeOwnSkillModifier(
     statAtTwelve(energySurcharge) === 0
       ? undefined
       : `${verb("cost", "costs")} ${at(energySurcharge, whole)} more Energy`,
-    activationMultiplier === 1
+    statAtTwelve(activationMultiplier) === 1
       ? undefined
-      : `${verb("cast", "casts")} ${percent(1 - activationMultiplier)} ${activationMultiplier < 1 ? "faster" : "slower"}`,
+      : `${verb("cast", "casts")} ${at(activationMultiplier, (value) => percent(1 - value))} ${statAtTwelve(activationMultiplier) < 1 ? "faster" : "slower"}`,
     statAtTwelve(activationSecondsLess) === 0
       ? undefined
       : `${verb("cast", "casts")} ${at(activationSecondsLess, seconds)} faster`,
@@ -3331,8 +3340,11 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       // Shatter Delusions' "remove one Mesmer hex" (#1765).
       const whose =
         effect.profession === undefined ? "" : `${getProfession(effect.profession).name} `;
+      // Peace and Harmony's "loses 0...4 conditions and hexes" (#2291).
+      const and =
+        effect.orCategory === undefined ? "" : ` and ${categoryNoun(count, effect.orCategory)}`;
       return {
-        text: `Removes ${upTo}${String(count)} ${whose}${categoryNoun(count, effect.category)}${perSpirit}`,
+        text: `Removes ${upTo}${String(count)} ${whose}${categoryNoun(count, effect.category)}${and}${perSpirit}`,
         magnitude: undefined,
       };
     }

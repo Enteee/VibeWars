@@ -11,7 +11,13 @@ import { isAttacking, signetsOnBar } from "./attacking.js";
 import { beginRecharge, resolvedBar, skillIdOfKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
-import { hitLocationOf, mitigate, skillDamage, withSkillArmorPenetration } from "./damage.js";
+import {
+  type DamageSource,
+  hitLocationOf,
+  mitigate,
+  skillDamage,
+  withSkillArmorPenetration,
+} from "./damage.js";
 import { guardedDamage, guardedLoss } from "./loss-guard.js";
 import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude, resolveMagnitudeTimes, statAt } from "./scaling.js";
@@ -355,7 +361,7 @@ export type CombatEvent =
  * here, so it can never count as physical. Damage a foe `dealer` dealt is
  * recorded too, for Vengeful Weapon (#1022); with no dealer, as a
  * sacrifice, it is not. A bond on the target (#1108) takes its share of
- * a physical hit, after Reversal of Fortune. An invulnerable target
+ * a physical hit, or of a `weapon` one (#2291), after Reversal of Fortune. An invulnerable target
  * (#1208) takes none of it, and says so (#1233). A Guild Lord's guard
  * (#1223) cuts and caps what is left, to 0 once its second's cap is spent.
  * A status that negates fatal damage (#1789) drops what would kill; what
@@ -369,7 +375,19 @@ export function applyDamage(
   events: CombatEvent[],
   dealer: Combatant | undefined,
 ): void {
-  landDamage(target, amount, type, critical, events, dealer, true);
+  landDamage(target, amount, type, critical, events, dealer, "skill");
+}
+
+/** As `applyDamage`, for a weapon blow (#2291): what Life Bond answers. */
+export function applyAttackDamage(
+  target: Combatant,
+  amount: number,
+  type: DamageType,
+  critical: boolean,
+  events: CombatEvent[],
+  dealer: Combatant | undefined,
+): void {
+  landDamage(target, amount, type, critical, events, dealer, "weapon");
 }
 
 /**
@@ -381,7 +399,7 @@ export function applyRedirectedDamage(
   amount: number,
   events: CombatEvent[],
 ): void {
-  landDamage(target, amount, "typeless", false, events, undefined, false);
+  landDamage(target, amount, "typeless", false, events, undefined, undefined);
 }
 
 function landDamage(
@@ -391,7 +409,8 @@ function landDamage(
   critical: boolean,
   events: CombatEvent[],
   dealer: Combatant | undefined,
-  redirectable: boolean,
+  // `undefined`: a bond's share, never redirected again.
+  source: DamageSource | undefined,
 ): void {
   if (amount <= 0 || target.dead) {
     return;
@@ -413,7 +432,10 @@ function landDamage(
   }
   // Symbiotic Bond (#1108) and Dark Bond (#1986): a share goes elsewhere
   // when the tick drains; the bearer takes the rest.
-  const kept = redirectable ? target.statuses.redirect(cut, isPhysicalDamage(type)) : cut;
+  const kept =
+    source === undefined
+      ? cut
+      : target.statuses.redirect(cut, isPhysicalDamage(type), source === "weapon");
   const applied = Math.min(guardedDamage(target, kept), target.health);
   if (negateFatal(target, applied, dealer, events)) {
     return;
@@ -2212,6 +2234,7 @@ export function applyEffect(
         removeCount(effect, caster, target, bearer, context.surroundings, earlier),
         effect.profession,
         same?.kind === "status-removed" ? same.statusId : effect.statusId,
+        effect.orCategory,
       );
       for (const { id: statusId, sourceSkillId } of removed) {
         events.push({ kind: "status-removed", targetId: bearer.id, statusId, sourceSkillId });

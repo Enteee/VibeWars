@@ -60,6 +60,10 @@ export type MonkStatusId =
   | "healing-hands"
   | "shield-of-judgment"
   | "zealots-fire"
+  | "life-bond"
+  | "life-attunement"
+  | "aura-of-faith"
+  | "peace-and-harmony"
   | "balthazars-spirit";
 
 /**
@@ -701,6 +705,45 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         skillId: "monk.zealots-fire",
       },
     ],
+  }),
+  // Maintained (#2291): "whenever target other ally takes damage from an
+  // attack, half the damage is redirected to you. The damage you receive
+  // this way is reduced by 3...30", by the caster's Protection Prayers.
+  "life-bond": define("life-bond", "Life Bond", "enchantment", {
+    profession: "monk",
+    redirectsDamage: {
+      share: 0.5,
+      from: "attack",
+      reduction: { scaling: { attributeId: "monk.protection-prayers", atZero: 3, atTwelve: 24.6 } },
+    },
+  }),
+  // Maintained (#2291): "target ally deals 30% less damage with attacks,
+  // but gains 14...50% more Health when healed": the weapon roll, as
+  // Flurry's; an attack skill's bonus is not scaled.
+  "life-attunement": define("life-attunement", "Life Attunement", "enchantment", {
+    profession: "monk",
+    weaponDamageMultiplier: 0.7,
+    healingMultiplier: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 1.14, atTwelve: 1.428 },
+    },
+  }),
+  // "For 3 seconds, target ally gains 50...100% more Health when healed
+  // and takes 5...50% less damage" (#2291), by Protection Prayers.
+  "aura-of-faith": define("aura-of-faith", "Aura of Faith", "enchantment", {
+    profession: "monk",
+    healingMultiplier: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 1.5, atTwelve: 1.9 },
+    },
+    damageTakenMultiplier: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 0.95, atTwelve: 0.59 },
+    },
+  }),
+  // PvP (#2291): "for 1...3 seconds, conditions and hexes expire 90%
+  // faster on that ally"; the duration is the skill's.
+  "peace-and-harmony": define("peace-and-harmony", "Peace and Harmony", "enchantment", {
+    profession: "monk",
+    conditionsExpireFaster: 0.9,
+    hexesExpireFaster: 0.9,
   }),
   // Maintained (#2302): "target ally gains adrenaline and 1 Energy when
   // taking damage", 2...5 points to each of its adrenaline skills by the
