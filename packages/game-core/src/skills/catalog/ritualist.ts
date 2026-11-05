@@ -3238,6 +3238,54 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Ritualist mechanics (#2321).
+  {
+    id: "ritualist.doom",
+    name: "Doom",
+    gwId: 1264,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Strike target foe for 10...60 lightning (maximum 135) damage for
+    // every recharging binding ritual you have." None recharging: no
+    // packet, though the cast is spent.
+    effects: [
+      {
+        kind: "damage",
+        amount: { flat: 0 },
+        type: "lightning",
+        armorPenetration: 0,
+        per: {
+          count: {
+            kind: "recharging-skills",
+            of: "caster",
+            attributeId: undefined,
+            type: "binding-ritual",
+          },
+          amount: {
+            scaling: { attributeId: "ritualist.spawning-power", atZero: 10, atTwelve: 50 },
+          },
+          max: { flat: 135 },
+        },
+      },
+    ],
+  },
 ];
 
 /**

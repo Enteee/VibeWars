@@ -87,7 +87,9 @@ export type NecromancerStatusId =
   | "masochism"
   | "spoil-victor"
   // Staples (#2278).
-  | "mark-of-subversion";
+  | "mark-of-subversion"
+  // Necromancer mechanics (#2321).
+  | "rising-bile";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -115,6 +117,19 @@ function shivers(skillId: string): StatusTrigger {
     skillId,
   };
 }
+
+/** Rising Bile's burst (#2321): 1...6 typeless damage a whole second it held. */
+const RISING_BILE_DAMAGE: DamageEffect = {
+  kind: "damage",
+  amount: { flat: 0 },
+  type: "typeless",
+  armorPenetration: 0,
+  per: {
+    count: { kind: "held-seconds" },
+    amount: { scaling: { attributeId: "necromancer.death-magic", atZero: 1, atTwelve: 5 } },
+    max: undefined,
+  },
+};
 
 export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDefinition>> = {
   // Faintheartedness (GW1 PvP): attacks 50% slower, −0...2 pips at the
@@ -834,5 +849,31 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       ],
       skillId: "necromancer.mark-of-subversion",
     },
+  }),
+  // Rising Bile (#2321): "For 20 seconds, this hex does nothing. When
+  // Rising Bile ends, that foe and all foes in the area take 1...6 damage
+  // for each second Rising Bile was in effect." Whole seconds, at any end,
+  // from its caster at its Death Magic; a recast leaves it as it is.
+  "rising-bile": define("rising-bile", "Rising Bile", "hex", {
+    profession: "necromancer",
+    attribute: "necromancer.death-magic",
+    ignoresReapplication: true,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          RISING_BILE_DAMAGE,
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_IN_THE_AREA,
+            maxTargets: undefined,
+            effects: [RISING_BILE_DAMAGE],
+          },
+        ],
+        skillId: "necromancer.rising-bile",
+      },
+    ],
   }),
 };

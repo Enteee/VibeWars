@@ -167,23 +167,37 @@ export function preCapEnergyPips(combatant: Combatant, upkeepPips: number): numb
 }
 
 /**
- * What `casterId` pays for the enchantments it maintains (#837): −1 pip
- * for each one on a living bearer. Derived, never stored on the caster,
- * so a strip, a replacement or a death ends the upkeep with the status.
+ * What `maintainer` pays for the enchantments it maintains (#837): −1 pip
+ * for each one on a living bearer, or its own statuses' highest
+ * `upkeepMultiplier` (#2321), Nature's Renewal's 2, wherever the bearers
+ * stand. Derived, never stored on the caster, so a strip, a replacement
+ * or a death ends the upkeep with the status.
  */
-export function upkeepPips(casterId: string, bearers: Iterable<Combatant>): number {
-  let pips = 0;
+export function upkeepPips(maintainer: Combatant, bearers: Iterable<Combatant>): number {
+  const multiplier = maintainer.statuses.active.reduce(
+    (highest, { id }) => Math.max(highest, getStatusDefinition(id).upkeepMultiplier),
+    1,
+  );
+  return -maintainedEnchantments(maintainer.id, bearers) * multiplier;
+}
+
+/**
+ * How many enchantments `casterId` maintains on living bearers (#2260):
+ * entries, not pips, so an upkeep multiplier changes none.
+ */
+export function maintainedEnchantments(casterId: string, bearers: Iterable<Combatant>): number {
+  let count = 0;
   for (const bearer of bearers) {
     if (bearer.dead) {
       continue;
     }
     for (const status of bearer.statuses.active) {
       if (status.maintained !== null && status.sourceId === casterId) {
-        pips -= 1;
+        count += 1;
       }
     }
   }
-  return pips;
+  return count;
 }
 
 /**

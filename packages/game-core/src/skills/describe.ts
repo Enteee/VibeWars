@@ -590,6 +590,24 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `attacks ${change}% ${way}${weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`}`,
     );
   }
+  // Archer's Signet's "150% longer while wielding a bow" (#2321).
+  if (statAtTwelve(definition.conditionDurationMultiplier) !== 1) {
+    const longer = statText(definition.conditionDurationMultiplier, ranks, (multiplier) =>
+      String(Math.round((multiplier - 1) * 100)),
+    );
+    const weapon = definition.conditionDurationMultiplierWeapon;
+    parts.push(
+      `conditions you apply last ${longer}% longer${weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`}`,
+    );
+  }
+  if (definition.upkeepMultiplier !== 1) {
+    parts.push(`enchantments you maintain cost ${String(definition.upkeepMultiplier)}× the upkeep`);
+  }
+  if (definition.overcastSurcharge > 0) {
+    parts.push(
+      `spells that cause Overcast cause ${String(definition.overcastSurcharge)} more as they finish`,
+    );
+  }
   if (definition.projectileSpeedMultiplier !== 1) {
     parts.push(`arrows move ${String(definition.projectileSpeedMultiplier)}× as fast`);
   }
@@ -1874,6 +1892,12 @@ function describeTrigger(
   bearerIsCaster: boolean,
 ): TriggerLine[] {
   const amount = (magnitude: Magnitude): string => shown(describeMagnitude(magnitude, ranks));
+  // Rising Bile's "1...6 damage for each second it was in effect" (#2321).
+  const dealt = (effect: DamageEffect): string =>
+    effect.per === undefined
+      ? `${amount(effect.amount)}${typeWord(effect.type)} damage`
+      : (resolveMagnitudeAtRanks(effect.amount, ranks) === 0 ? "" : `${amount(effect.amount)} + `) +
+        `${amount(effect.per.amount)}${typeWord(effect.type)} damage ${perCountText(effect.per, ranks, "on it")}`;
   const clause = (text: string): TriggerLine => ({ text, clause: true });
   const sentence = (text: string): TriggerLine => ({ text, clause: false });
   // The caster's foes beside a hexed or conditioned bearer are the
@@ -2079,7 +2103,7 @@ function describeTrigger(
       return [sentence(`${when}, that attack is interrupted`)];
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
-      return [clause(`takes ${amount(effect.amount)}${typeWord(effect.type)} damage ${when}`)];
+      return [clause(`takes ${dealt(effect)} ${when}`)];
     }
     // Judge's Intervention's (#1789): "... that would kill it is negated,
     // and the foe who dealt it takes 150 holy damage".
@@ -2157,7 +2181,7 @@ function describeTrigger(
             : `up to ${String(countAt(effect.maxTargets, ranks))} ${allies} take`;
       return effect.effects.map((inner) =>
         inner.kind === "damage" && when !== DROPPED
-          ? clause(`${struck} ${amount(inner.amount)}${typeWord(inner.type)} damage ${when}`)
+          ? clause(`${struck} ${dealt(inner)} ${when}`)
           : inner.kind === "apply-status"
             ? sentence(`${when}: ${allies} ${suffered(inner, ranks)}`)
             : sentence(`${when}: ${allies}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
@@ -2298,7 +2322,7 @@ function describeOwnSkillModifier(
     filter.attributeId === undefined
       ? undefined
       : (getAttribute(filter.attributeId)?.name ?? filter.attributeId),
-    one ? kind : `${kind}s`,
+    one ? kind : kind === "hex" ? "hexes" : `${kind}s`,
   ].filter((word) => word !== undefined);
   const which = uses === undefined ? "your" : one ? "your next" : `your next ${String(uses)}`;
   return `${which} ${named.join(" ")} ${changes.join(" and ")}`;
@@ -3072,14 +3096,29 @@ function countEach(count: CountRule, onTarget: string): string {
   return count.kind === "statuses"
     ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : onTarget}`
     : count.kind === "recharging-skills"
-      ? `of your recharging ${getAttribute(count.attributeId)?.name ?? count.attributeId} skills`
+      ? `of your recharging ${rechargingSkillsNoun(count)}`
       : count.kind === "energy"
         ? `point of Energy ${count.on === "caster" ? "you have" : "they have"}`
         : count.kind === "removed"
           ? `${count.categories.join(" or ")} removed`
           : count.kind === "maintained-enchantments"
             ? "enchantment you are maintaining"
-            : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+            : count.kind === "held-seconds"
+              ? "second it was in effect"
+              : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+}
+
+/**
+ * The skills a `recharging-skills` count counts, plural (#2321): "Beast
+ * Mastery skills", "binding rituals".
+ */
+function rechargingSkillsNoun(count: Extract<CountRule, { kind: "recharging-skills" }>): string {
+  const attribute =
+    count.attributeId === undefined
+      ? undefined
+      : (getAttribute(count.attributeId)?.name ?? count.attributeId);
+  const kind = count.type === undefined ? "skills" : `${count.type.replaceAll("-", " ")}s`;
+  return attribute === undefined ? kind : `${attribute} ${kind}`;
 }
 
 /** All of what `count` counts, as a condition names it (#2247): "target's hexes", "your enchantments". */
@@ -3103,9 +3142,11 @@ function perCountNoun(count: CountRule): string {
           ? `removed ${count.categories.join(" or ")}`
           : count.kind === "maintained-enchantments"
             ? "maintained enchantment"
-            : count.kind === "foes-within"
-              ? "foe"
-              : "ally";
+            : count.kind === "held-seconds"
+              ? "second held"
+              : count.kind === "foes-within"
+                ? "foe"
+                : "ally";
 }
 
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
@@ -3333,6 +3374,11 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         magnitude,
       };
     }
+    case "balance-health":
+      return {
+        text: "Whoever of you and target foe has more Health loses half the difference; the other gains that much",
+        magnitude: undefined,
+      };
     case "apply-status":
       // A stance, a preparation or a glyph is yours alone and one at a
       // time (#523, #525, #526), so it reads as what it is rather than as
@@ -3838,6 +3884,8 @@ function headlineOf(
         scales: percent.attributeId !== undefined,
       };
     }
+    case "balance-health":
+      return { text: "balances health with target foe", scales: false };
     case "if": {
       // Power Spike's card leads with its damage, though it needs a spell.
       const inner = effect.effects.flatMap((each) => headlineOf(each, ranks) ?? []);

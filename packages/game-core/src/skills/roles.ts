@@ -30,6 +30,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return ["interrupt"];
     case "heal":
     case "give-health":
+    case "balance-health":
     case "steal-from-corpse":
     case "drain-nearest-spirit":
       return ["healing"];

@@ -153,6 +153,7 @@ describe("bearer-dies (#1762)", () => {
         sourceId: "d",
         expired: false,
         death: true,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },

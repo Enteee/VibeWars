@@ -551,7 +551,7 @@ export function skillBlow(skill: Skill, caster: Combatant, surroundings: Surroun
       rule?.bonusPer,
       caster,
       undefined,
-      surroundings,
+      { surroundings },
       [],
     ),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),

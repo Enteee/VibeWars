@@ -87,7 +87,11 @@ export type RangerStatusId =
   | "expert-focus"
   | "rapid-fire"
   // Ranger staples (#2190).
-  | "tigers-fury";
+  | "tigers-fury"
+  // Ranger mechanics (#2321).
+  | "natures-renewal"
+  | "equinox"
+  | "archers-signet";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -744,5 +748,43 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   "tigers-fury": define("tigers-fury", "Tiger's Fury", "stance", {
     profession: "ranger",
     attackDurationMultiplier: 0.75,
+  }),
+  // Nature's Renewal's aura (#2321), PvP: "enchantments and hexes cast by
+  // non-spirit creatures take 50...75% longer to cast, and it costs twice
+  // as much Energy to maintain enchantments". The cast penalty by its
+  // summoner's Wilderness Survival; the doubled upkeep flat.
+  "natures-renewal": define("natures-renewal", "Nature's Renewal", "skill-effect", {
+    profession: "ranger",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "enchantment" },
+        {
+          activationMultiplier: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 1.5, atTwelve: 1.7 },
+          },
+        },
+      ),
+      ownSkills(
+        { type: "hex" },
+        {
+          activationMultiplier: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 1.5, atTwelve: 1.7 },
+          },
+        },
+      ),
+    ],
+    upkeepMultiplier: 2,
+  }),
+  // Equinox's aura (#2321): "Spells cast within its range that cause
+  // Overcast cause an additional 10 Overcast", as they finish.
+  equinox: define("equinox", "Equinox", "skill-effect", {
+    profession: "ranger",
+    overcastSurcharge: 10,
+  }),
+  // "Conditions you apply while wielding a bow last 150% longer" (#2321).
+  "archers-signet": define("archers-signet", "Archer's Signet", "skill-effect", {
+    profession: "ranger",
+    conditionDurationMultiplier: 2.5,
+    conditionDurationMultiplierWeapon: "bow",
   }),
 };

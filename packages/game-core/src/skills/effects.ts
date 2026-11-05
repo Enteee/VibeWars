@@ -48,7 +48,7 @@ import {
   raisedMaxHealth,
   rankOf,
   statusRanks,
-  upkeepPips,
+  maintainedEnchantments,
 } from "./tick.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange } from "../geometry.js";
@@ -567,7 +567,7 @@ function healAmount(
   effect: HealEffect,
   caster: Combatant,
   target: Combatant | undefined,
-  surroundings: Surroundings,
+  context: CountContext,
   earlier: readonly CombatEvent[],
   usedSkill: SlotSkill | undefined,
 ): number {
@@ -580,7 +580,7 @@ function healAmount(
     effect.per,
     caster,
     target,
-    surroundings,
+    context,
     earlier,
   );
   // Imbue Health's (#2207): a share of the caster's Health, capped.
@@ -591,11 +591,11 @@ function healAmount(
   if (perAlly === undefined) {
     return base;
   }
-  const at = surroundings.get(caster.id)?.position;
+  const at = context.surroundings.get(caster.id)?.position;
   const allies =
     at === undefined
       ? 1
-      : [...surroundings.values()].filter(
+      : [...context.surroundings.values()].filter(
           ({ combatant, position }) =>
             !combatant.dead &&
             combatant.team === caster.team &&
@@ -857,6 +857,9 @@ function perOwnCreature(
   return Math.min(amount * creatures, resolveMagnitude(per.max, caster));
 }
 
+/** What a count reads of the use it lands in (#2321). */
+export type CountContext = Pick<SkillContext, "surroundings" | "heldSeconds">;
+
 /**
  * `base` plus `per`'s amount for each of what it counts as the effect
  * lands on `target` (#1760), capped at its `max`. Without `per`, `base`.
@@ -866,7 +869,7 @@ export function withPerCount(
   per: PerCount | undefined,
   caster: Combatant,
   target: Combatant | undefined,
-  surroundings: Surroundings,
+  context: CountContext,
   earlier: readonly CombatEvent[],
 ): number {
   if (per === undefined) {
@@ -874,8 +877,7 @@ export function withPerCount(
   }
   const total =
     base +
-    resolveMagnitude(per.amount, caster) *
-      countOf(per.count, caster, target, surroundings, earlier);
+    resolveMagnitude(per.amount, caster) * countOf(per.count, caster, target, context, earlier);
   return per.max === undefined ? total : Math.min(total, resolveMagnitude(per.max, caster));
 }
 
@@ -887,7 +889,7 @@ function countOf(
   rule: CountRule,
   caster: Combatant,
   target: Combatant | undefined,
-  surroundings: Surroundings,
+  { surroundings, heldSeconds }: CountContext,
   earlier: readonly CombatEvent[],
 ): number {
   switch (rule.kind) {
@@ -919,14 +921,21 @@ function countOf(
           ).length;
     }
     case "recharging-skills": {
-      const owner = livingOwnerOf(caster, surroundings);
-      return owner === undefined
+      const whose = rule.of === "owner" ? livingOwnerOf(caster, surroundings) : caster;
+      return whose === undefined
         ? 0
-        : [...owner.cast.rechargeRemaining].filter(
-            ([key, remaining]) =>
-              remaining > 0 && getSkill(skillIdOfKey(key))?.attributeId === rule.attributeId,
-          ).length;
+        : [...whose.cast.rechargeRemaining.keys()].filter((key) => {
+            const skill = getSkill(skillIdOfKey(key));
+            return (
+              whose.cast.isRecharging(key) &&
+              skill !== undefined &&
+              (rule.attributeId === undefined || skill.attributeId === rule.attributeId) &&
+              (rule.type === undefined || skill.type === rule.type)
+            );
+          }).length;
     }
+    case "held-seconds":
+      return heldSeconds ?? 0;
     case "energy": {
       const bearer = rule.on === "caster" ? caster : target;
       return bearer === undefined ? 0 : Math.floor(bearer.energy);
@@ -937,7 +946,7 @@ function countOf(
         0,
       );
     case "maintained-enchantments":
-      return -upkeepPips(
+      return maintainedEnchantments(
         caster.id,
         new Set([caster, ...[...surroundings.values()].map(({ combatant }) => combatant)]),
       );
@@ -1324,6 +1333,26 @@ function inflictedScale(statusId: StatusId, bearer: Combatant, context: SkillCon
     return 1;
   }
   return caster.equipment.hitMods.inflictedDurationScale.get(statusId) ?? 1;
+}
+
+/**
+ * How much longer a condition `caster` applies lasts for its statuses'
+ * `conditionDurationMultiplier` (#2321), each by its source's rank: one
+ * held for a weapon counts only while `caster`'s main hand is one,
+ * Archer's Signet's bow. 1 for anything but a condition.
+ */
+function conditionDurationScale(statusId: StatusId, caster: Combatant): number {
+  if (getStatusDefinition(statusId).category !== "condition") {
+    return 1;
+  }
+  const wielded = caster.equipment.mainHand.weapon.id;
+  return caster.statuses.active.reduce((product, { id, ranks }) => {
+    const definition = getStatusDefinition(id);
+    const weapon = definition.conditionDurationMultiplierWeapon;
+    return weapon === undefined || wieldsFor(wielded, weapon)
+      ? product * statAt(definition.conditionDurationMultiplier, ranks)
+      : product;
+  }, 1);
 }
 
 /**
@@ -1771,7 +1800,7 @@ export function applyEffect(
           effect.per,
           caster,
           target,
-          context.surroundings,
+          context,
           earlier,
         ),
         lostBy,
@@ -1821,7 +1850,7 @@ export function applyEffect(
       const heal = ownHeal(
         perEnergyLost(
           effect,
-          healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
+          healAmount(effect, caster, target, context, earlier, context.usedSkill),
           lostBy,
           earlier,
         ),
@@ -1861,7 +1890,7 @@ export function applyEffect(
                 effect.per,
                 caster,
                 target,
-                context.surroundings,
+                context,
                 earlier,
               ),
               lostBy,
@@ -1892,7 +1921,7 @@ export function applyEffect(
           effect.per,
           caster,
           target,
-          context.surroundings,
+          context,
           earlier,
         ) * adrenalineGainTimes(caster, effect);
       const gainer =
@@ -1926,7 +1955,7 @@ export function applyEffect(
           effect.per,
           caster,
           target,
-          context.surroundings,
+          context,
           earlier,
         ),
         events,
@@ -1974,7 +2003,7 @@ export function applyEffect(
         const amount = resolveMagnitude(effect.amount, context.ranksFrom ?? caster);
         loseHealth(
           target,
-          withPerCount(amount, effect.per, caster, target, context.surroundings, earlier),
+          withPerCount(amount, effect.per, caster, target, context, earlier),
           "health-loss",
           events,
         );
@@ -2017,6 +2046,26 @@ export function applyEffect(
       return events;
     }
 
+    case "balance-health": {
+      if (target === undefined || target.dead || caster.dead || target === caster) {
+        return events;
+      }
+      // Neither a heal nor damage: the one above gives up half the gap,
+      // as much as the other can take when the foe gives, all of it when
+      // the caster does, and the other gains what it actually lost.
+      const half = Math.floor(Math.abs(target.health - caster.health) / 2);
+      const [giver, taker] = target.health > caster.health ? [target, caster] : [caster, target];
+      const before = giver.health;
+      loseHealth(
+        giver,
+        giver === target ? Math.min(half, effectiveMaxHealth(caster) - caster.health) : half,
+        "health-loss",
+        events,
+      );
+      gainHealth(taker, before - giver.health, events);
+      return events;
+    }
+
     case "apply-random-status": {
       if (target === undefined || target.dead || effect.choices.length === 0) {
         return events;
@@ -2048,7 +2097,7 @@ export function applyEffect(
         effect.per,
         caster,
         target,
-        context.surroundings,
+        context,
         earlier,
       );
       const base =
@@ -2065,6 +2114,7 @@ export function applyEffect(
         base *
           (context.own?.durationMultiplier ?? 1) *
           inflictedScale(effect.statusId, bearer, context) *
+          conditionDurationScale(effect.statusId, caster) *
           // Of Enchanting's (#2011): an enchantment its wielder casts lasts longer.
           (getStatusDefinition(effect.statusId).category === "enchantment"
             ? caster.equipment.spellMods.enchantmentDurationScale
@@ -2910,11 +2960,11 @@ export function stateHolds(
       );
     // A state is read before the use, when it has removed nothing.
     case "count-at-least":
-      return countOf(condition.count, caster, target, surroundings, []) >= condition.atLeast;
+      return countOf(condition.count, caster, target, { surroundings }, []) >= condition.atLeast;
     case "count-at-most":
       return (
-        countOf(condition.count, caster, target, surroundings, []) <=
-        countOf(condition.than, caster, target, surroundings, [])
+        countOf(condition.count, caster, target, { surroundings }, []) <=
+        countOf(condition.than, caster, target, { surroundings }, [])
       );
     case "target-casting-or-attacking": {
       const cast = target.cast.activeCast;
@@ -2996,7 +3046,7 @@ function removeCount(
   }
   // Signet of Twilight's one for each hex (#2247), counted before it removes.
   if (effect.perCount !== undefined) {
-    return countOf(effect.perCount, caster, target, surroundings, earlier);
+    return countOf(effect.perCount, caster, target, { surroundings }, earlier);
   }
   const count =
     effect.count === "all"
@@ -3405,6 +3455,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "transfer-conditions":
     case "spread-conditions":
     case "give-health":
+    case "balance-health":
     case "interrupt":
     case "apply-random-status":
     case "shadow-step":
