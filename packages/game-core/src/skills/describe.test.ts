@@ -1637,7 +1637,7 @@ describe("Elementalist auras (#2095)", () => {
       "If you are Overcast: allies in earshot around you gain Magnetic Surge for 4s (100% chance to block attacks, ends after 1 incoming attack)",
     ]);
     expect(texts("elementalist.sliver-armor")).toEqual([
-      "Applies Sliver Armor for 10s (45% chance to block attacks, the nearest of nearby foes takes 29 earth damage whenever it is targeted by a foe's spell or attack)",
+      "Applies Sliver Armor for 10s (45% chance to block attacks, the nearest of nearby foes takes 29 earth damage whenever you are targeted by a foe's spell or attack)",
     ]);
   });
 
