@@ -627,6 +627,13 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "natures-renewal": icon("natures-renewal"),
   equinox: icon("equinox"),
   "archers-signet": icon("archers-signet"),
+  // Staples (#2368).
+  "foxs-promise": icon("foxs-promise"),
+  "seeping-wound": icon("seeping-wound"),
+  "shameful-fear": icon("shameful-fear"),
+  "spirit-channeling": icon("spirit-channeling"),
+  "renewing-surge": icon("renewing-surge"),
+  "mystic-corruption": icon("mystic-corruption"),
   // Smoke Powder Defense (#2362).
   "smoke-powder-defense": icon("smoke-powder-defense"),
 };
