@@ -3863,14 +3863,18 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
                     ? `gain ${shown(describeMagnitude(each.amount, ranks))} Health`
                     : each.kind === "lose-health" && each.recipient === "target"
                       ? `lose ${shown(describeMagnitude(each.amount, ranks))} Health`
-                      : each.kind === "remove-status" && each.from === undefined
-                        ? lostInSplash(each, ranks)
-                        : // Verata's Sacrifice's (#1986).
-                          each.kind === "transfer-conditions" &&
-                            each.from === "target" &&
-                            resolveMagnitudeAtRanks(each.count, ranks) === Number.POSITIVE_INFINITY
-                          ? "transfer all their conditions to you"
-                          : lowerFirst(description.text),
+                      : // Fear Me!'s "lose 5 energy" (#2320).
+                        each.kind === "energy-loss" && each.on !== "caster"
+                        ? lowerFirst(description.text).replace(/^target loses/, "lose")
+                        : each.kind === "remove-status" && each.from === undefined
+                          ? lostInSplash(each, ranks)
+                          : // Verata's Sacrifice's (#1986).
+                            each.kind === "transfer-conditions" &&
+                              each.from === "target" &&
+                              resolveMagnitudeAtRanks(each.count, ranks) ===
+                                Number.POSITIVE_INFINITY
+                            ? "transfer all their conditions to you"
+                            : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;

@@ -424,4 +424,10 @@ describe("tooltips (#2320)", () => {
       "If any adjacent foe is knocked down: recharges all your stances",
     );
   });
+
+  it('say foes in earshot "lose" energy, not "target loses"', () => {
+    expect(
+      describeSkill(skill("warrior.fear-me"), RANK_12).effects.map(({ text }) => text),
+    ).toContain("Foes in earshot around you lose 5 energy");
+  });
 });
