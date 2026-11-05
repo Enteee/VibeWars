@@ -974,6 +974,14 @@ export interface StatusDefinition {
    */
   readonly damageTakenMultiplier: StatusStat;
   /**
+   * As `damageTakenMultiplier`, but on the first attack packet only that
+   * lands on the bearer under it (#2362): Smoke Powder Defense's "the next
+   * time you are struck, you take half damage", 0.5. Spent as that packet is
+   * mitigated, so a second blow in the same tick takes it whole; a spell's
+   * packet, or a blocked or missed attack, spends nothing. 1: none.
+   */
+  readonly attackDamageTakenMultiplier: number;
+  /**
    * Taken off every damage packet the bearer takes, after armor and
    * `damageTakenMultiplier` (#1108): Call of Protection's 17. Never below 0.
    */
@@ -2445,6 +2453,8 @@ export interface ActiveStatus {
   hitsLeft: number | undefined;
   /** Packets the bearer took under it (`damageReductionPerHitTaken`). */
   hitsTaken: number;
+  /** Its `attackDamageTakenMultiplier` has cut an attack already (#2362). */
+  struck: boolean;
   /** The bearer's unblockable attacks before it ends (`unblockableAttacks`); `undefined`: none. */
   unblockableLeft: number | undefined;
   /** The bearer's attacks before it ends (`endsAfterAttackCount`); `undefined`: no such limit. */
@@ -3133,6 +3143,7 @@ export class StatusSet {
       existing.attacksMadeLeft = definition.endsAfterAttackCount;
       existing.castsLeft = definition.borrowsAttribute?.spells;
       existing.hitsTaken = 0;
+      existing.struck = false;
       this.#statuses.set(id, existing);
       return false;
     }
@@ -3143,6 +3154,7 @@ export class StatusSet {
       attacksLeft: definition.endsAfterAttacks,
       hitsLeft: definition.endsAfterHits?.count,
       hitsTaken: 0,
+      struck: false,
       unblockableLeft: definition.unblockableAttacks,
       attacksMadeLeft: definition.endsAfterAttackCount,
       spellsLeft: definition.nextSpells?.count,
@@ -3220,6 +3232,7 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       hitsTaken: 0,
+      struck: false,
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
@@ -3275,6 +3288,7 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       hitsTaken: 0,
+      struck: false,
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
@@ -3319,6 +3333,7 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       hitsTaken: 0,
+      struck: false,
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
@@ -3761,6 +3776,23 @@ export class StatusSet {
     }
     this.#end(ended);
     return ended;
+  }
+
+  /**
+   * The bearer is struck by an attack packet (#2362): every status that
+   * cuts the first such packet and has not yet cut one is spent now.
+   * Returns their multipliers, multiplied: 1 with none.
+   */
+  public strikeAttackDamageTaken(): number {
+    let multiplier = 1;
+    for (const status of this.#statuses.values()) {
+      const cut = getStatusDefinition(status.id).attackDamageTakenMultiplier;
+      if (cut !== 1 && !status.struck) {
+        status.struck = true;
+        multiplier *= cut;
+      }
+    }
+    return multiplier;
   }
 
   /**
