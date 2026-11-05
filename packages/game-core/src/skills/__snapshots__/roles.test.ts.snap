@@ -76,7 +76,6 @@ exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
   "assassin.signet-of-toxic-shock": "",
   "assassin.signet-of-twilight": "",
   "assassin.siphon-speed": "hex",
-  "assassin.smoke-powder-defense": "defence",
   "assassin.spirit-walk": "",
   "assassin.swap": "",
   "assassin.temple-strike": "interrupt condition",

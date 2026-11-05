@@ -19,8 +19,8 @@ import { resolveSwing } from "./weapon-attack.js";
 
 /**
  * Ranger staples (#2317): Choking Gas, Dryder's Defenses, Healing Spring,
- * Snare, Bestial Fury, Scavenger's Focus, Piercing Trap, Feral Aggression
- * and the Assassin's Smoke Powder Defense, on today's primitives. Every
+ * Snare, Bestial Fury, Scavenger's Focus, Piercing Trap and Feral
+ * Aggression, on today's primitives. Every
  * scaled number at rank 12 and at rank 0.
  */
 
@@ -31,7 +31,6 @@ const rankAll = (rank: number): ReadonlyMap<string, number> =>
     ["ranger.wilderness-survival", rank],
     ["ranger.beast-mastery", rank],
     ["ranger.marksmanship", rank],
-    ["assassin.shadow-arts", rank],
   ]);
 const RANK_12 = rankAll(12);
 const RANK_0 = rankAll(0);
@@ -50,7 +49,6 @@ function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
 }
 
 const BOW = wielding(WEAPONS.flatbow, "ranger.marksmanship");
-const SWORD = wielding(WEAPONS.sword, "warrior.swordsmanship");
 
 /** A float stream of 0.9: no crit, no block, no blind miss. */
 const steady = (): SimulationRng =>
@@ -144,7 +142,6 @@ describe("the nine are the corpus's (#2317)", () => {
     ["ranger.scavengers-focus", 1471, "skill", true, "wilderness-survival", 5, 0, 12],
     ["ranger.piercing-trap", 2140, "trap", false, "wilderness-survival", 10, 2, 30],
     ["ranger.feral-aggression", 2142, "skill", false, "beast-mastery", 15, 0, 20],
-    ["assassin.smoke-powder-defense", 2136, "stance", false, "shadow-arts", 5, 0, 20],
   ] as const)(
     "%s: gwId %i, %s",
     (id, gwId, type, elite, attribute, energy, activation, recharge) => {
@@ -484,63 +481,4 @@ describe("Feral Aggression (#2317)", () => {
       expect(participant.combatant.statuses.has("feral-aggression")).toBe(false);
     }
   });
-});
-
-describe("Smoke Powder Defense (#2317)", () => {
-  const SMOKE = "assassin.smoke-powder-defense";
-
-  /** `a`'s first two sword blows on `r`, and who is Blinded how long, Smoke Powder up or not. */
-  function struck(ranks: ReadonlyMap<string, number>, smoke: boolean) {
-    const sim = match(
-      [SMOKE],
-      ranks,
-      spec("a", 1, vec2(30, 0), { equipment: SWORD }),
-      spec("b", 1, vec2(-30, 0)),
-      spec("c", 1, vec2(-AREA_ADJACENT - 40, 0)),
-    );
-    if (smoke) {
-      press(sim, SMOKE);
-      stepFor(sim, DT);
-    }
-    expect(sim.requestAttack("a", "r")?.ok).toBe(true);
-    const blows: number[] = [];
-    let blind: (number | undefined)[] = [];
-    for (let i = 0; i < Math.round(8 / DT) && blows.length < 2; i += 1) {
-      for (const entry of sim.step(DT).log) {
-        for (const event of entry.events) {
-          if (event.kind === "damage" && event.targetId === "r" && entry.sourceId === "a") {
-            blows.push(event.amount);
-            if (blows.length === 1) {
-              stepFor(sim, DT);
-              blind = ["a", "b", "c"].map(
-                (id) => get(sim, id).combatant.statuses.get("blind")?.remainingSeconds,
-              );
-            }
-          }
-        }
-      }
-    }
-    return { blows, blind, smoke: get(sim, "r").combatant.statuses.has("smoke-powder-defense") };
-  }
-
-  it.each([
-    [RANK_12, 5],
-    [RANK_0, 2],
-  ] as const)(
-    "halves the next blow, Blinds adjacent foes 2...6 seconds, and ends (%#)",
-    (ranks, seconds) => {
-      const plain = struck(ranks, false);
-      const smoke = struck(ranks, true);
-      const [full = 0] = plain.blows;
-      expect(smoke.blows[0]).toBeCloseTo(full / 2, -0.5);
-      expect(smoke.blows[1]).toBe(plain.blows[1]);
-      expect(smoke.smoke).toBe(false);
-      const [a, b, c] = smoke.blind;
-      expect(a).toBeGreaterThan(seconds - 0.2);
-      expect(a).toBeLessThanOrEqual(seconds);
-      expect(b).toBeGreaterThan(seconds - 0.2);
-      expect(c).toBeUndefined();
-      expect(plain.blind).toEqual([undefined, undefined, undefined]);
-    },
-  );
 });

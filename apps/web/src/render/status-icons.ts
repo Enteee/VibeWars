@@ -590,7 +590,6 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "bestial-fury": icon("bestial-fury"),
   "scavengers-focus": icon("scavengers-focus"),
   "feral-aggression": icon("feral-aggression"),
-  "smoke-powder-defense": icon("smoke-powder-defense"),
   // Monk and Ranger mechanics (#2189).
   "spell-shield": icon("spell-shield"),
   "convert-hexes": icon("convert-hexes"),
