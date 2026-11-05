@@ -1626,11 +1626,11 @@ describe("Elementalist auras (#2095)", () => {
   it("says what each blocks, who the Overcast reaches and what strikes back, at rank 12", () => {
     expect(texts("elementalist.magnetic-aura")).toEqual([
       "Applies Magnetic Aura for 7s (100% chance to block attacks, the next time it blocks, the foe who dealt it takes 42 damage)",
-      "If you are Overcast: all party members gain Magnetic Aura for 7s (100% chance to block attacks, the next time it blocks, the foe who dealt it takes 42 damage)",
+      "If you are Overcast: party members in earshot gain Magnetic Aura for 7s (100% chance to block attacks, the next time it blocks, the foe who dealt it takes 42 damage)",
     ]);
     expect(texts("elementalist.swirling-aura")).toEqual([
       "Applies Swirling Aura for 6s (+5 Health regeneration, 50% chance to block projectiles)",
-      "If you are Overcast: all party members gain Swirling Aura for 6s (+5 Health regeneration, 50% chance to block projectiles)",
+      "If you are Overcast: party members in earshot gain Swirling Aura for 6s (+5 Health regeneration, 50% chance to block projectiles)",
     ]);
     expect(texts("elementalist.magnetic-surge")).toEqual([
       "Deals 63 damage",
