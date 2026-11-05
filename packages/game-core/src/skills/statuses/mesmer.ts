@@ -87,7 +87,9 @@ export type MesmerStatusId =
   | "soothing-images"
   | "arcane-languor"
   | "illusion-of-pain"
-  | "ether-phantom";
+  | "ether-phantom"
+  // Staples (#2367).
+  | "shared-burden";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -1048,5 +1050,13 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         skillId: "mesmer.ether-phantom",
       },
     ],
+  }),
+  // Staples (#2367). Sum of All Fears' 33% on target and foes in the area.
+  "shared-burden": define("shared-burden", "Shared Burden", "hex", {
+    profession: "mesmer",
+    attribute: "mesmer.illusion-magic",
+    moveSpeedMultiplier: 0.67,
+    attackDurationMultiplier: 1.33,
+    castTimeMultiplier: 1.33,
   }),
 };

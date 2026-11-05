@@ -623,6 +623,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "dwarven-battle-stance": icon("dwarven-battle-stance"),
   // Signet of Suffering (#2333).
   "signet-of-suffering": icon("signet-of-suffering"),
+  // Mesmer, Monk and Elementalist staples (#2367).
+  "shared-burden": icon("shared-burden"),
+  "strength-of-honor": icon("strength-of-honor"),
+  "frigid-armor": icon("frigid-armor"),
+  "earthen-shackles": icon("earthen-shackles"),
+  "ether-prism": icon("ether-prism"),
 };
 
 const GAP = 2;

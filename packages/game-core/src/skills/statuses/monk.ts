@@ -74,7 +74,9 @@ export type MonkStatusId =
   | "aura-of-faith"
   | "peace-and-harmony"
   | "vengeance"
-  | "balthazars-spirit";
+  | "balthazars-spirit"
+  // Staples (#2367).
+  | "strength-of-honor";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -941,5 +943,15 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         skillId: "monk.balthazars-spirit",
       },
     ],
+  }),
+  // Staples (#2367). "Target ally deals 1...5 more damage in melee"
+  // (PvP): 4 at rank 12. A bow hit gains nothing.
+  "strength-of-honor": define("strength-of-honor", "Strength of Honor", "enchantment", {
+    profession: "monk",
+    attribute: "monk.smiting-prayers",
+    attackDamageDelta: {
+      scaling: { attributeId: "monk.smiting-prayers", atZero: 1, atTwelve: 4.2 },
+    },
+    attackDamageDeltaWeapon: "melee",
   }),
 };

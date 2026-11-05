@@ -79,7 +79,11 @@ export type ElementalistStatusId =
   | "rust"
   // Elementalist staples (#2288).
   | "gust"
-  | "mirror-of-ice";
+  | "mirror-of-ice"
+  // Staples (#2367).
+  | "frigid-armor"
+  | "earthen-shackles"
+  | "ether-prism";
 
 /** Incendiary Bonds' blast (#2289), on its bearer and the foes near it. */
 const INCENDIARY_BLAST = {
@@ -797,6 +801,65 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     profession: "elementalist",
     attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
+  }),
+  // Staples (#2367). "+10...40 armor against physical damage and cannot
+  // be set on fire": +34 at rank 12. Burning already on its bearer stays.
+  "frigid-armor": define("frigid-armor", "Frigid Armor", "enchantment", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    conditionalArmor: [
+      {
+        amount: { scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 34 } },
+        conditions: [{ kind: "vs-physical" }],
+      },
+    ],
+    immuneTo: ["burning"],
+  }),
+  // "Move 90% slower. When Earthen Shackles ends, it applies Weakness for
+  // 5...20 seconds": 17 s. Any end, a strip included.
+  "earthen-shackles": define("earthen-shackles", "Earthen Shackles", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.earth-magic",
+    moveSpeedMultiplier: 0.1,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "weakness",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+        skillId: "elementalist.earthen-shackles",
+      },
+    ],
+  }),
+  // "All damage you take is reduced by 75%. When Ether Prism ends, you
+  // gain 5...20 Energy": 17. A skill effect, never stripped, so it ends
+  // when its 3 s run out.
+  "ether-prism": define("ether-prism", "Ether Prism", "skill-effect", {
+    profession: "elementalist",
+    attribute: "elementalist.energy-storage",
+    damageTakenMultiplier: 0.25,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "elementalist.energy-storage", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+        skillId: "elementalist.ether-prism",
+      },
+    ],
   }),
 };
 

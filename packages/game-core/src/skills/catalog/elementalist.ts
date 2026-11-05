@@ -5407,6 +5407,148 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "chilling-winds", durationSeconds: { flat: 10 } },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2367), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.frigid-armor",
+    name: "Frigid Armor",
+    gwId: 1261,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...25 seconds, you have +10...40 armor against physical damage
+    // and cannot be set on fire": 22 s, +34.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "frigid-armor",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 22 },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.earthen-shackles",
+    name: "Earthen Shackles",
+    gwId: 2000,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3 seconds, target and all nearby foes move 90% slower. When
+    // Earthen Shackles ends, it applies Weakness for 5...20 seconds."
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        includesCentre: true,
+        effects: [
+          { kind: "apply-status", statusId: "earthen-shackles", durationSeconds: { flat: 3 } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.ether-prism",
+    name: "Ether Prism",
+    gwId: 1377,
+    type: "skill",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3 seconds, all damage you take is reduced by 75%. When Ether
+    // Prism ends, you gain 5...20 Energy."
+    effects: [{ kind: "apply-status", statusId: "ether-prism", durationSeconds: { flat: 3 } }],
+  },
+  {
+    id: "elementalist.slippery-ground",
+    name: "Slippery Ground",
+    gwId: 2191,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    failChanceUnless: { attributeId: "elementalist.water-magic", rank: 5, chance: 0.5 },
+    // The base record; its numbers and words are the PvP split's (3398):
+    // "If target foe is Blind or moving, that foe is knocked down. (50%
+    // failure chance with Water Magic 4 or less.)"
+    effects: [
+      {
+        kind: "if",
+        condition: {
+          kind: "any-of",
+          conditions: [{ kind: "target-moving" }, { kind: "target-has-status", statusId: "blind" }],
+        },
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
+    ],
+  },
 ];
 
 /**

@@ -4274,4 +4274,82 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2367), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.healing-ribbon",
+    name: "Healing Ribbon",
+    gwId: 2062,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target other ally is healed for 20...110 Health. Up to 2 additional
+    // allies near target ally are healed for 10...100 Health": 92 and 82.
+    effects: [
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 92 } },
+      },
+      {
+        kind: "splash",
+        hits: "allies",
+        radius: AREA_NEARBY,
+        maxTargets: 2,
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "monk.healing-prayers", atZero: 10, atTwelve: 82 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "monk.strength-of-honor",
+    name: "Strength of Honor",
+    gwId: 243,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The base record; its numbers are the PvP split's (2999). "While you
+    // maintain this enchantment, target ally deals 1...5 more damage in
+    // melee": 4, for −1 energy pip on its caster.
+    effects: [{ kind: "maintain-status", on: "target", statusId: "strength-of-honor" }],
+  },
 ];
