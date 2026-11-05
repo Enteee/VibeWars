@@ -512,6 +512,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "ward-against-harm": icon("ward-against-harm"),
   "mark-of-subversion": icon("mark-of-subversion"),
   "mantra-of-recall": icon("mantra-of-recall"),
+  // Elementalist staples (#2289).
+  "armor-of-frost": icon("armor-of-frost"),
+  "incendiary-bonds": icon("incendiary-bonds"),
+  rust: icon("rust"),
   // Warrior conditions (#2096).
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
