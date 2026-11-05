@@ -1,7 +1,7 @@
 /** @type {Readonly<Record<string, import("../../skill-icon-table.mjs").SkillIconRow>>} */
 const rows = {
-  // Hypochondria (#2311), a stand-in until its art card.
-  "mesmer.hypochondria": { glyph: "drop-to-skull", modifier: "area" },
+  // Signet of Suffering (#2333), art #2354.
+  "necromancer.signet-of-suffering": { glyph: "signet-thorns" },
 };
 
 export default rows;
