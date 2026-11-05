@@ -281,6 +281,7 @@ describe("status definitions", () => {
       "well-of-weariness": -1,
       "lyssas-aura": 4,
       succor: 1,
+      "spirit-channeling": 5,
     });
   });
 
