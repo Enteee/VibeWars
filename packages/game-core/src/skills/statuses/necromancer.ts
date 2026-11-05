@@ -88,7 +88,13 @@ export type NecromancerStatusId =
   | "spoil-victor"
   // Staples (#2278).
   | "mark-of-subversion"
-  | "signet-of-suffering";
+  | "signet-of-suffering"
+  // Staples (#2314).
+  | "ulcerous-lungs"
+  | "blood-bond"
+  | "vile-miasma"
+  | "depravity"
+  | "cultists-fervor";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -859,5 +865,145 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       },
     ],
     endsWhenTriggered: true,
+  }),
+  // Staples (#2314). "...suffer from -4 Health degeneration when Bleeding,
+  // and whenever they use a shout or chant, they Bleed for 5...20 seconds",
+  // at the hexer's Curses: 17 at rank 12. A bearer that is not Bleeding
+  // loses nothing until it bleeds.
+  "ulcerous-lungs": define("ulcerous-lungs", "Ulcerous Lungs", "hex", {
+    profession: "necromancer",
+    whileUnder: {
+      categories: [],
+      statusIds: ["bleeding"],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: -4,
+      armorModifier: 0,
+      attackMissChance: 0,
+    },
+    triggers: (["shout", "chant"] as const).map((type) => ({
+      on: "bearer-uses-skill" as const,
+      usedSkill: { type },
+      target: "bearer" as const,
+      effects: [
+        {
+          kind: "apply-status" as const,
+          statusId: "bleeding" as const,
+          durationSeconds: {
+            scaling: { attributeId: "necromancer.curses", atZero: 5, atTwelve: 17 },
+          },
+        },
+      ],
+      skillId: "necromancer.ulcerous-lungs",
+    })),
+  }),
+  // "Whenever an ally hits one of them with an attack, that ally gains
+  // 5...20 Health. If one of these foes dies while hexed, all allies
+  // adjacent to that foe are healed for 20...100 Health", each at the
+  // hexer's Blood Magic: 17 and 84 at rank 12.
+  "blood-bond": define("blood-bond", "Blood Bond", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-hit-by-attack",
+        target: "source-on-offender",
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+        skillId: "necromancer.blood-bond",
+      },
+      {
+        on: "bearer-dies",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "allies",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "heal",
+                amount: {
+                  scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 84 },
+                },
+              },
+            ],
+          },
+        ],
+        skillId: "necromancer.blood-bond",
+      },
+    ],
+  }),
+  // "...that foe is hexed with Vile Miasma and suffers -1...5 Health
+  // degeneration for 10 seconds", at the hexer's Death Magic: 4 at rank 12.
+  "vile-miasma": define("vile-miasma", "Vile Miasma", "hex", {
+    profession: "necromancer",
+    healthPips: { scaling: { attributeId: "necromancer.death-magic", atZero: -1, atTwelve: -4.2 } },
+  }),
+  // "...whenever target foe casts a spell, that foe and one nearby foe lose
+  // 1...5 Energy", at the hexer's Curses: 4 at rank 12, once the spell is
+  // cast, so an interrupted one costs nothing.
+  depravity: define("depravity", "Depravity", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        target: "bearer",
+        effects: [
+          {
+            kind: "energy-loss",
+            amount: {
+              scaling: { attributeId: "necromancer.curses", atZero: 1, atTwelve: 4.2 },
+            },
+          },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: 1,
+            effects: [
+              {
+                kind: "energy-loss",
+                amount: {
+                  scaling: { attributeId: "necromancer.curses", atZero: 1, atTwelve: 4.2 },
+                },
+              },
+            ],
+          },
+        ],
+        skillId: "necromancer.depravity",
+      },
+    ],
+  }),
+  // "...your Necromancer spells cost -1...6 Energy to cast, but you suffer
+  // from Bleeding for 10 seconds each time you cast a Necromancer spell",
+  // at its Blood Magic: 5 less at rank 12.
+  "cultists-fervor": define("cultists-fervor", "Cultist's Fervor", "enchantment", {
+    profession: "necromancer",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "spell", profession: "necromancer" },
+        {
+          energyDiscount: {
+            scaling: { attributeId: "necromancer.blood-magic", atZero: 1, atTwelve: 5 },
+          },
+        },
+      ),
+    ],
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        usedSkill: { profession: "necromancer" },
+        target: "bearer",
+        effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 10 } }],
+        skillId: "necromancer.cultists-fervor",
+      },
+    ],
   }),
 };
