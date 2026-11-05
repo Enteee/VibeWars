@@ -100,6 +100,10 @@ const rows = {
   "monk.healing-ring": { glyph: "ring-healers" },
   // Caster staples 2 (#1872).
   "monk.vital-blessing": { glyph: "ring-heart" },
+  // Stand-in art (#2292).
+  "monk.purge-signet": { glyph: "signet-drop-struck" },
+  "monk.blessed-signet": { glyph: "signet-rings-energy" },
+  "monk.zealots-fire": { glyph: "figure-flame-strike" },
 };
 
 export default rows;

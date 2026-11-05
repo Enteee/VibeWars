@@ -2,7 +2,7 @@ import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js
 import type { StatusDefinition } from "../status.js";
 import type { DamageEffect } from "../types.js";
 import { ILLUSION_OF_PAIN_HEAL } from "../catalog/shared.js";
-import { define } from "./define.js";
+import { define, ownSkills } from "./define.js";
 
 export type MesmerStatusId =
   | "backfire"
@@ -75,6 +75,7 @@ export type MesmerStatusId =
   | "keystone-signet"
   // Staples (#2278).
   | "mantra-of-recall"
+  | "enchanters-conundrum"
   // Source-targets triggers and signet lockout (#2290).
   | "mind-wrack"
   | "ignorance"
@@ -879,6 +880,22 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         ],
         skillId: "mesmer.mantra-of-recall",
       },
+    ],
+  }),
+  // PvP (#2291): "For 10 seconds, target foe casts enchantments
+  // 100...200% slower", by the Mesmer's Domination Magic; the damage is
+  // the skill's.
+  "enchanters-conundrum": define("enchanters-conundrum", "Enchanter's Conundrum", "hex", {
+    profession: "mesmer",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "enchantment" },
+        {
+          activationMultiplier: {
+            scaling: { attributeId: "mesmer.domination-magic", atZero: 2, atTwelve: 2.8 },
+          },
+        },
+      ),
     ],
   }),
   // Source-targets triggers and signet lockout (#2290). "...whenever this

@@ -16,7 +16,7 @@ import { distance } from "../vec2.js";
 import { chainAllows, markChain } from "./chain.js";
 import { hitLocationOf, mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
 import {
-  applyDamage,
+  applyAttackDamage,
   applyEffects,
   gainEnergy,
   gainHealth,
@@ -681,7 +681,7 @@ export function landBlow(
   };
   // After the crit and damage rolls: the piece it lands on (#1135).
   const location = hitLocationOf(packet, rng);
-  applyDamage(
+  applyAttackDamage(
     victim,
     mitigate(packet, victim, rules, location, rng, surroundings),
     packet.type,

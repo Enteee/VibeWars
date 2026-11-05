@@ -86,6 +86,8 @@ const rows = {
   "assassin.shadow-walk": { glyph: "step-haste", modifier: "clock" },
   // PvP forms (#1951)
   "assassin.shadow-form": { glyph: "form-shadow" },
+  // Stand-in art (#2293).
+  "assassin.way-of-the-assassin": { glyph: "dagger-star" },
 };
 
 export default rows;
