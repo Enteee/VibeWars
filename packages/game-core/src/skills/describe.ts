@@ -1116,7 +1116,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`${getProfession(profession).name} enchantments recharge ${faster}% faster`);
   }
   parts.push(
-    ...definition.ownSkillModifiers.map((modifier) => describeOwnSkillModifier(modifier, ranks)),
+    ...definition.ownSkillModifiers.map((modifier) =>
+      describeOwnSkillModifier(
+        modifier,
+        ranks,
+        definition.category === "hex" ? "the target's" : "your",
+      ),
+    ),
   );
   if (definition.skillArmorPenetration !== undefined) {
     const { share, profession } = definition.skillArmorPenetration;
@@ -2330,7 +2336,8 @@ function describeNextSkill(
 /**
  * How a status changes its bearer's own skills of a kind (#1761): "your
  * Monk spells cost 5 less Energy (minimum 1)", "your next Dervish
- * enchantment lasts 122% longer".
+ * enchantment lasts 122% longer". On a hex they are the hexed foe's
+ * (#2337): "the target's signets take 2× as long to cast".
  */
 function describeOwnSkillModifier(
   {
@@ -2350,6 +2357,7 @@ function describeOwnSkillModifier(
     uses,
   }: OwnSkillModifier,
   ranks: ReadonlyMap<string, number> | undefined,
+  whose: "your" | "the target's",
 ): string {
   const one = uses === 1;
   // A scaled number prints at `ranks` (#2158), as a status stat does.
@@ -2409,7 +2417,8 @@ function describeOwnSkillModifier(
     // Iron Mist's "spells that target a foe" (#2311).
     filter.targetsFoe ? (one ? "that targets a foe" : "that target a foe") : undefined,
   ].filter((word) => word !== undefined);
-  const which = uses === undefined ? "your" : one ? "your next" : `your next ${String(uses)}`;
+  const which =
+    uses === undefined ? whose : one ? `${whose} next` : `${whose} next ${String(uses)}`;
   return `${which} ${named.join(" ")} ${changes.join(" and ")}`;
 }
 
