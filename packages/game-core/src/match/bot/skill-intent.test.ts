@@ -42,6 +42,8 @@ const NO_BOT_USE = new Set([
   // Warrior's Cunning (#2335): blocks made not to happen are no use the
   // bot weighs yet.
   "warrior.warriors-cunning",
+  // Fox's Promise (#2368), the same, for dagger attacks.
+  "assassin.foxs-promise",
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
@@ -79,6 +81,7 @@ const NO_BOT_USE = new Set([
   "ranger.disrupting-lunge",
   "ranger.enraged-lunge",
   "ranger.ferocious-strike",
+  "ranger.feral-aggression",
   "ranger.feral-lunge",
   "ranger.heal-as-one",
   "ranger.maiming-strike",
@@ -210,6 +213,8 @@ const NO_BOT_USE = new Set([
   "elementalist.earth-attunement",
   // Scribe's Insight (#1913), the same, for signets still to be used.
   "monk.scribes-insight",
+  // Spirit Channeling (#2368): Energy regeneration, no use of its own.
+  "ritualist.spirit-channeling",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
   "paragon.blazing-finale",
   "paragon.enduring-harmony",
