@@ -504,6 +504,15 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "spoil-victor": icon("spoil-victor"),
   // Adrenaline in points (#2302).
   "balthazars-spirit": icon("balthazars-spirit"),
+  // Monk staples (#2286).
+  "essence-bond": icon("essence-bond"),
+  "life-barrier": icon("life-barrier"),
+  retribution: icon("retribution"),
+  "scourge-healing": icon("scourge-healing"),
+  "healing-seed": icon("healing-seed"),
+  succor: icon("succor"),
+  "divine-boon": icon("divine-boon"),
+  "restful-breeze": icon("restful-breeze"),
   // Condition movement (#2259).
   "fevered-dreams": icon("fevered-dreams"),
   "mark-of-fury": icon("mark-of-fury"),
@@ -564,6 +573,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "tiger-stance": icon("tiger-stance"),
   "berserker-stance": icon("berserker-stance"),
   "bulls-charge": icon("bulls-charge"),
+  // Warrior staples (#2316).
+  "charging-strike": icon("charging-strike"),
+  "signet-of-stamina": icon("signet-of-stamina"),
+  "soldiers-stance": icon("soldiers-stance"),
+  "steady-stance": icon("steady-stance"),
   // Monk and Ranger mechanics (#2189).
   "spell-shield": icon("spell-shield"),
   "convert-hexes": icon("convert-hexes"),

@@ -1010,13 +1010,19 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     }
   }
   // Holy Wrath's (#1754): "66% of the damage of the next 8 attacks that
-  // hit it goes back to the attacker as holy damage, up to 41".
+  // hit it goes back to the attacker as holy damage, up to 41"; Retribution's
+  // (#2286) "of every attack", up to its scaled cap.
   if (definition.reflectsAttackDamage !== undefined) {
     const { share, max, type, times } = definition.reflectsAttackDamage;
-    const attacks = times === 1 ? "attack" : `${String(times)} attacks`;
+    const attacks =
+      times === undefined
+        ? "every attack"
+        : times === 1
+          ? "the next attack"
+          : `the next ${String(times)} attacks`;
     const kind = type === "typeless" ? "" : ` as ${type} damage`;
     parts.push(
-      `${String(Math.round(share * 100))}% of the damage of the next ${attacks} that hit it goes back to the attacker${kind}, up to ${String(max)}`,
+      `${String(Math.round(share * 100))}% of the damage of ${attacks} that hit it goes back to the attacker${kind}, up to ${statText(max, ranks, whole)}`,
     );
   }
   if (definition.reversesNextDamage !== undefined) {
@@ -1123,12 +1129,20 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.endsWhenBearerHitsWithAttackSkill) {
     parts.push("ends if the bearer hits with an attack skill");
   }
-  // One that answers the use says so in its trigger's line (#949).
+  // One that answers the use says so in its trigger's line (#949). Only a
+  // stance, a preparation or a signet's effect is always its caster's own;
+  // Restful Breeze ends on its bearer's skill, not yours (#2286).
   if (
     definition.endsWhenBearerUsesSkill &&
     !definition.triggers.some(({ on }) => on === "bearer-uses-skill")
   ) {
-    parts.push("ends if you use a skill");
+    parts.push(
+      definition.category === "stance" ||
+        definition.category === "preparation" ||
+        definition.category === "skill-effect"
+        ? "ends if you use a skill"
+        : "ends if the bearer uses a skill",
+    );
   }
   if (definition.endsWhenBearerUsesAdrenalSkill) {
     parts.push("ends if you use an adrenal skill");
@@ -1429,6 +1443,47 @@ interface TriggerLine {
 }
 
 /**
+ * Divine Boon's (#2286), one sentence in GW1's words: "whenever it casts
+ * a Protection Prayers or Divine Favor spell on an ally, that ally is
+ * healed for 51 and its caster loses 1 energy". Undefined unless every
+ * trigger answers an ally-targeted spell of some attributes with a heal
+ * on that ally or an energy loss to its caster.
+ */
+function describeSpellOnAlly(
+  triggers: readonly StatusTrigger[],
+  ranks: ReadonlyMap<string, number>,
+  bearerIsCaster: boolean,
+): string | undefined {
+  const scopes: string[] = [];
+  const parts: string[] = [];
+  for (const { on, usedSkill, effects, target } of triggers) {
+    if (
+      on !== "bearer-casts-spell" ||
+      usedSkill?.targetsAlly !== true ||
+      usedSkill.attributes === undefined
+    ) {
+      return undefined;
+    }
+    scopes.push(scopeAdjective(usedSkill.attributes));
+    for (const effect of effects) {
+      if (effect.kind === "heal" && target === "skill-target") {
+        parts.push(`that ally is healed for ${shown(describeMagnitude(effect.amount, ranks))}`);
+      } else if (effect.kind === "energy-loss" && target === "source") {
+        const who = bearerIsCaster ? "you lose" : "its caster loses";
+        parts.push(`${who} ${shown(describeMagnitude(effect.amount, ranks))} energy`);
+      } else {
+        return undefined;
+      }
+    }
+  }
+  if (triggers.length === 0) {
+    return undefined;
+  }
+  const spell = `${[...new Set(scopes)].join(" or ")} spell`;
+  return `whenever it casts ${/^[aeiou]/i.test(spell) ? "an" : "a"} ${spell} on an ally, ${[...new Set(parts)].join(" and ")}`;
+}
+
+/**
  * A status's triggers, those that do the same thing said once (#935):
  * Spiteful Spirit's "whenever it uses a skill or attacks". One that ends
  * when its bearer uses a skill answers only the next use (#949), and one
@@ -1443,6 +1498,10 @@ function describeTriggers(
   dropped: boolean,
   bearerIsCaster: boolean,
 ): TriggerLine[] {
+  const onAlly = describeSpellOnAlly(triggers, ranks, bearerIsCaster);
+  if (onAlly !== undefined) {
+    return [{ text: onAlly, clause: false }];
+  }
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
     const key = JSON.stringify([
@@ -1510,7 +1569,7 @@ function describeTriggers(
       bearerIsCaster,
     );
     // A heal on the bearer and the same on the allies around (#1951):
-    // Mist Form's, said once.
+    // Mist Form's, said once; Healing Seed's heals its bearer, not you (#2286).
     const [self, splash] = trigger.effects;
     const [first, second] = lines;
     if (
@@ -1524,7 +1583,12 @@ function describeTriggers(
       JSON.stringify(splash.effects[0]) === JSON.stringify(self)
     ) {
       const when = first.text.slice(0, first.text.indexOf(": ") + 2);
-      return [{ ...second, text: `${when}you and ${second.text.slice(when.length)}` }];
+      return [
+        {
+          ...second,
+          text: `${when}${bearerIsCaster ? "you" : "it"} and ${second.text.slice(when.length)}`,
+        },
+      ];
     }
     // A drop is said once, all it does after it (#1434).
     if (!dropped || lines.length < 2) {
@@ -3407,7 +3471,9 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
             ? "Shadow steps to the target"
             : effect.to === "swap"
               ? "You and the target Shadow Step to each other's location"
-              : "Shadow Step to a nearby location directly away from your target",
+              : effect.to === "corpse"
+                ? "Teleports you to that corpse"
+                : "Shadow Step to a nearby location directly away from your target",
         magnitude: undefined,
       };
     case "resurrect": {
@@ -4398,11 +4464,13 @@ export function describeSkill(
                 ? "Exploits the corpse nearest your target"
                 : skill.corpse.all === true
                   ? `Exploits every fresh corpse ${AREA_TEXT.get(skill.corpse.radius) ?? `within ${String(skill.corpse.radius)}`}`
-                  : "Exploits the nearest corpse") +
-              // A well's price for none (#1730).
+                  : skill.corpse.pick === "random"
+                    ? "Exploits a random corpse"
+                    : "Exploits the nearest corpse") +
+              // A well's price for none (#1730), scaled (#2268).
               (skill.corpse.elseSacrificePercent === undefined
                 ? ""
-                : `, or sacrifices ${String(skill.corpse.elseSacrificePercent)}% Health if none is near`),
+                : `, or sacrifices ${shown(describeMagnitude(skill.corpse.elseSacrificePercent, ranks))}% Health if none is near`),
             magnitude: undefined,
           },
         ];

@@ -1477,18 +1477,30 @@ function measuredFromCaster(hits: SplashEffect["hits"]): boolean {
 /**
  * Whom a splash reaches round its centre, nearest first, past its
  * `maxTargets` none; its target is one of them only if it `includesCentre`
- * (#2282). With `alsoAround`, round the caster too, each one once (#2288). Your own spirits are within earshot of you, not of the target
- * (#1777); Return's adjacent foes are around its caster (#1826). The
- * resolution reads it too, for the minions a nested `take-control` takes
- * (#2092).
+ * (#2282). With `alsoAround`, round the caster too, each one once (#2288).
+ * Your own spirits are within earshot of you, not of the target (#1777);
+ * Return's adjacent foes are around its caster (#1826). The resolution
+ * reads it too, for the minions a nested `take-control` takes (#2092). A
+ * caster that shadow stepped earlier in the use is measured from where it
+ * stepped to (#2268), Necrotic Traversal's: the spot of whom it stepped
+ * beside, since the simulation places the body only after the use.
  */
 function splashTargets(
   effect: SplashEffect,
   context: SkillContext,
+  earlier: readonly CombatEvent[],
 ): { readonly centre: Combatant | undefined; readonly reached: readonly Combatant[] } {
   const { caster, target } = context;
   const centre = effect.around === "caster" || measuredFromCaster(effect.hits) ? caster : target;
-  const at = centre === undefined ? undefined : context.surroundings.get(centre.id)?.position;
+  const stepped =
+    centre === caster
+      ? earlier.findLast((event) => event.kind === "shadow-stepped" && event.targetId === caster.id)
+      : undefined;
+  const at =
+    centre === undefined
+      ? undefined
+      : context.surroundings.get(stepped?.kind === "shadow-stepped" ? stepped.toId : centre.id)
+          ?.position;
   if (target === undefined || at === undefined) {
     return { centre, reached: [] };
   }
@@ -2315,6 +2327,12 @@ export function applyEffect(
         }
         return events;
       }
+      if (effect.to === "corpse") {
+        if (context.corpseId !== undefined && !caster.dead) {
+          events.push({ kind: "shadow-stepped", targetId: caster.id, toId: context.corpseId });
+        }
+        return events;
+      }
       // To a living target only: there is nowhere to step to otherwise.
       if (target === undefined || target.dead || caster.dead) {
         return events;
@@ -2436,7 +2454,7 @@ export function applyEffect(
     }
 
     case "splash": {
-      const { centre, reached } = splashTargets(effect, context);
+      const { centre, reached } = splashTargets(effect, context, earlier);
       for (const combatant of reached) {
         for (const inner of effect.effects) {
           // Its own events so far count as earlier (#2289): Rust's disable
@@ -3419,6 +3437,8 @@ export interface SkillResolution {
    * absent where no use was paid for, as in a tooltip or a test.
    */
   readonly own?: OwnSkillBoost | undefined;
+  /** The corpse this use exploited (#2268); absent for none. */
+  readonly corpseId?: string | undefined;
 }
 
 /**
@@ -3501,7 +3521,11 @@ export interface SkippedEffect {
  * What `effect`, landing on `context.target`, moves between sides
  * (#1965, #2092): its target, living, or each a splash of it reaches.
  */
-function takenBy(effect: UnconditionalEffect, context: SkillContext): TakenCreature[] {
+function takenBy(
+  effect: UnconditionalEffect,
+  context: SkillContext,
+  earlier: readonly CombatEvent[],
+): TakenCreature[] {
   const target = context.target;
   switch (effect.kind) {
     case "take-control":
@@ -3513,9 +3537,9 @@ function takenBy(effect: UnconditionalEffect, context: SkillContext): TakenCreat
         ? []
         : [{ id: target.id, kind: "gaze", bondStatusId: undefined }];
     case "splash": {
-      const { reached } = splashTargets(effect, context);
+      const { reached } = splashTargets(effect, context, earlier);
       return effect.effects.flatMap((inner) =>
-        reached.flatMap((combatant) => takenBy(inner, { ...context, target: combatant })),
+        reached.flatMap((combatant) => takenBy(inner, { ...context, target: combatant }, earlier)),
       );
     }
     default:
@@ -3531,7 +3555,7 @@ export function resolveSkillEffects(
   resolution: SkillResolution,
   earlier: readonly CombatEvent[] = [],
 ): SkillOutcome {
-  const { skill, caster, targets, rng, rules, surroundings, own } = resolution;
+  const { skill, caster, targets, rng, rules, surroundings, own, corpseId } = resolution;
   const held = new Map(
     targets.map(
       (target) =>
@@ -3558,6 +3582,7 @@ export function resolveSkillEffects(
         skillId: skill.id,
         profession: skill.profession,
         own,
+        corpseId,
       };
       const before = [...earlier, ...events];
       const landed = landing(effect, context, before, states);
@@ -3572,7 +3597,7 @@ export function resolveSkillEffects(
           // Mirror of Ice's "if you strike a foe hexed with Water Magic"
           // (#2288): once, however many it reaches.
           const faster = inner.effects.find((each) => each.kind === "recharge-faster");
-          if (faster !== undefined && splashTargets(inner, context).reached.length > 0) {
+          if (faster !== undefined && splashTargets(inner, context, before).reached.length > 0) {
             rechargeFraction = Math.max(rechargeFraction, faster.fraction);
           }
         }
@@ -3603,7 +3628,7 @@ export function resolveSkillEffects(
           grounds.push(inner);
         }
         if (!caster.dead) {
-          taken.push(...takenBy(inner, context));
+          taken.push(...takenBy(inner, context, before));
         }
         events.push(...applyEffect(inner, context, [...earlier, ...events]));
       }

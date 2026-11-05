@@ -231,7 +231,7 @@ describe("Epidemic (#1501)", () => {
 describe("what the tooltips say (#1501)", () => {
   it("describes them", () => {
     expect(describeStatus("wastrels-demise")).toBe(
-      "each second, it and adjacent foes take 8 damage, 8 more each second, ends if you use a skill",
+      "each second, it and adjacent foes take 8 damage, 8 more each second, ends if the bearer uses a skill",
     );
     expect(describeSkill(getSkill(EPIDEMIC) ?? fail()).effects.map(({ text }) => text)).toContain(
       "Adjacent foes get the target's conditions, with the time each has left",
