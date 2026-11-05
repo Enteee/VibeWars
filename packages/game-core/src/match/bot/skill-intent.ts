@@ -533,7 +533,7 @@ export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | un
             ? "critical-strips"
             : status.onAttackHit?.weaponDamage !== undefined
               ? "weapon-element"
-              : status.energyPips > 0 &&
+              : statAtTwelve(status.energyPips) > 0 &&
                   status.triggers.some(
                     ({ on, effects }) =>
                       on === "ends" && effects.some(({ kind }) => kind === "lose-health"),
@@ -680,7 +680,7 @@ export function lowEnergyGain(
 export function energyAtFoes(skill: Skill): boolean {
   return ownStatuses(skill).some((id) => {
     const status = getStatusDefinition(id);
-    return status.renewsOnBearerSpellAtFoe && status.energyPips > 0;
+    return status.renewsOnBearerSpellAtFoe && statAtTwelve(status.energyPips) > 0;
   });
 }
 

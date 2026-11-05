@@ -71,7 +71,7 @@ describe("status definitions", () => {
         def.unblockableByBlinded ||
         def.unblockableAttacks !== undefined ||
         def.attacksUnblockable ||
-        def.energyPips !== 0 ||
+        statAtTwelve(def.energyPips) !== 0 ||
         def.armorModifier !== 0 ||
         def.armorWhileStill !== 0 ||
         def.healthPerSecondWhileMoving !== 0 ||
@@ -247,10 +247,9 @@ describe("status definitions", () => {
   it("counts energy in GW1's pips", () => {
     expect(
       Object.fromEntries(
-        ALL_STATUS_IDS.filter((id) => getStatusDefinition(id).energyPips !== 0).map((id) => [
-          id,
-          getStatusDefinition(id).energyPips,
-        ]),
+        ALL_STATUS_IDS.filter((id) => statAtTwelve(getStatusDefinition(id).energyPips) !== 0).map(
+          (id) => [id, Math.round(statAtTwelve(getStatusDefinition(id).energyPips))],
+        ),
       ),
     ).toEqual({
       malaise: -1,
@@ -264,7 +263,7 @@ describe("status definitions", () => {
       wither: -1,
       "obsidian-flesh": -2,
       "zealous-renewal": -1,
-      "zealous-vow": -3,
+      "zealous-vow": -2,
       "power-flux": -2,
       "song-of-power": 4,
       "the-power-is-yours": 2,
@@ -272,6 +271,23 @@ describe("status definitions", () => {
       "well-of-weariness": -1,
       "lyssas-aura": 4,
     });
+  });
+
+  it("reads a scaled status's energy pips at its source's rank (#2328)", () => {
+    const pips = (id: StatusId, attributeId: string, rank: number): number =>
+      aggregateModifiers([{ id, ranks: new Map([[attributeId, rank]]) }]).energyPips;
+    const table: readonly (readonly [StatusId, string, number, number])[] = [
+      ["blood-is-power", "necromancer.blood-magic", 3, 5],
+      ["lyssas-aura", "mesmer.inspiration-magic", 0, 4],
+      ["the-power-is-yours", "paragon.motivation", 1, 2],
+      ["ether-lord", "mesmer.inspiration-magic", -1, -3],
+      ["ether-lord-regeneration", "mesmer.inspiration-magic", 1, 3],
+    ];
+    for (const [id, attributeId, atZero, atTwelve] of table) {
+      expect([pips(id, attributeId, 0), pips(id, attributeId, 12)], id).toEqual([atZero, atTwelve]);
+    }
+    expect(scaledStatAttributes("blood-is-power")).toEqual(["necromancer.blood-magic"]);
+    expect(getStatusDefinition("zealous-vow").energyPips).toBe(-2);
   });
 
   it("makes enchantments beneficial and hexes/conditions detrimental", () => {

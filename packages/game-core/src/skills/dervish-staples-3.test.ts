@@ -460,11 +460,11 @@ describe("in a match (#1667)", () => {
   });
 
   describe("Zealous Vow", () => {
-    it("costs 3 energy pips for 20 s and gives 5 Energy for each foe a plain swing hits", () => {
+    it("costs 2 energy pips for 20 s and gives 5 Energy for each foe a plain swing hits", () => {
       const sim = match();
       use(sim, "dervish.zealous-vow", "c");
       expect(secondsOf(sim, "c", "zealous-vow")).toBeCloseTo(20, 0);
-      expect(aggregateModifiers(get(sim, "c").statuses.active).energyPips).toBe(-3);
+      expect(aggregateModifiers(get(sim, "c").statuses.active).energyPips).toBe(-2);
       get(sim, "c").energy = 0;
       const gains = events(
         swing(sim).filter((entry) => entry.skillId === "dervish.zealous-vow"),

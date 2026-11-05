@@ -451,10 +451,11 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     criticalChanceBonus: 0.66,
     endsWhenBearerAttacks: true,
   }),
-  // "The Power Is Yours!" at Motivation 12: +2 Energy regeneration.
+  // "The Power Is Yours!": "1...2 Energy regeneration", at the shouter's
+  // Motivation (#2328): 2 at rank 12.
   "the-power-is-yours": define("the-power-is-yours", "The Power Is Yours!", "shout", {
     profession: "paragon",
-    energyPips: 2,
+    energyPips: { scaling: { attributeId: "paragon.motivation", atZero: 1, atTwelve: 1.8 } },
   }),
   // "It's Just a Flesh Wound.": moves 25% faster.
   "its-just-a-flesh-wound": define("its-just-a-flesh-wound", "It's Just a Flesh Wound.", "shout", {

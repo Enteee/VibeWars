@@ -205,6 +205,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   healthPipsPerCondition: true,
   criticalChanceBonus: true,
   attackDamageDelta: true,
+  energyPips: true,
 };
 
 /** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
@@ -346,8 +347,11 @@ export interface StatusDefinition {
    */
   readonly healthPipsPerCondition: StatusStat;
   readonly healthPipsPerHex: number;
-  /** Energy regeneration while active, in pips (`ENERGY_PER_PIP`), summed with the base. */
-  readonly energyPips: number;
+  /**
+   * Energy regeneration while active, in pips (`ENERGY_PER_PIP`), summed
+   * with the base; at its source's rank where GW1's scales (#2328).
+   */
+  readonly energyPips: StatusStat;
   /** Energy pips for each condition, and for each hex, as `healthPipsPerCondition` (#2189). */
   readonly energyPipsPerCondition: number;
   readonly energyPipsPerHex: number;
@@ -4476,7 +4480,9 @@ export function aggregateModifiers(
       Math.round(statAt(def.healthPipsPerCondition, ranks)) * conditions +
       def.healthPipsPerHex * hexes;
     energyPips +=
-      def.energyPips + def.energyPipsPerCondition * conditions + def.energyPipsPerHex * hexes;
+      Math.round(statAt(def.energyPips, ranks)) +
+      def.energyPipsPerCondition * conditions +
+      def.energyPipsPerHex * hexes;
     armorModifier += Math.round(statAt(def.armorModifier, ranks)) * (status.stacks ?? 1);
     armorWhileStill += def.armorWhileStill;
     healthPerSecondWhileMoving += def.healthPerSecondWhileMoving;

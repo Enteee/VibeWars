@@ -766,10 +766,11 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   }),
   // Mesmer energy and utility (#2132), at their rank-12 values.
   // "For 10 seconds, you have +0...5 Energy regeneration. This enchantment
-  // reapplies itself every time you cast a spell on a foe."
+  // reapplies itself every time you cast a spell on a foe." At the
+  // caster's Inspiration Magic (#2328): 4 at rank 12, none at 0.
   "lyssas-aura": define("lyssas-aura", "Lyssa's Aura", "enchantment", {
     profession: "mesmer",
-    energyPips: 4,
+    energyPips: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 0, atTwelve: 4 } },
     renewsOnBearerSpellAtFoe: true,
   }),
   // "For 5...20 seconds, whenever a spell you cast is interrupted, that
@@ -937,14 +938,17 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     preventsSignets: true,
   }),
   // Staples (#2287). Ether Lord's "-1...3 Energy degeneration ... +1...3
-  // Energy regeneration": 3, its rank-12 value, on either side.
+  // Energy regeneration", at the caster's Inspiration Magic (#2328): 3
+  // at rank 12, on either side.
   "ether-lord": define("ether-lord", "Ether Lord", "hex", {
     profession: "mesmer",
-    energyPips: -3,
+    energyPips: {
+      scaling: { attributeId: "mesmer.inspiration-magic", atZero: -1, atTwelve: -2.6 },
+    },
   }),
   "ether-lord-regeneration": define("ether-lord-regeneration", "Ether Lord", "skill-effect", {
     profession: "mesmer",
-    energyPips: 3,
+    energyPips: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1, atTwelve: 2.6 } },
   }),
   // "...has a 25% chance to miss with attacks. You gain 1...3 Energy
   // whenever that foe fails to hit in combat": the hex's caster gains it.
