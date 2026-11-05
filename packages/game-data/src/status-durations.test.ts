@@ -1,4 +1,9 @@
-import { IMPLEMENTED_SKILLS, type ApplyStatusEffect, type Skill } from "@vibewars/game-core";
+import {
+  IMPLEMENTED_SKILLS,
+  getAttribute,
+  type ApplyStatusEffect,
+  type Skill,
+} from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import skilldata from "../raw/gw-skilldata/skilldata.json" with { type: "json" };
@@ -45,6 +50,26 @@ function statesFlat(gwId: number | undefined, seconds: number): boolean {
   return gwId !== undefined && flat.test(TEXT.get(gwId) ?? "");
 }
 
+/**
+ * Whether `gwId`'s text lasts "N seconds and M seconds longer for every
+ * rank of <attribute>", N at 0 and N + 12 M at 12: Cultist's Fervor's
+ * Soul Reaping, not its own Blood Magic (#2314).
+ */
+function perRankOf(
+  gwId: number | undefined,
+  attributeId: string,
+  atZero: number,
+  twelve: number,
+): boolean {
+  const name = getAttribute(attributeId)?.name;
+  const per =
+    /(\d+) seconds? and (\d+) seconds?(?: longer)? for (?:each|every) rank of ([\w' ]+?)[,.]/g;
+  return [...(TEXT.get(gwId ?? -1) ?? "").matchAll(per)].some(
+    ([, base, step, attribute]) =>
+      attribute === name && Number(base) === atZero && atZero + 12 * Number(step) === twelve,
+  );
+}
+
 /** The rank-12 value of a range, unrounded, as the catalog writes it. */
 function atTwelve([low, high]: readonly [number, number]): number {
   return low + (high - low) * 0.8;
@@ -75,6 +100,9 @@ describe("status durations at the caster's rank (#2041)", () => {
         continue;
       }
       const { attributeId, atZero, atTwelve: twelve } = effect.durationSeconds.scaling;
+      if (perRankOf(skill.gwId, attributeId, atZero, twelve)) {
+        continue;
+      }
       expect(attributeId, skill.id).toBe(skill.attributeId);
       expect(
         ranges(skill.gwId, true).some(

@@ -504,6 +504,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "spoil-victor": icon("spoil-victor"),
   // Adrenaline in points (#2302).
   "balthazars-spirit": icon("balthazars-spirit"),
+  // Necromancer staples (#2314).
+  "ulcerous-lungs": icon("ulcerous-lungs"),
+  "blood-bond": icon("blood-bond"),
+  "vile-miasma": icon("vile-miasma"),
+  depravity: icon("depravity"),
+  "cultists-fervor": icon("cultists-fervor"),
   // Monk staples (#2286).
   "essence-bond": icon("essence-bond"),
   "life-barrier": icon("life-barrier"),
@@ -608,6 +614,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "chilling-winds": icon("chilling-winds"),
   // Warrior staples 5 (#2315).
   "to-the-limit": icon("to-the-limit"),
+  // Weapon gates (#2335).
+  "warriors-cunning": icon("warriors-cunning"),
+  "dwarven-battle-stance": icon("dwarven-battle-stance"),
   // Signet of Suffering (#2333).
   "signet-of-suffering": icon("signet-of-suffering"),
 };

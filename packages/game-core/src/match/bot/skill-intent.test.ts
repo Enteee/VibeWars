@@ -17,6 +17,7 @@ const NO_BOT_USE = new Set([
   // Own-skill modifiers (#1761): cheaper, faster or longer own skills are
   // no role the bot weighs.
   "monk.divine-spirit",
+  "necromancer.cultists-fervor",
   "monk.blessed-aura",
   "monk.healers-covenant",
   "monk.holy-haste",
@@ -38,6 +39,9 @@ const NO_BOT_USE = new Set([
   "ritualist.vital-weapon",
   // Signet of Stamina (#2316), the same: more maximum Health until a hit.
   "warrior.signet-of-stamina",
+  // Warrior's Cunning (#2335): blocks made not to happen are no use the
+  // bot weighs yet.
+  "warrior.warriors-cunning",
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
