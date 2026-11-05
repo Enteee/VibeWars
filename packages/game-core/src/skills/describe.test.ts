@@ -1707,3 +1707,18 @@ describe("Mesmer interrupts (#2165)", () => {
     ]);
   });
 });
+
+describe("a hex's own-skill modifiers name the hexed foe (#2337)", () => {
+  it("says the target's skills on a hex", () => {
+    expect(describeStatus("rust")).toBe("the target's signets take 2× as long to cast");
+    expect(describeStatus("enchanters-conundrum")).toBe(
+      "the target's enchantments take 2...2.8× as long to cast",
+    );
+  });
+
+  it("keeps your skills on anything else", () => {
+    expect(describeStatus("glyph-of-energy")).toBe(
+      "+2 to elemental attributes, your next 3 spells cost 22 less energy, no Overcast",
+    );
+  });
+});
