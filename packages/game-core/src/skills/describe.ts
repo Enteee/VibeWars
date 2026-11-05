@@ -616,6 +616,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.preventsShoutsAndChants) {
     parts.push("cannot use shouts or chants");
   }
+  if (definition.preventsSignets) {
+    parts.push("cannot use signets");
+  }
   if (definition.unblockableBySource) {
     parts.push("cannot block its caster's attacks");
   }
@@ -1367,6 +1370,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-chant-or-shout-ends": "has a chant or shout end on it",
   "bearer-energy-empty": "has no energy left",
   "bearer-energy-drops-empty": "drops to 0 Energy",
+  "source-targets-bearer": "is targeted by your skill",
   "bearer-dies": "dies",
   ends: "ends",
   "ends-early": "ends prematurely",
@@ -1670,9 +1674,16 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     const words = `${scopeAdjective(trigger.usedSkill.attributes)} spell`;
     return `casts ${/^[aeiou]/i.test(words) ? "an" : "a"} ${words}`;
   }
-  if (event === "bearer-uses-skill" && trigger.usedSkill !== undefined) {
-    const { type, attributes, profession, elite, adrenal, targetsAlly } = trigger.usedSkill;
+  if (
+    (event === "bearer-uses-skill" || event === "source-targets-bearer") &&
+    trigger.usedSkill !== undefined
+  ) {
+    const { type, notType, attributes, profession, elite, adrenal, targetsAlly } =
+      trigger.usedSkill;
     const words = [
+      ...(notType === undefined
+        ? []
+        : [`non-${(TYPE_TEXT[notType].split(" ")[0] ?? "").replace(/\.$/, "").toLowerCase()}`]),
       ...(elite === undefined ? [] : ["elite"]),
       ...(adrenal === undefined ? [] : ["adrenal"]),
       ...(profession === undefined ? [] : [getProfession(profession).name]),
@@ -1680,6 +1691,10 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
       ...(type === undefined ? [] : [TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()]),
       "skill",
     ];
+    // Mind Wrack's "your non-hex Mesmer skill" (#2290).
+    if (event === "source-targets-bearer") {
+      return `is targeted by your ${words.join(" ")}`;
+    }
     // Zealot's Fire's "a skill that targets an ally" (#2282).
     const on = targetsAlly === undefined ? "" : " on an ally";
     return `uses ${/^[aeiou]/i.test(words[0] ?? "") ? "an" : "a"} ${words.join(" ")}${on}`;
@@ -2402,6 +2417,8 @@ function conditionText(
       return "If target is knocked down";
     case "target-moving":
       return "If target is moving";
+    case "target-moving-faster":
+      return "If target is moving faster than normal";
     case "any-of": {
       const [first, ...rest] = condition.conditions.map((each) => conditionText(each, ranks));
       return [first ?? "Never", ...rest.map((text) => text.replace(/^If /, ""))].join(" or ");
@@ -3521,7 +3538,10 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         magnitude: undefined,
       };
     case "copy-disabled":
-      return { text: "This skill becomes that spell for as long", magnitude: undefined };
+      return {
+        text: `This skill becomes that ${effect.which === "random-spell" ? "spell" : "skill"} for as long`,
+        magnitude: undefined,
+      };
     // Arcane Mimicry's and Signet of Binding's (#1965).
     case "copy-elite":
       return {

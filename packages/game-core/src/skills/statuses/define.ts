@@ -74,6 +74,7 @@ export function define(
     attacksAgainstMiss: false,
     preventsEnchantments: false,
     preventsShoutsAndChants: false,
+    preventsSignets: false,
     unblockableBySource: false,
     unblockableByBlinded: false,
     preventsBlocking: false,

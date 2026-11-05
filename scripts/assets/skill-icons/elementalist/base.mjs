@@ -105,6 +105,8 @@ const rows = {
   "elementalist.swirling-aura": { glyph: "ring-figure-swirl" },
   "elementalist.magnetic-surge": { glyph: "ring-figure-surge", modifier: "block" },
   "elementalist.sliver-armor": { glyph: "ring-figure-shards" },
+  // Stand-in art (#2292).
+  "elementalist.glimmering-mark": { glyph: "stars-adjacent" },
 };
 
 export default rows;
