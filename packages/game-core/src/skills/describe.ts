@@ -2084,7 +2084,7 @@ function describeTrigger(
   }
   // An attunement's and Aura of Restoration's (#1614), said at once:
   // "whenever it casts a spell: gains 1 energy and is healed for 360% of
-  // that skill's energy cost".
+  // that skill's energy cost". On the caster's own, "you gain" (#2341).
   const perCost = trigger.effects.flatMap((effect) =>
     (effect.kind === "energy-gain" && effect.toTarget !== true) || effect.kind === "heal"
       ? [effect]
@@ -2106,14 +2106,25 @@ function describeTrigger(
           ? [`${share(effect.amount)} of that skill's base energy cost`]
           : [`${amount(effect.amount)} energy`],
     );
+    const healed =
+      bearerIsCaster && gains.length === 0
+        ? "you are healed"
+        : bearerIsCaster
+          ? "are healed"
+          : "is healed";
     const heals = perCost.flatMap((effect) =>
       effect.kind !== "heal"
         ? []
         : effect.perUsedSkillEnergy === true
-          ? [`is healed for ${share(effect.amount)} of that skill's energy cost`]
-          : [`is healed for ${amount(effect.amount)}`],
+          ? [`${healed} for ${share(effect.amount)} of that skill's energy cost`]
+          : [`${healed} for ${amount(effect.amount)}`],
     );
-    const what = [...(gains.length === 0 ? [] : [`gains ${gains.join(" plus ")}`]), ...heals];
+    const what = [
+      ...(gains.length === 0
+        ? []
+        : [`${bearerIsCaster ? "you gain" : "gains"} ${gains.join(" plus ")}`]),
+      ...heals,
+    ];
     return [sentence(`${when}: ${what.join(" and ")}`)];
   }
   // Depravity's (#2314), said as one: "whenever it casts a spell: it and
@@ -2281,10 +2292,10 @@ function describeTrigger(
       effect.condition.kind === "target-foe" &&
       trigger.target === "skill-target" &&
       !bearerIsFoe &&
-      when.startsWith("whenever it uses ") &&
+      when.startsWith("whenever you use ") &&
       effect.effects.every((inner) => inner.kind === "splash" && inner.around === "caster")
     ) {
-      const yours = `whenever you ${secondPerson(when.slice("whenever it ".length))} on a foe`;
+      const yours = `${when} on a foe`;
       return effect.effects.flatMap((inner) => {
         if (inner.kind !== "splash") {
           return [];

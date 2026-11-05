@@ -130,7 +130,7 @@ describe("Attunements (#1614)", () => {
     const status = match.get("n")?.combatant.statuses.get("fire-attunement");
     expect(status?.durationSeconds).toBe(55);
     expect(describeStatus("fire-attunement")).toBe(
-      "whenever you use a Fire Magic skill: gains 1 energy plus 30% of that skill's base energy cost",
+      "whenever you use a Fire Magic skill: you gain 1 energy plus 30% of that skill's base energy cost",
     );
   });
 });
