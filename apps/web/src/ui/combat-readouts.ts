@@ -145,7 +145,7 @@ function withLanded(effect: SkillEffect): readonly SkillEffect[] {
     case "trap":
       return [effect, ...effect.act.trap.spring.effects];
     case "pulse":
-      return [effect, ...effect.act.pulse.effects];
+      return [effect, ...effect.act.pulse.effects, ...(effect.act.atEnd?.effects ?? [])];
   }
 }
 

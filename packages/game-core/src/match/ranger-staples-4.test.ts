@@ -416,7 +416,7 @@ describe("Zojun's Haste (#1676)", () => {
 
   it("says what it does", () => {
     expect(describeStatus("zojuns-haste", new Map())).toBe(
-      "moves at 133% speed, 65% chance to block projectiles, ends if the bearer attacks",
+      "moves at 133% speed, 65% chance to block projectiles, ends if you attack",
     );
   });
 });

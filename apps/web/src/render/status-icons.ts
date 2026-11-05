@@ -629,6 +629,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "dwarven-battle-stance": icon("dwarven-battle-stance"),
   // Signet of Suffering (#2333).
   "signet-of-suffering": icon("signet-of-suffering"),
+  // Smoke Powder Defense (#2362).
+  "smoke-powder-defense": icon("smoke-powder-defense"),
 };
 
 const GAP = 2;

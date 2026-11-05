@@ -406,7 +406,7 @@ describe("the texts (#1592)", () => {
 
   it("say what each does", () => {
     expect(text(SHIELD_BASH)).toEqual([
-      "If you hold a shield: applies Shield Bash for 10s (100% chance to block melee attacks. The next time it blocks a melee attack: knocks down for 2s)",
+      "If you hold a shield: applies Shield Bash for 10s (100% chance to block melee attacks. The next time you block a melee attack: knocks down for 2s)",
     ]);
     expect(describeStatus("shield-stance", ranks)).toBe(
       "75% chance to block attacks, −15 damage taken (2 per rank of Strength, at most 15)",
@@ -415,7 +415,7 @@ describe("the texts (#1592)", () => {
       "75% chance to block attacks, −6 damage taken (2 per rank of Strength, at most 15)",
     );
     expect(describeStatus("rage-of-the-ntouka", ranks)).toBe(
-      "whenever it uses an adrenal skill: that skill takes 3 seconds longer to recharge",
+      "whenever you use an adrenal skill: that skill takes 3 seconds longer to recharge",
     );
   });
 });

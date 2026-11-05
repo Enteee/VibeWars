@@ -339,6 +339,10 @@ export function mitigate(
   // Frenzy's 160% and Dark Escape's half (#919): every packet, armored
   // or not, after armor and before the flat shield below.
   dealt *= modifiers.damageTakenMultiplier;
+  // Smoke Powder Defense's half (#2362): the first attack packet only.
+  if (packet.source === "weapon") {
+    dealt *= target.statuses.strikeAttackDamageTaken();
+  }
   // The mantras of Earth, Flame, Frost and Lightning (#1964): one type's
   // cut, of the type as taken.
   dealt *= damageTypeTakenMultiplier(target, packet.type);

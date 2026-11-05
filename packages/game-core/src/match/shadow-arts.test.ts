@@ -424,7 +424,7 @@ describe("the six's descriptions (#1326)", () => {
     expect(lines("assassin.deaths-retreat")).toContain("Shadow steps to the target");
     expect(lines("assassin.caltrops")).toContain("Half the normal range");
     expect(lines("assassin.feigned-neutrality").join(" ")).toMatch(
-      /ends if the bearer hits with an attack/,
+      /ends if you hit with an attack/,
     );
     expect(lines("assassin.way-of-perfection").join(" ")).toMatch(
       /whenever you successfully land a critical hit, you gain 34 Health/,

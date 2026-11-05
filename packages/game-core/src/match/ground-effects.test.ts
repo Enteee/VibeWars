@@ -8,7 +8,7 @@ import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
 import { blockChanceOf } from "../skills/tick.js";
 import type { StatusId } from "../skills/status.js";
-import type { Aura, Skill } from "../skills/types.js";
+import type { Aura, RadiusArea, Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import {
@@ -39,6 +39,13 @@ const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const WARD = "elementalist.ward-against-melee";
 const EARTH = "elementalist.earth-magic";
+const FOES_IN_THE_AREA: RadiusArea = {
+  radius: AREA_IN_THE_AREA,
+  origin: "caster",
+  affects: "enemies",
+  maxTargets: undefined,
+  includesCaster: false,
+};
 
 /** An instant, free ward lasting `seconds`, whose aura `affects` this. */
 function testWard(id: string, affects: Aura["affects"], seconds: number): string {
@@ -83,11 +90,45 @@ function testWard(id: string, affects: Aura["affects"], seconds: number): string
 const ON_FOES = testWard("test.ward-on-foes", "foes", 10);
 const LONG = testWard("test.ward-long", "allies", 100);
 
+/** A free pulse effect on the caster for 100 s that burns foes in the area as it ends (#2329). */
+const ENDING = "test.burns-as-it-ends";
+const WARD_SHAPE = TEST_SKILLS.get(LONG);
+if (WARD_SHAPE === undefined) {
+  throw new Error("no test ward");
+}
+TEST_SKILLS.set(ENDING, {
+  ...WARD_SHAPE,
+  id: ENDING,
+  name: ENDING,
+  type: "spell",
+  effects: [
+    {
+      kind: "create-ground-effect",
+      anchor: "caster",
+      durationSeconds: { flat: 100 },
+      act: {
+        kind: "pulse",
+        pulse: {
+          count: 1,
+          everySeconds: 100,
+          delaySeconds: 0,
+          area: FOES_IN_THE_AREA,
+          effects: [],
+        },
+        atEnd: {
+          area: FOES_IN_THE_AREA,
+          effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 3 } }],
+        },
+      },
+    },
+  ],
+});
+
 function spec(id: string, team: number, spawn: Vec2, earth = 12): ParticipantSpec {
   return {
     id,
     team,
-    skillBar: [WARD, ON_FOES, LONG, "ranger.winnowing"],
+    skillBar: [WARD, ON_FOES, LONG, "ranger.winnowing", ENDING],
     attributeRanks: new Map([
       [EARTH, earth],
       ["ranger.wilderness-survival", 12],
@@ -281,6 +322,18 @@ describe("Ward Against Melee (#1087)", () => {
     expect(ids).toHaveLength(MAX_GROUND_EFFECTS);
     expect(ids[0]).toBe(2);
     expect(ids.at(-1)).toBe(MAX_GROUND_EFFECTS + 1);
+  });
+
+  it("lands a pulse effect's end when the cap ends it early (#2329)", () => {
+    const sim = match();
+    cast(sim, ENDING);
+    for (let i = 1; i < MAX_GROUND_EFFECTS; i += 1) {
+      cast(sim, LONG);
+    }
+    expect(wears(sim, "f", "burning")).toBe(false);
+    cast(sim, LONG);
+    expect(sim.groundEffects.map((effect) => effect.skillId)).not.toContain(ENDING);
+    expect(wears(sim, "f", "burning")).toBe(true);
   });
 
   it("lives beside a spirit's aura: neither strips the other", () => {
