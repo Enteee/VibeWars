@@ -283,7 +283,7 @@ describe("Seeking Arrows and endsWhenBearerMisses (#1742)", () => {
 
   it("says so", () => {
     expect(describeStatus("seeking-arrows")).toContain("attacks cannot be blocked");
-    expect(describeStatus("seeking-arrows")).toContain("ends if the bearer fails to hit");
+    expect(describeStatus("seeking-arrows")).toContain("ends if you fail to hit");
   });
 });
 
