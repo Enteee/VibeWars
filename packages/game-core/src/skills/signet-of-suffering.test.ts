@@ -148,7 +148,7 @@ describe("Signet of Suffering (#2333)", () => {
 
   it("says what it waits for", () => {
     expect(describeStatus("signet-of-suffering", R12)).toContain(
-      "the next time it uses a Necromancer skill on a foe",
+      "the next time you use a Necromancer skill on a foe",
     );
   });
 });

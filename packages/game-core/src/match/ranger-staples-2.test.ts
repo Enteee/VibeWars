@@ -380,10 +380,10 @@ describe("the texts (#1539)", () => {
       "75% chance to block attacks. If you block a projectile attack, adjacent foes: deals 10 damage",
     );
     expect(describeStatus("serpents-quickness", ranks)).toBe(
-      "skills recharge 33% faster. Whenever it takes damage or life steal from a foe, if it is below 50% Health: ends the target's stance",
+      "skills recharge 33% faster. Whenever you take damage or life steal from a foe, if you are below 50% Health: ends the target's stance",
     );
     expect(describeStatus("dodge", ranks)).toBe(
-      "moves at 133% speed, 65% chance to block projectiles, ends if the bearer attacks",
+      "moves at 133% speed, 65% chance to block projectiles, ends if you attack",
     );
   });
 });

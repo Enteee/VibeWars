@@ -230,3 +230,31 @@ yet run in a jail. So the spike must run again, to a green `ci` job, before
   workflows at them, part 4 measures them.
 - A host a job needs and the list lacks is found in the launcher's log as
   `runner-proxy: host refused: <host>`, and added here with its reason.
+
+## Amendment (2026-11-05, #2155): CI, Audit and CodeQL move too
+
+The operator decided that the merge gate itself runs on the company
+runners, not only the bulk-minute workflows #1891 moved. Every job of
+`ci.yml` and `audit.yml` now takes the canonical `runs-on` expression.
+`dependency-review.yml` and `pages.yml` stay hosted: `pages` deploys
+with write permissions, and dependency review is PR-only tooling with
+nothing to gain.
+
+**CodeQL is split in two jobs**, so that no job with a write permission
+runs on a company runner. `analyze` (company, read-only, `upload: never`)
+writes the SARIF to a one-day artifact. `upload` (hosted,
+`security-events: write`) downloads it by name from the same run and
+uploads it. `upload` has no checkout, no `run:` step and only pinned
+actions; nothing from the artifact is executed. All its steps are
+`continue-on-error`, because `codeql.yml` is in hubd's
+`EVERY_JOB_WORKFLOWS`: a missing SARIF, or a fork PR without a write token,
+ends as success.
+
+**The property relied on:** an upload replaces the analysis for its ref and
+category, so a doctored SARIF could close alerts. A company runner could
+produce one only if a PR job could poison a later main-push `analyze`.
+Runners are ephemeral (JIT config, one job, jail wiped, #1890), so it cannot.
+
+**Capacity:** CI is the merge gate, so runner queue wait now blocks merges.
+A dead runner fails an `analyze` job, which blocks the merge until it is
+re-run. If the queue wait outgrows hosted, scale with `company runners <n>`.
