@@ -362,6 +362,13 @@ export interface StatusDefinition {
   /** Flat armor modifier while active. */
   readonly armorModifier: StatusStat;
   /**
+   * `armorModifier`, its own and its `whileUnder` one, holds only while
+   * the bearer wields this weapon (#2335), as `criticalChanceBonusWeapon`:
+   * Dwarven Battle Stance's "if you are wielding a hammer". Read per hit,
+   * so a swap counts from the next one. `undefined`: whatever it wields.
+   */
+  readonly armorModifierWeapon: AttackWeaponClass | undefined;
+  /**
    * Armor added against a hit only when its conditions hold (#1437), as
    * an insignia's: Avatar of Melandru's "+30 elemental armor".
    */
@@ -805,6 +812,13 @@ export interface StatusDefinition {
    * nothing is spent (#1654): Guided Weapon's. false: blocks as ever.
    */
   readonly attacksUnblockable: boolean;
+  /**
+   * `attacksUnblockable` holds only for an attack with this weapon class
+   * (#2335), as `criticalChanceBonusWeapon`: Warrior's Cunning's "your
+   * melee attacks", so never a bow shot or a thrown spear. `undefined`:
+   * any attack.
+   */
+  readonly attacksUnblockableWeapon: AttackWeaponClass | undefined;
   /**
    * Effects on whoever the bearer's physical attacks hit while it lasts
    * (#525): a preparation's rider, as Apply Poison's poison. Applied
@@ -2545,12 +2559,19 @@ function damageTypeAnswers(
  * melee, so a spear, thrown, does not answer it.
  */
 export function triggerAnswersWeapon(trigger: StatusTrigger, weapon: Weapon): boolean {
-  if (trigger.weapon === undefined) {
+  return weaponAnswers(trigger.weapon, weapon);
+}
+
+/**
+ * Whether a blow of `weapon` is one of the `required` class: any blow for
+ * `undefined`, and a "melee" one never a thrown spear (#2335).
+ */
+function weaponAnswers(required: AttackWeaponClass | undefined, weapon: Weapon): boolean {
+  if (required === undefined) {
     return true;
   }
   return (
-    wieldsFor(weapon.id, trigger.weapon) &&
-    (trigger.weapon !== "melee" || weapon.projectileSpeed === undefined)
+    wieldsFor(weapon.id, required) && (required !== "melee" || weapon.projectileSpeed === undefined)
   );
 }
 
@@ -3676,17 +3697,23 @@ export class StatusSet {
   }
 
   /**
-   * The bearer attacked (#1604): whether a status of its own makes this
-   * attack unblockable, each such status one attack fewer, and the ids
+   * The bearer attacked with `weapon` (#1604): whether a status of its own
+   * makes this attack unblockable, one held for a weapon class only for a
+   * blow of it (#2335), each such status one attack fewer, and the ids
    * that ended on it. A counted status, as Guiding Hands, counts every
    * attack, even one another status, as Guided Weapon, already made
    * unblockable: GW1's "next N attacks" counts attacks, not saves.
    */
-  public spendUnblockableAttack(): { readonly unblockable: boolean; readonly ended: StatusId[] } {
+  public spendUnblockableAttack(weapon: Weapon): {
+    readonly unblockable: boolean;
+    readonly ended: StatusId[];
+  } {
     let unblockable = false;
     const ended: StatusId[] = [];
     for (const status of this.#statuses.values()) {
-      unblockable ||= getStatusDefinition(status.id).attacksUnblockable;
+      const definition = getStatusDefinition(status.id);
+      unblockable ||=
+        definition.attacksUnblockable && weaponAnswers(definition.attacksUnblockableWeapon, weapon);
       if (status.unblockableLeft !== undefined && status.unblockableLeft > 0) {
         unblockable = true;
         status.unblockableLeft -= 1;
