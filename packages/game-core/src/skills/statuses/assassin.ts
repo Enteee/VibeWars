@@ -48,6 +48,10 @@ export type AssassinStatusId =
   // Assassin staples 6 (#2233).
   | "hidden-caltrops"
   | "way-of-the-assassin"
+  // Staples (#2368).
+  | "foxs-promise"
+  | "seeping-wound"
+  | "shameful-fear"
   // Mechanics (#2362).
   | "smoke-powder-defense"
   | "flashing-blades";
@@ -366,6 +370,68 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
       scaling: { attributeId: "assassin.critical-strikes", atZero: 0.05, atTwelve: 0.29 },
     },
     criticalChanceBonusWeapon: "daggers",
+  }),
+  // Staples (#2368). "For 5...20 seconds, your dagger attacks cannot be
+  // blocked. This enchantment ends the next time you fail to hit": an
+  // axe or a bow is blocked as ever, and any failed hit ends it.
+  "foxs-promise": define("foxs-promise", "Fox's Promise", "enchantment", {
+    profession: "assassin",
+    attacksUnblockable: true,
+    attacksUnblockableWeapon: "daggers",
+    endsWhenBearerMisses: true,
+  }),
+  // "...target foe moves 33% slower. That foe takes 5...25 damage each
+  // second while suffering from a condition": 21 at rank 12.
+  "seeping-wound": define("seeping-wound", "Seeping Wound", "hex", {
+    profession: "assassin",
+    moveSpeedMultiplier: 0.67,
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-has-any", categories: ["condition"] },
+          effects: [
+            {
+              kind: "damage",
+              amount: {
+                scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 21 },
+              },
+              type: "typeless",
+              armorPenetration: 0,
+            },
+          ],
+        },
+      ],
+      skillId: "assassin.seeping-wound",
+    },
+  }),
+  // "...target foe moves 10% faster than normal. For each second, if that
+  // foe is moving, that foe takes 5...20 damage": 17 at rank 12. The
+  // speed is a boost, so what bars boosts bars it.
+  "shameful-fear": define("shameful-fear", "Shameful Fear", "hex", {
+    profession: "assassin",
+    moveSpeedMultiplier: 1.1,
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-moving" },
+          effects: [
+            {
+              kind: "damage",
+              amount: {
+                scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 17 },
+              },
+              type: "typeless",
+              armorPenetration: 0,
+            },
+          ],
+        },
+      ],
+      skillId: "assassin.shameful-fear",
+    },
   }),
   // "For 8 seconds, the next time you are struck, you take half damage and
   // all adjacent foes are Blinded for 2...5...6 seconds" (#2362): the first

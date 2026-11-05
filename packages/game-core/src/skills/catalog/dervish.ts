@@ -2881,4 +2881,81 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Staples (#2368).
+  {
+    id: "dervish.mystic-corruption",
+    name: "Mystic Corruption",
+    // The PvP split (3467); the base record is 1755.
+    gwId: 1755,
+    type: "enchantment",
+    elite: false,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.mysticism",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All adjacent foes suffer from Disease for 2...6 seconds. For 20
+    // seconds, nothing happens. Disease duration is doubled if you are
+    // enchanted when you activate this skill. When this enchantment ends,
+    // all party members in earshot are cured of Disease" (PvP): 5 s at
+    // rank 12, 10 enchanted. The Disease lands before the enchantment,
+    // so it is not counted.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "caster-has", category: "enchantment" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "apply-status",
+                statusId: "disease",
+                durationSeconds: {
+                  scaling: { attributeId: "dervish.mysticism", atZero: 4, atTwelve: 10.4 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-lacks", category: "enchantment" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "apply-status",
+                statusId: "disease",
+                durationSeconds: {
+                  scaling: { attributeId: "dervish.mysticism", atZero: 2, atTwelve: 5.2 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+      { kind: "apply-status", statusId: "mystic-corruption", durationSeconds: { flat: 20 } },
+    ],
+  },
 ];

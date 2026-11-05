@@ -283,6 +283,7 @@ describe("status definitions", () => {
       "lyssas-aura": 4,
       succor: 1,
       "signet-of-recall": -4,
+      "spirit-channeling": 5,
     });
   });
 

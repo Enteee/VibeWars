@@ -623,6 +623,13 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "dwarven-battle-stance": icon("dwarven-battle-stance"),
   // Signet of Suffering (#2333).
   "signet-of-suffering": icon("signet-of-suffering"),
+  // Staples (#2368).
+  "foxs-promise": icon("foxs-promise"),
+  "seeping-wound": icon("seeping-wound"),
+  "shameful-fear": icon("shameful-fear"),
+  "spirit-channeling": icon("spirit-channeling"),
+  "renewing-surge": icon("renewing-surge"),
+  "mystic-corruption": icon("mystic-corruption"),
   // Smoke Powder Defense (#2362).
   "smoke-powder-defense": icon("smoke-powder-defense"),
   // Block while attacking and its mechanics card (#2374).
