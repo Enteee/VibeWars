@@ -122,7 +122,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
         case "trap":
           return effect.act.trap.spring.effects.flatMap(effectRoles);
         case "pulse":
-          return effect.act.pulse.effects.flatMap(effectRoles);
+          return [...effect.act.pulse.effects, ...(effect.act.atEnd?.effects ?? [])].flatMap(
+            effectRoles,
+          );
       }
   }
 }

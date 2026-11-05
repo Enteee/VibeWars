@@ -2882,7 +2882,8 @@ function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>
     // (#1113): "When sprung, every 1s for 3s, foes nearby: deals 17
     // damage".
     const pulse = act.kind === "trap" ? act.trap.spring : act.pulse;
-    const { radius } = pulse.area;
+    const foes = (area: RadiusArea): string =>
+      `foes ${AREA_TEXT.get(area.radius) ?? `within ${String(area.radius)}`}`;
     const who = [
       ...(act.kind === "trap" ? ["when sprung"] : []),
       // Spirit Rift's (#1270): "after 3s, foes adjacent: ...".
@@ -2890,8 +2891,11 @@ function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>
       ...(pulse.count > 1
         ? [`every ${seconds(pulse.everySeconds)} for ${seconds(pulse.count * pulse.everySeconds)}`]
         : []),
-      `foes ${AREA_TEXT.get(radius) ?? `within ${String(radius)}`}`,
+      foes(pulse.area),
     ].join(", ");
+    // Searing Heat's (#2329): "When it ends, foes nearby: applies Burning".
+    const end = act.kind === "pulse" ? act.atEnd : undefined;
+    const ending = end === undefined ? "" : `When it ends, ${foes(end.area)}: `;
     return [
       describeEffect(effect, ranks),
       ...(act.kind === "trap" && act.trap.springsAtEnd
@@ -2900,6 +2904,12 @@ function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>
       ...pulse.effects.flatMap((inner) =>
         describeEffects(inner, ranks).map(({ text, magnitude }) => ({
           text: `${who.charAt(0).toUpperCase()}${who.slice(1)}: ${lowerFirst(text)}`,
+          magnitude,
+        })),
+      ),
+      ...(end?.effects ?? []).flatMap((inner) =>
+        describeEffects(inner, ranks).map(({ text, magnitude }) => ({
+          text: `${ending}${lowerFirst(text)}`,
           magnitude,
         })),
       ),
