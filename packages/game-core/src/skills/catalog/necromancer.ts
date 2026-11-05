@@ -4670,4 +4670,305 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "mark-of-subversion", durationSeconds: { flat: 6 } },
     ],
   },
+  // Staples (#2314).
+  {
+    id: "necromancer.ulcerous-lungs",
+    name: "Ulcerous Lungs",
+    gwId: 1358,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all nearby foes."
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...30 seconds, target foe and all nearby foes suffer from -4
+    // Health degeneration when Bleeding, and whenever they use a shout or
+    // chant, they Bleed for 5...20 seconds": 26 s at rank 12.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "ulcerous-lungs",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.curses", atZero: 10, atTwelve: 26 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.blood-bond",
+    name: "Blood Bond",
+    gwId: 835,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all adjacent foes."
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3...12 seconds, target foe and all adjacent foes are hexed with
+    // Blood Bond": 10.2 s at rank 12.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "blood-bond",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 10.2 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.poisoned-heart",
+    name: "Poisoned Heart",
+    gwId: 840,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    // "You and all adjacent foes": round you, so it needs no target.
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You and all adjacent foes are Poisoned for 5...15 seconds": 13 s at
+    // rank 12, the caster too.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "poison",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.curses", atZero: 5, atTwelve: 13 },
+        },
+        on: "caster",
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "poison",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.curses", atZero: 5, atTwelve: 13 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "necromancer.vile-miasma",
+    name: "Vile Miasma",
+    gwId: 828,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 10...65 cold damage. If suffering from a
+    // condition, that foe is hexed with Vile Miasma and suffers -1...5
+    // Health degeneration for 10 seconds": 54 at rank 12; no condition, no
+    // hex.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 10, atTwelve: 54 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has-any", categories: ["condition"] },
+        effects: [{ kind: "apply-status", statusId: "vile-miasma", durationSeconds: { flat: 10 } }],
+      },
+    ],
+  },
+  {
+    id: "necromancer.depravity",
+    name: "Depravity",
+    gwId: 820,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, whenever target foe casts a spell, that foe and
+    // one nearby foe lose 1...5 Energy": 17 s at rank 12.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "depravity",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.curses", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.cultists-fervor",
+    name: "Cultist's Fervor",
+    gwId: 806,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5 seconds and 3 seconds longer for every rank of Soul Reaping,
+    // your Necromancer spells cost -1...6 Energy to cast, but you suffer
+    // from Bleeding for 10 seconds each time you cast a Necromancer spell":
+    // the duration at Soul Reaping, 41 s at rank 12, whatever its own
+    // attribute.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "cultists-fervor",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.soul-reaping", atZero: 5, atTwelve: 41 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.blood-drinker",
+    name: "Blood Drinker",
+    gwId: 1076,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If your Health is above 90%, you begin Bleeding for 6 seconds. Steal
+    // up to 20...65 Health from target foe": 56 at rank 12, in the text's
+    // order, so the check reads your Health before the steal.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "not", condition: { kind: "caster-health-below", fraction: 0.9 } },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "bleeding",
+            durationSeconds: { flat: 6 },
+            on: "caster",
+          },
+        ],
+      },
+      {
+        kind: "life-steal",
+        amount: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 56 },
+        },
+      },
+    ],
+  },
 ];

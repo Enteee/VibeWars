@@ -504,6 +504,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "spoil-victor": icon("spoil-victor"),
   // Adrenaline in points (#2302).
   "balthazars-spirit": icon("balthazars-spirit"),
+  // Necromancer staples (#2314).
+  "ulcerous-lungs": icon("ulcerous-lungs"),
+  "blood-bond": icon("blood-bond"),
+  "vile-miasma": icon("vile-miasma"),
+  depravity: icon("depravity"),
+  "cultists-fervor": icon("cultists-fervor"),
   // Monk staples (#2286).
   "essence-bond": icon("essence-bond"),
   "life-barrier": icon("life-barrier"),

@@ -17,6 +17,7 @@ const NO_BOT_USE = new Set([
   // Own-skill modifiers (#1761): cheaper, faster or longer own skills are
   // no role the bot weighs.
   "monk.divine-spirit",
+  "necromancer.cultists-fervor",
   "monk.blessed-aura",
   "monk.healers-covenant",
   "monk.holy-haste",
