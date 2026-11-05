@@ -123,6 +123,7 @@ describe("the rule (#1761)", () => {
       rechargeSlower: 0,
       durationMultiplier: 1,
       healMultiplier: 0.8,
+      overcast: 0,
       notEasilyInterrupted: false,
     });
   });

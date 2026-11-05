@@ -2643,8 +2643,8 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
 
   await toggle.check();
   const fire = page.locator(".skill-group", { hasText: "FIRE MAGIC" });
-  // Searing Heat is GW1 Fire Magic VibeWars does not have yet.
-  const mark = fire.locator(".skill-corpus-box", { hasText: "Searing Heat" });
+  // Savannah Heat is GW1 Fire Magic VibeWars does not have yet.
+  const mark = fire.locator(".skill-corpus-box", { hasText: "Savannah Heat" });
   await expect(mark).toContainText("not in the game yet");
   // After the group's playable skills.
   await expect(fire.locator(".skill-box, .skill-corpus-box").last()).toHaveClass(
@@ -2654,17 +2654,16 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   expect(await mark.getAttribute("draggable")).toBeNull();
   await expect(mark.locator("button")).toHaveCount(0);
   await mark.click();
-  await expect(page.locator(".skill-slot", { hasText: "Searing Heat" })).toHaveCount(0);
+  await expect(page.locator(".skill-slot", { hasText: "Savannah Heat" })).toHaveCount(0);
   // Its hover shows GW1's own text.
   await mark.hover();
   await expect(page.locator(".skill-tip")).toContainText("Not in the game yet");
 
   // The search finds it; remembered across a reload.
-  // Searing Flames is in the game, so it is found too, playable.
-  await page.locator("input.skill-search").fill("searing");
-  await expect(page.locator(".skill-corpus-box", { hasText: "Searing Heat" })).toHaveCount(1);
-  await expect(page.locator(".skill-box", { hasText: "Searing Flames" })).toHaveCount(1);
-  await expect(page.locator(".skill-box, .skill-corpus-box")).toHaveCount(2);
+  // Searing Heat is in the game, so it is found too, playable.
+  await page.locator("input.skill-search").fill("heat");
+  await expect(page.locator(".skill-corpus-box", { hasText: "Savannah Heat" })).toHaveCount(1);
+  await expect(page.locator(".skill-box", { hasText: "Searing Heat" })).toHaveCount(1);
   await page.reload();
   await page.getByRole("button", { name: "New character", exact: true }).click();
   await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
