@@ -401,6 +401,11 @@ export interface StatusDefinition {
    */
   readonly preventsSpeedBoosts: boolean;
   /**
+   * Its bearer gains no adrenaline while it holds (#2287): Soothing
+   * Images' "cannot gain adrenaline". What it holds already stays.
+   */
+  readonly preventsAdrenalineGain: boolean;
+  /**
    * When it ends, for any reason, its caster Shadow Steps back to where it
    * stood when it put it up (#1826): GW1's "you return to your original
    * location". Not when it is replaced by a recast of itself: that one
