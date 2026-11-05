@@ -559,7 +559,7 @@ describe("describeSkill", () => {
     );
     expect(describeStatus("mist-form")).toBe(
       "33% less damage from foes with a Water Magic hex. Whenever it casts an elemental spell: " +
-        "you and non-spirit allies in earshot: heals for 210% of the spell's energy cost, under 80% Health",
+        "it and non-spirit allies in earshot: heals for 210% of the spell's energy cost, under 80% Health",
     );
   });
 

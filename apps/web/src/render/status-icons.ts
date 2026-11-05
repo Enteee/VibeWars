@@ -502,6 +502,15 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "zealots-fire": icon("zealots-fire"),
   "glimmering-mark": icon("glimmering-mark"),
   "spoil-victor": icon("spoil-victor"),
+  // Monk staples (#2286).
+  "essence-bond": icon("essence-bond"),
+  "life-barrier": icon("life-barrier"),
+  retribution: icon("retribution"),
+  "scourge-healing": icon("scourge-healing"),
+  "healing-seed": icon("healing-seed"),
+  succor: icon("succor"),
+  "divine-boon": icon("divine-boon"),
+  "restful-breeze": icon("restful-breeze"),
   // Condition movement (#2259).
   "fevered-dreams": icon("fevered-dreams"),
   "mark-of-fury": icon("mark-of-fury"),
