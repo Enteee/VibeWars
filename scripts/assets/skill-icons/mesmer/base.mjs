@@ -94,6 +94,8 @@ const rows = {
   "mesmer.signet-of-illusions": { glyph: "bars-lent" },
   // Stand-in art (#2293).
   "mesmer.keystone-signet": { glyph: "arch-keystone" },
+  // Stand-in art (#2294).
+  "mesmer.mantra-of-recall": { glyph: "hourglass-energy" },
 };
 
 export default rows;

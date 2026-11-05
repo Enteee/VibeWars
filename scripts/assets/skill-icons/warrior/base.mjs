@@ -92,6 +92,8 @@ const rows = {
   "warrior.flurry": { glyph: "slashes-flurry" },
   // Stand-in art (#2292).
   "warrior.wild-blow": { glyph: "blade-no-bars" },
+  // Stand-in art (#2294).
+  "warrior.shove": { glyph: "palm-felled" },
 };
 
 export default rows;

@@ -115,6 +115,8 @@ const rows = {
   "necromancer.spoil-victor": { glyph: "hearts-less" },
   // Stand-in art (#2293).
   "necromancer.masochism": { glyph: "heart-energy" },
+  // Stand-in art (#2294).
+  "necromancer.mark-of-subversion": { glyph: "hex-spell-drop" },
 };
 
 export default rows;
