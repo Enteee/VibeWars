@@ -2,20 +2,20 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Hex: a bolt over a figure lying flat, a strike that knocks down.
+  // Hex: a bolt over a figure lying flat, a strike that knocks down. All ink sits inside the plate's diamond.
   "lightning-surge": [
     "hex",
     (c) =>
-      `<path d="M14 3l-6 8h4l-3 6" ${stroke(c, 1.8)}/>` +
-      `<circle cx="5" cy="20" r="1.8" ${stroke(c, 1.5)}/>` +
-      `<path d="M8 20h13" ${stroke(c, 1.8)}/>`,
+      `<path d="M13.500 4L9.500 10h3L10.500 15" ${stroke(c, 1.8)}/>` +
+      `<circle cx="8" cy="17.500" r="1.500" ${stroke(c, 1.4)}/>` +
+      `<path d="M10.500 17.500H17" ${stroke(c, 1.8)}/>`,
   ],
-  // Skill effect: a shield in a ground ring, the ward on the floor.
+  // Skill effect: a short shield over an open ground arc, the ward on the floor.
   "ward-against-harm": [
     "skill-effect",
     (c) =>
-      `<ellipse cx="12" cy="18" rx="9" ry="3.5" ${stroke(c, 1.6)}/>` +
-      `<path d="M12 3l5 2v5c0 3-2 4.500-5 6-3-1.500-5-3-5-6V5z" ${stroke(c, 1.8)}/>`,
+      `<path d="M5.500 15.500Q12 21 18.500 15.500" ${stroke(c, 1.6)}/>` +
+      `<path d="M12 3.500l4 1.500v3.500c0 2.500-1.500 3.500-4 5-2.500-1.500-4-2.500-4-5V5z" ${stroke(c, 1.8)}/>`,
   ],
 };
 

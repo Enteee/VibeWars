@@ -96,6 +96,11 @@ const rows = {
   "mesmer.keystone-signet": { glyph: "arch-keystone" },
   // Stand-in art (#2294).
   "mesmer.mantra-of-recall": { glyph: "hourglass-energy" },
+  // Stand-in art (#2312).
+  "mesmer.mind-wrack": { glyph: "hex-energy-down" },
+  "mesmer.ignorance": { glyph: "hex-signet-struck" },
+  "mesmer.simple-thievery": { glyph: "tiles-steal" },
+  "mesmer.enchanters-conundrum": { glyph: "hex-ring-clock" },
 };
 
 export default rows;

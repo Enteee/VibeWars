@@ -110,6 +110,8 @@ const rows = {
   // Stand-in art (#2294).
   "elementalist.lightning-surge": { glyph: "bolt-felled" },
   "elementalist.ward-against-harm": { glyph: "ward-ground" },
+  // Stand-in art (#2312).
+  "elementalist.churning-earth": { glyph: "rocks-churning" },
 };
 
 export default rows;
