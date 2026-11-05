@@ -81,6 +81,7 @@ const NO_BOT_USE = new Set([
   "ranger.disrupting-lunge",
   "ranger.enraged-lunge",
   "ranger.ferocious-strike",
+  "ranger.feral-aggression",
   "ranger.feral-lunge",
   "ranger.heal-as-one",
   "ranger.maiming-strike",
