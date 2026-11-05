@@ -59,6 +59,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-creates-creature"
   | "bearer-chant-or-shout-ends"
   | "bearer-dies"
+  | "source-targets-bearer"
   | "ends"
   | "ends-early"
   | "expires"
@@ -145,10 +146,32 @@ function answersAim(trigger: StatusTrigger, bearer: Combatant, context: TriggerC
 }
 
 /**
+ * `sourceId` used `used` on the bearer (#2290): every status of its source's
+ * on the bearer that answers fires, once each, in `active` order, as
+ * `fireTriggers`. Anyone else's statuses do not answer.
+ */
+export function fireSourceTargetsTriggers(
+  bearer: Combatant,
+  sourceId: string,
+  used: SlotSkill,
+  context: TriggerContext,
+): FiredTrigger[] {
+  return bearer.statuses
+    .triggersOn("source-targets-bearer")
+    .filter((each) => each.sourceId === sourceId && answersUsedSkill(each.trigger, used))
+    .flatMap(({ statusId, trigger }) =>
+      fire(trigger, statusId, sourceId, bearer, undefined, undefined, {
+        ...context,
+        usedSkill: used,
+      }),
+    );
+}
+
+/**
  * Whether a `bearer-uses-skill` trigger answers `used` (#1437): any skill,
- * unless it names a type, a profession or an attribute (#1614) the skill
- * must have, or that it be elite (#1473), adrenal (#1592) or a spell
- * (#2132).
+ * unless it names a type, or one it must not be (#2290), a profession or
+ * an attribute (#1614) the skill must have, or that it be elite (#1473),
+ * adrenal (#1592) or a spell (#2132).
  */
 function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): boolean {
   if (trigger.usedSkill === undefined) {
@@ -158,6 +181,7 @@ function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): 
   return (
     skill !== undefined &&
     (trigger.usedSkill.type === undefined || skill.type === trigger.usedSkill.type) &&
+    (trigger.usedSkill.notType === undefined || skill.type !== trigger.usedSkill.notType) &&
     (trigger.usedSkill.spell === undefined || isSpell(skill.type)) &&
     (trigger.usedSkill.attributes === undefined ||
       (skill.attributeId !== undefined &&

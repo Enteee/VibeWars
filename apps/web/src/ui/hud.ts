@@ -463,6 +463,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "cannot-attack": "You cannot attack.",
   "cannot-resurrect": "You cannot resurrect here.",
   "cannot-shout-or-chant": "You cannot use shouts or chants.",
+  "cannot-use-signets": "You cannot use signets.",
   "invalid-target-untargetable": "Your spells cannot target that foe.",
   "invalid-target-unenchantable": "That target cannot be enchanted.",
   "no-spells": "That target has no spells.",

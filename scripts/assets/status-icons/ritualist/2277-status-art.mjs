@@ -3,19 +3,16 @@ import { stroke } from "../../icon-kit.mjs";
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
   // Ritualist status art (#2277).
-  // Ashes: an urn with a shield in it, more armor.
+  // Ashes: a big solid shield, more armor.
   "protective-was-kaolai": [
     "item",
-    (c) =>
-      `<path d="M8 4H16M9 4V7L6 11V17L8 20H16L18 17V11L15 7V4" ${stroke(c, 1.8)}/>` +
-      `<path d="M9.5 11.5h5v2.5c0 1.5-1.2 2.4-2.5 3-1.3-.6-2.5-1.5-2.5-3z" ${stroke(c, 1.5)}/>`,
+    (c) => `<path d="M12 2.5l8 3v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10v-6z" fill="${c}"/>`,
   ],
-  // Ashes: an urn with a bar rising in it, more maximum Energy.
+  // Ashes: a big arrow rising over a base line, more maximum Energy.
   "mighty-was-vorizun": [
     "item",
     (c) =>
-      `<path d="M8 4H16M9 4V7L6 11V17L8 20H16L18 17V11L15 7V4" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 18v-6M9.5 14.5L12 12l2.5 2.5" ${stroke(c, 1.8)}/>`,
+      `<path d="M12 3l8 9h-5v6H9v-6H4z" fill="${c}"/>` + `<path d="M5 21.5h14" ${stroke(c, 2)}/>`,
   ],
   // Weapon spell: a heart on a blade, more maximum Health.
   "vital-weapon": [

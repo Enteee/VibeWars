@@ -2688,6 +2688,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "target-knocked-down":
     case "target-moving":
     case "target-foe":
+    case "target-moving-faster":
     case "target-has-status":
     case "target-lacks-status":
     case "caster-more-energy":
@@ -2823,6 +2824,8 @@ export function stateHolds(
       return target.moving;
     case "target-foe":
       return target.team !== caster.team;
+    case "target-moving-faster":
+      return target.moving && aggregateModifiers(target.statuses.active).moveSpeedMultiplier > 1;
     case "target-has-status":
       return target.statuses.has(condition.statusId);
     case "target-lacks-status":
@@ -3188,6 +3191,7 @@ function conditionHolds(
     case "target-knocked-down":
     case "target-moving":
     case "target-foe":
+    case "target-moving-faster":
     case "target-has-status":
     case "target-lacks-status":
     case "caster-more-energy":
