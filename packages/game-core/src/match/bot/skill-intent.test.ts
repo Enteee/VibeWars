@@ -352,6 +352,9 @@ const NO_BOT_USE = new Set([
   // A rider on the next Necromancer skill on a foe (#2333), its effect only
   // in a status trigger: no role the bot weighs.
   "necromancer.signet-of-suffering",
+  // Energy later for Energy regeneration now (#2374), its gain only in a
+  // status trigger: no role the bot weighs.
+  "mesmer.signet-of-recall",
 ]);
 
 function skill(id: string) {

@@ -79,7 +79,8 @@ export type ElementalistStatusId =
   | "rust"
   // Elementalist staples (#2288).
   | "gust"
-  | "mirror-of-ice";
+  | "mirror-of-ice"
+  | "winters-embrace";
 
 /** Incendiary Bonds' blast (#2289), on its bearer and the foes near it. */
 const INCENDIARY_BLAST = {
@@ -797,6 +798,33 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     profession: "elementalist",
     attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
+  }),
+  // Mechanics (#2374). "...moves 66% slower and takes 5...15 damage while
+  // moving": 13 at rank 12, each second it is moving as the second comes.
+  "winters-embrace": define("winters-embrace", "Winter's Embrace", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    moveSpeedMultiplier: 0.34,
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-moving" },
+          effects: [
+            {
+              kind: "damage",
+              amount: {
+                scaling: { attributeId: "elementalist.water-magic", atZero: 5, atTwelve: 13 },
+              },
+              type: "typeless",
+              armorPenetration: 0,
+            },
+          ],
+        },
+      ],
+      skillId: "elementalist.winters-embrace",
+    },
   }),
 };
 

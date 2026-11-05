@@ -74,7 +74,8 @@ export type MonkStatusId =
   | "aura-of-faith"
   | "peace-and-harmony"
   | "vengeance"
-  | "balthazars-spirit";
+  | "balthazars-spirit"
+  | "watchful-healing";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -939,6 +940,26 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         ],
         target: "bearer",
         skillId: "monk.balthazars-spirit",
+      },
+    ],
+  }),
+  // Mechanics (#2374). "...+1...4 Health regeneration. If this skill ends
+  // prematurely, that ally gains 30...120 Health": 3 pips and 102 at the
+  // caster's rank 12. Running its full 10 s heals nothing.
+  "watchful-healing": define("watchful-healing", "Watchful Healing", "enchantment", {
+    profession: "monk",
+    healthPips: { scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 3.4 } },
+    triggers: [
+      {
+        on: "ends-early",
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "monk.divine-favor", atZero: 30, atTwelve: 102 } },
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.watchful-healing",
       },
     ],
   }),

@@ -638,6 +638,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mystic-corruption": icon("mystic-corruption"),
   // Smoke Powder Defense (#2362).
   "smoke-powder-defense": icon("smoke-powder-defense"),
+  // Block while attacking and its mechanics card (#2374).
+  "flashing-blades": icon("flashing-blades"),
+  "winters-embrace": icon("winters-embrace"),
+  "signet-of-recall": icon("signet-of-recall"),
+  "watchful-healing": icon("watchful-healing"),
 };
 
 const GAP = 2;

@@ -1,3 +1,4 @@
+import { isAttacking } from "./attacking.js";
 import { effectiveRank } from "../attributes.js";
 import type { ModStatusWhile } from "../equipment/mods.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
@@ -628,7 +629,8 @@ export interface BlockingStatus {
  * as `blockChanceOf` reads them: none while knocked down, and one that
  * holds only below a share of health only below it. One that blocks only
  * attack skills drops out against a plain swing, and one that holds only
- * while under a shout or chant drops out without one (#1978).
+ * while under a shout or chant drops out without one (#1978), and one
+ * that holds only while attacking drops out between attacks (#2374).
  */
 export function blockingStatusesOf(
   combatant: Combatant,
@@ -639,11 +641,14 @@ export function blockingStatusesOf(
   }
   const maxHealth = effectiveMaxHealth(combatant);
   return combatant.statuses.active.flatMap((status) => {
-    const { block, blockBelowHealth, blockWhileUnder } = getStatusDefinition(status.id);
+    const { block, blockBelowHealth, blockWhileUnder, blockWhileAttacking } = getStatusDefinition(
+      status.id,
+    );
     const holds =
       (blockBelowHealth === undefined || combatant.health < maxHealth * blockBelowHealth) &&
       (blockWhileUnder === undefined ||
-        isUnderAnother(combatant.statuses.active, status, blockWhileUnder));
+        isUnderAnother(combatant.statuses.active, status, blockWhileUnder)) &&
+      (!blockWhileAttacking || isAttacking(combatant));
     return block !== undefined && holds && (attackSkill || block.attackSkillsOnly !== true)
       ? [{ statusId: status.id, block }]
       : [];
