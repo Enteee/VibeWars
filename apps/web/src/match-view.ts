@@ -465,15 +465,22 @@ export async function startMatchView(
     // The chat (#2390) sits at the bottom-left beside the HUD's centred
     // column when the room left of it is 14rem or more, above the HUD when
     // not: the column holds the bars and the skill bar rows, and is watched
-    // through the bars. Not the message above it: that keeps the width of
-    // whatever it last said while it fades.
-    const column = hud.bars.parentElement?.getBoundingClientRect().width ?? 0;
-    parent.style.setProperty("--hud-column-width", `${String(column)}px`);
+    // through the bars, with the weapon sets hanging off the skill bar's
+    // left end. Not the message above it: that keeps the width of whatever
+    // it last said while it fades.
+    const column = hud.bars.parentElement;
+    const lefts = [column, column?.querySelector(".weapon-sets")]
+      .map((part) => part?.getBoundingClientRect())
+      .filter((box): box is DOMRect => box !== undefined && box.width > 0)
+      .map((box) => box.left);
+    const room =
+      lefts.length === 0
+        ? parent.clientWidth
+        : Math.min(...lefts) - parent.getBoundingClientRect().left;
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-    parent.classList.toggle(
-      "is-chat-above-hud",
-      (parent.clientWidth - column) / 2 - 1.8 * rem < 14 * rem,
-    );
+    const chatWidth = Math.max(0, room - 1.8 * rem);
+    parent.style.setProperty("--chat-beside-hud-width", `${String(chatWidth)}px`);
+    parent.classList.toggle("is-chat-above-hud", chatWidth < 14 * rem);
     // The compass and the party window, from the parent the canvas fills
     // (#1424). A hidden party window has no size and keeps nothing out; a
     // hidden compass keeps its box, so it keeps markers out either way and
@@ -1053,7 +1060,7 @@ export async function startMatchView(
       compass.dispose();
       delete parent.dataset.called;
       parent.style.removeProperty("--hud-height");
-      parent.style.removeProperty("--hud-column-width");
+      parent.style.removeProperty("--chat-beside-hud-width");
       parent.style.removeProperty("--chat-room");
       parent.classList.remove("is-chat-above-hud");
       nameReveal.detach();

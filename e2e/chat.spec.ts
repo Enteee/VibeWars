@@ -173,6 +173,19 @@ test("in a match the chat sits bottom-left beside the skill bar, above the HUD w
       expect(panel.x + panel.width, `${String(width)} px: clear of the skill bar`).toBeLessThan(
         skills.x,
       );
+      // Nor with the weapon sets hanging off the skill bar's left end.
+      const sets = await box(page.locator(".weapon-sets"), "the weapon sets");
+      expect(panel.x + panel.width, `${String(width)} px: clear of the weapon sets`).toBeLessThan(
+        sets.x,
+      );
+      // Nor with the party window.
+      const party = await box(page.locator(".party-window"), "the party window");
+      const apart =
+        panel.x + panel.width <= party.x ||
+        party.x + party.width <= panel.x ||
+        panel.y + panel.height <= party.y ||
+        party.y + party.height <= panel.y;
+      expect(apart, `${String(width)} px: clear of the party window`).toBe(true);
     }).toPass();
   }
   await page.setViewportSize({ width: 800, height: 600 });

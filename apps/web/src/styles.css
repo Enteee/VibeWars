@@ -6715,10 +6715,11 @@ body:has(#app > .chat) .now-playing {
   font-size: 0.78rem;
 }
 
-/* In a match (#2390): bottom-left beside the HUD's centred column, as wide
-   as the room left of it; above the HUD where that room is too narrow. */
+/* In a match (#2390): bottom-left beside the HUD's centred column and its
+   weapon sets, as wide as the room left of them; above the HUD where that
+   room is too narrow. */
 #viewport > .chat {
-  width: min(24rem, calc((100% - var(--hud-column-width, 100%)) / 2 - 1.8rem));
+  width: min(24rem, var(--chat-beside-hud-width, 0px));
 }
 
 #viewport.is-chat-above-hud > .chat {
