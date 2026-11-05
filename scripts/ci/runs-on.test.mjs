@@ -21,7 +21,7 @@ const CANONICAL =
   "runs-on: ${{ (vars.COMPANY_RUNNERS == '1' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))) && fromJSON('[\"self-hosted\",\"vibewars-company\"]') || 'ubuntu-latest' }}";
 
 /** Security tooling and deploys stay on clean hosts. */
-const HOSTED_ONLY = ["codeql.yml", "dependency-review.yml", "audit.yml", "pages.yml", "ci.yml"];
+const HOSTED_ONLY = ["dependency-review.yml", "pages.yml"];
 
 const files = fs.readdirSync(WORKFLOWS).filter((n) => n.endsWith(".yml") || n.endsWith(".yaml"));
 
@@ -116,8 +116,29 @@ describe("company runner selection", () => {
   });
 
   it("finds the jobs that use it", () => {
-    // None while the company runners are off (#2101, #2155).
-    expect(eligible.map(([n, id]) => `${n}:${id}`).sort()).toEqual([]);
+    const named = eligible.map(([n, id]) => `${n}:${id}`);
+    expect(named).toContain("ci.yml:e2e");
+    expect(named).toContain("audit.yml:audit");
+    expect(named).toContain("codeql.yml:analyze");
+    expect(named).not.toContain("codeql.yml:upload");
+  });
+
+  it("codeql.yml: the job with security-events: write is hosted and runs nothing", () => {
+    const jobs = Object.entries(workflows["codeql.yml"]?.jobs ?? {});
+    const writers = jobs.filter(([, b]) => /security-events:\s*write/.test(b));
+    expect(writers.map(([id]) => id)).toEqual(["upload"]);
+    for (const [, block] of writers) {
+      expect(runnerOf(block)).toBe("hosted");
+      expect(block).not.toMatch(/actions\/checkout/);
+      expect(block).not.toMatch(/^\s+(- )?run:/m);
+      const uses = [...block.matchAll(/^\s+(?:- )?uses:\s+(\S+)/gm)].map((m) => m[1] ?? "");
+      expect(uses.length).toBeGreaterThan(0);
+      for (const u of uses) expect(u, u).toMatch(/@[0-9a-f]{40}$/);
+      expect(block).not.toMatch(/run-id|github-token|checkout_path/);
+    }
+    const analyze = jobs.find(([id]) => id === "analyze")?.[1] ?? "";
+    expect(runnerOf(analyze)).toBe("company");
+    expect(analyze).not.toMatch(/security-events/);
   });
 
   it.each(eligible)("%s %s uses exactly the canonical expression", (_n, _id, block) => {

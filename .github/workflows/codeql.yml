@@ -11,7 +11,7 @@ name: CodeQL
 # (EVERY_JOB_WORKFLOWS in hubd.mjs). Two check runs appear, and both are
 # neutralised:
 #
-# - this job: `continue-on-error` on the CodeQL steps, so an extraction or
+# - these jobs: `continue-on-error` on the CodeQL steps, so an extraction or
 #   upload failure concludes as success rather than blocking unrelated work;
 # - code scanning's own `CodeQL` check run, which fails on new alerts by
 #   default. The repository setting Settings → Code security → Code
@@ -46,11 +46,10 @@ concurrency:
 jobs:
   analyze:
     name: analyze
-    runs-on: ubuntu-latest
+    runs-on: ${{ (vars.COMPANY_RUNNERS == '1' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))) && fromJSON('["self-hosted","vibewars-company"]') || 'ubuntu-latest' }}
     permissions:
       contents: read
       actions: read
-      security-events: write
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
@@ -63,7 +62,44 @@ jobs:
           build-mode: none
           config-file: ./.github/codeql/codeql-config.yml
 
+      # `upload: never`: the scan runs on a company runner, which holds no
+      # write token. The `upload` job sends the SARIF from a hosted runner.
       - uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         continue-on-error: true
         with:
+          category: /language:javascript-typescript
+          upload: never
+          output: sarif
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sarif-javascript-typescript
+          path: sarif
+          retention-days: 1
+          if-no-files-found: ignore
+
+  # Hosted, with the only write permission of this workflow. No checkout, no
+  # `run:` step, nothing from the artifact is executed (ADR-0045 amendment).
+  # Every step is `continue-on-error`: this job is de facto required (hubd's
+  # EVERY_JOB_WORKFLOWS), and a failed scan leaves no SARIF to download or
+  # upload; a fork PR has no write token and fails into the same success.
+  upload:
+    name: upload
+    needs: analyze
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        continue-on-error: true
+        with:
+          name: sarif-javascript-typescript
+          path: sarif
+
+      - uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        continue-on-error: true
+        with:
+          sarif_file: sarif
           category: /language:javascript-typescript
