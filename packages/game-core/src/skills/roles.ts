@@ -84,6 +84,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "recharge-faster":
     case "recharge-reset":
     case "recharge-others":
+    case "adrenaline-loss":
     case "pull-to-caster":
     case "destroy-target-spirit":
     case "destroy-target-minion":

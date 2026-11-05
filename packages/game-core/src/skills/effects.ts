@@ -915,9 +915,28 @@ function countOf(
                 rule.excludesCaster === true &&
                 combatant === caster
               ) &&
+              !(
+                rule.kind === "foes-within" &&
+                rule.knockedDown === true &&
+                combatant.knockdownRemaining <= 0
+              ) &&
               distance(position, at) <= rule.radius,
           ).length;
     }
+    case "dead-allies-within": {
+      const at = surroundings.get(caster.id)?.position;
+      return at === undefined
+        ? 0
+        : [...surroundings.values()].filter(
+            ({ combatant, position }) =>
+              combatant.dead &&
+              combatant.id !== caster.id &&
+              combatant.team === caster.team &&
+              distanceWithinRange(at, position, rule.radius),
+          ).length;
+    }
+    case "knocked-down":
+      return earlier.filter((event) => event.kind === "knocked-down").length;
     case "recharging-skills": {
       const owner = livingOwnerOf(caster, surroundings);
       return owner === undefined
@@ -2055,6 +2074,11 @@ export function applyEffect(
         getStatusDefinition(effect.statusId).category === "weapon-spell"
           ? seconds * spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
           : seconds;
+      // A count of none, as "I Will Avenge You!"'s with no dead ally (#2320):
+      // a 0 s status never lands.
+      if (base <= 0) {
+        return events;
+      }
       // A status the caster bears lengthens what its skills of a kind put on (#1761).
       // Infuse Condition's (#1915): a condition goes to the bearer's
       // closest living minion instead, if it has one.
@@ -2634,6 +2658,12 @@ export function applyEffect(
       return events;
     }
 
+    // Burst of Aggression's end (#2320): every pool, as `losesAllAdrenaline`.
+    case "adrenaline-loss":
+      if (target !== undefined && !target.dead) {
+        emptyAdrenaline(target);
+      }
+      return events;
     // A status's trigger recharges here (#1762), there being no resolution.
     case "recharge-others":
       if (context.firingStatusId !== undefined && !caster.dead) {
@@ -3419,6 +3449,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "owner-gains-damage-dealt":
     case "chain-mark":
     case "overcast":
+    case "adrenaline-loss":
     case "if":
       return false;
   }
@@ -3469,6 +3500,12 @@ export interface SkillOutcome {
    * `recharge-faster` that landed, if one did; else 0.
    */
   readonly rechargeFraction: number;
+  /**
+   * How many seconds shorter this use's recharge is (#2320): every
+   * `recharge-faster` of `seconds` that landed, summed; else 0. Taken off
+   * after `rechargeFraction`, never below 0 s.
+   */
+  readonly rechargeShorterSeconds: number;
   /**
    * How many seconds longer this use's recharge is (#1519): every
    * `lengthen-recharge` of `this-skill` that landed, summed; else 0.
@@ -3564,6 +3601,7 @@ export function resolveSkillEffects(
   );
   const events: CombatEvent[] = [];
   let rechargeFraction = 0;
+  let rechargeShorterSeconds = 0;
   let rechargeLongerSeconds = 0;
   const summons: SummonEffect[] = [];
   const grounds: CreateGroundEffect[] = [];
@@ -3591,13 +3629,29 @@ export function resolveSkillEffects(
       }
       for (const inner of landed) {
         if (inner.kind === "recharge-faster") {
-          rechargeFraction = Math.max(rechargeFraction, inner.fraction);
+          if ("fraction" in inner) {
+            rechargeFraction = Math.max(rechargeFraction, inner.fraction);
+          } else {
+            // "None Shall Pass!"'s (#2320): for each foe it knocked down.
+            rechargeShorterSeconds += withPerCount(
+              resolveMagnitude(inner.seconds, caster),
+              inner.per,
+              caster,
+              target,
+              surroundings,
+              before,
+            );
+          }
         }
         if (inner.kind === "splash") {
           // Mirror of Ice's "if you strike a foe hexed with Water Magic"
           // (#2288): once, however many it reaches.
           const faster = inner.effects.find((each) => each.kind === "recharge-faster");
-          if (faster !== undefined && splashTargets(inner, context, before).reached.length > 0) {
+          if (
+            faster !== undefined &&
+            "fraction" in faster &&
+            splashTargets(inner, context, before).reached.length > 0
+          ) {
             rechargeFraction = Math.max(rechargeFraction, faster.fraction);
           }
         }
@@ -3655,6 +3709,7 @@ export function resolveSkillEffects(
   return {
     events,
     rechargeFraction,
+    rechargeShorterSeconds,
     rechargeLongerSeconds,
     summons,
     grounds,

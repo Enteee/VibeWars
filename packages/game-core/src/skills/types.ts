@@ -148,8 +148,24 @@ export type CountRule =
       readonly on: "target" | "caster";
       readonly categories: readonly StatusCategory[];
     }
-  /** Living foes of the caster within `radius` of the caster. */
-  | { readonly kind: "foes-within"; readonly radius: number }
+  /**
+   * Living foes of the caster within `radius` of the caster; with
+   * `knockedDown` only those knocked down now (#2320): "On Your Knees!"'s
+   * "if any adjacent foe is knocked down".
+   */
+  | { readonly kind: "foes-within"; readonly radius: number; readonly knockedDown?: true }
+  /**
+   * Dead allies of the caster within `radius` of the caster, the caster
+   * not counted (#2320), each as `caster-dead-ally-within` finds one:
+   * "I Will Avenge You!"'s "for each dead ally".
+   */
+  | { readonly kind: "dead-allies-within"; readonly radius: number }
+  /**
+   * Foes an earlier effect of this same use knocked down (#2320), its
+   * `knocked-down` events, as `removed` reads them: "None Shall Pass!"'s
+   * "for each foe knocked down".
+   */
+  | { readonly kind: "knocked-down" }
   /**
    * Living allies of the caster within `radius` of the caster, the caster
    * included (#1955), or with `excludesCaster` only the others (#2222):
@@ -623,12 +639,14 @@ export interface RemoveStatusEffect {
 
 /**
  * This use's recharge is `fraction` shorter, as Signet of Pious Light's
- * "recharges 75% faster" (#845). Acts on the caster, once.
+ * "recharges 75% faster" (#845), or `seconds` shorter, `per` what it
+ * counts, never below 0 s (#2320): "None Shall Pass!"'s "recharges 1...8
+ * seconds faster for each foe knocked down (maximum 25)". Acts on the
+ * caster, once.
  */
-export interface RechargeFasterEffect {
-  readonly kind: "recharge-faster";
-  readonly fraction: number;
-}
+export type RechargeFasterEffect =
+  | { readonly kind: "recharge-faster"; readonly fraction: number }
+  | { readonly kind: "recharge-faster"; readonly seconds: Magnitude; readonly per: PerCount };
 
 /**
  * This skill recharges at once (#1914), as Needling Shot's "if it hits a
@@ -944,12 +962,22 @@ export interface DestroyAlliedSpiritsEffect {
  * as Moebius Strike's "all your other attack skills are recharged". Acts
  * on the caster, once. `all` (#1762), from a status's trigger, recharges
  * every skill on the bar, the status's own included: Assassin's Promise.
- * `signet` (#2275), every other signet: Keystone Signet's. A dead caster
- * recharges nothing.
+ * `signet` (#2275), every other signet: Keystone Signet's. `stance`
+ * (#2320), every stance: "On Your Knees!"'s. A dead caster recharges
+ * nothing.
  */
 export interface RechargeOthersEffect {
   readonly kind: "recharge-others";
-  readonly which: "attack" | "signet" | "all";
+  readonly which: "attack" | "signet" | "stance" | "all";
+}
+
+/**
+ * The target loses all its adrenaline (#2320), every pool, as a skill's
+ * `losesAllAdrenaline` empties them: Burst of Aggression's "when this
+ * stance ends, you lose all adrenaline", from an `ends` trigger.
+ */
+export interface AdrenalineLossEffect {
+  readonly kind: "adrenaline-loss";
 }
 
 /**
@@ -1794,6 +1822,7 @@ export type UnconditionalEffect =
   | OwnerGainsDamageDealtEffect
   | DestroyAlliedSpiritsEffect
   | RechargeOthersEffect
+  | AdrenalineLossEffect
   | DisableSkillEffect
   | CopyRemovedEffect
   | CopyDisabledEffect

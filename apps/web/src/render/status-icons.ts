@@ -578,6 +578,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "signet-of-stamina": icon("signet-of-stamina"),
   "soldiers-stance": icon("soldiers-stance"),
   "steady-stance": icon("steady-stance"),
+  // Warrior shouts that count (#2320).
+  "i-will-avenge-you": icon("i-will-avenge-you"),
+  "fear-me": icon("fear-me"),
+  "burst-of-aggression": icon("burst-of-aggression"),
   // Monk and Ranger mechanics (#2189).
   "spell-shield": icon("spell-shield"),
   "convert-hexes": icon("convert-hexes"),

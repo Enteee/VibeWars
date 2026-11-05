@@ -3,6 +3,7 @@ import {
   AREA_EARSHOT,
   AREA_IN_THE_AREA,
   AREA_NEARBY,
+  RANGE_COMPASS,
   RANGE_SPELL,
 } from "../distances.js";
 import type { DamageType } from "../equipment/types.js";
@@ -689,8 +690,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     );
     // Way of the Assassin's "while wielding daggers" (#2275).
     const weapon = definition.criticalChanceBonusWeapon;
+    // "Fear Me!"'s "against foes that are not moving" (#2320).
+    const versus =
+      definition.criticalChanceBonusVersus === undefined ? "" : " against foes that are not moving";
     parts.push(
-      `${chance}% critical chance${weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`}`,
+      `${chance}% critical chance${weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`}${versus}`,
     );
   }
   if (definition.energyPerCritical !== 0) {
@@ -2522,6 +2526,16 @@ function conditionText(
       return [first ?? "Always", ...rest.map((text) => text.replace(/^If /, ""))].join(" and ");
     }
     case "count-at-least":
+      // "On Your Knees!"'s "if any adjacent foe is knocked down" (#2320).
+      if (
+        condition.atLeast === 1 &&
+        condition.count.kind === "foes-within" &&
+        condition.count.knockedDown === true
+      ) {
+        const where =
+          AREA_TEXT.get(condition.count.radius) ?? `within ${String(condition.count.radius)}`;
+        return `If any ${where} foe is knocked down`;
+      }
       return `If ${countAll(condition.count)} number ${String(condition.atLeast)} or more`;
     case "count-at-most":
       return `If ${countAll(condition.count)} are no more than ${countAll(condition.than)}`;
@@ -3079,7 +3093,9 @@ function countEach(count: CountRule, onTarget: string): string {
           ? `${count.categories.join(" or ")} removed`
           : count.kind === "maintained-enchantments"
             ? "enchantment you are maintaining"
-            : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+            : count.kind === "knocked-down"
+              ? "foe knocked down"
+              : `${perCountNoun(count)} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
 }
 
 /** All of what `count` counts, as a condition names it (#2247): "target's hexes", "your enchantments". */
@@ -3103,9 +3119,15 @@ function perCountNoun(count: CountRule): string {
           ? `removed ${count.categories.join(" or ")}`
           : count.kind === "maintained-enchantments"
             ? "maintained enchantment"
-            : count.kind === "foes-within"
-              ? "foe"
-              : "ally";
+            : count.kind === "knocked-down"
+              ? "foe knocked down"
+              : count.kind === "dead-allies-within"
+                ? "dead ally"
+                : count.kind === "foes-within"
+                  ? count.knockedDown === true
+                    ? "knocked-down foe"
+                    : "foe"
+                  : "ally";
 }
 
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
@@ -3559,6 +3581,17 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         magnitude: undefined,
       };
     case "recharge-faster":
+      // "None Shall Pass!"'s "1...8 seconds faster for each foe knocked down" (#2320).
+      if (!("fraction" in effect)) {
+        return {
+          text: withPerText("", effect.seconds, effect.per, ranks, {
+            alone: "This skill recharges",
+            unit: " seconds faster",
+            onTarget: "",
+          }),
+          magnitude: undefined,
+        };
+      }
       return {
         // Bitter Chill's "recharges instantly" (#1640).
         text:
@@ -3576,12 +3609,16 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
             : "This skill recharges instantly",
         magnitude: undefined,
       };
+    case "adrenaline-loss":
+      return { text: "Lose all adrenaline", magnitude: undefined };
     case "recharge-others":
       return {
         text:
           effect.which === "all"
             ? "Recharges all your other skills"
-            : `Recharges all your other ${effect.which} skills`,
+            : effect.which === "stance"
+              ? "Recharges all your stances"
+              : `Recharges all your other ${effect.which} skills`,
         magnitude: undefined,
       };
     case "summon": {
@@ -4076,6 +4113,8 @@ const AREA_TEXT: ReadonlyMap<number, string> = new Map([
   [AREA_NEARBY, "nearby"],
   [AREA_IN_THE_AREA, "in the area"],
   [AREA_EARSHOT, "in earshot"],
+  // "I Will Avenge You!"'s dead allies (#2320).
+  [RANGE_COMPASS, "in compass range"],
 ]);
 
 /** Where round its target a target-centred area reaches: "nearby it" (#998). */
