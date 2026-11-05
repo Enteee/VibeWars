@@ -597,6 +597,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "grenths-aura": icon("grenths-aura"),
   // Warrior staples 5 (#2315).
   "to-the-limit": icon("to-the-limit"),
+  // Weapon gates (#2335).
+  "warriors-cunning": icon("warriors-cunning"),
+  "dwarven-battle-stance": icon("dwarven-battle-stance"),
 };
 
 const GAP = 2;

@@ -988,7 +988,7 @@ export function bearerAttacked(
 } {
   // Read before they end: an ended status's ranks go with it (#2275).
   const before = attacker.statuses.active;
-  const unblockable = attacker.statuses.spendUnblockableAttack();
+  const unblockable = attacker.statuses.spendUnblockableAttack(attacker.equipment.mainHand.weapon);
   const spent = attacker.statuses.spendAttack();
   const ended = [...unblockable.ended, ...spent, ...attacker.statuses.endOnBearerAttack(kind)];
   const endedBefore = before.filter(({ id }) => ended.includes(id));

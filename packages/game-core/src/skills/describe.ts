@@ -430,7 +430,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (armorModifier !== 0) {
     const sign = armorModifier > 0 ? "+" : "-";
-    parts.push(`${sign}${statText(definition.armorModifier, ranks, whole)} armor`);
+    // Dwarven Battle Stance's "if you are wielding a hammer" (#2335).
+    const weapon = definition.armorModifierWeapon;
+    parts.push(
+      `${sign}${statText(definition.armorModifier, ranks, whole)} armor` +
+        (weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`),
+    );
   }
   for (const bonus of definition.conditionalArmor) {
     parts.push(statusArmorText(bonus, ranks));
@@ -745,7 +750,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     );
   }
   if (definition.attacksUnblockable) {
-    parts.push("attacks cannot be blocked");
+    // Warrior's Cunning's "your melee attacks" (#2335).
+    const weapon = definition.attacksUnblockableWeapon;
+    parts.push(`${weapon === undefined ? "" : `${WEAPON_WORD[weapon]} `}attacks cannot be blocked`);
   }
   if (definition.onAttackHit !== undefined) {
     const { effects, attackSkillsOnly, weapon, weaponDamage } = definition.onAttackHit;
@@ -1298,6 +1305,9 @@ function describeAttackHits(
       // Ranger's bar: the pet's attacks heal whoever reads this.
       const amount = shown(describeMagnitude(effect.amount, ranks));
       parts.push(`your pet's attacks heal you for ${amount}`);
+    } else if (effect.kind === "interrupt" && effect.only === undefined) {
+      // Dwarven Battle Stance's (#2335).
+      parts.push(`your ${attacks} interrupt foes they hit`);
     } else {
       parts.push(...describeEffects(effect, ranks).map(({ text }) => `your ${attacks}: ${text}`));
     }

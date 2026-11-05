@@ -65,7 +65,10 @@ export type WarriorStatusId =
   | "charging-strike"
   | "signet-of-stamina"
   | "soldiers-stance"
-  | "steady-stance";
+  | "steady-stance"
+  // Weapon gates (#2335).
+  | "warriors-cunning"
+  | "dwarven-battle-stance";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -602,5 +605,29 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
         skillId: "warrior.steady-stance",
       },
     ],
+  }),
+  // "your melee attacks cannot be blocked": a bow shot or a thrown spear
+  // still can (#2335).
+  "warriors-cunning": define("warriors-cunning", "Warrior's Cunning", "skill-effect", {
+    profession: "warrior",
+    attacksUnblockable: true,
+    attacksUnblockableWeapon: "melee",
+  }),
+  // "if you are wielding a hammer, you attack 33% faster, you gain +40
+  // armor, and your attack skills interrupt foes when they hit" (#2335):
+  // all three off a hammer, back on with one; the stance runs on.
+  "dwarven-battle-stance": define("dwarven-battle-stance", "Dwarven Battle Stance", "stance", {
+    profession: "warrior",
+    attackDurationMultiplier: 0.67,
+    attackDurationMultiplierWeapon: "hammer",
+    armorModifier: 40,
+    armorModifierWeapon: "hammer",
+    onAttackHit: {
+      attackSkillsOnly: true,
+      weapon: "hammer",
+      weaponDamage: undefined,
+      effects: [{ kind: "interrupt" }],
+      skillId: "warrior.dwarven-battle-stance",
+    },
   }),
 };
