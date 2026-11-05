@@ -3849,4 +3849,48 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "smoke-powder-defense", durationSeconds: { flat: 8 } },
     ],
   },
+  {
+    id: "assassin.mark-of-insecurity",
+    name: "Mark of Insecurity",
+    gwId: 570,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.deadly-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...25 seconds, target foe suffers from -1...5 Health
+    // degeneration, and enchantments and stances on that foe expire
+    // 20...60% faster. All of your non-Assassin skills are disabled for 5
+    // seconds" (#2373). The price is paid even if the hex comes off at once.
+    effects: [
+      {
+        kind: "disable-own-skills",
+        which: "other-professions",
+        profession: "assassin",
+        exceptTypes: [],
+        seconds: { flat: 5 },
+      },
+      {
+        kind: "apply-status",
+        statusId: "mark-of-insecurity",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 21 },
+        },
+      },
+    ],
+  },
 ];

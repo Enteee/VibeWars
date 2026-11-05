@@ -49,7 +49,8 @@ export type AssassinStatusId =
   | "hidden-caltrops"
   | "way-of-the-assassin"
   // Mechanics (#2362).
-  | "smoke-powder-defense";
+  | "smoke-powder-defense"
+  | "mark-of-insecurity";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -397,5 +398,18 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
         skillId: "assassin.smoke-powder-defense",
       },
     ],
+  }),
+  // "For 5...25 seconds, target foe suffers from -1...5 Health
+  // degeneration, and enchantments and stances on that foe expire
+  // 20...60% faster" (#2373).
+  "mark-of-insecurity": define("mark-of-insecurity", "Mark of Insecurity", "hex", {
+    profession: "assassin",
+    healthPips: { scaling: { attributeId: "assassin.deadly-arts", atZero: -1, atTwelve: -4.2 } },
+    enchantmentsExpireFaster: {
+      scaling: { attributeId: "assassin.deadly-arts", atZero: 0.2, atTwelve: 0.52 },
+    },
+    stancesExpireFaster: {
+      scaling: { attributeId: "assassin.deadly-arts", atZero: 0.2, atTwelve: 0.52 },
+    },
   }),
 };

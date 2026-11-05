@@ -166,7 +166,11 @@ describe("status definitions", () => {
         def.damageReductionFromSourceWith !== undefined ||
         def.bindsCreatures ||
         def.conditionsExpireFaster !== 0 ||
-        def.hexesExpireFaster !== 0;
+        def.hexesExpireFaster !== 0 ||
+        statAtTwelve(def.enchantmentsExpireFaster) !== 0 ||
+        statAtTwelve(def.stancesExpireFaster) !== 0 ||
+        def.refuses.length > 0 ||
+        def.preventsCriticalHits;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -251,6 +255,7 @@ describe("status definitions", () => {
       "restful-breeze": 10,
       "vile-miasma": -4.2,
       "i-will-avenge-you": 6,
+      "mark-of-insecurity": -4.2,
     });
   });
 
@@ -622,6 +627,76 @@ describe("StatusSet duration advance", () => {
     const set = new StatusSet();
     set.apply("bleeding", 10, "a", NO_RANKS);
     expect(set.advance(1, false)).toEqual([]);
+  });
+});
+
+describe("StatusSet refuses (#2373)", () => {
+  it("keeps a Burning already on the bearer running", () => {
+    const set = new StatusSet();
+    set.apply("burning", 5, "a", NO_RANKS);
+    set.apply("frigid-armor", 20, "s", NO_RANKS);
+    expect(set.get("burning")?.remainingSeconds).toBe(5);
+    set.advance(1, false);
+    expect(set.get("burning")?.remainingSeconds).toBeCloseTo(4, 10);
+  });
+
+  it("refuses a new Burning, applied or caught, as immuneTo does", () => {
+    const set = new StatusSet();
+    set.apply("frigid-armor", 20, "s", NO_RANKS);
+    expect(set.isImmuneTo("burning")).toBe(true);
+    expect(set.apply("burning", 5, "a", NO_RANKS)).toBe(false);
+    set.catch(
+      "burning",
+      5,
+      "a",
+      { infected: new Set<string>(), refused: new Set<string>() },
+      NO_RANKS,
+    );
+    expect(set.has("burning")).toBe(false);
+    expect(set.isImmuneTo("bleeding")).toBe(false);
+  });
+});
+
+describe("StatusSet enchantments and stances expire faster (#2373)", () => {
+  const DEADLY = new Map([["assassin.deadly-arts", 12]]);
+
+  it("Air of Disenchantment runs enchantments 1 + 2.7 times as fast, and nothing else", () => {
+    const set = new StatusSet();
+    set.apply("gust", 10, "s", NO_RANKS);
+    set.apply("bonettis-defense", 10, "s", NO_RANKS);
+    set.apply("air-of-disenchantment", 30, "m", new Map([["mesmer.illusion-magic", 12]]));
+    set.advance(1, false);
+    expect(set.get("gust")?.remainingSeconds).toBeCloseTo(10 - 3.7, 10);
+    expect(set.get("bonettis-defense")?.remainingSeconds).toBeCloseTo(9, 10);
+    expect(set.get("air-of-disenchantment")?.remainingSeconds).toBeCloseTo(29, 10);
+  });
+
+  it("Mark of Insecurity runs both 52% faster at rank 12, 20% at rank 0", () => {
+    for (const [ranks, faster] of [
+      [DEADLY, 0.52],
+      [NO_RANKS, 0.2],
+    ] as const) {
+      const set = new StatusSet();
+      set.apply("gust", 10, "s", NO_RANKS);
+      set.apply("bonettis-defense", 10, "s", NO_RANKS);
+      set.apply("mark-of-insecurity", 30, "a", ranks);
+      set.advance(1, false);
+      expect(set.get("gust")?.remainingSeconds).toBeCloseTo(9 - faster, 10);
+      expect(set.get("bonettis-defense")?.remainingSeconds).toBeCloseTo(9 - faster, 10);
+    }
+  });
+
+  it("stacks additively, and the time lost stays lost once the hex is gone", () => {
+    const set = new StatusSet();
+    set.apply("gust", 10, "s", NO_RANKS);
+    set.apply("mark-of-insecurity", 30, "a", DEADLY);
+    set.apply("air-of-disenchantment", 30, "m", new Map([["mesmer.illusion-magic", 12]]));
+    set.advance(1, false);
+    expect(set.get("gust")?.remainingSeconds).toBeCloseTo(10 - (1 + 0.52 + 2.7), 10);
+    set.remove("mark-of-insecurity");
+    set.remove("air-of-disenchantment");
+    set.advance(1, false);
+    expect(set.get("gust")?.remainingSeconds).toBeCloseTo(10 - (1 + 0.52 + 2.7) - 1, 10);
   });
 });
 

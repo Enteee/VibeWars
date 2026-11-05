@@ -5395,6 +5395,113 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "chilling-winds", durationSeconds: { flat: 10 } },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Refusals and crit immunity (#2373)                                     */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.frigid-armor",
+    name: "Frigid Armor",
+    gwId: 1261,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...25 seconds, you have +10...40 armor against physical damage
+    // and cannot be set on fire."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "frigid-armor",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 22 },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.stone-sheath",
+    name: "Stone Sheath",
+    gwId: 1373,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, you and target ally have +1...30 armor and are
+    // immune to critical hits. When you cast this spell, all foes near you
+    // and your target take 15...70 earth damage and are Weakened for
+    // 5...20 seconds": a foe near both is struck once, as Gust.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "stone-sheath",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+      {
+        kind: "apply-status",
+        statusId: "stone-sheath",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 17 },
+        },
+        on: "caster",
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        alsoAround: "caster",
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 15, atTwelve: 59 },
+            },
+            type: "earth",
+            armorPenetration: 0,
+          },
+          {
+            kind: "apply-status",
+            statusId: "weakness",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 /**

@@ -31,6 +31,7 @@ import {
   type OwnSkillModifier,
   type StatusCategory,
   type StatusConditionalArmor,
+  type StatusDefinition,
   type StatusStat,
   type StatusTrigger,
   type StatusTriggerEvent,
@@ -334,6 +335,29 @@ function adrenalineGainText(
   return `gain adrenaline ${shown} ${statAtTwelve(faster) > 0 ? "faster" : "slower"}`;
 }
 
+/**
+ * "enchantments and stances on the bearer expire 20...60% faster"
+ * (#2373): one line when the two match, as Mark of Insecurity's does.
+ */
+function fasterExpiryText(
+  definition: StatusDefinition,
+  ranks: ReadonlyMap<string, number> | undefined,
+): string[] {
+  const { enchantmentsExpireFaster: enchantments, stancesExpireFaster: stances } = definition;
+  const line = (what: string, stat: StatusStat): string =>
+    `${what} on the bearer expire ${statText(stat, ranks, percent)} faster`;
+  if (statAtTwelve(enchantments) !== 0 && statAtTwelve(stances) !== 0) {
+    const same = statText(enchantments, ranks, percent) === statText(stances, ranks, percent);
+    if (same) {
+      return [line("enchantments and stances", enchantments)];
+    }
+  }
+  return [
+    ...(statAtTwelve(enchantments) === 0 ? [] : [line("enchantments", enchantments)]),
+    ...(statAtTwelve(stances) === 0 ? [] : [line("stances", stances)]),
+  ];
+}
+
 /** "45%": a share as its line prints it, whatever its sign. */
 function percent(share: number): string {
   return `${String(Math.round(Math.abs(share) * 100))}%`;
@@ -572,6 +596,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const names = definition.immuneTo.map((id) => getStatusDefinition(id).name);
     parts.push(`immune to ${names.join(" and ")}`);
   }
+  if (definition.refuses.length > 0) {
+    // Frigid Armor's "cannot be set on fire" (#2373).
+    const names = definition.refuses.map((id) =>
+      id === "burning" ? "set on fire" : getStatusDefinition(id).name,
+    );
+    parts.push(`cannot be ${names.join(" or ")}`);
+  }
   if (statAtTwelve(definition.adrenalineGainFaster) !== 0) {
     parts.push(
       `${adrenalineGainText(definition.adrenalineGainFaster, ranks)}${definition.adrenalineGainFasterFrom === "attacks" ? " from attacks" : ""}`,
@@ -674,6 +705,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.preventsCriticals) {
     parts.push("cannot land critical hits");
+  }
+  if (definition.preventsCriticalHits) {
+    parts.push("immune to critical hits");
   }
   if (definition.block !== undefined) {
     // Wary Stance's "attack skills" (#1978).
@@ -1151,6 +1185,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const faster = String(Math.round(definition.hexesExpireFaster * 100));
     parts.push(`hexes on the bearer expire ${faster}% faster`);
   }
+  parts.push(...fasterExpiryText(definition, ranks));
   // Chilling Winds' (#2311).
   const lengthening = definition.nextIncomingHexDurationMultiplier;
   if (lengthening !== undefined) {

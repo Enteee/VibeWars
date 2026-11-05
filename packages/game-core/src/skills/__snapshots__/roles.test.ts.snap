@@ -51,6 +51,7 @@ exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
   "assassin.malicious-strike": "",
   "assassin.mantis-touch": "condition",
   "assassin.mark-of-death": "hex",
+  "assassin.mark-of-insecurity": "hex",
   "assassin.mark-of-instability": "hex",
   "assassin.mirrored-stance": "hex",
   "assassin.moebius-strike": "",
@@ -213,6 +214,7 @@ exports[`skillRoles > tags every elementalist skill the same way every time 1`] 
   "elementalist.flame-burst": "",
   "elementalist.flare": "",
   "elementalist.freezing-gust": "hex",
+  "elementalist.frigid-armor": "",
   "elementalist.frozen-burst": "hex",
   "elementalist.gale": "knockdown",
   "elementalist.glimmering-mark": "hex condition",
@@ -280,6 +282,7 @@ exports[`skillRoles > tags every elementalist skill the same way every time 1`] 
   "elementalist.star-burst": "condition",
   "elementalist.steam": "condition",
   "elementalist.stone-daggers": "condition",
+  "elementalist.stone-sheath": "condition defence",
   "elementalist.stoning": "knockdown",
   "elementalist.swirling-aura": "healing defence",
   "elementalist.teinais-crystals": "condition",
@@ -302,6 +305,7 @@ exports[`skillRoles > tags every elementalist skill the same way every time 1`] 
 exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
 {
   "mesmer.accumulated-pain": "condition",
+  "mesmer.air-of-disenchantment": "hex",
   "mesmer.arcane-conundrum": "hex",
   "mesmer.arcane-echo": "",
   "mesmer.arcane-languor": "hex",

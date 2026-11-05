@@ -625,6 +625,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "signet-of-suffering": icon("signet-of-suffering"),
   // Smoke Powder Defense (#2362).
   "smoke-powder-defense": icon("smoke-powder-defense"),
+  // Refusals, crit immunity and faster expiry (#2373).
+  "frigid-armor": icon("frigid-armor"),
+  "stone-sheath": icon("stone-sheath"),
+  "air-of-disenchantment": icon("air-of-disenchantment"),
+  "mark-of-insecurity": icon("mark-of-insecurity"),
 };
 
 const GAP = 2;

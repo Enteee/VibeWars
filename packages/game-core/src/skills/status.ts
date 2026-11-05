@@ -207,6 +207,8 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   attackDamageDelta: true,
   damageDealtMultiplier: true,
   energyPips: true,
+  enchantmentsExpireFaster: true,
+  stancesExpireFaster: true,
 };
 
 /** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
@@ -740,6 +742,13 @@ export interface StatusDefinition {
    */
   readonly preventsCriticals: boolean;
   /**
+   * No blow on the bearer is a critical hit (#2373): Stone Sheath's
+   * "immune to critical hits", whatever the source. Unlike
+   * `ignoresCriticalDamage`, the blow is no crit for the attacker
+   * either, so nothing that rides a crit fires. The roll is still drawn.
+   */
+  readonly preventsCriticalHits: boolean;
+  /**
    * While it is up, its bearer projects this aura as a spirit does
    * (#2096): Protector's Defense's block for the allies adjacent to it.
    * `undefined`: none.
@@ -973,6 +982,12 @@ export interface StatusDefinition {
    * one already on the bearer ends as this one begins.
    */
   readonly immuneTo: readonly StatusId[];
+  /**
+   * Statuses that never land on the bearer, but unlike `immuneTo` one
+   * already on it keeps running (#2373): Frigid Armor's "cannot be set
+   * on fire". An apply or a spread is refused as `immuneTo` refuses it.
+   */
+  readonly refuses: readonly StatusId[];
   /**
    * Multiplier on the damage the bearer takes (#919): Frenzy's 1.6, Dark
    * Escape's 0.5. Applied to every damage packet after armor; health
@@ -1250,6 +1265,13 @@ export interface StatusDefinition {
   readonly conditionsExpireFaster: number;
   /** As `conditionsExpireFaster`, for its hexes (#2291): Peace and Harmony's 0.9. */
   readonly hexesExpireFaster: number;
+  /**
+   * As `conditionsExpireFaster`, for its enchantments (#2373), at the
+   * ranks it was put on with: Air of Disenchantment's 1.5...3.
+   */
+  readonly enchantmentsExpireFaster: StatusStat;
+  /** As `enchantmentsExpireFaster`, for its stances (#2373): Mark of Insecurity's. */
+  readonly stancesExpireFaster: StatusStat;
   /**
    * Multiplier on how long a hex takes to cast on the bearer (#944): Holy
    * Veil's 2. Read once, as the cast begins; an instant hex stays instant.
@@ -3197,12 +3219,16 @@ export class StatusSet {
   /**
    * Whether a status on the bearer keeps `id` off it (#1455): Avatar of
    * Grenth's Disease, or any enchantment under Well of the Profane (#1732).
+   * Frigid Armor's `refuses` keeps Burning off too (#2373).
    */
   public isImmuneTo(id: StatusId): boolean {
     if (getStatusDefinition(id).category === "enchantment" && preventsEnchantments(this.active)) {
       return true;
     }
-    return this.active.some((status) => getStatusDefinition(status.id).immuneTo.includes(id));
+    return this.active.some((status) => {
+      const definition = getStatusDefinition(status.id);
+      return definition.immuneTo.includes(id) || definition.refuses.includes(id);
+    });
   }
 
   /**
@@ -4188,19 +4214,22 @@ export class StatusSet {
    * Advance all durations by `dt` seconds, dropping any that expire.
    * Returns the ids that expired on this tick so the caller can emit
    * end-of-status effects. Conditions run `conditionsExpireFaster`
-   * faster (#1464), hexes `hexesExpireFaster` (#2291), read as the tick
-   * begins.
+   * faster (#1464), hexes `hexesExpireFaster` (#2291), enchantments and
+   * stances theirs (#2373), read as the tick begins.
    */
   public advance(dt: number, moving: boolean): StatusId[] {
     const expired: StatusId[] = [];
     const modifiers = aggregateModifiers(this.active);
-    const conditionDt = dt * (1 + modifiers.conditionsExpireFaster);
-    const hexDt = dt * (1 + modifiers.hexesExpireFaster);
+    const categoryDt: Readonly<Partial<Record<StatusCategory, number>>> = {
+      condition: dt * (1 + modifiers.conditionsExpireFaster),
+      hex: dt * (1 + modifiers.hexesExpireFaster),
+      enchantment: dt * (1 + modifiers.enchantmentsExpireFaster),
+      stance: dt * (1 + modifiers.stancesExpireFaster),
+    };
     for (const status of this.#statuses.values()) {
       this.#pulse(status, dt);
       const category = getStatusDefinition(status.id).category;
-      status.remainingSeconds -=
-        category === "condition" ? conditionDt : category === "hex" ? hexDt : dt;
+      status.remainingSeconds -= categoryDt[category] ?? dt;
       if (status.remainingSeconds > 0) {
         continue;
       }
@@ -4484,6 +4513,10 @@ export interface StatusModifiers {
   readonly conditionsExpireFaster: number;
   /** Every status's, summed (#2291). */
   readonly hexesExpireFaster: number;
+  /** Every status's, summed (#2373). */
+  readonly enchantmentsExpireFaster: number;
+  /** Every status's, summed (#2373). */
+  readonly stancesExpireFaster: number;
   /** Every status's, multiplied (#944). */
   readonly incomingHexCastTimeMultiplier: number;
   /** Every status's, multiplied (#1955). */
@@ -4502,6 +4535,8 @@ export interface StatusModifiers {
   readonly ignoresCriticalDamage: boolean;
   /** Any status's (#2212). */
   readonly preventsCriticals: boolean;
+  /** Any status's (#2373). */
+  readonly preventsCriticalHits: boolean;
 }
 
 /**
@@ -4613,6 +4648,8 @@ export function aggregateModifiers(
   let uninterruptible = false;
   let conditionsExpireFaster = 0;
   let hexesExpireFaster = 0;
+  let enchantmentsExpireFaster = 0;
+  let stancesExpireFaster = 0;
   let spellRechargeKept = 1;
   let skillRechargeKept = 1;
   let bindingRitualRechargeKept = 1;
@@ -4625,6 +4662,7 @@ export function aggregateModifiers(
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
   let preventsCriticals = false;
+  let preventsCriticalHits = false;
   const ofCategory = (category: StatusCategory): number =>
     statuses.filter((status) => getStatusDefinition(status.id).category === category).length;
   const enchantments = ofCategory("enchantment");
@@ -4734,6 +4772,8 @@ export function aggregateModifiers(
     uninterruptible ||= def.uninterruptible;
     conditionsExpireFaster += def.conditionsExpireFaster;
     hexesExpireFaster += def.hexesExpireFaster;
+    enchantmentsExpireFaster += statAt(def.enchantmentsExpireFaster, ranks);
+    stancesExpireFaster += statAt(def.stancesExpireFaster, ranks);
     spellRechargeKept *= 1 - def.spellRechargeFaster;
     skillRechargeKept *= 1 - def.skillRechargeFaster;
     bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
@@ -4746,6 +4786,7 @@ export function aggregateModifiers(
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
     preventsCriticals ||= def.preventsCriticals;
+    preventsCriticalHits ||= def.preventsCriticalHits;
   }
 
   return {
@@ -4790,6 +4831,8 @@ export function aggregateModifiers(
     uninterruptible,
     conditionsExpireFaster,
     hexesExpireFaster,
+    enchantmentsExpireFaster,
+    stancesExpireFaster,
     incomingHexCastTimeMultiplier,
     incomingAllySpellCastTimeMultiplier,
     criticalChanceBonus,
@@ -4799,6 +4842,7 @@ export function aggregateModifiers(
     damageFromSpiritAttacks,
     ignoresCriticalDamage,
     preventsCriticals,
+    preventsCriticalHits,
   };
 }
 

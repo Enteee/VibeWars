@@ -87,7 +87,8 @@ export type MesmerStatusId =
   | "soothing-images"
   | "arcane-languor"
   | "illusion-of-pain"
-  | "ether-phantom";
+  | "ether-phantom"
+  | "air-of-disenchantment";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -1048,5 +1049,14 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         skillId: "mesmer.ether-phantom",
       },
     ],
+  }),
+  // "For 5...20 seconds, enchantments expire 150...300% faster on those
+  // foes" (#2373).
+  "air-of-disenchantment": define("air-of-disenchantment", "Air of Disenchantment", "hex", {
+    profession: "mesmer",
+    attribute: "mesmer.illusion-magic",
+    enchantmentsExpireFaster: {
+      scaling: { attributeId: "mesmer.illusion-magic", atZero: 1.5, atTwelve: 2.7 },
+    },
   }),
 };

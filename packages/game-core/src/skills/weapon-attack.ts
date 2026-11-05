@@ -648,15 +648,19 @@ export function landBlow(
   interruptOnHit(victim, attacker?.id, events);
   const { weapon } = snapshot.mainHand;
   const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules, victim);
+  // Dulled Weapon's attacker (#2212) and Stone Sheath's victim (#2373)
+  // turn a crit into a plain blow; the roll above is drawn either way.
+  const victimModifiers = aggregateModifiers(victim.statuses.active);
   const critical =
     !snapshot.preventsCriticals &&
+    !victimModifiers.preventsCriticalHits &&
     (rolledCritical ||
       blow.criticalWhen === "always" ||
       (exposed && weapon.projectileSpeed === undefined));
   // A victim that suffers no extra damage from crits takes a normal roll,
   // and the blow is still a critical (#1329).
   const base =
-    critical && !aggregateModifiers(victim.statuses.active).ignoresCriticalDamage
+    critical && !victimModifiers.ignoresCriticalDamage
       ? weapon.damageMax * weapon.criticalMultiplier
       : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
   // Sundering (#2009): bonus penetration on its roll, on top of the
