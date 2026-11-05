@@ -36,13 +36,11 @@ const glyphs = {
       inkLine("M2 21.500H22", 2),
   },
   "star-four": {
-    means: "Star Burst: a four-point star with sparks flung off it: fire bursting outward.",
+    means:
+      "Star Burst: a four-point star low on the left, throwing three long sparks up and right.",
     draw: () =>
-      inkFill("M12 5L14 10L19 12L14 14L12 19L10 14L5 12L10 10Z") +
-      inkLine(
-        "M12 1.500V3.500M12 20.500V22.500M1.500 12H3.500M20.500 12H22.500M4.500 4.500L6 6M19.500 4.500L18 6M4.500 19.500L6 18M19.500 19.500L18 18",
-        1.8,
-      ),
+      inkFill("M8 10L9.700 14.300L14 16L9.700 17.700L8 22L6.300 17.700L2 16L6.300 14.300Z") +
+      inkLine("M13 12L21 3M14 8L19 8M9 6L9 2", 2),
   },
   "signet-rust": {
     means: "Rust: a signet ring eaten at the rim, with flakes falling off it.",

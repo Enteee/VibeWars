@@ -22,8 +22,7 @@ const rows = {
     "hex",
     (c) =>
       `<circle cx="12" cy="11" r="6.500" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 4.500l-2 4 3 2-2 4" ${stroke(c, 1.5)}/>` +
-      `<path d="M17 20h2" ${stroke(c, 2.2)}/>`,
+      `<path d="M12 4.500l-2 4 3 2-2 4" ${stroke(c, 1.5)}/>`,
   ],
 };
 
