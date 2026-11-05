@@ -8,11 +8,14 @@ export const OVERLAY_VIEWPORTS = [
 
 /** Click a top-bar icon, through the ⋯ when the window folds the icons into it (#1272). */
 export async function clickTopbarIcon(page: Page, selector: string): Promise<void> {
+  const icon = page.locator(`#topbar ${selector}`);
   const more = page.locator("#topbar .topbar-more");
+  // The bar folds once its screen is shown: wait for one of the two to be clickable.
+  await expect(icon.or(more).filter({ visible: true })).toHaveCount(1);
   if (await more.isVisible()) {
     await more.click();
   }
-  await page.locator(`#topbar ${selector}`).click();
+  await icon.click();
 }
 
 /**
