@@ -690,7 +690,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     triggers: [
       {
         on: "bearer-uses-skill",
-        usedSkill: { targetsAlly: true },
+        usedSkill: { targets: "ally" },
         effects: [
           {
             kind: "splash",
@@ -714,7 +714,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       },
       {
         on: "bearer-uses-skill",
-        usedSkill: { targetsAlly: true },
+        usedSkill: { targets: "ally" },
         effects: [{ kind: "energy-loss", amount: { flat: 1 } }],
         target: "source",
         skillId: "monk.zealots-fire",
@@ -845,7 +845,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     triggers: (["monk.protection-prayers", "monk.divine-favor"] as const).flatMap((attributeId) => [
       {
         on: "bearer-casts-spell" as const,
-        usedSkill: { attributes: { attributeId }, targetsAlly: true as const },
+        usedSkill: { attributes: { attributeId }, targets: "ally" as const },
         effects: [
           {
             kind: "heal" as const,
@@ -857,7 +857,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       },
       {
         on: "bearer-casts-spell" as const,
-        usedSkill: { attributes: { attributeId }, targetsAlly: true as const },
+        usedSkill: { attributes: { attributeId }, targets: "ally" as const },
         effects: [{ kind: "energy-loss" as const, amount: { flat: 1 } }],
         target: "source" as const,
         skillId: "monk.divine-boon",
