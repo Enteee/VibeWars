@@ -32,12 +32,11 @@ const glyphs = {
       inkFill("M3 19H8V22H3ZM9.500 19H14.500V22H9.500ZM16 19H21V22H16Z"),
   },
   "storm-spiral": {
-    means: "Chaos Storm: a widening spiral: Energy whirls out in the area.",
+    means: "Chaos Storm: three Energy bolts scattered at odd angles: Energy flung about the area.",
     draw: () =>
-      inkLine(
-        "M12 12a1.5 1.5 0 0 1 3 0a3 3 0 0 1-6 0a4.5 4.5 0 0 1 9 0a6 6 0 0 1-12 0a7.5 7.5 0 0 1 15 0",
-        2.2,
-      ),
+      at(glyph("energy"), 7, 7, 0.7) +
+      at(glyph("energy"), 17, 8, 0.55) +
+      at(glyph("energy"), 9, 17, 0.55),
   },
   "head-scatter": {
     means: "Psychic Distraction: a head with scattered dots above it: the thought is lost.",
