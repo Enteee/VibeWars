@@ -6,7 +6,8 @@ import {
   createQueueClient,
   type QueueBoardEvent,
 } from "@vibewars/game-session";
-import { describe, expect, it } from "vitest";
+import type { LobbyPhase } from "@vibewars/game-protocol";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   CONNECTION_LOST_MESSAGE,
@@ -23,6 +24,7 @@ import {
   VOTE_REFUSED_MESSAGE,
   PEER_UNREACHABLE_MESSAGE,
   REFUSED_MESSAGE,
+  RELAY_REFRESH_CHECK_MS,
   TURN_RELAY_HINT,
   followHost,
   joinFailureNotice,
@@ -32,6 +34,7 @@ import {
   lobbyRefusalNotice,
   loopbackHint,
   matchFailureNotice,
+  refreshRelayInLobby,
   secureRandom,
   watchHostMove,
   type FollowSteps,
@@ -268,5 +271,61 @@ describe("a Team Lobby's RNG (#2213)", () => {
     for (const seed of ["", "1.5", "-3", "eleven"]) {
       expect(() => lobbyRandom(seed)).toThrow(/decimal integer/);
     }
+  });
+});
+
+describe("a relayed guest's login, checked between maps (#2245)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** A lobby whose phase the test sets, telling its listeners each time. */
+  function fakeLobby(start: LobbyPhase) {
+    let phase = start;
+    const handlers: (() => void)[] = [];
+    return {
+      getSnapshot: () => ({ phase }),
+      onChange(handler: () => void) {
+        handlers.push(handler);
+      },
+      set(next: LobbyPhase) {
+        phase = next;
+        for (const handler of handlers) {
+          handler();
+        }
+      },
+    };
+  }
+
+  it("refreshes each minute in the lobby and on each return from a map, never during one", () => {
+    const lobby = fakeLobby("waiting");
+    let refreshes = 0;
+    const stop = refreshRelayInLobby(lobby, () => {
+      refreshes += 1;
+    });
+    vi.advanceTimersByTime(RELAY_REFRESH_CHECK_MS);
+    expect(refreshes).toBe(1);
+
+    lobby.set("starting");
+    lobby.set("in-match");
+    vi.advanceTimersByTime(RELAY_REFRESH_CHECK_MS * 30);
+    expect(refreshes).toBe(1);
+
+    // Back in the lobby: at once, then on the minute again.
+    lobby.set("waiting");
+    expect(refreshes).toBe(2);
+    lobby.set("waiting");
+    expect(refreshes).toBe(2);
+    vi.advanceTimersByTime(RELAY_REFRESH_CHECK_MS);
+    expect(refreshes).toBe(3);
+
+    stop();
+    lobby.set("in-match");
+    lobby.set("waiting");
+    vi.advanceTimersByTime(RELAY_REFRESH_CHECK_MS * 5);
+    expect(refreshes).toBe(3);
   });
 });

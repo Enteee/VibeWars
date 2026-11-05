@@ -240,7 +240,7 @@ describe("Retribution (#2286)", () => {
     const match = arena([]);
     const ally = get(match, "ally");
     ally.statuses.apply("retribution", 60, "c", ranks);
-    ally.statuses.recordHitByAttack("foe", took, undefined);
+    ally.statuses.recordHitByAttack("foe", took, undefined, WEAPONS.sword);
     expect(ally.statuses.drainChanges()).toContainEqual(
       expect.objectContaining({ kind: "reflected", damage: sent }),
     );
@@ -254,7 +254,7 @@ describe("Retribution (#2286)", () => {
     cast(match, "c", 0, "ally");
     const ally = get(match, "ally");
     ally.statuses.drainChanges();
-    ally.statuses.recordHitByAttack("foe", 100, undefined);
+    ally.statuses.recordHitByAttack("foe", 100, undefined, WEAPONS.sword);
     expect(ally.statuses.drainChanges()).toContainEqual(
       expect.objectContaining({ kind: "reflected", damage: sent }),
     );

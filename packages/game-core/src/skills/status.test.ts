@@ -244,6 +244,9 @@ describe("status definitions", () => {
       "blood-renewal": 5,
       "vampiric-spirit": 9,
       "ward-against-harm": 2.6,
+      "life-transfer": -7,
+      "life-transfer-regen": 7,
+      "weaken-knees": -3.4,
       succor: 1,
       "restful-breeze": 10,
       "vile-miasma": -4.2,
@@ -943,11 +946,11 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     const set = new StatusSet();
     set.apply("mark-of-instability", 20, "s", NO_RANKS);
     set.drainChanges();
-    set.recordHitByAttack("s", 30, "lead");
-    set.recordHitByAttack("s", 30, undefined);
-    set.recordHitByAttack("a", 30, "dual");
+    set.recordHitByAttack("s", 30, "lead", WEAPONS.sword);
+    set.recordHitByAttack("s", 30, undefined, WEAPONS.sword);
+    set.recordHitByAttack("a", 30, "dual", WEAPONS.sword);
     expect(set.drainChanges()).toEqual([]);
-    set.recordHitByAttack("s", 30, "dual");
+    set.recordHitByAttack("s", 30, "dual", WEAPONS.sword);
     expect(set.drainChanges()).toEqual([
       {
         kind: "hit-by-attack",

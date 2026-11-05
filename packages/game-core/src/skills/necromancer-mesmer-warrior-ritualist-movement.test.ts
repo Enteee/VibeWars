@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { AREA_ADJACENT, RANGE_SPELL } from "../distances.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS } from "../equipment/weapons.js";
 import { applyIntent } from "../match/apply-intent.js";
 import { MatchSimulation } from "../match/simulation.js";
 import { createRng } from "../rng.js";
@@ -226,7 +227,7 @@ describe("Mark of Fury (#2259)", () => {
     [0, 0],
   ] as const)("at Blood Magic %i each hit gives the attacker %i strikes", (rank, strikes) => {
     const { foe, ally, everyone } = scene(rank);
-    foe.statuses.recordHitByAttack("w", 20, undefined);
+    foe.statuses.recordHitByAttack("w", 20, undefined, WEAPONS.sword);
     drain(foe, everyone);
     expect(strikesOf(ally, ADRENAL)).toBe(strikes);
   });
