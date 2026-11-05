@@ -174,11 +174,12 @@ export function gearIconImg(icon: GearIcon | undefined): HTMLImageElement | unde
 
 /**
  * A skill's type badge, as markup. Named in `alt` and `title`, so a screen
- * reader and a hover both say what the shape means.
+ * reader and a hover both say what the shape means. Lazy, as the skill's
+ * icon is.
  */
 export function skillTypeBadgeHtml(type: SkillType): string {
   const name = SKILL_TYPE_NAME[type];
-  return `<img class="skill-type-badge" src="${skillTypeIcon(type)}" alt="${name}" title="${name}">`;
+  return `<img class="skill-type-badge" src="${skillTypeIcon(type)}" alt="${name}" title="${name}" loading="lazy">`;
 }
 
 /**
@@ -191,9 +192,14 @@ export function skillIcon(skillId: string): string {
   return iconUrl("skill", skill === undefined || skill.npcOnly === true ? "unknown" : skillId);
 }
 
-/** A skill's icon as markup, `size` px square. Decorative: the name sits beside it. */
+/**
+ * A skill's icon as markup, `size` px square. Decorative: the name sits
+ * beside it. Lazy (#2318): the library holds every skill, and an SVG image
+ * is parsed and drawn on the main thread, so loading all of them at once
+ * froze the first open of the editor for 20 s and more.
+ */
 export function skillIconHtml(skillId: string, size: number): string {
-  return `<img class="skill-icon" src="${skillIcon(skillId)}" alt="" width="${String(size)}" height="${String(size)}">`;
+  return `<img class="skill-icon" src="${skillIcon(skillId)}" alt="" width="${String(size)}" height="${String(size)}" loading="lazy">`;
 }
 
 /**
