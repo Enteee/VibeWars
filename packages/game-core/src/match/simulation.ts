@@ -223,7 +223,9 @@ import {
   fireCreationTriggers,
   fireDeathTriggers,
   fireEndTriggers,
+  fireSourceTargetsTriggers,
   fireTriggers,
+  type AimedAt,
   type DirectTriggerEvent,
   type FiredTrigger,
   type SpreadGainedCondition,
@@ -358,6 +360,7 @@ export const CREATURE_LOOKS = [
   "beast",
   "bone-minion",
   "bone-horror",
+  "bone-fiend",
   "vampiric-horror",
   "flesh-golem",
   "shambling-horror",
@@ -1968,29 +1971,35 @@ export class MatchSimulation {
    * source's foes within its radius of the bearer, and to the bearer if
    * it `hitsBearer` (#1754), logged as the status's skill. A bearer that died since takes none,
    * and a source that has left the match deals none. An effect pulse
-   * (#2187) runs its effects from the source on the bearer, as its skill.
+   * (#2187) runs its effects from the source on the bearer, as its skill,
+   * at the status's ranks; one that cost the bearer Health charges its
+   * source (#2275): Agony's spirit pays for each foe it hurt.
    */
   #pulseStatuses(): void {
     for (const record of this.#participants.values()) {
-      for (const { id, sourceId } of record.combatant.statuses.drainEffectPulses()) {
+      for (const { id, sourceId, ranks } of record.combatant.statuses.drainEffectPulses()) {
         const source = this.#participants.get(sourceId);
         const pulse = STATUS_DEFINITIONS[id].pulse;
         if (record.combatant.dead || source === undefined || pulse === undefined) {
           continue;
         }
-        this.#logFired([
-          {
-            sourceId,
-            skillId: pulse.skillId,
-            events: applyEffects(pulse.effects, {
-              caster: source.combatant,
-              target: record.combatant,
-              rng: this.#rng,
-              rules: this.#ruleset.combat,
-              surroundings: this.#participants,
-            }),
-          },
-        ]);
+        const ranksFrom = outsideMatch(ranks);
+        const events = applyEffects(pulse.effects, {
+          caster: source.combatant,
+          target: record.combatant,
+          ranksFrom,
+          rng: this.#rng,
+          rules: this.#ruleset.combat,
+          surroundings: this.#participants,
+        });
+        this.#logFired([{ sourceId, skillId: pulse.skillId, events }]);
+        const hurt = events.some(
+          (event) =>
+            event.kind === "health-loss" && event.targetId === record.id && event.amount > 0,
+        );
+        if (hurt && pulse.chargesSourcePerHit !== undefined) {
+          this.#landCharge(sourceId, id, Math.round(statAt(pulse.chargesSourcePerHit, ranks)));
+        }
       }
       for (const { id, sourceId, damage } of record.combatant.statuses.drainPulses()) {
         const source = this.#participants.get(sourceId);
@@ -2190,7 +2199,7 @@ export class MatchSimulation {
       }
       const { statuses } = body.combatant;
       for (const status of statuses.active) {
-        if (status.projected && !wears.has(status.id)) {
+        if (status.projected !== null && !wears.has(status.id)) {
           statuses.remove(status.id);
         }
       }
@@ -2931,6 +2940,7 @@ export class MatchSimulation {
         remainingSeconds: 0,
         whileActivating: undefined,
         rule,
+        targetHadLessHealth: this.#hasLessHealth(record, castTargetId),
       },
       0,
     );
@@ -3041,6 +3051,7 @@ export class MatchSimulation {
       skill.whileActivating,
       key,
       rule,
+      this.#hasLessHealth(record, castTargetId),
     );
     this.#castBegun(record, skill, castTargetId);
     // Casting stops you (operator Q33): a key held as the cast begins
@@ -3190,6 +3201,12 @@ export class MatchSimulation {
     if (target !== undefined && target.combatant.team !== record.combatant.team) {
       target.combatant.lastCombatAt = this.#elapsedSeconds;
     }
+  }
+
+  /** Whether `targetId` has less Health than `record` now (#2282): Spoil Victor's read. */
+  #hasLessHealth(record: ParticipantRecord, targetId: string | undefined): boolean {
+    const target = targetId === undefined ? undefined : this.#participants.get(targetId);
+    return target !== undefined && target.combatant.health < record.combatant.health;
   }
 
   #castBegun(record: ParticipantRecord, skill: Skill, castTargetId: string | undefined): void {
@@ -3932,6 +3949,25 @@ export class MatchSimulation {
           : [...cast.rule.heldAttributeDeltas, { scope: { attributeId: mastered }, amount: 1 }],
     };
     const primary = skill.target === "self" ? record : targetRecord;
+    // Glimmering Mark's (#2282): a status that ends when its source uses
+    // a skill on its bearer is gone before this one lands. Mind Wrack's
+    // (#2290): one that answers it fires then.
+    if (primary !== undefined) {
+      this.#logEnded(
+        record,
+        skill,
+        primary,
+        primary.combatant.statuses.endOnSourceTargets(record.id),
+      );
+      this.#logFired(
+        fireSourceTargetsTriggers(
+          primary.combatant,
+          record.id,
+          { skillId, key: cast.key },
+          this.#triggerContext(),
+        ),
+      );
+    }
     const exposed = this.#exposedTo(record);
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
     const flight = skill.projectile;
@@ -4231,11 +4267,18 @@ export class MatchSimulation {
     // After the skill's own effects, as their own entries (#469): a spell
     // finished is Backfire's moment, an attack skill Empathy's. Any skill
     // used is Spiteful Spirit's (#935), and an attack skill twice over.
-    this.#fireTriggers(record, "bearer-uses-skill", spared, {
-      skillId: skill.id,
-      key: cast.key,
-    });
-    this.#useNextSkill(record, skill, spared);
+    const aimedAt: AimedAt | undefined =
+      primary === undefined
+        ? undefined
+        : { id: primary.id, hadLessHealth: primary !== record && cast.targetHadLessHealth };
+    this.#fireTriggers(
+      record,
+      "bearer-uses-skill",
+      spared,
+      { skillId: skill.id, key: cast.key },
+      aimedAt,
+    );
+    this.#useNextSkill(record, skill, spared, primary);
     this.#endOnUseSkill(record, skill, spared);
     if (isSpell(skill.type)) {
       // Kinetic Armor's renewal (#1614), and Lyssa's Aura's at a foe
@@ -4243,13 +4286,16 @@ export class MatchSimulation {
       record.combatant.statuses.castSpell(
         primary !== undefined && primary.combatant.team !== record.combatant.team,
       );
-      this.#fireTriggers(record, "bearer-casts-spell", spared, {
-        skillId: skill.id,
-        key: cast.key,
-      });
+      this.#fireTriggers(
+        record,
+        "bearer-casts-spell",
+        spared,
+        { skillId: skill.id, key: cast.key },
+        aimedAt,
+      );
     }
     if (skill.attack !== undefined) {
-      this.#fireTriggers(record, "bearer-attacks", spared);
+      this.#fireTriggers(record, "bearer-attacks", spared, undefined, aimedAt);
     }
   }
 
@@ -4408,7 +4454,8 @@ export class MatchSimulation {
   /**
    * The bearer did `event` (#469): each status on it that answers fires.
    * `usedSkill` is the skill it used, on `bearer-uses-skill` (#949) and
-   * `bearer-casts-spell` (#1614).
+   * `bearer-casts-spell` (#1614); `aimedAt`, whom it or the attack was
+   * aimed at (#2282).
    * A status in `spared` does not answer (#999), as `fireTriggers`.
    */
   #fireTriggers(
@@ -4416,13 +4463,16 @@ export class MatchSimulation {
     event: DirectTriggerEvent,
     spared: ReadonlySet<StatusId>,
     usedSkill?: SlotSkill,
+    aimedAt?: AimedAt,
   ): readonly FiredTrigger[] {
     // Panic's interrupt (#1501) is untimed, as a pulse's: finding nothing
     // to interrupt is no miss, so it says nothing.
     const fired = fireTriggers(
       record.combatant,
       event,
-      this.#triggerContext(usedSkill),
+      aimedAt === undefined
+        ? this.#triggerContext(usedSkill)
+        : { ...this.#triggerContext(usedSkill), aimedAt },
       spared,
     ).map((each) => ({
       ...each,
@@ -4448,10 +4498,19 @@ export class MatchSimulation {
    * bearer that holds its next skill of this kind resolves on the bearer,
    * as its own entry, and one that counted its last ends there, but those
    * in `spared` (#999): Chorus of Restoration never answers its own cast.
+   * One `at` the skill's target resolves on `primary` (#2275), and on
+   * nothing if it is gone or dead.
    */
-  #useNextSkill(record: ParticipantRecord, skill: Skill, spared: ReadonlySet<StatusId>): void {
+  #useNextSkill(
+    record: ParticipantRecord,
+    skill: Skill,
+    spared: ReadonlySet<StatusId>,
+    primary: ParticipantRecord | undefined,
+  ): void {
     const bearer = record.combatant;
     const { answered, ended } = bearer.statuses.useNextSkill(skill, spared);
+    const atTarget =
+      primary === undefined || primary.combatant.dead ? undefined : primary.combatant;
     this.#logFired(
       answered.map(({ statusId, next, ranks }) => ({
         sourceId: record.id,
@@ -4459,14 +4518,16 @@ export class MatchSimulation {
         events: [
           // At its source's ranks as it landed (#2143): an ally's Anthem
           // of Fury gives the Paragon's strikes.
-          ...applyEffects(next.effects, {
-            caster: bearer,
-            target: bearer,
-            ranksFrom: outsideMatch(ranks),
-            rng: this.#rng,
-            rules: this.#ruleset.combat,
-            surroundings: this.#participants,
-          }),
+          ...(next.at === "skill-target" && atTarget === undefined
+            ? []
+            : applyEffects(next.effects, {
+                caster: bearer,
+                target: next.at === "skill-target" ? atTarget : bearer,
+                ranksFrom: outsideMatch(ranks),
+                rng: this.#rng,
+                rules: this.#ruleset.combat,
+                surroundings: this.#participants,
+              })),
           ...(ended.includes(statusId)
             ? [{ kind: "status-expired" as const, targetId: record.id, statusId }]
             : []),
@@ -4482,10 +4543,21 @@ export class MatchSimulation {
    * `spared` (#999).
    */
   #endOnUseSkill(record: ParticipantRecord, skill: Skill, spared: ReadonlySet<StatusId>): void {
-    const ended = record.combatant.statuses.endOnBearerUseSkill(
-      spared,
-      skill.cost?.kind === "adrenaline",
+    this.#logEnded(
+      record,
+      skill,
+      record,
+      record.combatant.statuses.endOnBearerUseSkill(spared, skill.cost?.kind === "adrenaline"),
     );
+  }
+
+  /** The statuses `ended` on `bearer` by `record`'s use of `skill`, logged against it. */
+  #logEnded(
+    record: ParticipantRecord,
+    skill: Skill,
+    bearer: ParticipantRecord,
+    ended: readonly StatusId[],
+  ): void {
     if (ended.length > 0) {
       this.#log.push({
         tick: this.#tick,
@@ -4499,7 +4571,7 @@ export class MatchSimulation {
         doubleStrike: false,
         events: ended.map((statusId) => ({
           kind: "status-expired",
-          targetId: record.id,
+          targetId: bearer.id,
           statusId,
         })),
       });
@@ -5532,6 +5604,11 @@ export class MatchSimulation {
     }
     record.outOfCombatSeconds = 0;
     this.#blowStarted(record, target);
+    // Read as the swing begins (#2282), before its blow lands.
+    const aimedAt: AimedAt = {
+      id: target.id,
+      hadLessHealth: this.#hasLessHealth(record, target.id),
+    };
     // Cancelled as it began (#1593): no arrow, no blow, and no `attacks`.
     // A pet's armed attack is spent, as if it missed.
     if (this.#attackBegins(record)) {
@@ -5544,7 +5621,7 @@ export class MatchSimulation {
       if (released.length > 0) {
         this.#logWeapon(record.id, weapon.id, released);
       }
-      this.#fireTriggers(record, "bearer-attacks", NONE_SPARED);
+      this.#fireTriggers(record, "bearer-attacks", NONE_SPARED, undefined, aimedAt);
       return;
     }
     const armed =
@@ -5567,7 +5644,7 @@ export class MatchSimulation {
     this.#recordKnockdowns(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events, doubleStrike);
     this.#logFired(fired);
-    this.#fireTriggers(record, "bearer-attacks", NONE_SPARED);
+    this.#fireTriggers(record, "bearer-attacks", NONE_SPARED, undefined, aimedAt);
   }
 
   /**
@@ -5579,6 +5656,7 @@ export class MatchSimulation {
    */
   #landArmedAttack(pet: ParticipantRecord, skill: Skill, target: ParticipantRecord): void {
     pet.armedAttack = undefined;
+    const aimedAt: AimedAt = { id: target.id, hadLessHealth: this.#hasLessHealth(pet, target.id) };
     const fired: FiredTrigger[] = [];
     const events = resolveAttackSkill(
       {
@@ -5608,7 +5686,7 @@ export class MatchSimulation {
       events,
     });
     this.#logFired(fired);
-    this.#fireTriggers(pet, "bearer-attacks", NONE_SPARED);
+    this.#fireTriggers(pet, "bearer-attacks", NONE_SPARED, undefined, aimedAt);
   }
 
   /**

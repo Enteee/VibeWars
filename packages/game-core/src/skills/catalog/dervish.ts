@@ -2797,4 +2797,88 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // this enchantment ends, you are cured of 1...2 conditions" (#2217).
     effects: [{ kind: "apply-status", statusId: "conviction", durationSeconds: { flat: 10 } }],
   },
+  {
+    id: "dervish.grenths-aura",
+    name: "Grenth's Aura",
+    gwId: 2013,
+    type: "enchantment",
+    elite: false,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20 seconds, you deal 5...25 less damage and steal 5...25 Health
+    // whenever you hit with a scythe attack. When you cast this
+    // enchantment you steal 5...25 Health from all adjacent foes."
+    effects: [
+      { kind: "apply-status", statusId: "grenths-aura", durationSeconds: { flat: 20 } },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "life-steal",
+            amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 5, atTwelve: 21 } },
+          },
+        ],
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2278), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "dervish.dwaynas-touch",
+    name: "Dwayna's Touch",
+    gwId: 1528,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 5,
+    // "Target touched ally."
+    touch: true,
+    range: RANGE_MELEE,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "...is healed for 60 Health for each enchantment on you (maximum
+    // 60...240)": none on you, none.
+    effects: [
+      {
+        kind: "heal",
+        amount: { flat: 0 },
+        per: {
+          count: { kind: "statuses", on: "caster", categories: ["enchantment"] },
+          amount: { flat: 60 },
+          max: { scaling: { attributeId: "dervish.wind-prayers", atZero: 60, atTwelve: 204 } },
+        },
+      },
+    ],
+  },
 ];

@@ -58,7 +58,12 @@ export type MonkStatusId =
   | "shield-of-absorption"
   | "divine-intervention"
   | "healing-hands"
-  | "shield-of-judgment";
+  | "shield-of-judgment"
+  | "zealots-fire"
+  | "life-bond"
+  | "life-attunement"
+  | "aura-of-faith"
+  | "peace-and-harmony";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -660,5 +665,83 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         skillId: "monk.shield-of-judgment",
       },
     ],
+  }),
+  // "...whenever you use a skill that targets an ally, all foes adjacent
+  // to that target are struck for 5...35 fire damage and you lose 1
+  // Energy" (#2282): a skill on itself too; the Energy goes with no foe near.
+  "zealots-fire": define("zealots-fire", "Zealot's Fire", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { targetsAlly: true },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 5, atTwelve: 29 },
+                },
+                type: "fire",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+        target: "skill-target",
+        skillId: "monk.zealots-fire",
+      },
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { targetsAlly: true },
+        effects: [{ kind: "energy-loss", amount: { flat: 1 } }],
+        target: "source",
+        skillId: "monk.zealots-fire",
+      },
+    ],
+  }),
+  // Maintained (#2291): "whenever target other ally takes damage from an
+  // attack, half the damage is redirected to you. The damage you receive
+  // this way is reduced by 3...30", by the caster's Protection Prayers.
+  "life-bond": define("life-bond", "Life Bond", "enchantment", {
+    profession: "monk",
+    redirectsDamage: {
+      share: 0.5,
+      from: "attack",
+      reduction: { scaling: { attributeId: "monk.protection-prayers", atZero: 3, atTwelve: 24.6 } },
+    },
+  }),
+  // Maintained (#2291): "target ally deals 30% less damage with attacks,
+  // but gains 14...50% more Health when healed": the weapon roll, as
+  // Flurry's; an attack skill's bonus is not scaled.
+  "life-attunement": define("life-attunement", "Life Attunement", "enchantment", {
+    profession: "monk",
+    weaponDamageMultiplier: 0.7,
+    healingMultiplier: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 1.14, atTwelve: 1.428 },
+    },
+  }),
+  // "For 3 seconds, target ally gains 50...100% more Health when healed
+  // and takes 5...50% less damage" (#2291), by Protection Prayers.
+  "aura-of-faith": define("aura-of-faith", "Aura of Faith", "enchantment", {
+    profession: "monk",
+    healingMultiplier: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 1.5, atTwelve: 1.9 },
+    },
+    damageTakenMultiplier: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 0.95, atTwelve: 0.59 },
+    },
+  }),
+  // PvP (#2291): "for 1...3 seconds, conditions and hexes expire 90%
+  // faster on that ally"; the duration is the skill's.
+  "peace-and-harmony": define("peace-and-harmony", "Peace and Harmony", "enchantment", {
+    profession: "monk",
+    conditionsExpireFaster: 0.9,
+    hexesExpireFaster: 0.9,
   }),
 };

@@ -11,7 +11,13 @@ import { isAttacking, signetsOnBar } from "./attacking.js";
 import { beginRecharge, resolvedBar, skillIdOfKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
-import { hitLocationOf, mitigate, skillDamage, withSkillArmorPenetration } from "./damage.js";
+import {
+  type DamageSource,
+  hitLocationOf,
+  mitigate,
+  skillDamage,
+  withSkillArmorPenetration,
+} from "./damage.js";
 import { guardedDamage, guardedLoss } from "./loss-guard.js";
 import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude, resolveMagnitudeTimes, statAt } from "./scaling.js";
@@ -42,6 +48,7 @@ import {
   raisedMaxHealth,
   rankOf,
   statusRanks,
+  upkeepPips,
 } from "./tick.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange } from "../geometry.js";
@@ -74,6 +81,7 @@ import {
   type RemoveStatusEffect,
   type ResurrectEffect,
   type SkillEffect,
+  type SkillType,
   type SplashEffect,
   type StateCondition,
   type Surroundings,
@@ -352,7 +360,7 @@ export type CombatEvent =
  * here, so it can never count as physical. Damage a foe `dealer` dealt is
  * recorded too, for Vengeful Weapon (#1022); with no dealer, as a
  * sacrifice, it is not. A bond on the target (#1108) takes its share of
- * a physical hit, after Reversal of Fortune. An invulnerable target
+ * a physical hit, or of a `weapon` one (#2291), after Reversal of Fortune. An invulnerable target
  * (#1208) takes none of it, and says so (#1233). A Guild Lord's guard
  * (#1223) cuts and caps what is left, to 0 once its second's cap is spent.
  * A status that negates fatal damage (#1789) drops what would kill; what
@@ -366,7 +374,19 @@ export function applyDamage(
   events: CombatEvent[],
   dealer: Combatant | undefined,
 ): void {
-  landDamage(target, amount, type, critical, events, dealer, true);
+  landDamage(target, amount, type, critical, events, dealer, "skill");
+}
+
+/** As `applyDamage`, for a weapon blow (#2291): what Life Bond answers. */
+export function applyAttackDamage(
+  target: Combatant,
+  amount: number,
+  type: DamageType,
+  critical: boolean,
+  events: CombatEvent[],
+  dealer: Combatant | undefined,
+): void {
+  landDamage(target, amount, type, critical, events, dealer, "weapon");
 }
 
 /**
@@ -378,7 +398,7 @@ export function applyRedirectedDamage(
   amount: number,
   events: CombatEvent[],
 ): void {
-  landDamage(target, amount, "typeless", false, events, undefined, false);
+  landDamage(target, amount, "typeless", false, events, undefined, undefined);
 }
 
 function landDamage(
@@ -388,7 +408,8 @@ function landDamage(
   critical: boolean,
   events: CombatEvent[],
   dealer: Combatant | undefined,
-  redirectable: boolean,
+  // `undefined`: a bond's share, never redirected again.
+  source: DamageSource | undefined,
 ): void {
   if (amount <= 0 || target.dead) {
     return;
@@ -410,7 +431,10 @@ function landDamage(
   }
   // Symbiotic Bond (#1108) and Dark Bond (#1986): a share goes elsewhere
   // when the tick drains; the bearer takes the rest.
-  const kept = redirectable ? target.statuses.redirect(cut, isPhysicalDamage(type)) : cut;
+  const kept =
+    source === undefined
+      ? cut
+      : target.statuses.redirect(cut, isPhysicalDamage(type), source === "weapon");
   const applied = Math.min(guardedDamage(target, kept), target.health);
   if (negateFatal(target, applied, dealer, events)) {
     return;
@@ -556,6 +580,7 @@ function healAmount(
     caster,
     target,
     surroundings,
+    earlier,
   );
   // Imbue Health's (#2207): a share of the caster's Health, capped.
   if (effect.ofCasterHealth !== undefined) {
@@ -841,21 +866,28 @@ export function withPerCount(
   caster: Combatant,
   target: Combatant | undefined,
   surroundings: Surroundings,
+  earlier: readonly CombatEvent[],
 ): number {
   if (per === undefined) {
     return base;
   }
   const total =
-    base + resolveMagnitude(per.amount, caster) * countOf(per.count, caster, target, surroundings);
+    base +
+    resolveMagnitude(per.amount, caster) *
+      countOf(per.count, caster, target, surroundings, earlier);
   return per.max === undefined ? total : Math.min(total, resolveMagnitude(per.max, caster));
 }
 
-/** What `rule` counts as an effect of `caster`'s lands on `target` (#1760). */
+/**
+ * What `rule` counts as an effect of `caster`'s lands on `target` (#1760),
+ * after `earlier` in the same use.
+ */
 function countOf(
   rule: CountRule,
   caster: Combatant,
   target: Combatant | undefined,
   surroundings: Surroundings,
+  earlier: readonly CombatEvent[],
 ): number {
   switch (rule.kind) {
     case "statuses": {
@@ -898,6 +930,16 @@ function countOf(
       const bearer = rule.on === "caster" ? caster : target;
       return bearer === undefined ? 0 : Math.floor(bearer.energy);
     }
+    case "removed":
+      return rule.categories.reduce(
+        (count, category) => count + removedByAnyone(category, earlier),
+        0,
+      );
+    case "maintained-enchantments":
+      return -upkeepPips(
+        caster.id,
+        new Set([caster, ...[...surroundings.values()].map(({ combatant }) => combatant)]),
+      );
   }
 }
 
@@ -1433,13 +1475,14 @@ function measuredFromCaster(hits: SplashEffect["hits"]): boolean {
 
 /**
  * Whom a splash reaches round its centre, nearest first, past its
- * `maxTargets` none; its target is never one of them. Your own spirits are
- * within earshot of you, not of the target (#1777); Return's adjacent foes
- * are around its caster (#1826). The resolution reads it too, for the
- * minions a nested `take-control` takes (#2092). A caster that shadow
- * stepped earlier in the use is measured from where it stepped to
- * (#2268), Necrotic Traversal's: the spot of whom it stepped beside, since
- * the simulation places the body only after the use.
+ * `maxTargets` none; its target is one of them only if it `includesCentre`
+ * (#2282). With `alsoAround`, round the caster too, each one once (#2288).
+ * Your own spirits are within earshot of you, not of the target (#1777);
+ * Return's adjacent foes are around its caster (#1826). The resolution
+ * reads it too, for the minions a nested `take-control` takes (#2092). A
+ * caster that shadow stepped earlier in the use is measured from where it
+ * stepped to (#2268), Necrotic Traversal's: the spot of whom it stepped
+ * beside, since the simulation places the body only after the use.
  */
 function splashTargets(
   effect: SplashEffect,
@@ -1460,20 +1503,32 @@ function splashTargets(
   if (target === undefined || at === undefined) {
     return { centre, reached: [] };
   }
+  const casterAt =
+    effect.alsoAround === "caster" ? context.surroundings.get(caster.id)?.position : undefined;
   const reached = [...context.surroundings.values()].filter(
     ({ combatant, position, creature }) =>
       !combatant.dead &&
-      combatant.id !== target.id &&
+      (combatant.id !== target.id || effect.includesCentre === true) &&
       splashReaches(effect.hits, caster, combatant, creature) &&
-      distance(position, at) <= effect.radius &&
+      (distance(position, at) <= effect.radius ||
+        (casterAt !== undefined && distance(position, casterAt) <= effect.radius)) &&
       (effect.onlyBearing === undefined ||
-        combatant.statuses.countByCategory(effect.onlyBearing) > 0),
+        combatant.statuses.countByCategory(effect.onlyBearing) > 0) &&
+      (effect.onlyUsing === undefined || usingSkillOf(combatant, effect.onlyUsing)) &&
+      (effect.onlyIf === undefined ||
+        stateHolds(effect.onlyIf, caster, combatant, context.surroundings)),
   );
   const maxTargets =
     effect.maxTargets === undefined || typeof effect.maxTargets === "number"
       ? effect.maxTargets
       : resolveMagnitude(effect.maxTargets, caster);
   return { centre, reached: nearestFirst(reached, at).slice(0, maxTargets) };
+}
+
+/** Whether `combatant` is activating a skill of `type` (#2282). */
+function usingSkillOf(combatant: Combatant, type: SkillType): boolean {
+  const cast = combatant.cast.activeCast;
+  return cast !== undefined && getSkill(cast.skillId)?.type === type;
 }
 
 /**
@@ -1578,6 +1633,9 @@ export function loseHealth(
   if (loser.health <= 0) {
     loser.dead = true;
     events.push({ kind: "death", targetId: loser.id });
+  } else if (kind === "sacrifice") {
+    // Masochism answers a sacrifice its bearer lives through (#2275).
+    loser.statuses.recordSacrifice();
   }
 }
 
@@ -1713,6 +1771,7 @@ export function applyEffect(
           caster,
           target,
           context.surroundings,
+          earlier,
         ),
         lostBy,
         earlier,
@@ -1802,6 +1861,7 @@ export function applyEffect(
                 caster,
                 target,
                 context.surroundings,
+                earlier,
               ),
               lostBy,
               earlier,
@@ -1827,6 +1887,7 @@ export function applyEffect(
           caster,
           target,
           context.surroundings,
+          earlier,
         ) * adrenalineGainTimes(caster, effect);
       const gainer =
         effect.recipient === "owner"
@@ -1852,10 +1913,22 @@ export function applyEffect(
     }
 
     case "energy-loss": {
-      if (target === undefined || target.dead) {
+      const loser = effect.on === "caster" ? caster : target;
+      if (loser === undefined || loser.dead) {
         return events;
       }
-      loseEnergy(target, resolveMagnitude(effect.amount, caster), events);
+      loseEnergy(
+        loser,
+        withPerCount(
+          resolveMagnitude(effect.amount, caster),
+          effect.per,
+          caster,
+          target,
+          context.surroundings,
+          earlier,
+        ),
+        events,
+      );
       return events;
     }
 
@@ -1896,10 +1969,10 @@ export function applyEffect(
         return events;
       }
       if (effect.recipient === "target") {
-        const amount = resolveMagnitude(effect.amount, caster);
+        const amount = resolveMagnitude(effect.amount, context.ranksFrom ?? caster);
         loseHealth(
           target,
-          withPerCount(amount, effect.per, caster, target, context.surroundings),
+          withPerCount(amount, effect.per, caster, target, context.surroundings, earlier),
           "health-loss",
           events,
         );
@@ -1932,6 +2005,7 @@ export function applyEffect(
       if (lost > 0 && !isInvulnerable(caster)) {
         caster.health -= lost;
         events.push({ kind: "sacrifice", targetId: caster.id, amount: lost });
+        caster.statuses.recordSacrifice();
       }
       applyHeal(
         target,
@@ -1973,6 +2047,7 @@ export function applyEffect(
         caster,
         target,
         context.surroundings,
+        earlier,
       );
       const base =
         getStatusDefinition(effect.statusId).category === "weapon-spell"
@@ -2174,6 +2249,7 @@ export function applyEffect(
         removeCount(effect, caster, target, bearer, context.surroundings, earlier),
         effect.profession,
         same?.kind === "status-removed" ? same.statusId : effect.statusId,
+        effect.orCategory,
       );
       for (const { id: statusId, sourceSkillId } of removed) {
         events.push({ kind: "status-removed", targetId: bearer.id, statusId, sourceSkillId });
@@ -2286,6 +2362,7 @@ export function applyEffect(
         if (lost > 0 && !isInvulnerable(caster)) {
           caster.health -= lost;
           events.push({ kind: "sacrifice", targetId: caster.id, amount: lost });
+          caster.statuses.recordSacrifice();
         }
         health = caster.health;
       }
@@ -2651,6 +2728,8 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":
+    case "target-foe":
+    case "target-moving-faster":
     case "target-has-status":
     case "target-lacks-status":
     case "caster-more-energy":
@@ -2784,6 +2863,10 @@ export function stateHolds(
       return target.knockdownRemaining > 0;
     case "target-moving":
       return target.moving;
+    case "target-foe":
+      return target.team !== caster.team;
+    case "target-moving-faster":
+      return target.moving && aggregateModifiers(target.statuses.active).moveSpeedMultiplier > 1;
     case "target-has-status":
       return target.statuses.has(condition.statusId);
     case "target-lacks-status":
@@ -2820,12 +2903,13 @@ export function stateHolds(
       return condition.conditions.every((each) =>
         stateHolds(each, caster, target, surroundings, firing),
       );
+    // A state is read before the use, when it has removed nothing.
     case "count-at-least":
-      return countOf(condition.count, caster, target, surroundings) >= condition.atLeast;
+      return countOf(condition.count, caster, target, surroundings, []) >= condition.atLeast;
     case "count-at-most":
       return (
-        countOf(condition.count, caster, target, surroundings) <=
-        countOf(condition.than, caster, target, surroundings)
+        countOf(condition.count, caster, target, surroundings, []) <=
+        countOf(condition.than, caster, target, surroundings, [])
       );
     case "target-casting-or-attacking": {
       const cast = target.cast.activeCast;
@@ -2907,7 +2991,7 @@ function removeCount(
   }
   // Signet of Twilight's one for each hex (#2247), counted before it removes.
   if (effect.perCount !== undefined) {
-    return countOf(effect.perCount, caster, target, surroundings);
+    return countOf(effect.perCount, caster, target, surroundings, earlier);
   }
   const count =
     effect.count === "all"
@@ -3047,7 +3131,8 @@ export function disableOwnSkills(
 /**
  * Whether `effect` disables the caster's bar skill `skillId` (#1473):
  * for `attribute` (#1511), never `usedId`, the skill that disables them;
- * for `all` (#1570), every one; for `types` (#1930), those of a type,
+ * for `all` (#1570), every one; for `others` (#2287), every one but
+ * `usedId`; for `types` (#1930), those of a type,
  * `usedId` included.
  */
 function disabledOwn(
@@ -3057,6 +3142,9 @@ function disabledOwn(
 ): boolean {
   if (effect.which === "all") {
     return true;
+  }
+  if (effect.which === "others") {
+    return skillId !== usedId;
   }
   if (effect.which === "spells") {
     return isSpellId(skillId);
@@ -3147,6 +3235,8 @@ function conditionHolds(
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":
+    case "target-foe":
+    case "target-moving-faster":
     case "target-has-status":
     case "target-lacks-status":
     case "caster-more-energy":
@@ -3296,11 +3386,12 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
       return effect.recipient !== undefined;
     case "remove-status":
       return effect.from === "caster";
+    // A caster-side energy loss (#2260) too: paid once, however many it hit.
     case "maintain-status":
     case "apply-status":
     case "knockdown":
-      return effect.on === "caster";
     case "energy-loss":
+      return effect.on === "caster";
     case "energy-steal":
     case "life-steal":
     case "damage":
@@ -3496,6 +3587,14 @@ export function resolveSkillEffects(
       for (const inner of landed) {
         if (inner.kind === "recharge-faster") {
           rechargeFraction = Math.max(rechargeFraction, inner.fraction);
+        }
+        if (inner.kind === "splash") {
+          // Mirror of Ice's "if you strike a foe hexed with Water Magic"
+          // (#2288): once, however many it reaches.
+          const faster = inner.effects.find((each) => each.kind === "recharge-faster");
+          if (faster !== undefined && splashTargets(inner, context, before).reached.length > 0) {
+            rechargeFraction = Math.max(rechargeFraction, faster.fraction);
+          }
         }
         if (inner.kind === "recharge-others") {
           rechargeOthers(caster, skill.id, inner.which);

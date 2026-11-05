@@ -498,11 +498,41 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "conjure-nightmare": icon("conjure-nightmare"),
   "images-of-remorse": icon("images-of-remorse"),
   "confusing-images": icon("confusing-images"),
+  // Wild Blow, Zealot's Fire, Glimmering Mark, Spoil Victor (#2282).
+  "zealots-fire": icon("zealots-fire"),
+  "glimmering-mark": icon("glimmering-mark"),
+  "spoil-victor": icon("spoil-victor"),
   // Condition movement (#2259).
   "fevered-dreams": icon("fevered-dreams"),
   "mark-of-fury": icon("mark-of-fury"),
   "i-will-survive": icon("i-will-survive"),
   "resilient-was-xiko": icon("resilient-was-xiko"),
+  // Staples (#2278).
+  "lightning-surge": icon("lightning-surge"),
+  "ward-against-harm": icon("ward-against-harm"),
+  // Elementalist staples (#2288).
+  gust: icon("gust"),
+  "mirror-of-ice": icon("mirror-of-ice"),
+  "mark-of-subversion": icon("mark-of-subversion"),
+  "mantra-of-recall": icon("mantra-of-recall"),
+  // Staples (#2287).
+  "ether-lord": icon("ether-lord"),
+  "ether-lord-regeneration": icon("ether-lord-regeneration"),
+  "spirit-of-failure": icon("spirit-of-failure"),
+  "spirit-shackles": icon("spirit-shackles"),
+  "soothing-images": icon("soothing-images"),
+  "arcane-languor": icon("arcane-languor"),
+  "illusion-of-pain": icon("illusion-of-pain"),
+  "ether-phantom": icon("ether-phantom"),
+  // Bonds and rank-scaled multipliers (#2291).
+  "life-bond": icon("life-bond"),
+  "life-attunement": icon("life-attunement"),
+  "aura-of-faith": icon("aura-of-faith"),
+  "peace-and-harmony": icon("peace-and-harmony"),
+  "enchanters-conundrum": icon("enchanters-conundrum"),
+  // Source-targets triggers and signet lockout (#2290).
+  "mind-wrack": icon("mind-wrack"),
+  ignorance: icon("ignorance"),
   // Warrior conditions (#2096).
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
@@ -539,6 +569,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "ballad-of-restoration": icon("ballad-of-restoration"),
   "theyre-on-fire": icon("theyre-on-fire"),
   "find-their-weakness": icon("find-their-weakness"),
+  // Sacrifice, crits, signet echoes and pulses (#2275).
+  masochism: icon("masochism"),
+  "way-of-the-assassin": icon("way-of-the-assassin"),
+  "keystone-signet": icon("keystone-signet"),
+  agony: icon("agony"),
+  "grenths-aura": icon("grenths-aura"),
 };
 
 const GAP = 2;

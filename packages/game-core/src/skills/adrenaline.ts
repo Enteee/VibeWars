@@ -9,7 +9,7 @@ import type { SkillBar } from "../build.js";
 import { ADRENALINE_PER_STRIKE } from "../ruleset.js";
 import { isCopyKey, skillIdOfKey } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
-import { aggregateModifiers } from "./status.js";
+import { aggregateModifiers, getStatusDefinition } from "./status.js";
 import type { Combatant, Skill } from "./types.js";
 
 /** The units `skill` needs, and the most its pool holds: 0 for any other cost. */
@@ -38,7 +38,8 @@ export function gainUnits(
  * does, since an effect does not know the time. The attack skill that
  * carries one has stamped it already, with its blow. A status that gains
  * adrenaline faster (#1455) gives `floor(units × (1 + faster))`, one
- * that does only from attacks (#2180) when `fromAttacks`. Whether any
+ * that does only from attacks (#2180) when `fromAttacks`; one that
+ * prevents it (#2287), none. Whether any
  * pool filled (#1735): not for a bar with no adrenaline skill, nor one
  * whose pools are all full or recharging.
  */
@@ -47,7 +48,10 @@ export function fillPools(combatant: Combatant, units: number, fromAttacks = fal
     combatant.statuses.active,
   );
   const faster = adrenalineGainFaster + (fromAttacks ? adrenalineGainFasterFromAttacks : 0);
-  const gained = Math.floor(units * (1 + faster));
+  const barred = combatant.statuses.active.some(
+    ({ id }) => getStatusDefinition(id).preventsAdrenalineGain,
+  );
+  const gained = barred ? 0 : Math.floor(units * (1 + faster));
   let filled = false;
   for (const [key, held] of combatant.adrenaline) {
     if ((combatant.cast.rechargeRemaining.get(key) ?? 0) > 0) {
@@ -72,7 +76,7 @@ export function gainStrikes(
 
 /** Whether using `skill` loses all adrenaline (#1097), GW1's Hammer Bash. */
 export function losesAllAdrenaline(skill: Skill): boolean {
-  return skill.cost?.kind === "adrenaline" && skill.cost.losesAll === true;
+  return skill.losesAllAdrenaline === true;
 }
 
 /**

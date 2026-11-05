@@ -34,12 +34,7 @@ export type ResourceKind = "energy" | "adrenaline";
 
 export type SkillCost =
   | { readonly kind: "energy"; readonly amount: number }
-  | {
-      readonly kind: "adrenaline";
-      readonly amount: number;
-      /** GW1 "Lose all adrenaline" (#1097): using the skill empties every pool, and its blow earns none back. */
-      readonly losesAll?: true;
-    };
+  | { readonly kind: "adrenaline"; readonly amount: number };
 
 /**
  * How a skill's magnitude scales with an attribute rank.
@@ -171,7 +166,20 @@ export type CountRule =
    * Whole points of Energy, rounded down (#1984): Ether Prodigy's "lose 2
    * Health for each point of Energy you have".
    */
-  | { readonly kind: "energy"; readonly on: "target" | "caster" };
+  | { readonly kind: "energy"; readonly on: "target" | "caster" }
+  /**
+   * Statuses of `categories` an earlier effect of this same use took off
+   * anyone (#2260), inside a `splash` or not: Purge Signet's "you lose 10
+   * Energy for each hex and condition removed". Read before the use, as a
+   * state is, it is 0.
+   */
+  | { readonly kind: "removed"; readonly categories: readonly StatusCategory[] }
+  /**
+   * Enchantments the caster maintains (#2260), on anyone living, as its
+   * upkeep counts them: Blessed Signet's "for each enchantment you are
+   * maintaining". A timed one is not maintained.
+   */
+  | { readonly kind: "maintained-enchantments" };
 
 /**
  * "+`amount` for each" (#1760): the effect's own amount plus `amount`
@@ -351,10 +359,17 @@ export interface AdrenalineGainEffect {
   readonly recipient?: "owner" | "target";
 }
 
-/** The effect's target loses up to `amount` energy (never below 0). */
+/**
+ * The effect's target, or with `on: "caster"` its caster (#2260), loses
+ * up to `amount` energy (never below 0). `per`: more for each of a count,
+ * as Purge Signet's "you lose 10 Energy for each hex and condition
+ * removed".
+ */
 export interface EnergyLossEffect {
   readonly kind: "energy-loss";
   readonly amount: Magnitude;
+  readonly on?: "caster";
+  readonly per?: PerCount;
 }
 
 /**
@@ -548,6 +563,12 @@ export interface MaintainStatusEffect {
 export interface RemoveStatusEffect {
   readonly kind: "remove-status";
   readonly category: StatusCategory;
+  /**
+   * Statuses of this category go too, newest first among both, out of the
+   * one `count` (#2291): Peace and Harmony's "loses 0...4 conditions and
+   * hexes". Absent: `category` alone.
+   */
+  readonly orCategory?: StatusCategory;
   /**
    * How many, newest first; `"all"` as Restore Condition's "remove all
    * conditions"; a `Magnitude` as Divert Hexes' "remove up to 1...3 hexes"
@@ -826,6 +847,29 @@ export interface SplashEffect {
    * spend no slot on one with none. Absent: anyone.
    */
   readonly onlyBearing?: StatusCategory;
+  /**
+   * Only those using a skill of this type as it lands, picked before
+   * `maxTargets` (#2282): Glimmering Mark's "foes using attack skills are
+   * Blinded". Absent: anyone.
+   */
+  readonly onlyUsing?: SkillType;
+  /**
+   * Only those for whom this holds as the splash lands, picked before
+   * `maxTargets` (#2288): Gust's "foes struck by Gust while attacking or
+   * moving are knocked down". Absent: anyone.
+   */
+  readonly onlyIf?: StateCondition;
+  /**
+   * The target is reached too, as one of them (#2282): Glimmering Mark's
+   * "target foe and all foes adjacent". Absent: the target is not.
+   */
+  readonly includesCentre?: true;
+  /**
+   * Round the caster as well as the centre, a character near both
+   * reached once (#2288): Gust's "all foes adjacent to you and your
+   * target". Absent: round the centre alone.
+   */
+  readonly alsoAround?: "caster";
   readonly effects: readonly UnconditionalEffect[];
 }
 
@@ -897,11 +941,12 @@ export interface DestroyAlliedSpiritsEffect {
  * as Moebius Strike's "all your other attack skills are recharged". Acts
  * on the caster, once. `all` (#1762), from a status's trigger, recharges
  * every skill on the bar, the status's own included: Assassin's Promise.
- * A dead caster recharges nothing.
+ * `signet` (#2275), every other signet: Keystone Signet's. A dead caster
+ * recharges nothing.
  */
 export interface RechargeOthersEffect {
   readonly kind: "recharge-others";
-  readonly which: "attack" | "all";
+  readonly which: "attack" | "signet" | "all";
 }
 
 /**
@@ -953,12 +998,16 @@ export interface CopyRemovedEffect {
 }
 
 /**
- * The slot of the skill resolving holds a copy of the spell an earlier
- * `disable-skill` `random-spell` disabled on the target (#1928), for as
- * long as it disabled it: Arcane Thievery's. Nothing disabled: no copy.
+ * The slot of the skill resolving holds a copy of the skill an earlier
+ * `disable-skill` of the same `which` disabled on the target, for as long
+ * as it disabled it: with `random-spell`, the spell it picked (#1928),
+ * Arcane Thievery's; with `interrupted`, the skill this skill interrupted
+ * (#2290), Simple Thievery's. Nothing disabled, or a plain attack
+ * interrupted: no copy.
  */
 export interface CopyDisabledEffect {
   readonly kind: "copy-disabled";
+  readonly which: "random-spell" | "interrupted";
 }
 
 /**
@@ -1007,7 +1056,9 @@ export interface LengthenRechargeEffect {
  * own, a common skill included, but those of `exceptTypes`: Unnatural
  * Signet's "all your non-Mesmer skills except signets". `all` (#1570):
  * every skill on the bar, the one used included, as Blackout's "all of
- * your skills are disabled for 5 seconds". `attacks` (#1914): every
+ * your skills are disabled for 5 seconds". `others` (#2287): every skill
+ * on the bar but the one used, as Psychic Distraction's "all of your other
+ * skills are disabled for 8 seconds". `attacks` (#1914): every
  * attack skill on the bar but the one used, as Focused Shot's "your other
  * attack skills are disabled", but those of `exceptWeapon` (#2134), as
  * Wastrel's Collapse's "your non-dagger attack skills". `types` (#1930): every skill on the
@@ -1025,6 +1076,11 @@ export type DisableOwnSkillsEffect =
   | {
       readonly kind: "disable-own-skills";
       readonly which: "all";
+      readonly seconds: Magnitude;
+    }
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "others";
       readonly seconds: Magnitude;
     }
   | {
@@ -1517,6 +1573,17 @@ export type StateCondition =
    * `Combatant.moving`): Water Trident's "a moving foe".
    */
   | { readonly kind: "target-moving" }
+  /**
+   * The effect's target is on another team than the caster (#2288): Ride
+   * the Lightning's "if your target is a foe".
+   */
+  | { readonly kind: "target-foe" }
+  /**
+   * The effect's target is moving and its statuses make it move faster
+   * than normal (#2290): their aggregate `moveSpeedMultiplier` is above 1.
+   * Churning Earth's "moving faster than normal".
+   */
+  | { readonly kind: "target-moving-faster" }
   /**
    * The effect's target has this status (#997): Stoning's "suffering from
    * Weakness", Searing Flames' "already on fire".
@@ -2059,6 +2126,12 @@ export interface Skill {
    */
   readonly attributeId: string | undefined;
   readonly cost: SkillCost | undefined;
+  /**
+   * GW1 "Lose all adrenaline" (#1097): using the skill empties every pool,
+   * and its blow earns none back, whatever it costs: Hammer Bash's
+   * adrenaline, Wild Blow's energy (#2282).
+   */
+  readonly losesAllAdrenaline?: true;
   /**
    * Maximum energy it takes away when activation starts, on top of its
    * cost (#461): GW1's overcast, once called exhaustion. `0` for none.

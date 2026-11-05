@@ -83,7 +83,11 @@ export type NecromancerStatusId =
   // Necromancer staples (#2230).
   | "vampiric-spirit"
   // Condition movement (#2259).
-  | "mark-of-fury";
+  | "mark-of-fury"
+  | "masochism"
+  | "spoil-victor"
+  // Staples (#2278).
+  | "mark-of-subversion";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -770,5 +774,64 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         skillId: "necromancer.mark-of-fury",
       },
     ],
+  }),
+  // PvP: "For 30 seconds, you gain 1...3 Energy whenever you sacrifice
+  // Health" (#2275), at its rank as each sacrifice lands.
+  masochism: define("masochism", "Masochism", "enchantment", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-sacrifices-health",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "necromancer.soul-reaping", atZero: 1, atTwelve: 2.6 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "necromancer.masochism",
+      },
+    ],
+  }),
+  // "...whenever target foe attacks or casts a spell on a creature with
+  // less Health that foe loses 15...75 Health" (#2282): its Health against
+  // the victim's as the attack or the cast began.
+  "spoil-victor": define("spoil-victor", "Spoil Victor", "hex", {
+    profession: "necromancer",
+    attribute: "necromancer.blood-magic",
+    triggers: (["bearer-attacks", "bearer-casts-spell"] as const).map((on): StatusTrigger => ({
+      on,
+      victimHasLessHealth: true,
+      effects: [
+        {
+          kind: "lose-health",
+          amount: {
+            scaling: { attributeId: "necromancer.blood-magic", atZero: 15, atTwelve: 63 },
+          },
+          recipient: "target",
+        },
+      ],
+      target: "bearer",
+      skillId: "necromancer.spoil-victor",
+    })),
+  }),
+  // Staples (#2278). As Shame, for "a spell that targets an ally of that
+  // foe", itself included: "you steal up to 10...92 Health from that foe".
+  "mark-of-subversion": define("mark-of-subversion", "Mark of Subversion", "hex", {
+    profession: "necromancer",
+    failsNextSpell: {
+      on: "ally-targeted",
+      effects: [
+        {
+          kind: "life-steal",
+          amount: {
+            scaling: { attributeId: "necromancer.blood-magic", atZero: 10, atTwelve: 75.6 },
+          },
+        },
+      ],
+      skillId: "necromancer.mark-of-subversion",
+    },
   }),
 };

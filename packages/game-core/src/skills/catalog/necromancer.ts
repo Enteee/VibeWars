@@ -4574,4 +4574,100 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "necromancer.masochism",
+    name: "Masochism",
+    gwId: 2139,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.soul-reaping",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "For 30 seconds, you gain 1...3 Energy whenever you sacrifice
+    // Health": the status's.
+    effects: [{ kind: "apply-status", statusId: "masochism", durationSeconds: { flat: 30 } }],
+  },
+  {
+    id: "necromancer.spoil-victor",
+    name: "Spoil Victor",
+    gwId: 1066,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The PvP split (3233): "For 3...15 seconds, whenever target foe attacks
+    // or casts a spell on a creature with less Health that foe loses
+    // 15...75 Health" (#2282); the base record is 1066.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "spoil-victor",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 12.6 },
+        },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2278), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.mark-of-subversion",
+    name: "Mark of Subversion",
+    gwId: 127,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 6 seconds, the next time target foe casts a spell that targets
+    // an ally of that foe, the spell fails and you steal up to 10...92
+    // Health from that foe." The steal is the hex's own.
+    effects: [
+      { kind: "apply-status", statusId: "mark-of-subversion", durationSeconds: { flat: 6 } },
+    ],
+  },
 ];

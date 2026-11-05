@@ -59,6 +59,7 @@ function printStatuses(): void {
     const healthPips = statAtTwelve(status.healthPips);
     const armorModifier = statAtTwelve(status.armorModifier);
     const attackDurationMultiplier = statAtTwelve(status.attackDurationMultiplier);
+    const healingMultiplier = statAtTwelve(status.healingMultiplier);
     if (healthPips !== 0) {
       parts.push(`${String(healthPips)} health pips`);
     }
@@ -78,8 +79,8 @@ function printStatuses(): void {
       const { fraction, cap } = status.maxHealthLoss;
       parts.push(`max hp -${String(fraction * 100)}% (cap ${String(cap)})`);
     }
-    if (status.healingMultiplier !== 1) {
-      parts.push(`healing x${String(status.healingMultiplier)}`);
+    if (healingMultiplier !== 1) {
+      parts.push(`healing x${String(healingMultiplier)}`);
     }
     if (status.castTimeMultiplier !== 1) {
       parts.push(`cast x${String(status.castTimeMultiplier)}`);

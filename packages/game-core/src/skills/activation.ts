@@ -10,7 +10,7 @@ import {
 } from "../primary-attributes.js";
 import type { Vec2 } from "../vec2.js";
 
-import { canAffordAdrenaline, spendAdrenaline } from "./adrenaline.js";
+import { canAffordAdrenaline, losesAllAdrenaline, spendAdrenaline } from "./adrenaline.js";
 import { isCastingSpell } from "./attacking.js";
 import { resolvedBar } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
@@ -23,6 +23,7 @@ import {
   preventsEnchantments,
   preventsResurrection,
   preventsShoutsAndChants,
+  preventsSignets,
   preventsSpells,
   untargetableByFoeSpells,
   untargetableBySpells,
@@ -96,6 +97,8 @@ export type ActivationRejection =
   | "cannot-resurrect"
   // A shout or a chant while a status bars them, as Well of Silence's (#1732).
   | "cannot-shout-or-chant"
+  // A signet while a status bars them, as Ignorance's (#2290).
+  | "cannot-use-signets"
   | "invalid-target-untargetable"
   // An enchantment spell at a target that can hold none, as Well of the
   // Profane's (#1732), the caster itself included.
@@ -340,6 +343,9 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   ) {
     return reject("cannot-shout-or-chant");
   }
+  if (skill.type === "signet" && preventsSignets(caster.statuses.active)) {
+    return reject("cannot-use-signets");
+  }
   // An attack skill is a blow of its weapon (ADR-0029): checked before the
   // cost, so the player is told what is wrong rather than what it costs.
   if (
@@ -514,7 +520,7 @@ export function payCost(
   target?: Pick<Combatant, "statuses">,
 ): void {
   caster.energy -= energyCostOf(skill, caster, target);
-  if (skill.cost?.kind === "adrenaline") {
+  if (skill.cost?.kind === "adrenaline" || losesAllAdrenaline(skill)) {
     spendAdrenaline(caster, skill, key);
   }
   // After the energy, so a spell that lowers the ceiling below its own

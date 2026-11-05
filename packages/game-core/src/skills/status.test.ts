@@ -18,6 +18,7 @@ import {
   ownSkillBoost,
   scaledStatAttributes,
   type StatusId,
+  type StatusStat,
 } from "./status.js";
 import { statAtTwelve } from "./scaling.js";
 
@@ -94,6 +95,7 @@ describe("status definitions", () => {
         def.untargetableByFoeSpells ||
         def.preventsEnchantments ||
         def.preventsShoutsAndChants ||
+        def.preventsSignets ||
         def.attackDurationMultiplier !== 1 ||
         def.projectileSpeedMultiplier !== 1 ||
         def.block !== undefined ||
@@ -138,7 +140,7 @@ describe("status definitions", () => {
         def.onCriticalHit !== undefined ||
         def.enchantmentsOnBearerCostLess !== 0 ||
         def.damageReduction !== 0 ||
-        def.redirectsPhysicalDamage !== 0 ||
+        def.redirectsDamage !== undefined ||
         def.redirectsDamageToMinion !== 0 ||
         def.replacedOnDeathBy !== undefined ||
         def.damageFromSpiritAttacks !== 0 ||
@@ -146,6 +148,7 @@ describe("status definitions", () => {
         def.energyCostMultiplier !== 1 ||
         def.preventsResurrection ||
         def.preventsSpeedBoosts ||
+        def.preventsAdrenalineGain ||
         def.returnsSource !== undefined ||
         def.stepsToTarget !== undefined ||
         def.elementalDamageTakenAs !== undefined ||
@@ -158,7 +161,9 @@ describe("status definitions", () => {
         def.interruptGuard !== undefined ||
         def.damageTypeTakenMultiplier !== undefined ||
         def.damageReductionFromSourceWith !== undefined ||
-        def.bindsCreatures;
+        def.bindsCreatures ||
+        def.conditionsExpireFaster !== 0 ||
+        def.hexesExpireFaster !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -226,6 +231,7 @@ describe("status definitions", () => {
       migraine: -7,
       "conjure-nightmare": -8,
       "images-of-remorse": -2.6,
+      "illusion-of-pain": -8.6,
       wither: -4,
       "life-siphon": -3,
       "life-siphon-regen": 3,
@@ -234,6 +240,7 @@ describe("status definitions", () => {
       "putrid-bile": -3,
       "blood-renewal": 5,
       "vampiric-spirit": 9,
+      "ward-against-harm": 2.6,
     });
   });
 
@@ -251,6 +258,9 @@ describe("status definitions", () => {
       "energetic-was-lee-sa": 2,
       "blood-is-power": 5,
       "ether-prodigy": 6,
+      "ether-lord": -3,
+      "ether-lord-regeneration": 3,
+      "ether-phantom": -1,
       wither: -1,
       "obsidian-flesh": -2,
       "zealous-renewal": -1,
@@ -1275,9 +1285,9 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Tiger Stance and Berserker Stance (#2181) 33%, Tiger's Fury (#2190) 25%, Rapid Fire (#2189) 33% with a bow, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Tiger Stance and Berserker Stance (#2181) 33%, Tiger's Fury (#2190) 25%, Rapid Fire (#2189) 33% with a bow, Way of the Assassin (#2275) 5...20% with daggers, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
-    const multipliers: Partial<Record<StatusId, number>> = {
+    const multipliers: Partial<Record<StatusId, StatusStat>> = {
       faintheartedness: 1.5,
       "heart-of-fury": 0.75,
       "shadow-of-fear": 1.5,
@@ -1300,10 +1310,13 @@ describe("attack duration (ADR-0029)", () => {
       "berserker-stance": 0.67,
       "rapid-fire": 0.67,
       "tigers-fury": 0.75,
+      "way-of-the-assassin": {
+        scaling: { attributeId: "assassin.critical-strikes", atZero: 0.95, atTwelve: 0.83 },
+      },
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;
-      expect(getStatusDefinition(id).attackDurationMultiplier, id).toBe(expected);
+      expect(getStatusDefinition(id).attackDurationMultiplier, id).toStrictEqual(expected);
     }
   });
 
