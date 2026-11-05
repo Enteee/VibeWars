@@ -607,6 +607,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "chilling-winds": icon("chilling-winds"),
   // Warrior staples 5 (#2315).
   "to-the-limit": icon("to-the-limit"),
+  // Weapon gates (#2335).
+  "warriors-cunning": icon("warriors-cunning"),
+  "dwarven-battle-stance": icon("dwarven-battle-stance"),
   // Signet of Suffering (#2333).
   "signet-of-suffering": icon("signet-of-suffering"),
 };
