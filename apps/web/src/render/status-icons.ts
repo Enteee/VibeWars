@@ -591,6 +591,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "signet-of-stamina": icon("signet-of-stamina"),
   "soldiers-stance": icon("soldiers-stance"),
   "steady-stance": icon("steady-stance"),
+  // Ranger staples (#2317).
+  "choking-gas": icon("choking-gas"),
+  "dryders-defenses": icon("dryders-defenses"),
+  "bestial-fury": icon("bestial-fury"),
+  "scavengers-focus": icon("scavengers-focus"),
+  "feral-aggression": icon("feral-aggression"),
   // Warrior shouts that count (#2320).
   "i-will-avenge-you": icon("i-will-avenge-you"),
   "fear-me": icon("fear-me"),
@@ -623,6 +629,13 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "dwarven-battle-stance": icon("dwarven-battle-stance"),
   // Signet of Suffering (#2333).
   "signet-of-suffering": icon("signet-of-suffering"),
+  // Staples (#2368).
+  "foxs-promise": icon("foxs-promise"),
+  "seeping-wound": icon("seeping-wound"),
+  "shameful-fear": icon("shameful-fear"),
+  "spirit-channeling": icon("spirit-channeling"),
+  "renewing-surge": icon("renewing-surge"),
+  "mystic-corruption": icon("mystic-corruption"),
   // Smoke Powder Defense (#2362).
   "smoke-powder-defense": icon("smoke-powder-defense"),
 };

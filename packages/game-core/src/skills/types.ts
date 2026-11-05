@@ -813,7 +813,8 @@ export interface CasterGainsStatusEffect {
 export interface CompanionGainsStatusEffect {
   readonly kind: "companion-gains-status";
   readonly statusId: StatusId;
-  readonly durationSeconds: number;
+  /** At the caster's ranks (#2317): Feral Aggression's 5...20 seconds. */
+  readonly durationSeconds: Magnitude;
 }
 
 /**

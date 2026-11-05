@@ -675,6 +675,50 @@ test("the open member's attribute names are never cut, and its name field is sty
   expect(await background("input.team-member-name")).toBe(await background("input.editor-name"));
 });
 
+// Where the equipment goes is only pinned where the width is far from a breakpoint.
+for (const { width, height, equipment } of [
+  { width: 1024, height: 768, equipment: undefined },
+  { width: 1280, height: 720, equipment: "below" },
+  { width: 1366, height: 768, equipment: undefined },
+  { width: 1920, height: 1080, equipment: "beside" },
+] as const) {
+  test(`at ${String(width)}×${String(height)}, the open member is never cut off on the right (#2379)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto("./");
+    await openTeamBuilder(page);
+    await setTeamSize(page, 2);
+    await page.getByRole("button", { name: "new team" }).click();
+    await memberRows(page).first().locator(".team-row-edit").click();
+    const editor = page.locator(".team-member-editor");
+    await expect(editor).toBeVisible();
+    // The crop happens inside the scroll box, so the page never scrolls sideways.
+    const fit = await editor.evaluate((node) => {
+      const box = node.getBoundingClientRect();
+      const scroll = node.closest(".team-grid-scroll")?.getBoundingClientRect();
+      return {
+        insideBox: scroll !== undefined && box.right <= scroll.right + 0.5,
+        insideWindow: box.right <= window.innerWidth,
+        overflow: node.scrollWidth - node.clientWidth,
+      };
+    });
+    expect(fit).toEqual({ insideBox: true, insideWindow: true, overflow: 0 });
+    if (equipment === undefined) {
+      return;
+    }
+    const top = (selector: string) =>
+      editor.locator(selector).evaluate((node) => node.getBoundingClientRect().top);
+    const attributesTop = await top(".team-member-editor-column:nth-child(2)");
+    const equipmentTop = await top(".team-member-editor-equipment");
+    if (equipment === "beside") {
+      expect(equipmentTop).toBe(attributesTop);
+    } else {
+      expect(equipmentTop).toBeGreaterThan(attributesTop);
+    }
+  });
+}
+
 test("on a phone, a Team Build card's Edit sits below its members, never on them (#1786)", async ({
   page,
 }) => {
