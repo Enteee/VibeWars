@@ -73,7 +73,10 @@ export type MesmerStatusId =
   | "fevered-dreams"
   | "keystone-signet"
   // Staples (#2278).
-  | "mantra-of-recall";
+  | "mantra-of-recall"
+  // Source-targets triggers and signet lockout (#2290).
+  | "mind-wrack"
+  | "ignorance";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -867,5 +870,43 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         skillId: "mesmer.mantra-of-recall",
       },
     ],
+  }),
+  // Source-targets triggers and signet lockout (#2290). "...whenever this
+  // foe is the target of one of your non-hex Mesmer skills, that foe loses
+  // 1 Energy. If the target foe's Energy drops to 0, Mind Wrack ends and
+  // that foe takes 15...100 damage": once, as the hex goes with it.
+  "mind-wrack": define("mind-wrack", "Mind Wrack", "hex", {
+    profession: "mesmer",
+    attribute: "mesmer.domination-magic",
+    triggers: [
+      {
+        on: "source-targets-bearer",
+        usedSkill: { profession: "mesmer", notType: "hex" },
+        effects: [{ kind: "energy-loss", amount: { flat: 1 } }],
+        target: "bearer",
+        skillId: "mesmer.mind-wrack",
+      },
+      {
+        on: "bearer-energy-drops-empty",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 15, atTwelve: 83 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+          { kind: "remove-status", category: "hex", count: 1, statusId: "mind-wrack" },
+        ],
+        target: "bearer",
+        skillId: "mesmer.mind-wrack",
+      },
+    ],
+  }),
+  // "...target foe cannot use signets."
+  ignorance: define("ignorance", "Ignorance", "hex", {
+    profession: "mesmer",
+    preventsSignets: true,
   }),
 };
