@@ -2396,6 +2396,8 @@ function conditionText(
       return "If target is knocked down";
     case "target-moving":
       return "If target is moving";
+    case "target-foe":
+      return "If target is a foe";
     case "any-of": {
       const [first, ...rest] = condition.conditions.map((each) => conditionText(each, ranks));
       return [first ?? "Never", ...rest.map((text) => text.replace(/^If /, ""))].join(" or ");
@@ -2565,8 +2567,13 @@ function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>): string 
     splash.onlyUsing === undefined
       ? ""
       : ` using ${TYPE_TEXT[splash.onlyUsing].replace(/\.$/, "").toLowerCase()} skills`;
+  // Gust's "while attacking or moving" (#2288).
+  const onlyIf =
+    splash.onlyIf === undefined
+      ? ""
+      : ` ${lowerFirst(conditionText(splash.onlyIf, ranks)).replace(/^if target is /, "while ")}`;
   const reached = foesWithin(splash.radius, splash.hits);
-  const who = `${splash.includesCentre === true ? `Target and ${lowerFirst(reached)}` : reached}${splash.around === "caster" ? " around you" : ""}${bearing}${using}`;
+  const who = `${splash.includesCentre === true ? `Target and ${lowerFirst(reached)}` : reached}${splash.around === "caster" ? " around you" : ""}${splash.alsoAround === "caster" ? " and around you" : ""}${bearing}${using}${onlyIf}`;
   return splash.maxTargets === undefined || splash.hits === "party"
     ? who
     : `Up to ${String(countAt(splash.maxTargets, ranks))} ${lowerFirst(who)}`;

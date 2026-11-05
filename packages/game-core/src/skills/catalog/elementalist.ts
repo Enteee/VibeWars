@@ -4597,6 +4597,381 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Elementalist staples (#2288)                                           */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "elementalist.searing-heat",
+    name: "Searing Heat",
+    gwId: 196,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Cause Searing Heat at target foe's location. For 5 seconds, foes
+    // near this location are struck for 10...40 fire damage each second.
+    // When Searing Heat ends, foes in the area of effect are set on fire
+    // for 3 seconds": it stays where they stood as the cast ended, as Fire
+    // Storm's, and its Burning lands on whoever is near as it ends, as
+    // Spirit Rift's late strike.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 5 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 5,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_NEARBY,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.fire-magic", atZero: 10, atTwelve: 34 },
+                },
+                type: "fire",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        },
+      },
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 5.1 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 1,
+            everySeconds: 0.1,
+            delaySeconds: 5,
+            area: {
+              radius: AREA_NEARBY,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 3 } }],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.lightning-bolt",
+    name: "Lightning Bolt",
+    gwId: 1369,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // Our own tuning, as GW1 publishes no speeds: Lightning Orb's.
+    projectile: { speed: 1.5 * RANGE_SPELL },
+    // "Send out a Lightning Bolt that strikes for 5...50 lightning damage
+    // if it hits. If Lightning Bolt strikes a moving foe, that foe is
+    // struck for 5...50 additional lightning damage. This spell has 25%
+    // armor penetration."
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 41 } },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-moving" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 41 },
+            },
+            type: "lightning",
+            armorPenetration: 0.25,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.shatter-storm",
+    name: "Shatter Storm",
+    gwId: 933,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe loses all enchantments. For each enchantment removed
+    // this way, Shatter Storm is disabled for an additional 7 seconds":
+    // Withdraw Hexes's pattern (#2189).
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: "all" },
+      {
+        kind: "lengthen-recharge",
+        of: "this-skill",
+        seconds: { flat: 7 },
+        perRemoved: "enchantment",
+      },
+    ],
+  },
+  {
+    id: "elementalist.gust",
+    name: "Gust",
+    gwId: 843,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...11 seconds, both you and target ally move 33% faster. When
+    // you cast this spell, all foes adjacent to you and your target take
+    // 15...70 cold damage. Foes struck by Gust while attacking or moving
+    // are knocked down": a foe adjacent to both is struck once.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "gust",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 9.8 },
+        },
+      },
+      {
+        kind: "apply-status",
+        statusId: "gust",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 9.8 },
+        },
+        on: "caster",
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        alsoAround: "caster",
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 15, atTwelve: 59 },
+            },
+            type: "cold",
+            armorPenetration: 0,
+          },
+        ],
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        alsoAround: "caster",
+        maxTargets: undefined,
+        onlyIf: {
+          kind: "any-of",
+          conditions: [{ kind: "target-attacking" }, { kind: "target-moving" }],
+        },
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
+    ],
+  },
+  {
+    id: "elementalist.ride-the-lightning",
+    name: "Ride the Lightning",
+    gwId: 836,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 5,
+    activationSeconds: 1,
+    // The PvP record's (2807).
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-any",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You Ride the Lightning to target. All adjacent foes are Blinded for
+    // 1...5 seconds. If your target is a foe, it is struck for 10...70
+    // lightning damage. This spell has 25% armor penetration": the caster
+    // lands beside the target, so its adjacent foes are the target's.
+    effects: [
+      { kind: "shadow-step", to: "target" },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        includesCentre: true,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "blind",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 1, atTwelve: 4.2 },
+            },
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-foe" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 58 },
+            },
+            type: "lightning",
+            armorPenetration: 0.25,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.mirror-of-ice",
+    name: "Mirror of Ice",
+    gwId: 1098,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Shatter a Mirror of Ice. All foes near you and target ally take
+    // 15...70 cold damage and move 66% slower for 2...6 seconds. If you
+    // strike a foe hexed with Water Magic, Mirror of Ice recharges 50%
+    // faster": a foe near both is struck once, and the hex it lays is not
+    // the one that counts, so the recharge is read first.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        alsoAround: "caster",
+        maxTargets: undefined,
+        onlyIf: { kind: "target-has", category: "hex", attribute: "elementalist.water-magic" },
+        effects: [{ kind: "recharge-faster", fraction: 0.5 }],
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        alsoAround: "caster",
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 15, atTwelve: 59 },
+            },
+            type: "cold",
+            armorPenetration: 0,
+          },
+          {
+            kind: "apply-status",
+            statusId: "mirror-of-ice",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 2, atTwelve: 5.2 },
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 /**

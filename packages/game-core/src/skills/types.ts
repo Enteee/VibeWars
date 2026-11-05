@@ -846,10 +846,22 @@ export interface SplashEffect {
    */
   readonly onlyUsing?: SkillType;
   /**
+   * Only those for whom this holds as the splash lands, picked before
+   * `maxTargets` (#2288): Gust's "foes struck by Gust while attacking or
+   * moving are knocked down". Absent: anyone.
+   */
+  readonly onlyIf?: StateCondition;
+  /**
    * The target is reached too, as one of them (#2282): Glimmering Mark's
    * "target foe and all foes adjacent". Absent: the target is not.
    */
   readonly includesCentre?: true;
+  /**
+   * Round the caster as well as the centre, a character near both
+   * reached once (#2288): Gust's "all foes adjacent to you and your
+   * target". Absent: round the centre alone.
+   */
+  readonly alsoAround?: "caster";
   readonly effects: readonly UnconditionalEffect[];
 }
 
@@ -1542,6 +1554,11 @@ export type StateCondition =
    * `Combatant.moving`): Water Trident's "a moving foe".
    */
   | { readonly kind: "target-moving" }
+  /**
+   * The effect's target is on another team than the caster (#2288): Ride
+   * the Lightning's "if your target is a foe".
+   */
+  | { readonly kind: "target-foe" }
   /**
    * The effect's target has this status (#997): Stoning's "suffering from
    * Weakness", Searing Flames' "already on fire".

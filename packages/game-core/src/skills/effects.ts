@@ -1454,7 +1454,7 @@ function measuredFromCaster(hits: SplashEffect["hits"]): boolean {
 /**
  * Whom a splash reaches round its centre, nearest first, past its
  * `maxTargets` none; its target is one of them only if it `includesCentre`
- * (#2282). Your own spirits are within earshot of you, not of the target
+ * (#2282). With `alsoAround`, round the caster too, each one once (#2288). Your own spirits are within earshot of you, not of the target
  * (#1777); Return's adjacent foes are around its caster (#1826). The
  * resolution reads it too, for the minions a nested `take-control` takes
  * (#2092).
@@ -1469,15 +1469,20 @@ function splashTargets(
   if (target === undefined || at === undefined) {
     return { centre, reached: [] };
   }
+  const casterAt =
+    effect.alsoAround === "caster" ? context.surroundings.get(caster.id)?.position : undefined;
   const reached = [...context.surroundings.values()].filter(
     ({ combatant, position, creature }) =>
       !combatant.dead &&
       (combatant.id !== target.id || effect.includesCentre === true) &&
       splashReaches(effect.hits, caster, combatant, creature) &&
-      distance(position, at) <= effect.radius &&
+      (distance(position, at) <= effect.radius ||
+        (casterAt !== undefined && distance(position, casterAt) <= effect.radius)) &&
       (effect.onlyBearing === undefined ||
         combatant.statuses.countByCategory(effect.onlyBearing) > 0) &&
-      (effect.onlyUsing === undefined || usingSkillOf(combatant, effect.onlyUsing)),
+      (effect.onlyUsing === undefined || usingSkillOf(combatant, effect.onlyUsing)) &&
+      (effect.onlyIf === undefined ||
+        stateHolds(effect.onlyIf, caster, combatant, context.surroundings)),
   );
   const maxTargets =
     effect.maxTargets === undefined || typeof effect.maxTargets === "number"
@@ -2682,6 +2687,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":
+    case "target-foe":
     case "target-has-status":
     case "target-lacks-status":
     case "caster-more-energy":
@@ -2815,6 +2821,8 @@ export function stateHolds(
       return target.knockdownRemaining > 0;
     case "target-moving":
       return target.moving;
+    case "target-foe":
+      return target.team !== caster.team;
     case "target-has-status":
       return target.statuses.has(condition.statusId);
     case "target-lacks-status":
@@ -3179,6 +3187,7 @@ function conditionHolds(
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":
+    case "target-foe":
     case "target-has-status":
     case "target-lacks-status":
     case "caster-more-energy":
@@ -3522,6 +3531,14 @@ export function resolveSkillEffects(
       for (const inner of landed) {
         if (inner.kind === "recharge-faster") {
           rechargeFraction = Math.max(rechargeFraction, inner.fraction);
+        }
+        if (inner.kind === "splash") {
+          // Mirror of Ice's "if you strike a foe hexed with Water Magic"
+          // (#2288): once, however many it reaches.
+          const faster = inner.effects.find((each) => each.kind === "recharge-faster");
+          if (faster !== undefined && splashTargets(inner, context).reached.length > 0) {
+            rechargeFraction = Math.max(rechargeFraction, faster.fraction);
+          }
         }
         if (inner.kind === "recharge-others") {
           rechargeOthers(caster, skill.id, inner.which);
