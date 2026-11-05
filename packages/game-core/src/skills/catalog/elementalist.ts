@@ -5040,6 +5040,321 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2289): Armor of Frost, Phoenix, Incendiary Bonds, Stone      */
+  /* Daggers, Star Burst, Rust                                              */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "elementalist.armor-of-frost",
+    name: "Armor of Frost",
+    gwId: 206,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...34 seconds, you gain +40 armor against physical damage and
+    // have +1 Water Magic."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "armor-of-frost",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 29.2 },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.phoenix",
+    name: "Phoenix",
+    gwId: 193,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // Fireball's flight.
+    projectile: { speed: RANGE_SPELL },
+    // "This explosion strikes your target and nearby foes for 10...60 fire
+    // damage. If you are Overcast, allies in the blast radius are healed
+    // for 20...80 Health": splashes, not an area, so the heal lands once.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        includesCentre: true,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.fire-magic", atZero: 10, atTwelve: 50 },
+            },
+            type: "fire",
+            armorPenetration: 0,
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "allies",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "heal",
+                amount: {
+                  scaling: { attributeId: "elementalist.fire-magic", atZero: 20, atTwelve: 68 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.incendiary-bonds",
+    name: "Incendiary Bonds",
+    gwId: 179,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 5,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "After 3 seconds, target foe and all nearby foes are struck...
+    // Activates early if target foe dies": the hex's own triggers.
+    effects: [{ kind: "apply-status", statusId: "incendiary-bonds", durationSeconds: { flat: 3 } }],
+  },
+  {
+    id: "elementalist.stone-daggers",
+    name: "Stone Daggers",
+    gwId: 172,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Send out two Stone Daggers", each its own flight and dodge, at
+    // Dancing Daggers' speed.
+    projectile: { speed: 1.5 * RANGE_SPELL, shots: 2 },
+    // "Each Stone Dagger strikes target foe for 8...33 earth damage if it
+    // hits. If you are Overcast, each projectile inflicts Bleeding for
+    // 1...5 seconds."
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 28 } },
+        type: "earth",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "bleeding",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 4.2 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.star-burst",
+    name: "Star Burst",
+    gwId: 1095,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 7,
+    // "Target touched foe": the foe must be at hand.
+    touch: true,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    // "...and all foes in the area".
+    area: {
+      radius: AREA_IN_THE_AREA,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "...are struck for 7...112 fire damage and set on fire for 1...4
+    // seconds. For each foe you hit, gain 2 Energy."
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.fire-magic", atZero: 7, atTwelve: 91 } },
+        type: "fire",
+        armorPenetration: 0,
+      },
+      {
+        kind: "apply-status",
+        statusId: "burning",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 1, atTwelve: 3.4 },
+        },
+      },
+      { kind: "energy-gain", amount: { flat: 2 }, perTarget: true },
+    ],
+  },
+  {
+    id: "elementalist.rust",
+    name: "Rust",
+    gwId: 204,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Deals 10...85 cold damage to target and adjacent foes. For 5...20
+    // seconds, target foe and all adjacent foes take twice as long to
+    // activate signets. If you are Overcast, foes struck with Rust have
+    // their signets interrupted and disabled for 1...10 seconds":
+    // splashes, so the Overcast one picks only foes using a signet.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        includesCentre: true,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 70 },
+            },
+            type: "cold",
+            armorPenetration: 0,
+          },
+          {
+            kind: "apply-status",
+            statusId: "rust",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            includesCentre: true,
+            onlyUsing: "signet",
+            effects: [
+              { kind: "interrupt", only: "skill" },
+              {
+                kind: "disable-skill",
+                which: "interrupted",
+                seconds: {
+                  scaling: { attributeId: "elementalist.water-magic", atZero: 1, atTwelve: 8.2 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
   {
     id: "elementalist.iron-mist",
     name: "Iron Mist",

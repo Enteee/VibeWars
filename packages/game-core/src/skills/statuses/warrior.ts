@@ -58,7 +58,9 @@ export type WarriorStatusId =
   | "berserker-stance"
   | "bulls-charge"
   // Condition movement (#2259).
-  | "i-will-survive";
+  | "i-will-survive"
+  // Warrior staples 5 (#2315).
+  | "to-the-limit";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -530,5 +532,11 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
   "i-will-survive": define("i-will-survive", "I Will Survive!", "shout", {
     profession: "warrior",
     healthPipsPerCondition: 3,
+  }),
+  // Warrior staples 5 (#2315). "For 10...20 seconds, your maximum Health
+  // is increased by 10...60", at the shouter's Tactics: +50 at rank 12.
+  "to-the-limit": define("to-the-limit", "To the Limit!", "shout", {
+    profession: "warrior",
+    maxHealthBonus: { scaling: { attributeId: "warrior.tactics", atZero: 10, atTwelve: 50 } },
   }),
 };

@@ -73,9 +73,37 @@ export type ElementalistStatusId =
   | "ward-against-harm"
   | "iron-mist"
   | "chilling-winds"
+  // Staples (#2289).
+  | "armor-of-frost"
+  | "incendiary-bonds"
+  | "rust"
   // Elementalist staples (#2288).
   | "gust"
   | "mirror-of-ice";
+
+/** Incendiary Bonds' blast (#2289), on its bearer and the foes near it. */
+const INCENDIARY_BLAST = {
+  kind: "splash",
+  hits: "foes",
+  radius: AREA_NEARBY,
+  maxTargets: undefined,
+  includesCentre: true,
+  effects: [
+    {
+      kind: "damage",
+      amount: { scaling: { attributeId: "elementalist.fire-magic", atZero: 20, atTwelve: 68 } },
+      type: "fire",
+      armorPenetration: 0,
+    },
+    {
+      kind: "apply-status",
+      statusId: "burning",
+      durationSeconds: {
+        scaling: { attributeId: "elementalist.fire-magic", atZero: 1, atTwelve: 2.6 },
+      },
+    },
+  ],
+} as const;
 
 /** Mist Form's heal (#1951): 210% of the spell's cost, under 80% Health. */
 const MIST_FORM_HEAL = {
@@ -721,6 +749,42 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         scaling: { attributeId: "elementalist.air-magic", atZero: 1.25, atTwelve: 1.85 },
       },
     },
+  }),
+  // Staples (#2289). "...you gain +40 armor against physical damage and
+  // have +1 Water Magic": both flat.
+  "armor-of-frost": define("armor-of-frost", "Armor of Frost", "enchantment", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    conditionalArmor: [{ amount: 40, conditions: [{ kind: "vs-physical" }] }],
+    attributeDeltas: [{ scope: { attributeId: "elementalist.water-magic" }, amount: 1 }],
+  }),
+  // "After 3 seconds, target foe and all nearby foes are struck for
+  // 20...80 fire damage and are set on fire for 1...3 seconds. Activates
+  // early if target foe dies": its expiry or its bearer's death, never a
+  // strip; its caster's Fire Magic.
+  "incendiary-bonds": define("incendiary-bonds", "Incendiary Bonds", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.fire-magic",
+    triggers: [
+      {
+        on: "expires",
+        target: "bearer",
+        effects: [INCENDIARY_BLAST],
+        skillId: "elementalist.incendiary-bonds",
+      },
+      {
+        on: "bearer-dies",
+        target: "bearer",
+        effects: [INCENDIARY_BLAST],
+        skillId: "elementalist.incendiary-bonds",
+      },
+    ],
+  }),
+  // "...take twice as long to activate signets."
+  rust: define("rust", "Rust", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    ownSkillModifiers: [ownSkills({ type: "signet" }, { activationMultiplier: 2 })],
   }),
   // "For 5...11 seconds, both you and target ally move 33% faster" (#2288).
   gust: define("gust", "Gust", "enchantment", {

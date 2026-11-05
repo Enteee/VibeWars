@@ -1547,12 +1547,6 @@ function destroyCreature(
   events.push({ kind: "creature-destroyed", targetId: combatant.id });
 }
 
-/**
- * `amount` from `dealer`, cut by each status on `target` that cuts damage
- * from a foe carrying a hex of its attribute (#1951), Mist Form's 33%
- * against a Water Magic hex, or suffering a given status (#2222), "They're
- * on Fire!"'s against Burning. Rounded once, as `mitigate` rounds.
- */
 /** `HealEffect.divineFavorBonus` (#2311): the caster's bonus for `skillId` on `healed`. */
 function favorBonus(
   effect: HealEffect,
@@ -1625,6 +1619,12 @@ function dealtDamage(amount: number, dealer: Combatant | undefined): number {
   return multiplier === 1 ? amount : Math.round(amount * multiplier);
 }
 
+/**
+ * `amount` from `dealer`, cut by each status on `target` that cuts damage
+ * from a foe carrying a hex of its attribute (#1951), Mist Form's 33%
+ * against a Water Magic hex, or suffering a given status (#2222), "They're
+ * on Fire!"'s against Burning. Rounded once, as `mitigate` rounds.
+ */
 function hexedSourceDamage(
   target: Combatant,
   amount: number,
@@ -2523,7 +2523,10 @@ export function applyEffect(
       const { centre, reached } = splashTargets(effect, context);
       for (const combatant of reached) {
         for (const inner of effect.effects) {
-          events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, centre));
+          // Its own events so far count as earlier (#2289): Rust's disable
+          // reads the interrupt beside it.
+          const seen = [...earlier, ...events];
+          events.push(...applyEffect(inner, { ...context, target: combatant }, seen, centre));
         }
       }
       return events;
