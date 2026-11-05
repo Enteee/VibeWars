@@ -42,11 +42,11 @@ const glyphs = {
       hammerHead() + `<ellipse cx="17.500" cy="4" rx="4.500" ry="1.800" ${stroke(C.ink, 1.8)}/>`,
   },
   "axe-crack": {
-    means: "Critical Chop: a downward blade wedge over a cracked line: the chop that splits.",
+    means: "Critical Chop: the house axe over a cracked line: the chop that splits.",
     draw: () =>
-      inkLine("M12 2V8", 2.4) +
-      inkFill("M4 8H20L12 16Z") +
-      inkLine("M12 16L10 19L13.500 20.500L11.500 23", 1.8),
+      inkLine("M5 15L14 4", 2.4) +
+      inkFill("M10 1.500C15 0.500 21 2.500 20.500 6C19 9 16 9.500 14.500 7Z") +
+      inkLine("M12 15L14 18L11 19.500L13 22.500", 1.8),
   },
 };
 
