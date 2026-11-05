@@ -298,6 +298,7 @@ describe("in flight, and on its caster (#1761)", () => {
         profession,
         chainRoles: undefined,
         weapon: undefined,
+        targetsFoe: false,
       },
       energyBase: undefined,
       energyDiscount: 0,
@@ -310,6 +311,7 @@ describe("in flight, and on its caster (#1761)", () => {
       durationMultiplier: 2,
       healMultiplier: 1,
       notEasilyInterrupted: false,
+      overcastPerUse: 0,
       uses: undefined,
     };
     return withStatusDefinitions({ "blessed-aura": { ownSkillModifiers: [doubles] } }, () => {

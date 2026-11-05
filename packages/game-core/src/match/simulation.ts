@@ -141,7 +141,12 @@ import {
   type StatusDefinition,
   type StatusId,
 } from "../skills/status.js";
-import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
+import {
+  addOvercast,
+  effectiveMaxEnergy,
+  energyFloor,
+  recoverOvercast,
+} from "../skills/overcast.js";
 import { resolveMagnitude, resolveMagnitudeAtRanks, statAt } from "../skills/scaling.js";
 import { nearestSpiritWithin, resolveTargets, spiritsWithin } from "../skills/targeting.js";
 import {
@@ -997,6 +1002,8 @@ export class MatchSimulation {
    * (#1955), cleared once the tick's last drain is done.
    */
   readonly #spentStatuses = new Set<string>();
+  /** Who a status that spares the death penalty killed as it ended (#2311), until its death is recorded. */
+  readonly #sparedDeaths = new Set<string>();
   /**
    * Every team anyone was added to (#846): one whose members all left is
    * still in the standing, wiped, rather than gone.
@@ -2967,6 +2974,8 @@ export class MatchSimulation {
       key,
       castTargetId === undefined ? undefined : this.#participants.get(castTargetId)?.combatant,
     );
+    // Iron Mist's Overcast (#2311), as the use begins.
+    addOvercast(record.combatant, own.overcast);
     const glyphs = this.#useGlyph(record, skill);
     this.#logSpent(record, skill, record.combatant.statuses.useOwnSkillModifiers(skill));
     // Heket's Rampage (#1869) ends before the attack skill is timed.
@@ -4615,6 +4624,7 @@ export class MatchSimulation {
         }
         this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
+        this.#dieWithStatus(record, change);
         this.#returnSource(change);
         this.#stepToTarget(change);
         this.#endEverywhere(record, change);
@@ -4672,6 +4682,7 @@ export class MatchSimulation {
         }
         this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
+        this.#dieWithStatus(record, change);
         this.#returnSource(change);
         this.#stepToTarget(change);
         this.#endEverywhere(record, change);
@@ -4706,12 +4717,48 @@ export class MatchSimulation {
           }
           this.#loseRaisedMaxima(record, change);
           this.#endForm(record, change);
+          this.#dieWithStatus(record, change);
           this.#returnSource(change);
           this.#stepToTarget(change);
           this.#endEverywhere(record, change);
         }
       }
     }
+  }
+
+  /**
+   * A status that kills its bearer as it ends did (#2311), unless its
+   * bearer's death ended it: Vengeance's ally dies, as a death, sparing the
+   * death penalty if the status does.
+   */
+  #dieWithStatus(record: ParticipantRecord, change: StatusChange): void {
+    const { combatant } = record;
+    if (change.kind !== "ended" || change.death || combatant.dead) {
+      return;
+    }
+    const definition = getStatusDefinition(change.id);
+    if (!definition.killsBearerOnEnd) {
+      return;
+    }
+    if (definition.noDeathPenalty) {
+      this.#sparedDeaths.add(combatant.id);
+    }
+    combatant.health = 0;
+    combatant.dead = true;
+    const events: CombatEvent[] = [{ kind: "death", targetId: combatant.id }];
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: change.sourceId,
+      skillId: undefined,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
   }
 
   /**
@@ -6470,6 +6517,10 @@ export class MatchSimulation {
           },
         );
         this.#riseMasterless(victim, replacedOnDeath);
+        // Vengeance's (#2311), read before death ends it.
+        const spared =
+          this.#sparedDeaths.delete(victim.combatant.id) ||
+          victim.combatant.statuses.active.some(({ id }) => getStatusDefinition(id).noDeathPenalty);
         victim.combatant.statuses.endAll();
         victim.armedAttack = undefined;
         this.#clearChainMarks(victim);
@@ -6489,7 +6540,7 @@ export class MatchSimulation {
           if (victim.creature.onDeath === "vanish") {
             this.#creatureFell(victim);
             this.#replaceOnDeath(victim, replacedOnDeath);
-          } else if (victim.creature.onDeath === "lie") {
+          } else if (victim.creature.onDeath === "lie" && !spared) {
             this.#deathPenalty(victim);
           }
           if (victim.creature.kind !== "spirit") {
@@ -6499,7 +6550,9 @@ export class MatchSimulation {
           continue;
         }
         victim.respawnInSeconds = this.#respawnSeconds(victim);
-        this.#deathPenalty(victim);
+        if (!spared) {
+          this.#deathPenalty(victim);
+        }
         this.#reapSoul(victim);
         this.recordDeath(victim.combatant.team);
       }

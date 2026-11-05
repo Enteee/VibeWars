@@ -205,6 +205,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   healthPipsPerCondition: true,
   criticalChanceBonus: true,
   attackDamageDelta: true,
+  damageDealtMultiplier: true,
 };
 
 /** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
@@ -262,11 +263,12 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
     }
   }
   // Reversal of Damage's and Mark of Protection's caps are their caster's (#2187),
-  // and Ward Against Harm's elemental armor (#2278).
+  // Ward Against Harm's elemental armor (#2278) and Chilling Winds' lengthening (#2311).
   for (const stat of [
     definition.reflectsNextDamage?.cap,
     definition.redirectsDamage?.reduction,
     definition.damageToHealing?.cap,
+    definition.nextIncomingHexDurationMultiplier?.multiplier,
     ...definition.conditionalArmor.map(({ amount }) => amount),
   ]) {
     if (stat !== undefined && typeof stat !== "number") {
@@ -478,6 +480,18 @@ export interface StatusDefinition {
    * attack skill's bonus damage is not scaled.
    */
   readonly weaponDamageMultiplier: number;
+  /**
+   * Multiplier on every damage the bearer deals (#2311), skill or weapon,
+   * after its target's mitigation: Vengeance's 1.25. 1: none.
+   */
+  readonly damageDealtMultiplier: StatusStat;
+  /**
+   * The bearer dies when it ends, for any reason but its bearer's death
+   * (#2311): Vengeance's "when Vengeance ends, that ally dies".
+   */
+  readonly killsBearerOnEnd: boolean;
+  /** A death while the bearer holds it pays no death penalty (#2311), its end-death too. */
+  readonly noDeathPenalty: boolean;
   /**
    * Damage added to each physical hit the bearer takes (#1064):
    * Winnowing's 4. After the attacker's side and before armor, fixed
@@ -1203,6 +1217,13 @@ export interface StatusDefinition {
    */
   readonly incomingHexCastTimeMultiplier: number;
   /**
+   * The next hex of `attribute` that lands on the bearer lasts `multiplier`
+   * times as long, by its source's rank (#2311), and this is spent:
+   * Chilling Winds' "the next Water Magic hex ... lasts 25...100% longer".
+   * `undefined`: none.
+   */
+  readonly nextIncomingHexDurationMultiplier: NextIncomingHexDuration | undefined;
+  /**
    * Multiplier on how long an ally's spell takes to cast on the bearer
    * (#1955): "Help!"'s 0.5. Not the bearer's own spell, nor a foe's. Read
    * once, as the cast begins.
@@ -1559,6 +1580,13 @@ export interface StatusPulse {
 /** Within a hair, as a swing is: twenty additions of 0.05 fall just short of 1. */
 const PULSE_EPSILON = 1e-6;
 
+/** `StatusDefinition.nextIncomingHexDurationMultiplier` (#2311). */
+export interface NextIncomingHexDuration {
+  /** The hex's `StatusDefinition.attribute`. */
+  readonly attributeId: string;
+  readonly multiplier: StatusStat;
+}
+
 /**
  * `StatusDefinition.reflectsAttackDamage` (#1754). Each foe's attack that
  * hits the bearer costs that attacker `min(share × damage the bearer
@@ -1610,6 +1638,8 @@ export interface OwnSkillFilter {
   readonly chainRoles: readonly ChainRole[] | undefined;
   /** Attack skills of this weapon (#2189), as Expert Focus's "your bow attack skills". */
   readonly weapon: AttackWeaponClass | undefined;
+  /** Only skills that target a foe (#2311), as Iron Mist's "Air Magic spells that target a foe". */
+  readonly targetsFoe: boolean;
 }
 
 /** `StatusDefinition.ownSkillModifiers` (#1761). */
@@ -1650,6 +1680,8 @@ export interface OwnSkillModifier {
   readonly healMultiplier: number;
   /** Its cast is not easily interrupted (#1966), as Trapper's Focus's traps. */
   readonly notEasilyInterrupted: boolean;
+  /** Overcast its user takes as each use begins (#2311), as Iron Mist's 2. 0: none. */
+  readonly overcastPerUse: number;
   /** Skills it answers before the status ends; `undefined`: as long as the status lasts. */
   readonly uses: number | undefined;
 }
@@ -1673,6 +1705,8 @@ export interface OwnSkillBoost {
   readonly healMultiplier: number;
   /** Any of them says so. */
   readonly notEasilyInterrupted: boolean;
+  /** Every one's, summed. */
+  readonly overcast: number;
 }
 
 /** A use no `OwnSkillModifier` touched. */
@@ -1688,6 +1722,7 @@ export const NO_OWN_SKILL_BOOST: OwnSkillBoost = {
   durationMultiplier: 1,
   healMultiplier: 1,
   notEasilyInterrupted: false,
+  overcast: 0,
 };
 
 /** Whether `skill` is one `filter` names (#1761). */
@@ -1701,7 +1736,8 @@ export function ownSkillAnswers(filter: OwnSkillFilter, skill: Skill): boolean {
     (filter.profession === undefined || skill.profession === filter.profession) &&
     (filter.chainRoles === undefined ||
       (skill.attack?.chain !== undefined && filter.chainRoles.includes(skill.attack.chain.role))) &&
-    (filter.weapon === undefined || skill.attack?.weapon === filter.weapon)
+    (filter.weapon === undefined || skill.attack?.weapon === filter.weapon) &&
+    (!filter.targetsFoe || skill.target === "single-enemy")
   );
 }
 
@@ -1738,6 +1774,7 @@ export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): Ow
       durationMultiplier: boost.durationMultiplier * statAt(modifier.durationMultiplier, ranks),
       healMultiplier: boost.healMultiplier * modifier.healMultiplier,
       notEasilyInterrupted: boost.notEasilyInterrupted || modifier.notEasilyInterrupted,
+      overcast: boost.overcast + modifier.overcastPerUse,
     }),
     { ...NO_OWN_SKILL_BOOST, energyFloor: 0 },
   );
@@ -2393,6 +2430,8 @@ export interface ActiveStatus {
   reflectionsLeft: number | undefined;
   /** Foes' touch skills still to fail before it ends (`failsFoeTouchSkills`); `undefined`: none. */
   touchFailsLeft: number | undefined;
+  /** Whether `nextIncomingHexDurationMultiplier` is still to lengthen a hex (#2311). */
+  hexLengtheningLeft: boolean;
   /**
    * How many times over its `armorModifier` counts (#2189): Convert Hexes'
    * +10 for each Necromancer hex removed (`ApplyStatusEffect.stacksPerRemovedOfProfession`).
@@ -3053,6 +3092,7 @@ export class StatusSet {
       triggersLeft: definition.endsAfterTriggers,
       reflectionsLeft: definition.reflectsAttackDamage?.times,
       touchFailsLeft: definition.failsFoeTouchSkills,
+      hexLengtheningLeft: definition.nextIncomingHexDurationMultiplier !== undefined,
       stacks: 1,
       sourceId,
       sourceSkillId,
@@ -3126,6 +3166,7 @@ export class StatusSet {
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       touchFailsLeft: undefined,
+      hexLengtheningLeft: false,
       stacks: 1,
       sourceId,
       sourceSkillId: undefined,
@@ -3180,6 +3221,7 @@ export class StatusSet {
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       touchFailsLeft: undefined,
+      hexLengtheningLeft: false,
       stacks: 1,
       sourceId,
       sourceSkillId,
@@ -3223,6 +3265,7 @@ export class StatusSet {
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       touchFailsLeft: undefined,
+      hexLengtheningLeft: false,
       stacks: 1,
       sourceId,
       sourceSkillId: undefined,
@@ -3329,6 +3372,28 @@ export class StatusSet {
     }
     this.#end([id]);
     return true;
+  }
+
+  /**
+   * A hex of `attributeId` is landing on the bearer (#2311): what the
+   * newest status still lengthening one multiplies its duration by, at
+   * that status's ranks, spending it. 1 with none: nothing is spent.
+   */
+  public lengthenIncomingHex(attributeId: string | undefined): number {
+    const status = this.active.findLast(
+      ({ id, hexLengtheningLeft }) =>
+        hexLengtheningLeft &&
+        getStatusDefinition(id).nextIncomingHexDurationMultiplier?.attributeId === attributeId,
+    );
+    const lengthening =
+      status === undefined
+        ? undefined
+        : getStatusDefinition(status.id).nextIncomingHexDurationMultiplier;
+    if (status === undefined || lengthening === undefined) {
+      return 1;
+    }
+    status.hexLengtheningLeft = false;
+    return statAt(lengthening.multiplier, status.ranks);
   }
 
   /** Gaining `definition`, end every enchantment on the bearer if it holds none (#1732). */
@@ -4261,6 +4326,8 @@ export interface StatusModifiers {
   /** Every status's, multiplied, and floored at `HEALING_MULTIPLIER_FLOOR`. */
   readonly healingMultiplier: number;
   readonly weaponDamageMultiplier: number;
+  /** Every status's, multiplied (#2311). */
+  readonly damageDealtMultiplier: number;
   /** Every status's, summed (#1064). */
   readonly physicalDamageTakenBonus: number;
   /** Every status's `attributeDeltas`, in `active` order (#1941). */
@@ -4416,6 +4483,7 @@ export function aggregateModifiers(
   let minionDamageBonus = 0;
   const healingMultipliers: number[] = [];
   let weaponDamageMultiplier = 1;
+  let damageDealtMultiplier = 1;
   let physicalDamageTakenBonus = 0;
   const attributeDeltas: AttributeDelta[] = [];
   const attributeSets: AttributeSet[] = [];
@@ -4503,6 +4571,7 @@ export function aggregateModifiers(
     minionDamageBonus += def.minionDamageBonus;
     healingMultipliers.push(statAt(def.healingMultiplier, ranks));
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
+    damageDealtMultiplier *= statAt(def.damageDealtMultiplier, ranks);
     physicalDamageTakenBonus += Math.round(statAt(def.physicalDamageTakenBonus, ranks));
     for (const delta of def.attributeDeltas) {
       attributeDeltas.push(delta);
@@ -4587,6 +4656,7 @@ export function aggregateModifiers(
     minionDamageBonus,
     healingMultiplier: combinedHealingMultiplier(healingMultipliers),
     weaponDamageMultiplier,
+    damageDealtMultiplier,
     physicalDamageTakenBonus,
     attributeDeltas,
     attributeSets,

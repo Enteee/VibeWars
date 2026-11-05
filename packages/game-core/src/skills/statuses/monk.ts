@@ -63,7 +63,8 @@ export type MonkStatusId =
   | "life-bond"
   | "life-attunement"
   | "aura-of-faith"
-  | "peace-and-harmony";
+  | "peace-and-harmony"
+  | "vengeance";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -743,5 +744,14 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     profession: "monk",
     conditionsExpireFaster: 0.9,
     hexesExpireFaster: 0.9,
+  }),
+  // "For 30 seconds, that party member deals 25% more damage. When this
+  // enchantment ends, target party member dies. Deaths while under the
+  // effects of this enchantment do not incur a death penalty" (#2311).
+  vengeance: define("vengeance", "Vengeance", "enchantment", {
+    profession: "monk",
+    damageDealtMultiplier: 1.25,
+    killsBearerOnEnd: true,
+    noDeathPenalty: true,
   }),
 };

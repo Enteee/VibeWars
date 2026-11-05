@@ -2,7 +2,7 @@ import { AREA_ADJACENT, AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
 import type { DamageType } from "../../equipment/types.js";
 import type { StatusDefinition } from "../status.js";
 import { KNOCKDOWN_SECONDS, type PerCount } from "../types.js";
-import { define } from "./define.js";
+import { define, ownSkills } from "./define.js";
 
 export type ElementalistStatusId =
   // PvP forms (#1951).
@@ -70,7 +70,9 @@ export type ElementalistStatusId =
   | "glimmering-mark"
   // Staples (#2278).
   | "lightning-surge"
-  | "ward-against-harm";
+  | "ward-against-harm"
+  | "iron-mist"
+  | "chilling-winds";
 
 /** Mist Form's heal (#1951): 210% of the spell's cost, under 80% Health. */
 const MIST_FORM_HEAL = {
@@ -692,6 +694,30 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         conditions: [{ kind: "vs-elemental" }],
       },
     ],
+  }),
+  // "You have +15 armor. Your Air Magic spells that target a foe activate
+  // and recharge 33% faster, but you are Overcast by 2 points" (#2311).
+  "iron-mist": define("iron-mist", "Iron Mist", "enchantment", {
+    profession: "elementalist",
+    armorModifier: 15,
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "spell", attributeId: "elementalist.air-magic", targetsFoe: true },
+        { activationMultiplier: 0.67, rechargeFaster: 0.33, overcastPerUse: 2 },
+      ),
+    ],
+  }),
+  // "For 10 seconds, the next Water Magic hex targeting a hexed foe lasts
+  // 25...100% longer" (#2311), by its caster's Air Magic.
+  "chilling-winds": define("chilling-winds", "Chilling Winds", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.air-magic",
+    nextIncomingHexDurationMultiplier: {
+      attributeId: "elementalist.water-magic",
+      multiplier: {
+        scaling: { attributeId: "elementalist.air-magic", atZero: 1.25, atTwelve: 1.85 },
+      },
+    },
   }),
 };
 

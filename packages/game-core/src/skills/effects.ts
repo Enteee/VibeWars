@@ -86,6 +86,7 @@ import {
   type StateCondition,
   type Surroundings,
   type SummonEffect,
+  type TransferConditionsEffect,
   type CreateGroundEffect,
   type UnconditionalEffect,
 } from "./types.js";
@@ -419,8 +420,13 @@ function landDamage(
     return;
   }
   // Mist Form's (#1951) and Intimidating Aura's (#2207), after every
-  // mitigation: what a hexed or a weaker foe deals.
-  const cut = weakerSourceDamage(target, hexedSourceDamage(target, amount, dealer), dealer);
+  // mitigation: what a hexed or a weaker foe deals. Vengeance's 25% more
+  // (#2311) is the dealer's, before them.
+  const cut = weakerSourceDamage(
+    target,
+    hexedSourceDamage(target, dealtDamage(amount, dealer), dealer),
+    dealer,
+  );
   if (
     cut <= 0 ||
     reverse(target, cut, events) ||
@@ -1542,6 +1548,78 @@ function destroyCreature(
  * against a Water Magic hex, or suffering a given status (#2222), "They're
  * on Fire!"'s against Burning. Rounded once, as `mitigate` rounds.
  */
+/** `HealEffect.divineFavorBonus` (#2311): the caster's bonus for `skillId` on `healed`. */
+function favorBonus(
+  effect: HealEffect,
+  caster: Combatant,
+  healed: Combatant,
+  skillId: string | undefined,
+): number {
+  const skill = skillId === undefined ? undefined : getSkill(skillId);
+  if (effect.divineFavorBonus !== true || skill === undefined) {
+    return 0;
+  }
+  return divineFavorBonusHeal(
+    rankOf(caster, DIVINE_FAVOR_ATTRIBUTE),
+    skill,
+    healed.team === caster.team,
+  );
+}
+
+/**
+ * Hypochondria's gather (#2311): every living foe of the caster within
+ * `radius` of the target, the target aside, nearest first, gives up
+ * `effect.count` of its conditions, newest first, each landing on the
+ * target with the time it had left as the caster's.
+ */
+function gatherConditions(
+  effect: TransferConditionsEffect,
+  radius: number,
+  context: SkillContext,
+  events: CombatEvent[],
+): void {
+  const { caster, target } = context;
+  const at = target === undefined ? undefined : context.surroundings.get(target.id)?.position;
+  if (target === undefined || at === undefined) {
+    return;
+  }
+  const givers = nearestFirst(
+    [...context.surroundings.values()].filter(
+      ({ combatant, position }) =>
+        !combatant.dead &&
+        combatant.id !== target.id &&
+        combatant.team !== caster.team &&
+        distance(position, at) <= radius,
+    ),
+    at,
+  );
+  const count = resolveMagnitude(effect.count, context.ranksFrom ?? caster);
+  for (const giver of givers) {
+    for (const { id, remainingSeconds, ranks } of giver.statuses.takeNewest("condition", count)) {
+      events.push({ kind: "status-removed", targetId: giver.id, statusId: id });
+      landOnTaker(
+        target,
+        id,
+        remainingSeconds * effect.durationMultiplier,
+        caster.id,
+        ranks,
+        events,
+        context.surroundings,
+        null,
+      );
+    }
+  }
+}
+
+/** `amount` times what `dealer`'s statuses multiply its damage by (#2311), rounded. */
+function dealtDamage(amount: number, dealer: Combatant | undefined): number {
+  if (dealer === undefined) {
+    return amount;
+  }
+  const multiplier = aggregateModifiers(dealer.statuses.active).damageDealtMultiplier;
+  return multiplier === 1 ? amount : Math.round(amount * multiplier);
+}
+
 function hexedSourceDamage(
   target: Combatant,
   amount: number,
@@ -1806,7 +1884,7 @@ export function applyEffect(
           healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
           lostBy,
           earlier,
-        ),
+        ) + favorBonus(effect, caster, healed, context.skillId),
         context.own,
       );
       // Soul Bind's "whenever target foe is healed by a skill" (#1913),
@@ -2046,6 +2124,10 @@ export function applyEffect(
         base *
           (context.own?.durationMultiplier ?? 1) *
           inflictedScale(effect.statusId, bearer, context) *
+          // Chilling Winds' (#2311): the next hex of its attribute on the bearer.
+          (getStatusDefinition(effect.statusId).category === "hex"
+            ? bearer.statuses.lengthenIncomingHex(getStatusDefinition(effect.statusId).attribute)
+            : 1) *
           // Of Enchanting's (#2011): an enchantment its wielder casts lasts longer.
           (getStatusDefinition(effect.statusId).category === "enchantment"
             ? caster.equipment.spellMods.enchantmentDurationScale
@@ -2076,6 +2158,10 @@ export function applyEffect(
 
     case "transfer-conditions": {
       if (target === undefined || target.dead) {
+        return events;
+      }
+      if (typeof effect.from === "object") {
+        gatherConditions(effect, effect.from.foesWithin, context, events);
         return events;
       }
       const [giver, taker] = effect.from === "caster" ? [caster, target] : [target, caster];

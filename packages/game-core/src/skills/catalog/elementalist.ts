@@ -4665,6 +4665,84 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "elementalist.iron-mist",
+    name: "Iron Mist",
+    gwId: 216,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8...15 seconds, you have +15 armor..." (#2311).
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "iron-mist",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 13.6 },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.chilling-winds",
+    name: "Chilling Winds",
+    gwId: 1368,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all adjacent foes are struck for 30...60 cold damage.
+    // For 10 seconds, the next Water Magic hex targeting a hexed foe lasts
+    // 25...100% longer" (#2311).
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 30, atTwelve: 54 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "chilling-winds", durationSeconds: { flat: 10 } },
+    ],
+  },
 ];
 
 /**
