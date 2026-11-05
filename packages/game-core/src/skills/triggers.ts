@@ -87,6 +87,11 @@ export interface TriggerContext {
    * Absent on every other event, and for a skill with no target.
    */
   readonly aimedAt?: AimedAt;
+  /**
+   * Whole seconds the ending status was on, on its end triggers (#2321):
+   * what `held-seconds` counts. Absent on every other event.
+   */
+  readonly heldSeconds?: number;
 }
 
 /** `TriggerContext.aimedAt` (#2282). */
@@ -344,7 +349,10 @@ export function fireEndTriggers(
         (trigger.on === "ends-early" && !change.expired),
     )
     .flatMap((trigger) =>
-      fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, context),
+      fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, {
+        ...context,
+        heldSeconds: change.heldSeconds,
+      }),
     );
 }
 
@@ -524,7 +532,7 @@ function fire(
   bearer: Combatant,
   otherId: string | undefined,
   spread: ((effect: SpreadGainedConditionEffect, caster: Combatant) => CombatEvent[]) | undefined,
-  { sourceOf, rng, rules, surroundings, usedSkill }: TriggerContext,
+  { sourceOf, rng, rules, surroundings, usedSkill, heldSeconds }: TriggerContext,
 ): FiredTrigger[] {
   const source = sourceOf(sourceId);
   if (source === undefined) {
@@ -548,6 +556,7 @@ function fire(
         usedSkill,
         firingStatusId: statusId,
         profession: getStatusDefinition(statusId).profession,
+        heldSeconds,
       }),
     );
     pending = [];

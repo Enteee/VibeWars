@@ -97,6 +97,9 @@ describe("status definitions", () => {
         def.preventsShoutsAndChants ||
         def.preventsSignets ||
         def.attackDurationMultiplier !== 1 ||
+        def.conditionDurationMultiplier !== 1 ||
+        def.upkeepMultiplier !== 1 ||
+        def.overcastSurcharge !== 0 ||
         def.projectileSpeedMultiplier !== 1 ||
         def.block !== undefined ||
         def.projectsAura !== undefined ||
@@ -687,6 +690,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "expiry",
         expired: true,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -696,6 +700,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "removed",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -705,6 +710,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "by-category",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -714,6 +720,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "attacked",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -723,6 +730,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "spells",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -732,6 +740,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "attacks",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -741,6 +750,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "knockdown",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -767,6 +777,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "a",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -776,6 +787,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "a",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -858,6 +870,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "a",
         expired: false,
         death: true,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -867,6 +880,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "b",
         expired: false,
         death: true,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -876,6 +890,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "c",
         expired: false,
         death: true,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -885,6 +900,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "d",
         expired: false,
         death: true,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -1124,6 +1140,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "b",
         expired: false,
         death: true,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },

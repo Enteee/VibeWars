@@ -5311,4 +5311,64 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2321), each scaled number by its rank                       */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.rising-bile",
+    name: "Rising Bile",
+    gwId: 935,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20 seconds, this hex does nothing. When Rising Bile ends, that
+    // foe and all foes in the area take 1...6 damage for each second Rising
+    // Bile was in effect." The burst is the hex's own.
+    effects: [{ kind: "apply-status", statusId: "rising-bile", durationSeconds: { flat: 20 } }],
+  },
+  {
+    id: "necromancer.grenths-balance",
+    name: "Grenth's Balance",
+    gwId: 86,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe has more Health than you, you gain half the difference
+    // (up to your maximum Health), and that foe loses an equal amount. If
+    // this foe has less Health than you, you lose half the difference, and
+    // that foe gains an equal amount."
+    effects: [{ kind: "balance-health" }],
+  },
 ];

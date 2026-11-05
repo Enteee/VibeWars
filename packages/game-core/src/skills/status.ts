@@ -197,6 +197,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   maxHealthBonus: true,
   physicalDamageTakenBonus: true,
   attackDurationMultiplier: true,
+  conditionDurationMultiplier: true,
   damageTakenMultiplier: true,
   healingMultiplier: true,
   adrenalineGainFaster: true,
@@ -623,6 +624,38 @@ export interface StatusDefinition {
    * 33% faster while wielding a bow". `undefined`: whatever it wields.
    */
   readonly attackDurationMultiplierWeapon: AttackWeaponClass | undefined;
+  /**
+   * Multiplier on how long a condition the bearer applies lasts (#2321),
+   * by its source's rank, as Archer's Signet's "150% longer" is 2.5. Only
+   * a condition an `apply-status` puts on; one transferred or spread keeps
+   * its own. 1: none.
+   */
+  readonly conditionDurationMultiplier: StatusStat;
+  /**
+   * `conditionDurationMultiplier` holds only while the bearer's main hand
+   * is this weapon as the condition lands (#2321): Archer's Signet's
+   * "while wielding a bow". `undefined`: whatever it wields.
+   */
+  readonly conditionDurationMultiplierWeapon: AttackWeaponClass | undefined;
+  /**
+   * Upkeep pips each enchantment the bearer maintains costs (#2321):
+   * Nature's Renewal's "maintained enchantments cost twice as much". The
+   * highest on the bearer counts; 1: as any.
+   */
+  readonly upkeepMultiplier: number;
+  /**
+   * More Overcast a spell with Overcast of its own causes the bearer as it
+   * finishes (#2321): Equinox's +10. Its own lands as it starts; an
+   * interrupted or cancelled spell takes none. The highest on the bearer
+   * counts; 0: none.
+   */
+  readonly overcastSurcharge: number;
+  /**
+   * A recast while it holds changes nothing (#2321): neither its duration
+   * nor its source nor its ranks. Rising Bile ends 20 s after the first
+   * cast, however often it is recast.
+   */
+  readonly ignoresReapplication: boolean;
   /**
    * Multiplier on how fast the bearer's shots fly (#1742): Read the
    * Wind's "your arrows move twice as fast" is 2. Read as each shot is
@@ -2142,6 +2175,8 @@ export type StatusChange =
       readonly expired: boolean;
       /** Ended by its bearer's death (#1762), `endAll`. */
       readonly death: boolean;
+      /** Whole seconds it was on (#2321), `heldSecondsOf`: Rising Bile's count. */
+      readonly heldSeconds: number;
       /** Where its source returns to (`returnsSource`, #1826); `null` for no return. */
       readonly returnPoint: Vec2 | null;
       /** Whom its source steps to (`stepsToTarget`, #1930); `null` for no step. */
@@ -2616,6 +2651,19 @@ function spentKey(id: StatusId, sourceId: string): string {
 }
 
 /**
+ * Whole seconds `status` has been on (#2321); a projected one by its own
+ * clock (#2275). A maintained one, which runs none, counts 0.
+ */
+function heldSecondsOf(status: ActiveStatus): number {
+  if (status.projected !== null) {
+    return Math.floor(status.projected.ageSeconds);
+  }
+  return Number.isFinite(status.durationSeconds)
+    ? Math.floor(status.durationSeconds - status.remainingSeconds)
+    : 0;
+}
+
+/**
  * All active statuses on one combatant, plus the lifecycle rules that
  * govern them.
  */
@@ -2688,6 +2736,7 @@ export class StatusSet {
           sourceId: status.sourceId,
           expired,
           death,
+          heldSeconds: heldSecondsOf(status),
           returnPoint: status.returnPoint,
           stepTargetId: status.stepTargetId,
         });
@@ -3103,7 +3152,8 @@ export class StatusSet {
    * for a duration of nothing. What a status does once, as it lands
    * (deep wound's health), hangs on this. A status newly on it ends every
    * one that ends when its bearer gains that category (#919). A hex a
-   * status breaks never lands (#1403): `false`, and nothing else changes.
+   * status breaks never lands (#1403): `false`, and nothing else changes;
+   * nor does one that `ignoresReapplication` already on the bearer (#2321).
    *
    * `returnPoint` is where its source stands as it casts, for a
    * `returnsSource` status (#1826): only the instance this call puts up
@@ -3123,6 +3173,9 @@ export class StatusSet {
     }
     const wasActive = this.#statuses.has(id);
     const definition = getStatusDefinition(id);
+    if (wasActive && definition.ignoresReapplication) {
+      return false;
+    }
     const durationSeconds =
       definition.category === "chant" || definition.category === "shout"
         ? appliedSeconds * this.#chantShoutDurationMultiplier()
@@ -3531,11 +3584,12 @@ export class StatusSet {
    * recording the end: the simulation fires their drop itself, where the
    * bearer stands now. `undefined` when it holds none.
    */
-  public dropItem(): { readonly id: StatusId; readonly sourceId: string } | undefined {
+  public dropItem():
+    { readonly id: StatusId; readonly sourceId: string; readonly heldSeconds: number } | undefined {
     for (const status of this.#statuses.values()) {
       if (getStatusDefinition(status.id).category === "item") {
         this.#statuses.delete(status.id);
-        return { id: status.id, sourceId: status.sourceId };
+        return { id: status.id, sourceId: status.sourceId, heldSeconds: heldSecondsOf(status) };
       }
     }
     return undefined;

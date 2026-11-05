@@ -629,6 +629,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "dwarven-battle-stance": icon("dwarven-battle-stance"),
   // Signet of Suffering (#2333).
   "signet-of-suffering": icon("signet-of-suffering"),
+  "rising-bile": icon("rising-bile"),
+  "natures-renewal": icon("natures-renewal"),
+  equinox: icon("equinox"),
+  "archers-signet": icon("archers-signet"),
   // Staples (#2368).
   "foxs-promise": icon("foxs-promise"),
   "seeping-wound": icon("seeping-wound"),
