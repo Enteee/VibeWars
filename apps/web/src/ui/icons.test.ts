@@ -128,7 +128,7 @@ describe("icons", () => {
 
   it("names a badge for screen readers and on hover", () => {
     expect(skillTypeBadgeHtml("hex")).toBe(
-      '<img class="skill-type-badge" src="/icons/skill-type/hex.svg" alt="Hex" title="Hex">',
+      '<img class="skill-type-badge" src="/icons/skill-type/hex.svg" alt="Hex" title="Hex" loading="lazy">',
     );
   });
 
@@ -186,7 +186,7 @@ describe("skill icons (#719)", () => {
 
   it("is decorative markup of the size asked", () => {
     expect(skillIconHtml("elementalist.fireball", 48)).toBe(
-      '<img class="skill-icon" src="/icons/skill/elementalist.fireball.svg" alt="" width="48" height="48">',
+      '<img class="skill-icon" src="/icons/skill/elementalist.fireball.svg" alt="" width="48" height="48" loading="lazy">',
     );
   });
 

@@ -1,6 +1,7 @@
 import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
 import type { DamageEffect } from "../types.js";
+import { ILLUSION_OF_PAIN_HEAL } from "../catalog/shared.js";
 import { define, ownSkills } from "./define.js";
 
 export type MesmerStatusId =
@@ -77,7 +78,16 @@ export type MesmerStatusId =
   | "enchanters-conundrum"
   // Source-targets triggers and signet lockout (#2290).
   | "mind-wrack"
-  | "ignorance";
+  | "ignorance"
+  // Staples (#2287).
+  | "ether-lord"
+  | "ether-lord-regeneration"
+  | "spirit-of-failure"
+  | "spirit-shackles"
+  | "soothing-images"
+  | "arcane-languor"
+  | "illusion-of-pain"
+  | "ether-phantom";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -925,5 +935,114 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   ignorance: define("ignorance", "Ignorance", "hex", {
     profession: "mesmer",
     preventsSignets: true,
+  }),
+  // Staples (#2287). Ether Lord's "-1...3 Energy degeneration ... +1...3
+  // Energy regeneration": 3, its rank-12 value, on either side.
+  "ether-lord": define("ether-lord", "Ether Lord", "hex", {
+    profession: "mesmer",
+    energyPips: -3,
+  }),
+  "ether-lord-regeneration": define("ether-lord-regeneration", "Ether Lord", "skill-effect", {
+    profession: "mesmer",
+    energyPips: 3,
+  }),
+  // "...has a 25% chance to miss with attacks. You gain 1...3 Energy
+  // whenever that foe fails to hit in combat": the hex's caster gains it.
+  "spirit-of-failure": define("spirit-of-failure", "Spirit of Failure", "hex", {
+    profession: "mesmer",
+    attackMissChance: 0.25,
+    triggers: [
+      {
+        on: "bearer-fails-to-hit",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1, atTwelve: 2.6 },
+            },
+          },
+        ],
+        target: "source",
+        skillId: "mesmer.spirit-of-failure",
+      },
+    ],
+  }),
+  // "...target foe loses 5 Energy whenever that foe attacks."
+  "spirit-shackles": define("spirit-shackles", "Spirit Shackles", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-attacks",
+        effects: [{ kind: "energy-loss", amount: { flat: 5 } }],
+        target: "bearer",
+        skillId: "mesmer.spirit-shackles",
+      },
+    ],
+  }),
+  // "...cannot gain adrenaline": what it holds already stays.
+  "soothing-images": define("soothing-images", "Soothing Images", "hex", {
+    profession: "mesmer",
+    preventsAdrenalineGain: true,
+  }),
+  // "...all spells cast by the target foe cause 10 Overcast."
+  "arcane-languor": define("arcane-languor", "Arcane Languor", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        effects: [{ kind: "overcast", amount: { flat: 10 } }],
+        target: "bearer",
+        skillId: "mesmer.arcane-languor",
+      },
+    ],
+  }),
+  // "...has -3...10 Health degeneration and takes 3...10 damage each
+  // second. When Illusion of Pain ends or is reapplied, that foe is healed
+  // for 36...120": any end, a removal included; the recast's heal is the
+  // skill's own.
+  "illusion-of-pain": define("illusion-of-pain", "Illusion of Pain", "hex", {
+    profession: "mesmer",
+    healthPips: { scaling: { attributeId: "mesmer.illusion-magic", atZero: -3, atTwelve: -8.6 } },
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "damage",
+          amount: { scaling: { attributeId: "mesmer.illusion-magic", atZero: 3, atTwelve: 8.6 } },
+          type: "typeless",
+          armorPenetration: 0,
+        },
+      ],
+      skillId: "mesmer.illusion-of-pain",
+    },
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "heal", amount: ILLUSION_OF_PAIN_HEAL }],
+        target: "bearer",
+        skillId: "mesmer.illusion-of-pain",
+      },
+    ],
+  }),
+  // "...-1 Energy degeneration. If this hex is removed prematurely, that
+  // foe loses 1...5 Energy": any early end, never its natural one.
+  "ether-phantom": define("ether-phantom", "Ether Phantom", "hex", {
+    profession: "mesmer",
+    energyPips: -1,
+    triggers: [
+      {
+        on: "ends-early",
+        effects: [
+          {
+            kind: "energy-loss",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1, atTwelve: 4.2 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "mesmer.ether-phantom",
+      },
+    ],
   }),
 };

@@ -73,6 +73,8 @@ const rows = {
   "dervish.natural-healing": { glyph: "leaf", modifier: "plus" },
   // Stand-in art (#2293).
   "dervish.grenths-aura": { glyph: "scythe-drop" },
+  // Stand-in art (#2294).
+  "dervish.dwaynas-touch": { glyph: "plus-rings" },
 };
 
 export default rows;

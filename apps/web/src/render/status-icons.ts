@@ -512,8 +512,24 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Staples (#2278).
   "lightning-surge": icon("lightning-surge"),
   "ward-against-harm": icon("ward-against-harm"),
+  // Elementalist staples (#2288).
+  gust: icon("gust"),
+  "mirror-of-ice": icon("mirror-of-ice"),
   "mark-of-subversion": icon("mark-of-subversion"),
   "mantra-of-recall": icon("mantra-of-recall"),
+  // Elementalist staples (#2289).
+  "armor-of-frost": icon("armor-of-frost"),
+  "incendiary-bonds": icon("incendiary-bonds"),
+  rust: icon("rust"),
+  // Staples (#2287).
+  "ether-lord": icon("ether-lord"),
+  "ether-lord-regeneration": icon("ether-lord-regeneration"),
+  "spirit-of-failure": icon("spirit-of-failure"),
+  "spirit-shackles": icon("spirit-shackles"),
+  "soothing-images": icon("soothing-images"),
+  "arcane-languor": icon("arcane-languor"),
+  "illusion-of-pain": icon("illusion-of-pain"),
+  "ether-phantom": icon("ether-phantom"),
   // Bonds and rank-scaled multipliers (#2291).
   "life-bond": icon("life-bond"),
   "life-attunement": icon("life-attunement"),
@@ -565,6 +581,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "keystone-signet": icon("keystone-signet"),
   agony: icon("agony"),
   "grenths-aura": icon("grenths-aura"),
+  // Warrior staples 5 (#2315).
+  "to-the-limit": icon("to-the-limit"),
 };
 
 const GAP = 2;

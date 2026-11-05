@@ -457,6 +457,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.preventsSpeedBoosts) {
     parts.push("speed boosts have no effect");
   }
+  if (definition.preventsAdrenalineGain) {
+    parts.push("cannot gain adrenaline");
+  }
   if (definition.returnsSource !== undefined) {
     parts.push("when this ends, you return to where you cast it");
   }
@@ -1470,7 +1473,18 @@ function describeTriggers(
       : (kindBoundWhen(event, trigger) ?? TRIGGER_WHEN[event]);
   return [...groups.values()].flatMap(({ trigger, on }) => {
     if (on.includes("bearer-dies")) {
-      return [{ text: describeDeath(trigger, ranks, bearerIsFoe), clause: false }];
+      // Incendiary Bonds' "activates early if target foe dies" (#2289).
+      const others = on.filter((event) => event !== "bearer-dies");
+      const death = describeDeath(trigger, ranks, bearerIsFoe);
+      return [
+        {
+          text:
+            others.length === 0
+              ? death
+              : `when it ${others.map((event) => whenOf(event, trigger)).join(" or ")}, or at once ${death}`,
+          clause: false,
+        },
+      ];
     }
     const lines = describeTrigger(
       trigger,
@@ -1571,8 +1585,8 @@ function describeDeath(
         effect.hits === "party" && inner.kind === "heal"
           ? `your party is healed for ${amount(inner.amount)}`
           : inner.kind === "damage"
-            ? `${lowerFirst(foesWithin(effect.radius, effect.hits))} take ${amount(inner.amount)}${typeWord(inner.type)} damage`
-            : `${lowerFirst(foesWithin(effect.radius, effect.hits))}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
+            ? `${lowerFirst(upTo(effect, ranks))} take ${amount(inner.amount)}${typeWord(inner.type)} damage`
+            : `${lowerFirst(upTo(effect, ranks))}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
       );
     }
     return effect.kind === "spread-gained-condition" ||
@@ -2177,7 +2191,10 @@ function describeOwnSkillModifier(
       : `${verb("cost", "costs")} ${at(energySurcharge, whole)} more Energy`,
     statAtTwelve(activationMultiplier) === 1
       ? undefined
-      : `${verb("cast", "casts")} ${at(activationMultiplier, (value) => percent(1 - value))} ${statAtTwelve(activationMultiplier) < 1 ? "faster" : "slower"}`,
+      : statAtTwelve(activationMultiplier) < 1
+        ? `${verb("cast", "casts")} ${at(activationMultiplier, (value) => percent(1 - value))} faster`
+        : // Rust's "take twice as long to activate" (#2289).
+          `${verb("take", "takes")} ${at(activationMultiplier, String)}× as long to cast`,
     statAtTwelve(activationSecondsLess) === 0
       ? undefined
       : `${verb("cast", "casts")} ${at(activationSecondsLess, seconds)} faster`,
@@ -2420,6 +2437,8 @@ function conditionText(
       return "If target is knocked down";
     case "target-moving":
       return "If target is moving";
+    case "target-foe":
+      return "If target is a foe";
     case "target-moving-faster":
       return "If target is moving faster than normal";
     case "any-of": {
@@ -2579,6 +2598,17 @@ function lostInSplash(effect: RemoveStatusEffect, ranks: ReadonlyMap<string, num
   return `lose ${String(count)} ${categoryNoun(count, effect.category)}`;
 }
 
+/**
+ * A splash's `onlyIf` (#2288), as said of whom it reaches: "while
+ * attacking or moving", "has a Water Magic hex".
+ */
+function onlyIfText(condition: StateCondition, ranks: ReadonlyMap<string, number>): string {
+  return lowerFirst(conditionText(condition, ranks))
+    .replace(/^if target is /, "while ")
+    .replace(/^if target /, "")
+    .replaceAll(" or target is ", " or ");
+}
+
 /** A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes". */
 function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>): string {
   // Hex Eater Signet's "adjacent allies with a hex" (#1954).
@@ -2591,8 +2621,10 @@ function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>): string 
     splash.onlyUsing === undefined
       ? ""
       : ` using ${TYPE_TEXT[splash.onlyUsing].replace(/\.$/, "").toLowerCase()} skills`;
+  // Gust's "while attacking or moving" (#2288).
+  const onlyIf = splash.onlyIf === undefined ? "" : ` ${onlyIfText(splash.onlyIf, ranks)}`;
   const reached = foesWithin(splash.radius, splash.hits);
-  const who = `${splash.includesCentre === true ? `Target and ${lowerFirst(reached)}` : reached}${splash.around === "caster" ? " around you" : ""}${bearing}${using}`;
+  const who = `${splash.includesCentre === true ? `Target and ${lowerFirst(reached)}` : reached}${splash.around === "caster" ? " around you" : ""}${splash.alsoAround === "caster" ? " around the target and you" : ""}${bearing}${using}${onlyIf}`;
   return splash.maxTargets === undefined || splash.hits === "party"
     ? who
     : `Up to ${String(countAt(splash.maxTargets, ranks))} ${lowerFirst(who)}`;
@@ -3598,6 +3630,16 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
     case "splash": {
       // "Adjacent foes take 40 damage" (#885). What the caster pays for
       // each one reached is said apart (#1986).
+      // Mirror of Ice's "if you strike a foe hexed with Water Magic, Mirror
+      // of Ice recharges 50% faster" (#2288).
+      const [faster] = effect.effects;
+      if (effect.effects.length === 1 && faster?.kind === "recharge-faster") {
+        const whom = effect.onlyIf === undefined ? "" : ` that ${onlyIfText(effect.onlyIf, ranks)}`;
+        return {
+          text: `If it strikes a foe${whom}: ${lowerFirst(describeEffect(faster, ranks).text)}`,
+          magnitude: undefined,
+        };
+      }
       const paid = effect.effects.filter((each) => each.kind === "sacrifice-health");
       const inner = effect.effects
         .filter((each) => each.kind !== "sacrifice-health")
@@ -3909,7 +3951,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
 
 /**
  * A `disable-own-skills` line (#1473): "All of your skills" (#1570), "All
- * of your spells", "All of your Smiting Prayers" (#1511), or "All of your
+ * of your other skills" (#2287), "All of your spells", "All of your Smiting Prayers" (#1511), or "All of your
  * non-Mesmer skills except signets", "are disabled for 10 seconds". A
  * skill of the attribute it disables spares itself: "All of your other
  * Healing Prayers" (#1748). "All of your other attack skills" (#1914). "Your
@@ -3920,6 +3962,9 @@ function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds
   const time = `are disabled for ${seconds} seconds`;
   if (effect.which === "all") {
     return `All of your skills ${time}`;
+  }
+  if (effect.which === "others") {
+    return `All of your other skills ${time}`;
   }
   if (effect.which === "attacks") {
     return effect.exceptWeapon === undefined
