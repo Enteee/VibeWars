@@ -322,3 +322,45 @@ describe("a bearer-loses-condition trigger (#1475)", () => {
     expect(fire(self)).toEqual([]);
   });
 });
+
+describe("a bearer-uses-skill trigger bound to whom the skill targets (#2282, #2333)", () => {
+  /** `n` under Signet of Suffering ("foe") and Zealot's Fire ("ally") uses Barbs at `aimedId`: what fires, each once. */
+  function used(aimedId: string | undefined): string[] {
+    const self = makeCombatant({ id: "n", team: 0 });
+    const others = new Map([
+      ["n", self],
+      ["ally", makeCombatant({ id: "ally", team: 0 })],
+      ["foe", makeCombatant({ id: "foe", team: 1 })],
+    ]);
+    self.statuses.apply("signet-of-suffering", Number.POSITIVE_INFINITY, "n", NO_RANKS);
+    self.statuses.apply("zealots-fire", 30, "n", NO_RANKS);
+    return fireTriggers(
+      self,
+      "bearer-uses-skill",
+      {
+        sourceOf: (id) => others.get(id),
+        rng: createRng(1),
+        rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+        surroundings: new Map(),
+        usedSkill: { skillId: "necromancer.barbs", key: "necromancer.barbs" },
+        ...(aimedId === undefined ? {} : { aimedAt: { id: aimedId, hadLessHealth: false } }),
+      },
+      new Set(),
+    ).flatMap(({ skillId }, at, all) =>
+      all.findIndex((each) => each.skillId === skillId) === at ? [skillId] : [],
+    );
+  }
+
+  it('"foe" answers an aim at a creature of another team, "ally" does not', () => {
+    expect(used("foe")).toEqual(["necromancer.signet-of-suffering"]);
+  });
+
+  it('"ally" answers an aim at an ally or the bearer itself, "foe" does not', () => {
+    expect(used("ally")).toEqual(["monk.zealots-fire"]);
+    expect(used("n")).toEqual(["monk.zealots-fire"]);
+  });
+
+  it("no aim answers neither", () => {
+    expect(used(undefined)).toEqual([]);
+  });
+});
