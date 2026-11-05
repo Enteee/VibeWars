@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { openRail } from "./helpers/menu.js";
+import { lobbyWindow, openRail } from "./helpers/menu.js";
 import { startSoloMatch } from "./helpers/peers.js";
 
 /**
@@ -13,12 +13,14 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
 }) => {
   await page.goto("./");
   // The page's own lobby, which Help leaves open (#1526).
-  const lobby = page.locator("#topbar .lobby-code-label");
+  const lobby = (await lobbyWindow(page)).locator(".lobby-code-label");
   await expect(lobby).toHaveText("Your lobby");
 
   await page.locator(".topbar-help").click();
   const help = page.getByRole("dialog", { name: "Help" });
   await expect(help).toBeVisible();
+  // Help shuts the Lobby window it opens over (#2385).
+  await expect(page.locator("#topbar .lobby-window")).toHaveCount(0);
   await expect(page.locator("#topbar .topbar-crumbs")).toHaveText(
     "VibeWars > Help > Getting started",
   );
@@ -39,6 +41,7 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
   await expect(help).toHaveCount(0);
   // The menu under it is as it was.
   await expect(page.locator(".screen-random-arena")).toBeVisible();
+  await lobbyWindow(page);
   await expect(lobby).toHaveText("Your lobby");
 });
 

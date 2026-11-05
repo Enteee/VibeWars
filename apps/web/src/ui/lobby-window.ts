@@ -7,7 +7,8 @@ import { ascentLine, waitedLabel } from "./queue-screen.js";
 
 /**
  * The Lobby window (#1526, ADR-0041, #2385): dropped from the top bar's
- * Lobby, who is in this lobby with you. The lobby is the party.
+ * Lobby, under the lobby's controls, who is in this lobby with you. The
+ * lobby is the party. While it is queued, the mode screen says so instead.
  */
 
 /** One person in the party: a bot is the lobby's, not the party's. */
@@ -43,10 +44,10 @@ export const PARTY_RECONNECTING = "Reconnecting…";
 /** A guest's word that its host has the lobby closed (#1682). */
 export const PARTY_CLOSED = "Lobby closed";
 /** The window with nobody else in the lobby (#2385): it always has something to say. */
-export const PARTY_ALONE = "Just you. Copy the invite link to bring friends.";
+export const PARTY_ALONE = "Just you. Copy the invite link above to bring friends.";
 
 /**
- * The window's line while the party is queued (#1766): "Looking for a
+ * The mode screen's line while the party is queued (#1766): "Looking for a
  * team… 1:05 · 2 teams searching", the time alone until the queue says
  * how many (#1881). Its own team always counts, so none means none heard
  * yet: a leader before its first tick, or a follower before it hears its
@@ -101,7 +102,7 @@ export function partyOf(
 
 /**
  * Whether the window says the lobby is closed (#1682): to a guest, while
- * its host has it so. The host has the title bar's toggle instead.
+ * its host has it so. The host has the toggle above it instead.
  */
 export function showsClosed(party: RailParty): boolean {
   return !party.isHost && !party.open;
@@ -119,6 +120,29 @@ export function memberClass(member: PartyMember): string {
 /** Whether nobody but this player is in the party. */
 export function isAlone(party: RailParty | undefined): boolean {
   return party === undefined || party.members.length <= 1;
+}
+
+/**
+ * The mode screen's status line while `party` is queued (#1766, #2385):
+ * the Heroes' Ascent round it is at (#1996) and how long it has looked,
+ * the only queue timer a queued party sees; none while it is not queued.
+ */
+export function queueLine(party: RailParty): HTMLElement | undefined {
+  if (party.queuedMs === null) {
+    return undefined;
+  }
+  const line = h("div", "party-status");
+  if (party.ascentRound !== null) {
+    line.appendChild(h("span", "party-ascent", ascentLine(party.ascentRound)));
+  }
+  line.appendChild(
+    h(
+      "span",
+      "party-queued",
+      lookingLabel(party.mode, party.teamSize, party.queuedMs, party.teams),
+    ),
+  );
+  return line;
 }
 
 /** What the Lobby window shows of `party`; none in a lobby yet reads as alone. */
@@ -141,22 +165,7 @@ export function lobbyWindowBody(party: RailParty | undefined): HTMLElement {
     }
     body.appendChild(list);
   }
-  if (party === undefined) {
-    return body;
-  }
-  if (party.queuedMs !== null) {
-    if (party.ascentRound !== null) {
-      body.appendChild(h("span", "party-ascent", ascentLine(party.ascentRound)));
-    }
-    body.appendChild(
-      h(
-        "span",
-        "party-queued",
-        lookingLabel(party.mode, party.teamSize, party.queuedMs, party.teams),
-      ),
-    );
-  }
-  if (showsClosed(party)) {
+  if (party !== undefined && showsClosed(party)) {
     // The host's closed padlock (#2382): host and guest see the same sign.
     const glyph = document.createElement("img");
     glyph.className = "party-closed-glyph";

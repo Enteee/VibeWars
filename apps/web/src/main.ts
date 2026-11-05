@@ -1579,7 +1579,7 @@ async function main(): Promise<void> {
       ? Date.now() - teamQueue.since
       : null;
 
-  /** The Lobby window's queue wait, each second; the screen again once Play against bots is offered. */
+  /** The queue line's wait, each second; the screen again once Play against bots is offered. */
   const tickTeamQueue = (): void => {
     const current = teamQueue;
     if (current === undefined || current.parked !== undefined || lobby !== current.party) {
@@ -1672,7 +1672,7 @@ async function main(): Promise<void> {
       name,
       entrant.guild,
       {
-        // The Lobby window says the wait and how many teams it last heard
+        // The queue line says the wait and how many teams it last heard
         // searching (#1881), none while the relays are down; the queue's
         // other states are its own.
         onState: (state) => {

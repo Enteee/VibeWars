@@ -9,7 +9,7 @@ import {
   type TeamSize,
 } from "../storage/schema.js";
 import { button, h } from "./kit.js";
-import type { RailParty } from "./lobby-window.js";
+import { queueLine, type RailParty } from "./lobby-window.js";
 
 /**
  * The mode rail on the left of the menu (#1525, #1522 variant C): the
@@ -381,8 +381,9 @@ export function redrawModeRail(
 }
 /**
  * A rail screen (#1525): the rail on the left, and `body` beside it, the
- * screen's own, under its heading and one line saying what it is for.
- * Who is in the party is the top bar's Lobby window's (#2385).
+ * screen's own, under its heading and one line saying what it is for. A
+ * mode's says on top how long its party has been queued (#1766); who is
+ * in the party is the top bar's Lobby window's (#2385).
  */
 export function railScreen(
   root: HTMLElement,
@@ -393,6 +394,11 @@ export function railScreen(
   teamSizeListener = undefined;
   const panel = h("div", `screen screen-rail screen-${active}`);
   const body = h("div", "rail-body");
+  const queued =
+    isModeEntry(active) && shownParty !== undefined ? queueLine(shownParty) : undefined;
+  if (queued !== undefined) {
+    body.appendChild(queued);
+  }
   body.append(h("h2", "rail-title", railLabel(active)), h("p", "rail-goal", goal));
   panel.append(modeRail(active, onSwitch), body);
   root.replaceChildren(panel);

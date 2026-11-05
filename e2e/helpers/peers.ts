@@ -6,7 +6,7 @@ import {
   type Page,
 } from "@playwright/test";
 
-import { INVITE_URL, openRail } from "./menu.js";
+import { INVITE_URL, lobbyWindow, openRail, shutLobbyWindow } from "./menu.js";
 
 /**
  * Pages that play with each other (#403).
@@ -30,52 +30,27 @@ export async function openPeers(
 
 /**
  * Open this page's own lobby to friends with its key (#1682): every
- * lobby starts closed, and a closed one takes nobody new. On a phone it
- * is in the ⋯, which the press puts away again.
+ * lobby starts closed, and a closed one takes nobody new. The toggle is
+ * in the Lobby window (#2385), shut again after.
  */
 export async function openToFriends(page: Page): Promise<void> {
-  const toggle = page.locator("#topbar .topbar-lobby-open");
+  const toggle = (await lobbyWindow(page)).locator(".topbar-lobby-open");
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
-  const more = page.locator("#topbar .topbar-more");
-  if (await more.isVisible()) {
-    await more.click();
-  }
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
-}
-
-/**
- * The top bar's Lobby window (#2385), opened if it is shut: who is in the
- * lobby with `page`. A press anywhere else shuts it again, so open it
- * right before each look. On a phone the Lobby button is in the ⋯.
- */
-export async function lobbyWindow(page: Page): Promise<Locator> {
-  const lobby = page.locator("#topbar .topbar-lobby-button");
-  if ((await lobby.getAttribute("aria-expanded")) !== "true") {
-    const more = page.locator("#topbar .topbar-more");
-    if (!(await lobby.isVisible()) && (await more.isVisible())) {
-      await more.click();
-    }
-    await lobby.click();
-  }
-  const panel = page.locator("#topbar .lobby-window");
-  await expect(panel).toBeVisible();
-  return panel;
+  await shutLobbyWindow(page);
 }
 
 /**
  * The invite link to the lobby `page` is in (#2100), from Copy invite
- * link and the clipboard, granted, as a player would send it.
+ * link in the Lobby window (#2385) and the clipboard, granted, as a
+ * player would send it.
  */
 export async function copyInvite(page: Page): Promise<string> {
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-  const copy = page.locator("#topbar .lobby-copy");
-  const more = page.locator("#topbar .topbar-more");
-  if (!(await copy.isVisible()) && (await more.isVisible())) {
-    await more.click();
-  }
-  await copy.click();
+  await (await lobbyWindow(page)).locator(".lobby-copy").click();
   await expect(page.locator(".toast")).toHaveText("Copied");
+  await shutLobbyWindow(page);
   const invite = await page.evaluate(() => navigator.clipboard.readText());
   expect(invite).toMatch(INVITE_URL);
   return invite;
@@ -144,7 +119,8 @@ export async function hostLobby(
 ): Promise<string> {
   await openRail(page, "Hosted Game");
   await expect(page.locator(".lobby-panel")).toBeVisible();
-  await expect(page.locator("#topbar .topbar-lobby:not([hidden])")).toBeAttached();
+  await expect((await lobbyWindow(page)).locator(".topbar-lobby")).toBeVisible();
+  await shutLobbyWindow(page);
   await setTeamSize(page, size);
   // A size keeps a map that suits it: pick the map after the size.
   const maps = page.locator(".lobby-map select");

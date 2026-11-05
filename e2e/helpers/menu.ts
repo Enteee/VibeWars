@@ -45,12 +45,43 @@ export async function joinByCode(page: Page, invite: string): Promise<void> {
 }
 
 /**
- * Join `invite` and wait until the title bar names a friend's lobby
- * (#1526): the page's own lobby shows its panel too, so a seen panel is
- * no sign the join is in. The invite is out of the address bar by then.
+ * Join `invite` and wait until the Lobby window offers a friend's lobby
+ * Leave (#1526, #2385): the page's own lobby shows its panel too, so a
+ * seen panel is no sign the join is in. The invite is out of the address
+ * bar by then, and the window shut again.
  */
 export async function joinFriend(page: Page, invite: string): Promise<void> {
   await joinByCode(page, invite);
-  await expect(page.locator("#topbar .topbar-leave")).toBeVisible();
+  await expect((await lobbyWindow(page)).locator(".topbar-leave")).toBeVisible();
+  await shutLobbyWindow(page);
   expect(new URL(page.url()).hash).toBe("");
+}
+
+/**
+ * The top bar's Lobby window (#2385), opened if it is shut: the lobby's
+ * controls, and who is in it with `page`. A press anywhere else shuts it
+ * again, so open it right before each look. On a phone the Lobby button is
+ * in the ⋯.
+ */
+export async function lobbyWindow(page: Page): Promise<Locator> {
+  const lobby = page.locator("#topbar .topbar-lobby-button");
+  if ((await lobby.getAttribute("aria-expanded")) !== "true") {
+    const more = page.locator("#topbar .topbar-more");
+    if (!(await lobby.isVisible()) && (await more.isVisible())) {
+      await more.click();
+    }
+    await lobby.click();
+  }
+  const panel = page.locator("#topbar .lobby-window");
+  await expect(panel).toBeVisible();
+  return panel;
+}
+
+/** Shut the Lobby window (#2385) if it is open, so it covers nothing under it. */
+export async function shutLobbyWindow(page: Page): Promise<void> {
+  const panel = page.locator("#topbar .lobby-window");
+  if (await panel.isVisible()) {
+    await panel.press("Escape");
+  }
+  await expect(panel).toHaveCount(0);
 }

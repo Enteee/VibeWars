@@ -233,7 +233,7 @@ describe("the mode rail (#1525)", () => {
     ]);
   });
 
-  it("lists nobody on a mode screen: who is in the party is the top bar's Lobby window's (#2385)", () => {
+  it("lists nobody on a mode screen, only how long it is queued, while it is (#1766, #2385)", () => {
     const member = (name: string, isHost: boolean) => ({
       name,
       isHost,
@@ -250,13 +250,20 @@ describe("the mode rail (#1525)", () => {
       ascentRound: null,
       teamSize: 4,
     } as const;
-    setRailParty({ ...party, members: [member("me", true), member("Friend", false)] });
-    const root = new FakeElement("div");
-    const body = railScreen(root as unknown as HTMLElement, "gvg", "", () => undefined);
-    expect((body as unknown as FakeElement).children.map((child) => child.className)).toEqual([
-      "rail-title",
-      "rail-goal",
-    ]);
+    const parts = (): string[] => {
+      const root = new FakeElement("div");
+      const body = railScreen(root as unknown as HTMLElement, "gvg", "", () => undefined);
+      return (body as unknown as FakeElement).children.map((child) => child.className);
+    };
+    const members = [member("me", true), member("Friend", false)];
+    // Who is in it is the top bar's Lobby window's, queued or not.
+    setRailParty({ ...party, members, queuedMs: null });
+    expect(parts()).toEqual(["rail-title", "rail-goal"]);
+    setRailParty({ ...party, members });
+    expect(parts()).toEqual(["party-status", "rail-title", "rail-goal"]);
+    // Queued alone, the line still says so: it is the party's only timer.
+    setRailParty({ ...party, members: [member("me", true)] });
+    expect(parts()).toEqual(["party-status", "rail-title", "rail-goal"]);
   });
 
   it("opens on Random Arena first, and for anything else stored", () => {

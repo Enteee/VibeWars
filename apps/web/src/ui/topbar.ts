@@ -72,8 +72,8 @@ export function partyJoinsNotice(party: number): string {
 }
 
 /**
- * The host's toggle (#1682): what it says beside its glyph (#2382) while
- * the bar has the room, its name, and its tooltip, each way.
+ * The host's toggle (#1682): what it says beside its glyph (#2382), its
+ * name, and its tooltip, each way.
  */
 export const CLOSED_LABEL = "Closed";
 export const OPEN_LABEL = "Open";
@@ -88,9 +88,15 @@ export const OPEN_TOOLTIP = "Anyone with your invite link can join.";
  */
 export const CONNECTING_NOTICE_MS = 3000;
 
-/** The bar's lobby, its Copy invite link, and the joins invite links ask for. */
+/**
+ * The lobby's controls, which the Lobby window mounts (#2385), and the
+ * bar's word on the joins invite links ask for.
+ */
 export interface JoinControls {
+  /** The bar's: "Connecting…" and a host's "your party joins too" (#1553). */
   readonly element: HTMLElement;
+  /** The Lobby window's, on top: the lobby's label, Copy invite link, Closed / Open and Leave. */
+  readonly controls: HTMLElement;
   /** A new bar shows: a join it was waiting on has ended, either way. */
   readonly settle: () => void;
   /**
@@ -108,9 +114,9 @@ export interface JoinControls {
 
 /**
  * The lobby this tab is in, its Copy invite link (#2100), its host's
- * Closed / Open (#1682) and a guest's Leave (#1526), then "Connecting…"
- * once a join has run a while (#707). The page has one, in the title bar.
- * The key itself is never shown. `name` is read at the join.
+ * Closed / Open (#1682) and a guest's Leave (#1526), in the Lobby window
+ * (#2385); in the bar, "Connecting…" once a join has run a while (#707).
+ * The page has one. The key itself is never shown. `name` is read at the join.
  */
 export function joinControls(
   name: () => string,
@@ -140,6 +146,8 @@ export function joinControls(
   toggle.append(toggleGlyph, toggleLabel);
   const leave = button("Leave", "topbar-leave", onLeave);
   lobby.append(lobbyLabel, copy, toggle, leave);
+  const controls = h("div", "lobby-window-controls");
+  controls.append(lobby, share.element);
   // Shown once a join has run a while; the lobby, or the menu again with
   // why it failed, puts it away when it ends.
   const connecting = h("span", "topbar-connecting", "Connecting…");
@@ -183,9 +191,10 @@ export function joinControls(
       dismiss();
     }
   });
-  group.append(lobby, share.element, connecting, confirm);
+  group.append(connecting, confirm);
   return {
     element: group,
+    controls,
     settle: () => {
       shown += 1;
       connecting.hidden = true;
@@ -224,7 +233,7 @@ export function joinControls(
       const open = shown?.open === true;
       toggleGlyph.src = open ? LOBBY_ICON.open : LOBBY_ICON.closed;
       toggleLabel.textContent = open ? OPEN_LABEL : CLOSED_LABEL;
-      // Its name whether or not the bar has room for the word (#1682).
+      // Its name says the state for a reader, whatever the word beside it (#1682).
       toggle.setAttribute("aria-label", open ? OPEN_NAME : CLOSED_NAME);
       toggle.title = open ? OPEN_TOOLTIP : CLOSED_TOOLTIP;
       toggle.setAttribute("aria-pressed", String(open));
@@ -281,9 +290,10 @@ export interface LobbyButton {
 /**
  * The Lobby button, its window dropping into `parent` (#2385): a count on
  * the button once someone else is in, pulsing on a join or a leave while
- * the window is shut, and the people in the window, repainted while open.
+ * the window is shut, and in the window the lobby's `controls` over the
+ * people in it, repainted while open.
  */
-export function lobbyButton(parent: HTMLElement): LobbyButton {
+export function lobbyButton(parent: HTMLElement, controls: HTMLElement): LobbyButton {
   const element = iconButton("topbar-lobby-button", lobbyButtonName(1), lobbyIcon());
   element.title = "Lobby";
   const badge = h("span", "topbar-badge");
@@ -299,10 +309,14 @@ export function lobbyButton(parent: HTMLElement): LobbyButton {
     const panel = h("div", "screen lobby-window");
     panel.setAttribute("aria-label", "Lobby");
     panel.tabIndex = -1;
+    // Only the people repaint: a control keeps its focus through a join.
+    let people = lobbyWindowBody(party);
+    panel.append(h("h3", "lobby-window-title", "Lobby"), controls, people);
     paintWindow = () => {
-      panel.replaceChildren(h("h3", "lobby-window-title", "Lobby"), lobbyWindowBody(party));
+      const next = lobbyWindowBody(party);
+      people.replaceWith(next);
+      people = next;
     };
-    paintWindow();
     return {
       element: panel,
       focus: panel,
@@ -379,7 +393,17 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     callbacks.onOptions();
   });
 
-  const lobby = lobbyButton(bar);
+  // The bar's join status, right before the global icons, on every menu
+  // screen that asks for it; the lobby's own controls are the Lobby window's.
+  const join = joinControls(
+    loadPlayerName,
+    callbacks.onJoin,
+    callbacks.onLeave,
+    callbacks.onSetOpen,
+  );
+  join.element.hidden = true;
+  join.controls.hidden = true;
+  const lobby = lobbyButton(bar, join.controls);
 
   const music = iconButton("topbar-music", "Music");
 
@@ -397,14 +421,6 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   attachFullscreenButton(fullscreen, fullscreenTarget());
 
   actions.append(help, options, lobby.element, music, mute, fullscreen);
-  // Right before the global icons, on every menu screen that asks for it.
-  const join = joinControls(
-    loadPlayerName,
-    callbacks.onJoin,
-    callbacks.onLeave,
-    callbacks.onSetOpen,
-  );
-  join.element.hidden = true;
   actions.before(join.element);
   // An invite link the page opened with (#2100) waits for the first
   // screen with the bar's lobby on it: until then nothing could join.
@@ -460,6 +476,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
         closeTopbarPopover();
       }
       join.element.hidden = !shown.join;
+      join.controls.hidden = !shown.join;
       join.settle();
       if (shown.join && !joinShown) {
         joinShown = true;

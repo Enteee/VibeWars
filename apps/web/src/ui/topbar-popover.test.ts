@@ -72,6 +72,21 @@ class FakeElement {
     return child;
   }
 
+  append(...children: FakeElement[]): void {
+    for (const child of children) {
+      this.appendChild(child);
+    }
+  }
+
+  replaceWith(next: FakeElement): void {
+    const parent = this.parent;
+    if (parent !== undefined) {
+      parent.children = parent.children.map((child) => (child === this ? next : child));
+      next.parent = parent;
+      this.parent = undefined;
+    }
+  }
+
   replaceChildren(...children: FakeElement[]): void {
     this.children = [];
     for (const child of children) {
@@ -237,7 +252,10 @@ describe("the top bar's Lobby (#2385)", () => {
     typeof lobbyButton
   > => {
     const parent = new FakeElement("div");
-    const lobby = lobbyButton(parent as unknown as HTMLElement);
+    // The lobby's controls (#2385), as the bar's join hands them over.
+    const controls = new FakeElement("div");
+    controls.textContent = "Copy invite link";
+    const lobby = lobbyButton(parent as unknown as HTMLElement, controls as unknown as HTMLElement);
     const button = lobby.element as unknown as FakeElement;
     const badge = button.children.find((child) => child.className === "topbar-badge");
     if (badge === undefined) {
@@ -278,22 +296,32 @@ describe("the top bar's Lobby (#2385)", () => {
   it("says it is just you, alone or in no lobby yet", () => {
     const { parent, button, setParty } = mount();
     button.fire("click");
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", PARTY_ALONE]);
+    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", PARTY_ALONE]);
     setParty(party(member("me", true)));
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", PARTY_ALONE]);
+    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", PARTY_ALONE]);
   });
 
-  it("lists who is in, repainting while open on a join or a leave", () => {
+  it("lists who is in under the lobby's controls, repainting while open on a join or a leave", () => {
     const { parent, button, badge, setParty } = mount();
     setParty(party(member("me", true), member("Ann")));
     badge.fire("animationend");
     button.fire("click");
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", "me", "Host", "Ann"]);
+    const controls = parent.children[0]?.children[1];
+    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", "me", "Host", "Ann"]);
     setParty(party(member("me", true), member("Ann"), member("Bo")));
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", "me", "Host", "Ann", "Bo"]);
+    expect(parent.children[0]?.texts()).toEqual([
+      "Lobby",
+      "Copy invite link",
+      "me",
+      "Host",
+      "Ann",
+      "Bo",
+    ]);
+    // The controls stay put through a repaint, so one keeps its focus.
+    expect(parent.children[0]?.children[1]).toBe(controls);
     // Open, the window shows the join; the badge need not pulse.
     expect(badge.classes.has("is-pulsing")).toBe(false);
     setParty(party(member("me", true)));
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", PARTY_ALONE]);
+    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", PARTY_ALONE]);
   });
 });

@@ -1,12 +1,19 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { openLibraryGroup } from "./helpers/library.js";
-import { INVITE_URL, joinByCode, joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
+import {
+  INVITE_URL,
+  joinByCode,
+  joinFriend,
+  lobbyWindow,
+  openRail,
+  pickCharacter,
+  shutLobbyWindow,
+} from "./helpers/menu.js";
 import {
   copyInvite,
   expectTeamSize,
   hostLobby as hostFromMenu,
-  lobbyWindow,
   openPeers,
   openToFriends,
   playHouseTeams,
@@ -129,13 +136,18 @@ test("a host with a guest who joins another lobby is asked once, and its guest f
     );
     // Asked, not gone yet: still its own lobby, the invite out of the
     // address bar all the same (#2100).
-    await expect(alpha.locator("#topbar .lobby-code-label")).toHaveText("Your lobby");
+    await expect((await lobbyWindow(alpha)).locator(".lobby-code-label")).toHaveText("Your lobby");
+    await shutLobbyWindow(alpha);
+    // The ask stays in the bar, the Lobby window shut or not (#2385).
+    await expect(confirm).toBeVisible();
     expect(new URL(alpha.url()).hash).toBe("");
     await confirm.getByRole("button", { name: "Join", exact: true }).click();
 
     for (const page of [alpha, bravo]) {
-      await expect(page.locator("#topbar .lobby-code-label")).toHaveText("Lobby");
-      await expect(page.locator("#topbar .topbar-leave")).toBeVisible();
+      const panel = await lobbyWindow(page);
+      await expect(panel.locator(".lobby-code-label")).toHaveText("Lobby");
+      await expect(panel.locator(".topbar-leave")).toBeVisible();
+      await shutLobbyWindow(page);
     }
     await expect(charlie.locator(".lobby-panel")).toContainText("Alpha");
     await expect(charlie.locator(".lobby-panel")).toContainText("Bravo");
@@ -160,7 +172,8 @@ test("a closed lobby takes nobody with its invite link; opened it does, and clos
     await openRail(host, "Hosted Game");
     // A closed lobby's invite link copies all the same (#2100).
     const invite = await copyInvite(host);
-    const toggle = host.locator("#topbar .topbar-lobby-open");
+    // The toggle is in the Lobby window (#2385).
+    const toggle = (await lobbyWindow(host)).locator(".topbar-lobby-open");
     await expect(toggle).toHaveAccessibleName("Lobby closed");
     await expect(toggle).toHaveAttribute(
       "title",
@@ -174,13 +187,14 @@ test("a closed lobby takes nobody with its invite link; opened it does, and clos
     });
 
     await openToFriends(host);
+    await lobbyWindow(host);
     await expect(toggle).toHaveAccessibleName("Lobby open");
     await expect(toggle).toHaveAttribute("title", "Anyone with your invite link can join.");
     await joinFriend(guest, invite);
     await expect(host.locator(".lobby-panel")).toContainText("Guest");
     // Only the host has the toggle; a guest's Lobby window says when it is closed.
-    await expect(guest.locator("#topbar .topbar-lobby-open")).toBeHidden();
     const guestLobby = await lobbyWindow(guest);
+    await expect(guestLobby.locator(".topbar-lobby-open")).toBeHidden();
     await expect(guestLobby.locator(".party-closed")).toHaveCount(0);
 
     await toggle.click();
@@ -191,7 +205,7 @@ test("a closed lobby takes nobody with its invite link; opened it does, and clos
     await joinByCode(late, invite);
     await expect(late.locator(".screen-connection-problem")).toHaveText(CLOSED);
     await expect(host.locator(".lobby-panel")).not.toContainText("Late");
-    await expect(guest.locator("#topbar .topbar-leave")).toBeVisible();
+    await expect(guestLobby.locator(".topbar-leave")).toBeVisible();
   } finally {
     await context.close();
   }
@@ -234,7 +248,7 @@ test("a wrong invite link says Connecting…, finds no lobby after the 20 s wait
 
     await openMenu(guest, "Guest");
     // Its own lobby stays open until a join is in (#1526).
-    const own = guest.locator("#topbar .lobby-code-label");
+    const own = (await lobbyWindow(guest)).locator(".lobby-code-label");
     await expect(own).toHaveText("Your lobby");
     const ownInvite = await copyInvite(guest);
     await joinByCode(guest, wrong);
@@ -254,6 +268,7 @@ test("a wrong invite link says Connecting…, finds no lobby after the 20 s wait
     // Back on the menu, but the error must not be reset to "ready".
     await expect(guest.locator("#status")).toHaveText("could not join");
     await expect(host.locator(".lobby-panel")).not.toContainText("Guest");
+    await lobbyWindow(guest);
     await expect(own).toHaveText("Your lobby");
     expect(await copyInvite(guest)).toBe(ownInvite);
   } finally {
@@ -268,7 +283,7 @@ test("a broken invite link is taken out of the address bar and says so, joining 
   await page.goto("./#lobby=nope");
   await expect(page.locator(".toast")).toHaveText("That invite link is broken.");
   expect(new URL(page.url()).hash).toBe("");
-  await expect(page.locator("#topbar .topbar-leave")).toBeHidden();
+  await expect((await lobbyWindow(page)).locator(".topbar-leave")).toBeHidden();
 });
 
 test("a broken invite link opened in a new tab says so once, on the first menu (#2100)", async ({
@@ -281,7 +296,7 @@ test("a broken invite link opened in a new tab says so once, on the first menu (
   ).toBeVisible();
   await expect(broken).toHaveCount(1);
   expect(new URL(page.url()).hash).toBe("");
-  await expect(page.locator("#topbar .topbar-leave")).toBeHidden();
+  await expect((await lobbyWindow(page)).locator(".topbar-leave")).toBeHidden();
 });
 
 test("a guest opening the host's invite link in a new tab joins from boot, and the address bar keeps no key (#2100)", async ({
@@ -297,8 +312,10 @@ test("a guest opening the host's invite link in a new tab joins from boot, and t
     // A fresh load, as a link opened from a chat is: no page to hashchange.
     await guest.goto("about:blank");
     await guest.goto(invite);
-    await expect(guest.locator("#topbar .topbar-leave")).toBeVisible();
-    await expect(guest.locator("#topbar .lobby-code-label")).toHaveText("Lobby");
+    const guestLobby = await lobbyWindow(guest);
+    await expect(guestLobby.locator(".topbar-leave")).toBeVisible();
+    await expect(guestLobby.locator(".lobby-code-label")).toHaveText("Lobby");
+    await shutLobbyWindow(guest);
     expect(guest.url()).not.toContain("lobby=");
     await expect(host.locator(".lobby-panel")).toContainText("Guest");
     await expect(guest.locator(".lobby-panel")).toContainText("Host");
@@ -315,12 +332,13 @@ test("the status bar says nothing in a lobby, which the title bar names, on any 
   // shown nowhere now (#2100).
   const invite = await hostLobby(page, "Host");
   const secret = invite.slice(invite.indexOf("#lobby=") + "#lobby=".length);
-  await expect(page.locator("#topbar .lobby-code-label")).toHaveText("Your lobby");
+  await expect((await lobbyWindow(page)).locator(".lobby-code-label")).toHaveText("Your lobby");
   await expect(page.locator("#status")).toBeHidden();
   await expect(page.locator("body")).not.toContainText(secret);
+  await shutLobbyWindow(page);
 
   await openRail(page, "Team Builder");
-  await expect(page.locator("#topbar .lobby-code-label")).toHaveText("Your lobby");
+  await expect((await lobbyWindow(page)).locator(".lobby-code-label")).toHaveText("Your lobby");
   await expect(page.locator("#status")).toBeHidden();
 });
 
@@ -333,10 +351,6 @@ test("the lobby's bar puts its status on a second row from 721 to 1200 px, nothi
   for (const width of [700, 721, 800, 940, 1100, 1201]) {
     await expectTopbarFits(page, width, "#topbar > :not(.topbar-status), #topbar .lobby-map");
   }
-  // Closed is the longer word of the host's toggle (#1682).
-  await page.locator("#topbar .topbar-lobby-open").click();
-  await expect(page.locator("#topbar .topbar-lobby-open")).toContainText("Closed");
-  await expectTopbarFits(page, 1201, "#topbar > :not(.topbar-status), #topbar .lobby-map");
 });
 
 test("the host closing its page takes the guest to the menu, and says why", async ({ browser }) => {
@@ -519,7 +533,11 @@ test("Copy invite link puts the lobby's invite link on the clipboard and says so
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await openMenu(page, "Host");
   await openRail(page, "Hosted Game");
-  await page.getByRole("button", { name: "Copy invite link", exact: true }).click();
+  await (
+    await lobbyWindow(page)
+  )
+    .getByRole("button", { name: "Copy invite link", exact: true })
+    .click();
   await expect(page.locator(".toast")).toHaveText("Copied");
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   expect(copied).toMatch(INVITE_URL);
@@ -535,7 +553,11 @@ test("a refused clipboard shows the invite link selected, to copy by hand (#580,
   });
   await openMenu(page, "Host");
   await openRail(page, "Hosted Game");
-  await page.getByRole("button", { name: "Copy invite link", exact: true }).click();
+  await (
+    await lobbyWindow(page)
+  )
+    .getByRole("button", { name: "Copy invite link", exact: true })
+    .click();
   await expect(page.locator(".toast")).toHaveText(
     "Could not copy: the invite link is selected, copy it by hand",
   );

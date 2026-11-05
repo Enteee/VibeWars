@@ -3,17 +3,19 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { LOBBY_ICON } from "./icons.js";
 
 import {
+  PARTY_ALONE,
   PARTY_CLOSED,
   PARTY_RECONNECTING,
   isAlone,
+  lobbyWindowBody,
   lookingLabel,
   memberClass,
   partyOf,
-  partyStrip,
+  queueLine,
   showsClosed,
 } from "./lobby-window.js";
 
-/** Just enough of an element for the strip: its tag, class, picture and parts. */
+/** Just enough of an element for the window and the queue line: its tag, class, picture and parts. */
 class FakeElement {
   className = "";
   textContent = "";
@@ -162,14 +164,42 @@ describe("the Lobby window's party (#1526, #2385)", () => {
       isHost: false,
       open: false,
     };
-    const strip = partyStrip(guest) as unknown as FakeElement;
-    const [glyph, text] = strip.find("party-closed")?.children ?? [];
+    const body = lobbyWindowBody(guest) as unknown as FakeElement;
+    const [glyph, text] = body.find("party-closed")?.children ?? [];
     expect(typeof glyph === "string" ? glyph : [glyph?.tagName, glyph?.src, glyph?.alt]).toEqual([
       "img",
       LOBBY_ICON.closed,
       "",
     ]);
     expect(text).toBe(PARTY_CLOSED);
+  });
+
+  it("says it is just you, the invite link above to bring friends (#2385)", () => {
+    vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
+    expect(PARTY_ALONE).toBe("Just you. Copy the invite link above to bring friends.");
+    const alone = lobbyWindowBody(partyOf(lobby([player("me")]), null, undefined));
+    expect((alone as unknown as FakeElement).find("lobby-window-alone")?.textContent).toBe(
+      PARTY_ALONE,
+    );
+    const none = lobbyWindowBody(undefined) as unknown as FakeElement;
+    expect(none.find("lobby-window-alone")?.textContent).toBe(PARTY_ALONE);
+  });
+
+  it("leaves the queue's wait to the mode screen's line, shown only while queued (#1766, #2385)", () => {
+    vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
+    const queued = {
+      ...partyOf(lobby([player("me"), player("Ann")]), 65_000, 2),
+      ascentRound: 1,
+    };
+    expect(queueLine({ ...queued, queuedMs: null })).toBeUndefined();
+    const line = queueLine(queued) as unknown as FakeElement;
+    expect(line.className).toBe("party-status");
+    expect(line.find("party-ascent")).toBeDefined();
+    expect(line.find("party-queued")?.textContent).toBe(
+      lookingLabel(queued.mode, queued.teamSize, 65_000, 2),
+    );
+    const body = lobbyWindowBody(queued) as unknown as FakeElement;
+    expect([body.find("party-queued"), body.find("party-ascent")]).toEqual([undefined, undefined]);
   });
 
   it("says how long a queued party has looked for a team (#1766)", () => {

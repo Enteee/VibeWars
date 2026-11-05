@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { joinByCode, openRail } from "./helpers/menu.js";
-import { copyInvite, hostLobby, lobbyWindow, openPeers, openToFriends } from "./helpers/peers.js";
+import { joinByCode, lobbyWindow, openRail, shutLobbyWindow } from "./helpers/menu.js";
+import { copyInvite, hostLobby, openPeers, openToFriends } from "./helpers/peers.js";
 
 /**
  * The screen bar every menu screen shares (#578), in the top bar (#1272):
@@ -106,8 +106,8 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await openMenu(guest);
     const hostInvite = await copyInvite(host);
     await openToFriends(host);
-    // The bar names whose lobby it is, never its key (#2100).
-    const guestLabel = guest.locator("#topbar .lobby-code-label");
+    // The Lobby window names whose lobby it is, never its key (#2100, #2385).
+    const guestLabel = (await lobbyWindow(guest)).locator(".lobby-code-label");
     await expect(guestLabel).toHaveText("Your lobby");
     const ownInvite = await copyInvite(guest);
     // Alone, the host's Lobby counts nobody, and its window says so (#2385).
@@ -115,9 +115,10 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(await lobbyWindow(host)).toContainText("Just you.");
 
     await joinByCode(guest, hostInvite);
+    const leave = (await lobbyWindow(guest)).getByRole("button", { name: "Leave", exact: true });
     await expect(guestLabel).toHaveText("Lobby");
-    const leave = guest.locator("#topbar").getByRole("button", { name: "Leave", exact: true });
     await expect(leave).toBeVisible();
+    await shutLobbyWindow(guest);
     await expect(host.locator("#topbar .topbar-badge")).toHaveText("2");
     await expect((await lobbyWindow(host)).locator(".party-member")).toHaveCount(2);
     // A party queues in card 4: alone only.
@@ -131,6 +132,7 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(hosted).toHaveAttribute("title", "The host picks the mode");
     // The builders are everyone's, and opening one leaves no lobby.
     await openRail(guest, "Team Builder");
+    await lobbyWindow(guest);
     await expect(guestLabel).toHaveText("Lobby");
     await expect(leave).toBeVisible();
 
@@ -317,7 +319,7 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
 });
 
 for (const screen of ["Random Arena", "Character Builder"] as const) {
-  test(`#2053: on a phone, ${screen} folds the lobby's Copy invite link into a ⋯, in full`, async ({
+  test(`#2053: on a phone, ${screen} folds the Lobby into a ⋯, its window's Copy invite link in full (#2385)`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -325,9 +327,11 @@ for (const screen of ["Random Arena", "Character Builder"] as const) {
     await openRail(page, screen);
     const bar = page.locator("#topbar");
     await expect(bar.getByRole("button", { name: "Record", exact: true })).toHaveCount(0);
-    const copy = bar.getByRole("button", { name: "Copy invite link", exact: true });
-    await expect(copy).toBeHidden();
-    await bar.locator(".topbar-more").click();
+    await expect(bar.locator(".topbar-lobby-button")).toBeHidden();
+    const copy = (await lobbyWindow(page)).getByRole("button", {
+      name: "Copy invite link",
+      exact: true,
+    });
     await expect(copy).toBeVisible();
     const box = await copy.boundingBox();
     expect(box).not.toBeNull();
@@ -342,7 +346,7 @@ for (const screen of ["Random Arena", "Character Builder"] as const) {
   });
 }
 
-test("#1525: on a phone, the join's ⋯, Copy invite link and the global icons stay on screen", async ({
+test("#1525: on a phone, the ⋯, the global icons and the Lobby window's Copy invite link stay on screen", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 640 });
@@ -355,8 +359,14 @@ test("#1525: on a phone, the join's ⋯, Copy invite link and the global icons s
   expect(right).toBeLessThanOrEqual(320);
   const overflow = await bar.evaluate((node) => node.scrollWidth - node.clientWidth);
   expect(overflow).toBe(0);
-  await more.click();
-  await expect(bar.getByRole("button", { name: "Copy invite link", exact: true })).toBeVisible();
+  const panel = await lobbyWindow(page);
+  await expect(panel.getByRole("button", { name: "Copy invite link", exact: true })).toBeVisible();
+  const edges = await panel.evaluate((node) => {
+    const box = node.getBoundingClientRect();
+    return [box.left, box.right];
+  });
+  expect(edges[0]).toBeGreaterThanOrEqual(0);
+  expect(edges[1]).toBeLessThanOrEqual(320);
   // No key to type (#2100).
   await expect(bar.getByRole("textbox")).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(

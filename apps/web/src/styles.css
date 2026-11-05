@@ -256,22 +256,6 @@ body {
   }
 }
 
-/* Short of room, the bar's lobby goes without its label: Copy invite
-   link says whose it is (#1526, #2100). The host's Closed/Open stays
-   until the bar runs out: it decides whether friends get in at all
-   (#1682). */
-@media (width <= 90rem) {
-  .topbar-lobby:not(.is-joining) .lobby-code-label {
-    display: none;
-  }
-}
-
-@media (width <= 48rem) {
-  .topbar-lobby .topbar-lobby-open-label {
-    display: none;
-  }
-}
-
 /* Just above 75rem the host's map shares the row with all of that: its
    select says which map, and the word Map stays only for a reader. */
 @media (75rem < width <= 80rem) {
@@ -342,13 +326,24 @@ body {
   margin-left: 0;
 }
 
-/* The lobby this tab is in (#1526): Copy invite link, and a guest's Leave. */
+/* The lobby this tab is in (#1526): Copy invite link, the host's
+   Closed/Open and a guest's Leave, on top of the Lobby window (#2385). */
 .topbar-lobby {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
-  margin-right: 0.6rem;
   white-space: nowrap;
+}
+
+.lobby-window-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.lobby-window-controls[hidden] {
+  display: none;
 }
 
 .topbar-lobby[hidden],
@@ -406,20 +401,6 @@ body {
 
 #topbar .topbar-lobby .topbar-lobby-open[aria-pressed="true"] .topbar-lobby-open-glyph {
   filter: brightness(0);
-}
-
-/* Between the ⋯ and a whole row the lobby crowds the global icons off
-   the bar (#1526). */
-@media (45rem < width <= 60rem) {
-  /* The host's lock (#1682) takes its room from the gaps. */
-  #topbar .topbar-lobby {
-    gap: 0.25rem;
-    margin-right: 0.2rem;
-  }
-
-  #topbar .topbar-lobby .topbar-lobby-open {
-    padding: 0.2rem 0.35rem;
-  }
 }
 
 #topbar .topbar-join-button {
@@ -1581,6 +1562,17 @@ body {
 .rail-title {
   margin: 0 0 -0.6rem;
   font-size: 1.05rem;
+}
+
+/* How long the party has been queued (#1766), on top of a mode's screen. */
+.party-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
 }
 
 /* Who is in this lobby (#1526), in the top bar's Lobby window (#2385). */
