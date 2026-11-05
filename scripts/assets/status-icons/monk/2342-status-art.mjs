@@ -2,13 +2,20 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Monk staples (#2286), art #2342.
-  // Enchantment: a bolt and a cross, the Health healed returning as Energy.
+  // Monk staples (#2286, #2302), art #2342.
+  // Enchantment: a flame over a ground bar, Energy kindled by every blow.
+  "balthazars-spirit": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3c2.500 3 4 4.500 4 7a4 4 0 0 1-8 0c0-2.500 1.500-4 4-7z" ${stroke(c, 1.7)}/>` +
+      `<path d="M5 20h14" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a bolt in a ring that loops back, Energy returned.
   "essence-bond": [
     "enchantment",
     (c) =>
-      `<path d="M10 4 6 12h4l-1.500 7" ${stroke(c, 1.8)}/>` +
-      `<path d="M16 8v8M12 12h8" ${stroke(c, 1.7)}/>`,
+      `<path d="M13 6l-4 6h4l-1.500 6" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 3a9 9 0 1 1-7 3.500M3 3.500l2.500 3.500 3-1.500" ${stroke(c, 1.5)}/>`,
   ],
   // Enchantment: a heart held in a shield, the blow turned to Health.
   "life-barrier": [

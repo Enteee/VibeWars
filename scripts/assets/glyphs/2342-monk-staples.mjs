@@ -5,12 +5,22 @@ import { inkFill, inkLine } from "../glyph-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../glyph-kit.mjs").GlyphEntry>>} */
 const glyphs = {
-  "bolt-bond-cross": {
-    means: "Essence Bond: a bolt and a cross joined by a bar: the Health healed returns as Energy.",
+  "bolt-loop": {
+    means: "Essence Bond: a solid bolt in a ring that loops back on itself: Energy returned.",
     draw: () =>
-      inkFill("M8 2L3 12H7L5 22L12 10H8Z") +
-      inkFill("M15.500 6H18.500V10H22V13H18.500V17H15.500V13H12V10H15.500Z") +
-      inkLine("M10 18H19", 2),
+      inkFill("M14 5L8 13H12L10 19L17 10H13Z") +
+      inkLine("M12 2A10 10 0 1 1 4 6", 2) +
+      inkFill("M1 3L8 3.500L4 9Z"),
+  },
+  "flame-spirit": {
+    means:
+      "Balthazar's Spirit: a solid flame with a hollow heart over a ground bar: Energy kindled by every blow.",
+    draw: () =>
+      inkFill(
+        "M12 1C15 6 19 9 19 14A7 7 0 0 1 5 14C5 11 7 9 8 7C9 9 10 9.500 10 9.500C10 6 11 4 12 1Z",
+      ) +
+      `<path d="M12 12C13.500 14 14 15 14 16A2 2 0 0 1 10 16C10 15 10.500 14 12 12Z" fill="${C.bg}"/>` +
+      inkLine("M4 22H20", 2.4),
   },
   "shield-heart": {
     means: "Life Barrier: a shield outline holding a solid heart: damage turned to Health.",
