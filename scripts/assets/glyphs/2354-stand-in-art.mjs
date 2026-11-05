@@ -14,11 +14,10 @@ const glyphs = {
       inkFill("M17.500 2L19.500 8H15.500Z"),
   },
   "plus-burst": {
-    means:
-      "Healing Burst: a solid cross with four rays flung off its corners: a heal bursting out.",
+    means: "Healing Burst: a solid cross inside a broken ring: a heal bursting out in an area.",
     draw: () =>
-      inkFill("M9.500 6H14.500V9.500H18V14.500H14.500V18H9.500V14.500H6V9.500H9.500Z") +
-      inkLine("M4 4L6 6M20 4L18 6M4 20L6 18M20 20L18 18", 2.2),
+      inkFill("M10 7H14V10H17V14H14V17H10V14H7V10H10Z") +
+      `<circle cx="12" cy="12" r="10" ${stroke(C.ink, 2)} stroke-dasharray="7 5.800"/>`,
   },
   "drops-gather": {
     means: "Hypochondria: three drops drawn in toward one ring: conditions gathered onto a foe.",
@@ -41,11 +40,12 @@ const glyphs = {
       inkLine("M18 5V19M12 8L24 16M12 16L24 8", 1.8),
   },
   "signet-thorns": {
-    means: "Signet of Suffering: a signet ring with a bleeding drop and thorns on its rim.",
+    means:
+      "Signet of Suffering: a plain signet ring round a solid hex diamond with a drop cut out: pain per hex.",
     draw: () =>
-      `<circle cx="12" cy="12" r="7" ${stroke(C.ink, 2.2)}/>` +
-      inkFill("M12 8C14 11 15 12 15 13.500A3 3 0 0 1 9 13.500C9 12 10 11 12 8Z") +
-      inkLine("M12 5V1.500M5 12H1.500M19 12H22.500M7 7L4.500 4.500M17 7L19.500 4.500", 1.8),
+      `<circle cx="12" cy="12" r="9.500" ${stroke(C.ink, 2.2)}/>` +
+      inkFill("M12 6L18 12L12 18L6 12Z") +
+      `<path d="M12 9.500C13.500 11.500 13.800 12 13.800 13A1.800 1.800 0 0 1 10.200 13C10.200 12 10.500 11.500 12 9.500Z" fill="${C.bg}"/>`,
   },
 };
 
