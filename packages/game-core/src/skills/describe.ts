@@ -401,11 +401,17 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `+${String(pips)} Health regeneration for each enchantment on you (at most ${String(max)})`,
     );
   }
-  if (definition.energyPips < 0) {
-    parts.push(`−${String(-definition.energyPips)} Energy degeneration`);
+  // Blood is Power's at its caster's rank (#2328); none at a rank that
+  // gives none, Lyssa's Aura's at 0.
+  const energyPips =
+    ranks === undefined
+      ? statAtTwelve(definition.energyPips)
+      : Math.round(statAt(definition.energyPips, ranks));
+  if (energyPips < 0) {
+    parts.push(`−${statText(definition.energyPips, ranks, whole)} Energy degeneration`);
   }
-  if (definition.energyPips > 0) {
-    parts.push(`+${String(definition.energyPips)} Energy regeneration`);
+  if (energyPips > 0) {
+    parts.push(`+${statText(definition.energyPips, ranks, whole)} Energy regeneration`);
   }
   // Melandru's Resilience's (#2189), Conviction's scaled (#2217).
   if (statAtTwelve(definition.healthPipsPerCondition) !== 0) {
@@ -3255,8 +3261,13 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     }
     case "adrenaline-gain": {
-      const magnitude = countedMagnitude(effect.strikes, effect.per, ranks);
-      const strikes = `${shown(magnitude)} ${magnitude.current === 1 ? "strike" : "strikes"}`;
+      // Balthazar's Spirit's points (#2302): "gains 2...5 adrenaline".
+      const amount = effect.units ?? effect.strikes;
+      const magnitude = countedMagnitude(amount, effect.per, ranks);
+      const strikes =
+        effect.units === undefined
+          ? `${shown(magnitude)} ${magnitude.current === 1 ? "strike" : "strikes"} of adrenaline`
+          : `${shown(magnitude)} adrenaline`;
       // Mark of Fury's attacker gains them (#2259).
       const gain =
         effect.recipient === "owner"
@@ -3265,17 +3276,11 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
             ? "Target gains"
             : "Gain";
       // "Make Your Time!"'s (#2222): "Gain 2 strikes of adrenaline for each ally in earshot".
-      const counted = withPerText(
-        `${gain} ${strikes} of adrenaline`,
-        effect.strikes,
-        effect.per,
-        ranks,
-        {
-          alone: gain,
-          unit: " strikes of adrenaline",
-          onTarget: "on them",
-        },
-      );
+      const counted = withPerText(`${gain} ${strikes}`, amount, effect.per, ranks, {
+        alone: gain,
+        unit: " strikes of adrenaline",
+        onTarget: "on them",
+      });
       return {
         text: `${counted}${perFoeHit(effect)}${perOwnMeleeAttackSkill(effect)}`,
         magnitude,

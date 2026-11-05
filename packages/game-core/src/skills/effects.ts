@@ -326,7 +326,8 @@ export type CombatEvent =
     }
   /**
    * `targetId` gained `strikes` of adrenaline (#1735): from `skillId`'s
-   * `adrenaline-gain`, or from a blow when `undefined`. Only when one of
+   * `adrenaline-gain`, or from a blow when `undefined`. A fraction for
+   * points short of a strike (#2302). Only when one of
    * its adrenaline skills filled.
    */
   | {
@@ -1957,10 +1958,15 @@ export function applyEffect(
 
     case "adrenaline-gain": {
       // Whole strikes at the caster's rank (#2143), as a duration's (#2041):
-      // Enraging Charge's "0...3" gives none at a low rank.
-      const strikes =
+      // Enraging Charge's "0...3" gives none at a low rank. Or whole points
+      // (#2302), Balthazar's Spirit's.
+      const perGain = effect.units === undefined ? ADRENALINE_PER_STRIKE : 1;
+      const gained =
         withPerCount(
-          Math.max(0, resolveMagnitude(effect.strikes, context.ranksFrom ?? caster)),
+          Math.max(
+            0,
+            resolveMagnitude(effect.units ?? effect.strikes, context.ranksFrom ?? caster),
+          ),
           effect.per,
           caster,
           target,
@@ -1975,15 +1981,11 @@ export function applyEffect(
               ? target
               : undefined
             : caster;
-      if (
-        gainer !== undefined &&
-        strikes > 0 &&
-        fillPools(gainer, strikes * ADRENALINE_PER_STRIKE, false)
-      ) {
+      if (gainer !== undefined && gained > 0 && fillPools(gainer, gained * perGain, false)) {
         events.push({
           kind: "adrenaline-gained",
           targetId: gainer.id,
-          strikes,
+          strikes: (gained * perGain) / ADRENALINE_PER_STRIKE,
           skillId: context.skillId,
         });
       }

@@ -86,18 +86,17 @@ describe("Lightning Strike (#918)", () => {
 });
 
 describe("Mind Shock (#918)", () => {
-  it("with more energy than its target: twice 42 lightning and a knockdown", () => {
+  it("with more energy than its target: 42 and 42 more lightning in one hit, and a knockdown", () => {
     const target = foe("foe", { energy: 10 });
     // 30 energy, 5 of it paid: still 25 against 10.
     const events = use(caster(), "elementalist.mind-shock", target);
-    const each = lightning(42, target);
-    expect(events.map((event) => event.kind)).toEqual(["damage", "damage", "knocked-down"]);
+    expect(events.map((event) => event.kind)).toEqual(["damage", "knocked-down"]);
     expect(events).toContainEqual({
       kind: "knocked-down",
       targetId: "foe",
       durationSeconds: KNOCKDOWN_SECONDS,
     });
-    expect(target.health).toBe(1000 - 2 * each);
+    expect(target.health).toBe(1000 - lightning(84, target));
     expect(target.knockdownRemaining).toBe(KNOCKDOWN_SECONDS);
   });
 
@@ -112,8 +111,8 @@ describe("Mind Shock (#918)", () => {
   it("against Fleeting Stability: the bonus lands, the knockdown is prevented", () => {
     const target = foe("foe", { energy: 0 });
     target.statuses.apply("fleeting-stability", 10, "foe", NO_RANKS);
-    const events = use(caster(), "elementalist.mind-shock", target);
-    expect(events.filter((event) => event.kind === "damage")).toHaveLength(2);
+    use(caster(), "elementalist.mind-shock", target);
+    expect(target.health).toBe(1000 - lightning(84, target));
     expect(target.knockdownRemaining).toBe(0);
   });
 

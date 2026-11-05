@@ -197,16 +197,16 @@ describe("Searing Heat (#2288)", () => {
 });
 
 describe("Lightning Bolt (#2288)", () => {
-  it.each([12, 0])("at rank %i strikes a moving foe twice as hard", (rank) => {
-    const still = foe("f");
+  // 82 and 10 in one hit (#2330), through 60 armor a quarter pierced.
+  it.each([
+    [12, 106],
+    [0, 13],
+  ])("at rank %i strikes a moving foe once, twice as hard: %i", (rank, amount) => {
     const moving = foe("m");
     moving.moving = true;
-    const e = elementalist(rank);
-    const [base] = damageTo(land(BOLT, e, still, placed()).events, "f");
-    const [first, second] = damageTo(land(BOLT, e, moving, placed()).events, "m");
-    expect(damageTo(land(BOLT, e, still, placed()).events, "f")).toHaveLength(1);
-    expect(first).toBe(base);
-    expect(second).toBe(base);
+    expect(damageTo(land(BOLT, elementalist(rank), moving, placed()).events, "m")).toEqual([
+      amount,
+    ]);
   });
 
   it("is 41 at rank 12 and 5 at rank 0, its armor penetration 25%", () => {
@@ -218,6 +218,42 @@ describe("Lightning Bolt (#2288)", () => {
       amount: { scaling: { atTwelve: 41 } },
       armorPenetration: 0.25,
     });
+  });
+
+  it("dodged, it deals neither its damage nor its bonus (#2330)", () => {
+    const spec = (id: string, team: number, spawn: Vec2): ParticipantSpec => ({
+      id,
+      team,
+      skillBar: id === "e" ? [BOLT] : [],
+      attributeRanks: ranked(12),
+      equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+      maxHealth: 1e5,
+      maxEnergy: 100,
+      spawn,
+      facing: 0,
+    });
+    const sim = new MatchSimulation({
+      seed: "staples-ele-a",
+      participants: [spec("e", 0, vec2(0, 0)), spec("f", 1, vec2(400, 0))],
+    });
+    sim.setTarget("e", "f");
+    expect(sim.requestSkill("e", 0)?.check).toEqual({ ok: true });
+    const events: CombatEvent[] = [];
+    const run = (seconds: number) => {
+      for (let tick = 0; tick < Math.round(seconds / DT); tick += 1) {
+        events.push(...sim.step(DT).log.flatMap((entry) => entry.events));
+      }
+    };
+    run(1 + 2 * DT);
+    expect(sim.projectiles.length).toBeGreaterThan(0);
+    const dodger = sim.get("f");
+    if (dodger === undefined) {
+      throw new Error("no participant f");
+    }
+    dodger.position = vec2(0, 300);
+    dodger.combatant.moving = true;
+    run(2);
+    expect(damageTo(events, "f")).toEqual([]);
   });
 });
 

@@ -57,14 +57,15 @@ function printStatuses(): void {
   for (const status of Object.values(STATUS_DEFINITIONS)) {
     const parts: string[] = [];
     const healthPips = statAtTwelve(status.healthPips);
+    const energyPips = statAtTwelve(status.energyPips);
     const armorModifier = statAtTwelve(status.armorModifier);
     const attackDurationMultiplier = statAtTwelve(status.attackDurationMultiplier);
     const healingMultiplier = statAtTwelve(status.healingMultiplier);
     if (healthPips !== 0) {
       parts.push(`${String(healthPips)} health pips`);
     }
-    if (status.energyPips !== 0) {
-      parts.push(`${String(status.energyPips)} energy pips`);
+    if (energyPips !== 0) {
+      parts.push(`${String(energyPips)} energy pips`);
     }
     if (armorModifier !== 0) {
       parts.push(`${String(armorModifier)} armor`);
