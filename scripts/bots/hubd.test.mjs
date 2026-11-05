@@ -2937,7 +2937,9 @@ describe("hubd watching CI for an agent (#736)", () => {
       run: how.e2e === undefined ? run : { ...run, conclusion: "failure" },
     });
     hubd.setCi(sha, "dependency-review.yml", { id: 200, jobs: [job("dependency-review")] });
-    hubd.setCi(sha, "e2e-repeat.yml", { id: 400, jobs: [job("e2e-repeat (1)")] });
+    if (how.unfiltered !== true) {
+      hubd.setCi(sha, "e2e-repeat.yml", { id: 400, jobs: [job("e2e-repeat (1)")] });
+    }
     hubd.setCi(sha, "codeql.yml", { id: 500, jobs: [job("analyze")] });
   };
   /**
@@ -2977,6 +2979,16 @@ describe("hubd watching CI for an agent (#736)", () => {
     await sleep(800);
     expect(told(hubd, "developer")).toEqual(["CI on #9 @ abc1234: PASS.\nyour note: then QA"]);
     expect(JSON.parse(fs.readFileSync(watchesFile(hubd), "utf8"))).toEqual([]);
+  }, 30_000);
+
+  it("answers when a path filter left e2e-repeat unstarted", async () => {
+    const hubd = await startHubd(5000);
+    hubd.expectChecks(["ci"]);
+    ran(hubd, "abc1234def", { unfiltered: true });
+
+    await hubd.request("developer", "watch", ["ci", "9"]);
+    await hubd.until(() => told(hubd, "developer").length > 0, "the watch to answer");
+    expect(told(hubd, "developer")).toEqual(["CI on #9 @ abc1234: PASS."]);
   }, 30_000);
 
   it("names the failing job and the e2e specs its log names", async () => {
