@@ -4,7 +4,7 @@ const rows = {
   "monk.essence-bond": { glyph: "signet-energy", modifier: "take" },
   "monk.life-barrier": { glyph: "armor", modifier: "half" },
   "monk.retribution": { glyph: "smite-attacking", modifier: "upkeep" },
-  "monk.scourge-healing": { glyph: "heal", modifier: "bleed" },
+  "monk.scourge-healing": { glyph: "heal", modifier: "bolt" },
   "monk.healing-seed": { glyph: "heal", modifier: "pair" },
   "monk.succor": { glyph: "heal", modifier: "plus" },
   "monk.divine-boon": { glyph: "star-aura", modifier: "plus" },
