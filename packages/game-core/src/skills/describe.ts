@@ -1695,8 +1695,7 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     (event === "bearer-uses-skill" || event === "source-targets-bearer") &&
     trigger.usedSkill !== undefined
   ) {
-    const { type, notType, attributes, profession, elite, adrenal, targetsAlly } =
-      trigger.usedSkill;
+    const { type, notType, attributes, profession, elite, adrenal, targets } = trigger.usedSkill;
     const words = [
       ...(notType === undefined
         ? []
@@ -1712,8 +1711,9 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     if (event === "source-targets-bearer") {
       return `is targeted by your ${words.join(" ")}`;
     }
-    // Zealot's Fire's "a skill that targets an ally" (#2282).
-    const on = targetsAlly === undefined ? "" : " on an ally";
+    // Zealot's Fire's "a skill that targets an ally" (#2282), Signet of
+    // Suffering's "skill that targets a foe" (#2333).
+    const on = targets === undefined ? "" : ` on ${targets === "ally" ? "an ally" : "a foe"}`;
     return `uses ${/^[aeiou]/i.test(words[0] ?? "") ? "an" : "a"} ${words.join(" ")}${on}`;
   }
   return undefined;

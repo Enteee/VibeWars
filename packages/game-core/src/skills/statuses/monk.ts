@@ -674,7 +674,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     triggers: [
       {
         on: "bearer-uses-skill",
-        usedSkill: { targetsAlly: true },
+        usedSkill: { targets: "ally" },
         effects: [
           {
             kind: "splash",
@@ -698,7 +698,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       },
       {
         on: "bearer-uses-skill",
-        usedSkill: { targetsAlly: true },
+        usedSkill: { targets: "ally" },
         effects: [{ kind: "energy-loss", amount: { flat: 1 } }],
         target: "source",
         skillId: "monk.zealots-fire",

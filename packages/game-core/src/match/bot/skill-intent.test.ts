@@ -322,6 +322,9 @@ const NO_BOT_USE = new Set([
   // Adrenaline by foes in earshot and a raised maximum (#2315), as
   // "Make Your Time!"'s and Endure Pain's: no rule the bot weighs.
   "warrior.to-the-limit",
+  // A rider on the next Necromancer skill on a foe (#2333), its effect only
+  // in a status trigger: no role the bot weighs.
+  "necromancer.signet-of-suffering",
 ]);
 
 function skill(id: string) {
