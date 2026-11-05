@@ -3,6 +3,7 @@ import {
   AREA_EARSHOT,
   AREA_IN_THE_AREA,
   AREA_NEARBY,
+  RANGE_COMPASS,
   RANGE_SPELL,
 } from "../distances.js";
 import type { DamageType } from "../equipment/types.js";
@@ -708,8 +709,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     );
     // Way of the Assassin's "while wielding daggers" (#2275).
     const weapon = definition.criticalChanceBonusWeapon;
+    // "Fear Me!"'s "against foes that are not moving" (#2320).
+    const versus =
+      definition.criticalChanceBonusVersus === undefined ? "" : " against foes that are not moving";
     parts.push(
-      `${chance}% critical chance${weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`}`,
+      `${chance}% critical chance${weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`}${versus}`,
     );
   }
   if (definition.energyPerCritical !== 0) {
@@ -1028,7 +1032,8 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const what = definition.pulse.effects
       .flatMap((effect) => describeEffects(effect, triggerRanks))
       .map(({ text }) => lowerFirst(text));
-    parts.push(`every ${String(definition.pulse.everySeconds)} seconds: ${what.join(", ")}`);
+    const every = definition.pulse.everySeconds;
+    parts.push(`every ${every === 1 ? "second" : `${String(every)} seconds`}: ${what.join(", ")}`);
     // Agony's (#2275): "this spirit loses 3...10 Health for each foe hurt".
     const charge = definition.pulse.chargesSourcePerHit;
     if (charge !== undefined) {
@@ -1108,7 +1113,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`${getProfession(profession).name} enchantments recharge ${faster}% faster`);
   }
   parts.push(
-    ...definition.ownSkillModifiers.map((modifier) => describeOwnSkillModifier(modifier, ranks)),
+    ...definition.ownSkillModifiers.map((modifier) =>
+      describeOwnSkillModifier(
+        modifier,
+        ranks,
+        definition.category === "hex" ? "the target's" : "your",
+      ),
+    ),
   );
   if (definition.skillArmorPenetration !== undefined) {
     const { share, profession } = definition.skillArmorPenetration;
@@ -1659,6 +1670,12 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
   if (event === "bearer-hits") {
     return weapon === "melee" ? "hits with a melee attack" : `hits with ${NEEDED_WEAPON[weapon]}`;
   }
+  // Tainted Flesh's (#2313): the weapon is the attacker's.
+  if (event === "bearer-hit-by-attack") {
+    return weapon === "melee"
+      ? "is hit by a foe's melee attack"
+      : `is hit by a foe's attack with ${NEEDED_WEAPON[weapon]}`;
+  }
   return `${TRIGGER_WHEN[event]} with ${NEEDED_WEAPON[weapon]}`;
 }
 
@@ -2123,14 +2140,15 @@ function describeTrigger(
     }
     // Ether Prodigy's end (#1984): "when it ends: lose 2 Health for each
     // point of Energy you have"; on a foe, Spoil Victor's "it loses 63
-    // Health" (#2282).
+    // Health" (#2282); its caster's, Dark Aura's "you lose 17 Health" (#2313).
     if (
       effect.kind === "lose-health" &&
       effect.recipient === "target" &&
-      trigger.target === "bearer"
+      (trigger.target === "bearer" || trigger.target === "source")
     ) {
+      const loser = trigger.target === "source" ? "you lose" : bearerIsFoe ? "it loses" : "lose";
       const text = describeEffect(effect, ranks)
-        .text.replace(/^Target foe loses/, bearerIsFoe ? "it loses" : "lose")
+        .text.replace(/^Target foe loses/, loser)
         .replace(/Energy they have/, "Energy you have");
       return [sentence(`${when}: ${text}`)];
     }
@@ -2235,6 +2253,34 @@ function describeTrigger(
             : sentence(`${when}: ${allies}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
       );
     }
+    // Demonic Flesh's (#2313): on a self-buff the user is you, as its
+    // enders say (#1841), and a splash round you that leaves the target
+    // out strikes the others: "whenever you use a skill on a foe, other
+    // foes adjacent to you take 17 shadow damage".
+    if (
+      effect.kind === "if" &&
+      effect.condition.kind === "target-foe" &&
+      trigger.target === "skill-target" &&
+      !bearerIsFoe &&
+      when.startsWith("whenever it uses ") &&
+      effect.effects.every((inner) => inner.kind === "splash" && inner.around === "caster")
+    ) {
+      const yours = `whenever you ${secondPerson(when.slice("whenever it ".length))} on a foe`;
+      return effect.effects.flatMap((inner) => {
+        if (inner.kind !== "splash") {
+          return [];
+        }
+        const area = AREA_TEXT.get(inner.radius);
+        const reached = `${inner.includesCentre === true ? "" : "other "}${SPLASH_SIDE[inner.hits]} ${area === "adjacent" ? "adjacent to you" : `${area ?? `within ${String(inner.radius)}`} around you`}`;
+        return inner.effects.map((each) =>
+          sentence(
+            each.kind === "damage"
+              ? `${yours}, ${reached} take ${amount(each.amount)}${typeWord(each.type)} damage`
+              : `${yours}, ${reached}: ${lowerFirst(describeEffect(each, ranks).text)}`,
+          ),
+        );
+      });
+    }
     // The bearer is "it" in its own tooltip (#988): "when it ends, if it
     // is attacking: heals for 88".
     if (effect.kind === "if" && trigger.target === "bearer") {
@@ -2298,7 +2344,8 @@ function describeNextSkill(
 /**
  * How a status changes its bearer's own skills of a kind (#1761): "your
  * Monk spells cost 5 less Energy (minimum 1)", "your next Dervish
- * enchantment lasts 122% longer".
+ * enchantment lasts 122% longer". On a hex they are the hexed foe's
+ * (#2337): "the target's signets take 2× as long to cast".
  */
 function describeOwnSkillModifier(
   {
@@ -2318,6 +2365,7 @@ function describeOwnSkillModifier(
     uses,
   }: OwnSkillModifier,
   ranks: ReadonlyMap<string, number> | undefined,
+  whose: "your" | "the target's",
 ): string {
   const one = uses === 1;
   // A scaled number prints at `ranks` (#2158), as a status stat does.
@@ -2377,7 +2425,8 @@ function describeOwnSkillModifier(
     // Iron Mist's "spells that target a foe" (#2311).
     filter.targetsFoe ? (one ? "that targets a foe" : "that target a foe") : undefined,
   ].filter((word) => word !== undefined);
-  const which = uses === undefined ? "your" : one ? "your next" : `your next ${String(uses)}`;
+  const which =
+    uses === undefined ? whose : one ? `${whose} next` : `${whose} next ${String(uses)}`;
   return `${which} ${named.join(" ")} ${changes.join(" and ")}`;
 }
 
@@ -2601,6 +2650,16 @@ function conditionText(
       return [first ?? "Always", ...rest.map((text) => text.replace(/^If /, ""))].join(" and ");
     }
     case "count-at-least":
+      // "On Your Knees!"'s "if any adjacent foe is knocked down" (#2320).
+      if (
+        condition.atLeast === 1 &&
+        condition.count.kind === "foes-within" &&
+        condition.count.knockedDown === true
+      ) {
+        const where =
+          AREA_TEXT.get(condition.count.radius) ?? `within ${String(condition.count.radius)}`;
+        return `If any ${where} foe is knocked down`;
+      }
       return `If ${countAll(condition.count)} number ${String(condition.atLeast)} or more`;
     case "count-at-most":
       return `If ${countAll(condition.count)} are no more than ${countAll(condition.than)}`;
@@ -2758,8 +2817,11 @@ function onlyIfText(condition: StateCondition, ranks: ReadonlyMap<string, number
     .replaceAll(" or target is ", " or ");
 }
 
-/** A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes". */
-function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>): string {
+/**
+ * A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes".
+ * Without `withOnlyIf`, its `onlyIf` is left for the caller to say (#2313).
+ */
+function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>, withOnlyIf = true): string {
   // Hex Eater Signet's "adjacent allies with a hex" (#1954).
   // Mystic Healing's "enchanted party members", "with an enchantment" (#2207).
   const article = splash.onlyBearing === "enchantment" ? "an" : "a";
@@ -2771,7 +2833,8 @@ function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>): string 
       ? ""
       : ` using ${TYPE_TEXT[splash.onlyUsing].replace(/\.$/, "").toLowerCase()} skills`;
   // Gust's "while attacking or moving" (#2288).
-  const onlyIf = splash.onlyIf === undefined ? "" : ` ${onlyIfText(splash.onlyIf, ranks)}`;
+  const onlyIf =
+    splash.onlyIf === undefined || !withOnlyIf ? "" : ` ${onlyIfText(splash.onlyIf, ranks)}`;
   const reached = foesWithin(splash.radius, splash.hits);
   const who = `${splash.includesCentre === true ? `Target and ${lowerFirst(reached)}` : reached}${splash.around === "caster" ? " around you" : ""}${splash.alsoAround === "caster" ? " around the target and you" : ""}${bearing}${using}${onlyIf}`;
   return splash.maxTargets === undefined || splash.hits === "party"
@@ -3167,7 +3230,9 @@ function countEach(count: CountRule, onTarget: string): string {
           ? `${count.categories.join(" or ")} removed`
           : count.kind === "maintained-enchantments"
             ? "enchantment you are maintaining"
-            : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+            : count.kind === "knocked-down"
+              ? "foe knocked down"
+              : `${perCountNoun(count)} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
 }
 
 /** All of what `count` counts, as a condition names it (#2247): "target's hexes", "your enchantments". */
@@ -3191,9 +3256,15 @@ function perCountNoun(count: CountRule): string {
           ? `removed ${count.categories.join(" or ")}`
           : count.kind === "maintained-enchantments"
             ? "maintained enchantment"
-            : count.kind === "foes-within"
-              ? "foe"
-              : "ally";
+            : count.kind === "knocked-down"
+              ? "foe knocked down"
+              : count.kind === "dead-allies-within"
+                ? "dead ally"
+                : count.kind === "foes-within"
+                  ? count.knockedDown === true
+                    ? "knocked-down foe"
+                    : "foe"
+                  : "ally";
 }
 
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
@@ -3657,6 +3728,17 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         magnitude: undefined,
       };
     case "recharge-faster":
+      // "None Shall Pass!"'s "1...8 seconds faster for each foe knocked down" (#2320).
+      if (!("fraction" in effect)) {
+        return {
+          text: withPerText("", effect.seconds, effect.per, ranks, {
+            alone: "This skill recharges",
+            unit: " seconds faster",
+            onTarget: "",
+          }),
+          magnitude: undefined,
+        };
+      }
       return {
         // Bitter Chill's "recharges instantly" (#1640).
         text:
@@ -3674,12 +3756,16 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
             : "This skill recharges instantly",
         magnitude: undefined,
       };
+    case "adrenaline-loss":
+      return { text: "Lose all adrenaline", magnitude: undefined };
     case "recharge-others":
       return {
         text:
           effect.which === "all"
             ? "Recharges all your other skills"
-            : `Recharges all your other ${effect.which} skills`,
+            : effect.which === "stance"
+              ? "Recharges all your stances"
+              : `Recharges all your other ${effect.which} skills`,
         magnitude: undefined,
       };
     case "summon": {
@@ -3810,6 +3896,23 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
           magnitude: undefined,
         };
       }
+      // A steal is the caster's, from those reached (#2313): Unholy Feast's
+      // "Steals up to 54 Health from up to 3 foes in the area", Feast of
+      // Corruption's "from each of target and adjacent foes that has a hex".
+      const [stolen] = effect.effects;
+      if (
+        effect.effects.length === 1 &&
+        (stolen?.kind === "life-steal" || stolen?.kind === "energy-steal")
+      ) {
+        const description = describeEffect(stolen, ranks);
+        const reached = lowerFirst(upTo(effect, ranks, false));
+        const condition = effect.onlyIf === undefined ? "" : onlyIfText(effect.onlyIf, ranks);
+        const from =
+          condition === ""
+            ? reached
+            : `each of ${reached} ${condition.startsWith("while ") ? "" : "that "}${condition}`;
+        return { text: `${description.text} from ${from}`, magnitude: description.magnitude };
+      }
       const paid = effect.effects.filter((each) => each.kind === "sacrifice-health");
       const inner = effect.effects
         .filter((each) => each.kind !== "sacrifice-health")
@@ -3838,14 +3941,21 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
                     ? `gain ${shown(describeMagnitude(each.amount, ranks))} Health`
                     : each.kind === "lose-health" && each.recipient === "target"
                       ? `lose ${shown(describeMagnitude(each.amount, ranks))} Health`
-                      : each.kind === "remove-status" && each.from === undefined
-                        ? lostInSplash(each, ranks)
-                        : // Verata's Sacrifice's (#1986).
-                          each.kind === "transfer-conditions" &&
-                            each.from === "target" &&
-                            resolveMagnitudeAtRanks(each.count, ranks) === Number.POSITIVE_INFINITY
-                          ? "transfer all their conditions to you"
-                          : lowerFirst(description.text),
+                      : // Fear Me!'s "lose 5 energy" (#2320).
+                        each.kind === "energy-loss" && each.on !== "caster"
+                        ? lowerFirst(description.text).replace(/^target loses/, "lose")
+                        : each.kind === "remove-status" && each.from === undefined
+                          ? lostInSplash(each, ranks)
+                          : // Ravenous Gaze's (#2313): the caster steals, from each.
+                            each.kind === "life-steal" || each.kind === "energy-steal"
+                            ? `you ${lowerFirst(description.text).replace(/^steals /, "steal ")} from each`
+                            : // Verata's Sacrifice's (#1986).
+                              each.kind === "transfer-conditions" &&
+                                each.from === "target" &&
+                                resolveMagnitudeAtRanks(each.count, ranks) ===
+                                  Number.POSITIVE_INFINITY
+                              ? "transfer all their conditions to you"
+                              : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
@@ -4180,6 +4290,8 @@ const AREA_TEXT: ReadonlyMap<number, string> = new Map([
   [AREA_NEARBY, "nearby"],
   [AREA_IN_THE_AREA, "in the area"],
   [AREA_EARSHOT, "in earshot"],
+  // "I Will Avenge You!"'s dead allies (#2320).
+  [RANGE_COMPASS, "in compass range"],
 ]);
 
 /** Where round its target a target-centred area reaches: "nearby it" (#998). */

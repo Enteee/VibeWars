@@ -68,7 +68,11 @@ export type WarriorStatusId =
   | "steady-stance"
   // Weapon gates (#2335).
   | "warriors-cunning"
-  | "dwarven-battle-stance";
+  | "dwarven-battle-stance"
+  // Warrior shouts that count (#2320).
+  | "i-will-avenge-you"
+  | "fear-me"
+  | "burst-of-aggression";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -629,5 +633,37 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       effects: [{ kind: "interrupt" }],
       skillId: "warrior.dwarven-battle-stance",
     },
+  }),
+  // "For each dead ally, you gain 10 seconds of +3...6...7 Health
+  // regeneration and your attacks are 25% faster" (#2320): the shout's
+  // duration counts the dead.
+  "i-will-avenge-you": define("i-will-avenge-you", "I Will Avenge You!", "shout", {
+    profession: "warrior",
+    healthPips: { scaling: { attributeId: "warrior.strength", atZero: 3, atTwelve: 6 } },
+    attackDurationMultiplier: 0.75,
+  }),
+  // "you have an additional 5...25...30% chance to land a critical hit
+  // with melee attacks against foes that are not moving" (#2320).
+  "fear-me": define("fear-me", "Fear Me!", "shout", {
+    profession: "warrior",
+    criticalChanceBonus: {
+      scaling: { attributeId: "warrior.tactics", atZero: 0.05, atTwelve: 0.25 },
+    },
+    criticalChanceBonusWeapon: "melee",
+    criticalChanceBonusVersus: "not-moving",
+  }),
+  // "you attack 33% faster. When this stance ends, you lose all
+  // adrenaline" (#2320): any end, a strip or another stance included.
+  "burst-of-aggression": define("burst-of-aggression", "Burst of Aggression", "stance", {
+    profession: "warrior",
+    attackDurationMultiplier: 0.67,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "adrenaline-loss" }],
+        target: "bearer",
+        skillId: "warrior.burst-of-aggression",
+      },
+    ],
   }),
 };

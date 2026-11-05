@@ -94,6 +94,7 @@ export function define(
     blockWhileUnder: undefined,
     criticalChanceBonus: 0,
     criticalChanceBonusWeapon: undefined,
+    criticalChanceBonusVersus: undefined,
     energyPerCritical: 0,
     healthPerCritical: 0,
     refreshesOnCritical: false,

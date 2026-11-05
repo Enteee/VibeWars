@@ -249,7 +249,7 @@ function validateSharedRelay(value: unknown): SharedRelay | undefined {
 }
 
 /** How long a minted credential lets its holder relay: anyone in the lobby, so not long. */
-export const TURN_CREDENTIAL_TTL_MS = 2 * 60 * 60 * 1000;
+export const TURN_CREDENTIAL_TTL_MS = 4 * 60 * 60 * 1000;
 
 /**
  * A credential for `shared` that expires `TURN_CREDENTIAL_TTL_MS` after

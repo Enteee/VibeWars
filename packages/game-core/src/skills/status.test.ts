@@ -244,9 +244,13 @@ describe("status definitions", () => {
       "blood-renewal": 5,
       "vampiric-spirit": 9,
       "ward-against-harm": 2.6,
+      "life-transfer": -7,
+      "life-transfer-regen": 7,
+      "weaken-knees": -3.4,
       succor: 1,
       "restful-breeze": 10,
       "vile-miasma": -4.2,
+      "i-will-avenge-you": 6,
     });
   });
 
@@ -943,11 +947,11 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     const set = new StatusSet();
     set.apply("mark-of-instability", 20, "s", NO_RANKS);
     set.drainChanges();
-    set.recordHitByAttack("s", 30, "lead");
-    set.recordHitByAttack("s", 30, undefined);
-    set.recordHitByAttack("a", 30, "dual");
+    set.recordHitByAttack("s", 30, "lead", WEAPONS.sword);
+    set.recordHitByAttack("s", 30, undefined, WEAPONS.sword);
+    set.recordHitByAttack("a", 30, "dual", WEAPONS.sword);
     expect(set.drainChanges()).toEqual([]);
-    set.recordHitByAttack("s", 30, "dual");
+    set.recordHitByAttack("s", 30, "dual", WEAPONS.sword);
     expect(set.drainChanges()).toEqual([
       {
         kind: "hit-by-attack",
@@ -1308,7 +1312,7 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Tiger Stance and Berserker Stance (#2181) 33%, Tiger's Fury (#2190) and Bestial Fury (#2317) 25%, Feral Aggression (#2317) 33%, Rapid Fire (#2189) 33% with a bow, Way of the Assassin (#2275) 5...20% with daggers, Dwarven Battle Stance (#2335) 33% with a hammer, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Tiger Stance and Berserker Stance (#2181) 33%, Tiger's Fury (#2190) and Bestial Fury (#2317) 25%, Feral Aggression (#2317) 33%, Rapid Fire (#2189) 33% with a bow, Way of the Assassin (#2275) 5...20% with daggers, Dwarven Battle Stance (#2335) 33% with a hammer, I Will Avenge You! (#2320) 25%, Burst of Aggression (#2320) 33%, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, StatusStat>> = {
       faintheartedness: 1.5,
@@ -1339,6 +1343,8 @@ describe("attack duration (ADR-0029)", () => {
       "way-of-the-assassin": {
         scaling: { attributeId: "assassin.critical-strikes", atZero: 0.95, atTwelve: 0.83 },
       },
+      "i-will-avenge-you": 0.75,
+      "burst-of-aggression": 0.67,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;
