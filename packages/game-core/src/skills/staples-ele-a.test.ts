@@ -187,6 +187,26 @@ describe("Searing Heat (#2288)", () => {
     expect(get(sim, "h").combatant.statuses.has("burning")).toBe(false);
   });
 
+  it("holds one ground effect, and burns as it ends at 5 s (#2329)", () => {
+    const sim = scene(0);
+    struck(sim, 2 + 0.1);
+    expect(sim.groundEffects.filter((effect) => effect.skillId === SEARING)).toHaveLength(1);
+    struck(sim, 4.8);
+    expect(get(sim, "f").combatant.statuses.has("burning")).toBe(false);
+    struck(sim, 0.2);
+    expect(get(sim, "f").combatant.statuses.has("burning")).toBe(true);
+    expect(sim.groundEffects).toHaveLength(0);
+  });
+
+  it("says its Burning lands when it ends, and creates its symbol once (#2329)", () => {
+    const lines = describeSkill(skill(SEARING), ranked(0)).effects.map((effect) => effect.text);
+    expect(lines).toEqual([
+      "Creates a symbol at your target's location for 5 seconds",
+      "Every 1s for 5s, foes nearby: deals 10 fire damage",
+      "When it ends, foes nearby: applies Burning for 3s (−7 Health degeneration)",
+    ]);
+  });
+
   it("strikes 34 at rank 12 and 10 at rank 0, before armor", () => {
     const at = (rank: number) => {
       const sim = scene(rank);

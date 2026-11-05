@@ -19,6 +19,7 @@ import { energyCostOf } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { creatureDamageMultiplier } from "./damage.js";
 import { resolveMagnitudeAtRanks, statAt, statAtTwelve } from "./scaling.js";
+import { isSelfOnlyStatus } from "./self-only.js";
 import {
   findStatusDefinition,
   getStatusDefinition,
@@ -384,6 +385,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     return id;
   }
   const triggerRanks = ranks ?? NO_RANKS;
+  // Only its caster's own reads "you" (#2341); one an ally can bear, "the bearer".
+  const selfOnly = isSelfOnlyStatus(id);
+  const bearer = selfOnly ? "you" : "the bearer";
+  const endsIf = (phrase: string): string =>
+    selfOnly ? `ends if you ${secondPerson(phrase)}` : `ends if the bearer ${phrase}`;
   const healthPips = statAtTwelve(definition.healthPips);
   const armorModifier = statAtTwelve(definition.armorModifier);
   const physicalDamageTakenBonus = statAtTwelve(definition.physicalDamageTakenBonus);
@@ -531,7 +537,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push("no death penalty");
   }
   if (definition.killsBearerOnEnd) {
-    parts.push("the bearer dies when it ends");
+    parts.push(`${selfOnly ? "you die" : "the bearer dies"} when it ends`);
   }
   if (physicalDamageTakenBonus !== 0) {
     const sign = physicalDamageTakenBonus > 0 ? "+" : "−";
@@ -719,7 +725,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.projectsAura !== undefined) {
     const { statusId, radius } = definition.projectsAura;
     const around = AREA_TEXT.get(radius) ?? `within ${String(radius)}`;
-    parts.push(`allies ${around} to the bearer: ${statusText(statusId, ranks)}`);
+    parts.push(`allies ${around} to ${bearer}: ${statusText(statusId, ranks)}`);
   }
   if (statAtTwelve(definition.criticalChanceBonus) !== 0) {
     const chance = statText(definition.criticalChanceBonus, ranks, (bonus) =>
@@ -856,16 +862,21 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(...describeNextSkillRule(definition.nextSkillRule));
   }
   if (definition.endsWhenBearerAttacks) {
-    parts.push("ends if the bearer attacks");
+    parts.push(endsIf("attacks"));
   }
   if (definition.endsWhenBearerAttacksInMelee) {
-    parts.push("ends if the bearer makes a melee attack");
+    parts.push(endsIf("makes a melee attack"));
   }
   if (definition.endsWhenBearerMoves) {
-    parts.push("ends if the bearer moves");
+    parts.push(endsIf("moves"));
   }
   if (statAtTwelve(definition.damageTakenMultiplier) !== 1) {
     parts.push(`takes ${statText(definition.damageTakenMultiplier, ranks, damageTaken)} damage`);
+  }
+  if (definition.attackDamageTakenMultiplier !== 1) {
+    parts.push(
+      `takes ${damageTaken(definition.attackDamageTakenMultiplier)} damage from the next attack`,
+    );
   }
   if (definition.damageReduction > 0) {
     parts.push(`−${String(definition.damageReduction)} damage taken`);
@@ -956,14 +967,14 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`its spirit loses ${String(definition.sourceLosesHealth)} health each time`);
   }
   if (definition.renewsOnChantOrShoutEnd) {
-    parts.push("renewed whenever a chant or shout ends on it");
+    parts.push(`renewed whenever a chant or shout ends on ${selfOnly ? "you" : "it"}`);
   }
   if (definition.renewsOnBearerSpell) {
-    parts.push("renewed whenever it casts a spell");
+    parts.push(`renewed whenever ${selfOnly ? "you cast" : "it casts"} a spell`);
   }
   // Lyssa's Aura's (#2132).
   if (definition.renewsOnBearerSpellAtFoe) {
-    parts.push("reapplied whenever it casts a spell on a foe");
+    parts.push(`reapplied whenever ${selfOnly ? "you cast" : "it casts"} a spell on a foe`);
   }
   if (definition.chantShoutDurationMultiplier !== 1) {
     const longer = Math.round((definition.chantShoutDurationMultiplier - 1) * 100);
@@ -1093,7 +1104,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     );
   }
   if (definition.negatesFatalDamage) {
-    parts.push("the next damage or life steal that would kill it is negated");
+    parts.push(
+      `the next damage or life steal that would kill ${selfOnly ? "you" : "it"} is negated`,
+    );
   }
   if (definition.endsEverywhereWhenSpent) {
     parts.push("when one ally's is spent, it ends on all others");
@@ -1145,7 +1158,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`${getProfession(profession).name} skills have ${pierce}% armor penetration`);
   }
   if (definition.uninterruptible) {
-    parts.push("the bearer's skills cannot be interrupted");
+    parts.push(`${selfOnly ? "your" : "the bearer's"} skills cannot be interrupted`);
   }
   if (definition.interruptGuard?.kind === "once") {
     parts.push("the next time you would be interrupted, you are not");
@@ -1158,39 +1171,39 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.conditionsExpireFaster !== 0) {
     const faster = String(Math.round(definition.conditionsExpireFaster * 100));
-    parts.push(`conditions on the bearer expire ${faster}% faster`);
+    parts.push(`conditions on ${bearer} expire ${faster}% faster`);
   }
   if (definition.hexesExpireFaster !== 0) {
     const faster = String(Math.round(definition.hexesExpireFaster * 100));
-    parts.push(`hexes on the bearer expire ${faster}% faster`);
+    parts.push(`hexes on ${bearer} expire ${faster}% faster`);
   }
   // Chilling Winds' (#2311).
   const lengthening = definition.nextIncomingHexDurationMultiplier;
   if (lengthening !== undefined) {
     const longer = statText(lengthening.multiplier, ranks, (value) => percent(value - 1));
     const of = getAttribute(lengthening.attributeId)?.name ?? lengthening.attributeId;
-    parts.push(`the next ${of} hex on the bearer lasts ${longer} longer`);
+    parts.push(`the next ${of} hex on ${bearer} lasts ${longer} longer`);
   }
   if (definition.incomingHexCastTimeMultiplier !== 1) {
     const times = String(definition.incomingHexCastTimeMultiplier);
-    parts.push(`hexes cast on the bearer take ${times}× as long to cast`);
+    parts.push(`hexes cast on ${bearer} take ${times}× as long to cast`);
   }
   if (definition.incomingAllySpellCastTimeMultiplier !== 1) {
     const times = String(definition.incomingAllySpellCastTimeMultiplier);
-    parts.push(`other allies' spells on the bearer take ${times}× as long to cast`);
+    parts.push(`other allies' spells on ${bearer} take ${times}× as long to cast`);
   }
   if (definition.enchantmentsOnBearerCostLess !== 0) {
     const less = String(definition.enchantmentsOnBearerCostLess);
-    parts.push(`enchantments cast on the bearer cost ${less} less Energy, minimum 1`);
+    parts.push(`enchantments cast on ${bearer} cost ${less} less Energy, minimum 1`);
   }
   if (definition.endsWhenBearerHits) {
-    parts.push("ends if the bearer hits with an attack");
+    parts.push(endsIf("hits with an attack"));
   }
   if (definition.endsWhenBearerMisses) {
-    parts.push("ends if the bearer fails to hit");
+    parts.push(endsIf("fails to hit"));
   }
   if (definition.endsWhenBearerHitsWithAttackSkill) {
-    parts.push("ends if the bearer hits with an attack skill");
+    parts.push(endsIf("hits with an attack skill"));
   }
   // One that answers the use says so in its trigger's line (#949). Only a
   // stance, a preparation or a signet's effect is always its caster's own;
@@ -1200,9 +1213,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     !definition.triggers.some(({ on }) => on === "bearer-uses-skill")
   ) {
     parts.push(
-      definition.category === "stance" ||
-        definition.category === "preparation" ||
-        definition.category === "skill-effect"
+      selfOnly || definition.category === "skill-effect"
         ? "ends if you use a skill"
         : "ends if the bearer uses a skill",
     );
@@ -1229,14 +1240,14 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const gained = definition.endsWhenBearerGains.map((category) =>
       category === "hex" ? "hexed" : "enchanted",
     );
-    parts.push(`ends if the bearer becomes ${gained.join(" or ")}`);
+    parts.push(endsIf(`becomes ${gained.join(" or ")}`));
   }
   if (definition.destroysBearerOnExpiry) {
     parts.push("the bearer is destroyed when it expires");
   }
   // Verata's Aura's (#2092).
   if (definition.bindsCreatures) {
-    parts.push("the minions it took become masterless when it ends");
+    parts.push(`the minions ${selfOnly ? "you" : "it"} took become masterless when it ends`);
   }
   // Jagged Bones's (#1986); Malign Intervention's, nobody's (#2092).
   if (definition.replacedOnDeathBy !== undefined) {
@@ -1270,7 +1281,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     definition.endsWhenTriggered,
     definition.category === "hex" || definition.category === "condition",
     definition.category === "item",
-    definition.category === "preparation" || definition.category === "stance",
+    selfOnly,
   )) {
     (clause ? parts : sentences).push(text);
   }
@@ -1467,6 +1478,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
 const SECOND_PERSON: Readonly<Record<string, string>> = {
   applies: "apply",
   attacks: "attack",
+  becomes: "become",
   blocks: "block",
   casts: "cast",
   creates: "create",
@@ -1480,6 +1492,8 @@ const SECOND_PERSON: Readonly<Record<string, string>> = {
   hits: "hit",
   is: "are",
   loses: "lose",
+  makes: "make",
+  moves: "move",
   sacrifices: "sacrifice",
   takes: "take",
   uses: "use",
@@ -1546,7 +1560,7 @@ function describeSpellOnAlly(
     return undefined;
   }
   const spell = `${[...new Set(scopes)].join(" or ")} spell`;
-  return `whenever it casts ${/^[aeiou]/i.test(spell) ? "an" : "a"} ${spell} on an ally, ${[...new Set(parts)].join(" and ")}`;
+  return `whenever ${bearerIsCaster ? "you cast" : "it casts"} ${/^[aeiou]/i.test(spell) ? "an" : "a"} ${spell} on an ally, ${[...new Set(parts)].join(" and ")}`;
 }
 
 /**
@@ -1596,6 +1610,13 @@ function describeTriggers(
     trigger.weapon !== undefined
       ? weaponBoundWhen(event, trigger.weapon)
       : (kindBoundWhen(event, trigger) ?? TRIGGER_WHEN[event]);
+  // Its doer (#2341): "you cast a spell" on the caster's own, "it casts a spell" else.
+  const doer = (on: readonly StatusTriggerEvent[], trigger: StatusTrigger): string => {
+    const phrases = on.map((event) => whenOf(event, trigger));
+    return bearerIsCaster
+      ? `you ${phrases.map(secondPerson).join(" or ")}`
+      : `it ${phrases.join(" or ")}`;
+  };
   return [...groups.values()].flatMap(({ trigger, on }) => {
     if (on.includes("bearer-dies")) {
       // Incendiary Bonds' "activates early if target foe dies" (#2289).
@@ -1624,12 +1645,14 @@ function describeTriggers(
               : on.includes("ends") || on.includes("ends-early") || on.includes("expires")
                 ? `when it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
                 : once && on.includes("bearer-uses-skill")
-                  ? NEXT_SKILL
+                  ? bearerIsCaster
+                    ? YOUR_NEXT_SKILL
+                    : NEXT_SKILL
                   : nextOnly
-                    ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
+                    ? `the next time ${doer(on, trigger)}`
                     : bearerIsCaster && trigger.weapon === "bow"
                       ? `whenever your arrows ${on.map((event) => ARROWS_WHEN[event] ?? whenOf(event, trigger)).join(" or ")}`
-                      : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}${trigger.victimHasLessHealth === undefined ? "" : " on a creature with less Health"}`,
+                      : `whenever ${doer(on, trigger)}${trigger.victimHasLessHealth === undefined ? "" : " on a creature with less Health"}`,
       ranks,
       bearerIsFoe,
       bearerIsCaster,
@@ -1869,6 +1892,9 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
 /** The one use a status that ends on it answers (#949), as its tooltip says it. */
 const NEXT_SKILL = "the next time it uses a skill";
 
+/** `NEXT_SKILL` on its caster's own (#2341). */
+const YOUR_NEXT_SKILL = "the next time you use a skill";
+
 /**
  * A creation trigger's (#1316), in the corpus's words: the Ritualist
  * wears it, so "you", not "it".
@@ -2091,7 +2117,7 @@ function describeTrigger(
   }
   // An attunement's and Aura of Restoration's (#1614), said at once:
   // "whenever it casts a spell: gains 1 energy and is healed for 360% of
-  // that skill's energy cost".
+  // that skill's energy cost". On the caster's own, "you gain" (#2341).
   const perCost = trigger.effects.flatMap((effect) =>
     (effect.kind === "energy-gain" && effect.toTarget !== true) || effect.kind === "heal"
       ? [effect]
@@ -2113,14 +2139,25 @@ function describeTrigger(
           ? [`${share(effect.amount)} of that skill's base energy cost`]
           : [`${amount(effect.amount)} energy`],
     );
+    const healed =
+      bearerIsCaster && gains.length === 0
+        ? "you are healed"
+        : bearerIsCaster
+          ? "are healed"
+          : "is healed";
     const heals = perCost.flatMap((effect) =>
       effect.kind !== "heal"
         ? []
         : effect.perUsedSkillEnergy === true
-          ? [`is healed for ${share(effect.amount)} of that skill's energy cost`]
-          : [`is healed for ${amount(effect.amount)}`],
+          ? [`${healed} for ${share(effect.amount)} of that skill's energy cost`]
+          : [`${healed} for ${amount(effect.amount)}`],
     );
-    const what = [...(gains.length === 0 ? [] : [`gains ${gains.join(" plus ")}`]), ...heals];
+    const what = [
+      ...(gains.length === 0
+        ? []
+        : [`${bearerIsCaster ? "you gain" : "gains"} ${gains.join(" plus ")}`]),
+      ...heals,
+    ];
     return [sentence(`${when}: ${what.join(" and ")}`)];
   }
   // Depravity's (#2314), said as one: "whenever it casts a spell: it and
@@ -2241,9 +2278,11 @@ function describeTrigger(
     if (effect.kind === "energy-gain" && trigger.target === "source") {
       return [clause(`its caster gains ${amount(effect.amount)} energy ${when}`)];
     }
-    if (effect.kind === "lengthen-recharge" && when === NEXT_SKILL) {
+    if (effect.kind === "lengthen-recharge" && (when === NEXT_SKILL || when === YOUR_NEXT_SKILL)) {
       return [
-        clause(`the next skill it uses takes ${amount(effect.seconds)} seconds longer to recharge`),
+        clause(
+          `the next skill ${bearerIsCaster ? "you use" : "it uses"} takes ${amount(effect.seconds)} seconds longer to recharge`,
+        ),
       ];
     }
     if (effect.kind === "life-steal" && trigger.target === "bearer") {
@@ -2286,10 +2325,10 @@ function describeTrigger(
       effect.condition.kind === "target-foe" &&
       trigger.target === "skill-target" &&
       !bearerIsFoe &&
-      when.startsWith("whenever it uses ") &&
+      when.startsWith("whenever you use ") &&
       effect.effects.every((inner) => inner.kind === "splash" && inner.around === "caster")
     ) {
-      const yours = `whenever you ${secondPerson(when.slice("whenever it ".length))} on a foe`;
+      const yours = `${when} on a foe`;
       return effect.effects.flatMap((inner) => {
         if (inner.kind !== "splash") {
           return [];
@@ -2306,9 +2345,18 @@ function describeTrigger(
       });
     }
     // The bearer is "it" in its own tooltip (#988): "when it ends, if it
-    // is attacking: heals for 88".
+    // is attacking: heals for 88"; "if you are attacking" on the caster's
+    // own (#2341).
     if (effect.kind === "if" && trigger.target === "bearer") {
-      const condition = lowerFirst(conditionText(effect.condition).replace(/^If target/, "If it"));
+      const said = conditionText(effect.condition);
+      const condition = lowerFirst(
+        bearerIsCaster
+          ? said
+              .replace(/^If target is /, "If you are ")
+              .replace(/^If target has /, "If you have ")
+              .replace(/^If target /, "If you ")
+          : said.replace(/^If target/, "If it"),
+      );
       return effect.effects.map((inner) =>
         sentence(`${when}, ${condition}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
       );
@@ -2901,7 +2949,8 @@ function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>
     // (#1113): "When sprung, every 1s for 3s, foes nearby: deals 17
     // damage".
     const pulse = act.kind === "trap" ? act.trap.spring : act.pulse;
-    const { radius } = pulse.area;
+    const foes = (area: RadiusArea): string =>
+      `foes ${AREA_TEXT.get(area.radius) ?? `within ${String(area.radius)}`}`;
     const who = [
       ...(act.kind === "trap" ? ["when sprung"] : []),
       // Spirit Rift's (#1270): "after 3s, foes adjacent: ...".
@@ -2909,8 +2958,11 @@ function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>
       ...(pulse.count > 1
         ? [`every ${seconds(pulse.everySeconds)} for ${seconds(pulse.count * pulse.everySeconds)}`]
         : []),
-      `foes ${AREA_TEXT.get(radius) ?? `within ${String(radius)}`}`,
+      foes(pulse.area),
     ].join(", ");
+    // Searing Heat's (#2329): "When it ends, foes nearby: applies Burning".
+    const end = act.kind === "pulse" ? act.atEnd : undefined;
+    const ending = end === undefined ? "" : `When it ends, ${foes(end.area)}: `;
     return [
       describeEffect(effect, ranks),
       ...(act.kind === "trap" && act.trap.springsAtEnd
@@ -2919,6 +2971,12 @@ function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>
       ...pulse.effects.flatMap((inner) =>
         describeEffects(inner, ranks).map(({ text, magnitude }) => ({
           text: `${who.charAt(0).toUpperCase()}${who.slice(1)}: ${lowerFirst(text)}`,
+          magnitude,
+        })),
+      ),
+      ...(end?.effects ?? []).flatMap((inner) =>
+        describeEffects(inner, ranks).map(({ text, magnitude }) => ({
+          text: `${ending}${lowerFirst(text)}`,
           magnitude,
         })),
       ),

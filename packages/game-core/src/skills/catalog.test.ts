@@ -98,8 +98,9 @@ describe("skill catalog integrity", () => {
       const grounds = skill.effects.flatMap((effect) =>
         effect.kind === "create-ground-effect" ? [effect.act.kind] : [],
       );
-      // A spell may leave pulses where its target stands: a symbol, or
-      // Searing Heat's strikes and the Burning as it ends (#2288).
+      // A spell may leave pulses where its target stands, as a symbol;
+      // a skill leaves at most one ground effect (#2329).
+      expect(grounds.length, skill.id).toBeLessThanOrEqual(1);
       const pulse = skill.type === "spell" ? grounds.map(() => "pulse") : [];
       expect(grounds, skill.id).toEqual(
         skill.type === "ward" || skill.type === "well"

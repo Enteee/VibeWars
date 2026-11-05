@@ -417,13 +417,13 @@ describe("the texts (#1549)", () => {
       'Applies "Charge!" for 11s (moves at 133% speed)',
     ]);
     expect(describeStatus("riposte", ranks)).toBe(
-      "100% chance to block melee attacks. The next time it blocks a melee attack: deals 68 damage",
+      "100% chance to block melee attacks. The next time you block a melee attack: deals 68 damage",
     );
     expect(describeStatus("deadly-riposte", ranks)).toBe(
-      "100% chance to block melee attacks. The next time it blocks a melee attack: deals 75 damage, applies Bleeding for 21s (−3 Health degeneration)",
+      "100% chance to block melee attacks. The next time you block a melee attack: deals 75 damage, applies Bleeding for 21s (−3 Health degeneration)",
     );
     expect(describeStatus("enraging-charge", ranks)).toBe(
-      "moves at 125% speed, ends if the bearer hits with an attack. Whenever it hits with a melee attack: gain 2 strikes of adrenaline",
+      "moves at 125% speed, ends if you hit with an attack. Whenever you hit with a melee attack: gain 2 strikes of adrenaline",
     );
   });
 });

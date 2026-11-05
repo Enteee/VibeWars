@@ -123,7 +123,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
         case "trap":
           return effect.act.trap.spring.effects.flatMap(effectRoles);
         case "pulse":
-          return effect.act.pulse.effects.flatMap(effectRoles);
+          return [...effect.act.pulse.effects, ...(effect.act.atEnd?.effects ?? [])].flatMap(
+            effectRoles,
+          );
       }
   }
 }
@@ -160,6 +162,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.armorWhileStill > 0 ||
     status.block !== undefined ||
     statAtTwelve(status.damageTakenMultiplier) < 1 ||
+    status.attackDamageTakenMultiplier < 1 ||
     status.damageReduction > 0 ||
     status.damageReductionPerHitTaken !== undefined ||
     status.maxDamageFractionPerHit !== undefined ||

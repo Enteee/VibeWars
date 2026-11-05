@@ -627,6 +627,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "natures-renewal": icon("natures-renewal"),
   equinox: icon("equinox"),
   "archers-signet": icon("archers-signet"),
+  // Smoke Powder Defense (#2362).
+  "smoke-powder-defense": icon("smoke-powder-defense"),
 };
 
 const GAP = 2;
