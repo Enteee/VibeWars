@@ -464,13 +464,10 @@ export async function startMatchView(
     parent.style.setProperty("--hud-height", `${String(hud.root.offsetHeight)}px`);
     // The chat (#2390) sits at the bottom-left beside the HUD's centred
     // column when the room left of it is 14rem or more, above the HUD when
-    // not: the column is the widest of what the HUD lays out in its flow.
-    const column = Math.max(
-      0,
-      ...[...hud.root.children]
-        .filter((child) => getComputedStyle(child).position === "static")
-        .map((child) => child.getBoundingClientRect().width),
-    );
+    // not: the column holds the bars and the skill bar rows, and is watched
+    // through the bars. Not the message above it: that keeps the width of
+    // whatever it last said while it fades.
+    const column = hud.bars.parentElement?.getBoundingClientRect().width ?? 0;
     parent.style.setProperty("--hud-column-width", `${String(column)}px`);
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
     parent.classList.toggle(
