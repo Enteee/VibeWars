@@ -502,6 +502,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "zealots-fire": icon("zealots-fire"),
   "glimmering-mark": icon("glimmering-mark"),
   "spoil-victor": icon("spoil-victor"),
+  // Adrenaline in points (#2302).
+  "balthazars-spirit": icon("balthazars-spirit"),
   // Condition movement (#2259).
   "fevered-dreams": icon("fevered-dreams"),
   "mark-of-fury": icon("mark-of-fury"),

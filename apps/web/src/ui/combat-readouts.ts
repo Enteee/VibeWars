@@ -1,4 +1,5 @@
 import {
+  ADRENALINE_PER_STRIKE,
   MAINTAINED_STATUSES,
   STATUS_DEFINITIONS,
   chainRequirementText,
@@ -279,16 +280,22 @@ export function describeCombatEvent(
       return `${nameOf(event.casterId)} uses ${skillName(event.skillId) ?? event.skillId}${event.targetId === event.casterId ? "" : ` on ${target}`}`;
     case "adrenaline-gained": {
       const from = skillName(event.skillId ?? entry.skillId);
-      return `${target} gains ${strikesOf(event.strikes)} of adrenaline${from === undefined ? "" : ` from ${from}`}`;
+      return `${target} gains ${adrenalineOf(event.strikes)}${from === undefined ? "" : ` from ${from}`}`;
     }
     case "effect-skipped":
       return `${by}: no effect, ${event.requirement}`;
   }
 }
 
-/** "1 strike", "3 strikes". */
-function strikesOf(strikes: number): string {
-  return `${String(strikes)} ${strikes === 1 ? "strike" : "strikes"}`;
+/**
+ * "1 strike of adrenaline", "3 strikes of adrenaline"; points short of a
+ * whole strike (#2302) as GW1 words them, "4 adrenaline".
+ */
+function adrenalineOf(strikes: number): string {
+  if (!Number.isInteger(strikes)) {
+    return `${String(Math.round(strikes * ADRENALINE_PER_STRIKE))} adrenaline`;
+  }
+  return `${String(strikes)} ${strikes === 1 ? "strike" : "strikes"} of adrenaline`;
 }
 
 /**

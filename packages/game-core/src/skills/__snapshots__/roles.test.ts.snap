@@ -398,6 +398,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.air-of-enchantment": "",
   "monk.aura-of-stability": "",
   "monk.balthazars-aura": "",
+  "monk.balthazars-spirit": "",
   "monk.bane-signet": "knockdown",
   "monk.banish": "",
   "monk.blessed-aura": "",

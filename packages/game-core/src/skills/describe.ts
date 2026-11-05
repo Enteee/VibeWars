@@ -3117,8 +3117,13 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     }
     case "adrenaline-gain": {
-      const magnitude = countedMagnitude(effect.strikes, effect.per, ranks);
-      const strikes = `${shown(magnitude)} ${magnitude.current === 1 ? "strike" : "strikes"}`;
+      // Balthazar's Spirit's points (#2302): "gains 2...5 adrenaline".
+      const amount = effect.units ?? effect.strikes;
+      const magnitude = countedMagnitude(amount, effect.per, ranks);
+      const strikes =
+        effect.units === undefined
+          ? `${shown(magnitude)} ${magnitude.current === 1 ? "strike" : "strikes"} of adrenaline`
+          : `${shown(magnitude)} adrenaline`;
       // Mark of Fury's attacker gains them (#2259).
       const gain =
         effect.recipient === "owner"
@@ -3127,17 +3132,11 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
             ? "Target gains"
             : "Gain";
       // "Make Your Time!"'s (#2222): "Gain 2 strikes of adrenaline for each ally in earshot".
-      const counted = withPerText(
-        `${gain} ${strikes} of adrenaline`,
-        effect.strikes,
-        effect.per,
-        ranks,
-        {
-          alone: gain,
-          unit: " strikes of adrenaline",
-          onTarget: "on them",
-        },
-      );
+      const counted = withPerText(`${gain} ${strikes}`, amount, effect.per, ranks, {
+        alone: gain,
+        unit: " strikes of adrenaline",
+        onTarget: "on them",
+      });
       return {
         text: `${counted}${perFoeHit(effect)}${perOwnMeleeAttackSkill(effect)}`,
         magnitude,

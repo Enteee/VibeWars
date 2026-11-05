@@ -312,6 +312,9 @@ const NO_BOT_USE = new Set([
   // Energy for each sacrifice (#2275): worth only beside a sacrifice, which
   // no rule the bot has pairs.
   "necromancer.masochism",
+  // Adrenaline and Energy for an ally that is being hit (#2302): no role
+  // the bot weighs.
+  "monk.balthazars-spirit",
 ]);
 
 function skill(id: string) {

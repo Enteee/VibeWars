@@ -59,7 +59,8 @@ export type MonkStatusId =
   | "divine-intervention"
   | "healing-hands"
   | "shield-of-judgment"
-  | "zealots-fire";
+  | "zealots-fire"
+  | "balthazars-spirit";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -698,6 +699,27 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         effects: [{ kind: "energy-loss", amount: { flat: 1 } }],
         target: "source",
         skillId: "monk.zealots-fire",
+      },
+    ],
+  }),
+  // Maintained (#2302): "target ally gains adrenaline and 1 Energy when
+  // taking damage", 2...5 points to each of its adrenaline skills by the
+  // caster's Smiting Prayers (4.4 at 12); a bar with none, the Energy.
+  "balthazars-spirit": define("balthazars-spirit", "Balthazar's Spirit", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            units: { scaling: { attributeId: "monk.smiting-prayers", atZero: 2, atTwelve: 4.4 } },
+            recipient: "target",
+          },
+          { kind: "energy-gain", amount: { flat: 1 }, toTarget: true },
+        ],
+        target: "bearer",
+        skillId: "monk.balthazars-spirit",
       },
     ],
   }),

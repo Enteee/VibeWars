@@ -3823,4 +3823,33 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Adrenaline in points (#2302)                                           */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.balthazars-spirit",
+    name: "Balthazar's Spirit",
+    gwId: 242,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Maintained: adrenaline points and Energy whenever the ally takes damage.
+    effects: [{ kind: "maintain-status", on: "target", statusId: "balthazars-spirit" }],
+  },
 ];
