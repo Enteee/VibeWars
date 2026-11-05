@@ -234,6 +234,9 @@ const NO_BOT_USE = new Set([
   "paragon.anthem-of-fury",
   // An ally's attacks made holy and penetrating (#1519): no rule weighs it.
   "monk.judges-insight",
+  // Strength of Honor (#2367), the same: an ally's melee blows a little
+  // harder, kept up by upkeep.
+  "monk.strength-of-honor",
   // Necromancer and Elementalist staples (#1540): an ally's energy, armor
   // against one kind of damage, and a spirit's adrenaline aura are none
   // the bot weighs.

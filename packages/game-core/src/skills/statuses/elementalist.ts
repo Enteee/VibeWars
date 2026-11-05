@@ -79,7 +79,10 @@ export type ElementalistStatusId =
   | "rust"
   // Elementalist staples (#2288).
   | "gust"
-  | "mirror-of-ice";
+  | "mirror-of-ice"
+  // Staples (#2367).
+  | "earthen-shackles"
+  | "ether-prism";
 
 /** Incendiary Bonds' blast (#2289), on its bearer and the foes near it. */
 const INCENDIARY_BLAST = {
@@ -797,6 +800,51 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     profession: "elementalist",
     attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
+  }),
+  // "For 3 seconds, target and all nearby foes move 90% slower. When
+  // Earthen Shackles ends, it applies Weakness for 5...20 seconds"
+  // (#2367). Any end, a strip included.
+  "earthen-shackles": define("earthen-shackles", "Earthen Shackles", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.earth-magic",
+    moveSpeedMultiplier: 0.1,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "weakness",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+        skillId: "elementalist.earthen-shackles",
+      },
+    ],
+  }),
+  // "For 3 seconds, all damage you take is reduced by 75%. When Ether Prism
+  // ends, you gain 5...20 Energy" (#2367). A skill effect: nothing strips it.
+  "ether-prism": define("ether-prism", "Ether Prism", "skill-effect", {
+    profession: "elementalist",
+    damageTakenMultiplier: 0.25,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "elementalist.energy-storage", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+        skillId: "elementalist.ether-prism",
+      },
+    ],
   }),
 };
 
