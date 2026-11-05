@@ -4052,7 +4052,10 @@ export class MatchSimulation {
                   : {
                       ...skill,
                       effects: [
-                        { kind: "sacrifice-health", percentOfMax: sacrifice },
+                        {
+                          kind: "sacrifice-health",
+                          percentOfMax: resolveMagnitude(sacrifice, record.combatant),
+                        },
                         ...skill.effects,
                       ],
                     },
@@ -4062,6 +4065,7 @@ export class MatchSimulation {
               rules: this.#ruleset.combat,
               surroundings: this.#participants,
               own: cast.rule.own,
+              corpseId: corpse?.id,
             }),
           );
     // What the skill put on its own user does not answer this use of it
@@ -7158,14 +7162,25 @@ export class MatchSimulation {
   /**
    * Marks the corpse `#freshCorpse` finds as exploited (#466) and returns
    * it; `undefined` for none. Wells and minions (#466, #467) will want
-   * its position.
+   * its position. A random pick (#2268) draws among every fresh corpse in
+   * reach, in their nearest-first order, with the match's rng: the same
+   * seed, the same corpse.
    */
   #exploitCorpse(
     record: ParticipantRecord,
     rule: CorpseRule,
     target: ParticipantRecord | undefined,
   ): ParticipantRecord | undefined {
-    const corpse = this.#freshCorpse(record, rule, target);
+    const reach =
+      rule.pick === "random"
+        ? freshCorpsesWithin(record.position, rule.radius, this.#participants.values())
+        : undefined;
+    const corpse =
+      reach === undefined
+        ? this.#freshCorpse(record, rule, target)
+        : reach.length === 0
+          ? undefined
+          : reach[this.#rng.nextInt(0, reach.length)];
     if (corpse !== undefined) {
       this.#markExploited(corpse);
     }

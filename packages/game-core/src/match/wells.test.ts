@@ -334,7 +334,7 @@ describe("Wells of Blood, Power and Weariness (#1730)", () => {
         activationSeconds: 1,
         rechargeSeconds: recharge,
         target: "self",
-        corpse: { elseSacrificePercent: 66 },
+        corpse: { elseSacrificePercent: { flat: 66 } },
       });
       expect(skill?.effects).toMatchObject([
         {
