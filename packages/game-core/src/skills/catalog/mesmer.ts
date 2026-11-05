@@ -2876,7 +2876,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 29 },
         },
       },
-      { kind: "copy-disabled" },
+      { kind: "copy-disabled", which: "random-spell" },
     ],
   },
   {
@@ -2912,7 +2912,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 29 },
         },
       },
-      { kind: "copy-disabled" },
+      { kind: "copy-disabled", which: "random-spell" },
     ],
   },
   /* ---------------------------------------------------------------------- */
@@ -3888,6 +3888,117 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // when Mantra of Recall ends." The gain is the enchantment's own end.
     effects: [
       { kind: "apply-status", statusId: "mantra-of-recall", durationSeconds: { flat: 20 } },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Source-targets triggers, signet lockout, interrupted copies (#2290)     */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.mind-wrack",
+    name: "Mind Wrack",
+    // The base record; its numbers are the PvP split's (2734).
+    gwId: 49,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...40 seconds, whenever this foe is the target of one of your
+    // non-hex Mesmer skills, that foe loses 1 Energy." The rest is the hex's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mind-wrack",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 33 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.ignorance",
+    name: "Ignorance",
+    gwId: 35,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8...20 seconds target foe cannot use signets."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "ignorance",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.domination-magic", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.simple-thievery",
+    name: "Simple Thievery",
+    gwId: 1350,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Interrupt target foe's action. If that action was a skill, that skill
+    // is disabled for 5...20 seconds, and Simple Thievery is replaced by
+    // that skill": a plain swing interrupted disables and copies nothing.
+    effects: [
+      { kind: "interrupt" },
+      {
+        kind: "disable-skill",
+        which: "interrupted",
+        seconds: {
+          scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+      { kind: "copy-disabled", which: "interrupted" },
     ],
   },
   {

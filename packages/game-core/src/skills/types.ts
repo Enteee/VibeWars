@@ -984,12 +984,16 @@ export interface CopyRemovedEffect {
 }
 
 /**
- * The slot of the skill resolving holds a copy of the spell an earlier
- * `disable-skill` `random-spell` disabled on the target (#1928), for as
- * long as it disabled it: Arcane Thievery's. Nothing disabled: no copy.
+ * The slot of the skill resolving holds a copy of the skill an earlier
+ * `disable-skill` of the same `which` disabled on the target, for as long
+ * as it disabled it: with `random-spell`, the spell it picked (#1928),
+ * Arcane Thievery's; with `interrupted`, the skill this skill interrupted
+ * (#2290), Simple Thievery's. Nothing disabled, or a plain attack
+ * interrupted: no copy.
  */
 export interface CopyDisabledEffect {
   readonly kind: "copy-disabled";
+  readonly which: "random-spell" | "interrupted";
 }
 
 /**
@@ -1548,6 +1552,12 @@ export type StateCondition =
    * `Combatant.moving`): Water Trident's "a moving foe".
    */
   | { readonly kind: "target-moving" }
+  /**
+   * The effect's target is moving and its statuses make it move faster
+   * than normal (#2290): their aggregate `moveSpeedMultiplier` is above 1.
+   * Churning Earth's "moving faster than normal".
+   */
+  | { readonly kind: "target-moving-faster" }
   /**
    * The effect's target has this status (#997): Stoning's "suffering from
    * Weakness", Searing Flames' "already on fire".

@@ -663,6 +663,12 @@ export interface StatusDefinition {
    */
   readonly preventsShoutsAndChants: boolean;
   /**
+   * The bearer cannot use a signet (#2290): Ignorance's. Refused as
+   * `preventsShoutsAndChants` refuses a shout; one already activating
+   * finishes.
+   */
+  readonly preventsSignets: boolean;
+  /**
    * The bearer cannot block an attack of the status's source (#1234):
    * Expose Defenses' "cannot block your attacks". Anyone else's still
    * rolls block.
@@ -1480,6 +1486,14 @@ export type StatusTriggerEvent =
    */
   | "bearer-energy-drops-empty"
   /**
+   * The status's source used a skill on the bearer (#2290), as
+   * `endsWhenSourceTargets` sees it, before that skill's effects resolve.
+   * Anyone else's skill does not answer; `usedSkill` filters it, the used
+   * skill as `usedSkill`: Mind Wrack's "whenever you use a non-hex Mesmer
+   * skill targeting this foe". Fired by the simulation from the use.
+   */
+  | "source-targets-bearer"
+  /**
    * The bearer died while it was on (#1762): only what a death ends,
    * never an expiry or a removal earlier in the same tick. GW1's "if
    * target foe dies while hexed with this". `ends` and `ends-early`
@@ -1845,10 +1859,13 @@ export interface StatusTrigger {
    * spell (`isSpell`), a hex or an enchantment too: Persistence of
    * Memory's "a spell you cast". With `targetsAlly` (#2282), only a skill
    * used on an ally of the bearer's or on the bearer: Zealot's Fire's
-   * "whenever you use a skill that targets an ally". Absent: any skill.
+   * "whenever you use a skill that targets an ally". On `source-targets-bearer`
+   * too (#2290); with `notType`, only a skill not of that type, Mind
+   * Wrack's "non-hex Mesmer skill". Absent: any skill.
    */
   readonly usedSkill?: {
     readonly type?: SkillType;
+    readonly notType?: SkillType;
     readonly spell?: true;
     readonly attributes?: AttributeScope;
     readonly profession?: ProfessionId;
@@ -4185,6 +4202,15 @@ export function preventsEnchantments(statuses: readonly Pick<ActiveStatus, "id">
  */
 export function preventsShoutsAndChants(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
   return statuses.some(({ id }) => getStatusDefinition(id).preventsShoutsAndChants);
+}
+
+/**
+ * Whether a bearer of `statuses` cannot use a signet (#2290,
+ * `preventsSignets`). The server's refusal and the skill bar's dimming
+ * both ask this.
+ */
+export function preventsSignets(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).preventsSignets);
 }
 
 /**

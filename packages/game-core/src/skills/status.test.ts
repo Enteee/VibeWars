@@ -95,6 +95,7 @@ describe("status definitions", () => {
         def.untargetableByFoeSpells ||
         def.preventsEnchantments ||
         def.preventsShoutsAndChants ||
+        def.preventsSignets ||
         def.attackDurationMultiplier !== 1 ||
         def.projectileSpeedMultiplier !== 1 ||
         def.block !== undefined ||
