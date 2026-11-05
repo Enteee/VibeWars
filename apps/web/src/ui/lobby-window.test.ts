@@ -8,7 +8,7 @@ import {
   memberClass,
   partyOf,
   showsClosed,
-} from "./party-strip.js";
+} from "./lobby-window.js";
 
 function player(
   sessionId: string,
@@ -47,7 +47,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
   };
 }
 
-describe("the party strip's party (#1526)", () => {
+describe("the Lobby window's party (#1526, #2385)", () => {
   it("lists the people in lobby order, with the host marked, and no bots", () => {
     const party = partyOf(
       lobby([

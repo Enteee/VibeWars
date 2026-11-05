@@ -45,6 +45,25 @@ export async function openToFriends(page: Page): Promise<void> {
 }
 
 /**
+ * The top bar's Lobby window (#2385), opened if it is shut: who is in the
+ * lobby with `page`. A press anywhere else shuts it again, so open it
+ * right before each look. On a phone the Lobby button is in the ⋯.
+ */
+export async function lobbyWindow(page: Page): Promise<Locator> {
+  const lobby = page.locator("#topbar .topbar-lobby-button");
+  if ((await lobby.getAttribute("aria-expanded")) !== "true") {
+    const more = page.locator("#topbar .topbar-more");
+    if (!(await lobby.isVisible()) && (await more.isVisible())) {
+      await more.click();
+    }
+    await lobby.click();
+  }
+  const panel = page.locator("#topbar .lobby-window");
+  await expect(panel).toBeVisible();
+  return panel;
+}
+
+/**
  * The invite link to the lobby `page` is in (#2100), from Copy invite
  * link and the clipboard, granted, as a player would send it.
  */

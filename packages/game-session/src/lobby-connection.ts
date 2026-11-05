@@ -50,7 +50,7 @@ export interface LobbySnapshot {
   readonly mapId: string;
   /** Players a side (#2104): a Hosted Game's, its host's pick; every other mode's, its own. */
   readonly teamSize: number;
-  /** Whether a peer with the key may join (#1682): a guest's party strip says when not. */
+  /** Whether a peer with the key may join (#1682): a guest's Lobby window says when not. */
   readonly open: boolean;
   /** The peer the lobby and its match are hosted on. */
   readonly hostId: string;

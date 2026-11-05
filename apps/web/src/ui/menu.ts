@@ -8,7 +8,7 @@ import { characterFigureCard, lookOfCharacter } from "./character-card.js";
 import { equippedCount, professionLabel } from "./character-preview.js";
 import { button, emptyState, h, playCard, readyButton, screenBar } from "./kit.js";
 import { loadPlayerName, playerGuild } from "./player-section.js";
-import { isAlone } from "./party-strip.js";
+import { isAlone } from "./lobby-window.js";
 import { loadTeamSize, railParty, railScreen, type RailEntry, type TeamSize } from "./rail.js";
 
 /**

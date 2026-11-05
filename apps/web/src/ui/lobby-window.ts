@@ -5,8 +5,8 @@ import { h } from "./kit.js";
 import { ascentLine, waitedLabel } from "./queue-screen.js";
 
 /**
- * The party strip (#1526, ADR-0041): on top of every mode screen, who is
- * in this lobby with you, and its code. The lobby is the party.
+ * The Lobby window (#1526, ADR-0041, #2385): dropped from the top bar's
+ * Lobby, who is in this lobby with you. The lobby is the party.
  */
 
 /** One person in the party: a bot is the lobby's, not the party's. */
@@ -41,9 +41,11 @@ export interface RailParty {
 export const PARTY_RECONNECTING = "Reconnecting…";
 /** A guest's word that its host has the lobby closed (#1682). */
 export const PARTY_CLOSED = "Lobby closed";
+/** The window with nobody else in the lobby (#2385): it always has something to say. */
+export const PARTY_ALONE = "Just you. Copy the invite link to bring friends.";
 
 /**
- * The strip's line while the party is queued (#1766): "Looking for a
+ * The window's line while the party is queued (#1766): "Looking for a
  * team… 1:05 · 2 teams searching", the time alone until the queue says
  * how many (#1881). Its own team always counts, so none means none heard
  * yet: a leader before its first tick, or a follower before it hears its
@@ -97,7 +99,7 @@ export function partyOf(
 }
 
 /**
- * Whether the strip says the lobby is closed (#1682): to a guest, while
+ * Whether the window says the lobby is closed (#1682): to a guest, while
  * its host has it so. The host has the title bar's toggle instead.
  */
 export function showsClosed(party: RailParty): boolean {
@@ -118,27 +120,34 @@ export function isAlone(party: RailParty | undefined): boolean {
   return party === undefined || party.members.length <= 1;
 }
 
-export function partyStrip(party: RailParty): HTMLElement {
-  const strip = h("div", "party-strip");
-  strip.setAttribute("aria-label", "Party");
-  const list = h("ul", "party-members");
-  for (const member of party.members) {
-    const row = h("li", memberClass(member));
-    row.appendChild(h("span", "party-member-name", member.name));
-    if (member.isHost) {
-      row.appendChild(h("span", "party-host-mark", "Host"));
+/** What the Lobby window shows of `party`; none in a lobby yet reads as alone. */
+export function lobbyWindowBody(party: RailParty | undefined): HTMLElement {
+  const body = h("div", "lobby-window-body");
+  if (party === undefined || isAlone(party)) {
+    body.appendChild(h("p", "lobby-window-alone", PARTY_ALONE));
+  } else {
+    const list = h("ul", "party-members");
+    for (const member of party.members) {
+      const row = h("li", memberClass(member));
+      row.appendChild(h("span", "party-member-name", member.name));
+      if (member.isHost) {
+        row.appendChild(h("span", "party-host-mark", "Host"));
+      }
+      if (member.away) {
+        row.appendChild(h("span", "party-member-away", PARTY_RECONNECTING));
+      }
+      list.appendChild(row);
     }
-    if (member.away) {
-      row.appendChild(h("span", "party-member-away", PARTY_RECONNECTING));
-    }
-    list.appendChild(row);
+    body.appendChild(list);
   }
-  strip.appendChild(list);
+  if (party === undefined) {
+    return body;
+  }
   if (party.queuedMs !== null) {
     if (party.ascentRound !== null) {
-      strip.appendChild(h("span", "party-ascent", ascentLine(party.ascentRound)));
+      body.appendChild(h("span", "party-ascent", ascentLine(party.ascentRound)));
     }
-    strip.appendChild(
+    body.appendChild(
       h(
         "span",
         "party-queued",
@@ -147,7 +156,7 @@ export function partyStrip(party: RailParty): HTMLElement {
     );
   }
   if (showsClosed(party)) {
-    strip.appendChild(h("span", "party-closed", PARTY_CLOSED));
+    body.appendChild(h("span", "party-closed", PARTY_CLOSED));
   }
-  return strip;
+  return body;
 }

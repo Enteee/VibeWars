@@ -6,6 +6,7 @@ import {
   copyInvite,
   expectTeamSize,
   hostLobby as hostFromMenu,
+  lobbyWindow,
   openPeers,
   openToFriends,
   playHouseTeams,
@@ -177,13 +178,14 @@ test("a closed lobby takes nobody with its invite link; opened it does, and clos
     await expect(toggle).toHaveAttribute("title", "Anyone with your invite link can join.");
     await joinFriend(guest, invite);
     await expect(host.locator(".lobby-panel")).toContainText("Guest");
-    // Only the host has the toggle; a guest's strip says when it is closed.
+    // Only the host has the toggle; a guest's Lobby window says when it is closed.
     await expect(guest.locator("#topbar .topbar-lobby-open")).toBeHidden();
-    await expect(guest.locator(".party-closed")).toHaveCount(0);
+    const guestLobby = await lobbyWindow(guest);
+    await expect(guestLobby.locator(".party-closed")).toHaveCount(0);
 
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-pressed", "false");
-    await expect(guest.locator(".party-closed")).toHaveText("Lobby closed");
+    await expect(guestLobby.locator(".party-closed")).toHaveText("Lobby closed");
 
     await openMenu(late, "Late");
     await joinByCode(late, invite);

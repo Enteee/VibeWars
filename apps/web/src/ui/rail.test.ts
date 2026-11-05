@@ -233,7 +233,7 @@ describe("the mode rail (#1525)", () => {
     ]);
   });
 
-  it("shows no party strip while the player is alone, and the strip once someone joins (#1782)", () => {
+  it("lists nobody on a mode screen: who is in the party is the top bar's Lobby window's (#2385)", () => {
     const member = (name: string, isHost: boolean) => ({
       name,
       isHost,
@@ -245,27 +245,17 @@ describe("the mode rail (#1525)", () => {
       mode: "gvg",
       isHost: true,
       open: true,
-      queuedMs: null,
+      queuedMs: 5_000,
       teams: undefined,
       ascentRound: null,
       teamSize: 4,
     } as const;
-    const strip = (): FakeElement | undefined => {
-      const root = new FakeElement("div");
-      const body = railScreen(root as unknown as HTMLElement, "gvg", "", () => undefined);
-      return (body as unknown as FakeElement).children.find(
-        (child) => child.className === "party-strip",
-      );
-    };
-    setRailParty({ ...party, members: [member("me", true)] });
-    expect(strip()).toBeUndefined();
-    // Queued alone, the strip still says so (#1766).
-    setRailParty({ ...party, members: [member("me", true)], queuedMs: 5_000 });
-    expect(strip()).toBeDefined();
     setRailParty({ ...party, members: [member("me", true), member("Friend", false)] });
-    expect(strip()?.children[0]?.children.map((row) => row.children[0]?.textContent)).toEqual([
-      "me",
-      "Friend",
+    const root = new FakeElement("div");
+    const body = railScreen(root as unknown as HTMLElement, "gvg", "", () => undefined);
+    expect((body as unknown as FakeElement).children.map((child) => child.className)).toEqual([
+      "rail-title",
+      "rail-goal",
     ]);
   });
 

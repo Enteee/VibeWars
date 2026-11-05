@@ -246,7 +246,7 @@ skips the wait, or, for winners, leaves without queueing.
 
 A queued Heroes' Ascent is four rounds, always in this order: Relic
 Temples (Relic Run), Forgotten Shrines (Capture Points), Hill Courtyard
-(King of the Hill), then the Hall of Heroes. The party strip says where
+(King of the Hill), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 4 · Forgotten Shrines`.
 You only ever meet a team at the same round, and you wait for one as
 long as it takes: no bots fill in. Win, and your party ascends to the

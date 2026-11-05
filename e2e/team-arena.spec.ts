@@ -8,6 +8,7 @@ import { joinFriend, openRail } from "./helpers/menu.js";
 import {
   copyInvite,
   expectTeamSize,
+  lobbyWindow,
   openPeers,
   openToFriends,
   proposeTeam,
@@ -155,7 +156,9 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
       await expect(card).toHaveAttribute("aria-pressed", "true");
     });
     for (const page of [ann, bea]) {
-      await expect(page.locator(".party-queued")).toContainText("Team Arena 4v4 — searching…");
+      await expect((await lobbyWindow(page)).locator(".party-queued")).toContainText(
+        "Team Arena 4v4 — searching…",
+      );
     }
     await expect(ann.getByRole("button", { name: "Leave the queue" })).toBeVisible();
 
@@ -179,7 +182,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await press(bea, bea.locator(".hud-leave").getByRole("button", { name: "yes" }));
     await expect(bea.locator("#topbar .topbar-leave")).toBeVisible();
     await expect(bea.locator(".lobby-panel")).toContainText("Ann");
-    await expect(bea.locator(".party-queued")).toHaveCount(0);
+    await expect((await lobbyWindow(bea)).locator(".party-queued")).toHaveCount(0);
   } finally {
     await context.close();
   }
@@ -200,7 +203,9 @@ test("#2107: a Team Arena leader picks 2v2, and the party queues for Team Arena 
     await expectTeamSize(bea, 2, { locked: true });
     await runTeamLobby([ann, bea], undefined, 2);
     for (const page of [ann, bea]) {
-      await expect(page.locator(".party-queued")).toContainText("Team Arena 2v2 — searching…");
+      await expect((await lobbyWindow(page)).locator(".party-queued")).toContainText(
+        "Team Arena 2v2 — searching…",
+      );
     }
   } finally {
     await context.close();

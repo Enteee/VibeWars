@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { joinByCode, openRail } from "./helpers/menu.js";
-import { copyInvite, hostLobby, openPeers, openToFriends } from "./helpers/peers.js";
+import { copyInvite, hostLobby, lobbyWindow, openPeers, openToFriends } from "./helpers/peers.js";
 
 /**
  * The screen bar every menu screen shares (#578), in the top bar (#1272):
@@ -110,14 +110,16 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     const guestLabel = guest.locator("#topbar .lobby-code-label");
     await expect(guestLabel).toHaveText("Your lobby");
     const ownInvite = await copyInvite(guest);
-    // Alone, the host has no party strip (#1782).
-    await expect(host.locator(".party-strip")).toHaveCount(0);
+    // Alone, the host's Lobby counts nobody, and its window says so (#2385).
+    await expect(host.locator("#topbar .topbar-badge")).toBeHidden();
+    await expect(await lobbyWindow(host)).toContainText("Just you.");
 
     await joinByCode(guest, hostInvite);
     await expect(guestLabel).toHaveText("Lobby");
     const leave = guest.locator("#topbar").getByRole("button", { name: "Leave", exact: true });
     await expect(leave).toBeVisible();
-    await expect(host.locator(".party-strip .party-member")).toHaveCount(2);
+    await expect(host.locator("#topbar .topbar-badge")).toHaveText("2");
+    await expect((await lobbyWindow(host)).locator(".party-member")).toHaveCount(2);
     // A party queues in card 4: alone only.
     await expect(guest.locator("#topbar .screen-ready")).toBeDisabled();
 
@@ -139,7 +141,7 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     const newInvite = await copyInvite(guest);
     expect(newInvite).not.toBe(hostInvite);
     expect(newInvite).not.toBe(ownInvite);
-    await expect(host.locator(".party-strip")).toHaveCount(0);
+    await expect((await lobbyWindow(host)).locator(".party-member")).toHaveCount(0);
   } finally {
     await context.close();
   }
@@ -155,7 +157,8 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await openMenu(guest);
     const hostInvite = await copyInvite(host);
     await openToFriends(host);
-    await expect(host.locator(".party-strip")).toHaveCount(0);
+    const hostLobbyWindow = await lobbyWindow(host);
+    await expect(hostLobbyWindow).toContainText("Just you.");
 
     // The host's page stops answering, so the guest's join waits for it.
     const debugger_ = await context.newCDPSession(host);
@@ -169,7 +172,8 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await debugger_.send("Debugger.resume");
     // An absence: give the late join the time it took to land unguarded.
     await host.waitForTimeout(3_000);
-    await expect(host.locator(".party-strip")).toHaveCount(0);
+    await expect(hostLobbyWindow.locator(".party-member")).toHaveCount(0);
+    await expect(hostLobbyWindow).toContainText("Just you.");
     await expect(guest.locator(".queue-count")).toContainText("searching");
   } finally {
     await context.close();
@@ -289,6 +293,19 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   await expect(own).toHaveText(["Ready"]);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
+  // Lobby sits between Options and Music (#2385).
+  expect(
+    await page
+      .locator("#topbar .topbar-actions > button")
+      .evaluateAll((buttons) => buttons.map((node) => node.getAttribute("class") ?? "")),
+  ).toEqual([
+    "topbar-help",
+    "topbar-options",
+    "topbar-lobby-button",
+    "topbar-music",
+    "topbar-mute",
+    "topbar-fullscreen",
+  ]);
 
   // Edit opens the editor and chooses nobody.
   await openRail(page, "Character Builder");

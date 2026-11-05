@@ -250,6 +250,11 @@ export function settingsIcon(): string {
   return iconUrl("ui", "settings");
 }
 
+/** The top bar's Lobby (#2385): three heads, who is in it with you. */
+export function lobbyIcon(): string {
+  return iconUrl("ui", "lobby");
+}
+
 /** The [?] of the top bar and the HUD: the player docs (#1257). */
 export function helpIcon(): string {
   return iconUrl("ui", "help");
