@@ -5,6 +5,7 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeStatus } from "../skills/describe.js";
+import { NO_RANKS } from "../skills/status.js";
 import { weaponSnapshotOf } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -152,22 +153,22 @@ describe("the Monk smiting staples (#1519)", () => {
     expect(getSkill(SPEAR_OF_LIGHT)?.projectile).toBeDefined();
   });
 
-  it("Smite: 46 holy, and 30 more on a foe attacking", () => {
+  it("Smite: 46 holy, and 30 more in the same hit on a foe attacking", () => {
     const idle = sim();
     expect(hits(cast(idle, SMITE, "f"), SMITE, "f")).toEqual([46]);
 
     const match = sim();
     attacking(match);
-    expect(hits(cast(match, SMITE, "f"), SMITE, "f")).toEqual([46, 30]);
+    expect(hits(cast(match, SMITE, "f"), SMITE, "f")).toEqual([76]);
   });
 
-  it("Spear of Light: flies, 50 holy, and 51 more on a foe attacking", () => {
+  it("Spear of Light: flies, 50 holy, and 51 more in the same hit on a foe attacking", () => {
     const idle = sim();
     expect(hits(cast(idle, SPEAR_OF_LIGHT, "f"), SPEAR_OF_LIGHT, "f")).toEqual([50]);
 
     const match = sim();
     attacking(match);
-    expect(hits(cast(match, SPEAR_OF_LIGHT, "f"), SPEAR_OF_LIGHT, "f")).toEqual([50, 51]);
+    expect(hits(cast(match, SPEAR_OF_LIGHT, "f"), SPEAR_OF_LIGHT, "f")).toEqual([101]);
   });
 
   it("Word of Censure: 110 holy; 20 s more to recharge on a foe below half, read before the damage", () => {
@@ -278,13 +279,35 @@ describe("the Monk smiting staples (#1519)", () => {
     expect(hits(log, SIGNET_OF_JUDGMENT, "far")).toEqual([]);
   });
 
-  it("Holy Strike: a touch for 46 holy, and 46 more after Signet of Judgment knocked the foe down", () => {
+  it("Holy Strike: a touch for 46 holy, and 46 more in the same hit after Signet of Judgment knocked the foe down", () => {
     const touch = sim([HOLY_STRIKE, SIGNET_OF_JUDGMENT]);
     expect(hits(cast(touch, HOLY_STRIKE, "f", 1), HOLY_STRIKE, "f")).toEqual([46]);
 
     const match = sim([HOLY_STRIKE, SIGNET_OF_JUDGMENT]);
     cast(match, SIGNET_OF_JUDGMENT, "f", 1.1);
     expect(get(match, "f").knockdownRemaining).toBeGreaterThan(0);
-    expect(hits(cast(match, HOLY_STRIKE, "f", 1.6), HOLY_STRIKE, "f")).toEqual([46, 46]);
+    expect(hits(cast(match, HOLY_STRIKE, "f", 1.6), HOLY_STRIKE, "f")).toEqual([92]);
+  });
+
+  // One packet (#2330): mitigated, capped and triggering once.
+  it("Smite on an attacking 480-Health foe under Protective Spirit: one hit, capped at 48", () => {
+    const match = sim();
+    const f = get(match, "f");
+    f.maxHealth = 480;
+    f.health = 480;
+    f.statuses.apply("protective-spirit", 10, "n", NO_RANKS);
+    attacking(match);
+    expect(hits(cast(match, SMITE, "f"), SMITE, "f")).toEqual([48]);
+  });
+
+  it("Holy Strike's 92 on a downed foe under Spirit Bond heals it once", () => {
+    const match = sim([HOLY_STRIKE, SIGNET_OF_JUDGMENT]);
+    get(match, "f").statuses.apply("spirit-bond", 8, "n", NO_RANKS);
+    cast(match, SIGNET_OF_JUDGMENT, "f", 1.1);
+    const heals = cast(match, HOLY_STRIKE, "f", 1.6)
+      .filter((entry) => entry.skillId === "monk.spirit-bond")
+      .flatMap((entry) => entry.events)
+      .filter((event) => event.kind === "heal" && event.targetId === "f");
+    expect(heals).toHaveLength(1);
   });
 });

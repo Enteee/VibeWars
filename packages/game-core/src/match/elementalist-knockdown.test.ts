@@ -87,8 +87,12 @@ describe("Shock, then Aftershock (#985)", () => {
 
     const entry = use(sim, "e", 1, AFTERSHOCK);
     expect(combatant(sim, "t").knockdownRemaining).toBeGreaterThan(0);
-    expect(damageTo(entry, "t")).toHaveLength(2);
+    // One strike each (#2330), the bonus in the downed foe's.
+    const [down = 0, ...more] = damageTo(entry, "t");
+    const [standing = 0] = damageTo(entry, "side");
+    expect(more).toEqual([]);
     expect(damageTo(entry, "side")).toHaveLength(1);
+    expect(down).toBeGreaterThan(standing);
     expect(damageTo(entry, "e")).toEqual([]);
   });
 

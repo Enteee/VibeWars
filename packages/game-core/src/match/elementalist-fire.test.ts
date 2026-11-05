@@ -218,13 +218,11 @@ describe("Mind Burn (#1366)", () => {
     return match;
   };
 
-  it("against foes with less energy, strikes the target and an adjacent foe twice and burns them 8 s", () => {
+  it("against foes with less energy, strikes the target and an adjacent foe once for 102 and burns them 8 s", () => {
     const match = burnFoes(10);
     expect(damage(cast(match, MIND_BURN, "a")).sort()).toEqual([
-      ["a", 51],
-      ["a", 51],
-      ["b", 51],
-      ["b", 51],
+      ["a", 102],
+      ["b", 102],
     ]);
     burnsFor(match, "a", 8);
     burnsFor(match, "b", 8);
@@ -288,8 +286,7 @@ describe("Fire Magic texts (#1366)", () => {
           "Deals 114 fire damage",
         ],
         "mindBurn": [
-          "Deals 51 fire damage",
-          "If you have more Energy than target: deals 51 fire damage",
+          "Deals 51 fire damage; if you have more Energy than target: +51",
           "If you have more Energy than target: applies Burning for 8s (−7 Health degeneration)",
         ],
         "rodgorts": [

@@ -195,6 +195,20 @@ describe("skill catalog integrity", () => {
     );
   });
 
+  it('deals a spell\'s "more damage if" in its hit, not in a second one (#2330)', () => {
+    for (const skill of IMPLEMENTED_SKILLS) {
+      const types = new Set(
+        skill.effects.flatMap((effect) => (effect.kind === "damage" ? [effect.type] : [])),
+      );
+      const again = skill.effects.flatMap((effect) =>
+        effect.kind === "if"
+          ? effect.effects.filter((each) => each.kind === "damage" && types.has(each.type))
+          : [],
+      );
+      expect(again, skill.id).toEqual([]);
+    }
+  });
+
   it("counts a remove-status by at most one of perSpiritNear, perRemoved and perCount (#2247)", () => {
     // Every remove-status, however deep inside an if, a splash or a status.
     const removals: { id: string; set: number }[] = [];
