@@ -1700,6 +1700,7 @@ body {
 .team-grid-scroll {
   min-width: 0;
   overflow-x: auto;
+  container-type: inline-size;
 }
 
 .team-grid {
@@ -1746,10 +1747,16 @@ body {
   min-width: 0;
 }
 
-/* The open member, in place under its row (#2226). */
+/* The open member, in place under its row (#2226). Its columns follow the
+   room the scroll box gives it, not the window (#2379): one, then equipment
+   under the other two, then three. It is never wider than the box, and stays
+   in view while the rows scroll sideways under it. */
 .team-member-editor {
   display: grid;
-  grid-template-columns: 10rem minmax(27rem, 1fr) minmax(21rem, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 100cqi;
+  position: sticky;
+  left: 0;
   gap: 1rem;
   max-height: 32rem;
   overflow-y: auto;
@@ -1767,6 +1774,26 @@ body {
   min-width: 0;
 }
 
+@container (width >= 40rem) {
+  .team-member-editor {
+    grid-template-columns: 10rem minmax(27rem, 1fr);
+  }
+
+  .team-member-editor-equipment {
+    grid-column: 1 / -1;
+  }
+}
+
+@container (width >= 62rem) {
+  .team-member-editor {
+    grid-template-columns: 10rem minmax(27rem, 1fr) minmax(21rem, 1fr);
+  }
+
+  .team-member-editor-equipment {
+    grid-column: auto;
+  }
+}
+
 .team-member-editor-heading {
   margin: 0;
   color: var(--ink-dim);
@@ -1778,6 +1805,18 @@ body {
    least that word wide, and the middle column leaves room for it. */
 .team-member-editor .editor-attribute {
   grid-template-columns: minmax(min-content, 1fr) auto 6ch 10ch;
+}
+
+/* On a phone, what the next rank does goes on a line of its own. */
+@container (width < 40rem) {
+  .team-member-editor .editor-attribute {
+    grid-template-columns: minmax(min-content, 1fr) auto 6ch;
+  }
+
+  .team-member-editor .editor-attribute-next {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
 }
 
 .team-member-editor .editor-professions {
