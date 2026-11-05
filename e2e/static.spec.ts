@@ -72,7 +72,8 @@ test("the menu loads under the sub-path, with every asset found", async ({ page 
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await expect(page.locator("input.editor-name")).toBeVisible();
-  // Every icon in the editor loaded; an icon button with no icon has no src.
+  // Every eager icon in the editor loaded; an icon button with no icon has
+  // no src.
   const icons = page.locator(".editor-layout img[src]");
   await expect(icons.first()).toBeAttached();
   await expect
@@ -80,12 +81,29 @@ test("the menu loads under the sub-path, with every asset found", async ({ page 
       icons.evaluateAll((images) =>
         images
           .filter(
-            (img) => !(img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0),
+            (img) =>
+              img instanceof HTMLImageElement &&
+              img.loading !== "lazy" &&
+              !(img.complete && img.naturalWidth > 0),
           )
           .map((img) => img.getAttribute("src")),
       ),
     )
     .toEqual([]);
+  // A lazy one (#2318) loads only once scrolled to, so it is fetched here:
+  // every one is found under the sub-path all the same.
+  const lazy = await icons.evaluateAll((images) => [
+    ...new Set(
+      images.flatMap((img) =>
+        img instanceof HTMLImageElement && img.loading === "lazy" ? [img.src] : [],
+      ),
+    ),
+  ]);
+  expect(lazy.length).toBeGreaterThan(0);
+  const statuses = await Promise.all(
+    lazy.map(async (url) => `${String((await page.request.get(url)).status())} ${url}`),
+  );
+  expect(statuses.filter((status) => !status.startsWith("200 "))).toEqual([]);
   await settled(traffic);
 
   expect(traffic.failed).toEqual([]);

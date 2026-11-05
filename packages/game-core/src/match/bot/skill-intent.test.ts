@@ -317,10 +317,16 @@ const NO_BOT_USE = new Set([
   // spells: no role the bot weighs.
   "monk.essence-bond",
   "monk.divine-boon",
+  // Armor against physical damage only (#2289), which no role counts yet:
+  // Shields Up!'s goes unweighed the same way.
+  "elementalist.armor-of-frost",
   // A bond on attacks, attack damage traded for healing, and faster expiry
   // (#2291): no role the bot weighs.
   "monk.life-bond",
   "monk.life-attunement",
+  // Adrenaline by foes in earshot and a raised maximum (#2315), as
+  // "Make Your Time!"'s and Endure Pain's: no rule the bot weighs.
+  "warrior.to-the-limit",
 ]);
 
 function skill(id: string) {
