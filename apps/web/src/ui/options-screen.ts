@@ -1,11 +1,11 @@
-import { h, screenBar, type ScreenBarBack } from "./kit.js";
+import { h, overlayClose, screenBar } from "./kit.js";
 import { OPTIONS_SECTIONS } from "./options-sections.js";
 
 /**
  * Options (#423, #454): the sections of `OPTIONS_SECTIONS` listed on the
  * left, the selected one on the right, opening on the first, as an overlay
- * from the top bar or a match's HUD. Close, or Esc, closes it (the screen
- * bar's, #578); a section that wants Esc for itself, as Controls does
+ * from the top bar or a match's HUD. Its ×, or Esc, closes it (#2381; Esc
+ * is the screen bar's, #578); a section that wants Esc for itself, as Controls does
  * while a key is being rebound, stops it first.
  */
 
@@ -58,16 +58,13 @@ let overlay: { readonly element: HTMLElement; readonly dispose: () => void } | u
 /**
  * Options above whatever runs under it (#454), from the top bar or the
  * HUD's ⚙: its sections in a panel over `parent`.
- * Close, or Esc, closes it and leaves what is under it exactly as it was;
+ * Its ×, or Esc, closes it and leaves what is under it exactly as it was;
  * a match goes on underneath. `onClose` hears every way it closes.
  */
 export function openOptionsOverlay(parent: HTMLElement, onClose?: () => void): void {
   closeOptionsOverlay();
   const backdrop = h("div", "options-overlay");
-  const options = optionsPanel(["VibeWars", "Options"], {
-    label: "Close",
-    onBack: closeOptionsOverlay,
-  });
+  const options = optionsPanel(["VibeWars", "Options"], closeOptionsOverlay);
   options.panel.classList.add("screen", "options-screen");
   options.panel.setAttribute("role", "dialog");
   options.panel.setAttribute("aria-modal", "true");
@@ -102,13 +99,14 @@ export function closeOptionsOverlay(): void {
 /** The Options frame and its sections. */
 function optionsPanel(
   crumbs: readonly string[],
-  back: ScreenBarBack,
+  close: () => void,
 ): { readonly panel: HTMLElement; readonly dispose: () => void } {
   const panel = document.createElement("div");
+  panel.appendChild(overlayClose(close));
 
   const { release } = screenBar({
     crumbs,
-    back,
+    escape: close,
     actions: [],
     overlay: true,
     own: "options",
