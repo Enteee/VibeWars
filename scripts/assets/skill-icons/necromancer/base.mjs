@@ -111,6 +111,8 @@ const rows = {
   "necromancer.taste-of-death": { glyph: "skull-heal" },
   "necromancer.wail-of-doom": { glyph: "bars-wail" },
   "necromancer.atrophy": { glyph: "bars-wilt" },
+  // Stand-in art (#2292).
+  "necromancer.spoil-victor": { glyph: "hearts-less" },
 };
 
 export default rows;
