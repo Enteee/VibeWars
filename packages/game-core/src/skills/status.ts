@@ -247,9 +247,10 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
     }
   }
   // Reversal of Damage's and Mark of Protection's caps are their caster's (#2187),
-  // and Ward Against Harm's elemental armor (#2278).
+  // Ward Against Harm's elemental armor (#2278) and Retribution's cap (#2286).
   for (const stat of [
     definition.reflectsNextDamage?.cap,
+    definition.reflectsAttackDamage?.max,
     definition.damageToHealing?.cap,
     ...definition.conditionalArmor.map(({ amount }) => amount),
   ]) {

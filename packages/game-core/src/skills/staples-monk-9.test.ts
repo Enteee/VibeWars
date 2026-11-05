@@ -246,6 +246,20 @@ describe("Retribution (#2286)", () => {
     );
   });
 
+  it.each([
+    ["rank 12", 17, R12],
+    ["rank 0", 5, R0],
+  ])("cast at %s, caps what it sends back at %i", (_, sent, ranks) => {
+    const match = arena([RETRIBUTION], ranks);
+    cast(match, "c", 0, "ally");
+    const ally = get(match, "ally");
+    ally.statuses.drainChanges();
+    ally.statuses.recordHitByAttack("foe", 100, undefined);
+    expect(ally.statuses.drainChanges()).toContainEqual(
+      expect.objectContaining({ kind: "reflected", damage: sent }),
+    );
+  });
+
   it("sends back every blow while maintained", () => {
     const match = arena([RETRIBUTION]);
     cast(match, "c", 0, "ally");
