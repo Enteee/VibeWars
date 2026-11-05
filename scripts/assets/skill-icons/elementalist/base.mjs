@@ -109,6 +109,13 @@ const rows = {
   "elementalist.glimmering-mark": { glyph: "stars-adjacent" },
   // Stand-in art (#2312).
   "elementalist.churning-earth": { glyph: "rocks-churning" },
+  // Stand-in art (#2325).
+  "elementalist.searing-heat": { glyph: "flame-haze", modifier: "area" },
+  "elementalist.gust": { glyph: "gust-curls", modifier: "area" },
+  "elementalist.lightning-bolt": { glyph: "bolt-target" },
+  "elementalist.shatter-storm": { glyph: "cloud-shards", modifier: "area" },
+  "elementalist.ride-the-lightning": { glyph: "figure-bolt-dash", modifier: "self" },
+  "elementalist.mirror-of-ice": { glyph: "mirror-frost" },
 };
 
 export default rows;
