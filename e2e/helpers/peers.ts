@@ -172,6 +172,22 @@ export async function saveSoloTeam(page: Page, size: 2 | 4 | 8): Promise<string>
   return teamName;
 }
 
+/** The vote's title: a 1v1 chooses a character, not a Team Build (#2387). */
+export const VOTE_STAGE = /^(Choose a team build|Choose your character)$/;
+
+/**
+ * Take seat `seat` of the claim stage, then be ready. A 1v1 has no seats
+ * to pick: its one is taken for the player (#2387).
+ */
+async function takeSeat(page: Page, seat: number): Promise<void> {
+  const stage = page.locator(".team-lobby-stage");
+  await expect(stage).toHaveText(/^(Take a character|Starting…)$/);
+  if ((await stage.textContent()) === "Take a character") {
+    await page.locator(".team-lobby-seat").nth(seat).click();
+  }
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+}
+
 /**
  * Propose `team` in the Team Lobby's vote, as a player does (#2116):
  * open Your Team Builds, expand its row, press Propose this build. A
@@ -193,7 +209,7 @@ export async function proposeTeam(page: Page, team: string): Promise<void> {
 /**
  * The Team Lobby (#1460) of each page's own build: each page proposes its
  * Team Build `team`, or in a 1v1, with no `team`, sees its active
- * character proposed for it (#2141). Everyone is ready, then each takes
+ * character picked for it (#2141, #2387). Everyone is ready, then each takes
  * its side's seat `seat`, the first unless said, and is ready again.
  * Resolves once each page's HUD shows the player.
  */
@@ -205,9 +221,11 @@ export async function playOwnTeams(
   }[],
 ): Promise<void> {
   for (const { page, team } of players) {
-    await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+    await expect(page.locator(".team-lobby-stage")).toHaveText(VOTE_STAGE);
     if (team === undefined) {
-      await expect(page.locator(".team-lobby-proposals .play-card")).toHaveCount(1);
+      await expect(
+        page.locator('.team-lobby-solo .play-card-open[aria-pressed="true"]'),
+      ).toHaveCount(1);
     } else {
       await proposeTeam(page, team);
     }
@@ -216,12 +234,7 @@ export async function playOwnTeams(
     await page.getByRole("button", { name: "Ready", exact: true }).click();
   }
   for (const { page, seat } of players) {
-    await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
-    await page
-      .locator(".team-lobby-seat")
-      .nth(seat ?? 0)
-      .click();
-    await page.getByRole("button", { name: "Ready", exact: true }).click();
+    await takeSeat(page, seat ?? 0);
   }
   for (const { page } of players) {
     await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
@@ -240,18 +253,13 @@ export async function playHouseTeams(
   seats: readonly number[] = [],
 ): Promise<void> {
   for (const page of pages) {
-    await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+    await expect(page.locator(".team-lobby-stage")).toHaveText(VOTE_STAGE);
   }
   for (const page of pages) {
     await page.getByRole("button", { name: "Ready", exact: true }).click();
   }
   for (const [index, page] of pages.entries()) {
-    await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
-    await page
-      .locator(".team-lobby-seat")
-      .nth(seats[index] ?? 0)
-      .click();
-    await page.getByRole("button", { name: "Ready", exact: true }).click();
+    await takeSeat(page, seats[index] ?? 0);
   }
   for (const page of pages) {
     await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
