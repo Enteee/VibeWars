@@ -290,8 +290,8 @@ describe("the login a player joins with (#2240)", () => {
     const first = loadOwnTurnConfig(now);
     const second = loadOwnTurnConfig(now);
     expect(first?.urls).toEqual(LINKED.urls);
-    expect(first?.username).toMatch(/^1700007200:[0-9a-f]{16}$/);
-    expect(second?.username).toMatch(/^1700007200:[0-9a-f]{16}$/);
+    expect(first?.username).toMatch(/^1700014400:[0-9a-f]{16}$/);
+    expect(second?.username).toMatch(/^1700014400:[0-9a-f]{16}$/);
     expect(second?.username).not.toBe(first?.username);
     expect(JSON.stringify([first, second])).not.toContain(SECRET);
     // Each verifies as coturn checks it: the HMAC-SHA1 of its username under the secret.
