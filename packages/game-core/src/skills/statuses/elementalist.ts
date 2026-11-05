@@ -803,6 +803,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   // moving": 13 at rank 12, each second it is moving as the second comes.
   "winters-embrace": define("winters-embrace", "Winter's Embrace", "hex", {
     profession: "elementalist",
+    attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
     pulse: {
       everySeconds: 1,
