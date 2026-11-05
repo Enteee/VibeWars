@@ -2437,7 +2437,10 @@ export function applyEffect(
       const { centre, reached } = splashTargets(effect, context);
       for (const combatant of reached) {
         for (const inner of effect.effects) {
-          events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, centre));
+          // Its own events so far count as earlier (#2289): Rust's disable
+          // reads the interrupt beside it.
+          const seen = [...earlier, ...events];
+          events.push(...applyEffect(inner, { ...context, target: combatant }, seen, centre));
         }
       }
       return events;

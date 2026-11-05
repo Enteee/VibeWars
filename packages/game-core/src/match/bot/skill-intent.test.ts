@@ -312,6 +312,9 @@ const NO_BOT_USE = new Set([
   // Energy for each sacrifice (#2275): worth only beside a sacrifice, which
   // no rule the bot has pairs.
   "necromancer.masochism",
+  // Armor against physical damage only (#2289), which no role counts yet:
+  // Shields Up!'s goes unweighed the same way.
+  "elementalist.armor-of-frost",
   // A bond on attacks, attack damage traded for healing, and faster expiry
   // (#2291): no role the bot weighs.
   "monk.life-bond",

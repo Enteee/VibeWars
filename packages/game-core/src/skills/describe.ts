@@ -1473,7 +1473,18 @@ function describeTriggers(
       : (kindBoundWhen(event, trigger) ?? TRIGGER_WHEN[event]);
   return [...groups.values()].flatMap(({ trigger, on }) => {
     if (on.includes("bearer-dies")) {
-      return [{ text: describeDeath(trigger, ranks, bearerIsFoe), clause: false }];
+      // Incendiary Bonds' "activates early if target foe dies" (#2289).
+      const others = on.filter((event) => event !== "bearer-dies");
+      const death = describeDeath(trigger, ranks, bearerIsFoe);
+      return [
+        {
+          text:
+            others.length === 0
+              ? death
+              : `when it ${others.map((event) => whenOf(event, trigger)).join(" or ")}, or at once ${death}`,
+          clause: false,
+        },
+      ];
     }
     const lines = describeTrigger(
       trigger,
@@ -1574,8 +1585,8 @@ function describeDeath(
         effect.hits === "party" && inner.kind === "heal"
           ? `your party is healed for ${amount(inner.amount)}`
           : inner.kind === "damage"
-            ? `${lowerFirst(foesWithin(effect.radius, effect.hits))} take ${amount(inner.amount)}${typeWord(inner.type)} damage`
-            : `${lowerFirst(foesWithin(effect.radius, effect.hits))}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
+            ? `${lowerFirst(upTo(effect, ranks))} take ${amount(inner.amount)}${typeWord(inner.type)} damage`
+            : `${lowerFirst(upTo(effect, ranks))}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
       );
     }
     return effect.kind === "spread-gained-condition" ||
@@ -2180,7 +2191,10 @@ function describeOwnSkillModifier(
       : `${verb("cost", "costs")} ${at(energySurcharge, whole)} more Energy`,
     statAtTwelve(activationMultiplier) === 1
       ? undefined
-      : `${verb("cast", "casts")} ${at(activationMultiplier, (value) => percent(1 - value))} ${statAtTwelve(activationMultiplier) < 1 ? "faster" : "slower"}`,
+      : statAtTwelve(activationMultiplier) < 1
+        ? `${verb("cast", "casts")} ${at(activationMultiplier, (value) => percent(1 - value))} faster`
+        : // Rust's "take twice as long to activate" (#2289).
+          `${verb("take", "takes")} ${at(activationMultiplier, String)}× as long to cast`,
     statAtTwelve(activationSecondsLess) === 0
       ? undefined
       : `${verb("cast", "casts")} ${at(activationSecondsLess, seconds)} faster`,
