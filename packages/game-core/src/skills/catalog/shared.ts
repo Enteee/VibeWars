@@ -10,6 +10,14 @@ import type { Behaviour } from "../../match/behaviour.js";
 import type { StatusId } from "../status.js";
 import type { CreatureTemplate, Magnitude, OnHitEffect } from "../types.js";
 
+/**
+ * Illusion of Pain's 36...120 (#2287): the heal when it ends, its
+ * status's, and when it is reapplied, the recast's.
+ */
+export const ILLUSION_OF_PAIN_HEAL: Magnitude = {
+  scaling: { attributeId: "mesmer.illusion-magic", atZero: 36, atTwelve: 103.2 },
+};
+
 /** Longbow-ish range. */
 export const RANGE_LONG = 520;
 

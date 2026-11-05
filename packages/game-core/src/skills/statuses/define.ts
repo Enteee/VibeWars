@@ -35,6 +35,7 @@ export function define(
     moveSpeedMultiplier: 1,
     moveSpeedWhileEnchanted: 1,
     preventsSpeedBoosts: false,
+    preventsAdrenalineGain: false,
     returnsSource: undefined,
     stepsToTarget: undefined,
     attackMissChance: 0,
