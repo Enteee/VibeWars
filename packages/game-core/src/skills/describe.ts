@@ -1459,7 +1459,7 @@ function describeSpellOnAlly(
   for (const { on, usedSkill, effects, target } of triggers) {
     if (
       on !== "bearer-casts-spell" ||
-      usedSkill?.targetsAlly !== true ||
+      usedSkill?.targets !== "ally" ||
       usedSkill.attributes === undefined
     ) {
       return undefined;
