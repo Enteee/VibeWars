@@ -104,6 +104,8 @@ const rows = {
   "monk.purge-signet": { glyph: "signet-drop-struck" },
   "monk.blessed-signet": { glyph: "signet-rings-energy" },
   "monk.zealots-fire": { glyph: "figure-flame-strike" },
+  // Stand-in art (#2294).
+  "monk.signet-of-mystic-wrath": { glyph: "signet-star" },
   // Stand-in art (#2312).
   "monk.life-bond": { glyph: "hearts-redirect" },
   "monk.life-attunement": { glyph: "heart-plus-blade" },
