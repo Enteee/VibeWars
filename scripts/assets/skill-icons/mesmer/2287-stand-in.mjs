@@ -3,14 +3,14 @@ const rows = {
   // Staples (#2287), stand-ins until their art card.
   "mesmer.ether-lord": { glyph: "energy-cut", modifier: "up" },
   "mesmer.spirit-of-failure": { glyph: "hex-fail-foe", modifier: "plus" },
-  "mesmer.spirit-shackles": { glyph: "chain", modifier: "down" },
+  "mesmer.spirit-shackles": { glyph: "chain", modifier: "stun" },
   "mesmer.soothing-images": { glyph: "adrenal-fast", modifier: "down" },
   "mesmer.chaos-storm": { glyph: "energy-ring", modifier: "bolt" },
-  "mesmer.psychic-distraction": { glyph: "interrupt", modifier: "clock" },
+  "mesmer.psychic-distraction": { glyph: "interrupt", modifier: "stun" },
   "mesmer.arcane-languor": { glyph: "energy-quiet", modifier: "stun" },
   "mesmer.illusion-of-pain": { glyph: "heal", modifier: "bleed" },
   "mesmer.feedback": { glyph: "drop-energy", modifier: "take" },
-  "mesmer.ether-phantom": { glyph: "ghost", modifier: "less" },
+  "mesmer.ether-phantom": { glyph: "ghost", modifier: "take" },
 };
 
 export default rows;
