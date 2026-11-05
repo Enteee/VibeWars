@@ -1032,7 +1032,9 @@ export interface LengthenRechargeEffect {
  * own, a common skill included, but those of `exceptTypes`: Unnatural
  * Signet's "all your non-Mesmer skills except signets". `all` (#1570):
  * every skill on the bar, the one used included, as Blackout's "all of
- * your skills are disabled for 5 seconds". `attacks` (#1914): every
+ * your skills are disabled for 5 seconds". `others` (#2287): every skill
+ * on the bar but the one used, as Psychic Distraction's "all of your other
+ * skills are disabled for 8 seconds". `attacks` (#1914): every
  * attack skill on the bar but the one used, as Focused Shot's "your other
  * attack skills are disabled", but those of `exceptWeapon` (#2134), as
  * Wastrel's Collapse's "your non-dagger attack skills". `types` (#1930): every skill on the
@@ -1050,6 +1052,11 @@ export type DisableOwnSkillsEffect =
   | {
       readonly kind: "disable-own-skills";
       readonly which: "all";
+      readonly seconds: Magnitude;
+    }
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "others";
       readonly seconds: Magnitude;
     }
   | {

@@ -147,6 +147,7 @@ describe("status definitions", () => {
         def.energyCostMultiplier !== 1 ||
         def.preventsResurrection ||
         def.preventsSpeedBoosts ||
+        def.preventsAdrenalineGain ||
         def.returnsSource !== undefined ||
         def.stepsToTarget !== undefined ||
         def.elementalDamageTakenAs !== undefined ||

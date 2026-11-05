@@ -512,6 +512,15 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "ward-against-harm": icon("ward-against-harm"),
   "mark-of-subversion": icon("mark-of-subversion"),
   "mantra-of-recall": icon("mantra-of-recall"),
+  // Staples (#2287).
+  "ether-lord": icon("ether-lord"),
+  "ether-lord-regeneration": icon("ether-lord-regeneration"),
+  "spirit-of-failure": icon("spirit-of-failure"),
+  "spirit-shackles": icon("spirit-shackles"),
+  "soothing-images": icon("soothing-images"),
+  "arcane-languor": icon("arcane-languor"),
+  "illusion-of-pain": icon("illusion-of-pain"),
+  "ether-phantom": icon("ether-phantom"),
   // Warrior conditions (#2096).
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
