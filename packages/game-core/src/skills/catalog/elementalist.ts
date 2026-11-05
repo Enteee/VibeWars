@@ -4598,6 +4598,75 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     ],
   },
   /* ---------------------------------------------------------------------- */
+  /* Faster than normal (#2290)                                              */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.churning-earth",
+    name: "Churning Earth",
+    gwId: 844,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Create Churning Earth at target foe's location. For the next 5
+    // seconds, Churning Earth strikes foes near that location for 10...40
+    // earth damage each second. Any foe moving faster than normal when
+    // struck by Churning Earth is knocked down."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 5 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 5,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_NEARBY,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 34 },
+                },
+                type: "earth",
+                armorPenetration: 0,
+              },
+              {
+                kind: "if",
+                condition: { kind: "target-moving-faster" },
+                effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
   /* Staples (#2289): Armor of Frost, Phoenix, Incendiary Bonds, Stone      */
   /* Daggers, Star Burst, Rust                                              */
   /* ---------------------------------------------------------------------- */

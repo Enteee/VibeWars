@@ -516,6 +516,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "armor-of-frost": icon("armor-of-frost"),
   "incendiary-bonds": icon("incendiary-bonds"),
   rust: icon("rust"),
+  // Source-targets triggers and signet lockout (#2290).
+  "mind-wrack": icon("mind-wrack"),
+  ignorance: icon("ignorance"),
   // Warrior conditions (#2096).
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),

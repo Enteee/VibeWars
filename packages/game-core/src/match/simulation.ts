@@ -223,6 +223,7 @@ import {
   fireCreationTriggers,
   fireDeathTriggers,
   fireEndTriggers,
+  fireSourceTargetsTriggers,
   fireTriggers,
   type AimedAt,
   type DirectTriggerEvent,
@@ -3949,13 +3950,22 @@ export class MatchSimulation {
     };
     const primary = skill.target === "self" ? record : targetRecord;
     // Glimmering Mark's (#2282): a status that ends when its source uses
-    // a skill on its bearer is gone before this one lands.
+    // a skill on its bearer is gone before this one lands. Mind Wrack's
+    // (#2290): one that answers it fires then.
     if (primary !== undefined) {
       this.#logEnded(
         record,
         skill,
         primary,
         primary.combatant.statuses.endOnSourceTargets(record.id),
+      );
+      this.#logFired(
+        fireSourceTargetsTriggers(
+          primary.combatant,
+          record.id,
+          { skillId, key: cast.key },
+          this.#triggerContext(),
+        ),
       );
     }
     const exposed = this.#exposedTo(record);
