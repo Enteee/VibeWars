@@ -516,6 +516,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "armor-of-frost": icon("armor-of-frost"),
   "incendiary-bonds": icon("incendiary-bonds"),
   rust: icon("rust"),
+  // Bonds and rank-scaled multipliers (#2291).
+  "life-bond": icon("life-bond"),
+  "life-attunement": icon("life-attunement"),
+  "aura-of-faith": icon("aura-of-faith"),
+  "peace-and-harmony": icon("peace-and-harmony"),
+  "enchanters-conundrum": icon("enchanters-conundrum"),
   // Source-targets triggers and signet lockout (#2290).
   "mind-wrack": icon("mind-wrack"),
   ignorance: icon("ignorance"),

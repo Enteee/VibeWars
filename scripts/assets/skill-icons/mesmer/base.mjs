@@ -92,6 +92,13 @@ const rows = {
   "mesmer.physical-resistance": { glyph: "shield-blow" },
   // Attributes set or borrowed (#1929).
   "mesmer.signet-of-illusions": { glyph: "bars-lent" },
+  // Stand-in art (#2293).
+  "mesmer.keystone-signet": { glyph: "arch-keystone" },
+  // Stand-in art (#2312).
+  "mesmer.mind-wrack": { glyph: "hex-energy-down" },
+  "mesmer.ignorance": { glyph: "hex-signet-struck" },
+  "mesmer.simple-thievery": { glyph: "tiles-steal" },
+  "mesmer.enchanters-conundrum": { glyph: "hex-ring-clock" },
 };
 
 export default rows;
