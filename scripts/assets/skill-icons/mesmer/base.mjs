@@ -101,6 +101,17 @@ const rows = {
   "mesmer.ignorance": { glyph: "hex-signet-struck" },
   "mesmer.simple-thievery": { glyph: "tiles-steal" },
   "mesmer.enchanters-conundrum": { glyph: "hex-ring-clock" },
+  // Stand-in art (#2334).
+  "mesmer.ether-lord": { glyph: "drop-crown" },
+  "mesmer.spirit-of-failure": { glyph: "hex-ring-cross" },
+  "mesmer.spirit-shackles": { glyph: "shackle-pair" },
+  "mesmer.soothing-images": { glyph: "moon-bars" },
+  "mesmer.chaos-storm": { glyph: "storm-spiral", modifier: "area" },
+  "mesmer.psychic-distraction": { glyph: "head-scatter" },
+  "mesmer.arcane-languor": { glyph: "bolt-rings" },
+  "mesmer.illusion-of-pain": { glyph: "zigzag-plus" },
+  "mesmer.feedback": { glyph: "bolt-uturn" },
+  "mesmer.ether-phantom": { glyph: "drop-ghost" },
 };
 
 export default rows;
