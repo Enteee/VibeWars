@@ -29,7 +29,7 @@ jobs:
   # No `needs:`, for the reason given on `ci`.
   hooks:
     name: git hooks
-    runs-on: ubuntu-latest
+    runs-on: ${{ (vars.COMPANY_RUNNERS == '1' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))) && fromJSON('["self-hosted","vibewars-company"]') || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -70,7 +70,7 @@ jobs:
   # reported as skipped, and a skipped required check counts as passing.
   ci:
     name: format + lint + typecheck + test + build
-    runs-on: ubuntu-latest
+    runs-on: ${{ (vars.COMPANY_RUNNERS == '1' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))) && fromJSON('["self-hosted","vibewars-company"]') || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: ./.github/actions/devenv
@@ -120,7 +120,7 @@ jobs:
   # No path filter, for the reason given on `ci`: a required check that is
   # skipped, or never reports, must not count as green.
   e2e-shard:
-    runs-on: ubuntu-latest
+    runs-on: ${{ (vars.COMPANY_RUNNERS == '1' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))) && fromJSON('["self-hosted","vibewars-company"]') || 'ubuntu-latest' }}
     timeout-minutes: 90
     # Two pull requests that are green alone and red together (#1571) are
     # caught on main by e2e, but a push runs only a third of the suite (above):
@@ -210,7 +210,7 @@ jobs:
     name: e2e
     needs: e2e-shard
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ${{ (vars.COMPANY_RUNNERS == '1' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))) && fromJSON('["self-hosted","vibewars-company"]') || 'ubuntu-latest' }}
     steps:
       - name: Every shard succeeded
         env:
