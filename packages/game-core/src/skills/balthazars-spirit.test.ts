@@ -51,7 +51,7 @@ function scene(rank: number, pools: ReadonlyMap<string, number>) {
 
 /** `foe` hits `bearer` once, and the triggers fire as the simulation's drain does. */
 function hit(bearer: Combatant, foe: Combatant, everyone: readonly Combatant[]): CombatEvent[] {
-  bearer.statuses.recordDamageFromFoe(foe.id, "physical", 20, false);
+  bearer.statuses.recordDamageFromFoe(foe.id, "slashing", 20, false);
   return bearer.statuses.drainChanges().flatMap((change) =>
     fireChangeTriggers(bearer, change, noSpread, {
       sourceOf: (id) => everyone.find((combatant) => combatant.id === id),
