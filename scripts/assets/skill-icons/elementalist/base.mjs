@@ -107,6 +107,8 @@ const rows = {
   "elementalist.sliver-armor": { glyph: "ring-figure-shards" },
   // Stand-in art (#2292).
   "elementalist.glimmering-mark": { glyph: "stars-adjacent" },
+  // Stand-in art (#2312).
+  "elementalist.churning-earth": { glyph: "rocks-churning" },
 };
 
 export default rows;
