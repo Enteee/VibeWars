@@ -78,6 +78,7 @@ export {
   preventsEnchantments,
   preventsResurrection,
   preventsShoutsAndChants,
+  preventsSignets,
   preventsSpells,
   scaledStatusDuration,
 } from "./status.js";
