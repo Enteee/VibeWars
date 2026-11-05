@@ -262,9 +262,10 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
     }
   }
   // Reversal of Damage's and Mark of Protection's caps are their caster's (#2187),
-  // and Ward Against Harm's elemental armor (#2278).
+  // Ward Against Harm's elemental armor (#2278) and Retribution's cap (#2286).
   for (const stat of [
     definition.reflectsNextDamage?.cap,
+    definition.reflectsAttackDamage?.max,
     definition.redirectsDamage?.reduction,
     definition.damageToHealing?.cap,
     ...definition.conditionalArmor.map(({ amount }) => amount),
@@ -1568,15 +1569,17 @@ const PULSE_EPSILON = 1e-6;
  * `StatusDefinition.reflectsAttackDamage` (#1754). Each foe's attack that
  * hits the bearer costs that attacker `min(share × damage the bearer
  * took, max)` damage of `type`, from the status's source, logged as
- * `skillId`; a blow that took nothing reflects nothing. After `times`
- * reflections the status ends. A reflection is no attack, so it is never
+ * `skillId`; a blow that took nothing reflects nothing. `max` scales by
+ * the ranks it was put on with, as Retribution's 5...20 (#2286). After
+ * `times` reflections the status ends; `undefined`, never, as
+ * Retribution's, which lasts while maintained. A reflection is no attack, so it is never
  * reflected again, and one at an attacker dead or gone does not count.
  */
 export interface ReflectsAttackDamage {
   readonly share: number;
-  readonly max: number;
+  readonly max: StatusStat;
   readonly type: DamageType;
-  readonly times: number;
+  readonly times: number | undefined;
   readonly skillId: string;
 }
 
@@ -1817,10 +1820,11 @@ export interface StatusTrigger {
    * On `bearer-takes-damage-from-foe` only (#1540): it fires only for
    * damage of this type, never for a life steal, as Mark of Rodgort's
    * "whenever each foe is struck for fire damage"; `elemental` (#2133),
-   * any of cold, fire, lightning or earth, as Storm Chaser's. Absent: any
-   * damage or steal.
+   * any of cold, fire, lightning or earth, as Storm Chaser's; `physical`
+   * (#2286), any of slashing, piercing or blunt, as Essence Bond's. Absent:
+   * any damage or steal.
    */
-  readonly damageType?: DamageType | "elemental";
+  readonly damageType?: DamageType | "elemental" | "physical";
   /**
    * On `bearer-takes-damage-from-foe` only (#1931): it fires only while the
    * bearer is using a skill, never mid-swing nor idle, as Spinal Shivers'
@@ -2470,11 +2474,12 @@ export function getStatusDefinition(id: StatusId): StatusDefinition {
 
 /**
  * Whether a trigger bound to damage of `wanted` answers damage of `type`
- * (#1540): any, with none wanted; `elemental` any elemental type (#2133).
+ * (#1540): any, with none wanted; `elemental` any elemental type (#2133),
+ * `physical` any physical one (#2286).
  * A life steal, `undefined`, answers only a trigger that wants none.
  */
 function damageTypeAnswers(
-  wanted: DamageType | "elemental" | undefined,
+  wanted: DamageType | "elemental" | "physical" | undefined,
   type: DamageType | undefined,
 ): boolean {
   if (wanted === undefined) {
@@ -2483,7 +2488,10 @@ function damageTypeAnswers(
   if (type === undefined) {
     return false;
   }
-  return wanted === "elemental" ? isElementalDamage(type) : wanted === type;
+  if (wanted === "elemental") {
+    return isElementalDamage(type);
+  }
+  return wanted === "physical" ? isPhysicalDamage(type) : wanted === type;
 }
 
 /**
@@ -2825,7 +2833,7 @@ export class StatusSet {
     if (took <= 0) {
       return;
     }
-    for (const { id, sourceId } of this.active) {
+    for (const { id, sourceId, ranks } of this.active) {
       const reflects = getStatusDefinition(id).reflectsAttackDamage;
       if (reflects !== undefined) {
         this.#changes.push({
@@ -2833,7 +2841,10 @@ export class StatusSet {
           statusId: id,
           sourceId,
           toId: offenderId,
-          damage: Math.min(Math.round(reflects.share * took), reflects.max),
+          damage: Math.min(
+            Math.round(reflects.share * took),
+            Math.round(statAt(reflects.max, ranks)),
+          ),
         });
       }
     }

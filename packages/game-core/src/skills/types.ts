@@ -684,13 +684,15 @@ export interface KnockdownEffect {
  * has selected (#1326), as Heart of Shadow's "Shadow Step to a nearby
  * location directly away from your target" (`"away-from-selection"`), or
  * trades places with it (#1930), as Swap's "you and target summoned
- * creature Shadow Step to each other's locations" (`"swap"`). The effect
+ * creature Shadow Step to each other's locations" (`"swap"`), or to the
+ * corpse this use exploited (#2268), as Consume Corpse's "teleport to that
+ * corpse" (`"corpse"`; none exploited, no step). The effect
  * layer only reports it (`shadow-stepped`, `shadow-stepped-away`,
  * `shadow-swapped`); the simulation places the bodies.
  */
 export interface ShadowStepEffect {
   readonly kind: "shadow-step";
-  readonly to: "target" | "away-from-selection" | "swap";
+  readonly to: "target" | "away-from-selection" | "swap" | "corpse";
 }
 
 /**
@@ -2229,12 +2231,19 @@ export interface CorpseRule {
    */
   readonly all?: true;
   /**
+   * `random`: one fresh corpse within `radius` of the caster, picked with
+   * the match's rng as the use lands, not the nearest (#2268): Consume
+   * Corpse's "exploit a random corpse". Not with `near` or `all`.
+   */
+  readonly pick?: "random";
+  /**
    * A well's "or sacrifice 66% health" (#1730): with no fresh corpse in
    * reach as it resolves, the caster sacrifices this % of its max Health
-   * and the skill goes off where it stands. `undefined`: no corpse, no
-   * use.
+   * and the skill goes off where it stands. Scaled by the skill's
+   * attribute (#2268), as Necrotic Traversal's 30...20%. `undefined`: no
+   * corpse, no use.
    */
-  readonly elseSacrificePercent: number | undefined;
+  readonly elseSacrificePercent: Magnitude | undefined;
 }
 
 /** How a flying spell flies (#535). */
@@ -2449,6 +2458,11 @@ export interface SkillContext {
    * trigger: what `disable-own-skills` `attribute` spares. Absent elsewhere.
    */
   readonly skillId?: string | undefined;
+  /**
+   * The corpse the skill landing exploited (#2268): where `shadow-step`
+   * `corpse` goes. Absent when it exploited none.
+   */
+  readonly corpseId?: string | undefined;
   /**
    * The status whose trigger these effects are (#1473): what
    * `target-lacks-other-hex` does not count. Absent outside a trigger.

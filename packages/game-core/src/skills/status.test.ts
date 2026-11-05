@@ -244,6 +244,8 @@ describe("status definitions", () => {
       "life-transfer": -7,
       "life-transfer-regen": 7,
       "weaken-knees": -3.4,
+      succor: 1,
+      "restful-breeze": 10,
     });
   });
 
@@ -274,6 +276,7 @@ describe("status definitions", () => {
       "well-of-power": 2,
       "well-of-weariness": -1,
       "lyssas-aura": 4,
+      succor: 1,
     });
   });
 

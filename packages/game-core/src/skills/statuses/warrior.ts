@@ -60,7 +60,12 @@ export type WarriorStatusId =
   // Condition movement (#2259).
   | "i-will-survive"
   // Warrior staples 5 (#2315).
-  | "to-the-limit";
+  | "to-the-limit"
+  // Warrior staples (#2316).
+  | "charging-strike"
+  | "signet-of-stamina"
+  | "soldiers-stance"
+  | "steady-stance";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -538,5 +543,64 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
   "to-the-limit": define("to-the-limit", "To the Limit!", "shout", {
     profession: "warrior",
     maxHealthBonus: { scaling: { attributeId: "warrior.tactics", atZero: 10, atTwelve: 50 } },
+  }),
+  // Warrior staples (#2316). (PvP) "you run 33% faster. Your next
+  // successful melee hit does +10...80 damage and this stance ends. This
+  // stance ends if you use a skill." Not the stance itself, which its own
+  // use spares. A bow hit neither gains the damage nor ends it.
+  "charging-strike": define("charging-strike", "Charging Strike", "stance", {
+    profession: "warrior",
+    moveSpeedMultiplier: 1.33,
+    attackDamageDelta: { scaling: { attributeId: "warrior.strength", atZero: 10, atTwelve: 66 } },
+    attackDamageDeltaWeapon: "melee",
+    endsAfterHits: { count: 1, weapon: "melee" },
+    endsWhenBearerUsesSkill: true,
+  }),
+  // "You have +50...300 maximum Health. This signet ends if you
+  // successfully hit with an attack": a miss or a block keeps it.
+  "signet-of-stamina": define("signet-of-stamina", "Signet of Stamina", "skill-effect", {
+    profession: "warrior",
+    maxHealthBonus: { scaling: { attributeId: "warrior.strength", atZero: 50, atTwelve: 250 } },
+    endsWhenBearerHits: true,
+  }),
+  // (PvP) "you attack 33% faster while under the effects of a shout or
+  // chant", as Soldier's Fury. The shout ending stops the speed, not the
+  // stance.
+  "soldiers-stance": define("soldiers-stance", "Soldier's Stance", "stance", {
+    profession: "warrior",
+    whileUnder: {
+      categories: ["shout", "chant"],
+      statusIds: [],
+      attackDurationMultiplier: 0.67,
+      adrenalineGainFaster: 0,
+      healthPips: 0,
+      armorModifier: 0,
+      attackMissChance: 0,
+    },
+  }),
+  // "the next time you would be knocked down, you gain 1...4 strikes of
+  // adrenaline and 1...7 Energy instead": it ends only on a knockdown it
+  // stopped.
+  "steady-stance": define("steady-stance", "Steady Stance", "stance", {
+    profession: "warrior",
+    preventsKnockdown: true,
+    endsOnKnockdownPrevented: true,
+    triggers: [
+      {
+        on: "bearer-knockdown-prevented",
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            strikes: { scaling: { attributeId: "warrior.tactics", atZero: 1, atTwelve: 3.4 } },
+          },
+          {
+            kind: "energy-gain",
+            amount: { scaling: { attributeId: "warrior.tactics", atZero: 1, atTwelve: 5.8 } },
+          },
+        ],
+        target: "bearer",
+        skillId: "warrior.steady-stance",
+      },
+    ],
   }),
 };
