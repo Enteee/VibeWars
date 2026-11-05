@@ -162,6 +162,19 @@ export interface BlockRule {
  */
 export type StatusStat = number | { readonly scaling: AttributeScaling };
 
+/**
+ * A bond's share of hits on its bearer (#2291), sent to the status's
+ * source: `share` of each hit `from` names, rounded down, then less
+ * `reduction` for the source, never below 0. The bearer is spared the
+ * whole share either way.
+ */
+export interface RedirectsDamage {
+  readonly share: number;
+  /** `physical`: a hit of a physical type; `attack`: a weapon blow, of any type. */
+  readonly from: "physical" | "attack";
+  readonly reduction: StatusStat;
+}
+
 /** An insignia's `ConditionalArmor`, its amount a `StatusStat` (#2278): Ward Against Harm's 12...24. */
 export interface StatusConditionalArmor {
   readonly amount: StatusStat;
@@ -185,6 +198,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   physicalDamageTakenBonus: true,
   attackDurationMultiplier: true,
   damageTakenMultiplier: true,
+  healingMultiplier: true,
   adrenalineGainFaster: true,
   damageReductionFromWeakerFoe: true,
   casterEnergyPerReduction: true,
@@ -202,6 +216,7 @@ type OwnSkillStatKey = {
 const OWN_SKILL_STAT_KEYS: Readonly<Record<OwnSkillStatKey, true>> = {
   energyDiscount: true,
   energySurcharge: true,
+  activationMultiplier: true,
   activationSecondsLess: true,
   rechargeFaster: true,
   durationMultiplier: true,
@@ -250,6 +265,7 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   // and Ward Against Harm's elemental armor (#2278).
   for (const stat of [
     definition.reflectsNextDamage?.cap,
+    definition.redirectsDamage?.reduction,
     definition.damageToHealing?.cap,
     ...definition.conditionalArmor.map(({ amount }) => amount),
   ]) {
@@ -452,10 +468,11 @@ export interface StatusDefinition {
    */
   readonly redirectsConditionsToMinion: boolean;
   /**
-   * Multiplier on the heals the bearer receives from skills (1 = unaffected).
+   * Multiplier on the heals the bearer receives from skills (1 = unaffected),
+   * by its source's rank (#2291): Life Attunement's 1.14...1.5.
    * Regeneration and life steal ignore it.
    */
-  readonly healingMultiplier: number;
+  readonly healingMultiplier: StatusStat;
   /**
    * Multiplier on the bearer's weapon roll (#762): weakness's 0.34. An
    * attack skill's bonus damage is not scaled.
@@ -983,10 +1000,11 @@ export interface StatusDefinition {
    */
   readonly bindsCreatures: boolean;
   /**
-   * The share of each physical hit on the bearer that its source takes
-   * instead (#1108): Symbiotic Bond's 0.5, rounded down. 0: none.
+   * A share of each qualifying hit on the bearer that its source takes
+   * instead (#1108, #2291): Symbiotic Bond's half of a physical one, Life
+   * Bond's half of an attack's. `undefined`: none.
    */
-  readonly redirectsPhysicalDamage: number;
+  readonly redirectsDamage: RedirectsDamage | undefined;
   /**
    * The share of each hit on the bearer, of any type, that its closest
    * living minion takes instead (#1986): Dark Bond's 0.75, rounded down.
@@ -1171,6 +1189,8 @@ export interface StatusDefinition {
    * keep their rate.
    */
   readonly conditionsExpireFaster: number;
+  /** As `conditionsExpireFaster`, for its hexes (#2291): Peace and Harmony's 0.9. */
+  readonly hexesExpireFaster: number;
   /**
    * Multiplier on how long a hex takes to cast on the bearer (#944): Holy
    * Veil's 2. Read once, as the cast begins; an instant hex stays instant.
@@ -1596,8 +1616,8 @@ export interface OwnSkillModifier {
   readonly energyFloor: number;
   /** Energy on the cost after the discount (#1886), as Roaring Winds'. 0: none. */
   readonly energySurcharge: StatusStat;
-  /** On activation time. 1: none. */
-  readonly activationMultiplier: number;
+  /** On activation time, by its source's rank (#2291). 1: none. */
+  readonly activationMultiplier: StatusStat;
   /**
    * Seconds off the activation time, after every multiplier, never below
    * 0 (#1975): Jaundiced Gaze's "casts 1 second faster". 0: none.
@@ -1695,7 +1715,8 @@ export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): Ow
       energyDiscount: boost.energyDiscount + Math.round(statAt(modifier.energyDiscount, ranks)),
       energyFloor: Math.max(boost.energyFloor, modifier.energyFloor),
       energySurcharge: boost.energySurcharge + Math.round(statAt(modifier.energySurcharge, ranks)),
-      activationMultiplier: boost.activationMultiplier * modifier.activationMultiplier,
+      activationMultiplier:
+        boost.activationMultiplier * statAt(modifier.activationMultiplier, ranks),
       activationSecondsLess:
         boost.activationSecondsLess + statAt(modifier.activationSecondsLess, ranks),
       rechargeFaster: Math.max(boost.rechargeFaster, statAt(modifier.rechargeFaster, ranks)),
@@ -3366,13 +3387,15 @@ export class StatusSet {
    * important enchantment or condition with a cheaper one is a tactic.
    * With a `profession`, only that profession's statuses go (#845): "lose
    * 1 Dervish enchantment". With a `statusId`, only that status (#1549):
-   * "Charge!"'s "lose the Crippled condition".
+   * "Charge!"'s "lose the Crippled condition". With an `orCategory`, its
+   * statuses go too, out of the same count (#2291).
    */
   public removeByCategory(
     category: StatusCategory,
     count = Number.POSITIVE_INFINITY,
     profession?: ProfessionId,
     statusId?: StatusId,
+    orCategory?: StatusCategory,
   ): RemovedStatus[] {
     const removed: RemovedStatus[] = [];
     for (const status of [...this.#statuses.values()].reverse()) {
@@ -3381,7 +3404,7 @@ export class StatusSet {
       }
       const definition = getStatusDefinition(status.id);
       if (
-        definition.category === category &&
+        (definition.category === category || definition.category === orCategory) &&
         (profession === undefined || definition.profession === profession) &&
         (statusId === undefined || status.id === statusId)
       ) {
@@ -3395,26 +3418,35 @@ export class StatusSet {
   /**
    * Split a hit of `amount` on the bearer (#1108, #1986): with a status
    * whose rule takes it, the newest, its share, rounded down, is recorded
-   * and the rest returned; without one, all of it. A bond on physical
-   * hits (Symbiotic Bond) sends to its source and takes only a
-   * `physical` one; one on any hit (Dark Bond) to the closest minion.
+   * and the rest returned; without one, all of it. A bond to its source
+   * takes only the hits its `from` names, a `physical` one (Symbiotic
+   * Bond) or an `attack` (Life Bond, less its reduction, #2291); one on
+   * any hit (Dark Bond) to the closest minion.
    */
-  public redirect(amount: number, physical: boolean): number {
+  public redirect(amount: number, physical: boolean, attack: boolean): number {
     for (const status of [...this.#statuses.values()].reverse()) {
       const definition = getStatusDefinition(status.id);
       const toClosestMinion = definition.redirectsDamageToMinion > 0;
+      const bond = definition.redirectsDamage;
       const share = toClosestMinion
         ? definition.redirectsDamageToMinion
-        : physical
-          ? definition.redirectsPhysicalDamage
+        : bond !== undefined && (bond.from === "physical" ? physical : attack)
+          ? bond.share
           : 0;
       if (share > 0) {
         const sent = Math.floor(amount * share);
-        if (sent > 0) {
+        const taken = Math.max(
+          0,
+          sent -
+            (toClosestMinion || bond === undefined
+              ? 0
+              : Math.round(statAt(bond.reduction, status.ranks))),
+        );
+        if (taken > 0) {
           this.#changes.push({
             kind: "redirected-damage",
             toId: status.sourceId,
-            amount: sent,
+            amount: taken,
             toClosestMinion,
           });
         }
@@ -3967,15 +3999,19 @@ export class StatusSet {
    * Advance all durations by `dt` seconds, dropping any that expire.
    * Returns the ids that expired on this tick so the caller can emit
    * end-of-status effects. Conditions run `conditionsExpireFaster`
-   * faster (#1464), read as the tick begins.
+   * faster (#1464), hexes `hexesExpireFaster` (#2291), read as the tick
+   * begins.
    */
   public advance(dt: number, moving: boolean): StatusId[] {
     const expired: StatusId[] = [];
-    const conditionDt = dt * (1 + aggregateModifiers(this.active).conditionsExpireFaster);
+    const modifiers = aggregateModifiers(this.active);
+    const conditionDt = dt * (1 + modifiers.conditionsExpireFaster);
+    const hexDt = dt * (1 + modifiers.hexesExpireFaster);
     for (const status of this.#statuses.values()) {
       this.#pulse(status, dt);
+      const category = getStatusDefinition(status.id).category;
       status.remainingSeconds -=
-        getStatusDefinition(status.id).category === "condition" ? conditionDt : dt;
+        category === "condition" ? conditionDt : category === "hex" ? hexDt : dt;
       if (status.remainingSeconds > 0) {
         continue;
       }
@@ -4246,6 +4282,8 @@ export interface StatusModifiers {
   readonly uninterruptible: boolean;
   /** Every status's, summed (#1464). */
   readonly conditionsExpireFaster: number;
+  /** Every status's, summed (#2291). */
+  readonly hexesExpireFaster: number;
   /** Every status's, multiplied (#944). */
   readonly incomingHexCastTimeMultiplier: number;
   /** Every status's, multiplied (#1955). */
@@ -4373,6 +4411,7 @@ export function aggregateModifiers(
   const skillArmorPenetration: SkillArmorPenetration[] = [];
   let uninterruptible = false;
   let conditionsExpireFaster = 0;
+  let hexesExpireFaster = 0;
   let spellRechargeKept = 1;
   let skillRechargeKept = 1;
   let bindingRitualRechargeKept = 1;
@@ -4436,7 +4475,7 @@ export function aggregateModifiers(
       def.maxHealthBonusPerEnchantment * enchantments;
     maxEnergyBonus += def.maxEnergyBonus;
     minionDamageBonus += def.minionDamageBonus;
-    healingMultipliers.push(def.healingMultiplier);
+    healingMultipliers.push(statAt(def.healingMultiplier, ranks));
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
     physicalDamageTakenBonus += Math.round(statAt(def.physicalDamageTakenBonus, ranks));
     for (const delta of def.attributeDeltas) {
@@ -4490,6 +4529,7 @@ export function aggregateModifiers(
     }
     uninterruptible ||= def.uninterruptible;
     conditionsExpireFaster += def.conditionsExpireFaster;
+    hexesExpireFaster += def.hexesExpireFaster;
     spellRechargeKept *= 1 - def.spellRechargeFaster;
     skillRechargeKept *= 1 - def.skillRechargeFaster;
     bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
@@ -4544,6 +4584,7 @@ export function aggregateModifiers(
     skillArmorPenetration,
     uninterruptible,
     conditionsExpireFaster,
+    hexesExpireFaster,
     incomingHexCastTimeMultiplier,
     incomingAllySpellCastTimeMultiplier,
     criticalChanceBonus,

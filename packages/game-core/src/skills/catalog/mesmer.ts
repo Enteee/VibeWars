@@ -3890,4 +3890,75 @@ export const MESMER_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "mantra-of-recall", durationSeconds: { flat: 20 } },
     ],
   },
+  {
+    id: "mesmer.enchanters-conundrum",
+    name: "Enchanter's Conundrum",
+    gwId: 1345,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP (#2291): "For 10 seconds, target foe casts enchantments
+    // 100...200% slower. If target foe is not under the effects of an
+    // enchantment when this hex is applied, that foe takes 10...100 damage
+    // and all adjacent foes take 75% of that damage": 82 and 61, read
+    // before the hex lands; the splash's curve sits a quarter low, so its
+    // rounding is 75% rounded down at every rank.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "not", condition: { kind: "target-has", category: "enchantment" } },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 10, atTwelve: 82 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: {
+                    attributeId: "mesmer.domination-magic",
+                    atZero: 7.25,
+                    atTwelve: 61.25,
+                  },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        kind: "apply-status",
+        statusId: "enchanters-conundrum",
+        durationSeconds: { flat: 10 },
+      },
+    ],
+  },
 ];

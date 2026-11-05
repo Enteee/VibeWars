@@ -312,6 +312,10 @@ const NO_BOT_USE = new Set([
   // Energy for each sacrifice (#2275): worth only beside a sacrifice, which
   // no rule the bot has pairs.
   "necromancer.masochism",
+  // A bond on attacks, attack damage traded for healing, and faster expiry
+  // (#2291): no role the bot weighs.
+  "monk.life-bond",
+  "monk.life-attunement",
 ]);
 
 function skill(id: string) {

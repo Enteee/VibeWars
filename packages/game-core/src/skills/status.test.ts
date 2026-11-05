@@ -139,7 +139,7 @@ describe("status definitions", () => {
         def.onCriticalHit !== undefined ||
         def.enchantmentsOnBearerCostLess !== 0 ||
         def.damageReduction !== 0 ||
-        def.redirectsPhysicalDamage !== 0 ||
+        def.redirectsDamage !== undefined ||
         def.redirectsDamageToMinion !== 0 ||
         def.replacedOnDeathBy !== undefined ||
         def.damageFromSpiritAttacks !== 0 ||
@@ -159,7 +159,9 @@ describe("status definitions", () => {
         def.interruptGuard !== undefined ||
         def.damageTypeTakenMultiplier !== undefined ||
         def.damageReductionFromSourceWith !== undefined ||
-        def.bindsCreatures;
+        def.bindsCreatures ||
+        def.conditionsExpireFaster !== 0 ||
+        def.hexesExpireFaster !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });

@@ -1,7 +1,7 @@
 import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
 import type { DamageEffect } from "../types.js";
-import { define } from "./define.js";
+import { define, ownSkills } from "./define.js";
 
 export type MesmerStatusId =
   | "backfire"
@@ -73,7 +73,8 @@ export type MesmerStatusId =
   | "fevered-dreams"
   | "keystone-signet"
   // Staples (#2278).
-  | "mantra-of-recall";
+  | "mantra-of-recall"
+  | "enchanters-conundrum";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -866,6 +867,22 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         ],
         skillId: "mesmer.mantra-of-recall",
       },
+    ],
+  }),
+  // PvP (#2291): "For 10 seconds, target foe casts enchantments
+  // 100...200% slower", by the Mesmer's Domination Magic; the damage is
+  // the skill's.
+  "enchanters-conundrum": define("enchanters-conundrum", "Enchanter's Conundrum", "hex", {
+    profession: "mesmer",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "enchantment" },
+        {
+          activationMultiplier: {
+            scaling: { attributeId: "mesmer.domination-magic", atZero: 2, atTwelve: 2.8 },
+          },
+        },
+      ),
     ],
   }),
 };
