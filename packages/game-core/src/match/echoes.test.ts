@@ -152,7 +152,7 @@ describe("Arcane Echo (#1126)", () => {
     echoUp(match, 0);
     expect(get(match, "a").statuses.get("arcane-echo")?.remainingSeconds).toBeGreaterThan(16);
     expect(describeStatus("arcane-echo")).toBe(
-      "the next time it uses a skill: if a spell, it takes this skill's slot for 20 seconds",
+      "the next time you use a skill: if a spell, it takes this skill's slot for 20 seconds",
     );
   });
 

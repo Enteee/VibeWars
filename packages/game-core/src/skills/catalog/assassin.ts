@@ -4028,4 +4028,33 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "assassin.smoke-powder-defense",
+    name: "Smoke Powder Defense",
+    gwId: 2136,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time you are struck, you take half damage
+    // and all adjacent foes are Blinded" (#2362): the stance's.
+    effects: [
+      { kind: "apply-status", statusId: "smoke-powder-defense", durationSeconds: { flat: 8 } },
+    ],
+  },
 ];

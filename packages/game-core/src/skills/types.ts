@@ -1432,14 +1432,26 @@ export interface TrapRule {
 }
 
 /**
+ * What a pulse effect lands once as it ends (#2329), as Searing Heat's
+ * "When Searing Heat ends, foes in the area of effect are set on fire":
+ * on whoever `area` takes around it, from its owner, also when the cap
+ * ends it early.
+ */
+export interface PulseEnd {
+  /** Who it hits; `origin: "caster"` means the effect's position. */
+  readonly area: RadiusArea;
+  readonly effects: readonly SkillEffect[];
+}
+
+/**
  * What a ground effect does while it lasts: a ward projects an aura
  * (#1087), a trap waits for a foe to spring it (#1105), a pulse lands its
- * effects every interval (#1113).
+ * effects every interval (#1113), and `atEnd`'s once as it ends (#2329).
  */
 export type GroundAct =
   | { readonly kind: "aura"; readonly aura: Aura }
   | { readonly kind: "trap"; readonly trap: TrapRule }
-  | { readonly kind: "pulse"; readonly pulse: PulseRule };
+  | { readonly kind: "pulse"; readonly pulse: PulseRule; readonly atEnd?: PulseEnd };
 
 /**
  * Leave a ground effect as the skill lands (#1087): a circle that is not

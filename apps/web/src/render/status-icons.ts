@@ -630,6 +630,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "spirit-channeling": icon("spirit-channeling"),
   "renewing-surge": icon("renewing-surge"),
   "mystic-corruption": icon("mystic-corruption"),
+  // Smoke Powder Defense (#2362).
+  "smoke-powder-defense": icon("smoke-powder-defense"),
 };
 
 const GAP = 2;

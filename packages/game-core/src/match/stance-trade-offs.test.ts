@@ -336,11 +336,11 @@ describe("the three stances' tooltips (#919)", () => {
       "attacks 33% faster, takes 160% damage",
     );
     expect(describeStatus("dark-escape")).toBe(
-      "moves at 125% speed, takes half damage, ends if the bearer hits with an attack",
+      "moves at 125% speed, takes half damage, ends if you hit with an attack",
     );
     expect(describeStatus("natural-stride")).toBe(
       "moves at 133% speed, 50% chance to block attacks, " +
-        "ends if the bearer becomes hexed or enchanted",
+        "ends if you become hexed or enchanted",
     );
   });
 });
