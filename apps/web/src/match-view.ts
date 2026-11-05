@@ -462,11 +462,34 @@ export async function startMatchView(
   const measureCover = (): void => {
     // The chat panel (#479) sits just above the HUD, wherever its top is.
     parent.style.setProperty("--hud-height", `${String(hud.root.offsetHeight)}px`);
+    // The chat (#2390) sits at the bottom-left beside the HUD's centred
+    // column when the room left of it is 14rem or more, above the HUD when
+    // not: the column is the widest of what the HUD lays out in its flow.
+    const column = Math.max(
+      0,
+      ...[...hud.root.children]
+        .filter((child) => getComputedStyle(child).position === "static")
+        .map((child) => child.getBoundingClientRect().width),
+    );
+    parent.style.setProperty("--hud-column-width", `${String(column)}px`);
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    parent.classList.toggle(
+      "is-chat-above-hud",
+      (parent.clientWidth - column) / 2 - 1.8 * rem < 14 * rem,
+    );
     // The compass and the party window, from the parent the canvas fills
     // (#1424). A hidden party window has no size and keeps nothing out; a
     // hidden compass keeps its box, so it keeps markers out either way and
     // nothing goes stale when it shows.
     const origin = parent.getBoundingClientRect();
+    // A party window on the left, as the Training Ground's (#2390), caps
+    // the chat's lines to the room below it.
+    const party = partyWindow.element.getBoundingClientRect();
+    if (party.height > 0 && party.left - origin.left < origin.width / 2) {
+      parent.style.setProperty("--chat-room", `${String(origin.bottom - party.bottom)}px`);
+    } else {
+      parent.style.removeProperty("--chat-room");
+    }
     const keepOut = [compass.element, partyWindow.element]
       .map((element) => element.getBoundingClientRect())
       .filter((rect) => rect.width > 0 && rect.height > 0)
@@ -1033,6 +1056,9 @@ export async function startMatchView(
       compass.dispose();
       delete parent.dataset.called;
       parent.style.removeProperty("--hud-height");
+      parent.style.removeProperty("--hud-column-width");
+      parent.style.removeProperty("--chat-room");
+      parent.classList.remove("is-chat-above-hud");
       nameReveal.detach();
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement?.();
