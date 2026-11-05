@@ -410,3 +410,20 @@ describe("Restful Breeze (#2286)", () => {
     expect(ally.statuses.has("restful-breeze")).toBe(false);
   });
 });
+
+describe("Monk staples' tooltips (#2286)", () => {
+  it("Healing Seed heals its bearer, not its caster", () => {
+    expect(describeStatus("healing-seed", R12)).toContain(": it and adjacent allies");
+    expect(describeStatus("healing-seed", R12)).not.toContain("you and");
+  });
+
+  it("Divine Boon says who is healed, for which spells, in one sentence", () => {
+    expect(describeStatus("divine-boon", R12)).toBe(
+      "whenever it casts a Protection Prayers or Divine Favor spell on an ally, that ally is healed for 51 and its caster loses 1 energy",
+    );
+  });
+
+  it("Restful Breeze ends on its bearer's skill, not yours", () => {
+    expect(describeStatus("restful-breeze", R12)).toContain("ends if the bearer uses a skill");
+  });
+});

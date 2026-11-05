@@ -495,9 +495,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.redirectsConditionsToMinion) {
     parts.push("conditions you would receive go to your closest minion instead");
   }
-  if (definition.healingMultiplier !== 1) {
-    const change = Math.round((definition.healingMultiplier - 1) * 100);
-    parts.push(`${change > 0 ? "+" : "−"}${String(Math.abs(change))}% healing`);
+  if (statAtTwelve(definition.healingMultiplier) !== 1) {
+    const more = statAtTwelve(definition.healingMultiplier) > 1;
+    const change = statText(definition.healingMultiplier, ranks, (value) => percent(value - 1));
+    parts.push(`${more ? "+" : "−"}${change} healing`);
   }
   if (definition.weaponDamageMultiplier !== 1) {
     const change = Math.round((definition.weaponDamageMultiplier - 1) * 100);
@@ -858,10 +859,14 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `−${statText(definition.damageReductionFromWeakerFoe, ranks, whole)} damage taken from foes with less Health`,
     );
   }
-  if (definition.redirectsPhysicalDamage > 0) {
-    parts.push(
-      `${share(definition.redirectsPhysicalDamage)} its physical damage goes to its caster`,
-    );
+  if (definition.redirectsDamage !== undefined) {
+    const { share: fraction, from, reduction } = definition.redirectsDamage;
+    const hits = from === "physical" ? "its physical damage" : "the damage it takes from attacks";
+    const less =
+      statAtTwelve(reduction) === 0
+        ? ""
+        : `, which takes ${statText(reduction, ranks, whole)} less of it`;
+    parts.push(`${share(fraction)} ${hits} goes to its caster${less}`);
   }
   if (definition.redirectsDamageToMinion > 0) {
     parts.push(
@@ -1096,6 +1101,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const faster = String(Math.round(definition.conditionsExpireFaster * 100));
     parts.push(`conditions on the bearer expire ${faster}% faster`);
   }
+  if (definition.hexesExpireFaster !== 0) {
+    const faster = String(Math.round(definition.hexesExpireFaster * 100));
+    parts.push(`hexes on the bearer expire ${faster}% faster`);
+  }
   if (definition.incomingHexCastTimeMultiplier !== 1) {
     const times = String(definition.incomingHexCastTimeMultiplier);
     parts.push(`hexes cast on the bearer take ${times}× as long to cast`);
@@ -1117,12 +1126,20 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.endsWhenBearerHitsWithAttackSkill) {
     parts.push("ends if the bearer hits with an attack skill");
   }
-  // One that answers the use says so in its trigger's line (#949).
+  // One that answers the use says so in its trigger's line (#949). Only a
+  // stance, a preparation or a signet's effect is always its caster's own;
+  // Restful Breeze ends on its bearer's skill, not yours (#2286).
   if (
     definition.endsWhenBearerUsesSkill &&
     !definition.triggers.some(({ on }) => on === "bearer-uses-skill")
   ) {
-    parts.push("ends if you use a skill");
+    parts.push(
+      definition.category === "stance" ||
+        definition.category === "preparation" ||
+        definition.category === "skill-effect"
+        ? "ends if you use a skill"
+        : "ends if the bearer uses a skill",
+    );
   }
   if (definition.endsWhenBearerUsesAdrenalSkill) {
     parts.push("ends if you use an adrenal skill");
@@ -1423,6 +1440,47 @@ interface TriggerLine {
 }
 
 /**
+ * Divine Boon's (#2286), one sentence in GW1's words: "whenever it casts
+ * a Protection Prayers or Divine Favor spell on an ally, that ally is
+ * healed for 51 and its caster loses 1 energy". Undefined unless every
+ * trigger answers an ally-targeted spell of some attributes with a heal
+ * on that ally or an energy loss to its caster.
+ */
+function describeSpellOnAlly(
+  triggers: readonly StatusTrigger[],
+  ranks: ReadonlyMap<string, number>,
+  bearerIsCaster: boolean,
+): string | undefined {
+  const scopes: string[] = [];
+  const parts: string[] = [];
+  for (const { on, usedSkill, effects, target } of triggers) {
+    if (
+      on !== "bearer-casts-spell" ||
+      usedSkill?.targetsAlly !== true ||
+      usedSkill.attributes === undefined
+    ) {
+      return undefined;
+    }
+    scopes.push(scopeAdjective(usedSkill.attributes));
+    for (const effect of effects) {
+      if (effect.kind === "heal" && target === "skill-target") {
+        parts.push(`that ally is healed for ${shown(describeMagnitude(effect.amount, ranks))}`);
+      } else if (effect.kind === "energy-loss" && target === "source") {
+        const who = bearerIsCaster ? "you lose" : "its caster loses";
+        parts.push(`${who} ${shown(describeMagnitude(effect.amount, ranks))} energy`);
+      } else {
+        return undefined;
+      }
+    }
+  }
+  if (triggers.length === 0) {
+    return undefined;
+  }
+  const spell = `${[...new Set(scopes)].join(" or ")} spell`;
+  return `whenever it casts ${/^[aeiou]/i.test(spell) ? "an" : "a"} ${spell} on an ally, ${[...new Set(parts)].join(" and ")}`;
+}
+
+/**
  * A status's triggers, those that do the same thing said once (#935):
  * Spiteful Spirit's "whenever it uses a skill or attacks". One that ends
  * when its bearer uses a skill answers only the next use (#949), and one
@@ -1437,6 +1495,10 @@ function describeTriggers(
   dropped: boolean,
   bearerIsCaster: boolean,
 ): TriggerLine[] {
+  const onAlly = describeSpellOnAlly(triggers, ranks, bearerIsCaster);
+  if (onAlly !== undefined) {
+    return [{ text: onAlly, clause: false }];
+  }
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
     const key = JSON.stringify([
@@ -1493,7 +1555,7 @@ function describeTriggers(
       bearerIsCaster,
     );
     // A heal on the bearer and the same on the allies around (#1951):
-    // Mist Form's, said once.
+    // Mist Form's, said once; Healing Seed's heals its bearer, not you (#2286).
     const [self, splash] = trigger.effects;
     const [first, second] = lines;
     if (
@@ -1507,7 +1569,12 @@ function describeTriggers(
       JSON.stringify(splash.effects[0]) === JSON.stringify(self)
     ) {
       const when = first.text.slice(0, first.text.indexOf(": ") + 2);
-      return [{ ...second, text: `${when}you and ${second.text.slice(when.length)}` }];
+      return [
+        {
+          ...second,
+          text: `${when}${bearerIsCaster ? "you" : "it"} and ${second.text.slice(when.length)}`,
+        },
+      ];
     }
     // A drop is said once, all it does after it (#1434).
     if (!dropped || lines.length < 2) {
@@ -2172,9 +2239,9 @@ function describeOwnSkillModifier(
     statAtTwelve(energySurcharge) === 0
       ? undefined
       : `${verb("cost", "costs")} ${at(energySurcharge, whole)} more Energy`,
-    activationMultiplier === 1
+    statAtTwelve(activationMultiplier) === 1
       ? undefined
-      : `${verb("cast", "casts")} ${percent(1 - activationMultiplier)} ${activationMultiplier < 1 ? "faster" : "slower"}`,
+      : `${verb("cast", "casts")} ${at(activationMultiplier, (value) => percent(1 - value))} ${statAtTwelve(activationMultiplier) < 1 ? "faster" : "slower"}`,
     statAtTwelve(activationSecondsLess) === 0
       ? undefined
       : `${verb("cast", "casts")} ${at(activationSecondsLess, seconds)} faster`,
@@ -3338,8 +3405,11 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       // Shatter Delusions' "remove one Mesmer hex" (#1765).
       const whose =
         effect.profession === undefined ? "" : `${getProfession(effect.profession).name} `;
+      // Peace and Harmony's "loses 0...4 conditions and hexes" (#2291).
+      const and =
+        effect.orCategory === undefined ? "" : ` and ${categoryNoun(count, effect.orCategory)}`;
       return {
-        text: `Removes ${upTo}${String(count)} ${whose}${categoryNoun(count, effect.category)}${perSpirit}`,
+        text: `Removes ${upTo}${String(count)} ${whose}${categoryNoun(count, effect.category)}${and}${perSpirit}`,
         magnitude: undefined,
       };
     }

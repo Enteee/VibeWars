@@ -210,7 +210,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   "symbiotic-bond": define("symbiotic-bond", "Symbiotic Bond", "shout", {
     profession: "ranger",
     healthPips: 3,
-    redirectsPhysicalDamage: 0.5,
+    redirectsDamage: { share: 0.5, from: "physical", reduction: 0 },
   }),
 
   // "Enemies struck by your physical attacks become poisoned for

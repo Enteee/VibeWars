@@ -317,6 +317,10 @@ const NO_BOT_USE = new Set([
   // spells: no role the bot weighs.
   "monk.essence-bond",
   "monk.divine-boon",
+  // A bond on attacks, attack damage traded for healing, and faster expiry
+  // (#2291): no role the bot weighs.
+  "monk.life-bond",
+  "monk.life-attunement",
 ]);
 
 function skill(id: string) {
