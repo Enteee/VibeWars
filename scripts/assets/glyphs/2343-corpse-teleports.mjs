@@ -1,6 +1,6 @@
 // Glyphs (#2343): the stand-ins of #2268.
 
-import { C, stroke } from "../icon-kit.mjs";
+import { C } from "../icon-kit.mjs";
 import { inkFill, inkLine } from "../glyph-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../glyph-kit.mjs").GlyphEntry>>} */
@@ -21,7 +21,7 @@ const glyphs = {
       inkFill(
         "M15 3C10.500 3 8 6 8 9.500C8 12 9 13 10.500 14V18H19.500V14C21 13 22 12 22 9.500C22 6 19.500 3 15 3Z",
       ) +
-      `<path d="M12.500 9.500H14.500M16.500 9.500H18.500" ${stroke(C.bg, 2.4)}/>` +
+      `<path d="M12.500 8.200A1.600 1.600 0 1 1 12.500 11.400A1.600 1.600 0 1 1 12.500 8.200ZM17.500 8.200A1.600 1.600 0 1 1 17.500 11.400A1.600 1.600 0 1 1 17.500 8.200Z" fill="${C.bg}"/>` +
       inkLine("M2 7H6M1 12H5M2 17H6", 2),
   },
 };
