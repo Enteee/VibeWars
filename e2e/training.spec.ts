@@ -134,6 +134,20 @@ async function castFireballAndLand(page: Page): Promise<void> {
   );
 }
 
+/**
+ * Open a new character's editor, its training arena up, and leave it with
+ * Escape. The first arena a page opens is slow on software GL (#2318:
+ * 18-40 s in CI and the jail, the later ones under 1 s), so a test opens
+ * as few as its point needs.
+ */
+async function openAndLeaveEditor(page: Page): Promise<void> {
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "new character" }).click();
+  await expect(page.locator(".training canvas")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".screen-characters")).toBeVisible();
+}
+
 test("(1) the arena is a third column, left of the editor and the library", async ({ page }) => {
   await openTraining(page);
   const training = await page.locator(".training").boundingBox();
@@ -252,17 +266,20 @@ test("(7) editing the build re-arms the arena in place", async ({ page }) => {
   expect(await canvasHandle.evaluate((node) => node.isConnected)).toBe(true);
 });
 
-test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
+test("(8a) leaving the editor three times leaves no arena behind", async ({ page }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
   for (let i = 0; i < 3; i += 1) {
-    await openRail(page, "Character Builder");
-    await page.getByRole("button", { name: "new character" }).click();
-    await expect(page.locator(".training canvas")).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(page.locator(".screen-characters")).toBeVisible();
+    await openAndLeaveEditor(page);
   }
   // The cards' character figures are canvases too (#1250); no arena is.
+  await expect(page.locator("canvas:not(.character-figure)")).toHaveCount(0);
+});
+
+test("(8b) the training arena opened after leaving the editor is alive", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await openAndLeaveEditor(page);
   await expect(page.locator("canvas:not(.character-figure)")).toHaveCount(0);
 
   const canvas = await openTraining(page);

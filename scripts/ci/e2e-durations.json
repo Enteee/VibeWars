@@ -236,7 +236,6 @@
   "e2e/training.spec.ts › (5) the chosen scenario survives a reload": 7.9,
   "e2e/training.spec.ts › (6) reset zeroes the meter but keeps the log": 8.6,
   "e2e/training.spec.ts › (7) editing the build re-arms the arena in place": 9.1,
-  "e2e/training.spec.ts › (8) leaving the editor leaves no arena behind": 11.1,
   "e2e/training.spec.ts › (9) a match is unaffected": 2.3,
   "e2e/training.spec.ts › 2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swaps back (#489)": 5.1,
   "e2e/training.spec.ts › a pet attack arms the wolf's next bite, and the log says so (#1107)": 9.1,
