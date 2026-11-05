@@ -44,8 +44,8 @@ const rows = {
   "weaken-knees": [
     "hex",
     (c) =>
-      `<path d="M9 3v8l5 4v6" ${stroke(c, 2)}/>` +
-      `<path d="M5.500 9.500 12 13.500" ${stroke(c, 1.5)}/>`,
+      `<path d="M10.500 7v5l3 2.500v3" ${stroke(c, 2)}/>` +
+      `<path d="M8.500 11.500 14.500 14" ${stroke(c, 1.5)}/>`,
   ],
 };
 
