@@ -88,6 +88,7 @@ export type NecromancerStatusId =
   | "spoil-victor"
   // Staples (#2278).
   | "mark-of-subversion"
+  | "signet-of-suffering"
   // Staples (#2314).
   | "ulcerous-lungs"
   | "blood-bond"
@@ -840,6 +841,30 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       ],
       skillId: "necromancer.mark-of-subversion",
     },
+  }),
+  // "The next Necromancer skill that targets a foe causes Bleeding for
+  // 2...16 seconds" (#2333): fired as the skill is used, on its target.
+  // A skill on an ally or on itself, or no Necromancer one, leaves it.
+  "signet-of-suffering": define("signet-of-suffering", "Signet of Suffering", "skill-effect", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { profession: "necromancer", targets: "foe" },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "bleeding",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 2, atTwelve: 13.2 },
+            },
+          },
+        ],
+        target: "skill-target",
+        skillId: "necromancer.signet-of-suffering",
+      },
+    ],
+    endsWhenTriggered: true,
   }),
   // Staples (#2314). "...suffer from -4 Health degeneration when Bleeding,
   // and whenever they use a shout or chant, they Bleed for 5...20 seconds",

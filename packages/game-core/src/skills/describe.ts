@@ -1465,7 +1465,7 @@ function describeSpellOnAlly(
   for (const { on, usedSkill, effects, target } of triggers) {
     if (
       on !== "bearer-casts-spell" ||
-      usedSkill?.targetsAlly !== true ||
+      usedSkill?.targets !== "ally" ||
       usedSkill.attributes === undefined
     ) {
       return undefined;
@@ -1656,7 +1656,10 @@ function describeDeath(
           ? `your party is healed for ${amount(inner.amount)}`
           : inner.kind === "damage"
             ? `${lowerFirst(upTo(effect, ranks))} take ${amount(inner.amount)}${typeWord(inner.type)} damage`
-            : `${lowerFirst(upTo(effect, ranks))}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
+            : inner.kind === "heal"
+              ? // Blood Bond's (#2314): "adjacent allies are healed for 84".
+                `${lowerFirst(upTo(effect, ranks))} are healed for ${amount(inner.amount)}`
+              : `${lowerFirst(upTo(effect, ranks))}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
       );
     }
     return effect.kind === "spread-gained-condition" ||
@@ -1756,17 +1759,24 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     const words = `${scopeAdjective(trigger.appliedHex.attributes)} hex`;
     return `applies ${/^[aeiou]/i.test(words) ? "an" : "a"} ${words} to a foe`;
   }
-  // Mist Form's (#1951).
-  if (event === "bearer-casts-spell" && trigger.usedSkill?.attributes !== undefined) {
-    const words = `${scopeAdjective(trigger.usedSkill.attributes)} spell`;
+  // Mist Form's (#1951), Cultist's Fervor's "a Necromancer spell" (#2314).
+  if (
+    event === "bearer-casts-spell" &&
+    (trigger.usedSkill?.attributes !== undefined || trigger.usedSkill?.profession !== undefined)
+  ) {
+    const { attributes, profession } = trigger.usedSkill;
+    const words = [
+      ...(profession === undefined ? [] : [getProfession(profession).name]),
+      ...(attributes === undefined ? [] : [scopeAdjective(attributes)]),
+      "spell",
+    ].join(" ");
     return `casts ${/^[aeiou]/i.test(words) ? "an" : "a"} ${words}`;
   }
   if (
     (event === "bearer-uses-skill" || event === "source-targets-bearer") &&
     trigger.usedSkill !== undefined
   ) {
-    const { type, notType, attributes, profession, elite, adrenal, targetsAlly } =
-      trigger.usedSkill;
+    const { type, notType, attributes, profession, elite, adrenal, targets } = trigger.usedSkill;
     const words = [
       ...(notType === undefined
         ? []
@@ -1782,8 +1792,9 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     if (event === "source-targets-bearer") {
       return `is targeted by your ${words.join(" ")}`;
     }
-    // Zealot's Fire's "a skill that targets an ally" (#2282).
-    const on = targetsAlly === undefined ? "" : " on an ally";
+    // Zealot's Fire's "a skill that targets an ally" (#2282), Signet of
+    // Suffering's "skill that targets a foe" (#2333).
+    const on = targets === undefined ? "" : ` on ${targets === "ally" ? "an ally" : "a foe"}`;
     return `uses ${/^[aeiou]/i.test(words[0] ?? "") ? "an" : "a"} ${words.join(" ")}${on}`;
   }
   return undefined;
@@ -2040,6 +2051,27 @@ function describeTrigger(
     const what = [...(gains.length === 0 ? [] : [`gains ${gains.join(" plus ")}`]), ...heals];
     return [sentence(`${when}: ${what.join(" and ")}`)];
   }
+  // Depravity's (#2314), said as one: "whenever it casts a spell: it and
+  // the nearest of its allies nearby lose 4 energy".
+  const [splash] = after;
+  const [drained] = splash?.kind === "splash" ? splash.effects : [];
+  if (
+    first?.kind === "energy-loss" &&
+    trigger.target === "bearer" &&
+    after.length === 1 &&
+    splash?.kind === "splash" &&
+    splash.effects.length === 1 &&
+    drained?.kind === "energy-loss" &&
+    amount(drained.amount) === amount(first.amount)
+  ) {
+    const others =
+      splash.maxTargets === undefined
+        ? splashed(splash)
+        : splash.maxTargets === 1
+          ? `the nearest of ${splashed(splash)}`
+          : `up to ${String(countAt(splash.maxTargets, ranks))} ${splashed(splash)}`;
+    return [sentence(`${when}: it and ${others} lose ${amount(first.amount)} energy`)];
+  }
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
       // Fevered Dreams' (#2259) are the hexed foe's allies: to its caster, other foes.
@@ -2090,6 +2122,15 @@ function describeTrigger(
           `${then} the foe who dealt it takes ${amount(effect.amount)}${typeWord(effect.type)} damage`,
         ),
       ];
+    }
+    // Blood Bond's (#2314): "whenever it is hit by a foe's attack, that
+    // attacker is healed for 17".
+    if (
+      effect.kind === "heal" &&
+      trigger.target === "source-on-offender" &&
+      trigger.on === "bearer-hit-by-attack"
+    ) {
+      return [clause(`${when}, that attacker is healed for ${amount(effect.amount)}`)];
     }
     // Scourge Enchantment's (#1403): "whenever it gains an enchantment,
     // its caster takes 63 holy damage".
@@ -2420,6 +2461,8 @@ function negatedText(text: string): string {
     ],
     [/^If (target|you) (has|have) an? /, (_, who, verb) => `If ${who} ${verb} no `],
     [/^If target has /, () => "If target does not have "],
+    // Blood Drinker's (#2314): "If you have at least 90% Health".
+    [/^If (target|you) (has|have) less than /, (_, who, verb) => `If ${who} ${verb} at least `],
     [/^If you (\w+) /, (_, verb) => `If you do not ${verb} `],
   ];
   for (const [pattern, replacement] of rules) {

@@ -9,8 +9,9 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { energyCostOf } from "./activation.js";
+import { describeSkill, describeStatus } from "./describe.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
-import type { Combatant } from "./types.js";
+import type { Combatant, Skill } from "./types.js";
 
 /**
  * Necromancer staples (#2314): Ulcerous Lungs, Blood Bond, Poisoned Heart,
@@ -27,6 +28,14 @@ const R12 = new Map([
   ["necromancer.soul-reaping", 12],
 ]);
 const R0: ReadonlyMap<string, number> = new Map();
+
+function skill(id: string): Skill {
+  const found = getSkill(id);
+  if (found === undefined) {
+    throw new Error(`unknown skill ${id}`);
+  }
+  return found;
+}
 
 const LUNGS = "necromancer.ulcerous-lungs";
 const BOND = "necromancer.blood-bond";
@@ -314,8 +323,8 @@ describe("Cultist's Fervor (#2314)", () => {
       const c = get(match, "c");
       cast(match, "c", 0, "c", 1.5);
       expect(c.statuses.get("cultists-fervor")?.durationSeconds).toBe(seconds);
-      expect(energyCostOf(getSkill(MIASMA), c)).toBe(cost);
-      expect(energyCostOf(getSkill(FLARE), c)).toBe(5);
+      expect(energyCostOf(skill(MIASMA), c)).toBe(cost);
+      expect(energyCostOf(skill(FLARE), c)).toBe(5);
       expect(c.statuses.has("bleeding")).toBe(false);
 
       cast(match, "c", 2, "foe", 1.5);
@@ -341,5 +350,27 @@ describe("Blood Drinker (#2314)", () => {
     c.health = 8.9e4;
     cast(hurt, "c", 0, "foe", 2.5);
     expect(c.statuses.has("bleeding")).toBe(false);
+  });
+});
+
+describe("their tooltips (#2314)", () => {
+  it.each([
+    [
+      "blood-bond",
+      "whenever it is hit by a foe's attack, that attacker is healed for 17. If target foe dies while hexed with this, adjacent allies are healed for 84",
+    ],
+    [
+      "depravity",
+      "whenever it casts a spell: it and the nearest of its allies nearby lose 4 energy",
+    ],
+    ["cultists-fervor", "Whenever it casts a Necromancer spell"],
+  ])("%s reads as the corpus says it", (id, text) => {
+    expect(describeStatus(id, R12)).toContain(text);
+  });
+
+  it("Blood Drinker bleeds you at 90% Health or more", () => {
+    expect(describeSkill(skill(DRINKER), R12).effects[0]?.text).toMatch(
+      /^If you have at least 90% Health: /,
+    );
   });
 });
