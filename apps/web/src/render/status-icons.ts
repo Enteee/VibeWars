@@ -554,6 +554,13 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Source-targets triggers and signet lockout (#2290).
   "mind-wrack": icon("mind-wrack"),
   ignorance: icon("ignorance"),
+  // Necromancer staples (#2313).
+  "tainted-flesh": icon("tainted-flesh"),
+  "dark-aura": icon("dark-aura"),
+  "life-transfer": icon("life-transfer"),
+  "life-transfer-regen": icon("life-transfer-regen"),
+  "demonic-flesh": icon("demonic-flesh"),
+  "weaken-knees": icon("weaken-knees"),
   // Warrior conditions (#2096).
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
@@ -584,6 +591,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "signet-of-stamina": icon("signet-of-stamina"),
   "soldiers-stance": icon("soldiers-stance"),
   "steady-stance": icon("steady-stance"),
+  // Warrior shouts that count (#2320).
+  "i-will-avenge-you": icon("i-will-avenge-you"),
+  "fear-me": icon("fear-me"),
+  "burst-of-aggression": icon("burst-of-aggression"),
   // Monk and Ranger mechanics (#2189).
   "spell-shield": icon("spell-shield"),
   "convert-hexes": icon("convert-hexes"),
@@ -607,6 +618,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "chilling-winds": icon("chilling-winds"),
   // Warrior staples 5 (#2315).
   "to-the-limit": icon("to-the-limit"),
+  // Weapon gates (#2335).
+  "warriors-cunning": icon("warriors-cunning"),
+  "dwarven-battle-stance": icon("dwarven-battle-stance"),
   // Signet of Suffering (#2333).
   "signet-of-suffering": icon("signet-of-suffering"),
   "rising-bile": icon("rising-bile"),

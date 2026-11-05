@@ -226,6 +226,11 @@ export interface WeaponSnapshot {
   readonly damageMultiplier: number;
   /** Added to the chance to crit by the attacker's statuses: Critical Eye's 0.13 (#988). */
   readonly criticalChanceBonus: number;
+  /**
+   * Added to it against a victim that is not moving (#2320), as the blow
+   * lands: "Fear Me!"'s.
+   */
+  readonly criticalChanceBonusVersusStill: number;
   /** The attacker's statuses forbid it a critical hit (#2212): Dulled Weapon's. */
   readonly preventsCriticals: boolean;
   /**
@@ -263,6 +268,7 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
   const { mainHand } = attacker.equipment;
   const rank = rankIn(attacker, mainHand.attributeId);
   const modifiers = aggregateModifiers(attacker.statuses.active);
+  const critical = attacker.statuses.active.filter(gatesCritical(attacker));
   return {
     mainHand,
     rank,
@@ -270,7 +276,12 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     requirementMet: mainHand.attributeId === undefined || rank >= mainHand.weapon.requirement.rank,
     damageMultiplier: weaponDamageMultiplierOf(attacker),
     criticalChanceBonus: aggregateModifiers(
-      attacker.statuses.active.filter(gatesCritical(attacker)),
+      critical.filter(({ id }) => getStatusDefinition(id).criticalChanceBonusVersus === undefined),
+    ).criticalChanceBonus,
+    criticalChanceBonusVersusStill: aggregateModifiers(
+      critical.filter(
+        ({ id }) => getStatusDefinition(id).criticalChanceBonusVersus === "not-moving",
+      ),
     ).criticalChanceBonus,
     preventsCriticals: modifiers.preventsCriticals,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
@@ -304,16 +315,22 @@ function modDamageOf(
  * names, plus Critical Strikes' (#606). A caster weapon's nominated
  * attribute is no mastery, and fists have none, so both crit at the base
  * chance and Critical Strikes'. Statuses add theirs (#988), all of it at
- * most 1.
+ * most 1; one only against a still foe (#2320) when a `victim` is given
+ * and is not moving.
  */
-export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): number {
+export function criticalChance(
+  snapshot: WeaponSnapshot,
+  rules: CombatRules,
+  victim?: Pick<Combatant, "moving">,
+): number {
   const mastery = snapshot.mainHand.weapon.requirement.kind === "fixed" ? snapshot.rank : 0;
   return Math.min(
     1,
     rules.criticalBaseChance +
       rules.criticalChancePerRank * mastery +
       CRITICAL_STRIKES_CHANCE_PER_RANK * snapshot.criticalStrikes +
-      snapshot.criticalChanceBonus,
+      snapshot.criticalChanceBonus +
+      (victim !== undefined && !victim.moving ? snapshot.criticalChanceBonusVersusStill : 0),
   );
 }
 
@@ -630,7 +647,7 @@ export function landBlow(
 ): boolean {
   interruptOnHit(victim, attacker?.id, events);
   const { weapon } = snapshot.mainHand;
-  const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules);
+  const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules, victim);
   const critical =
     !snapshot.preventsCriticals &&
     (rolledCritical ||
@@ -988,7 +1005,7 @@ export function bearerAttacked(
 } {
   // Read before they end: an ended status's ranks go with it (#2275).
   const before = attacker.statuses.active;
-  const unblockable = attacker.statuses.spendUnblockableAttack();
+  const unblockable = attacker.statuses.spendUnblockableAttack(attacker.equipment.mainHand.weapon);
   const spent = attacker.statuses.spendAttack();
   const ended = [...unblockable.ended, ...spent, ...attacker.statuses.endOnBearerAttack(kind)];
   const endedBefore = before.filter(({ id }) => ended.includes(id));
@@ -1045,7 +1062,7 @@ export function bearerHit(
 ): void {
   attacker.statuses.recordHit(weapon);
   if (victim.team !== attacker.team) {
-    victim.statuses.recordHitByAttack(attacker.id, took, attackSkill?.attack?.chain?.role);
+    victim.statuses.recordHitByAttack(attacker.id, took, attackSkill?.attack?.chain?.role, weapon);
   }
   for (const statusId of attacker.statuses.endOnBearerHit(attackSkill !== undefined)) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
@@ -1361,10 +1378,12 @@ export function resolveAttackSkillOutcome(
   fired: FiredTrigger[],
 ): SkillOutcome {
   let rechargeFraction = 0;
+  let rechargeShorterSeconds = 0;
   let rechargeLongerSeconds = 0;
   const land = (landing: SkillResolution, earlier: readonly CombatEvent[]): CombatEvent[] => {
     const outcome = resolveSkillEffects(landing, earlier);
     rechargeFraction = Math.max(rechargeFraction, outcome.rechargeFraction);
+    rechargeShorterSeconds += outcome.rechargeShorterSeconds;
     rechargeLongerSeconds += outcome.rechargeLongerSeconds;
     return outcome.events;
   };
@@ -1526,6 +1545,7 @@ export function resolveAttackSkillOutcome(
   return {
     events,
     rechargeFraction,
+    rechargeShorterSeconds,
     rechargeLongerSeconds,
     summons: [],
     grounds: [],

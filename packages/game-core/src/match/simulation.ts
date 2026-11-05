@@ -3997,6 +3997,7 @@ export class MatchSimulation {
     const only = (events: CombatEvent[]): SkillOutcome => ({
       events,
       rechargeFraction: 0,
+      rechargeShorterSeconds: 0,
       rechargeLongerSeconds: 0,
       summons: [],
       grounds: [],
@@ -4052,7 +4053,16 @@ export class MatchSimulation {
     // What it summons is made at the ranks it went off at (#1915), before
     // any status it gives itself, and with what it is lent and holds (#1929, #1941).
     const ranks = withRankLoan(record.combatant, loan, skill, () => ranksOf(record.combatant));
-    const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, taken, skipped } =
+    const {
+      events,
+      rechargeFraction,
+      rechargeShorterSeconds,
+      rechargeLongerSeconds,
+      summons,
+      grounds,
+      taken,
+      skipped,
+    } =
       skill.corpse !== undefined && site === undefined
         ? only([])
         : withRankLoan(record.combatant, loan, skill, () =>
@@ -4238,7 +4248,12 @@ export class MatchSimulation {
         cast.rule.rechargesInstantly
           ? 0
           : // Energizing Wind's slower share (#1886), once the faster is off.
-            (reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) *
+            // "None Shall Pass!"'s seconds (#2320), never below 0 s.
+            (Math.max(
+              0,
+              reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) -
+                rechargeShorterSeconds,
+            ) *
               (1 + cast.rule.own.rechargeSlower) +
               rechargeLongerSeconds +
               cast.rule.extraRechargeSeconds) *

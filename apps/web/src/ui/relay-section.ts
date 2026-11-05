@@ -44,7 +44,7 @@ export function splitRelayUrls(text: string): string[] {
 /** What Options says sharing a relay means: who gets it, for how long, and what to lock down. */
 const SHARED_RELAY_EXPLANATION =
   "A relay from an invite link can be offered to your lobbies: anyone with a lobby's " +
-  "invite link may relay through it for up to 2 hours after its last offer, and that " +
+  "invite link may relay through it for up to 4 hours after its last offer, and that " +
   "cannot be taken back early. Its operator should set denied-peer-ip for private ranges, " +
   "no-loopback-peers, no-multicast-peers and quotas on it. Its secret came from the relay " +
   "operator's link and never goes into a lobby offer. A relay with a username and " +

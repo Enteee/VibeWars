@@ -119,6 +119,13 @@ const rows = {
   "elementalist.shatter-storm": { glyph: "cloud-shards", modifier: "area" },
   "elementalist.ride-the-lightning": { glyph: "figure-bolt-dash", modifier: "self" },
   "elementalist.mirror-of-ice": { glyph: "mirror-frost" },
+  // Stand-in art (#2339).
+  "elementalist.armor-of-frost": { glyph: "shield-frost" },
+  "elementalist.phoenix": { glyph: "phoenix-wings" },
+  "elementalist.incendiary-bonds": { glyph: "link-flame" },
+  "elementalist.stone-daggers": { glyph: "stone-spikes" },
+  "elementalist.star-burst": { glyph: "star-four" },
+  "elementalist.rust": { glyph: "signet-rust" },
 };
 
 export default rows;

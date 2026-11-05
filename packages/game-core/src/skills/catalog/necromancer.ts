@@ -6,7 +6,7 @@ import {
   RANGE_MELEE,
   RANGE_SPELL,
 } from "../../distances.js";
-import type { Skill } from "../types.js";
+import type { Magnitude, Skill } from "../types.js";
 import {
   BONE_FIEND,
   BONE_HORROR,
@@ -15,6 +15,11 @@ import {
   SHAMBLING_HORROR,
   VAMPIRIC_HORROR,
 } from "./shared.js";
+
+/** Life Transfer's 6...12 s (#2313), on each foe it hexes and on its caster. */
+const LIFE_TRANSFER_SECONDS: Magnitude = {
+  scaling: { attributeId: "necromancer.blood-magic", atZero: 6, atTwelve: 10.8 },
+};
 
 export const NECROMANCER_SKILLS: readonly Skill[] = [
   {
@@ -4702,6 +4707,306 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
         kind: "apply-status",
         statusId: "signet-of-suffering",
         durationSeconds: { flat: Number.POSITIVE_INFINITY },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2313), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.unholy-feast",
+    name: "Unholy Feast",
+    gwId: 110,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    // "Foes in the area": the area around you, so it needs no target.
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The base record; its numbers are the PvP split's (3058), 20 s
+    // recharge. "Steal up to 10...65 Health from up to 1...4 foes in the
+    // area": the nearest 3 at rank 12, 54 from each.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_IN_THE_AREA,
+        maxTargets: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 1, atTwelve: 3.4 },
+        },
+        effects: [
+          {
+            kind: "life-steal",
+            amount: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 10, atTwelve: 54 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "necromancer.tainted-flesh",
+    name: "Tainted Flesh",
+    gwId: 113,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    area: {
+      radius: AREA_IN_THE_AREA,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20...44 seconds, allies in the area are immune to disease, and
+    // anyone striking those allies in melee becomes Diseased for 3...15
+    // seconds": 39 s, the caster among them.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "tainted-flesh",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 20, atTwelve: 39.2 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.dark-aura",
+    name: "Dark Aura",
+    gwId: 116,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30 seconds, whenever target ally sacrifices Health, Dark Aura
+    // deals 5...50 shadow damage to adjacent foes, and you lose 5...20
+    // Health."
+    effects: [{ kind: "apply-status", statusId: "dark-aura", durationSeconds: { flat: 30 } }],
+  },
+  {
+    id: "necromancer.life-transfer",
+    name: "Life Transfer",
+    gwId: 126,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 6...12 seconds, target foe and adjacent foes suffer -3...8
+    // Health degeneration, which you gain as Health regeneration": as Life
+    // Siphon's, the caster's regeneration once.
+    effects: [
+      { kind: "apply-status", statusId: "life-transfer", durationSeconds: LIFE_TRANSFER_SECONDS },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "life-transfer",
+            durationSeconds: LIFE_TRANSFER_SECONDS,
+          },
+        ],
+      },
+      {
+        kind: "apply-status",
+        statusId: "life-transfer-regen",
+        durationSeconds: LIFE_TRANSFER_SECONDS,
+        on: "caster",
+      },
+    ],
+  },
+  {
+    id: "necromancer.demonic-flesh",
+    name: "Demonic Flesh",
+    gwId: 130,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30...60 seconds, whenever you use a skill that targets a foe,
+    // you deal 5...20 shadow damage to all other foes adjacent to you."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "demonic-flesh",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 30, atTwelve: 54 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.feast-of-corruption",
+    name: "Feast of Corruption",
+    gwId: 151,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe and all adjacent foes are struck for 16...80 shadow
+    // damage. You steal up to 8...40 Health from each struck foe who is
+    // suffering from a hex": the hexes read once the damage is dealt.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        includesCentre: true,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "necromancer.curses", atZero: 16, atTwelve: 67.2 },
+            },
+            type: "shadow",
+            armorPenetration: 0,
+          },
+        ],
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        includesCentre: true,
+        maxTargets: undefined,
+        onlyIf: { kind: "target-has", category: "hex" },
+        effects: [
+          {
+            kind: "life-steal",
+            amount: {
+              scaling: { attributeId: "necromancer.curses", atZero: 8, atTwelve: 33.6 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "necromancer.weaken-knees",
+    name: "Weaken Knees",
+    gwId: 822,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 1...16 seconds, target foe suffers -1...4 Health degeneration
+    // and takes 5...20 damage while moving."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "weaken-knees",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.curses", atZero: 1, atTwelve: 13 },
+        },
       },
     ],
   },

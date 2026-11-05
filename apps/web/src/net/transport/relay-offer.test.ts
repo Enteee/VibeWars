@@ -6,6 +6,7 @@ import {
   MAX_OFFER_OPENS_PER_SECOND,
   OFFER_OPEN_INTERVAL_MS,
   RELAY_OFFER_KIND,
+  REMINT_LEFT_MS,
   followOfferedRelay,
   openOffer,
   sealOffer,
@@ -15,7 +16,12 @@ import {
   type RelayOfferRoom,
 } from "./relay-offer.js";
 import { newTicketKey } from "./ticket-key.js";
-import { TURN_CREDENTIAL_TTL_MS, type SharedRelay, type TurnConfig } from "./turn-config.js";
+import {
+  TURN_CREDENTIAL_TTL_MS,
+  credentialExpiry,
+  type SharedRelay,
+  type TurnConfig,
+} from "./turn-config.js";
 
 /** A lobby's relay topic and key (#2091), as `deriveLobbyRoom` would give them. */
 const ROOM: RelayOfferRoom = { topic: "ab".repeat(32), key: new Uint8Array(32).fill(7) };
@@ -215,6 +221,47 @@ describe("a host's relay offers, heard by a joiner (#2091)", () => {
     expect(offers.latest()).toBeUndefined();
   });
 
+  it("mints a fresh 4 h credential once the last has 2 h left, not before (#2245)", async () => {
+    const relay = fakeRelay();
+    let now = NOW;
+    const offers = watchRelayOffers(
+      ROOM,
+      deps(relay.openSocket, () => now),
+    );
+    await settle();
+    const host = shareRelay(
+      ROOM,
+      SHARED,
+      deps(relay.openSocket, () => now),
+    );
+    host.follow(true);
+    await settle();
+    const first = offers.latest();
+    expect(first === undefined ? undefined : credentialExpiry(first)).toBe(
+      NOW + 4 * 60 * 60 * 1000,
+    );
+
+    // A minute more than 2 h left: the same credential, sealed again.
+    now += 2 * 60 * 60 * 1000 - 60 * 1000;
+    host.follow(false);
+    host.follow(true);
+    await settle();
+    expect(offers.latest()?.username).toBe(first?.username);
+
+    // Under 2 h left: a fresh one, good for 4 h from now.
+    now += 2 * 60 * 1000;
+    host.follow(false);
+    host.follow(true);
+    await settle();
+    const second = offers.latest();
+    expect(second?.username).not.toBe(first?.username);
+    expect(second === undefined ? undefined : credentialExpiry(second)).toBe(
+      now + 4 * 60 * 60 * 1000,
+    );
+    host.close();
+    offers.close();
+  });
+
   it("never puts the secret in an offer, sealed or before it is (#2240)", async () => {
     const linked: SharedRelay = { urls: SHARED.urls, secret: "cd".repeat(32) };
     const plains: string[] = [];
@@ -319,7 +366,7 @@ describe("a host's relay offers, heard by a joiner (#2091)", () => {
     expect(first?.urls).toEqual(SHARED.urls);
 
     // Two hours on, the host mints again while the topic is flooded.
-    now += 2 * 60 * 60 * 1000 - 60 * 1000;
+    now += TURN_CREDENTIAL_TTL_MS - REMINT_LEFT_MS + 60 * 1000;
     for (let i = 0; i < MAX_OFFER_OPENS_PER_SECOND * 2; i += 1) {
       relay.publish(garbage());
     }
@@ -389,7 +436,7 @@ describe("a host's relay offers, heard by a joiner (#2091)", () => {
       relay.publish(garbage(hostKey.ticketId));
     }
     await settle();
-    now += 2 * 60 * 60 * 1000 - 60 * 1000;
+    now += TURN_CREDENTIAL_TTL_MS - REMINT_LEFT_MS + 60 * 1000;
     relay.publish(garbage(hostKey.ticketId));
     host.follow(false);
     host.follow(true);

@@ -39,6 +39,9 @@ const NO_BOT_USE = new Set([
   "ritualist.vital-weapon",
   // Signet of Stamina (#2316), the same: more maximum Health until a hit.
   "warrior.signet-of-stamina",
+  // Warrior's Cunning (#2335): blocks made not to happen are no use the
+  // bot weighs yet.
+  "warrior.warriors-cunning",
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
@@ -47,6 +50,10 @@ const NO_BOT_USE = new Set([
   "monk.dwaynas-sorrow",
   // Death Nova (#1931), the same, a burst that waits on an ally's death.
   "necromancer.death-nova",
+  // Dark Aura and Demonic Flesh (#2313), the same, damage that waits on
+  // an ally's sacrifice or on the caster's foe-targeted skills.
+  "necromancer.dark-aura",
+  "necromancer.demonic-flesh",
   // Aura of Displacement, Shadow Meld and Shadow of Haste (#1826): a step
   // there and back is nothing the bot plans for yet.
   "assassin.aura-of-displacement",

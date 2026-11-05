@@ -363,6 +363,13 @@ export interface StatusDefinition {
   /** Flat armor modifier while active. */
   readonly armorModifier: StatusStat;
   /**
+   * `armorModifier`, its own and its `whileUnder` one, holds only while
+   * the bearer wields this weapon (#2335), as `criticalChanceBonusWeapon`:
+   * Dwarven Battle Stance's "if you are wielding a hammer". Read per hit,
+   * so a swap counts from the next one. `undefined`: whatever it wields.
+   */
+  readonly armorModifierWeapon: AttackWeaponClass | undefined;
+  /**
    * Armor added against a hit only when its conditions hold (#1437), as
    * an insignia's: Avatar of Melandru's "+30 elemental armor".
    */
@@ -793,6 +800,12 @@ export interface StatusDefinition {
    * "while wielding daggers". `undefined`: whatever it wields.
    */
   readonly criticalChanceBonusWeapon: AttackWeaponClass | undefined;
+  /**
+   * `criticalChanceBonus` holds only against a victim of this kind
+   * (#2320), read as the blow lands: "Fear Me!"'s "against foes that are
+   * not moving". `undefined`: any victim.
+   */
+  readonly criticalChanceBonusVersus: "not-moving" | undefined;
   /** Energy the bearer gains on each critical hit it lands, beyond Critical Strikes' (#988). */
   readonly energyPerCritical: number;
   /**
@@ -838,6 +851,13 @@ export interface StatusDefinition {
    * nothing is spent (#1654): Guided Weapon's. false: blocks as ever.
    */
   readonly attacksUnblockable: boolean;
+  /**
+   * `attacksUnblockable` holds only for an attack with this weapon class
+   * (#2335), as `criticalChanceBonusWeapon`: Warrior's Cunning's "your
+   * melee attacks", so never a bow shot or a thrown spear. `undefined`:
+   * any attack.
+   */
+  readonly attacksUnblockableWeapon: AttackWeaponClass | undefined;
   /**
    * Effects on whoever the bearer's physical attacks hit while it lasts
    * (#525): a preparation's rider, as Apply Poison's poison. Applied
@@ -1871,7 +1891,9 @@ export interface StatusTrigger {
    * On `bearer-attacks`, `bearer-hits` and `bearer-fails-to-hit` only
    * (#1354, #1359, #2133): it fires only for an attack made with a weapon
    * of this class in the bearer's main hand, as Hundred Blades' "whenever
-   * you attack with a sword".
+   * you attack with a sword". On `bearer-hit-by-attack` too (#2313), for
+   * the attacker's weapon: Tainted Flesh's "anyone striking those allies
+   * in melee".
    * `melee` is any weapon that strikes in melee, never a bow nor a thrown
    * spear: Warrior's Endurance's "each time you hit with a melee attack".
    * Absent: any attack.
@@ -2580,13 +2602,32 @@ function damageTypeAnswers(
  * melee, so a spear, thrown, does not answer it.
  */
 export function triggerAnswersWeapon(trigger: StatusTrigger, weapon: Weapon): boolean {
-  if (trigger.weapon === undefined) {
+  return weaponAnswers(trigger.weapon, weapon);
+}
+
+/**
+ * Whether a blow of `weapon` is one of the `required` class: any blow for
+ * `undefined`, and a "melee" one never a thrown spear (#2335).
+ */
+function weaponAnswers(required: AttackWeaponClass | undefined, weapon: Weapon): boolean {
+  if (required === undefined) {
     return true;
   }
   return (
-    wieldsFor(weapon.id, trigger.weapon) &&
-    (trigger.weapon !== "melee" || weapon.projectileSpeed === undefined)
+    wieldsFor(weapon.id, required) && (required !== "melee" || weapon.projectileSpeed === undefined)
   );
+}
+
+/**
+ * Whether `trigger` answers a strike by a foe with `weapon` (#2313): as
+ * `triggerAnswersWeapon`, but any blow that flies no projectile is melee,
+ * a minion's, a pet's or a fist's too, as Tainted Flesh's "anyone
+ * striking those allies in melee".
+ */
+function strikerAnswers(trigger: StatusTrigger, weapon: Weapon): boolean {
+  return trigger.weapon === "melee"
+    ? weapon.projectileSpeed === undefined
+    : triggerAnswersWeapon(trigger, weapon);
 }
 
 /** How `StatusSet`'s `spent` names `id` from `sourceId` (#1955). */
@@ -2892,18 +2933,22 @@ export class StatusSet {
    * `took` health, recorded only if a status on it answers that, with the
    * triggers that do. Every hit counts: two foes in one tick are two. Each
    * status that reflects attack damage (#1754) sends its share back.
-   * `chainRole` is the hitting attack skill's (#2134), if it has one.
+   * `chainRole` is the hitting attack skill's (#2134), if it has one;
+   * `weapon` the attacker's, a creature's fists too, for a trigger bound
+   * to a class (#2313).
    */
   public recordHitByAttack(
     offenderId: string,
     took: number,
     chainRole: ChainRole | undefined,
+    weapon: Weapon,
   ): void {
     const fired = this.#answering("bearer-hit-by-attack").filter(
       ({ sourceId, trigger }) =>
-        trigger.hitBy === undefined ||
-        (sourceId === offenderId &&
-          (trigger.hitBy.chainRole === undefined || trigger.hitBy.chainRole === chainRole)),
+        strikerAnswers(trigger, weapon) &&
+        (trigger.hitBy === undefined ||
+          (sourceId === offenderId &&
+            (trigger.hitBy.chainRole === undefined || trigger.hitBy.chainRole === chainRole))),
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "hit-by-attack", offenderId, fired });
@@ -3730,17 +3775,23 @@ export class StatusSet {
   }
 
   /**
-   * The bearer attacked (#1604): whether a status of its own makes this
-   * attack unblockable, each such status one attack fewer, and the ids
+   * The bearer attacked with `weapon` (#1604): whether a status of its own
+   * makes this attack unblockable, one held for a weapon class only for a
+   * blow of it (#2335), each such status one attack fewer, and the ids
    * that ended on it. A counted status, as Guiding Hands, counts every
    * attack, even one another status, as Guided Weapon, already made
    * unblockable: GW1's "next N attacks" counts attacks, not saves.
    */
-  public spendUnblockableAttack(): { readonly unblockable: boolean; readonly ended: StatusId[] } {
+  public spendUnblockableAttack(weapon: Weapon): {
+    readonly unblockable: boolean;
+    readonly ended: StatusId[];
+  } {
     let unblockable = false;
     const ended: StatusId[] = [];
     for (const status of this.#statuses.values()) {
-      unblockable ||= getStatusDefinition(status.id).attacksUnblockable;
+      const definition = getStatusDefinition(status.id);
+      unblockable ||=
+        definition.attacksUnblockable && weaponAnswers(definition.attacksUnblockableWeapon, weapon);
       if (status.unblockableLeft !== undefined && status.unblockableLeft > 0) {
         unblockable = true;
         status.unblockableLeft -= 1;

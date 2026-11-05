@@ -67,12 +67,14 @@ export function checkTransportNat(): Promise<boolean> {
     : checkNat();
 }
 
-/** A guest's room, how it is told the host answered, and the relay login the host shares. */
+/** A guest's room, how it is told the host answered, the relay login the host shares, and its refresh. */
 export interface GuestRoom {
   readonly transport: Transport;
   reached(hostId: string): void;
   /** The host's `relay-login` (#2248): from then on, Nostr offers are ignored. */
   fromHost(login: WireRelayLogin | null): void;
+  /** Called in the lobby, never in a map (#2245): see `RelayJoin.refreshRelay`. */
+  refreshRelay(nowMs: number): void;
 }
 
 /**
@@ -82,7 +84,12 @@ export interface GuestRoom {
  */
 export function joinGuestRoom(room: LobbyRoom): GuestRoom {
   if (import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast" || room.relay === null) {
-    return { transport: joinRoom(room), reached: () => undefined, fromHost: () => undefined };
+    return {
+      transport: joinRoom(room),
+      reached: () => undefined,
+      fromHost: () => undefined,
+      refreshRelay: () => undefined,
+    };
   }
   const offers = watchRelayOffers(room.relay);
   const transport = joinWithRelayOffers({
@@ -101,6 +108,9 @@ export function joinGuestRoom(room: LobbyRoom): GuestRoom {
     // A login the guest would not use itself, such as a private address, is none.
     fromHost: (login) => {
       offers.fromHost(login === null ? null : (validateTurnConfig(login) ?? null));
+    },
+    refreshRelay: (nowMs) => {
+      transport.refreshRelay(nowMs);
     },
   };
 }
