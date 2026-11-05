@@ -6,6 +6,7 @@ import {
   type DamageType,
 } from "../equipment/types.js";
 import type { ArmorCondition } from "../equipment/insignias.js";
+import { wieldsFor } from "../equipment/weapons.js";
 import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
 import type { SkillProfession } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
@@ -148,7 +149,15 @@ export function effectiveArmor(
 
   // Armor of Earth (+24) and Healing Signet (−40) reach a consumer here for
   // the first time; "Stand Your Ground!"'s +24 only while standing (#921).
-  const modifiers = aggregateModifiers(target.statuses.active);
+  // One held for a weapon only while the target wields it (#2335), as
+  // Dwarven Battle Stance's off a hammer.
+  const wielded = target.equipment.mainHand.weapon.id;
+  const modifiers = aggregateModifiers(
+    target.statuses.active.filter(({ id }) => {
+      const weapon = getStatusDefinition(id).armorModifierWeapon;
+      return weapon === undefined || wieldsFor(wielded, weapon);
+    }),
+  );
   armor += modifiers.armorModifier;
   if (!target.moving) {
     armor += modifiers.armorWhileStill;

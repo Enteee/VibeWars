@@ -431,7 +431,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (armorModifier !== 0) {
     const sign = armorModifier > 0 ? "+" : "-";
-    parts.push(`${sign}${statText(definition.armorModifier, ranks, whole)} armor`);
+    // Dwarven Battle Stance's "if you are wielding a hammer" (#2335).
+    const weapon = definition.armorModifierWeapon;
+    parts.push(
+      `${sign}${statText(definition.armorModifier, ranks, whole)} armor` +
+        (weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`),
+    );
   }
   for (const bonus of definition.conditionalArmor) {
     parts.push(statusArmorText(bonus, ranks));
@@ -513,6 +518,20 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.weaponDamageMultiplier !== 1) {
     const change = Math.round((definition.weaponDamageMultiplier - 1) * 100);
     parts.push(`${signed(change)}% weapon damage`);
+  }
+  // Vengeance's (#2311).
+  if (statAtTwelve(definition.damageDealtMultiplier) !== 1) {
+    const more = statAtTwelve(definition.damageDealtMultiplier) > 1;
+    const change = statText(definition.damageDealtMultiplier, ranks, (value) =>
+      percent(Math.abs(value - 1)),
+    );
+    parts.push(`deals ${more ? "+" : "−"}${change} damage`);
+  }
+  if (definition.noDeathPenalty) {
+    parts.push("no death penalty");
+  }
+  if (definition.killsBearerOnEnd) {
+    parts.push("the bearer dies when it ends");
   }
   if (physicalDamageTakenBonus !== 0) {
     const sign = physicalDamageTakenBonus > 0 ? "+" : "−";
@@ -749,7 +768,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     );
   }
   if (definition.attacksUnblockable) {
-    parts.push("attacks cannot be blocked");
+    // Warrior's Cunning's "your melee attacks" (#2335).
+    const weapon = definition.attacksUnblockableWeapon;
+    parts.push(`${weapon === undefined ? "" : `${WEAPON_WORD[weapon]} `}attacks cannot be blocked`);
   }
   if (definition.onAttackHit !== undefined) {
     const { effects, attackSkillsOnly, weapon, weaponDamage } = definition.onAttackHit;
@@ -1118,6 +1139,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const faster = String(Math.round(definition.hexesExpireFaster * 100));
     parts.push(`hexes on the bearer expire ${faster}% faster`);
   }
+  // Chilling Winds' (#2311).
+  const lengthening = definition.nextIncomingHexDurationMultiplier;
+  if (lengthening !== undefined) {
+    const longer = statText(lengthening.multiplier, ranks, (value) => percent(value - 1));
+    const of = getAttribute(lengthening.attributeId)?.name ?? lengthening.attributeId;
+    parts.push(`the next ${of} hex on the bearer lasts ${longer} longer`);
+  }
   if (definition.incomingHexCastTimeMultiplier !== 1) {
     const times = String(definition.incomingHexCastTimeMultiplier);
     parts.push(`hexes cast on the bearer take ${times}× as long to cast`);
@@ -1302,6 +1330,9 @@ function describeAttackHits(
       // Ranger's bar: the pet's attacks heal whoever reads this.
       const amount = shown(describeMagnitude(effect.amount, ranks));
       parts.push(`your pet's attacks heal you for ${amount}`);
+    } else if (effect.kind === "interrupt" && effect.only === undefined) {
+      // Dwarven Battle Stance's (#2335).
+      parts.push(`your ${attacks} interrupt foes they hit`);
     } else {
       parts.push(...describeEffects(effect, ranks).map(({ text }) => `your ${attacks}: ${text}`));
     }
@@ -1660,7 +1691,10 @@ function describeDeath(
           ? `your party is healed for ${amount(inner.amount)}`
           : inner.kind === "damage"
             ? `${lowerFirst(upTo(effect, ranks))} take ${amount(inner.amount)}${typeWord(inner.type)} damage`
-            : `${lowerFirst(upTo(effect, ranks))}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
+            : inner.kind === "heal"
+              ? // Blood Bond's (#2314): "adjacent allies are healed for 84".
+                `${lowerFirst(upTo(effect, ranks))} are healed for ${amount(inner.amount)}`
+              : `${lowerFirst(upTo(effect, ranks))}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
       );
     }
     return effect.kind === "spread-gained-condition" ||
@@ -1760,9 +1794,17 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     const words = `${scopeAdjective(trigger.appliedHex.attributes)} hex`;
     return `applies ${/^[aeiou]/i.test(words) ? "an" : "a"} ${words} to a foe`;
   }
-  // Mist Form's (#1951).
-  if (event === "bearer-casts-spell" && trigger.usedSkill?.attributes !== undefined) {
-    const words = `${scopeAdjective(trigger.usedSkill.attributes)} spell`;
+  // Mist Form's (#1951), Cultist's Fervor's "a Necromancer spell" (#2314).
+  if (
+    event === "bearer-casts-spell" &&
+    (trigger.usedSkill?.attributes !== undefined || trigger.usedSkill?.profession !== undefined)
+  ) {
+    const { attributes, profession } = trigger.usedSkill;
+    const words = [
+      ...(profession === undefined ? [] : [getProfession(profession).name]),
+      ...(attributes === undefined ? [] : [scopeAdjective(attributes)]),
+      "spell",
+    ].join(" ");
     return `casts ${/^[aeiou]/i.test(words) ? "an" : "a"} ${words}`;
   }
   if (
@@ -2044,6 +2086,27 @@ function describeTrigger(
     const what = [...(gains.length === 0 ? [] : [`gains ${gains.join(" plus ")}`]), ...heals];
     return [sentence(`${when}: ${what.join(" and ")}`)];
   }
+  // Depravity's (#2314), said as one: "whenever it casts a spell: it and
+  // the nearest of its allies nearby lose 4 energy".
+  const [splash] = after;
+  const [drained] = splash?.kind === "splash" ? splash.effects : [];
+  if (
+    first?.kind === "energy-loss" &&
+    trigger.target === "bearer" &&
+    after.length === 1 &&
+    splash?.kind === "splash" &&
+    splash.effects.length === 1 &&
+    drained?.kind === "energy-loss" &&
+    amount(drained.amount) === amount(first.amount)
+  ) {
+    const others =
+      splash.maxTargets === undefined
+        ? splashed(splash)
+        : splash.maxTargets === 1
+          ? `the nearest of ${splashed(splash)}`
+          : `up to ${String(countAt(splash.maxTargets, ranks))} ${splashed(splash)}`;
+    return [sentence(`${when}: it and ${others} lose ${amount(first.amount)} energy`)];
+  }
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
       // Fevered Dreams' (#2259) are the hexed foe's allies: to its caster, other foes.
@@ -2094,6 +2157,15 @@ function describeTrigger(
           `${then} the foe who dealt it takes ${amount(effect.amount)}${typeWord(effect.type)} damage`,
         ),
       ];
+    }
+    // Blood Bond's (#2314): "whenever it is hit by a foe's attack, that
+    // attacker is healed for 17".
+    if (
+      effect.kind === "heal" &&
+      trigger.target === "source-on-offender" &&
+      trigger.on === "bearer-hit-by-attack"
+    ) {
+      return [clause(`${when}, that attacker is healed for ${amount(effect.amount)}`)];
     }
     // Scourge Enchantment's (#1403): "whenever it gains an enchantment,
     // its caster takes 63 holy damage".
@@ -2246,6 +2318,7 @@ function describeOwnSkillModifier(
     durationMultiplier,
     healMultiplier,
     notEasilyInterrupted,
+    overcastPerUse,
     uses,
   }: OwnSkillModifier,
   ranks: ReadonlyMap<string, number> | undefined,
@@ -2286,6 +2359,8 @@ function describeOwnSkillModifier(
       : `${verb("heal", "heals")} ${percent(1 - healMultiplier)} ${healMultiplier < 1 ? "less" : "more"}`,
     // Trapper's Focus's (#1966).
     notEasilyInterrupted ? `${verb("are", "is")} not easily interrupted` : undefined,
+    // Iron Mist's (#2311).
+    overcastPerUse === 0 ? undefined : `Overcast you by ${String(overcastPerUse)}`,
   ].filter((change) => change !== undefined);
   // Way of the Empty Palm's "off-hand and dual attacks" (#2134).
   const kind =
@@ -2303,6 +2378,8 @@ function describeOwnSkillModifier(
       ? undefined
       : (getAttribute(filter.attributeId)?.name ?? filter.attributeId),
     one ? kind : `${kind}s`,
+    // Iron Mist's "spells that target a foe" (#2311).
+    filter.targetsFoe ? (one ? "that targets a foe" : "that target a foe") : undefined,
   ].filter((word) => word !== undefined);
   const which = uses === undefined ? "your" : one ? "your next" : `your next ${String(uses)}`;
   return `${which} ${named.join(" ")} ${changes.join(" and ")}`;
@@ -2424,6 +2501,8 @@ function negatedText(text: string): string {
     ],
     [/^If (target|you) (has|have) an? /, (_, who, verb) => `If ${who} ${verb} no `],
     [/^If target has /, () => "If target does not have "],
+    // Blood Drinker's (#2314): "If you have at least 90% Health".
+    [/^If (target|you) (has|have) less than /, (_, who, verb) => `If ${who} ${verb} at least `],
     [/^If you (\w+) /, (_, verb) => `If you do not ${verb} `],
   ];
   for (const [pattern, replacement] of rules) {
@@ -2628,7 +2707,7 @@ const SPLASH_SIDE: Readonly<Record<SplashEffect["hits"], string>> = {
 /** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
 function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   // Protective Was Kaolai's reaches the whole party, at any distance (#1434).
-  if (hits === "party") {
+  if (hits === "party" && radius === Number.POSITIVE_INFINITY) {
     return "All party members";
   }
   // Mirror of Disenchantment's foe's whole party (#1954).
@@ -3195,6 +3274,13 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
     case "heal": {
       const magnitude = countedMagnitude(effect.amount, effect.per, ranks);
       const amount = shown(magnitude);
+      // Healing Burst's party (#2311).
+      if (effect.divineFavorBonus === true && magnitude.current === 0) {
+        return {
+          text: "Gain Health equal to this spell's Divine Favor bonus",
+          magnitude: undefined,
+        };
+      }
       const text =
         effect.perRemoved !== undefined
           ? `Heals ${amount} for each ${effect.perRemoved} removed`
@@ -3770,18 +3856,21 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
                 ? effect.hits === "foes" || effect.hits === "foe-creatures"
                   ? suffered(each, ranks)
                   : `gain ${suffered(each, ranks).slice("suffer ".length)}`
-                : each.kind === "heal" && each.recipient === undefined
-                  ? `gain ${shown(describeMagnitude(each.amount, ranks))} Health`
-                  : each.kind === "lose-health" && each.recipient === "target"
-                    ? `lose ${shown(describeMagnitude(each.amount, ranks))} Health`
-                    : each.kind === "remove-status" && each.from === undefined
-                      ? lostInSplash(each, ranks)
-                      : // Verata's Sacrifice's (#1986).
-                        each.kind === "transfer-conditions" &&
-                          each.from === "target" &&
-                          resolveMagnitudeAtRanks(each.count, ranks) === Number.POSITIVE_INFINITY
-                        ? "transfer all their conditions to you"
-                        : lowerFirst(description.text),
+                : // Healing Burst's (#2311).
+                  each.kind === "heal" && each.divineFavorBonus === true
+                  ? "gain Health equal to this spell's Divine Favor bonus"
+                  : each.kind === "heal" && each.recipient === undefined
+                    ? `gain ${shown(describeMagnitude(each.amount, ranks))} Health`
+                    : each.kind === "lose-health" && each.recipient === "target"
+                      ? `lose ${shown(describeMagnitude(each.amount, ranks))} Health`
+                      : each.kind === "remove-status" && each.from === undefined
+                        ? lostInSplash(each, ranks)
+                        : // Verata's Sacrifice's (#1986).
+                          each.kind === "transfer-conditions" &&
+                            each.from === "target" &&
+                            resolveMagnitudeAtRanks(each.count, ranks) === Number.POSITIVE_INFINITY
+                          ? "transfer all their conditions to you"
+                          : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
@@ -4019,10 +4108,13 @@ function transferText(effect: TransferConditionsEffect, ranks: ReadonlyMap<strin
     effect.durationMultiplier === 1
       ? ""
       : ` with ${String(Math.round(effect.durationMultiplier * 100))}% of their remaining durations`;
+  // Hypochondria's gather (#2311).
   const moves =
-    effect.from === "caster"
-      ? `Moves ${count} of your conditions${lasting} to the target${copies}`
-      : `Moves ${count} of target's conditions${lasting} to you`;
+    typeof effect.from === "object"
+      ? `Moves ${count} conditions${lasting} from foes ${AREA_AROUND_TARGET.get(effect.from.foesWithin) ?? `within ${String(effect.from.foesWithin)} of it`} to the target`
+      : effect.from === "caster"
+        ? `Moves ${count} of your conditions${lasting} to the target${copies}`
+        : `Moves ${count} of target's conditions${lasting} to you`;
   if (effect.healPerCondition === undefined) {
     // Plague Sending's "1...3" scales (#2259).
     return { text: moves, magnitude: moving.atZero === undefined ? undefined : moving };
