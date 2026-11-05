@@ -457,6 +457,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.preventsSpeedBoosts) {
     parts.push("speed boosts have no effect");
   }
+  if (definition.preventsAdrenalineGain) {
+    parts.push("cannot gain adrenaline");
+  }
   if (definition.returnsSource !== undefined) {
     parts.push("when this ends, you return to where you cast it");
   }
@@ -3999,7 +4002,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
 
 /**
  * A `disable-own-skills` line (#1473): "All of your skills" (#1570), "All
- * of your spells", "All of your Smiting Prayers" (#1511), or "All of your
+ * of your other skills" (#2287), "All of your spells", "All of your Smiting Prayers" (#1511), or "All of your
  * non-Mesmer skills except signets", "are disabled for 10 seconds". A
  * skill of the attribute it disables spares itself: "All of your other
  * Healing Prayers" (#1748). "All of your other attack skills" (#1914). "Your
@@ -4010,6 +4013,9 @@ function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds
   const time = `are disabled for ${seconds} seconds`;
   if (effect.which === "all") {
     return `All of your skills ${time}`;
+  }
+  if (effect.which === "others") {
+    return `All of your other skills ${time}`;
   }
   if (effect.which === "attacks") {
     return effect.exceptWeapon === undefined
