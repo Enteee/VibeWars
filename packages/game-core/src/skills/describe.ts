@@ -2761,7 +2761,16 @@ function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>
     // (#1113): "When sprung, every 1s for 3s, foes nearby: deals 17
     // damage".
     const pulse = act.kind === "trap" ? act.trap.spring : act.pulse;
-    const { radius } = pulse.area;
+    const { radius, affects, includesCaster } = pulse.area;
+    // Healing Spring's "you and allies adjacent" (#2317).
+    const whom =
+      affects === "enemies"
+        ? "foes"
+        : affects === "all"
+          ? "everyone"
+          : includesCaster
+            ? "you and allies"
+            : "allies";
     const who = [
       ...(act.kind === "trap" ? ["when sprung"] : []),
       // Spirit Rift's (#1270): "after 3s, foes adjacent: ...".
@@ -2769,7 +2778,7 @@ function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>
       ...(pulse.count > 1
         ? [`every ${seconds(pulse.everySeconds)} for ${seconds(pulse.count * pulse.everySeconds)}`]
         : []),
-      `foes ${AREA_TEXT.get(radius) ?? `within ${String(radius)}`}`,
+      `${whom} ${AREA_TEXT.get(radius) ?? `within ${String(radius)}`}`,
     ].join(", ");
     return [
       describeEffect(effect, ranks),
@@ -3558,13 +3567,16 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         magnitude: undefined,
       };
     // Run as One's "you and your pet run 25% faster" (#1865).
-    case "companion-gains-status":
+    case "companion-gains-status": {
+      const duration = describeMagnitude(effect.durationSeconds, ranks);
       return {
         text:
-          `Your pet gains ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
+          `Your pet gains ${statusName(effect.statusId)} ` +
+          `for ${shown(duration, seconds(duration.current))} ` +
           `(${statusText(effect.statusId, ranks)})`,
-        magnitude: undefined,
+        magnitude: duration,
       };
+    }
     // Strike as One's "your animal companion instantly moves to your target" (#1966).
     case "companion-steps-to-target":
       return { text: "Your pet moves to your target and attacks it", magnitude: undefined };

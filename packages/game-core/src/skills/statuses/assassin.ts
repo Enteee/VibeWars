@@ -1,3 +1,4 @@
+import { AREA_ADJACENT } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
 import { KNOCKDOWN_SECONDS } from "../types.js";
 import { define, ownSkills } from "./define.js";
@@ -46,7 +47,9 @@ export type AssassinStatusId =
   | "unseen-fury"
   // Assassin staples 6 (#2233).
   | "hidden-caltrops"
-  | "way-of-the-assassin";
+  | "way-of-the-assassin"
+  // Ranger staples (#2317).
+  | "smoke-powder-defense";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -362,5 +365,38 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
       scaling: { attributeId: "assassin.critical-strikes", atZero: 0.05, atTwelve: 0.29 },
     },
     criticalChanceBonusWeapon: "daggers",
+  }),
+  // Ranger staples (#2317). "For 8 seconds, the next time you are struck,
+  // you take half damage and all adjacent foes are Blinded for 2...6
+  // seconds": the strike that ends it is halved, and so is any other
+  // damage that lands before it.
+  "smoke-powder-defense": define("smoke-powder-defense", "Smoke Powder Defense", "stance", {
+    profession: "assassin",
+    damageTakenMultiplier: 0.5,
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-hit-by-attack",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "apply-status",
+                statusId: "blind",
+                durationSeconds: {
+                  scaling: { attributeId: "assassin.shadow-arts", atZero: 2, atTwelve: 5.2 },
+                },
+              },
+            ],
+          },
+        ],
+        skillId: "assassin.smoke-powder-defense",
+      },
+    ],
   }),
 };

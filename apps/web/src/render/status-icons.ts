@@ -578,6 +578,13 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "signet-of-stamina": icon("signet-of-stamina"),
   "soldiers-stance": icon("soldiers-stance"),
   "steady-stance": icon("steady-stance"),
+  // Ranger staples (#2317).
+  "choking-gas": icon("choking-gas"),
+  "dryders-defenses": icon("dryders-defenses"),
+  "bestial-fury": icon("bestial-fury"),
+  "scavengers-focus": icon("scavengers-focus"),
+  "feral-aggression": icon("feral-aggression"),
+  "smoke-powder-defense": icon("smoke-powder-defense"),
   // Monk and Ranger mechanics (#2189).
   "spell-shield": icon("spell-shield"),
   "convert-hexes": icon("convert-hexes"),

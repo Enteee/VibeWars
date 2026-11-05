@@ -99,12 +99,16 @@ describe("skill catalog integrity", () => {
         effect.kind === "create-ground-effect" ? [effect.act.kind] : [],
       );
       // A spell may leave pulses where its target stands: a symbol, or
-      // Searing Heat's strikes and the Burning as it ends (#2288).
-      const pulse = skill.type === "spell" ? grounds.map(() => "pulse") : [];
+      // Searing Heat's strikes and the Burning as it ends (#2288). Healing
+      // Spring is a trap that springs for no foe, but heals where it lies (#2317).
+      const pulse =
+        skill.type === "spell" || skill.id === "ranger.healing-spring"
+          ? grounds.map(() => "pulse")
+          : [];
       expect(grounds, skill.id).toEqual(
         skill.type === "ward" || skill.type === "well"
           ? ["aura"]
-          : skill.type === "trap"
+          : skill.type === "trap" && skill.id !== "ranger.healing-spring"
             ? ["trap"]
             : pulse,
       );
