@@ -59,6 +59,8 @@ export type WarriorStatusId =
   | "bulls-charge"
   // Condition movement (#2259).
   | "i-will-survive"
+  // Warrior staples 5 (#2315).
+  | "to-the-limit"
   // Warrior staples (#2316).
   | "charging-strike"
   | "signet-of-stamina"
@@ -535,6 +537,12 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
   "i-will-survive": define("i-will-survive", "I Will Survive!", "shout", {
     profession: "warrior",
     healthPipsPerCondition: 3,
+  }),
+  // Warrior staples 5 (#2315). "For 10...20 seconds, your maximum Health
+  // is increased by 10...60", at the shouter's Tactics: +50 at rank 12.
+  "to-the-limit": define("to-the-limit", "To the Limit!", "shout", {
+    profession: "warrior",
+    maxHealthBonus: { scaling: { attributeId: "warrior.tactics", atZero: 10, atTwelve: 50 } },
   }),
   // Warrior staples (#2316). (PvP) "you run 33% faster. Your next
   // successful melee hit does +10...80 damage and this stance ends. This

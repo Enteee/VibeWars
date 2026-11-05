@@ -36,6 +36,15 @@ function ranges(gwId: number | undefined, withSplit = false): (readonly [number,
     .map(([, low, high]) => [Number(low), Number(high)] as const);
 }
 
+/**
+ * Whether `gwId`'s text states `seconds` flat, outside any range: Incendiary
+ * Bonds' "After 3 seconds" beside its Burning's "1...3 seconds" (#2289).
+ */
+function statesFlat(gwId: number | undefined, seconds: number): boolean {
+  const flat = new RegExp(`(?<![.\\d])${String(seconds)} seconds?`);
+  return gwId !== undefined && flat.test(TEXT.get(gwId) ?? "");
+}
+
 /** The rank-12 value of a range, unrounded, as the catalog writes it. */
 function atTwelve([low, high]: readonly [number, number]): number {
   return low + (high - low) * 0.8;
@@ -81,6 +90,7 @@ describe("status durations at the caster's rank (#2041)", () => {
       ({ skill, effect }) =>
         skill.attributeId !== undefined &&
         "flat" in effect.durationSeconds &&
+        !statesFlat(skill.gwId, effect.durationSeconds.flat) &&
         ranges(skill.gwId).some((range) => {
           const seconds = "flat" in effect.durationSeconds ? effect.durationSeconds.flat : NaN;
           return Math.round(atTwelve(range)) === seconds || atTwelve(range) === seconds;

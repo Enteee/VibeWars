@@ -94,6 +94,8 @@ const rows = {
   "mesmer.signet-of-illusions": { glyph: "bars-lent" },
   // Stand-in art (#2293).
   "mesmer.keystone-signet": { glyph: "arch-keystone" },
+  // Stand-in art (#2294).
+  "mesmer.mantra-of-recall": { glyph: "hourglass-energy" },
   // Stand-in art (#2312).
   "mesmer.mind-wrack": { glyph: "hex-energy-down" },
   "mesmer.ignorance": { glyph: "hex-signet-struck" },
