@@ -88,6 +88,7 @@ export type NecromancerStatusId =
   | "spoil-victor"
   // Staples (#2278).
   | "mark-of-subversion"
+  | "signet-of-suffering"
   // Necromancer mechanics (#2321).
   | "rising-bile";
 
@@ -875,5 +876,29 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         skillId: "necromancer.rising-bile",
       },
     ],
+  }),
+  // "The next Necromancer skill that targets a foe causes Bleeding for
+  // 2...16 seconds" (#2333): fired as the skill is used, on its target.
+  // A skill on an ally or on itself, or no Necromancer one, leaves it.
+  "signet-of-suffering": define("signet-of-suffering", "Signet of Suffering", "skill-effect", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { profession: "necromancer", targets: "foe" },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "bleeding",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 2, atTwelve: 13.2 },
+            },
+          },
+        ],
+        target: "skill-target",
+        skillId: "necromancer.signet-of-suffering",
+      },
+    ],
+    endsWhenTriggered: true,
   }),
 };

@@ -138,16 +138,21 @@ export function fireTriggers(
 }
 
 /**
- * Whether a use trigger bound to a skill on an ally (#2282) answers the
- * aim: one at the bearer or at an ally of its, a dead one too. Any other trigger
- * answers any aim, and none.
+ * Whether a use trigger bound to a skill on an ally (#2282) or on a foe
+ * (#2333) answers the aim: "ally", one at the bearer or at an ally of its,
+ * "foe", one at a creature of another team, a dead one too either way. No
+ * aim answers neither. Any other trigger answers any aim, and none.
  */
 function answersAim(trigger: StatusTrigger, bearer: Combatant, context: TriggerContext): boolean {
-  if (trigger.usedSkill?.targetsAlly === undefined) {
+  const targets = trigger.usedSkill?.targets;
+  if (targets === undefined) {
     return true;
   }
   const aimed = context.aimedAt === undefined ? undefined : context.sourceOf(context.aimedAt.id);
-  return aimed?.team === bearer.team;
+  if (aimed === undefined) {
+    return false;
+  }
+  return targets === "ally" ? aimed.team === bearer.team : aimed.team !== bearer.team;
 }
 
 /**
