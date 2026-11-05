@@ -60,6 +60,15 @@ export type MonkStatusId =
   | "healing-hands"
   | "shield-of-judgment"
   | "zealots-fire"
+  // Monk staples (#2286).
+  | "essence-bond"
+  | "life-barrier"
+  | "retribution"
+  | "scourge-healing"
+  | "healing-seed"
+  | "succor"
+  | "divine-boon"
+  | "restful-breeze"
   | "life-bond"
   | "life-attunement"
   | "aura-of-faith"
@@ -92,6 +101,12 @@ const SHIELD_GUARDIAN_HEALS: readonly SkillEffect[] = [
 const VIGOROUS_SPIRIT_HEAL: HealEffect = {
   kind: "heal",
   amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 17 } },
+};
+
+/** Healing Seed's heal (#2286), to its bearer and, by the splash, which skips its centre, to each ally beside it. */
+const HEALING_SEED_HEAL: HealEffect = {
+  kind: "heal",
+  amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 3, atTwelve: 24.6 } },
 };
 
 export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
@@ -704,6 +719,157 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         skillId: "monk.zealots-fire",
       },
     ],
+  }),
+  // "...whenever target ally takes physical or elemental damage, you gain
+  // 1 Energy" (#2286): once a packet, a foe's; holy, shadow, chaos, dark,
+  // typeless and a life steal give none.
+  "essence-bond": define("essence-bond", "Essence Bond", "enchantment", {
+    profession: "monk",
+    triggers: (["physical", "elemental"] as const).map((damageType) => ({
+      on: "bearer-takes-damage-from-foe" as const,
+      damageType,
+      effects: [{ kind: "energy-gain" as const, amount: { flat: 1 } }],
+      target: "source" as const,
+      skillId: "monk.essence-bond",
+    })),
+  }),
+  // "...damage dealt to target other ally is reduced by 20...50%. If your
+  // Health is below 50% when that ally takes damage, Life Barrier ends"
+  // (#2286): the Monk's Health, read as the packet lands; that packet is
+  // still reduced.
+  "life-barrier": define("life-barrier", "Life Barrier", "enchantment", {
+    profession: "monk",
+    damageTakenMultiplier: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 0.8, atTwelve: 0.56 },
+    },
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        effects: [
+          {
+            kind: "if",
+            condition: { kind: "caster-health-below", fraction: 0.5 },
+            effects: [
+              {
+                kind: "remove-status",
+                category: "enchantment",
+                count: 1,
+                statusId: "life-barrier",
+              },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.life-barrier",
+      },
+    ],
+  }),
+  // "...whenever target ally takes attack damage, this spell deals 33% of
+  // the damage back to the source (maximum 5...20 damage)" (#2286): every
+  // attack while maintained, its cap by the Monk's Smiting Prayers.
+  retribution: define("retribution", "Retribution", "enchantment", {
+    profession: "monk",
+    reflectsAttackDamage: {
+      share: 0.33,
+      max: { scaling: { attributeId: "monk.smiting-prayers", atZero: 5, atTwelve: 17 } },
+      type: "holy",
+      times: undefined,
+      skillId: "monk.retribution",
+    },
+  }),
+  // "For 30 seconds, every time target foe is healed, the healer takes
+  // 15...80 holy damage" (#2286): healed by a skill, as Soul Bind's; a
+  // healer on the Monk's own team takes none.
+  "scourge-healing": define("scourge-healing", "Scourge Healing", "hex", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-healed-by-skill",
+        effects: [
+          {
+            kind: "damage",
+            amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 15, atTwelve: 67 } },
+            type: "holy",
+            armorPenetration: 0,
+          },
+        ],
+        target: "healer",
+        skillId: "monk.scourge-healing",
+      },
+    ],
+  }),
+  // "...whenever target other ally takes damage, that ally and all
+  // adjacent allies gain 3...30 Health" (#2286): damage a foe deals, as
+  // Healing Hands'.
+  "healing-seed": define("healing-seed", "Healing Seed", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        effects: [
+          HEALING_SEED_HEAL,
+          {
+            kind: "splash",
+            hits: "allies",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [HEALING_SEED_HEAL],
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.healing-seed",
+      },
+    ],
+  }),
+  // "...target other ally gains +1 Health and +1 Energy regeneration, but
+  // you lose 1 Energy each time that ally casts a spell" (#2286).
+  succor: define("succor", "Succor", "enchantment", {
+    profession: "monk",
+    healthPips: 1,
+    energyPips: 1,
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        effects: [{ kind: "energy-loss", amount: { flat: 1 } }],
+        target: "source",
+        skillId: "monk.succor",
+      },
+    ],
+  }),
+  // "...whenever you cast a Protection Prayer or Divine Favor spell that
+  // targets an ally, that ally is healed for 15...60 Health, and you lose
+  // 1 Energy" (#2286): on itself too, as Zealot's Fire's.
+  "divine-boon": define("divine-boon", "Divine Boon", "enchantment", {
+    profession: "monk",
+    triggers: (["monk.protection-prayers", "monk.divine-favor"] as const).flatMap((attributeId) => [
+      {
+        on: "bearer-casts-spell" as const,
+        usedSkill: { attributes: { attributeId }, targetsAlly: true as const },
+        effects: [
+          {
+            kind: "heal" as const,
+            amount: { scaling: { attributeId: "monk.divine-favor", atZero: 15, atTwelve: 51 } },
+          },
+        ],
+        target: "skill-target" as const,
+        skillId: "monk.divine-boon",
+      },
+      {
+        on: "bearer-casts-spell" as const,
+        usedSkill: { attributes: { attributeId }, targetsAlly: true as const },
+        effects: [{ kind: "energy-loss" as const, amount: { flat: 1 } }],
+        target: "source" as const,
+        skillId: "monk.divine-boon",
+      },
+    ]),
+  }),
+  // "For 8...18 seconds, target ally has +10 Health regeneration. This
+  // enchantment ends if that ally attacks or uses a skill" (#2286).
+  "restful-breeze": define("restful-breeze", "Restful Breeze", "enchantment", {
+    profession: "monk",
+    healthPips: 10,
+    endsWhenBearerAttacks: true,
+    endsWhenBearerUsesSkill: true,
   }),
   // Maintained (#2291): "whenever target other ally takes damage from an
   // attack, half the damage is redirected to you. The damage you receive
