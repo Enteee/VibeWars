@@ -206,6 +206,12 @@ export interface HealEffect {
   /** More for each of a count, in the same heal (#1760): Dwayna's Kiss's. */
   readonly per?: PerCount;
   /**
+   * Plus the caster's Divine Favor bonus for this skill (#2311), as Healing
+   * Burst's party "gains Health equal to this spell's Divine Favor bonus":
+   * 0 at Divine Favor 0, and for a skill Divine Favor does not touch.
+   */
+  readonly divineFavorBonus?: true;
+  /**
    * More for each living ally of the caster within `radius` of it, the
    * caster included, as Leader's Comfort's "+18 Health for each ally
    * within earshot (maximum 140 Health)" (#923): the whole heal, base and
@@ -465,10 +471,13 @@ export interface LoseHealthToEffect {
  * `count` scales with the caster's rank (#2259), as Plague Sending's
  * "1...3"; `{ flat: Infinity }` moves them all. A giver who is the taker,
  * as Martyr's caster among its party (#1954), keeps its own as they are.
+ * `foesWithin` gathers instead (#2311): every condition of each living foe
+ * of the caster within that radius of the target, the target aside, moves
+ * onto the target, `count` of each, as Hypochondria's.
  */
 export interface TransferConditionsEffect {
   readonly kind: "transfer-conditions";
-  readonly from: "caster" | "target";
+  readonly from: "caster" | "target" | { readonly foesWithin: number };
   readonly count: Magnitude;
   readonly durationMultiplier: number;
   readonly healPerCondition?: Magnitude;
