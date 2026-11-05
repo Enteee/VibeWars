@@ -803,7 +803,7 @@ export function mountTeamEditor(
   );
   const attributes = h("div", "team-member-editor-column");
   attributes.appendChild(h("h4", "team-member-editor-heading", "Attributes"));
-  const equipment = h("div", "team-member-editor-column");
+  const equipment = h("div", "team-member-editor-column team-member-editor-equipment");
   const doll = mountPaperDoll(host);
   const regions: readonly Region[] = [
     professions,
