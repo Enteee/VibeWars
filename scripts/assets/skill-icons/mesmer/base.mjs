@@ -92,6 +92,8 @@ const rows = {
   "mesmer.physical-resistance": { glyph: "shield-blow" },
   // Attributes set or borrowed (#1929).
   "mesmer.signet-of-illusions": { glyph: "bars-lent" },
+  // Stand-in art (#2293).
+  "mesmer.keystone-signet": { glyph: "arch-keystone" },
 };
 
 export default rows;

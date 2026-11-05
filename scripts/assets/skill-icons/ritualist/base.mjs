@@ -86,6 +86,8 @@ const rows = {
   "ritualist.gaze-of-fury": { glyph: "spirit-eye" },
   // Stand-in art (#2292).
   "ritualist.cautery-signet": { glyph: "signet-flame" },
+  // Stand-in art (#2293).
+  "ritualist.agony": { glyph: "pulse-arcs" },
 };
 
 export default rows;
