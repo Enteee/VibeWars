@@ -429,21 +429,17 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         },
         type: "lightning",
         armorPenetration: 0.25,
+        conditionalBonus: {
+          condition: { kind: "caster-more-energy" },
+          amount: {
+            scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 42 },
+          },
+        },
       },
       {
         kind: "if",
         condition: { kind: "caster-more-energy" },
-        effects: [
-          {
-            kind: "damage",
-            amount: {
-              scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 42 },
-            },
-            type: "lightning",
-            armorPenetration: 0.25,
-          },
-          { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
-        ],
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
       },
     ],
   },
@@ -698,8 +694,8 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "...are struck for 26...85...100 earth damage. Knocked down foes are
-    // struck for 10...56...68 additional earth damage." Down is read before
-    // the first strike lands.
+    // struck for 10...56...68 additional earth damage." One strike: down is
+    // read as it lands.
     effects: [
       {
         kind: "damage",
@@ -708,20 +704,12 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         },
         type: "earth",
         armorPenetration: 0,
-      },
-      {
-        kind: "if",
-        condition: { kind: "target-knocked-down" },
-        effects: [
-          {
-            kind: "damage",
-            amount: {
-              scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 56 },
-            },
-            type: "earth",
-            armorPenetration: 0,
+        conditionalBonus: {
+          condition: { kind: "target-knocked-down" },
+          amount: {
+            scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 56 },
           },
-        ],
+        },
       },
     ],
   },
@@ -1424,19 +1412,17 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         },
         type: "fire",
         armorPenetration: 0,
+        conditionalBonus: {
+          condition: { kind: "caster-more-energy" },
+          amount: {
+            scaling: { attributeId: "elementalist.fire-magic", atZero: 15, atTwelve: 51 },
+          },
+        },
       },
       {
         kind: "if",
         condition: { kind: "caster-more-energy" },
         effects: [
-          {
-            kind: "damage",
-            amount: {
-              scaling: { attributeId: "elementalist.fire-magic", atZero: 15, atTwelve: 51 },
-            },
-            type: "fire",
-            armorPenetration: 0,
-          },
           {
             kind: "apply-status",
             statusId: "burning",
@@ -1796,19 +1782,17 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         },
         type: "cold",
         armorPenetration: 0,
+        conditionalBonus: {
+          condition: { kind: "caster-more-energy" },
+          amount: {
+            scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 50 },
+          },
+        },
       },
       {
         kind: "if",
         condition: { kind: "caster-more-energy" },
         effects: [
-          {
-            kind: "damage",
-            amount: {
-              scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 50 },
-            },
-            type: "cold",
-            armorPenetration: 0,
-          },
           {
             kind: "apply-status",
             statusId: "mind-freeze",
@@ -3271,19 +3255,17 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         },
         type: "typeless",
         armorPenetration: 0,
+        conditionalBonus: {
+          condition: { kind: "target-has", category: "hex", attribute: "elementalist.water-magic" },
+          amount: {
+            scaling: { attributeId: "elementalist.earth-magic", atZero: 20, atTwelve: 36 },
+          },
+        },
       },
       {
         kind: "if",
         condition: { kind: "target-has", category: "hex", attribute: "elementalist.water-magic" },
         effects: [
-          {
-            kind: "damage",
-            amount: {
-              scaling: { attributeId: "elementalist.earth-magic", atZero: 20, atTwelve: 36 },
-            },
-            type: "typeless",
-            armorPenetration: 0,
-          },
           {
             kind: "splash",
             hits: "foes",
@@ -4787,20 +4769,12 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         amount: { scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 41 } },
         type: "lightning",
         armorPenetration: 0.25,
-      },
-      {
-        kind: "if",
-        condition: { kind: "target-moving" },
-        effects: [
-          {
-            kind: "damage",
-            amount: {
-              scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 41 },
-            },
-            type: "lightning",
-            armorPenetration: 0.25,
+        conditionalBonus: {
+          condition: { kind: "target-moving" },
+          amount: {
+            scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 41 },
           },
-        ],
+        },
       },
     ],
   },

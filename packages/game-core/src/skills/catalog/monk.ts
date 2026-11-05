@@ -1540,18 +1540,10 @@ export const MONK_SKILLS: readonly Skill[] = [
         amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 46 } },
         type: "holy",
         armorPenetration: 0,
-      },
-      {
-        kind: "if",
-        condition: { kind: "target-attacking" },
-        effects: [
-          {
-            kind: "damage",
-            amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 30 } },
-            type: "holy",
-            armorPenetration: 0,
-          },
-        ],
+        conditionalBonus: {
+          condition: { kind: "target-attacking" },
+          amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 30 } },
+        },
       },
     ],
   },
@@ -1588,18 +1580,10 @@ export const MONK_SKILLS: readonly Skill[] = [
         amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 26, atTwelve: 50 } },
         type: "holy",
         armorPenetration: 0,
-      },
-      {
-        kind: "if",
-        condition: { kind: "target-attacking" },
-        effects: [
-          {
-            kind: "damage",
-            amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 15, atTwelve: 51 } },
-            type: "holy",
-            armorPenetration: 0,
-          },
-        ],
+        conditionalBonus: {
+          condition: { kind: "target-attacking" },
+          amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 15, atTwelve: 51 } },
+        },
       },
     ],
   },
@@ -1911,18 +1895,10 @@ export const MONK_SKILLS: readonly Skill[] = [
         amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 46 } },
         type: "holy",
         armorPenetration: 0,
-      },
-      {
-        kind: "if",
-        condition: { kind: "target-knocked-down" },
-        effects: [
-          {
-            kind: "damage",
-            amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 46 } },
-            type: "holy",
-            armorPenetration: 0,
-          },
-        ],
+        conditionalBonus: {
+          condition: { kind: "target-knocked-down" },
+          amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 46 } },
+        },
       },
     ],
   },

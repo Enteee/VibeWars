@@ -829,12 +829,12 @@ describe("attack skills (#417)", () => {
     ]);
   });
 
-  it("words Aftershock's bonus on a foe that is down (#985)", () => {
+  it("words Aftershock's bonus on a foe that is down (#985), in the same strike (#2330)", () => {
     const ranks = new Map([["elementalist.earth-magic", 12]]);
     const texts = describeSkill(skill("elementalist.aftershock"), ranks).effects.map(
       ({ text }) => text,
     );
-    expect(texts.at(-1)).toBe("If target is knocked down: deals 56 earth damage");
+    expect(texts.at(-1)).toBe("Deals 85 earth damage; if target is knocked down: +56");
   });
 
   it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {

@@ -198,7 +198,7 @@ describe("Icy Prism (#1765)", () => {
 describe("Teinai's Crystals (#1765)", () => {
   const CRYSTALS = "elementalist.teinais-crystals";
 
-  it("strikes the target twice and cracks nearby foes' armor on a Water Magic hex", () => {
+  it("strikes the target for double and cracks nearby foes' armor on a Water Magic hex", () => {
     const plain = crowd(AREA_NEARBY);
     const once = damageTo(use(caster(), CRYSTALS, plain.target, plain.surroundings), "target");
     const { target, near, far, surroundings } = crowd(AREA_NEARBY, WATER_HEX);
