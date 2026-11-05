@@ -46,8 +46,14 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
           effect.choices.flatMap(({ statusId }) => statusRoles(getStatusDefinition(statusId))),
         ),
       ];
-    case "maintain-status":
+    // Blood Drinker's own Bleeding (#2314) is its price, not a role.
     case "apply-status":
+      if (effect.on === "caster") {
+        const definition = getStatusDefinition(effect.statusId);
+        if (definition.category === "hex" || definition.category === "condition") return [];
+      }
+      return statusRoles(getStatusDefinition(effect.statusId));
+    case "maintain-status":
     case "companion-gains-status":
       return statusRoles(getStatusDefinition(effect.statusId));
     case "companion-steps-to-target":

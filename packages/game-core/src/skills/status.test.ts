@@ -249,6 +249,7 @@ describe("status definitions", () => {
       "ward-against-harm": 2.6,
       succor: 1,
       "restful-breeze": 10,
+      "vile-miasma": -4.2,
     });
   });
 
