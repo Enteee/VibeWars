@@ -1788,7 +1788,9 @@ export interface StatusTrigger {
    * On `bearer-attacks`, `bearer-hits` and `bearer-fails-to-hit` only
    * (#1354, #1359, #2133): it fires only for an attack made with a weapon
    * of this class in the bearer's main hand, as Hundred Blades' "whenever
-   * you attack with a sword".
+   * you attack with a sword". On `bearer-hit-by-attack` too (#2313), for
+   * the attacker's weapon: Tainted Flesh's "anyone striking those allies
+   * in melee".
    * `melee` is any weapon that strikes in melee, never a bow nor a thrown
    * spear: Warrior's Endurance's "each time you hit with a melee attack".
    * Absent: any attack.
@@ -2783,18 +2785,21 @@ export class StatusSet {
    * `took` health, recorded only if a status on it answers that, with the
    * triggers that do. Every hit counts: two foes in one tick are two. Each
    * status that reflects attack damage (#1754) sends its share back.
-   * `chainRole` is the hitting attack skill's (#2134), if it has one.
+   * `chainRole` is the hitting attack skill's (#2134), if it has one;
+   * `weapon` the attacker's, for a trigger bound to a class (#2313).
    */
   public recordHitByAttack(
     offenderId: string,
     took: number,
     chainRole: ChainRole | undefined,
+    weapon: Weapon,
   ): void {
     const fired = this.#answering("bearer-hit-by-attack").filter(
       ({ sourceId, trigger }) =>
-        trigger.hitBy === undefined ||
-        (sourceId === offenderId &&
-          (trigger.hitBy.chainRole === undefined || trigger.hitBy.chainRole === chainRole)),
+        triggerAnswersWeapon(trigger, weapon) &&
+        (trigger.hitBy === undefined ||
+          (sourceId === offenderId &&
+            (trigger.hitBy.chainRole === undefined || trigger.hitBy.chainRole === chainRole))),
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "hit-by-attack", offenderId, fired });

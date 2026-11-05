@@ -1544,6 +1544,12 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
   if (event === "bearer-hits") {
     return weapon === "melee" ? "hits with a melee attack" : `hits with ${NEEDED_WEAPON[weapon]}`;
   }
+  // Tainted Flesh's (#2313): the weapon is the attacker's.
+  if (event === "bearer-hit-by-attack") {
+    return weapon === "melee"
+      ? "is hit by a foe's melee attack"
+      : `is hit by a foe's attack with ${NEEDED_WEAPON[weapon]}`;
+  }
   return `${TRIGGER_WHEN[event]} with ${NEEDED_WEAPON[weapon]}`;
 }
 
@@ -1976,14 +1982,15 @@ function describeTrigger(
     }
     // Ether Prodigy's end (#1984): "when it ends: lose 2 Health for each
     // point of Energy you have"; on a foe, Spoil Victor's "it loses 63
-    // Health" (#2282).
+    // Health" (#2282); its caster's, Dark Aura's "you lose 17 Health" (#2313).
     if (
       effect.kind === "lose-health" &&
       effect.recipient === "target" &&
-      trigger.target === "bearer"
+      (trigger.target === "bearer" || trigger.target === "source")
     ) {
+      const loser = trigger.target === "source" ? "you lose" : bearerIsFoe ? "it loses" : "lose";
       const text = describeEffect(effect, ranks)
-        .text.replace(/^Target foe loses/, bearerIsFoe ? "it loses" : "lose")
+        .text.replace(/^Target foe loses/, loser)
         .replace(/Energy they have/, "Energy you have");
       return [sentence(`${when}: ${text}`)];
     }
