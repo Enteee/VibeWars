@@ -4473,4 +4473,37 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // is removed prematurely, that foe loses 1...5 Energy."
     effects: [{ kind: "apply-status", statusId: "ether-phantom", durationSeconds: { flat: 10 } }],
   },
+  {
+    id: "mesmer.hypochondria",
+    name: "Hypochondria",
+    gwId: 1334,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Transfer all conditions from all foes in the area to target foe" (#2311).
+    effects: [
+      {
+        kind: "transfer-conditions",
+        from: { foesWithin: AREA_IN_THE_AREA },
+        count: { flat: Number.POSITIVE_INFINITY },
+        durationMultiplier: 1,
+      },
+    ],
+  },
 ];

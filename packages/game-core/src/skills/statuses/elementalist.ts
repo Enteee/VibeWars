@@ -71,6 +71,8 @@ export type ElementalistStatusId =
   // Staples (#2278).
   | "lightning-surge"
   | "ward-against-harm"
+  | "iron-mist"
+  | "chilling-winds"
   // Staples (#2289).
   | "armor-of-frost"
   | "incendiary-bonds"
@@ -723,6 +725,30 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         conditions: [{ kind: "vs-elemental" }],
       },
     ],
+  }),
+  // "You have +15 armor. Your Air Magic spells that target a foe activate
+  // and recharge 33% faster, but you are Overcast by 2 points" (#2311).
+  "iron-mist": define("iron-mist", "Iron Mist", "enchantment", {
+    profession: "elementalist",
+    armorModifier: 15,
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "spell", attributeId: "elementalist.air-magic", targetsFoe: true },
+        { activationMultiplier: 0.67, rechargeFaster: 0.33, overcastPerUse: 2 },
+      ),
+    ],
+  }),
+  // "For 10 seconds, the next Water Magic hex targeting a hexed foe lasts
+  // 25...100% longer" (#2311), by its caster's Air Magic.
+  "chilling-winds": define("chilling-winds", "Chilling Winds", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.air-magic",
+    nextIncomingHexDurationMultiplier: {
+      attributeId: "elementalist.water-magic",
+      multiplier: {
+        scaling: { attributeId: "elementalist.air-magic", atZero: 1.25, atTwelve: 1.85 },
+      },
+    },
   }),
   // Staples (#2289). "...you gain +40 armor against physical damage and
   // have +1 Water Magic": both flat.

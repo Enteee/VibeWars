@@ -3931,6 +3931,89 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "monk.vengeance",
+    name: "Vengeance",
+    gwId: 315,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 4,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Bring target dead party member back to life at full Health and full
+    // Energy. For 30 seconds, that party member deals 25% more damage..." (#2311).
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "percent", percent: { flat: 100 } },
+        energyPercent: { flat: 100 },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+      { kind: "apply-status", statusId: "vengeance", durationSeconds: { flat: 30 } },
+    ],
+  },
+  {
+    id: "monk.healing-burst",
+    name: "Healing Burst",
+    gwId: 1118,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target ally is healed for 20...120. All party members in earshot of
+    // your target gain Health equal to the Divine Favor bonus from this
+    // spell. Your Smiting Prayers are disabled for 20 seconds" (#2311). The
+    // target's own bonus is the cast's, once.
+    effects: [
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 100 } },
+      },
+      {
+        kind: "splash",
+        hits: "party",
+        radius: AREA_EARSHOT,
+        maxTargets: undefined,
+        effects: [{ kind: "heal", amount: { flat: 0 }, divineFavorBonus: true }],
+      },
+      {
+        kind: "disable-own-skills",
+        which: "attribute",
+        attributeId: "monk.smiting-prayers",
+        seconds: { flat: 20 },
+      },
+    ],
+  },
   /* ---------------------------------------------------------------------- */
   /* Adrenaline in points (#2302)                                           */
   /* ---------------------------------------------------------------------- */

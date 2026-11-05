@@ -112,6 +112,9 @@ describe("status definitions", () => {
         def.damageToHealing !== undefined ||
         def.pulse !== undefined ||
         def.reflectsAttackDamage !== undefined ||
+        def.damageDealtMultiplier !== 1 ||
+        def.killsBearerOnEnd ||
+        def.nextIncomingHexDurationMultiplier !== undefined ||
         def.breaksNextHex !== undefined ||
         def.failsNextSpell !== undefined ||
         def.failsFoeTouchSkills !== undefined ||

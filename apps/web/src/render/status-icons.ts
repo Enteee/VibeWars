@@ -595,6 +595,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "keystone-signet": icon("keystone-signet"),
   agony: icon("agony"),
   "grenths-aura": icon("grenths-aura"),
+  // Damage dealt, death on end, own-skill Overcast, next-hex duration (#2311).
+  vengeance: icon("vengeance"),
+  "iron-mist": icon("iron-mist"),
+  "chilling-winds": icon("chilling-winds"),
   // Warrior staples 5 (#2315).
   "to-the-limit": icon("to-the-limit"),
   // Signet of Suffering (#2333).
