@@ -33,16 +33,22 @@ const glyphs = {
       inkLine("M9 14H17V21", 3) +
       inkLine("M2 22H22", 2),
   },
-  "chevrons-blade": {
-    means:
-      "Burst of Aggression: three heavy chevrons rushing right: speed bought with a lowered guard.",
-    draw: () => inkLine("M2 4L9 12L2 20M9.500 4L16.500 12L9.500 20M17 4L24 12L17 20", 3),
-  },
-  "puff-ground": {
-    means: "Smoke Powder Defense: a solid cloud over a ground line: a stance wreathed in smoke.",
+  "blade-speed": {
+    means: "Burst of Aggression: a sword with speed marks behind it: faster attacks.",
     draw: () =>
-      inkFill("M6 17A4.500 4.500 0 0 1 6 8A5.500 5.500 0 0 1 17 7A5 5 0 0 1 18 17Z") +
-      inkLine("M3 21H21", 2.4),
+      inkLine("M21 3L10 14", 3.4) +
+      inkLine("M6.500 11.500L12.500 17.500", 2.4) +
+      inkLine("M9 15L4 20", 3) +
+      inkLine("M2 3H10M2 7H6.500M2 11H4", 2),
+  },
+  "eye-blind": {
+    means:
+      "Smoke Powder Defense: an eye struck through with a slash: foes blinded when you are hit.",
+    draw: () =>
+      inkFill("M2 12C6 5 18 5 22 12C18 19 6 19 2 12Z") +
+      `<path d="M12 9.500A2.500 2.500 0 1 1 12 14.500A2.500 2.500 0 1 1 12 9.500Z" fill="${C.bg}"/>` +
+      `<path d="M4 21L20 3" ${stroke(C.bg, 5)}/>` +
+      inkLine("M4 21L20 3", 2.4),
   },
 };
 

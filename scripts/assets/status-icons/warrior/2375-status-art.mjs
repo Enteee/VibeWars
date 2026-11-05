@@ -18,10 +18,13 @@ const rows = {
       `<path d="M9 10v1.500M15 10v1.500" ${stroke(c, 1.8)}/>` +
       `<ellipse cx="12" cy="16" rx="2" ry="2.500" ${stroke(c, 1.5)}/>`,
   ],
-  // Stance: three chevrons rushing right, speed with the guard lowered.
+  // Stance: a sword with speed marks, faster blows.
   "burst-of-aggression": [
     "stance",
-    (c) => `<path d="M4 6l5 6-5 6M10 6l5 6-5 6M16 6l5 6-5 6" ${stroke(c, 1.9)}/>`,
+    (c) =>
+      `<path d="M19 5 9 15" ${stroke(c, 2.2)}/>` +
+      `<path d="M6.500 12.500 11.500 17.500M8.500 15 5 19" ${stroke(c, 1.8)}/>` +
+      `<path d="M4 5h6M4 8.500h3" ${stroke(c, 1.5)}/>`,
   ],
 };
 

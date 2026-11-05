@@ -5,7 +5,7 @@ const rows = {
   "warrior.fear-me": { glyph: "face-scream" },
   "warrior.none-shall-pass": { glyph: "stakes-bar" },
   "warrior.on-your-knees": { glyph: "kneeling-figure" },
-  "warrior.burst-of-aggression": { glyph: "chevrons-blade" },
+  "warrior.burst-of-aggression": { glyph: "blade-speed" },
 };
 
 export default rows;
