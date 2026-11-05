@@ -378,8 +378,8 @@ describe("Rust (#2289)", () => {
     expect(damageTo(log, RUST, ["foe", "foe2"])).toEqual([amount, amount]);
   });
 
-  it("says signets take twice as long", () => {
-    expect(describeStatus("rust")).toBe("your signets take 2× as long to cast");
+  it("says the hexed foe's signets take twice as long", () => {
+    expect(describeStatus("rust")).toBe("the target's signets take 2× as long to cast");
   });
 
   it("doubles a hexed foe's signet activation", () => {
