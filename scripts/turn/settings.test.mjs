@@ -130,6 +130,14 @@ describe("turnserverConf", () => {
     );
     expect(withTls).not.toContain("no-tls");
   });
+
+  // #2240: REST logins from the secrets in the userdb, none in the conf.
+  it("takes REST logins from the userdb, and holds no secret", () => {
+    expect(conf).toEqual(
+      expect.arrayContaining(["lt-cred-mech", "userdb=/state/turn/turndb", "use-auth-secret"]),
+    );
+    expect(conf.some((l) => l.startsWith("static-auth-secret"))).toBe(false);
+  });
 });
 
 describe("turnNft", () => {

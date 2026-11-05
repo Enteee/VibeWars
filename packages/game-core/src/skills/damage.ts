@@ -122,8 +122,11 @@ export function effectiveArmor(
   let armor = target.equipment.baseArmor;
 
   const pieceArmor = location === null ? [] : target.equipment.pieceArmor[location];
-  const statusArmor = target.statuses.active.flatMap(
-    ({ id }) => getStatusDefinition(id).conditionalArmor,
+  const statusArmor = target.statuses.active.flatMap(({ id, ranks }) =>
+    getStatusDefinition(id).conditionalArmor.map(({ amount, conditions }) => ({
+      amount: Math.round(statAt(amount, ranks)),
+      conditions,
+    })),
   );
   for (const bonus of [...target.equipment.conditionalArmor, ...pieceArmor, ...statusArmor]) {
     if (bonus.conditions.every((condition) => conditionHolds(condition, target, packet))) {

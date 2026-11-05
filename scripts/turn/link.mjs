@@ -1,7 +1,8 @@
 /**
- * Invite links (#974) in #972's format: the page URL plus
+ * Invite links (#974, #2240) in #972's format: the page URL plus
  * `#turn=<base64url(JSON)>`, no padding, where the JSON is
- * `{ urls, username, credential }`. The game's own parser is
+ * `{ urls, secret }`: the friend's own REST secret, which the game mints
+ * logins from for itself and its lobbies. The game's own parser is
  * apps/web/src/net/transport/turn-config.ts; scripts/ does not import from
  * apps/web, so this carries its own encoder.
  */
@@ -44,21 +45,17 @@ export function turnUrls(s) {
 }
 
 /**
- * @param {{ urls: readonly string[], username: string, credential: string }} config
+ * @param {{ urls: readonly string[], secret: string }} config
  * @returns {string}  the fragment, starting `#turn=`
  */
 export function encodeTurnFragment(config) {
-  const json = JSON.stringify({
-    urls: config.urls,
-    username: config.username,
-    credential: config.credential,
-  });
+  const json = JSON.stringify({ urls: config.urls, secret: config.secret });
   return `#turn=${Buffer.from(json, "utf8").toString("base64url")}`;
 }
 
 /**
  * @param {string} base  the page; any fragment it has is replaced
- * @param {{ urls: readonly string[], username: string, credential: string }} config
+ * @param {{ urls: readonly string[], secret: string }} config
  * @returns {string}
  */
 export function inviteLink(base, config) {

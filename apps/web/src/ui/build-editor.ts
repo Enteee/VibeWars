@@ -865,8 +865,34 @@ interface EditorContext {
 }
 
 /** A part of the editor, built once, that shows whatever character it is given. */
-interface Region {
+export interface Region {
   update(character: StoredCharacter): void;
+}
+
+/**
+ * What a build's own parts need of the screen they sit on (#2226): the
+ * build, and a way to change it. The Character Builder is one such
+ * screen, a Team Builder member opened in place another.
+ */
+export interface BuildHost {
+  readonly current: () => StoredCharacter;
+  readonly commit: (next: StoredCharacter) => void;
+}
+
+/** The profession pickers' host: new professions go through it, to drop what they cannot keep. */
+export interface ProfessionsHost {
+  readonly current: () => StoredCharacter;
+  readonly changeProfessions: (primary: ProfessionId, secondary: ProfessionId | undefined) => void;
+}
+
+/** The gear editor's host: the weapon set shown, and the gear library to open. */
+export interface GearHost extends BuildHost {
+  readonly tooltip: SkillTooltip;
+  /** The weapon set shown and edited (#489); screen state, never stored. */
+  readonly weaponSet: () => WeaponSetIndex;
+  readonly selectWeaponSet: (set: WeaponSetIndex) => void;
+  /** Open the gear library, scrolled to `group`. */
+  readonly showLibrary: (tab: "gear", group: string) => void;
 }
 
 export interface BuildEditorView {
@@ -1193,25 +1219,7 @@ function mountCommandBar(
     onName(nameInput.value);
   });
 
-  const professions = h("div", "editor-row editor-professions");
-  professions.dataset.cause = "professions";
-  const primary = professionPicker(
-    "primary",
-    () => professionChoices(context.current(), "primary"),
-    (value) => {
-      if (value !== undefined) {
-        context.changeProfessions(value, context.current().secondaryProfession);
-      }
-    },
-  );
-  const secondary = professionPicker(
-    "secondary",
-    () => professionChoices(context.current(), "secondary"),
-    (value) => {
-      context.changeProfessions(context.current().primaryProfession, value);
-    },
-  );
-  professions.append(primary.element, secondary.element);
+  const professions = mountProfessions(context);
 
   const budget = h("span", "editor-budget");
   budget.title = "Attribute points spent";
@@ -1337,7 +1345,7 @@ function mountCommandBar(
     escape: () => {
       leave(callbacks.onClose);
     },
-    status: [professions, budget, chip.element, unsaved],
+    status: [professions.element, budget, chip.element, unsaved],
     actions: [save, more.element],
     putAway,
   });
@@ -1367,8 +1375,7 @@ function mountCommandBar(
       if (nameInput.value !== character.name) {
         nameInput.value = character.name;
       }
-      primary.update(character.primaryProfession);
-      secondary.update(character.secondaryProfession);
+      professions.update(character);
       budget.textContent = `${String(budgetTotal - remainingPoints(character))}/${String(budgetTotal)}`;
       const problems = editorProblems(character);
       chip.update(
@@ -1405,6 +1412,38 @@ function mountCommandBar(
 }
 
 /* --- professions ----------------------------------------------------------- */
+
+/** The primary and secondary profession pickers, side by side. */
+export function mountProfessions(
+  host: ProfessionsHost,
+): Region & { readonly element: HTMLElement } {
+  const element = h("div", "editor-row editor-professions");
+  element.dataset.cause = "professions";
+  const primary = professionPicker(
+    "primary",
+    () => professionChoices(host.current(), "primary"),
+    (value) => {
+      if (value !== undefined) {
+        host.changeProfessions(value, host.current().secondaryProfession);
+      }
+    },
+  );
+  const secondary = professionPicker(
+    "secondary",
+    () => professionChoices(host.current(), "secondary"),
+    (value) => {
+      host.changeProfessions(host.current().primaryProfession, value);
+    },
+  );
+  element.append(primary.element, secondary.element);
+  return {
+    element,
+    update(character) {
+      primary.update(character.primaryProfession);
+      secondary.update(character.secondaryProfession);
+    },
+  };
+}
 
 /**
  * A profession field (#568): a button with the chosen profession's icon
@@ -1537,7 +1576,7 @@ function rankOf(character: StoredCharacter, attributeId: string): number {
   return character.attributes.find((a) => a.attributeId === attributeId)?.rank ?? 0;
 }
 
-function mountAttributes(panel: HTMLElement, context: EditorContext): Region {
+export function mountAttributes(panel: HTMLElement, context: BuildHost): Region {
   const budget = MINIMAL_GW_INSPIRED_PVP_V1.attributes.attributePointBudget;
   const points = h("div", "editor-points");
   const pointsText = h("div", "editor-points-text");
@@ -1975,7 +2014,7 @@ function mountLibrary(layout: HTMLElement, context: EditorContext): LibraryRegio
  * `commit` a gear change, toasting each mod a new weapon or off-hand
  * could not keep (#2008); a change that drops none is silent.
  */
-function commitGear(context: EditorContext, next: StoredCharacter): void {
+function commitGear(context: BuildHost, next: StoredCharacter): void {
   const notes = droppedModNotes(context.current(), next);
   context.commit(next);
   for (const note of notes) {
@@ -2052,7 +2091,7 @@ function present(node: HTMLElement, shown: boolean, place: (node: HTMLElement) =
  */
 function mountGearSlot(
   label: string,
-  context: EditorContext,
+  context: GearHost,
   onDrop: (source: GearDragSource) => void,
   onClick?: () => void,
 ): { readonly element: HTMLElement; update(state: GearSlotState): void } {
@@ -2147,7 +2186,7 @@ function mountGearSlot(
  * a number, and a player weighing +3 Swordsmanship against 75 health
  * needs to see both sides of the trade as they make it.
  */
-function mountGear(panel: HTMLElement, context: EditorContext, doll: PaperDoll): Region {
+export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll): Region {
   const { current, commit } = context;
   const section = h("div", "editor-gear");
   section.dataset.cause = "equipment";
@@ -2448,7 +2487,9 @@ function statLine(label: string, value: string): HTMLElement {
  * same markup, same gestures. A player who has learned to build a skill
  * bar already knows how to use this.
  */
-function mountGearLibrary(context: EditorContext): LibraryBody {
+export function mountGearLibrary(
+  context: Pick<GearHost, "current" | "commit" | "weaponSet">,
+): LibraryBody {
   const { current } = context;
   const host = h("div", "skill-groups");
 

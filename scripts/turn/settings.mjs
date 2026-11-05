@@ -93,7 +93,7 @@ export function files(s) {
     db: path.join(s.stateDir, "turndb"),
     log: path.join(s.stateDir, "turn.log"),
     pid: path.join(s.stateDir, "turnserver.pid"),
-    healthSecret: path.join(s.stateDir, "health.secret"),
+    shared: path.join(s.stateDir, "shared"),
     nft: path.join(s.stateDir, "turn.nft"),
   };
 }
@@ -181,9 +181,10 @@ export function tls(s) {
 }
 
 /**
- * turnserver.conf for these settings: long-term credentials from the
- * SQLite userdb, no CLI, UDP relays only, every DENIED_PEERS range
- * refused but the host's own addresses, and metrics on localhost only.
+ * turnserver.conf for these settings: REST logins minted from the
+ * secrets in the SQLite userdb (#2240), read on each request, no CLI, UDP
+ * relays only, every DENIED_PEERS range refused but the host's own
+ * addresses, and metrics on localhost only.
  *
  * @param {TurnSettings} s
  * @returns {string}
@@ -201,6 +202,9 @@ export function turnserverConf(s) {
     `realm=${s.realm}`,
     "lt-cred-mech",
     `userdb=${f.db}`,
+    // No static-auth-secret: the secrets are in the userdb, so adding or
+    // removing one needs no restart. Static userdb users stop working.
+    "use-auth-secret",
     "fingerprint",
     // No CLI: coturn 4.17 has it off unless `cli` is given, and logs an
     // error for the old `no-cli`.

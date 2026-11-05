@@ -67,7 +67,10 @@ export type RitualistStatusId =
   | "ritual-lord"
   // Ritualist staples (#2212).
   | "ancestors-rage"
-  | "dulled-weapon";
+  | "dulled-weapon"
+  // Condition movement (#2259).
+  | "resilient-was-xiko"
+  | "agony";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -761,5 +764,53 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     profession: "ritualist",
     preventsCriticals: true,
     attackDamageDelta: -17,
+  }),
+  // "For each hex or condition you are suffering from while holding her
+  // ashes, you gain +3 Health regeneration. When you drop her ashes, you
+  // lose 1...4 conditions" (#2259): 3.4 at 12, by the Ritualist's
+  // Restoration Magic, however the ashes go.
+  "resilient-was-xiko": define("resilient-was-xiko", "Resilient Was Xiko", "item", {
+    profession: "ritualist",
+    healthPipsPerCondition: 3,
+    healthPipsPerHex: 3,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "remove-status",
+            category: "condition",
+            count: {
+              scaling: { attributeId: "ritualist.restoration-magic", atZero: 1, atTwelve: 3.4 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "ritualist.resilient-was-xiko",
+      },
+    ],
+  }),
+  // PvP: "This spirit causes 3...10 Health loss each second to foes within
+  // earshot. This spirit loses 3...10 Health for each foe hurt in this
+  // way" (#2275): each foe in range keeps its own 1 s clock, from when it
+  // came in, at the Ritualist's rank.
+  agony: define("agony", "Agony", "skill-effect", {
+    profession: "ritualist",
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "lose-health",
+          recipient: "target",
+          amount: {
+            scaling: { attributeId: "ritualist.channeling-magic", atZero: 3, atTwelve: 8.6 },
+          },
+        },
+      ],
+      skillId: "ritualist.agony",
+      chargesSourcePerHit: {
+        scaling: { attributeId: "ritualist.channeling-magic", atZero: 3, atTwelve: 8.6 },
+      },
+    },
   }),
 };

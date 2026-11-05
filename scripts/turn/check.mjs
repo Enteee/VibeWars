@@ -11,7 +11,7 @@ import process from "node:process";
 
 import { files, ownAddresses, tls } from "./settings.mjs";
 import { allocate, binding, permissions } from "./stun.mjs";
-import { HEALTH_USER, healthPassword } from "./users.mjs";
+import { HEALTH_USER, healthSecret, mintLogin } from "./users.mjs";
 
 /** @typedef {{ name: string, status: "ok" | "fail" | "skip", detail: string }} Check */
 
@@ -165,6 +165,16 @@ async function lookupV4(host) {
 }
 
 /**
+ * A login for one check, minted from the health secret: it lives a minute.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @returns {{ username: string, password: string }}
+ */
+function healthLogin(s) {
+  return mintLogin(healthSecret(s), Math.floor(Date.now() / 1000) + 60, HEALTH_USER);
+}
+
+/**
  * Whether a relay may reach a public peer and the host's own address, and
  * is refused a private one.
  *
@@ -175,13 +185,11 @@ async function lookupV4(host) {
 async function permissionCheck(s, host) {
   const name = "permissions";
   try {
-    const password = healthPassword(s);
     const probes = await permissionProbes(s, lookupV4);
     const res = await permissions({
       host,
       port: s.listeningPort,
-      username: HEALTH_USER,
-      password,
+      ...healthLogin(s),
       peers: probes.map((p) => p.peer),
     });
     if (!res.ok) {
@@ -258,8 +266,7 @@ export async function runChecks(s, now = new Date()) {
     });
   }
   try {
-    const password = healthPassword(s);
-    const res = await allocate({ host, port: s.listeningPort, username: HEALTH_USER, password });
+    const res = await allocate({ host, port: s.listeningPort, ...healthLogin(s) });
     checks.push(
       res.ok
         ? { name: "allocation", status: "ok", detail: `relayed ${res.relayed}` }

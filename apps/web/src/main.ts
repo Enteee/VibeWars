@@ -34,7 +34,7 @@ import {
 import { parseLobbyFragment, type LobbyFragment } from "./net/fragment.js";
 import {
   UNREADABLE_RELAY_NOTICE,
-  loadTurnConfig,
+  loadRelay,
   parseTurnFragment,
   type TurnFragment,
 } from "./net/transport/turn-config.js";
@@ -310,7 +310,7 @@ async function main(): Promise<void> {
     notices.add(notice);
   });
   // A saved relay of the wrong shape goes now, and the first menu says so.
-  const savedRelay = loadTurnConfig(() => {
+  const savedRelay = loadRelay(() => {
     notices.add(UNREADABLE_RELAY_NOTICE);
   });
   const framed = window.top !== window.self;
@@ -921,7 +921,7 @@ async function main(): Promise<void> {
       } catch (error) {
         opening = false;
         console.warn("[web] could not open a lobby", error);
-        menuNotice = joinFailureNotice(error, location, loadTurnConfig() !== undefined);
+        menuNotice = joinFailureNotice(error, location, loadRelay() !== undefined);
         redrawRail();
         return;
       }
@@ -1035,7 +1035,7 @@ async function main(): Promise<void> {
         },
       },
       location,
-      loadTurnConfig() !== undefined,
+      loadRelay() !== undefined,
     );
   };
 
@@ -1066,7 +1066,7 @@ async function main(): Promise<void> {
         if (movedOn()) {
           return;
         }
-        menuNotice = joinFailureNotice(error, location, loadTurnConfig() !== undefined);
+        menuNotice = joinFailureNotice(error, location, loadRelay() !== undefined);
         redrawRail();
         setStatus("could not join", "error");
         return;
@@ -2507,7 +2507,7 @@ async function main(): Promise<void> {
     topbarView.invite(lobbyLink.code);
   }
   if (relayLink.kind === "config" && !framed) {
-    openRelayPrompt(app, relayLink.config, savedRelay);
+    openRelayPrompt(app, relayLink.relay, savedRelay);
   }
   // An invite link pasted into this open tab only changes the fragment:
   // nothing reloads, so it is taken out and asked about here.
@@ -2524,7 +2524,7 @@ async function main(): Promise<void> {
     } else if (pasted.kind === "config" && framed) {
       toast(FRAMED_RELAY_LINK_NOTICE);
     } else if (pasted.kind === "config") {
-      openRelayPrompt(app, pasted.config, loadTurnConfig());
+      openRelayPrompt(app, pasted.relay, loadRelay());
     }
   };
   window.addEventListener("hashchange", takeFragmentLinks);

@@ -60,7 +60,7 @@ channels, as often as they like.
 | Host-only lobby actions by a peer                       | Only the host's own player picks the mode (#1526), the map and starts; a lobby command changes its sender and names no other player.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | A stale or foreign client desynchronising a match       | `PROTOCOL_VERSION` is checked on every hello and lobby join; a mismatch is refused.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Oversized messages                                      | Trystero drops a message over `MAX_RECEIVE_BYTES` before decoding it, and no game message is bigger than `MAX_MESSAGE_BYTES` (see below).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| A forged, stale or flooding TURN relay offer (#2091)    | An offer opens only under the lobby's relay key (AES-GCM, from the invite link's 256-bit key). Content over 2 KB is dropped before decrypting; an expired one, one outlasting a fresh 2 h credential, or a relay failing `validateTurnConfig` (private, loopback and LAN addresses refused) is ignored. A joiner opens at most 200 offers a second from unproven authors and 200 from authors whose offer has opened (one per 5 s each), so garbage on the public topic, even under the host's key, cannot spend the host's slot; it keeps offers in memory only, and uses none when two name different relays (`relay-offer.test.ts`). |
+| A forged, stale or flooding TURN relay offer (#2091)    | An offer opens only under the lobby's relay key (AES-GCM, from the invite link's 256-bit key). Content over 2 KB is dropped before decrypting; an expired one, one outlasting a fresh 4 h credential, or a relay failing `validateTurnConfig` (private, loopback and LAN addresses refused) is ignored. A joiner opens at most 200 offers a second from unproven authors and 200 from authors whose offer has opened (one per 5 s each), so garbage on the public topic, even under the host's key, cannot spend the host's slot; it keeps offers in memory only, and uses none when two name different relays (`relay-offer.test.ts`). |
 | Secrets in source                                       | There are none to leak: the game has no credentials. `gitleaks` runs over history on review.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Non-reproducible simulation abuse                       | Simulation randomness is seeded (`SimulationRng`), so any reported exploit can be replayed from its seed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
@@ -161,12 +161,25 @@ channels, as often as they like.
   relay lets anyone with the invite link relay through it for up to 4 h
   after the last offer they saw; a minted credential cannot be revoked
   early. The host's coturn must set `denied-peer-ip` for private ranges,
-  `no-loopback-peers`, `no-multicast-peers` and quotas. Offers are not
-  bound to the host: a hostile member can publish one for its own relay.
-  A joiner that sees two live offers naming different relays uses
-  neither, so that member gets a denied relay, not the joiners' addresses.
+  `no-loopback-peers`, `no-multicast-peers` and quotas. Any member can
+  seal an offer. A seated guest ignores them all (#2248): the host tells
+  it its login over the lobby, which only the host can, so a member's
+  offer naming the host's relay with a junk login cannot replace the real
+  one for a rejoin or a refresh. A first join is not bound to the host: a
+  hostile member can publish an offer for its own relay. A joiner that
+  sees two live offers naming different relays uses neither, so that
+  member gets a denied first relayed join, not the joiners' addresses.
   A relay _name_ that resolves to a private address cannot be checked
   from a browser; literal private and LAN addresses are refused.
+  Since #2240 the secret itself travels in the relay operator's invite
+  link (fragment only, taken out of the address bar at once, never logged,
+  never in a lobby offer), and sharing is on by default: a friend's secret
+  reaches the friend plus everyone in their lobbies, through minted logins
+  that last as long as their minter chose. Removing or re-linking the
+  friend (`turn-user remove`, `turn-link`) refuses every one of them at
+  once; relays already open run on until refresh, and the relay's total
+  quotas bound those. Like any saved relay, the secret sits in browser
+  storage, so an XSS in the client could read it.
 - **Volumetric DoS.** A host is one browser tab. A peer that floods it with
   traffic can make its tick late; filtering that is the network's job.
   _Cheap application-level_ abuse (one peer making the tick slow) is in

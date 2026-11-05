@@ -12,7 +12,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { NO_RANKS, getStatusDefinition } from "./status.js";
+import { NO_RANKS, aggregateModifiers, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 
@@ -103,7 +103,7 @@ describe("Blood is Power (#1540)", () => {
     use(necro, "necromancer.blood-is-power", ally);
     expect(necro.health).toBe(600 - 198);
     expect(ally.statuses.get("blood-is-power")?.durationSeconds).toBe(10);
-    expect(getStatusDefinition("blood-is-power").energyPips).toBe(5);
+    expect(aggregateModifiers(ally.statuses.active).energyPips).toBe(5);
     expect(skill("necromancer.blood-is-power").target).toBe("single-other-ally");
   });
 });

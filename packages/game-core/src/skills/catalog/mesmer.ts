@@ -5,12 +5,38 @@ import {
   RANGE_MELEE,
   RANGE_SPELL,
 } from "../../distances.js";
-import type { Magnitude, Skill } from "../types.js";
+import type { Magnitude, Skill, UnconditionalEffect } from "../types.js";
+import { ILLUSION_OF_PAIN_HEAL } from "./shared.js";
+
+/** Ether Lord's 5...10 s (#2287), on its target and on its caster. */
+const ETHER_LORD_SECONDS: Magnitude = {
+  scaling: { attributeId: "mesmer.inspiration-magic", atZero: 5, atTwelve: 9 },
+};
+
+/** Soothing Images' 8...20 s (#2287), on its target and on each adjacent foe. */
+const SOOTHING_IMAGES_SECONDS: Magnitude = {
+  scaling: { attributeId: "mesmer.illusion-magic", atZero: 8, atTwelve: 17.6 },
+};
 
 /** Complicate's 5...12 (#2165): 11 s, on its target and on each foe in the area. */
 const COMPLICATE_DISABLE: Magnitude = {
   scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 10.6 },
 };
+
+/** Signet of Weariness's 3...8 Energy and 1...12 s Weakness (#2231), on its target and each nearby foe. */
+const WEARINESS: readonly UnconditionalEffect[] = [
+  {
+    kind: "energy-loss",
+    amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 3, atTwelve: 7 } },
+  },
+  {
+    kind: "apply-status",
+    statusId: "weakness",
+    durationSeconds: {
+      scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 9.8 },
+    },
+  },
+];
 
 export const MESMER_SKILLS: readonly Skill[] = [
   /* ---------------------------------------------------------------------- */
@@ -2861,7 +2887,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 29 },
         },
       },
-      { kind: "copy-disabled" },
+      { kind: "copy-disabled", which: "random-spell" },
     ],
   },
   {
@@ -2897,7 +2923,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 29 },
         },
       },
-      { kind: "copy-disabled" },
+      { kind: "copy-disabled", which: "random-spell" },
     ],
   },
   /* ---------------------------------------------------------------------- */
@@ -3427,5 +3453,1024 @@ export const MESMER_SKILLS: readonly Skill[] = [
       { kind: "interrupt" },
       { kind: "apply-status", statusId: "web-of-disruption", durationSeconds: { flat: 10 } },
     ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Mesmer staples 5 (#2231)                                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.energy-drain",
+    name: "Energy Drain",
+    gwId: 79,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe loses 2...9 Energy. You gain 3 Energy for each point of
+    // Energy lost."
+    effects: [
+      {
+        kind: "energy-loss",
+        amount: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 2, atTwelve: 7.6 } },
+      },
+      { kind: "energy-gain", amount: { flat: 3 }, perEnergyLost: true },
+    ],
+  },
+  {
+    id: "mesmer.signet-of-weariness",
+    name: "Signet of Weariness",
+    gwId: 59,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe and all nearby foes lose 3...8 Energy and suffer from
+    // Weakness for 1...12 seconds."
+    effects: [
+      ...WEARINESS,
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        effects: WEARINESS,
+      },
+    ],
+  },
+  {
+    id: "mesmer.conjure-nightmare",
+    name: "Conjure Nightmare",
+    gwId: 859,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 2...16 seconds, target foe suffers -8 Health degeneration."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "conjure-nightmare",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 2, atTwelve: 13.2 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.images-of-remorse",
+    name: "Images of Remorse",
+    gwId: 899,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...10 seconds, target foe suffers -1...3 Health degeneration.
+    // If that foe was attacking, that foe takes 10...52 damage."
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-attacking" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 10, atTwelve: 43.6 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+        ],
+      },
+      {
+        kind: "apply-status",
+        statusId: "images-of-remorse",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 9 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.confusing-images",
+    name: "Confusing Images",
+    gwId: 2137,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 2...10 seconds, target foe takes twice as long to activate
+    // non-attack skills."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "confusing-images",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 2, atTwelve: 8.4 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.discharge-enchantment",
+    name: "Discharge Enchantment",
+    gwId: 1347,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove one enchantment from target foe. If that foe is hexed, this
+    // skill recharges 20...50% faster": 44%, its rank-12 fraction.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "hex" },
+        effects: [{ kind: "recharge-faster", fraction: 0.44 }],
+      },
+    ],
+  },
+  {
+    id: "mesmer.expel-hexes",
+    name: "Expel Hexes",
+    gwId: 954,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    // GW1's "No Attribute".
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove up to 2 hexes from target ally."
+    effects: [{ kind: "remove-status", category: "hex", count: 2 }],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Count conditions (#2247), at their rank-12 values                       */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.accumulated-pain",
+    name: "Accumulated Pain",
+    gwId: 1052,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "Target foe takes 10...35 damage. If target foe is suffering
+    // from 2 or more hexes, that foe suffers a Deep Wound for 5...20
+    // seconds": 30 and 17 s. Hexes from anyone count.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "mesmer.illusion-magic", atZero: 10, atTwelve: 30 } },
+        type: "typeless",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: {
+          kind: "count-at-least",
+          count: { kind: "statuses", on: "target", categories: ["hex"] },
+          atLeast: 2,
+        },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.lyssas-balance",
+    name: "Lyssa's Balance",
+    gwId: 877,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe loses one enchantment. If you have more enchantments than
+    // target foe, this skill has no effect": as many still strips.
+    effects: [
+      {
+        kind: "if",
+        condition: {
+          kind: "count-at-most",
+          count: { kind: "statuses", on: "caster", categories: ["enchantment"] },
+          than: { kind: "statuses", on: "target", categories: ["enchantment"] },
+        },
+        effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Condition movement (#2259), at their rank-12 values                    */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.fevered-dreams",
+    name: "Fevered Dreams",
+    gwId: 55,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "For 5...15 seconds, whenever target foe suffers from a new
+    // condition, all foes in the area suffer from that condition as well":
+    // 13 s. The PvE Daze is not the PvP skill's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "fevered-dreams",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 13 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.keystone-signet",
+    name: "Keystone Signet",
+    gwId: 63,
+    type: "signet",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All of your signets except Keystone Signet are recharged. For 20
+    // seconds, the next 0...6 times you use a signet that targets a foe,
+    // all other foes adjacent to your target take 15...60 damage and are
+    // interrupted": the status counts them.
+    effects: [
+      { kind: "recharge-others", which: "signet" },
+      { kind: "apply-status", statusId: "keystone-signet", durationSeconds: { flat: 20 } },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2278), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.mantra-of-recall",
+    name: "Mantra of Recall",
+    gwId: 82,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20 seconds, you gain no benefit from it. You gain 10...25 Energy
+    // when Mantra of Recall ends." The gain is the enchantment's own end.
+    effects: [
+      { kind: "apply-status", statusId: "mantra-of-recall", durationSeconds: { flat: 20 } },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Source-targets triggers, signet lockout, interrupted copies (#2290)     */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.mind-wrack",
+    name: "Mind Wrack",
+    // The base record; its numbers are the PvP split's (2734).
+    gwId: 49,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...40 seconds, whenever this foe is the target of one of your
+    // non-hex Mesmer skills, that foe loses 1 Energy." The rest is the hex's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mind-wrack",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 33 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.ignorance",
+    name: "Ignorance",
+    gwId: 35,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8...20 seconds target foe cannot use signets."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "ignorance",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.domination-magic", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.simple-thievery",
+    name: "Simple Thievery",
+    gwId: 1350,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Interrupt target foe's action. If that action was a skill, that skill
+    // is disabled for 5...20 seconds, and Simple Thievery is replaced by
+    // that skill": a plain swing interrupted disables and copies nothing.
+    effects: [
+      { kind: "interrupt" },
+      {
+        kind: "disable-skill",
+        which: "interrupted",
+        seconds: {
+          scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+      { kind: "copy-disabled", which: "interrupted" },
+    ],
+  },
+  {
+    id: "mesmer.enchanters-conundrum",
+    name: "Enchanter's Conundrum",
+    gwId: 1345,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP (#2291): "For 10 seconds, target foe casts enchantments
+    // 100...200% slower. If target foe is not under the effects of an
+    // enchantment when this hex is applied, that foe takes 10...100 damage
+    // and all adjacent foes take 75% of that damage": 82 and 61, read
+    // before the hex lands; the splash's curve sits a quarter low, so its
+    // rounding is 75% rounded down at every rank.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "not", condition: { kind: "target-has", category: "enchantment" } },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 10, atTwelve: 82 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: {
+                    attributeId: "mesmer.domination-magic",
+                    atZero: 7.25,
+                    atTwelve: 61.25,
+                  },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        kind: "apply-status",
+        statusId: "enchanters-conundrum",
+        durationSeconds: { flat: 10 },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2287), at their rank-12 values                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.ether-lord",
+    name: "Ether Lord",
+    gwId: 41,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You lose all Energy. For 5...10 seconds, target foe suffers -1...3
+    // Energy degeneration, and you experience +1...3 Energy regeneration":
+    // the cost is paid first, then the rest goes.
+    effects: [
+      { kind: "drain-own-energy" },
+      { kind: "apply-status", statusId: "ether-lord", durationSeconds: ETHER_LORD_SECONDS },
+      {
+        kind: "apply-status",
+        statusId: "ether-lord-regeneration",
+        durationSeconds: ETHER_LORD_SECONDS,
+        on: "caster",
+      },
+    ],
+  },
+  {
+    id: "mesmer.spirit-of-failure",
+    name: "Spirit of Failure",
+    gwId: 48,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30 seconds, target foe has a 25% chance to miss with attacks.
+    // You gain 1...3 Energy whenever that foe fails to hit in combat."
+    effects: [
+      { kind: "apply-status", statusId: "spirit-of-failure", durationSeconds: { flat: 30 } },
+    ],
+  },
+  {
+    id: "mesmer.spirit-shackles",
+    name: "Spirit Shackles",
+    gwId: 66,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, target foe loses 5 Energy whenever that foe attacks."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "spirit-shackles",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.soothing-images",
+    name: "Soothing Images",
+    gwId: 56,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8...20 seconds, target foe and all adjacent foes cannot gain
+    // adrenaline": what each holds already stays.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "soothing-images",
+        durationSeconds: SOOTHING_IMAGES_SECONDS,
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "soothing-images",
+            durationSeconds: SOOTHING_IMAGES_SECONDS,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.psychic-distraction",
+    name: "Psychic Distraction",
+    gwId: 1053,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All of your other skills are disabled for 8 seconds. If target foe
+    // is using a skill, that skill is interrupted and disabled for an
+    // additional 5...12 seconds."
+    effects: [
+      { kind: "disable-own-skills", which: "others", seconds: { flat: 8 } },
+      { kind: "interrupt", only: "skill" },
+      {
+        kind: "disable-skill",
+        which: "interrupted",
+        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 10.6 } },
+      },
+    ],
+  },
+  {
+    id: "mesmer.chaos-storm",
+    name: "Chaos Storm",
+    gwId: 77,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Create a Chaos Storm at target foe's location that lasts for 10
+    // seconds. Each second, foes adjacent to this location take 5...25
+    // damage and lose 0...2 Energy": it stays where the foe stood as the
+    // cast ended, as Maelstrom's.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 10 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 10,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_ADJACENT,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 21 },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+              {
+                kind: "energy-loss",
+                amount: {
+                  scaling: { attributeId: "mesmer.domination-magic", atZero: 0, atTwelve: 1.6 },
+                },
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.arcane-languor",
+    name: "Arcane Languor",
+    gwId: 804,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 1...10 seconds, all spells cast by the target foe cause 10 Overcast."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "arcane-languor",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.fast-casting", atZero: 1, atTwelve: 8.2 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.illusion-of-pain",
+    name: "Illusion of Pain",
+    gwId: 879,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The base record; its numbers are the PvP split's (3374). "For 8
+    // seconds, target foe has -3...10 Health degeneration and takes 3...10
+    // damage each second. When Illusion of Pain ends or is reapplied, that
+    // foe is healed for 36...120": a recast replaces the hex, which no end
+    // trigger sees, so the heal for it is the recast's own, once.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "illusion-of-pain" },
+        effects: [{ kind: "heal", amount: ILLUSION_OF_PAIN_HEAL }],
+      },
+      { kind: "apply-status", statusId: "illusion-of-pain", durationSeconds: { flat: 8 } },
+    ],
+  },
+  {
+    id: "mesmer.feedback",
+    name: "Feedback",
+    gwId: 1061,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe loses one enchantment. If an enchantment is removed in
+    // this way, that foe also loses 4...10 Energy."
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "enchantment" },
+        effects: [
+          {
+            kind: "energy-loss",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 4, atTwelve: 8.8 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.ether-phantom",
+    name: "Ether Phantom",
+    gwId: 1343,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, target foe has -1 Energy degeneration. If this hex
+    // is removed prematurely, that foe loses 1...5 Energy."
+    effects: [{ kind: "apply-status", statusId: "ether-phantom", durationSeconds: { flat: 10 } }],
   },
 ];

@@ -26,13 +26,15 @@ export interface FiredTrigger {
 
 /**
  * Contagion's spread, which needs positions (#887): what it did, from
- * `bearer`, for the condition gained. Only the simulation knows where
- * everyone is.
+ * `bearer`, for the condition gained, each copy as `caster`'s, the
+ * trigger's (#2259): Fevered Dreams' Mesmer's, Contagion's bearer's own.
+ * Only the simulation knows where everyone is.
  */
 export type SpreadGainedCondition = (
   effect: SpreadGainedConditionEffect,
   bearer: Combatant,
   gained: Extract<StatusChange, { kind: "gained-condition" }>,
+  caster: Combatant,
 ) => CombatEvent[];
 
 /**
@@ -50,12 +52,14 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-blocks"
   | "bearer-interrupted"
   | "bearer-knocked-down"
+  | "bearer-sacrifices-health"
   | "bearer-knockdown-prevented"
   | "bearer-health-drops-below"
   | "bearer-fatal-damage-negated"
   | "bearer-creates-creature"
   | "bearer-chant-or-shout-ends"
   | "bearer-dies"
+  | "source-targets-bearer"
   | "ends"
   | "ends-early"
   | "expires"
@@ -75,6 +79,20 @@ export interface TriggerContext {
    * `undefined` on every other event.
    */
   readonly usedSkill: SlotSkill | undefined;
+  /**
+   * Whom the bearer's skill, attack or spell was aimed at, on
+   * `bearer-uses-skill`, `bearer-casts-spell` and `bearer-attacks`
+   * (#2282), and whether it had less Health than the bearer as the attack
+   * or the cast began: Zealot's Fire's ally, Spoil Victor's victim.
+   * Absent on every other event, and for a skill with no target.
+   */
+  readonly aimedAt?: AimedAt;
+}
+
+/** `TriggerContext.aimedAt` (#2282). */
+export interface AimedAt {
+  readonly id: string;
+  readonly hadLessHealth: boolean;
 }
 
 /**
@@ -86,7 +104,8 @@ export interface TriggerContext {
  * does not answer that use (#999): Song of Restoration waits for the
  * chanter's next skill. An attack trigger bound to a weapon (#1354)
  * answers only an attack with that weapon in the bearer's main hand.
- * A use trigger bound to a kind of skill (#1437) answers only that kind.
+ * A use trigger bound to a kind of skill (#1437) answers only that kind,
+ * one bound to a weaker victim (#2282) only an aim at one.
  *
  * Nothing here fires a trigger: damage from one is never an event that
  * answers another, so triggers cannot recurse.
@@ -105,18 +124,54 @@ export function fireTriggers(
         (event !== "bearer-attacks" ||
           triggerAnswersWeapon(trigger, bearer.equipment.mainHand.weapon)) &&
         ((event !== "bearer-uses-skill" && event !== "bearer-casts-spell") ||
-          answersUsedSkill(trigger, context.usedSkill)),
+          (answersUsedSkill(trigger, context.usedSkill) && answersAim(trigger, bearer, context))) &&
+        (trigger.victimHasLessHealth === undefined || context.aimedAt?.hadLessHealth === true),
     )
     .flatMap(({ statusId, sourceId, trigger }) =>
-      fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
+      fire(trigger, statusId, sourceId, bearer, context.aimedAt?.id, undefined, context),
+    );
+}
+
+/**
+ * Whether a use trigger bound to a skill on an ally (#2282) answers the
+ * aim: one at the bearer or at an ally of its, a dead one too. Any other trigger
+ * answers any aim, and none.
+ */
+function answersAim(trigger: StatusTrigger, bearer: Combatant, context: TriggerContext): boolean {
+  if (trigger.usedSkill?.targetsAlly === undefined) {
+    return true;
+  }
+  const aimed = context.aimedAt === undefined ? undefined : context.sourceOf(context.aimedAt.id);
+  return aimed?.team === bearer.team;
+}
+
+/**
+ * `sourceId` used `used` on the bearer (#2290): every status of its source's
+ * on the bearer that answers fires, once each, in `active` order, as
+ * `fireTriggers`. Anyone else's statuses do not answer.
+ */
+export function fireSourceTargetsTriggers(
+  bearer: Combatant,
+  sourceId: string,
+  used: SlotSkill,
+  context: TriggerContext,
+): FiredTrigger[] {
+  return bearer.statuses
+    .triggersOn("source-targets-bearer")
+    .filter((each) => each.sourceId === sourceId && answersUsedSkill(each.trigger, used))
+    .flatMap(({ statusId, trigger }) =>
+      fire(trigger, statusId, sourceId, bearer, undefined, undefined, {
+        ...context,
+        usedSkill: used,
+      }),
     );
 }
 
 /**
  * Whether a `bearer-uses-skill` trigger answers `used` (#1437): any skill,
- * unless it names a type, a profession or an attribute (#1614) the skill
- * must have, or that it be elite (#1473), adrenal (#1592) or a spell
- * (#2132).
+ * unless it names a type, or one it must not be (#2290), a profession or
+ * an attribute (#1614) the skill must have, or that it be elite (#1473),
+ * adrenal (#1592) or a spell (#2132).
  */
 function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): boolean {
   if (trigger.usedSkill === undefined) {
@@ -126,6 +181,7 @@ function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): 
   return (
     skill !== undefined &&
     (trigger.usedSkill.type === undefined || skill.type === trigger.usedSkill.type) &&
+    (trigger.usedSkill.notType === undefined || skill.type !== trigger.usedSkill.notType) &&
     (trigger.usedSkill.spell === undefined || isSpell(skill.type)) &&
     (trigger.usedSkill.attributes === undefined ||
       (skill.attributeId !== undefined &&
@@ -194,7 +250,7 @@ export function fireChangeTriggers(
             sourceId,
             bearer,
             undefined,
-            (effect) => spread(effect, bearer, change),
+            (effect, caster) => spread(effect, bearer, change, caster),
             context,
           ),
         );
@@ -217,6 +273,7 @@ export function fireChangeTriggers(
     case "failed-to-hit":
     case "took-physical-damage":
     case "knocked-down":
+    case "sacrificed-health":
     case "knockdown-prevented":
     case "lost-enchantment":
     case "lost-condition":
@@ -314,8 +371,9 @@ export function fireDeathTriggers(
  * off, or (#1316) the creature it created, or (#1403) the source on
  * `otherId`, who put the gained hex or enchantment on the bearer, or (#1789)
  * the source on `otherId`, the offender, or (#1913) the source on
- * `otherId`, the healer, only a foe of its own. `undefined` when one of them is
- * gone, or an offender's bearer is dead: then it fires nothing.
+ * `otherId`, the healer, only a foe of its own, or (#2282) the source on
+ * `otherId`, whom the bearer's skill was used on. `undefined` when one of
+ * them is gone, or an offender's bearer is dead: then it fires nothing.
  */
 function parties(
   trigger: StatusTrigger,
@@ -343,6 +401,8 @@ function parties(
         : { caster: source, target: other };
     case "hexed-foe":
       return other === undefined || other.dead ? undefined : { caster: bearer, target: other };
+    case "skill-target":
+      return other === undefined ? undefined : { caster: source, target: other };
   }
 }
 
@@ -458,7 +518,7 @@ function fire(
   sourceId: string,
   bearer: Combatant,
   otherId: string | undefined,
-  spread: ((effect: SpreadGainedConditionEffect) => CombatEvent[]) | undefined,
+  spread: ((effect: SpreadGainedConditionEffect, caster: Combatant) => CombatEvent[]) | undefined,
   { sourceOf, rng, rules, surroundings, usedSkill }: TriggerContext,
 ): FiredTrigger[] {
   const source = sourceOf(sourceId);
@@ -490,7 +550,7 @@ function fire(
   for (const effect of trigger.effects) {
     if (effect.kind === "spread-gained-condition") {
       flush();
-      events.push(...(spread?.(effect) ?? []));
+      events.push(...(spread?.(effect, caster) ?? []));
     } else if (effect.kind === "echo") {
       flush();
       echo(effect, bearer, trigger.skillId, usedSkill);

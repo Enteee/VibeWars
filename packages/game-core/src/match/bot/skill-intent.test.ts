@@ -36,6 +36,8 @@ const NO_BOT_USE = new Set([
   "mesmer.physical-resistance",
   "monk.vital-blessing",
   "ritualist.vital-weapon",
+  // Signet of Stamina (#2316), the same: more maximum Health until a hit.
+  "warrior.signet-of-stamina",
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
@@ -102,9 +104,9 @@ const NO_BOT_USE = new Set([
   "mesmer.arcane-echo",
   "mesmer.channeling",
   "mesmer.echo",
-  "mesmer.energy-tap",
   "mesmer.illusion-of-haste",
   "mesmer.mantra-of-recovery",
+  "mesmer.mantra-of-recall",
   "necromancer.blood-ritual",
   "necromancer.contagion",
   "necromancer.offering-of-blood",
@@ -132,6 +134,8 @@ const NO_BOT_USE = new Set([
   "ritualist.vengeful-was-khanhei",
   "ritualist.weapon-of-quickening",
   "warrior.balanced-stance",
+  // Steady Stance (#2316), as Balanced Stance: a knockdown turned away.
+  "warrior.steady-stance",
   "warrior.battle-rage",
   "warrior.endure-pain",
   "warrior.rage-of-the-ntouka",
@@ -144,6 +148,7 @@ const NO_BOT_USE = new Set([
   "necromancer.animate-vampiric-horror",
   "necromancer.animate-flesh-golem",
   "necromancer.animate-shambling-horror",
+  "necromancer.animate-bone-fiend",
   // Minions 3 (#1915): no minion rule yet either. Infuse Condition is a
   // defence.
   "necromancer.order-of-undeath",
@@ -208,6 +213,8 @@ const NO_BOT_USE = new Set([
   "paragon.bladeturn-refrain",
   "paragon.energizing-finale",
   "paragon.soldiers-fury",
+  // Soldier's Stance (#2316), the same: its speed waits for a shout or chant.
+  "warrior.soldiers-stance",
   // Chants (#1483) whose energy, adrenaline or cleanse waits for the
   // bearer's next skill of a kind.
   "paragon.zealous-anthem",
@@ -299,6 +306,36 @@ const NO_BOT_USE = new Set([
   // Untargetable only while casting, then every skill disabled (#2189).
   "monk.spell-shield",
   "ranger.melandrus-resilience",
+  // Energy only for each enchantment it maintains (#2260): no rule the bot
+  // has counts its upkeep.
+  "monk.blessed-signet",
+  // Pips for each condition (and hex) on the bearer (#2259), as Melandru's
+  // Resilience.
+  "warrior.i-will-survive",
+  "ritualist.resilient-was-xiko",
+  // Burns only round the allies its bearer's later skills target (#2282).
+  "monk.zealots-fire",
+  // Energy for each sacrifice (#2275): worth only beside a sacrifice, which
+  // no rule the bot has pairs.
+  "necromancer.masochism",
+  // Energy for its caster only when a foe hurts its bearer (#2286), and
+  // heals only round its caster's later Protection and Divine Favor
+  // spells: no role the bot weighs.
+  "monk.essence-bond",
+  "monk.divine-boon",
+  // Armor against physical damage only (#2289), which no role counts yet:
+  // Shields Up!'s goes unweighed the same way.
+  "elementalist.armor-of-frost",
+  // A bond on attacks, attack damage traded for healing, and faster expiry
+  // (#2291): no role the bot weighs.
+  "monk.life-bond",
+  "monk.life-attunement",
+  // Adrenaline and Energy for an ally that is being hit (#2302): no role
+  // the bot weighs.
+  "monk.balthazars-spirit",
+  // Adrenaline by foes in earshot and a raised maximum (#2315), as
+  // "Make Your Time!"'s and Endure Pain's: no rule the bot weighs.
+  "warrior.to-the-limit",
 ]);
 
 function skill(id: string) {

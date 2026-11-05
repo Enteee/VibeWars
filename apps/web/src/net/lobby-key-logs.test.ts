@@ -45,13 +45,14 @@ function expressions(text: string): string {
 
 /**
  * What names a lobby key, or what is derived from it (#1681), what
- * carries one in an invite URL (#2100), and a shared relay's secret, its
- * minted credentials and the offers that carry them (#2091).
+ * carries one in an invite URL (#2100), a shared relay's secret, its
+ * minted credentials and the offers that carry them (#2091), and the
+ * relay a link brings, its secret and the player's own minted login (#2240).
  */
 const KEY_NAMES =
-  /\b(code|lobbyCode|key|lobbyKey|lobbyRoom|roomId|password|proofKey|url|inviteUrl|href|hash|location|fragment|lobbyLink|invited|rest|relay|shared|secret|credential|turn|offered|offer|config|content|plain)\b/;
+  /\b(code|lobbyCode|key|lobbyKey|lobbyRoom|roomId|password|proofKey|url|inviteUrl|href|hash|location|fragment|lobbyLink|invited|rest|relay|shared|secret|credential|turn|offered|offer|config|content|plain|relayLink|pasted|saved|savedRelay|login|minted|tag)\b/;
 
-describe("a lobby key or a shared relay in the console (#1681, #2100, #2091)", () => {
+describe("a lobby key or a relay's secret in the console (#1681, #2100, #2091, #2240)", () => {
   const files = [
     ...["net", "ui"].flatMap((dir) => sources(path.join(SRC, dir))),
     path.join(SRC, "main.ts"),

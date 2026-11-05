@@ -43,7 +43,10 @@ export type AssassinStatusId =
   | "way-of-the-empty-palm"
   | "mark-of-instability"
   | "deadly-paradox"
-  | "unseen-fury";
+  | "unseen-fury"
+  // Assassin staples 6 (#2233).
+  | "hidden-caltrops"
+  | "way-of-the-assassin";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -322,5 +325,42 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   "unseen-fury": define("unseen-fury", "Unseen Fury", "stance", {
     profession: "assassin",
     unblockableByBlinded: true,
+  }),
+  // "For 1...10 seconds, target foe moves 50% slower. When this hex ends
+  // that foe is crippled for 1...15 seconds" (#2233): 12 s at rank 12, on
+  // any end, a removal included.
+  "hidden-caltrops": define("hidden-caltrops", "Hidden Caltrops", "hex", {
+    profession: "assassin",
+    moveSpeedMultiplier: 0.5,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "crippled",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.shadow-arts", atZero: 1, atTwelve: 12.2 },
+            },
+          },
+        ],
+        skillId: "assassin.hidden-caltrops",
+      },
+    ],
+  }),
+  // "For the next 20 seconds while wielding daggers, you attack 5...20%
+  // faster and have a +5...35% chance to land a critical hit" (#2275):
+  // neither holds with another weapon.
+  "way-of-the-assassin": define("way-of-the-assassin", "Way of the Assassin", "stance", {
+    profession: "assassin",
+    attackDurationMultiplier: {
+      scaling: { attributeId: "assassin.critical-strikes", atZero: 0.95, atTwelve: 0.83 },
+    },
+    attackDurationMultiplierWeapon: "daggers",
+    criticalChanceBonus: {
+      scaling: { attributeId: "assassin.critical-strikes", atZero: 0.05, atTwelve: 0.29 },
+    },
+    criticalChanceBonusWeapon: "daggers",
   }),
 };

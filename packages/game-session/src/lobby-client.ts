@@ -13,6 +13,7 @@ import {
   parseWirePartySplit,
   parseWireLobbyMove,
   parsePeerLobbySeat,
+  parsePeerRelayLogin,
   teamQueueModeOf,
   type JsonValue,
   type LobbyRefusal,
@@ -26,6 +27,7 @@ import {
   type WireLobbyState,
   type WireProposalBuild,
   type WirePartyFormed,
+  type WireRelayLogin,
 } from "@vibewars/game-protocol";
 
 import { keyGated } from "./key-gate.js";
@@ -184,6 +186,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const refusedHandlers: ((reason: LobbyRefusal) => void)[] = [];
   const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
   const moveHandlers: ((code: string) => void)[] = [];
+  const relayHandlers: ((relay: WireRelayLogin | null) => void)[] = [];
+  /** The host's last `relay-login`, for a handler added after it came. */
+  let relayLogin: WireRelayLogin | null | undefined;
   const chatHandlers: ((line: ChatLine) => void)[] = [];
   const throttledHandlers: (() => void)[] = [];
   const partyHandlers: ((party: WirePartyFormed | null) => void)[] = [];
@@ -222,6 +227,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     refusedHandlers.length = 0;
     closedHandlers.length = 0;
     moveHandlers.length = 0;
+    relayHandlers.length = 0;
     chatHandlers.length = 0;
     throttledHandlers.length = 0;
     partyHandlers.length = 0;
@@ -486,6 +492,13 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       onMove(handler) {
         moveHandlers.push(handler);
       },
+      onRelayLogin(handler) {
+        relayHandlers.push(handler);
+        // The host sends it on admission, which can beat the handler here.
+        if (relayLogin !== undefined) {
+          handler(relayLogin);
+        }
+      },
       onChat(handler) {
         chatHandlers.push(handler);
       },
@@ -591,6 +604,16 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         const seat = parsePeerLobbySeat(data);
         if (hostId !== undefined && from === hostId && seat !== undefined) {
           rejoinToken = seat.rejoinToken;
+        }
+      }),
+      transport.on("relay-login", (data, from) => {
+        // The host's alone, and only once it is known (#2248).
+        const login = parsePeerRelayLogin(data);
+        if (hostId !== undefined && from === hostId && login !== undefined) {
+          relayLogin = login.relay;
+          for (const handler of [...relayHandlers]) {
+            handler(login.relay);
+          }
         }
       }),
       transport.on("lobby-note", (data, from) => {

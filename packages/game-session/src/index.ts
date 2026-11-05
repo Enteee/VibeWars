@@ -90,6 +90,7 @@ export type {
   LobbyHostOptions,
   LobbyMatchmakingOptions,
   LobbyReach,
+  LobbyRelaySource,
   MatchPlan,
   QueuedPlan,
 } from "./lobby-host.js";

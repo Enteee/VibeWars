@@ -80,7 +80,9 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (removedCategories(skill).length > 0) uses.push("removal");
   if (skill.target === "single-dead-ally") uses.push("resurrect");
   if (setupOf(skill) !== undefined) uses.push("setup");
-  if (lowEnergyGain(skill) !== undefined || energyAtFoes(skill)) uses.push("energy");
+  if (lowEnergyGain(skill) !== undefined || energyAtFoes(skill) || drainsFoeEnergy(skill)) {
+    uses.push("energy");
+  }
   if (recallsInterrupted(skill)) uses.push("guard");
   // Taste of Death's life steal (#1915) is from its own minion: no foe's.
   if (
@@ -223,9 +225,9 @@ function actsOnAttacks(status: StatusDefinition): boolean {
   return (
     status.onAttackHit !== undefined ||
     status.extraStrikesPerHit > 0 ||
-    status.attackDamageDelta > 0 ||
+    statAtTwelve(status.attackDamageDelta) > 0 ||
     statAtTwelve(status.attackDurationMultiplier) < 1 ||
-    status.criticalChanceBonus > 0 ||
+    statAtTwelve(status.criticalChanceBonus) > 0 ||
     status.attackArmorPenetration > 0 ||
     status.nextAttackSkill !== undefined ||
     status.triggers.some(({ on }) => on === "bearer-attacks" || on === "bearer-hits")
@@ -531,7 +533,7 @@ export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | un
             ? "critical-strips"
             : status.onAttackHit?.weaponDamage !== undefined
               ? "weapon-element"
-              : status.energyPips > 0 &&
+              : statAtTwelve(status.energyPips) > 0 &&
                   status.triggers.some(
                     ({ on, effects }) =>
                       on === "ends" && effects.some(({ kind }) => kind === "lose-health"),
@@ -678,8 +680,20 @@ export function lowEnergyGain(
 export function energyAtFoes(skill: Skill): boolean {
   return ownStatuses(skill).some((id) => {
     const status = getStatusDefinition(id);
-    return status.renewsOnBearerSpellAtFoe && status.energyPips > 0;
+    return status.renewsOnBearerSpellAtFoe && statAtTwelve(status.energyPips) > 0;
   });
+}
+
+/**
+ * Whether `skill` at a foe is for its user's Energy alone (#2231): Energy
+ * Drain, a gain per point the foe loses and no damage.
+ */
+export function drainsFoeEnergy(skill: Skill): boolean {
+  return (
+    skill.target === "single-enemy" &&
+    !skill.effects.some(dealsDamage) &&
+    skill.effects.some((effect) => effect.kind === "energy-gain" && effect.perEnergyLost === true)
+  );
 }
 
 /**

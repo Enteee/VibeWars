@@ -81,7 +81,13 @@ export type NecromancerStatusId =
   | "order-of-apostasy"
   | "jaundiced-gaze"
   // Necromancer staples (#2230).
-  | "vampiric-spirit";
+  | "vampiric-spirit"
+  // Condition movement (#2259).
+  | "mark-of-fury"
+  | "masochism"
+  | "spoil-victor"
+  // Staples (#2278).
+  | "mark-of-subversion";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -146,7 +152,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       {
         on: "bearer-gains-condition",
         effects: [
-          { kind: "spread-gained-condition", radius: AREA_IN_THE_AREA },
+          { kind: "spread-gained-condition", radius: AREA_IN_THE_AREA, to: "bearer-foes" },
           { kind: "sacrifice-health", percentOfMax: 6 },
         ],
         target: "bearer",
@@ -360,10 +366,11 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     endsWhenTriggered: true,
   }),
   // Necromancer and Elementalist staples (#1540), at their rank-12 values.
-  // "For 10 seconds, target other ally gains +3...6 Energy regeneration": 5.
+  // "For 10 seconds, target other ally gains +3...6 Energy regeneration", at
+  // the caster's Blood Magic (#2328): 5 at rank 12.
   "blood-is-power": define("blood-is-power", "Blood is Power", "enchantment", {
     profession: "necromancer",
-    energyPips: 5,
+    energyPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 5.4 } },
   }),
   // "For 5 seconds, whenever a party member hits a foe with physical
   // damage, that party member does +3...16 damage": 13, on each hit.
@@ -731,5 +738,101 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   "vampiric-spirit": define("vampiric-spirit", "Vampiric Spirit", "enchantment", {
     profession: "necromancer",
     healthPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: 5, atTwelve: 9 } },
+  }),
+  // "Allies hitting target foe gain 0...2 strikes of adrenaline. When this
+  // hex ends, that foe suffers from Cracked Armor for 1...15 seconds"
+  // (#2259), each at the Necromancer's Blood Magic: 1.6 and 12.2 at 12.
+  // Any end, a strip included.
+  "mark-of-fury": define("mark-of-fury", "Mark of Fury", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-hit-by-attack",
+        target: "source-on-offender",
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            strikes: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 0, atTwelve: 1.6 },
+            },
+            recipient: "target",
+          },
+        ],
+        skillId: "necromancer.mark-of-fury",
+      },
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "cracked-armor",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 1, atTwelve: 12.2 },
+            },
+          },
+        ],
+        skillId: "necromancer.mark-of-fury",
+      },
+    ],
+  }),
+  // PvP: "For 30 seconds, you gain 1...3 Energy whenever you sacrifice
+  // Health" (#2275), at its rank as each sacrifice lands.
+  masochism: define("masochism", "Masochism", "enchantment", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-sacrifices-health",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "necromancer.soul-reaping", atZero: 1, atTwelve: 2.6 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "necromancer.masochism",
+      },
+    ],
+  }),
+  // "...whenever target foe attacks or casts a spell on a creature with
+  // less Health that foe loses 15...75 Health" (#2282): its Health against
+  // the victim's as the attack or the cast began.
+  "spoil-victor": define("spoil-victor", "Spoil Victor", "hex", {
+    profession: "necromancer",
+    attribute: "necromancer.blood-magic",
+    triggers: (["bearer-attacks", "bearer-casts-spell"] as const).map((on): StatusTrigger => ({
+      on,
+      victimHasLessHealth: true,
+      effects: [
+        {
+          kind: "lose-health",
+          amount: {
+            scaling: { attributeId: "necromancer.blood-magic", atZero: 15, atTwelve: 63 },
+          },
+          recipient: "target",
+        },
+      ],
+      target: "bearer",
+      skillId: "necromancer.spoil-victor",
+    })),
+  }),
+  // Staples (#2278). As Shame, for "a spell that targets an ally of that
+  // foe", itself included: "you steal up to 10...92 Health from that foe".
+  "mark-of-subversion": define("mark-of-subversion", "Mark of Subversion", "hex", {
+    profession: "necromancer",
+    failsNextSpell: {
+      on: "ally-targeted",
+      effects: [
+        {
+          kind: "life-steal",
+          amount: {
+            scaling: { attributeId: "necromancer.blood-magic", atZero: 10, atTwelve: 75.6 },
+          },
+        },
+      ],
+      skillId: "necromancer.mark-of-subversion",
+    },
   }),
 };

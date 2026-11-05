@@ -92,6 +92,26 @@ const rows = {
   "mesmer.physical-resistance": { glyph: "shield-blow" },
   // Attributes set or borrowed (#1929).
   "mesmer.signet-of-illusions": { glyph: "bars-lent" },
+  // Stand-in art (#2293).
+  "mesmer.keystone-signet": { glyph: "arch-keystone" },
+  // Stand-in art (#2294).
+  "mesmer.mantra-of-recall": { glyph: "hourglass-energy" },
+  // Stand-in art (#2312).
+  "mesmer.mind-wrack": { glyph: "hex-energy-down" },
+  "mesmer.ignorance": { glyph: "hex-signet-struck" },
+  "mesmer.simple-thievery": { glyph: "tiles-steal" },
+  "mesmer.enchanters-conundrum": { glyph: "hex-ring-clock" },
+  // Stand-in art (#2334).
+  "mesmer.ether-lord": { glyph: "drop-crown" },
+  "mesmer.spirit-of-failure": { glyph: "hex-ring-cross" },
+  "mesmer.spirit-shackles": { glyph: "shackle-pair" },
+  "mesmer.soothing-images": { glyph: "moon-bars" },
+  "mesmer.chaos-storm": { glyph: "storm-spiral", modifier: "area" },
+  "mesmer.psychic-distraction": { glyph: "head-scatter" },
+  "mesmer.arcane-languor": { glyph: "bolt-rings" },
+  "mesmer.illusion-of-pain": { glyph: "zigzag-plus" },
+  "mesmer.feedback": { glyph: "bolt-uturn" },
+  "mesmer.ether-phantom": { glyph: "drop-ghost" },
 };
 
 export default rows;

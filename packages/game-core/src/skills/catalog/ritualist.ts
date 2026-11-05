@@ -1960,6 +1960,41 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Condition movement (#2259).
+  {
+    id: "ritualist.resilient-was-xiko",
+    name: "Resilient Was Xiko",
+    gwId: 1221,
+    type: "item-spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Hold Xiko's ashes for up to 5...20 seconds": 17.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "resilient-was-xiko",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
   // Ritualist spirits (#1550): on-hit effects past a status, and death bursts.
   bindingRitual({
     id: "ritualist.bloodsong",
@@ -3094,6 +3129,111 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         statusId: "dulled-weapon",
         durationSeconds: {
           scaling: { attributeId: "ritualist.communing", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.agony",
+    name: "Agony",
+    gwId: 2205,
+    type: "binding-ritual",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "Create a level 1...8 spirit. This spirit causes 3...10 Health
+    // loss each second to foes within earshot. This spirit loses 3...10
+    // Health for each foe hurt in this way. This spirit dies after
+    // 30...90 seconds": the foes' status pulses, and charges the spirit.
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          look: "spirit",
+          name: "Agony",
+          maxHealth: spiritHealth("ritualist.channeling-magic", [1, 8]),
+          armor: { flat: 51 },
+          attack: undefined,
+          durationSeconds: {
+            scaling: { attributeId: "ritualist.channeling-magic", atZero: 30, atTwelve: 78 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "agony", affects: "foes", radius: AREA_EARSHOT },
+          replacedBy: undefined,
+          leavesCorpses: undefined,
+          onePerOwner: false,
+          onDeath: "vanish",
+          ownerDisableOnDeath: undefined,
+          deathBurst: undefined,
+          onDeathInRange: undefined,
+        },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Removed and maintained counts (#2260)                                   */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ritualist.cautery-signet",
+    name: "Cautery Signet",
+    gwId: 1588,
+    type: "signet",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: undefined,
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All party members lose all conditions. You are set on Fire for 1
+    // second for each condition removed in this way": the caster's own
+    // count, however far the party.
+    effects: [
+      { kind: "remove-status", category: "condition", count: "all" },
+      {
+        kind: "splash",
+        hits: "party",
+        radius: Number.POSITIVE_INFINITY,
+        maxTargets: undefined,
+        effects: [{ kind: "remove-status", category: "condition", count: "all" }],
+      },
+      {
+        kind: "apply-status",
+        statusId: "burning",
+        durationSeconds: { flat: 0 },
+        on: "caster",
+        per: {
+          count: { kind: "removed", categories: ["condition"] },
+          amount: { flat: 1 },
+          max: undefined,
         },
       },
     ],

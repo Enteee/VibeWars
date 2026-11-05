@@ -98,8 +98,9 @@ describe("skill catalog integrity", () => {
       const grounds = skill.effects.flatMap((effect) =>
         effect.kind === "create-ground-effect" ? [effect.act.kind] : [],
       );
-      // A spell may leave a pulse where its target stands: a symbol.
-      const pulse = skill.type === "spell" && grounds.length > 0 ? ["pulse"] : [];
+      // A spell may leave pulses where its target stands: a symbol, or
+      // Searing Heat's strikes and the Burning as it ends (#2288).
+      const pulse = skill.type === "spell" ? grounds.map(() => "pulse") : [];
       expect(grounds, skill.id).toEqual(
         skill.type === "ward" || skill.type === "well"
           ? ["aura"]
@@ -192,6 +193,72 @@ describe("skill catalog integrity", () => {
     expect(getSkill("elementalist.fireball")?.effects).toContainEqual(
       expect.objectContaining({ kind: "damage", type: "fire" }),
     );
+  });
+
+  it('deals a spell\'s "more damage if" in its hit, not in a second one (#2330)', () => {
+    for (const skill of IMPLEMENTED_SKILLS) {
+      const types = new Set(
+        skill.effects.flatMap((effect) => (effect.kind === "damage" ? [effect.type] : [])),
+      );
+      const again = skill.effects.flatMap((effect) =>
+        effect.kind === "if"
+          ? effect.effects.filter((each) => each.kind === "damage" && types.has(each.type))
+          : [],
+      );
+      expect(again, skill.id).toEqual([]);
+    }
+  });
+
+  it("counts a remove-status by at most one of perSpiritNear, perRemoved and perCount (#2247)", () => {
+    // Every remove-status, however deep inside an if, a splash or a status.
+    const removals: { id: string; set: number }[] = [];
+    const visit = (value: unknown, id: string): void => {
+      if (Array.isArray(value)) {
+        value.forEach((each) => visit(each, id));
+      } else if (typeof value === "object" && value !== null) {
+        const fields = Object.entries(value);
+        if (fields.some(([key, field]) => key === "kind" && field === "remove-status")) {
+          const set = fields.filter(
+            ([key, field]) =>
+              ["perSpiritNear", "perRemoved", "perCount"].includes(key) && field !== undefined,
+          ).length;
+          removals.push({ id, set });
+        }
+        fields.forEach(([, field]) => visit(field, id));
+      }
+    };
+    IMPLEMENTED_SKILLS.forEach((skill) => visit(skill.effects, skill.id));
+    expect(removals.some(({ id }) => id === "assassin.signet-of-twilight")).toBe(true);
+    for (const { id, set } of removals) {
+      expect(set, id).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("copies transferred conditions to foes only from the caster's (#2259)", () => {
+    // Every transfer-conditions, however deep inside an if or a splash.
+    const transfers: { id: string; from: unknown; copies: unknown }[] = [];
+    const visit = (value: unknown, id: string): void => {
+      if (Array.isArray(value)) {
+        value.forEach((each) => visit(each, id));
+      } else if (typeof value === "object" && value !== null) {
+        const fields = new Map(Object.entries(value));
+        if (fields.get("kind") === "transfer-conditions") {
+          transfers.push({ id, from: fields.get("from"), copies: fields.get("copyToFoesWithin") });
+        }
+        fields.forEach((field) => visit(field, id));
+      }
+    };
+    IMPLEMENTED_SKILLS.forEach((skill) => visit(skill.effects, skill.id));
+    expect(
+      transfers.some(
+        ({ id, copies }) => id === "necromancer.plague-sending" && copies !== undefined,
+      ),
+    ).toBe(true);
+    for (const { id, from, copies } of transfers) {
+      if (copies !== undefined) {
+        expect(from, id).toBe("caster");
+      }
+    }
   });
 
   it("maintains only enchantments (#837)", () => {

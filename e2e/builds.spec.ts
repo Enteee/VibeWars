@@ -599,6 +599,82 @@ test("Team Builder has a random Team Build at each size, 2v2, 4v4 and 8v8 (#2147
   }
 });
 
+test("a member opens in place: its secondary profession and a rank change there and survive a reload (#2226)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByLabel("team name").fill("Duo");
+  const editor = page.locator(".team-member-editor");
+  await expect(editor).toHaveCount(0);
+  // The Gear tab has a member to equip only while one is open.
+  await expect(page.getByRole("tab", { name: "Gear", exact: true })).toBeHidden();
+
+  await memberRows(page).first().locator(".team-row-edit").click();
+  await expect(editor).toBeVisible();
+  await expect(memberRows(page).first().locator(".team-row-edit")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await chooseProfession(page, "secondary", "monk");
+  const healing = editor.getByRole("slider", { name: "Healing Prayers" });
+  await healing.locator('.attribute-pip[data-pip="3"]').click();
+  await expect(healing).toHaveAttribute("aria-valuenow", "3");
+  // The row says it at once.
+  await expect(memberRows(page).first().locator(".team-row-professions")).toContainText("Monk");
+  await expect(page.getByRole("tab", { name: "Gear", exact: true })).toBeVisible();
+
+  // One member open at a time: the second's ✎ closes the first.
+  await memberRows(page).nth(1).locator(".team-row-edit").click();
+  await expect(editor).toHaveCount(1);
+  await expect(memberRows(page).first().locator(".team-row-edit")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  // Esc closes the open member before it leaves the editor.
+  await page.keyboard.press("Escape");
+  await expect(editor).toHaveCount(0);
+  await expect(page.getByLabel("team name")).toBeVisible();
+
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
+  await page.reload();
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await memberRows(page).first().locator(".team-row-edit").click();
+  await expect(professionField(page, "secondary")).toContainText("Monk");
+  await expect(editor.getByRole("slider", { name: "Healing Prayers" })).toHaveAttribute(
+    "aria-valuenow",
+    "3",
+  );
+});
+
+test("the open member's attribute names are never cut, and its name field is styled like the team's (#2226)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto("./");
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "new team" }).click();
+  await memberRows(page).first().locator(".team-row-edit").click();
+  const editor = page.locator(".team-member-editor");
+  // Ranger: Marksmanship and Wilderness Survival, the longest one-word names.
+  await chooseProfession(page, "secondary", "ranger");
+  const names = editor.locator(".editor-attribute-name");
+  await expect(names.first()).toBeVisible();
+  const cut = await names.evaluateAll((spans) =>
+    spans.filter((span) => span.scrollWidth > span.clientWidth).map((span) => span.textContent),
+  );
+  expect(cut).toEqual([]);
+  const background = (selector: string) =>
+    page.locator(selector).evaluate((input) => getComputedStyle(input).backgroundColor);
+  expect(await background("input.team-member-name")).toBe(await background("input.editor-name"));
+});
+
 test("on a phone, a Team Build card's Edit sits below its members, never on them (#1786)", async ({
   page,
 }) => {
@@ -2567,8 +2643,8 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
 
   await toggle.check();
   const fire = page.locator(".skill-group", { hasText: "FIRE MAGIC" });
-  // Searing Heat is GW1 Fire Magic VibeWars does not have yet.
-  const mark = fire.locator(".skill-corpus-box", { hasText: "Searing Heat" });
+  // Savannah Heat is GW1 Fire Magic VibeWars does not have yet.
+  const mark = fire.locator(".skill-corpus-box", { hasText: "Savannah Heat" });
   await expect(mark).toContainText("not in the game yet");
   // After the group's playable skills.
   await expect(fire.locator(".skill-box, .skill-corpus-box").last()).toHaveClass(
@@ -2578,17 +2654,16 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   expect(await mark.getAttribute("draggable")).toBeNull();
   await expect(mark.locator("button")).toHaveCount(0);
   await mark.click();
-  await expect(page.locator(".skill-slot", { hasText: "Searing Heat" })).toHaveCount(0);
+  await expect(page.locator(".skill-slot", { hasText: "Savannah Heat" })).toHaveCount(0);
   // Its hover shows GW1's own text.
   await mark.hover();
   await expect(page.locator(".skill-tip")).toContainText("Not in the game yet");
 
   // The search finds it; remembered across a reload.
-  // Searing Flames is in the game, so it is found too, playable.
-  await page.locator("input.skill-search").fill("searing");
-  await expect(page.locator(".skill-corpus-box", { hasText: "Searing Heat" })).toHaveCount(1);
-  await expect(page.locator(".skill-box", { hasText: "Searing Flames" })).toHaveCount(1);
-  await expect(page.locator(".skill-box, .skill-corpus-box")).toHaveCount(2);
+  // Searing Heat is in the game, so it is found too, playable.
+  await page.locator("input.skill-search").fill("heat");
+  await expect(page.locator(".skill-corpus-box", { hasText: "Savannah Heat" })).toHaveCount(1);
+  await expect(page.locator(".skill-box", { hasText: "Searing Heat" })).toHaveCount(1);
   await page.reload();
   await page.getByRole("button", { name: "New character", exact: true }).click();
   await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
@@ -2624,4 +2699,33 @@ test("of Fortitude on the sword, picked on the paper-doll, adds 30 Health, and s
     .click();
   await expect(page.locator('.paper-doll-row[data-slot="mainHand"]')).toContainText("of Fortitude");
   await expect(health).toHaveText(String(before + 30));
+});
+
+test("a member's skill dragged to another member moves; with Shift it is copied (#2227)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByRole("tab", { name: "Skills", exact: true }).click();
+  await openLibraryGroup(page, "Strength");
+  const box = page.locator(".team-picker-skills .skill-box").first();
+  const skillId = (await box.getAttribute("data-skill-id")) ?? "";
+  const cell = (row: number, slot: number) =>
+    memberRows(page).nth(row).locator(".team-skill").nth(slot);
+  await box.dragTo(cell(0, 0));
+  await expect(cell(0, 0)).toHaveAttribute("data-skill-id", skillId);
+
+  // A plain drag moves it: the source slot empties.
+  await cell(0, 0).dragTo(cell(1, 2));
+  await expect(cell(1, 2)).toHaveAttribute("data-skill-id", skillId);
+  await expect(cell(0, 0)).not.toHaveAttribute("data-skill-id");
+
+  // Shift held at the drop copies it back: both bars hold it.
+  await page.keyboard.down("Shift");
+  await cell(1, 2).dragTo(cell(0, 4));
+  await page.keyboard.up("Shift");
+  await expect(cell(0, 4)).toHaveAttribute("data-skill-id", skillId);
+  await expect(cell(1, 2)).toHaveAttribute("data-skill-id", skillId);
 });

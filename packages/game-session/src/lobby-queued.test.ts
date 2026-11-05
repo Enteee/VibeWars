@@ -26,6 +26,7 @@ import {
   MAP_IDS,
   MAP_TEAM_SIZES,
   MODE_MAPS,
+  NO_RELAY,
   openLobby,
   provenPeer,
 } from "./lobby-harness.test-support.js";
@@ -228,6 +229,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     hostedTeamSize: 4,
     teamLobby: false,
     random: () => 0.5,
+    relay: NO_RELAY,
     startMatch(plan) {
       plans.push(plan);
       if (match !== undefined) {

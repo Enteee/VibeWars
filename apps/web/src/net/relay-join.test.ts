@@ -2,7 +2,8 @@ import { createMemoryNetwork } from "@vibewars/game-session/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RELAY_REFRESH_LEFT_MS, RELAY_REJOIN_MS, joinWithRelayOffers } from "./relay-join.js";
-import type { RelayOffers } from "./transport/relay-offer.js";
+import { watchRelayOffers, type RelayOffers } from "./transport/relay-offer.js";
+import { newTicketKey } from "./transport/ticket-key.js";
 import type { TrysteroTransport } from "./transport/trystero.js";
 import type { TurnConfig } from "./transport/turn-config.js";
 
@@ -21,6 +22,9 @@ function fakeOffers() {
   let closed = false;
   const offers: RelayOffers = {
     latest: () => latest,
+    fromHost(login) {
+      latest = login ?? undefined;
+    },
     onOffer(handler) {
       handlers.add(handler);
       return () => {
@@ -52,7 +56,7 @@ describe("a joiner's fallback on its host's shared relay (#2091)", () => {
   });
 
   /** A joiner on a memory network, recording the relay of each join. */
-  function joiner(ownRelay = false) {
+  function joiner(ownRelay = false, offers?: RelayOffers) {
     const network = createMemoryNetwork();
     const fake = fakeOffers();
     const joins: (TurnConfig | undefined)[] = [];
@@ -73,7 +77,7 @@ describe("a joiner's fallback on its host's shared relay (#2091)", () => {
           swapIceServers: () => undefined,
         };
       },
-      offers: fake.offers,
+      offers: offers ?? fake.offers,
       ownRelay,
     });
     return { network, fake, room, joins, inRoom: () => inRoom };
@@ -133,6 +137,32 @@ describe("a joiner's fallback on its host's shared relay (#2091)", () => {
     await host.leave();
     await vi.advanceTimersByTimeAsync(0);
     expect(joins).toEqual([undefined, offer(1), offer(2)]);
+  });
+
+  it("rejoins a dropped host through the login it gave, which the drop keeps (#2248)", async () => {
+    // Real offers, on Nostr relays that never answer: only the host speaks.
+    const offers = watchRelayOffers(
+      { topic: "ab".repeat(32), key: new Uint8Array(32).fill(7) },
+      {
+        relays: ["wss://relay.example"],
+        openSocket: () => ({ send: () => undefined, close: () => undefined }),
+        now: () => 0,
+        newKey: newTicketKey,
+        randomBytes: (length) => new Uint8Array(length),
+      },
+    );
+    const { network, room, joins } = joiner(false, offers);
+    offers.fromHost(offer(1));
+    await vi.advanceTimersByTimeAsync(RELAY_REJOIN_MS);
+    const host = network.join("host");
+    await vi.advanceTimersByTimeAsync(0);
+    room.reached("host");
+    offers.fromHost(offer(2));
+    await host.leave();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(joins).toEqual([undefined, offer(1), offer(2)]);
+    expect(offers.latest()).toEqual(offer(2));
+    await room.leave();
   });
 
   it("hears the host on the relayed room, through handlers added before it", async () => {

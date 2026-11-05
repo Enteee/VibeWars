@@ -50,7 +50,8 @@ export type DervishStatusId =
   | "eremites-zeal"
   | "vow-of-silence"
   // Conviction (#2217).
-  | "conviction";
+  | "conviction"
+  | "grenths-aura";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -459,7 +460,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       weaponDamage: undefined,
       effects: [
         { kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 9 } },
-        { kind: "transfer-conditions", from: "caster", count: 3, durationMultiplier: 1 },
+        { kind: "transfer-conditions", from: "caster", count: { flat: 3 }, durationMultiplier: 1 },
       ],
       skillId: "dervish.grenths-grasp",
     },
@@ -563,12 +564,12 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     attackDurationMultiplier: 0.75,
     adrenalineGainFaster: 0.25,
   }),
-  // "You have -3 Energy regeneration, and you gain 1...5...6 Energy every
+  // "You have -2 Energy regeneration, and you gain 1...5...6 Energy every
   // time you hit with an attack" (#1667): 5, its rank-12 value, on any
   // hit, a plain swing's too, as Zealous Renewal's.
   "zealous-vow": define("zealous-vow", "Zealous Vow", "enchantment", {
     profession: "dervish",
-    energyPips: -3,
+    energyPips: -2,
     triggers: [
       {
         on: "bearer-hits",
@@ -792,5 +793,27 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
         skillId: "dervish.conviction",
       },
     ],
+  }),
+  // "For 20 seconds, you deal 5...25 less damage and steal 5...25 Health
+  // whenever you hit with a scythe attack" (#2275): with another weapon,
+  // neither.
+  "grenths-aura": define("grenths-aura", "Grenth's Aura", "enchantment", {
+    profession: "dervish",
+    attackDamageDelta: {
+      scaling: { attributeId: "dervish.wind-prayers", atZero: -5, atTwelve: -21 },
+    },
+    attackDamageDeltaWeapon: "scythe",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "scythe",
+      weaponDamage: undefined,
+      effects: [
+        {
+          kind: "life-steal",
+          amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 5, atTwelve: 21 } },
+        },
+      ],
+      skillId: "dervish.grenths-aura",
+    },
   }),
 };

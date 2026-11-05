@@ -34,12 +34,7 @@ export type ResourceKind = "energy" | "adrenaline";
 
 export type SkillCost =
   | { readonly kind: "energy"; readonly amount: number }
-  | {
-      readonly kind: "adrenaline";
-      readonly amount: number;
-      /** GW1 "Lose all adrenaline" (#1097): using the skill empties every pool, and its blow earns none back. */
-      readonly losesAll?: true;
-    };
+  | { readonly kind: "adrenaline"; readonly amount: number };
 
 /**
  * How a skill's magnitude scales with an attribute rank.
@@ -171,7 +166,20 @@ export type CountRule =
    * Whole points of Energy, rounded down (#1984): Ether Prodigy's "lose 2
    * Health for each point of Energy you have".
    */
-  | { readonly kind: "energy"; readonly on: "target" | "caster" };
+  | { readonly kind: "energy"; readonly on: "target" | "caster" }
+  /**
+   * Statuses of `categories` an earlier effect of this same use took off
+   * anyone (#2260), inside a `splash` or not: Purge Signet's "you lose 10
+   * Energy for each hex and condition removed". Read before the use, as a
+   * state is, it is 0.
+   */
+  | { readonly kind: "removed"; readonly categories: readonly StatusCategory[] }
+  /**
+   * Enchantments the caster maintains (#2260), on anyone living, as its
+   * upkeep counts them: Blessed Signet's "for each enchantment you are
+   * maintaining". A timed one is not maintained.
+   */
+  | { readonly kind: "maintained-enchantments" };
 
 /**
  * "+`amount` for each" (#1760): the effect's own amount plus `amount`
@@ -335,23 +343,36 @@ export interface EnergyGainToTarget extends Omit<
  * the caster's bar, at most `max` times: Defensive Stance's "1 strike of
  * adrenaline for each melee attack skill on your bar (maximum 3)".
  * `recipient: "owner"`: the caster's living owner, a pet's, gains them
- * instead, as Ferocious Strike's (#1957); no owner, nobody. `per`: more
- * strikes for each of a count (#2222), "Make Your Time!"'s "2 strikes of
- * adrenaline for each party member within earshot (maximum 1...8)".
+ * instead, as Ferocious Strike's (#1957); no owner, nobody. `"target"`:
+ * the effect's target gains them (#2259), at the caster's rank, as Mark
+ * of Fury's "allies hitting target foe gain 0...2 strikes"; a dead one,
+ * nobody. `per`: more strikes for each of a count (#2222), "Make Your
+ * Time!"'s "2 strikes of adrenaline for each party member within earshot
+ * (maximum 1...8)". `units` instead of `strikes` (#2302): raw points, 25 to
+ * a strike, as Balthazar's Spirit's "gains 2...5 adrenaline".
  */
-export interface AdrenalineGainEffect {
+export type AdrenalineGainEffect = {
   readonly kind: "adrenaline-gain";
-  readonly strikes: Magnitude;
   readonly perTarget?: true;
   readonly perOwnMeleeAttackSkill?: { readonly max: number };
   readonly per?: PerCount;
-  readonly recipient?: "owner";
-}
+  readonly recipient?: "owner" | "target";
+} & (
+  | { readonly strikes: Magnitude; readonly units?: never }
+  | { readonly units: Magnitude; readonly strikes?: never }
+);
 
-/** The effect's target loses up to `amount` energy (never below 0). */
+/**
+ * The effect's target, or with `on: "caster"` its caster (#2260), loses
+ * up to `amount` energy (never below 0). `per`: more for each of a count,
+ * as Purge Signet's "you lose 10 Energy for each hex and condition
+ * removed".
+ */
 export interface EnergyLossEffect {
   readonly kind: "energy-loss";
   readonly amount: Magnitude;
+  readonly on?: "caster";
+  readonly per?: PerCount;
 }
 
 /**
@@ -441,15 +462,24 @@ export interface LoseHealthToEffect {
  * with `durationMultiplier` times the time it had left (#1540): Plague
  * Signet's "with 100...200% of their remaining durations", Plague Touch's 1.
  * `healPerCondition`: the caster is healed that much per condition moved.
- * A `count` of `Infinity` moves them all; a giver who is the taker, as
- * Martyr's caster among its party (#1954), keeps its own as they are.
+ * `count` scales with the caster's rank (#2259), as Plague Sending's
+ * "1...3"; `{ flat: Infinity }` moves them all. A giver who is the taker,
+ * as Martyr's caster among its party (#1954), keeps its own as they are.
  */
 export interface TransferConditionsEffect {
   readonly kind: "transfer-conditions";
   readonly from: "caster" | "target";
-  readonly count: number;
+  readonly count: Magnitude;
   readonly durationMultiplier: number;
   readonly healPerCondition?: Magnitude;
+  /**
+   * Only `from: "caster"` (#2259): each living foe of the caster within
+   * this radius of the target, the target aside, gets a copy of each
+   * moved condition with the same time, landing as the caster's (the
+   * longer duration wins): Plague Sending's "to target foe and all
+   * adjacent foes".
+   */
+  readonly copyToFoesWithin?: number;
 }
 
 /**
@@ -537,9 +567,15 @@ export interface RemoveStatusEffect {
   readonly kind: "remove-status";
   readonly category: StatusCategory;
   /**
+   * Statuses of this category go too, newest first among both, out of the
+   * one `count` (#2291): Peace and Harmony's "loses 0...4 conditions and
+   * hexes". Absent: `category` alone.
+   */
+  readonly orCategory?: StatusCategory;
+  /**
    * How many, newest first; `"all"` as Restore Condition's "remove all
    * conditions"; a `Magnitude` as Divert Hexes' "remove up to 1...3 hexes"
-   * (#1954). Ignored when `perRemoved` is set.
+   * (#1954). Ignored when `perRemoved` or `perCount` is set.
    */
   readonly count: number | "all" | Magnitude;
   /**
@@ -570,6 +606,13 @@ export interface RemoveStatusEffect {
    * hex (maximum 1...7...8)" (#1205). Absent: `count` as it is.
    */
   readonly perRemoved?: { readonly category: StatusCategory; readonly max: Magnitude };
+  /**
+   * The count is what this counts, read before this removal (#2247), as
+   * Signet of Twilight's "for each hex on target foe, that foe loses one
+   * enchantment". At most one of `perSpiritNear`, `perRemoved` and
+   * `perCount`. Absent: `count` as it is.
+   */
+  readonly perCount?: CountRule;
   /**
    * Only the status the newest earlier `status-removed` of `category` in
    * this use took off, whoever bore it (#1954): Mirror of Disenchantment's
@@ -644,13 +687,15 @@ export interface KnockdownEffect {
  * has selected (#1326), as Heart of Shadow's "Shadow Step to a nearby
  * location directly away from your target" (`"away-from-selection"`), or
  * trades places with it (#1930), as Swap's "you and target summoned
- * creature Shadow Step to each other's locations" (`"swap"`). The effect
+ * creature Shadow Step to each other's locations" (`"swap"`), or to the
+ * corpse this use exploited (#2268), as Consume Corpse's "teleport to that
+ * corpse" (`"corpse"`; none exploited, no step). The effect
  * layer only reports it (`shadow-stepped`, `shadow-stepped-away`,
  * `shadow-swapped`); the simulation places the bodies.
  */
 export interface ShadowStepEffect {
   readonly kind: "shadow-step";
-  readonly to: "target" | "away-from-selection" | "swap";
+  readonly to: "target" | "away-from-selection" | "swap" | "corpse";
 }
 
 /**
@@ -805,6 +850,29 @@ export interface SplashEffect {
    * spend no slot on one with none. Absent: anyone.
    */
   readonly onlyBearing?: StatusCategory;
+  /**
+   * Only those using a skill of this type as it lands, picked before
+   * `maxTargets` (#2282): Glimmering Mark's "foes using attack skills are
+   * Blinded". Absent: anyone.
+   */
+  readonly onlyUsing?: SkillType;
+  /**
+   * Only those for whom this holds as the splash lands, picked before
+   * `maxTargets` (#2288): Gust's "foes struck by Gust while attacking or
+   * moving are knocked down". Absent: anyone.
+   */
+  readonly onlyIf?: StateCondition;
+  /**
+   * The target is reached too, as one of them (#2282): Glimmering Mark's
+   * "target foe and all foes adjacent". Absent: the target is not.
+   */
+  readonly includesCentre?: true;
+  /**
+   * Round the caster as well as the centre, a character near both
+   * reached once (#2288): Gust's "all foes adjacent to you and your
+   * target". Absent: round the centre alone.
+   */
+  readonly alsoAround?: "caster";
   readonly effects: readonly UnconditionalEffect[];
 }
 
@@ -876,11 +944,12 @@ export interface DestroyAlliedSpiritsEffect {
  * as Moebius Strike's "all your other attack skills are recharged". Acts
  * on the caster, once. `all` (#1762), from a status's trigger, recharges
  * every skill on the bar, the status's own included: Assassin's Promise.
- * A dead caster recharges nothing.
+ * `signet` (#2275), every other signet: Keystone Signet's. A dead caster
+ * recharges nothing.
  */
 export interface RechargeOthersEffect {
   readonly kind: "recharge-others";
-  readonly which: "attack" | "all";
+  readonly which: "attack" | "signet" | "all";
 }
 
 /**
@@ -932,12 +1001,16 @@ export interface CopyRemovedEffect {
 }
 
 /**
- * The slot of the skill resolving holds a copy of the spell an earlier
- * `disable-skill` `random-spell` disabled on the target (#1928), for as
- * long as it disabled it: Arcane Thievery's. Nothing disabled: no copy.
+ * The slot of the skill resolving holds a copy of the skill an earlier
+ * `disable-skill` of the same `which` disabled on the target, for as long
+ * as it disabled it: with `random-spell`, the spell it picked (#1928),
+ * Arcane Thievery's; with `interrupted`, the skill this skill interrupted
+ * (#2290), Simple Thievery's. Nothing disabled, or a plain attack
+ * interrupted: no copy.
  */
 export interface CopyDisabledEffect {
   readonly kind: "copy-disabled";
+  readonly which: "random-spell" | "interrupted";
 }
 
 /**
@@ -986,7 +1059,9 @@ export interface LengthenRechargeEffect {
  * own, a common skill included, but those of `exceptTypes`: Unnatural
  * Signet's "all your non-Mesmer skills except signets". `all` (#1570):
  * every skill on the bar, the one used included, as Blackout's "all of
- * your skills are disabled for 5 seconds". `attacks` (#1914): every
+ * your skills are disabled for 5 seconds". `others` (#2287): every skill
+ * on the bar but the one used, as Psychic Distraction's "all of your other
+ * skills are disabled for 8 seconds". `attacks` (#1914): every
  * attack skill on the bar but the one used, as Focused Shot's "your other
  * attack skills are disabled", but those of `exceptWeapon` (#2134), as
  * Wastrel's Collapse's "your non-dagger attack skills". `types` (#1930): every skill on the
@@ -1004,6 +1079,11 @@ export type DisableOwnSkillsEffect =
   | {
       readonly kind: "disable-own-skills";
       readonly which: "all";
+      readonly seconds: Magnitude;
+    }
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "others";
       readonly seconds: Magnitude;
     }
   | {
@@ -1497,6 +1577,17 @@ export type StateCondition =
    */
   | { readonly kind: "target-moving" }
   /**
+   * The effect's target is on another team than the caster (#2288): Ride
+   * the Lightning's "if your target is a foe".
+   */
+  | { readonly kind: "target-foe" }
+  /**
+   * The effect's target is moving and its statuses make it move faster
+   * than normal (#2290): their aggregate `moveSpeedMultiplier` is above 1.
+   * Churning Earth's "moving faster than normal".
+   */
+  | { readonly kind: "target-moving-faster" }
+  /**
    * The effect's target has this status (#997): Stoning's "suffering from
    * Weakness", Searing Flames' "already on fire".
    */
@@ -1574,6 +1665,27 @@ export type StateCondition =
    */
   | { readonly kind: "not"; readonly condition: StateCondition }
   /**
+   * Every one of `conditions` holds, each read as it would be alone
+   * (#2247): Discord's "suffering from a condition and under the effects
+   * of a hex or an enchantment". No `all-of` inside one. An empty list
+   * always holds.
+   */
+  | {
+      readonly kind: "all-of";
+      readonly conditions: readonly Exclude<StateCondition, { readonly kind: "all-of" }>[];
+    }
+  /**
+   * What `count` counts, read as `per` reads it, is at least `atLeast`
+   * (#2247): Accumulated Pain's "suffering from 2 or more hexes".
+   */
+  | { readonly kind: "count-at-least"; readonly count: CountRule; readonly atLeast: number }
+  /**
+   * What `count` counts is at most what `than` does (#2247): Lyssa's
+   * Balance works unless "you have more enchantments than target foe", so
+   * equal holds.
+   */
+  | { readonly kind: "count-at-most"; readonly count: CountRule; readonly than: CountRule }
+  /**
    * The effect's target is a summoned creature (#1528): a minion or a
    * spirit, never a pet or a map NPC (`isSummoned`). Banish's "double
    * damage if target foe is a summoned creature".
@@ -1612,6 +1724,13 @@ export type StateCondition =
    * corpse". The corpse is not exploited.
    */
   | { readonly kind: "caster-spirit-or-corpse-within"; readonly radius: number }
+  /**
+   * A fresh corpse lies within `radius` of the effect's target, or the
+   * target's pet is dead (#2250): Signet of Sorrow's "if target foe is near
+   * a corpse or its pet is dead", "near" being `AREA_NEARBY`. An exploited
+   * corpse does not count; a living target is never its own corpse.
+   */
+  | { readonly kind: "target-near-corpse-or-dead-pet"; readonly radius: number }
   /**
    * A dead body of the caster's team other than the caster lies within
    * `radius` of it (#2096): "Retreat!"'s "if an ally is dead within
@@ -2011,6 +2130,12 @@ export interface Skill {
   readonly attributeId: string | undefined;
   readonly cost: SkillCost | undefined;
   /**
+   * GW1 "Lose all adrenaline" (#1097): using the skill empties every pool,
+   * and its blow earns none back, whatever it costs: Hammer Bash's
+   * adrenaline, Wild Blow's energy (#2282).
+   */
+  readonly losesAllAdrenaline?: true;
+  /**
    * Maximum energy it takes away when activation starts, on top of its
    * cost (#461): GW1's overcast, once called exhaustion. `0` for none.
    */
@@ -2109,12 +2234,19 @@ export interface CorpseRule {
    */
   readonly all?: true;
   /**
+   * `random`: one fresh corpse within `radius` of the caster, picked with
+   * the match's rng as the use lands, not the nearest (#2268): Consume
+   * Corpse's "exploit a random corpse". Not with `near` or `all`.
+   */
+  readonly pick?: "random";
+  /**
    * A well's "or sacrifice 66% health" (#1730): with no fresh corpse in
    * reach as it resolves, the caster sacrifices this % of its max Health
-   * and the skill goes off where it stands. `undefined`: no corpse, no
-   * use.
+   * and the skill goes off where it stands. Scaled by the skill's
+   * attribute (#2268), as Necrotic Traversal's 30...20%. `undefined`: no
+   * corpse, no use.
    */
-  readonly elseSacrificePercent: number | undefined;
+  readonly elseSacrificePercent: Magnitude | undefined;
 }
 
 /** How a flying spell flies (#535). */
@@ -2329,6 +2461,11 @@ export interface SkillContext {
    * trigger: what `disable-own-skills` `attribute` spares. Absent elsewhere.
    */
   readonly skillId?: string | undefined;
+  /**
+   * The corpse the skill landing exploited (#2268): where `shadow-step`
+   * `corpse` goes. Absent when it exploited none.
+   */
+  readonly corpseId?: string | undefined;
   /**
    * The status whose trigger these effects are (#1473): what
    * `target-lacks-other-hex` does not count. Absent outside a trigger.

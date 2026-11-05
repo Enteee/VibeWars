@@ -1,8 +1,8 @@
-import { AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
+import { AREA_ADJACENT, AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
 import type { DamageType } from "../../equipment/types.js";
 import type { StatusDefinition } from "../status.js";
-import type { PerCount } from "../types.js";
-import { define } from "./define.js";
+import { KNOCKDOWN_SECONDS, type PerCount } from "../types.js";
+import { define, ownSkills } from "./define.js";
 
 export type ElementalistStatusId =
   // PvP forms (#1951).
@@ -66,7 +66,42 @@ export type ElementalistStatusId =
   | "magnetic-surge"
   | "sliver-armor"
   // Elementalist staples (#2166).
-  | "teinais-prison";
+  | "teinais-prison"
+  | "glimmering-mark"
+  // Staples (#2278).
+  | "lightning-surge"
+  | "ward-against-harm"
+  // Staples (#2289).
+  | "armor-of-frost"
+  | "incendiary-bonds"
+  | "rust"
+  // Elementalist staples (#2288).
+  | "gust"
+  | "mirror-of-ice";
+
+/** Incendiary Bonds' blast (#2289), on its bearer and the foes near it. */
+const INCENDIARY_BLAST = {
+  kind: "splash",
+  hits: "foes",
+  radius: AREA_NEARBY,
+  maxTargets: undefined,
+  includesCentre: true,
+  effects: [
+    {
+      kind: "damage",
+      amount: { scaling: { attributeId: "elementalist.fire-magic", atZero: 20, atTwelve: 68 } },
+      type: "fire",
+      armorPenetration: 0,
+    },
+    {
+      kind: "apply-status",
+      statusId: "burning",
+      durationSeconds: {
+        scaling: { attributeId: "elementalist.fire-magic", atZero: 1, atTwelve: 2.6 },
+      },
+    },
+  ],
+} as const;
 
 /** Mist Form's heal (#1951): 210% of the spell's cost, under 80% Health. */
 const MIST_FORM_HEAL = {
@@ -78,6 +113,47 @@ const MIST_FORM_HEAL = {
 
 export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, StatusDefinition>> = {
   // "...move 66% slower for 2...5...6 seconds" (#918).
+  // "...target foe and all foes adjacent to your target take 5...25 damage
+  // each second. Foes using attack skills are Blinded for 3 seconds. This
+  // hex ends if you use a skill that targets this foe" (#2282): lightning,
+  // Air Magic's, and the Blindness flat.
+  "glimmering-mark": define("glimmering-mark", "Glimmering Mark", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.air-magic",
+    endsWhenSourceTargets: true,
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          maxTargets: undefined,
+          includesCentre: true,
+          effects: [
+            {
+              kind: "damage",
+              amount: {
+                scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 21 },
+              },
+              type: "lightning",
+              armorPenetration: 0,
+            },
+          ],
+        },
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          maxTargets: undefined,
+          includesCentre: true,
+          onlyUsing: "attack",
+          effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: { flat: 3 } }],
+        },
+      ],
+      skillId: "elementalist.glimmering-mark",
+    },
+  }),
   "shard-storm": define("shard-storm", "Shard Storm", "hex", {
     profession: "elementalist",
     attribute: "elementalist.water-magic",
@@ -595,6 +671,106 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         skillId: "elementalist.sliver-armor",
       },
     ],
+  }),
+  // Staples (#2278). "After 3 seconds, target foe is knocked down, struck
+  // for 14...100 lightning damage, and has Cracked Armor for 5...20
+  // seconds. This spell has 25% armor penetration": only its expiry
+  // strikes, so a strip first does nothing. Knocked down first, as the
+  // text orders; its caster's Air Magic.
+  "lightning-surge": define("lightning-surge", "Lightning Surge", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.air-magic",
+    triggers: [
+      {
+        on: "expires",
+        target: "bearer",
+        effects: [
+          { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 14, atTwelve: 82.8 },
+            },
+            type: "lightning",
+            armorPenetration: 0.25,
+          },
+          {
+            kind: "apply-status",
+            statusId: "cracked-armor",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+        skillId: "elementalist.lightning-surge",
+      },
+    ],
+  }),
+  // What the ward projects on the allies inside it: "+1...3 Health
+  // regeneration, +12...24 armor, and an additional +12...24 armor against
+  // elemental damage", at its caster's Water Magic.
+  "ward-against-harm": define("ward-against-harm", "Ward Against Harm", "skill-effect", {
+    profession: "elementalist",
+    healthPips: { scaling: { attributeId: "elementalist.water-magic", atZero: 1, atTwelve: 2.6 } },
+    armorModifier: {
+      scaling: { attributeId: "elementalist.water-magic", atZero: 12, atTwelve: 21.6 },
+    },
+    conditionalArmor: [
+      {
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 12, atTwelve: 21.6 },
+        },
+        conditions: [{ kind: "vs-elemental" }],
+      },
+    ],
+  }),
+  // Staples (#2289). "...you gain +40 armor against physical damage and
+  // have +1 Water Magic": both flat.
+  "armor-of-frost": define("armor-of-frost", "Armor of Frost", "enchantment", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    conditionalArmor: [{ amount: 40, conditions: [{ kind: "vs-physical" }] }],
+    attributeDeltas: [{ scope: { attributeId: "elementalist.water-magic" }, amount: 1 }],
+  }),
+  // "After 3 seconds, target foe and all nearby foes are struck for
+  // 20...80 fire damage and are set on fire for 1...3 seconds. Activates
+  // early if target foe dies": its expiry or its bearer's death, never a
+  // strip; its caster's Fire Magic.
+  "incendiary-bonds": define("incendiary-bonds", "Incendiary Bonds", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.fire-magic",
+    triggers: [
+      {
+        on: "expires",
+        target: "bearer",
+        effects: [INCENDIARY_BLAST],
+        skillId: "elementalist.incendiary-bonds",
+      },
+      {
+        on: "bearer-dies",
+        target: "bearer",
+        effects: [INCENDIARY_BLAST],
+        skillId: "elementalist.incendiary-bonds",
+      },
+    ],
+  }),
+  // "...take twice as long to activate signets."
+  rust: define("rust", "Rust", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    ownSkillModifiers: [ownSkills({ type: "signet" }, { activationMultiplier: 2 })],
+  }),
+  // "For 5...11 seconds, both you and target ally move 33% faster" (#2288).
+  gust: define("gust", "Gust", "enchantment", {
+    profession: "elementalist",
+    attribute: "elementalist.air-magic",
+    moveSpeedMultiplier: 1.33,
+  }),
+  // "...and move 66% slower for 2...6 seconds" (#2288).
+  "mirror-of-ice": define("mirror-of-ice", "Mirror of Ice", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    moveSpeedMultiplier: 0.34,
   }),
 };
 

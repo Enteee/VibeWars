@@ -74,6 +74,11 @@ export interface ActiveCast {
   readonly whileActivating: StatusId | undefined;
   /** What it carries from its caster's chants (#1505). */
   readonly rule: CastRule;
+  /**
+   * Its target had less Health than its caster as it began (#2282): what
+   * Spoil Victor reads. `false` with no target.
+   */
+  readonly targetHadLessHealth: boolean;
 }
 
 /**
@@ -191,7 +196,8 @@ export class CastState {
   /**
    * Begin casting. A `whileActivating` status lasts until the cast ends,
    * which is what takes it off; an instant has no activation to bear it in.
-   * `rule` is what the chants it consumed give it (#1505).
+   * `rule` is what the chants it consumed give it (#1505);
+   * `targetHadLessHealth`, how the target stood against its caster (#2282).
    */
   public beginCast(
     skillId: string,
@@ -200,6 +206,7 @@ export class CastState {
     whileActivating: StatusId | undefined,
     key: string = skillId,
     rule: CastRule = NO_CAST_RULE,
+    targetHadLessHealth = false,
   ): void {
     const bears = activationSeconds > 0 ? whileActivating : undefined;
     this.#activeCast = {
@@ -210,6 +217,7 @@ export class CastState {
       remainingSeconds: activationSeconds,
       whileActivating: bears,
       rule,
+      targetHadLessHealth,
     };
     if (bears !== undefined) {
       // No `whileActivating` status scales (#1976).

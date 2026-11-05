@@ -559,7 +559,7 @@ describe("describeSkill", () => {
     );
     expect(describeStatus("mist-form")).toBe(
       "33% less damage from foes with a Water Magic hex. Whenever it casts an elemental spell: " +
-        "you and non-spirit allies in earshot: heals for 210% of the spell's energy cost, under 80% Health",
+        "it and non-spirit allies in earshot: heals for 210% of the spell's energy cost, under 80% Health",
     );
   });
 
@@ -646,7 +646,7 @@ describe("describeSkill", () => {
       const rule = blowRuleOf(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         lines(entry.effects) +
-          (entry.cost?.kind === "adrenaline" && entry.cost.losesAll === true ? 1 : 0) +
+          (entry.losesAllAdrenaline === true ? 1 : 0) +
           (rule?.chain === undefined ? 0 : 1) +
           (rule?.bonusDamage === undefined && rule?.weaponDamage !== 0 ? 0 : 1) +
           (rule === undefined || rule.unblockable === false ? 0 : 1) +
@@ -829,12 +829,12 @@ describe("attack skills (#417)", () => {
     ]);
   });
 
-  it("words Aftershock's bonus on a foe that is down (#985)", () => {
+  it("words Aftershock's bonus on a foe that is down (#985), in the same strike (#2330)", () => {
     const ranks = new Map([["elementalist.earth-magic", 12]]);
     const texts = describeSkill(skill("elementalist.aftershock"), ranks).effects.map(
       ({ text }) => text,
     );
-    expect(texts.at(-1)).toBe("If target is knocked down: deals 56 earth damage");
+    expect(texts.at(-1)).toBe("Deals 85 earth damage; if target is knocked down: +56");
   });
 
   it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {
@@ -1587,6 +1587,11 @@ describe("Mesmer energy and utility (#2132)", () => {
       "Applies Lyssa's Aura for 10s " +
         "(+4 Energy regeneration, reapplied whenever it casts a spell on a foe)",
     ]);
+    // At its caster's rank (#2328): none at Inspiration 0, a range unread.
+    expect(describeStatus("lyssas-aura", new Map([["mesmer.inspiration-magic", 0]]))).toBe(
+      "reapplied whenever it casts a spell on a foe",
+    );
+    expect(describeStatus("blood-is-power")).toBe("+3...5 Energy regeneration");
     expect(texts("mesmer.persistence-of-memory", "mesmer.fast-casting")).toEqual([
       "Applies Persistence of Memory for 17s " +
         "(whenever it has a spell interrupted: that skill recharges instantly)",

@@ -262,6 +262,50 @@ describe("a host's relay offers, heard by a joiner (#2091)", () => {
     offers.close();
   });
 
+  it("never puts the secret in an offer, sealed or before it is (#2240)", async () => {
+    const linked: SharedRelay = { urls: SHARED.urls, secret: "cd".repeat(32) };
+    const plains: string[] = [];
+    const encrypt = crypto.subtle.encrypt.bind(crypto.subtle);
+    vi.spyOn(crypto.subtle, "encrypt").mockImplementation((algorithm, key, data) => {
+      plains.push(new TextDecoder().decode(data));
+      return encrypt(algorithm, key, data);
+    });
+    const relay = fakeRelay();
+    const sent: string[] = [];
+    const recording: OpenRelaySocket = (url, handlers) => {
+      const socket = relay.openSocket(url, handlers);
+      return {
+        send(data) {
+          sent.push(data);
+          socket.send(data);
+        },
+        close() {
+          socket.close();
+        },
+      };
+    };
+    const share = shareRelay(
+      ROOM,
+      linked,
+      deps(recording, () => NOW),
+    );
+    share.follow(true);
+    await settle();
+    share.close();
+
+    expect(plains).toHaveLength(1);
+    expect(sent.some((data) => data.startsWith('["EVENT"'))).toBe(true);
+    for (const bytes of [...plains, ...sent]) {
+      expect(bytes).not.toContain(linked.secret);
+    }
+    // What is sealed is the minted login, and only that.
+    expect(Object.keys(JSON.parse(plains[0] ?? "{}") as object)).toEqual([
+      "urls",
+      "username",
+      "credential",
+    ]);
+  });
+
   it("is heard by no joiner of another lobby", async () => {
     const relay = fakeRelay();
     const other = watchRelayOffers(
@@ -512,5 +556,135 @@ describe("a host's relay offers, heard by a joiner (#2091)", () => {
     expect(openSockets).toBe(0);
     expect(watchers.size).toBe(0);
     offers.close();
+  });
+});
+
+describe("a seated guest's relay login, from its host (#2248)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** What any member can seal: the host's URLs, a junk login, the latest expiry allowed. */
+  async function forged(urls: readonly string[]): Promise<object> {
+    const expiry = Math.floor((NOW + TURN_CREDENTIAL_TTL_MS) / 1000);
+    const junk: TurnConfig = {
+      urls,
+      username: `${String(expiry)}:ffffffffffffffff`,
+      credential: "junk",
+    };
+    return { ...garbage(), content: await sealOffer(junk, ROOM.key, iv()) };
+  }
+
+  it("keeps the host's login through a member's forged offer, and never opens it", async () => {
+    const relay = fakeRelay();
+    const offers = watchRelayOffers(
+      ROOM,
+      deps(relay.openSocket, () => NOW),
+    );
+    await settle();
+    const host = shareRelay(
+      ROOM,
+      SHARED,
+      deps(relay.openSocket, () => NOW),
+    );
+    host.follow(true);
+    await settle();
+    const real = host.current();
+    expect(real?.urls).toEqual(SHARED.urls);
+    offers.fromHost(real ?? null);
+
+    // Before #2248 this replaced the host's offer: same URLs, newer expiry.
+    const decrypt = vi.spyOn(crypto.subtle, "decrypt");
+    const event = await forged(SHARED.urls);
+    relay.publish(event);
+    await settle();
+    expect(decrypt).not.toHaveBeenCalled();
+    expect(offers.latest()).toEqual(real);
+    host.close();
+    offers.close();
+  });
+
+  it("is none for the host's null, and a later login replaces the earlier", async () => {
+    const relay = fakeRelay();
+    const offers = watchRelayOffers(
+      ROOM,
+      deps(relay.openSocket, () => NOW),
+    );
+    await settle();
+    const host = shareRelay(
+      ROOM,
+      SHARED,
+      deps(relay.openSocket, () => NOW),
+    );
+    host.follow(true);
+    await settle();
+    expect(offers.latest()?.urls).toEqual(SHARED.urls);
+    let told = 0;
+    offers.onOffer(() => {
+      told += 1;
+    });
+    offers.fromHost(null);
+    expect(offers.latest()).toBeUndefined();
+    const next = minted(["turn:next.example:3478"], NOW + 1000);
+    offers.fromHost(next);
+    expect(offers.latest()).toEqual(next);
+    expect(told).toBe(2);
+    host.close();
+    offers.close();
+  });
+
+  it("is what a host's share offers now: minted, reminted, stopped", () => {
+    const relay = fakeRelay();
+    let now = NOW;
+    const share = shareRelay(
+      ROOM,
+      SHARED,
+      deps(relay.openSocket, () => now),
+    );
+    const seen: (TurnConfig | undefined)[] = [];
+    share.onChange(() => seen.push(share.current()));
+    expect(share.current()).toBeUndefined();
+    share.follow(true);
+    const first = share.current();
+    expect(first?.urls).toEqual(SHARED.urls);
+    // Back in its room long after: the old credential is reminted.
+    share.follow(false);
+    now += TURN_CREDENTIAL_TTL_MS;
+    share.follow(true);
+    const second = share.current();
+    expect(second?.username).not.toBe(first?.username);
+    share.follow(false);
+    expect(seen).toEqual([first, undefined, second, undefined]);
+    share.close();
+  });
+
+  it("follows Options for the login it tells: another relay, then none", () => {
+    const relay = fakeRelay();
+    let offered: SharedRelay | undefined = SHARED;
+    const watchers = new Set<() => void>();
+    const share = followOfferedRelay(
+      ROOM,
+      {
+        load: () => offered,
+        onChange: (handler) => {
+          watchers.add(handler);
+          return () => watchers.delete(handler);
+        },
+      },
+      deps(relay.openSocket, () => NOW),
+    );
+    const seen: (readonly string[] | undefined)[] = [];
+    share.onChange(() => seen.push(share.current()?.urls));
+    share.follow(true);
+    offered = { urls: ["turns:other.example:5349"], secret: "t" };
+    for (const watcher of [...watchers]) {
+      watcher();
+    }
+    offered = undefined;
+    for (const watcher of [...watchers]) {
+      watcher();
+    }
+    expect(seen).toEqual([SHARED.urls, ["turns:other.example:5349"], undefined]);
+    share.close();
   });
 });

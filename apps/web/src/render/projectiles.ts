@@ -20,27 +20,31 @@ export type ProjectileSprite =
   | "water-trident"
   | "ebon-hawk"
   | "stone"
-  | "thrown-dagger";
+  | "thrown-dagger"
+  | "deathly-swarm";
 
 /** A flying spell's own sprite (#1176). A new flying spell needs a row, or the test fails. */
 export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
   "elementalist.fireball": "fireball",
   "elementalist.flare": "fireball",
   "elementalist.lava-arrows": "fireball",
+  "elementalist.phoenix": "fireball",
   "elementalist.lightning-orb": "lightning-orb",
   "elementalist.shock-arrow": "lightning-orb",
   "elementalist.lightning-javelin": "lightning-orb",
+  "elementalist.lightning-bolt": "lightning-orb",
   "elementalist.shard-storm": "ice-shard",
   "elementalist.ice-spear": "ice-shard",
   "elementalist.water-trident": "water-trident",
   "elementalist.ebon-hawk": "ebon-hawk",
   "elementalist.stoning": "stone",
   "elementalist.glowstone": "stone",
+  "elementalist.stone-daggers": "stone",
   "assassin.disrupting-dagger": "thrown-dagger",
   "assassin.crippling-dagger": "thrown-dagger",
   "assassin.dancing-daggers": "thrown-dagger",
   "monk.spear-of-light": "spear",
-  "necromancer.deathly-swarm": "bolt",
+  "necromancer.deathly-swarm": "deathly-swarm",
 };
 
 /** Every weapon's sprite. A melee weapon never shoots; it gets `bolt` rather than a throw in the render loop. */

@@ -494,6 +494,60 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "persistence-of-memory": icon("persistence-of-memory"),
   // Mesmer interrupts (#2165).
   "web-of-disruption": icon("web-of-disruption"),
+  // Mesmer staples 5 (#2231).
+  "conjure-nightmare": icon("conjure-nightmare"),
+  "images-of-remorse": icon("images-of-remorse"),
+  "confusing-images": icon("confusing-images"),
+  // Wild Blow, Zealot's Fire, Glimmering Mark, Spoil Victor (#2282).
+  "zealots-fire": icon("zealots-fire"),
+  "glimmering-mark": icon("glimmering-mark"),
+  "spoil-victor": icon("spoil-victor"),
+  // Adrenaline in points (#2302).
+  "balthazars-spirit": icon("balthazars-spirit"),
+  // Monk staples (#2286).
+  "essence-bond": icon("essence-bond"),
+  "life-barrier": icon("life-barrier"),
+  retribution: icon("retribution"),
+  "scourge-healing": icon("scourge-healing"),
+  "healing-seed": icon("healing-seed"),
+  succor: icon("succor"),
+  "divine-boon": icon("divine-boon"),
+  "restful-breeze": icon("restful-breeze"),
+  // Condition movement (#2259).
+  "fevered-dreams": icon("fevered-dreams"),
+  "mark-of-fury": icon("mark-of-fury"),
+  "i-will-survive": icon("i-will-survive"),
+  "resilient-was-xiko": icon("resilient-was-xiko"),
+  // Staples (#2278).
+  "lightning-surge": icon("lightning-surge"),
+  "ward-against-harm": icon("ward-against-harm"),
+  // Elementalist staples (#2288).
+  gust: icon("gust"),
+  "mirror-of-ice": icon("mirror-of-ice"),
+  "mark-of-subversion": icon("mark-of-subversion"),
+  "mantra-of-recall": icon("mantra-of-recall"),
+  // Elementalist staples (#2289).
+  "armor-of-frost": icon("armor-of-frost"),
+  "incendiary-bonds": icon("incendiary-bonds"),
+  rust: icon("rust"),
+  // Staples (#2287).
+  "ether-lord": icon("ether-lord"),
+  "ether-lord-regeneration": icon("ether-lord-regeneration"),
+  "spirit-of-failure": icon("spirit-of-failure"),
+  "spirit-shackles": icon("spirit-shackles"),
+  "soothing-images": icon("soothing-images"),
+  "arcane-languor": icon("arcane-languor"),
+  "illusion-of-pain": icon("illusion-of-pain"),
+  "ether-phantom": icon("ether-phantom"),
+  // Bonds and rank-scaled multipliers (#2291).
+  "life-bond": icon("life-bond"),
+  "life-attunement": icon("life-attunement"),
+  "aura-of-faith": icon("aura-of-faith"),
+  "peace-and-harmony": icon("peace-and-harmony"),
+  "enchanters-conundrum": icon("enchanters-conundrum"),
+  // Source-targets triggers and signet lockout (#2290).
+  "mind-wrack": icon("mind-wrack"),
+  ignorance: icon("ignorance"),
   // Warrior conditions (#2096).
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
@@ -513,10 +567,17 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mark-of-instability": icon("mark-of-instability"),
   "deadly-paradox": icon("deadly-paradox"),
   "unseen-fury": icon("unseen-fury"),
+  // Assassin staples 6 (#2233).
+  "hidden-caltrops": icon("hidden-caltrops"),
   // Warrior staples 4 (#2181).
   "tiger-stance": icon("tiger-stance"),
   "berserker-stance": icon("berserker-stance"),
   "bulls-charge": icon("bulls-charge"),
+  // Warrior staples (#2316).
+  "charging-strike": icon("charging-strike"),
+  "signet-of-stamina": icon("signet-of-stamina"),
+  "soldiers-stance": icon("soldiers-stance"),
+  "steady-stance": icon("steady-stance"),
   // Monk and Ranger mechanics (#2189).
   "spell-shield": icon("spell-shield"),
   "convert-hexes": icon("convert-hexes"),
@@ -528,6 +589,14 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "ballad-of-restoration": icon("ballad-of-restoration"),
   "theyre-on-fire": icon("theyre-on-fire"),
   "find-their-weakness": icon("find-their-weakness"),
+  // Sacrifice, crits, signet echoes and pulses (#2275).
+  masochism: icon("masochism"),
+  "way-of-the-assassin": icon("way-of-the-assassin"),
+  "keystone-signet": icon("keystone-signet"),
+  agony: icon("agony"),
+  "grenths-aura": icon("grenths-aura"),
+  // Warrior staples 5 (#2315).
+  "to-the-limit": icon("to-the-limit"),
 };
 
 const GAP = 2;

@@ -169,8 +169,42 @@ export async function openOffer(
 export interface RelayShare {
   /** Publish while `on`, every `TICKET_HEARTBEAT_MS`; stop at once when not. */
   follow(on: boolean): void;
+  /**
+   * The credential offered now, while it publishes (#2248): what the host
+   * tells each seated member over the lobby. `undefined` when it is not on.
+   */
+  current(): TurnConfig | undefined;
+  /** `handler` each time `current()` changes, until the returned function is called. */
+  onChange(handler: () => void): () => void;
   /** Stop for good: the credential is dropped. */
   close(): void;
+}
+
+/** `current()` and `onChange` for a share: `changed()` tells the handlers only when it did. */
+function currentRelay(current: () => TurnConfig | undefined): {
+  readonly onChange: (handler: () => void) => () => void;
+  readonly changed: () => void;
+} {
+  const handlers = new Set<() => void>();
+  let told = current();
+  return {
+    onChange(handler) {
+      handlers.add(handler);
+      return () => {
+        handlers.delete(handler);
+      };
+    },
+    changed() {
+      const now = current();
+      if (now === told) {
+        return;
+      }
+      told = now;
+      for (const handler of [...handlers]) {
+        handler();
+      }
+    },
+  };
 }
 
 /**
@@ -190,12 +224,15 @@ export function shareRelay(
   let pool: RelayPool | undefined;
   let heartbeat: ReturnType<typeof setInterval> | undefined;
   let closed = false;
+  const current = (): TurnConfig | undefined => (pool === undefined ? undefined : credential);
+  const relay = currentRelay(current);
 
   const publish = async (): Promise<void> => {
     const now = deps.now();
     const expiry = credential === undefined ? undefined : credentialExpiry(credential);
     if (credential === undefined || expiry === undefined || expiry - now < REMINT_LEFT_MS) {
       credential = mintTurnCredential(shared, tag, now);
+      relay.changed();
     }
     const content = await sealOffer(credential, room.key, deps.randomBytes(IV_BYTES));
     pool?.send(
@@ -230,6 +267,7 @@ export function shareRelay(
       }
       if (!on) {
         stop();
+        relay.changed();
         return;
       }
       // It subscribes to nothing, so nothing it hears is for it.
@@ -240,7 +278,10 @@ export function shareRelay(
       });
       beat();
       heartbeat = setInterval(beat, TICKET_HEARTBEAT_MS);
+      relay.changed();
     },
+    current,
+    onChange: relay.onChange,
     close() {
       closed = true;
       stop();
@@ -270,7 +311,11 @@ export function followOfferedRelay(
 ): RelayShare {
   let on = false;
   let closed = false;
-  let current: { readonly shared: SharedRelay; readonly share: RelayShare } | undefined;
+  let current:
+    | { readonly shared: SharedRelay; readonly share: RelayShare; readonly off: () => void }
+    | undefined;
+  const credential = (): TurnConfig | undefined => current?.share.current();
+  const relay = currentRelay(credential);
 
   const sync = (): void => {
     if (closed) {
@@ -278,13 +323,16 @@ export function followOfferedRelay(
     }
     const shared = source.load();
     if (current !== undefined && (shared === undefined || !sameRelay(shared, current.shared))) {
+      current.off();
       current.share.close();
       current = undefined;
     }
     if (current === undefined && shared !== undefined) {
-      current = { shared, share: shareRelay(room, shared, deps) };
+      const share = shareRelay(room, shared, deps);
+      current = { shared, share, off: share.onChange(relay.changed) };
     }
     current?.share.follow(on);
+    relay.changed();
   };
   const stopHearing = source.onChange(sync);
   sync();
@@ -294,9 +342,12 @@ export function followOfferedRelay(
       on = next;
       sync();
     },
+    current: credential,
+    onChange: relay.onChange,
     close() {
       closed = true;
       stopHearing();
+      current?.off();
       current?.share.close();
       current = undefined;
     },
@@ -306,13 +357,22 @@ export function followOfferedRelay(
 /** A joiner's view of a lobby's offers, held in memory only. */
 export interface RelayOffers {
   /**
-   * The newest live offer; `undefined` when there is none, or when two
-   * live offers name different relays. Offers are not bound to the host:
-   * any code holder can seal one, and a second relay is how a hostile
-   * member would learn each joiner's address. Using neither turns that
-   * into a denied relay only (ADR-0049).
+   * The host's login once `fromHost` has been called, `undefined` for its
+   * `null`. Before that, the newest live offer; `undefined` when there is
+   * none, or when two live offers name different relays. Offers are not
+   * bound to the host: any code holder can seal one, and a second relay is
+   * how a hostile member would learn each joiner's address. Using neither
+   * turns that into a denied relay only (ADR-0049).
    */
   latest(): TurnConfig | undefined;
+  /**
+   * The login the host told this seated guest over the lobby (#2248),
+   * checked by `validateTurnConfig`; `null` for none or a failing one.
+   * From the first call on, no offer is opened again: a member can seal
+   * one, the host's lobby messages only the host can send. A later call
+   * replaces it.
+   */
+  fromHost(login: TurnConfig | null): void;
   /** An offer opened; `latest()` may have changed. */
   onOffer(handler: () => void): () => void;
   /** Unsubscribe, and drop every offer. */
@@ -333,7 +393,15 @@ export function watchRelayOffers(
   let windowStart = -Infinity;
   /** Opens this second, by unproven and by proven authors. */
   const windowOpens = { unproven: 0, proven: 0 };
+  /** What the host said, once it has: `undefined` until then. */
+  let hostLogin: TurnConfig | null | undefined;
   let closed = false;
+
+  const tell = (): void => {
+    for (const handler of [...handlers]) {
+      handler();
+    }
+  };
 
   const live = (): TurnConfig[] => {
     const now = deps.now();
@@ -352,13 +420,16 @@ export function watchRelayOffers(
       return;
     }
     offers.set(urls, config);
-    for (const handler of [...handlers]) {
-      handler();
-    }
+    tell();
   };
 
   const hear = (data: unknown): void => {
-    if (closed || typeof data !== "string" || byteLength(data) > MAX_OFFER_MESSAGE_BYTES) {
+    if (
+      closed ||
+      hostLogin !== undefined ||
+      typeof data !== "string" ||
+      byteLength(data) > MAX_OFFER_MESSAGE_BYTES
+    ) {
       return;
     }
     let message: unknown;
@@ -408,7 +479,7 @@ export function watchRelayOffers(
     }
     seen.add(id);
     void openOffer(content, room.key, now).then((config) => {
-      if (closed || config === undefined) {
+      if (closed || hostLogin !== undefined || config === undefined) {
         return;
       }
       if (openedAt.size >= AUTHOR_LIMIT) {
@@ -432,8 +503,23 @@ export function watchRelayOffers(
 
   return {
     latest() {
+      if (hostLogin !== undefined) {
+        return hostLogin ?? undefined;
+      }
       const [only, other] = live();
       return other === undefined ? only : undefined;
+    },
+    fromHost(login) {
+      if (closed) {
+        return;
+      }
+      if (hostLogin === undefined) {
+        // Nothing from the Nostr relays is wanted any more.
+        pool.close();
+        offers.clear();
+      }
+      hostLogin = login;
+      tell();
     },
     onOffer(handler) {
       handlers.add(handler);
@@ -445,6 +531,7 @@ export function watchRelayOffers(
       closed = true;
       pool.close();
       offers.clear();
+      hostLogin = undefined;
       handlers.clear();
     },
   };
