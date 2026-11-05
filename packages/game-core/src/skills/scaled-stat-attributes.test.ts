@@ -28,6 +28,7 @@ interface ScaledAt {
 const RESOLVED_ELSEWHERE: readonly (readonly [field: string, reason: string])[] = [
   ["triggers", "a trigger's effects are its source's, at its ranks as it fires (fireTriggers)"],
   ["failsNextSpell", "the failed spell's price is its source's, at its ranks as it fails"],
+  // True only while the attacker is the status's source: `weaponSpellRiders` holds that.
   ["onAttackHit", "a rider lands at the attacker's ranks as the blow does (applyRiders)"],
   ["onAttackBlocked", "as onAttackHit: at the attacker's ranks as the blow is blocked"],
 ];
@@ -65,6 +66,28 @@ function misses(id: StatusId): readonly string[] {
     .map(({ path, attributeId }) => `${id} ${path} ${attributeId}`);
 }
 
+/**
+ * `id`'s scaled rider stats if it is a weapon spell: one cast on an ally
+ * would land at the ally's ranks, not its caster's, so none may scale
+ * until `applyRiders` reads the source's.
+ */
+function weaponSpellRiders(id: StatusId): readonly string[] {
+  const definition = STATUS_DEFINITIONS[id];
+  if (definition.category !== "weapon-spell") {
+    return [];
+  }
+  const found: ScaledAt[] = [];
+  scaledAt(
+    { onAttackHit: definition.onAttackHit, onAttackBlocked: definition.onAttackBlocked },
+    "",
+    found,
+  );
+  return found.map(
+    ({ path, attributeId }) =>
+      `${id} ${path} ${attributeId}: applyRiders must read the source's ranks first`,
+  );
+}
+
 function allStatusIds(): StatusId[] {
   return Object.values(STATUS_DEFINITIONS).map(({ id }) => id);
 }
@@ -72,6 +95,35 @@ function allStatusIds(): StatusId[] {
 describe("scaledStatAttributes (#2306)", () => {
   it("names the attribute of every scaled stat in every status", () => {
     expect(allStatusIds().flatMap(misses)).toEqual([]);
+  });
+
+  it("scales no weapon spell's rider, which lands at its bearer's ranks", () => {
+    expect(allStatusIds().flatMap(weaponSpellRiders)).toEqual([]);
+  });
+
+  it("finds a weapon spell's scaled rider", () => {
+    const rider: Partial<StatusDefinition> = {
+      category: "weapon-spell",
+      onAttackHit: {
+        skillId: "ritualist.splinter-weapon",
+        attackSkillsOnly: false,
+        weapon: undefined,
+        weaponDamage: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "ritualist.channeling-magic", atZero: 5, atTwelve: 20 },
+            },
+            type: "cold",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    };
+    expect(withStatusDefinitions({ burning: rider }, () => weaponSpellRiders("burning"))).toEqual([
+      "burning onAttackHit.effects.0.amount.scaling ritualist.channeling-magic: applyRiders must read the source's ranks first",
+    ]);
   });
 
   it("finds a nested scaled stat scaledStatAttributes leaves out", () => {
