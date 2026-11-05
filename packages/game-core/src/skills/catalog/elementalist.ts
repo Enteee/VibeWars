@@ -5395,6 +5395,41 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "chilling-winds", durationSeconds: { flat: 10 } },
     ],
   },
+  {
+    id: "elementalist.winters-embrace",
+    name: "Winter's Embrace",
+    gwId: 1999,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 2...6 seconds, target foe moves 66% slower and takes 5...15
+    // damage while moving" (#2374): 5 s at rank 12.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "winters-embrace",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 2, atTwelve: 5.2 },
+        },
+      },
+    ],
+  },
 ];
 
 /**

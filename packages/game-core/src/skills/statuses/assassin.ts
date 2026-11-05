@@ -53,7 +53,8 @@ export type AssassinStatusId =
   | "seeping-wound"
   | "shameful-fear"
   // Mechanics (#2362).
-  | "smoke-powder-defense";
+  | "smoke-powder-defense"
+  | "flashing-blades";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -461,6 +462,31 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
           },
         ],
         skillId: "assassin.smoke-powder-defense",
+      },
+    ],
+  }),
+  // Mechanics (#2374). "...a 75% chance to block incoming attacks while
+  // attacking. If you block an attack in this way, your attacker takes
+  // 5...20 damage": 17 at rank 12. Casting, idle or walking: no block.
+  "flashing-blades": define("flashing-blades", "Flashing Blades", "stance", {
+    profession: "assassin",
+    block: { chance: 0.75, against: "all" },
+    blockWhileAttacking: true,
+    triggers: [
+      {
+        on: "bearer-blocks",
+        target: "offender",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 17 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+        ],
+        skillId: "assassin.flashing-blades",
       },
     ],
   }),

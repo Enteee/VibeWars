@@ -377,9 +377,35 @@ body {
   margin-left: 0.3rem;
 }
 
-/* The host's Open (#1682) stands out: friends can come in. */
-#topbar .topbar-lobby .topbar-lobby-open[aria-pressed="true"] {
+/* The toggle's glyph (#2382): a shut padlock, an open door. No wider
+   than the emoji it replaced. */
+.topbar-lobby-open-glyph {
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: -0.2em;
+}
+
+/* The host's Open (#1682) stands out: friends can come in. Filled with
+   dark ink (#2382), so it reads apart from Closed by fill as well. */
+#topbar .topbar-lobby .topbar-lobby-open[aria-pressed="true"],
+#topbar .topbar-lobby .topbar-lobby-open[aria-pressed="true"]:hover {
+  background: var(--accent);
   border-color: var(--accent);
+  color: var(--bg);
+}
+
+#topbar .topbar-lobby .topbar-lobby-open[aria-pressed="true"]:hover {
+  border-color: var(--ink);
+}
+
+/* Its focus ring sits inside the fill, dark on the accent (#2382). */
+#topbar .topbar-lobby .topbar-lobby-open[aria-pressed="true"]:focus-visible {
+  outline: 2px solid var(--bg);
+  outline-offset: -4px;
+}
+
+#topbar .topbar-lobby .topbar-lobby-open[aria-pressed="true"] .topbar-lobby-open-glyph {
+  filter: brightness(0);
 }
 
 /* Between the ⋯ and a whole row the lobby crowds the global icons off
@@ -1616,6 +1642,14 @@ body {
 .party-closed {
   color: var(--ink-dim);
   font-style: italic;
+}
+
+/* The host's closed padlock in front of it (#2382). */
+.party-closed-glyph {
+  width: 1.1em;
+  height: 1.1em;
+  margin-right: 0.3em;
+  vertical-align: -0.2em;
 }
 
 .lobby-panel {

@@ -77,10 +77,12 @@ them.
   only with people you want in. If your browser refuses to copy, the link
   shows selected: copy it by hand.
 - **Open your lobby** before friends join: your lobby starts **Closed**
-  (🔒), and nobody can join it, even with the link. Press the lock in the
-  top bar to open it; anyone with the link can then join. Press it again
+  (a shut padlock), and nobody can join it, even with the link. Press
+  **Closed** in the top bar to open it: it turns into a highlighted open
+  door, **Open**, and anyone with the link can then join. Press it again
   to close it: friends already in stay, and nobody new gets in. A guest
-  sees "Lobby closed" in the Lobby window while it is closed.
+  sees the padlock and "Lobby closed" in the Lobby window while it is
+  closed.
 - **Join:** open the invite link you were sent, in a new tab or pasted
   into the address bar of one already open. Your own lobby stays open
   until the join is in. Once in, the top bar says **Lobby**, and

@@ -180,6 +180,7 @@ describe("Reversal of Fortune (#987)", () => {
         sourceId: "monk",
         expired: false,
         death: false,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },

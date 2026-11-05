@@ -97,7 +97,12 @@ const NO_BOT_USE = new Set([
   "ranger.savage-pounce",
   "ranger.scavenger-strike",
   "ranger.symbiotic-bond",
+  // Nature's Renewal's and Equinox's auras slow and tax every caster (#2321):
+  // no role the bot weighs.
+  "ranger.natures-renewal",
+  "ranger.equinox",
   // Speed, energy, attack speed and other self-help no rule reaches for.
+  "ranger.archers-signet",
   "assassin.dash",
   "dervish.avatar-of-balthazar",
   "dervish.avatar-of-dwayna",
@@ -352,6 +357,9 @@ const NO_BOT_USE = new Set([
   // A rider on the next Necromancer skill on a foe (#2333), its effect only
   // in a status trigger: no role the bot weighs.
   "necromancer.signet-of-suffering",
+  // Energy later for Energy regeneration now (#2374), its gain only in a
+  // status trigger: no role the bot weighs.
+  "mesmer.signet-of-recall",
 ]);
 
 function skill(id: string) {

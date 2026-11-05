@@ -1,6 +1,7 @@
 import type { LobbyMode } from "@vibewars/game-protocol";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
+import { LOBBY_ICON } from "./icons.js";
 import { h } from "./kit.js";
 import { ascentLine, waitedLabel } from "./queue-screen.js";
 
@@ -156,7 +157,13 @@ export function lobbyWindowBody(party: RailParty | undefined): HTMLElement {
     );
   }
   if (showsClosed(party)) {
-    body.appendChild(h("span", "party-closed", PARTY_CLOSED));
+    // The host's closed padlock (#2382): host and guest see the same sign.
+    const glyph = document.createElement("img");
+    glyph.className = "party-closed-glyph";
+    glyph.alt = "";
+    glyph.src = LOBBY_ICON.closed;
+    const closed = body.appendChild(h("span", "party-closed"));
+    closed.append(glyph, PARTY_CLOSED);
   }
   return body;
 }

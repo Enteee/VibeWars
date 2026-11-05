@@ -629,6 +629,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "dwarven-battle-stance": icon("dwarven-battle-stance"),
   // Signet of Suffering (#2333).
   "signet-of-suffering": icon("signet-of-suffering"),
+  "rising-bile": icon("rising-bile"),
+  "natures-renewal": icon("natures-renewal"),
+  equinox: icon("equinox"),
+  "archers-signet": icon("archers-signet"),
   // Staples (#2368).
   "foxs-promise": icon("foxs-promise"),
   "seeping-wound": icon("seeping-wound"),
@@ -638,6 +642,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mystic-corruption": icon("mystic-corruption"),
   // Smoke Powder Defense (#2362).
   "smoke-powder-defense": icon("smoke-powder-defense"),
+  // Block while attacking and its mechanics card (#2374).
+  "flashing-blades": icon("flashing-blades"),
+  "winters-embrace": icon("winters-embrace"),
+  "signet-of-recall": icon("signet-of-recall"),
+  "watchful-healing": icon("watchful-healing"),
 };
 
 const GAP = 2;

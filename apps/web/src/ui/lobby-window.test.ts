@@ -1,14 +1,59 @@
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { LOBBY_ICON } from "./icons.js";
 
 import {
+  PARTY_CLOSED,
   PARTY_RECONNECTING,
   isAlone,
   lookingLabel,
   memberClass,
   partyOf,
+  partyStrip,
   showsClosed,
 } from "./lobby-window.js";
+
+/** Just enough of an element for the strip: its tag, class, picture and parts. */
+class FakeElement {
+  className = "";
+  textContent = "";
+  src = "";
+  alt = "";
+  readonly tagName: string;
+  readonly children: (FakeElement | string)[] = [];
+
+  constructor(tagName: string) {
+    this.tagName = tagName;
+  }
+
+  readonly setAttribute = (): void => undefined;
+
+  appendChild(child: FakeElement): FakeElement {
+    this.children.push(child);
+    return child;
+  }
+
+  append(...children: (FakeElement | string)[]): void {
+    this.children.push(...children);
+  }
+
+  find(className: string): FakeElement | undefined {
+    for (const child of this.children) {
+      if (typeof child === "string") {
+        continue;
+      }
+      const found = child.className === className ? child : child.find(className);
+      if (found !== undefined) {
+        return found;
+      }
+    }
+    return undefined;
+  }
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 function player(
   sessionId: string,
@@ -108,6 +153,23 @@ describe("the Lobby window's party (#1526, #2385)", () => {
     expect(party(false, false)).toBe(true);
     expect(party(false, true)).toBe(false);
     expect(party(true, false)).toBe(false);
+  });
+
+  it("puts the host's closed padlock before a guest's Lobby closed (#2382)", () => {
+    vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
+    const guest = {
+      ...partyOf(lobby([player("me")]), null, undefined),
+      isHost: false,
+      open: false,
+    };
+    const strip = partyStrip(guest) as unknown as FakeElement;
+    const [glyph, text] = strip.find("party-closed")?.children ?? [];
+    expect(typeof glyph === "string" ? glyph : [glyph?.tagName, glyph?.src, glyph?.alt]).toEqual([
+      "img",
+      LOBBY_ICON.closed,
+      "",
+    ]);
+    expect(text).toBe(PARTY_CLOSED);
   });
 
   it("says how long a queued party has looked for a team (#1766)", () => {

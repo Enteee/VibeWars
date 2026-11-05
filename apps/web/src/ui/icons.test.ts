@@ -23,6 +23,7 @@ import {
   fullscreenIcon,
   insigniaIcon,
   lobbyIcon,
+  LOBBY_ICON,
   musicIcon,
   offhandIcon,
   professionIcon,
@@ -129,6 +130,13 @@ describe("icons", () => {
 
   it("has a file under public/ for the attacking state", () => {
     expect(fs.existsSync(path.join(PUBLIC, attackingIcon()))).toBe(true);
+  });
+
+  it("has a file under public/ for each lobby toggle state, a different one each (#2382)", () => {
+    for (const [state, icon] of Object.entries(LOBBY_ICON)) {
+      expect(fs.existsSync(path.join(PUBLIC, icon)), state).toBe(true);
+    }
+    expect(LOBBY_ICON.open).not.toBe(LOBBY_ICON.closed);
   });
 
   it("names a badge for screen readers and on hover", () => {

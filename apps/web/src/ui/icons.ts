@@ -269,3 +269,12 @@ export function fullscreenIcon(fullscreen: boolean): string {
 export function chatIcon(): string {
   return iconUrl("ui", "chat");
 }
+
+/**
+ * The host's lobby toggle (#2382): a shut padlock while closed, an open
+ * door while open. They differ in shape, so neither leans on colour.
+ */
+export const LOBBY_ICON: Readonly<Record<"closed" | "open", string>> = {
+  closed: iconUrl("ui", "lobby-closed"),
+  open: iconUrl("ui", "lobby-open"),
+};

@@ -263,6 +263,18 @@ const ui = {
   "chain-lead": () => `<g ${stroke(C.assassin, 2)}>${chainDagger(35)}</g>`,
   "chain-off-hand": () => `<g ${stroke(C.assassin, 2)}>${chainDagger(-35)}</g>`,
   "chain-dual": () => `<g ${stroke(C.assassin, 2)}>${chainDagger(35)}${chainDagger(-35)}</g>`,
+  // A shut padlock, shackle down, solid body with a keyhole, dimmed: the
+  // lobby is closed (#2382).
+  "lobby-closed": () =>
+    `<path d="M7.5 11V7.5a4.5 4.5 0 0 1 9 0V11" ${stroke(C.inkDim, 2.6)}/>` +
+    `<rect x="4.5" y="10.5" width="15" height="11" rx="1.5" fill="${C.inkDim}"/>` +
+    `<circle cx="12" cy="15" r="1.7" fill="${C.bg}"/><path d="M12 15.5v3" ${stroke(C.bg, 1.8)}/>`,
+  // A door frame, its door swung in on the right jamb, an arrow going in
+  // through it: the lobby is open (#2382). No lock, so the shapes differ.
+  "lobby-open": () =>
+    `<path d="M9 21.5V2.5h12v19" ${stroke(C.ink, 2)}/>` +
+    `<path d="M21 2.5L16 5v14.5l5 2z" fill="${C.ink}"/>` +
+    `<path d="M1.5 12H13M9.5 8.5L13 12l-3.5 3.5" ${stroke(C.ink, 2.2)}/>`,
 };
 
 // ---------------------------------------------------------------------------

@@ -1304,7 +1304,7 @@ export class MatchSimulation {
     return netPips(
       participant.combatant,
       this.#naturalPips(participant) + creaturePips(participant),
-      this.#upkeep(participant.id),
+      this.#upkeep(participant.combatant),
     );
   }
 
@@ -2980,7 +2980,7 @@ export class MatchSimulation {
     // Read before anything is spent: Extend Enchantments lengthens the
     // enchantment that uses it up.
     const own = ownSkillBoost(record.combatant.statuses.active, skill);
-    payCost(
+    const causedOvercast = payCost(
       skill,
       record.combatant,
       key,
@@ -3003,7 +3003,7 @@ export class MatchSimulation {
     const heldAttributeDeltas = [...glyphs, ...spent].flatMap(
       (id) => getStatusDefinition(id).attributeDeltas,
     );
-    return { rule: { ...rule, heldAttributeDeltas, own }, castsInstantly };
+    return { rule: { ...rule, heldAttributeDeltas, own, causedOvercast }, castsInstantly };
   }
 
   /**
@@ -3170,7 +3170,7 @@ export class MatchSimulation {
     record: ParticipantRecord,
     skill: Skill,
   ): {
-    rule: Omit<CastRule, "own" | "heldAttributeDeltas">;
+    rule: Omit<CastRule, "own" | "heldAttributeDeltas" | "causedOvercast">;
     castsInstantly: boolean;
     losesAllEnergy: boolean;
     spent: readonly StatusId[];
@@ -3345,7 +3345,7 @@ export class MatchSimulation {
       // Energy regenerates continuously, at the net pips (GW1); adrenaline
       // is earned by acting, not by waiting, so it deliberately does not
       // tick up here.
-      const energyPips = netPips(record.combatant, natural, this.#upkeep(record.id)).energy;
+      const energyPips = netPips(record.combatant, natural, this.#upkeep(record.combatant)).energy;
       // Up to the ceiling overcast leaves, which can be below 0 (#461).
       record.combatant.energy = Math.max(
         energyFloor(record.combatant),
@@ -3592,9 +3592,9 @@ export class MatchSimulation {
     }
   }
 
-  /** What `casterId` pays for the enchantments it maintains, in pips (#837). */
-  #upkeep(casterId: string): number {
-    return upkeepPips(casterId, combatantsOf(this.#participants.values()));
+  /** What `caster` pays for the enchantments it maintains, in pips (#837, #2321). */
+  #upkeep(caster: Combatant): number {
+    return upkeepPips(caster, combatantsOf(this.#participants.values()));
   }
 
   /**
@@ -3933,6 +3933,17 @@ export class MatchSimulation {
       cast.rule.unblockable && used.attack !== undefined
         ? { ...used, attack: { ...used.attack, unblockable: true } }
         : used;
+    // Equinox's (#2321): a spell that caused Overcast as it began causes
+    // more as it finishes, the highest surcharge on its caster once.
+    if (cast.rule.causedOvercast) {
+      addOvercast(
+        record.combatant,
+        record.combatant.statuses.active.reduce(
+          (highest, { id }) => Math.max(highest, getStatusDefinition(id).overcastSurcharge),
+          0,
+        ),
+      );
+    }
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
     if (
