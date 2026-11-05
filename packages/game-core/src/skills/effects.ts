@@ -3199,7 +3199,8 @@ export function disableOwnSkills(
 /**
  * Whether `effect` disables the caster's bar skill `skillId` (#1473):
  * for `attribute` (#1511), never `usedId`, the skill that disables them;
- * for `all` (#1570), every one; for `types` (#1930), those of a type,
+ * for `all` (#1570), every one; for `others` (#2287), every one but
+ * `usedId`; for `types` (#1930), those of a type,
  * `usedId` included.
  */
 function disabledOwn(
@@ -3209,6 +3210,9 @@ function disabledOwn(
 ): boolean {
   if (effect.which === "all") {
     return true;
+  }
+  if (effect.which === "others") {
+    return skillId !== usedId;
   }
   if (effect.which === "spells") {
     return isSpellId(skillId);

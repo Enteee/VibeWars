@@ -151,6 +151,7 @@ describe("status definitions", () => {
         def.energyCostMultiplier !== 1 ||
         def.preventsResurrection ||
         def.preventsSpeedBoosts ||
+        def.preventsAdrenalineGain ||
         def.returnsSource !== undefined ||
         def.stepsToTarget !== undefined ||
         def.elementalDamageTakenAs !== undefined ||
@@ -233,6 +234,7 @@ describe("status definitions", () => {
       migraine: -7,
       "conjure-nightmare": -8,
       "images-of-remorse": -2.6,
+      "illusion-of-pain": -8.6,
       wither: -4,
       "life-siphon": -3,
       "life-siphon-regen": 3,
@@ -259,6 +261,9 @@ describe("status definitions", () => {
       "energetic-was-lee-sa": 2,
       "blood-is-power": 5,
       "ether-prodigy": 6,
+      "ether-lord": -3,
+      "ether-lord-regeneration": 3,
+      "ether-phantom": -1,
       wither: -1,
       "obsidian-flesh": -2,
       "zealous-renewal": -1,
