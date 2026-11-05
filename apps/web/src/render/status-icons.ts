@@ -510,6 +510,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Staples (#2278).
   "lightning-surge": icon("lightning-surge"),
   "ward-against-harm": icon("ward-against-harm"),
+  // Elementalist staples (#2288).
+  gust: icon("gust"),
+  "mirror-of-ice": icon("mirror-of-ice"),
   "mark-of-subversion": icon("mark-of-subversion"),
   "mantra-of-recall": icon("mantra-of-recall"),
   // Elementalist staples (#2289).

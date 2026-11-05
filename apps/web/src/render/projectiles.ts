@@ -32,6 +32,7 @@ export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
   "elementalist.lightning-orb": "lightning-orb",
   "elementalist.shock-arrow": "lightning-orb",
   "elementalist.lightning-javelin": "lightning-orb",
+  "elementalist.lightning-bolt": "lightning-orb",
   "elementalist.shard-storm": "ice-shard",
   "elementalist.ice-spear": "ice-shard",
   "elementalist.water-trident": "water-trident",
