@@ -1540,18 +1540,10 @@ export const MONK_SKILLS: readonly Skill[] = [
         amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 46 } },
         type: "holy",
         armorPenetration: 0,
-      },
-      {
-        kind: "if",
-        condition: { kind: "target-attacking" },
-        effects: [
-          {
-            kind: "damage",
-            amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 30 } },
-            type: "holy",
-            armorPenetration: 0,
-          },
-        ],
+        conditionalBonus: {
+          condition: { kind: "target-attacking" },
+          amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 30 } },
+        },
       },
     ],
   },
@@ -1588,18 +1580,10 @@ export const MONK_SKILLS: readonly Skill[] = [
         amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 26, atTwelve: 50 } },
         type: "holy",
         armorPenetration: 0,
-      },
-      {
-        kind: "if",
-        condition: { kind: "target-attacking" },
-        effects: [
-          {
-            kind: "damage",
-            amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 15, atTwelve: 51 } },
-            type: "holy",
-            armorPenetration: 0,
-          },
-        ],
+        conditionalBonus: {
+          condition: { kind: "target-attacking" },
+          amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 15, atTwelve: 51 } },
+        },
       },
     ],
   },
@@ -1911,18 +1895,10 @@ export const MONK_SKILLS: readonly Skill[] = [
         amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 46 } },
         type: "holy",
         armorPenetration: 0,
-      },
-      {
-        kind: "if",
-        condition: { kind: "target-knocked-down" },
-        effects: [
-          {
-            kind: "damage",
-            amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 46 } },
-            type: "holy",
-            armorPenetration: 0,
-          },
-        ],
+        conditionalBonus: {
+          condition: { kind: "target-knocked-down" },
+          amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 46 } },
+        },
       },
     ],
   },
@@ -3954,6 +3930,35 @@ export const MONK_SKILLS: readonly Skill[] = [
         seconds: { flat: 20 },
       },
     ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Adrenaline in points (#2302)                                           */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.balthazars-spirit",
+    name: "Balthazar's Spirit",
+    gwId: 242,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Maintained: adrenaline points and Energy whenever the ally takes damage.
+    effects: [{ kind: "maintain-status", on: "target", statusId: "balthazars-spirit" }],
   },
   /* ---------------------------------------------------------------------- */
   /* Monk staples (#2286), at their rank-12 values                          */

@@ -502,6 +502,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "zealots-fire": icon("zealots-fire"),
   "glimmering-mark": icon("glimmering-mark"),
   "spoil-victor": icon("spoil-victor"),
+  // Adrenaline in points (#2302).
+  "balthazars-spirit": icon("balthazars-spirit"),
   // Monk staples (#2286).
   "essence-bond": icon("essence-bond"),
   "life-barrier": icon("life-barrier"),
@@ -602,6 +604,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "grenths-aura": icon("grenths-aura"),
   // Warrior staples 5 (#2315).
   "to-the-limit": icon("to-the-limit"),
+  // Signet of Suffering (#2333).
+  "signet-of-suffering": icon("signet-of-suffering"),
 };
 
 const GAP = 2;

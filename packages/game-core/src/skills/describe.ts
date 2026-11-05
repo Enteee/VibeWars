@@ -401,11 +401,17 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `+${String(pips)} Health regeneration for each enchantment on you (at most ${String(max)})`,
     );
   }
-  if (definition.energyPips < 0) {
-    parts.push(`−${String(-definition.energyPips)} Energy degeneration`);
+  // Blood is Power's at its caster's rank (#2328); none at a rank that
+  // gives none, Lyssa's Aura's at 0.
+  const energyPips =
+    ranks === undefined
+      ? statAtTwelve(definition.energyPips)
+      : Math.round(statAt(definition.energyPips, ranks));
+  if (energyPips < 0) {
+    parts.push(`−${statText(definition.energyPips, ranks, whole)} Energy degeneration`);
   }
-  if (definition.energyPips > 0) {
-    parts.push(`+${String(definition.energyPips)} Energy regeneration`);
+  if (energyPips > 0) {
+    parts.push(`+${statText(definition.energyPips, ranks, whole)} Energy regeneration`);
   }
   // Melandru's Resilience's (#2189), Conviction's scaled (#2217).
   if (statAtTwelve(definition.healthPipsPerCondition) !== 0) {
@@ -1460,7 +1466,7 @@ function describeSpellOnAlly(
   for (const { on, usedSkill, effects, target } of triggers) {
     if (
       on !== "bearer-casts-spell" ||
-      usedSkill?.targetsAlly !== true ||
+      usedSkill?.targets !== "ally" ||
       usedSkill.attributes === undefined
     ) {
       return undefined;
@@ -1766,8 +1772,7 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     (event === "bearer-uses-skill" || event === "source-targets-bearer") &&
     trigger.usedSkill !== undefined
   ) {
-    const { type, notType, attributes, profession, elite, adrenal, targetsAlly } =
-      trigger.usedSkill;
+    const { type, notType, attributes, profession, elite, adrenal, targets } = trigger.usedSkill;
     const words = [
       ...(notType === undefined
         ? []
@@ -1783,8 +1788,9 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     if (event === "source-targets-bearer") {
       return `is targeted by your ${words.join(" ")}`;
     }
-    // Zealot's Fire's "a skill that targets an ally" (#2282).
-    const on = targetsAlly === undefined ? "" : " on an ally";
+    // Zealot's Fire's "a skill that targets an ally" (#2282), Signet of
+    // Suffering's "skill that targets a foe" (#2333).
+    const on = targets === undefined ? "" : ` on ${targets === "ally" ? "an ally" : "a foe"}`;
     return `uses ${/^[aeiou]/i.test(words[0] ?? "") ? "an" : "a"} ${words.join(" ")}${on}`;
   }
   return undefined;
@@ -3262,8 +3268,13 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     }
     case "adrenaline-gain": {
-      const magnitude = countedMagnitude(effect.strikes, effect.per, ranks);
-      const strikes = `${shown(magnitude)} ${magnitude.current === 1 ? "strike" : "strikes"}`;
+      // Balthazar's Spirit's points (#2302): "gains 2...5 adrenaline".
+      const amount = effect.units ?? effect.strikes;
+      const magnitude = countedMagnitude(amount, effect.per, ranks);
+      const strikes =
+        effect.units === undefined
+          ? `${shown(magnitude)} ${magnitude.current === 1 ? "strike" : "strikes"} of adrenaline`
+          : `${shown(magnitude)} adrenaline`;
       // Mark of Fury's attacker gains them (#2259).
       const gain =
         effect.recipient === "owner"
@@ -3272,17 +3283,11 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
             ? "Target gains"
             : "Gain";
       // "Make Your Time!"'s (#2222): "Gain 2 strikes of adrenaline for each ally in earshot".
-      const counted = withPerText(
-        `${gain} ${strikes} of adrenaline`,
-        effect.strikes,
-        effect.per,
-        ranks,
-        {
-          alone: gain,
-          unit: " strikes of adrenaline",
-          onTarget: "on them",
-        },
-      );
+      const counted = withPerText(`${gain} ${strikes}`, amount, effect.per, ranks, {
+        alone: gain,
+        unit: " strikes of adrenaline",
+        onTarget: "on them",
+      });
       return {
         text: `${counted}${perFoeHit(effect)}${perOwnMeleeAttackSkill(effect)}`,
         magnitude,

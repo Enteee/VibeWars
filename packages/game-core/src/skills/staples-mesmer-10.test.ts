@@ -169,20 +169,23 @@ describe("the ten are the corpus's (#2287)", () => {
 
 describe("Ether Lord (#2287)", () => {
   it.each([
-    [R12, 9],
-    [R0, 5],
-  ])("drains its caster, degenerates the foe and regenerates the caster", (ranks, seconds) => {
-    const match = arena([ETHER_LORD], ranks);
-    const c = get(match, "c");
-    const foe = get(match, "foe");
-    c.energy = 40;
-    cast(match, "c", 0, "foe", 2.1);
-    expect(c.energy).toBeLessThan(1);
-    expect(foe.statuses.get("ether-lord")?.durationSeconds).toBe(seconds);
-    expect(c.statuses.get("ether-lord-regeneration")?.durationSeconds).toBe(seconds);
-    expect(aggregateModifiers(foe.statuses.active).energyPips).toBe(-3);
-    expect(aggregateModifiers(c.statuses.active).energyPips).toBe(3);
-  });
+    [R12, 9, 3],
+    [R0, 5, 1],
+  ])(
+    "drains its caster, degenerates the foe and regenerates the caster",
+    (ranks, seconds, pips) => {
+      const match = arena([ETHER_LORD], ranks);
+      const c = get(match, "c");
+      const foe = get(match, "foe");
+      c.energy = 40;
+      cast(match, "c", 0, "foe", 2.1);
+      expect(c.energy).toBeLessThan(1);
+      expect(foe.statuses.get("ether-lord")?.durationSeconds).toBe(seconds);
+      expect(c.statuses.get("ether-lord-regeneration")?.durationSeconds).toBe(seconds);
+      expect(aggregateModifiers(foe.statuses.active).energyPips).toBe(-pips);
+      expect(aggregateModifiers(c.statuses.active).energyPips).toBe(pips);
+    },
+  );
 
   it("casts on its bare cost, leaving nothing", () => {
     const match = arena([ETHER_LORD]);

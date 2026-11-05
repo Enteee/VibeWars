@@ -4675,6 +4675,41 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "mark-of-subversion", durationSeconds: { flat: 6 } },
     ],
   },
+  {
+    id: "necromancer.signet-of-suffering",
+    name: "Signet of Suffering",
+    gwId: 1364,
+    type: "signet",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You suffer from Bleeding for 6 seconds. The next Necromancer skill
+    // that targets a foe causes Bleeding for 2...16 seconds" (#2333): no
+    // duration, it waits for that skill.
+    effects: [
+      { kind: "caster-gains-status", statusId: "bleeding", durationSeconds: 6 },
+      {
+        kind: "apply-status",
+        statusId: "signet-of-suffering",
+        durationSeconds: { flat: Number.POSITIVE_INFINITY },
+      },
+    ],
+  },
   /* ---------------------------------------------------------------------- */
   /* Staples (#2313), at their rank-12 values                               */
   /* ---------------------------------------------------------------------- */

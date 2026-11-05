@@ -88,6 +88,7 @@ export type NecromancerStatusId =
   | "spoil-victor"
   // Staples (#2278).
   | "mark-of-subversion"
+  | "signet-of-suffering"
   // Staples (#2313).
   | "tainted-flesh"
   | "dark-aura"
@@ -373,10 +374,11 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     endsWhenTriggered: true,
   }),
   // Necromancer and Elementalist staples (#1540), at their rank-12 values.
-  // "For 10 seconds, target other ally gains +3...6 Energy regeneration": 5.
+  // "For 10 seconds, target other ally gains +3...6 Energy regeneration", at
+  // the caster's Blood Magic (#2328): 5 at rank 12.
   "blood-is-power": define("blood-is-power", "Blood is Power", "enchantment", {
     profession: "necromancer",
-    energyPips: 5,
+    energyPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 5.4 } },
   }),
   // "For 5 seconds, whenever a party member hits a foe with physical
   // damage, that party member does +3...16 damage": 13, on each hit.
@@ -840,6 +842,30 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       ],
       skillId: "necromancer.mark-of-subversion",
     },
+  }),
+  // "The next Necromancer skill that targets a foe causes Bleeding for
+  // 2...16 seconds" (#2333): fired as the skill is used, on its target.
+  // A skill on an ally or on itself, or no Necromancer one, leaves it.
+  "signet-of-suffering": define("signet-of-suffering", "Signet of Suffering", "skill-effect", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { profession: "necromancer", targets: "foe" },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "bleeding",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 2, atTwelve: 13.2 },
+            },
+          },
+        ],
+        target: "skill-target",
+        skillId: "necromancer.signet-of-suffering",
+      },
+    ],
+    endsWhenTriggered: true,
   }),
   // Staples (#2313). "...allies in the area are immune to disease, and
   // anyone striking those allies in melee becomes Diseased for 3...15

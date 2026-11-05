@@ -205,6 +205,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   healthPipsPerCondition: true,
   criticalChanceBonus: true,
   attackDamageDelta: true,
+  energyPips: true,
 };
 
 /** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
@@ -347,8 +348,11 @@ export interface StatusDefinition {
    */
   readonly healthPipsPerCondition: StatusStat;
   readonly healthPipsPerHex: number;
-  /** Energy regeneration while active, in pips (`ENERGY_PER_PIP`), summed with the base. */
-  readonly energyPips: number;
+  /**
+   * Energy regeneration while active, in pips (`ENERGY_PER_PIP`), summed
+   * with the base; at its source's rank where GW1's scales (#2328).
+   */
+  readonly energyPips: StatusStat;
   /** Energy pips for each condition, and for each hex, as `healthPipsPerCondition` (#2189). */
   readonly energyPipsPerCondition: number;
   readonly energyPipsPerHex: number;
@@ -1868,11 +1872,14 @@ export interface StatusTrigger {
    * spell". On `bearer-casts-spell` too, and on `bearer-interrupted`, for
    * the skill interrupted (#2132), never a plain swing. With `spell`, any
    * spell (`isSpell`), a hex or an enchantment too: Persistence of
-   * Memory's "a spell you cast". With `targetsAlly` (#2282), only a skill
+   * Memory's "a spell you cast". With `targets` "ally" (#2282), only a skill
    * used on an ally of the bearer's or on the bearer: Zealot's Fire's
-   * "whenever you use a skill that targets an ally". On `source-targets-bearer`
-   * too (#2290); with `notType`, only a skill not of that type, Mind
-   * Wrack's "non-hex Mesmer skill". Absent: any skill.
+   * "whenever you use a skill that targets an ally"; "foe" (#2333), only
+   * one used on a creature of another team: Signet of Suffering's "the
+   * next Necromancer skill that targets a foe". No aim answers neither.
+   * On `source-targets-bearer` too (#2290); with `notType`, only a skill
+   * not of that type, Mind Wrack's "non-hex Mesmer skill". Absent: any
+   * skill.
    */
   readonly usedSkill?: {
     readonly type?: SkillType;
@@ -1882,7 +1889,7 @@ export interface StatusTrigger {
     readonly profession?: ProfessionId;
     readonly elite?: true;
     readonly adrenal?: true;
-    readonly targetsAlly?: true;
+    readonly targets?: "ally" | "foe";
   };
   /**
    * On `bearer-attacks` and `bearer-casts-spell` only (#2282): it fires
@@ -4505,7 +4512,9 @@ export function aggregateModifiers(
       Math.round(statAt(def.healthPipsPerCondition, ranks)) * conditions +
       def.healthPipsPerHex * hexes;
     energyPips +=
-      def.energyPips + def.energyPipsPerCondition * conditions + def.energyPipsPerHex * hexes;
+      Math.round(statAt(def.energyPips, ranks)) +
+      def.energyPipsPerCondition * conditions +
+      def.energyPipsPerHex * hexes;
     armorModifier += Math.round(statAt(def.armorModifier, ranks)) * (status.stacks ?? 1);
     armorWhileStill += def.armorWhileStill;
     healthPerSecondWhileMoving += def.healthPerSecondWhileMoving;

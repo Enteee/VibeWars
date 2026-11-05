@@ -369,14 +369,11 @@ describe("Shatterstone (#1367)", () => {
 });
 
 describe("Mind Freeze (#1367)", () => {
-  it("against a foe with less energy, strikes for 50 twice and slows it to 0.1 for 4 s", () => {
+  it("against a foe with less energy, strikes once for 100 and slows it to 0.1 for 4 s", () => {
     const match = sim(vec2(300, 0));
     get(match, "n").energy = 50;
     get(match, "a").energy = 10;
-    expect(damage(cast(match, MIND_FREEZE, "a"))).toEqual([
-      ["a", 50],
-      ["a", 50],
-    ]);
+    expect(damage(cast(match, MIND_FREEZE, "a"))).toEqual([["a", 100]]);
     hasFor(match, "a", "mind-freeze", 4);
     expect(speed(match, "a")).toBe(0.1);
   });
@@ -448,8 +445,7 @@ describe("Water Magic texts (#1367)", () => {
           "Every 1s for 10s, foes adjacent: interrupts the target's spell, if they are casting one",
         ],
         "mindFreeze": [
-          "Deals 50 cold damage",
-          "If you have more Energy than target: deals 50 cold damage",
+          "Deals 50 cold damage; if you have more Energy than target: +50",
           "If you have more Energy than target: applies Mind Freeze for 4s (moves at 10% speed)",
         ],
         "shatterstone": [

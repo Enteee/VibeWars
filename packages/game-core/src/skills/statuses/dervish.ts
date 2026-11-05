@@ -564,12 +564,12 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     attackDurationMultiplier: 0.75,
     adrenalineGainFaster: 0.25,
   }),
-  // "You have -3 Energy regeneration, and you gain 1...5...6 Energy every
+  // "You have -2 Energy regeneration, and you gain 1...5...6 Energy every
   // time you hit with an attack" (#1667): 5, its rank-12 value, on any
   // hit, a plain swing's too, as Zealous Renewal's.
   "zealous-vow": define("zealous-vow", "Zealous Vow", "enchantment", {
     profession: "dervish",
-    energyPips: -3,
+    energyPips: -2,
     triggers: [
       {
         on: "bearer-hits",
