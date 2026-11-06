@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { stroke, fitRows } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -333,4 +333,38 @@ const rows = {
   ],
 };
 
-export default rows;
+/** Drawn smaller to sit inside the plate (#2417). */
+const fits = {
+  "zojuns-haste": [0.86, 0],
+  "infuriating-heat": [0.92, 0],
+  "kindle-arrows": [0.7, 3],
+  "ignite-arrows": [0.72, 4],
+  "seeking-arrows": [0.64, 4],
+  "barbed-arrows": [0.62, 4],
+  "barbed-arrows-armor": [0.88, 0],
+  "melandrus-arrows": [0.62, 4],
+  "read-the-wind": [0.56, 3],
+  "quickening-zephyr": [0.94, 0],
+  "frozen-soil": [0.9, 0],
+  "muddy-terrain": [0.94, 0],
+  conflagration: [0.9, 0],
+  winter: [0.9, 0],
+  symbiosis: [0.82, 0],
+  "favorable-winds": [0.92, 0],
+  brambles: [0.94, 0],
+  toxicity: [0.9, 0],
+  "greater-conflagration": [0.8, 0],
+  "energizing-wind": [0.94, 0],
+  "primal-echoes": [0.86, 0],
+  "roaring-winds": [0.8, 0],
+  famine: [0.9, 0],
+  lacerate: [0.9, 0],
+  "predatory-bond": [0.96, 0],
+  "strike-as-one-pet": [0.68, 0],
+  "trappers-focus": [0.88, 5],
+  "disrupting-accuracy": [0.7, 3],
+  "marksmans-wager": [0.66, 4],
+  "storm-chaser": [0.74, 0],
+};
+
+export default fitRows(rows, fits);

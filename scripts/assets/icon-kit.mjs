@@ -144,3 +144,27 @@ export const stepAndReturn = (kind, c, w) => {
   }[kind];
   return top + `<path d="M21 15v1.5a4 4 0 0 1-4 4H5M8.5 17L5 20.5L8.5 24" ${stroke(c, w)}/>`;
 };
+
+/**
+ * Rows with some glyphs drawn smaller to sit inside their plate (#2404): each
+ * fit is `[scale, dy]`, the glyph scaled about the plate's centre and moved down by dy.
+ * @param {Readonly<Record<string, readonly [Category, Glyph]>>} rows
+ * @param {Readonly<Record<string, readonly [number, number]>>} fits
+ * @returns {Record<string, readonly [Category, Glyph]>}
+ */
+export const fitRows = (rows, fits) =>
+  Object.fromEntries(
+    Object.entries(rows).map(([id, [category, glyph]]) => {
+      const fit = fits[id];
+      if (fit === undefined) return [id, [category, glyph]];
+      const [scale, dy] = fit;
+      return [
+        id,
+        [
+          category,
+          (c) =>
+            `<g transform="translate(12 ${String(12 + dy)}) scale(${String(scale)}) translate(-12 -12)">${glyph(c)}</g>`,
+        ],
+      ];
+    }),
+  );
