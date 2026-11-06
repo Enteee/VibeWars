@@ -2042,8 +2042,12 @@ export function applyEffect(
       }
       // Greater Conflagration's (#1873) on the caster, then Winter's (#1745)
       // on the target: elemental damage reaches its bearer as cold. A
-      // spell landing, not a status's trigger, is a spell's (#2503).
-      const landing = context.skillId === undefined ? undefined : getSkill(context.skillId);
+      // spell landing, not a status's trigger, is a spell's (#2503): an
+      // ends trigger carries its skill's id too, so the firing status rules.
+      const landing =
+        context.skillId === undefined || context.firingStatusId !== undefined
+          ? undefined
+          : getSkill(context.skillId);
       const dealt = skillDamage(
         amount,
         damageTypeTaken(

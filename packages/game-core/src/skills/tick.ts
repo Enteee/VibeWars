@@ -259,8 +259,8 @@ export function raisedMaxHealth(combatant: MaxHealthHolder): number {
 /**
  * Maximum health the bearer's statuses add for each point of its own
  * maximum Energy (#2503): Energy Boon's 1...3, read live. That maximum is
- * its own and its statuses' bonus; a held set's mods are not read, as
- * theirs can hang on Health and so on this.
+ * the held set's, its Energy included, and its statuses' bonus, so a
+ * weapon swap moves it.
  */
 function maxHealthFromMaxEnergy(combatant: MaxHealthHolder): number {
   let bonus = 0;

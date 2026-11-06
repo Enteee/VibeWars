@@ -282,6 +282,23 @@ describe("Veil of Thorns (#2503)", () => {
     };
     expect(lost(veiled())).toBe(lost(makeCombatant({ id: "b", health: 1000, maxHealth: 1000 })));
   });
+
+  it("does not cut a hex spell's ends trigger: Shatterstone bursts in full", () => {
+    // An ends trigger carries its skill's id, a spell's here.
+    const burst = (veil: boolean): number => {
+      const match = sim([body("m", 0, vec2(0, 0)), body("e", 1, vec2(0, 900))]);
+      const { statuses } = get(match, "m").combatant;
+      if (veil) {
+        statuses.apply("veil-of-thorns", 30, "m", at("dervish.earth-prayers", 12));
+      }
+      statuses.apply("shatterstone", 0.5, "e", NO_RANKS);
+      return events(stepFor(match, 1))
+        .filter((event) => event.kind === "damage" && event.targetId === "m")
+        .reduce((sum, event) => sum + (event.kind === "damage" ? event.amount : 0), 0);
+    };
+    expect(burst(false)).toBeGreaterThan(0);
+    expect(burst(true)).toBe(burst(false));
+  });
 });
 
 describe("Armor of Sanctity (#2503)", () => {
@@ -342,6 +359,36 @@ describe("Energy Boon (#2503)", () => {
     expect(raisedMaxHealth(bearer)).toBe(480 + 78);
     bearer.maxEnergy = 50;
     expect(raisedMaxHealth(bearer)).toBe(480 + 130);
+  });
+
+  it("moves Health with a weapon swap's Energy, both ways, and logs no damage", () => {
+    const spare = {
+      equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+      maxEnergy: 50,
+      maxHealth: 480,
+      baseEnergyPips: 0,
+    };
+    const match = sim([
+      { ...body("m", 0, vec2(0, 0)), maxEnergy: 30, spareWeaponSets: [spare, null, null] },
+      body("e", 1, vec2(0, 900)),
+    ]);
+    const { combatant } = get(match, "m");
+    combatant.statuses.apply("energy-boon", 55, "m", at("elementalist.energy-storage", 12));
+    combatant.health = raisedMaxHealth(combatant);
+    expect(combatant.health).toBe(480 + 78);
+
+    for (const [set, health] of [
+      [1, 480 + 130],
+      [0, 480 + 78],
+      [1, 480 + 130],
+    ] as const) {
+      expect(match.requestWeaponSet("m", set)?.kind).toBe("swapped");
+      expect(combatant.health).toBe(health);
+      const hurt = events(match.step(DT).log).filter(
+        (event) => event.kind === "damage" && event.targetId === "m",
+      );
+      expect(hurt).toEqual([]);
+    }
   });
 
   it("enchants caster and ally; each gains 10 Energy, the caster 6 more at rank 12", () => {

@@ -7673,7 +7673,8 @@ export class MatchSimulation {
     }
     const { combatant } = record;
     const before = combatant.maxEnergy;
-    const healthBefore = combatant.maxHealth;
+    // Read raised: Energy Boon hangs Health on the set's Energy (#2503).
+    const healthBefore = raisedMaxHealth(combatant);
     record.activeWeaponSet = set;
     record.pendingWeaponSet = undefined;
     combatant.equipment = held.equipment;
@@ -7691,7 +7692,7 @@ export class MatchSimulation {
       record.resolvedMaxHealth,
       combatant.morale,
     );
-    const change = combatant.maxHealth - healthBefore;
+    const change = raisedMaxHealth(combatant) - healthBefore;
     if (change >= 0) {
       const repaid = Math.min(record.swapHealthDebt, change);
       record.swapHealthDebt -= repaid;
