@@ -398,6 +398,15 @@ const NO_BOT_USE = new Set([
   // Raising every dead party member round the caster is no use the bot
   // has yet: its "resurrect" is a cast on one dead ally.
   "monk.light-of-dwayna",
+  // Restoration (#2478) is the same, a raise that waits for its spirit's
+  // death.
+  "ritualist.restoration",
+  // Empowerment's aura (#2478) only raises the maxima of allies holding an
+  // item: no role the bot weighs.
+  "ritualist.empowerment",
+  // Soul Twisting (#2478) eases only its own binding rituals: self-help no
+  // rule reaches for.
+  "ritualist.soul-twisting",
 ]);
 
 function skill(id: string) {

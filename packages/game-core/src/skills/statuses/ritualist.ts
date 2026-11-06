@@ -1,7 +1,7 @@
 import { AREA_ADJACENT, AREA_EARSHOT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
 import { KNOCKDOWN_SECONDS } from "../types.js";
-import { define } from "./define.js";
+import { define, ownSkills } from "./define.js";
 
 export type RitualistStatusId =
   | "weapon-of-warding"
@@ -76,6 +76,9 @@ export type RitualistStatusId =
   | "renewing-surge"
   // Staples (#2413).
   | "binding-chains"
+  // Mechanics (#2478).
+  | "empowerment"
+  | "soul-twisting"
   // Mechanics (#2479).
   | "death-pact-signet";
 
@@ -895,6 +898,36 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       ],
       skillId: "ritualist.binding-chains",
     },
+  }),
+  // "All allies within its range holding an item gain 15...45 maximum
+  // Health and 10 maximum Energy" (#2478), at its caster's Spawning Power:
+  // ashes, a flag or a relic.
+  empowerment: define("empowerment", "Empowerment", "skill-effect", {
+    profession: "ritualist",
+    maxHealthBonus: {
+      scaling: { attributeId: "ritualist.spawning-power", atZero: 15, atTwelve: 39 },
+    },
+    maxEnergyBonus: 10,
+    onlyWhileHoldingItem: true,
+  }),
+  // "Your Binding Rituals cost 15 less Energy (minimum 5) and recharge
+  // 25...50% faster. Soul Twisting ends after 1...3 Binding Rituals"
+  // (#2478), at its Spawning Power; the last ritual gets the discount too.
+  "soul-twisting": define("soul-twisting", "Soul Twisting", "skill-effect", {
+    profession: "ritualist",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "binding-ritual" },
+        {
+          energyDiscount: 15,
+          energyFloor: 5,
+          rechargeFaster: {
+            scaling: { attributeId: "ritualist.spawning-power", atZero: 0.25, atTwelve: 0.45 },
+          },
+          uses: { scaling: { attributeId: "ritualist.spawning-power", atZero: 1, atTwelve: 2.6 } },
+        },
+      ),
+    ],
   }),
   // "The next time that ally dies within 120 seconds, so do you" (#2479):
   // the caster dies with no death penalty.

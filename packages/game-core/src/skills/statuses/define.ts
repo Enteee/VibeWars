@@ -47,6 +47,7 @@ export function define(
     redirectsConditionsToMinion: false,
     maxHealthBonusPerEnchantment: 0,
     maxEnergyBonus: 0,
+    onlyWhileHoldingItem: false,
     healingMultiplier: 1,
     weaponDamageMultiplier: 1,
     damageDealtMultiplier: 1,

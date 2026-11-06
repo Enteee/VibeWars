@@ -379,8 +379,9 @@ export const CREATURE_LOOKS = [
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
 /**
- * A spirit's death burst as it arrived: its rate (#1603), or the time of
- * the status it gives (#1956), on its owner's rank.
+ * A spirit's death burst as it arrived: its rate (#1603), the time of
+ * the status it gives (#1956), or the Health it raises with (#2478), on
+ * its owner's rank.
  */
 export type ArrivedDeathBurst =
   | (Omit<Extract<DeathBurst, { effect: "damage" | "heal" }>, "perSecondAlive"> & {
@@ -388,6 +389,9 @@ export type ArrivedDeathBurst =
     })
   | (Omit<Extract<DeathBurst, { effect: "apply-status" }>, "durationSeconds"> & {
       readonly durationSeconds: number;
+    })
+  | (Omit<Extract<DeathBurst, { effect: "resurrect" }>, "healthPercent"> & {
+      readonly healthPercent: number;
     });
 
 /** A spirit's answer to a death in its range as it arrived: its damage on its owner's rank (#1886). */
@@ -1587,13 +1591,21 @@ export class MatchSimulation {
                     ranks,
                   ),
                 }
-              : {
-                  ...template.deathBurst,
-                  perSecondAlive: resolveMagnitudeAtRanks(
-                    template.deathBurst.perSecondAlive,
-                    ranks,
-                  ),
-                },
+              : template.deathBurst.effect === "resurrect"
+                ? {
+                    ...template.deathBurst,
+                    healthPercent: resolveMagnitudeAtRanks(
+                      template.deathBurst.healthPercent,
+                      ranks,
+                    ),
+                  }
+                : {
+                    ...template.deathBurst,
+                    perSecondAlive: resolveMagnitudeAtRanks(
+                      template.deathBurst.perSecondAlive,
+                      ranks,
+                    ),
+                  },
         onDeathInRange:
           template.onDeathInRange?.kind === "damage-same-type"
             ? {
@@ -2211,7 +2223,8 @@ export class MatchSimulation {
           !wears.has(aura.statusId) &&
           !(aura.excludesSource === true && sourceId === body.id) &&
           reaches(aura.affects, team, body.combatant.team) &&
-          distance(position, body.position) <= aura.radius
+          distance(position, body.position) <= aura.radius &&
+          (!getStatusDefinition(aura.statusId).onlyWhileHoldingItem || this.carriesBundle(body.id))
         ) {
           wears.set(aura.statusId, { sourceId, ranks });
         }
@@ -2243,6 +2256,7 @@ export class MatchSimulation {
    * its skill. A creature a burst kills leaves too, and bursts nothing:
    * only a spirit has one, and a burst passes spirits by. A status burst
    * (#1956) gives its status instead, to each one under its Health line.
+   * A resurrecting one (#2478) raises each dead party member instead.
    */
   #burstLeaving(): void {
     for (const id of [...this.#leaving]) {
@@ -2262,24 +2276,37 @@ export class MatchSimulation {
       const amount =
         burst.effect === "apply-status"
           ? burst.durationSeconds
-          : Math.min(
-              burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
-              burst.max ?? Number.POSITIVE_INFINITY,
-            );
+          : burst.effect === "resurrect"
+            ? burst.healthPercent
+            : Math.min(
+                burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
+                burst.max ?? Number.POSITIVE_INFINITY,
+              );
       if (amount <= 0) {
         continue;
       }
       const effect: SkillEffect =
         burst.effect === "apply-status"
           ? { kind: "apply-status", statusId: burst.statusId, durationSeconds: { flat: amount } }
-          : burst.effect === "damage"
-            ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
-            : { kind: "heal", amount: { flat: amount } };
+          : burst.effect === "resurrect"
+            ? {
+                kind: "resurrect",
+                health: { kind: "percent", percent: { flat: amount } },
+                energyPercent: { flat: 0 },
+                perPartyMemberWithin: undefined,
+                at: "corpse",
+              }
+            : burst.effect === "damage"
+              ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
+              : { kind: "heal", amount: { flat: amount } };
       const events: CombatEvent[] = [];
       for (const other of this.#participants.values()) {
         const ally = other.combatant.team === spirit.combatant.team;
         if (
-          other.combatant.dead ||
+          // Restoration's raises only dead party members (#2478), no
+          // creature; the rest touch only the living.
+          other.combatant.dead !== (burst.effect === "resurrect") ||
+          (burst.effect === "resurrect" && other.creature !== undefined) ||
           other.creature?.kind === "spirit" ||
           (burst.affects !== "all" && ally !== (burst.affects === "allies")) ||
           distance(other.position, spirit.position) > burst.radius ||
@@ -5025,6 +5052,8 @@ export class MatchSimulation {
       // A trigger's step moves the body as a skill's does (#2446): Augury of Death's.
       this.#recordSteps(events);
       this.#recordDeaths(events);
+      // Restoration's death burst raises (#2478): no respawn after it.
+      this.#recordResurrections(events);
     }
   }
 
