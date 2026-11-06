@@ -1924,3 +1924,40 @@ describe("narrower counts (#2432)", () => {
     expect(count({ kind: "removed", categories: ["enchantment"] })).toBe(3);
   });
 });
+
+describe("healing for a removed status of one id (#2453)", () => {
+  const removeOne = { kind: "remove-status", category: "condition", count: 1 } as const;
+  const healIfBurning = {
+    kind: "heal",
+    amount: { flat: 82 },
+    perRemoved: "condition",
+    perRemovedStatusId: "burning",
+  } as const;
+
+  function sufferingFrom(id: StatusId): SkillContext {
+    const ally = makeCombatant({ id: "ally", health: 100, maxHealth: 1000 });
+    ally.statuses.apply(id, 10, "foe", NO_RANKS);
+    return context(ally, ally);
+  }
+
+  const heals = (events: readonly CombatEvent[]) => events.filter(({ kind }) => kind === "heal");
+
+  it("heals a bearer relieved of Burning", () => {
+    expect(heals(applyEffects([removeOne, healIfBurning], sufferingFrom("burning")))).toEqual([
+      { kind: "heal", targetId: "ally", amount: 82 },
+    ]);
+  });
+
+  it("heals none relieved of another condition", () => {
+    const events = applyEffects([removeOne, healIfBurning], sufferingFrom("bleeding"));
+    expect(events.some((event) => event.kind === "status-removed")).toBe(true);
+    expect(heals(events)).toEqual([]);
+  });
+
+  it("leaves a heal per removed category as it was", () => {
+    const perCondition = { kind: "heal", amount: { flat: 82 }, perRemoved: "condition" } as const;
+    expect(heals(applyEffects([removeOne, perCondition], sufferingFrom("bleeding")))).toEqual([
+      { kind: "heal", targetId: "ally", amount: 82 },
+    ]);
+  });
+});

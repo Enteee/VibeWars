@@ -5980,6 +5980,187 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2453)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.stoneflesh-aura",
+    name: "Stoneflesh Aura",
+    gwId: 1375,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...15 seconds, damage you receive is reduced by 1...31, and you
+    // are immune to critical attacks."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "stoneflesh-aura",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 13 },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.icy-shackles",
+    name: "Icy Shackles",
+    gwId: 939,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 1...10 seconds, target foe's movement speed is reduced by 66%.
+    // While under the effects of an enchantment, that foe's movement is
+    // reduced by 90%."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "icy-shackles",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 1, atTwelve: 8.2 },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.glyph-of-swiftness",
+    name: "Glyph of Swiftness",
+    gwId: 2002,
+    type: "glyph",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 15 seconds, your next 1...5 spells recharge 25% faster and
+    // projectiles from the affected spells move 200% faster."
+    effects: [
+      { kind: "apply-status", statusId: "glyph-of-swiftness", durationSeconds: { flat: 15 } },
+    ],
+  },
+  {
+    id: "elementalist.ward-of-weakness",
+    name: "Ward of Weakness",
+    gwId: 2001,
+    type: "ward",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You create a Ward of Weakness at your current location. For 5...20
+    // seconds, foes in this area become Weakened for 5...20 seconds whenever
+    // they take elemental damage."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 17 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "ward-of-weakness", affects: "foes", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Dropped leftovers (#2446)                                             */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.storm-djinns-haste",
+    name: "Storm Djinn's Haste",
+    gwId: 1370,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...25 seconds, you move 25% faster. Each second that you are
+    // moving, you lose 1 Energy" (#2446).
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "storm-djinns-haste",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 22 },
+        },
+      },
+    ],
+  },
 ];
 
 /**

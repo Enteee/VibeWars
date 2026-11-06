@@ -30,6 +30,7 @@ import {
   type SkillGroup,
 } from "./skill-library.js";
 import { appendParts, renderSkillDescription, type SkillTooltip } from "./skill-tooltip.js";
+import { attachTopbarPopover } from "./topbar-popover.js";
 
 /**
  * The skill library (#2225): the Character Builder's, and the Team
@@ -107,7 +108,12 @@ function libraryKey(skill: Skill | CorpusSkill): string {
   return isCorpus(skill) ? `gw:${String(skill.gwId)}` : skill.id;
 }
 
-export function mountSkillLibrary(context: SkillLibraryHost): LibraryBody {
+/** The skill library's body, and how to let go of its filter popover's page listener. */
+export interface SkillLibraryBody extends LibraryBody {
+  dispose(): void;
+}
+
+export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
   const { tooltip } = context;
   const search = document.createElement("input");
   search.className = "field-input skill-search";
@@ -115,21 +121,11 @@ export function mountSkillLibrary(context: SkillLibraryHost): LibraryBody {
   search.placeholder = "Search names and text";
   search.setAttribute("aria-label", "search skills");
   // The library's "Elite" toggle (#459): only elite skills listed.
-  const eliteOnly = document.createElement("input");
-  eliteOnly.type = "checkbox";
-  const eliteFilter = h("label", "skill-elite-filter");
-  eliteFilter.append(eliteOnly, " Elite");
-  // On the search's own row, so the library is no taller for it.
-  const filters = h("div", "skill-filters");
-  filters.append(search, eliteFilter);
+  let eliteOnly = false;
   // The GW1 skills not in the game yet (#1220), off by default and
   // remembered. Their data is a chunk of its own, loaded the first time
   // this is on; until it arrives the library lists what it has.
-  const showCorpus = document.createElement("input");
-  showCorpus.type = "checkbox";
-  showCorpus.checked = loadShowCorpus();
-  const corpusToggle = h("label", "skill-corpus-toggle");
-  corpusToggle.append(showCorpus, " Show skills not in the game yet");
+  let showCorpus = loadShowCorpus();
   let corpus: readonly CorpusSkill[] | undefined;
   let corpusLoading = false;
   const loadCorpus = (): void => {
@@ -149,28 +145,142 @@ export function mountSkillLibrary(context: SkillLibraryHost): LibraryBody {
         corpusLoading = false;
       });
   };
-  if (showCorpus.checked) {
+  if (showCorpus) {
     loadCorpus();
   }
   // One chip per type the catalogue has (#567); several may be on.
   const types = new Set<SkillType>();
+  const typeOrder = skillTypesOf(IMPLEMENTED_SKILLS, Object.keys(SKILL_TYPE_NAME) as SkillType[]);
+  const typeLabel = (type: SkillType): string => SKILL_TYPE_NAME[type].toLowerCase();
+  const chip = (label: string, onClick: () => void): HTMLButtonElement => {
+    const made = button(label, "skill-type-chip", onClick);
+    made.setAttribute("aria-pressed", "false");
+    return made;
+  };
+  const typeChips = new Map<SkillType, HTMLButtonElement>();
   const chips = h("div", "skill-type-chips");
-  for (const type of skillTypesOf(
-    IMPLEMENTED_SKILLS,
-    Object.keys(SKILL_TYPE_NAME) as SkillType[],
-  )) {
-    const chip = button(SKILL_TYPE_NAME[type].toLowerCase(), "skill-type-chip", () => {
+  for (const type of typeOrder) {
+    const made = chip(typeLabel(type), () => {
       if (types.has(type)) {
         types.delete(type);
       } else {
         types.add(type);
       }
-      chip.setAttribute("aria-pressed", String(types.has(type)));
-      render(context.current());
+      filtersChanged();
     });
-    chip.setAttribute("aria-pressed", "false");
-    chips.appendChild(chip);
+    typeChips.set(type, made);
+    chips.appendChild(made);
   }
+  const eliteChip = chip("Elite only", () => {
+    eliteOnly = !eliteOnly;
+    filtersChanged();
+  });
+  const corpusChip = chip("Not in the game yet", () => {
+    showCorpus = !showCorpus;
+    saveShowCorpus(showCorpus);
+    if (showCorpus) {
+      loadCorpus();
+    }
+    filtersChanged();
+  });
+  corpusChip.setAttribute("aria-pressed", String(showCorpus));
+  const showChips = h("div", "skill-type-chips");
+  showChips.append(eliteChip, corpusChip);
+
+  // The filters in one popover (#2463), under a "Filters · N" button, and
+  // what is on shown beside it as tags that each turn theirs off. "Not in
+  // the game yet" adds skills rather than filtering them out, so it is not
+  // counted and gets no tag.
+  const filterButton = button("Filters", "skill-filter-button", () => {
+    // The popover opens and shuts it.
+  });
+  const filterPopover = h("div", "skill-filter-popover");
+  filterPopover.setAttribute("aria-label", "Skill filters");
+  /** The open popover's own close, which refocuses the button. */
+  let closeFilters: (() => void) | undefined;
+  const done = button("Done", "skill-filter-done", () => {
+    closeFilters?.();
+  });
+  filterPopover.append(
+    h("div", "skill-filter-heading", "Skill type"),
+    chips,
+    h("div", "skill-filter-heading", "Show"),
+    showChips,
+    done,
+  );
+  const tags = h("div", "skill-filter-tags");
+  let tagButtons: readonly HTMLButtonElement[] = [];
+  const filters = h("div", "skill-filters");
+  filters.append(search, filterButton, tags);
+  const filterPopoverHandle = attachTopbarPopover(filterButton, filters, (close) => {
+    closeFilters = close;
+    return {
+      element: filterPopover,
+      focus: chips.querySelector("button") ?? done,
+      dispose() {
+        closeFilters = undefined;
+      },
+    };
+  });
+
+  /**
+   * A tag that turns one filter off, focus going to the filter tag after
+   * it, else the last one left, else the button: never to clear, where a
+   * second Enter would wipe every filter.
+   */
+  const tag = (label: string, name: string, off: () => void): HTMLButtonElement => {
+    const made = button(`${label} ×`, "skill-filter-tag", () => {
+      const at = tagButtons.indexOf(made);
+      off();
+      filtersChanged();
+      (tagButtons[at] ?? tagButtons.at(-1) ?? filterButton).focus();
+    });
+    made.setAttribute("aria-label", `remove ${name} filter`);
+    return made;
+  };
+  const paintFilters = (): void => {
+    for (const [type, made] of typeChips) {
+      made.setAttribute("aria-pressed", String(types.has(type)));
+    }
+    eliteChip.setAttribute("aria-pressed", String(eliteOnly));
+    corpusChip.setAttribute("aria-pressed", String(showCorpus));
+    const active = [
+      ...typeOrder
+        .filter((type) => types.has(type))
+        .map((type) =>
+          tag(typeLabel(type), typeLabel(type), () => {
+            types.delete(type);
+          }),
+        ),
+      ...(eliteOnly
+        ? [
+            tag("elite", "elite", () => {
+              eliteOnly = false;
+            }),
+          ]
+        : []),
+    ];
+    const count = active.length;
+    filterButton.textContent = count === 0 ? "Filters" : `Filters · ${String(count)}`;
+    filterButton.setAttribute(
+      "aria-label",
+      count === 0 ? "Filters" : `Filters, ${String(count)} active`,
+    );
+    tagButtons = [...active];
+    if (count >= 2) {
+      active.push(
+        tag("clear", "every", () => {
+          types.clear();
+          eliteOnly = false;
+        }),
+      );
+    }
+    tags.replaceChildren(...active);
+  };
+  const filtersChanged = (): void => {
+    paintFilters();
+    render(context.current());
+  };
   /** The card whose details are open; one at a time (#567). */
   let open: string | undefined;
   /**
@@ -378,7 +488,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): LibraryBody {
         : `Equip → ${context.slotLabel(target.slot)}${target.replaces ? " (replace)" : ""}`;
     const filtered = (list: readonly Skill[]): readonly Skill[] =>
       filterSkillsByType(
-        filterSkillsByText(eliteOnly.checked ? filterEliteSkills(list) : list, search.value),
+        filterSkillsByText(eliteOnly ? filterEliteSkills(list) : list, search.value),
         types,
       );
     const matches = filtered(equippableSkills(character));
@@ -386,8 +496,8 @@ export function mountSkillLibrary(context: SkillLibraryHost): LibraryBody {
       lockedSkills(IMPLEMENTED_SKILLS, character.primaryProfession, character.secondaryProfession),
     );
     const corpusMatches = corpusByAccess(
-      showCorpus.checked && corpus !== undefined
-        ? filterCorpus(corpus, search.value, types, eliteOnly.checked)
+      showCorpus && corpus !== undefined
+        ? filterCorpus(corpus, search.value, types, eliteOnly)
         : [],
       character.primaryProfession,
       character.secondaryProfession,
@@ -395,7 +505,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): LibraryBody {
     const groups = groupSkillsByAttribute(matches, corpusMatches.open);
     // A filter opens every group it matches in, so a search never looks
     // empty; the player's own folds come back once it is cleared (#2161).
-    const filtering = search.value.trim() !== "" || eliteOnly.checked || types.size > 0;
+    const filtering = search.value.trim() !== "" || eliteOnly || types.size > 0;
     const isOpen = (group: SkillGroup): boolean => filtering || openGroups.has(groupKey(group));
     // A card the filters took away, or a fold hid, closes; it does not
     // reopen on its own.
@@ -492,25 +602,19 @@ export function mountSkillLibrary(context: SkillLibraryHost): LibraryBody {
   search.addEventListener("input", () => {
     render(context.current());
   });
-  eliteOnly.addEventListener("change", () => {
-    render(context.current());
-  });
   locked.addEventListener("toggle", () => {
-    if (showCorpus.checked) {
+    if (showCorpus) {
       render(context.current());
     }
   });
-  showCorpus.addEventListener("change", () => {
-    saveShowCorpus(showCorpus.checked);
-    if (showCorpus.checked) {
-      loadCorpus();
-    }
-    render(context.current());
-  });
+  paintFilters();
 
   return {
-    elements: [corpusToggle, filters, chips, groupHost],
+    elements: [filters, groupHost],
     scroller: groupHost,
     update: render,
+    dispose() {
+      filterPopoverHandle.dispose();
+    },
   };
 }

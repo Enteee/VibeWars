@@ -4287,4 +4287,43 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Dropped leftovers (#2446)                                             */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.augury-of-death",
+    name: "Augury of Death",
+    gwId: 1646,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.deadly-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL / 2,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...35 seconds, the next time damage would drop target foe's
+    // Health below 50%, you inflict a Deep Wound for 5...20 seconds and
+    // Shadow Step to that foe. This spell has half the normal range" (#2446).
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "augury-of-death",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 29 },
+        },
+      },
+    ],
+  },
 ];

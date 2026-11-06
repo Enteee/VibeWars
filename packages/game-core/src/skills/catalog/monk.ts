@@ -4728,4 +4728,203 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2453)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.extinguish",
+    name: "Extinguish",
+    gwId: 943,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove one condition from each party member. Party members relieved
+    // of Burning are healed for 10...100 Health": 82 at rank 12. The party
+    // is the team, the caster included.
+    effects: [
+      { kind: "remove-status", category: "condition", count: 1 },
+      {
+        kind: "heal",
+        perRemoved: "condition",
+        perRemovedStatusId: "burning",
+        amount: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 82 },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.smiters-boon",
+    name: "Smiter's Boon",
+    gwId: 2005,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 90,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The base record; its numbers are the PvP split's (2895). "For 4
+    // seconds, your Smiting Prayers have double the Divine Favor bonus."
+    effects: [{ kind: "apply-status", statusId: "smiters-boon", durationSeconds: { flat: 4 } }],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Dropped leftovers (#2446)                                             */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.healers-boon",
+    name: "Healer's Boon",
+    gwId: 1393,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...55 seconds. Healing Prayers spells cast 50% faster and heal
+    // for 50% more Health" (#2446): the Divine Favor bonus is not boosted.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "healers-boon",
+        durationSeconds: {
+          scaling: { attributeId: "monk.divine-favor", atZero: 10, atTwelve: 46 },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.light-of-dwayna",
+    name: "Light of Dwayna",
+    gwId: 304,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 4,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Resurrect all dead party members in the area. They are returned to
+    // life with 25% Health and zero Energy" (#2446). A dead foe is never raised.
+    effects: [
+      {
+        kind: "splash",
+        hits: "party",
+        radius: AREA_IN_THE_AREA,
+        around: "caster",
+        dead: true,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "resurrect",
+            health: { kind: "percent", percent: { flat: 25 } },
+            energyPercent: { flat: 0 },
+            perPartyMemberWithin: undefined,
+            at: "corpse",
+          },
+        ],
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2470)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.unyielding-aura",
+    name: "Unyielding Aura",
+    gwId: 268,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    failChanceUnless: { attributeId: "monk.divine-favor", rank: 5, chance: 0.5 },
+    // The base record; its numbers are the PvP split's (2891). "Bring target
+    // dead party member back to life at full Health and full Energy. If you
+    // stop maintaining this enchantment or if this enchantment is removed,
+    // that party member dies and leaves an exploited corpse": the status's.
+    // Raised first, as a dead wearer is maintained nothing; and only one
+    // this cast raised, not an ally another brought back mid-cast.
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "percent", percent: { flat: 100 } },
+        energyPercent: { flat: 100 },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+      {
+        kind: "if",
+        condition: { kind: "resurrected" },
+        effects: [{ kind: "maintain-status", on: "target", statusId: "unyielding-aura" }],
+      },
+    ],
+  },
 ];

@@ -14,7 +14,7 @@ import type { CombatRules } from "../ruleset.js";
 import { isAttacking, skillsOnBar } from "./attacking.js";
 import { getSkill } from "./catalog.js";
 import { modWhileHolds } from "./mod-conditions.js";
-import { statAt } from "./scaling.js";
+import { statAt, statAtTwelve } from "./scaling.js";
 import { aggregateModifiers, getStatusDefinition } from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, raisedMaxHealth, rankOf } from "./tick.js";
 import type { Combatant, CreatureLevel, Surroundings } from "./types.js";
@@ -355,7 +355,7 @@ export function mitigate(
   // Absorption's (#2190) grows with every packet. Reverse Hex's (#2428)
   // spends itself on the first packet armor left above 0.
   if (modifiers.damageReduction > 0 && dealt > 0) {
-    target.statuses.chargeSources((definition) => definition.damageReduction > 0);
+    target.statuses.chargeSources((definition) => statAtTwelve(definition.damageReduction) > 0);
   }
   dealt -=
     modifiers.damageReduction +

@@ -686,6 +686,19 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Staples (#2447).
   "ancestors-visage": icon("ancestors-visage"),
   "smoldering-embers": icon("smoldering-embers"),
+  // Mechanics (#2453).
+  "stoneflesh-aura": icon("stoneflesh-aura"),
+  "icy-shackles": icon("icy-shackles"),
+  "glyph-of-swiftness": icon("glyph-of-swiftness"),
+  "ward-of-weakness": icon("ward-of-weakness"),
+  "smiters-boon": icon("smiters-boon"),
+  // Dropped leftovers (#2446).
+  "healers-boon": icon("healers-boon"),
+  "augury-of-death": icon("augury-of-death"),
+  "symbolic-celerity": icon("symbolic-celerity"),
+  "storm-djinns-haste": icon("storm-djinns-haste"),
+  // Mechanics (#2470).
+  "unyielding-aura": icon("unyielding-aura"),
 };
 
 const GAP = 2;

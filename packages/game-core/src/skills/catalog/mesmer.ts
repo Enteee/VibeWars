@@ -4921,4 +4921,42 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Dropped leftovers (#2446)                                             */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.symbolic-celerity",
+    name: "Symbolic Celerity",
+    gwId: 1340,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 36...60 seconds, all of your signets use your Fast Casting
+    // attribute instead of their normal attributes" (#2446).
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "symbolic-celerity",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.fast-casting", atZero: 36, atTwelve: 55.2 },
+        },
+      },
+    ],
+  },
 ];
