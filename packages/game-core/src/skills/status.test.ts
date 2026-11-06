@@ -1136,14 +1136,14 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     const set = new StatusSet();
     set.apply("backfire", 10, "a", NO_RANKS);
     set.drainChanges();
-    set.recordHit(WEAPONS.sword);
+    set.recordHit(WEAPONS.sword, undefined);
     set.recordPhysicalDamage();
     expect(set.drainChanges()).toEqual([]);
 
     set.apply("insidious-parasite", 13, "a", NO_RANKS);
-    set.recordHit(WEAPONS.sword);
+    set.recordHit(WEAPONS.sword, undefined);
     set.recordPhysicalDamage();
-    set.recordHit(WEAPONS.sword);
+    set.recordHit(WEAPONS.sword, undefined);
     expect(set.drainChanges()).toEqual([
       { kind: "hit", fired: [parasite] },
       { kind: "hit", fired: [parasite] },
@@ -1152,7 +1152,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.apply("mark-of-pain", 30, "b", NO_RANKS);
     set.drainChanges();
     set.recordPhysicalDamage();
-    set.recordHit(WEAPONS.sword);
+    set.recordHit(WEAPONS.sword, undefined);
     expect(set.drainChanges()).toEqual([
       { kind: "took-physical-damage", fired: [mark] },
       { kind: "hit", fired: [parasite] },
@@ -1164,12 +1164,30 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.apply("warriors-endurance", 29, "w", NO_RANKS);
     set.drainChanges();
     for (const weapon of [WEAPONS.longbow, WEAPONS.spear]) {
-      set.recordHit(weapon);
+      set.recordHit(weapon, undefined);
     }
     expect(set.drainChanges()).toEqual([]);
-    set.recordHit(WEAPONS.sword);
-    set.recordHit(WEAPONS.hammer);
+    set.recordHit(WEAPONS.sword, undefined);
+    set.recordHit(WEAPONS.hammer, undefined);
     expect(set.drainChanges()).toHaveLength(2);
+  });
+  it("a hit trigger bound to a chain role answers only that role's hit; unbound, every hit (#2432)", () => {
+    const set = new StatusSet();
+    set.apply("way-of-the-lotus", 20, "a", NO_RANKS);
+    set.drainChanges();
+    set.recordHit(WEAPONS.daggers, undefined);
+    set.recordHit(WEAPONS.daggers, "off-hand");
+    set.recordHit(WEAPONS.daggers, "lead");
+    expect(set.drainChanges()).toEqual([]);
+    set.recordHit(WEAPONS.daggers, "dual");
+    expect(set.drainChanges()).toHaveLength(1);
+
+    const unbound = new StatusSet();
+    unbound.apply("insidious-parasite", 13, "a", NO_RANKS);
+    unbound.drainChanges();
+    unbound.recordHit(WEAPONS.daggers, undefined);
+    unbound.recordHit(WEAPONS.daggers, "dual");
+    expect(unbound.drainChanges()).toHaveLength(2);
   });
 
   it("a record keeps the triggers it was made with, though they end before the drain (#953)", () => {

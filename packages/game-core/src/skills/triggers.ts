@@ -522,8 +522,10 @@ function reflectNext(
  * effects resolve together, so one may read what an earlier one did; a
  * spread with nothing gained does nothing. A status that ends when
  * triggered (#1022), or has fired as many times as it may (#1423), then
- * ends, logged as its expiry. The status itself is the effects' firing
- * status (#1473), which "another hex" leaves out.
+ * ends, logged as its expiry, and fires no more: a second record of the
+ * same tick, as a dagger's second strike, finds it gone (#2432). The
+ * status itself is the effects' firing status (#1473), which "another
+ * hex" leaves out.
  */
 function fire(
   trigger: StatusTrigger,
@@ -535,7 +537,12 @@ function fire(
   { sourceOf, rng, rules, surroundings, usedSkill, heldSeconds }: TriggerContext,
 ): FiredTrigger[] {
   const source = sourceOf(sourceId);
-  if (source === undefined) {
+  if (
+    source === undefined ||
+    (trigger.on !== "ends" &&
+      getStatusDefinition(statusId).endsWhenTriggered &&
+      !bearer.statuses.has(statusId))
+  ) {
     return [];
   }
   const resolved = parties(trigger, source, bearer, otherId, sourceOf);

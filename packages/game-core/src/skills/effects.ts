@@ -864,7 +864,7 @@ function perOwnCreature(
 }
 
 /** What a count reads of the use it lands in (#2321). */
-export type CountContext = Pick<SkillContext, "surroundings" | "heldSeconds">;
+export type CountContext = Pick<SkillContext, "surroundings" | "heldSeconds" | "skillId">;
 
 /**
  * `base` plus `per`'s amount for each of what it counts as the effect
@@ -895,7 +895,7 @@ function countOf(
   rule: CountRule,
   caster: Combatant,
   target: Combatant | undefined,
-  { surroundings, heldSeconds }: CountContext,
+  { surroundings, heldSeconds, skillId }: CountContext,
   earlier: readonly CombatEvent[],
 ): number {
   switch (rule.kind) {
@@ -947,17 +947,20 @@ function countOf(
       return earlier.filter((event) => event.kind === "knocked-down").length;
     case "recharging-skills": {
       const whose = rule.of === "owner" ? livingOwnerOf(caster, surroundings) : caster;
+      const answers = (skill: Skill | undefined): boolean =>
+        skill !== undefined &&
+        (rule.attributeId === undefined || skill.attributeId === rule.attributeId) &&
+        (rule.type === undefined || skill.type === rule.type) &&
+        (rule.weapon === undefined || skill.attack?.weapon === rule.weapon);
+      // The caster's own skill landing counts itself (#2432), as Blades of
+      // Steel's notes say: GW1 starts its recharge as it is used, here
+      // only once it has landed.
+      const itself = rule.of === "caster" && skillId !== undefined && answers(getSkill(skillId));
       return whose === undefined
         ? 0
-        : [...whose.cast.rechargeRemaining.keys()].filter((key) => {
-            const skill = getSkill(skillIdOfKey(key));
-            return (
-              whose.cast.isRecharging(key) &&
-              skill !== undefined &&
-              (rule.attributeId === undefined || skill.attributeId === rule.attributeId) &&
-              (rule.type === undefined || skill.type === rule.type)
-            );
-          }).length;
+        : [...whose.cast.rechargeRemaining.keys()].filter(
+            (key) => whose.cast.isRecharging(key) && answers(getSkill(skillIdOfKey(key))),
+          ).length + (itself ? 1 : 0);
     }
     case "held-seconds":
       return heldSeconds ?? 0;
@@ -967,7 +970,7 @@ function countOf(
     }
     case "removed":
       return rule.categories.reduce(
-        (count, category) => count + removedByAnyone(category, earlier),
+        (count, category) => count + removedByAnyone(category, earlier, rule.profession),
         0,
       );
     case "maintained-enchantments":
@@ -1014,12 +1017,25 @@ function perRemovedByAnyone(
   return category === undefined ? amount : amount * removedByAnyone(category, earlier);
 }
 
-/** How many statuses of `category` an earlier `remove-status` took off anyone. */
-function removedByAnyone(category: StatusCategory, earlier: readonly CombatEvent[]): number {
-  return earlier.filter(
-    (event) =>
-      event.kind === "status-removed" && getStatusDefinition(event.statusId).category === category,
-  ).length;
+/**
+ * How many statuses of `category`, and of `profession` where set, an
+ * earlier `remove-status` took off anyone.
+ */
+function removedByAnyone(
+  category: StatusCategory,
+  earlier: readonly CombatEvent[],
+  profession?: ProfessionId,
+): number {
+  return earlier.filter((event) => {
+    if (event.kind !== "status-removed") {
+      return false;
+    }
+    const definition = getStatusDefinition(event.statusId);
+    return (
+      definition.category === category &&
+      (profession === undefined || definition.profession === profession)
+    );
+  }).length;
 }
 
 /**
