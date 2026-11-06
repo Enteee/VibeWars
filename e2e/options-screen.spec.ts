@@ -265,6 +265,35 @@ test("⚙ toggles Options; Esc, × and a press outside give the focus back to �
   await expect(gear).toBeFocused();
 });
 
+test("closing Options leaves the menu as it was, and a press outside lands where it was pressed (#2386)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("./");
+  await openRail(page, "Random Arena");
+  const options = page.getByRole("dialog", { name: "Options" });
+  const menu = page.locator(".screen-rail");
+  await menu.evaluate((element) => {
+    element.setAttribute("data-e2e-kept", "");
+  });
+
+  // No cape changed: the menu is not drawn again under it.
+  await clickTopbarIcon(page, ".topbar-options");
+  await expect(options).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(options).toHaveCount(0);
+  await expect(page.locator(".screen-rail[data-e2e-kept]")).toHaveCount(1);
+
+  // A human's press, its release a moment after: it closes Options and
+  // still opens the entry pressed.
+  await clickTopbarIcon(page, ".topbar-options");
+  await expect(options).toBeVisible();
+  const team = page.locator(".mode-rail").getByRole("button", { name: "Team Arena", exact: true });
+  await team.click({ delay: 150 });
+  await expect(options).toHaveCount(0);
+  await expect(team).toHaveAttribute("aria-pressed", "true");
+});
+
 test("a key still being rebound keeps Options open through a press outside; Esc cancels only it (#2386)", async ({
   page,
 }) => {

@@ -602,6 +602,8 @@ async function main(): Promise<void> {
    * build may reload away. Every screen change clears it first.
    */
   let idleScreen = false;
+  /** The cape the menu was last drawn with (#1513), to redraw it only for a new one (#2386). */
+  let menuCape = "";
 
   const screenTurns = createScreenTurns();
   /**
@@ -638,7 +640,9 @@ async function main(): Promise<void> {
     onOptionsClosed: () => {
       // Closed over the menu, its characters wear the cape just picked in
       // Options (#1513). Not when a match starting closed it, which leaves
-      // the screen first; any other screen keeps what it joined with.
+      // the screen first; any other screen keeps what it joined with. Only
+      // a new cape redraws it: a redraw would swallow the press outside
+      // that closed the window (#2386).
       const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
       if (renamedAlone()) {
         // Nobody else is in it to keep its code for: the lobby is opened
@@ -653,7 +657,7 @@ async function main(): Promise<void> {
         })();
         return;
       }
-      if (menu) {
+      if (menu && menuCape !== JSON.stringify(playerGuild().guildCape)) {
         showMenu();
       }
     },
@@ -732,6 +736,7 @@ async function main(): Promise<void> {
 
   const showMenu = (): void => {
     const turn = leaveScreen();
+    menuCape = JSON.stringify(playerGuild().guildCape);
     // Every way back to the menu passes through here, so the status bar
     // never keeps saying where the player was: idle, it says nothing (#454).
     // Error paths set theirs after.
