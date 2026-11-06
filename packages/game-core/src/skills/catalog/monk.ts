@@ -4910,7 +4910,8 @@ export const MONK_SKILLS: readonly Skill[] = [
     // dead party member back to life at full Health and full Energy. If you
     // stop maintaining this enchantment or if this enchantment is removed,
     // that party member dies and leaves an exploited corpse": the status's.
-    // Raised first: a dead wearer is maintained nothing.
+    // Raised first, as a dead wearer is maintained nothing; and only one
+    // this cast raised, not an ally another brought back mid-cast.
     effects: [
       {
         kind: "resurrect",
@@ -4919,7 +4920,11 @@ export const MONK_SKILLS: readonly Skill[] = [
         perPartyMemberWithin: undefined,
         at: "corpse",
       },
-      { kind: "maintain-status", on: "target", statusId: "unyielding-aura" },
+      {
+        kind: "if",
+        condition: { kind: "resurrected" },
+        effects: [{ kind: "maintain-status", on: "target", statusId: "unyielding-aura" }],
+      },
     ],
   },
 ];

@@ -108,7 +108,7 @@ describe("Unyielding Aura (#2470)", () => {
       rechargeSeconds: 15,
       target: "single-dead-ally",
     });
-    expect(skill(ID).effects.map(({ kind }) => kind)).toEqual(["resurrect", "maintain-status"]);
+    expect(skill(ID).effects.map(({ kind }) => kind)).toEqual(["resurrect", "if"]);
   });
 
   it("raises the ally at full Health and Energy, maintained by its caster", () => {
@@ -118,6 +118,30 @@ describe("Unyielding Aura (#2470)", () => {
     expect(a.combatant.energy).toBe(a.combatant.maxEnergy);
     expect(a.combatant.statuses.has("unyielding-aura")).toBe(true);
     expect(sim.pips(record(sim, "m")).energy).toBe(sim.pips(record(sim, "x")).energy - 1);
+  });
+
+  it("an ally another raised mid-cast is left as it is: no aura, no upkeep", () => {
+    const sim = new MatchSimulation({
+      seed: "unyielding-aura",
+      matchRules: DP,
+      participants: [
+        spec("a", 0, vec2(0, 0), [], 0),
+        spec("m", 0, vec2(200, 0), [ID], 12),
+        spec("x", 1, vec2(900, 0), [], 0),
+      ],
+    });
+    kill(sim, "a");
+    sim.setTarget("m", "a");
+    expect(sim.requestSkill("m", 0)?.check).toEqual({ ok: true });
+    stepFor(sim, 1);
+    // Another resurrection lands first, at half Health.
+    const a = record(sim, "a").combatant;
+    a.dead = false;
+    a.health = a.maxHealth / 2;
+    stepFor(sim, skill(ID).activationSeconds);
+    expect(a.health).toBeLessThan(a.maxHealth);
+    expect(a.statuses.has("unyielding-aura")).toBe(false);
+    expect(sim.pips(record(sim, "m")).energy).toBe(sim.pips(record(sim, "x")).energy);
   });
 
   it("cancelled, the ally dies and its corpse is exploited, paying no death penalty", () => {
