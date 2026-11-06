@@ -46,6 +46,7 @@ import { newTicketKey } from "./ticket-key.js";
 import {
   credentialExpiry,
   mintTurnCredential,
+  relayHosts,
   TURN_CREDENTIAL_TTL_MS,
   type SharedRelay,
 } from "./turn-config.js";
@@ -77,12 +78,12 @@ export const OFFER_OPEN_INTERVAL_MS = 5_000;
 export const MAX_OFFER_OPENS_PER_SECOND = 200;
 
 /**
- * The most new peer ids a holder mints for in a lobby in any hour
- * (#2527): with coturn's per-allocation `max-bps`, what one lobby can
- * draw from a relay. A seated member's login is never refused.
+ * The most peer ids a holder holds logins for in a lobby at once (#2527):
+ * seated members it minted for, and ids in a live admit. With coturn's
+ * per-allocation `max-bps`, this bounds what one lobby can draw from a
+ * relay. A seated member's login is never refused.
  */
-export const MAX_RELAYED_PER_HOLDER = 16;
-const RELAYED_WINDOW_MS = 60 * 60 * 1000;
+export const MAX_RELAYED_PER_HOLDER = 8;
 
 /**
  * A seated member's login is reminted once it has this little left
@@ -414,9 +415,12 @@ export interface RelayHold {
   /**
    * The host admitted `admit`: mint its peer id a login and publish it
    * sealed to its key, again each `TICKET_HEARTBEAT_MS` while the admit is
-   * live. Nothing when not holding, or past `MAX_RELAYED_PER_HOLDER`.
+   * live. Nothing when not holding, or when it would hold more than
+   * `MAX_RELAYED_PER_HOLDER` peer ids.
    */
   admit(admit: PeerRelayAdmit): void;
+  /** The lobby's members now: an id minted for keeps its slot while seated. */
+  seated(peerIds: ReadonlySet<string>): void;
   /**
    * The login for seated member `peerId` (#2248), as the host tells it
    * over the lobby: reminted once it has `LOGIN_REMINT_LEFT_MS` left, and
@@ -447,8 +451,9 @@ export function holdRelay(
   const handlers = new Set<() => void>();
   let shared = source.load();
   let publisher: TopicPublisher | undefined;
-  /** When each peer id was first minted for by an admit, within the hour. */
+  /** Until when each peer id minted for by an admit has that admit live. */
   const relayed = new Map<string, number>();
+  let members: ReadonlySet<string> = new Set();
   /** Seated members' logins, by peer id. */
   const logins = new Map<string, WireRelayLogin>();
   /** Live seals, republished each beat until their admit ends. */
@@ -509,17 +514,22 @@ export function holdRelay(
         return;
       }
       const now = deps.now();
-      for (const [id, at] of relayed) {
-        if (now - at >= RELAYED_WINDOW_MS) {
+      // An id that neither seated nor holds a live admit frees its slot.
+      for (const [id, until] of relayed) {
+        if (until <= now && !members.has(id)) {
           relayed.delete(id);
         }
       }
-      if (!relayed.has(peerId) && relayed.size >= MAX_RELAYED_PER_HOLDER) {
+      const held = new Set(relayed.keys());
+      for (const id of logins.keys()) {
+        if (members.has(id)) {
+          held.add(id);
+        }
+      }
+      if (!held.has(peerId) && held.size >= MAX_RELAYED_PER_HOLDER) {
         return;
       }
-      if (!relayed.has(peerId)) {
-        relayed.set(peerId, now);
-      }
+      relayed.set(peerId, Math.max(relayed.get(peerId) ?? 0, now + RELAY_ADMIT_MS));
       const offer: RelayOffer = {
         config: mintTurnCredential(shared, peerId, now, TURN_CREDENTIAL_TTL_MS),
         holder: selfId,
@@ -542,6 +552,9 @@ export function holdRelay(
           // Not a key WebCrypto takes: the host checked its shape only.
         },
       );
+    },
+    seated(peerIds) {
+      members = peerIds;
     },
     loginFor(peerId) {
       if (closed || shared === undefined) {
@@ -579,6 +592,10 @@ export function holdRelay(
     },
   };
 }
+
+/** The host name of an offer's first URL, which `rankOffers` ranks it by. */
+const firstHost = (offer: RelayOffer): string =>
+  relayHosts({ urls: offer.config.urls.slice(0, 1) }).toLowerCase();
 
 /** A joiner's view of a lobby's relays, held in memory only. */
 export interface RelayOffers {
@@ -630,6 +647,8 @@ export function watchRelayOffers(
     }
   };
 
+  const heardHost = (): boolean => host !== undefined;
+
   const live = (): RelayOffer[] => {
     const now = deps.now();
     for (const [holder, offer] of offers) {
@@ -645,7 +664,8 @@ export function watchRelayOffers(
       return false;
     }
     const offer = await openRelaySeal(message.seal, key, selfId, nowMs);
-    if (offer === undefined || closed || host !== undefined) {
+    // The host's login may have come while it opened.
+    if (offer === undefined || closed || heardHost()) {
       return false;
     }
     const held = offers.get(offer.holder);
@@ -653,6 +673,13 @@ export function watchRelayOffers(
       held === undefined ||
       (credentialExpiry(held.config) ?? 0) < (credentialExpiry(offer.config) ?? 0)
     ) {
+      // One relay host name fills one attempt: the newest seal naming it wins.
+      const name = firstHost(offer);
+      for (const [holder, other] of offers) {
+        if (holder !== offer.holder && firstHost(other) === name) {
+          offers.delete(holder);
+        }
+      }
       offers.set(offer.holder, offer);
       tell();
     }

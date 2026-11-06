@@ -239,6 +239,11 @@ export function holdInLobby(lobby: LobbyConnection, hold: RelayHold | undefined)
   if (hold === undefined) {
     return;
   }
+  const seat = (): void => {
+    hold.seated(new Set(lobby.getSnapshot().players.map((p) => p.sessionId)));
+  };
+  lobby.onChange(seat);
+  seat();
   const stopAdmits = lobby.onRelayAdmit((admit) => {
     hold.admit(admit);
   });

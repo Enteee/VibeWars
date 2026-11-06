@@ -474,7 +474,7 @@ describe("a member's relay, held for its lobby (#2527)", () => {
     hold.close();
   });
 
-  it("mints for at most 16 new peer ids an hour, an id already minted for free", async () => {
+  it("holds at most 8 peer ids at once, seated or in a live admit, and never refuses a remint", async () => {
     const relay = fakeRelay();
     const sockets = recording(relay);
     let now = NOW;
@@ -488,11 +488,11 @@ describe("a member's relay, held for its lobby (#2527)", () => {
     );
     for (let i = 0; i < MAX_RELAYED_PER_HOLDER; i += 1) {
       hold.admit({ peerId: `peer-${String(i)}`, pub });
-      now += 1000;
     }
     await settle();
     expect(sockets.sent).toHaveLength(MAX_RELAYED_PER_HOLDER);
 
+    // A 9th live peer id is refused; one it holds is sealed for again.
     hold.admit({ peerId: "one-too-many", pub });
     await settle();
     expect(sockets.sent).toHaveLength(MAX_RELAYED_PER_HOLDER);
@@ -502,12 +502,26 @@ describe("a member's relay, held for its lobby (#2527)", () => {
     // A seated member's login is never refused.
     expect(hold.loginFor("one-too-many")?.username).toMatch(/:one-too-many$/);
 
-    // An hour after the first: its slot is free, and only its.
-    now = NOW + HOUR;
-    hold.admit({ peerId: "one-too-many", pub });
-    hold.admit({ peerId: "two-too-many", pub });
+    // peer-0 and peer-1 seated; once the admits expire, only the unseated ids free their slots.
+    hold.seated(new Set(["peer-0", "peer-1"]));
+    now += RELAY_ADMIT_MS;
+    for (let i = 0; i < MAX_RELAYED_PER_HOLDER - 2; i += 1) {
+      hold.admit({ peerId: `late-${String(i)}`, pub });
+    }
     await settle();
-    expect(sockets.sent).toHaveLength(MAX_RELAYED_PER_HOLDER + 2);
+    expect(sockets.sent).toHaveLength(2 * MAX_RELAYED_PER_HOLDER - 1);
+    hold.admit({ peerId: "late-full", pub });
+    await settle();
+    expect(sockets.sent).toHaveLength(2 * MAX_RELAYED_PER_HOLDER - 1);
+
+    // A seated member it minted a login for holds a slot too.
+    hold.seated(new Set(["peer-0", "peer-1", "one-too-many"]));
+    now += RELAY_ADMIT_MS;
+    for (let i = 0; i < MAX_RELAYED_PER_HOLDER; i += 1) {
+      hold.admit({ peerId: `last-${String(i)}`, pub });
+    }
+    await settle();
+    expect(sockets.sent).toHaveLength(3 * MAX_RELAYED_PER_HOLDER - 4);
     hold.close();
   });
 
@@ -672,6 +686,34 @@ describe("a joiner's relay offers (#2527)", () => {
     now = NOW + OFFER_OPEN_INTERVAL_MS + HOUR;
     expect(offers.ranked()).toEqual([]);
     for (const hold of [early, late, ...others]) {
+      hold.close();
+    }
+    offers.close();
+  });
+
+  it("keeps one offer per relay host name, the newest seal's", async () => {
+    const relay = fakeRelay();
+    const key = await newJoinerKey();
+    const offers = watchRelayOffers(
+      ROOM,
+      ROOM_ID,
+      JOINER,
+      deps(relay.openSocket, () => NOW),
+      joiner(key),
+    );
+    await settle();
+    const holders = ["b", "c"].map((peerId, i) =>
+      holder(relay, peerId, () => NOW, {
+        urls: [`turns:Relay.example:${String(5349 + i)}`],
+        secret: "x",
+      }),
+    );
+    for (const hold of holders) {
+      hold.admit({ peerId: JOINER, pub: key.pub });
+      await settle();
+    }
+    expect(offers.ranked().map((offer) => offer.holder)).toEqual(["c"]);
+    for (const hold of holders) {
       hold.close();
     }
     offers.close();
