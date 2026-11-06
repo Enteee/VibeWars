@@ -10,11 +10,12 @@ const cut = (d, w) => `<path d="${d}" ${stroke(C.bg, w)}/>`;
 const glyphs = {
   "coal-sparks": {
     means:
-      "Smoldering Embers: one faceted coal with three sparks rising: a slow glow that burns what it touches, once a second.",
+      "Smoldering Embers: a rough dark coal, glowing cracks across it, a flame tip and flecks flying off: a slow glow that burns what it touches, once a second.",
     draw: () =>
-      inkFill("M5 22L3.500 15L8 11L15 10.500L20 14.500L19 22Z") +
-      cut("M8 14L12 17L16 14", 1.6) +
-      inkLine("M8 6.500V3M12 7V1.500M16 6.500V3", 2.2),
+      inkFill("M3 22L2 16L5.500 12L9 13.500L13 11L17.500 12.500L22 16L21 22Z") +
+      cut("M8 22L10 17.500L13 19.500L15.500 15M16 22L18 18.500", 1.5) +
+      inkFill("M12 10C9.500 7.500 12 6 11 2.500C14.500 4.500 15 7.500 12 10Z") +
+      inkLine("M5 8L6.500 6.500M18 7.500L19.500 6M20 11.500L21.500 10.500", 1.8),
   },
   "coal-bed-flames": {
     means:
