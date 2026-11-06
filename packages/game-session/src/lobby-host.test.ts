@@ -473,6 +473,7 @@ describe("lobby host", () => {
         guildTag: null,
         guildCape: null,
         timeoutMs: 1000,
+        relayPub: null,
       }),
     ).rejects.toEqual(new LobbyRefusedError("lobby-full"));
     expect(playersOf(lobby.host)).toHaveLength(16);
@@ -569,6 +570,7 @@ describe("an open or closed lobby (#1682)", () => {
       guildTag: null,
       guildCape: null,
       timeoutMs: 1000,
+      relayPub: null,
     }).catch((error: unknown) => error);
 
   it("starts closed, and refuses a peer with the key as closed", async () => {
@@ -865,6 +867,7 @@ describe("joining by code", () => {
         guildTag: null,
         guildCape: null,
         timeoutMs: 50,
+        relayPub: null,
       }),
     ).rejects.toEqual(new LobbyNoAnswerError(50, null));
   });
@@ -880,6 +883,7 @@ describe("joining by code", () => {
         guildTag: null,
         guildCape: null,
         timeoutMs: 50,
+        relayPub: null,
       });
       for (const trouble of troubles) {
         lobby.network.trouble(peerId, trouble);
@@ -905,6 +909,7 @@ describe("joining by code", () => {
         guildTag: null,
         guildCape: null,
         timeoutMs: 50,
+        relayPub: null,
       }),
     ).rejects.toBeInstanceOf(LobbyNoAnswerError);
   });
@@ -1231,6 +1236,7 @@ describe("a Team Lobby (#1458)", () => {
         guildTag: null,
         guildCape: null,
         timeoutMs: 1000,
+        relayPub: null,
       }),
     ).rejects.toEqual(new LobbyRefusedError("party-full"));
     expect(playersOf(lobby.host)).toHaveLength(2);
@@ -2320,6 +2326,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
       guildTag: null,
       guildCape: null,
       timeoutMs: 50,
+      relayPub: null,
     });
     await expect(joining).rejects.toEqual(new LobbyNoAnswerError(50, null));
   });

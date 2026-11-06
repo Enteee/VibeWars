@@ -1,130 +1,221 @@
 import {
   PROTOCOL_VERSION,
   type PeerRelayAdmit,
-  type WireRelayLogin,
+  type PeerRelayCredIn,
+  type PeerRelayOffers,
 } from "@vibewars/game-protocol";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { type Member, openLobby, provenPeer, seat, start } from "./lobby-harness.test-support.js";
-import type { LobbyRelaySource } from "./lobby-host.js";
+import { RELAY_CRED_EVERY_MS } from "./lobby-host.js";
 import { settle } from "./match-harness.test-support.js";
-import { createMemoryNetwork } from "./memory-transport.js";
 import { RELAY_ADMIT_MS, RELAY_ROOMS_LINGER_MS } from "./relay-admission.js";
-import { MAX_MESSAGE_BYTES, sizeChecked, type Transport } from "./transport.js";
+import type { Transport } from "./transport.js";
 
 /**
- * The relay login a lobby host shares with its members (#2248): to each
- * admitted member alone, on admission and on every change, away and in
- * a match too; never to a peer that is not a member.
+ * A lobby's relay holders and their sealed logins (#2529, ADR-0049): the
+ * host lists the seated holders and the members they mint for, to every
+ * member on each change, and forwards a holder's seal seated to seated,
+ * stamped with the sender's seat, at most one a pair a minute.
  */
 
-const login = (n: number): WireRelayLogin => ({
-  urls: ["turn:turn.example:3478?transport=udp"],
-  username: `${String(1_800_000_000 + n)}:0123456789abcdef`,
-  credential: `credential-${String(n)}`,
-});
+const pub = (letter: string): string => letter.repeat(87);
 
-/** A relay source a test turns: `set` changes the login and tells the host. */
-function relaySource(first: WireRelayLogin | null): LobbyRelaySource & {
-  set(next: WireRelayLogin | null): void;
-} {
-  let current = first;
-  const handlers = new Set<() => void>();
-  return {
-    current: () => current,
-    onChange(handler) {
-      handlers.add(handler);
-      return () => handlers.delete(handler);
-    },
-    set(next) {
-      current = next;
-      for (const handler of [...handlers]) {
-        handler();
-      }
-    },
-  };
-}
-
-/** Every login `who` was told, through its lobby connection. */
-function logins(who: Member): (WireRelayLogin | null)[] {
-  const told: (WireRelayLogin | null)[] = [];
-  who.connection.onRelayLogin((relay) => told.push(relay));
+/** Every list `who` was told, through its lobby connection. */
+function offers(who: Member): PeerRelayOffers[] {
+  const told: PeerRelayOffers[] = [];
+  who.connection.onRelayOffers((list) => told.push(list));
   return told;
 }
 
-/** Every raw `relay-login` message `transport` receives. */
-function heard(transport: Transport): unknown[] {
+/** Every seal forwarded to `who`, through its lobby connection. */
+function creds(who: Member): PeerRelayCredIn[] {
+  const told: PeerRelayCredIn[] = [];
+  who.connection.onRelayCred((cred) => told.push(cred));
+  return told;
+}
+
+/** Every raw message on `channel` that `transport` receives. */
+function heard(transport: Transport, channel: "relay-offers" | "relay-cred"): unknown[] {
   const told: unknown[] = [];
-  transport.on("relay-login", (data) => told.push(data));
+  transport.on(channel, (data) => told.push(data));
   return told;
 }
 
-const joinAs = (name: string, rejoinToken: string | null) => ({
+const joinAs = (name: string, rejoinToken: string | null, relayPub: string | null = null) => ({
   protocolVersion: PROTOCOL_VERSION,
   name,
   guildTag: null,
   guildCape: null,
   admission: null,
   rejoinToken,
+  relayPub,
 });
 
-describe("a lobby host's relay login (#2248)", () => {
-  it("tells a member on admission, and every member on each change", async () => {
-    const relay = relaySource(login(1));
-    const lobby = await openLobby({ relay });
-    const told: (WireRelayLogin | null)[][] = [];
-    const guests: Member[] = [];
-    for (const name of ["Ann", "Bo"]) {
-      const guest = await lobby.join(name);
-      guests.push(guest);
-      told.push(logins(guest));
-    }
-    // Admission's login came before the listener: it is handed the last at once.
-    relay.set(login(2));
+describe("a lobby host's relay holders (#2529)", () => {
+  it("lists the seated holders in seat order and the members with a key, on each change", async () => {
+    const lobby = await openLobby();
+    const ann = await lobby.join("Ann", null, null, pub("A"));
+    const bo = await lobby.join("Bo", null, null, pub("B"));
+    const told = offers(bo);
+    const id = (who: Member): string => who.transport.selfId;
+    bo.connection.setRelayHolding(true);
     await settle();
-    relay.set(null);
+    ann.connection.setRelayHolding(true);
     await settle();
+    lobby.host.connection.setRelayHolding(true);
+    await settle();
+    bo.connection.setRelayHolding(false);
+    await settle();
+    // The host's own player needs no relay to reach the host: never a member to mint for.
+    const members = [
+      { peerId: id(ann), pub: pub("A") },
+      { peerId: id(bo), pub: pub("B") },
+    ];
     expect(told).toEqual([
-      [login(1), login(2), null],
-      [login(1), login(2), null],
+      { holders: [], members },
+      { holders: [id(bo)], members },
+      { holders: [id(ann), id(bo)], members },
+      { holders: [id(lobby.host), id(ann), id(bo)], members },
+      { holders: [id(lobby.host), id(ann)], members },
     ]);
   });
 
-  it("is sent to a joiner on admission, and to nobody that is not a member", async () => {
-    const relay = relaySource(login(1));
-    const lobby = await openLobby({ relay });
-    // Proven the key but never joined, and one in the room without the key.
-    const proven = await provenPeer(lobby);
-    const bare = lobby.network.join();
-    const outsiders = [heard(proven), heard(bare)];
-    const joiner = await provenPeer(lobby);
-    const admitted = heard(joiner);
-    joiner.send("lobby-join", joinAs("Joiner", null), "host");
+  it("tells every member, the host's own player and a member in a match too", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join("Guest", null, null, pub("G"));
+    await seat([lobby.host, guest], [0, 1]);
+    await start(lobby);
+    const told = [offers(lobby.host), offers(guest)];
+    guest.connection.setRelayHolding(true);
     await settle();
-    expect(admitted).toEqual([{ relay: login(1) }]);
-    relay.set(login(2));
-    await settle();
-    expect(admitted).toEqual([{ relay: login(1) }, { relay: login(2) }]);
-    expect(outsiders).toEqual([[], []]);
-  });
-
-  it("reaches a member in a match, and a Team Lobby's members", async () => {
-    for (const teamLobby of [false, true]) {
-      const relay = relaySource(login(1));
-      const lobby = await openLobby({ relay, teamLobby });
-      const guest = await lobby.join("Guest");
-      const told = logins(guest);
-      await seat([lobby.host, guest], [0, 1]);
-      await start(lobby);
-      relay.set(login(2));
-      await settle();
-      expect(told).toEqual([login(1), login(2)]);
+    for (const list of told) {
+      expect(list.at(-1)?.holders).toEqual([guest.transport.selfId]);
     }
   });
 
-  it("tells a member back from a drop the login it missed", async () => {
-    const relay = relaySource(login(1));
-    const lobby = await openLobby({ relay });
+  it("drops a holder that leaves, and a joiner's key joins the list", async () => {
+    const lobby = await openLobby();
+    const holder = await lobby.join("Holder", null, null, pub("H"));
+    holder.connection.setRelayHolding(true);
+    await settle();
+    const told = offers(lobby.host);
+    const joiner = await lobby.join("Joiner", null, null, pub("J"));
+    await holder.connection.disconnect();
+    await settle();
+    expect(told.slice(-2)).toEqual([
+      {
+        holders: [holder.transport.selfId],
+        members: [
+          { peerId: holder.transport.selfId, pub: pub("H") },
+          { peerId: joiner.transport.selfId, pub: pub("J") },
+        ],
+      },
+      { holders: [], members: [{ peerId: joiner.transport.selfId, pub: pub("J") }] },
+    ]);
+  });
+
+  it("is sent to nobody that is not a member, and taken from the host alone", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join("Guest");
+    const told = offers(guest);
+    const outsider = await provenPeer(lobby);
+    const overheard = heard(outsider, "relay-offers");
+    outsider.send("relay-holding", { on: true }, "host");
+    outsider.send("relay-offers", { holders: [outsider.selfId], members: [] }, guest.transport.selfId);
+    guest.connection.setRelayHolding(true);
+    await settle();
+    expect(overheard).toEqual([]);
+    expect(told.map(({ holders }) => holders)).toEqual([[], [guest.transport.selfId]]);
+  });
+
+  it("tells a member back from a drop the list, with its new key", async () => {
+    const lobby = await openLobby();
+    const holder = await lobby.join("Holder");
+    holder.connection.setRelayHolding(true);
+    const guest = await provenPeer(lobby);
+    let token: string | null = null;
+    guest.on("lobby-seat", (data) => {
+      token = (data as { rejoinToken: string }).rejoinToken;
+    });
+    guest.send("lobby-join", joinAs("Guest", null, pub("G")), "host");
+    await settle();
+    const id = guest.selfId;
+    await guest.leave();
+    await settle();
+
+    const back = await provenPeer(lobby, id);
+    const told = heard(back, "relay-offers");
+    back.send("lobby-join", joinAs("Guest", token, pub("N")), "host");
+    await settle();
+    expect(told).toEqual([
+      { holders: [holder.transport.selfId], members: [{ peerId: id, pub: pub("N") }] },
+    ]);
+  });
+
+  it("refuses a join whose relay key is not a P-256 key", async () => {
+    const lobby = await openLobby();
+    const guest = await provenPeer(lobby);
+    const states = heard(guest, "relay-offers");
+    guest.send("lobby-join", joinAs("Guest", null, "short"), "host");
+    await settle();
+    expect(states).toEqual([]);
+    expect(lobby.lobby.isMember(guest.selfId)).toBe(false);
+  });
+});
+
+describe("a lobby host's sealed relay logins (#2529)", () => {
+  const SEAL = "sealed.login-text_0";
+
+  it("forwards a holder's seal to a seated member, stamped with the holder's seat", async () => {
+    const lobby = await openLobby();
+    const holder = await lobby.join("Holder");
+    const guest = await lobby.join("Guest");
+    const told = creds(guest);
+    const raw = holder.transport;
+    raw.send("relay-cred", { to: guest.transport.selfId, from: "forged", seal: SEAL }, "host");
+    await settle();
+    expect(told).toEqual([{ from: raw.selfId, seal: SEAL }]);
+  });
+
+  it("forwards the host's own player's seal the same way", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join("Guest");
+    const told = creds(guest);
+    lobby.host.connection.sendRelayCred(guest.transport.selfId, SEAL);
+    await settle();
+    expect(told).toEqual([{ from: lobby.host.transport.selfId, seal: SEAL }]);
+  });
+
+  it("forwards nothing from or to a peer that is not seated, nor to the host's own player", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join("Guest");
+    const outsider = await provenPeer(lobby);
+    const told = [creds(guest), creds(lobby.host)];
+    const overheard = heard(outsider, "relay-cred");
+    outsider.send("relay-cred", { to: guest.transport.selfId, seal: SEAL }, "host");
+    guest.connection.sendRelayCred(outsider.selfId, SEAL);
+    guest.connection.sendRelayCred(lobby.host.transport.selfId, SEAL);
+    guest.connection.sendRelayCred(guest.transport.selfId, SEAL);
+    await settle();
+    expect(told).toEqual([[], []]);
+    expect(overheard).toEqual([]);
+  });
+
+  it("takes a seal from the host alone", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join("Guest");
+    const told = creds(guest);
+    const member = await provenPeer(lobby);
+    member.send("relay-cred", { from: member.selfId, seal: SEAL }, guest.transport.selfId);
+    await settle();
+    expect(told).toEqual([]);
+  });
+
+  it("forwards one seal a pair each RELAY_CRED_EVERY_MS, and the first after a seat", async () => {
+    const lobby = await openLobby();
+    const holder = await lobby.join("Holder");
+    const other = await lobby.join("Other");
     const guest = await provenPeer(lobby);
     let token: string | null = null;
     guest.on("lobby-seat", (data) => {
@@ -133,41 +224,42 @@ describe("a lobby host's relay login (#2248)", () => {
     guest.send("lobby-join", joinAs("Guest", null), "host");
     await settle();
     const id = guest.selfId;
+    const told = heard(guest, "relay-cred");
+    const send = (from: Member, seal: string): void => {
+      from.connection.sendRelayCred(id, seal);
+    };
+    send(holder, "a");
+    send(holder, "b");
+    send(other, "c");
+    await settle();
+    lobby.lobby.advance(RELAY_CRED_EVERY_MS / 1000 - 1);
+    send(holder, "d");
+    await settle();
+    lobby.lobby.advance(1);
+    send(holder, "e");
+    await settle();
+    expect(told.map((cred) => (cred as PeerRelayCredIn).seal)).toEqual(["a", "c", "e"]);
+
     await guest.leave();
     await settle();
-    relay.set(login(2));
-    await settle();
-
     const back = await provenPeer(lobby, id);
-    const told = heard(back);
+    const after = heard(back, "relay-cred");
     back.send("lobby-join", joinAs("Guest", token), "host");
     await settle();
-    expect(told).toEqual([{ relay: login(2) }]);
+    send(holder, "f");
+    await settle();
+    expect(after).toEqual([{ from: holder.transport.selfId, seal: "f" }]);
   });
 
-  it("is taken from the host alone, and stops when the lobby closes", async () => {
-    const relay = relaySource(login(1));
-    const lobby = await openLobby({ relay });
+  it("refuses a seal over MAX_RELAY_SEAL_CHARS or outside its alphabet", async () => {
+    const lobby = await openLobby();
+    const holder = await lobby.join("Holder");
     const guest = await lobby.join("Guest");
-    const told = logins(guest);
-    const member = await provenPeer(lobby);
-    member.send("relay-login", { relay: login(9) }, guest.transport.selfId);
+    const told = creds(guest);
+    holder.connection.sendRelayCred(guest.transport.selfId, "s".repeat(2049));
+    holder.connection.sendRelayCred(guest.transport.selfId, "no spaces");
     await settle();
-    expect(told).toEqual([login(1)]);
-    await lobby.lobby.close();
-    relay.set(login(2));
-    await settle();
-    expect(told).toEqual([login(1)]);
-  });
-
-  it("is never formatted into a log, even one over the size cap", () => {
-    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const credential = "c".repeat(MAX_MESSAGE_BYTES);
-    const transport = sizeChecked(createMemoryNetwork().join());
-    transport.send("relay-login", { relay: { ...login(1), credential } });
-    expect(error).toHaveBeenCalledTimes(1);
-    expect(JSON.stringify(error.mock.calls)).not.toMatch(/credential-|cccc|0123456789abcdef/);
-    error.mockRestore();
+    expect(told).toEqual([]);
   });
 });
 
@@ -180,18 +272,6 @@ describe("a lobby host's relay asks (#2527)", () => {
     who.connection.onRelayAdmit((admit) => told.push(admit));
     return told;
   }
-
-  it("mints each member's login for that member's peer id", async () => {
-    const asked: string[] = [];
-    const lobby = await openLobby({
-      relay: {
-        current: (peerId) => (asked.push(peerId), login(1)),
-        onChange: () => () => undefined,
-      },
-    });
-    const guest = await lobby.join("Guest");
-    expect(asked).toContain(guest.transport.selfId);
-  });
 
   it("tells every member of an ask it admits, once a member holds a relay", async () => {
     const lobby = await openLobby();
