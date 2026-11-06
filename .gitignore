@@ -10,6 +10,9 @@ dist-static/
 build/
 *.tsbuildinfo
 
+# Sound effects, rendered from apps/web/src/audio/sfx by `pnpm sfx:render` (#2524).
+apps/web/public/sfx/
+
 # devenv
 .devenv*
 devenv.local.nix

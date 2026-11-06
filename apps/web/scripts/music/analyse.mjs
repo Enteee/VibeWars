@@ -739,3 +739,63 @@ export async function checkSting(sting, { key, bpm, allowedSounds: allowed }) {
   if (a.events === 0) problems.push(`${at}: plays nothing`);
   return problems;
 }
+
+/**
+ * The controls a sound effect uses beyond the music's: a pitch envelope for
+ * the falls and rises, a tremolo for the interrupt's buzz, a band-pass Q and
+ * a frequency in Hz (a cue is not in a key).
+ */
+export const SFX_CONTROLS = new Set(
+  "freq penv pattack pdecay psustain prelease panchor tremolo tremolodepth hcutoff bandf bandq".split(
+    " ",
+  ),
+);
+
+/**
+ * Runs a sound effect (#2524) and applies the rules that hold for any
+ * source: no evaluation error or warning, built-in synths and the music
+ * palette only, known controls, no clipping, every stack member sounds. A
+ * cue is no phrase of music: it has no key, so notes are not checked against
+ * one, and it must set the tempo (`setcpm(60)`) its length is read in.
+ *
+ * @param {{ id: string, source: string }} sfx
+ * @param {{ allowedSounds: ReadonlySet<string> }} options
+ * @returns {Promise<string[]>} problems
+ */
+export async function checkSfx(sfx, { allowedSounds: allowed }) {
+  const at = `sfx ${sfx.id}`;
+  /** @type {Analysis} */
+  let a;
+  try {
+    a = await analyseTrack(sfx.source, {
+      intensity: 0,
+      cycles: 1,
+      key: "C chromatic",
+      phraseCycles: 1,
+    });
+  } catch (e) {
+    return [`${at}: evaluation error: ${e instanceof Error ? e.message : String(e)}`];
+  }
+  /** @type {string[]} */
+  const problems = [];
+  for (const w of a.warnings) problems.push(`${at}: Strudel warns: ${w}`);
+  if (a.cpm !== 60) problems.push(`${at}: must call setcpm(60), so a cycle is one second`);
+  for (const v of a.voices) {
+    if (!allowed.has(v.name)) problems.push(`${at}: sound "${v.name}" is not in the palette`);
+  }
+  for (const c of a.controls) {
+    if (!KNOWN_CONTROLS.has(c) && !SFX_CONTROLS.has(c)) {
+      problems.push(`${at}: control "${c}" is not in KNOWN_CONTROLS or SFX_CONTROLS`);
+    }
+  }
+  if (a.peakGain > MAX_PEAK_GAIN) {
+    problems.push(
+      `${at}: summed gain ${a.peakGain.toFixed(2)} is over ${String(MAX_PEAK_GAIN)}, it will clip`,
+    );
+  }
+  for (const m of a.silentMembers) {
+    problems.push(`${at}: stack member #${String(m)} plays no event`);
+  }
+  if (a.events === 0) problems.push(`${at}: plays nothing`);
+  return problems;
+}

@@ -5,7 +5,8 @@
  * One build, then two watchers. There is no server: the game plays peer
  * to peer in the browser (ADR-0022), so the client is the whole game.
  *
- *   0. tsc --build           brings packages/ up to date, before anything starts
+ *   0. tsc --build           brings packages/ up to date, before anything starts;
+ *                            then pnpm sfx:render renders the sound effects
  *   1. tsc --build --watch   rebuilds packages/ on change
  *   2. vite                  serves the client, reloading it on save
  *
@@ -35,7 +36,7 @@ import { setTimeout } from "node:timers";
 const CLIENT_PORT = process.env.VIBEWARS_CLIENT_PORT ?? "5173";
 
 /** @type {Record<string, string>} */
-const COLOURS = { tsc: "[36m", client: "[35m" };
+const COLOURS = { tsc: "[36m", client: "[35m", sfx: "[33m" };
 const RESET = "[0m";
 
 /**
@@ -138,16 +139,19 @@ const PACKAGES = [
 
 /**
  * Step 0: build the packages once, to completion, before either watcher
- * starts. Its child joins `children`, so Ctrl-C during it stops it too.
+ * starts, and render the sound effects (#2524; a warm run skips them). Its
+ * child joins `children`, so Ctrl-C during it stops it too.
  *
- * @returns {Promise<number | null>} tsc's exit code; `null` if a signal ended it
+ * @param {string} name
+ * @param {string[]} args  `pnpm`'s
+ * @returns {Promise<number | null>} its exit code; `null` if a signal ended it
  */
-function buildOnce() {
-  const child = spawn("pnpm", ["exec", "tsc", "--build", ...PACKAGES], {
+function runOnce(name, args) {
+  const child = spawn("pnpm", args, {
     stdio: ["ignore", "pipe", "pipe"],
   });
-  pipe("tsc", child.stdout);
-  pipe("tsc", child.stderr);
+  pipe(name, child.stdout);
+  pipe(name, child.stderr);
   children.push(child);
   return new Promise((resolve) => {
     child.on("exit", (code) => {
@@ -157,15 +161,22 @@ function buildOnce() {
   });
 }
 
-const built = await buildOnce();
+const built = await runOnce("tsc", ["exec", "tsc", "--build", ...PACKAGES]);
 if (typeof built === "number" && built !== 0) {
   process.stdout.write(
     `${COLOURS.tsc ?? ""}[tsc]${RESET} the packages do not build (${String(built)}); starting nothing\n`,
   );
   process.exit(built);
 }
+const rendered = built === 0 ? await runOnce("sfx", ["run", "sfx:render"]) : built;
+if (typeof rendered === "number" && rendered !== 0) {
+  process.stdout.write(
+    `[sfx] the sound effects do not render (${String(rendered)}); starting nothing\n`,
+  );
+  process.exit(rendered);
+}
 // `null` is Ctrl-C during the build: `shutdown` is already on its way out.
-if (built === 0) {
+if (built === 0 && rendered === 0) {
   // `--preserveWatchOutput` stops tsc clearing the screen on every rebuild,
   // which would wipe the other stream's output.
   start("tsc", "pnpm", ["exec", "tsc", "--build", ...PACKAGES, "--watch", "--preserveWatchOutput"]);

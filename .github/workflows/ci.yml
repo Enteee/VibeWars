@@ -89,6 +89,11 @@ jobs:
       - name: Typecheck
         run: devenv shell -- pnpm run typecheck
 
+      # The sound effects are rendered from their Strudel sources, not
+      # committed (#2524); sfx-files.test.ts reads the files.
+      - name: Render sound effects
+        run: devenv shell -- pnpm run sfx:render
+
       - name: Test
         run: devenv shell -- pnpm run test
 
