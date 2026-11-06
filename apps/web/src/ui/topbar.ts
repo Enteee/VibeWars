@@ -391,7 +391,8 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   attachOptionsWindow(options, bar, callbacks.onOptionsClosed);
 
   // The bar's join status, right before the global icons, on every menu
-  // screen that asks for it; the lobby's own controls are the Lobby window's.
+  // screen that asks for it; the lobby's own controls are the Lobby
+  // window's, on every screen (#2566).
   const join = joinControls(
     loadPlayerName,
     callbacks.onJoin,
@@ -399,7 +400,6 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     callbacks.onSetOpen,
   );
   join.element.hidden = true;
-  join.controls.hidden = true;
   const lobby = lobbyButton(bar, join.controls);
 
   const music = iconButton("topbar-music", "Music");
@@ -472,7 +472,6 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
         closeTopbarPopover();
       }
       join.element.hidden = !shown.join;
-      join.controls.hidden = !shown.join;
       join.settle();
       if (shown.join && !joinShown) {
         joinShown = true;
