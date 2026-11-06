@@ -109,7 +109,9 @@ export type MesmerStatusId =
   | "illusionary-weaponry"
   | "mantra-of-persistence"
   | "kitahs-burden"
-  | "symbolic-posture";
+  | "symbolic-posture"
+  // Mechanics (#2501).
+  | "recurring-insecurity";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -840,7 +842,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   "lyssas-aura": define("lyssas-aura", "Lyssa's Aura", "enchantment", {
     profession: "mesmer",
     energyPips: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 0, atTwelve: 4 } },
-    renewsOnBearerSpellAtFoe: true,
+    renewsOn: ["bearer-casts-spell-at-foe"],
   }),
   // "For 5...20 seconds, whenever a spell you cast is interrupted, that
   // spell is instantly recharged." A disable the interrupt adds stays.
@@ -1273,5 +1275,13 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         },
       ),
     ],
+  }),
+  // "For 5 seconds, target foe suffers from -1...6 Health degeneration.
+  // If that foe has another hex when Recurring Insecurity would end, it is
+  // reapplied" (#2501): -5 at 12, for as long as another hex stays.
+  "recurring-insecurity": define("recurring-insecurity", "Recurring Insecurity", "hex", {
+    profession: "mesmer",
+    healthPips: { scaling: { attributeId: "mesmer.illusion-magic", atZero: -1, atTwelve: -5 } },
+    reappliesOnExpiryIf: { bearerHasOtherHex: true },
   }),
 };

@@ -5838,4 +5838,43 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       { kind: "recharge-others", which: "attack" },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2501)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "warrior.soldiers-speed",
+    name: "Soldier's Speed",
+    gwId: 2196,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "warrior",
+    attributeId: "warrior.tactics",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3...18 seconds, you move 15% faster. You move an additional
+    // 15% faster while under the effects of a chant or shout": 15 s at
+    // 12; both speeds are the stance's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "soldiers-speed",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.tactics", atZero: 3, atTwelve: 15 },
+        },
+      },
+    ],
+  },
 ];

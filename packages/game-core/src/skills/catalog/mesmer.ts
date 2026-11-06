@@ -5251,4 +5251,41 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2501)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.recurring-insecurity",
+    name: "Recurring Insecurity",
+    gwId: 1055,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5 seconds, target foe suffers from -1...6 Health degeneration.
+    // If that foe has another hex when Recurring Insecurity would end, it
+    // is reapplied": the degeneration and the reapplying are the hex's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "recurring-insecurity",
+        durationSeconds: { flat: 5 },
+      },
+    ],
+  },
 ];

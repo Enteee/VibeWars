@@ -207,6 +207,8 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       },
       armorModifier: 0,
       attackMissChance: 0,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1,
     },
   }),
   // "For 10 seconds, all foes move 66% slower" (#938).
@@ -521,7 +523,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   "kinetic-armor": define("kinetic-armor", "Kinetic Armor", "enchantment", {
     profession: "elementalist",
     armorModifier: 68,
-    renewsOnBearerSpell: true,
+    renewsOn: ["bearer-casts-spell"],
   }),
   // Elementalist staples 3 (#1664), at their rank-12 values.
   // "For 5...13 seconds, target ally moves 33% faster."
@@ -1142,6 +1144,8 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       healthPips: 0,
       armorModifier: 0,
       attackMissChance: 0,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1,
     },
   }),
   // "For 15 seconds, your next 1...4 spells that target a foe also cause

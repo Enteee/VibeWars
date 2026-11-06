@@ -125,6 +125,7 @@ describe("the rule (#1761)", () => {
       healMultiplier: 0.8,
       favorHealMultiplier: 0.8,
       overcast: 0,
+      energyPercentOff: 0,
       notEasilyInterrupted: false,
     });
   });
@@ -301,6 +302,9 @@ describe("in flight, and on its caster (#1761)", () => {
         chainRoles: undefined,
         weapon: undefined,
         targetsFoe: false,
+        halfRange: false,
+        targetsSelf: false,
+        notFlash: false,
       },
       energyBase: undefined,
       energyDiscount: 0,
@@ -315,6 +319,8 @@ describe("in flight, and on its caster (#1761)", () => {
       sparesDivineFavor: false,
       notEasilyInterrupted: false,
       overcastPerUse: 0,
+      energyPercentOff: 0,
+      whileHoldingItem: false,
       uses: undefined,
     };
     return withStatusDefinitions({ "blessed-aura": { ownSkillModifiers: [doubles] } }, () => {

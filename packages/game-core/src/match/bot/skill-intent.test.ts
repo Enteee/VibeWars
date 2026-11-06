@@ -17,6 +17,12 @@ const NO_BOT_USE = new Set([
   // Own-skill modifiers (#1761): cheaper, faster or longer own skills are
   // no role the bot weighs.
   "monk.divine-spirit",
+  // Self-buffs on own skills (#2501), as above.
+  "assassin.deadly-haste",
+  "dervish.signet-of-mystic-speed",
+  "ritualist.attuned-was-songkai",
+  "ritualist.renewing-memories",
+  "ritualist.spirits-strength",
   "necromancer.cultists-fervor",
   "monk.blessed-aura",
   "monk.healers-covenant",
@@ -147,6 +153,8 @@ const NO_BOT_USE = new Set([
   "paragon.lead-the-way",
   "paragon.make-haste",
   "ranger.serpents-quickness",
+  // Storm's Embrace (#2501): speed, and its damage only while hexed.
+  "ranger.storms-embrace",
   "ranger.winnowing",
   "ritualist.cruel-was-daoshen",
   "ritualist.destructive-was-glaive",
@@ -161,6 +169,8 @@ const NO_BOT_USE = new Set([
   "warrior.rage-of-the-ntouka",
   "warrior.rush",
   "warrior.shields-up",
+  // Soldier's Speed (#2501), as Sprint: speed, which no rule casts.
+  "warrior.soldiers-speed",
   "warrior.sprint",
   // Minions, wells and enchantment strips: no rule for them yet.
   "necromancer.animate-bone-horror",
