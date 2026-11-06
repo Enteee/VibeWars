@@ -502,6 +502,35 @@ body {
   border: 1px solid var(--line);
 }
 
+/* An overlay window (#2381): its × at its own top right, not in the top
+   bar. The window holds it; its body keeps clear of it. */
+.options-overlay > .screen {
+  position: relative;
+}
+
+.options-overlay .options-body {
+  padding-right: 2.25rem;
+}
+
+.screen button.overlay-close {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+/* An overlay's own buttons (#2381): a footer, right-aligned, the primary
+   one first and the dismissing one last. */
+.overlay-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 .status[data-state="online"] {
   color: #7ee787;
 }
@@ -6072,6 +6101,8 @@ button.skill-group-header > .skill-group-rank {
   align-items: center;
   justify-content: space-between;
   gap: 0.8rem;
+  /* Clear of the editor's × (#2381). */
+  padding-right: 2.25rem;
 }
 
 .beat-editor-bar .screen-title {
