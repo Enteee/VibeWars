@@ -5,6 +5,7 @@ import type {
   LobbyPhase,
   LobbyRefusal,
   LobbyTeamSize,
+  WireAscentLock,
   WirePartyFormed,
   WireProposalBuild,
   WireRelayLogin,
@@ -74,6 +75,8 @@ export interface LobbySnapshot {
   readonly queueNonce: string | null;
   /** While `phase` is `"queued"` in Heroes' Ascent (#1996), the party's round; `null` otherwise. */
   readonly ascentRound: number | null;
+  /** A Heroes' Ascent run's slots, once its party queued (#2539); `null` otherwise. */
+  readonly ascentLock: WireAscentLock | null;
 }
 
 /** A seat of a party's team plan as its host sends it (ADR-0042): its human's member key, `null` for a bot. */

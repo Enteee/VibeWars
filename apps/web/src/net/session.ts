@@ -133,6 +133,8 @@ export const PROPOSAL_REFUSED_MESSAGE =
 export const VOTE_REFUSED_MESSAGE = "That proposal is gone: vote for another.";
 export const SEAT_TAKEN_MESSAGE = "Someone took that seat first.";
 export const SEAT_REFUSED_MESSAGE = "That seat is not one of the chosen team build's.";
+export const ASCENT_LOCKED_MESSAGE =
+  "Locked for this Heroes' Ascent run: your team won with this build.";
 
 /** A lobby hosted in this tab, and how to end it for everyone. */
 export interface HostedLobby {
@@ -901,6 +903,8 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
       return SEAT_TAKEN_MESSAGE;
     case "invalid-slot":
       return SEAT_REFUSED_MESSAGE;
+    case "ascent-locked":
+      return ASCENT_LOCKED_MESSAGE;
     default:
       return REFUSED_MESSAGE;
   }

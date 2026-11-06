@@ -165,6 +165,18 @@ interface TeamLobby {
   readonly forQueue: boolean;
   /** The Heroes' Ascent round the party queues at (#1996); `null` in other modes. */
   readonly ascentRound: number | null;
+  /** A Heroes' Ascent run's claim after a win (#2539): its Team Build is the run's, and only a vacant slot is claimed. */
+  readonly locked: boolean;
+}
+
+/**
+ * A Heroes' Ascent run's Team Build and who holds each slot (#2539), as
+ * its first map's Team Lobby left them, kept for every map after a win.
+ */
+interface AscentLock {
+  readonly chosen: NonNullable<TeamSide["chosen"]>;
+  /** Each slot's member; `null` for a vacant one, a bot's or one whose member left. */
+  claimers: (string | null)[];
 }
 
 /** One seat of a queueing party's side (#1766): its human's peer, `null` for a bot, and its build. */
@@ -511,6 +523,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     | undefined;
   /** A team mode's queued lobby: each side's seat plan so far (ADR-0042). */
   const teamPlans: [TeamPlan | undefined, TeamPlan | undefined] = [undefined, undefined];
+  /**
+   * Heroes' Ascent's party (#2539): recorded each time it queues, applied
+   * by a `find-match` past round 0, and gone with round 0 or a new mode.
+   */
+  let ascentLock: AscentLock | undefined;
 
   const nowMs = (): number => elapsed * 1000;
   /** The clock in whole ms, so a countdown of ticks that do not add up exactly still ends. */
@@ -625,6 +642,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
     queueNonce: queueing?.nonce ?? null,
     ascentRound: queueing?.ascentRound ?? null,
+    ascentLock:
+      ascentLock === undefined
+        ? null
+        : { slots: ascentLock.claimers.map((claimedBy, slot) => ({ slot, claimedBy })) },
     teamLobby: teamLobby === undefined ? null : wireTeamLobby(teamLobby, to?.team ?? null),
   });
 
@@ -829,21 +850,58 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       note("start-rejected", `a team plays at most ${String(size)}`, local.selfId);
       return false;
     }
-    const side = (size: number): TeamSide => ({
-      size,
-      proposals: new Map(),
-      pending: new Map(),
-      votes: new Map(),
-      chosen: undefined,
-      claims: [],
-    });
     phase = "team-lobby";
     teamLobby = {
       stage: "vote",
       endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
-      sides: [side(size), side(forQueue ? 0 : size)],
+      sides: [emptySide(size), emptySide(forQueue ? 0 : size)],
       forQueue,
       ascentRound,
+      locked: false,
+    };
+    clearReady();
+    return true;
+  };
+
+  /** A side of `size` before its vote. */
+  const emptySide = (size: number): TeamSide => ({
+    size,
+    proposals: new Map(),
+    pending: new Map(),
+    votes: new Map(),
+    chosen: undefined,
+    claims: [],
+  });
+
+  /**
+   * A Heroes' Ascent party queueing again after a win (#2539): it keeps
+   * its run's Team Build and slots. With every member seated it queues at
+   * once; a member who holds no slot first claims one of the vacant ones.
+   */
+  const requeueLocked = (lock: AscentLock, ascentRound: number): boolean => {
+    if (humansOn(0).every((human) => lock.claimers.includes(human.id))) {
+      const seats = lock.chosen.builds.map((build, slot) => ({
+        holder: lock.claimers[slot] ?? null,
+        build,
+      }));
+      beginQueueing(seats, ascentRound);
+      return false;
+    }
+    phase = "team-lobby";
+    teamLobby = {
+      stage: "claim",
+      endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
+      sides: [
+        {
+          ...emptySide(lock.chosen.builds.length),
+          chosen: lock.chosen,
+          claims: [...lock.claimers],
+        },
+        emptySide(0),
+      ],
+      forQueue: true,
+      ascentRound,
+      locked: true,
     };
     clearReady();
     return true;
@@ -941,10 +999,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (lobby.forQueue) {
       // The party's side alone: every seat nobody holds is a bot (#1766).
       const claims = claimsOf(0, lobby.sides[0]);
-      const seats = (lobby.sides[0].chosen?.builds ?? []).map((build, slot) => ({
+      const { chosen } = lobby.sides[0];
+      const seats = (chosen?.builds ?? []).map((build, slot) => ({
         holder: claims[slot] ?? null,
         build,
       }));
+      // Heroes' Ascent keeps them for the run (#2539).
+      if (lobby.ascentRound !== null && chosen !== undefined) {
+        ascentLock = { chosen, claimers: seats.map((seat) => seat.holder) };
+      }
       teamLobby = undefined;
       beginQueueing(seats, lobby.ascentRound);
       return;
@@ -1265,6 +1328,20 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return false;
     }
     const side = lobby.sides[member.team];
+    // A run's Team Build stays, and so does every member who holds a slot of it (#2539).
+    const lock = lobby.locked ? ascentLock : undefined;
+    if (
+      lock !== undefined &&
+      (command.kind === "propose" ||
+        command.kind === "vote" ||
+        command.kind === "choose-team" ||
+        (command.kind === "claim" &&
+          (lock.claimers.includes(member.id) ||
+            (command.slot !== null && (lock.claimers[command.slot] ?? null) !== null))))
+    ) {
+      refuse(member.id, "ascent-locked");
+      return false;
+    }
     switch (command.kind) {
       case "ready": {
         const changed = member.ready !== command.ready;
@@ -1418,6 +1495,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           return false;
         }
         mode = command.mode;
+        ascentLock = undefined;
         const [first = defaultMap, ...rest] = mapsOf(mode);
         // In the same broadcast as the mode: no member ever sees a mode
         // with a map outside it. Only a Hosted Game keeps a picked one
@@ -1466,6 +1544,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         ) {
           return false;
         }
+        // Past round 0 a run keeps its Team Build (#2539); round 0, or no
+        // run recorded, picks again.
+        const lock =
+          command.ascentRound !== null && command.ascentRound > 0 ? ascentLock : undefined;
+        ascentLock = lock;
         // The party is everyone here, on the one side; its seats nobody
         // claims are bots.
         const size = teamSizeOf(queueMode);
@@ -1476,7 +1559,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         for (const other of members.values()) {
           other.team = 0;
         }
-        return beginTeamLobby(true, command.ascentRound);
+        return lock === undefined || command.ascentRound === null
+          ? beginTeamLobby(true, command.ascentRound)
+          : requeueLocked(lock, command.ascentRound);
       }
       case "leave-queue":
       case "play-bots":
@@ -1966,6 +2051,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     away.delete(peerId);
     members.delete(peerId);
     tellReach();
+    // Its slot of a Heroes' Ascent run stays the run's build, vacant (#2539).
+    if (ascentLock !== undefined) {
+      ascentLock.claimers = ascentLock.claimers.map((holder) =>
+        holder === peerId ? null : holder,
+      );
+    }
     // A party member gone takes the party out of the queue (#1766).
     if (queueing !== undefined && leaving?.team === 0) {
       leaveQueue();

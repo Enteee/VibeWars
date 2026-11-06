@@ -331,6 +331,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     proposalBuilds: new Map(proposalBuilds),
     queueNonce: state.queueNonce,
     ascentRound: state.ascentRound,
+    ascentLock: state.ascentLock,
   });
 
   /**

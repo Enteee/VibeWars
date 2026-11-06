@@ -195,6 +195,7 @@ export type {
   PeerLobbyJoin,
   WireLobbyCharacter,
   WireLobbyPlayer,
+  WireAscentLock,
   WireLobbyState,
   WireTeamLobby,
   WireTeamSide,
