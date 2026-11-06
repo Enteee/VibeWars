@@ -644,13 +644,13 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
 }) => {
   const arena = JSON.parse(
     readFileSync(
-      new URL("../packages/game-maps/maps/arena-alpha/map.json", import.meta.url),
+      new URL("../packages/game-maps/maps/arena-pillars/map.json", import.meta.url),
       "utf8",
     ),
   ) as { readonly height: number };
   await page.goto("./");
   await hostLobby(page);
-  await expect(page.locator(".lobby-map select")).toHaveValue("arena-alpha");
+  await expect(page.locator(".lobby-map select")).toHaveValue("arena-pillars");
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
@@ -771,7 +771,7 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
     await page.mouse.wheel(0, -100);
   }
   await expect(stage).toHaveAttribute("data-zoom-step", "Close");
-  // Right, to the middle of arena-alpha (960 wide), clear of its edges.
+  // Right, to the middle of arena-pillars (960 wide), clear of its edges.
   await page.keyboard.down(key("move-right"));
   await expect.poll(cameraX, { timeout: 15_000 }).toBeGreaterThan(400);
   await page.keyboard.up(key("move-right"));
@@ -817,7 +817,7 @@ test("a wheel click on a foe calls it for your team, and the other team never se
 }) => {
   const arena = JSON.parse(
     readFileSync(
-      new URL("../packages/game-maps/maps/arena-alpha/map.json", import.meta.url),
+      new URL("../packages/game-maps/maps/arena-pillars/map.json", import.meta.url),
       "utf8",
     ),
   ) as {
@@ -828,7 +828,7 @@ test("a wheel click on a foe calls it for your team, and the other team never se
   };
   const foeSpawn = arena.spawnPoints.find((spawn) => spawn.team === 1)?.position;
   if (foeSpawn === undefined) {
-    throw new Error("arena-alpha has no team 1 spawn");
+    throw new Error("arena-pillars has no team 1 spawn");
   }
   const opponent = await page.context().newPage();
   const canvas = await startLobbyMatch(page, [opponent]);
