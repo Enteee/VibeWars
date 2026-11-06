@@ -77,6 +77,9 @@ const NO_BOT_USE = new Set([
   // plans for.
   "ritualist.spirit-siphon",
   "ritualist.ghostly-haste",
+  // Second Wind (#2504): Health and Energy only per point of Overcast,
+  // which a bot never builds.
+  "elementalist.second-wind",
   // Aura of Displacement, Shadow Meld and Shadow of Haste (#1826): a step
   // there and back is nothing the bot plans for yet.
   "assassin.aura-of-displacement",

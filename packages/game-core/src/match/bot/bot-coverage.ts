@@ -196,6 +196,7 @@ export const BOT_UNUSED: Readonly<Record<string, BotGap>> = Object.freeze({
   "ritualist.signet-of-creation": "resource-gain",
   "warrior.flourish": "resource-gain",
   "ritualist.spirit-siphon": "resource-gain",
+  "elementalist.second-wind": "resource-gain",
   "dervish.extend-enchantments": "self-buff",
   "mesmer.signet-of-illusions": "self-buff",
   "mesmer.signet-of-recall": "self-buff",
