@@ -219,11 +219,14 @@ function boosts(skill: Skill): boolean {
 /**
  * Whether `status` makes its bearer's attacks worth more (#2000): more on
  * a hit, more adrenaline, faster, more often critical or through more
- * armor, a rider on its next attack skill, or a trigger on its attacking.
+ * armor, a rider on its next attack skill, or a trigger on its attacking;
+ * or its melee blows replaced by surer damage (#2472), Illusionary
+ * Weaponry's.
  */
 function actsOnAttacks(status: StatusDefinition): boolean {
   return (
     status.onAttackHit !== undefined ||
+    status.replacesMeleeBlows !== undefined ||
     status.extraStrikesPerHit > 0 ||
     statAtTwelve(status.attackDamageDelta) > 0 ||
     statAtTwelve(status.attackDurationMultiplier) < 1 ||

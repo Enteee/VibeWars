@@ -1202,6 +1202,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `the next damage is negated and its source takes that much instead, up to ${statText(definition.reflectsNextDamage.cap, ranks, whole)}`,
     );
   }
+  // Illusionary Weaponry's (#2472).
+  if (definition.replacesMeleeBlows !== undefined) {
+    parts.push(
+      `melee attacks neither hit nor fail to hit, and deal ${statText(definition.replacesMeleeBlows.damage, ranks, whole)} damage each instead`,
+    );
+  }
   // Mark of Protection's (#2187).
   if (definition.damageToHealing !== undefined) {
     parts.push(
@@ -3431,6 +3437,10 @@ function perCountText(per: PerCount, ranks: ReadonlyMap<string, number>, onTarge
 
 /** One of what `count` counts, as "for each" names it: "hex on them", "foe nearby". */
 function countEach(count: CountRule, onTarget: string): string {
+  // Aneurysm's (#2472).
+  if (count.kind === "energy-gained") {
+    return "point of Energy gained";
+  }
   return count.kind === "statuses"
     ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : onTarget}`
     : count.kind === "recharging-skills"
@@ -3483,6 +3493,9 @@ function countAll(count: CountRule): string {
 
 /** What a `per` counts, one of it, as a headline names it (#2222): "ally", "hex". */
 function perCountNoun(count: CountRule): string {
+  if (count.kind === "energy-gained") {
+    return "point of Energy gained";
+  }
   return count.kind === "statuses"
     ? count.categories.join(" or ")
     : count.kind === "recharging-skills"
@@ -3615,11 +3628,7 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       return { text: `${counted}${perAllyText(effect, ranks)}${below}`, magnitude };
     }
     case "energy-gain": {
-      const magnitude = countedMagnitude(
-        effect.amount,
-        effect.toTarget === true ? undefined : effect.per,
-        ranks,
-      );
+      const magnitude = countedMagnitude(effect.amount, effect.per, ranks);
       if (effect.toTarget !== true && effect.perUsedSkillEnergy === true) {
         return {
           text: `Gain ${shown(magnitude, percentOf(magnitude.current))} of the skill's base energy cost`,
@@ -3634,7 +3643,8 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
             : "Gain";
       const text = `${gains} ${shown(magnitude)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${perRemovedText(effect)}`;
       return {
-        text: `${effect.toTarget === true ? text : withPerText(text, effect.amount, effect.per, ranks, { alone: "Gain", unit: " energy", onTarget: "on target foe" })}${upToText(effect)}`,
+        // A target's gain counts too (#2472).
+        text: `${withPerText(text, effect.amount, effect.per, ranks, effect.toTarget === true ? { alone: gains, unit: " energy", onTarget: "on them" } : { alone: "Gain", unit: " energy", onTarget: "on target foe" })}${upToText(effect)}`,
         magnitude,
       };
     }
@@ -3664,6 +3674,9 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         magnitude,
       };
     }
+    // Aneurysm's (#2472).
+    case "energy-refill":
+      return { text: "Target regains all Energy", magnitude: undefined };
     case "energy-loss": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       const who = effect.on === "caster" ? "You lose" : "Target loses";

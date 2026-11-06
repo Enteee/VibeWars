@@ -188,7 +188,8 @@ describe("status definitions", () => {
         def.preventsCriticalHits ||
         def.killsSourceOnDeath ||
         def.resurrectionBonus !== undefined ||
-        def.refusesEnchantments;
+        def.refusesEnchantments ||
+        def.replacesMeleeBlows !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
