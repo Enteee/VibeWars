@@ -42,6 +42,7 @@
     "observing",
     "call",
     "calls",
+    "strokes",
     "traps",
     "chat",
     "chat-line"
@@ -630,6 +631,7 @@
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
+    "MAX_STROKE_POINTS": { "literal": 16 },
     "MAX_TEAM_LOBBY_SIDE": { "literal": 8 },
     "MAX_WIRE_CHAT_TEXT": { "literal": 2048 },
     "MAX_WIRE_COMBATS": { "literal": 64 },
@@ -650,6 +652,7 @@
     "MAX_WIRE_STATUSES": { "literal": 32 },
     "MAX_WIRE_STATUS_INDEX": { "literal": 1023 },
     "MAX_WIRE_STRING": { "literal": 64 },
+    "MAX_WIRE_STROKES": { "literal": 64 },
     "MAX_WIRE_TEXT": { "literal": 256 },
     "MAX_WIRE_WALLS": { "literal": 1024 },
     "MIN_WIRE_MORALE": { "literal": -60 },
@@ -657,6 +660,7 @@
     "PROTOCOL_MISMATCH_MESSAGE": {
       "literal": "This tab is running an outdated version of VibeWars. Reload the page."
     },
+    "STROKE_SECONDS": { "literal": 4 },
     "TEAM_LOBBY_STAGE_SECONDS": { "literal": 60 },
     "TICKET_HEARTBEAT_MS": { "literal": 5000 },
     "TICKET_TTL_MS": { "literal": 15000 }
@@ -764,6 +768,7 @@
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
         { "literal": "stay-together" },
+        { "literal": "strokes" },
         { "literal": "team-proposal-builds" },
         { "literal": "traps" },
         { "literal": "weapon-sets" },
@@ -4865,6 +4870,17 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "stroke" } },
+            {
+              "name": "points",
+              "optional": false,
+              "type": { "array": { "tuple": ["number", "number"] } }
+            },
+            { "name": "strokeId", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "target" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
@@ -6794,6 +6810,7 @@
         { "name": "y", "optional": false, "type": "number" }
       ]
     },
+    "WirePoint": { "tuple": ["number", "number"] },
     "WireProjectile": {
       "properties": [
         { "name": "attackerId", "optional": false, "type": "string" },
@@ -7792,6 +7809,42 @@
           "name": "holder",
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        }
+      ]
+    },
+    "WireStroke": {
+      "properties": [
+        { "name": "byId", "optional": false, "type": "string" },
+        { "name": "id", "optional": false, "type": "number" },
+        {
+          "name": "points",
+          "optional": false,
+          "type": { "array": { "tuple": ["number", "number"] } }
+        },
+        { "name": "remaining", "optional": false, "type": "number" },
+        { "name": "strokeId", "optional": false, "type": "number" }
+      ]
+    },
+    "WireStrokes": {
+      "properties": [
+        {
+          "name": "segments",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "byId", "optional": false, "type": "string" },
+                { "name": "id", "optional": false, "type": "number" },
+                {
+                  "name": "points",
+                  "optional": false,
+                  "type": { "array": { "tuple": ["number", "number"] } }
+                },
+                { "name": "remaining", "optional": false, "type": "number" },
+                { "name": "strokeId", "optional": false, "type": "number" }
+              ]
+            }
+          }
         }
       ]
     },

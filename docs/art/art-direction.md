@@ -429,8 +429,12 @@ the arena does not. A body beyond it is not on it: the edge markers
   Its capture progress is the arena's to show, not the compass's.
 - **Pings**: a 1 px `friend` ring growing from 3 to 10 px and fading over
   the ping's life. Reduced motion: it holds at 3 px, whole.
+- **Your team's lines** (#2391): 2 px `friend`, round-capped, over the
+  walls and rings and under every mark. Whole for 3 s, then fading out
+  over the last 1 s. Reduced motion: whole until they go at 4 s.
 
-Clicking it does nothing. Spectators have none.
+A click on it pings that spot for your team, and a drag draws a line
+(#2391); the pointer is a crosshair over it. Spectators have none.
 
 ### Damage and heal numbers
 

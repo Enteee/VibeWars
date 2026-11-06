@@ -1,7 +1,12 @@
 import {
+  MAX_STROKE_POINTS,
   MAX_WIRE_PINGS,
+  MAX_WIRE_STROKES,
+  STROKE_SECONDS,
   parseWireCalls,
+  parseWireStrokes,
   type JsonValue,
+  type PeerCall,
   type WireCalls,
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
@@ -155,11 +160,90 @@ describe("calls through the P2P host (#443)", () => {
     }
     await settle();
     await match.step(TICK_SECONDS);
-    expect(c.connection.getCalls()).toEqual({ target: null, pings: [] });
+    expect(c.connection.getCalls()).toEqual({ target: null, pings: [], strokes: [] });
 
     a.connection.sendCall({ kind: "target", targetId: b.connection.selfSessionId });
     await settle();
     await match.step(TICK_SECONDS);
     expect(c.connection.getCalls().target?.targetId).toBe(b.connection.selfSessionId);
+  });
+});
+
+describe("compass lines through the P2P host (#2391)", () => {
+  const line = (strokeId: number, from: number): PeerCall => ({
+    kind: "stroke",
+    strokeId,
+    points: [
+      [from, 200],
+      [from + 20, 210],
+    ],
+  });
+
+  it("shows a segment to the drawer's team, never a foe, and sends each once", async () => {
+    const match = startMatch();
+    const { a, b, c, d } = await fourInAMatch(match);
+    const sent: number[][] = [];
+    for (const player of [a, b, c, d]) {
+      const ids: number[] = [];
+      sent.push(ids);
+      player.transport.on("strokes", (data) => {
+        ids.push(...(parseWireStrokes(data)?.segments.map(({ id }) => id) ?? []));
+      });
+    }
+    a.connection.sendCall(line(1, 300));
+    await settle();
+    await match.step(TICK_SECONDS);
+    a.connection.sendCall(line(1, 320));
+    await settle();
+    await match.step(TICK_SECONDS);
+
+    const drawn = c.connection.getCalls().strokes;
+    expect(drawn.map(({ points }) => points[0])).toEqual([
+      [300, 200],
+      [320, 200],
+    ]);
+    expect(drawn.every(({ byId }) => byId === a.connection.selfSessionId)).toBe(true);
+    expect(a.connection.getCalls().strokes).toHaveLength(2);
+    expect(sent).toEqual([[1, 2], [], [1, 2], []]);
+    expect(b.connection.getCalls().strokes).toEqual([]);
+    expect(d.connection.getCalls().strokes).toEqual([]);
+    await match.step(STROKE_SECONDS);
+    expect(c.connection.getCalls().strokes).toEqual([]);
+  });
+
+  it("gives a rejoining peer its team's live segments", async () => {
+    const match = startMatch();
+    const { a, c } = await fourInAMatch(match);
+    a.connection.sendCall(line(1, 300));
+    await settle();
+    await match.step(TICK_SECONDS);
+
+    await c.transport.leave();
+    await settle();
+    await match.step(TICK_SECONDS);
+    const { connection: back } = await match.rejoin(c.connection);
+    await settle();
+    expect(back.getCalls().strokes.map(({ points }) => points[0])).toEqual([[300, 200]]);
+  });
+
+  it("keeps a peer's lines bounded however many a hostile host sends", async () => {
+    const match = startMatch();
+    const { c } = await fourInAMatch(match);
+    const points = Array.from({ length: MAX_STROKE_POINTS }, (_, i) => [i, i]);
+    for (let message = 0; message < 10; message += 1) {
+      match.hostTransport.send("strokes", {
+        segments: Array.from({ length: MAX_WIRE_STROKES }, (_, i) => ({
+          id: 1000 + message * MAX_WIRE_STROKES + i,
+          byId: "forged",
+          strokeId: 1,
+          points,
+          remaining: STROKE_SECONDS,
+        })),
+      });
+    }
+    await settle();
+    const drawn = c.connection.getCalls().strokes;
+    expect(drawn).toHaveLength(MAX_WIRE_STROKES);
+    expect(drawn.at(-1)?.id).toBe(1000 + 10 * MAX_WIRE_STROKES - 1);
   });
 });
