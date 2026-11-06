@@ -19,7 +19,7 @@ import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage, weaponAttributeMultiplier } from "./damage.js";
 import { applyEffect, type CombatEvent } from "./effects.js";
 import { resolveMagnitudeAtRanks } from "./scaling.js";
-import { makeCombatant } from "./testing.js";
+import { makeCombatant, withStatusDefinitions } from "./testing.js";
 import { blockChanceOf, combinedBlockChance } from "./tick.js";
 import {
   attackDurationSeconds,
@@ -33,7 +33,8 @@ import {
   weaponSnapshotOf,
 } from "./weapon-attack.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
-import { NO_RANKS } from "./status.js";
+import { NO_RANKS, STATUS_DEFINITIONS } from "./status.js";
+import { define } from "./statuses/define.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
 
@@ -2114,5 +2115,80 @@ describe("martial weapon mods on a hit (#2009)", () => {
       plain * 1.33,
       6,
     );
+  });
+});
+
+describe("a rider at its source's ranks (#2411)", () => {
+  const DEATH = "necromancer.death-magic";
+  const steady = (): SimulationRng =>
+    Object.assign(createRng(1), { nextInt: () => 10, nextFloat: () => 0.5 });
+
+  /** The Weakness a sword swing gives, its Withering Aura's source at `source` Death Magic. */
+  function weaknessSeconds(source: number, ownDeathMagic = 0): number {
+    const swordsman = makeCombatant({
+      id: "attacker",
+      team: 0,
+      equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
+      attributeRanks: new Map([
+        ["warrior.swordsmanship", 12],
+        [DEATH, ownDeathMagic],
+      ]),
+    });
+    swordsman.statuses.apply("withering-aura", 17, "necro", new Map([[DEATH, source]]));
+    const target = foe("dummy");
+    resolveSwing({
+      attacker: swordsman,
+      target,
+      surroundings: new Map(),
+      rng: steady(),
+      rules: RULES,
+      exposed: NOWHERE,
+    });
+    return target.combatant.statuses.get("weakness")?.remainingSeconds ?? 0;
+  }
+
+  it("weakens for the caster's Death Magic, not the attacker's", () => {
+    expect(weaknessSeconds(12)).toBe(17);
+    expect(weaknessSeconds(0)).toBe(5);
+    expect(weaknessSeconds(0, 12)).toBe(5);
+  });
+
+  it("without the flag, resolves at the attacker's own ranks", () => {
+    const rider = STATUS_DEFINITIONS["withering-aura"].onAttackHit;
+    if (rider === undefined) {
+      throw new Error("Withering Aura has no rider");
+    }
+    const atAttacker = { onAttackHit: { ...rider, atSourceRanks: false } };
+    expect(withStatusDefinitions({ "withering-aura": atAttacker }, () => weaknessSeconds(12))).toBe(
+      5,
+    );
+    expect(
+      withStatusDefinitions({ "withering-aura": atAttacker }, () => weaknessSeconds(0, 12)),
+    ).toBe(17);
+  });
+
+  it("leaves an attacker-ranked rider as it was: Barbed Arrows bleeds 13 s", () => {
+    const archer = attacker(WEAPONS.longbow, "ranger.marksmanship");
+    archer.statuses.apply("barbed-arrows", 24, "attacker", NO_RANKS);
+    const target = foe("dummy");
+    resolveSwing({
+      attacker: archer,
+      target,
+      surroundings: new Map(),
+      rng: steady(),
+      rules: RULES,
+      exposed: NOWHERE,
+    });
+    expect(target.combatant.statuses.get("bleeding")?.remainingSeconds).toBe(13);
+  });
+
+  it("refuses a rider at its source's ranks on a status its attack spends", () => {
+    const rider = STATUS_DEFINITIONS["withering-aura"].onAttackHit;
+    expect(() =>
+      define("withering-aura", "Withering Aura", "enchantment", {
+        onAttackHit: rider,
+        endsAfterAttackCount: 1,
+      }),
+    ).toThrow(/cannot end after its attacks/);
   });
 });

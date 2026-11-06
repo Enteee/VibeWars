@@ -501,6 +501,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
       attackSkillsOnly: false,
       weapon: "daggers",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "apply-status",
