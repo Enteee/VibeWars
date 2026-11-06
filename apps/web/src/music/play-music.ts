@@ -44,8 +44,8 @@ export interface MusicFollower {
   /** The menus' music, as deep as `screen` is (#1993); the song already playing goes on. */
   menu(screen: MenuScreen): void;
   /**
-   * Play `id` once over the music (#2523), in the key of the track the
-   * director wants: none when it wants none, as with Music Off.
+   * Play `id` once over the music (#2523), in the key of the track
+   * playing, an edit's or preview's too: none when none plays.
    */
   sting(id: StingId): void;
   /** The global mute, which mutes the music too. */
@@ -198,7 +198,7 @@ export function createMusicFollower(
     },
     menu,
     sting(id) {
-      const track = tracks.find((candidate) => candidate.id === directed);
+      const track = tracks.find((candidate) => candidate.id === playingId);
       if (track !== undefined) {
         player.sting({ ...STINGS[id], key: track.key });
       }

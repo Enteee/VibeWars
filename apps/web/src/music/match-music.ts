@@ -103,6 +103,19 @@ function fromSnapshot(
 /** A resurrection on your team plays its sting at most this often. */
 export const RESURRECTED_STING_MS = 8_000;
 
+/**
+ * Combat heard longer ago than this plays no sting (#2523): snapshots
+ * follow the frame, so a hidden tab hears a fight it never saw. A late
+ * death still spends first blood.
+ */
+export const STING_LATE_MS = 1_000;
+
+/** A combat message's events, and when they arrived, epoch milliseconds. */
+export interface HeardCombat {
+  readonly atMs: number;
+  readonly events: readonly CombatEvent[];
+}
+
 /** What the stings (#2523) remember from one snapshot to the next. */
 export interface StingMemory {
   /** The phase of the last snapshot, `null` before the first. */
@@ -116,16 +129,17 @@ export interface StingMemory {
 export const FRESH_STINGS: StingMemory = { phase: null, bloodied: false, resurrectedAtMs: null };
 
 /**
- * The stings `next` and the combat since the last snapshot call for, in
- * the order they rank: match-start, first-blood, resurrected, then victory
- * or defeat. Only the last plays. Pure: what it remembers comes back.
+ * The stings `next` and the combat heard since the last snapshot call
+ * for, in the order they rank: match-start, first-blood, resurrected,
+ * then victory or defeat. Only the last plays. Pure: what it remembers
+ * comes back.
  *
  * @param selfTeam your team, `null` for a watcher, who has no side
  */
 export function stingsFor(
   prev: StingMemory,
   next: MatchSnapshot,
-  combatEvents: readonly CombatEvent[],
+  heard: readonly HeardCombat[],
   selfTeam: number | null,
   nowMs: number,
 ): { readonly stings: StingId[]; readonly memory: StingMemory } {
@@ -134,21 +148,28 @@ export function stingsFor(
   // Creatures (#1052) are no one's blood and no one's comeback.
   const player = (id: string): PlayerSnapshot | undefined =>
     next.players.find((p) => p.sessionId === id && p.creature === undefined);
+  const recent = (combat: HeardCombat): boolean => nowMs - combat.atMs < STING_LATE_MS;
+  const deaths = heard.filter((combat) =>
+    combat.events.some((event) => event.kind === "death" && player(event.targetId) !== undefined),
+  );
   if (prev.phase === null && next.phase === "active") {
     stings.push("match-start");
   }
-  if (
-    !bloodied &&
-    combatEvents.some((event) => event.kind === "death" && player(event.targetId) !== undefined)
-  ) {
+  if (!bloodied && deaths.length > 0) {
     bloodied = true;
-    stings.push("first-blood");
+    if (deaths.some(recent)) {
+      stings.push("first-blood");
+    }
   }
   if (
     selfTeam !== null &&
     (resurrectedAtMs === null || nowMs - resurrectedAtMs >= RESURRECTED_STING_MS) &&
-    combatEvents.some(
-      (event) => event.kind === "resurrected" && player(event.targetId)?.team === selfTeam,
+    heard.some(
+      (combat) =>
+        recent(combat) &&
+        combat.events.some(
+          (event) => event.kind === "resurrected" && player(event.targetId)?.team === selfTeam,
+        ),
     )
   ) {
     resurrectedAtMs = nowMs;
@@ -188,16 +209,16 @@ export function attachMatchMusic(
   let disposed = false;
   /** What the stings remember, and the combat since the last snapshot (#2523). */
   let stingMemory = FRESH_STINGS;
-  let combatSince: CombatEvent[] = [];
+  let combatSince: HeardCombat[] = [];
 
   connection.onCombat((message) => {
     if (disposed || !online) {
       return;
     }
-    if (screen === "match") {
-      combatSince.push(...message.events);
-    }
     const at = now();
+    if (screen === "match") {
+      combatSince.push({ atMs: at, events: message.events });
+    }
     for (const hit of hitsForCombat(message, connection.selfSessionId)) {
       (hit === "dealt" ? dealt : taken).push(at);
     }

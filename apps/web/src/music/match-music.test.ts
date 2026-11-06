@@ -12,9 +12,11 @@ import {
   ENGAGE_RANGE,
   FRESH_STINGS,
   RESURRECTED_STING_MS,
+  STING_LATE_MS,
   attachMatchMusic,
   stingsFor,
   type StingMemory,
+  type HeardCombat,
 } from "./match-music.js";
 import type { StingId } from "./stings/ids.js";
 
@@ -317,6 +319,11 @@ const resurrected = (targetId: string): CombatMessage["events"][number] => ({
   energyFraction: 0.5,
 });
 
+/** `events`, heard at `atMs`. */
+const heardAt = (atMs: number, events: CombatMessage["events"]): HeardCombat[] => [
+  { atMs, events },
+];
+
 /** A match already under way, nobody dead yet. */
 const UNDER_WAY: StingMemory = { ...FRESH_STINGS, phase: "active" };
 
@@ -327,7 +334,7 @@ describe("stingsFor (#2523)", () => {
     events: CombatMessage["events"] = [],
     selfTeam: number | null = 0,
     nowMs = 0,
-  ): StingId[] => stingsFor(prev, next, events, selfTeam, nowMs).stings;
+  ): StingId[] => stingsFor(prev, next, heardAt(nowMs, events), selfTeam, nowMs).stings;
 
   it("starts the match on its first active snapshot, and only then", () => {
     expect(called(FRESH_STINGS, snapshot())).toEqual(["match-start"]);
@@ -336,7 +343,7 @@ describe("stingsFor (#2523)", () => {
   });
 
   it("draws first blood on the first death of either team, once", () => {
-    const first = stingsFor(UNDER_WAY, snapshot(), [death("foe")], 0, 0);
+    const first = stingsFor(UNDER_WAY, snapshot(), heardAt(0, [death("foe")]), 0, 0);
     expect(first.stings).toEqual(["first-blood"]);
     expect(called(first.memory, snapshot(), [death(ME)])).toEqual([]);
     expect(called(UNDER_WAY, snapshot(), [death(ME)])).toEqual(["first-blood"]);
@@ -363,7 +370,13 @@ describe("stingsFor (#2523)", () => {
   });
 
   it("raises your team's dead, at most once every 8 s, and never a foe's", () => {
-    const raised = stingsFor(UNDER_WAY, snapshot(), [resurrected("ally")], 0, 1_000);
+    const raised = stingsFor(
+      UNDER_WAY,
+      snapshot(),
+      heardAt(1_000, [resurrected("ally")]),
+      0,
+      1_000,
+    );
     expect(raised.stings).toEqual(["resurrected"]);
     expect(
       called(raised.memory, snapshot(), [resurrected(ME)], 0, 1_000 + RESURRECTED_STING_MS - 1),
@@ -381,6 +394,19 @@ describe("stingsFor (#2523)", () => {
       [],
     );
     expect(called({ ...UNDER_WAY, phase: "finished" }, snapshot({ finished: 0 }))).toEqual([]);
+  });
+
+  it("plays no sting for combat heard too long ago, though it spends first blood", () => {
+    const late = STING_LATE_MS;
+    const stale = stingsFor(UNDER_WAY, snapshot(), heardAt(0, [death("foe")]), 0, late);
+    expect(stale.stings).toEqual([]);
+    expect(stale.memory.bloodied).toBe(true);
+    expect(
+      stingsFor(UNDER_WAY, snapshot(), heardAt(0, [resurrected("ally")]), 0, late).stings,
+    ).toEqual([]);
+    expect(stingsFor(UNDER_WAY, snapshot(), heardAt(1, [death("foe")]), 0, late).stings).toEqual([
+      "first-blood",
+    ]);
   });
 
   it("plays a watcher no side's stings", () => {
@@ -426,6 +452,17 @@ describe("attachMatchMusic's stings (#2523)", () => {
     at(16);
     at(RESURRECTED_STING_MS);
     expect(stings).toEqual(["match-start", "resurrected"]);
+  });
+
+  it("plays no sting for combat heard while the tab was hidden, its frames stopped", () => {
+    const { stings, at, combat } = setup();
+    at(0);
+    combat(combatOf(death("foe"), resurrected("ally")));
+    at(STING_LATE_MS);
+    // First blood is spent all the same.
+    combat(combatOf(death(ME)));
+    at(16);
+    expect(stings).toEqual(["match-start"]);
   });
 
   it("plays none in the Training Ground", () => {

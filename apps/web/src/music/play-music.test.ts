@@ -428,6 +428,29 @@ describe("createMusicFollower", () => {
     ]);
   });
 
+  it("plays a sting in the key of the preview or edit you hear, not the director's (#2523)", () => {
+    const { player, calls } = recording();
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      NO_EDITS,
+    );
+    music.follow(state("first-light", 0));
+    music.preview("clash-of-banners");
+    music.sting("first-blood");
+    expect(calls.at(-1)?.[1]).toMatchObject({ key: "E phrygian" });
+    music.preview(null);
+    music.edit("clash-of-banners");
+    music.sting("first-blood");
+    expect(calls.at(-1)?.[1]).toMatchObject({ key: "E phrygian" });
+    music.edit(null);
+    music.sting("first-blood");
+    expect(calls.at(-1)?.[1]).toMatchObject({ key: "D lydian" });
+  });
+
   it("plays no sting when the director wants no track, as with Music Off (#2523)", () => {
     const { player, calls } = recording();
     const music = createMusicFollower(
