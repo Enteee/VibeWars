@@ -23,6 +23,8 @@ const NO_BOT_USE = new Set([
   "ritualist.attuned-was-songkai",
   "ritualist.renewing-memories",
   "ritualist.spirits-strength",
+  // Stone Striker (#2503): its damage turned to earth.
+  "elementalist.stone-striker",
   "necromancer.cultists-fervor",
   "monk.blessed-aura",
   "monk.healers-covenant",

@@ -5005,7 +5005,13 @@ export class MatchSimulation {
     const { maxHealthBonus, maxHealthBonusPerEnchantment, maxEnergyBonus, category } =
       STATUS_DEFINITIONS[change.id];
     const { combatant } = record;
-    if (maxHealthBonus !== 0 || maxHealthBonusPerEnchantment !== 0 || category === "enchantment") {
+    // Energy Boon's (#2503) health hangs on the energy maximum too.
+    if (
+      maxHealthBonus !== 0 ||
+      maxHealthBonusPerEnchantment !== 0 ||
+      maxEnergyBonus !== 0 ||
+      category === "enchantment"
+    ) {
       combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
     }
     if (maxEnergyBonus !== 0) {

@@ -99,7 +99,10 @@ export type ElementalistStatusId =
   | "glyph-of-swiftness"
   | "ward-of-weakness"
   // Dropped leftovers (#2446).
-  | "storm-djinns-haste";
+  | "storm-djinns-haste"
+  // Mechanics (#2503).
+  | "stone-striker"
+  | "energy-boon";
 
 /** Incendiary Bonds' blast (#2289), on its bearer and the foes near it. */
 const INCENDIARY_BLAST = {
@@ -1093,6 +1096,23 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         },
       ],
       skillId: "elementalist.storm-djinns-haste",
+    },
+  }),
+  // "whenever you take or deal elemental or physical damage, that damage
+  // is converted to earth damage" (#2503).
+  "stone-striker": define("stone-striker", "Stone Striker", "enchantment", {
+    profession: "elementalist",
+    physicalDamageDealtAs: "earth",
+    elementalDamageDealtAs: "earth",
+    physicalDamageTakenAs: "earth",
+    elementalDamageTakenAs: "earth",
+  }),
+  // "raises the maximum Health of you and target ally by 1...3 for each
+  // point of your respective maximum Energy" (#2503): each bearer's own.
+  "energy-boon": define("energy-boon", "Energy Boon", "enchantment", {
+    profession: "elementalist",
+    maxHealthPerMaxEnergy: {
+      scaling: { attributeId: "elementalist.energy-storage", atZero: 1, atTwelve: 2.6 },
     },
   }),
 };

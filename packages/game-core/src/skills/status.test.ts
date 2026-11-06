@@ -173,6 +173,13 @@ describe("status definitions", () => {
         def.minionHitHealthLossPercent !== 0 ||
         def.redirectsConditionsToMinion ||
         def.physicalDamageDealtAs !== undefined ||
+        def.elementalDamageDealtAs !== undefined ||
+        def.physicalDamageTakenAs !== undefined ||
+        statAtTwelve(def.damageReductionFromConditionedFoe) !== 0 ||
+        statAtTwelve(def.spellDamageTakenMultiplier) !== 1 ||
+        def.damagePerSecondCap !== undefined ||
+        statAtTwelve(def.maxHealthPerMaxEnergy) !== 0 ||
+        def.preventsFoeKnockdown ||
         def.moveSpeedWhileEnchanted !== 1 ||
         def.incomingAllySpellCastTimeMultiplier !== 1 ||
         def.interruptGuard !== undefined ||
@@ -553,9 +560,9 @@ describe("StatusSet removal by profession (#845)", () => {
     const set = new StatusSet();
     set.apply("fleeting-stability", 10, "a", NO_RANKS);
     set.apply("mystic-regeneration", 10, "a", NO_RANKS);
-    expect(set.endOnKnockdownPrevented()).toEqual(["fleeting-stability"]);
+    expect(set.endOnKnockdownPrevented("foe", true)).toEqual(["fleeting-stability"]);
     expect(set.has("mystic-regeneration")).toBe(true);
-    expect(set.endOnKnockdownPrevented()).toEqual([]);
+    expect(set.endOnKnockdownPrevented("foe", true)).toEqual([]);
   });
 });
 
@@ -787,7 +794,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.countSpellStarted();
     set.countSpellStarted();
     set.endOnBearerAttack("melee");
-    set.endOnKnockdownPrevented();
+    set.endOnKnockdownPrevented("foe", true);
 
     expect(set.drainChanges()).toEqual([
       {

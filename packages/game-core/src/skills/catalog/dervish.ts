@@ -3324,4 +3324,180 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "dervish.veil-of-thorns",
+    name: "Veil of Thorns",
+    gwId: 1757,
+    type: "enchantment",
+    elite: false,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "When you cast this enchantment, all nearby foes are struck for 5...50
+    // piercing damage. For 5...25 seconds, you take 5...35% less damage from
+    // spells" (#2503).
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "veil-of-thorns",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.earth-prayers", atZero: 5, atTwelve: 21 },
+        },
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            type: "piercing",
+            armorPenetration: 0,
+            amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 5, atTwelve: 41 } },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "dervish.armor-of-sanctity",
+    name: "Armor of Sanctity",
+    gwId: 1515,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All adjacent foes suffer from Weakness for 5...15 seconds. For 15
+    // seconds, you take 5...20 less damage from foes suffering from a
+    // condition" (#2503).
+    effects: [
+      { kind: "apply-status", statusId: "armor-of-sanctity", durationSeconds: { flat: 15 } },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "weakness",
+            durationSeconds: {
+              scaling: { attributeId: "dervish.earth-prayers", atZero: 5, atTwelve: 13 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "dervish.pious-concentration",
+    name: "Pious Concentration",
+    gwId: 1542,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, you cannot be interrupted, but each time you would
+    // have been interrupted, you lose 1 Dervish enchantment or Pious
+    // Concentration ends" (#2503).
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "pious-concentration",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.earth-prayers", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
+  {
+    id: "dervish.grenths-fingers",
+    name: "Grenth's Fingers",
+    gwId: 1493,
+    type: "enchantment",
+    elite: false,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All nearby foes are struck for 10...40 cold damage. For 30 seconds,
+    // your attacks deal cold damage. When this enchantment ends, you transfer
+    // 1...2 conditions to all nearby foes" (#2503): the transfer is the
+    // status's end.
+    effects: [
+      { kind: "apply-status", statusId: "grenths-fingers", durationSeconds: { flat: 30 } },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            type: "cold",
+            armorPenetration: 0,
+            amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 10, atTwelve: 34 } },
+          },
+        ],
+      },
+    ],
+  },
 ];

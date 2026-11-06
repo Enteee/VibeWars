@@ -65,7 +65,9 @@ export type ParagonStatusId =
   | "theyre-on-fire"
   | "find-their-weakness"
   // Mechanics (#2479).
-  | "we-shall-return";
+  | "we-shall-return"
+  // Mechanics (#2503).
+  | "angelic-protection";
 
 export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition>> = {
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
@@ -597,6 +599,14 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     resurrectionBonus: {
       healthPercent: { scaling: { attributeId: "paragon.command", atZero: 10, atTwelve: 62 } },
       energyPercent: { scaling: { attributeId: "paragon.command", atZero: 5, atTwelve: 41 } },
+    },
+  }),
+  // "any time target other ally takes more than 250...80 damage per
+  // second, that ally is healed for any damage over that amount" (#2503).
+  "angelic-protection": define("angelic-protection", "Angelic Protection", "skill-effect", {
+    profession: "paragon",
+    damagePerSecondCap: {
+      scaling: { attributeId: "paragon.leadership", atZero: 250, atTwelve: 114 },
     },
   }),
 };

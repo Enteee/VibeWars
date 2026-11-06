@@ -6227,6 +6227,111 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "elementalist.stone-striker",
+    name: "Stone Striker",
+    gwId: 1371,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...30 seconds, whenever you take or deal elemental or physical
+    // damage, that damage is converted to earth damage" (#2503).
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "stone-striker",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 25 },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.energy-boon",
+    name: "Energy Boon",
+    gwId: 837,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 36...60 seconds, Energy Boon raises the maximum Health of you and
+    // target ally by 1...3 for each point of your respective maximum Energy.
+    // When this enchantment is first applied, you and your target gain
+    // 1...12 Energy. You gain an additional 1 Energy for every 2 points you
+    // have in Energy Storage" (#2503). The extra is a level line, so it is
+    // rounded down: -0.25 + rank / 2, rounded, is ⌊rank / 2⌋ at every rank.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "energy-boon",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.energy-storage", atZero: 36, atTwelve: 55.2 },
+        },
+      },
+      {
+        kind: "apply-status",
+        statusId: "energy-boon",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.energy-storage", atZero: 36, atTwelve: 55.2 },
+        },
+        on: "caster",
+      },
+      {
+        kind: "energy-gain",
+        amount: {
+          scaling: { attributeId: "elementalist.energy-storage", atZero: 1, atTwelve: 9.8 },
+        },
+        toTarget: true,
+      },
+      {
+        kind: "energy-gain",
+        amount: {
+          scaling: { attributeId: "elementalist.energy-storage", atZero: 1, atTwelve: 9.8 },
+        },
+      },
+      {
+        kind: "energy-gain",
+        amount: {
+          byLevel: {
+            level: { attributeId: "elementalist.energy-storage", atZero: -0.25, atTwelve: 5.75 },
+            atLevelZero: 0,
+            perLevel: 1,
+          },
+        },
+      },
+    ],
+  },
 ];
 
 /**

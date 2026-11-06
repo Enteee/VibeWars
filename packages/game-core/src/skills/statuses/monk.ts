@@ -88,7 +88,9 @@ export type MonkStatusId =
   // Dropped leftovers (#2446).
   | "healers-boon"
   // Mechanics (#2470).
-  | "unyielding-aura";
+  | "unyielding-aura"
+  // Mechanics (#2503).
+  | "balthazars-pendulum";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -1049,5 +1051,20 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     killsBearerOnEnd: true,
     exploitsCorpseOnDeath: true,
     noDeathPenalty: true,
+  }),
+  // "the next time target ally would be knocked down by a foe, that foe is
+  // knocked down instead" (#2503): spent on the knockdown it stops.
+  "balthazars-pendulum": define("balthazars-pendulum", "Balthazar's Pendulum", "enchantment", {
+    profession: "monk",
+    preventsFoeKnockdown: true,
+    endsOnKnockdownPrevented: true,
+    triggers: [
+      {
+        on: "bearer-knockdown-prevented",
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+        target: "offender",
+        skillId: "monk.balthazars-pendulum",
+      },
+    ],
   }),
 };

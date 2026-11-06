@@ -4967,4 +4967,39 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "monk.balthazars-pendulum",
+    name: "Balthazar's Pendulum",
+    gwId: 1395,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...25 seconds, the next time target ally would be knocked down by
+    // a foe, that foe is knocked down instead" (#2503).
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "balthazars-pendulum",
+        durationSeconds: {
+          scaling: { attributeId: "monk.smiting-prayers", atZero: 5, atTwelve: 21 },
+        },
+      },
+    ],
+  },
 ];

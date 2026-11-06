@@ -30,21 +30,13 @@ export type MissingMechanic =
   | "recharge-others-by-type"
   | "rank-scale-fixed-field"
   | "distance-trigger"
-  | "max-health-per-max-energy"
   | "count-disabled-own-skills"
   | "double-strike-bonus"
   | "count-overcast"
   | "nearest-spirit-energy-drain"
   | "while-near-spirit"
   | "borrow-attribute-elite"
-  | "damage-type-conversion"
-  | "knockdown-offender"
   | "destroy-own-spirits"
-  | "transfer-conditions-to-area"
-  | "source-condition-damage-reduction"
-  | "interrupt-guard-strip-enchantment"
-  | "damage-per-second-cap"
-  | "spell-damage-taken-multiplier"
   | "weapon-element"
   | "weapon-filter-negation";
 
@@ -56,22 +48,13 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
     "recharge-others-by-type": "other skills of a type recharge faster or instantly",
     "rank-scale-fixed-field": "a field the engine keeps fixed scales with attribute rank",
     "distance-trigger": "an effect fires after the bearer moves a distance",
-    "max-health-per-max-energy": "maximum Health scales with your maximum Energy",
     "count-disabled-own-skills": "a magnitude counts how many of your skills are recharging",
     "double-strike-bonus": "an attack strikes twice and the second strike has its own bonus",
     "count-overcast": "a magnitude counts your Overcast",
     "nearest-spirit-energy-drain": "Energy is stolen from the nearest spirit",
     "while-near-spirit": "an effect holds while the bearer is within range of a spirit",
     "borrow-attribute-elite": "an elite skill borrows an attribute rank it does not belong to",
-    "damage-type-conversion": "damage of one type is dealt as another type",
-    "knockdown-offender": "whoever does something to the bearer is knocked down",
     "destroy-own-spirits": "the caster destroys their own spirits for a benefit",
-    "transfer-conditions-to-area": "the bearer's conditions move to foes in an area",
-    "source-condition-damage-reduction": "damage from a foe suffering a condition is reduced",
-    "interrupt-guard-strip-enchantment":
-      "the bearer cannot be interrupted, and an attempt ends the enchantment",
-    "damage-per-second-cap": "damage taken in one second is capped",
-    "spell-damage-taken-multiplier": "spells deal a multiple of their damage to the bearer",
     "weapon-element": "the wielder's weapon deals an element's damage",
     "weapon-filter-negation": "a bonus applies with every weapon except one type",
   });
@@ -92,7 +75,6 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     305: ["unwritten"], // Resurrect
     815: ["distance-trigger"], // Scorpion Wire
     827: ["vs-source-attack-mods"], // Siphon Strength
-    837: ["max-health-per-max-energy"], // Energy Boon
     847: ["unwritten"], // Boon Signet
     930: ["rank-scale-fixed-field"], // Auspicious Incantation
     950: ["vs-source-attack-mods"], // Shadowy Burden
@@ -110,22 +92,15 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     1228: ["nearest-spirit-energy-drain"], // Spirit Siphon
     1244: ["while-near-spirit"], // Ghostly Haste
     1339: ["rank-scale-fixed-field", "borrow-attribute-elite"], // Symbols of Inspiration
-    1371: ["damage-type-conversion"], // Stone Striker
     1372: ["unwritten"], // Sandstorm
     1391: ["unwritten"], // Supportive Spirit
-    1395: ["knockdown-offender"], // Balthazar's Pendulum
     1482: ["recharge-others-by-type", "destroy-own-spirits"], // Reclaim Essence
-    1493: ["transfer-conditions-to-area"], // Grenth's Fingers
-    1515: ["source-condition-damage-reduction"], // Armor of Sanctity
-    1542: ["interrupt-guard-strip-enchantment"], // Pious Concentration
-    1586: ["damage-per-second-cap"], // Angelic Protection
     1658: ["unwritten"], // Symbolic Posture
     1731: ["unwritten"], // Vocal Was Sogolon
     1737: ["unwritten"], // Wielder's Zeal
     1738: ["unwritten"], // Sight Beyond Sight
     1740: ["unwritten"], // Wielder's Remedy
     1744: ["unwritten"], // Caretaker's Charge
-    1757: ["spell-damage-taken-multiplier"], // Veil of Thorns
     1760: ["weapon-element"], // Ebon Dust Aura
     1764: ["unwritten"], // Attacker's Insight
     2011: ["unwritten"], // Grapple

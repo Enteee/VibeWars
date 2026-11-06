@@ -239,7 +239,7 @@ const PIP_EPSILON = 1e-6;
  */
 export function effectiveMaxHealth(combatant: MaxHealthHolder): number {
   const modifiers = aggregateModifiers(combatant.statuses.active);
-  const raised = combatant.maxHealth + modifiers.maxHealthBonus + modMaxHealthBonus(combatant);
+  const raised = raisedMaxHealth(combatant);
   return raised - lossOf(raised, modifiers.maxHealthLoss);
 }
 
@@ -251,21 +251,39 @@ export function raisedMaxHealth(combatant: MaxHealthHolder): number {
   return (
     combatant.maxHealth +
     aggregateModifiers(combatant.statuses.active).maxHealthBonus +
+    maxHealthFromMaxEnergy(combatant) +
     modMaxHealthBonus(combatant)
   );
+}
+
+/**
+ * Maximum health the bearer's statuses add for each point of its own
+ * maximum Energy (#2503): Energy Boon's 1...3, read live. That maximum is
+ * its own and its statuses' bonus; a held set's mods are not read, as
+ * theirs can hang on Health and so on this.
+ */
+function maxHealthFromMaxEnergy(combatant: MaxHealthHolder): number {
+  let bonus = 0;
+  let maxEnergy: number | undefined;
+  for (const { id, ranks } of combatant.statuses.active) {
+    const perEnergy = getStatusDefinition(id).maxHealthPerMaxEnergy;
+    if (perEnergy !== 0) {
+      maxEnergy ??=
+        combatant.maxEnergy + aggregateModifiers(combatant.statuses.active).maxEnergyBonus;
+      bonus += Math.round(statAt(perEnergy, ranks) * maxEnergy);
+    }
+  }
+  return bonus;
 }
 
 /** How much maximum health the bearer's statuses take: 0 for none. */
 export function maxHealthLossOf(combatant: MaxHealthHolder): number {
   const modifiers = aggregateModifiers(combatant.statuses.active);
-  return lossOf(
-    combatant.maxHealth + modifiers.maxHealthBonus + modMaxHealthBonus(combatant),
-    modifiers.maxHealthLoss,
-  );
+  return lossOf(raisedMaxHealth(combatant), modifiers.maxHealthLoss);
 }
 
 /** What a maximum Health is read from: the base, statuses and the held set's mods. */
-type MaxHealthHolder = Pick<Combatant, "maxHealth" | "statuses" | "equipment">;
+type MaxHealthHolder = Pick<Combatant, "maxHealth" | "maxEnergy" | "statuses" | "equipment">;
 
 /** Whether an enchantment, stance or hex is on `bearer`: a mod's condition (#2010). */
 export function statusWhileHolds(

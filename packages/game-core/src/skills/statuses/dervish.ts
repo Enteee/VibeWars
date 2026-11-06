@@ -63,7 +63,12 @@ export type DervishStatusId =
   | "lyssas-haste"
   // Mechanics (#2501).
   | "vow-of-piety"
-  | "signet-of-mystic-speed";
+  | "signet-of-mystic-speed"
+  // Mechanics (#2503).
+  | "veil-of-thorns"
+  | "armor-of-sanctity"
+  | "pious-concentration"
+  | "grenths-fingers";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -989,4 +994,45 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       ],
     },
   ),
+  // "you take 5...35% less damage from spells" (#2503).
+  "veil-of-thorns": define("veil-of-thorns", "Veil of Thorns", "enchantment", {
+    profession: "dervish",
+    spellDamageTakenMultiplier: {
+      scaling: { attributeId: "dervish.earth-prayers", atZero: 0.95, atTwelve: 0.71 },
+    },
+  }),
+  // "you take 5...20 less damage from foes suffering from a condition" (#2503).
+  "armor-of-sanctity": define("armor-of-sanctity", "Armor of Sanctity", "enchantment", {
+    profession: "dervish",
+    damageReductionFromConditionedFoe: {
+      scaling: { attributeId: "dervish.earth-prayers", atZero: 5, atTwelve: 17 },
+    },
+  }),
+  // "you cannot be interrupted, but each time you would have been
+  // interrupted, you lose 1 Dervish enchantment or Pious Concentration
+  // ends" (#2503).
+  "pious-concentration": define("pious-concentration", "Pious Concentration", "stance", {
+    profession: "dervish",
+    interruptGuard: { kind: "lose-enchantment", profession: "dervish" },
+  }),
+  // "your attacks deal cold damage. When this enchantment ends, you
+  // transfer 1...2 conditions to all nearby foes" (#2503).
+  "grenths-fingers": define("grenths-fingers", "Grenth's Fingers", "enchantment", {
+    profession: "dervish",
+    attackDamageType: "cold",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "transfer-conditions-to-area",
+            count: { scaling: { attributeId: "dervish.wind-prayers", atZero: 1, atTwelve: 1.8 } },
+            radius: AREA_NEARBY,
+          },
+        ],
+        skillId: "dervish.grenths-fingers",
+      },
+    ],
+  }),
 };

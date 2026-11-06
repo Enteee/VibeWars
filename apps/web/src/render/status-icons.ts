@@ -726,6 +726,15 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "renewing-memories": icon("renewing-memories"),
   "soldiers-speed": icon("soldiers-speed"),
   "deadly-haste": icon("deadly-haste"),
+  // Mechanics (#2503).
+  "stone-striker": icon("stone-striker"),
+  "energy-boon": icon("energy-boon"),
+  "veil-of-thorns": icon("veil-of-thorns"),
+  "armor-of-sanctity": icon("armor-of-sanctity"),
+  "pious-concentration": icon("pious-concentration"),
+  "grenths-fingers": icon("grenths-fingers"),
+  "angelic-protection": icon("angelic-protection"),
+  "balthazars-pendulum": icon("balthazars-pendulum"),
 };
 
 const GAP = 2;

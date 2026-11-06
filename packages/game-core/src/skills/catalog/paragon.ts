@@ -3337,4 +3337,34 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // 5...50% more Energy": the status's.
     effects: [{ kind: "apply-status", statusId: "we-shall-return", durationSeconds: { flat: 10 } }],
   },
+  {
+    id: "paragon.angelic-protection",
+    name: "Angelic Protection",
+    gwId: 1586,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.leadership",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, any time target other ally takes more than 250...80
+    // damage per second, that ally is healed for any damage over that
+    // amount" (#2503).
+    effects: [
+      { kind: "apply-status", statusId: "angelic-protection", durationSeconds: { flat: 10 } },
+    ],
+  },
 ];
