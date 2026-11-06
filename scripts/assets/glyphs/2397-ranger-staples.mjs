@@ -62,12 +62,11 @@ const glyphs = {
   },
   "spikes-plate": {
     means:
-      "Piercing Trap: three solid spikes rising from a floor plate: a trap that pierces armor.",
+      "Piercing Trap: one tall barbed lance driving up through a floor plate split in two: a trap that pierces armor.",
     draw: () =>
-      inkFill("M2 19H22V22H2Z") +
-      inkFill(
-        "M4.500 19L7.500 7L10.500 19ZM9.500 19L12.500 3L15.500 19ZM14.500 19L17.500 7L20.500 19Z",
-      ),
+      inkFill("M12 1L17.500 12H6.500Z") +
+      inkLine("M12 12V19", 3) +
+      inkFill("M2 17L10 19.500V22H2ZM14 19.500L22 17V22H14Z"),
   },
   "paw-bolt": {
     means:
