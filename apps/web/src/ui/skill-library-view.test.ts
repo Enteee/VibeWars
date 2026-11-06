@@ -308,6 +308,17 @@ describe("the skill library's Filters popover (#2463)", () => {
     expect(chip("Elite only").getAttribute("aria-pressed")).toBe("false");
   });
 
+  it("a tag's × moves focus back to the tag left before it, never to clear", () => {
+    filterButton().click();
+    chip("hex").click();
+    chip("Elite only").click();
+    one("skill-filter-done").click();
+    expect(tagTexts()).toEqual(["hex ×", "elite ×", "clear ×"]);
+    one("skill-filter-tags").children[1]?.click();
+    expect(tagTexts()).toEqual(["hex ×"]);
+    expect(focus.current).toBe(one("skill-filter-tags").children[0]);
+  });
+
   it("clear turns every filter off", () => {
     filterButton().click();
     chip("hex").click();

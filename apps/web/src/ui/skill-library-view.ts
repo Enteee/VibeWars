@@ -223,13 +223,17 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     };
   });
 
-  /** A tag that turns one filter off, focus going to the tag after it. */
+  /**
+   * A tag that turns one filter off, focus going to the filter tag after
+   * it, else the last one left, else the button: never to clear, where a
+   * second Enter would wipe every filter.
+   */
   const tag = (label: string, name: string, off: () => void): HTMLButtonElement => {
     const made = button(`${label} ×`, "skill-filter-tag", () => {
       const at = tagButtons.indexOf(made);
       off();
       filtersChanged();
-      (tagButtons[at] ?? filterButton).focus();
+      (tagButtons[at] ?? tagButtons.at(-1) ?? filterButton).focus();
     });
     made.setAttribute("aria-label", `remove ${name} filter`);
     return made;
@@ -262,6 +266,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
       "aria-label",
       count === 0 ? "Filters" : `Filters, ${String(count)} active`,
     );
+    tagButtons = [...active];
     if (count >= 2) {
       active.push(
         tag("clear", "every", () => {
@@ -270,7 +275,6 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
         }),
       );
     }
-    tagButtons = active;
     tags.replaceChildren(...active);
   };
   const filtersChanged = (): void => {
