@@ -9,7 +9,7 @@ import {
   isShortcut,
 } from "../input/keymap.js";
 import { loadKeymap } from "../input/keymap-preference.js";
-import type { StoredCharacter, TeamCharacter } from "../storage/schema.js";
+import type { TeamCharacter } from "../storage/schema.js";
 import {
   describeProfessionChange,
   followTip,
@@ -379,7 +379,7 @@ export function mountBuildPicker<C extends TeamCharacter>(
     },
     changeProfessions(on, primary, secondary) {
       const before = on.current();
-      const after: StoredCharacter = setProfessions(before, primary, secondary);
+      const after = setProfessions(before, primary, secondary);
       dropUndo();
       on.commit(after);
       const removed = describeProfessionChange(before, after);

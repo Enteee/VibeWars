@@ -5949,7 +5949,8 @@ button.skill-group-header > .skill-group-rank {
   margin-bottom: 0.5rem;
 }
 
-.library-tab {
+/* Prefixed to beat `.screen button` on the Team Builder (#2565). */
+.skill-library .library-tab {
   flex: 1;
   padding: 0.3rem 0.5rem;
   border: 1px solid var(--line);
@@ -5963,7 +5964,7 @@ button.skill-group-header > .skill-group-rank {
   text-transform: uppercase;
 }
 
-.library-tab.is-active {
+.skill-library .library-tab.is-active {
   background: var(--panel);
   border-color: var(--accent);
   color: var(--ink);

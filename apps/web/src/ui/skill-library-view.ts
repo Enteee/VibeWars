@@ -31,8 +31,8 @@ import { attachTopbarPopover } from "./topbar-popover.js";
  * Builder's for its focused member. Attribute groups folded by default
  * (#2161), search, type chips, the skills not in the game yet, and
  * locked cards of other professions. Its cards drag as
- * `encodeSkillDrag({ from: "library" })`; where they drop is the
- * screen's.
+ * `encodeSkillDrag({ from: "library" })`; the build picker (#2565) says
+ * where they drop.
  */
 
 /** What the library shows skills for, and where its Equip puts one. */
