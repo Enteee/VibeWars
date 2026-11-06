@@ -4115,6 +4115,27 @@ body {
   max-height: calc(100vh - 5rem);
 }
 
+/* On a short window the log gives way first, down to about three rows;
+   only then does the panel scroll inside its border (#2464). */
+@media (width > 78rem) {
+  .editor-layout.has-training > .training:not(.is-expanded) {
+    overflow-y: auto;
+  }
+
+  .editor-layout.has-training > .training:not(.is-expanded) > * {
+    flex-shrink: 0;
+  }
+
+  .editor-layout.has-training > .training:not(.is-expanded) > .training-log {
+    flex-shrink: 1;
+    min-height: 4rem;
+  }
+
+  .editor-layout.has-training > .training:not(.is-expanded) .training-log-rows {
+    min-height: 0;
+  }
+}
+
 @media (width <= 78rem) {
   .editor-layout.has-training {
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
