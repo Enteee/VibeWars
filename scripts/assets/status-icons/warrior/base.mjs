@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { stroke, fitRows } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -225,4 +225,26 @@ const rows = {
   ],
 };
 
-export default rows;
+/** Drawn smaller to sit inside the plate (#2420). */
+const fits = {
+  "deflect-arrows": [0.92, 0],
+  "gladiators-defense": [0.96, 2],
+  rush: [0.94, 0],
+  "dolyak-signet": [0.96, 0],
+  "endure-pain": [0.94, 0],
+  "warriors-endurance": [0.96, 2],
+  riposte: [0.96, 0],
+  "deadly-riposte": [0.84, -1],
+  "shield-bash": [0.82, 0],
+  "shield-stance": [0.96, 3],
+  "rage-of-the-ntouka": [0.76, 0],
+  retreat: [0.84, 0],
+  "protectors-defense": [0.86, 0],
+  "battle-rage": [0.9, 0],
+  "shields-up": [0.96, 0],
+  "tiger-stance": [0.96, 1],
+  "frenzied-defense": [0.94, 0],
+  "signet-of-strength": [0.82, 0],
+};
+
+export default fitRows(rows, fits);
