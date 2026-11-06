@@ -589,6 +589,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.strength-of-honor": "",
   "monk.succor": "healing",
   "monk.symbol-of-wrath": "",
+  "monk.unyielding-aura": "",
   "monk.vengeance": "",
   "monk.vigorous-spirit": "healing",
   "monk.vital-blessing": "",

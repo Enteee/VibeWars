@@ -535,6 +535,11 @@ export interface StatusDefinition {
    * (#2311): Vengeance's "when Vengeance ends, that ally dies".
    */
   readonly killsBearerOnEnd: boolean;
+  /**
+   * The death `killsBearerOnEnd` deals leaves an exploited corpse (#2470):
+   * Unyielding Aura's "that party member dies and leaves an exploited corpse".
+   */
+  readonly exploitsCorpseOnDeath: boolean;
   /** A death while the bearer holds it pays no death penalty (#2311), its end-death too. */
   readonly noDeathPenalty: boolean;
   /**
