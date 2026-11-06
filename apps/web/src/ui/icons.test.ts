@@ -42,6 +42,16 @@ import { SKILL_ICONS } from "../../../../scripts/assets/skill-icon-table.mjs";
 import { STATUS_ICON_TABLES, STATUS_ICONS } from "../../../../scripts/assets/status-icon-table.mjs";
 
 const PUBLIC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public");
+/** Directories under public/icons/ drawn by hand, which the generator does not write. */
+const HAND_MADE_ICON_DIRS: readonly string[] = [];
+
+/** Every file under `dir`, nested ones included, as sorted paths relative to it. */
+function iconFiles(dir: string): string[] {
+  return fs
+    .readdirSync(dir, { recursive: true, encoding: "utf8" })
+    .filter((file) => fs.statSync(path.join(dir, file)).isFile())
+    .sort();
+}
 
 describe("icons", () => {
   it("has a file under public/ for every skill type", () => {
@@ -203,19 +213,29 @@ describe("skill icons (#719)", () => {
     );
   });
 
-  it("matches what the generator writes now", () => {
+  it("matches what the generator writes now, in every icon directory", () => {
     const out = fs.mkdtempSync(path.join(os.tmpdir(), "vw-icons-"));
     try {
       execFileSync("node", [path.resolve(PUBLIC, "../../../scripts/assets/icons.mjs")], {
         env: { ...process.env, VIBEWARS_ICONS_OUT: out },
         stdio: "ignore",
       });
-      const fresh = fs.readdirSync(path.join(out, "skill")).sort();
-      expect(fresh).toEqual(fs.readdirSync(SKILL_DIR).sort());
-      for (const file of fresh) {
-        expect(fs.readFileSync(path.join(SKILL_DIR, file), "utf8"), file).toBe(
-          fs.readFileSync(path.join(out, "skill", file), "utf8"),
-        );
+      const icons = path.join(PUBLIC, "icons");
+      const dirs = fs.readdirSync(out).sort();
+      expect(dirs).toEqual(
+        fs
+          .readdirSync(icons)
+          .filter((dir) => !HAND_MADE_ICON_DIRS.includes(dir))
+          .sort(),
+      );
+      for (const dir of dirs) {
+        const fresh = iconFiles(path.join(out, dir));
+        expect(iconFiles(path.join(icons, dir)), dir).toEqual(fresh);
+        for (const file of fresh) {
+          expect(fs.readFileSync(path.join(icons, dir, file), "utf8"), `${dir}/${file}`).toBe(
+            fs.readFileSync(path.join(out, dir, file), "utf8"),
+          );
+        }
       }
     } finally {
       fs.rmSync(out, { recursive: true, force: true });
