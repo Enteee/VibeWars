@@ -124,7 +124,12 @@ export type PvxDecoded =
 
 /** `build` as a legal build named `Gust (E/Me)`, or why it is not one. */
 export function decodePvxBuild(build: PvxBuild): PvxDecoded {
-  const decoded = decodeTemplateCode(build.code);
+  return decodePvxCode(build.name, build.code);
+}
+
+/** `code` as a legal build named `<name> (E/Me)`, or why it is not one. */
+export function decodePvxCode(name: string, code: string): PvxDecoded {
+  const decoded = decodeTemplateCode(code);
   if (!decoded.ok) {
     return { ok: false, reason: decoded.problems.join(" ") };
   }
@@ -138,7 +143,7 @@ export function decodePvxBuild(build: PvxBuild): PvxDecoded {
     )
     .join("/");
   const player: PlayerBuild = {
-    name: `${build.name} (${professions})`,
+    name: `${name} (${professions})`,
     primaryProfession: template.primaryProfession,
     secondaryProfession: template.secondaryProfession,
     attributes: template.attributes,
