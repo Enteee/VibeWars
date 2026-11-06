@@ -292,10 +292,12 @@ describe("GW1 template codes (#494)", () => {
     expect(decoded(`${encoded.code}==`)).toEqual(plain);
     expect(decoded(` \t${encoded.code}==\n`)).toEqual(plain);
 
-    const padding = "=".repeat(200_000);
+    // Not all `=`: /=+$/ only backtracks when the run stops short of the end.
+    const padding = `${"=".repeat(200_000)}x`;
     const start = performance.now();
     expect(looksLikeTemplate(padding)).toBe(false);
     expect(looksLikeTemplate("==")).toBe(false);
+    expect(looksLikeTemplate("=".repeat(200_000))).toBe(false);
     expect(problemsOf(padding)).not.toEqual([]);
     expect(decodeTemplateCode(padding).ok).toBe(false);
     expect(performance.now() - start).toBeLessThan(200);
