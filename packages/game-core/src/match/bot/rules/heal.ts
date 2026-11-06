@@ -1,9 +1,9 @@
 import type { Participant } from "../../simulation.js";
 import type { Skill } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
-import { botUses, projectsToOthers, wardedDamageType } from "../skill-intent.js";
+import { botUses, projectsToOthers, summonAura, wardedDamageType } from "../skill-intent.js";
 import { airFirst } from "./setup.js";
-import { HURT_FRACTION, healthFraction } from "./shared.js";
+import { HURT_FRACTION, healthFraction, spiritUp } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /** Heal or protect the most hurt ally, itself included. */
@@ -50,33 +50,13 @@ const heal: BotRule = {
       }
       return patient.id !== self.id && distance(patient.position, self.position) <= area.radius;
     };
-    // A spirit from this skill still stands (#2491), one the new one would
-    // only replace: within its aura, any of its side's, as the simulation
-    // ends them; with no aura, its own. Recovery outlives its recharge, and
-    // two Ritualists would otherwise take turns replacing each other's.
-    const spiritUp = (held: Skill): boolean => {
-      if (!held.effects.some((effect) => effect.kind === "summon")) {
-        return false;
-      }
-      const radius = summonAura(held)?.radius;
-      return context.participants.some(
-        ({ combatant, creature, position }) =>
-          creature?.kind === "spirit" &&
-          creature.skillId === held.id &&
-          !combatant.dead &&
-          (radius === undefined
-            ? creature.ownerId === self.id
-            : combatant.team === self.combatant.team &&
-              distance(position, self.position) <= radius),
-      );
-    };
     for (const role of ["healing", "defence"] as const) {
       const skill = bar.find(
         (held) =>
           botUses(held).includes(role) &&
           wardedDamageType(held) === undefined &&
           reaches(held) &&
-          !spiritUp(held) &&
+          !spiritUp(context, self, held) &&
           mayUse(held, held.target === "self" ? self.id : patient.id),
       );
       if (skill !== undefined) {
@@ -88,16 +68,6 @@ const heal: BotRule = {
     return undefined;
   },
 };
-
-/** The aura of the spirit `skill` summons, if it has one. */
-function summonAura(skill: Skill) {
-  for (const effect of skill.effects) {
-    if (effect.kind === "summon" && effect.creature.aura !== undefined) {
-      return effect.creature.aura;
-    }
-  }
-  return undefined;
-}
 
 /** The radius of the ally aura of the spirit `skill` summons, if it has one. */
 function allyAuraRadius(skill: Skill): number | undefined {

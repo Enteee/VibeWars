@@ -387,6 +387,9 @@ const NO_BOT_USE = new Set([
   // Restoration (#2478) is the same, a raise that waits for its spirit's
   // death.
   "ritualist.restoration",
+  // Empowerment's aura (#2478) helps only allies holding an item, and a
+  // bot holds none (#2491).
+  "ritualist.empowerment",
   // Soul Twisting (#2478) eases only its own binding rituals: self-help no
   // rule reaches for.
   "ritualist.soul-twisting",
@@ -417,6 +420,8 @@ describe("botUses (#1189)", () => {
     expect(botUses(skill("monk.guardian"))).toEqual(["defence"]);
     expect(botUses(skill("monk.mend-condition"))).toEqual(["healing", "removal"]);
     expect(botUses(skill("monk.restore-life"))).toContain("resurrect");
+    // Recovery is for a condition borne, not for low Health (#2491).
+    expect(botUses(skill("ritualist.recovery"))).toEqual(["removal"]);
     expect(botUses(skill("elementalist.fireball"))).toEqual(["offence"]);
     // An attack skill is offence, whatever else it does.
     expect(botUses(skill("warrior.distracting-blow"))).toEqual(["interrupt", "offence"]);

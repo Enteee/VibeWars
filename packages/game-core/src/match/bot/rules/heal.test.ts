@@ -64,11 +64,10 @@ describe("play-build spirits for a hurt ally (#2491)", () => {
     ["ritualist.communing", 12],
   ]);
 
-  for (const [skillId, waitSeconds] of [
-    ["ritualist.recovery", 3 + 30 + 5],
-    ["ritualist.shelter", 5 + 45 + 5],
-  ] as const) {
-    it(`casts ${skillId} at full Health for an ally in its range, once while the spirit stands`, () => {
+  {
+    const skillId = "ritualist.shelter";
+    const waitSeconds = 5 + 45 + 5;
+    it("casts Shelter at full Health for an ally in its range, once while the spirit stands", () => {
       const sim = match([
         fighter("rit", 0, MONK, vec2(400, 400), {
           skillBar: [skillId],
@@ -90,10 +89,10 @@ describe("play-build spirits for a hurt ally (#2491)", () => {
     });
   }
 
-  it("casts no Recovery while a teammate's stands in its aura, which it would only replace", () => {
+  it("casts no Shelter while a teammate's stands in its aura, which it would only replace", () => {
     const ritualist = (id: string, x: number) =>
       fighter(id, 0, MONK, vec2(x, 400), {
-        skillBar: ["ritualist.recovery"],
+        skillBar: ["ritualist.shelter"],
         attributeRanks: RITUALIST_RANKS,
         maxEnergy: 100,
         behaviour: undefined,
@@ -106,11 +105,11 @@ describe("play-build spirits for a hurt ally (#2491)", () => {
         startHealthFraction: 0.4,
       }),
     ]);
-    expect(askBot(sim, "rit").useSkillId).toBe("ritualist.recovery");
+    expect(askBot(sim, "rit").useSkillId).toBe("ritualist.shelter");
     expect(sim.requestSkill("other", 0)?.check).toEqual({ ok: true });
-    skillsUsed(sim, "other", 4);
+    skillsUsed(sim, "other", 6);
     expect(
-      [...sim.participants()].some(({ creature }) => creature?.skillId === "ritualist.recovery"),
+      [...sim.participants()].some(({ creature }) => creature?.skillId === "ritualist.shelter"),
     ).toBe(true);
     expect(askBot(sim, "rit").useSkillId).toBeUndefined();
   });
@@ -118,7 +117,7 @@ describe("play-build spirits for a hurt ally (#2491)", () => {
   it("casts no spirit for an ally outside its aura", () => {
     const sim = match([
       fighter("rit", 0, MONK, vec2(400, 400), {
-        skillBar: ["ritualist.recovery"],
+        skillBar: ["ritualist.shelter"],
         attributeRanks: RITUALIST_RANKS,
         maxEnergy: 100,
       }),
