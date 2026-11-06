@@ -1034,8 +1034,16 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.endsAfterTriggers !== undefined) {
     // Shield Guardian's (#1974): "ends after it takes effect once".
+    // Harrier's Grasp's (#2438): "1...3 times" at the caster's ranks.
+    const stat = definition.endsAfterTriggers;
     const times =
-      definition.endsAfterTriggers === 1 ? "once" : `${String(definition.endsAfterTriggers)} times`;
+      (typeof stat === "number"
+        ? stat
+        : ranks === undefined
+          ? undefined
+          : Math.round(statAt(stat, ranks))) === 1
+        ? "once"
+        : `${statText(stat, ranks, (n) => String(Math.round(n)))} times`;
     parts.push(`ends after it takes effect ${times}`);
   }
   if (definition.breaksNextHex !== undefined) {
@@ -3346,7 +3354,11 @@ function countEach(count: CountRule, onTarget: string): string {
               ? "second it was in effect"
               : count.kind === "knocked-down"
                 ? "foe knocked down"
-                : `${perCountNoun(count)} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+                : count.kind === "bar-skills"
+                  ? `${count.type} you have equipped`
+                  : count.kind === "targets"
+                    ? "foe hit"
+                    : `${perCountNoun(count)} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
 }
 
 /**
@@ -3650,7 +3662,12 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         case "glyph": {
           // One with no end of its own (#1941), as Glyph of Energy, lasts
           // until what it holds is spent.
-          const what = statusText(effect.statusId, ranks);
+          // Mantra of Signets' (#2438): its stats once for each of a count.
+          const what =
+            statusText(effect.statusId, ranks) +
+            (effect.stacksPer === undefined
+              ? ""
+              : `. Stacks once for each ${countEach(effect.stacksPer, "on them")}`);
           return {
             text: ends(effect.durationSeconds)
               ? `For ${lasting(effect.durationSeconds, ranks)}, ${what}`
@@ -3672,7 +3689,10 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
           // Convert Hexes' (#2189).
           (effect.stacksPerRemovedOfProfession === undefined
             ? ")"
-            : ` for each ${getProfession(effect.stacksPerRemovedOfProfession).name} hex removed)`),
+            : ` for each ${getProfession(effect.stacksPerRemovedOfProfession).name} hex removed)`) +
+          (effect.stacksPer === undefined
+            ? ""
+            : `, stacking once for each ${countEach(effect.stacksPer, "on them")}`),
         magnitude: undefined,
       };
     // Desperation Blow's (#2180).

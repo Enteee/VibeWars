@@ -7,7 +7,7 @@ import {
   spawningPowerMultiplier,
 } from "../primary-attributes.js";
 import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
-import { isAttacking, signetsOnBar } from "./attacking.js";
+import { isAttacking, skillsOnBar } from "./attacking.js";
 import { beginRecharge, resolvedBar, skillIdOfKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
@@ -864,7 +864,10 @@ function perOwnCreature(
 }
 
 /** What a count reads of the use it lands in (#2321). */
-export type CountContext = Pick<SkillContext, "surroundings" | "heldSeconds" | "skillId">;
+export type CountContext = Pick<
+  SkillContext,
+  "surroundings" | "heldSeconds" | "skillId" | "targetsHit"
+>;
 
 /**
  * `base` plus `per`'s amount for each of what it counts as the effect
@@ -895,7 +898,7 @@ function countOf(
   rule: CountRule,
   caster: Combatant,
   target: Combatant | undefined,
-  { surroundings, heldSeconds, skillId }: CountContext,
+  { surroundings, heldSeconds, skillId, targetsHit }: CountContext,
   earlier: readonly CombatEvent[],
 ): number {
   switch (rule.kind) {
@@ -964,6 +967,10 @@ function countOf(
     }
     case "held-seconds":
       return heldSeconds ?? 0;
+    case "targets":
+      return targetsHit ?? 0;
+    case "bar-skills":
+      return skillsOnBar(caster, rule.type);
     case "energy": {
       const bearer = rule.on === "caster" ? caster : target;
       return bearer === undefined ? 0 : Math.floor(bearer.energy);
@@ -2257,6 +2264,10 @@ export function applyEffect(
       if (stacked !== undefined && effect.stacksPerRemovedOfProfession !== undefined) {
         stacked.stacks = stacks;
       }
+      // Mantra of Signets' (#2438): a stack for each of a count, none included.
+      if (stacked !== undefined && effect.stacksPer !== undefined) {
+        stacked.stacks = countOf(effect.stacksPer, caster, bearer, context, earlier);
+      }
       // Elemental Flame's (#1951): the caster's hex landed on a foe.
       if (
         bearer.team !== caster.team &&
@@ -2725,7 +2736,7 @@ export function applyEffect(
       }
       const seconds =
         resolveMagnitude(effect.seconds, caster) *
-        (effect.perOwnSignet === true ? signetsOnBar(caster) : 1);
+        (effect.perOwnSignet === true ? skillsOnBar(caster, "signet") : 1);
       for (const key of disabledBy(effect, target, interrupted, context.rng)) {
         // A disabled skill loses all its adrenaline (GW1, #1097), though
         // a longer recharge kept the disable from lengthening its wait.
@@ -2965,6 +2976,7 @@ export function stateHolds(
   target: Combatant,
   surroundings: Surroundings,
   firing?: StatusId,
+  targetsHit?: number,
 ): boolean {
   switch (condition.kind) {
     case "target-health-below":
@@ -3088,21 +3100,21 @@ export function stateHolds(
       return !isAttacking(target);
     case "any-of":
       return condition.conditions.some((each) =>
-        stateHolds(each, caster, target, surroundings, firing),
+        stateHolds(each, caster, target, surroundings, firing, targetsHit),
       );
     case "not":
-      return !stateHolds(condition.condition, caster, target, surroundings, firing);
+      return !stateHolds(condition.condition, caster, target, surroundings, firing, targetsHit);
     case "all-of":
       return condition.conditions.every((each) =>
-        stateHolds(each, caster, target, surroundings, firing),
+        stateHolds(each, caster, target, surroundings, firing, targetsHit),
       );
     // A state is read before the use, when it has removed nothing.
     case "count-at-least":
-      return countOf(condition.count, caster, target, { surroundings }, []) >= condition.atLeast;
+      return countOf(condition.count, caster, target, { surroundings, targetsHit }, []) >= condition.atLeast;
     case "count-at-most":
       return (
-        countOf(condition.count, caster, target, { surroundings }, []) <=
-        countOf(condition.than, caster, target, { surroundings }, [])
+        countOf(condition.count, caster, target, { surroundings, targetsHit }, []) <=
+        countOf(condition.than, caster, target, { surroundings, targetsHit }, [])
       );
     case "target-casting-or-attacking": {
       const cast = target.cast.activeCast;
@@ -3215,6 +3227,7 @@ function statesBefore(
   target: Combatant | undefined,
   surroundings: Surroundings,
   firing: StatusId | undefined,
+  targetsHit?: number,
 ): ReadonlySet<EffectCondition> {
   if (target === undefined) {
     return NONE_HELD;
@@ -3224,7 +3237,7 @@ function statesBefore(
     if (
       effect.kind === "if" &&
       isStateCondition(effect.condition) &&
-      stateHolds(effect.condition, caster, target, surroundings, firing)
+      stateHolds(effect.condition, caster, target, surroundings, firing, targetsHit)
     ) {
       held.add(effect.condition);
     }
@@ -3629,6 +3642,8 @@ export interface SkillResolution {
   readonly own?: OwnSkillBoost | undefined;
   /** The corpse this use exploited (#2268); absent for none. */
   readonly corpseId?: string | undefined;
+  /** Foes the attack landing hit (#2438), `SkillContext.targetsHit`. */
+  readonly targetsHit?: number | undefined;
 }
 
 /**
@@ -3751,11 +3766,15 @@ export function resolveSkillEffects(
   resolution: SkillResolution,
   earlier: readonly CombatEvent[] = [],
 ): SkillOutcome {
-  const { skill, caster, targets, rng, rules, surroundings, own, corpseId } = resolution;
+  const { skill, caster, targets, rng, rules, surroundings, own, corpseId, targetsHit } =
+    resolution;
   const held = new Map(
     targets.map(
       (target) =>
-        [target, statesBefore(skill.effects, caster, target, surroundings, undefined)] as const,
+        [
+          target,
+          statesBefore(skill.effects, caster, target, surroundings, undefined, targetsHit),
+        ] as const,
     ),
   );
   const events: CombatEvent[] = [];
@@ -3780,6 +3799,7 @@ export function resolveSkillEffects(
         profession: skill.profession,
         own,
         corpseId,
+        targetsHit,
       };
       const before = [...earlier, ...events];
       const landed = landing(effect, context, before, states);

@@ -86,7 +86,9 @@ export type ElementalistStatusId =
   | "flame-djinns-haste"
   // Staples (#2367).
   | "earthen-shackles"
-  | "ether-prism";
+  | "ether-prism"
+  // Mechanics (#2438).
+  | "glyph-of-restoration";
 
 /** Incendiary Bonds' blast (#2289), on its bearer and the foes near it. */
 const INCENDIARY_BLAST = {
@@ -450,6 +452,35 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
           { kind: "heal", amount: { flat: 3.6 }, perUsedSkillEnergy: true },
         ],
         skillId: "elementalist.aura-of-restoration",
+      },
+    ],
+  }),
+  // "For 15 seconds, your next 2 spells heal you for 30...105 Health, and
+  // you are healed for 150...400% of the Energy cost of each spell" (#2438),
+  // at the bearer's Energy Storage, spent as each spell starts.
+  "glyph-of-restoration": define("glyph-of-restoration", "Glyph of Restoration", "glyph", {
+    profession: "elementalist",
+    endsAfterTriggers: 2,
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        target: "bearer",
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "elementalist.energy-storage", atZero: 30, atTwelve: 90 },
+            },
+          },
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "elementalist.energy-storage", atZero: 1.5, atTwelve: 3.5 },
+            },
+            perUsedSkillEnergy: true,
+          },
+        ],
+        skillId: "elementalist.glyph-of-restoration",
       },
     ],
   }),

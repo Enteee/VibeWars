@@ -564,6 +564,8 @@ function fire(
         firingStatusId: statusId,
         profession: getStatusDefinition(statusId).profession,
         heldSeconds,
+        // Pious Renewal's (#2438): an end's `recharge-reset` resets its own skill.
+        skillId: trigger.on === "ends" ? trigger.skillId : undefined,
       }),
     );
     pending = [];

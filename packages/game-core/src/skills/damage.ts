@@ -11,7 +11,7 @@ import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
 import type { SkillProfession } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
-import { isAttacking, signetsOnBar } from "./attacking.js";
+import { isAttacking, skillsOnBar } from "./attacking.js";
 import { getSkill } from "./catalog.js";
 import { modWhileHolds } from "./mod-conditions.js";
 import { statAt } from "./scaling.js";
@@ -232,7 +232,7 @@ function conditionHolds(
     case "activating":
       return target.cast.activeCast !== undefined;
     case "signets-at-least":
-      return signetsOnBar(target) >= condition.count;
+      return skillsOnBar(target, "signet") >= condition.count;
     case "mod-while":
       return modWhileHolds(condition.while, target, undefined);
   }

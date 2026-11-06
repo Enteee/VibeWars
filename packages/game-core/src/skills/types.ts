@@ -217,7 +217,18 @@ export type CountRule =
    * upkeep counts them: Blessed Signet's "for each enchantment you are
    * maintaining". A timed one is not maintained.
    */
-  | { readonly kind: "maintained-enchantments" };
+  | { readonly kind: "maintained-enchantments" }
+  /**
+   * Skills of `type` on the caster's bar (#2438), recharging or not:
+   * Mantra of Signets' "for each signet you have equipped".
+   */
+  | { readonly kind: "bar-skills"; readonly type: SkillType }
+  /**
+   * Foes the landing attack hit (#2438), its primary and any it cleaved,
+   * a blocked or missed one not counted; 0 outside an attack: Farmer's
+   * Scythe's "if you hit more than one foe".
+   */
+  | { readonly kind: "targets" };
 
 /**
  * "+`amount` for each" (#1760): the effect's own amount plus `amount`
@@ -588,6 +599,13 @@ export interface ApplyStatusEffect {
    * A recast sets the count anew. Absent: one stack, always.
    */
   readonly stacksPerRemovedOfProfession?: ProfessionId;
+  /**
+   * One `stacks` for each of what it counts as it lands (#2438), set anew
+   * on a recast: Mantra of Signets' "+3 armor for each signet you have
+   * equipped". Unlike `stacksPerRemovedOfProfession`, a count of none
+   * still lands the status, at 0 stacks.
+   */
+  readonly stacksPer?: CountRule;
   /**
    * Seconds more for each of a count (#1955): "Lead the Way!"'s "1...5
    * seconds for each ally in earshot (maximum 30 seconds)".
@@ -2561,6 +2579,11 @@ export interface SkillContext {
    * (#2321): what `held-seconds` counts. Absent elsewhere, where it counts 0.
    */
   readonly heldSeconds?: number | undefined;
+  /**
+   * Foes the attack landing hit (#2438): what `targets` counts. Absent
+   * outside an attack, where it counts 0.
+   */
+  readonly targetsHit?: number | undefined;
   /**
    * The profession of the skill, or of the status whose trigger fires
    * (#1464), whose effects these are: which `skillArmorPenetration` its

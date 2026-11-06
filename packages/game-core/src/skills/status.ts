@@ -211,6 +211,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   moveSpeedMultiplier: true,
   reversesNextDamage: true,
   nextDamageReduction: true,
+  endsAfterTriggers: true,
 };
 
 /** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
@@ -1405,9 +1406,11 @@ export interface StatusDefinition {
   readonly renewsOnBearerSpellAtFoe: boolean;
   /**
    * It ends once its triggers have fired this many times (#1423): Finale
-   * of Restoration's "the next 5 times". `undefined`: no such limit.
+   * of Restoration's "the next 5 times", at the ranks it landed with,
+   * rounded (#2438): Harrier's Grasp's "1...3 times". `undefined`: no
+   * such limit.
    */
-  readonly endsAfterTriggers: number | undefined;
+  readonly endsAfterTriggers: StatusStat | undefined;
   /**
    * Multiplier on the duration of a chant or a shout applied to the bearer
    * while it lasts (#1423): Enduring Harmony's 1.5. One already up keeps
@@ -2079,6 +2082,13 @@ export interface AttackHitRider {
     readonly profession: ProfessionId;
     readonly percentOfMax: number;
   };
+  /**
+   * A hit whose rider put a status on the victim spends one of the
+   * status's `endsAfterTriggers` (#2438): Harrier's Grasp's "ends after
+   * you apply Cripple 1...3 times". A hit the rider lands nothing with
+   * spends none.
+   */
+  readonly spendsTrigger?: true;
 }
 
 /** `StatusDefinition.onCriticalHit` (#1975). */
@@ -3278,7 +3288,10 @@ export class StatusSet {
           ? undefined
           : Math.round(statAt(definition.nextSkill.count, ranks)),
       ownSkillsLeft: definition.ownSkillModifiers.find(({ uses }) => uses !== undefined)?.uses,
-      triggersLeft: definition.endsAfterTriggers,
+      triggersLeft:
+        definition.endsAfterTriggers === undefined
+          ? undefined
+          : Math.round(statAt(definition.endsAfterTriggers, ranks)),
       reflectionsLeft: definition.reflectsAttackDamage?.times,
       touchFailsLeft: definition.failsFoeTouchSkills,
       hexLengtheningLeft: definition.nextIncomingHexDurationMultiplier !== undefined,
