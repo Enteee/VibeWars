@@ -3413,6 +3413,129 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "ritualist.wielders-strike",
+    name: "Wielder's Strike",
+    gwId: 1733,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Staples (#2413). "Target foe is struck for 10...60 lightning damage.
+    // If you are under the effects of a weapon spell, you deal an
+    // additional 10...50 lightning damage": 50 and 42 at rank 12. A weapon
+    // spell on the caster, not on the target.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 10, atTwelve: 50 },
+        },
+        type: "lightning",
+        armorPenetration: 0,
+        conditionalBonus: {
+          condition: { kind: "caster-has", category: "weapon-spell" },
+          amount: {
+            scaling: { attributeId: "ritualist.channeling-magic", atZero: 10, atTwelve: 42 },
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.offering-of-spirit",
+    name: "Offering of Spirit",
+    gwId: 1479,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 3 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Staples (#2413). "Gain 8...17 Energy. If any spirits are within
+    // earshot, you do not sacrifice Health": 15.2 at rank 12; its 17%
+    // sacrifice spared by any team's spirit in earshot, as Spirit Light's.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "caster-no-spirit-within", radius: AREA_EARSHOT },
+        effects: [{ kind: "sacrifice-health", percentOfMax: 17 }],
+      },
+      {
+        kind: "energy-gain",
+        amount: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 8, atTwelve: 15.2 },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.binding-chains",
+    name: "Binding Chains",
+    gwId: 1236,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Staples (#2413). "For 3 seconds, target foe and all nearby foes move
+    // 90% slower and take 1...30 damage each second while moving": the 3 s
+    // flat, the slow and the damage the status's.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        includesCentre: true,
+        effects: [
+          { kind: "apply-status", statusId: "binding-chains", durationSeconds: { flat: 3 } },
+        ],
+      },
+    ],
+  },
 ];
 
 /**

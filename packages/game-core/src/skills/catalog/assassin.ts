@@ -4093,4 +4093,39 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "assassin.sharpen-daggers",
+    name: "Sharpen Daggers",
+    gwId: 926,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Staples (#2413). "For 5...30 seconds, your dagger attacks cause
+    // Bleeding for 5...15 seconds": 25 at rank 12; the status bleeds.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "sharpen-daggers",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 25 },
+        },
+      },
+    ],
+  },
 ];

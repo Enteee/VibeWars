@@ -54,7 +54,9 @@ export type AssassinStatusId =
   | "shameful-fear"
   // Mechanics (#2362).
   | "smoke-powder-defense"
-  | "flashing-blades";
+  | "flashing-blades"
+  // Staples (#2413).
+  | "sharpen-daggers";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -489,5 +491,27 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
         skillId: "assassin.flashing-blades",
       },
     ],
+  }),
+  // Staples (#2413). "For 5...30 seconds, your dagger attacks cause
+  // Bleeding for 5...15 seconds": 13 at rank 12, at its Critical Strikes.
+  // A plain swing too; a sword or a spear, a miss or a block, none.
+  "sharpen-daggers": define("sharpen-daggers", "Sharpen Daggers", "enchantment", {
+    profession: "assassin",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "daggers",
+      weaponDamage: undefined,
+      atSourceRanks: false,
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "bleeding",
+          durationSeconds: {
+            scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 13 },
+          },
+        },
+      ],
+      skillId: "assassin.sharpen-daggers",
+    },
   }),
 };
