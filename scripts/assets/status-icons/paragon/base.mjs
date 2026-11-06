@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { stroke, fitRows } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -273,4 +273,33 @@ const rows = {
   ],
 };
 
-export default rows;
+/** Drawn smaller to sit inside the plate (#2404). */
+const fits = {
+  "bladeturn-refrain": [0.86, 0],
+  "energizing-finale": [0.94, 0],
+  "soldiers-fury": [0.66, 0],
+  "aria-of-zeal": [0.86, 0],
+  "lyric-of-zeal": [0.88, 0],
+  "aria-of-restoration": [0.86, 0],
+  "chorus-of-restoration": [0.68, 0],
+  "lyric-of-purification": [0.72, 0],
+  "song-of-purification": [0.76, 0],
+  "hexbreaker-aria": [0.74, 0],
+  "anthem-of-fury": [0.82, 0],
+  "anthem-of-weariness": [0.98, 0],
+  "crippling-anthem": [0.78, 0],
+  "anthem-of-guidance": [0.76, 0],
+  "energizing-chorus": [0.74, 0],
+  "anthem-of-envy": [0.82, 0],
+  "aggressive-refrain": [0.92, 0],
+  "enduring-harmony": [0.98, 0],
+  "go-for-the-eyes": [0.86, 0],
+  "focused-anger": [0.76, 0],
+  "angelic-bond": [0.8, 0],
+  godspeed: [0.96, 0],
+  "lead-the-way": [0.9, 0],
+  help: [0.78, 0],
+  "brace-yourself": [0.76, 0],
+};
+
+export default fitRows(rows, fits);
