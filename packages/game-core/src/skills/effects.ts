@@ -1889,10 +1889,10 @@ export function applyEffect(
       const amount = perEnergyLost(
         effect,
         withPerCount(
-          resolveMagnitude(effect.amount, caster) +
+          resolveMagnitude(effect.amount, context.ranksFrom ?? caster) +
             (bonus !== undefined &&
             stateHolds(bonus.condition, caster, target, context.surroundings)
-              ? resolveMagnitude(bonus.amount, caster)
+              ? resolveMagnitude(bonus.amount, context.ranksFrom ?? caster)
               : 0),
           effect.per,
           caster,
@@ -2076,7 +2076,12 @@ export function applyEffect(
       if (target === undefined || target.dead || caster.dead) {
         return events;
       }
-      stealLife(caster, target, resolveMagnitude(effect.amount, caster), events);
+      stealLife(
+        caster,
+        target,
+        resolveMagnitude(effect.amount, context.ranksFrom ?? caster),
+        events,
+      );
       return events;
     }
 

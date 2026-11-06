@@ -284,6 +284,12 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   if (definition.nextSkill !== undefined) {
     scalingAttributes(definition.nextSkill, attributes);
   }
+  // Withering Aura's Weakness is its Necromancer's, not the ally's (#2411).
+  for (const rider of [definition.onAttackHit, definition.onAttackBlocked]) {
+    if (rider?.atSourceRanks === true) {
+      scalingAttributes(rider, attributes);
+    }
+  }
   // Agony's pulse hurts at its Ritualist's rank, and costs the spirit so (#2275).
   if (definition.pulse !== undefined) {
     scalingAttributes(definition.pulse, attributes);
@@ -968,6 +974,12 @@ export interface StatusDefinition {
    * "ends if you use any non-adrenal skills".
    */
   readonly endsWhenBearerUsesNonAdrenalSkill: boolean;
+  /**
+   * It ends the moment the bearer uses a skill `nextSkillAnswers` does not
+   * answer for this (#2411): Hexer's Vigor's "ends if you use a non-hex
+   * skill". A plain swing is no skill and keeps it. `undefined`: none.
+   */
+  readonly endsWhenBearerUsesSkillNot: NextSkill["which"] | undefined;
   /**
    * It ends the moment the bearer starts an attack skill (#1869), before
    * that attack is timed, so the attack does not get its speed: Heket's
@@ -2026,6 +2038,13 @@ export interface AttackHitRider {
   readonly weapon: AttackWeaponClass | undefined;
   readonly weaponDamage: DamageType | undefined;
   /**
+   * Its effects resolve at the status's captured ranks, its source's
+   * (#2411), not the attacker's: Withering Aura's Weakness lasts as long
+   * as its Necromancer's Death Magic says, whoever swings. `false`: the
+   * attacker's own, as its blow.
+   */
+  readonly atSourceRanks: boolean;
+  /**
    * The status's source loses this share of its effective maximum Health,
    * rounded up, for each status of `profession` the rider removed
    * (#1975): Order of Apostasy's 4% per Monk enchantment. Health loss,
@@ -2380,7 +2399,8 @@ export interface NextSkill {
    * type; `signet-at-foe` a signet that targets a foe (#2275), Keystone
    * Signet's.
    */
-  readonly which: "attack-skill" | "spell" | "signet" | "signet-at-foe" | "shout-or-chant" | "any";
+  readonly which:
+    "attack-skill" | "spell" | "hex" | "signet" | "signet-at-foe" | "shout-or-chant" | "any";
   /**
    * How many such skills it answers before it ends (Song of Purification:
    * 1...6), at its source's rank as it landed (#2275): Keystone Signet's
@@ -2443,6 +2463,8 @@ export function nextSkillAnswers(which: NextSkill["which"], skill: Skill): boole
       return skill.attack !== undefined;
     case "spell":
       return isSpell(skill.type);
+    case "hex":
+      return skill.type === "hex";
     case "signet":
       return skill.type === "signet";
     case "signet-at-foe":
@@ -4092,17 +4114,22 @@ export class StatusSet {
   /**
    * The bearer used a skill (#949): every status that ends when it does
    * is gone, and every one that ends on an adrenal skill if it was one
-   * (#1329), or on a non-adrenal one if it was not (#2180), but those in `spared`, which that skill put on its own user
-   * (#999). Returns the ids that ended on it.
+   * (#1329), or on a non-adrenal one if it was not (#2180), or on any
+   * `endsWhenBearerUsesSkillNot` does not answer (#2411), but those in
+   * `spared`, which that skill put on its own user (#999). Returns the
+   * ids that ended on it.
    */
-  public endOnBearerUseSkill(spared: ReadonlySet<StatusId>, adrenal: boolean): StatusId[] {
+  public endOnBearerUseSkill(spared: ReadonlySet<StatusId>, skill: Skill): StatusId[] {
+    const adrenal = skill.cost?.kind === "adrenaline";
     const ended = this.active
       .filter(({ id }) => {
         const definition = getStatusDefinition(id);
+        const not = definition.endsWhenBearerUsesSkillNot;
         return (
           (definition.endsWhenBearerUsesSkill ||
             (adrenal && definition.endsWhenBearerUsesAdrenalSkill) ||
-            (!adrenal && definition.endsWhenBearerUsesNonAdrenalSkill)) &&
+            (!adrenal && definition.endsWhenBearerUsesNonAdrenalSkill) ||
+            (not !== undefined && !nextSkillAnswers(not, skill))) &&
           !spared.has(id)
         );
       })

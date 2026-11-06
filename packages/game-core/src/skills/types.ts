@@ -2567,7 +2567,9 @@ export interface SkillContext {
   /**
    * Whose attribute ranks scale the statuses these effects put on (#1976),
    * when not the caster's: Mirrored Stance's copy takes the foe's (#1965),
-   * and a next-skill status its source's, as it landed (#2143).
+   * and a next-skill status its source's, as it landed (#2143). Damage
+   * and stolen Health read them too (#2411): Order of Pain's bonus is
+   * its Necromancer's, in whoever's hit.
    */
   readonly ranksFrom?: RankHolder | undefined;
 }

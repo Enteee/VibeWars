@@ -1226,6 +1226,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.endsWhenBearerUsesNonAdrenalSkill) {
     parts.push("ends if you use a non-adrenal skill");
   }
+  // Hexer's Vigor's (#2411).
+  if (definition.endsWhenBearerUsesSkillNot !== undefined) {
+    const [kind] = NEXT_SKILL_KIND[definition.endsWhenBearerUsesSkillNot];
+    parts.push(`ends if you use a non-${kind} skill`);
+  }
   if (definition.endsWhenBearerUsesAttackSkill) {
     parts.push("ends if you use an attack skill");
   }
@@ -2393,6 +2398,7 @@ function describeNextAttackSkill(
 const NEXT_SKILL_KIND: Readonly<Record<NextSkill["which"], readonly [string, string]>> = {
   "attack-skill": ["attack skill", "attack skills"],
   spell: ["spell", "spells"],
+  hex: ["hex", "hexes"],
   signet: ["signet", "signets"],
   "signet-at-foe": ["signet that targets a foe", "signets that target a foe"],
   "shout-or-chant": ["shout or chant", "shouts or chants"],

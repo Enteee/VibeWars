@@ -856,6 +856,7 @@ function conjure(id: ElementalistStatusId, name: string, element: DamageType): S
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: element,
+      atSourceRanks: false,
       effects: [{ kind: "damage", amount: { flat: 17 }, type: element, armorPenetration: 0 }],
       skillId: `elementalist.${id}`,
     },
