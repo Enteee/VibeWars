@@ -177,6 +177,7 @@ import {
   type CreatureTemplate,
   type DeathBurst,
   type DeathInRange,
+  type SpiritPulse,
   type GroundAct,
   type PulseEnd,
   type Skill,
@@ -397,6 +398,12 @@ export type ArrivedDeathInRange =
     })
   | Extract<DeathInRange, { kind: "spread-conditions" }>;
 
+/** A spirit's heal pulse as it arrived (#2477): its heal on its owner's rank, and its count. */
+export interface ArrivedSpiritPulse extends Omit<SpiritPulse, "heal"> {
+  readonly heal: number;
+  pulsed: number;
+}
+
 /**
  * A body that is not a player (#1052, ADR-0035): a participant that never
  * counts for its team and has no seat. A spirit or minion is gone once it
@@ -445,6 +452,11 @@ export interface Creature {
   readonly deathBurst: ArrivedDeathBurst | undefined;
   /** From the template (#1886): what another's death in its range does. */
   readonly onDeathInRange: ArrivedDeathInRange | undefined;
+  /**
+   * From the template (#2477): its heal read on its owner's rank at
+   * arrival, and how many it has given.
+   */
+  readonly pulse: ArrivedSpiritPulse | undefined;
   /** From the template (#1836): who stands up where it falls, its owner's. */
   readonly replacedBy: CreatureTemplate["replacedBy"];
   /**
@@ -1601,6 +1613,14 @@ export class MatchSimulation {
                 damage: resolveMagnitudeAtRanks(template.onDeathInRange.damage, ranks),
               }
             : template.onDeathInRange,
+        pulse:
+          template.pulse === undefined
+            ? undefined
+            : {
+                ...template.pulse,
+                heal: resolveMagnitudeAtRanks(template.pulse.heal, ranks),
+                pulsed: 0,
+              },
         replacedBy: template.replacedBy,
         corpsesLeft:
           template.leavesCorpses === undefined
@@ -1985,6 +2005,56 @@ export class MatchSimulation {
   }
 
   /**
+   * Every spirit heal that came due this step (#2477), in participant
+   * order: Preservation's, on the living non-spirit ally within its
+   * radius with the lowest share of its Health, the lowest id among
+   * equals, logged as its skill. Nobody hurt: no heal, the pulse spent.
+   */
+  #pulseSpirits(): void {
+    for (const record of this.#participants.values()) {
+      const pulse = record.creature?.pulse;
+      if (
+        pulse === undefined ||
+        record.creature?.skillId === undefined ||
+        record.combatant.dead ||
+        this.#leaving.has(record.id) ||
+        record.creature.ageSeconds < (pulse.pulsed + 1) * pulse.everySeconds - SWING_EPSILON
+      ) {
+        continue;
+      }
+      pulse.pulsed += 1;
+      let pick: ParticipantRecord | undefined;
+      let share = 1;
+      for (const body of this.#participants.values()) {
+        if (
+          body.combatant.dead ||
+          body.combatant.team !== record.combatant.team ||
+          body.creature?.kind === "spirit" ||
+          distance(record.position, body.position) > pulse.radius
+        ) {
+          continue;
+        }
+        const ratio = body.combatant.health / effectiveMaxHealth(body.combatant);
+        if (ratio < share || (ratio === share && pick !== undefined && body.id < pick.id)) {
+          pick = body;
+          share = ratio;
+        }
+      }
+      if (pick === undefined) {
+        continue;
+      }
+      const events = applyEffects([{ kind: "heal", amount: { flat: pulse.heal } }], {
+        caster: record.combatant,
+        target: pick.combatant,
+        rng: this.#rng,
+        rules: this.#ruleset.combat,
+        surroundings: this.#participants,
+      });
+      this.#logFired([{ sourceId: record.id, skillId: record.creature.skillId, events }]);
+    }
+  }
+
+  /**
    * Every status damage pulse that came due this step (#1501), in
    * participant order: damage of its type from the status's source to the
    * source's foes within its radius of the bearer, and to the bearer if
@@ -1992,7 +2062,8 @@ export class MatchSimulation {
    * and a source that has left the match deals none. An effect pulse
    * (#2187) runs its effects from the source on the bearer, as its skill,
    * at the status's ranks; one that cost the bearer Health charges its
-   * source (#2275): Agony's spirit pays for each foe it hurt.
+   * source (#2275): Agony's spirit pays for each foe it hurt, and one
+   * that healed it (#2477), Rejuvenation's for each ally it healed.
    */
   #pulseStatuses(): void {
     for (const record of this.#participants.values()) {
@@ -2018,6 +2089,13 @@ export class MatchSimulation {
         );
         if (hurt && pulse.chargesSourcePerHit !== undefined) {
           this.#landCharge(sourceId, id, Math.round(statAt(pulse.chargesSourcePerHit, ranks)));
+        }
+        // Rejuvenation's (#2477): one the pulse healed costs its spirit.
+        const healed = events.some(
+          (event) => event.kind === "heal" && event.targetId === record.id && event.amount > 0,
+        );
+        if (healed && pulse.chargesSourcePerHeal !== undefined) {
+          this.#landCharge(sourceId, id, Math.round(statAt(pulse.chargesSourcePerHeal, ranks)));
         }
       }
       for (const { id, sourceId, damage } of record.combatant.statuses.drainPulses()) {
@@ -3501,6 +3579,7 @@ export class MatchSimulation {
 
     this.#springTraps();
     this.#pulseGroundEffects();
+    this.#pulseSpirits();
     this.#pulseStatuses();
     this.#settleUpkeep(dt);
     this.#fireEnergyEmpty();

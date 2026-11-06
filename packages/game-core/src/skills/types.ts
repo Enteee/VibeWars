@@ -1241,6 +1241,8 @@ export interface CreatureTemplate {
   readonly attack: CreatureAttack | undefined;
   /** Seconds it lasts; omitted: until it is killed. */
   readonly durationSeconds?: Magnitude;
+  /** What it does every few seconds it lives (#2477); omitted: nothing. */
+  readonly pulse?: SpiritPulse;
   /** What it does each tick. */
   readonly behaviour: Behaviour;
   /** `undefined`: it projects nothing (every minion). Only a spirit has one. */
@@ -1274,6 +1276,19 @@ export interface CreatureTemplate {
   readonly leavesCorpses: Magnitude | undefined;
   /** A new one from the same skill and owner kills the old one first (#1836): Flesh Golem. */
   readonly onePerOwner: boolean;
+}
+
+/**
+ * A spirit's heal on one ally (#2477), Preservation's "every 4 seconds,
+ * this spirit heals one non-spirit ally in the area for 10...115 Health":
+ * every `everySeconds` it lives, the living non-spirit ally within
+ * `radius` with the lowest share of its Health, the lowest id among
+ * equals, is healed for `heal`, at its owner's ranks. Nobody hurt: none.
+ */
+export interface SpiritPulse {
+  readonly everySeconds: number;
+  readonly heal: Magnitude;
+  readonly radius: number;
 }
 
 /**

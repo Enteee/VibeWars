@@ -596,6 +596,7 @@ describe("Offering of Spirit (#2413)", () => {
               ownerDisableSeconds: 0,
               deathBurst: undefined,
               onDeathInRange: undefined,
+              pulse: undefined,
               replacedBy: undefined,
               corpsesLeft: 0,
               companionSkillId: undefined,

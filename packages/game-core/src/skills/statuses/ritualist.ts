@@ -75,7 +75,10 @@ export type RitualistStatusId =
   | "spirit-channeling"
   | "renewing-surge"
   // Staples (#2413).
-  | "binding-chains";
+  | "binding-chains"
+  // Healing spirits (#2477).
+  | "rejuvenation"
+  | "recovery";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -892,6 +895,36 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
         },
       ],
       skillId: "ritualist.binding-chains",
+    },
+  }),
+  // PvP (#2477): "This spirit heals all party members within earshot for
+  // 3...10 Health each second. This spirit loses 3...10 Health for each
+  // party member healed in this way": each ally in range keeps its own 1 s
+  // clock, as Agony's foes; one at full Health is not healed and costs nothing.
+  rejuvenation: define("rejuvenation", "Rejuvenation", "skill-effect", {
+    profession: "ritualist",
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "heal",
+          amount: {
+            scaling: { attributeId: "ritualist.restoration-magic", atZero: 3, atTwelve: 8.6 },
+          },
+        },
+      ],
+      skillId: "ritualist.rejuvenation",
+      chargesSourcePerHeal: {
+        scaling: { attributeId: "ritualist.restoration-magic", atZero: 3, atTwelve: 8.6 },
+      },
+    },
+  }),
+  // PvP (#2477): "Conditions on allies within range of this spirit expire
+  // 20...50% faster", at its Ritualist's rank.
+  recovery: define("recovery", "Recovery", "skill-effect", {
+    profession: "ritualist",
+    conditionsExpireFaster: {
+      scaling: { attributeId: "ritualist.restoration-magic", atZero: 0.2, atTwelve: 0.44 },
     },
   }),
 };

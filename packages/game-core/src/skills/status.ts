@@ -213,6 +213,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   reversesNextDamage: true,
   nextDamageReduction: true,
   endsAfterTriggers: true,
+  conditionsExpireFaster: true,
   enchantmentsExpireFaster: true,
   stancesExpireFaster: true,
 };
@@ -1349,9 +1350,10 @@ export interface StatusDefinition {
   /**
    * The bearer's conditions run out this much faster (#1464): Pure Was Li
    * Ming's 0.5 takes `dt × 1.5` off each a tick. Hexes and enchantments
-   * keep their rate.
+   * keep their rate. At the ranks it was put on with: Recovery's 20...50%
+   * (#2477).
    */
-  readonly conditionsExpireFaster: number;
+  readonly conditionsExpireFaster: StatusStat;
   /** As `conditionsExpireFaster`, for its hexes (#2291): Peace and Harmony's 0.9. */
   readonly hexesExpireFaster: number;
   /**
@@ -1716,6 +1718,12 @@ export interface EffectPulse {
    * nobody costs nothing. `undefined`: none.
    */
   readonly chargesSourcePerHit?: StatusStat;
+  /**
+   * As `chargesSourcePerHit`, for each pulse that healed the bearer
+   * (#2477): Rejuvenation's "loses 3...10 Health for each party member
+   * healed". A bearer at full Health is not healed and costs nothing.
+   */
+  readonly chargesSourcePerHeal?: StatusStat;
 }
 
 /** `StatusDefinition.reflectsNextDamage` (#2187). */
@@ -4986,7 +4994,7 @@ export function aggregateModifiers(
       skillArmorPenetration.push(def.skillArmorPenetration);
     }
     uninterruptible ||= def.uninterruptible;
-    conditionsExpireFaster += def.conditionsExpireFaster;
+    conditionsExpireFaster += statAt(def.conditionsExpireFaster, ranks);
     hexesExpireFaster += def.hexesExpireFaster;
     enchantmentsExpireFaster += statAt(def.enchantmentsExpireFaster, ranks);
     stancesExpireFaster += statAt(def.stancesExpireFaster, ranks);

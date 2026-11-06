@@ -1160,6 +1160,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       const amount = statText(charge, ranks, (value) => String(Math.round(value)));
       parts.push(`its spirit loses ${amount} Health for each one hurt`);
     }
+    const healCharge = definition.pulse.chargesSourcePerHeal;
+    if (healCharge !== undefined) {
+      const amount = statText(healCharge, ranks, (value) => String(Math.round(value)));
+      parts.push(`its spirit loses ${amount} Health for each one healed`);
+    }
   }
   // Holy Wrath's (#1754): "66% of the damage of the next 8 attacks that
   // hit it goes back to the attacker as holy damage, up to 41"; Retribution's
@@ -1260,9 +1265,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `you cannot be interrupted; each time you would be, lose ${amount} Energy or this ends`,
     );
   }
-  if (definition.conditionsExpireFaster !== 0) {
-    const faster = String(Math.round(definition.conditionsExpireFaster * 100));
-    parts.push(`conditions on ${bearer} expire ${faster}% faster`);
+  if (statAtTwelve(definition.conditionsExpireFaster) !== 0) {
+    const faster = statText(definition.conditionsExpireFaster, ranks, percent);
+    parts.push(`conditions on ${bearer} expire ${faster} faster`);
   }
   if (definition.hexesExpireFaster !== 0) {
     const faster = String(Math.round(definition.hexesExpireFaster * 100));

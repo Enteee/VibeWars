@@ -39,6 +39,7 @@ describe("play-build renews a spirit near its end (#1947)", () => {
           ownerDisableSeconds: 0,
           deathBurst: undefined,
           onDeathInRange: undefined,
+          pulse: undefined,
           replacedBy: undefined,
           corpsesLeft: 0,
           companionSkillId: undefined,

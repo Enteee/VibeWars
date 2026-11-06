@@ -28,6 +28,7 @@ function body(
             ownerDisableSeconds: 0,
             deathBurst: undefined,
             onDeathInRange: undefined,
+            pulse: undefined,
             replacedBy: undefined,
             corpsesLeft: extra.corpses ?? 0,
             companionSkillId: undefined,

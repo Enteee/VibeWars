@@ -3536,6 +3536,94 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Healing spirits (#2477)                                                */
+  /* ---------------------------------------------------------------------- */
+  bindingRitual({
+    id: "ritualist.preservation",
+    name: "Preservation",
+    gwId: 1250,
+    elite: true,
+    attributeId: "ritualist.restoration-magic",
+    energy: 5,
+    activationSeconds: 3,
+    rechargeSeconds: 20,
+    // The base record; its numbers are the PvP split's (3011). "Create a
+    // level 1...10 spirit. Every 4 seconds, this spirit heals one
+    // non-spirit ally in the area for 10...115 Health. This spirit dies
+    // after 90 seconds." At 12: level 8.2, 94 Health, to the most hurt.
+    creature: {
+      kind: "spirit",
+      look: "spirit",
+      name: "Preservation",
+      maxHealth: spiritHealth("ritualist.restoration-magic", [1, 10]),
+      armor: { flat: 51 },
+      attack: undefined,
+      durationSeconds: { flat: 90 },
+      pulse: {
+        everySeconds: 4,
+        heal: { scaling: { attributeId: "ritualist.restoration-magic", atZero: 10, atTwelve: 94 } },
+        radius: RANGE_SPIRIT,
+      },
+      behaviour: { kind: "idle" },
+      aura: undefined,
+      replacedBy: undefined,
+      leavesCorpses: undefined,
+      onePerOwner: false,
+      onDeath: "vanish",
+      ownerDisableOnDeath: undefined,
+      deathBurst: undefined,
+      onDeathInRange: undefined,
+    },
+  }),
+  bindingRitual({
+    id: "ritualist.rejuvenation",
+    name: "Rejuvenation",
+    gwId: 2204,
+    elite: false,
+    attributeId: "ritualist.restoration-magic",
+    energy: 10,
+    activationSeconds: 3,
+    rechargeSeconds: 30,
+    // The base record; its numbers are the PvP split's (3039). "Create a
+    // level 1...16 spirit. This spirit heals all party members within
+    // earshot for 3...10 Health each second. This spirit loses 3...10
+    // Health for each party member healed in this way. This spirit dies
+    // after 30...90 seconds": the allies' status pulses, and charges it.
+    creature: {
+      ...protectiveSpirit(
+        "Rejuvenation",
+        "ritualist.restoration-magic",
+        [1, 16],
+        { atZero: 30, atTwelve: 78 },
+        "rejuvenation",
+        "allies",
+      ),
+      aura: { statusId: "rejuvenation", affects: "allies", radius: AREA_EARSHOT },
+    },
+  }),
+  bindingRitual({
+    id: "ritualist.recovery",
+    name: "Recovery",
+    gwId: 1748,
+    elite: false,
+    attributeId: "ritualist.restoration-magic",
+    energy: 15,
+    activationSeconds: 3,
+    rechargeSeconds: 30,
+    // The base record; its numbers are the PvP split's (3025). "Create a
+    // level 1...10 spirit. Conditions on allies within range of this
+    // spirit expire 20...50% faster. This spirit dies after 30...60
+    // seconds." At 12: level 8.2, 44%, 54 s.
+    creature: protectiveSpirit(
+      "Recovery",
+      "ritualist.restoration-magic",
+      [1, 10],
+      { atZero: 30, atTwelve: 54 },
+      "recovery",
+      "allies",
+    ),
+  }),
 ];
 
 /**
