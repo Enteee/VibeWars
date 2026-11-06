@@ -1,7 +1,7 @@
 /** @type {Readonly<Record<string, import("../../skill-icon-table.mjs").SkillIconRow>>} */
 const rows = {
-  // Staples (#2447), stand-ins until their art card.
-  "warrior.flourish": { glyph: "blade-bolt-gain", modifier: "renew" },
+  // Staples (#2447), art #2456.
+  "warrior.flourish": { glyph: "blade-flourish", modifier: "renew" },
 };
 
 export default rows;
