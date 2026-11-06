@@ -1161,6 +1161,7 @@ export function mountBuildEditor(
       bar.dispose();
       tooltip.dispose();
       paperDoll.close();
+      library.dispose();
       training?.dispose();
     },
   };
@@ -1920,6 +1921,7 @@ type LibraryTab = "skills" | "gear";
 interface LibraryRegion extends Region {
   /** Open `tab`, scrolled to the group named `group` if given. */
   show(tab: LibraryTab, group?: string): void;
+  dispose(): void;
 }
 
 function mountLibrary(layout: HTMLElement, context: EditorContext): LibraryRegion {
@@ -1991,6 +1993,9 @@ function mountLibrary(layout: HTMLElement, context: EditorContext): LibraryRegio
     update(character) {
       skills.update(character);
       gear.update(character);
+    },
+    dispose() {
+      skills.dispose();
     },
     show(tab, group) {
       open(tab);
