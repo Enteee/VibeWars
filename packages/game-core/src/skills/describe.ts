@@ -68,6 +68,7 @@ import type {
   StateCondition,
   UnconditionalEffect,
   SplashEffect,
+  SpiritPulse,
   DamageEffect,
   TransferConditionsEffect,
 } from "./types.js";
@@ -3040,7 +3041,7 @@ function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>, withOnly
  */
 function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>): Line[] {
   if (effect.kind === "summon") {
-    const { kind, aura, attack, deathBurst, onDeathInRange } = effect.creature;
+    const { kind, aura, attack, deathBurst, onDeathInRange, pulse } = effect.creature;
     return [
       describeEffect(effect, ranks),
       // What the spirit projects (#1064): "Non-spirit allies in its range:
@@ -3053,6 +3054,7 @@ function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>
         ? [describeMinionDamage(attack, attack.scaling.level, ranks)]
         : []),
       ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
+      ...(pulse === undefined ? [] : [describeSpiritPulse(pulse, ranks)]),
       ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst, ranks)]),
       ...(onDeathInRange === undefined ? [] : [describeDeathInRange(onDeathInRange, ranks)]),
       ...describeMinionDeath(effect.creature, ranks),
@@ -3302,6 +3304,19 @@ function describeDeathBurst(burst: DeathBurst, ranks: ReadonlyMap<string, number
   return {
     text: `When it dies, ${who} ${what} per second it lived${max}`,
     magnitude: rate,
+  };
+}
+
+/**
+ * A spirit's heal on one ally (#2477), Preservation's: "Every 4 seconds:
+ * heals the most hurt non-spirit ally in its range for 94 Health".
+ */
+function describeSpiritPulse(pulse: SpiritPulse, ranks: ReadonlyMap<string, number>): Line {
+  const heal = describeMagnitude(pulse.heal, ranks);
+  const where = AREA_TEXT.get(pulse.radius) ?? "in its range";
+  return {
+    text: `Every ${String(pulse.everySeconds)} seconds: heals the most hurt non-spirit ally ${where} for ${shown(heal)} Health`,
+    magnitude: heal,
   };
 }
 

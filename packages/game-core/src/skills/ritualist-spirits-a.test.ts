@@ -6,7 +6,7 @@ import { MatchSimulation, type Participant, type ParticipantSpec } from "../matc
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
-import { describeStatus } from "./describe.js";
+import { describeSkill, describeStatus } from "./describe.js";
 import { NO_RANKS } from "./status.js";
 
 /**
@@ -161,6 +161,21 @@ describe("Preservation (#2477): one ally a pulse", () => {
     expect(sim.get(spiritId)).toBeDefined();
     stepFor(sim, 1);
     expect(sim.get(spiritId)).toBeUndefined();
+  });
+
+  it.each([
+    [12, 94],
+    [0, 10],
+  ] as const)("describes its heal at %i", (rank, amount) => {
+    const preservation = getSkill("ritualist.preservation");
+    if (preservation === undefined) throw new Error("Preservation is not in the catalog");
+    const text = describeSkill(
+      preservation,
+      new Map([["ritualist.restoration-magic", rank]]),
+    ).effects.map((line) => line.text);
+    expect(text).toContain(
+      `Every 4 seconds: heals the most hurt non-spirit ally in its range for ${String(amount)} Health`,
+    );
   });
 });
 
