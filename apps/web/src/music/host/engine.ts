@@ -27,7 +27,7 @@ import {
   type LevelChange,
 } from "./transitions.js";
 import { busGate, type BusGate } from "./bus-gate.js";
-import { crossfade, isTempoMark } from "./crossfade.js";
+import { crossfade, isTempoMark, overTrack } from "./crossfade.js";
 import { dropLate } from "./late-notes.js";
 import { catchUpTick, leadClock } from "./lead-clock.js";
 import { makeLayer, type TrackClock } from "./layer.js";
@@ -370,7 +370,7 @@ export async function startEngine(): Promise<void> {
   const schedule = async (pattern: core.Pattern): Promise<void> => {
     scheduled = pattern;
     startScheduler();
-    const heard = sting === undefined ? pattern : core.stack(pattern, quiet(sting.pattern));
+    const heard = sting === undefined ? pattern : overTrack(pattern, quiet(sting.pattern));
     await repl.setPattern(guarded(heard), true);
   };
 
