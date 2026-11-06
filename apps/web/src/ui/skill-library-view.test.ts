@@ -176,7 +176,6 @@ const character: TeamCharacter = {
 
 const tooltip: SkillTooltip = {
   show: () => undefined,
-  showCorpus: () => undefined,
   update: () => undefined,
   hide: () => undefined,
   dispose: () => undefined,
@@ -335,13 +334,10 @@ describe("the skill library's Filters popover (#2463)", () => {
     }
   });
 
-  it("Not in the game yet adds no count and no tag", () => {
+  it("offers no Not in the game yet chip: every corpus skill plays (#2518)", () => {
     filterButton().click();
-    chip("Not in the game yet").click();
-    expect(chip("Not in the game yet").getAttribute("aria-pressed")).toBe("true");
-    expect(filterButton().textContent).toBe("Filters");
-    expect(tagTexts()).toEqual([]);
-    chip("Not in the game yet").click();
+    expect(chip("Elite only")).toBeDefined();
+    expect(() => chip("Not in the game yet")).toThrow("no chip");
   });
 
   it("a re-render while open keeps the popover open", () => {

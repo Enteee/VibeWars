@@ -10,10 +10,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./corpus": {
-      "types": "./dist/corpus.d.ts",
-      "default": "./dist/corpus.js"
-    },
     "./gw-skilldata/LICENSE": "./raw/gw-skilldata/LICENSE"
   },
   "main": "./dist/index.js",
