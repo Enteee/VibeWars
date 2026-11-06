@@ -73,10 +73,12 @@ const glyphs = {
           inkLine("M6 20.500L8.500 22L11 20.500M13 20.500L15.500 22L18 20.500", 1.4),
       ),
   },
-  "chevrons-three": {
-    means: "Soldier's Speed: three chevrons running right: fast, faster under a chant or shout.",
+  "boot-speed": {
+    means:
+      "Soldier's Speed: a marching boot with speed lines behind it: fast, faster under a chant or shout.",
     draw: () =>
-      inkLine("M3.500 5L9.500 12L3.500 19M10 5L16 12L10 19M16.500 7.500L21 12L16.500 16.500", 2.6),
+      inkFill("M10 3H16V11L21 14.500V20H8V16L10 14.500Z") +
+      inkLine("M2.500 8H7M2.500 12H7M2.500 16H6", 2.2),
   },
   "half-disc-speed": {
     means: "Deadly Haste: a half disc with speed lines behind it: half-ranged spells come faster.",
