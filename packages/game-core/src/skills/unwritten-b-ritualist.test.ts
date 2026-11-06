@@ -171,6 +171,7 @@ describe("Lively Was Naomei (#2500)", () => {
               hits: "party",
               radius: AREA_IN_THE_AREA,
               dead: true,
+              includesCentre: true,
               effects: [
                 {
                   kind: "resurrect",
@@ -215,6 +216,40 @@ describe("Lively Was Naomei (#2500)", () => {
       { kind: "resurrected", targetId: "a", healthFraction: fraction, energyFraction: 0 },
     ]);
     expect(get(sim, "far").dead).toBe(true);
+  });
+
+  it.each([
+    [12, 0.63],
+    [0, 0.15],
+  ])("at rank %i, the holder who dies holding them rises at %d with the ally", (rank, fraction) => {
+    const sim = match(
+      spec("r", 0, vec2(0, 0), [LIVELY], rank),
+      spec("a", 0, vec2(AREA_IN_THE_AREA - 20, 0)),
+      spec("x", 1, vec2(900, 0)),
+    );
+    const ally = get(sim, "a");
+    ally.statuses.apply("burning", 10, "x", NO_RANKS);
+    ally.health = 0.2;
+    sim.step(DT);
+    expect(ally.dead).toBe(true);
+    use(sim, "r", 0, "r", LIVELY);
+    const holder = get(sim, "r");
+    holder.statuses.apply("imagined-burden", 20, "x", NO_RANKS);
+    holder.statuses.apply("burning", 10, "x", NO_RANKS);
+    holder.health = 0.2;
+    const raised = stepFor(sim, 1)
+      .flatMap((entry) => entry.events)
+      .filter((event) => event.kind === "resurrected");
+    expect(raised).toEqual([
+      { kind: "resurrected", targetId: "r", healthFraction: fraction, energyFraction: 0 },
+      { kind: "resurrected", targetId: "a", healthFraction: fraction, energyFraction: 0 },
+    ]);
+    // Raised after the death's own clears, not wiped by them.
+    expect(holder.dead).toBe(false);
+    expect(holder.health).toBeCloseTo(500 * fraction);
+    expect(holder.energy).toBe(0);
+    expect(holder.statuses.has("imagined-burden")).toBe(false);
+    expect(holder.statuses.has("lively-was-naomei")).toBe(false);
   });
 });
 

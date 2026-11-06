@@ -978,6 +978,9 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
   // members in the area are resurrected with 15...75% Health and zero
   // Energy": 63%, the dead ones in the area as the ashes fall, as Light of
   // Dwayna's; dropped early by another item spell, they fall all the same.
+  // The holder is one of them: dying drops the ashes, and the end fires
+  // once the death has cleared them, so the raise is a fresh life. GW1
+  // raises 3 s after the drop; here it is at once.
   "lively-was-naomei": define("lively-was-naomei", "Lively Was Naomei", "item", {
     profession: "ritualist",
     triggers: [
@@ -989,6 +992,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
             hits: "party",
             radius: AREA_IN_THE_AREA,
             dead: true,
+            includesCentre: true,
             maxTargets: undefined,
             effects: [
               {
