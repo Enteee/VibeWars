@@ -4879,4 +4879,47 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2470)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.unyielding-aura",
+    name: "Unyielding Aura",
+    gwId: 268,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    failChanceUnless: { attributeId: "monk.divine-favor", rank: 5, chance: 0.5 },
+    // The base record; its numbers are the PvP split's (2891). "Bring target
+    // dead party member back to life at full Health and full Energy. If you
+    // stop maintaining this enchantment or if this enchantment is removed,
+    // that party member dies and leaves an exploited corpse": the status's.
+    // Raised first: a dead wearer is maintained nothing.
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "percent", percent: { flat: 100 } },
+        energyPercent: { flat: 100 },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+      { kind: "maintain-status", on: "target", statusId: "unyielding-aura" },
+    ],
+  },
 ];
