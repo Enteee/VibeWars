@@ -37,11 +37,11 @@ const glyphs = {
   },
   "sunrise-plus": {
     means:
-      "Light of Dwayna: a sun rising over the horizon with a plus in its disc: the whole party is raised and healed.",
+      "Light of Dwayna: an ankh rising over the horizon with the sun's rays behind it: the whole party is raised.",
     draw: () =>
-      inkFill("M3 17A9 9 0 0 1 21 17Z") +
-      cut("M12 10V15M9.500 12.500H14.500", 1.8) +
-      inkLine("M12 2V4M3.500 6.500L5 8M20.500 6.500L19 8M1.500 21H22.500", 2),
+      inkLine("M3 3.500L5.500 6M21 3.500L18.500 6M1.500 10H4M22.500 10H20", 2) +
+      `<ellipse cx="12" cy="8.500" rx="3.500" ry="4" ${stroke(C.ink, 2.2)}/>` +
+      inkLine("M12 12.500V20.500M7 14.500H17M1.500 21.500H22.500", 2.4),
   },
 };
 
