@@ -108,6 +108,7 @@ let
       which
       nodejs_24
       pnpm_10
+      ffmpeg-headless
       tg
       hub
       board
@@ -480,7 +481,6 @@ let
       imagemagick
       inkscape
       sox
-      ffmpeg
     ];
     # Judges the pipeline, so it needs the same linters CI runs.
     cicd-engineer = with pkgs; [
