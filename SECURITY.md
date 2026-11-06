@@ -73,7 +73,8 @@ channels, as often as they like.
   clock. Nothing a peer runs can tell a fair host from a cheating one. P2P
   is for playing with people you would let host; there is no ranked play,
   and none is planned without a server. Random Arena (ADR-0032) puts
-  strangers together, so it stays unranked and keeps nothing past a visit.
+  strangers together, so it stays unranked; its public match record
+  (#2528) is the host's word, not a result anyone checked.
 - **Choosing to host a Random Arena.** The host of a queued match is the
   ticket whose `sha256(groupId ‖ ticketId)` is lowest, and tickets are
   public, so a player can grind fresh ticket keys (about 2 × team size
@@ -148,6 +149,13 @@ channels, as often as they like.
   one gets a starter build. Its label is not checked. Do not use the
   lobby's character for anything but display. A Team Lobby's seat is the
   exception: there, the host assigns the build (#1458).
+- **A false match record** (#2528). When a match ends its host publishes
+  a record on Nostr: mode, map, winner, and each player's name, guild tag
+  and build. The host writes it alone, so it can name the wrong winner,
+  invent a match or leave one out. Each record is signed by a throwaway
+  key: the signature proves the event is intact, not who sent it, and ties
+  no two records to one host. Anyone can publish a well-formed fake on the
+  same topic. Nothing may be ranked on these records.
 - **What is said in chat** (#479). The host reads every line, its own
   team's and the other team's, and could drop or forge one. There is no
   moderation and no report button, only a mute each player sets for the
@@ -229,6 +237,17 @@ channels, as often as they like.
   relay sees each player online, not only those in a match. The relays
   are third parties we do not run; the list lives in
   `apps/web/src/net/transport/relays.ts` (#392).
+- **Every finished match is public** (#2528; the operator's call: no
+  opt-out). Its record holds each player's in-game name, guild tag and
+  build as a GW1 template code, in any mode, bots marked; no IP, peer id,
+  lobby key or room, and nothing that links two records to one host.
+  Relays store it (NIP-78, kind 30078) and nobody can delete it. A match
+  its host left, or one the e2e (broadcast) build plays, is not
+  published. `validateMatchRecord` reads a record as hostile input: known
+  mode, map and end reason, 1 to 8 players a team, names held to the
+  game's name rules, a template of at most 64 characters that re-encodes
+  byte for byte and passes `validatePlayerBuild`. A reader of records
+  (#2532) must also drop an event over 8 KB before `JSON.parse`.
 - **Everything in a snapshot.** A peer receives every snapshot field the
   host sends, for every player. Anything that must stay hidden from a
   player must not be in the snapshot at all.

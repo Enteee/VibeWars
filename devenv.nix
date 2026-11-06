@@ -63,9 +63,9 @@ in
     # of the reproducible environment like every other tool, instead of an
     # unversioned binary fetched on first run.
     pkgs.chromium
-    # scripts/assets/sfx.sh synthesises the sound effects with sox and
-    # encodes them to MP3 with ffmpeg (#104). Pinned here so anyone can
-    # re-run it and get the committed bytes.
+    # scripts/assets/render-sfx.mjs renders the sound effects in Chromium
+    # and encodes them to MP3 with ffmpeg (#2524). sox is for asset-designer's
+    # one-off comparisons of a cue against its predecessor.
     pkgs.sox
     pkgs.ffmpeg-headless
     # scripts/music-stress.mjs (#519): Firefox is the browser that crackles,
