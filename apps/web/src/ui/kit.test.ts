@@ -571,22 +571,22 @@ describe("screenBar in the top bar (#578, #1272)", () => {
     const below = screen();
     const onClose = vi.fn();
     const overlay = screenBar({
-      crumbs: ["VibeWars", "Options"],
+      crumbs: ["VibeWars", "Help"],
       back: { label: "Close", onBack: onClose },
       actions: [],
       overlay: true,
-      own: "options",
+      own: "help",
     });
-    expect(slots.crumbs.text).toBe("VibeWars > Options");
+    expect(slots.crumbs.text).toBe("VibeWars > Help");
     expect(shown.at(-1)).toEqual({
-      place: "VibeWars / Options",
-      own: "options",
+      place: "VibeWars / Help",
+      own: "help",
       overlay: true,
       join: false,
     });
     // A lobby repaints under it: the overlay's bar stays.
     const repainted = screen(undefined, "Lobby");
-    expect(slots.crumbs.text).toBe("VibeWars > Options");
+    expect(slots.crumbs.text).toBe("VibeWars > Help");
     expect(slots.back.children).toEqual([overlay.back]);
     expect(pressEscape()).toBe(true);
     expect(onClose).toHaveBeenCalledOnce();

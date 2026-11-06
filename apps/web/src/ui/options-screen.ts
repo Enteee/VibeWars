@@ -1,12 +1,13 @@
-import { h, overlayClose, screenBar } from "./kit.js";
+import { overlayClose } from "./kit.js";
 import { OPTIONS_SECTIONS } from "./options-sections.js";
+import { attachTopbarPopover } from "./topbar-popover.js";
 
 /**
  * Options (#423, #454): the sections of `OPTIONS_SECTIONS` listed on the
- * left, the selected one on the right, opening on the first, as an overlay
- * from the top bar or a match's HUD. Its ×, or Esc, closes it (#2381; Esc
- * is the screen bar's, #578); a section that wants Esc for itself, as Controls does
- * while a key is being rebound, stops it first.
+ * left, the selected one on the right, opening on the first, as a window
+ * from the top bar or a match's HUD (#2386). Its ×, or Esc, closes it
+ * (#2381); a section that wants Esc for itself, as
+ * Controls does while a key is being rebound, stops it first.
  */
 
 /** A section, as far as switching between them goes. */
@@ -52,65 +53,55 @@ export class SectionSwitcher<C> {
   }
 }
 
-/** The open overlay, closed by `closeOptionsOverlay`. */
-let overlay: { readonly element: HTMLElement; readonly dispose: () => void } | undefined;
+/** Whether the Options window is open, page-wide. */
+let windowOpen = false;
 
 /**
- * Options above whatever runs under it (#454), from the top bar or the
- * HUD's ⚙: its sections in a panel over `parent`.
- * Its ×, or Esc, closes it and leaves what is under it exactly as it was;
- * a match goes on underneath. `onClose` hears every way it closes.
+ * Options as a window from `trigger`, the top bar's or the HUD's ⚙
+ * (#454, #2386), in `parent`: a top-bar popover (#2385), so it shuts
+ * the Lobby's and the music's, and the screen or match under it goes on.
+ * Its ×, Esc or a click outside closes it, except while Controls waits for
+ * a key: Esc then cancels only that wait. `onClose` hears every way it closes.
  */
-export function openOptionsOverlay(parent: HTMLElement, onClose?: () => void): void {
-  closeOptionsOverlay();
-  const backdrop = h("div", "options-overlay");
-  const options = optionsPanel(["VibeWars", "Options"], closeOptionsOverlay);
-  options.panel.classList.add("screen", "options-screen");
-  options.panel.setAttribute("role", "dialog");
-  options.panel.setAttribute("aria-modal", "true");
-  options.panel.setAttribute("aria-label", "Options");
-  backdrop.appendChild(options.panel);
-  parent.appendChild(backdrop);
-  overlay = {
-    element: backdrop,
-    dispose: () => {
-      options.dispose();
-      onClose?.();
-    },
-  };
-  options.panel.querySelector<HTMLElement>(".options-entry.is-selected")?.focus();
+export function attachOptionsWindow(
+  trigger: HTMLButtonElement,
+  parent: HTMLElement,
+  onClose?: () => void,
+): { dispose(): void } {
+  return attachTopbarPopover(trigger, parent, (close) => {
+    const options = optionsPanel(close);
+    options.panel.classList.add("screen", "options-screen", "options-window");
+    options.panel.setAttribute("aria-label", "Options");
+    // A press inside keeps the focus, and so Esc, in the window.
+    options.panel.tabIndex = -1;
+    windowOpen = true;
+    return {
+      element: options.panel,
+      focus:
+        options.panel.querySelector<HTMLElement>(".options-entry.is-selected") ?? options.panel,
+      // A click outside leaves a key-rebind that still waits open (#2386).
+      holdsOpen: () => options.panel.querySelector(".key-cell.is-capturing") !== null,
+      dispose() {
+        windowOpen = false;
+        options.dispose();
+        onClose?.();
+      },
+    };
+  });
 }
 
-/** Whether the Options overlay is open, for whoever routes keys around it. */
-export function isOptionsOverlayOpen(): boolean {
-  return overlay !== undefined;
-}
-
-export function closeOptionsOverlay(): void {
-  const closing = overlay;
-  if (closing === undefined) {
-    return;
-  }
-  overlay = undefined;
-  closing.element.remove();
-  closing.dispose();
+/** Whether the Options window is open, for whoever routes keys around it. */
+export function isOptionsWindowOpen(): boolean {
+  return windowOpen;
 }
 
 /** The Options frame and its sections. */
-function optionsPanel(
-  crumbs: readonly string[],
-  close: () => void,
-): { readonly panel: HTMLElement; readonly dispose: () => void } {
+function optionsPanel(close: () => void): {
+  readonly panel: HTMLElement;
+  readonly dispose: () => void;
+} {
   const panel = document.createElement("div");
   panel.appendChild(overlayClose(close));
-
-  const { release } = screenBar({
-    crumbs,
-    escape: close,
-    actions: [],
-    overlay: true,
-    own: "options",
-  });
 
   const body = document.createElement("div");
   body.className = "options-body";
@@ -163,7 +154,6 @@ function optionsPanel(
     panel,
     dispose: () => {
       switcher.close();
-      release();
     },
   };
 }
