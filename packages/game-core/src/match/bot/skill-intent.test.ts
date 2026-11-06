@@ -378,6 +378,10 @@ const NO_BOT_USE = new Set([
   // and an ally's drain on melee foes lives only in a status trigger.
   "mesmer.mantra-of-inscriptions",
   "mesmer.sympathetic-visage",
+  // Staples (#2447): Ancestor's Visage, the same trigger; Flourish's Energy
+  // and recharge come only with attacks recharging, no role the bot weighs.
+  "mesmer.ancestors-visage",
+  "warrior.flourish",
 ]);
 
 function skill(id: string) {
