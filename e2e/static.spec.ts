@@ -91,7 +91,10 @@ test("the menu loads under the sub-path, with every asset found", async ({ page 
     )
     .toEqual([]);
   // A lazy one (#2318) loads only once scrolled to, so it is fetched here:
-  // every one is found under the sub-path all the same.
+  // every one is found under the sub-path all the same. The other
+  // professions' skills are laid out only once their fold opens (#2518).
+  await page.locator(".skill-locked summary").click();
+  await expect(page.locator(".skill-locked-box img[loading='lazy']").first()).toBeAttached();
   const lazy = await icons.evaluateAll((images) => [
     ...new Set(
       images.flatMap((img) =>
