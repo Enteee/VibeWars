@@ -68,6 +68,7 @@ import type {
   StateCondition,
   UnconditionalEffect,
   SplashEffect,
+  SpiritPulse,
   DamageEffect,
   TransferConditionsEffect,
 } from "./types.js";
@@ -1174,6 +1175,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       const amount = statText(charge, ranks, (value) => String(Math.round(value)));
       parts.push(`its spirit loses ${amount} Health for each one hurt`);
     }
+    const healCharge = definition.pulse.chargesSourcePerHeal;
+    if (healCharge !== undefined) {
+      const amount = statText(healCharge, ranks, (value) => String(Math.round(value)));
+      parts.push(`its spirit loses ${amount} Health for each one healed`);
+    }
   }
   // Holy Wrath's (#1754): "66% of the damage of the next 8 attacks that
   // hit it goes back to the attacker as holy damage, up to 41"; Retribution's
@@ -1287,9 +1293,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `you cannot be interrupted; each time you would be, lose ${amount} Energy or this ends`,
     );
   }
-  if (definition.conditionsExpireFaster !== 0) {
-    const faster = String(Math.round(definition.conditionsExpireFaster * 100));
-    parts.push(`conditions on ${bearer} expire ${faster}% faster`);
+  if (statAtTwelve(definition.conditionsExpireFaster) !== 0) {
+    const faster = statText(definition.conditionsExpireFaster, ranks, percent);
+    parts.push(`conditions on ${bearer} expire ${faster} faster`);
   }
   if (definition.hexesExpireFaster !== 0) {
     const faster = String(Math.round(definition.hexesExpireFaster * 100));
@@ -3071,7 +3077,7 @@ function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>, withOnly
  */
 function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>): Line[] {
   if (effect.kind === "summon") {
-    const { kind, aura, attack, deathBurst, onDeathInRange } = effect.creature;
+    const { kind, aura, attack, deathBurst, onDeathInRange, pulse } = effect.creature;
     return [
       describeEffect(effect, ranks),
       // What the spirit projects (#1064): "Non-spirit allies in its range:
@@ -3084,6 +3090,7 @@ function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>
         ? [describeMinionDamage(attack, attack.scaling.level, ranks)]
         : []),
       ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
+      ...(pulse === undefined ? [] : [describeSpiritPulse(pulse, ranks)]),
       ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst, ranks)]),
       ...(onDeathInRange === undefined ? [] : [describeDeathInRange(onDeathInRange, ranks)]),
       ...describeMinionDeath(effect.creature, ranks),
@@ -3340,6 +3347,19 @@ function describeDeathBurst(burst: DeathBurst, ranks: ReadonlyMap<string, number
   return {
     text: `When it dies, ${who} ${what} per second it lived${max}`,
     magnitude: rate,
+  };
+}
+
+/**
+ * A spirit's heal on one ally (#2477), Preservation's: "Every 4 seconds:
+ * heals the most hurt non-spirit ally in its range for 94 Health".
+ */
+function describeSpiritPulse(pulse: SpiritPulse, ranks: ReadonlyMap<string, number>): Line {
+  const heal = describeMagnitude(pulse.heal, ranks);
+  const where = AREA_TEXT.get(pulse.radius) ?? "in its range";
+  return {
+    text: `Every ${String(pulse.everySeconds)} seconds: heals the most hurt non-spirit ally ${where} for ${shown(heal)} Health`,
+    magnitude: heal,
   };
 }
 

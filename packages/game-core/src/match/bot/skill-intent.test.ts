@@ -75,6 +75,8 @@ const NO_BOT_USE = new Set([
   "monk.live-vicariously",
   // Nor Purifying Veil's, whose removal waits for the enchantment to end.
   "monk.purifying-veil",
+  // Recovery (#2477): conditions run out faster, none taken off.
+  "ritualist.recovery",
   // Companion commands and pet attacks: out of scope for a bot.
   "ranger.bestial-mauling",
   "ranger.bestial-pounce",

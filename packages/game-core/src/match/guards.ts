@@ -153,6 +153,7 @@ export function guardSpec(guard: BaseGuard, index: number, facing: number): Part
       ownerDisableSeconds: 0,
       deathBurst: undefined,
       onDeathInRange: undefined,
+      pulse: undefined,
       replacedBy: undefined,
       corpsesLeft: 0,
       companionSkillId: undefined,

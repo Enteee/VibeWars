@@ -69,6 +69,7 @@ function minion(
       ownerDisableSeconds: 0,
       deathBurst: undefined,
       onDeathInRange: undefined,
+      pulse: undefined,
       replacedBy,
       corpsesLeft: 0,
       companionSkillId: undefined,

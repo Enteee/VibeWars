@@ -49,6 +49,7 @@ import {
   rankOf,
   statusRanks,
   maintainedEnchantments,
+  type RankHolder,
 } from "./tick.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange } from "../geometry.js";
@@ -569,7 +570,8 @@ function turnToHealing(target: Combatant, amount: number, events: CombatEvent[])
 }
 
 /**
- * What `effect` heals, at the caster's ranks, before healing modifiers:
+ * What `effect` heals, at `ranks`, the caster's or its source's (#2477),
+ * before healing modifiers:
  * plus its `per` count (#1760); with
  * `perAlly`, more for each living ally of the caster within the radius,
  * the caster included, and the whole capped at `max` (#923); with
@@ -584,9 +586,10 @@ function healAmount(
   context: CountContext,
   earlier: readonly CombatEvent[],
   usedSkill: SlotSkill | undefined,
+  ranks: RankHolder,
 ): number {
   const base = withPerCount(
-    perUsedSkillEnergy(effect, caster, usedSkill) *
+    perUsedSkillEnergy(effect, caster, usedSkill, ranks) *
       perRemoved(effect.perRemoved, target, earlier, effect.perRemovedStatusId) *
       (effect.perDestroyedSpirit === true
         ? earlier.filter((event) => event.kind === "creature-destroyed").length
@@ -870,9 +873,10 @@ function perUsedSkillEnergy(
   effect: { readonly amount: Magnitude; readonly perUsedSkillEnergy?: true },
   caster: Combatant,
   used: SlotSkill | undefined,
+  ranks: RankHolder,
 ): number {
   if (effect.perUsedSkillEnergy === undefined) {
-    return resolveMagnitude(effect.amount, caster);
+    return resolveMagnitude(effect.amount, ranks);
   }
   const cost = used === undefined ? undefined : getSkill(used.skillId)?.cost;
   return cost?.kind === "energy" ? resolveMagnitudeTimes(effect.amount, caster, cost.amount) : 0;
@@ -2029,7 +2033,15 @@ export function applyEffect(
         ownHeal(
           perEnergyLost(
             effect,
-            healAmount(effect, caster, target, context, earlier, context.usedSkill),
+            healAmount(
+              effect,
+              caster,
+              target,
+              context,
+              earlier,
+              context.usedSkill,
+              context.ranksFrom ?? caster,
+            ),
             lostBy,
             earlier,
           ),
@@ -2078,7 +2090,7 @@ export function applyEffect(
             perEnergyLost(
               effect,
               withPerCount(
-                perUsedSkillEnergy(effect, caster, context.usedSkill),
+                perUsedSkillEnergy(effect, caster, context.usedSkill, caster),
                 effect.per,
                 caster,
                 target,

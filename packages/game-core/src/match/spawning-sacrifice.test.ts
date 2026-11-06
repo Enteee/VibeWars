@@ -67,6 +67,7 @@ function creature(
       ownerDisableSeconds: 0,
       deathBurst: undefined,
       onDeathInRange: undefined,
+      pulse: undefined,
       replacedBy: undefined,
       corpsesLeft: 0,
       companionSkillId: undefined,

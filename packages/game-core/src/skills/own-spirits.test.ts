@@ -61,6 +61,7 @@ function spirit(id: string, ownerId: string, team: number, spawn: Vec2): Partici
       ownerDisableSeconds: 0,
       deathBurst: undefined,
       onDeathInRange: undefined,
+      pulse: undefined,
       replacedBy: undefined,
       corpsesLeft: 0,
       companionSkillId: undefined,

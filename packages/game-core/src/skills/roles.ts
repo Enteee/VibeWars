@@ -109,11 +109,15 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "chain-mark":
     case "overcast":
       return [];
-    // A spirit does what it projects (#1064): Recuperation heals.
+    // A spirit does what it projects (#1064): Recuperation heals; and
+    // what it pulses (#2477): Preservation heals.
     case "summon":
-      return effect.creature.aura === undefined
-        ? []
-        : statusRoles(getStatusDefinition(effect.creature.aura.statusId));
+      return [
+        ...(effect.creature.aura === undefined
+          ? []
+          : statusRoles(getStatusDefinition(effect.creature.aura.statusId))),
+        ...(effect.creature.pulse === undefined ? [] : (["healing"] as const)),
+      ];
     // So does a ward (#1087): Ward Against Melee defends. A trap does
     // what its spring does (#1105): Barbed Trap cripples and bleeds. A
     // pulse does what each pulse does (#1113): Symbol of Wrath damages.
