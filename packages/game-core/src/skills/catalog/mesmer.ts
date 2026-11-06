@@ -4959,4 +4959,102 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2472)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.illusionary-weaponry",
+    name: "Illusionary Weaponry",
+    gwId: 33,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30 seconds, your melee attacks neither hit nor fail to hit.
+    // Instead, Illusionary Weaponry deals 20...60 damage to your targets
+    // for each melee attack" (PvP): the damage at the Mesmer's Illusion
+    // Magic as it landed, typeless.
+    effects: [
+      { kind: "apply-status", statusId: "illusionary-weaponry", durationSeconds: { flat: 30 } },
+    ],
+  },
+  {
+    id: "mesmer.aneurysm",
+    name: "Aneurysm",
+    gwId: 2055,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe regains all Energy. For each point of Energy gained in
+    // this way, that foe takes 1...3 damage and all adjacent foes lose 1
+    // Energy. (Maximum 1...30 Energy lost)." Each point's damage rounds
+    // once, as all damage does: 3 a point at 12. The adjacent foes count
+    // what the foe hit gained, their splash's centre.
+    effects: [
+      { kind: "energy-refill", on: "target" },
+      {
+        kind: "damage",
+        amount: { flat: 0 },
+        type: "typeless",
+        armorPenetration: 0,
+        per: {
+          count: { kind: "energy-gained", on: "target" },
+          amount: {
+            scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 2.6 },
+          },
+          max: undefined,
+        },
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "energy-loss",
+            amount: { flat: 0 },
+            per: {
+              count: { kind: "energy-gained", on: "target" },
+              amount: { flat: 1 },
+              max: {
+                scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 24.2 },
+              },
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];

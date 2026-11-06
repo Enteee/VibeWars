@@ -201,6 +201,14 @@ export type CountRule =
    */
   | { readonly kind: "energy"; readonly on: "target" | "caster" }
   /**
+   * Whole points of Energy the target gained from earlier effects of this
+   * same use, its `energy-gain` events, rounded down (#2472); inside a
+   * `splash`, its centre's: Aneurysm's "for each point of Energy gained in
+   * this way, that foe takes 1...3 damage and all adjacent foes lose 1
+   * Energy". None gained: 0.
+   */
+  | { readonly kind: "energy-gained"; readonly on: "target" }
+  /**
    * Statuses of `categories` an earlier effect of this same use took off
    * anyone (#2260), inside a `splash` or not: Purge Signet's "you lose 10
    * Energy for each hex and condition removed". Read before the use, as a
@@ -392,6 +400,17 @@ export interface EnergyGainToTarget extends Omit<
   readonly perOwnCreatureWithin?: never;
   readonly perRemoved?: never;
   readonly recipient?: never;
+}
+
+/**
+ * The effect's target regains all its Energy (#2472), up to the maximum
+ * overcast leaves it: Aneurysm's "target foe regains all Energy". The
+ * gain is an `energy-gain` event, as any other, so an `energy-gained`
+ * count reads it; a target already full, or dead, gains none.
+ */
+export interface EnergyRefillEffect {
+  readonly kind: "energy-refill";
+  readonly on: "target";
 }
 
 /**
@@ -1871,6 +1890,7 @@ export type UnconditionalEffect =
   | DamageEffect
   | HealEffect
   | EnergyGainEffect
+  | EnergyRefillEffect
   | AdrenalineGainEffect
   | EnergyLossEffect
   | EnergyStealEffect
@@ -2570,6 +2590,12 @@ export interface SkillContext {
    * `lengthen-recharge` lengthens. Absent elsewhere.
    */
   readonly usedSkill?: SlotSkill | undefined;
+  /**
+   * The centre of the `splash` the effect lands in (#2472), whom an
+   * `energy-gained` count reads rather than the splash's target: Aneurysm's
+   * adjacent foes lose what the foe it hit gained. Absent outside a splash.
+   */
+  readonly splashCentre?: Combatant | undefined;
   /**
    * The skill landing (#1511), when one does rather than a status's
    * trigger: what `disable-own-skills` `attribute` spares. Absent elsewhere.
