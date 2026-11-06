@@ -2,7 +2,7 @@
 const rows = {
   // Healing spirits (#2477), stand-ins until their art card.
   "ritualist.preservation": { glyph: "totem", modifier: "dot" },
-  "ritualist.rejuvenation": { glyph: "totem", modifier: "renew" },
+  "ritualist.rejuvenation": { glyph: "totem", modifier: "area" },
   "ritualist.recovery": { glyph: "totem", modifier: "hourglass" },
 };
 
