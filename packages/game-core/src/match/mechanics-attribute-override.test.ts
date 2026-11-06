@@ -215,6 +215,23 @@ describe("Signet of Illusions (#1929)", () => {
   });
 });
 
+describe("an elite borrowing (#2502)", () => {
+  it("lends any elite skill of another attribute the borrowed rank, and nothing else", () => {
+    const mesmer = makeCombatant({ id: "m" });
+    mesmer.statuses.apply("symbols-of-inspiration", 30, "m", NO_RANKS);
+    // Elite, of another attribute: Lightning Surge, Energy Surge.
+    expect(mesmer.statuses.borrowedFor(skill("elementalist.lightning-surge"))).toBe(
+      "symbols-of-inspiration",
+    );
+    expect(mesmer.statuses.borrowedFor(skill("mesmer.energy-surge"))).toBe(
+      "symbols-of-inspiration",
+    );
+    // Not elite, or of the borrowed attribute itself.
+    expect(mesmer.statuses.borrowedFor(skill("elementalist.lightning-strike"))).toBeUndefined();
+    expect(mesmer.statuses.borrowedFor(skill("mesmer.symbols-of-inspiration"))).toBeUndefined();
+  });
+});
+
 describe("tooltips (#1929)", () => {
   it("say what each sets or lends", () => {
     expect(describeStatus("wail-of-doom")).toContain("attributes set to 0");

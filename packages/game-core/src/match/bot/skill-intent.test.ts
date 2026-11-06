@@ -23,6 +23,11 @@ const NO_BOT_USE = new Set([
   "ritualist.attuned-was-songkai",
   "ritualist.renewing-memories",
   "ritualist.spirits-strength",
+  // Self-buffs on own skills (#2502), as above, and Reclaim Essence's
+  // Energy from the caster's own spirits, which no rule spends.
+  "mesmer.auspicious-incantation",
+  "ritualist.anguished-was-lingwah",
+  "ritualist.reclaim-essence",
   "necromancer.cultists-fervor",
   "monk.blessed-aura",
   "monk.healers-covenant",

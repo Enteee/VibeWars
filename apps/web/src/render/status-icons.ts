@@ -726,6 +726,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "renewing-memories": icon("renewing-memories"),
   "soldiers-speed": icon("soldiers-speed"),
   "deadly-haste": icon("deadly-haste"),
+  // Mechanics (#2502).
+  "siphon-strength": icon("siphon-strength"),
+  "shadowy-burden": icon("shadowy-burden"),
+  "anguished-was-lingwah": icon("anguished-was-lingwah"),
+  "auspicious-incantation": icon("auspicious-incantation"),
+  "symbols-of-inspiration": icon("symbols-of-inspiration"),
   // Unwritten skills (#2500).
   "lively-was-naomei": icon("lively-was-naomei"),
   "vocal-was-sogolon": icon("vocal-was-sogolon"),

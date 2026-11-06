@@ -88,6 +88,8 @@ export type RitualistStatusId =
   | "spirits-strength"
   | "attuned-was-songkai"
   | "renewing-memories"
+  // Mechanics (#2502).
+  | "anguished-was-lingwah"
   // Unwritten corpus skills (#2500).
   | "lively-was-naomei"
   | "vocal-was-sogolon"
@@ -772,6 +774,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       extraRechargeSeconds: 0,
       rechargesInstantly: false,
       losesAllEnergy: false,
+      energyGainOfCost: 0,
       rechargeFasterIfType: { type: "binding-ritual", fraction: 0.5 },
       resetsOwnRechargeIfType: "binding-ritual",
       skillId: "ritualist.ritual-lord",
@@ -1044,6 +1047,31 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
           whileHoldingItem: true,
         },
       ),
+    ],
+  }),
+  // "While you hold her ashes, your Ritualist hexes cost 1...5 less energy
+  // and last 50% longer. When you drop her ashes all your Ritualist hexes
+  // are recharged" (#2502): 4 less at 12; dropped early, they still are.
+  "anguished-was-lingwah": define("anguished-was-lingwah", "Anguished Was Lingwah", "item", {
+    profession: "ritualist",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "hex", profession: "ritualist" },
+        {
+          energyDiscount: {
+            scaling: { attributeId: "ritualist.spawning-power", atZero: 1, atTwelve: 4.2 },
+          },
+          durationMultiplier: 1.5,
+        },
+      ),
+    ],
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "recharge-others", which: { type: "hex", profession: "ritualist" } }],
+        target: "bearer",
+        skillId: "ritualist.anguished-was-lingwah",
+      },
     ],
   }),
   // Unwritten corpus skills (#2500). "When you drop her ashes, all party

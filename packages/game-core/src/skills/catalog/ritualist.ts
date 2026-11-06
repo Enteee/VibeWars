@@ -3880,6 +3880,87 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     ],
   },
   /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2502)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ritualist.anguished-was-lingwah",
+    name: "Anguished Was Lingwah",
+    gwId: 1223,
+    type: "item-spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Hold Lingwah's ashes for up to 10...60 seconds": 50 at 12; the
+    // cheaper, longer hexes and the drop are the ashes'.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "anguished-was-lingwah",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 10, atTwelve: 50 },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.reclaim-essence",
+    name: "Reclaim Essence",
+    gwId: 1482,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All of your spirits die. You gain 5...20 Energy and all of your
+    // Binding Rituals are recharged if a spirit died in this way": 17 at
+    // 12. None died: the cast still happens, and does nothing.
+    effects: [
+      { kind: "destroy-own-spirits" },
+      {
+        kind: "if",
+        condition: { kind: "creature-destroyed" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 17 },
+            },
+          },
+          { kind: "recharge-others", which: { type: "binding-ritual" } },
+        ],
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
   /* Unwritten corpus skills (#2500)                                        */
   /* ---------------------------------------------------------------------- */
   // An item spell as Protective Was Kaolai: the drop is the item status's.

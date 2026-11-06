@@ -2419,3 +2419,69 @@ describe("Illusionary Weaponry: a melee blow replaced by its damage (#2472)", ()
     expect(rng.getState()).not.toBe(createRng(4).getState());
   });
 });
+
+describe("a hex that changes its source's attacks against its bearer (#2502)", () => {
+  /** Every crit roll comes up `float`, every damage roll 10. */
+  const fixed = (float: number): SimulationRng =>
+    Object.assign(createRng(1), { nextInt: () => 10, nextFloat: () => float });
+  const sword = (id: string): Combatant =>
+    makeCombatant({
+      id,
+      team: 0,
+      equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
+      attributeRanks: new Map([["warrior.swordsmanship", 12]]),
+    });
+  const deadly = new Map([["assassin.deadly-arts", 12]]);
+  const shadow = new Map([["assassin.shadow-arts", 12]]);
+
+  /** What `who`'s one blow at `target` took, and whether it crit. */
+  function blow(who: Combatant, target: Combatant, float = 0.99): [number, boolean] {
+    const before = target.health;
+    const crit = landBlow(
+      weaponSnapshotOf(who),
+      who,
+      target,
+      PLAIN_BLOW,
+      false,
+      fixed(float),
+      RULES,
+      [],
+      new Map(),
+    );
+    return [before - target.health, crit];
+  }
+
+  it("adds Siphon Strength's 50% crit chance to its own source's blows only", () => {
+    const target = foe("dummy").combatant;
+    target.statuses.apply("siphon-strength", 17, "a", deadly);
+    const chance = criticalChance(weaponSnapshotOf(sword("b")), RULES);
+    // A roll above the plain chance and below it plus 0.5.
+    const roll = chance + 0.25;
+    expect(blow(sword("a"), target, roll)[1]).toBe(true);
+    expect(blow(sword("b"), target, roll)[1]).toBe(false);
+  });
+
+  it("each source of two Siphon Strengths gets the bonus only against its own", () => {
+    const own = foe("x").combatant;
+    own.statuses.apply("siphon-strength", 17, "a", deadly);
+    const theirs = foe("y").combatant;
+    theirs.statuses.apply("siphon-strength", 17, "b", deadly);
+    const roll = criticalChance(weaponSnapshotOf(sword("a")), RULES) + 0.25;
+    expect(blow(sword("a"), own, roll)[1]).toBe(true);
+    expect(blow(sword("a"), theirs, roll)[1]).toBe(false);
+  });
+
+  it("lowers armor against Shadowy Burden's source only while it is the only hex", () => {
+    const plain = blow(sword("a"), foe("plain").combatant)[0];
+    const target = foe("dummy").combatant;
+    target.statuses.apply("shadowy-burden", 12.6, "a", shadow);
+    const burdened = blow(sword("a"), target)[0];
+    expect(burdened).toBeGreaterThan(plain);
+    expect(blow(sword("b"), target)[0]).toBe(plain);
+    // Another hex: no armor penalty, until it ends.
+    target.statuses.apply("dulled-weapon", 2, "c", NO_RANKS);
+    expect(blow(sword("a"), target)[0]).toBe(plain);
+    target.statuses.remove("dulled-weapon");
+    expect(blow(sword("a"), target)[0]).toBe(burdened);
+  });
+});
