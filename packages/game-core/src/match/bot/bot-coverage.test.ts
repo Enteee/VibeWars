@@ -35,10 +35,9 @@ describe("bot coverage (#2490)", () => {
   it("knows the never-cast skills that started it", () => {
     expect([
       BOT_UNUSED["ritualist.empowerment"],
-      BOT_UNUSED["ritualist.recovery"],
       BOT_UNUSED["ritualist.armor-of-unfeeling"],
       BOT_UNUSED["ritualist.draw-spirit"],
       BOT_UNUSED["paragon.we-shall-return"],
-    ]).toEqual(["support-spirit", "support-spirit", "spirit-buff", "spirit-buff", "party-buff"]);
+    ]).toEqual(["support-spirit", "spirit-buff", "spirit-buff", "party-buff"]);
   });
 });
