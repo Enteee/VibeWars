@@ -3954,7 +3954,8 @@ export class MatchSimulation {
       return;
     }
     // Signet of Illusions' (#1929): a finished spell spends a use and
-    // scales, where it lands and what it summons, with the lent attribute.
+    // scales, where it lands and what it summons, with the lent attribute;
+    // a signet under Symbolic Celerity's too (#2446).
     const borrowing = record.combatant.statuses.borrowedFor(skill);
     const lent =
       borrowing === undefined
@@ -4976,6 +4977,8 @@ export class MatchSimulation {
         events,
       });
       this.#chargeFromDamage(this.#participants.get(sourceId)?.combatant, events);
+      // A trigger's step moves the body as a skill's does (#2446): Augury of Death's.
+      this.#recordSteps(events);
       this.#recordDeaths(events);
     }
   }

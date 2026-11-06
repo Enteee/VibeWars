@@ -683,6 +683,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "stone-sheath": icon("stone-sheath"),
   "air-of-disenchantment": icon("air-of-disenchantment"),
   "mark-of-insecurity": icon("mark-of-insecurity"),
+  // Dropped leftovers (#2446).
+  "healers-boon": icon("healers-boon"),
+  "augury-of-death": icon("augury-of-death"),
+  "symbolic-celerity": icon("symbolic-celerity"),
+  "storm-djinns-haste": icon("storm-djinns-haste"),
 };
 
 const GAP = 2;

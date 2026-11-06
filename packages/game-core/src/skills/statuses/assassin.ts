@@ -59,7 +59,9 @@ export type AssassinStatusId =
   | "sharpen-daggers"
   | "assassins-remedy"
   | "way-of-the-lotus"
-  | "mark-of-insecurity";
+  | "mark-of-insecurity"
+  // Dropped leftovers (#2446).
+  | "augury-of-death";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -561,5 +563,30 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
     stancesExpireFaster: {
       scaling: { attributeId: "assassin.deadly-arts", atZero: 0.2, atTwelve: 0.52 },
     },
+  }),
+  // "The next time damage would drop target foe's Health below 50%, you
+  // inflict a Deep Wound for 5...20 seconds and Shadow Step to that foe"
+  // (#2446): wherever it is, as a step from a trigger has no range.
+  "augury-of-death": define("augury-of-death", "Augury of Death", "hex", {
+    profession: "assassin",
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-health-drops-below",
+        healthBelow: 0.5,
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 17 },
+            },
+          },
+          { kind: "shadow-step", to: "target" },
+        ],
+        target: "bearer",
+        skillId: "assassin.augury-of-death",
+      },
+    ],
   }),
 };

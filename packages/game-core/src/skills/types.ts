@@ -947,6 +947,11 @@ export interface SplashEffect {
    */
   readonly includesCentre?: true;
   /**
+   * Picks only the dead (#2446), as Light of Dwayna's "resurrect all dead
+   * party members in the area". Absent: only the living.
+   */
+  readonly dead?: true;
+  /**
    * Round the caster as well as the centre, a character near both
    * reached once (#2288): Gust's "all foes adjacent to you and your
    * target". Absent: round the centre alone.

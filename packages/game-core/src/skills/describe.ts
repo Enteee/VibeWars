@@ -622,10 +622,14 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(attributeSetText(definition.attributeSet));
   }
   if (definition.borrowsAttribute !== undefined) {
-    const { attributeId, spells } = definition.borrowsAttribute;
+    const { attributeId, skillType, uses } = definition.borrowsAttribute;
     const name = getAttribute(attributeId)?.name ?? attributeId;
-    const next = spells === 1 ? "spell uses" : `${String(spells)} spells use`;
-    parts.push(`your next ${next} ${name}`);
+    if (uses === undefined) {
+      parts.push(`your ${skillType}s use ${name}`);
+    } else {
+      const next = uses === 1 ? `${skillType} uses` : `${String(uses)} ${skillType}s use`;
+      parts.push(`your next ${next} ${name}`);
+    }
   }
   if (definition.castTimeMultiplier !== 1) {
     parts.push(`spells take ${String(definition.castTimeMultiplier)}× as long to cast`);

@@ -602,10 +602,12 @@ export interface StatusDefinition {
    */
   readonly attributeSet: AttributeSet | undefined;
   /**
-   * The bearer's next `spells` spells not of `attributeId` scale with its
-   * rank in `attributeId` instead of their own attribute (#1929): Signet of
-   * Illusions' "your next 3 non-Illusion spells use your Illusion
-   * attribute". A spell spends one as it finishes. `undefined`: none.
+   * The bearer's next `uses` skills of `skillType` not of `attributeId`
+   * scale with its rank in `attributeId` instead of their own attribute
+   * (#1929): Signet of Illusions' "your next 3 non-Illusion spells use your
+   * Illusion attribute". A skill spends one as it finishes. With no `uses`,
+   * every one while it lasts (#2446): Symbolic Celerity's "all of your
+   * signets use your Fast Casting attribute". `undefined`: none.
    */
   readonly borrowsAttribute: BorrowedAttribute | undefined;
   /**
@@ -1813,6 +1815,11 @@ export interface OwnSkillModifier {
   readonly durationMultiplier: StatusStat;
   /** On every heal the skill does. 1: none. */
   readonly healMultiplier: number;
+  /**
+   * `healMultiplier` leaves the Divine Favor bonus alone (#2446), as
+   * Healer's Boon's 50% more. Healer's Covenant's 20% less is the bonus's too.
+   */
+  readonly sparesDivineFavor: boolean;
   /** Its cast is not easily interrupted (#1966), as Trapper's Focus's traps. */
   readonly notEasilyInterrupted: boolean;
   /** Overcast its user takes as each use begins (#2311), as Iron Mist's 2. 0: none. */
@@ -1838,6 +1845,8 @@ export interface OwnSkillBoost {
   readonly rechargeSlower: number;
   readonly durationMultiplier: number;
   readonly healMultiplier: number;
+  /** On the Divine Favor bonus: the `healMultiplier`s that do not spare it (#2446). */
+  readonly favorHealMultiplier: number;
   /** Any of them says so. */
   readonly notEasilyInterrupted: boolean;
   /** Every one's, summed. */
@@ -1856,6 +1865,7 @@ export const NO_OWN_SKILL_BOOST: OwnSkillBoost = {
   rechargeSlower: 0,
   durationMultiplier: 1,
   healMultiplier: 1,
+  favorHealMultiplier: 1,
   notEasilyInterrupted: false,
   overcast: 0,
 };
@@ -1908,6 +1918,9 @@ export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): Ow
       rechargeSlower: Math.max(boost.rechargeSlower, modifier.rechargeSlower),
       durationMultiplier: boost.durationMultiplier * statAt(modifier.durationMultiplier, ranks),
       healMultiplier: boost.healMultiplier * modifier.healMultiplier,
+      favorHealMultiplier: modifier.sparesDivineFavor
+        ? boost.favorHealMultiplier
+        : boost.favorHealMultiplier * modifier.healMultiplier,
       notEasilyInterrupted: boost.notEasilyInterrupted || modifier.notEasilyInterrupted,
       overcast: boost.overcast + modifier.overcastPerUse,
     }),
@@ -2442,7 +2455,10 @@ export interface AttributeSet {
 /** A borrowed attribute's hold on the bearer's next spells (#1929). */
 export interface BorrowedAttribute {
   readonly attributeId: string;
-  readonly spells: number;
+  /** Which of the bearer's skills borrow it: `spell` is any `isSpell` type (#2446). */
+  readonly skillType: "spell" | "signet";
+  /** How many borrow it before it ends; `undefined`: every one while it lasts (#2446). */
+  readonly uses: number | undefined;
 }
 
 /**
@@ -2586,7 +2602,7 @@ export interface ActiveStatus {
   attacksMadeLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
-  /** Spells still to borrow an attribute for (`borrowsAttribute`); `undefined`: none. */
+  /** Skills still to borrow an attribute for (`borrowsAttribute`); `undefined`: no such limit. */
   castsLeft: number | undefined;
   /** Skills still to answer before it ends (`nextSkill`); `undefined`: no such limit. */
   skillsLeft: number | undefined;
@@ -3293,7 +3309,7 @@ export class StatusSet {
       existing.outbreak = outbreak;
       // A recast signet starts its count again (#1916), never adds to it.
       existing.attacksMadeLeft = definition.endsAfterAttackCount;
-      existing.castsLeft = definition.borrowsAttribute?.spells;
+      existing.castsLeft = definition.borrowsAttribute?.uses;
       existing.hitsTaken = 0;
       existing.struck = false;
       this.#statuses.set(id, existing);
@@ -3310,7 +3326,7 @@ export class StatusSet {
       unblockableLeft: definition.unblockableAttacks,
       attacksMadeLeft: definition.endsAfterAttackCount,
       spellsLeft: definition.nextSpells?.count,
-      castsLeft: definition.borrowsAttribute?.spells,
+      castsLeft: definition.borrowsAttribute?.uses,
       skillsLeft:
         definition.nextSkill === undefined
           ? undefined
@@ -4094,27 +4110,30 @@ export class StatusSet {
   }
 
   /**
-   * What the bearer's spell `skill` scales with instead of its own
-   * attribute (#1929): the newest `borrowsAttribute` with a use left, if
-   * `skill` is a spell of another attribute. A skill of no attribute
-   * scales with nothing to borrow for.
+   * What the bearer's `skill` scales with instead of its own attribute
+   * (#1929): the newest `borrowsAttribute` of its type, if `skill` is of
+   * another attribute. One that counts its uses ends at its last, so any
+   * still here has one left. A skill of no attribute scales with nothing
+   * to borrow for.
    */
   public borrowedFor(skill: Skill): StatusId | undefined {
-    if (!isSpell(skill.type) || skill.attributeId === undefined) {
+    if (skill.attributeId === undefined) {
       return undefined;
     }
-    return [...this.#statuses.values()]
-      .reverse()
-      .find(
-        ({ id, castsLeft }) =>
-          castsLeft !== undefined &&
-          getStatusDefinition(id).borrowsAttribute?.attributeId !== skill.attributeId,
-      )?.id;
+    return [...this.#statuses.values()].reverse().find(({ id }) => {
+      const borrows = getStatusDefinition(id).borrowsAttribute;
+      return (
+        borrows !== undefined &&
+        (borrows.skillType === "spell" ? isSpell(skill.type) : skill.type === borrows.skillType) &&
+        borrows.attributeId !== skill.attributeId
+      );
+    })?.id;
   }
 
   /**
-   * The bearer finished a spell that borrowed through `id` (#1929): one
-   * use fewer, and at none it ends. Returns the ids that ended on it.
+   * The bearer finished a skill that borrowed through `id` (#1929): one
+   * use fewer, and at none it ends; one with no limit is left alone
+   * (#2446). Returns the ids that ended on it.
    */
   public spendBorrowed(id: StatusId): StatusId[] {
     const status = this.#statuses.get(id);

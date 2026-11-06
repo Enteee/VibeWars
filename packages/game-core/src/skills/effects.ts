@@ -1585,7 +1585,7 @@ function splashTargets(
     effect.alsoAround === "caster" ? context.surroundings.get(caster.id)?.position : undefined;
   const reached = [...context.surroundings.values()].filter(
     ({ combatant, position, creature }) =>
-      !combatant.dead &&
+      combatant.dead === (effect.dead === true) &&
       (combatant.id !== target.id || effect.includesCentre === true) &&
       splashReaches(effect.hits, caster, combatant, creature) &&
       (distance(position, at) <= effect.radius ||
@@ -1966,16 +1966,18 @@ export function applyEffect(
       ) {
         return events;
       }
-      // Healer's Covenant's "heal 20% less" (#1761).
-      const heal = ownHeal(
-        perEnergyLost(
-          effect,
-          healAmount(effect, caster, target, context, earlier, context.usedSkill),
-          lostBy,
-          earlier,
-        ) + favorBonus(effect, caster, healed, context.skillId),
-        context.own,
-      );
+      // Healer's Covenant's "heal 20% less" (#1761); the favor bonus as
+      // the cast's own (#2446).
+      const heal =
+        ownHeal(
+          perEnergyLost(
+            effect,
+            healAmount(effect, caster, target, context, earlier, context.usedSkill),
+            lostBy,
+            earlier,
+          ),
+          context.own,
+        ) + ownFavorHeal(favorBonus(effect, caster, healed, context.skillId), context.own);
       // Soul Bind's "whenever target foe is healed by a skill" (#1913),
       // at full Health too: the heal counts, not the Health it gained.
       if (heal > 0) {
@@ -3874,10 +3876,11 @@ export function resolveSkillEffects(
   // the spell's own effects, through the same heal path.
   const primary = targets[0];
   if (primary !== undefined) {
-    // Healer's Covenant's 20% less (#1761) is the bonus's too: it is the spell's heal.
+    // Healer's Covenant's 20% less (#1761) is the bonus's too: it is the
+    // spell's heal. Healer's Boon's 50% more is not (#2446).
     applyHeal(
       primary,
-      ownHeal(
+      ownFavorHeal(
         divineFavorBonusHeal(
           rankOf(caster, DIVINE_FAVOR_ATTRIBUTE),
           skill,
@@ -3906,6 +3909,13 @@ function ownHeal(amount: number, own: OwnSkillBoost | undefined): number {
   return own === undefined || own.healMultiplier === 1
     ? amount
     : Math.round(amount * own.healMultiplier);
+}
+
+/** A Divine Favor bonus of `amount` on a use `own` touched (#2446): as `ownHeal`, but by `favorHealMultiplier`. */
+function ownFavorHeal(amount: number, own: OwnSkillBoost | undefined): number {
+  return own === undefined || own.favorHealMultiplier === 1
+    ? amount
+    : Math.round(amount * own.favorHealMultiplier);
 }
 
 /**
