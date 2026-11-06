@@ -4,7 +4,7 @@ import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js"
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { STARTER_TEAMS } from "../packages/game-core/src/starter-teams.js";
-import { joinFriend, openRail } from "./helpers/menu.js";
+import { joinFriend, lobbyWindow, openRail, shutLobbyWindow } from "./helpers/menu.js";
 import {
   copyInvite,
   expectTeamSize,
@@ -177,7 +177,8 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     // Out of the match, Bea is back in Ann's lobby, out of the queue.
     await press(bea, bea.locator(".hud-leave").getByRole("button", { name: "leave match" }));
     await press(bea, bea.locator(".hud-leave").getByRole("button", { name: "yes" }));
-    await expect(bea.locator("#topbar .topbar-leave")).toBeVisible();
+    await expect((await lobbyWindow(bea)).locator(".topbar-leave")).toBeVisible();
+    await shutLobbyWindow(bea);
     await expect(bea.locator(".lobby-panel")).toContainText("Ann");
     await expect(bea.locator(".party-queued")).toHaveCount(0);
   } finally {

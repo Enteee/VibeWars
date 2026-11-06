@@ -363,7 +363,7 @@ describe("their tooltips (#2314)", () => {
       "depravity",
       "whenever it casts a spell: it and the nearest of its allies nearby lose 4 energy",
     ],
-    ["cultists-fervor", "Whenever it casts a Necromancer spell"],
+    ["cultists-fervor", "Whenever you cast a Necromancer spell"],
   ])("%s reads as the corpus says it", (id, text) => {
     expect(describeStatus(id, R12)).toContain(text);
   });

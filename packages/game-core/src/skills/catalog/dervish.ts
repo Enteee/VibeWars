@@ -2881,4 +2881,165 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Staples (#2368).
+  {
+    id: "dervish.mystic-corruption",
+    name: "Mystic Corruption",
+    // The PvP split (3467); the base record is 1755.
+    gwId: 1755,
+    type: "enchantment",
+    elite: false,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.mysticism",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All adjacent foes suffer from Disease for 2...6 seconds. For 20
+    // seconds, nothing happens. Disease duration is doubled if you are
+    // enchanted when you activate this skill. When this enchantment ends,
+    // all party members in earshot are cured of Disease" (PvP): 5 s at
+    // rank 12, 10 enchanted. The Disease lands before the enchantment,
+    // so it is not counted.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "caster-has", category: "enchantment" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "apply-status",
+                statusId: "disease",
+                durationSeconds: {
+                  scaling: { attributeId: "dervish.mysticism", atZero: 4, atTwelve: 10.4 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-lacks", category: "enchantment" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "apply-status",
+                statusId: "disease",
+                durationSeconds: {
+                  scaling: { attributeId: "dervish.mysticism", atZero: 2, atTwelve: 5.2 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+      { kind: "apply-status", statusId: "mystic-corruption", durationSeconds: { flat: 20 } },
+    ],
+  },
+  {
+    id: "dervish.meditation",
+    name: "Meditation",
+    gwId: 1523,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.mysticism",
+    cost: { kind: "energy", amount: 10 },
+    // "Lose all adrenaline."
+    losesAllAdrenaline: true,
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Staples (#2413). "For 20 seconds, you gain 1...4 Energy every time an
+    // enchantment on you ends": the status does that.
+    effects: [{ kind: "apply-status", statusId: "meditation", durationSeconds: { flat: 20 } }],
+  },
+  {
+    id: "dervish.radiant-scythe",
+    name: "Radiant Scythe",
+    gwId: 2012,
+    type: "attack",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "adrenaline", amount: 6 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // Staples (#2413). "This attack strikes for +1 damage for each point of
+    // Energy you currently have, maximum 5...30 damage": 25 at rank 12,
+    // the Energy read as the blow is made, before its own gain.
+    attack: {
+      weapon: "scythe",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      bonusPer: {
+        count: { kind: "energy", on: "caster" },
+        amount: { flat: 1 },
+        max: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 5, atTwelve: 25 } },
+      },
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      criticalWhen: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      flightSpeed: undefined,
+      onCritical: [],
+      onFailedToHit: [],
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You gain 1...7 Energy if this attack hits": 5.8 at rank 12, once
+    // however many foes the scythe cleaves (the corpus text, ADR-0038).
+    effects: [
+      {
+        kind: "energy-gain",
+        amount: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 5.8 } },
+      },
+    ],
+  },
 ];

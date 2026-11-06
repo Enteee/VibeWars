@@ -1,17 +1,20 @@
 import { isGloballyMuted, onGlobalMute, setGlobalMute } from "../audio/global-mute.js";
 import { attachFullscreenButton, fullscreenTarget } from "./fullscreen.js";
 import { paintMuteButton } from "./hud.js";
-import { helpIcon, settingsIcon } from "./icons.js";
+import { helpIcon, LOBBY_ICON, lobbyIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
 import { button, h, iconButton, setTopbarSlots, shareLine, type ShownBar } from "./kit.js";
 import { copyInviteLink } from "./lobby-screen.js";
+import { lobbyWindowBody, type RailParty } from "./lobby-window.js";
 import { loadPlayerName } from "./player-section.js";
+import { attachOptionsWindow } from "./options-screen.js";
+import { attachTopbarPopover, closeTopbarPopover } from "./topbar-popover.js";
 
 /**
  * The top bar on the menu screens (#454, #1272): the shown screen's
  * breadcrumb, Back, status and own buttons (`screenBar`), the status when
  * it has something to say, and the buttons a player wants from anywhere:
- * Help, Options, music, mute and fullscreen. In a match it is hidden and the
+ * Help, Options, Lobby, music, mute and fullscreen. In a match it is hidden and the
  * HUD carries the same buttons.
  */
 
@@ -37,8 +40,8 @@ export function paintStatus(status: StatusElement, text: string, state: StatusSt
 export interface TopbarCallbacks {
   /** [?]: the player docs, Help, over whatever screen shows (#1257). */
   readonly onHelp: () => void;
-  /** ⚙: Options, over whatever screen shows. */
-  readonly onOptions: () => void;
+  /** ⚙'s Options window, over whatever screen shows, closed (#2386). */
+  readonly onOptionsClosed: () => void;
   /** Join the lobby `code` as `name` (#1525): an invite link opened (#2100). */
   readonly onJoin: (code: string, name: string) => void;
   /** A guest's Leave (#1526): back to a fresh lobby of its own. */
@@ -70,11 +73,9 @@ export function partyJoinsNotice(party: number): string {
 }
 
 /**
- * The host's toggle (#1682): its lock, what it says beside it while the
- * bar has the room, its name, and its tooltip, each way.
+ * The host's toggle (#1682): what it says beside its glyph (#2382), its
+ * name, and its tooltip, each way.
  */
-export const CLOSED_GLYPH = "🔒";
-export const OPEN_GLYPH = "🔓";
 export const CLOSED_LABEL = "Closed";
 export const OPEN_LABEL = "Open";
 export const CLOSED_NAME = "Lobby closed";
@@ -88,9 +89,15 @@ export const OPEN_TOOLTIP = "Anyone with your invite link can join.";
  */
 export const CONNECTING_NOTICE_MS = 3000;
 
-/** The bar's lobby, its Copy invite link, and the joins invite links ask for. */
+/**
+ * The lobby's controls, which the Lobby window mounts (#2385), and the
+ * bar's word on the joins invite links ask for.
+ */
 export interface JoinControls {
+  /** The bar's: "Connecting…" and a host's "your party joins too" (#1553). */
   readonly element: HTMLElement;
+  /** The Lobby window's, on top: the lobby's label, Copy invite link, Closed / Open and Leave. */
+  readonly controls: HTMLElement;
   /** A new bar shows: a join it was waiting on has ended, either way. */
   readonly settle: () => void;
   /**
@@ -108,9 +115,9 @@ export interface JoinControls {
 
 /**
  * The lobby this tab is in, its Copy invite link (#2100), its host's
- * Closed / Open (#1682) and a guest's Leave (#1526), then "Connecting…"
- * once a join has run a while (#707). The page has one, in the title bar.
- * The key itself is never shown. `name` is read at the join.
+ * Closed / Open (#1682) and a guest's Leave (#1526), in the Lobby window
+ * (#2385); in the bar, "Connecting…" once a join has run a while (#707).
+ * The page has one. The key itself is never shown. `name` is read at the join.
  */
 export function joinControls(
   name: () => string,
@@ -131,11 +138,17 @@ export function joinControls(
   const toggle = button("", "topbar-lobby-open", () => {
     onSetOpen(toggle.getAttribute("aria-pressed") !== "true");
   });
-  const toggleGlyph = h("span", "topbar-lobby-open-glyph", CLOSED_GLYPH);
+  // Decorative: the toggle's name says the state (#2382).
+  const toggleGlyph = document.createElement("img");
+  toggleGlyph.className = "topbar-lobby-open-glyph";
+  toggleGlyph.alt = "";
+  toggleGlyph.src = LOBBY_ICON.closed;
   const toggleLabel = h("span", "topbar-lobby-open-label", CLOSED_LABEL);
   toggle.append(toggleGlyph, toggleLabel);
   const leave = button("Leave", "topbar-leave", onLeave);
   lobby.append(lobbyLabel, copy, toggle, leave);
+  const controls = h("div", "lobby-window-controls");
+  controls.append(lobby, share.element);
   // Shown once a join has run a while; the lobby, or the menu again with
   // why it failed, puts it away when it ends.
   const connecting = h("span", "topbar-connecting", "Connecting…");
@@ -179,9 +192,10 @@ export function joinControls(
       dismiss();
     }
   });
-  group.append(lobby, share.element, connecting, confirm);
+  group.append(connecting, confirm);
   return {
     element: group,
+    controls,
     settle: () => {
       shown += 1;
       connecting.hidden = true;
@@ -218,9 +232,9 @@ export function joinControls(
       leave.hidden = shown?.isHost !== false || joining;
       toggle.hidden = shown?.isHost !== true;
       const open = shown?.open === true;
-      toggleGlyph.textContent = open ? OPEN_GLYPH : CLOSED_GLYPH;
+      toggleGlyph.src = open ? LOBBY_ICON.open : LOBBY_ICON.closed;
       toggleLabel.textContent = open ? OPEN_LABEL : CLOSED_LABEL;
-      // Its name whether or not the bar has room for the word (#1682).
+      // Its name says the state for a reader, whatever the word beside it (#1682).
       toggle.setAttribute("aria-label", open ? OPEN_NAME : CLOSED_NAME);
       toggle.title = open ? OPEN_TOOLTIP : CLOSED_TOOLTIP;
       toggle.setAttribute("aria-pressed", String(open));
@@ -253,10 +267,89 @@ export function putsMoreAway(
   );
 }
 
+/** The Lobby button's name (#2385): with the head count once someone else is in. */
+export function lobbyButtonName(members: number): string {
+  return members > 1 ? `Lobby, ${String(members)} players` : "Lobby";
+}
+
+/**
+ * Whether going from `last` to `next` is a join or a leave (#2385): the
+ * badge pulses for one while the window is shut. A queue's tick is neither.
+ */
+export function partyChanged(last: RailParty | undefined, next: RailParty | undefined): boolean {
+  const names = (party: RailParty | undefined): string =>
+    (party?.members ?? []).map((member) => member.name).join("\n");
+  return names(last) !== names(next);
+}
+
+/** The bar's Lobby (#2385): its button, and who it says is in the lobby. */
+export interface LobbyButton {
+  readonly element: HTMLButtonElement;
+  readonly setParty: (party: RailParty | undefined) => void;
+}
+
+/**
+ * The Lobby button, its window dropping into `parent` (#2385): a count on
+ * the button once someone else is in, pulsing on a join or a leave while
+ * the window is shut, and in the window the lobby's `controls` over the
+ * people in it, repainted while open.
+ */
+export function lobbyButton(parent: HTMLElement, controls: HTMLElement): LobbyButton {
+  const element = iconButton("topbar-lobby-button", lobbyButtonName(1), lobbyIcon());
+  element.title = "Lobby";
+  const badge = h("span", "topbar-badge");
+  badge.hidden = true;
+  element.appendChild(badge);
+  badge.addEventListener("animationend", () => {
+    badge.classList.remove("is-pulsing");
+  });
+  let party: RailParty | undefined;
+  /** The open window's repaint; none while it is shut. */
+  let paintWindow: (() => void) | undefined;
+  attachTopbarPopover(element, parent, () => {
+    const panel = h("div", "screen lobby-window");
+    panel.setAttribute("aria-label", "Lobby");
+    panel.tabIndex = -1;
+    // Only the people repaint: a control keeps its focus through a join.
+    let people = lobbyWindowBody(party);
+    panel.append(h("h3", "lobby-window-title", "Lobby"), controls, people);
+    paintWindow = () => {
+      const next = lobbyWindowBody(party);
+      people.replaceWith(next);
+      people = next;
+    };
+    return {
+      element: panel,
+      focus: panel,
+      dispose() {
+        paintWindow = undefined;
+      },
+    };
+  });
+  return {
+    element,
+    setParty: (next) => {
+      const changed = partyChanged(party, next);
+      party = next;
+      const members = next?.members.length ?? 0;
+      badge.textContent = String(members);
+      badge.hidden = members <= 1;
+      element.setAttribute("aria-label", lobbyButtonName(members));
+      if (paintWindow !== undefined) {
+        paintWindow();
+      } else if (changed && !badge.hidden) {
+        badge.classList.add("is-pulsing");
+      }
+    },
+  };
+}
+
 /** What `mountTopbar` hands back: the bar's say in whether it shows. */
 export interface Topbar {
   /** The lobby the bar names (#1526); none while this tab is in none. */
   setLobby(lobby: BarLobby | undefined): void;
+  /** Who is in that lobby (#2385): the Lobby button's badge and its window. */
+  setParty(party: RailParty | undefined): void;
   /**
    * Join the lobby an invite link names (#2100): `false` on a bar that
    * cannot. Before the first menu, it waits for it.
@@ -289,14 +382,27 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
 
   const help = iconButton("topbar-help", "Help", helpIcon());
   help.setAttribute("aria-haspopup", "dialog");
-  help.addEventListener("click", callbacks.onHelp);
+  help.addEventListener("click", () => {
+    closeTopbarPopover();
+    callbacks.onHelp();
+  });
 
   const options = iconButton("topbar-options", "Options", settingsIcon());
-  options.setAttribute("aria-haspopup", "dialog");
-  options.addEventListener("click", callbacks.onOptions);
+  attachOptionsWindow(options, bar, callbacks.onOptionsClosed);
+
+  // The bar's join status, right before the global icons, on every menu
+  // screen that asks for it; the lobby's own controls are the Lobby window's.
+  const join = joinControls(
+    loadPlayerName,
+    callbacks.onJoin,
+    callbacks.onLeave,
+    callbacks.onSetOpen,
+  );
+  join.element.hidden = true;
+  join.controls.hidden = true;
+  const lobby = lobbyButton(bar, join.controls);
 
   const music = iconButton("topbar-music", "Music");
-  music.setAttribute("aria-haspopup", "dialog");
 
   // The same mute all as the HUD's and Options → Sound (#424).
   const mute = iconButton("topbar-mute", "Mute sounds");
@@ -311,15 +417,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   const fullscreen = iconButton("topbar-fullscreen", "Fullscreen");
   attachFullscreenButton(fullscreen, fullscreenTarget());
 
-  actions.append(help, options, music, mute, fullscreen);
-  // Right before the global icons, on every menu screen that asks for it.
-  const join = joinControls(
-    loadPlayerName,
-    callbacks.onJoin,
-    callbacks.onLeave,
-    callbacks.onSetOpen,
-  );
-  join.element.hidden = true;
+  actions.append(help, options, lobby.element, music, mute, fullscreen);
   actions.before(join.element);
   // An invite link the page opened with (#2100) waits for the first
   // screen with the bar's lobby on it: until then nothing could join.
@@ -369,9 +467,12 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     actions: screenActions,
     onShow: (shown) => {
       help.hidden = shown.own === "help";
-      options.hidden = shown.own === "options";
       music.hidden = shown.own === "music";
+      if (shown.own === "help") {
+        closeTopbarPopover();
+      }
       join.element.hidden = !shown.join;
+      join.controls.hidden = !shown.join;
       join.settle();
       if (shown.join && !joinShown) {
         joinShown = true;
@@ -404,6 +505,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
 
   return {
     setLobby: join.setLobby,
+    setParty: lobby.setParty,
     invite(code) {
       if (!joinShown) {
         early = code;

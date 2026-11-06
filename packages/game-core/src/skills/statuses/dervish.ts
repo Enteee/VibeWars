@@ -51,7 +51,11 @@ export type DervishStatusId =
   | "vow-of-silence"
   // Conviction (#2217).
   | "conviction"
-  | "grenths-aura";
+  | "grenths-aura"
+  // Staples (#2368).
+  | "mystic-corruption"
+  // Staples (#2413).
+  | "meditation";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -114,6 +118,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",
@@ -293,6 +298,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",
@@ -391,6 +397,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",
@@ -458,6 +465,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: true,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         { kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 9 } },
         { kind: "transfer-conditions", from: "caster", count: { flat: 3 }, durationMultiplier: 1 },
@@ -475,6 +483,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: true,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",
@@ -596,6 +605,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "splash",
@@ -807,6 +817,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: "scythe",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "life-steal",
@@ -815,5 +826,50 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       ],
       skillId: "dervish.grenths-aura",
     },
+  }),
+  // Staples (#2368). "When this enchantment ends, all party members in
+  // earshot are cured of Disease": any end, a strip too, the bearer
+  // among them.
+  "mystic-corruption": define("mystic-corruption", "Mystic Corruption", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "party",
+            radius: AREA_EARSHOT,
+            maxTargets: undefined,
+            includesCentre: true,
+            effects: [
+              { kind: "remove-status", category: "condition", statusId: "disease", count: 1 },
+            ],
+          },
+        ],
+        skillId: "dervish.mystic-corruption",
+      },
+    ],
+  }),
+  // Staples (#2413). "For 20 seconds, you gain 1...4 Energy every time an
+  // enchantment on you ends": 3.4 at rank 12, at its Mysticism. Any
+  // enchantment, any end: a strip, an expiry, a flash one's end. Its own
+  // end gives nothing, as it is gone before its loss is recorded.
+  meditation: define("meditation", "Meditation", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "bearer-loses-enchantment",
+        target: "bearer",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: { scaling: { attributeId: "dervish.mysticism", atZero: 1, atTwelve: 3.4 } },
+          },
+        ],
+        skillId: "dervish.meditation",
+      },
+    ],
   }),
 };

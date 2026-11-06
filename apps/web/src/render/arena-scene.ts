@@ -47,7 +47,7 @@ import {
   type AtlasMap,
 } from "./arena-atlas.js";
 import { MatchClock, projectileHeading, projectilePosition, shotFadeAlpha } from "./projectiles.js";
-import { NO_COVER, type CameraView, type Cover } from "./camera-rig.js";
+import { NO_COVER, snapView, type CameraView, type Cover } from "./camera-rig.js";
 import { edgeMarkers, type EdgeMarker, type EdgeThing } from "./edge-markers.js";
 import { statusRowLayout } from "./status-icons.js";
 import {
@@ -294,8 +294,12 @@ export class ArenaScene extends Phaser.Scene {
   public setCamera(view: CameraView, cover: Cover): void {
     this.cover = cover;
     this.view = view;
-    this.cameras.main.setZoom(view.zoom);
-    this.cameras.main.centerOn(view.x, view.y);
+    const camera = this.cameras.main;
+    camera.setZoom(view.zoom);
+    // Only the camera snaps (#2393): the leash, picking and the HUD keep
+    // `view` as it is.
+    const snapped = snapView(view, camera);
+    camera.centerOn(snapped.x, snapped.y);
   }
 
   /** The arena's bounds, which the grid covers and the edge line traces. */
@@ -1453,24 +1457,34 @@ export class ArenaScene extends Phaser.Scene {
     this.floatingTexts = survivors;
   }
 
-  /** The grid and the walls, drawn again only when the bounds or the wall list change (#1353). */
+  /**
+   * The grid and the walls, drawn again only when the bounds, the wall
+   * list or the zoom change (#1353): their lines are 1 CSS px at any zoom.
+   */
   private drawMap(): void {
     const g = this.mapGraphics;
-    const next: MapLayer = { ...this.arena, walls: this.snapshot.walls };
+    const next: MapLayer = {
+      ...this.arena,
+      walls: this.snapshot.walls,
+      zoom: this.view?.zoom ?? 1,
+    };
     if (g === undefined || !mapLayerChanged(this.drawnMap, next)) {
       return;
     }
     g.clear();
-    this.drawGrid(g);
+    // A line 1 world unit wide is under a pixel when zoomed out, and
+    // flickers as the camera moves (#2393): 1 CSS px, as the edge markers.
+    const line = 1 / next.zoom;
+    this.drawGrid(g, line);
     for (const wall of next.walls) {
-      this.drawWall(g, wall);
+      this.drawWall(g, wall, line);
     }
     this.drawnMap = next;
   }
 
-  private drawWall(g: Phaser.GameObjects.Graphics, wall: RenderableWall): void {
+  private drawWall(g: Phaser.GameObjects.Graphics, wall: RenderableWall, line: number): void {
     g.fillStyle(WALL_FILL, 1);
-    g.lineStyle(1, WALL_STROKE, 1);
+    g.lineStyle(line, WALL_STROKE, 1);
     if (wall.kind === "rect") {
       g.fillRect(wall.x, wall.y, wall.width, wall.height);
       g.strokeRect(wall.x, wall.y, wall.width, wall.height);
@@ -1491,17 +1505,17 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** The grid over the arena's bounds, not the screen, and its edge in `wall-stroke`; outside is `bg`. */
-  private drawGrid(g: Phaser.GameObjects.Graphics): void {
+  private drawGrid(g: Phaser.GameObjects.Graphics, line: number): void {
     const { width, height } = this.arena;
     const step = 64;
-    g.lineStyle(1, GRID, 1);
+    g.lineStyle(line, GRID, 1);
     for (let x = 0; x <= width; x += step) {
       g.lineBetween(x, 0, x, height);
     }
     for (let y = 0; y <= height; y += step) {
       g.lineBetween(0, y, width, y);
     }
-    g.lineStyle(1, WALL_STROKE, 1);
+    g.lineStyle(line, WALL_STROKE, 1);
     g.strokeRect(0, 0, width, height);
   }
 }

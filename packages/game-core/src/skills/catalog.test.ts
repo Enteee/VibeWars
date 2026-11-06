@@ -99,13 +99,17 @@ describe("skill catalog integrity", () => {
         effect.kind === "create-ground-effect" ? [effect.act.kind] : [],
       );
       // A spell may leave pulses where its target stands, as a symbol;
-      // a skill leaves at most one ground effect (#2329).
+      // a skill leaves at most one ground effect (#2329). Healing Spring
+      // is a trap that springs for no foe, but heals where it lies (#2317).
       expect(grounds.length, skill.id).toBeLessThanOrEqual(1);
-      const pulse = skill.type === "spell" ? grounds.map(() => "pulse") : [];
+      const pulse =
+        skill.type === "spell" || skill.id === "ranger.healing-spring"
+          ? grounds.map(() => "pulse")
+          : [];
       expect(grounds, skill.id).toEqual(
         skill.type === "ward" || skill.type === "well"
           ? ["aura"]
-          : skill.type === "trap"
+          : skill.type === "trap" && skill.id !== "ranger.healing-spring"
             ? ["trap"]
             : pulse,
       );

@@ -591,6 +591,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "signet-of-stamina": icon("signet-of-stamina"),
   "soldiers-stance": icon("soldiers-stance"),
   "steady-stance": icon("steady-stance"),
+  // Ranger staples (#2317).
+  "choking-gas": icon("choking-gas"),
+  "dryders-defenses": icon("dryders-defenses"),
+  "bestial-fury": icon("bestial-fury"),
+  "scavengers-focus": icon("scavengers-focus"),
+  "feral-aggression": icon("feral-aggression"),
   // Warrior shouts that count (#2320).
   "i-will-avenge-you": icon("i-will-avenge-you"),
   "fear-me": icon("fear-me"),
@@ -623,8 +629,43 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "dwarven-battle-stance": icon("dwarven-battle-stance"),
   // Signet of Suffering (#2333).
   "signet-of-suffering": icon("signet-of-suffering"),
+  "rising-bile": icon("rising-bile"),
+  "natures-renewal": icon("natures-renewal"),
+  equinox: icon("equinox"),
+  "archers-signet": icon("archers-signet"),
+  // Staples (#2368).
+  "foxs-promise": icon("foxs-promise"),
+  "seeping-wound": icon("seeping-wound"),
+  "shameful-fear": icon("shameful-fear"),
+  "spirit-channeling": icon("spirit-channeling"),
+  "renewing-surge": icon("renewing-surge"),
+  "mystic-corruption": icon("mystic-corruption"),
   // Smoke Powder Defense (#2362).
   "smoke-powder-defense": icon("smoke-powder-defense"),
+  // Block while attacking and its mechanics card (#2374).
+  "flashing-blades": icon("flashing-blades"),
+  "winters-embrace": icon("winters-embrace"),
+  "signet-of-recall": icon("signet-of-recall"),
+  "watchful-healing": icon("watchful-healing"),
+  // Staples (#2406).
+  "primal-rage": icon("primal-rage"),
+  // Staples (#2414).
+  "sympathetic-visage": icon("sympathetic-visage"),
+  "mantra-of-inscriptions": icon("mantra-of-inscriptions"),
+  "defenders-zeal": icon("defenders-zeal"),
+  "flame-djinns-haste": icon("flame-djinns-haste"),
+  // Riders at the caster's ranks, ends on a non-hex skill (#2411).
+  "withering-aura": icon("withering-aura"),
+  "hexers-vigor": icon("hexers-vigor"),
+  // Rank-scaled speed, reversal and next-hit cut (#2428).
+  "burning-speed": icon("burning-speed"),
+  "life-sheath": icon("life-sheath"),
+  "reverse-hex": icon("reverse-hex"),
+  "assassins-remedy": icon("assassins-remedy"),
+  // Staples (#2413).
+  meditation: icon("meditation"),
+  "sharpen-daggers": icon("sharpen-daggers"),
+  "binding-chains": icon("binding-chains"),
   // Refusals, crit immunity and faster expiry (#2373).
   "frigid-armor": icon("frigid-armor"),
   "stone-sheath": icon("stone-sheath"),

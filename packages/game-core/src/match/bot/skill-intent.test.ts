@@ -42,6 +42,8 @@ const NO_BOT_USE = new Set([
   // Warrior's Cunning (#2335): blocks made not to happen are no use the
   // bot weighs yet.
   "warrior.warriors-cunning",
+  // Fox's Promise (#2368), the same, for dagger attacks.
+  "assassin.foxs-promise",
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
@@ -79,6 +81,7 @@ const NO_BOT_USE = new Set([
   "ranger.disrupting-lunge",
   "ranger.enraged-lunge",
   "ranger.ferocious-strike",
+  "ranger.feral-aggression",
   "ranger.feral-lunge",
   "ranger.heal-as-one",
   "ranger.maiming-strike",
@@ -94,7 +97,12 @@ const NO_BOT_USE = new Set([
   "ranger.savage-pounce",
   "ranger.scavenger-strike",
   "ranger.symbiotic-bond",
+  // Nature's Renewal's and Equinox's auras slow and tax every caster (#2321):
+  // no role the bot weighs.
+  "ranger.natures-renewal",
+  "ranger.equinox",
   // Speed, energy, attack speed and other self-help no rule reaches for.
+  "ranger.archers-signet",
   "assassin.dash",
   "dervish.avatar-of-balthazar",
   "dervish.avatar-of-dwayna",
@@ -125,6 +133,8 @@ const NO_BOT_USE = new Set([
   "paragon.leaders-zeal",
   "paragon.make-your-time",
   "paragon.song-of-power",
+  // Inspirational Speech (#2413): an ally's adrenaline, the same.
+  "paragon.inspirational-speech",
   // Godspeed, "Lead the Way!" and "Brace Yourself!" (#1955): cast by
   // play-build's rider rule, not an intent.
   "paragon.brace-yourself",
@@ -210,6 +220,10 @@ const NO_BOT_USE = new Set([
   "elementalist.earth-attunement",
   // Scribe's Insight (#1913), the same, for signets still to be used.
   "monk.scribes-insight",
+  // Spirit Channeling (#2368): Energy regeneration, no use of its own.
+  "ritualist.spirit-channeling",
+  // Offering of Spirit (#2413), the same: Energy, no use of its own.
+  "ritualist.offering-of-spirit",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
   "paragon.blazing-finale",
   "paragon.enduring-harmony",
@@ -230,6 +244,8 @@ const NO_BOT_USE = new Set([
   "paragon.lyric-of-zeal",
   "paragon.lyric-of-purification",
   "paragon.song-of-purification",
+  // Assassin's Remedy (#2428), the same: its cleanse waits for an attack skill.
+  "assassin.assassins-remedy",
   "paragon.hexbreaker-aria",
   "paragon.anthem-of-fury",
   // An ally's attacks made holy and penetrating (#1519): no rule weighs it.
@@ -326,6 +342,9 @@ const NO_BOT_USE = new Set([
   // Energy for each sacrifice (#2275): worth only beside a sacrifice, which
   // no rule the bot has pairs.
   "necromancer.masochism",
+  // Energy each time an enchantment on the bearer ends (#2413), the same:
+  // worth only beside enchantments, which no rule the bot has pairs.
+  "dervish.meditation",
   // Energy for its caster only when a foe hurts its bearer (#2286), and
   // heals only round its caster's later Protection and Divine Favor
   // spells: no role the bot weighs.
@@ -349,6 +368,13 @@ const NO_BOT_USE = new Set([
   // A rider on the next Necromancer skill on a foe (#2333), its effect only
   // in a status trigger: no role the bot weighs.
   "necromancer.signet-of-suffering",
+  // Energy later for Energy regeneration now (#2374), its gain only in a
+  // status trigger: no role the bot weighs.
+  "mesmer.signet-of-recall",
+  // Staples (#2414): signets recharging faster is an own-skill modifier,
+  // and an ally's drain on melee foes lives only in a status trigger.
+  "mesmer.mantra-of-inscriptions",
+  "mesmer.sympathetic-visage",
 ]);
 
 function skill(id: string) {

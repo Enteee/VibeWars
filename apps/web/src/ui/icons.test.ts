@@ -22,6 +22,8 @@ import {
   attackingIcon,
   fullscreenIcon,
   insigniaIcon,
+  lobbyIcon,
+  LOBBY_ICON,
   musicIcon,
   offhandIcon,
   professionIcon,
@@ -112,6 +114,10 @@ describe("icons", () => {
     expect(musicIcon(true)).not.toBe(musicIcon(false));
   });
 
+  it("has a file under public/ for the top bar's Lobby (#2385)", () => {
+    expect(fs.existsSync(path.join(PUBLIC, lobbyIcon()))).toBe(true);
+  });
+
   it("has a file under public/ for Options and both fullscreen states (#454)", () => {
     expect(fs.existsSync(path.join(PUBLIC, settingsIcon()))).toBe(true);
     for (const fullscreen of [false, true]) {
@@ -124,6 +130,13 @@ describe("icons", () => {
 
   it("has a file under public/ for the attacking state", () => {
     expect(fs.existsSync(path.join(PUBLIC, attackingIcon()))).toBe(true);
+  });
+
+  it("has a file under public/ for each lobby toggle state, a different one each (#2382)", () => {
+    for (const [state, icon] of Object.entries(LOBBY_ICON)) {
+      expect(fs.existsSync(path.join(PUBLIC, icon)), state).toBe(true);
+    }
+    expect(LOBBY_ICON.open).not.toBe(LOBBY_ICON.closed);
   });
 
   it("names a badge for screen readers and on hover", () => {

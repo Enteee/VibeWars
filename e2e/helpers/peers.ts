@@ -6,7 +6,7 @@ import {
   type Page,
 } from "@playwright/test";
 
-import { INVITE_URL, openRail } from "./menu.js";
+import { awaitLobby, INVITE_URL, lobbyWindow, openRail, shutLobbyWindow } from "./menu.js";
 
 /**
  * Pages that play with each other (#403).
@@ -30,33 +30,27 @@ export async function openPeers(
 
 /**
  * Open this page's own lobby to friends with its key (#1682): every
- * lobby starts closed, and a closed one takes nobody new. On a phone it
- * is in the ⋯, which the press puts away again.
+ * lobby starts closed, and a closed one takes nobody new. The toggle is
+ * in the Lobby window (#2385), shut again after.
  */
 export async function openToFriends(page: Page): Promise<void> {
-  const toggle = page.locator("#topbar .topbar-lobby-open");
+  const toggle = (await lobbyWindow(page)).locator(".topbar-lobby-open");
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
-  const more = page.locator("#topbar .topbar-more");
-  if (await more.isVisible()) {
-    await more.click();
-  }
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await shutLobbyWindow(page);
 }
 
 /**
  * The invite link to the lobby `page` is in (#2100), from Copy invite
- * link and the clipboard, granted, as a player would send it.
+ * link in the Lobby window (#2385) and the clipboard, granted, as a
+ * player would send it.
  */
 export async function copyInvite(page: Page): Promise<string> {
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-  const copy = page.locator("#topbar .lobby-copy");
-  const more = page.locator("#topbar .topbar-more");
-  if (!(await copy.isVisible()) && (await more.isVisible())) {
-    await more.click();
-  }
-  await copy.click();
+  await (await lobbyWindow(page)).locator(".lobby-copy").click();
   await expect(page.locator(".toast")).toHaveText("Copied");
+  await shutLobbyWindow(page);
   const invite = await page.evaluate(() => navigator.clipboard.readText());
   expect(invite).toMatch(INVITE_URL);
   return invite;
@@ -125,7 +119,7 @@ export async function hostLobby(
 ): Promise<string> {
   await openRail(page, "Hosted Game");
   await expect(page.locator(".lobby-panel")).toBeVisible();
-  await expect(page.locator("#topbar .topbar-lobby:not([hidden])")).toBeAttached();
+  await awaitLobby(page);
   await setTeamSize(page, size);
   // A size keeps a map that suits it: pick the map after the size.
   const maps = page.locator(".lobby-map select");
@@ -172,6 +166,22 @@ export async function saveSoloTeam(page: Page, size: 2 | 4 | 8): Promise<string>
   return teamName;
 }
 
+/** The vote's title: a 1v1 chooses a character, not a Team Build (#2387). */
+export const VOTE_STAGE = /^(Choose a team build|Choose your character)$/;
+
+/**
+ * Take seat `seat` of the claim stage, then be ready. A 1v1 has no seats
+ * to pick: its one is taken for the player (#2387).
+ */
+async function takeSeat(page: Page, seat: number): Promise<void> {
+  const stage = page.locator(".team-lobby-stage");
+  await expect(stage).toHaveText(/^(Take a character|Starting…)$/);
+  if ((await stage.textContent()) === "Take a character") {
+    await page.locator(".team-lobby-seat").nth(seat).click();
+  }
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+}
+
 /**
  * Propose `team` in the Team Lobby's vote, as a player does (#2116):
  * open Your Team Builds, expand its row, press Propose this build. A
@@ -193,7 +203,7 @@ export async function proposeTeam(page: Page, team: string): Promise<void> {
 /**
  * The Team Lobby (#1460) of each page's own build: each page proposes its
  * Team Build `team`, or in a 1v1, with no `team`, sees its active
- * character proposed for it (#2141). Everyone is ready, then each takes
+ * character picked for it (#2141, #2387). Everyone is ready, then each takes
  * its side's seat `seat`, the first unless said, and is ready again.
  * Resolves once each page's HUD shows the player.
  */
@@ -205,9 +215,11 @@ export async function playOwnTeams(
   }[],
 ): Promise<void> {
   for (const { page, team } of players) {
-    await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+    await expect(page.locator(".team-lobby-stage")).toHaveText(VOTE_STAGE);
     if (team === undefined) {
-      await expect(page.locator(".team-lobby-proposals .play-card")).toHaveCount(1);
+      await expect(
+        page.locator('.team-lobby-solo .play-card-open[aria-pressed="true"]'),
+      ).toHaveCount(1);
     } else {
       await proposeTeam(page, team);
     }
@@ -216,12 +228,7 @@ export async function playOwnTeams(
     await page.getByRole("button", { name: "Ready", exact: true }).click();
   }
   for (const { page, seat } of players) {
-    await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
-    await page
-      .locator(".team-lobby-seat")
-      .nth(seat ?? 0)
-      .click();
-    await page.getByRole("button", { name: "Ready", exact: true }).click();
+    await takeSeat(page, seat ?? 0);
   }
   for (const { page } of players) {
     await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
@@ -240,18 +247,13 @@ export async function playHouseTeams(
   seats: readonly number[] = [],
 ): Promise<void> {
   for (const page of pages) {
-    await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+    await expect(page.locator(".team-lobby-stage")).toHaveText(VOTE_STAGE);
   }
   for (const page of pages) {
     await page.getByRole("button", { name: "Ready", exact: true }).click();
   }
   for (const [index, page] of pages.entries()) {
-    await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
-    await page
-      .locator(".team-lobby-seat")
-      .nth(seats[index] ?? 0)
-      .click();
-    await page.getByRole("button", { name: "Ready", exact: true }).click();
+    await takeSeat(page, seats[index] ?? 0);
   }
   for (const page of pages) {
     await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");

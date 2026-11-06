@@ -101,7 +101,12 @@ export type NecromancerStatusId =
   | "blood-bond"
   | "vile-miasma"
   | "depravity"
-  | "cultists-fervor";
+  | "cultists-fervor"
+  // Necromancer mechanics (#2321).
+  | "rising-bile"
+  // Riders at the caster's ranks, ends on a non-hex skill (#2411).
+  | "withering-aura"
+  | "hexers-vigor";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -129,6 +134,19 @@ function shivers(skillId: string): StatusTrigger {
     skillId,
   };
 }
+
+/** Rising Bile's burst (#2321): 1...6 typeless damage a whole second it held. */
+const RISING_BILE_DAMAGE: DamageEffect = {
+  kind: "damage",
+  amount: { flat: 0 },
+  type: "typeless",
+  armorPenetration: 0,
+  per: {
+    count: { kind: "held-seconds" },
+    amount: { scaling: { attributeId: "necromancer.death-magic", atZero: 1, atTwelve: 5 } },
+    max: undefined,
+  },
+};
 
 export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDefinition>> = {
   // Faintheartedness (GW1 PvP): attacks 50% slower, −0...2 pips at the
@@ -387,14 +405,25 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     energyPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 5.4 } },
   }),
   // "For 5 seconds, whenever a party member hits a foe with physical
-  // damage, that party member does +3...16 damage": 13, on each hit.
+  // damage, that party member does +3...16 damage", at its caster's
+  // Blood Magic, not the party member's (#2411): 13.4 at rank 12.
   "order-of-pain": define("order-of-pain", "Order of Pain", "enchantment", {
     profession: "necromancer",
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
-      effects: [{ kind: "damage", amount: { flat: 13 }, type: "typeless", armorPenetration: 1 }],
+      atSourceRanks: true,
+      effects: [
+        {
+          kind: "damage",
+          amount: {
+            scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 13.4 },
+          },
+          type: "typeless",
+          armorPenetration: 1,
+        },
+      ],
       skillId: "necromancer.order-of-pain",
     },
   }),
@@ -659,14 +688,16 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   // Blood Magic orders and leeches (#1979), at their rank-12 values.
   // "For 5 seconds, whenever a party member who is not under the effects
   // of another Necromancer enchantment hits a foe with physical damage,
-  // that party member steals up to 3...13...16 Health": the rider's
-  // caster is the attacker, so the check reads the attacker's statuses.
+  // that party member steals up to 3...13...16 Health", at its caster's
+  // Blood Magic (#2411): 13.4 at rank 12. The rider's caster is the
+  // attacker, so the check reads the attacker's statuses.
   "order-of-the-vampire": define("order-of-the-vampire", "Order of the Vampire", "enchantment", {
     profession: "necromancer",
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: true,
       effects: [
         {
           kind: "if",
@@ -676,7 +707,14 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
             profession: "necromancer",
             excluding: "order-of-the-vampire",
           },
-          effects: [{ kind: "life-steal", amount: { flat: 13 } }],
+          effects: [
+            {
+              kind: "life-steal",
+              amount: {
+                scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 13.4 },
+              },
+            },
+          ],
         },
       ],
       skillId: "necromancer.order-of-the-vampire",
@@ -722,6 +760,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
       skillId: "necromancer.order-of-apostasy",
       sourceLosesPerRemoved: { profession: "monk", percentOfMax: 4 },
@@ -848,6 +887,32 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       ],
       skillId: "necromancer.mark-of-subversion",
     },
+  }),
+  // Rising Bile (#2321): "For 20 seconds, this hex does nothing. When
+  // Rising Bile ends, that foe and all foes in the area take 1...6 damage
+  // for each second Rising Bile was in effect." Whole seconds, at any end,
+  // from its caster at its Death Magic; a recast leaves it as it is.
+  "rising-bile": define("rising-bile", "Rising Bile", "hex", {
+    profession: "necromancer",
+    attribute: "necromancer.death-magic",
+    ignoresReapplication: true,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          RISING_BILE_DAMAGE,
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_IN_THE_AREA,
+            maxTargets: undefined,
+            effects: [RISING_BILE_DAMAGE],
+          },
+        ],
+        skillId: "necromancer.rising-bile",
+      },
+    ],
   }),
   // "The next Necromancer skill that targets a foe causes Bleeding for
   // 2...16 seconds" (#2333): fired as the skill is used, on its target.
@@ -1158,5 +1223,34 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         skillId: "necromancer.cultists-fervor",
       },
     ],
+  }),
+  // "For 5...20 seconds, target ally's melee attacks cause Weakness for
+  // 5...20 seconds" (#2411): both at the Necromancer's Death Magic,
+  // whoever swings; 17 s at rank 12.
+  "withering-aura": define("withering-aura", "Withering Aura", "enchantment", {
+    profession: "necromancer",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "melee",
+      weaponDamage: undefined,
+      atSourceRanks: true,
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "weakness",
+          durationSeconds: {
+            scaling: { attributeId: "necromancer.death-magic", atZero: 5, atTwelve: 17 },
+          },
+        },
+      ],
+      skillId: "necromancer.withering-aura",
+    },
+  }),
+  // "For 10 seconds, you have +1...8 Health regeneration. Hexer's Vigor
+  // ends if you cast a non-hex skill" (#2411): 6.6 at rank 12.
+  "hexers-vigor": define("hexers-vigor", "Hexer's Vigor", "enchantment", {
+    profession: "necromancer",
+    healthPips: { scaling: { attributeId: "necromancer.soul-reaping", atZero: 1, atTwelve: 6.6 } },
+    endsWhenBearerUsesSkillNot: "hex",
   }),
 };

@@ -323,6 +323,15 @@ export interface ArenaSnapshot {
   readonly calledId: string | undefined;
   /** Your team's pings on the floor (#443). */
   readonly pings: readonly RenderablePing[];
+  /** Your team's lines on the compass (#2391), oldest first; the arena does not draw them. */
+  readonly strokes: readonly RenderableStroke[];
+}
+
+/** One segment of a line drawn on the compass (#2391), in world units. */
+export interface RenderableStroke {
+  readonly points: readonly Vec2[];
+  /** Seconds left of it. */
+  readonly remaining: number;
 }
 
 export const EMPTY_SNAPSHOT: ArenaSnapshot = {
@@ -341,6 +350,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   showAllNames: false,
   calledId: undefined,
   pings: [],
+  strokes: [],
 };
 
 /** `snapshot` with your team's calls on it (#443). */
@@ -352,6 +362,10 @@ export function withCalls(snapshot: ArenaSnapshot, calls: CallsSnapshot): ArenaS
       id: ping.id,
       position: { x: ping.x, y: ping.y },
       remaining: ping.remaining,
+    })),
+    strokes: calls.strokes.map((stroke) => ({
+      points: stroke.points.map(([x, y]) => ({ x, y })),
+      remaining: stroke.remaining,
     })),
   };
 }

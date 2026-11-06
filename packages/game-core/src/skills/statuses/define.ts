@@ -12,7 +12,7 @@ export function define(
   category: StatusCategory,
   overrides: Partial<Omit<StatusDefinition, "id" | "name" | "category">> = {},
 ): StatusDefinition {
-  return {
+  const definition: StatusDefinition = {
     id,
     name,
     category,
@@ -68,6 +68,11 @@ export function define(
     interruptsSpells: false,
     attackDurationMultiplier: 1,
     attackDurationMultiplierWeapon: undefined,
+    conditionDurationMultiplier: 1,
+    conditionDurationMultiplierWeapon: undefined,
+    upkeepMultiplier: 1,
+    overcastSurcharge: 0,
+    ignoresReapplication: false,
     projectileSpeedMultiplier: 1,
     preventsSpells: false,
     preventsAttacks: false,
@@ -93,6 +98,7 @@ export function define(
     projectsAura: undefined,
     blockBelowHealth: undefined,
     blockWhileUnder: undefined,
+    blockWhileAttacking: false,
     criticalChanceBonus: 0,
     criticalChanceBonusWeapon: undefined,
     criticalChanceBonusVersus: undefined,
@@ -124,6 +130,7 @@ export function define(
     endsWhenSourceTargets: false,
     endsWhenBearerUsesAdrenalSkill: false,
     endsWhenBearerUsesNonAdrenalSkill: false,
+    endsWhenBearerUsesSkillNot: undefined,
     endsWhenBearerUsesAttackSkill: false,
     endsWhenTriggered: false,
     endsWhenBearerHitsWithAttackSkill: false,
@@ -135,6 +142,7 @@ export function define(
     damageReduction: 0,
     damageReductionPerRank: undefined,
     damageReductionPerHitTaken: undefined,
+    nextDamageReduction: undefined,
     damageReductionWhileCasting: undefined,
     damageReductionFromHexedSource: undefined,
     damageReductionFromSourceWith: undefined,
@@ -194,6 +202,16 @@ export function define(
     triggers: [],
     ...overrides,
   };
+  // A status its attack spends is gone before its rider resolves (#2411):
+  // it has no ranks left to resolve it at.
+  if (
+    (definition.onAttackHit?.atSourceRanks === true ||
+      definition.onAttackBlocked?.atSourceRanks === true) &&
+    definition.endsAfterAttackCount !== undefined
+  ) {
+    throw new Error(`${id}: a rider at its source's ranks cannot end after its attacks`);
+  }
+  return definition;
 }
 
 /**

@@ -48,8 +48,16 @@ export type AssassinStatusId =
   // Assassin staples 6 (#2233).
   | "hidden-caltrops"
   | "way-of-the-assassin"
+  // Staples (#2368).
+  | "foxs-promise"
+  | "seeping-wound"
+  | "shameful-fear"
   // Mechanics (#2362).
   | "smoke-powder-defense"
+  | "flashing-blades"
+  // Staples (#2413).
+  | "sharpen-daggers"
+  | "assassins-remedy"
   | "mark-of-insecurity";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
@@ -367,6 +375,68 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
     },
     criticalChanceBonusWeapon: "daggers",
   }),
+  // Staples (#2368). "For 5...20 seconds, your dagger attacks cannot be
+  // blocked. This enchantment ends the next time you fail to hit": an
+  // axe or a bow is blocked as ever, and any failed hit ends it.
+  "foxs-promise": define("foxs-promise", "Fox's Promise", "enchantment", {
+    profession: "assassin",
+    attacksUnblockable: true,
+    attacksUnblockableWeapon: "daggers",
+    endsWhenBearerMisses: true,
+  }),
+  // "...target foe moves 33% slower. That foe takes 5...25 damage each
+  // second while suffering from a condition": 21 at rank 12.
+  "seeping-wound": define("seeping-wound", "Seeping Wound", "hex", {
+    profession: "assassin",
+    moveSpeedMultiplier: 0.67,
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-has-any", categories: ["condition"] },
+          effects: [
+            {
+              kind: "damage",
+              amount: {
+                scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 21 },
+              },
+              type: "typeless",
+              armorPenetration: 0,
+            },
+          ],
+        },
+      ],
+      skillId: "assassin.seeping-wound",
+    },
+  }),
+  // "...target foe moves 10% faster than normal. For each second, if that
+  // foe is moving, that foe takes 5...20 damage": 17 at rank 12. The
+  // speed is a boost, so what bars boosts bars it.
+  "shameful-fear": define("shameful-fear", "Shameful Fear", "hex", {
+    profession: "assassin",
+    moveSpeedMultiplier: 1.1,
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-moving" },
+          effects: [
+            {
+              kind: "damage",
+              amount: {
+                scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 17 },
+              },
+              type: "typeless",
+              armorPenetration: 0,
+            },
+          ],
+        },
+      ],
+      skillId: "assassin.shameful-fear",
+    },
+  }),
   // "For 8 seconds, the next time you are struck, you take half damage and
   // all adjacent foes are Blinded for 2...5...6 seconds" (#2362): the first
   // attack that hits, never a spell; a block or a miss spends nothing.
@@ -398,6 +468,64 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
         skillId: "assassin.smoke-powder-defense",
       },
     ],
+  }),
+  // Mechanics (#2374). "...a 75% chance to block incoming attacks while
+  // attacking. If you block an attack in this way, your attacker takes
+  // 5...20 damage": 17 at rank 12. Casting, idle or walking: no block.
+  "flashing-blades": define("flashing-blades", "Flashing Blades", "stance", {
+    profession: "assassin",
+    block: { chance: 0.75, against: "all" },
+    blockWhileAttacking: true,
+    triggers: [
+      {
+        on: "bearer-blocks",
+        target: "offender",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 17 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+        ],
+        skillId: "assassin.flashing-blades",
+      },
+    ],
+  }),
+  // Staples (#2413). "For 5...30 seconds, your dagger attacks cause
+  // Bleeding for 5...15 seconds": 13 at rank 12, at its Critical Strikes.
+  // A plain swing too; a sword or a spear, a miss or a block, none.
+  "sharpen-daggers": define("sharpen-daggers", "Sharpen Daggers", "enchantment", {
+    profession: "assassin",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "daggers",
+      weaponDamage: undefined,
+      atSourceRanks: false,
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "bleeding",
+          durationSeconds: {
+            scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 13 },
+          },
+        },
+      ],
+      skillId: "assassin.sharpen-daggers",
+    },
+  }),
+  // "For 30 seconds, the next 1...10 attack skills you use remove one
+  // condition" (#2428): Zealous Anthem's, its uses at the caster's rank.
+  "assassins-remedy": define("assassins-remedy", "Assassin's Remedy", "enchantment", {
+    profession: "assassin",
+    nextSkill: {
+      which: "attack-skill",
+      count: { scaling: { attributeId: "assassin.critical-strikes", atZero: 1, atTwelve: 8.2 } },
+      effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+      skillId: "assassin.assassins-remedy",
+    },
   }),
   // "For 5...25 seconds, target foe suffers from -1...5 Health
   // degeneration, and enchantments and stances on that foe expire

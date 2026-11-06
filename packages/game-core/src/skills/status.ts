@@ -197,6 +197,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   maxHealthBonus: true,
   physicalDamageTakenBonus: true,
   attackDurationMultiplier: true,
+  conditionDurationMultiplier: true,
   damageTakenMultiplier: true,
   healingMultiplier: true,
   adrenalineGainFaster: true,
@@ -207,6 +208,9 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   attackDamageDelta: true,
   damageDealtMultiplier: true,
   energyPips: true,
+  moveSpeedMultiplier: true,
+  reversesNextDamage: true,
+  nextDamageReduction: true,
   enchantmentsExpireFaster: true,
   stancesExpireFaster: true,
 };
@@ -285,6 +289,12 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   if (definition.nextSkill !== undefined) {
     scalingAttributes(definition.nextSkill, attributes);
   }
+  // Withering Aura's Weakness is its Necromancer's, not the ally's (#2411).
+  for (const rider of [definition.onAttackHit, definition.onAttackBlocked]) {
+    if (rider?.atSourceRanks === true) {
+      scalingAttributes(rider, attributes);
+    }
+  }
   // Agony's pulse hurts at its Ritualist's rank, and costs the spirit so (#2275).
   if (definition.pulse !== undefined) {
     scalingAttributes(definition.pulse, attributes);
@@ -327,6 +337,11 @@ export interface StatusDefinition {
    * profession owns.
    */
   readonly profession: ProfessionId | undefined;
+  /**
+   * `block` holds only while the bearer is attacking (#2374), as
+   * `target-attacking` counts it: Flashing Blades' "while attacking".
+   */
+  readonly blockWhileAttacking: boolean;
   /**
    * The attribute of the skill that applies it (#1765), as `profession`:
    * "if target foe is suffering from a Water Magic hex" asks this.
@@ -403,8 +418,11 @@ export interface StatusDefinition {
    * Cracked Armor's −20, not below 60. `undefined`: none.
    */
   readonly armorReduction: ArmorReduction | undefined;
-  /** Movement speed multiplier while active (1 = unaffected). */
-  readonly moveSpeedMultiplier: number;
+  /**
+   * Movement speed multiplier while active (1 = unaffected), at the
+   * caster's rank where it scales (#2428): Burning Speed's 1.30...1.42.
+   */
+  readonly moveSpeedMultiplier: StatusStat;
   /**
    * A move speed multiplier that holds only while the bearer is enchanted
    * (#1955): Godspeed's 1.25. A boost, so `preventsSpeedBoosts` bars it.
@@ -620,6 +638,38 @@ export interface StatusDefinition {
    * 33% faster while wielding a bow". `undefined`: whatever it wields.
    */
   readonly attackDurationMultiplierWeapon: AttackWeaponClass | undefined;
+  /**
+   * Multiplier on how long a condition the bearer applies lasts (#2321),
+   * by its source's rank, as Archer's Signet's "150% longer" is 2.5. Only
+   * a condition an `apply-status` puts on; one transferred or spread keeps
+   * its own. 1: none.
+   */
+  readonly conditionDurationMultiplier: StatusStat;
+  /**
+   * `conditionDurationMultiplier` holds only while the bearer's main hand
+   * is this weapon as the condition lands (#2321): Archer's Signet's
+   * "while wielding a bow". `undefined`: whatever it wields.
+   */
+  readonly conditionDurationMultiplierWeapon: AttackWeaponClass | undefined;
+  /**
+   * Upkeep pips each enchantment the bearer maintains costs (#2321):
+   * Nature's Renewal's "maintained enchantments cost twice as much". The
+   * highest on the bearer counts; 1: as any.
+   */
+  readonly upkeepMultiplier: number;
+  /**
+   * More Overcast a spell with Overcast of its own causes the bearer as it
+   * finishes (#2321): Equinox's +10. Its own lands as it starts; an
+   * interrupted or cancelled spell takes none. The highest on the bearer
+   * counts; 0: none.
+   */
+  readonly overcastSurcharge: number;
+  /**
+   * A recast while it holds changes nothing (#2321): neither its duration
+   * nor its source nor its ranks. Rising Bile ends 20 s after the first
+   * cast, however often it is recast.
+   */
+  readonly ignoresReapplication: boolean;
   /**
    * Multiplier on how fast the bearer's shots fly (#1742): Read the
    * Wind's "your arrows move twice as fast" is 2. Read as each shot is
@@ -940,6 +990,12 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerUsesNonAdrenalSkill: boolean;
   /**
+   * It ends the moment the bearer uses a skill `nextSkillAnswers` does not
+   * answer for this (#2411): Hexer's Vigor's "ends if you use a non-hex
+   * skill". A plain swing is no skill and keeps it. `undefined`: none.
+   */
+  readonly endsWhenBearerUsesSkillNot: NextSkill["which"] | undefined;
+  /**
    * It ends the moment the bearer starts an attack skill (#1869), before
    * that attack is timed, so the attack does not get its speed: Heket's
    * Rampage's "ends if you use an attack skill". A plain swing keeps it.
@@ -1021,6 +1077,12 @@ export interface StatusDefinition {
    * A recast starts the count again. `undefined`: none.
    */
   readonly damageReductionPerHitTaken: number | undefined;
+  /**
+   * As `damageReduction`, but off the next packet only that armor left
+   * above 0, and then the status ends (#2428): Reverse Hex's 5...41.
+   * `undefined`: none.
+   */
+  readonly nextDamageReduction: StatusStat | undefined;
   /**
    * As `damageReduction`, but only while the bearer is activating a skill
    * of `skillType` (#1827): Armor of Unfeeling's "10 base damage reduction
@@ -1142,11 +1204,12 @@ export interface StatusDefinition {
   readonly sourceLosesHealth: number | undefined;
   /**
    * The next damage or life steal the bearer would take heals it instead,
-   * up to this much, and the status ends (#987): Reversal of Fortune's 67.
+   * up to this much, and the status ends (#987): Reversal of Fortune's
+   * 15...67, the cap at the caster's rank as it landed (#2428).
    * The whole packet is negated, after `mitigate`; degeneration and
    * sacrifice are neither. `undefined`: no reversal.
    */
-  readonly reversesNextDamage: number | undefined;
+  readonly reversesNextDamage: StatusStat | undefined;
   /**
    * The next damage the bearer would take is negated, its dealer takes
    * as much of the same type, up to the cap, from the status's source, and
@@ -2010,6 +2073,13 @@ export interface AttackHitRider {
   readonly weapon: AttackWeaponClass | undefined;
   readonly weaponDamage: DamageType | undefined;
   /**
+   * Its effects resolve at the status's captured ranks, its source's
+   * (#2411), not the attacker's: Withering Aura's Weakness lasts as long
+   * as its Necromancer's Death Magic says, whoever swings. `false`: the
+   * attacker's own, as its blow.
+   */
+  readonly atSourceRanks: boolean;
+  /**
    * The status's source loses this share of its effective maximum Health,
    * rounded up, for each status of `profession` the rider removed
    * (#1975): Order of Apostasy's 4% per Monk enchantment. Health loss,
@@ -2159,6 +2229,8 @@ export type StatusChange =
       readonly expired: boolean;
       /** Ended by its bearer's death (#1762), `endAll`. */
       readonly death: boolean;
+      /** Whole seconds it was on (#2321), `heldSecondsOf`: Rising Bile's count. */
+      readonly heldSeconds: number;
       /** Where its source returns to (`returnsSource`, #1826); `null` for no return. */
       readonly returnPoint: Vec2 | null;
       /** Whom its source steps to (`stepsToTarget`, #1930); `null` for no step. */
@@ -2362,7 +2434,8 @@ export interface NextSkill {
    * type; `signet-at-foe` a signet that targets a foe (#2275), Keystone
    * Signet's.
    */
-  readonly which: "attack-skill" | "spell" | "signet" | "signet-at-foe" | "shout-or-chant" | "any";
+  readonly which:
+    "attack-skill" | "spell" | "hex" | "signet" | "signet-at-foe" | "shout-or-chant" | "any";
   /**
    * How many such skills it answers before it ends (Song of Purification:
    * 1...6), at its source's rank as it landed (#2275): Keystone Signet's
@@ -2425,6 +2498,8 @@ export function nextSkillAnswers(which: NextSkill["which"], skill: Skill): boole
       return skill.attack !== undefined;
     case "spell":
       return isSpell(skill.type);
+    case "hex":
+      return skill.type === "hex";
     case "signet":
       return skill.type === "signet";
     case "signet-at-foe":
@@ -2633,6 +2708,19 @@ function spentKey(id: StatusId, sourceId: string): string {
 }
 
 /**
+ * Whole seconds `status` has been on (#2321); a projected one by its own
+ * clock (#2275). A maintained one, which runs none, counts 0.
+ */
+function heldSecondsOf(status: ActiveStatus): number {
+  if (status.projected !== null) {
+    return Math.floor(status.projected.ageSeconds);
+  }
+  return Number.isFinite(status.durationSeconds)
+    ? Math.floor(status.durationSeconds - status.remainingSeconds)
+    : 0;
+}
+
+/**
  * All active statuses on one combatant, plus the lifecycle rules that
  * govern them.
  */
@@ -2705,6 +2793,7 @@ export class StatusSet {
           sourceId: status.sourceId,
           expired,
           death,
+          heldSeconds: heldSecondsOf(status),
           returnPoint: status.returnPoint,
           stepTargetId: status.stepTargetId,
         });
@@ -3120,7 +3209,8 @@ export class StatusSet {
    * for a duration of nothing. What a status does once, as it lands
    * (deep wound's health), hangs on this. A status newly on it ends every
    * one that ends when its bearer gains that category (#919). A hex a
-   * status breaks never lands (#1403): `false`, and nothing else changes.
+   * status breaks never lands (#1403): `false`, and nothing else changes;
+   * nor does one that `ignoresReapplication` already on the bearer (#2321).
    *
    * `returnPoint` is where its source stands as it casts, for a
    * `returnsSource` status (#1826): only the instance this call puts up
@@ -3140,6 +3230,9 @@ export class StatusSet {
     }
     const wasActive = this.#statuses.has(id);
     const definition = getStatusDefinition(id);
+    if (wasActive && definition.ignoresReapplication) {
+      return false;
+    }
     const durationSeconds =
       definition.category === "chant" || definition.category === "shout"
         ? appliedSeconds * this.#chantShoutDurationMultiplier()
@@ -3552,11 +3645,12 @@ export class StatusSet {
    * recording the end: the simulation fires their drop itself, where the
    * bearer stands now. `undefined` when it holds none.
    */
-  public dropItem(): { readonly id: StatusId; readonly sourceId: string } | undefined {
+  public dropItem():
+    { readonly id: StatusId; readonly sourceId: string; readonly heldSeconds: number } | undefined {
     for (const status of this.#statuses.values()) {
       if (getStatusDefinition(status.id).category === "item") {
         this.#statuses.delete(status.id);
-        return { id: status.id, sourceId: status.sourceId };
+        return { id: status.id, sourceId: status.sourceId, heldSeconds: heldSecondsOf(status) };
       }
     }
     return undefined;
@@ -3676,7 +3770,7 @@ export class StatusSet {
       const cap = getStatusDefinition(status.id).reversesNextDamage;
       if (cap !== undefined) {
         this.#end([status.id]);
-        return { id: status.id, cap };
+        return { id: status.id, cap: Math.round(statAt(cap, status.ranks)) };
       }
     }
     return undefined;
@@ -3825,6 +3919,21 @@ export class StatusSet {
       }
     }
     return multiplier;
+  }
+
+  /**
+   * Spend the newest status that cuts the next packet (#2428), recorded
+   * as ended, and return its cut at the caster's rank; 0 if none is up.
+   */
+  public takeNextDamageReduction(): number {
+    for (const status of [...this.#statuses.values()].reverse()) {
+      const cut = getStatusDefinition(status.id).nextDamageReduction;
+      if (cut !== undefined) {
+        this.#end([status.id]);
+        return Math.round(statAt(cut, status.ranks));
+      }
+    }
+    return 0;
   }
 
   /**
@@ -4059,17 +4168,22 @@ export class StatusSet {
   /**
    * The bearer used a skill (#949): every status that ends when it does
    * is gone, and every one that ends on an adrenal skill if it was one
-   * (#1329), or on a non-adrenal one if it was not (#2180), but those in `spared`, which that skill put on its own user
-   * (#999). Returns the ids that ended on it.
+   * (#1329), or on a non-adrenal one if it was not (#2180), or on any
+   * `endsWhenBearerUsesSkillNot` does not answer (#2411), but those in
+   * `spared`, which that skill put on its own user (#999). Returns the
+   * ids that ended on it.
    */
-  public endOnBearerUseSkill(spared: ReadonlySet<StatusId>, adrenal: boolean): StatusId[] {
+  public endOnBearerUseSkill(spared: ReadonlySet<StatusId>, skill: Skill): StatusId[] {
+    const adrenal = skill.cost?.kind === "adrenaline";
     const ended = this.active
       .filter(({ id }) => {
         const definition = getStatusDefinition(id);
+        const not = definition.endsWhenBearerUsesSkillNot;
         return (
           (definition.endsWhenBearerUsesSkill ||
             (adrenal && definition.endsWhenBearerUsesAdrenalSkill) ||
-            (!adrenal && definition.endsWhenBearerUsesNonAdrenalSkill)) &&
+            (!adrenal && definition.endsWhenBearerUsesNonAdrenalSkill) ||
+            (not !== undefined && !nextSkillAnswers(not, skill))) &&
           !spared.has(id)
         );
       })
@@ -4698,9 +4812,8 @@ export function aggregateModifiers(
     ) {
       armorReduction = def.armorReduction;
     }
-    moveSpeedMultiplier *= speedBoostsBarred
-      ? Math.min(1, def.moveSpeedMultiplier)
-      : def.moveSpeedMultiplier;
+    const moveSpeed = statAt(def.moveSpeedMultiplier, ranks);
+    moveSpeedMultiplier *= speedBoostsBarred ? Math.min(1, moveSpeed) : moveSpeed;
     if (enchantments > 0 && !speedBoostsBarred) {
       moveSpeedMultiplier *= def.moveSpeedWhileEnchanted;
     }

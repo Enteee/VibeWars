@@ -4,14 +4,12 @@ import type * as Kit from "./kit.js";
 import type { ShownBar } from "./kit.js";
 import {
   barHasMore,
-  CLOSED_GLYPH,
   CLOSED_LABEL,
   CLOSED_NAME,
   CLOSED_TOOLTIP,
   CONNECTING_NOTICE_MS,
   JOINED_LOBBY_LABEL,
   JOINING_LOBBY_LABEL,
-  OPEN_GLYPH,
   OPEN_LABEL,
   OPEN_NAME,
   OPEN_TOOLTIP,
@@ -22,6 +20,7 @@ import {
   putsMoreAway,
   type StatusElement,
 } from "./topbar.js";
+import { LOBBY_ICON } from "./icons.js";
 import { COPIED } from "./lobby-screen.js";
 
 const toasts: string[] = [];
@@ -72,7 +71,7 @@ describe("the top bar's ⋯ on a repaint (#1305)", () => {
   it("goes away on another place, or an overlay over the same place", () => {
     expect(putsMoreAway(lobby, { ...lobby, place: "VibeWars / Teams" }, true)).toBe(true);
     expect(putsMoreAway(lobby, { ...lobby, overlay: true }, true)).toBe(true);
-    expect(putsMoreAway(lobby, { ...lobby, own: "options" }, true)).toBe(true);
+    expect(putsMoreAway(lobby, { ...lobby, own: "help" }, true)).toBe(true);
   });
 
   it("goes away on the first bar, and when nothing is left in it", () => {
@@ -103,6 +102,8 @@ class FakeElement {
   maxLength = -1;
   hidden = false;
   title = "";
+  src = "";
+  alt = "";
   readonly tagName: string;
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
@@ -175,7 +176,8 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
       () => left.push(1),
       (open) => opened.push(open),
     );
-    const [lobby, share, connecting, confirm] = (join.element as unknown as FakeElement).children;
+    const [lobby, share] = (join.controls as unknown as FakeElement).children;
+    const [connecting, confirm] = (join.element as unknown as FakeElement).children;
     if (
       lobby === undefined ||
       share === undefined ||
@@ -205,6 +207,7 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     const text = (element: FakeElement): string =>
       element.textContent + element.children.map(text).join("");
     expect(text(join.element as unknown as FakeElement)).not.toContain(FRIEND);
+    expect(text(join.controls as unknown as FakeElement)).not.toContain(FRIEND);
     join.setLobby(undefined);
     expect(lobby.hidden).toBe(true);
   });
@@ -218,6 +221,23 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
       ...element.children.flatMap(inputs),
     ];
     expect(inputs(join.element as unknown as FakeElement)).toEqual([]);
+    expect(inputs(join.controls as unknown as FakeElement)).toEqual([]);
+  });
+
+  it("hands Copy invite link, the toggle and Leave to the Lobby window; the bar keeps Connecting… and the confirm (#2385)", () => {
+    const { join, lobby, share, connecting, confirm } = mount();
+    expect((join.controls as unknown as FakeElement).children).toEqual([lobby, share]);
+    expect(lobby.children.map((child) => child.className)).toEqual([
+      "lobby-code-label",
+      "lobby-copy",
+      "topbar-lobby-open",
+      "topbar-leave",
+    ]);
+    expect((join.element as unknown as FakeElement).children).toEqual([connecting, confirm]);
+    expect([connecting.className, confirm.className]).toEqual([
+      "topbar-connecting",
+      "topbar-join-confirm",
+    ]);
   });
 
   it("copies the lobby's invite link, not its key", async () => {
@@ -248,7 +268,7 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     }
     const looks = () => [
       toggle.hidden,
-      toggle.children.map((part) => part.textContent).join(" "),
+      toggle.children.map((part) => [part.tagName, part.src, part.alt, part.textContent]),
       toggle.getAttribute("aria-label"),
       toggle.title,
       toggle.getAttribute("aria-pressed"),
@@ -256,7 +276,10 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     join.setLobby({ code: OWN, isHost: true, open: false, party: 1, joining: false });
     expect(looks()).toEqual([
       false,
-      `${CLOSED_GLYPH} ${CLOSED_LABEL}`,
+      [
+        ["img", LOBBY_ICON.closed, "", ""],
+        ["span", "", "", CLOSED_LABEL],
+      ],
       CLOSED_NAME,
       CLOSED_TOOLTIP,
       "false",
@@ -265,7 +288,10 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     join.setLobby({ code: OWN, isHost: true, open: true, party: 1, joining: false });
     expect(looks()).toEqual([
       false,
-      `${OPEN_GLYPH} ${OPEN_LABEL}`,
+      [
+        ["img", LOBBY_ICON.open, "", ""],
+        ["span", "", "", OPEN_LABEL],
+      ],
       OPEN_NAME,
       OPEN_TOOLTIP,
       "true",

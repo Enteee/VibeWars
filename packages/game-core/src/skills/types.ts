@@ -173,11 +173,25 @@ export type CountRule =
    */
   | { readonly kind: "allies-within"; readonly radius: number; readonly excludesCaster?: true }
   /**
-   * The skills of `attributeId` on the bar of the caster's living owner,
-   * a pet's, that are recharging (#1957): Enraged Lunge's "for each of
-   * your Beast Mastery skills that is recharging". No owner: 0.
+   * The skills on a bar that are recharging, of `attributeId` and of
+   * `type` where each is set: the bar of the caster's living owner, a
+   * pet's (#1957), as Enraged Lunge's "for each of your Beast Mastery
+   * skills that is recharging", no owner 0; or the caster's own (#2321),
+   * as Doom's "for each of your binding rituals that is recharging". A
+   * skill disabled but not recharging is not counted.
    */
-  | { readonly kind: "recharging-skills"; readonly of: "owner"; readonly attributeId: string }
+  | {
+      readonly kind: "recharging-skills";
+      readonly of: "owner" | "caster";
+      readonly attributeId: string | undefined;
+      readonly type: SkillType | undefined;
+    }
+  /**
+   * Whole seconds the status whose end trigger lands this was on (#2321),
+   * as Rising Bile's "for each second this hex was in effect". 0 outside
+   * an end trigger.
+   */
+  | { readonly kind: "held-seconds" }
   /**
    * Whole points of Energy, rounded down (#1984): Ether Prodigy's "lose 2
    * Health for each point of Energy you have".
@@ -539,6 +553,17 @@ export interface GiveHealthEffect {
 }
 
 /**
+ * The caster and the target even out their Health (#2321), Grenth's
+ * Balance's: the one with more loses half the difference, rounded down,
+ * and the other gains exactly what it lost, never over its effective
+ * maximum. A gain is not a heal and a loss is not damage; a foe that
+ * cannot lose Health gives nothing.
+ */
+export interface BalanceHealthEffect {
+  readonly kind: "balance-health";
+}
+
+/**
  * Apply a condition/hex/enchantment to the effect's target, or to the
  * caster whatever it targeted (`on: "caster"`, #1930), as Shadow Walk's
  * stance while it Shadow Steps to a foe.
@@ -813,7 +838,8 @@ export interface CasterGainsStatusEffect {
 export interface CompanionGainsStatusEffect {
   readonly kind: "companion-gains-status";
   readonly statusId: StatusId;
-  readonly durationSeconds: number;
+  /** At the caster's ranks (#2317): Feral Aggression's 5...20 seconds. */
+  readonly durationSeconds: Magnitude;
 }
 
 /**
@@ -1819,6 +1845,7 @@ export type UnconditionalEffect =
   | TransferConditionsEffect
   | SpreadConditionsEffect
   | GiveHealthEffect
+  | BalanceHealthEffect
   | ApplyStatusEffect
   | ApplyRandomStatusEffect
   | MaintainStatusEffect
@@ -2522,6 +2549,11 @@ export interface SkillContext {
    */
   readonly firingStatusId?: StatusId | undefined;
   /**
+   * Whole seconds the status whose end trigger these effects are was on
+   * (#2321): what `held-seconds` counts. Absent elsewhere, where it counts 0.
+   */
+  readonly heldSeconds?: number | undefined;
+  /**
    * The profession of the skill, or of the status whose trigger fires
    * (#1464), whose effects these are: which `skillArmorPenetration` its
    * damage takes. Absent for what is no skill's.
@@ -2535,7 +2567,9 @@ export interface SkillContext {
   /**
    * Whose attribute ranks scale the statuses these effects put on (#1976),
    * when not the caster's: Mirrored Stance's copy takes the foe's (#1965),
-   * and a next-skill status its source's, as it landed (#2143).
+   * and a next-skill status its source's, as it landed (#2143). Damage
+   * and stolen Health read them too (#2411): Order of Pain's bonus is
+   * its Necromancer's, in whoever's hit.
    */
   readonly ranksFrom?: RankHolder | undefined;
 }

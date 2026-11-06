@@ -4,7 +4,7 @@ import type { ChatLine } from "@vibewars/game-session";
 import { isHelpOverlayOpen } from "./help-screen.js";
 import { chatIcon } from "./icons.js";
 import { button, h, iconButton } from "./kit.js";
-import { isOptionsOverlayOpen } from "./options-screen.js";
+import { isOptionsWindowOpen } from "./options-screen.js";
 
 /**
  * Chat (#479): the panel at the lower left, in the lobby, on the menu's
@@ -293,7 +293,7 @@ export function mountChat(deps: ChatDeps): ChatPanel {
       event.altKey ||
       event.metaKey ||
       isControl(event.target) ||
-      isOptionsOverlayOpen() ||
+      isOptionsWindowOpen() ||
       isHelpOverlayOpen() ||
       !root.isConnected
     ) {

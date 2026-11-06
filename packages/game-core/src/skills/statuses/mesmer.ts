@@ -88,6 +88,10 @@ export type MesmerStatusId =
   | "arcane-languor"
   | "illusion-of-pain"
   | "ether-phantom"
+  | "signet-of-recall"
+  // Staples (#2414).
+  | "sympathetic-visage"
+  | "mantra-of-inscriptions"
   | "air-of-disenchantment";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
@@ -1048,6 +1052,65 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         target: "bearer",
         skillId: "mesmer.ether-phantom",
       },
+    ],
+  }),
+  // Mechanics (#2374). "...-4 Energy regeneration. When this effect ends,
+  // you gain 13...20 Energy": 19 at rank 12. Any end pays, a removal too.
+  "signet-of-recall": define("signet-of-recall", "Signet of Recall", "skill-effect", {
+    profession: "mesmer",
+    energyPips: -4,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 13, atTwelve: 18.6 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "mesmer.signet-of-recall",
+      },
+    ],
+  }),
+  // Staples (#2414). "...whenever target ally is hit by a melee attack,
+  // all adjacent foes lose all adrenaline and 3 Energy": round the ally,
+  // the enchanter's foes, the attacker too when beside it; never a shot.
+  "sympathetic-visage": define("sympathetic-visage", "Sympathetic Visage", "enchantment", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-hit-by-attack",
+        weapon: "melee",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [{ kind: "adrenaline-loss" }, { kind: "energy-loss", amount: { flat: 3 } }],
+          },
+        ],
+        skillId: "mesmer.sympathetic-visage",
+      },
+    ],
+  }),
+  // "For 5...25 seconds, signets you successfully activate while in this
+  // stance recharge 10...40% faster", at the Mesmer's Inspiration Magic.
+  "mantra-of-inscriptions": define("mantra-of-inscriptions", "Mantra of Inscriptions", "stance", {
+    profession: "mesmer",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "signet" },
+        {
+          rechargeFaster: {
+            scaling: { attributeId: "mesmer.inspiration-magic", atZero: 0.1, atTwelve: 0.34 },
+          },
+        },
+      ),
     ],
   }),
   // "For 5...20 seconds, enchantments expire 150...300% faster on those

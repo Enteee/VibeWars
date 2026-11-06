@@ -7,6 +7,9 @@ import {
   MAX_WIRE_EVENTS,
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_PINGS,
+  MAX_STROKE_POINTS,
+  MAX_WIRE_STROKES,
+  STROKE_SECONDS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_RADIUS,
@@ -29,6 +32,7 @@ import {
   parsePeerCall,
   parsePeerChat,
   parseWireCalls,
+  parseWireStrokes,
   parseWireTraps,
   parseWireChatLine,
   parsePeerHello,
@@ -569,6 +573,26 @@ const trap = {
   durationSeconds: 90,
 };
 
+const strokeCall = {
+  kind: "stroke",
+  strokeId: 2,
+  points: [
+    [120.5, 40],
+    [130, 44.25],
+  ],
+};
+const stroke = {
+  id: 7,
+  byId: "peer-1",
+  strokeId: 2,
+  points: [
+    [120.5, 40],
+    [130, 44.25],
+  ],
+  remaining: 4,
+};
+const longest = Array.from({ length: MAX_STROKE_POINTS }, (_, i) => [i, i * 2]);
+
 const calls = { target: { targetId: "peer-2", callerId: "peer-1" }, pings: [ping] };
 
 const chatLine = { channel: "all", fromId: "peer-2", name: "Ann", team: 0, text: "gg" };
@@ -790,6 +814,19 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["bye", parsePeerBye, {}],
   ["call on a foe", parsePeerCall, { kind: "target", targetId: "peer-2" }],
   ["ping", parsePeerCall, { kind: "ping", x: 120.5, y: 40 }],
+  ["a compass stroke (#2391)", parsePeerCall, strokeCall],
+  [
+    "a compass stroke as long as it gets (#2391)",
+    parsePeerCall,
+    { ...strokeCall, points: longest },
+  ],
+  ["strokes (#2391)", parseWireStrokes, { segments: [stroke] }],
+  ["no strokes, a welcome's to a team that drew none (#2391)", parseWireStrokes, { segments: [] }],
+  [
+    "every stroke the wire carries, each as long as it gets (#2391)",
+    parseWireStrokes,
+    { segments: Array.from({ length: MAX_WIRE_STROKES }, () => ({ ...stroke, points: longest })) },
+  ],
   ["calls", parseWireCalls, calls],
   ["calls with none", parseWireCalls, { target: null, pings: [] }],
   [
@@ -997,6 +1034,70 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["a call with no target (#443)", parsePeerCall, { kind: "target" }],
   ["a ping at NaN (#443)", parsePeerCall, { kind: "ping", x: Number.NaN, y: 0 }],
   ["a ping with a string for y (#443)", parsePeerCall, { kind: "ping", x: 0, y: "0" }],
+  ["a stroke of one point (#2391)", parsePeerCall, { ...strokeCall, points: [[1, 2]] }],
+  [
+    "a stroke of one point too many (#2391)",
+    parsePeerCall,
+    { ...strokeCall, points: [...longest, [0, 0]] },
+  ],
+  [
+    "a stroke through Infinity (#2391)",
+    parsePeerCall,
+    {
+      ...strokeCall,
+      points: [
+        [0, 0],
+        [Number.POSITIVE_INFINITY, 1],
+      ],
+    },
+  ],
+  [
+    "a stroke with a point of three (#2391)",
+    parsePeerCall,
+    {
+      ...strokeCall,
+      points: [
+        [0, 0],
+        [1, 2, 3],
+      ],
+    },
+  ],
+  ["a stroke with no id (#2391)", parsePeerCall, { kind: "stroke", points: strokeCall.points }],
+  [
+    "strokes with one segment too many (#2391)",
+    parseWireStrokes,
+    { segments: Array.from({ length: MAX_WIRE_STROKES + 1 }, () => stroke) },
+  ],
+  [
+    "strokes with a segment of one point (#2391)",
+    parseWireStrokes,
+    { segments: [{ ...stroke, points: [[1, 2]] }] },
+  ],
+  [
+    "strokes with a segment of NaN (#2391)",
+    parseWireStrokes,
+    {
+      segments: [
+        {
+          ...stroke,
+          points: [
+            [0, 0],
+            [Number.NaN, 1],
+          ],
+        },
+      ],
+    },
+  ],
+  [
+    "strokes with a segment running backwards (#2391)",
+    parseWireStrokes,
+    { segments: [{ ...stroke, remaining: -1 }] },
+  ],
+  [
+    "strokes with a segment that outlives a stroke (#2391)",
+    parseWireStrokes,
+    { segments: [{ ...stroke, remaining: STROKE_SECONDS + 0.001 }] },
+  ],
   [
     "a call with a target id past the cap (#443)",
     parsePeerCall,

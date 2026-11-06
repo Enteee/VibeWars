@@ -70,7 +70,12 @@ export type RitualistStatusId =
   | "dulled-weapon"
   // Condition movement (#2259).
   | "resilient-was-xiko"
-  | "agony";
+  | "agony"
+  // Staples (#2368).
+  | "spirit-channeling"
+  | "renewing-surge"
+  // Staples (#2413).
+  | "binding-chains";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -183,6 +188,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "splash",
@@ -575,6 +581,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: { flat: 17 } }],
       skillId: "ritualist.sundering-weapon",
     },
@@ -590,6 +597,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: { flat: 5 } }],
       skillId: "ritualist.weapon-of-shadow",
     },
@@ -610,6 +618,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",
@@ -629,6 +638,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         { kind: "if", condition: { kind: "target-attacking" }, effects: [{ kind: "interrupt" }] },
       ],
@@ -644,6 +654,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "life-steal", amount: { flat: 42 } }],
       skillId: "ritualist.nightmare-weapon",
     },
@@ -671,6 +682,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       attackSkillsOnly: true,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "energy-gain", amount: { flat: 6 } }],
       skillId: "ritualist.weapon-of-renewal",
     },
@@ -686,6 +698,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "life-steal", amount: { flat: 17 } }],
       skillId: "ritualist.spiritleech-aura",
     },
@@ -811,6 +824,74 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       chargesSourcePerHit: {
         scaling: { attributeId: "ritualist.channeling-magic", atZero: 3, atTwelve: 8.6 },
       },
+    },
+  }),
+  // Staples (#2368). "For 12 seconds, you have +1...6 Energy
+  // regeneration": +5 at rank 12.
+  "spirit-channeling": define("spirit-channeling", "Spirit Channeling", "enchantment", {
+    profession: "ritualist",
+    energyPips: { scaling: { attributeId: "ritualist.spawning-power", atZero: 1, atTwelve: 5 } },
+  }),
+  // "...target foe suffers 2...12 damage each second. When this hex ends,
+  // you gain 1...8 Energy": 10 and 7 at rank 12. Any end pays, a
+  // removal too.
+  "renewing-surge": define("renewing-surge", "Renewing Surge", "hex", {
+    profession: "ritualist",
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "damage",
+          amount: {
+            scaling: { attributeId: "ritualist.channeling-magic", atZero: 2, atTwelve: 10 },
+          },
+          type: "typeless",
+          armorPenetration: 0,
+        },
+      ],
+      skillId: "ritualist.renewing-surge",
+    },
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "ritualist.channeling-magic", atZero: 1, atTwelve: 6.6 },
+            },
+          },
+        ],
+        target: "source",
+        skillId: "ritualist.renewing-surge",
+      },
+    ],
+  }),
+  // Staples (#2413). "For 3 seconds, target foe and all nearby foes move
+  // 90% slower and take 1...30 damage each second while moving": 24.2 at
+  // rank 12, at its Communing. A still foe takes nothing.
+  "binding-chains": define("binding-chains", "Binding Chains", "hex", {
+    profession: "ritualist",
+    moveSpeedMultiplier: 0.1,
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-moving" },
+          effects: [
+            {
+              kind: "damage",
+              amount: {
+                scaling: { attributeId: "ritualist.communing", atZero: 1, atTwelve: 24.2 },
+              },
+              type: "typeless",
+              armorPenetration: 0,
+            },
+          ],
+        },
+      ],
+      skillId: "ritualist.binding-chains",
     },
   }),
 };

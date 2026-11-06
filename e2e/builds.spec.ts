@@ -7,7 +7,7 @@ import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { openLibraryGroup } from "./helpers/library.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
-import { openRail, pickCharacter } from "./helpers/menu.js";
+import { awaitLobby, openRail, pickCharacter } from "./helpers/menu.js";
 import { expectTeamSize, setTeamSize, startSoloMatch } from "./helpers/peers.js";
 import { bringStarter } from "./helpers/starter.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
@@ -674,6 +674,50 @@ test("the open member's attribute names are never cut, and its name field is sty
     page.locator(selector).evaluate((input) => getComputedStyle(input).backgroundColor);
   expect(await background("input.team-member-name")).toBe(await background("input.editor-name"));
 });
+
+// Where the equipment goes is only pinned where the width is far from a breakpoint.
+for (const { width, height, equipment } of [
+  { width: 1024, height: 768, equipment: undefined },
+  { width: 1280, height: 720, equipment: "below" },
+  { width: 1366, height: 768, equipment: undefined },
+  { width: 1920, height: 1080, equipment: "beside" },
+] as const) {
+  test(`at ${String(width)}×${String(height)}, the open member is never cut off on the right (#2379)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto("./");
+    await openTeamBuilder(page);
+    await setTeamSize(page, 2);
+    await page.getByRole("button", { name: "new team" }).click();
+    await memberRows(page).first().locator(".team-row-edit").click();
+    const editor = page.locator(".team-member-editor");
+    await expect(editor).toBeVisible();
+    // The crop happens inside the scroll box, so the page never scrolls sideways.
+    const fit = await editor.evaluate((node) => {
+      const box = node.getBoundingClientRect();
+      const scroll = node.closest(".team-grid-scroll")?.getBoundingClientRect();
+      return {
+        insideBox: scroll !== undefined && box.right <= scroll.right + 0.5,
+        insideWindow: box.right <= window.innerWidth,
+        overflow: node.scrollWidth - node.clientWidth,
+      };
+    });
+    expect(fit).toEqual({ insideBox: true, insideWindow: true, overflow: 0 });
+    if (equipment === undefined) {
+      return;
+    }
+    const top = (selector: string) =>
+      editor.locator(selector).evaluate((node) => node.getBoundingClientRect().top);
+    const attributesTop = await top(".team-member-editor-column:nth-child(2)");
+    const equipmentTop = await top(".team-member-editor-equipment");
+    if (equipment === "beside") {
+      expect(equipmentTop).toBe(attributesTop);
+    } else {
+      expect(equipmentTop).toBeGreaterThan(attributesTop);
+    }
+  });
+}
 
 test("on a phone, a Team Build card's Edit sits below its members, never on them (#1786)", async ({
   page,
@@ -1799,7 +1843,7 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
   await page.reload();
   // The page's own lobby opening redraws the roster (#1526): a click
   // before it lands on a card the redraw takes away.
-  await expect(page.locator("#topbar .topbar-lobby:not([hidden])")).toBeAttached();
+  await awaitLobby(page);
 
   const outlaw = page.locator(".character-card", { hasText: "Outlaw" });
   await expect(outlaw).toHaveClass(/is-invalid/);

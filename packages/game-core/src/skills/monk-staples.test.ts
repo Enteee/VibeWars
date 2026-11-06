@@ -64,9 +64,12 @@ function use(
   });
 }
 
+/** A Monk's 12 Protection Prayers: Reversal of Fortune's cap of 67 (#2428). */
+const PROTECTION_12: ReadonlyMap<string, number> = new Map([["monk.protection-prayers", 12]]);
+
 /** `target` under Reversal of Fortune. */
 function reversed(target: Combatant): Combatant {
-  target.statuses.apply("reversal-of-fortune", 8, "monk", NO_RANKS);
+  target.statuses.apply("reversal-of-fortune", 8, "monk", PROTECTION_12);
   return target;
 }
 
@@ -180,6 +183,7 @@ describe("Reversal of Fortune (#987)", () => {
         sourceId: "monk",
         expired: false,
         death: false,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -218,14 +222,14 @@ describe("Reversal of Fortune (#987)", () => {
   it("takeReversal spends it and returns its cap; nothing without one", () => {
     const statuses = new StatusSet();
     expect(statuses.takeReversal()).toBeUndefined();
-    statuses.apply("reversal-of-fortune", 8, "monk", NO_RANKS);
+    statuses.apply("reversal-of-fortune", 8, "monk", PROTECTION_12);
     expect(statuses.takeReversal()).toEqual({ id: "reversal-of-fortune", cap: 67 });
     expect(statuses.has("reversal-of-fortune")).toBe(false);
   });
 
   it("says so", () => {
     expect(describeStatus("reversal-of-fortune")).toBe(
-      "the next damage or life steal heals for that much instead, up to 67",
+      "the next damage or life steal heals for that much instead, up to 15...67",
     );
   });
 });

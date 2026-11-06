@@ -51,6 +51,7 @@ import {
   blockingStatusesOf,
   combinedBlockChance,
   effectiveMaxHealth,
+  outsideMatch,
   rankOf,
   weaponDamageMultiplierOf,
 } from "./tick.js";
@@ -568,7 +569,7 @@ export function skillBlow(skill: Skill, caster: Combatant, surroundings: Surroun
       rule?.bonusPer,
       caster,
       undefined,
-      surroundings,
+      { surroundings },
       [],
     ),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
@@ -823,6 +824,7 @@ export function attackBlockedRiders(
  * `withAttackSkill`, one for a weapon class only a blow of that weapon,
  * and a wand's or staff's blow only a weapon spell's: a martial
  * weapon's elemental prefix (#2009) changes its damage, not its riders.
+ * One `atSourceRanks` resolves at its status's captured ranks (#2411).
  */
 function applyRiders(
   which: "onAttackHit" | "onAttackBlocked",
@@ -854,6 +856,8 @@ function applyRiders(
     const events = applyEffects(rider.effects, {
       caster: attacker,
       target: victim,
+      // A spent status is gone, and `define` keeps such riders off it.
+      ranksFrom: rider.atSourceRanks && "ranks" in status ? outsideMatch(status.ranks) : undefined,
       rng,
       rules,
       surroundings,

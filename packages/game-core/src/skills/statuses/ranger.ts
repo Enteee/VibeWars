@@ -87,7 +87,17 @@ export type RangerStatusId =
   | "expert-focus"
   | "rapid-fire"
   // Ranger staples (#2190).
-  | "tigers-fury";
+  | "tigers-fury"
+  // Ranger staples (#2317).
+  | "choking-gas"
+  | "dryders-defenses"
+  | "bestial-fury"
+  | "scavengers-focus"
+  | "feral-aggression"
+  // Ranger mechanics (#2321).
+  | "natures-renewal"
+  | "equinox"
+  | "archers-signet";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -221,6 +231,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: { flat: 13 } }],
       skillId: "ranger.apply-poison",
     },
@@ -236,6 +247,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "damage",
@@ -256,6 +268,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         { kind: "damage", amount: { flat: 15 }, type: "fire", armorPenetration: 0 },
         {
@@ -292,6 +305,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 13 } }],
       skillId: "ranger.barbed-arrows",
     },
@@ -310,6 +324,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         { kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 21 } },
         {
@@ -371,6 +386,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "heal", amount: { flat: 5 }, recipient: "caster" }],
       skillId: "ranger.predatory-season",
     },
@@ -541,6 +557,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "heal", amount: { flat: 25 }, recipient: "owner" }],
       skillId: "ranger.predatory-bond",
     },
@@ -574,6 +591,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: { flat: 14 } }],
       skillId: "ranger.poison-tip-signet",
     },
@@ -595,6 +613,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 13 } }],
       skillId: "ranger.strike-as-one",
     },
@@ -609,6 +628,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 13 } }],
       skillId: "ranger.strike-as-one",
     },
@@ -641,6 +661,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 18 } }],
       skillId: "ranger.glass-arrows",
     },
@@ -723,6 +744,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: true,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "damage",
@@ -744,5 +766,126 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   "tigers-fury": define("tigers-fury", "Tiger's Fury", "stance", {
     profession: "ranger",
     attackDurationMultiplier: 0.75,
+  }),
+  // Ranger staples (#2317). "For 1...12 seconds, your arrows deal 1...8
+  // more damage and spread Choking Gas to all adjacent foes on impact.
+  // Choking Gas interrupts foes attempting to cast spells": the struck foe
+  // too, as the splash skips its centre. A foe using a non-spell skill
+  // keeps it.
+  "choking-gas": define("choking-gas", "Choking Gas", "preparation", {
+    profession: "ranger",
+    attackDamageDelta: {
+      scaling: { attributeId: "ranger.wilderness-survival", atZero: 1, atTwelve: 6.6 },
+    },
+    attackDamageDeltaWeapon: "bow",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "bow",
+      weaponDamage: undefined,
+      atSourceRanks: false,
+      effects: [
+        { kind: "interrupt", only: "spell" },
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          maxTargets: undefined,
+          effects: [{ kind: "interrupt", only: "spell" }],
+        },
+      ],
+      skillId: "ranger.choking-gas",
+    },
+  }),
+  // "For 5...11 seconds, you gain 75% chance to block attacks and 34...60
+  // armor against elemental damage."
+  "dryders-defenses": define("dryders-defenses", "Dryder's Defenses", "stance", {
+    profession: "ranger",
+    block: { chance: 0.75, against: "all" },
+    conditionalArmor: [
+      {
+        amount: {
+          scaling: { attributeId: "ranger.wilderness-survival", atZero: 34, atTwelve: 54.8 },
+        },
+        conditions: [{ kind: "vs-elemental" }],
+      },
+    ],
+  }),
+  // Tiger's Fury's text: "For 5...11 seconds, you attack 25% faster."
+  "bestial-fury": define("bestial-fury", "Bestial Fury", "stance", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.75,
+  }),
+  // "For 10 seconds, if you strike a foe who is suffering from a condition
+  // you gain 3...12 Energy": every such hit, a pet's none.
+  "scavengers-focus": define("scavengers-focus", "Scavenger's Focus", "skill-effect", {
+    profession: "ranger",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      weaponDamage: undefined,
+      atSourceRanks: false,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-has-any", categories: ["condition"] },
+          effects: [
+            {
+              kind: "energy-gain",
+              amount: {
+                scaling: { attributeId: "ranger.wilderness-survival", atZero: 3, atTwelve: 10.2 },
+              },
+            },
+          ],
+        },
+      ],
+      skillId: "ranger.scavengers-focus",
+    },
+  }),
+  // On the pet: "your pet attacks 33% faster and deals 3...10 additional
+  // damage."
+  "feral-aggression": define("feral-aggression", "Feral Aggression", "skill-effect", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.67,
+    attackDamageDelta: {
+      scaling: { attributeId: "ranger.beast-mastery", atZero: 3, atTwelve: 8.6 },
+    },
+  }),
+  // Nature's Renewal's aura (#2321), PvP: "enchantments and hexes cast by
+  // non-spirit creatures take 50...75% longer to cast, and it costs twice
+  // as much Energy to maintain enchantments". The cast penalty by its
+  // summoner's Wilderness Survival; the doubled upkeep flat.
+  "natures-renewal": define("natures-renewal", "Nature's Renewal", "skill-effect", {
+    profession: "ranger",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "enchantment" },
+        {
+          activationMultiplier: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 1.5, atTwelve: 1.7 },
+          },
+        },
+      ),
+      ownSkills(
+        { type: "hex" },
+        {
+          activationMultiplier: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 1.5, atTwelve: 1.7 },
+          },
+        },
+      ),
+    ],
+    upkeepMultiplier: 2,
+  }),
+  // Equinox's aura (#2321): "Spells cast within its range that cause
+  // Overcast cause an additional 10 Overcast", as they finish.
+  equinox: define("equinox", "Equinox", "skill-effect", {
+    profession: "ranger",
+    overcastSurcharge: 10,
+  }),
+  // "Conditions you apply while wielding a bow last 150% longer" (#2321).
+  "archers-signet": define("archers-signet", "Archer's Signet", "skill-effect", {
+    profession: "ranger",
+    conditionDurationMultiplier: 2.5,
+    conditionDurationMultiplierWeapon: "bow",
   }),
 };

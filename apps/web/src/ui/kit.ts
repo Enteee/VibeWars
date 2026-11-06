@@ -28,6 +28,17 @@ export function button(label: string, className: string, onClick: () => void): H
 }
 
 /**
+ * An overlay window's × (#2381): at its panel's top right, the panel's
+ * first focusable element. Esc closes the overlay the same way.
+ */
+export function overlayClose(onClose: () => void): HTMLButtonElement {
+  const node = button("×", "overlay-close", onClose);
+  node.setAttribute("aria-label", "Close");
+  node.title = "Close (Esc)";
+  return node;
+}
+
+/**
  * Every mode screen's Ready (#2022): the title bar's primary action, the
  * one a phone keeps out of the ⋯ (#1272), until `ready` makes it Not ready.
  */
@@ -119,7 +130,7 @@ export interface ScreenBarBack {
 }
 
 /** The global icon that is a screen itself, hidden while that screen shows (#1272). */
-export type OwnIcon = "help" | "options" | "music";
+export type OwnIcon = "help" | "music";
 
 /** What a screen puts in the top bar (#1272), left to right. */
 export interface ScreenBarOptions {

@@ -1,6 +1,6 @@
 import { expect, test, type Page, type Request } from "@playwright/test";
 
-import { openRail } from "./helpers/menu.js";
+import { lobbyWindow, openRail } from "./helpers/menu.js";
 
 /**
  * The static GitHub Pages build (#103): served under a sub-path, with no
@@ -139,8 +139,9 @@ test("online play is on, and hosting a lobby reaches nothing but our own origin"
   await expect(page.getByRole("button", { name: "quick match" })).toHaveCount(0);
   // Every page hosts its own lobby from load (#1526), its invite link to
   // copy (#2100).
-  await expect(page.locator("#topbar .lobby-code-label")).toHaveText("Your lobby");
-  await expect(page.getByRole("button", { name: "Copy invite link", exact: true })).toBeEnabled();
+  const lobby = await lobbyWindow(page);
+  await expect(lobby.locator(".lobby-code-label")).toHaveText("Your lobby");
+  await expect(lobby.getByRole("button", { name: "Copy invite link", exact: true })).toBeEnabled();
   await openRail(page, "Hosted Game");
   await expect(page.locator(".lobby-panel")).toBeVisible();
 

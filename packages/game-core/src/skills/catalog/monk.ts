@@ -4274,4 +4274,191 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "monk.watchful-healing",
+    name: "Watchful Healing",
+    gwId: 1392,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, target ally gains +1...4 Health regeneration. If
+    // this skill ends prematurely, that ally gains 30...120 Health"
+    // (#2374): the regeneration and the heal are the status's.
+    effects: [
+      { kind: "apply-status", statusId: "watchful-healing", durationSeconds: { flat: 10 } },
+    ],
+  },
+  {
+    id: "monk.resurrection-chant",
+    name: "Resurrection Chant",
+    gwId: 1128,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 6,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL / 2,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Staples (#2414). "Resurrect target party member with up to your
+    // current Health and 5...35% Energy. This spell has half the normal
+    // range": 29% at rank 12; the Monk loses none of it.
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "caster-current", casterLosesFractionOfCurrent: 0 },
+        energyPercent: {
+          scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 29 },
+        },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+    ],
+  },
+  {
+    id: "monk.defenders-zeal",
+    name: "Defender's Zeal",
+    gwId: 1688,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...30 seconds, whenever target foe hits with an attack, you
+    // gain 2 Energy": 26 s at rank 12.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "defenders-zeal",
+        durationSeconds: {
+          scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 26 },
+        },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Rank-scaled reversal and next-hit cut (#2428)                          */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.life-sheath",
+    name: "Life Sheath",
+    gwId: 1123,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove 0...2 conditions from target ally. For 8 seconds, the next
+    // time that ally would take damage or life steal, that ally gains
+    // that amount of Health instead (maximum 20...100)": the cap is the
+    // status's, at the caster's rank.
+    effects: [
+      {
+        kind: "remove-status",
+        category: "condition",
+        count: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 0, atTwelve: 1.6 },
+        },
+      },
+      { kind: "apply-status", statusId: "life-sheath", durationSeconds: { flat: 8 } },
+    ],
+  },
+  {
+    id: "monk.reverse-hex",
+    name: "Reverse Hex",
+    gwId: 848,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove one hex from target ally. If a hex was removed in this way,
+    // for 5...10 seconds, the next time target ally would take damage,
+    // that damage is reduced by 5...50": the cut is the status's.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "reverse-hex",
+            durationSeconds: {
+              scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 9 },
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];

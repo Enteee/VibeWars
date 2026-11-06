@@ -74,7 +74,7 @@ export function openRelayPrompt(
   window.setTimeout(() => {
     use.disabled = false;
   }, ARM_USE_MS);
-  const actions = h("div", "menu-row relay-prompt-actions");
+  const actions = h("div", "menu-row overlay-actions relay-prompt-actions");
   actions.append(use, ignore);
   panel.appendChild(actions);
 

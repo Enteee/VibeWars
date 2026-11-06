@@ -254,7 +254,7 @@ describe("Escape (#976)", () => {
 
   it("says so", () => {
     expect(describeStatus("escape")).toBe(
-      "moves at 133% speed, 75% chance to block attacks, ends if the bearer makes a melee attack",
+      "moves at 133% speed, 75% chance to block attacks, ends if you make a melee attack",
     );
   });
 });

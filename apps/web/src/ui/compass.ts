@@ -1,4 +1,5 @@
 import { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL, type Vec2 } from "@vibewars/game-core";
+import { MAX_STROKE_POINTS, type PeerCall, type WirePoint } from "@vibewars/game-protocol";
 import { PING_SECONDS } from "@vibewars/game-session";
 
 import { type ArenaSnapshot, type RenderableWall } from "../render/arena-snapshot.js";
@@ -12,7 +13,8 @@ import { prefersReducedMotion } from "./recharge-overlay.js";
  * (#1199), a Guild Battle's lords, flags and stand (#1226), a Relic Run's
  * altar (#1388), Capture Points' shrines (#1407), the earshot and cast-range rings and the walls
  * (docs/art/art-direction.md "Compass"). Bodies beyond it are not shown:
- * the edge markers (#440) give direction, the compass distance.
+ * the edge markers (#440) give direction, the compass distance. A click
+ * on it pings that spot, and a drag draws a line your team sees (#2391).
  */
 
 /** The compass's content in its own px, centre (0,0), y down, north up (#486). */
@@ -32,6 +34,11 @@ export interface CompassView {
   }[];
   /** `age`: 0 when pinged, 1 when it goes. */
   readonly pings: readonly { readonly x: number; readonly y: number; readonly age: number }[];
+  /**
+   * Your team's lines (#2391), every point kept: the disc's clip cuts
+   * what lies beyond its reach. `remaining` in seconds, above 0.
+   */
+  readonly strokes: readonly { readonly points: readonly Vec2[]; readonly remaining: number }[];
   /** Each team's resurrection shrine in reach (#1199), whether its priest stands or not. */
   readonly shrines: readonly {
     readonly x: number;
@@ -150,6 +157,107 @@ export function compassReach(map: { readonly width: number; readonly height: num
   return Math.min(RANGE_COMPASS, Math.max(map.width, map.height));
 }
 
+/**
+ * The world point `px` compass px from the centre shows (#2391), with
+ * `self` at the centre at `scale` px per world unit: `compassView`'s
+ * mapping, inverted.
+ */
+export function worldAt(self: Vec2, scale: number, px: Vec2): Vec2 {
+  return { x: self.x + px.x / scale, y: self.y + px.y / scale };
+}
+
+/** How long a line stays whole, seconds, before it fades out over its last one (#2391). */
+const STROKE_FADE_SECONDS = 1;
+
+/**
+ * A line's alpha with `remaining` seconds left (#2391): whole, then
+ * fading over its last second; whole to the end when `still`
+ * (`prefersReducedMotion`); 0 once gone.
+ */
+export function strokeAlpha(remaining: number, still: boolean): number {
+  if (remaining <= 0) {
+    return 0;
+  }
+  return still ? 1 : Math.min(1, remaining / STROKE_FADE_SECONDS);
+}
+
+/** Under this many compass px moved before release, a press is a click: a ping (#2391). */
+const CLICK_SLOP_PX = 4;
+
+/** Whether a press from `from` now at `at`, compass px, is a drag rather than a click (#2391). */
+export function isDrag(from: Vec2, at: Vec2): boolean {
+  return Math.hypot(at.x - from.x, at.y - from.y) >= CLICK_SLOP_PX;
+}
+
+/** How often a drag sends what it has drawn, ms (#2391). */
+export const STROKE_BATCH_MS = 100;
+
+export type StrokeCall = Extract<PeerCall, { kind: "stroke" }>;
+
+/** One drag's points, sent in batches as it goes (#2391). */
+export interface StrokeRecorder {
+  /** A drag starts at world point `at`, at `nowMs`. */
+  start(at: Vec2, nowMs: number): void;
+  /** The drag is at `at`; sends a batch once `STROKE_BATCH_MS` has passed, or it is full. */
+  move(at: Vec2, nowMs: number): void;
+  /** The drag ends: sends what is left of it. */
+  end(nowMs: number): void;
+  /** The drag ends sending nothing more: you died. */
+  drop(): void;
+}
+
+/**
+ * Batches each drag into `StrokeCall`s for `send` (#2391): every
+ * `STROKE_BATCH_MS`, and on release, each batch starting at the last
+ * one's last point so they join. A point closer than `minGap` world
+ * units to the last one kept is dropped.
+ */
+export function createStrokeRecorder(
+  minGap: number,
+  send: (call: StrokeCall) => void,
+): StrokeRecorder {
+  let strokeId = 0;
+  let points: WirePoint[] | undefined;
+  let sentAt = 0;
+  const flush = (nowMs: number): void => {
+    const last = points?.at(-1);
+    if (points === undefined || last === undefined) {
+      return;
+    }
+    if (points.length >= 2) {
+      send({ kind: "stroke", strokeId, points });
+    }
+    points = [last];
+    sentAt = nowMs;
+  };
+  return {
+    start(at, nowMs) {
+      strokeId += 1;
+      points = [[at.x, at.y]];
+      sentAt = nowMs;
+    },
+    move(at, nowMs) {
+      const last = points?.at(-1);
+      if (points === undefined || last === undefined) {
+        return;
+      }
+      if (Math.hypot(at.x - last[0], at.y - last[1]) >= minGap) {
+        points.push([at.x, at.y]);
+      }
+      if (points.length >= MAX_STROKE_POINTS || nowMs - sentAt >= STROKE_BATCH_MS) {
+        flush(nowMs);
+      }
+    },
+    end(nowMs) {
+      flush(nowMs);
+      points = undefined;
+    },
+    drop() {
+      points = undefined;
+    },
+  };
+}
+
 /** `undefined`: no self actor (a spectator), so no compass. */
 export function compassView(
   arena: ArenaSnapshot,
@@ -192,6 +300,9 @@ export function compassView(
         ...local(ping.position),
         age: Math.max(0, Math.min(1, 1 - ping.remaining / PING_SECONDS)),
       })),
+    strokes: arena.strokes
+      .filter((stroke) => stroke.remaining > 0)
+      .map((stroke) => ({ points: stroke.points.map(local), remaining: stroke.remaining })),
     shrines: arena.shrines
       .filter((shrine) => within(shrine.position))
       .map((shrine) => ({ ...local(shrine.position), side: shrine.side })),
@@ -251,15 +362,107 @@ export interface Compass {
   dispose(): void;
 }
 
+/** What the compass's own clicks and drags send (#2391). */
+export interface CompassCalls {
+  /** A click: ping world point `at`. */
+  onPing(at: Vec2): void;
+  /** A drag's next segment. */
+  onStroke(call: StrokeCall): void;
+}
+
 /**
  * One `<canvas class="compass">` in `parent`, its size set by CSS,
- * reaching `reach` (`compassReach`).
+ * reaching `reach` (`compassReach`), its clicks and drags to `calls`.
  */
-export function createCompass(parent: HTMLElement, reach: number): Compass {
+export function createCompass(parent: HTMLElement, reach: number, calls: CompassCalls): Compass {
   const canvas = document.createElement("canvas");
   canvas.className = "compass";
   parent.appendChild(canvas);
   let drawn = "";
+  /** You, as last drawn: where the centre is, and whether you may call. */
+  let self: { readonly position: Vec2; readonly scale: number; readonly dead: boolean } | undefined;
+  // A point closer than this to the last one adds nothing a 2 px line shows.
+  const recorder = createStrokeRecorder(reach / 80, (call) => {
+    calls.onStroke(call);
+  });
+  /** The press under way: where it went down, in compass px, and whether it is a drag yet. */
+  let press: { readonly pointerId: number; readonly from: Vec2; dragging: boolean } | undefined;
+
+  /** `event`'s spot in compass px from the centre, pulled in to the disc's edge. */
+  const pxOf = (event: PointerEvent): Vec2 => {
+    const box = canvas.getBoundingClientRect();
+    const half = canvas.clientWidth / 2;
+    const x = event.clientX - box.left - canvas.clientLeft - half;
+    const y = event.clientY - box.top - canvas.clientTop - half;
+    const out = Math.hypot(x, y) / half;
+    return out > 1 ? { x: x / out, y: y / out } : { x, y };
+  };
+  const worldOf = (px: Vec2): Vec2 | undefined =>
+    self === undefined || self.dead ? undefined : worldAt(self.position, self.scale, px);
+  const release = (nowMs: number): void => {
+    if (press?.dragging === true) {
+      recorder.end(nowMs);
+    }
+    press = undefined;
+  };
+
+  const onDown = (event: PointerEvent): void => {
+    if (event.button !== 0 || self === undefined || self.dead) {
+      return;
+    }
+    event.preventDefault();
+    canvas.setPointerCapture(event.pointerId);
+    press = { pointerId: event.pointerId, from: pxOf(event), dragging: false };
+  };
+  const onMove = (event: PointerEvent): void => {
+    if (press?.pointerId !== event.pointerId) {
+      return;
+    }
+    const px = pxOf(event);
+    const at = worldOf(px);
+    // Dead mid-drag: the line stops where it was.
+    if (at === undefined) {
+      recorder.drop();
+      press = undefined;
+      return;
+    }
+    if (!press.dragging) {
+      if (!isDrag(press.from, px)) {
+        return;
+      }
+      const from = worldOf(press.from);
+      if (from === undefined) {
+        return;
+      }
+      press.dragging = true;
+      recorder.start(from, event.timeStamp);
+    }
+    recorder.move(at, event.timeStamp);
+  };
+  const onUp = (event: PointerEvent): void => {
+    if (press?.pointerId !== event.pointerId) {
+      return;
+    }
+    if (!press.dragging) {
+      const at = worldOf(press.from);
+      if (at !== undefined) {
+        calls.onPing(at);
+      }
+    }
+    release(event.timeStamp);
+  };
+  const onCancel = (event: Event): void => {
+    release(event.timeStamp);
+  };
+  const onContextMenu = (event: MouseEvent): void => {
+    event.preventDefault();
+  };
+  canvas.addEventListener("pointerdown", onDown);
+  canvas.addEventListener("pointermove", onMove);
+  canvas.addEventListener("pointerup", onUp);
+  canvas.addEventListener("pointercancel", onCancel);
+  canvas.addEventListener("contextmenu", onContextMenu);
+  window.addEventListener("blur", onCancel);
 
   const draw = (context: CanvasRenderingContext2D, view: CompassView, sizePx: number): void => {
     const half = sizePx / 2;
@@ -290,6 +493,25 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
       context.stroke();
     }
     context.setLineDash([]);
+    // Your team's lines (#2391): over the ground, under every mark.
+    const still = prefersReducedMotion();
+    context.lineWidth = 2;
+    context.lineJoin = "round";
+    context.lineCap = "round";
+    context.strokeStyle = FRIEND;
+    for (const stroke of view.strokes) {
+      context.globalAlpha = strokeAlpha(stroke.remaining, still);
+      context.beginPath();
+      stroke.points.forEach((point, index) => {
+        if (index === 0) {
+          context.moveTo(point.x, point.y);
+        } else {
+          context.lineTo(point.x, point.y);
+        }
+      });
+      context.stroke();
+    }
+    context.globalAlpha = 1;
     // Under the pings and bodies, as the shrine's ring is under them in
     // the arena.
     context.lineWidth = 2;
@@ -352,7 +574,6 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
       context.fillText("⚑", flag.x + 3, flag.y);
     }
     context.lineWidth = 1;
-    const still = prefersReducedMotion();
     context.strokeStyle = FRIEND;
     for (const ping of view.pings) {
       context.globalAlpha = still ? 1 : 1 - ping.age;
@@ -398,6 +619,11 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
       // Hidden keeps its box (styles.css), so its size is there to read.
       const sizePx = canvas.clientWidth;
       const view = compassView(arena, selfId, sizePx, reach);
+      const actor = arena.actors.find(({ id }) => id === selfId);
+      self =
+        view === undefined || actor === undefined
+          ? undefined
+          : { position: actor.position, scale: view.scale, dead: actor.dead };
       // A spectator has no compass.
       setHidden(canvas, view === undefined);
       if (view === undefined || sizePx === 0) {
@@ -422,6 +648,7 @@ export function createCompass(parent: HTMLElement, reach: number): Compass {
       draw(context, view, sizePx);
     },
     dispose() {
+      window.removeEventListener("blur", onCancel);
       canvas.remove();
     },
   };

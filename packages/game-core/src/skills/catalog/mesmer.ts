@@ -4507,6 +4507,157 @@ export const MESMER_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "mesmer.tease",
+    name: "Tease",
+    // The PvP split (3463); the base record is 1342.
+    gwId: 1342,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is using a skill, that foe and other foes in the area
+    // are interrupted and you steal 0...5 Energy from all foes in the
+    // area" (PvP, #2374): 4 at rank 12. A foe not using a skill: nothing.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-using-skill" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_IN_THE_AREA,
+            includesCentre: true,
+            maxTargets: undefined,
+            effects: [
+              { kind: "interrupt" },
+              {
+                kind: "energy-steal",
+                amount: {
+                  scaling: { attributeId: "mesmer.inspiration-magic", atZero: 0, atTwelve: 4 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.signet-of-recall",
+    name: "Signet of Recall",
+    gwId: 1993,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 6 seconds, you have -4 Energy regeneration. When this effect
+    // ends, you gain 13...20 Energy" (#2374): the energy is the status's.
+    effects: [{ kind: "apply-status", statusId: "signet-of-recall", durationSeconds: { flat: 6 } }],
+  },
+  {
+    id: "mesmer.sympathetic-visage",
+    name: "Sympathetic Visage",
+    gwId: 34,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Staples (#2414). "For 4...10 seconds, whenever target ally is hit by
+    // a melee attack, all adjacent foes lose all adrenaline and 3 Energy":
+    // 8.8 s at rank 12; the trigger is the status's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "sympathetic-visage",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.mantra-of-inscriptions",
+    name: "Mantra of Inscriptions",
+    gwId: 15,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...25 seconds, signets you successfully activate while in this
+    // stance recharge 10...40% faster": 21 s at rank 12, the share the
+    // stance's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mantra-of-inscriptions",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 5, atTwelve: 21 },
+        },
+      },
+    ],
+  },
+  {
     id: "mesmer.air-of-disenchantment",
     name: "Air of Disenchantment",
     gwId: 1656,

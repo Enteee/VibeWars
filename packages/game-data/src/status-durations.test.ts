@@ -70,6 +70,16 @@ function perRankOf(
   );
 }
 
+/**
+ * Whether `gwId`'s or its PvP split's text doubles a duration on a
+ * condition, so twice a range counts too: Mystic Corruption's Disease
+ * when enchanted (#2368).
+ */
+function doubles(gwId: number | undefined): boolean {
+  const split = gwId === undefined ? undefined : PVP_SPLIT.get(gwId);
+  return [gwId, split].some((id) => (TEXT.get(id ?? -1) ?? "").includes("duration is doubled"));
+}
+
 /** The rank-12 value of a range, unrounded, as the catalog writes it. */
 function atTwelve([low, high]: readonly [number, number]): number {
   return low + (high - low) * 0.8;
@@ -105,8 +115,11 @@ describe("status durations at the caster's rank (#2041)", () => {
       }
       expect(attributeId, skill.id).toBe(skill.attributeId);
       expect(
-        ranges(skill.gwId, true).some(
-          (range) => range[0] === atZero && Math.abs(atTwelve(range) - twelve) < 1e-9,
+        ranges(skill.gwId, true).some((range) =>
+          (doubles(skill.gwId) ? [1, 2] : [1]).some(
+            (times) =>
+              range[0] * times === atZero && Math.abs(atTwelve(range) * times - twelve) < 1e-9,
+          ),
         ),
         `${skill.id} ${effect.statusId}`,
       ).toBe(true);

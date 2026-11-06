@@ -15,6 +15,7 @@ import {
   aggregateModifiers,
   clampPips,
   getStatusDefinition,
+  nextSkillAnswers,
   ownSkillBoost,
   scaledStatAttributes,
   type StatusId,
@@ -26,7 +27,16 @@ const BLOOD = "necromancer.blood-magic";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { attackDamageDeltaOf } from "./tick.js";
 import type { FiredTrigger } from "./triggers.js";
+import type { Skill } from "./types.js";
 import { attackBlockedRiders } from "./weapon-attack.js";
+
+function skill(id: string): Skill {
+  const found = getSkill(id);
+  if (found === undefined) {
+    throw new Error(`unknown skill ${id}`);
+  }
+  return found;
+}
 
 const ALL_STATUS_IDS = Object.keys(STATUS_DEFINITIONS) as StatusId[];
 
@@ -78,7 +88,7 @@ describe("status definitions", () => {
         def.healthPerSecond !== 0 ||
         def.healthPerSecondNearSpirit !== 0 ||
         def.armorReduction !== undefined ||
-        def.moveSpeedMultiplier !== 1 ||
+        statAtTwelve(def.moveSpeedMultiplier) !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
         def.maxHealthBonus !== 0 ||
@@ -97,6 +107,9 @@ describe("status definitions", () => {
         def.preventsShoutsAndChants ||
         def.preventsSignets ||
         def.attackDurationMultiplier !== 1 ||
+        def.conditionDurationMultiplier !== 1 ||
+        def.upkeepMultiplier !== 1 ||
+        def.overcastSurcharge !== 0 ||
         def.projectileSpeedMultiplier !== 1 ||
         def.block !== undefined ||
         def.projectsAura !== undefined ||
@@ -105,6 +118,7 @@ describe("status definitions", () => {
         def.lifeStealReduction !== 0 ||
         def.knockdownMinSeconds !== undefined ||
         def.reversesNextDamage !== undefined ||
+        def.nextDamageReduction !== undefined ||
         def.reflectsNextDamage !== undefined ||
         def.damageToHealing !== undefined ||
         def.pulse !== undefined ||
@@ -181,7 +195,7 @@ describe("status definitions", () => {
     expect(statAtTwelve(getStatusDefinition("burning").healthPips)).toBeLessThan(
       statAtTwelve(getStatusDefinition("bleeding").healthPips),
     );
-    expect(getStatusDefinition("crippled").moveSpeedMultiplier).toBeLessThan(1);
+    expect(statAtTwelve(getStatusDefinition("crippled").moveSpeedMultiplier)).toBeLessThan(1);
     expect(getStatusDefinition("blind").attackMissChance).toBeGreaterThan(0.5);
     expect(getStatusDefinition("deep-wound").maxHealthLoss?.fraction).toBeGreaterThan(0);
     expect(getStatusDefinition("deep-wound").healingMultiplier).toBeLessThan(1);
@@ -255,6 +269,8 @@ describe("status definitions", () => {
       "restful-breeze": 10,
       "vile-miasma": -4.2,
       "i-will-avenge-you": 6,
+      "watchful-healing": 3.4,
+      "hexers-vigor": 6.6,
       "mark-of-insecurity": -4.2,
     });
   });
@@ -286,6 +302,8 @@ describe("status definitions", () => {
       "well-of-weariness": -1,
       "lyssas-aura": 4,
       succor: 1,
+      "signet-of-recall": -4,
+      "spirit-channeling": 5,
     });
   });
 
@@ -759,6 +777,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "expiry",
         expired: true,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -768,6 +787,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "removed",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -777,6 +797,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "by-category",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -786,6 +807,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "attacked",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -795,6 +817,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "spells",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -804,6 +827,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "attacks",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -813,6 +837,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "knockdown",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -839,6 +864,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "a",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -848,6 +874,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "a",
         expired: false,
         death: false,
+        heldSeconds: 1,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -866,15 +893,59 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     expect(set.active).toEqual([]);
   });
 
+  it("ends Hexer's Vigor on any skill but a hex, or the one that spared it (#2411)", () => {
+    const vigor = (): StatusSet => {
+      const set = new StatusSet();
+      set.apply("hexers-vigor", 10, "p", NO_RANKS);
+      return set;
+    };
+    for (const id of ["monk.healing-breeze", "warrior.healing-signet", "warrior.sprint"]) {
+      expect(vigor().endOnBearerUseSkill(new Set(), skill(id))).toEqual(["hexers-vigor"]);
+    }
+    expect(vigor().endOnBearerUseSkill(new Set(), skill("necromancer.faintheartedness"))).toEqual(
+      [],
+    );
+    expect(
+      vigor().endOnBearerUseSkill(new Set(["hexers-vigor"]), skill("necromancer.hexers-vigor")),
+    ).toEqual([]);
+  });
+
+  it('nextSkillAnswers("hex") answers a hex only (#2411)', () => {
+    expect(nextSkillAnswers("hex", skill("necromancer.faintheartedness"))).toBe(true);
+    expect(nextSkillAnswers("hex", skill("monk.healing-breeze"))).toBe(false);
+  });
+
+  it("ends Battle Rage on a non-adrenal skill, Disciplined Stance on an adrenal one (#2411)", () => {
+    // One stance at a time: each on its own.
+    const stance = (id: StatusId): StatusSet => {
+      const set = new StatusSet();
+      set.apply(id, 10, "p", NO_RANKS);
+      return set;
+    };
+    const adrenal = skill("warrior.backbreaker");
+    const plain = skill("warrior.healing-signet");
+    expect(stance("battle-rage").endOnBearerUseSkill(new Set(), adrenal)).toEqual([]);
+    expect(stance("battle-rage").endOnBearerUseSkill(new Set(), plain)).toEqual(["battle-rage"]);
+    expect(stance("disciplined-stance").endOnBearerUseSkill(new Set(), adrenal)).toEqual([
+      "disciplined-stance",
+    ]);
+    expect(stance("disciplined-stance").endOnBearerUseSkill(new Set(), plain)).toEqual([]);
+  });
+
   it("ends what ends on a skill used, but what that skill spared (#999)", () => {
     const set = new StatusSet();
     set.apply("song-of-restoration", 10, "p", NO_RANKS);
     set.apply("diversion", 6, "foe", NO_RANKS);
-    expect(set.endOnBearerUseSkill(new Set(["song-of-restoration"]), false)).toEqual(["diversion"]);
+    expect(
+      set.endOnBearerUseSkill(new Set(["song-of-restoration"]), skill("monk.healing-breeze")),
+    ).toEqual(["diversion"]);
     expect(set.has("song-of-restoration")).toBe(true);
 
     set.apply("diversion", 6, "foe", NO_RANKS);
-    expect(set.endOnBearerUseSkill(new Set(), false)).toEqual(["song-of-restoration", "diversion"]);
+    expect(set.endOnBearerUseSkill(new Set(), skill("monk.healing-breeze"))).toEqual([
+      "song-of-restoration",
+      "diversion",
+    ]);
     expect(set.active).toEqual([]);
   });
 
@@ -930,6 +1001,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "a",
         expired: false,
         death: true,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -939,6 +1011,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "b",
         expired: false,
         death: true,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -948,6 +1021,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "c",
         expired: false,
         death: true,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -957,6 +1031,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "d",
         expired: false,
         death: true,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -1196,6 +1271,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         sourceId: "b",
         expired: false,
         death: true,
+        heldSeconds: 0,
         returnPoint: null,
         stepTargetId: null,
       },
@@ -1387,7 +1463,7 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Tiger Stance and Berserker Stance (#2181) 33%, Tiger's Fury (#2190) 25%, Rapid Fire (#2189) 33% with a bow, Way of the Assassin (#2275) 5...20% with daggers, Dwarven Battle Stance (#2335) 33% with a hammer, I Will Avenge You! (#2320) 25%, Burst of Aggression (#2320) 33%, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Tiger Stance and Berserker Stance (#2181) 33%, Tiger's Fury (#2190) and Bestial Fury (#2317) 25%, Feral Aggression (#2317) 33%, Rapid Fire (#2189) 33% with a bow, Way of the Assassin (#2275) 5...20% with daggers, Dwarven Battle Stance (#2335) 33% with a hammer, I Will Avenge You! (#2320) 25%, Burst of Aggression (#2320) 33%, Primal Rage (#2406) 33%, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, StatusStat>> = {
       faintheartedness: 1.5,
@@ -1413,11 +1489,14 @@ describe("attack duration (ADR-0029)", () => {
       "rapid-fire": 0.67,
       "dwarven-battle-stance": 0.67,
       "tigers-fury": 0.75,
+      "bestial-fury": 0.75,
+      "feral-aggression": 0.67,
       "way-of-the-assassin": {
         scaling: { attributeId: "assassin.critical-strikes", atZero: 0.95, atTwelve: 0.83 },
       },
       "i-will-avenge-you": 0.75,
       "burst-of-aggression": 0.67,
+      "primal-rage": 0.67,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;
@@ -1577,5 +1656,43 @@ describe("StatusSet.recordInterrupt (#1473, #2132)", () => {
     expect(
       set.drainChanges().map((change) => change.kind === "interrupted" && change.skill),
     ).toEqual([{ skillId: "mesmer.empathy", key: "mesmer.empathy" }, undefined]);
+  });
+});
+
+describe("rank-scaled speed and reversal (#2428)", () => {
+  const FIRE = "elementalist.fire-magic";
+  const speed = (set: StatusSet): number => aggregateModifiers(set.active).moveSpeedMultiplier;
+
+  it.each([
+    [0, 1.3],
+    [12, 1.42],
+  ])("Burning Speed at Fire Magic %i moves %f times as fast", (rank, multiplier) => {
+    const set = new StatusSet();
+    set.apply("burning-speed", 7, "e", new Map([[FIRE, rank]]));
+    expect(speed(set)).toBeCloseTo(multiplier);
+  });
+
+  it("is barred like any boost by preventsSpeedBoosts", () => {
+    const set = new StatusSet();
+    set.apply("muddy-terrain", 10, "r", NO_RANKS);
+    set.apply("burning-speed", 7, "e", new Map([[FIRE, 12]]));
+    expect(speed(set)).toBeCloseTo(0.9);
+  });
+
+  it("leaves a flat speed as it was: Crippled and Dash", () => {
+    const set = new StatusSet();
+    set.apply("crippled", 10, "a", NO_RANKS);
+    expect(speed(set)).toBe(0.5);
+    set.apply("dash", 3, "a", NO_RANKS);
+    expect(speed(set)).toBe(0.75);
+  });
+
+  it.each([
+    [0, 20],
+    [12, 84],
+  ])("Life Sheath at Protection Prayers %i caps its reversal at %i", (rank, cap) => {
+    const set = new StatusSet();
+    set.apply("life-sheath", 8, "monk", new Map([["monk.protection-prayers", rank]]));
+    expect(set.takeReversal()).toEqual({ id: "life-sheath", cap });
   });
 });

@@ -250,6 +250,11 @@ export function settingsIcon(): string {
   return iconUrl("ui", "settings");
 }
 
+/** The top bar's Lobby (#2385): three heads, who is in it with you. */
+export function lobbyIcon(): string {
+  return iconUrl("ui", "lobby");
+}
+
 /** The [?] of the top bar and the HUD: the player docs (#1257). */
 export function helpIcon(): string {
   return iconUrl("ui", "help");
@@ -264,3 +269,12 @@ export function fullscreenIcon(fullscreen: boolean): string {
 export function chatIcon(): string {
   return iconUrl("ui", "chat");
 }
+
+/**
+ * The host's lobby toggle (#2382): a shut padlock while closed, an open
+ * door while open. They differ in shape, so neither leans on colour.
+ */
+export const LOBBY_ICON: Readonly<Record<"closed" | "open", string>> = {
+  closed: iconUrl("ui", "lobby-closed"),
+  open: iconUrl("ui", "lobby-open"),
+};

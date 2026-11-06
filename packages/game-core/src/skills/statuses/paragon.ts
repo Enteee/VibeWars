@@ -353,6 +353,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",
