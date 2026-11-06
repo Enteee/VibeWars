@@ -2678,29 +2678,6 @@ test("other professions' skills are listed, locked, with what they need (#568)",
   await expect(locked.locator("summary")).toHaveText("Other professions (1)");
 });
 
-test("the library's 'Not in the game yet' lists no skill: every PvP corpus skill is in the game (#1220, #2503)", async ({
-  page,
-}) => {
-  await openElementalist(page);
-  const toggle = filterChip(page, "Not in the game yet");
-  await openLibraryGroup(page, "Earth Magic");
-  await page.locator(".skill-filter-button").click();
-  await expect(toggle).toHaveAttribute("aria-pressed", "false");
-
-  // The corpus loads on the toggle: none shown must mean none missing.
-  const corpusLoaded = page.waitForResponse((response) => response.url().includes("corpus"));
-  await toggle.click();
-  await corpusLoaded;
-  await expect(toggle).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Done" }).click();
-  // Stone Striker, the last Earth Magic gap, is playable now (#2503).
-  const earth = page.locator(".skill-group", { hasText: "EARTH MAGIC" });
-  await expect(earth.locator(".skill-box", { hasText: "Stone Striker" })).toHaveCount(1);
-  await page.locator("input.skill-search").fill("stone");
-  await expect(page.locator(".skill-box", { hasText: "Stone Striker" })).toHaveCount(1);
-  await expect(page.locator(".skill-corpus-box")).toHaveCount(0);
-});
-
 test("of Fortitude on the sword, picked on the paper-doll, adds 30 Health, and stays on after Save and a reload (#2008, #2151)", async ({
   page,
 }) => {

@@ -105,10 +105,6 @@ turn them all off. Skills of other professions wait, folded, under
 The attribute groups start folded: click a group's name to open it. A
 search or a filter opens every group it finds something in.
 
-**Not in the game yet**, under Show in the Filters window, adds the GW1
-skills VibeWars does not have yet, greyed out. You can read them, not
-equip them. It is remembered, and is not counted as a filter.
-
 Beside the editor, the **Training Ground** lets you try your bar on
 practice targets before a match. Its log shows every skill you or a bot
 use, the adrenaline you gain, and a skill that had no effect, with what
