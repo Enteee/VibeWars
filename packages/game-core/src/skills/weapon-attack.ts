@@ -2,7 +2,7 @@ import { AREA_ADJACENT } from "../distances.js";
 import type { ResolvedWeapon, WeaponHitMods } from "../equipment/resolve.js";
 import { type DamageType } from "../equipment/types.js";
 import { modWhileHolds } from "./mod-conditions.js";
-import { isCasterWeapon, wieldsFor, type Weapon } from "../equipment/weapons.js";
+import { isCasterWeapon, wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import {
   CRITICAL_STRIKES_ATTRIBUTE,
   CRITICAL_STRIKES_CHANCE_PER_RANK,
@@ -60,6 +60,7 @@ import {
 import type { FiredTrigger } from "./triggers.js";
 import {
   blowRuleOf,
+  type AttackWeaponClass,
   type Combatant,
   type PetAttackRule,
   type Skill,
@@ -120,14 +121,25 @@ export function attackDurationSeconds(combatant: Combatant, baseSeconds: number)
 /**
  * Whether a status's critical chance holds for `combatant` (#2275): not
  * one held for a weapon it is not wielding, as Way of the Assassin's off
- * daggers.
+ * daggers, nor one held for any weapon but one (#2504) while it wields
+ * that one or none, as Way of the Master's with daggers or bare hands.
  */
 function gatesCritical(combatant: Combatant): (status: Pick<ActiveStatus, "id">) => boolean {
   const wielded = combatant.equipment.mainHand.weapon.id;
   return ({ id }) => {
     const weapon = getStatusDefinition(id).criticalChanceBonusWeapon;
-    return weapon === undefined || wieldsFor(wielded, weapon);
+    return weapon === undefined || holdsFor(wielded, weapon);
   };
+}
+
+/** Whether `wielded` is `weapon`, or with `not` (#2504), a weapon but that one. */
+function holdsFor(
+  wielded: WeaponId,
+  weapon: AttackWeaponClass | { readonly not: AttackWeaponClass },
+): boolean {
+  return typeof weapon === "string"
+    ? wieldsFor(wielded, weapon)
+    : wielded !== "unarmed" && !wieldsFor(wielded, weapon.not);
 }
 
 /** The length of this combatant's swing with the weapon it holds, attack speed included. */
@@ -158,13 +170,22 @@ function rankIn(attacker: Combatant, attributeId: string | undefined): number {
   return attributeId === undefined ? 0 : rankOf(attacker, attributeId);
 }
 
-/** The chance this attacker's swing strikes twice: daggers only. */
+/**
+ * The chance this attacker's swing strikes twice: daggers' own, and what
+ * its statuses add for the weapon it holds (#2504), as Locust's Fury's.
+ */
 export function doubleStrikeChance(attacker: Combatant, weapon: Weapon): number {
   const rule = weapon.doubleStrike;
-  if (rule === undefined) {
-    return 0;
-  }
-  return Math.min(1, rule.baseChance + rule.perRank * rankIn(attacker, rule.attributeId));
+  const own =
+    rule === undefined ? 0 : rule.baseChance + rule.perRank * rankIn(attacker, rule.attributeId);
+  const added = attacker.statuses.active.reduce((sum, { id }) => {
+    const definition = getStatusDefinition(id);
+    const gate = definition.doubleStrikeChanceBonusWeapon;
+    return gate === undefined || wieldsFor(weapon.id, gate)
+      ? sum + definition.doubleStrikeChanceBonus
+      : sum;
+  }, 0);
+  return Math.min(1, own + added);
 }
 
 /**

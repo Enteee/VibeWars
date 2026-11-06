@@ -1,5 +1,5 @@
 import type { StatusDefinition } from "../status.js";
-import { AREA_ADJACENT } from "../../distances.js";
+import { AREA_ADJACENT, AREA_EARSHOT } from "../../distances.js";
 import { KNOCKDOWN_SECONDS } from "../types.js";
 import { define, ownSkills } from "./define.js";
 
@@ -68,7 +68,11 @@ export type AssassinStatusId =
   | "deadly-haste"
   // Mechanics (#2502).
   | "siphon-strength"
-  | "shadowy-burden";
+  | "shadowy-burden"
+  // Mechanics (#2504).
+  | "scorpion-wire"
+  | "locusts-fury"
+  | "way-of-the-master";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -641,5 +645,39 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
       },
       onlyWhileNoOtherHex: true,
     },
+  }),
+  // "...the next time you and target foe are more than 75' apart, you
+  // Shadow Step to that foe and that foe is knocked down" (#2504): GW1's
+  // 75' is 900 of earshot's 1,012.
+  "scorpion-wire": define("scorpion-wire", "Scorpion Wire", "hex", {
+    profession: "assassin",
+    triggers: [
+      {
+        on: "source-bearer-apart",
+        apartBeyond: Math.round((AREA_EARSHOT * 900) / 1012),
+        effects: [
+          { kind: "shadow-step", to: "target" },
+          { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+        ],
+        target: "bearer",
+        skillId: "assassin.scorpion-wire",
+      },
+    ],
+    endsWhenTriggered: true,
+  }),
+  // "...an additional 50% chance to double strike while using daggers" (#2504).
+  "locusts-fury": define("locusts-fury", "Locust's Fury", "enchantment", {
+    profession: "assassin",
+    doubleStrikeChanceBonus: 0.5,
+    doubleStrikeChanceBonusWeapon: "daggers",
+  }),
+  // "...while holding a non-dagger weapon, you have an additional 3...33%
+  // chance to land a critical hit" (#2504): never empty-handed.
+  "way-of-the-master": define("way-of-the-master", "Way of the Master", "enchantment", {
+    profession: "assassin",
+    criticalChanceBonus: {
+      scaling: { attributeId: "assassin.critical-strikes", atZero: 0.03, atTwelve: 0.27 },
+    },
+    criticalChanceBonusWeapon: { not: "daggers" },
   }),
 };

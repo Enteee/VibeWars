@@ -60,6 +60,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-chant-or-shout-ends"
   | "bearer-dies"
   | "source-targets-bearer"
+  | "source-bearer-apart"
   | "ends"
   | "ends-early"
   | "expires"
@@ -177,6 +178,27 @@ export function fireSourceTargetsTriggers(
         ...context,
         usedSkill: used,
       }),
+    );
+}
+
+/**
+ * Each status on `bearer` that answers `source-bearer-apart` and whose
+ * source `apart` says is farther than its `apartBeyond` fires (#2504),
+ * once each, in `active` order, as `fireTriggers`: Scorpion Wire's.
+ */
+export function fireSourceApartTriggers(
+  bearer: Combatant,
+  apart: (sourceId: string, beyond: number) => boolean,
+  context: TriggerContext,
+): FiredTrigger[] {
+  return bearer.statuses
+    .triggersOn("source-bearer-apart")
+    .filter(
+      ({ sourceId, trigger }) =>
+        trigger.apartBeyond !== undefined && apart(sourceId, trigger.apartBeyond),
+    )
+    .flatMap(({ statusId, sourceId, trigger }) =>
+      fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
     );
 }
 

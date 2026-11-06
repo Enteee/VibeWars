@@ -24,27 +24,12 @@ import { IMPLEMENTED_SKILLS } from "./catalog.js";
  * string would quietly create a new "mechanic" and split the report, and
  * grouping skills by what they are waiting on is the whole point.
  */
-export type MissingMechanic =
-  | "unwritten"
-  | "distance-trigger"
-  | "count-disabled-own-skills"
-  | "double-strike-bonus"
-  | "count-overcast"
-  | "nearest-spirit-energy-drain"
-  | "while-near-spirit"
-  | "weapon-filter-negation";
+export type MissingMechanic = "unwritten";
 
 /** What each missing mechanic would mean to build, in one line. */
 export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, string>> =
   Object.freeze({
     unwritten: "not a mechanic: the engine has every piece, only the catalog entry is missing",
-    "distance-trigger": "an effect fires after the bearer moves a distance",
-    "count-disabled-own-skills": "a magnitude counts how many of your skills are recharging",
-    "double-strike-bonus": "an attack strikes twice and the second strike has its own bonus",
-    "count-overcast": "a magnitude counts your Overcast",
-    "nearest-spirit-energy-drain": "Energy is stolen from the nearest spirit",
-    "while-near-spirit": "an effect holds while the bearer is within range of a spirit",
-    "weapon-filter-negation": "a bonus applies with every weapon except one type",
   });
 
 /**
@@ -56,15 +41,7 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
  * `coverage-gate.test.ts` fails on any key whose skill is implemented.
  */
 export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMechanic[]>> =
-  Object.freeze({
-    815: ["distance-trigger"], // Scorpion Wire
-    990: ["count-disabled-own-skills"], // Expunge Enchantments
-    1030: ["double-strike-bonus"], // Locust's Fury
-    1088: ["count-overcast"], // Second Wind
-    1228: ["nearest-spirit-energy-drain"], // Spirit Siphon
-    1244: ["while-near-spirit"], // Ghostly Haste
-    2187: ["weapon-filter-negation"], // Way of the Master
-  });
+  Object.freeze({});
 
 /** A corpus skill as coverage needs it: its GW1 id and name. */
 export interface CorpusRef {

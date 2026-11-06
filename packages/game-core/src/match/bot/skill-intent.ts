@@ -64,6 +64,12 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (isCompanionRule(skill.target)) {
     return [];
   }
+  // Second Wind (#2504): Health and Energy only per point of the caster's
+  // Overcast, which a bot never builds. Cast for its heal it would only
+  // strip the bot's own enchantments.
+  if (paysOnlyPerOvercast(skill)) {
+    return [];
+  }
   // Taking or freeing foe minions (#2092) is the take-minion rule's alone.
   if (takesMinions(skill)) {
     return ["take-minion"];
@@ -118,6 +124,23 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (uses.length === 0 && stateGates(skill) !== undefined) uses.push("offence");
   if (uses.length === 0 && boosts(skill)) uses.push("boost");
   return uses;
+}
+
+/**
+ * Whether every Health or Energy `skill` gives scales only with the caster's
+ * Overcast, nothing flat (#2504): Second Wind's.
+ */
+function paysOnlyPerOvercast(skill: Skill): boolean {
+  const gains = skill.effects.filter(
+    (effect) => effect.kind === "heal" || effect.kind === "energy-gain",
+  );
+  return (
+    gains.length > 0 &&
+    gains.every(
+      (gain) =>
+        "flat" in gain.amount && gain.amount.flat === 0 && gain.per?.count.kind === "overcast",
+    )
+  );
 }
 
 /**
@@ -230,8 +253,8 @@ function boosts(skill: Skill): boolean {
 
 /**
  * Whether `status` makes its bearer's attacks worth more (#2000): more on
- * a hit, more adrenaline, faster, more often critical or through more
- * armor, a rider on its next attack skill, or a trigger on its attacking;
+ * a hit, more adrenaline, faster, more often critical or twice (#2504),
+ * or through more armor, a rider on its next attack skill, or a trigger on its attacking;
  * or its melee blows replaced by surer damage (#2472), Illusionary
  * Weaponry's.
  */
@@ -243,6 +266,7 @@ function actsOnAttacks(status: StatusDefinition): boolean {
     statAtTwelve(status.attackDamageDelta) > 0 ||
     statAtTwelve(status.attackDurationMultiplier) < 1 ||
     statAtTwelve(status.criticalChanceBonus) > 0 ||
+    status.doubleStrikeChanceBonus > 0 ||
     status.attackArmorPenetration > 0 ||
     status.nextAttackSkill !== undefined ||
     status.triggers.some(({ on }) => on === "bearer-attacks" || on === "bearer-hits")

@@ -95,7 +95,9 @@ export type RitualistStatusId =
   | "vocal-was-sogolon"
   | "wielders-zeal"
   | "sight-beyond-sight"
-  | "wielders-remedy";
+  | "wielders-remedy"
+  // Mechanics (#2504).
+  | "ghostly-haste";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -1172,5 +1174,11 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
         skillId: "ritualist.wielders-remedy",
       },
     ],
+  }),
+  // "...spells you cast while within earshot of a spirit recharge 25%
+  // faster" (#2504).
+  "ghostly-haste": define("ghostly-haste", "Ghostly Haste", "enchantment", {
+    profession: "ritualist",
+    spellRechargeFasterNearSpirit: 0.25,
   }),
 };

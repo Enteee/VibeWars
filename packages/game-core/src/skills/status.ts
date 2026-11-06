@@ -462,6 +462,12 @@ export interface StatusDefinition {
    */
   readonly healthPerSecondNearSpirit: number;
   /**
+   * As `spellRechargeFaster`, for a spell the bearer finishes in earshot
+   * of a spirit, any owner's (#2504): Ghostly Haste's 0.25. Proximity is
+   * read as the recharge starts.
+   */
+  readonly spellRechargeFasterNearSpirit: number;
+  /**
    * Armor taken before `armorModifier`s add, never below a floor (#763):
    * Cracked Armor's −20, not below 60. `undefined`: none.
    */
@@ -943,9 +949,12 @@ export interface StatusDefinition {
   /**
    * `criticalChanceBonus` holds only while the bearer wields this weapon
    * (#2275), as `attackDurationMultiplierWeapon`: Way of the Assassin's
-   * "while wielding daggers". `undefined`: whatever it wields.
+   * "while wielding daggers", or while it holds any weapon but this one
+   * (#2504), `not`: Way of the Master's "while holding a non-dagger
+   * weapon", so never empty-handed. `undefined`: whatever it wields.
    */
-  readonly criticalChanceBonusWeapon: AttackWeaponClass | undefined;
+  readonly criticalChanceBonusWeapon:
+    AttackWeaponClass | { readonly not: AttackWeaponClass } | undefined;
   /**
    * `criticalChanceBonus` holds only against a victim of this kind
    * (#2320), read as the blow lands: "Fear Me!"'s "against foes that are
@@ -1431,6 +1440,13 @@ export interface StatusDefinition {
    */
   readonly spellRechargeFaster: number;
   /**
+   * Added to the chance the bearer's swing strikes twice, capped at 1,
+   * while it wields `doubleStrikeChanceBonusWeapon` (#2504): Locust's
+   * Fury's 0.5 "while using daggers". 0: none.
+   */
+  readonly doubleStrikeChanceBonus: number;
+  readonly doubleStrikeChanceBonusWeapon: AttackWeaponClass | undefined;
+  /**
    * The share taken off the recharge of each skill the bearer finishes,
    * of any type (#1539): Serpent's Quickness's 0.33. Read as
    * `spellRechargeFaster` is; with a type's own share, the larger counts.
@@ -1819,6 +1835,13 @@ export type StatusTriggerEvent =
    * skill targeting this foe". Fired by the simulation from the use.
    */
   | "source-targets-bearer"
+  /**
+   * The status's living source and its living bearer are more than the
+   * trigger's `apartBeyond` apart (#2504): checked each step, by the
+   * simulation, after everyone has moved. Scorpion Wire's "the next time
+   * you and target foe are more than 75' apart", which ends when triggered.
+   */
+  | "source-bearer-apart"
   /**
    * The bearer died while it was on (#1762): only what a death ends,
    * never an expiry or a removal earlier in the same tick. GW1's "if
@@ -2277,6 +2300,11 @@ export interface StatusTrigger {
    * it below, from at least that.
    */
   readonly healthBelow?: number;
+  /**
+   * On `source-bearer-apart`, and only there (#2504): the distance the
+   * source and the bearer must be more than apart.
+   */
+  readonly apartBeyond?: number;
   /**
    * On `bearer-hit-by-attack` only (#2134): it fires only for a hit by the
    * status's source, and with `chainRole`, only by an attack skill of that
@@ -5058,6 +5086,8 @@ export interface StatusModifiers {
   readonly healthPerSecond: number;
   /** Every status's, summed: health per second near a spirit (#1064). */
   readonly healthPerSecondNearSpirit: number;
+  /** As `spellRechargeFaster`, in earshot of a spirit (#2504). */
+  readonly spellRechargeFasterNearSpirit: number;
   /** The largest armor reduction; `undefined`: none. */
   readonly armorReduction: ArmorReduction | undefined;
   readonly moveSpeedMultiplier: number;
@@ -5226,6 +5256,7 @@ export function aggregateModifiers(
   let healthPerSecondWhileMoving = 0;
   let healthPerSecond = 0;
   let healthPerSecondNearSpirit = 0;
+  let spellRechargeNearSpiritKept = 1;
   let armorReduction: ArmorReduction | undefined;
   let moveSpeedMultiplier = 1;
   const speedBoostsBarred = statuses.some(({ id }) => getStatusDefinition(id).preventsSpeedBoosts);
@@ -5303,6 +5334,7 @@ export function aggregateModifiers(
     healthPerSecondWhileMoving += def.healthPerSecondWhileMoving;
     healthPerSecond += def.healthPerSecond;
     healthPerSecondNearSpirit += def.healthPerSecondNearSpirit;
+    spellRechargeNearSpiritKept *= 1 - def.spellRechargeFasterNearSpirit;
     if (
       def.armorReduction !== undefined &&
       (armorReduction === undefined || def.armorReduction.amount > armorReduction.amount)
@@ -5437,6 +5469,10 @@ export function aggregateModifiers(
     knockdownMinSeconds,
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),
+    spellRechargeFasterNearSpirit: Math.min(
+      MAX_RECHARGE_REDUCTION,
+      1 - spellRechargeNearSpiritKept,
+    ),
     skillRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - skillRechargeKept),
     bindingRitualRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - bindingRitualRechargeKept),
     adrenalineGainFaster,
