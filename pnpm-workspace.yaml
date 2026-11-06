@@ -13,3 +13,9 @@ strictPeerDependencies: false
 minimumReleaseAge: 10080
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
+
+# minimatch 10.2.6 has a medium advisory, fixed in 11.0.1 (GHSA-g3hv-75wg-m249,
+# #2416). Dev-only: eslint, @eslint/config-array and typescript-eslint pull it
+# in. Drop this once all three depend on minimatch ^11 themselves.
+overrides:
+  minimatch: ^11.0.1
