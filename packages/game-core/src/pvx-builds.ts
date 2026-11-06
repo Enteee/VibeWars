@@ -722,11 +722,6 @@ export const PVX_SOLO: readonly PvxBuild[] = [
   },
 ];
 
-/** How a PvX build is named in `PVX_SKIPPED`: the PvX file's name, its rating left out. */
-export function pvxKey(build: PvxBuild): string {
-  return `${build.professions} ${build.mode} ${build.name}`;
-}
-
 /**
  * The PvX builds that do not become a build here, and why: a skill not
  * in the game yet, or a bar the build rules refuse. Never patched to
