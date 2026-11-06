@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Unwritten corpus skills (#2500), stand-ins until their art card.
+  // Unwritten corpus skills (#2500), art #2516.
   // Skill effect: a shield with a flame beside it: the next attack skill
   // blocked, a melee attacker set alight.
   "burning-shield": [
