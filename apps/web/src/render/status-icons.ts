@@ -701,6 +701,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "illusionary-weaponry": icon("illusionary-weaponry"),
   // Mechanics (#2470).
   "unyielding-aura": icon("unyielding-aura"),
+  // Mechanics (#2478).
+  empowerment: icon("empowerment"),
+  "soul-twisting": icon("soul-twisting"),
 };
 
 const GAP = 2;
