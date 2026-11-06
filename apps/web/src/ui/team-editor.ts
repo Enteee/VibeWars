@@ -1343,6 +1343,7 @@ export function mountTeamEditor(
     dispose() {
       disposed = true;
       doll.close();
+      library.dispose();
       tooltip.dispose();
       document.removeEventListener("pointerdown", onPointerDown);
       stopPaste();
