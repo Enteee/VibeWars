@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { openLibraryGroup } from "./helpers/library.js";
 import { openRail } from "./helpers/menu.js";
+import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
 import { chooseProfession } from "./helpers/professions.js";
 
 /**
@@ -142,14 +143,34 @@ test("the top bar's ⚙ opens Options over the screen; Esc closes it and leaves 
   await expect(options).toHaveCount(0);
   await expect(teamName).toBeVisible();
 
-  // Close does the same; then Esc is the screen's again.
+  // Its × does the same; then Esc is the screen's again.
   await page.locator("#topbar").getByRole("button", { name: "Options" }).click();
-  // The overlay's Close is in the top bar, beside its place (#1272).
-  await page.locator("#topbar").getByRole("button", { name: "Close", exact: true }).click();
+  // The × is the window's own, at its top right (#2381).
+  await options.getByRole("button", { name: "Close", exact: true }).click();
   await expect(options).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(teamName).toHaveCount(0);
 });
+
+for (const viewport of OVERLAY_VIEWPORTS) {
+  test(`Options' × sits at its own top right at ${String(viewport.width)} px; it and Esc close it (#2381)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("./");
+    const options = page.getByRole("dialog", { name: "Options" });
+
+    await clickTopbarIcon(page, ".topbar-options");
+    const close = await expectCloseAtTopRight(page, options);
+    await close.click();
+    await expect(options).toHaveCount(0);
+
+    await clickTopbarIcon(page, ".topbar-options");
+    await expect(options).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(options).toHaveCount(0);
+  });
+}
 
 test("Options lists the third-party licences, each with its full text (#1235)", async ({
   page,

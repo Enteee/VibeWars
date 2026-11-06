@@ -7,6 +7,7 @@ import {
   emptyState,
   inlineConfirm,
   keepInside,
+  overlayClose,
   screenBar,
   selectableRow,
   setToastHost,
@@ -126,6 +127,8 @@ class FakeNode {
   textContent = "";
   hidden = false;
   type = "";
+  title = "";
+  readonly attributes = new Map<string, string>();
   /** The page itself: what is below it is connected (#578). */
   isPage = false;
   readonly style = { display: "" };
@@ -160,8 +163,8 @@ class FakeNode {
     return this.isPage || this.parent?.isConnected === true;
   }
 
-  setAttribute(): void {
-    // Roles and labels are not under test here.
+  setAttribute(name: string, value: string): void {
+    this.attributes.set(name, value);
   }
 
   append(...nodes: FakeNode[]): void {
@@ -714,6 +717,25 @@ describe("emptyState (#578)", () => {
     expect(state.children.map((child) => child.textContent)).toEqual(["No teams yet.", "New team"]);
     state.button("New team").click();
     expect(onAction).toHaveBeenCalledOnce();
+  });
+});
+
+describe("overlayClose (#2381)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement, body: new FakeNode() });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("is a × named Close, says Esc does it too, and closes on a click", () => {
+    const onClose = vi.fn();
+    const close = overlayClose(onClose) as unknown as FakeNode;
+    expect(close.textContent).toBe("×");
+    expect(close.attributes.get("aria-label")).toBe("Close");
+    expect(close.title).toBe("Close (Esc)");
+    close.click();
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });
 

@@ -28,6 +28,17 @@ export function button(label: string, className: string, onClick: () => void): H
 }
 
 /**
+ * An overlay window's × (#2381): at its panel's top right, the panel's
+ * first focusable element. Esc closes the overlay the same way.
+ */
+export function overlayClose(onClose: () => void): HTMLButtonElement {
+  const node = button("×", "overlay-close", onClose);
+  node.setAttribute("aria-label", "Close");
+  node.title = "Close (Esc)";
+  return node;
+}
+
+/**
  * Every mode screen's Ready (#2022): the title bar's primary action, the
  * one a phone keeps out of the ⋯ (#1272), until `ready` makes it Not ready.
  */

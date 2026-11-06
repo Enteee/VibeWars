@@ -8,13 +8,14 @@ import { defaultBuildEquipment, STARTER_TEAMS } from "@vibewars/game-core";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { StoredTeam, TeamBuildSize } from "../storage/schema.js";
+import type { StoredCharacter, StoredTeam, TeamBuildSize } from "../storage/schema.js";
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
 import type * as Kit from "./kit.js";
 import {
   NO_PROPOSALS,
-  SOLO_PROPOSAL,
+  SOLO_STARTING,
+  SOLO_TITLE,
   PRESET_TEAM,
   NO_PLAYABLE_TEAM_BUILDS,
   NO_TEAM_BUILDS,
@@ -30,7 +31,10 @@ import {
   putAwayBuildsDrawer,
   reasonLine,
   renderTeamLobbyScreen,
+  soloCharacterKey,
+  soloEntries,
   teamLobbyBody,
+  type SoloChoice,
   type TeamLobbyCallbacks,
 } from "./team-lobby-screen.js";
 
@@ -231,6 +235,24 @@ function lobby(
   };
 }
 
+/** A saved character `id`: legal, unless its bar holds a skill that does not exist. */
+function saved(id: string, name: string, legal = true): StoredCharacter {
+  return {
+    schemaVersion: 1,
+    id,
+    name,
+    primaryProfession: "monk",
+    secondaryProfession: undefined,
+    attributes: [],
+    skillBar: [legal ? null : "no-such-skill", ...Array.from({ length: 7 }, () => null)],
+    equipment: defaultBuildEquipment("monk"),
+    updatedAt: 0,
+  };
+}
+
+/** A chooser with nothing in it: every side here but the 1v1 ones. */
+const NO_SOLO: SoloChoice = { entries: [], picked: undefined };
+
 /** A Team Build of `size`, `filled` of its slots taken: all of them unless said. */
 function team(id: string, name: string, size: TeamBuildSize, filled: number = size): StoredTeam {
   const character = {
@@ -329,6 +351,7 @@ describe("the Team Lobby's body (#1460)", () => {
     onVote: (proposerId) => sent.push({ kind: "vote", value: proposerId }),
     onPropose: (teamId) => sent.push({ kind: "propose", value: teamId }),
     onClaim: (slot) => sent.push({ kind: "claim", value: slot }),
+    onPickSolo: (key) => sent.push({ kind: "pick", value: key }),
     onToggleReady: () => undefined,
     onLeave: () => undefined,
   };
@@ -336,9 +359,12 @@ describe("the Team Lobby's body (#1460)", () => {
     shown: LobbySnapshot,
     teams: readonly StoredTeam[] = [],
     proposed?: string,
+    solo: SoloChoice = NO_SOLO,
   ): FakeElement => {
     const root = new FakeElement();
-    root.append(...(teamLobbyBody(shown, teams, proposed, callbacks) as unknown as FakeElement[]));
+    root.append(
+      ...(teamLobbyBody(shown, teams, proposed, solo, callbacks) as unknown as FakeElement[]),
+    );
     return root;
   };
 
@@ -349,7 +375,7 @@ describe("the Team Lobby's body (#1460)", () => {
         Object.assign(new FakeElement(), { tagName: tag.toUpperCase() }),
     });
     // A spectator's body forgets the last test's drawer (#2116).
-    teamLobbyBody(lobby("watcher", "vote", voteSide([])), [], undefined, callbacks);
+    teamLobbyBody(lobby("watcher", "vote", voteSide([])), [], undefined, NO_SOLO, callbacks);
     focusLog.length = 0;
   });
 
@@ -377,6 +403,7 @@ describe("the Team Lobby's body (#1460)", () => {
         shown,
         [],
         undefined,
+        NO_SOLO,
         callbacks,
         undefined,
       );
@@ -588,18 +615,111 @@ describe("the Team Lobby's body (#1460)", () => {
   it("gives a side of one player no vote hint", () => {
     const shown = body(lobby("eli", "vote", { ...voteSide([proposal("eli", [])]), size: 1 }));
     expect(shown.all("team-lobby-hint")).toEqual([]);
-    expect(shown.all("play-card")).toHaveLength(1);
   });
 
-  it("offers a 1v1 no Team Builds: it plays the active character (#2141)", () => {
-    const shown = body(lobby("eli", "vote", { ...voteSide([proposal("eli", [])]), size: 1 }));
+  it("lists a 1v1 every character, team members labelled, the active one pressed (#2387)", () => {
+    const characters = [saved("kai", "Kai"), saved("lin", "Lin")];
+    const teams = [team("z", "Zeal", 2), team("a", "Anvil", 2)];
+    const entries = soloEntries(characters, teams);
+    expect(entries.map((entry) => entry.key)).toEqual([
+      "character:kai",
+      "character:lin",
+      "team:a:0",
+      "team:a:1",
+      "team:z:0",
+      "team:z:1",
+    ]);
+    const solo = { entries, picked: soloCharacterKey("lin") };
+    const shown = body(
+      lobby("eli", "vote", { ...voteSide([proposal("eli", [])]), size: 1 }),
+      teams,
+      undefined,
+      solo,
+    );
     expect(shown.all("team-lobby-drawer-tab")).toEqual([]);
-    expect(shown.all("team-lobby-drawer")).toEqual([]);
-    expect(shown.all("team-lobby-solo").map((line) => line.textContent)).toEqual([SOLO_PROPOSAL]);
+    expect(shown.all("team-lobby-proposals")).toEqual([]);
+    const cards = shown.all("play-card");
+    expect(cards.map((card) => card.all("play-card-name")[0]?.textContent)).toEqual([
+      "Kai",
+      "Lin",
+      "Member",
+      "Member",
+      "Member",
+      "Member",
+    ]);
+    expect(shown.all("play-card-note").map((label) => label.textContent)).toEqual([
+      "Team: Anvil",
+      "Team: Anvil",
+      "Team: Zeal",
+      "Team: Zeal",
+    ]);
+    expect(cards.map((card) => press(card)?.attributes.get("aria-pressed"))).toEqual([
+      "false",
+      "true",
+      "false",
+      "false",
+      "false",
+      "false",
+    ]);
     // A side of two still picks from its Team Builds.
     const pair = body(lobby("eli", "vote", { ...voteSide([proposal("eli", [])]), size: 2 }));
     expect(pair.all("team-lobby-drawer-tab")).toHaveLength(1);
     expect(pair.all("team-lobby-solo")).toEqual([]);
+  });
+
+  it("plays a 1v1's clicked character, never an invalid one (#2387)", () => {
+    const entries = soloEntries([saved("kai", "Kai"), saved("bad", "Bad", false)], []);
+    expect(entries.map((entry) => entry.legal)).toEqual([true, false]);
+    const shown = body(lobby("eli", "vote", { ...voteSide([]), size: 1 }), [], undefined, {
+      entries,
+      picked: undefined,
+    });
+    const [kai, bad] = shown.all("play-card");
+    expect(bad?.all("roster-invalid-tag").map((tag) => tag.textContent)).toEqual(["Invalid"]);
+    expect(bad?.title).not.toBe("");
+    press(bad)?.click();
+    expect(sent).toEqual([]);
+    press(kai)?.click();
+    expect(sent).toEqual([{ kind: "pick", value: "character:kai" }]);
+  });
+
+  it("starts a 1v1 with the chosen card and no seats (#2387)", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("HTMLInputElement", FakeElement);
+    vi.stubGlobal("document", {
+      createElement: (tag: string) =>
+        Object.assign(new FakeElement(), { tagName: tag.toUpperCase() }),
+      getElementById: () => null,
+    });
+    const solo = {
+      ...claimSide([null]),
+      size: 1,
+      chosen: { ...SUNRISE, members: SUNRISE.members.slice(0, 1) },
+    };
+    const root = new FakeElement();
+    renderTeamLobbyScreen(
+      root as unknown as HTMLElement,
+      lobby("brann", "claim", solo),
+      [],
+      undefined,
+      NO_SOLO,
+      callbacks,
+      undefined,
+    );
+    expect((bar.status as readonly FakeElement[])[0]?.text()).toContain(SOLO_STARTING);
+    expect(root.all("team-lobby-seat")).toEqual([]);
+    expect(root.all("team-lobby-result")).toHaveLength(1);
+    renderTeamLobbyScreen(
+      root as unknown as HTMLElement,
+      lobby("brann", "vote", { ...voteSide([]), size: 1 }),
+      [],
+      undefined,
+      NO_SOLO,
+      callbacks,
+      undefined,
+    );
+    expect((bar.status as readonly FakeElement[])[0]?.text()).toContain(SOLO_TITLE);
+    vi.useRealTimers();
   });
 
   it("shows a spectator one line and nothing of either side", () => {

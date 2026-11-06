@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 
 import { openRail } from "./helpers/menu.js";
+import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { key } from "./keys.js";
 
@@ -295,6 +296,33 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await openJukebox(page);
   await expect(row).not.toHaveClass(/is-edited/);
 });
+
+for (const viewport of OVERLAY_VIEWPORTS) {
+  test(`the beat editor's × sits at its own top right at ${String(viewport.width)} px; it and Esc close it (#2381)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("./");
+    const editor = page.getByRole("dialog", { name: "Beat editor: Ember Deep" });
+    const open = async (): Promise<void> => {
+      await clickTopbarIcon(page, ".topbar-music");
+      await page
+        .locator(".jukebox-row", { hasText: "Ember Deep" })
+        .getByRole("button", { name: "Open Ember Deep in the beat editor" })
+        .click();
+      await expect(editor).toBeVisible();
+    };
+
+    await open();
+    const close = await expectCloseAtTopRight(page, editor);
+    await close.click();
+    await expect(editor).toHaveCount(0);
+
+    await open();
+    await page.keyboard.press("Escape");
+    await expect(editor).toHaveCount(0);
+  });
+}
 
 test("a pasted beat that floods the game is switched off, and its edit is not replayed (#878)", async ({
   page,

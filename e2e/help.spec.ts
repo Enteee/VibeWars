@@ -1,12 +1,33 @@
 import { expect, test } from "@playwright/test";
 
 import { lobbyWindow, openRail } from "./helpers/menu.js";
+import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
 import { startSoloMatch } from "./helpers/peers.js";
 
 /**
  * The Help screen (#1257): the [?] of the top bar and of the HUD opens
  * the player docs over what runs under it, and Esc puts them away.
  */
+
+for (const viewport of OVERLAY_VIEWPORTS) {
+  test(`Help's × sits at its own top right at ${String(viewport.width)} px; it and Esc close it (#2381)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("./");
+    const help = page.getByRole("dialog", { name: "Help" });
+
+    await clickTopbarIcon(page, ".topbar-help");
+    const close = await expectCloseAtTopRight(page, help);
+    await close.click();
+    await expect(help).toHaveCount(0);
+
+    await clickTopbarIcon(page, ".topbar-help");
+    await expect(help).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(help).toHaveCount(0);
+  });
+}
 
 test("[?] opens Help on Getting started; Esc returns to the menu as it was (#1257)", async ({
   page,

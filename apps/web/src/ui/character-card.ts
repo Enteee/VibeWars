@@ -93,6 +93,8 @@ export interface CharacterFigureCardOptions {
   readonly size: CharacterCardSize;
   /** A card's line under the figure; the professions when omitted. A row has none. */
   readonly line?: string;
+  /** A card's second line, under `line`: a team member's "Team: Spike" (#2387). */
+  readonly note?: string | undefined;
   /** A row's title and label, as "Ser Bash, Warrior"; the card never draws a name. */
   readonly label?: string;
 }
@@ -107,6 +109,9 @@ export function characterFigureCard(
     const card = h("span", "character-card-body");
     card.appendChild(createCharacterFigure(look));
     card.appendChild(h("span", "play-card-line", options.line ?? professions));
+    if (options.note !== undefined) {
+      card.appendChild(h("span", "play-card-note", options.note));
+    }
     card.appendChild(miniSkillBar(look));
     return card;
   }

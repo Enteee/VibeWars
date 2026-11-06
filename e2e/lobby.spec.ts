@@ -650,8 +650,10 @@ test("a 1v1 plays the host's active character as it hosted, not one selected aft
     await host.getByRole("button", { name: "Ready", exact: true }).click();
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
     await host.getByRole("button", { name: "start match" }).click();
-    await expect(host.locator(".team-lobby-stage")).toHaveText("Choose a team build");
-    await expect(host.locator(".team-lobby-proposals .play-card")).toHaveCount(1);
+    await expect(host.locator(".team-lobby-stage")).toHaveText("Choose your character");
+    await expect(
+      host.locator('.team-lobby-solo .play-card-open[aria-pressed="true"] .play-card-name'),
+    ).toHaveText("Cynn");
     await playHouseTeams([host, guest]);
 
     // Cynn's one skill, not Blank's empty bar.
@@ -660,6 +662,56 @@ test("a 1v1 plays the host's active character as it hosted, not one selected aft
   } finally {
     await context.close();
   }
+});
+
+test("a 1v1 lists every character, team members too, and one click plays the one clicked (#2387)", async ({
+  page,
+}) => {
+  // Cynn has one skill, Blank none. The Team Build Duo seats Blank, then
+  // Cynn; Blank is the active character.
+  await page.goto("./");
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "New character", exact: true }).click();
+  await page.locator("input.editor-name").fill("Cynn");
+  await openLibraryGroup(page);
+  await page.locator(".skill-box").first().locator(".skill-box-equip").click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("button", { name: "New character", exact: true }).click();
+  await page.locator("input.editor-name").fill("Blank");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await openRail(page, "Team Builder");
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "New team build", exact: true }).click();
+  await page.getByLabel("team name").fill("Duo");
+  await page.getByRole("tab", { name: "My characters", exact: true }).click();
+  const names = page.locator(".team-grid .team-row-name");
+  for (const [seat, name] of ["Blank", "Cynn"].entries()) {
+    await page
+      .locator(".team-pick")
+      .filter({ has: page.locator(".team-pick-name").getByText(name, { exact: true }) })
+      .dragTo(page.locator(".team-grid .team-row").nth(seat));
+    await expect(names.nth(seat)).toHaveText(name);
+  }
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await pickCharacter(page, "Blank");
+
+  await hostLobby(page, "Host");
+  await page.getByRole("button", { name: "join team 1" }).click();
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await page.getByRole("button", { name: "start match" }).click();
+  await expect(page.locator(".team-lobby-stage")).toHaveText("Choose your character");
+  const cards = page.locator(".team-lobby-solo .play-card");
+  await expect(cards.locator('.play-card-open[aria-pressed="true"] .play-card-name')).toHaveText(
+    "Blank",
+  );
+  const duo = cards.filter({ has: page.getByText("Team: Duo", { exact: true }) });
+  await expect(duo).toHaveCount(2);
+  // One click: proposed, ready, its one seat taken, and on.
+  await duo.nth(1).locator(".play-card-open").click();
+  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  // Duo's Cynn's one skill, not Blank's empty bar.
+  await expect(page.locator(".hud-skills .hud-skill:not(.is-empty)")).toHaveCount(1);
 });
 
 test("a spectator presses Watch and follows the match 10 s late, with nothing to act with (#480)", async ({

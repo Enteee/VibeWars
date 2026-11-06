@@ -196,8 +196,9 @@ and both sides play exactly that many; the Team Lobby shows no Team size. A gues
 shows only maps made for that size, and a size the map does not suit
 moves the lobby to the first map that does. It never goes below a side's
 players, and a side that has as many players as the team size takes
-nobody more. A 1v1 plays your active character: there are no Team Builds
-of one, so the Team Lobby proposes it for you. **Leave** on your team
+nobody more. A 1v1 lists all your characters, team members labelled with
+their team: click one to play it, or wait and play your active character.
+**Leave** on your team
 takes you off it without leaving the lobby.
 A queued party ([Find a match](getting-started.md#host-or-join-a-match)
 on Team Arena, Heroes' Ascent or GvG) gets a Team Lobby of its own side
