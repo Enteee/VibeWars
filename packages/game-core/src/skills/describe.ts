@@ -403,8 +403,16 @@ export function describeStatus(id: string, ranks?: ReadonlyMap<string, number>):
   return plain(statusText(id, ranks));
 }
 
-/** `describeStatus`, its scaled numbers still marked for the skill line it sits in. */
-function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined): string {
+/**
+ * `describeStatus`, its scaled numbers still marked for the skill line it
+ * sits in. `holdingSaid`: the line already says "holding an item", as an
+ * aura's does, so Empowerment's stats do not say it twice (#2493).
+ */
+function statusText(
+  id: string,
+  ranks: ReadonlyMap<string, number> | undefined,
+  holdingSaid = false,
+): string {
   const definition = findStatusDefinition(id);
   if (definition === undefined) {
     return id;
@@ -1422,7 +1430,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (parts.length === 0 && sentences.length === 0) {
     return definition.name;
   }
-  return [...(parts.length === 0 ? [] : [parts.join(", ")]), ...sentences]
+  // Empowerment's whole stat line holds only while an item is held (#2493).
+  const holding = definition.onlyWhileHoldingItem && !holdingSaid ? " while holding an item" : "";
+  return [...(parts.length === 0 ? [] : [parts.join(", ") + holding]), ...sentences]
     .map((text, index) => (index === 0 ? text : `${text.charAt(0).toUpperCase()}${text.slice(1)}`))
     .join(". ");
 }
@@ -3393,7 +3403,7 @@ function describeAura(aura: Aura, where: string, ranks: ReadonlyMap<string, numb
   const who = AURA_WHO[aura.affects];
   const holding = getStatusDefinition(aura.statusId).onlyWhileHoldingItem ? " holding an item" : "";
   return {
-    text: `${who} ${where}${holding}: ${statusText(aura.statusId, ranks)}`,
+    text: `${who} ${where}${holding}: ${statusText(aura.statusId, ranks, holding !== "")}`,
     magnitude: undefined,
   };
 }
