@@ -50,14 +50,26 @@ const heal: BotRule = {
       }
       return patient.id !== self.id && distance(patient.position, self.position) <= area.radius;
     };
-    // A spirit of its own from this skill still stands (#2491): Recovery
-    // outlives its recharge, and a second one only replaces the first.
-    const spiritUp = (held: Skill): boolean =>
-      held.effects.some((effect) => effect.kind === "summon") &&
-      context.participants.some(
-        ({ combatant, creature }) =>
-          creature?.ownerId === self.id && creature.skillId === held.id && !combatant.dead,
+    // A spirit from this skill still stands (#2491), one the new one would
+    // only replace: within its aura, any of its side's, as the simulation
+    // ends them; with no aura, its own. Recovery outlives its recharge, and
+    // two Ritualists would otherwise take turns replacing each other's.
+    const spiritUp = (held: Skill): boolean => {
+      if (!held.effects.some((effect) => effect.kind === "summon")) {
+        return false;
+      }
+      const radius = summonAura(held)?.radius;
+      return context.participants.some(
+        ({ combatant, creature, position }) =>
+          creature?.kind === "spirit" &&
+          creature.skillId === held.id &&
+          !combatant.dead &&
+          (radius === undefined
+            ? creature.ownerId === self.id
+            : combatant.team === self.combatant.team &&
+              distance(position, self.position) <= radius),
       );
+    };
     for (const role of ["healing", "defence"] as const) {
       const skill = bar.find(
         (held) =>
@@ -77,14 +89,20 @@ const heal: BotRule = {
   },
 };
 
-/** The radius of the ally aura of the spirit `skill` summons, if it has one. */
-function allyAuraRadius(skill: Skill): number | undefined {
+/** The aura of the spirit `skill` summons, if it has one. */
+function summonAura(skill: Skill) {
   for (const effect of skill.effects) {
-    if (effect.kind === "summon" && effect.creature.aura?.affects === "allies") {
-      return effect.creature.aura.radius;
+    if (effect.kind === "summon" && effect.creature.aura !== undefined) {
+      return effect.creature.aura;
     }
   }
   return undefined;
+}
+
+/** The radius of the ally aura of the spirit `skill` summons, if it has one. */
+function allyAuraRadius(skill: Skill): number | undefined {
+  const aura = summonAura(skill);
+  return aura?.affects === "allies" ? aura.radius : undefined;
 }
 
 export default heal;

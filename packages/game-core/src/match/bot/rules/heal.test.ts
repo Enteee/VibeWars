@@ -90,6 +90,31 @@ describe("play-build spirits for a hurt ally (#2491)", () => {
     });
   }
 
+  it("casts no Recovery while a teammate's stands in its aura, which it would only replace", () => {
+    const ritualist = (id: string, x: number) =>
+      fighter(id, 0, MONK, vec2(x, 400), {
+        skillBar: ["ritualist.recovery"],
+        attributeRanks: RITUALIST_RANKS,
+        maxEnergy: 100,
+        behaviour: undefined,
+      });
+    const sim = match([
+      ritualist("rit", 400),
+      ritualist("other", 440),
+      fighter("ally", 0, WARRIOR, vec2(480, 400), {
+        behaviour: undefined,
+        startHealthFraction: 0.4,
+      }),
+    ]);
+    expect(askBot(sim, "rit").useSkillId).toBe("ritualist.recovery");
+    expect(sim.requestSkill("other", 0)?.check).toEqual({ ok: true });
+    skillsUsed(sim, "other", 4);
+    expect(
+      [...sim.participants()].some(({ creature }) => creature?.skillId === "ritualist.recovery"),
+    ).toBe(true);
+    expect(askBot(sim, "rit").useSkillId).toBeUndefined();
+  });
+
   it("casts no spirit for an ally outside its aura", () => {
     const sim = match([
       fighter("rit", 0, MONK, vec2(400, 400), {
