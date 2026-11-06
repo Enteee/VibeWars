@@ -1,6 +1,7 @@
-// What the icon generator and its row tables share: the palette, the stroke
+// What the icon generator and its row tables share: the palette, the frame, the stroke
 // helper, the germ glyph and the row types. Rows in skill-icons/ and
 // status-icons/ import from here, never from icons.mjs, which runs on import.
+// The row types (Glyph, Category) are declared in icon-kit.d.mts.
 
 /** The palette. Mirrors the tokens table in docs/art/art-direction.md. */
 export const C = {
@@ -28,6 +29,10 @@ export const C = {
   dervish: "#c9a27e",
 };
 
+/** The 24x24 frame every icon is drawn in. @param {string} body */
+export const svg = (body) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">${body}</svg>\n`;
+
 /**
  * @param {string} colour
  * @param {number} [width]
@@ -54,9 +59,6 @@ export const germ = (c) =>
       );
     })
     .join("");
-
-/** @typedef {(colour: string) => string} Glyph */
-/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "echo" | "weapon-spell" | "item" | "form" | "skill-effect"} Category */
 
 const BOLT = "M0 0L-4.5 7H-1L-2.5 13L4 4.5H0.5L2.5 0Z";
 

@@ -37,8 +37,11 @@ import {
   weaponIcon,
 } from "./icons.js";
 
+import { C } from "../../../../scripts/assets/icon-kit.mjs";
+import { inkOutsidePlate } from "../../../../scripts/assets/plate-check.mjs";
 import { SKILL_ICONS } from "../../../../scripts/assets/skill-icon-table.mjs";
 import { STATUS_ICON_TABLES, STATUS_ICONS } from "../../../../scripts/assets/status-icon-table.mjs";
+import { PLATES } from "../../../../scripts/assets/status-plates.mjs";
 
 const PUBLIC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public");
 
@@ -215,5 +218,15 @@ describe("skill icons (#719)", () => {
     } finally {
       fs.rmSync(out, { recursive: true, force: true });
     }
+  });
+});
+
+describe("status ink stays inside its plate (#2404)", () => {
+  it("has no glyph ink outside its category's plate", () => {
+    const outside = Object.entries(STATUS_ICONS).flatMap(([id, [category, glyph]]) => {
+      const pixels = inkOutsidePlate(PLATES[category], glyph(C.plate));
+      return pixels === 0 ? [] : [`${id} (${category}): ${String(pixels)} px outside`];
+    });
+    expect(outside).toEqual([]);
   });
 });
