@@ -8,8 +8,13 @@ const post = (c, x) =>
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
   // Mechanics (#2477, #2478, #2479), art #2487.
-  // Skill effect: a post beside a plus, as the skill's.
-  rejuvenation: ["skill-effect", (c) => post(c, 8) + `<path d="M15 9v6M12 12h6" ${stroke(c, 2)}/>`],
+  // Skill effect: a post with pulse arcs spreading from its foot, as the skill's.
+  rejuvenation: [
+    "skill-effect",
+    (c) =>
+      post(c, 8) +
+      `<path d="M13.500 15a3.500 3.500 0 0 1 3.500 3.500M13.500 11a7.500 7.500 0 0 1 6 5.500" ${stroke(c, 1.6)}/>`,
+  ],
   // Skill effect: a post beside a drop with a speed line.
   recovery: [
     "skill-effect",

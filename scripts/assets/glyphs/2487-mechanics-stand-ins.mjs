@@ -1,25 +1,33 @@
 // Glyphs (#2487): the stand-ins of #2477, #2478 and #2479.
 
 import { C, stroke } from "../icon-kit.mjs";
-import { brokenPost, inkFill, inkLine, ringDot, smallSkull, spiritPost } from "../glyph-kit.mjs";
+import {
+  brokenPost,
+  inkFill,
+  inkLine,
+  ringDot,
+  smallFigure,
+  smallSkull,
+  spiritPost,
+} from "../glyph-kit.mjs";
 
 /** A line in the panel colour, cut out of an ink shape. @param {string} d @param {number} w */
 const cut = (d, w) => `<path d="${d}" ${stroke(C.bg, w)}/>`;
 
 /** @type {Readonly<Record<string, import("../glyph-kit.mjs").GlyphEntry>>} */
 const glyphs = {
-  "spirit-heal-ring": {
+  "spirit-one-ally": {
     means:
-      "Preservation: the spirit post beside a ringed plus: its pulse heals the one ally it picks.",
+      "Preservation: the spirit post beside one small figure under a pulse arc: its pulse heals the one ally it picks.",
     draw: () =>
-      spiritPost() +
-      `<circle cx="17" cy="9" r="5.500" ${stroke(C.ink, 2)}/>` +
-      inkLine("M17 6.200V11.800M14.200 9H19.800", 2),
+      spiritPost() + smallFigure(17, 14.5, 0.62) + inkLine("M12.500 5Q17 1.500 21.500 5", 2),
   },
-  "spirit-heal-crack": {
+  "spirit-heal-pulses": {
     means:
-      "Rejuvenation: a cracked spirit post beside a plus: each heal is paid for out of the spirit.",
-    draw: () => brokenPost(7) + inkLine("M17 5V13M13 9H21", 2.6),
+      "Rejuvenation: a cracked spirit post with pulse arcs spreading from its foot: each heal is paid for out of the spirit.",
+    draw: () =>
+      brokenPost(7) +
+      inkLine("M13.500 14.500A5.500 5.500 0 0 1 19 20M13.500 9A11 11 0 0 1 22 20", 2.2),
   },
   "spirit-drop-fast": {
     means: "Recovery: the spirit post beside a drop with speed lines: conditions run out faster.",

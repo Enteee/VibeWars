@@ -1,8 +1,8 @@
 /** @type {Readonly<Record<string, import("../../skill-icon-table.mjs").SkillIconRow>>} */
 const rows = {
   // Mechanics (#2477, #2478, #2479), art #2487.
-  "ritualist.preservation": { glyph: "spirit-heal-ring" },
-  "ritualist.rejuvenation": { glyph: "spirit-heal-crack" },
+  "ritualist.preservation": { glyph: "spirit-one-ally" },
+  "ritualist.rejuvenation": { glyph: "spirit-heal-pulses" },
   "ritualist.recovery": { glyph: "spirit-drop-fast" },
   "ritualist.restoration": { glyph: "spirit-rise" },
   "ritualist.empowerment": { glyph: "spirit-item-up" },
