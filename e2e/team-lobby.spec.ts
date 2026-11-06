@@ -14,7 +14,7 @@ import { namePlayer } from "./helpers/player.js";
  * Build saved and picked on one is the other's as well.
  */
 
-/** The first four starter builds, Warrior/Monk first: the Four's seats, in order. */
+/** The first four starter builds (#2554): the Four's seats, in order. */
 const FOUR = STARTER_BUILDS.slice(0, 4);
 
 /** Paste `text` onto `target`, as Ctrl+V would. */

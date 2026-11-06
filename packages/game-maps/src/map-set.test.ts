@@ -8,7 +8,7 @@ import {
   distancePointToSegment,
   loadoutOf,
   nearestStandable,
-  pickStarterBuild,
+  STARTER_BUILDS,
   resolveLoadout,
   type Segment,
   type Vec2,
@@ -109,8 +109,9 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 
   it("lets a fighter at each spawn reach the enemy across the arena and hit, without snagging", () => {
     // Swords, so every hit is a walk into reach: on the longest arena, ~18 s.
-    // The first starter build is the Warrior/Monk's (#852).
-    const fighter = loadoutOf(pickStarterBuild(() => 0));
+    const sworded = STARTER_BUILDS.find((build) => build.name === "June Star Burst (W/E)");
+    if (sworded === undefined) throw new Error("no June Star Burst (W/E)");
+    const fighter = loadoutOf(sworded);
     expect(fighter.equipment.weaponSets[0].mainHand.weaponId).toBe("sword");
     const ruleset = MINIMAL_GW_INSPIRED_PVP_V1;
     const resolved = resolveLoadout(

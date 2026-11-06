@@ -103,6 +103,16 @@ export {
   toCharacter,
   validatePlayerBuild,
 } from "./build.js";
+export {
+  ATTRIBUTE_IDS,
+  decodeTemplate,
+  encodeTemplate,
+  looksLikeTemplate,
+  skillOfGw,
+  type DecodeResult,
+  type EncodeResult,
+  type GwTemplate,
+} from "./gw1-template.js";
 export type { JoinLoadout, JoinRefusal } from "./join-loadout.js";
 export { loadoutOf, resolveJoinLoadout } from "./join-loadout.js";
 export { STARTER_BUILDS, pickBuildFrom, pickStarterBuild } from "./starter-builds.js";

@@ -67,8 +67,12 @@ function hostHeld(character: StoredCharacter): {
 }
 
 describe("characterAppearance (#1250)", () => {
-  it("gives the default Warrior the sword and shield a match gives it", () => {
-    const warrior = stored(starter("warrior"));
+  it("gives a sword Warrior the sword and shield a match gives it", () => {
+    const sworded = STARTER_BUILDS.find((build) => build.name === "June Star Burst (W/E)");
+    if (sworded === undefined) {
+      throw new Error("no June Star Burst (W/E)");
+    }
+    const warrior = stored(sworded);
     expect(characterAppearance(warrior)).toEqual({ weaponId: "sword", offhandId: "shield" });
     expect(characterAppearance(warrior)).toEqual(hostHeld(warrior));
   });
