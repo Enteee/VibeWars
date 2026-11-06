@@ -7,7 +7,7 @@ import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { openLibraryGroup } from "./helpers/library.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
-import { openRail, pickCharacter } from "./helpers/menu.js";
+import { awaitLobby, openRail, pickCharacter } from "./helpers/menu.js";
 import { expectTeamSize, setTeamSize, startSoloMatch } from "./helpers/peers.js";
 import { bringStarter } from "./helpers/starter.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
@@ -1843,7 +1843,7 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
   await page.reload();
   // The page's own lobby opening redraws the roster (#1526): a click
   // before it lands on a card the redraw takes away.
-  await expect(page.locator("#topbar .topbar-lobby:not([hidden])")).toBeAttached();
+  await awaitLobby(page);
 
   const outlaw = page.locator(".character-card", { hasText: "Outlaw" });
   await expect(outlaw).toHaveClass(/is-invalid/);
