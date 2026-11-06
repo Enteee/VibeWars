@@ -561,8 +561,8 @@ export async function startMatchView(
     menuDepth: null,
     mode: () => music().mode(),
     tracks: TRACKS,
-    onChange: (state) => {
-      music().follow(state);
+    onChange: (state, landOn) => {
+      music().follow(state, landOn);
     },
     onSting: (id) => {
       music().sting(id);

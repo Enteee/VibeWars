@@ -18,6 +18,7 @@ import {
   type StingMemory,
   type HeardCombat,
 } from "./match-music.js";
+import type { LandOn } from "./host-protocol.js";
 import type { StingId } from "./stings/ids.js";
 
 const ME = "me";
@@ -131,6 +132,7 @@ function setup(
     },
   } as unknown as MatchConnection;
   const changes: MusicState[] = [];
+  const landings: LandOn[] = [];
   const stings: StingId[] = [];
   /** Changes and stings, in the order they came. */
   const heard: string[] = [];
@@ -139,8 +141,9 @@ function setup(
     menuDepth: screen === "training" ? 1 : null,
     mode: () => mode,
     tracks: TRACKS,
-    onChange: (state) => {
+    onChange: (state, landOn) => {
       changes.push(state);
+      landings.push(landOn);
       heard.push(state.trackId ?? "silence");
     },
     onSting: (id) => {
@@ -152,6 +155,7 @@ function setup(
   return {
     music,
     changes,
+    landings,
     stings,
     heard,
     combat: (m: CombatMessage) => combat(m),
@@ -255,6 +259,19 @@ describe("attachMatchMusic", () => {
     expect(changes.at(-1)).toEqual(
       expect.objectContaining({ trackId: "victors-hymn", intensity: 0, context: "result-victory" }),
     );
+  });
+
+  it("lands a match's first track on the next cycle, every later one on the phrase (#2530)", () => {
+    const { landings, at } = setup();
+    at(0, snapshot({ allyHealth: 10 }));
+    at(DIRECT_INTERVAL_MS, snapshot({ allyHealth: 10, finished: 0 }));
+    expect(landings).toEqual(["cycle", "phrase"]);
+  });
+
+  it("lands a Training Ground's first track on the phrase, as a menu's (#2530)", () => {
+    const { landings, at } = setup("training");
+    at(0);
+    expect(landings).toEqual(["phrase"]);
   });
 
   it("stays on the menu song when a Training Ground fight ends (#2020)", () => {

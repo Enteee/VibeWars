@@ -17,13 +17,14 @@ import {
   type GameToHost,
   type HostToGame,
   type HostTrack,
+  type LandOn,
 } from "../host-protocol.js";
 import { samplesBaseUrl } from "../music-urls.js";
 import {
   levelAt,
-  nextBoundary,
   nextCycle,
   scheduleLevel,
+  switchLanding,
   type LevelChange,
 } from "./transitions.js";
 import { busGate, type BusGate } from "./bus-gate.js";
@@ -439,10 +440,16 @@ export async function startEngine(): Promise<void> {
   };
 
   /**
-   * Switch to `track` on the playing track's next phrase boundary, with
-   * both playing for `cycles` while one fades out and the other in.
+   * Switch to `track` on the playing track's next phrase boundary, or on
+   * its next cycle, with both playing for `cycles` while one fades out and
+   * the other in.
    */
-  const crossfadeTo = async (track: HostTrack, cycles: number, askedAt: number): Promise<void> => {
+  const crossfadeTo = async (
+    track: HostTrack,
+    cycles: number,
+    landOn: LandOn,
+    askedAt: number,
+  ): Promise<void> => {
     if (playing === undefined || !scheduler.started) {
       await load(track, askedAt);
       return;
@@ -450,7 +457,7 @@ export async function startEngine(): Promise<void> {
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
     // A switch still planned is replaced: this one lands where it would have.
     const current = switching?.next ?? playing;
-    const from = nextBoundary(position(), current.clock.origin, current.phraseCycles);
+    const from = switchLanding(landOn, position(), current.clock.origin, current.phraseCycles);
     clock.origin = from;
     const next: Playing = {
       trackId: track.trackId,
@@ -497,7 +504,7 @@ export async function startEngine(): Promise<void> {
         await load(message, askedAt);
         return;
       case "crossfadeTo":
-        await crossfadeTo(message, message.cycles, askedAt);
+        await crossfadeTo(message, message.cycles, message.landOn, askedAt);
         return;
       case "play":
         // From the top: a stopped scheduler counts cycles from 0 again.

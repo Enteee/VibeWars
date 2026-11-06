@@ -367,6 +367,26 @@ export type TeamHighlight =
   | { readonly kind: "counter"; readonly id: TeamCounterId }
   | { readonly kind: "skill"; readonly skillId: string };
 
+/** A member row's open/close button (#2536): ▼ while closed, ▲ while open. */
+export interface MemberToggle {
+  readonly glyph: "▼" | "▲";
+  readonly expanded: boolean;
+  readonly label: string;
+}
+
+/** `character`'s open/close button, with `openMember` the one open, if any. */
+export function memberToggle(
+  character: TeamCharacter,
+  openMember: string | undefined,
+): MemberToggle {
+  const open = character.id === openMember;
+  return {
+    glyph: open ? "▲" : "▼",
+    expanded: open,
+    label: open ? `close ${character.name}` : `edit ${character.name} here`,
+  };
+}
+
 /** A cell's key in `markedCells`: "<member id>:slot". */
 export function cellKey(characterId: string, slot: number): string {
   return `${characterId}:${String(slot)}`;
@@ -982,7 +1002,7 @@ export function mountTeamEditor(
       });
       skills.appendChild(cell);
     }
-    const edit = button("✎", "team-row-edit", () => {
+    const edit = button("▼", "team-row-edit", () => {
       toggleOpen(characterId);
     });
     row.append(order, who, stats, skills, edit);
@@ -1176,11 +1196,10 @@ export function mountTeamEditor(
         row.classList.toggle("is-open", characterId === openMember);
         const edit = row.querySelector<HTMLButtonElement>(".team-row-edit");
         if (edit !== null) {
-          edit.setAttribute("aria-expanded", String(characterId === openMember));
-          edit.setAttribute(
-            "aria-label",
-            characterId === openMember ? `close ${character.name}` : `edit ${character.name} here`,
-          );
+          const toggle = memberToggle(character, openMember);
+          edit.textContent = toggle.glyph;
+          edit.setAttribute("aria-expanded", String(toggle.expanded));
+          edit.setAttribute("aria-label", toggle.label);
         }
         const stats = memberStats(character);
         setText(".team-row-health", stats === undefined ? "–" : String(stats.health));

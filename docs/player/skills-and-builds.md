@@ -105,10 +105,6 @@ turn them all off. Skills of other professions wait, folded, under
 The attribute groups start folded: click a group's name to open it. A
 search or a filter opens every group it finds something in.
 
-**Not in the game yet**, under Show in the Filters window, adds the GW1
-skills VibeWars does not have yet, greyed out. You can read them, not
-equip them. It is remembered, and is not counted as a filter.
-
 Beside the editor, the **Training Ground** lets you try your bar on
 practice targets before a match. Its log shows every skill you or a bot
 use, the adrenaline you gain, and a skill that had no effect, with what
@@ -186,7 +182,7 @@ hold **Shift** as you drop it on another member to copy it instead. A
 bar still holds one elite and no skill twice, so a drop that would break
 that is refused the same way. Each member's skills show as icons; hover
 one for its details, click it to find every copy on the team.
-A member's **✎** opens it in place, under its row: its professions, name,
+A member's **▼** opens it in place (**▲** closes it), under its row: its professions, name,
 attribute ranks and equipment change right there, and a third tab,
 **Gear**, holds the weapons and off-hands to drag onto its hands. One
 member is open at a time; **Esc** closes it. A new profession drops the

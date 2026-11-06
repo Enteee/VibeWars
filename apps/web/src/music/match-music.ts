@@ -10,6 +10,7 @@ import {
   type MusicState,
   type TrackChoice,
 } from "./director.js";
+import type { LandOn } from "./host-protocol.js";
 import type { StingId } from "./stings/ids.js";
 
 /** Within this, an enemy has you engaged: the longest any weapon reaches. */
@@ -39,8 +40,12 @@ export interface MatchMusicOptions {
   /** Asked on every snapshot, so a mode the player changes mid-match applies at once. */
   readonly mode: () => MusicMode;
   readonly tracks: readonly TrackChoice[];
-  /** Called with each new state: a new track, intensity or context. */
-  readonly onChange: (state: MusicState) => void;
+  /**
+   * Called with each new state: a new track, intensity or context, and
+   * where a new track lands: a match's first on the next cycle, so its
+   * start sting is not a phrase late (#2530).
+   */
+  readonly onChange: (state: MusicState, landOn: LandOn) => void;
   /**
    * Called with a sting to play over the music (#2523), after any new
    * state it lands on. Never in the Training Ground.
@@ -273,7 +278,7 @@ export function attachMatchMusic(
       const prev = state;
       state = directMusic(input, prev, mode(), tracks);
       if (prev === null || !sameMusic(prev, state)) {
-        onChange(state);
+        onChange(state, prev === null && screen === "match" ? "cycle" : "phrase");
       }
       if (sting !== undefined) {
         onSting?.(sting);
