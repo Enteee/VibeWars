@@ -123,6 +123,7 @@ describe("the rule (#1761)", () => {
       rechargeSlower: 0,
       durationMultiplier: 1,
       healMultiplier: 0.8,
+      favorHealMultiplier: 0.8,
       overcast: 0,
       notEasilyInterrupted: false,
     });
@@ -311,6 +312,7 @@ describe("in flight, and on its caster (#1761)", () => {
       rechargeSlower: 0,
       durationMultiplier: 2,
       healMultiplier: 1,
+      sparesDivineFavor: false,
       notEasilyInterrupted: false,
       overcastPerUse: 0,
       uses: undefined,

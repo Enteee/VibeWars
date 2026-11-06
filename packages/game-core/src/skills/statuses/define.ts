@@ -244,6 +244,7 @@ export function ownSkills(
     rechargeSlower: 0,
     durationMultiplier: 1,
     healMultiplier: 1,
+    sparesDivineFavor: false,
     notEasilyInterrupted: false,
     overcastPerUse: 0,
     uses: undefined,

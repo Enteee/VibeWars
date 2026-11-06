@@ -386,6 +386,15 @@ const NO_BOT_USE = new Set([
   // and recharge come only with attacks recharging, no role the bot weighs.
   "mesmer.ancestors-visage",
   "warrior.flourish",
+  // Dropped leftovers (#2446): faster, stronger heals and signets at Fast
+  // Casting are own-skill rules the bot does not weigh.
+  "monk.healers-boon",
+  "mesmer.symbolic-celerity",
+  // Speed for Energy is self-help no rule reaches for, as Dash.
+  "elementalist.storm-djinns-haste",
+  // Raising every dead party member round the caster is no use the bot
+  // has yet: its "resurrect" is a cast on one dead ally.
+  "monk.light-of-dwayna",
 ]);
 
 function skill(id: string) {

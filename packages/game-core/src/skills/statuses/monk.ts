@@ -84,7 +84,9 @@ export type MonkStatusId =
   // Staples (#2367).
   | "strength-of-honor"
   // Mechanics (#2453).
-  | "smiters-boon";
+  | "smiters-boon"
+  // Dropped leftovers (#2446).
+  | "healers-boon";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -1024,5 +1026,16 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
   "smiters-boon": define("smiters-boon", "Smiter's Boon", "enchantment", {
     profession: "monk",
     divineFavorDoubledFor: "monk.smiting-prayers",
+  }),
+  // "Healing Prayers spells cast 50% faster and heal for 50% more Health"
+  // (#2446); per the wiki, not the Divine Favor bonus.
+  "healers-boon": define("healers-boon", "Healer's Boon", "enchantment", {
+    profession: "monk",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "spell", attributeId: "monk.healing-prayers" },
+        { activationMultiplier: 0.5, healMultiplier: 1.5, sparesDivineFavor: true },
+      ),
+    ],
   }),
 };

@@ -4796,4 +4796,87 @@ export const MONK_SKILLS: readonly Skill[] = [
     // seconds, your Smiting Prayers have double the Divine Favor bonus."
     effects: [{ kind: "apply-status", statusId: "smiters-boon", durationSeconds: { flat: 4 } }],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Dropped leftovers (#2446)                                             */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.healers-boon",
+    name: "Healer's Boon",
+    gwId: 1393,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...55 seconds. Healing Prayers spells cast 50% faster and heal
+    // for 50% more Health" (#2446): the Divine Favor bonus is not boosted.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "healers-boon",
+        durationSeconds: {
+          scaling: { attributeId: "monk.divine-favor", atZero: 10, atTwelve: 46 },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.light-of-dwayna",
+    name: "Light of Dwayna",
+    gwId: 304,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 4,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Resurrect all dead party members in the area. They are returned to
+    // life with 25% Health and zero Energy" (#2446). A dead foe is never raised.
+    effects: [
+      {
+        kind: "splash",
+        hits: "party",
+        radius: AREA_IN_THE_AREA,
+        around: "caster",
+        dead: true,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "resurrect",
+            health: { kind: "percent", percent: { flat: 25 } },
+            energyPercent: { flat: 0 },
+            perPartyMemberWithin: undefined,
+            at: "corpse",
+          },
+        ],
+      },
+    ],
+  },
 ];

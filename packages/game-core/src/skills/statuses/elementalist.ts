@@ -97,7 +97,9 @@ export type ElementalistStatusId =
   | "stoneflesh-aura"
   | "icy-shackles"
   | "glyph-of-swiftness"
-  | "ward-of-weakness";
+  | "ward-of-weakness"
+  // Dropped leftovers (#2446).
+  | "storm-djinns-haste";
 
 /** Incendiary Bonds' blast (#2289), on its bearer and the foes near it. */
 const INCENDIARY_BLAST = {
@@ -1073,6 +1075,23 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         skillId: "elementalist.ward-of-weakness",
       },
     ],
+  }),
+  // "You move 25% faster. Each second that you are moving, you lose 1
+  // Energy" (#2446); at 0 Energy it keeps running.
+  "storm-djinns-haste": define("storm-djinns-haste", "Storm Djinn's Haste", "enchantment", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 1.25,
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-moving" },
+          effects: [{ kind: "energy-loss", amount: { flat: 1 } }],
+        },
+      ],
+      skillId: "elementalist.storm-djinns-haste",
+    },
   }),
 };
 

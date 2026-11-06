@@ -6123,6 +6123,44 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Dropped leftovers (#2446)                                             */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.storm-djinns-haste",
+    name: "Storm Djinn's Haste",
+    gwId: 1370,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...25 seconds, you move 25% faster. Each second that you are
+    // moving, you lose 1 Energy" (#2446).
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "storm-djinns-haste",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 22 },
+        },
+      },
+    ],
+  },
 ];
 
 /**
