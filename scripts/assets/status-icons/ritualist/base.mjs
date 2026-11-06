@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { stroke, fitRows } from "../../icon-kit.mjs";
 import { WEAPON_MARKS } from "../../weapon-marks.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
@@ -266,4 +266,21 @@ const rows = {
   ],
 };
 
-export default rows;
+/** Drawn smaller to sit inside the plate (#2423). */
+const fits = {
+  "xinraes-weapon": [1, -1],
+  "resilient-weapon": [0.96, 0],
+  "ghostly-weapon": [0.96, 0],
+  "guided-weapon": [0.86, 0],
+  "sundering-weapon": [0.96, 0],
+  "weapon-of-shadow": [0.96, 0],
+  "warmongers-weapon": [0.96, 0],
+  "wailing-weapon": [0.96, 0],
+  "nightmare-weapon": [0.96, 0],
+  "weapon-of-fury": [0.98, -1],
+  "weapon-of-renewal": [0.96, 0],
+  "signet-of-ghostly-might": [0.8, 0],
+  lamentation: [1, -2],
+};
+
+export default fitRows(rows, fits);

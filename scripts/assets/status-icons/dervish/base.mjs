@@ -1,4 +1,4 @@
-import { C, perEach, stroke } from "../../icon-kit.mjs";
+import { C, perEach, stroke, fitRows } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -256,4 +256,19 @@ const rows = {
   ],
 };
 
-export default rows;
+/** Drawn smaller to sit inside the plate (#2423). */
+const fits = {
+  "enchanted-haste": [1, -1],
+  "balthazars-rage": [1, -1],
+  "avatar-of-melandru": [1, -1],
+  "avatar-of-grenth": [1, -2],
+  "guiding-hands": [1, -2],
+  onslaught: [0.94, 0],
+  "zealous-vow": [0.94, 0],
+  "featherfoot-grace": [0.94, -1],
+  "whirling-charge": [0.96, 0],
+  "watchful-intervention": [1, -1],
+  "faithful-intervention": [0.94, 0],
+};
+
+export default fitRows(rows, fits);

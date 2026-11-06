@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { stroke, fitRows } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -37,4 +37,12 @@ const rows = {
   ],
 };
 
-export default rows;
+/** Drawn smaller to sit inside the plate (#2423). */
+const fits = {
+  "protective-was-kaolai": [0.96, 2],
+  "mighty-was-vorizun": [1, 4],
+  "brutal-weapon": [0.98, 0],
+  "ritual-lord": [0.8, 0],
+};
+
+export default fitRows(rows, fits);
