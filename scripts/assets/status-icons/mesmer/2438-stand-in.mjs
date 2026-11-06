@@ -8,9 +8,9 @@ const rows = {
     "stance",
     (c) =>
       `<path d="M12 3l6 3v4c0 3-3 5-6 6-3-1-6-3-6-6V6z" ${stroke(c, 1.8)}/>` +
-      `<rect x="4" y="18" width="4" height="4" ${stroke(c, 1.5)}/>` +
-      `<rect x="10" y="18" width="4" height="4" ${stroke(c, 1.5)}/>` +
-      `<rect x="16" y="18" width="4" height="4" ${stroke(c, 1.5)}/>`,
+      `<rect x="6" y="17" width="3" height="3" ${stroke(c, 1.5)}/>` +
+      `<rect x="10.5" y="17" width="3" height="3" ${stroke(c, 1.5)}/>` +
+      `<rect x="15" y="17" width="3" height="3" ${stroke(c, 1.5)}/>`,
   ],
 };
 

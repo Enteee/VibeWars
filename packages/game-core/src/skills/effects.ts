@@ -3110,7 +3110,10 @@ export function stateHolds(
       );
     // A state is read before the use, when it has removed nothing.
     case "count-at-least":
-      return countOf(condition.count, caster, target, { surroundings, targetsHit }, []) >= condition.atLeast;
+      return (
+        countOf(condition.count, caster, target, { surroundings, targetsHit }, []) >=
+        condition.atLeast
+      );
     case "count-at-most":
       return (
         countOf(condition.count, caster, target, { surroundings, targetsHit }, []) <=
