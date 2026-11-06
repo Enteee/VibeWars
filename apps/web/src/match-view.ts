@@ -919,6 +919,11 @@ export async function startMatchView(
     if (parent.dataset.called !== called) {
       parent.dataset.called = called;
     }
+    // And how many pings and compass line segments it has up (#2391).
+    const marks = `${String(latestArena.pings.length)}/${String(latestArena.strokes.length)}`;
+    if (parent.dataset.calls !== marks) {
+      parent.dataset.calls = marks;
+    }
 
     if (seat === undefined) {
       // No self: the scoreboard, clock and result alone, and the target
@@ -1041,6 +1046,7 @@ export async function startMatchView(
       partyWindow.dispose();
       compass.dispose();
       delete parent.dataset.called;
+      delete parent.dataset.calls;
       parent.style.removeProperty("--hud-height");
       nameReveal.detach();
       window.removeEventListener("keydown", handleKeyDown);
