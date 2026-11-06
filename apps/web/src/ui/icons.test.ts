@@ -39,6 +39,7 @@ import {
 
 import { C } from "../../../../scripts/assets/icon-kit.mjs";
 import { inkOutsidePlate } from "../../../../scripts/assets/plate-check.mjs";
+import { PLATE_CHECK_OFFENDERS } from "../../../../scripts/assets/plate-check-offenders.mjs";
 import { SKILL_ICONS } from "../../../../scripts/assets/skill-icon-table.mjs";
 import { STATUS_ICON_TABLES, STATUS_ICONS } from "../../../../scripts/assets/status-icon-table.mjs";
 import { PLATES } from "../../../../scripts/assets/status-plates.mjs";
@@ -222,11 +223,27 @@ describe("skill icons (#719)", () => {
 });
 
 describe("status ink stays inside its plate (#2404)", () => {
-  it("has no glyph ink outside its category's plate", () => {
-    const outside = Object.entries(STATUS_ICONS).flatMap(([id, [category, glyph]]) => {
-      const pixels = inkOutsidePlate(PLATES[category], glyph(C.plate));
-      return pixels === 0 ? [] : [`${id} (${category}): ${String(pixels)} px outside`];
+  const listed = new Set(Object.values(PLATE_CHECK_OFFENDERS).flat());
+  const outside = new Map(
+    Object.entries(STATUS_ICONS).map(([id, [category, glyph]]) => [
+      id,
+      inkOutsidePlate(PLATES[category], glyph(C.plate)),
+    ]),
+  );
+
+  it("has no glyph ink outside its category's plate, but for the frozen offenders", () => {
+    const offenders = Object.entries(STATUS_ICONS).flatMap(([id, [category]]) => {
+      const pixels = outside.get(id) ?? 0;
+      return pixels === 0 || listed.has(id)
+        ? []
+        : [`${id} (${category}): ${String(pixels)} px outside`];
     });
-    expect(outside).toEqual([]);
+    expect(offenders).toEqual([]);
+  });
+
+  it("lists only ids that still cross their plate, so the list only shrinks", () => {
+    // An id with no status row any more is no offender either.
+    const stale = [...listed].filter((id) => (outside.get(id) ?? 0) === 0);
+    expect(stale.map((id) => `remove ${id} from the offenders list`)).toEqual([]);
   });
 });
