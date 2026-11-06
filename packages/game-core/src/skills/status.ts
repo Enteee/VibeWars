@@ -28,6 +28,7 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
+import { RANGE_SPELL } from "../distances.js";
 import type { ArmorCondition } from "../equipment/insignias.js";
 import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
@@ -107,6 +108,25 @@ export type StatusId =
   | ParagonStatusId
   | DervishStatusId;
 
+/**
+ * What renews a status (`StatusDefinition.renewsOn`, #2501):
+ * - `chant-or-shout-ends`: a chant or a shout ends on the bearer (#1423),
+ *   a refrain's "this echo is reapplied every time a chant or shout ends on you";
+ * - `bearer-casts-spell`: the bearer casts a spell (#1614), Kinetic Armor's;
+ * - `bearer-casts-spell-at-foe`: a spell at a foe (#2132), Lyssa's Aura's;
+ *   one at the bearer itself or an ally renews nothing;
+ * - `bearer-takes-elemental-damage`: the bearer loses Health to cold, fire,
+ *   lightning or earth damage, after any block, Storm's Embrace's;
+ * - `bearer-enchantment-ends`: another enchantment on it ends, removed,
+ *   stripped or expired, Vow of Piety's. A death's ends count not.
+ */
+export type RenewEvent =
+  | "chant-or-shout-ends"
+  | "bearer-casts-spell"
+  | "bearer-casts-spell-at-foe"
+  | "bearer-takes-elemental-damage"
+  | "bearer-enchantment-ends";
+
 /** A status's modifiers that hold only while its bearer is under another (#1485). */
 export interface WhileUnder {
   /**
@@ -128,6 +148,10 @@ export interface WhileUnder {
    * Darkness's "hexed foes miss 50% of the time".
    */
   readonly attackMissChance: number;
+  /** Summed into each of the bearer's blows as the status's own (#2501): Spirit's Strength's. */
+  readonly attackDamageDelta: StatusStat;
+  /** Multiplied into the bearer's speed as the status's own (#2501): Soldier's Speed's 15% more. */
+  readonly moveSpeedMultiplier: number;
 }
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
@@ -225,6 +249,7 @@ type OwnSkillStatKey = {
 
 /** Every `OwnSkillStatKey`, as `STATUS_STAT_KEYS`. */
 const OWN_SKILL_STAT_KEYS: Readonly<Record<OwnSkillStatKey, true>> = {
+  energyPercentOff: true,
   energyDiscount: true,
   energySurcharge: true,
   activationMultiplier: true,
@@ -241,6 +266,7 @@ type WhileUnderStatKey = {
 
 /** Every `WhileUnderStatKey`, as `STATUS_STAT_KEYS`. */
 const WHILE_UNDER_STAT_KEYS: Readonly<Record<WhileUnderStatKey, true>> = {
+  attackDamageDelta: true,
   healthPips: true,
   armorModifier: true,
 };
@@ -1487,23 +1513,18 @@ export interface StatusDefinition {
    */
   readonly pulse: EffectPulse | undefined;
   /**
-   * Whenever a chant or a shout ends on the bearer, its remaining time is
-   * back to the duration it was applied with (#1423): a refrain's "this
-   * echo is reapplied every time a chant or shout ends on you".
+   * Whenever one of these happens, its remaining time is back to the
+   * duration it was applied with (#2501). Empty: never.
    */
-  readonly renewsOnChantOrShoutEnd: boolean;
+  readonly renewsOn: readonly RenewEvent[];
   /**
-   * Whenever the bearer casts a spell, its remaining time is back to the
-   * duration it was applied with (#1614): Kinetic Armor's "whenever you
-   * cast a spell, Kinetic Armor is renewed for 12 seconds".
+   * As it would expire, it gets its full duration again, from the same
+   * source at the same ranks, while the bearer holds another hex (#2501):
+   * Recurring Insecurity's "if that foe has another hex when Recurring
+   * Insecurity would end, it is reapplied". Not a new application: nothing
+   * answering one fires. A removal ends it for good. `undefined`: never.
    */
-  readonly renewsOnBearerSpell: boolean;
-  /**
-   * As `renewsOnBearerSpell`, only for a spell cast at a foe (#2132):
-   * Lyssa's Aura's "reapplies itself every time you cast a spell on a
-   * foe". One at the bearer itself or an ally renews nothing.
-   */
-  readonly renewsOnBearerSpellAtFoe: boolean;
+  readonly reappliesOnExpiryIf: { readonly bearerHasOtherHex: true } | undefined;
   /**
    * It ends once its triggers have fired this many times (#1423): Finale
    * of Restoration's "the next 5 times", at the ranks it landed with,
@@ -1887,6 +1908,15 @@ export interface OwnSkillFilter {
   readonly weapon: AttackWeaponClass | undefined;
   /** Only skills that target a foe (#2311), as Iron Mist's "Air Magic spells that target a foe". */
   readonly targetsFoe: boolean;
+  /**
+   * Only half-ranged skills (#2501), as Deadly Haste's "half-ranged
+   * spells": half spell range, at someone other than the user.
+   */
+  readonly halfRange: boolean;
+  /** Only skills that target their user (#2501), as Signet of Mystic Speed's "self-targeting". */
+  readonly targetsSelf: boolean;
+  /** No flash enchantment (#2501): Signet of Mystic Speed's are instant already. */
+  readonly notFlash: boolean;
 }
 
 /** `StatusDefinition.ownSkillModifiers` (#1761). */
@@ -1935,6 +1965,17 @@ export interface OwnSkillModifier {
   /** Overcast its user takes as each use begins (#2311), as Iron Mist's 2. 0: none. */
   readonly overcastPerUse: number;
   /**
+   * The share of the skill's base cost taken off before `energyDiscount`,
+   * rounded half up (#2501): Attuned Was Songkai's "cost 5...50% of the
+   * base Energy". Every one's adds. 0: none.
+   */
+  readonly energyPercentOff: StatusStat;
+  /**
+   * It holds only while the bearer holds an item (#2501), as
+   * `caster-holds-item` reads it: Renewing Memories' "while holding an item".
+   */
+  readonly whileHoldingItem: boolean;
+  /**
    * Skills it answers before the status ends, rounded at the bearer's
    * ranks as it lands (#2478): Soul Twisting's "1...3". `undefined`: as
    * long as the status lasts.
@@ -1965,6 +2006,8 @@ export interface OwnSkillBoost {
   readonly notEasilyInterrupted: boolean;
   /** Every one's, summed. */
   readonly overcast: number;
+  /** The share of the base cost off (#2501), every one's summed. */
+  readonly energyPercentOff: number;
 }
 
 /** A use no `OwnSkillModifier` touched. */
@@ -1982,6 +2025,7 @@ export const NO_OWN_SKILL_BOOST: OwnSkillBoost = {
   favorHealMultiplier: 1,
   notEasilyInterrupted: false,
   overcast: 0,
+  energyPercentOff: 0,
 };
 
 /** Whether `skill` is one `filter` names (#1761). */
@@ -1996,7 +2040,10 @@ export function ownSkillAnswers(filter: OwnSkillFilter, skill: Skill): boolean {
     (filter.chainRoles === undefined ||
       (skill.attack?.chain !== undefined && filter.chainRoles.includes(skill.attack.chain.role))) &&
     (filter.weapon === undefined || skill.attack?.weapon === filter.weapon) &&
-    (!filter.targetsFoe || skill.target === "single-enemy")
+    (!filter.targetsFoe || skill.target === "single-enemy") &&
+    (!filter.halfRange || (skill.target !== "self" && skill.range === RANGE_SPELL / 2)) &&
+    (!filter.targetsSelf || skill.target === "self") &&
+    (!filter.notFlash || !skill.flash)
   );
 }
 
@@ -2016,11 +2063,16 @@ function ownSkillUses(
  * holds only alone.
  */
 export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): OwnSkillBoost {
+  // Renewing Memories' (#2501), as `caster-holds-item` reads it.
+  const holding = active.some(({ id }) => getStatusDefinition(id).category === "item");
   const answering = active
     .flatMap(({ id, ranks }) =>
       getStatusDefinition(id).ownSkillModifiers.map((modifier) => ({ modifier, ranks })),
     )
-    .filter(({ modifier }) => ownSkillAnswers(modifier.filter, skill));
+    .filter(
+      ({ modifier }) =>
+        ownSkillAnswers(modifier.filter, skill) && (!modifier.whileHoldingItem || holding),
+    );
   if (answering.length === 0) {
     return NO_OWN_SKILL_BOOST;
   }
@@ -2046,6 +2098,7 @@ export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): Ow
         : boost.favorHealMultiplier * modifier.healMultiplier,
       notEasilyInterrupted: boost.notEasilyInterrupted || modifier.notEasilyInterrupted,
       overcast: boost.overcast + modifier.overcastPerUse,
+      energyPercentOff: boost.energyPercentOff + statAt(modifier.energyPercentOff, ranks),
     }),
     { ...NO_OWN_SKILL_BOOST, energyFloor: 0 },
   );
@@ -2977,6 +3030,10 @@ export class StatusSet {
           stepTargetId: status.stepTargetId,
         });
         if (!death) {
+          // Vow of Piety's (#2501): gone already, its own end renews nothing.
+          if (getStatusDefinition(id).category === "enchantment") {
+            this.#renew("bearer-enchantment-ends");
+          }
           this.#lostEnchantment(id);
           this.#lostCondition(id);
         }
@@ -3058,8 +3115,14 @@ export class StatusSet {
     }
   }
 
-  /** As `recordPhysicalDamage`, for elemental damage (#2453). */
-  public recordElementalDamage(): void {
+  /**
+   * As `recordPhysicalDamage`, for `amount` of elemental damage (#2453).
+   * Any above 0 renews what renews on it (#2501), Storm's Embrace.
+   */
+  public recordElementalDamage(amount: number): void {
+    if (amount > 0) {
+      this.#renew("bearer-takes-elemental-damage");
+    }
     const fired = this.#answering("bearer-takes-elemental-damage");
     if (fired.length > 0) {
       this.#changes.push({ kind: "took-elemental-damage", fired });
@@ -3696,9 +3759,19 @@ export class StatusSet {
    * status that renews on that is renewed.
    */
   public castSpell(atFoe: boolean): void {
+    this.#renew("bearer-casts-spell");
+    if (atFoe) {
+      this.#renew("bearer-casts-spell-at-foe");
+    }
+  }
+
+  /**
+   * Every status that renews on `event` is back to the duration it was
+   * applied with (#2501).
+   */
+  #renew(event: RenewEvent): void {
     for (const status of this.#statuses.values()) {
-      const definition = getStatusDefinition(status.id);
-      if (definition.renewsOnBearerSpell || (atFoe && definition.renewsOnBearerSpellAtFoe)) {
+      if (getStatusDefinition(status.id).renewsOn.includes(event)) {
         status.remainingSeconds = status.durationSeconds;
         this.#hastened.delete(status);
       }
@@ -3711,12 +3784,7 @@ export class StatusSet {
    * triggers that answer it, in `active` order, are returned to fire.
    */
   public chantOrShoutEnded(): AnsweringTrigger[] {
-    for (const status of this.#statuses.values()) {
-      if (getStatusDefinition(status.id).renewsOnChantOrShoutEnd) {
-        status.remainingSeconds = status.durationSeconds;
-        this.#hastened.delete(status);
-      }
-    }
+    this.#renew("chant-or-shout-ends");
     return this.triggersOn("bearer-chant-or-shout-ends");
   }
 
@@ -4562,6 +4630,11 @@ export class StatusSet {
       enchantment: 1 + modifiers.enchantmentsExpireFaster,
       stance: 1 + modifiers.stancesExpireFaster,
     };
+    // Read as the tick begins (#2501): a hex ending beside Recurring
+    // Insecurity in this tick still reapplies it.
+    const hexes = [...this.#statuses.values()].filter(
+      ({ id }) => getStatusDefinition(id).category === "hex",
+    );
     for (const status of this.#statuses.values()) {
       const rate = categoryRate[getStatusDefinition(status.id).category] ?? 1;
       this.#pulse(status, dt, rate);
@@ -4572,10 +4645,13 @@ export class StatusSet {
       if (status.remainingSeconds > 0) {
         continue;
       }
-      const renews = getStatusDefinition(status.id).renewsWhileMoving;
+      const { renewsWhileMoving: renews, reappliesOnExpiryIf } = getStatusDefinition(status.id);
       if (moving && renews !== undefined) {
         status.remainingSeconds = renews;
         status.durationSeconds = renews;
+        this.#hastened.delete(status);
+      } else if (reappliesOnExpiryIf !== undefined && hexes.some((hex) => hex !== status)) {
+        status.remainingSeconds = status.durationSeconds;
         this.#hastened.delete(status);
       } else {
         expired.push(status.id);
@@ -5104,6 +5180,8 @@ export function aggregateModifiers(
       healthPips += Math.round(statAt(def.whileUnder.healthPips, ranks));
       armorModifier += Math.round(statAt(def.whileUnder.armorModifier, ranks));
       attackMissChance = Math.max(attackMissChance, def.whileUnder.attackMissChance);
+      const underSpeed = def.whileUnder.moveSpeedMultiplier;
+      moveSpeedMultiplier *= speedBoostsBarred ? Math.min(1, underSpeed) : underSpeed;
     }
     if (def.enchantmentRechargeFaster !== undefined) {
       enchantmentRechargeFaster.push(def.enchantmentRechargeFaster);

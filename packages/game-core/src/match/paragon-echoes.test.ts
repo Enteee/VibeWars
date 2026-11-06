@@ -266,7 +266,7 @@ describe("the eight echoes (#1423)", () => {
     // A 1.33 s axe swing becomes 1 s (#1516).
     expect(attackDurationSeconds(get(sim, "p").combatant, 1.33)).toBeCloseTo(1, 2);
     expect(modifiers.armorModifier).toBe(-20);
-    expect(getStatusDefinition("aggressive-refrain").renewsOnChantOrShoutEnd).toBe(true);
+    expect(getStatusDefinition("aggressive-refrain").renewsOn).toEqual(["chant-or-shout-ends"]);
   });
 
   it("Blazing Finale: foes adjacent to the ally burn 4 s when a chant ends on it", () => {
@@ -283,7 +283,7 @@ describe("the eight echoes (#1423)", () => {
     expect(sim.requestAttack("a", "f")?.ok).toBe(true);
     stepFor(sim, 2);
     expect(remaining(sim, "burning", "f")).toBeGreaterThan(1);
-    expect(getStatusDefinition("burning-refrain").renewsOnChantOrShoutEnd).toBe(true);
+    expect(getStatusDefinition("burning-refrain").renewsOn).toEqual(["chant-or-shout-ends"]);
   });
 
   it("Burning Refrain: no burn on a foe with less Health than the ally", () => {
@@ -332,7 +332,7 @@ describe("the eight echoes (#1423)", () => {
     const sim = cast("paragon.mending-refrain", "p");
     expect(get(sim, "p").combatant.statuses.get("mending-refrain")?.durationSeconds).toBe(15);
     expect(getStatusDefinition("mending-refrain").healthPips).toBe(3);
-    expect(getStatusDefinition("mending-refrain").renewsOnChantOrShoutEnd).toBe(true);
+    expect(getStatusDefinition("mending-refrain").renewsOn).toEqual(["chant-or-shout-ends"]);
   });
 
   it("Purifying Finale: the ally loses a condition when a chant ends on it", () => {
@@ -347,7 +347,7 @@ describe("Paragon echoes 2 (#1485)", () => {
   it("Bladeturn Refrain: +34 armor against a slashing hit, none against a blunt or piercing one, renewed", () => {
     const sim = cast("paragon.bladeturn-refrain");
     expect(remaining(sim, "bladeturn-refrain")).toBeGreaterThan(19);
-    expect(getStatusDefinition("bladeturn-refrain").renewsOnChantOrShoutEnd).toBe(true);
+    expect(getStatusDefinition("bladeturn-refrain").renewsOn).toEqual(["chant-or-shout-ends"]);
     const ally = get(sim, "a").combatant;
     const armorAgainst = (weapon: Weapon): number =>
       effectiveArmor(ally, skillDamage(10, weapon.damageType, 0), "chest");
