@@ -71,7 +71,7 @@ describe("the top bar's ⋯ on a repaint (#1305)", () => {
   it("goes away on another place, or an overlay over the same place", () => {
     expect(putsMoreAway(lobby, { ...lobby, place: "VibeWars / Teams" }, true)).toBe(true);
     expect(putsMoreAway(lobby, { ...lobby, overlay: true }, true)).toBe(true);
-    expect(putsMoreAway(lobby, { ...lobby, own: "options" }, true)).toBe(true);
+    expect(putsMoreAway(lobby, { ...lobby, own: "help" }, true)).toBe(true);
   });
 
   it("goes away on the first bar, and when nothing is left in it", () => {

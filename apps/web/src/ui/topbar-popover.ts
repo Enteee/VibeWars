@@ -1,6 +1,6 @@
 /**
  * A window that drops from a top-bar or HUD button (#2385): the music
- * selector's and the Lobby's. A click on the button opens it and another
+ * selector's, the Lobby's and Options (#2386). A click on the button opens it and another
  * shuts it, as do Esc inside it and a click outside it; focus goes back to
  * the button. One is open at a time on the page: opening one shuts the other.
  */
@@ -10,6 +10,8 @@ export interface PopoverContent {
   readonly element: HTMLElement;
   /** Where focus goes once it is in the page. */
   readonly focus: HTMLElement;
+  /** Whether a click outside leaves it open for now: Options while a key is rebound (#2386). */
+  readonly holdsOpen?: () => boolean;
   /** Stop listening; the popover takes the element out itself. */
   dispose(): void;
 }
@@ -17,9 +19,14 @@ export interface PopoverContent {
 /** The popover open now, page-wide, and how to shut it without stealing focus. */
 let shutOpen: (() => void) | undefined;
 
-/** Shut whichever popover is open (#2385): Help or Options opens over it. */
+/** Shut whichever popover is open (#2385): Help opens over it, a match takes the page. */
 export function closeTopbarPopover(): void {
   shutOpen?.();
+}
+
+/** Whether a popover is open: the page is in use, so no reload under it (#2386). */
+export function isTopbarPopoverOpen(): boolean {
+  return shutOpen !== undefined;
 }
 
 /**
@@ -84,7 +91,8 @@ export function attachTopbarPopover(
       open !== undefined &&
       target instanceof Node &&
       !open.element.contains(target) &&
-      !trigger.contains(target)
+      !trigger.contains(target) &&
+      open.holdsOpen?.() !== true
     ) {
       close();
     }

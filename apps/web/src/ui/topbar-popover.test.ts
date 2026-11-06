@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PartyMember, RailParty } from "./lobby-window.js";
 import { PARTY_ALONE } from "./lobby-window.js";
 import { lobbyButton, lobbyButtonName } from "./topbar.js";
-import { attachTopbarPopover, closeTopbarPopover } from "./topbar-popover.js";
+import { attachTopbarPopover, closeTopbarPopover, isTopbarPopoverOpen } from "./topbar-popover.js";
 
 type Listener = (event: FakeEvent) => void;
 
@@ -147,7 +147,10 @@ afterEach(() => {
 });
 
 /** A popover off a fresh button in `parent`, its content a plain box. */
-function popover(parent: FakeElement): { trigger: FakeElement; disposed: number[] } {
+function popover(
+  parent: FakeElement,
+  holdsOpen?: () => boolean,
+): { trigger: FakeElement; disposed: number[] } {
   const trigger = new FakeElement("button");
   const disposed: number[] = [];
   attachTopbarPopover(
@@ -158,6 +161,7 @@ function popover(parent: FakeElement): { trigger: FakeElement; disposed: number[
       return {
         element: element as unknown as HTMLElement,
         focus: element as unknown as HTMLElement,
+        ...(holdsOpen === undefined ? {} : { holdsOpen }),
         dispose: () => disposed.push(1),
       };
     },
@@ -217,7 +221,29 @@ describe("a top-bar popover (#2385)", () => {
     expect(music.trigger.getAttribute("aria-expanded")).toBe("true");
   });
 
-  it("shuts for Help or Options without taking the focus they want", () => {
+  it("stays open through a press outside while it holds itself open, as Options rebinding a key (#2386)", () => {
+    const parent = new FakeElement("div");
+    let capturing = true;
+    const { trigger } = popover(parent, () => capturing);
+    trigger.fire("click");
+    page.fire("pointerdown", { target: new FakeElement("main") });
+    expect(parent.children).toHaveLength(1);
+    capturing = false;
+    page.fire("pointerdown", { target: new FakeElement("main") });
+    expect(parent.children).toHaveLength(0);
+  });
+
+  it("says whether one is open, for the reload that waits on an idle page (#2386)", () => {
+    const parent = new FakeElement("div");
+    const { trigger } = popover(parent);
+    expect(isTopbarPopoverOpen()).toBe(false);
+    trigger.fire("click");
+    expect(isTopbarPopoverOpen()).toBe(true);
+    trigger.fire("click");
+    expect(isTopbarPopoverOpen()).toBe(false);
+  });
+
+  it("shuts for Help or a match without taking the focus they want", () => {
     const parent = new FakeElement("div");
     const { trigger, disposed } = popover(parent);
     trigger.fire("click");

@@ -130,7 +130,7 @@ export interface ScreenBarBack {
 }
 
 /** The global icon that is a screen itself, hidden while that screen shows (#1272). */
-export type OwnIcon = "help" | "options" | "music";
+export type OwnIcon = "help" | "music";
 
 /** What a screen puts in the top bar (#1272), left to right. */
 export interface ScreenBarOptions {

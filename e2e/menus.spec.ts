@@ -31,7 +31,7 @@ test("#578: Esc goes back on the team editor, options and lobby screens", async 
   await expect(page.locator(".character-card")).toBeVisible();
 
   await page.locator(".topbar-options").click();
-  await expect(page.getByRole("heading", { name: "Options" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Options" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
 

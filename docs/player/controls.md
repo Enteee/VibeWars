@@ -57,6 +57,7 @@ Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),
 **♪** (music: what plays, and how loud), the sound mute and fullscreen. In a match the same buttons,
 but Lobby, sit at the top right of the screen. In a narrow window, these icons and
 the screen's other buttons fold into **⋯**; only its main button stays out.
-Help and Options close with the × at their top right, or Esc.
+⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it.
+Help closes with the × at its top right, or Esc.
 
 In Auto, the menus share one song that builds as you go deeper, and each map always has its own song.

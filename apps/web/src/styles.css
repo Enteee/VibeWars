@@ -530,7 +530,7 @@ body {
   letter-spacing: normal;
 }
 
-/* Options over a screen or a match (#454): the match runs on behind it. */
+/* Help over a screen or a match (#1257): the match runs on behind it. */
 .options-overlay {
   position: fixed;
   inset: 0;
@@ -543,20 +543,40 @@ body {
   background: rgb(14 17 22 / 70%);
 }
 
-.options-overlay .screen.options-screen {
-  padding: 1rem;
-  background: var(--bg);
-  border: 1px solid var(--line);
-}
-
 /* An overlay window (#2381): its × at its own top right, not in the top
    bar. The window holds it; its body keeps clear of it. */
 .options-overlay > .screen {
   position: relative;
 }
 
-.options-overlay .options-body {
+.options-window .options-body {
   padding-right: 2.25rem;
+}
+
+/* Options as a window (#2386), no backdrop: in a match under the HUD's
+   cluster, as the music's; from the bar, just under it. Its pane scrolls. */
+.screen.options-screen.options-window {
+  position: absolute;
+  top: calc(5.8rem + var(--build-banner-space, 0px));
+  right: 0.9rem;
+  z-index: 20;
+  width: min(56rem, calc(100vw - 1.8rem));
+  max-height: calc(100vh - 6.8rem - var(--build-banner-space, 0px));
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgb(14 17 22 / 96%);
+  border: 1px solid var(--line);
+}
+
+#topbar .screen.options-screen.options-window {
+  top: calc(100% + 0.3rem);
+  right: 0.5rem;
+  width: min(56rem, calc(100vw - 1rem));
+  max-height: calc(100vh - 100% - 1.3rem - var(--build-banner-space, 0px));
+  /* The size it has in a match, not the slim bar's. */
+  font-size: 1rem;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .screen button.overlay-close {

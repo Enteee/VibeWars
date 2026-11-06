@@ -7,6 +7,7 @@ import { button, h, iconButton, setTopbarSlots, shareLine, type ShownBar } from 
 import { copyInviteLink } from "./lobby-screen.js";
 import { lobbyWindowBody, type RailParty } from "./lobby-window.js";
 import { loadPlayerName } from "./player-section.js";
+import { attachOptionsWindow } from "./options-screen.js";
 import { attachTopbarPopover, closeTopbarPopover } from "./topbar-popover.js";
 
 /**
@@ -39,8 +40,8 @@ export function paintStatus(status: StatusElement, text: string, state: StatusSt
 export interface TopbarCallbacks {
   /** [?]: the player docs, Help, over whatever screen shows (#1257). */
   readonly onHelp: () => void;
-  /** ⚙: Options, over whatever screen shows. */
-  readonly onOptions: () => void;
+  /** ⚙'s Options window, over whatever screen shows, closed (#2386). */
+  readonly onOptionsClosed: () => void;
   /** Join the lobby `code` as `name` (#1525): an invite link opened (#2100). */
   readonly onJoin: (code: string, name: string) => void;
   /** A guest's Leave (#1526): back to a fresh lobby of its own. */
@@ -387,11 +388,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   });
 
   const options = iconButton("topbar-options", "Options", settingsIcon());
-  options.setAttribute("aria-haspopup", "dialog");
-  options.addEventListener("click", () => {
-    closeTopbarPopover();
-    callbacks.onOptions();
-  });
+  attachOptionsWindow(options, bar, callbacks.onOptionsClosed);
 
   // The bar's join status, right before the global icons, on every menu
   // screen that asks for it; the lobby's own controls are the Lobby window's.
@@ -470,9 +467,8 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     actions: screenActions,
     onShow: (shown) => {
       help.hidden = shown.own === "help";
-      options.hidden = shown.own === "options";
       music.hidden = shown.own === "music";
-      if (shown.own === "help" || shown.own === "options") {
+      if (shown.own === "help") {
         closeTopbarPopover();
       }
       join.element.hidden = !shown.join;
