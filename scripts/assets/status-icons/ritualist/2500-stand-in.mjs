@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { fitRows, stroke } from "../../icon-kit.mjs";
 
 /** The held urn of ashes, small. @param {string} c */
 const urn = (c) => `<path d="M5 9h7l-1 9H6z" fill="${c}"/><path d="M6 7h5" ${stroke(c, 1.6)}/>`;
@@ -40,4 +40,10 @@ const rows = {
   ],
 };
 
-export default rows;
+/** Drawn smaller to sit inside the item plate (#2404). */
+const fits = {
+  "lively-was-naomei": [0.9, 0.5],
+  "vocal-was-sogolon": [0.94, 0],
+};
+
+export default fitRows(rows, fits);
