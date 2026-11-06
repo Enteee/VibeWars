@@ -147,7 +147,7 @@ export const stepAndReturn = (kind, c, w) => {
 
 /**
  * Rows with some glyphs drawn smaller to sit inside their plate (#2404): each
- * fit is `[scale, dy]`, the glyph scaled about the plate's centre and moved down by dy.
+ * fit is `[scale, dy]`, the glyph drawn through `inset` with no sideways move.
  * @param {Readonly<Record<string, readonly [Category, Glyph]>>} rows
  * @param {Readonly<Record<string, readonly [number, number]>>} fits
  * @returns {Record<string, readonly [Category, Glyph]>}
@@ -158,13 +158,6 @@ export const fitRows = (rows, fits) =>
       const fit = fits[id];
       if (fit === undefined) return [id, [category, glyph]];
       const [scale, dy] = fit;
-      return [
-        id,
-        [
-          category,
-          (c) =>
-            `<g transform="translate(12 ${String(12 + dy)}) scale(${String(scale)}) translate(-12 -12)">${glyph(c)}</g>`,
-        ],
-      ];
+      return [id, [category, (c) => inset(scale, glyph(c), 0, dy)]];
     }),
   );
