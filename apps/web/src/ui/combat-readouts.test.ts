@@ -32,6 +32,9 @@ const nameOf = (id: string): string => NAMES.get(id) ?? id;
 const CREATURES = new Set(["wolf", "priest/0"]);
 const isCreature = (id: string): boolean => CREATURES.has(id);
 
+/** Nobody here is a creature (#2483). */
+const NO_CREATURES = (): undefined => undefined;
+
 function entry(events: CombatEvent[], extra: Partial<CombatLogEntry> = {}): CombatLogEntry {
   return {
     tick: 1,
@@ -521,7 +524,7 @@ describe("describeCombatEvent", () => {
       tone: "damage",
       critical: false,
     });
-    expect(accumulate(EMPTY_TOTALS, [steal], "you", 0.05)).toEqual({
+    expect(accumulate(EMPTY_TOTALS, [steal], "you", 0.05, NO_CREATURES)).toEqual({
       damage: 0,
       weaponDamage: 0,
       healing: 0,
@@ -545,7 +548,7 @@ describe("describeCombatEvent", () => {
       tone: "damage",
       critical: false,
     });
-    expect(accumulate(EMPTY_TOTALS, [touch], "you", 0.05)).toEqual({
+    expect(accumulate(EMPTY_TOTALS, [touch], "you", 0.05, NO_CREATURES)).toEqual({
       damage: 0,
       weaponDamage: 0,
       healing: 0,
@@ -742,12 +745,72 @@ describe("accumulate", () => {
       ],
       "you",
       0.05,
+      NO_CREATURES,
     );
     expect(totals).toEqual({
       damage: 76,
       weaponDamage: 12,
       healing: 30,
       taken: 35,
+      seconds: 0.05,
+    });
+  });
+
+  it("counts what your own creatures deal and heal as yours, on the skills side (#2483)", () => {
+    const owners = new Map<string, string | undefined>([
+      ["you/c1", "you"],
+      ["you/c2", "you"],
+      ["you/c3", "foe"],
+      ["you/c4", undefined],
+      ["foe/c1", "you"],
+      ["other/c1", "other"],
+      ["masterless/c1", undefined],
+    ]);
+    const totals = accumulate(
+      EMPTY_TOTALS,
+      [
+        entry([{ kind: "heal", targetId: "you", amount: 94 }], { sourceId: "you/c1" }),
+        entry([{ kind: "damage", targetId: "dummy", amount: 20, critical: false }], {
+          sourceId: "you/c1",
+        }),
+        // A minion's own blow is its skills' share, not your weapon's.
+        entry([{ kind: "damage", targetId: "dummy", amount: 15, critical: false }], {
+          sourceId: "you/c2",
+          cause: "weapon",
+          skillId: undefined,
+          weaponId: "sword",
+        }),
+        // Your creature hurting you is taken, never dealt.
+        entry([{ kind: "damage", targetId: "you", amount: 7, critical: false }], {
+          sourceId: "you/c1",
+        }),
+        // Someone else's creatures, and masterless ones, are not yours.
+        entry([{ kind: "heal", targetId: "you", amount: 50 }], { sourceId: "other/c1" }),
+        entry([{ kind: "damage", targetId: "dummy", amount: 50, critical: false }], {
+          sourceId: "masterless/c1",
+        }),
+        // Who owns it now counts, not who raised it: one a foe took from you
+        // (#1965) is theirs, one you took is yours, one gone masterless
+        // (#2092) nobody's.
+        entry([{ kind: "damage", targetId: "dummy", amount: 40, critical: false }], {
+          sourceId: "you/c3",
+        }),
+        entry([{ kind: "damage", targetId: "dummy", amount: 11, critical: false }], {
+          sourceId: "foe/c1",
+        }),
+        entry([{ kind: "damage", targetId: "dummy", amount: 30, critical: false }], {
+          sourceId: "you/c4",
+        }),
+      ],
+      "you",
+      0.05,
+      (id) => owners.get(id),
+    );
+    expect(totals).toEqual({
+      damage: 46,
+      weaponDamage: 0,
+      healing: 94,
+      taken: 7,
       seconds: 0.05,
     });
   });

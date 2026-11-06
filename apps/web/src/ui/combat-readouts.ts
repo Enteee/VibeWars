@@ -586,27 +586,34 @@ export const EMPTY_TOTALS: MeterTotals = {
  * Add one step's entries to the player's totals. Damage to yourself is
  * not damage dealt, as `tallyCombat` counts it; healing yourself is
  * healing done. Health a status takes as it lands, or a foe's skill makes
- * you lose (#1678), is taken, never dealt.
+ * you lose (#1678), is taken, never dealt. What your own spirits, minions
+ * and pet deal and heal is yours (#2483), on the skills side: "weapon" is
+ * only your own weapon. `ownerOf` names a creature's owner, `undefined`
+ * for a masterless one or anyone not a creature.
  */
 export function accumulate(
   totals: MeterTotals,
   entries: readonly CombatLogEntry[],
   selfId: string,
   stepSeconds: number,
+  ownerOf: (id: string) => string | undefined,
 ): MeterTotals {
   let { damage, weaponDamage, healing, taken } = totals;
   for (const entry of entries) {
+    const yours =
+      entry.sourceId === selfId ||
+      (entry.sourceId !== undefined && ownerOf(entry.sourceId) === selfId);
     for (const event of entry.events) {
       if (event.kind === "damage") {
         if (event.targetId === selfId) {
           taken += event.amount;
-        } else if (entry.sourceId === selfId) {
+        } else if (yours) {
           damage += event.amount;
-          if (entry.cause === "weapon") {
+          if (entry.cause === "weapon" && entry.sourceId === selfId) {
             weaponDamage += event.amount;
           }
         }
-      } else if (event.kind === "heal" && entry.sourceId === selfId) {
+      } else if (event.kind === "heal" && yours) {
         healing += event.amount;
       } else if (
         (event.kind === "health-lost" ||

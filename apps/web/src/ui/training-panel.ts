@@ -1,5 +1,6 @@
 import {
   TRAINING_SCENARIOS,
+  creatureSummonerOf,
   getTrainingScenario,
   type StepResult,
   type Segment,
@@ -324,6 +325,13 @@ export function createTrainingPanel(): TrainingPanel {
   let armedBeforeClick = false;
   let logRows: readonly LogRow[] = [];
   let totals: MeterTotals = EMPTY_TOTALS;
+  /**
+   * Each creature's owner as last seen (#2483), read live, as a takeover
+   * or going masterless changes it; one gone keeps its last owner.
+   */
+  const creatureOwners = new Map<string, string | undefined>();
+  const ownerOf = (id: string): string | undefined =>
+    creatureOwners.has(id) ? creatureOwners.get(id) : creatureSummonerOf(id);
   /** Gathers status ticks into a row a second (#151); one per session. */
   let ticks = new StatusTickBatcher();
   let sinceMeterPaint = 0;
@@ -627,7 +635,12 @@ export function createTrainingPanel(): TrainingPanel {
   /* --- the session ------------------------------------------------------ */
 
   const onStep = (result: StepResult): void => {
-    totals = accumulate(totals, result.log, SELF_ID, TICK_SECONDS);
+    for (const participant of session?.connection.simulation.participants() ?? []) {
+      if (participant.creature !== undefined) {
+        creatureOwners.set(participant.id, participant.creature.ownerId);
+      }
+    }
+    totals = accumulate(totals, result.log, SELF_ID, TICK_SECONDS, ownerOf);
     const rows: LogRow[] = [];
     for (const entry of result.log) {
       rows.push(...ticks.push(entry, nameOf, isCreature));
@@ -640,6 +653,7 @@ export function createTrainingPanel(): TrainingPanel {
     session?.music.dispose();
     void session?.connection.disconnect();
     const setup = setupScenario(scenario, build);
+    creatureOwners.clear();
     ticks = new StatusTickBatcher();
     const connection = createLocalConnection({
       simulation: setup.simulation,
