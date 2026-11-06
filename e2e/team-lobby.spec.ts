@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
+import { PROFESSIONS } from "../packages/game-core/src/professions.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
 import { hostLobby, openPeers, proposeTeam, setTeamSize } from "./helpers/peers.js";
@@ -16,6 +17,11 @@ import { namePlayer } from "./helpers/player.js";
 
 /** The first four starter builds (#2554): the Four's seats, in order. */
 const FOUR = STARTER_BUILDS.slice(0, 4);
+
+/** The first seat's professions as its card names them, `Assassin / Elementalist`. */
+const FIRST_PROFESSIONS = [FOUR[0]?.primaryProfession, FOUR[0]?.secondaryProfession]
+  .flatMap((id) => (id === undefined ? [] : [PROFESSIONS[id].name]))
+  .join(" / ");
 
 /** Paste `text` onto `target`, as Ctrl+V would. */
 async function paste(target: Locator, text: string): Promise<void> {
@@ -140,8 +146,8 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
     const first = host.locator(".team-lobby-seat").nth(0);
     await expect(first.locator("canvas.character-figure")).toHaveCount(1);
     await expect(first.locator(".mini-skill")).toHaveCount(8);
-    await expect(first).toContainText("Warrior / Monk");
-    // Seats: the host the Warrior, the guest the Ranger; bots get the Monk and the Necromancer.
+    await expect(first).toContainText(FIRST_PROFESSIONS);
+    // Seats: the host the first, the guest the second; bots get the other two.
     await host.locator(".team-lobby-seat").nth(0).click();
     await expect(guest.locator(".team-lobby-seat").nth(0)).toBeDisabled();
     await guest.locator(".team-lobby-seat").nth(1).click();
