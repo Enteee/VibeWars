@@ -257,9 +257,10 @@ anywhere, and a networked match is decided only by its host. It is
 trustworthy only because it is the identical code, so a game rule belongs in
 `MatchSimulation`, never in `MatchHost`.
 
-**Honest coverage** (brief §9). The catalog is generated from the imported
-GW1 PvP corpus (ADR-0038), matched by GW1 id, plus a few skills of this
-project's own design that are never counted as corpus coverage. A corpus
+**Honest coverage** (brief §9). The reference corpus is the imported GW1
+PvP skill table (ADR-0038); every catalog skill names its GW1 id, and
+coverage matches the two by that id. A few skills of this project's own
+design carry none and are never counted as corpus coverage. A corpus
 skill that needs a mechanic the engine does not have yet is **absent from
 the catalog** rather than present as a watered-down approximation. Every
 absent skill has a named reason in `UNIMPLEMENTED_REASONS`
