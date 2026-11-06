@@ -1,8 +1,11 @@
-# ADR-0039: Third-party credits and licences live on one Options page
+# ADR-0039: Third-party credits and licences live on one Help page
 
 ## Status
 
 Accepted (2026-10-28). Issue #1235, an operator rule.
+
+Amended (2026-11-06, operator, #2559): the page lives in Help, after the
+player docs, not in Options. Still one page for every credit.
 
 ## Context
 
@@ -16,8 +19,8 @@ looks for them and do not scale.
 
 ## Decision
 
-**Every third-party credit and licence notice lives in Options →
-Third-party licences, and nowhere else in the UI.** The section lists
+**Every third-party credit and licence notice lives in Help →
+Third-party licences, and nowhere else in the UI.** The page lists
 `THIRD_PARTY_LICENCES` (`apps/web/src/ui/licences-section.ts`): each work's
 name, what VibeWars uses it for, its source, its SPDX licence and its full
 text, verbatim.

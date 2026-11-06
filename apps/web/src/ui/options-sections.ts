@@ -1,5 +1,4 @@
 import { controlsSection } from "./controls-section.js";
-import { licencesSection } from "./licences-section.js";
 import { playerSection } from "./player-section.js";
 import { relaySection } from "./relay-section.js";
 import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
@@ -30,5 +29,4 @@ export const OPTIONS_SECTIONS: readonly OptionsSection[] = [
   soundSection,
   controlsSection,
   relaySection,
-  licencesSection,
 ];
