@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { stroke, fitRows } from "../../icon-kit.mjs";
 
 const SHIELD = (/** @type {string} */ c) =>
   `<path d="M6 4h12v7c0 4-3 7-6 9-3-2-6-5-6-9z" ${stroke(c, 2)}/>`;
@@ -22,4 +22,12 @@ const rows = {
   ],
 };
 
-export default rows;
+/** Drawn smaller to sit inside the plate (#2420). */
+const fits = {
+  "wary-stance": [0.96, 2],
+  "soldiers-defense": [0.96, 2],
+  "defensive-stance": [0.96, 2],
+  "auspicious-parry": [0.96, 2],
+};
+
+export default fitRows(rows, fits);
