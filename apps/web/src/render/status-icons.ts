@@ -657,6 +657,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Riders at the caster's ranks, ends on a non-hex skill (#2411).
   "withering-aura": icon("withering-aura"),
   "hexers-vigor": icon("hexers-vigor"),
+  // Rank-scaled speed, reversal and next-hit cut (#2428).
+  "burning-speed": icon("burning-speed"),
+  "life-sheath": icon("life-sheath"),
+  "reverse-hex": icon("reverse-hex"),
+  "assassins-remedy": icon("assassins-remedy"),
   // Staples (#2413).
   meditation: icon("meditation"),
   "sharpen-daggers": icon("sharpen-daggers"),

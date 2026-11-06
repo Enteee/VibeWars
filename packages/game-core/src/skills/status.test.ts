@@ -88,7 +88,7 @@ describe("status definitions", () => {
         def.healthPerSecond !== 0 ||
         def.healthPerSecondNearSpirit !== 0 ||
         def.armorReduction !== undefined ||
-        def.moveSpeedMultiplier !== 1 ||
+        statAtTwelve(def.moveSpeedMultiplier) !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
         def.maxHealthBonus !== 0 ||
@@ -118,6 +118,7 @@ describe("status definitions", () => {
         def.lifeStealReduction !== 0 ||
         def.knockdownMinSeconds !== undefined ||
         def.reversesNextDamage !== undefined ||
+        def.nextDamageReduction !== undefined ||
         def.reflectsNextDamage !== undefined ||
         def.damageToHealing !== undefined ||
         def.pulse !== undefined ||
@@ -190,7 +191,7 @@ describe("status definitions", () => {
     expect(statAtTwelve(getStatusDefinition("burning").healthPips)).toBeLessThan(
       statAtTwelve(getStatusDefinition("bleeding").healthPips),
     );
-    expect(getStatusDefinition("crippled").moveSpeedMultiplier).toBeLessThan(1);
+    expect(statAtTwelve(getStatusDefinition("crippled").moveSpeedMultiplier)).toBeLessThan(1);
     expect(getStatusDefinition("blind").attackMissChance).toBeGreaterThan(0.5);
     expect(getStatusDefinition("deep-wound").maxHealthLoss?.fraction).toBeGreaterThan(0);
     expect(getStatusDefinition("deep-wound").healingMultiplier).toBeLessThan(1);
@@ -1580,5 +1581,43 @@ describe("StatusSet.recordInterrupt (#1473, #2132)", () => {
     expect(
       set.drainChanges().map((change) => change.kind === "interrupted" && change.skill),
     ).toEqual([{ skillId: "mesmer.empathy", key: "mesmer.empathy" }, undefined]);
+  });
+});
+
+describe("rank-scaled speed and reversal (#2428)", () => {
+  const FIRE = "elementalist.fire-magic";
+  const speed = (set: StatusSet): number => aggregateModifiers(set.active).moveSpeedMultiplier;
+
+  it.each([
+    [0, 1.3],
+    [12, 1.42],
+  ])("Burning Speed at Fire Magic %i moves %f times as fast", (rank, multiplier) => {
+    const set = new StatusSet();
+    set.apply("burning-speed", 7, "e", new Map([[FIRE, rank]]));
+    expect(speed(set)).toBeCloseTo(multiplier);
+  });
+
+  it("is barred like any boost by preventsSpeedBoosts", () => {
+    const set = new StatusSet();
+    set.apply("muddy-terrain", 10, "r", NO_RANKS);
+    set.apply("burning-speed", 7, "e", new Map([[FIRE, 12]]));
+    expect(speed(set)).toBeCloseTo(0.9);
+  });
+
+  it("leaves a flat speed as it was: Crippled and Dash", () => {
+    const set = new StatusSet();
+    set.apply("crippled", 10, "a", NO_RANKS);
+    expect(speed(set)).toBe(0.5);
+    set.apply("dash", 3, "a", NO_RANKS);
+    expect(speed(set)).toBe(0.75);
+  });
+
+  it.each([
+    [0, 20],
+    [12, 84],
+  ])("Life Sheath at Protection Prayers %i caps its reversal at %i", (rank, cap) => {
+    const set = new StatusSet();
+    set.apply("life-sheath", 8, "monk", new Map([["monk.protection-prayers", rank]]));
+    expect(set.takeReversal()).toEqual({ id: "life-sheath", cap });
   });
 });

@@ -466,7 +466,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`−${String(amount)} armor (not below ${String(floor)})`);
   }
   if (definition.moveSpeedMultiplier !== 1) {
-    parts.push(`moves at ${String(Math.round(definition.moveSpeedMultiplier * 100))}% speed`);
+    const speed = statText(definition.moveSpeedMultiplier, ranks, (multiplier) =>
+      String(Math.round(multiplier * 100)),
+    );
+    parts.push(`moves at ${speed}% speed`);
   }
   if (definition.moveSpeedWhileEnchanted !== 1) {
     const speed = String(Math.round(definition.moveSpeedWhileEnchanted * 100));
@@ -895,6 +898,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const step = String(definition.damageReductionPerHitTaken);
     parts.push(`−${step} damage taken, ${step} more each hit`);
   }
+  if (definition.nextDamageReduction !== undefined) {
+    parts.push(
+      `the next hit deals ${statText(definition.nextDamageReduction, ranks, whole)} less damage`,
+    );
+  }
   if (definition.damageReductionWhileCasting !== undefined) {
     const { skillType, amount } = definition.damageReductionWhileCasting;
     parts.push(`−${String(amount)} damage taken while casting ${skillType.replaceAll("-", " ")}s`);
@@ -1090,7 +1098,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.reversesNextDamage !== undefined) {
     parts.push(
-      `the next damage or life steal heals for that much instead, up to ${String(definition.reversesNextDamage)}`,
+      `the next damage or life steal heals for that much instead, up to ${statText(definition.reversesNextDamage, ranks, whole)}`,
     );
   }
   // Reversal of Damage's (#2187).

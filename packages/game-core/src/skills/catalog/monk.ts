@@ -4377,4 +4377,88 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Rank-scaled reversal and next-hit cut (#2428)                          */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.life-sheath",
+    name: "Life Sheath",
+    gwId: 1123,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove 0...2 conditions from target ally. For 8 seconds, the next
+    // time that ally would take damage or life steal, that ally gains
+    // that amount of Health instead (maximum 20...100)": the cap is the
+    // status's, at the caster's rank.
+    effects: [
+      {
+        kind: "remove-status",
+        category: "condition",
+        count: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 0, atTwelve: 1.6 },
+        },
+      },
+      { kind: "apply-status", statusId: "life-sheath", durationSeconds: { flat: 8 } },
+    ],
+  },
+  {
+    id: "monk.reverse-hex",
+    name: "Reverse Hex",
+    gwId: 848,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove one hex from target ally. If a hex was removed in this way,
+    // for 5...10 seconds, the next time target ally would take damage,
+    // that damage is reduced by 5...50": the cut is the status's.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "reverse-hex",
+            durationSeconds: {
+              scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 9 },
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];

@@ -244,6 +244,8 @@ const NO_BOT_USE = new Set([
   "paragon.lyric-of-zeal",
   "paragon.lyric-of-purification",
   "paragon.song-of-purification",
+  // Assassin's Remedy (#2428), the same: its cleanse waits for an attack skill.
+  "assassin.assassins-remedy",
   "paragon.hexbreaker-aria",
   "paragon.anthem-of-fury",
   // An ally's attacks made holy and penetrating (#1519): no rule weighs it.
