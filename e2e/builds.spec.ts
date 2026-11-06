@@ -2684,7 +2684,7 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   await openElementalist(page);
   const toggle = filterChip(page, "Not in the game yet");
   // Off by default: the library is as it was.
-  await openLibraryGroup(page, "Fire Magic");
+  await openLibraryGroup(page, "Earth Magic");
   await page.locator(".skill-filter-button").click();
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator(".skill-corpus-box")).toHaveCount(0);
@@ -2694,28 +2694,28 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   await expect(page.locator(".skill-filter-button")).toHaveText("Filters");
   await expect(page.locator(".skill-filter-tag")).toHaveCount(0);
   await page.getByRole("button", { name: "Done" }).click();
-  const fire = page.locator(".skill-group", { hasText: "FIRE MAGIC" });
-  // Double Dragon is GW1 Fire Magic VibeWars does not have yet.
-  const mark = fire.locator(".skill-corpus-box", { hasText: "Double Dragon" });
+  const earth = page.locator(".skill-group", { hasText: "EARTH MAGIC" });
+  // Stone Striker is GW1 Earth Magic VibeWars does not have yet.
+  const mark = earth.locator(".skill-corpus-box", { hasText: "Stone Striker" });
   await expect(mark).toContainText("not in the game yet");
   // After the group's playable skills.
-  await expect(fire.locator(".skill-box, .skill-corpus-box").last()).toHaveClass(
+  await expect(earth.locator(".skill-box, .skill-corpus-box").last()).toHaveClass(
     /skill-corpus-box/,
   );
   // It neither drags nor equips.
   expect(await mark.getAttribute("draggable")).toBeNull();
   await expect(mark.locator("button")).toHaveCount(0);
   await mark.click();
-  await expect(page.locator(".skill-slot", { hasText: "Double Dragon" })).toHaveCount(0);
+  await expect(page.locator(".skill-slot", { hasText: "Stone Striker" })).toHaveCount(0);
   // Its hover shows GW1's own text.
   await mark.hover();
   await expect(page.locator(".skill-tip")).toContainText("Not in the game yet");
 
   // The search finds it; remembered across a reload.
-  // Dragon's Stomp is in the game, so it is found too, playable.
-  await page.locator("input.skill-search").fill("dragon");
-  await expect(page.locator(".skill-corpus-box", { hasText: "Double Dragon" })).toHaveCount(1);
-  await expect(page.locator(".skill-box", { hasText: "Dragon's Stomp" })).toHaveCount(1);
+  // Stone Daggers is in the game, so it is found too, playable.
+  await page.locator("input.skill-search").fill("stone");
+  await expect(page.locator(".skill-corpus-box", { hasText: "Stone Striker" })).toHaveCount(1);
+  await expect(page.locator(".skill-box", { hasText: "Stone Daggers" })).toHaveCount(1);
   await page.reload();
   await page.getByRole("button", { name: "New character", exact: true }).click();
   await page.locator(".skill-filter-button").click();
