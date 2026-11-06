@@ -182,7 +182,11 @@ channels, as often as they like.
   tell admitted holders from anyone else with the invite link. Admission
   comes before seating, so an invite holder can also get a working 1 h
   login for a peer id that never seats; the host's rate limits bound how
-  many. A holder's name and peer id in a seal are untrusted text, capped
+  many. The same fresh asks can spend the host's admits (2 per 10 s, and
+  its free seats) indefinitely, so a real joiner gets no relay admit, only
+  its direct join, and they keep the host in `relay1..3`. A joiner keeps
+  only its 8 best-ranked offers, so a flood of valid seals cannot grow
+  what it ranks. A holder's name and peer id in a seal are untrusted text, capped
   and rendered as text only.
   A relay _name_ that resolves to a private address cannot be checked
   from a browser; literal private and LAN addresses are refused.

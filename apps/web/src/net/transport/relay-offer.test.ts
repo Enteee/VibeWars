@@ -6,6 +6,7 @@ import type { OpenRelaySocket } from "./nostr-relays.js";
 import {
   LOGIN_REMINT_LEFT_MS,
   MAX_OFFER_CONTENT_BYTES,
+  MAX_KEPT_OFFERS,
   MAX_OFFER_OPENS_PER_SECOND,
   MAX_RELAYED_PER_HOLDER,
   OFFER_OPEN_INTERVAL_MS,
@@ -502,26 +503,27 @@ describe("a member's relay, held for its lobby (#2527)", () => {
     // A seated member's login is never refused.
     expect(hold.loginFor("one-too-many")?.username).toMatch(/:one-too-many$/);
 
-    // peer-0 and peer-1 seated; once the admits expire, only the unseated ids free their slots.
-    hold.seated(new Set(["peer-0", "peer-1"]));
+    // Seated: peer-0, peer-1, and the member it minted a login for. Once
+    // the admits expire, only the unseated ids free their slots.
+    hold.seated(new Set(["peer-0", "peer-1", "one-too-many"]));
     now += RELAY_ADMIT_MS;
-    for (let i = 0; i < MAX_RELAYED_PER_HOLDER - 2; i += 1) {
+    for (let i = 0; i < MAX_RELAYED_PER_HOLDER - 3; i += 1) {
       hold.admit({ peerId: `late-${String(i)}`, pub });
     }
     await settle();
-    expect(sockets.sent).toHaveLength(2 * MAX_RELAYED_PER_HOLDER - 1);
+    expect(sockets.sent).toHaveLength(2 * MAX_RELAYED_PER_HOLDER - 2);
     hold.admit({ peerId: "late-full", pub });
     await settle();
-    expect(sockets.sent).toHaveLength(2 * MAX_RELAYED_PER_HOLDER - 1);
+    expect(sockets.sent).toHaveLength(2 * MAX_RELAYED_PER_HOLDER - 2);
 
-    // A seated member it minted a login for holds a slot too.
-    hold.seated(new Set(["peer-0", "peer-1", "one-too-many"]));
+    // Members that leave free their slots, a login's too.
+    hold.seated(new Set(["peer-0"]));
     now += RELAY_ADMIT_MS;
     for (let i = 0; i < MAX_RELAYED_PER_HOLDER; i += 1) {
       hold.admit({ peerId: `last-${String(i)}`, pub });
     }
     await settle();
-    expect(sockets.sent).toHaveLength(3 * MAX_RELAYED_PER_HOLDER - 4);
+    expect(sockets.sent).toHaveLength(3 * MAX_RELAYED_PER_HOLDER - 3);
     hold.close();
   });
 
@@ -688,6 +690,47 @@ describe("a joiner's relay offers (#2527)", () => {
     for (const hold of [early, late, ...others]) {
       hold.close();
     }
+    offers.close();
+  });
+
+  it("keeps only the best-ranked few of a flood of valid seals", async () => {
+    const relay = fakeRelay();
+    let now = NOW;
+    const key = await newJoinerKey();
+    const offers = watchRelayOffers(
+      ROOM,
+      ROOM_ID,
+      JOINER,
+      deps(relay.openSocket, () => now),
+      joiner(key),
+    );
+    await settle();
+    // One invite holder, every seal valid, each a fresh holder, relay and author.
+    const all = Array.from({ length: 1000 }, (_, i) => ({
+      config: mintTurnCredential(
+        { urls: [`turns:relay-${String(i)}.example:5349`], secret: "x" },
+        JOINER,
+        NOW,
+        TURN_CREDENTIAL_TTL_MS,
+      ),
+      holder: `holder-${String(i)}`,
+      name: "Mallory",
+    }));
+    const events = await Promise.all(
+      all.map(async (offer) =>
+        topicEvent({ kind: "seal", seal: await sealRelayOffer(offer, key.pub, iv()) }),
+      ),
+    );
+    for (let i = 0; i < events.length; i += MAX_OFFER_OPENS_PER_SECOND) {
+      now += 1000;
+      for (const event of events.slice(i, i + MAX_OFFER_OPENS_PER_SECOND)) {
+        relay.publish(event);
+      }
+      await settle();
+    }
+    const ranked = offers.ranked();
+    expect(ranked).toHaveLength(MAX_KEPT_OFFERS);
+    expect(ranked).toEqual(rankOffers(ROOM_ID, all).slice(0, MAX_KEPT_OFFERS));
     offers.close();
   });
 

@@ -78,6 +78,13 @@ export const OFFER_OPEN_INTERVAL_MS = 5_000;
 export const MAX_OFFER_OPENS_PER_SECOND = 200;
 
 /**
+ * The most offers a joiner keeps, the best-ranked (#2527): a flood of
+ * valid seals from one invite holder costs a rank of this many each, not
+ * of everything it sealed. A joiner tries at most `MAX_RELAY_ATTEMPTS`.
+ */
+export const MAX_KEPT_OFFERS = 8;
+
+/**
  * The most peer ids a holder seals for in a lobby at once (#2527):
  * seated members it minted for, and ids in a live admit. It bounds open
  * seals, not valid logins (an unseated id's 1 h login outlives its slot):
@@ -556,6 +563,11 @@ export function holdRelay(
     },
     seated(peerIds) {
       members = peerIds;
+      for (const id of [...logins.keys()]) {
+        if (!members.has(id)) {
+          logins.delete(id);
+        }
+      }
     },
     loginFor(peerId) {
       if (closed || shared === undefined) {
@@ -682,6 +694,11 @@ export function watchRelayOffers(
         }
       }
       offers.set(offer.holder, offer);
+      if (offers.size > MAX_KEPT_OFFERS) {
+        for (const worst of rankOffers(roomId, live()).slice(MAX_KEPT_OFFERS)) {
+          offers.delete(worst.holder);
+        }
+      }
       tell();
     }
     return true;
