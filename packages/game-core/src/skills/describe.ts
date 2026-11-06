@@ -285,6 +285,35 @@ const BLOCKED_ATTACKS: Record<"all" | "melee" | "projectile", string> = {
   projectile: "projectiles",
 };
 
+/** One of `BLOCKED_ATTACKS`, for a block that ends with its first (#2500). */
+const BLOCKED_ATTACK: Record<"all" | "melee" | "projectile", string> = {
+  all: "attack",
+  melee: "melee attack",
+  projectile: "projectile",
+};
+
+/**
+ * A sure block that its own first block ends (#2500): Shield of Force's
+ * "blocks the next 1 attacks", Riposte's "the next melee attack". It ends
+ * when triggered, and a block trigger fires on every block it makes: an
+ * unfiltered one, or one for each kind it blocks.
+ */
+function blocksOnce(definition: StatusDefinition): boolean {
+  if (definition.block?.chance !== 1 || !definition.endsWhenTriggered) {
+    return false;
+  }
+  const kinds = new Set(
+    definition.triggers
+      .filter((trigger) => trigger.on === "bearer-blocks")
+      .map((trigger) => trigger.blocked ?? "all"),
+  );
+  return (
+    kinds.has("all") ||
+    kinds.has(definition.block.against) ||
+    (kinds.has("melee") && kinds.has("projectile"))
+  );
+}
+
 /**
  * The attributes a `scope` holds (#1929, #1941): "attributes", "primary
  * attribute", "elemental attributes", "Ritualist attributes", "Marksmanship".
@@ -797,10 +826,15 @@ function statusText(
       getAttribute(definition.divineFavorDoubledFor)?.name ?? definition.divineFavorDoubledFor;
     parts.push(`${attribute} spells have double the Divine Favor bonus`);
   }
+  // Shield of Force's "blocks the next attack" (#2500).
+  const once = blocksOnce(definition);
   if (definition.block !== undefined) {
     // Wary Stance's "attack skills" (#1978).
-    const what =
-      definition.block.attackSkillsOnly === true
+    const what = once
+      ? definition.block.attackSkillsOnly === true
+        ? "attack skill"
+        : BLOCKED_ATTACK[definition.block.against]
+      : definition.block.attackSkillsOnly === true
         ? "attack skills"
         : BLOCKED_ATTACKS[definition.block.against];
     const below =
@@ -826,7 +860,9 @@ function statusText(
     // Flashing Blades' "while attacking" (#2374).
     const attacking = definition.blockWhileAttacking ? " while attacking" : "";
     parts.push(
-      `${String(Math.round(definition.block.chance * 100))}% chance to block ${what}${attacker}${below}${under}${attacking}`,
+      once
+        ? `blocks the next ${what}${attacker}${below}${under}${attacking}`
+        : `${String(Math.round(definition.block.chance * 100))}% chance to block ${what}${attacker}${below}${under}${attacking}`,
     );
   }
   // Protector's Defense's "allies adjacent to you" (#2096).
@@ -1433,10 +1469,13 @@ function statusText(
   const enders = definition.endsWhenTriggered
     ? definition.triggers.filter((trigger) => trigger.effects.length === 0)
     : [];
+  // A block that ends it is said by "blocks the next" (#2500): Burning
+  // Shield's projectile ender is no second way out.
+  const said = once ? enders.filter((trigger) => trigger.on !== "bearer-blocks") : enders;
   // Its holder reads it (#1841): "ends if you cast…" on a self-buff, "it"
   // on a hex or condition.
   const onFoe = definition.category === "hex" || definition.category === "condition";
-  for (const trigger of enders) {
+  for (const trigger of said) {
     const when = kindBoundWhen(trigger.on, trigger) ?? TRIGGER_WHEN[trigger.on];
     parts.push(onFoe ? `ends if it ${when}` : `ends if you ${secondPerson(when)}`);
   }
@@ -1452,7 +1491,13 @@ function statusText(
     definition.category === "item",
     selfOnly,
   )) {
-    (clause ? parts : sentences).push(text);
+    // Burning Shield's (#2500): its one block is the next, of whatever
+    // kind, so a kind-bound answer is "if it is a melee attack".
+    const answer =
+      once && definition.block?.against === "all"
+        ? text.replace(/^the next time (?:you block|it blocks) an? /, "if it is a ")
+        : text;
+    (clause ? parts : sentences).push(answer);
   }
   if (parts.length === 0 && sentences.length === 0) {
     return definition.name;
@@ -2170,8 +2215,15 @@ function describeTrigger(
   // bearer's allies; beside one wearing its own enchantment, its foes (#1021).
   const splashed = (effect: SplashEffect): string => {
     const area = AREA_TEXT.get(effect.radius);
+    // Shield of Force's "adjacent foes that are attacking" (#2500).
+    const condition = effect.onlyIf === undefined ? "" : onlyIfText(effect.onlyIf, ranks);
+    const only = condition.startsWith("while ")
+      ? ` that are ${condition.slice("while ".length)}`
+      : condition === ""
+        ? ""
+        : ` that ${condition}`;
     return !bearerIsFoe
-      ? lowerFirst(foesWithin(effect.radius, effect.hits))
+      ? `${lowerFirst(foesWithin(effect.radius, effect.hits))}${only}`
       : area === "adjacent"
         ? "its adjacent allies"
         : `its allies ${area ?? `within ${String(effect.radius)}`}`;
@@ -2536,12 +2588,7 @@ function describeTrigger(
     if (effect.kind === "if" && trigger.target === "bearer") {
       const said = conditionText(effect.condition);
       const condition = lowerFirst(
-        bearerIsCaster
-          ? said
-              .replace(/^If target is /, "If you are ")
-              .replace(/^If target has /, "If you have ")
-              .replace(/^If target /, "If you ")
-          : said.replace(/^If target/, "If it"),
+        bearerIsCaster ? yourCondition(said) : said.replace(/^If target/, "If it"),
       );
       return effect.effects.map((inner) =>
         sentence(`${when}, ${condition}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
@@ -2838,6 +2885,18 @@ function negatedText(text: string): string {
     }
   }
   return `Unless ${text.replace(/^If /, "")}`;
+}
+
+/**
+ * A `conditionText` whose target is you (#2341, #2500): "If you are
+ * attacking" on the caster's own status, "If you are knocked down" on a
+ * skill that targets yourself.
+ */
+function yourCondition(text: string): string {
+  return text
+    .replace(/^If target is /, "If you are ")
+    .replace(/^If target has /, "If you have ")
+    .replace(/^If target /, "If you ");
 }
 
 /**
@@ -4958,11 +5017,21 @@ export function describeSkill(
       magnitude,
     })),
   );
+  // Drunken Blow's knockdown (#2500), on a hit and on a miss alike, is
+  // said once: "You are knocked down for 2s, hit or miss".
+  const onHit = new Set(skill.effects.map((effect) => JSON.stringify(effect)));
+  const hitOrMiss = new Set(
+    (rule?.onFailedToHit ?? [])
+      .map((effect) => JSON.stringify(effect))
+      .filter((effect) => onHit.has(effect)),
+  );
   const onFailedToHit = (rule?.onFailedToHit ?? []).flatMap((effect) =>
-    describeEffects(effect, ranks).map(({ text, magnitude }) => ({
-      text: `If it fails to hit: ${lowerFirst(text)}`,
-      magnitude,
-    })),
+    hitOrMiss.has(JSON.stringify(effect))
+      ? []
+      : describeEffects(effect, ranks).map(({ text, magnitude }) => ({
+          text: `If it fails to hit: ${lowerFirst(text)}`,
+          magnitude,
+        })),
   );
   // Twin Moon Sweep's (#2459), as it is released, hit or miss.
   const onRelease = (rule?.onRelease ?? []).flatMap((effect) =>
@@ -5167,7 +5236,19 @@ export function describeSkill(
                 ...line,
                 text: line.text.replace(/^Your other minions/, "Your minions"),
               }))
-            : describeEffects(petReads(skill, effect), ranks),
+            : // "I Meant to Do That!"'s "If you are knocked down" (#2500):
+              // a skill on yourself alone has you for its target.
+              skill.target === "self" && skill.area === undefined && effect.kind === "if"
+              ? describeEffects(petReads(skill, effect), ranks).map((line) => ({
+                  ...line,
+                  text: yourCondition(line.text),
+                }))
+              : hitOrMiss.has(JSON.stringify(effect))
+                ? describeEffects(petReads(skill, effect), ranks).map((line) => ({
+                    ...line,
+                    text: `${line.text}, hit or miss`,
+                  }))
+                : describeEffects(petReads(skill, effect), ranks),
     ),
     ...onCritical,
     ...onBlocked,

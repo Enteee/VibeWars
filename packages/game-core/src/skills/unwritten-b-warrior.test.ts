@@ -7,6 +7,7 @@ import { createRng, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
+import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { NO_RANKS, type StatusId } from "./status.js";
 import { makeCombatant, strikesOf } from "./testing.js";
@@ -201,6 +202,16 @@ describe("Drunken Blow (#2500)", () => {
     expect(foe.statuses.has("bleeding")).toBe(false);
     expect(foe.statuses.has("crippled")).toBe(false);
   });
+
+  it("says its knockdown once, hit or miss", () => {
+    expect(describeSkill(skill(DRUNKEN_BLOW), ranksAt(12)).effects.map(({ text }) => text)).toEqual(
+      [
+        "+34 damage",
+        "Applies one of, at random: Deep Wound (20s), Weakness (20s), Bleeding (25s), Crippled (15s)",
+        "You are knocked down for 2s, hit or miss",
+      ],
+    );
+  });
 });
 
 describe("Yeti Smash (#2500)", () => {
@@ -309,6 +320,12 @@ describe('"I Meant to Do That!" (#2500)', () => {
     const caster = warrior(12, "sword", [I_MEANT_TO, YETI_SMASH]);
     use(I_MEANT_TO, caster, [caster]);
     expect(strikesOf(caster, YETI_SMASH)).toBe(0);
+  });
+
+  it("says its user is the one knocked down", () => {
+    expect(describeSkill(skill(I_MEANT_TO), ranksAt(12)).effects.map(({ text }) => text)).toEqual([
+      "If you are knocked down: gain 5 strikes of adrenaline",
+    ]);
   });
 });
 

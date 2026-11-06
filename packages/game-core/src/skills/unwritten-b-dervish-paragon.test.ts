@@ -8,6 +8,7 @@ import { MatchSimulation, type ParticipantSpec } from "../match/simulation.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
+import { describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
 import {
   getStatusDefinition,
@@ -255,6 +256,12 @@ describe("Shield of Force (#2500)", () => {
     expect(lasts(get(shielded(0), "d"), "shield-of-force")).toBe(1);
   });
 
+  it("says it blocks one attack, and strikes only the attacking foes beside you", () => {
+    expect(describeStatus("shield-of-force", new Map([["dervish.earth-prayers", 12]]))).toBe(
+      "blocks the next attack. The next time you block: adjacent foes that are attacking: knocks down for 2s. The next time you block: adjacent foes that are attacking suffer Weakness for 17s (−66% weapon damage, −1 to all attributes)",
+    );
+  });
+
   it("blocks the next attack, knocks down and Weakens the attacking foe beside it for 17 s, and ends", () => {
     const sim = shielded(12);
     expect(lasts(get(sim, "d"), "shield-of-force")).toBe(13);
@@ -329,6 +336,12 @@ describe("Burning Shield (#2500)", () => {
     });
     expect(lasts(get(burning(12), "p"), "burning-shield")).toBe(8);
     expect(lasts(get(burning(0), "p"), "burning-shield")).toBe(3);
+  });
+
+  it("says it ends with its one block, melee or projectile, and burns only a melee attacker", () => {
+    expect(describeStatus("burning-shield", new Map([["paragon.leadership", 12]]))).toBe(
+      "blocks the next attack skill. If it is a melee attack: applies Burning for 5s (−7 Health degeneration)",
+    );
   });
 
   it("with no shield in hand, nothing lands", () => {
