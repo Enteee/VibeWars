@@ -36,6 +36,17 @@ export const stroke = (colour, width = 2) =>
   `fill="none" stroke="${colour}" stroke-width="${String(width)}" stroke-linecap="round" stroke-linejoin="round"`;
 
 /**
+ * A glyph scaled by `k` about the centre and moved by (dx, dy): its ink
+ * pulled inside a plate it crossed (#2404).
+ * @param {number} k
+ * @param {string} body
+ * @param {number} [dx]
+ * @param {number} [dy]
+ */
+export const inset = (k, body, dx = 0, dy = 0) =>
+  `<g transform="translate(${String(12 + dx)},${String(12 + dy)}) scale(${String(k)}) translate(-12,-12)">${body}</g>`;
+
+/**
  * A germ (#765): a body and six knobbed spikes, so it never reads as a sun.
  * @param {string} c
  */

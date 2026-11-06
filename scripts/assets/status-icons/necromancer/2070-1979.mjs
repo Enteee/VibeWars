@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { inset, stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -28,8 +28,13 @@ const rows = {
   "soul-leech": [
     "hex",
     (c) =>
-      `<path d="M6 4l2 4-2 4 4-2" ${stroke(c, 2)}/>` +
-      `<path d="M15 11c2 3 3 4.5 3 6a3 3 0 0 1-6 0c0-1.5 1-3 3-6z" fill="${c}"/>`,
+      inset(
+        0.82,
+        `<path d="M6 4l2 4-2 4 4-2" ${stroke(c, 2)}/>` +
+          `<path d="M15 11c2 3 3 4.5 3 6a3 3 0 0 1-6 0c0-1.5 1-3 3-6z" fill="${c}"/>`,
+        0,
+        1.5,
+      ),
   ],
 };
 

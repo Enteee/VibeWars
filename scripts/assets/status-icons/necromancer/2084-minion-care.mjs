@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { inset, stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -7,8 +7,13 @@ const rows = {
   "veratas-sacrifice": [
     "skill-effect",
     (c) =>
-      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.4)}/>` +
-      `<path d="M5 19l5-3 4 2 5-4" ${stroke(c, 2)}/>`,
+      inset(
+        0.9,
+        `<path d="M12 4v8M8 8h8" ${stroke(c, 2.4)}/>` +
+          `<path d="M5 19l5-3 4 2 5-4" ${stroke(c, 2)}/>`,
+        1,
+        0.5,
+      ),
   ],
   // Enchantment: two linked rings, the hit shared with a minion.
   "dark-bond": [

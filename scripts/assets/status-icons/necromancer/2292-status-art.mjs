@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { inset, stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -6,8 +6,13 @@ const rows = {
   "spoil-victor": [
     "hex",
     (c) =>
-      `<path d="M12 14l-6-6a3.4 3.4 0 0 1 6-3 3.4 3.4 0 0 1 6 3z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 16v6M9 19.5l3 2.5 3-2.5" ${stroke(c, 1.8)}/>`,
+      inset(
+        0.88,
+        `<path d="M12 14l-6-6a3.4 3.4 0 0 1 6-3 3.4 3.4 0 0 1 6 3z" ${stroke(c, 1.8)}/>` +
+          `<path d="M12 16v6M9 19.5l3 2.5 3-2.5" ${stroke(c, 1.8)}/>`,
+        0,
+        1,
+      ),
   ],
 };
 
