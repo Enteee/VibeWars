@@ -301,31 +301,31 @@ describe("skill catalog integrity", () => {
 
 describe("skill coverage reporting", () => {
   it("counts implemented vs imported and names the gap", () => {
-    const imported = [
-      "elementalist.fireball",
-      "monk.orison-of-healing",
-      "warrior.whirlwind-attack",
-    ];
-    const coverage = computeCoverage(imported);
-    expect(coverage.imported).toBe(3);
-    expect(coverage.implemented).toBe(IMPLEMENTED_SKILLS.length);
-    const ids = coverage.unimplemented.map((skill) => skill.id);
-    expect(ids).toContain("warrior.whirlwind-attack");
-    expect(ids).not.toContain("elementalist.fireball");
+    const coverage = computeCoverage([
+      { gwId: 186, name: "Fireball" },
+      { gwId: 265, name: "Amity" },
+    ]);
+    expect(coverage.imported).toBe(2);
+    expect(coverage.implemented).toBe(1);
+    const ids = coverage.unimplemented.map((skill) => skill.gwId);
+    expect(ids).toContain(265);
+    expect(ids).not.toContain(186);
   });
 
   it("flags implemented skills that are original design, not imports", () => {
-    const coverage = computeCoverage(["elementalist.fireball"]);
+    const coverage = computeCoverage([{ gwId: 186, name: "Fireball" }]);
     expect(coverage.originalDesign).toContain("necromancer.blood-renewal-lite");
   });
 
   it("formats a human-readable report naming every unimplemented skill", () => {
     const text = formatCoverage(
-      computeCoverage(["warrior.whirlwind-attack", "elementalist.fireball"]),
+      computeCoverage([
+        { gwId: 265, name: "Amity" },
+        { gwId: 186, name: "Fireball" },
+      ]),
     );
-    expect(text).toContain("warrior.whirlwind-attack");
-    expect(text).toContain("imported:");
-    expect(text).toContain("implemented:");
+    expect(text).toContain("265 Amity");
+    expect(text).toContain("imported 2 / implemented 1 / 1 unimplemented");
   });
 });
 

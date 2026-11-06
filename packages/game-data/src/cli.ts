@@ -9,7 +9,7 @@ import {
   statAtTwelve,
 } from "@vibewars/game-core";
 
-import { generateSkillBundle } from "./generate.js";
+import { corpusSkills } from "./corpus.js";
 
 /**
  * Developer tooling (brief §28): a skill inspector, a status inspector,
@@ -98,8 +98,7 @@ function printStatuses(): void {
 }
 
 function printCoverage(): void {
-  const bundle = generateSkillBundle();
-  console.info(formatCoverage(computeCoverage(bundle.skills.map((skill) => skill.id))));
+  console.info(formatCoverage(computeCoverage(corpusSkills())));
 }
 
 function printDuel(aSkill: string, bSkill: string, seed: string): void {
