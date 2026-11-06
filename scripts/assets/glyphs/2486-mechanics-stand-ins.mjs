@@ -1,7 +1,7 @@
 // Glyphs (#2486): the stand-ins of #2459, #2470, #2471 and #2472.
 
 import { C, stroke } from "../icon-kit.mjs";
-import { inkFill, inkLine } from "../glyph-kit.mjs";
+import { inkFill, inkLine, ringDot } from "../glyph-kit.mjs";
 
 /** A line in the panel colour, cut out of an ink shape. @param {string} d @param {number} w */
 const cut = (d, w) => `<path d="${d}" ${stroke(C.bg, w)}/>`;
@@ -54,12 +54,12 @@ const glyphs = {
       cut("M7 12.500L10 14L8.500 17L12 17.500", 1.6) +
       inkLine("M14.500 8L18.500 4M16.500 11.500H22M15 5L16 2", 2),
   },
-  "seal-rage": {
+  "ring-rage": {
     means:
-      "Signet of Rage: a signet's square seal with a jagged flame cut in it: adrenaline turned to holy damage.",
+      "Signet of Rage: a signet ring with three rising bars: adrenaline turned to holy damage.",
     draw: () =>
-      inkFill("M5 3H19Q21 3 21 5V19Q21 21 19 21H5Q3 21 3 19V5Q3 3 5 3Z") +
-      cut("M7.500 18L8.500 10L11 13L12 6L14 12L16.500 9L16.500 18Z", 1.8),
+      ringDot(8, 8, 5.5) +
+      inkFill("M11.500 21V18H13.500V21ZM14.500 21V14.500H16.500V21ZM17.500 21V11H19.500V21Z"),
   },
   "grave-aura": {
     means:
@@ -71,5 +71,4 @@ const glyphs = {
       inkLine("M2 21.500H16", 2.2),
   },
 };
-
 export default glyphs;
