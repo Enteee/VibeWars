@@ -4790,6 +4790,13 @@ export function describeSkill(
       magnitude,
     })),
   );
+  // Twin Moon Sweep's (#2459), as it is released, hit or miss.
+  const onRelease = (rule?.onRelease ?? []).flatMap((effect) =>
+    describeEffects(effect, ranks).map(({ text, magnitude }) => ({
+      text: `As it is used: ${lowerFirst(text)}`,
+      magnitude,
+    })),
+  );
   // Barrage's and Volley's (#1629), before anything else it does.
   const preparationsLine =
     rule?.removesPreparations === true
@@ -4816,7 +4823,9 @@ export function describeSkill(
   // Forked Arrow's (#1914): "only one arrow" while its state holds.
   const fewer =
     typeof strikes === "number" ? "" : `; ${conditionText(strikes.oneWhile).toLowerCase()}, only 1`;
-  const weaponDamage = rule?.weaponDamage ?? 1;
+  // Twin Moon Sweep's cut (#2459), only on the blows past one.
+  const weaponDamage =
+    (rule?.weaponDamage ?? 1) * (typeof strikes === "number" ? 1 : (strikes.eachWeaponDamage ?? 1));
   const weaker =
     weaponDamage > 0 && weaponDamage < 1
       ? `, each dealing ${String(Math.round((1 - weaponDamage) * 100))}% less damage`
@@ -4944,6 +4953,7 @@ export function describeSkill(
   const effects = [
     ...lossLine,
     ...preparationsLine,
+    ...onRelease,
     ...chainLine,
     ...bonusLine,
     ...unblockableLine,

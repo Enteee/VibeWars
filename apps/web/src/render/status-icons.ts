@@ -686,6 +686,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Staples (#2447).
   "ancestors-visage": icon("ancestors-visage"),
   "smoldering-embers": icon("smoldering-embers"),
+  // Mechanics (#2459).
+  "stolen-speed": icon("stolen-speed"),
 };
 
 const GAP = 2;

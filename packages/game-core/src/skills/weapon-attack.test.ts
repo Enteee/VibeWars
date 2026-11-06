@@ -27,6 +27,7 @@ import {
   doubleStrikeChance,
   landBlow,
   PLAIN_BLOW,
+  releasedStrikes,
   resolveAttackSkill,
   resolveSwing,
   swingProgress,
@@ -2227,5 +2228,39 @@ describe("a rider at its source's ranks (#2411)", () => {
         endsAfterAttackCount: 1,
       }),
     ).toThrow(/cannot end after its attacks/);
+  });
+});
+
+describe("releasedStrikes (#2459)", () => {
+  const attacker = makeCombatant({ id: "attacker" });
+  const victim = makeCombatant({ id: "victim", team: 1 });
+  const read = (id: string): ReturnType<typeof releasedStrikes> =>
+    releasedStrikes(getSkill(id)?.attack, attacker, victim, new Map());
+
+  it("keeps Dual Shot's two arrows at its own 25% less, cut no further", () => {
+    expect(read("ranger.dual-shot")).toMatchObject({ strikes: 2, eachWeaponDamage: 1 });
+  });
+
+  it("reads Forked Arrow's one arrow as before, and Twin Moon Sweep's cut only past one", () => {
+    expect(read("ranger.forked-arrow").strikes).toBe(2);
+    attacker.statuses.apply("sand-shards", 30, "dervish", NO_RANKS);
+    expect(read("dervish.twin-moon-sweep")).toEqual({
+      strikes: 2,
+      unblockable: true,
+      eachWeaponDamage: 0.75,
+    });
+    attacker.statuses.remove("sand-shards");
+    expect(read("dervish.twin-moon-sweep")).toEqual({
+      strikes: 1,
+      unblockable: false,
+      eachWeaponDamage: 1,
+    });
+  });
+
+  it("leaves Pure Strike's gate to be read per blow: it has no release", () => {
+    expect(read("warrior.pure-strike").unblockable).toEqual({
+      kind: "caster-lacks",
+      category: "stance",
+    });
   });
 });
