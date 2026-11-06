@@ -50,14 +50,13 @@ const glyphs = {
       inkFill("M12 6L17 12L12 18L7 12Z") +
       cut("M5.500 18.500L18.500 5.500", 2.6),
   },
-  "sprout-arc": {
+  "heart-rise": {
     means:
-      "Renew Life: a seedling pushing up from the ground under a rising arc: the dead raised, the living renewed.",
+      "Renew Life: a solid heart with an arrow cut rising out of it: the dead stand up again, the living are renewed.",
     draw: () =>
-      inkLine("M3 22H21M12 22V11", 2.6) +
       inkFill(
-        "M12 14C6 15 3.500 11 3 7C8 7 11.500 9 12 14ZM12 11C12.500 6 16 3.500 21 4C21 9 17 12 12 11Z",
-      ),
+        "M12 22C3 15 2 9 5.500 5.500C8.500 3 11 5 12 7C13 5 15.500 3 18.500 5.500C22 9 21 15 12 22Z",
+      ) + cut("M12 18V9M8.500 12.500L12 9L15.500 12.500", 2.2),
   },
   "blade-flourish": {
     means:
