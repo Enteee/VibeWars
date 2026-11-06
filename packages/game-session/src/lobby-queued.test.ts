@@ -507,6 +507,7 @@ describe("a queued lobby", () => {
           teamLobby: null,
           queueNonce: null,
           ascentRound: null,
+          ascentLock: null,
           players: [
             {
               id: from,
