@@ -1,5 +1,5 @@
 import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipment/types.js";
-import { AREA_EARSHOT } from "../distances.js";
+import { AREA_EARSHOT, RANGE_SPELL } from "../distances.js";
 import {
   DIVINE_FAVOR_ATTRIBUTE,
   divineFavorBonusHeal,
@@ -1027,6 +1027,12 @@ function countOf(
         (count, category) => count + removedByAnyone(category, earlier, rule.profession),
         0,
       );
+    case "overcast":
+      return Math.floor(caster.overcast);
+    case "own-skills-disabled":
+      return earlier.filter(
+        (event) => event.kind === "skill-disabled" && event.targetId === caster.id,
+      ).length;
     case "maintained-enchantments":
       return maintainedEnchantments(
         caster.id,
@@ -2801,6 +2807,20 @@ export function applyEffect(
       return events;
     }
 
+    case "drain-nearest-spirit-energy": {
+      const at = context.surroundings.get(caster.id)?.position;
+      const spirit =
+        at === undefined
+          ? undefined
+          : nearestSpiritWithin(context.surroundings.values(), at, RANGE_SPELL);
+      if (spirit !== undefined) {
+        const lost = loseEnergy(spirit, spirit.energy, events);
+        const percent = resolveMagnitude(effect.percent, caster);
+        gainEnergy(caster, Math.round((lost * percent) / 100), events);
+      }
+      return events;
+    }
+
     case "destroy-target-minion": {
       const minion = target === undefined ? undefined : context.surroundings.get(target.id);
       if (minion !== undefined) {
@@ -3462,7 +3482,8 @@ export function disableOwnSkills(
  * Whether `effect` disables the caster's bar skill `skillId` (#1473):
  * for `attribute` (#1511), never `usedId`, the skill that disables them;
  * for `all` (#1570), every one; for `others` (#2287), every one but
- * `usedId`; for `types` (#1930), those of a type,
+ * `usedId`; for `other-non-attacks` (#2504), every one but `usedId` and
+ * attack skills; for `types` (#1930), those of a type,
  * `usedId` included.
  */
 function disabledOwn(
@@ -3480,6 +3501,9 @@ function disabledOwn(
     return isSpellId(skillId);
   }
   const skill = getSkill(skillId);
+  if (effect.which === "other-non-attacks") {
+    return skillId !== usedId && skill?.type !== "attack";
+  }
   if (effect.which === "attribute") {
     return skillId !== usedId && skill?.attributeId === effect.attributeId;
   }
@@ -3714,6 +3738,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "destroy-target-spirit":
     case "destroy-target-minion":
     case "drain-nearest-spirit":
+    case "drain-nearest-spirit-energy":
       return true;
     case "heal":
       return effect.recipient !== undefined;

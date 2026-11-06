@@ -2,7 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import { AREA_ADJACENT } from "../../../distances.js";
 import { vec2 } from "../../../vec2.js";
-import { DT, MONK, WARRIOR, askBot, fighter, match, skillsUsed, uses } from "./test-support.js";
+import {
+  DT,
+  ELEMENTALIST,
+  MONK,
+  WARRIOR,
+  askBot,
+  fighter,
+  match,
+  skillsUsed,
+  uses,
+} from "./test-support.js";
 
 describe("play-build heals (#1189, #1870)", () => {
   it("heals the ally at 40% rather than attacking", () => {
@@ -127,5 +137,20 @@ describe("play-build spirits for a hurt ally (#2491)", () => {
       }),
     ]);
     expect(askBot(sim, "rit").useSkillId).toBeUndefined();
+  });
+
+  it("never casts Second Wind at 0 Overcast, a real heal instead (#2504)", () => {
+    const sim = match([
+      fighter("ele", 0, ELEMENTALIST, vec2(400, 400), {
+        skillBar: ["elementalist.second-wind", "monk.orison-of-healing"],
+        startHealthFraction: 0.3,
+      }),
+      fighter("foe", 1, WARRIOR, vec2(1200, 400), { behaviour: undefined }),
+    ]);
+    expect(sim.get("ele")?.combatant.overcast).toBe(0);
+    expect(askBot(sim, "ele")).toMatchObject({
+      useSkillId: "monk.orison-of-healing",
+      targetId: "ele",
+    });
   });
 });

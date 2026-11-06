@@ -78,6 +78,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "damage":
     case "energy-gain":
     case "energy-refill":
+    case "drain-nearest-spirit-energy":
     case "adrenaline-gain":
     case "energy-loss":
     case "energy-steal":

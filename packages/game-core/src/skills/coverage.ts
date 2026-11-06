@@ -26,33 +26,20 @@ import { IMPLEMENTED_SKILLS } from "./catalog.js";
  */
 export type MissingMechanic =
   | "unwritten"
-  | "distance-trigger"
   | "max-health-per-max-energy"
-  | "count-disabled-own-skills"
-  | "double-strike-bonus"
-  | "count-overcast"
-  | "nearest-spirit-energy-drain"
-  | "while-near-spirit"
   | "damage-type-conversion"
   | "knockdown-offender"
   | "transfer-conditions-to-area"
   | "source-condition-damage-reduction"
   | "interrupt-guard-strip-enchantment"
   | "damage-per-second-cap"
-  | "spell-damage-taken-multiplier"
-  | "weapon-filter-negation";
+  | "spell-damage-taken-multiplier";
 
 /** What each missing mechanic would mean to build, in one line. */
 export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, string>> =
   Object.freeze({
     unwritten: "not a mechanic: the engine has every piece, only the catalog entry is missing",
-    "distance-trigger": "an effect fires after the bearer moves a distance",
     "max-health-per-max-energy": "maximum Health scales with your maximum Energy",
-    "count-disabled-own-skills": "a magnitude counts how many of your skills are recharging",
-    "double-strike-bonus": "an attack strikes twice and the second strike has its own bonus",
-    "count-overcast": "a magnitude counts your Overcast",
-    "nearest-spirit-energy-drain": "Energy is stolen from the nearest spirit",
-    "while-near-spirit": "an effect holds while the bearer is within range of a spirit",
     "damage-type-conversion": "damage of one type is dealt as another type",
     "knockdown-offender": "whoever does something to the bearer is knocked down",
     "transfer-conditions-to-area": "the bearer's conditions move to foes in an area",
@@ -61,7 +48,6 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
       "the bearer cannot be interrupted, and an attempt ends the enchantment",
     "damage-per-second-cap": "damage taken in one second is capped",
     "spell-damage-taken-multiplier": "spells deal a multiple of their damage to the bearer",
-    "weapon-filter-negation": "a bonus applies with every weapon except one type",
   });
 
 /**
@@ -74,13 +60,7 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
  */
 export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMechanic[]>> =
   Object.freeze({
-    815: ["distance-trigger"], // Scorpion Wire
     837: ["max-health-per-max-energy"], // Energy Boon
-    990: ["count-disabled-own-skills"], // Expunge Enchantments
-    1030: ["double-strike-bonus"], // Locust's Fury
-    1088: ["count-overcast"], // Second Wind
-    1228: ["nearest-spirit-energy-drain"], // Spirit Siphon
-    1244: ["while-near-spirit"], // Ghostly Haste
     1371: ["damage-type-conversion"], // Stone Striker
     1395: ["knockdown-offender"], // Balthazar's Pendulum
     1493: ["transfer-conditions-to-area"], // Grenth's Fingers
@@ -88,7 +68,6 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     1542: ["interrupt-guard-strip-enchantment"], // Pious Concentration
     1586: ["damage-per-second-cap"], // Angelic Protection
     1757: ["spell-damage-taken-multiplier"], // Veil of Thorns
-    2187: ["weapon-filter-negation"], // Way of the Master
   });
 
 /** A corpus skill as coverage needs it: its GW1 id and name. */

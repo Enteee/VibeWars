@@ -6415,6 +6415,49 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "glyph-of-immolation", durationSeconds: { flat: 15 } },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2504)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.second-wind",
+    name: "Second Wind",
+    gwId: 1088,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You gain 1 Energy and 5 Health for each point of Energy restricted
+    // by Overcast. You lose all enchantments": counted before the strip.
+    effects: [
+      {
+        kind: "energy-gain",
+        amount: { flat: 0 },
+        per: { count: { kind: "overcast" }, amount: { flat: 1 }, max: undefined },
+      },
+      {
+        kind: "heal",
+        amount: { flat: 0 },
+        per: { count: { kind: "overcast" }, amount: { flat: 5 }, max: undefined },
+      },
+      { kind: "remove-status", category: "enchantment", count: "all" },
+    ],
+  },
 ];
 
 /**

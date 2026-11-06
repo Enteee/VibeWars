@@ -243,7 +243,19 @@ export type CountRule =
    * a blocked or missed one not counted; 0 outside an attack: Farmer's
    * Scythe's "if you hit more than one foe".
    */
-  | { readonly kind: "targets" };
+  | { readonly kind: "targets" }
+  /**
+   * The caster's Overcast, whole points of Energy, as the effect resolves
+   * (#2504): Second Wind's "for each point of Energy restricted by
+   * Overcast".
+   */
+  | { readonly kind: "overcast" }
+  /**
+   * The caster's own skills an earlier `disable-own-skills` of this same
+   * use disabled, or kept disabled longer, its `skill-disabled` events
+   * (#2504): Expunge Enchantments' "for each skill disabled in this way".
+   */
+  | { readonly kind: "own-skills-disabled" };
 
 /**
  * "+`amount` for each" (#1760): the effect's own amount plus `amount`
@@ -1025,6 +1037,18 @@ export interface DrainNearestSpiritEffect {
 }
 
 /**
+ * The living spirit nearest the caster within `RANGE_SPELL`, any team's,
+ * loses all its Energy, and the caster gains `percent` % of it, rounded
+ * (#2504): Spirit Siphon's "the spirit closest to you loses all Energy.
+ * You gain 30...60% of that Energy". Acts once. None in range: nothing,
+ * the cast still paid for.
+ */
+export interface DrainNearestSpiritEnergyEffect {
+  readonly kind: "drain-nearest-spirit-energy";
+  readonly percent: Magnitude;
+}
+
+/**
  * The skill's target, a living allied minion, is destroyed (#1836), as
  * `destroy-target-spirit` a spirit: Putrid Flesh's and Feast for the
  * Dead's "it is destroyed". No killer and no morale, but what its death
@@ -1205,7 +1229,9 @@ export interface LengthenRechargeEffect {
  * every skill on the bar, the one used included, as Blackout's "all of
  * your skills are disabled for 5 seconds". `others` (#2287): every skill
  * on the bar but the one used, as Psychic Distraction's "all of your other
- * skills are disabled for 8 seconds". `attacks` (#1914): every
+ * skills are disabled for 8 seconds". `other-non-attacks` (#2504): every
+ * skill on the bar but the one used and attack skills, as Expunge
+ * Enchantments' "all of your other non-attack skills". `attacks` (#1914): every
  * attack skill on the bar but the one used, as Focused Shot's "your other
  * attack skills are disabled", but those of `exceptWeapon` (#2134), as
  * Wastrel's Collapse's "your non-dagger attack skills". `types` (#1930): every skill on the
@@ -1228,6 +1254,11 @@ export type DisableOwnSkillsEffect =
   | {
       readonly kind: "disable-own-skills";
       readonly which: "others";
+      readonly seconds: Magnitude;
+    }
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "other-non-attacks";
       readonly seconds: Magnitude;
     }
   | {
@@ -1979,6 +2010,7 @@ export type UnconditionalEffect =
   | PullToCasterEffect
   | DestroyTargetSpiritEffect
   | DrainNearestSpiritEffect
+  | DrainNearestSpiritEnergyEffect
   | DestroyTargetMinionEffect
   | OwnerGainsDamageDealtEffect
   | DestroyAlliedSpiritsEffect

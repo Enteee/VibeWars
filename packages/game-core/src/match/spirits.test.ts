@@ -219,6 +219,22 @@ describe("Winnowing (#1064)", () => {
   });
 });
 
+describe("a spirit's Energy (#2504)", () => {
+  it("is 30, full as the spirit is planted, and regenerates at 4 pips", () => {
+    const sim = match();
+    ritual(sim, WINNOWING);
+    const [spirit] = spirits(sim);
+    expect(spirit?.combatant.maxEnergy).toBe(30);
+    expect(spirit?.combatant.energy).toBe(30);
+    if (spirit !== undefined) {
+      spirit.combatant.energy = 0;
+    }
+    // 4 pips, a third of a point each a second: 4 in 3 seconds.
+    stepFor(sim, 3);
+    expect(spirit?.combatant.energy).toBeCloseTo(4, 5);
+  });
+});
+
 describe("one spirit of a skill in range (#1064)", () => {
   it("a second allied Winnowing in range of the first ends it, with no death", () => {
     const sim = match(spec("r2", 0, vec2(500, 300)));

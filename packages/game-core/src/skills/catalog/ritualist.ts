@@ -4175,6 +4175,78 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2504)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ritualist.spirit-siphon",
+    name: "Spirit Siphon",
+    gwId: 1228,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "The spirit closest to you loses all Energy. You gain 30...60% of
+    // that Energy": 54% at 12, 16 of a full spirit's 30.
+    effects: [
+      {
+        kind: "drain-nearest-spirit-energy",
+        percent: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 30, atTwelve: 54 },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.ghostly-haste",
+    name: "Ghostly Haste",
+    gwId: 1244,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...30 seconds, spells you cast while within earshot of a
+    // spirit recharge 25% faster."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "ghostly-haste",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 25 },
+        },
+      },
+    ],
+  },
 ];
 
 /**
