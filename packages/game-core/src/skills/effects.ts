@@ -461,6 +461,7 @@ function landDamage(
   } else if (isElementalDamage(type)) {
     target.statuses.recordElementalDamage();
   }
+  target.statuses.recordDamage();
   recordFromFoe(target, dealer, type, applied);
   recordHealthDrop(target, dealer, before);
   // The guard above already returned for an already-dead target, so

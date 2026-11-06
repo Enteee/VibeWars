@@ -1578,6 +1578,13 @@ export type StatusTriggerEvent =
   /** As `bearer-takes-physical-damage`, for elemental damage (#2453): Ward of Weakness. */
   | "bearer-takes-elemental-damage"
   /**
+   * The bearer lost health to damage from anyone, or to degeneration
+   * (#2499): any packet through `applyDamage`, and every tick its
+   * degeneration takes health. Amity's "ends if that foe takes damage".
+   * Sacrifice and life steal are neither.
+   */
+  | "bearer-takes-damage"
+  /**
    * The bearer lost health to damage or life steal from a foe (#1022):
    * any typed packet through `applyDamage`, or a `stealLife`, whose dealer
    * is on the other team. Degeneration, sacrifice and a reversed packet are
@@ -2178,7 +2185,9 @@ export interface StatusTrigger {
    * used on an ally of the bearer's or on the bearer: Zealot's Fire's
    * "whenever you use a skill that targets an ally"; "foe" (#2333), only
    * one used on a creature of another team: Signet of Suffering's "the
-   * next Necromancer skill that targets a foe". No aim answers neither.
+   * next Necromancer skill that targets a foe". "other-ally" (#2499), only
+   * one used on an ally, never on the bearer: Boon Signet's "spell that
+   * targets an ally". No aim answers neither.
    * On `source-targets-bearer` too (#2290); with `notType`, only a skill
    * not of that type, Mind Wrack's "non-hex Mesmer skill". Absent: any
    * skill.
@@ -2191,7 +2200,7 @@ export interface StatusTrigger {
     readonly profession?: ProfessionId;
     readonly elite?: true;
     readonly adrenal?: true;
-    readonly targets?: "ally" | "foe";
+    readonly targets?: "ally" | "other-ally" | "foe";
   };
   /**
    * On `bearer-attacks` and `bearer-casts-spell` only (#2282): it fires
@@ -2410,6 +2419,7 @@ export type StatusChange =
   | { readonly kind: "failed-to-hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "took-elemental-damage"; readonly fired: readonly AnsweringTrigger[] }
+  | { readonly kind: "took-damage"; readonly fired: readonly AnsweringTrigger[] }
   | {
       readonly kind: "knocked-down" | "knockdown-prevented" | "sacrificed-health";
       readonly fired: readonly AnsweringTrigger[];
@@ -3063,6 +3073,14 @@ export class StatusSet {
     const fired = this.#answering("bearer-takes-elemental-damage");
     if (fired.length > 0) {
       this.#changes.push({ kind: "took-elemental-damage", fired });
+    }
+  }
+
+  /** As `recordPhysicalDamage`, for any damage or degeneration (#2499). */
+  public recordDamage(): void {
+    const fired = this.#answering("bearer-takes-damage");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "took-damage", fired });
     }
   }
 

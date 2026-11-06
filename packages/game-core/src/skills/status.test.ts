@@ -69,6 +69,7 @@ describe("status definitions", () => {
       const def = getStatusDefinition(id);
       const hasEffect =
         def.healthPips !== 0 ||
+        def.sacrificeMultiplier !== 1 ||
         def.healthPipsPerEnchantment !== undefined ||
         statAtTwelve(def.healthPipsPerCondition) !== 0 ||
         def.healthPipsPerHex !== 0 ||
@@ -277,6 +278,7 @@ describe("status definitions", () => {
       "watchful-healing": 3.4,
       "hexers-vigor": 6.6,
       "mark-of-insecurity": -4.2,
+      "teinais-heat": -4.4,
     });
   });
 

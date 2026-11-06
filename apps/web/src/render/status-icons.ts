@@ -716,6 +716,17 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "we-shall-return": icon("we-shall-return"),
   "lyssas-haste": icon("lyssas-haste"),
   "shadow-shroud": icon("shadow-shroud"),
+  // Corpus skills on existing mechanics (#2499).
+  "scourge-sacrifice": icon("scourge-sacrifice"),
+  amity: icon("amity"),
+  "boon-signet": icon("boon-signet"),
+  "supportive-spirit": icon("supportive-spirit"),
+  "mantra-of-persistence": icon("mantra-of-persistence"),
+  "kitahs-burden": icon("kitahs-burden"),
+  "symbolic-posture": icon("symbolic-posture"),
+  "double-dragon": icon("double-dragon"),
+  "teinais-heat": icon("teinais-heat"),
+  "glyph-of-immolation": icon("glyph-of-immolation"),
 };
 
 const GAP = 2;

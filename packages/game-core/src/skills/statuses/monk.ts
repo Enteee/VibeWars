@@ -88,7 +88,11 @@ export type MonkStatusId =
   // Dropped leftovers (#2446).
   | "healers-boon"
   // Mechanics (#2470).
-  | "unyielding-aura";
+  | "unyielding-aura"
+  | "scourge-sacrifice"
+  | "amity"
+  | "boon-signet"
+  | "supportive-spirit";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -1049,5 +1053,66 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     killsBearerOnEnd: true,
     exploitsCorpseOnDeath: true,
     noDeathPenalty: true,
+  }),
+  // "For 8...20 seconds, every time target foe and adjacent foes sacrifice
+  // life, they sacrifice twice the normal amount" (#2499).
+  "scourge-sacrifice": define("scourge-sacrifice", "Scourge Sacrifice", "hex", {
+    profession: "monk",
+    sacrificeMultiplier: 2,
+  }),
+  // "For 4...12 seconds, adjacent foes cannot attack. For each foe, Amity
+  // ends if that foe takes damage" (#2499): any damage, degeneration too,
+  // from anyone.
+  amity: define("amity", "Amity", "hex", {
+    profession: "monk",
+    preventsAttacks: true,
+    endsWhenTriggered: true,
+    triggers: [{ on: "bearer-takes-damage", effects: [], target: "bearer", skillId: "monk.amity" }],
+  }),
+  // "Your next Healing or Protection Prayer spell that targets an ally
+  // heals for an additional 20...100 Health" (#2499): a heal of its own,
+  // at that ally, never at you.
+  "boon-signet": define("boon-signet", "Boon Signet", "skill-effect", {
+    profession: "monk",
+    endsWhenTriggered: true,
+    triggers: (["monk.healing-prayers", "monk.protection-prayers"] as const).map((attributeId) => ({
+      on: "bearer-casts-spell" as const,
+      usedSkill: { attributes: { attributeId }, targets: "other-ally" as const },
+      effects: [
+        {
+          kind: "heal" as const,
+          amount: { scaling: { attributeId: "monk.divine-favor", atZero: 20, atTwelve: 84 } },
+        },
+      ],
+      target: "skill-target" as const,
+      skillId: "monk.boon-signet",
+    })),
+  }),
+  // "...whenever target ally takes damage while knocked down, that ally is
+  // healed for 5...50 Health" (#2499): damage from a foe, as Life
+  // Barrier's.
+  "supportive-spirit": define("supportive-spirit", "Supportive Spirit", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        effects: [
+          {
+            kind: "if",
+            condition: { kind: "target-knocked-down" },
+            effects: [
+              {
+                kind: "heal",
+                amount: {
+                  scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 41 },
+                },
+              },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.supportive-spirit",
+      },
+    ],
   }),
 };

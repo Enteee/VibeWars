@@ -5545,4 +5545,50 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     // ends if you cast a non-hex skill" (#2411).
     effects: [{ kind: "apply-status", statusId: "hexers-vigor", durationSeconds: { flat: 10 } }],
   },
+  {
+    id: "necromancer.angorodons-gaze",
+    name: "Angorodon's Gaze",
+    gwId: 2189,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.soul-reaping",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Steal 10...50 Health from target foe. If you are suffering from a
+    // condition, you gain 3...12 Energy" (#2499).
+    effects: [
+      {
+        kind: "life-steal",
+        amount: {
+          scaling: { attributeId: "necromancer.soul-reaping", atZero: 10, atTwelve: 42 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-has", category: "condition" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "necromancer.soul-reaping", atZero: 3, atTwelve: 10.2 },
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];
