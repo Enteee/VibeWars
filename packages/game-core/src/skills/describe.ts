@@ -572,6 +572,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.killsBearerOnEnd) {
     parts.push(`${selfOnly ? "you die" : "the bearer dies"} when it ends`);
+    if (definition.exploitsCorpseOnDeath) {
+      parts.push("leaves an exploited corpse");
+    }
   }
   if (physicalDamageTakenBonus !== 0) {
     const sign = physicalDamageTakenBonus > 0 ? "+" : "−";

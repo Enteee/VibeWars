@@ -51,6 +51,7 @@ export function define(
     weaponDamageMultiplier: 1,
     damageDealtMultiplier: 1,
     killsBearerOnEnd: false,
+    exploitsCorpseOnDeath: false,
     noDeathPenalty: false,
     physicalDamageTakenBonus: 0,
     elementalDamageTakenAs: undefined,
