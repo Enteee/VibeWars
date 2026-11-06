@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Mechanics (#2501), stand-ins until their art card.
+  // Mechanics (#2501), art #2517.
   // Stance: two chevrons, a third when a chant or shout is on you.
   "soldiers-speed": [
     "stance",
