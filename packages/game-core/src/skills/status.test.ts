@@ -15,6 +15,7 @@ import {
   aggregateModifiers,
   clampPips,
   getStatusDefinition,
+  nextSkillAnswers,
   ownSkillBoost,
   scaledStatAttributes,
   type StatusId,
@@ -26,7 +27,16 @@ const BLOOD = "necromancer.blood-magic";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { attackDamageDeltaOf } from "./tick.js";
 import type { FiredTrigger } from "./triggers.js";
+import type { Skill } from "./types.js";
 import { attackBlockedRiders } from "./weapon-attack.js";
+
+function skill(id: string): Skill {
+  const found = getSkill(id);
+  if (found === undefined) {
+    throw new Error(`unknown skill ${id}`);
+  }
+  return found;
+}
 
 const ALL_STATUS_IDS = Object.keys(STATUS_DEFINITIONS) as StatusId[];
 
@@ -255,6 +265,7 @@ describe("status definitions", () => {
       "vile-miasma": -4.2,
       "i-will-avenge-you": 6,
       "watchful-healing": 3.4,
+      "hexers-vigor": 6.6,
     });
   });
 
@@ -806,15 +817,59 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     expect(set.active).toEqual([]);
   });
 
+  it("ends Hexer's Vigor on any skill but a hex, or the one that spared it (#2411)", () => {
+    const vigor = (): StatusSet => {
+      const set = new StatusSet();
+      set.apply("hexers-vigor", 10, "p", NO_RANKS);
+      return set;
+    };
+    for (const id of ["monk.healing-breeze", "warrior.healing-signet", "warrior.sprint"]) {
+      expect(vigor().endOnBearerUseSkill(new Set(), skill(id))).toEqual(["hexers-vigor"]);
+    }
+    expect(vigor().endOnBearerUseSkill(new Set(), skill("necromancer.faintheartedness"))).toEqual(
+      [],
+    );
+    expect(
+      vigor().endOnBearerUseSkill(new Set(["hexers-vigor"]), skill("necromancer.hexers-vigor")),
+    ).toEqual([]);
+  });
+
+  it('nextSkillAnswers("hex") answers a hex only (#2411)', () => {
+    expect(nextSkillAnswers("hex", skill("necromancer.faintheartedness"))).toBe(true);
+    expect(nextSkillAnswers("hex", skill("monk.healing-breeze"))).toBe(false);
+  });
+
+  it("ends Battle Rage on a non-adrenal skill, Disciplined Stance on an adrenal one (#2411)", () => {
+    // One stance at a time: each on its own.
+    const stance = (id: StatusId): StatusSet => {
+      const set = new StatusSet();
+      set.apply(id, 10, "p", NO_RANKS);
+      return set;
+    };
+    const adrenal = skill("warrior.backbreaker");
+    const plain = skill("warrior.healing-signet");
+    expect(stance("battle-rage").endOnBearerUseSkill(new Set(), adrenal)).toEqual([]);
+    expect(stance("battle-rage").endOnBearerUseSkill(new Set(), plain)).toEqual(["battle-rage"]);
+    expect(stance("disciplined-stance").endOnBearerUseSkill(new Set(), adrenal)).toEqual([
+      "disciplined-stance",
+    ]);
+    expect(stance("disciplined-stance").endOnBearerUseSkill(new Set(), plain)).toEqual([]);
+  });
+
   it("ends what ends on a skill used, but what that skill spared (#999)", () => {
     const set = new StatusSet();
     set.apply("song-of-restoration", 10, "p", NO_RANKS);
     set.apply("diversion", 6, "foe", NO_RANKS);
-    expect(set.endOnBearerUseSkill(new Set(["song-of-restoration"]), false)).toEqual(["diversion"]);
+    expect(
+      set.endOnBearerUseSkill(new Set(["song-of-restoration"]), skill("monk.healing-breeze")),
+    ).toEqual(["diversion"]);
     expect(set.has("song-of-restoration")).toBe(true);
 
     set.apply("diversion", 6, "foe", NO_RANKS);
-    expect(set.endOnBearerUseSkill(new Set(), false)).toEqual(["song-of-restoration", "diversion"]);
+    expect(set.endOnBearerUseSkill(new Set(), skill("monk.healing-breeze"))).toEqual([
+      "song-of-restoration",
+      "diversion",
+    ]);
     expect(set.active).toEqual([]);
   });
 

@@ -530,6 +530,7 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: "melee",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",
@@ -632,6 +633,7 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       attackSkillsOnly: true,
       weapon: "hammer",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "interrupt" }],
       skillId: "warrior.dwarven-battle-stance",
     },

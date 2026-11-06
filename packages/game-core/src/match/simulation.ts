@@ -4594,7 +4594,7 @@ export class MatchSimulation {
       record,
       skill,
       record,
-      record.combatant.statuses.endOnBearerUseSkill(spared, skill.cost?.kind === "adrenaline"),
+      record.combatant.statuses.endOnBearerUseSkill(spared, skill),
     );
   }
 

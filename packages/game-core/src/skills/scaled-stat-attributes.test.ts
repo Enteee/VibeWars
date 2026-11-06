@@ -28,10 +28,21 @@ interface ScaledAt {
 const RESOLVED_ELSEWHERE: readonly (readonly [field: string, reason: string])[] = [
   ["triggers", "a trigger's effects are its source's, at its ranks as it fires (fireTriggers)"],
   ["failsNextSpell", "the failed spell's price is its source's, at its ranks as it fails"],
-  // True only while the attacker is the status's source: `weaponSpellRiders` holds that.
-  ["onAttackHit", "a rider lands at the attacker's ranks as the blow does (applyRiders)"],
-  ["onAttackBlocked", "as onAttackHit: at the attacker's ranks as the blow is blocked"],
 ];
+
+/**
+ * A rider's numbers are read at the attacker's ranks as the blow lands
+ * (applyRiders), unless it is `atSourceRanks` (#2411): then they are its
+ * source's, and named like any stat. True only while the attacker is the
+ * status's source: `weaponSpellRiders` holds that.
+ */
+function attackerRanked(
+  definition: StatusDefinition,
+): readonly ("onAttackHit" | "onAttackBlocked")[] {
+  return (["onAttackHit", "onAttackBlocked"] as const).filter(
+    (which) => definition[which]?.atSourceRanks === false,
+  );
+}
 
 /** Every `scaling.attributeId` in `value`, with its path. */
 function scaledAt(value: unknown, path: string, into: ScaledAt[]): void {
@@ -62,6 +73,10 @@ function misses(id: StatusId): readonly string[] {
   const named = new Set(scaledStatAttributes(id));
   return found
     .filter(({ path }) => !RESOLVED_ELSEWHERE.some(([field]) => path.startsWith(`${field}.`)))
+    .filter(
+      ({ path }) =>
+        !attackerRanked(STATUS_DEFINITIONS[id]).some((field) => path.startsWith(`${field}.`)),
+    )
     .filter(({ attributeId }) => !named.has(attributeId))
     .map(({ path, attributeId }) => `${id} ${path} ${attributeId}`);
 }
@@ -78,7 +93,7 @@ function weaponSpellRiders(id: StatusId): readonly string[] {
   }
   const found: ScaledAt[] = [];
   scaledAt(
-    { onAttackHit: definition.onAttackHit, onAttackBlocked: definition.onAttackBlocked },
+    Object.fromEntries(attackerRanked(definition).map((which) => [which, definition[which]])),
     "",
     found,
   );
@@ -109,6 +124,7 @@ describe("scaledStatAttributes (#2306)", () => {
         attackSkillsOnly: false,
         weapon: undefined,
         weaponDamage: undefined,
+        atSourceRanks: false,
         effects: [
           {
             kind: "damage",
