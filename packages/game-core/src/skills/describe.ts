@@ -2549,7 +2549,12 @@ function describeOwnSkillModifier(
   ranks: ReadonlyMap<string, number> | undefined,
   whose: "your" | "the target's",
 ): string {
-  const one = uses === 1;
+  // Soul Twisting's "1...3" is plural until a rank makes it 1 (#2478).
+  const one =
+    uses !== undefined &&
+    (typeof uses === "number"
+      ? uses === 1
+      : ranks !== undefined && Math.round(statAt(uses, ranks)) === 1);
   // A scaled number prints at `ranks` (#2158), as a status stat does.
   const at = (stat: StatusStat, format: (value: number) => string): string =>
     statText(stat, ranks, format);
@@ -2608,7 +2613,7 @@ function describeOwnSkillModifier(
     filter.targetsFoe ? (one ? "that targets a foe" : "that target a foe") : undefined,
   ].filter((word) => word !== undefined);
   const which =
-    uses === undefined ? whose : one ? `${whose} next` : `${whose} next ${String(uses)}`;
+    uses === undefined ? whose : one ? `${whose} next` : `${whose} next ${at(uses, whole)}`;
   return `${which} ${named.join(" ")} ${changes.join(" and ")}`;
 }
 
@@ -3289,6 +3294,13 @@ function describeDeathBurst(burst: DeathBurst, ranks: ReadonlyMap<string, number
       magnitude: duration,
     };
   }
+  if (burst.effect === "resurrect") {
+    const health = describeMagnitude(burst.healthPercent, ranks);
+    return {
+      text: `When it dies, dead party members ${where} are resurrected with ${shown(health)}% Health and zero Energy`,
+      magnitude: health,
+    };
+  }
   const rate = describeMagnitude(burst.perSecondAlive, ranks);
   const amount = shown(rate);
   const what =
@@ -3322,10 +3334,17 @@ function describeDeathInRange(rule: DeathInRange, ranks: ReadonlyMap<string, num
   };
 }
 
-/** Who an aura reaches and what they wear: "Non-spirit allies in its range: …". */
+/**
+ * Who an aura reaches and what they wear: "Non-spirit allies in its
+ * range: …"; Empowerment's only those "holding an item" (#2478).
+ */
 function describeAura(aura: Aura, where: string, ranks: ReadonlyMap<string, number>): Line {
   const who = AURA_WHO[aura.affects];
-  return { text: `${who} ${where}: ${statusText(aura.statusId, ranks)}`, magnitude: undefined };
+  const holding = getStatusDefinition(aura.statusId).onlyWhileHoldingItem ? " holding an item" : "";
+  return {
+    text: `${who} ${where}${holding}: ${statusText(aura.statusId, ranks)}`,
+    magnitude: undefined,
+  };
 }
 
 const AURA_WHO: Record<Aura["affects"], string> = {

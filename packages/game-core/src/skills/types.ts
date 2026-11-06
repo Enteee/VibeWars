@@ -1285,6 +1285,9 @@ export interface CreatureTemplate {
  * Damage is typeless, from its owner. `"apply-status"`, Lacerate's
  * (#1956): every one of them strictly below `belowHealthFraction` of its
  * maximum gets `statusId` for `durationSeconds`, from its owner.
+ * `"resurrect"`, Restoration's (#2478): every dead non-spirit of
+ * `affects` within `radius`, its owner's corpse too, stands up where it
+ * lies with `healthPercent` of its maximum and no Energy.
  */
 export type DeathBurst =
   | {
@@ -1302,6 +1305,13 @@ export type DeathBurst =
       /** Scaled by its owner, read once at summoning. */
       readonly durationSeconds: Magnitude;
       readonly belowHealthFraction: number;
+      readonly affects: "allies" | "foes" | "all";
+      readonly radius: number;
+    }
+  | {
+      readonly effect: "resurrect";
+      /** Scaled by its owner, read once at summoning. */
+      readonly healthPercent: Magnitude;
       readonly affects: "allies" | "foes" | "all";
       readonly radius: number;
     };
