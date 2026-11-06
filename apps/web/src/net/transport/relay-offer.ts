@@ -526,9 +526,11 @@ export function holdRelay(
         name: name(),
       };
       const key = `${peerId} ${pub}`;
+      const from = shared;
       void sealRelayOffer(offer, pub, deps.randomBytes(IV_BYTES)).then(
         (seal) => {
-          if (closed || shared === undefined) {
+          // Options changed the relay while it sealed: this login is for the old one.
+          if (closed || shared !== from) {
             return;
           }
           publisher ??= topicPublisher(room, deps);
