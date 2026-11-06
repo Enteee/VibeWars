@@ -69,11 +69,16 @@ async function joinLobby(page: Page, playerName: string, invite: string): Promis
  * (#1525), or a side of one its active character (#2141), so no bot plays
  * beside them (#2029). A side nobody is on plays a random preset team, as
  * many as the other.
+ * On Arena Alpha, an Annihilation map: a quitter wipes their side and ends
+ * the match, and the scoreboard counts the living (#846).
  */
 async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
   await openMenu(host, "Host");
   const team = guestTeam === 1 ? await saveSoloTeam(host, 2) : undefined;
-  const invite = await hostFromMenu(host, { size: guestTeam === 1 ? 2 : 1 });
+  const invite = await hostFromMenu(host, {
+    size: guestTeam === 1 ? 2 : 1,
+    map: "arena-alpha",
+  });
   await joinLobby(guest, "Guest", invite);
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: `join team ${String(guestTeam)}` }).click();
