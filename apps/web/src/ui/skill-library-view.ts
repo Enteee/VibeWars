@@ -12,7 +12,7 @@ import { equippableSkills } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
 import { encodeDragSource, equipTarget } from "./build-editor.js";
 import { characterRanks } from "./character-ranks.js";
-import { SKILL_TYPE_NAME, skillIconHtml, skillTypeBadgeHtml } from "./icons.js";
+import { SKILL_TYPE_NAME, skillIcon, skillIconHtml, skillTypeBadgeHtml } from "./icons.js";
 import { button, h, syncList } from "./kit.js";
 import {
   filterEliteSkills,
@@ -51,6 +51,35 @@ export interface SkillLibraryHost {
 }
 
 const LIBRARY_ICON_PX = 24;
+
+/** The drag image's size, px (#2533). */
+const DRAG_ICON_PX = 32;
+
+/**
+ * Drag `skillId`'s icon alone, the pointer at its top-left (#2533): the
+ * browser's default image, the whole box, covers the bar it is dropped
+ * on. The icon must be rendered when the browser takes its snapshot, at
+ * once, so it waits off-screen and goes on the next frame. Eager: a lazy
+ * image not yet loaded draws as nothing.
+ */
+function dragIcon(event: DragEvent, skillId: string): void {
+  // Absent, not only null, on a synthetic event.
+  const transfer = event.dataTransfer;
+  if (transfer == null) {
+    return;
+  }
+  const icon = document.createElement("img");
+  icon.width = DRAG_ICON_PX;
+  icon.height = DRAG_ICON_PX;
+  icon.className = "skill-icon skill-drag-image";
+  icon.alt = "";
+  icon.src = skillIcon(skillId);
+  document.body.appendChild(icon);
+  transfer.setDragImage(icon, 0, 0);
+  requestAnimationFrame(() => {
+    icon.remove();
+  });
+}
 
 /**
  * A library tab's body: the elements it puts under the tabs, and the one
@@ -284,6 +313,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
         "text/plain",
         encodeDragSource({ from: "library", skillId: skill.id }),
       );
+      dragIcon(event, skill.id);
     });
     // The hover tooltip stays beside the inline details (#549 Q3), as in
     // GW1's skill window.

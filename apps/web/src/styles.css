@@ -4917,6 +4917,13 @@ button.skill-group-header > .skill-group-rank {
   font-size: 0.72rem;
 }
 
+/* Off-screen, yet rendered: the browser takes a skill drag's image from it (#2533). */
+.skill-drag-image {
+  position: fixed;
+  top: -100px;
+  left: -100px;
+}
+
 .skill-box,
 .skill-locked-box {
   position: relative;

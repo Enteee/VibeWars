@@ -162,6 +162,10 @@ class FakeElement {
 
 /** The page's own listeners: the popover's click outside. */
 const page = new FakeElement();
+/** The page's body, where a drag image waits off-screen (#2533). */
+const body = new FakeElement();
+/** Callbacks waiting for the next animation frame. */
+const frames: (() => void)[] = [];
 
 /** A Mesmer/Necromancer, whose lines have hexes and elites both. */
 const character: TeamCharacter = {
@@ -212,11 +216,15 @@ describe("the skill library's Filters popover (#2463)", () => {
 
   beforeEach(() => {
     delete focus.current;
+    body.replaceChildren();
+    frames.length = 0;
+    vi.stubGlobal("requestAnimationFrame", (callback: () => void) => frames.push(callback));
     vi.stubGlobal("Node", FakeElement);
     vi.stubGlobal("HTMLElement", FakeElement);
     vi.stubGlobal("HTMLButtonElement", FakeElement);
     vi.stubGlobal("document", {
       createElement: () => new FakeElement(),
+      body,
       addEventListener: (type: string, listener: Listener) => {
         page.addEventListener(type, listener);
       },
@@ -345,5 +353,52 @@ describe("the skill library's Filters popover (#2463)", () => {
     chip("hex").click();
     library.update(character);
     expect(popover()).toBeDefined();
+  });
+
+  it("drags a skill's 32 px icon alone, at the pointer, and leaves nothing behind (#2533)", () => {
+    filterButton().click();
+    chip("Elite only").click();
+    const box = root.querySelectorAll(".skill-box")[0];
+    const skillId = box?.dataset.skillId ?? "";
+    expect(skillId).not.toBe("");
+    const data: string[] = [];
+    const images: [FakeElement, number, number][] = [];
+    const dataTransfer = {
+      setData: (_type: string, value: string) => data.push(value),
+      setDragImage: (image: FakeElement, x: number, y: number) => images.push([image, x, y]),
+    };
+    for (const listener of box?.listeners.get("dragstart") ?? []) {
+      listener({ dataTransfer } as unknown as FakeEvent);
+    }
+    expect(data).toEqual([`library:${skillId}`]);
+    expect(images).toHaveLength(1);
+    const [icon, x, y] = images[0] ?? [];
+    expect([x, y]).toEqual([0, 0]);
+    expect(icon).toEqual(
+      expect.objectContaining({
+        width: 32,
+        height: 32,
+        src: expect.stringContaining(skillId) as unknown,
+        className: "skill-icon skill-drag-image",
+      }),
+    );
+    expect(icon?.attributes.has("loading")).toBe(false);
+    expect(body.children).toEqual([icon]);
+    for (const frame of frames) {
+      frame();
+    }
+    expect(body.children).toEqual([]);
+  });
+
+  it("starts a drag with no data transfer without throwing (#2533)", () => {
+    filterButton().click();
+    chip("Elite only").click();
+    const box = root.querySelectorAll(".skill-box")[0];
+    expect(() => {
+      for (const listener of box?.listeners.get("dragstart") ?? []) {
+        listener({} as unknown as FakeEvent);
+      }
+    }).not.toThrow();
+    expect(body.children).toEqual([]);
   });
 });
