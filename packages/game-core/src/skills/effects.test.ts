@@ -481,6 +481,100 @@ describe("energy-gain to its target (#1485)", () => {
   });
 });
 
+describe("energy-refill and the energy-gained count (#2472)", () => {
+  const refill = { kind: "energy-refill", on: "target" } as const;
+  const gained: PerCount = {
+    count: { kind: "energy-gained", on: "target" },
+    amount: { flat: 2 },
+    max: undefined,
+  };
+  const perPoint = {
+    kind: "damage",
+    amount: { flat: 0 },
+    type: "typeless",
+    armorPenetration: 0,
+    per: gained,
+  } as const;
+
+  it("fills the target to its maximum, one energy-gain event of what it gained", () => {
+    const target = makeCombatant({ id: "target", team: 1, energy: 12 });
+    expect(applyEffect(refill, context(undefined, target))).toEqual([
+      { kind: "energy-gain", targetId: "target", amount: 38 },
+    ]);
+    expect(target.energy).toBe(50);
+  });
+
+  it("a full target gains nothing, so a count after it is 0", () => {
+    const target = makeCombatant({ id: "target", team: 1, energy: 50, health: 500 });
+    expect(applyEffects([refill, perPoint], context(undefined, target))).toEqual([]);
+    expect(target.health).toBe(500);
+  });
+
+  it("counts the target's whole points gained earlier in the use, rounded down", () => {
+    const target = makeCombatant({ id: "target", team: 1, energy: 0.5, health: 500 });
+    applyEffects([refill, perPoint], context(undefined, target));
+    // 49.5 gained: 49 points, 2 each.
+    expect(target.health).toBe(500 - 98);
+  });
+
+  it("inside a splash, counts what its centre gained, not each foe it reaches", () => {
+    const caster = makeCombatant({ id: "caster", team: 0 });
+    const target = makeCombatant({ id: "target", team: 1, energy: 40 });
+    const adjacent = makeCombatant({ id: "adjacent", team: 1, energy: 30 });
+    const at = (combatant: Combatant, x: number) =>
+      [
+        combatant.id,
+        { combatant, position: vec2(x, 0), creature: undefined, corpseExploited: false },
+      ] as const;
+    const ctx: SkillContext = {
+      ...context(caster, target),
+      surroundings: new Map([at(caster, -500), at(target, 0), at(adjacent, AREA_ADJACENT)]),
+    };
+    applyEffects(
+      [
+        refill,
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          maxTargets: undefined,
+          effects: [
+            {
+              kind: "energy-loss",
+              amount: { flat: 0 },
+              per: { ...gained, amount: { flat: 1 }, max: { flat: 7 } },
+            },
+          ],
+        },
+      ],
+      ctx,
+    );
+    // The centre gained 10; capped at 7.
+    expect(adjacent.energy).toBe(23);
+    expect(target.energy).toBe(50);
+  });
+
+  it("energy-gain to its target honours its per count", () => {
+    const target = makeCombatant({ id: "target", energy: 10 });
+    target.statuses.apply("bleeding", 10, "x", NO_RANKS);
+    target.statuses.apply("crippled", 10, "x", NO_RANKS);
+    const events = applyEffect(
+      {
+        kind: "energy-gain",
+        amount: { flat: 1 },
+        toTarget: true,
+        per: {
+          count: { kind: "statuses", on: "target", categories: ["condition"] },
+          amount: { flat: 3 },
+          max: undefined,
+        },
+      },
+      context(undefined, target),
+    );
+    expect(events).toEqual([{ kind: "energy-gain", targetId: "target", amount: 7 }]);
+  });
+});
+
 describe("a raised maximum (#1359)", () => {
   // Endure Pain at Strength 12: +258 (#1976).
   const STRENGTH_12: ReadonlyMap<string, number> = new Map([["warrior.strength", 12]]);
