@@ -184,6 +184,7 @@ describe("status definitions", () => {
         statAtTwelve(def.enchantmentsExpireFaster) !== 0 ||
         statAtTwelve(def.stancesExpireFaster) !== 0 ||
         def.refuses.length > 0 ||
+        def.divineFavorDoubledFor !== undefined ||
         def.preventsCriticalHits;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
@@ -1713,5 +1714,66 @@ describe("rank-scaled speed and reversal (#2428)", () => {
     const set = new StatusSet();
     set.apply("life-sheath", 8, "monk", new Map([["monk.protection-prayers", rank]]));
     expect(set.takeReversal()).toEqual({ id: "life-sheath", cap });
+  });
+});
+
+describe("scaled damage reduction, a slow under a boost bar, an elemental trigger (#2453)", () => {
+  const EARTH = "elementalist.earth-magic";
+  const modifiers = (set: StatusSet) => aggregateModifiers(set.active);
+
+  it.each([
+    [0, 1],
+    [12, 25],
+  ])("Stoneflesh Aura at Earth Magic %i takes %i off each packet", (rank, reduction) => {
+    const set = new StatusSet();
+    set.apply("stoneflesh-aura", 13, "e", new Map([[EARTH, rank]]));
+    expect(modifiers(set).damageReduction).toBe(reduction);
+    expect(modifiers(set).preventsCriticalHits).toBe(true);
+  });
+
+  it("leaves a flat reduction as it was: Call of Protection's 17", () => {
+    const set = new StatusSet();
+    set.apply("call-of-protection", 10, "r", NO_RANKS);
+    expect(modifiers(set).damageReduction).toBe(17);
+  });
+
+  it("slows Icy Shackles' bearer 66%, 90% while enchanted, a speed-boost bar or not", () => {
+    const set = new StatusSet();
+    set.apply("icy-shackles", 8, "e", NO_RANKS);
+    expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(0.34);
+    set.apply("stoneflesh-aura", 13, "f", NO_RANKS);
+    expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(0.1, 2);
+    set.apply("muddy-terrain", 10, "r", NO_RANKS);
+    expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(0.34 * 0.294 * 0.9);
+  });
+
+  it("still bars Godspeed's boost under a speed-boost bar", () => {
+    const set = new StatusSet();
+    set.apply("godspeed", 10, "p", NO_RANKS);
+    set.apply("stoneflesh-aura", 13, "f", NO_RANKS);
+    expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(1.25);
+    set.apply("muddy-terrain", 10, "r", NO_RANKS);
+    expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(0.9);
+  });
+
+  it("answers elemental damage with Ward of Weakness, physical with Mark of Pain", () => {
+    const set = new StatusSet();
+    set.apply("ward-of-weakness", 1, "e", NO_RANKS);
+    set.apply("mark-of-pain", 10, "n", NO_RANKS);
+    set.recordElementalDamage();
+    set.recordPhysicalDamage();
+    expect(set.drainChanges().map(({ kind }) => kind)).toEqual([
+      "took-elemental-damage",
+      "took-physical-damage",
+    ]);
+  });
+
+  it.each([
+    [0, 1],
+    [12, 4],
+  ])("Glyph of Swiftness at Air Magic %i holds the next %i spells", (rank, count) => {
+    const set = new StatusSet();
+    set.apply("glyph-of-swiftness", 15, "e", new Map([["elementalist.air-magic", rank]]));
+    expect(set.get("glyph-of-swiftness")?.spellsLeft).toBe(count);
   });
 });

@@ -234,17 +234,23 @@ describe("Divine Favor (#529)", () => {
   const orison = skill("monk.orison-of-healing");
 
   it("is floor(3.2 × rank) on a Monk spell at an ally: +38 at 12, 0 at 0", () => {
-    expect(divineFavorBonusHeal(12, orison, true)).toBe(38);
-    expect(divineFavorBonusHeal(15, orison, true)).toBe(48);
-    expect(divineFavorBonusHeal(0, orison, true)).toBe(0);
-    expect(divineFavorBonusHeal(12, skill("monk.guardian"), true)).toBe(38);
+    expect(divineFavorBonusHeal(12, orison, true, false)).toBe(38);
+    expect(divineFavorBonusHeal(15, orison, true, false)).toBe(48);
+    expect(divineFavorBonusHeal(0, orison, true, false)).toBe(0);
+    expect(divineFavorBonusHeal(12, skill("monk.guardian"), true, false)).toBe(38);
   });
 
   it("gives nothing for a Monk spell at a foe, or another profession's spell", () => {
     expect(
-      divineFavorBonusHeal(12, { ...orison, target: "single-enemy", type: "hex" }, false),
+      divineFavorBonusHeal(12, { ...orison, target: "single-enemy", type: "hex" }, false, false),
     ).toBe(0);
-    expect(divineFavorBonusHeal(12, skill("elementalist.armor-of-earth"), true)).toBe(0);
+    expect(divineFavorBonusHeal(12, skill("elementalist.armor-of-earth"), true, false)).toBe(0);
+  });
+
+  it("doubles under a status that doubles it, never more than twice (#2453)", () => {
+    expect(divineFavorBonusHeal(12, orison, true, true)).toBe(76);
+    expect(divineFavorBonusHeal(12, skill("monk.healing-touch"), true, true)).toBe(76);
+    expect(divineFavorBonusHeal(12, orison, false, true)).toBe(0);
   });
 
   /** A rank-12 monk casting `used` at `targets`, the primary first. */

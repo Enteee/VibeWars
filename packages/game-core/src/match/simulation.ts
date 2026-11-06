@@ -2988,7 +2988,7 @@ export class MatchSimulation {
     );
     // Iron Mist's Overcast (#2311), as the use begins.
     addOvercast(record.combatant, own.overcast);
-    const glyphs = this.#useGlyph(record, skill);
+    const glyph = this.#useGlyph(record, skill);
     this.#logSpent(record, skill, record.combatant.statuses.useOwnSkillModifiers(skill));
     // Heket's Rampage (#1869) ends before the attack skill is timed.
     if (skill.type === "attack") {
@@ -3000,10 +3000,20 @@ export class MatchSimulation {
       record.combatant.energy = 0;
     }
     // A glyph or a rule this start spent still boosts the skill (#1941).
-    const heldAttributeDeltas = [...glyphs, ...spent].flatMap(
+    const heldAttributeDeltas = [...glyph.ended, ...spent].flatMap(
       (id) => getStatusDefinition(id).attributeDeltas,
     );
-    return { rule: { ...rule, heldAttributeDeltas, own, causedOvercast }, castsInstantly };
+    return {
+      rule: {
+        ...rule,
+        rechargeFaster: Math.max(rule.rechargeFaster, glyph.rechargeFaster),
+        projectileSpeedMultiplier: glyph.projectileSpeedMultiplier,
+        heldAttributeDeltas,
+        own,
+        causedOvercast,
+      },
+      castsInstantly,
+    };
   }
 
   /**
@@ -3128,14 +3138,34 @@ export class MatchSimulation {
    * A spell starting, paid for, uses up one of the next spells an active
    * glyph holds (#526): an interrupt or a cancel after this does not give
    * it back, as in GW1. A glyph spent logs its end.
+   * What the holding glyphs do to the spell is taken first (#2453): Glyph
+   * of Swiftness' last spell still recharges faster and flies faster.
    */
-  #useGlyph(record: ParticipantRecord, skill: Skill): readonly StatusId[] {
+  #useGlyph(
+    record: ParticipantRecord,
+    skill: Skill,
+  ): {
+    ended: readonly StatusId[];
+    rechargeFaster: number;
+    projectileSpeedMultiplier: number;
+  } {
     if (!isSpell(skill.type)) {
-      return [];
+      return { ended: [], rechargeFaster: 0, projectileSpeedMultiplier: 1 };
     }
+    const holding = record.combatant.statuses.active.flatMap(({ id }) => {
+      const next = getStatusDefinition(id).nextSpells;
+      return next === undefined ? [] : [next];
+    });
     const ended = record.combatant.statuses.countSpellStarted();
     this.#logSpent(record, skill, ended);
-    return ended;
+    return {
+      ended,
+      rechargeFaster: Math.max(0, ...holding.map((next) => next.rechargeFaster)),
+      projectileSpeedMultiplier: Math.max(
+        1,
+        ...holding.map((next) => next.projectileSpeedMultiplier),
+      ),
+    };
   }
 
   /** The statuses `skill`'s use spent, each logged as ended under it. */
@@ -3170,7 +3200,10 @@ export class MatchSimulation {
     record: ParticipantRecord,
     skill: Skill,
   ): {
-    rule: Omit<CastRule, "own" | "heldAttributeDeltas" | "causedOvercast">;
+    rule: Omit<
+      CastRule,
+      "own" | "heldAttributeDeltas" | "causedOvercast" | "projectileSpeedMultiplier"
+    >;
     castsInstantly: boolean;
     losesAllEnergy: boolean;
     spent: readonly StatusId[];
@@ -4021,7 +4054,15 @@ export class MatchSimulation {
     const resolve =
       flight !== undefined
         ? (resolution: SkillResolution) =>
-            only(this.#releaseSpell(record, resolution, flight.speed, dt, loan))
+            only(
+              this.#releaseSpell(
+                record,
+                resolution,
+                flight.speed * cast.rule.projectileSpeedMultiplier,
+                dt,
+                loan,
+              ),
+            )
         : skill.attack === undefined
           ? (resolution: SkillResolution) => resolveSkillEffects(resolution)
           : speed === undefined

@@ -36,6 +36,11 @@ export interface CastRule {
   /** Skills whose recharge ends as it ends (#1941): Ritual Lord's own. */
   readonly resetsRecharge: readonly string[];
   /**
+   * Its projectiles fly this many times as fast (#2453): Glyph of
+   * Swiftness' 3, as the spell started. 1: as fast as they fly.
+   */
+  readonly projectileSpeedMultiplier: number;
+  /**
    * The attribute deltas of the statuses its start spent (#1941), held
    * while it resolves: the last of Glyph of Elemental Power's spells, or
    * Ritual Lord's skill, still scales with the boost.
@@ -62,6 +67,7 @@ export const NO_CAST_RULE: CastRule = {
   extraRechargeSeconds: 0,
   rechargeFaster: 0,
   resetsRecharge: [],
+  projectileSpeedMultiplier: 1,
   heldAttributeDeltas: [],
   own: NO_OWN_SKILL_BOOST,
   causedOvercast: false,

@@ -94,6 +94,7 @@ export function define(
     ignoresCriticalDamage: false,
     preventsCriticals: false,
     preventsCriticalHits: false,
+    divineFavorDoubledFor: undefined,
     block: undefined,
     projectsAura: undefined,
     blockBelowHealth: undefined,

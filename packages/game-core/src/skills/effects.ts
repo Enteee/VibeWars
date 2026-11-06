@@ -1,4 +1,4 @@
-import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
+import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import { AREA_EARSHOT } from "../distances.js";
 import {
   DIVINE_FAVOR_ATTRIBUTE,
@@ -451,6 +451,8 @@ function landDamage(
   events.push({ kind: "damage", targetId: target.id, amount: applied, critical });
   if (isPhysicalDamage(type)) {
     target.statuses.recordPhysicalDamage();
+  } else if (isElementalDamage(type)) {
+    target.statuses.recordElementalDamage();
   }
   recordFromFoe(target, dealer, type, applied);
   recordHealthDrop(target, dealer, before);
@@ -579,7 +581,7 @@ function healAmount(
 ): number {
   const base = withPerCount(
     perUsedSkillEnergy(effect, caster, usedSkill) *
-      perRemoved(effect.perRemoved, target, earlier) *
+      perRemoved(effect.perRemoved, target, earlier, effect.perRemovedStatusId) *
       (effect.perDestroyedSpirit === true
         ? earlier.filter((event) => event.kind === "creature-destroyed").length
         : 1),
@@ -990,12 +992,13 @@ function countOf(
 
 /**
  * How many statuses of `category` an earlier `remove-status` took off
- * `target` (#987); with no category, 1.
+ * `target` (#987); with no category, 1. With `statusId`, only of that id (#2453).
  */
 function perRemoved(
   category: StatusCategory | undefined,
   target: Combatant | undefined,
   earlier: readonly CombatEvent[],
+  statusId: StatusId | undefined,
 ): number {
   if (category === undefined) {
     return 1;
@@ -1007,7 +1010,8 @@ function perRemoved(
     (event) =>
       event.kind === "status-removed" &&
       event.targetId === target.id &&
-      getStatusDefinition(event.statusId).category === category,
+      getStatusDefinition(event.statusId).category === category &&
+      (statusId === undefined || event.statusId === statusId),
   ).length;
 }
 
@@ -1631,6 +1635,18 @@ function destroyCreature(
   events.push({ kind: "creature-destroyed", targetId: combatant.id });
 }
 
+/**
+ * Whether `caster` is under a status that doubles Divine Favor for
+ * `skill`'s attribute (#2453), as Smiter's Boon for Smiting Prayers.
+ */
+function favorDoubledFor(caster: Combatant, skill: Skill): boolean {
+  return caster.statuses.active.some(
+    (status) =>
+      skill.attributeId !== undefined &&
+      getStatusDefinition(status.id).divineFavorDoubledFor === skill.attributeId,
+  );
+}
+
 /** `HealEffect.divineFavorBonus` (#2311): the caster's bonus for `skillId` on `healed`. */
 function favorBonus(
   effect: HealEffect,
@@ -1646,6 +1662,7 @@ function favorBonus(
     rankOf(caster, DIVINE_FAVOR_ATTRIBUTE),
     skill,
     healed.team === caster.team,
+    favorDoubledFor(caster, skill),
   );
 }
 
@@ -3194,7 +3211,7 @@ function removeCount(
   // Contemplation of Purity's one each for the enchantments it took (#1205).
   if (effect.perRemoved !== undefined) {
     return Math.min(
-      perRemoved(effect.perRemoved.category, bearer, earlier),
+      perRemoved(effect.perRemoved.category, bearer, earlier, undefined),
       resolveMagnitude(effect.perRemoved.max, caster),
     );
   }
@@ -3883,6 +3900,7 @@ export function resolveSkillEffects(
           rankOf(caster, DIVINE_FAVOR_ATTRIBUTE),
           skill,
           primary.team === caster.team,
+          favorDoubledFor(caster, skill),
         ),
         own,
       ),
