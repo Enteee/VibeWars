@@ -620,6 +620,7 @@ describe("describeSkill", () => {
           attack,
           deathBurst,
           onDeathInRange,
+          pulse,
           onePerOwner,
           leavesCorpses,
           replacedBy,
@@ -630,6 +631,7 @@ describe("describeSkill", () => {
           (kind === "spirit" && (attack?.damageMax ?? 0) > 0 ? 1 : 0) +
           (kind !== "spirit" && attack?.scaling.kind === "level" ? 1 : 0) +
           (attack?.onHit ?? []).length +
+          (pulse === undefined ? 0 : 1) +
           (deathBurst === undefined ? 0 : 1) +
           (onDeathInRange === undefined ? 0 : 1) +
           (onePerOwner ? 1 : 0) +
