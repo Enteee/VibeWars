@@ -57,3 +57,51 @@ describe("play-build heals (#1189, #1870)", () => {
     expect(sim.get("ally")?.combatant.health).toBeGreaterThan(before);
   });
 });
+
+describe("play-build spirits for a hurt ally (#2491)", () => {
+  const RITUALIST_RANKS = new Map([
+    ["ritualist.restoration-magic", 12],
+    ["ritualist.communing", 12],
+  ]);
+
+  for (const [skillId, waitSeconds] of [
+    ["ritualist.recovery", 3 + 30 + 5],
+    ["ritualist.shelter", 5 + 45 + 5],
+  ] as const) {
+    it(`casts ${skillId} at full Health for an ally in its range, once while the spirit stands`, () => {
+      const sim = match([
+        fighter("rit", 0, MONK, vec2(400, 400), {
+          skillBar: [skillId],
+          attributeRanks: RITUALIST_RANKS,
+          maxEnergy: 100,
+        }),
+        fighter("ally", 0, WARRIOR, vec2(480, 400), {
+          behaviour: undefined,
+          startHealthFraction: 0.4,
+        }),
+        fighter("foe", 1, WARRIOR, vec2(600, 400), { behaviour: undefined, skillBar: [] }),
+      ]);
+      expect(askBot(sim, "rit")).toMatchObject({ useSkillId: skillId, targetId: "rit" });
+      expect(skillsUsed(sim, "rit", waitSeconds)).toEqual([skillId]);
+      const spirit = [...sim.participants()].find(
+        ({ creature }) => creature?.ownerId === "rit" && creature.skillId === skillId,
+      );
+      expect(spirit?.combatant.dead).toBe(false);
+    });
+  }
+
+  it("casts no spirit for an ally outside its aura", () => {
+    const sim = match([
+      fighter("rit", 0, MONK, vec2(400, 400), {
+        skillBar: ["ritualist.recovery"],
+        attributeRanks: RITUALIST_RANKS,
+        maxEnergy: 100,
+      }),
+      fighter("ally", 0, WARRIOR, vec2(1500, 400), {
+        behaviour: undefined,
+        startHealthFraction: 0.4,
+      }),
+    ]);
+    expect(askBot(sim, "rit").useSkillId).toBeUndefined();
+  });
+});

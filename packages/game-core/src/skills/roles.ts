@@ -190,6 +190,10 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     statAtTwelve(status.damageReductionFromWeakerFoe) > 0 ||
     status.interruptGuard !== undefined ||
     (status.damageTypeTakenMultiplier?.multiplier ?? 1) < 1 ||
+    // More maximum Health and shorter conditions (#2491): Empowerment's
+    // and Recovery's auras.
+    statAtTwelve(status.maxHealthBonus) > 0 ||
+    statAtTwelve(status.conditionsExpireFaster) > 0 ||
     // Protector's Defense (#2096): the block its bearer projects.
     (status.projectsAura !== undefined &&
       statusRoles(getStatusDefinition(status.projectsAura.statusId)).includes("defence"))

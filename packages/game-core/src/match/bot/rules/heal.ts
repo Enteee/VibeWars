@@ -11,7 +11,7 @@ const heal: BotRule = {
   order: 20,
   name: "heal",
   decide: (rule) => {
-    const { self, bar, allies, mayUse, use } = rule;
+    const { context, self, bar, allies, mayUse, use } = rule;
     let hurt: Participant | undefined;
     for (const ally of allies) {
       if (hurt === undefined || healthFraction(ally) < healthFraction(hurt)) {
@@ -38,18 +38,33 @@ const heal: BotRule = {
           distance(patient.position, self.position) <= beside
         );
       }
+      // A spirit whose aura reaches allies (#2491), Shelter's or Recovery's,
+      // is for a patient inside that aura, the caster among them.
+      const aura = allyAuraRadius(held);
+      if (aura !== undefined) {
+        return distance(patient.position, self.position) <= aura;
+      }
       const area = held.area;
       if (area?.origin !== "caster" || area.includesCaster) {
         return patient.id === self.id;
       }
       return patient.id !== self.id && distance(patient.position, self.position) <= area.radius;
     };
+    // A spirit of its own from this skill still stands (#2491): Recovery
+    // outlives its recharge, and a second one only replaces the first.
+    const spiritUp = (held: Skill): boolean =>
+      held.effects.some((effect) => effect.kind === "summon") &&
+      context.participants.some(
+        ({ combatant, creature }) =>
+          creature?.ownerId === self.id && creature.skillId === held.id && !combatant.dead,
+      );
     for (const role of ["healing", "defence"] as const) {
       const skill = bar.find(
         (held) =>
           botUses(held).includes(role) &&
           wardedDamageType(held) === undefined &&
           reaches(held) &&
+          !spiritUp(held) &&
           mayUse(held, held.target === "self" ? self.id : patient.id),
       );
       if (skill !== undefined) {
@@ -61,5 +76,15 @@ const heal: BotRule = {
     return undefined;
   },
 };
+
+/** The radius of the ally aura of the spirit `skill` summons, if it has one. */
+function allyAuraRadius(skill: Skill): number | undefined {
+  for (const effect of skill.effects) {
+    if (effect.kind === "summon" && effect.creature.aura?.affects === "allies") {
+      return effect.creature.aura.radius;
+    }
+  }
+  return undefined;
+}
 
 export default heal;
