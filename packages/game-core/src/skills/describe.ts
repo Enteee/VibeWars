@@ -3756,7 +3756,8 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     case "resurrect": {
       // "13% health and 3% energy per party member in earshot",
-      // "your health after losing half and 17% energy" (#474).
+      // "your health after losing half and 17% energy" (#474), "up to your
+      // current health" when it loses none (#2414).
       const energy = describeMagnitude(effect.energyPercent, ranks);
       const health =
         effect.health.kind === "percent"
@@ -3765,7 +3766,9 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       const healthText =
         effect.health.kind === "percent"
           ? `${shown(describeMagnitude(effect.health.percent, ranks))}% health`
-          : `your health after losing ${share(effect.health.casterLosesFractionOfCurrent)}`;
+          : effect.health.casterLosesFractionOfCurrent === 0
+            ? "up to your current health"
+            : `your health after losing ${share(effect.health.casterLosesFractionOfCurrent)}`;
       const radius = effect.perPartyMemberWithin;
       const per =
         radius === undefined

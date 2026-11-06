@@ -5430,6 +5430,163 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "elementalist.whirlwind",
+    name: "Whirlwind",
+    gwId: 163,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Staples (#2414). "All adjacent foes take 15...75 cold damage.
+    // Attacking foes struck by Whirlwind are knocked down. If you are
+    // Overcast, this spell strikes nearby instead of adjacent": 63 at rank
+    // 12; overcast as it resolves, so never its own.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            around: "caster",
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.air-magic", atZero: 15, atTwelve: 63 },
+                },
+                type: "cold",
+                armorPenetration: 0,
+              },
+            ],
+          },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            around: "caster",
+            maxTargets: undefined,
+            onlyIf: { kind: "target-attacking" },
+            effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: { kind: "not", condition: { kind: "caster-overcast" } },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            around: "caster",
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.air-magic", atZero: 15, atTwelve: 63 },
+                },
+                type: "cold",
+                armorPenetration: 0,
+              },
+            ],
+          },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            around: "caster",
+            maxTargets: undefined,
+            onlyIf: { kind: "target-attacking" },
+            effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.flame-djinns-haste",
+    name: "Flame Djinn's Haste",
+    gwId: 1381,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All adjacent foes are struck for 15...120 fire damage. For 8...14
+    // seconds, you move 25% faster. Flame Djinn's Haste recharges 50%
+    // faster if a foe was struck by this spell": 99 and 12.8 s at rank 12.
+    // The gate is read before the burst, so a foe it kills still counts.
+    effects: [
+      {
+        kind: "if",
+        condition: {
+          kind: "count-at-least",
+          count: { kind: "foes-within", radius: AREA_ADJACENT },
+          atLeast: 1,
+        },
+        effects: [{ kind: "recharge-faster", fraction: 0.5 }],
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        around: "caster",
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.fire-magic", atZero: 15, atTwelve: 99 },
+            },
+            type: "fire",
+            armorPenetration: 0,
+          },
+        ],
+      },
+      {
+        kind: "apply-status",
+        statusId: "flame-djinns-haste",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 8, atTwelve: 12.8 },
+        },
+      },
+    ],
+  },
 ];
 
 /**
