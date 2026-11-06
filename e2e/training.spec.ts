@@ -1574,9 +1574,11 @@ for (const viewport of [
     await openTraining(page);
     await castFireballAndLand(page);
     await releaseByClickAway(page);
-    // Each reset adds a divider row: a log far longer than the panel has room for.
-    const reset = page.getByRole("button", { name: "reset" });
-    for (let i = 0; i < 12; i++) await reset.click();
+    // Each reset adds a divider row: a log far longer than the panel has room
+    // for. One synthetic burst: a click() each waits on canvas frames (#2466).
+    await page.getByRole("button", { name: "reset" }).evaluate((button: HTMLElement) => {
+      for (let i = 0; i < 12; i++) button.click();
+    });
     await page.setViewportSize(viewport);
 
     // The panel may scroll inside its border, once the log is down to about
