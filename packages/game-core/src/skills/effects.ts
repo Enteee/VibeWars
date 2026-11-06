@@ -12,6 +12,7 @@ import { beginRecharge, resolvedBar, skillIdOfKey, type SlotSkill } from "./cast
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
 import {
+  type DamagePacket,
   type DamageSource,
   hitLocationOf,
   mitigate,
@@ -24,10 +25,10 @@ import { resolveMagnitude, resolveMagnitudeTimes, statAt } from "./scaling.js";
 import { mimickedElite, standIn } from "./stand-in.js";
 import {
   aggregateModifiers,
+  damageDealtAsOf,
   damageTypeDealt,
   damageTypeTaken,
   getStatusDefinition,
-  physicalDamageDealtAsOf,
   scaledStatusDuration,
   type ActiveStatus,
   type OwnSkillBoost,
@@ -427,12 +428,17 @@ function landDamage(
     events.push({ kind: "invulnerable", targetId: target.id });
     return;
   }
-  // Mist Form's (#1951) and Intimidating Aura's (#2207), after every
-  // mitigation: what a hexed or a weaker foe deals. Vengeance's 25% more
-  // (#2311) is the dealer's, before them.
-  const cut = weakerSourceDamage(
+  // Mist Form's (#1951), Intimidating Aura's (#2207) and Armor of
+  // Sanctity's (#2503), after every mitigation: what a hexed, a weaker or
+  // a conditioned foe deals. Vengeance's 25% more (#2311) is the dealer's,
+  // before them.
+  const cut = conditionedSourceDamage(
     target,
-    hexedSourceDamage(target, dealtDamage(amount, dealer), dealer),
+    weakerSourceDamage(
+      target,
+      hexedSourceDamage(target, dealtDamage(amount, dealer), dealer),
+      dealer,
+    ),
     dealer,
   );
   if (
@@ -469,7 +475,11 @@ function landDamage(
   if (target.health <= 0) {
     target.dead = true;
     events.push({ kind: "death", targetId: target.id });
+    return;
   }
+  // Angelic Protection (#2503): what takes the last second over its cap
+  // is healed at once, after the packet answered everything it answers.
+  applyHeal(target, target.statuses.damageOverCap(applied), events);
 }
 
 /**
@@ -1110,8 +1120,11 @@ function canBeKnockedDown(target: Combatant): boolean {
 }
 
 /** Whether a status on `target` stops a knockdown (#468). */
-function preventsKnockdown(target: Combatant): boolean {
-  return target.statuses.active.some((status) => getStatusDefinition(status.id).preventsKnockdown);
+function preventsKnockdown(target: Combatant, byFoe: boolean): boolean {
+  return target.statuses.active.some((status) => {
+    const definition = getStatusDefinition(status.id);
+    return definition.preventsKnockdown || (byFoe && definition.preventsFoeKnockdown);
+  });
 }
 
 /**
@@ -1185,7 +1198,8 @@ function castInterruptible(target: Combatant): boolean {
  * already got past `uninterruptible`. Mantra of Concentration's is spent
  * on it. Mantra of Resolve's costs its Energy, paid at once since that
  * decides the interrupt; short of it, the stance ends and the interrupt
- * lands, as in GW1.
+ * lands, as in GW1. Pious Concentration's (#2503) costs a Dervish
+ * enchantment the same way.
  */
 function interruptGuarded(target: Combatant, events: CombatEvent[]): boolean {
   for (const { id } of target.statuses.active) {
@@ -1199,6 +1213,16 @@ function interruptGuarded(target: Combatant, events: CombatEvent[]): boolean {
     if (guard?.kind === "pay-energy") {
       if (Math.floor(target.energy) >= guard.amount) {
         loseEnergy(target, guard.amount, events);
+        return true;
+      }
+      target.statuses.end(id);
+      events.push({ kind: "status-removed", targetId: target.id, statusId: id });
+      return false;
+    }
+    if (guard?.kind === "lose-enchantment") {
+      const [lost] = target.statuses.removeByCategory("enchantment", 1, guard.profession);
+      if (lost !== undefined) {
+        events.push({ kind: "status-removed", targetId: target.id, statusId: lost.id });
         return true;
       }
       target.statuses.end(id);
@@ -1828,6 +1852,32 @@ function weakerSourceDamage(
 }
 
 /**
+ * `amount` from `dealer`, less each `damageReductionFromConditionedFoe`
+ * on `target` when `dealer` is a foe suffering any condition (#2503):
+ * Armor of Sanctity's 20 at rank 12. Never below 0.
+ */
+function conditionedSourceDamage(
+  target: Combatant,
+  amount: number,
+  dealer: Combatant | undefined,
+): number {
+  if (
+    dealer === undefined ||
+    dealer.team === target.team ||
+    !dealer.statuses.active.some(({ id }) => getStatusDefinition(id).category === "condition")
+  ) {
+    return amount;
+  }
+  let reduction = 0;
+  for (const { id, ranks } of target.statuses.active) {
+    reduction += Math.round(
+      statAt(getStatusDefinition(id).damageReductionFromConditionedFoe, ranks),
+    );
+  }
+  return Math.max(0, amount - reduction);
+}
+
+/**
  * `loser` loses `amount` health: the caster's `sacrifice`, or a target's
  * `health-loss` (#1648, #1678). Not damage, so nothing mitigates it; only
  * invulnerability and a Guild Lord's cap stop it, and it can kill.
@@ -1998,15 +2048,23 @@ export function applyEffect(
         return events;
       }
       // Greater Conflagration's (#1873) on the caster, then Winter's (#1745)
-      // on the target: elemental damage reaches its bearer as cold.
-      const packet = skillDamage(
+      // on the target: elemental damage reaches its bearer as cold. A
+      // spell landing, not a status's trigger, is a spell's (#2503): an
+      // ends trigger carries its skill's id too, so the firing status rules.
+      const landing =
+        context.skillId === undefined || context.firingStatusId !== undefined
+          ? undefined
+          : getSkill(context.skillId);
+      const dealt = skillDamage(
         amount,
         damageTypeTaken(
-          damageTypeDealt(effect.type, physicalDamageDealtAsOf(caster.statuses.active)),
+          damageTypeDealt(effect.type, damageDealtAsOf(caster.statuses.active)),
           target.statuses.active,
         ),
         withSkillArmorPenetration(effect.armorPenetration, caster, context.profession),
       );
+      const packet: DamagePacket =
+        landing !== undefined && isSpell(landing.type) ? { ...dealt, spell: true } : dealt;
       applyDamage(
         target,
         mitigate(
@@ -2446,6 +2504,45 @@ export function applyEffect(
       return events;
     }
 
+    case "transfer-conditions-to-area": {
+      const at = context.surroundings.get(caster.id)?.position;
+      if (caster.dead || at === undefined) {
+        return events;
+      }
+      const foes = nearestFirst(
+        [...context.surroundings.values()].filter(
+          ({ combatant, position }) =>
+            !combatant.dead &&
+            combatant.team !== caster.team &&
+            distance(position, at) <= effect.radius,
+        ),
+        at,
+      );
+      if (foes.length === 0) {
+        return events;
+      }
+      const moved = caster.statuses.takeNewest(
+        "condition",
+        resolveMagnitude(effect.count, context.ranksFrom ?? caster),
+      );
+      for (const { id, remainingSeconds, ranks } of moved) {
+        events.push({ kind: "status-removed", targetId: caster.id, statusId: id });
+        for (const combatant of foes) {
+          landOnTaker(
+            combatant,
+            id,
+            remainingSeconds,
+            caster.id,
+            ranks,
+            events,
+            context.surroundings,
+            null,
+          );
+        }
+      }
+      return events;
+    }
+
     case "spread-conditions": {
       const at = target === undefined ? undefined : context.surroundings.get(target.id)?.position;
       if (target === undefined || target.dead || at === undefined) {
@@ -2590,9 +2687,11 @@ export function applyEffect(
       if (falls === undefined || !canBeKnockedDown(falls)) {
         return events;
       }
-      if (preventsKnockdown(falls)) {
+      // Balthazar's Pendulum (#2503) stops only a foe's, and turns on it.
+      const byFoe = caster.team !== falls.team;
+      if (preventsKnockdown(falls, byFoe)) {
         // Stopped, and what stops only one is spent (#845).
-        for (const statusId of falls.statuses.endOnKnockdownPrevented()) {
+        for (const statusId of falls.statuses.endOnKnockdownPrevented(caster.id, byFoe)) {
           events.push({ kind: "status-removed", targetId: falls.id, statusId });
         }
         return events;
@@ -3727,6 +3826,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "destroy-own-spirits":
     case "resurrect-companions":
     case "disable-own-skills":
+    case "transfer-conditions-to-area":
       return true;
     // Measured from the caster, so once (#1777), not once a target.
     case "splash":

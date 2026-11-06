@@ -7,6 +7,7 @@ import {
   missingMechanics,
   unmaintainedUpkeepSkills,
   type CorpusRef,
+  type SkillCoverage,
 } from "./coverage.js";
 
 /**
@@ -19,9 +20,6 @@ import {
  * `catalog.test.ts`.
  */
 
-/** One listed gap, Energy Boon: a corpus skill with no catalog entry. Kept literal on purpose. */
-const KNOWN_UNIMPLEMENTED = [{ gwId: 837, name: "Energy Boon" }] as const;
-
 const CORPUS: readonly CorpusRef[] = [
   { gwId: 74, name: "Echo" },
   { gwId: 186, name: "Fireball" },
@@ -29,8 +27,22 @@ const CORPUS: readonly CorpusRef[] = [
   { gwId: 358, name: "Backbreaker" },
   { gwId: 395, name: "Barrage" },
   { gwId: 1356, name: "Contagion" },
-  ...KNOWN_UNIMPLEMENTED,
 ];
+
+/**
+ * Two gaps, built by hand: every PvP corpus skill is in the catalog since
+ * #2503, so no real one is left to group or print.
+ */
+const TWO_GAPS: SkillCoverage = {
+  imported: 8,
+  implemented: 6,
+  unimplemented: [
+    { gwId: 99_998, name: "First Gap", missing: ["unwritten"] },
+    { gwId: 99_999, name: "Second Gap", missing: ["unwritten"] },
+  ],
+  originalDesign: [],
+  unexplained: [],
+};
 
 describe("skill coverage regression gate", () => {
   it("records a reason for every unimplemented skill", () => {
@@ -56,10 +68,8 @@ describe("skill coverage regression gate", () => {
   it("holds the line on what is implemented", () => {
     const coverage = computeCoverage(CORPUS);
 
-    expect(coverage.implemented).toBe(CORPUS.length - KNOWN_UNIMPLEMENTED.length);
-    expect(coverage.unimplemented.map((s) => s.gwId)).toEqual(
-      KNOWN_UNIMPLEMENTED.map((s) => s.gwId),
-    );
+    expect(coverage.implemented).toBe(CORPUS.length);
+    expect(coverage.unimplemented).toEqual([]);
   });
 
   it("never counts an original-design skill as corpus coverage", () => {
@@ -73,7 +83,7 @@ describe("skill coverage regression gate", () => {
   });
 
   it("describes every mechanic it blames a skill on", () => {
-    const grouped = missingMechanics(computeCoverage(CORPUS));
+    const grouped = missingMechanics(TWO_GAPS);
 
     expect(grouped.size).toBeGreaterThan(0);
     for (const mechanic of grouped.keys()) {
@@ -81,20 +91,8 @@ describe("skill coverage regression gate", () => {
     }
   });
 
-  it("groups skills by the mechanic they wait on", () => {
-    const grouped = missingMechanics(computeCoverage(CORPUS));
-
-    expect(grouped.get("max-health-per-max-energy")).toEqual([837]);
-  });
-
-  // No reason line names two mechanics since #2502 implemented Reclaim
-  // Essence: one is grouped under the mechanic it waits on, once.
-  it("counts a skill once under the mechanic it waits on (Balthazar's Pendulum)", () => {
-    const coverage = computeCoverage([...CORPUS, { gwId: 1395, name: "Balthazar's Pendulum" }]);
-    const grouped = missingMechanics(coverage);
-
-    expect(coverage.unimplemented.filter((s) => s.gwId === 1395)).toHaveLength(1);
-    expect(grouped.get("knockdown-offender")).toEqual([1395]);
+  it("groups skills by the mechanic they wait on, each once", () => {
+    expect(missingMechanics(TWO_GAPS).get("unwritten")).toEqual([99_998, 99_999]);
   });
 
   it("counts a duplicated corpus entry once", () => {
@@ -104,12 +102,12 @@ describe("skill coverage regression gate", () => {
   });
 
   it("reports a reason in the human-readable output", () => {
-    const text = formatCoverage(computeCoverage(CORPUS));
+    const text = formatCoverage(TWO_GAPS);
 
-    expect(text).toContain("imported 7 / implemented 6 / 1 unimplemented");
-    expect(text).toContain("837 Energy Boon — needs max-health-per-max-energy");
+    expect(text).toContain("imported 8 / implemented 6 / 2 unimplemented");
+    expect(text).toContain("99998 First Gap — needs unwritten");
     expect(text).toContain("blocked on:");
-    expect(text).toContain(MISSING_MECHANIC_DESCRIPTIONS["max-health-per-max-energy"]);
+    expect(text).toContain(MISSING_MECHANIC_DESCRIPTIONS.unwritten);
   });
 
   it("passes an upkeep skill the catalog maintains (Mending, #840)", () => {

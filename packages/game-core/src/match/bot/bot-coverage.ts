@@ -260,6 +260,7 @@ export const BOT_UNUSED: Readonly<Record<string, BotGap>> = Object.freeze({
   "assassin.deadly-haste": "self-enchantment",
   "ritualist.renewing-memories": "self-enchantment",
   "ritualist.spirits-strength": "self-enchantment",
+  "elementalist.stone-striker": "self-enchantment",
   "mesmer.auspicious-incantation": "self-enchantment",
   "ritualist.sight-beyond-sight": "self-enchantment",
   "ritualist.wielders-remedy": "self-enchantment",

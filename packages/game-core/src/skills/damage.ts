@@ -56,6 +56,11 @@ export interface DamagePacket {
    */
   readonly projectile?: true;
   /**
+   * A spell skill's own packet (#2503), what Veil of Thorns cuts; never a
+   * spell's status's trigger or degeneration. Absent: not one.
+   */
+  readonly spell?: true;
+  /**
    * On the target's armor against this packet alone (#2502), with the
    * status modifiers: Shadowy Burden's −28 against its source's blows.
    * Absent: none.
@@ -293,6 +298,18 @@ function damageTypeTakenMultiplier(target: Combatant, type: DamageType): number 
 }
 
 /**
+ * The product of `target`'s statuses' `spellDamageTakenMultiplier`
+ * (#2503): Veil of Thorns's 0.65 at rank 12.
+ */
+function spellDamageTakenMultiplier(target: Combatant): number {
+  let multiplier = 1;
+  for (const { id, ranks } of target.statuses.active) {
+    multiplier *= statAt(getStatusDefinition(id).spellDamageTakenMultiplier, ranks);
+  }
+  return multiplier;
+}
+
+/**
  * What `target`'s statuses take off each packet while it activates a
  * skill of their type (#1827): Armor of Unfeeling's 10 while casting a
  * binding ritual. Nothing once the activation is over.
@@ -352,6 +369,10 @@ export function mitigate(
   // The mantras of Earth, Flame, Frost and Lightning (#1964): one type's
   // cut, of the type as taken.
   dealt *= damageTypeTakenMultiplier(target, packet.type);
+  // Veil of Thorns (#2503): a spell's own packet.
+  if (packet.spell === true) {
+    dealt *= spellDamageTakenMultiplier(target);
+  }
 
   // Call of Protection (#1108): a flat cut off every packet, after
   // armor and the multiplier, before Rune of Absorption. Union's spirit

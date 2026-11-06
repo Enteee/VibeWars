@@ -24,30 +24,12 @@ import { IMPLEMENTED_SKILLS } from "./catalog.js";
  * string would quietly create a new "mechanic" and split the report, and
  * grouping skills by what they are waiting on is the whole point.
  */
-export type MissingMechanic =
-  | "unwritten"
-  | "max-health-per-max-energy"
-  | "damage-type-conversion"
-  | "knockdown-offender"
-  | "transfer-conditions-to-area"
-  | "source-condition-damage-reduction"
-  | "interrupt-guard-strip-enchantment"
-  | "damage-per-second-cap"
-  | "spell-damage-taken-multiplier";
+export type MissingMechanic = "unwritten";
 
 /** What each missing mechanic would mean to build, in one line. */
 export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, string>> =
   Object.freeze({
     unwritten: "not a mechanic: the engine has every piece, only the catalog entry is missing",
-    "max-health-per-max-energy": "maximum Health scales with your maximum Energy",
-    "damage-type-conversion": "damage of one type is dealt as another type",
-    "knockdown-offender": "whoever does something to the bearer is knocked down",
-    "transfer-conditions-to-area": "the bearer's conditions move to foes in an area",
-    "source-condition-damage-reduction": "damage from a foe suffering a condition is reduced",
-    "interrupt-guard-strip-enchantment":
-      "the bearer cannot be interrupted, and an attempt ends the enchantment",
-    "damage-per-second-cap": "damage taken in one second is capped",
-    "spell-damage-taken-multiplier": "spells deal a multiple of their damage to the bearer",
   });
 
 /**
@@ -59,16 +41,7 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
  * `coverage-gate.test.ts` fails on any key whose skill is implemented.
  */
 export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMechanic[]>> =
-  Object.freeze({
-    837: ["max-health-per-max-energy"], // Energy Boon
-    1371: ["damage-type-conversion"], // Stone Striker
-    1395: ["knockdown-offender"], // Balthazar's Pendulum
-    1493: ["transfer-conditions-to-area"], // Grenth's Fingers
-    1515: ["source-condition-damage-reduction"], // Armor of Sanctity
-    1542: ["interrupt-guard-strip-enchantment"], // Pious Concentration
-    1586: ["damage-per-second-cap"], // Angelic Protection
-    1757: ["spell-damage-taken-multiplier"], // Veil of Thorns
-  });
+  Object.freeze({});
 
 /** A corpus skill as coverage needs it: its GW1 id and name. */
 export interface CorpusRef {

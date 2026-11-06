@@ -465,6 +465,11 @@ function whole(value: number): string {
   return String(Math.abs(Math.round(value)));
 }
 
+/** "2.6": to the tenth, Energy Boon's Health a point (#2503). */
+function tenths(value: number): string {
+  return String(Math.round(value * 10) / 10);
+}
+
 /**
  * What a status actually does, so a tooltip does not just name it.
  * `ranks` are its caster's, for a trigger an attribute scales (#944),
@@ -632,6 +637,10 @@ function statusText(
   if (definition.maxEnergyBonus !== 0) {
     parts.push(`+${String(definition.maxEnergyBonus)} maximum energy`);
   }
+  if (statAtTwelve(definition.maxHealthPerMaxEnergy) !== 0) {
+    const per = statText(definition.maxHealthPerMaxEnergy, ranks, tenths);
+    parts.push(`+${per} maximum Health per point of maximum Energy`);
+  }
   if (definition.minionDamageBonus !== 0) {
     parts.push(`your minions deal ${signed(definition.minionDamageBonus)} damage`);
   }
@@ -688,8 +697,14 @@ function statusText(
   if (definition.elementalDamageTakenAs !== undefined) {
     parts.push(`elemental damage taken is ${definition.elementalDamageTakenAs} damage`);
   }
+  if (definition.physicalDamageTakenAs !== undefined) {
+    parts.push(`physical damage taken is ${definition.physicalDamageTakenAs} damage`);
+  }
   if (definition.physicalDamageDealtAs !== undefined) {
     parts.push(`physical damage dealt is ${definition.physicalDamageDealtAs} damage`);
+  }
+  if (definition.elementalDamageDealtAs !== undefined) {
+    parts.push(`elemental damage dealt is ${definition.elementalDamageDealtAs} damage`);
   }
   if (definition.damageFromSpiritAttacks !== 0) {
     parts.push(`take ${signed(definition.damageFromSpiritAttacks)} from spirits' attacks`);
@@ -845,6 +860,9 @@ function statusText(
   }
   if (definition.preventsKnockdown) {
     parts.push("cannot be knocked down");
+  }
+  if (definition.preventsFoeKnockdown) {
+    parts.push("cannot be knocked down by a foe");
   }
   if (definition.endsOnKnockdownPrevented) {
     parts.push("ends if it prevents a knockdown");
@@ -1131,6 +1149,21 @@ function statusText(
       `−${statText(definition.damageReductionFromWeakerFoe, ranks, whole)} damage taken from foes with less Health`,
     );
   }
+  if (statAtTwelve(definition.damageReductionFromConditionedFoe) > 0) {
+    parts.push(
+      `−${statText(definition.damageReductionFromConditionedFoe, ranks, whole)} damage taken from foes with a condition`,
+    );
+  }
+  if (statAtTwelve(definition.spellDamageTakenMultiplier) !== 1) {
+    const less = statText(definition.spellDamageTakenMultiplier, ranks, (multiplier) =>
+      String(Math.round((1 - multiplier) * 100)),
+    );
+    parts.push(`${less}% less damage from spells`);
+  }
+  if (definition.damagePerSecondCap !== undefined) {
+    const cap = statText(definition.damagePerSecondCap, ranks, whole);
+    parts.push(`damage over ${cap} in a second is healed`);
+  }
   if (definition.redirectsDamage !== undefined) {
     const { share: fraction, from, reduction } = definition.redirectsDamage;
     const hits = from === "physical" ? "its physical damage" : "the damage it takes from attacks";
@@ -1410,6 +1443,12 @@ function statusText(
     const amount = String(definition.interruptGuard.amount);
     parts.push(
       `you cannot be interrupted; each time you would be, lose ${amount} Energy or this ends`,
+    );
+  }
+  if (definition.interruptGuard?.kind === "lose-enchantment") {
+    const profession = getProfession(definition.interruptGuard.profession).name;
+    parts.push(
+      `you cannot be interrupted; each time you would be, lose 1 ${profession} enchantment or this ends`,
     );
   }
   if (statAtTwelve(definition.conditionsExpireFaster) !== 0) {
@@ -4004,6 +4043,14 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
     }
     case "transfer-conditions":
       return transferText(effect, ranks);
+    // Grenth's Fingers (#2503): "Transfer 2 conditions to nearby foes".
+    case "transfer-conditions-to-area": {
+      const magnitude = describeMagnitude(effect.count, ranks);
+      return {
+        text: `Transfer ${shown(magnitude)} of your conditions to ${foesWithin(effect.radius, "foes")}`,
+        magnitude,
+      };
+    }
     // Epidemic's (#1501): "Adjacent foes get the target's conditions...";
     // Extend Conditions' "...with 81% more time (max 30 s)" (#1954).
     case "spread-conditions": {
