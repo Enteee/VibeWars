@@ -91,7 +91,7 @@ describe("createMusicPlayer", () => {
     player.setIntensity(1);
     player.load(track);
     player.setIntensity(2);
-    player.crossfadeTo({ ...track, id: "ashen-fields" });
+    player.crossfadeTo({ ...track, id: "ashen-fields" }, "cycle");
     click();
     player.setVolume(0.5, 0.3);
     expect(frames[0]?.sent).toEqual([]);
@@ -104,6 +104,7 @@ describe("createMusicPlayer", () => {
       {
         type: "crossfadeTo",
         cycles: CROSSFADE_CYCLES,
+        landOn: "cycle",
         trackId: "ashen-fields",
         source: track.source,
         phraseCycles: 8,
@@ -184,7 +185,7 @@ describe("createMusicPlayer", () => {
 
     player.setIntensity(3);
     expect(frames).toHaveLength(1);
-    player.crossfadeTo(track);
+    player.crossfadeTo(track, "phrase");
     expect(frames).toHaveLength(2);
     frames[1]?.receive({ type: "ready" });
     expect(frames[1]?.sent.slice(0, 3)).toEqual([
@@ -303,7 +304,7 @@ describe("a host that floods the game (#878)", () => {
     frames[0]?.receive({ type: "error", message: "playing" });
     frames[0]?.receive({ type: "error", message: "playing" });
     expect(errors).toEqual([{ message: "bad", evaluation: seq }, { message: "playing" }]);
-    player.crossfadeTo(track);
+    player.crossfadeTo(track, "phrase");
     frames[0]?.receive({ type: "error", message: "again" });
     expect(errors.at(-1)).toEqual({ message: "again" });
   });

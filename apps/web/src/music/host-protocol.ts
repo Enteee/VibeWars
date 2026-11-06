@@ -21,11 +21,21 @@ export interface HostTrack {
   readonly phraseCycles: number;
 }
 
+/** Where a switch lands: the playing track's next phrase, or its next cycle (one bar). */
+export type LandOn = "phrase" | "cycle";
+
 export type GameToHost =
   /** Play this track now, replacing whatever plays. */
   | ({ readonly type: "load" } & HostTrack)
-  /** Switch to this track on the playing one's next phrase boundary, fading over `cycles`. */
-  | ({ readonly type: "crossfadeTo"; readonly cycles: number } & HostTrack)
+  /**
+   * Switch to this track on the playing one's next phrase boundary, or on
+   * its next cycle, fading over `cycles`.
+   */
+  | ({
+      readonly type: "crossfadeTo";
+      readonly cycles: number;
+      readonly landOn: LandOn;
+    } & HostTrack)
   /** Start again what `stop` stopped. */
   | { readonly type: "play" }
   | { readonly type: "stop" }
@@ -170,8 +180,9 @@ export function parseGameToHost(data: unknown): GameToHost | null {
       if (message.type === "load") {
         return { type: "load", ...parsed };
       }
-      return finite(message.cycles, 0, 16)
-        ? { type: "crossfadeTo", cycles: message.cycles, ...parsed }
+      return finite(message.cycles, 0, 16) &&
+        (message.landOn === "phrase" || message.landOn === "cycle")
+        ? { type: "crossfadeTo", cycles: message.cycles, landOn: message.landOn, ...parsed }
         : null;
     }
     case "play":

@@ -26,7 +26,8 @@ describe("parseGameToHost", () => {
   it("accepts every message the game sends", () => {
     for (const message of [
       { type: "load", ...track },
-      { type: "crossfadeTo", cycles: 2, ...track },
+      { type: "crossfadeTo", cycles: 2, landOn: "phrase", ...track },
+      { type: "crossfadeTo", cycles: 2, landOn: "cycle", ...track },
       { type: "play" },
       { type: "stop" },
       { type: "setIntensity", level: 0 },
@@ -57,8 +58,10 @@ describe("parseGameToHost", () => {
       { type: "load", ...track, phraseCycles: 2.5 },
       { type: "load", ...track, source: 42 },
       { type: "load", ...track, source: "x".repeat(MAX_SOURCE_LENGTH + 1) },
-      { type: "crossfadeTo", ...track },
-      { type: "crossfadeTo", cycles: Number.NaN, ...track },
+      { type: "crossfadeTo", landOn: "phrase", ...track },
+      { type: "crossfadeTo", cycles: Number.NaN, landOn: "phrase", ...track },
+      { type: "crossfadeTo", cycles: 2, ...track },
+      { type: "crossfadeTo", cycles: 2, landOn: "bar", ...track },
       { type: "setIntensity", level: 4 },
       { type: "setIntensity", level: "2" },
       { type: "setVolume", gain: 2, rampSeconds: 0 },
