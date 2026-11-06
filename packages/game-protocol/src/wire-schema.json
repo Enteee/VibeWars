@@ -660,6 +660,7 @@
     "PROTOCOL_MISMATCH_MESSAGE": {
       "literal": "This tab is running an outdated version of VibeWars. Reload the page."
     },
+    "STROKE_SECONDS": { "literal": 4 },
     "TEAM_LOBBY_STAGE_SECONDS": { "literal": 60 },
     "TICKET_HEARTBEAT_MS": { "literal": 5000 },
     "TICKET_TTL_MS": { "literal": 15000 }
