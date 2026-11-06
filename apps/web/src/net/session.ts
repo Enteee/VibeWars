@@ -59,10 +59,12 @@ import {
   joinRoom,
   publishRecord,
   roomSelfId,
-  shareLobbyRelay,
+  holdLobbyRelay,
+  watchLobbyRelayAsks,
 } from "./transport/index.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
-import type { RelayShare } from "./transport/relay-offer.js";
+import { relayRoomsSwitch } from "./relay-room.js";
+import type { RelayHold } from "./transport/relay-offer.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
 import { loadRelay } from "./transport/turn-config.js";
 
@@ -133,6 +135,8 @@ export const PROPOSAL_REFUSED_MESSAGE =
 export const VOTE_REFUSED_MESSAGE = "That proposal is gone: vote for another.";
 export const SEAT_TAKEN_MESSAGE = "Someone took that seat first.";
 export const SEAT_REFUSED_MESSAGE = "That seat is not one of the chosen team build's.";
+export const ASCENT_LOCKED_MESSAGE =
+  "Locked for this Heroes' Ascent run: your team won with this build.";
 
 /** A lobby hosted in this tab, and how to end it for everyone. */
 export interface HostedLobby {
@@ -230,19 +234,48 @@ function startMatch(plan: MatchPlan) {
 }
 
 /**
- * The login a lobby host tells its seated members (#2248): what `share`
- * offers now, or none for a lobby that never shares.
+ * The login a lobby host tells each seated member (#2248, #2527): minted
+ * for it from what `hold` shares now, or none for a lobby that never
+ * shares.
  */
-export function lobbyRelaySource(share: RelayShare | undefined): LobbyRelaySource {
+export function lobbyRelaySource(hold: RelayHold | undefined): LobbyRelaySource {
   return {
-    current: () => {
-      const login = share?.current();
-      return login === undefined
-        ? null
-        : { urls: login.urls, username: login.username, credential: login.credential };
-    },
-    onChange: (handler) => share?.onChange(handler) ?? (() => undefined),
+    current: (peerId) => hold?.loginFor(peerId) ?? null,
+    onChange: (handler) => hold?.onChange(handler) ?? (() => undefined),
   };
+}
+
+/**
+ * A member's relay in its lobby (#2527): it seals for each joiner the host
+ * admits, and the host hears whether it holds one, until the lobby closes.
+ */
+export function holdInLobby(lobby: LobbyConnection, hold: RelayHold | undefined): void {
+  if (hold === undefined) {
+    return;
+  }
+  const seat = (): void => {
+    hold.seated(new Set(lobby.getSnapshot().players.map((p) => p.sessionId)));
+  };
+  lobby.onChange(seat);
+  seat();
+  const stopAdmits = lobby.onRelayAdmit((admit) => {
+    hold.admit(admit);
+  });
+  let told: boolean | undefined;
+  const tell = (): void => {
+    const holding = hold.holding();
+    if (holding !== told) {
+      told = holding;
+      lobby.setRelayHolding(holding);
+    }
+  };
+  const stopHolding = hold.onChange(tell);
+  tell();
+  lobby.onClosed(() => {
+    stopAdmits();
+    stopHolding();
+    hold.close();
+  });
 }
 
 /**
@@ -282,14 +315,17 @@ export async function hostLobby(
     void close();
   };
   window.addEventListener("pagehide", onPageHide);
+  // Whether the host sits in its relay rooms: the lobby host, made below, says (#2527).
+  const relayRooms = relayRoomsSwitch();
   // A queued lobby is open from the start, and its group is on its way.
   const link =
     queued === undefined
-      ? linkLobbyRoom({ selfId: roomSelfId(), join: () => joinHostRoom(lobbyRoom) })
+      ? linkLobbyRoom({ selfId: roomSelfId(), join: () => joinHostRoom(lobbyRoom, relayRooms) })
       : undefined;
   // Offered while the host is in its room, a match included: a guest
   // reconnecting through the relay (#1764) needs it then too.
-  const share = queued === undefined ? shareLobbyRelay(lobbyRoom) : undefined;
+  const hold =
+    queued === undefined ? holdLobbyRelay(lobbyRoom, roomSelfId(), () => name) : undefined;
   const host = createLobbyHost({
     transport: link ?? joinRoom(lobbyRoom),
     code,
@@ -301,7 +337,7 @@ export async function hostLobby(
     startMatch,
     teamLobby,
     random: lobbyRandom(import.meta.env.VITE_VIBEWARS_LOBBY_SEED),
-    relay: lobbyRelaySource(share),
+    relay: lobbyRelaySource(hold),
     ...(queued === undefined
       ? // Its party queues for a team mode under a group its room id names (#1766).
         { matchmaking: { roomId: lobbyRoom.roomId, verifyTicketSig, newNonce: newQueueNonce } }
@@ -314,12 +350,23 @@ export async function hostLobby(
           },
         }),
   });
+  // Asks heard while the host is in its room; who they admit is the host's call.
+  const asks =
+    queued === undefined
+      ? watchLobbyRelayAsks(lobbyRoom, (peerId, pub) => {
+          host.relayAsk(peerId, pub);
+        })
+      : undefined;
+  const stopRelayMembers = relayRooms.follow(host);
+  const stopRelayRooms = host.onRelayRooms((wanted) => {
+    relayRooms.set(wanted);
+  });
   const stopFollowing =
     link === undefined
       ? () => undefined
       : host.onReach((reach) => {
           link.follow(reach);
-          share?.follow(needsRoom(reach));
+          asks?.follow(needsRoom(reach));
         });
   const stopClock = startHostClock((seconds) => {
     host.advance(seconds);
@@ -333,7 +380,10 @@ export async function hostLobby(
     window.removeEventListener("pagehide", onPageHide);
     stopFollowing();
     stopClock();
-    share?.close();
+    stopRelayRooms();
+    stopRelayMembers();
+    asks?.close();
+    hold?.close();
     await host.close(moveTo);
   };
   try {
@@ -348,6 +398,7 @@ export async function hostLobby(
       // The host is one of its own group: it proves its ticket like the rest.
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
     });
+    holdInLobby(lobby, hold);
     return {
       lobby,
       done,
@@ -411,6 +462,11 @@ export async function joinLobbyByCode(
       window.removeEventListener("pagehide", onPageHide);
       stopRefreshing();
     });
+    // Any member's relay is offered to the lobby's joiners, not only the host's (#2527).
+    holdInLobby(
+      joined,
+      holdLobbyRelay(lobbyRoom, roomSelfId(), () => name),
+    );
     return joined;
   } catch (error) {
     window.removeEventListener("pagehide", onPageHide);
@@ -901,6 +957,8 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
       return SEAT_TAKEN_MESSAGE;
     case "invalid-slot":
       return SEAT_REFUSED_MESSAGE;
+    case "ascent-locked":
+      return ASCENT_LOCKED_MESSAGE;
     default:
       return REFUSED_MESSAGE;
   }

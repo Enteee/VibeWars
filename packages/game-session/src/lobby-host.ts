@@ -21,6 +21,7 @@ import {
   parsePeerLobbyLeave,
   parsePeerLobbyJoin,
   parsePeerPartyConsent,
+  parsePeerRelayHolding,
   parsePeerStayTogether,
   parseWireLobbyCommand,
   teamQueueModeOf,
@@ -31,6 +32,7 @@ import {
   type TeamArenaSize,
   type PeerLobbyJoin,
   type PeerLobbySeat,
+  type PeerRelayAdmit,
   type PeerRelayLogin,
   type WireRelayLogin,
   type LobbyRefusal,
@@ -69,6 +71,7 @@ import {
   type VerifyTicketSig,
 } from "./queue-admission.js";
 import { ticketsOf } from "./queue-formation.js";
+import { createRelayAdmission } from "./relay-admission.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { decideStayTogether } from "./stay-together.js";
 import { sizeChecked, type Transport } from "./transport.js";
@@ -165,6 +168,18 @@ interface TeamLobby {
   readonly forQueue: boolean;
   /** The Heroes' Ascent round the party queues at (#1996); `null` in other modes. */
   readonly ascentRound: number | null;
+  /** A Heroes' Ascent run's claim after a win (#2539): its Team Build is the run's, and only a vacant slot is claimed. */
+  readonly locked: boolean;
+}
+
+/**
+ * A Heroes' Ascent run's Team Build and who holds each slot (#2539), as
+ * its first map's Team Lobby left them, kept for every map after a win.
+ */
+interface AscentLock {
+  readonly chosen: NonNullable<TeamSide["chosen"]>;
+  /** Each slot's member; `null` for a vacant one, a bot's or one whose member left. */
+  claimers: (string | null)[];
 }
 
 /** One seat of a queueing party's side (#1766): its human's peer, `null` for a bot, and its build. */
@@ -270,12 +285,13 @@ export interface LobbyHostOptions {
 }
 
 /**
- * The relay login a lobby host shares, `null` for none, and when it
- * changes (a remint, sharing turned on or off, another relay). Each
- * admitted member is told it on admission and on every change.
+ * The relay login a lobby host shares, minted for one member (#2527),
+ * `null` for none, and when it changes (a remint, sharing turned on or
+ * off, another relay). Each admitted member is told its own on admission
+ * and on every change.
  */
 export interface LobbyRelaySource {
-  current(): WireRelayLogin | null;
+  current(peerId: string): WireRelayLogin | null;
   /** `handler` on each change, until the returned function is called. */
   onChange(handler: () => void): () => void;
 }
@@ -308,6 +324,21 @@ export interface LobbyHost {
   onReach(handler: (reach: LobbyReach) => void): () => void;
   /** Run `seconds` of the lobby's match, if one is on, and notice when it ends. */
   advance(seconds: number): void;
+  /**
+   * A joiner asked for a relay over Nostr (#2527): if the lobby would seat
+   * it now and a member holds one, every member is told `relay-admit`.
+   */
+  relayAsk(peerId: string, pub: string): void;
+  /**
+   * `handler` now, and each time whether the host should sit in its relay
+   * rooms changes (#2527): while a member holds a relay and an admit is
+   * live, and `RELAY_ROOMS_LINGER_MS` after the last.
+   */
+  onRelayRooms(handler: (wanted: boolean) => void): () => void;
+  /** Whether `peerId` is a member now, an away one (#1764) included. */
+  isMember(peerId: string): boolean;
+  /** `handler` each time a member is gone for good: it left, or did not come back in time. */
+  onMemberGone(handler: (peerId: string) => void): () => void;
   /**
    * Send everyone off, end the match if one is on, and leave the room.
    * With `moveTo`, the key of the lobby its host has just joined
@@ -406,7 +437,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const members = new Map<string, Member>();
   /** The relay login to `to`, an admitted member (#2248): never to anyone else. */
   const tellRelay = (to: string): void => {
-    const message: PeerRelayLogin = { relay: options.relay.current() };
+    const message: PeerRelayLogin = { relay: options.relay.current(to) };
     transport.send("relay-login", message, to);
   };
   /** The member peer `peerId` is: never a bot, whatever a peer calls itself (#1193). */
@@ -420,6 +451,39 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * or until the match it dropped from ends, whichever is first.
    */
   const away = new Map<string, number>();
+  /** Relay asks the host admits, and who holds a relay (#2527). */
+  const relayAdmission = createRelayAdmission({
+    wouldSeat: (peerId) => {
+      const member = members.get(peerId);
+      if (member !== undefined) {
+        return away.has(peerId);
+      }
+      return (
+        !closed &&
+        open &&
+        queued === undefined &&
+        phase !== "starting" &&
+        phase !== "in-match" &&
+        freeSeats() > 0
+      );
+    },
+    isAway: (peerId) => away.has(peerId),
+    freeSeats: () => freeSeats(),
+  });
+  const relayRoomsHandlers = new Set<(wanted: boolean) => void>();
+  const goneHandlers = new Set<(peerId: string) => void>();
+  let relayRoomsWanted = false;
+  /** Tell the relay-room handlers if whether the host should be in its relay rooms changed. */
+  const tellRelayRooms = (): void => {
+    const wanted = !closed && relayAdmission.roomsWanted(nowMs());
+    if (wanted === relayRoomsWanted) {
+      return;
+    }
+    relayRoomsWanted = wanted;
+    for (const handler of [...relayRoomsHandlers]) {
+      handler(wanted);
+    }
+  };
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
   const chatBudget = new MessageBudget(CHAT_LINES_PER_SECOND, CHAT_BURST, () => undefined);
   /** Peers already told their lines are dropped, until one gets through: once a burst. */
@@ -511,6 +575,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     | undefined;
   /** A team mode's queued lobby: each side's seat plan so far (ADR-0042). */
   const teamPlans: [TeamPlan | undefined, TeamPlan | undefined] = [undefined, undefined];
+  /**
+   * Heroes' Ascent's party (#2539): recorded each time it queues, applied
+   * by a `find-match` past round 0, and gone with round 0 or a new mode.
+   */
+  let ascentLock: AscentLock | undefined;
 
   const nowMs = (): number => elapsed * 1000;
   /** The clock in whole ms, so a countdown of ticks that do not add up exactly still ends. */
@@ -544,6 +613,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
 
   /** The humans here: a Team Arena's party (#2107). */
   const humans = (): number => [...members.values()].filter((member) => member.bot === null).length;
+  /** Seats a new joiner could take now (#2527): a Team Arena's party plays no more humans than its size. */
+  const freeSeats = (): number =>
+    Math.max(
+      0,
+      Math.min(
+        MAX_LOBBY_PLAYERS - members.size,
+        mode === "team-arena" ? arenaSize - humans() : Infinity,
+      ),
+    );
 
   /** Each human on `team`, in join order. */
   const humansOn = (team: 0 | 1): Member[] =>
@@ -625,6 +703,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
     queueNonce: queueing?.nonce ?? null,
     ascentRound: queueing?.ascentRound ?? null,
+    ascentLock:
+      ascentLock === undefined
+        ? null
+        : { slots: ascentLock.claimers.map((claimedBy, slot) => ({ slot, claimedBy })) },
     teamLobby: teamLobby === undefined ? null : wireTeamLobby(teamLobby, to?.team ?? null),
   });
 
@@ -829,21 +911,58 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       note("start-rejected", `a team plays at most ${String(size)}`, local.selfId);
       return false;
     }
-    const side = (size: number): TeamSide => ({
-      size,
-      proposals: new Map(),
-      pending: new Map(),
-      votes: new Map(),
-      chosen: undefined,
-      claims: [],
-    });
     phase = "team-lobby";
     teamLobby = {
       stage: "vote",
       endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
-      sides: [side(size), side(forQueue ? 0 : size)],
+      sides: [emptySide(size), emptySide(forQueue ? 0 : size)],
       forQueue,
       ascentRound,
+      locked: false,
+    };
+    clearReady();
+    return true;
+  };
+
+  /** A side of `size` before its vote. */
+  const emptySide = (size: number): TeamSide => ({
+    size,
+    proposals: new Map(),
+    pending: new Map(),
+    votes: new Map(),
+    chosen: undefined,
+    claims: [],
+  });
+
+  /**
+   * A Heroes' Ascent party queueing again after a win (#2539): it keeps
+   * its run's Team Build and slots. With every member seated it queues at
+   * once; a member who holds no slot first claims one of the vacant ones.
+   */
+  const requeueLocked = (lock: AscentLock, ascentRound: number): boolean => {
+    if (humansOn(0).every((human) => lock.claimers.includes(human.id))) {
+      const seats = lock.chosen.builds.map((build, slot) => ({
+        holder: lock.claimers[slot] ?? null,
+        build,
+      }));
+      beginQueueing(seats, ascentRound);
+      return false;
+    }
+    phase = "team-lobby";
+    teamLobby = {
+      stage: "claim",
+      endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
+      sides: [
+        {
+          ...emptySide(lock.chosen.builds.length),
+          chosen: lock.chosen,
+          claims: [...lock.claimers],
+        },
+        emptySide(0),
+      ],
+      forQueue: true,
+      ascentRound,
+      locked: true,
     };
     clearReady();
     return true;
@@ -941,10 +1060,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (lobby.forQueue) {
       // The party's side alone: every seat nobody holds is a bot (#1766).
       const claims = claimsOf(0, lobby.sides[0]);
-      const seats = (lobby.sides[0].chosen?.builds ?? []).map((build, slot) => ({
+      const { chosen } = lobby.sides[0];
+      const seats = (chosen?.builds ?? []).map((build, slot) => ({
         holder: claims[slot] ?? null,
         build,
       }));
+      // Heroes' Ascent keeps them for the run (#2539).
+      if (lobby.ascentRound !== null && chosen !== undefined) {
+        ascentLock = { chosen, claimers: seats.map((seat) => seat.holder) };
+      }
       teamLobby = undefined;
       beginQueueing(seats, lobby.ascentRound);
       return;
@@ -1265,6 +1389,20 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return false;
     }
     const side = lobby.sides[member.team];
+    // A run's Team Build stays, and so does every member who holds a slot of it (#2539).
+    const lock = lobby.locked ? ascentLock : undefined;
+    if (
+      lock !== undefined &&
+      (command.kind === "propose" ||
+        command.kind === "vote" ||
+        command.kind === "choose-team" ||
+        (command.kind === "claim" &&
+          (lock.claimers.includes(member.id) ||
+            (command.slot !== null && (lock.claimers[command.slot] ?? null) !== null))))
+    ) {
+      refuse(member.id, "ascent-locked");
+      return false;
+    }
     switch (command.kind) {
       case "ready": {
         const changed = member.ready !== command.ready;
@@ -1418,6 +1556,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           return false;
         }
         mode = command.mode;
+        ascentLock = undefined;
         const [first = defaultMap, ...rest] = mapsOf(mode);
         // In the same broadcast as the mode: no member ever sees a mode
         // with a map outside it. Only a Hosted Game keeps a picked one
@@ -1466,6 +1605,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         ) {
           return false;
         }
+        // Past round 0 a run keeps its Team Build (#2539); round 0, or no
+        // run recorded, picks again.
+        const lock =
+          command.ascentRound !== null && command.ascentRound > 0 ? ascentLock : undefined;
+        ascentLock = lock;
         // The party is everyone here, on the one side; its seats nobody
         // claims are bots.
         const size = teamSizeOf(queueMode);
@@ -1476,7 +1620,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         for (const other of members.values()) {
           other.team = 0;
         }
-        return beginTeamLobby(true, command.ascentRound);
+        return lock === undefined || command.ascentRound === null
+          ? beginTeamLobby(true, command.ascentRound)
+          : requeueLocked(lock, command.ascentRound);
       }
       case "leave-queue":
       case "play-bots":
@@ -1587,6 +1733,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       rejoinToken,
       bot: null,
     });
+    relayAdmission.seated(from);
     beginCountdown();
     broadcast();
     // To it alone, after the state that lists it, so it knows the host by then.
@@ -1815,6 +1962,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       // Back from a drop during the match (#596): the seat it held, on its
       // team, to confirm again like everyone else when the match is over.
       away.delete(from);
+      relayAdmission.seated(from);
       returning.name = sanitizeName(join.name, returning.name);
       const guild = sanitizeGuild(join);
       returning.guildTag = guild.guildTag;
@@ -1858,6 +2006,20 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return;
     }
     admit(from, join, null, null);
+  });
+
+  // Whether a member holds a relay it shares (#2527): only a seated one counts.
+  transport.on("relay-holding", (data, from) => {
+    const member = peerMember(from);
+    if (closed || member === undefined || !budget.take(from, nowMs())) {
+      return;
+    }
+    const holding = parsePeerRelayHolding(data);
+    if (holding === undefined) {
+      return;
+    }
+    relayAdmission.holding(from, holding.on);
+    tellRelayRooms();
   });
 
   transport.on("lobby-cmd", (data, from) => {
@@ -1965,7 +2127,18 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const leaving = members.get(peerId);
     away.delete(peerId);
     members.delete(peerId);
+    relayAdmission.gone(peerId);
+    tellRelayRooms();
+    for (const handler of [...goneHandlers]) {
+      handler(peerId);
+    }
     tellReach();
+    // Its slot of a Heroes' Ascent run stays the run's build, vacant (#2539).
+    if (ascentLock !== undefined) {
+      ascentLock.claimers = ascentLock.claimers.map((holder) =>
+        holder === peerId ? null : holder,
+      );
+    }
     // A party member gone takes the party out of the queue (#1766).
     if (queueing !== undefined && leaving?.team === 0) {
       leaveQueue();
@@ -2242,6 +2415,35 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       open = opened;
       broadcast();
     },
+    relayAsk(peerId, pub) {
+      if (closed) {
+        return;
+      }
+      const admit = relayAdmission.ask(peerId, pub, nowMs());
+      if (admit !== undefined) {
+        // To every member, away ones too: a holder seals whatever its seat.
+        for (const member of members.values()) {
+          if (member.bot === null) {
+            transport.send("relay-admit", admit satisfies PeerRelayAdmit, member.id);
+          }
+        }
+      }
+      tellRelayRooms();
+    },
+    isMember: (peerId) => members.has(peerId),
+    onMemberGone(handler) {
+      goneHandlers.add(handler);
+      return () => {
+        goneHandlers.delete(handler);
+      };
+    },
+    onRelayRooms(handler) {
+      relayRoomsHandlers.add(handler);
+      handler(relayRoomsWanted);
+      return () => {
+        relayRoomsHandlers.delete(handler);
+      };
+    },
     onReach(handler) {
       reachHandlers.add(handler);
       handler(reach());
@@ -2256,6 +2458,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       const shown = countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt);
       const shownStage = teamLobby === undefined ? null : countdownLeft(teamLobby.endsAt);
       elapsed += seconds;
+      tellRelayRooms();
       if (queueing !== undefined) {
         gatherParty();
       }
@@ -2317,6 +2520,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       }
       closed = true;
       stopRelay();
+      tellRelayRooms();
       if (moveTo !== undefined) {
         const move: WireLobbyMove = { code: moveTo };
         for (const member of members.values()) {

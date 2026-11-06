@@ -254,7 +254,16 @@ long as it takes: no bots fill in. Win, and your party ascends to the
 next map on its own after 20 seconds; win in the Hall, and you stay to
 defend it. Lose, or leave a match before it ends, and your next Ascent
 starts again at round 1; so does leaving the queue or the party. A match
-lost to its host leaving keeps your round. The round is remembered by
+lost to its host leaving keeps your round.
+
+The team picks once, in the Team Lobby of its first map, and keeps its
+Team Build and seats for the rest of the run: after a win it queues
+again with no vote and no claim. Someone who leaves mid-run frees their
+seat but not its build. A newcomer to the party between maps gets a
+claim of the vacant seats only (**Open: Monk build**), and plays that
+seat's build; a vacant seat nobody claims is a bot's. A loss starts
+over: the next run votes again. So does following your host to another
+party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
 

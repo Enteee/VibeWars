@@ -7,6 +7,7 @@ import type {
 } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
+import { ASCENT_LOCKED_MESSAGE } from "../net/session.js";
 import { validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
 import {
@@ -349,15 +350,31 @@ export function seat(
     onClaim(mine ? null : slot);
   });
   node.disabled = holder !== null && !mine;
+  // A Heroes' Ascent run keeps its seats (#2539): only a vacant one, by a member who holds none.
+  const lock = snapshot.ascentLock;
+  if (
+    lock !== null &&
+    (lock.slots.some((locked) => locked.claimedBy === snapshot.selfSessionId) ||
+      (lock.slots[slot]?.claimedBy ?? null) !== null)
+  ) {
+    node.disabled = true;
+  }
   node.classList.toggle("is-mine", mine);
   node.classList.toggle("is-taken", holder !== null && !mine);
   const holderName = holder === null ? undefined : nameOf(snapshot.players, holder);
-  if (character !== undefined) {
-    const look = lookOfWire(character, choiceBuilds(choice, snapshot)?.[slot]);
-    // A preset's seat is its job (#2148): "Healer Monk".
-    const professions =
-      presetOf(choice)?.members[slot]?.name ??
-      (look === undefined ? character.primary : professionLabel(look.primary, look.secondary));
+  const look =
+    character === undefined
+      ? undefined
+      : lookOfWire(character, choiceBuilds(choice, snapshot)?.[slot]);
+  // A preset's seat is its job (#2148): "Healer Monk".
+  const professions =
+    character === undefined
+      ? undefined
+      : (presetOf(choice)?.members[slot]?.name ??
+        (look === undefined ? character.primary : professionLabel(look.primary, look.secondary)));
+  const free =
+    lock !== null && professions !== undefined ? `Open: ${professions} build` : "Sit here";
+  if (professions !== undefined) {
     if (look === undefined) {
       node.append(
         h("span", "character-dot is-house", "?"),
@@ -366,13 +383,13 @@ export function seat(
     } else {
       node.appendChild(characterFigureCard(look, { size: "card" }));
     }
-    const label = `${professions}: ${holderName ?? "Sit here"}`;
+    const label = `${professions}: ${holderName ?? free}`;
     node.title = label;
     node.setAttribute("aria-label", label);
   }
   node.appendChild(
     holderName === undefined
-      ? h("span", "team-lobby-seat-free", "Sit here")
+      ? h("span", "team-lobby-seat-free", free)
       : personName("team-lobby-seat-holder", holderName, holder === side.captainId),
   );
   return node;
@@ -802,7 +819,9 @@ function claimStage(
   if (side.size === 1) {
     return [result];
   }
-  for (const proposal of lastProposals) {
+  // A locked run's build was voted in on its first map (#2539), not now.
+  const locked = snapshot.ascentLock !== null;
+  for (const proposal of locked ? [] : lastProposals) {
     if (proposal.proposerId !== choice.proposerId) {
       const faded = proposalCard(proposal, side, snapshot, undefined);
       faded.classList.add("is-faded");
@@ -815,7 +834,11 @@ function claimStage(
   }
   return [
     result,
-    h("div", "team-lobby-reason", reasonLine(choice, lastProposals)),
+    h(
+      "div",
+      "team-lobby-reason",
+      locked ? ASCENT_LOCKED_MESSAGE : reasonLine(choice, lastProposals),
+    ),
     seats,
     h("div", "screen-info team-lobby-seats-line", SEATS_LINE),
   ];
