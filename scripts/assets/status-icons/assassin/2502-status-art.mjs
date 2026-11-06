@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Mechanics (#2502), stand-ins until their art card.
+  // Mechanics (#2502), art #2517.
   // Hex: a blade pointing down beside a star, weaker blows, their crits yours.
   "siphon-strength": [
     "hex",

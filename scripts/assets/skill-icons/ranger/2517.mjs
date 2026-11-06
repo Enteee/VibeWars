@@ -1,7 +1,7 @@
 /** @type {Readonly<Record<string, import("../../skill-icon-table.mjs").SkillIconRow>>} */
 const rows = {
-  // Mechanics (#2501), stand-ins until their art card.
-  "assassin.deadly-haste": { glyph: "step-haste", modifier: "half" },
+  // Corpus skills (#2501, #2502, #2513), art #2517.
+  "ranger.storms-embrace": { glyph: "bolt-speed-lines" },
 };
 
 export default rows;

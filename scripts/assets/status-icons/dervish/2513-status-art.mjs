@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Weapon element (#2513), a stand-in until its art card.
+  // Weapon element (#2513), art #2517.
   // Enchantment: a scythe blade over three dust dots: earth on the swing.
   "ebon-dust-aura": [
     "enchantment",
