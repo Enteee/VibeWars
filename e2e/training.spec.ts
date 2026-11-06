@@ -1563,3 +1563,45 @@ test("(46) in Moving targets, the patroller walks on its own (#497)", async ({ p
   await page.waitForTimeout(2000);
   await expect.poll(() => shownAt(page, "patroller")).not.toBe(start);
 });
+
+for (const viewport of [
+  { width: 1366, height: 768 },
+  { width: 1280, height: 720 },
+]) {
+  test(`(47) at ${String(viewport.width)}×${String(viewport.height)} the meter, stats and a long log stay inside the panel (#2464)`, async ({
+    page,
+  }) => {
+    await openTraining(page);
+    await castFireballAndLand(page);
+    await releaseControl(page);
+    // Each reset adds a divider row: a log far longer than the panel has room for.
+    const reset = page.getByRole("button", { name: "reset" });
+    for (let i = 0; i < 12; i++) await reset.click();
+    await page.setViewportSize(viewport);
+
+    // The panel may scroll inside its border, once the log is down to about
+    // three rows: at its end, nothing is drawn below that border.
+    const fit = await page.locator(".training").evaluate((panel) => {
+      panel.scrollTop = panel.scrollHeight;
+      const bottomOf = (selector: string): number =>
+        panel.querySelector(selector)?.getBoundingClientRect().bottom ?? Infinity;
+      return {
+        panel: panel.getBoundingClientRect().bottom,
+        parts: Object.fromEntries(
+          [".training-meter", ".training-stats-slot", ".training-log"].map((part) => [
+            part,
+            bottomOf(part),
+          ]),
+        ),
+        logRows: panel.querySelector(".training-log-rows")?.clientHeight ?? 0,
+        row: panel.querySelector(".training-log-row")?.getBoundingClientRect().height ?? Infinity,
+      };
+    });
+    for (const [part, bottom] of Object.entries(fit.parts)) {
+      expect(bottom, part).toBeLessThanOrEqual(fit.panel);
+    }
+    // The log gave way first: about three rows, not its 14 rem.
+    expect(fit.logRows).toBeGreaterThanOrEqual(2.5 * fit.row);
+    expect(fit.logRows).toBeLessThan(6 * fit.row);
+  });
+}
