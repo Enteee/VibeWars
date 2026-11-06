@@ -25,6 +25,8 @@
     "lobby-leave",
     "lobby-seat",
     "relay-login",
+    "relay-admit",
+    "relay-holding",
     "stay-together",
     "party-proposal",
     "party-consent",
@@ -726,6 +728,7 @@
     "MASTERLESS_WIRE_TEAM": { "literal": -1 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
+    "MAX_RELAY_PEER_ID": { "literal": 64 },
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
     "MAX_STROKE_POINTS": { "literal": 16 },
     "MAX_TEAM_LOBBY_SIDE": { "literal": 8 },
@@ -860,6 +863,8 @@
         { "literal": "refused" },
         { "literal": "rejoin-challenge" },
         { "literal": "rejoin-proof" },
+        { "literal": "relay-admit" },
+        { "literal": "relay-holding" },
         { "literal": "relay-login" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
@@ -5856,6 +5861,13 @@
         { "name": "proof", "optional": false, "type": "string" }
       ]
     },
+    "PeerRelayAdmit": {
+      "properties": [
+        { "name": "peerId", "optional": false, "type": "string" },
+        { "name": "pub", "optional": false, "type": "string" }
+      ]
+    },
+    "PeerRelayHolding": { "properties": [{ "name": "on", "optional": false, "type": "boolean" }] },
     "PeerRelayLogin": {
       "properties": [
         {

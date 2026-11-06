@@ -1,13 +1,18 @@
 /**
- * A joiner's room that falls back on the relay its lobby's host shares
- * (#2091, ADR-0049). It joins at once without one, so a direct path is
- * never delayed. Once an offer has opened, it is `RELAY_REJOIN_MS` since
- * the join and the host is still unreached, it leaves the room and joins
- * again through the offered relay: once. A relayed joiner whose host drops
- * joins again with the newest offer it holds, since coturn ends a relayed
- * peer's allocation when its credential expires (#1764). Between maps, a
- * relayed joiner whose login is running out moves onto a newer offer in
- * place, keeping its seat (#2245).
+ * A joiner's room that falls back on the relays its lobby's members share
+ * (#2091, #2527, ADR-0049). It joins at once without one, so a direct path
+ * is never delayed. Once an offer sealed to it has opened, it is
+ * `RELAY_REJOIN_MS` since the join and the host is still unreached, it
+ * leaves and joins again through offer 1, into sibling room `relay1`;
+ * unseated `RELAY_ATTEMPT_MS` later, through the next offer into the
+ * next sibling, up to `MAX_RELAY_ATTEMPTS`. Every client ranks the offers
+ * alike (`rankOffers`), so no one votes, and each joiner switches alone.
+ *
+ * A relayed joiner whose host drops joins again with the host's newest
+ * login, since coturn ends a relayed peer's allocation when its
+ * credential expires (#1764). Between maps, a relayed joiner whose login
+ * is running out moves onto the host's newer one in place, keeping its
+ * seat (#2245).
  */
 import type { Channel } from "@vibewars/game-protocol";
 import type { Transport } from "@vibewars/game-session";
@@ -20,21 +25,28 @@ import { credentialExpiry, type TurnConfig } from "./transport/turn-config.js";
 /** How long a joiner waits for the host directly before it takes an offer. */
 export const RELAY_REJOIN_MS = 5_000;
 
+/** How long a joiner waits to be seated through one offer before it tries the next. */
+export const RELAY_ATTEMPT_MS = 8_000;
+
+/** The most offers a joiner tries, each in its own sibling room. */
+export const MAX_RELAY_ATTEMPTS = 3;
+
 /**
- * A relayed joiner moves onto a newer offer once its login has this
- * little left (#2245): more than the longest map, a Guild Battle's 28 min,
- * so it never has to mid-map.
+ * A relayed joiner moves onto a newer login once its own has this little
+ * left (#2245): more than the longest map, a Guild Battle's 28 min, so it
+ * never has to mid-map, and less than a seated member's login is
+ * reminted at (`LOGIN_REMINT_LEFT_MS`), so a newer one is there.
  */
-export const RELAY_REFRESH_LEFT_MS = 60 * 60 * 1000;
+export const RELAY_REFRESH_LEFT_MS = 30 * 60 * 1000;
 
 /** A joiner's `Transport`, told when the host has answered. */
 export interface RelayJoin extends Transport {
-  /** The host answered from `hostId`: no first rejoin, and its drop is watched. */
+  /** The host answered from `hostId`: no further attempt, and its drop is watched. */
   reached(hostId: string): void;
   /**
    * In the lobby, not a map (#2245): if this joiner came in through an
    * offer, its login has under `RELAY_REFRESH_LEFT_MS` left at `nowMs` and
-   * a newer offer is held, move the host's connection onto that one.
+   * the host has told it a newer one, move the host's connection onto it.
    */
   refreshRelay(nowMs: number): void;
 }
@@ -42,29 +54,46 @@ export interface RelayJoin extends Transport {
 export interface RelayJoinOptions {
   /** The peer id `join` gives every room. */
   readonly selfId: string;
-  /** Join the lobby's room, through `turn` when given. */
-  readonly join: (turn: TurnConfig | undefined) => TrysteroTransport;
+  /**
+   * Join the lobby's room directly (`attempt` 0, `turn` undefined), or
+   * through `turn` into sibling room `relay<attempt>`.
+   */
+  readonly join: (turn: TurnConfig | undefined, attempt: number) => TrysteroTransport;
   /** The lobby's offers; closed with the room. */
   readonly offers: RelayOffers;
   /** The player's own relay from Options: it wins, so an offer never rejoins. */
   readonly ownRelay: boolean;
   readonly rejoinMs?: number;
+  readonly attemptMs?: number;
 }
 
 export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
-  const { selfId, join, offers, ownRelay, rejoinMs = RELAY_REJOIN_MS } = options;
+  const {
+    selfId,
+    join,
+    offers,
+    ownRelay,
+    rejoinMs = RELAY_REJOIN_MS,
+    attemptMs = RELAY_ATTEMPT_MS,
+  } = options;
   const handlers = new HandlerSets();
   /** Every channel listened on: a room joined later hears them all. */
   const channels = new Set<Channel>();
   /** Peers the room said joined and has not said left. */
   const peers = new Set<string>();
   let room: { readonly transport: TrysteroTransport; readonly offs: (() => void)[] } | undefined;
+  /** The attempt the room is: 0 direct, else the sibling it went into. */
+  let attempt = 0;
+  /** Holders whose offer an attempt took: each is tried once. */
+  const tried = new Set<string>();
   /** The relay the room was joined through, once it has been. */
   let joinedWith: TurnConfig | undefined;
   /** The login the host's connection relays with now: `joinedWith`, or a newer one swapped in. */
   let relayedWith: TurnConfig | undefined;
   let hostId: string | undefined;
-  let waited = false;
+  /** The current attempt has waited its time: the next may begin as soon as an offer is there. */
+  let due = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   let swapping = false;
   let left = false;
 
@@ -74,7 +103,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     });
 
   const attach = (turn: TurnConfig | undefined): void => {
-    const transport = join(turn);
+    const transport = join(turn, attempt);
     if (transport.selfId !== selfId) {
       throw new Error("a lobby's room changed its joiner's peer id");
     }
@@ -94,7 +123,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
           // A swapped-in login the drop came after still rejoins: the room
           // itself was joined with the older one.
           if (peerId === hostId && joinedWith !== undefined) {
-            const newest = offers.latest();
+            const newest = offers.hostLogin();
             if (newest !== undefined && newest.username !== joinedWith.username) {
               void rejoin(newest);
             }
@@ -125,9 +154,9 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
   };
 
   /**
-   * Leave and join again through `turn`. Never rejects: a leave or a join
-   * that fails leaves no room, which the player hears as the host being
-   * unreachable.
+   * Leave and join again through `turn`, into the current attempt's
+   * sibling. Never rejects: a leave or a join that fails leaves no room,
+   * which the player hears as the host being unreachable.
    */
   const rejoin = async (turn: TurnConfig): Promise<void> => {
     swapping = true;
@@ -146,29 +175,44 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     }
   };
 
-  // Checked whenever an offer opens or the wait ends: an offer at 12 s
-  // still counts, once.
+  /** Wait `ms` for the host; then the next attempt is due. */
+  const wait = (ms: number): void => {
+    due = false;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      due = true;
+      check();
+    }, ms);
+  };
+
+  // Checked whenever an offer opens or a wait ends: an offer at 12 s
+  // still counts.
   const check = (): void => {
-    if (left || ownRelay || !waited || hostId !== undefined || relayedWith !== undefined) {
+    if (left || ownRelay || !due || swapping || hostId !== undefined) {
       return;
     }
-    const offered = offers.latest();
-    if (offered !== undefined && !swapping) {
-      void rejoin(offered);
+    if (attempt >= MAX_RELAY_ATTEMPTS) {
+      return;
     }
+    const offer = offers.ranked().find(({ holder }) => !tried.has(holder));
+    if (offer === undefined) {
+      return;
+    }
+    tried.add(offer.holder);
+    attempt += 1;
+    void rejoin(offer.config);
+    wait(attemptMs);
   };
 
   attach(undefined);
-  const timer = setTimeout(() => {
-    waited = true;
-    check();
-  }, rejoinMs);
+  wait(rejoinMs);
   const stopHearing = offers.onOffer(check);
 
   return {
     selfId,
     reached(id) {
       hostId = id;
+      clearTimeout(timer);
     },
     refreshRelay(nowMs) {
       // Direct, or through the player's own relay: nothing to refresh.
@@ -185,7 +229,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
       if (expiry === undefined || expiry - nowMs >= RELAY_REFRESH_LEFT_MS) {
         return;
       }
-      const newest = offers.latest();
+      const newest = offers.hostLogin();
       const newestExpiry = newest === undefined ? undefined : credentialExpiry(newest);
       if (
         newest === undefined ||

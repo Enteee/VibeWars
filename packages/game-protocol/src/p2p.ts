@@ -66,6 +66,8 @@ export const CHANNELS = [
   "lobby-leave",
   "lobby-seat",
   "relay-login",
+  "relay-admit",
+  "relay-holding",
   "stay-together",
   "party-proposal",
   "party-consent",
@@ -985,6 +987,29 @@ const MAX_RELAY_URLS = 4;
  */
 export interface PeerRelayLogin {
   readonly relay: WireRelayLogin | null;
+}
+
+/** The most characters a peer id on `relay-admit` has: Trystero's are 20. */
+export const MAX_RELAY_PEER_ID = 64;
+
+/**
+ * Lobby host to every member (#2527, ADR-0049): a joiner it would seat
+ * now asked for a relay, so a member holding one may mint it a login and
+ * seal it to `pub` for 30 s. Never anyone's credential.
+ */
+export interface PeerRelayAdmit {
+  /** The joiner's peer id, which the holder's login names. */
+  readonly peerId: string;
+  /** The joiner's raw P-256 public key, 65 bytes, base64url without padding. */
+  readonly pub: string;
+}
+
+/**
+ * A member to its lobby host (#2527): whether it holds a relay it shares
+ * now. The host opens its relay rooms only while someone does.
+ */
+export interface PeerRelayHolding {
+  readonly on: boolean;
 }
 
 /**
@@ -2530,6 +2555,28 @@ export function parsePeerRelayLogin(value: unknown): PeerRelayLogin | undefined 
     return undefined;
   }
   return { relay: { urls, username: relay.username, credential: relay.credential } };
+}
+
+/** A raw P-256 public key (65 bytes) as base64url without padding: 87 characters. */
+export function isRelayPub(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{87}$/.test(value);
+}
+
+/** The `"relay-admit"` channel (#2527). */
+export function parsePeerRelayAdmit(value: unknown): PeerRelayAdmit | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isString(raw.peerId, MAX_RELAY_PEER_ID) &&
+    raw.peerId.length > 0 &&
+    isRelayPub(raw.pub)
+    ? { peerId: raw.peerId, pub: raw.pub }
+    : undefined;
+}
+
+/** The `"relay-holding"` channel (#2527). */
+export function parsePeerRelayHolding(value: unknown): PeerRelayHolding | undefined {
+  const raw = fields(value);
+  return raw !== undefined && typeof raw.on === "boolean" ? { on: raw.on } : undefined;
 }
 
 /** The `"lobby-welcome"` channel. */

@@ -61,6 +61,8 @@ import {
   parsePeerLobbyLeave,
   parsePeerLobbySeat,
   parsePeerRelayLogin,
+  parsePeerRelayAdmit,
+  parsePeerRelayHolding,
   parseWireLobbyWelcome,
   parsePeerStayTogether,
   parseWirePartyProposal,
@@ -107,6 +109,8 @@ const hello: PeerHello = {
 /** 128 bits of hex, as the host makes them; repeated so it reads as no secret. */
 const TOKEN = "0f".repeat(16);
 /** A host's shared relay login (#2248), at every bound. */
+/** A raw P-256 public key's shape (#2527): 87 base64url characters. */
+const PUB = "B" + "A".repeat(86);
 const relayLogin = {
   urls: Array.from({ length: 4 }, (_, i) => `turn:${String(i)}.example:3478`.padEnd(256, "x")),
   username: "1".repeat(256),
@@ -858,6 +862,9 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["lobby-seat (#2157)", parsePeerLobbySeat, { rejoinToken: TOKEN }],
   ["relay-login (#2248)", parsePeerRelayLogin, { relay: relayLogin }],
   ["relay-login of no relay (#2248)", parsePeerRelayLogin, { relay: null }],
+  ["relay-admit (#2527)", parsePeerRelayAdmit, { peerId: "p".repeat(64), pub: PUB }],
+  ["relay-holding on (#2527)", parsePeerRelayHolding, { on: true }],
+  ["relay-holding off (#2527)", parsePeerRelayHolding, { on: false }],
   ["lobby-hello (#871)", parsePeerLobbyHello, {}],
   ["lobby-leave (#1764)", parsePeerLobbyLeave, {}],
   ["lobby-welcome (#871)", parseWireLobbyWelcome, { hostSig: "ef".repeat(64) }],
@@ -1954,6 +1961,20 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parsePeerRelayLogin,
     { relay: { ...relayLogin, credential: 7 } },
   ],
+  ["relay-admit of an empty peer id (#2527)", parsePeerRelayAdmit, { peerId: "", pub: PUB }],
+  [
+    "relay-admit of a long peer id (#2527)",
+    parsePeerRelayAdmit,
+    { peerId: "p".repeat(65), pub: PUB },
+  ],
+  ["relay-admit of a short key (#2527)", parsePeerRelayAdmit, { peerId: "p", pub: PUB.slice(1) }],
+  [
+    "relay-admit of a padded key (#2527)",
+    parsePeerRelayAdmit,
+    { peerId: "p", pub: `${PUB.slice(1)}=` },
+  ],
+  ["relay-holding of no flag (#2527)", parsePeerRelayHolding, {}],
+  ["relay-holding of a string flag (#2527)", parsePeerRelayHolding, { on: "true" }],
   ["lobby-welcome of no signature (#871)", parseWireLobbyWelcome, {}],
   ["stay-together of no key (#882)", parsePeerStayTogether, {}],
   ["stay-together of a short key (#882)", parsePeerStayTogether, { memberKey: "ab".repeat(31) }],
