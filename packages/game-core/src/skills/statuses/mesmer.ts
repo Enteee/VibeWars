@@ -100,7 +100,8 @@ export type MesmerStatusId =
   // Staples (#2447).
   | "ancestors-visage"
   // Dropped leftovers (#2446).
-  | "symbolic-celerity";
+  | "symbolic-celerity"
+  | "calculated-risk";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -1181,5 +1182,18 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   "symbolic-celerity": define("symbolic-celerity", "Symbolic Celerity", "enchantment", {
     profession: "mesmer",
     borrowsAttribute: { attributeId: "mesmer.fast-casting", skillType: "signet", uses: undefined },
+  }),
+  // "Target foe's attacks do +10 damage, but there is a 50% chance that the
+  // damage from each attack will be done to that foe instead. (Maximum
+  // 15...60 damage.)" (PvP, #2471): every blow that lands, its cap by the
+  // Mesmer's Illusion Magic.
+  "calculated-risk": define("calculated-risk", "Calculated Risk", "hex", {
+    profession: "mesmer",
+    attribute: "mesmer.illusion-magic",
+    attackDamageDelta: 10,
+    attackBackfire: {
+      chance: 0.5,
+      max: { scaling: { attributeId: "mesmer.illusion-magic", atZero: 15, atTwelve: 51 } },
+    },
   }),
 };

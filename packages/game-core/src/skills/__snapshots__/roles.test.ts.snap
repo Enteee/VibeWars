@@ -347,6 +347,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.arcane-thievery": "",
   "mesmer.backfire": "hex",
   "mesmer.blackout": "",
+  "mesmer.calculated-risk": "hex",
   "mesmer.channeling": "",
   "mesmer.chaos-storm": "",
   "mesmer.clumsiness": "hex",

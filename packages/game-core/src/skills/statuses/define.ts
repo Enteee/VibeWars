@@ -168,6 +168,7 @@ export function define(
     negatesFatalDamage: false,
     endsEverywhereWhenSpent: false,
     reflectsAttackDamage: undefined,
+    attackBackfire: undefined,
     extraStrikesPerHit: 0,
     adrenalineGainFaster: 0,
     adrenalineGainFasterFrom: "all",

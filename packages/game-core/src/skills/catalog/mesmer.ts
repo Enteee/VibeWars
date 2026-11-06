@@ -4959,4 +4959,43 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Attack backfire (#2471)                                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.calculated-risk",
+    name: "Calculated Risk",
+    gwId: 3196,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3...12 seconds, target foe's attacks do +10 damage, but there is
+    // a 50% chance that the damage from each attack will be done to that foe
+    // instead. (Maximum 15...60 damage.)" (PvP, #2471).
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "calculated-risk",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 3, atTwelve: 10.2 },
+        },
+      },
+    ],
+  },
 ];

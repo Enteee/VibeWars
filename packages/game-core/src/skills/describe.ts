@@ -1174,6 +1174,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `${String(Math.round(share * 100))}% of the damage of ${attacks} that hit it goes back to the attacker${kind}, up to ${statText(max, ranks, whole)}`,
     );
   }
+  // Calculated Risk's (#2471).
+  if (definition.attackBackfire !== undefined) {
+    const { chance, max } = definition.attackBackfire;
+    parts.push(
+      `each attack it lands has a ${String(Math.round(chance * 100))}% chance to deal its damage to it instead, up to ${statText(max, ranks, whole)}`,
+    );
+  }
   if (definition.reversesNextDamage !== undefined) {
     parts.push(
       `the next damage or life steal heals for that much instead, up to ${statText(definition.reversesNextDamage, ranks, whole)}`,

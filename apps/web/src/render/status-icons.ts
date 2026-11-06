@@ -697,6 +697,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "augury-of-death": icon("augury-of-death"),
   "symbolic-celerity": icon("symbolic-celerity"),
   "storm-djinns-haste": icon("storm-djinns-haste"),
+  // Attack backfire (#2471).
+  "calculated-risk": icon("calculated-risk"),
 };
 
 const GAP = 2;
