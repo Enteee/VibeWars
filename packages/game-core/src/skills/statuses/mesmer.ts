@@ -92,7 +92,9 @@ export type MesmerStatusId =
   // Staples (#2414).
   | "sympathetic-visage"
   | "mantra-of-inscriptions"
-  | "air-of-disenchantment";
+  | "air-of-disenchantment"
+  // Staples (#2367).
+  | "shared-burden";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -1053,6 +1055,14 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         skillId: "mesmer.ether-phantom",
       },
     ],
+  }),
+  // "For 5...20 seconds, target foe and all foes in the area attack, cast
+  // spells, and move 33% slower" (PvP, #2367).
+  "shared-burden": define("shared-burden", "Shared Burden", "hex", {
+    profession: "mesmer",
+    moveSpeedMultiplier: 0.67,
+    attackDurationMultiplier: 1.33,
+    castTimeMultiplier: 1.33,
   }),
   // Mechanics (#2374). "...-4 Energy regeneration. When this effect ends,
   // you gain 13...20 Energy": 19 at rank 12. Any end pays, a removal too.

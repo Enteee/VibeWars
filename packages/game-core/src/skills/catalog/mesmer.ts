@@ -5,7 +5,12 @@ import {
   RANGE_MELEE,
   RANGE_SPELL,
 } from "../../distances.js";
-import type { Magnitude, Skill, UnconditionalEffect } from "../types.js";
+import {
+  KNOCKDOWN_SECONDS,
+  type Magnitude,
+  type Skill,
+  type UnconditionalEffect,
+} from "../types.js";
 import { ILLUSION_OF_PAIN_HEAL } from "./shared.js";
 
 /** Ether Lord's 5...10 s (#2287), on its target and on its caster. */
@@ -4654,6 +4659,114 @@ export const MESMER_SKILLS: readonly Skill[] = [
         durationSeconds: {
           scaling: { attributeId: "mesmer.inspiration-magic", atZero: 5, atTwelve: 21 },
         },
+      },
+    ],
+  },
+  {
+    id: "mesmer.shared-burden",
+    name: "Shared Burden",
+    gwId: 900,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, target foe and all foes in the area attack, cast
+    // spells, and move 33% slower" (PvP, #2367).
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_IN_THE_AREA,
+        includesCentre: true,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "shared-burden",
+            durationSeconds: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.signet-of-clumsiness",
+    name: "Signet of Clumsiness",
+    gwId: 1657,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is attacking, that foe and all adjacent foes are
+    // interrupted and take 15...60 damage. Any foes using attack skills are
+    // knocked down" (PvP, #2367). The knockdown is picked first, while they
+    // are still using it.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-attacking" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            includesCentre: true,
+            maxTargets: undefined,
+            onlyUsing: "attack",
+            effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+          },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            includesCentre: true,
+            maxTargets: undefined,
+            effects: [
+              { kind: "interrupt" },
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "mesmer.illusion-magic", atZero: 15, atTwelve: 51 },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
       },
     ],
   },
