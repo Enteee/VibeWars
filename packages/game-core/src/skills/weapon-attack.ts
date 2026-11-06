@@ -707,6 +707,7 @@ export function landBlow(
   const location = hitLocationOf(packet, rng);
   const damage = mitigate(packet, victim, rules, location, rng, surroundings);
   if (attacker !== undefined && backfires(attacker, damage, packet.type, critical, rng, events)) {
+    events.push({ kind: "attack-backfired", targetId: victim.id });
     return critical;
   }
   applyAttackDamage(victim, damage, packet.type, critical, events, attacker);
@@ -1328,8 +1329,9 @@ function strike(
  * blind, block, crit and damage rolls; it is rolled only for a weapon that can, for
  * the same reason as the miss. `doubleStrike` says it struck twice, missed
  * blows included, so the off hand can stab after the main one (#561).
- * `landed` counts the blows that damaged a victim, however many each
- * cleaved: each earns a strike of adrenaline (#463).
+ * `landed` counts the blows that damaged a victim, or backfired off one
+ * (#2471), however many each cleaved: each earns a strike of adrenaline
+ * (#463).
  * `fired` is what the attacker's statuses added to its hits, each under
  * its own skill (#939).
  */
@@ -1356,7 +1358,11 @@ export function resolveSwing(swing: Swing): {
     if (
       events
         .slice(from)
-        .some((event) => event.kind === "damage" && event.targetId !== swing.attacker.id)
+        .some(
+          (event) =>
+            (event.kind === "damage" && event.targetId !== swing.attacker.id) ||
+            event.kind === "attack-backfired",
+        )
     ) {
       landed += 1;
     }

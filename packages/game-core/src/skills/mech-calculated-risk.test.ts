@@ -1,14 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { RANGE_SPELL } from "../distances.js";
+import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS } from "../equipment/weapons.js";
+import { MatchSimulation } from "../match/simulation.js";
 import { createRng, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
-import { getStatusDefinition } from "./status.js";
-import { makeCombatant } from "./testing.js";
+import { getStatusDefinition, NO_RANKS } from "./status.js";
+import { chargeAdrenaline, makeCombatant, strikesOf } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { landBlow, PLAIN_BLOW, resolveSwing, weaponSnapshotOf } from "./weapon-attack.js";
 
@@ -194,5 +197,128 @@ describe("a backfired blow (#2471)", () => {
       outcomes.add(lost(attacker) > 0 && lost(victim) === 0 ? "back" : "kept");
     }
     expect(outcomes).toEqual(new Set(["back", "kept"]));
+  });
+});
+
+describe("a backfired blow still hit (#2471)", () => {
+  const SEVER_ARTERY = "warrior.sever-artery";
+  const BACKBREAKER = "warrior.backbreaker";
+  const DT = 1 / RULES.tickRateHz;
+
+  /**
+   * A hexed swordsman with Sever Artery and Backbreaker, of so much
+   * Health that its own backfire earns no adrenaline from damage taken
+   * (#827), facing a punching bag.
+   */
+  function match(seed: string): { readonly sim: MatchSimulation; readonly attacker: Combatant } {
+    const sim = new MatchSimulation({
+      seed,
+      participants: [
+        {
+          id: "a",
+          team: 0,
+          skillBar: [SEVER_ARTERY, BACKBREAKER],
+          attributeRanks: new Map([["warrior.swordsmanship", 12]]),
+          equipment: {
+            ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+            mainHand: {
+              weapon: WEAPONS.sword,
+              attributeId: "warrior.swordsmanship",
+              damageType: WEAPONS.sword.damageType,
+              requirementMet: true,
+              creatureDamageScale: undefined,
+            },
+          },
+          maxHealth: 1e6,
+          spawn: vec2(0, 0),
+          facing: 0,
+        },
+        {
+          id: "d",
+          team: 1,
+          skillBar: [],
+          attributeRanks: new Map(),
+          equipment: unarmedResolvedEquipment(60),
+          maxHealth: 1e6,
+          spawn: vec2(40, 0),
+          facing: 0,
+        },
+      ],
+    });
+    const attacker = sim.get("a")?.combatant;
+    if (attacker === undefined) {
+      throw new Error("no attacker");
+    }
+    attacker.statuses.apply("calculated-risk", 60, "m", ranks(12));
+    return { sim, attacker };
+  }
+
+  /** Steps `sim` for `seconds`; whether any blow in it backfired off d. */
+  function backfiredIn(sim: MatchSimulation, seconds: number): boolean {
+    let backfired = false;
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      backfired ||= sim
+        .step(DT)
+        .log.some(({ events }) =>
+          events.some((event) => event.kind === "attack-backfired" && event.targetId === "d"),
+        );
+    }
+    return backfired;
+  }
+
+  it("a backfired swing gives every adrenaline skill one strike, as a kept one does", () => {
+    const outcomes = new Set<boolean>();
+    for (let seed = 0; seed < 12; seed += 1) {
+      const { sim, attacker } = match(`risk-swing-${String(seed)}`);
+      sim.requestAttack("a", "d");
+      outcomes.add(backfiredIn(sim, 1.4));
+      expect(strikesOf(attacker, SEVER_ARTERY)).toBe(1);
+      expect(strikesOf(attacker, BACKBREAKER)).toBe(1);
+    }
+    expect(outcomes).toEqual(new Set([true, false]));
+  });
+
+  it("a backfired attack skill refills its strike, as a kept one does", () => {
+    const outcomes = new Set<boolean>();
+    for (let seed = 0; seed < 12; seed += 1) {
+      const { sim, attacker } = match(`risk-skill-${String(seed)}`);
+      sim.setTarget("a", "d");
+      chargeAdrenaline(attacker);
+      expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+      outcomes.add(backfiredIn(sim, DT + 0.7));
+      expect(strikesOf(attacker, SEVER_ARTERY)).toBe(1);
+      expect(strikesOf(attacker, BACKBREAKER)).toBe(9);
+    }
+    expect(outcomes).toEqual(new Set([true, false]));
+  });
+
+  it("a backfired blow still carries its on-hit rider: Apply Poison poisons the target", () => {
+    let backfired = 0;
+    // The backfire roll's place among the swing's float draws: tried at each.
+    for (let at = 0; at < 8; at += 1) {
+      const attacker = makeCombatant({ id: "x", team: 1, maxHealth: 1000, health: 1000 });
+      const victim = makeCombatant({ id: "v", team: 0, maxHealth: 1000, health: 1000 });
+      attacker.statuses.apply("calculated-risk", 10, "m", ranks(12));
+      attacker.statuses.apply("apply-poison", 24, "x", NO_RANKS);
+      const { events, fired } = resolveSwing({
+        attacker,
+        target: { combatant: victim, position: vec2(40, 0), creature: undefined },
+        surroundings: new Map(),
+        rng: stream(10, at, 0),
+        rules: RULES.combat,
+        exposed: () => false,
+      });
+      if (!events.some(({ kind }) => kind === "attack-backfired")) {
+        continue;
+      }
+      backfired += 1;
+      expect(lost(victim)).toBe(0);
+      expect(
+        fired
+          .flatMap((trigger) => trigger.events)
+          .filter((event) => event.kind === "status-applied" && event.statusId === "poison"),
+      ).toHaveLength(1);
+    }
+    expect(backfired).toBe(1);
   });
 });

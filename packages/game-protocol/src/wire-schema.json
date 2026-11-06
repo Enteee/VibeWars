@@ -3566,6 +3566,12 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "attack-backfired" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "attack-blocked" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
