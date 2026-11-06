@@ -167,10 +167,10 @@ describe("Wary Stance (#1978)", () => {
   it("blocks every attack skill, blow or shot, and no plain attack", () => {
     const sim = duel();
     get(sim, "w").statuses.apply("wary-stance", 1000, "w", NO_RANKS);
-    expect(blockChanceOf(get(sim, "w"), "melee", false)).toBe(0);
-    expect(blockChanceOf(get(sim, "w"), "projectile", false)).toBe(0);
-    expect(blockChanceOf(get(sim, "w"), "melee", true)).toBe(1);
-    expect(blockChanceOf(get(sim, "w"), "projectile", true)).toBe(1);
+    expect(blockChanceOf(get(sim, "w"), "melee", false, [])).toBe(0);
+    expect(blockChanceOf(get(sim, "w"), "projectile", false, [])).toBe(0);
+    expect(blockChanceOf(get(sim, "w"), "melee", true, [])).toBe(1);
+    expect(blockChanceOf(get(sim, "w"), "projectile", true, [])).toBe(1);
   });
 });
 
@@ -186,13 +186,13 @@ describe("Soldier's Defense (#1978)", () => {
     const w = get(sim, "w");
     w.statuses.apply("soldiers-defense", 1000, "w", NO_RANKS);
     w.statuses.apply("for-great-justice", 1000, "w", NO_RANKS);
-    expect(blockChanceOf(w, "melee", false)).toBe(0.75);
+    expect(blockChanceOf(w, "melee", false, [])).toBe(0.75);
     const log = swings(sim, 3);
     const blocked = eventsOn(log, "w", "attack-blocked");
     expect(blocked).toBeGreaterThan(0);
     expect(strikesOf(w, "warrior.backbreaker")).toBe(blocked);
     w.statuses.remove("for-great-justice");
-    expect(blockChanceOf(w, "melee", false)).toBe(0);
+    expect(blockChanceOf(w, "melee", false, [])).toBe(0);
     expect(w.statuses.has("soldiers-defense")).toBe(true);
   });
 });
@@ -248,13 +248,13 @@ describe("block while attacking (#2374)", () => {
     const sim = duel();
     const w = get(sim, "w");
     w.statuses.apply("flashing-blades", 1000, "w", NO_RANKS);
-    expect(blockChanceOf(w, "melee", false)).toBe(0);
+    expect(blockChanceOf(w, "melee", false, [])).toBe(0);
     expect(sim.requestAttack("w", "f")).toEqual({ ok: true });
     for (let tick = 0; tick < 0.5 / DT; tick += 1) {
       sim.step(DT);
     }
-    expect(blockChanceOf(w, "melee", false)).toBe(0.75);
-    expect(blockChanceOf(w, "projectile", true)).toBe(0.75);
+    expect(blockChanceOf(w, "melee", false, [])).toBe(0.75);
+    expect(blockChanceOf(w, "projectile", true, [])).toBe(0.75);
   });
 
   it("blocks while activating an attack skill, and not while casting a spell", () => {
@@ -262,10 +262,10 @@ describe("block while attacking (#2374)", () => {
     const w = get(sim, "w");
     w.statuses.apply("flashing-blades", 1000, "w", NO_RANKS);
     w.cast.beginCast("ranger.savage-shot", "f", 0.5, undefined);
-    expect(blockChanceOf(w, "melee", false)).toBe(0.75);
+    expect(blockChanceOf(w, "melee", false, [])).toBe(0.75);
     w.cast.cancelCast();
     w.cast.beginCast("monk.orison-of-healing", "w", 1, undefined);
-    expect(blockChanceOf(w, "melee", false)).toBe(0);
+    expect(blockChanceOf(w, "melee", false, [])).toBe(0);
   });
 
   it("beside an ungated block stance, that stance still blocks while idle", () => {
@@ -273,7 +273,7 @@ describe("block while attacking (#2374)", () => {
     const w = get(sim, "w");
     w.statuses.apply("flashing-blades", 1000, "w", NO_RANKS);
     w.statuses.apply("gladiators-defense", 1000, "w", NO_RANKS);
-    expect(blockChanceOf(w, "melee", false)).toBe(0.75);
+    expect(blockChanceOf(w, "melee", false, [])).toBe(0.75);
   });
 
   it("blocks swings while trading them, and an idle bearer's never", () => {

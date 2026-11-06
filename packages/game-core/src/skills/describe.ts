@@ -720,10 +720,18 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
             ...definition.blockWhileUnder.categories.map(aCategory),
             ...definition.blockWhileUnder.statusIds.map(statusName),
           ].join(" or ")}`;
+    // Pensive Guardian's "from enchanted foes" (#2432): "from foes under an enchantment".
+    const attacker =
+      definition.blockAttackerUnder === undefined
+        ? ""
+        : ` from foes under ${[
+            ...definition.blockAttackerUnder.categories.map(aCategory),
+            ...definition.blockAttackerUnder.statusIds.map(statusName),
+          ].join(" or ")}`;
     // Flashing Blades' "while attacking" (#2374).
     const attacking = definition.blockWhileAttacking ? " while attacking" : "";
     parts.push(
-      `${String(Math.round(definition.block.chance * 100))}% chance to block ${what}${below}${under}${attacking}`,
+      `${String(Math.round(definition.block.chance * 100))}% chance to block ${what}${attacker}${below}${under}${attacking}`,
     );
   }
   // Protector's Defense's "allies adjacent to you" (#2096).
@@ -1603,6 +1611,7 @@ function describeTriggers(
       trigger.effects,
       trigger.target,
       trigger.weapon,
+      trigger.chainRole,
       trigger.blocked,
       trigger.profession,
       trigger.usedSkill,
@@ -1846,6 +1855,10 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
   // Watchful Intervention's (#1789).
   if (event === "bearer-health-drops-below" && trigger.healthBelow !== undefined) {
     return `has its Health dropped below ${String(Math.round(trigger.healthBelow * 100))}% by damage`;
+  }
+  // Way of the Lotus's (#2432).
+  if (event === "bearer-hits" && trigger.chainRole !== undefined) {
+    return `hits with a ${trigger.chainRole} attack`;
   }
   // Mark of Instability's (#2134).
   if (event === "bearer-hit-by-attack" && trigger.hitBy !== undefined) {
@@ -3324,7 +3337,9 @@ function countEach(count: CountRule, onTarget: string): string {
       : count.kind === "energy"
         ? `point of Energy ${count.on === "caster" ? "you have" : "they have"}`
         : count.kind === "removed"
-          ? `${count.categories.join(" or ")} removed`
+          ? count.profession === undefined
+            ? `${count.categories.join(" or ")} removed`
+            : `${getProfession(count.profession).name} ${count.categories.join(" or ")} lost`
           : count.kind === "maintained-enchantments"
             ? "enchantment you are maintaining"
             : count.kind === "held-seconds"
@@ -3336,14 +3351,19 @@ function countEach(count: CountRule, onTarget: string): string {
 
 /**
  * The skills a `recharging-skills` count counts, plural (#2321): "Beast
- * Mastery skills", "binding rituals".
+ * Mastery skills", "binding rituals", "dagger attacks" (#2432).
  */
 function rechargingSkillsNoun(count: Extract<CountRule, { kind: "recharging-skills" }>): string {
   const attribute =
     count.attributeId === undefined
       ? undefined
       : (getAttribute(count.attributeId)?.name ?? count.attributeId);
-  const kind = count.type === undefined ? "skills" : `${count.type.replaceAll("-", " ")}s`;
+  const kind =
+    count.weapon !== undefined
+      ? `${WEAPON_WORD[count.weapon]} attacks`
+      : count.type === undefined
+        ? "skills"
+        : `${count.type.replaceAll("-", " ")}s`;
   return attribute === undefined ? kind : `${attribute} ${kind}`;
 }
 
@@ -3365,7 +3385,9 @@ function perCountNoun(count: CountRule): string {
       : count.kind === "energy"
         ? "point of Energy"
         : count.kind === "removed"
-          ? `removed ${count.categories.join(" or ")}`
+          ? count.profession === undefined
+            ? `removed ${count.categories.join(" or ")}`
+            : `removed ${getProfession(count.profession).name} ${count.categories.join(" or ")}`
           : count.kind === "maintained-enchantments"
             ? "maintained enchantment"
             : count.kind === "held-seconds"
@@ -4059,25 +4081,28 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
                 : // Healing Burst's (#2311).
                   each.kind === "heal" && each.divineFavorBonus === true
                   ? "gain Health equal to this spell's Divine Favor bonus"
-                  : each.kind === "heal" && each.recipient === undefined
-                    ? `gain ${shown(describeMagnitude(each.amount, ranks))} Health`
-                    : each.kind === "lose-health" && each.recipient === "target"
-                      ? `lose ${shown(describeMagnitude(each.amount, ranks))} Health`
-                      : // Fear Me!'s "lose 5 energy" (#2320).
-                        each.kind === "energy-loss" && each.on !== "caster"
-                        ? lowerFirst(description.text).replace(/^target loses/, "lose")
-                        : each.kind === "remove-status" && each.from === undefined
-                          ? lostInSplash(each, ranks)
-                          : // Ravenous Gaze's (#2313): the caster steals, from each.
-                            each.kind === "life-steal" || each.kind === "energy-steal"
-                            ? `you ${lowerFirst(description.text).replace(/^steals /, "steal ")} from each`
-                            : // Verata's Sacrifice's (#1986).
-                              each.kind === "transfer-conditions" &&
-                                each.from === "target" &&
-                                resolveMagnitudeAtRanks(each.count, ranks) ===
-                                  Number.POSITIVE_INFINITY
-                              ? "transfer all their conditions to you"
-                              : lowerFirst(description.text),
+                  : // Release Enchantments' "for each Monk enchantment lost" (#2432).
+                    each.kind === "heal" && each.recipient === undefined && each.per !== undefined
+                    ? `gain ${lowerFirst(description.text).replace(/^heals /, "")}`
+                    : each.kind === "heal" && each.recipient === undefined
+                      ? `gain ${shown(describeMagnitude(each.amount, ranks))} Health`
+                      : each.kind === "lose-health" && each.recipient === "target"
+                        ? `lose ${shown(describeMagnitude(each.amount, ranks))} Health`
+                        : // Fear Me!'s "lose 5 energy" (#2320).
+                          each.kind === "energy-loss" && each.on !== "caster"
+                          ? lowerFirst(description.text).replace(/^target loses/, "lose")
+                          : each.kind === "remove-status" && each.from === undefined
+                            ? lostInSplash(each, ranks)
+                            : // Ravenous Gaze's (#2313): the caster steals, from each.
+                              each.kind === "life-steal" || each.kind === "energy-steal"
+                              ? `you ${lowerFirst(description.text).replace(/^steals /, "steal ")} from each`
+                              : // Verata's Sacrifice's (#1986).
+                                each.kind === "transfer-conditions" &&
+                                  each.from === "target" &&
+                                  resolveMagnitudeAtRanks(each.count, ranks) ===
+                                    Number.POSITIVE_INFINITY
+                                ? "transfer all their conditions to you"
+                                : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;

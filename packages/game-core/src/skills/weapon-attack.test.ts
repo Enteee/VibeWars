@@ -599,8 +599,8 @@ describe("block (#534)", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     const target = foe("dummy");
     target.combatant.statuses.apply("guardian", 1e6, "monk", NO_RANKS);
-    expect(blockChanceOf(target.combatant, "melee", false)).toBe(0.5);
-    expect(blockChanceOf(target.combatant, "projectile", false)).toBe(0.5);
+    expect(blockChanceOf(target.combatant, "melee", false, [])).toBe(0.5);
+    expect(blockChanceOf(target.combatant, "projectile", false, [])).toBe(0.5);
     const rng = createRng(5);
     let blocked = 0;
     for (let i = 0; i < 2000; i += 1) {
@@ -640,19 +640,56 @@ describe("block (#534)", () => {
       }).events;
 
     target.combatant.knockdownRemaining = 2;
-    expect(blockChanceOf(target.combatant, "melee", false)).toBe(0);
-    expect(blockChanceOf(target.combatant, "projectile", false)).toBe(0);
+    expect(blockChanceOf(target.combatant, "melee", false, [])).toBe(0);
+    expect(blockChanceOf(target.combatant, "projectile", false, [])).toBe(0);
     for (let i = 0; i < 20; i += 1) {
       expect(swing().map((event) => event.kind)).toEqual(["damage"]);
     }
 
     target.combatant.knockdownRemaining = 0;
-    expect(blockChanceOf(target.combatant, "melee", false)).toBe(0.5);
+    expect(blockChanceOf(target.combatant, "melee", false, [])).toBe(0.5);
     let blocked = 0;
     for (let i = 0; i < 20; i += 1) {
       blocked += swing().filter((event) => event.kind === "attack-blocked").length;
     }
     expect(blocked).toBeGreaterThan(0);
+  });
+  it("a block of enchanted foes only rolls against an enchanted attacker; Guardian's against any (#2432)", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    const target = foe("dummy");
+    target.combatant.statuses.apply("pensive-guardian", 1e6, "monk", NO_RANKS);
+    const rng = createRng(2432);
+    const blockedOf20 = () => {
+      let blocked = 0;
+      for (let i = 0; i < 20; i += 1) {
+        blocked += resolveSwing({
+          attacker: sword,
+          target,
+          surroundings: new Map(),
+          rng,
+          rules: RULES,
+          exposed: NOWHERE,
+        }).events.filter((event) => event.kind === "attack-blocked").length;
+      }
+      return blocked;
+    };
+
+    expect(blockChanceOf(target.combatant, "melee", false, sword.statuses.active)).toBe(0);
+    expect(blockedOf20()).toBe(0);
+
+    sword.statuses.apply("guardian", 1e6, "monk", NO_RANKS);
+    expect(blockChanceOf(target.combatant, "melee", false, sword.statuses.active)).toBe(0.5);
+    expect(blockChanceOf(target.combatant, "projectile", false, sword.statuses.active)).toBe(0.5);
+    expect(blockedOf20()).toBeGreaterThan(0);
+
+    // Its enchantment gone before the check: not blocked.
+    sword.statuses.endAll();
+    expect(blockedOf20()).toBe(0);
+
+    target.combatant.statuses.endAll();
+    target.combatant.statuses.apply("guardian", 1e6, "monk", NO_RANKS);
+    expect(blockChanceOf(target.combatant, "melee", false, [])).toBe(0.5);
+    expect(blockChanceOf(target.combatant, "melee", false, sword.statuses.active)).toBe(0.5);
   });
 
   it("a blind attacker's miss is a miss: no block roll is drawn", () => {
