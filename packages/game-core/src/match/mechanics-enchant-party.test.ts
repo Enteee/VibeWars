@@ -207,7 +207,8 @@ describe("Order of Apostasy (#1975)", () => {
     f.statuses.apply("arcane-echo", 30, "x", NO_RANKS);
     hit(a, f, around(n, a, f));
     expect(f.statuses.has("arcane-echo")).toBe(false);
-    expect(f.health).toBe(1000 - 13);
+    // At its caster's Blood Magic, here 0 (#2411).
+    expect(f.health).toBe(1000 - 3);
   });
 
   it("a wand's hit strips nothing", () => {
