@@ -63,7 +63,9 @@ export type ParagonStatusId =
   | "song-of-power"
   | "ballad-of-restoration"
   | "theyre-on-fire"
-  | "find-their-weakness";
+  | "find-their-weakness"
+  // Mechanics (#2479).
+  | "we-shall-return";
 
 export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition>> = {
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
@@ -583,6 +585,16 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
       endsWhenFired: true,
       skillId: "paragon.find-their-weakness",
       weapon: undefined,
+    },
+  }),
+  // "Whenever party members within earshot use a resurrection skill, their
+  // fallen allies return with 10...75% more Health and 5...50% more
+  // Energy" (#2479).
+  "we-shall-return": define("we-shall-return", '"We Shall Return!"', "shout", {
+    profession: "paragon",
+    resurrectionBonus: {
+      healthPercent: { scaling: { attributeId: "paragon.command", atZero: 10, atTwelve: 62 } },
+      energyPercent: { scaling: { attributeId: "paragon.command", atZero: 5, atTwelve: 41 } },
     },
   }),
 };

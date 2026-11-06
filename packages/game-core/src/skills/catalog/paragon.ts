@@ -3298,4 +3298,43 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2479)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "paragon.we-shall-return",
+    name: '"We Shall Return!"',
+    gwId: 1592,
+    type: "shout",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Party members within earshot", the shouter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The base record; its numbers are the PvP split's (3033). "For 10
+    // seconds, whenever party members within earshot use a resurrection
+    // skill, their fallen allies return with 10...75% more Health and
+    // 5...50% more Energy": the status's.
+    effects: [{ kind: "apply-status", statusId: "we-shall-return", durationSeconds: { flat: 10 } }],
+  },
 ];

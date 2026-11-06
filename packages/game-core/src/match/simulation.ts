@@ -6559,6 +6559,7 @@ export class MatchSimulation {
    */
   #recordDeaths(events: readonly CombatEvent[]): void {
     const fallen: { victim: ParticipantRecord; conditions: ActiveStatus[] }[] = [];
+    const pacts: { sourceId: string; skillId: string | undefined }[] = [];
     for (const event of events) {
       // A destroyed spirit (#1309) is no death: it leaves as an expired
       // one does, at the end of the step, and nothing answers it.
@@ -6607,6 +6608,13 @@ export class MatchSimulation {
           },
         );
         this.#riseMasterless(victim, replacedOnDeath);
+        // Death Pact Signet's (#2479), read before death ends it.
+        for (const { id, sourceId, sourceSkillId, remainingSeconds } of victim.combatant.statuses
+          .active) {
+          if (remainingSeconds > 0 && getStatusDefinition(id).killsSourceOnDeath) {
+            pacts.push({ sourceId, skillId: sourceSkillId });
+          }
+        }
         // Vengeance's (#2311), read before death ends it.
         const spared =
           this.#sparedDeaths.delete(victim.combatant.id) ||
@@ -6650,6 +6658,40 @@ export class MatchSimulation {
     for (const { victim, conditions } of fallen) {
       this.#diedInRange(victim, conditions);
     }
+    for (const { sourceId, skillId } of pacts) {
+      this.#dieWithPact(sourceId, skillId);
+    }
+  }
+
+  /**
+   * A pact's bearer died (#2479): its source dies too, sparing the death
+   * penalty, as Death Pact Signet's "the next time that ally dies within
+   * 120 seconds, so do you". A source already dead is left as it is, so
+   * pacts chained round a loop end there.
+   */
+  #dieWithPact(sourceId: string, skillId: string | undefined): void {
+    const record = this.#participants.get(sourceId);
+    if (record === undefined || record.combatant.dead) {
+      return;
+    }
+    const { combatant } = record;
+    this.#sparedDeaths.add(combatant.id);
+    combatant.health = 0;
+    combatant.dead = true;
+    const events: CombatEvent[] = [{ kind: "death", targetId: combatant.id }];
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId,
+      skillId,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
   }
 
   /**

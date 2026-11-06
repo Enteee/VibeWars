@@ -699,6 +699,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "storm-djinns-haste": icon("storm-djinns-haste"),
   // Mechanics (#2470).
   "unyielding-aura": icon("unyielding-aura"),
+  // Mechanics (#2479).
+  "death-pact-signet": icon("death-pact-signet"),
+  "we-shall-return": icon("we-shall-return"),
+  "lyssas-haste": icon("lyssas-haste"),
+  "shadow-shroud": icon("shadow-shroud"),
 };
 
 const GAP = 2;

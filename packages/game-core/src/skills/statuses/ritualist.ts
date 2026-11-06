@@ -75,7 +75,9 @@ export type RitualistStatusId =
   | "spirit-channeling"
   | "renewing-surge"
   // Staples (#2413).
-  | "binding-chains";
+  | "binding-chains"
+  // Mechanics (#2479).
+  | "death-pact-signet";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -893,5 +895,11 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       ],
       skillId: "ritualist.binding-chains",
     },
+  }),
+  // "The next time that ally dies within 120 seconds, so do you" (#2479):
+  // the caster dies with no death penalty.
+  "death-pact-signet": define("death-pact-signet", "Death Pact Signet", "skill-effect", {
+    profession: "ritualist",
+    killsSourceOnDeath: true,
   }),
 };

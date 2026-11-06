@@ -4326,4 +4326,43 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2479)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.shadow-shroud",
+    name: "Shadow Shroud",
+    gwId: 928,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The base record; its numbers are the PvP split's (3452). "For 2...7
+    // seconds, target foe cannot be the target of enchantments": the
+    // status's, which strips none already on it.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "shadow-shroud",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 2, atTwelve: 6 },
+        },
+      },
+    ],
+  },
 ];

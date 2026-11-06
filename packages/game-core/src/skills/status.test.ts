@@ -185,7 +185,10 @@ describe("status definitions", () => {
         statAtTwelve(def.stancesExpireFaster) !== 0 ||
         def.refuses.length > 0 ||
         def.divineFavorDoubledFor !== undefined ||
-        def.preventsCriticalHits;
+        def.preventsCriticalHits ||
+        def.killsSourceOnDeath ||
+        def.resurrectionBonus !== undefined ||
+        def.refusesEnchantments;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -507,6 +510,18 @@ describe("StatusSet apply/remove", () => {
       { id: "guardian", sourceSkillId: undefined },
       { id: "armor-boost", sourceSkillId: "elementalist.armor-of-earth" },
     ]);
+  });
+});
+
+describe("StatusSet refusesEnchantments (#2479)", () => {
+  it("keeps a new enchantment off, but strips none already on, unlike Well of the Profane", () => {
+    const set = new StatusSet();
+    set.apply("guardian", 10, "ally", NO_RANKS);
+    set.apply("shadow-shroud", 6, "foe", NO_RANKS);
+    expect(set.has("guardian")).toBe(true);
+    expect(set.isImmuneTo("aegis")).toBe(true);
+    expect(set.isImmuneTo("bleeding")).toBe(false);
+    expect(scaledStatAttributes("we-shall-return")).toEqual(["paragon.command"]);
   });
 });
 

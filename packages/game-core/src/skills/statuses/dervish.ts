@@ -58,7 +58,9 @@ export type DervishStatusId =
   | "meditation"
   // Mechanics (#2438).
   | "harriers-grasp"
-  | "pious-renewal";
+  | "pious-renewal"
+  // Mechanics (#2479).
+  | "lyssas-haste";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -928,6 +930,30 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
           },
         ],
         skillId: "dervish.meditation",
+      },
+    ],
+  }),
+  // "Your Dervish enchantments recharge 33% faster. When you activate this
+  // enchantment, all adjacent foes are interrupted. When this enchantment
+  // ends, all adjacent foes are interrupted" (#2479): any end, a strip
+  // included, around the bearer then. The first is the skill's.
+  "lyssas-haste": define("lyssas-haste", "Lyssa's Haste", "enchantment", {
+    profession: "dervish",
+    enchantmentRechargeFaster: { share: 0.33, profession: "dervish" },
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [{ kind: "interrupt" }],
+          },
+        ],
+        skillId: "dervish.lyssas-haste",
       },
     ],
   }),
