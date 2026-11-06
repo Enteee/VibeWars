@@ -409,7 +409,7 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
   );
 
   // GvG plays one map, so its host sees it named, not picked.
-  await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (large)");
+  await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (small)");
 
   // Heroes' Ascent starts on its first map, and Team Arena draws one for
   // each match: neither is picked (#1994).
