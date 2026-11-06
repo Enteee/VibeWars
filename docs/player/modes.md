@@ -189,8 +189,8 @@ size** shows, locked. In Team Arena the party leader picks 2v2, 4v4 or
 the party sees it locked. It starts at the size the leader last picked
 in Team Arena, 4v4 at first. A party never picks a size smaller than its players,
 and a party with as many players as its size takes nobody more ("Party
-is full"). Two parties only ever meet at the same size, and the party
-strip names it: "Team Arena 2v2 — searching…". In a Hosted Game the host sets
+is full"). Two parties only ever meet at the same size, and the queue
+line on top of the mode's screen names it: "Team Arena 2v2 — searching…". In a Hosted Game the host sets
 the team size with its arrows, 1v1 to 8v8, before the Team Lobby,
 and both sides play exactly that many; the Team Lobby shows no Team size. A guest sees the host's, locked. The host's map list
 shows only maps made for that size, and a size the map does not suit
@@ -247,7 +247,7 @@ skips the wait, or, for winners, leaves without queueing.
 
 A queued Heroes' Ascent is four rounds, always in this order: Relic
 Temples (Relic Run), Forgotten Shrines (Capture Points), Hill Courtyard
-(King of the Hill), then the Hall of Heroes. The party strip says where
+(King of the Hill), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 4 · Forgotten Shrines`.
 You only ever meet a team at the same round, and you wait for one as
 long as it takes: no bots fill in. Win, and your party ascends to the

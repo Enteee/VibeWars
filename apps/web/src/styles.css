@@ -256,22 +256,6 @@ body {
   }
 }
 
-/* Short of room, the bar's lobby goes without its label: Copy invite
-   link says whose it is (#1526, #2100). The host's Closed/Open stays
-   until the bar runs out: it decides whether friends get in at all
-   (#1682). */
-@media (width <= 90rem) {
-  .topbar-lobby:not(.is-joining) .lobby-code-label {
-    display: none;
-  }
-}
-
-@media (width <= 48rem) {
-  .topbar-lobby .topbar-lobby-open-label {
-    display: none;
-  }
-}
-
 /* Just above 75rem the host's map shares the row with all of that: its
    select says which map, and the word Map stays only for a reader. */
 @media (75rem < width <= 80rem) {
@@ -342,13 +326,24 @@ body {
   margin-left: 0;
 }
 
-/* The lobby this tab is in (#1526): Copy invite link, and a guest's Leave. */
+/* The lobby this tab is in (#1526): Copy invite link, the host's
+   Closed/Open and a guest's Leave, on top of the Lobby window (#2385). */
 .topbar-lobby {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
-  margin-right: 0.6rem;
   white-space: nowrap;
+}
+
+.lobby-window-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.lobby-window-controls[hidden] {
+  display: none;
 }
 
 .topbar-lobby[hidden],
@@ -408,20 +403,6 @@ body {
   filter: brightness(0);
 }
 
-/* Between the ⋯ and a whole row the lobby crowds the global icons off
-   the bar (#1526). */
-@media (45rem < width <= 60rem) {
-  /* The host's lock (#1682) takes its room from the gaps. */
-  #topbar .topbar-lobby {
-    gap: 0.25rem;
-    margin-right: 0.2rem;
-  }
-
-  #topbar .topbar-lobby .topbar-lobby-open {
-    padding: 0.2rem 0.35rem;
-  }
-}
-
 #topbar .topbar-join-button {
   padding: 0.2rem 0.7rem;
   background: var(--panel);
@@ -474,6 +455,72 @@ body {
   height: 18px;
 }
 
+/* Who is in the lobby (#2385), on the Lobby button: hidden while it is just you. */
+.topbar-actions .topbar-lobby-button {
+  position: relative;
+}
+
+.topbar-badge {
+  position: absolute;
+  top: -0.3rem;
+  right: -0.35rem;
+  min-width: 0.95rem;
+  height: 0.95rem;
+  padding: 0 0.2rem;
+  border-radius: 0.5rem;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 0.95rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.topbar-badge[hidden] {
+  display: none;
+}
+
+/* Someone joined or left while the window was shut. */
+.topbar-badge.is-pulsing {
+  animation: topbar-badge-pulse 0.9s ease-out 2;
+}
+
+@keyframes topbar-badge-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent);
+    transform: scale(1.35);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0.5rem transparent;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar-badge.is-pulsing {
+    animation: none;
+  }
+}
+
+/* The Lobby window (#2385), like the jukebox, just under the bar. */
+#topbar .lobby-window {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0.5rem;
+  z-index: 20;
+  width: min(320px, calc(100vw - 1rem));
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 0.7rem;
+  gap: 0.6rem;
+  background: rgb(14 17 22 / 96%);
+  border: 1px solid var(--line);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 /* The jukebox from the bar's ♪, just under the bar. */
 #topbar .hud-jukebox {
   top: calc(100% + 0.3rem);
@@ -483,7 +530,7 @@ body {
   letter-spacing: normal;
 }
 
-/* Options over a screen or a match (#454): the match runs on behind it. */
+/* Help over a screen or a match (#1257): the match runs on behind it. */
 .options-overlay {
   position: fixed;
   inset: 0;
@@ -496,20 +543,40 @@ body {
   background: rgb(14 17 22 / 70%);
 }
 
-.options-overlay .screen.options-screen {
-  padding: 1rem;
-  background: var(--bg);
-  border: 1px solid var(--line);
-}
-
 /* An overlay window (#2381): its × at its own top right, not in the top
    bar. The window holds it; its body keeps clear of it. */
 .options-overlay > .screen {
   position: relative;
 }
 
-.options-overlay .options-body {
+.options-window .options-body {
   padding-right: 2.25rem;
+}
+
+/* Options as a window (#2386), no backdrop: in a match under the HUD's
+   cluster, as the music's; from the bar, just under it. Its pane scrolls. */
+.screen.options-screen.options-window {
+  position: absolute;
+  top: calc(5.8rem + var(--build-banner-space, 0px));
+  right: 0.9rem;
+  z-index: 20;
+  width: min(56rem, calc(100vw - 1.8rem));
+  max-height: calc(100vh - 6.8rem - var(--build-banner-space, 0px));
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgb(14 17 22 / 96%);
+  border: 1px solid var(--line);
+}
+
+#topbar .screen.options-screen.options-window {
+  top: calc(100% + 0.3rem);
+  right: 0.5rem;
+  width: min(56rem, calc(100vw - 1rem));
+  max-height: calc(100vh - 100% - 1.3rem - var(--build-banner-space, 0px));
+  /* The size it has in a match, not the slim bar's. */
+  font-size: 1rem;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .screen button.overlay-close {
@@ -1546,8 +1613,8 @@ body {
   font-size: 1.05rem;
 }
 
-/* Who is in this lobby (#1526), on top of every mode screen. */
-.party-strip {
+/* How long the party has been queued (#1766), on top of a mode's screen. */
+.party-status {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1557,10 +1624,27 @@ body {
   border: 1px solid var(--line);
 }
 
+/* Who is in this lobby (#1526), in the top bar's Lobby window (#2385). */
+.lobby-window-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lobby-window-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.lobby-window-alone {
+  margin: 0;
+  color: var(--ink-dim);
+}
+
 .party-members {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
+  flex-direction: column;
+  gap: 0.35rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -6430,7 +6514,8 @@ body:has(#app > .chat) .now-playing {
  * The compass (#486): GW1's radar, top right under the match buttons,
  * centred on you, north up. A canvas `ui/compass.ts` draws; hidden keeps
  * its box, so its size is there to read. Smaller on a narrow window, clear
- * of the scoreboard.
+ * of the scoreboard. It takes the pointer (#2391): a click pings, a drag
+ * draws, and neither reaches the arena under it.
  */
 :root {
   /* Under the match buttons, so down with them under the banner (#1283). */
@@ -6454,7 +6539,8 @@ body:has(#app > .chat) .now-playing {
   background: rgb(22 27 34 / 85%);
   border: 1px solid var(--line);
   border-radius: 50%;
-  pointer-events: none;
+  cursor: crosshair;
+  touch-action: none;
 }
 
 .compass[hidden] {

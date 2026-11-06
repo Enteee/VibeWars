@@ -68,24 +68,25 @@ the team you just played with.
 ## Host or join a match
 
 You are always in a lobby: from the moment the page opens it hosts one
-of your own. The lobby is your party,
-and the strip on top of every mode screen lists who is in it.
+of your own. The lobby is your party: **Lobby** in the top bar, between
+Options and Music, opens a window with the invite link, Open/Closed and
+Leave, and a list of who is in it; its badge counts them.
 
-- **Invite:** press **Copy invite link** in the top bar and send the
+- **Invite:** press **Copy invite link** in the Lobby window and send the
   link to your friends. It holds your lobby's secret key, so share it
   only with people you want in. If your browser refuses to copy, the link
   shows selected: copy it by hand.
 - **Open your lobby** before friends join: your lobby starts **Closed**
   (a shut padlock), and nobody can join it, even with the link. Press
-  **Closed** in the top bar to open it: it turns into a highlighted open
+  **Closed** in the Lobby window to open it: it turns into a highlighted open
   door, **Open**, and anyone with the link can then join. Press it again
   to close it: friends already in stay, and nobody new gets in. A guest
-  sees the padlock and "Lobby closed" in the party strip while it is
+  sees the padlock and "Lobby closed" in the Lobby window while it is
   closed.
 - **Join:** open the invite link you were sent, in a new tab or pasted
   into the address bar of one already open. Your own lobby stays open
-  until the join is in. Once in, the top bar says **Lobby**, and
-  **Leave** takes you back to a fresh lobby of your own, with a new
+  until the join is in. Once in, the Lobby window says **Lobby**, and
+  its **Leave** takes you back to a fresh lobby of your own, with a new
   invite link. A link opened on a lobby's screen or in a match asks you
   to go back to the menu first. If your connection drops, your seat is held
   for 30 seconds.
@@ -129,7 +130,7 @@ On **Team Arena** (2, 4 or 8 a side, the host's **Team size**),
 your lobby is one side, your party, and there is no Start or bot count:
 the host presses **Find a match**. The Team Lobby comes first, with only
 Team Builds of exactly that size; every seat nobody claims is a bot.
-Then the party is queued, and the party strip says **Looking for a
+Then the party is queued, and a line on top of the mode's screen says **Looking for a
 team…** (in Team Arena, **Team Arena 2v2 — searching…** with its size)
 with the time waited and how many teams of that mode are
 searching, yours included: `1:05 · 2 teams searching`. Closing the

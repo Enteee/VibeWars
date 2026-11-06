@@ -430,6 +430,21 @@ describe("calls in the Training Ground (#443)", () => {
     expect(connection.getCalls().pings).toEqual([]);
   });
 
+  it("echoes your compass line back to you, and it runs out at 4 s (#2391)", () => {
+    const { connection } = targetDummy();
+    const points = [
+      [100, 100],
+      [120, 110],
+    ] as const;
+    connection.sendCall({ kind: "stroke", strokeId: 1, points });
+    expect(connection.getCalls().strokes.map((stroke) => stroke.points)).toEqual([points]);
+    // A tick past 4 s, summed tick by tick.
+    for (let i = 0; i <= 4 / TICK_SECONDS; i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+    expect(connection.getCalls().strokes).toEqual([]);
+  });
+
   it("calls nothing while you are dead", () => {
     const { connection, setup } = targetDummy();
     const self = setup.simulation.get(SELF_ID);
@@ -439,7 +454,7 @@ describe("calls in the Training Ground (#443)", () => {
     self.combatant.dead = true;
     connection.sendCall({ kind: "target", targetId: "dummy" });
     connection.sendCall({ kind: "ping", x: 100, y: 100 });
-    expect(connection.getCalls()).toEqual({ target: null, pings: [] });
+    expect(connection.getCalls()).toEqual({ target: null, pings: [], strokes: [] });
   });
 });
 

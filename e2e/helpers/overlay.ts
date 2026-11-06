@@ -20,7 +20,7 @@ export async function clickTopbarIcon(page: Page, selector: string): Promise<voi
 
 /**
  * The overlay window's × (#2381): within 1.5rem of its panel's top right,
- * and no Back or Close in the top bar while it is open. Returned to be
+ * and no Back or other Close in the top bar while it is open. Returned to be
  * clicked.
  */
 export async function expectCloseAtTopRight(page: Page, dialog: Locator): Promise<Locator> {
@@ -35,8 +35,10 @@ export async function expectCloseAtTopRight(page: Page, dialog: Locator): Promis
     expect(box.y - panel.y).toBeLessThanOrEqual(24);
   }
   await expect(page.locator("#topbar .topbar-back")).toBeEmpty();
+  // A window that is a top-bar popover (#2386) brings its own × into the bar.
+  const own = await page.locator("#topbar").locator(close).count();
   await expect(
     page.locator("#topbar").getByRole("button", { name: "Close", exact: true }),
-  ).toHaveCount(0);
+  ).toHaveCount(own);
   return close;
 }

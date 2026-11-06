@@ -239,7 +239,8 @@ export function createLocalConnection(options: {
   const getCalls = (): CallsSnapshot => {
     const now = simulation.elapsedSeconds;
     calls.step(now, alive);
-    return calls.view(selfTeam(), now);
+    // Your own lines echo straight back, as pings do (#2391).
+    return { ...calls.view(selfTeam(), now), strokes: calls.strokes(selfTeam(), now) };
   };
 
   return {

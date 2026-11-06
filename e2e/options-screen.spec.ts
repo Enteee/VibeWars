@@ -202,3 +202,126 @@ test("Options lists every bundled npm package and the VCSL samples, each with it
   await phaser.locator("summary").click();
   await expect(phaser.locator(".licence-text")).toContainText("Permission is hereby granted");
 });
+
+for (const viewport of OVERLAY_VIEWPORTS) {
+  test(`Options is a window under the bar at ${String(viewport.width)} px, the screen still there behind it (#2386)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("./");
+    const options = page.getByRole("dialog", { name: "Options" });
+    await clickTopbarIcon(page, ".topbar-options");
+    await expect(options).toBeVisible();
+    await expect(options).not.toHaveAttribute("aria-modal", /.*/);
+
+    const bar = await page.locator("#topbar").boundingBox();
+    const box = await options.boundingBox();
+    expect(bar).not.toBeNull();
+    expect(box).not.toBeNull();
+    if (bar !== null && box !== null) {
+      expect(box.y).toBeGreaterThanOrEqual(bar.y + bar.height);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+      expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+    }
+    // No backdrop: the menu behind it shows, and a press on it closes Options.
+    const heading = page.getByRole("heading", { name: "VibeWars" });
+    await expect(heading).toBeVisible();
+    await heading.click();
+    await expect(options).toHaveCount(0);
+  });
+}
+
+test("⚙ toggles Options; Esc, × and a press outside give the focus back to ⚙ (#2386)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("./");
+  const gear = page.locator("#topbar .topbar-options");
+  const options = page.getByRole("dialog", { name: "Options" });
+
+  await gear.click();
+  await expect(options).toBeVisible();
+  await expect(gear).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator('.options-entry[data-section="player"]')).toBeFocused();
+  await gear.click();
+  await expect(options).toHaveCount(0);
+  await expect(gear).toBeFocused();
+
+  for (const shut of [
+    () => page.keyboard.press("Escape"),
+    () => options.getByRole("button", { name: "Close", exact: true }).click(),
+    () => page.getByRole("heading", { name: "VibeWars" }).click(),
+  ]) {
+    await gear.click();
+    await expect(options).toBeVisible();
+    await shut();
+    await expect(options).toHaveCount(0);
+    await expect(gear).toHaveAttribute("aria-expanded", "false");
+  }
+  // The press outside is the player's to place; the others hand ⚙ the focus.
+  await gear.click();
+  await page.keyboard.press("Escape");
+  await expect(gear).toBeFocused();
+});
+
+test("closing Options leaves the menu as it was, and a press outside lands where it was pressed (#2386)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("./");
+  await openRail(page, "Random Arena");
+  const options = page.getByRole("dialog", { name: "Options" });
+  const menu = page.locator(".screen-rail");
+  await menu.evaluate((element) => {
+    element.setAttribute("data-e2e-kept", "");
+  });
+
+  // No cape changed: the menu is not drawn again under it.
+  await clickTopbarIcon(page, ".topbar-options");
+  await expect(options).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(options).toHaveCount(0);
+  await expect(page.locator(".screen-rail[data-e2e-kept]")).toHaveCount(1);
+
+  // A human's press, its release a moment after: it closes Options and
+  // still opens the entry pressed.
+  await clickTopbarIcon(page, ".topbar-options");
+  await expect(options).toBeVisible();
+  const team = page.locator(".mode-rail").getByRole("button", { name: "Team Arena", exact: true });
+  await team.click({ delay: 150 });
+  await expect(options).toHaveCount(0);
+  await expect(team).toHaveAttribute("aria-pressed", "true");
+});
+
+test("a key still being rebound keeps Options open through a press outside; Esc cancels only it (#2386)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openKeys(page);
+  await cell(page, "skill-1").click();
+  await expect(cell(page, "skill-1")).toHaveText("press a key...");
+  await page.getByRole("heading", { name: "VibeWars" }).click();
+  await expect(page.locator(".options-screen")).toBeVisible();
+  await cell(page, "skill-1").focus();
+  await page.keyboard.press("Escape");
+  await expect(cell(page, "skill-1")).toHaveText("Q");
+  await expect(page.locator(".options-screen")).toBeVisible();
+});
+
+test("Options and the Lobby window shut each other: one top-bar window at a time (#2386)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("./");
+  const options = page.getByRole("dialog", { name: "Options" });
+  const lobby = page.locator("#topbar .lobby-window");
+  await page.locator("#topbar .topbar-options").click();
+  await expect(options).toBeVisible();
+  await page.locator("#topbar .topbar-lobby-button").click();
+  await expect(lobby).toBeVisible();
+  await expect(options).toHaveCount(0);
+  await page.locator("#topbar .topbar-options").click();
+  await expect(options).toBeVisible();
+  await expect(lobby).toHaveCount(0);
+});

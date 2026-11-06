@@ -80,7 +80,6 @@ import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-banner.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
-import { closeOptionsOverlay, openOptionsOverlay } from "./ui/options-screen.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
 import { needsTouchNotice, showTouchNotice } from "./ui/touch-notice.js";
@@ -128,7 +127,7 @@ import { dismissToast, toast } from "./ui/kit.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
-import { isAlone, lookingLabel, partyOf } from "./ui/party-strip.js";
+import { isAlone, lookingLabel, partyOf } from "./ui/lobby-window.js";
 import {
   isModeEntry,
   loadRail,
@@ -150,6 +149,7 @@ import {
   type TeamPlayCallbacks,
 } from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
+import { closeTopbarPopover, isTopbarPopoverOpen } from "./ui/topbar-popover.js";
 import { duplicateTeam, newTeam, replaceMember, teamCharacter } from "./ui/team-builder.js";
 import {
   mountTeamEditor,
@@ -602,6 +602,8 @@ async function main(): Promise<void> {
    * build may reload away. Every screen change clears it first.
    */
   let idleScreen = false;
+  /** The cape the menu was last drawn with (#1513), to redraw it only for a new one (#2386). */
+  let menuCape = "";
 
   const screenTurns = createScreenTurns();
   /**
@@ -630,34 +632,34 @@ async function main(): Promise<void> {
 
   // The bar's [?] and ⚙ open Help and Options over the screen, which
   // stays as it was underneath: an editor keeps its edits, a lobby keeps
-  // updating (#454, #1257).
+  // updating (#454, #1257, #2386).
   const topbarView = mountTopbar(topbar, {
     onHelp: () => {
       openHelpOverlay(app);
     },
-    onOptions: () => {
+    onOptionsClosed: () => {
       // Closed over the menu, its characters wear the cape just picked in
       // Options (#1513). Not when a match starting closed it, which leaves
-      // the screen first; any other screen keeps what it joined with.
-      openOptionsOverlay(app, () => {
-        const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
-        if (renamedAlone()) {
-          // Nobody else is in it to keep its code for: the lobby is opened
-          // again under the new name and tag (#1526).
-          void (async () => {
-            await closeLobby();
-            if (menu) {
-              showMenu();
-            } else {
-              openOwnLobby();
-            }
-          })();
-          return;
-        }
-        if (menu) {
-          showMenu();
-        }
-      });
+      // the screen first; any other screen keeps what it joined with. Only
+      // a new cape redraws it: a redraw would swallow the press outside
+      // that closed the window (#2386).
+      const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
+      if (renamedAlone()) {
+        // Nobody else is in it to keep its code for: the lobby is opened
+        // again under the new name and tag (#1526).
+        void (async () => {
+          await closeLobby();
+          if (menu) {
+            showMenu();
+          } else {
+            openOwnLobby();
+          }
+        })();
+        return;
+      }
+      if (menu && menuCape !== JSON.stringify(playerGuild().guildCape)) {
+        showMenu();
+      }
     },
     onJoin: (code, name) => {
       joinWith(code, name);
@@ -675,7 +677,7 @@ async function main(): Promise<void> {
       leaveScreen();
       // From the bar, over a lobby whose match just started: it goes with
       // the screens.
-      closeOptionsOverlay();
+      closeTopbarPopover();
       closeHelpOverlay();
     }
     // In a match the viewport has the whole height; the HUD has the bar's
@@ -734,6 +736,7 @@ async function main(): Promise<void> {
 
   const showMenu = (): void => {
     const turn = leaveScreen();
+    menuCape = JSON.stringify(playerGuild().guildCape);
     // Every way back to the menu passes through here, so the status bar
     // never keeps saying where the player was: idle, it says nothing (#454).
     // Error paths set theirs after.
@@ -1016,6 +1019,7 @@ async function main(): Promise<void> {
     const turn = joinTurns.take();
     following = move.code;
     setRailParty(undefined);
+    topbarView.setParty(undefined);
     topbarView.setLobby({ code: move.code, isHost: false, open: false, party: 0, joining: true });
     setStatus("connecting…", "offline");
     menuNotice = undefined;
@@ -1595,7 +1599,7 @@ async function main(): Promise<void> {
       ? Date.now() - teamQueue.since
       : null;
 
-  /** The queue strip's wait, each second; the screen again once Play against bots is offered. */
+  /** The queue line's wait, each second; the screen again once Play against bots is offered. */
   const tickTeamQueue = (): void => {
     const current = teamQueue;
     if (current === undefined || current.parked !== undefined || lobby !== current.party) {
@@ -1688,7 +1692,7 @@ async function main(): Promise<void> {
       name,
       entrant.guild,
       {
-        // The queue strip says the wait and how many teams it last heard
+        // The queue line says the wait and how many teams it last heard
         // searching (#1881), none while the relays are down; the queue's
         // other states are its own.
         onState: (state) => {
@@ -1793,11 +1797,12 @@ async function main(): Promise<void> {
 
   /** The rail and the title bar name `snapshot`'s party, or none (#1526). */
   const syncParty = (snapshot: LobbySnapshot | undefined): void => {
-    setRailParty(
+    const party =
       snapshot === undefined
         ? undefined
-        : partyOf(snapshot, queuedMsOf(snapshot), teamQueue?.teams),
-    );
+        : partyOf(snapshot, queuedMsOf(snapshot), teamQueue?.teams);
+    setRailParty(party);
+    topbarView.setParty(party);
     topbarView.setLobby(
       snapshot === undefined
         ? undefined
@@ -2531,7 +2536,8 @@ async function main(): Promise<void> {
         match === undefined &&
         !enteringMatch &&
         stay === undefined &&
-        document.querySelector('[aria-modal="true"]') === null,
+        document.querySelector('[aria-modal="true"]') === null &&
+        !isTopbarPopoverOpen(),
       reloadedFor: {
         load: () => sessionStorage.getItem(RELOADED_FOR_KEY) ?? undefined,
         save: (id) => {
