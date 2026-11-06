@@ -7,16 +7,16 @@ const rows = {
   "earthen-shackles": [
     "hex",
     (c) =>
-      `<circle cx="8" cy="10" r="3" ${stroke(c, 1.8)}/>` +
-      `<circle cx="16" cy="10" r="3" ${stroke(c, 1.8)}/>` +
-      `<path d="M11 10h2M4 19h16M8 13v6M16 13v6" ${stroke(c, 1.6)}/>`,
+      `<circle cx="9" cy="10" r="2.5" ${stroke(c, 1.8)}/>` +
+      `<circle cx="15" cy="10" r="2.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M11.5 10h1M7 17h10M9 12.5v4.5M15 12.5v4.5" ${stroke(c, 1.6)}/>`,
   ],
   // Skill effect: a prism turning blows aside, energy when it ends.
   "ether-prism": [
     "skill-effect",
     (c) =>
-      `<path d="M12 4l7 13H5z" ${stroke(c, 1.8)}/>` +
-      `<path d="M3 9l5 3M21 9l-5 3" ${stroke(c, 1.6)}/>`,
+      `<path d="M12 7l5 10H7z" ${stroke(c, 1.8)}/>` +
+      `<path d="M4 10l4 2M20 10l-4 2" ${stroke(c, 1.6)}/>`,
   ],
 };
 

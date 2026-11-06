@@ -7,8 +7,8 @@ const rows = {
   "shared-burden": [
     "hex",
     (c) =>
-      `<path d="M5 6h14M12 6v4" ${stroke(c, 1.8)}/>` +
-      `<path d="M8 19l1.5-9h5L16 19z" ${stroke(c, 1.8)}/>`,
+      `<path d="M7 8h10M12 8v3" ${stroke(c, 1.8)}/>` +
+      `<path d="M9.5 17l1-6h3l1 6z" ${stroke(c, 1.8)}/>`,
   ],
 };
 
