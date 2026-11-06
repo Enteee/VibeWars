@@ -1,6 +1,7 @@
+import type { TicketKey } from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { OpenRelaySocket } from "./nostr-relays.js";
+import { signEvent, type OpenRelaySocket } from "./nostr-relays.js";
 import {
   MAX_OFFER_CONTENT_BYTES,
   MAX_OFFER_OPENS_PER_SECOND,
@@ -89,7 +90,8 @@ const hex = (bytes: number): string =>
 
 /**
  * An event on `ROOM`'s topic that no key opens, by a fresh author or one
- * it claims: what anyone watching can send, since no signature is checked.
+ * it claims: what anyone watching can send, since no signature is checked
+ * before an offer opens.
  */
 function garbage(pubkey = hex(32)): object {
   return {
@@ -99,6 +101,20 @@ function garbage(pubkey = hex(32)): object {
     tags: [["t", ROOM.topic]],
     content: btoa("x".repeat(64)),
   };
+}
+
+/** `config`, sealed under `ROOM`'s key, claiming `pubkey` and signed by `signer`. */
+async function signedOffer(config: TurnConfig, pubkey: string, signer: TicketKey): Promise<object> {
+  return signEvent(
+    {
+      pubkey,
+      created_at: Math.floor(NOW / 1000),
+      kind: RELAY_OFFER_KIND,
+      tags: [["t", ROOM.topic]],
+      content: await sealOffer(config, ROOM.key, iv()),
+    },
+    (digest) => signer.sign(digest),
+  );
 }
 
 function deps(openSocket: OpenRelaySocket, now: () => number): RelayOfferDeps {
@@ -443,6 +459,65 @@ describe("a host's relay offers, heard by a joiner (#2091)", () => {
     await settle();
     expect(offers.latest()?.username).not.toBe(first?.username);
     host.close();
+    offers.close();
+  });
+
+  it("drops an invite holder's offer claiming the host's key, and keeps the host's slot (#2553)", async () => {
+    const relay = fakeRelay();
+    const offers = watchRelayOffers(
+      ROOM,
+      deps(relay.openSocket, () => NOW),
+    );
+    await settle();
+    const host = newTicketKey();
+    const member = newTicketKey();
+    relay.publish(await signedOffer(minted(["turn:hostile.example:3478"]), host.ticketId, member));
+    await settle();
+    expect(offers.latest()).toBeUndefined();
+
+    // Within the same 5 s: the forgery charged nobody.
+    relay.publish(await signedOffer(minted(SHARED.urls), host.ticketId, host));
+    await settle();
+    expect(offers.latest()?.urls).toEqual(SHARED.urls);
+    offers.close();
+  });
+
+  it("charges a genuine offer to its author: a second within 5 s is dropped (#2553)", async () => {
+    const relay = fakeRelay();
+    let now = NOW;
+    const offers = watchRelayOffers(
+      ROOM,
+      deps(relay.openSocket, () => now),
+    );
+    await settle();
+    const host = newTicketKey();
+    relay.publish(await signedOffer(minted(SHARED.urls), host.ticketId, host));
+    await settle();
+    const first = offers.latest();
+    expect(first?.urls).toEqual(SHARED.urls);
+
+    now += OFFER_OPEN_INTERVAL_MS - 1;
+    relay.publish(await signedOffer(minted(SHARED.urls), host.ticketId, host));
+    await settle();
+    expect(offers.latest()).toBe(first);
+    offers.close();
+  });
+
+  it("drops an offer whose content changed after it was signed (#2553)", async () => {
+    const relay = fakeRelay();
+    const offers = watchRelayOffers(
+      ROOM,
+      deps(relay.openSocket, () => NOW),
+    );
+    await settle();
+    const host = newTicketKey();
+    const signed = await signedOffer(minted(SHARED.urls), host.ticketId, host);
+    relay.publish({
+      ...signed,
+      content: await sealOffer(minted(["turn:hostile.example:3478"]), ROOM.key, iv()),
+    });
+    await settle();
+    expect(offers.latest()).toBeUndefined();
     offers.close();
   });
 

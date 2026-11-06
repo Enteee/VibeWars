@@ -12,11 +12,13 @@
  * memory only, for as long as it is in the lobby, and nothing here logs
  * a config, a secret or an offer.
  */
+import { bytesToHex } from "@noble/hashes/utils.js";
 import { TICKET_HEARTBEAT_MS } from "@vibewars/game-protocol";
 import type { TicketKey } from "@vibewars/game-session";
 
 import {
   byteLength,
+  eventId,
   isTags,
   openRelayPool,
   signEvent,
@@ -25,7 +27,7 @@ import {
   type RelayPool,
 } from "./nostr-relays.js";
 import { NOSTR_RELAYS } from "./relays.js";
-import { newTicketKey } from "./ticket-key.js";
+import { newTicketKey, verifyTicketSig } from "./ticket-key.js";
 import {
   credentialExpiry,
   mintTurnCredential,
@@ -46,9 +48,10 @@ const MAX_OFFER_MESSAGE_BYTES = 4096;
 
 /**
  * After an author's offer opens, a joiner opens no other from it for this
- * long. Only an open charges it: an event's `pubkey` is not verified here,
- * and anyone can claim the host's, so nothing short of an open may cost
- * an author anything.
+ * long. Only an open whose event is signed by its `pubkey` charges it:
+ * anyone can claim the host's pubkey, and an invite holder can seal an
+ * offer that opens, so nothing short of an open with a valid signature
+ * may cost an author anything.
  */
 export const OFFER_OPEN_INTERVAL_MS = 5_000;
 
@@ -445,12 +448,13 @@ export function watchRelayOffers(
     if (typeof raw !== "object" || raw === null) {
       return;
     }
-    // The signature is the relays' business: the seal is what says who
-    // made an offer, and any code holder can make one either way.
-    const { id, pubkey, kind, tags, content } = raw as Record<string, unknown>;
+    // The signature is checked only once the offer opens: verifying is
+    // far dearer than opening, and only a code holder's offer opens.
+    const { id, pubkey, created_at, kind, tags, content, sig } = raw as Record<string, unknown>;
     if (
       typeof id !== "string" ||
       typeof pubkey !== "string" ||
+      typeof created_at !== "number" ||
       seen.has(id) ||
       kind !== RELAY_OFFER_KIND ||
       !isTags(tags) ||
@@ -480,6 +484,16 @@ export function watchRelayOffers(
     seen.add(id);
     void openOffer(content, room.key, now).then((config) => {
       if (closed || hostLogin !== undefined || config === undefined) {
+        return;
+      }
+      // An offer is charged to its pubkey, so it must be that pubkey's:
+      // otherwise an invite holder could claim a real host's and mute it.
+      const digest = eventId({ pubkey, created_at, kind, tags, content });
+      if (
+        typeof sig !== "string" ||
+        id !== bytesToHex(digest) ||
+        !verifyTicketSig(pubkey, digest, sig)
+      ) {
         return;
       }
       if (openedAt.size >= AUTHOR_LIMIT) {
