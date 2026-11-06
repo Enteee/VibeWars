@@ -4679,6 +4679,21 @@ export class StatusSet {
   }
 
   /**
+   * Whether any status on the bearer has a trigger on `event` (#2520):
+   * a per-tick check for a rare trigger, so it allocates nothing.
+   */
+  public hasTriggerOn(event: StatusTriggerEvent): boolean {
+    for (const status of this.#statuses.values()) {
+      for (const trigger of getStatusDefinition(status.id).triggers) {
+        if (trigger.on === event) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * Every trigger on the bearer that answers one of `events` (#469,
    * #1403), in `active` order, with who applied the status that holds it.
    */
@@ -4736,10 +4751,9 @@ export class StatusSet {
       stance: 1 + modifiers.stancesExpireFaster,
     };
     // Read as the tick begins (#2501): a hex ending beside Recurring
-    // Insecurity in this tick still reapplies it.
-    const hexes = [...this.#statuses.values()].filter(
-      ({ id }) => getStatusDefinition(id).category === "hex",
-    );
+    // Insecurity in this tick still reapplies it. A count, not a list, so
+    // a tick allocates nothing for it (#2520).
+    const hexesAtStart = this.countByCategory("hex");
     for (const status of this.#statuses.values()) {
       const rate = categoryRate[getStatusDefinition(status.id).category] ?? 1;
       this.#pulse(status, dt, rate);
@@ -4755,7 +4769,10 @@ export class StatusSet {
         status.remainingSeconds = renews;
         status.durationSeconds = renews;
         this.#hastened.delete(status);
-      } else if (reappliesOnExpiryIf !== undefined && hexes.some((hex) => hex !== status)) {
+      } else if (
+        reappliesOnExpiryIf !== undefined &&
+        hexesAtStart - (getStatusDefinition(status.id).category === "hex" ? 1 : 0) > 0
+      ) {
         status.remainingSeconds = status.durationSeconds;
         this.#hastened.delete(status);
       } else {

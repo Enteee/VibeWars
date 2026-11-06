@@ -2186,11 +2186,12 @@ export class MatchSimulation {
    * Every living bearer whose status's living source stands farther from
    * it than the status's trigger says answers it (#2504), in participant
    * order: Scorpion Wire's step and knockdown. A dead or departed source
-   * answers nothing, so the hex just runs out.
+   * answers nothing, so the hex just runs out. A bearer with no such
+   * trigger is skipped before anything is built (#2520).
    */
   #fireSourceApart(): void {
     for (const record of this.#participants.values()) {
-      if (record.combatant.dead) {
+      if (record.combatant.dead || !record.combatant.statuses.hasTriggerOn("source-bearer-apart")) {
         continue;
       }
       const apart = (sourceId: string, beyond: number): boolean => {
