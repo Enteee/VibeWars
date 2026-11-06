@@ -4082,7 +4082,8 @@ export class MatchSimulation {
       seesBetween: (from, to) => hasLineOfSight(from, to, this.#walls),
       walkable: (point) =>
         isStandable(this.#graph, point) && walkIsClear(this.#graph, record.position, point),
-      teamCentroid: centroids !== undefined && centroids.team.count > 0 ? centroids.team : undefined,
+      teamCentroid:
+        centroids !== undefined && centroids.team.count > 0 ? centroids.team : undefined,
       foeCentroid: centroids !== undefined && centroids.foes.count > 0 ? centroids.foes : undefined,
     });
     this.setInputDirection(record.id, intent.moveDirection);
