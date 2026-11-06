@@ -9,7 +9,7 @@ import {
   type TeamSize,
 } from "../storage/schema.js";
 import { button, h } from "./kit.js";
-import { isAlone, partyStrip, type RailParty } from "./party-strip.js";
+import { queueLine, type RailParty } from "./lobby-window.js";
 
 /**
  * The mode rail on the left of the menu (#1525, #1522 variant C): the
@@ -382,8 +382,8 @@ export function redrawModeRail(
 /**
  * A rail screen (#1525): the rail on the left, and `body` beside it, the
  * screen's own, under its heading and one line saying what it is for. A
- * mode's has the party strip on top (#1526), once someone else is in it
- * (#1782): alone, the title bar already shows all it would.
+ * mode's says on top how long its party has been queued (#1766); who is
+ * in the party is the top bar's Lobby window's (#2385).
  */
 export function railScreen(
   root: HTMLElement,
@@ -394,13 +394,10 @@ export function railScreen(
   teamSizeListener = undefined;
   const panel = h("div", `screen screen-rail screen-${active}`);
   const body = h("div", "rail-body");
-  // Alone, the strip has nothing to say, unless the party is queued (#1766).
-  if (
-    isModeEntry(active) &&
-    shownParty !== undefined &&
-    (!isAlone(shownParty) || shownParty.queuedMs !== null)
-  ) {
-    body.appendChild(partyStrip(shownParty));
+  const queued =
+    isModeEntry(active) && shownParty !== undefined ? queueLine(shownParty) : undefined;
+  if (queued !== undefined) {
+    body.appendChild(queued);
   }
   body.append(h("h2", "rail-title", railLabel(active)), h("p", "rail-goal", goal));
   panel.append(modeRail(active, onSwitch), body);

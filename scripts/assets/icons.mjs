@@ -238,6 +238,12 @@ const ui = {
   settings: () =>
     `<circle cx="12" cy="12" r="6.2" ${stroke(C.ink, 2.2)}/><circle cx="12" cy="12" r="2.4" ${stroke(C.ink, 2)}/>` +
     `<path d="M18.5 12.0L21.8 12.0M16.6 16.6L18.9 18.9M12.0 18.5L12.0 21.8M7.4 16.6L5.1 18.9M5.5 12.0L2.2 12.0M7.4 7.4L5.1 5.1M12.0 5.5L12.0 2.2M16.6 7.4L18.9 5.1" ${stroke(C.ink, 3)}/>`,
+  // Three heads and shoulders, the front one cased off the two behind: the
+  // lobby, who is in it with you (#2385).
+  lobby: () =>
+    `<circle cx="5" cy="7.5" r="2.5" fill="${C.ink}"/><circle cx="19" cy="7.5" r="2.5" fill="${C.ink}"/>` +
+    `<path d="M0.5 19c0-4 2-6.5 4.5-6.5s4.5 2.5 4.5 6.5zM14.5 19c0-4 2-6.5 4.5-6.5s4.5 2.5 4.5 6.5z" fill="${C.ink}"/>` +
+    `<g fill="${C.ink}" stroke="${C.bg}" stroke-width="1.8" paint-order="stroke"><circle cx="12" cy="8" r="3.3"/><path d="M5.5 22c0-5 2.9-8 6.5-8s6.5 3 6.5 8z"/></g>`,
   // A question mark in a ring: the player docs, Help (#1257).
   help: () =>
     `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 2)}/>` +

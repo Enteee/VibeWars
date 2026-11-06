@@ -11,6 +11,7 @@ import { openBeatEditor } from "./beat-editor.js";
 import { musicIcon } from "./icons.js";
 import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
 import { button, h, selectableRow, syncList } from "./kit.js";
+import { attachTopbarPopover } from "./topbar-popover.js";
 
 /**
  * The jukebox (#372, #366 §3.6): what plays, a popover from the ♪ button
@@ -214,35 +215,21 @@ export function jukeboxPanel(
 }
 
 /**
- * The jukebox as a popover from the HUD's ♪ button: open on a click, shut
- * on another, on Esc, or on a click outside it.
+ * The jukebox as a popover from the ♪ button, the HUD's or the top bar's
+ * (#2385): open on a click, shut on another, on Esc, or on a click outside it.
  */
 export function attachJukeboxPopover(
   trigger: HTMLButtonElement,
   parent: HTMLElement,
 ): { dispose(): void } {
-  let open: JukeboxPanel | undefined;
   const paintTrigger = (preference: MusicPreference): void => {
     const icon = trigger.querySelector("img");
     if (icon !== null) {
       icon.src = musicIcon(preference.musicMuted);
     }
   };
-  const close = (): void => {
-    if (open === undefined) {
-      return;
-    }
-    open.dispose();
-    open.element.remove();
-    open = undefined;
-    trigger.setAttribute("aria-expanded", "false");
-    trigger.focus();
-  };
-  const toggle = (): void => {
-    if (open !== undefined) {
-      close();
-      return;
-    }
+  paintTrigger(music().preference);
+  return attachTopbarPopover(trigger, parent, (close) => {
     const panel = jukeboxPanel(close, music());
     // Above the tracks: in a match, how loud comes before what plays.
     const sound = h("div", "hud-sound");
@@ -255,42 +242,15 @@ export function attachJukeboxPopover(
         paintTrigger(preference);
       },
     });
-    open = {
+    panel.element.classList.add("screen", "hud-jukebox");
+    panel.element.setAttribute("aria-label", "Sound and music");
+    return {
       element: panel.element,
+      focus: panel.element.querySelector<HTMLElement>(".jukebox-play") ?? panel.element,
       dispose() {
         unmountSound();
         panel.dispose();
       },
     };
-    open.element.classList.add("screen", "hud-jukebox");
-    open.element.setAttribute("role", "dialog");
-    open.element.setAttribute("aria-label", "Sound and music");
-    parent.appendChild(open.element);
-    trigger.setAttribute("aria-expanded", "true");
-    open.element.querySelector<HTMLElement>(".jukebox-play")?.focus();
-  };
-  const onOutside = (event: PointerEvent): void => {
-    const target = event.target;
-    if (
-      open !== undefined &&
-      target instanceof Node &&
-      !open.element.contains(target) &&
-      !trigger.contains(target)
-    ) {
-      close();
-    }
-  };
-  paintTrigger(music().preference);
-  trigger.setAttribute("aria-expanded", "false");
-  trigger.addEventListener("click", toggle);
-  document.addEventListener("pointerdown", onOutside);
-  return {
-    dispose() {
-      trigger.removeEventListener("click", toggle);
-      document.removeEventListener("pointerdown", onOutside);
-      open?.dispose();
-      open?.element.remove();
-      open = undefined;
-    },
-  };
+  });
 }

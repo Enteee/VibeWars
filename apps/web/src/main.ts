@@ -128,7 +128,7 @@ import { dismissToast, toast } from "./ui/kit.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
-import { isAlone, lookingLabel, partyOf } from "./ui/party-strip.js";
+import { isAlone, lookingLabel, partyOf } from "./ui/lobby-window.js";
 import {
   isModeEntry,
   loadRail,
@@ -1016,6 +1016,7 @@ async function main(): Promise<void> {
     const turn = joinTurns.take();
     following = move.code;
     setRailParty(undefined);
+    topbarView.setParty(undefined);
     topbarView.setLobby({ code: move.code, isHost: false, open: false, party: 0, joining: true });
     setStatus("connecting…", "offline");
     menuNotice = undefined;
@@ -1595,7 +1596,7 @@ async function main(): Promise<void> {
       ? Date.now() - teamQueue.since
       : null;
 
-  /** The queue strip's wait, each second; the screen again once Play against bots is offered. */
+  /** The queue line's wait, each second; the screen again once Play against bots is offered. */
   const tickTeamQueue = (): void => {
     const current = teamQueue;
     if (current === undefined || current.parked !== undefined || lobby !== current.party) {
@@ -1688,7 +1689,7 @@ async function main(): Promise<void> {
       name,
       entrant.guild,
       {
-        // The queue strip says the wait and how many teams it last heard
+        // The queue line says the wait and how many teams it last heard
         // searching (#1881), none while the relays are down; the queue's
         // other states are its own.
         onState: (state) => {
@@ -1793,11 +1794,12 @@ async function main(): Promise<void> {
 
   /** The rail and the title bar name `snapshot`'s party, or none (#1526). */
   const syncParty = (snapshot: LobbySnapshot | undefined): void => {
-    setRailParty(
+    const party =
       snapshot === undefined
         ? undefined
-        : partyOf(snapshot, queuedMsOf(snapshot), teamQueue?.teams),
-    );
+        : partyOf(snapshot, queuedMsOf(snapshot), teamQueue?.teams);
+    setRailParty(party);
+    topbarView.setParty(party);
     topbarView.setLobby(
       snapshot === undefined
         ? undefined

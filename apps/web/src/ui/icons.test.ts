@@ -22,6 +22,7 @@ import {
   attackingIcon,
   fullscreenIcon,
   insigniaIcon,
+  lobbyIcon,
   LOBBY_ICON,
   musicIcon,
   offhandIcon,
@@ -111,6 +112,10 @@ describe("icons", () => {
       expect(fs.existsSync(path.join(PUBLIC, musicIcon(muted))), String(muted)).toBe(true);
     }
     expect(musicIcon(true)).not.toBe(musicIcon(false));
+  });
+
+  it("has a file under public/ for the top bar's Lobby (#2385)", () => {
+    expect(fs.existsSync(path.join(PUBLIC, lobbyIcon()))).toBe(true);
   });
 
   it("has a file under public/ for Options and both fullscreen states (#454)", () => {
