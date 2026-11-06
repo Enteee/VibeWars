@@ -1,4 +1,4 @@
-import { STARTER_BUILDS } from "@vibewars/game-core";
+import { STARTER_BUILDS, decodeTemplateCode, encodeTemplateCode } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { toJson } from "./match-harness.test-support.js";
@@ -6,6 +6,7 @@ import {
   MAX_RECORD_DURATION_SECONDS,
   MAX_RECORD_TEAM,
   RECORD_CLOCK_SKEW_SECONDS,
+  recordTemplate,
   validateMatchRecord,
 } from "./match-record.js";
 import { sanitizeCharacterName } from "./names.js";
@@ -19,16 +20,22 @@ const fail = (): never => {
   throw new Error("no such starter build");
 };
 
-const build = (index: number) => {
-  const { name: _, ...played } = STARTER_BUILDS.at(index % STARTER_BUILDS.length) ?? fail();
-  return toJson(played);
-};
+const template = (index: number) =>
+  recordTemplate(STARTER_BUILDS.at(index % STARTER_BUILDS.length) ?? fail());
+
+/** A well-formed code for a build no Warrior may play: Strength 15. */
+const illegal = encodeTemplateCode({
+  primaryProfession: "warrior",
+  secondaryProfession: undefined,
+  attributes: [{ attributeId: "warrior.strength", rank: 15 }],
+  skillBar: [null, null, null, null, null, null, null, null],
+});
 
 const player = (name: string, index = 0) => ({
   name,
   guildTag: "VIBE",
   bot: false,
-  build: build(index),
+  template: template(index),
 });
 
 const valid = () => ({
@@ -104,17 +111,12 @@ describe("validateMatchRecord (#2528)", () => {
     ["a name with padding", { name: " Ann " }],
     ["a bad guild tag", { guildTag: "TOOLONG" }],
     ["no bot flag", { bot: "no" }],
-    ["no build", { build: null }],
-    ["a malformed build", { build: { primaryProfession: "pirate" } }],
-    [
-      "an illegal build",
-      {
-        build: {
-          ...(build(0) as object),
-          attributes: [{ attributeId: "warrior.strength", rank: 99 }],
-        },
-      },
-    ],
+    ["no template", { template: null }],
+    ["a whole build for a template", { template: toJson(STARTER_BUILDS[0]) }],
+    ["a malformed template", { template: "not a code" }],
+    ["a template written otherwise, padded", { template: `${template(0)}AAAA` }],
+    ["a template over 64 characters", { template: `${template(0)}${"A".repeat(64)}` }],
+    ["an illegal build", { template: illegal.ok ? illegal.code : "" }],
   ])("refuses a player with %s", (_, change) => {
     const record = valid();
     const [first, second] = record.teams;
@@ -144,7 +146,27 @@ describe("validateMatchRecord (#2528)", () => {
       name: "Ann",
       guildTag: "VIBE",
       bot: false,
-      build: expect.any(Object),
+      template: template(0),
     });
+  });
+});
+
+describe("recordTemplate (#2528)", () => {
+  it("holds the professions, ranks and bar as played", () => {
+    const played = STARTER_BUILDS[0] ?? fail();
+    const decoded = decodeTemplateCode(recordTemplate(played));
+    expect(decoded.ok && decoded.build).toEqual({
+      primaryProfession: played.primaryProfession,
+      secondaryProfession: played.secondaryProfession,
+      attributes: played.attributes.filter(({ rank }) => rank > 0),
+      skillBar: played.skillBar,
+    });
+  });
+
+  it("leaves out a skill GW1 does not have", () => {
+    const played = STARTER_BUILDS[0] ?? fail();
+    const skillBar = ["necromancer.blood-renewal-lite", ...played.skillBar.slice(1)];
+    const decoded = decodeTemplateCode(recordTemplate({ ...played, skillBar }));
+    expect(decoded.ok && decoded.build.skillBar).toEqual([null, ...played.skillBar.slice(1)]);
   });
 });

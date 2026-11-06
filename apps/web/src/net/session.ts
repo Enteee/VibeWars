@@ -57,10 +57,10 @@ import {
   joinHostRoom,
   joinQueueBoard,
   joinRoom,
+  publishRecord,
   roomSelfId,
   shareLobbyRelay,
 } from "./transport/index.js";
-import { publishMatchRecord } from "./transport/match-records.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
 import type { RelayShare } from "./transport/relay-offer.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
@@ -220,7 +220,7 @@ function startMatch(plan: MatchPlan) {
     // must not cost them the end of the match.
     publishRecord: (record) => {
       try {
-        publishMatchRecord(record);
+        publishRecord(record);
       } catch (error) {
         console.warn("[web] could not publish the match record", error);
       }

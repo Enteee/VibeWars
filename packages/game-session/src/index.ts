@@ -128,6 +128,7 @@ export {
   MAX_RECORD_DURATION_SECONDS,
   MAX_RECORD_TEAM,
   RECORD_CLOCK_SKEW_SECONDS,
+  recordTemplate,
   validateMatchRecord,
 } from "./match-record.js";
 export type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "./match-record.js";

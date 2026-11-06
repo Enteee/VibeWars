@@ -1,5 +1,5 @@
 import { STARTER_BUILDS } from "@vibewars/game-core";
-import { type MatchRecord } from "@vibewars/game-session";
+import { MAX_RECORD_TEAM, recordTemplate, type MatchRecord } from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { arenaIds } from "../maps.js";
@@ -20,10 +20,7 @@ const fail = (): never => {
   throw new Error("no such starter build");
 };
 
-const played = (index: number) => {
-  const { name: _, ...build } = STARTER_BUILDS.at(index) ?? fail();
-  return build;
-};
+const played = (index: number) => recordTemplate(STARTER_BUILDS.at(index) ?? fail());
 
 const RECORD: MatchRecord = {
   v: 1,
@@ -34,8 +31,8 @@ const RECORD: MatchRecord = {
   winningTeam: 0,
   endReason: "annihilation",
   teams: [
-    { players: [{ name: "Ann", guildTag: "VIBE", bot: false, build: played(0) }] },
-    { players: [{ name: "Elementalist Bot", guildTag: null, bot: true, build: played(1) }] },
+    { players: [{ name: "Ann", guildTag: "VIBE", bot: false, template: played(0) }] },
+    { players: [{ name: "Elementalist Bot", guildTag: null, bot: true, template: played(1) }] },
   ],
 };
 
@@ -130,6 +127,26 @@ describe("match records on Nostr (#2528)", () => {
     return Promise.resolve().then(() => {
       expect(sockets.every((socket) => socket.closed)).toBe(true);
     });
+  });
+
+  it("publishes a full 8v8, every name and tag as long as allowed, every bar the longest", () => {
+    const longest = STARTER_BUILDS.map(recordTemplate).reduce((a, b) =>
+      b.length > a.length ? b : a,
+    );
+    const team = (side: number) => ({
+      players: Array.from({ length: MAX_RECORD_TEAM }, (_, index) => ({
+        // Four bytes a grapheme, sixteen graphemes.
+        name: `${"🏹".repeat(14)}${String(side)}${String(index)}`,
+        guildTag: "WWWW",
+        bot: false,
+        template: longest,
+      })),
+    });
+    const full: MatchRecord = { ...RECORD, teams: [team(0), team(1)] };
+    const sockets = publish(full);
+    sockets[0]?.handlers.open();
+    const event = sockets[0] === undefined ? undefined : eventSent(sockets[0]);
+    expect(event?.content).toBe(JSON.stringify(full));
   });
 
   it("publishes nothing over 8 KB", () => {

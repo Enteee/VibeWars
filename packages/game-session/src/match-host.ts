@@ -70,7 +70,12 @@ import {
 import { createCallBoard, type Team } from "./calls.js";
 import { packCombat } from "./combat-batches.js";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
-import { MATCH_RECORD_VERSION, type MatchRecord, type MatchRecordTeam } from "./match-record.js";
+import {
+  MATCH_RECORD_VERSION,
+  recordTemplate,
+  type MatchRecord,
+  type MatchRecordTeam,
+} from "./match-record.js";
 import { NO_GUILD, sanitizeGuild, sanitizeName, type Guild } from "./names.js";
 import { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 import { chainMarks, chainMarksPredicted } from "./chain-marks.js";
@@ -412,11 +417,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const team = (side: 0 | 1): MatchRecordTeam => ({
       players: [...everSeated.values()]
         .filter((seat) => seat.team === side)
-        .map(({ name, guildTag, bot, build: { name: _, ...build } }) => ({
+        .map(({ name, guildTag, bot, build }) => ({
           name,
           guildTag,
           bot,
-          build,
+          template: recordTemplate(build),
         })),
     });
     return {

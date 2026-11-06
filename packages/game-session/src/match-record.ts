@@ -1,6 +1,9 @@
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
-  parsePlayerBuild,
+  decodeTemplateCode,
+  defaultEquipmentFor,
+  encodeTemplateCode,
+  getSkill,
   validatePlayerBuild,
   type MatchEndReason,
   type PlayerBuild,
@@ -27,6 +30,9 @@ export const MAX_RECORD_TEAM = 8;
 /** The longest match a record may claim, in seconds. */
 export const MAX_RECORD_DURATION_SECONDS = 7200;
 
+/** The longest template code a record may hold: GW1's longest is 64 characters. */
+const MAX_TEMPLATE_LENGTH = 64;
+
 /** How far ahead of the reader's clock `endedAt` may be, in seconds. */
 export const RECORD_CLOCK_SKEW_SECONDS = 300;
 
@@ -34,8 +40,12 @@ export interface MatchRecordPlayer {
   readonly name: string;
   readonly guildTag: string | null;
   readonly bot: boolean;
-  /** As played: the lobby's, or the hello's once the host accepted it. */
-  readonly build: Omit<PlayerBuild, "name">;
+  /**
+   * The build as played (the lobby's, or the hello's once the host
+   * accepted it) as a GW1 template code: professions, ranks and bar in
+   * about 40 bytes, where the whole build takes over a kilobyte.
+   */
+  readonly template: string;
 }
 
 export interface MatchRecordTeam {
@@ -97,22 +107,46 @@ function parsePlayer(value: unknown): MatchRecordPlayer | undefined {
   ) {
     return undefined;
   }
-  // The record keeps the name on the player, not the build: lent back,
-  // the build parses and validates as any other.
-  const build = isRecord(value.build) ? parsePlayerBuild({ ...value.build, name }) : undefined;
-  if (
-    build === undefined ||
-    validatePlayerBuild(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes).length > 0
-  ) {
+  const { template } = value;
+  if (typeof template !== "string" || template.length > MAX_TEMPLATE_LENGTH) {
     return undefined;
   }
-  const { primaryProfession, secondaryProfession, attributes, skillBar, equipment } = build;
-  return {
+  // Every skill one this game has, and written as this game writes it:
+  // no padding or wider fields to carry anything else.
+  const decoded = decodeTemplateCode(template);
+  if (!decoded.ok || decoded.missingSkills.length > 0) {
+    return undefined;
+  }
+  const written = encodeTemplateCode(decoded.build);
+  if (!written.ok || written.code !== template) {
+    return undefined;
+  }
+  // Lent the name and the primary's own equipment, the build validates
+  // as any other.
+  const build: PlayerBuild = {
     name,
-    guildTag,
-    bot: value.bot,
-    build: { primaryProfession, secondaryProfession, attributes, skillBar, equipment },
+    ...decoded.build,
+    equipment: defaultEquipmentFor(decoded.build.primaryProfession),
   };
+  if (validatePlayerBuild(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes).length > 0) {
+    return undefined;
+  }
+  return { name, guildTag, bot: value.bot, template };
+}
+
+/**
+ * `build` as a record holds it: its template code, with any skill GW1
+ * does not have left out, as the code cannot name it.
+ */
+export function recordTemplate(build: PlayerBuild): string {
+  const skillBar = build.skillBar.map((id) =>
+    id !== null && getSkill(id)?.gwId === undefined ? null : id,
+  );
+  const encoded = encodeTemplateCode({ ...build, skillBar });
+  if (!encoded.ok) {
+    throw new Error(`no template code for a GW1 bar: ${encoded.problem}`);
+  }
+  return encoded.code;
 }
 
 function parseTeam(value: unknown): MatchRecordTeam | undefined {

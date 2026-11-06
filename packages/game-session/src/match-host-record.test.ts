@@ -8,11 +8,11 @@ import {
   startMatch,
   starterBuild,
 } from "./match-harness.test-support.js";
-import { validateMatchRecord, type MatchRecord } from "./match-record.js";
+import { recordTemplate, validateMatchRecord, type MatchRecord } from "./match-record.js";
 
 /** The finished match's record (#2528): what the host hands its publisher. */
 
-const played = ({ name: _, ...build }: PlayerBuild) => build;
+const played = (build: PlayerBuild) => recordTemplate(build);
 
 function recording() {
   const records: MatchRecord[] = [];
@@ -72,7 +72,7 @@ describe("a finished match's record (#2528)", () => {
             name: "Me",
             guildTag: "VIBE",
             bot: false,
-            build: played(starterBuild("Warrior/Monk")),
+            template: played(starterBuild("Warrior/Monk")),
           },
         ],
       },
@@ -82,7 +82,7 @@ describe("a finished match's record (#2528)", () => {
             name: "Elementalist Bot",
             guildTag: null,
             bot: true,
-            build: played(starterBuild("Elementalist/Mesmer")),
+            template: played(starterBuild("Elementalist/Mesmer")),
           },
         ],
       },
@@ -112,7 +112,7 @@ describe("a finished match's record (#2528)", () => {
 
     expect(records).toHaveLength(1);
     expect(records[0]?.teams[1].players).toEqual([
-      expect.objectContaining({ build: played(starterBuild("Elementalist/Mesmer")) }),
+      expect.objectContaining({ template: played(starterBuild("Elementalist/Mesmer")) }),
     ]);
   });
 
