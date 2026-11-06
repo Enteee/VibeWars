@@ -133,6 +133,8 @@ const NO_BOT_USE = new Set([
   "paragon.leaders-zeal",
   "paragon.make-your-time",
   "paragon.song-of-power",
+  // Inspirational Speech (#2413): an ally's adrenaline, the same.
+  "paragon.inspirational-speech",
   // Godspeed, "Lead the Way!" and "Brace Yourself!" (#1955): cast by
   // play-build's rider rule, not an intent.
   "paragon.brace-yourself",
@@ -220,6 +222,8 @@ const NO_BOT_USE = new Set([
   "monk.scribes-insight",
   // Spirit Channeling (#2368): Energy regeneration, no use of its own.
   "ritualist.spirit-channeling",
+  // Offering of Spirit (#2413), the same: Energy, no use of its own.
+  "ritualist.offering-of-spirit",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
   "paragon.blazing-finale",
   "paragon.enduring-harmony",
@@ -338,6 +342,9 @@ const NO_BOT_USE = new Set([
   // Energy for each sacrifice (#2275): worth only beside a sacrifice, which
   // no rule the bot has pairs.
   "necromancer.masochism",
+  // Energy each time an enchantment on the bearer ends (#2413), the same:
+  // worth only beside enchantments, which no rule the bot has pairs.
+  "dervish.meditation",
   // Energy for its caster only when a foe hurts its bearer (#2286), and
   // heals only round its caster's later Protection and Divine Favor
   // spells: no role the bot weighs.

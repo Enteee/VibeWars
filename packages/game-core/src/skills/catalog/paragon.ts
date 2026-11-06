@@ -3262,4 +3262,40 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "paragon.inspirational-speech",
+    name: "Inspirational Speech",
+    gwId: 2207,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.motivation",
+    cost: { kind: "energy", amount: 5 },
+    // "You lose all adrenaline": the Paragon's pools empty as it is used.
+    losesAllAdrenaline: true,
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Staples (#2413). "...target other ally gains 1...8 strikes of
+    // adrenaline": 6.6 at rank 12, at the Paragon's Motivation; each of
+    // the ally's adrenal skills capped at its cost, none if it has none.
+    effects: [
+      {
+        kind: "adrenaline-gain",
+        strikes: { scaling: { attributeId: "paragon.motivation", atZero: 1, atTwelve: 6.6 } },
+        recipient: "target",
+      },
+    ],
+  },
 ];

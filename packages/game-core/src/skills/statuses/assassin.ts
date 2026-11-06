@@ -55,6 +55,8 @@ export type AssassinStatusId =
   // Mechanics (#2362).
   | "smoke-powder-defense"
   | "flashing-blades"
+  // Staples (#2413).
+  | "sharpen-daggers"
   | "assassins-remedy";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
@@ -490,6 +492,28 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
         skillId: "assassin.flashing-blades",
       },
     ],
+  }),
+  // Staples (#2413). "For 5...30 seconds, your dagger attacks cause
+  // Bleeding for 5...15 seconds": 13 at rank 12, at its Critical Strikes.
+  // A plain swing too; a sword or a spear, a miss or a block, none.
+  "sharpen-daggers": define("sharpen-daggers", "Sharpen Daggers", "enchantment", {
+    profession: "assassin",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "daggers",
+      weaponDamage: undefined,
+      atSourceRanks: false,
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "bleeding",
+          durationSeconds: {
+            scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 13 },
+          },
+        },
+      ],
+      skillId: "assassin.sharpen-daggers",
+    },
   }),
   // "For 30 seconds, the next 1...10 attack skills you use remove one
   // condition" (#2428): Zealous Anthem's, its uses at the caster's rank.
