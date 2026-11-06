@@ -40,7 +40,6 @@ export type MissingMechanic =
   | "interrupt-guard-strip-enchantment"
   | "damage-per-second-cap"
   | "spell-damage-taken-multiplier"
-  | "weapon-element"
   | "weapon-filter-negation";
 
 /** What each missing mechanic would mean to build, in one line. */
@@ -62,7 +61,6 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
       "the bearer cannot be interrupted, and an attempt ends the enchantment",
     "damage-per-second-cap": "damage taken in one second is capped",
     "spell-damage-taken-multiplier": "spells deal a multiple of their damage to the bearer",
-    "weapon-element": "the wielder's weapon deals an element's damage",
     "weapon-filter-negation": "a bonus applies with every weapon except one type",
   });
 
@@ -90,7 +88,6 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     1542: ["interrupt-guard-strip-enchantment"], // Pious Concentration
     1586: ["damage-per-second-cap"], // Angelic Protection
     1757: ["spell-damage-taken-multiplier"], // Veil of Thorns
-    1760: ["weapon-element"], // Ebon Dust Aura
     2187: ["weapon-filter-negation"], // Way of the Master
   });
 

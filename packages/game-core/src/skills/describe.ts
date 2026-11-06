@@ -979,11 +979,14 @@ function statusText(
       triggerRanks,
     );
     // A conjure's (#1984): "while you wield a fire weapon, foes your
-    // attacks hit take 17 fire damage".
+    // attacks hit take 17 fire damage"; Ebon Dust Aura's "an earth" (#2513).
     parts.push(
       ...(weaponDamage === undefined
         ? hits
-        : hits.map((hit) => `while you wield a ${weaponDamage} weapon, ${hit}`)),
+        : hits.map(
+            (hit) =>
+              `while you wield ${/^[aeiou]/.test(weaponDamage) ? "an" : "a"} ${weaponDamage} weapon, ${hit}`,
+          )),
     );
     // Order of Apostasy's price (#1975), the caster's.
     const price = definition.onAttackHit.sourceLosesPerRemoved;
