@@ -3204,4 +3204,53 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     effects: [],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2479)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "dervish.lyssas-haste",
+    name: "Lyssa's Haste",
+    gwId: 1512,
+    type: "enchantment",
+    elite: false,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    failChanceUnless: { attributeId: "dervish.wind-prayers", rank: 5, chance: 0.5 },
+    // The base record; its numbers are the PvP split's (3348). "For 3...15
+    // seconds, your Dervish enchantments recharge 33% faster. When you
+    // activate this enchantment, all adjacent foes are interrupted. When
+    // this enchantment ends, all adjacent foes are interrupted": the first
+    // interrupt here, the faster recharge and the second in the status.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [{ kind: "interrupt" }],
+      },
+      {
+        kind: "apply-status",
+        statusId: "lyssas-haste",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.wind-prayers", atZero: 3, atTwelve: 12.6 },
+        },
+      },
+    ],
+  },
 ];

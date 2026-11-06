@@ -3631,6 +3631,57 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2479)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ritualist.death-pact-signet",
+    name: "Death Pact Signet",
+    gwId: 1481,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 4,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The base record; its numbers are the PvP split's (2872). "Resurrect
+    // target party member with your current Health and 15...100% maximum
+    // Energy. The next time that ally dies within 120 seconds, so do you":
+    // the pact goes on after the raise, which clears statuses, and only on
+    // one this cast raised.
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "caster-current", casterLosesFractionOfCurrent: 0 },
+        energyPercent: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 83 },
+        },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+      {
+        kind: "if",
+        condition: { kind: "resurrected" },
+        effects: [
+          { kind: "apply-status", statusId: "death-pact-signet", durationSeconds: { flat: 120 } },
+        ],
+      },
+    ],
+  },
 ];
 
 /**

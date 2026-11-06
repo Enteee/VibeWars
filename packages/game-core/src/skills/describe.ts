@@ -570,6 +570,17 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.noDeathPenalty) {
     parts.push("no death penalty");
   }
+  // Death Pact Signet's (#2479).
+  if (definition.killsSourceOnDeath) {
+    parts.push("when the bearer dies, so does its caster");
+  }
+  // "We Shall Return!"'s (#2479).
+  if (definition.resurrectionBonus !== undefined) {
+    const { healthPercent, energyPercent } = definition.resurrectionBonus;
+    const health = statText(healthPercent, ranks, (value) => `${whole(value)}%`);
+    const energy = statText(energyPercent, ranks, (value) => `${whole(value)}%`);
+    parts.push(`allies you resurrect return with +${health} Health and +${energy} Energy`);
+  }
   if (definition.killsBearerOnEnd) {
     parts.push(`${selfOnly ? "you die" : "the bearer dies"} when it ends`);
     if (definition.exploitsCorpseOnDeath) {
@@ -714,6 +725,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.preventsEnchantments) {
     parts.push("stripped of all enchantments, and cannot be enchanted");
+  }
+  if (definition.refusesEnchantments) {
+    parts.push("cannot be the target of enchantments");
   }
   if (definition.preventsShoutsAndChants) {
     parts.push("cannot use shouts or chants");

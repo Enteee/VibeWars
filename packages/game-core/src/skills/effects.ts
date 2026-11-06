@@ -772,6 +772,23 @@ function resurrect(
 }
 
 /**
+ * The percentage points of maximum Health and Energy the caster's statuses
+ * add to a resurrection it performs (#2479): "We Shall Return!"'s.
+ */
+function resurrectionBonus(caster: Combatant): { health: number; energy: number } {
+  let health = 0;
+  let energy = 0;
+  for (const { id, ranks } of caster.statuses.active) {
+    const bonus = getStatusDefinition(id).resurrectionBonus;
+    if (bonus !== undefined) {
+      health += statAt(bonus.healthPercent, ranks);
+      energy += statAt(bonus.energyPercent, ranks);
+    }
+  }
+  return { health, energy };
+}
+
+/**
  * How many times a resurrection's shares count (#474): once, or with
  * `perPartyMemberWithin`, once for the caster and each living team-mate
  * within that radius of it, creatures aside (ADR-0035): Signet of
@@ -2600,10 +2617,14 @@ export function applyEffect(
         return events;
       }
       const shares = partyShares(effect, caster, context.surroundings);
-      const share = (percent: number): number => Math.min(100, percent * shares) / 100;
+      // "We Shall Return!" on the caster (#2479): points added, capped at 100.
+      const bonus = resurrectionBonus(caster);
+      const share = (percent: number, more: number): number =>
+        Math.min(100, percent * shares + more) / 100;
       let health: number;
       if (effect.health.kind === "percent") {
-        health = target.maxHealth * share(resolveMagnitude(effect.health.percent, caster));
+        health =
+          target.maxHealth * share(resolveMagnitude(effect.health.percent, caster), bonus.health);
       } else {
         // Not damage, and half of what is left is less than all of it: it
         // never kills, as Infuse Health's loss, and none of it while
@@ -2614,9 +2635,14 @@ export function applyEffect(
           events.push({ kind: "sacrifice", targetId: caster.id, amount: lost });
           caster.statuses.recordSacrifice();
         }
-        health = caster.health;
+        health = caster.health + (target.maxHealth * bonus.health) / 100;
       }
-      resurrect(target, health, share(resolveMagnitude(effect.energyPercent, caster)), events);
+      resurrect(
+        target,
+        health,
+        share(resolveMagnitude(effect.energyPercent, caster), bonus.energy),
+        events,
+      );
       if (effect.at === "caster") {
         events.push({ kind: "teleported", targetId: target.id, toId: caster.id });
       }

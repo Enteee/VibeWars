@@ -58,6 +58,9 @@ const NO_BOT_USE = new Set([
   // an ally's sacrifice or on the caster's foe-targeted skills.
   "necromancer.dark-aura",
   "necromancer.demonic-flesh",
+  // "We Shall Return!" (#2479), the same, a bonus that waits on an
+  // ally's resurrection skill.
+  "paragon.we-shall-return",
   // Aura of Displacement, Shadow Meld and Shadow of Haste (#1826): a step
   // there and back is nothing the bot plans for yet.
   "assassin.aura-of-displacement",

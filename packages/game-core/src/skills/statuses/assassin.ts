@@ -61,7 +61,9 @@ export type AssassinStatusId =
   | "way-of-the-lotus"
   | "mark-of-insecurity"
   // Dropped leftovers (#2446).
-  | "augury-of-death";
+  | "augury-of-death"
+  // Mechanics (#2479).
+  | "shadow-shroud";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -588,5 +590,10 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
         skillId: "assassin.augury-of-death",
       },
     ],
+  }),
+  // "Target foe cannot be the target of enchantments" (#2479): those on it stay.
+  "shadow-shroud": define("shadow-shroud", "Shadow Shroud", "hex", {
+    profession: "assassin",
+    refusesEnchantments: true,
   }),
 };

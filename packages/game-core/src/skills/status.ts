@@ -283,6 +283,8 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
     definition.damageToHealing?.cap,
     definition.nextIncomingHexDurationMultiplier?.multiplier,
     ...definition.conditionalArmor.map(({ amount }) => amount),
+    definition.resurrectionBonus?.healthPercent,
+    definition.resurrectionBonus?.energyPercent,
   ]) {
     if (stat !== undefined && typeof stat !== "number") {
       attributes.add(stat.scaling.attributeId);
@@ -552,6 +554,21 @@ export interface StatusDefinition {
   /** A death while the bearer holds it pays no death penalty (#2311), its end-death too. */
   readonly noDeathPenalty: boolean;
   /**
+   * The bearer's death while it holds it kills its source too, sparing the
+   * source the death penalty (#2479): Death Pact Signet's "the next time
+   * that ally dies within 120 seconds, so do you". A dead source is left
+   * as it is; a source that holds one of its own passes the death on.
+   */
+  readonly killsSourceOnDeath: boolean;
+  /**
+   * Percentage points of maximum Health and Energy added to what each
+   * resurrection the bearer's skill brings back, each capped at 100 (#2479):
+   * "We Shall Return!"'s "their fallen allies return with 10...75% more
+   * Health and 5...50% more Energy". `undefined`: none.
+   */
+  readonly resurrectionBonus:
+    { readonly healthPercent: StatusStat; readonly energyPercent: StatusStat } | undefined;
+  /**
    * Damage added to each physical hit the bearer takes (#1064):
    * Winnowing's 4. After the attacker's side and before armor, fixed
    * "deals only N damage" hits included: it is on the victim, not on the
@@ -763,6 +780,12 @@ export interface StatusDefinition {
    * paid, the bearer's own on itself included.
    */
   readonly preventsEnchantments: boolean;
+  /**
+   * The bearer cannot be the target of enchantments (#2479): Shadow
+   * Shroud's. As `preventsEnchantments`, but strips nothing on gain: the
+   * enchantments already on it stay.
+   */
+  readonly refusesEnchantments: boolean;
   /**
    * The bearer cannot use a shout or a chant (#1732): Well of Silence's.
    * Refused before anything is paid, as `preventsAttacks` refuses an
@@ -4674,12 +4697,16 @@ export function damageTypeTaken(
 }
 
 /**
- * Whether a bearer of `statuses` can hold no enchantment (#1732,
- * `preventsEnchantments`): the refusal of an enchantment spell at it
- * asks this, and so does every status landing on it.
+ * Whether a bearer of `statuses` can be given no enchantment (#1732,
+ * `preventsEnchantments`; #2479, `refusesEnchantments`): the refusal of
+ * an enchantment spell at it asks this, and so does every status landing
+ * on it.
  */
 export function preventsEnchantments(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
-  return statuses.some(({ id }) => getStatusDefinition(id).preventsEnchantments);
+  return statuses.some(({ id }) => {
+    const definition = getStatusDefinition(id);
+    return definition.preventsEnchantments || definition.refusesEnchantments;
+  });
 }
 
 /**
