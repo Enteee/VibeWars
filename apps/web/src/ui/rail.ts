@@ -13,8 +13,9 @@ import { queueLine, type RailParty } from "./lobby-window.js";
 
 /**
  * The mode rail on the left of the menu (#1525, #1522 variant C): the
- * five modes, top to bottom, then Character Builder and Team Builder at
- * its bottom. Each entry is a screen of its own; the one shown is marked.
+ * five modes, top to bottom, then Character Builder, Team Builder and
+ * Matches at its bottom. Each entry is a screen of its own; the one
+ * shown is marked.
  * The modes are the lobby's (#1526): a guest's follow its host, and are
  * locked; the builders are everyone's.
  */

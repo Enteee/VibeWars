@@ -379,7 +379,7 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
 }) => {
   await openMenu(page);
   const rail = page.locator(".mode-rail .mode-rail-entry");
-  await expect(rail).toHaveCount(7);
+  await expect(rail).toHaveCount(8);
   for (const label of [
     "Random Arena",
     "Team Arena",
@@ -388,6 +388,7 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
     "Hosted Game",
     "Character Builder",
     "Team Builder",
+    "Matches",
   ]) {
     await expect(
       page.locator(".mode-rail").getByRole("button", { name: label, exact: true }),
