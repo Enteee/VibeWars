@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { inset, stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -22,8 +22,12 @@ const rows = {
   "life-transfer": [
     "hex",
     (c) =>
-      `<path d="M8 5c2.500 3.500 4 5.500 4 8a4 4 0 0 1-8 0c0-2.500 1.500-4.500 4-8z" ${stroke(c, 1.8)}/>` +
-      `<path d="M13.500 13h6M17.500 10.500 20 13l-2.500 2.500" ${stroke(c, 1.8)}/>`,
+      inset(
+        1,
+        `<path d="M8 5c2.500 3.500 4 5.500 4 8a4 4 0 0 1-8 0c0-2.500 1.500-4.500 4-8z" ${stroke(c, 1.8)}/>` +
+          `<path d="M13.500 13h6M17.500 10.500 20 13l-2.500 2.500" ${stroke(c, 1.8)}/>`,
+        1,
+      ),
   ],
   // Skill effect: a small drop arriving at a big one, the Health gained.
   "life-transfer-regen": [

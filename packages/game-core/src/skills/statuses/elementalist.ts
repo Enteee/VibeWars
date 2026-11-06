@@ -84,6 +84,8 @@ export type ElementalistStatusId =
   | "burning-speed"
   // Staples (#2414).
   | "flame-djinns-haste"
+  | "frigid-armor"
+  | "stone-sheath"
   // Staples (#2367).
   | "earthen-shackles"
   | "ether-prism"
@@ -951,6 +953,29 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   "flame-djinns-haste": define("flame-djinns-haste", "Flame Djinn's Haste", "enchantment", {
     profession: "elementalist",
     moveSpeedMultiplier: 1.25,
+  }),
+  // "For 10...25 seconds, you have +10...40 armor against physical damage
+  // and cannot be set on fire" (#2373): a Burning already on you runs on.
+  "frigid-armor": define("frigid-armor", "Frigid Armor", "enchantment", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    conditionalArmor: [
+      {
+        amount: { scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 34 } },
+        conditions: [{ kind: "vs-physical" }],
+      },
+    ],
+    refuses: ["burning"],
+  }),
+  // "For 5...20 seconds, you and target ally have +1...30 armor and are
+  // immune to critical hits" (#2373).
+  "stone-sheath": define("stone-sheath", "Stone Sheath", "enchantment", {
+    profession: "elementalist",
+    attribute: "elementalist.earth-magic",
+    armorModifier: {
+      scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 24.2 },
+    },
+    preventsCriticalHits: true,
   }),
 };
 

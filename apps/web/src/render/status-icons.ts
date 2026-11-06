@@ -678,6 +678,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "harriers-grasp": icon("harriers-grasp"),
   "pious-renewal": icon("pious-renewal"),
   "glyph-of-restoration": icon("glyph-of-restoration"),
+  // Refusals, crit immunity and faster expiry (#2373).
+  "frigid-armor": icon("frigid-armor"),
+  "stone-sheath": icon("stone-sheath"),
+  "air-of-disenchantment": icon("air-of-disenchantment"),
+  "mark-of-insecurity": icon("mark-of-insecurity"),
 };
 
 const GAP = 2;

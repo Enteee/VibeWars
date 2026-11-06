@@ -92,6 +92,7 @@ export type MesmerStatusId =
   // Staples (#2414).
   | "sympathetic-visage"
   | "mantra-of-inscriptions"
+  | "air-of-disenchantment"
   // Staples (#2367).
   | "shared-burden"
   // Mechanics (#2438).
@@ -1146,5 +1147,14 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         },
       ),
     ],
+  }),
+  // "For 5...20 seconds, enchantments expire 150...300% faster on those
+  // foes" (#2373).
+  "air-of-disenchantment": define("air-of-disenchantment", "Air of Disenchantment", "hex", {
+    profession: "mesmer",
+    attribute: "mesmer.illusion-magic",
+    enchantmentsExpireFaster: {
+      scaling: { attributeId: "mesmer.illusion-magic", atZero: 1.5, atTwelve: 2.7 },
+    },
   }),
 };

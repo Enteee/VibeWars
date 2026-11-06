@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { inset, stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -7,8 +7,13 @@ const rows = {
   "order-of-apostasy": [
     "enchantment",
     (c) =>
-      `<path d="M12 2v11" ${stroke(c, 2.4)}/>` +
-      `<path d="M7 15a6 6 0 0 0 10 0M5 20h4M15 20h4" ${stroke(c, 2)}/>`,
+      inset(
+        1,
+        `<path d="M12 2v11" ${stroke(c, 2.4)}/>` +
+          `<path d="M7 15a6 6 0 0 0 10 0M5 20h4M15 20h4" ${stroke(c, 2)}/>`,
+        0,
+        0.5,
+      ),
   ],
   // Enchantment: an eye over a minus, the next enchantment cheaper.
   "jaundiced-gaze": [

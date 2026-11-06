@@ -356,6 +356,8 @@ const NO_BOT_USE = new Set([
   // Armor against physical damage only (#2289), which no role counts yet:
   // Shields Up!'s goes unweighed the same way.
   "elementalist.armor-of-frost",
+  // The same armor (#2373), and a Burning refused: no role the bot weighs.
+  "elementalist.frigid-armor",
   // A bond on attacks, attack damage traded for healing, and faster expiry
   // (#2291): no role the bot weighs.
   "monk.life-bond",

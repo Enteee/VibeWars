@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { inset, stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -14,8 +14,13 @@ const rows = {
   "malign-intervention": [
     "hex",
     (c) =>
-      `<path d="M14 4v16M11 8h6M11 12h6M11 16h6" ${stroke(c, 1.8)}/>` +
-      `<path d="M4 9l5 5M9 9l-5 5" ${stroke(c, 1.8)}/>`,
+      inset(
+        0.96,
+        `<path d="M14 4v16M11 8h6M11 12h6M11 16h6" ${stroke(c, 1.8)}/>` +
+          `<path d="M4 9l5 5M9 9l-5 5" ${stroke(c, 1.8)}/>`,
+        0,
+        0.5,
+      ),
   ],
 };
 
