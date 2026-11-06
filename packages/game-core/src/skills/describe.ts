@@ -2199,9 +2199,14 @@ function describeTrigger(
     perCost.length === trigger.effects.length &&
     perCost.some((effect) => effect.perUsedSkillEnergy === true)
   ) {
+    // A scaled share, Glyph of Restoration's 150...350% (#2438), rounds as a
+    // percentage, not first as a multiplier.
     const share = (magnitude: Magnitude): string => {
       const described = describeMagnitude(magnitude, ranks);
-      return shown(described, percentOf(described.current));
+      return shown(
+        described,
+        percentOf("scaling" in magnitude ? statAt(magnitude, ranks) : described.current),
+      );
     };
     const gains = perCost.flatMap((effect) =>
       effect.kind !== "energy-gain"
@@ -2802,6 +2807,10 @@ function conditionText(
         return condition.count.knockedDown === true
           ? `If any ${where} foe is knocked down`
           : `If any foe is ${where}`;
+      }
+      // Farmer's Scythe's "if you hit more than one foe" (#2438).
+      if (condition.count.kind === "targets") {
+        return `If you hit ${String(condition.atLeast)} or more foes`;
       }
       return `If ${countAll(condition.count)} number ${String(condition.atLeast)} or more`;
     case "count-at-most":
@@ -3441,13 +3450,15 @@ function perCountNoun(count: CountRule): string {
               ? "second held"
               : count.kind === "knocked-down"
                 ? "foe knocked down"
-                : count.kind === "dead-allies-within"
-                  ? "dead ally"
-                  : count.kind === "foes-within"
-                    ? count.knockedDown === true
-                      ? "knocked-down foe"
-                      : "foe"
-                    : "ally";
+                : count.kind === "targets"
+                  ? "foe hit"
+                  : count.kind === "dead-allies-within"
+                    ? "dead ally"
+                    : count.kind === "foes-within"
+                      ? count.knockedDown === true
+                        ? "knocked-down foe"
+                        : "foe"
+                      : "ally";
 }
 
 /** Warrior's Endurance's cap (#1359): ", never above 55". */

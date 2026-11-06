@@ -214,6 +214,12 @@ describe("Farmer's Scythe (#2438)", () => {
     expect(get(sim, "d").cast.isRecharging(FARMERS)).toBe(true);
   });
 
+  it("says when it recharges", () => {
+    expect(text(FARMERS, new Map([[SCYTHE_MASTERY, 12]]))).toContain(
+      "If you hit 2 or more foes: this skill recharges instantly",
+    );
+  });
+
   it.each([
     [0, 5],
     [12, 29],
@@ -352,6 +358,15 @@ describe("Pious Renewal (#2438)", () => {
 });
 
 describe("Glyph of Restoration (#2438)", () => {
+  it.each([
+    [0, "150%"],
+    [12, "350%"],
+  ])("at Energy Storage %i says %s of the spell's cost", (rank, share) => {
+    expect(describeStatus("glyph-of-restoration", new Map([[ENERGY_STORAGE, rank]]))).toContain(
+      `healed for ${share} of that skill's energy cost`,
+    );
+  });
+
   const SPELLS = [
     "elementalist.armor-of-earth",
     "elementalist.windborne-speed",
