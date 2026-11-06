@@ -763,6 +763,7 @@ describe("follow-and-attack (#467)", () => {
       useSkillId: undefined,
       attackTargetId: undefined,
       applyStatuses: [],
+      endUpkeep: undefined,
     });
   });
 });
