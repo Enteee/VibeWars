@@ -303,12 +303,12 @@ describe("skill coverage reporting", () => {
   it("counts implemented vs imported and names the gap", () => {
     const coverage = computeCoverage([
       { gwId: 186, name: "Fireball" },
-      { gwId: 837, name: "Energy Boon" },
+      { gwId: 99_999, name: "Not In The Catalog" },
     ]);
     expect(coverage.imported).toBe(2);
     expect(coverage.implemented).toBe(1);
     const ids = coverage.unimplemented.map((skill) => skill.gwId);
-    expect(ids).toContain(837);
+    expect(ids).toContain(99_999);
     expect(ids).not.toContain(186);
   });
 
@@ -320,11 +320,11 @@ describe("skill coverage reporting", () => {
   it("formats a human-readable report naming every unimplemented skill", () => {
     const text = formatCoverage(
       computeCoverage([
-        { gwId: 837, name: "Energy Boon" },
+        { gwId: 99_999, name: "Not In The Catalog" },
         { gwId: 186, name: "Fireball" },
       ]),
     );
-    expect(text).toContain("837 Energy Boon");
+    expect(text).toContain("99999 Not In The Catalog");
     expect(text).toContain("imported 2 / implemented 1 / 1 unimplemented");
   });
 });
