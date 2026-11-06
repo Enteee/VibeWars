@@ -19,8 +19,8 @@ import {
  * `catalog.test.ts`.
  */
 
-/** One listed gap, Amity: a corpus skill with no catalog entry. Kept literal on purpose. */
-const KNOWN_UNIMPLEMENTED = [{ gwId: 265, name: "Amity" }] as const;
+/** One listed gap, Energy Boon: a corpus skill with no catalog entry. Kept literal on purpose. */
+const KNOWN_UNIMPLEMENTED = [{ gwId: 837, name: "Energy Boon" }] as const;
 
 const CORPUS: readonly CorpusRef[] = [
   { gwId: 74, name: "Echo" },
@@ -84,7 +84,7 @@ describe("skill coverage regression gate", () => {
   it("groups skills by the mechanic they wait on", () => {
     const grouped = missingMechanics(computeCoverage(CORPUS));
 
-    expect(grouped.get("unwritten")).toEqual([265]);
+    expect(grouped.get("max-health-per-max-energy")).toEqual([837]);
   });
 
   // No reason line names two mechanics since #2502 implemented Reclaim
@@ -107,9 +107,9 @@ describe("skill coverage regression gate", () => {
     const text = formatCoverage(computeCoverage(CORPUS));
 
     expect(text).toContain("imported 7 / implemented 6 / 1 unimplemented");
-    expect(text).toContain("265 Amity — needs unwritten");
+    expect(text).toContain("837 Energy Boon — needs max-health-per-max-energy");
     expect(text).toContain("blocked on:");
-    expect(text).toContain(MISSING_MECHANIC_DESCRIPTIONS.unwritten);
+    expect(text).toContain(MISSING_MECHANIC_DESCRIPTIONS["max-health-per-max-energy"]);
   });
 
   it("passes an upkeep skill the catalog maintains (Mending, #840)", () => {

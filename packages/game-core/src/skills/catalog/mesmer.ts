@@ -5141,6 +5141,116 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Corpus skills on existing mechanics (#2499)                            */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.mantra-of-persistence",
+    name: "Mantra of Persistence",
+    gwId: 14,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...25 seconds, any Illusion Magic hex you cast lasts 10...40%
+    // longer": the stance carries the multiplier.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mantra-of-persistence",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 5, atTwelve: 21 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.kitahs-burden",
+    name: "Kitah's Burden",
+    gwId: 1056,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 6...12 seconds, target foe moves 50% slower. When Kitah's Burden
+    // ends you gain 10...18 Energy": the status gives it, as Ethereal
+    // Burden's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "kitahs-burden",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 6, atTwelve: 10.8 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.symbolic-posture",
+    name: "Symbolic Posture",
+    gwId: 1658,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, the next signet you activate recharges 20...80%
+    // faster": one use, the stance's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "symbolic-posture",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.fast-casting", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
   /* ---------------------------------------------------------------------- */
   /* Mechanics (#2501)                                                      */
   /* ---------------------------------------------------------------------- */

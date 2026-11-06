@@ -60,28 +60,14 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
  */
 export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMechanic[]>> =
   Object.freeze({
-    14: ["unwritten"], // Mantra of Persistence
-    253: ["unwritten"], // Scourge Sacrifice
-    265: ["unwritten"], // Amity
-    305: ["unwritten"], // Resurrect
     837: ["max-health-per-max-energy"], // Energy Boon
-    847: ["unwritten"], // Boon Signet
-    1056: ["unwritten"], // Kitah's Burden
-    1091: ["unwritten"], // Double Dragon
-    1093: ["unwritten"], // Teinai's Heat
-    1119: ["unwritten"], // Karei's Healing Circle
     1371: ["damage-type-conversion"], // Stone Striker
-    1372: ["unwritten"], // Sandstorm
-    1391: ["unwritten"], // Supportive Spirit
     1395: ["knockdown-offender"], // Balthazar's Pendulum
     1493: ["transfer-conditions-to-area"], // Grenth's Fingers
     1515: ["source-condition-damage-reduction"], // Armor of Sanctity
     1542: ["interrupt-guard-strip-enchantment"], // Pious Concentration
     1586: ["damage-per-second-cap"], // Angelic Protection
-    1658: ["unwritten"], // Symbolic Posture
     1757: ["spell-damage-taken-multiplier"], // Veil of Thorns
-    2060: ["unwritten"], // Glyph of Immolation
-    2189: ["unwritten"], // Angorodon's Gaze
   });
 
 /** A corpus skill as coverage needs it: its GW1 id and name. */

@@ -99,7 +99,10 @@ export type ElementalistStatusId =
   | "glyph-of-swiftness"
   | "ward-of-weakness"
   // Dropped leftovers (#2446).
-  | "storm-djinns-haste";
+  | "storm-djinns-haste"
+  | "double-dragon"
+  | "teinais-heat"
+  | "glyph-of-immolation";
 
 /** Incendiary Bonds' blast (#2289), on its bearer and the foes near it. */
 const INCENDIARY_BLAST = {
@@ -1098,6 +1101,81 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       ],
       skillId: "elementalist.storm-djinns-haste",
     },
+  }),
+  // "...you and target ally are enchanted with Double Dragon. Adjacent foes
+  // are dealt 10...40 fire damage each second. Additionally, when you or
+  // your ally use skills that target a foe, that foe is set on fire for
+  // 1...4 seconds" (#2499): 34 a second, its rank-12 value.
+  "double-dragon": define("double-dragon", "Double Dragon", "enchantment", {
+    profession: "elementalist",
+    damagePulse: {
+      damage: 34,
+      growth: 0,
+      type: "fire",
+      radius: AREA_ADJACENT,
+      hitsBearer: false,
+      skillId: "elementalist.double-dragon",
+    },
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { targets: "foe" },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "burning",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.fire-magic", atZero: 1, atTwelve: 3.4 },
+            },
+          },
+        ],
+        target: "skill-target",
+        skillId: "elementalist.double-dragon",
+      },
+    ],
+  }),
+  // What the ward projects on the foes inside it: "Foes within the ward
+  // suffer 2...5 health degeneration. Weakened foes attack 33% slower"
+  // (#2499), at the ward's Elementalist's ranks.
+  "teinais-heat": define("teinais-heat", "Teinai's Heat", "skill-effect", {
+    profession: "elementalist",
+    healthPips: { scaling: { attributeId: "elementalist.fire-magic", atZero: -2, atTwelve: -4.4 } },
+    whileUnder: {
+      categories: [],
+      statusIds: ["weakness"],
+      attackDurationMultiplier: 1.33,
+      adrenalineGainFaster: 0,
+      healthPips: 0,
+      armorModifier: 0,
+      attackMissChance: 0,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1,
+    },
+  }),
+  // "For 15 seconds, your next 1...4 spells that target a foe also cause
+  // Burning for 1...4 seconds" (#2499).
+  "glyph-of-immolation": define("glyph-of-immolation", "Glyph of Immolation", "glyph", {
+    profession: "elementalist",
+    endsAfterTriggers: {
+      scaling: { attributeId: "elementalist.fire-magic", atZero: 1, atTwelve: 3.4 },
+    },
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { spell: true, targets: "foe" },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "burning",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.fire-magic", atZero: 1, atTwelve: 3.4 },
+            },
+          },
+        ],
+        target: "skill-target",
+        skillId: "elementalist.glyph-of-immolation",
+      },
+    ],
   }),
 };
 

@@ -1710,6 +1710,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-fails-to-hit": "fails to hit",
   "bearer-takes-physical-damage": "takes physical damage",
   "bearer-takes-elemental-damage": "takes elemental damage",
+  "bearer-takes-damage": "takes damage",
   "bearer-takes-damage-from-foe": "takes damage or life steal from a foe",
   "bearer-health-drops-below": "has its Health dropped below a line by damage",
   "bearer-fatal-damage-negated": "has fatal damage negated",
@@ -2076,6 +2077,11 @@ function partyHealed(
 /** An item status's end (#1434), every one a drop: "Drop effect: …". */
 const DROPPED = "drop effect";
 
+/** What a use trigger's aim reads as (#2282, #2333, #2499). */
+const TARGETS_WORDS: Readonly<
+  Record<NonNullable<NonNullable<StatusTrigger["usedSkill"]>["targets"]>, string>
+> = { ally: "an ally", "other-ally": "another ally", foe: "a foe" };
+
 /**
  * What the bearer does that a trigger bound to a kind of skill or
  * enchantment answers (#1437): "uses a Dervish attack skill", "loses a
@@ -2169,8 +2175,9 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
       return `is targeted by your ${words.join(" ")}`;
     }
     // Zealot's Fire's "a skill that targets an ally" (#2282), Signet of
-    // Suffering's "skill that targets a foe" (#2333).
-    const on = targets === undefined ? "" : ` on ${targets === "ally" ? "an ally" : "a foe"}`;
+    // Suffering's "skill that targets a foe" (#2333), Boon Signet's "spell
+    // that targets an ally", never you (#2499).
+    const on = targets === undefined ? "" : ` on ${TARGETS_WORDS[targets]}`;
     return `uses ${/^[aeiou]/i.test(words[0] ?? "") ? "an" : "a"} ${words.join(" ")}${on}`;
   }
   return undefined;
