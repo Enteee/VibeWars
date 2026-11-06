@@ -231,6 +231,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: { flat: 13 } }],
       skillId: "ranger.apply-poison",
     },
@@ -246,6 +247,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "damage",
@@ -266,6 +268,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         { kind: "damage", amount: { flat: 15 }, type: "fire", armorPenetration: 0 },
         {
@@ -302,6 +305,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 13 } }],
       skillId: "ranger.barbed-arrows",
     },
@@ -320,6 +324,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         { kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 21 } },
         {
@@ -381,6 +386,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "heal", amount: { flat: 5 }, recipient: "caster" }],
       skillId: "ranger.predatory-season",
     },
@@ -551,6 +557,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "heal", amount: { flat: 25 }, recipient: "owner" }],
       skillId: "ranger.predatory-bond",
     },
@@ -584,6 +591,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: { flat: 14 } }],
       skillId: "ranger.poison-tip-signet",
     },
@@ -605,6 +613,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 13 } }],
       skillId: "ranger.strike-as-one",
     },
@@ -619,6 +628,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 13 } }],
       skillId: "ranger.strike-as-one",
     },
@@ -651,6 +661,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 18 } }],
       skillId: "ranger.glass-arrows",
     },
@@ -733,6 +744,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: true,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "damage",
@@ -770,6 +782,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         { kind: "interrupt", only: "spell" },
         {
@@ -810,6 +823,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",

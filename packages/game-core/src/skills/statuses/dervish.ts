@@ -116,6 +116,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",
@@ -295,6 +296,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",
@@ -393,6 +395,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",
@@ -460,6 +463,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: true,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         { kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 9 } },
         { kind: "transfer-conditions", from: "caster", count: { flat: 3 }, durationMultiplier: 1 },
@@ -477,6 +481,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: true,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "if",
@@ -598,6 +603,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "splash",
@@ -809,6 +815,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       attackSkillsOnly: false,
       weapon: "scythe",
       weaponDamage: undefined,
+      atSourceRanks: false,
       effects: [
         {
           kind: "life-steal",

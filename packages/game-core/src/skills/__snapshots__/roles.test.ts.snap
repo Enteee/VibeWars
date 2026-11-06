@@ -605,6 +605,7 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.foul-feast": "removal",
   "necromancer.gaze-of-contempt": "",
   "necromancer.grenths-balance": "healing",
+  "necromancer.hexers-vigor": "healing",
   "necromancer.icy-veins": "hex",
   "necromancer.infuse-condition": "defence",
   "necromancer.insidious-parasite": "hex",
@@ -694,6 +695,7 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.well-of-the-profane": "",
   "necromancer.well-of-weariness": "",
   "necromancer.wither": "hex",
+  "necromancer.withering-aura": "condition",
 }
 `;
 
