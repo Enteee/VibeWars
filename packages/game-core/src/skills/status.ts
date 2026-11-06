@@ -230,6 +230,7 @@ const OWN_SKILL_STAT_KEYS: Readonly<Record<OwnSkillStatKey, true>> = {
   activationSecondsLess: true,
   rechargeFaster: true,
   durationMultiplier: true,
+  uses: true,
 };
 
 /** The fields of a `WhileUnder` that are a `StatusStat` (#2191). */
@@ -257,7 +258,7 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   for (const modifier of definition.ownSkillModifiers) {
     for (const key of Object.keys(OWN_SKILL_STAT_KEYS) as OwnSkillStatKey[]) {
       const stat = modifier[key];
-      if (typeof stat !== "number") {
+      if (stat !== undefined && typeof stat !== "number") {
         attributes.add(stat.scaling.attributeId);
       }
     }
@@ -499,6 +500,14 @@ export interface StatusDefinition {
    * ceiling left, as `maxHealthBonus` does health.
    */
   readonly maxEnergyBonus: number;
+  /**
+   * An aura's status lands only on a body holding an item (#2478):
+   * Empowerment's "allies within its range holding an item". An item is
+   * an `"item"` status, a Ritualist's ashes, or a carried flag or relic;
+   * picking one up or dropping it puts the status on or takes it off the
+   * next step, clamping as any lost bonus does.
+   */
+  readonly onlyWhileHoldingItem: boolean;
   /**
    * Damage the bearer's minions add to each hit (#1915), before armor,
    * as Order of Undeath's "your minions deal +3...13...16 damage".
@@ -1398,6 +1407,13 @@ export interface StatusDefinition {
    */
   readonly incomingAllySpellCastTimeMultiplier: number;
   /**
+   * Multiplier on how long a spell of the status's source takes to cast
+   * on the bearer (#2459): Stolen Speed's "Spells you cast that target
+   * these foes take 50% less time to cast", 0.5. Nobody else's spell,
+   * nor one aimed elsewhere. Read once, as the cast begins.
+   */
+  readonly sourceSpellCastTimeMultiplier: number;
+  /**
    * Energy off each enchantment cast on the bearer (#1975): Air of
    * Enchantment's 10. Taken off last, after the caster's own discounts
    * and glyphs, never below 1; a cost already at 1 or less stays. Only a
@@ -1887,8 +1903,12 @@ export interface OwnSkillModifier {
   readonly notEasilyInterrupted: boolean;
   /** Overcast its user takes as each use begins (#2311), as Iron Mist's 2. 0: none. */
   readonly overcastPerUse: number;
-  /** Skills it answers before the status ends; `undefined`: as long as the status lasts. */
-  readonly uses: number | undefined;
+  /**
+   * Skills it answers before the status ends, rounded at the bearer's
+   * ranks as it lands (#2478): Soul Twisting's "1...3". `undefined`: as
+   * long as the status lasts.
+   */
+  readonly uses: StatusStat | undefined;
 }
 
 /**
@@ -1947,6 +1967,15 @@ export function ownSkillAnswers(filter: OwnSkillFilter, skill: Skill): boolean {
     (filter.weapon === undefined || skill.attack?.weapon === filter.weapon) &&
     (!filter.targetsFoe || skill.target === "single-enemy")
   );
+}
+
+/** Own skills a status answers as it lands at `ranks` (#2478): its first `uses`, rounded. */
+function ownSkillUses(
+  definition: StatusDefinition,
+  ranks: ReadonlyMap<string, number>,
+): number | undefined {
+  const uses = definition.ownSkillModifiers.find(({ uses }) => uses !== undefined)?.uses;
+  return uses === undefined ? undefined : Math.round(statAt(uses, ranks));
 }
 
 /**
@@ -3417,7 +3446,7 @@ export class StatusSet {
         definition.nextSkill === undefined
           ? undefined
           : Math.round(statAt(definition.nextSkill.count, ranks)),
-      ownSkillsLeft: definition.ownSkillModifiers.find(({ uses }) => uses !== undefined)?.uses,
+      ownSkillsLeft: ownSkillUses(definition, ranks),
       triggersLeft:
         definition.endsAfterTriggers === undefined
           ? undefined

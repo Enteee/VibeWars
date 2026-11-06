@@ -536,7 +536,8 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * and so does the skill's own `activationWhile` (#1916), as Natural
  * Healing's half while the caster is not enchanted. A spell an ally casts
  * on a `target` under "Help!" (#1955) takes half as long; the target's own
- * and a foe's do not. Last, the seconds a status takes off its own skills
+ * and a foe's do not. One its caster cast on a `target` under Stolen Speed
+ * (#2459) takes half as long. Last, the seconds a status takes off its own skills
  * of a kind (#1975), never below 0.
  */
 export function effectiveActivationSeconds(skill: Skill, caster: RankHolder): number;
@@ -569,9 +570,18 @@ export function effectiveActivationSeconds(
   }
   const onTarget = aggregateModifiers(target.statuses.active);
   const fromAlly = target.id !== caster.id && target.team === caster.team;
+  // `aggregateModifiers` keeps no source: read each status's own (#2459).
+  const fromSource = target.statuses.active.reduce(
+    (multiplier, { id, sourceId }) =>
+      sourceId === caster.id
+        ? multiplier * getStatusDefinition(id).sourceSpellCastTimeMultiplier
+        : multiplier,
+    1,
+  );
   const targeted =
     (skill.type === "hex" ? onTarget.incomingHexCastTimeMultiplier : 1) *
-    (fromAlly ? onTarget.incomingAllySpellCastTimeMultiplier : 1);
+    (fromAlly ? onTarget.incomingAllySpellCastTimeMultiplier : 1) *
+    fromSource;
   return less(
     skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * targeted,
   );

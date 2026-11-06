@@ -217,6 +217,7 @@ import {
   skillBlow,
   useNextAttackSkill,
   swingIntervalSeconds,
+  releasedStrikes,
   strikeCount,
   unblockableNow,
   weaponSnapshotOf,
@@ -379,8 +380,9 @@ export const CREATURE_LOOKS = [
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
 /**
- * A spirit's death burst as it arrived: its rate (#1603), or the time of
- * the status it gives (#1956), on its owner's rank.
+ * A spirit's death burst as it arrived: its rate (#1603), the time of
+ * the status it gives (#1956), or the Health it raises with (#2478), on
+ * its owner's rank.
  */
 export type ArrivedDeathBurst =
   | (Omit<Extract<DeathBurst, { effect: "damage" | "heal" }>, "perSecondAlive"> & {
@@ -388,6 +390,9 @@ export type ArrivedDeathBurst =
     })
   | (Omit<Extract<DeathBurst, { effect: "apply-status" }>, "durationSeconds"> & {
       readonly durationSeconds: number;
+    })
+  | (Omit<Extract<DeathBurst, { effect: "resurrect" }>, "healthPercent"> & {
+      readonly healthPercent: number;
     });
 
 /** A spirit's answer to a death in its range as it arrived: its damage on its owner's rank (#1886). */
@@ -1587,13 +1592,21 @@ export class MatchSimulation {
                     ranks,
                   ),
                 }
-              : {
-                  ...template.deathBurst,
-                  perSecondAlive: resolveMagnitudeAtRanks(
-                    template.deathBurst.perSecondAlive,
-                    ranks,
-                  ),
-                },
+              : template.deathBurst.effect === "resurrect"
+                ? {
+                    ...template.deathBurst,
+                    healthPercent: resolveMagnitudeAtRanks(
+                      template.deathBurst.healthPercent,
+                      ranks,
+                    ),
+                  }
+                : {
+                    ...template.deathBurst,
+                    perSecondAlive: resolveMagnitudeAtRanks(
+                      template.deathBurst.perSecondAlive,
+                      ranks,
+                    ),
+                  },
         onDeathInRange:
           template.onDeathInRange?.kind === "damage-same-type"
             ? {
@@ -1826,7 +1839,7 @@ export class MatchSimulation {
       // Ended early, a pulse effect still lands its end (#2329).
       const owner = ended === undefined ? undefined : this.#participants.get(ended.ownerId);
       if (ended?.act.kind === "pulse" && ended.act.atEnd !== undefined && owner !== undefined) {
-        this.#landPulse(owner, ended.skillId, ended.position, ended.act.atEnd);
+        this.#landPulse(owner, ended.skillId, ended.position, ended.act.atEnd, ended.pulsed);
       }
     }
   }
@@ -1919,7 +1932,7 @@ export class MatchSimulation {
         continue;
       }
       sprung.add(effect.id);
-      this.#landPulse(owner, effect.skillId, effect.position, trap.spring);
+      this.#landPulse(owner, effect.skillId, effect.position, trap.spring, 1);
       if (trap.spring.count > 1) {
         pulsing.push(effect);
       }
@@ -1972,11 +1985,11 @@ export class MatchSimulation {
         age >= pulse.delaySeconds + effect.pulsed * pulse.everySeconds - SWING_EPSILON
       ) {
         effect.pulsed += 1;
-        this.#landPulse(owner, effect.skillId, effect.position, pulse);
+        this.#landPulse(owner, effect.skillId, effect.position, pulse, effect.pulsed);
       }
       if (atEnd !== undefined && effect.remainingSeconds <= SWING_EPSILON) {
         gone.add(effect.id);
-        this.#landPulse(owner, effect.skillId, effect.position, atEnd);
+        this.#landPulse(owner, effect.skillId, effect.position, atEnd, effect.pulsed);
       }
     }
     if (gone.size > 0) {
@@ -2088,8 +2101,16 @@ export class MatchSimulation {
    * it is logged as a cast is, even when it hits nobody. A pulse's
    * interrupt comes free with what it lands, untimed, as Maelstrom's
    * (#1367): finding nothing to interrupt is no miss, so it says nothing.
+   * Its `held-seconds` count is `pulsed`, this pulse among them (#2459):
+   * Savannah Heat's "for each second this spell has been in effect".
    */
-  #landPulse(owner: ParticipantRecord, skillId: string, position: Vec2, rule: PulseEnd): void {
+  #landPulse(
+    owner: ParticipantRecord,
+    skillId: string,
+    position: Vec2,
+    rule: PulseEnd,
+    pulsed: number,
+  ): void {
     const skill = getSkill(skillId);
     if (skill === undefined) {
       return;
@@ -2109,6 +2130,7 @@ export class MatchSimulation {
       rng: this.#rng,
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
+      heldSeconds: pulsed,
     });
     const events = resolved.events.filter((event) => event.kind !== "interrupt-missed");
     this.#log.push({
@@ -2211,7 +2233,8 @@ export class MatchSimulation {
           !wears.has(aura.statusId) &&
           !(aura.excludesSource === true && sourceId === body.id) &&
           reaches(aura.affects, team, body.combatant.team) &&
-          distance(position, body.position) <= aura.radius
+          distance(position, body.position) <= aura.radius &&
+          (!getStatusDefinition(aura.statusId).onlyWhileHoldingItem || this.carriesBundle(body.id))
         ) {
           wears.set(aura.statusId, { sourceId, ranks });
         }
@@ -2243,6 +2266,7 @@ export class MatchSimulation {
    * its skill. A creature a burst kills leaves too, and bursts nothing:
    * only a spirit has one, and a burst passes spirits by. A status burst
    * (#1956) gives its status instead, to each one under its Health line.
+   * A resurrecting one (#2478) raises each dead party member instead.
    */
   #burstLeaving(): void {
     for (const id of [...this.#leaving]) {
@@ -2262,24 +2286,37 @@ export class MatchSimulation {
       const amount =
         burst.effect === "apply-status"
           ? burst.durationSeconds
-          : Math.min(
-              burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
-              burst.max ?? Number.POSITIVE_INFINITY,
-            );
+          : burst.effect === "resurrect"
+            ? burst.healthPercent
+            : Math.min(
+                burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
+                burst.max ?? Number.POSITIVE_INFINITY,
+              );
       if (amount <= 0) {
         continue;
       }
       const effect: SkillEffect =
         burst.effect === "apply-status"
           ? { kind: "apply-status", statusId: burst.statusId, durationSeconds: { flat: amount } }
-          : burst.effect === "damage"
-            ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
-            : { kind: "heal", amount: { flat: amount } };
+          : burst.effect === "resurrect"
+            ? {
+                kind: "resurrect",
+                health: { kind: "percent", percent: { flat: amount } },
+                energyPercent: { flat: 0 },
+                perPartyMemberWithin: undefined,
+                at: "corpse",
+              }
+            : burst.effect === "damage"
+              ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
+              : { kind: "heal", amount: { flat: amount } };
       const events: CombatEvent[] = [];
       for (const other of this.#participants.values()) {
         const ally = other.combatant.team === spirit.combatant.team;
         if (
-          other.combatant.dead ||
+          // Restoration's raises only dead party members (#2478), no
+          // creature; the rest touch only the living.
+          other.combatant.dead !== (burst.effect === "resurrect") ||
+          (burst.effect === "resurrect" && other.creature !== undefined) ||
           other.creature?.kind === "spirit" ||
           (burst.affects !== "all" && ally !== (burst.affects === "allies")) ||
           distance(other.position, spirit.position) > burst.radius ||
@@ -5027,6 +5064,8 @@ export class MatchSimulation {
       // A trigger's step moves the body as a skill's does (#2446): Augury of Death's.
       this.#recordSteps(events);
       this.#recordDeaths(events);
+      // Restoration's death burst raises (#2478): no respawn after it.
+      this.#recordResurrections(events);
     }
   }
 
@@ -5874,11 +5913,31 @@ export class MatchSimulation {
       next: nextAttackSkillOf(record.combatant),
       own: resolution.own,
       strikes: 1,
+      unblockable: false,
     };
     const flight = resolution.skill.attack?.flightSpeed;
     const released: CombatEvent[] = [];
     removePreparations(record.combatant, resolution.skill, released);
-    const events = resolution.targets.flatMap((victim) => {
+    // Read before `onRelease`, which may take what gates them (#2459).
+    const shots = resolution.targets.map((victim) => ({
+      victim,
+      ...releasedStrikes(resolution.skill.attack, record.combatant, victim, this.#participants),
+    }));
+    const onRelease = resolution.skill.attack?.onRelease;
+    const primary = resolution.targets[0];
+    if (onRelease !== undefined) {
+      released.push(
+        ...applySkillEffects(
+          {
+            ...resolution,
+            skill: { ...resolution.skill, effects: onRelease },
+            targets: [primary ?? record.combatant],
+          },
+          [],
+        ),
+      );
+    }
+    const events = shots.flatMap(({ victim, strikes, unblockable, eachWeaponDamage }) => {
       const target = this.#participants.get(victim.id);
       const multiplier =
         flight !== undefined &&
@@ -5886,15 +5945,18 @@ export class MatchSimulation {
           stateHolds(flight.when, record.combatant, victim, this.#participants))
           ? flight.multiplier
           : 1;
-      const strikes = strikeCount(
-        resolution.skill.attack?.strikes,
-        record.combatant,
-        victim,
-        this.#participants,
-      );
+      const blow =
+        eachWeaponDamage === 1
+          ? skillHit.blow
+          : { ...skillHit.blow, weaponDamage: skillHit.blow.weaponDamage * eachWeaponDamage };
       return target === undefined || victim.dead
         ? []
-        : this.#release(record, target, speed * multiplier, dt, { ...skillHit, strikes });
+        : this.#release(record, target, speed * multiplier, dt, {
+            ...skillHit,
+            blow,
+            strikes,
+            unblockable,
+          });
     });
     useNextAttackSkill(record.combatant, skillHit.next, events);
     return [...released, ...events];
@@ -6218,7 +6280,7 @@ export class MatchSimulation {
     if (
       !projectile.unblockable &&
       !unblockableNow(
-        skillHit?.skill.attack?.unblockable ?? false,
+        skillHit?.unblockable ?? false,
         attacker?.combatant,
         target.combatant,
         this.#participants,

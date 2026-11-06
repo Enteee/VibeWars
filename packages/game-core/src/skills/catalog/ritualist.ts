@@ -3536,6 +3536,101 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2478)                                                      */
+  /* ---------------------------------------------------------------------- */
+  bindingRitual({
+    id: "ritualist.restoration",
+    name: "Restoration",
+    gwId: 963,
+    elite: false,
+    attributeId: "ritualist.communing",
+    energy: 10,
+    activationSeconds: 3,
+    rechargeSeconds: 45,
+    // PvP: "Create a level 1...10 spirit. When this spirit dies, all party
+    // members in the area are resurrected with 5...50% Health and zero
+    // Energy. This spirit dies after 30 seconds." Killed or expired alike;
+    // "in the area" is its range. At 12: 41%.
+    creature: burstingSpirit("Restoration", "ritualist.communing", 30, {
+      effect: "resurrect",
+      healthPercent: {
+        scaling: { attributeId: "ritualist.communing", atZero: 5, atTwelve: 41 },
+      },
+      affects: "allies",
+      radius: RANGE_SPIRIT,
+    }),
+  }),
+  bindingRitual({
+    id: "ritualist.empowerment",
+    name: "Empowerment",
+    gwId: 1747,
+    elite: false,
+    attributeId: "ritualist.spawning-power",
+    energy: 5,
+    activationSeconds: 3,
+    rechargeSeconds: 30,
+    // PvP: "Create a level 1...10 spirit. All allies within its range
+    // holding an item gain 15...45 maximum Health and 10 maximum Energy.
+    // This spirit dies after 15...60 seconds." At 12: 51 s; the bonus is
+    // the status's.
+    creature: {
+      kind: "spirit",
+      look: "spirit",
+      name: "Empowerment",
+      maxHealth: spiritHealth("ritualist.spawning-power", [1, 10]),
+      armor: { flat: 51 },
+      attack: undefined,
+      durationSeconds: {
+        scaling: { attributeId: "ritualist.spawning-power", atZero: 15, atTwelve: 51 },
+      },
+      behaviour: { kind: "idle" },
+      aura: { statusId: "empowerment", affects: "allies", radius: RANGE_SPIRIT },
+      replacedBy: undefined,
+      leavesCorpses: undefined,
+      onePerOwner: false,
+      onDeath: "vanish",
+      ownerDisableOnDeath: undefined,
+      deathBurst: undefined,
+      onDeathInRange: undefined,
+    },
+  }),
+  {
+    id: "ritualist.soul-twisting",
+    name: "Soul Twisting",
+    gwId: 1240,
+    type: "skill",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "For 5...45 seconds, your Binding Rituals cost 15 less Energy
+    // (minimum 5) and recharge 25...50% faster. Soul Twisting ends after
+    // 1...3 Binding Rituals." At 12: 37 s; the rest is the status's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "soul-twisting",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 37 },
+        },
+      },
+    ],
+  },
 ];
 
 /**

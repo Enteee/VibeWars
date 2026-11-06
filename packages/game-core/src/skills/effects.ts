@@ -7,7 +7,7 @@ import {
   spawningPowerMultiplier,
 } from "../primary-attributes.js";
 import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
-import { isAttacking, skillsOnBar } from "./attacking.js";
+import { adrenalSkillsOnBar, isAttacking, skillsOnBar } from "./attacking.js";
 import { beginRecharge, resolvedBar, skillIdOfKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
@@ -990,6 +990,8 @@ function countOf(
       return targetsHit ?? 0;
     case "bar-skills":
       return skillsOnBar(caster, rule.type);
+    case "adrenaline-skills":
+      return target === undefined ? 0 : adrenalSkillsOnBar(target);
     case "energy": {
       const bearer = rule.on === "caster" ? caster : target;
       return bearer === undefined ? 0 : Math.floor(bearer.energy);
@@ -3717,6 +3719,8 @@ export interface SkillResolution {
   readonly corpseId?: string | undefined;
   /** Foes the attack landing hit (#2438), `SkillContext.targetsHit`. */
   readonly targetsHit?: number | undefined;
+  /** A ground pulse's pulses so far (#2459), `SkillContext.heldSeconds`. */
+  readonly heldSeconds?: number | undefined;
 }
 
 /**
@@ -3839,8 +3843,18 @@ export function resolveSkillEffects(
   resolution: SkillResolution,
   earlier: readonly CombatEvent[] = [],
 ): SkillOutcome {
-  const { skill, caster, targets, rng, rules, surroundings, own, corpseId, targetsHit } =
-    resolution;
+  const {
+    skill,
+    caster,
+    targets,
+    rng,
+    rules,
+    surroundings,
+    own,
+    corpseId,
+    targetsHit,
+    heldSeconds,
+  } = resolution;
   const held = new Map(
     targets.map(
       (target) =>
@@ -3873,6 +3887,7 @@ export function resolveSkillEffects(
         own,
         corpseId,
         targetsHit,
+        heldSeconds,
       };
       const before = [...earlier, ...events];
       const landed = landing(effect, context, before, states);
