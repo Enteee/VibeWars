@@ -911,10 +911,10 @@ test("(29) an attack skill pressed out of reach walks in, then lands (#415)", as
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   // A new character is a warrior; Swift Chop needs an axe.
-  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.getByRole("tab", { name: "Gear", exact: true }).click();
   await page.locator(".gear-box").filter({ hasText: "Axe" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Axe");
-  await page.getByRole("button", { name: "skills", exact: true }).click();
+  await page.getByRole("tab", { name: "Skills", exact: true }).click();
   await openLibraryGroup(page, "Axe Mastery");
   await page.locator(".skill-box", { hasText: "Swift Chop" }).locator(".skill-box-equip").click();
   await expectFilledSlots(page, ["Swift Chop"]);
@@ -974,10 +974,10 @@ test("(31) a slot out of reach of the target is marked, and the mark goes once i
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   // A new character is a warrior; Swift Chop needs an axe.
-  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.getByRole("tab", { name: "Gear", exact: true }).click();
   await page.locator(".gear-box").filter({ hasText: "Axe" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Axe");
-  await page.getByRole("button", { name: "skills", exact: true }).click();
+  await page.getByRole("tab", { name: "Skills", exact: true }).click();
   await openLibraryGroup(page, "Axe Mastery");
   await page.locator(".skill-box", { hasText: "Swift Chop" }).locator(".skill-box-equip").click();
   const canvas = page.locator(".training canvas");
@@ -1048,10 +1048,10 @@ test("(34) Backbreaker lays the melee dummy flat until it rises (#545)", async (
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   // A new character is a warrior; Backbreaker needs a hammer.
-  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.getByRole("tab", { name: "Gear", exact: true }).click();
   await page.locator(".gear-box").filter({ hasText: "Hammer" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
-  await page.getByRole("button", { name: "skills", exact: true }).click();
+  await page.getByRole("tab", { name: "Skills", exact: true }).click();
   await openLibraryGroup(page, "Hammer Mastery");
   await page.locator(".skill-box", { hasText: "Backbreaker" }).locator(".skill-box-equip").click();
   const canvas = page.locator(".training canvas");
@@ -1292,10 +1292,10 @@ test("(40) an adrenaline skill's slot fills from dark to lit as it charges (#826
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   // A new character is a warrior; Sever Artery needs a sword, and 4 strikes.
-  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.getByRole("tab", { name: "Gear", exact: true }).click();
   await page.locator(".gear-box").filter({ hasText: "Sword" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Sword");
-  await page.getByRole("button", { name: "skills", exact: true }).click();
+  await page.getByRole("tab", { name: "Skills", exact: true }).click();
   await openLibraryGroup(page, "Swordsmanship");
   await page.locator(".skill-box", { hasText: "Sever Artery" }).locator(".skill-box-equip").click();
   await expectFilledSlots(page, ["Sever Artery"]);
@@ -1472,7 +1472,7 @@ test("2 swaps to weapon set 2, the empty 3 does nothing, and a slot's click swap
   // A new character is a warrior with a sword and shield in set 1.
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
-  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.getByRole("tab", { name: "Gear", exact: true }).click();
   await page.getByRole("tab", { name: /^2/ }).click();
   await page.locator(".gear-box").filter({ hasText: "Recurve Bow" }).first().click();
   await expect(page.locator(".training canvas")).toBeVisible();

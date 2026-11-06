@@ -721,7 +721,7 @@ export function mountTeamEditor(
       }
     }),
   );
-  memberEditor.append(identity, attributes, bar, equipment);
+  memberEditor.append(identity, attributes, equipment, bar);
   const fillMemberEditor = (): void => {
     const character = openCharacter();
     memberEditor.setAttribute("aria-label", `editing ${character.name}`);

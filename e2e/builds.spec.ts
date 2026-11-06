@@ -1884,7 +1884,7 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
 
 /** Open the gear library in the right-hand column. */
 async function openGearLibrary(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.getByRole("tab", { name: "Gear", exact: true }).click();
   await expect(page.locator(".gear-box").first()).toBeVisible();
 }
 
