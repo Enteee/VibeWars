@@ -1,4 +1,4 @@
-import type { MusicLevel } from "../host-protocol.js";
+import type { LandOn, MusicLevel } from "../host-protocol.js";
 
 /**
  * When things change in the music host, in cycles. Pure, so the timing of
@@ -22,6 +22,22 @@ export function nextBoundary(position: number, origin: number, phraseCycles: num
 /** The first whole cycle after `position`: where a new intensity starts. */
 export function nextCycle(position: number): number {
   return Math.floor(position) + 1;
+}
+
+/**
+ * Where a switch away from a track lands: its next phrase boundary, or the
+ * next cycle when a match starts (#2530), which is that boundary too in
+ * the phrase's last cycle.
+ *
+ * @param origin the cycle the track started on
+ */
+export function switchLanding(
+  landOn: LandOn,
+  position: number,
+  origin: number,
+  phraseCycles: number,
+): number {
+  return landOn === "cycle" ? nextCycle(position) : nextBoundary(position, origin, phraseCycles);
 }
 
 /**

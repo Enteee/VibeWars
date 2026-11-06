@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { fadeGain, levelAt, nextBoundary, nextCycle, scheduleLevel } from "./transitions.js";
+import {
+  fadeGain,
+  levelAt,
+  nextBoundary,
+  nextCycle,
+  scheduleLevel,
+  switchLanding,
+} from "./transitions.js";
 
 describe("nextBoundary", () => {
   it("is the next multiple of the phrase after what was queried, counted from the track's start", () => {
@@ -23,6 +30,22 @@ describe("nextCycle", () => {
   it("is the next whole cycle", () => {
     expect(nextCycle(3.2)).toBe(4);
     expect(nextCycle(4)).toBe(5);
+  });
+});
+
+describe("switchLanding (#2530)", () => {
+  it("lands a match start on the next cycle, not the phrase", () => {
+    expect(switchLanding("cycle", 3.2, 0, 8)).toBe(4);
+    expect(switchLanding("phrase", 3.2, 0, 8)).toBe(8);
+  });
+
+  it("lands on the phrase boundary from the phrase's last cycle either way", () => {
+    expect(switchLanding("cycle", 7.5, 0, 8)).toBe(8);
+    expect(switchLanding("phrase", 7.5, 0, 8)).toBe(8);
+  });
+
+  it("lands a match start on the next cycle when a planned switch has not begun", () => {
+    expect(switchLanding("cycle", 10, 12, 4)).toBe(11);
   });
 });
 

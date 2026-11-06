@@ -2,6 +2,7 @@ import {
   parseHostToGame,
   type GameToHost,
   type HostToGame,
+  type LandOn,
   type MusicLevel,
   type MusicStats,
 } from "./host-protocol.js";
@@ -38,8 +39,8 @@ export interface MusicError {
 export interface MusicPlayer {
   /** Play `track` now. */
   load(track: MusicTrack): void;
-  /** Switch to `track` on the playing track's next phrase boundary. */
-  crossfadeTo(track: MusicTrack): void;
+  /** Switch to `track` on the playing track's next phrase boundary, or its next cycle. */
+  crossfadeTo(track: MusicTrack, landOn: LandOn): void;
   setIntensity(level: MusicLevel): void;
   /** Ramp the music's volume to `gain`, 0 to 1. */
   setVolume(gain: number, rampSeconds: number): void;
@@ -313,10 +314,10 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
       trackFailed = false;
       send({ type: "load", ...trackMessage(track) });
     },
-    crossfadeTo(track) {
+    crossfadeTo(track, landOn) {
       // A fresh host has nothing to fade from; it plays the track at once.
       trackFailed = false;
-      send({ type: "crossfadeTo", cycles: CROSSFADE_CYCLES, ...trackMessage(track) });
+      send({ type: "crossfadeTo", cycles: CROSSFADE_CYCLES, landOn, ...trackMessage(track) });
     },
     setIntensity(level) {
       intensity = level;

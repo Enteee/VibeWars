@@ -645,7 +645,9 @@ async function sentToHost(page: Page): Promise<Record<string, unknown>[]> {
   );
 }
 
-test("a match starts with a sting in the key of the arena's track (#2523)", async ({ page }) => {
+test("a match starts with a sting in the key of the arena's track (#2523), which lands on the next bar (#2530)", async ({
+  page,
+}) => {
   const keys = new Map(
     (
       JSON.parse(
@@ -676,6 +678,8 @@ test("a match starts with a sting in the key of the arena's track (#2523)", asyn
   const track = sent
     .slice(0, at)
     .findLast((message) => message.type === "crossfadeTo" || message.type === "load");
+  // On the next bar, not the next phrase: the sting waits for it.
+  expect(track).toEqual(expect.objectContaining({ type: "crossfadeTo", landOn: "cycle" }));
   expect(sent[at]).toEqual(
     expect.objectContaining({
       id: "match-start",

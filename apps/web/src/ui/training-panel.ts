@@ -679,8 +679,8 @@ export function createTrainingPanel(): TrainingPanel {
         menuDepth: MENU_DEPTH["character-builder"],
         mode: () => music().mode(),
         tracks: TRACKS,
-        onChange: (state) => {
-          music().follow(state);
+        onChange: (state, landOn) => {
+          music().follow(state, landOn);
         },
       }),
       parked: setup.arming.problem !== undefined,
