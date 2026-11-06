@@ -4927,4 +4927,44 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Count of adrenal skills on the target's bar (#2459).
+  {
+    id: "monk.signet-of-rage",
+    name: "Signet of Rage",
+    gwId: 1269,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe takes 5...50 holy damage and +5...10 holy damage for each
+    // adrenaline skill that foe has": 41 and 9 at rank 12, charged or not.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 5, atTwelve: 41 } },
+        type: "holy",
+        armorPenetration: 0,
+        per: {
+          count: { kind: "adrenaline-skills", on: "target" },
+          amount: { scaling: { attributeId: "monk.smiting-prayers", atZero: 5, atTwelve: 9 } },
+          max: undefined,
+        },
+      },
+    ],
+  },
 ];

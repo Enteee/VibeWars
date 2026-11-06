@@ -697,11 +697,18 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "augury-of-death": icon("augury-of-death"),
   "symbolic-celerity": icon("symbolic-celerity"),
   "storm-djinns-haste": icon("storm-djinns-haste"),
+  // Mechanics (#2459).
+  "stolen-speed": icon("stolen-speed"),
+  // Mechanics (#2472).
+  "illusionary-weaponry": icon("illusionary-weaponry"),
   // Mechanics (#2470).
   "unyielding-aura": icon("unyielding-aura"),
   // Healing spirits (#2477).
   rejuvenation: icon("rejuvenation"),
   recovery: icon("recovery"),
+  // Mechanics (#2478).
+  empowerment: icon("empowerment"),
+  "soul-twisting": icon("soul-twisting"),
 };
 
 const GAP = 2;

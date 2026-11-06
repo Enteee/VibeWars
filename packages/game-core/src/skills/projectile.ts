@@ -1,6 +1,6 @@
 import { add, dot, lengthSquared, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import type { OwnSkillBoost, StatusId } from "./status.js";
-import type { Combatant, Skill } from "./types.js";
+import type { Combatant, Skill, StateCondition } from "./types.js";
 import type { RankLoan } from "./tick.js";
 import type { BlowRule, NextAttackSkill, WeaponSnapshot } from "./weapon-attack.js";
 
@@ -65,6 +65,11 @@ export interface SkillHit {
   readonly own: OwnSkillBoost | undefined;
   /** Its blows on its victim, read at release (#1914): Forked Arrow's one or two. */
   readonly strikes: number;
+  /**
+   * Its `unblockable` on its victim (#2459): the skill's, read as the
+   * shot lands, or already read at release when it has `onRelease`.
+   */
+  readonly unblockable: boolean | StateCondition;
 }
 
 /**

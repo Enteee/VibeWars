@@ -1194,6 +1194,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `the next damage is negated and its source takes that much instead, up to ${statText(definition.reflectsNextDamage.cap, ranks, whole)}`,
     );
   }
+  // Illusionary Weaponry's (#2472).
+  if (definition.replacesMeleeBlows !== undefined) {
+    parts.push(
+      `melee attacks neither hit nor fail to hit, and deal ${statText(definition.replacesMeleeBlows.damage, ranks, whole)} damage each instead`,
+    );
+  }
   // Mark of Protection's (#2187).
   if (definition.damageToHealing !== undefined) {
     parts.push(
@@ -1289,6 +1295,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.incomingAllySpellCastTimeMultiplier !== 1) {
     const times = String(definition.incomingAllySpellCastTimeMultiplier);
     parts.push(`other allies' spells on ${bearer} take ${times}× as long to cast`);
+  }
+  if (definition.sourceSpellCastTimeMultiplier !== 1) {
+    const times = String(definition.sourceSpellCastTimeMultiplier);
+    parts.push(`your spells on ${bearer} take ${times}× as long to cast`);
   }
   if (definition.enchantmentsOnBearerCostLess !== 0) {
     const less = String(definition.enchantmentsOnBearerCostLess);
@@ -2555,7 +2565,12 @@ function describeOwnSkillModifier(
   ranks: ReadonlyMap<string, number> | undefined,
   whose: "your" | "the target's",
 ): string {
-  const one = uses === 1;
+  // Soul Twisting's "1...3" is plural until a rank makes it 1 (#2478).
+  const one =
+    uses !== undefined &&
+    (typeof uses === "number"
+      ? uses === 1
+      : ranks !== undefined && Math.round(statAt(uses, ranks)) === 1);
   // A scaled number prints at `ranks` (#2158), as a status stat does.
   const at = (stat: StatusStat, format: (value: number) => string): string =>
     statText(stat, ranks, format);
@@ -2614,7 +2629,7 @@ function describeOwnSkillModifier(
     filter.targetsFoe ? (one ? "that targets a foe" : "that target a foe") : undefined,
   ].filter((word) => word !== undefined);
   const which =
-    uses === undefined ? whose : one ? `${whose} next` : `${whose} next ${String(uses)}`;
+    uses === undefined ? whose : one ? `${whose} next` : `${whose} next ${at(uses, whole)}`;
   return `${which} ${named.join(" ")} ${changes.join(" and ")}`;
 }
 
@@ -3296,6 +3311,13 @@ function describeDeathBurst(burst: DeathBurst, ranks: ReadonlyMap<string, number
       magnitude: duration,
     };
   }
+  if (burst.effect === "resurrect") {
+    const health = describeMagnitude(burst.healthPercent, ranks);
+    return {
+      text: `When it dies, dead party members ${where} are resurrected with ${shown(health)}% Health and zero Energy`,
+      magnitude: health,
+    };
+  }
   const rate = describeMagnitude(burst.perSecondAlive, ranks);
   const amount = shown(rate);
   const what =
@@ -3342,10 +3364,17 @@ function describeDeathInRange(rule: DeathInRange, ranks: ReadonlyMap<string, num
   };
 }
 
-/** Who an aura reaches and what they wear: "Non-spirit allies in its range: …". */
+/**
+ * Who an aura reaches and what they wear: "Non-spirit allies in its
+ * range: …"; Empowerment's only those "holding an item" (#2478).
+ */
 function describeAura(aura: Aura, where: string, ranks: ReadonlyMap<string, number>): Line {
   const who = AURA_WHO[aura.affects];
-  return { text: `${who} ${where}: ${statusText(aura.statusId, ranks)}`, magnitude: undefined };
+  const holding = getStatusDefinition(aura.statusId).onlyWhileHoldingItem ? " holding an item" : "";
+  return {
+    text: `${who} ${where}${holding}: ${statusText(aura.statusId, ranks)}`,
+    magnitude: undefined,
+  };
 }
 
 const AURA_WHO: Record<Aura["affects"], string> = {
@@ -3437,6 +3466,10 @@ function perCountText(per: PerCount, ranks: ReadonlyMap<string, number>, onTarge
 
 /** One of what `count` counts, as "for each" names it: "hex on them", "foe nearby". */
 function countEach(count: CountRule, onTarget: string): string {
+  // Aneurysm's (#2472).
+  if (count.kind === "energy-gained") {
+    return "point of Energy gained";
+  }
   return count.kind === "statuses"
     ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : onTarget}`
     : count.kind === "recharging-skills"
@@ -3455,9 +3488,11 @@ function countEach(count: CountRule, onTarget: string): string {
                 ? "foe knocked down"
                 : count.kind === "bar-skills"
                   ? `${count.type} you have equipped`
-                  : count.kind === "targets"
-                    ? "foe hit"
-                    : `${perCountNoun(count)} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+                  : count.kind === "adrenaline-skills"
+                    ? "adrenaline skill they have"
+                    : count.kind === "targets"
+                      ? "foe hit"
+                      : `${perCountNoun(count)} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
 }
 
 /**
@@ -3489,6 +3524,9 @@ function countAll(count: CountRule): string {
 
 /** What a `per` counts, one of it, as a headline names it (#2222): "ally", "hex". */
 function perCountNoun(count: CountRule): string {
+  if (count.kind === "energy-gained") {
+    return "point of Energy gained";
+  }
   return count.kind === "statuses"
     ? count.categories.join(" or ")
     : count.kind === "recharging-skills"
@@ -3507,13 +3545,15 @@ function perCountNoun(count: CountRule): string {
                 ? "foe knocked down"
                 : count.kind === "targets"
                   ? "foe hit"
-                  : count.kind === "dead-allies-within"
-                    ? "dead ally"
-                    : count.kind === "foes-within"
-                      ? count.knockedDown === true
-                        ? "knocked-down foe"
-                        : "foe"
-                      : "ally";
+                  : count.kind === "adrenaline-skills"
+                    ? "adrenaline skill"
+                    : count.kind === "dead-allies-within"
+                      ? "dead ally"
+                      : count.kind === "foes-within"
+                        ? count.knockedDown === true
+                          ? "knocked-down foe"
+                          : "foe"
+                        : "ally";
 }
 
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
@@ -3621,11 +3661,7 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       return { text: `${counted}${perAllyText(effect, ranks)}${below}`, magnitude };
     }
     case "energy-gain": {
-      const magnitude = countedMagnitude(
-        effect.amount,
-        effect.toTarget === true ? undefined : effect.per,
-        ranks,
-      );
+      const magnitude = countedMagnitude(effect.amount, effect.per, ranks);
       if (effect.toTarget !== true && effect.perUsedSkillEnergy === true) {
         return {
           text: `Gain ${shown(magnitude, percentOf(magnitude.current))} of the skill's base energy cost`,
@@ -3640,7 +3676,8 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
             : "Gain";
       const text = `${gains} ${shown(magnitude)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${perRemovedText(effect)}`;
       return {
-        text: `${effect.toTarget === true ? text : withPerText(text, effect.amount, effect.per, ranks, { alone: "Gain", unit: " energy", onTarget: "on target foe" })}${upToText(effect)}`,
+        // A target's gain counts too (#2472).
+        text: `${withPerText(text, effect.amount, effect.per, ranks, effect.toTarget === true ? { alone: gains, unit: " energy", onTarget: "on them" } : { alone: "Gain", unit: " energy", onTarget: "on target foe" })}${upToText(effect)}`,
         magnitude,
       };
     }
@@ -3670,6 +3707,9 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         magnitude,
       };
     }
+    // Aneurysm's (#2472).
+    case "energy-refill":
+      return { text: "Target regains all Energy", magnitude: undefined };
     case "energy-loss": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       const who = effect.on === "caster" ? "You lose" : "Target loses";
@@ -4845,6 +4885,13 @@ export function describeSkill(
       magnitude,
     })),
   );
+  // Twin Moon Sweep's (#2459), as it is released, hit or miss.
+  const onRelease = (rule?.onRelease ?? []).flatMap((effect) =>
+    describeEffects(effect, ranks).map(({ text, magnitude }) => ({
+      text: `As it is used: ${lowerFirst(text)}`,
+      magnitude,
+    })),
+  );
   // Barrage's and Volley's (#1629), before anything else it does.
   const preparationsLine =
     rule?.removesPreparations === true
@@ -4871,7 +4918,9 @@ export function describeSkill(
   // Forked Arrow's (#1914): "only one arrow" while its state holds.
   const fewer =
     typeof strikes === "number" ? "" : `; ${conditionText(strikes.oneWhile).toLowerCase()}, only 1`;
-  const weaponDamage = rule?.weaponDamage ?? 1;
+  // Twin Moon Sweep's cut (#2459), only on the blows past one.
+  const weaponDamage =
+    (rule?.weaponDamage ?? 1) * (typeof strikes === "number" ? 1 : (strikes.eachWeaponDamage ?? 1));
   const weaker =
     weaponDamage > 0 && weaponDamage < 1
       ? `, each dealing ${String(Math.round((1 - weaponDamage) * 100))}% less damage`
@@ -4999,6 +5048,7 @@ export function describeSkill(
   const effects = [
     ...lossLine,
     ...preparationsLine,
+    ...onRelease,
     ...chainLine,
     ...bonusLine,
     ...unblockableLine,

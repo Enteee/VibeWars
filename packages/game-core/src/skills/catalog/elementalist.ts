@@ -6161,6 +6161,72 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // A ground pulse that grows (#2459).
+  {
+    id: "elementalist.savannah-heat",
+    name: "Savannah Heat",
+    gwId: 1380,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You create Savannah Heat at target foe's location. For 5 seconds,
+    // all nearby foes take 5...20 fire damage for each second this spell
+    // has been in effect" (PvP): 17 a second at rank 12, a pulse each
+    // second from the first, 17, 34, ... 85.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 5 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 5,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_NEARBY,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: { flat: 0 },
+                type: "fire",
+                armorPenetration: 0,
+                per: {
+                  count: { kind: "held-seconds" },
+                  amount: {
+                    scaling: { attributeId: "elementalist.fire-magic", atZero: 5, atTwelve: 17 },
+                  },
+                  max: undefined,
+                },
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
 ];
 
 /**

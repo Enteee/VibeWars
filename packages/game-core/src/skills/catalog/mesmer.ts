@@ -28,6 +28,11 @@ const COMPLICATE_DISABLE: Magnitude = {
   scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 10.6 },
 };
 
+/** Stolen Speed's 1...10 s (#2459), on its target and on each adjacent foe. */
+const STOLEN_SPEED_SECONDS: Magnitude = {
+  scaling: { attributeId: "mesmer.fast-casting", atZero: 1, atTwelve: 8.2 },
+};
+
 /** Signet of Weariness's 3...8 Energy and 1...12 s Weakness (#2231), on its target and each nearby foe. */
 const WEARINESS: readonly UnconditionalEffect[] = [
   {
@@ -4956,6 +4961,144 @@ export const MESMER_SKILLS: readonly Skill[] = [
         durationSeconds: {
           scaling: { attributeId: "mesmer.fast-casting", atZero: 36, atTwelve: 55.2 },
         },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2472)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.illusionary-weaponry",
+    name: "Illusionary Weaponry",
+    gwId: 33,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30 seconds, your melee attacks neither hit nor fail to hit.
+    // Instead, Illusionary Weaponry deals 20...60 damage to your targets
+    // for each melee attack" (PvP): the damage at the Mesmer's Illusion
+    // Magic as it landed, typeless.
+    effects: [
+      { kind: "apply-status", statusId: "illusionary-weaponry", durationSeconds: { flat: 30 } },
+    ],
+  },
+  {
+    id: "mesmer.aneurysm",
+    name: "Aneurysm",
+    gwId: 2055,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe regains all Energy. For each point of Energy gained in
+    // this way, that foe takes 1...3 damage and all adjacent foes lose 1
+    // Energy. (Maximum 1...30 Energy lost)." Each point's damage rounds
+    // once, as all damage does: 3 a point at 12. The adjacent foes count
+    // what the foe hit gained, their splash's centre.
+    effects: [
+      { kind: "energy-refill", on: "target" },
+      {
+        kind: "damage",
+        amount: { flat: 0 },
+        type: "typeless",
+        armorPenetration: 0,
+        per: {
+          count: { kind: "energy-gained", on: "target" },
+          amount: {
+            scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 2.6 },
+          },
+          max: undefined,
+        },
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "energy-loss",
+            amount: { flat: 0 },
+            per: {
+              count: { kind: "energy-gained", on: "target" },
+              amount: { flat: 1 },
+              max: {
+                scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 24.2 },
+              },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  // Faster casting for the hex's own source (#2459).
+  {
+    id: "mesmer.stolen-speed",
+    name: "Stolen Speed",
+    gwId: 880,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 1...10 seconds, spells cast by the target foe and all adjacent
+    // foes take 100% longer to cast. Spells you cast that target these foes
+    // take 50% less time to cast" (PvP): 8.2 s at rank 12.
+    effects: [
+      { kind: "apply-status", statusId: "stolen-speed", durationSeconds: STOLEN_SPEED_SECONDS },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          { kind: "apply-status", statusId: "stolen-speed", durationSeconds: STOLEN_SPEED_SECONDS },
+        ],
       },
     ],
   },

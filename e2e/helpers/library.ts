@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 /**
  * Open the skill library's attribute group `name` (#2161), matched on its
@@ -27,4 +27,12 @@ export async function openLibraryGroup(page: Page, name?: string): Promise<void>
     await folded.first().click();
   }
   await expect(folded).toHaveCount(0);
+}
+
+/** A chip in the skill library's Filters popover (#2463): a skill type, Elite only, or Not in the game yet. */
+export function filterChip(page: Page, label: string): Locator {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return page.locator(".skill-filter-popover .skill-type-chip", {
+    hasText: new RegExp(`^${escaped}$`),
+  });
 }

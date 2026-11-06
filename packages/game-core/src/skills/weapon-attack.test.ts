@@ -27,6 +27,7 @@ import {
   doubleStrikeChance,
   landBlow,
   PLAIN_BLOW,
+  releasedStrikes,
   resolveAttackSkill,
   resolveSwing,
   swingProgress,
@@ -35,6 +36,7 @@ import {
 import type { Combatant, Skill, Surroundings } from "./types.js";
 import { NO_RANKS, STATUS_DEFINITIONS } from "./status.js";
 import { define } from "./statuses/define.js";
+import type { FiredTrigger } from "./triggers.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
 
@@ -2227,5 +2229,193 @@ describe("a rider at its source's ranks (#2411)", () => {
         endsAfterAttackCount: 1,
       }),
     ).toThrow(/cannot end after its attacks/);
+  });
+});
+
+describe("releasedStrikes (#2459)", () => {
+  const attacker = makeCombatant({ id: "attacker" });
+  const victim = makeCombatant({ id: "victim", team: 1 });
+  const read = (id: string): ReturnType<typeof releasedStrikes> =>
+    releasedStrikes(getSkill(id)?.attack, attacker, victim, new Map());
+
+  it("keeps Dual Shot's two arrows at its own 25% less, cut no further", () => {
+    expect(read("ranger.dual-shot")).toMatchObject({ strikes: 2, eachWeaponDamage: 1 });
+  });
+
+  it("reads Forked Arrow's one arrow as before, and Twin Moon Sweep's cut only past one", () => {
+    expect(read("ranger.forked-arrow").strikes).toBe(2);
+    attacker.statuses.apply("sand-shards", 30, "dervish", NO_RANKS);
+    expect(read("dervish.twin-moon-sweep")).toEqual({
+      strikes: 2,
+      unblockable: true,
+      eachWeaponDamage: 0.75,
+    });
+    attacker.statuses.remove("sand-shards");
+    expect(read("dervish.twin-moon-sweep")).toEqual({
+      strikes: 1,
+      unblockable: false,
+      eachWeaponDamage: 1,
+    });
+  });
+
+  it("leaves Pure Strike's gate to be read per blow: it has no release", () => {
+    expect(read("warrior.pure-strike").unblockable).toEqual({
+      kind: "caster-lacks",
+      category: "stance",
+    });
+  });
+});
+
+describe("Illusionary Weaponry: a melee blow replaced by its damage (#2472)", () => {
+  const ILLUSION = "mesmer.illusion-magic";
+  const IW = "mesmer.illusionary-weaponry";
+
+  /** A stream that fails the test if anything draws from it. */
+  const undrawable = (): SimulationRng =>
+    Object.assign(createRng(1), {
+      nextFloat: (): number => {
+        throw new Error("drew a float");
+      },
+      nextInt: (): number => {
+        throw new Error("drew an int");
+      },
+      nextUint32: (): number => {
+        throw new Error("drew a uint");
+      },
+    });
+
+  function weaponry(who: Combatant, rank = 12): Combatant {
+    who.statuses.apply("illusionary-weaponry", 30, "mesmer", new Map([[ILLUSION, rank]]));
+    return who;
+  }
+
+  function swing(who: Combatant, target: ReturnType<typeof foe>, rng: SimulationRng) {
+    return resolveSwing({
+      attacker: who,
+      target,
+      surroundings: new Map(),
+      rng,
+      rules: RULES,
+      exposed: NOWHERE,
+    });
+  }
+
+  /** What `fired` dealt under the status's skill, each packet. */
+  function replaced(fired: readonly FiredTrigger[]): number[] {
+    return fired.flatMap(({ skillId, events }) => (skillId === IW ? damages(events) : []));
+  }
+
+  it.each([
+    [12, 52],
+    [0, 20],
+  ] as const)(
+    "at rank %i a swing deals %i, no weapon damage, no roll, no landed blow",
+    (rank, dealt) => {
+      const sword = weaponry(attacker(WEAPONS.sword, "warrior.swordsmanship"), rank);
+      const target = foe("dummy");
+      const { events, landed, fired } = swing(sword, target, undrawable());
+      expect(damages(events)).toEqual([]);
+      expect(landed).toBe(0);
+      expect(replaced(fired)).toEqual([dealt]);
+      expect(target.combatant.health).toBe(target.combatant.maxHealth - dealt);
+    },
+  );
+
+  it("blind, it neither misses nor rolls", () => {
+    const sword = weaponry(attacker(WEAPONS.sword, "warrior.swordsmanship"));
+    sword.statuses.apply("blind", 10, "foe", NO_RANKS);
+    const { events, fired } = swing(sword, foe("dummy"), undrawable());
+    expect(events.some((event) => event.kind === "attack-missed")).toBe(false);
+    expect(replaced(fired)).toEqual([52]);
+  });
+
+  it("fires no on-hit rider: Withering Aura weakens nobody", () => {
+    const sword = weaponry(attacker(WEAPONS.sword, "warrior.swordsmanship"));
+    sword.statuses.apply("withering-aura", 17, "necro", NO_RANKS);
+    const target = foe("dummy");
+    const { fired } = swing(sword, target, undrawable());
+    expect(target.combatant.statuses.has("weakness")).toBe(false);
+    expect(replaced(fired)).toEqual([52]);
+  });
+
+  it("a double strike is one packet a blow", () => {
+    const daggers = weaponry(attacker(WEAPONS.daggers, "assassin.dagger-mastery"));
+    // The double-strike roll is the weapon's, before any blow: 0 always doubles.
+    const doubling = Object.assign(undrawable(), { nextFloat: (): number => 0 });
+    const { doubleStrike, fired } = swing(daggers, foe("dummy"), doubling);
+    expect(doubleStrike).toBe(true);
+    expect(replaced(fired)).toEqual([52, 52]);
+  });
+
+  it("leaves a ranged blow as it was, roll for roll", () => {
+    const plain = attacker(WEAPONS.longbow, "ranger.marksmanship");
+    const under = weaponry(attacker(WEAPONS.longbow, "ranger.marksmanship"));
+    const rngs = [createRng(9), createRng(9)] as const;
+    const without = swing(plain, foe("dummy"), rngs[0]);
+    const withIt = swing(under, foe("dummy"), rngs[1]);
+    expect(withIt.events).toEqual(without.events);
+    expect(replaced(withIt.fired)).toEqual([]);
+    expect(rngs[1].getState()).toBe(rngs[0].getState());
+  });
+
+  it("an attack skill deals it once a victim: no hit, no miss, no rider", () => {
+    const severArtery = getSkill("warrior.sever-artery");
+    if (severArtery === undefined) {
+      throw new Error("missing skill");
+    }
+    const sword = weaponry(attacker(WEAPONS.sword, "warrior.swordsmanship"));
+    sword.statuses.apply("blind", 10, "foe", NO_RANKS);
+    const target = makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });
+    const fired: FiredTrigger[] = [];
+    const events = resolveAttackSkill(
+      {
+        surroundings: new Map(),
+        skill: severArtery,
+        caster: sword,
+        targets: [target],
+        rng: undrawable(),
+        rules: RULES,
+      },
+      NOWHERE,
+      fired,
+    );
+    expect(damages(events)).toEqual([]);
+    expect(events.some((event) => event.kind === "attack-missed")).toBe(false);
+    expect(target.statuses.has("bleeding")).toBe(false);
+    expect(replaced(fired)).toEqual([52]);
+  });
+
+  it("a dual attack is one packet a blow", () => {
+    const twisting = getSkill("assassin.twisting-fangs");
+    if (twisting === undefined) {
+      throw new Error("missing skill");
+    }
+    const daggers = weaponry(attacker(WEAPONS.daggers, "assassin.dagger-mastery"));
+    // In sequence: its off-hand attack was the last.
+    daggers.chainMarks.set("t", { role: "off-hand", remainingSeconds: 15 });
+    const fired: FiredTrigger[] = [];
+    resolveAttackSkill(
+      {
+        surroundings: new Map(),
+        skill: twisting,
+        caster: daggers,
+        targets: [makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 })],
+        rng: undrawable(),
+        rules: RULES,
+      },
+      NOWHERE,
+      fired,
+    );
+    expect(replaced(fired)).toEqual([52, 52]);
+  });
+
+  it("without it, a swing draws as before", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    const rng = createRng(4);
+    const replay = createRng(4);
+    swing(sword, foe("dummy"), rng);
+    swing(attacker(WEAPONS.sword, "warrior.swordsmanship"), foe("dummy"), replay);
+    expect(rng.getState()).toBe(replay.getState());
+    expect(rng.getState()).not.toBe(createRng(4).getState());
   });
 });

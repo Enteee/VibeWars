@@ -4115,6 +4115,27 @@ body {
   max-height: calc(100vh - 5rem);
 }
 
+/* On a short window the log gives way first, down to about three rows;
+   only then does the panel scroll inside its border (#2464). */
+@media (width > 78rem) {
+  .editor-layout.has-training > .training:not(.is-expanded) {
+    overflow-y: auto;
+  }
+
+  .editor-layout.has-training > .training:not(.is-expanded) > * {
+    flex-shrink: 0;
+  }
+
+  .editor-layout.has-training > .training:not(.is-expanded) > .training-log {
+    flex-shrink: 1;
+    min-height: 4rem;
+  }
+
+  .editor-layout.has-training > .training:not(.is-expanded) .training-log-rows {
+    min-height: 0;
+  }
+}
+
 @media (width <= 78rem) {
   .editor-layout.has-training {
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
@@ -4732,25 +4753,84 @@ body.has-expanded-training #screens {
   width: 100%;
 }
 
+/* Search, the Filters button and the tags of what is on (#2463). The
+   popover hangs under the row and is no wider than the library; tags wrap
+   to a line of their own before the search gets narrower than 12em. */
 .skill-filters {
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem 0.5rem;
 }
 
 .skill-filters .skill-search {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 12em;
+  min-width: 12em;
 }
 
-.skill-elite-filter {
-  display: flex;
+.skill-filter-button,
+.screen .skill-filter-button {
   flex: none;
-  align-items: center;
-  gap: 0.3rem;
-  color: var(--ink-dim);
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
   font-size: 0.8rem;
   cursor: pointer;
+}
+
+.skill-filter-button[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.skill-filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.skill-filter-tag,
+.screen .skill-filter-tag {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.skill-filter-popover {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  background: rgb(14 17 22);
+  border: 1px solid var(--line);
+}
+
+.skill-filter-heading {
+  color: var(--ink-dim);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.skill-filter-done,
+.screen .skill-filter-done {
+  align-self: flex-end;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.8rem;
 }
 
 .skill-groups {
@@ -4894,15 +4974,6 @@ button.skill-group-header > .skill-group-rank {
   text-transform: uppercase;
 }
 
-.skill-corpus-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  color: var(--ink-dim);
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
 .skill-locked {
   margin-top: 0.6rem;
 }
@@ -5023,8 +5094,7 @@ button.skill-group-header > .skill-group-rank {
    (#563), so it must not pick the controls above the list as its anchor:
    they never move, and the list would jump under them. */
 .library-tabs,
-.skill-filters,
-.skill-type-chips {
+.skill-filters {
   overflow-anchor: none;
 }
 

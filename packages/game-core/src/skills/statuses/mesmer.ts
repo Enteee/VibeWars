@@ -100,7 +100,11 @@ export type MesmerStatusId =
   // Staples (#2447).
   | "ancestors-visage"
   // Dropped leftovers (#2446).
-  | "symbolic-celerity";
+  | "symbolic-celerity"
+  // Mechanics (#2459).
+  | "stolen-speed"
+  // Mechanics (#2472).
+  | "illusionary-weaponry";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -1181,5 +1185,23 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   "symbolic-celerity": define("symbolic-celerity", "Symbolic Celerity", "enchantment", {
     profession: "mesmer",
     borrowsAttribute: { attributeId: "mesmer.fast-casting", skillType: "signet", uses: undefined },
+  }),
+  // "Spells cast by the target foe and all adjacent foes take 100% longer
+  // to cast. Spells you cast that target these foes take 50% less time to
+  // cast" (PvP, #2459): only its own caster's, aimed at the bearer.
+  "stolen-speed": define("stolen-speed", "Stolen Speed", "hex", {
+    profession: "mesmer",
+    castTimeMultiplier: 2,
+    sourceSpellCastTimeMultiplier: 0.5,
+  }),
+  // "For 30 seconds, your melee attacks neither hit nor fail to hit.
+  // Instead, Illusionary Weaponry deals 20...60 damage to your targets for
+  // each melee attack" (#2472), at the Mesmer's Illusion Magic as it landed.
+  "illusionary-weaponry": define("illusionary-weaponry", "Illusionary Weaponry", "enchantment", {
+    profession: "mesmer",
+    replacesMeleeBlows: {
+      damage: { scaling: { attributeId: "mesmer.illusion-magic", atZero: 20, atTwelve: 52 } },
+      skillId: "mesmer.illusionary-weaponry",
+    },
   }),
 };

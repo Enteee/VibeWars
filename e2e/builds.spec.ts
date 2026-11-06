@@ -5,7 +5,7 @@ import { exportBuild } from "../apps/web/src/storage/build-transfer.js";
 import { CHARACTER_SCHEMA_VERSION } from "../apps/web/src/storage/schema.js";
 import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
-import { openLibraryGroup } from "./helpers/library.js";
+import { filterChip, openLibraryGroup } from "./helpers/library.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { awaitLobby, openRail, pickCharacter } from "./helpers/menu.js";
 import { expectTeamSize, setTeamSize, startSoloMatch } from "./helpers/peers.js";
@@ -1438,9 +1438,11 @@ test("a second elite replaces the first on the bar, framed in gold, into the mat
   await openLibraryGroup(page, "Wilderness Survival");
   await expect(page.locator(".skill-box.is-elite", { hasText: "Barrage" })).toBeVisible();
   await expect(page.locator(".skill-box.is-elite", { hasText: "Troll Unguent" })).toHaveCount(0);
-  await page.locator(".skill-elite-filter input").check();
+  await page.locator(".skill-filter-button").click();
+  await filterChip(page, "Elite only").click();
+  await page.getByRole("button", { name: "Done" }).click();
   await expect(page.locator(".skill-box:not(.is-elite)")).toHaveCount(0);
-  await page.locator(".skill-elite-filter input").uncheck();
+  await page.getByRole("button", { name: "remove elite filter" }).click();
 
   await page.locator(".skill-box", { hasText: "Barrage" }).locator(".skill-box-equip").click();
   await page
@@ -2556,10 +2558,9 @@ test("Tab reaches the bar's slots and the library's cards (#567)", async ({ page
 
   const firstCard = page.locator(".skill-box-card").first();
   await page.locator(".skill-search").focus();
-  // Past the elite toggle, the type chips and the first group's header, on
-  // to the first card. Each new skill type adds a chip, so the cap follows
-  // their count.
-  const presses = (await page.locator(".skill-type-chip").count()) + 10;
+  // Past the Filters button and the first group's header, on to the first
+  // card: the filters themselves are in their popover (#2463).
+  const presses = 10;
   for (let press = 0; press < presses; press++) {
     if (await firstCard.evaluate((node) => node === document.activeElement)) {
       break;
@@ -2576,8 +2577,10 @@ test("type chips filter the library, several at once, and search reads the text 
   const names = page.locator(".skill-library .skill-box-name");
   await openLibraryGroup(page);
   const all = await names.count();
-  const hex = page.locator(".skill-type-chip", { hasText: /^hex$/ });
-  const enchantment = page.locator(".skill-type-chip", { hasText: /^enchantment$/ });
+  // The chips are in the Filters popover (#2463), which a chip leaves open.
+  await page.locator(".skill-filter-button").click();
+  const hex = filterChip(page, "hex");
+  const enchantment = filterChip(page, "enchantment");
   await enchantment.click();
   await expect(enchantment).toHaveAttribute("aria-pressed", "true");
   const enchantments = await names.count();
@@ -2679,16 +2682,21 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   page,
 }) => {
   await openElementalist(page);
-  const toggle = page.getByLabel("Show skills not in the game yet");
+  const toggle = filterChip(page, "Not in the game yet");
   // Off by default: the library is as it was.
   await openLibraryGroup(page, "Fire Magic");
-  await expect(toggle).not.toBeChecked();
+  await page.locator(".skill-filter-button").click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator(".skill-corpus-box")).toHaveCount(0);
 
-  await toggle.check();
+  await toggle.click();
+  // It adds skills rather than filtering them out (#2463): no count, no tag.
+  await expect(page.locator(".skill-filter-button")).toHaveText("Filters");
+  await expect(page.locator(".skill-filter-tag")).toHaveCount(0);
+  await page.getByRole("button", { name: "Done" }).click();
   const fire = page.locator(".skill-group", { hasText: "FIRE MAGIC" });
-  // Savannah Heat is GW1 Fire Magic VibeWars does not have yet.
-  const mark = fire.locator(".skill-corpus-box", { hasText: "Savannah Heat" });
+  // Double Dragon is GW1 Fire Magic VibeWars does not have yet.
+  const mark = fire.locator(".skill-corpus-box", { hasText: "Double Dragon" });
   await expect(mark).toContainText("not in the game yet");
   // After the group's playable skills.
   await expect(fire.locator(".skill-box, .skill-corpus-box").last()).toHaveClass(
@@ -2698,19 +2706,20 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   expect(await mark.getAttribute("draggable")).toBeNull();
   await expect(mark.locator("button")).toHaveCount(0);
   await mark.click();
-  await expect(page.locator(".skill-slot", { hasText: "Savannah Heat" })).toHaveCount(0);
+  await expect(page.locator(".skill-slot", { hasText: "Double Dragon" })).toHaveCount(0);
   // Its hover shows GW1's own text.
   await mark.hover();
   await expect(page.locator(".skill-tip")).toContainText("Not in the game yet");
 
   // The search finds it; remembered across a reload.
-  // Searing Heat is in the game, so it is found too, playable.
-  await page.locator("input.skill-search").fill("heat");
-  await expect(page.locator(".skill-corpus-box", { hasText: "Savannah Heat" })).toHaveCount(1);
-  await expect(page.locator(".skill-box", { hasText: "Searing Heat" })).toHaveCount(1);
+  // Dragon's Stomp is in the game, so it is found too, playable.
+  await page.locator("input.skill-search").fill("dragon");
+  await expect(page.locator(".skill-corpus-box", { hasText: "Double Dragon" })).toHaveCount(1);
+  await expect(page.locator(".skill-box", { hasText: "Dragon's Stomp" })).toHaveCount(1);
   await page.reload();
   await page.getByRole("button", { name: "New character", exact: true }).click();
-  await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
+  await page.locator(".skill-filter-button").click();
+  await expect(filterChip(page, "Not in the game yet")).toHaveAttribute("aria-pressed", "true");
 });
 
 test("of Fortitude on the sword, picked on the paper-doll, adds 30 Health, and stays on after Save and a reload (#2008, #2151)", async ({

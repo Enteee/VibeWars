@@ -231,6 +231,7 @@ const OWN_SKILL_STAT_KEYS: Readonly<Record<OwnSkillStatKey, true>> = {
   activationSecondsLess: true,
   rechargeFaster: true,
   durationMultiplier: true,
+  uses: true,
 };
 
 /** The fields of a `WhileUnder` that are a `StatusStat` (#2191). */
@@ -258,7 +259,7 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   for (const modifier of definition.ownSkillModifiers) {
     for (const key of Object.keys(OWN_SKILL_STAT_KEYS) as OwnSkillStatKey[]) {
       const stat = modifier[key];
-      if (typeof stat !== "number") {
+      if (stat !== undefined && typeof stat !== "number") {
         attributes.add(stat.scaling.attributeId);
       }
     }
@@ -273,10 +274,11 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
     }
   }
   // Reversal of Damage's and Mark of Protection's caps are their caster's (#2187),
-  // Ward Against Harm's elemental armor (#2278), Retribution's cap (#2286) and
-  // Chilling Winds' lengthening (#2311).
+  // Ward Against Harm's elemental armor (#2278), Retribution's cap (#2286),
+  // Chilling Winds' lengthening (#2311) and Illusionary Weaponry's damage (#2472).
   for (const stat of [
     definition.reflectsNextDamage?.cap,
+    definition.replacesMeleeBlows?.damage,
     definition.reflectsAttackDamage?.max,
     definition.redirectsDamage?.reduction,
     definition.damageToHealing?.cap,
@@ -497,6 +499,14 @@ export interface StatusDefinition {
    * ceiling left, as `maxHealthBonus` does health.
    */
   readonly maxEnergyBonus: number;
+  /**
+   * An aura's status lands only on a body holding an item (#2478):
+   * Empowerment's "allies within its range holding an item". An item is
+   * an `"item"` status, a Ritualist's ashes, or a carried flag or relic;
+   * picking one up or dropping it puts the status on or takes it off the
+   * next step, clamping as any lost bonus does.
+   */
+  readonly onlyWhileHoldingItem: boolean;
   /**
    * Damage the bearer's minions add to each hit (#1915), before armor,
    * as Order of Undeath's "your minions deal +3...13...16 damage".
@@ -1247,6 +1257,16 @@ export interface StatusDefinition {
    */
   readonly reflectsNextDamage: ReflectsNextDamage | undefined;
   /**
+   * Each melee blow the bearer makes, a plain swing or an attack skill's,
+   * neither hits nor fails to hit: no roll, no weapon damage, no
+   * adrenaline and no on-hit effect, and its target takes this damage
+   * instead (#2472): Illusionary Weaponry's "your melee attacks neither
+   * hit nor fail to hit. Instead, Illusionary Weaponry deals 20...60
+   * damage to your targets for each melee attack". Ranged blows are
+   * untouched. `undefined`: blows are blows.
+   */
+  readonly replacesMeleeBlows: ReplacesMeleeBlows | undefined;
+  /**
    * Every damage the bearer would take while it lasts heals it instead, up
    * to the cap a hit (#2187): Mark of Protection's 6...60. Not spent by a hit;
    * after `mitigate`, so a bond's cap comes first. `undefined`: none.
@@ -1381,6 +1401,13 @@ export interface StatusDefinition {
    * once, as the cast begins.
    */
   readonly incomingAllySpellCastTimeMultiplier: number;
+  /**
+   * Multiplier on how long a spell of the status's source takes to cast
+   * on the bearer (#2459): Stolen Speed's "Spells you cast that target
+   * these foes take 50% less time to cast", 0.5. Nobody else's spell,
+   * nor one aimed elsewhere. Read once, as the cast begins.
+   */
+  readonly sourceSpellCastTimeMultiplier: number;
   /**
    * Energy off each enchantment cast on the bearer (#1975): Air of
    * Enchantment's 10. Taken off last, after the caster's own discounts
@@ -1732,6 +1759,20 @@ export interface ReflectsNextDamage {
   readonly skillId: string;
 }
 
+/** `StatusDefinition.replacesMeleeBlows` (#2472). */
+export interface ReplacesMeleeBlows {
+  /** Typeless, at the status's ranks as it landed. */
+  readonly damage: StatusStat;
+  /** The skill the damage is reported as. */
+  readonly skillId: string;
+}
+
+/** What a melee blow deals instead of hitting (#2472): `StatusSet.meleeBlowReplacement`'s. */
+export interface MeleeBlowReplacement {
+  readonly damage: number;
+  readonly skillId: string;
+}
+
 /** A `damagePulse` that came due on the bearer (#1501): what it deals, from whom. */
 export interface StatusPulse {
   readonly id: StatusId;
@@ -1851,8 +1892,12 @@ export interface OwnSkillModifier {
   readonly notEasilyInterrupted: boolean;
   /** Overcast its user takes as each use begins (#2311), as Iron Mist's 2. 0: none. */
   readonly overcastPerUse: number;
-  /** Skills it answers before the status ends; `undefined`: as long as the status lasts. */
-  readonly uses: number | undefined;
+  /**
+   * Skills it answers before the status ends, rounded at the bearer's
+   * ranks as it lands (#2478): Soul Twisting's "1...3". `undefined`: as
+   * long as the status lasts.
+   */
+  readonly uses: StatusStat | undefined;
 }
 
 /**
@@ -1911,6 +1956,15 @@ export function ownSkillAnswers(filter: OwnSkillFilter, skill: Skill): boolean {
     (filter.weapon === undefined || skill.attack?.weapon === filter.weapon) &&
     (!filter.targetsFoe || skill.target === "single-enemy")
   );
+}
+
+/** Own skills a status answers as it lands at `ranks` (#2478): its first `uses`, rounded. */
+function ownSkillUses(
+  definition: StatusDefinition,
+  ranks: ReadonlyMap<string, number>,
+): number | undefined {
+  const uses = definition.ownSkillModifiers.find(({ uses }) => uses !== undefined)?.uses;
+  return uses === undefined ? undefined : Math.round(statAt(uses, ranks));
 }
 
 /**
@@ -3381,7 +3435,7 @@ export class StatusSet {
         definition.nextSkill === undefined
           ? undefined
           : Math.round(statAt(definition.nextSkill.count, ranks)),
-      ownSkillsLeft: definition.ownSkillModifiers.find(({ uses }) => uses !== undefined)?.uses,
+      ownSkillsLeft: ownSkillUses(definition, ranks),
       triggersLeft:
         definition.endsAfterTriggers === undefined
           ? undefined
@@ -3903,6 +3957,24 @@ export class StatusSet {
           });
         }
         return status.id;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * What the bearer's melee blows deal instead of hitting (#2472), from
+   * the first status up that replaces them, at its ranks as it landed;
+   * `undefined` if none is up.
+   */
+  public meleeBlowReplacement(): MeleeBlowReplacement | undefined {
+    for (const status of this.#statuses.values()) {
+      const replaces = getStatusDefinition(status.id).replacesMeleeBlows;
+      if (replaces !== undefined) {
+        return {
+          damage: Math.round(statAt(replaces.damage, status.ranks)),
+          skillId: replaces.skillId,
+        };
       }
     }
     return undefined;
