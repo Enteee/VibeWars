@@ -1946,6 +1946,11 @@ body {
   }
 }
 
+/* The open member's skill bar (#2565), the Character Builder's, across every column. */
+.team-member-editor-bar {
+  grid-column: 1 / -1;
+}
+
 .team-member-editor-heading {
   margin: 0;
   color: var(--ink-dim);
@@ -2212,8 +2217,9 @@ body {
   white-space: nowrap;
 }
 
-/* The right panel (#2225): My characters | Skills, beside the rows as they scroll. */
-.team-picker {
+/* The right panel (#2225): the build picker (#2565) with My characters
+   first, beside the rows as they scroll, under the screen bar. */
+.skill-library.team-picker {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -2221,18 +2227,6 @@ body {
   top: 0.5rem;
   height: calc(100vh - 9rem);
   min-height: 20rem;
-}
-
-.team-picker-tabs {
-  display: grid;
-  grid-auto-columns: 1fr;
-  grid-auto-flow: column;
-  gap: 0.3rem;
-}
-
-.screen .team-picker-tab.is-active {
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
 .team-picker-pane {
@@ -2243,17 +2237,7 @@ body {
   min-height: 0;
 }
 
-.team-picker-pane[hidden] {
-  display: none;
-}
-
-/* The Character Builder's library, in the panel's height rather than the window's. */
-.team-picker-skills.skill-library {
-  position: static;
-  height: auto;
-}
-
-.team-picker-hint {
+.picker-hint {
   margin: 0;
   font-size: 0.75rem;
   color: var(--ink-dim);
@@ -2268,7 +2252,8 @@ body {
 }
 
 /* A skill dragged off its slot (#2227): its origin dims while it travels. */
-.team-skill.is-dragging {
+.team-skill.is-dragging,
+.skill-slot.is-dragging {
   opacity: 0.4;
 }
 
@@ -2278,12 +2263,13 @@ body {
   outline-offset: -1px;
 }
 
-.team-skill.is-drop-refused {
+.team-skill.is-drop-refused,
+.skill-slot.is-drop-refused {
   outline: 2px dashed var(--damage);
   outline-offset: -1px;
 }
 
-.team-drop-reason {
+.drop-reason {
   position: fixed;
   z-index: 30;
   padding: 0.2rem 0.5rem;
@@ -2293,7 +2279,7 @@ body {
   pointer-events: none;
 }
 
-.team-drop-reason.is-refused {
+.drop-reason.is-refused {
   border-color: var(--damage);
   color: var(--damage);
 }

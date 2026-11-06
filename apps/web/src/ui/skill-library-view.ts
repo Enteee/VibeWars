@@ -10,7 +10,7 @@ import {
 
 import { equippableSkills } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
-import { encodeDragSource, equipTarget } from "./build-editor.js";
+import { encodeSkillDrag, equipTarget } from "./build-drop.js";
 import { characterRanks } from "./character-ranks.js";
 import { SKILL_TYPE_NAME, skillIcon, skillIconHtml, skillTypeBadgeHtml } from "./icons.js";
 import { button, h, syncList } from "./kit.js";
@@ -31,7 +31,7 @@ import { attachTopbarPopover } from "./topbar-popover.js";
  * Builder's for its focused member. Attribute groups folded by default
  * (#2161), search, type chips, the skills not in the game yet, and
  * locked cards of other professions. Its cards drag as
- * `encodeDragSource({ from: "library" })`; where they drop is the
+ * `encodeSkillDrag({ from: "library" })`; where they drop is the
  * screen's.
  */
 
@@ -311,7 +311,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     box.addEventListener("dragstart", (event: DragEvent) => {
       event.dataTransfer?.setData(
         "text/plain",
-        encodeDragSource({ from: "library", skillId: skill.id }),
+        encodeSkillDrag({ from: "library", skillId: skill.id }),
       );
       dragIcon(event, skill.id);
     });

@@ -609,8 +609,8 @@ test("a member opens in place: its secondary profession and a rank change there 
   await page.getByLabel("team name").fill("Duo");
   const editor = page.locator(".team-member-editor");
   await expect(editor).toHaveCount(0);
-  // The Gear tab has a member to equip only while one is open.
-  await expect(page.getByRole("tab", { name: "Gear", exact: true })).toBeHidden();
+  // The build picker's Gear tab is there before a member opens (#2565).
+  await expect(page.getByRole("tab", { name: "Gear", exact: true })).toBeVisible();
 
   await memberRows(page).first().locator(".team-row-edit").click();
   await expect(editor).toBeVisible();
@@ -922,10 +922,8 @@ test("a skill dragged from the Skills tab equips on a member's slot; a refused d
   await page.getByRole("button", { name: "new team" }).click();
   // The Skills tab shows the focused member's: the first, a blank Warrior.
   await page.getByRole("tab", { name: "Skills", exact: true }).click();
-  await expect(page.locator(".team-picker-skills .team-picker-hint")).toContainText(
-    "New Character",
-  );
-  const library = page.locator(".team-picker-skills");
+  await expect(page.locator(".team-picker .picker-hint")).toContainText("New Character");
+  const library = page.locator(".team-picker");
   await openLibraryGroup(page, "Strength");
   const box = library.locator(".skill-box").first();
   const skillId = (await box.getAttribute("data-skill-id")) ?? "";
@@ -934,18 +932,29 @@ test("a skill dragged from the Skills tab equips on a member's slot; a refused d
   await expect(target).toHaveAttribute("data-skill-id", skillId);
   await expect(page.locator(".editor-unsaved")).toBeVisible();
 
-  // The same skill again on that bar is refused: the slot is marked, the
-  // reason said, and the drop does nothing.
+  // The same skill again on that bar moves it there, as in the Character
+  // Builder (#2565).
   const other = memberRows(page).nth(1).locator(".team-skill").nth(5);
-  await box.hover();
+  await box.dragTo(other);
+  await expect(other).toHaveAttribute("data-skill-id", skillId);
+  await expect(target).not.toHaveAttribute("data-skill-id");
+
+  // Another member's copy dragged onto that bar is refused: the slot is
+  // marked, the reason said, and the drop does nothing.
+  const first = memberRows(page).first().locator(".team-skill").first();
+  await box.dragTo(first);
+  await expect(first).toHaveAttribute("data-skill-id", skillId);
+  const empty = memberRows(page).nth(1).locator(".team-skill").nth(2);
+  await first.hover();
   await page.mouse.down();
-  const spot = await other.boundingBox();
+  const spot = await empty.boundingBox();
   await page.mouse.move((spot?.x ?? 0) + 8, (spot?.y ?? 0) + 8, { steps: 4 });
   await page.mouse.move((spot?.x ?? 0) + 12, (spot?.y ?? 0) + 12, { steps: 2 });
-  await expect(other).toHaveClass(/is-drop-refused/);
-  await expect(page.locator(".team-drop-reason")).toContainText("already on New Character's bar");
+  await expect(empty).toHaveClass(/is-drop-refused/);
+  await expect(page.locator(".drop-reason")).toContainText("already on New Character's bar");
   await page.mouse.up();
-  await expect(other).not.toHaveAttribute("data-skill-id");
+  await expect(empty).not.toHaveAttribute("data-skill-id");
+  await expect(first).toHaveAttribute("data-skill-id", skillId);
   await expect(memberRows(page).nth(1).locator(".team-skill:not(.is-empty)")).toHaveCount(1);
 });
 
@@ -2319,7 +2328,7 @@ test("the library remembers which tab you were on while you build", async ({ pag
   await openGearLibrary(page);
   // Equipping updates the editor; the tab must not snap back.
   await equipFromLibrary(page, "Axe");
-  await expect(page.locator(".library-tab.is-active")).toHaveText("gear");
+  await expect(page.locator(".library-tab.is-active")).toHaveText("Gear");
 });
 
 /* --- beside the Training Ground arena (#10) ------------------------------- */
@@ -2719,7 +2728,7 @@ test("a member's skill dragged to another member moves; with Shift it is copied 
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByRole("tab", { name: "Skills", exact: true }).click();
   await openLibraryGroup(page, "Strength");
-  const box = page.locator(".team-picker-skills .skill-box").first();
+  const box = page.locator(".team-picker .skill-box").first();
   const skillId = (await box.getAttribute("data-skill-id")) ?? "";
   const cell = (row: number, slot: number) =>
     memberRows(page).nth(row).locator(".team-skill").nth(slot);
