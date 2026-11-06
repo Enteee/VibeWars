@@ -19,6 +19,8 @@ export interface RuleContext {
   /** Whether it may begin `skill` at `targetId` now, walking in if need be. */
   readonly mayUse: (skill: Skill, targetId: string | undefined) => boolean;
   readonly use: (skill: Skill, targetId: string | undefined) => BehaviourIntent;
+  /** Whether its spacing lets it end a maintained enchantment now (#2492). */
+  readonly mayEndUpkeep: boolean;
 }
 
 /** One step of `play-build`'s think: the first rule with an answer decides. */

@@ -8,6 +8,7 @@ import type {
   BehaviourIntent,
 } from "../behaviour.js";
 import type { Participant } from "../simulation.js";
+import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { BOT_RULES } from "./rules/index.js";
 import { HURT_FRACTION, NOTHING, healthFraction, skillsOf } from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
@@ -42,7 +43,7 @@ export function playBuild(
 ): BehaviourIntent {
   return paced(behaviour.thinkSeconds, cursor, context, () => {
     const foes = livingFoes(context);
-    return think(context, foes, livingMembers(context), teamTarget(context, foes));
+    return think(context, cursor, foes, livingMembers(context), teamTarget(context, foes));
   });
 }
 
@@ -90,7 +91,7 @@ export function guard(
       : { ...NOTHING, moveTo: behaviour.post };
   }
   const intent = paced(behaviour.thinkSeconds, cursor, context, () =>
-    think(context, foes, allies, weakest(self, foes)?.id),
+    think(context, cursor, foes, allies, weakest(self, foes)?.id),
   );
   return behaviour.rooted ? { ...intent, moveDirection: ZERO, moveTo: undefined } : intent;
 }
@@ -109,6 +110,7 @@ function paced(
   const cast = self.combatant.cast;
   const holding = { ...NOTHING, targetId: self.targetId };
   cursor.waitSeconds = Math.max(0, cursor.waitSeconds - context.dt);
+  cursor.upkeepDropSeconds = Math.max(0, cursor.upkeepDropSeconds - context.dt);
   // Nothing new while what it last asked for is still going: the retry
   // bound, so it never presses twice for one skill.
   if (cast.isCasting || cast.inAftercast || self.pendingSkill !== undefined) {
@@ -151,6 +153,7 @@ function livingFoes(context: BehaviourContext): Participant[] {
  */
 function think(
   context: BehaviourContext,
+  cursor: BehaviourCursor,
   foes: readonly Participant[],
   allies: readonly Participant[],
   targetId: string | undefined,
@@ -176,11 +179,15 @@ function think(
       const check = context.check(skill.id, targetId);
       return check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight";
     },
+    mayEndUpkeep: cursor.upkeepDropSeconds <= 0,
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
   for (const { decide } of BOT_RULES) {
     const intent = decide(rule);
     if (intent !== undefined) {
+      if (intent.endUpkeep !== undefined) {
+        cursor.upkeepDropSeconds = UPKEEP_DROP_SECONDS;
+      }
       return intent;
     }
   }

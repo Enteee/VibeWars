@@ -181,6 +181,11 @@ export interface BehaviourIntent {
   /** Whom to attack with the weapon, through `requestAttack`. */
   readonly attackTargetId: string | undefined;
   readonly applyStatuses: readonly StatusApplication[];
+  /**
+   * A maintained enchantment of its own to end (#2492), as a player's
+   * `end-upkeep` does; `undefined` for none.
+   */
+  readonly endUpkeep: { readonly targetId: string; readonly status: StatusId } | undefined;
 }
 
 /** A behaviour's own memory between ticks. One per participant. */
@@ -197,6 +202,8 @@ export interface BehaviourCursor {
   returning: boolean;
   /** `play-build` and `guard`: the movement its last think asked for, held until the next. */
   heldMove: Pick<BehaviourIntent, "moveTo">;
+  /** `play-build`: seconds before it may end another maintained enchantment (#2492). */
+  upkeepDropSeconds: number;
 }
 
 export interface BehaviourContext {
@@ -230,6 +237,7 @@ export function createCursor(): BehaviourCursor {
     children: [],
     returning: false,
     heldMove: { moveTo: undefined },
+    upkeepDropSeconds: 0,
   };
 }
 
@@ -300,6 +308,7 @@ const STAND_STILL: BehaviourIntent = {
   useSkillId: undefined,
   attackTargetId: undefined,
   applyStatuses: [],
+  endUpkeep: undefined,
 };
 
 export function decide(
@@ -610,7 +619,7 @@ function statusCadence(
  * Every child decides, each with its own cursor. The first child that
  * moves steers; the first that casts picks the skill and its target,
  * and otherwise the first that targets anything does. Every status is
- * applied.
+ * applied, and the first maintained enchantment one ends.
  */
 function parallel(
   behaviour: Extract<Behaviour, { kind: "parallel" }>,
@@ -633,5 +642,6 @@ function parallel(
     useSkillId: casting?.useSkillId,
     attackTargetId: intents.find((intent) => intent.attackTargetId !== undefined)?.attackTargetId,
     applyStatuses: intents.flatMap((intent) => intent.applyStatuses),
+    endUpkeep: intents.find((intent) => intent.endUpkeep !== undefined)?.endUpkeep,
   };
 }

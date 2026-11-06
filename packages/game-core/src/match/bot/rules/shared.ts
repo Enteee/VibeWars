@@ -12,6 +12,7 @@ export const NOTHING: BehaviourIntent = {
   useSkillId: undefined,
   attackTargetId: undefined,
   applyStatuses: [],
+  endUpkeep: undefined,
 };
 
 /** Below this share of its health, an ally is worth a heal. */

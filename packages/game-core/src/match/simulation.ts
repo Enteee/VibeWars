@@ -4000,6 +4000,9 @@ export class MatchSimulation {
         this.requestSkill(record.id, slot);
       }
     }
+    if (intent.endUpkeep !== undefined) {
+      this.endUpkeep(record.id, intent.endUpkeep.targetId, intent.endUpkeep.status);
+    }
     // As a skill effect applies it: the dummy is the source, so the
     // degeneration it causes is attributed to the dummy, and so is the
     // health a deep wound takes as it lands.
