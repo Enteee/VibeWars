@@ -185,17 +185,23 @@ describe("mapLabel (#444)", () => {
       mapLabel({
         id: "arena-long-hall",
         name: "Long Hall",
-        size: "large",
+        size: "small",
         mode: "annihilation",
         teamSizes: [4],
       }),
-    ).toBe("Long Hall (large)");
+    ).toBe("Long Hall (small)");
   });
 });
 
 describe("hostMaps (#1453)", () => {
   const maps = [
-    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation", teamSizes: [4] },
+    {
+      id: "arena-crossroads",
+      name: "Crossroads",
+      size: "small",
+      mode: "annihilation",
+      teamSizes: [4],
+    },
     {
       id: "guild-hall-isle",
       name: "Guild Hall Isle",
@@ -210,7 +216,7 @@ describe("hostMaps (#1453)", () => {
       mode: "relic-run",
       teamSizes: [4],
     },
-    { id: "arena-open", name: "Open", size: "small", mode: "kill-count", teamSizes: [4] },
+    { id: "arena-pillars", name: "Pillar Hall", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
 
   it("offers every map without a filter", () => {
@@ -219,8 +225,8 @@ describe("hostMaps (#1453)", () => {
 
   it("offers only the maps playing one of the filter's modes, in their order", () => {
     expect(hostMaps(maps, ["kill-count", "annihilation"]).map((map) => map.id)).toEqual([
-      "arena-alpha",
-      "arena-open",
+      "arena-crossroads",
+      "arena-pillars",
     ]);
     expect(hostMaps(maps, ["guild-battle"]).map((map) => map.id)).toEqual(["guild-hall-isle"]);
   });
@@ -500,12 +506,18 @@ describe("lobbyPanel: the map (#1994)", () => {
     onSetBots: () => undefined,
   };
   const maps = [
-    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation", teamSizes: [2, 4] },
-    { id: "arena-open", name: "Open", size: "small", mode: "kill-count", teamSizes: [4] },
+    {
+      id: "arena-crossroads",
+      name: "Crossroads",
+      size: "small",
+      mode: "annihilation",
+      teamSizes: [2, 4],
+    },
+    { id: "arena-pillars", name: "Pillar Hall", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
-  /** The map part of the host's bar in `mode`, on Alpha. */
+  /** The map part of the host's bar in `mode`, on Crossroads. */
   const mapPart = (mode: LobbySnapshot["mode"]): FakeElement => {
-    const shown = { ...snapshot("waiting"), mode, mapId: "arena-alpha" };
+    const shown = { ...snapshot("waiting"), mode, mapId: "arena-crossroads" };
     const [part] = lobbyPanel(shown, callbacks, undefined, maps).status;
     return part as unknown as FakeElement;
   };
@@ -528,10 +540,13 @@ describe("lobbyPanel: the map (#1994)", () => {
 
   it("lists only the maps made for a Hosted Game's team size (#2104)", () => {
     const [select] = selects(mapPart("hosted-game"));
-    expect(select?.children.map((option) => option.value)).toEqual(["arena-alpha", "arena-open"]);
-    const twos = { ...snapshot("waiting"), mapId: "arena-alpha", teamSize: 2 };
+    expect(select?.children.map((option) => option.value)).toEqual([
+      "arena-crossroads",
+      "arena-pillars",
+    ]);
+    const twos = { ...snapshot("waiting"), mapId: "arena-crossroads", teamSize: 2 };
     const [part] = lobbyPanel(twos, callbacks, undefined, maps).status;
-    // Alpha alone: nothing to pick.
+    // Crossroads alone: nothing to pick.
     expect(selects(part as unknown as FakeElement)).toEqual([]);
   });
 
@@ -544,7 +559,7 @@ describe("lobbyPanel: the map (#1994)", () => {
   it("names Heroes' Ascent's, with no picker", () => {
     const part = mapPart("heroes-ascent");
     expect(selects(part)).toEqual([]);
-    expect(part.textContent).toBe("Map: Alpha (small)");
+    expect(part.textContent).toBe("Map: Crossroads (small)");
   });
 
   it("says on a disabled Ready why, and nothing on an enabled one (#2124)", () => {
@@ -560,9 +575,9 @@ describe("lobbyPanel: the map (#1994)", () => {
     expect(open.title).toBe("");
   });
 
-  /** The mode line under the bar in `mode`, on Alpha. */
+  /** The mode line under the bar in `mode`, on Crossroads. */
   const modeLines = (mode: LobbySnapshot["mode"]): string[] => {
-    const shown = { ...snapshot("waiting"), mode, mapId: "arena-alpha" };
+    const shown = { ...snapshot("waiting"), mode, mapId: "arena-crossroads" };
     const { body } = lobbyPanel(shown, callbacks, undefined, maps);
     return (body as unknown as FakeElement).all("lobby-mode").map((line) => line.textContent);
   };

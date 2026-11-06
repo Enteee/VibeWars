@@ -80,7 +80,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
     code: "ACDEFG",
     phase: "waiting",
     mode: "team-arena",
-    mapId: "arena-alpha",
+    mapId: "arena-crossroads",
     teamSize: 4,
     open: true,
     hostId: "host",

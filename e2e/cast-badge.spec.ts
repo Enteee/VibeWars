@@ -14,7 +14,10 @@ const TROLL_UNGUENT = starterKey(UNGUENT_BUILD, "ranger.troll-unguent");
 const RADIUS = 14;
 
 const arena = JSON.parse(
-  readFileSync(new URL("../packages/game-maps/maps/arena-alpha/map.json", import.meta.url), "utf8"),
+  readFileSync(
+    new URL("../packages/game-maps/maps/arena-crossroads/map.json", import.meta.url),
+    "utf8",
+  ),
 ) as {
   readonly spawnPoints: readonly {
     readonly team: number;
@@ -26,7 +29,7 @@ const arena = JSON.parse(
 async function badgeSpot(page: Page): Promise<Buffer> {
   const self = arena.spawnPoints.find((spawn) => spawn.team === 0)?.position;
   if (self === undefined) {
-    throw new Error("arena-alpha has no team 0 spawn");
+    throw new Error("arena-crossroads has no team 0 spawn");
   }
   const view = await projection(
     page.locator("#viewport"),

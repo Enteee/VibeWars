@@ -110,12 +110,15 @@ export async function expectTeamSizeAtMost(scope: Page | Locator, size: 1 | 2 | 
 /**
  * The lobby every page hosts from load (#1526), on Hosted Game (#1525),
  * opened to friends (#1682); its invite link (#2100). It plays `size`
- * a side on `map`, 1v1 on arena-alpha unless said: the sidebar's
+ * a side on `map`, 1v1 on arena-crossroads unless said: the sidebar's
  * stored size (#2104) is 4v4, which most specs do not want.
  */
 export async function hostLobby(
   page: Page,
-  { size = 1, map = "arena-alpha" }: { readonly size?: 1 | 2 | 4 | 8; readonly map?: string } = {},
+  {
+    size = 1,
+    map = "arena-crossroads",
+  }: { readonly size?: 1 | 2 | 4 | 8; readonly map?: string } = {},
 ): Promise<string> {
   await openRail(page, "Hosted Game");
   await expect(page.locator(".lobby-panel")).toBeVisible();
