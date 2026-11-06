@@ -140,6 +140,7 @@ exports[`skillRoles > tags every dervish skill the same way every time 1`] = `
   "dervish.crippling-victory": "condition",
   "dervish.dust-cloak": "condition",
   "dervish.dwaynas-touch": "healing",
+  "dervish.ebon-dust-aura": "removal condition",
   "dervish.enchanted-haste": "removal",
   "dervish.eremites-attack": "",
   "dervish.eremites-zeal": "",
