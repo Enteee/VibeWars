@@ -184,6 +184,7 @@ describe("status definitions", () => {
         statAtTwelve(def.enchantmentsExpireFaster) !== 0 ||
         statAtTwelve(def.stancesExpireFaster) !== 0 ||
         def.refuses.length > 0 ||
+        def.immuneTo.length > 0 ||
         def.divineFavorDoubledFor !== undefined ||
         def.preventsCriticalHits ||
         def.killsSourceOnDeath ||

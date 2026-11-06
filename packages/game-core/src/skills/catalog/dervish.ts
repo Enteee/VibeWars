@@ -3324,4 +3324,81 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Unwritten corpus skills (#2500)                                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "dervish.attackers-insight",
+    name: "Attacker's Insight",
+    gwId: 1764,
+    type: "enchantment",
+    elite: false,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3...10 seconds, you have a 50% chance to block while attacking.
+    // When this enchantment ends you inflict Weakness on all adjacent foes
+    // for 3...15 seconds" (#2500): 8.6 s at rank 12; the block and the
+    // Weakness are the status's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "attackers-insight",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.wind-prayers", atZero: 3, atTwelve: 8.6 },
+        },
+      },
+    ],
+  },
+  {
+    id: "dervish.shield-of-force",
+    name: "Shield of Force",
+    gwId: 2201,
+    type: "enchantment",
+    elite: false,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 1...16 seconds, blocks the next 1 attacks against you. If an
+    // attack is blocked, all adjacent attacking foes are knocked down and
+    // suffer from Weakness for 5...20 seconds" (#2500): 13 s at rank 12;
+    // the block and what it does are the status's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "shield-of-force",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.earth-prayers", atZero: 1, atTwelve: 13 },
+        },
+      },
+    ],
+  },
 ];

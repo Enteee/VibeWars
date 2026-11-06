@@ -732,6 +732,15 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "anguished-was-lingwah": icon("anguished-was-lingwah"),
   "auspicious-incantation": icon("auspicious-incantation"),
   "symbols-of-inspiration": icon("symbols-of-inspiration"),
+  // Unwritten skills (#2500).
+  "lively-was-naomei": icon("lively-was-naomei"),
+  "vocal-was-sogolon": icon("vocal-was-sogolon"),
+  "wielders-zeal": icon("wielders-zeal"),
+  "sight-beyond-sight": icon("sight-beyond-sight"),
+  "wielders-remedy": icon("wielders-remedy"),
+  "attackers-insight": icon("attackers-insight"),
+  "shield-of-force": icon("shield-of-force"),
+  "burning-shield": icon("burning-shield"),
 };
 
 const GAP = 2;

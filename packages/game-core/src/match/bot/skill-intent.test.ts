@@ -35,6 +35,8 @@ const NO_BOT_USE = new Set([
   // Smiter's Boon (#2453), the same: more Divine Favor on own smites.
   "monk.smiters-boon",
   "ranger.practiced-stance",
+  // Vocal Was Sogolon (#2500), the same: longer own shouts and chants.
+  "ritualist.vocal-was-sogolon",
   // Trapper's Focus and Speed (#1966) go up before a trap, not for a use of
   // their own.
   "ranger.trappers-focus",
@@ -67,6 +69,9 @@ const NO_BOT_USE = new Set([
   // "We Shall Return!" (#2479), the same, a bonus that waits on an
   // ally's resurrection skill.
   "paragon.we-shall-return",
+  // Lively Was Naomei (#2500), the same, a resurrection that waits on
+  // its item being dropped.
+  "ritualist.lively-was-naomei",
   // Aura of Displacement, Shadow Meld and Shadow of Haste (#1826): a step
   // there and back is nothing the bot plans for yet.
   "assassin.aura-of-displacement",
@@ -353,6 +358,12 @@ const NO_BOT_USE = new Set([
   "ritualist.resilient-was-xiko",
   // Burns only round the allies its bearer's later skills target (#2282).
   "monk.zealots-fire",
+  // Wielder's Zeal and Remedy (#2500), the same: they pay out only on the
+  // weapon spells its bearer casts on allies later.
+  "ritualist.wielders-zeal",
+  "ritualist.wielders-remedy",
+  // Sight Beyond Sight (#2500): Blindness immunity, no role the bot weighs.
+  "ritualist.sight-beyond-sight",
   // Energy for each sacrifice (#2275): worth only beside a sacrifice, which
   // no rule the bot has pairs.
   "necromancer.masochism",
