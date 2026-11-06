@@ -21,6 +21,8 @@ const NO_BOT_USE = new Set([
   "monk.blessed-aura",
   "monk.healers-covenant",
   "monk.holy-haste",
+  // Smiter's Boon (#2453), the same: more Divine Favor on own smites.
+  "monk.smiters-boon",
   "ranger.practiced-stance",
   // Trapper's Focus and Speed (#1966) go up before a trap, not for a use of
   // their own.
@@ -180,6 +182,7 @@ const NO_BOT_USE = new Set([
   "elementalist.glyph-of-sacrifice",
   "elementalist.glyph-of-renewal",
   "elementalist.glyph-of-essence",
+  "elementalist.glyph-of-swiftness",
   // Wells 2 (#1732): no well has a use yet, as Well of Suffering.
   "necromancer.well-of-the-profane",
   "necromancer.well-of-silence",
@@ -289,9 +292,10 @@ const NO_BOT_USE = new Set([
   "paragon.energizing-chorus",
   "paragon.anthem-of-envy",
   // Elementalist staples 2 (#1575): a ward that slows foes or keeps allies
-  // standing is no rule the bot weighs.
+  // standing is no rule the bot weighs; Ward of Weakness (#2453) the same.
   "elementalist.ward-against-foes",
   "elementalist.ward-of-stability",
+  "elementalist.ward-of-weakness",
   // Paragon staples 4 (#1677): energy and adrenaline on a condition the
   // skill does not check itself are no rules the bot weighs.
   "paragon.the-power-is-yours",

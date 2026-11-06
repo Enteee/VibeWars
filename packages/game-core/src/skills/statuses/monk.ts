@@ -83,6 +83,8 @@ export type MonkStatusId =
   | "pensive-guardian"
   // Staples (#2367).
   | "strength-of-honor"
+  // Mechanics (#2453).
+  | "smiters-boon"
   // Dropped leftovers (#2446).
   | "healers-boon";
 
@@ -1018,6 +1020,12 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       scaling: { attributeId: "monk.smiting-prayers", atZero: 1, atTwelve: 4.2 },
     },
     attackDamageDeltaWeapon: "melee",
+  }),
+  // "For 4 seconds, your Smiting Prayers have double the Divine Favor
+  // bonus" (PvP, #2453).
+  "smiters-boon": define("smiters-boon", "Smiter's Boon", "enchantment", {
+    profession: "monk",
+    divineFavorDoubledFor: "monk.smiting-prayers",
   }),
   // "Healing Prayers spells cast 50% faster and heal for 50% more Health"
   // (#2446); per the wiki, not the Divine Favor bonus.

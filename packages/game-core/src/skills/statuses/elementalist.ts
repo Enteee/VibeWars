@@ -93,6 +93,11 @@ export type ElementalistStatusId =
   | "glyph-of-restoration"
   // Staples (#2447).
   | "smoldering-embers"
+  // Mechanics (#2453).
+  | "stoneflesh-aura"
+  | "icy-shackles"
+  | "glyph-of-swiftness"
+  | "ward-of-weakness"
   // Dropped leftovers (#2446).
   | "storm-djinns-haste";
 
@@ -231,7 +236,13 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   // rank-12 value; Energy Storage scaling waits for #532.
   "glyph-of-lesser-energy": define("glyph-of-lesser-energy", "Glyph of Lesser Energy", "glyph", {
     profession: "elementalist",
-    nextSpells: { count: 2, costReduction: 16, noOvercast: false },
+    nextSpells: {
+      count: 2,
+      costReduction: 16,
+      noOvercast: false,
+      rechargeFaster: 0,
+      projectileSpeedMultiplier: 1,
+    },
   }),
   // "For 25 seconds, your elemental attributes are boosted by 1...2 for
   // your next 10 spells" (#1941): 2, its rank-12 value. Spent as each
@@ -242,7 +253,13 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     "glyph",
     {
       profession: "elementalist",
-      nextSpells: { count: 10, costReduction: 0, noOvercast: false },
+      nextSpells: {
+        count: 10,
+        costReduction: 0,
+        noOvercast: false,
+        rechargeFaster: 0,
+        projectileSpeedMultiplier: 1,
+      },
       attributeDeltas: [{ scope: "elemental", amount: 2 }],
     },
   ),
@@ -251,7 +268,13 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   // (#1941): 3, 22 and 2 at rank 12; no duration, as Signet of Illusions.
   "glyph-of-energy": define("glyph-of-energy", "Glyph of Energy", "glyph", {
     profession: "elementalist",
-    nextSpells: { count: 3, costReduction: 22, noOvercast: true },
+    nextSpells: {
+      count: 3,
+      costReduction: 22,
+      noOvercast: true,
+      rechargeFaster: 0,
+      projectileSpeedMultiplier: 1,
+    },
     attributeDeltas: [{ scope: "elemental", amount: 2 }],
   }),
   // "Your next 1 spells cannot be interrupted" (#1730); "and ignore the
@@ -998,6 +1021,60 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       ],
       skillId: "elementalist.smoldering-embers",
     },
+  }),
+  // "For 5...15 seconds, damage you receive is reduced by 1...31, and you
+  // are immune to critical attacks" (#2453): 25 at rank 12, after armor.
+  "stoneflesh-aura": define("stoneflesh-aura", "Stoneflesh Aura", "enchantment", {
+    profession: "elementalist",
+    attribute: "elementalist.earth-magic",
+    damageReduction: {
+      scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 25 },
+    },
+    preventsCriticalHits: true,
+  }),
+  // "For 1...10 seconds, target foe's movement speed is reduced by 66%.
+  // While under the effects of an enchantment, that foe's movement is
+  // reduced by 90%" (#2453): 0.34 × 0.294 ≈ 0.10 while enchanted.
+  "icy-shackles": define("icy-shackles", "Icy Shackles", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    moveSpeedMultiplier: 0.34,
+    moveSpeedWhileEnchanted: 0.294,
+  }),
+  // "For 15 seconds, your next 1...5 spells recharge 25% faster and
+  // projectiles from the affected spells move 200% faster" (#2453): 4 at
+  // rank 12, 3× as fast.
+  "glyph-of-swiftness": define("glyph-of-swiftness", "Glyph of Swiftness", "glyph", {
+    profession: "elementalist",
+    nextSpells: {
+      count: { scaling: { attributeId: "elementalist.air-magic", atZero: 1, atTwelve: 4.2 } },
+      costReduction: 0,
+      noOvercast: false,
+      rechargeFaster: 0.25,
+      projectileSpeedMultiplier: 3,
+    },
+  }),
+  // What the ward projects on the foes inside it: "foes in this area become
+  // Weakened for 5...20 seconds whenever they take elemental damage"
+  // (#2453): 17 at rank 12, at the ward's Elementalist's.
+  "ward-of-weakness": define("ward-of-weakness", "Ward of Weakness", "skill-effect", {
+    profession: "elementalist",
+    triggers: [
+      {
+        on: "bearer-takes-elemental-damage",
+        target: "bearer",
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "weakness",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+        skillId: "elementalist.ward-of-weakness",
+      },
+    ],
   }),
   // "You move 25% faster. Each second that you are moving, you lose 1
   // Energy" (#2446); at 0 Energy it keeps running.

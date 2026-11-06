@@ -496,7 +496,14 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`moves at ${speed}% speed`);
   }
   if (definition.moveSpeedWhileEnchanted !== 1) {
-    const speed = String(Math.round(definition.moveSpeedWhileEnchanted * 100));
+    // On top of its own: Icy Shackles' 66% slower is 90% while enchanted (#2453).
+    const speed = String(
+      Math.round(
+        statAt(definition.moveSpeedMultiplier, triggerRanks) *
+          definition.moveSpeedWhileEnchanted *
+          100,
+      ),
+    );
     parts.push(`moves at ${speed}% speed while enchanted`);
   }
   if (definition.preventsSpeedBoosts) {
@@ -740,6 +747,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.preventsCriticalHits) {
     parts.push("immune to critical hits");
   }
+  if (definition.divineFavorDoubledFor !== undefined) {
+    const attribute =
+      getAttribute(definition.divineFavorDoubledFor)?.name ?? definition.divineFavorDoubledFor;
+    parts.push(`${attribute} spells have double the Divine Favor bonus`);
+  }
   if (definition.block !== undefined) {
     // Wary Stance's "attack skills" (#1978).
     const what =
@@ -883,13 +895,25 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`ends after ${String(count)} hit${plural}${how}`);
   }
   if (definition.nextSpells !== undefined) {
-    const { count, costReduction, noOvercast } = definition.nextSpells;
+    const { count, costReduction, noOvercast, rechargeFaster, projectileSpeedMultiplier } =
+      definition.nextSpells;
+    const one = statAtTwelve(count) === 1;
+    const next = one ? "spell" : `${statText(count, ranks, whole)} spells`;
     if (costReduction > 0) {
-      const spells = count === 1 ? "spell costs" : `${String(count)} spells cost`;
-      parts.push(`your next ${spells} ${String(costReduction)} less energy`);
+      parts.push(
+        `your next ${next} ${one ? "costs" : "cost"} ${String(costReduction)} less energy`,
+      );
+    } else if (rechargeFaster > 0) {
+      // Glyph of Swiftness' (#2453).
+      parts.push(
+        `your next ${next} ${one ? "recharges" : "recharge"} ${String(Math.round(rechargeFaster * 100))}% faster`,
+      );
     } else {
       // Glyph of Elemental Power's (#1941): a boost for the next spells alone.
-      parts.push(`for your next ${count === 1 ? "spell" : `${String(count)} spells`}`);
+      parts.push(`for your next ${next}`);
+    }
+    if (projectileSpeedMultiplier !== 1) {
+      parts.push(`their projectiles move ${String(projectileSpeedMultiplier)}× as fast`);
     }
     if (noOvercast) {
       parts.push("no Overcast");
@@ -929,8 +953,8 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `takes ${damageTaken(definition.attackDamageTakenMultiplier)} damage from the next attack`,
     );
   }
-  if (definition.damageReduction > 0) {
-    parts.push(`−${String(definition.damageReduction)} damage taken`);
+  if (statAtTwelve(definition.damageReduction) > 0) {
+    parts.push(`−${statText(definition.damageReduction, ranks, whole)} damage taken`);
   }
   if (definition.damageReductionPerRank !== undefined) {
     const { attributeId, perRank, max } = definition.damageReductionPerRank;
@@ -1515,6 +1539,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-hits": "hits with an attack",
   "bearer-fails-to-hit": "fails to hit",
   "bearer-takes-physical-damage": "takes physical damage",
+  "bearer-takes-elemental-damage": "takes elemental damage",
   "bearer-takes-damage-from-foe": "takes damage or life steal from a foe",
   "bearer-health-drops-below": "has its Health dropped below a line by damage",
   "bearer-fatal-damage-negated": "has fatal damage negated",
@@ -3541,23 +3566,25 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         };
       }
       const text =
-        effect.perRemoved !== undefined
-          ? `Heals ${amount} for each ${effect.perRemoved} removed`
-          : effect.perDestroyedSpirit === true
-            ? `Heals ${amount} for each spirit destroyed`
-            : effect.perEnergyLost === true
-              ? `${effect.recipient === "caster" ? "You are healed" : "Heals"} ${amount} for each point of Energy lost`
-              : effect.perUsedSkillEnergy === true
-                ? `Heals for ${shown(magnitude, percentOf(magnitude.current))} of the spell's energy cost`
-                : effect.ofCasterHealth !== undefined
-                  ? `Heals for ${shown(magnitude, `${String(magnitude.current)}%`)} of your current Health (maximum ${String(effect.ofCasterHealth.max)} Health)`
-                  : effect.recipient === "caster"
-                    ? `You gain ${amount} health`
-                    : effect.recipient === "companion"
-                      ? `Your pet gains ${amount} health`
-                      : effect.recipient === "owner"
-                        ? `Heals its owner for ${amount}`
-                        : `Heals for ${amount}`;
+        effect.perRemoved !== undefined && effect.perRemovedStatusId !== undefined
+          ? `Heals ${amount} if relieved of ${getStatusDefinition(effect.perRemovedStatusId).name}`
+          : effect.perRemoved !== undefined
+            ? `Heals ${amount} for each ${effect.perRemoved} removed`
+            : effect.perDestroyedSpirit === true
+              ? `Heals ${amount} for each spirit destroyed`
+              : effect.perEnergyLost === true
+                ? `${effect.recipient === "caster" ? "You are healed" : "Heals"} ${amount} for each point of Energy lost`
+                : effect.perUsedSkillEnergy === true
+                  ? `Heals for ${shown(magnitude, percentOf(magnitude.current))} of the spell's energy cost`
+                  : effect.ofCasterHealth !== undefined
+                    ? `Heals for ${shown(magnitude, `${String(magnitude.current)}%`)} of your current Health (maximum ${String(effect.ofCasterHealth.max)} Health)`
+                    : effect.recipient === "caster"
+                      ? `You gain ${amount} health`
+                      : effect.recipient === "companion"
+                        ? `Your pet gains ${amount} health`
+                        : effect.recipient === "owner"
+                          ? `Heals its owner for ${amount}`
+                          : `Heals for ${amount}`;
       const counted = withPerText(text, effect.amount, effect.per, ranks, {
         alone: effect.recipient === "caster" ? "You gain" : "Heals",
         unit: " Health",
