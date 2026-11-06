@@ -49,7 +49,7 @@ const glyphs = {
     draw: () =>
       `<rect x="2.500" y="4" width="11" height="7" rx="3.500" ${stroke(C.ink, 2.2)}/>` +
       `<rect x="10.500" y="4" width="11" height="7" rx="3.500" ${stroke(C.ink, 2.2)}/>` +
-      inkLine("M9 21L12 17.500L15 21", 2.2) +
+      inkLine("M9 17.500L12 21L15 17.500", 2.2) +
       inkLine("M3 21H6.500M17.500 21H21", 2.2),
   },
   "mask-drain": {
@@ -95,11 +95,10 @@ const glyphs = {
       ),
   },
   "flame-speed": {
-    means:
-      "Flame Djinn's Haste: a flame with speed lines streaming behind it: a burst, then a faster run.",
+    means: "Flame Djinn's Haste: a flame with two forward chevrons: a burst, then a faster run.",
     draw: () =>
-      `<g transform="translate(5,0) scale(0.85)">${glyph("flame")}</g>` +
-      inkLine("M1.500 9H6M1.500 13.500H5M1.500 18H6", 2),
+      `<g transform="translate(-2,3) scale(0.78)">${glyph("flame")}</g>` +
+      inkLine("M14 8L18 12.500L14 17M18.500 8L22.500 12.500L18.500 17", 2.2),
   },
 };
 
