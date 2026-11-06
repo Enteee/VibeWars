@@ -77,7 +77,9 @@ export type MonkStatusId =
   | "balthazars-spirit"
   | "watchful-healing"
   | "life-sheath"
-  | "reverse-hex";
+  | "reverse-hex"
+  // Staples (#2414).
+  | "defenders-zeal";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -980,6 +982,19 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         ],
         target: "bearer",
         skillId: "monk.watchful-healing",
+      },
+    ],
+  }),
+  // Staples (#2414). "For 10...30 seconds, whenever target foe hits with
+  // an attack, you gain 2 Energy": any hit, melee or ranged, to the Monk.
+  "defenders-zeal": define("defenders-zeal", "Defender's Zeal", "hex", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-hits",
+        effects: [{ kind: "energy-gain", amount: { flat: 2 } }],
+        target: "source",
+        skillId: "monk.defenders-zeal",
       },
     ],
   }),
