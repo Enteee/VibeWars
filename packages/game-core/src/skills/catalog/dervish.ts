@@ -3142,6 +3142,68 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // "For 8 seconds, nothing happens" (#2438): its end pays out.
     effects: [{ kind: "apply-status", statusId: "pious-renewal", durationSeconds: { flat: 8 } }],
   },
+  // Release-time effects and a per-strike cut (#2459).
+  {
+    id: "dervish.twin-moon-sweep",
+    name: "Twin Moon Sweep",
+    gwId: 1487,
+    type: "attack",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "adrenaline", amount: 7 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "You lose 1 Dervish enchantment and gain 10...20 Health. If an
+    // enchantment is lost in this way, you cannot be blocked, you strike
+    // twice, with each strike doing 25% less damage than normal, and you
+    // gain an additional 10...30 Health" (PvP): 18 and 26, once per use,
+    // hit or miss. Its blows read the enchantment before the release
+    // takes it.
+    attack: {
+      ...scytheAttack(undefined, []),
+      weapon: "melee",
+      strikes: {
+        count: 2,
+        oneWhile: { kind: "caster-lacks", category: "enchantment", profession: "dervish" },
+        eachWeaponDamage: 0.75,
+      },
+      unblockable: { kind: "caster-has", category: "enchantment", profession: "dervish" },
+      onRelease: [
+        {
+          kind: "heal",
+          recipient: "caster",
+          amount: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 10, atTwelve: 18 } },
+        },
+        LOSE_DERVISH_ENCHANTMENT,
+        {
+          kind: "if",
+          condition: { kind: "removed", category: "enchantment", from: "caster" },
+          effects: [
+            {
+              kind: "heal",
+              recipient: "caster",
+              amount: {
+                scaling: { attributeId: "dervish.scythe-mastery", atZero: 10, atTwelve: 26 },
+              },
+            },
+          ],
+        },
+      ],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [],
+  },
   /* ---------------------------------------------------------------------- */
   /* Mechanics (#2479)                                                      */
   /* ---------------------------------------------------------------------- */

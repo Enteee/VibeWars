@@ -1304,6 +1304,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const times = String(definition.incomingAllySpellCastTimeMultiplier);
     parts.push(`other allies' spells on ${bearer} take ${times}× as long to cast`);
   }
+  if (definition.sourceSpellCastTimeMultiplier !== 1) {
+    const times = String(definition.sourceSpellCastTimeMultiplier);
+    parts.push(`your spells on ${bearer} take ${times}× as long to cast`);
+  }
   if (definition.enchantmentsOnBearerCostLess !== 0) {
     const less = String(definition.enchantmentsOnBearerCostLess);
     parts.push(`enchantments cast on ${bearer} cost ${less} less Energy, minimum 1`);
@@ -3478,9 +3482,11 @@ function countEach(count: CountRule, onTarget: string): string {
                 ? "foe knocked down"
                 : count.kind === "bar-skills"
                   ? `${count.type} you have equipped`
-                  : count.kind === "targets"
-                    ? "foe hit"
-                    : `${perCountNoun(count)} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+                  : count.kind === "adrenaline-skills"
+                    ? "adrenaline skill they have"
+                    : count.kind === "targets"
+                      ? "foe hit"
+                      : `${perCountNoun(count)} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
 }
 
 /**
@@ -3533,13 +3539,15 @@ function perCountNoun(count: CountRule): string {
                 ? "foe knocked down"
                 : count.kind === "targets"
                   ? "foe hit"
-                  : count.kind === "dead-allies-within"
-                    ? "dead ally"
-                    : count.kind === "foes-within"
-                      ? count.knockedDown === true
-                        ? "knocked-down foe"
-                        : "foe"
-                      : "ally";
+                  : count.kind === "adrenaline-skills"
+                    ? "adrenaline skill"
+                    : count.kind === "dead-allies-within"
+                      ? "dead ally"
+                      : count.kind === "foes-within"
+                        ? count.knockedDown === true
+                          ? "knocked-down foe"
+                          : "foe"
+                        : "ally";
 }
 
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
@@ -4871,6 +4879,13 @@ export function describeSkill(
       magnitude,
     })),
   );
+  // Twin Moon Sweep's (#2459), as it is released, hit or miss.
+  const onRelease = (rule?.onRelease ?? []).flatMap((effect) =>
+    describeEffects(effect, ranks).map(({ text, magnitude }) => ({
+      text: `As it is used: ${lowerFirst(text)}`,
+      magnitude,
+    })),
+  );
   // Barrage's and Volley's (#1629), before anything else it does.
   const preparationsLine =
     rule?.removesPreparations === true
@@ -4897,7 +4912,9 @@ export function describeSkill(
   // Forked Arrow's (#1914): "only one arrow" while its state holds.
   const fewer =
     typeof strikes === "number" ? "" : `; ${conditionText(strikes.oneWhile).toLowerCase()}, only 1`;
-  const weaponDamage = rule?.weaponDamage ?? 1;
+  // Twin Moon Sweep's cut (#2459), only on the blows past one.
+  const weaponDamage =
+    (rule?.weaponDamage ?? 1) * (typeof strikes === "number" ? 1 : (strikes.eachWeaponDamage ?? 1));
   const weaker =
     weaponDamage > 0 && weaponDamage < 1
       ? `, each dealing ${String(Math.round((1 - weaponDamage) * 100))}% less damage`
@@ -5025,6 +5042,7 @@ export function describeSkill(
   const effects = [
     ...lossLine,
     ...preparationsLine,
+    ...onRelease,
     ...chainLine,
     ...bonusLine,
     ...unblockableLine,
