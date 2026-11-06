@@ -5,7 +5,7 @@ const rows = {
   "monk.strength-of-honor": { glyph: "sword-laurel" },
   "monk.life-sheath": { glyph: "sheath-plus" },
   "monk.reverse-hex": { glyph: "hex-uturn" },
-  "monk.release-enchantments": { glyph: "ring-open-plus" },
+  "monk.release-enchantments": { glyph: "ring-shards" },
   "monk.pensive-guardian": { glyph: "shield-ring-cut" },
 };
 

@@ -15,12 +15,12 @@ const glyphs = {
       inkLine("M12 2V6M3 6H21M6 6V10M18 6V10", 2.2) +
       inkFill("M2.500 10H9.500L10.500 21H1.500ZM14.500 10H21.500L22.500 21H13.500Z"),
   },
-  "signet-wobble": {
+  "signet-bent-blade": {
     means:
-      "Signet of Clumsiness: a signet ring with a stumbling zigzag inside: the target's attack goes wrong.",
+      "Signet of Clumsiness: a signet ring around a sword whose blade is bent over at the tip: the target's attack goes wrong.",
     draw: () =>
       `<circle cx="12" cy="12" r="9.500" ${stroke(C.ink, 2.2)}/>` +
-      inkLine("M6.500 15L10 8.500L13.500 15.500L17.500 9", 2.4),
+      inkLine("M6.500 17.500L11.500 12.500V7H17M5.500 14.500L9.500 18.500", 2.6),
   },
   "ribbon-plus": {
     means: "Healing Ribbon: a bow with long tails and a plus above: healing tied to an ally.",
@@ -55,13 +55,17 @@ const glyphs = {
       inkFill("M12 9L15 12L12 15L9 12Z") +
       inkLine("M20 12A8 8 0 1 1 12 4M8.500 1L12.500 4L8.500 7", 2.4),
   },
-  "ring-open-plus": {
+  "ring-shards": {
     means:
-      "Release Enchantments: a broken ring with a plus inside: enchantments let go, healing taken from them.",
+      "Release Enchantments: a ring broken into three shards flying apart around a drop: enchantments let go, healing taken from them.",
     draw: () =>
-      inkLine("M20 8.500A9 9 0 1 0 20 15.500", 2.4) +
-      inkLine("M12 7V17M7 12H17", 2.6) +
-      inkLine("M21 6L23 4M21 18L23 20", 2),
+      inkLine(
+        "M7.69 3.28A7 7 0 0 1 16.31 3.28M21.70 12.63A7 7 0 0 1 17.39 20.09M6.61 20.09A7 7 0 0 1 2.30 12.63",
+        3,
+      ) +
+      inkFill(
+        "M12 8.500C12 8.500 9.500 11.500 9.500 13.300A2.500 2.500 0 0 0 14.500 13.300C14.500 11.500 12 8.500 12 8.500Z",
+      ),
   },
   "shield-ring-cut": {
     means:
@@ -109,17 +113,13 @@ const glyphs = {
         "M9.500 2H14.500V8L19.500 18.500A2 2 0 0 1 17.500 21.500H6.500A2 2 0 0 1 4.500 18.500L9.500 8Z",
       ) + cut("M12 13V19M9 16H15", 2),
   },
-  "daggers-rising": {
+  "dagger-stack": {
     means:
-      "Blades of Steel: three daggers of rising height: it grows with every dagger attack still recharging.",
+      "Blades of Steel: one dagger beside a stack of three slabs: it grows with every dagger attack still recharging.",
     draw: () =>
-      inkFill("M3 13L5.500 9L8 13Z") +
-      inkFill("M9.500 13L12 5L14.500 13Z") +
-      inkFill("M16 13L18.500 1.500L21 13Z") +
-      inkLine(
-        "M2.500 15H8.500M9 15H15M15.500 15H21.500M5.500 15V21.500M12 15V21.500M18.500 15V21.500",
-        2,
-      ),
+      inkFill("M8 2L11.500 6V14H4.500V6Z") +
+      inkLine("M2.500 14H13.500M8 14V21.500", 2.4) +
+      inkFill("M16 5H22V8H16ZM16 10H22V13H16ZM16 15H22V18H16Z"),
   },
   "lotus-bolt": {
     means:
