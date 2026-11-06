@@ -166,6 +166,7 @@ export function define(
     sourceLosesHealth: undefined,
     reversesNextDamage: undefined,
     reflectsNextDamage: undefined,
+    replacesMeleeBlows: undefined,
     damageToHealing: undefined,
     negatesFatalDamage: false,
     endsEverywhereWhenSpent: false,
