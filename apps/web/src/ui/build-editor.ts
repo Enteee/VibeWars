@@ -13,10 +13,12 @@ import {
   cumulativeCostForRank,
   defaultBuildEquipment,
   defaultEquipmentFor,
+  encodeTemplateCode,
   getAttribute,
   getOffhand,
   getSkill,
   getWeapon,
+  looksLikeTemplate,
   neededWeaponText,
   reconcileEquipment,
   runeDisplayName,
@@ -50,12 +52,7 @@ import {
 } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
-import {
-  decodeTemplate,
-  encodeTemplate,
-  looksLikeTemplate,
-  missingSkillsNote,
-} from "../storage/gw1-template.js";
+import { decodeTemplate, missingSkillsNote } from "../storage/gw1-template.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { noWebGlNotice } from "./arena-notice.js";
 import { characterRanks } from "./character-ranks.js";
@@ -1271,7 +1268,7 @@ function mountCommandBar(
       }),
       // The same build as a GW1 template code (#494), for GW1's build sites.
       button("Share as GW1 code", "", () => {
-        const encoded = encodeTemplate(context.current());
+        const encoded = encodeTemplateCode(context.current());
         if (encoded.ok) {
           showShare(encoded.code);
         } else {

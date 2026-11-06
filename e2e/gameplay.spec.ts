@@ -764,6 +764,11 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
   const cameraX = async (): Promise<number> =>
     Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[0]);
 
+  // A click walks right, toward the middle of arena-pillars (960 wide), on
+  // y 255: the lane between its top and centre pillars, clear end to end,
+  // so the walk to the goal below meets none.
+  const middle = (await projection(stage, canvas)).onPage({ x: 380, y: 255 });
+  await page.mouse.click(middle.x, middle.y);
   // Over the canvas, for the wheel; then Close.
   await page.mouse.move(centre.x, centre.y);
   for (const _ of [1, 2]) {
@@ -771,10 +776,7 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
     await page.mouse.wheel(0, -100);
   }
   await expect(stage).toHaveAttribute("data-zoom-step", "Close");
-  // Right, to the middle of arena-pillars (960 wide), clear of its edges.
-  await page.keyboard.down(key("move-right"));
-  await expect.poll(cameraX, { timeout: 15_000 }).toBeGreaterThan(400);
-  await page.keyboard.up(key("move-right"));
+  await expect.poll(cameraX, { timeout: 15_000 }).toBeGreaterThan(350);
   let last = NaN;
   await expect
     .poll(

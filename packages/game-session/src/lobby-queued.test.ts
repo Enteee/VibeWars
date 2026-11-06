@@ -245,6 +245,9 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
         seats: plan.seats,
         matchId: plan.matchId,
         isSpectator: plan.isSpectator,
+        mode: plan.mode,
+        publishRecord: () => undefined,
+        nowSeconds: () => 0,
       });
     },
     queued: {
@@ -504,6 +507,7 @@ describe("a queued lobby", () => {
           teamLobby: null,
           queueNonce: null,
           ascentRound: null,
+          ascentLock: null,
           players: [
             {
               id: from,

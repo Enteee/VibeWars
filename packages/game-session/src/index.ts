@@ -94,6 +94,8 @@ export type {
   MatchPlan,
   QueuedPlan,
 } from "./lobby-host.js";
+export { RELAY_ADMIT_MS, RELAY_ROOMS_LINGER_MS, createRelayAdmission } from "./relay-admission.js";
+export type { RelayAdmission, RelayAdmissionLobby } from "./relay-admission.js";
 export { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 export type { JoinLobbyOptions } from "./lobby-client.js";
 export { scopeTransport } from "./scoped-transport.js";
@@ -123,3 +125,12 @@ export { decideStayTogether } from "./stay-together.js";
 export type { StayTogetherDecision, StayTogetherInput } from "./stay-together.js";
 export { admissionBytes, admissionDigest, partyGroupId } from "./queue-admission.js";
 export type { AdmissionTag, QueuedSeat, VerifyTicketSig } from "./queue-admission.js";
+export {
+  MATCH_RECORD_VERSION,
+  MAX_RECORD_DURATION_SECONDS,
+  MAX_RECORD_TEAM,
+  RECORD_CLOCK_SKEW_SECONDS,
+  recordTemplate,
+  validateMatchRecord,
+} from "./match-record.js";
+export type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "./match-record.js";
