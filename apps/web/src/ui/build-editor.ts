@@ -13,10 +13,12 @@ import {
   cumulativeCostForRank,
   defaultBuildEquipment,
   defaultEquipmentFor,
+  encodeTemplate,
   getAttribute,
   getOffhand,
   getSkill,
   getWeapon,
+  looksLikeTemplate,
   neededWeaponText,
   reconcileEquipment,
   runeDisplayName,
@@ -50,12 +52,7 @@ import {
 } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
-import {
-  decodeTemplate,
-  encodeTemplate,
-  looksLikeTemplate,
-  missingSkillsNote,
-} from "../storage/gw1-template.js";
+import { importTemplate, missingSkillsNote } from "../storage/gw1-template.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { noWebGlNotice } from "./arena-notice.js";
 import { characterRanks } from "./character-ranks.js";
@@ -691,7 +688,7 @@ export function loadCode(text: string, id: string, now: number): LoadedCode {
   if (looksLikeBuild(code)) {
     result = importBuild(code, id, now);
   } else if (looksLikeTemplate(code)) {
-    const decoded = decodeTemplate(code, id, now);
+    const decoded = importTemplate(code, id, now);
     result = decoded;
     missing = decoded.ok ? decoded.missingSkills : [];
   } else {

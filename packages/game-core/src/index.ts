@@ -113,6 +113,16 @@ export {
   type StarterTeamMember,
 } from "./starter-teams.js";
 export { FIRST_NAMES, SURNAMES, randomCharacterName } from "./character-names.js";
+export {
+  ATTRIBUTE_IDS,
+  decodeTemplate,
+  encodeTemplate,
+  looksLikeTemplate,
+  skillOfGw,
+  type DecodeResult,
+  type EncodeResult,
+  type TemplateBuild,
+} from "./gw1-template.js";
 
 export * from "./skills/index.js";
 
