@@ -125,8 +125,9 @@ describe.ts      skill descriptions, generated from the effect data
 
 Adding a skill means adding an entry to `catalog/<profession>.ts`, and
 its status, if it has one, to `statuses/<profession>.ts`. If it needs a
-mechanic that does not exist yet, the correct move is to **not add it** —
-see "Honest coverage" below.
+mechanic that does not exist yet, the correct move is to **not add it**,
+and to give it a reason line in `UNIMPLEMENTED_REASONS` instead — see "Honest
+coverage" below. Adding a corpus skill deletes its line there.
 
 ### `packages/game-protocol` — the wire contract
 
@@ -256,15 +257,23 @@ anywhere, and a networked match is decided only by its host. It is
 trustworthy only because it is the identical code, so a game rule belongs in
 `MatchSimulation`, never in `MatchHost`.
 
-**Honest coverage** (brief §9). The catalog holds 12 skills: 9 of the 16
-in the imported reference corpus, plus 3 of this project's own design. The
-other 7 corpus skills need mechanics that do not exist yet — area-of-effect,
-knockdown, skill-copying, condition transfer — so they are **absent from
-the catalog** rather than present as watered-down approximations.
-`coverage.ts` reports that gap as machine-readable data, including why each
-missing skill is missing, and a test asserts the gap never grows silently.
-A skill list that quietly mapped unsupported skills onto generic effects
-would look better and be a lie.
+**Honest coverage** (brief §9). The reference corpus is the imported GW1
+PvP skill table (ADR-0038); every catalog skill names its GW1 id, and
+coverage matches the two by that id. A few skills of this project's own
+design carry none and are never counted as corpus coverage. A corpus
+skill that needs a mechanic the engine does not have yet is **absent from
+the catalog** rather than present as a watered-down approximation. Every
+absent skill has a named reason in `UNIMPLEMENTED_REASONS`
+(`packages/game-core/src/skills/coverage.ts`), keyed by GW1 id: the
+mechanic it waits on, or `unwritten` when the engine already has every
+piece. `game-core` cannot see the corpus (ADR-0001), so the gate lives in
+`packages/game-data/src/coverage-gate.test.ts` and runs against the real
+corpus: no unexplained gap, no stale reason (shrink-only — the card that
+implements a skill deletes its line), a majority implemented, and a reason
+may blame only a mechanic the engine lacks. The current numbers are
+whatever `computeCoverage(corpusSkills())` returns; none are written here
+because every skill card changes them. A skill list that quietly mapped
+unsupported skills onto generic effects would look better and be a lie.
 
 ## Testing shape
 
