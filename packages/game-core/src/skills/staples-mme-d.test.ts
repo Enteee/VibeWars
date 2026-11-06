@@ -481,4 +481,10 @@ describe("Flame Djinn's Haste (#2414)", () => {
     expect(damage(log, DJINN).size).toBe(0);
     lasts(get(sim, "c").cast.rechargeRemaining.get(DJINN), 20);
   });
+
+  it("reads as recharging faster only with a foe adjacent", () => {
+    expect(describeSkill(skill(DJINN), R12).effects.map((effect) => effect.text)).toContainEqual(
+      expect.stringMatching(/^If any foe is adjacent: /),
+    );
+  });
 });

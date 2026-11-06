@@ -2730,15 +2730,14 @@ function conditionText(
       return [first ?? "Always", ...rest.map((text) => text.replace(/^If /, ""))].join(" and ");
     }
     case "count-at-least":
-      // "On Your Knees!"'s "if any adjacent foe is knocked down" (#2320).
-      if (
-        condition.atLeast === 1 &&
-        condition.count.kind === "foes-within" &&
-        condition.count.knockedDown === true
-      ) {
+      // "On Your Knees!"'s "if any adjacent foe is knocked down" (#2320),
+      // Flame Djinn's Haste's "if any foe is adjacent" (#2414).
+      if (condition.atLeast === 1 && condition.count.kind === "foes-within") {
         const where =
           AREA_TEXT.get(condition.count.radius) ?? `within ${String(condition.count.radius)}`;
-        return `If any ${where} foe is knocked down`;
+        return condition.count.knockedDown === true
+          ? `If any ${where} foe is knocked down`
+          : `If any foe is ${where}`;
       }
       return `If ${countAll(condition.count)} number ${String(condition.atLeast)} or more`;
     case "count-at-most":
