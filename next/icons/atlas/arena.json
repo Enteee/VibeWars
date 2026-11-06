@@ -2688,1364 +2688,1370 @@
       "w": 16,
       "h": 16
     },
-    "status/protective-bond": {
+    "status/primal-rage": {
       "x": 340,
+      "y": 563,
+      "w": 16,
+      "h": 16
+    },
+    "status/protective-bond": {
+      "x": 357,
       "y": 563,
       "w": 16,
       "h": 16
     },
     "status/protective-spirit": {
-      "x": 357,
+      "x": 374,
       "y": 563,
       "w": 16,
       "h": 16
     },
     "status/protective-was-kaolai": {
-      "x": 374,
+      "x": 391,
       "y": 563,
       "w": 16,
       "h": 16
     },
     "status/protectors-defense": {
-      "x": 391,
+      "x": 408,
       "y": 563,
       "w": 16,
       "h": 16
     },
     "status/protectors-defense-block": {
-      "x": 408,
+      "x": 425,
       "y": 563,
       "w": 16,
       "h": 16
     },
     "status/pure-was-li-ming": {
-      "x": 425,
+      "x": 442,
       "y": 563,
       "w": 16,
       "h": 16
     },
     "status/purifying-finale": {
-      "x": 442,
+      "x": 459,
       "y": 563,
       "w": 16,
       "h": 16
     },
     "status/purifying-veil": {
-      "x": 459,
+      "x": 476,
       "y": 563,
       "w": 16,
       "h": 16
     },
     "status/putrid-bile": {
-      "x": 476,
+      "x": 493,
       "y": 563,
       "w": 16,
       "h": 16
     },
     "status/quickening-zephyr": {
-      "x": 493,
-      "y": 563,
+      "x": 0,
+      "y": 580,
       "w": 16,
       "h": 16
     },
     "status/quicksand": {
-      "x": 0,
+      "x": 17,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/rage-of-the-ntouka": {
-      "x": 17,
+      "x": 34,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/rampage-as-one": {
-      "x": 34,
+      "x": 51,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/rapid-fire": {
-      "x": 51,
+      "x": 68,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/read-the-wind": {
-      "x": 68,
+      "x": 85,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/reapers-mark": {
-      "x": 85,
+      "x": 102,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/recall": {
-      "x": 102,
+      "x": 119,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/reckless-haste": {
-      "x": 119,
+      "x": 136,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/recuperation": {
-      "x": 136,
+      "x": 153,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/regeneration": {
-      "x": 153,
+      "x": 170,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/rending-aura": {
-      "x": 170,
+      "x": 187,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/renewing-surge": {
-      "x": 187,
+      "x": 204,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/resilient-was-xiko": {
-      "x": 204,
+      "x": 221,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/resilient-weapon": {
-      "x": 221,
+      "x": 238,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/restful-breeze": {
-      "x": 238,
+      "x": 255,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/retreat": {
-      "x": 255,
+      "x": 272,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/retribution": {
-      "x": 272,
+      "x": 289,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/reversal-of-damage": {
-      "x": 289,
+      "x": 306,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/reversal-of-fortune": {
-      "x": 306,
+      "x": 323,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/rigor-mortis": {
-      "x": 323,
+      "x": 340,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/riposte": {
-      "x": 340,
+      "x": 357,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/rising-bile": {
-      "x": 357,
+      "x": 374,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/ritual-lord": {
-      "x": 374,
+      "x": 391,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/roaring-winds": {
-      "x": 391,
+      "x": 408,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/run-as-one": {
-      "x": 408,
+      "x": 425,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/rush": {
-      "x": 425,
+      "x": 442,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/rust": {
-      "x": 442,
+      "x": 459,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/sand-shards": {
-      "x": 459,
+      "x": 476,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/scavengers-focus": {
-      "x": 476,
+      "x": 493,
       "y": 580,
       "w": 16,
       "h": 16
     },
     "status/scourge-enchantment": {
-      "x": 493,
-      "y": 580,
+      "x": 0,
+      "y": 597,
       "w": 16,
       "h": 16
     },
     "status/scourge-healing": {
-      "x": 0,
+      "x": 17,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/scribes-insight": {
-      "x": 17,
+      "x": 34,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/seeking-arrows": {
-      "x": 34,
+      "x": 51,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/seeping-wound": {
-      "x": 51,
+      "x": 68,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/serpents-quickness": {
-      "x": 68,
+      "x": 85,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shadow-fang": {
-      "x": 85,
+      "x": 102,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shadow-form": {
-      "x": 102,
+      "x": 119,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shadow-meld": {
-      "x": 119,
+      "x": 136,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shadow-of-fear": {
-      "x": 136,
+      "x": 153,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shadow-of-haste": {
-      "x": 153,
+      "x": 170,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shadow-prison": {
-      "x": 170,
+      "x": 187,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shadow-refuge": {
-      "x": 187,
+      "x": 204,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shadow-walk": {
-      "x": 204,
+      "x": 221,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shame": {
-      "x": 221,
+      "x": 238,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shameful-fear": {
-      "x": 238,
+      "x": 255,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shard-storm": {
-      "x": 255,
+      "x": 272,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shatterstone": {
-      "x": 272,
+      "x": 289,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shelter": {
-      "x": 289,
+      "x": 306,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shield-bash": {
-      "x": 306,
+      "x": 323,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shield-guardian": {
-      "x": 323,
+      "x": 340,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shield-of-absorption": {
-      "x": 340,
+      "x": 357,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shield-of-deflection": {
-      "x": 357,
+      "x": 374,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shield-of-judgment": {
-      "x": 374,
+      "x": 391,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shield-of-regeneration": {
-      "x": 391,
+      "x": 408,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shield-stance": {
-      "x": 408,
+      "x": 425,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shielding-hands": {
-      "x": 425,
+      "x": 442,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shields-up": {
-      "x": 442,
+      "x": 459,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shivers-of-dread": {
-      "x": 459,
+      "x": 476,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shrinking-armor": {
-      "x": 476,
+      "x": 493,
       "y": 597,
       "w": 16,
       "h": 16
     },
     "status/shroud-of-distress": {
-      "x": 493,
-      "y": 597,
+      "x": 0,
+      "y": 614,
       "w": 16,
       "h": 16
     },
     "status/shroud-of-silence": {
-      "x": 0,
+      "x": 17,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/signet-of-ghostly-might": {
-      "x": 17,
+      "x": 34,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/signet-of-illusions": {
-      "x": 34,
+      "x": 51,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/signet-of-recall": {
-      "x": 51,
+      "x": 68,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/signet-of-stamina": {
-      "x": 68,
+      "x": 85,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/signet-of-strength": {
-      "x": 85,
+      "x": 102,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/signet-of-suffering": {
-      "x": 102,
+      "x": 119,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/siphon-speed": {
-      "x": 119,
+      "x": 136,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/siphon-speed-haste": {
-      "x": 136,
+      "x": 153,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/sliver-armor": {
-      "x": 153,
+      "x": 170,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/smoke-powder-defense": {
-      "x": 170,
+      "x": 187,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/soldiers-defense": {
-      "x": 187,
+      "x": 204,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/soldiers-fury": {
-      "x": 204,
+      "x": 221,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/soldiers-stance": {
-      "x": 221,
+      "x": 238,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/song-of-concentration": {
-      "x": 238,
+      "x": 255,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/song-of-power": {
-      "x": 255,
+      "x": 272,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/song-of-purification": {
-      "x": 272,
+      "x": 289,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/song-of-restoration": {
-      "x": 289,
+      "x": 306,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/soothing": {
-      "x": 306,
+      "x": 323,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/soothing-images": {
-      "x": 323,
+      "x": 340,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/soul-barbs": {
-      "x": 340,
+      "x": 357,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/soul-bind": {
-      "x": 357,
+      "x": 374,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/soul-leech": {
-      "x": 374,
+      "x": 391,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/spell-breaker": {
-      "x": 391,
+      "x": 408,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/spell-shield": {
-      "x": 408,
+      "x": 425,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/spinal-shivers": {
-      "x": 425,
+      "x": 442,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/spirit-bond": {
-      "x": 442,
+      "x": 459,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/spirit-channeling": {
-      "x": 459,
+      "x": 476,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/spirit-light-weapon": {
-      "x": 476,
+      "x": 493,
       "y": 614,
       "w": 16,
       "h": 16
     },
     "status/spirit-of-failure": {
-      "x": 493,
-      "y": 614,
+      "x": 0,
+      "y": 631,
       "w": 16,
       "h": 16
     },
     "status/spirit-shackles": {
-      "x": 0,
+      "x": 17,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/spiritleech-aura": {
-      "x": 17,
+      "x": 34,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/spirits-gift": {
-      "x": 34,
+      "x": 51,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/spiteful-spirit": {
-      "x": 51,
+      "x": 68,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/splinter-weapon": {
-      "x": 68,
+      "x": 85,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/spoil-victor": {
-      "x": 85,
+      "x": 102,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/spotless-mind": {
-      "x": 102,
+      "x": 119,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/spotless-soul": {
-      "x": 119,
+      "x": 136,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/sprint": {
-      "x": 136,
+      "x": 153,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/staggering-force": {
-      "x": 153,
+      "x": 170,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/stand-your-ground": {
-      "x": 170,
+      "x": 187,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/steady-stance": {
-      "x": 187,
+      "x": 204,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/storm-chaser": {
-      "x": 204,
+      "x": 221,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/strike-as-one": {
-      "x": 221,
+      "x": 238,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/strike-as-one-pet": {
-      "x": 238,
+      "x": 255,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/succor": {
-      "x": 255,
+      "x": 272,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/suffering": {
-      "x": 272,
+      "x": 289,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/sum-of-all-fears": {
-      "x": 289,
+      "x": 306,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/sundering-weapon": {
-      "x": 306,
+      "x": 323,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/swirling-aura": {
-      "x": 323,
+      "x": 340,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/symbiosis": {
-      "x": 340,
+      "x": 357,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/symbiotic-bond": {
-      "x": 357,
+      "x": 374,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/tainted-flesh": {
-      "x": 374,
+      "x": 391,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/teinais-prison": {
-      "x": 391,
+      "x": 408,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/the-power-is-yours": {
-      "x": 408,
+      "x": 425,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/theyre-on-fire": {
-      "x": 425,
+      "x": 442,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/tiger-stance": {
-      "x": 442,
+      "x": 459,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/tigers-fury": {
-      "x": 459,
+      "x": 476,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/to-the-limit": {
-      "x": 476,
+      "x": 493,
       "y": 631,
       "w": 16,
       "h": 16
     },
     "status/toxicity": {
-      "x": 493,
-      "y": 631,
+      "x": 0,
+      "y": 648,
       "w": 16,
       "h": 16
     },
     "status/tranquil-was-tanasen": {
-      "x": 0,
+      "x": 17,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/tranquility": {
-      "x": 17,
+      "x": 34,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/trappers-focus": {
-      "x": 34,
+      "x": 51,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/trappers-speed": {
-      "x": 51,
+      "x": 68,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/ulcerous-lungs": {
-      "x": 68,
+      "x": 85,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/union": {
-      "x": 85,
+      "x": 102,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/unseen-fury": {
-      "x": 102,
+      "x": 119,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vampiric-spirit": {
-      "x": 119,
+      "x": 136,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vengeance": {
-      "x": 136,
+      "x": 153,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vengeful-was-khanhei": {
-      "x": 153,
+      "x": 170,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vengeful-weapon": {
-      "x": 170,
+      "x": 187,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/veratas-aura": {
-      "x": 187,
+      "x": 204,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/veratas-sacrifice": {
-      "x": 204,
+      "x": 221,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vigorous-spirit": {
-      "x": 221,
+      "x": 238,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vile-miasma": {
-      "x": 238,
+      "x": 255,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/visions-of-regret": {
-      "x": 255,
+      "x": 272,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vital-blessing": {
-      "x": 272,
+      "x": 289,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vital-boon": {
-      "x": 289,
+      "x": 306,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vital-weapon": {
-      "x": 306,
+      "x": 323,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vocal-minority": {
-      "x": 323,
+      "x": 340,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vow-of-silence": {
-      "x": 340,
+      "x": 357,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/vow-of-strength": {
-      "x": 357,
+      "x": 374,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/wail-of-doom": {
-      "x": 374,
+      "x": 391,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/wailing-weapon": {
-      "x": 391,
+      "x": 408,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/wandering-eye": {
-      "x": 408,
+      "x": 425,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/ward-against-elements": {
-      "x": 425,
+      "x": 442,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/ward-against-foes": {
-      "x": 442,
+      "x": 459,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/ward-against-harm": {
-      "x": 459,
+      "x": 476,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/ward-against-melee": {
-      "x": 476,
+      "x": 493,
       "y": 648,
       "w": 16,
       "h": 16
     },
     "status/ward-of-stability": {
-      "x": 493,
-      "y": 648,
+      "x": 0,
+      "y": 665,
       "w": 16,
       "h": 16
     },
     "status/warmongers-weapon": {
-      "x": 0,
+      "x": 17,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/warriors-cunning": {
-      "x": 17,
+      "x": 34,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/warriors-endurance": {
-      "x": 34,
+      "x": 51,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/wary-stance": {
-      "x": 51,
+      "x": 68,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/wastrels-demise": {
-      "x": 68,
+      "x": 85,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/wastrels-worry": {
-      "x": 85,
+      "x": 102,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/watch-yourself": {
-      "x": 102,
+      "x": 119,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/watchful-healing": {
-      "x": 119,
+      "x": 136,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/watchful-intervention": {
-      "x": 136,
+      "x": 153,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/watchful-spirit": {
-      "x": 153,
+      "x": 170,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/water-attunement": {
-      "x": 170,
+      "x": 187,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/way-of-perfection": {
-      "x": 187,
+      "x": 204,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/way-of-the-assassin": {
-      "x": 204,
+      "x": 221,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/way-of-the-empty-palm": {
-      "x": 221,
+      "x": 238,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/way-of-the-fox": {
-      "x": 238,
+      "x": 255,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/weaken-knees": {
-      "x": 255,
+      "x": 272,
       "y": 665,
       "w": 16,
       "h": 16
     },
     "status/weakness": {
-      "x": 272,
-      "y": 665,
-      "w": 16,
-      "h": 16
-    },
-    "status/weapon-of-aggression": {
       "x": 289,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/weapon-of-fury": {
+    "status/weapon-of-aggression": {
       "x": 306,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/weapon-of-quickening": {
+    "status/weapon-of-fury": {
       "x": 323,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/weapon-of-remedy": {
+    "status/weapon-of-quickening": {
       "x": 340,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/weapon-of-renewal": {
+    "status/weapon-of-remedy": {
       "x": 357,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/weapon-of-shadow": {
+    "status/weapon-of-renewal": {
       "x": 374,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/weapon-of-warding": {
+    "status/weapon-of-shadow": {
       "x": 391,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/web-of-disruption": {
+    "status/weapon-of-warding": {
       "x": 408,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/well-of-blood": {
+    "status/web-of-disruption": {
       "x": 425,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/well-of-darkness": {
+    "status/well-of-blood": {
       "x": 442,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/well-of-power": {
+    "status/well-of-darkness": {
       "x": 459,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/well-of-ruin": {
+    "status/well-of-power": {
       "x": 476,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/well-of-silence": {
+    "status/well-of-ruin": {
       "x": 493,
       "y": 665,
       "w": 16,
       "h": 16
     },
-    "status/well-of-suffering": {
+    "status/well-of-silence": {
       "x": 0,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/well-of-the-profane": {
+    "status/well-of-suffering": {
       "x": 17,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/well-of-weariness": {
+    "status/well-of-the-profane": {
       "x": 34,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/whirling-charge": {
+    "status/well-of-weariness": {
       "x": 51,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/whirling-defense": {
+    "status/whirling-charge": {
       "x": 68,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/windborne-speed": {
+    "status/whirling-defense": {
       "x": 85,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/winnowing": {
+    "status/windborne-speed": {
       "x": 102,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/winter": {
+    "status/winnowing": {
       "x": 119,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/winters-embrace": {
+    "status/winter": {
       "x": 136,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/wither": {
+    "status/winters-embrace": {
       "x": 153,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/xinraes-weapon": {
+    "status/wither": {
       "x": 170,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/zealots-fire": {
+    "status/xinraes-weapon": {
       "x": 187,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/zealous-anthem": {
+    "status/zealots-fire": {
       "x": 204,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/zealous-renewal": {
+    "status/zealous-anthem": {
       "x": 221,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/zealous-vow": {
+    "status/zealous-renewal": {
       "x": 238,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "status/zojuns-haste": {
+    "status/zealous-vow": {
       "x": 255,
       "y": 682,
       "w": 16,
       "h": 16
     },
-    "projectile/arrow": {
+    "status/zojuns-haste": {
       "x": 272,
+      "y": 682,
+      "w": 16,
+      "h": 16
+    },
+    "projectile/arrow": {
+      "x": 289,
       "y": 682,
       "w": 32,
       "h": 12
     },
     "projectile/spear": {
-      "x": 462,
-      "y": 699,
-      "w": 32,
-      "h": 12
-    },
-    "projectile/bolt": {
-      "x": 338,
-      "y": 682,
-      "w": 32,
-      "h": 12
-    },
-    "projectile/fireball": {
-      "x": 470,
-      "y": 682,
-      "w": 32,
-      "h": 12
-    },
-    "projectile/lightning-orb": {
-      "x": 99,
-      "y": 699,
-      "w": 32,
-      "h": 12
-    },
-    "projectile/ice-shard": {
-      "x": 165,
-      "y": 699,
-      "w": 32,
-      "h": 12
-    },
-    "projectile/water-trident": {
-      "x": 198,
-      "y": 699,
-      "w": 32,
-      "h": 12
-    },
-    "projectile/ebon-hawk": {
-      "x": 231,
-      "y": 699,
-      "w": 32,
-      "h": 12
-    },
-    "projectile/stone": {
-      "x": 330,
-      "y": 699,
-      "w": 32,
-      "h": 12
-    },
-    "projectile/thrown-dagger": {
-      "x": 429,
-      "y": 699,
-      "w": 32,
-      "h": 12
-    },
-    "projectile/deathly-swarm": {
       "x": 0,
       "y": 712,
       "w": 32,
       "h": 12
     },
-    "profession/warrior": {
+    "projectile/bolt": {
+      "x": 355,
+      "y": 682,
+      "w": 32,
+      "h": 12
+    },
+    "projectile/fireball": {
+      "x": 0,
+      "y": 699,
+      "w": 32,
+      "h": 12
+    },
+    "projectile/lightning-orb": {
+      "x": 132,
+      "y": 699,
+      "w": 32,
+      "h": 12
+    },
+    "projectile/ice-shard": {
+      "x": 198,
+      "y": 699,
+      "w": 32,
+      "h": 12
+    },
+    "projectile/water-trident": {
+      "x": 231,
+      "y": 699,
+      "w": 32,
+      "h": 12
+    },
+    "projectile/ebon-hawk": {
+      "x": 264,
+      "y": 699,
+      "w": 32,
+      "h": 12
+    },
+    "projectile/stone": {
+      "x": 363,
+      "y": 699,
+      "w": 32,
+      "h": 12
+    },
+    "projectile/thrown-dagger": {
+      "x": 462,
+      "y": 699,
+      "w": 32,
+      "h": 12
+    },
+    "projectile/deathly-swarm": {
       "x": 33,
+      "y": 712,
+      "w": 32,
+      "h": 12
+    },
+    "profession/warrior": {
+      "x": 66,
       "y": 712,
       "w": 11,
       "h": 11
     },
     "profession/ranger": {
-      "x": 45,
+      "x": 78,
       "y": 712,
       "w": 11,
       "h": 11
     },
     "profession/monk": {
-      "x": 57,
+      "x": 90,
       "y": 712,
       "w": 11,
       "h": 11
     },
     "profession/necromancer": {
-      "x": 69,
+      "x": 102,
       "y": 712,
       "w": 11,
       "h": 11
     },
     "profession/mesmer": {
-      "x": 81,
+      "x": 114,
       "y": 712,
       "w": 11,
       "h": 11
     },
     "profession/elementalist": {
-      "x": 93,
+      "x": 126,
       "y": 712,
       "w": 11,
       "h": 11
     },
     "profession/assassin": {
-      "x": 105,
+      "x": 138,
       "y": 712,
       "w": 11,
       "h": 11
     },
     "profession/ritualist": {
-      "x": 117,
+      "x": 150,
       "y": 712,
       "w": 11,
       "h": 11
     },
     "profession/paragon": {
-      "x": 129,
+      "x": 162,
       "y": 712,
       "w": 11,
       "h": 11
     },
     "profession/dervish": {
-      "x": 141,
+      "x": 174,
       "y": 712,
       "w": 11,
       "h": 11
