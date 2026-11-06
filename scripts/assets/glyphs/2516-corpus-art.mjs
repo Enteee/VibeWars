@@ -99,9 +99,16 @@ const glyphs = {
     means: "Boon Signet: a signet ring beside two pluses: the next heal on an ally is stronger.",
     draw: () => ring(8.5, 15, 5) + plus(16.5, 7, 4.5) + plus(17.5, 17, 3),
   },
-  "circle-plus": {
-    means: "Karei's Healing Circle: a plus in a ring: whole-circle healing.",
-    draw: () => `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)}/>` + plus(12, 12, 5.5),
+  "circle-allies-plus": {
+    means: "Karei's Healing Circle: a ring of allies round a plus: the whole party is healed.",
+    draw: () =>
+      plus(12, 12, 4) +
+      [0, 1, 2, 3, 4, 5]
+        .map(
+          (i) =>
+            `<circle cx="${(12 + 8.2 * Math.cos((i * Math.PI) / 3)).toFixed(2)}" cy="${(12 + 8.2 * Math.sin((i * Math.PI) / 3)).toFixed(2)}" r="2" fill="${C.ink}"/>`,
+        )
+        .join(""),
   },
   "spirit-heart": {
     means: "Supportive Spirit: the spirit post beside a heart: it heals your allies.",
@@ -164,18 +171,25 @@ const glyphs = {
   },
   "blade-drop-tick": {
     means:
-      "Wielder's Remedy: a sword beside a drop with a tick: conditions cured by weapon spells.",
+      "Wielder's Remedy: a sword beside a drop struck through: conditions cured by weapon spells.",
     draw: () =>
       bladeMark(
         inkFill(
           "M7.500 2.500C10 6.500 11.500 8 11.500 10.500A4 4 0 0 1 3.500 10.500C3.500 8 5 6.500 7.500 2.500Z",
-        ) + `<path d="M5.500 10.500l1.500 1.500 2.500-3" ${stroke(C.bg, 1.4)}/>`,
+        ) +
+          `<path d="M3 13L12 4.500" ${stroke(C.bg, 2.6)}/>` +
+          inkLine("M3.500 12.500L11.500 5", 1.6),
       ),
   },
-  "urn-bolt": {
+  "urn-ally": {
     means:
-      "Caretaker's Charge: the urn of ashes holding an energy bolt: its charge is spent for the ally.",
-    draw: () => urn(inkFill("M13 10.500L9.500 15H12L11 19L15 13.500H12.500Z")),
+      "Caretaker's Charge: the urn of ashes holding a heart: its charge is spent for the ally.",
+    draw: () =>
+      urn(
+        inkFill(
+          "M12 19.500C8.500 17 8.500 13.500 10.300 12.800C11.300 12.500 12 13.200 12 14C12 13.200 12.700 12.500 13.700 12.800C15.500 13.500 15.500 17 12 19.500Z",
+        ),
+      ),
   },
   "eye-sick": {
     means: "Angorodon's Gaze: an eye over a drop: the gaze poisons.",

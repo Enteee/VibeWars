@@ -6,7 +6,7 @@ const rows = {
   "ritualist.wielders-zeal": { glyph: "blade-bolt" },
   "ritualist.sight-beyond-sight": { glyph: "eye-rayed" },
   "ritualist.wielders-remedy": { glyph: "blade-drop-tick" },
-  "ritualist.caretakers-charge": { glyph: "urn-bolt" },
+  "ritualist.caretakers-charge": { glyph: "urn-ally" },
 };
 
 export default rows;
