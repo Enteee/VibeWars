@@ -5,9 +5,9 @@ import {
   type MatchEndReason,
   type PlayerBuild,
 } from "@vibewars/game-core";
-import { LOBBY_MODES, MAX_WIRE_STRING, type LobbyMode } from "@vibewars/game-protocol";
+import { LOBBY_MODES, type LobbyMode } from "@vibewars/game-protocol";
 
-import { sanitizeGuildTag } from "./names.js";
+import { sanitizeGuildTag, sanitizeName } from "./names.js";
 
 /**
  * What one finished match looked like (#2528), as its host reports it:
@@ -86,7 +86,9 @@ function parsePlayer(value: unknown): MatchRecordPlayer | undefined {
     return undefined;
   }
   const { name, guildTag } = value;
-  if (typeof name !== "string" || name.trim() === "" || name.length > MAX_WIRE_STRING) {
+  // Held to what the game shows anywhere else, as the tag is: no bidi,
+  // control or zero-width characters, at most MAX_NAME_LENGTH graphemes.
+  if (typeof name !== "string" || name === "" || sanitizeName(name, "") !== name) {
     return undefined;
   }
   if (

@@ -216,8 +216,14 @@ function startMatch(plan: MatchPlan) {
     matchId: plan.matchId,
     isSpectator: plan.isSpectator,
     mode: plan.mode,
+    // Called mid-tick, before the observers hear "ended": a throw here
+    // must not cost them the end of the match.
     publishRecord: (record) => {
-      publishMatchRecord(record);
+      try {
+        publishMatchRecord(record);
+      } catch (error) {
+        console.warn("[web] could not publish the match record", error);
+      }
     },
     nowSeconds: () => Date.now() / 1000,
   });

@@ -8,6 +8,7 @@ import {
   RECORD_CLOCK_SKEW_SECONDS,
   validateMatchRecord,
 } from "./match-record.js";
+import { sanitizeCharacterName } from "./names.js";
 
 /** Off a public relay, from anyone (#2528): only a record of the exact shape is read. */
 
@@ -96,7 +97,11 @@ describe("validateMatchRecord (#2528)", () => {
 
   it.each([
     ["an empty name", { name: "" }],
-    ["a name too long", { name: "x".repeat(65) }],
+    ["a name over 16 graphemes", { name: "x".repeat(17) }],
+    ["a name with a bidi override", { name: "Ann\u202Enib" }],
+    ["a name with a control character", { name: "An\u0007n" }],
+    ["a name with a zero-width space", { name: "An\u200Bn" }],
+    ["a name with padding", { name: " Ann " }],
     ["a bad guild tag", { guildTag: "TOOLONG" }],
     ["no bot flag", { bot: "no" }],
     ["no build", { build: null }],
@@ -119,6 +124,15 @@ describe("validateMatchRecord (#2528)", () => {
         teams: [{ players: [{ ...first?.players[0], ...change }] }, second],
       }),
     ).toBeUndefined();
+  });
+
+  it("keeps a lobby character name cut to an ellipsis", () => {
+    const name = sanitizeCharacterName("Necromancer/Elementalist", "");
+    expect(name).toBe("Necromancer…");
+    const record = valid();
+    const [first, second] = record.teams;
+    const out = read({ ...record, teams: [{ players: [{ ...first?.players[0], name }] }, second] });
+    expect(out?.teams[0].players[0]?.name).toBe(name);
   });
 
   it("drops anything it does not know about a player", () => {
