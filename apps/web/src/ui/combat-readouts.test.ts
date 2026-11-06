@@ -751,6 +751,43 @@ describe("accumulate", () => {
       seconds: 0.05,
     });
   });
+
+  it("counts what your own creatures deal and heal as yours, on the skills side (#2483)", () => {
+    const totals = accumulate(
+      EMPTY_TOTALS,
+      [
+        entry([{ kind: "heal", targetId: "you", amount: 94 }], { sourceId: "you/c1" }),
+        entry([{ kind: "damage", targetId: "dummy", amount: 20, critical: false }], {
+          sourceId: "you/c1",
+        }),
+        // A minion's own blow is its skills' share, not your weapon's.
+        entry([{ kind: "damage", targetId: "dummy", amount: 15, critical: false }], {
+          sourceId: "you/c2",
+          cause: "weapon",
+          skillId: undefined,
+          weaponId: "sword",
+        }),
+        // Your creature hurting you is taken, never dealt.
+        entry([{ kind: "damage", targetId: "you", amount: 7, critical: false }], {
+          sourceId: "you/c1",
+        }),
+        // Someone else's creatures, and masterless ones, are not yours.
+        entry([{ kind: "heal", targetId: "you", amount: 50 }], { sourceId: "other/c1" }),
+        entry([{ kind: "damage", targetId: "dummy", amount: 50, critical: false }], {
+          sourceId: "masterless/c1",
+        }),
+      ],
+      "you",
+      0.05,
+    );
+    expect(totals).toEqual({
+      damage: 35,
+      weaponDamage: 0,
+      healing: 94,
+      taken: 7,
+      seconds: 0.05,
+    });
+  });
 });
 
 describe("perSecond", () => {
