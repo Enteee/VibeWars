@@ -13,7 +13,7 @@ const rows = {
   amity: [
     "hex",
     (c) =>
-      `<path d="M7 16v-6M10 16v-7M14 16v-7M17 16v-6" ${stroke(c, 1.6)}/><path d="M6 18h12" ${stroke(c, 1.6)}/>`,
+      `<path d="M8 15v-5M11 15v-6M13 15v-6M16 15v-5" ${stroke(c, 1.6)}/><path d="M8 17h8" ${stroke(c, 1.6)}/>`,
   ],
   // The next heal on an ally: a plus over a plus.
   "boon-signet": [
