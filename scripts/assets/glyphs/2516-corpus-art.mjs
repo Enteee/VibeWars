@@ -183,13 +183,12 @@ const glyphs = {
   },
   "urn-ally": {
     means:
-      "Caretaker's Charge: the urn of ashes holding a heart: its charge is spent for the ally.",
+      "Caretaker's Charge: a small urn tipped toward an ally, an arc running from it to the figure: its charge is poured out for them.",
     draw: () =>
-      urn(
-        inkFill(
-          "M12 19.500C8.500 17 8.500 13.500 10.300 12.800C11.300 12.500 12 13.200 12 14C12 13.200 12.700 12.500 13.700 12.800C15.500 13.500 15.500 17 12 19.500Z",
-        ),
-      ),
+      `<g transform="translate(-0.5,-1) scale(0.66)">${urn("")}</g>` +
+      smallFigure(18, 16.5, 0.62) +
+      inkLine("M12 4.500Q20 2 19.500 9", 1.8) +
+      inkLine("M17.500 7.500L19.500 9.500L21.500 7.500", 1.8),
   },
   "eye-sick": {
     means: "Angorodon's Gaze: an eye over a drop: the gaze poisons.",
