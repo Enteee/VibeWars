@@ -104,8 +104,17 @@ export function looksLikeTemplate(text: string): boolean {
   return /^O[A-Za-z0-9+/]{7,63}$/.test(stripped(text));
 }
 
+/**
+ * The code without whitespace or trailing `=` padding. A loop, not
+ * `/=+$/`: that regex is quadratic on a long run of `=` (CodeQL #15).
+ */
 function stripped(text: string): string {
-  return text.trim().replace(/=+$/, "");
+  const trimmed = text.trim();
+  let end = trimmed.length;
+  while (end > 0 && trimmed[end - 1] === "=") {
+    end -= 1;
+  }
+  return trimmed.slice(0, end);
 }
 
 /** The fewest bits `value` fits in. */
