@@ -1998,18 +1998,22 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     const words = `${scopeAdjective(trigger.appliedHex.attributes)} hex`;
     return `applies ${/^[aeiou]/i.test(words) ? "an" : "a"} ${words} to a foe`;
   }
-  // Mist Form's (#1951), Cultist's Fervor's "a Necromancer spell" (#2314).
+  // Mist Form's (#1951), Cultist's Fervor's "a Necromancer spell" (#2314),
+  // Wielder's Zeal's "a weapon spell on an ally" (#2500).
   if (
     event === "bearer-casts-spell" &&
-    (trigger.usedSkill?.attributes !== undefined || trigger.usedSkill?.profession !== undefined)
+    (trigger.usedSkill?.attributes !== undefined ||
+      trigger.usedSkill?.profession !== undefined ||
+      trigger.usedSkill?.type !== undefined)
   ) {
-    const { attributes, profession } = trigger.usedSkill;
+    const { attributes, profession, type, targets } = trigger.usedSkill;
     const words = [
       ...(profession === undefined ? [] : [getProfession(profession).name]),
       ...(attributes === undefined ? [] : [scopeAdjective(attributes)]),
-      "spell",
+      type === undefined ? "spell" : TYPE_TEXT[type].replace(/\.$/, "").toLowerCase(),
     ].join(" ");
-    return `casts ${/^[aeiou]/i.test(words) ? "an" : "a"} ${words}`;
+    const on = targets === undefined ? "" : ` on ${targets === "ally" ? "an ally" : "a foe"}`;
+    return `casts ${/^[aeiou]/i.test(words) ? "an" : "a"} ${words}${on}`;
   }
   if (
     (event === "bearer-uses-skill" || event === "source-targets-bearer") &&

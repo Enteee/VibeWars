@@ -1,5 +1,6 @@
 import { AREA_ADJACENT, AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
+import { KNOCKDOWN_SECONDS } from "../types.js";
 import { define, ownSkills } from "./define.js";
 
 export type DervishStatusId =
@@ -60,7 +61,10 @@ export type DervishStatusId =
   | "harriers-grasp"
   | "pious-renewal"
   // Mechanics (#2479).
-  | "lyssas-haste";
+  | "lyssas-haste"
+  // Unwritten corpus skills (#2500).
+  | "attackers-insight"
+  | "shield-of-force";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -954,6 +958,74 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
           },
         ],
         skillId: "dervish.lyssas-haste",
+      },
+    ],
+  }),
+  // "You have a 50% chance to block while attacking. When this enchantment
+  // ends you inflict Weakness on all adjacent foes for 3...15 seconds"
+  // (#2500): 12.6 s at rank 12, any end, a strip included, around the
+  // bearer then. Casting, idle or walking: no block.
+  "attackers-insight": define("attackers-insight", "Attacker's Insight", "enchantment", {
+    profession: "dervish",
+    block: { chance: 0.5, against: "all" },
+    blockWhileAttacking: true,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "apply-status",
+                statusId: "weakness",
+                durationSeconds: {
+                  scaling: { attributeId: "dervish.wind-prayers", atZero: 3, atTwelve: 12.6 },
+                },
+              },
+            ],
+          },
+        ],
+        skillId: "dervish.attackers-insight",
+      },
+    ],
+  }),
+  // "Blocks the next 1 attacks against you. If an attack is blocked, all
+  // adjacent attacking foes are knocked down and suffer from Weakness for
+  // 5...20 seconds" (#2500): 17 s at rank 12. A block by any status ends
+  // it, and fires it; an unblockable attack leaves it up.
+  "shield-of-force": define("shield-of-force", "Shield of Force", "enchantment", {
+    profession: "dervish",
+    block: { chance: 1, against: "all" },
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-blocks",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            onlyIf: { kind: "target-attacking" },
+            effects: [
+              { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+              {
+                kind: "apply-status",
+                statusId: "weakness",
+                durationSeconds: {
+                  scaling: { attributeId: "dervish.earth-prayers", atZero: 5, atTwelve: 17 },
+                },
+              },
+            ],
+          },
+        ],
+        skillId: "dervish.shield-of-force",
       },
     ],
   }),
