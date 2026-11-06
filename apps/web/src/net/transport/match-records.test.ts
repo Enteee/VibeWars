@@ -1,0 +1,144 @@
+import { STARTER_BUILDS } from "@vibewars/game-core";
+import { type MatchRecord } from "@vibewars/game-session";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { arenaIds } from "../maps.js";
+import {
+  MATCH_RECORD_EVENT_KIND,
+  MATCH_RECORD_PUBLISH_MS,
+  MAX_MATCH_RECORD_BYTES,
+  matchRecordEvent,
+  publishMatchRecord,
+} from "./match-records.js";
+import { eventId, type NostrEvent, type RelaySocketHandlers } from "./nostr-relays.js";
+import { verifyTicketSig } from "./ticket-key.js";
+
+const RELAYS = ["wss://one.example", "wss://two.example"];
+const NOW = 1_800_000_000_000;
+
+const fail = (): never => {
+  throw new Error("no such starter build");
+};
+
+const played = (index: number) => {
+  const { name: _, ...build } = STARTER_BUILDS.at(index) ?? fail();
+  return build;
+};
+
+const RECORD: MatchRecord = {
+  v: 1,
+  mode: "random-arena",
+  map: arenaIds()[0] ?? "",
+  endedAt: NOW / 1000,
+  durationSeconds: 300,
+  winningTeam: 0,
+  endReason: "annihilation",
+  teams: [
+    { players: [{ name: "Ann", guildTag: "VIBE", bot: false, build: played(0) }] },
+    { players: [{ name: "Elementalist Bot", guildTag: null, bot: true, build: played(1) }] },
+  ],
+};
+
+interface FakeSocket {
+  readonly handlers: RelaySocketHandlers;
+  readonly sent: string[];
+  closed: boolean;
+}
+
+/** Relay sockets with no network: the test plays the relays. */
+function publish(record: MatchRecord) {
+  const sockets: FakeSocket[] = [];
+  publishMatchRecord(record, {
+    relays: RELAYS,
+    now: () => NOW,
+    openSocket: (_url, handlers) => {
+      const socket: FakeSocket = { handlers, sent: [], closed: false };
+      sockets.push(socket);
+      return {
+        send: (data) => socket.sent.push(data),
+        close: () => {
+          socket.closed = true;
+        },
+      };
+    },
+  });
+  return sockets;
+}
+
+function eventSent(socket: FakeSocket): NostrEvent {
+  const [verb, event] = JSON.parse(socket.sent[0] ?? "[]") as [string, NostrEvent];
+  expect(verb).toBe("EVENT");
+  return event;
+}
+
+describe("match records on Nostr (#2528)", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("is a NIP-78 event with its three tags, signed, carrying the record", () => {
+    const event = matchRecordEvent(RECORD, NOW);
+
+    expect(event?.kind).toBe(MATCH_RECORD_EVENT_KIND);
+    expect(event?.created_at).toBe(NOW / 1000);
+    expect(event?.tags).toEqual([
+      ["d", expect.stringMatching(/^vibewars-match\/[0-9a-f]{32}$/)],
+      ["t", "vibewars-matches"],
+      ["v", "1"],
+    ]);
+    expect(JSON.parse(event?.content ?? "")).toEqual(RECORD);
+    if (event === undefined) {
+      return;
+    }
+    expect(verifyTicketSig(event.pubkey, eventId(event), event.sig)).toBe(true);
+  });
+
+  it("signs each record with a key of its own, under a fresh d tag", () => {
+    const first = matchRecordEvent(RECORD, NOW);
+    const second = matchRecordEvent(RECORD, NOW);
+
+    expect(first?.pubkey).not.toBe(second?.pubkey);
+    expect(first?.tags[0]).not.toEqual(second?.tags[0]);
+  });
+
+  it("sends the event to every relay and lets go once each has answered", async () => {
+    const sockets = publish(RECORD);
+    for (const socket of sockets) {
+      socket.handlers.open();
+    }
+    const [event, again] = sockets.map(eventSent);
+    expect(sockets).toHaveLength(2);
+    expect(again).toEqual(event);
+    const ok = JSON.stringify(["OK", event?.id, true, ""]);
+
+    sockets[0]?.handlers.message(ok);
+    // Another event's answer is not this one's.
+    sockets[1]?.handlers.message(JSON.stringify(["OK", "0".repeat(64), true, ""]));
+    await Promise.resolve();
+    expect(sockets.some((socket) => socket.closed)).toBe(false);
+    sockets[1]?.handlers.message(ok);
+    await Promise.resolve();
+    expect(sockets.every((socket) => socket.closed)).toBe(true);
+  });
+
+  it("gives up after a while, with no relay answering, and keeps nothing to retry", () => {
+    vi.useFakeTimers();
+    const sockets = publish(RECORD);
+
+    vi.advanceTimersByTime(MATCH_RECORD_PUBLISH_MS);
+    vi.runAllTicks();
+    return Promise.resolve().then(() => {
+      expect(sockets.every((socket) => socket.closed)).toBe(true);
+    });
+  });
+
+  it("publishes nothing over 8 KB", () => {
+    const long = { ...RECORD, map: "x".repeat(MAX_MATCH_RECORD_BYTES) };
+    expect(matchRecordEvent(long, NOW)).toBeUndefined();
+  });
+
+  it("publishes nothing it would not read from someone else", () => {
+    expect(publish({ ...RECORD, teams: [{ players: [] }, RECORD.teams[1]] })).toEqual([]);
+    expect(publish({ ...RECORD, map: "nowhere" })).toEqual([]);
+  });
+});

@@ -56,6 +56,7 @@ describe("resolveJoinLoadout", () => {
 
   it("gives the starter build random picks for no build, without calling it a refusal (#852)", () => {
     expect(resolveJoinLoadout(undefined, RULES, always(0.5))).toEqual({
+      build: starter(2),
       loadout: loadoutOf(starter(2)),
       refused: undefined,
     });
@@ -66,6 +67,7 @@ describe("resolveJoinLoadout", () => {
     // 0.5 picks the third of five.
     const middle = loadoutOf(starter(2));
     expect(resolveJoinLoadout({ name: 3 }, RULES, always(0.5))).toEqual({
+      build: starter(2),
       loadout: middle,
       refused: { kind: "malformed" },
     });
@@ -81,6 +83,7 @@ describe("resolveJoinLoadout", () => {
   it("plays an empty bar as claimed, equipment and all, without rolling (#1290)", () => {
     const empty: PlayerBuild = { ...LEGAL, skillBar: Array(8).fill(null) };
     expect(resolveJoinLoadout(empty, RULES, never)).toEqual({
+      build: empty,
       loadout: loadoutOf(empty),
       refused: undefined,
     });

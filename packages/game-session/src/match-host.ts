@@ -15,7 +15,7 @@ import {
   spawnFacing,
   swingProgress,
   type MatchMode,
-  type JoinLoadout,
+  type MatchEndReason,
   type MatchRules,
   type Participant,
   type PlayerBuild,
@@ -46,6 +46,7 @@ import {
   type AdrenalineMessage,
   type ChainMarksMessage,
   type WireChainMark,
+  type LobbyMode,
   type MapDescriptor,
   type PeerHello,
   type PeerObserving,
@@ -69,6 +70,7 @@ import {
 import { createCallBoard, type Team } from "./calls.js";
 import { packCombat } from "./combat-batches.js";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
+import { MATCH_RECORD_VERSION, type MatchRecord, type MatchRecordTeam } from "./match-record.js";
 import { NO_GUILD, sanitizeGuild, sanitizeName, type Guild } from "./names.js";
 import { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 import { chainMarks, chainMarksPredicted } from "./chain-marks.js";
@@ -176,6 +178,15 @@ export interface MatchHostOptions {
    * the match, `OBSERVER_DELAY_SECONDS` late. Asked on every `observe`.
    */
   readonly isSpectator: (peerId: string) => boolean;
+  /** What the lobby is for (#2528): the record's mode. */
+  readonly mode: LobbyMode;
+  /**
+   * Called once, when the match is `finished` (#2528), with what it was:
+   * never for a match the host closed or everyone left.
+   */
+  readonly publishRecord: (record: MatchRecord) => void;
+  /** Wall-clock unix seconds, for the record's `endedAt`. */
+  readonly nowSeconds: () => number;
 }
 
 /**
@@ -356,11 +367,18 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * The seats the match had, in seat order: whoever left still has a line
    * in the summary (#1057), under the name they joined with. At most
    * `MAX_LOBBY_PLAYERS`, all `ended` carries: past it, the earliest seat
-   * no longer held goes (`seatNew`).
+   * no longer held goes (`seatNew`). Each with the build it played, for
+   * the match record (#2528).
    */
   const everSeated = new Map<
     string,
-    { readonly name: string; readonly guildTag: string | null; readonly team: 0 | 1 }
+    {
+      readonly name: string;
+      readonly guildTag: string | null;
+      readonly team: 0 | 1;
+      readonly bot: boolean;
+      readonly build: PlayerBuild;
+    }
   >();
   /**
    * Every body's team as the tick began, a creature's too: one killed in
@@ -389,6 +407,29 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         interrupts: row.interrupts,
       };
     });
+  /** The finished match as the world may read it (#2528): names and builds, no ids. */
+  const record = (endReason: MatchEndReason): MatchRecord => {
+    const team = (side: 0 | 1): MatchRecordTeam => ({
+      players: [...everSeated.values()]
+        .filter((seat) => seat.team === side)
+        .map(({ name, guildTag, bot, build: { name: _, ...build } }) => ({
+          name,
+          guildTag,
+          bot,
+          build,
+        })),
+    });
+    return {
+      v: MATCH_RECORD_VERSION,
+      mode: options.mode,
+      map: map.descriptor.id,
+      endedAt: Math.floor(options.nowSeconds()),
+      durationSeconds: Math.round(sim.elapsedSeconds),
+      winningTeam: wireTeam(sim.outcome.winningTeam),
+      endReason,
+      teams: [team(0), team(1)],
+    };
+  };
   let accumulator = 0;
   let finished = false;
   /** Handed its room on: see `MatchHost.retire`. */
@@ -672,7 +713,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * id and of `guild`; a bot's if `bot`.
    */
   const seatNew = (
-    loadout: JoinLoadout,
+    build: PlayerBuild,
     team: 0 | 1,
     nameOf: (playerId: string) => string,
     guild: Guild,
@@ -680,6 +721,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   ): Seat => {
     seated += 1;
     const playerId = `player-${String(seated)}`;
+    const loadout = loadoutOf(build);
     // Gear becomes numbers exactly once, before the combatant exists (ADR-0012).
     const resolved = resolveLoadout(
       {
@@ -727,7 +769,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       weaponSets: undefined,
     };
     seats.set(playerId, seat);
-    everSeated.set(playerId, { name: seat.name, guildTag: seat.guildTag, team });
+    everSeated.set(playerId, { name: seat.name, guildTag: seat.guildTag, team, bot, build });
     for (const id of everSeated.keys()) {
       if (everSeated.size <= MAX_LOBBY_PLAYERS) {
         break;
@@ -848,11 +890,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
     awaited.delete(from);
     // The lobby's build if it assigned one, whatever the hello brings (#1458).
-    const assigned = plan?.build ?? null;
-    const loadout =
-      assigned === null
-        ? resolveJoinLoadout(hello.build, RULESET.attributes, random).loadout
-        : loadoutOf(assigned);
+    const build = plan?.build ?? resolveJoinLoadout(hello.build, RULESET.attributes, random).build;
     // Without a plan, teams alternate as players arrive, so a 1v1 is
     // adversarial by default.
     const team: 0 | 1 = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
@@ -860,7 +898,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     // #1406, #1422). Without a lobby they are the peer's to choose, so
     // they are sanitised before anyone sees them.
     const seat = seatNew(
-      loadout,
+      build,
       team,
       (playerId) => plan?.name ?? sanitizeName(hello.name, playerId),
       plan ?? sanitizeGuild(hello),
@@ -1184,6 +1222,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         summary: summary(),
       };
       transport.send("ended", ended, live);
+      options.publishRecord(record(sim.outcome.reason ?? "time"));
     }
     // A match nobody watches holds nothing.
     if (observers.size > 0) {
@@ -1196,7 +1235,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   // A lobby's bots (#1193) take their seats at once: none of them says hello.
   for (const plan of planned?.values() ?? []) {
     if (plan.bot) {
-      seatNew(loadoutOf(plan.build), plan.team, () => plan.name, NO_GUILD, true);
+      seatNew(plan.build, plan.team, () => plan.name, NO_GUILD, true);
     }
   }
 

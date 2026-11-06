@@ -60,6 +60,7 @@ import {
   roomSelfId,
   shareLobbyRelay,
 } from "./transport/index.js";
+import { publishMatchRecord } from "./transport/match-records.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
 import type { RelayShare } from "./transport/relay-offer.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
@@ -214,6 +215,11 @@ function startMatch(plan: MatchPlan) {
     seats: plan.seats,
     matchId: plan.matchId,
     isSpectator: plan.isSpectator,
+    mode: plan.mode,
+    publishRecord: (record) => {
+      publishMatchRecord(record);
+    },
+    nowSeconds: () => Date.now() / 1000,
   });
 }
 
