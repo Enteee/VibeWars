@@ -5,13 +5,13 @@ const urn = (c) => `<path d="M5 9h7l-1 9H6z" fill="${c}"/><path d="M6 7h5" ${str
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Unwritten corpus skills (#2500), stand-ins until their art card.
+  // Unwritten corpus skills (#2500), art #2516.
   // Item: the urn beside an ankh, the dead raised as it falls.
   "lively-was-naomei": [
     "item",
     (c) =>
       urn(c) +
-      `<circle cx="17" cy="8" r="2.200" ${stroke(c, 1.5)}/><path d="M17 10.500V18M14 13h6" ${stroke(c, 1.6)}/>`,
+      `<circle cx="17" cy="8" r="2.200" ${stroke(c, 1.5)}/><path d="M17 10.500V18M14 13.500h6" ${stroke(c, 1.6)}/>`,
   ],
   // Item: the urn beside two sound arcs, shouts and chants held longer.
   "vocal-was-sogolon": [
