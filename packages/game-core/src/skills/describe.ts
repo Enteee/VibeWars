@@ -2513,6 +2513,7 @@ function describeOwnSkillModifier(
     rechargeSlower,
     durationMultiplier,
     healMultiplier,
+    sparesDivineFavor,
     notEasilyInterrupted,
     overcastPerUse,
     uses,
@@ -2553,7 +2554,7 @@ function describeOwnSkillModifier(
       : `${verb("last", "lasts")} ${at(durationMultiplier, (value) => percent(value - 1))} ${statAtTwelve(durationMultiplier) > 1 ? "longer" : "shorter"}`,
     healMultiplier === 1
       ? undefined
-      : `${verb("heal", "heals")} ${percent(1 - healMultiplier)} ${healMultiplier < 1 ? "less" : "more"}`,
+      : `${verb("heal", "heals")} ${percent(1 - healMultiplier)} ${healMultiplier < 1 ? "less" : "more"}${sparesDivineFavor ? ", not the Divine Favor bonus" : ""}`,
     // Trapper's Focus's (#1966).
     notEasilyInterrupted ? `${verb("are", "is")} not easily interrupted` : undefined,
     // Iron Mist's (#2311).
@@ -2991,7 +2992,9 @@ function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>, withOnly
   // Gust's "while attacking or moving" (#2288).
   const onlyIf =
     splash.onlyIf === undefined || !withOnlyIf ? "" : ` ${onlyIfText(splash.onlyIf, ranks)}`;
-  const reached = foesWithin(splash.radius, splash.hits);
+  // Light of Dwayna's "all dead party members in the area" (#2446).
+  const living = foesWithin(splash.radius, splash.hits);
+  const reached = splash.dead === true ? `Dead ${lowerFirst(living)}` : living;
   const who = `${splash.includesCentre === true ? `Target and ${lowerFirst(reached)}` : reached}${splash.around === "caster" ? " around you" : ""}${splash.alsoAround === "caster" ? " around the target and you" : ""}${bearing}${using}${onlyIf}`;
   return splash.maxTargets === undefined || splash.hits === "party"
     ? who
@@ -4172,7 +4175,13 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
                                   resolveMagnitudeAtRanks(each.count, ranks) ===
                                     Number.POSITIVE_INFINITY
                                 ? "transfer all their conditions to you"
-                                : lowerFirst(description.text),
+                                : // Light of Dwayna's "they are returned to life" (#2446).
+                                  each.kind === "resurrect"
+                                  ? lowerFirst(description.text).replace(
+                                      /^returns the target to life/,
+                                      "are returned to life",
+                                    )
+                                  : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
