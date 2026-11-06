@@ -17,6 +17,7 @@ import { chainAllows, markChain } from "./chain.js";
 import { hitLocationOf, mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
 import {
   applyAttackDamage,
+  applyDamage,
   applyEffects,
   gainEnergy,
   gainHealth,
@@ -703,15 +704,31 @@ export function landBlow(
   };
   // After the crit and damage rolls: the piece it lands on (#1135).
   const location = hitLocationOf(packet, rng);
-  applyAttackDamage(
-    victim,
-    mitigate(packet, victim, rules, location, rng, surroundings),
-    packet.type,
-    critical,
-    events,
-    attacker,
-  );
+  const dealt = mitigate(packet, victim, rules, location, rng, surroundings);
+  const backfired = attacker === undefined ? undefined : backfireCap(attacker, rng);
+  if (attacker !== undefined && backfired !== undefined) {
+    applyDamage(attacker, Math.min(dealt, backfired), packet.type, critical, events, attacker);
+  } else {
+    applyAttackDamage(victim, dealt, packet.type, critical, events, attacker);
+  }
   return critical;
+}
+
+/**
+ * The cap of the backfire this blow of `attacker`'s turns into (#2471),
+ * Calculated Risk's; `undefined` when it lands as it is. Drawn only
+ * under such a status, so no other fight's stream moves.
+ */
+function backfireCap(attacker: Combatant, rng: SimulationRng): number | undefined {
+  for (const { id, ranks } of attacker.statuses.active) {
+    const backfire = getStatusDefinition(id).attackBackfire;
+    if (backfire !== undefined) {
+      return rng.nextFloat() < backfire.chance
+        ? Math.round(statAt(backfire.max, ranks))
+        : undefined;
+    }
+  }
+  return undefined;
 }
 
 /**

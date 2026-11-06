@@ -273,10 +273,11 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   }
   // Reversal of Damage's and Mark of Protection's caps are their caster's (#2187),
   // Ward Against Harm's elemental armor (#2278), Retribution's cap (#2286) and
-  // Chilling Winds' lengthening (#2311).
+  // Chilling Winds' lengthening (#2311) and Calculated Risk's cap (#2471).
   for (const stat of [
     definition.reflectsNextDamage?.cap,
     definition.reflectsAttackDamage?.max,
+    definition.attackBackfire?.max,
     definition.redirectsDamage?.reduction,
     definition.damageToHealing?.cap,
     definition.nextIncomingHexDurationMultiplier?.multiplier,
@@ -1266,6 +1267,11 @@ export interface StatusDefinition {
    */
   readonly reflectsAttackDamage: ReflectsAttackDamage | undefined;
   /**
+   * Each blow the bearer lands may turn back on it (#2471): Calculated
+   * Risk's. `undefined`: none.
+   */
+  readonly attackBackfire: AttackBackfire | undefined;
+  /**
    * Strikes of adrenaline the bearer gains on top of each hit it lands
    * (#936): "For Great Justice!"'s 1. Taking damage is not a hit.
    */
@@ -1752,6 +1758,18 @@ export interface ReflectsAttackDamage {
   readonly type: DamageType;
   readonly times: number | undefined;
   readonly skillId: string;
+}
+
+/**
+ * `StatusDefinition.attackBackfire` (#2471). With `chance`, a blow the
+ * bearer lands does its victim nothing and the bearer `min(damage the
+ * victim would have taken, max)` of the blow's type instead, from
+ * itself. Rolled only for a blow that lands, after the victim's armor;
+ * the blow still hit. `max` scales by the ranks it was put on with.
+ */
+export interface AttackBackfire {
+  readonly chance: number;
+  readonly max: StatusStat;
 }
 
 /** `StatusDefinition.skillArmorPenetration` (#1464). */

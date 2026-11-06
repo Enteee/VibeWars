@@ -2229,3 +2229,86 @@ describe("a rider at its source's ranks (#2411)", () => {
     ).toThrow(/cannot end after its attacks/);
   });
 });
+
+describe("Calculated Risk's backfire (#2471)", () => {
+  const ILLUSION = "mesmer.illusion-magic";
+
+  /** A sword under Calculated Risk put on at `rank` Illusion Magic. */
+  function risky(rank: number): Combatant {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    sword.statuses.apply("calculated-risk", 1e6, "mesmer", new Map([[ILLUSION, rank]]));
+    return sword;
+  }
+
+  /** Rolls `roll` for the weapon, never crits, then floats `float`: the backfire's roll last. */
+  const rolling = (roll: number, float: number, draws: number[] = []): SimulationRng =>
+    Object.assign(createRng(1), {
+      nextInt: () => roll,
+      nextFloat: () => {
+        draws.push(0);
+        return draws.length === 1 ? 0.99 : float;
+      },
+    });
+
+  /** Health `who` and its target lost to one blow. */
+  function blow(who: Combatant, rng: SimulationRng): { self: number; target: number } {
+    const target = foe("dummy").combatant;
+    const before = who.health;
+    landBlow(weaponSnapshotOf(who), who, target, PLAIN_BLOW, false, rng, RULES, [], new Map());
+    return { self: before - who.health, target: 1e6 - target.health };
+  }
+
+  it("does +10 a blow, and a backfire moves the blow's damage onto its attacker", () => {
+    const plain = blow(attacker(WEAPONS.sword, "warrior.swordsmanship"), rolling(10, 0.9));
+    const landed = blow(risky(12), rolling(10, 0.9));
+    expect(landed.self).toBe(0);
+    expect(landed.target).toBeGreaterThan(plain.target);
+    expect(blow(risky(12), rolling(10, 0.1))).toEqual({ self: landed.target, target: 0 });
+  });
+
+  it.each([
+    [0, 15],
+    [12, 51],
+  ])("at rank %i caps a backfire at %i, and its target still takes nothing", (rank, cap) => {
+    expect(blow(risky(rank), rolling(1000, 0.1))).toEqual({ self: cap, target: 0 });
+  });
+
+  it("draws one roll more under the hex, and none more without it", () => {
+    const draws: number[] = [];
+    blow(attacker(WEAPONS.sword, "warrior.swordsmanship"), rolling(10, 0.9, draws));
+    const plainDraws = draws.length;
+    draws.length = 0;
+    blow(risky(12), rolling(10, 0.9, draws));
+    expect(draws.length).toBe(plainDraws + 1);
+  });
+
+  it("never backfires a miss; of the blows that land, some do and some do not", () => {
+    const sword = risky(12);
+    sword.statuses.apply("blind", 1e6, "someone", NO_RANKS);
+    sword.health = 1e6;
+    sword.maxHealth = 1e6;
+    const rng = createRng(5);
+    const landedOn = new Map<string, number>();
+    for (let i = 0; i < 1000; i += 1) {
+      const before = sword.health;
+      const events = resolveSwing({
+        attacker: sword,
+        target: foe("dummy"),
+        surroundings: new Map(),
+        rng,
+        rules: RULES,
+        exposed: NOWHERE,
+      }).events;
+      if (events[0]?.kind === "attack-missed") {
+        expect(sword.health).toBe(before);
+      }
+      for (const event of events) {
+        if (event.kind === "damage") {
+          landedOn.set(event.targetId, (landedOn.get(event.targetId) ?? 0) + 1);
+        }
+      }
+    }
+    expect(landedOn.get("attacker")).toBeGreaterThan(20);
+    expect(landedOn.get("dummy")).toBeGreaterThan(20);
+  });
+});
