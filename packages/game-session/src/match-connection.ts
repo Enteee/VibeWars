@@ -24,6 +24,7 @@ import type {
   WireCalls,
   WireCape,
   WirePing,
+  WireStroke,
   WireWeaponSets,
 } from "@vibewars/game-protocol";
 
@@ -254,15 +255,17 @@ export interface SlotRecharge {
 }
 
 /**
- * Your team's calls (#443): the foe called, if any, and the live pings,
- * `remaining` counted down on the match clock to now.
+ * Your team's calls (#443): the foe called, if any, the live pings, and
+ * the live compass line segments (#2391), oldest first, `remaining`
+ * counted down on the match clock to now.
  */
 export interface CallsSnapshot {
   readonly target: WireCalls["target"];
   readonly pings: readonly WirePing[];
+  readonly strokes: readonly WireStroke[];
 }
 
-export const NO_CALLS: CallsSnapshot = { target: null, pings: [] };
+export const NO_CALLS: CallsSnapshot = { target: null, pings: [], strokes: [] };
 
 /** A `"combat"` message, its events game-core's. */
 export type CombatMessage = WireCombatMessage<CombatEvent>;
@@ -326,7 +329,10 @@ export interface MatchConnection {
    * none, or one run out.
    */
   getChainMark(targetId: string): ChainRole | undefined;
-  /** Call a foe for your team, or ping a spot (#443). The host may drop it, and says nothing. */
+  /**
+   * Call a foe for your team, ping a spot (#443), or draw on the compass
+   * (#2391). The host may drop it, and says nothing.
+   */
   sendCall(call: PeerCall): void;
   /** Your team's calls right now; nobody else's ever reach you. */
   getCalls(): CallsSnapshot;

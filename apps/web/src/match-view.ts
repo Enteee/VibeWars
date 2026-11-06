@@ -283,6 +283,7 @@ export function toArenaSnapshot(
     // Your team's calls are the caller's (`withCalls`, #443).
     calledId: undefined,
     pings: [],
+    strokes: [],
     actors: match.players.map((player) => {
       const statuses = player.statuses.map((status) => status.id);
       // Rings and condition cues for what the statuses already say (#1117,
@@ -441,8 +442,16 @@ export async function startMatchView(
       seat?.sendIntent({ kind: "command", creatureId, order: { kind: "mode", mode } });
     },
   );
-  // The compass (#486), top right under the match controls.
-  const compass = createCompass(parent, compassReach(viewed.map));
+  // The compass (#486), top right under the match controls; a click on it
+  // pings, a drag draws for your team (#2391).
+  const compass = createCompass(parent, compassReach(viewed.map), {
+    onPing(at) {
+      seat?.sendCall({ kind: "ping", x: at.x, y: at.y });
+    },
+    onStroke(call) {
+      seat?.sendCall(call);
+    },
+  });
   // A watcher has none (#480), from the start, not only once it updates.
   compass.element.hidden = seat === undefined;
   // A watcher (#480) has no body: no bars, effects or skill bar of its

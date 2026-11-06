@@ -10,7 +10,7 @@ export { packSnapshot, snapshotAssembler } from "./snapshot-parts.js";
 export type { Transport, TransportTrouble } from "./transport.js";
 
 export { NO_CALLS } from "./match-connection.js";
-export { PING_SECONDS, createCallBoard } from "./calls.js";
+export { PING_SECONDS, STROKE_SECONDS, createCallBoard } from "./calls.js";
 export type { CallBoard } from "./calls.js";
 export type {
   CallsSnapshot,

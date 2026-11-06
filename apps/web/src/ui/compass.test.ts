@@ -9,7 +9,16 @@ import {
   type ArenaSnapshot,
   type RenderableActor,
 } from "../render/arena-snapshot.js";
-import { compassReach, compassView } from "./compass.js";
+import {
+  STROKE_BATCH_MS,
+  compassReach,
+  compassView,
+  createStrokeRecorder,
+  isDrag,
+  strokeAlpha,
+  worldAt,
+  type StrokeCall,
+} from "./compass.js";
 
 function actor(
   id: string,
@@ -311,5 +320,111 @@ describe("compassReach (#1080)", () => {
       ["near", 900 * scale, 0],
     ]);
     expect(view?.rings[0]).toEqual({ radius: AREA_EARSHOT * scale, kind: "earshot" });
+  });
+});
+
+describe("drawing on the compass (#2391)", () => {
+  it("finds the world point under a compass px: compassView's mapping, inverted", () => {
+    const point = vec2(1340, 595);
+    const view = compassView(
+      arena({ pings: [{ id: 1, position: point, remaining: PING_SECONDS }] }),
+      "me",
+      SIZE,
+      RANGE_COMPASS,
+    );
+    const shown = view?.pings[0];
+    expect(shown).toBeDefined();
+    if (view !== undefined && shown !== undefined) {
+      const back = worldAt(me.position, view.scale, shown);
+      expect(back.x).toBeCloseTo(point.x);
+      expect(back.y).toBeCloseTo(point.y);
+    }
+  });
+
+  it("takes a press moved under 4 px for a click, 4 px or more for a drag", () => {
+    const from = { x: 10, y: 10 };
+    expect(isDrag(from, { x: 13, y: 12 })).toBe(false);
+    expect(isDrag(from, { x: 14, y: 10 })).toBe(true);
+  });
+
+  it("sends a drag every 100 ms and on release, each batch joined to the last", () => {
+    const sent: StrokeCall[] = [];
+    const recorder = createStrokeRecorder(5, (call) => sent.push(call));
+    recorder.start({ x: 0, y: 0 }, 0);
+    recorder.move({ x: 10, y: 0 }, 40);
+    // Closer than 5 to the last point kept: dropped.
+    recorder.move({ x: 12, y: 0 }, 60);
+    recorder.move({ x: 20, y: 0 }, STROKE_BATCH_MS);
+    recorder.move({ x: 30, y: 0 }, 150);
+    recorder.end(170);
+    expect(sent).toEqual([
+      {
+        kind: "stroke",
+        strokeId: 1,
+        points: [
+          [0, 0],
+          [10, 0],
+          [20, 0],
+        ],
+      },
+      {
+        kind: "stroke",
+        strokeId: 1,
+        points: [
+          [20, 0],
+          [30, 0],
+        ],
+      },
+    ]);
+    // The next drag is a stroke of its own; dying mid-drag sends no more of it.
+    recorder.start({ x: 0, y: 0 }, 500);
+    recorder.move({ x: 0, y: 10 }, 520);
+    recorder.drop();
+    recorder.end(700);
+    recorder.start({ x: 0, y: 0 }, 900);
+    recorder.move({ x: 0, y: 10 }, 920);
+    recorder.end(940);
+    expect(sent.slice(2).map(({ strokeId }) => strokeId)).toEqual([3]);
+  });
+
+  it("sends a full batch at once, however soon", () => {
+    const sent: StrokeCall[] = [];
+    const recorder = createStrokeRecorder(1, (call) => sent.push(call));
+    recorder.start({ x: 0, y: 0 }, 0);
+    for (let x = 1; x < 20; x += 1) {
+      recorder.move({ x, y: 0 }, x);
+    }
+    expect(sent.map(({ points }) => points.length)).toEqual([16]);
+  });
+
+  it("shows your team's lines in compass px, and none run out", () => {
+    const view = compassView(
+      arena({
+        strokes: [
+          { points: [vec2(1000, 1000), vec2(1000, 1850)], remaining: 0.5 },
+          { points: [vec2(0, 0), vec2(10, 10)], remaining: 0 },
+        ],
+      }),
+      "me",
+      SIZE,
+      RANGE_COMPASS,
+    );
+    expect(view?.strokes).toEqual([
+      {
+        points: [
+          { x: 0, y: 0 },
+          { x: 0, y: 40 },
+        ],
+        remaining: 0.5,
+      },
+    ]);
+  });
+
+  it("keeps a line whole 3 s, fades it over its last, and gone at 4 s; still, whole to the end", () => {
+    expect(strokeAlpha(4 - 2, false)).toBe(1);
+    expect(strokeAlpha(4 - 3.5, false)).toBe(0.5);
+    expect(strokeAlpha(4 - 4, false)).toBe(0);
+    expect(strokeAlpha(4 - 3.5, true)).toBe(1);
+    expect(strokeAlpha(4 - 4, true)).toBe(0);
   });
 });

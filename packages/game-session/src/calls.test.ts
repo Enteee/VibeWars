@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_WIRE_PINGS } from "@vibewars/game-protocol";
+import { MAX_WIRE_PINGS, MAX_WIRE_STROKES, type PeerCall } from "@vibewars/game-protocol";
 
-import { PING_SECONDS, createCallBoard } from "./calls.js";
+import { PING_SECONDS, STROKES_PER_SECOND, STROKE_SECONDS, createCallBoard } from "./calls.js";
 
 const BOUNDS = { width: 960, height: 640 };
 /** b is team 0's living foe; everyone else is not. */
@@ -94,5 +94,108 @@ describe("createCallBoard (#443)", () => {
     board.call(0, "a", { kind: "target", targetId: "b" }, 0, foes);
     board.call(0, "c", { kind: "target", targetId: "e" }, 0, foes);
     expect(board.view(0, 0).target).toEqual({ targetId: "e", callerId: "c" });
+  });
+});
+
+describe("createCallBoard's compass lines (#2391)", () => {
+  const line = (strokeId: number, x = 10): PeerCall => ({
+    kind: "stroke",
+    strokeId,
+    points: [
+      [x, 10],
+      [x + 5, 20],
+    ],
+  });
+
+  it("keeps a segment for the drawer's team only, sent once as fresh, and never in the calls view", () => {
+    const board = createCallBoard(BOUNDS);
+    expect(board.call(0, "a", line(1), 1, foeB)).toBe(false);
+    expect(board.view(0, 1)).toEqual({ target: null, pings: [] });
+    const segment = {
+      id: 1,
+      byId: "a",
+      strokeId: 1,
+      points: [
+        [10, 10],
+        [15, 20],
+      ],
+      remaining: STROKE_SECONDS - 0.5,
+    };
+    expect(board.freshStrokes(0, 1.5)).toEqual([segment]);
+    expect(board.freshStrokes(0, 1.5)).toEqual([]);
+    expect(board.strokes(0, 1.5)).toEqual([segment]);
+    expect(board.strokes(1, 1.5)).toEqual([]);
+    expect(board.freshStrokes(1, 1.5)).toEqual([]);
+  });
+
+  it("pulls points into the arena, drops a non-finite one, and a segment left with one point", () => {
+    const board = createCallBoard(BOUNDS);
+    const wild: PeerCall = {
+      kind: "stroke",
+      strokeId: 1,
+      points: [
+        [-50, 10],
+        [Number.NaN, 1],
+        [2000, 9000],
+      ],
+    };
+    board.call(0, "a", wild, 0, foeB);
+    expect(board.strokes(0, 0)[0]?.points).toEqual([
+      [0, 10],
+      [960, 640],
+    ]);
+    const lone: PeerCall = {
+      kind: "stroke",
+      strokeId: 2,
+      points: [
+        [1, 1],
+        [Number.POSITIVE_INFINITY, 1],
+      ],
+    };
+    board.call(0, "a", lone, 0, foeB);
+    expect(board.strokes(0, 0)).toHaveLength(1);
+  });
+
+  it("keeps the newest 64 segments", () => {
+    const board = createCallBoard(BOUNDS);
+    // Ten players' worth, so no one's budget runs out.
+    for (let index = 0; index < MAX_WIRE_STROKES + 6; index += 1) {
+      board.call(0, `p${String(index % 10)}`, line(index), 0, foeB);
+    }
+    const ids = board.strokes(0, 0).map(({ id }) => id);
+    expect(ids).toHaveLength(MAX_WIRE_STROKES);
+    expect(ids[0]).toBe(7);
+    expect(board.freshStrokes(0, 0)).toHaveLength(MAX_WIRE_STROKES);
+  });
+
+  it("expires a segment at 4 s", () => {
+    const board = createCallBoard(BOUNDS);
+    board.call(0, "a", line(1), 2, foeB);
+    expect(board.strokes(0, 5.9)[0]?.remaining).toBeCloseTo(0.1);
+    expect(board.step(6, alive)).toEqual([]);
+    expect(board.strokes(0, 6)).toEqual([]);
+    expect(board.freshStrokes(0, 6)).toEqual([]);
+  });
+
+  it("drops a player's segments past 15 a second, theirs only, and refills with time", () => {
+    const board = createCallBoard(BOUNDS);
+    for (let index = 0; index < STROKES_PER_SECOND + 5; index += 1) {
+      board.call(0, "a", line(1, index), 0, foeB);
+    }
+    board.call(0, "c", line(1), 0, foeB);
+    const by = (id: string): number => board.strokes(0, 0).filter(({ byId }) => byId === id).length;
+    expect(by("a")).toBe(STROKES_PER_SECOND);
+    expect(by("c")).toBe(1);
+    board.call(0, "a", line(2), 0.2, foeB);
+    expect(board.strokes(0, 0.2).filter(({ byId }) => byId === "a")).toHaveLength(
+      STROKES_PER_SECOND + 1,
+    );
+  });
+
+  it("numbers each team's segments on its own", () => {
+    const board = createCallBoard(BOUNDS);
+    board.call(0, "a", line(1), 0, foeB);
+    board.call(1, "b", line(1), 0, foeB);
+    expect(board.strokes(1, 0).map(({ id }) => id)).toEqual([1]);
   });
 });

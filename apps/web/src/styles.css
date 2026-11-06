@@ -6399,7 +6399,8 @@ body:has(#app > .chat) .now-playing {
  * The compass (#486): GW1's radar, top right under the match buttons,
  * centred on you, north up. A canvas `ui/compass.ts` draws; hidden keeps
  * its box, so its size is there to read. Smaller on a narrow window, clear
- * of the scoreboard.
+ * of the scoreboard. It takes the pointer (#2391): a click pings, a drag
+ * draws, and neither reaches the arena under it.
  */
 :root {
   /* Under the match buttons, so down with them under the banner (#1283). */
@@ -6423,7 +6424,8 @@ body:has(#app > .chat) .now-playing {
   background: rgb(22 27 34 / 85%);
   border: 1px solid var(--line);
   border-radius: 50%;
-  pointer-events: none;
+  cursor: crosshair;
+  touch-action: none;
 }
 
 .compass[hidden] {

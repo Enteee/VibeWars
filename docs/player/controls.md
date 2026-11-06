@@ -43,6 +43,8 @@ These keys are fixed:
   it; **Space** walks there and takes the flag up or plants it.
 - **Wheel click** a foe to call it for your team: their **T** targets it.
   On the ground or an ally, it pings that spot.
+- Click the compass to ping that spot for your team; drag on it to draw a
+  line they see for a few seconds.
 - **Wheel** zooms. **Right drag** looks around; let go and the view
   glides back to you.
 - Click a skill on the bar to use it, and a name in the party window to
