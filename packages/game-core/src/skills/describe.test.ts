@@ -1760,3 +1760,16 @@ describe("a hex's own-skill modifiers name the hexed foe (#2337)", () => {
     );
   });
 });
+
+describe("Empowerment's item clause (#2493)", () => {
+  it("its status says the bonus holds only while holding an item", () => {
+    expect(describeStatus("empowerment")).toMatch(/maximum energy while holding an item$/);
+  });
+
+  it("its skill tooltip says 'holding an item' once", () => {
+    const text = describeSkill(skill("ritualist.empowerment"))
+      .effects.map((line) => line.text)
+      .join(" ");
+    expect(text.split("holding an item")).toHaveLength(2);
+  });
+});
