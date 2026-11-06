@@ -275,6 +275,12 @@ export interface HealEffect {
    */
   readonly perRemoved?: StatusCategory;
   /**
+   * With `perRemoved`, only statuses of this id count, as Extinguish's
+   * "Party members relieved of Burning are healed for 10...100 Health"
+   * (#2453).
+   */
+  readonly perRemovedStatusId?: StatusId;
+  /**
    * The amount is per spirit an earlier `destroy-allied-spirits` of this
    * skill destroyed (#1309), as Feast of Souls' "for each spirit destroyed
    * in this way". None destroyed: no heal.

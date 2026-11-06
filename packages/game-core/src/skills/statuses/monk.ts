@@ -82,7 +82,9 @@ export type MonkStatusId =
   | "defenders-zeal"
   | "pensive-guardian"
   // Staples (#2367).
-  | "strength-of-honor";
+  | "strength-of-honor"
+  // Mechanics (#2453).
+  | "smiters-boon";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -1016,5 +1018,11 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       scaling: { attributeId: "monk.smiting-prayers", atZero: 1, atTwelve: 4.2 },
     },
     attackDamageDeltaWeapon: "melee",
+  }),
+  // "For 4 seconds, your Smiting Prayers have double the Divine Favor
+  // bonus" (PvP, #2453).
+  "smiters-boon": define("smiters-boon", "Smiter's Boon", "enchantment", {
+    profession: "monk",
+    divineFavorDoubledFor: "monk.smiting-prayers",
   }),
 };

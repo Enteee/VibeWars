@@ -683,6 +683,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "stone-sheath": icon("stone-sheath"),
   "air-of-disenchantment": icon("air-of-disenchantment"),
   "mark-of-insecurity": icon("mark-of-insecurity"),
+  // Mechanics (#2453).
+  "stoneflesh-aura": icon("stoneflesh-aura"),
+  "icy-shackles": icon("icy-shackles"),
+  "glyph-of-swiftness": icon("glyph-of-swiftness"),
+  "ward-of-weakness": icon("ward-of-weakness"),
+  "smiters-boon": icon("smiters-boon"),
 };
 
 const GAP = 2;

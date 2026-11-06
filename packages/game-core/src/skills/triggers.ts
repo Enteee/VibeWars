@@ -282,6 +282,7 @@ export function fireChangeTriggers(
     case "hit":
     case "failed-to-hit":
     case "took-physical-damage":
+    case "took-elemental-damage":
     case "knocked-down":
     case "sacrificed-health":
     case "knockdown-prevented":

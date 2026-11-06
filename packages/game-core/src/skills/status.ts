@@ -201,6 +201,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   damageTakenMultiplier: true,
   healingMultiplier: true,
   adrenalineGainFaster: true,
+  damageReduction: true,
   damageReductionFromWeakerFoe: true,
   casterEnergyPerReduction: true,
   healthPipsPerCondition: true,
@@ -289,6 +290,10 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   // and Keystone Signet's uses its Mesmer's (#2275).
   if (definition.nextSkill !== undefined) {
     scalingAttributes(definition.nextSkill, attributes);
+  }
+  // Glyph of Swiftness' count is its Elementalist's (#2453).
+  if (definition.nextSpells !== undefined) {
+    scalingAttributes(definition.nextSpells, attributes);
   }
   // Withering Aura's Weakness is its Necromancer's, not the ally's (#2411).
   for (const rider of [definition.onAttackHit, definition.onAttackBlocked]) {
@@ -426,8 +431,8 @@ export interface StatusDefinition {
   readonly moveSpeedMultiplier: StatusStat;
   /**
    * A move speed multiplier that holds only while the bearer is enchanted
-   * (#1955): Godspeed's 1.25. A boost, so `preventsSpeedBoosts` bars it.
-   * 1: none.
+   * (#1955): Godspeed's 1.25. A boost, so `preventsSpeedBoosts` bars it;
+   * a slow, Icy Shackles' 0.294 (#2453), it does not. 1: none.
    */
   readonly moveSpeedWhileEnchanted: number;
   /**
@@ -800,6 +805,12 @@ export interface StatusDefinition {
    */
   readonly preventsCriticalHits: boolean;
   /**
+   * The bearer's spells of this attribute have double the Divine Favor
+   * bonus (#2453): Smiter's Boon's `monk.smiting-prayers`. Two copies
+   * still double it once. `undefined`: none.
+   */
+  readonly divineFavorDoubledFor: string | undefined;
+  /**
    * While it is up, its bearer projects this aura as a spirit does
    * (#2096): Protector's Defense's block for the allies adjacent to it.
    * `undefined`: none.
@@ -1068,8 +1079,9 @@ export interface StatusDefinition {
   /**
    * Taken off every damage packet the bearer takes, after armor and
    * `damageTakenMultiplier` (#1108): Call of Protection's 17. Never below 0.
+   * Stoneflesh Aura's 1...31 by its caster's Earth Magic (#2453).
    */
-  readonly damageReduction: number;
+  readonly damageReduction: StatusStat;
   /**
    * As `damageReduction`, by the bearer's rank in `attributeId` (#1592):
    * `perRank` a rank, at most `max`, Shield Stance's "reduced by 2 for each
@@ -1497,6 +1509,8 @@ export type StatusTriggerEvent =
    */
   | "bearer-fails-to-hit"
   | "bearer-takes-physical-damage"
+  /** As `bearer-takes-physical-damage`, for elemental damage (#2453): Ward of Weakness. */
+  | "bearer-takes-elemental-damage"
   /**
    * The bearer lost health to damage or life steal from a foe (#1022):
    * any typed packet through `applyDamage`, or a `stealLife`, whose dealer
@@ -2273,6 +2287,7 @@ export type StatusChange =
   | { readonly kind: "hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "failed-to-hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] }
+  | { readonly kind: "took-elemental-damage"; readonly fired: readonly AnsweringTrigger[] }
   | {
       readonly kind: "knocked-down" | "knockdown-prevented" | "sacrificed-health";
       readonly fired: readonly AnsweringTrigger[];
@@ -2405,9 +2420,20 @@ export interface PipsPerEnchantment {
  * Energy's.
  */
 export interface NextSpells {
-  readonly count: number;
+  /** At its source's rank as it landed, rounded (#2453): Glyph of Swiftness' 1...5. */
+  readonly count: StatusStat;
   readonly costReduction: number;
   readonly noOvercast: boolean;
+  /**
+   * Each of those spells recharges this share faster (#2453): Glyph of
+   * Swiftness' 0.25. Taken as the spell starts, so the last one still has it.
+   */
+  readonly rechargeFaster: number;
+  /**
+   * Each of those spells' projectiles flies this many times as fast
+   * (#2453): Glyph of Swiftness' "200% faster", 3. Taken as it starts.
+   */
+  readonly projectileSpeedMultiplier: number;
 }
 
 /**
@@ -2907,6 +2933,14 @@ export class StatusSet {
     }
   }
 
+  /** As `recordPhysicalDamage`, for elemental damage (#2453). */
+  public recordElementalDamage(): void {
+    const fired = this.#answering("bearer-takes-elemental-damage");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "took-elemental-damage", fired });
+    }
+  }
+
   /**
    * The bearer's hex `id` landed on `hexedId` (#1951), recorded only if a
    * status on it answers that, with the triggers that do; which of them
@@ -3309,7 +3343,10 @@ export class StatusSet {
       struck: false,
       unblockableLeft: definition.unblockableAttacks,
       attacksMadeLeft: definition.endsAfterAttackCount,
-      spellsLeft: definition.nextSpells?.count,
+      spellsLeft:
+        definition.nextSpells === undefined
+          ? undefined
+          : Math.round(statAt(definition.nextSpells.count, ranks)),
       castsLeft: definition.borrowsAttribute?.spells,
       skillsLeft:
         definition.nextSkill === undefined
@@ -4853,8 +4890,11 @@ export function aggregateModifiers(
     }
     const moveSpeed = statAt(def.moveSpeedMultiplier, ranks);
     moveSpeedMultiplier *= speedBoostsBarred ? Math.min(1, moveSpeed) : moveSpeed;
-    if (enchantments > 0 && !speedBoostsBarred) {
-      moveSpeedMultiplier *= def.moveSpeedWhileEnchanted;
+    if (enchantments > 0) {
+      // Under a bar a boost is refused, a slow still lands (#2453).
+      moveSpeedMultiplier *= speedBoostsBarred
+        ? Math.min(1, def.moveSpeedWhileEnchanted)
+        : def.moveSpeedWhileEnchanted;
     }
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
     if (
@@ -4885,7 +4925,7 @@ export function aggregateModifiers(
     attackSlower = Math.max(attackSlower, attackDuration);
     projectileSpeedMultiplier *= def.projectileSpeedMultiplier;
     damageTakenMultiplier *= statAt(def.damageTakenMultiplier, ranks);
-    damageReduction += def.damageReduction;
+    damageReduction += Math.round(statAt(def.damageReduction, ranks));
     if (
       def.attackDamageCapFraction !== undefined &&
       (attackDamageCapFraction === undefined ||

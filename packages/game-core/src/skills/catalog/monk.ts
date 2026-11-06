@@ -4624,4 +4624,72 @@ export const MONK_SKILLS: readonly Skill[] = [
     // damage in melee" (PvP, #2367). The damage is the status's.
     effects: [{ kind: "maintain-status", on: "target", statusId: "strength-of-honor" }],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2453)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.extinguish",
+    name: "Extinguish",
+    gwId: 943,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove one condition from each party member. Party members relieved
+    // of Burning are healed for 10...100 Health": 82 at rank 12. The party
+    // is the team, the caster included.
+    effects: [
+      { kind: "remove-status", category: "condition", count: 1 },
+      {
+        kind: "heal",
+        perRemoved: "condition",
+        perRemovedStatusId: "burning",
+        amount: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 82 },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.smiters-boon",
+    name: "Smiter's Boon",
+    gwId: 2005,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 90,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The base record; its numbers are the PvP split's (2895). "For 4
+    // seconds, your Smiting Prayers have double the Divine Favor bonus."
+    effects: [{ kind: "apply-status", statusId: "smiters-boon", durationSeconds: { flat: 4 } }],
+  },
 ];

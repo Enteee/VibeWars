@@ -120,13 +120,20 @@ export const DIVINE_FAVOR_ATTRIBUTE = "monk.divine-favor";
  * The extra heal Divine Favor gives the ally a Monk spell is cast on, the
  * caster included (#529): floor(3.2 × rank), +38 at rank 12. 0 for any
  * other skill, and for a Monk spell cast at a foe. Twice that for a spell
- * that doubles it (#1754), as Healing Touch.
+ * that doubles it (#1754), as Healing Touch, or while the caster is under a
+ * status that doubles it for the spell's attribute (`statusDoubles`,
+ * #2453), as Smiter's Boon. Never more than twice.
  */
-export function divineFavorBonusHeal(rank: number, skill: Skill, targetIsAlly: boolean): number {
+export function divineFavorBonusHeal(
+  rank: number,
+  skill: Skill,
+  targetIsAlly: boolean,
+  statusDoubles: boolean,
+): number {
   if (skill.profession !== "monk" || !isSpell(skill.type) || !targetIsAlly) {
     return 0;
   }
-  return divineFavorHeal(rank) * (skill.divineFavorDoubled === true ? 2 : 1);
+  return divineFavorHeal(rank) * (skill.divineFavorDoubled === true || statusDoubles ? 2 : 1);
 }
 
 /** Divine Favor's extra heal for a spell it applies to: floor(3.2 × rank). */
