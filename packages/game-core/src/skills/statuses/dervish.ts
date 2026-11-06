@@ -53,7 +53,9 @@ export type DervishStatusId =
   | "conviction"
   | "grenths-aura"
   // Staples (#2368).
-  | "mystic-corruption";
+  | "mystic-corruption"
+  // Staples (#2413).
+  | "meditation";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -840,6 +842,26 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
           },
         ],
         skillId: "dervish.mystic-corruption",
+      },
+    ],
+  }),
+  // Staples (#2413). "For 20 seconds, you gain 1...4 Energy every time an
+  // enchantment on you ends": 3.4 at rank 12, at its Mysticism. Any
+  // enchantment, any end: a strip, an expiry, a flash one's end. Its own
+  // end gives nothing, as it is gone before its loss is recorded.
+  meditation: define("meditation", "Meditation", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "bearer-loses-enchantment",
+        target: "bearer",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: { scaling: { attributeId: "dervish.mysticism", atZero: 1, atTwelve: 3.4 } },
+          },
+        ],
+        skillId: "dervish.meditation",
       },
     ],
   }),

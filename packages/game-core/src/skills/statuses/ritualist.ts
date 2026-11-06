@@ -73,7 +73,9 @@ export type RitualistStatusId =
   | "agony"
   // Staples (#2368).
   | "spirit-channeling"
-  | "renewing-surge";
+  | "renewing-surge"
+  // Staples (#2413).
+  | "binding-chains";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -856,5 +858,32 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
         skillId: "ritualist.renewing-surge",
       },
     ],
+  }),
+  // Staples (#2413). "For 3 seconds, target foe and all nearby foes move
+  // 90% slower and take 1...30 damage each second while moving": 24.2 at
+  // rank 12, at its Communing. A still foe takes nothing.
+  "binding-chains": define("binding-chains", "Binding Chains", "hex", {
+    profession: "ritualist",
+    moveSpeedMultiplier: 0.1,
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-moving" },
+          effects: [
+            {
+              kind: "damage",
+              amount: {
+                scaling: { attributeId: "ritualist.communing", atZero: 1, atTwelve: 24.2 },
+              },
+              type: "typeless",
+              armorPenetration: 0,
+            },
+          ],
+        },
+      ],
+      skillId: "ritualist.binding-chains",
+    },
   }),
 };
