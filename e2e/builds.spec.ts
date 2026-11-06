@@ -2704,10 +2704,10 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   await expect(page.locator(".skill-tip")).toContainText("Not in the game yet");
 
   // The search finds it; remembered across a reload.
-  // Searing Heat is in the game, so it is found too, playable.
-  await page.locator("input.skill-search").fill("heat");
+  // Dragon's Stomp is in the game, so it is found too, playable.
+  await page.locator("input.skill-search").fill("dragon");
   await expect(page.locator(".skill-corpus-box", { hasText: "Double Dragon" })).toHaveCount(1);
-  await expect(page.locator(".skill-box", { hasText: "Searing Heat" })).toHaveCount(1);
+  await expect(page.locator(".skill-box", { hasText: "Dragon's Stomp" })).toHaveCount(1);
   await page.reload();
   await page.getByRole("button", { name: "New character", exact: true }).click();
   await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
