@@ -34,8 +34,7 @@ nobody's, the altar in gold. A player's filled arrow draws over it.
 and each death costs morale. Wipe the other team to win. After 8 minutes,
 the team with the most morale left wins.
 
-Arena Alpha, Canyon, Crossroads, Long Hall, Open Field and The Ring play
-it.
+Canyon, Crossroads and Long Hall play it.
 
 ## Kill Count
 
