@@ -3128,7 +3128,28 @@ export class StatusSet {
    * The damage the bearer kept in the last second under a
    * `damagePerSecondCap` (#2503), each with seconds since it landed.
    */
-  #recentDamage: { age: number; amount: number }[] = [];
+  readonly #recentDamage: { age: number; amount: number }[] = [];
+
+  /**
+   * Age the cap's window by `dt` in place and drop what is a second old.
+   * Runs every tick for every combatant, so it allocates nothing: entries
+   * land in order and age together, which makes the expired ones a prefix.
+   */
+  #ageRecentDamage(dt: number): void {
+    if (this.#recentDamage.length === 0) {
+      return;
+    }
+    let expired = 0;
+    for (const entry of this.#recentDamage) {
+      entry.age += dt;
+      if (entry.age >= 1) {
+        expired++;
+      }
+    }
+    if (expired > 0) {
+      this.#recentDamage.splice(0, expired);
+    }
+  }
 
   /**
    * `spent`: the match's `endsEverywhereWhenSpent` statuses spent this
@@ -3193,7 +3214,7 @@ export class StatusSet {
           stepTargetId: status.stepTargetId,
         });
         if (getStatusDefinition(id).damagePerSecondCap !== undefined) {
-          this.#recentDamage = [];
+          this.#recentDamage.length = 0;
         }
         if (!death) {
           // Vow of Piety's (#2501): gone already, its own end renews nothing.
@@ -4828,9 +4849,7 @@ export class StatusSet {
    */
   public advance(dt: number, moving: boolean): StatusId[] {
     const expired: StatusId[] = [];
-    this.#recentDamage = this.#recentDamage
-      .map(({ age, amount }) => ({ age: age + dt, amount }))
-      .filter(({ age }) => age < 1);
+    this.#ageRecentDamage(dt);
     const modifiers = aggregateModifiers(this.active);
     const categoryRate: Readonly<Partial<Record<StatusCategory, number>>> = {
       condition: 1 + modifiers.conditionsExpireFaster,
