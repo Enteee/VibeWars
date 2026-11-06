@@ -975,6 +975,15 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
 type PathStep = "moved" | "stalled" | "held";
 
 /**
+ * Where a team's living players stand on average, and every other
+ * team's (#2545): sums while placed, then means; a count of 0 for none.
+ */
+interface TeamCentroids {
+  readonly team: { x: number; y: number; count: number };
+  readonly foes: { x: number; y: number; count: number };
+}
+
+/**
  * What a status on a body that died stands up there (#1986, #2092), at
  * its caster's `ranks`, as the status's `replacedOnDeathBy` says.
  */
@@ -1037,6 +1046,10 @@ export class MatchSimulation {
   readonly #teams = new Set<number>();
   /** Each team's called foe (#443), which its bots fight (#1193). */
   readonly #calledTargets = new Map<number, string>();
+  /** Each team's centroids for its bots (#2545), placed once a tick, reused. */
+  readonly #centroids = new Map<number, TeamCentroids>();
+  /** The tick `#centroids` were last placed at. */
+  #centroidsTick = -1;
   #projectiles: Projectile[] = [];
   #nextProjectileId = 1;
 
@@ -4000,8 +4013,55 @@ export class MatchSimulation {
     return check;
   }
 
+  /**
+   * Each team's centroids, and its foes', from its living players'
+   * positions now (#2545): once a tick, into the same objects.
+   */
+  #placeCentroids(): void {
+    this.#centroidsTick = this.#tick;
+    for (const team of this.#teams) {
+      if (!this.#centroids.has(team)) {
+        this.#centroids.set(team, {
+          team: { x: 0, y: 0, count: 0 },
+          foes: { x: 0, y: 0, count: 0 },
+        });
+      }
+    }
+    let x = 0;
+    let y = 0;
+    let count = 0;
+    for (const { team } of this.#centroids.values()) {
+      team.x = 0;
+      team.y = 0;
+      team.count = 0;
+    }
+    for (const { combatant, creature, position } of this.#participants.values()) {
+      const sum = this.#centroids.get(combatant.team)?.team;
+      if (combatant.dead || creature !== undefined || sum === undefined) {
+        continue;
+      }
+      sum.x += position.x;
+      sum.y += position.y;
+      sum.count += 1;
+      x += position.x;
+      y += position.y;
+      count += 1;
+    }
+    for (const { team, foes } of this.#centroids.values()) {
+      foes.count = count - team.count;
+      foes.x = foes.count > 0 ? (x - team.x) / foes.count : 0;
+      foes.y = foes.count > 0 ? (y - team.y) / foes.count : 0;
+      team.x = team.count > 0 ? team.x / team.count : 0;
+      team.y = team.count > 0 ? team.y / team.count : 0;
+    }
+  }
+
   /** Put a behaviour's intent through the same calls a player's messages make. */
   #act(record: ParticipantRecord, behaviour: Behaviour, dt: number): void {
+    if (this.#centroidsTick !== this.#tick) {
+      this.#placeCentroids();
+    }
+    const centroids = this.#centroids.get(record.combatant.team);
     const intent = decide(behaviour, record.cursor, {
       self: record,
       participants: [...this.#participants.values()],
@@ -4019,6 +4079,11 @@ export class MatchSimulation {
         this.#participants.get(participantId)?.behaviour?.kind === "play-build",
       calledTargetId: this.#calledTargets.get(record.combatant.team),
       sees: (point) => hasLineOfSight(record.position, point, this.#walls),
+      seesBetween: (from, to) => hasLineOfSight(from, to, this.#walls),
+      walkable: (point) =>
+        isStandable(this.#graph, point) && walkIsClear(this.#graph, record.position, point),
+      teamCentroid: centroids !== undefined && centroids.team.count > 0 ? centroids.team : undefined,
+      foeCentroid: centroids !== undefined && centroids.foes.count > 0 ? centroids.foes : undefined,
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;

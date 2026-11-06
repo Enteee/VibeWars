@@ -1,7 +1,7 @@
 import { getSkill } from "../../../skills/catalog.js";
 import { raisedMaxHealth } from "../../../skills/tick.js";
 import type { Skill } from "../../../skills/types.js";
-import { distance, ZERO } from "../../../vec2.js";
+import { distance, ZERO, type Vec2 } from "../../../vec2.js";
 import type { BehaviourIntent } from "../../behaviour.js";
 import type { BehaviourContext } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
@@ -24,13 +24,15 @@ export function nearestLiving(
   self: Participant,
   foes: readonly Participant[],
 ): Participant | undefined {
+  return nearestTo(self.position, foes);
+}
+
+/** Of `bodies`, the one nearest `point`; a tie to the first. */
+export function nearestTo(point: Vec2, bodies: readonly Participant[]): Participant | undefined {
   let best: Participant | undefined;
-  for (const foe of foes) {
-    if (
-      best === undefined ||
-      distance(foe.position, self.position) < distance(best.position, self.position)
-    ) {
-      best = foe;
+  for (const body of bodies) {
+    if (best === undefined || distance(body.position, point) < distance(best.position, point)) {
+      best = body;
     }
   }
   return best;
@@ -70,4 +72,34 @@ export function spiritUp(context: BehaviourContext, self: Participant, skill: Sk
         ? creature.ownerId === self.id
         : combatant.team === self.combatant.team && distance(position, self.position) <= radius),
   );
+}
+
+/** A ranged bot or healer this far from its spot walks back to it (#2545). */
+export const POSITION_SLACK = 40;
+
+/** A ranged bot or healer with a foe this close steps away (#2545). */
+export const KITE_DISTANCE = 100;
+
+
+/** How finely `reachable` tries the line back from a spot to the bot. */
+const REACHABLE_STEPS = 8;
+
+/**
+ * Where `self` can go on its way to `spot` (#2545): `spot` itself if it
+ * can walk straight there and stand, else the point nearest `spot` on
+ * the line from `self` to it that it can; none at all: `undefined`.
+ */
+export function reachable(context: BehaviourContext, spot: Vec2): Vec2 | undefined {
+  const from = context.self.position;
+  for (let step = REACHABLE_STEPS; step > 0; step -= 1) {
+    const share = step / REACHABLE_STEPS;
+    const point = {
+      x: from.x + (spot.x - from.x) * share,
+      y: from.y + (spot.y - from.y) * share,
+    };
+    if (context.walkable(point)) {
+      return point;
+    }
+  }
+  return undefined;
 }

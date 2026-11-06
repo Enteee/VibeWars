@@ -325,6 +325,10 @@ describe("auto-attack", () => {
         isBot: () => false,
         calledTargetId: undefined,
         sees: () => true,
+        seesBetween: () => true,
+        walkable: () => true,
+        teamCentroid: undefined,
+        foeCentroid: undefined,
       },
     );
     expect(intent.attackTargetId).toBe("first");
@@ -384,6 +388,10 @@ describe("follow-and-attack (#467)", () => {
       isBot: () => false,
       calledTargetId: undefined,
       sees: () => true,
+      seesBetween: () => true,
+      walkable: () => true,
+      teamCentroid: undefined,
+      foeCentroid: undefined,
     });
   }
 

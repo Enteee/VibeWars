@@ -9,7 +9,9 @@ import type {
 } from "../behaviour.js";
 import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
+import { botRole, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
+import { KITE_REST_SECONDS, KITE_SECONDS } from "./rules/kite.js";
 import { HURT_FRACTION, NOTHING, healthFraction, skillsOf } from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
 import { sacrificesTooMuch } from "./skill-intent.js";
@@ -19,8 +21,10 @@ import { sacrificesTooMuch } from "./skill-intent.js";
  * sensible GW1 hero does. Each think it does what the first of
  * `rules/index.ts`'s `BOT_RULES` with an answer says, one file per rule:
  * interrupt, heal, step away, cleanse, raise, …, fight the team target,
- * and otherwise walk to the nearest foe. A ranged bot stands and fights a
- * foe at its elbow: at equal speed, backing off would never end.
+ * and otherwise walk to the nearest foe. Between casts it takes the spot
+ * its role gives it (#2545): a frontline closes in, a ranged bot holds
+ * near the edge of its reach and steps away from a foe at its elbow, a
+ * healer stands behind the ally it looks after.
  *
  * It reads only what a player reads off the screen: positions, teams,
  * health fractions, the statuses on a body, a foe's cast bar and its
@@ -43,7 +47,8 @@ export function playBuild(
 ): BehaviourIntent {
   return paced(behaviour.thinkSeconds, cursor, context, () => {
     const foes = livingFoes(context);
-    return think(context, cursor, foes, livingMembers(context), teamTarget(context, foes));
+    cursor.role ??= botRole(skillsOf(context.self), context.self.combatant.equipment.mainHand.weapon.range);
+    return think(context, cursor, foes, livingMembers(context), teamTarget(context, foes), cursor.role);
   });
 }
 
@@ -91,7 +96,7 @@ export function guard(
       : { ...NOTHING, moveTo: behaviour.post };
   }
   const intent = paced(behaviour.thinkSeconds, cursor, context, () =>
-    think(context, cursor, foes, allies, weakest(self, foes)?.id),
+    think(context, cursor, foes, allies, weakest(self, foes)?.id, undefined),
   );
   return behaviour.rooted ? { ...intent, moveDirection: ZERO, moveTo: undefined } : intent;
 }
@@ -111,6 +116,7 @@ function paced(
   const holding = { ...NOTHING, targetId: self.targetId };
   cursor.waitSeconds = Math.max(0, cursor.waitSeconds - context.dt);
   cursor.upkeepDropSeconds = Math.max(0, cursor.upkeepDropSeconds - context.dt);
+  cursor.kiteSeconds = Math.max(0, cursor.kiteSeconds - context.dt);
   // Nothing new while what it last asked for is still going: the retry
   // bound, so it never presses twice for one skill.
   if (cast.isCasting || cast.inAftercast || self.pendingSkill !== undefined) {
@@ -157,6 +163,7 @@ function think(
   foes: readonly Participant[],
   allies: readonly Participant[],
   targetId: string | undefined,
+  role: BotRole | undefined,
 ): BehaviourIntent {
   const self = context.self;
   const rule: RuleContext = {
@@ -180,11 +187,18 @@ function think(
       return check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight";
     },
     mayEndUpkeep: cursor.upkeepDropSeconds <= 0,
+    mayKite: cursor.kiteSeconds <= 0 || cursor.kiteSeconds > KITE_REST_SECONDS,
+    role,
+    teamCentroid: context.teamCentroid,
+    foeCentroid: context.foeCentroid,
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
-  for (const { decide } of BOT_RULES) {
+  for (const { name, decide } of BOT_RULES) {
     const intent = decide(rule);
     if (intent !== undefined) {
+      if (name === "kite" && cursor.kiteSeconds <= 0) {
+        cursor.kiteSeconds = KITE_SECONDS + KITE_REST_SECONDS;
+      }
       if (intent.endUpkeep !== undefined) {
         cursor.upkeepDropSeconds = UPKEEP_DROP_SECONDS;
       }
