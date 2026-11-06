@@ -32,7 +32,6 @@ export type MissingMechanic =
   | "count-overcast"
   | "nearest-spirit-energy-drain"
   | "while-near-spirit"
-  | "weapon-element"
   | "weapon-filter-negation";
 
 /** What each missing mechanic would mean to build, in one line. */
@@ -45,7 +44,6 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
     "count-overcast": "a magnitude counts your Overcast",
     "nearest-spirit-energy-drain": "Energy is stolen from the nearest spirit",
     "while-near-spirit": "an effect holds while the bearer is within range of a spirit",
-    "weapon-element": "the wielder's weapon deals an element's damage",
     "weapon-filter-negation": "a bonus applies with every weapon except one type",
   });
 
@@ -77,7 +75,6 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     1372: ["unwritten"], // Sandstorm
     1391: ["unwritten"], // Supportive Spirit
     1658: ["unwritten"], // Symbolic Posture
-    1760: ["weapon-element"], // Ebon Dust Aura
     2060: ["unwritten"], // Glyph of Immolation
     2187: ["weapon-filter-negation"], // Way of the Master
     2189: ["unwritten"], // Angorodon's Gaze

@@ -749,6 +749,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "wielders-remedy": icon("wielders-remedy"),
   "attackers-insight": icon("attackers-insight"),
   "shield-of-force": icon("shield-of-force"),
+  "ebon-dust-aura": icon("ebon-dust-aura"),
   "burning-shield": icon("burning-shield"),
 };
 

@@ -3402,6 +3402,56 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "dervish.ebon-dust-aura",
+    name: "Ebon Dust Aura",
+    gwId: 1760,
+    type: "enchantment",
+    elite: true,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: {
+      radius: AREA_NEARBY,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "When you cast this enchantment, all nearby foes are Blinded for
+    // 1...7 seconds. For 30 seconds, if you are wielding an earth weapon,
+    // your melee attacks deal +3...30 earth damage. When this enchantment
+    // ends, you are cured of Blindness" (#2513): 5.8 s at rank 12; the
+    // bonus and the cure are the status's, on you once however many foes.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "blind",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.earth-prayers", atZero: 1, atTwelve: 5.8 },
+        },
+      },
+      {
+        kind: "apply-status",
+        statusId: "ebon-dust-aura",
+        durationSeconds: { flat: 30 },
+        on: "caster",
+      },
+    ],
+  },
+  {
     id: "dervish.veil-of-thorns",
     name: "Veil of Thorns",
     gwId: 1757,

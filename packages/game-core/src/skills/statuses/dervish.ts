@@ -68,6 +68,7 @@ export type DervishStatusId =
   // Unwritten corpus skills (#2500).
   | "attackers-insight"
   | "shield-of-force"
+  | "ebon-dust-aura"
   // Mechanics (#2503).
   | "veil-of-thorns"
   | "armor-of-sanctity"
@@ -1063,6 +1064,38 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
           },
         ],
         skillId: "dervish.shield-of-force",
+      },
+    ],
+  }),
+  // "For 30 seconds, if you are wielding an earth weapon, your melee
+  // attacks deal +3...30 earth damage. When this enchantment ends, you
+  // are cured of Blindness" (#2513): 24.6 at rank 12. Any end cures it,
+  // a strip included; other conditions stay.
+  "ebon-dust-aura": define("ebon-dust-aura", "Ebon Dust Aura", "enchantment", {
+    profession: "dervish",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "melee",
+      weaponDamage: "earth",
+      atSourceRanks: false,
+      effects: [
+        {
+          kind: "damage",
+          amount: {
+            scaling: { attributeId: "dervish.earth-prayers", atZero: 3, atTwelve: 24.6 },
+          },
+          type: "earth",
+          armorPenetration: 0,
+        },
+      ],
+      skillId: "dervish.ebon-dust-aura",
+    },
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "remove-status", category: "condition", statusId: "blind", count: 1 }],
+        target: "bearer",
+        skillId: "dervish.ebon-dust-aura",
       },
     ],
   }),
