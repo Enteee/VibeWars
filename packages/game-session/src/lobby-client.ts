@@ -13,6 +13,7 @@ import {
   parseWirePartySplit,
   parseWireLobbyMove,
   parsePeerLobbySeat,
+  parsePeerRelayAdmit,
   parsePeerRelayLogin,
   teamQueueModeOf,
   type JsonValue,
@@ -27,6 +28,8 @@ import {
   type WireLobbyState,
   type WireProposalBuild,
   type WirePartyFormed,
+  type PeerRelayAdmit,
+  type PeerRelayHolding,
   type WireRelayLogin,
 } from "@vibewars/game-protocol";
 
@@ -189,6 +192,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const relayHandlers: ((relay: WireRelayLogin | null) => void)[] = [];
   /** The host's last `relay-login`, for a handler added after it came. */
   let relayLogin: WireRelayLogin | null | undefined;
+  const admitHandlers = new Set<(admit: PeerRelayAdmit) => void>();
   const chatHandlers: ((line: ChatLine) => void)[] = [];
   const throttledHandlers: (() => void)[] = [];
   const partyHandlers: ((party: WirePartyFormed | null) => void)[] = [];
@@ -499,6 +503,17 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           handler(relayLogin);
         }
       },
+      onRelayAdmit(handler) {
+        admitHandlers.add(handler);
+        return () => {
+          admitHandlers.delete(handler);
+        };
+      },
+      setRelayHolding(on) {
+        if (hostId !== undefined) {
+          transport.send("relay-holding", { on } satisfies PeerRelayHolding, hostId);
+        }
+      },
       onChat(handler) {
         chatHandlers.push(handler);
       },
@@ -613,6 +628,15 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           relayLogin = login.relay;
           for (const handler of [...relayHandlers]) {
             handler(login.relay);
+          }
+        }
+      }),
+      transport.on("relay-admit", (data, from) => {
+        // The host's alone, and only once it is known (#2527).
+        const admit = parsePeerRelayAdmit(data);
+        if (hostId !== undefined && from === hostId && admit !== undefined) {
+          for (const handler of [...admitHandlers]) {
+            handler(admit);
           }
         }
       }),

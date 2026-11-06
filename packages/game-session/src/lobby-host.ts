@@ -21,6 +21,7 @@ import {
   parsePeerLobbyLeave,
   parsePeerLobbyJoin,
   parsePeerPartyConsent,
+  parsePeerRelayHolding,
   parsePeerStayTogether,
   parseWireLobbyCommand,
   teamQueueModeOf,
@@ -31,6 +32,7 @@ import {
   type TeamArenaSize,
   type PeerLobbyJoin,
   type PeerLobbySeat,
+  type PeerRelayAdmit,
   type PeerRelayLogin,
   type WireRelayLogin,
   type LobbyRefusal,
@@ -69,6 +71,7 @@ import {
   type VerifyTicketSig,
 } from "./queue-admission.js";
 import { ticketsOf } from "./queue-formation.js";
+import { createRelayAdmission } from "./relay-admission.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { decideStayTogether } from "./stay-together.js";
 import { sizeChecked, type Transport } from "./transport.js";
@@ -268,12 +271,13 @@ export interface LobbyHostOptions {
 }
 
 /**
- * The relay login a lobby host shares, `null` for none, and when it
- * changes (a remint, sharing turned on or off, another relay). Each
- * admitted member is told it on admission and on every change.
+ * The relay login a lobby host shares, minted for one member (#2527),
+ * `null` for none, and when it changes (a remint, sharing turned on or
+ * off, another relay). Each admitted member is told its own on admission
+ * and on every change.
  */
 export interface LobbyRelaySource {
-  current(): WireRelayLogin | null;
+  current(peerId: string): WireRelayLogin | null;
   /** `handler` on each change, until the returned function is called. */
   onChange(handler: () => void): () => void;
 }
@@ -306,6 +310,17 @@ export interface LobbyHost {
   onReach(handler: (reach: LobbyReach) => void): () => void;
   /** Run `seconds` of the lobby's match, if one is on, and notice when it ends. */
   advance(seconds: number): void;
+  /**
+   * A joiner asked for a relay over Nostr (#2527): if the lobby would seat
+   * it now and a member holds one, every member is told `relay-admit`.
+   */
+  relayAsk(peerId: string, pub: string): void;
+  /**
+   * `handler` now, and each time whether the host should sit in its relay
+   * rooms changes (#2527): while a member holds a relay and an admit is
+   * live, and `RELAY_ROOMS_LINGER_MS` after the last.
+   */
+  onRelayRooms(handler: (wanted: boolean) => void): () => void;
   /**
    * Send everyone off, end the match if one is on, and leave the room.
    * With `moveTo`, the key of the lobby its host has just joined
@@ -404,7 +419,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const members = new Map<string, Member>();
   /** The relay login to `to`, an admitted member (#2248): never to anyone else. */
   const tellRelay = (to: string): void => {
-    const message: PeerRelayLogin = { relay: options.relay.current() };
+    const message: PeerRelayLogin = { relay: options.relay.current(to) };
     transport.send("relay-login", message, to);
   };
   /** The member peer `peerId` is: never a bot, whatever a peer calls itself (#1193). */
@@ -418,6 +433,38 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * or until the match it dropped from ends, whichever is first.
    */
   const away = new Map<string, number>();
+  /** Relay asks the host admits, and who holds a relay (#2527). */
+  const relayAdmission = createRelayAdmission({
+    wouldSeat: (peerId) => {
+      const member = members.get(peerId);
+      if (member !== undefined) {
+        return away.has(peerId);
+      }
+      return (
+        !closed &&
+        open &&
+        queued === undefined &&
+        phase !== "starting" &&
+        phase !== "in-match" &&
+        freeSeats() > 0
+      );
+    },
+    isAway: (peerId) => away.has(peerId),
+    freeSeats: () => freeSeats(),
+  });
+  const relayRoomsHandlers = new Set<(wanted: boolean) => void>();
+  let relayRoomsWanted = false;
+  /** Tell the relay-room handlers if whether the host should be in its relay rooms changed. */
+  const tellRelayRooms = (): void => {
+    const wanted = !closed && relayAdmission.roomsWanted(nowMs());
+    if (wanted === relayRoomsWanted) {
+      return;
+    }
+    relayRoomsWanted = wanted;
+    for (const handler of [...relayRoomsHandlers]) {
+      handler(wanted);
+    }
+  };
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
   const chatBudget = new MessageBudget(CHAT_LINES_PER_SECOND, CHAT_BURST, () => undefined);
   /** Peers already told their lines are dropped, until one gets through: once a burst. */
@@ -542,6 +589,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
 
   /** The humans here: a Team Arena's party (#2107). */
   const humans = (): number => [...members.values()].filter((member) => member.bot === null).length;
+  /** Seats a new joiner could take now (#2527): a Team Arena's party plays no more humans than its size. */
+  const freeSeats = (): number =>
+    Math.max(
+      0,
+      Math.min(
+        MAX_LOBBY_PLAYERS - members.size,
+        mode === "team-arena" ? arenaSize - humans() : Infinity,
+      ),
+    );
 
   /** Each human on `team`, in join order. */
   const humansOn = (team: 0 | 1): Member[] =>
@@ -1584,6 +1640,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       rejoinToken,
       bot: null,
     });
+    relayAdmission.seated(from);
     beginCountdown();
     broadcast();
     // To it alone, after the state that lists it, so it knows the host by then.
@@ -1812,6 +1869,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       // Back from a drop during the match (#596): the seat it held, on its
       // team, to confirm again like everyone else when the match is over.
       away.delete(from);
+      relayAdmission.seated(from);
       returning.name = sanitizeName(join.name, returning.name);
       const guild = sanitizeGuild(join);
       returning.guildTag = guild.guildTag;
@@ -1855,6 +1913,20 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return;
     }
     admit(from, join, null, null);
+  });
+
+  // Whether a member holds a relay it shares (#2527): only a seated one counts.
+  transport.on("relay-holding", (data, from) => {
+    const member = peerMember(from);
+    if (closed || member === undefined || !budget.take(from, nowMs())) {
+      return;
+    }
+    const holding = parsePeerRelayHolding(data);
+    if (holding === undefined) {
+      return;
+    }
+    relayAdmission.holding(from, holding.on);
+    tellRelayRooms();
   });
 
   transport.on("lobby-cmd", (data, from) => {
@@ -1962,6 +2034,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const leaving = members.get(peerId);
     away.delete(peerId);
     members.delete(peerId);
+    relayAdmission.gone(peerId);
+    tellRelayRooms();
     tellReach();
     // A party member gone takes the party out of the queue (#1766).
     if (queueing !== undefined && leaving?.team === 0) {
@@ -2239,6 +2313,28 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       open = opened;
       broadcast();
     },
+    relayAsk(peerId, pub) {
+      if (closed) {
+        return;
+      }
+      const admit = relayAdmission.ask(peerId, pub, nowMs());
+      if (admit !== undefined) {
+        // To every member, away ones too: a holder seals whatever its seat.
+        for (const member of members.values()) {
+          if (member.bot === null) {
+            transport.send("relay-admit", admit satisfies PeerRelayAdmit, member.id);
+          }
+        }
+      }
+      tellRelayRooms();
+    },
+    onRelayRooms(handler) {
+      relayRoomsHandlers.add(handler);
+      handler(relayRoomsWanted);
+      return () => {
+        relayRoomsHandlers.delete(handler);
+      };
+    },
     onReach(handler) {
       reachHandlers.add(handler);
       handler(reach());
@@ -2253,6 +2349,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       const shown = countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt);
       const shownStage = teamLobby === undefined ? null : countdownLeft(teamLobby.endsAt);
       elapsed += seconds;
+      tellRelayRooms();
       if (queueing !== undefined) {
         gatherParty();
       }
@@ -2314,6 +2411,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       }
       closed = true;
       stopRelay();
+      tellRelayRooms();
       if (moveTo !== undefined) {
         const move: WireLobbyMove = { code: moveTo };
         for (const member of members.values()) {

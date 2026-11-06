@@ -94,6 +94,8 @@ export type {
   MatchPlan,
   QueuedPlan,
 } from "./lobby-host.js";
+export { RELAY_ADMIT_MS, RELAY_ROOMS_LINGER_MS, createRelayAdmission } from "./relay-admission.js";
+export type { RelayAdmission, RelayAdmissionLobby } from "./relay-admission.js";
 export { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 export type { JoinLobbyOptions } from "./lobby-client.js";
 export { scopeTransport } from "./scoped-transport.js";

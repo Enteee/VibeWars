@@ -3,16 +3,18 @@ import type { LobbyRoom, Transport } from "@vibewars/game-session";
 
 import { checkNat } from "../nat-check.js";
 import { joinWithRelayOffers } from "../relay-join.js";
-import { relaySibling, withSiblingRoom } from "../relay-room.js";
+import { relaySibling, withSiblingRoom, type RelayRoomsSource } from "../relay-room.js";
 
 import { BROADCAST_SELF_ID, joinBroadcastRoom } from "./broadcast-channel.js";
 import { joinBroadcastQueue } from "./broadcast-queue.js";
 import { createNostrQueue, type NostrQueue } from "./nostr-queue.js";
 import {
-  followOfferedRelay,
+  holdRelay,
+  watchRelayAsks,
   watchRelayOffers,
   type OfferedRelaySource,
-  type RelayShare,
+  type RelayAsks,
+  type RelayHold,
 } from "./relay-offer.js";
 import { TRYSTERO_SELF_ID, joinTrysteroRoom } from "./trystero.js";
 import {
@@ -71,16 +73,16 @@ export function checkTransportNat(): Promise<boolean> {
 export interface GuestRoom {
   readonly transport: Transport;
   reached(hostId: string): void;
-  /** The host's `relay-login` (#2248): from then on, Nostr offers are ignored. */
+  /** The host's `relay-login` (#2248): from then on, it asks no more over Nostr. */
   fromHost(login: WireRelayLogin | null): void;
   /** Called in the lobby, never in a map (#2245): see `RelayJoin.refreshRelay`. */
   refreshRelay(nowMs: number): void;
 }
 
 /**
- * Join a coded lobby's room as a guest (#2091): through the relay its host
- * offers when the host cannot be reached directly, on the same switch.
- * The broadcast build's pages reach each other without one.
+ * Join a coded lobby's room as a guest (#2091, #2527): through a relay a
+ * member seals to it when the host cannot be reached directly, on the
+ * same switch. The broadcast build's pages reach each other without one.
  */
 export function joinGuestRoom(room: LobbyRoom): GuestRoom {
   if (import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast" || room.relay === null) {
@@ -91,12 +93,14 @@ export function joinGuestRoom(room: LobbyRoom): GuestRoom {
       refreshRelay: () => undefined,
     };
   }
-  const offers = watchRelayOffers(room.relay);
+  const offers = watchRelayOffers(room.relay, room.roomId, TRYSTERO_SELF_ID);
   const transport = joinWithRelayOffers({
     selfId: TRYSTERO_SELF_ID,
-    // Through a relay, into the sibling room the sharing host also sits in.
-    join: (turn) =>
-      turn === undefined ? joinTrysteroRoom(room) : joinTrysteroRoom(relaySibling(room), turn),
+    // Through a relay, into the attempt's sibling room the host also sits in.
+    join: (turn, attempt) =>
+      turn === undefined
+        ? joinTrysteroRoom(room)
+        : joinTrysteroRoom(relaySibling(room, attempt), turn),
     offers,
     ownRelay: loadRelay() !== undefined,
   });
@@ -122,30 +126,48 @@ const OFFERED_RELAY: OfferedRelaySource = {
 };
 
 /**
- * Join a coded lobby's room as its host (#2091): with the sibling room
- * its relayed joiners come into, while it offers a relay. A room that
- * never shares, and the broadcast build, have no sibling.
+ * Join a coded lobby's room as its host (#2091): with the sibling rooms
+ * its relayed joiners come into, while `relayRooms` wants them. A queued
+ * lobby's room, and the broadcast build, have none.
  */
-export function joinHostRoom(room: LobbyRoom): Transport {
+export function joinHostRoom(room: LobbyRoom, relayRooms: RelayRoomsSource): Transport {
   if (import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast" || room.relay === null) {
     return joinRoom(room);
   }
   return withSiblingRoom({
     main: joinTrysteroRoom(room),
-    joinSibling: () => joinTrysteroRoom(relaySibling(room)),
-    offering: OFFERED_RELAY,
+    joinSibling: (attempt) => joinTrysteroRoom(relaySibling(room, attempt)),
+    relayRooms,
   });
 }
 
 /**
- * Offer the host's shared relay to its lobby `room` (#2091) whenever it
- * has one and sharing is on, following Options while the lobby is open;
+ * Hold this player's shared relay for the lobby `room` is (#2527), as
+ * member `selfId` named `name()`, following Options while it is there;
  * `undefined` for a room that never shares, and always on the broadcast
- * build, which has no Nostr relays to offer it over.
+ * build, which has no Nostr relays to seal a login over.
  */
-export function shareLobbyRelay(room: LobbyRoom): RelayShare | undefined {
+export function holdLobbyRelay(
+  room: LobbyRoom,
+  selfId: string,
+  name: () => string,
+): RelayHold | undefined {
   if (import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast" || room.relay === null) {
     return undefined;
   }
-  return followOfferedRelay(room.relay, OFFERED_RELAY);
+  return holdRelay(room.relay, OFFERED_RELAY, selfId, name);
+}
+
+/**
+ * A lobby host's ear for relay asks on `room`'s topic (#2527), handed to
+ * `ask`; `undefined` where `holdLobbyRelay` is.
+ */
+export function watchLobbyRelayAsks(
+  room: LobbyRoom,
+  ask: (peerId: string, pub: string) => void,
+): RelayAsks | undefined {
+  if (import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast" || room.relay === null) {
+    return undefined;
+  }
+  return watchRelayAsks(room.relay, ask);
 }
