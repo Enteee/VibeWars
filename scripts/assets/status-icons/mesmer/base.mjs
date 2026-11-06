@@ -1,4 +1,4 @@
-import { perEach, stroke } from "../../icon-kit.mjs";
+import { perEach, stroke, fitRows } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -210,4 +210,22 @@ const rows = {
   ],
 };
 
-export default rows;
+/** Drawn smaller to sit inside the plate (#2422). */
+const fits = {
+  "wastrels-worry": [0.8, 0],
+  frustration: [0.78, 2],
+  "price-of-pride": [0.96, 0],
+  ineptitude: [0.84, 0],
+  "crippling-anguish": [0.86, 0],
+  shame: [0.74, 0],
+  mistrust: [0.86, 0],
+  "wastrels-demise": [1, -1],
+  clumsiness: [0.8, 0],
+  "wandering-eye": [0.88, 1],
+  "illusion-of-weakness": [1, -1],
+  "sum-of-all-fears": [0.86, 0],
+  "physical-resistance": [1, 1],
+  "power-flux": [1, -1],
+};
+
+export default fitRows(rows, fits);
