@@ -182,7 +182,7 @@ hold **Shift** as you drop it on another member to copy it instead. A
 bar still holds one elite and no skill twice, so a drop that would break
 that is refused the same way. Each member's skills show as icons; hover
 one for its details, click it to find every copy on the team.
-A member's **✎** opens it in place, under its row: its professions, name,
+A member's **▼** opens it in place (**▲** closes it), under its row: its professions, name,
 attribute ranks and equipment change right there, and a third tab,
 **Gear**, holds the weapons and off-hands to drag onto its hands. One
 member is open at a time; **Esc** closes it. A new profession drops the

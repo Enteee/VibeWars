@@ -23,6 +23,7 @@ import {
   markedCells,
   memberSkillCells,
   memberStats,
+  memberToggle,
   pastedTeam,
   saveTitle,
   skillDropRefusal,
@@ -320,5 +321,23 @@ describe("markedCells (#575)", () => {
     expect(markedCells({ kind: "skill", skillId: "monk.mend-condition" }, counters, team)).toEqual(
       new Set(["b:1"]),
     );
+  });
+});
+
+describe("memberToggle (#2536)", () => {
+  const [a, b] = [character("a"), character("b")];
+
+  it("is ▼, not expanded, for a closed member, and ▲, expanded, once it is open", () => {
+    expect(memberToggle(a, undefined)).toEqual({
+      glyph: "▼",
+      expanded: false,
+      label: "edit a here",
+    });
+    expect(memberToggle(a, "a")).toEqual({ glyph: "▲", expanded: true, label: "close a" });
+  });
+
+  it("flips the first member back to ▼ when another opens", () => {
+    expect(memberToggle(a, "b").glyph).toBe("▼");
+    expect(memberToggle(b, "b").glyph).toBe("▲");
   });
 });

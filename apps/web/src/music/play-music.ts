@@ -14,7 +14,7 @@ import {
   type IntensityOverrideStore,
 } from "./intensity-override.js";
 import { measuringMusic, musicPlayer, type MusicPlayer, type MusicTrack } from "./music-player.js";
-import type { MusicLevel } from "./host-protocol.js";
+import type { LandOn, MusicLevel } from "./host-protocol.js";
 import type { Mood } from "./mood.js";
 import { STINGS, type StingId } from "./stings/index.js";
 import { TRACKS } from "./tracks/index.js";
@@ -39,8 +39,11 @@ type PlayableTrack = MusicTrack & {
 };
 
 export interface MusicFollower {
-  /** Play what `state` says, changing only what differs from the last state. */
-  follow(state: MusicState): void;
+  /**
+   * Play what `state` says, changing only what differs from the last
+   * state: a new track lands on the next phrase, or the next cycle (#2530).
+   */
+  follow(state: MusicState, landOn: LandOn): void;
   /** The menus' music, as deep as `screen` is (#1993); the song already playing goes on. */
   menu(screen: MenuScreen): void;
   /**
@@ -118,8 +121,11 @@ export function createMusicFollower(
   const volume = (): number => (muted || preference.musicMuted ? 0 : preference.musicVolume);
   player.setVolume(volume(), 0);
 
-  /** Play the edited track, the preview, or else the director's: at once, or on the next phrase. */
-  const play = (when: "now" | "on-phrase"): void => {
+  /**
+   * Play the edited track, the preview, or else the director's: at once,
+   * or on the next phrase, or the next cycle when a match starts (#2530).
+   */
+  const play = (when: "now" | "on-phrase" | "on-cycle"): void => {
     const wanted = editId ?? previewId ?? directed;
     if (wanted === playingId) {
       return;
@@ -135,7 +141,7 @@ export function createMusicFollower(
     if (when === "now") {
       player.load(heard);
     } else {
-      player.crossfadeTo(heard);
+      player.crossfadeTo(heard, when === "on-cycle" ? "cycle" : "phrase");
     }
   };
 
@@ -153,9 +159,9 @@ export function createMusicFollower(
     changed();
   });
 
-  const follow = (state: MusicState): void => {
+  const follow = (state: MusicState, landOn: LandOn): void => {
     directed = state.trackId;
-    play("on-phrase");
+    play(landOn === "cycle" ? "on-cycle" : "on-phrase");
     intensity = state.intensity;
     playIntensity();
     changed();
@@ -186,15 +192,16 @@ export function createMusicFollower(
         mode(),
         tracks,
       ),
+      "phrase",
     );
     // After `follow`, which a fight's music calls without a screen.
     onScreen = name;
   };
 
   return {
-    follow(state) {
+    follow(state, landOn) {
       onScreen = null;
-      follow(state);
+      follow(state, landOn);
     },
     menu,
     sting(id) {
@@ -277,7 +284,7 @@ export function music(): MusicFollower {
           crossfadeTo: (trackId: string) => {
             const track = TRACKS.find((candidate) => candidate.id === trackId);
             if (track !== undefined) {
-              player.crossfadeTo(track);
+              player.crossfadeTo(track, "phrase");
             }
           },
           // Re-evaluate a track's own source, as the beat editor would (#509).
