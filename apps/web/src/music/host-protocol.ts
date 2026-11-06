@@ -4,8 +4,11 @@
  * The host runs player-written Strudel in a sandboxed, opaque-origin
  * iframe, and a pattern can navigate its own frame, so neither side trusts
  * the other's messages: each is checked here, field by field, and anything
- * malformed is `null` and dropped. This is the only file both sides import.
+ * malformed is `null` and dropped. This, and the sting ids it names, is all
+ * both sides import.
  */
+
+import { isStingId, type StingId } from "./stings/ids.js";
 
 /** The intensity levels a track can respond to (`layer(n, …)`). */
 export type MusicLevel = 0 | 1 | 2 | 3;
@@ -33,6 +36,17 @@ export type GameToHost =
    * editor). The host answers `evaluated` or `error` with the same `seq`.
    */
   | { readonly type: "evaluate"; readonly seq: number; readonly source: string }
+  /**
+   * Play this sting (#2523) once on top of the track, from its next beat,
+   * with `KEY` set to `key`; it replaces any sting still playing.
+   */
+  | {
+      readonly type: "sting";
+      readonly id: StingId;
+      readonly source: string;
+      readonly key: string;
+      readonly cycles: number;
+    }
   /** The watchdog's heartbeat; the host answers `pong` with the same `seq`. */
   | { readonly type: "ping"; readonly seq: number }
   /** Count what the music costs and report it every second (`?musicstats`, #420). */
@@ -107,6 +121,11 @@ export const MAX_SOURCE_LENGTH = 100_000;
 /** Longer ids and error messages are refused or cut. */
 const MAX_TEXT_LENGTH = 500;
 
+/** A key as a track's manifest has it: a tonic and a scale, "E phrygian dominant". */
+const KEY = /^[A-G][b#]? [a-z]+( [a-z]+)*$/;
+/** A sting plays for at most this many cycles. */
+export const MAX_STING_CYCLES = 4;
+
 type Fields = Readonly<Record<string, unknown>>;
 
 function fields(value: unknown): Fields | null {
@@ -168,6 +187,17 @@ export function parseGameToHost(data: unknown): GameToHost | null {
       return Number.isSafeInteger(message.seq) && text(message.source, MAX_SOURCE_LENGTH)
         ? { type: "evaluate", seq: message.seq as number, source: message.source }
         : null;
+    case "sting": {
+      const { id, source, key, cycles } = message;
+      return isStingId(id) &&
+        text(source, MAX_SOURCE_LENGTH) &&
+        typeof key === "string" &&
+        KEY.test(key) &&
+        Number.isInteger(cycles) &&
+        finite(cycles, 1, MAX_STING_CYCLES)
+        ? { type: "sting", id, source, key, cycles }
+        : null;
+    }
     case "ping":
       return Number.isSafeInteger(message.seq)
         ? { type: "ping", seq: message.seq as number }

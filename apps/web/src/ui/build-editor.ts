@@ -31,7 +31,6 @@ import {
   type WeaponSet,
   type WeaponSetIndex,
 } from "@vibewars/game-core";
-import type {} from "@vibewars/game-data/corpus";
 
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {

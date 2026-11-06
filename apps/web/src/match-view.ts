@@ -564,6 +564,9 @@ export async function startMatchView(
     onChange: (state) => {
       music().follow(state);
     },
+    onSting: (id) => {
+      music().sting(id);
+    },
   });
   const toggleMute = (): void => {
     setGlobalMute(!sounds.muted);

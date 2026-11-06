@@ -1,7 +1,7 @@
 import * as core from "@strudel/core";
 import { describe, expect, it } from "vitest";
 
-import { crossfade, isTempoMark } from "./crossfade.js";
+import { crossfade, isTempoMark, overTrack } from "./crossfade.js";
 
 interface Fired {
   readonly begin: number;
@@ -74,5 +74,20 @@ describe("crossfade", () => {
     const fired = await play(crossfade(voices("old"), voices("new"), 4, 2, 0.5), 0.5, 20);
     const old = fired.filter((event) => String(event.sound).startsWith("old"));
     expect(Math.max(...old.map((event) => event.begin))).toBe(5);
+  });
+
+  it("plays a sting landing on the switch on its downbeat, the tempo mark still last (#2523)", async () => {
+    const sting = core
+      .pure({ s: "sting" })
+      .filterHaps((hap) => hap.wholeOrPart().begin.valueOf() === 4);
+    const fired = await play(
+      overTrack(crossfade(voices("old"), voices("new"), 4, 2, 1.25), sting),
+      0.5,
+      14,
+    );
+    expect(fired.filter((event) => event.t < event.now)).toEqual([]);
+    const onset = fired.find((event) => event.sound === "sting");
+    expect(onset?.begin).toBe(4);
+    expect(onset?.t).toBeCloseTo(8.1, 1);
   });
 });

@@ -29,7 +29,7 @@ export async function openLibraryGroup(page: Page, name?: string): Promise<void>
   await expect(folded).toHaveCount(0);
 }
 
-/** A chip in the skill library's Filters popover (#2463): a skill type, Elite only, or Not in the game yet. */
+/** A chip in the skill library's Filters popover (#2463): a skill type or Elite only. */
 export function filterChip(page: Page, label: string): Locator {
   const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return page.locator(".skill-filter-popover .skill-type-chip", {

@@ -74,3 +74,12 @@ export function crossfade(
     tempo,
   );
 }
+
+/**
+ * `sting` over `track` (#2523), stacked before it, so a crossfade's tempo
+ * mark in `track` stays the last event of its slot: after it, a sting
+ * landing on the switch would lose its downbeat as the track's did (#420).
+ */
+export function overTrack(track: core.Pattern, sting: core.Pattern): core.Pattern {
+  return core.stack(sting, track);
+}

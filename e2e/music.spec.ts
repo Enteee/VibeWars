@@ -628,3 +628,59 @@ test("Options → Sound names the menu's track, and a fixed intensity reaches th
   );
   await expect.poll(() => intensitiesSent(page), { timeout: 5_000 }).toContain(3);
 });
+
+/** Every message the game sent its host, oldest first. */
+async function sentToHost(page: Page): Promise<Record<string, unknown>[]> {
+  const host = page.frames().find((frame) => frame.url().includes("music-host"));
+  if (host === undefined) {
+    return [];
+  }
+  return host.evaluate(
+    () =>
+      (window as unknown as { fromGame?: unknown[] }).fromGame?.flatMap((message) =>
+        typeof message === "object" && message !== null
+          ? [{ ...(message as Record<string, unknown>), source: undefined }]
+          : [],
+      ) ?? [],
+  );
+}
+
+test("a match starts with a sting in the key of the arena's track (#2523)", async ({ page }) => {
+  const keys = new Map(
+    (
+      JSON.parse(
+        readFileSync(
+          new URL("../apps/web/src/music/tracks/manifest.json", import.meta.url),
+          "utf8",
+        ),
+      ) as readonly { readonly id: string; readonly key: string }[]
+    ).map((track) => [track.id, track.key]),
+  );
+  await recordMessages(page);
+  await recordHostInbox(page);
+  await page.goto("./");
+  await expect(page.locator(".screen-random-arena")).toBeVisible();
+  // A sting is never queued: the host must be up before the match starts.
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toHaveLength(1);
+
+  await startSoloMatch(page);
+  await expect
+    .poll(async () => (await sentToHost(page)).map((message) => message.type), {
+      timeout: 10_000,
+    })
+    .toContain("sting");
+  const sent = await sentToHost(page);
+  const at = sent.findIndex((message) => message.type === "sting");
+  // The track the director turned to for the match: the last the host was sent.
+  const track = sent
+    .slice(0, at)
+    .findLast((message) => message.type === "crossfadeTo" || message.type === "load");
+  expect(sent[at]).toEqual(
+    expect.objectContaining({
+      id: "match-start",
+      key: keys.get(String(track?.trackId)),
+      cycles: 2,
+    }),
+  );
+});

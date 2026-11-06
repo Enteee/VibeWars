@@ -16,6 +16,7 @@ import {
 import { measuringMusic, musicPlayer, type MusicPlayer, type MusicTrack } from "./music-player.js";
 import type { MusicLevel } from "./host-protocol.js";
 import type { Mood } from "./mood.js";
+import { STINGS, type StingId } from "./stings/index.js";
 import { TRACKS } from "./tracks/index.js";
 
 /**
@@ -33,6 +34,8 @@ type PlayableTrack = MusicTrack & {
   readonly title: string;
   readonly moods: readonly Mood[];
   readonly layers: number;
+  /** Its scale, "D aeolian": the key a sting plays in over it (#2523). */
+  readonly key: string;
 };
 
 export interface MusicFollower {
@@ -40,6 +43,11 @@ export interface MusicFollower {
   follow(state: MusicState): void;
   /** The menus' music, as deep as `screen` is (#1993); the song already playing goes on. */
   menu(screen: MenuScreen): void;
+  /**
+   * Play `id` once over the music (#2523), in the key of the track
+   * playing, an edit's or preview's too: none when none plays.
+   */
+  sting(id: StingId): void;
   /** The global mute, which mutes the music too. */
   setMuted(muted: boolean): void;
   /** The director's mode, as the player chose it. */
@@ -189,6 +197,12 @@ export function createMusicFollower(
       follow(state);
     },
     menu,
+    sting(id) {
+      const track = tracks.find((candidate) => candidate.id === playingId);
+      if (track !== undefined) {
+        player.sting({ ...STINGS[id], key: track.key });
+      }
+    },
     setMuted(next) {
       muted = next;
       player.setVolume(volume(), VOLUME_RAMP_SECONDS);

@@ -73,6 +73,31 @@ describe("parseGameToHost", () => {
   });
 });
 
+const sting = { type: "sting", id: "first-blood", source: 'n("0").scale(KEY)', cycles: 1 };
+
+it("accepts a sting in any track's key (#2523)", () => {
+  for (const key of ["D aeolian", "Bb major", "F# dorian", "E phrygian dominant"]) {
+    const message = { ...sting, key };
+    expect(parseGameToHost(message), key).toEqual(message);
+  }
+});
+
+it.each([
+  ["an unknown id", { id: "fanfare" }],
+  ["no id", { id: undefined }],
+  ["a key with no scale", { key: "D" }],
+  ["a key with a lower-case tonic", { key: "d aeolian" }],
+  ["a key that is code", { key: 'D aeolian"); hush(); ("' }],
+  ["a key that is no string", { key: 7 }],
+  ["no cycles", { cycles: 0 }],
+  ["too many cycles", { cycles: 5 }],
+  ["a part of a cycle", { cycles: 1.5 }],
+  ["a source too long", { source: "x".repeat(MAX_SOURCE_LENGTH + 1) }],
+  ["no source", { source: undefined }],
+])("refuses a sting with %s (#2523)", (_, wrong) => {
+  expect(parseGameToHost({ ...sting, key: "D aeolian", ...wrong })).toBeNull();
+});
+
 describe("parseHostToGame", () => {
   it("accepts every message the host sends", () => {
     for (const message of [
