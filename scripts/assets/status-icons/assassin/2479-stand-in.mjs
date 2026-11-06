@@ -7,8 +7,8 @@ const rows = {
   "shadow-shroud": [
     "hex",
     (c) =>
-      `<path d="M5 19c0-8 3-14 7-14s7 6 7 14" ${stroke(c, 1.8)}/>` +
-      `<path d="M8 10l8 8M16 10l-8 8" ${stroke(c, 1.6)}/>`,
+      `<path d="M7 17c0-6 2.5-10 5-10s5 4 5 10" ${stroke(c, 1.8)}/>` +
+      `<path d="M9.5 12.5l5 5M14.5 12.5l-5 5" ${stroke(c, 1.6)}/>`,
   ],
 };
 
