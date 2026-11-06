@@ -108,13 +108,19 @@ import {
   type LobbyMatchmaking,
   type LobbyPanel,
 } from "./ui/lobby-screen.js";
-import { renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
+import {
+  renderTeamLobbyScreen,
+  soloCharacterKey,
+  soloEntries,
+  type SoloEntry,
+} from "./ui/team-lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
   loadActiveCharacterId,
   loadStarterCharacterId,
   renderCharacterBuilder,
   renderRandomArena,
+  rosterOrder,
   saveActiveCharacterId,
   saveStarterCharacterId,
 } from "./ui/menu.js";
@@ -261,14 +267,24 @@ const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
 interface TeamPicks {
   teams: readonly StoredTeam[];
   proposed: string | undefined;
-  /** At 1v1 (#2141), the active character's build this side was proposed. */
-  solo: PlayerBuild | undefined;
+  /** At 1v1 (#2387), everything the chooser lists, read with the teams. */
+  solo: readonly SoloEntry[];
+  /** The chooser's pick: the active character until a click. */
+  soloKey: string | undefined;
+  /** The build this side was last proposed at 1v1 (#2141). */
+  soloProposed: PlayerBuild | undefined;
+  /** A click picked, so the claim stage readies too. */
+  soloClicked: boolean;
+  /** The claim stage this side already claimed its one seat in. */
+  soloClaimed: boolean;
 }
 
 /** What a player takes into a lobby, read once when they enter it (#1070). */
 interface Entrant {
   /** Played every match of the lobby; `undefined` plays a starter build from the host. */
   readonly build: PlayerBuild | undefined;
+  /** The selected character `build` is, which a 1v1's chooser presses (#2387). */
+  readonly characterId: string | undefined;
   /** The menu's guild tag (#1406) if it is a valid one, and its cape (#1422). */
   readonly guild: Guild;
 }
@@ -709,7 +725,8 @@ async function main(): Promise<void> {
    * A build the host would refuse, an illegal one, plays a starter build.
    */
   const readEntrant = async (): Promise<Entrant> => {
-    return { build: await activeBuild(loadActiveCharacterId()), guild: playerGuild() };
+    const characterId = loadActiveCharacterId();
+    return { build: await activeBuild(characterId), characterId, guild: playerGuild() };
   };
 
   /** The open build editor; every way out of it passes through `showMenu`. */
@@ -1895,9 +1912,11 @@ async function main(): Promise<void> {
   };
 
   /**
-   * At 1v1 (#2141) there are no Team Builds: a player on a side proposes
-   * its active character in the vote, and again once that changes. A
-   * size change away from 1v1 withdrew it (#2104).
+   * At 1v1 (#2141, #2387) there are no Team Builds: a player on a side
+   * proposes the chooser's pick in the vote, the active character until a
+   * click, and again once that changes. In the claim stage it takes its
+   * one seat itself, and readies if a click picked. A size change away
+   * from 1v1 withdrew it (#2104).
    */
   const proposeSolo = (
     joined: LobbyConnection,
@@ -1905,19 +1924,43 @@ async function main(): Promise<void> {
     picks: TeamPicks,
   ): void => {
     const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
-    const onSide = self !== undefined && self.team !== null;
-    const solo =
-      snapshot.teamSize === 1 && snapshot.teamLobby?.stage === "vote" && onSide
-        ? lobbyEntrant?.build
-        : undefined;
-    if (solo === undefined) {
-      picks.solo = undefined;
+    const team = self?.team ?? null;
+    const stage = snapshot.teamLobby?.stage;
+    if (snapshot.teamSize !== 1 || team === null || stage === undefined) {
+      picks.soloProposed = undefined;
+      picks.soloClaimed = false;
       return;
     }
-    if (JSON.stringify(solo) !== JSON.stringify(picks.solo)) {
-      picks.solo = solo;
+    if (stage === "claim") {
+      picks.soloProposed = undefined;
+      if (!picks.soloClaimed && (snapshot.teamLobby?.sides[team]?.chosen ?? null) !== null) {
+        picks.soloClaimed = true;
+        joined.claim(0);
+        if (picks.soloClicked) {
+          joined.setReady(true);
+        }
+      }
+      return;
+    }
+    picks.soloClaimed = false;
+    const picked = picks.solo.find((entry) => entry.key === picks.soloKey);
+    const solo = picked?.legal === true ? toPlayerBuild(picked.character) : lobbyEntrant?.build;
+    if (solo !== undefined && JSON.stringify(solo) !== JSON.stringify(picks.soloProposed)) {
+      picks.soloProposed = solo;
       joined.propose([solo]);
     }
+  };
+
+  /** Play the chooser's entry `key` at 1v1 (#2387): propose it, then ready. */
+  const pickSolo = (key: string): void => {
+    if (teamPicks === undefined || lobby === undefined) {
+      return;
+    }
+    teamPicks.soloKey = key;
+    teamPicks.soloClicked = true;
+    proposeSolo(lobby, lobby.getSnapshot(), teamPicks);
+    lobby.setReady(true);
+    lobbyChanged();
   };
 
   /**
@@ -1927,15 +1970,27 @@ async function main(): Promise<void> {
    */
   const renderTeamLobby = (joined: LobbyConnection, snapshot: LobbySnapshot): void => {
     if (teamPicks === undefined) {
-      const picks: TeamPicks = { teams: [], proposed: undefined, solo: undefined };
+      const active = lobbyEntrant?.characterId;
+      const picks: TeamPicks = {
+        teams: [],
+        proposed: undefined,
+        solo: [],
+        soloKey: active === undefined ? undefined : soloCharacterKey(active),
+        soloProposed: undefined,
+        soloClicked: false,
+        soloClaimed: false,
+      };
       teamPicks = picks;
-      void teams.list().then(({ teams: saved }) => {
-        if (teamPicks !== picks || lobby !== joined) {
-          return;
-        }
-        picks.teams = saved;
-        lobbyChanged();
-      });
+      void Promise.all([teams.list(), characters.list()]).then(
+        ([{ teams: saved }, { characters: roster }]) => {
+          if (teamPicks !== picks || lobby !== joined) {
+            return;
+          }
+          picks.teams = saved;
+          picks.solo = soloEntries(rosterOrder(roster, loadStarterCharacterId()), saved);
+          lobbyChanged();
+        },
+      );
     }
     // A team size change withdrew the proposal of another size (#2104).
     const proposed = teamPicks.teams.find((saved) => saved.id === teamPicks?.proposed);
@@ -1948,11 +2003,13 @@ async function main(): Promise<void> {
       snapshot,
       teamPicks.teams,
       teamPicks.proposed,
+      { entries: teamPicks.solo, picked: teamPicks.soloKey },
       {
         onVote: (proposerId) => {
           lobby?.vote(proposerId);
         },
         onPropose: proposeTeam,
+        onPickSolo: pickSolo,
         onClaim: (slot) => {
           lobby?.claim(slot);
         },
