@@ -86,7 +86,9 @@ export type MonkStatusId =
   // Mechanics (#2453).
   | "smiters-boon"
   // Dropped leftovers (#2446).
-  | "healers-boon";
+  | "healers-boon"
+  // Mechanics (#2470).
+  | "unyielding-aura";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -1037,5 +1039,15 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         { activationMultiplier: 0.5, healMultiplier: 1.5, sparesDivineFavor: true },
       ),
     ],
+  }),
+  // Maintained (#2470): "If you stop maintaining this enchantment or if
+  // this enchantment is removed, that party member dies and leaves an
+  // exploited corpse. Deaths while enchanted with Unyielding Aura do not
+  // incur a death penalty."
+  "unyielding-aura": define("unyielding-aura", "Unyielding Aura", "enchantment", {
+    profession: "monk",
+    killsBearerOnEnd: true,
+    exploitsCorpseOnDeath: true,
+    noDeathPenalty: true,
   }),
 };
