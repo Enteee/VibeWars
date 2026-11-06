@@ -5791,4 +5791,51 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     effects: [{ kind: "adrenaline-gain", strikes: { flat: 2 } }],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Staples (#2447)                                                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "warrior.flourish",
+    name: "Flourish",
+    gwId: 389,
+    type: "skill",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "warrior",
+    attributeId: "warrior.strength",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All of your attack skills become recharged. You gain 2...7 Energy for
+    // each skill recharged by Flourish": counted before they recharge, so
+    // the gain comes first; Flourish is no attack and never counts itself.
+    effects: [
+      {
+        kind: "energy-gain",
+        amount: { flat: 0 },
+        per: {
+          count: {
+            kind: "recharging-skills",
+            of: "caster",
+            attributeId: undefined,
+            type: "attack",
+          },
+          amount: { scaling: { attributeId: "warrior.strength", atZero: 2, atTwelve: 6 } },
+          max: undefined,
+        },
+      },
+      { kind: "recharge-others", which: "attack" },
+    ],
+  },
 ];

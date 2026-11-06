@@ -4853,6 +4853,75 @@ export const MESMER_SKILLS: readonly Skill[] = [
     ],
   },
   /* ---------------------------------------------------------------------- */
+  /* Staples (#2447)                                                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.signet-of-disenchantment",
+    name: "Signet of Disenchantment",
+    gwId: 882,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: undefined,
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Lose all Energy. Target foe loses one enchantment": the Energy goes
+    // whether or not the foe has one; the newest goes first.
+    effects: [
+      { kind: "drain-own-energy" },
+      { kind: "remove-status", category: "enchantment", count: 1 },
+    ],
+  },
+  {
+    id: "mesmer.ancestors-visage",
+    name: "Ancestor's Visage",
+    gwId: 1054,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 4...10 seconds, whenever target ally is hit by a melee attack,
+    // all adjacent foes lose all adrenaline and 3 Energy": Sympathetic
+    // Visage's text under its own id; 8.8 s at rank 12, the 3 Energy flat.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "ancestors-visage",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
   /* Dropped leftovers (#2446)                                             */
   /* ---------------------------------------------------------------------- */
   {

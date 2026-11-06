@@ -91,6 +91,8 @@ export type ElementalistStatusId =
   | "ether-prism"
   // Mechanics (#2438).
   | "glyph-of-restoration"
+  // Staples (#2447).
+  | "smoldering-embers"
   // Dropped leftovers (#2446).
   | "storm-djinns-haste";
 
@@ -978,6 +980,24 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 24.2 },
     },
     preventsCriticalHits: true,
+  }),
+  // "...that foe is hexed with Smoldering Embers for 3 seconds and takes
+  // 5...25 additional fire damage each second" (#2447).
+  "smoldering-embers": define("smoldering-embers", "Smoldering Embers", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.fire-magic",
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "damage",
+          amount: { scaling: { attributeId: "elementalist.fire-magic", atZero: 5, atTwelve: 21 } },
+          type: "fire",
+          armorPenetration: 0,
+        },
+      ],
+      skillId: "elementalist.smoldering-embers",
+    },
   }),
   // "You move 25% faster. Each second that you are moving, you lose 1
   // Energy" (#2446); at 0 Energy it keeps running.

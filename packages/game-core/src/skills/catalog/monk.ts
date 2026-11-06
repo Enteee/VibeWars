@@ -4625,6 +4625,110 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [{ kind: "maintain-status", on: "target", statusId: "strength-of-honor" }],
   },
   /* ---------------------------------------------------------------------- */
+  /* Staples (#2447)                                                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.deny-hexes",
+    name: "Deny Hexes",
+    gwId: 991,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove one hex from target ally and one additional hex for each
+    // recharging Divine Favor skill you have": Deny Hexes is recharging as
+    // it lands, so at least two go, the count read before either removal.
+    effects: [
+      {
+        kind: "remove-status",
+        category: "hex",
+        count: 1,
+      },
+      {
+        kind: "remove-status",
+        category: "hex",
+        count: 0,
+        perCount: {
+          kind: "recharging-skills",
+          of: "caster",
+          attributeId: "monk.divine-favor",
+          type: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.renew-life",
+    name: "Renew Life",
+    gwId: 1263,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 4,
+    rechargeSeconds: 5,
+    // "Resurrect target touched dead target party member": at hand, as
+    // Restore Life.
+    touch: true,
+    range: RANGE_MELEE,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "...with 50% Health and 5...20% Energy. That party member and all
+    // allies within earshot are healed for 55...130 Health": raised first,
+    // as a splash passes the dead by, then healed with the rest.
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "percent", percent: { flat: 50 } },
+        energyPercent: {
+          scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 17 },
+        },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+      {
+        kind: "splash",
+        hits: "allies",
+        radius: AREA_EARSHOT,
+        maxTargets: undefined,
+        includesCentre: true,
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "monk.healing-prayers", atZero: 55, atTwelve: 115 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
   /* Dropped leftovers (#2446)                                             */
   /* ---------------------------------------------------------------------- */
   {

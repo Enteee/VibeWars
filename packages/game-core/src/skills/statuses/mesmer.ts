@@ -97,6 +97,8 @@ export type MesmerStatusId =
   | "shared-burden"
   // Mechanics (#2438).
   | "mantra-of-signets"
+  // Staples (#2447).
+  | "ancestors-visage"
   // Dropped leftovers (#2446).
   | "symbolic-celerity";
 
@@ -130,6 +132,30 @@ function elementMantra(
       },
     ],
   });
+}
+
+/**
+ * "Whenever target ally is hit by a melee attack, all adjacent foes lose
+ * all adrenaline and 3 Energy", for the Visage whose `skillId` it is.
+ */
+function visageTriggers(skillId: string): StatusDefinition["triggers"] {
+  return [
+    {
+      on: "bearer-hit-by-attack",
+      weapon: "melee",
+      target: "bearer",
+      effects: [
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          maxTargets: undefined,
+          effects: [{ kind: "adrenaline-loss" }, { kind: "energy-loss", amount: { flat: 3 } }],
+        },
+      ],
+      skillId,
+    },
+  ];
 }
 
 export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>> = {
@@ -1117,23 +1143,13 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   // the enchanter's foes, the attacker too when beside it; never a shot.
   "sympathetic-visage": define("sympathetic-visage", "Sympathetic Visage", "enchantment", {
     profession: "mesmer",
-    triggers: [
-      {
-        on: "bearer-hit-by-attack",
-        weapon: "melee",
-        target: "bearer",
-        effects: [
-          {
-            kind: "splash",
-            hits: "foes",
-            radius: AREA_ADJACENT,
-            maxTargets: undefined,
-            effects: [{ kind: "adrenaline-loss" }, { kind: "energy-loss", amount: { flat: 3 } }],
-          },
-        ],
-        skillId: "mesmer.sympathetic-visage",
-      },
-    ],
+    triggers: visageTriggers("mesmer.sympathetic-visage"),
+  }),
+  // Staples (#2447). Ancestor's Visage: the same text as Sympathetic
+  // Visage's under its own id, so both can be on one ally.
+  "ancestors-visage": define("ancestors-visage", "Ancestor's Visage", "enchantment", {
+    profession: "mesmer",
+    triggers: visageTriggers("mesmer.ancestors-visage"),
   }),
   // "For 5...25 seconds, signets you successfully activate while in this
   // stance recharge 10...40% faster", at the Mesmer's Inspiration Magic.
