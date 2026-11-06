@@ -1,4 +1,4 @@
-// Draws a study of the skill library's filters (#2459 mockups): the filter
+// Draws a study of the skill library's filters (operator's request): the filter
 // chips take five rows of a 360 px panel. A design reference, not a game
 // asset; study, not decided.
 //
@@ -8,7 +8,7 @@
 // Palette and type mirror apps/web/src/styles.css (monospace).
 //   A: one scrolling row of chips, the pressed ones first, and a "more" button.
 //   B: one "Filters" button opens a popover; what is on shows as removable tags.
-//   C: search plus compact dropdowns (Type, Profession) and Elite; tags below.
+//   C: search and Elite as today; Type and Unreleased dropdowns, and a Profession one (new, no such filter today).
 
 import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -189,13 +189,14 @@ const b = (y) => {
   const tags =
     chip(12, y + 38, "hex ×", true).svg +
     chip(66, y + 38, "spell ×", true).svg +
-    chip(128, y + 38, "elite ×", true).svg;
+    chip(135, y + 38, "elite ×", true).svg;
   const pop =
     box(12, y + 66, W - 24, 266, C.bg, C.accent, 6) +
     text(24, y + 86, "Skill type", 11, C.dim) +
     wrapChips(TYPES, 24, y + 94, W - 48).svg +
     text(24, y + 266, "Show", 11, C.dim) +
-    box(24, y + 274, 12, 12, "none", C.dim, 2) +
+    box(24, y + 274, 12, 12, C.accent, C.accent, 2) +
+    text(30, y + 284, "✓", 10, C.bg, "middle") +
     text(42, y + 284, "Elite only", 11, C.ink) +
     box(120, y + 274, 12, 12, "none", C.dim, 2) +
     text(138, y + 284, "Not in the game yet", 11, C.ink) +
@@ -231,7 +232,7 @@ const c = (y) => {
   return (
     searchRow(y, W - 100) +
     dd(12, 104, "Type · 2", true) +
-    dd(122, 104, "Profession", false) +
+    dd(122, 104, "Profession*", false) +
     dd(236, 112, "Unreleased", false) +
     cards(y + 74) +
     menu
@@ -246,6 +247,6 @@ const svg =
   panel(0, "Today", "five rows of type chips", current) +
   panel(W + GAP, "A: one row", "scrolls; pressed first; + opens all", a) +
   panel(2 * (W + GAP), "B: popover", "one button; tags show what is on", b) +
-  panel(3 * (W + GAP), "C: dropdowns", "Type, Profession, Elite in one row", c) +
+  panel(3 * (W + GAP), "C: dropdowns", "Type, Profession (new), Unreleased in one row", c) +
   `</svg>\n`;
 writeFileSync(outFile, svg);
