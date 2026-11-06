@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { inset, stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -40,8 +40,13 @@ const rows = {
   "spiteful-spirit": [
     "hex",
     (c) =>
-      `<circle cx="12" cy="12.5" r="2" fill="${c}"/>` +
-      `<path d="M12 5.5v2.5M12 17v2.5M5 12.5h2.5M16.5 12.5H19M7 7.5l1.8 1.8M15.2 15.7L17 17.5M17 7.5l-1.8 1.8M8.8 15.7L7 17.5" ${stroke(c, 1.8)}/>`,
+      inset(
+        1,
+        `<circle cx="12" cy="12.5" r="2" fill="${c}"/>` +
+          `<path d="M12 5.5v2.5M12 17v2.5M5 12.5h2.5M16.5 12.5H19M7 7.5l1.8 1.8M15.2 15.7L17 17.5M17 7.5l-1.8 1.8M8.8 15.7L7 17.5" ${stroke(c, 1.8)}/>`,
+        0,
+        -0.5,
+      ),
   ],
   // Hex: a drop drawn off by an arrow, health stolen on each hit (#935).
   "insidious-parasite": [
@@ -54,70 +59,109 @@ const rows = {
   "mark-of-pain": [
     "hex",
     (c) =>
-      `<path d="M10 9.5l4 4M14 9.5l-4 4" ${stroke(c, 2.2)}/>` +
-      `<circle cx="6.5" cy="15.5" r="1.5" ${stroke(c, 1.5)}/>` +
-      `<circle cx="17.5" cy="15.5" r="1.5" ${stroke(c, 1.5)}/>`,
+      inset(
+        1,
+        `<path d="M10 9.5l4 4M14 9.5l-4 4" ${stroke(c, 2.2)}/>` +
+          `<circle cx="6.5" cy="15.5" r="1.5" ${stroke(c, 1.5)}/>` +
+          `<circle cx="17.5" cy="15.5" r="1.5" ${stroke(c, 1.5)}/>`,
+        0,
+        -1,
+      ),
   ],
   // Skill effect: two degeneration arrows over a ground line, Well of
   // Suffering's -5 to the foes inside it (#1104).
   "well-of-suffering": [
     "skill-effect",
     (c) =>
-      `<path d="M7 8l3 3 3-3M11 8l3 3 3-3" ${stroke(c, 2)}/>` +
-      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+      inset(
+        1,
+        `<path d="M7 8l3 3 3-3M11 8l3 3 3-3" ${stroke(c, 2)}/>` +
+          `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+        0,
+        -1,
+      ),
   ],
   // Wells 2 (#1749): the skills' shapes.
   // Skill effect: a struck-through ring, no enchantment holds.
   "well-of-the-profane": [
     "skill-effect",
     (c) =>
-      `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(c, 2.2)}/>` +
-      `<circle cx="12" cy="9" r="5.5" ${stroke(c, 2)}/><path d="M7 15L16.5 5.5" ${stroke(c, 2.2)}/>`,
+      inset(
+        0.76,
+        `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(c, 2.2)}/>` +
+          `<circle cx="12" cy="9" r="5.5" ${stroke(c, 2)}/><path d="M7 15L16.5 5.5" ${stroke(c, 2.2)}/>`,
+        0,
+        -0.5,
+      ),
   ],
   // Skill effect: a struck-through horn, no shout or chant.
   "well-of-silence": [
     "skill-effect",
     (c) =>
-      `<ellipse cx="12" cy="19" rx="7.5" ry="3" ${stroke(c, 2.2)}/>` +
-      `<path d="M9 6C13 9.5 13 12.5 9 16" ${stroke(c, 2.6)}/><path d="M6.5 15L16 5.5" ${stroke(c, 2.6)}/>`,
+      inset(
+        0.84,
+        `<ellipse cx="12" cy="19" rx="7.5" ry="3" ${stroke(c, 2.2)}/>` +
+          `<path d="M9 6C13 9.5 13 12.5 9 16" ${stroke(c, 2.6)}/><path d="M6.5 15L16 5.5" ${stroke(c, 2.6)}/>`,
+        0,
+        -1.5,
+      ),
   ],
   // Skill effect: a pupil in a dark eye, the hexed miss.
   "well-of-darkness": [
     "skill-effect",
     (c) =>
-      `<ellipse cx="12" cy="19" rx="7.5" ry="3" ${stroke(c, 2.2)}/>` +
-      `<path d="M3.5 9.5C6 5 9 3.5 12 3.5S18 5 20.5 9.5C18 14 15 15.5 12 15.5S6 14 3.5 9.5Z" ${stroke(c, 2)}/>` +
-      `<circle cx="9.5" cy="9.5" r="2.4" fill="${c}"/><path d="M15 7v5M18 8v3" ${stroke(c, 1.8)}/>`,
+      inset(
+        0.76,
+        `<ellipse cx="12" cy="19" rx="7.5" ry="3" ${stroke(c, 2.2)}/>` +
+          `<path d="M3.5 9.5C6 5 9 3.5 12 3.5S18 5 20.5 9.5C18 14 15 15.5 12 15.5S6 14 3.5 9.5Z" ${stroke(c, 2)}/>` +
+          `<circle cx="9.5" cy="9.5" r="2.4" fill="${c}"/><path d="M15 7v5M18 8v3" ${stroke(c, 1.8)}/>`,
+        0,
+        -0.5,
+      ),
   ],
   // Skill effect: a cracked shield, armor cracking under each hit.
   "well-of-ruin": [
     "skill-effect",
     (c) =>
-      `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(c, 2.2)}/>` +
-      `<path d="M12 2.5L19 5V10C19 13 16 15 12 16.5C8 15 5 13 5 10V5Z" ${stroke(c, 2)}/>` +
-      `<path d="M12 3L10 7.5L13.5 10L11 15" ${stroke(c, 1.6)}/>`,
+      inset(
+        0.72,
+        `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(c, 2.2)}/>` +
+          `<path d="M12 2.5L19 5V10C19 13 16 15 12 16.5C8 15 5 13 5 10V5Z" ${stroke(c, 2)}/>` +
+          `<path d="M12 3L10 7.5L13.5 10L11 15" ${stroke(c, 1.6)}/>`,
+      ),
   ],
   // Skill effects inside the wells of #1730, the skills' shapes: the
   // ring under a plus, a plus and a bolt, a sinking bolt.
   "well-of-blood": [
     "skill-effect",
     (c) =>
-      `<ellipse cx="12" cy="18" rx="9" ry="3.5" ${stroke(c, 2)}/>` +
-      `<path d="M12 3v10M7 8h10" ${stroke(c, 2.6)}/>`,
+      inset(
+        0.76,
+        `<ellipse cx="12" cy="18" rx="9" ry="3.5" ${stroke(c, 2)}/>` +
+          `<path d="M12 3v10M7 8h10" ${stroke(c, 2.6)}/>`,
+      ),
   ],
   "well-of-power": [
     "skill-effect",
     (c) =>
-      `<ellipse cx="12" cy="18" rx="9" ry="3.5" ${stroke(c, 2)}/>` +
-      `<path d="M7 4v8M3 8h8" ${stroke(c, 2.4)}/>` +
-      `<path d="M18 2.5l-4.5 7h3l-1.5 5 5-7h-3z" fill="${c}"/>`,
+      inset(
+        0.8,
+        `<ellipse cx="12" cy="18" rx="9" ry="3.5" ${stroke(c, 2)}/>` +
+          `<path d="M7 4v8M3 8h8" ${stroke(c, 2.4)}/>` +
+          `<path d="M18 2.5l-4.5 7h3l-1.5 5 5-7h-3z" fill="${c}"/>`,
+        0,
+        -0.5,
+      ),
   ],
   "well-of-weariness": [
     "skill-effect",
     (c) =>
-      `<ellipse cx="12" cy="18" rx="9" ry="3.5" ${stroke(c, 2)}/>` +
-      `<path d="M10 2L4.5 10h3.5L6.5 15l5.5-8h-3.5z" fill="${c}"/>` +
-      `<path d="M17 5v7M14 9.5l3 3.5 3-3.5" ${stroke(c, 2.2)}/>`,
+      inset(
+        0.76,
+        `<ellipse cx="12" cy="18" rx="9" ry="3.5" ${stroke(c, 2)}/>` +
+          `<path d="M10 2L4.5 10h3.5L6.5 15l5.5-8h-3.5z" fill="${c}"/>` +
+          `<path d="M17 5v7M14 9.5l3 3.5 3-3.5" ${stroke(c, 2.2)}/>`,
+      ),
   ],
   // Hex: a barbed line, physical hits hurt more (#1332).
   barbs: [
@@ -130,7 +174,13 @@ const rows = {
   "price-of-failure": [
     "hex",
     (c) =>
-      `<path d="M8 5l8 8M16 5l-8 8" ${stroke(c, 2.2)}/>` + `<path d="M12 15v4.5" ${stroke(c, 2)}/>`,
+      inset(
+        1,
+        `<path d="M8 5l8 8M16 5l-8 8" ${stroke(c, 2.2)}/>` +
+          `<path d="M12 15v4.5" ${stroke(c, 2)}/>`,
+        0,
+        1.5,
+      ),
   ],
   // Hex: three falling drops, degeneration on a crowd (#1332).
   suffering: [
@@ -150,30 +200,48 @@ const rows = {
   "rigor-mortis": [
     "hex",
     (c) =>
-      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
-      `<path d="M5 19L19 5" ${stroke(c, 2.2)}/>`,
+      inset(
+        0.72,
+        `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+          `<path d="M5 19L19 5" ${stroke(c, 2.2)}/>`,
+      ),
   ],
   // Hex: a drop beside a small plus, degeneration and less healing (#1332).
   "lingering-curse": [
     "hex",
     (c) =>
-      `<path d="M9 5c-2 2.8-3.5 4.6-3.5 6.4a3.5 3.5 0 0 0 7 0C12.5 9.6 11 7.8 9 5z" fill="${c}"/>` +
-      `<path d="M17 13v6M14 16h6" ${stroke(c, 1.8)}/>`,
+      inset(
+        0.98,
+        `<path d="M9 5c-2 2.8-3.5 4.6-3.5 6.4a3.5 3.5 0 0 0 7 0C12.5 9.6 11 7.8 9 5z" fill="${c}"/>` +
+          `<path d="M17 13v6M14 16h6" ${stroke(c, 1.8)}/>`,
+        0,
+        -1.5,
+      ),
   ],
   // Hex: a barbed line under a spark, any hex or enchantment hurts (#1403).
   "soul-barbs": [
     "hex",
     (c) =>
-      `<path d="M4 15h16" ${stroke(c, 2)}/>` +
-      `<path d="M7 15l2-3M11 15l2-3M15 15l2-3" ${stroke(c, 1.6)}/>` +
-      `<path d="M12 4v5M9.5 6.5h5" ${stroke(c, 1.8)}/>`,
+      inset(
+        1,
+        `<path d="M4 15h16" ${stroke(c, 2)}/>` +
+          `<path d="M7 15l2-3M11 15l2-3M15 15l2-3" ${stroke(c, 1.6)}/>` +
+          `<path d="M12 4v5M9.5 6.5h5" ${stroke(c, 1.8)}/>`,
+        0,
+        -1,
+      ),
   ],
   // Hex: a shield with a bolt, the next block hurts (#1403).
   "defile-defenses": [
     "hex",
     (c) =>
-      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
-      `<path d="M13 7l-3 4h4l-3 4" ${stroke(c, 1.6)}/>`,
+      inset(
+        1,
+        `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+          `<path d="M13 7l-3 4h4l-3 4" ${stroke(c, 1.6)}/>`,
+        0,
+        1,
+      ),
   ],
   // Enchantment: a blade over a drop, every party blow cuts deeper.
   "order-of-pain": [
@@ -187,36 +255,60 @@ const rows = {
   wither: [
     "hex",
     (c) =>
-      `<path d="M12 3c2.5 3.5 4 5.5 4 8a4 4 0 0 1-8 0c0-2.5 1.5-4.5 4-8z" ${stroke(c, 1.8)}/>` +
-      `<path d="M7 16v4M5 18l2 2 2-2M17 16v4M15 18l2 2 2-2" ${stroke(c, 1.6)}/>`,
+      inset(
+        0.92,
+        `<path d="M12 3c2.5 3.5 4 5.5 4 8a4 4 0 0 1-8 0c0-2.5 1.5-4.5 4-8z" ${stroke(c, 1.8)}/>` +
+          `<path d="M7 16v4M5 18l2 2 2-2M17 16v4M15 18l2 2 2-2" ${stroke(c, 1.6)}/>`,
+        0,
+        -2,
+      ),
   ],
   // Hex: a drop drawn off sideways, health siphoned to the caster.
   "life-siphon": [
     "hex",
     (c) =>
-      `<path d="M9 4c2.5 3.5 4 5.5 4 8a4 4 0 0 1-8 0c0-2.5 1.5-4.5 4-8z" fill="${c}"/>` +
-      `<path d="M14 15h6M17.5 12.5L20 15l-2.5 2.5" ${stroke(c, 1.8)}/>`,
+      inset(
+        0.98,
+        `<path d="M9 4c2.5 3.5 4 5.5 4 8a4 4 0 0 1-8 0c0-2.5 1.5-4.5 4-8z" fill="${c}"/>` +
+          `<path d="M14 15h6M17.5 12.5L20 15l-2.5 2.5" ${stroke(c, 1.8)}/>`,
+        0,
+        -0.5,
+      ),
   ],
   // Skill effect: a drop over three rising arrows, the siphoned health returning.
   "life-siphon-regen": [
     "skill-effect",
     (c) =>
-      `<path d="M12 3c2 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0C8.5 7.5 10 6 12 3z" fill="${c}"/>` +
-      `<path d="M6 19.5l2.5-2.5 2.5 2.5M10 19.5l2.5-2.5 2.5 2.5M14 19.5l2.5-2.5 2.5 2.5" ${stroke(c, 1.6)}/>`,
+      inset(
+        0.9,
+        `<path d="M12 3c2 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0C8.5 7.5 10 6 12 3z" fill="${c}"/>` +
+          `<path d="M6 19.5l2.5-2.5 2.5 2.5M10 19.5l2.5-2.5 2.5 2.5M14 19.5l2.5-2.5 2.5 2.5" ${stroke(c, 1.6)}/>`,
+        -0.5,
+      ),
   ],
   // Hex: a struck-through blade trailing speed lines, fast swings that miss.
   "reckless-haste": [
     "hex",
     (c) =>
-      `<path d="M8 17L18 7" ${stroke(c, 2.2)}/><path d="M7 7l10 10" ${stroke(c, 1.6)}/>` +
-      `<path d="M3 12h3M4 15.5h3M5 19h3" ${stroke(c, 1.6)}/>`,
+      inset(
+        0.82,
+        `<path d="M8 17L18 7" ${stroke(c, 2.2)}/><path d="M7 7l10 10" ${stroke(c, 1.6)}/>` +
+          `<path d="M3 12h3M4 15.5h3M5 19h3" ${stroke(c, 1.6)}/>`,
+        0,
+        -1,
+      ),
   ],
   // Hex: a broken ring over a falling arrow, the enchantment turned to rot.
   "corrupt-enchantment": [
     "hex",
     (c) =>
-      `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
+      inset(
+        1,
+        `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
+          `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
+        0,
+        0.5,
+      ),
   ],
   // Death triggers (#1762, #1832): a skull, and what its death gives: Energy, bile, cold.
   "reapers-mark": [
@@ -248,7 +340,10 @@ const rows = {
       `</g>`,
   ],
   // Hex: a sword bent down under a bar, attacks slowed.
-  meekness: ["hex", (c) => `<path d="M5 6h14M12 9v10M9 16l3 3 3-3" ${stroke(c, 2.2)}/>`],
+  meekness: [
+    "hex",
+    (c) => inset(0.92, `<path d="M5 6h14M12 9v10M9 16l3 3 3-3" ${stroke(c, 2.2)}/>`, 0, 2),
+  ],
   // Hex: two links bound, a heal that hurts its healer.
   "soul-bind": [
     "hex",
@@ -274,8 +369,11 @@ const rows = {
   "shivers-of-dread": [
     "hex",
     (c) =>
-      `<path d="M12 6v12M7 9l10 6M17 9L7 15" ${stroke(c, 1.8)}/>` +
-      `<path d="M4 4l2 2M20 4l-2 2M4 20l2-2M20 20l-2-2" ${stroke(c, 1.6)}/>`,
+      inset(
+        0.66,
+        `<path d="M12 6v12M7 9l10 6M17 9L7 15" ${stroke(c, 1.8)}/>` +
+          `<path d="M4 4l2 2M20 4l-2 2M4 20l2-2M20 20l-2-2" ${stroke(c, 1.6)}/>`,
+      ),
   ],
   // Enchantment: a burst from a skull's line, the dead ally bursts.
   "death-nova": [
