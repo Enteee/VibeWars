@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { stroke, fitRows } from "../../icon-kit.mjs";
 
 const SHIELD = (/** @type {string} */ c) =>
   `<path d="M6 4h12v7c0 4-3 7-6 9-3-2-6-5-6-9z" ${stroke(c, 2)}/>`;
@@ -315,4 +315,25 @@ const rows = {
   ],
 };
 
-export default rows;
+/** Drawn smaller to sit inside the plate (#2421). */
+const fits = {
+  "ward-against-melee": [0.96, 0],
+  "ice-prison": [0.82, 3],
+  "frozen-burst": [0.78, 0],
+  "ice-spear": [0.9, 0],
+  shatterstone: [0.92, -1],
+  "mind-freeze": [0.74, -2],
+  "mark-of-rodgort": [0.86, 0],
+  "ward-against-elements": [0.96, 0],
+  "ward-against-foes": [0.8, 0],
+  "ward-of-stability": [0.84, -1],
+  "aura-of-restoration": [1, 1],
+  "windborne-speed": [0.92, 0],
+  "ash-blast": [0.76, 0],
+  "freezing-gust": [0.76, 0],
+  "glyph-of-energy": [0.64, -4],
+  "magnetic-surge": [0.92, 0],
+  "teinais-prison": [0.74, 2],
+};
+
+export default fitRows(rows, fits);
