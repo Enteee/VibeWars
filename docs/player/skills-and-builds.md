@@ -94,15 +94,20 @@ strip or death ends them, and heal you as they go.
 ## The library
 
 The skill library lists every skill your two professions can use,
-grouped by attribute. Search names and text, show only elites, or pick
-skill types to narrow it. Skills of other professions wait, folded, under
+grouped by attribute. Search names and text beside the **Filters**
+button. Filters opens a window where you pick skill types or **Elite
+only** to narrow the list; **Done**, Esc or a click outside closes it.
+The button counts what is on (**Filters · 2**), and each filter shows
+beside it as a tag: click a tag to turn that filter off, or **clear** to
+turn them all off. Skills of other professions wait, folded, under
 **Other professions**.
 
 The attribute groups start folded: click a group's name to open it. A
-search opens every group it finds something in.
+search or a filter opens every group it finds something in.
 
-**Show skills not in the game yet** adds the GW1 skills VibeWars does not
-have yet, greyed out. You can read them, not equip them.
+**Not in the game yet**, under Show in the Filters window, adds the GW1
+skills VibeWars does not have yet, greyed out. You can read them, not
+equip them. It is remembered, and is not counted as a filter.
 
 Beside the editor, the **Training Ground** lets you try your bar on
 practice targets before a match. Its log shows every skill you or a bot
