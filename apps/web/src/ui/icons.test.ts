@@ -37,8 +37,11 @@ import {
   weaponIcon,
 } from "./icons.js";
 
+import { C } from "../../../../scripts/assets/icon-kit.mjs";
+import { inkOutsidePlate } from "../../../../scripts/assets/plate-check.mjs";
 import { SKILL_ICONS } from "../../../../scripts/assets/skill-icon-table.mjs";
 import { STATUS_ICON_TABLES, STATUS_ICONS } from "../../../../scripts/assets/status-icon-table.mjs";
+import { PLATES } from "../../../../scripts/assets/status-plates.mjs";
 
 const PUBLIC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public");
 
@@ -163,6 +166,14 @@ describe("skill icons (#719)", () => {
   it("has each status row in exactly one per-profession table", () => {
     const rows = Object.values(STATUS_ICON_TABLES).flatMap((table) => Object.keys(table));
     expect(rows.length).toBe(Object.keys(STATUS_ICONS).length);
+  });
+
+  it("keeps every status glyph's ink inside its plate (#2404)", () => {
+    const offenders = Object.entries(STATUS_ICONS).flatMap(([id, [category, glyph]]) => {
+      const outside = inkOutsidePlate(PLATES[category], glyph(C.plate));
+      return outside > 0 ? [`${id} (${String(category)}): ${String(outside)} px outside`] : [];
+    });
+    expect(offenders).toEqual([]);
   });
 
   it("has no file for a skill that is not implemented", () => {
