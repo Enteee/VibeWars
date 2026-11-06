@@ -26,13 +26,7 @@ import { IMPLEMENTED_SKILLS } from "./catalog.js";
  */
 export type MissingMechanic =
   | "unwritten"
-  | "distance-trigger"
   | "max-health-per-max-energy"
-  | "count-disabled-own-skills"
-  | "double-strike-bonus"
-  | "count-overcast"
-  | "nearest-spirit-energy-drain"
-  | "while-near-spirit"
   | "damage-type-conversion"
   | "knockdown-offender"
   | "transfer-conditions-to-area"
@@ -40,20 +34,13 @@ export type MissingMechanic =
   | "interrupt-guard-strip-enchantment"
   | "damage-per-second-cap"
   | "spell-damage-taken-multiplier"
-  | "weapon-element"
-  | "weapon-filter-negation";
+  | "weapon-element";
 
 /** What each missing mechanic would mean to build, in one line. */
 export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, string>> =
   Object.freeze({
     unwritten: "not a mechanic: the engine has every piece, only the catalog entry is missing",
-    "distance-trigger": "an effect fires after the bearer moves a distance",
     "max-health-per-max-energy": "maximum Health scales with your maximum Energy",
-    "count-disabled-own-skills": "a magnitude counts how many of your skills are recharging",
-    "double-strike-bonus": "an attack strikes twice and the second strike has its own bonus",
-    "count-overcast": "a magnitude counts your Overcast",
-    "nearest-spirit-energy-drain": "Energy is stolen from the nearest spirit",
-    "while-near-spirit": "an effect holds while the bearer is within range of a spirit",
     "damage-type-conversion": "damage of one type is dealt as another type",
     "knockdown-offender": "whoever does something to the bearer is knocked down",
     "transfer-conditions-to-area": "the bearer's conditions move to foes in an area",
@@ -63,7 +50,6 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
     "damage-per-second-cap": "damage taken in one second is capped",
     "spell-damage-taken-multiplier": "spells deal a multiple of their damage to the bearer",
     "weapon-element": "the wielder's weapon deals an element's damage",
-    "weapon-filter-negation": "a bonus applies with every weapon except one type",
   });
 
 /**
@@ -80,18 +66,12 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     253: ["unwritten"], // Scourge Sacrifice
     265: ["unwritten"], // Amity
     305: ["unwritten"], // Resurrect
-    815: ["distance-trigger"], // Scorpion Wire
     837: ["max-health-per-max-energy"], // Energy Boon
     847: ["unwritten"], // Boon Signet
-    990: ["count-disabled-own-skills"], // Expunge Enchantments
-    1030: ["double-strike-bonus"], // Locust's Fury
     1056: ["unwritten"], // Kitah's Burden
-    1088: ["count-overcast"], // Second Wind
     1091: ["unwritten"], // Double Dragon
     1093: ["unwritten"], // Teinai's Heat
     1119: ["unwritten"], // Karei's Healing Circle
-    1228: ["nearest-spirit-energy-drain"], // Spirit Siphon
-    1244: ["while-near-spirit"], // Ghostly Haste
     1371: ["damage-type-conversion"], // Stone Striker
     1372: ["unwritten"], // Sandstorm
     1391: ["unwritten"], // Supportive Spirit
@@ -104,7 +84,6 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     1757: ["spell-damage-taken-multiplier"], // Veil of Thorns
     1760: ["weapon-element"], // Ebon Dust Aura
     2060: ["unwritten"], // Glyph of Immolation
-    2187: ["weapon-filter-negation"], // Way of the Master
     2189: ["unwritten"], // Angorodon's Gaze
   });
 

@@ -152,6 +152,8 @@ describe("status definitions", () => {
         def.bindingRitualRechargeFaster !== 0 ||
         def.ownSkillModifiers.length > 0 ||
         def.criticalChanceBonus !== 0 ||
+        def.doubleStrikeChanceBonus !== 0 ||
+        def.spellRechargeFasterNearSpirit !== 0 ||
         def.energyPerCritical !== 0 ||
         def.healthPerCritical !== 0 ||
         def.onCriticalHit !== undefined ||

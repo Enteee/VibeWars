@@ -230,6 +230,7 @@ import {
   fireCreationTriggers,
   fireDeathTriggers,
   fireEndTriggers,
+  fireSourceApartTriggers,
   fireSourceTargetsTriggers,
   fireTriggers,
   type AimedAt,
@@ -516,6 +517,13 @@ const WHOLE_SECOND_EPSILON = 1e-6;
  * Guild Lords and guards, never take a summon's place (#1281).
  */
 export const MAX_CREATURES = 32;
+
+/**
+ * A spirit's Energy (#2504), full as it is made: 30, at 4 pips. It casts
+ * nothing, so only what drains it reads it, as Spirit Siphon does.
+ */
+export const SPIRIT_MAX_ENERGY = 30;
+const SPIRIT_ENERGY_PIPS = 4;
 
 /** The most creatures a map places itself (#1281): a map with more is refused at setup. */
 export const MAX_MAP_CREATURES = 24;
@@ -1573,8 +1581,8 @@ export class MatchSimulation {
               ranks.get(SPAWNING_POWER_ATTRIBUTE) ?? 0,
               resolveMagnitudeAtRanks(template.maxHealth, ranks),
             ),
-      maxEnergy: 0,
-      baseEnergyPips: 0,
+      maxEnergy: template.kind === "spirit" ? SPIRIT_MAX_ENERGY : 0,
+      baseEnergyPips: template.kind === "spirit" ? SPIRIT_ENERGY_PIPS : 0,
       behaviour: template.behaviour,
       creature: {
         ownerId,
@@ -2171,6 +2179,29 @@ export class MatchSimulation {
       if (hadEnergy && !record.hadEnergy) {
         this.#fireTriggers(record, "bearer-energy-drops-empty", NONE_SPARED);
       }
+    }
+  }
+
+  /**
+   * Every living bearer whose status's living source stands farther from
+   * it than the status's trigger says answers it (#2504), in participant
+   * order: Scorpion Wire's step and knockdown. A dead or departed source
+   * answers nothing, so the hex just runs out.
+   */
+  #fireSourceApart(): void {
+    for (const record of this.#participants.values()) {
+      if (record.combatant.dead) {
+        continue;
+      }
+      const apart = (sourceId: string, beyond: number): boolean => {
+        const source = this.#participants.get(sourceId);
+        return (
+          source !== undefined &&
+          !source.combatant.dead &&
+          distance(source.position, record.position) > beyond
+        );
+      };
+      this.#logFired(fireSourceApartTriggers(record.combatant, apart, this.#triggerContext()));
     }
   }
 
@@ -3638,6 +3669,7 @@ export class MatchSimulation {
     this.#pulseStatuses();
     this.#settleUpkeep(dt);
     this.#fireEnergyEmpty();
+    this.#fireSourceApart();
     this.#spreadStatuses();
     this.#fireStatusChanges();
     this.#breakBonds();
@@ -4416,12 +4448,19 @@ export class MatchSimulation {
       // enchantment of Avatar of Lyssa's profession (#1455) takes the
       // larger of its share and the spells'. Serpent's Quickness's share
       // (#1539) is any skill's: the larger of it and the type's counts.
+      // Ghostly Haste's (#2504) holds for a spell finished in earshot of a
+      // spirit, read now as the rest are.
       const modifiers = aggregateModifiers(record.combatant.statuses.active);
+      const nearSpiritShare =
+        modifiers.spellRechargeFasterNearSpirit !== 0 &&
+        spiritsWithin(this.#participants.values(), record.position, AREA_EARSHOT) > 0
+          ? modifiers.spellRechargeFasterNearSpirit
+          : 0;
       const enchantmentShares = modifiers.enchantmentRechargeFaster
         .filter(({ profession }) => skill.type === "enchantment" && skill.profession === profession)
         .map(({ share }) => share);
       const typeFaster = isSpell(skill.type)
-        ? Math.max(modifiers.spellRechargeFaster, ...enchantmentShares)
+        ? Math.max(modifiers.spellRechargeFaster, nearSpiritShare, ...enchantmentShares)
         : skill.type === "binding-ritual"
           ? modifiers.bindingRitualRechargeFaster
           : 0;

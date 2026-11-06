@@ -567,6 +567,17 @@ function statusText(
       `+${String(definition.healthPerSecondNearSpirit)} Health per second more in earshot of a spirit`,
     );
   }
+  if (definition.spellRechargeFasterNearSpirit !== 0) {
+    const faster = String(Math.round(definition.spellRechargeFasterNearSpirit * 100));
+    parts.push(`spells cast in earshot of a spirit recharge ${faster}% faster`);
+  }
+  if (definition.doubleStrikeChanceBonus !== 0) {
+    const chance = String(Math.round(definition.doubleStrikeChanceBonus * 100));
+    const weapon = definition.doubleStrikeChanceBonusWeapon;
+    parts.push(
+      `+${chance}% chance to double strike${weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`}`,
+    );
+  }
   if (definition.armorReduction !== undefined) {
     const { amount, floor } = definition.armorReduction;
     parts.push(`−${String(amount)} armor (not below ${String(floor)})`);
@@ -901,14 +912,19 @@ function statusText(
     const chance = statText(definition.criticalChanceBonus, ranks, (bonus) =>
       signed(Math.round(bonus * 100)),
     );
-    // Way of the Assassin's "while wielding daggers" (#2275).
+    // Way of the Assassin's "while wielding daggers" (#2275), Way of the
+    // Master's "while holding a non-dagger weapon" (#2504).
     const weapon = definition.criticalChanceBonusWeapon;
+    const holding =
+      weapon === undefined
+        ? ""
+        : typeof weapon === "string"
+          ? ` while wielding ${NEEDED_WEAPON[weapon]}`
+          : ` while holding a weapon other than ${NEEDED_WEAPON[weapon.not]}`;
     // "Fear Me!"'s "against foes that are not moving" (#2320).
     const versus =
       definition.criticalChanceBonusVersus === undefined ? "" : " against foes that are not moving";
-    parts.push(
-      `${chance}% critical chance${weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`}${versus}`,
-    );
+    parts.push(`${chance}% critical chance${holding}${versus}`);
   }
   if (definition.sourceAttacks !== undefined) {
     parts.push(...sourceAttacksText(definition.sourceAttacks, ranks));
@@ -1714,6 +1730,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-energy-empty": "has no energy left",
   "bearer-energy-drops-empty": "drops to 0 Energy",
   "source-targets-bearer": "is targeted by your skill",
+  "source-bearer-apart": "is far from you",
   "bearer-dies": "dies",
   ends: "ends",
   "ends-early": "ends prematurely",
@@ -1842,6 +1859,7 @@ function describeTriggers(
       trigger.whileUsingSkill,
       trigger.minDamage,
       trigger.healthBelow,
+      trigger.apartBeyond,
       trigger.appliedHex,
       trigger.hitBy,
       trigger.victimHasLessHealth,
@@ -1904,6 +1922,13 @@ function describeTriggers(
       bearerIsFoe,
       bearerIsCaster,
     );
+    // Scorpion Wire's step and knockdown (#2504), said as one.
+    const [lead] = lines;
+    if (on.includes("source-bearer-apart") && lead !== undefined && lines.length > 1) {
+      const head = /^[^:]*: /.exec(lead.text)?.[0] ?? "";
+      const each = lines.map(({ text }) => text.slice(head.length));
+      return [{ text: `${head}${each.join(", and ")}`, clause: lead.clause }];
+    }
     // A heal on the bearer and the same on the allies around (#1951):
     // Mist Form's, said once; Healing Seed's heals its bearer, not you (#2286).
     const [self, splash] = trigger.effects;
@@ -2078,6 +2103,10 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
   // Watchful Intervention's (#1789).
   if (event === "bearer-health-drops-below" && trigger.healthBelow !== undefined) {
     return `has its Health dropped below ${String(Math.round(trigger.healthBelow * 100))}% by damage`;
+  }
+  // Scorpion Wire's (#2504).
+  if (event === "source-bearer-apart" && trigger.apartBeyond !== undefined) {
+    return `is more than ${String(trigger.apartBeyond)} from you`;
   }
   // Way of the Lotus's (#2432).
   if (event === "bearer-hits" && trigger.chainRole !== undefined) {
@@ -3652,6 +3681,13 @@ function countEach(count: CountRule, onTarget: string): string {
   if (count.kind === "energy-gained") {
     return "point of Energy gained";
   }
+  // Second Wind's and Expunge Enchantments' (#2504).
+  if (count.kind === "overcast") {
+    return "point of Energy restricted by Overcast";
+  }
+  if (count.kind === "own-skills-disabled") {
+    return "skill disabled in this way";
+  }
   return count.kind === "statuses"
     ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : onTarget}`
     : count.kind === "recharging-skills"
@@ -3708,6 +3744,12 @@ function countAll(count: CountRule): string {
 function perCountNoun(count: CountRule): string {
   if (count.kind === "energy-gained") {
     return "point of Energy gained";
+  }
+  if (count.kind === "overcast") {
+    return "point of Overcast";
+  }
+  if (count.kind === "own-skills-disabled") {
+    return "skill disabled";
   }
   return count.kind === "statuses"
     ? count.categories.join(" or ")
@@ -4206,6 +4248,14 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         text:
           `Nearest spirit loses ${shown(magnitude)} Health; ` +
           `target ally is healed ${String(effect.healPerPoint)} per point`,
+        magnitude,
+      };
+    }
+    case "drain-nearest-spirit-energy": {
+      // Spirit Siphon's (#2504).
+      const magnitude = describeMagnitude(effect.percent, ranks);
+      return {
+        text: `Nearest spirit loses all Energy; you gain ${shown(magnitude)}% of it`,
         magnitude,
       };
     }
@@ -4749,7 +4799,8 @@ const TYPE_TEXT: Record<SkillType, string> = {
  * skill of the attribute it disables spares itself: "All of your other
  * Healing Prayers" (#1748). "All of your other attack skills" (#1914). "Your
  * enchantment spells and stances" (#1930). "Your non-dagger attack skills" (#2134).
- * "All of your non-attack skills" (#2190).
+ * "All of your non-attack skills" (#2190). "All of your other non-attack
+ * skills" (#2504).
  */
 function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds: string): string {
   const time = `are disabled for ${seconds} seconds`;
@@ -4758,6 +4809,9 @@ function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds
   }
   if (effect.which === "others") {
     return `All of your other skills ${time}`;
+  }
+  if (effect.which === "other-non-attacks") {
+    return `All of your other non-attack skills ${time}`;
   }
   if (effect.which === "attacks") {
     return effect.exceptWeapon === undefined

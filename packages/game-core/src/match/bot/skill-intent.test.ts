@@ -72,6 +72,11 @@ const NO_BOT_USE = new Set([
   // Lively Was Naomei (#2500), the same, a resurrection that waits on
   // its item being dropped.
   "ritualist.lively-was-naomei",
+  // Spirit Siphon and Ghostly Haste (#2504): Energy that waits on a spirit
+  // nearby, and a haste that holds only near one, are nothing the bot
+  // plans for.
+  "ritualist.spirit-siphon",
+  "ritualist.ghostly-haste",
   // Aura of Displacement, Shadow Meld and Shadow of Haste (#1826): a step
   // there and back is nothing the bot plans for yet.
   "assassin.aura-of-displacement",
