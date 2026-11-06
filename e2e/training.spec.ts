@@ -1573,7 +1573,7 @@ for (const viewport of [
   }) => {
     await openTraining(page);
     await castFireballAndLand(page);
-    await releaseControl(page);
+    await releaseByClickAway(page);
     // Each reset adds a divider row: a log far longer than the panel has room for.
     const reset = page.getByRole("button", { name: "reset" });
     for (let i = 0; i < 12; i++) await reset.click();
