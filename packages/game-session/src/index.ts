@@ -123,3 +123,12 @@ export { decideStayTogether } from "./stay-together.js";
 export type { StayTogetherDecision, StayTogetherInput } from "./stay-together.js";
 export { admissionBytes, admissionDigest, partyGroupId } from "./queue-admission.js";
 export type { AdmissionTag, QueuedSeat, VerifyTicketSig } from "./queue-admission.js";
+export {
+  MATCH_RECORD_VERSION,
+  MAX_RECORD_DURATION_SECONDS,
+  MAX_RECORD_TEAM,
+  RECORD_CLOCK_SKEW_SECONDS,
+  recordTemplate,
+  validateMatchRecord,
+} from "./match-record.js";
+export type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "./match-record.js";

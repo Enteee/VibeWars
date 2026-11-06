@@ -331,6 +331,9 @@ describe("an observe said again (#1805)", () => {
       seats: null,
       matchId: TEST_MATCH_ID,
       isSpectator: (peerId) => peerId === "viewer",
+      mode: "random-arena",
+      publishRecord: () => undefined,
+      nowSeconds: () => 0,
     });
     await vi.advanceTimersByTimeAsync(HELLO_RESEND_MS);
     await viewing;

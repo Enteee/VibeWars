@@ -257,3 +257,17 @@ starts again at round 1; so does leaving the queue or the party. A match
 lost to its host leaving keeps your round. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
+
+## Match records
+
+Every match that is played to its end, in any mode and bots included,
+is published by its host as a public match record on the Nostr relays
+the game uses. Anyone can read it, and there is no opting out. A record
+holds the mode, the map, when the match ended and how long it ran, who
+won and why, and each player's in-game name, guild tag and build (its
+GW1 template code: professions, attributes and skill bar, no
+equipment), with bots marked as bots. Your in-game name is in every record of a match
+you play. Nothing else that could identify you is: no address, no peer
+id, no lobby. A match that ends because its host left, or that everyone
+left, is not published. Records are reported by the host, so a host can
+get one wrong; nothing checks them against the match.

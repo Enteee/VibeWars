@@ -1,14 +1,8 @@
-import { PROFESSIONS, decodeTemplate, defaultEquipmentFor } from "@vibewars/game-core";
+import { PROFESSIONS, decodeTemplateCode, defaultEquipmentFor } from "@vibewars/game-core";
 
 import type { ImportResult } from "./build-transfer.js";
 import { validateBuild } from "./build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, isStoredCharacter, type StoredCharacter } from "./schema.js";
-
-/**
- * Importing a GW1 skill template code (#494) as a new character. The
- * code itself is game-core's `decodeTemplate`; this is what the editor
- * adds: a name, the default gear and the build rules.
- */
 
 /**
  * What a decoded code adds to an import: the GW1 skill ids it named that
@@ -19,32 +13,30 @@ export type TemplateImportResult =
   | Extract<ImportResult, { ok: false }>;
 
 /**
- * Read a GW1 template code as a new character. Like a JSON build it is
- * untrusted text, so this never throws: a malformed code is refused with
- * the reason, and a well-formed one is validated as any build is.
+ * Read a GW1 template code (`decodeTemplateCode`) as a new character.
+ * Like a JSON build it is untrusted text, so this never throws: a
+ * malformed code is refused with the reason, and a well-formed one is
+ * validated as any build is.
  *
  * The one exception to "never half-applies": a skill this game does not
  * have becomes an empty slot, and `missingSkills` says which.
  */
-export function importTemplate(text: string, id: string, now: number): TemplateImportResult {
-  const decoded = decodeTemplate(text);
+export function decodeTemplate(text: string, id: string, now: number): TemplateImportResult {
+  const decoded = decodeTemplateCode(text);
   if (!decoded.ok) {
-    return { ok: false, problems: [...decoded.problems] };
+    return { ok: false, problems: decoded.problems };
   }
-  const { primaryProfession, secondaryProfession, attributes, skillBar } = decoded.template;
-  const name = [primaryProfession, secondaryProfession]
+  const { build, missingSkills } = decoded;
+  const name = [build.primaryProfession, build.secondaryProfession]
     .flatMap((profession) => (profession === undefined ? [] : [PROFESSIONS[profession].name]))
     .join("/");
   const character: StoredCharacter = {
     schemaVersion: CHARACTER_SCHEMA_VERSION,
     id,
     name: `${name} build`,
-    primaryProfession,
-    secondaryProfession,
-    attributes: [...attributes],
-    skillBar: [...skillBar],
+    ...build,
     // The format has no equipment: the primary's own, as a new character gets.
-    equipment: defaultEquipmentFor(primaryProfession),
+    equipment: defaultEquipmentFor(build.primaryProfession),
     updatedAt: now,
   };
   const invalid = validateBuild(character);
@@ -54,7 +46,7 @@ export function importTemplate(text: string, id: string, now: number): TemplateI
   if (!isStoredCharacter(character)) {
     return { ok: false, problems: ["Imported build does not match the storage schema."] };
   }
-  return { ok: true, character, missingSkills: decoded.missingSkills };
+  return { ok: true, character, missingSkills };
 }
 
 /**

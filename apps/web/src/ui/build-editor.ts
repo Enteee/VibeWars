@@ -13,7 +13,7 @@ import {
   cumulativeCostForRank,
   defaultBuildEquipment,
   defaultEquipmentFor,
-  encodeTemplate,
+  encodeTemplateCode,
   getAttribute,
   getOffhand,
   getSkill,
@@ -52,7 +52,7 @@ import {
 } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
-import { importTemplate, missingSkillsNote } from "../storage/gw1-template.js";
+import { decodeTemplate, missingSkillsNote } from "../storage/gw1-template.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { noWebGlNotice } from "./arena-notice.js";
 import { characterRanks } from "./character-ranks.js";
@@ -688,7 +688,7 @@ export function loadCode(text: string, id: string, now: number): LoadedCode {
   if (looksLikeBuild(code)) {
     result = importBuild(code, id, now);
   } else if (looksLikeTemplate(code)) {
-    const decoded = importTemplate(code, id, now);
+    const decoded = decodeTemplate(code, id, now);
     result = decoded;
     missing = decoded.ok ? decoded.missingSkills : [];
   } else {
@@ -1268,7 +1268,7 @@ function mountCommandBar(
       }),
       // The same build as a GW1 template code (#494), for GW1's build sites.
       button("Share as GW1 code", "", () => {
-        const encoded = encodeTemplate(context.current());
+        const encoded = encodeTemplateCode(context.current());
         if (encoded.ok) {
           showShare(encoded.code);
         } else {

@@ -14,7 +14,7 @@ import {
   type WeaponId,
   type WeaponSet,
 } from "./equipment/index.js";
-import { decodeTemplate, type GwTemplate } from "./gw1-template.js";
+import { decodeTemplateCode, type TemplateBuild } from "./template-code.js";
 import { PROFESSIONS, primaryAttributeOf } from "./professions.js";
 import { PVX_SOLO, type PvxBuild } from "./pvx-builds.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
@@ -72,7 +72,7 @@ const WEAPON_FOR: Readonly<Record<AttackWeaponClass, WeaponId>> = {
  * of attack on the bar, as a GW1 player swaps to, and the starter
  * builds' armour on the primary's highest attribute.
  */
-function equipmentFor(template: GwTemplate): BuildEquipment {
+function equipmentFor(template: TemplateBuild): BuildEquipment {
   const primary = template.primaryProfession;
   const [first] = defaultEquipmentFor(primary).weaponSets;
   const own = first.mainHand.weaponId;
@@ -124,14 +124,14 @@ export type PvxDecoded =
 
 /** `build` as a legal build named `Gust (E/Me)`, or why it is not one. */
 export function decodePvxBuild(build: PvxBuild): PvxDecoded {
-  const decoded = decodeTemplate(build.code);
+  const decoded = decodeTemplateCode(build.code);
   if (!decoded.ok) {
     return { ok: false, reason: decoded.problems.join(" ") };
   }
   if (decoded.missingSkills.length > 0) {
     return { ok: false, reason: `GW1 skills not in the game: ${decoded.missingSkills.join(", ")}` };
   }
-  const { template } = decoded;
+  const { build: template } = decoded;
   const professions = [template.primaryProfession, template.secondaryProfession]
     .flatMap((profession) =>
       profession === undefined ? [] : [PROFESSIONS[profession].abbreviation],

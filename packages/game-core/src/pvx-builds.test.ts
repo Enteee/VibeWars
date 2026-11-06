@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { validatePlayerBuild } from "./build.js";
-import { decodeTemplate, encodeTemplate } from "./gw1-template.js";
+import { decodeTemplateCode, encodeTemplateCode } from "./template-code.js";
 import { PVX_SKIPPED, PVX_SOLO } from "./pvx-builds.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
 import {
@@ -63,12 +63,12 @@ describe("the PvX solo builds (#2554)", () => {
   it.each(PVX_SOLO.filter((pvx) => !(pvxKey(pvx) in PVX_SKIPPED)).map((pvx) => [pvxKey(pvx), pvx]))(
     "%s round-trips through the encoder",
     (_, pvx) => {
-      const decoded = decodeTemplate(pvx.code);
+      const decoded = decodeTemplateCode(pvx.code);
       if (!decoded.ok) throw new Error(decoded.problems.join(" "));
-      const encoded = encodeTemplate(decoded.template);
+      const encoded = encodeTemplateCode(decoded.build);
       if (!encoded.ok) throw new Error(encoded.problem);
-      const again = decodeTemplate(encoded.code);
-      expect(again.ok && again.template).toEqual(decoded.template);
+      const again = decodeTemplateCode(encoded.code);
+      expect(again.ok && again.build).toEqual(decoded.build);
     },
   );
 

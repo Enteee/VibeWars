@@ -189,6 +189,8 @@ export interface LobbyMatchmakingOptions {
 export interface MatchPlan {
   readonly matchId: string;
   readonly mapId: string;
+  /** What the lobby is for, as the match began: its record's mode (#2528). */
+  readonly mode: LobbyMode;
   /** Every member on a team, by peer id; spectators are not in it. */
   readonly seats: PlannedSeats;
   /** Whether `peerId` is a member on no team, now (#480): who may watch the match. */
@@ -757,6 +759,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         host: startMatch({
           matchId: id,
           mapId,
+          mode,
           seats,
           isSpectator: (peerId) => peerMember(peerId)?.team === null,
           transport: room,

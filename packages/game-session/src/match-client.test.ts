@@ -681,6 +681,9 @@ describe("connectMatch, before the host's match listens (#1805)", () => {
       seats: null,
       matchId: TEST_MATCH_ID,
       isSpectator: () => false,
+      mode: "random-arena",
+      publishRecord: () => undefined,
+      nowSeconds: () => 0,
     });
   }
 

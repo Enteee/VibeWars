@@ -57,6 +57,7 @@ import {
   joinHostRoom,
   joinQueueBoard,
   joinRoom,
+  publishRecord,
   roomSelfId,
   shareLobbyRelay,
 } from "./transport/index.js";
@@ -214,6 +215,17 @@ function startMatch(plan: MatchPlan) {
     seats: plan.seats,
     matchId: plan.matchId,
     isSpectator: plan.isSpectator,
+    mode: plan.mode,
+    // Called mid-tick, before the observers hear "ended": a throw here
+    // must not cost them the end of the match.
+    publishRecord: (record) => {
+      try {
+        publishRecord(record);
+      } catch (error) {
+        console.warn("[web] could not publish the match record", error);
+      }
+    },
+    nowSeconds: () => Date.now() / 1000,
   });
 }
 

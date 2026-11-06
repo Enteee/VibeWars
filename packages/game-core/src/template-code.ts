@@ -1,5 +1,5 @@
 import type { AttributeAllocation } from "./attributes.js";
-import { SKILL_BAR_SLOTS, type SkillBar } from "./build.js";
+import { SKILL_BAR_SLOTS, type PlayerBuild } from "./build.js";
 import type { ProfessionId } from "./professions.js";
 import { IMPLEMENTED_SKILLS, getSkill } from "./skills/catalog.js";
 import type { Skill } from "./skills/types.js";
@@ -86,16 +86,11 @@ const professionOfGw = new Map(
   Object.entries(PROFESSION_IDS).map(([id, gw]) => [gw, id as ProfessionId]),
 );
 const attributeOfGw = new Map(Object.entries(ATTRIBUTE_IDS).map(([id, gw]) => [gw, id]));
-const SKILL_OF_GW = new Map(
+const skillOfGw = new Map(
   IMPLEMENTED_SKILLS.flatMap((skill): [number, Skill][] =>
     skill.gwId === undefined ? [] : [[skill.gwId, skill]],
   ),
 );
-
-/** The skill GW1 calls `gwId`, if this game has it. */
-export function skillOfGw(gwId: number): Skill | undefined {
-  return SKILL_OF_GW.get(gwId);
-}
 
 const NOT_A_TEMPLATE = "This is not a GW1 skill template.";
 const CUT_SHORT = "This GW1 code is cut short.";
@@ -140,7 +135,7 @@ class BitWriter {
   }
 }
 
-/** Thrown, and caught in `decodeTemplate`, when a field runs past the end. */
+/** Thrown, and caught in `decodeTemplateCode`, when a field runs past the end. */
 class CutShort extends Error {}
 
 class BitReader {
@@ -164,26 +159,23 @@ class BitReader {
   }
 }
 
-/** What a template code holds: professions, bought ranks and the bar. */
-export interface GwTemplate {
-  readonly primaryProfession: ProfessionId;
-  readonly secondaryProfession: ProfessionId | undefined;
-  readonly attributes: readonly AttributeAllocation[];
-  /** Always `SKILL_BAR_SLOTS` long; a skill this game lacks is `null`. */
-  readonly skillBar: SkillBar;
-}
-
 export type EncodeResult =
   { readonly ok: true; readonly code: string } | { readonly ok: false; readonly problem: string };
 
+/** What a template code holds of a build: no name, no equipment. */
+export type TemplateBuild = Pick<
+  PlayerBuild,
+  "primaryProfession" | "secondaryProfession" | "attributes" | "skillBar"
+>;
+
 /**
- * `character` as a GW1 template code: professions, the ranks bought
- * (never rune or headgear bonuses, which are equipment) and the bar.
- * A skill GW1 does not have makes a code impossible.
+ * `build` as a GW1 template code: professions, the ranks bought (never
+ * rune or headgear bonuses, which are equipment) and the bar. A skill
+ * GW1 does not have makes a code impossible.
  */
-export function encodeTemplate(character: GwTemplate): EncodeResult {
+export function encodeTemplateCode(build: TemplateBuild): EncodeResult {
   const skillIds: number[] = [];
-  for (const id of character.skillBar) {
+  for (const id of build.skillBar) {
     if (id === null) {
       skillIds.push(0);
       continue;
@@ -195,7 +187,7 @@ export function encodeTemplate(character: GwTemplate): EncodeResult {
     }
     skillIds.push(skill.gwId);
   }
-  const attributes = character.attributes.flatMap((attribute) => {
+  const attributes = build.attributes.flatMap((attribute) => {
     const gw = ATTRIBUTE_IDS[attribute.attributeId];
     return attribute.rank > 0 && gw !== undefined ? [{ gw, rank: attribute.rank }] : [];
   });
@@ -205,9 +197,9 @@ export function encodeTemplate(character: GwTemplate): EncodeResult {
   writer.write(TEMPLATE_VERSION, 4);
   writer.write(0, 2);
   const professionWidth = 4;
-  writer.write(PROFESSION_IDS[character.primaryProfession], professionWidth);
+  writer.write(PROFESSION_IDS[build.primaryProfession], professionWidth);
   writer.write(
-    character.secondaryProfession === undefined ? 0 : PROFESSION_IDS[character.secondaryProfession],
+    build.secondaryProfession === undefined ? 0 : PROFESSION_IDS[build.secondaryProfession],
     professionWidth,
   );
   writer.write(attributes.length, 4);
@@ -225,24 +217,21 @@ export function encodeTemplate(character: GwTemplate): EncodeResult {
   return { ok: true, code: writer.toString() };
 }
 
-/**
- * What a decoded code adds to an import: the GW1 skill ids it named that
- * this game does not have, each now an empty slot (#494).
-
-/**
- * A decoded code, and the GW1 skill ids it named that this game does not
- * have, each now an empty slot (#494).
- */
 export type DecodeResult =
-  | { readonly ok: true; readonly template: GwTemplate; readonly missingSkills: readonly number[] }
+  | {
+      readonly ok: true;
+      readonly build: TemplateBuild;
+      /** The GW1 skill ids it named that this game does not have, each now an empty slot. */
+      readonly missingSkills: readonly number[];
+    }
   | { readonly ok: false; readonly problems: readonly string[] };
 
 /**
  * Read a GW1 template code. It is untrusted text, so this never throws:
- * a malformed code is refused with the reason. Whether the build it
- * holds is legal is the caller's question, not the format's.
+ * a malformed code is refused with the reason. The build is not
+ * validated: that is the caller's, with whatever it adds.
  */
-export function decodeTemplate(text: string): DecodeResult {
+export function decodeTemplateCode(text: string): DecodeResult {
   const code = stripped(text);
   const bits: number[] = [];
   for (const char of code) {
@@ -306,7 +295,7 @@ function readTemplate(reader: BitReader): DecodeResult {
   const missingSkills: number[] = [];
   for (let slot = 0; slot < SKILL_BAR_SLOTS; slot += 1) {
     const gw = reader.read(skillWidth);
-    const skill = gw === 0 ? undefined : SKILL_OF_GW.get(gw);
+    const skill = gw === 0 ? undefined : skillOfGw.get(gw);
     if (gw !== 0 && skill === undefined) {
       missingSkills.push(gw);
     }
@@ -319,7 +308,7 @@ function readTemplate(reader: BitReader): DecodeResult {
   }
   return {
     ok: true,
-    template: { primaryProfession: primary, secondaryProfession: secondary, attributes, skillBar },
+    build: { primaryProfession: primary, secondaryProfession: secondary, attributes, skillBar },
     missingSkills,
   };
 }

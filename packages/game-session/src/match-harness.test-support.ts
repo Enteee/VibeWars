@@ -34,6 +34,7 @@ import {
   type MatchHost,
   type PlannedSeats,
 } from "./match-host.js";
+import type { MatchRecord } from "./match-record.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import { rejoinProof } from "./rejoin-proof.js";
 import type { Transport } from "./transport.js";
@@ -181,6 +182,9 @@ export interface TestMatch {
   joinLocal(peerHello?: PeerHello): Promise<PeerMatchConnection>;
 }
 
+/** The harness's wall clock, unix seconds: what a record's `endedAt` reads. */
+export const TEST_NOW_SECONDS = 1_800_000_000;
+
 export function startMatch(
   options: {
     map?: HostMap;
@@ -190,6 +194,8 @@ export function startMatch(
     seats?: PlannedSeats;
     /** The peers the lobby has on no team, who may watch (#480). */
     spectators?: readonly string[];
+    /** Where the finished match's record goes (#2528). */
+    publishRecord?: (record: MatchRecord) => void;
   } = {},
 ): TestMatch {
   const network = createMemoryNetwork();
@@ -207,6 +213,9 @@ export function startMatch(
     seats: options.seats ?? null,
     matchId: TEST_MATCH_ID,
     isSpectator: (peerId) => options.spectators?.includes(peerId) ?? false,
+    mode: "random-arena",
+    publishRecord: options.publishRecord ?? (() => undefined),
+    nowSeconds: () => TEST_NOW_SECONDS,
   });
   return {
     network,
