@@ -44,7 +44,7 @@ function skill(id: string): Skill {
 
 describe("the two are the corpus's (#2472)", () => {
   it.each([
-    [IW, 3181, "enchantment", true, "mesmer.illusion-magic", 5, 1, 10, "self"],
+    [IW, 33, "enchantment", true, "mesmer.illusion-magic", 5, 1, 10, "self"],
     [ANEURYSM, 2055, "spell", false, "mesmer.domination-magic", 5, 1, 5, "single-enemy"],
   ] as const)(
     "%s: gwId %i, %s, elite %s, %s, %i energy, %d s, %i s recharge",

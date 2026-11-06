@@ -4965,7 +4965,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.illusionary-weaponry",
     name: "Illusionary Weaponry",
-    gwId: 3181,
+    gwId: 33,
     type: "enchantment",
     elite: true,
     flash: false,
