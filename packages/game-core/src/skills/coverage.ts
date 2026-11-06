@@ -72,30 +72,15 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     1091: ["unwritten"], // Double Dragon
     1093: ["unwritten"], // Teinai's Heat
     1119: ["unwritten"], // Karei's Healing Circle
-    1133: ["unwritten"], // Drunken Blow
-    1137: ["unwritten"], // Yeti Smash
-    1222: ["unwritten"], // Lively Was Naomei
     1228: ["nearest-spirit-energy-drain"], // Spirit Siphon
     1244: ["while-near-spirit"], // Ghostly Haste
     1372: ["unwritten"], // Sandstorm
     1391: ["unwritten"], // Supportive Spirit
     1658: ["unwritten"], // Symbolic Posture
-    1731: ["unwritten"], // Vocal Was Sogolon
-    1737: ["unwritten"], // Wielder's Zeal
-    1738: ["unwritten"], // Sight Beyond Sight
-    1740: ["unwritten"], // Wielder's Remedy
-    1744: ["unwritten"], // Caretaker's Charge
     1760: ["weapon-element"], // Ebon Dust Aura
-    1764: ["unwritten"], // Attacker's Insight
-    2011: ["unwritten"], // Grapple
     2060: ["unwritten"], // Glyph of Immolation
-    2067: ["unwritten"], // "I Meant to Do That!"
     2187: ["weapon-filter-negation"], // Way of the Master
     2189: ["unwritten"], // Angorodon's Gaze
-    2194: ["unwritten"], // Distracting Strike
-    2195: ["unwritten"], // Symbolic Strike
-    2201: ["unwritten"], // Shield of Force
-    2208: ["unwritten"], // Burning Shield
   });
 
 /** A corpus skill as coverage needs it: its GW1 id and name. */

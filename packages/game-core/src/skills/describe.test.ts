@@ -662,7 +662,12 @@ describe("describeSkill", () => {
           ((rule?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(rule?.onBlocked ?? []) +
           lines(rule?.onCritical ?? []) +
-          lines(rule?.onFailedToHit ?? []) +
+          // One also on a hit is said once, "hit or miss" (#2500).
+          lines(
+            (rule?.onFailedToHit ?? []).filter((effect) =>
+              entry.effects.every((each) => JSON.stringify(each) !== JSON.stringify(effect)),
+            ),
+          ) +
           (rule?.flightSpeed === undefined ? 0 : 1) +
           (rule?.removesPreparations === true ? 1 : 0) +
           lines(rule?.onRelease ?? []) +
@@ -1628,8 +1633,8 @@ describe("Elementalist auras (#2095)", () => {
 
   it("says what each blocks, who the Overcast reaches and what strikes back, at rank 12", () => {
     expect(texts("elementalist.magnetic-aura")).toEqual([
-      "Applies Magnetic Aura for 7s (100% chance to block attacks, the next time it blocks, the foe who dealt it takes 42 damage)",
-      "If you are Overcast: party members in earshot gain Magnetic Aura for 7s (100% chance to block attacks, the next time it blocks, the foe who dealt it takes 42 damage)",
+      "Applies Magnetic Aura for 7s (blocks the next attack, the next time it blocks, the foe who dealt it takes 42 damage)",
+      "If you are Overcast: party members in earshot gain Magnetic Aura for 7s (blocks the next attack, the next time it blocks, the foe who dealt it takes 42 damage)",
     ]);
     expect(texts("elementalist.swirling-aura")).toEqual([
       "Applies Swirling Aura for 6s (+5 Health regeneration, 50% chance to block projectiles)",

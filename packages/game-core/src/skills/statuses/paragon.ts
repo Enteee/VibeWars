@@ -66,6 +66,8 @@ export type ParagonStatusId =
   | "find-their-weakness"
   // Mechanics (#2479).
   | "we-shall-return"
+  // Unwritten corpus skills (#2500).
+  | "burning-shield"
   // Mechanics (#2503).
   | "angelic-protection";
 
@@ -603,6 +605,39 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
       healthPercent: { scaling: { attributeId: "paragon.command", atZero: 10, atTwelve: 62 } },
       energyPercent: { scaling: { attributeId: "paragon.command", atZero: 5, atTwelve: 41 } },
     },
+  }),
+  // "The next attack skill used against you is blocked. If it was a melee
+  // attack, your attacker is set on fire for 1...6 seconds" (#2500): 5 s
+  // at rank 12. A plain swing or arrow passes it by; a blocked attack
+  // skill ends it, a shot with no fire.
+  "burning-shield": define("burning-shield", "Burning Shield", "skill-effect", {
+    profession: "paragon",
+    block: { chance: 1, against: "all", attackSkillsOnly: true },
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-blocks",
+        blocked: "melee",
+        target: "offender",
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "burning",
+            durationSeconds: {
+              scaling: { attributeId: "paragon.leadership", atZero: 1, atTwelve: 5 },
+            },
+          },
+        ],
+        skillId: "paragon.burning-shield",
+      },
+      {
+        on: "bearer-blocks",
+        blocked: "projectile",
+        target: "bearer",
+        effects: [],
+        skillId: "paragon.burning-shield",
+      },
+    ],
   }),
   // "any time target other ally takes more than 250...80 damage per
   // second, that ally is healed for any damage over that amount" (#2503).
