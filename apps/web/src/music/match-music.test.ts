@@ -7,7 +7,16 @@ import type {
 import { describe, expect, it } from "vitest";
 
 import { directMusic, type MusicMode, type MusicState, type TrackChoice } from "./director.js";
-import { DIRECT_INTERVAL_MS, ENGAGE_RANGE, attachMatchMusic } from "./match-music.js";
+import {
+  DIRECT_INTERVAL_MS,
+  ENGAGE_RANGE,
+  FRESH_STINGS,
+  RESURRECTED_STING_MS,
+  attachMatchMusic,
+  stingsFor,
+  type StingMemory,
+} from "./match-music.js";
+import type { StingId } from "./stings/ids.js";
 
 const ME = "me";
 
@@ -120,17 +129,29 @@ function setup(
     },
   } as unknown as MatchConnection;
   const changes: MusicState[] = [];
+  const stings: StingId[] = [];
+  /** Changes and stings, in the order they came. */
+  const heard: string[] = [];
   const music = attachMatchMusic(connection, {
     screen,
     menuDepth: screen === "training" ? 1 : null,
     mode: () => mode,
     tracks: TRACKS,
-    onChange: (state) => changes.push(state),
+    onChange: (state) => {
+      changes.push(state);
+      heard.push(state.trackId ?? "silence");
+    },
+    onSting: (id) => {
+      stings.push(id);
+      heard.push(`sting ${id}`);
+    },
     now: () => clock,
   });
   return {
     music,
     changes,
+    stings,
+    heard,
     combat: (m: CombatMessage) => combat(m),
     /** Moves the clock on, then feeds `next`. */
     at: (ms: number, next: MatchSnapshot = snapshot()) => {
@@ -280,5 +301,138 @@ describe("attachMatchMusic", () => {
     music.dispose();
     at(DIRECT_INTERVAL_MS, snapshot({ allyHealth: 10 }));
     expect(changes).toHaveLength(1);
+  });
+});
+
+/** A combat message carrying `events`, from nobody in particular. */
+function combatOf(...events: CombatMessage["events"]): CombatMessage {
+  return { ...hit("foe", ME), events };
+}
+
+const death = (targetId: string): CombatMessage["events"][number] => ({ kind: "death", targetId });
+const resurrected = (targetId: string): CombatMessage["events"][number] => ({
+  kind: "resurrected",
+  targetId,
+  healthFraction: 0.5,
+  energyFraction: 0.5,
+});
+
+/** A match already under way, nobody dead yet. */
+const UNDER_WAY: StingMemory = { ...FRESH_STINGS, phase: "active" };
+
+describe("stingsFor (#2523)", () => {
+  const called = (
+    prev: StingMemory,
+    next: MatchSnapshot,
+    events: CombatMessage["events"] = [],
+    selfTeam: number | null = 0,
+    nowMs = 0,
+  ): StingId[] => stingsFor(prev, next, events, selfTeam, nowMs).stings;
+
+  it("starts the match on its first active snapshot, and only then", () => {
+    expect(called(FRESH_STINGS, snapshot())).toEqual(["match-start"]);
+    expect(called(UNDER_WAY, snapshot())).toEqual([]);
+    expect(called(FRESH_STINGS, snapshot({ finished: 0 }))).toEqual([]);
+  });
+
+  it("draws first blood on the first death of either team, once", () => {
+    const first = stingsFor(UNDER_WAY, snapshot(), [death("foe")], 0, 0);
+    expect(first.stings).toEqual(["first-blood"]);
+    expect(called(first.memory, snapshot(), [death(ME)])).toEqual([]);
+    expect(called(UNDER_WAY, snapshot(), [death(ME)])).toEqual(["first-blood"]);
+  });
+
+  it("draws no first blood from a creature", () => {
+    const withMinion = {
+      ...snapshot(),
+      players: [
+        ...snapshot().players,
+        player("minion", {
+          creature: {
+            ownerId: ME,
+            kind: "minion",
+            look: "bone-minion",
+            mode: null,
+            armedAttack: null,
+            leaderId: null,
+          },
+        }),
+      ],
+    };
+    expect(called(UNDER_WAY, withMinion, [death("minion")])).toEqual([]);
+  });
+
+  it("raises your team's dead, at most once every 8 s, and never a foe's", () => {
+    const raised = stingsFor(UNDER_WAY, snapshot(), [resurrected("ally")], 0, 1_000);
+    expect(raised.stings).toEqual(["resurrected"]);
+    expect(
+      called(raised.memory, snapshot(), [resurrected(ME)], 0, 1_000 + RESURRECTED_STING_MS - 1),
+    ).toEqual([]);
+    expect(
+      called(raised.memory, snapshot(), [resurrected(ME)], 0, 1_000 + RESURRECTED_STING_MS),
+    ).toEqual(["resurrected"]);
+    expect(called(UNDER_WAY, snapshot(), [resurrected("foe")])).toEqual([]);
+  });
+
+  it("ends in victory or defeat, and a draw in neither", () => {
+    expect(called(UNDER_WAY, snapshot({ finished: 0 }))).toEqual(["victory"]);
+    expect(called(UNDER_WAY, snapshot({ finished: 1 }))).toEqual(["defeat"]);
+    expect(called(UNDER_WAY, { ...snapshot(), phase: "finished", winningTeam: undefined })).toEqual(
+      [],
+    );
+    expect(called({ ...UNDER_WAY, phase: "finished" }, snapshot({ finished: 0 }))).toEqual([]);
+  });
+
+  it("plays a watcher no side's stings", () => {
+    expect(called(UNDER_WAY, snapshot(), [resurrected("ally")], null)).toEqual([]);
+    expect(called(UNDER_WAY, snapshot({ finished: 0 }), [], null)).toEqual([]);
+    expect(called(UNDER_WAY, snapshot(), [death("foe")], null)).toEqual(["first-blood"]);
+  });
+
+  it("ranks them match-start, first-blood, resurrected, then the result: the last plays", () => {
+    expect(called(UNDER_WAY, snapshot({ finished: 1 }), [death(ME), resurrected("ally")])).toEqual([
+      "first-blood",
+      "resurrected",
+      "defeat",
+    ]);
+  });
+});
+
+describe("attachMatchMusic's stings (#2523)", () => {
+  it("plays each on its frame, after the track it lands on, even between the director's turns", () => {
+    const { heard, at } = setup();
+    at(0);
+    at(16, snapshot({ finished: 0 }));
+    expect(heard).toEqual([
+      "hall-of-champions",
+      "sting match-start",
+      "victors-hymn",
+      "sting victory",
+    ]);
+  });
+
+  it("plays only the last of a frame's stings", () => {
+    const { stings, at, combat } = setup();
+    at(0);
+    combat(combatOf(death("foe")));
+    at(16, snapshot({ finished: 0 }));
+    expect(stings).toEqual(["match-start", "victory"]);
+  });
+
+  it("hears the combat since the last snapshot once", () => {
+    const { stings, at, combat } = setup();
+    at(0);
+    combat(combatOf(resurrected("ally")));
+    at(16);
+    at(RESURRECTED_STING_MS);
+    expect(stings).toEqual(["match-start", "resurrected"]);
+  });
+
+  it("plays none in the Training Ground", () => {
+    const { stings, at, combat } = setup("training");
+    at(0);
+    combat(combatOf(death("foe")));
+    at(DIRECT_INTERVAL_MS, snapshot({ finished: 0 }));
+    expect(stings).toEqual([]);
   });
 });

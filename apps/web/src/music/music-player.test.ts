@@ -114,6 +114,19 @@ describe("createMusicPlayer", () => {
     expect(frames[0]?.sent.at(-1)).toEqual({ type: "stop" });
   });
 
+  it("never queues a sting: one before the host is up is gone (#2523)", () => {
+    const sting = { source: 'n("0").scale(KEY)', key: "D aeolian", cycles: 1 };
+    const { player, frames, click } = setup();
+    player.sting({ ...sting, id: "first-blood" });
+    click();
+    player.sting({ ...sting, id: "first-blood" });
+    frames[0]?.receive({ type: "ready" });
+    expect(frames[0]?.sent.map((message) => message.type)).not.toContain("sting");
+
+    player.sting({ ...sting, id: "victory" });
+    expect(frames[0]?.sent.at(-1)).toEqual({ type: "sting", ...sting, id: "victory" });
+  });
+
   it("reports what the host says is playing, and its errors", () => {
     const { player, frames } = opened();
     const playing: string[] = [];
