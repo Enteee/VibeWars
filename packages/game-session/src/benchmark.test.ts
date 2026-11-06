@@ -106,6 +106,9 @@ async function runScenario(scenario: Scenario): Promise<Result> {
     seats,
     matchId: "bench",
     isSpectator: () => false,
+    mode: "random-arena",
+    publishRecord: () => undefined,
+    nowSeconds: () => 0,
   });
   const connections: PeerMatchConnection[] = [];
   for (const peerId of seats.keys()) {

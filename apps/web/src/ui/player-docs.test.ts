@@ -36,6 +36,10 @@ describe("docs/player (#1257)", () => {
     expect(PLAYER_DOC_PAGES.map((page) => `${page.id}.md`)).toEqual(listed);
   });
 
+  it("has no page `licences`: Help draws that page itself (#2559)", () => {
+    expect(PLAYER_DOC_PAGES.map((page) => page.id)).not.toContain("licences");
+  });
+
   it("starts with Getting started", () => {
     expect(PLAYER_DOC_PAGES[0]?.id).toBe("getting-started");
     expect(PLAYER_DOC_PAGES[0]?.title).toBe("Getting started");

@@ -1018,6 +1018,8 @@ async function main(): Promise<void> {
   const followTo = (move: HostMove, name: string): void => {
     const turn = joinTurns.take();
     following = move.code;
+    // A new host cannot vouch for the old one's Heroes' Ascent run (#2539).
+    ascentRound = 0;
     setRailParty(undefined);
     topbarView.setParty(undefined);
     topbarView.setLobby({ code: move.code, isHost: false, open: false, party: 0, joining: true });

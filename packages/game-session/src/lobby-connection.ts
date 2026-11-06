@@ -5,8 +5,10 @@ import type {
   LobbyPhase,
   LobbyRefusal,
   LobbyTeamSize,
+  WireAscentLock,
   WirePartyFormed,
   WireProposalBuild,
+  PeerRelayAdmit,
   WireRelayLogin,
   WireTeamLobby,
 } from "@vibewars/game-protocol";
@@ -74,6 +76,8 @@ export interface LobbySnapshot {
   readonly queueNonce: string | null;
   /** While `phase` is `"queued"` in Heroes' Ascent (#1996), the party's round; `null` otherwise. */
   readonly ascentRound: number | null;
+  /** A Heroes' Ascent run's slots, once its party queued (#2539); `null` otherwise. */
+  readonly ascentLock: WireAscentLock | null;
 }
 
 /** A seat of a party's team plan as its host sends it (ADR-0042): its human's member key, `null` for a bot. */
@@ -182,6 +186,13 @@ export interface LobbyConnection {
    * A handler added after one came is called with the last at once.
    */
   onRelayLogin(handler: (relay: WireRelayLogin | null) => void): void;
+  /**
+   * The host admitted a joiner's relay ask (#2527): a member holding a
+   * relay may mint it a login and seal it to `pub`. From the host alone.
+   */
+  onRelayAdmit(handler: (admit: PeerRelayAdmit) => void): () => void;
+  /** Tell the host whether this member holds a relay it shares now (#2527). */
+  setRelayHolding(on: boolean): void;
   /**
    * After a queued match this player's side won (#882): stay together as
    * a party with `key`, fresh, which signs its consent to the party
