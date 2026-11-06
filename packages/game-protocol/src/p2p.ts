@@ -1130,6 +1130,20 @@ export interface WireLobbyState {
    * `null` otherwise.
    */
   readonly ascentRound: number | null;
+  /**
+   * While a Heroes' Ascent run is locked (#2539), from its first win on:
+   * the slots its Team Build keeps, and who holds each. `null` otherwise.
+   */
+  readonly ascentLock: WireAscentLock | null;
+}
+
+/**
+ * A Heroes' Ascent run's lock (#2539): the slots of the Team Build its
+ * first map voted in, each with its member's id, `null` for one vacant.
+ * A vacant slot is the one thing an unseated member may claim.
+ */
+export interface WireAscentLock {
+  readonly slots: readonly { readonly slot: number; readonly claimedBy: string | null }[];
 }
 
 /**
@@ -1286,6 +1300,9 @@ export const LOBBY_REFUSALS = [
   "invalid-slot",
   // A coded lobby its host has closed (#1682), told only after the key proof.
   "closed",
+  // A Heroes' Ascent run's locked Team Build (#2539): no proposal, vote or
+  // side, and a claim only of a vacant slot by a member who holds none.
+  "ascent-locked",
 ] as const;
 
 export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
@@ -2703,6 +2720,22 @@ function parseTeamSide(value: unknown): WireTeamSide | null | undefined {
     : { size: raw.size, captainId: raw.captainId, proposals, chosen, claims };
 }
 
+function parseAscentLock(value: unknown): WireAscentLock | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  const slots = parseArray(fields(value)?.slots, MAX_TEAM_LOBBY_SIDE, (item) => {
+    const raw = fields(item);
+    return raw !== undefined &&
+      isCount(raw.slot) &&
+      raw.slot < MAX_TEAM_LOBBY_SIDE &&
+      isNullableString(raw.claimedBy)
+      ? { slot: raw.slot, claimedBy: raw.claimedBy }
+      : undefined;
+  });
+  return slots === undefined ? undefined : { slots };
+}
+
 function parseTeamLobby(value: unknown): WireTeamLobby | null | undefined {
   if (value === null) {
     return null;
@@ -2724,9 +2757,11 @@ function parseTeamLobby(value: unknown): WireTeamLobby | null | undefined {
 export function parseWireLobbyState(value: unknown): WireLobbyState | undefined {
   const raw = fields(value);
   const teamLobby = parseTeamLobby(raw?.teamLobby);
+  const ascentLock = parseAscentLock(raw?.ascentLock);
   if (
     raw === undefined ||
     teamLobby === undefined ||
+    ascentLock === undefined ||
     !isString(raw.code) ||
     !isOneOf(raw.phase, ["waiting", "team-lobby", "queued", "starting", "in-match"] as const) ||
     !(raw.queueNonce === null || isTicketId(raw.queueNonce)) ||
@@ -2758,6 +2793,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         teamLobby,
         queueNonce: raw.queueNonce,
         ascentRound: raw.ascentRound,
+        ascentLock,
       };
 }
 

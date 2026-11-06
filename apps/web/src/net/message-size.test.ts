@@ -500,6 +500,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       // The longest a nonce is (#1766).
       queueNonce: "f".repeat(64),
       ascentRound: 3,
+      ascentLock: null,
     };
     expect(messageBytes(state)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
@@ -514,7 +515,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     expect(messageBytes(propose)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
-  it("a Team Lobby state, either stage: every seat taken, a full side, each of its humans proposing (#1458)", () => {
+  it("a Team Lobby state, either stage: every seat taken, a full side, each of its humans proposing (#1458, #2539)", () => {
     const professions = Object.keys(PROFESSIONS);
     const profession = longest(professions);
     const id = (i: number) => `${PEER_ID}${String(i)}`;
@@ -568,6 +569,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       teamLobby: null,
       queueNonce: null,
       ascentRound: null,
+      ascentLock: null,
     };
     // The vote has proposals and no choice yet; the claim the choice and its claims.
     const vote = {
@@ -581,7 +583,16 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       sides: [{ ...side, proposals: [] }, null],
     } as const;
     expect(messageBytes({ ...state, teamLobby: vote })).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
-    expect(messageBytes({ ...state, teamLobby: claim })).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+    // A Heroes' Ascent run's claim after a win (#2539) carries its lock too.
+    const ascentLock = {
+      slots: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, (_, slot) => ({
+        slot,
+        claimedBy: id(slot),
+      })),
+    };
+    expect(messageBytes({ ...state, teamLobby: claim, ascentLock })).toBeLessThanOrEqual(
+      MAX_MESSAGE_BYTES,
+    );
   });
 
   it("a chat line on its way to the host: the longest wire text, each unit a JSON-escaped control (#479)", () => {

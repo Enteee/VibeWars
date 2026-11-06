@@ -5466,6 +5466,7 @@
     },
     "LobbyRefusal": {
       "union": [
+        { "literal": "ascent-locked" },
         { "literal": "closed" },
         { "literal": "fell-through" },
         { "literal": "host-left" },
@@ -6137,6 +6138,22 @@
       "properties": [
         { "name": "endsAt", "optional": false, "type": "number" },
         { "name": "skillId", "optional": false, "type": "string" }
+      ]
+    },
+    "WireAscentLock": {
+      "properties": [
+        {
+          "name": "slots",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "claimedBy", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "slot", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        }
       ]
     },
     "WireCalls": {
@@ -6846,6 +6863,35 @@
     },
     "WireLobbyState": {
       "properties": [
+        {
+          "name": "ascentLock",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  {
+                    "name": "slots",
+                    "optional": false,
+                    "type": {
+                      "array": {
+                        "properties": [
+                          {
+                            "name": "claimedBy",
+                            "optional": false,
+                            "type": { "union": ["null", "string"] }
+                          },
+                          { "name": "slot", "optional": false, "type": "number" }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
         { "name": "ascentRound", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "code", "optional": false, "type": "string" },
         { "name": "countdownSeconds", "optional": false, "type": { "union": ["null", "number"] } },

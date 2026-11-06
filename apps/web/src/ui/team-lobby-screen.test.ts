@@ -8,6 +8,7 @@ import { defaultBuildEquipment, STARTER_TEAMS } from "@vibewars/game-core";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ASCENT_LOCKED_MESSAGE } from "../net/session.js";
 import type { StoredCharacter, StoredTeam, TeamBuildSize } from "../storage/schema.js";
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
@@ -226,6 +227,7 @@ function lobby(
     countdownSeconds: null,
     queueNonce: null,
     ascentRound: null,
+    ascentLock: null,
     proposalBuilds,
     teamLobby: {
       stage,
@@ -783,6 +785,46 @@ describe("the Team Lobby's body (#1460)", () => {
       { kind: "claim", value: null },
       { kind: "claim", value: 2 },
     ]);
+  });
+
+  it("keeps a won Heroes' Ascent run's seats, a vacant one open to a newcomer alone (#2539)", () => {
+    // Aria and Brann hold their seats; Elementalist's left, Ranger's was a bot's.
+    const ascentLock = {
+      slots: [
+        { slot: 0, claimedBy: "aria" },
+        { slot: 1, claimedBy: "brann" },
+        { slot: 2, claimedBy: null },
+        { slot: 3, claimedBy: null },
+      ],
+    };
+    const locked = (self: string, claims: readonly (string | null)[]) =>
+      body({ ...lobby(self, "claim", claimSide(claims)), ascentLock });
+    const newcomer = locked("cass", ["aria", "brann", null, null]);
+    const seats = newcomer.all("team-lobby-seat");
+    expect(seats.map((seat) => seat.attributes.get("aria-label"))).toEqual([
+      "Warrior: Aria",
+      "Monk: Brann",
+      "Elementalist: Open: Elementalist build",
+      "Ranger: Open: Ranger build",
+    ]);
+    expect(seats.map((seat) => seat.disabled)).toEqual([true, true, false, false]);
+    expect(newcomer.all("team-lobby-reason").map((line) => line.textContent)).toEqual([
+      ASCENT_LOCKED_MESSAGE,
+    ]);
+    seats[2]?.click();
+    expect(sent).toEqual([{ kind: "claim", value: 2 }]);
+    // A newcomer seated in a vacant slot may let go of it.
+    expect(
+      locked("cass", ["aria", "brann", "cass", null])
+        .all("team-lobby-seat")
+        .map((seat) => seat.disabled),
+    ).toEqual([true, true, false, false]);
+    // A member of the run keeps its seat, and takes no other.
+    expect(
+      locked("brann", ["aria", "brann", null, null])
+        .all("team-lobby-seat")
+        .map((seat) => seat.disabled),
+    ).toEqual([true, true, true, true]);
   });
 
   describe("each member's weapons and skills (#1811)", () => {

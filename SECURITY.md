@@ -89,7 +89,8 @@ channels, as often as they like.
   match result is signed. A modded client can queue straight into the
   Hall of Heroes, or claim to hold it. Accepted while the Hall carries
   nothing past the visit; a signed record of the round won is the lever
-  if it ever does.
+  if it ever does. Its locked Team Build after a win (#2539) is the same
+  page memory, and no match host can verify it either.
 - **A flood of fake queue tickets.** A ticket costs nothing to publish,
   so a sybil flood can stall the queue, every group falling through. A
   ticket id is its signing key, so nobody can rewrite an honest ticket.

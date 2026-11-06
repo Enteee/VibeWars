@@ -524,6 +524,7 @@ const lobbyState: WireLobbyState = {
   countdownSeconds: null,
   queueNonce: null,
   ascentRound: null,
+  ascentLock: null,
   teamLobby: null,
 };
 
@@ -910,6 +911,12 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
       matchId: null,
       queueNonce: "ab".repeat(32),
       ascentRound: 3,
+      ascentLock: {
+        slots: [
+          { slot: 0, claimedBy: "peer-a" },
+          { slot: 1, claimedBy: null },
+        ],
+      },
     },
   ],
   ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
@@ -2073,6 +2080,21 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...lobbyState, ascentRound: undefined },
   ],
   ["lobby-state past the Hall (#1996)", parseWireLobbyState, { ...lobbyState, ascentRound: 4 }],
+  [
+    "lobby-state without an ascent lock (#2539)",
+    parseWireLobbyState,
+    { ...lobbyState, ascentLock: undefined },
+  ],
+  [
+    "lobby-state with an ascent lock slot past a side (#2539)",
+    parseWireLobbyState,
+    { ...lobbyState, ascentLock: { slots: [{ slot: 8, claimedBy: null }] } },
+  ],
+  [
+    "lobby-state with an ascent lock slot held by a number (#2539)",
+    parseWireLobbyState,
+    { ...lobbyState, ascentLock: { slots: [{ slot: 0, claimedBy: 7 }] } },
+  ],
   ["find-match without a round (#1996)", parseWireLobbyCommand, { kind: "find-match" }],
   [
     "find-match at a negative round (#1996)",
