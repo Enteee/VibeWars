@@ -7,8 +7,8 @@ const rows = {
   "storms-embrace": [
     "stance",
     (c) =>
-      `<path d="M14 4l-5 9h4l-2 7 6-10h-4z" fill="${c}"/>` +
-      `<path d="M3 10h4M4 14h4M3 18h4" ${stroke(c, 1.6)}/>`,
+      `<path d="M15 5l-5 8h4l-2 6 6-9h-4z" fill="${c}"/>` +
+      `<path d="M4 10h4M5 13h4M6 16h4" ${stroke(c, 1.6)}/>`,
   ],
 };
 

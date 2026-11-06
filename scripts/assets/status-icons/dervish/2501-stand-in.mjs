@@ -14,8 +14,8 @@ const rows = {
   "signet-of-mystic-speed": [
     "skill-effect",
     (c) =>
-      `<circle cx="12" cy="13" r="5" ${stroke(c, 1.6)}/>` +
-      `<path d="M8 5l1 2M12 4v2.500M16 5l-1 2" ${stroke(c, 1.6)}/>`,
+      `<circle cx="12" cy="13.500" r="4" ${stroke(c, 1.6)}/>` +
+      `<path d="M8.500 7l1 1.500M12 6v2M15.500 7l-1 1.500" ${stroke(c, 1.6)}/>`,
   ],
 };
 
