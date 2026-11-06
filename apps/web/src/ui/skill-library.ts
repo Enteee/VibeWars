@@ -97,6 +97,7 @@ export function filterEliteSkills(skills: readonly Skill[]): readonly Skill[] {
  * A profession's "No Attribute" skills are a group of their own, and so
  * are the Common ones (#474): "No Attribute (Common)".
  *
+ * Groups come out in the order the skills do, so a stable catalog gives
  * a stable library and the list does not reshuffle as you type.
  */
 export function groupSkillsByAttribute(skills: readonly Skill[]): readonly SkillGroup[] {

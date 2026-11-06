@@ -136,6 +136,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
   const showChips = h("div", "skill-type-chips");
   showChips.append(eliteChip);
 
+  // The filters in one popover (#2463), under a "Filters · N" button, and
   // what is on shown beside it as tags that each turn theirs off.
   const filterButton = button("Filters", "skill-filter-button", () => {
     // The popover opens and shuts it.
@@ -413,7 +414,10 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     const isOpen = (group: SkillGroup): boolean => filtering || openGroups.has(groupKey(group));
     // A card the filters took away, or a fold hid, closes; it does not
     // reopen on its own.
-    const shown = [...groups.filter(isOpen).flatMap((group) => group.skills), ...lockedMatches];
+    const shown = [
+      ...groups.filter(isOpen).flatMap((group) => group.skills),
+      ...(locked.open ? lockedMatches : []),
+    ];
     if (!shown.some((skill) => skill.id === open)) {
       open = undefined;
     }
@@ -483,9 +487,11 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
       }
     });
     lockedSummary.textContent = `Other professions (${String(lockedMatches.length)})`;
+    // Collapsed, the near thousand skills of other professions are
+    // counted, not laid out: they come in as it opens (#1220, #2518).
     syncList(
       lockedBoxes,
-      lockedMatches,
+      locked.open ? lockedMatches : [],
       (skill) => skill.id,
       createLockedBox,
       (box, skill) => {
@@ -496,6 +502,9 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
   };
 
   search.addEventListener("input", () => {
+    render(context.current());
+  });
+  locked.addEventListener("toggle", () => {
     render(context.current());
   });
   paintFilters();
