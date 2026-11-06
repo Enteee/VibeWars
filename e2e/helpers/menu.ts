@@ -54,3 +54,8 @@ export async function joinFriend(page: Page, invite: string): Promise<void> {
   await expect(page.locator("#topbar .topbar-leave")).toBeVisible();
   expect(new URL(page.url()).hash).toBe("");
 }
+
+/** Wait until the title bar names the lobby this page is in (#1526). */
+export async function awaitLobby(page: Page): Promise<void> {
+  await expect(page.locator("#topbar .topbar-lobby:not([hidden])")).toBeAttached();
+}
