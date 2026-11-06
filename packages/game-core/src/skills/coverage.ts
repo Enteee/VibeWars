@@ -81,9 +81,6 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     990: ["count-disabled-own-skills"], // Expunge Enchantments
     1030: ["double-strike-bonus"], // Locust's Fury
     1088: ["count-overcast"], // Second Wind
-    1133: ["unwritten"], // Drunken Blow
-    1137: ["unwritten"], // Yeti Smash
-    1222: ["unwritten"], // Lively Was Naomei
     1228: ["nearest-spirit-energy-drain"], // Spirit Siphon
     1244: ["while-near-spirit"], // Ghostly Haste
     1371: ["damage-type-conversion"], // Stone Striker
@@ -92,21 +89,9 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     1515: ["source-condition-damage-reduction"], // Armor of Sanctity
     1542: ["interrupt-guard-strip-enchantment"], // Pious Concentration
     1586: ["damage-per-second-cap"], // Angelic Protection
-    1731: ["unwritten"], // Vocal Was Sogolon
-    1737: ["unwritten"], // Wielder's Zeal
-    1738: ["unwritten"], // Sight Beyond Sight
-    1740: ["unwritten"], // Wielder's Remedy
-    1744: ["unwritten"], // Caretaker's Charge
     1757: ["spell-damage-taken-multiplier"], // Veil of Thorns
     1760: ["weapon-element"], // Ebon Dust Aura
-    1764: ["unwritten"], // Attacker's Insight
-    2011: ["unwritten"], // Grapple
-    2067: ["unwritten"], // "I Meant to Do That!"
     2187: ["weapon-filter-negation"], // Way of the Master
-    2194: ["unwritten"], // Distracting Strike
-    2195: ["unwritten"], // Symbolic Strike
-    2201: ["unwritten"], // Shield of Force
-    2208: ["unwritten"], // Burning Shield
   });
 
 /** A corpus skill as coverage needs it: its GW1 id and name. */

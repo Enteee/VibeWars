@@ -3337,4 +3337,51 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // 5...50% more Energy": the status's.
     effects: [{ kind: "apply-status", statusId: "we-shall-return", durationSeconds: { flat: 10 } }],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Unwritten corpus skills (#2500)                                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "paragon.burning-shield",
+    name: "Burning Shield",
+    gwId: 2208,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.leadership",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3...9 seconds, while wielding a shield, the next attack skill
+    // used against you is blocked. If it was a melee attack, your attacker
+    // is set on fire for 1...6 seconds" (#2500): 7.8 s at rank 12. The
+    // shield is checked on use, as Shield Bash's: with none in hand, the
+    // energy is spent for nothing. The block and the fire are the status's.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "caster-holds-shield" },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "burning-shield",
+            durationSeconds: {
+              scaling: { attributeId: "paragon.leadership", atZero: 3, atTwelve: 7.8 },
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];

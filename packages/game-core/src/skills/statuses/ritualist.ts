@@ -89,7 +89,13 @@ export type RitualistStatusId =
   | "attuned-was-songkai"
   | "renewing-memories"
   // Mechanics (#2502).
-  | "anguished-was-lingwah";
+  | "anguished-was-lingwah"
+  // Unwritten corpus skills (#2500).
+  | "lively-was-naomei"
+  | "vocal-was-sogolon"
+  | "wielders-zeal"
+  | "sight-beyond-sight"
+  | "wielders-remedy";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -1065,6 +1071,105 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
         effects: [{ kind: "recharge-others", which: { type: "hex", profession: "ritualist" } }],
         target: "bearer",
         skillId: "ritualist.anguished-was-lingwah",
+      },
+    ],
+  }),
+  // Unwritten corpus skills (#2500). "When you drop her ashes, all party
+  // members in the area are resurrected with 15...75% Health and zero
+  // Energy": 63%, the dead ones in the area as the ashes fall, as Light of
+  // Dwayna's; dropped early by another item spell, they fall all the same.
+  // The holder is one of them: dying drops the ashes, and the end fires
+  // once the death has cleared them, so the raise is a fresh life. GW1
+  // raises 3 s after the drop; here it is at once.
+  "lively-was-naomei": define("lively-was-naomei", "Lively Was Naomei", "item", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "splash",
+            hits: "party",
+            radius: AREA_IN_THE_AREA,
+            dead: true,
+            includesCentre: true,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "resurrect",
+                health: {
+                  kind: "percent",
+                  percent: {
+                    scaling: {
+                      attributeId: "ritualist.restoration-magic",
+                      atZero: 15,
+                      atTwelve: 63,
+                    },
+                  },
+                },
+                energyPercent: { flat: 0 },
+                perPartyMemberWithin: undefined,
+                at: "corpse",
+              },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "ritualist.lively-was-naomei",
+      },
+    ],
+  }),
+  // "...all shouts and chants you use last 20...50% longer": 44%.
+  "vocal-was-sogolon": define("vocal-was-sogolon", "Vocal Was Sogolon", "item", {
+    profession: "ritualist",
+    ownSkillModifiers: (["shout", "chant"] as const).map((type) =>
+      ownSkills(
+        { type },
+        {
+          durationMultiplier: {
+            scaling: { attributeId: "ritualist.restoration-magic", atZero: 1.2, atTwelve: 1.44 },
+          },
+        },
+      ),
+    ),
+  }),
+  // "...whenever you cast a weapon spell on an ally, you gain 1...5
+  // Energy": 4.2. On yourself too, as an ally is.
+  "wielders-zeal": define("wielders-zeal", "Wielder's Zeal", "enchantment", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        usedSkill: { type: "weapon-spell", targets: "ally" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "ritualist.spawning-power", atZero: 1, atTwelve: 4.2 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "ritualist.wielders-zeal",
+      },
+    ],
+  }),
+  // "...you cannot be Blinded."
+  "sight-beyond-sight": define("sight-beyond-sight", "Sight Beyond Sight", "enchantment", {
+    profession: "ritualist",
+    immuneTo: ["blind"],
+  }),
+  // "...whenever you cast a weapon spell on an ally, that ally loses 2
+  // conditions."
+  "wielders-remedy": define("wielders-remedy", "Wielder's Remedy", "enchantment", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        usedSkill: { type: "weapon-spell", targets: "ally" },
+        effects: [{ kind: "remove-status", category: "condition", count: 2 }],
+        target: "skill-target",
+        skillId: "ritualist.wielders-remedy",
       },
     ],
   }),
