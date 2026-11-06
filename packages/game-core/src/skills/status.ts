@@ -272,10 +272,12 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
     }
   }
   // Reversal of Damage's and Mark of Protection's caps are their caster's (#2187),
-  // Ward Against Harm's elemental armor (#2278), Retribution's cap (#2286) and
-  // Chilling Winds' lengthening (#2311) and Calculated Risk's cap (#2471).
+  // Ward Against Harm's elemental armor (#2278), Retribution's cap (#2286),
+  // Chilling Winds' lengthening (#2311), Illusionary Weaponry's damage (#2472)
+  // and Calculated Risk's cap (#2471).
   for (const stat of [
     definition.reflectsNextDamage?.cap,
+    definition.replacesMeleeBlows?.damage,
     definition.reflectsAttackDamage?.max,
     definition.attackBackfire?.max,
     definition.redirectsDamage?.reduction,
@@ -1247,6 +1249,16 @@ export interface StatusDefinition {
    */
   readonly reflectsNextDamage: ReflectsNextDamage | undefined;
   /**
+   * Each melee blow the bearer makes, a plain swing or an attack skill's,
+   * neither hits nor fails to hit: no roll, no weapon damage, no
+   * adrenaline and no on-hit effect, and its target takes this damage
+   * instead (#2472): Illusionary Weaponry's "your melee attacks neither
+   * hit nor fail to hit. Instead, Illusionary Weaponry deals 20...60
+   * damage to your targets for each melee attack". Ranged blows are
+   * untouched. `undefined`: blows are blows.
+   */
+  readonly replacesMeleeBlows: ReplacesMeleeBlows | undefined;
+  /**
    * Every damage the bearer would take while it lasts heals it instead, up
    * to the cap a hit (#2187): Mark of Protection's 6...60. Not spent by a hit;
    * after `mitigate`, so a bond's cap comes first. `undefined`: none.
@@ -1727,6 +1739,20 @@ export interface EffectPulse {
 /** `StatusDefinition.reflectsNextDamage` (#2187). */
 export interface ReflectsNextDamage {
   readonly cap: StatusStat;
+  readonly skillId: string;
+}
+
+/** `StatusDefinition.replacesMeleeBlows` (#2472). */
+export interface ReplacesMeleeBlows {
+  /** Typeless, at the status's ranks as it landed. */
+  readonly damage: StatusStat;
+  /** The skill the damage is reported as. */
+  readonly skillId: string;
+}
+
+/** What a melee blow deals instead of hitting (#2472): `StatusSet.meleeBlowReplacement`'s. */
+export interface MeleeBlowReplacement {
+  readonly damage: number;
   readonly skillId: string;
 }
 
@@ -3913,6 +3939,24 @@ export class StatusSet {
           });
         }
         return status.id;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * What the bearer's melee blows deal instead of hitting (#2472), from
+   * the first status up that replaces them, at its ranks as it landed;
+   * `undefined` if none is up.
+   */
+  public meleeBlowReplacement(): MeleeBlowReplacement | undefined {
+    for (const status of this.#statuses.values()) {
+      const replaces = getStatusDefinition(status.id).replacesMeleeBlows;
+      if (replaces !== undefined) {
+        return {
+          damage: Math.round(statAt(replaces.damage, status.ranks)),
+          skillId: replaces.skillId,
+        };
       }
     }
     return undefined;

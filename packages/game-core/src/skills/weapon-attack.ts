@@ -1226,6 +1226,47 @@ export function aimedAt(attacker: Combatant, victim: Combatant): void {
 }
 
 /**
+ * Whether `attacker`'s blow of `kind` on `victim` is replaced (#2472):
+ * Illusionary Weaponry's "your melee attacks neither hit nor fail to hit.
+ * Instead, Illusionary Weaponry deals 20...60 damage to your targets for
+ * each melee attack". A melee blow under it rolls nothing, no blind, no
+ * block, no crit, and does nothing a blow does: no weapon damage, no
+ * on-hit rider, no adrenaline. Its target takes the status's typeless
+ * damage instead, on `fired` under the status's skill, never among the
+ * blow's own events, so neither `landed` nor adrenaline sees it. What
+ * fired as the attack began, `bearerAttacked`, stays. A ranged blow, or
+ * one without the status, is not replaced: `false`.
+ */
+function replacedMeleeBlow(
+  attacker: Combatant,
+  victim: Combatant,
+  kind: "melee" | "projectile",
+  { rng, rules, surroundings }: Pick<Swing, "rng" | "rules" | "surroundings">,
+  fired: FiredTrigger[],
+): boolean {
+  const replacement = kind === "melee" ? attacker.statuses.meleeBlowReplacement() : undefined;
+  if (replacement === undefined) {
+    return false;
+  }
+  fired.push({
+    sourceId: attacker.id,
+    skillId: replacement.skillId,
+    events: applyEffects(
+      [
+        {
+          kind: "damage",
+          amount: { flat: replacement.damage },
+          type: "typeless",
+          armorPenetration: 0,
+        },
+      ],
+      { caster: attacker, target: victim, rng, rules, surroundings, usedSkill: undefined },
+    ),
+  });
+  return true;
+}
+
+/**
  * One blow on one victim: blind first, then block, unless `unblockable`,
  * then the crit and damage rolls.
  */
@@ -1242,6 +1283,11 @@ function strike(
     return;
   }
   aimedAt(attacker, victim);
+  if (
+    replacedMeleeBlow(attacker, victim, blowKind(attacker.equipment.mainHand.weapon), swing, fired)
+  ) {
+    return;
+  }
   if (blindMisses(attacker, victim, rng)) {
     events.push({ kind: "attack-missed", targetId: victim.id });
     bearerFailedToHit(attacker, attacker.equipment.mainHand.weapon, events);
@@ -1509,6 +1555,10 @@ export function resolveAttackSkillOutcome(
         continue;
       }
       aimedAt(caster, victim);
+      // Illusionary Weaponry's (#2472): neither hit, nor failed, nor blocked.
+      if (replacedMeleeBlow(caster, victim, kind, resolution, fired)) {
+        continue;
+      }
       if (blindMisses(caster, victim, rng) || lowRankMisses(rule, caster, rng)) {
         events.push({ kind: "attack-missed", targetId: victim.id });
         bearerFailedToHit(caster, snapshot.mainHand.weapon, events);

@@ -816,6 +816,17 @@ function energyLostBy(targetId: string, earlier: readonly CombatEvent[]): number
   return lost;
 }
 
+/** Energy `targetId` gained earlier in this resolution (#2472), its `energy-gain` events. */
+function energyGainedBy(targetId: string, earlier: readonly CombatEvent[]): number {
+  let gained = 0;
+  for (const event of earlier) {
+    if (event.kind === "energy-gain" && event.targetId === targetId) {
+      gained += event.amount;
+    }
+  }
+  return gained;
+}
+
 /**
  * `amount`, or with `perEnergyLost`, `amount` for each point `lostBy` lost
  * earlier in this resolution: 0 with no one or no loss (#793).
@@ -874,7 +885,7 @@ function perOwnCreature(
 /** What a count reads of the use it lands in (#2321). */
 export type CountContext = Pick<
   SkillContext,
-  "surroundings" | "heldSeconds" | "skillId" | "targetsHit"
+  "surroundings" | "heldSeconds" | "skillId" | "targetsHit" | "splashCentre"
 >;
 
 /**
@@ -906,7 +917,7 @@ function countOf(
   rule: CountRule,
   caster: Combatant,
   target: Combatant | undefined,
-  { surroundings, heldSeconds, skillId, targetsHit }: CountContext,
+  { surroundings, heldSeconds, skillId, targetsHit, splashCentre }: CountContext,
   earlier: readonly CombatEvent[],
 ): number {
   switch (rule.kind) {
@@ -982,6 +993,10 @@ function countOf(
     case "energy": {
       const bearer = rule.on === "caster" ? caster : target;
       return bearer === undefined ? 0 : Math.floor(bearer.energy);
+    }
+    case "energy-gained": {
+      const gainer = splashCentre ?? target;
+      return gainer === undefined ? 0 : Math.floor(energyGainedBy(gainer.id, earlier));
     }
     case "removed":
       return rule.categories.reduce(
@@ -2012,8 +2027,21 @@ export function applyEffect(
 
     case "energy-gain": {
       if (effect.toTarget === true) {
+        // With its count too (#2472), as the caster's own gain has it.
         if (target !== undefined) {
-          gainEnergy(target, resolveMagnitude(effect.amount, caster), events, effect.upTo);
+          gainEnergy(
+            target,
+            withPerCount(
+              resolveMagnitude(effect.amount, caster),
+              effect.per,
+              caster,
+              target,
+              context,
+              earlier,
+            ),
+            events,
+            effect.upTo,
+          );
         }
         return events;
       }
@@ -2051,6 +2079,13 @@ export function applyEffect(
       );
       return events;
     }
+
+    // Aneurysm's "target foe regains all Energy" (#2472).
+    case "energy-refill":
+      if (target !== undefined && !target.dead) {
+        gainEnergy(target, effectiveMaxEnergy(target) - target.energy, events);
+      }
+      return events;
 
     case "adrenaline-gain": {
       // Whole strikes at the caster's rank (#2143), as a duration's (#2041):
@@ -2678,7 +2713,15 @@ export function applyEffect(
           // Its own events so far count as earlier (#2289): Rust's disable
           // reads the interrupt beside it.
           const seen = [...earlier, ...events];
-          events.push(...applyEffect(inner, { ...context, target: combatant }, seen, centre));
+          // Its centre is whose gain an `energy-gained` count reads (#2472).
+          events.push(
+            ...applyEffect(
+              inner,
+              { ...context, target: combatant, splashCentre: centre },
+              seen,
+              centre,
+            ),
+          );
         }
       }
       return events;
@@ -3627,6 +3670,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "knockdown":
     case "energy-loss":
       return effect.on === "caster";
+    case "energy-refill":
     case "energy-steal":
     case "life-steal":
     case "damage":

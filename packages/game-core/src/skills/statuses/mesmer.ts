@@ -101,7 +101,10 @@ export type MesmerStatusId =
   | "ancestors-visage"
   // Dropped leftovers (#2446).
   | "symbolic-celerity"
-  | "calculated-risk";
+  // Attack backfire (#2471).
+  | "calculated-risk"
+  // Mechanics (#2472).
+  | "illusionary-weaponry";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -1194,6 +1197,16 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     attackBackfire: {
       chance: 0.5,
       max: { scaling: { attributeId: "mesmer.illusion-magic", atZero: 15, atTwelve: 51 } },
+    },
+  }),
+  // "For 30 seconds, your melee attacks neither hit nor fail to hit.
+  // Instead, Illusionary Weaponry deals 20...60 damage to your targets for
+  // each melee attack" (#2472), at the Mesmer's Illusion Magic as it landed.
+  "illusionary-weaponry": define("illusionary-weaponry", "Illusionary Weaponry", "enchantment", {
+    profession: "mesmer",
+    replacesMeleeBlows: {
+      damage: { scaling: { attributeId: "mesmer.illusion-magic", atZero: 20, atTwelve: 52 } },
+      skillId: "mesmer.illusionary-weaponry",
     },
   }),
 };

@@ -185,7 +185,8 @@ describe("status definitions", () => {
         statAtTwelve(def.stancesExpireFaster) !== 0 ||
         def.refuses.length > 0 ||
         def.divineFavorDoubledFor !== undefined ||
-        def.preventsCriticalHits;
+        def.preventsCriticalHits ||
+        def.replacesMeleeBlows !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
