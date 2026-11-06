@@ -6,7 +6,7 @@ import {
   type Page,
 } from "@playwright/test";
 
-import { INVITE_URL, lobbyWindow, openRail, shutLobbyWindow } from "./menu.js";
+import { awaitLobby, INVITE_URL, lobbyWindow, openRail, shutLobbyWindow } from "./menu.js";
 
 /**
  * Pages that play with each other (#403).
@@ -119,8 +119,7 @@ export async function hostLobby(
 ): Promise<string> {
   await openRail(page, "Hosted Game");
   await expect(page.locator(".lobby-panel")).toBeVisible();
-  await expect((await lobbyWindow(page)).locator(".topbar-lobby")).toBeVisible();
-  await shutLobbyWindow(page);
+  await awaitLobby(page);
   await setTeamSize(page, size);
   // A size keeps a map that suits it: pick the map after the size.
   const maps = page.locator(".lobby-map select");

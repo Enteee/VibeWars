@@ -85,3 +85,12 @@ export async function shutLobbyWindow(page: Page): Promise<void> {
   }
   await expect(panel).toHaveCount(0);
 }
+
+/**
+ * Wait until the lobby this page is in is up (#1526): its Lobby window
+ * (#2385) names it, shut again after.
+ */
+export async function awaitLobby(page: Page): Promise<void> {
+  await expect((await lobbyWindow(page)).locator(".topbar-lobby")).toBeVisible();
+  await shutLobbyWindow(page);
+}
