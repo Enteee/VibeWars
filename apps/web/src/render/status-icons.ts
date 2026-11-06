@@ -647,6 +647,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "winters-embrace": icon("winters-embrace"),
   "signet-of-recall": icon("signet-of-recall"),
   "watchful-healing": icon("watchful-healing"),
+  // Staples (#2406).
+  "primal-rage": icon("primal-rage"),
 };
 
 const GAP = 2;

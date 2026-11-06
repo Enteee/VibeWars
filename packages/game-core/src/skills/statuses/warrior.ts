@@ -72,7 +72,9 @@ export type WarriorStatusId =
   // Warrior shouts that count (#2320).
   | "i-will-avenge-you"
   | "fear-me"
-  | "burst-of-aggression";
+  | "burst-of-aggression"
+  // Staples (#2406).
+  | "primal-rage";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -665,5 +667,15 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
         skillId: "warrior.burst-of-aggression",
       },
     ],
+  }),
+  // Staples (#2406). PvP: "you attack 33% faster and move 33% faster,
+  // but you take 200...150% damage", at the warrior's Strength as Frenzy.
+  "primal-rage": define("primal-rage", "Primal Rage", "stance", {
+    profession: "warrior",
+    attackDurationMultiplier: 0.67,
+    moveSpeedMultiplier: 1.33,
+    damageTakenMultiplier: {
+      scaling: { attributeId: "warrior.strength", atZero: 2, atTwelve: 1.6 },
+    },
   }),
 };
