@@ -97,7 +97,9 @@ export type RangerStatusId =
   // Ranger mechanics (#2321).
   | "natures-renewal"
   | "equinox"
-  | "archers-signet";
+  | "archers-signet"
+  // Mechanics (#2501).
+  | "storms-embrace";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -455,6 +457,8 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       healthPips: -2,
       armorModifier: 0,
       attackMissChance: 0,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1,
     },
   }),
   // Nature rituals 2 (#1873), at rank 12 as rituals 1's.
@@ -514,6 +518,8 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       healthPips: -2,
       armorModifier: 0,
       attackMissChance: 0,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1,
     },
   }),
   // "All physical damage is fire damage instead."
@@ -887,5 +893,12 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     conditionDurationMultiplier: 2.5,
     conditionDurationMultiplierWeapon: "bow",
+  }),
+  // "You move 25% faster. This stance is refreshed whenever you take
+  // Elemental damage" (#2501): any above 0, after any block.
+  "storms-embrace": define("storms-embrace", "Storm's Embrace", "stance", {
+    profession: "ranger",
+    moveSpeedMultiplier: 1.25,
+    renewsOn: ["bearer-takes-elemental-damage"],
   }),
 };

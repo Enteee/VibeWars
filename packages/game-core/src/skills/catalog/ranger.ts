@@ -6516,4 +6516,40 @@ export const RANGER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2501)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ranger.storms-embrace",
+    name: "Storm's Embrace",
+    gwId: 1474,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, you move 25% faster. This stance is refreshed
+    // whenever you take Elemental damage": both the stance's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "storms-embrace",
+        durationSeconds: { flat: 10 },
+      },
+    ],
+  },
 ];

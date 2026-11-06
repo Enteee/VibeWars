@@ -445,7 +445,8 @@ export function isResurrectionSkill(skill: Skill): boolean {
  * The energy `skill` costs `caster` right now (#637): its base, raised
  * by Quickening Zephyr's multiplier and rounded half up (#1745), then
  * Expertise (#528) or Mysticism (#874), less what a status takes off
- * the caster's skills of its kind, never below its floor (#1761, #1886),
+ * the caster's skills of its kind, a share of the base first (#2501),
+ * never below its floor (#1761, #1886),
  * plus what a status adds to them (#1886), less what an
  * active glyph takes off a spell (#526) and what a chant takes off the
  * next skill of its kind (#1505), never below 0. The base is a status's
@@ -472,7 +473,9 @@ export function energyCostOf(
     skill,
     expertiseEnergyCost(expertise, skill, raisedBaseCost(base, caster)),
   );
-  const { energyDiscount: discount, energyFloor: floor } = own;
+  // Attuned Was Songkai's share of the base (#2501), before the discount.
+  const discount = Math.round(base * own.energyPercentOff) + own.energyDiscount;
+  const floor = own.energyFloor;
   const cost =
     (discount === 0 || attributed < floor ? attributed : Math.max(floor, attributed - discount)) +
     own.energySurcharge;

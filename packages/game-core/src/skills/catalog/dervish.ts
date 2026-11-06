@@ -3253,4 +3253,75 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2501)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "dervish.vow-of-piety",
+    name: "Vow of Piety",
+    gwId: 1505,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20 seconds, you have +24 armor and +1...4 Health regeneration.
+    // Vow of Piety renews whenever an enchantment on you ends": all the
+    // enchantment's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "vow-of-piety",
+        durationSeconds: { flat: 20 },
+      },
+    ],
+  },
+  {
+    id: "dervish.signet-of-mystic-speed",
+    name: "Signet of Mystic Speed",
+    gwId: 2200,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30 seconds, your next 1...3 self-targeting enchantments cast
+    // instantly. Flash enchantments do not consume uses of this skill":
+    // the count and the instant cast are the status's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "signet-of-mystic-speed",
+        durationSeconds: { flat: 30 },
+      },
+    ],
+  },
 ];

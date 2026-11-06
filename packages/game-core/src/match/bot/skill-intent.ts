@@ -720,7 +720,9 @@ export function lowEnergyGain(
 export function energyAtFoes(skill: Skill): boolean {
   return ownStatuses(skill).some((id) => {
     const status = getStatusDefinition(id);
-    return status.renewsOnBearerSpellAtFoe && statAtTwelve(status.energyPips) > 0;
+    return (
+      status.renewsOn.includes("bearer-casts-spell-at-foe") && statAtTwelve(status.energyPips) > 0
+    );
   });
 }
 

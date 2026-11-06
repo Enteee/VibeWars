@@ -63,7 +63,9 @@ export type AssassinStatusId =
   // Dropped leftovers (#2446).
   | "augury-of-death"
   // Mechanics (#2479).
-  | "shadow-shroud";
+  | "shadow-shroud"
+  // Mechanics (#2501).
+  | "deadly-haste";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -595,5 +597,23 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   "shadow-shroud": define("shadow-shroud", "Shadow Shroud", "hex", {
     profession: "assassin",
     refusesEnchantments: true,
+  }),
+  // "Half-ranged spells cast 5...50% faster and recharge 5...60% faster"
+  // (#2501): 41% and 49% at 12.
+  "deadly-haste": define("deadly-haste", "Deadly Haste", "enchantment", {
+    profession: "assassin",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "spell", halfRange: true },
+        {
+          activationMultiplier: {
+            scaling: { attributeId: "assassin.critical-strikes", atZero: 0.95, atTwelve: 0.59 },
+          },
+          rechargeFaster: {
+            scaling: { attributeId: "assassin.critical-strikes", atZero: 0.05, atTwelve: 0.49 },
+          },
+        },
+      ),
+    ],
   }),
 };
