@@ -4930,7 +4930,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.stolen-speed",
     name: "Stolen Speed",
-    gwId: 3187,
+    gwId: 880,
     type: "hex",
     elite: true,
     flash: false,

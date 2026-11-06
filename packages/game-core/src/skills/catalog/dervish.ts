@@ -3146,7 +3146,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
   {
     id: "dervish.twin-moon-sweep",
     name: "Twin Moon Sweep",
-    gwId: 3264,
+    gwId: 1487,
     type: "attack",
     elite: false,
     flash: false,

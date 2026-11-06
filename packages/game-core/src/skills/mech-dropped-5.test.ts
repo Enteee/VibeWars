@@ -108,10 +108,10 @@ function hits(log: readonly CombatLogEntry[], skillId: string, targetId: string)
 
 describe("#2459's data", () => {
   it.each([
-    [SWEEP, 3264, "attack", false, SCYTHE_MASTERY, { kind: "adrenaline", amount: 7 }, 0, 0],
+    [SWEEP, 1487, "attack", false, SCYTHE_MASTERY, { kind: "adrenaline", amount: 7 }, 0, 0],
     [RAGE, 1269, "signet", false, SMITING, undefined, 1, 20],
-    [STOLEN, 3187, "hex", true, FAST, { kind: "energy", amount: 5 }, 1, 12],
-    [SAVANNAH, 3021, "spell", true, FIRE, { kind: "energy", amount: 15 }, 2, 25],
+    [STOLEN, 880, "hex", true, FAST, { kind: "energy", amount: 5 }, 1, 12],
+    [SAVANNAH, 1380, "spell", true, FIRE, { kind: "energy", amount: 15 }, 2, 25],
   ] as const)(
     "%s: gwId %i, %s, elite %s, %s",
     (id, gwId, type, elite, attributeId, cost, activation, recharge) => {

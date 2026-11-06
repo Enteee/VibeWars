@@ -5984,7 +5984,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.savannah-heat",
     name: "Savannah Heat",
-    gwId: 3021,
+    gwId: 1380,
     type: "spell",
     elite: true,
     flash: false,
@@ -6018,7 +6018,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
           pulse: {
             count: 5,
             everySeconds: 1,
-            delaySeconds: 1,
+            delaySeconds: 0,
             area: {
               radius: AREA_NEARBY,
               origin: "caster",

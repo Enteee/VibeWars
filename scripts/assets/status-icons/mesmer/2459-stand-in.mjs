@@ -7,8 +7,8 @@ const rows = {
   "stolen-speed": [
     "hex",
     (c) =>
-      `<path d="M6 5h8M6 19h8M7 5c0 5 6 5 6 7s-6 2-6 7M13 5c0 5-6 5-6 7s6 2 6 7" ${stroke(c, 1.6)}/>` +
-      `<path d="M15 12h6M18 9l3 3-3 3" ${stroke(c, 1.8)}/>`,
+      `<path d="M7 7h6M7 17h6M8 7c0 3.5 4 3.5 4 5s-4 1.5-4 5M12 7c0 3.5-4 3.5-4 5s4 1.5 4 5" ${stroke(c, 1.6)}/>` +
+      `<path d="M14 12h5M17 10l2 2-2 2" ${stroke(c, 1.8)}/>`,
   ],
 };
 
