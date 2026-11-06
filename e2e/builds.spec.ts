@@ -2246,13 +2246,13 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
 
   // Each tab keeps its own place. The tabs are pressed in place, so the
   // click itself scrolls nothing.
-  const tab = (name: string) => page.getByRole("button", { name, exact: true });
-  await tab("gear").dispatchEvent("click");
+  const tab = (name: string) => page.getByRole("tab", { name, exact: true });
+  await tab("Gear").dispatchEvent("click");
   await expect(page.locator(".gear-box").first()).toBeVisible();
   const gearTop = await scrollLibrary(page, 120);
-  await tab("skills").dispatchEvent("click");
+  await tab("Skills").dispatchEvent("click");
   expect(await libraryScroll(page)).toBe(reshuffled);
-  await tab("gear").dispatchEvent("click");
+  await tab("Gear").dispatchEvent("click");
   expect(await libraryScroll(page)).toBe(gearTop);
 });
 
