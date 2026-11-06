@@ -1,7 +1,7 @@
 /** @type {Readonly<Record<string, import("../../skill-icon-table.mjs").SkillIconRow>>} */
 const rows = {
-  // Mechanics (#2459), stand-ins until their art card.
-  "monk.signet-of-rage": { glyph: "axe-adrenaline", modifier: "bolt" },
+  // Mechanics (#2459), art #2486.
+  "elementalist.savannah-heat": { glyph: "heat-shimmer", modifier: "up" },
 };
 
 export default rows;
