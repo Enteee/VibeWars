@@ -4839,6 +4839,10 @@ export class MatchSimulation {
     }
     combatant.health = 0;
     combatant.dead = true;
+    // Unyielding Aura (#2470): the corpse it leaves is spent.
+    if (definition.exploitsCorpseOnDeath) {
+      record.corpseExploited = true;
+    }
     const events: CombatEvent[] = [{ kind: "death", targetId: combatant.id }];
     this.#log.push({
       tick: this.#tick,

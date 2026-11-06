@@ -173,6 +173,8 @@ describe("Vengeance (#2311)", () => {
     a.statuses.remove("vengeance");
     sim.step(DT);
     expect(a.dead).toBe(true);
+    // Its corpse is not spent, as Unyielding Aura's is (#2470).
+    expect(sim.get("a")?.corpseExploited).toBe(false);
     expect(a.morale).toBe(-15);
   });
 
