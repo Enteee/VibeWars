@@ -4965,7 +4965,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.calculated-risk",
     name: "Calculated Risk",
-    gwId: 3196,
+    gwId: 2053,
     type: "hex",
     elite: false,
     flash: false,

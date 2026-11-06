@@ -85,7 +85,7 @@ const PLAIN_DRAWS = blow(undefined, stream(10, -1, 0)).draws;
 describe("Calculated Risk is the corpus's (#2471)", () => {
   it("costs 10 Energy, activates in 1 s, recharges in 12 s, of Illusion Magic", () => {
     expect(skillOf(RISK)).toMatchObject({
-      gwId: 3196,
+      gwId: 2053,
       type: "hex",
       elite: false,
       profession: "mesmer",
