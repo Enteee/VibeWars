@@ -458,7 +458,7 @@ export function blocks(
   ) {
     return false;
   }
-  const blocking = blockingStatusesOf(victim, attackSkill);
+  const blocking = blockingStatusesOf(victim, attackSkill, attackerStatuses);
   const chance = combinedBlockChance(
     blocking.map(({ block }) => block),
     kind,
@@ -569,7 +569,7 @@ export function skillBlow(skill: Skill, caster: Combatant, surroundings: Surroun
       rule?.bonusPer,
       caster,
       undefined,
-      { surroundings },
+      { surroundings, skillId: skill.id },
       [],
     ),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
@@ -1068,7 +1068,7 @@ export function bearerHit(
   weapon: Weapon,
   took: number,
 ): void {
-  attacker.statuses.recordHit(weapon);
+  attacker.statuses.recordHit(weapon, attackSkill?.attack?.chain?.role);
   if (victim.team !== attacker.team) {
     victim.statuses.recordHitByAttack(attacker.id, took, attackSkill?.attack?.chain?.role, weapon);
   }

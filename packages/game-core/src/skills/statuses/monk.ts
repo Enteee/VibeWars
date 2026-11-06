@@ -79,7 +79,8 @@ export type MonkStatusId =
   | "life-sheath"
   | "reverse-hex"
   // Staples (#2414).
-  | "defenders-zeal";
+  | "defenders-zeal"
+  | "pensive-guardian";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -997,5 +998,12 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         skillId: "monk.defenders-zeal",
       },
     ],
+  }),
+  // "50% chance to block attacks from enchanted foes" (#2432), read as
+  // each blow is checked.
+  "pensive-guardian": define("pensive-guardian", "Pensive Guardian", "enchantment", {
+    profession: "monk",
+    block: { chance: 0.5, against: "all" },
+    blockAttackerUnder: { categories: ["enchantment"], statusIds: [] },
   }),
 };

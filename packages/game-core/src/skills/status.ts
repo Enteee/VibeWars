@@ -818,6 +818,12 @@ export interface StatusDefinition {
    * effects of a shout or chant". `undefined`: always.
    */
   readonly blockWhileUnder: Pick<WhileUnder, "categories" | "statusIds"> | undefined;
+  /**
+   * `block` holds only against an attacker under a status of one of these
+   * categories or ids when the blow is checked (#2432): Pensive
+   * Guardian's "attacks from enchanted foes". `undefined`: any attacker.
+   */
+  readonly blockAttackerUnder: Pick<WhileUnder, "categories" | "statusIds"> | undefined;
   /** Added to the bearer's chance to land a critical hit (#988): Critical Eye's 0.13. */
   readonly criticalChanceBonus: StatusStat;
   /**
@@ -1960,6 +1966,12 @@ export interface StatusTrigger {
    */
   readonly weapon?: AttackWeaponClass;
   /**
+   * On `bearer-hits` only (#2432): it fires only for a hit of an attack
+   * skill of this chain role, as Way of the Lotus's "the next time you hit
+   * with a dual attack skill". Absent: any hit.
+   */
+  readonly chainRole?: ChainRole;
+  /**
    * On `bearer-blocks` only (#1549): it fires only for a blocked attack of
    * this kind, whichever status's share the roll fell in, as Riposte's
    * "block the next melee attack". Absent: any block.
@@ -2840,11 +2852,14 @@ export class StatusSet {
   /**
    * The bearer landed a hit with `weapon` (#935), recorded only if a
    * status on it answers one, with the triggers that do (#953): one bound
-   * to a weapon class only for that class (#1359).
+   * to a weapon class only for that class (#1359), and one bound to a
+   * chain role only for an attack skill of that role (#2432).
    */
-  public recordHit(weapon: Weapon): void {
-    const fired = this.#answering("bearer-hits").filter(({ trigger }) =>
-      triggerAnswersWeapon(trigger, weapon),
+  public recordHit(weapon: Weapon, chainRole: ChainRole | undefined): void {
+    const fired = this.#answering("bearer-hits").filter(
+      ({ trigger }) =>
+        triggerAnswersWeapon(trigger, weapon) &&
+        (trigger.chainRole === undefined || trigger.chainRole === chainRole),
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "hit", fired });

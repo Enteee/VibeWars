@@ -662,6 +662,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "life-sheath": icon("life-sheath"),
   "reverse-hex": icon("reverse-hex"),
   "assassins-remedy": icon("assassins-remedy"),
+  "way-of-the-lotus": icon("way-of-the-lotus"),
+  "pensive-guardian": icon("pensive-guardian"),
   // Staples (#2413).
   meditation: icon("meditation"),
   "sharpen-daggers": icon("sharpen-daggers"),

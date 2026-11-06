@@ -23,6 +23,7 @@ import {
   isUnderAnother,
   ownSkillBoost,
   scaledStatAttributes,
+  type ActiveStatus,
   type ArmorReduction,
   type AttributeDelta,
   type AttributeScope,
@@ -620,14 +621,17 @@ export function combinedBlockChance(
  * rolled at all. A block that holds only below a share of health (#988)
  * reads the bearer's health as it is now. `attackSkill`: the blow or shot
  * is an attack skill's, which a block of attack skills only (#1978) needs.
+ * `attackerStatuses`: the attacker's, which a block of enchanted foes only
+ * (#2432) reads.
  */
 export function blockChanceOf(
   combatant: Combatant,
   kind: "melee" | "projectile",
   attackSkill: boolean,
+  attackerStatuses: readonly ActiveStatus[],
 ): number {
   return combinedBlockChance(
-    blockingStatusesOf(combatant, attackSkill).map(({ block }) => block),
+    blockingStatusesOf(combatant, attackSkill, attackerStatuses).map(({ block }) => block),
     kind,
   );
 }
@@ -644,24 +648,28 @@ export interface BlockingStatus {
  * holds only below a share of health only below it. One that blocks only
  * attack skills drops out against a plain swing, and one that holds only
  * while under a shout or chant drops out without one (#1978), and one
- * that holds only while attacking drops out between attacks (#2374).
+ * that holds only while attacking drops out between attacks (#2374), and
+ * one that holds only against an enchanted attacker drops out against one
+ * with none (#2432).
  */
 export function blockingStatusesOf(
   combatant: Combatant,
   attackSkill: boolean,
+  attackerStatuses: readonly ActiveStatus[],
 ): readonly BlockingStatus[] {
   if (combatant.knockdownRemaining > 0) {
     return [];
   }
   const maxHealth = effectiveMaxHealth(combatant);
   return combatant.statuses.active.flatMap((status) => {
-    const { block, blockBelowHealth, blockWhileUnder, blockWhileAttacking } = getStatusDefinition(
-      status.id,
-    );
+    const { block, blockBelowHealth, blockWhileUnder, blockAttackerUnder, blockWhileAttacking } =
+      getStatusDefinition(status.id);
     const holds =
       (blockBelowHealth === undefined || combatant.health < maxHealth * blockBelowHealth) &&
       (blockWhileUnder === undefined ||
         isUnderAnother(combatant.statuses.active, status, blockWhileUnder)) &&
+      (blockAttackerUnder === undefined ||
+        isUnderAnother(attackerStatuses, status, blockAttackerUnder)) &&
       (!blockWhileAttacking || isAttacking(combatant));
     return block !== undefined && holds && (attackSkill || block.attackSkillsOnly !== true)
       ? [{ statusId: status.id, block }]
