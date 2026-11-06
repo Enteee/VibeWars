@@ -95,6 +95,62 @@ export function byteLength(data: string): number {
   return new TextEncoder().encode(data).length;
 }
 
+/**
+ * `raw` as an event of `kind` whose id is its content's, with that id's
+ * bytes, or `undefined`. Its signature is not checked yet: that is the
+ * expensive part, and budgeted.
+ */
+export function wellFormedEvent(
+  raw: unknown,
+  kind: number,
+): { readonly event: NostrEvent; readonly digest: Uint8Array } | undefined {
+  if (typeof raw !== "object" || raw === null) {
+    return undefined;
+  }
+  const { id, pubkey, created_at, kind: said, tags, content, sig } = raw as Record<string, unknown>;
+  if (
+    typeof id !== "string" ||
+    !HEX_64.test(id) ||
+    typeof pubkey !== "string" ||
+    !HEX_64.test(pubkey) ||
+    typeof created_at !== "number" ||
+    said !== kind ||
+    !isTags(tags) ||
+    typeof content !== "string" ||
+    typeof sig !== "string" ||
+    !HEX_128.test(sig)
+  ) {
+    return undefined;
+  }
+  const event = { id, pubkey, created_at, kind, tags, content, sig };
+  const digest = eventId(event);
+  return bytesToHex(digest) === id ? { event, digest } : undefined;
+}
+
+/**
+ * A token bucket for signature checks: `perSecond` a second, `burst` at
+ * once. The returned check says whether `count` more fit, and takes them
+ * if so. `now` is in milliseconds.
+ */
+export function verifyBudget(
+  now: () => number,
+  perSecond: number,
+  burst: number,
+): (count?: number) => boolean {
+  let tokens = burst;
+  let refilledAt = now();
+  return (count = 1) => {
+    const at = now();
+    tokens = Math.min(burst, tokens + ((at - refilledAt) * perSecond) / 1000);
+    refilledAt = at;
+    if (tokens < count) {
+      return false;
+    }
+    tokens -= count;
+    return true;
+  };
+}
+
 export interface RelayPoolOptions {
   readonly relays: readonly string[];
   readonly openSocket: OpenRelaySocket;

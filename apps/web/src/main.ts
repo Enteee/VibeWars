@@ -2,6 +2,7 @@ import { sizeClass } from "@vibewars/game-maps/size-class";
 import type { Guild, LobbyConnection, LobbySnapshot, MatchStarting } from "@vibewars/game-session";
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
+import { watchRecords } from "./net/transport/index.js";
 
 import { ARENA_MAPS, ASCENT_PROGRESSION, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
 import {
@@ -89,6 +90,7 @@ import {
 } from "./ui/touch-notice-preference.js";
 import { describeOutcome } from "./ui/hud.js";
 import type { SummaryTable } from "./ui/match-summary.js";
+import { renderMatchesScreen, type MatchesScreen } from "./ui/matches-screen.js";
 import {
   mountQueueScreen,
   nextAscentRound,
@@ -605,6 +607,8 @@ async function main(): Promise<void> {
   /** The cape the menu was last drawn with (#1513), to redraw it only for a new one (#2386). */
   let menuCape = "";
 
+  /** The Matches page, while it is the screen. */
+  let matchesScreen: MatchesScreen | undefined;
   const screenTurns = createScreenTurns();
   /**
    * Whose turn joining a lobby is (#1526): a join can wait 20 s for its
@@ -622,6 +626,9 @@ async function main(): Promise<void> {
    */
   const leaveScreen = (): ScreenTurn => {
     idleScreen = false;
+    // The Matches page listens to the relays only while it is open (#2532).
+    matchesScreen?.close();
+    matchesScreen = undefined;
     followsLobby = false;
     teamLobbyShown = false;
     dismissToast();
@@ -775,6 +782,15 @@ async function main(): Promise<void> {
     drawnParty = party === undefined ? "" : `${party.mode}:${String(party.isHost)}`;
     const entry = railEntry();
     drawnEntry = entry;
+    if (entry === "matches") {
+      matchesScreen?.close();
+      matchesScreen = renderMatchesScreen(screenRoot, {
+        onSwitch: switchTo,
+        watch: watchRecords,
+        now: () => Date.now(),
+      });
+      return;
+    }
     if (entry !== "random-arena" && entry !== "characters") {
       void showTeamScreen(entry, turn);
       return;
@@ -1187,7 +1203,7 @@ async function main(): Promise<void> {
    * (#1460), where a Team Build is proposed.
    */
   const showTeamScreen = async (
-    entry: Exclude<RailEntry, "random-arena" | "characters">,
+    entry: Exclude<RailEntry, "random-arena" | "characters" | "matches">,
     turn: ScreenTurn,
   ): Promise<void> => {
     const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);

@@ -15,7 +15,9 @@ modes is the **Team size**, `‹ 4v4 ›`: the arrows step to the next
 smaller or larger size the screen plays. Each screen remembers its own,
 and opens at a size it plays (GvG at 8v8). Below that are **Character Builder**, where you
 make your characters, and **Team Builder**, where you make your
-[Team Builds](skills-and-builds.md#team-builds). The game opens on the
+[Team Builds](skills-and-builds.md#team-builds), then
+**Matches**, the [finished matches](modes.md#match-records) as their
+hosts report them. The game opens on the
 one you used last.
 
 ## Make a character
@@ -105,8 +107,8 @@ Leave, and a list of who is in it; its badge counts them.
   own and is told why.
 
 **The host picks the mode** on the rail, and everyone's screen follows;
-a guest's modes are locked. **Character Builder** and **Team Builder**
-are open to everyone, and opening one does not leave the lobby. On a
+a guest's modes are locked. **Character Builder**, **Team Builder** and
+**Matches** are open to everyone, and opening one does not leave the lobby. On a
 mode's screen, join a team, and when everyone is in, the host presses
 **Start match**; bots play every place nobody takes. The lobby lists
 players by name: what you play is the character you claim in the Team

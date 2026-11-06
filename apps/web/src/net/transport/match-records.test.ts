@@ -9,9 +9,11 @@ import {
   MAX_MATCH_RECORD_BYTES,
   matchRecordEvent,
   publishMatchRecord,
+  watchMatchRecords,
+  type HeardMatchRecord,
 } from "./match-records.js";
-import { eventId, type NostrEvent, type RelaySocketHandlers } from "./nostr-relays.js";
-import { verifyTicketSig } from "./ticket-key.js";
+import { eventId, signEvent, type NostrEvent, type RelaySocketHandlers } from "./nostr-relays.js";
+import { newTicketKey, verifyTicketSig } from "./ticket-key.js";
 
 const RELAYS = ["wss://one.example", "wss://two.example"];
 const NOW = 1_800_000_000_000;
@@ -157,5 +159,128 @@ describe("match records on Nostr (#2528)", () => {
   it("publishes nothing it would not read from someone else", () => {
     expect(publish({ ...RECORD, teams: [{ players: [] }, RECORD.teams[1]] })).toEqual([]);
     expect(publish({ ...RECORD, map: "nowhere" })).toEqual([]);
+  });
+});
+
+/** Watch the records on fake relays: the test plays the relays. */
+function watch(now = NOW) {
+  const sockets: FakeSocket[] = [];
+  const heard: HeardMatchRecord[] = [];
+  const verified: string[] = [];
+  let noRelay = 0;
+  const watching = watchMatchRecords(
+    {
+      record: (record) => heard.push(record),
+      noRelay: () => {
+        noRelay += 1;
+      },
+    },
+    {
+      relays: RELAYS,
+      now: () => now,
+      verifyTicketSig: (pubkey, digest, sig) => {
+        verified.push(pubkey);
+        return verifyTicketSig(pubkey, digest, sig);
+      },
+      openSocket: (_url, handlers) => {
+        const socket: FakeSocket = { handlers, sent: [], closed: false };
+        sockets.push(socket);
+        return {
+          send: (data) => socket.sent.push(data),
+          close: () => {
+            socket.closed = true;
+            handlers.close();
+          },
+        };
+      },
+    },
+  );
+  const deliver = (event: unknown, socket = 0) => {
+    sockets[socket]?.handlers.message(JSON.stringify(["EVENT", "vibewars-matches", event]));
+  };
+  return { watching, sockets, heard, verified, deliver, noRelays: () => noRelay };
+}
+
+/** `content` signed as a record event would be, under `d`. */
+function signedRecord(content: string, d = "vibewars-match/one"): NostrEvent {
+  const key = newTicketKey();
+  return signEvent(
+    {
+      pubkey: key.ticketId,
+      created_at: NOW / 1000,
+      kind: MATCH_RECORD_EVENT_KIND,
+      tags: [
+        ["d", d],
+        ["t", "vibewars-matches"],
+      ],
+      content,
+    },
+    (digest) => key.sign(digest),
+  );
+}
+
+describe("watching match records on Nostr (#2532)", () => {
+  it("asks every relay, once open, for the last 100 records of the topic", () => {
+    const { sockets } = watch();
+    for (const socket of sockets) {
+      socket.handlers.open();
+    }
+    expect(sockets).toHaveLength(2);
+    for (const socket of sockets) {
+      expect(JSON.parse(socket.sent[0] ?? "")).toEqual([
+        "REQ",
+        "vibewars-matches",
+        { kinds: [MATCH_RECORD_EVENT_KIND], "#t": ["vibewars-matches"], limit: 100 },
+      ]);
+    }
+  });
+
+  it("hears a valid, signed record, once however many relays deliver it", () => {
+    const { heard, verified, deliver } = watch();
+    const event = matchRecordEvent(RECORD, NOW);
+    deliver(event, 0);
+    deliver(event, 1);
+    expect(heard).toEqual([{ id: event?.tags[0]?.[1], record: RECORD }]);
+    expect(verified).toHaveLength(1);
+  });
+
+  it("keeps the first record under a d tag, and drops a second one", () => {
+    const { heard, deliver } = watch();
+    const first = signedRecord(JSON.stringify(RECORD));
+    const second = signedRecord(JSON.stringify({ ...RECORD, durationSeconds: 1 }));
+    deliver(first);
+    deliver(second);
+    expect(heard.map(({ record }) => record.durationSeconds)).toEqual([300]);
+  });
+
+  it("drops a bad signature, an invalid record, oversized content and another kind", () => {
+    const { heard, verified, deliver } = watch();
+    const event = signedRecord(JSON.stringify(RECORD), "a");
+    deliver({ ...event, sig: signedRecord(JSON.stringify(RECORD), "a").sig });
+    deliver(signedRecord(JSON.stringify({ ...RECORD, map: "nowhere" }), "b"));
+    deliver(
+      signedRecord(JSON.stringify({ ...RECORD, junk: "x".repeat(MAX_MATCH_RECORD_BYTES) }), "c"),
+    );
+    deliver({ ...signedRecord(JSON.stringify(RECORD), "d"), kind: 1 });
+    deliver(signedRecord("not json", "e"));
+    expect(heard).toEqual([]);
+    // Only the forged signature was worth a check: the rest failed before it.
+    expect(verified).toHaveLength(1);
+  });
+
+  it("says no relay when every socket has closed", () => {
+    const { sockets, noRelays } = watch();
+    for (const socket of sockets) {
+      socket.handlers.close();
+    }
+    expect(noRelays()).toBe(1);
+  });
+
+  it("closes every socket, and hears nothing after", () => {
+    const { watching, sockets, heard, deliver } = watch();
+    watching.close();
+    deliver(matchRecordEvent(RECORD, NOW));
+    expect(sockets.every((socket) => socket.closed)).toBe(true);
+    expect(heard).toEqual([]);
   });
 });
