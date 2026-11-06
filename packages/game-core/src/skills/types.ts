@@ -585,6 +585,20 @@ export interface TransferConditionsEffect {
 }
 
 /**
+ * Move up to `count` of the caster's conditions, newest first, onto every
+ * living foe within `radius` of the caster (#2503), as Grenth's Fingers'
+ * "transfer 1...2 conditions to all nearby foes": each foe gets a copy
+ * with the time it had left, landing as the caster's (the longer
+ * duration wins), and the caster loses each once. It needs no target, so
+ * an `ends` trigger may hold it. With no foe in reach nothing moves.
+ */
+export interface TransferConditionsToAreaEffect {
+  readonly kind: "transfer-conditions-to-area";
+  readonly count: Magnitude;
+  readonly radius: number;
+}
+
+/**
  * Copy every condition on the target, with the time it has left, onto
  * each foe of the caster within `radius` of the target (#1501), as
  * Epidemic's. The target keeps its own and gets no copy. Each copy lands
@@ -1988,6 +2002,7 @@ export type UnconditionalEffect =
   | LoseHealthToEffect
   | TransferConditionsEffect
   | SpreadConditionsEffect
+  | TransferConditionsToAreaEffect
   | GiveHealthEffect
   | BalanceHealthEffect
   | ApplyStatusEffect

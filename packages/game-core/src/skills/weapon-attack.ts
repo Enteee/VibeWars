@@ -35,13 +35,14 @@ import { resolveMagnitude, statAt } from "./scaling.js";
 import {
   aggregateModifiers,
   attacksAgainstMiss,
+  damageDealtAsOf,
   damageTypeDealt,
   damageTypeTaken,
   getStatusDefinition,
-  physicalDamageDealtAsOf,
   isSuppressed,
   type ActiveStatus,
   type AttackHitRider,
+  type DamageDealtAs,
   type StatusId,
 } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
@@ -270,11 +271,11 @@ export interface WeaponSnapshot {
    */
   readonly damageDelta: number;
   /**
-   * The type the attacker's statuses turn its physical blows into, after
-   * `damageType` or the skill's own (#1873): Greater Conflagration's fire.
-   * `undefined`: none.
+   * The types the attacker's statuses turn its blows into, after
+   * `damageType` or the skill's own (#1873, #2503): Greater
+   * Conflagration's fire, Stone Striker's earth.
    */
-  readonly physicalDamageDealtAs: DamageType | undefined;
+  readonly damageDealtAs: DamageDealtAs;
   /** The held set's mods that act on a hit (#2009): Sundering's chance rides the blow. */
   readonly hitMods: WeaponHitMods;
   /**
@@ -310,7 +311,7 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
     armorPenetration: modifiers.attackArmorPenetration,
     damageDelta: attackDamageDeltaOf(attacker),
-    physicalDamageDealtAs: physicalDamageDealtAsOf(attacker.statuses.active),
+    damageDealtAs: damageDealtAsOf(attacker.statuses.active),
     hitMods: attacker.equipment.hitMods,
     ...modDamageOf(attacker),
   };
@@ -780,7 +781,7 @@ export function landBlow(
     // The attacker's type first, turned by its Greater Conflagration
     // (#1873), then Winter's on the victim (#1745).
     type: damageTypeTaken(
-      damageTypeDealt(blow.damageType ?? snapshot.damageType, snapshot.physicalDamageDealtAs),
+      damageTypeDealt(blow.damageType ?? snapshot.damageType, snapshot.damageDealtAs),
       victim.statuses.active,
     ),
     source: "weapon",

@@ -4,7 +4,6 @@ import {
   IMPLEMENTED_SKILLS,
   UNIMPLEMENTED_REASONS,
   computeCoverage,
-  missingMechanics,
   resolveMagnitudeAtRanks,
   unmaintainedUpkeepSkills,
   type LevelScaling,
@@ -40,22 +39,10 @@ describe("coverage gate against the committed corpus", () => {
     expect(stale).toEqual([]);
   });
 
-  it("implements a majority of the corpus", () => {
-    // Not a vanity metric: if this drops, either skills were removed or
-    // the corpus grew without the engine growing, and both deserve a look.
-    expect(coverage.implemented * 2).toBeGreaterThan(coverage.imported);
-  });
-
-  it("blames only mechanics the engine genuinely lacks", () => {
-    // A guard against the lazy fix for the test above: marking a skill as
-    // blocked on something already built, to avoid implementing it.
-    // "unwritten" is the honest exception: it says the engine has it all.
-    const grouped = missingMechanics(coverage);
-    const implementedMechanics = ["damage", "heal", "status", "interrupt"];
-
-    for (const mechanic of grouped.keys()) {
-      expect(implementedMechanics).not.toContain(mechanic);
-    }
+  it("implements every skill in the corpus (#2503)", () => {
+    // If this fails, either skills were removed or the corpus grew without
+    // the engine growing, and both deserve a look.
+    expect(coverage.unimplemented).toEqual([]);
   });
 
   it("maintains every catalog skill the corpus marks as upkeep (#840)", () => {

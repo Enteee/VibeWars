@@ -219,6 +219,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   healthPips: true,
   armorModifier: true,
   maxHealthBonus: true,
+  maxHealthPerMaxEnergy: true,
   physicalDamageTakenBonus: true,
   attackDurationMultiplier: true,
   conditionDurationMultiplier: true,
@@ -227,6 +228,9 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   adrenalineGainFaster: true,
   damageReduction: true,
   damageReductionFromWeakerFoe: true,
+  damageReductionFromConditionedFoe: true,
+  spellDamageTakenMultiplier: true,
+  damagePerSecondCap: true,
   casterEnergyPerReduction: true,
   healthPipsPerCondition: true,
   criticalChanceBonus: true,
@@ -535,6 +539,12 @@ export interface StatusDefinition {
    */
   readonly maxHealthBonusPerEnchantment: number;
   /**
+   * Maximum health added for each point of the bearer's own maximum
+   * Energy, read live (#2503): Energy Boon's 1...3. Gaining and losing it
+   * go as `maxHealthBonus`'s. 0: none.
+   */
+  readonly maxHealthPerMaxEnergy: StatusStat;
+  /**
    * Maximum energy added while it lasts (#1464): Mighty Was Vorizun's 30.
    * Gaining it raises only the ceiling; losing it clamps energy to the
    * ceiling left, as `maxHealthBonus` does health.
@@ -624,6 +634,12 @@ export interface StatusDefinition {
    */
   readonly elementalDamageTakenAs: DamageType | undefined;
   /**
+   * The type physical damage the bearer takes becomes, before armor is
+   * read (#2503): Stone Striker's "whenever you take physical damage,
+   * that damage is converted to earth damage". `undefined`: none.
+   */
+  readonly physicalDamageTakenAs: DamageType | undefined;
+  /**
    * The type the bearer's attacks deal, the weapon's roll included
    * (#1021): Staggering Force's and Dust Cloak's "your attacks deal
    * earth damage". An attack skill's own `damageType` (Spear of
@@ -644,6 +660,12 @@ export interface StatusDefinition {
    * `undefined`: none.
    */
   readonly physicalDamageDealtAs: DamageType | undefined;
+  /**
+   * The type every elemental packet the bearer deals becomes, as
+   * `physicalDamageDealtAs` does for physical (#2503): Stone Striker's
+   * earth. `undefined`: none.
+   */
+  readonly elementalDamageDealtAs: DamageType | undefined;
   /**
    * The least armor penetration the bearer's weapon attacks have (#1519):
    * Judge's Insight's "+20% armor penetration". It joins the blow's and
@@ -862,6 +884,12 @@ export interface StatusDefinition {
   readonly renewsWhileMoving: number | undefined;
   /** While active, a knockdown does nothing to the bearer (#468). */
   readonly preventsKnockdown: boolean;
+  /**
+   * As `preventsKnockdown`, but only a foe's knockdown (#2503): Balthazar's
+   * Pendulum's "would be knocked down by a foe". An ally's, or the
+   * bearer's own, still lands.
+   */
+  readonly preventsFoeKnockdown: boolean;
   /** It ends when it stops a knockdown (#845): Fleeting Stability. */
   readonly endsOnKnockdownPrevented: boolean;
   /**
@@ -1223,6 +1251,27 @@ export interface StatusDefinition {
    */
   readonly damageReductionFromWeakerFoe: StatusStat;
   /**
+   * Taken off each packet a foe suffering any condition deals (#2503):
+   * Armor of Sanctity's "take 5...20 less damage from foes suffering from
+   * a condition". Read as the packet lands. Never below 0. 0: none.
+   */
+  readonly damageReductionFromConditionedFoe: StatusStat;
+  /**
+   * Multiplier on the damage a spell skill deals the bearer (#2503): Veil
+   * of Thorns's "5...35% less damage from spells", 0.95...0.65. Only a
+   * spell's own packet; an attack, a degeneration or a spell's status's
+   * trigger never. Read with `damageTakenMultiplier`. 1: none.
+   */
+  readonly spellDamageTakenMultiplier: StatusStat;
+  /**
+   * The most damage the bearer keeps in any one second (#2503): Angelic
+   * Protection's "takes more than 250...80 damage per second, healed for
+   * any damage over that amount". Damage over it, in a rolling second, is
+   * healed at once; the window is the bearer's and is emptied when the
+   * status ends. The lowest of several counts. `undefined`: none.
+   */
+  readonly damagePerSecondCap: StatusStat | undefined;
+  /**
    * Damage of `type` the bearer takes is multiplied by `multiplier` (#1964):
    * Mantra of Flame's "fire damage you take is reduced by 45%", 0.55.
    * Read as each packet lands, after `damageTakenMultiplier`, of the type
@@ -1447,8 +1496,11 @@ export interface StatusDefinition {
    * after `uninterruptible`, which spends nothing. `once`: Mantra of
    * Concentration's "the next time you would be interrupted, you are not",
    * and it ends. `pay-energy`: Mantra of Resolve's, `amount` Energy a
-   * stop, and with less the status ends and the interrupt lands. A
-   * knockdown is no interrupt and goes by. `undefined`: none.
+   * stop, and with less the status ends and the interrupt lands.
+   * `lose-enchantment`: Pious Concentration's (#2503), one of the bearer's
+   * `profession` enchantments a stop, the newest; with none, the status
+   * ends and the interrupt lands. A knockdown is no interrupt and goes by.
+   * `undefined`: none.
    */
   readonly interruptGuard: InterruptGuard | undefined;
   /**
@@ -1921,7 +1973,9 @@ export interface SkillArmorPenetration {
 
 /** `StatusDefinition.interruptGuard` (#1964). */
 export type InterruptGuard =
-  { readonly kind: "once" } | { readonly kind: "pay-energy"; readonly amount: number };
+  | { readonly kind: "once" }
+  | { readonly kind: "pay-energy"; readonly amount: number }
+  | { readonly kind: "lose-enchantment"; readonly profession: ProfessionId };
 
 /** `StatusDefinition.failsNextSpell` (#1475). */
 export interface FailsNextSpell {
@@ -2514,7 +2568,16 @@ export type StatusChange =
   | { readonly kind: "took-elemental-damage"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "took-damage"; readonly fired: readonly AnsweringTrigger[] }
   | {
-      readonly kind: "knocked-down" | "knockdown-prevented" | "sacrificed-health";
+      readonly kind: "knocked-down" | "sacrificed-health";
+      readonly fired: readonly AnsweringTrigger[];
+    }
+  /**
+   * A knockdown `offenderId` tried was stopped (#845, #2503), with the
+   * triggers that answered: Balthazar's Pendulum knocks the offender down.
+   */
+  | {
+      readonly kind: "knockdown-prevented";
+      readonly offenderId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
   | {
@@ -3061,6 +3124,32 @@ export class StatusSet {
    * remaining time is put back.
    */
   readonly #hastened = new WeakMap<ActiveStatus, number>();
+  /**
+   * The damage the bearer kept in the last second under a
+   * `damagePerSecondCap` (#2503), each with seconds since it landed.
+   */
+  readonly #recentDamage: { age: number; amount: number }[] = [];
+
+  /**
+   * Age the cap's window by `dt` in place and drop what is a second old.
+   * Runs every tick for every combatant, so it allocates nothing: entries
+   * land in order and age together, which makes the expired ones a prefix.
+   */
+  #ageRecentDamage(dt: number): void {
+    if (this.#recentDamage.length === 0) {
+      return;
+    }
+    let expired = 0;
+    for (const entry of this.#recentDamage) {
+      entry.age += dt;
+      if (entry.age >= 1) {
+        expired++;
+      }
+    }
+    if (expired > 0) {
+      this.#recentDamage.splice(0, expired);
+    }
+  }
 
   /**
    * `spent`: the match's `endsEverywhereWhenSpent` statuses spent this
@@ -3124,6 +3213,9 @@ export class StatusSet {
           returnPoint: status.returnPoint,
           stepTargetId: status.stepTargetId,
         });
+        if (getStatusDefinition(id).damagePerSecondCap !== undefined) {
+          this.#recentDamage.length = 0;
+        }
         if (!death) {
           // Vow of Piety's (#2501): gone already, its own end renews nothing.
           if (getStatusDefinition(id).category === "enchantment") {
@@ -4325,6 +4417,30 @@ export class StatusSet {
   }
 
   /**
+   * The bearer just lost `amount` Health to damage (#2503): returns what
+   * of it its lowest `damagePerSecondCap` heals back, what takes the last
+   * second's kept damage over the cap, and keeps the rest in the window.
+   * 0 with no cap.
+   */
+  public damageOverCap(amount: number): number {
+    let cap: number | undefined;
+    for (const status of this.#statuses.values()) {
+      const stat = getStatusDefinition(status.id).damagePerSecondCap;
+      if (stat !== undefined) {
+        const each = Math.round(statAt(stat, status.ranks));
+        cap = cap === undefined ? each : Math.min(cap, each);
+      }
+    }
+    if (cap === undefined) {
+      return 0;
+    }
+    const kept = this.#recentDamage.reduce((sum, { amount: each }) => sum + each, 0);
+    const over = Math.min(amount, Math.max(0, kept + amount - cap));
+    this.#recentDamage.push({ age: 0, amount: amount - over });
+    return over;
+  }
+
+  /**
    * The bearer took a packet (#2190): every status that takes more off
    * each one counts it. Returns what they take off this one, Shield of
    * Absorption's 5 off the first, 10 off the second, and so on.
@@ -4659,12 +4775,17 @@ export class StatusSet {
   }
 
   /**
-   * A knockdown was stopped (#845): every status that ends when it stops
-   * one is gone, its `bearer-knockdown-prevented` triggers recorded
-   * (#1955). Returns the ids that ended on it.
+   * A knockdown `offenderId` tried was stopped (#845): every status that
+   * ends when it stops one is gone, its `bearer-knockdown-prevented`
+   * triggers recorded (#1955) toward the offender (#2503). One that stops
+   * only a foe's stays when `byFoe` is false, as it stopped nothing.
+   * Returns the ids that ended on it.
    */
-  public endOnKnockdownPrevented(): StatusId[] {
-    const ending = this.active.filter(({ id }) => getStatusDefinition(id).endsOnKnockdownPrevented);
+  public endOnKnockdownPrevented(offenderId: string, byFoe: boolean): StatusId[] {
+    const ending = this.active.filter(({ id }) => {
+      const definition = getStatusDefinition(id);
+      return definition.endsOnKnockdownPrevented && (byFoe || !definition.preventsFoeKnockdown);
+    });
     const fired = ending.flatMap(({ id, sourceId }) =>
       getStatusDefinition(id)
         .triggers.filter((trigger) => trigger.on === "bearer-knockdown-prevented")
@@ -4673,7 +4794,7 @@ export class StatusSet {
     const ended = ending.map(({ id }) => id);
     this.#end(ended);
     if (fired.length > 0) {
-      this.#changes.push({ kind: "knockdown-prevented", fired });
+      this.#changes.push({ kind: "knockdown-prevented", offenderId, fired });
     }
     return ended;
   }
@@ -4743,6 +4864,7 @@ export class StatusSet {
    */
   public advance(dt: number, moving: boolean): StatusId[] {
     const expired: StatusId[] = [];
+    this.#ageRecentDamage(dt);
     const modifiers = aggregateModifiers(this.active);
     const categoryRate: Readonly<Partial<Record<StatusCategory, number>>> = {
       condition: 1 + modifiers.conditionsExpireFaster,
@@ -4874,46 +4996,61 @@ export function preventsResurrection(statuses: readonly Pick<ActiveStatus, "id">
   return statuses.some(({ id }) => getStatusDefinition(id).preventsResurrection);
 }
 
-/**
- * The type a bearer of `statuses` deals its physical damage as (#1873):
- * the first status's `physicalDamageDealtAs`, Greater Conflagration's
- * fire. `undefined`: its own.
- */
-export function physicalDamageDealtAsOf(
-  statuses: readonly Pick<ActiveStatus, "id">[],
-): DamageType | undefined {
-  for (const { id } of statuses) {
-    const turned = getStatusDefinition(id).physicalDamageDealtAs;
-    if (turned !== undefined) {
-      return turned;
-    }
-  }
-  return undefined;
+/** The types a dealer turns its physical and its elemental damage into. */
+export interface DamageDealtAs {
+  readonly physical: DamageType | undefined;
+  readonly elemental: DamageType | undefined;
 }
 
 /**
- * The type a packet of `type` is as its dealer deals it (#1873): physical
- * damage turns into `dealtAs`, the dealer's `physicalDamageDealtAsOf`;
- * anything else stays. Read before the victim's `damageTypeTaken`.
+ * The types a bearer of `statuses` deals its damage as (#1873, #2503):
+ * the first status's `physicalDamageDealtAs`, Greater Conflagration's
+ * fire, and the first's `elementalDamageDealtAs`. `undefined`: its own.
  */
-export function damageTypeDealt(type: DamageType, dealtAs: DamageType | undefined): DamageType {
-  return dealtAs !== undefined && isPhysicalDamage(type) ? dealtAs : type;
+export function damageDealtAsOf(statuses: readonly Pick<ActiveStatus, "id">[]): DamageDealtAs {
+  let physical: DamageType | undefined;
+  let elemental: DamageType | undefined;
+  for (const { id } of statuses) {
+    const definition = getStatusDefinition(id);
+    physical ??= definition.physicalDamageDealtAs;
+    elemental ??= definition.elementalDamageDealtAs;
+  }
+  return { physical, elemental };
+}
+
+/**
+ * The type a packet of `type` is as its dealer deals it (#1873, #2503):
+ * physical damage turns into `dealtAs.physical` and elemental into
+ * `dealtAs.elemental`, the dealer's `damageDealtAsOf`; anything else
+ * stays. Read before the victim's `damageTypeTaken`.
+ */
+export function damageTypeDealt(type: DamageType, dealtAs: DamageDealtAs): DamageType {
+  if (isPhysicalDamage(type)) {
+    return dealtAs.physical ?? type;
+  }
+  if (isElementalDamage(type)) {
+    return dealtAs.elemental ?? type;
+  }
+  return type;
 }
 
 /**
  * The type a packet of `type` is when it reaches a bearer of `statuses`
- * (#1745): elemental damage turns into a status's
- * `elementalDamageTakenAs`, Winter's cold; anything else stays.
+ * (#1745, #2503): elemental damage turns into a status's
+ * `elementalDamageTakenAs`, Winter's cold, and physical into its
+ * `physicalDamageTakenAs`, Stone Striker's earth; anything else stays.
  */
 export function damageTypeTaken(
   type: DamageType,
   statuses: readonly Pick<ActiveStatus, "id">[],
 ): DamageType {
-  if (!isElementalDamage(type)) {
+  const elemental = isElementalDamage(type);
+  if (!elemental && !isPhysicalDamage(type)) {
     return type;
   }
   for (const { id } of statuses) {
-    const turned = getStatusDefinition(id).elementalDamageTakenAs;
+    const definition = getStatusDefinition(id);
+    const turned = elemental ? definition.elementalDamageTakenAs : definition.physicalDamageTakenAs;
     if (turned !== undefined) {
       return turned;
     }

@@ -75,6 +75,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     // Epidemic (#1501): the target's conditions on the foes around it.
     case "spread-conditions":
       return ["condition"];
+    // Grenth's Fingers (#2503): your conditions on the foes around you.
+    case "transfer-conditions-to-area":
+      return ["condition", "removal"];
     case "damage":
     case "energy-gain":
     case "energy-refill":
@@ -190,6 +193,12 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.damageReductionFromHexedSource !== undefined ||
     status.damageReductionFromSourceWith !== undefined ||
     statAtTwelve(status.damageReductionFromWeakerFoe) > 0 ||
+    // Armor of Sanctity, Veil of Thorns, Angelic Protection and Energy
+    // Boon (#2503).
+    statAtTwelve(status.damageReductionFromConditionedFoe) > 0 ||
+    statAtTwelve(status.spellDamageTakenMultiplier) < 1 ||
+    status.damagePerSecondCap !== undefined ||
+    statAtTwelve(status.maxHealthPerMaxEnergy) > 0 ||
     status.interruptGuard !== undefined ||
     (status.damageTypeTakenMultiplier?.multiplier ?? 1) < 1 ||
     // More maximum Health and shorter conditions (#2491): Empowerment's

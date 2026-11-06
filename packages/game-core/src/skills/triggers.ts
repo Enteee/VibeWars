@@ -311,12 +311,12 @@ export function fireChangeTriggers(
     case "took-damage":
     case "knocked-down":
     case "sacrificed-health":
-    case "knockdown-prevented":
     case "lost-enchantment":
     case "lost-condition":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
       );
+    case "knockdown-prevented":
     case "took-damage-from-foe":
     case "hit-by-attack":
     case "targeted-by-foe":
