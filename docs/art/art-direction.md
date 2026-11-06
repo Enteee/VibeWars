@@ -1368,7 +1368,7 @@ so there is no second list to drift.
 
 Samples are cut from VCSL (CC0) by `scripts/assets/music-palette.sh` into mono
 MP3, 32 kHz, 40 kbit/s. The set is about 0.55 MB; the budget is 3 MB. VCSL is
-credited in Options → Third-party licences (ADR-0039). A map of pitched samples
+credited in Help → Third-party licences (ADR-0039). A map of pitched samples
 has note-name keys; unpitched hits are arrays (`s("taiko:1")`). A key with
 `#` in it is stored as `s` in the file name, because `#` starts a URL fragment.
 The host must pass the base URL itself (`samples(map, base)`, with a trailing
