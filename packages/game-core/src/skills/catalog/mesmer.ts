@@ -28,6 +28,11 @@ const COMPLICATE_DISABLE: Magnitude = {
   scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 10.6 },
 };
 
+/** Stolen Speed's 1...10 s (#2459), on its target and on each adjacent foe. */
+const STOLEN_SPEED_SECONDS: Magnitude = {
+  scaling: { attributeId: "mesmer.fast-casting", atZero: 1, atTwelve: 8.2 },
+};
+
 /** Signet of Weariness's 3...8 Energy and 1...12 s Weakness (#2231), on its target and each nearby foe. */
 const WEARINESS: readonly UnconditionalEffect[] = [
   {
@@ -4918,6 +4923,46 @@ export const MESMER_SKILLS: readonly Skill[] = [
         durationSeconds: {
           scaling: { attributeId: "mesmer.illusion-magic", atZero: 4, atTwelve: 8.8 },
         },
+      },
+    ],
+  },
+  // Faster casting for the hex's own source (#2459).
+  {
+    id: "mesmer.stolen-speed",
+    name: "Stolen Speed",
+    gwId: 3187,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 1...10 seconds, spells cast by the target foe and all adjacent
+    // foes take 100% longer to cast. Spells you cast that target these foes
+    // take 50% less time to cast" (PvP): 8.2 s at rank 12.
+    effects: [
+      { kind: "apply-status", statusId: "stolen-speed", durationSeconds: STOLEN_SPEED_SECONDS },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          { kind: "apply-status", statusId: "stolen-speed", durationSeconds: STOLEN_SPEED_SECONDS },
+        ],
       },
     ],
   },

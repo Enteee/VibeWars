@@ -1253,6 +1253,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const times = String(definition.incomingAllySpellCastTimeMultiplier);
     parts.push(`other allies' spells on ${bearer} take ${times}× as long to cast`);
   }
+  if (definition.sourceSpellCastTimeMultiplier !== 1) {
+    const times = String(definition.sourceSpellCastTimeMultiplier);
+    parts.push(`your spells on ${bearer} take ${times}× as long to cast`);
+  }
   if (definition.enchantmentsOnBearerCostLess !== 0) {
     const less = String(definition.enchantmentsOnBearerCostLess);
     parts.push(`enchantments cast on ${bearer} cost ${less} less Energy, minimum 1`);
@@ -3400,9 +3404,11 @@ function countEach(count: CountRule, onTarget: string): string {
                 ? "foe knocked down"
                 : count.kind === "bar-skills"
                   ? `${count.type} you have equipped`
-                  : count.kind === "targets"
-                    ? "foe hit"
-                    : `${perCountNoun(count)} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+                  : count.kind === "adrenaline-skills"
+                    ? "adrenaline skill they have"
+                    : count.kind === "targets"
+                      ? "foe hit"
+                      : `${perCountNoun(count)} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
 }
 
 /**
@@ -3452,13 +3458,15 @@ function perCountNoun(count: CountRule): string {
                 ? "foe knocked down"
                 : count.kind === "targets"
                   ? "foe hit"
-                  : count.kind === "dead-allies-within"
-                    ? "dead ally"
-                    : count.kind === "foes-within"
-                      ? count.knockedDown === true
-                        ? "knocked-down foe"
-                        : "foe"
-                      : "ally";
+                  : count.kind === "adrenaline-skills"
+                    ? "adrenaline skill"
+                    : count.kind === "dead-allies-within"
+                      ? "dead ally"
+                      : count.kind === "foes-within"
+                        ? count.knockedDown === true
+                          ? "knocked-down foe"
+                          : "foe"
+                        : "ally";
 }
 
 /** Warrior's Endurance's cap (#1359): ", never above 55". */

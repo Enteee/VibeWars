@@ -98,7 +98,9 @@ export type MesmerStatusId =
   // Mechanics (#2438).
   | "mantra-of-signets"
   // Staples (#2447).
-  | "ancestors-visage";
+  | "ancestors-visage"
+  // Mechanics (#2459).
+  | "stolen-speed";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -1172,5 +1174,13 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     enchantmentsExpireFaster: {
       scaling: { attributeId: "mesmer.illusion-magic", atZero: 1.5, atTwelve: 2.7 },
     },
+  }),
+  // "Spells cast by the target foe and all adjacent foes take 100% longer
+  // to cast. Spells you cast that target these foes take 50% less time to
+  // cast" (PvP, #2459): only its own caster's, aimed at the bearer.
+  "stolen-speed": define("stolen-speed", "Stolen Speed", "hex", {
+    profession: "mesmer",
+    castTimeMultiplier: 2,
+    sourceSpellCastTimeMultiplier: 0.5,
   }),
 };

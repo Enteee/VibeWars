@@ -186,6 +186,7 @@ export function define(
     incomingHexCastTimeMultiplier: 1,
     nextIncomingHexDurationMultiplier: undefined,
     incomingAllySpellCastTimeMultiplier: 1,
+    sourceSpellCastTimeMultiplier: 1,
     enchantmentsOnBearerCostLess: 0,
     damageFromSpiritAttacks: 0,
     breaksNextHex: undefined,

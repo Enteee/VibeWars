@@ -41,3 +41,14 @@ export function skillsOnBar(combatant: Combatant, type: SkillType): number {
     (slot) => slot !== null && getSkill(slot.skillId)?.type === type,
   ).length;
 }
+
+/**
+ * Slots of `combatant`'s bar whose skill now costs adrenaline (#2459),
+ * charged or not: Signet of Rage's "for each adrenaline skill that foe
+ * has".
+ */
+export function adrenalSkillsOnBar(combatant: Combatant): number {
+  return resolvedBar(combatant.skillBar, combatant.cast).filter(
+    (slot) => slot !== null && getSkill(slot.skillId)?.cost?.kind === "adrenaline",
+  ).length;
+}

@@ -191,8 +191,9 @@ export type CountRule =
     }
   /**
    * Whole seconds the status whose end trigger lands this was on (#2321),
-   * as Rising Bile's "for each second this hex was in effect". 0 outside
-   * an end trigger.
+   * as Rising Bile's "for each second this hex was in effect"; in a ground
+   * pulse, the pulses so far, this one too (#2459), as Savannah Heat's
+   * "for each second this spell has been in effect". 0 elsewhere.
    */
   | { readonly kind: "held-seconds" }
   /**
@@ -223,6 +224,12 @@ export type CountRule =
    * Mantra of Signets' "for each signet you have equipped".
    */
   | { readonly kind: "bar-skills"; readonly type: SkillType }
+  /**
+   * Adrenal skills on the target's bar (#2459), charged or not: Signet
+   * of Rage's "+5...10 holy damage for each adrenaline skill that foe
+   * has".
+   */
+  | { readonly kind: "adrenaline-skills"; readonly on: "target" }
   /**
    * Foes the landing attack hit (#2438), its primary and any it cleaved,
    * a blocked or missed one not counted; 0 outside an attack: Farmer's
@@ -2021,7 +2028,19 @@ export interface FlightSpeed {
  * state holds (#1914), read at release with the attacker as the caster:
  * Forked Arrow's "if you are enchanted or hexed, only one arrow".
  */
-export type Strikes = 1 | 2 | { readonly count: 2; readonly oneWhile: StateCondition };
+export type Strikes =
+  | 1
+  | 2
+  | {
+      readonly count: 2;
+      readonly oneWhile: StateCondition;
+      /**
+       * What each blow's weapon roll is multiplied by when it strikes
+       * more than once (#2459): Twin Moon Sweep's "each strike doing 25%
+       * less damage than normal", 0.75. Absent: 1.
+       */
+      readonly eachWeaponDamage?: number;
+    };
 
 /** What makes an attack skill a blow of its weapon (ADR-0029). */
 export interface AttackSkillRule {
@@ -2106,6 +2125,15 @@ export interface AttackSkillRule {
    * blows or shots, so none rides them. Absent: they stay.
    */
   readonly removesPreparations?: true;
+  /**
+   * What an attack skill's release does, once per use, hit or miss
+   * (#2459), after `removesPreparations` and before its blows or shots,
+   * its target the primary: Twin Moon Sweep's "You lose 1 Dervish
+   * enchantment and gain 10...20 Health". With it, `strikes` and
+   * `unblockable` are read once, at the primary, before it runs, so its
+   * removal does not undo them. Absent: nothing.
+   */
+  readonly onRelease?: readonly SkillEffect[];
   /**
    * How much faster than its weapon's shot it flies (#1486): Mighty
    * Throw's "three times faster". Read at release; a melee blow ignores
@@ -2576,7 +2604,8 @@ export interface SkillContext {
   readonly firingStatusId?: StatusId | undefined;
   /**
    * Whole seconds the status whose end trigger these effects are was on
-   * (#2321): what `held-seconds` counts. Absent elsewhere, where it counts 0.
+   * (#2321), or the ground pulse they are has been in effect, one a pulse
+   * (#2459): what `held-seconds` counts. Absent elsewhere, where it counts 0.
    */
   readonly heldSeconds?: number | undefined;
   /**
