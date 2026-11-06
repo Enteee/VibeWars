@@ -57,3 +57,75 @@ describe("play-build heals (#1189, #1870)", () => {
     expect(sim.get("ally")?.combatant.health).toBeGreaterThan(before);
   });
 });
+
+describe("play-build spirits for a hurt ally (#2491)", () => {
+  const RITUALIST_RANKS = new Map([
+    ["ritualist.restoration-magic", 12],
+    ["ritualist.communing", 12],
+  ]);
+
+  {
+    const skillId = "ritualist.shelter";
+    const waitSeconds = 5 + 45 + 5;
+    it("casts Shelter at full Health for an ally in its range, once while the spirit stands", () => {
+      const sim = match([
+        fighter("rit", 0, MONK, vec2(400, 400), {
+          skillBar: [skillId],
+          attributeRanks: RITUALIST_RANKS,
+          maxEnergy: 100,
+        }),
+        fighter("ally", 0, WARRIOR, vec2(480, 400), {
+          behaviour: undefined,
+          startHealthFraction: 0.4,
+        }),
+        fighter("foe", 1, WARRIOR, vec2(600, 400), { behaviour: undefined, skillBar: [] }),
+      ]);
+      expect(askBot(sim, "rit")).toMatchObject({ useSkillId: skillId, targetId: "rit" });
+      expect(skillsUsed(sim, "rit", waitSeconds)).toEqual([skillId]);
+      const spirit = [...sim.participants()].find(
+        ({ creature }) => creature?.ownerId === "rit" && creature.skillId === skillId,
+      );
+      expect(spirit?.combatant.dead).toBe(false);
+    });
+  }
+
+  it("casts no Shelter while a teammate's stands in its aura, which it would only replace", () => {
+    const ritualist = (id: string, x: number) =>
+      fighter(id, 0, MONK, vec2(x, 400), {
+        skillBar: ["ritualist.shelter"],
+        attributeRanks: RITUALIST_RANKS,
+        maxEnergy: 100,
+        behaviour: undefined,
+      });
+    const sim = match([
+      ritualist("rit", 400),
+      ritualist("other", 440),
+      fighter("ally", 0, WARRIOR, vec2(480, 400), {
+        behaviour: undefined,
+        startHealthFraction: 0.4,
+      }),
+    ]);
+    expect(askBot(sim, "rit").useSkillId).toBe("ritualist.shelter");
+    expect(sim.requestSkill("other", 0)?.check).toEqual({ ok: true });
+    skillsUsed(sim, "other", 6);
+    expect(
+      [...sim.participants()].some(({ creature }) => creature?.skillId === "ritualist.shelter"),
+    ).toBe(true);
+    expect(askBot(sim, "rit").useSkillId).toBeUndefined();
+  });
+
+  it("casts no spirit for an ally outside its aura", () => {
+    const sim = match([
+      fighter("rit", 0, MONK, vec2(400, 400), {
+        skillBar: ["ritualist.shelter"],
+        attributeRanks: RITUALIST_RANKS,
+        maxEnergy: 100,
+      }),
+      fighter("ally", 0, WARRIOR, vec2(1500, 400), {
+        behaviour: undefined,
+        startHealthFraction: 0.4,
+      }),
+    ]);
+    expect(askBot(sim, "rit").useSkillId).toBeUndefined();
+  });
+});

@@ -16,6 +16,7 @@ import {
   type StatusId,
 } from "../../skills/status.js";
 import type {
+  Aura,
   Combatant,
   Skill,
   SkillEffect,
@@ -70,6 +71,17 @@ export function botUses(skill: Skill): readonly BotUse[] {
   // Healing or bonding minions (#1986) is no heal or defence of a player's.
   if (minionCareOf(skill) !== undefined) {
     return ["minion-care"];
+  }
+  // A spirit whose aura helps only allies holding an item (#2491),
+  // Empowerment's: a bot holds none.
+  const aura = summonAura(skill);
+  if (aura?.affects === "allies" && getStatusDefinition(aura.statusId).onlyWhileHoldingItem) {
+    return [];
+  }
+  // One whose aura runs conditions out faster (#2491), Recovery's, is for
+  // where a condition is borne, not for low Health: the cleanse rule's.
+  if (conditionAuraRadius(skill) !== undefined) {
+    return ["removal"];
   }
   const roles = skillRoles(skill);
   const uses: BotUse[] = [];
@@ -445,6 +457,28 @@ export function interruptAimed(
     return null;
   };
   return aimed(skill.effects);
+}
+
+/** The aura of the spirit `skill` summons, if it has one. */
+export function summonAura(skill: Skill): Aura | undefined {
+  for (const effect of skill.effects) {
+    if (effect.kind === "summon" && effect.creature.aura !== undefined) {
+      return effect.creature.aura;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * The radius of the aura of the spirit `skill` summons, if it is one that
+ * runs allies' conditions out faster (#2491): Recovery's.
+ */
+export function conditionAuraRadius(skill: Skill): number | undefined {
+  const aura = summonAura(skill);
+  return aura?.affects === "allies" &&
+    statAtTwelve(getStatusDefinition(aura.statusId).conditionsExpireFaster) > 0
+    ? aura.radius
+    : undefined;
 }
 
 /**

@@ -32,15 +32,10 @@ const NO_BOT_USE = new Set([
   // Aura of Stability (#1870): knockdown kept off an ally is no defence
   // the bot weighs, as Balanced Stance on itself.
   "monk.aura-of-stability",
-  // Elemental and Physical Resistance, Vital Blessing and Vital Weapon
-  // (#1872): armor against one kind of damage and more maximum Health are
-  // no defence the bot weighs, as Avatar of Melandru's.
+  // Elemental and Physical Resistance (#1872): armor against one kind of
+  // damage is no defence the bot weighs.
   "mesmer.elemental-resistance",
   "mesmer.physical-resistance",
-  "monk.vital-blessing",
-  "ritualist.vital-weapon",
-  // Signet of Stamina (#2316), the same: more maximum Health until a hit.
-  "warrior.signet-of-stamina",
   // Warrior's Cunning (#2335): blocks made not to happen are no use the
   // bot weighs yet.
   "warrior.warriors-cunning",
@@ -73,10 +68,6 @@ const NO_BOT_USE = new Set([
   // Live Vicariously (#1748): Health to the caster when its ally hits is
   // no heal the bot weighs.
   "monk.live-vicariously",
-  // Nor Purifying Veil's, whose removal waits for the enchantment to end.
-  "monk.purifying-veil",
-  // Recovery (#2477): conditions run out faster, none taken off.
-  "ritualist.recovery",
   // Companion commands and pet attacks: out of scope for a bot.
   "ranger.bestial-mauling",
   "ranger.bestial-pounce",
@@ -114,9 +105,7 @@ const NO_BOT_USE = new Set([
   "dervish.avatar-of-balthazar",
   "dervish.avatar-of-dwayna",
   "dervish.avatar-of-lyssa",
-  "dervish.avatar-of-melandru",
   "dervish.enchanted-haste",
-  "dervish.featherfoot-grace",
   "dervish.fleeting-stability",
   "dervish.pious-fury",
   "dervish.eremites-zeal",
@@ -154,7 +143,6 @@ const NO_BOT_USE = new Set([
   "ritualist.cruel-was-daoshen",
   "ritualist.destructive-was-glaive",
   "ritualist.energetic-was-lee-sa",
-  "ritualist.pure-was-li-ming",
   "ritualist.signet-of-creation",
   "ritualist.vengeful-was-khanhei",
   "ritualist.weapon-of-quickening",
@@ -162,7 +150,6 @@ const NO_BOT_USE = new Set([
   // Steady Stance (#2316), as Balanced Stance: a knockdown turned away.
   "warrior.steady-stance",
   "warrior.battle-rage",
-  "warrior.endure-pain",
   "warrior.rage-of-the-ntouka",
   "warrior.rush",
   "warrior.shields-up",
@@ -374,9 +361,6 @@ const NO_BOT_USE = new Set([
   // Adrenaline and Energy for an ally that is being hit (#2302): no role
   // the bot weighs.
   "monk.balthazars-spirit",
-  // Adrenaline by foes in earshot and a raised maximum (#2315), as
-  // "Make Your Time!"'s and Endure Pain's: no rule the bot weighs.
-  "warrior.to-the-limit",
   // A rider on the next Necromancer skill on a foe (#2333), its effect only
   // in a status trigger: no role the bot weighs.
   "necromancer.signet-of-suffering",
@@ -403,8 +387,8 @@ const NO_BOT_USE = new Set([
   // Restoration (#2478) is the same, a raise that waits for its spirit's
   // death.
   "ritualist.restoration",
-  // Empowerment's aura (#2478) only raises the maxima of allies holding an
-  // item: no role the bot weighs.
+  // Empowerment's aura (#2478) helps only allies holding an item, and a
+  // bot holds none (#2491).
   "ritualist.empowerment",
   // Soul Twisting (#2478) eases only its own binding rituals: self-help no
   // rule reaches for.
@@ -436,6 +420,8 @@ describe("botUses (#1189)", () => {
     expect(botUses(skill("monk.guardian"))).toEqual(["defence"]);
     expect(botUses(skill("monk.mend-condition"))).toEqual(["healing", "removal"]);
     expect(botUses(skill("monk.restore-life"))).toContain("resurrect");
+    // Recovery is for a condition borne, not for low Health (#2491).
+    expect(botUses(skill("ritualist.recovery"))).toEqual(["removal"]);
     expect(botUses(skill("elementalist.fireball"))).toEqual(["offence"]);
     // An attack skill is offence, whatever else it does.
     expect(botUses(skill("warrior.distracting-blow"))).toEqual(["interrupt", "offence"]);
