@@ -88,11 +88,7 @@ import { noWebGlNotice, watchingNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
 import { closeHelpOverlay, isHelpOverlayOpen, openHelpOverlay } from "./ui/help-screen.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
-import {
-  closeOptionsOverlay,
-  isOptionsOverlayOpen,
-  openOptionsOverlay,
-} from "./ui/options-screen.js";
+import { attachOptionsWindow, isOptionsWindowOpen } from "./ui/options-screen.js";
 import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
@@ -283,6 +279,7 @@ export function toArenaSnapshot(
     // Your team's calls are the caller's (`withCalls`, #443).
     calledId: undefined,
     pings: [],
+    strokes: [],
     actors: match.players.map((player) => {
       const statuses = player.statuses.map((status) => status.id);
       // Rings and condition cues for what the statuses already say (#1117,
@@ -441,8 +438,16 @@ export async function startMatchView(
       seat?.sendIntent({ kind: "command", creatureId, order: { kind: "mode", mode } });
     },
   );
-  // The compass (#486), top right under the match controls.
-  const compass = createCompass(parent, compassReach(viewed.map));
+  // The compass (#486), top right under the match controls; a click on it
+  // pings, a drag draws for your team (#2391).
+  const compass = createCompass(parent, compassReach(viewed.map), {
+    onPing(at) {
+      seat?.sendCall({ kind: "ping", x: at.x, y: at.y });
+    },
+    onStroke(call) {
+      seat?.sendCall(call);
+    },
+  });
   // A watcher has none (#480), from the start, not only once it updates.
   compass.element.hidden = seat === undefined;
   // A watcher (#480) has no body: no bars, effects or skill bar of its
@@ -462,11 +467,38 @@ export async function startMatchView(
   const measureCover = (): void => {
     // The chat panel (#479) sits just above the HUD, wherever its top is.
     parent.style.setProperty("--hud-height", `${String(hud.root.offsetHeight)}px`);
+    // The chat (#2390) sits at the bottom-left beside the HUD's centred
+    // column when the room left of it is 14rem or more, above the HUD when
+    // not: the column holds the bars and the skill bar rows, and is watched
+    // through the bars, with the weapon sets hanging off the skill bar's
+    // left end. Not the message above it: that keeps the width of whatever
+    // it last said while it fades.
+    const column = hud.bars.parentElement;
+    const lefts = [column, column?.querySelector(".weapon-sets")]
+      .map((part) => part?.getBoundingClientRect())
+      .filter((box): box is DOMRect => box !== undefined && box.width > 0)
+      .map((box) => box.left);
+    const room =
+      lefts.length === 0
+        ? parent.clientWidth
+        : Math.min(...lefts) - parent.getBoundingClientRect().left;
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const chatWidth = Math.max(0, room - 1.8 * rem);
+    parent.style.setProperty("--chat-beside-hud-width", `${String(chatWidth)}px`);
+    parent.classList.toggle("is-chat-above-hud", chatWidth < 14 * rem);
     // The compass and the party window, from the parent the canvas fills
     // (#1424). A hidden party window has no size and keeps nothing out; a
     // hidden compass keeps its box, so it keeps markers out either way and
     // nothing goes stale when it shows.
     const origin = parent.getBoundingClientRect();
+    // A party window on the left, as the Training Ground's (#2390), caps
+    // the chat's lines to the room below it.
+    const party = partyWindow.element.getBoundingClientRect();
+    if (party.height > 0 && party.left - origin.left < origin.width / 2) {
+      parent.style.setProperty("--chat-room", `${String(origin.bottom - party.bottom)}px`);
+    } else {
+      parent.style.removeProperty("--chat-room");
+    }
     const keepOut = [compass.element, partyWindow.element]
       .map((element) => element.getBoundingClientRect())
       .filter((rect) => rect.width > 0 && rect.height > 0)
@@ -545,16 +577,9 @@ export async function startMatchView(
   const jukebox = attachJukeboxPopover(hud.music, parent);
   // Esc cancels an attack now, so leaving is a button that asks first (#160).
   const leave = renderLeave(hud, callbacks.onLeave);
-  // Options over the match (#454): the match goes on underneath.
-  const openOptions = (): void => {
-    openOptionsOverlay(parent, () => {
-      hud.options.setAttribute("aria-expanded", "false");
-      hud.options.focus();
-    });
-    hud.options.setAttribute("aria-expanded", "true");
-  };
-  hud.options.setAttribute("aria-expanded", "false");
-  hud.options.addEventListener("click", openOptions);
+  // Options over the match (#454), a window like the music's (#2386): the
+  // match goes on underneath.
+  const optionsWindow = attachOptionsWindow(hud.options, parent);
   // Help over the match too (#1257), the same way.
   const openHelp = (): void => {
     openHelpOverlay(parent, () => {
@@ -623,7 +648,7 @@ export async function startMatchView(
       event.stopPropagation();
       // Not under Options (#454) or Help (#1257): their keys are their
       // own, so no question opens beneath them.
-      if (!event.repeat && !isOptionsOverlayOpen() && !isHelpOverlayOpen()) {
+      if (!event.repeat && !isOptionsWindowOpen() && !isHelpOverlayOpen()) {
         if (leave.isOpen()) {
           leave.close();
         } else {
@@ -655,7 +680,7 @@ export async function startMatchView(
     // runs first, so an Esc it used is not also Cancel Action. Movement
     // keys still move.
     if (
-      isOptionsOverlayOpen() ||
+      isOptionsWindowOpen() ||
       isHelpOverlayOpen() ||
       (event.key === "Escape" && event.defaultPrevented)
     ) {
@@ -910,6 +935,11 @@ export async function startMatchView(
     if (parent.dataset.called !== called) {
       parent.dataset.called = called;
     }
+    // And how many pings and compass line segments it has up (#2391).
+    const marks = `${String(latestArena.pings.length)}/${String(latestArena.strokes.length)}`;
+    if (parent.dataset.calls !== marks) {
+      parent.dataset.calls = marks;
+    }
 
     if (seat === undefined) {
       // No self: the scoreboard, clock and result alone, and the target
@@ -1032,7 +1062,11 @@ export async function startMatchView(
       partyWindow.dispose();
       compass.dispose();
       delete parent.dataset.called;
+      delete parent.dataset.calls;
       parent.style.removeProperty("--hud-height");
+      parent.style.removeProperty("--chat-beside-hud-width");
+      parent.style.removeProperty("--chat-room");
+      parent.classList.remove("is-chat-above-hud");
       nameReveal.detach();
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement?.();
@@ -1055,7 +1089,7 @@ export async function startMatchView(
       waiting?.remove();
       offMute();
       jukebox.dispose();
-      closeOptionsOverlay();
+      optionsWindow.dispose();
       closeHelpOverlay();
       detachFullscreen();
       hud.controls.remove();

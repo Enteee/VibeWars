@@ -4591,6 +4591,78 @@ export const MESMER_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "signet-of-recall", durationSeconds: { flat: 6 } }],
   },
   {
+    id: "mesmer.sympathetic-visage",
+    name: "Sympathetic Visage",
+    gwId: 34,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Staples (#2414). "For 4...10 seconds, whenever target ally is hit by
+    // a melee attack, all adjacent foes lose all adrenaline and 3 Energy":
+    // 8.8 s at rank 12; the trigger is the status's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "sympathetic-visage",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.mantra-of-inscriptions",
+    name: "Mantra of Inscriptions",
+    gwId: 15,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...25 seconds, signets you successfully activate while in this
+    // stance recharge 10...40% faster": 21 s at rank 12, the share the
+    // stance's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mantra-of-inscriptions",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 5, atTwelve: 21 },
+        },
+      },
+    ],
+  },
+  {
     id: "mesmer.shared-burden",
     name: "Shared Burden",
     gwId: 900,

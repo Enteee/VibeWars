@@ -5371,4 +5371,178 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     // that foe gains an equal amount."
     effects: [{ kind: "balance-health" }],
   },
+  {
+    id: "necromancer.oppressive-gaze",
+    name: "Oppressive Gaze",
+    gwId: 864,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe and adjacent foes take 10...30 shadow damage. Foes
+    // already suffering from a condition are Poisoned and Weakened for
+    // 3...12 seconds" (#2406): 26 and 10 at rank 12. The conditions go
+    // first, so "already" reads each foe before its own Poison lands.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        includesCentre: true,
+        maxTargets: undefined,
+        onlyIf: { kind: "target-has", category: "condition" },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "poison",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 10.2 },
+            },
+          },
+          {
+            kind: "apply-status",
+            statusId: "weakness",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 10.2 },
+            },
+          },
+        ],
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        includesCentre: true,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 10, atTwelve: 26 },
+            },
+            type: "shadow",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "necromancer.envenom-enchantments",
+    name: "Envenom Enchantments",
+    gwId: 936,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe loses one enchantment. For every remaining enchantment,
+    // target foe is poisoned for 3...10 seconds" (#2406): 8.6 s each at
+    // rank 12, counted once the one is gone; none left, no Poison.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: 1 },
+      {
+        kind: "apply-status",
+        statusId: "poison",
+        durationSeconds: { flat: 0 },
+        per: {
+          count: { kind: "statuses", on: "target", categories: ["enchantment"] },
+          amount: { scaling: { attributeId: "necromancer.curses", atZero: 3, atTwelve: 8.6 } },
+          max: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.withering-aura",
+    name: "Withering Aura",
+    gwId: 1997,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, target ally's melee attacks cause Weakness for
+    // 5...20 seconds" (#2411): 17 s at rank 12, and the Weakness the
+    // caster's too, whatever the ally's Death Magic.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "withering-aura",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.hexers-vigor",
+    name: "Hexer's Vigor",
+    gwId: 2138,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.soul-reaping",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, you have +1...8 Health regeneration. Hexer's Vigor
+    // ends if you cast a non-hex skill" (#2411).
+    effects: [{ kind: "apply-status", statusId: "hexers-vigor", durationSeconds: { flat: 10 } }],
+  },
 ];

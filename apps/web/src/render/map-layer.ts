@@ -9,6 +9,8 @@ export interface MapLayer {
   readonly width: number;
   readonly height: number;
   readonly walls: readonly RenderableWall[];
+  /** CSS px per world unit: its lines are 1 CSS px wide at any zoom (#2393). */
+  readonly zoom: number;
 }
 
 /**
@@ -17,5 +19,10 @@ export interface MapLayer {
  * once, so a new list is a new map.
  */
 export function mapLayerChanged(drawn: MapLayer | undefined, next: MapLayer): boolean {
-  return drawn?.width !== next.width || drawn.height !== next.height || drawn.walls !== next.walls;
+  return (
+    drawn?.width !== next.width ||
+    drawn.height !== next.height ||
+    drawn.walls !== next.walls ||
+    drawn.zoom !== next.zoom
+  );
 }

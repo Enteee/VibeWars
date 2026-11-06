@@ -845,6 +845,33 @@ test("a wheel click on a foe calls it for your team, and the other team never se
   await opponent.close();
 });
 
+test("a click on the compass pings, and a drag on it draws a line gone by 4 s later (#2391)", async ({
+  page,
+}) => {
+  await startSoloMatch(page);
+  const stage = page.locator("#viewport");
+  const compass = await page.locator(".compass").boundingBox();
+  if (compass === null) {
+    throw new Error("no compass");
+  }
+  const x = compass.x + compass.width / 2;
+  const y = compass.y + compass.height / 2;
+  await expect(stage).toHaveAttribute("data-calls", "0/0");
+
+  await page.mouse.click(x + 20, y - 10);
+  await expect(stage).toHaveAttribute("data-calls", /^1\//);
+
+  await page.mouse.move(x - 40, y);
+  await page.mouse.down();
+  for (let step = 1; step <= 8; step += 1) {
+    await page.mouse.move(x - 40 + step * 10, y + step * 3, { steps: 2 });
+    await page.waitForTimeout(40);
+  }
+  await page.mouse.up();
+  await expect(stage).toHaveAttribute("data-calls", /\/[1-9]\d*$/);
+  await expect(stage).toHaveAttribute("data-calls", /\/0$/, { timeout: 8_000 });
+});
+
 test("⚙ opens Options over the match: Esc closes it, and the attack and the match go on (#454)", async ({
   page,
 }) => {

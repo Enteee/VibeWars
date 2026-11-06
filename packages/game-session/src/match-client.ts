@@ -1,4 +1,5 @@
 import {
+  MAX_WIRE_STROKES,
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   parseCastRefused,
@@ -9,6 +10,7 @@ import {
   parseChainMarks,
   parseRecharge,
   parseWireCalls,
+  parseWireStrokes,
   parseWireTraps,
   parseWireCombatBatch,
   parseWireEnded,
@@ -29,6 +31,7 @@ import {
   type PeerWelcome,
   type RechargeMessage,
   type WireCalls,
+  type WireStroke,
   type WireTraps,
   type WireEnded,
   type WireSkillBar,
@@ -169,6 +172,11 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   };
   /** Your team's calls as last sent, and the match time they came at (#443). */
   let calls: { readonly wire: WireCalls; readonly at: number } | undefined;
+  /**
+   * Your team's compass line segments (#2391), each with the match time
+   * it came at, kept here: the host sends each once, and again after a welcome.
+   */
+  let strokes: { readonly wire: WireStroke; readonly at: number }[] = [];
   /** Your team's traps as last sent (#1105). */
   let traps: WireTraps["traps"] = [];
   let lost = false;
@@ -284,6 +292,17 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   });
   fromHost("calls", parseWireCalls, (message) => {
     calls = { wire: message, at: elapsed() };
+  });
+  fromHost("strokes", parseWireStrokes, (message) => {
+    const at = elapsed();
+    // A welcome's resend replaces what this peer already had of them.
+    // The host keeps one team's worth live, so the newest that many are
+    // all a fair host ever needs shown: a hostile one cannot pile up more.
+    const ids = new Set(message.segments.map(({ id }) => id));
+    strokes = [
+      ...strokes.filter((kept) => !ids.has(kept.wire.id) && kept.wire.remaining > at - kept.at),
+      ...message.segments.map((wire) => ({ wire, at })),
+    ].slice(-MAX_WIRE_STROKES);
   });
   fromHost("traps", parseWireTraps, (message) => {
     traps = message.traps;
@@ -471,16 +490,23 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         }
       },
       getCalls(): CallsSnapshot {
+        const now = elapsed();
+        const lines = strokes.flatMap(({ wire, at }) =>
+          wire.remaining - (now - at) > 0
+            ? [{ ...wire, remaining: wire.remaining - (now - at) }]
+            : [],
+        );
         if (calls === undefined) {
-          return NO_CALLS;
+          return { ...NO_CALLS, strokes: lines };
         }
         // Counted down on the match clock, as recharges are.
-        const passed = elapsed() - calls.at;
+        const passed = now - calls.at;
         return {
           target: calls.wire.target,
           pings: calls.wire.pings.flatMap((ping) =>
             ping.remaining - passed > 0 ? [{ ...ping, remaining: ping.remaining - passed }] : [],
           ),
+          strokes: lines,
         };
       },
       async disconnect() {

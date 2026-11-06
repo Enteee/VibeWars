@@ -80,7 +80,6 @@ import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-banner.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
-import { closeOptionsOverlay, openOptionsOverlay } from "./ui/options-screen.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
 import { needsTouchNotice, showTouchNotice } from "./ui/touch-notice.js";
@@ -108,13 +107,19 @@ import {
   type LobbyMatchmaking,
   type LobbyPanel,
 } from "./ui/lobby-screen.js";
-import { renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
+import {
+  renderTeamLobbyScreen,
+  soloCharacterKey,
+  soloEntries,
+  type SoloEntry,
+} from "./ui/team-lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
   loadActiveCharacterId,
   loadStarterCharacterId,
   renderCharacterBuilder,
   renderRandomArena,
+  rosterOrder,
   saveActiveCharacterId,
   saveStarterCharacterId,
 } from "./ui/menu.js";
@@ -122,7 +127,7 @@ import { dismissToast, toast } from "./ui/kit.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
-import { isAlone, lookingLabel, partyOf } from "./ui/party-strip.js";
+import { isAlone, lookingLabel, partyOf } from "./ui/lobby-window.js";
 import {
   isModeEntry,
   loadRail,
@@ -144,6 +149,7 @@ import {
   type TeamPlayCallbacks,
 } from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
+import { closeTopbarPopover, isTopbarPopoverOpen } from "./ui/topbar-popover.js";
 import { duplicateTeam, newTeam, replaceMember, teamCharacter } from "./ui/team-builder.js";
 import {
   mountTeamEditor,
@@ -261,14 +267,24 @@ const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
 interface TeamPicks {
   teams: readonly StoredTeam[];
   proposed: string | undefined;
-  /** At 1v1 (#2141), the active character's build this side was proposed. */
-  solo: PlayerBuild | undefined;
+  /** At 1v1 (#2387), everything the chooser lists, read with the teams. */
+  solo: readonly SoloEntry[];
+  /** The chooser's pick: the active character until a click. */
+  soloKey: string | undefined;
+  /** The build this side was last proposed at 1v1 (#2141). */
+  soloProposed: PlayerBuild | undefined;
+  /** A click picked, so the claim stage readies too. */
+  soloClicked: boolean;
+  /** The claim stage this side already claimed its one seat in. */
+  soloClaimed: boolean;
 }
 
 /** What a player takes into a lobby, read once when they enter it (#1070). */
 interface Entrant {
   /** Played every match of the lobby; `undefined` plays a starter build from the host. */
   readonly build: PlayerBuild | undefined;
+  /** The selected character `build` is, which a 1v1's chooser presses (#2387). */
+  readonly characterId: string | undefined;
   /** The menu's guild tag (#1406) if it is a valid one, and its cape (#1422). */
   readonly guild: Guild;
 }
@@ -586,6 +602,8 @@ async function main(): Promise<void> {
    * build may reload away. Every screen change clears it first.
    */
   let idleScreen = false;
+  /** The cape the menu was last drawn with (#1513), to redraw it only for a new one (#2386). */
+  let menuCape = "";
 
   const screenTurns = createScreenTurns();
   /**
@@ -614,34 +632,34 @@ async function main(): Promise<void> {
 
   // The bar's [?] and ⚙ open Help and Options over the screen, which
   // stays as it was underneath: an editor keeps its edits, a lobby keeps
-  // updating (#454, #1257).
+  // updating (#454, #1257, #2386).
   const topbarView = mountTopbar(topbar, {
     onHelp: () => {
       openHelpOverlay(app);
     },
-    onOptions: () => {
+    onOptionsClosed: () => {
       // Closed over the menu, its characters wear the cape just picked in
       // Options (#1513). Not when a match starting closed it, which leaves
-      // the screen first; any other screen keeps what it joined with.
-      openOptionsOverlay(app, () => {
-        const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
-        if (renamedAlone()) {
-          // Nobody else is in it to keep its code for: the lobby is opened
-          // again under the new name and tag (#1526).
-          void (async () => {
-            await closeLobby();
-            if (menu) {
-              showMenu();
-            } else {
-              openOwnLobby();
-            }
-          })();
-          return;
-        }
-        if (menu) {
-          showMenu();
-        }
-      });
+      // the screen first; any other screen keeps what it joined with. Only
+      // a new cape redraws it: a redraw would swallow the press outside
+      // that closed the window (#2386).
+      const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
+      if (renamedAlone()) {
+        // Nobody else is in it to keep its code for: the lobby is opened
+        // again under the new name and tag (#1526).
+        void (async () => {
+          await closeLobby();
+          if (menu) {
+            showMenu();
+          } else {
+            openOwnLobby();
+          }
+        })();
+        return;
+      }
+      if (menu && menuCape !== JSON.stringify(playerGuild().guildCape)) {
+        showMenu();
+      }
     },
     onJoin: (code, name) => {
       joinWith(code, name);
@@ -659,7 +677,7 @@ async function main(): Promise<void> {
       leaveScreen();
       // From the bar, over a lobby whose match just started: it goes with
       // the screens.
-      closeOptionsOverlay();
+      closeTopbarPopover();
       closeHelpOverlay();
     }
     // In a match the viewport has the whole height; the HUD has the bar's
@@ -709,7 +727,8 @@ async function main(): Promise<void> {
    * A build the host would refuse, an illegal one, plays a starter build.
    */
   const readEntrant = async (): Promise<Entrant> => {
-    return { build: await activeBuild(loadActiveCharacterId()), guild: playerGuild() };
+    const characterId = loadActiveCharacterId();
+    return { build: await activeBuild(characterId), characterId, guild: playerGuild() };
   };
 
   /** The open build editor; every way out of it passes through `showMenu`. */
@@ -717,6 +736,7 @@ async function main(): Promise<void> {
 
   const showMenu = (): void => {
     const turn = leaveScreen();
+    menuCape = JSON.stringify(playerGuild().guildCape);
     // Every way back to the menu passes through here, so the status bar
     // never keeps saying where the player was: idle, it says nothing (#454).
     // Error paths set theirs after.
@@ -999,6 +1019,7 @@ async function main(): Promise<void> {
     const turn = joinTurns.take();
     following = move.code;
     setRailParty(undefined);
+    topbarView.setParty(undefined);
     topbarView.setLobby({ code: move.code, isHost: false, open: false, party: 0, joining: true });
     setStatus("connecting…", "offline");
     menuNotice = undefined;
@@ -1578,7 +1599,7 @@ async function main(): Promise<void> {
       ? Date.now() - teamQueue.since
       : null;
 
-  /** The queue strip's wait, each second; the screen again once Play against bots is offered. */
+  /** The queue line's wait, each second; the screen again once Play against bots is offered. */
   const tickTeamQueue = (): void => {
     const current = teamQueue;
     if (current === undefined || current.parked !== undefined || lobby !== current.party) {
@@ -1671,7 +1692,7 @@ async function main(): Promise<void> {
       name,
       entrant.guild,
       {
-        // The queue strip says the wait and how many teams it last heard
+        // The queue line says the wait and how many teams it last heard
         // searching (#1881), none while the relays are down; the queue's
         // other states are its own.
         onState: (state) => {
@@ -1776,11 +1797,12 @@ async function main(): Promise<void> {
 
   /** The rail and the title bar name `snapshot`'s party, or none (#1526). */
   const syncParty = (snapshot: LobbySnapshot | undefined): void => {
-    setRailParty(
+    const party =
       snapshot === undefined
         ? undefined
-        : partyOf(snapshot, queuedMsOf(snapshot), teamQueue?.teams),
-    );
+        : partyOf(snapshot, queuedMsOf(snapshot), teamQueue?.teams);
+    setRailParty(party);
+    topbarView.setParty(party);
     topbarView.setLobby(
       snapshot === undefined
         ? undefined
@@ -1895,9 +1917,11 @@ async function main(): Promise<void> {
   };
 
   /**
-   * At 1v1 (#2141) there are no Team Builds: a player on a side proposes
-   * its active character in the vote, and again once that changes. A
-   * size change away from 1v1 withdrew it (#2104).
+   * At 1v1 (#2141, #2387) there are no Team Builds: a player on a side
+   * proposes the chooser's pick in the vote, the active character until a
+   * click, and again once that changes. In the claim stage it takes its
+   * one seat itself, and readies if a click picked. A size change away
+   * from 1v1 withdrew it (#2104).
    */
   const proposeSolo = (
     joined: LobbyConnection,
@@ -1905,19 +1929,43 @@ async function main(): Promise<void> {
     picks: TeamPicks,
   ): void => {
     const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
-    const onSide = self !== undefined && self.team !== null;
-    const solo =
-      snapshot.teamSize === 1 && snapshot.teamLobby?.stage === "vote" && onSide
-        ? lobbyEntrant?.build
-        : undefined;
-    if (solo === undefined) {
-      picks.solo = undefined;
+    const team = self?.team ?? null;
+    const stage = snapshot.teamLobby?.stage;
+    if (snapshot.teamSize !== 1 || team === null || stage === undefined) {
+      picks.soloProposed = undefined;
+      picks.soloClaimed = false;
       return;
     }
-    if (JSON.stringify(solo) !== JSON.stringify(picks.solo)) {
-      picks.solo = solo;
+    if (stage === "claim") {
+      picks.soloProposed = undefined;
+      if (!picks.soloClaimed && (snapshot.teamLobby?.sides[team]?.chosen ?? null) !== null) {
+        picks.soloClaimed = true;
+        joined.claim(0);
+        if (picks.soloClicked) {
+          joined.setReady(true);
+        }
+      }
+      return;
+    }
+    picks.soloClaimed = false;
+    const picked = picks.solo.find((entry) => entry.key === picks.soloKey);
+    const solo = picked?.legal === true ? toPlayerBuild(picked.character) : lobbyEntrant?.build;
+    if (solo !== undefined && JSON.stringify(solo) !== JSON.stringify(picks.soloProposed)) {
+      picks.soloProposed = solo;
       joined.propose([solo]);
     }
+  };
+
+  /** Play the chooser's entry `key` at 1v1 (#2387): propose it, then ready. */
+  const pickSolo = (key: string): void => {
+    if (teamPicks === undefined || lobby === undefined) {
+      return;
+    }
+    teamPicks.soloKey = key;
+    teamPicks.soloClicked = true;
+    proposeSolo(lobby, lobby.getSnapshot(), teamPicks);
+    lobby.setReady(true);
+    lobbyChanged();
   };
 
   /**
@@ -1927,15 +1975,27 @@ async function main(): Promise<void> {
    */
   const renderTeamLobby = (joined: LobbyConnection, snapshot: LobbySnapshot): void => {
     if (teamPicks === undefined) {
-      const picks: TeamPicks = { teams: [], proposed: undefined, solo: undefined };
+      const active = lobbyEntrant?.characterId;
+      const picks: TeamPicks = {
+        teams: [],
+        proposed: undefined,
+        solo: [],
+        soloKey: active === undefined ? undefined : soloCharacterKey(active),
+        soloProposed: undefined,
+        soloClicked: false,
+        soloClaimed: false,
+      };
       teamPicks = picks;
-      void teams.list().then(({ teams: saved }) => {
-        if (teamPicks !== picks || lobby !== joined) {
-          return;
-        }
-        picks.teams = saved;
-        lobbyChanged();
-      });
+      void Promise.all([teams.list(), characters.list()]).then(
+        ([{ teams: saved }, { characters: roster }]) => {
+          if (teamPicks !== picks || lobby !== joined) {
+            return;
+          }
+          picks.teams = saved;
+          picks.solo = soloEntries(rosterOrder(roster, loadStarterCharacterId()), saved);
+          lobbyChanged();
+        },
+      );
     }
     // A team size change withdrew the proposal of another size (#2104).
     const proposed = teamPicks.teams.find((saved) => saved.id === teamPicks?.proposed);
@@ -1948,11 +2008,13 @@ async function main(): Promise<void> {
       snapshot,
       teamPicks.teams,
       teamPicks.proposed,
+      { entries: teamPicks.solo, picked: teamPicks.soloKey },
       {
         onVote: (proposerId) => {
           lobby?.vote(proposerId);
         },
         onPropose: proposeTeam,
+        onPickSolo: pickSolo,
         onClaim: (slot) => {
           lobby?.claim(slot);
         },
@@ -2474,7 +2536,8 @@ async function main(): Promise<void> {
         match === undefined &&
         !enteringMatch &&
         stay === undefined &&
-        document.querySelector('[aria-modal="true"]') === null,
+        document.querySelector('[aria-modal="true"]') === null &&
+        !isTopbarPopoverOpen(),
       reloadedFor: {
         load: () => sessionStorage.getItem(RELOADED_FOR_KEY) ?? undefined,
         save: (id) => {

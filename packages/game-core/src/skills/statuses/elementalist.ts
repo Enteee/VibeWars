@@ -80,10 +80,13 @@ export type ElementalistStatusId =
   // Elementalist staples (#2288).
   | "gust"
   | "mirror-of-ice"
+  | "winters-embrace"
+  | "burning-speed"
+  // Staples (#2414).
+  | "flame-djinns-haste"
   // Staples (#2367).
   | "earthen-shackles"
-  | "ether-prism"
-  | "winters-embrace";
+  | "ether-prism";
 
 /** Incendiary Bonds' blast (#2289), on its bearer and the foes near it. */
 const INCENDIARY_BLAST = {
@@ -197,10 +200,16 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     moveSpeedMultiplier: 0.34,
   }),
   // The slow is Armor of Earth's price: without it, +24 armor is free.
+  // "For 30 seconds, you gain 24...60 armor, but move 50...14% slower"
+  // (#2428), at the caster's Earth Magic.
   "armor-boost": define("armor-boost", "Armor Boost", "enchantment", {
     profession: "elementalist",
-    armorModifier: 24,
-    moveSpeedMultiplier: 0.75,
+    armorModifier: {
+      scaling: { attributeId: "elementalist.earth-magic", atZero: 24, atTwelve: 52.8 },
+    },
+    moveSpeedMultiplier: {
+      scaling: { attributeId: "elementalist.earth-magic", atZero: 0.5, atTwelve: 0.788 },
+    },
   }),
   // What a ward projects on the allies inside it (#1087), as a spirit's
   // aura: "non-spirit allies in this area have a 50% chance to block
@@ -874,6 +883,44 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       skillId: "elementalist.winters-embrace",
     },
   }),
+  // "For 7 seconds, you are set on fire and move 30...45% faster. When
+  // Burning Speed ends, all adjacent foes are set on fire for 3...9
+  // seconds" (#2428): both at the caster's Fire Magic.
+  "burning-speed": define("burning-speed", "Burning Speed", "enchantment", {
+    profession: "elementalist",
+    moveSpeedMultiplier: {
+      scaling: { attributeId: "elementalist.fire-magic", atZero: 1.3, atTwelve: 1.42 },
+    },
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "apply-status",
+                statusId: "burning",
+                durationSeconds: {
+                  scaling: { attributeId: "elementalist.fire-magic", atZero: 3, atTwelve: 7.8 },
+                },
+              },
+            ],
+          },
+        ],
+        skillId: "elementalist.burning-speed",
+      },
+    ],
+  }),
+  // Staples (#2414). "For 8...14 seconds, you move 25% faster."
+  "flame-djinns-haste": define("flame-djinns-haste", "Flame Djinn's Haste", "enchantment", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 1.25,
+  }),
 };
 
 /** Ether Renewal's count (#1984): `amount` for each enchantment on its bearer. */
@@ -897,6 +944,7 @@ function conjure(id: ElementalistStatusId, name: string, element: DamageType): S
       attackSkillsOnly: false,
       weapon: undefined,
       weaponDamage: element,
+      atSourceRanks: false,
       effects: [{ kind: "damage", amount: { flat: 17 }, type: element, armorPenetration: 0 }],
       skillId: `elementalist.${id}`,
     },

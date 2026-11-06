@@ -1,5 +1,5 @@
 import { SOURCE_URL } from "../source.js";
-import { h, screenBar } from "./kit.js";
+import { h, overlayClose, screenBar } from "./kit.js";
 import {
   PLAYER_DOC_PAGES,
   playerDocTargets,
@@ -11,7 +11,7 @@ import {
  * The Help screen (#1257): the player docs of `docs/player/`, the page
  * list on the left, the page on the right. It opens over whatever runs
  * under it, from the top bar's [?] or the HUD's, as Options does (#454):
- * Close, or Esc, puts it away and leaves the screen or match beneath
+ * its ×, or Esc, puts it away and leaves the screen or match beneath
  * exactly as it was. A link to another page switches page in place.
  *
  * The top bar says where you are, `VibeWars > Help > <Page>` (#1272).
@@ -34,11 +34,12 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-modal", "true");
   panel.setAttribute("aria-label", "Help");
+  panel.appendChild(overlayClose(closeHelpOverlay));
 
   const crumb = h("span");
   const { release } = screenBar({
     crumbs: ["VibeWars", "Help", crumb],
-    back: { label: "Close", onBack: closeHelpOverlay },
+    escape: closeHelpOverlay,
     actions: [],
     overlay: true,
     own: "help",

@@ -60,6 +60,7 @@ import {
   type WireSkillBar,
   type WireSnapshot,
   type WireSnapshotPart,
+  type WireStrokes,
   type WireTraps,
   type WireCape,
   type WireSummaryRow,
@@ -542,6 +543,22 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   };
 
   /**
+   * `team`'s compass lines drawn since the last tick to every seated peer
+   * of it, each its own (#2391): only the new ones, never a broadcast.
+   */
+  const sendStrokes = (team: Team): void => {
+    const message: WireStrokes = { segments: calls.freshStrokes(team, sim.elapsedSeconds) };
+    if (message.segments.length === 0) {
+      return;
+    }
+    for (const seat of seats.values()) {
+      if (seat.team === team && seat.peerId !== undefined) {
+        transport.send("strokes", message, seat.peerId);
+      }
+    }
+  };
+
+  /**
    * `team`'s traps, the newest `MAX_WIRE_GROUND_EFFECTS` (#1105): a
    * foe's are hidden information, so this is all a peer ever hears of them.
    */
@@ -644,8 +661,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sendRecharges(seat, true);
     sendAdrenaline(seat, true);
     sendChainMarks(seat, true);
-    // A rejoin sees the call its team has up, and its traps.
+    // A rejoin sees the call its team has up, its lines, and its traps.
     transport.send("calls", calls.view(seat.team, sim.elapsedSeconds), peerId);
+    transport.send("strokes", { segments: calls.strokes(seat.team, sim.elapsedSeconds) }, peerId);
     transport.send("traps", trapsOf(seat.team), peerId);
   };
 
@@ -1133,6 +1151,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       sendCalls(team);
     }
     callsDirty.clear();
+    sendStrokes(0);
+    sendStrokes(1);
     sendTraps(0);
     sendTraps(1);
     // To the players, never the room (#480): a spectator in it watches

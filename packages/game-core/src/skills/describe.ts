@@ -466,7 +466,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`−${String(amount)} armor (not below ${String(floor)})`);
   }
   if (definition.moveSpeedMultiplier !== 1) {
-    parts.push(`moves at ${String(Math.round(definition.moveSpeedMultiplier * 100))}% speed`);
+    const speed = statText(definition.moveSpeedMultiplier, ranks, (multiplier) =>
+      String(Math.round(multiplier * 100)),
+    );
+    parts.push(`moves at ${speed}% speed`);
   }
   if (definition.moveSpeedWhileEnchanted !== 1) {
     const speed = String(Math.round(definition.moveSpeedWhileEnchanted * 100));
@@ -895,6 +898,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const step = String(definition.damageReductionPerHitTaken);
     parts.push(`−${step} damage taken, ${step} more each hit`);
   }
+  if (definition.nextDamageReduction !== undefined) {
+    parts.push(
+      `the next hit deals ${statText(definition.nextDamageReduction, ranks, whole)} less damage`,
+    );
+  }
   if (definition.damageReductionWhileCasting !== undefined) {
     const { skillType, amount } = definition.damageReductionWhileCasting;
     parts.push(`−${String(amount)} damage taken while casting ${skillType.replaceAll("-", " ")}s`);
@@ -1090,7 +1098,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.reversesNextDamage !== undefined) {
     parts.push(
-      `the next damage or life steal heals for that much instead, up to ${String(definition.reversesNextDamage)}`,
+      `the next damage or life steal heals for that much instead, up to ${statText(definition.reversesNextDamage, ranks, whole)}`,
     );
   }
   // Reversal of Damage's (#2187).
@@ -1225,6 +1233,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.endsWhenBearerUsesNonAdrenalSkill) {
     parts.push("ends if you use a non-adrenal skill");
+  }
+  // Hexer's Vigor's (#2411).
+  if (definition.endsWhenBearerUsesSkillNot !== undefined) {
+    const [kind] = NEXT_SKILL_KIND[definition.endsWhenBearerUsesSkillNot];
+    parts.push(`ends if you use a non-${kind} skill`);
   }
   if (definition.endsWhenBearerUsesAttackSkill) {
     parts.push("ends if you use an attack skill");
@@ -2393,6 +2406,7 @@ function describeNextAttackSkill(
 const NEXT_SKILL_KIND: Readonly<Record<NextSkill["which"], readonly [string, string]>> = {
   "attack-skill": ["attack skill", "attack skills"],
   spell: ["spell", "spells"],
+  hex: ["hex", "hexes"],
   signet: ["signet", "signets"],
   "signet-at-foe": ["signet that targets a foe", "signets that target a foe"],
   "shout-or-chant": ["shout or chant", "shouts or chants"],
@@ -2724,15 +2738,14 @@ function conditionText(
       return [first ?? "Always", ...rest.map((text) => text.replace(/^If /, ""))].join(" and ");
     }
     case "count-at-least":
-      // "On Your Knees!"'s "if any adjacent foe is knocked down" (#2320).
-      if (
-        condition.atLeast === 1 &&
-        condition.count.kind === "foes-within" &&
-        condition.count.knockedDown === true
-      ) {
+      // "On Your Knees!"'s "if any adjacent foe is knocked down" (#2320),
+      // Flame Djinn's Haste's "if any foe is adjacent" (#2414).
+      if (condition.atLeast === 1 && condition.count.kind === "foes-within") {
         const where =
           AREA_TEXT.get(condition.count.radius) ?? `within ${String(condition.count.radius)}`;
-        return `If any ${where} foe is knocked down`;
+        return condition.count.knockedDown === true
+          ? `If any ${where} foe is knocked down`
+          : `If any foe is ${where}`;
       }
       return `If ${countAll(condition.count)} number ${String(condition.atLeast)} or more`;
     case "count-at-most":
@@ -3756,7 +3769,8 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     case "resurrect": {
       // "13% health and 3% energy per party member in earshot",
-      // "your health after losing half and 17% energy" (#474).
+      // "your health after losing half and 17% energy" (#474), "up to your
+      // current health" when it loses none (#2414).
       const energy = describeMagnitude(effect.energyPercent, ranks);
       const health =
         effect.health.kind === "percent"
@@ -3765,7 +3779,9 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       const healthText =
         effect.health.kind === "percent"
           ? `${shown(describeMagnitude(effect.health.percent, ranks))}% health`
-          : `your health after losing ${share(effect.health.casterLosesFractionOfCurrent)}`;
+          : effect.health.casterLosesFractionOfCurrent === 0
+            ? "up to your current health"
+            : `your health after losing ${share(effect.health.casterLosesFractionOfCurrent)}`;
       const radius = effect.perPartyMemberWithin;
       const per =
         radius === undefined

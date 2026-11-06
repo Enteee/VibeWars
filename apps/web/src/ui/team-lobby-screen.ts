@@ -7,7 +7,8 @@ import type {
 } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
-import type { StoredTeam } from "../storage/schema.js";
+import { validateBuild } from "../storage/build-validation.js";
+import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
 import {
   characterFigureCard,
   lookOfCharacter,
@@ -16,7 +17,7 @@ import {
   type TeamFigureMember,
 } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
-import { button, h, screenBar } from "./kit.js";
+import { button, h, playCard, screenBar } from "./kit.js";
 import { memberCount, validateTeam } from "./team-builder.js";
 
 /**
@@ -34,6 +35,8 @@ export interface TeamLobbyCallbacks {
   readonly onPropose: (teamId: string | undefined) => void;
   /** Take seat `slot` of the chosen build, or leave yours with `null`. */
   readonly onClaim: (slot: number | null) => void;
+  /** At 1v1 (#2387), play the character of the chooser's entry `key`. */
+  readonly onPickSolo: (key: string) => void;
   readonly onToggleReady: () => void;
   readonly onLeave: () => void;
 }
@@ -43,8 +46,56 @@ export const CLAIM_TITLE = "Take a character";
 export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
 export const NO_PROPOSALS = "No proposals: a random preset team plays";
-/** A 1v1's vote (#2141): there are no Team Builds of one. */
-export const SOLO_PROPOSAL = "A 1v1 plays your active character";
+/** A 1v1's vote and claim (#2387): every character of the player, one click plays one. */
+export const SOLO_TITLE = "Choose your character";
+export const SOLO_STARTING = "Starting…";
+
+/** One character a 1v1 can play (#2387): a saved one, or a Team Build's member. */
+export interface SoloEntry {
+  /** `character:<id>`, or `team:<teamId>:<seat>`. */
+  readonly key: string;
+  readonly character: TeamCharacter | StoredCharacter;
+  /** The Team Build's name, for a member of one. */
+  readonly team: string | undefined;
+  readonly legal: boolean;
+}
+
+/** A 1v1's chooser: its entries, and the one picked, the active character until a click. */
+export interface SoloChoice {
+  readonly entries: readonly SoloEntry[];
+  readonly picked: string | undefined;
+}
+
+/** The key of the saved character `id` in a 1v1's chooser. */
+export function soloCharacterKey(id: string): string {
+  return `character:${id}`;
+}
+
+/**
+ * Everything a 1v1 can play (#2387): the saved characters in the order
+ * given, then every Team Build's members, teams by name, each in seat
+ * order. A member is its own copy, so one also saved alone is listed twice.
+ */
+export function soloEntries(
+  characters: readonly StoredCharacter[],
+  teams: readonly StoredTeam[],
+): SoloEntry[] {
+  const entry = (
+    key: string,
+    character: TeamCharacter | StoredCharacter,
+    team: string | undefined,
+  ): SoloEntry => ({ key, character, team, legal: validateBuild(character).length === 0 });
+  return [
+    ...characters.map((character) => entry(soloCharacterKey(character.id), character, undefined)),
+    ...[...teams]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .flatMap((team) =>
+        team.members.map((member, seat) =>
+          entry(`team:${team.id}:${String(seat)}`, member.character, team.name),
+        ),
+      ),
+  ];
+}
 export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Builder.";
 /** Every Team Build has problems (#2110): saved, but none can be proposed. */
 export const NO_PLAYABLE_TEAM_BUILDS =
@@ -353,6 +404,7 @@ export function renderTeamLobbyScreen(
   snapshot: LobbySnapshot,
   teams: readonly StoredTeam[],
   proposedTeamId: string | undefined,
+  solo: SoloChoice,
   callbacks: TeamLobbyCallbacks,
   notice: string | undefined,
 ): void {
@@ -375,10 +427,7 @@ export function renderTeamLobbyScreen(
   const clock = h("span", "team-lobby-clock", clockText(lobby.secondsLeft));
   tickDown(clock, lobby.secondsLeft);
   const status = h("div", "team-lobby-status");
-  status.append(
-    h("span", "team-lobby-stage", lobby.stage === "vote" ? VOTE_TITLE : CLAIM_TITLE),
-    clock,
-  );
+  status.append(h("span", "team-lobby-stage", stageTitle(lobby.stage, side?.size)), clock);
   const actions: HTMLElement[] = [];
   if (side !== null) {
     const ready = self?.ready === true;
@@ -399,7 +448,7 @@ export function renderTeamLobbyScreen(
     panel.appendChild(h("div", "screen-problem", notice));
   }
 
-  panel.append(...teamLobbyBody(snapshot, teams, proposedTeamId, callbacks));
+  panel.append(...teamLobbyBody(snapshot, teams, proposedTeamId, solo, callbacks));
   root.appendChild(panel);
   // The drawer and its tab hang just below the top bar, however tall it wraps.
   const topbar = document.getElementById("topbar");
@@ -426,6 +475,7 @@ export function teamLobbyBody(
   snapshot: LobbySnapshot,
   teams: readonly StoredTeam[],
   proposedTeamId: string | undefined,
+  solo: SoloChoice,
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
   const lobby = snapshot.teamLobby;
@@ -437,7 +487,7 @@ export function teamLobbyBody(
   }
   if (lobby.stage === "vote") {
     lastProposals = side.proposals;
-    return voteStage(side, snapshot, teams, proposedTeamId, callbacks);
+    return voteStage(side, snapshot, teams, proposedTeamId, solo, callbacks);
   }
   forgetDrawer();
   return side.chosen === null ? [] : claimStage(side, side.chosen, snapshot, callbacks);
@@ -666,13 +716,14 @@ function voteStage(
   snapshot: LobbySnapshot,
   teams: readonly StoredTeam[],
   proposedTeamId: string | undefined,
+  solo: SoloChoice,
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
-  // A 1v1 proposes the active character itself, not a Team Build (#2141).
-  const shown: HTMLElement[] =
-    side.size === 1
-      ? [h("div", "screen-info team-lobby-solo", SOLO_PROPOSAL)]
-      : buildsDrawer(teams, side.size, proposedTeamId, callbacks.onPropose);
+  // A 1v1 picks one of the player's characters, not a Team Build (#2387).
+  if (side.size === 1) {
+    return [soloChooser(solo.entries, solo.picked, callbacks.onPickSolo)];
+  }
+  const shown = buildsDrawer(teams, side.size, proposedTeamId, callbacks.onPropose);
   shown.push(h("h3", "menu-column-title", "Proposals"));
   if (humansOnSide(snapshot) > 1) {
     shown.push(h("div", "screen-info team-lobby-hint", VOTE_HINT));
@@ -689,6 +740,55 @@ function voteStage(
   return shown;
 }
 
+/** The title of `stage` (#2387): a 1v1 chooses a character, then starts. */
+function stageTitle(stage: "vote" | "claim", size: number | undefined): string {
+  if (size === 1) {
+    return stage === "vote" ? SOLO_TITLE : SOLO_STARTING;
+  }
+  return stage === "vote" ? VOTE_TITLE : CLAIM_TITLE;
+}
+
+/**
+ * A 1v1's chooser (#2387): every character the player has, `picked`
+ * pressed. An illegal one is shown, tagged and explained, never picked.
+ */
+function soloChooser(
+  entries: readonly SoloEntry[],
+  picked: string | undefined,
+  onPick: (key: string) => void,
+): HTMLElement {
+  const cards = h("div", "play-cards team-lobby-solo");
+  for (const entry of entries) {
+    const content = [
+      characterFigureCard(lookOfCharacter(entry.character, undefined), {
+        size: "card",
+        note: entry.team === undefined ? undefined : `Team: ${entry.team}`,
+      }),
+    ];
+    const card = playCard({
+      name: entry.character.name,
+      tags: entry.legal ? [] : [h("span", "roster-invalid-tag", "Invalid")],
+      content,
+      pressed: entry.key === picked && entry.legal,
+      disabled: !entry.legal,
+      onOpen: () => {
+        if (entry.legal) {
+          onPick(entry.key);
+        }
+      },
+    });
+    card.classList.add("character-card");
+    if (!entry.legal) {
+      card.classList.add("is-invalid");
+      card.title = validateBuild(entry.character)
+        .map((problem) => problem.message)
+        .join("\n");
+    }
+    cards.appendChild(card);
+  }
+  return cards;
+}
+
 function claimStage(
   side: WireTeamSide,
   choice: WireTeamChoice,
@@ -698,6 +798,10 @@ function claimStage(
   // The chosen card lifted, the rest faded behind it.
   const result = h("div", "play-cards team-lobby-result");
   result.appendChild(chosenCard(choice, side, snapshot));
+  // A 1v1 takes its one seat itself (#2387): the card it starts with, alone.
+  if (side.size === 1) {
+    return [result];
+  }
   for (const proposal of lastProposals) {
     if (proposal.proposerId !== choice.proposerId) {
       const faded = proposalCard(proposal, side, snapshot, undefined);

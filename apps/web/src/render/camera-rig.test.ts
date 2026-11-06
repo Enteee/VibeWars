@@ -14,6 +14,7 @@ import {
   feedWheel,
   panBy,
   releasePan,
+  snapView,
   stepCamera,
   wheelNotch,
   zoomFor,
@@ -270,5 +271,47 @@ describe("a small canvas at a match's scale (#709)", () => {
   it("follows you at the map's corner, not centring the world (#721)", () => {
     const { view } = run(createCameraRig(), small({ self: { x: 10, y: 10 } }), 1);
     expect(view).toMatchObject({ x: 10, y: 10 });
+  });
+});
+
+describe("snapView (#2393)", () => {
+  const views = [
+    { x: 1234.567, y: 890.123, zoom: 0.65 },
+    { x: 17.3, y: 4021.77, zoom: 1.37 },
+    { x: 500.5, y: 500.5, zoom: 1 },
+  ];
+  const canvases = [
+    { width: 1280, height: 720 },
+    { width: 1279, height: 721 },
+  ];
+
+  it("keeps the zoom", () => {
+    for (const view of views) {
+      for (const canvas of canvases) {
+        expect(snapView(view, canvas).zoom).toBe(view.zoom);
+      }
+    }
+  });
+
+  it("lands the world on whole CSS px, on even and odd canvases", () => {
+    for (const view of views) {
+      for (const canvas of canvases) {
+        const snapped = snapView(view, canvas);
+        const left = snapped.x * view.zoom - canvas.width / 2;
+        const top = snapped.y * view.zoom - canvas.height / 2;
+        expect(Math.abs(left - Math.round(left))).toBeLessThan(1e-6);
+        expect(Math.abs(top - Math.round(top))).toBeLessThan(1e-6);
+      }
+    }
+  });
+
+  it("moves the view by half a CSS px at most", () => {
+    for (const view of views) {
+      for (const canvas of canvases) {
+        const snapped = snapView(view, canvas);
+        expect(Math.abs(snapped.x - view.x)).toBeLessThanOrEqual(0.5 / view.zoom + 1e-9);
+        expect(Math.abs(snapped.y - view.y)).toBeLessThanOrEqual(0.5 / view.zoom + 1e-9);
+      }
+    }
   });
 });

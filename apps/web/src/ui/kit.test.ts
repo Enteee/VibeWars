@@ -7,6 +7,7 @@ import {
   emptyState,
   inlineConfirm,
   keepInside,
+  overlayClose,
   screenBar,
   selectableRow,
   setToastHost,
@@ -126,6 +127,8 @@ class FakeNode {
   textContent = "";
   hidden = false;
   type = "";
+  title = "";
+  readonly attributes = new Map<string, string>();
   /** The page itself: what is below it is connected (#578). */
   isPage = false;
   readonly style = { display: "" };
@@ -160,8 +163,8 @@ class FakeNode {
     return this.isPage || this.parent?.isConnected === true;
   }
 
-  setAttribute(): void {
-    // Roles and labels are not under test here.
+  setAttribute(name: string, value: string): void {
+    this.attributes.set(name, value);
   }
 
   append(...nodes: FakeNode[]): void {
@@ -568,22 +571,22 @@ describe("screenBar in the top bar (#578, #1272)", () => {
     const below = screen();
     const onClose = vi.fn();
     const overlay = screenBar({
-      crumbs: ["VibeWars", "Options"],
+      crumbs: ["VibeWars", "Help"],
       back: { label: "Close", onBack: onClose },
       actions: [],
       overlay: true,
-      own: "options",
+      own: "help",
     });
-    expect(slots.crumbs.text).toBe("VibeWars > Options");
+    expect(slots.crumbs.text).toBe("VibeWars > Help");
     expect(shown.at(-1)).toEqual({
-      place: "VibeWars / Options",
-      own: "options",
+      place: "VibeWars / Help",
+      own: "help",
       overlay: true,
       join: false,
     });
     // A lobby repaints under it: the overlay's bar stays.
     const repainted = screen(undefined, "Lobby");
-    expect(slots.crumbs.text).toBe("VibeWars > Options");
+    expect(slots.crumbs.text).toBe("VibeWars > Help");
     expect(slots.back.children).toEqual([overlay.back]);
     expect(pressEscape()).toBe(true);
     expect(onClose).toHaveBeenCalledOnce();
@@ -714,6 +717,25 @@ describe("emptyState (#578)", () => {
     expect(state.children.map((child) => child.textContent)).toEqual(["No teams yet.", "New team"]);
     state.button("New team").click();
     expect(onAction).toHaveBeenCalledOnce();
+  });
+});
+
+describe("overlayClose (#2381)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement, body: new FakeNode() });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("is a × named Close, says Esc does it too, and closes on a click", () => {
+    const onClose = vi.fn();
+    const close = overlayClose(onClose) as unknown as FakeNode;
+    expect(close.textContent).toBe("×");
+    expect(close.attributes.get("aria-label")).toBe("Close");
+    expect(close.title).toBe("Close (Esc)");
+    close.click();
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });
 

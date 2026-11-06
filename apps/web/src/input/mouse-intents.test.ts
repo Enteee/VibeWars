@@ -263,7 +263,7 @@ describe("the call keys (#443)", () => {
   });
 
   it("targets the foe your team called, unless there is none or it is already yours", () => {
-    const called = { target: { targetId: "foe", callerId: "ally" }, pings: [] };
+    const called = { target: { targetId: "foe", callerId: "ally" }, pings: [], strokes: [] };
     expect(calledTargetIntent(targeting(undefined), called)).toEqual({
       kind: "target",
       targetSessionId: "foe",
@@ -273,6 +273,8 @@ describe("the call keys (#443)", () => {
       targetSessionId: "foe",
     });
     expect(calledTargetIntent(targeting("foe"), called)).toBeUndefined();
-    expect(calledTargetIntent(targeting(undefined), { target: null, pings: [] })).toBeUndefined();
+    expect(
+      calledTargetIntent(targeting(undefined), { target: null, pings: [], strokes: [] }),
+    ).toBeUndefined();
   });
 });

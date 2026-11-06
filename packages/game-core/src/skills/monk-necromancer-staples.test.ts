@@ -392,8 +392,13 @@ describe("profession on enchantments (#944)", () => {
   it("every status a profession's enchantment applies or maintains is that profession's", () => {
     for (const entry of IMPLEMENTED_SKILLS.filter(({ type }) => type === "enchantment")) {
       for (const effect of entry.effects) {
-        if (effect.kind === "apply-status" || effect.kind === "maintain-status") {
-          expect(getStatusDefinition(effect.statusId).profession, entry.id).toBe(entry.profession);
+        // A condition it puts on its caster is no profession's: Burning Speed's (#2428).
+        const status =
+          effect.kind === "apply-status" || effect.kind === "maintain-status"
+            ? getStatusDefinition(effect.statusId)
+            : undefined;
+        if (status !== undefined && status.category !== "condition") {
+          expect(status.profession, entry.id).toBe(entry.profession);
         }
       }
     }

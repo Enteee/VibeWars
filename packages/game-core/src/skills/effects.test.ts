@@ -133,7 +133,12 @@ describe("Symbiotic Bond's redirect (#1108)", () => {
   it("comes after Reversal of Fortune, which negates the whole hit", () => {
     const pet = bonded();
     pet.health = 100;
-    pet.statuses.apply("reversal-of-fortune", 8, "monk", NO_RANKS);
+    pet.statuses.apply(
+      "reversal-of-fortune",
+      8,
+      "monk",
+      new Map([["monk.protection-prayers", 12]]),
+    );
     applyDamage(pet, 25, "slashing", false, [], undefined);
     expect(pet.health).toBe(125);
     expect(redirected(pet)).toEqual([]);

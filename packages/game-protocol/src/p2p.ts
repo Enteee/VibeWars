@@ -83,6 +83,7 @@ export const CHANNELS = [
   "observing",
   "call",
   "calls",
+  "strokes",
   "traps",
   "chat",
   "chat-line",
@@ -206,6 +207,15 @@ export const MAX_WIRE_RANK = 16;
 
 /** The most pings a team's calls carry at once, the newest kept (#443). */
 export const MAX_WIRE_PINGS = 32;
+
+/** The most points one compass stroke segment carries (#2391). */
+export const MAX_STROKE_POINTS = 16;
+
+/** The most compass stroke segments one `"strokes"` message carries (#2391). */
+export const MAX_WIRE_STROKES = 64;
+
+/** How long a compass line segment stays up, seconds (#2391); a longer `remaining` is refused. */
+export const STROKE_SECONDS = 4;
 
 /** The most graphemes a chat line keeps (#479); the host cuts the rest. */
 export const MAX_CHAT_GRAPHEMES = 200;
@@ -763,14 +773,24 @@ export type WireCombatBatch = readonly WireCombat[];
  */
 export type PeerBye = Readonly<Record<string, never>>;
 
+/** A world point, `[x, y]`. */
+export type WirePoint = readonly [number, number];
+
 /**
- * Client to host (#443): call a foe for your team, or ping a spot. Not a
- * `ClientIntent`: it changes nothing in the simulation, only what your
- * team is shown.
+ * Client to host (#443): call a foe for your team, ping a spot, or draw
+ * a segment of a line on the compass (#2391): `strokeId` counts up per
+ * drag, client-local, and `points` are 2 to `MAX_STROKE_POINTS` world
+ * points, the first the previous segment's last. Not a `ClientIntent`:
+ * it changes nothing in the simulation, only what your team is shown.
  */
 export type PeerCall =
   | { readonly kind: "target"; readonly targetId: string }
-  | { readonly kind: "ping"; readonly x: number; readonly y: number };
+  | { readonly kind: "ping"; readonly x: number; readonly y: number }
+  | {
+      readonly kind: "stroke";
+      readonly strokeId: number;
+      readonly points: readonly WirePoint[];
+    };
 
 /** One ping, as its team is shown it. */
 export interface WirePing {
@@ -791,6 +811,28 @@ export interface WirePing {
 export interface WireCalls {
   readonly target: { readonly targetId: string; readonly callerId: string } | null;
   readonly pings: readonly WirePing[];
+}
+
+/** One segment of a compass line (#2391), as its team is shown it. */
+export interface WireStroke {
+  readonly id: number;
+  /** Who drew it. */
+  readonly byId: string;
+  /** The drawer's own count of their drags: segments of one drag join. */
+  readonly strokeId: number;
+  readonly points: readonly WirePoint[];
+  /** Seconds left of it, when sent. */
+  readonly remaining: number;
+}
+
+/**
+ * Host to each seated peer of one team, never the other (#2391): the
+ * compass line segments that team drew since it was last sent them, at
+ * most `MAX_WIRE_STROKES`. Append-only: each client keeps and ages its
+ * own list. After a welcome, the team's live ones.
+ */
+export interface WireStrokes {
+  readonly segments: readonly WireStroke[];
 }
 
 /**
@@ -1554,7 +1596,53 @@ export function parsePeerCall(value: unknown): PeerCall | undefined {
   if (raw?.kind === "ping") {
     return isNumber(raw.x) && isNumber(raw.y) ? { kind: "ping", x: raw.x, y: raw.y } : undefined;
   }
+  if (raw?.kind === "stroke") {
+    const points = parseStrokePoints(raw.points);
+    return isCount(raw.strokeId) && points !== undefined
+      ? { kind: "stroke", strokeId: raw.strokeId, points }
+      : undefined;
+  }
   return undefined;
+}
+
+function parseWirePoint(value: unknown): WirePoint | undefined {
+  return Array.isArray(value) && value.length === 2 && isNumber(value[0]) && isNumber(value[1])
+    ? [value[0], value[1]]
+    : undefined;
+}
+
+/** 2 to `MAX_STROKE_POINTS` finite world points (#2391). */
+function parseStrokePoints(value: unknown): WirePoint[] | undefined {
+  const points = parseArray(value, MAX_STROKE_POINTS, parseWirePoint);
+  return points !== undefined && points.length >= 2 ? points : undefined;
+}
+
+function parseWireStroke(value: unknown): WireStroke | undefined {
+  const raw = fields(value);
+  const points = raw === undefined ? undefined : parseStrokePoints(raw.points);
+  return raw !== undefined &&
+    isCount(raw.id) &&
+    isString(raw.byId) &&
+    isCount(raw.strokeId) &&
+    points !== undefined &&
+    isNumber(raw.remaining) &&
+    raw.remaining >= 0 &&
+    raw.remaining <= STROKE_SECONDS
+    ? {
+        id: raw.id,
+        byId: raw.byId,
+        strokeId: raw.strokeId,
+        points,
+        remaining: raw.remaining,
+      }
+    : undefined;
+}
+
+export function parseWireStrokes(value: unknown): WireStrokes | undefined {
+  const raw = fields(value);
+  const segments =
+    raw === undefined ? undefined : parseArray(raw.segments, MAX_WIRE_STROKES, parseWireStroke);
+  return segments === undefined ? undefined : { segments };
 }
 
 function parseWirePing(value: unknown): WirePing | undefined {

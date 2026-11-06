@@ -75,9 +75,13 @@ export type MonkStatusId =
   | "peace-and-harmony"
   | "vengeance"
   | "balthazars-spirit"
+  | "watchful-healing"
+  | "life-sheath"
+  | "reverse-hex"
+  // Staples (#2414).
+  | "defenders-zeal"
   // Staples (#2367).
-  | "strength-of-honor"
-  | "watchful-healing";
+  | "strength-of-honor";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -208,10 +212,28 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
   }),
   // "For 8 seconds, the next time target ally would take damage or life
   // steal, that ally gains that amount of health instead, maximum
-  // 15...67...80": 67, its rank-12 cap; the 8 s are the skill's.
+  // 15...67...80": the cap at the caster's rank (#2428); the 8 s are the skill's.
   "reversal-of-fortune": define("reversal-of-fortune", "Reversal of Fortune", "enchantment", {
     profession: "monk",
-    reversesNextDamage: 67,
+    reversesNextDamage: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 67 },
+    },
+  }),
+  // "...that ally gains that amount of Health instead (maximum 20...100)"
+  // (#2428): Reversal of Fortune's, at the caster's rank.
+  "life-sheath": define("life-sheath", "Life Sheath", "enchantment", {
+    profession: "monk",
+    reversesNextDamage: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 20, atTwelve: 84 },
+    },
+  }),
+  // "...the next time target ally would take damage, that damage is
+  // reduced by 5...50" (#2428), at the caster's rank.
+  "reverse-hex": define("reverse-hex", "Reverse Hex", "enchantment", {
+    profession: "monk",
+    nextDamageReduction: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 41 },
+    },
   }),
   // "For 30 seconds, each time target ally attacks or casts a spell,
   // that ally is healed for 5...17...20 health", at the caster's rank.
@@ -971,6 +993,19 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         ],
         target: "bearer",
         skillId: "monk.watchful-healing",
+      },
+    ],
+  }),
+  // Staples (#2414). "For 10...30 seconds, whenever target foe hits with
+  // an attack, you gain 2 Energy": any hit, melee or ranged, to the Monk.
+  "defenders-zeal": define("defenders-zeal", "Defender's Zeal", "hex", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-hits",
+        effects: [{ kind: "energy-gain", amount: { flat: 2 } }],
+        target: "source",
+        skillId: "monk.defenders-zeal",
       },
     ],
   }),

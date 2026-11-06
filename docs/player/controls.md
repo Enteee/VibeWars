@@ -43,6 +43,8 @@ These keys are fixed:
   it; **Space** walks there and takes the flag up or plants it.
 - **Wheel click** a foe to call it for your team: their **T** targets it.
   On the ground or an ally, it pings that spot.
+- Click the compass to ping that spot for your team; drag on it to draw a
+  line they see for a few seconds.
 - **Wheel** zooms. **Right drag** looks around; let go and the view
   glides back to you.
 - Click a skill on the bar to use it, and a name in the party window to
@@ -51,8 +53,11 @@ These keys are fixed:
 ## The top bar
 
 Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),
-**♪** (music: what plays, and how loud), the sound mute and fullscreen. In a match the same buttons
-sit at the top right of the screen. In a narrow window, these icons and
+**Lobby** (your invite link, Open/Closed, Leave, and who is in your lobby; its badge counts them),
+**♪** (music: what plays, and how loud), the sound mute and fullscreen. In a match the same buttons,
+but Lobby, sit at the top right of the screen. In a narrow window, these icons and
 the screen's other buttons fold into **⋯**; only its main button stays out.
+⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it.
+Help closes with the × at its top right, or Esc.
 
 In Auto, the menus share one song that builds as you go deeper, and each map always has its own song.

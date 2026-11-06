@@ -652,6 +652,25 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "winters-embrace": icon("winters-embrace"),
   "signet-of-recall": icon("signet-of-recall"),
   "watchful-healing": icon("watchful-healing"),
+  // Staples (#2406).
+  "primal-rage": icon("primal-rage"),
+  // Staples (#2414).
+  "sympathetic-visage": icon("sympathetic-visage"),
+  "mantra-of-inscriptions": icon("mantra-of-inscriptions"),
+  "defenders-zeal": icon("defenders-zeal"),
+  "flame-djinns-haste": icon("flame-djinns-haste"),
+  // Riders at the caster's ranks, ends on a non-hex skill (#2411).
+  "withering-aura": icon("withering-aura"),
+  "hexers-vigor": icon("hexers-vigor"),
+  // Rank-scaled speed, reversal and next-hit cut (#2428).
+  "burning-speed": icon("burning-speed"),
+  "life-sheath": icon("life-sheath"),
+  "reverse-hex": icon("reverse-hex"),
+  "assassins-remedy": icon("assassins-remedy"),
+  // Staples (#2413).
+  meditation: icon("meditation"),
+  "sharpen-daggers": icon("sharpen-daggers"),
+  "binding-chains": icon("binding-chains"),
 };
 
 const GAP = 2;

@@ -11,7 +11,7 @@ import { music, type MusicFollower } from "../music/play-music.js";
 import { pastedSource, shareLink } from "../music/share-link.js";
 import { TRACKS, type Track } from "../music/tracks/index.js";
 import type { CodeEditor } from "./code-editor.js";
-import { button, h, shareLine } from "./kit.js";
+import { button, h, overlayClose, shareLine } from "./kit.js";
 
 /**
  * The beat editor (#373, #366 §3.7): the source of a track, edited while
@@ -101,12 +101,7 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   const title = h("h2", "screen-title", track.title);
   const edited = h("span", "beat-editor-edited", "edited");
   title.appendChild(edited);
-  bar.append(
-    title,
-    button("Close", "beat-editor-close", () => {
-      close();
-    }),
-  );
+  bar.append(title);
 
   const tools = h("div", "menu-row beat-editor-tools");
   const evaluateButton = button("Play change", "primary beat-editor-evaluate", () => {
@@ -167,7 +162,17 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
     "beat-editor-hint",
     "Ctrl+Enter plays your change from the next cycle and keeps it. Ctrl+. stops. Esc closes.",
   );
-  panel.append(bar, tools, pasteBox, status, code, hint);
+  panel.append(
+    overlayClose(() => {
+      close();
+    }),
+    bar,
+    tools,
+    pasteBox,
+    status,
+    code,
+    hint,
+  );
 
   const paint = (): void => {
     const isEdited = edits.get(track.id) !== undefined;

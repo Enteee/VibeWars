@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { joinFriend } from "./helpers/menu.js";
 import { hostLobby, openPeers, playHouseTeams, startSoloMatch } from "./helpers/peers.js";
@@ -137,4 +137,54 @@ test("in the lobby the closed chat is its lines, clicks go through it, and its i
   await expect(box).toBeFocused();
   await icon.click();
   await expect(box).toBeHidden();
+});
+
+test("in a match the chat sits bottom-left beside the skill bar, above the HUD when narrow (#2390)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await startSoloMatch(page);
+  await say(page, "rush mid");
+  const chat = page.locator("#viewport > .chat");
+  const column = page.locator(".hud-column");
+  /** A box, or a failure naming what has none. */
+  const box = async (locator: Locator, what: string) => {
+    const found = await locator.boundingBox();
+    if (found === null) {
+      throw new Error(`${what} has no box`);
+    }
+    return found;
+  };
+  const rem = 16;
+  for (const [width, height] of [
+    [1920, 1080],
+    [1280, 720],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await expect(page.locator("#viewport")).not.toHaveClass(/is-chat-above-hud/);
+    // The measure reruns on a resize observer: retry until it has.
+    await expect(async () => {
+      const panel = await box(chat, "the chat");
+      const skills = await box(column, "the HUD's column");
+      expect(height - (panel.y + panel.height), `${String(width)} px: off the bottom`).toBeLessThan(
+        rem,
+      );
+      // Left of the column: no overlap with the skill bar or the bars.
+      expect(panel.x + panel.width, `${String(width)} px: clear of the skill bar`).toBeLessThan(
+        skills.x,
+      );
+      // Nor with the weapon sets hanging off the skill bar's left end.
+      const sets = await box(page.locator(".weapon-sets"), "the weapon sets");
+      expect(panel.x + panel.width, `${String(width)} px: clear of the weapon sets`).toBeLessThan(
+        sets.x,
+      );
+    }).toPass();
+  }
+  await page.setViewportSize({ width: 800, height: 600 });
+  await expect(page.locator("#viewport")).toHaveClass(/is-chat-above-hud/);
+  await expect(async () => {
+    const panel = await box(chat, "the chat");
+    const hud = await box(page.locator(".hud"), "the HUD");
+    expect(panel.y + panel.height).toBeLessThanOrEqual(hud.y);
+  }).toPass();
 });
