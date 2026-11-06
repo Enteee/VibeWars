@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { IMPLEMENTED_SKILLS } from "./catalog.js";
 import {
   MISSING_MECHANIC_DESCRIPTIONS,
   computeCoverage,
   formatCoverage,
   missingMechanics,
   unmaintainedUpkeepSkills,
+  type CorpusRef,
 } from "./coverage.js";
 
 /**
@@ -19,27 +19,17 @@ import {
  * `catalog.test.ts`.
  */
 
-/** The one corpus skill that has no implementation. Kept literal on purpose. */
-const KNOWN_UNIMPLEMENTED = ["warrior.whirlwind-attack"] as const;
+/** One listed gap, Amity: a corpus skill with no catalog entry. Kept literal on purpose. */
+const KNOWN_UNIMPLEMENTED = [{ gwId: 265, name: "Amity" }] as const;
 
-const CORPUS = [
-  "elementalist.armor-of-earth",
-  "elementalist.fireball",
-  "elementalist.meteor-shower",
-  "mesmer.arcane-echo",
-  "mesmer.echo",
-  "monk.contemplation-of-purity",
-  "monk.guardian",
-  "monk.orison-of-healing",
-  "necromancer.contagion",
-  "necromancer.faintheartedness",
-  "necromancer.parasitic-bond",
-  "ranger.barrage",
-  "ranger.broad-head-arrow",
-  "ranger.troll-unguent",
-  "warrior.backbreaker",
-  "warrior.swift-chop",
-  "warrior.whirlwind-attack",
+const CORPUS: readonly CorpusRef[] = [
+  { gwId: 74, name: "Echo" },
+  { gwId: 186, name: "Fireball" },
+  { gwId: 258, name: "Guardian" },
+  { gwId: 358, name: "Backbreaker" },
+  { gwId: 395, name: "Barrage" },
+  { gwId: 1356, name: "Contagion" },
+  ...KNOWN_UNIMPLEMENTED,
 ];
 
 describe("skill coverage regression gate", () => {
@@ -56,19 +46,20 @@ describe("skill coverage regression gate", () => {
   });
 
   it("surfaces an unexplained skill instead of inventing a reason for it", () => {
-    const coverage = computeCoverage([...CORPUS, "mesmer.some-new-import"]);
+    // A made-up GW1 id: no catalog skill carries it and no reason names it.
+    const coverage = computeCoverage([...CORPUS, { gwId: 99_999, name: "Some New Import" }]);
 
-    expect(coverage.unexplained).toEqual(["mesmer.some-new-import"]);
+    expect(coverage.unexplained).toEqual([99_999]);
     expect(formatCoverage(coverage)).toContain("NO REASON RECORDED");
   });
 
   it("holds the line on what is implemented", () => {
-    // A pinned floor, not an exact count: adding skills is good and should
-    // not fail CI, but losing one silently should.
     const coverage = computeCoverage(CORPUS);
 
-    expect(coverage.implemented).toBeGreaterThanOrEqual(IMPLEMENTED_SKILLS.length);
-    expect(coverage.unimplemented.map((s) => s.id)).toEqual([...KNOWN_UNIMPLEMENTED]);
+    expect(coverage.implemented).toBe(CORPUS.length - KNOWN_UNIMPLEMENTED.length);
+    expect(coverage.unimplemented.map((s) => s.gwId)).toEqual(
+      KNOWN_UNIMPLEMENTED.map((s) => s.gwId),
+    );
   });
 
   it("never counts an original-design skill as corpus coverage", () => {
@@ -76,12 +67,9 @@ describe("skill coverage regression gate", () => {
     // be counted as though the corpus skill had been implemented.
     const coverage = computeCoverage(CORPUS);
 
-    for (const id of coverage.originalDesign) {
-      expect(CORPUS).not.toContain(id);
-    }
-    expect(coverage.implemented - coverage.originalDesign.length).toBe(
-      coverage.imported - coverage.unimplemented.length,
-    );
+    expect(coverage.originalDesign).not.toContain("elementalist.fireball");
+    expect(coverage.originalDesign).toContain("necromancer.blood-renewal-lite");
+    expect(coverage.implemented).toBe(coverage.imported - coverage.unimplemented.length);
   });
 
   it("describes every mechanic it blames a skill on", () => {
@@ -96,19 +84,20 @@ describe("skill coverage regression gate", () => {
   it("groups skills by the mechanic they wait on", () => {
     const grouped = missingMechanics(computeCoverage(CORPUS));
 
-    expect(grouped.get("title-attribute")).toEqual(["warrior.whirlwind-attack"]);
+    expect(grouped.get("unwritten")).toEqual([265]);
   });
 
-  it("does not blame a mechanic that now exists", () => {
-    // Areas shipped (#5). Fireball and Barrage use them; the skill that
-    // waited on them still waits, on something else.
-    for (const skill of computeCoverage(CORPUS).unimplemented) {
-      expect(skill.missing, skill.id).not.toContain("area-of-effect");
-    }
+  it("counts a skill once under each mechanic it waits on (Reclaim Essence)", () => {
+    const coverage = computeCoverage([...CORPUS, { gwId: 1482, name: "Reclaim Essence" }]);
+    const grouped = missingMechanics(coverage);
+
+    expect(coverage.unimplemented.filter((s) => s.gwId === 1482)).toHaveLength(1);
+    expect(grouped.get("recharge-others-by-type")).toEqual([1482]);
+    expect(grouped.get("destroy-own-spirits")).toEqual([1482]);
   });
 
-  it("counts a duplicated import once", () => {
-    const coverage = computeCoverage([...CORPUS, "elementalist.fireball"]);
+  it("counts a duplicated corpus entry once", () => {
+    const coverage = computeCoverage([...CORPUS, { gwId: 186, name: "Fireball" }]);
 
     expect(coverage.imported).toBe(CORPUS.length);
   });
@@ -116,9 +105,10 @@ describe("skill coverage regression gate", () => {
   it("reports a reason in the human-readable output", () => {
     const text = formatCoverage(computeCoverage(CORPUS));
 
-    expect(text).toContain("warrior.whirlwind-attack — needs title-attribute");
+    expect(text).toContain("imported 7 / implemented 6 / 1 unimplemented");
+    expect(text).toContain("265 Amity — needs unwritten");
     expect(text).toContain("blocked on:");
-    expect(text).toContain(MISSING_MECHANIC_DESCRIPTIONS["title-attribute"]);
+    expect(text).toContain(MISSING_MECHANIC_DESCRIPTIONS.unwritten);
   });
 
   it("passes an upkeep skill the catalog maintains (Mending, #840)", () => {

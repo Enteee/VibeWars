@@ -30,9 +30,10 @@ export {
   overcastText,
 } from "./describe.js";
 
-export type { MissingMechanic, SkillCoverage, UnimplementedSkill } from "./coverage.js";
+export type { CorpusRef, MissingMechanic, SkillCoverage, UnimplementedSkill } from "./coverage.js";
 export {
   MISSING_MECHANIC_DESCRIPTIONS,
+  UNIMPLEMENTED_REASONS,
   computeCoverage,
   formatCoverage,
   missingMechanics,
