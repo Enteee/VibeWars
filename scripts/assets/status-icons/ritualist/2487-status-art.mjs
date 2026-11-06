@@ -34,12 +34,12 @@ const rows = {
       `<path d="M17 9a3 3 0 1 0 .6 3.800" ${stroke(c, 1.7)}/>` +
       `<path d="M18 6.800V9.300H15.500" ${stroke(c, 1.5)}/>`,
   ],
-  // Skill effect: a square seal with a skull.
+  // Skill effect: a signet ring beside a skull, as the skill's.
   "death-pact-signet": [
     "skill-effect",
     (c) =>
-      `<rect x="6.500" y="6.500" width="11" height="11" rx="1.800" ${stroke(c, 1.6)}/>` +
-      `<path d="M10 11h.1M14 11h.1M10.500 15v-1.500M13.500 15v-1.500" ${stroke(c, 1.8)}/>`,
+      `<circle cx="9" cy="9" r="3.500" ${stroke(c, 1.7)}/><circle cx="9" cy="9" r="1" fill="${c}"/>` +
+      `<path d="M11.500 17.500v-2a2.800 2.800 0 1 1 5.600 0v2z" fill="${c}"/>`,
   ],
 };
 

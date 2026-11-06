@@ -1,7 +1,7 @@
 // Glyphs (#2487): the stand-ins of #2477, #2478 and #2479.
 
 import { C, stroke } from "../icon-kit.mjs";
-import { brokenPost, inkFill, inkLine, spiritPost } from "../glyph-kit.mjs";
+import { brokenPost, inkFill, inkLine, ringDot, smallSkull, spiritPost } from "../glyph-kit.mjs";
 
 /** A line in the panel colour, cut out of an ink shape. @param {string} d @param {number} w */
 const cut = (d, w) => `<path d="${d}" ${stroke(C.bg, w)}/>`;
@@ -51,13 +51,9 @@ const glyphs = {
       inkLine("M21.500 5.500A5.500 5.500 0 1 0 22 11.500", 2.2) +
       inkLine("M22 2.500V6H18.500", 2),
   },
-  "seal-skull": {
-    means:
-      "Death Pact Signet: a signet's square seal with a skull cut in it: your life for a friend's.",
-    draw: () =>
-      inkFill("M5 3H19Q21 3 21 5V19Q21 21 19 21H5Q3 21 3 19V5Q3 3 5 3Z") +
-      `<path d="M7.500 12.500A4.500 4.500 0 1 1 16.500 12.500V15.500H7.500Z" fill="${C.bg}"/>` +
-      inkLine("M9.700 11.500H9.800M14.200 11.500H14.300M10.500 18V15.500M13.500 18V15.500", 2),
+  "ring-skull": {
+    means: "Death Pact Signet: a signet ring beside a skull: your life for a friend's.",
+    draw: () => ringDot(8, 8, 5.5) + smallSkull(16, 16, 0.65) + inkLine("M2 21H8", 2.2),
   },
   "cloak-no-ring": {
     means: "Shadow Shroud: a hooded cloak with a ring struck out on it: no enchantment will take.",

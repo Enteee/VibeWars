@@ -7,7 +7,7 @@ const rows = {
   "ritualist.restoration": { glyph: "spirit-rise" },
   "ritualist.empowerment": { glyph: "spirit-item-up" },
   "ritualist.soul-twisting": { glyph: "spirit-twist" },
-  "ritualist.death-pact-signet": { glyph: "seal-skull" },
+  "ritualist.death-pact-signet": { glyph: "ring-skull" },
 };
 
 export default rows;
