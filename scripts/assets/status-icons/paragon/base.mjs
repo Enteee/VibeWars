@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { inset, stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -7,23 +7,38 @@ const rows = {
   "bladeturn-refrain": [
     "echo",
     (c) =>
-      `<path d="M9 5h10v6c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 1.8)}/>` +
-      `<path d="M2.5 4.5L7 9M7 9l-.3-2.8M7 9l2.8.3" ${stroke(c, 1.8)}/>`,
+      inset(
+        0.96,
+        `<path d="M9 5h10v6c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 1.8)}/>` +
+          `<path d="M2.5 4.5L7 9M7 9l-.3-2.8M7 9l2.8.3" ${stroke(c, 1.8)}/>`,
+        1,
+        0,
+      ),
   ],
   // Echo: a bolt inside a ring, energy at the end of each chant.
   "energizing-finale": [
     "echo",
     (c) =>
-      `<circle cx="12" cy="11.5" r="8" ${stroke(c, 1.6)}/>` +
-      `<path d="M13 5.5L8.5 12h3.5l-1 5.5 4.5-6.5h-3.5z" fill="${c}"/>`,
+      inset(
+        1,
+        `<circle cx="12" cy="11.5" r="8" ${stroke(c, 1.6)}/>` +
+          `<path d="M13 5.5L8.5 12h3.5l-1 5.5 4.5-6.5h-3.5z" fill="${c}"/>`,
+        0,
+        -1,
+      ),
   ],
   // Echo: three rising bars topped by a spike over a slanted blade, adrenaline and haste under a chant.
   "soldiers-fury": [
     "echo",
     (c) =>
-      `<path d="M5 12V9M10 12V6" ${stroke(c, 2.4)}/>` +
-      `<path d="M14 12V7l2.5-5L19 7v5z" fill="${c}"/>` +
-      `<path d="M5 21L17 13M8 15.5l4 4" ${stroke(c, 2)}/>`,
+      inset(
+        0.96,
+        `<path d="M5 12V9M10 12V6" ${stroke(c, 2.4)}/>` +
+          `<path d="M14 12V7l2.5-5L19 7v5z" fill="${c}"/>` +
+          `<path d="M5 21L17 13M8 15.5l4 4" ${stroke(c, 2)}/>`,
+        -1,
+        -1,
+      ),
   ],
   // Shout: an arrow turning back, run and be healed for it (#921).
   "fall-back": ["shout", (c) => `<path d="M17 12H7.5M11 8l-4 4 4 4" ${stroke(c, 2.5)}/>`],
@@ -70,53 +85,99 @@ const rows = {
   "aria-of-zeal": [
     "chant",
     (c) =>
-      `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/>` +
-      `<path d="M6 18h12" ${stroke(c, 2)}/>`,
+      inset(
+        1,
+        `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/>` +
+          `<path d="M6 18h12" ${stroke(c, 2)}/>`,
+        0,
+        -1,
+      ),
   ],
   // Chant: a bolt in a ring, energy with your next signet.
   "lyric-of-zeal": [
     "chant",
     (c) =>
-      `<circle cx="12" cy="11" r="7" ${stroke(c, 1.6)}/>` +
-      `<path d="M13 6l-3.5 5h2.5l-1 4 3.5-5H12z" fill="${c}"/>`,
+      inset(
+        1,
+        `<circle cx="12" cy="11" r="7" ${stroke(c, 1.6)}/>` +
+          `<path d="M13 6l-3.5 5h2.5l-1 4 3.5-5H12z" fill="${c}"/>`,
+        0,
+        -1,
+      ),
   ],
   // Chant: a plus over a bar, a heal with your next spell.
   "aria-of-restoration": [
     "chant",
-    (c) => `<path d="M12 4v10M7 9h10" ${stroke(c, 2.6)}/>` + `<path d="M6 18h12" ${stroke(c, 2)}/>`,
+    (c) =>
+      inset(
+        1,
+        `<path d="M12 4v10M7 9h10" ${stroke(c, 2.6)}/>` + `<path d="M6 18h12" ${stroke(c, 2)}/>`,
+        0,
+        -1,
+      ),
   ],
   // Chant: a plus between two bars, a heal with your next shout or chant.
   "chorus-of-restoration": [
     "chant",
     (c) =>
-      `<path d="M12 7v10M7 12h10" ${stroke(c, 2.4)}/>` +
-      `<path d="M5 4h14M5 20h14" ${stroke(c, 1.8)}/>`,
+      inset(
+        0.9,
+        `<path d="M12 7v10M7 12h10" ${stroke(c, 2.4)}/>` +
+          `<path d="M5 4h14M5 20h14" ${stroke(c, 1.8)}/>`,
+        0,
+        -2,
+      ),
   ],
   // Chant: a drop in a ring, a condition lost with your next signet.
   "lyric-of-purification": [
     "chant",
     (c) =>
-      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
-      `<path d="M12 6.5c1.5 2.2 3 3.8 3 5.5a3 3 0 0 1-6 0c0-1.7 1.5-3.3 3-5.5z" fill="${c}"/>`,
+      inset(
+        0.96,
+        `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
+          `<path d="M12 6.5c1.5 2.2 3 3.8 3 5.5a3 3 0 0 1-6 0c0-1.7 1.5-3.3 3-5.5z" fill="${c}"/>`,
+        0,
+        -2,
+      ),
   ],
   // Chant: a drop crossed out over a bar, conditions lost with your next skills.
   "song-of-purification": [
     "chant",
     (c) =>
-      `<path d="M12 3c2 3 4 5 4 7.5a4 4 0 0 1-8 0C8 8 10 6 12 3z" ${stroke(c, 1.8)}/>` +
-      `<path d="M6 15L18 3M6 19h12" ${stroke(c, 1.8)}/>`,
+      inset(
+        0.96,
+        `<path d="M12 3c2 3 4 5 4 7.5a4 4 0 0 1-8 0C8 8 10 6 12 3z" ${stroke(c, 1.8)}/>` +
+          `<path d="M6 15L18 3M6 19h12" ${stroke(c, 1.8)}/>`,
+        0,
+        -1.5,
+      ),
   ],
   // Chant: a broken ring, a hex lost with your next spell.
   "hexbreaker-aria": [
     "chant",
-    (c) => `<path d="M10 5.3A7 7 0 1 0 18.7 12M14 5.3A7 7 0 0 1 18.7 9" ${stroke(c, 2.2)}/>`,
+    (c) =>
+      inset(
+        0.98,
+        `<path d="M10 5.3A7 7 0 1 0 18.7 12M14 5.3A7 7 0 0 1 18.7 9" ${stroke(c, 2.2)}/>`,
+        0,
+        -2,
+      ),
   ],
   // Chant: three rising strokes, adrenaline with your next attack skill.
-  "anthem-of-fury": ["chant", (c) => `<path d="M6 18V13M12 18V9M18 18V5" ${stroke(c, 2.6)}/>`],
+  "anthem-of-fury": [
+    "chant",
+    (c) => inset(1, `<path d="M6 18V13M12 18V9M18 18V5" ${stroke(c, 2.6)}/>`, -1, -1),
+  ],
   // Chant: an arrow down, your next attack skill weakens.
-  "anthem-of-weariness": ["chant", (c) => `<path d="M12 4v13M7 12l5 5 5-5" ${stroke(c, 2.4)}/>`],
+  "anthem-of-weariness": [
+    "chant",
+    (c) => inset(1, `<path d="M12 4v13M7 12l5 5 5-5" ${stroke(c, 2.4)}/>`, 0, -0.5),
+  ],
   // Chant: a bent leg, your next attack skill cripples.
-  "crippling-anthem": ["chant", (c) => `<path d="M9 4v7l6 3v6" ${stroke(c, 2.4)}/>`],
+  "crippling-anthem": [
+    "chant",
+    (c) => inset(1, `<path d="M9 4v7l6 3v6" ${stroke(c, 2.4)}/>`, 0.5, -1.5),
+  ],
   // Chant: a zigzag struck through, your next attack skill interrupts.
   "anthem-of-disruption": [
     "chant",
@@ -128,19 +189,34 @@ const rows = {
   "anthem-of-guidance": [
     "chant",
     (c) =>
-      `<path d="M4 12h14M14 8l4 4-4 4" ${stroke(c, 2.2)}/><path d="M10 4v4M10 16v4" ${stroke(c, 1.6)}/>`,
+      inset(
+        1,
+        `<path d="M4 12h14M14 8l4 4-4 4" ${stroke(c, 2.2)}/><path d="M10 4v4M10 16v4" ${stroke(c, 1.6)}/>`,
+        0.5,
+        -2,
+      ),
   ],
   // Chant: a bolt over a minus, your next shout or chant costs less.
   "energizing-chorus": [
     "chant",
     (c) =>
-      `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/><path d="M7 19h10" ${stroke(c, 2.2)}/>`,
+      inset(
+        0.98,
+        `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/><path d="M7 19h10" ${stroke(c, 2.2)}/>`,
+        0,
+        -2,
+      ),
   ],
   // Chant: a plus over a half bar, more damage to a foe above half Health.
   "anthem-of-envy": [
     "chant",
     (c) =>
-      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.2)}/><path d="M5 18h7" ${stroke(c, 2.6)}/><path d="M12 18h7" ${stroke(c, 1)}/>`,
+      inset(
+        1,
+        `<path d="M12 4v8M8 8h8" ${stroke(c, 2.2)}/><path d="M5 18h7" ${stroke(c, 2.6)}/><path d="M12 18h7" ${stroke(c, 1)}/>`,
+        0,
+        -1.5,
+      ),
   ],
   // Shout: a plus with a chevron rising over it, regeneration called for (#923).
   "never-surrender": [
@@ -154,8 +230,13 @@ const rows = {
   "aggressive-refrain": [
     "echo",
     (c) =>
-      `<path d="M7 4l5 4 5-4M7 9l5 4 5-4" ${stroke(c, 2.2)}/>` +
-      `<path d="M7.5 18h9" ${stroke(c, 2.2)}/>`,
+      inset(
+        1,
+        `<path d="M7 4l5 4 5-4M7 9l5 4 5-4" ${stroke(c, 2.2)}/>` +
+          `<path d="M7.5 18h9" ${stroke(c, 2.2)}/>`,
+        0,
+        -1,
+      ),
   ],
   // Echo: a flame ringed by a burst, foes beside the bearer burn.
   "blazing-finale": [
@@ -175,10 +256,13 @@ const rows = {
   "enduring-harmony": [
     "echo",
     (c) =>
-      `<circle cx="9" cy="16.5" r="2.6" fill="${c}"/>` +
-      `<path d="M11.4 16.5V9" ${stroke(c, 1.8)}/>` +
-      `<path d="M4 8a8 6 0 0 1 16 0" ${stroke(c, 1.8)}/>` +
-      `<circle cx="12" cy="6" r="1.1" fill="${c}"/>`,
+      inset(
+        0.98,
+        `<circle cx="9" cy="16.5" r="2.6" fill="${c}"/>` +
+          `<path d="M11.4 16.5V9" ${stroke(c, 1.8)}/>` +
+          `<path d="M4 8a8 6 0 0 1 16 0" ${stroke(c, 1.8)}/>` +
+          `<circle cx="12" cy="6" r="1.1" fill="${c}"/>`,
+      ),
   ],
   // Echo: a heart with a plus, one heal at the end of each chant.
   "finale-of-restoration": [
@@ -208,8 +292,13 @@ const rows = {
   "go-for-the-eyes": [
     "shout",
     (c) =>
-      `<path d="M3 12c3-4.5 6-6.5 9-6.5s6 2 9 6.5c-3 4.5-6 6.5-9 6.5s-6-2-9-6.5z" ${stroke(c, 1.8)}/>` +
-      `<circle cx="12" cy="12" r="2.6" fill="${c}"/><path d="M18 3v3.5M16.25 4.75h3.5" ${stroke(c, 1.6)}/>`,
+      inset(
+        0.96,
+        `<path d="M3 12c3-4.5 6-6.5 9-6.5s6 2 9 6.5c-3 4.5-6 6.5-9 6.5s-6-2-9-6.5z" ${stroke(c, 1.8)}/>` +
+          `<circle cx="12" cy="12" r="2.6" fill="${c}"/><path d="M18 3v3.5M16.25 4.75h3.5" ${stroke(c, 1.6)}/>`,
+        -1,
+        0.5,
+      ),
   ],
   // Shout: a bolt over two pips, energy regeneration.
   "the-power-is-yours": [
@@ -229,47 +318,71 @@ const rows = {
   "focused-anger": [
     "skill-effect",
     (c) =>
-      `<path d="M6 19v-4M11 19v-7M16 19v-10" ${stroke(c, 2.4)}/>` +
-      `<path d="M14 5.5l3-3 3 3" ${stroke(c, 1.8)}/>`,
+      inset(
+        0.84,
+        `<path d="M6 19v-4M11 19v-7M16 19v-10" ${stroke(c, 2.4)}/>` +
+          `<path d="M14 5.5l3-3 3 3" ${stroke(c, 1.8)}/>`,
+        0.5,
+        1,
+      ),
   ],
   // Paragon riders (#2178): each pairs with its skill icon.
   // Skill: a winged heart under a halo, one death turned aside.
   "angelic-bond": [
     "skill-effect",
     (c) =>
-      `<path d="M12 20L6 14a3.4 3.4 0 0 1 6-3.4 3.4 3.4 0 0 1 6 3.4z" ${stroke(c, 1.8)}/>` +
-      `<ellipse cx="12" cy="5" rx="3.2" ry="1.3" ${stroke(c, 1.4)}/>` +
-      `<path d="M5.5 12.5C3.5 11 2.5 8.5 2 5M18.5 12.5c2-1.5 3-4 3.5-7.5" ${stroke(c, 1.8)}/>`,
+      inset(
+        0.84,
+        `<path d="M12 20L6 14a3.4 3.4 0 0 1 6-3.4 3.4 3.4 0 0 1 6 3.4z" ${stroke(c, 1.8)}/>` +
+          `<ellipse cx="12" cy="5" rx="3.2" ry="1.3" ${stroke(c, 1.4)}/>` +
+          `<path d="M5.5 12.5C3.5 11 2.5 8.5 2 5M18.5 12.5c2-1.5 3-4 3.5-7.5" ${stroke(c, 1.8)}/>`,
+        0,
+        0.5,
+      ),
   ],
   // Shout: chevrons inside a ring, the enchanted hurry.
   godspeed: [
     "shout",
     (c) =>
-      `<circle cx="12" cy="12" r="9" ${stroke(c, 1.8)}/>` +
-      `<path d="M8 8.5l3.5 3.5L8 15.5M12.5 8.5l3.5 3.5-3.5 3.5" ${stroke(c, 2)}/>`,
+      inset(
+        0.96,
+        `<circle cx="12" cy="12" r="9" ${stroke(c, 1.8)}/>` +
+          `<path d="M8 8.5l3.5 3.5L8 15.5M12.5 8.5l3.5 3.5-3.5 3.5" ${stroke(c, 2)}/>`,
+      ),
   ],
   // Shout: one figure with chevrons ahead of it.
   "lead-the-way": [
     "shout",
     (c) =>
-      `<ellipse cx="6.5" cy="7.5" rx="2.6" ry="3" ${stroke(c, 1.8)}/>` +
-      `<path d="M6.5 11V19M2.5 13.5h8" ${stroke(c, 2)}/>` +
-      `<path d="M13.5 6l5.5 6-5.5 6M17.5 6l5.5 6-5.5 6" ${stroke(c, 2)}/>`,
+      inset(
+        0.9,
+        `<ellipse cx="6.5" cy="7.5" rx="2.6" ry="3" ${stroke(c, 1.8)}/>` +
+          `<path d="M6.5 11V19M2.5 13.5h8" ${stroke(c, 2)}/>` +
+          `<path d="M13.5 6l5.5 6-5.5 6M17.5 6l5.5 6-5.5 6" ${stroke(c, 2)}/>`,
+      ),
   ],
   // Shout: a heart with a plus and a bolt, healed and quickened.
   help: [
     "shout",
     (c) =>
-      `<path d="M9 20L3.5 14.5a3.2 3.2 0 0 1 5.5-3.6 3.2 3.2 0 0 1 5.5 3.6z" ${stroke(c, 1.8)}/>` +
-      `<path d="M9 13v4M7 15h4" ${stroke(c, 1.6)}/>` +
-      `<path d="M19.5 2L14 10.5h4.5L16.5 17l6-9.5H18z" ${stroke(c, 1.6)}/>`,
+      inset(
+        0.88,
+        `<path d="M9 20L3.5 14.5a3.2 3.2 0 0 1 5.5-3.6 3.2 3.2 0 0 1 5.5 3.6z" ${stroke(c, 1.8)}/>` +
+          `<path d="M9 13v4M7 15h4" ${stroke(c, 1.6)}/>` +
+          `<path d="M19.5 2L14 10.5h4.5L16.5 17l6-9.5H18z" ${stroke(c, 1.6)}/>`,
+        -1,
+        0.5,
+      ),
   ],
   // Shout: a shield with rays at both sides, the foes beside it struck.
   "brace-yourself": [
     "shout",
     (c) =>
-      `<path d="M12 5l6 2.2V12c0 3.4-2.6 5.4-6 7-3.4-1.6-6-3.6-6-7V7.2z" ${stroke(c, 1.8)}/>` +
-      `<path d="M2 6l2.5 2M1.5 12H4M2 18l2.5-2M22 6l-2.5 2M22.5 12H20M22 18l-2.5-2" ${stroke(c, 1.6)}/>`,
+      inset(
+        0.76,
+        `<path d="M12 5l6 2.2V12c0 3.4-2.6 5.4-6 7-3.4-1.6-6-3.6-6-7V7.2z" ${stroke(c, 1.8)}/>` +
+          `<path d="M2 6l2.5 2M1.5 12H4M2 18l2.5-2M22 6l-2.5 2M22.5 12H20M22 18l-2.5-2" ${stroke(c, 1.6)}/>`,
+      ),
   ],
 };
 
