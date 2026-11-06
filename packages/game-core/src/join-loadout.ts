@@ -39,7 +39,8 @@ export type JoinRefusal =
 
 /**
  * Decide what a joining player actually gets to play (brief §32), from
- * the build they claimed, `undefined` for none.
+ * the build they claimed, `undefined` for none: the build it plays, as
+ * `loadout` plays it, and why a claim was turned down.
  *
  * The client sends a build; the host decides whether to honour it. With
  * none, or an illegal or malformed one, the player gets a starter build
@@ -55,18 +56,25 @@ export function resolveJoinLoadout(
   claimed: unknown,
   rules: AttributeRules,
   random: () => number,
-): { readonly loadout: JoinLoadout; readonly refused: JoinRefusal | undefined } {
-  const starter = (): JoinLoadout => loadoutOf(pickStarterBuild(random));
+): {
+  readonly build: PlayerBuild;
+  readonly loadout: JoinLoadout;
+  readonly refused: JoinRefusal | undefined;
+} {
+  const starter = (refused: JoinRefusal | undefined) => {
+    const build = pickStarterBuild(random);
+    return { build, loadout: loadoutOf(build), refused };
+  };
   if (claimed === undefined) {
-    return { loadout: starter(), refused: undefined };
+    return starter(undefined);
   }
   const build = parsePlayerBuild(claimed);
   if (build === undefined) {
-    return { loadout: starter(), refused: { kind: "malformed" } };
+    return starter({ kind: "malformed" });
   }
   const problems = validatePlayerBuild(build, rules);
   if (problems.length > 0) {
-    return { loadout: starter(), refused: { kind: "illegal", build, problems } };
+    return starter({ kind: "illegal", build, problems });
   }
-  return { loadout: loadoutOf(build), refused: undefined };
+  return { build, loadout: loadoutOf(build), refused: undefined };
 }

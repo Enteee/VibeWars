@@ -1,5 +1,5 @@
 import type { WireRelayLogin } from "@vibewars/game-protocol";
-import type { LobbyRoom, Transport } from "@vibewars/game-session";
+import type { LobbyRoom, MatchRecord, Transport } from "@vibewars/game-session";
 
 import { checkNat } from "../nat-check.js";
 import { joinWithRelayOffers } from "../relay-join.js";
@@ -7,6 +7,7 @@ import { relaySibling, withSiblingRoom } from "../relay-room.js";
 
 import { BROADCAST_SELF_ID, joinBroadcastRoom } from "./broadcast-channel.js";
 import { joinBroadcastQueue } from "./broadcast-queue.js";
+import { publishMatchRecord } from "./match-records.js";
 import { createNostrQueue, type NostrQueue } from "./nostr-queue.js";
 import {
   followOfferedRelay,
@@ -148,4 +149,16 @@ export function shareLobbyRelay(room: LobbyRoom): RelayShare | undefined {
     return undefined;
   }
   return followOfferedRelay(room.relay, OFFERED_RELAY);
+}
+
+/**
+ * Publish a finished match's record on Nostr (#2528). The broadcast
+ * build, which e2e runs, publishes nothing: a test match never reaches
+ * the public relays.
+ */
+export function publishRecord(record: MatchRecord): void {
+  if (import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast") {
+    return;
+  }
+  publishMatchRecord(record);
 }
