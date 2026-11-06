@@ -367,6 +367,10 @@ const NO_BOT_USE = new Set([
   // Energy later for Energy regeneration now (#2374), its gain only in a
   // status trigger: no role the bot weighs.
   "mesmer.signet-of-recall",
+  // Staples (#2414): signets recharging faster is an own-skill modifier,
+  // and an ally's drain on melee foes lives only in a status trigger.
+  "mesmer.mantra-of-inscriptions",
+  "mesmer.sympathetic-visage",
 ]);
 
 function skill(id: string) {

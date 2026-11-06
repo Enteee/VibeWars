@@ -4304,4 +4304,77 @@ export const MONK_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "watchful-healing", durationSeconds: { flat: 10 } },
     ],
   },
+  {
+    id: "monk.resurrection-chant",
+    name: "Resurrection Chant",
+    gwId: 1128,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 6,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL / 2,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Staples (#2414). "Resurrect target party member with up to your
+    // current Health and 5...35% Energy. This spell has half the normal
+    // range": 29% at rank 12; the Monk loses none of it.
+    effects: [
+      {
+        kind: "resurrect",
+        health: { kind: "caster-current", casterLosesFractionOfCurrent: 0 },
+        energyPercent: {
+          scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 29 },
+        },
+        perPartyMemberWithin: undefined,
+        at: "corpse",
+      },
+    ],
+  },
+  {
+    id: "monk.defenders-zeal",
+    name: "Defender's Zeal",
+    gwId: 1688,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...30 seconds, whenever target foe hits with an attack, you
+    // gain 2 Energy": 26 s at rank 12.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "defenders-zeal",
+        durationSeconds: {
+          scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 26 },
+        },
+      },
+    ],
+  },
 ];

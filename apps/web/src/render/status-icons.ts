@@ -649,6 +649,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "watchful-healing": icon("watchful-healing"),
   // Staples (#2406).
   "primal-rage": icon("primal-rage"),
+  // Staples (#2414).
+  "sympathetic-visage": icon("sympathetic-visage"),
+  "mantra-of-inscriptions": icon("mantra-of-inscriptions"),
+  "defenders-zeal": icon("defenders-zeal"),
+  "flame-djinns-haste": icon("flame-djinns-haste"),
   // Riders at the caster's ranks, ends on a non-hex skill (#2411).
   "withering-aura": icon("withering-aura"),
   "hexers-vigor": icon("hexers-vigor"),

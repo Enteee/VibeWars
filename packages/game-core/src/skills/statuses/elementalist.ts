@@ -80,7 +80,9 @@ export type ElementalistStatusId =
   // Elementalist staples (#2288).
   | "gust"
   | "mirror-of-ice"
-  | "winters-embrace";
+  | "winters-embrace"
+  // Staples (#2414).
+  | "flame-djinns-haste";
 
 /** Incendiary Bonds' blast (#2289), on its bearer and the foes near it. */
 const INCENDIARY_BLAST = {
@@ -825,6 +827,11 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       ],
       skillId: "elementalist.winters-embrace",
     },
+  }),
+  // Staples (#2414). "For 8...14 seconds, you move 25% faster."
+  "flame-djinns-haste": define("flame-djinns-haste", "Flame Djinn's Haste", "enchantment", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 1.25,
   }),
 };
 
