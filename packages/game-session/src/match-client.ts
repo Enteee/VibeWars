@@ -1,4 +1,5 @@
 import {
+  MAX_WIRE_STROKES,
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   parseCastRefused,
@@ -295,11 +296,13 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   fromHost("strokes", parseWireStrokes, (message) => {
     const at = elapsed();
     // A welcome's resend replaces what this peer already had of them.
+    // The host keeps one team's worth live, so the newest that many are
+    // all a fair host ever needs shown: a hostile one cannot pile up more.
     const ids = new Set(message.segments.map(({ id }) => id));
     strokes = [
       ...strokes.filter((kept) => !ids.has(kept.wire.id) && kept.wire.remaining > at - kept.at),
       ...message.segments.map((wire) => ({ wire, at })),
-    ];
+    ].slice(-MAX_WIRE_STROKES);
   });
   fromHost("traps", parseWireTraps, (message) => {
     traps = message.traps;

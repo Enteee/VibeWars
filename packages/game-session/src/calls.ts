@@ -1,6 +1,7 @@
 import {
   MAX_WIRE_PINGS,
   MAX_WIRE_STROKES,
+  STROKE_SECONDS,
   type PeerCall,
   type WireCalls,
   type WirePoint,
@@ -19,9 +20,6 @@ import { MessageBudget } from "./intent-budget.js";
 
 /** How long a ping stays up, seconds. */
 export const PING_SECONDS = 2.6;
-
-/** How long a compass line segment stays up, seconds (#2391). */
-export const STROKE_SECONDS = 4;
 
 /**
  * How many compass line segments one player may draw a second (#2391),

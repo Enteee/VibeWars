@@ -1,5 +1,8 @@
 import {
+  MAX_STROKE_POINTS,
   MAX_WIRE_PINGS,
+  MAX_WIRE_STROKES,
+  STROKE_SECONDS,
   parseWireCalls,
   parseWireStrokes,
   type JsonValue,
@@ -8,7 +11,6 @@ import {
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { STROKE_SECONDS } from "./calls.js";
 import { MESSAGE_BURST } from "./intent-budget.js";
 import type { PeerMatchConnection } from "./match-client.js";
 import { TICK_SECONDS, settle, startMatch, type TestMatch } from "./match-harness.test-support.js";
@@ -222,5 +224,26 @@ describe("compass lines through the P2P host (#2391)", () => {
     const { connection: back } = await match.rejoin(c.connection);
     await settle();
     expect(back.getCalls().strokes.map(({ points }) => points[0])).toEqual([[300, 200]]);
+  });
+
+  it("keeps a peer's lines bounded however many a hostile host sends", async () => {
+    const match = startMatch();
+    const { c } = await fourInAMatch(match);
+    const points = Array.from({ length: MAX_STROKE_POINTS }, (_, i) => [i, i]);
+    for (let message = 0; message < 10; message += 1) {
+      match.hostTransport.send("strokes", {
+        segments: Array.from({ length: MAX_WIRE_STROKES }, (_, i) => ({
+          id: 1000 + message * MAX_WIRE_STROKES + i,
+          byId: "forged",
+          strokeId: 1,
+          points,
+          remaining: STROKE_SECONDS,
+        })),
+      });
+    }
+    await settle();
+    const drawn = c.connection.getCalls().strokes;
+    expect(drawn).toHaveLength(MAX_WIRE_STROKES);
+    expect(drawn.at(-1)?.id).toBe(1000 + 10 * MAX_WIRE_STROKES - 1);
   });
 });

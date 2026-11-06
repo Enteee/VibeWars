@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_WIRE_PINGS, MAX_WIRE_STROKES, type PeerCall } from "@vibewars/game-protocol";
+import {
+  MAX_WIRE_PINGS,
+  MAX_WIRE_STROKES,
+  STROKE_SECONDS,
+  type PeerCall,
+} from "@vibewars/game-protocol";
 
-import { PING_SECONDS, STROKES_PER_SECOND, STROKE_SECONDS, createCallBoard } from "./calls.js";
+import { PING_SECONDS, STROKES_PER_SECOND, createCallBoard } from "./calls.js";
 
 const BOUNDS = { width: 960, height: 640 };
 /** b is team 0's living foe; everyone else is not. */

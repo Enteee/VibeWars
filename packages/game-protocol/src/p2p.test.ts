@@ -9,6 +9,7 @@ import {
   MAX_WIRE_PINGS,
   MAX_STROKE_POINTS,
   MAX_WIRE_STROKES,
+  STROKE_SECONDS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_RADIUS,
@@ -1091,6 +1092,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "strokes with a segment running backwards (#2391)",
     parseWireStrokes,
     { segments: [{ ...stroke, remaining: -1 }] },
+  ],
+  [
+    "strokes with a segment that outlives a stroke (#2391)",
+    parseWireStrokes,
+    { segments: [{ ...stroke, remaining: STROKE_SECONDS + 0.001 }] },
   ],
   [
     "a call with a target id past the cap (#443)",

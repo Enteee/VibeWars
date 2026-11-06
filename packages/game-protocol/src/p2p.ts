@@ -214,6 +214,9 @@ export const MAX_STROKE_POINTS = 16;
 /** The most compass stroke segments one `"strokes"` message carries (#2391). */
 export const MAX_WIRE_STROKES = 64;
 
+/** How long a compass line segment stays up, seconds (#2391); a longer `remaining` is refused. */
+export const STROKE_SECONDS = 4;
+
 /** The most graphemes a chat line keeps (#479); the host cuts the rest. */
 export const MAX_CHAT_GRAPHEMES = 200;
 
@@ -1623,7 +1626,8 @@ function parseWireStroke(value: unknown): WireStroke | undefined {
     isCount(raw.strokeId) &&
     points !== undefined &&
     isNumber(raw.remaining) &&
-    raw.remaining >= 0
+    raw.remaining >= 0 &&
+    raw.remaining <= STROKE_SECONDS
     ? {
         id: raw.id,
         byId: raw.byId,
