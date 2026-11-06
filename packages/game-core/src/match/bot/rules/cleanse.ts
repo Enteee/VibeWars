@@ -1,14 +1,30 @@
-import { removedCategories, removesFromCaster } from "../skill-intent.js";
+import { distance } from "../../../vec2.js";
+import { conditionAuraRadius, removedCategories, removesFromCaster } from "../skill-intent.js";
+import { spiritUp } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /** Take a hex or a condition off the nearest ally bearing one. */
 const cleanse: BotRule = {
   order: 50,
   name: "cleanse",
-  decide: ({ self, bar, allies, targetId, nearestFirst, mayUse, use }) => {
+  decide: ({ context, self, bar, allies, targetId, nearestFirst, mayUse, use }) => {
     for (const ally of nearestFirst(allies)) {
       const statuses = ally.combatant.statuses;
       for (const skill of bar) {
+        // A spirit that runs conditions out faster (#2491), Recovery's:
+        // for a bearer inside its aura, unless one already stands.
+        const aura = conditionAuraRadius(skill);
+        if (aura !== undefined) {
+          if (
+            statuses.countByCategory("condition") > 0 &&
+            distance(ally.position, self.position) <= aura &&
+            !spiritUp(context, self, skill) &&
+            mayUse(skill, self.id)
+          ) {
+            return use(skill, self.id);
+          }
+          continue;
+        }
         const takesOff = removedCategories(skill).some(
           (category) => statuses.countByCategory(category) > 0,
         );

@@ -1,9 +1,9 @@
 import type { Participant } from "../../simulation.js";
 import type { Skill } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
-import { botUses, projectsToOthers, wardedDamageType } from "../skill-intent.js";
+import { botUses, projectsToOthers, summonAura, wardedDamageType } from "../skill-intent.js";
 import { airFirst } from "./setup.js";
-import { HURT_FRACTION, healthFraction } from "./shared.js";
+import { HURT_FRACTION, healthFraction, spiritUp } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /** Heal or protect the most hurt ally, itself included. */
@@ -11,7 +11,7 @@ const heal: BotRule = {
   order: 20,
   name: "heal",
   decide: (rule) => {
-    const { self, bar, allies, mayUse, use } = rule;
+    const { context, self, bar, allies, mayUse, use } = rule;
     let hurt: Participant | undefined;
     for (const ally of allies) {
       if (hurt === undefined || healthFraction(ally) < healthFraction(hurt)) {
@@ -38,6 +38,12 @@ const heal: BotRule = {
           distance(patient.position, self.position) <= beside
         );
       }
+      // A spirit whose aura reaches allies (#2491), Shelter's or Recovery's,
+      // is for a patient inside that aura, the caster among them.
+      const aura = allyAuraRadius(held);
+      if (aura !== undefined) {
+        return distance(patient.position, self.position) <= aura;
+      }
       const area = held.area;
       if (area?.origin !== "caster" || area.includesCaster) {
         return patient.id === self.id;
@@ -50,6 +56,7 @@ const heal: BotRule = {
           botUses(held).includes(role) &&
           wardedDamageType(held) === undefined &&
           reaches(held) &&
+          !spiritUp(context, self, held) &&
           mayUse(held, held.target === "self" ? self.id : patient.id),
       );
       if (skill !== undefined) {
@@ -61,5 +68,11 @@ const heal: BotRule = {
     return undefined;
   },
 };
+
+/** The radius of the ally aura of the spirit `skill` summons, if it has one. */
+function allyAuraRadius(skill: Skill): number | undefined {
+  const aura = summonAura(skill);
+  return aura?.affects === "allies" ? aura.radius : undefined;
+}
 
 export default heal;
