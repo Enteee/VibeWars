@@ -178,13 +178,16 @@ export type CountRule =
    * pet's (#1957), as Enraged Lunge's "for each of your Beast Mastery
    * skills that is recharging", no owner 0; or the caster's own (#2321),
    * as Doom's "for each of your binding rituals that is recharging". A
-   * skill disabled but not recharging is not counted.
+   * skill disabled but not recharging is not counted. With `weapon`, only
+   * attack skills of that weapon (#2432): Blades of Steel's "for each
+   * recharging dagger attack".
    */
   | {
       readonly kind: "recharging-skills";
       readonly of: "owner" | "caster";
       readonly attributeId: string | undefined;
       readonly type: SkillType | undefined;
+      readonly weapon?: AttackWeaponClass;
     }
   /**
    * Whole seconds the status whose end trigger lands this was on (#2321),
@@ -201,9 +204,14 @@ export type CountRule =
    * Statuses of `categories` an earlier effect of this same use took off
    * anyone (#2260), inside a `splash` or not: Purge Signet's "you lose 10
    * Energy for each hex and condition removed". Read before the use, as a
-   * state is, it is 0.
+   * state is, it is 0. With `profession`, only statuses of that profession
+   * (#2432): Release Enchantments' "for each Monk enchantment lost".
    */
-  | { readonly kind: "removed"; readonly categories: readonly StatusCategory[] }
+  | {
+      readonly kind: "removed";
+      readonly categories: readonly StatusCategory[];
+      readonly profession?: ProfessionId;
+    }
   /**
    * Enchantments the caster maintains (#2260), on anyone living, as its
    * upkeep counts them: Blessed Signet's "for each enchantment you are

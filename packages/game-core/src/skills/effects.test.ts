@@ -14,6 +14,7 @@ import {
   applySkillEffects,
   applyStatus,
   resolveSkillEffects,
+  withPerCount,
   type CombatEvent,
 } from "./effects.js";
 import { chainAllows } from "./chain.js";
@@ -25,6 +26,7 @@ import { vec2 } from "../vec2.js";
 import type {
   Combatant,
   EffectCondition,
+  PerCount,
   Skill,
   SkillContext,
   SkillEffect,
@@ -1876,5 +1878,49 @@ describe("perUsedSkillEnergy (#1614)", () => {
   it("gives nothing without a used skill, or for one with no energy cost", () => {
     expect(share(undefined)).toEqual([]);
     expect(share({ skillId: "warrior.cleave", key: "warrior.cleave" })).toEqual([]);
+  });
+});
+
+describe("narrower counts (#2432)", () => {
+  const context = { surroundings: new Map() };
+  const each = (count: PerCount["count"]): PerCount => ({
+    count,
+    amount: { flat: 1 },
+    max: undefined,
+  });
+
+  it("recharging-skills with a weapon counts only attack skills of that weapon", () => {
+    const fangs = "assassin.twisting-fangs";
+    const artery = "warrior.sever-artery";
+    const dash = "assassin.dash";
+    const caster = makeCombatant({ id: "c", skillBar: [fangs, artery, dash] });
+    for (const id of [fangs, artery, dash]) {
+      caster.cast.startRecharge(id, 30);
+    }
+    const all = {
+      kind: "recharging-skills",
+      of: "caster",
+      attributeId: undefined,
+      type: undefined,
+    } as const;
+    const recharging = (count: PerCount["count"]) =>
+      withPerCount(0, each(count), caster, undefined, context, []);
+    expect(recharging({ ...all, weapon: "daggers" })).toBe(1);
+    expect(recharging(all)).toBe(3);
+  });
+
+  it("removed with a profession counts only that profession's statuses", () => {
+    const caster = makeCombatant({ id: "c" });
+    const removed = (statusId: StatusId): CombatEvent => ({
+      kind: "status-removed",
+      targetId: "c",
+      statusId,
+    });
+    // Guardian and Mending are Monk enchantments, Way of the Lotus an Assassin one.
+    const earlier = [removed("guardian"), removed("mending"), removed("way-of-the-lotus")];
+    const count = (rule: PerCount["count"]) =>
+      withPerCount(0, each(rule), caster, undefined, context, earlier);
+    expect(count({ kind: "removed", categories: ["enchantment"], profession: "monk" })).toBe(2);
+    expect(count({ kind: "removed", categories: ["enchantment"] })).toBe(3);
   });
 });

@@ -10,6 +10,7 @@ exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
   "assassin.black-lotus-strike": "",
   "assassin.black-mantis-thrust": "condition",
   "assassin.black-spider-strike": "condition",
+  "assassin.blades-of-steel": "",
   "assassin.blinding-powder": "condition",
   "assassin.caltrops": "condition",
   "assassin.crippling-dagger": "condition",
@@ -99,6 +100,7 @@ exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
   "assassin.way-of-the-assassin": "",
   "assassin.way-of-the-empty-palm": "",
   "assassin.way-of-the-fox": "",
+  "assassin.way-of-the-lotus": "",
   "assassin.wild-strike": "",
 }
 `;
@@ -515,6 +517,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.pacifism": "hex",
   "monk.patient-spirit": "healing",
   "monk.peace-and-harmony": "removal",
+  "monk.pensive-guardian": "defence",
   "monk.protective-bond": "defence",
   "monk.protective-spirit": "defence",
   "monk.purge-conditions": "removal",
@@ -522,6 +525,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.purifying-veil": "removal",
   "monk.ray-of-judgment": "condition",
   "monk.rebirth": "",
+  "monk.release-enchantments": "healing",
   "monk.remove-hex": "removal",
   "monk.restful-breeze": "healing",
   "monk.restore-condition": "healing removal",

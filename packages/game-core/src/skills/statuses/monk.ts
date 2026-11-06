@@ -80,6 +80,7 @@ export type MonkStatusId =
   | "reverse-hex"
   // Staples (#2414).
   | "defenders-zeal"
+  | "pensive-guardian"
   // Staples (#2367).
   | "strength-of-honor";
 
@@ -967,15 +968,6 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       },
     ],
   }),
-  // "While you maintain this enchantment, target ally deals 1...5 more
-  // damage in melee" (PvP, #2367): a bow gets nothing.
-  "strength-of-honor": define("strength-of-honor", "Strength of Honor", "enchantment", {
-    profession: "monk",
-    attackDamageDelta: {
-      scaling: { attributeId: "monk.smiting-prayers", atZero: 1, atTwelve: 4.2 },
-    },
-    attackDamageDeltaWeapon: "melee",
-  }),
   // Mechanics (#2374). "...+1...4 Health regeneration. If this skill ends
   // prematurely, that ally gains 30...120 Health": 3 pips and 102 at the
   // caster's rank 12. Running its full 10 s heals nothing.
@@ -1008,5 +1000,21 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         skillId: "monk.defenders-zeal",
       },
     ],
+  }),
+  // "50% chance to block attacks from enchanted foes" (#2432), read as
+  // each blow is checked.
+  "pensive-guardian": define("pensive-guardian", "Pensive Guardian", "enchantment", {
+    profession: "monk",
+    block: { chance: 0.5, against: "all" },
+    blockAttackerUnder: { categories: ["enchantment"], statusIds: [] },
+  }),
+  // "While you maintain this enchantment, target ally deals 1...5 more
+  // damage in melee" (PvP, #2367): a bow gets nothing.
+  "strength-of-honor": define("strength-of-honor", "Strength of Honor", "enchantment", {
+    profession: "monk",
+    attackDamageDelta: {
+      scaling: { attributeId: "monk.smiting-prayers", atZero: 1, atTwelve: 4.2 },
+    },
+    attackDamageDeltaWeapon: "melee",
   }),
 };

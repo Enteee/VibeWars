@@ -57,7 +57,8 @@ export type AssassinStatusId =
   | "flashing-blades"
   // Staples (#2413).
   | "sharpen-daggers"
-  | "assassins-remedy";
+  | "assassins-remedy"
+  | "way-of-the-lotus";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -525,5 +526,26 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
       effects: [{ kind: "remove-status", category: "condition", count: 1 }],
       skillId: "assassin.assassins-remedy",
     },
+  }),
+  // "For 20 seconds, the next time you hit with a dual attack skill, you
+  // gain 5...20 Energy" (#2432): the caster's Shadow Arts, any other hit
+  // neither fires nor spends it.
+  "way-of-the-lotus": define("way-of-the-lotus", "Way of the Lotus", "enchantment", {
+    profession: "assassin",
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-hits",
+        chainRole: "dual",
+        target: "bearer",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 5, atTwelve: 17 } },
+          },
+        ],
+        skillId: "assassin.way-of-the-lotus",
+      },
+    ],
   }),
 };

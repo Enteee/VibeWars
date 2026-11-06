@@ -6,7 +6,21 @@ import {
   RANGE_MELEE,
   RANGE_SPELL,
 } from "../../distances.js";
-import { KNOCKDOWN_SECONDS, type Skill } from "../types.js";
+import { KNOCKDOWN_SECONDS, type HealEffect, type Skill } from "../types.js";
+
+/**
+ * Release Enchantments' heal (#2432): 5...35 for each Monk enchantment
+ * its use took off the caster.
+ */
+const RELEASE_ENCHANTMENTS_HEAL: HealEffect = {
+  kind: "heal",
+  amount: { flat: 0 },
+  per: {
+    count: { kind: "removed", categories: ["enchantment"], profession: "monk" },
+    amount: { scaling: { attributeId: "monk.divine-favor", atZero: 5, atTwelve: 29 } },
+    max: undefined,
+  },
+};
 
 export const MONK_SKILLS: readonly Skill[] = [
   {
@@ -4458,6 +4472,82 @@ export const MONK_SKILLS: readonly Skill[] = [
             },
           },
         ],
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Narrower filters (#2432)                                                */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.release-enchantments",
+    name: "Release Enchantments",
+    gwId: 960,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Lose all enchantments. Each party member is healed for 5...35
+    // Health for each Monk enchantment lost": the caster, then the rest
+    // of the party, however far. None lost heals none.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: "all", from: "caster" },
+      RELEASE_ENCHANTMENTS_HEAL,
+      {
+        kind: "splash",
+        hits: "party",
+        radius: Number.POSITIVE_INFINITY,
+        maxTargets: undefined,
+        effects: [RELEASE_ENCHANTMENTS_HEAL],
+      },
+    ],
+  },
+  {
+    id: "monk.pensive-guardian",
+    name: "Pensive Guardian",
+    gwId: 1683,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...11 seconds, target ally has a 50% chance to block attacks
+    // from enchanted foes": the block is the status's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "pensive-guardian",
+        durationSeconds: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 9.8 },
+        },
       },
     ],
   },
