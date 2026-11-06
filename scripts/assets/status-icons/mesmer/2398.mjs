@@ -7,9 +7,9 @@ const rows = {
   "signet-of-recall": [
     "skill-effect",
     (c) =>
-      `<path d="M3 4c.500 10 6 16 14 14.500" ${stroke(c, 2)}/>` +
-      `<path d="M16 15l6 4.500-6 3.500z" fill="${c}"/>` +
-      `<path d="M19 2l-5 8h4l-1.500 6 6-8h-4z" fill="${c}"/>`,
+      `<path d="M6 6c.500 7 3.500 12 7 11.500" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 15.500l5 3-5 3z" fill="${c}"/>` +
+      `<path d="M17 3.500L13 9h3l-1 4.500 5-6.500h-3z" fill="${c}"/>`,
   ],
 };
 

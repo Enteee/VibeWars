@@ -14,15 +14,15 @@ const rows = {
   "seeping-wound": [
     "hex",
     (c) =>
-      `<path d="M3 8c5-5 13-5 18 0-5 5-13 5-18 0z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 14c2 3 2.500 4 2.500 5.500a2.500 2.500 0 0 1-5 0c0-1.500.500-2.500 2.500-5.500z" fill="${c}"/>`,
+      `<path d="M6 9c3-3 9-3 12 0-3 3-9 3-12 0z" ${stroke(c, 1.6)}/>` +
+      `<path d="M12 13c1.500 2 2 3 2 4a2 2 0 0 1-4 0c0-1 .500-2 2-4z" fill="${c}"/>`,
   ],
   // Hex: running chevrons over spikes.
   "shameful-fear": [
     "hex",
     (c) =>
-      `<path d="M4 3l6 6-6 6M12 3l6 6-6 6" ${stroke(c, 2.2)}/>` +
-      `<path d="M3 21l3-5 3 5zM9 21l3-5 3 5zM15 21l3-5 3 5z" fill="${c}"/>`,
+      `<path d="M8 6l4 4-4 4M13 6l4 4-4 4" ${stroke(c, 1.8)}/>` +
+      `<path d="M9 19l1.500-3 1.500 3zM12.500 19l1.500-3 1.500 3z" fill="${c}"/>`,
   ],
   // Stance: two crossed blades with a flash at the cross.
   "flashing-blades": [
