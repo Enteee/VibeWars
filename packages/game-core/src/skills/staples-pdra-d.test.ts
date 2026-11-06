@@ -550,17 +550,13 @@ describe("Wielder's Strike (#2413)", () => {
     [RANK_12, 50, 42],
     [RANK_0, 10, 10],
   ] as const)(
-    "strikes 10...50 more under a weapon spell on the caster (%#)",
+    "strikes 10...50 more, in the same hit, under a weapon spell on the caster (%#)",
     (ranks, damage, more) => {
       const sim = match([WIELDERS], ranks, DAGGERS, spec("f", 1, vec2(300, 0)));
       get(sim, "r").combatant.statuses.apply("weapon-of-warding", 30, "r", NO_RANKS);
-      const [first = 0, second = 0, ...rest] = damageTo(
-        of(cast(sim, WIELDERS, "f"), WIELDERS),
-        "f",
-      );
-      expect(first).toBeCloseTo(damage, 0);
-      expect(second).toBeCloseTo(more, 0);
-      expect(rest).toEqual([]);
+      const hits = damageTo(of(cast(sim, WIELDERS, "f"), WIELDERS), "f");
+      expect(hits).toHaveLength(1);
+      expect(hits[0]).toBeCloseTo(damage + more, 0);
     },
   );
 

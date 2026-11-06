@@ -3448,20 +3448,12 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         },
         type: "lightning",
         armorPenetration: 0,
-      },
-      {
-        kind: "if",
-        condition: { kind: "caster-has", category: "weapon-spell" },
-        effects: [
-          {
-            kind: "damage",
-            amount: {
-              scaling: { attributeId: "ritualist.channeling-magic", atZero: 10, atTwelve: 42 },
-            },
-            type: "lightning",
-            armorPenetration: 0,
+        conditionalBonus: {
+          condition: { kind: "caster-has", category: "weapon-spell" },
+          amount: {
+            scaling: { attributeId: "ritualist.channeling-magic", atZero: 10, atTwelve: 42 },
           },
-        ],
+        },
       },
     ],
   },
