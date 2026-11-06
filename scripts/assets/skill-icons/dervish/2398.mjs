@@ -1,7 +1,7 @@
 /** @type {Readonly<Record<string, import("../../skill-icon-table.mjs").SkillIconRow>>} */
 const rows = {
-  // Staples (#2368), stand-ins until their art card.
-  "dervish.mystic-corruption": { glyph: "cleanse", modifier: "area" },
+  // Dervish staples (#2368), art #2398.
+  "dervish.mystic-corruption": { glyph: "germ-ring-plus" },
 };
 
 export default rows;
