@@ -318,12 +318,14 @@ function modDamageOf(
  * attribute is no mastery, and fists have none, so both crit at the base
  * chance and Critical Strikes'. Statuses add theirs (#988), all of it at
  * most 1; one only against a still foe (#2320) when a `victim` is given
- * and is not moving.
+ * and is not moving. `versusSource` is what the victim's statuses give
+ * their source (#2502), `sourceAttacksOn`'s.
  */
 export function criticalChance(
   snapshot: WeaponSnapshot,
   rules: CombatRules,
   victim?: Pick<Combatant, "moving">,
+  versusSource = 0,
 ): number {
   const mastery = snapshot.mainHand.weapon.requirement.kind === "fixed" ? snapshot.rank : 0;
   return Math.min(
@@ -332,8 +334,39 @@ export function criticalChance(
       rules.criticalChancePerRank * mastery +
       CRITICAL_STRIKES_CHANCE_PER_RANK * snapshot.criticalStrikes +
       snapshot.criticalChanceBonus +
-      (victim !== undefined && !victim.moving ? snapshot.criticalChanceBonusVersusStill : 0),
+      (victim !== undefined && !victim.moving ? snapshot.criticalChanceBonusVersusStill : 0) +
+      versusSource,
   );
+}
+
+/**
+ * What `victim`'s statuses that `attackerId` applied give its blows
+ * against it (#2502), `sourceAttacks`: their crit chance, summed, and
+ * their armor modifiers, at their ranks, rounded and summed, each only
+ * while it holds. Siphon Strength from two Assassins gives each its own.
+ * No attacker: nothing.
+ */
+export function sourceAttacksOn(
+  victim: Combatant,
+  attackerId: string | undefined,
+): { readonly criticalChanceBonus: number; readonly armorModifier: number } {
+  let criticalChanceBonus = 0;
+  let armorModifier = 0;
+  const hexes = victim.statuses.countByCategory("hex");
+  for (const { id, sourceId, ranks } of victim.statuses.active) {
+    const definition = getStatusDefinition(id);
+    const rule = definition.sourceAttacks;
+    if (rule === undefined || attackerId === undefined || sourceId !== attackerId) {
+      continue;
+    }
+    criticalChanceBonus += rule.criticalChanceBonus;
+    // Shadowy Burden's "while target foe has no other hexes": it is one.
+    const otherHexes = hexes - (definition.category === "hex" ? 1 : 0);
+    if (!rule.onlyWhileNoOtherHex || otherHexes === 0) {
+      armorModifier += Math.round(statAt(rule.armorModifier, ranks));
+    }
+  }
+  return { criticalChanceBonus, armorModifier };
 }
 
 /**
@@ -683,7 +716,9 @@ export function landBlow(
 ): boolean {
   interruptOnHit(victim, attacker?.id, events);
   const { weapon } = snapshot.mainHand;
-  const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules, victim);
+  const versusSource = sourceAttacksOn(victim, attacker?.id);
+  const rolledCritical =
+    rng.nextFloat() < criticalChance(snapshot, rules, victim, versusSource.criticalChanceBonus);
   // Dulled Weapon's attacker (#2212) and Stone Sheath's victim (#2373)
   // turn a crit into a plain blow; the roll above is drawn either way.
   const victimModifiers = aggregateModifiers(victim.statuses.active);
@@ -735,6 +770,7 @@ export function landBlow(
         snapshot.armorPenetration,
       ) + sundered,
     ...(weapon.projectileSpeed === undefined ? {} : { projectile: true }),
+    ...(versusSource.armorModifier === 0 ? {} : { armorModifier: versusSource.armorModifier }),
   };
   // After the crit and damage rolls: the piece it lands on (#1135).
   const location = hitLocationOf(packet, rng);

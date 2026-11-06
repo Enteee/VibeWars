@@ -111,7 +111,10 @@ export type MesmerStatusId =
   | "kitahs-burden"
   | "symbolic-posture"
   // Mechanics (#2501).
-  | "recurring-insecurity";
+  | "recurring-insecurity"
+  // Mechanics (#2502).
+  | "auspicious-incantation"
+  | "symbols-of-inspiration";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -1284,4 +1287,45 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     healthPips: { scaling: { attributeId: "mesmer.illusion-magic", atZero: -1, atTwelve: -5 } },
     reappliesOnExpiryIf: { bearerHasOtherHex: true },
   }),
+  // "For 20 seconds, the next spell you cast is disabled for an additional
+  // 10...5 seconds, and you gain 110...200% of that spell's Energy cost"
+  // (#2502): 6 s and 182% at 12, as it is paid for.
+  "auspicious-incantation": define(
+    "auspicious-incantation",
+    "Auspicious Incantation",
+    "enchantment",
+    {
+      profession: "mesmer",
+      nextSkillRule: {
+        which: "spell",
+        uninterruptible: false,
+        unblockable: false,
+        energyDiscount: 0,
+        castsInstantly: false,
+        extraRechargeSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 10, atTwelve: 6 },
+        },
+        rechargesInstantly: false,
+        losesAllEnergy: false,
+        energyGainOfCost: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1.1, atTwelve: 1.82 },
+        },
+        rechargeFasterIfType: undefined,
+        resetsOwnRechargeIfType: undefined,
+        skillId: "mesmer.auspicious-incantation",
+      },
+    },
+  ),
+  // "Elite skills you cast use your Fast Casting attribute instead of their
+  // normal attributes" (#2502), every one while it lasts, as Symbolic
+  // Celerity's signets; the 6...40 s are the skill's.
+  "symbols-of-inspiration": define(
+    "symbols-of-inspiration",
+    "Symbols of Inspiration",
+    "skill-effect",
+    {
+      profession: "mesmer",
+      borrowsAttribute: { attributeId: "mesmer.fast-casting", skillType: "elite", uses: undefined },
+    },
+  ),
 };

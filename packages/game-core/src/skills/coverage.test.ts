@@ -87,13 +87,14 @@ describe("skill coverage regression gate", () => {
     expect(grouped.get("count-overcast")).toEqual([1088]);
   });
 
-  it("counts a skill once under each mechanic it waits on (Reclaim Essence)", () => {
-    const coverage = computeCoverage([...CORPUS, { gwId: 1482, name: "Reclaim Essence" }]);
+  // No reason line names two mechanics since #2502 implemented Reclaim
+  // Essence: one is grouped under the mechanic it waits on, once.
+  it("counts a skill once under the mechanic it waits on (Balthazar's Pendulum)", () => {
+    const coverage = computeCoverage([...CORPUS, { gwId: 1395, name: "Balthazar's Pendulum" }]);
     const grouped = missingMechanics(coverage);
 
-    expect(coverage.unimplemented.filter((s) => s.gwId === 1482)).toHaveLength(1);
-    expect(grouped.get("recharge-others-by-type")).toEqual([1482]);
-    expect(grouped.get("destroy-own-spirits")).toEqual([1482]);
+    expect(coverage.unimplemented.filter((s) => s.gwId === 1395)).toHaveLength(1);
+    expect(grouped.get("knockdown-offender")).toEqual([1395]);
   });
 
   it("counts a duplicated corpus entry once", () => {

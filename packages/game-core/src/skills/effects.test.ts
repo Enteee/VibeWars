@@ -2055,3 +2055,26 @@ describe("healing for a removed status of one id (#2453)", () => {
     ]);
   });
 });
+
+describe("recharge-others by type, of a profession (#2502)", () => {
+  it("a status's trigger recharges only the skills of that type, and of that profession", () => {
+    const dulled = "ritualist.dulled-weapon";
+    const empathy = "mesmer.empathy";
+    const painful = "ritualist.painful-bond";
+    const bloodsong = "ritualist.bloodsong";
+    const caster = makeCombatant({ id: "c", skillBar: [dulled, empathy, painful, bloodsong] });
+    for (const id of [dulled, empathy, painful, bloodsong]) {
+      caster.cast.startRecharge(id, 30);
+    }
+    applyEffect(
+      { kind: "recharge-others", which: { type: "hex", profession: "ritualist" } },
+      { ...context(caster), firingStatusId: "anguished-was-lingwah" },
+    );
+    expect([...caster.cast.rechargeRemaining.keys()].sort()).toEqual([bloodsong, empathy].sort());
+    applyEffect(
+      { kind: "recharge-others", which: { type: "binding-ritual" } },
+      { ...context(caster), firingStatusId: "anguished-was-lingwah" },
+    );
+    expect([...caster.cast.rechargeRemaining.keys()]).toEqual([empathy]);
+  });
+});

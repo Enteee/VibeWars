@@ -3326,19 +3326,36 @@ export class MatchSimulation {
   } {
     const all = record.combatant.statuses.useNextSkillRules(skill);
     const used = all.filter(({ answered }) => answered);
+    const cost = skill.cost?.kind === "energy" ? skill.cost.amount : 0;
     this.#logFired(
-      all.map(({ statusId, rule }) => ({
-        sourceId: record.id,
-        skillId: rule.skillId,
-        events: [{ kind: "status-expired" as const, targetId: record.id, statusId }],
-      })),
+      all.map(({ statusId, rule, answered, ranks }) => {
+        // Auspicious Incantation's share of the cost (#2502), at its
+        // source's ranks, once the skill is paid for.
+        const events: CombatEvent[] = [];
+        if (answered) {
+          gainEnergy(
+            record.combatant,
+            Math.round(cost * statAt(rule.energyGainOfCost, ranks)),
+            events,
+          );
+        }
+        return {
+          sourceId: record.id,
+          skillId: rule.skillId,
+          events: [...events, { kind: "status-expired" as const, targetId: record.id, statusId }],
+        };
+      }),
     );
     return {
       rule: {
         uninterruptible: used.some(({ rule }) => rule.uninterruptible),
         unblockable: used.some(({ rule }) => rule.unblockable),
         rechargesInstantly: used.some(({ rule }) => rule.rechargesInstantly),
-        extraRechargeSeconds: used.reduce((sum, { rule }) => sum + rule.extraRechargeSeconds, 0),
+        // Auspicious Incantation's at its source's ranks (#2502), whole seconds.
+        extraRechargeSeconds: used.reduce(
+          (sum, { rule, ranks }) => sum + Math.round(statAt(rule.extraRechargeSeconds, ranks)),
+          0,
+        ),
         // Ritual Lord's on a binding ritual (#1941).
         rechargeFaster: Math.max(
           0,
