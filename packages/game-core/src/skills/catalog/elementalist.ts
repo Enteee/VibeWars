@@ -5860,6 +5860,127 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     ],
   },
   /* ---------------------------------------------------------------------- */
+  /* Staples (#2447)                                                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.smoldering-embers",
+    name: "Smoldering Embers",
+    gwId: 1090,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 10...70 fire damage. If you are Overcast,
+    // that foe is hexed with Smoldering Embers for 3 seconds": it costs no
+    // Overcast itself, so the hex needs the caster to be Overcast already.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 10, atTwelve: 58 },
+        },
+        type: "fire",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [
+          { kind: "apply-status", statusId: "smoldering-embers", durationSeconds: { flat: 3 } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.bed-of-coals",
+    name: "Bed of Coals",
+    gwId: 825,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Create a Bed of Coals at target foe's location. For 5 seconds, foes
+    // adjacent to target foe are struck for 5...29 fire damage each second.
+    // Any foe knocked down on the Bed of Coals is set on fire for 3...7
+    // seconds": it stays where they stood, as Meteor Shower's, so a foe can
+    // walk out; whoever is down on it at a pulse burns.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 5 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 5,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_ADJACENT,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.fire-magic", atZero: 5, atTwelve: 24.2 },
+                },
+                type: "fire",
+                armorPenetration: 0,
+              },
+              {
+                kind: "if",
+                condition: { kind: "target-knocked-down" },
+                effects: [
+                  {
+                    kind: "apply-status",
+                    statusId: "burning",
+                    durationSeconds: {
+                      scaling: { attributeId: "elementalist.fire-magic", atZero: 3, atTwelve: 6.2 },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
   /* Mechanics (#2453)                                                      */
   /* ---------------------------------------------------------------------- */
   {

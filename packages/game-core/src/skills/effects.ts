@@ -2457,7 +2457,7 @@ export function applyEffect(
       }
       const removed = bearer.statuses.removeByCategory(
         effect.category,
-        removeCount(effect, caster, target, bearer, context.surroundings, earlier),
+        removeCount(effect, caster, target, bearer, context, earlier),
         effect.profession,
         same?.kind === "status-removed" ? same.statusId : effect.statusId,
         effect.orCategory,
@@ -3196,17 +3196,18 @@ export function stateHolds(
  * How many a `remove-status` takes off `bearer`: its `count`, or that
  * for each living spirit within `perSpiritNear` of it (#1064), or one for
  * each `perRemoved` status `earlier` took off it, to its `max` (#1205), or
- * what `perCount` counts (#2247). A bearer nowhere in `surroundings` has
- * no spirit near.
+ * what `perCount` counts (#2247), the skill landing among what it counts
+ * (#2447). A bearer nowhere in `surroundings` has no spirit near.
  */
 function removeCount(
   effect: RemoveStatusEffect,
   caster: Combatant,
   target: Combatant | undefined,
   bearer: Combatant,
-  surroundings: Surroundings,
+  context: CountContext,
   earlier: readonly CombatEvent[],
 ): number {
+  const { surroundings } = context;
   // Contemplation of Purity's one each for the enchantments it took (#1205).
   if (effect.perRemoved !== undefined) {
     return Math.min(
@@ -3216,7 +3217,7 @@ function removeCount(
   }
   // Signet of Twilight's one for each hex (#2247), counted before it removes.
   if (effect.perCount !== undefined) {
-    return countOf(effect.perCount, caster, target, { surroundings }, earlier);
+    return countOf(effect.perCount, caster, target, context, earlier);
   }
   const count =
     effect.count === "all"

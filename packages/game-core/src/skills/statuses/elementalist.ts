@@ -91,6 +91,8 @@ export type ElementalistStatusId =
   | "ether-prism"
   // Mechanics (#2438).
   | "glyph-of-restoration"
+  // Staples (#2447).
+  | "smoldering-embers"
   // Mechanics (#2453).
   | "stoneflesh-aura"
   | "icy-shackles"
@@ -999,6 +1001,24 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 24.2 },
     },
     preventsCriticalHits: true,
+  }),
+  // "...that foe is hexed with Smoldering Embers for 3 seconds and takes
+  // 5...25 additional fire damage each second" (#2447).
+  "smoldering-embers": define("smoldering-embers", "Smoldering Embers", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.fire-magic",
+    pulse: {
+      everySeconds: 1,
+      effects: [
+        {
+          kind: "damage",
+          amount: { scaling: { attributeId: "elementalist.fire-magic", atZero: 5, atTwelve: 21 } },
+          type: "fire",
+          armorPenetration: 0,
+        },
+      ],
+      skillId: "elementalist.smoldering-embers",
+    },
   }),
   // "For 5...15 seconds, damage you receive is reduced by 1...31, and you
   // are immune to critical attacks" (#2453): 25 at rank 12, after armor.
