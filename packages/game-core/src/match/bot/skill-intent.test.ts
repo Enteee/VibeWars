@@ -25,6 +25,11 @@ const NO_BOT_USE = new Set([
   "ritualist.spirits-strength",
   // Stone Striker (#2503): its damage turned to earth.
   "elementalist.stone-striker",
+  // Self-buffs on own skills (#2502), as above, and Reclaim Essence's
+  // Energy from the caster's own spirits, which no rule spends.
+  "mesmer.auspicious-incantation",
+  "ritualist.anguished-was-lingwah",
+  "ritualist.reclaim-essence",
   "necromancer.cultists-fervor",
   "monk.blessed-aura",
   "monk.healers-covenant",

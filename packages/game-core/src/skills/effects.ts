@@ -2922,6 +2922,16 @@ export function applyEffect(
       return events;
     }
 
+    case "destroy-own-spirits": {
+      // Reclaim Essence's (#2502): wherever they stand.
+      for (const candidate of context.surroundings.values()) {
+        if (candidate.creature?.ownerId === caster.id) {
+          destroyCreature(candidate, "spirit", caster, events);
+        }
+      }
+      return events;
+    }
+
     case "disable-skill": {
       if (target === undefined) {
         return events;
@@ -2979,7 +2989,7 @@ export function applyEffect(
       // Arcane Mimicry's (#1965).
       const elite = target === undefined ? undefined : mimickedElite(target.skillBar);
       if (context.skillId !== undefined && elite !== undefined) {
-        standIn(caster, context.skillId, elite, effect.seconds);
+        standIn(caster, context.skillId, elite, resolveMagnitude(effect.seconds, caster));
       }
       return events;
     }
@@ -3115,6 +3125,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "target-killed":
     case "removed":
     case "resurrected":
+    case "creature-destroyed":
       return false;
     case "target-health-below":
     case "target-health-above":
@@ -3629,6 +3640,8 @@ function conditionHolds(
     }
     case "resurrected":
       return earlier.some((event) => event.kind === "resurrected" && event.targetId === target.id);
+    case "creature-destroyed":
+      return earlier.some((event) => event.kind === "creature-destroyed");
     case "target-health-below":
     case "target-health-above":
     case "caster-health-below":
@@ -3781,6 +3794,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "companion-gains-status":
     case "companion-steps-to-target":
     case "destroy-allied-spirits":
+    case "destroy-own-spirits":
     case "resurrect-companions":
     case "disable-own-skills":
     case "transfer-conditions-to-area":
@@ -4147,8 +4161,25 @@ function rechargeOthers(
   which: RechargeOthersEffect["which"],
 ): void {
   for (const id of [...caster.cast.rechargeRemaining.keys()]) {
-    if (id !== skillId && (which === "all" || getSkill(skillIdOfKey(id))?.type === which)) {
+    if (id !== skillId && rechargedBy(which, getSkill(skillIdOfKey(id)))) {
       caster.cast.endRecharge(id);
     }
   }
+}
+
+/** Whether `which` recharges `skill` (#885, #2502). */
+function rechargedBy(which: RechargeOthersEffect["which"], skill: Skill | undefined): boolean {
+  if (which === "all") {
+    return true;
+  }
+  if (skill === undefined) {
+    return false;
+  }
+  if (typeof which === "string") {
+    return skill.type === which;
+  }
+  return (
+    skill.type === which.type &&
+    (which.profession === undefined || skill.profession === which.profession)
+  );
 }

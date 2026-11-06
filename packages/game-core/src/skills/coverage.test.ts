@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   MISSING_MECHANIC_DESCRIPTIONS,
+  UNIMPLEMENTED_REASONS,
   computeCoverage,
   formatCoverage,
   missingMechanics,
@@ -87,13 +88,20 @@ describe("skill coverage regression gate", () => {
     expect(grouped.get("unwritten")).toEqual([265]);
   });
 
-  it("counts a skill once under each mechanic it waits on (Reclaim Essence)", () => {
-    const coverage = computeCoverage([...CORPUS, { gwId: 1482, name: "Reclaim Essence" }]);
+  // Read from the live list, not a named skill: every card that implements
+  // a listed gap deletes its row, and a literal example went stale twice.
+  it("counts a skill once under each mechanic it waits on", () => {
+    const [gwId, missing] = Object.entries(UNIMPLEMENTED_REASONS)[0] ?? [];
+    expect(missing).toBeDefined();
+    const id = Number(gwId);
+    const coverage = computeCoverage([...CORPUS, { gwId: id, name: "Listed Gap" }]);
     const grouped = missingMechanics(coverage);
 
-    expect(coverage.unimplemented.filter((s) => s.gwId === 1482)).toHaveLength(1);
-    expect(grouped.get("recharge-others-by-type")).toEqual([1482]);
-    expect(grouped.get("destroy-own-spirits")).toEqual([1482]);
+    expect(coverage.unimplemented.filter((s) => s.gwId === id)).toHaveLength(1);
+    for (const mechanic of missing ?? []) {
+      expect(grouped.get(mechanic)).toContain(id);
+      expect(grouped.get(mechanic)?.filter((g) => g === id)).toHaveLength(1);
+    }
   });
 
   it("counts a duplicated corpus entry once", () => {

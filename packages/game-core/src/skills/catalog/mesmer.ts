@@ -3090,7 +3090,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 20 seconds, Arcane Mimicry becomes the non-form elite skill from
     // target other ally" (#1965). None: no copy, and it recharges.
-    effects: [{ kind: "copy-elite", seconds: 20 }],
+    effects: [{ kind: "copy-elite", seconds: { flat: 20 } }],
   },
   {
     id: "mesmer.distortion",
@@ -5175,6 +5175,85 @@ export const MESMER_SKILLS: readonly Skill[] = [
         kind: "apply-status",
         statusId: "recurring-insecurity",
         durationSeconds: { flat: 5 },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2502)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.auspicious-incantation",
+    name: "Auspicious Incantation",
+    gwId: 930,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20 seconds, the next spell you cast is disabled for an additional
+    // 10...5 seconds, and you gain 110...200% of that spell's Energy cost":
+    // the rest is the enchantment's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "auspicious-incantation",
+        durationSeconds: { flat: 20 },
+      },
+    ],
+  },
+  {
+    id: "mesmer.symbols-of-inspiration",
+    name: "Symbols of Inspiration",
+    gwId: 1339,
+    type: "skill",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 6...40 seconds, this skill becomes the Elite of target foe. Elite
+    // skills you cast use your Fast Casting attribute instead of their
+    // normal attributes": 33 s at 12, the copy as Arcane Mimicry's, the
+    // borrowing as long, from the skills used after it.
+    effects: [
+      {
+        kind: "copy-elite",
+        seconds: { scaling: { attributeId: "mesmer.fast-casting", atZero: 6, atTwelve: 33.2 } },
+      },
+      {
+        kind: "apply-status",
+        statusId: "symbols-of-inspiration",
+        on: "caster",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.fast-casting", atZero: 6, atTwelve: 33.2 },
+        },
       },
     ],
   },

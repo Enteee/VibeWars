@@ -113,6 +113,7 @@ export function define(
     criticalChanceBonus: 0,
     criticalChanceBonusWeapon: undefined,
     criticalChanceBonusVersus: undefined,
+    sourceAttacks: undefined,
     energyPerCritical: 0,
     healthPerCritical: 0,
     refreshesOnCritical: false,

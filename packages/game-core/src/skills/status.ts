@@ -305,8 +305,8 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   }
   // Reversal of Damage's and Mark of Protection's caps are their caster's (#2187),
   // Ward Against Harm's elemental armor (#2278), Retribution's cap (#2286),
-  // Chilling Winds' lengthening (#2311), Illusionary Weaponry's damage (#2472)
-  // and Calculated Risk's cap (#2471).
+  // Chilling Winds' lengthening (#2311), Illusionary Weaponry's damage (#2472),
+  // Calculated Risk's cap (#2471) and Shadowy Burden's armor (#2502).
   for (const stat of [
     definition.reflectsNextDamage?.cap,
     definition.replacesMeleeBlows?.damage,
@@ -318,6 +318,7 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
     ...definition.conditionalArmor.map(({ amount }) => amount),
     definition.resurrectionBonus?.healthPercent,
     definition.resurrectionBonus?.energyPercent,
+    definition.sourceAttacks?.armorModifier,
   ]) {
     if (stat !== undefined && typeof stat !== "number") {
       attributes.add(stat.scaling.attributeId);
@@ -327,6 +328,10 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   // and Keystone Signet's uses its Mesmer's (#2275).
   if (definition.nextSkill !== undefined) {
     scalingAttributes(definition.nextSkill, attributes);
+  }
+  // Auspicious Incantation's recharge and Energy are its Mesmer's (#2502).
+  if (definition.nextSkillRule !== undefined) {
+    scalingAttributes(definition.nextSkillRule, attributes);
   }
   // Glyph of Swiftness' count is its Elementalist's (#2453).
   if (definition.nextSpells !== undefined) {
@@ -947,6 +952,13 @@ export interface StatusDefinition {
    * not moving". `undefined`: any victim.
    */
   readonly criticalChanceBonusVersus: "not-moving" | undefined;
+  /**
+   * What the attacks of this status's source against its bearer gain
+   * (#2502): Siphon Strength's "all of your attacks against that foe have
+   * an additional 50% chance of being a critical hit". Another attacker's
+   * do not. `undefined`: none.
+   */
+  readonly sourceAttacks: SourceAttacks | undefined;
   /** Energy the bearer gains on each critical hit it lands, beyond Critical Strikes' (#988). */
   readonly energyPerCritical: number;
   /**
@@ -2703,11 +2715,33 @@ export interface AttributeSet {
   readonly plusEquipment: boolean;
 }
 
+/** `StatusDefinition.sourceAttacks` (#2502). */
+export interface SourceAttacks {
+  /** Added to the source's chance to crit its bearer. 0: none. */
+  readonly criticalChanceBonus: number;
+  /**
+   * On the bearer's armor against the source's blows, at the source's
+   * ranks, rounded: Shadowy Burden's "20...30 less armor against your
+   * attacks". 0: none.
+   */
+  readonly armorModifier: StatusStat;
+  /**
+   * `armorModifier` holds only while the bearer has no other hex, read as
+   * each blow lands: Shadowy Burden's "while target foe has no other
+   * hexes". The crit chance holds either way.
+   */
+  readonly onlyWhileNoOtherHex: boolean;
+}
+
 /** A borrowed attribute's hold on the bearer's next spells (#1929). */
 export interface BorrowedAttribute {
   readonly attributeId: string;
-  /** Which of the bearer's skills borrow it: `spell` is any `isSpell` type (#2446). */
-  readonly skillType: "spell" | "signet";
+  /**
+   * Which of the bearer's skills borrow it: `spell` is any `isSpell` type
+   * (#2446), `elite` any elite skill (#2502), Symbols of Inspiration's
+   * "elite skills you cast".
+   */
+  readonly skillType: "spell" | "signet" | "elite";
   /** How many borrow it before it ends; `undefined`: every one while it lasts (#2446). */
   readonly uses: number | undefined;
 }
@@ -2759,12 +2793,23 @@ export interface NextSkillRule {
   readonly energyDiscount: number;
   /** That skill's activation is 0 s (#1730): Glyph of Sacrifice's. */
   readonly castsInstantly: boolean;
-  /** Seconds added to that skill's recharge (#1730): Glyph of Sacrifice's 30. */
-  readonly extraRechargeSeconds: number;
+  /**
+   * Seconds added to that skill's recharge (#1730): Glyph of Sacrifice's
+   * 30; at its source's ranks (#2502), Auspicious Incantation's 10...5,
+   * falling as the rank rises.
+   */
+  readonly extraRechargeSeconds: StatusStat;
   /** That skill recharges at once (#1730), over any `extraRechargeSeconds`. */
   readonly rechargesInstantly: boolean;
   /** The bearer's Energy goes to 0 once that skill is paid for (#1730). */
   readonly losesAllEnergy: boolean;
+  /**
+   * The share of that skill's base Energy cost the bearer gains once it
+   * is paid for, at its source's ranks, rounded half up (#2502):
+   * Auspicious Incantation's "you gain 110...200% of that spell's Energy
+   * cost". No Energy cost: none. 0: none.
+   */
+  readonly energyGainOfCost: StatusStat;
   /**
    * That skill, if of `type`, recharges `fraction` faster (#1941): Ritual
    * Lord's binding ritual, 50%. `undefined`: none.
@@ -2778,6 +2823,18 @@ export interface NextSkillRule {
   readonly resetsOwnRechargeIfType: SkillType | undefined;
   /** The skill the log names it after: "paragon.song-of-concentration". */
   readonly skillId: string;
+}
+
+/** Whether `skill` borrows for a `BorrowedAttribute` of `skillType` (#1929, #2502). */
+function borrowerAnswers(skillType: BorrowedAttribute["skillType"], skill: Skill): boolean {
+  switch (skillType) {
+    case "spell":
+      return isSpell(skill.type);
+    case "signet":
+      return skill.type === "signet";
+    case "elite":
+      return skill.elite;
+  }
 }
 
 /** Whether `skill` is of the kind `which` names (#1483). */
@@ -4368,8 +4425,10 @@ export class StatusSet {
     readonly statusId: StatusId;
     readonly rule: NextSkillRule;
     readonly answered: boolean;
+    /** Its source's, as it landed (#2502): what its scaled numbers read. */
+    readonly ranks: ReadonlyMap<string, number>;
   }[] {
-    const used = this.active.flatMap(({ id }) => {
+    const used = this.active.flatMap(({ id, ranks }) => {
       const definition = getStatusDefinition(id);
       const rule = definition.nextSkillRule;
       if (rule === undefined) {
@@ -4377,7 +4436,7 @@ export class StatusSet {
       }
       const answered = nextSkillAnswers(rule.which, skill);
       return answered || definition.endsWhenBearerUsesOtherSkill
-        ? [{ statusId: id, rule, answered }]
+        ? [{ statusId: id, rule, answered, ranks }]
         : [];
     });
     this.#end(used.map(({ statusId }) => statusId));
@@ -4451,7 +4510,7 @@ export class StatusSet {
       const borrows = getStatusDefinition(id).borrowsAttribute;
       return (
         borrows !== undefined &&
-        (borrows.skillType === "spell" ? isSpell(skill.type) : skill.type === borrows.skillType) &&
+        borrowerAnswers(borrows.skillType, skill) &&
         borrows.attributeId !== skill.attributeId
       );
     })?.id;

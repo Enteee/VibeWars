@@ -1070,17 +1070,34 @@ export interface DestroyAlliedSpiritsEffect {
 }
 
 /**
+ * Every living spirit the caster created dies, at any distance (#2502):
+ * Reclaim Essence's "all of your spirits die". An ally's are left alone.
+ * An `if` after it on `spirit-destroyed` holds if one did. Acts on the
+ * caster, once.
+ */
+export interface DestroyOwnSpiritsEffect {
+  readonly kind: "destroy-own-spirits";
+}
+
+/**
  * Every other skill of the caster of this type recharges at once (#885),
  * as Moebius Strike's "all your other attack skills are recharged". Acts
  * on the caster, once. `all` (#1762), from a status's trigger, recharges
  * every skill on the bar, the status's own included: Assassin's Promise.
  * `signet` (#2275), every other signet: Keystone Signet's. `stance`
- * (#2320), every stance: "On Your Knees!"'s. A dead caster recharges
- * nothing.
+ * (#2320), every stance: "On Your Knees!"'s. A `type`, with a
+ * `profession` only of it (#2502): Anguished Was Lingwah's "all your
+ * Ritualist hexes are recharged", Reclaim Essence's binding rituals. A
+ * dead caster recharges nothing.
  */
 export interface RechargeOthersEffect {
   readonly kind: "recharge-others";
-  readonly which: "attack" | "signet" | "stance" | "all";
+  readonly which:
+    | "attack"
+    | "signet"
+    | "stance"
+    | "all"
+    | { readonly type: SkillType; readonly profession?: ProfessionId };
 }
 
 /**
@@ -1160,7 +1177,8 @@ export interface CopyDisabledEffect {
  */
 export interface CopyEliteEffect {
   readonly kind: "copy-elite";
-  readonly seconds: number;
+  /** At the caster's ranks (#2502): Symbols of Inspiration's 6...40. */
+  readonly seconds: Magnitude;
 }
 
 /**
@@ -1633,7 +1651,13 @@ export type EventCondition =
    * A `resurrect` earlier in the list brought this target back (#474), so
    * Rebirth's disable stays off a living ally whom another res reached first.
    */
-  | { readonly kind: "resurrected" };
+  | { readonly kind: "resurrected" }
+  /**
+   * An effect earlier in the list destroyed a spirit or a minion (#2502),
+   * its `creature-destroyed` events, whoever it targeted: Reclaim
+   * Essence's "if a spirit died in this way".
+   */
+  | { readonly kind: "creature-destroyed" };
 
 /**
  * How the target or the caster stands (#794), read once, before any
@@ -1973,6 +1997,7 @@ export type UnconditionalEffect =
   | DestroyTargetMinionEffect
   | OwnerGainsDamageDealtEffect
   | DestroyAlliedSpiritsEffect
+  | DestroyOwnSpiritsEffect
   | RechargeOthersEffect
   | AdrenalineLossEffect
   | DisableSkillEffect

@@ -101,6 +101,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "destroy-target-minion":
     case "owner-gains-damage-dealt":
     case "destroy-allied-spirits":
+    case "destroy-own-spirits":
     case "disable-skill":
     case "copy-removed":
     case "copy-disabled":

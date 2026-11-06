@@ -60,6 +60,12 @@ export interface DamagePacket {
    * spell's status's trigger or degeneration. Absent: not one.
    */
   readonly spell?: true;
+  /**
+   * On the target's armor against this packet alone (#2502), with the
+   * status modifiers: Shadowy Burden's −28 against its source's blows.
+   * Absent: none.
+   */
+  readonly armorModifier?: number;
 }
 
 /** Skill damage of these types ignores armor (GW1). */
@@ -163,7 +169,7 @@ export function effectiveArmor(
       return weapon === undefined || wieldsFor(wielded, weapon);
     }),
   );
-  armor += modifiers.armorModifier;
+  armor += modifiers.armorModifier + (packet.armorModifier ?? 0);
   if (!target.moving) {
     armor += modifiers.armorWhileStill;
   }
