@@ -4636,7 +4636,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     flash: false,
     disabledAfterUseSeconds: undefined,
     profession: "monk",
-    attributeId: "monk.healing-prayers",
+    attributeId: "monk.divine-favor",
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0.25,
@@ -4657,7 +4657,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         kind: "apply-status",
         statusId: "healers-boon",
         durationSeconds: {
-          scaling: { attributeId: "monk.healing-prayers", atZero: 10, atTwelve: 46 },
+          scaling: { attributeId: "monk.divine-favor", atZero: 10, atTwelve: 46 },
         },
       },
     ],

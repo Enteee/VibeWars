@@ -130,7 +130,7 @@ function lines(id: string, ranks: ReadonlyMap<string, number>): string {
 
 describe("#2446's data", () => {
   it.each([
-    [BOON, 1393, "enchantment", true, HEALING, 5, 0.25, 10, RANGE_SPELL, "self"],
+    [BOON, 1393, "enchantment", true, FAVOR, 5, 0.25, 10, RANGE_SPELL, "self"],
     [AUGURY, 1646, "hex", false, DEADLY, 5, 1, 20, RANGE_SPELL / 2, "single-enemy"],
     [LIGHT, 304, "spell", false, undefined, 25, 4, 20, RANGE_SPELL, "self"],
     [CELERITY, 1340, "enchantment", false, FAST, 15, 1, 30, RANGE_SPELL, "self"],
@@ -153,8 +153,8 @@ describe("#2446's data", () => {
   );
 
   it.each([
-    [BOON, HEALING, 0, 10, "healers-boon"],
-    [BOON, HEALING, 12, 46, "healers-boon"],
+    [BOON, FAVOR, 0, 10, "healers-boon"],
+    [BOON, FAVOR, 12, 46, "healers-boon"],
     [AUGURY, DEADLY, 0, 5, "augury-of-death"],
     [AUGURY, DEADLY, 12, 29, "augury-of-death"],
     [CELERITY, FAST, 0, 36, "symbolic-celerity"],
@@ -425,7 +425,7 @@ describe("Storm Djinn's Haste (#2446)", () => {
 
 describe("#2446's tooltips", () => {
   it("Healer's Boon spares the favor bonus", () => {
-    expect(lines(BOON, new Map([[HEALING, 12]]))).toContain(
+    expect(lines(BOON, new Map([[FAVOR, 12]]))).toContain(
       "heal 50% more, not the Divine Favor bonus",
     );
   });
