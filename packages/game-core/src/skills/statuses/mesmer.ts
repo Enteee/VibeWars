@@ -107,6 +107,9 @@ export type MesmerStatusId =
   | "stolen-speed"
   // Mechanics (#2472).
   | "illusionary-weaponry"
+  | "mantra-of-persistence"
+  | "kitahs-burden"
+  | "symbolic-posture"
   // Mechanics (#2501).
   | "recurring-insecurity"
   // Mechanics (#2502).
@@ -1223,6 +1226,58 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
       damage: { scaling: { attributeId: "mesmer.illusion-magic", atZero: 20, atTwelve: 52 } },
       skillId: "mesmer.illusionary-weaponry",
     },
+  }),
+  // "For 5...25 seconds, any Illusion Magic hex you cast lasts 10...40%
+  // longer" (#2499).
+  "mantra-of-persistence": define("mantra-of-persistence", "Mantra of Persistence", "stance", {
+    profession: "mesmer",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "hex", attributeId: "mesmer.illusion-magic" },
+        {
+          durationMultiplier: {
+            scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1.1, atTwelve: 1.34 },
+          },
+        },
+      ),
+    ],
+  }),
+  // "For 6...12 seconds, target foe moves 50% slower. When Kitah's Burden
+  // ends you gain 10...18 Energy" (#2499): as Ethereal Burden's.
+  "kitahs-burden": define("kitahs-burden", "Kitah's Burden", "hex", {
+    profession: "mesmer",
+    moveSpeedMultiplier: 0.5,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 10, atTwelve: 16.4 },
+            },
+          },
+        ],
+        target: "source",
+        skillId: "mesmer.kitahs-burden",
+      },
+    ],
+  }),
+  // "For 5...20 seconds, the next signet you activate recharges 20...80%
+  // faster" (#2499).
+  "symbolic-posture": define("symbolic-posture", "Symbolic Posture", "stance", {
+    profession: "mesmer",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "signet" },
+        {
+          rechargeFaster: {
+            scaling: { attributeId: "mesmer.fast-casting", atZero: 0.2, atTwelve: 0.68 },
+          },
+          uses: 1,
+        },
+      ),
+    ],
   }),
   // "For 5 seconds, target foe suffers from -1...6 Health degeneration.
   // If that foe has another hex when Recurring Insecurity would end, it is

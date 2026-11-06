@@ -140,8 +140,8 @@ export function fireTriggers(
 /**
  * Whether a use trigger bound to a skill on an ally (#2282) or on a foe
  * (#2333) answers the aim: "ally", one at the bearer or at an ally of its,
- * "foe", one at a creature of another team, a dead one too either way. No
- * aim answers neither. Any other trigger answers any aim, and none.
+ * "other-ally" (#2499), one at an ally only, "foe", one at a creature of
+ * another team, a dead one too either way. No aim answers neither. Any other trigger answers any aim, and none.
  */
 function answersAim(trigger: StatusTrigger, bearer: Combatant, context: TriggerContext): boolean {
   const targets = trigger.usedSkill?.targets;
@@ -152,7 +152,10 @@ function answersAim(trigger: StatusTrigger, bearer: Combatant, context: TriggerC
   if (aimed === undefined) {
     return false;
   }
-  return targets === "ally" ? aimed.team === bearer.team : aimed.team !== bearer.team;
+  if (targets === "foe") {
+    return aimed.team !== bearer.team;
+  }
+  return aimed.team === bearer.team && (targets === "ally" || aimed.id !== bearer.id);
 }
 
 /**
@@ -283,6 +286,7 @@ export function fireChangeTriggers(
     case "failed-to-hit":
     case "took-physical-damage":
     case "took-elemental-damage":
+    case "took-damage":
     case "knocked-down":
     case "sacrificed-health":
     case "lost-enchantment":

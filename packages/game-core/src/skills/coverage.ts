@@ -57,27 +57,13 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
  */
 export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMechanic[]>> =
   Object.freeze({
-    14: ["unwritten"], // Mantra of Persistence
-    253: ["unwritten"], // Scourge Sacrifice
-    265: ["unwritten"], // Amity
-    305: ["unwritten"], // Resurrect
     815: ["distance-trigger"], // Scorpion Wire
-    847: ["unwritten"], // Boon Signet
     990: ["count-disabled-own-skills"], // Expunge Enchantments
     1030: ["double-strike-bonus"], // Locust's Fury
-    1056: ["unwritten"], // Kitah's Burden
     1088: ["count-overcast"], // Second Wind
-    1091: ["unwritten"], // Double Dragon
-    1093: ["unwritten"], // Teinai's Heat
-    1119: ["unwritten"], // Karei's Healing Circle
     1228: ["nearest-spirit-energy-drain"], // Spirit Siphon
     1244: ["while-near-spirit"], // Ghostly Haste
-    1372: ["unwritten"], // Sandstorm
-    1391: ["unwritten"], // Supportive Spirit
-    1658: ["unwritten"], // Symbolic Posture
-    2060: ["unwritten"], // Glyph of Immolation
     2187: ["weapon-filter-negation"], // Way of the Master
-    2189: ["unwritten"], // Angorodon's Gaze
   });
 
 /** A corpus skill as coverage needs it: its GW1 id and name. */

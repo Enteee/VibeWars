@@ -20,8 +20,8 @@ import {
  * `catalog.test.ts`.
  */
 
-/** One listed gap, Amity: a corpus skill with no catalog entry. Kept literal on purpose. */
-const KNOWN_UNIMPLEMENTED = [{ gwId: 265, name: "Amity" }] as const;
+/** One listed gap, Second Wind: a corpus skill with no catalog entry. Kept literal on purpose. */
+const KNOWN_UNIMPLEMENTED = [{ gwId: 1088, name: "Second Wind" }] as const;
 
 const CORPUS: readonly CorpusRef[] = [
   { gwId: 74, name: "Echo" },
@@ -85,7 +85,7 @@ describe("skill coverage regression gate", () => {
   it("groups skills by the mechanic they wait on", () => {
     const grouped = missingMechanics(computeCoverage(CORPUS));
 
-    expect(grouped.get("unwritten")).toEqual([265]);
+    expect(grouped.get("count-overcast")).toEqual([1088]);
   });
 
   // Read from the live list, not a named skill: every card that implements
@@ -114,9 +114,9 @@ describe("skill coverage regression gate", () => {
     const text = formatCoverage(computeCoverage(CORPUS));
 
     expect(text).toContain("imported 7 / implemented 6 / 1 unimplemented");
-    expect(text).toContain("265 Amity — needs unwritten");
+    expect(text).toContain("1088 Second Wind — needs count-overcast");
     expect(text).toContain("blocked on:");
-    expect(text).toContain(MISSING_MECHANIC_DESCRIPTIONS.unwritten);
+    expect(text).toContain(MISSING_MECHANIC_DESCRIPTIONS["count-overcast"]);
   });
 
   it("passes an upkeep skill the catalog maintains (Mending, #840)", () => {

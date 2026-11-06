@@ -71,6 +71,14 @@ const NO_BOT_USE = new Set([
   // "We Shall Return!" (#2479), the same, a bonus that waits on an
   // ally's resurrection skill.
   "paragon.we-shall-return",
+  // Corpus skills on existing mechanics (#2499): a stance on own hexes or
+  // signets, a glyph and an ally enchantment whose burns wait on skills at
+  // foes, and a ward, are no rules the bot weighs.
+  "mesmer.mantra-of-persistence",
+  "mesmer.symbolic-posture",
+  "elementalist.glyph-of-immolation",
+  "elementalist.double-dragon",
+  "elementalist.teinais-heat",
   // Lively Was Naomei (#2500), the same, a resurrection that waits on
   // its item being dropped.
   "ritualist.lively-was-naomei",

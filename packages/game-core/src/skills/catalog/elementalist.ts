@@ -6227,6 +6227,194 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Corpus skills on existing mechanics (#2499)                            */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.double-dragon",
+    name: "Double Dragon",
+    gwId: 1091,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8 seconds, you and target ally are enchanted with Double Dragon.
+    // Adjacent foes are dealt 10...40 fire damage each second. Additionally,
+    // when you or your ally use skills that target a foe, that foe is set
+    // on fire for 1...4 seconds": the status does both, on each of you.
+    effects: [
+      { kind: "apply-status", statusId: "double-dragon", durationSeconds: { flat: 8 } },
+      {
+        kind: "apply-status",
+        statusId: "double-dragon",
+        durationSeconds: { flat: 8 },
+        on: "caster",
+      },
+    ],
+  },
+  {
+    id: "elementalist.teinais-heat",
+    name: "Teinai's Heat",
+    gwId: 1093,
+    type: "ward",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: 20,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Place a ward of Teinai's Heat at your location for 10...15 seconds.
+    // Foes within the ward suffer 2...5 health degeneration. Weakened foes
+    // attack 33% slower. This skill is disabled for 20 seconds."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "caster",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 10, atTwelve: 14 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "teinais-heat", affects: "foes", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.sandstorm",
+    name: "Sandstorm",
+    gwId: 1372,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Create a Sandstorm at target foe's location. For 10 seconds, nearby
+    // foes are struck for 20...40 earth damage each second and attacking
+    // foes are struck for an additional 10...30 earth damage each second":
+    // where it stood as the cast ended, as Maelstrom's.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 10 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 10,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_NEARBY,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.earth-magic", atZero: 20, atTwelve: 36 },
+                },
+                type: "earth",
+                armorPenetration: 0,
+              },
+              {
+                kind: "if",
+                condition: { kind: "target-attacking" },
+                effects: [
+                  {
+                    kind: "damage",
+                    amount: {
+                      scaling: {
+                        attributeId: "elementalist.earth-magic",
+                        atZero: 10,
+                        atTwelve: 26,
+                      },
+                    },
+                    type: "earth",
+                    armorPenetration: 0,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.glyph-of-immolation",
+    name: "Glyph of Immolation",
+    gwId: 2060,
+    type: "glyph",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 15 seconds, your next 1...4 spells that target a foe also cause
+    // Burning for 1...4 seconds": the glyph burns them.
+    effects: [
+      { kind: "apply-status", statusId: "glyph-of-immolation", durationSeconds: { flat: 15 } },
+    ],
+  },
   {
     id: "elementalist.stone-striker",
     name: "Stone Striker",

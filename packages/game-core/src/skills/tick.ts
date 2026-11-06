@@ -92,6 +92,7 @@ export function advanceStatuses(
 
     if (applied < 0) {
       events.push({ kind: "damage", targetId: combatant.id, amount: -applied, critical: false });
+      combatant.statuses.recordDamage();
     } else if (applied > 0) {
       events.push({ kind: "heal", targetId: combatant.id, amount: applied });
     }
