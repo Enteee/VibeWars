@@ -496,7 +496,14 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`moves at ${speed}% speed`);
   }
   if (definition.moveSpeedWhileEnchanted !== 1) {
-    const speed = String(Math.round(definition.moveSpeedWhileEnchanted * 100));
+    // On top of its own: Icy Shackles' 66% slower is 90% while enchanted (#2453).
+    const speed = String(
+      Math.round(
+        statAt(definition.moveSpeedMultiplier, triggerRanks) *
+          definition.moveSpeedWhileEnchanted *
+          100,
+      ),
+    );
     parts.push(`moves at ${speed}% speed while enchanted`);
   }
   if (definition.preventsSpeedBoosts) {
@@ -622,10 +629,14 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(attributeSetText(definition.attributeSet));
   }
   if (definition.borrowsAttribute !== undefined) {
-    const { attributeId, spells } = definition.borrowsAttribute;
+    const { attributeId, skillType, uses } = definition.borrowsAttribute;
     const name = getAttribute(attributeId)?.name ?? attributeId;
-    const next = spells === 1 ? "spell uses" : `${String(spells)} spells use`;
-    parts.push(`your next ${next} ${name}`);
+    if (uses === undefined) {
+      parts.push(`your ${skillType}s use ${name}`);
+    } else {
+      const next = uses === 1 ? `${skillType} uses` : `${String(uses)} ${skillType}s use`;
+      parts.push(`your next ${next} ${name}`);
+    }
   }
   if (definition.castTimeMultiplier !== 1) {
     parts.push(`spells take ${String(definition.castTimeMultiplier)}× as long to cast`);
@@ -735,6 +746,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.preventsCriticalHits) {
     parts.push("immune to critical hits");
+  }
+  if (definition.divineFavorDoubledFor !== undefined) {
+    const attribute =
+      getAttribute(definition.divineFavorDoubledFor)?.name ?? definition.divineFavorDoubledFor;
+    parts.push(`${attribute} spells have double the Divine Favor bonus`);
   }
   if (definition.block !== undefined) {
     // Wary Stance's "attack skills" (#1978).
@@ -879,13 +895,25 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`ends after ${String(count)} hit${plural}${how}`);
   }
   if (definition.nextSpells !== undefined) {
-    const { count, costReduction, noOvercast } = definition.nextSpells;
+    const { count, costReduction, noOvercast, rechargeFaster, projectileSpeedMultiplier } =
+      definition.nextSpells;
+    const one = statAtTwelve(count) === 1;
+    const next = one ? "spell" : `${statText(count, ranks, whole)} spells`;
     if (costReduction > 0) {
-      const spells = count === 1 ? "spell costs" : `${String(count)} spells cost`;
-      parts.push(`your next ${spells} ${String(costReduction)} less energy`);
+      parts.push(
+        `your next ${next} ${one ? "costs" : "cost"} ${String(costReduction)} less energy`,
+      );
+    } else if (rechargeFaster > 0) {
+      // Glyph of Swiftness' (#2453).
+      parts.push(
+        `your next ${next} ${one ? "recharges" : "recharge"} ${String(Math.round(rechargeFaster * 100))}% faster`,
+      );
     } else {
       // Glyph of Elemental Power's (#1941): a boost for the next spells alone.
-      parts.push(`for your next ${count === 1 ? "spell" : `${String(count)} spells`}`);
+      parts.push(`for your next ${next}`);
+    }
+    if (projectileSpeedMultiplier !== 1) {
+      parts.push(`their projectiles move ${String(projectileSpeedMultiplier)}× as fast`);
     }
     if (noOvercast) {
       parts.push("no Overcast");
@@ -925,8 +953,8 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `takes ${damageTaken(definition.attackDamageTakenMultiplier)} damage from the next attack`,
     );
   }
-  if (definition.damageReduction > 0) {
-    parts.push(`−${String(definition.damageReduction)} damage taken`);
+  if (statAtTwelve(definition.damageReduction) > 0) {
+    parts.push(`−${statText(definition.damageReduction, ranks, whole)} damage taken`);
   }
   if (definition.damageReductionPerRank !== undefined) {
     const { attributeId, perRank, max } = definition.damageReductionPerRank;
@@ -1515,6 +1543,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-hits": "hits with an attack",
   "bearer-fails-to-hit": "fails to hit",
   "bearer-takes-physical-damage": "takes physical damage",
+  "bearer-takes-elemental-damage": "takes elemental damage",
   "bearer-takes-damage-from-foe": "takes damage or life steal from a foe",
   "bearer-health-drops-below": "has its Health dropped below a line by damage",
   "bearer-fatal-damage-negated": "has fatal damage negated",
@@ -2513,6 +2542,7 @@ function describeOwnSkillModifier(
     rechargeSlower,
     durationMultiplier,
     healMultiplier,
+    sparesDivineFavor,
     notEasilyInterrupted,
     overcastPerUse,
     uses,
@@ -2553,7 +2583,7 @@ function describeOwnSkillModifier(
       : `${verb("last", "lasts")} ${at(durationMultiplier, (value) => percent(value - 1))} ${statAtTwelve(durationMultiplier) > 1 ? "longer" : "shorter"}`,
     healMultiplier === 1
       ? undefined
-      : `${verb("heal", "heals")} ${percent(1 - healMultiplier)} ${healMultiplier < 1 ? "less" : "more"}`,
+      : `${verb("heal", "heals")} ${percent(1 - healMultiplier)} ${healMultiplier < 1 ? "less" : "more"}${sparesDivineFavor ? ", not the Divine Favor bonus" : ""}`,
     // Trapper's Focus's (#1966).
     notEasilyInterrupted ? `${verb("are", "is")} not easily interrupted` : undefined,
     // Iron Mist's (#2311).
@@ -2991,7 +3021,9 @@ function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>, withOnly
   // Gust's "while attacking or moving" (#2288).
   const onlyIf =
     splash.onlyIf === undefined || !withOnlyIf ? "" : ` ${onlyIfText(splash.onlyIf, ranks)}`;
-  const reached = foesWithin(splash.radius, splash.hits);
+  // Light of Dwayna's "all dead party members in the area" (#2446).
+  const living = foesWithin(splash.radius, splash.hits);
+  const reached = splash.dead === true ? `Dead ${lowerFirst(living)}` : living;
   const who = `${splash.includesCentre === true ? `Target and ${lowerFirst(reached)}` : reached}${splash.around === "caster" ? " around you" : ""}${splash.alsoAround === "caster" ? " around the target and you" : ""}${bearing}${using}${onlyIf}`;
   return splash.maxTargets === undefined || splash.hits === "party"
     ? who
@@ -3542,23 +3574,25 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         };
       }
       const text =
-        effect.perRemoved !== undefined
-          ? `Heals ${amount} for each ${effect.perRemoved} removed`
-          : effect.perDestroyedSpirit === true
-            ? `Heals ${amount} for each spirit destroyed`
-            : effect.perEnergyLost === true
-              ? `${effect.recipient === "caster" ? "You are healed" : "Heals"} ${amount} for each point of Energy lost`
-              : effect.perUsedSkillEnergy === true
-                ? `Heals for ${shown(magnitude, percentOf(magnitude.current))} of the spell's energy cost`
-                : effect.ofCasterHealth !== undefined
-                  ? `Heals for ${shown(magnitude, `${String(magnitude.current)}%`)} of your current Health (maximum ${String(effect.ofCasterHealth.max)} Health)`
-                  : effect.recipient === "caster"
-                    ? `You gain ${amount} health`
-                    : effect.recipient === "companion"
-                      ? `Your pet gains ${amount} health`
-                      : effect.recipient === "owner"
-                        ? `Heals its owner for ${amount}`
-                        : `Heals for ${amount}`;
+        effect.perRemoved !== undefined && effect.perRemovedStatusId !== undefined
+          ? `Heals ${amount} if relieved of ${getStatusDefinition(effect.perRemovedStatusId).name}`
+          : effect.perRemoved !== undefined
+            ? `Heals ${amount} for each ${effect.perRemoved} removed`
+            : effect.perDestroyedSpirit === true
+              ? `Heals ${amount} for each spirit destroyed`
+              : effect.perEnergyLost === true
+                ? `${effect.recipient === "caster" ? "You are healed" : "Heals"} ${amount} for each point of Energy lost`
+                : effect.perUsedSkillEnergy === true
+                  ? `Heals for ${shown(magnitude, percentOf(magnitude.current))} of the spell's energy cost`
+                  : effect.ofCasterHealth !== undefined
+                    ? `Heals for ${shown(magnitude, `${String(magnitude.current)}%`)} of your current Health (maximum ${String(effect.ofCasterHealth.max)} Health)`
+                    : effect.recipient === "caster"
+                      ? `You gain ${amount} health`
+                      : effect.recipient === "companion"
+                        ? `Your pet gains ${amount} health`
+                        : effect.recipient === "owner"
+                          ? `Heals its owner for ${amount}`
+                          : `Heals for ${amount}`;
       const counted = withPerText(text, effect.amount, effect.per, ranks, {
         alone: effect.recipient === "caster" ? "You gain" : "Heals",
         unit: " Health",
@@ -4176,7 +4210,13 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
                                   resolveMagnitudeAtRanks(each.count, ranks) ===
                                     Number.POSITIVE_INFINITY
                                 ? "transfer all their conditions to you"
-                                : lowerFirst(description.text),
+                                : // Light of Dwayna's "they are returned to life" (#2446).
+                                  each.kind === "resurrect"
+                                  ? lowerFirst(description.text).replace(
+                                      /^returns the target to life/,
+                                      "are returned to life",
+                                    )
+                                  : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;

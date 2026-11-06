@@ -99,6 +99,8 @@ export type MesmerStatusId =
   | "mantra-of-signets"
   // Staples (#2447).
   | "ancestors-visage"
+  // Dropped leftovers (#2446).
+  | "symbolic-celerity"
   // Mechanics (#2459).
   | "stolen-speed";
 
@@ -801,7 +803,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   // until its 3 are spent.
   "signet-of-illusions": define("signet-of-illusions", "Signet of Illusions", "skill-effect", {
     profession: "mesmer",
-    borrowsAttribute: { attributeId: "mesmer.illusion-magic", spells: 3 },
+    borrowsAttribute: { attributeId: "mesmer.illusion-magic", skillType: "spell", uses: 3 },
   }),
   // "For 1...5 seconds, you have a 75% chance to block attacks. Whenever
   // you block an attack this way, you lose 2 Energy or Distortion ends"
@@ -1174,6 +1176,13 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     enchantmentsExpireFaster: {
       scaling: { attributeId: "mesmer.illusion-magic", atZero: 1.5, atTwelve: 2.7 },
     },
+  }),
+  // "All of your signets use your Fast Casting attribute instead of their
+  // normal attributes" (#2446): every one while it lasts, weaker too at a
+  // low Fast Casting, as in GW1.
+  "symbolic-celerity": define("symbolic-celerity", "Symbolic Celerity", "enchantment", {
+    profession: "mesmer",
+    borrowsAttribute: { attributeId: "mesmer.fast-casting", skillType: "signet", uses: undefined },
   }),
   // "Spells cast by the target foe and all adjacent foes take 100% longer
   // to cast. Spells you cast that target these foes take 50% less time to

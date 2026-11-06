@@ -1,4 +1,4 @@
-import { C, stepAndReturn, stroke } from "../../icon-kit.mjs";
+import { C, stepAndReturn, stroke, fitRows } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -145,4 +145,10 @@ const rows = {
   ],
 };
 
-export default rows;
+/** Drawn smaller to sit inside the plate (#2422). */
+const fits = {
+  "shadow-prison": [0.68, 0],
+  "siphon-speed": [0.74, 0],
+};
+
+export default fitRows(rows, fits);

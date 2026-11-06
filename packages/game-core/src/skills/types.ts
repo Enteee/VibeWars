@@ -282,6 +282,12 @@ export interface HealEffect {
    */
   readonly perRemoved?: StatusCategory;
   /**
+   * With `perRemoved`, only statuses of this id count, as Extinguish's
+   * "Party members relieved of Burning are healed for 10...100 Health"
+   * (#2453).
+   */
+  readonly perRemovedStatusId?: StatusId;
+  /**
    * The amount is per spirit an earlier `destroy-allied-spirits` of this
    * skill destroyed (#1309), as Feast of Souls' "for each spirit destroyed
    * in this way". None destroyed: no heal.
@@ -953,6 +959,11 @@ export interface SplashEffect {
    * "target foe and all foes adjacent". Absent: the target is not.
    */
   readonly includesCentre?: true;
+  /**
+   * Picks only the dead (#2446), as Light of Dwayna's "resurrect all dead
+   * party members in the area". Absent: only the living.
+   */
+  readonly dead?: true;
   /**
    * Round the caster as well as the centre, a character near both
    * reached once (#2288): Gust's "all foes adjacent to you and your

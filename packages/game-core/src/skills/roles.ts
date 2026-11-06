@@ -163,7 +163,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.block !== undefined ||
     statAtTwelve(status.damageTakenMultiplier) < 1 ||
     status.attackDamageTakenMultiplier < 1 ||
-    status.damageReduction > 0 ||
+    statAtTwelve(status.damageReduction) > 0 ||
     status.damageReductionPerHitTaken !== undefined ||
     status.maxDamageFractionPerHit !== undefined ||
     status.attackDamageCapFraction !== undefined ||
