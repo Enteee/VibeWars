@@ -24,27 +24,149 @@ import { IMPLEMENTED_SKILLS } from "./catalog.js";
  * string would quietly create a new "mechanic" and split the report, and
  * grouping skills by what they are waiting on is the whole point.
  */
-export type MissingMechanic = "title-attribute";
+export type MissingMechanic =
+  | "unwritten"
+  | "renew-on-event"
+  | "while-under-more-stats"
+  | "own-skill-energy-percent"
+  | "own-skill-filter-ext"
+  | "vs-source-attack-mods"
+  | "recharge-others-by-type"
+  | "rank-scale-fixed-field"
+  | "distance-trigger"
+  | "max-health-per-max-energy"
+  | "count-disabled-own-skills"
+  | "double-strike-bonus"
+  | "count-overcast"
+  | "nearest-spirit-energy-drain"
+  | "while-near-spirit"
+  | "borrow-attribute-elite"
+  | "damage-type-conversion"
+  | "knockdown-offender"
+  | "destroy-own-spirits"
+  | "transfer-conditions-to-area"
+  | "source-condition-damage-reduction"
+  | "interrupt-guard-strip-enchantment"
+  | "damage-per-second-cap"
+  | "spell-damage-taken-multiplier"
+  | "weapon-element"
+  | "weapon-filter-negation";
 
 /** What each missing mechanic would mean to build, in one line. */
 export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, string>> =
   Object.freeze({
-    "title-attribute": "a PvE title track as the skill's attribute",
+    unwritten: "not a mechanic: the engine has every piece, only the catalog entry is missing",
+    "renew-on-event": "a status returns to full duration when an event happens",
+    "while-under-more-stats":
+      "while you are under a kind of effect, you gain damage or move faster",
+    "own-skill-energy-percent": "your skills of a kind cost a percentage less Energy",
+    "own-skill-filter-ext":
+      "a bonus to your own skills filtered by a type the engine cannot name yet (half range, self target)",
+    "vs-source-attack-mods": "the target's attacks against the caster are changed",
+    "recharge-others-by-type": "other skills of a type recharge faster or instantly",
+    "rank-scale-fixed-field": "a field the engine keeps fixed scales with attribute rank",
+    "distance-trigger": "an effect fires after the bearer moves a distance",
+    "max-health-per-max-energy": "maximum Health scales with your maximum Energy",
+    "count-disabled-own-skills": "a magnitude counts how many of your skills are recharging",
+    "double-strike-bonus": "an attack strikes twice and the second strike has its own bonus",
+    "count-overcast": "a magnitude counts your Overcast",
+    "nearest-spirit-energy-drain": "Energy is stolen from the nearest spirit",
+    "while-near-spirit": "an effect holds while the bearer is within range of a spirit",
+    "borrow-attribute-elite": "an elite skill borrows an attribute rank it does not belong to",
+    "damage-type-conversion": "damage of one type is dealt as another type",
+    "knockdown-offender": "whoever does something to the bearer is knocked down",
+    "destroy-own-spirits": "the caster destroys their own spirits for a benefit",
+    "transfer-conditions-to-area": "the bearer's conditions move to foes in an area",
+    "source-condition-damage-reduction": "damage from a foe suffering a condition is reduced",
+    "interrupt-guard-strip-enchantment":
+      "the bearer cannot be interrupted, and an attempt ends the enchantment",
+    "damage-per-second-cap": "damage taken in one second is capped",
+    "spell-damage-taken-multiplier": "spells deal a multiple of their damage to the bearer",
+    "weapon-element": "the wielder's weapon deals an element's damage",
+    "weapon-filter-negation": "a bonus applies with every weapon except one type",
   });
 
 /**
- * Why each imported-but-unimplemented skill is not in the catalog.
+ * Why each corpus skill with no catalog entry is not in the catalog, keyed
+ * by GW1 id. Several mechanics per skill where the skill genuinely needs
+ * all of them, since naming one alone would understate the work.
  *
- * Keyed by skill id; several mechanics per skill where the skill genuinely
- * needs all of them, since naming one alone would understate the work.
+ * Shrink-only: a card that adds one of these skills deletes its line, and
+ * `coverage-gate.test.ts` fails on any key whose skill is implemented.
  */
-const UNIMPLEMENTED_REASONS: Readonly<Record<string, readonly MissingMechanic[]>> = Object.freeze({
-  // PvE-only: its attribute is "Sunspear rank", a title track (ADR-0029).
-  "warrior.whirlwind-attack": ["title-attribute"],
-});
+export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMechanic[]>> =
+  Object.freeze({
+    14: ["unwritten"], // Mantra of Persistence
+    253: ["unwritten"], // Scourge Sacrifice
+    265: ["unwritten"], // Amity
+    305: ["unwritten"], // Resurrect
+    815: ["distance-trigger"], // Scorpion Wire
+    827: ["vs-source-attack-mods"], // Siphon Strength
+    837: ["max-health-per-max-energy"], // Energy Boon
+    847: ["unwritten"], // Boon Signet
+    930: ["rank-scale-fixed-field"], // Auspicious Incantation
+    950: ["vs-source-attack-mods"], // Shadowy Burden
+    990: ["count-disabled-own-skills"], // Expunge Enchantments
+    1030: ["double-strike-bonus"], // Locust's Fury
+    1055: ["renew-on-event"], // Recurring Insecurity
+    1056: ["unwritten"], // Kitah's Burden
+    1088: ["count-overcast"], // Second Wind
+    1091: ["unwritten"], // Double Dragon
+    1093: ["unwritten"], // Teinai's Heat
+    1119: ["unwritten"], // Karei's Healing Circle
+    1133: ["unwritten"], // Drunken Blow
+    1137: ["unwritten"], // Yeti Smash
+    1220: ["own-skill-energy-percent"], // Attuned Was Songkai
+    1222: ["unwritten"], // Lively Was Naomei
+    1223: ["recharge-others-by-type"], // Anguished Was Lingwah
+    1228: ["nearest-spirit-energy-drain"], // Spirit Siphon
+    1244: ["while-near-spirit"], // Ghostly Haste
+    1339: ["rank-scale-fixed-field", "borrow-attribute-elite"], // Symbols of Inspiration
+    1371: ["damage-type-conversion"], // Stone Striker
+    1372: ["unwritten"], // Sandstorm
+    1391: ["unwritten"], // Supportive Spirit
+    1395: ["knockdown-offender"], // Balthazar's Pendulum
+    1474: ["renew-on-event"], // Storm's Embrace
+    1482: ["recharge-others-by-type", "destroy-own-spirits"], // Reclaim Essence
+    1493: ["transfer-conditions-to-area"], // Grenth's Fingers
+    1505: ["renew-on-event"], // Vow of Piety
+    1515: ["source-condition-damage-reduction"], // Armor of Sanctity
+    1542: ["interrupt-guard-strip-enchantment"], // Pious Concentration
+    1586: ["damage-per-second-cap"], // Angelic Protection
+    1638: ["own-skill-filter-ext"], // Deadly Haste
+    1658: ["unwritten"], // Symbolic Posture
+    1731: ["unwritten"], // Vocal Was Sogolon
+    1736: ["while-under-more-stats"], // Spirit's Strength
+    1737: ["unwritten"], // Wielder's Zeal
+    1738: ["unwritten"], // Sight Beyond Sight
+    1739: ["own-skill-energy-percent"], // Renewing Memories
+    1740: ["unwritten"], // Wielder's Remedy
+    1744: ["unwritten"], // Caretaker's Charge
+    1757: ["spell-damage-taken-multiplier"], // Veil of Thorns
+    1760: ["weapon-element"], // Ebon Dust Aura
+    1764: ["unwritten"], // Attacker's Insight
+    2011: ["unwritten"], // Grapple
+    2060: ["unwritten"], // Glyph of Immolation
+    2067: ["unwritten"], // "I Meant to Do That!"
+    2187: ["weapon-filter-negation"], // Way of the Master
+    2189: ["unwritten"], // Angorodon's Gaze
+    2194: ["unwritten"], // Distracting Strike
+    2195: ["unwritten"], // Symbolic Strike
+    2196: ["while-under-more-stats"], // Soldier's Speed
+    2200: ["own-skill-filter-ext"], // Signet of Mystic Speed
+    2201: ["unwritten"], // Shield of Force
+    2208: ["unwritten"], // Burning Shield
+  });
+
+/** A corpus skill as coverage needs it: its GW1 id and name. */
+export interface CorpusRef {
+  readonly gwId: number;
+  readonly name: string;
+}
 
 export interface UnimplementedSkill {
-  readonly id: string;
+  readonly gwId: number;
+  readonly name: string;
   /**
    * The mechanics this skill is waiting on. Empty means nobody recorded a
    * reason — which is the exact gap this module exists to surface, so it
@@ -54,46 +176,56 @@ export interface UnimplementedSkill {
 }
 
 export interface SkillCoverage {
-  /** Skills present in the imported reference corpus. */
+  /** Skills in the reference corpus, counted once per GW1 id. */
   readonly imported: number;
-  /** Skills implemented against the generic effect system. */
+  /** Corpus skills some catalog skill implements, by GW1 id. */
   readonly implemented: number;
-  /** Imported skills with no implementation yet, and why. */
+  /** Corpus skills with no implementation yet, and why. */
   readonly unimplemented: readonly UnimplementedSkill[];
-  /** Implemented skills that are this project's own design, not imports. */
+  /** Catalog skills that are this project's own design: no corpus GW1 id. */
   readonly originalDesign: readonly string[];
   /**
-   * Unimplemented skills with no recorded reason. Always empty in a healthy
-   * repository; `coverage.test.ts` is what keeps it that way.
+   * Unimplemented skills with no recorded reason, by GW1 id. Always empty
+   * in a healthy repository; `coverage-gate.test.ts` is what keeps it so.
    */
-  readonly unexplained: readonly string[];
+  readonly unexplained: readonly number[];
 }
 
 /**
- * Compute coverage against a list of imported skill ids.
+ * Compute coverage against the corpus, by GW1 id.
  *
- * Takes the imported ids as a parameter rather than importing
+ * Takes the corpus as a parameter rather than importing
  * `@vibewars/game-data` directly: `game-core` must stay dependency-free
  * (ADR-0001), and the caller (a CLI, a test, a future build UI) is the
  * one that already has the corpus loaded.
  */
-export function computeCoverage(importedSkillIds: readonly string[]): SkillCoverage {
-  const implementedIds = new Set(IMPLEMENTED_SKILLS.map((s) => s.id));
-  const importedSet = new Set(importedSkillIds);
+export function computeCoverage(corpus: readonly CorpusRef[]): SkillCoverage {
+  const implementedIds = new Set(
+    IMPLEMENTED_SKILLS.flatMap((skill) => (skill.gwId === undefined ? [] : [skill.gwId])),
+  );
+  const byId = new Map(corpus.map((skill) => [skill.gwId, skill]));
 
-  const unimplemented = [...importedSet]
-    .filter((id) => !implementedIds.has(id))
-    .sort()
-    .map((id) => ({ id, missing: UNIMPLEMENTED_REASONS[id] ?? [] }));
+  const unimplemented = [...byId.values()]
+    .filter((skill) => !implementedIds.has(skill.gwId))
+    .sort((a, b) => a.gwId - b.gwId)
+    .map((skill) => ({
+      gwId: skill.gwId,
+      name: skill.name,
+      missing: UNIMPLEMENTED_REASONS[skill.gwId] ?? [],
+    }));
 
-  const originalDesign = [...implementedIds].filter((id) => !importedSet.has(id)).sort();
+  const originalDesign = IMPLEMENTED_SKILLS.filter(
+    (skill) => skill.gwId === undefined || !byId.has(skill.gwId),
+  )
+    .map((skill) => skill.id)
+    .sort();
 
   return {
-    imported: importedSet.size,
-    implemented: implementedIds.size,
+    imported: byId.size,
+    implemented: byId.size - unimplemented.length,
     unimplemented,
     originalDesign,
-    unexplained: unimplemented.filter((s) => s.missing.length === 0).map((s) => s.id),
+    unexplained: unimplemented.filter((s) => s.missing.length === 0).map((s) => s.gwId),
   };
 }
 
@@ -113,18 +245,18 @@ export function unmaintainedUpkeepSkills(upkeepSkillIds: readonly string[]): rea
     .sort();
 }
 
-/** Group unimplemented skills by the mechanic they are waiting on. */
+/** Group unimplemented skills (GW1 ids) by the mechanic they are waiting on. */
 export function missingMechanics(
   coverage: SkillCoverage,
-): ReadonlyMap<MissingMechanic, readonly string[]> {
-  const grouped = new Map<MissingMechanic, string[]>();
+): ReadonlyMap<MissingMechanic, readonly number[]> {
+  const grouped = new Map<MissingMechanic, number[]>();
   for (const skill of coverage.unimplemented) {
     for (const mechanic of skill.missing) {
       const existing = grouped.get(mechanic);
       if (existing === undefined) {
-        grouped.set(mechanic, [skill.id]);
+        grouped.set(mechanic, [skill.gwId]);
       } else {
-        existing.push(skill.id);
+        existing.push(skill.gwId);
       }
     }
   }
@@ -133,12 +265,10 @@ export function missingMechanics(
 
 export function formatCoverage(coverage: SkillCoverage): string {
   const lines = [
-    `imported:    ${String(coverage.imported)}`,
-    `implemented: ${String(coverage.implemented)}`,
-    `unimplemented (${String(coverage.unimplemented.length)}):`,
+    `imported ${String(coverage.imported)} / implemented ${String(coverage.implemented)} / ${String(coverage.unimplemented.length)} unimplemented`,
     ...coverage.unimplemented.map((skill) => {
       const why = skill.missing.length === 0 ? "NO REASON RECORDED" : skill.missing.join(", ");
-      return `  - ${skill.id} — needs ${why}`;
+      return `  - ${String(skill.gwId)} ${skill.name} — needs ${why}`;
     }),
   ];
 
