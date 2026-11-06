@@ -3,7 +3,6 @@ import {
   MAINTAINED_STATUSES,
   STATUS_DEFINITIONS,
   chainRequirementText,
-  creatureOwnerOf,
   getAttribute,
   getSkill,
   getWeapon,
@@ -589,19 +588,21 @@ export const EMPTY_TOTALS: MeterTotals = {
  * healing done. Health a status takes as it lands, or a foe's skill makes
  * you lose (#1678), is taken, never dealt. What your own spirits, minions
  * and pet deal and heal is yours (#2483), on the skills side: "weapon" is
- * only your own weapon.
+ * only your own weapon. `ownerOf` names a creature's owner, `undefined`
+ * for a masterless one or anyone not a creature.
  */
 export function accumulate(
   totals: MeterTotals,
   entries: readonly CombatLogEntry[],
   selfId: string,
   stepSeconds: number,
+  ownerOf: (id: string) => string | undefined,
 ): MeterTotals {
   let { damage, weaponDamage, healing, taken } = totals;
   for (const entry of entries) {
     const yours =
       entry.sourceId === selfId ||
-      (entry.sourceId !== undefined && creatureOwnerOf(entry.sourceId) === selfId);
+      (entry.sourceId !== undefined && ownerOf(entry.sourceId) === selfId);
     for (const event of entry.events) {
       if (event.kind === "damage") {
         if (event.targetId === selfId) {

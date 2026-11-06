@@ -228,7 +228,7 @@ export type {
   MatchTallyRow,
 } from "./match/combat-log.js";
 export { CombatMeter, MatchTally, tallyCombat } from "./match/combat-log.js";
-export { creatureOwnerOf } from "./match/creature-id.js";
+export { creatureSummonerOf } from "./match/creature-id.js";
 
 export type {
   Behaviour,

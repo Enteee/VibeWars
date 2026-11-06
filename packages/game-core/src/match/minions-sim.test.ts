@@ -5,7 +5,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
-import { creatureOwnerOf } from "./creature-id.js";
+import { creatureSummonerOf } from "./creature-id.js";
 import {
   MAX_CREATURES,
   MatchSimulation,
@@ -140,8 +140,8 @@ describe("Animate Bone Minions (#467)", () => {
     expect(risen).toHaveLength(2);
     for (const minion of risen) {
       expect(minion.creature).toMatchObject({ kind: "minion", name: "Bone Minion", ownerId: "n" });
-      // Its id names its master, for a reader without the snapshot (#2483).
-      expect(creatureOwnerOf(minion.id)).toBe("n");
+      // Its id names who raised it (#2483).
+      expect(creatureSummonerOf(minion.id)).toBe("n");
       expect(minion.combatant.team).toBe(0);
       expect(minion.combatant.maxHealth).toBe(280);
       expect(minion.combatant.equipment.baseArmor).toBe(30);

@@ -13,11 +13,12 @@ export function creatureId(ownerId: string | undefined, n: number): string {
 }
 
 /**
- * Whose creature `id` is: its owner's id, or `undefined` for a masterless
- * one or an id that is not a creature's. Read from the id, not a
- * snapshot, so a creature that died this step still has its owner.
+ * Who summoned the creature `id`: their id, or `undefined` for one raised
+ * masterless or an id that is not a creature's. Not its owner now: a
+ * takeover (#1965) or going masterless (#2092) keeps the id; read
+ * `Creature.ownerId` for that.
  */
-export function creatureOwnerOf(id: string): string | undefined {
+export function creatureSummonerOf(id: string): string | undefined {
   const at = id.lastIndexOf(SEPARATOR);
   if (at <= 0 || !/^\d+$/.test(id.slice(at + SEPARATOR.length))) {
     return undefined;
