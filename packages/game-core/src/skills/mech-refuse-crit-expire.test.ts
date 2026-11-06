@@ -403,3 +403,58 @@ describe("Mark of Insecurity (#2373)", () => {
     );
   });
 });
+
+describe("pulses keep real time while a status runs out faster (#2373)", () => {
+  const CONDITIONS: readonly StatusId[] = ["bleeding", "poison", "blind", "weakness", "dazed"];
+
+  /** A clock from now: steps `sim` on to `seconds` from now, a tick at a time. */
+  function clock(sim: MatchSimulation, log: CombatLogEntry[] = []): (seconds: number) => void {
+    let ticks = 0;
+    return (seconds) => {
+      for (; ticks < Math.round(seconds / DT); ticks += 1) {
+        log.push(...sim.step(DT).log);
+      }
+    };
+  }
+
+  it("Spotless Soul under Air of Disenchantment: one condition at 3 s, gone by 4.05 s", () => {
+    const sim = match([spec("t", 1, vec2(300, 0))]);
+    cast(sim, AIR, "t");
+    const { statuses } = get(sim, "t").combatant;
+    for (const id of CONDITIONS) {
+      statuses.apply(id, 60, "c", RANK_12);
+    }
+    statuses.apply("spotless-soul", 15, "t", RANK_12);
+    const stepTo = clock(sim);
+    const conditions = (): number =>
+      statuses.active.filter(({ id }) => CONDITIONS.includes(id)).length;
+
+    stepTo(2.9);
+    expect(conditions()).toBe(5);
+    stepTo(3.1);
+    expect(conditions()).toBe(4);
+    // 15 s at 370%.
+    stepTo(4);
+    expect(statuses.has("spotless-soul")).toBe(true);
+    stepTo(4.1);
+    expect(statuses.has("spotless-soul")).toBe(false);
+    expect(conditions()).toBe(4);
+  });
+
+  it("Illusion of Pain under Peace and Harmony: a pulse each real second, none past its end", () => {
+    const sim = match([spec("t", 1, vec2(300, 0))]);
+    const { statuses } = get(sim, "t").combatant;
+    statuses.apply("peace-and-harmony", 60, "t", RANK_12);
+    statuses.apply("illusion-of-pain", 10, "c", RANK_12);
+    const log: CombatLogEntry[] = [];
+    // 10 s at 190% is 5.26 s: pulses at 1 to 5.
+    clock(sim, log)(6);
+    expect(statuses.has("illusion-of-pain")).toBe(false);
+    const pulses = log.filter(
+      (entry) =>
+        entry.skillId === "mesmer.illusion-of-pain" &&
+        entry.events.some((event) => event.kind === "damage" && event.targetId === "t"),
+    );
+    expect(pulses).toHaveLength(5);
+  });
+});

@@ -2746,6 +2746,12 @@ export class StatusSet {
     readonly ranks: ReadonlyMap<string, number>;
   }[] = [];
   readonly #spent: Set<string>;
+  /**
+   * How many seconds faster than real time each status has run out
+   * (#2373, `advance`), so its pulses keep real time. None once its
+   * remaining time is put back.
+   */
+  readonly #hastened = new WeakMap<ActiveStatus, number>();
 
   /**
    * `spent`: the match's `endsEverywhereWhenSpent` statuses spent this
@@ -3363,6 +3369,7 @@ export class StatusSet {
       existing.remainingSeconds = Math.max(existing.remainingSeconds, durationSeconds);
       // A bar is never over full.
       existing.durationSeconds = Math.max(existing.durationSeconds, existing.remainingSeconds);
+      this.#hastened.delete(existing);
       return;
     }
     this.#statuses.set(id, {
@@ -3518,6 +3525,7 @@ export class StatusSet {
       const definition = getStatusDefinition(status.id);
       if (definition.renewsOnBearerSpell || (atFoe && definition.renewsOnBearerSpellAtFoe)) {
         status.remainingSeconds = status.durationSeconds;
+        this.#hastened.delete(status);
       }
     }
   }
@@ -3531,6 +3539,7 @@ export class StatusSet {
     for (const status of this.#statuses.values()) {
       if (getStatusDefinition(status.id).renewsOnChantOrShoutEnd) {
         status.remainingSeconds = status.durationSeconds;
+        this.#hastened.delete(status);
       }
     }
     return this.triggersOn("bearer-chant-or-shout-ends");
@@ -4262,6 +4271,7 @@ export class StatusSet {
     for (const status of this.#statuses.values()) {
       if (getStatusDefinition(status.id).refreshesOnCritical) {
         status.remainingSeconds = status.durationSeconds;
+        this.#hastened.delete(status);
       }
     }
   }
@@ -4344,21 +4354,25 @@ export class StatusSet {
    * Returns the ids that expired on this tick so the caller can emit
    * end-of-status effects. Conditions run `conditionsExpireFaster`
    * faster (#1464), hexes `hexesExpireFaster` (#2291), enchantments and
-   * stances theirs (#2373), read as the tick begins.
+   * stances theirs (#2373), read as the tick begins; their pulses keep
+   * real time.
    */
   public advance(dt: number, moving: boolean): StatusId[] {
     const expired: StatusId[] = [];
     const modifiers = aggregateModifiers(this.active);
-    const categoryDt: Readonly<Partial<Record<StatusCategory, number>>> = {
-      condition: dt * (1 + modifiers.conditionsExpireFaster),
-      hex: dt * (1 + modifiers.hexesExpireFaster),
-      enchantment: dt * (1 + modifiers.enchantmentsExpireFaster),
-      stance: dt * (1 + modifiers.stancesExpireFaster),
+    const categoryRate: Readonly<Partial<Record<StatusCategory, number>>> = {
+      condition: 1 + modifiers.conditionsExpireFaster,
+      hex: 1 + modifiers.hexesExpireFaster,
+      enchantment: 1 + modifiers.enchantmentsExpireFaster,
+      stance: 1 + modifiers.stancesExpireFaster,
     };
     for (const status of this.#statuses.values()) {
-      this.#pulse(status, dt);
-      const category = getStatusDefinition(status.id).category;
-      status.remainingSeconds -= categoryDt[category] ?? dt;
+      const rate = categoryRate[getStatusDefinition(status.id).category] ?? 1;
+      this.#pulse(status, dt, rate);
+      status.remainingSeconds -= dt * rate;
+      if (rate !== 1 && Number.isFinite(status.remainingSeconds)) {
+        this.#hastened.set(status, (this.#hastened.get(status) ?? 0) + dt * (rate - 1));
+      }
       if (status.remainingSeconds > 0) {
         continue;
       }
@@ -4366,6 +4380,7 @@ export class StatusSet {
       if (moving && renews !== undefined) {
         status.remainingSeconds = renews;
         status.durationSeconds = renews;
+        this.#hastened.delete(status);
       } else {
         expired.push(status.id);
       }
@@ -4376,25 +4391,24 @@ export class StatusSet {
 
   /**
    * Record the pulses of `status` that fall due in the next `dt` (#1501):
-   * one at each whole second since it was applied, none past its
-   * duration, so one ending between pulses deals no partial one.
+   * one at each whole second since it was applied, none past its end,
+   * so one ending between pulses deals no partial one. It runs out
+   * `rate` times as fast as real time (#2373), its pulses at real time.
    */
-  #pulse(status: ActiveStatus, dt: number): void {
+  #pulse(status: ActiveStatus, dt: number, rate: number): void {
     // A projected one keeps its own clock (#2275): it has no duration.
     const before =
       status.projected === null
-        ? status.durationSeconds - status.remainingSeconds
+        ? status.durationSeconds - status.remainingSeconds - (this.#hastened.get(status) ?? 0)
         : status.projected.ageSeconds;
     if (status.projected !== null) {
       status.projected.ageSeconds += dt;
     }
+    const until = before + Math.min(dt, status.remainingSeconds / rate);
     const every = getStatusDefinition(status.id).pulse?.everySeconds;
     if (every !== undefined) {
       // As below, in steps of `every` (#2187).
-      const due = Math.min(
-        Math.floor((before + dt) / every + PULSE_EPSILON),
-        Math.floor(status.durationSeconds / every + PULSE_EPSILON),
-      );
+      const due = Math.floor(until / every + PULSE_EPSILON);
       for (let k = Math.floor(before / every + PULSE_EPSILON) + 1; k <= due; k += 1) {
         this.#effectPulses.push({ id: status.id, sourceId: status.sourceId, ranks: status.ranks });
       }
@@ -4403,10 +4417,7 @@ export class StatusSet {
     if (pulse === undefined) {
       return;
     }
-    const last = Math.min(
-      Math.floor(before + dt + PULSE_EPSILON),
-      Math.floor(status.durationSeconds + PULSE_EPSILON),
-    );
+    const last = Math.floor(until + PULSE_EPSILON);
     for (let k = Math.floor(before + PULSE_EPSILON) + 1; k <= last; k += 1) {
       this.#pulses.push({
         id: status.id,
