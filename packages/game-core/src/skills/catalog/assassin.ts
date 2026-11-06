@@ -4403,4 +4403,79 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2502)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.siphon-strength",
+    name: "Siphon Strength",
+    gwId: 827,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.deadly-arts",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, target foe deals -5...50 damage with attacks and
+    // all of your attacks against that foe have an additional 50% chance of
+    // being a critical hit": 17 s at 12; the rest is the hex's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "siphon-strength",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
+  {
+    id: "assassin.shadowy-burden",
+    name: "Shadowy Burden",
+    gwId: 950,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3...15 seconds, target foe moves 25% slower and while target foe
+    // has no other hexes, that foe has 20...30 less armor against your
+    // attacks": 12.6 s at 12; the rest is the hex's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "shadowy-burden",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 3, atTwelve: 12.6 },
+        },
+      },
+    ],
+  },
 ];

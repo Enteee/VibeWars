@@ -31,6 +31,7 @@ import {
   type NextSkillRule,
   type OwnSkillModifier,
   type RenewEvent,
+  type SourceAttacks,
   type StatusCategory,
   type StatusConditionalArmor,
   type StatusDefinition,
@@ -379,6 +380,30 @@ function fasterExpiryText(
   ];
 }
 
+/**
+ * What a hex gives its source's attacks against its bearer (#2502), in the
+ * corpus's words: Siphon Strength's "your attacks against it have +50%
+ * critical chance", Shadowy Burden's "−28 armor against your attacks
+ * while it has no other hexes".
+ */
+function sourceAttacksText(
+  { criticalChanceBonus, armorModifier, onlyWhileNoOtherHex }: SourceAttacks,
+  ranks: ReadonlyMap<string, number> | undefined,
+): string[] {
+  return [
+    ...(criticalChanceBonus === 0
+      ? []
+      : [
+          `your attacks against it have ${signed(Math.round(criticalChanceBonus * 100))}% critical chance`,
+        ]),
+    ...(statAtTwelve(armorModifier) === 0
+      ? []
+      : [
+          `${signedStat(armorModifier, ranks)} armor against your attacks${onlyWhileNoOtherHex ? " while it has no other hexes" : ""}`,
+        ]),
+  ];
+}
+
 /** "45%": a share as its line prints it, whatever its sign. */
 function percent(share: number): string {
   return `${String(Math.round(Math.abs(share) * 100))}%`;
@@ -674,7 +699,8 @@ function statusText(
     const { attributeId, skillType, uses } = definition.borrowsAttribute;
     const name = getAttribute(attributeId)?.name ?? attributeId;
     if (uses === undefined) {
-      parts.push(`your ${skillType}s use ${name}`);
+      // Symbols of Inspiration's "elite skills you cast" (#2502).
+      parts.push(`your ${skillType === "elite" ? "elite skill" : skillType}s use ${name}`);
     } else {
       const next = uses === 1 ? `${skillType} uses` : `${String(uses)} ${skillType}s use`;
       parts.push(`your next ${next} ${name}`);
@@ -848,6 +874,9 @@ function statusText(
       `${chance}% critical chance${weapon === undefined ? "" : ` while wielding ${NEEDED_WEAPON[weapon]}`}${versus}`,
     );
   }
+  if (definition.sourceAttacks !== undefined) {
+    parts.push(...sourceAttacksText(definition.sourceAttacks, ranks));
+  }
   if (definition.energyPerCritical !== 0) {
     parts.push(`gain ${String(definition.energyPerCritical)} Energy per critical hit`);
   }
@@ -979,7 +1008,7 @@ function statusText(
     parts.push(...describeNextSkill(definition.nextSkill, triggerRanks));
   }
   if (definition.nextSkillRule !== undefined) {
-    parts.push(...describeNextSkillRule(definition.nextSkillRule));
+    parts.push(...describeNextSkillRule(definition.nextSkillRule, ranks));
   }
   if (definition.endsWhenBearerAttacks) {
     parts.push(endsIf("attacks"));
@@ -2708,20 +2737,27 @@ function describeOwnSkillModifier(
   return `${holding}${which} ${ranged.join(" ")}${flash} ${changes.join(" and ")}`;
 }
 
-/** How a chant's next skill of a kind goes (#1505): "your next skill cannot be interrupted". */
-function describeNextSkillRule({
-  which,
-  uninterruptible,
-  unblockable,
-  energyDiscount,
-  castsInstantly,
-  extraRechargeSeconds,
-  rechargesInstantly,
-  losesAllEnergy,
-  rechargeFasterIfType,
-  resetsOwnRechargeIfType,
-  skillId,
-}: NextSkillRule): string[] {
+/**
+ * How a chant's next skill of a kind goes (#1505): "your next skill cannot
+ * be interrupted". Its scaled numbers at `ranks`, as `statText` (#2502).
+ */
+function describeNextSkillRule(
+  {
+    which,
+    uninterruptible,
+    unblockable,
+    energyDiscount,
+    castsInstantly,
+    extraRechargeSeconds,
+    rechargesInstantly,
+    losesAllEnergy,
+    energyGainOfCost,
+    rechargeFasterIfType,
+    resetsOwnRechargeIfType,
+    skillId,
+  }: NextSkillRule,
+  ranks: ReadonlyMap<string, number> | undefined,
+): string[] {
   // One clause for all a rule does to the skill (#1730): "your next
   // spell casts instantly and takes 30s longer to recharge".
   const does = [
@@ -2731,13 +2767,19 @@ function describeNextSkillRule({
     ...(castsInstantly ? ["casts instantly"] : []),
     ...(rechargesInstantly
       ? ["recharges instantly"]
-      : extraRechargeSeconds > 0
-        ? [`takes ${String(extraRechargeSeconds)}s longer to recharge`]
+      : statAtTwelve(extraRechargeSeconds) > 0
+        ? [
+            `takes ${statText(extraRechargeSeconds, ranks, (value) => `${whole(value)}s`)} longer to recharge`,
+          ]
         : []),
   ];
   return [
     ...(does.length > 0 ? [`your next ${NEXT_SKILL_KIND[which][0]} ${does.join(" and ")}`] : []),
     ...(losesAllEnergy ? ["you lose all energy as it is cast"] : []),
+    // Auspicious Incantation's (#2502).
+    ...(statAtTwelve(energyGainOfCost) > 0
+      ? [`you gain ${statText(energyGainOfCost, ranks, percent)} of its Energy cost`]
+      : []),
     ...ifTypeText(rechargeFasterIfType, resetsOwnRechargeIfType, skillId),
   ];
 }
@@ -2855,6 +2897,8 @@ function conditionText(
       return "If it kills the target";
     case "resurrected":
       return "If it resurrects";
+    case "creature-destroyed":
+      return "If a spirit died in this way";
     case "removed":
       return condition.from === "caster"
         ? `If ${aCategory(condition.category)} was removed`
@@ -4147,9 +4191,13 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
             ? "Recharges all your other skills"
             : effect.which === "stance"
               ? "Recharges all your stances"
-              : `Recharges all your other ${effect.which} skills`,
+              : typeof effect.which === "string"
+                ? `Recharges all your other ${effect.which} skills`
+                : `Recharges all your ${rechargedKind(effect.which)}`,
         magnitude: undefined,
       };
+    case "destroy-own-spirits":
+      return { text: "All of your spirits die", magnitude: undefined };
     case "summon": {
       // "Summons 2 Bone Minion (60 Health, lasts 30 seconds)" (#1052), with
       // Spawning Power's health and the base in brackets (#1098).
@@ -4218,11 +4266,14 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         magnitude: undefined,
       };
     // Arcane Mimicry's and Signet of Binding's (#1965).
-    case "copy-elite":
+    case "copy-elite": {
+      // Arcane Mimicry's ally, Symbols of Inspiration's foe (#2502).
+      const magnitude = describeMagnitude(effect.seconds, ranks);
       return {
-        text: `This skill becomes target ally's non-form elite skill for ${String(effect.seconds)} seconds`,
-        magnitude: undefined,
+        text: `This skill becomes its target's non-form elite skill for ${shown(magnitude)} seconds`,
+        magnitude,
       };
+    }
     case "take-control":
       // Verata's Aura's foe minions, its own while it lasts (#2092).
       return effect.bondStatusId === undefined
@@ -5212,4 +5263,21 @@ export function describeSkill(
     headline: headline === undefined ? undefined : plain(headline),
     headlineParts: headline === undefined ? undefined : partsOf(headline),
   };
+}
+
+/**
+ * Lingwah's "Ritualist hexes", Reclaim Essence's "binding rituals"
+ * (#2502): a `recharge-others` by type, plural, its profession first.
+ */
+function rechargedKind(which: {
+  readonly type: SkillType;
+  readonly profession?: ProfessionId;
+}): string {
+  const kind = which.type.replaceAll("-", " ");
+  return [
+    which.profession === undefined ? undefined : getProfession(which.profession).name,
+    kind === "hex" ? "hexes" : `${kind}s`,
+  ]
+    .filter((word) => word !== undefined)
+    .join(" ");
 }
