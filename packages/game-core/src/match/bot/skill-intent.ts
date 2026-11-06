@@ -319,7 +319,10 @@ export function riderOf(skill: Skill): Rider | undefined {
     if (status.moveSpeedWhileEnchanted > 1) {
       return "enchanted-speed";
     }
-    if (status.moveSpeedMultiplier > 1 && effect.per?.count.kind === "allies-within") {
+    if (
+      statAtTwelve(status.moveSpeedMultiplier) > 1 &&
+      effect.per?.count.kind === "allies-within"
+    ) {
       return "speed-per-ally";
     }
     if (status.preventsKnockdown && skill.target === "single-other-ally") {

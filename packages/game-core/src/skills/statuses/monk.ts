@@ -75,7 +75,9 @@ export type MonkStatusId =
   | "peace-and-harmony"
   | "vengeance"
   | "balthazars-spirit"
-  | "watchful-healing";
+  | "watchful-healing"
+  | "life-sheath"
+  | "reverse-hex";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -206,10 +208,28 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
   }),
   // "For 8 seconds, the next time target ally would take damage or life
   // steal, that ally gains that amount of health instead, maximum
-  // 15...67...80": 67, its rank-12 cap; the 8 s are the skill's.
+  // 15...67...80": the cap at the caster's rank (#2428); the 8 s are the skill's.
   "reversal-of-fortune": define("reversal-of-fortune", "Reversal of Fortune", "enchantment", {
     profession: "monk",
-    reversesNextDamage: 67,
+    reversesNextDamage: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 67 },
+    },
+  }),
+  // "...that ally gains that amount of Health instead (maximum 20...100)"
+  // (#2428): Reversal of Fortune's, at the caster's rank.
+  "life-sheath": define("life-sheath", "Life Sheath", "enchantment", {
+    profession: "monk",
+    reversesNextDamage: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 20, atTwelve: 84 },
+    },
+  }),
+  // "...the next time target ally would take damage, that damage is
+  // reduced by 5...50" (#2428), at the caster's rank.
+  "reverse-hex": define("reverse-hex", "Reverse Hex", "enchantment", {
+    profession: "monk",
+    nextDamageReduction: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 41 },
+    },
   }),
   // "For 30 seconds, each time target ally attacks or casts a spell,
   // that ally is healed for 5...17...20 health", at the caster's rank.

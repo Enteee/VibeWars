@@ -70,8 +70,9 @@ function printStatuses(): void {
     if (armorModifier !== 0) {
       parts.push(`${String(armorModifier)} armor`);
     }
-    if (status.moveSpeedMultiplier !== 1) {
-      parts.push(`move x${String(status.moveSpeedMultiplier)}`);
+    const moveSpeedMultiplier = statAtTwelve(status.moveSpeedMultiplier);
+    if (moveSpeedMultiplier !== 1) {
+      parts.push(`move x${String(moveSpeedMultiplier)}`);
     }
     if (status.attackMissChance !== 0) {
       parts.push(`${String(status.attackMissChance * 100)}% miss`);

@@ -3,6 +3,7 @@
 exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
 {
   "assassin.assassins-promise": "hex",
+  "assassin.assassins-remedy": "removal",
   "assassin.assault-enchantments": "",
   "assassin.aura-of-displacement": "",
   "assassin.beguiling-haze": "interrupt condition",
@@ -195,6 +196,7 @@ exports[`skillRoles > tags every elementalist skill the same way every time 1`] 
   "elementalist.blinding-surge": "condition",
   "elementalist.blurred-vision": "hex",
   "elementalist.breath-of-fire": "",
+  "elementalist.burning-speed": "condition",
   "elementalist.chain-lightning": "",
   "elementalist.chilling-winds": "hex",
   "elementalist.churning-earth": "knockdown",
@@ -486,6 +488,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.life-attunement": "",
   "monk.life-barrier": "defence",
   "monk.life-bond": "",
+  "monk.life-sheath": "removal defence",
   "monk.light-of-deliverance": "healing",
   "monk.live-vicariously": "",
   "monk.mark-of-protection": "defence",
@@ -512,6 +515,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.retribution": "defence",
   "monk.reversal-of-damage": "defence",
   "monk.reversal-of-fortune": "defence",
+  "monk.reverse-hex": "removal",
   "monk.scourge-enchantment": "hex",
   "monk.scourge-healing": "hex",
   "monk.scribes-insight": "",

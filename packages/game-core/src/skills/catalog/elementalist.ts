@@ -5430,6 +5430,40 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Rank-scaled speed and reversal (#2428)                                  */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.burning-speed",
+    name: "Burning Speed",
+    gwId: 823,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 7 seconds, you are set on fire and move 30...45% faster. When
+    // Burning Speed ends, all adjacent foes are set on fire for 3...9
+    // seconds": the speed and the end are the status's.
+    effects: [
+      { kind: "apply-status", statusId: "burning-speed", durationSeconds: { flat: 7 } },
+      { kind: "apply-status", statusId: "burning", durationSeconds: { flat: 7 } },
+    ],
+  },
 ];
 
 /**

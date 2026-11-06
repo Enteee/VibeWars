@@ -199,11 +199,11 @@ describe("moveSpeedMultiplier", () => {
     expect(moveSpeedMultiplier(c)).toBe(0.5);
   });
 
-  it("multiplies crippled with Armor of Earth's slow", () => {
+  it("multiplies crippled with Armor of Earth's slow, at its Earth Magic", () => {
     const c = makeCombatant({ id: "c" });
     c.statuses.apply("crippled", 10, "a", NO_RANKS);
-    c.statuses.apply("armor-boost", 10, "c", NO_RANKS);
-    expect(moveSpeedMultiplier(c)).toBe(0.375);
+    c.statuses.apply("armor-boost", 10, "c", new Map([["elementalist.earth-magic", 12]]));
+    expect(moveSpeedMultiplier(c)).toBeCloseTo(0.5 * 0.788);
   });
 
   it("clamps to [0.25, 1.33]", () => {

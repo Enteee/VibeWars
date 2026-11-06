@@ -24,7 +24,7 @@ import {
 } from "./damage.js";
 import { applyEffects } from "./effects.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
-import { makeCombatant } from "./testing.js";
+import { makeCombatant, withStatusDefinitions } from "./testing.js";
 import type { Combatant, SkillContext } from "./types.js";
 
 /** Frenzy at its PvP Strength-12 value, 160% (#1976). */
@@ -1258,5 +1258,42 @@ describe("skill armor penetration from statuses (#1464)", () => {
     caster.statuses.apply("cruel-was-daoshen", 51, "r", NO_RANKS);
     expect(withSkillArmorPenetration(0.25, caster, "elementalist")).toBe(0.25);
     expect(withSkillArmorPenetration(0, caster, undefined)).toBe(0);
+  });
+});
+
+describe("nextDamageReduction (#2428)", () => {
+  const hit = (target: Combatant): number =>
+    mitigate(skillDamage(100, "chaos", 0), target, RULES, "chest", createRng(1), new Map());
+
+  it.each([
+    [0, 5],
+    [12, 41],
+  ])(
+    "at Protection Prayers %i takes %i off the first packet, ends, and leaves the second whole",
+    (rank, cut) => {
+      const target = defender(60);
+      target.statuses.apply("reverse-hex", 9, "monk", new Map([["monk.protection-prayers", rank]]));
+      expect(hit(target)).toBe(100 - cut);
+      expect(target.statuses.has("reverse-hex")).toBe(false);
+      expect(hit(target)).toBe(100);
+    },
+  );
+
+  it("never takes a packet below 0", () => {
+    const target = defender(60);
+    target.statuses.apply("reverse-hex", 9, "monk", new Map([["monk.protection-prayers", 12]]));
+    expect(
+      mitigate(skillDamage(20, "chaos", 0), target, RULES, "chest", createRng(1), new Map()),
+    ).toBe(0);
+  });
+
+  it("is not spent on a packet already cut to 0", () => {
+    withStatusDefinitions({ "armor-boost": { armorModifier: 0, damageTakenMultiplier: 0 } }, () => {
+      const target = defender(60);
+      target.statuses.apply("armor-boost", 30, "self", NO_RANKS);
+      target.statuses.apply("reverse-hex", 9, "monk", NO_RANKS);
+      expect(hit(target)).toBe(0);
+      expect(target.statuses.has("reverse-hex")).toBe(true);
+    });
   });
 });

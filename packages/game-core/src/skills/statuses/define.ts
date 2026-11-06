@@ -140,6 +140,7 @@ export function define(
     damageReduction: 0,
     damageReductionPerRank: undefined,
     damageReductionPerHitTaken: undefined,
+    nextDamageReduction: undefined,
     damageReductionWhileCasting: undefined,
     damageReductionFromHexedSource: undefined,
     damageReductionFromSourceWith: undefined,

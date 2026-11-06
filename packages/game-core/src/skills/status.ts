@@ -208,6 +208,9 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   attackDamageDelta: true,
   damageDealtMultiplier: true,
   energyPips: true,
+  moveSpeedMultiplier: true,
+  reversesNextDamage: true,
+  nextDamageReduction: true,
 };
 
 /** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
@@ -413,8 +416,11 @@ export interface StatusDefinition {
    * Cracked Armor's −20, not below 60. `undefined`: none.
    */
   readonly armorReduction: ArmorReduction | undefined;
-  /** Movement speed multiplier while active (1 = unaffected). */
-  readonly moveSpeedMultiplier: number;
+  /**
+   * Movement speed multiplier while active (1 = unaffected), at the
+   * caster's rank where it scales (#2428): Burning Speed's 1.30...1.42.
+   */
+  readonly moveSpeedMultiplier: StatusStat;
   /**
    * A move speed multiplier that holds only while the bearer is enchanted
    * (#1955): Godspeed's 1.25. A boost, so `preventsSpeedBoosts` bars it.
@@ -1057,6 +1063,12 @@ export interface StatusDefinition {
    */
   readonly damageReductionPerHitTaken: number | undefined;
   /**
+   * As `damageReduction`, but off the next packet only that armor left
+   * above 0, and then the status ends (#2428): Reverse Hex's 5...41.
+   * `undefined`: none.
+   */
+  readonly nextDamageReduction: StatusStat | undefined;
+  /**
    * As `damageReduction`, but only while the bearer is activating a skill
    * of `skillType` (#1827): Armor of Unfeeling's "10 base damage reduction
    * while casting binding rituals". Read as each packet lands, so it ends
@@ -1177,11 +1189,12 @@ export interface StatusDefinition {
   readonly sourceLosesHealth: number | undefined;
   /**
    * The next damage or life steal the bearer would take heals it instead,
-   * up to this much, and the status ends (#987): Reversal of Fortune's 67.
+   * up to this much, and the status ends (#987): Reversal of Fortune's
+   * 15...67, the cap at the caster's rank as it landed (#2428).
    * The whole packet is negated, after `mitigate`; degeneration and
    * sacrifice are neither. `undefined`: no reversal.
    */
-  readonly reversesNextDamage: number | undefined;
+  readonly reversesNextDamage: StatusStat | undefined;
   /**
    * The next damage the bearer would take is negated, its dealer takes
    * as much of the same type, up to the cap, from the status's source, and
@@ -3731,7 +3744,7 @@ export class StatusSet {
       const cap = getStatusDefinition(status.id).reversesNextDamage;
       if (cap !== undefined) {
         this.#end([status.id]);
-        return { id: status.id, cap };
+        return { id: status.id, cap: Math.round(statAt(cap, status.ranks)) };
       }
     }
     return undefined;
@@ -3880,6 +3893,21 @@ export class StatusSet {
       }
     }
     return multiplier;
+  }
+
+  /**
+   * Spend the newest status that cuts the next packet (#2428), recorded
+   * as ended, and return its cut at the caster's rank; 0 if none is up.
+   */
+  public takeNextDamageReduction(): number {
+    for (const status of [...this.#statuses.values()].reverse()) {
+      const cut = getStatusDefinition(status.id).nextDamageReduction;
+      if (cut !== undefined) {
+        this.#end([status.id]);
+        return Math.round(statAt(cut, status.ranks));
+      }
+    }
+    return 0;
   }
 
   /**
@@ -4746,9 +4774,8 @@ export function aggregateModifiers(
     ) {
       armorReduction = def.armorReduction;
     }
-    moveSpeedMultiplier *= speedBoostsBarred
-      ? Math.min(1, def.moveSpeedMultiplier)
-      : def.moveSpeedMultiplier;
+    const moveSpeed = statAt(def.moveSpeedMultiplier, ranks);
+    moveSpeedMultiplier *= speedBoostsBarred ? Math.min(1, moveSpeed) : moveSpeed;
     if (enchantments > 0 && !speedBoostsBarred) {
       moveSpeedMultiplier *= def.moveSpeedWhileEnchanted;
     }

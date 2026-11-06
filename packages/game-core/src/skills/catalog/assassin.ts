@@ -4093,4 +4093,33 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "assassin.assassins-remedy",
+    name: "Assassin's Remedy",
+    gwId: 1639,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "For 30 seconds, the next 1...10 attack skills you use remove
+    // one condition" (#2428): the uses are the status's.
+    effects: [
+      { kind: "apply-status", statusId: "assassins-remedy", durationSeconds: { flat: 30 } },
+    ],
+  },
 ];
