@@ -217,6 +217,7 @@ import {
   skillBlow,
   useNextAttackSkill,
   swingIntervalSeconds,
+  releasedStrikes,
   strikeCount,
   unblockableNow,
   weaponSnapshotOf,
@@ -1838,7 +1839,7 @@ export class MatchSimulation {
       // Ended early, a pulse effect still lands its end (#2329).
       const owner = ended === undefined ? undefined : this.#participants.get(ended.ownerId);
       if (ended?.act.kind === "pulse" && ended.act.atEnd !== undefined && owner !== undefined) {
-        this.#landPulse(owner, ended.skillId, ended.position, ended.act.atEnd);
+        this.#landPulse(owner, ended.skillId, ended.position, ended.act.atEnd, ended.pulsed);
       }
     }
   }
@@ -1931,7 +1932,7 @@ export class MatchSimulation {
         continue;
       }
       sprung.add(effect.id);
-      this.#landPulse(owner, effect.skillId, effect.position, trap.spring);
+      this.#landPulse(owner, effect.skillId, effect.position, trap.spring, 1);
       if (trap.spring.count > 1) {
         pulsing.push(effect);
       }
@@ -1984,11 +1985,11 @@ export class MatchSimulation {
         age >= pulse.delaySeconds + effect.pulsed * pulse.everySeconds - SWING_EPSILON
       ) {
         effect.pulsed += 1;
-        this.#landPulse(owner, effect.skillId, effect.position, pulse);
+        this.#landPulse(owner, effect.skillId, effect.position, pulse, effect.pulsed);
       }
       if (atEnd !== undefined && effect.remainingSeconds <= SWING_EPSILON) {
         gone.add(effect.id);
-        this.#landPulse(owner, effect.skillId, effect.position, atEnd);
+        this.#landPulse(owner, effect.skillId, effect.position, atEnd, effect.pulsed);
       }
     }
     if (gone.size > 0) {
@@ -2100,8 +2101,16 @@ export class MatchSimulation {
    * it is logged as a cast is, even when it hits nobody. A pulse's
    * interrupt comes free with what it lands, untimed, as Maelstrom's
    * (#1367): finding nothing to interrupt is no miss, so it says nothing.
+   * Its `held-seconds` count is `pulsed`, this pulse among them (#2459):
+   * Savannah Heat's "for each second this spell has been in effect".
    */
-  #landPulse(owner: ParticipantRecord, skillId: string, position: Vec2, rule: PulseEnd): void {
+  #landPulse(
+    owner: ParticipantRecord,
+    skillId: string,
+    position: Vec2,
+    rule: PulseEnd,
+    pulsed: number,
+  ): void {
     const skill = getSkill(skillId);
     if (skill === undefined) {
       return;
@@ -2121,6 +2130,7 @@ export class MatchSimulation {
       rng: this.#rng,
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
+      heldSeconds: pulsed,
     });
     const events = resolved.events.filter((event) => event.kind !== "interrupt-missed");
     this.#log.push({
@@ -5901,11 +5911,31 @@ export class MatchSimulation {
       next: nextAttackSkillOf(record.combatant),
       own: resolution.own,
       strikes: 1,
+      unblockable: false,
     };
     const flight = resolution.skill.attack?.flightSpeed;
     const released: CombatEvent[] = [];
     removePreparations(record.combatant, resolution.skill, released);
-    const events = resolution.targets.flatMap((victim) => {
+    // Read before `onRelease`, which may take what gates them (#2459).
+    const shots = resolution.targets.map((victim) => ({
+      victim,
+      ...releasedStrikes(resolution.skill.attack, record.combatant, victim, this.#participants),
+    }));
+    const onRelease = resolution.skill.attack?.onRelease;
+    const primary = resolution.targets[0];
+    if (onRelease !== undefined) {
+      released.push(
+        ...applySkillEffects(
+          {
+            ...resolution,
+            skill: { ...resolution.skill, effects: onRelease },
+            targets: [primary ?? record.combatant],
+          },
+          [],
+        ),
+      );
+    }
+    const events = shots.flatMap(({ victim, strikes, unblockable, eachWeaponDamage }) => {
       const target = this.#participants.get(victim.id);
       const multiplier =
         flight !== undefined &&
@@ -5913,15 +5943,18 @@ export class MatchSimulation {
           stateHolds(flight.when, record.combatant, victim, this.#participants))
           ? flight.multiplier
           : 1;
-      const strikes = strikeCount(
-        resolution.skill.attack?.strikes,
-        record.combatant,
-        victim,
-        this.#participants,
-      );
+      const blow =
+        eachWeaponDamage === 1
+          ? skillHit.blow
+          : { ...skillHit.blow, weaponDamage: skillHit.blow.weaponDamage * eachWeaponDamage };
       return target === undefined || victim.dead
         ? []
-        : this.#release(record, target, speed * multiplier, dt, { ...skillHit, strikes });
+        : this.#release(record, target, speed * multiplier, dt, {
+            ...skillHit,
+            blow,
+            strikes,
+            unblockable,
+          });
     });
     useNextAttackSkill(record.combatant, skillHit.next, events);
     return [...released, ...events];
@@ -6245,7 +6278,7 @@ export class MatchSimulation {
     if (
       !projectile.unblockable &&
       !unblockableNow(
-        skillHit?.skill.attack?.unblockable ?? false,
+        skillHit?.unblockable ?? false,
         attacker?.combatant,
         target.combatant,
         this.#participants,

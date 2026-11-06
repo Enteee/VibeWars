@@ -1400,6 +1400,13 @@ export interface StatusDefinition {
    */
   readonly incomingAllySpellCastTimeMultiplier: number;
   /**
+   * Multiplier on how long a spell of the status's source takes to cast
+   * on the bearer (#2459): Stolen Speed's "Spells you cast that target
+   * these foes take 50% less time to cast", 0.5. Nobody else's spell,
+   * nor one aimed elsewhere. Read once, as the cast begins.
+   */
+  readonly sourceSpellCastTimeMultiplier: number;
+  /**
    * Energy off each enchantment cast on the bearer (#1975): Air of
    * Enchantment's 10. Taken off last, after the caster's own discounts
    * and glyphs, never below 1; a cost already at 1 or less stays. Only a

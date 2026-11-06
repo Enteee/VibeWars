@@ -697,6 +697,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "augury-of-death": icon("augury-of-death"),
   "symbolic-celerity": icon("symbolic-celerity"),
   "storm-djinns-haste": icon("storm-djinns-haste"),
+  // Mechanics (#2459).
+  "stolen-speed": icon("stolen-speed"),
   // Mechanics (#2472).
   "illusionary-weaponry": icon("illusionary-weaponry"),
   // Mechanics (#2470).

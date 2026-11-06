@@ -426,6 +426,39 @@ export function strikeCount(
   return stateHolds(strikes.oneWhile, attacker, victim, surroundings) ? 1 : strikes.count;
 }
 
+/** What an attack skill's release settles for its blows on one victim (#2459). */
+export interface ReleasedStrikes {
+  readonly strikes: number;
+  /** Its `unblockable`, already read when the skill has `onRelease`. */
+  readonly unblockable: boolean | StateCondition;
+  /** What each blow's weapon roll is multiplied by: `eachWeaponDamage` past one strike. */
+  readonly eachWeaponDamage: number;
+}
+
+/**
+ * `rule`'s blows on `victim` as `attacker` releases it (#2459), read
+ * before its `onRelease` runs: Twin Moon Sweep strikes twice, unblocked,
+ * at 75% each, if it had the Dervish enchantment its release takes.
+ */
+export function releasedStrikes(
+  rule: PetAttackRule | undefined,
+  attacker: Combatant,
+  victim: Combatant,
+  surroundings: Surroundings,
+): ReleasedStrikes {
+  const strikes = strikeCount(rule?.strikes, attacker, victim, surroundings);
+  const unblockable = rule?.unblockable ?? false;
+  return {
+    strikes,
+    unblockable:
+      rule?.onRelease === undefined
+        ? unblockable
+        : unblockableNow(unblockable, attacker, victim, surroundings),
+    eachWeaponDamage:
+      strikes > 1 && typeof rule?.strikes === "object" ? (rule.strikes.eachWeaponDamage ?? 1) : 1,
+  };
+}
+
 /**
  * Whether `victim` blocks a blow of this kind from `attackerId` (#534),
  * rolled after blind and before the damage roll. Rolled only when there
@@ -1460,6 +1493,21 @@ export function resolveAttackSkillOutcome(
   removePreparations(caster, skill, events);
   const next = nextAttackSkillOf(caster);
   const primary = resolution.targets[0];
+  // Read before `onRelease`, which may take what gates them (#2459).
+  const released = releasedStrikes(rule, caster, primary ?? caster, surroundings);
+  const onRelease = skill.attack?.onRelease;
+  if (onRelease !== undefined) {
+    events.push(
+      ...land(
+        { ...resolution, skill: { ...skill, effects: onRelease }, targets: [primary ?? caster] },
+        [],
+      ),
+    );
+  }
+  const struck =
+    released.eachWeaponDamage === 1
+      ? blow
+      : { ...blow, weaponDamage: blow.weaponDamage * released.eachWeaponDamage };
   const around =
     skill.area !== undefined || primary === undefined || primary.dead
       ? undefined
@@ -1501,7 +1549,7 @@ export function resolveAttackSkillOutcome(
     }
     victims.push(victim);
   }
-  const strikes = strikeCount(rule?.strikes, caster, primary ?? caster, surroundings);
+  const { strikes } = released;
   for (let strike = 0; strike < strikes; strike += 1) {
     const since = strike === 0 ? 0 : events.length;
     const hit: Combatant[] = [];
@@ -1526,7 +1574,7 @@ export function resolveAttackSkillOutcome(
       }
       if (
         !unblockable &&
-        (rule === undefined || !unblockableNow(rule.unblockable, caster, victim, surroundings)) &&
+        !unblockableNow(released.unblockable, caster, victim, surroundings) &&
         blocks(victim, caster.id, caster.statuses.active, kind, true, rng)
       ) {
         events.push({ kind: "attack-blocked", targetId: victim.id });
@@ -1553,7 +1601,7 @@ export function resolveAttackSkillOutcome(
           snapshot,
           caster,
           victim,
-          settleBlow(blow, caster, victim, surroundings),
+          settleBlow(struck, caster, victim, surroundings),
           exposed(victim),
           rng,
           rules,
