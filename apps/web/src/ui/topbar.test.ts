@@ -18,6 +18,7 @@ import {
   partyJoinsNotice,
   paintStatus,
   putsMoreAway,
+  showJoin,
   type StatusElement,
 } from "./topbar.js";
 import { LOBBY_ICON } from "./icons.js";
@@ -238,6 +239,29 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
       "topbar-connecting",
       "topbar-join-confirm",
     ]);
+  });
+
+  it("keeps the Lobby window's controls on every bar; only the bar's join status follows `join` (#2566)", () => {
+    const { join, lobby } = mount();
+    const [, copy, toggle, leave] = lobby.children;
+    const looks = () => [
+      (join.controls as unknown as FakeElement).hidden,
+      lobby.hidden,
+      copy?.hidden,
+      toggle?.hidden,
+      leave?.hidden,
+      (join.element as unknown as FakeElement).hidden,
+    ];
+    join.setLobby({ code: OWN, isHost: true, open: false, party: 1, joining: false });
+    showJoin(join, false);
+    expect(looks()).toEqual([false, false, false, false, true, true]);
+    showJoin(join, true);
+    expect(looks()).toEqual([false, false, false, false, true, false]);
+    join.setLobby({ code: FRIEND, isHost: false, open: true, party: 1, joining: false });
+    showJoin(join, false);
+    expect(looks()).toEqual([false, false, false, true, false, true]);
+    showJoin(join, true);
+    expect(looks()).toEqual([false, false, false, true, false, false]);
   });
 
   it("copies the lobby's invite link, not its key", async () => {

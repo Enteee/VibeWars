@@ -344,6 +344,15 @@ export function lobbyButton(parent: HTMLElement, controls: HTMLElement): LobbyBu
   };
 }
 
+/**
+ * A new bar shows: the bar's join status only where it asks for it, the
+ * lobby's controls in the Lobby window on every screen (#2566).
+ */
+export function showJoin(join: JoinControls, shown: boolean): void {
+  join.element.hidden = !shown;
+  join.settle();
+}
+
 /** What `mountTopbar` hands back: the bar's say in whether it shows. */
 export interface Topbar {
   /** The lobby the bar names (#1526); none while this tab is in none. */
@@ -471,8 +480,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
       if (shown.own === "help") {
         closeTopbarPopover();
       }
-      join.element.hidden = !shown.join;
-      join.settle();
+      showJoin(join, shown.join);
       if (shown.join && !joinShown) {
         joinShown = true;
         if (early !== undefined) {
