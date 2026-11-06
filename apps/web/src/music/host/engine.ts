@@ -27,11 +27,12 @@ import {
   type LevelChange,
 } from "./transitions.js";
 import { busGate, type BusGate } from "./bus-gate.js";
-import { crossfade, isTempoMark } from "./crossfade.js";
+import { crossfade, isTempoMark, overTrack } from "./crossfade.js";
 import { dropLate } from "./late-notes.js";
 import { catchUpTick, leadClock } from "./lead-clock.js";
 import { makeLayer, type TrackClock } from "./layer.js";
 import { reverbPins } from "./reverb-pins.js";
+import { stingStart } from "./sting-start.js";
 import { startAudioStress } from "./audio-stress.js";
 import { createMeasurement, readAudio } from "./stats.js";
 import { createUnderrunProbe } from "./underruns.js";
@@ -96,6 +97,21 @@ interface Switch {
   readonly next: Playing;
   readonly until: number;
   announced: boolean;
+}
+
+/** A sting as it plays (#2523): placed in cycles, silent outside its own. */
+interface StingLayer {
+  readonly pattern: core.Pattern;
+  /** The cycle it ends on, when it is dropped. */
+  readonly until: number;
+}
+
+/** The events of `pattern` that start in `[from, until)`. */
+function startingIn(pattern: core.Pattern, from: number, until: number): core.Pattern {
+  return pattern.filterHaps((hap) => {
+    const begin = hap.wholeOrPart().begin.valueOf();
+    return begin >= from && begin < until;
+  });
 }
 
 function record(value: unknown): Readonly<Record<string, unknown>> | null {
@@ -216,6 +232,10 @@ export async function startEngine(): Promise<void> {
   let switching: Switch | undefined;
   /** What the scheduler plays: `playing`, or a crossfade into a switch. */
   let scheduled: core.Pattern = core.silence;
+  /** Played on top of `scheduled` until it ends (#2523). */
+  let sting: StingLayer | undefined;
+  /** The key of the sting being evaluated, as its `KEY`. */
+  let stingKey = "";
   let volume = 1;
   let bus: GainNode | undefined;
   let gate: BusGate | undefined;
@@ -228,6 +248,9 @@ export async function startEngine(): Promise<void> {
   );
   Object.defineProperty(globalThis, "INTENSITY", {
     get: () => levelAt(levels, position()),
+  });
+  Object.defineProperty(globalThis, "KEY", {
+    get: () => stingKey,
   });
   await core.evalScope(core, mini, tonal, {
     layer,
@@ -330,10 +353,57 @@ export async function startEngine(): Promise<void> {
     }
   };
 
+  /**
+   * A sting's pattern that plays nothing rather than fail: a sting is
+   * mood, and a broken one must not silence the track (#2523).
+   */
+  const quiet = (pattern: core.Pattern): core.Pattern =>
+    new core.Pattern((state) => {
+      try {
+        return pattern.query(state);
+      } catch {
+        return [];
+      }
+    });
+
+  /** Play `pattern`, with the sting, if one plays, on top. */
   const schedule = async (pattern: core.Pattern): Promise<void> => {
     scheduled = pattern;
     startScheduler();
-    await repl.setPattern(guarded(pattern), true);
+    const heard = sting === undefined ? pattern : overTrack(pattern, quiet(sting.pattern));
+    await repl.setPattern(guarded(heard), true);
+  };
+
+  /**
+   * Play the sting `source` in `key` for `cycles` from the next beat, over
+   * whatever plays or is about to land. One that fails to evaluate or to
+   * query is dropped without a word: a sting is never worth an error.
+   */
+  const playSting = async (source: string, key: string, cycles: number): Promise<void> => {
+    if (playing === undefined || !scheduler.started) {
+      return;
+    }
+    let pattern: core.Pattern;
+    stingKey = key;
+    try {
+      const evaluated = await evaluate(source);
+      if (!core.isPattern(evaluated.pattern)) {
+        return;
+      }
+      pattern = evaluated.pattern;
+      pattern.queryArc(0, cycles);
+    } catch {
+      return;
+    }
+    const from = stingStart(position(), switching?.next.clock.origin);
+    const until = from + cycles;
+    const next = startingIn(pattern.late(from), from, until);
+    // A sting still playing gives way from this one's start.
+    sting = {
+      pattern: sting === undefined ? next : core.stack(startingIn(sting.pattern, 0, from), next),
+      until,
+    };
+    await schedule(scheduled);
   };
 
   /**
@@ -358,6 +428,8 @@ export async function startEngine(): Promise<void> {
     await ensureAudio();
     clock.origin = scheduler.started ? Math.floor(position()) : 0;
     switching = undefined;
+    // A sting belongs to the music it was played over.
+    sting = undefined;
     playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, clock };
     pins.reset();
     scheduler.setCps(cps);
@@ -394,8 +466,15 @@ export async function startEngine(): Promise<void> {
     await schedule(crossfade(scheduled, pattern, from, cycles, cps));
   };
 
-  /** Land a planned switch: announce it on its boundary, then play the new track alone. */
+  /**
+   * Land a planned switch: announce it on its boundary, then play the new
+   * track alone. Drop a sting that has ended.
+   */
   timers.setInterval(() => {
+    if (sting !== undefined && position() >= sting.until) {
+      sting = undefined;
+      void schedule(scheduled);
+    }
     const planned = switching;
     if (planned === undefined) {
       return;
@@ -435,6 +514,7 @@ export async function startEngine(): Promise<void> {
           playing = switching.next;
           switching = undefined;
         }
+        sting = undefined;
         scheduler.stop();
         gate?.stop();
         return;
@@ -469,6 +549,9 @@ export async function startEngine(): Promise<void> {
         post({ type: "evaluated", seq: message.seq });
         return;
       }
+      case "sting":
+        await playSting(message.source, message.key, message.cycles);
+        return;
       case "ping":
         return;
       case "measure":

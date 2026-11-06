@@ -6,6 +6,7 @@ import {
   type MusicStats,
 } from "./host-protocol.js";
 import { musicHostUrl } from "./music-urls.js";
+import type { StingId } from "./stings/ids.js";
 import { STRESS_BUILD, audioStressMs } from "./stress.js";
 
 /**
@@ -47,6 +48,11 @@ export interface MusicPlayer {
    * Returns the evaluation's number, which its answer carries.
    */
   evaluate(source: string): number;
+  /**
+   * Play `sting` once over the track, in `key` (#2523). Sent only to a
+   * host that is up: never queued, so a sting the engine missed is gone.
+   */
+  sting(sting: { id: StingId; source: string; key: string; cycles: number }): void;
   /** Start again what `stop` stopped. */
   play(): void;
   stop(): void;
@@ -324,6 +330,11 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
       evaluations += 1;
       send({ type: "evaluate", seq: evaluations, source });
       return evaluations;
+    },
+    sting(sting) {
+      if (frame !== undefined && ready) {
+        frame.post({ type: "sting", ...sting });
+      }
     },
     play() {
       send({ type: "play" });

@@ -3,7 +3,8 @@
  * `pnpm music:check <file.strudel.js> --key "D aeolian" [--layers N] [--bpm N] [--colour C#,Db] [--phrase-cycles N] [--json]`
  *
  * Prints, for every track and every intensity level, what the track plays,
- * and exits 1 on any failure `tracks.test.ts` would fail on. With `--json` the
+ * and exits 1 on any failure `tracks.test.ts` would fail on; with no ids,
+ * every sting in every track key too, as `stings.test.ts` checks them. With `--json` the
  * last line of stdout is one JSON object `{ ok, problems, reports }`; Strudel
  * prints a banner on import, so parse that line only.
  */
@@ -16,17 +17,19 @@ import { fileURLToPath } from "node:url";
 
 import {
   allowedSounds,
+  checkSting,
   checkTrack,
   MAX_DSP_COST,
   MAX_FORM_CYCLES,
   MAX_PEAK_GAIN,
 } from "./analyse.mjs";
-import { checkManifest } from "./manifest.mjs";
+import { checkManifest, checkStingManifest } from "./manifest.mjs";
 
 /** @typedef {import("./manifest.mjs").ManifestEntry} ManifestEntry */
 
 const webDir = fileURLToPath(new URL("../..", import.meta.url));
 const tracksDir = path.join(webDir, "src/music/tracks");
+const stingsDir = path.join(webDir, "src/music/stings");
 
 const MOODS =
   fs
@@ -147,10 +150,34 @@ for (const track of tracks) {
   });
 }
 
+// With no arguments, every sting (#2523) in every key and tempo a track plays at.
+let stingCount = 0;
+if (positional.length === 0) {
+  const stings = /** @type {Record<string, { cycles: number }>} */ (
+    readJson(path.join(stingsDir, "manifest.json"))
+  );
+  problems.push(...checkStingManifest(stings, fs.readdirSync(stingsDir)));
+  const settings = [...new Map(tracks.map((t) => [`${t.key} ${String(t.bpm)}`, t])).values()];
+  for (const [id, { cycles: stingCycles }] of Object.entries(stings)) {
+    const file = path.join(stingsDir, `${id}.strudel.js`);
+    if (!fs.existsSync(file)) continue;
+    const source = fs.readFileSync(file, "utf8");
+    stingCount += 1;
+    for (const { key, bpm } of settings) {
+      problems.push(
+        ...(await checkSting(
+          { id, source, cycles: stingCycles },
+          { key, bpm, allowedSounds: allowed },
+        )),
+      );
+    }
+  }
+}
+
 if (!json) {
   console.log(
     problems.length === 0
-      ? `\nok: ${String(tracks.length)} track(s)`
+      ? `\nok: ${String(tracks.length)} track(s), ${String(stingCount)} sting(s)`
       : `\n${String(problems.length)} problem(s):`,
   );
   for (const p of problems) console.log(`  FAIL ${p}`);

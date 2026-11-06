@@ -57,3 +57,27 @@ export function checkManifest(manifest, files, moods) {
   }
   return problems;
 }
+
+/**
+ * The stings' manifest (#2523), `{ "<id>": { "cycles": 1..4 } }`: ids
+ * kebab-case, a source file for each entry and none without one.
+ *
+ * @param {Readonly<Record<string, { cycles: unknown }>>} manifest parsed `stings/manifest.json`
+ * @param {readonly string[]} files file names in the stings directory
+ * @returns {string[]} problems
+ */
+export function checkStingManifest(manifest, files) {
+  /** @type {string[]} */
+  const problems = [];
+  const sources = new Set(files.flatMap((f) => SOURCE.exec(f)?.[1] ?? []));
+  for (const [id, sting] of Object.entries(manifest)) {
+    if (!KEBAB.test(id)) problems.push(`sting ${id}: id is not kebab-case`);
+    if (!sources.has(id)) problems.push(`sting ${id}: ${id}.strudel.js does not exist`);
+    if (![1, 2, 3, 4].includes(/** @type {number} */ (sting.cycles)))
+      problems.push(`sting ${id}: cycles is ${String(sting.cycles)}, want 1–4`);
+  }
+  for (const id of sources) {
+    if (!(id in manifest)) problems.push(`sting ${id}: ${id}.strudel.js has no manifest entry`);
+  }
+  return problems;
+}

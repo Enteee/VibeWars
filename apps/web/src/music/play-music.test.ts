@@ -15,6 +15,7 @@ const tracks = [
     phraseCycles: 8,
     moods: ["atmospheric" as const],
     layers: 2,
+    key: "D lydian",
   },
   {
     id: "clash-of-banners",
@@ -23,6 +24,7 @@ const tracks = [
     phraseCycles: 4,
     moods: ["action" as const],
     layers: 4,
+    key: "E phrygian",
   },
 ];
 
@@ -61,6 +63,7 @@ function recording(): {
         record("evaluate")(source);
         return calls.length;
       },
+      sting: record("sting"),
       play: record("play"),
       stop: record("stop"),
       onNowPlaying: record("onNowPlaying"),
@@ -403,5 +406,63 @@ describe("createMusicFollower", () => {
     expect(removed).toEqual([]);
     expect(notices).toEqual([]);
     expect(music.nowPlaying).toBe("first-light");
+  });
+
+  it("plays a sting in the key of the track the director wants (#2523)", () => {
+    const { player, calls } = recording();
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      NO_EDITS,
+    );
+    music.follow(state("first-light", 0));
+    // The arena's track is wanted, still crossfading in: its key, not the menu's.
+    music.follow(state("clash-of-banners", 0));
+    music.sting("match-start");
+    expect(calls.at(-1)).toEqual([
+      "sting",
+      { id: "match-start", cycles: 2, source: expect.any(String) as string, key: "E phrygian" },
+    ]);
+  });
+
+  it("plays a sting in the key of the preview or edit you hear, not the director's (#2523)", () => {
+    const { player, calls } = recording();
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      NO_EDITS,
+    );
+    music.follow(state("first-light", 0));
+    music.preview("clash-of-banners");
+    music.sting("first-blood");
+    expect(calls.at(-1)?.[1]).toMatchObject({ key: "E phrygian" });
+    music.preview(null);
+    music.edit("clash-of-banners");
+    music.sting("first-blood");
+    expect(calls.at(-1)?.[1]).toMatchObject({ key: "E phrygian" });
+    music.edit(null);
+    music.sting("first-blood");
+    expect(calls.at(-1)?.[1]).toMatchObject({ key: "D lydian" });
+  });
+
+  it("plays no sting when the director wants no track, as with Music Off (#2523)", () => {
+    const { player, calls } = recording();
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      NO_EDITS,
+    );
+    music.follow(state(null, 0));
+    music.sting("first-blood");
+    expect(calls.map(([name]) => name)).not.toContain("sting");
   });
 });

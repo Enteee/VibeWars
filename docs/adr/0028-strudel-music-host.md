@@ -581,6 +581,29 @@ ramp the bus as before.
 - **Not above 1 s.** More lead would hide a main thread that is too busy;
   that is the game's to fix.
 
+## Stings
+
+A sting (#2523) is a short phrase, one to four cycles, played once on top
+of the track: a horn when a match starts, a brass hit on first blood, a
+harp and choir when your side gets someone back, a fanfare or a falling
+cello at the end. The host plays it as a layer of its own. It never
+restarts or interrupts the track.
+
+- **In the parent's key.** A sting is written in scale degrees over
+  `KEY`, `n("0 2 4").scale(KEY)`, and sets no tempo. The game sends the
+  key of the track the director has chosen, so a sting lands in the key
+  of the track it plays over. `pnpm music:check` checks every sting in
+  every track's key and tempo.
+- **On the beat.** It starts on the first quarter cycle after what the
+  scheduler has queried, and never before a planned switch lands.
+  Victory's fanfare therefore starts with the result track. A new sting
+  replaces one still playing from its own start. A sting that ends is
+  dropped.
+- **Mood, not information.** It goes through the music bus, so music
+  volume and mute apply. With Music Off, or with no host up or a broken
+  one, there is no sting. It is never queued. A sting that fails to
+  evaluate or to query plays nothing and reports no error.
+
 ## Budgets
 
 Step 4 builds to these budgets, and QA (step 8) checks them.

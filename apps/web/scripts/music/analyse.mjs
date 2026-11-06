@@ -387,10 +387,14 @@ export function distinctPhrasesOf(cycles, form, phraseCycles) {
 
 /**
  * @param {string} source
- * @param {{ intensity: number, cycles: number, key: string, colour?: readonly string[], phraseCycles: number }} options
+ * @param {{ intensity: number, cycles: number, key: string, colour?: readonly string[], phraseCycles: number, sting?: { cpm: number } }} options
+ *   `sting`: a sting (#2523), given `KEY` and played at the tempo `cpm` of a track
  * @returns {Promise<Analysis>}
  */
-export async function analyseTrack(source, { intensity, cycles, key, colour = [], phraseCycles }) {
+export async function analyseTrack(
+  source,
+  { intensity, cycles, key, colour = [], phraseCycles, sting },
+) {
   const { evaluate, ref } = await loadEngine();
   /** @type {string[]} */
   const warnings = [];
@@ -406,6 +410,8 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
   g.hush = () => undefined;
   // The music host provides the same two names (#366 §3.1).
   g.INTENSITY = intensity;
+  // A sting's key is the playing track's (#2523); a track has none.
+  g.KEY = sting === undefined ? undefined : key;
   g.layer = (/** @type {number} */ n, /** @type {Pattern} */ pat) =>
     pat.mask(ref(() => (intensity >= n ? 1 : 0)));
 
@@ -471,7 +477,8 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
     const formValues = [];
     /** @type {{ begin: number, seconds: number, value: Record<string, unknown> }[]} */
     const formHaps = [];
-    const cps = repl.cpm === null ? null : repl.cpm / 60;
+    const cpm = repl.cpm ?? sting?.cpm ?? null;
+    const cps = cpm === null ? null : cpm / 60;
     /** @type {Map<string, Parameters<typeof noteRegister>[0] extends Map<string, infer E> ? E : never>} */
     const seenRegister = new Map();
     for (const h of pattern.queryArc(0, 2 * MAX_FORM_CYCLES)) {
@@ -490,7 +497,7 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
     }
     for (const keys of keysByCycle) keys.sort();
     const formCycles = formOf(keysByCycle, MAX_FORM_CYCLES);
-    const formSeconds = repl.cpm === null ? null : (formCycles * 60) / repl.cpm;
+    const formSeconds = cpm === null ? null : (formCycles * 60) / cpm;
     const formEvents = keysByCycle.slice(0, formCycles).reduce((n, keys) => n + keys.length, 0);
 
     // What sounds at once: a voice lasts from its onset to the end of its
@@ -679,4 +686,56 @@ export async function checkTrack(track, { cycles, allowedSounds: allowed }) {
     }
   }
   return { levels, problems };
+}
+
+/**
+ * Runs a sting (#2523) in `key` at `bpm` over its `cycles` and applies the track
+ * rules that hold for a phrase too: no evaluation error or warning (an
+ * unknown chord), no tempo of its own, every note in key, every stack
+ * member sounds, only allowed sounds and known controls, no clipping. A
+ * sting is no form, so the form rules do not apply.
+ *
+ * @param {{ id: string, source: string, cycles: number }} sting
+ * @param {{ key: string, bpm: number, allowedSounds: ReadonlySet<string> }} options
+ * @returns {Promise<string[]>} problems
+ */
+export async function checkSting(sting, { key, bpm, allowedSounds: allowed }) {
+  const at = `sting ${sting.id} in ${key} at ${String(bpm)} bpm`;
+  /** @type {Analysis} */
+  let a;
+  try {
+    a = await analyseTrack(sting.source, {
+      intensity: 0,
+      cycles: sting.cycles,
+      key,
+      phraseCycles: sting.cycles,
+      sting: { cpm: bpm / 4 },
+    });
+  } catch (e) {
+    return [`${at}: evaluation error: ${e instanceof Error ? e.message : String(e)}`];
+  }
+  /** @type {string[]} */
+  const problems = [];
+  for (const w of a.warnings) problems.push(`${at}: Strudel warns: ${w}`);
+  if (a.cpm !== null) {
+    problems.push(`${at}: sets a tempo of ${String(a.cpm * 4)} bpm, a sting plays at the track's`);
+  }
+  if (a.outsideKey.length > 0)
+    problems.push(`${at}: notes outside ${key}: ${a.outsideKey.join(" ")}`);
+  for (const v of a.voices) {
+    if (!allowed.has(v.name)) problems.push(`${at}: sound "${v.name}" is not in the palette`);
+  }
+  for (const c of a.controls) {
+    if (!KNOWN_CONTROLS.has(c)) problems.push(`${at}: control "${c}" is not in KNOWN_CONTROLS`);
+  }
+  if (a.peakGain > MAX_PEAK_GAIN) {
+    problems.push(
+      `${at}: summed gain ${a.peakGain.toFixed(2)} is over ${String(MAX_PEAK_GAIN)}, it will clip`,
+    );
+  }
+  for (const m of a.silentMembers) {
+    problems.push(`${at}: stack member #${String(m)} plays no event`);
+  }
+  if (a.events === 0) problems.push(`${at}: plays nothing`);
+  return problems;
 }
