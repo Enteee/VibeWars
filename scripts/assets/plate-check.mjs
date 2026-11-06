@@ -4,7 +4,8 @@
 
 import { Resvg } from "@resvg/resvg-js";
 
-import { svg } from "./status-plates.mjs";
+import { C } from "./icon-kit.mjs";
+import { PLATES, svg } from "./status-plates.mjs";
 
 const SIZE = 96;
 /** A glyph pixel counts when its alpha passes this, a plate pixel when its alpha reaches PLATE_ALPHA: the antialias fringe on both sides. */
@@ -38,3 +39,11 @@ export const inkOutsidePlate = (plateSvg, glyphSvg) => {
   }
   return outside;
 };
+
+/**
+ * How many pixels of a status row's glyph lie outside its category's plate.
+ * @param {import("./icon-kit.mjs").Category} category
+ * @param {import("./icon-kit.mjs").Glyph} glyph
+ */
+export const statusInkOutside = (category, glyph) =>
+  inkOutsidePlate(PLATES[category], glyph(C.plate));

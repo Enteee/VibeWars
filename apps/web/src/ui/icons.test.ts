@@ -37,12 +37,8 @@ import {
   weaponIcon,
 } from "./icons.js";
 
-import { C } from "../../../../scripts/assets/icon-kit.mjs";
-import { inkOutsidePlate } from "../../../../scripts/assets/plate-check.mjs";
 import { SKILL_ICONS } from "../../../../scripts/assets/skill-icon-table.mjs";
 import { STATUS_ICON_TABLES, STATUS_ICONS } from "../../../../scripts/assets/status-icon-table.mjs";
-import { PLATE_OVERFLOW } from "../../../../scripts/assets/status-plate-baseline.mjs";
-import { PLATES } from "../../../../scripts/assets/status-plates.mjs";
 
 const PUBLIC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public");
 
@@ -167,19 +163,6 @@ describe("skill icons (#719)", () => {
   it("has each status row in exactly one per-profession table", () => {
     const rows = Object.values(STATUS_ICON_TABLES).flatMap((table) => Object.keys(table));
     expect(rows.length).toBe(Object.keys(STATUS_ICONS).length);
-  });
-
-  it("keeps status glyph ink inside its plate, apart from the listed overflow (#2404)", () => {
-    const overflow = new Set(PLATE_OVERFLOW);
-    const crossing = Object.entries(STATUS_ICONS).flatMap(([id, [category, glyph]]) => {
-      const outside = inkOutsidePlate(PLATES[category], glyph(C.plate));
-      return outside > 0
-        ? [{ id, text: `${id} (${String(category)}): ${String(outside)} px outside` }]
-        : [];
-    });
-    const crossingIds = new Set(crossing.map((row) => row.id));
-    expect(crossing.filter((row) => !overflow.has(row.id)).map((row) => row.text)).toEqual([]);
-    expect(PLATE_OVERFLOW.filter((id) => !crossingIds.has(id))).toEqual([]);
   });
 
   it("has no file for a skill that is not implemented", () => {
