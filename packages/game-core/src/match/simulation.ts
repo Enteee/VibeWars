@@ -4234,7 +4234,9 @@ export class MatchSimulation {
       const foesHit = new Set(
         landed.flatMap((event) => {
           const victim =
-            event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
+            event.kind === "damage" || event.kind === "attack-backfired"
+              ? this.#participants.get(event.targetId)
+              : undefined;
           return victim !== undefined &&
             swungAt.has(victim.id) &&
             victim.combatant.team !== record.combatant.team
@@ -6560,7 +6562,11 @@ export class MatchSimulation {
     blows = 1,
   ): void {
     const damagedFoe = events.some((event) => {
-      const victim = event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
+      // A blow that backfired off a foe hit it (#2471).
+      const victim =
+        event.kind === "damage" || event.kind === "attack-backfired"
+          ? this.#participants.get(event.targetId)
+          : undefined;
       return victim !== undefined && victim.combatant.team !== record.combatant.team;
     });
     if (damagedFoe) {

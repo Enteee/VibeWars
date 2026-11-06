@@ -432,6 +432,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent | undefined {
     case "attack-blocked":
     case "invulnerable":
     case "attack-dodged":
+    case "attack-backfired":
     case "attack-obstructed":
     case "attack-unreachable":
     case "attack-interrupted":
@@ -540,6 +541,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "attack-blocked":
     case "invulnerable":
     case "attack-dodged":
+    case "attack-backfired":
     case "attack-obstructed":
     case "attack-unreachable":
     case "attack-interrupted":

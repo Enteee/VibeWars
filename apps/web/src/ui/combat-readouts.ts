@@ -82,6 +82,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "attack-blocked":
     case "invulnerable":
     case "attack-dodged":
+    case "attack-backfired":
     case "attack-obstructed":
     case "attack-unreachable":
     case "knocked-down":
@@ -254,6 +255,8 @@ export function describeCombatEvent(
       return `${by}: ${target} is invulnerable`;
     case "attack-dodged":
       return `${target} dodges ${by}`;
+    case "attack-backfired":
+      return `${by}'s blow at ${target} backfires`;
     case "attack-obstructed":
       return `${by} is obstructed on the way to ${target}`;
     case "attack-unreachable":
@@ -723,6 +726,9 @@ export function floatingCueFor(
     case "attack-dodged":
       // A shot that landed where the target would have been (#159).
       return { text: "dodge", tone: "neutral", critical: false };
+    case "attack-backfired":
+      // Calculated Risk turned the blow back on its attacker (#2471).
+      return { text: "backfire", tone: "neutral", critical: false };
     case "attack-obstructed":
       // A wall between the bow and its target at release (#160).
       return { text: "obstructed", tone: "neutral", critical: false };

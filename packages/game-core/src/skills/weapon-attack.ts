@@ -17,6 +17,7 @@ import { chainAllows, markChain } from "./chain.js";
 import { hitLocationOf, mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
 import {
   applyAttackDamage,
+  applyDamage,
   applyEffects,
   gainEnergy,
   gainHealth,
@@ -666,7 +667,8 @@ export function settleBlow(
  * A dazed victim casting a spell, or one setting a trap, is
  * interrupted first, before the damage (#546, #1105): every landed
  * attack comes here, a swing, an attack skill or an arrow, and a miss or
- * a block never does.
+ * a block never does. An attacker under Calculated Risk may take the
+ * blow itself instead (#2471).
  */
 export function landBlow(
   snapshot: WeaponSnapshot,
@@ -736,15 +738,49 @@ export function landBlow(
   };
   // After the crit and damage rolls: the piece it lands on (#1135).
   const location = hitLocationOf(packet, rng);
-  applyAttackDamage(
-    victim,
-    mitigate(packet, victim, rules, location, rng, surroundings),
-    packet.type,
-    critical,
-    events,
-    attacker,
-  );
+  const damage = mitigate(packet, victim, rules, location, rng, surroundings);
+  if (attacker !== undefined && backfires(attacker, damage, packet.type, critical, rng, events)) {
+    events.push({ kind: "attack-backfired", targetId: victim.id });
+    return critical;
+  }
+  applyAttackDamage(victim, damage, packet.type, critical, events, attacker);
   return critical;
+}
+
+/**
+ * Calculated Risk (#2471): if `attacker` bears a status that may turn its
+ * blow back, roll it, drawn only then so no other fight's stream moves.
+ * On success `attacker` takes `damage`, the victim's mitigated share, up
+ * to the cap, from itself and as no hit, and the victim takes nothing.
+ * Returns whether it backfired.
+ */
+function backfires(
+  attacker: Combatant,
+  damage: number,
+  type: DamageType,
+  critical: boolean,
+  rng: SimulationRng,
+  events: CombatEvent[],
+): boolean {
+  for (const { id, ranks } of attacker.statuses.active) {
+    const backfire = getStatusDefinition(id).attackBackfire;
+    if (backfire === undefined) {
+      continue;
+    }
+    if (rng.nextFloat() >= backfire.chance) {
+      return false;
+    }
+    applyDamage(
+      attacker,
+      Math.min(damage, Math.round(statAt(backfire.max, ranks))),
+      type,
+      critical,
+      events,
+      attacker,
+    );
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -1372,8 +1408,9 @@ function strike(
  * blind, block, crit and damage rolls; it is rolled only for a weapon that can, for
  * the same reason as the miss. `doubleStrike` says it struck twice, missed
  * blows included, so the off hand can stab after the main one (#561).
- * `landed` counts the blows that damaged a victim, however many each
- * cleaved: each earns a strike of adrenaline (#463).
+ * `landed` counts the blows that damaged a victim, or backfired off one
+ * (#2471), however many each cleaved: each earns a strike of adrenaline
+ * (#463).
  * `fired` is what the attacker's statuses added to its hits, each under
  * its own skill (#939).
  */
@@ -1400,7 +1437,11 @@ export function resolveSwing(swing: Swing): {
     if (
       events
         .slice(from)
-        .some((event) => event.kind === "damage" && event.targetId !== swing.attacker.id)
+        .some(
+          (event) =>
+            (event.kind === "damage" && event.targetId !== swing.attacker.id) ||
+            event.kind === "attack-backfired",
+        )
     ) {
       landed += 1;
     }

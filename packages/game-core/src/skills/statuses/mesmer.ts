@@ -101,6 +101,8 @@ export type MesmerStatusId =
   | "ancestors-visage"
   // Dropped leftovers (#2446).
   | "symbolic-celerity"
+  // Attack backfire (#2471).
+  | "calculated-risk"
   // Mechanics (#2459).
   | "stolen-speed"
   // Mechanics (#2472).
@@ -1185,6 +1187,19 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   "symbolic-celerity": define("symbolic-celerity", "Symbolic Celerity", "enchantment", {
     profession: "mesmer",
     borrowsAttribute: { attributeId: "mesmer.fast-casting", skillType: "signet", uses: undefined },
+  }),
+  // "Target foe's attacks do +10 damage, but there is a 50% chance that the
+  // damage from each attack will be done to that foe instead. (Maximum
+  // 15...60 damage.)" (PvP, #2471): every blow that lands, its cap by the
+  // Mesmer's Illusion Magic.
+  "calculated-risk": define("calculated-risk", "Calculated Risk", "hex", {
+    profession: "mesmer",
+    attribute: "mesmer.illusion-magic",
+    attackDamageDelta: 10,
+    attackBackfire: {
+      chance: 0.5,
+      max: { scaling: { attributeId: "mesmer.illusion-magic", atZero: 15, atTwelve: 51 } },
+    },
   }),
   // "Spells cast by the target foe and all adjacent foes take 100% longer
   // to cast. Spells you cast that target these foes take 50% less time to

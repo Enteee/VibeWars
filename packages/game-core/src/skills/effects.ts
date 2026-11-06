@@ -271,6 +271,12 @@ export type CombatEvent =
   | { readonly kind: "invulnerable"; readonly targetId: string }
   /** A projectile that landed where its target would have been, had it kept moving. */
   | { readonly kind: "attack-dodged"; readonly targetId: string }
+  /**
+   * A blow that hit `targetId` and turned back on its attacker (Calculated
+   * Risk, #2471): the target took nothing, but the attack hit, so it
+   * earns adrenaline as a landed blow does.
+   */
+  | { readonly kind: "attack-backfired"; readonly targetId: string }
   /** A ranged swing released with a wall in the way: nothing flies (GW1's "Obstructed"). */
   | { readonly kind: "attack-obstructed"; readonly targetId: string }
   /** An attack with no way round the walls to its target: it ends (#211). */
