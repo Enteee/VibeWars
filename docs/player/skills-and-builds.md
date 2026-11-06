@@ -113,7 +113,9 @@ Beside the editor, the **Training Ground** lets you try your bar on
 practice targets before a match. Its log shows every skill you or a bot
 use, the adrenaline you gain, and a skill that had no effect, with what
 it was waiting for. Some targets move: in **Moving targets** one walks a
-loop, one flees from you and one chases you.
+loop, one flees from you and one chases you. The Training Ground's
+damage and healing meter counts what your spirits, minions and pet deal
+and heal as yours.
 
 ## Item spells
 

@@ -317,6 +317,7 @@ import {
   type HillField,
 } from "./ghost.js";
 import { priestId, priestSpec, type Shrine } from "./priest.js";
+import { mintCreatureId } from "./creature-id.js";
 import { steerAround } from "./steering.js";
 
 /**
@@ -1473,7 +1474,7 @@ export class MatchSimulation {
       }
     }
     for (let i = 0; i < fits; i += 1) {
-      const id = `${owner.id}/c${String(this.#nextCreature)}`;
+      const id = mintCreatureId(owner.id, this.#nextCreature);
       this.#nextCreature += 1;
       this.#addCreature(
         id,
@@ -1507,7 +1508,7 @@ export class MatchSimulation {
   ): void {
     const fits = Math.max(0, Math.min(count, MAX_CREATURES - this.#summonedCount()));
     for (let i = 0; i < fits; i += 1) {
-      const id = `masterless/c${String(this.#nextCreature)}`;
+      const id = mintCreatureId(undefined, this.#nextCreature);
       this.#nextCreature += 1;
       this.#addCreature(id, MASTERLESS_TEAM, undefined, 0, skillId, template, at, ranks, false);
     }

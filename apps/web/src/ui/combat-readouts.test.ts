@@ -751,6 +751,45 @@ describe("accumulate", () => {
       seconds: 0.05,
     });
   });
+
+  it("counts your own creatures' damage and healing as yours, on the skills side (#2483)", () => {
+    const totals = accumulate(
+      EMPTY_TOTALS,
+      [
+        // Your spirit's heal, on you and on an ally.
+        entry([{ kind: "heal", targetId: "you", amount: 30 }], { sourceId: "you/c1" }),
+        entry([{ kind: "heal", targetId: "ally", amount: 20 }], { sourceId: "you/c1" }),
+        // Your minion's blow is damage, but not your weapon's.
+        entry([{ kind: "damage", targetId: "dummy", amount: 15, critical: false }], {
+          sourceId: "you/c2",
+          cause: "weapon",
+          skillId: undefined,
+          weaponId: "sword",
+        }),
+        // Your creature hurting you is taken, never dealt.
+        entry([{ kind: "damage", targetId: "you", amount: 5, critical: false }], {
+          sourceId: "you/c2",
+        }),
+        // Someone else's creature, or a masterless one, is not yours.
+        entry([{ kind: "heal", targetId: "you", amount: 99 }], { sourceId: "other/c3" }),
+        entry([{ kind: "damage", targetId: "dummy", amount: 99, critical: false }], {
+          sourceId: "other/c3",
+        }),
+        entry([{ kind: "damage", targetId: "dummy", amount: 99, critical: false }], {
+          sourceId: "masterless/c4",
+        }),
+      ],
+      "you",
+      0.05,
+    );
+    expect(totals).toEqual({
+      damage: 15,
+      weaponDamage: 0,
+      healing: 50,
+      taken: 5,
+      seconds: 0.05,
+    });
+  });
 });
 
 describe("perSecond", () => {

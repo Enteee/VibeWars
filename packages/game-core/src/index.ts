@@ -183,6 +183,7 @@ export {
   MatchSimulation,
 } from "./match/simulation.js";
 export type { CorpseCandidate } from "./match/corpses.js";
+export { creatureOwnerOf } from "./match/creature-id.js";
 export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
 export {
   MASTERLESS_TEAM,
