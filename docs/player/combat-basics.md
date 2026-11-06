@@ -86,6 +86,7 @@ Warriors and Paragons wear the most armor; Rangers, Assassins and
 Dervishes less; casters the least. Armor makes weapon, elemental, chaos
 and dark damage smaller. Holy, shadow and typeless damage, Health drains and life
 stealing ignore it. Only weapon hits can be critical.
+Some enchantments make their bearer immune to critical hits.
 
 ## Death, resurrection and morale
 

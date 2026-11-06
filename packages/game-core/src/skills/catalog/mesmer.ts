@@ -4770,4 +4770,50 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "mesmer.air-of-disenchantment",
+    name: "Air of Disenchantment",
+    gwId: 1656,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove one enchantment from target foe and all nearby foes. For
+    // 5...20 seconds, enchantments expire 150...300% faster on those foes"
+    // (#2373).
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        includesCentre: true,
+        maxTargets: undefined,
+        effects: [
+          { kind: "remove-status", category: "enchantment", count: 1 },
+          {
+            kind: "apply-status",
+            statusId: "air-of-disenchantment",
+            durationSeconds: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];

@@ -211,6 +211,8 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   moveSpeedMultiplier: true,
   reversesNextDamage: true,
   nextDamageReduction: true,
+  enchantmentsExpireFaster: true,
+  stancesExpireFaster: true,
 };
 
 /** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
@@ -790,6 +792,13 @@ export interface StatusDefinition {
    */
   readonly preventsCriticals: boolean;
   /**
+   * No blow on the bearer is a critical hit (#2373): Stone Sheath's
+   * "immune to critical hits", whatever the source. Unlike
+   * `ignoresCriticalDamage`, the blow is no crit for the attacker
+   * either, so nothing that rides a crit fires. The roll is still drawn.
+   */
+  readonly preventsCriticalHits: boolean;
+  /**
    * While it is up, its bearer projects this aura as a spirit does
    * (#2096): Protector's Defense's block for the allies adjacent to it.
    * `undefined`: none.
@@ -1035,6 +1044,12 @@ export interface StatusDefinition {
    * one already on the bearer ends as this one begins.
    */
   readonly immuneTo: readonly StatusId[];
+  /**
+   * Statuses that never land on the bearer, but unlike `immuneTo` one
+   * already on it keeps running (#2373): Frigid Armor's "cannot be set
+   * on fire". An apply or a spread is refused as `immuneTo` refuses it.
+   */
+  readonly refuses: readonly StatusId[];
   /**
    * Multiplier on the damage the bearer takes (#919): Frenzy's 1.6, Dark
    * Escape's 0.5. Applied to every damage packet after armor; health
@@ -1319,6 +1334,13 @@ export interface StatusDefinition {
   readonly conditionsExpireFaster: number;
   /** As `conditionsExpireFaster`, for its hexes (#2291): Peace and Harmony's 0.9. */
   readonly hexesExpireFaster: number;
+  /**
+   * As `conditionsExpireFaster`, for its enchantments (#2373), at the
+   * ranks it was put on with: Air of Disenchantment's 1.5...3.
+   */
+  readonly enchantmentsExpireFaster: StatusStat;
+  /** As `enchantmentsExpireFaster`, for its stances (#2373): Mark of Insecurity's. */
+  readonly stancesExpireFaster: StatusStat;
   /**
    * Multiplier on how long a hex takes to cast on the bearer (#944): Holy
    * Veil's 2. Read once, as the cast begins; an instant hex stays instant.
@@ -2724,6 +2746,12 @@ export class StatusSet {
     readonly ranks: ReadonlyMap<string, number>;
   }[] = [];
   readonly #spent: Set<string>;
+  /**
+   * How many seconds faster than real time each status has run out
+   * (#2373, `advance`), so its pulses keep real time. None once its
+   * remaining time is put back.
+   */
+  readonly #hastened = new WeakMap<ActiveStatus, number>();
 
   /**
    * `spent`: the match's `endsEverywhereWhenSpent` statuses spent this
@@ -3305,12 +3333,16 @@ export class StatusSet {
   /**
    * Whether a status on the bearer keeps `id` off it (#1455): Avatar of
    * Grenth's Disease, or any enchantment under Well of the Profane (#1732).
+   * Frigid Armor's `refuses` keeps Burning off too (#2373).
    */
   public isImmuneTo(id: StatusId): boolean {
     if (getStatusDefinition(id).category === "enchantment" && preventsEnchantments(this.active)) {
       return true;
     }
-    return this.active.some((status) => getStatusDefinition(status.id).immuneTo.includes(id));
+    return this.active.some((status) => {
+      const definition = getStatusDefinition(status.id);
+      return definition.immuneTo.includes(id) || definition.refuses.includes(id);
+    });
   }
 
   /**
@@ -3337,6 +3369,7 @@ export class StatusSet {
       existing.remainingSeconds = Math.max(existing.remainingSeconds, durationSeconds);
       // A bar is never over full.
       existing.durationSeconds = Math.max(existing.durationSeconds, existing.remainingSeconds);
+      this.#hastened.delete(existing);
       return;
     }
     this.#statuses.set(id, {
@@ -3492,6 +3525,7 @@ export class StatusSet {
       const definition = getStatusDefinition(status.id);
       if (definition.renewsOnBearerSpell || (atFoe && definition.renewsOnBearerSpellAtFoe)) {
         status.remainingSeconds = status.durationSeconds;
+        this.#hastened.delete(status);
       }
     }
   }
@@ -3505,6 +3539,7 @@ export class StatusSet {
     for (const status of this.#statuses.values()) {
       if (getStatusDefinition(status.id).renewsOnChantOrShoutEnd) {
         status.remainingSeconds = status.durationSeconds;
+        this.#hastened.delete(status);
       }
     }
     return this.triggersOn("bearer-chant-or-shout-ends");
@@ -4236,6 +4271,7 @@ export class StatusSet {
     for (const status of this.#statuses.values()) {
       if (getStatusDefinition(status.id).refreshesOnCritical) {
         status.remainingSeconds = status.durationSeconds;
+        this.#hastened.delete(status);
       }
     }
   }
@@ -4317,19 +4353,26 @@ export class StatusSet {
    * Advance all durations by `dt` seconds, dropping any that expire.
    * Returns the ids that expired on this tick so the caller can emit
    * end-of-status effects. Conditions run `conditionsExpireFaster`
-   * faster (#1464), hexes `hexesExpireFaster` (#2291), read as the tick
-   * begins.
+   * faster (#1464), hexes `hexesExpireFaster` (#2291), enchantments and
+   * stances theirs (#2373), read as the tick begins; their pulses keep
+   * real time.
    */
   public advance(dt: number, moving: boolean): StatusId[] {
     const expired: StatusId[] = [];
     const modifiers = aggregateModifiers(this.active);
-    const conditionDt = dt * (1 + modifiers.conditionsExpireFaster);
-    const hexDt = dt * (1 + modifiers.hexesExpireFaster);
+    const categoryRate: Readonly<Partial<Record<StatusCategory, number>>> = {
+      condition: 1 + modifiers.conditionsExpireFaster,
+      hex: 1 + modifiers.hexesExpireFaster,
+      enchantment: 1 + modifiers.enchantmentsExpireFaster,
+      stance: 1 + modifiers.stancesExpireFaster,
+    };
     for (const status of this.#statuses.values()) {
-      this.#pulse(status, dt);
-      const category = getStatusDefinition(status.id).category;
-      status.remainingSeconds -=
-        category === "condition" ? conditionDt : category === "hex" ? hexDt : dt;
+      const rate = categoryRate[getStatusDefinition(status.id).category] ?? 1;
+      this.#pulse(status, dt, rate);
+      status.remainingSeconds -= dt * rate;
+      if (rate !== 1 && Number.isFinite(status.remainingSeconds)) {
+        this.#hastened.set(status, (this.#hastened.get(status) ?? 0) + dt * (rate - 1));
+      }
       if (status.remainingSeconds > 0) {
         continue;
       }
@@ -4337,6 +4380,7 @@ export class StatusSet {
       if (moving && renews !== undefined) {
         status.remainingSeconds = renews;
         status.durationSeconds = renews;
+        this.#hastened.delete(status);
       } else {
         expired.push(status.id);
       }
@@ -4347,25 +4391,24 @@ export class StatusSet {
 
   /**
    * Record the pulses of `status` that fall due in the next `dt` (#1501):
-   * one at each whole second since it was applied, none past its
-   * duration, so one ending between pulses deals no partial one.
+   * one at each whole second since it was applied, none past its end,
+   * so one ending between pulses deals no partial one. It runs out
+   * `rate` times as fast as real time (#2373), its pulses at real time.
    */
-  #pulse(status: ActiveStatus, dt: number): void {
+  #pulse(status: ActiveStatus, dt: number, rate: number): void {
     // A projected one keeps its own clock (#2275): it has no duration.
     const before =
       status.projected === null
-        ? status.durationSeconds - status.remainingSeconds
+        ? status.durationSeconds - status.remainingSeconds - (this.#hastened.get(status) ?? 0)
         : status.projected.ageSeconds;
     if (status.projected !== null) {
       status.projected.ageSeconds += dt;
     }
+    const until = before + Math.min(dt, status.remainingSeconds / rate);
     const every = getStatusDefinition(status.id).pulse?.everySeconds;
     if (every !== undefined) {
       // As below, in steps of `every` (#2187).
-      const due = Math.min(
-        Math.floor((before + dt) / every + PULSE_EPSILON),
-        Math.floor(status.durationSeconds / every + PULSE_EPSILON),
-      );
+      const due = Math.floor(until / every + PULSE_EPSILON);
       for (let k = Math.floor(before / every + PULSE_EPSILON) + 1; k <= due; k += 1) {
         this.#effectPulses.push({ id: status.id, sourceId: status.sourceId, ranks: status.ranks });
       }
@@ -4374,10 +4417,7 @@ export class StatusSet {
     if (pulse === undefined) {
       return;
     }
-    const last = Math.min(
-      Math.floor(before + dt + PULSE_EPSILON),
-      Math.floor(status.durationSeconds + PULSE_EPSILON),
-    );
+    const last = Math.floor(until + PULSE_EPSILON);
     for (let k = Math.floor(before + PULSE_EPSILON) + 1; k <= last; k += 1) {
       this.#pulses.push({
         id: status.id,
@@ -4613,6 +4653,10 @@ export interface StatusModifiers {
   readonly conditionsExpireFaster: number;
   /** Every status's, summed (#2291). */
   readonly hexesExpireFaster: number;
+  /** Every status's, summed (#2373). */
+  readonly enchantmentsExpireFaster: number;
+  /** Every status's, summed (#2373). */
+  readonly stancesExpireFaster: number;
   /** Every status's, multiplied (#944). */
   readonly incomingHexCastTimeMultiplier: number;
   /** Every status's, multiplied (#1955). */
@@ -4631,6 +4675,8 @@ export interface StatusModifiers {
   readonly ignoresCriticalDamage: boolean;
   /** Any status's (#2212). */
   readonly preventsCriticals: boolean;
+  /** Any status's (#2373). */
+  readonly preventsCriticalHits: boolean;
 }
 
 /**
@@ -4742,6 +4788,8 @@ export function aggregateModifiers(
   let uninterruptible = false;
   let conditionsExpireFaster = 0;
   let hexesExpireFaster = 0;
+  let enchantmentsExpireFaster = 0;
+  let stancesExpireFaster = 0;
   let spellRechargeKept = 1;
   let skillRechargeKept = 1;
   let bindingRitualRechargeKept = 1;
@@ -4754,6 +4802,7 @@ export function aggregateModifiers(
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
   let preventsCriticals = false;
+  let preventsCriticalHits = false;
   const ofCategory = (category: StatusCategory): number =>
     statuses.filter((status) => getStatusDefinition(status.id).category === category).length;
   const enchantments = ofCategory("enchantment");
@@ -4862,6 +4911,8 @@ export function aggregateModifiers(
     uninterruptible ||= def.uninterruptible;
     conditionsExpireFaster += def.conditionsExpireFaster;
     hexesExpireFaster += def.hexesExpireFaster;
+    enchantmentsExpireFaster += statAt(def.enchantmentsExpireFaster, ranks);
+    stancesExpireFaster += statAt(def.stancesExpireFaster, ranks);
     spellRechargeKept *= 1 - def.spellRechargeFaster;
     skillRechargeKept *= 1 - def.skillRechargeFaster;
     bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
@@ -4874,6 +4925,7 @@ export function aggregateModifiers(
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
     preventsCriticals ||= def.preventsCriticals;
+    preventsCriticalHits ||= def.preventsCriticalHits;
   }
 
   return {
@@ -4918,6 +4970,8 @@ export function aggregateModifiers(
     uninterruptible,
     conditionsExpireFaster,
     hexesExpireFaster,
+    enchantmentsExpireFaster,
+    stancesExpireFaster,
     incomingHexCastTimeMultiplier,
     incomingAllySpellCastTimeMultiplier,
     criticalChanceBonus,
@@ -4927,6 +4981,7 @@ export function aggregateModifiers(
     damageFromSpiritAttacks,
     ignoresCriticalDamage,
     preventsCriticals,
+    preventsCriticalHits,
   };
 }
 
