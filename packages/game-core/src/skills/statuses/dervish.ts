@@ -55,7 +55,10 @@ export type DervishStatusId =
   // Staples (#2368).
   | "mystic-corruption"
   // Staples (#2413).
-  | "meditation";
+  | "meditation"
+  // Mechanics (#2438).
+  | "harriers-grasp"
+  | "pious-renewal";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -310,6 +313,62 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       ],
       skillId: "dervish.harriers-haste",
     },
+  }),
+  // PvP: "melee attacks against moving foes also Cripple those foes for
+  // 2...9 seconds. This enchantment ends after you apply Cripple 1...3
+  // times" (#2438), each at the bearer's Wind Prayers as it landed.
+  "harriers-grasp": define("harriers-grasp", "Harrier's Grasp", "enchantment", {
+    profession: "dervish",
+    endsAfterTriggers: {
+      scaling: { attributeId: "dervish.wind-prayers", atZero: 1, atTwelve: 2.6 },
+    },
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "melee",
+      weaponDamage: undefined,
+      atSourceRanks: false,
+      spendsTrigger: true,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-moving" },
+          effects: [
+            {
+              kind: "apply-status",
+              statusId: "crippled",
+              durationSeconds: {
+                scaling: { attributeId: "dervish.wind-prayers", atZero: 2, atTwelve: 7.6 },
+              },
+            },
+          ],
+        },
+      ],
+      skillId: "dervish.harriers-grasp",
+    },
+  }),
+  // "For 8 seconds, nothing happens. When this enchantment ends, Pious
+  // Renewal is recharged and you gain 0...5 Energy and 0...30 Health"
+  // (#2438), at the bearer's Mysticism; removed early, it still pays.
+  "pious-renewal": define("pious-renewal", "Pious Renewal", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          { kind: "recharge-reset" },
+          {
+            kind: "energy-gain",
+            amount: { scaling: { attributeId: "dervish.mysticism", atZero: 0, atTwelve: 4 } },
+          },
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "dervish.mysticism", atZero: 0, atTwelve: 24 } },
+          },
+        ],
+        target: "bearer",
+        skillId: "dervish.pious-renewal",
+      },
+    ],
   }),
   // "You have +100 Health, +30 elemental armor, and your attacks deal earth
   // damage. Whenever you lose a Dervish enchantment you lose 2 conditions"

@@ -863,6 +863,13 @@ function applyRiders(
       surroundings,
     });
     sourcePaysForRemoved(rider, attacker.statuses.get(status.id)?.sourceId, surroundings, events);
+    if (
+      rider.spendsTrigger === true &&
+      events.some((event) => event.kind === "status-applied" && event.targetId === victim.id) &&
+      attacker.statuses.spendTrigger(status.id)
+    ) {
+      events.push({ kind: "status-expired", targetId: attacker.id, statusId: status.id });
+    }
     if (events.length > 0) {
       fired.push({ sourceId: attacker.id, skillId: rider.skillId, events });
     }
@@ -1544,7 +1551,9 @@ export function resolveAttackSkillOutcome(
         ? []
         : land({ ...resolution, skill: { ...skill, effects }, targets }, events.slice(since));
     events.push(
-      ...(hit.length === 0 ? [] : land({ ...resolution, targets: hit }, events.slice(since))),
+      ...(hit.length === 0
+        ? []
+        : land({ ...resolution, targets: hit, targetsHit: hit.length }, events.slice(since))),
       ...riders(rule?.onCritical ?? [], critical),
       ...riders(rule?.onBlocked ?? [], blocked),
       ...riders(rule?.onFailedToHit ?? [], failed),

@@ -673,6 +673,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   meditation: icon("meditation"),
   "sharpen-daggers": icon("sharpen-daggers"),
   "binding-chains": icon("binding-chains"),
+  // Mechanics (#2438).
+  "mantra-of-signets": icon("mantra-of-signets"),
+  "harriers-grasp": icon("harriers-grasp"),
+  "pious-renewal": icon("pious-renewal"),
+  "glyph-of-restoration": icon("glyph-of-restoration"),
   // Refusals, crit immunity and faster expiry (#2373).
   "frigid-armor": icon("frigid-armor"),
   "stone-sheath": icon("stone-sheath"),

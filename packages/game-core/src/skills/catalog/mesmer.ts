@@ -4816,4 +4816,40 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "mesmer.mantra-of-signets",
+    name: "Mantra of Signets",
+    gwId: 18,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "For 10...40 seconds, you have +3 armor for each signet you have
+    // equipped" (#2438): 34 s, its rank-12 value; no signet, no armor.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mantra-of-signets",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 10, atTwelve: 34 },
+        },
+        stacksPer: { kind: "bar-skills", type: "signet" },
+      },
+    ],
+  },
 ];

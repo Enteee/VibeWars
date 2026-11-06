@@ -5831,6 +5831,34 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "elementalist.glyph-of-restoration",
+    name: "Glyph of Restoration",
+    gwId: 1376,
+    type: "glyph",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 15 seconds, your next 2 spells heal you" (#2438).
+    effects: [
+      { kind: "apply-status", statusId: "glyph-of-restoration", durationSeconds: { flat: 15 } },
+    ],
+  },
 ];
 
 /**

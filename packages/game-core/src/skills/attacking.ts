@@ -1,6 +1,6 @@
 import { getSkill } from "./catalog.js";
 import { resolvedBar } from "./cast-state.js";
-import { isSpell, type Combatant } from "./types.js";
+import { isSpell, type Combatant, type SkillType } from "./types.js";
 
 /**
  * Whether `combatant` is attacking, as GW1 counts it: swinging at a foe,
@@ -31,11 +31,13 @@ export function isCastingSpell(combatant: Combatant): boolean {
 }
 
 /**
- * Slots of `combatant`'s bar whose skill now is a signet (#1206), an
- * echoed slot's copy counted rather than the build's: Artificer's test.
+ * Slots of `combatant`'s bar whose skill now is of `type` (#1206), an
+ * echoed slot's copy counted rather than the build's: Artificer's
+ * signet test, Mantra of Signets' "for each signet you have equipped"
+ * (#2438).
  */
-export function signetsOnBar(combatant: Combatant): number {
+export function skillsOnBar(combatant: Combatant, type: SkillType): number {
   return resolvedBar(combatant.skillBar, combatant.cast).filter(
-    (slot) => slot !== null && getSkill(slot.skillId)?.type === "signet",
+    (slot) => slot !== null && getSkill(slot.skillId)?.type === type,
   ).length;
 }

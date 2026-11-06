@@ -94,7 +94,9 @@ export type MesmerStatusId =
   | "mantra-of-inscriptions"
   | "air-of-disenchantment"
   // Staples (#2367).
-  | "shared-burden";
+  | "shared-burden"
+  // Mechanics (#2438).
+  | "mantra-of-signets";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -225,6 +227,29 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   "mantra-of-flame": elementMantra("mantra-of-flame", "Mantra of Flame", "fire"),
   "mantra-of-frost": elementMantra("mantra-of-frost", "Mantra of Frost", "cold"),
   "mantra-of-lightning": elementMantra("mantra-of-lightning", "Mantra of Lightning", "lightning"),
+  // PvP: "you have +3 armor for each signet you have equipped. Whenever you
+  // use a signet, you gain 5...60 Health" (#2438): one stack a signet,
+  // counted as it lands; the heal at the bearer's Inspiration Magic.
+  "mantra-of-signets": define("mantra-of-signets", "Mantra of Signets", "stance", {
+    profession: "mesmer",
+    armorModifier: 3,
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { type: "signet" },
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 5, atTwelve: 49 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "mesmer.mantra-of-signets",
+      },
+    ],
+  }),
 
   // Mesmer Illusion Magic (#1228), each at its rank-12 values.
   // "...target foe experiences -5 Health degeneration."
