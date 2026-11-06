@@ -26,10 +26,6 @@ import { IMPLEMENTED_SKILLS } from "./catalog.js";
  */
 export type MissingMechanic =
   | "unwritten"
-  | "renew-on-event"
-  | "while-under-more-stats"
-  | "own-skill-energy-percent"
-  | "own-skill-filter-ext"
   | "vs-source-attack-mods"
   | "recharge-others-by-type"
   | "rank-scale-fixed-field"
@@ -56,12 +52,6 @@ export type MissingMechanic =
 export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, string>> =
   Object.freeze({
     unwritten: "not a mechanic: the engine has every piece, only the catalog entry is missing",
-    "renew-on-event": "a status returns to full duration when an event happens",
-    "while-under-more-stats":
-      "while you are under a kind of effect, you gain damage or move faster",
-    "own-skill-energy-percent": "your skills of a kind cost a percentage less Energy",
-    "own-skill-filter-ext":
-      "a bonus to your own skills filtered by a type the engine cannot name yet (half range, self target)",
     "vs-source-attack-mods": "the target's attacks against the caster are changed",
     "recharge-others-by-type": "other skills of a type recharge faster or instantly",
     "rank-scale-fixed-field": "a field the engine keeps fixed scales with attribute rank",
@@ -108,13 +98,11 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     950: ["vs-source-attack-mods"], // Shadowy Burden
     990: ["count-disabled-own-skills"], // Expunge Enchantments
     1030: ["double-strike-bonus"], // Locust's Fury
-    1055: ["renew-on-event"], // Recurring Insecurity
     1056: ["unwritten"], // Kitah's Burden
     1088: ["count-overcast"], // Second Wind
     1091: ["unwritten"], // Double Dragon
     1093: ["unwritten"], // Teinai's Heat
     1119: ["unwritten"], // Karei's Healing Circle
-    1220: ["own-skill-energy-percent"], // Attuned Was Songkai
     1223: ["recharge-others-by-type"], // Anguished Was Lingwah
     1228: ["nearest-spirit-energy-drain"], // Spirit Siphon
     1244: ["while-near-spirit"], // Ghostly Haste
@@ -123,24 +111,17 @@ export const UNIMPLEMENTED_REASONS: Readonly<Record<number, readonly MissingMech
     1372: ["unwritten"], // Sandstorm
     1391: ["unwritten"], // Supportive Spirit
     1395: ["knockdown-offender"], // Balthazar's Pendulum
-    1474: ["renew-on-event"], // Storm's Embrace
     1482: ["recharge-others-by-type", "destroy-own-spirits"], // Reclaim Essence
     1493: ["transfer-conditions-to-area"], // Grenth's Fingers
-    1505: ["renew-on-event"], // Vow of Piety
     1515: ["source-condition-damage-reduction"], // Armor of Sanctity
     1542: ["interrupt-guard-strip-enchantment"], // Pious Concentration
     1586: ["damage-per-second-cap"], // Angelic Protection
-    1638: ["own-skill-filter-ext"], // Deadly Haste
     1658: ["unwritten"], // Symbolic Posture
-    1736: ["while-under-more-stats"], // Spirit's Strength
-    1739: ["own-skill-energy-percent"], // Renewing Memories
     1757: ["spell-damage-taken-multiplier"], // Veil of Thorns
     1760: ["weapon-element"], // Ebon Dust Aura
     2060: ["unwritten"], // Glyph of Immolation
     2187: ["weapon-filter-negation"], // Way of the Master
     2189: ["unwritten"], // Angorodon's Gaze
-    2196: ["while-under-more-stats"], // Soldier's Speed
-    2200: ["own-skill-filter-ext"], // Signet of Mystic Speed
   });
 
 /** A corpus skill as coverage needs it: its GW1 id and name. */

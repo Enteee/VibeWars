@@ -278,6 +278,8 @@ describe("status definitions", () => {
       "watchful-healing": 3.4,
       "hexers-vigor": 6.6,
       "mark-of-insecurity": -4.2,
+      "recurring-insecurity": -5,
+      "vow-of-piety": 3.4,
     });
   });
 
@@ -1670,8 +1672,8 @@ describe("onAttackBlocked (#1974)", () => {
 
 describe("StatusSet.castSpell (#1614, #2132)", () => {
   it("renews Lyssa's Aura only for a spell at a foe, and Kinetic Armor for any", () => {
-    expect(getStatusDefinition("lyssas-aura").renewsOnBearerSpellAtFoe).toBe(true);
-    expect(getStatusDefinition("kinetic-armor").renewsOnBearerSpellAtFoe).toBe(false);
+    expect(getStatusDefinition("lyssas-aura").renewsOn).toEqual(["bearer-casts-spell-at-foe"]);
+    expect(getStatusDefinition("kinetic-armor").renewsOn).toEqual(["bearer-casts-spell"]);
     const set = new StatusSet();
     set.apply("lyssas-aura", 10, "m", NO_RANKS);
     set.apply("kinetic-armor", 12, "m", NO_RANKS);
@@ -1777,7 +1779,7 @@ describe("scaled damage reduction, a slow under a boost bar, an elemental trigge
     const set = new StatusSet();
     set.apply("ward-of-weakness", 1, "e", NO_RANKS);
     set.apply("mark-of-pain", 10, "n", NO_RANKS);
-    set.recordElementalDamage();
+    set.recordElementalDamage(10);
     set.recordPhysicalDamage();
     expect(set.drainChanges().map(({ kind }) => kind)).toEqual([
       "took-elemental-damage",

@@ -459,7 +459,7 @@ function landDamage(
   if (isPhysicalDamage(type)) {
     target.statuses.recordPhysicalDamage();
   } else if (isElementalDamage(type)) {
-    target.statuses.recordElementalDamage();
+    target.statuses.recordElementalDamage(applied);
   }
   recordFromFoe(target, dealer, type, applied);
   recordHealthDrop(target, dealer, before);

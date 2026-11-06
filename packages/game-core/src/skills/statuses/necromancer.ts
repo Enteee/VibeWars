@@ -291,6 +291,8 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       healthPips: 0,
       armorModifier: 0,
       attackMissChance: 0.5,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1,
     },
   }),
   // "...whenever a foe in the well takes physical damage, that foe has
@@ -1098,6 +1100,8 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       healthPips: -4,
       armorModifier: 0,
       attackMissChance: 0,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1,
     },
     triggers: (["shout", "chant"] as const).map((type) => ({
       on: "bearer-uses-skill" as const,

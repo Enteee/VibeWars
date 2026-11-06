@@ -330,7 +330,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     profession: "paragon",
     attackDurationMultiplier: 0.75,
     armorModifier: -20,
-    renewsOnChantOrShoutEnd: true,
+    renewsOn: ["chant-or-shout-ends"],
   }),
   "blazing-finale": define("blazing-finale", "Blazing Finale", "echo", {
     profession: "paragon",
@@ -367,7 +367,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
       ],
       skillId: "paragon.burning-refrain",
     },
-    renewsOnChantOrShoutEnd: true,
+    renewsOn: ["chant-or-shout-ends"],
   }),
   "enduring-harmony": define("enduring-harmony", "Enduring Harmony", "echo", {
     profession: "paragon",
@@ -394,12 +394,12 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
   "hasty-refrain": define("hasty-refrain", "Hasty Refrain", "echo", {
     profession: "paragon",
     moveSpeedMultiplier: 1.25,
-    renewsOnChantOrShoutEnd: true,
+    renewsOn: ["chant-or-shout-ends"],
   }),
   "mending-refrain": define("mending-refrain", "Mending Refrain", "echo", {
     profession: "paragon",
     healthPips: 3,
-    renewsOnChantOrShoutEnd: true,
+    renewsOn: ["chant-or-shout-ends"],
   }),
   "purifying-finale": define("purifying-finale", "Purifying Finale", "echo", {
     profession: "paragon",
@@ -417,7 +417,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
   "bladeturn-refrain": define("bladeturn-refrain", "Bladeturn Refrain", "echo", {
     profession: "paragon",
     conditionalArmor: [{ amount: 34, conditions: [{ kind: "vs-type", type: "slashing" }] }],
-    renewsOnChantOrShoutEnd: true,
+    renewsOn: ["chant-or-shout-ends"],
   }),
   // "...whenever a shout or chant ends on target non-spirit ally, that
   // ally gains 1...2 Energy": 2.
@@ -446,6 +446,8 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
       healthPips: 0,
       armorModifier: 0,
       attackMissChance: 0,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1,
     },
   }),
 

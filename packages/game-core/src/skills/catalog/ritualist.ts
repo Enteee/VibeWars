@@ -3771,6 +3771,115 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     ],
   },
   /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2501)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ritualist.spirits-strength",
+    name: "Spirit's Strength",
+    gwId: 1736,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 15...60 seconds, your attacks deal 5...35 more damage while
+    // under the effects of a weapon spell": 51 s at 12; the damage is the
+    // enchantment's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "spirits-strength",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 15, atTwelve: 51 },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.attuned-was-songkai",
+    name: "Attuned Was Songkai",
+    gwId: 1220,
+    type: "item-spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Hold Songkai's ashes for up to 45 seconds. While you hold her
+    // ashes, your spells and binding rituals cost -5...50% of the base
+    // Energy to cast": the cut is the ashes'.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "attuned-was-songkai",
+        durationSeconds: { flat: 45 },
+      },
+    ],
+  },
+  {
+    id: "ritualist.renewing-memories",
+    name: "Renewing Memories",
+    gwId: 1739,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, while holding an item, any weapon and item
+    // spells you cast cost 5...35% less Energy": 17 s at 12; the cut is
+    // the enchantment's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "renewing-memories",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
   /* Unwritten corpus skills (#2500)                                        */
   /* ---------------------------------------------------------------------- */
   // An item spell as Protective Was Kaolai: the drop is the item status's.

@@ -4365,4 +4365,42 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Mechanics (#2501)                                                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.deadly-haste",
+    name: "Deadly Haste",
+    gwId: 1638,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...35 seconds, half-ranged spells cast 5...50% faster and
+    // recharge 5...60% faster": 30 s at 12; the rest is the enchantment's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "deadly-haste",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.critical-strikes", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
+  },
 ];

@@ -84,6 +84,10 @@ export type RitualistStatusId =
   | "soul-twisting"
   // Mechanics (#2479).
   | "death-pact-signet"
+  // Mechanics (#2501).
+  | "spirits-strength"
+  | "attuned-was-songkai"
+  | "renewing-memories"
   // Unwritten corpus skills (#2500).
   | "lively-was-naomei"
   | "vocal-was-sogolon"
@@ -573,6 +577,8 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       },
       armorModifier: 24,
       attackMissChance: 0,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1,
     },
   }),
   // "...target other ally's next attack cannot be blocked": Guiding
@@ -973,6 +979,72 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
   "death-pact-signet": define("death-pact-signet", "Death Pact Signet", "skill-effect", {
     profession: "ritualist",
     killsSourceOnDeath: true,
+  }),
+  // "Your attacks deal 5...35 more damage while under the effects of a
+  // weapon spell" (#2501): 29 at 12.
+  "spirits-strength": define("spirits-strength", "Spirit's Strength", "enchantment", {
+    profession: "ritualist",
+    whileUnder: {
+      categories: ["weapon-spell"],
+      statusIds: [],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: 0,
+      armorModifier: 0,
+      attackMissChance: 0,
+      attackDamageDelta: {
+        scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 29 },
+      },
+      moveSpeedMultiplier: 1,
+    },
+  }),
+  // "While you hold her ashes, your spells and binding rituals cost
+  // -5...50% of the base Energy to cast" (#2501): 41% at 12.
+  "attuned-was-songkai": define("attuned-was-songkai", "Attuned Was Songkai", "item", {
+    profession: "ritualist",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "spell" },
+        {
+          energyPercentOff: {
+            scaling: { attributeId: "ritualist.spawning-power", atZero: 0.05, atTwelve: 0.41 },
+          },
+        },
+      ),
+      ownSkills(
+        { type: "binding-ritual" },
+        {
+          energyPercentOff: {
+            scaling: { attributeId: "ritualist.spawning-power", atZero: 0.05, atTwelve: 0.41 },
+          },
+        },
+      ),
+    ],
+  }),
+  // "While holding an item, any weapon and item spells you cast cost
+  // 5...35% less Energy" (#2501): 29% at 12.
+  "renewing-memories": define("renewing-memories", "Renewing Memories", "enchantment", {
+    profession: "ritualist",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "weapon-spell" },
+        {
+          energyPercentOff: {
+            scaling: { attributeId: "ritualist.spawning-power", atZero: 0.05, atTwelve: 0.29 },
+          },
+          whileHoldingItem: true,
+        },
+      ),
+      ownSkills(
+        { type: "item-spell" },
+        {
+          energyPercentOff: {
+            scaling: { attributeId: "ritualist.spawning-power", atZero: 0.05, atTwelve: 0.29 },
+          },
+          whileHoldingItem: true,
+        },
+      ),
+    ],
   }),
   // Unwritten corpus skills (#2500). "When you drop her ashes, all party
   // members in the area are resurrected with 15...75% Health and zero

@@ -716,6 +716,16 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "we-shall-return": icon("we-shall-return"),
   "lyssas-haste": icon("lyssas-haste"),
   "shadow-shroud": icon("shadow-shroud"),
+  // Mechanics (#2501).
+  "recurring-insecurity": icon("recurring-insecurity"),
+  "storms-embrace": icon("storms-embrace"),
+  "vow-of-piety": icon("vow-of-piety"),
+  "signet-of-mystic-speed": icon("signet-of-mystic-speed"),
+  "spirits-strength": icon("spirits-strength"),
+  "attuned-was-songkai": icon("attuned-was-songkai"),
+  "renewing-memories": icon("renewing-memories"),
+  "soldiers-speed": icon("soldiers-speed"),
+  "deadly-haste": icon("deadly-haste"),
   // Unwritten skills (#2500).
   "lively-was-naomei": icon("lively-was-naomei"),
   "vocal-was-sogolon": icon("vocal-was-sogolon"),

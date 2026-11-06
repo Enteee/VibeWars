@@ -30,6 +30,7 @@ import {
   type NextSkill,
   type NextSkillRule,
   type OwnSkillModifier,
+  type RenewEvent,
   type StatusCategory,
   type StatusConditionalArmor,
   type StatusDefinition,
@@ -323,6 +324,24 @@ function attributeDeltaText({ scope, amount }: AttributeDelta): string {
 /** `n` with its sign, a minus as GW1 prints it: "+3", "−66". */
 function signed(n: number): string {
   return n > 0 ? `+${String(n)}` : `−${String(-n)}`;
+}
+
+/** What renews a status (#2501), as "renewed whenever you cast a spell". */
+function renewText(event: RenewEvent, selfOnly: boolean): string {
+  const you = (self: string, other: string): string => (selfOnly ? self : other);
+  switch (event) {
+    case "chant-or-shout-ends":
+      return `renewed whenever a chant or shout ends on ${you("you", "it")}`;
+    case "bearer-casts-spell":
+      return `renewed whenever ${you("you cast", "it casts")} a spell`;
+    // Lyssa's Aura's (#2132).
+    case "bearer-casts-spell-at-foe":
+      return `reapplied whenever ${you("you cast", "it casts")} a spell on a foe`;
+    case "bearer-takes-elemental-damage":
+      return `renewed whenever ${you("you take", "it takes")} elemental damage`;
+    case "bearer-enchantment-ends":
+      return `renewed whenever an enchantment on ${you("you", "it")} ends`;
+  }
 }
 
 /**
@@ -1072,15 +1091,12 @@ function statusText(
   if (definition.sourceLosesHealth !== undefined) {
     parts.push(`its spirit loses ${String(definition.sourceLosesHealth)} health each time`);
   }
-  if (definition.renewsOnChantOrShoutEnd) {
-    parts.push(`renewed whenever a chant or shout ends on ${selfOnly ? "you" : "it"}`);
+  for (const event of definition.renewsOn) {
+    parts.push(renewText(event, selfOnly));
   }
-  if (definition.renewsOnBearerSpell) {
-    parts.push(`renewed whenever ${selfOnly ? "you cast" : "it casts"} a spell`);
-  }
-  // Lyssa's Aura's (#2132).
-  if (definition.renewsOnBearerSpellAtFoe) {
-    parts.push(`reapplied whenever ${selfOnly ? "you cast" : "it casts"} a spell on a foe`);
+  // Recurring Insecurity's (#2501).
+  if (definition.reappliesOnExpiryIf !== undefined) {
+    parts.push(`reapplied as it would end while ${selfOnly ? "you have" : "it has"} another hex`);
   }
   if (definition.chantShoutDurationMultiplier !== 1) {
     const longer = Math.round((definition.chantShoutDurationMultiplier - 1) * 100);
@@ -1097,8 +1113,19 @@ function statusText(
       healthPips,
       armorModifier,
       attackMissChance,
+      attackDamageDelta,
+      moveSpeedMultiplier,
     } = definition.whileUnder;
     const gains = [
+      // Spirit's Strength's and Soldier's Speed's (#2501).
+      ...(statAtTwelve(attackDamageDelta) === 0
+        ? []
+        : [
+            `attacks deal ${statText(attackDamageDelta, ranks, (n) => String(Math.abs(Math.round(n))))} ${statAtTwelve(attackDamageDelta) < 0 ? "less" : "more"} damage`,
+          ]),
+      ...(moveSpeedMultiplier === 1
+        ? []
+        : [`moves ${String(Math.round((moveSpeedMultiplier - 1) * 100))}% faster`]),
       ...(attackMissChance === 0
         ? []
         : [`${String(Math.round(attackMissChance * 100))}% of attacks miss`]),
@@ -2595,6 +2622,8 @@ function describeOwnSkillModifier(
     sparesDivineFavor,
     notEasilyInterrupted,
     overcastPerUse,
+    energyPercentOff,
+    whileHoldingItem,
     uses,
   }: OwnSkillModifier,
   ranks: ReadonlyMap<string, number> | undefined,
@@ -2612,6 +2641,10 @@ function describeOwnSkillModifier(
   const verb = (plural: string, singular: string): string => (one ? singular : plural);
   const changes = [
     energyBase === undefined ? undefined : `${verb("cost", "costs")} ${String(energyBase)} Energy`,
+    // Attuned Was Songkai's (#2501).
+    statAtTwelve(energyPercentOff) === 0
+      ? undefined
+      : `${verb("cost", "costs")} ${at(energyPercentOff, percent)} less Energy`,
     statAtTwelve(energyDiscount) === 0
       ? undefined
       : `${verb("cost", "costs")} ${at(energyDiscount, whole)} less Energy (minimum ${String(energyFloor)})`,
@@ -2620,10 +2653,13 @@ function describeOwnSkillModifier(
       : `${verb("cost", "costs")} ${at(energySurcharge, whole)} more Energy`,
     statAtTwelve(activationMultiplier) === 1
       ? undefined
-      : statAtTwelve(activationMultiplier) < 1
-        ? `${verb("cast", "casts")} ${at(activationMultiplier, (value) => percent(1 - value))} faster`
-        : // Rust's "take twice as long to activate" (#2289).
-          `${verb("take", "takes")} ${at(activationMultiplier, String)}× as long to cast`,
+      : // Signet of Mystic Speed's (#2501).
+        statAtTwelve(activationMultiplier) === 0
+        ? `${verb("cast", "casts")} instantly`
+        : statAtTwelve(activationMultiplier) < 1
+          ? `${verb("cast", "casts")} ${at(activationMultiplier, (value) => percent(1 - value))} faster`
+          : // Rust's "take twice as long to activate" (#2289).
+            `${verb("take", "takes")} ${at(activationMultiplier, String)}× as long to cast`,
     statAtTwelve(activationSecondsLess) === 0
       ? undefined
       : `${verb("cast", "casts")} ${at(activationSecondsLess, seconds)} faster`,
@@ -2662,10 +2698,18 @@ function describeOwnSkillModifier(
     one ? kind : kind === "hex" ? "hexes" : `${kind}s`,
     // Iron Mist's "spells that target a foe" (#2311).
     filter.targetsFoe ? (one ? "that targets a foe" : "that target a foe") : undefined,
+    // Signet of Mystic Speed's (#2501).
+    filter.targetsSelf ? (one ? "that targets you" : "that target you") : undefined,
   ].filter((word) => word !== undefined);
+  // Deadly Haste's "half-ranged spells" (#2501).
+  const ranged = filter.halfRange ? ["half-ranged", ...named] : named;
+  // Lyssa's Haste and the like are instant already (#2501).
+  const flash = filter.notFlash ? " (not flash enchantments)" : "";
+  // Renewing Memories' (#2501).
+  const holding = whileHoldingItem ? "while holding an item, " : "";
   const which =
     uses === undefined ? whose : one ? `${whose} next` : `${whose} next ${at(uses, whole)}`;
-  return `${which} ${named.join(" ")} ${changes.join(" and ")}`;
+  return `${holding}${which} ${ranged.join(" ")}${flash} ${changes.join(" and ")}`;
 }
 
 /** How a chant's next skill of a kind goes (#1505): "your next skill cannot be interrupted". */

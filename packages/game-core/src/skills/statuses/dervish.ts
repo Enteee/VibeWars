@@ -62,6 +62,9 @@ export type DervishStatusId =
   | "pious-renewal"
   // Mechanics (#2479).
   | "lyssas-haste"
+  // Mechanics (#2501).
+  | "vow-of-piety"
+  | "signet-of-mystic-speed"
   // Unwritten corpus skills (#2500).
   | "attackers-insight"
   | "shield-of-force";
@@ -853,6 +856,8 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       healthPips: 0,
       armorModifier: 10,
       attackMissChance: 0,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1,
     },
     triggers: [
       {
@@ -961,6 +966,33 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       },
     ],
   }),
+  // "You have +24 armor and +1...4 Health regeneration. Vow of Piety
+  // renews whenever an enchantment on you ends" (#2501): 3 pips at 12.
+  "vow-of-piety": define("vow-of-piety", "Vow of Piety", "enchantment", {
+    profession: "dervish",
+    armorModifier: 24,
+    healthPips: { scaling: { attributeId: "dervish.wind-prayers", atZero: 1, atTwelve: 3.4 } },
+    renewsOn: ["bearer-enchantment-ends"],
+  }),
+  // "Your next 1...3 self-targeting enchantments cast instantly. Flash
+  // enchantments do not consume uses of this skill" (#2501): 3 at 12.
+  "signet-of-mystic-speed": define(
+    "signet-of-mystic-speed",
+    "Signet of Mystic Speed",
+    "skill-effect",
+    {
+      profession: "dervish",
+      ownSkillModifiers: [
+        ownSkills(
+          { type: "enchantment", targetsSelf: true, notFlash: true },
+          {
+            activationMultiplier: 0,
+            uses: { scaling: { attributeId: "dervish.wind-prayers", atZero: 1, atTwelve: 2.6 } },
+          },
+        ),
+      ],
+    },
+  ),
   // "You have a 50% chance to block while attacking. When this enchantment
   // ends you inflict Weakness on all adjacent foes for 3...15 seconds"
   // (#2500): 12.6 s at rank 12, any end, a strip included, around the

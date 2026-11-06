@@ -74,7 +74,9 @@ export type WarriorStatusId =
   | "fear-me"
   | "burst-of-aggression"
   // Staples (#2406).
-  | "primal-rage";
+  | "primal-rage"
+  // Mechanics (#2501).
+  | "soldiers-speed";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -586,6 +588,8 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       healthPips: 0,
       armorModifier: 0,
       attackMissChance: 0,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1,
     },
   }),
   // "the next time you would be knocked down, you gain 1...4 strikes of
@@ -678,6 +682,23 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
     moveSpeedMultiplier: 1.33,
     damageTakenMultiplier: {
       scaling: { attributeId: "warrior.strength", atZero: 2, atTwelve: 1.6 },
+    },
+  }),
+  // "You move 15% faster. You move an additional 15% faster while under
+  // the effects of a chant or shout" (#2501).
+  "soldiers-speed": define("soldiers-speed", "Soldier's Speed", "stance", {
+    profession: "warrior",
+    moveSpeedMultiplier: 1.15,
+    whileUnder: {
+      categories: ["chant", "shout"],
+      statusIds: [],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: 0,
+      armorModifier: 0,
+      attackMissChance: 0,
+      attackDamageDelta: 0,
+      moveSpeedMultiplier: 1.15,
     },
   }),
 };

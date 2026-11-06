@@ -492,13 +492,20 @@ export function attackDamageDeltaOf(combatant: Combatant): number {
   const wielded = combatant.equipment.mainHand.weapon.id;
   const { active } = combatant.statuses;
   return active.reduce((sum, status) => {
-    const { attackDamageDelta, attackDamageDeltaWeapon } = getStatusDefinition(status.id);
+    const { attackDamageDelta, attackDamageDeltaWeapon, whileUnder } = getStatusDefinition(
+      status.id,
+    );
     if (isSuppressed(active, status)) {
       return sum;
     }
+    // Spirit's Strength's (#2501): only while under a weapon spell.
+    const under =
+      whileUnder !== undefined && isUnderAnother(active, status, whileUnder)
+        ? Math.round(statAt(whileUnder.attackDamageDelta, status.ranks))
+        : 0;
     return attackDamageDeltaWeapon === undefined || wieldsFor(wielded, attackDamageDeltaWeapon)
-      ? sum + Math.round(statAt(attackDamageDelta, status.ranks))
-      : sum;
+      ? sum + under + Math.round(statAt(attackDamageDelta, status.ranks))
+      : sum + under;
   }, 0);
 }
 
