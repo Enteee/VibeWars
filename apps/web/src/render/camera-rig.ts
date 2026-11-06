@@ -239,3 +239,14 @@ export function feedWheel(
   }
   return { state: { accumulated: 0, notchedAt: now }, notch: accumulated > 0 ? 1 : -1 };
 }
+
+/**
+ * `view` moved by less than half a CSS px on screen, so that the world
+ * lands on whole CSS px (#2393): left free, the camera puts the still map
+ * at a new sub-pixel offset every frame, and its thin lines shimmer.
+ */
+export function snapView(view: CameraView, canvas: Size): CameraView {
+  const snap = (centre: number, extent: number): number =>
+    (Math.round(centre * view.zoom - extent / 2) + extent / 2) / view.zoom;
+  return { x: snap(view.x, canvas.width), y: snap(view.y, canvas.height), zoom: view.zoom };
+}
