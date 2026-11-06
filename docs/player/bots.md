@@ -20,6 +20,16 @@ window and the match summary.
 Bots are made for one match: once it is over, the lobby lists its people
 again, and the next match's bots are made afresh.
 
+## How bots fight
+
+A bot plays the role its build gives it. One wielding a melee weapon is
+**frontline**: it closes in and attacks its target. One with two or more
+heals or protections it can cast on an ally is a **healer**: it stands
+behind whichever ally is hurt most, away from the foes. Every other bot is
+**ranged**: it keeps near the edge of its range, and steps back from a
+foe who comes too close, for a couple of seconds at a time, so a chase
+ends in a fight rather than going on forever.
+
 ## Random Arena
 
 A Random Arena has no bots: every place is a real player, and you wait

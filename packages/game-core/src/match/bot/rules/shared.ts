@@ -80,7 +80,6 @@ export const POSITION_SLACK = 40;
 /** A ranged bot or healer with a foe this close steps away (#2545). */
 export const KITE_DISTANCE = 100;
 
-
 /** How finely `reachable` tries the line back from a spot to the bot. */
 const REACHABLE_STEPS = 8;
 

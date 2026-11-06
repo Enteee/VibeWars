@@ -47,8 +47,18 @@ export function playBuild(
 ): BehaviourIntent {
   return paced(behaviour.thinkSeconds, cursor, context, () => {
     const foes = livingFoes(context);
-    cursor.role ??= botRole(skillsOf(context.self), context.self.combatant.equipment.mainHand.weapon.range);
-    return think(context, cursor, foes, livingMembers(context), teamTarget(context, foes), cursor.role);
+    cursor.role ??= botRole(
+      skillsOf(context.self),
+      context.self.combatant.equipment.mainHand.weapon.range,
+    );
+    return think(
+      context,
+      cursor,
+      foes,
+      livingMembers(context),
+      teamTarget(context, foes),
+      cursor.role,
+    );
   });
 }
 

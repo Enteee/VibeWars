@@ -38,7 +38,11 @@ const position: BotRule = {
       return undefined;
     }
     const spot =
-      rule.role === "ranged" ? holdSpot(rule) : rule.role === "healer" ? coverSpot(rule) : undefined;
+      rule.role === "ranged"
+        ? holdSpot(rule)
+        : rule.role === "healer"
+          ? coverSpot(rule)
+          : undefined;
     if (spot === undefined || distance(spot.point, self.position) <= POSITION_SLACK) {
       return undefined;
     }
