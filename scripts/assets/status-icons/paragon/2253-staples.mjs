@@ -1,4 +1,4 @@
-import { stroke } from "../../icon-kit.mjs";
+import { inset, stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
@@ -7,15 +7,25 @@ const rows = {
   "song-of-power": [
     "chant",
     (c) =>
-      `<path d="M13 4l-4 7h5l-3 6" ${stroke(c, 2)}/>` +
-      `<path d="M6 20v-3M12 20v-2M18 20v-4" ${stroke(c, 2)}/>`,
+      inset(
+        1,
+        `<path d="M13 4l-4 7h5l-3 6" ${stroke(c, 2)}/>` +
+          `<path d="M6 20v-3M12 20v-2M18 20v-4" ${stroke(c, 2)}/>`,
+        -2,
+        -2,
+      ),
   ],
   // Chant: a plus over a broken bar, healed the next time you are hit.
   "ballad-of-restoration": [
     "chant",
     (c) =>
-      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.4)}/>` +
-      `<path d="M5 17h5l2 2 2-2h5" ${stroke(c, 2)}/>`,
+      inset(
+        0.98,
+        `<path d="M12 4v8M8 8h8" ${stroke(c, 2.4)}/>` +
+          `<path d="M5 17h5l2 2 2-2h5" ${stroke(c, 2)}/>`,
+        -1,
+        -1.5,
+      ),
   ],
   // Shout: a flame behind a bar held across it, less damage from burning foes.
   "theyre-on-fire": [
