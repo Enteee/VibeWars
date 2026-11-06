@@ -9,7 +9,7 @@ import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
 import { applyEffects } from "../skills/effects.js";
 import { NO_RANKS, EXCLUSIVE_CATEGORIES, getStatusDefinition } from "../skills/status.js";
-import { makeCombatant } from "../skills/testing.js";
+import { makeCombatant, withStatusDefinitions } from "../skills/testing.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -318,6 +318,33 @@ describe("glyphs on the next spell (#1730)", () => {
     expect(e.cast.activeCast).toBeUndefined();
     expect(e.cast.rechargeTotal.get(FIREBALL)).toBe(7 + 30);
     expect(e.statuses.has("glyph-of-sacrifice")).toBe(false);
+  });
+
+  it("a scaled extra recharge reads its source's rank, rounded to whole seconds (#2502)", () => {
+    const sacrifice = getStatusDefinition("glyph-of-sacrifice");
+    const rule = sacrifice.nextSkillRule;
+    expect(rule?.extraRechargeSeconds).toBe(30);
+    if (rule === undefined) {
+      return;
+    }
+    withStatusDefinitions(
+      {
+        "glyph-of-sacrifice": {
+          nextSkillRule: {
+            ...rule,
+            extraRechargeSeconds: {
+              scaling: { attributeId: "elementalist.energy-storage", atZero: 30, atTwelve: 17.6 },
+            },
+          },
+        },
+      },
+      () => {
+        const match = glyphMatch(SACRIFICE);
+        cast(match, 0);
+        fireball(match);
+        expect(get(match, "e").combatant.cast.rechargeTotal.get(FIREBALL)).toBe(7 + 18);
+      },
+    );
   });
 
   it("Sacrifice ends, unspent, on a skill that is no spell; the signet goes as ever", () => {

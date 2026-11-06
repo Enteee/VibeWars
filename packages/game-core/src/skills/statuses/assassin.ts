@@ -65,7 +65,10 @@ export type AssassinStatusId =
   // Mechanics (#2479).
   | "shadow-shroud"
   // Mechanics (#2501).
-  | "deadly-haste";
+  | "deadly-haste"
+  // Mechanics (#2502).
+  | "siphon-strength"
+  | "shadowy-burden";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -615,5 +618,28 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
         },
       ),
     ],
+  }),
+  // "Target foe deals -5...50 damage with attacks and all of your attacks
+  // against that foe have an additional 50% chance of being a critical
+  // hit" (#2502): -41 at 12, the crit only for its own Assassin.
+  "siphon-strength": define("siphon-strength", "Siphon Strength", "hex", {
+    profession: "assassin",
+    attackDamageDelta: {
+      scaling: { attributeId: "assassin.deadly-arts", atZero: -5, atTwelve: -41 },
+    },
+    sourceAttacks: { criticalChanceBonus: 0.5, armorModifier: 0, onlyWhileNoOtherHex: false },
+  }),
+  // "Target foe moves 25% slower and while target foe has no other hexes,
+  // that foe has 20...30 less armor against your attacks" (#2502): -28 at 12.
+  "shadowy-burden": define("shadowy-burden", "Shadowy Burden", "hex", {
+    profession: "assassin",
+    moveSpeedMultiplier: 0.75,
+    sourceAttacks: {
+      criticalChanceBonus: 0,
+      armorModifier: {
+        scaling: { attributeId: "assassin.shadow-arts", atZero: -20, atTwelve: -28 },
+      },
+      onlyWhileNoOtherHex: true,
+    },
   }),
 };

@@ -321,3 +321,26 @@ describe("the skill texts (#1309)", () => {
     ]);
   });
 });
+
+describe("destroy-own-spirits (#2502)", () => {
+  const RECLAIM = "ritualist.reclaim-essence";
+
+  it("kills every spirit the caster made, however far, and no ally's or foe's", () => {
+    const sim = new MatchSimulation({
+      seed: "destroy-own-spirits",
+      participants: [
+        { ...spec("r", 0, vec2(0, 0)), skillBar: [RECLAIM] },
+        creature("near", "r", 0, vec2(50, 0)),
+        creature("far", "r", 0, vec2(5000, 0)),
+        creature("allys", "a", 0, vec2(60, 0)),
+        creature("foes", "f", 1, vec2(-60, 0)),
+        spec("a", 0, vec2(100, 0)),
+        spec("f", 1, vec2(3000, 3000)),
+      ],
+    });
+    const events = cast(sim, RECLAIM, undefined);
+    expect(destroyed(events).sort()).toEqual(["far", "near"]);
+    expect(sim.get("allys")).toBeDefined();
+    expect(sim.get("foes")).toBeDefined();
+  });
+});
