@@ -165,11 +165,12 @@ channels, as often as they like.
   5 min), and each holder mints that peer id alone a 1 h login and seals
   it to the joiner's key (ECDH, HKDF-SHA256, AES-256-GCM). The secret
   never leaves the holder, nothing on Nostr is a credential in plaintext
-  or under a key another invite holder has, and a holder holds logins for
-  at most 8 peer ids at once (seated or in a live admit); a minted login
-  cannot be revoked early. The holder's coturn must set `denied-peer-ip`
-  for private ranges, `no-loopback-peers`, `no-multicast-peers`, quotas
-  and a per-allocation `max-bps`. A seated guest ignores every seal
+  or under a key another invite holder has, and a holder seals for at most
+  8 peer ids at once (seated or in a live admit). A minted login cannot be
+  revoked early and outlives its slot, so that cap bounds seals, not valid
+  logins: what a lobby draws is bounded by the holder's coturn, which must
+  set `denied-peer-ip` for private ranges, `no-loopback-peers`,
+  `no-multicast-peers`, quotas and a per-allocation `max-bps`. A seated guest ignores every seal
   (#2248): the host tells it its login over the lobby, which only the
   host can, so a member's seal naming the host's relay with a junk login
   cannot replace the real one for a rejoin or a refresh. A first join is

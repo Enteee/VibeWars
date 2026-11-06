@@ -260,4 +260,24 @@ describe("a lobby host's relay asks (#2527)", () => {
     await settle();
     expect(wanted).toEqual([false, true, false]);
   });
+
+  it("counts an away member a member, and tells when one is gone for good", async () => {
+    const lobby = await openLobby();
+    const dropped = await lobby.join("Dropped");
+    const leaver = await lobby.join("Leaver");
+    const gone: string[] = [];
+    lobby.lobby.onMemberGone((peerId) => gone.push(peerId));
+    expect(lobby.lobby.isMember(dropped.transport.selfId)).toBe(true);
+    expect(lobby.lobby.isMember("stranger")).toBe(false);
+
+    await dropped.transport.leave();
+    await settle();
+    expect(lobby.lobby.isMember(dropped.transport.selfId)).toBe(true);
+    expect(gone).toEqual([]);
+
+    await leaver.connection.disconnect();
+    await settle();
+    expect(lobby.lobby.isMember(leaver.transport.selfId)).toBe(false);
+    expect(gone).toEqual([leaver.transport.selfId]);
+  });
 });

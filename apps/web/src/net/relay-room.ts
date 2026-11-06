@@ -22,26 +22,52 @@ export function relaySibling(room: LobbyRoom, attempt: number): LobbyRoom {
   return { ...room, roomId: `${room.roomId}/relay${String(attempt)}` };
 }
 
-/** Whether the host should sit in its relay rooms (`LobbyHost.onRelayRooms`), and when it changes. */
+/**
+ * Whether the host should sit in its relay rooms (`LobbyHost.onRelayRooms`),
+ * whether a peer is still a lobby member, an away one included, and when
+ * either changes.
+ */
 export interface RelayRoomsSource {
   wanted(): boolean;
+  member(peerId: string): boolean;
   onChange(handler: () => void): () => void;
 }
 
-/** A `RelayRoomsSource` set from outside, as the lobby host, made after the room, says. */
-export function relayRoomsSwitch(): RelayRoomsSource & { set(wanted: boolean): void } {
+/** The lobby host's half of a `RelayRoomsSource`. */
+export interface RelayRoomsHost {
+  isMember(peerId: string): boolean;
+  onMemberGone(handler: (peerId: string) => void): () => void;
+}
+
+/**
+ * A `RelayRoomsSource` set from outside, as the lobby host, made after the
+ * room, says: nobody is a member until it `follow`s that host.
+ */
+export function relayRoomsSwitch(): RelayRoomsSource & {
+  set(wanted: boolean): void;
+  follow(host: RelayRoomsHost): () => void;
+} {
   const handlers = new Set<() => void>();
   let on = false;
+  let isMember = (_peerId: string): boolean => false;
+  const tell = (): void => {
+    for (const handler of [...handlers]) {
+      handler();
+    }
+  };
   return {
     wanted: () => on,
+    member: (peerId) => isMember(peerId),
     set(wanted) {
       if (wanted === on) {
         return;
       }
       on = wanted;
-      for (const handler of [...handlers]) {
-        handler();
-      }
+      tell();
+    },
+    follow(host) {
+      isMember = (peerId) => host.isMember(peerId);
+      return host.onMemberGone(tell);
     },
     onChange(handler) {
       handlers.add(handler);
@@ -59,7 +85,8 @@ export interface SiblingRoomOptions {
   readonly joinSibling: (attempt: number) => Transport;
   /**
    * Whether relays are wanted: the host is in every sibling while they
-   * are, and in one a relayed member is seated through while it is.
+   * are, and in one a member was seated through while it is a member,
+   * away (#1764) included, so its rejoin there is heard.
    */
   readonly relayRooms: RelayRoomsSource;
 }
@@ -82,6 +109,8 @@ export function withSiblingRoom(options: SiblingRoomOptions): Transport {
   const seats = new Map<string, Transport>();
   /** The peers each room has heard join and not yet leave. */
   const present = new Map<Transport, Set<string>>();
+  /** The sibling each relayed member was last seated through. */
+  const cameThrough = new Map<string, Transport>();
   /** The siblings joined, by attempt. */
   const siblings = new Map<
     number,
@@ -126,6 +155,11 @@ export function withSiblingRoom(options: SiblingRoomOptions): Transport {
         return;
       }
       seats.set(peerId, transport);
+      if (transport === main) {
+        cameThrough.delete(peerId);
+      } else {
+        cameThrough.set(peerId, transport);
+      }
       if (held !== undefined) {
         handlers.left(peerId);
       }
@@ -156,6 +190,11 @@ export function withSiblingRoom(options: SiblingRoomOptions): Transport {
       off();
     }
     present.delete(transport);
+    for (const [peerId, through] of [...cameThrough]) {
+      if (through === transport) {
+        cameThrough.delete(peerId);
+      }
+    }
     for (const [peerId, seat] of [...seats]) {
       if (seat === transport) {
         unseat(peerId);
@@ -164,9 +203,18 @@ export function withSiblingRoom(options: SiblingRoomOptions): Transport {
     await transport.leave();
   };
 
-  /** Whether sibling `transport` holds a seat: it stays while it does, unless the lobby is left. */
-  const holdsSeat = (transport: Transport): boolean =>
-    [...seats.values()].some((seat) => seat === transport);
+  /**
+   * Whether sibling `transport` holds a seat, or a member seated through
+   * it may come back there: it stays while it does, unless the lobby is left.
+   */
+  const holdsSeat = (transport: Transport): boolean => {
+    for (const peerId of [...cameThrough.keys()]) {
+      if (!relayRooms.member(peerId)) {
+        cameThrough.delete(peerId);
+      }
+    }
+    return [...seats.values(), ...cameThrough.values()].some((seat) => seat === transport);
+  };
 
   /** Join or leave sibling `attempt` as `wanted` says, keeping one that holds a seat. */
   const applyOne = async (attempt: number, wanted: boolean): Promise<void> => {
@@ -248,6 +296,7 @@ export function withSiblingRoom(options: SiblingRoomOptions): Transport {
       }
       seats.clear();
       present.clear();
+      cameThrough.clear();
       await main.leave();
       handlers.clear();
     },

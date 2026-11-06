@@ -8,6 +8,7 @@ import {
   RELAY_REJOIN_MS,
   joinWithRelayOffers,
 } from "./relay-join.js";
+import { relayRoomsSwitch, withSiblingRoom } from "./relay-room.js";
 import type { RelayOffers } from "./transport/relay-offer.js";
 import type { RelayOffer } from "./transport/relay-seal.js";
 import type { TrysteroTransport } from "./transport/trystero.js";
@@ -403,5 +404,87 @@ describe("a relayed joiner's login, refreshed in place between maps (#2245)", ()
       { turn: NEWER, attempt: 1 },
     ]);
     await joiner.room.leave();
+  });
+
+  it("rejoins a dropped host through its sibling, which the host keeps for an away member (#1764)", async () => {
+    const networks = Array.from({ length: MAX_RELAY_ATTEMPTS + 1 }, () => createMemoryNetwork());
+    const network = (attempt: number) => {
+      const found = networks[attempt];
+      if (found === undefined) {
+        throw new Error(`no room for attempt ${String(attempt)}`);
+      }
+      return found;
+    };
+    // The host's half: in every sibling while relays are wanted, and the
+    // lobby's members, away ones included, as its lobby host says.
+    const members = new Set<string>();
+    const gone = new Set<(peerId: string) => void>();
+    const relayRooms = relayRoomsSwitch();
+    relayRooms.follow({
+      isMember: (peerId) => members.has(peerId),
+      onMemberGone: (handler) => {
+        gone.add(handler);
+        return () => {
+          gone.delete(handler);
+        };
+      },
+    });
+    relayRooms.set(true);
+    const host = withSiblingRoom({
+      main: network(0).join("host"),
+      joinSibling: (attempt) => network(attempt).join("host"),
+      relayRooms,
+    });
+    const heard: string[] = [];
+    host.onPeerJoin((peerId) => {
+      heard.push(`+${peerId}`);
+      members.add(peerId);
+    });
+    host.onPeerLeave((peerId) => {
+      heard.push(`-${peerId}`);
+    });
+    // The joiner's half: its direct join never reaches the host.
+    network(0).partition("guest", "host");
+    const fake = fakeOffers();
+    const joins: Join[] = [];
+    const room = joinWithRelayOffers({
+      selfId: "guest",
+      join: (turn, attempt): TrysteroTransport => {
+        joins.push({ turn, attempt });
+        return { ...network(attempt).join("guest"), swapIceServers: () => undefined };
+      },
+      offers: fake.offers,
+      ownRelay: false,
+    });
+    fake.open(offer("a", 1));
+    await vi.advanceTimersByTimeAsync(RELAY_REJOIN_MS);
+    expect(heard).toEqual(["+guest"]);
+    room.reached("host");
+    fake.offers.fromHost(login(5));
+    // The admit and its linger are over.
+    relayRooms.set(false);
+    await vi.advanceTimersByTimeAsync(0);
+
+    // The connection drops: the member is away, and the host stays in relay1 for it.
+    network(1).partition("guest", "host");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(heard).toEqual(["+guest", "-guest"]);
+    expect(joins).toEqual([DIRECT, { turn: login(1), attempt: 1 }, { turn: login(5), attempt: 1 }]);
+    network(1).heal();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(heard).toEqual(["+guest", "-guest", "+guest"]);
+
+    // Gone for good, unseated: the sibling goes too, and a rejoin there is not heard.
+    network(1).partition("guest", "host");
+    members.delete("guest");
+    for (const handler of [...gone]) {
+      handler("guest");
+    }
+    await vi.advanceTimersByTimeAsync(0);
+    network(1).heal();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(heard).toEqual(["+guest", "-guest", "+guest", "-guest"]);
+    await room.leave();
+    await host.leave();
   });
 });

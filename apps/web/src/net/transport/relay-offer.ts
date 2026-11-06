@@ -78,10 +78,11 @@ export const OFFER_OPEN_INTERVAL_MS = 5_000;
 export const MAX_OFFER_OPENS_PER_SECOND = 200;
 
 /**
- * The most peer ids a holder holds logins for in a lobby at once (#2527):
- * seated members it minted for, and ids in a live admit. With coturn's
- * per-allocation `max-bps`, this bounds what one lobby can draw from a
- * relay. A seated member's login is never refused.
+ * The most peer ids a holder seals for in a lobby at once (#2527):
+ * seated members it minted for, and ids in a live admit. It bounds open
+ * seals, not valid logins (an unseated id's 1 h login outlives its slot):
+ * the relay's own quotas bound what a lobby draws. A seated member's
+ * login is never refused.
  */
 export const MAX_RELAYED_PER_HOLDER = 8;
 

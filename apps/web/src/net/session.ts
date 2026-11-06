@@ -343,6 +343,7 @@ export async function hostLobby(
           host.relayAsk(peerId, pub);
         })
       : undefined;
+  const stopRelayMembers = relayRooms.follow(host);
   const stopRelayRooms = host.onRelayRooms((wanted) => {
     relayRooms.set(wanted);
   });
@@ -366,6 +367,7 @@ export async function hostLobby(
     stopFollowing();
     stopClock();
     stopRelayRooms();
+    stopRelayMembers();
     asks?.close();
     hold?.close();
     await host.close(moveTo);

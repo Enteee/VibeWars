@@ -321,6 +321,10 @@ export interface LobbyHost {
    * live, and `RELAY_ROOMS_LINGER_MS` after the last.
    */
   onRelayRooms(handler: (wanted: boolean) => void): () => void;
+  /** Whether `peerId` is a member now, an away one (#1764) included. */
+  isMember(peerId: string): boolean;
+  /** `handler` each time a member is gone for good: it left, or did not come back in time. */
+  onMemberGone(handler: (peerId: string) => void): () => void;
   /**
    * Send everyone off, end the match if one is on, and leave the room.
    * With `moveTo`, the key of the lobby its host has just joined
@@ -453,6 +457,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     freeSeats: () => freeSeats(),
   });
   const relayRoomsHandlers = new Set<(wanted: boolean) => void>();
+  const goneHandlers = new Set<(peerId: string) => void>();
   let relayRoomsWanted = false;
   /** Tell the relay-room handlers if whether the host should be in its relay rooms changed. */
   const tellRelayRooms = (): void => {
@@ -2036,6 +2041,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     members.delete(peerId);
     relayAdmission.gone(peerId);
     tellRelayRooms();
+    for (const handler of [...goneHandlers]) {
+      handler(peerId);
+    }
     tellReach();
     // A party member gone takes the party out of the queue (#1766).
     if (queueing !== undefined && leaving?.team === 0) {
@@ -2327,6 +2335,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         }
       }
       tellRelayRooms();
+    },
+    isMember: (peerId) => members.has(peerId),
+    onMemberGone(handler) {
+      goneHandlers.add(handler);
+      return () => {
+        goneHandlers.delete(handler);
+      };
     },
     onRelayRooms(handler) {
       relayRoomsHandlers.add(handler);
