@@ -1,4 +1,4 @@
-// #2662 mockups: five ways 32 derived bits can mark a player's character.
+// #2662 mockups: eleven ways 32 derived bits can mark a player's character.
 // Study, not decided. Usage: node scripts/assets/identity-mockups.mjs <outDir>
 // Writes <outDir>/2662-option-{a..e}.png (normal, deuteranopia and protanopia strips).
 import { execFileSync } from "node:child_process";
