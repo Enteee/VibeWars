@@ -5,14 +5,13 @@
 [![Pages](https://img.shields.io/github/actions/workflow/status/Enteee/VibeWars/pages.yml?branch=main&style=flat&label=pages)](https://github.com/Enteee/VibeWars/actions/workflows/pages.yml)
 [![License: AGPL v3](https://img.shields.io/github/license/Enteee/VibeWars?style=flat&label=license)](LICENSE)
 
-Team arena PvP in the browser, after Guild Wars 1: two professions,
-eight skills on the bar, and real-time fights at 20 Hz, hosted by one
-player's browser.
+Team arena PvP in the browser, after Guild Wars 1: a primary and a
+secondary profession from ten, eight skills on the bar, and real-time
+fights at 20 Hz, hosted by one player's browser.
 
-**[▶ Play it now](https://enteee.github.io/VibeWars/next/)** — build a
-character, test it on dummies in the Training Ground, then open your
-lobby (the lock in the title bar) and send its invite link to your friends. Nothing
-to install; see [Play it](#play-it).
+**[▶ Play v0.1.0](https://enteee.github.io/VibeWars/)** — build a
+character, then open your lobby (the lock in the title bar) and send its
+invite link to your friends. Nothing to install; see [Play it](#play-it).
 
 ![A 4v4 match on Canyon: an Elementalist and three bots fight four bots, with the skill bar, the target frame, the party window and the compass on screen](docs/media/readme-match.png)
 
@@ -36,13 +35,13 @@ for the decisions behind this repository (start with
 does not work on a phone or a touch-only tablet.
 
 Open the GitHub Pages build:
-[the latest release](https://enteee.github.io/VibeWars/) or
-[the latest `main`](https://enteee.github.io/VibeWars/next/). Every
-player is always in a lobby of your own. Open it (the lock in the title
-bar), press **Copy invite link** and send it; a friend opens the link,
-and the host's mode is the party's. The host's tab runs the match, so it has to stay open: if it
-closes, the lobby ends for everyone. The two builds keep separate
-saved characters.
+[the release](https://enteee.github.io/VibeWars/), or
+[the latest `main`](https://enteee.github.io/VibeWars/next/)
+(unreleased, may break). Every player is always in a lobby of your own.
+Open it (the lock in the title bar), press **Copy invite link** and send
+it; a friend opens the link, and the host's mode is the party's. The
+host's tab runs the match, so it has to stay open: if it closes, the
+lobby ends for everyone. The two builds keep separate saved characters.
 
 In a match, the default keys are:
 
@@ -72,7 +71,7 @@ own development was verified that way; see
 - **Real-time authoritative combat** on a fixed 20 Hz tick, run by the
   host: movement, body blocking, line of sight, casting with activation
   and recharge, energy and adrenaline.
-- **Over 200 skills** across all ten professions: Warrior, Ranger, Monk,
+- **Over a thousand skills** across all ten professions: Warrior, Ranger, Monk,
   Necromancer, Mesmer, Elementalist, Assassin, Ritualist, Paragon and
   Dervish ([Skills and builds](docs/player/skills-and-builds.md)).
 - **Mechanics**: conditions, hexes and enchantments, maintained
@@ -81,32 +80,33 @@ own development was verified that way; see
   traps, minions and pets, weapon sets, morale and resurrection
   ([Combat basics](docs/player/combat-basics.md),
   [Equipment](docs/player/equipment.md)).
-- **Twelve original maps**, picked by the lobby host, in seven
-  [modes](docs/player/modes.md): Annihilation, Kill Count, Priest
-  Annihilation, Guild Battle, Relic Run, King of the Hill and Capture
-  Points.
-- **Random Arena**: queue for a team size and get matched with other
-  players on a random map
+- **Five ways to play**: Team Arena, Heroes' Ascent (the run through
+  its maps, with three-team fights), GvG, Hosted Game and Random Arena,
+  which queues for a team size and a random map. Original maps; the
+  seven rule sets are in [Modes](docs/player/modes.md).
+- **Matches**: records of finished matches
   ([Getting started](docs/player/getting-started.md)).
+- **Calling targets**: tell your team which foe to attack
+  ([Controls](docs/player/controls.md)).
 - **Bots** fill empty places in a lobby you host
   ([Bots](docs/player/bots.md)).
 - **Character builder** with profession, attribute and equipment rules,
   saved in the browser, and the **Training Ground** beside it to try a
   bar on dummies. The host validates every build and hands an illegal one
   a starter build instead.
-- **Team Builds**: teams of their own characters, for planning a roster (see the limits below).
-- **Music and sound**, and a **narrow-window layout**.
+- **Team Builds**: teams of your own characters; the host assigns every
+  seat's build in the Team Lobby.
+- **Music and sound**, a **music editor**, a **narrow-window layout**
+  and your **language** in Options
+  ([Getting started](docs/player/getting-started.md)).
+- **A player key** per browser is your identity
+  ([Support](docs/player/support.md)).
 - **Robustness**: a dropped player's character stays in the match for 30
   seconds and the player can rejoin it; hostile input cannot crash the
   host (fuzz-tested).
 
 Honest limits:
 
-- A **saved team is not taken into a match**. Each player picks their
-  own character; the lobby does not assign a team's slots to anyone. A
-  team is a planning tool.
-- A player in a lobby **without a team** stays in the lobby while the
-  match runs; watching a match is not built yet.
 - The **host's tab runs the match**: if it closes, the match ends for
   everyone.
 
@@ -186,7 +186,7 @@ claude-llc doctor   # what is signed in, and as whom
 claude-llc          # start the company, and attach to it
 ```
 
-VibeWars is built by a company of sandboxed Claude agents, one per role.
+VibeWars is built by a company of sandboxed Claude agents in ten roles.
 Each runs in its own bubblewrap jail on its own `git worktree`, takes its
 work from a GitHub board, and coordinates with the others through a
 Telegram supergroup, one topic per role. The group doubles as a log and a
