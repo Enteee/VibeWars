@@ -48,7 +48,9 @@ export interface RelayJoin extends Transport {
   reached(hostId: string): void;
   /**
    * The holder whose relay the host's connection goes through now (#2531),
-   * by peer id: `undefined` direct, or through the player's own relay.
+   * by peer id, once it relays with a login the host forwarded from that
+   * holder: `undefined` direct, through the player's own relay, or with a
+   * login off the Nostr relays, whose holder is only claimed.
    */
   relayedVia(): string | undefined;
   /** `handler` when `relayedVia` changed. */
@@ -111,12 +113,17 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
   let left = false;
   const viaHandlers = new Set<() => void>();
 
-  /** Relay through `holder` from now on, telling whoever listens if that changed. */
-  const via = (holder: string): void => {
-    if (holder === relayedVia) {
+  /** `relayedVia()` as last told. */
+  let vouchedVia: string | undefined;
+
+  /** Relay with `offer` from now on, telling whoever listens if whose it shows changed. */
+  const via = (offer: RelayOffer): void => {
+    relayedVia = offer.holder;
+    const shown = offers.vouched(offer) ? offer.holder : undefined;
+    if (shown === vouchedVia) {
       return;
     }
-    relayedVia = holder;
+    vouchedVia = shown;
     for (const handler of [...viaHandlers]) {
       handler();
     }
@@ -189,7 +196,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     swapping = true;
     joinedWith = turn;
     relayedWith = turn;
-    via(offer.holder);
+    via(offer);
     try {
       await detach();
       if (!left) {
@@ -286,7 +293,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     room.transport.swapIceServers(hostId, next);
     restarted.set(relayOf(next), now());
     relayedWith = next;
-    via(offer.holder);
+    via(offer);
   };
 
   attach(undefined);
@@ -303,7 +310,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
       clearTimeout(timer);
       move();
     },
-    relayedVia: () => relayedVia,
+    relayedVia: () => vouchedVia,
     onRelayedVia(handler) {
       viaHandlers.add(handler);
       return () => {

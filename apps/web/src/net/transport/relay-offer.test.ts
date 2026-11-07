@@ -1224,6 +1224,8 @@ describe("a joiner's relay offers (#2527)", () => {
     hold.admit({ peerId: JOINER, pub: key.pub });
     await settle();
     expect(offers.ranked()).toHaveLength(1);
+    // Off the Nostr relays, its holder is only claimed (#2531).
+    expect(offers.ranked().map((offer) => offers.vouched(offer))).toEqual([false]);
 
     // Listed without it: its offer goes, and nothing from Nostr opens again.
     offers.listed(["other"]);
@@ -1254,6 +1256,8 @@ describe("a joiner's relay offers (#2527)", () => {
     offers.fromMember(HOLDER, first);
     await settle();
     expect(offers.ranked().map(({ holder: from }) => from)).toEqual([HOLDER]);
+    // The host forwarded it from its holder (#2531).
+    expect(offers.ranked().map((offer) => offers.vouched(offer))).toEqual([true]);
     expect(told).toBe(2);
     // The same login again is not newer.
     offers.fromMember(HOLDER, first);

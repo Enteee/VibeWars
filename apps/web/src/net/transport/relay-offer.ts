@@ -678,6 +678,12 @@ export interface RelayOffers {
    * for this page, strictly newer than the one it has from `from`.
    */
   fromMember(from: string, seal: string): void;
+  /**
+   * Whether `offer` came through `fromMember` from its own holder
+   * (#2531): the host vouches for who sent it. A seal off the Nostr
+   * relays names a holder anyone with the invite link may claim.
+   */
+  vouched(offer: RelayOffer): boolean;
   /** An offer opened or one was dropped: what `ranked` says may have changed. */
   onOffer(handler: () => void): () => void;
   /** Stop asking and listening, and drop every offer. */
@@ -699,6 +705,8 @@ export function watchRelayOffers(
 ): RelayOffers {
   /** The newest offer per holder: one holder never fills two attempts. */
   const offers = new Map<string, RelayOffer>();
+  /** Offers `fromMember` kept: the host forwarded each from its holder. */
+  const vouched = new WeakSet<RelayOffer>();
   const handlers = new Set<() => void>();
   /** The holders the host lists, once it has. */
   let holders: ReadonlySet<string> | undefined;
@@ -821,10 +829,12 @@ export function watchRelayOffers(
       void openRelaySeal(seal, key, selfId, deps.now()).then((offer) => {
         // Another holder's login, or `from` left the list while it opened.
         if (offer?.holder === from && !closed && holders?.has(from) === true) {
+          vouched.add(offer);
           keep(offer);
         }
       });
     },
+    vouched: (offer) => vouched.has(offer),
     onOffer(handler) {
       handlers.add(handler);
       return () => {
