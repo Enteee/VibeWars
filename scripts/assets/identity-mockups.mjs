@@ -83,6 +83,10 @@ const BAND_MID = (BAND_IN + BAND_OUT) / 2;
 const innerBody = (p, ring) =>
   `<circle r="${String(R - 0.75)}" fill="${TEAM[p.team]}" stroke="${EDGE}" stroke-width="1.5"/>${ring}<g transform="translate(-6.5 -6.5) scale(${f2(13 / 24)})" opacity="0.6">${profGlyph(p.prof)}</g>${weapon(p.facing)}`;
 
+/** The band as a clip path, for patterns that must stay inside it. */
+/** @type {(id: string) => string} */
+const bandClip = (id) =>
+  `<clipPath id="${id}"><path clip-rule="evenodd" d="M${String(-BAND_OUT)} 0 a${String(BAND_OUT)} ${String(BAND_OUT)} 0 1 0 ${String(2 * BAND_OUT)} 0 a${String(BAND_OUT)} ${String(BAND_OUT)} 0 1 0 ${String(-2 * BAND_OUT)} 0z M${String(-BAND_IN)} 0 a${String(BAND_IN)} ${String(BAND_IN)} 0 1 0 ${String(2 * BAND_IN)} 0 a${String(BAND_IN)} ${String(BAND_IN)} 0 1 0 ${String(-2 * BAND_IN)} 0z"/></clipPath>`;
 /** @type {Option[]} */
 const OPTIONS = [
   {
@@ -275,6 +279,100 @@ const OPTIONS = [
     },
     dot: (p) => compassBase(p, `<circle r="1.6" fill="${accent(reader(p.word)(8) & 7)}"/>`),
   },
+  {
+    name: "I. Pattern families",
+    bits: "family 2 + angle 2 + scale 2 + ink 3 + ground 3 = 12 bits",
+    body: (p) => {
+      const b = reader(p.word);
+      const family = b(2);
+      const ang = b(2) * 45;
+      const gap = [2.6, 3.4, 4.2, 5][b(2)] ?? 3;
+      const ink = accent(b(3));
+      const ground =
+        ["#0b0f14", "#ffffff", "#1c2733", "#f2d64b", "#6a5a9c", "#2f6f5a", "#8a5a2a", "#9aa9bd"][
+          b(3)
+        ] ?? EDGE;
+      const n = Math.ceil(30 / gap);
+      /** @type {string[]} */
+      const parts = [];
+      for (let i = -n; i <= n; i++) {
+        const x = i * gap;
+        if (family === 0) {
+          parts.push(`<path d="M${f2(x)} -20 V20" stroke="${ink}" stroke-width="1.2"/>`);
+        } else if (family === 1) {
+          for (let j = -n; j <= n; j++) {
+            parts.push(`<circle cx="${f2(x)}" cy="${f2(j * gap)}" r="0.9" fill="${ink}"/>`);
+          }
+        } else if (family === 2) {
+          for (let j = -n; j <= n; j++) {
+            parts.push(
+              `<path d="M${f2(x - gap / 2)} ${f2(j * gap + gap / 2)} L${f2(x)} ${f2(j * gap)} L${f2(x + gap / 2)} ${f2(j * gap + gap / 2)}" fill="none" stroke="${ink}" stroke-width="1"/>`,
+            );
+          }
+        } else {
+          for (let j = -n; j <= n; j++) {
+            if ((i + j) % 2 === 0) {
+              parts.push(
+                `<rect x="${f2(x)}" y="${f2(j * gap)}" width="${f2(gap)}" height="${f2(gap)}" fill="${ink}"/>`,
+              );
+            }
+          }
+        }
+      }
+      const id = `rimi${String(p.word)}`;
+      return innerBody(
+        p,
+        `${bandClip(id)}<g clip-path="url(#${id})"><rect x="-20" y="-20" width="40" height="40" fill="${ground}"/><g transform="rotate(${String(ang)})">${parts.join("")}</g></g>`,
+      );
+    },
+    dot: (p) => compassBase(p, `<circle r="1.6" fill="${accent(reader(p.word)(8) & 7)}"/>`),
+  },
+  {
+    name: "J. Twin rails",
+    bits: "two rails x (12 slots + 3 colour) = 30 bits",
+    body: (p) => {
+      const b = reader(p.word);
+      /** @type {string[]} */
+      const rails = [];
+      for (const rr of [9.7, 11.0]) {
+        const slots = Array.from({ length: 12 }, () => b(1));
+        const c = accent(b(3));
+        slots.forEach((on, i) => {
+          if (!on) return;
+          const a0 = (i / 12) * Math.PI * 2 + 0.04;
+          const a1 = ((i + 1) / 12) * Math.PI * 2 - 0.04;
+          rails.push(
+            `<path d="M${pt(rr, a0)} A${String(rr)} ${String(rr)} 0 0 1 ${pt(rr, a1)}" fill="none" stroke="${c}" stroke-width="1.15"/>`,
+          );
+        });
+      }
+      return innerBody(p, rails.join(""));
+    },
+    dot: (p) => compassBase(p, `<circle r="1.6" fill="${accent(reader(p.word)(8) & 7)}"/>`),
+  },
+  {
+    name: "K. Teeth and wedge",
+    bits: "teeth 3 + tooth colour 3 + wedge start 4 + width 2 + wedge colour 3 = 15 bits",
+    body: (p) => {
+      const b = reader(p.word);
+      const count = 3 + b(3);
+      const tooth = accent(b(3));
+      const start = (b(4) / 16) * Math.PI * 2;
+      const width = [Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4, Math.PI][b(2)] ?? Math.PI / 2;
+      const wedge = accent(b(3));
+      const wedgePath = `M${pt(BAND_IN + 0.4, start)} L${pt(BAND_OUT, start)} A${String(BAND_OUT)} ${String(BAND_OUT)} 0 ${width > Math.PI ? "1" : "0"} 1 ${pt(BAND_OUT, start + width)} L${pt(BAND_IN + 0.4, start + width)} A${String(BAND_IN + 0.4)} ${String(BAND_IN + 0.4)} 0 ${width > Math.PI ? "1" : "0"} 0 ${pt(BAND_IN + 0.4, start)}z`;
+      const teeth = Array.from({ length: count }, (_, i) => {
+        const a = start + width + ((i + 0.5) / count) * (Math.PI * 2 - width);
+        const w = Math.min(0.28, (Math.PI * 2 - width) / count / 2.4);
+        return `<path d="M${pt(BAND_OUT + 0.3, a - w)} L${pt(BAND_IN + 0.5, a)} L${pt(BAND_OUT + 0.3, a + w)}z" fill="${tooth}" stroke="${EDGE}" stroke-width="0.5"/>`;
+      }).join("");
+      return innerBody(
+        p,
+        `<path d="${wedgePath}" fill="${wedge}" stroke="${EDGE}" stroke-width="0.6"/>${teeth}`,
+      );
+    },
+    dot: (p) => compassBase(p, `<circle r="1.6" fill="${accent(reader(p.word)(8) & 7)}"/>`),
+  },
 ];
 
 /** A pauldron or crest shape at angle a, 3 bits: none, dot, spike, square, bar, diamond, ring, twin. */
@@ -372,7 +470,7 @@ const PROT = "0.152286 1.052583 -0.204868 0.114503 0.786281 0.099216 -0.003882 -
 /** @type {(m: string) => string} */
 const matrix = (m) => m;
 
-const letters = "abcdefgh";
+const letters = "abcdefghijk";
 const notes = [];
 OPTIONS.forEach((o, oi) => {
   const id = letters.charAt(oi);

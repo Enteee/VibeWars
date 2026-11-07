@@ -126,6 +126,36 @@
       colour does not; risk of moire on small screens. Clash: stripes shimmer next to the glyph.
       Cost: a clipped group of up to 20 lines per body, the dearest of the three.
     </p>
+    <h2>I. Pattern families</h2>
+    <img src="../art/2662-option-i.png" alt="I" />
+    <p>
+      Round 3, after the operator liked H's rim band but wanted more than stripes. The band holds
+      one of four patterns (stripes, dots, chevrons, checker) at one of four angles and scales, in
+      an ink colour on one of eight ground colours: 12 bits, 4096 looks, and they differ in kind,
+      not only in angle. Map size: the family is readable at 2.4x (dots vs bars vs checker); at 1:1
+      it is texture and ground colour. Colour-blind: pattern and ground lightness carry it. Clash:
+      busiest of the set, a bright ground can read as a status ring. Cost: up to ~100 small shapes
+      inside a clip: the dearest, would be baked to a sprite per key.
+    </p>
+    <h2>J. Twin rails</h2>
+    <img src="../art/2662-option-j.png" alt="J" />
+    <p>
+      Two thin concentric rails, each broken into 12 slots (on or off) with its own colour: 30 bits,
+      almost the whole key. A dash-code look, like morse. Map size: the quietest; the rails are 1
+      px, so it works on the card and in the Team Lobby, and at 1:1 it is a faint coloured halo.
+      Colour-blind: slot pattern survives, colours less. Clash: none, it is the most discreet. Cost:
+      up to 24 short arcs.
+    </p>
+    <h2>K. Teeth and wedge</h2>
+    <img src="../art/2662-option-k.png" alt="K" />
+    <p>
+      A wedge of one colour covers a quarter to half of the band, and a number of inward teeth (3 to
+      10) in another colour fill the rest: 15 bits. Map size: the strongest silhouette in the rim
+      family, since the wedge reads as a 'bite' whose position is the first thing you see, at 1:1
+      too; the teeth count is for the card. Colour-blind: wedge position and size and tooth count
+      carry it. Clash: a wedge can read as a cooldown or progress arc; keep it off the cast bar's
+      colours. Cost: one path and up to 10 triangles.
+    </p>
     <table>
       <tr>
         <th></th>
@@ -189,6 +219,27 @@
         <td>loud texture</td>
         <td>colour weak</td>
         <td>glyph shimmer</td>
+      </tr>
+      <tr>
+        <td>I patterns</td>
+        <td>12</td>
+        <td>texture + ground</td>
+        <td>good</td>
+        <td>busiest, status rings</td>
+      </tr>
+      <tr>
+        <td>J rails</td>
+        <td>30</td>
+        <td>faint halo</td>
+        <td>ok</td>
+        <td>none</td>
+      </tr>
+      <tr>
+        <td>K teeth and wedge</td>
+        <td>15</td>
+        <td>strongest rim silhouette</td>
+        <td>good</td>
+        <td>progress arcs</td>
       </tr>
     </table>
     <p>
