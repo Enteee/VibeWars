@@ -3,11 +3,12 @@ name: Pages
 # Publishes the web client as a static site on GitHub Pages (#103):
 #   next     every merge to main   -> https://<owner>.github.io/<repo>/next/
 #   release  a published release   -> https://<owner>.github.io/<repo>/
+#   rc       every push to release/* -> https://<owner>.github.io/<repo>/rc/ (#2708)
 # Both are built with the web client alone: peer-to-peer play needs no
 # hosted backend (ADR-0022).
 #
-# Both targets write the one gh-pages branch, with plain git rather than a
-# deploy action, because the release must replace everything except next/.
+# All targets write the one gh-pages branch, with plain git rather than a
+# deploy action, because the release must replace everything except next/ and rc/.
 #
 # Two jobs, so the write token never meets repository code: `build` runs
 # the repo's and its dependencies' build code with a read-only token that
@@ -16,22 +17,22 @@ name: Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, "release/**"]
   release:
     types: [published]
   workflow_dispatch:
     inputs:
       target:
-        description: Which deploy to redo. `release` rebuilds the latest release tag.
+        description: Which deploy to redo. `release` rebuilds the latest release tag, `rc` the newest release/* branch.
         type: choice
-        options: [next, release]
+        options: [next, release, rc]
         default: next
 
 permissions:
   contents: read
 
 env:
-  TARGET: ${{ (github.event_name == 'release' || inputs.target == 'release') && 'release' || 'next' }}
+  TARGET: ${{ (github.event_name == 'release' || inputs.target == 'release') && 'release' || ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') || inputs.target == 'rc') && 'rc' || 'next') }}
 
 jobs:
   build:
@@ -39,6 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ steps.built.outputs.sha }}
+      target: ${{ env.TARGET }}
     steps:
       # A release event already runs on its tag. A hand-run release has to
       # find the latest one; everything else builds the commit it ran for.
@@ -49,6 +51,12 @@ jobs:
         run: |
           if [ "$TARGET" = release ] && [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
             ref=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          elif [ "$TARGET" = rc ] && [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            ref=$(gh api "repos/$GITHUB_REPOSITORY/branches" --paginate --jq '.[].name' | grep '^release/' | sort -V | tail -n 1)
+            if [ -z "$ref" ]; then
+              echo "::error::no release/* branch to build"
+              exit 1
+            fi
           else
             ref=$GITHUB_SHA
           fi
@@ -71,6 +79,8 @@ jobs:
           base="/$REPO_NAME/"
           if [ "$TARGET" = next ]; then
             base="${base}next/"
+          elif [ "$TARGET" = rc ]; then
+            base="${base}rc/"
           fi
           VIBEWARS_BUILD="$(git rev-parse HEAD)" VIBEWARS_BASE="$base" devenv shell -- pnpm --filter "@vibewars/web..." run build
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
@@ -92,17 +102,20 @@ jobs:
     permissions:
       contents: write
     environment:
-      name: ${{ (github.event_name == 'release' || inputs.target == 'release') && 'prod' || 'test' }}
+      # rc has an environment of its own: test only accepts main.
+      name: ${{ needs.build.outputs.target == 'release' && 'prod' || needs.build.outputs.target == 'rc' && 'rc' || 'test' }}
       # `cond && '' || x` would always give x ('' is falsy), so the
       # condition is the one that yields the non-empty string.
       url: >-
         https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{
-        (github.event_name != 'release' && inputs.target != 'release') && 'next/' || '' }}
-    # Deploys are serialised, never cancelled: two quick merges queue, and
-    # the later one, the newer main, lands last.
+        needs.build.outputs.target == 'release' && '' || format('{0}/', needs.build.outputs.target) }}
+    # next and release deploys are serialised, never cancelled: two quick
+    # merges queue, and the later one, the newer main, lands last. rc deploys
+    # have a group of their own, where a newer push cancels the older one, so
+    # they never cancel or replace a next or release deploy.
     concurrency:
-      group: pages
-      cancel-in-progress: false
+      group: ${{ needs.build.outputs.target == 'rc' && 'pages-rc' || 'pages' }}
+      cancel-in-progress: ${{ needs.build.outputs.target == 'rc' }}
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
@@ -125,6 +138,12 @@ jobs:
           dist="$RUNNER_TEMP/dist"
           remote="https://github.com/$GITHUB_REPOSITORY.git"
           site="$RUNNER_TEMP/site"
+
+          # An rc deploy runs beside next and release deploys, so another push to
+          # gh-pages can land between the fetch and the push: start over then.
+          for attempt in 1 2 3; do
+          cd "$RUNNER_TEMP"
+          rm -rf "$site"
           git init -q "$site"
           cd "$site"
           if git ls-remote --exit-code --heads "$remote" gh-pages >/dev/null; then
@@ -150,11 +169,15 @@ jobs:
           <p>No release yet. The latest build from main is at <a href="next/">next/</a>.</p>
           HTML
             fi
+          elif [ "$TARGET" = rc ]; then
+            # Replace rc/ entirely; next and the release around it stay.
+            mkdir -p rc
+            rsync -a --checksum --delete "$dist/" rc/
           else
-            # Replace everything but next/, so stale hashed assets from older
-            # releases don't pile up. A release before any next deploy must
+            # Replace everything but next/ and rc/, so stale hashed assets from
+            # older releases don't pile up. A release before any next deploy must
             # not create next/; rsync leaves an absent excluded path absent.
-            rsync -a --checksum --delete --exclude /next/ --exclude /.git "$dist/" ./
+            rsync -a --checksum --delete --exclude /next/ --exclude /rc/ --exclude /.git "$dist/" ./
           fi
           # Pages must not run Jekyll over the site, even before a release
           # has put one at the root.
@@ -168,4 +191,9 @@ jobs:
           git -c user.name="github-actions[bot]" \
             -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -q -m "deploy $TARGET $SOURCE_SHA"
-          git push -q "$remote" HEAD:gh-pages
+          if git push -q "$remote" HEAD:gh-pages; then
+            exit 0
+          fi
+          echo "::warning::push attempt $attempt was refused; retrying"
+          done
+          exit 1
