@@ -488,8 +488,8 @@ talks to the game only by `postMessage`. What holds:
 - **WebRTC is taken away.** `connect-src` does not cover WebRTC, so
   `host/guard.ts` deletes `RTCPeerConnection`, `webkitRTCPeerConnection`,
   `RTCDataChannel` and `RTCSessionDescription` before the engine loads,
-  and the host refuses to run if any is still reachable. The CSP adds
-  `webrtc 'block'` for browsers that know it.
+  and the host refuses to run if any is still reachable. The CSP does
+  not add `webrtc 'block'`: Chromium logs it as unrecognized.
 
 What does not hold, and why it is acceptable:
 
@@ -511,10 +511,9 @@ What does not hold, and why it is acceptable:
 - **A nested frame gets fresh constructors.** `default-src 'none'`
   makes `frame-src 'none'`, which stops loading a URL into a frame, but
   not an `about:blank` or `srcdoc` frame a pattern makes itself: that
-  frame shares the opaque origin and has its own `RTCPeerConnection`.
-  Where the browser knows `webrtc 'block'`, the inherited CSP stops it;
-  elsewhere a shared track you pressed Play on could open a peer
-  connection. Accepted with the residuals below, as it needs your Play.
+  frame shares the opaque origin and has its own `RTCPeerConnection`,
+  so a shared track you pressed Play on could open a peer connection.
+  Accepted with the residuals below, as it needs your Play.
 - **A share can hog the frame's thread** until a reload, which drops it,
   and **play at full scale** past the music slider through its own
   AudioContext until _Back_. **Frame navigation is a beacon** that you
