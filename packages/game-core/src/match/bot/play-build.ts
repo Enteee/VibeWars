@@ -7,6 +7,8 @@ import type {
   BehaviourCursor,
   BehaviourIntent,
 } from "../behaviour.js";
+import { isGhostId } from "../ghost.js";
+import { ALTAR_REACH_UNITS } from "../relics.js";
 import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { roleOf, type BotRole } from "./role.js";
@@ -232,8 +234,9 @@ function think(
 }
 
 /**
- * The foe the team called (#1193), while it is alive; else the foe the
- * team's bots already target, while it is below `FINISH_FRACTION`; else
+ * The foe the team called (#1193), while it is alive; else, in King of the
+ * Hill, a foe's ghost on an altar the team does not hold (#2600); else
+ * the foe the team's bots already target, while it is below `FINISH_FRACTION`; else
  * the weakest foe in spell range once it is below `FINISH_FRACTION`
  * (#2545), so the team commits to a kill and never drops one for
  * another; else the team's target, if one is alive within `FOCUS_REACH`
@@ -246,6 +249,10 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
   const called = foes.find((foe) => foe.id === context.calledTargetId);
   if (called !== undefined) {
     return called.id;
+  }
+  const ghost = foeGhostOnAltar(context, foes);
+  if (ghost !== undefined) {
+    return ghost.id;
   }
   const self = context.self;
   const inRange = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
@@ -264,6 +271,37 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
     return held.id;
   }
   return focusPick(self, inRange)?.id;
+}
+
+/**
+ * Of `foes`, the Ghostly Hero within spell range of the bot that stands on
+ * an altar its team does not hold (#2600), nearest first, then simulation
+ * order: two ghosts on the altar contest it for good, and one holding it
+ * keeps ours from claiming, so it dies first, creature or not.
+ */
+function foeGhostOnAltar(
+  context: BehaviourContext,
+  foes: readonly Participant[],
+): Participant | undefined {
+  const { altar, altarHolder } = context.objectives;
+  const self = context.self;
+  if (altar === undefined || altarHolder === self.combatant.team) {
+    return undefined;
+  }
+  let nearest: Participant | undefined;
+  let nearestDistance = RANGE_SPELL;
+  for (const foe of foes) {
+    const away = distance(foe.position, self.position);
+    if (
+      isGhostId(foe.id) &&
+      distance(foe.position, altar) <= ALTAR_REACH_UNITS &&
+      (away < nearestDistance || (nearest === undefined && away === nearestDistance))
+    ) {
+      nearest = foe;
+      nearestDistance = away;
+    }
+  }
+  return nearest;
 }
 
 /** The first living foe a bot of `context.self`'s team targets, if it may be fought. */
