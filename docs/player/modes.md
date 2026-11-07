@@ -42,6 +42,10 @@ ice rocks on each bank. For the bigger teams: **Ashen Courtyard** (4v4,
 4400x2600), a ruined keep whose walled courtyard has four breaches, ruins
 on its flanks; and **Moss Vale** (8v8, 4800x2800), two wooded ridges
 that split the vale into three lanes, meeting in a clearing in the middle.
+Two large ones for the same teams: **Shiverpeak Pass** (4v4, 6000x3400),
+two cliff massifs that leave a wide pass strewn with boulders and a narrow
+trail along each edge; and **Elonian Plateau** (8v8, 6400x3600), open
+savanna round five great mesas, with the longest sightlines of any arena.
 
 ## Kill Count
 
