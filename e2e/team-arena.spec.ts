@@ -22,7 +22,7 @@ import { namePlayer } from "./helpers/player.js";
  * their storage: the Team Build saved on one is every page's.
  */
 
-/** Ranger/Mesmer, Monk/Elementalist, Necromancer/Elementalist, Elementalist/Mesmer. */
+/** The second to fifth starter builds (#2554), each with a skill in its first slot. */
 const QUAD = STARTER_BUILDS.slice(1, 5);
 
 /** Paste `text` onto `target`, as Ctrl+V would. */

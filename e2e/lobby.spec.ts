@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
+import { STARTER_TEAMS } from "../packages/game-core/src/starter-teams.js";
+import { sanitizeCharacterName } from "../packages/game-session/src/names.js";
 import { openLibraryGroup } from "./helpers/library.js";
 import {
   INVITE_URL,
@@ -776,9 +779,16 @@ test("a bot plays every slot nobody claims, tagged BOT in the match alone (#1194
   await playHouseTeams([page]);
 
   // Every foe in the arena is a bot, playing its preset team's slot under
-  // that member's job (#1458, #2148), cut short when long.
+  // that member's job, or a built-in build under its name (#1458, #2148,
+  // #2554), cut short when long.
+  const names = [
+    ...STARTER_BUILDS.map(({ name }) => name),
+    ...STARTER_TEAMS.flatMap(({ members }) => members.map(({ name }) => name)),
+  ].map((name) => sanitizeCharacterName(name, ""));
   await page.keyboard.press(key("target-closest"));
-  await expect(page.locator(".hud-target-text")).toHaveText(/^[A-Z][a-z]+([ /][A-Z][a-z]+|…)$/);
+  await expect
+    .poll(async () => names.includes((await page.locator(".hud-target-text").textContent()) ?? ""))
+    .toBe(true);
   await expect(page.locator(".hud-target-bot")).toBeVisible();
   await expect(page.locator(".hud-target-bot")).toHaveText("BOT");
 });
