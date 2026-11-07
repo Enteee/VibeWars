@@ -227,6 +227,8 @@ export interface BehaviourCursor {
   wardId: string | undefined;
   /** `play-build`, a healer: the spot it walks to, kept until a fresh one is clearly elsewhere (#2615). */
   coverSpot: Vec2 | undefined;
+  /** `play-build`: waiting, ahead of its team, for the rest to catch up (#2621). */
+  regrouping: boolean;
   /** `play-build` and `guard`: how many decisions it has made, the seed of its next reaction time (#2606). */
   thinks: number;
   /** `play-build`: each foe's reach, read once from its bar (#2598). */
@@ -309,6 +311,7 @@ export function createCursor(): BehaviourCursor {
     upkeepDropSeconds: 0,
     wardId: undefined,
     coverSpot: undefined,
+    regrouping: false,
     thinks: 0,
     foeReach: new Map(),
   };

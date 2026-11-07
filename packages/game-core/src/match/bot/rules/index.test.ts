@@ -50,6 +50,7 @@ describe("BOT_RULES (#2042)", () => {
       "mimic-elite",
       "pick-up-ghost",
       "fetch-relic",
+      "regroup",
       "close-in",
     ]);
   });

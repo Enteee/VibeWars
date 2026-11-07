@@ -13,6 +13,7 @@ import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { roleOf, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
+import regroup from "./rules/regroup.js";
 import {
   FOCUS_REACH,
   HEALER_PRIORITY,
@@ -222,9 +223,13 @@ function think(
     foeReach: (foe) => foeReach(cursor.foeReach, foe),
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
-  for (const { decide } of BOT_RULES) {
-    const intent = decide(rule);
+  for (const each of BOT_RULES) {
+    const intent = each.decide(rule);
     if (intent !== undefined) {
+      // Any other answer, a fight first among them, ends a wait for the team (#2621).
+      if (each !== regroup) {
+        cursor.regrouping = false;
+      }
       if (intent.endUpkeep !== undefined) {
         cursor.upkeepDropSeconds = UPKEEP_DROP_SECONDS;
       }
