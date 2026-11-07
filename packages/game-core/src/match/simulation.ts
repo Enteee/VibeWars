@@ -5861,15 +5861,19 @@ export class MatchSimulation {
       return;
     }
     const { state, scored } = stepAltar(this.#altarState, dt, claimant(claims));
+    const taken = state.holder !== this.#altarState.holder;
     this.#altarState = state;
+    if (taken) {
+      this.#refreshBotObjectives();
+    }
     if (scored !== null) {
       this.#score = addPoint(this.#score, scored);
     }
   }
 
   /**
-   * The shrines (#2580) or relics (#2581) bots read, only in their mode:
-   * one allocation per change to them.
+   * The shrines (#2580), relics (#2581) or altar holder (#2582) bots
+   * read, only in their mode: one allocation per change to them.
    */
   #refreshBotObjectives(): void {
     const victory = this.#matchRules?.victory;
@@ -5881,6 +5885,12 @@ export class MatchSimulation {
         relics: this.relics,
         relicSpawns: this.#relicField.spawns,
         altar: this.#relicField.altar,
+      };
+    } else if (victory === "king-of-the-hill" && this.#hillField !== undefined) {
+      this.#botObjectives = {
+        ...NO_OBJECTIVES,
+        altar: this.#hillField.altar,
+        altarHolder: this.#altarState.holder,
       };
     } else {
       this.#botObjectives = NO_OBJECTIVES;

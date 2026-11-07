@@ -1,11 +1,14 @@
-import { RANGE_MELEE } from "../../../distances.js";
+import { RANGE_MELEE, RANGE_SPELL } from "../../../distances.js";
 import { getSkill } from "../../../skills/catalog.js";
 import { raisedMaxHealth } from "../../../skills/tick.js";
 import type { Skill } from "../../../skills/types.js";
 import { distance, ZERO, type Vec2 } from "../../../vec2.js";
 import type { BehaviourIntent, Reaction } from "../../behaviour.js";
 import type { BehaviourContext } from "../../behaviour.js";
+import { FLAG_REACH_UNITS } from "../../flags.js";
+import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
+import { roleOf } from "../role.js";
 import { botUses, summonAura } from "../skill-intent.js";
 
 export const NOTHING: BehaviourIntent = {
@@ -79,6 +82,86 @@ export function spiritUp(context: BehaviourContext, self: Participant, skill: Sk
         ? creature.ownerId === self.id
         : combatant.team === self.combatant.team && distance(position, self.position) <= radius),
   );
+}
+
+/**
+ * Whether `self` is the one of its team to go to `point` for an
+ * objective (#2581): the living teammate with empty hands nearest to it,
+ * ties to simulation order, a bot or, when `humans`, a human within
+ * `FLAG_REACH_UNITS` of it, about to take it up, and then no bot goes.
+ * A bot free to go comes first. Then, when `fromFight`, one with a foe in
+ * spell range, which `run-relic` sends from its fight; else that one is
+ * passed over. Last, one an earlier rule holds back, a healer behind its
+ * ward or one resting below `REST_FRACTION`, out of any fight.
+ */
+export function sentTo(
+  context: BehaviourContext,
+  point: Vec2,
+  humans: boolean,
+  fromFight: boolean,
+): boolean {
+  const team = context.self.combatant.team;
+  let best: Participant | undefined;
+  let bestTier = Infinity;
+  let bestDistance = Infinity;
+  for (const mate of context.participants) {
+    const bot = context.isBot(mate.id);
+    if (
+      mate.combatant.team !== team ||
+      mate.combatant.dead ||
+      mate.creature !== undefined ||
+      (!bot && (!humans || distance(mate.position, point) > FLAG_REACH_UNITS)) ||
+      carriedRelic(context.objectives.relics, mate.id) !== undefined
+    ) {
+      continue;
+    }
+    const tier = bot ? sentTier(context, mate, fromFight) : 0;
+    if (tier === undefined) {
+      continue;
+    }
+    const away = distance(mate.position, point);
+    if (tier < bestTier || (tier === bestTier && away < bestDistance)) {
+      best = mate;
+      bestTier = tier;
+      bestDistance = away;
+    }
+  }
+  return best?.id === context.self.id;
+}
+
+/** How late bot `mate` comes in `sentTo`'s order; `undefined` never. */
+function sentTier(
+  context: BehaviourContext,
+  mate: Participant,
+  fromFight: boolean,
+): number | undefined {
+  const held = heldBack(mate);
+  if (!fighting(context, mate)) {
+    return held ? 2 : 0;
+  }
+  return fromFight && !held ? 1 : undefined;
+}
+
+/** Whether `position` pulls bot `mate` back to its ward, or `rest` stands it still. */
+export function heldBack(mate: Participant): boolean {
+  return roleOf(mate) === "healer" || healthFraction(mate) < REST_FRACTION;
+}
+
+/** Whether a living foe of `mate` stands within its spell range. */
+function fighting(context: BehaviourContext, mate: Participant): boolean {
+  return context.participants.some(
+    (foe) =>
+      foe.combatant.team !== mate.combatant.team &&
+      !foe.combatant.dead &&
+      distance(foe.position, mate.position) <= RANGE_SPELL,
+  );
+}
+
+/** An escort (#2581): to `altar`, then waiting within half spell range of it. */
+export function escort(self: Participant, altar: Vec2): BehaviourIntent {
+  return distance(self.position, altar) <= RANGE_SPELL / 2
+    ? NOTHING
+    : { ...NOTHING, moveTo: altar };
 }
 
 /** A ranged bot or healer this far from its spot walks back to it (#2545). */

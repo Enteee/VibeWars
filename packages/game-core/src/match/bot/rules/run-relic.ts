@@ -2,8 +2,7 @@ import { RANGE_SPELL } from "../../../distances.js";
 import { distance } from "../../../vec2.js";
 import { lyingPosition } from "../../carried.js";
 import { relicId } from "../../relics.js";
-import { heldBack, runner } from "./fetch-relic.js";
-import { NOTHING } from "./shared.js";
+import { heldBack, NOTHING, sentTo } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -28,7 +27,7 @@ const runRelic: BotRule = {
     const team = self.combatant.team;
     const relic = relics.find((candidate) => candidate.team === team);
     const lying = relic === undefined ? undefined : lyingPosition(relicSpawns, relic);
-    return lying !== undefined && runner(context, lying, true)?.id === self.id
+    return lying !== undefined && sentTo(context, lying, true, true)
       ? { ...NOTHING, attackTargetId: relicId(team) }
       : undefined;
   },

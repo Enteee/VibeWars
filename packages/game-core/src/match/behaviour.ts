@@ -274,8 +274,13 @@ export interface BotObjectives {
   readonly relics: readonly RelicState[];
   /** Where each team's relic lies at rest (#2581); `[]` in any other mode. */
   readonly relicSpawns: readonly CarriedSpawn[];
-  /** The altar relics are run to (#2581); `undefined` in any other mode. */
+  /**
+   * The altar relics are run to (#2581) or Ghostly Heroes claim (#2582);
+   * `undefined` in any other mode.
+   */
   readonly altar: Vec2 | undefined;
+  /** The team holding King of the Hill's altar (#2582); `null` when nobody does, or in any other mode. */
+  readonly altarHolder: number | null;
 }
 
 /** No objectives: every mode but those with one. */
@@ -284,6 +289,7 @@ export const NO_OBJECTIVES: BotObjectives = {
   relics: [],
   relicSpawns: [],
   altar: undefined,
+  altarHolder: null,
 };
 
 export function createCursor(): BehaviourCursor {

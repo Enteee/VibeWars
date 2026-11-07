@@ -11,9 +11,11 @@ import flee from "./flee.js";
 import fight from "./fight.js";
 import heal from "./heal.js";
 import interrupt from "./interrupt.js";
+import leadGhost from "./lead-ghost.js";
 import mantra from "./mantra.js";
 import mimicElite from "./mimic-elite.js";
 import minionCare from "./minion-care.js";
+import pickUpGhost from "./pick-up-ghost.js";
 import position from "./position.js";
 import raise from "./raise.js";
 import renewSpirit from "./renew-spirit.js";
@@ -45,9 +47,11 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   fight,
   heal,
   interrupt,
+  leadGhost,
   mantra,
   mimicElite,
   minionCare,
+  pickUpGhost,
   position,
   raise,
   renewSpirit,
