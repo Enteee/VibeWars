@@ -85,7 +85,7 @@ export function guard(
     .sort((a, b) => lordFirst(a) - lordFirst(b));
   const healing = allies.some((ally) => healthFraction(ally) < HURT_FRACTION);
   if (cursor.returning || (foes.length === 0 && !healing)) {
-    cursor.heldMove = { moveTo: undefined };
+    cursor.heldMove = { moveDirection: ZERO, moveTo: undefined };
     return behaviour.rooted || home <= context.stepUnits
       ? NOTHING
       : { ...NOTHING, moveTo: behaviour.post };
@@ -121,7 +121,7 @@ function paced(
   }
   cursor.waitSeconds = thinkSeconds;
   const intent = decide();
-  cursor.heldMove = { moveTo: intent.moveTo };
+  cursor.heldMove = { moveDirection: intent.moveDirection, moveTo: intent.moveTo };
   return intent;
 }
 

@@ -44,6 +44,7 @@ describe("play-build ends its own upkeep when Energy-starved (#2492)", () => {
       calledTargetId: undefined,
       sees: () => true,
       objectives: NO_OBJECTIVES,
+      projectiles: [],
     });
   }
 

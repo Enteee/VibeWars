@@ -94,6 +94,7 @@ export function askBot(sim: MatchSimulation, id: string, objectives = NO_OBJECTI
     calledTargetId: undefined,
     sees: () => true,
     objectives,
+    projectiles: sim.projectiles,
   });
 }
 

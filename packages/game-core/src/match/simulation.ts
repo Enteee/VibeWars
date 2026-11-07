@@ -4025,6 +4025,7 @@ export class MatchSimulation {
       calledTargetId: this.#calledTargets.get(record.combatant.team),
       sees: (point) => hasLineOfSight(record.position, point, this.#walls),
       objectives: this.#botObjectives,
+      projectiles: this.#projectiles,
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;

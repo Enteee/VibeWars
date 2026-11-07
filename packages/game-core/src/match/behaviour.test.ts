@@ -326,6 +326,7 @@ describe("auto-attack", () => {
         calledTargetId: undefined,
         sees: () => true,
         objectives: NO_OBJECTIVES,
+        projectiles: [],
       },
     );
     expect(intent.attackTargetId).toBe("first");
@@ -386,6 +387,7 @@ describe("follow-and-attack (#467)", () => {
       calledTargetId: undefined,
       sees: () => true,
       objectives: NO_OBJECTIVES,
+      projectiles: [],
     });
   }
 

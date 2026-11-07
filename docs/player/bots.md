@@ -20,6 +20,12 @@ window and the match summary.
 Bots are made for one match: once it is over, the lobby lists its people
 again, and the next match's bots are made afresh.
 
+## How bots fight
+
+Bots side-step about half the skill shots aimed at them, such as a
+Fireball or an attack skill's arrow, so stopping or turning works for
+them as it does for you.
+
 ## Random Arena
 
 A Random Arena has no bots: every place is a real player, and you wait
