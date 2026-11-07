@@ -1,9 +1,11 @@
+import { RANGE_SPELL } from "../../../distances.js";
 import { getSkill } from "../../../skills/catalog.js";
 import { raisedMaxHealth } from "../../../skills/tick.js";
 import type { Skill } from "../../../skills/types.js";
-import { distance, ZERO } from "../../../vec2.js";
+import { distance, ZERO, type Vec2 } from "../../../vec2.js";
 import type { BehaviourIntent } from "../../behaviour.js";
 import type { BehaviourContext } from "../../behaviour.js";
+import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
 import { summonAura } from "../skill-intent.js";
 
@@ -70,4 +72,40 @@ export function spiritUp(context: BehaviourContext, self: Participant, skill: Sk
         ? creature.ownerId === self.id
         : combatant.team === self.combatant.team && distance(position, self.position) <= radius),
   );
+}
+
+/**
+ * Whether `self` is the one of its team to go to `point` for an
+ * objective (#2581): the living teammate with empty hands nearest to it,
+ * ties to simulation order, a bot or, when `humans`, a human. A human
+ * nearer, no bot goes.
+ */
+export function sentTo(context: BehaviourContext, point: Vec2, humans: boolean): boolean {
+  const team = context.self.combatant.team;
+  let best: Participant | undefined;
+  let bestDistance = Infinity;
+  for (const mate of context.participants) {
+    if (
+      mate.combatant.team !== team ||
+      mate.combatant.dead ||
+      mate.creature !== undefined ||
+      (!humans && !context.isBot(mate.id)) ||
+      carriedRelic(context.objectives.relics, mate.id) !== undefined
+    ) {
+      continue;
+    }
+    const away = distance(mate.position, point);
+    if (away < bestDistance) {
+      best = mate;
+      bestDistance = away;
+    }
+  }
+  return best?.id === context.self.id;
+}
+
+/** An escort (#2581): to `altar`, then waiting within half spell range of it. */
+export function escort(self: Participant, altar: Vec2): BehaviourIntent {
+  return distance(self.position, altar) <= RANGE_SPELL / 2
+    ? NOTHING
+    : { ...NOTHING, moveTo: altar };
 }

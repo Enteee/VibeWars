@@ -158,6 +158,13 @@ The scoreboard shows the points, yours first, then the altar: `▲` and
 the time to the holder's next point, in the holder's colour, or a grey
 `▲ —` while nobody holds it.
 
+Bots go for the altar too: while your team does not hold it, the one
+nearest to your Ghostly Hero picks it up unless you are nearer, leads it
+onto the altar and tells it to stay there, and the rest wait by the
+altar. A bot leading the ghost does not stop to fight on the way; the
+others leave the altar only to fight a foe that comes within spell
+range.
+
 Hill Courtyard plays it.
 
 ## Capture Points
