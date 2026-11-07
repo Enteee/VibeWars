@@ -18,7 +18,7 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
 
 /**
- * King of the Hill in the simulation (#1377), on Hill Courtyard: each
+ * King of the Hill in the simulation (#1377), on The Courtyard (#2552): each
  * team's Ghostly Hero follows or stays at Space, claims the altar by
  * itself in 5 s through the cast path, and its team scores for holding
  * it; at 8 minutes the most points win, and a wipe ends it before.
@@ -37,23 +37,42 @@ function rect(x: number, y: number, width: number, height: number): Segment[] {
   return [segment(a, b), segment(b, c), segment(c, d), segment(d, a)];
 }
 
-/** Hill Courtyard's walls (packages/game-maps/maps/hill-courtyard). */
+/** A polygon's sides, closed back to its first point, as a map's polygon wall becomes. */
+function polygon(points: readonly Vec2[]): Segment[] {
+  return points.map((point, index) => segment(point, points[(index + 1) % points.length] ?? point));
+}
+
+/** The Courtyard's walls (packages/game-maps/maps/the-courtyard). */
 const WALLS = [
-  ...rect(840, 560, 40, 280),
-  ...rect(1120, 560, 40, 280),
-  ...rect(440, 300, 120, 120),
-  ...rect(1440, 980, 120, 120),
-  ...rect(440, 980, 120, 120),
-  ...rect(1440, 300, 120, 120),
-  ...rect(960, 200, 80, 80),
-  ...rect(960, 1120, 80, 80),
+  ...rect(60, 520, 260, 40),
+  ...rect(2680, 1240, 260, 40),
+  ...rect(480, 520, 60, 240),
+  ...rect(2460, 1040, 60, 240),
+  ...rect(480, 1040, 60, 240),
+  ...rect(2460, 520, 60, 240),
+  ...rect(1210, 820, 60, 160),
+  ...rect(1730, 820, 60, 160),
+  ...rect(1120, 710, 50, 50),
+  ...rect(1830, 1040, 50, 50),
+  ...rect(1120, 1040, 50, 50),
+  ...rect(1830, 710, 50, 50),
+  ...rect(1420, 610, 160, 60),
+  ...rect(1420, 1130, 160, 60),
+  ...rect(1640, 520, 50, 50),
+  ...rect(1310, 1230, 50, 50),
+  ...rect(1310, 520, 50, 50),
+  ...rect(1640, 1230, 50, 50),
+  ...rect(1300, 240, 400, 60),
+  ...rect(1300, 1500, 400, 60),
+  ...rect(820, 620, 60, 200),
+  ...rect(2120, 980, 60, 200),
 ];
-const BOUNDS = { width: 2000, height: 1400 };
+const BOUNDS = { width: 3000, height: 1800 };
 const FIELD: HillField = {
-  altar: vec2(1000, 700),
+  altar: vec2(1500, 900),
   spawns: [
-    { team: 0, position: vec2(200, 700) },
-    { team: 1, position: vec2(1800, 700) },
+    { team: 0, position: vec2(120, 900) },
+    { team: 1, position: vec2(2880, 900) },
   ],
 };
 const GHOST_0 = ghostId(0);
@@ -81,10 +100,10 @@ function kingOfTheHill(): MatchSimulation {
     bounds: BOUNDS,
     hillField: FIELD,
     participants: [
-      fighter("a", 0, vec2(290, 560)),
-      fighter("b", 0, vec2(290, 840)),
-      fighter("x", 1, vec2(1710, 840)),
-      fighter("y", 1, vec2(1710, 560)),
+      fighter("a", 0, vec2(240, 780)),
+      fighter("b", 0, vec2(240, 1020)),
+      fighter("x", 1, vec2(2760, 1020)),
+      fighter("y", 1, vec2(2760, 780)),
     ],
   });
 }
@@ -143,12 +162,12 @@ describe("a Ghostly Hero (#1377)", () => {
   it("stands at its team's ghost spawn from the start, a creature of 600 Health", () => {
     const sim = kingOfTheHill();
     const ghost = get(sim, GHOST_0);
-    expect(ghost.position).toEqual(vec2(200, 700));
+    expect(ghost.position).toEqual(vec2(120, 900));
     expect(ghost.combatant.team).toBe(0);
     expect(ghost.combatant.maxHealth).toBe(GHOST_HEALTH);
     expect(ghost.creature?.kind).toBe("ghostly-hero");
     expect(ghost.creature?.name).toBe("Ghostly Hero");
-    expect(get(sim, GHOST_1).position).toEqual(vec2(1800, 700));
+    expect(get(sim, GHOST_1).position).toEqual(vec2(2880, 900));
   });
 
   it("follows the ally whose Space reaches it, and stays where it is at the next", () => {
@@ -156,18 +175,18 @@ describe("a Ghostly Hero (#1377)", () => {
     expect(applyIntent(sim, "a", { kind: "target", targetSessionId: GHOST_0 })).toBeNull();
     expect(applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 })).toBeNull();
     stepFor(sim, 1);
-    applyIntent(sim, "a", { kind: "walk-to", x: 700, y: 700 });
+    applyIntent(sim, "a", { kind: "walk-to", x: 1000, y: 900 });
     expect(get(sim, GHOST_0).creature?.leaderId).toBe("a");
     stepFor(sim, 4);
     // At its leader's heel, far from its spawn.
     expect(distance(get(sim, GHOST_0).position, get(sim, "a").position)).toBeLessThan(150);
-    expect(get(sim, GHOST_0).position.x).toBeGreaterThan(450);
+    expect(get(sim, GHOST_0).position.x).toBeGreaterThan(600);
 
     expect(applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 })).toBeNull();
     stepFor(sim, 1);
     const stayed = get(sim, GHOST_0).position;
     expect(get(sim, GHOST_0).creature?.leaderId).toBeUndefined();
-    applyIntent(sim, "a", { kind: "walk-to", x: 290, y: 560 });
+    applyIntent(sim, "a", { kind: "walk-to", x: 240, y: 780 });
     stepFor(sim, 4);
     expect(get(sim, GHOST_0).position).toEqual(stayed);
     expect(distance(get(sim, "a").position, stayed)).toBeGreaterThan(300);
@@ -211,12 +230,12 @@ describe("a Ghostly Hero (#1377)", () => {
 
   it("is attacked, never led, by a foe's Space", () => {
     const sim = kingOfTheHill();
-    get(sim, "x").position = vec2(260, 700);
+    get(sim, "x").position = vec2(200, 900);
     expect(applyIntent(sim, "x", { kind: "attack", targetId: GHOST_0 })).toBeNull();
     expect(get(sim, "x").combatant.attack?.targetId).toBe(GHOST_0);
-    applyIntent(sim, "x", { kind: "walk-to", x: 700, y: 700 });
+    applyIntent(sim, "x", { kind: "walk-to", x: 1000, y: 900 });
     stepFor(sim, 3);
-    expect(distance(get(sim, GHOST_0).position, vec2(200, 700))).toBeLessThan(150);
+    expect(distance(get(sim, GHOST_0).position, vec2(120, 900))).toBeLessThan(150);
   });
 
   it("stays put when its leader dies", () => {
@@ -230,14 +249,14 @@ describe("a Ghostly Hero (#1377)", () => {
     // Space by another ally leads it again: it was staying.
     applyIntent(sim, "b", { kind: "attack", targetId: GHOST_0 });
     stepFor(sim, 2);
-    applyIntent(sim, "b", { kind: "walk-to", x: 700, y: 840 });
+    applyIntent(sim, "b", { kind: "walk-to", x: 1000, y: 1000 });
     stepFor(sim, 4);
     expect(distance(get(sim, GHOST_0).position, where)).toBeGreaterThan(200);
   });
 
   it("rises at its spawn after PRIEST_WAVE_SECONDS, staying put, and costs its team nothing", () => {
     const sim = kingOfTheHill();
-    get(sim, GHOST_0).position = vec2(600, 700);
+    get(sim, GHOST_0).position = vec2(800, 900);
     kill(sim, GHOST_0);
     sim.step(DT);
     expect(get(sim, GHOST_0).combatant.dead).toBe(true);
@@ -246,10 +265,10 @@ describe("a Ghostly Hero (#1377)", () => {
     stepFor(sim, PRIEST_WAVE_SECONDS - 1);
     expect(get(sim, GHOST_0).combatant.dead).toBe(true);
     stepUntil(sim, () => !get(sim, GHOST_0).combatant.dead, 2);
-    expect(get(sim, GHOST_0).position).toEqual(vec2(200, 700));
+    expect(get(sim, GHOST_0).position).toEqual(vec2(120, 900));
     expect(get(sim, GHOST_0).combatant.health).toBe(GHOST_HEALTH);
     stepFor(sim, 2);
-    expect(get(sim, GHOST_0).position).toEqual(vec2(200, 700));
+    expect(get(sim, GHOST_0).position).toEqual(vec2(120, 900));
   });
 });
 
@@ -389,48 +408,64 @@ describe("a King of the Hill match (#1377)", () => {
   });
 });
 
-/** Hall of Heroes (#1995): packages/game-maps/maps/hall-of-heroes, walls as [x, y, width, height]. */
-const HALL_WALLS: readonly (readonly [number, number, number, number])[] = [
-  [420, 380, 40, 240],
-  [420, 980, 40, 240],
-  [1940, 380, 40, 240],
-  [1940, 980, 40, 240],
-  [700, 300, 120, 120],
-  [700, 1180, 120, 120],
-  [1580, 300, 120, 120],
-  [1580, 1180, 120, 120],
-  [700, 500, 50, 50],
-  [700, 1050, 50, 50],
-  [1650, 500, 50, 50],
-  [1650, 1050, 50, 50],
-  [820, 500, 50, 50],
-  [820, 1050, 50, 50],
-  [1530, 500, 50, 50],
-  [1530, 1050, 50, 50],
-  [1005, 605, 50, 50],
-  [1005, 945, 50, 50],
-  [1345, 605, 50, 50],
-  [1345, 945, 50, 50],
-  [1160, 200, 80, 80],
-  [1160, 1320, 80, 80],
+/** Hall of Heroes (#1995, rebuilt by #2552): packages/game-maps/maps/hall-of-heroes. */
+const HALL_WALLS = [
+  ...rect(60, 720, 260, 40),
+  ...rect(2880, 1440, 260, 40),
+  ...rect(480, 720, 60, 240),
+  ...rect(2660, 1240, 60, 240),
+  ...rect(480, 1240, 60, 240),
+  ...rect(2660, 720, 60, 240),
+  ...polygon([
+    vec2(1480, 840),
+    vec2(1340, 840),
+    vec2(1340, 1360),
+    vec2(1480, 1360),
+    vec2(1480, 1320),
+    vec2(1380, 1320),
+    vec2(1380, 880),
+    vec2(1480, 880),
+  ]),
+  ...polygon([
+    vec2(1720, 1360),
+    vec2(1860, 1360),
+    vec2(1860, 840),
+    vec2(1720, 840),
+    vec2(1720, 880),
+    vec2(1820, 880),
+    vec2(1820, 1320),
+    vec2(1720, 1320),
+  ]),
+  ...rect(1050, 700, 60, 60),
+  ...rect(2090, 1440, 60, 60),
+  ...rect(1370, 700, 60, 60),
+  ...rect(1770, 1440, 60, 60),
+  ...rect(1770, 700, 60, 60),
+  ...rect(1370, 1440, 60, 60),
+  ...rect(2050, 700, 60, 60),
+  ...rect(1090, 1440, 60, 60),
+  ...rect(860, 980, 60, 240),
+  ...rect(2280, 980, 60, 240),
+  ...rect(760, 300, 60, 220),
+  ...rect(2380, 1680, 60, 220),
 ];
 
 describe("on the Hall of Heroes (#1995)", () => {
   it("lets a Ghostly Hero step onto the altar, claim it and score for its team", () => {
-    const altar = vec2(1200, 800);
+    const altar = vec2(1600, 1100);
     const sim = new MatchSimulation({
       seed: "hall-of-heroes",
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
-      walls: HALL_WALLS.flatMap(([x, y, width, height]) => rect(x, y, width, height)),
-      bounds: { width: 2400, height: 1600 },
+      walls: HALL_WALLS,
+      bounds: { width: 3200, height: 2200 },
       hillField: {
         altar,
         spawns: [
-          { team: 0, position: vec2(200, 800) },
-          { team: 1, position: vec2(2200, 800) },
+          { team: 0, position: vec2(120, 1100) },
+          { team: 1, position: vec2(3080, 1100) },
         ],
       },
-      participants: [fighter("a", 0, vec2(250, 720)), fighter("x", 1, vec2(2150, 720))],
+      participants: [fighter("a", 0, vec2(360, 1040)), fighter("x", 1, vec2(2840, 1160))],
     });
     get(sim, GHOST_0).position = altar;
     stepUntil(sim, () => sim.altarState.holder === 0, CLAIM_SECONDS + 1);

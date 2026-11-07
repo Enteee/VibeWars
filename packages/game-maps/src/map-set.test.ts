@@ -177,14 +177,14 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), the hill courtyard (#1377), Scarred Earth (#2551), the medium arenas Sandstone Steps and Frozen Crossing (#2604) and the large Canthan Terraces and Sunken Bastion (#2607)", () => {
+  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), The Courtyard (#2552), Scarred Earth (#2551), the medium arenas Sandstone Steps and Frozen Crossing (#2604) and the large Canthan Terraces and Sunken Bastion (#2607)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
         "arena-pillars",
         "arena-split",
         "guild-hall-isle",
         "broken-tower",
-        "hill-courtyard",
+        "the-courtyard",
         "hall-of-heroes",
         "scarred-earth",
         "sandstone-steps",
@@ -196,7 +196,7 @@ describe("the arena set (#444)", () => {
     );
   });
 
-  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Broken Tower, King of the Hill on Hill Courtyard and Hall of Heroes (#1995), Capture Points on Scarred Earth and Annihilation everywhere else (#476, #1186, #1222, #1374, #1377, #1378, #2551)", () => {
+  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Broken Tower, King of the Hill on The Courtyard and Hall of Heroes (#2552), Capture Points on Scarred Earth and Annihilation everywhere else (#476, #1186, #1222, #1374, #1377, #1378, #2551, #2552)", () => {
     expect(MAPS.filter((map) => map.mode === "kill-count").map((map) => map.id)).toEqual([
       "arena-pillars",
     ]);
@@ -211,7 +211,7 @@ describe("the arena set (#444)", () => {
     ]);
     expect(MAPS.filter((map) => map.mode === "king-of-the-hill").map((map) => map.id)).toEqual([
       "hall-of-heroes",
-      "hill-courtyard",
+      "the-courtyard",
     ]);
     expect(MAPS.filter((map) => map.mode === "capture-points").map((map) => map.id)).toEqual([
       "scarred-earth",
@@ -495,81 +495,135 @@ describe("Scarred Earth (#2551)", () => {
   });
 });
 
-describe("Hill Courtyard (#1377)", () => {
-  const courtyard = MAPS.find((map) => map.id === "hill-courtyard");
-  if (courtyard === undefined) throw new Error("no hill-courtyard");
-  const walls = allWallSegments(courtyard.walls);
-  const bounds = { width: courtyard.width, height: courtyard.height };
-  const altar = courtyard.objectives.find((objective) => objective.kind === "altar");
-  const spawns = courtyard.objectives.filter((objective) => objective.kind === "ghost-spawn");
-  if (altar === undefined) throw new Error("no altar");
+/** A King of the Hill map's altar and ghosts, and its walls as segments. */
+function hill(id: string) {
+  const map = MAPS.find((each) => each.id === id);
+  if (map === undefined) throw new Error(`no ${id}`);
+  const altar = map.objectives.find((objective) => objective.kind === "altar");
+  if (altar === undefined) throw new Error(`no altar on ${id}`);
+  const ghosts = map.objectives.filter((objective) => objective.kind === "ghost-spawn");
+  const walls = allWallSegments(map.walls);
+  const finder = createPathFinder(
+    buildNavGraph(walls, { width: map.width, height: map.height }, RADIUS),
+  );
+  return { map, altar: altar.position, ghosts, walls, finder };
+}
 
-  it("puts the altar at the centre, and a ghost in each base", () => {
-    expect(altar.position).toEqual({ x: courtyard.width / 2, y: courtyard.height / 2 });
-    expect(spawns.map((spawn) => spawn.team).sort()).toEqual([0, 1]);
+/** Whether a straight line runs 400 out of `from`, along each of `directions`. */
+const sightLines = (
+  from: Vec2,
+  directions: readonly (readonly [number, number])[],
+  walls: readonly Segment[],
+): boolean[] =>
+  directions.map(([dx, dy]) =>
+    hasLineOfSight(from, { x: from.x + 400 * dx, y: from.y + 400 * dy }, walls),
+  );
+
+const CARDINALS = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+] as const;
+const DIAGONALS = [
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+] as const;
+
+/** The checks every King of the Hill map of #2552 passes. */
+function holdsTheHill(id: string, seats: readonly number[]): void {
+  const { map, altar, ghosts, finder } = hill(id);
+
+  it("seats every team size it lists, and puts the altar at the centre", () => {
+    expect(map.teamSizes).toEqual(seats);
+    for (const team of [0, 1]) {
+      expect(map.spawnPoints.filter((spawn) => spawn.team === team)).toHaveLength(8);
+    }
+    expect(altar).toEqual({ x: map.width / 2, y: map.height / 2 });
+  });
+
+  it("puts each team's ghost in its own base, behind its spawns", () => {
+    expect(ghosts.map((ghost) => ghost.team).sort()).toEqual([0, 1]);
+    for (const ghost of ghosts) {
+      for (const spawn of map.spawnPoints.filter((each) => each.team === ghost.team)) {
+        expect(Math.abs(spawn.position.x - altar.x)).toBeLessThan(
+          Math.abs(ghost.position.x - altar.x),
+        );
+      }
+    }
   });
 
   it("leads each ghost to the altar the same length", () => {
-    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
-    const lengths = spawns.map((spawn) => {
-      const path = finder.find(spawn.position, altar.position);
-      if (path === undefined) throw new Error(`no way for team ${String(spawn.team)}`);
-      return walked(spawn.position, path);
+    const lengths = ghosts.map((ghost) => {
+      const path = finder.find(ghost.position, altar);
+      if (path === undefined) throw new Error(`no way for team ${String(ghost.team)}`);
+      return walked(ghost.position, path);
     });
     expect(lengths[0]).toBeCloseTo(lengths[1] ?? 0, 3);
   });
 
-  it("raises the altar between two walls, with an approach from the north and one from the south", () => {
-    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
-    for (const [from, side] of [
-      [{ x: altar.position.x, y: 120 }, -1],
-      [{ x: altar.position.x, y: courtyard.height - 120 }, 1],
-    ] as const) {
-      const path = finder.find(from, altar.position);
-      expect(path, JSON.stringify(from)).toBeDefined();
-      // Straight in: nothing between the approach and the altar.
-      expect(path?.every((point) => Math.sign(point.y - altar.position.y) !== -side)).toBe(true);
+  it("has two routes from each base: walled off the one, the ghost goes round the other way", () => {
+    for (const ghost of ghosts) {
+      const path = finder.find(ghost.position, altar) ?? [];
+      const north = path.some((point) => point.y < altar.y - 50);
+      // A wall across the half of the map the way took, from the centre line to the edge.
+      const cut = {
+        kind: "rect" as const,
+        x: ghost.position.x < altar.x ? map.width / 4 - 40 : (map.width * 3) / 4 - 40,
+        y: north ? 0 : altar.y,
+        width: 80,
+        height: altar.y,
+      };
+      const blocked = createPathFinder(
+        buildNavGraph(
+          allWallSegments([...map.walls, cut]),
+          { width: map.width, height: map.height },
+          RADIUS,
+        ),
+      );
+      const detour = blocked.find(ghost.position, altar);
+      expect(detour, JSON.stringify(ghost)).toBeDefined();
+      expect(detour?.some((point) => point.y < altar.y - 50)).toBe(!north);
     }
-    // From either base the way in goes round the plinth's west or east wall.
-    for (const spawn of spawns) {
-      const path = finder.find(spawn.position, altar.position) ?? [];
-      expect(path.some((point) => Math.abs(point.y - altar.position.y) > 140)).toBe(true);
+  });
+
+  it("has three walls or more within spell range of the altar and of each ghost", () => {
+    for (const objective of map.objectives) {
+      expect(wallsNear(map, objective.position), objective.kind).toBeGreaterThanOrEqual(3);
     }
+  });
+
+  it("keeps the map within 12-24 walls", () => {
+    expect(map.walls.length).toBeGreaterThanOrEqual(12);
+    expect(map.walls.length).toBeLessThanOrEqual(24);
+  });
+}
+
+describe("The Courtyard (#2552)", () => {
+  holdsTheHill("the-courtyard", [4, 8]);
+  const { altar, walls } = hill("the-courtyard");
+
+  it("rings the altar with four pillar clusters, entered from the four diagonals", () => {
+    expect(sightLines(altar, CARDINALS, walls)).toEqual([false, false, false, false]);
+    expect(sightLines(altar, DIAGONALS, walls)).toEqual([true, true, true, true]);
   });
 });
 
-describe("Hall of Heroes (#1995)", () => {
-  const hall = MAPS.find((map) => map.id === "hall-of-heroes");
-  if (hall === undefined) throw new Error("no hall-of-heroes");
-  const walls = allWallSegments(hall.walls);
-  const bounds = { width: hall.width, height: hall.height };
-  const altar = hall.objectives.find((objective) => objective.kind === "altar");
-  const ghosts = hall.objectives.filter((objective) => objective.kind === "ghost-spawn");
-  if (altar === undefined) throw new Error("no altar");
+describe("Hall of Heroes (#2552)", () => {
+  holdsTheHill("hall-of-heroes", [8]);
+  const { altar, ghosts, walls, finder } = hill("hall-of-heroes");
 
-  it("seats 8 a team, and keeps every spawn 300 units from the altar", () => {
-    for (const team of [0, 1]) {
-      expect(hall.spawnPoints.filter((spawn) => spawn.team === team)).toHaveLength(8);
-    }
-    for (const spawn of hall.spawnPoints) {
-      expect(Vec.distance(spawn.position, altar.position)).toBeGreaterThan(300);
-    }
+  it("raises the altar on a dais walled west and east, open to the north and south", () => {
+    expect(sightLines(altar, CARDINALS, walls)).toEqual([false, false, true, true]);
   });
 
-  it("leads each ghost to the altar the same length, over open ground", () => {
-    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
-    const lengths = ghosts.map((ghost) => {
-      const path = finder.find(ghost.position, altar.position);
-      if (path === undefined) throw new Error(`no way for team ${String(ghost.team)}`);
-      return path.reduce(
-        (sum, point, index) =>
-          sum +
-          Vec.distance(index === 0 ? ghost.position : (path[index - 1] ?? ghost.position), point),
-        0,
-      );
-    });
-    expect(ghosts.map((ghost) => ghost.team).sort()).toEqual([0, 1]);
-    expect(lengths[0]).toBeCloseTo(lengths[1] ?? 0, 3);
+  it("leads every base's way in round the dais, by the north or the south approach", () => {
+    for (const ghost of ghosts) {
+      const path = finder.find(ghost.position, altar) ?? [];
+      expect(path.some((point) => Math.abs(point.y - altar.y) > 220)).toBe(true);
+    }
   });
 });
 
