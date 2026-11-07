@@ -47,6 +47,13 @@
       bottom strip). Accent palette (8 colours, no blue, no red): yellow, white, violet, mint,
       orange, slate, magenta, ice.
     </p>
+    <p>
+      <b>Operator constraint (after round 1):</b> the mark must live inside the player circle, and
+      the profession symbol must stay untouched. Only E fit. A to D draw outside the disc and are
+      kept for reference. F to H below use only the ring between the glyph and the rim (radius 8.6
+      to 11.4 of 14, a 2.8 px band) and sit on a flat team disc, so the glyph reads as on a bare
+      body.
+    </p>
     <h2>A. Pip ring</h2>
     <img src="../art/2662-option-a.png" alt="A" />
     <p>
@@ -91,6 +98,34 @@
       first. Compass: accent core. Colour-blind: plate shape plus tick pattern survive. Cost: one
       shape and up to 8 dots.
     </p>
+    <h2>F. Segmented band</h2>
+    <img src="../art/2662-option-f.png" alt="F" />
+    <p>
+      Eight arcs in the rim band, each off, dark, white or yellow (2 bits): 16 bits, 65k states. Map
+      size: reads as a clock-like ring; with 8 arcs the pattern is clear at 2.4x and a blur at 1:1
+      (arcs are 3 px wide), so at 1:1 it tells players apart by overall light/dark balance only.
+      Colour-blind: lightness carries it (white, dark, yellow differ in luminance), good. Clash: a
+      bright ring can read as a status ring; keeping white/yellow off the team hues avoids team
+      confusion. Cost: up to 8 paths. Compass: the dot gets an accent core, nothing more.
+    </p>
+    <h2>G. Satellites</h2>
+    <img src="../art/2662-option-g.png" alt="G" />
+    <p>
+      Three dots parked on the band, each at one of 16 clock slots and in one of 4 colours (white,
+      yellow, violet, dark): 18 bits. Map size: the quietest, so the glyph stays clearest; dots are
+      4 px, you see 'two white dots on the left, yellow top' at 2.4x and a speck at 1:1.
+      Colour-blind: lightness and position, good; violet is the weak colour. Clash: dots can read as
+      a weapon or off-hand mark if one lands near the facing. Cost: three circles.
+    </p>
+    <h2>H. Hatched rim</h2>
+    <img src="../art/2662-option-h.png" alt="H" />
+    <p>
+      The band filled with hatching: one of 8 angles, 4 densities, 8 accent colours: 8 bits only
+      (256 looks). Map size: the loudest texture, readable as 'striped rim' even at 1:1 but only 8
+      bits; same-class partners differ by angle and colour. Colour-blind: angle and density survive,
+      colour does not; risk of moire on small screens. Clash: stripes shimmer next to the glyph.
+      Cost: a clipped group of up to 20 lines per body, the dearest of the three.
+    </p>
     <table>
       <tr>
         <th></th>
@@ -133,6 +168,27 @@
         <td>loud</td>
         <td>good</td>
         <td>profession glyph</td>
+      </tr>
+      <tr>
+        <td>F band</td>
+        <td>16</td>
+        <td>ring balance</td>
+        <td>good</td>
+        <td>status rings</td>
+      </tr>
+      <tr>
+        <td>G satellites</td>
+        <td>18</td>
+        <td>specks, glyph clearest</td>
+        <td>good</td>
+        <td>weapon marks</td>
+      </tr>
+      <tr>
+        <td>H hatch</td>
+        <td>8</td>
+        <td>loud texture</td>
+        <td>colour weak</td>
+        <td>glyph shimmer</td>
       </tr>
     </table>
     <p>

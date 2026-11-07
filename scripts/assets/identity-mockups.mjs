@@ -74,6 +74,15 @@ const bare = (p) =>
 const compassBase = (p, inner = "") =>
   `<circle r="4" fill="${TEAM[p.team]}" stroke="${EDGE}" stroke-width="1"/>${inner}`;
 
+/** The ring between the profession glyph and the body edge: the only room inside the circle. */
+const BAND_IN = 8.6;
+const BAND_OUT = 11.4;
+const BAND_MID = (BAND_IN + BAND_OUT) / 2;
+/** A body whose glyph sits on a flat team disc, with `ring` marks in the band round it. */
+/** @type {(p: Player, ring: string) => string} */
+const innerBody = (p, ring) =>
+  `<circle r="${String(R - 0.75)}" fill="${TEAM[p.team]}" stroke="${EDGE}" stroke-width="1.5"/>${ring}<g transform="translate(-6.5 -6.5) scale(${f2(13 / 24)})" opacity="0.6">${profGlyph(p.prof)}</g>${weapon(p.facing)}`;
+
 /** @type {Option[]} */
 const OPTIONS = [
   {
@@ -210,6 +219,62 @@ const OPTIONS = [
       return compassBase(p, `<circle r="2" fill="${accent(b(3))}"/>`);
     },
   },
+  {
+    name: "F. Segmented band",
+    bits: "8 arcs x 2 bits (off, dark, white, yellow) = 16 bits",
+    body: (p) => {
+      const b = reader(p.word);
+      const states = [null, "#0b0f14", "#ffffff", "#f2d64b"];
+      const arcs = Array.from({ length: 8 }, (_, i) => {
+        const fill = states[b(2)];
+        if (fill === null || fill === undefined) return "";
+        const a0 = (i / 8) * Math.PI * 2 + 0.06;
+        const a1 = ((i + 1) / 8) * Math.PI * 2 - 0.06;
+        const d = `M${pt(BAND_IN, a0)} L${pt(BAND_OUT, a0)} A${String(BAND_OUT)} ${String(BAND_OUT)} 0 0 1 ${pt(BAND_OUT, a1)} L${pt(BAND_IN, a1)} A${String(BAND_IN)} ${String(BAND_IN)} 0 0 0 ${pt(BAND_IN, a0)}z`;
+        return `<path d="${d}" fill="${fill}" stroke="${EDGE}" stroke-width="0.6"/>`;
+      }).join("");
+      return innerBody(p, arcs);
+    },
+    dot: (p) => compassBase(p, `<circle r="1.6" fill="${accent(reader(p.word)(3))}"/>`),
+  },
+  {
+    name: "G. Satellites",
+    bits: "3 dots x (4 clock slots + 2 colours) = 18 bits",
+    body: (p) => {
+      const b = reader(p.word);
+      const cols = ["#ffffff", "#f2d64b", "#b58cff", EDGE];
+      const dots = [0, 1, 2]
+        .map(() => {
+          const a = (b(4) / 16) * Math.PI * 2;
+          const c = cols[b(2)] ?? INK;
+          return `<circle cx="${f2(BAND_MID * Math.cos(a))}" cy="${f2(BAND_MID * Math.sin(a))}" r="2.1" fill="${c}" stroke="${c === EDGE ? INK : EDGE}" stroke-width="0.7"/>`;
+        })
+        .join("");
+      return innerBody(p, dots);
+    },
+    dot: (p) => compassBase(p, `<circle r="1.6" fill="${accent(reader(p.word)(3))}"/>`),
+  },
+  {
+    name: "H. Hatched rim",
+    bits: "angle 3 + spacing 2 + accent 3 = 8 bits",
+    body: (p) => {
+      const b = reader(p.word);
+      const ang = (b(3) / 8) * 180;
+      const gap = [2.2, 2.8, 3.4, 4.2][b(2)] ?? 3;
+      const c = accent(b(3));
+      const n = Math.ceil(30 / gap);
+      const lines = Array.from(
+        { length: 2 * n + 1 },
+        (_, i) => `<path d="M${f2((i - n) * gap)} -20 V20" stroke="${c}" stroke-width="1.1"/>`,
+      ).join("");
+      const clip = `<clipPath id="rim${String(p.word)}"><path clip-rule="evenodd" d="M${String(-BAND_OUT)} 0 a${String(BAND_OUT)} ${String(BAND_OUT)} 0 1 0 ${String(2 * BAND_OUT)} 0 a${String(BAND_OUT)} ${String(BAND_OUT)} 0 1 0 ${String(-2 * BAND_OUT)} 0z M${String(-BAND_IN)} 0 a${String(BAND_IN)} ${String(BAND_IN)} 0 1 0 ${String(2 * BAND_IN)} 0 a${String(BAND_IN)} ${String(BAND_IN)} 0 1 0 ${String(-2 * BAND_IN)} 0z"/></clipPath>`;
+      return innerBody(
+        p,
+        `${clip}<g clip-path="url(#rim${String(p.word)})"><g transform="rotate(${f2(ang)})">${lines}</g></g>`,
+      );
+    },
+    dot: (p) => compassBase(p, `<circle r="1.6" fill="${accent(reader(p.word)(8) & 7)}"/>`),
+  },
 ];
 
 /** A pauldron or crest shape at angle a, 3 bits: none, dot, spike, square, bar, diamond, ring, twin. */
@@ -307,11 +372,11 @@ const PROT = "0.152286 1.052583 -0.204868 0.114503 0.786281 0.099216 -0.003882 -
 /** @type {(m: string) => string} */
 const matrix = (m) => m;
 
-const letters = "abcde";
+const letters = "abcdefgh";
 const notes = [];
 OPTIONS.forEach((o, oi) => {
   const id = letters.charAt(oi);
-  const W = 1180;
+  const W = 1260;
   const withUnder = (/** @type {Player} */ p) => o.body(p) + (o.under?.(p) ?? "");
   let body = text(20, 28, `${o.name}  —  ${o.bits}`, 18);
   // Arena body at 5x, both teams, then the same at 1:1 (normal zoom).
