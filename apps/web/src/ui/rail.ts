@@ -384,14 +384,12 @@ export function redrawModeRail(
 }
 /**
  * A rail screen (#1525): the rail on the left, and `body` beside it, the
- * screen's own, under its heading and one line saying what it is for. A
- * mode's says on top how long its party has been queued (#1766); who is
+ * screen's own, under its heading. A mode's says on top how long its party has been queued (#1766); who is
  * in the party is the top bar's Lobby window's (#2385).
  */
 export function railScreen(
   root: HTMLElement,
   active: RailEntry,
-  goal: string,
   onSwitch: (entry: RailEntry) => void,
 ): HTMLElement {
   teamSizeListener = undefined;
@@ -402,7 +400,7 @@ export function railScreen(
   if (queued !== undefined) {
     body.appendChild(queued);
   }
-  body.append(h("h2", "rail-title", railLabel(active)), h("p", "rail-goal", goal));
+  body.append(h("h2", "rail-title", railLabel(active)));
   panel.append(modeRail(active, onSwitch), body);
   root.replaceChildren(panel);
   return body;

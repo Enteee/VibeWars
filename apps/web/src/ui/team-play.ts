@@ -28,17 +28,17 @@ import { validateTeam } from "./team-builder.js";
 /** A rail entry that shows the lobby. */
 export type HostEntry = Exclude<LobbyMode, "random-arena">;
 
-/** What each lobby screen says it is for. */
-export const HOST_GOALS: Readonly<Record<HostEntry, string>> = {
-  "team-arena": "Two teams, one arena: wipe the other side out, or outscore it.",
-  "heroes-ascent": "Carry the relic, hold the altar, take the points.",
-  gvg: "Storm the other guild's hall and kill its Guild Lord.",
-  "hosted-game": "Any map, any rules: a lobby for friends with its key.",
-};
+/** The screens that show the lobby. */
+const HOST_ENTRIES: ReadonlySet<RailEntry> = new Set<HostEntry>([
+  "team-arena",
+  "heroes-ascent",
+  "gvg",
+  "hosted-game",
+]);
 
 /** Whether `entry` is a screen that shows the lobby. */
 export function isHostEntry(entry: RailEntry): entry is HostEntry {
-  return entry in HOST_GOALS;
+  return HOST_ENTRIES.has(entry);
 }
 
 /** Where the lobby goes while this tab has none yet (#1526). */
@@ -53,9 +53,6 @@ export function noTeamBuilds(size: TeamSize): string {
 function sizeTag(team: StoredTeam): HTMLElement {
   return h("span", "play-card-size", `${String(team.members.length)}/${String(team.size)}`);
 }
-
-/** What Team Builder is for, under its heading. */
-export const TEAM_BUILDER_GOAL = "Make and edit the Team Builds you propose in a Team Lobby.";
 
 export interface TeamPlayCallbacks {
   /** Show another rail entry (#1525); the rail has stored it. */
@@ -217,7 +214,6 @@ function teamBuilderBody(
 function teamScreen(
   root: HTMLElement,
   entry: RailEntry,
-  goal: string,
   problems: readonly string[],
   connectionNotice: string | undefined,
   callbacks: TeamPlayCallbacks,
@@ -229,7 +225,7 @@ function teamScreen(
     actions: panel?.actions ?? [],
     join: true,
   });
-  const body = railScreen(root, entry, goal, callbacks.onSwitch);
+  const body = railScreen(root, entry, callbacks.onSwitch);
   // Why the last try failed, under the bar it was tried from.
   if (connectionNotice !== undefined) {
     body.appendChild(h("div", "screen-problem screen-connection-problem", connectionNotice));
@@ -254,15 +250,7 @@ export function renderHostScreen(
   callbacks: TeamPlayCallbacks,
   panel: LobbyPanel | undefined,
 ): void {
-  const body = teamScreen(
-    root,
-    entry,
-    HOST_GOALS[entry],
-    problems,
-    connectionNotice,
-    callbacks,
-    panel,
-  );
+  const body = teamScreen(root, entry, problems, connectionNotice, callbacks, panel);
   body.appendChild(panel?.body ?? h("p", "screen-info", OPENING_LOBBY));
 }
 
@@ -275,6 +263,6 @@ export function renderTeamBuilder(
   callbacks: TeamPlayCallbacks,
 ): void {
   const rerolled = rerollFocused();
-  const body = teamScreen(root, "teams", TEAM_BUILDER_GOAL, problems, connectionNotice, callbacks);
+  const body = teamScreen(root, "teams", problems, connectionNotice, callbacks);
   teamBuilderBody(body, teams, callbacks, rerolled);
 }

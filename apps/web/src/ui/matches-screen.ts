@@ -26,8 +26,7 @@ import { railLabel, railScreen, type RailEntry } from "./rail.js";
 /** The most records the page holds; the oldest goes first. */
 export const MATCHES_KEPT = 100;
 
-export const MATCHES_GOAL = "Matches as their hosts report them, the newest first.";
-export const NO_MATCHES = "No matches yet. Finished matches appear here as they are played.";
+export const NO_MATCHES = "No matches yet.";
 export const MATCHES_OFFLINE = "Can't reach the match relays right now.";
 export const HOST_REPORTED = "Published by the match's host; not verified by anyone else.";
 export const BUILD_UNREADABLE = "Build unreadable";
@@ -265,7 +264,7 @@ export function renderMatchesScreen(
   options: MatchesScreenOptions,
 ): MatchesScreen {
   screenBar({ crumbs: ["VibeWars"], status: [], actions: [], join: true });
-  const body = railScreen(root, "matches", MATCHES_GOAL, options.onSwitch);
+  const body = railScreen(root, "matches", options.onSwitch);
   const note = body.appendChild(h("p", "matches-note", NO_MATCHES));
   const list = body.appendChild(h("ol", "match-list"));
   let records: HeardMatchRecord[] = [];
