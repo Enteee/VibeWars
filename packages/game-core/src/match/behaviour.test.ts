@@ -325,6 +325,9 @@ describe("auto-attack", () => {
         isBot: () => false,
         calledTargetId: undefined,
         sees: () => true,
+        seesBetween: () => true,
+        walkable: () => true,
+        foeCentroid: undefined,
         objectives: NO_OBJECTIVES,
       },
     );
@@ -385,6 +388,9 @@ describe("follow-and-attack (#467)", () => {
       isBot: () => false,
       calledTargetId: undefined,
       sees: () => true,
+      seesBetween: () => true,
+      walkable: () => true,
+      foeCentroid: undefined,
       objectives: NO_OBJECTIVES,
     });
   }

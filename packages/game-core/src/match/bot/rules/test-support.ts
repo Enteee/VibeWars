@@ -5,10 +5,24 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../../../ruleset.js";
 import { getSkill } from "../../../skills/catalog.js";
 import { STARTER_BUILDS } from "../../../starter-builds.js";
 import { STARTER_TEAMS } from "../../../starter-teams.js";
-import { type Vec2 } from "../../../vec2.js";
-import { createCursor, decide, NO_OBJECTIVES, type Behaviour } from "../../behaviour.js";
-import { MatchSimulation, loadoutSpec, type ParticipantSpec } from "../../simulation.js";
+import { add, scale, ZERO, type Vec2 } from "../../../vec2.js";
+import {
+  createCursor,
+  decide,
+  NO_OBJECTIVES,
+  type Behaviour,
+  type BehaviourContext,
+} from "../../behaviour.js";
+import {
+  MatchSimulation,
+  loadoutSpec,
+  type Participant,
+  type ParticipantSpec,
+} from "../../simulation.js";
+import { botRole } from "../role.js";
 import { botUses } from "../skill-intent.js";
+import { NOTHING, skillsOf } from "./shared.js";
+import type { RuleContext } from "./types.js";
 
 export const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 export const DT = 1 / RULESET.tickRateHz;
@@ -90,19 +104,80 @@ export function askBot(
   objectives = NO_OBJECTIVES,
   isBot: (participantId: string) => boolean = () => true,
 ) {
+  return decide(BOT, createCursor(), contextFor(sim, id, { objectives, isBot }));
+}
+
+/** The bot `id`'s view, as the simulation gives it, with every skill allowed and nothing in the way. */
+export function contextFor(
+  sim: MatchSimulation,
+  id: string,
+  extra: Partial<BehaviourContext> = {},
+): BehaviourContext {
   const self = sim.get(id);
   if (self === undefined) throw new Error(`no ${id}`);
-  return decide(BOT, createCursor(), {
+  const participants = [...sim.participants()];
+  const team = self.combatant.team;
+  return {
     self,
-    participants: [...sim.participants()],
+    participants,
     dt: DT,
     stepUnits: 1,
     check: () => ({ ok: true }),
-    isBot,
+    isBot: () => true,
     calledTargetId: undefined,
     sees: () => true,
-    objectives,
-  });
+    seesBetween: () => true,
+    walkable: () => true,
+    foeCentroid: centroidOf(participants, (other) => other.combatant.team !== team),
+    objectives: NO_OBJECTIVES,
+    ...extra,
+  };
+}
+
+/** Where the living players `accept` takes stand on average; none: `undefined`. */
+function centroidOf(
+  participants: readonly Participant[],
+  accept: (other: Participant) => boolean,
+): Vec2 | undefined {
+  const bodies = participants.filter(
+    (other) => !other.combatant.dead && other.creature === undefined && accept(other),
+  );
+  if (bodies.length === 0) return undefined;
+  const sum = bodies.reduce((total, { position }) => add(total, position), ZERO);
+  return scale(sum, 1 / bodies.length);
+}
+
+/**
+ * One rule's view of the bot `id` (#2545): its living foes and team, its
+ * role from its bar, no target, every skill allowed.
+ */
+export function ruleFor(
+  sim: MatchSimulation,
+  id: string,
+  extra: Partial<RuleContext> = {},
+  context: Partial<BehaviourContext> = {},
+): RuleContext {
+  const view = contextFor(sim, id, context);
+  const self = view.self;
+  const bar = skillsOf(self);
+  const living = view.participants.filter((other) => !other.combatant.dead);
+  return {
+    context: view,
+    self,
+    bar,
+    foes: living.filter((other) => other.combatant.team !== self.combatant.team),
+    allies: living.filter(
+      (other) => other.combatant.team === self.combatant.team && other.creature === undefined,
+    ),
+    targetId: undefined,
+    nearestFirst: (bodies) => [...bodies],
+    mayUse: () => true,
+    use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
+    mayEndUpkeep: true,
+    role: botRole(bar, self.combatant.equipment.mainHand.weapon.range),
+    foeCentroid: view.foeCentroid,
+    ...extra,
+  };
 }
 
 export function uses(skillId: string | undefined) {

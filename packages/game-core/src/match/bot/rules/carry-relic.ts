@@ -7,7 +7,7 @@ import type { BotRule } from "./types.js";
  * foes or not, and scores on arrival as a player does.
  */
 const carryRelic: BotRule = {
-  order: 99,
+  order: 35,
   name: "carry-relic",
   decide: ({ context, self }) => {
     const { relics, altar } = context.objectives;

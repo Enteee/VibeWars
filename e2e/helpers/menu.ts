@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 /**
  * The menu's mode rail (#1525): Random Arena, Team Arena, Heroes'
- * Ascent, GvG and Hosted Game, then Character Builder and Team Builder.
+ * Ascent, GvG and Hosted Game, then Character Builder, Team Builder and Matches.
  */
 export type RailLabel =
   | "Random Arena"
@@ -11,7 +11,8 @@ export type RailLabel =
   | "GvG"
   | "Hosted Game"
   | "Character Builder"
-  | "Team Builder";
+  | "Team Builder"
+  | "Matches";
 
 /** Open `label`'s screen from the rail, as a player would. */
 export async function openRail(page: Page, label: RailLabel): Promise<void> {

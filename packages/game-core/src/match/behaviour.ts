@@ -4,6 +4,7 @@ import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
+import type { BotRole } from "./bot/role.js";
 import type { CapturePoint } from "./capture-points.js";
 import type { CarriedSpawn } from "./carried.js";
 import { MASTERLESS_TEAM } from "./minions.js";
@@ -207,6 +208,8 @@ export interface BehaviourCursor {
   heldMove: Pick<BehaviourIntent, "moveTo">;
   /** `play-build`: seconds before it may end another maintained enchantment (#2492). */
   upkeepDropSeconds: number;
+  /** `play-build`: the role its bar gives it (#2545), set at its first think. */
+  role: BotRole | undefined;
 }
 
 export interface BehaviourContext {
@@ -230,6 +233,12 @@ export interface BehaviourContext {
   readonly calledTargetId: string | undefined;
   /** Whether nothing blocks the line of sight from `self` to `point` (#1222). */
   sees(point: Vec2): boolean;
+  /** Whether nothing blocks the line of sight from `from` to `to` (#2545). */
+  seesBetween(from: Vec2, to: Vec2): boolean;
+  /** Whether `self` could walk straight to `point` and stand there (#2545). */
+  walkable(point: Vec2): boolean;
+  /** Where the living players of every other team stand on average (#2545). */
+  readonly foeCentroid: Vec2 | undefined;
   /** What a bot plays for besides the foes (#2542). */
   readonly objectives: BotObjectives;
 }
@@ -267,6 +276,7 @@ export function createCursor(): BehaviourCursor {
     returning: false,
     heldMove: { moveTo: undefined },
     upkeepDropSeconds: 0,
+    role: undefined,
   };
 }
 

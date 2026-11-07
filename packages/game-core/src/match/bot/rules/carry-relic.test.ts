@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { vec2 } from "../../../vec2.js";
 import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
 import { relicId, type RelicState } from "../../relics.js";
-import { askBot, body, BOT, match } from "./test-support.js";
+import { askBot, body, BOT, fighter, match, MONK, WARRIOR } from "./test-support.js";
 
 const ALTAR = vec2(800, 400);
 
@@ -29,6 +29,16 @@ describe("carry-relic: a bot runs its relic to the altar (#2581)", () => {
     expect(intent.moveTo).toEqual(ALTAR);
     expect(intent.attackTargetId).toBeUndefined();
     expect(intent.useSkillId).toBeUndefined();
+  });
+
+  it("walks a healer carrier to the altar, not behind its ally", () => {
+    const sim = match([
+      fighter("bot", 0, MONK, vec2(300, 400)),
+      fighter("mate", 0, WARRIOR, vec2(300, 1000)),
+      fighter("foe", 1, WARRIOR, vec2(500, 400)),
+    ]);
+    const carrying = running({ team: 0, place: { kind: "carried", carrierId: "bot" } });
+    expect(askBot(sim, "bot", carrying).moveTo).toEqual(ALTAR);
   });
 
   it("fights a foe in spell range while a teammate carries the relic", () => {

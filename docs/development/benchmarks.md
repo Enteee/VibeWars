@@ -106,6 +106,18 @@ Run it on the PR's branch and on `main`, on the same machine, and
 compare the two. A number on its own means nothing: the starter builds
 change, and with them the `casters` baseline, and machines differ.
 
+## The bot bench
+
+`pnpm run bench:bots` (#2545) fights all-bot 4v4s and 8v8s on an open
+field, bots on `play-build` and the built-in builds, 90 s a fight, on two
+sets of 20 seeds, and prints how many players died. It measures whether
+bots commit to kills: a bot change that makes fights stall shows as fewer
+deaths. It is not in CI; every PR that changes how bots fight runs it on
+its branch and on `main` and puts both counts in the PR. Deaths at or
+above `main`'s are the bar. The counts are deterministic, so a
+difference is a real one, but a seed set is small: read a few deaths
+either way as noise.
+
 ## What is not measured
 
 **Client FPS.** It needs a real browser compositing real frames, which

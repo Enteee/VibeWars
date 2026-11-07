@@ -53,7 +53,8 @@ const fetchRelic: BotRule = {
 /**
  * The living teammate of `context.self` with empty hands nearest to
  * `point`, ties to simulation order: a bot, or a human only when
- * `humans`. `undefined` when that is a human.
+ * `humans`. A bot with a foe in spell range fights rather than runs, so
+ * it is passed over. `undefined` when that is a human.
  */
 function runner(context: BehaviourContext, point: Vec2, humans: boolean): Participant | undefined {
   const team = context.self.combatant.team;
@@ -67,7 +68,8 @@ function runner(context: BehaviourContext, point: Vec2, humans: boolean): Partic
       mate.combatant.dead ||
       mate.creature !== undefined ||
       (!bot && !humans) ||
-      carriedRelic(relics, mate.id) !== undefined
+      carriedRelic(relics, mate.id) !== undefined ||
+      (bot && fighting(context, mate))
     ) {
       continue;
     }
@@ -78,6 +80,16 @@ function runner(context: BehaviourContext, point: Vec2, humans: boolean): Partic
     }
   }
   return best !== undefined && context.isBot(best.id) ? best : undefined;
+}
+
+/** Whether a living foe of `mate` stands within its spell range. */
+function fighting(context: BehaviourContext, mate: Participant): boolean {
+  return context.participants.some(
+    (foe) =>
+      foe.combatant.team !== mate.combatant.team &&
+      !foe.combatant.dead &&
+      distance(foe.position, mate.position) <= RANGE_SPELL,
+  );
 }
 
 export default fetchRelic;
