@@ -2,7 +2,7 @@
   "id": "arena-canyon",
   "name": "Canyon",
   "mode": "annihilation",
-  "teamSizes": [4, 8],
+  "teamSizes": [1, 2, 4, 8],
   "width": 2800,
   "height": 1800,
   "walls": [

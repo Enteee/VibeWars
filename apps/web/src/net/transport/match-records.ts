@@ -17,16 +17,19 @@ import {
 } from "@vibewars/game-session";
 
 import { arenaIds } from "../maps.js";
+import { VERIFY_PER_SECOND } from "./nostr-queue.js";
 import {
   byteLength,
   openRelayPool,
   signEvent,
+  verifyBudget,
   webSocket,
+  wellFormedEvent,
   type NostrEvent,
   type OpenRelaySocket,
 } from "./nostr-relays.js";
 import { NOSTR_RELAYS } from "./relays.js";
-import { newTicketKey } from "./ticket-key.js";
+import { newTicketKey, verifyTicketSig } from "./ticket-key.js";
 
 /** NIP-78 application data: a kind relays store. */
 export const MATCH_RECORD_EVENT_KIND = 30078;
@@ -128,4 +131,129 @@ function isOkFor(data: unknown, id: string): boolean {
     return false;
   }
   return Array.isArray(message) && message[0] === "OK" && message[1] === id;
+}
+
+/** The subscription the Matches page holds, by its id on every relay. */
+const WATCH_SUBSCRIPTION_ID = "vibewars-matches";
+
+/** How many records the Matches page asks each relay for. */
+export const MATCH_RECORD_LIMIT = 100;
+
+/**
+ * The largest relay message a reader parses: a record's content at its
+ * cap, every character escaped, and room for the event around it.
+ */
+const MAX_MATCH_RECORD_MESSAGE_BYTES = 2 * MAX_MATCH_RECORD_BYTES + 2 * 1024;
+
+/**
+ * Signature checks the watch makes at once: one relay's whole answer.
+ * The other relays' copies of a record are dropped before any check.
+ */
+export const MATCH_RECORD_VERIFY_BURST = MATCH_RECORD_LIMIT;
+
+/** Record `d` tags remembered to drop the copy each other relay delivers. */
+const SEEN_LIMIT = 1024;
+
+export interface MatchRecordWatchDeps extends MatchRecordDeps {
+  readonly verifyTicketSig: (pubkey: string, digest: Uint8Array, sig: string) => boolean;
+}
+
+const BROWSER_WATCH: MatchRecordWatchDeps = { ...BROWSER, verifyTicketSig };
+
+/** A record heard, with the `d` tag that names it. */
+export interface HeardMatchRecord {
+  readonly id: string;
+  readonly record: MatchRecord;
+}
+
+export interface MatchRecordWatchHandlers {
+  /** A valid, verified record, each `d` once. */
+  readonly record: (heard: HeardMatchRecord) => void;
+  /** Every relay is down. */
+  readonly noRelay: () => void;
+}
+
+export interface MatchRecordWatch {
+  /** Closes every socket; nothing more is heard. */
+  close(): void;
+}
+
+/**
+ * The records on the relays, the last `MATCH_RECORD_LIMIT` each has and
+ * every new one after, until closed. A record reaches `record` only once
+ * it is valid and its event's signature holds; anything else is dropped
+ * without a word, as is a second record under a `d` already heard.
+ */
+export function watchMatchRecords(
+  on: MatchRecordWatchHandlers,
+  deps: MatchRecordWatchDeps = BROWSER_WATCH,
+): MatchRecordWatch {
+  const mayVerify = verifyBudget(deps.now, VERIFY_PER_SECOND, MATCH_RECORD_VERIFY_BURST);
+  const mapIds = new Set(arenaIds());
+  const seen = new Set<string>();
+
+  function hear(data: unknown): void {
+    if (typeof data !== "string" || byteLength(data) > MAX_MATCH_RECORD_MESSAGE_BYTES) {
+      return;
+    }
+    let message: unknown;
+    try {
+      message = JSON.parse(data);
+    } catch {
+      return;
+    }
+    if (!Array.isArray(message) || message[0] !== "EVENT" || message[1] !== WATCH_SUBSCRIPTION_ID) {
+      return;
+    }
+    const formed = wellFormedEvent(message[2], MATCH_RECORD_EVENT_KIND);
+    if (formed === undefined) {
+      return;
+    }
+    const { event, digest } = formed;
+    const id = event.tags.find(([name]) => name === "d")?.[1];
+    if (
+      id === undefined ||
+      seen.has(id) ||
+      !event.tags.some(([name, value]) => name === "t" && value === MATCH_RECORD_TOPIC) ||
+      byteLength(event.content) > MAX_MATCH_RECORD_BYTES
+    ) {
+      return;
+    }
+    let content: unknown;
+    try {
+      content = JSON.parse(event.content);
+    } catch {
+      return;
+    }
+    const record = validateMatchRecord(content, mapIds, Math.floor(deps.now() / 1000));
+    // Over budget, a record is dropped unmarked: another relay's copy may yet be checked.
+    if (record === undefined || !mayVerify()) {
+      return;
+    }
+    if (!deps.verifyTicketSig(event.pubkey, digest, event.sig)) {
+      return;
+    }
+    if (seen.size >= SEEN_LIMIT) {
+      seen.clear();
+    }
+    seen.add(id);
+    on.record({ id, record });
+  }
+
+  const pool = openRelayPool({
+    relays: deps.relays,
+    openSocket: deps.openSocket,
+    request: JSON.stringify([
+      "REQ",
+      WATCH_SUBSCRIPTION_ID,
+      { kinds: [MATCH_RECORD_EVENT_KIND], "#t": [MATCH_RECORD_TOPIC], limit: MATCH_RECORD_LIMIT },
+    ]),
+    hear,
+    allDown: on.noRelay,
+  });
+  return {
+    close: () => {
+      pool.close();
+    },
+  };
 }

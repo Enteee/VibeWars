@@ -34,8 +34,7 @@ nobody's, the altar in gold. A player's filled arrow draws over it.
 and each death costs morale. Wipe the other team to win. After 8 minutes,
 the team with the most morale left wins.
 
-Arena Alpha, Canyon, Crossroads, Long Hall, Open Field and The Ring play
-it.
+Canyon, Crossroads and Long Hall play it.
 
 ## Kill Count
 
@@ -280,3 +279,8 @@ you play. Nothing else that could identify you is: no address, no peer
 id, no lobby. A match that ends because its host left, or that everyone
 left, is not published. Records are reported by the host, so a host can
 get one wrong; nothing checks them against the match.
+
+See them on the **Matches** page, below Team Builder: the last 100,
+newest first, with new ones appearing as they are played. Every row is
+marked **host-reported**. Click one for both teams, each player's
+professions, top attributes and skill bar.

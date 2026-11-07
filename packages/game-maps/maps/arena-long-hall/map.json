@@ -2,7 +2,7 @@
   "id": "arena-long-hall",
   "name": "Long Hall",
   "mode": "annihilation",
-  "teamSizes": [4, 8],
+  "teamSizes": [1, 2, 4, 8],
   "width": 3200,
   "height": 1100,
   "walls": [

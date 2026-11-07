@@ -180,8 +180,10 @@ builds (`starter-builds.ts`), and the fixed-step `drainAccumulator`.
 ### `packages/game-maps` — arenas
 
 Declarative map documents (`maps/*/`), a zod schema, a loader/validator and
-derived geometry (wall segments, spawn points by team). Four arenas ship:
-`arena-alpha` (chokepoint), `arena-open`, `arena-split`, `arena-pillars`.
+derived geometry (wall segments, spawn points by team). Annihilation plays on
+`arena-canyon`, `arena-crossroads` and `arena-long-hall`; each other mode has its
+own maps (`arena-pillars`, `arena-split`, `relic-temples`, `forgotten-shrines`,
+`hill-courtyard`, `hall-of-heroes`, `guild-hall-isle`).
 Map geometry is original (brief §41) — see ADR-0006 for the format.
 
 ### `packages/game-data` — reference data, not a runtime dependency

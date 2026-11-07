@@ -101,7 +101,7 @@ describe("the mode rail (#1525)", () => {
     setRailParty(undefined);
   });
 
-  it("has the five modes, then Character Builder and Team Builder", () => {
+  it("has the five modes, then Character Builder, Team Builder and Matches (#2532)", () => {
     expect(RAIL.map(({ label }) => label)).toEqual([
       "Random Arena",
       "Team Arena",
@@ -110,6 +110,7 @@ describe("the mode rail (#1525)", () => {
       "Hosted Game",
       "Character Builder",
       "Team Builder",
+      "Matches",
     ]);
   });
 
@@ -119,6 +120,7 @@ describe("the mode rail (#1525)", () => {
       ...Array<string>(5).fill("button"),
       "div",
       "hr",
+      "button",
       "button",
       "button",
     ]);
@@ -166,7 +168,7 @@ describe("the mode rail (#1525)", () => {
       rail.children.find((child) => child.attributes.get("data-entry") === name);
     expect(
       RAIL.map((item) => entry(item.entry)?.attributes.get("aria-disabled") ?? "false"),
-    ).toEqual(["true", "true", "true", "false", "true", "false", "false"]);
+    ).toEqual(["true", "true", "true", "false", "true", "false", "false", "false"]);
     expect(entry("team-arena")?.title).toBe(HOST_PICKS_MODE);
     entry("team-arena")?.click();
     entry("gvg")?.click();

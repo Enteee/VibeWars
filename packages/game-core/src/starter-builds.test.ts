@@ -11,26 +11,17 @@ import { STARTER_BUILDS, pickBuildFrom, pickStarterBuild } from "./starter-build
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.attributes;
 const IMPLEMENTED = new Set(IMPLEMENTED_SKILLS.map((skill) => skill.id));
 
-describe("STARTER_BUILDS (#852)", () => {
-  it("are five, of five different primaries, one a Monk", () => {
-    expect(STARTER_BUILDS).toHaveLength(5);
-    const primaries = STARTER_BUILDS.map((build) => build.primaryProfession);
-    expect(new Set(primaries).size).toBe(primaries.length);
-    expect(primaries).toContain("monk");
-  });
-
-  it("are named <Primary>/<Secondary>, each name once", () => {
+describe("STARTER_BUILDS (#852, #2554)", () => {
+  it("are the PvX builds, named <PvX name> (<Primary>/<Secondary>)", () => {
+    expect(STARTER_BUILDS.length).toBeGreaterThan(50);
     for (const build of STARTER_BUILDS) {
-      const secondary = build.secondaryProfession;
-      expect(secondary, build.name).toBeDefined();
-      if (secondary !== undefined) {
-        expect(build.name).toBe(
-          `${PROFESSIONS[build.primaryProfession].name}/${PROFESSIONS[secondary].name}`,
-        );
-      }
+      const professions = [build.primaryProfession, build.secondaryProfession]
+        .flatMap((profession) =>
+          profession === undefined ? [] : [PROFESSIONS[profession].abbreviation],
+        )
+        .join("/");
+      expect(build.name).toMatch(new RegExp(` \\(${professions}\\)$`));
     }
-    const names = STARTER_BUILDS.map((build) => build.name);
-    expect(new Set(names).size).toBe(names.length);
   });
 
   for (const build of STARTER_BUILDS) {
@@ -47,25 +38,30 @@ describe("STARTER_BUILDS (#852)", () => {
         );
       });
 
-      it("spends every attribute point", () => {
-        expect(totalCost(build.attributes)).toBe(RULES.attributePointBudget);
+      it("spends no more attribute points than a build has", () => {
+        expect(totalCost(build.attributes)).toBeLessThanOrEqual(RULES.attributePointBudget);
       });
 
-      it("fills all eight slots with skills the engine runs, at most one elite", () => {
+      it("has eight slots of skills the engine runs or empty, at most one elite", () => {
         expect(build.skillBar).toHaveLength(SKILL_BAR_SLOTS);
         for (const id of build.skillBar) {
-          expect(id !== null && IMPLEMENTED.has(id), String(id)).toBe(true);
+          expect(id === null || IMPLEMENTED.has(id), String(id)).toBe(true);
         }
         const elites = build.skillBar.filter((id) => id !== null && getSkill(id)?.elite === true);
         expect(elites.length).toBeLessThanOrEqual(1);
       });
 
-      it("can use every attack skill on its bar with its weapon", () => {
-        const weapon = build.equipment.weaponSets[0].mainHand.weaponId;
+      it("can use every attack skill on its bar with one of its weapons", () => {
+        const weapons = build.equipment.weaponSets.flatMap((set) =>
+          set === null ? [] : [set.mainHand.weaponId],
+        );
         for (const id of build.skillBar) {
           const rule = id === null ? undefined : getSkill(id)?.attack;
           if (rule !== undefined) {
-            expect(wieldsFor(weapon, rule.weapon), `${String(id)} with ${weapon}`).toBe(true);
+            expect(
+              weapons.some((weapon) => wieldsFor(weapon, rule.weapon)),
+              `${String(id)} with ${weapons.join()}`,
+            ).toBe(true);
           }
         }
       });
@@ -77,13 +73,6 @@ describe("pickStarterBuild (#852)", () => {
   it("picks the first at 0 and the last just under 1", () => {
     expect(pickStarterBuild(() => 0)).toBe(STARTER_BUILDS[0]);
     expect(pickStarterBuild(() => 0.9999999)).toBe(STARTER_BUILDS[STARTER_BUILDS.length - 1]);
-  });
-
-  it("gives every starter build a profession pair no other has", () => {
-    const pairs = STARTER_BUILDS.map(
-      (build) => `${build.primaryProfession}/${String(build.secondaryProfession)}`,
-    );
-    expect(new Set(pairs).size).toBe(STARTER_BUILDS.length);
   });
 
   it("never picks the professions it is told not to, whatever the name (#1149)", () => {

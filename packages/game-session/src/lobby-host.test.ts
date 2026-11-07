@@ -43,7 +43,7 @@ import {
   type TestLobby,
 } from "./lobby-harness.test-support.js";
 import { canStart, type MatchPlan } from "./lobby-host.js";
-import { cryptoTurns, settle, until } from "./match-harness.test-support.js";
+import { cryptoTurns, settle, starterBuild, until } from "./match-harness.test-support.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import { sanitizeCharacterName } from "./names.js";
@@ -919,16 +919,11 @@ describe("joining by code", () => {
 });
 
 describe("a Team Lobby (#1458)", () => {
-  const [WARRIOR, RANGER, MONK, NECRO, ELE] = STARTER_BUILDS;
-  if (
-    WARRIOR === undefined ||
-    RANGER === undefined ||
-    MONK === undefined ||
-    NECRO === undefined ||
-    ELE === undefined
-  ) {
-    throw new Error("a Team Lobby test needs five starter builds");
-  }
+  const WARRIOR = starterBuild("Warrior/Monk");
+  const RANGER = starterBuild("Ranger/Mesmer");
+  const MONK = starterBuild("Monk/Elementalist");
+  const NECRO = starterBuild("Necromancer/Elementalist");
+  const ELE = starterBuild("Elementalist/Mesmer");
 
   /** The draws the lobby's RNG makes, in order, then 0 for good. */
   function draws(...values: number[]): () => number {

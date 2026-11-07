@@ -7,7 +7,13 @@ import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { filterChip, openLibraryGroup } from "./helpers/library.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
-import { awaitLobby, openRail, pickCharacter } from "./helpers/menu.js";
+import {
+  awaitLobby,
+  lobbyWindow,
+  openRail,
+  pickCharacter,
+  shutLobbyWindow,
+} from "./helpers/menu.js";
 import { expectTeamSize, setTeamSize, startSoloMatch } from "./helpers/peers.js";
 import { bringStarter } from "./helpers/starter.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
@@ -82,6 +88,24 @@ test("Esc leaves at once without edits, and asks before it discards them; Save l
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
   await expect(roster(page)).toContainText("Kept");
+});
+
+test("the builders' editors' Lobby window has Copy invite link and Closed / Open, as the menu's does (#2566)", async ({
+  page,
+}) => {
+  for (const [screen, create] of [
+    ["Character Builder", "New character"],
+    ["Team Builder", "New team build"],
+  ] as const) {
+    await page.goto("./");
+    await awaitLobby(page);
+    await openRail(page, screen);
+    await page.getByRole("button", { name: create, exact: true }).click();
+    const lobby = await lobbyWindow(page);
+    await expect(lobby.getByRole("button", { name: "Copy invite link" })).toBeVisible();
+    await expect(lobby.locator(".topbar-lobby-open")).toBeVisible();
+    await shutLobbyWindow(page);
+  }
 });
 
 test("the top bar's question stands in for the crumbs and fits the window at any width (#1320)", async ({
