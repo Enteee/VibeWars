@@ -9,8 +9,8 @@ import type { DoubleClick } from "./double-click.js";
 
 /**
  * What a right click sends (#438), shared by the match and the Training
- * Ground so it means the same in both. The left button only ever walks;
- * the right one picks.
+ * Ground so it means the same in both. The left button walks (unless
+ * Show names is held, `primaryClickIntent`); the right one picks.
  *
  * A body under `world` is targeted, and a second right click on the same
  * enemy within the double-click window attacks it, as Space would (#298).
@@ -20,6 +20,9 @@ import type { DoubleClick } from "./double-click.js";
  * The ground sends nothing: a missed right click costs nothing, and keeps
  * the target. `doubleClick` is pressed either way, so a click on the
  * ground breaks a double.
+ *
+ * With `shift` (Show names held, #2738) a name is part of its body's hit,
+ * and the click only ever targets: a double never attacks.
  */
 export function secondaryClickIntents(
   snapshot: MatchSnapshot,
@@ -27,8 +30,9 @@ export function secondaryClickIntents(
   world: Vec2,
   doubleClick: DoubleClick,
   nowMs: number,
+  shift: boolean,
 ): ClientIntent[] {
-  const body = actorAtPoint(arena, world)?.id;
+  const body = actorAtPoint(arena, world, shift ? arena.nameBoxes : undefined)?.id;
   const flagObject = flagObjectAtPoint(arena.flags, arena.stand, world);
   // #1299: your own body never hides the flag or stand you stand on.
   const hit = body === undefined || body === snapshot.selfSessionId ? (flagObject ?? body) : body;
@@ -38,8 +42,24 @@ export function secondaryClickIntents(
   }
   return [
     { kind: "target", targetSessionId: hit },
-    ...(double ? attackClickIntents(snapshot, hit) : []),
+    ...(double && !shift ? attackClickIntents(snapshot, hit) : []),
   ];
+}
+
+/**
+ * What a left click sends (#438): a walk to `world`. With `shift` (Show
+ * names held, #2738), a click on a body or its name targets it instead,
+ * and does not walk; on the ground it still walks.
+ */
+export function primaryClickIntent(
+  arena: ArenaSnapshot,
+  world: Vec2,
+  shift: boolean,
+): ClientIntent {
+  const hit = shift ? actorAtPoint(arena, world, arena.nameBoxes) : undefined;
+  return hit === undefined
+    ? { kind: "walk-to", x: world.x, y: world.y }
+    : { kind: "target", targetSessionId: hit.id };
 }
 
 /** What a wheel click does (#443). */
@@ -51,19 +71,21 @@ export type MiddleClick =
  * Training Ground: on a living foe, call it for your team; on a living
  * ally or the ground, ping that point (#1055: the party window shows
  * every ally's health, so there is no one to watch). On yourself, on a
- * corpse, or while you are dead: nothing.
+ * corpse, or while you are dead: nothing. With `shift`, a name is part
+ * of its body's hit (#2738).
  */
 export function middleClickAction(
   snapshot: MatchSnapshot,
   arena: ArenaSnapshot,
   world: Vec2,
+  shift: boolean,
 ): MiddleClick {
   const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
   if (self === undefined || self.dead) {
     return { kind: "none" };
   }
   const ping: MiddleClick = { kind: "call", call: { kind: "ping", x: world.x, y: world.y } };
-  const hit = actorAtPoint(arena, world);
+  const hit = actorAtPoint(arena, world, shift ? arena.nameBoxes : undefined);
   if (hit === undefined) {
     return ping;
   }

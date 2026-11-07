@@ -15,6 +15,7 @@ import {
   healthFraction,
   nameLabelBottom,
   nameShown,
+  nameTagBox,
   offhandMarkLayout,
   type OffhandMarkLayout,
   nameplateLayout,
@@ -33,6 +34,7 @@ import {
   toRenderableGroundEffect,
   type ArenaSnapshot,
   type FloatingText,
+  type Rect,
   type RenderableActor,
 } from "./arena-snapshot.js";
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
@@ -147,6 +149,7 @@ describe("actorAtPoint", () => {
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
+      nameBoxes: new Map(),
       calledId: undefined,
       pings: [],
       strokes: [],
@@ -170,6 +173,7 @@ describe("actorAtPoint", () => {
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
+      nameBoxes: new Map(),
       calledId: undefined,
       pings: [],
       strokes: [],
@@ -193,6 +197,7 @@ describe("actorAtPoint", () => {
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
+      nameBoxes: new Map(),
       calledId: undefined,
       pings: [],
       strokes: [],
@@ -216,6 +221,7 @@ describe("actorAtPoint", () => {
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
+      nameBoxes: new Map(),
       calledId: undefined,
       pings: [],
       strokes: [],
@@ -240,6 +246,7 @@ describe("actorAtPoint", () => {
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
+      nameBoxes: new Map(),
       calledId: undefined,
       pings: [],
       strokes: [],
@@ -266,6 +273,7 @@ describe("actorAtPoint and the dead", () => {
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
+      nameBoxes: new Map(),
       calledId: undefined,
       pings: [],
       strokes: [],
@@ -289,6 +297,7 @@ describe("actorAtPoint and the dead", () => {
       clock: 0,
       hoverId: undefined,
       showAllNames: false,
+      nameBoxes: new Map(),
       calledId: undefined,
       pings: [],
       strokes: [],
@@ -318,6 +327,109 @@ describe("actorAtPoint and an ally's corpse (#812)", () => {
     const foe = actor("foe", 100, 100, 20, { team: "enemy", dead: true });
     const me = actor("me", 100, 100, 20, { team: "self", dead: true });
     expect(actorAtPoint(arena([foe, me]), vec2(100, 100))).toBeUndefined();
+  });
+});
+
+describe("actorAtPoint with name tags (#2738)", () => {
+  const box = (left: number, top: number, right: number, bottom: number): Rect => ({
+    left,
+    top,
+    right,
+    bottom,
+  });
+  const arena = (actors: readonly RenderableActor[]): ArenaSnapshot => ({
+    ...EMPTY_SNAPSHOT,
+    actors,
+  });
+  // A body at (100, 100), radius 14; its tag 40 wide, 16 tall, 24 above.
+  const foe = actor("foe", 100, 100, 14, { team: "enemy" });
+  const tags = new Map([["foe", box(80, 60, 120, 76)]]);
+
+  it("hits on the tag with the boxes, and misses without", () => {
+    expect(actorAtPoint(arena([foe]), vec2(115, 65), tags)?.id).toBe("foe");
+    expect(actorAtPoint(arena([foe]), vec2(115, 65))).toBeUndefined();
+  });
+
+  it("hits between the tag and the body", () => {
+    expect(actorAtPoint(arena([foe]), vec2(100, 80), tags)?.id).toBe("foe");
+    expect(actorAtPoint(arena([foe]), vec2(100, 80))).toBeUndefined();
+  });
+
+  it("misses beside the column and below the body", () => {
+    expect(actorAtPoint(arena([foe]), vec2(125, 70), tags)).toBeUndefined();
+    expect(actorAtPoint(arena([foe]), vec2(100, 115), tags)).toBeUndefined();
+  });
+
+  it("lets a body under the point beat a nearer tag column", () => {
+    const body = actor("body", 100, 100, 14, { team: "enemy" });
+    // A small body whose wide tag column covers the point, centre nearer it.
+    const small = actor("small", 113, 108, 5, { team: "enemy" });
+    const both = new Map([["small", box(90, 90, 160, 100)]]);
+    expect(actorAtPoint(arena([body, small]), vec2(113, 100), both)?.id).toBe("body");
+  });
+
+  it("picks the nearest body when two tag columns hold the point", () => {
+    const left = actor("left", 100, 100, 14, { team: "enemy" });
+    const right = actor("right", 130, 100, 14, { team: "enemy" });
+    const overlapping = new Map([
+      ["left", box(70, 60, 160, 76)],
+      ["right", box(70, 60, 160, 76)],
+    ]);
+    expect(actorAtPoint(arena([left, right]), vec2(125, 65), overlapping)?.id).toBe("right");
+    expect(actorAtPoint(arena([left, right]), vec2(105, 65), overlapping)?.id).toBe("left");
+  });
+
+  it("never picks a foe's corpse through its tag, but an ally's", () => {
+    const foeCorpse = actor("foe", 100, 100, 14, { team: "enemy", dead: true });
+    const allyCorpse = actor("foe", 100, 100, 14, { team: "ally", dead: true });
+    expect(actorAtPoint(arena([foeCorpse]), vec2(100, 65), tags)).toBeUndefined();
+    expect(actorAtPoint(arena([allyCorpse]), vec2(100, 65), tags)?.id).toBe("foe");
+  });
+
+  it("prefers a living actor's tag to an ally's corpse under the point", () => {
+    const corpse = actor("corpse", 100, 70, 10, { team: "ally", dead: true });
+    expect(actorAtPoint(arena([corpse, foe]), vec2(100, 70), tags)?.id).toBe("foe");
+  });
+
+  it("gives the same hit at any zoom, the boxes being world units", () => {
+    const monk = actor("monk", 100, 100, 14, { team: "enemy", profession: "monk" });
+    for (const zoom of [0.5, 2]) {
+      const tag = nameTagBox(monk, 40, 14, zoom);
+      const onTag = vec2((tag.left + tag.right) / 2, (tag.top + tag.bottom) / 2);
+      expect(actorAtPoint(arena([monk]), onTag, new Map([["monk", tag]]))?.id).toBe("monk");
+    }
+  });
+});
+
+describe("nameTagBox (#2738)", () => {
+  it("covers the glyph and the label, as tall as the taller", () => {
+    const monk = actor("m", 200, 100, 14, { profession: "monk" });
+    const layout = nameplateLayout(monk, 40, 1);
+    expect(nameTagBox(monk, 40, 14, 1)).toEqual({
+      left: (layout.glyphX ?? 0) - PROFESSION_GLYPH_SIZE / 2,
+      top: layout.bottom - Math.max(14, PROFESSION_GLYPH_SIZE),
+      right: layout.textX + 20,
+      bottom: layout.bottom,
+    });
+  });
+
+  it("is the label alone with no profession", () => {
+    const creature = actor("c", 200, 100, 10);
+    const layout = nameplateLayout(creature, 40, 1);
+    expect(nameTagBox(creature, 40, 14, 1)).toEqual({
+      left: 180,
+      top: layout.bottom - 14,
+      right: 220,
+      bottom: layout.bottom,
+    });
+  });
+
+  it("spans more world zoomed out, as the screen-sized label does", () => {
+    const creature = actor("c", 200, 100, 10);
+    const near = nameTagBox(creature, 40, 14, 1);
+    const wide = nameTagBox(creature, 40, 14, 0.5);
+    expect(wide.right - wide.left).toBeCloseTo(2 * (near.right - near.left), 9);
+    expect(wide.bottom - wide.top).toBeCloseTo(2 * (near.bottom - near.top), 9);
   });
 });
 
@@ -512,13 +624,19 @@ describe("withNames (#253)", () => {
   const base: ArenaSnapshot = { ...EMPTY_SNAPSHOT, actors: [enemy, corpse] };
 
   it("hovers the living body under the cursor, as a click would target it", () => {
-    expect(withNames(base, vec2(105, 100), false).hoverId).toBe("enemy");
-    expect(withNames(base, vec2(300, 100), false).hoverId).toBeUndefined();
-    expect(withNames(base, vec2(500, 500), false).hoverId).toBeUndefined();
+    expect(withNames(base, vec2(105, 100), false, new Map()).hoverId).toBe("enemy");
+    expect(withNames(base, vec2(300, 100), false, new Map()).hoverId).toBeUndefined();
+    expect(withNames(base, vec2(500, 500), false, new Map()).hoverId).toBeUndefined();
+  });
+
+  it("hovers a body by its name while Show names is held (#2738)", () => {
+    const tags = new Map([["enemy", { left: 80, top: 60, right: 120, bottom: 76 }]]);
+    expect(withNames(base, vec2(115, 65), true, tags).hoverId).toBe("enemy");
+    expect(withNames(base, vec2(115, 65), false, tags).hoverId).toBeUndefined();
   });
 
   it("hovers nothing once the cursor has left, and carries Ctrl through", () => {
-    const named = withNames(base, undefined, true);
+    const named = withNames(base, undefined, true, new Map());
     expect(named.hoverId).toBeUndefined();
     expect(named.showAllNames).toBe(true);
     expect(named.actors).toBe(base.actors);

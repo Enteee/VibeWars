@@ -36,7 +36,7 @@ These keys are fixed:
 
 ## Mouse
 
-- **Left click** the ground to walk there. The left button only walks.
+- **Left click** the ground to walk there. Without Shift, the left button only walks.
 - **Right click** a foe or an ally to target it. Right click the same foe
   again, quickly, to attack it.
 - **Right click** a flag or the flag stand, in a Guild Battle, to target
@@ -50,6 +50,10 @@ These keys are fixed:
   glides back to you.
 - Click a skill on the bar to use it, and a name in the party window to
   target that ally.
+- Hold **Show names** (Shift) and every name shows. While held, clicking
+  a character's name targets it, as clicking its body does, and a click
+  never attacks or walks onto it: a left or right click targets, a wheel
+  click calls or pings. The name a click would hit is highlighted.
 
 ## The top bar
 

@@ -23,6 +23,7 @@ import {
   callTargetCall,
   middleClickAction,
   pingCall,
+  primaryClickIntent,
   secondaryClickIntents,
 } from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
@@ -40,6 +41,7 @@ import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
 import {
   ACTOR_RADIUS,
+  EMPTY_SNAPSHOT,
   withCalls,
   withNames,
   teamColour,
@@ -278,6 +280,7 @@ export function toArenaSnapshot(
     // Whose names show is the caller's to say (`withNames`, #253).
     hoverId: undefined,
     showAllNames: false,
+    nameBoxes: new Map(),
     // Your team's calls are the caller's (`withCalls`, #443).
     calledId: undefined,
     pings: [],
@@ -946,6 +949,7 @@ export async function startMatchView(
       toArenaSnapshot(match, walls, shrines, flagField, relicField),
       viewport?.pointerWorld(),
       nameReveal.held(),
+      viewport?.scene.nameTagBoxes() ?? EMPTY_SNAPSHOT.nameBoxes,
     );
     // A watcher has no team, so nobody's calls.
     latestArena = seat === undefined ? arena : withCalls(arena, seat.getCalls());
@@ -1008,17 +1012,30 @@ export async function startMatchView(
   // A misclick must never move you (#438): the left button only walks,
   // bodies included, and keeps the target; the right one picks, on its
   // release, so a later drag can pan instead. A watcher's drag still pans.
+  // With Show names held (#2738), a left click on a body or name picks it.
   const doubleClick = createDoubleClick();
   const offPointer =
     seat === undefined
       ? undefined
       : viewport?.onButton(({ button, phase, world }) => {
           if (button === "left" && phase === "down") {
-            seat.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
-            viewport.scene.showWalkMarker(world);
+            const intent = primaryClickIntent(
+              latestArena ?? EMPTY_SNAPSHOT,
+              world,
+              nameReveal.held(),
+            );
+            seat.sendIntent(intent);
+            if (intent.kind === "walk-to") {
+              viewport.scene.showWalkMarker(world);
+            }
           } else if (button === "middle" && phase === "down" && latestArena !== undefined) {
             // A wheel click calls a foe, or pings the point (#443, #1055).
-            const action = middleClickAction(seat.getSnapshot(), latestArena, world);
+            const action = middleClickAction(
+              seat.getSnapshot(),
+              latestArena,
+              world,
+              nameReveal.held(),
+            );
             if (action.kind === "call") {
               seat.sendCall(action.call);
             }
@@ -1035,6 +1052,7 @@ export async function startMatchView(
       world,
       doubleClick,
       performance.now(),
+      nameReveal.held(),
     );
     for (const intent of intents) {
       seat.sendIntent(intent);

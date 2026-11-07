@@ -1607,3 +1607,43 @@ for (const viewport of [
     expect(fit.logRows).toBeLessThan(6 * fit.row);
   });
 }
+
+test("(47) under Show names, a click on a name targets it, and never attacks or walks (#2738)", async ({
+  page,
+}) => {
+  // A walk and a wait for a still camera (#721).
+  test.setTimeout(60_000);
+  // A new character is a warrior with a Sword: an attack on the far dummy
+  // would walk to it, as in (20).
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "new character" }).click();
+  await expect(professionField(page, "primary")).toHaveAttribute("data-value", "warrior");
+  const canvas = page.locator(".training canvas");
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await takeControl(page);
+  await wholeMap(page);
+  await walkTo(page, canvas, { x: 250, y: 210 });
+  const stage = page.locator(".training-stage");
+  const before = await stage.getAttribute("data-positions");
+
+  // The bow-range dummy's name: its bottom 3 px over the cast bar's top,
+  // 19 world units over the body's 14 radius (`nameBand`); 11 px text.
+  await page.keyboard.down(key("show-names"));
+  const view = await trainingView(page, canvas);
+  const bottom = view.onPage({ x: 480, y: 210 - 14 - 19 });
+  const name = { x: bottom.x, y: bottom.y - 3 - 6 };
+  await page.mouse.dblclick(name.x, name.y, { button: "right" });
+  await page.mouse.click(name.x, name.y);
+  await page.keyboard.up(key("show-names"));
+  await page.mouse.move(1, 1);
+
+  // Targeted: only its name shows now.
+  await expect.poll(() => shownNames(page)).toEqual(["ranged"]);
+  // Long enough for an attack, or a walk, to have started.
+  await page.waitForTimeout(1000);
+  await expect(page.locator(".training-attacking")).not.toContainText("attacking");
+  expect(await stage.getAttribute("data-positions")).toBe(before);
+});
