@@ -12,10 +12,10 @@ import brokenTower from "../maps/broken-tower/map.json" with { type: "json" };
 import frozenCrossing from "../maps/frozen-crossing/map.json" with { type: "json" };
 import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
 import hallOfHeroes from "../maps/hall-of-heroes/map.json" with { type: "json" };
-import hillCourtyard from "../maps/hill-courtyard/map.json" with { type: "json" };
 import mossVale from "../maps/moss-vale/map.json" with { type: "json" };
 import sandstoneSteps from "../maps/sandstone-steps/map.json" with { type: "json" };
 import scarredEarth from "../maps/scarred-earth/map.json" with { type: "json" };
+import theCourtyard from "../maps/the-courtyard/map.json" with { type: "json" };
 import { allWallSegments } from "./geometry.js";
 import { MapNotFoundError, listMapIds, loadAllMaps, loadMap, unseatedTeams } from "./loader.js";
 import { validateMapData } from "./schema.js";
@@ -48,10 +48,10 @@ describe("the maps the browser imports", () => {
       frozenCrossing,
       guildHallIsle,
       hallOfHeroes,
-      hillCourtyard,
       mossVale,
       sandstoneSteps,
       scarredEarth,
+      theCourtyard,
     ].map((raw) => validateMapData(raw));
     expect(imported.map((map) => map.id)).toEqual(listMapIds());
     for (const map of imported) {

@@ -184,7 +184,7 @@ derived geometry (wall segments, spawn points by team). Annihilation plays on
 `arena-canyon`, `arena-crossroads`, `arena-long-hall` and the medium `sandstone-steps`,
 `frozen-crossing`, `ashen-courtyard` and `moss-vale`; each other mode has its
 own maps (`arena-pillars`, `arena-split`, `broken-tower`, `scarred-earth`,
-`hill-courtyard`, `hall-of-heroes`, `guild-hall-isle`).
+`the-courtyard`, `hall-of-heroes`, `guild-hall-isle`).
 Map geometry is original (brief §41) — see ADR-0006 for the format.
 
 ### `packages/game-data` — reference data, not a runtime dependency
