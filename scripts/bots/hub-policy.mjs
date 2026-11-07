@@ -627,6 +627,48 @@ export function refuseTrackingEdit(argv) {
 }
 
 /**
+ * Whether a `pr create` or `pr edit` points a pull request at a base other
+ * than main (#2747). hubd's merge guard reads the base before qa-tester's
+ * merge runs, so a retarget in between would land an approved pull request
+ * on a release branch. Read as gh reads flags, failing closed: every base
+ * named must be exactly `main`, `-B` only on its own, and a word that is
+ * another flag's value but looks like a base flag is refused, not parsed.
+ *
+ * @param {string[]} argv `["pr", "create" | "edit", ...]`
+ * @returns {string | null} why not, if not
+ */
+export function refuseBase(argv) {
+  const words = argv.slice(2);
+  for (let i = 0; i < words.length; i += 1) {
+    const word = words[i] ?? "";
+    if (word === "--") {
+      break;
+    }
+    /** @type {string | undefined} */
+    let value;
+    if (word === "--base" || word === "-B") {
+      i += 1;
+      value = words[i];
+    } else if (word.startsWith("--base=")) {
+      value = word.slice("--base=".length);
+    } else if (word.startsWith("--")) {
+      continue;
+    } else {
+      const short = shortFlag(word, (letter) => letter === "B");
+      if (short === null) {
+        continue;
+      }
+      // A cluster (`-dB x`) is refused rather than parsed.
+      value = short.at === 1 ? (short.glued ?? undefined) : undefined;
+    }
+    if (value !== "main") {
+      return "pull requests target main only; release branches take cherry-picks, not PRs (#2707)";
+    }
+  }
+  return null;
+}
+
+/**
  * Whether a `pr close` would also delete the branch. A branch is a
  * developer's work, and closing a pull request is not a decision to throw
  * it away. Read as gh reads flags: `--delete-branch` in any spelling, and
@@ -950,6 +992,12 @@ function authorizeAs(role, request, acting, employee) {
   }
   if (best.argv.join(" ") === "release edit") {
     const refused = refuseReleaseEdit(argv);
+    if (refused !== null) {
+      return { allow: false, reason: refused };
+    }
+  }
+  if (best.argv.join(" ") === "pr create" || best.argv.join(" ") === "pr edit") {
+    const refused = refuseBase(argv);
     if (refused !== null) {
       return { allow: false, reason: refused };
     }
