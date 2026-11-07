@@ -115,6 +115,8 @@ export const PARTY_FULL_MESSAGE = "Party is full.";
 /** Told only after the key proof (#1682): a closed lobby with guests is still in its room. */
 export const LOBBY_CLOSED_MESSAGE = "That lobby is closed. Ask the host to open it.";
 export const HOST_CLOSED_MESSAGE = "The host closed the lobby.";
+/** Its host removed this player (#2746), and keeps them out of that lobby. */
+export const REMOVED_MESSAGE = "The host removed you from the lobby.";
 /** True whichever side dropped: a guest cannot tell its own drop from the host's. */
 export const CONNECTION_LOST_MESSAGE = "Lost the connection to the host.";
 /** A queued lobby (#871) turned this ticket away: its proof did not hold, or it is seated already. */
@@ -852,6 +854,8 @@ export function joinFailureNotice(
         return LOBBY_CLOSED_MESSAGE;
       case "host-left":
         return HOST_CLOSED_MESSAGE;
+      case "removed":
+        return REMOVED_MESSAGE;
       case "not-admitted":
         return NOT_ADMITTED_MESSAGE;
       case "ticket-used":
@@ -978,6 +982,8 @@ export function lobbyClosedNotice(reason: LobbyClosedReason): string {
       return CONNECTION_LOST_MESSAGE;
     case "fell-through":
       return FELL_THROUGH_MESSAGE;
+    case "removed":
+      return REMOVED_MESSAGE;
   }
 }
 

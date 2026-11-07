@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 import {
   CONNECTION_LOST_MESSAGE,
   HOST_CLOSED_MESSAGE,
+  REMOVED_MESSAGE,
   LOBBY_CLOSED_MESSAGE,
   LOBBY_FULL_MESSAGE,
   NO_ANSWER_MESSAGE,
@@ -54,6 +55,11 @@ describe("the notice for a match that would not start (#1268)", () => {
 describe("the notice for a closed lobby (#515)", () => {
   it("says the host closed it when the host said so", () => {
     expect(lobbyClosedNotice("host-left")).toBe(HOST_CLOSED_MESSAGE);
+  });
+
+  it("says the host removed this player (#2746)", () => {
+    expect(lobbyClosedNotice("removed")).toBe(REMOVED_MESSAGE);
+    expect(REMOVED_MESSAGE).toBe("The host removed you from the lobby.");
   });
 
   it("blames no one when the host's peer was gone for the whole window", () => {

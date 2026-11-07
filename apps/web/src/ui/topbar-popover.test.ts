@@ -255,6 +255,7 @@ describe("a top-bar popover (#2385)", () => {
 });
 
 const member = (name: string, isHost = false): PartyMember => ({
+  id: name,
   name,
   isHost,
   self: isHost,
@@ -271,6 +272,7 @@ const party = (...members: PartyMember[]): RailParty => ({
   teamSize: 4,
   teams: undefined,
   ascentRound: null,
+  inMatch: false,
 });
 
 describe("the top bar's Lobby (#2385)", () => {
@@ -281,7 +283,11 @@ describe("the top bar's Lobby (#2385)", () => {
     // The lobby's controls (#2385), as the bar's join hands them over.
     const controls = new FakeElement("div");
     controls.textContent = "Copy invite link";
-    const lobby = lobbyButton(parent as unknown as HTMLElement, controls as unknown as HTMLElement);
+    const lobby = lobbyButton(
+      parent as unknown as HTMLElement,
+      controls as unknown as HTMLElement,
+      () => undefined,
+    );
     const button = lobby.element as unknown as FakeElement;
     const badge = button.children.find((child) => child.className === "topbar-badge");
     if (badge === undefined) {

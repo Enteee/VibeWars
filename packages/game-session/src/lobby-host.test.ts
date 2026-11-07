@@ -2352,3 +2352,54 @@ describe("the key gate (#1681, ADR-0043)", () => {
     await expect(joining).rejects.toEqual(new LobbyNoAnswerError(50, null));
   });
 });
+
+describe("the host removes a member (#2746)", () => {
+  it("sends the member off as a leave would, and tells them why", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join("Ann");
+    const closed: string[] = [];
+    guest.connection.onClosed((reason) => closed.push(reason));
+    lobby.host.connection.removeMember(guest.connection.selfSessionId);
+    await settle();
+    expect(closed).toEqual(["removed"]);
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
+  });
+
+  it("refuses a guest's remove as not the host's, and ignores the host's of itself", async () => {
+    const lobby = await openLobby();
+    const ann = await lobby.join("Ann");
+    const bo = await lobby.join("Bo");
+    const refused: string[] = [];
+    ann.connection.onRefused((reason) => refused.push(reason));
+    ann.connection.removeMember(bo.connection.selfSessionId);
+    lobby.host.connection.removeMember(lobby.host.connection.selfSessionId);
+    await settle();
+    expect(refused).toEqual(["not-host"]);
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Ann", "Bo"]);
+  });
+
+  it("removes nobody while the match is on, and tells the host so", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join("Ann");
+    await seat([lobby.host, guest], [0, 1]);
+    await start(lobby);
+    const told: string[] = [];
+    lobby.host.connection.onNotice((text) => told.push(text));
+    lobby.host.connection.removeMember(guest.connection.selfSessionId);
+    await settle();
+    expect(told).toEqual(["Members cannot be removed during a match."]);
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Ann"]);
+  });
+
+  it("refuses the removed player's key for as long as the lobby lasts, and no other", async () => {
+    const lobby = await openLobby();
+    const key = testPlayerKey();
+    const guest = await lobby.join("Ann", null, null, null, key);
+    lobby.host.connection.removeMember(guest.connection.selfSessionId);
+    await settle();
+    const again = await lobby.join("Ann", null, null, null, key).catch((error: unknown) => error);
+    expect(again).toEqual(new LobbyRefusedError("removed"));
+    await lobby.join("Bo");
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Bo"]);
+  });
+});

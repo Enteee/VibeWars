@@ -714,6 +714,9 @@ async function main(): Promise<void> {
     onSetOpen: (open) => {
       hosted?.setOpen(open);
     },
+    onRemoveMember: (id) => {
+      lobby?.removeMember(id);
+    },
   });
 
   const showViewport = (visible: boolean): void => {

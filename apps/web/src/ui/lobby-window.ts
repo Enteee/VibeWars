@@ -1,6 +1,7 @@
 import type { LobbyMode } from "@vibewars/game-protocol";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
 import { LOBBY_ICON } from "./icons.js";
 import { h } from "./kit.js";
 import { ascentLine, waitedLabel } from "./queue-screen.js";
@@ -13,6 +14,8 @@ import { ascentLine, waitedLabel } from "./queue-screen.js";
 
 /** One person in the party: a bot is the lobby's, not the party's. */
 export interface PartyMember {
+  /** Its lobby id, what the host's remove names (#2746). */
+  readonly id: string;
   readonly name: string;
   readonly isHost: boolean;
   readonly self: boolean;
@@ -37,6 +40,8 @@ export interface RailParty {
   readonly teams: number | undefined;
   /** The Heroes' Ascent round it is queued at (#1996); `null` otherwise. */
   readonly ascentRound: number | null;
+  /** Its match is on (#2746): nobody is removed from it then. */
+  readonly inMatch: boolean;
 }
 
 /** Beside a member whose connection dropped, while its seat is held (#1764). */
@@ -84,6 +89,7 @@ export function partyOf(
     queuedMs,
     teams,
     ascentRound: snapshot.ascentRound,
+    inMatch: snapshot.phase === "in-match",
     teamSize: snapshot.teamSize,
     code: snapshot.code,
     mode: snapshot.mode,
@@ -92,6 +98,7 @@ export function partyOf(
     members: snapshot.players
       .filter((player) => !player.bot)
       .map((player) => ({
+        id: player.sessionId,
         name: player.name,
         isHost: player.isHost,
         self: player.sessionId === snapshot.selfSessionId,
@@ -145,8 +152,33 @@ export function queueLine(party: RailParty): HTMLElement | undefined {
   return line;
 }
 
-/** What the Lobby window shows of `party`; none in a lobby yet reads as alone. */
-export function lobbyWindowBody(party: RailParty | undefined): HTMLElement {
+/** The host's (x) by `member` (#2746): removes them at once, no confirm. */
+function removeButton(
+  member: PartyMember,
+  onRemove: (member: PartyMember) => void,
+): HTMLButtonElement {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "party-member-remove";
+  button.textContent = "×";
+  const label = t("lobby.removeMember", { name: member.name });
+  button.title = label;
+  button.setAttribute("aria-label", label);
+  button.addEventListener("click", () => {
+    onRemove(member);
+  });
+  return button;
+}
+
+/**
+ * What the Lobby window shows of `party`; none in a lobby yet reads as
+ * alone. Its host sees an (x) by each other member, outside a match,
+ * that `onRemove`s them (#2746).
+ */
+export function lobbyWindowBody(
+  party: RailParty | undefined,
+  onRemove: (member: PartyMember) => void,
+): HTMLElement {
   const body = h("div", "lobby-window-body");
   if (party === undefined || isAlone(party)) {
     body.appendChild(h("p", "lobby-window-alone", PARTY_ALONE));
@@ -160,6 +192,9 @@ export function lobbyWindowBody(party: RailParty | undefined): HTMLElement {
       }
       if (member.away) {
         row.appendChild(h("span", "party-member-away", PARTY_RECONNECTING));
+      }
+      if (party.isHost && !member.self && !party.inMatch) {
+        row.appendChild(removeButton(member, onRemove));
       }
       list.appendChild(row);
     }
