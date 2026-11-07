@@ -2608,9 +2608,7 @@ export function isRelayPub(value: unknown): value is string {
 /** The `"relay-admit"` channel (#2527). */
 export function parsePeerRelayAdmit(value: unknown): PeerRelayAdmit | undefined {
   const raw = fields(value);
-  return raw !== undefined &&
-    isRelayPeerId(raw.peerId) &&
-    isRelayPub(raw.pub)
+  return raw !== undefined && isRelayPeerId(raw.peerId) && isRelayPub(raw.pub)
     ? { peerId: raw.peerId, pub: raw.pub }
     : undefined;
 }

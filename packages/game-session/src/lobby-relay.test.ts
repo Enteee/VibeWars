@@ -122,7 +122,11 @@ describe("a lobby host's relay holders (#2529)", () => {
     const outsider = await provenPeer(lobby);
     const overheard = heard(outsider, "relay-offers");
     outsider.send("relay-holding", { on: true }, "host");
-    outsider.send("relay-offers", { holders: [outsider.selfId], members: [] }, guest.transport.selfId);
+    outsider.send(
+      "relay-offers",
+      { holders: [outsider.selfId], members: [] },
+      guest.transport.selfId,
+    );
     guest.connection.setRelayHolding(true);
     await settle();
     expect(overheard).toEqual([]);
