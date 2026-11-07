@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import type { MatchSimulation, ParticipantSpec } from "../../simulation.js";
+import { NO_RANKS } from "../../../skills/status.js";
+
 import { AREA_ADJACENT } from "../../../distances.js";
 import { vec2 } from "../../../vec2.js";
 import {
@@ -13,6 +16,8 @@ import {
   skillsUsed,
   uses,
 } from "./test-support.js";
+
+const PROTECTIVE_SPIRIT = "monk.protective-spirit";
 
 describe("play-build heals (#1189, #1870)", () => {
   it("heals the ally at 40% rather than attacking", () => {
@@ -152,5 +157,76 @@ describe("play-build spirits for a hurt ally (#2491)", () => {
       useSkillId: "monk.orison-of-healing",
       targetId: "ele",
     });
+  });
+});
+
+describe("play-build protects the spiked ally (#2627)", () => {
+  /**
+   * A monk holding `skillBar`, a full-health "ally", an "other" ally at
+   * `otherHealth`, and five idle foes, none targeting anyone yet.
+   */
+  function spike(
+    skillBar: readonly string[],
+    extra: Partial<ParticipantSpec> = {},
+    otherHealth = 1,
+  ): MatchSimulation {
+    return match([
+      fighter("monk", 0, MONK, vec2(400, 400), { skillBar: [...skillBar], ...extra }),
+      fighter("ally", 0, WARRIOR, vec2(480, 400), { behaviour: undefined }),
+      fighter("other", 0, WARRIOR, vec2(480, 480), {
+        behaviour: undefined,
+        startHealthFraction: otherHealth,
+      }),
+      ...[0, 1, 2, 3, 4].map((n) =>
+        fighter(`foe${String(n)}`, 1, WARRIOR, vec2(700, 200 + 100 * n), { behaviour: undefined }),
+      ),
+    ]);
+  }
+
+  /** Points the foes `foeIds` at `targetId`. */
+  function target(sim: MatchSimulation, targetId: string, ...foeIds: string[]): MatchSimulation {
+    for (const foeId of foeIds) {
+      const foe = sim.get(foeId);
+      if (foe === undefined) throw new Error(`no ${foeId}`);
+      foe.targetId = targetId;
+    }
+    return sim;
+  }
+
+  it("puts Protective Spirit on a full-health ally two foes target", () => {
+    const sim = target(spike([PROTECTIVE_SPIRIT]), "ally", "foe0", "foe1");
+    expect(askBot(sim, "monk")).toMatchObject({ useSkillId: PROTECTIVE_SPIRIT, targetId: "ally" });
+  });
+
+  it("leaves a full-health ally only one foe targets", () => {
+    const sim = target(spike([PROTECTIVE_SPIRIT]), "ally", "foe0");
+    expect(askBot(sim, "monk").useSkillId).toBeUndefined();
+  });
+
+  it("does not recast Protective Spirit on an ally that has it", () => {
+    const sim = target(spike([PROTECTIVE_SPIRIT]), "ally", "foe0", "foe1");
+    sim.get("ally")?.combatant.statuses.apply("protective-spirit", 10, "monk", NO_RANKS);
+    expect(askBot(sim, "monk").useSkillId).toBeUndefined();
+  });
+
+  it("heals the hurt ally when it holds nothing to protect the spiked one", () => {
+    const sim = target(spike(["monk.heal-other"], {}, 0.4), "ally", "foe0", "foe1");
+    expect(askBot(sim, "monk")).toMatchObject({ useSkillId: "monk.heal-other", targetId: "other" });
+  });
+
+  it("protects the ally three foes target over the one two do", () => {
+    const sim = target(spike([PROTECTIVE_SPIRIT]), "ally", "foe0", "foe1");
+    target(sim, "other", "foe2", "foe3", "foe4");
+    expect(askBot(sim, "monk").targetId).toBe("other");
+  });
+
+  it("protects at rank 0 in Protection Prayers", () => {
+    const sim = target(
+      spike([PROTECTIVE_SPIRIT], { attributeRanks: new Map() }),
+      "ally",
+      "foe0",
+      "foe1",
+    );
+    expect(askBot(sim, "monk")).toMatchObject({ useSkillId: PROTECTIVE_SPIRIT, targetId: "ally" });
   });
 });

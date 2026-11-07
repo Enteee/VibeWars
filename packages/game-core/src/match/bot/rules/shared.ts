@@ -24,6 +24,9 @@ export const NOTHING: BehaviourIntent = {
 /** Below this share of its health, an ally is worth a heal. */
 export const HURT_FRACTION = 0.6;
 
+/** How many foes on one ally make it a spike to protect against (#2627). */
+export const SPIKE_FOES = 2;
+
 /** How much more hurt than it is a foe healer counts when the team picks a target (#2573). */
 export const HEALER_PRIORITY = 0.25;
 
