@@ -3,6 +3,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 import { BUILD_FORMAT_VERSION } from "../../apps/web/src/storage/build-transfer.js";
 import { STARTER_BUILDS } from "../../packages/game-core/src/starter-builds.js";
 import { STARTER_TEAMS } from "../../packages/game-core/src/starter-teams.js";
+import { TEST_BUILDS } from "../../packages/game-core/src/testing.js";
 import { skillKey } from "../keys.js";
 import { openRail, pickCharacter } from "./menu.js";
 
@@ -14,11 +15,12 @@ import { openRail, pickCharacter } from "./menu.js";
  * editor, saved, and picked on Random Arena.
  */
 
-/** A built-in build by name: a PvX one (#2554), or a starter team member's ("Warrior/Monk"). */
+/** A build by name: a PvX one (#2554), a starter team member's ("HA Balanced 3 (R/E)"), or a test build ("Warrior/Monk"). */
 function starter(name: string) {
   const build = [
     ...STARTER_BUILDS,
     ...STARTER_TEAMS.flatMap((team) => team.members.map((member) => member.build)),
+    ...TEST_BUILDS,
   ].find((candidate) => candidate.name === name);
   if (build === undefined) {
     throw new Error(`no starter build ${name}`);
