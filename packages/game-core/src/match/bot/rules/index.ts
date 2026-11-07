@@ -1,9 +1,11 @@
 import bindSpirit from "./bind-spirit.js";
 import boost from "./boost.js";
+import carryRelic from "./carry-relic.js";
 import cleanse from "./cleanse.js";
 import closeIn from "./close-in.js";
 import dropUpkeep from "./drop-upkeep.js";
 import energy from "./energy.js";
+import fetchRelic from "./fetch-relic.js";
 import fight from "./fight.js";
 import heal from "./heal.js";
 import interrupt from "./interrupt.js";
@@ -27,10 +29,12 @@ import wayOut from "./way-out.js";
 export const BOT_RULES: readonly BotRule[] = inOrder([
   bindSpirit,
   boost,
+  carryRelic,
   cleanse,
   closeIn,
   dropUpkeep,
   energy,
+  fetchRelic,
   fight,
   heal,
   interrupt,

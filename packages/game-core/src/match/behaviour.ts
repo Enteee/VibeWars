@@ -5,7 +5,9 @@ import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
 import type { CapturePoint } from "./capture-points.js";
+import type { CarriedSpawn } from "./carried.js";
 import { MASTERLESS_TEAM } from "./minions.js";
+import type { RelicState } from "./relics.js";
 import type { Participant } from "./simulation.js";
 
 /**
@@ -240,10 +242,21 @@ export interface BehaviourContext {
 export interface BotObjectives {
   /** Capture Points' shrines (#2580), in map order; `[]` in any other mode. */
   readonly capturePoints: readonly CapturePoint[];
+  /** Relic Run's relics (#2581), wherever they are; `[]` in any other mode. */
+  readonly relics: readonly RelicState[];
+  /** Where each team's relic lies at rest (#2581); `[]` in any other mode. */
+  readonly relicSpawns: readonly CarriedSpawn[];
+  /** The altar relics are run to (#2581); `undefined` in any other mode. */
+  readonly altar: Vec2 | undefined;
 }
 
 /** No objectives: every mode but those with one. */
-export const NO_OBJECTIVES: BotObjectives = { capturePoints: [] };
+export const NO_OBJECTIVES: BotObjectives = {
+  capturePoints: [],
+  relics: [],
+  relicSpawns: [],
+  altar: undefined,
+};
 
 export function createCursor(): BehaviourCursor {
   return {

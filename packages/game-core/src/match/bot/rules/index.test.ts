@@ -38,9 +38,11 @@ describe("BOT_RULES (#2042)", () => {
       "rider",
       "setup",
       "boost",
+      "carry-relic",
       "fight",
       "mimic-elite",
       "shrines",
+      "fetch-relic",
       "close-in",
     ]);
   });

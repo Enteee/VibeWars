@@ -2652,6 +2652,7 @@ export class MatchSimulation {
       this.#relicsState = stepRelics(this.#relicField, this.#relicsState, [
         { kind: "drop", carrierId: record.id, position: record.position },
       ]).state;
+      this.#refreshBotObjectives();
     }
   }
 
@@ -4041,10 +4042,12 @@ export class MatchSimulation {
     }
     this.setTarget(record.id, intent.targetId);
     // Asked only when the attack wanted is not the one going, as a player
-    // presses Space once: a pet switches with its owner (#1046).
+    // presses Space once: a pet switches with its owner (#1046). So is
+    // the walk to a relic (#2581).
     if (
       intent.attackTargetId !== undefined &&
-      record.combatant.attack?.targetId !== intent.attackTargetId
+      record.combatant.attack?.targetId !== intent.attackTargetId &&
+      record.interact?.targetId !== intent.attackTargetId
     ) {
       this.requestAttack(record.id, intent.attackTargetId);
     }
@@ -5663,6 +5666,9 @@ export class MatchSimulation {
       ...this.#livingArrivals(arrivals),
     ]);
     this.#relicsState = next;
+    if (next !== state) {
+      this.#refreshBotObjectives();
+    }
     for (const team of scored) {
       this.#score = addPoint(this.#score, team);
     }
@@ -5793,12 +5799,24 @@ export class MatchSimulation {
     }
   }
 
-  /** The shrines bots read (#2580), only in Capture Points: one allocation per shrine change. */
+  /**
+   * The shrines (#2580) or relics (#2581) bots read, only in their mode:
+   * one allocation per change to them.
+   */
   #refreshBotObjectives(): void {
-    this.#botObjectives =
-      this.#matchRules?.victory === "capture-points"
-        ? { capturePoints: this.#capturePoints }
-        : NO_OBJECTIVES;
+    const victory = this.#matchRules?.victory;
+    if (victory === "capture-points") {
+      this.#botObjectives = { ...NO_OBJECTIVES, capturePoints: this.#capturePoints };
+    } else if (victory === "relic-run" && this.#relicField !== undefined) {
+      this.#botObjectives = {
+        ...NO_OBJECTIVES,
+        relics: this.relics,
+        relicSpawns: this.#relicField.spawns,
+        altar: this.#relicField.altar,
+      };
+    } else {
+      this.#botObjectives = NO_OBJECTIVES;
+    }
   }
 
   /**
