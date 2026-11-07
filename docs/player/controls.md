@@ -42,7 +42,8 @@ These keys are fixed:
 - **Right click** a flag or the flag stand, in a Guild Battle, to target
   it; **Space** walks there and takes the flag up or plants it.
 - **Wheel click** a foe to call it for your team: their **T** targets it.
-  On the ground or an ally, it pings that spot.
+  On the ground or an ally, it pings that spot. Or click the target bar
+  at the top to call the foe you have targeted.
 - Click the compass to ping that spot for your team; drag on it to draw a
   line they see for a few seconds.
 - **Wheel** zooms. **Right drag** looks around; let go and the view

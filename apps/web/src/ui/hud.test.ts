@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ChainRole, StatusId } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
@@ -27,6 +27,8 @@ import {
   ghostNameplate,
   invulnerableLabel,
   isAttackingTarget,
+  isCallableTarget,
+  isTargetCallClick,
   lostHealthPercent,
   moraleLabel,
   muteButtonState,
@@ -520,6 +522,7 @@ describe("carriedBundle (#1225, #1374)", () => {
     vi.stubGlobal("document", { createElement: () => new FakeNode() });
     const hud = createHud(
       new FakeNode() as unknown as HTMLElement,
+      () => undefined,
       () => undefined,
       () => undefined,
     );
@@ -1585,8 +1588,12 @@ class FakeNode {
   readonly children: FakeNode[] = [];
   readonly style = { setProperty: (): void => undefined };
   readonly setAttribute = (): void => undefined;
-  readonly addEventListener = (): void => undefined;
+  readonly listeners = new Map<string, (event: unknown) => void>();
   readonly remove = (): void => undefined;
+
+  addEventListener(type: string, listener: (event: unknown) => void): void {
+    this.listeners.set(type, listener);
+  }
 
   appendChild(child: FakeNode): FakeNode {
     this.children.push(child);
@@ -1619,6 +1626,7 @@ describe("createHud's layout (#1042)", () => {
     const parent = new FakeNode();
     const hud = createHud(
       parent as unknown as HTMLElement,
+      () => undefined,
       () => undefined,
       () => undefined,
     );
@@ -1678,5 +1686,65 @@ describe("createHud's layout (#1042)", () => {
       "hud-target",
       "toast",
     ]);
+  });
+});
+
+/** What a click lands on: inside a button or an effect's icon, or not. */
+class FakeClicked {
+  readonly inOwnControl: boolean;
+
+  constructor(inOwnControl: boolean) {
+    this.inOwnControl = inOwnControl;
+  }
+
+  closest(): FakeClicked | null {
+    return this.inOwnControl ? this : null;
+  }
+}
+
+describe("a click on the target frame calls its target (#2737)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("Element", FakeClicked);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("calls on a primary click, and keeps the keyboard with the arena on a press", () => {
+    vi.stubGlobal("document", { createElement: () => new FakeNode() });
+    const onCall = vi.fn();
+    const hud = createHud(
+      new FakeNode() as unknown as HTMLElement,
+      () => undefined,
+      () => undefined,
+      onCall,
+    );
+    const panel = hud.targetPanel as unknown as FakeNode;
+    const preventDefault = vi.fn();
+    panel.listeners.get("mousedown")?.({ preventDefault });
+    expect(preventDefault).toHaveBeenCalledOnce();
+    panel.listeners.get("click")?.({ button: 0, target: new FakeClicked(false) });
+    expect(onCall).toHaveBeenCalledOnce();
+    panel.listeners.get("click")?.({ button: 2, target: new FakeClicked(false) });
+    expect(onCall).toHaveBeenCalledOnce();
+  });
+
+  it("ignores any button but the primary one, and a click on an effect's icon or a button", () => {
+    const click = (button: number, inOwnControl: boolean): MouseEvent =>
+      ({ button, target: new FakeClicked(inOwnControl) }) as unknown as MouseEvent;
+    expect(isTargetCallClick(click(0, false))).toBe(true);
+    expect(isTargetCallClick(click(1, false))).toBe(false);
+    expect(isTargetCallClick(click(0, true))).toBe(false);
+  });
+
+  it("calls a living foe while you are alive, and nothing else", () => {
+    const self = player({ sessionId: "me", team: 0 });
+    const foe = player({ sessionId: "foe", team: 1 });
+    expect(isCallableTarget(self, foe)).toBe(true);
+    expect(isCallableTarget(self, player({ sessionId: "ally", team: 0 }))).toBe(false);
+    expect(isCallableTarget(self, { ...foe, dead: true })).toBe(false);
+    expect(isCallableTarget({ ...self, dead: true }, foe)).toBe(false);
+    expect(isCallableTarget(self, undefined)).toBe(false);
+    expect(isCallableTarget(undefined, foe)).toBe(false);
   });
 });
