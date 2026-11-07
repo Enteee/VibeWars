@@ -37,6 +37,10 @@ of its team waits for the rest before it pushes on.
 A badly hurt bot that is losing its fight falls back behind its healer, or
 to its base, and rests out of reach until it has most of its health back.
 
+A bot resurrects a fallen ally only when the foes are not on top of the
+body, more of its own team than of theirs standing near it, and never
+while a foe close by is targeting the bot itself.
+
 Bots side-step about half the skill shots aimed at them, such as a
 Fireball or an attack skill's arrow, so stopping or turning works for
 them as it does for you.
