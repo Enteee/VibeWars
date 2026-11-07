@@ -254,18 +254,18 @@ describe("the mode rail (#1525)", () => {
     } as const;
     const parts = (): string[] => {
       const root = new FakeElement("div");
-      const body = railScreen(root as unknown as HTMLElement, "gvg", "", () => undefined);
+      const body = railScreen(root as unknown as HTMLElement, "gvg", () => undefined);
       return (body as unknown as FakeElement).children.map((child) => child.className);
     };
     const members = [member("me", true), member("Friend", false)];
     // Who is in it is the top bar's Lobby window's, queued or not.
     setRailParty({ ...party, members, queuedMs: null });
-    expect(parts()).toEqual(["rail-title", "rail-goal"]);
+    expect(parts()).toEqual(["rail-title"]);
     setRailParty({ ...party, members });
-    expect(parts()).toEqual(["party-status", "rail-title", "rail-goal"]);
+    expect(parts()).toEqual(["party-status", "rail-title"]);
     // Queued alone, the line still says so: it is the party's only timer.
     setRailParty({ ...party, members: [member("me", true)] });
-    expect(parts()).toEqual(["party-status", "rail-title", "rail-goal"]);
+    expect(parts()).toEqual(["party-status", "rail-title"]);
   });
 
   it("opens on Random Arena first, and for anything else stored", () => {
@@ -449,12 +449,7 @@ describe("the mode rail (#1525)", () => {
 
   it("tells the shown screen of a step, not of opening it (#2022)", () => {
     const heard: TeamSize[] = [];
-    railScreen(
-      new FakeElement("div") as unknown as HTMLElement,
-      "random-arena",
-      "",
-      () => undefined,
-    );
+    railScreen(new FakeElement("div") as unknown as HTMLElement, "random-arena", () => undefined);
     onTeamSizeChange((size) => heard.push(size));
     const { smaller } = stepper("random-arena");
     expect(heard).toEqual([]);
@@ -462,7 +457,7 @@ describe("the mode rail (#1525)", () => {
     expect(heard).toEqual([2]);
 
     // Another screen drawn: the last one hears nothing more.
-    railScreen(new FakeElement("div") as unknown as HTMLElement, "teams", "", () => undefined);
+    railScreen(new FakeElement("div") as unknown as HTMLElement, "teams", () => undefined);
     smaller.click();
     expect(heard).toEqual([2]);
   });
