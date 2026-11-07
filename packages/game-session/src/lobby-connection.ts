@@ -42,6 +42,8 @@ export interface LobbyPlayerSnapshot {
   readonly bot: boolean;
   /** Dropped, its seat held while it may come back (#1764). */
   readonly away: boolean;
+  /** The player key its host saw it prove (#2706), `null` for a bot: the host's word, no proof. */
+  readonly playerPubkey: string | null;
 }
 
 export interface LobbySnapshot {

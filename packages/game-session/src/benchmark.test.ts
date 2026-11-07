@@ -89,6 +89,7 @@ async function runScenario(scenario: Scenario): Promise<Result> {
         guildTag: null,
         guildCape: null,
         bot: false,
+        playerPubkey: "ab".repeat(32),
         build: null,
       } as const,
     ]),

@@ -28,11 +28,14 @@ import {
   MODE_MAPS,
   openLobby,
   provenPeer,
+  WIRE_PLAYER_KEY,
+  answerChallenges,
 } from "./lobby-harness.test-support.js";
 import { PARTY_CONSENT_MS, createLobbyHost, type LobbyHost, type MatchPlan } from "./lobby-host.js";
 import { ARENA, TICK_SECONDS, settle, until } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
+import { testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
 import {
   admissionBytes,
   admissionDigest,
@@ -207,6 +210,7 @@ function joinQueued(transport: Transport, ticketId: string, timeoutMs = 1000, gr
     guildCape: null,
     timeoutMs,
     relayPub: null,
+    playerKey: testPlayerKey(),
     queued: { group, key: keyOf(ticketId), verifyTicketSig },
   });
 }
@@ -229,6 +233,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     hostedTeamSize: 4,
     teamLobby: false,
     random: () => 0.5,
+    verifyPlayerProof: verifyTestProof,
     startMatch(plan) {
       plans.push(plan);
       if (match !== undefined) {
@@ -291,6 +296,7 @@ function rawPeer(network: MemoryNetwork): {
   welcomes: unknown[];
 } {
   const transport = network.join();
+  answerChallenges(transport, WIRE_PLAYER_KEY, GROUP_ID);
   const notes: WireLobbyNote[] = [];
   const states: WireLobbyState[] = [];
   const welcomes: unknown[] = [];
@@ -330,6 +336,7 @@ async function forgedJoin(
     guildCape: null,
     admission: { seatKey: ticketId, admissionSig: keyOf(signer).sign(bytes) },
     rejoinToken: null,
+    playerPubkey: WIRE_PLAYER_KEY.pubkey,
   };
 }
 
@@ -385,6 +392,7 @@ describe("a queued lobby", () => {
         admission: null,
         rejoinToken: null,
         relayPub: null,
+        playerPubkey: WIRE_PLAYER_KEY.pubkey,
       },
       "host",
     );
@@ -520,6 +528,7 @@ describe("a queued lobby", () => {
               guildCape: null,
               bot: false,
               away: false,
+              playerPubkey: "ab".repeat(32),
             },
           ],
           countdownSeconds: null,
