@@ -4,11 +4,13 @@ import { getSkill } from "../../../skills/catalog.js";
 import { rankOf } from "../../../skills/tick.js";
 import type { Skill, Surroundings } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
+import { isGhostId } from "../../ghost.js";
 import {
   blindsUser,
   botUses,
   conditionWithin,
   holdsGround,
+  isSpikeSkill,
   mirrorsStance,
   missDisablesBar,
   onlyInterrupts,
@@ -17,7 +19,13 @@ import {
   stateGateHolds,
   takenOffFoe,
 } from "../skill-intent.js";
-import { NOTHING } from "./shared.js";
+import {
+  FINISH_FRACTION,
+  NOTHING,
+  SPIKE_HOLD_MAX_SECONDS,
+  healthFraction,
+  spikeReady,
+} from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /** A pet at least this far from the foe is worth sending to it (#1966): Strike as One. */
@@ -38,11 +46,27 @@ const GAMBLE_RECHARGING = 2;
  * touch, and never by a bot whose own fight is its attacks. Oath Shot
  * (#2159) only past the Expertise it misses at, with two other skills
  * recharging; Screaming Shot at a foe within earshot not yet Bleeding.
+ * A spike skill at the team's target waits for the spike (#2631): until
+ * enough of the team's damage dealers could fire with it, the target is
+ * low enough to finish, or it has waited `SPIKE_HOLD_MAX_SECONDS`;
+ * meanwhile the bot casts its other skills and swings.
  */
 const fight: BotRule = {
   order: 100,
   name: "fight",
-  decide: ({ context, self, bar, foes, allies, role, targetId, nearestFirst, mayUse, use }) => {
+  decide: ({
+    context,
+    self,
+    bar,
+    foes,
+    allies,
+    role,
+    targetId,
+    nearestFirst,
+    mayUse,
+    use,
+    cursor,
+  }) => {
     if (targetId === undefined) {
       return undefined;
     }
@@ -120,6 +144,29 @@ const fight: BotRule = {
       stateGateHolds(held, self.combatant, self.combatant, surroundings) !== undefined
         ? self.id
         : (freshFoe(held) ?? targetId);
+    // The team's target is `play-build`'s: a guard's own, or a ghost on
+    // the altar (#2600), is fought as it comes.
+    if (cursor.spikeTargetId !== targetId) {
+      cursor.spikeTargetId = undefined;
+      cursor.spikeHeldSeconds = 0;
+    }
+    let spikeHeld: boolean | undefined;
+    const holdsSpike = (held: Skill): boolean => {
+      if (role === undefined || isGhostId(targetId) || target === undefined) {
+        return false;
+      }
+      if (!isSpikeSkill(held) || castOn(held) !== targetId) {
+        return false;
+      }
+      spikeHeld ??=
+        healthFraction(target) >= FINISH_FRACTION &&
+        !spikeReady(allies, target) &&
+        cursor.spikeHeldSeconds < SPIKE_HOLD_MAX_SECONDS;
+      if (spikeHeld) {
+        cursor.spikeTargetId = targetId;
+      }
+      return spikeHeld;
+    };
     const skill = bar.find(
       (held) =>
         worthUsing(held) &&
@@ -130,8 +177,13 @@ const fight: BotRule = {
         (!sendsPet(held) || petFar) &&
         (hasStance || !mirrorsStance(held)) &&
         mayUse(held, castOn(held)) &&
-        (!(holding || covering) || context.check(held.id, castOn(held)).ok),
+        (!(holding || covering) || context.check(held.id, castOn(held)).ok) &&
+        !holdsSpike(held),
     );
+    if (skill !== undefined && isSpikeSkill(skill)) {
+      cursor.spikeTargetId = undefined;
+      cursor.spikeHeldSeconds = 0;
+    }
     // A trap goes down under Trapper's Focus or Speed when the bar has one
     // not yet up (#1966).
     if (skill?.type === "trap") {

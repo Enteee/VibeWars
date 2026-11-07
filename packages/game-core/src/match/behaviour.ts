@@ -229,6 +229,10 @@ export interface BehaviourCursor {
   coverSpot: Vec2 | undefined;
   /** `play-build`: waiting, ahead of its team, for the rest to catch up (#2621). */
   regrouping: boolean;
+  /** `play-build`: the team target it holds its spike skills for (#2631), `undefined` while it holds none. */
+  spikeTargetId: string | undefined;
+  /** `play-build`: how long it has held them for `spikeTargetId` (#2631). */
+  spikeHeldSeconds: number;
   /** `play-build` and `guard`: how many decisions it has made, the seed of its next reaction time (#2606). */
   thinks: number;
   /** `play-build`: each foe's reach, read once from its bar (#2598). */
@@ -312,6 +316,8 @@ export function createCursor(): BehaviourCursor {
     wardId: undefined,
     coverSpot: undefined,
     regrouping: false,
+    spikeTargetId: undefined,
+    spikeHeldSeconds: 0,
     thinks: 0,
     foeReach: new Map(),
   };

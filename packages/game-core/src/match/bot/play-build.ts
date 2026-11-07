@@ -15,6 +15,7 @@ import { roleOf, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
 import regroup from "./rules/regroup.js";
 import {
+  FINISH_FRACTION,
   FOCUS_REACH,
   HEALER_PRIORITY,
   HURT_FRACTION,
@@ -26,12 +27,6 @@ import {
 } from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
 import { sacrificesTooMuch } from "./skill-intent.js";
-
-/**
- * Below this share of its health a foe in reach is the team's target
- * (#2545): one about to fall is worth more than one at full health.
- */
-const FINISH_FRACTION = 0.6;
 
 /**
  * `play-build` (#1189): a participant playing its own skill bar the way a
@@ -145,6 +140,9 @@ function paced(
   const holding = { ...NOTHING, targetId: self.targetId };
   cursor.waitSeconds = Math.max(0, cursor.waitSeconds - context.dt);
   cursor.upkeepDropSeconds = Math.max(0, cursor.upkeepDropSeconds - context.dt);
+  if (cursor.spikeTargetId !== undefined) {
+    cursor.spikeHeldSeconds += context.dt;
+  }
   // Nothing new while what it last asked for is still going: the retry
   // bound, so it never presses twice for one skill.
   if (cast.isCasting || cast.inAftercast || self.pendingSkill !== undefined) {

@@ -1,7 +1,10 @@
 import { RANGE_MELEE, RANGE_SPELL } from "../../../distances.js";
+import { energyCostOf } from "../../../skills/activation.js";
+import { canAffordAdrenaline } from "../../../skills/adrenaline.js";
 import { getSkill } from "../../../skills/catalog.js";
+import { getStatusDefinition, preventsAttacks, preventsSpells } from "../../../skills/status.js";
 import { raisedMaxHealth } from "../../../skills/tick.js";
-import type { Skill } from "../../../skills/types.js";
+import { isSpell, type Skill } from "../../../skills/types.js";
 import { distance, ZERO, type Vec2 } from "../../../vec2.js";
 import type { BehaviourIntent, Reaction } from "../../behaviour.js";
 import type { BehaviourContext } from "../../behaviour.js";
@@ -9,7 +12,7 @@ import { FLAG_REACH_UNITS } from "../../flags.js";
 import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
 import { roleOf } from "../role.js";
-import { botUses, summonAura } from "../skill-intent.js";
+import { botUses, isSpikeSkill, summonAura } from "../skill-intent.js";
 
 export const NOTHING: BehaviourIntent = {
   moveDirection: ZERO,
@@ -26,6 +29,13 @@ export const HURT_FRACTION = 0.6;
 
 /** How much more hurt than it is a foe healer counts when the team picks a target (#2573). */
 export const HEALER_PRIORITY = 0.25;
+
+/**
+ * Below this share of its health a foe in reach is the team's target
+ * (#2545): one about to fall is worth more than one at full health. Bots
+ * hold no spike for it (#2631): they finish it.
+ */
+export const FINISH_FRACTION = 0.6;
 
 /** How far past spell range a bot follows its team's target (#2573). */
 export const FOCUS_REACH = 150;
@@ -269,6 +279,67 @@ function roll(text: string, value: number, basis: number): number {
   hash = Math.imul(hash ^ (hash >>> 16), 0x85ebca6b);
   hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35);
   return ((hash ^ (hash >>> 16)) >>> 0) / 0x1_0000_0000;
+}
+
+/** At most this many damage dealers ready to fire make a spike (#2631). */
+export const SPIKE_READY_MAX = 2;
+
+/** A bot that has held a spike skill this long casts it anyway (#2631). */
+export const SPIKE_HOLD_MAX_SECONDS = 4;
+
+/**
+ * Whether the team's spike at `target` is ready (#2631): of `mates`, its
+ * living players, at least `SPIKE_READY_MAX` damage dealers, or all of
+ * them if fewer, hold a spike skill they could fire at it now. With one
+ * damage dealer there is nobody to wait for.
+ */
+export function spikeReady(mates: readonly Participant[], target: Participant): boolean {
+  let dealers = 0;
+  let ready = 0;
+  for (const mate of mates) {
+    const spike = spikeOf(mate, target);
+    if (spike !== "none") {
+      dealers += 1;
+    }
+    if (spike === "ready") {
+      ready += 1;
+    }
+  }
+  return dealers <= 1 || ready >= Math.min(SPIKE_READY_MAX, dealers);
+}
+
+/**
+ * `mate`'s spike at `target`: "ready" with a spike skill it could fire
+ * now, as `canActivate` reads it: recharged, affordable, not barred by a
+ * status, slowed by none, in range; "held" with spike skills but none of
+ * those; "none" without. Read off its bar without allocating.
+ */
+function spikeOf(mate: Participant, target: Participant): "ready" | "held" | "none" {
+  const combatant = mate.combatant;
+  const away = distance(mate.position, target.position);
+  let spike: "held" | "none" = "none";
+  for (const id of mate.skillBar) {
+    const skill = id === null ? undefined : getSkill(id);
+    if (skill === undefined || !isSpikeSkill(skill)) {
+      continue;
+    }
+    spike = "held";
+    const spell = isSpell(skill.type);
+    const active = combatant.statuses.active;
+    if (
+      away <= skill.range &&
+      (combatant.cast.rechargeRemaining.get(skill.id) ?? 0) <= 0 &&
+      !combatant.cast.spent.has(skill.id) &&
+      !(spell && preventsSpells(active)) &&
+      !(spell && active.some((status) => getStatusDefinition(status.id).castTimeMultiplier > 1)) &&
+      !(skill.type === "attack" && preventsAttacks(active)) &&
+      combatant.energy >= energyCostOf(skill, combatant, target.combatant) &&
+      (skill.cost?.kind !== "adrenaline" || canAffordAdrenaline(combatant, skill))
+    ) {
+      return "ready";
+    }
+  }
+  return spike;
 }
 
 /**

@@ -34,6 +34,13 @@ of the Hill, while your team does not hold the altar, the other team's
 Ghostly Hero on the altar comes before even that. A bot that gets far ahead
 of its team waits for the rest before it pushes on.
 
+Bot damage dealers hold their big hits, attack skills and damage spells,
+and fire them together on the team's target, so the damage lands at once
+rather than trickling in for a healer to undo. Meanwhile they keep
+swinging and casting their hexes and conditions. A bot waits at most four
+seconds for its teammates, and doesn't wait at all to finish a foe below
+60% health.
+
 A badly hurt bot that is losing its fight falls back behind its healer, or
 to its base, and rests out of reach until it has most of its health back.
 
