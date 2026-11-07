@@ -11,7 +11,7 @@
  * passes.
  */
 
-/** @typedef {import("eslint").Rule.Node} Node */
+/** @typedef {NonNullable<ReturnType<import("eslint").SourceCode["getNodeByRangeIndex"]>>} Node An ESTree node; eslint does not re-export the type */
 
 const MESSAGE = "Player-facing text goes through t() and i18n/en.ts";
 const SHOWN_PROPERTIES = new Set(["textContent", "innerText", "title", "placeholder", "alt"]);
