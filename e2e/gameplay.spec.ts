@@ -67,20 +67,14 @@ function spawnOf(team: number): { readonly x: number; readonly y: number } {
 const LANE_Y = 900;
 
 /**
- * Where a 1v1's opponent walks to, by timed keys from its spawn along the
- * middle lane: 640 east of the host's spawn, well inside the 1956-wide
- * default view of a host that stays there (#2550). Only the server walks
- * either hero: the host never steers by its view, which a loaded tab
- * draws too late to steer by.
+ * Where a 1v1's opponent heads, by timed keys from its spawn along the
+ * middle lane, to meet the host's attack partway (#2550). A loaded box
+ * lets a key go hundreds of ms late, so it stops only roughly there, or
+ * on a pillar: enough, as the attack walks the rest by the server's
+ * pathing. No test steers a hero by its view, which a loaded tab draws
+ * too late to steer by.
  */
 const FOE_STOP = { x: spawnOf(0).x + 640, y: LANE_Y };
-
-/**
- * How far from `FOE_STOP` the opponent, walked there by timed keys, may
- * end: a loaded box lets a key go hundreds of ms late (#2550). Nearer
- * than its spawn, so a view that has not drawn the walk yet is not it.
- */
-const NEAR_FOE = 400;
 
 /** Holds `direction` on `page` for as long as a hero takes to walk `distance`. */
 async function hold(page: Page, direction: KeyAction, distance: number): Promise<void> {
@@ -920,32 +914,18 @@ test("a wheel click on a foe calls it for your team, and the other team never se
   const stage = page.locator("#viewport");
   await expect(stage).toHaveAttribute("data-called", "");
 
-  // The opponent spawns across the map: it comes into the host's view.
-  await approach(opponent);
-  // Where the opponent really stopped, near FOE_STOP: its view, in front a
-  // moment so it draws, follows it.
-  await opponent.bringToFront();
-  // Two frames: the first after it comes to the front may be one queued behind.
-  await opponent.evaluate(
-    () =>
-      new Promise<void>((resolve) => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            resolve();
-          });
-        });
-      }),
-  );
-  const seen = await viewStopsNear(
-    opponent,
-    FOE_STOP,
-    NEAR_FOE,
-    "the opponent's view should reach it",
-  );
-  // The host never moved, so its camera, on its spawn, still aims the click.
-  await page.bringToFront();
-  const [x = NaN, y = NaN] = seen.split(",").map(Number);
-  const foe = (await projection(stage, canvas)).onPage({ x, y });
+  // The opponent stands on its spawn, across the map. The host's attack
+  // walks it there by the server's pathing, so no view steers it, and
+  // stops it within a long bow's reach, well inside its view (#2550).
+  await page.keyboard.press(key("attack"));
+  const foeAt = spawnOf(1);
+  const cameraX = async (): Promise<number> =>
+    Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[0]);
+  await expect
+    .poll(cameraX, { message: "the host should walk to the opponent", timeout: 40_000 })
+    .toBeGreaterThan(foeAt.x - 600);
+  await viewStopsNear(page, foeAt, 600, "the host should stop by the opponent");
+  const foe = (await projection(stage, canvas)).onPage(foeAt);
   await page.mouse.click(foe.x, foe.y, { button: "middle" });
   await expect(stage).toHaveAttribute("data-called", /^\S+$/);
   // The called side hears nothing of it.
