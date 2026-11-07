@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import { IMPLEMENTED_SKILLS, getSkill } from "../../skills/catalog.js";
 import {
   botUses,
+  isDefenceStatus,
   onlyInterrupts,
   removedCategories,
   setupOf,
+  stripsEnchantment,
   takenOffFoe,
 } from "./skill-intent.js";
 
@@ -538,5 +540,21 @@ describe("botUses (#1189)", () => {
     expect(removedCategories(skill("monk.mend-condition"))).toEqual(["condition"]);
     expect(removedCategories(skill("monk.smite-hex"))).toEqual(["hex"]);
     expect(removedCategories(skill("necromancer.plague-touch"))).toEqual(["condition"]);
+  });
+});
+
+describe("strip before the spike (#2634)", () => {
+  it("knows a defence skill's status from a damage self-buff's", () => {
+    expect(isDefenceStatus("protective-spirit")).toBe(true);
+    expect(isDefenceStatus("illusionary-weaponry")).toBe(false);
+  });
+
+  it("knows a skill that takes enchantments off its foe", () => {
+    for (const id of ["necromancer.strip-enchantment", "mesmer.drain-enchantment"]) {
+      expect(stripsEnchantment(skill(id)), id).toBe(true);
+    }
+    for (const id of ["elementalist.flare", "monk.remove-hex"]) {
+      expect(stripsEnchantment(skill(id)), id).toBe(false);
+    }
   });
 });

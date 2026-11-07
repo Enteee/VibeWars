@@ -42,7 +42,9 @@ rather than trickling in for a healer to undo: the slowest spell goes
 first, a quicker one as much later as it is quicker. Meanwhile they keep
 swinging and casting their hexes and conditions. A bot waits at most four
 seconds for its teammates, and doesn't wait at all to finish a foe below
-30% health.
+30% health. When the target is under a protective enchantment such as
+Protective Spirit or Aegis, a bot with an enchantment strip, like Strip
+Enchantment, takes it off first, and the others hold their hits for it.
 
 A badly hurt bot that is losing its fight falls back behind its healer, or
 to its base, and rests out of reach until it has most of its health back.

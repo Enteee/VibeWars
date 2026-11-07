@@ -440,3 +440,69 @@ describe("damage dealers spike the team's target together (#2631)", () => {
     expect(decideFor(spike({ fire: 0 }))?.useSkillId).toBe(FLARE);
   });
 });
+
+describe("damage dealers strip the protection off the team's target first (#2634)", () => {
+  const FLARE = "elementalist.flare";
+  const STRIP = "necromancer.strip-enchantment";
+  /**
+   * Bot `a` with `bar`, beside caster `b` with Flare unless `lone`, and a
+   * foe in range of both under `status`, if any. No Death Magic: Strip Enchantment
+   * is at rank 0.
+   */
+  const strip = ({
+    bar = [FLARE, STRIP],
+    lone = false,
+    status = "protective-spirit",
+  }: { bar?: readonly string[]; lone?: boolean; status?: string | null } = {}) => {
+    const ranks = new Map([["elementalist.fire-magic", 12]]);
+    const sim = match([
+      body("a", 0, vec2(400, 400), { behaviour: BOT, skillBar: [...bar], attributeRanks: ranks }),
+      ...(lone
+        ? []
+        : [
+            body("b", 0, vec2(400, 460), {
+              behaviour: BOT,
+              skillBar: [FLARE],
+              attributeRanks: ranks,
+            }),
+          ]),
+      body("foe", 1, vec2(700, 400)),
+    ]);
+    if (status !== null) {
+      sim.get("foe")?.combatant.statuses.apply(status, 10, "x", NO_RANKS);
+    }
+    return sim;
+  };
+  const decideFor = (sim: MatchSimulation, id = "a", spikeHold = true) =>
+    fight.decide(ruleFor(sim, id, { targetId: "foe", spikeHold }));
+
+  it("casts Strip Enchantment at a target under Protective Spirit before its spike skill", () => {
+    expect(decideFor(strip())).toMatchObject({ useSkillId: STRIP, targetId: "foe" });
+  });
+
+  it("spikes as #2631 with no enchantment on the target", () => {
+    expect(decideFor(strip({ status: null }))?.useSkillId).toBe(FLARE);
+  });
+
+  it("leaves an enchantment no defence skill applies: spikes as today", () => {
+    expect(decideFor(strip({ status: "illusionary-weaponry" }))?.useSkillId).toBe(FLARE);
+  });
+
+  it("keeps a teammate's spike held until the strip is cast, and not for a recharging one", () => {
+    const sim = strip();
+    expect(decideFor(sim, "b")?.useSkillId).toBeUndefined();
+    sim.get("a")?.combatant.cast.startRecharge(STRIP, 10);
+    expect(decideFor(sim, "b")?.useSkillId).toBe(FLARE);
+  });
+
+  it("strips, alone, then casts its damage with nobody to wait for", () => {
+    const sim = strip({ bar: [FLARE, "necromancer.rip-enchantment"], lone: true });
+    expect(decideFor(sim)?.useSkillId).toBe("necromancer.rip-enchantment");
+    sim.get("a")?.combatant.cast.startRecharge("necromancer.rip-enchantment", 10);
+    expect(decideFor(sim)?.useSkillId).toBe(FLARE);
+  });
+
+  it("casts in bar order when it doesn't hold its spike skills", () => {
+    expect(decideFor(strip(), "a", false)?.useSkillId).toBe(FLARE);
+  });
+});
