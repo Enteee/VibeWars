@@ -38,7 +38,10 @@ Canyon, Crossroads and Long Hall play it, and two bigger, medium-sized
 arenas: **Sandstone Steps** (1v1, 3600x2000), terraced desert ledges
 round a broken obelisk circle, with pillars to kite round; and **Frozen
 Crossing** (2v2, 4000x2200), a frozen river crossed by three bridges,
-ice rocks on each bank.
+ice rocks on each bank. For the bigger teams: **Ashen Courtyard** (4v4,
+4400x2600), a ruined keep whose walled courtyard has four breaches, ruins
+on its flanks; and **Moss Vale** (8v8, 4800x2800), two wooded ridges
+that split the vale into three lanes, meeting in a clearing in the middle.
 
 ## Kill Count
 
