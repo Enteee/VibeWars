@@ -611,6 +611,51 @@ describe("a member's relay, held for its lobby (#2527)", () => {
     await settle();
     expect(sealed).toHaveLength(5);
   });
+
+  it("counts the players it holds a live login for, and says when that changes (#2531)", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    const relay = fakeRelay();
+    let now = NOW;
+    const opts = options(undefined);
+    const key = await newJoinerKey();
+    const hold = holdRelay(
+      ROOM,
+      opts.source,
+      HOLDER,
+      () => "Ann",
+      deps(relay.openSocket, () => now),
+    );
+    let told = 0;
+    hold.onChange(() => {
+      told += 1;
+    });
+    const member = { peerId: "member-peer-id", pub: key.pub };
+    // Not sharing: none, whoever sits.
+    hold.seated([{ peerId: HOLDER, pub: key.pub }, member]);
+    expect(hold.sharingWith()).toBe(0);
+    opts.set(SHARED);
+    expect(hold.sharingWith()).toBe(1);
+    told = 0;
+
+    // An admitted joiner counts until its admit ends, then it is told.
+    hold.admit({ peerId: JOINER, pub: key.pub });
+    expect(hold.sharingWith()).toBe(2);
+    expect(told).toBe(1);
+    await settle();
+    now += RELAY_ADMIT_MS;
+    vi.advanceTimersByTime(RELAY_ADMIT_MS);
+    expect(hold.sharingWith()).toBe(1);
+    expect(told).toBe(2);
+
+    // Seated, the same count tells nothing; one leaving tells.
+    hold.seated([member]);
+    expect(told).toBe(2);
+    hold.seated([]);
+    expect(hold.sharingWith()).toBe(0);
+    expect(told).toBe(3);
+    hold.close();
+    vi.useRealTimers();
+  });
 });
 
 describe("a joiner's relay offers (#2527)", () => {

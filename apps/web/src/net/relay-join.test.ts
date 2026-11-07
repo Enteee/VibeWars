@@ -443,6 +443,40 @@ describe("a relayed member's login, moved in place (#2245, #2529)", () => {
     await joiner.room.leave();
   });
 
+  it("says whose relay it goes through, and when a move switches holder (#2531)", async () => {
+    const joiner = relayedJoiner();
+    let told = 0;
+    joiner.room.onRelayedVia(() => {
+      told += 1;
+    });
+    expect(joiner.room.relayedVia()).toBeUndefined();
+    await reachHost(joiner);
+    expect(joiner.room.relayedVia()).toBe("a");
+    expect(told).toBe(1);
+    // A newer login from the same holder is no switch.
+    joiner.fake.open(offer("m", EXPIRY + 60 * 60), offer("a", EXPIRY + 60));
+    expect(told).toBe(1);
+    // Failed ICE: the restart limit holds no move back.
+    joiner.setIce("failed");
+    joiner.fake.open(offer("m", EXPIRY + 60 * 60));
+    expect(joiner.room.relayedVia()).toBe("m");
+    expect(told).toBe(2);
+    await joiner.room.leave();
+  });
+
+  it("says no holder reached directly, or with its own relay (#2531)", async () => {
+    for (const ownRelay of [false, true]) {
+      const joiner = relayedJoiner(ownRelay);
+      joiner.network.join("host");
+      await vi.advanceTimersByTimeAsync(0);
+      joiner.room.reached("host");
+      joiner.fake.open(offer("a", EXPIRY));
+      await vi.advanceTimersByTimeAsync(RELAY_REJOIN_MS);
+      expect(joiner.room.relayedVia()).toBeUndefined();
+      await joiner.room.leave();
+    }
+  });
+
   it("restarts at most once per relay each 5 min, unless ICE failed or disconnected", async () => {
     const joiner = relayedJoiner();
     await reachHost(joiner);

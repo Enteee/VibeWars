@@ -46,6 +46,13 @@ export const RELAY_RESTART_EVERY_MS = 5 * 60 * 1000;
 export interface RelayJoin extends Transport {
   /** The host answered from `hostId`: no further attempt, and its drop is watched. */
   reached(hostId: string): void;
+  /**
+   * The holder whose relay the host's connection goes through now (#2531),
+   * by peer id: `undefined` direct, or through the player's own relay.
+   */
+  relayedVia(): string | undefined;
+  /** `handler` when `relayedVia` changed. */
+  onRelayedVia(handler: () => void): () => void;
 }
 
 export interface RelayJoinOptions {
@@ -102,6 +109,18 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
   let restartTimer: ReturnType<typeof setTimeout> | undefined;
   let swapping = false;
   let left = false;
+  const viaHandlers = new Set<() => void>();
+
+  /** Relay through `holder` from now on, telling whoever listens if that changed. */
+  const via = (holder: string): void => {
+    if (holder === relayedVia) {
+      return;
+    }
+    relayedVia = holder;
+    for (const handler of [...viaHandlers]) {
+      handler();
+    }
+  };
 
   const listen = (transport: Transport, channel: Channel): (() => void) =>
     transport.on(channel, (data, from) => {
@@ -170,7 +189,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     swapping = true;
     joinedWith = turn;
     relayedWith = turn;
-    relayedVia = offer.holder;
+    via(offer.holder);
     try {
       await detach();
       if (!left) {
@@ -267,7 +286,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     room.transport.swapIceServers(hostId, next);
     restarted.set(relayOf(next), now());
     relayedWith = next;
-    relayedVia = offer.holder;
+    via(offer.holder);
   };
 
   attach(undefined);
@@ -283,6 +302,13 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
       hostId = id;
       clearTimeout(timer);
       move();
+    },
+    relayedVia: () => relayedVia,
+    onRelayedVia(handler) {
+      viaHandlers.add(handler);
+      return () => {
+        viaHandlers.delete(handler);
+      };
     },
     send(channel, data, to) {
       room?.transport.send(channel, data, to);
@@ -305,6 +331,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
       offers.close();
       await detach();
       handlers.clear();
+      viaHandlers.clear();
     },
   };
 }
