@@ -61,6 +61,8 @@ import {
   parsePeerLobbyHello,
   parsePeerLobbyLeave,
   parsePeerLobbySeat,
+  parsePeerLobbyChallenge,
+  parsePeerLobbyProof,
   parsePeerRelayCredIn,
   parsePeerRelayCredOut,
   parsePeerRelayOffers,
@@ -470,6 +472,7 @@ const lobbyJoin: PeerLobbyJoin = {
   admission: null,
   rejoinToken: null,
   relayPub: null,
+  playerPubkey: "9a".repeat(32),
 };
 
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
@@ -508,6 +511,7 @@ const lobbyState: WireLobbyState = {
       isHost: true,
       bot: false,
       away: false,
+      playerPubkey: "1f".repeat(32),
     },
     {
       id: "peer-3",
@@ -519,6 +523,7 @@ const lobbyState: WireLobbyState = {
       isHost: false,
       bot: false,
       away: false,
+      playerPubkey: "3e".repeat(32),
     },
     {
       id: "bot-1",
@@ -530,6 +535,7 @@ const lobbyState: WireLobbyState = {
       isHost: false,
       bot: true,
       away: false,
+      playerPubkey: null,
     },
   ],
   countdownSeconds: null,
@@ -867,6 +873,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["untagged lobby-join (#1406)", parsePeerLobbyJoin, { ...lobbyJoin, guildTag: null }],
   ["returning lobby-join (#2157)", parsePeerLobbyJoin, { ...lobbyJoin, rejoinToken: TOKEN }],
   ["lobby-seat (#2157)", parsePeerLobbySeat, { rejoinToken: TOKEN }],
+  ["lobby-challenge (#2706)", parsePeerLobbyChallenge, { nonce: "5c".repeat(32) }],
+  ["lobby-proof (#2706)", parsePeerLobbyProof, { sig: "d4".repeat(64) }],
   ["lobby-join with a relay key (#2529)", parsePeerLobbyJoin, { ...lobbyJoin, relayPub: PUB }],
   ["relay-offers (#2529)", parsePeerRelayOffers, relayOffers],
   ["relay-offers of no holder (#2529)", parsePeerRelayOffers, { holders: [], members: [] }],
@@ -1943,6 +1951,41 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...lobbyJoin, rejoinToken: "0f".repeat(15) },
   ],
   ["lobby-seat of a null token (#2157)", parsePeerLobbySeat, { rejoinToken: null }],
+  [
+    "lobby-join without a player key (#2706)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, playerPubkey: undefined },
+  ],
+  [
+    "lobby-join with an upper-case player key (#2706)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, playerPubkey: "9A".repeat(32) },
+  ],
+  [
+    "lobby-join with a short player key (#2706)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, playerPubkey: "9a".repeat(31) },
+  ],
+  ["lobby-challenge of a short nonce (#2706)", parsePeerLobbyChallenge, { nonce: "5c".repeat(31) }],
+  ["lobby-challenge of no nonce (#2706)", parsePeerLobbyChallenge, {}],
+  ["lobby-proof of a long signature (#2706)", parsePeerLobbyProof, { sig: "d4".repeat(65) }],
+  ["lobby-proof of a non-hex signature (#2706)", parsePeerLobbyProof, { sig: "zz".repeat(64) }],
+  [
+    "lobby-state of a human with no player key (#2706)",
+    parseWireLobbyState,
+    {
+      ...lobbyState,
+      players: lobbyState.players.map((member) => ({ ...member, playerPubkey: null })),
+    },
+  ],
+  [
+    "lobby-state of a bot with a player key (#2706)",
+    parseWireLobbyState,
+    {
+      ...lobbyState,
+      players: lobbyState.players.map((member) => ({ ...member, playerPubkey: "1f".repeat(32) })),
+    },
+  ],
   ["lobby-seat of a long token (#2157)", parsePeerLobbySeat, { rejoinToken: "0f".repeat(17) }],
   [
     "lobby-join without a relay key (#2529)",

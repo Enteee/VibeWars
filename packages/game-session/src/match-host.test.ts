@@ -420,7 +420,15 @@ describe("a Team Lobby's seats (#1458)", () => {
       seats: new Map<string, PlannedSeat>([
         [
           "host/local",
-          { team: 0, name: "Me", guildTag: null, guildCape: null, bot: false, build: assigned },
+          {
+            team: 0,
+            name: "Me",
+            guildTag: null,
+            guildCape: null,
+            bot: false,
+            playerPubkey: "ab".repeat(32),
+            build: assigned,
+          },
         ],
       ]),
     });
@@ -442,7 +450,15 @@ describe("a lobby's bots (#1193)", () => {
   const human = (team: 0 | 1) =>
     [
       "host/local",
-      { team, name: "Me", guildTag: "VIBE", guildCape: CAPE, bot: false, build: null },
+      {
+        team,
+        name: "Me",
+        guildTag: "VIBE",
+        guildCape: CAPE,
+        bot: false,
+        playerPubkey: "ab".repeat(32),
+        build: null,
+      },
     ] as const;
   const named = (snapshot: MatchSnapshot, name: string) =>
     snapshot.players.find((player) => player.name === name);

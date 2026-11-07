@@ -9,7 +9,12 @@
  * the build.
  */
 import { ANNIHILATION_MATCH_RULES, type MatchRules } from "@vibewars/game-core";
-import type { LobbyMode, LobbyTeamSize, WireCape } from "@vibewars/game-protocol";
+import {
+  parsePeerLobbyChallenge,
+  type LobbyMode,
+  type LobbyTeamSize,
+  type WireCape,
+} from "@vibewars/game-protocol";
 
 import { keyGated } from "./key-gate.js";
 import { joinLobby } from "./lobby-client.js";
@@ -24,6 +29,8 @@ import { connectMatch, type PeerMatchConnection } from "./match-client.js";
 import { ARENA, TICK_SECONDS, hello, settle } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
+import type { PlayerKey } from "./player-key.js";
+import { testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
 import type { Transport } from "./transport.js";
 
 export const CODE = "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE"; // pragma: allowlist secret
@@ -78,6 +85,8 @@ export interface TestLobby {
     guildCape?: WireCape | null,
     /** Its page's relay key (#2529): none by default. */
     relayPub?: string | null,
+    /** Its player key (#2706): a fresh one by default. */
+    playerKey?: PlayerKey,
   ): Promise<Member>;
   /** Run `seconds` of the lobby's match, a tick at a time, letting messages land between. */
   step(seconds: number): Promise<void>;
@@ -122,6 +131,7 @@ export async function openLobby(
     teamLobby: options.teamLobby ?? false,
     ...(options.matchmaking === undefined ? {} : { matchmaking: options.matchmaking }),
     random: options.random ?? (() => 0.5),
+    verifyPlayerProof: verifyTestProof,
     startMatch(plan) {
       const host =
         options.startMatch?.(plan) ??
@@ -153,6 +163,7 @@ export async function openLobby(
     guildTag: string | null,
     guildCape: WireCape | null,
     relayPub: string | null,
+    playerKey: PlayerKey,
   ): Promise<Member> =>
     member(
       await joinLobby({
@@ -164,11 +175,12 @@ export async function openLobby(
         guildCape,
         timeoutMs: 1000,
         relayPub,
+        playerKey,
         ...(options.matchmaking === undefined ? {} : { roomId: options.matchmaking.roomId }),
       }),
       transport,
     );
-  const host = await join(lobby.local, null, "Host", null, null, null);
+  const host = await join(lobby.local, null, "Host", null, null, null, testPlayerKey());
   lobby.setOpen(options.open ?? true);
   return {
     network,
@@ -176,8 +188,13 @@ export async function openLobby(
     room,
     host,
     matches,
-    join: (name = "Guest", guildTag = null, guildCape = null, relayPub = null) =>
-      join(network.join(), PROOF_KEY, name, guildTag, guildCape, relayPub),
+    join: (
+      name = "Guest",
+      guildTag = null,
+      guildCape = null,
+      relayPub = null,
+      playerKey = testPlayerKey(),
+    ) => join(network.join(), PROOF_KEY, name, guildTag, guildCape, relayPub, playerKey),
     async step(seconds) {
       const ticks = Math.round(seconds / TICK_SECONDS);
       for (let i = 0; i < ticks; i += 1) {
@@ -188,13 +205,43 @@ export async function openLobby(
   };
 }
 
+/** The player key a hand-spoken `lobby-join` carries (#2706): `provenPeer` proves it. */
+export const WIRE_PLAYER_KEY = testPlayerKey();
+
+/**
+ * Answer every `lobby-challenge` `transport` gets with `key`'s proof
+ * (#2706), as `joinLobby` does, and nothing else of it checked.
+ */
+export function answerChallenges(
+  transport: Transport,
+  key: PlayerKey = WIRE_PLAYER_KEY,
+  roomId: string = CODE,
+): void {
+  transport.on("lobby-challenge", (data, from) => {
+    const challenge = parsePeerLobbyChallenge(data);
+    if (challenge !== undefined) {
+      const fields = { hostPeerId: from, joinerPeerId: transport.selfId, roomId };
+      const sig = key.signLobbyProof({ ...fields, nonce: challenge.nonce });
+      transport.send("lobby-proof", { sig }, from);
+    }
+  });
+}
+
 /**
  * A peer in the room that holds the key (#1681) and has proven it to the
  * host, but has not joined the lobby: a test speaks the wire through it
- * by hand. Resolves once the host is proven to it.
+ * by hand, and its joins prove `playerKey` (#2706), or, for `null`, are
+ * left to the test to prove. Resolves once the host is proven to it.
  */
-export async function provenPeer(lobby: TestLobby, peerId?: string): Promise<Transport> {
+export async function provenPeer(
+  lobby: TestLobby,
+  peerId?: string,
+  playerKey: PlayerKey | null = WIRE_PLAYER_KEY,
+): Promise<Transport> {
   const transport = keyGated(lobby.network.join(peerId), PROOF_KEY, "guest");
+  if (playerKey !== null) {
+    answerChallenges(transport, playerKey);
+  }
   await new Promise<void>((resolve) => {
     const off = transport.onPeerJoin((joined) => {
       if (joined === lobby.room.selfId) {

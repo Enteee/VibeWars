@@ -6,7 +6,14 @@ import {
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { type Member, openLobby, provenPeer, seat, start } from "./lobby-harness.test-support.js";
+import {
+  type Member,
+  openLobby,
+  provenPeer,
+  seat,
+  start,
+  WIRE_PLAYER_KEY,
+} from "./lobby-harness.test-support.js";
 import { RELAY_CRED_EVERY_MS } from "./lobby-host.js";
 import { settle } from "./match-harness.test-support.js";
 import { RELAY_ADMIT_MS, RELAY_ROOMS_LINGER_MS } from "./relay-admission.js";
@@ -50,6 +57,7 @@ const joinAs = (name: string, rejoinToken: string | null, relayPub: string | nul
   admission: null,
   rejoinToken,
   relayPub,
+  playerPubkey: WIRE_PLAYER_KEY.pubkey,
 });
 
 describe("a lobby host's relay holders (#2529)", () => {

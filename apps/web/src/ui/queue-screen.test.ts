@@ -55,6 +55,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         isHost: false,
         bot: false,
         away: false,
+        playerPubkey: "ab".repeat(32),
       },
       {
         sessionId: "mate",
@@ -65,6 +66,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         isHost: false,
         bot: false,
         away: false,
+        playerPubkey: "ab".repeat(32),
       },
       {
         sessionId: "foe",
@@ -75,6 +77,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         isHost: true,
         bot: false,
         away: false,
+        playerPubkey: "ab".repeat(32),
       },
     ],
     isHost: false,

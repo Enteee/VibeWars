@@ -16,6 +16,8 @@
     "ended",
     "bye",
     "lobby-join",
+    "lobby-challenge",
+    "lobby-proof",
     "lobby-state",
     "lobby-cmd",
     "lobby-note",
@@ -844,12 +846,14 @@
         { "literal": "key-challenge" },
         { "literal": "key-proof" },
         { "literal": "key-proven" },
+        { "literal": "lobby-challenge" },
         { "literal": "lobby-cmd" },
         { "literal": "lobby-hello" },
         { "literal": "lobby-join" },
         { "literal": "lobby-leave" },
         { "literal": "lobby-move" },
         { "literal": "lobby-note" },
+        { "literal": "lobby-proof" },
         { "literal": "lobby-seat" },
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
@@ -5488,7 +5492,8 @@
         { "literal": "party-full" },
         { "literal": "protocol-mismatch" },
         { "literal": "slot-taken" },
-        { "literal": "ticket-used" }
+        { "literal": "ticket-used" },
+        { "literal": "unproven" }
       ]
     },
     "LobbyTeamSize": {
@@ -5677,6 +5682,9 @@
         }
       ]
     },
+    "PeerLobbyChallenge": {
+      "properties": [{ "name": "nonce", "optional": false, "type": "string" }]
+    },
     "PeerLobbyHello": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "PeerLobbyJoin": {
       "properties": [
@@ -5758,12 +5766,14 @@
         },
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "name", "optional": false, "type": "string" },
+        { "name": "playerPubkey", "optional": false, "type": "string" },
         { "name": "protocolVersion", "optional": false, "type": "string" },
         { "name": "rejoinToken", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "relayPub", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
     "PeerLobbyLeave": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
+    "PeerLobbyProof": { "properties": [{ "name": "sig", "optional": false, "type": "string" }] },
     "PeerLobbySeat": {
       "properties": [{ "name": "rejoinToken", "optional": false, "type": "string" }]
     },
@@ -6878,6 +6888,7 @@
         { "name": "id", "optional": false, "type": "string" },
         { "name": "isHost", "optional": false, "type": "boolean" },
         { "name": "name", "optional": false, "type": "string" },
+        { "name": "playerPubkey", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "ready", "optional": false, "type": "boolean" },
         {
           "name": "team",
@@ -7023,6 +7034,11 @@
                 { "name": "id", "optional": false, "type": "string" },
                 { "name": "isHost", "optional": false, "type": "boolean" },
                 { "name": "name", "optional": false, "type": "string" },
+                {
+                  "name": "playerPubkey",
+                  "optional": false,
+                  "type": { "union": ["null", "string"] }
+                },
                 { "name": "ready", "optional": false, "type": "boolean" },
                 {
                   "name": "team",
