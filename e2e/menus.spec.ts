@@ -296,12 +296,15 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   await expect(own).toHaveText(["Ready"]);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
-  // Lobby sits between Options and Music (#2385).
+  // Lobby sits between Options and Music (#2385); the queue icon, before
+  // Help, hides while nothing is queued (#2743).
+  await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
   expect(
     await page
       .locator("#topbar .topbar-actions > button")
       .evaluateAll((buttons) => buttons.map((node) => node.getAttribute("class") ?? "")),
   ).toEqual([
+    "topbar-queue",
     "topbar-help",
     "topbar-options",
     "topbar-lobby-button",
