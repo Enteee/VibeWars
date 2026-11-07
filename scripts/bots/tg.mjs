@@ -14,7 +14,8 @@
  *                           Manager topic
  *   tg broadcast <text>     queue a message into General
  *   tg ask <question> [--option <text>]...
- *                           ask the operator (manager, architect, lead-dev);
+ *                           ask the operator (manager, architect, lead-dev,
+ *                           release-manager);
  *                           the answer arrives in your inbox
  *   tg reply [--to <msg>] <text>
  *                           support only: answer a user in the Support

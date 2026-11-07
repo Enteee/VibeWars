@@ -69,6 +69,26 @@ Backlog`, judged against the card's column in hubd's copy of the board
   named list of the other roles rather than `"*"`. Nor does it read
   code-scanning alerts.
 
+- **A release branch takes main's commits and nothing else** (#2707). The
+  release manager scopes a release in a `Release 0.N.0` tracking issue,
+  freezes it as `release/0.N.0` from a commit on main, has QA test that
+  branch and publishes it with `gh release create`. Publishing is a
+  production deploy: `pages.yml` puts every published release on the site
+  root. So the branch, the sign-off and the tag are three roles' own, and no
+  hat lends any of them. hubd pushes the branch only if it starts on main
+  and then only fast-forwards by `git cherry-pick -x` commits, one parent
+  each, whose trailer names a full sha on a freshly fetched main with the
+  same `git patch-id --verbatim` of the full binary diff: plain patch-id
+  ignores whitespace and hashes binary files by path, so it would let an
+  unreviewed change pass as a pick. It pushes exactly the sha it checked, as
+  a compare-and-swap on GitHub's head. qa-tester's `hub release-ok` is
+  recorded for the branch's head in hubd's ledger; `release create` is
+  refused without one on the current head, takes no flag beyond the tag,
+  `--target`, `--title` and `--generate-notes`, and hubd rewrites the
+  target to that signed-off sha, so GitHub cannot tag a newer one. Nothing
+  else can make a tag. A fix that does not pick cleanly waits for the next
+  release rather than being resolved by hand on the branch.
+
 - **The jails share one resource budget** (#358). Jails run as the
   operator's UID, so without a cap one runaway test run takes the host's RAM,
   CPU or process table with it. `claude-bot` starts every jail as a systemd

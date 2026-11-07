@@ -209,6 +209,36 @@ export function scheduleReader(file, complain) {
 }
 
 /**
+ * The own schedules a role starts with when it is hired (#2707), as the
+ * words of `hub schedule add`: then they are its own, to change or remove.
+ * A name it already has is left as it is.
+ *
+ * @type {Readonly<Record<string, readonly (readonly string[])[]>>}
+ */
+export const SEEDED_SCHEDULES = Object.freeze({
+  "release-manager": [
+    [
+      "add",
+      "release-cadence",
+      "72h",
+      "Release cadence: close the current release cycle, or start the next one.",
+    ],
+    [
+      "add",
+      "feature-progress",
+      "12h",
+      "Check the open Release tracking issue's Features against the board.",
+    ],
+    [
+      "add",
+      "qa-status",
+      "6h",
+      "If a release branch is waiting for QA's release-ok on its head, ask qa-tester where it stands. If none is, nothing to do.",
+    ],
+  ],
+});
+
+/**
  * `15m`, `2h`: minutes, or a throw saying why not.
  *
  * @param {string} every

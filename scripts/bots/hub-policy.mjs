@@ -2,7 +2,7 @@
  * What each employee of the company is allowed to do on GitHub.
  *
  * GitHub's ruleset on `main` covers the mechanical invariants (no direct
- * push, CI must pass), but all nine agents share one GitHub identity, so it
+ * push, CI must pass), but every agent shares one GitHub identity, so it
  * cannot tell them apart. The kanban rules — only QA merges, only the
  * reviewers approve, only the manager restructures the board — are
  * therefore not conventions that agents are asked to respect. They are
@@ -26,8 +26,8 @@
 import { shortFlag } from "./hub-filter.mjs";
 
 /**
- * The nine roles. Order is the org chart, roughly. The default staff is
- * ten: `developer` starts with two (staff.mjs DEFAULT_HEADCOUNT).
+ * The ten roles. Order is the org chart, roughly. The default staff is
+ * eleven: `developer` starts with two (staff.mjs DEFAULT_HEADCOUNT).
  */
 export const ROLES = [
   "manager",
@@ -39,10 +39,14 @@ export const ROLES = [
   "perf-sec-qa",
   "qa-tester",
   "business-analyst",
+  "release-manager",
 ];
 
-/** Who keeps recurring reminders to themselves (#678). No hat lends it. */
-export const SCHEDULERS = Object.freeze(["manager", "architect", "lead-dev"]);
+/**
+ * Who keeps recurring reminders to themselves (#678). No hat lends it. The
+ * release manager's cycle runs on its own (#2707).
+ */
+export const SCHEDULERS = Object.freeze(["manager", "architect", "lead-dev", "release-manager"]);
 
 /**
  * Who may read code-scanning alerts (#184): the eight roles of the time, named
@@ -119,6 +123,7 @@ const COMMENTERS = [
   "lead-dev",
   "perf-sec-qa",
   "qa-tester",
+  "release-manager",
 ];
 
 /**
@@ -135,6 +140,7 @@ export const GATE_PATHS = [
   "devenv.nix",
   "playwright.config.ts",
   "scripts/bots/hub-policy.mjs",
+  "scripts/bots/hub-release.mjs",
   "scripts/bots/hubd.mjs",
   "scripts/bots/hub-guards.mjs",
   "scripts/bots/hub-filter.mjs",
@@ -219,8 +225,13 @@ const RULES = [
   /* ---- the manager runs the backlog and the board. --------------------- */
   // The CI/CD engineer files the bug when main goes red (#164): it is the
   // one watching, and the failing run is evidence nobody else has to hand.
-  { argv: ["issue", "create"], roles: ["manager", "architect", "cicd-engineer"] },
-  { argv: ["issue", "edit"], roles: ["manager", "architect"] },
+  // The release manager keeps the release's tracking issue, and QA adds the
+  // bugs it files to that issue's "Fixes to cherry-pick" (#2707).
+  {
+    argv: ["issue", "create"],
+    roles: ["manager", "architect", "cicd-engineer", "release-manager"],
+  },
+  { argv: ["issue", "edit"], roles: ["manager", "architect", "release-manager", "qa-tester"] },
   { argv: ["issue", "close"], roles: ["manager"] },
   { argv: ["issue", "reopen"], roles: ["manager"] },
   // Superseded pull requests: closed with a comment naming the replacement,
@@ -267,7 +278,7 @@ const RULES = [
 
   /* ---- reviewing. ------------------------------------------------------
      `gh pr review` is refused for EVERY role, which looks wrong until you
-     notice that all nine agents share one GitHub identity: hubd holds a
+     notice that every agent shares one GitHub identity: hubd holds a
      single token and `gh api user` is `Enteee` for all of them. Two
      consequences, neither avoidable:
 
@@ -305,8 +316,11 @@ const RULES = [
   { argv: ["workflow", "run"], roles: ["cicd-engineer"] },
   { argv: ["workflow", "enable"], roles: ["cicd-engineer"] },
   { argv: ["workflow", "disable"], roles: ["cicd-engineer"] },
-  { argv: ["release", "create"], roles: ["cicd-engineer"] },
-  { argv: ["release", "edit"], roles: ["cicd-engineer"] },
+  // Publishing a release is a production deploy: pages.yml puts it on the
+  // site root. Only from a QA-signed-off release branch (#2707); see
+  // parseReleaseCreate, and hubd for the sign-off and the target it pins.
+  { argv: ["release", "create"], roles: ["release-manager"] },
+  { argv: ["release", "edit"], roles: ["release-manager"] },
   { argv: ["release", "delete"], roles: [] },
 ];
 
@@ -492,6 +506,107 @@ export function parseMerge(argv) {
 }
 
 /**
+ * A release's version, pre-1.0 only (#2707): `0.N.0`, N from 1, no leading
+ * zero. Bug fixes wait for the next release, so there is no patch number,
+ * and 1.0 is the operator's call (ADR-0016).
+ */
+export const RELEASE_VERSION = /^0\.[1-9][0-9]*\.0$/;
+
+/** The roles that push release branches, and only those (#2707). */
+export const RELEASE_PUSHERS = Object.freeze(["release-manager"]);
+
+/**
+ * @param {string} branch
+ * @returns {string | null} the version of `release/<version>`, or null for any other name
+ */
+export function releaseVersion(branch) {
+  const version = branch.startsWith("release/") ? branch.slice("release/".length) : "";
+  return RELEASE_VERSION.test(version) ? version : null;
+}
+
+/**
+ * The words of a `release create` request, or why they are not acceptable
+ * (#2707). Publishing deploys the site, so only what a release from a
+ * signed-off branch needs: the tag `v<version>`, one `--target
+ * release/<version>` of the same version, `--generate-notes` and
+ * `--title`. hubd swaps the target for the signed-off commit. Each flag at
+ * most once and never in its `=` form, so hub and gh cannot read two
+ * different targets; nothing that names a file, an asset or a draft.
+ *
+ * @param {string[]} argv `["release", "create", ...]`
+ * @returns {{ tag: string, branch: string, title: string | null, notes: boolean } | { error: string }}
+ */
+export function parseReleaseCreate(argv) {
+  const words = argv.slice(2);
+  /** @type {string[]} */
+  const positional = [];
+  /** @type {Map<string, string>} */
+  const seen = new Map();
+  for (let i = 0; i < words.length; i += 1) {
+    const word = words[i] ?? "";
+    if (!word.startsWith("-")) {
+      positional.push(word);
+      continue;
+    }
+    if (word !== "--target" && word !== "--title" && word !== "--generate-notes") {
+      return {
+        error: `${word} is not allowed on a release; only the tag, --target, --title and --generate-notes are, unclustered and without "="`,
+      };
+    }
+    if (seen.has(word)) {
+      return { error: `${word} is given twice` };
+    }
+    if (word === "--generate-notes") {
+      seen.set(word, "");
+      continue;
+    }
+    const value = words[(i += 1)];
+    if (value === undefined) {
+      return { error: `${word} needs a value` };
+    }
+    seen.set(word, value);
+  }
+  const [tag = ""] = positional;
+  const version = tag.startsWith("v") ? tag.slice(1) : "";
+  if (positional.length !== 1 || !RELEASE_VERSION.test(version)) {
+    return { error: "a release names exactly one tag, v0.N.0" };
+  }
+  const branch = `release/${version}`;
+  if (seen.get("--target") !== branch) {
+    return { error: `release ${tag} is published from --target ${branch}, and from nothing else` };
+  }
+  return { tag, branch, title: seen.get("--title") ?? null, notes: seen.has("--generate-notes") };
+}
+
+/**
+ * Whether a `release edit` changes only words (#2707): the tag, then
+ * `--title` and `--notes` with their text. Retargeting, re-tagging,
+ * drafting, a prerelease toggle or a notes file would publish something the
+ * QA sign-off never saw.
+ *
+ * @param {string[]} argv `["release", "edit", ...]`
+ * @returns {string | null} why not, if not
+ */
+export function refuseReleaseEdit(argv) {
+  const words = argv.slice(2);
+  let tags = 0;
+  for (let i = 0; i < words.length; i += 1) {
+    const word = words[i] ?? "";
+    if (!word.startsWith("-")) {
+      tags += 1;
+    } else if (word === "--title" || word === "--notes") {
+      i += 1;
+      if (words[i] === undefined) {
+        return `${word} needs a value`;
+      }
+    } else {
+      return `${word} is not allowed on a release edit; only --title and --notes are, without "="`;
+    }
+  }
+  return tags === 1 ? null : "a release edit names exactly one tag";
+}
+
+/**
  * Whether a `pr close` would also delete the branch. A branch is a
  * developer's work, and closing a pull request is not a decision to throw
  * it away. Read as gh reads flags: `--delete-branch` in any spelling, and
@@ -634,12 +749,17 @@ export function authorize(role, request, options = {}) {
   // Hiring and firing is the manager's own; no hat lends it (#380), nor the
   // load it is decided on (#747), nor the company's runners (#1890). Nor
   // does a hat lend a schedule (#678).
+  // Nor a release (#2707): the branch, the sign-off and the tag are three
+  // roles' own, so that no one of them publishes alone.
   if (
     direct.allow ||
     request.kind === "staff" ||
     request.kind === "load" ||
     request.kind === "runners" ||
-    request.kind === "schedule"
+    request.kind === "schedule" ||
+    request.kind === "release-ok" ||
+    (request.kind === "push" && request.argv[0]?.startsWith("release/") === true) ||
+    (request.kind === "gh" && request.argv[0] === "release")
   ) {
     return direct;
   }
@@ -675,6 +795,9 @@ function authorizeAs(role, request, acting, employee) {
   if (request.kind === "reboot") {
     return authorizeReboot(role, argv);
   }
+  if (request.kind === "release-ok") {
+    return authorizeReleaseOk(role, argv);
+  }
   if (request.kind === "staff") {
     return authorizeStaff(role, argv);
   }
@@ -687,7 +810,10 @@ function authorizeAs(role, request, acting, employee) {
   if (request.kind === "schedule") {
     return SCHEDULERS.includes(role)
       ? { allow: true }
-      : { allow: false, reason: "schedule: only manager, architect and lead-dev keep schedules" };
+      : {
+          allow: false,
+          reason: "schedule: only manager, architect, lead-dev and release-manager keep schedules",
+        };
   }
   if (request.kind === "board") {
     return authorizeBoard(argv);
@@ -788,6 +914,18 @@ function authorizeAs(role, request, acting, employee) {
     const merge = parseMerge(argv);
     if ("error" in merge) {
       return { allow: false, reason: merge.error };
+    }
+  }
+  if (best.argv.join(" ") === "release create") {
+    const release = parseReleaseCreate(argv);
+    if ("error" in release) {
+      return { allow: false, reason: release.error };
+    }
+  }
+  if (best.argv.join(" ") === "release edit") {
+    const refused = refuseReleaseEdit(argv);
+    if (refused !== null) {
+      return { allow: false, reason: refused };
     }
   }
   // A role scoped to one kind of file opens pull requests for its own
@@ -1081,6 +1219,9 @@ function authorizeBoard(argv) {
  * @returns {{ allow: boolean, reason?: string, guards?: string[] }}
  */
 function authorizePush(role, argv, employee) {
+  if (RELEASE_PUSHERS.includes(role)) {
+    return authorizeReleasePush(argv);
+  }
   const scope = PUSH_SCOPES[role];
   if (!IMPLEMENTERS.includes(role) && scope === undefined) {
     return { allow: false, reason: `role "${role}" does not push branches` };
@@ -1125,6 +1266,65 @@ function authorizePush(role, argv, employee) {
     guards.push(`paths-outside:${restricted.join(",")}`);
   }
   return guards.length === 0 ? { allow: true } : { allow: true, guards };
+}
+
+/**
+ * A release manager's push (#2707): one branch named `release/0.N.0`,
+ * nothing else, no flag. The name is matched whole, so a `+`, a `:`
+ * refspec, a `refs/tags/` destination or `main` never matches. What the
+ * branch may contain (a commit on main, then cherry-picks of main's commits
+ * only, fast-forward) is hubd's to check, against the remote: the
+ * `release-branch` guard.
+ *
+ * @param {string[]} argv `[branch, ...flags]`
+ * @returns {{ allow: boolean, reason?: string, guards?: string[] }}
+ */
+function authorizeReleasePush(argv) {
+  const [branch = "", ...flags] = argv;
+  if (releaseVersion(branch) === null) {
+    return {
+      allow: false,
+      reason: `the release manager pushes only release/0.N.0 branches, by name; not "${branch}"`,
+    };
+  }
+  if (flags.length > 0) {
+    return { allow: false, reason: `a release push takes no flags: ${flags.join(" ")}` };
+  }
+  return { allow: true, guards: ["release-branch"] };
+}
+
+/**
+ * QA's sign-off on a release branch (#2707): `["release/0.N.0", "--sha",
+ * <commit>, ...note]`. qa-tester's alone; no hat lends it (see
+ * `authorize`). hubd checks the commit is the branch's head.
+ *
+ * @param {string} role
+ * @param {string[]} argv
+ * @returns {{ allow: boolean, reason?: string }}
+ */
+function authorizeReleaseOk(role, argv) {
+  if (role !== "qa-tester") {
+    return { allow: false, reason: "release-ok: only qa-tester signs off a release" };
+  }
+  const parsed = parseReleaseOk(argv);
+  return "error" in parsed ? { allow: false, reason: parsed.error } : { allow: true };
+}
+
+/**
+ * @param {string[]} argv `[branch, "--sha", commit, ...note]`
+ * @returns {{ branch: string, sha: string, note: string } | { error: string }}
+ */
+export function parseReleaseOk(argv) {
+  const [branch = "", flag, sha = "", ...note] = argv;
+  if (releaseVersion(branch) === null) {
+    return { error: "release-ok names a release/0.N.0 branch" };
+  }
+  if (flag !== "--sha" || !/^[0-9a-f]{7,40}$/.test(sha)) {
+    return {
+      error: "release-ok names the head you tested: release-ok <branch> --sha <commit> [note]",
+    };
+  }
+  return { branch, sha, note: note.join(" ") };
 }
 
 /**
