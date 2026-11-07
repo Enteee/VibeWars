@@ -239,7 +239,8 @@ function think(
  * another; else the team's target, if one is alive within `FOCUS_REACH`
  * past spell range (#2573), or anywhere while no foe is in range; else
  * `focusPick` in spell range. A creature only while no other foe is in
- * range. With shrines to hold, the team's target only in range.
+ * range. With shrines to hold or a relic to run, the team's target only
+ * in range.
  */
 function teamTarget(context: BehaviourContext, foes: readonly Participant[]): string | undefined {
   const called = foes.find((foe) => foe.id === context.calledTargetId);
@@ -273,9 +274,11 @@ function heldTarget(
 ): Participant | undefined {
   const self = context.self;
   const eligible = fightable(inRange);
-  // With shrines to hold (#2580), a bot leaves one for a foe in its own
-  // reach, never for one a teammate fights across the map.
-  const objectives = context.objectives.capturePoints.length > 0;
+  // With shrines to hold (#2580) or a relic to run (#2581), a bot leaves
+  // them for a foe in its own reach, never for one a teammate fights
+  // across the map.
+  const objectives =
+    context.objectives.capturePoints.length > 0 || context.objectives.altar !== undefined;
   for (const ally of context.participants) {
     if (
       ally.combatant.team !== self.combatant.team ||

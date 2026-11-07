@@ -2,8 +2,10 @@ import {
   ANNIHILATION_MATCH_RULES,
   BOT_REACTION,
   CAPTURE_POINTS_MATCH_RULES,
+  KING_OF_THE_HILL_MATCH_RULES,
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
+  RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
   loadoutOf,
   loadoutSpec,
@@ -14,6 +16,7 @@ import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
 import { loadAllMaps } from "./loader.js";
+import type { MapData } from "./schema.js";
 
 /**
  * Bots on the real arenas (#1189): every map spawns its teams beyond spell
@@ -28,34 +31,7 @@ const CASTERS = ["Barrage (R)", "Signet of Suffering (N/A)", "Double Dragon (E)"
 
 describe.each(loadAllMaps().map((map) => [map.id, map] as const))("%s bots", (_, map) => {
   it("a caster mirror on the map's spawns deals damage within 30 s", () => {
-    const participants: ParticipantSpec[] = [0, 1].flatMap((team) =>
-      map.spawnPoints
-        .filter((spawn) => spawn.team === team)
-        .slice(0, CASTERS.length)
-        .map((spawn, k) => {
-          const build = STARTER_BUILDS.find((candidate) => candidate.name === CASTERS[k]);
-          if (build === undefined) throw new Error(`no starter build ${String(CASTERS[k])}`);
-          const loadout = loadoutOf(build);
-          const resolved = resolveLoadout(
-            {
-              primaryProfession: loadout.primaryProfession,
-              secondaryProfession: loadout.secondaryProfession,
-              allocatedRanks: loadout.attributeRanks,
-              equipment: loadout.equipment,
-            },
-            RULESET.combat,
-          );
-          return {
-            id: `${String(team)}-${String(k)}`,
-            team,
-            skillBar: loadout.skillBar,
-            ...loadoutSpec(resolved),
-            spawn: spawn.position,
-            facing: 0,
-            behaviour: { kind: "play-build", reaction: BOT_REACTION },
-          };
-        }),
-    );
+    const participants = casterBots(map, CASTERS.length);
     const sim = new MatchSimulation({
       seed: map.id,
       ruleset: RULESET,
@@ -74,6 +50,86 @@ describe.each(loadAllMaps().map((map) => [map.id, map] as const))("%s bots", (_,
   });
 });
 
+describe("Relic Run bots (#2581)", () => {
+  const map = loadAllMaps().find((candidate) => candidate.mode === "relic-run");
+
+  /** The score after up to 180 s of a 1v1 of bots, and when the first point fell. */
+  const play = (seed: string) => {
+    if (map === undefined) throw new Error("no map with relics");
+    const altar = map.objectives.find((objective) => objective.kind === "altar");
+    if (altar === undefined) throw new Error("no altar");
+    const sim = new MatchSimulation({
+      seed,
+      ruleset: RULESET,
+      walls: allWallSegments(map.walls),
+      bounds: { width: map.width, height: map.height },
+      matchRules: RELIC_RUN_MATCH_RULES,
+      relicField: {
+        altar: altar.position,
+        spawns: map.objectives.flatMap((objective) =>
+          objective.kind === "relic-spawn"
+            ? [{ team: objective.team, position: objective.position }]
+            : [],
+        ),
+      },
+      participants: casterBots(map, 1),
+    });
+    let scoredAt: number | undefined;
+    for (let t = 0; t < 180 && scoredAt === undefined; t += DT) {
+      sim.step(DT);
+      if ([...sim.score.byTeam.values()].some((points) => points > 0)) scoredAt = t;
+    }
+    return { scoredAt, score: [...sim.score.byTeam] };
+  };
+
+  it("a 1v1 of bots scores a relic within 180 s, the same way for the same seed", () => {
+    const first = play("relics");
+    expect(first.scoredAt).toBeDefined();
+    expect(play("relics")).toEqual(first);
+  });
+});
+
+describe("King of the Hill bots (#2582)", () => {
+  const map = loadAllMaps().find((candidate) => candidate.mode === "king-of-the-hill");
+
+  /** Who holds the altar after up to 120 s of a 1v1 of bots, and when it was first held. */
+  const play = (seed: string) => {
+    if (map === undefined) throw new Error("no map with ghosts");
+    const altar = map.objectives.find((objective) => objective.kind === "altar");
+    if (altar === undefined) throw new Error("no altar");
+    const sim = new MatchSimulation({
+      seed,
+      ruleset: RULESET,
+      walls: allWallSegments(map.walls),
+      bounds: { width: map.width, height: map.height },
+      matchRules: KING_OF_THE_HILL_MATCH_RULES,
+      hillField: {
+        altar: altar.position,
+        spawns: map.objectives.flatMap((objective) =>
+          objective.kind === "ghost-spawn"
+            ? [{ team: objective.team, position: objective.position }]
+            : [],
+        ),
+      },
+      // Unlike builds: a mirror match brings both ghosts onto the altar
+      // together, and they contest it for good.
+      participants: casterBots(map, 1, 1),
+    });
+    let heldAt: number | undefined;
+    for (let t = 0; t < 120 && heldAt === undefined; t += DT) {
+      sim.step(DT);
+      if (sim.altarState.holder !== null) heldAt = t;
+    }
+    return { heldAt, holder: sim.altarState.holder };
+  };
+
+  it("a 1v1 of bots holds the altar within 120 s, the same way for the same seed", () => {
+    const first = play("hill");
+    expect(first.heldAt).toBeDefined();
+    expect(play("hill")).toEqual(first);
+  });
+});
+
 describe("Capture Points bots (#2580)", () => {
   const map = loadAllMaps().find((candidate) =>
     candidate.objectives.some((objective) => objective.kind === "capture-point"),
@@ -82,35 +138,7 @@ describe("Capture Points bots (#2580)", () => {
   /** Who owns each shrine after up to 60 s of a 2v2 of bots, and when one was first owned. */
   const play = (seed: string) => {
     if (map === undefined) throw new Error("no map with capture points");
-    const participants: ParticipantSpec[] = [0, 1].flatMap((team) =>
-      map.spawnPoints
-        .filter((spawn) => spawn.team === team)
-        .slice(0, 2)
-        .map((spawn, k): ParticipantSpec => {
-          // No healer: one would rightly leave its shrine for a hurt ally.
-          const build = STARTER_BUILDS.find((candidate) => candidate.name === CASTERS[k]);
-          if (build === undefined) throw new Error(`no starter build ${String(CASTERS[k])}`);
-          const loadout = loadoutOf(build);
-          const resolved = resolveLoadout(
-            {
-              primaryProfession: loadout.primaryProfession,
-              secondaryProfession: loadout.secondaryProfession,
-              allocatedRanks: loadout.attributeRanks,
-              equipment: loadout.equipment,
-            },
-            RULESET.combat,
-          );
-          return {
-            id: `${String(team)}-${String(k)}`,
-            team,
-            skillBar: loadout.skillBar,
-            ...loadoutSpec(resolved),
-            spawn: spawn.position,
-            facing: 0,
-            behaviour: { kind: "play-build", reaction: BOT_REACTION },
-          };
-        }),
-    );
+    const participants = casterBots(map, 2);
     const sim = new MatchSimulation({
       seed,
       ruleset: RULESET,
@@ -136,3 +164,44 @@ describe("Capture Points bots (#2580)", () => {
     expect(play("shrines")).toEqual(first);
   });
 });
+
+/**
+ * `perTeam` caster bots a team on `map`'s first spawns, no healer among
+ * them: one would rightly leave an objective for a hurt ally. Team 1's
+ * builds are team 0's moved on by `shift`.
+ */
+function casterBots(map: MapData, perTeam: number, shift = 0): ParticipantSpec[] {
+  return [0, 1].flatMap((team) =>
+    map.spawnPoints
+      .filter((spawn) => spawn.team === team)
+      .slice(0, perTeam)
+      .map((spawn, k): ParticipantSpec => {
+        const build = STARTER_BUILDS.find(
+          (candidate) => candidate.name === CASTERS[(k + team * shift) % CASTERS.length],
+        );
+        if (build === undefined)
+          throw new Error(
+            `no starter build ${String(CASTERS[(k + team * shift) % CASTERS.length])}`,
+          );
+        const loadout = loadoutOf(build);
+        const resolved = resolveLoadout(
+          {
+            primaryProfession: loadout.primaryProfession,
+            secondaryProfession: loadout.secondaryProfession,
+            allocatedRanks: loadout.attributeRanks,
+            equipment: loadout.equipment,
+          },
+          RULESET.combat,
+        );
+        return {
+          id: `${String(team)}-${String(k)}`,
+          team,
+          skillBar: loadout.skillBar,
+          ...loadoutSpec(resolved),
+          spawn: spawn.position,
+          facing: 0,
+          behaviour: { kind: "play-build", reaction: BOT_REACTION },
+        };
+      }),
+  );
+}

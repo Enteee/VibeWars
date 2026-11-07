@@ -98,9 +98,17 @@ export function slotOf(build: PlayerBuild, skillId: string): number {
   return build.skillBar.indexOf(skillId);
 }
 
-/** What the bot `id` would do now, with every skill allowed, playing for `objectives`. */
-export function askBot(sim: MatchSimulation, id: string, objectives = NO_OBJECTIVES) {
-  return decide(BOT, createCursor(), contextFor(sim, id, { objectives }));
+/**
+ * What the bot `id` would do now, with every skill allowed, playing for
+ * `objectives`, everyone a bot unless `isBot` says not.
+ */
+export function askBot(
+  sim: MatchSimulation,
+  id: string,
+  objectives = NO_OBJECTIVES,
+  isBot: (participantId: string) => boolean = () => true,
+) {
+  return decide(BOT, createCursor(), contextFor(sim, id, { objectives, isBot }));
 }
 
 /** The bot `id`'s view, as the simulation gives it, with every skill allowed and nothing in the way. */

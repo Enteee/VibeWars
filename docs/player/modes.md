@@ -38,7 +38,10 @@ Canyon, Crossroads and Long Hall play it, and two bigger, medium-sized
 arenas: **Sandstone Steps** (1v1, 3600x2000), terraced desert ledges
 round a broken obelisk circle, with pillars to kite round; and **Frozen
 Crossing** (2v2, 4000x2200), a frozen river crossed by three bridges,
-ice rocks on each bank.
+ice rocks on each bank. For the bigger teams: **Ashen Courtyard** (4v4,
+4400x2600), a ruined keep whose walled courtyard has four breaches, ruins
+on its flanks; and **Moss Vale** (8v8, 4800x2800), two wooded ridges
+that split the vale into three lanes, meeting in a clearing in the middle.
 
 ## Kill Count
 
@@ -102,7 +105,8 @@ Target your relic and press **Space** to take it up. Carry it onto the
 altar and you score a point at once, and the relic goes back to your base.
 Every point is announced, with a fanfare that rises for yours and falls
 for theirs. A carrier walks slower and cannot
-attack or use attack skills. It drops the relic when it dies or presses
+attack or use attack skills. It walks through its own team, but a foe
+still blocks it. It drops the relic when it dies or presses
 **Drop relic** above its Health bar, and the relic stays where it fell
 until someone reaches it. Your team takes it up from there. A foe who
 reaches it, with empty hands, sends it home. A foe's relic in its base
@@ -115,6 +119,15 @@ with more points wins; equal points is a draw. Kills score nothing.
 The scoreboard shows the points, yours first, and the clock. Under it, a
 line for each relic says where it is: `✦ Name` on its carrier,
 `✦ dropped` on the ground or `✦ at base`.
+
+Bots run the relic too: the one nearest to your relic fetches it, unless
+you are about to pick it up yourself. A bot out of the fight goes first;
+when all are in it, the nearest leaves it for the relic, so a stand-off
+at the altar never stops the scoring. A healer or a badly hurt bot only
+goes when no one else can, and never from a fight. The one nearest to a
+dropped foe relic sends it home, and the rest wait by the altar. A bot
+carrying your relic walks it straight to the altar; the others leave the
+relic only to fight a foe that comes within spell range.
 
 Broken Tower plays it: the altar stands inside a ruined tower with a
 doorway on each side.
@@ -158,6 +171,14 @@ with more points wins; equal points is a draw. Kills score nothing.
 The scoreboard shows the points, yours first, then the altar: `▲` and
 the time to the holder's next point, in the holder's colour, or a grey
 `▲ —` while nobody holds it.
+
+Bots go for the altar too: while your team does not hold it, the one
+nearest to your Ghostly Hero picks it up, unless you are about to pick it
+up yourself; a healer or a badly hurt bot only goes when no one else can.
+It leads the ghost onto the altar and tells it to stay there, and the
+rest wait by the altar. A bot leading the ghost does not stop to fight on
+the way; the others leave the altar only to fight a foe that comes within
+spell range.
 
 The Courtyard plays it.
 
