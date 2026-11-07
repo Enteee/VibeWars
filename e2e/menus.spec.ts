@@ -112,7 +112,7 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(guestLabel).toHaveText("Your lobby");
     const ownInvite = await copyInvite(guest);
     // Alone, the host's Lobby counts nobody, and its window says so (#2385).
-    await expect(host.locator("#topbar .topbar-badge")).toBeHidden();
+    await expect(host.locator("#topbar .topbar-lobby-button .topbar-badge")).toBeHidden();
     await expect(await lobbyWindow(host)).toContainText("Just you.");
 
     await joinByCode(guest, hostInvite);
@@ -120,7 +120,7 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(guestLabel).toHaveText("Lobby");
     await expect(leave).toBeVisible();
     await shutLobbyWindow(guest);
-    await expect(host.locator("#topbar .topbar-badge")).toHaveText("2");
+    await expect(host.locator("#topbar .topbar-lobby-button .topbar-badge")).toHaveText("2");
     await expect((await lobbyWindow(host)).locator(".party-member")).toHaveCount(2);
     // A party queues in card 4: alone only.
     await expect(guest.locator("#topbar .screen-ready")).toBeDisabled();
