@@ -1726,20 +1726,15 @@ body {
 
 .screen .match-row-head {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+  align-items: center;
   width: 100%;
   padding: 0.6rem 0.8rem;
   border: 0;
   background: none;
-  text-align: left;
-}
-
-.match-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.9rem;
   color: var(--ink-dim);
+  text-align: left;
 }
 
 .match-mode {
@@ -1754,27 +1749,56 @@ body {
   font-size: 0.8em;
 }
 
-.match-teams {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.6rem;
-  align-items: baseline;
+/* The closed row's teams (#2585): a primary profession icon per player. */
+.match-team {
+  display: inline-flex;
+  gap: 0.2rem;
+  align-items: center;
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
 }
 
 .match-team.is-winner {
+  border-bottom-color: var(--accent);
+}
+
+.match-player-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.match-player-icon.is-unknown {
+  text-align: center;
+  line-height: 18px;
+}
+
+.match-result {
+  font-size: 0.8em;
+  font-weight: bold;
   color: var(--accent);
+  text-transform: uppercase;
 }
 
-.match-versus,
-.match-draw {
-  color: var(--ink-dim);
-}
-
-.match-bot,
-.match-won {
+.match-bot {
   margin-left: 0.3rem;
   font-size: 0.8em;
   color: var(--ink-dim);
+}
+
+.match-tabs {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.screen .match-tab {
+  padding: 0.15rem 0.7rem;
+  border-radius: 4px 4px 0 0;
+  color: var(--ink-dim);
+}
+
+.screen .match-tab[aria-selected="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .match-detail {

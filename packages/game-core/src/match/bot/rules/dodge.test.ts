@@ -5,12 +5,11 @@ import { WEAPONS } from "../../../equipment/weapons.js";
 import type { Projectile } from "../../../skills/projectile.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
 import type { BehaviourContext } from "../../behaviour.js";
-import { NO_OBJECTIVES } from "../../behaviour.js";
 import type { CombatLogEntry } from "../../combat-log.js";
 import type { MatchSimulation } from "../../simulation.js";
 import dodge from "./dodge.js";
-import { DODGE_CHANCE, dodgeRoll, skillsOf } from "./shared.js";
-import { BOT, DT, body, match } from "./test-support.js";
+import { DODGE_CHANCE, dodgeRoll } from "./shared.js";
+import { BOT, DT, body, match, ruleFor } from "./test-support.js";
 
 const FIREBALL = "elementalist.fireball";
 /** One tick of a bot's top speed, 180 units a second. */
@@ -71,42 +70,16 @@ describe("play-build's dodge (#2590)", () => {
   function ask(
     projectiles: readonly Readonly<Projectile>[],
     extra: Partial<BehaviourContext> = {},
-    foeAt: readonly Vec2[] = [],
+    foeCentroid: Vec2 = vec2(0, 0),
   ) {
-    const self = dodger();
-    const context: BehaviourContext = {
-      self,
-      participants: [...sim.participants()],
-      dt: DT,
-      stepUnits: STEP,
-      check: () => ({ ok: true }),
-      isBot: () => true,
-      calledTargetId: undefined,
-      sees: () => true,
-      objectives: NO_OBJECTIVES,
-      projectiles,
-      ...extra,
-    };
-    const caster = sim.get("caster");
-    if (caster === undefined) throw new Error("no caster");
-    const foes = [
-      { ...caster, position: vec2(0, 0) },
-      ...foeAt.map((position, at) => ({ ...caster, id: `foe${String(at)}`, position })),
-    ];
-    return dodge.decide({
-      context,
-      self,
-      bar: skillsOf(self),
-      foes,
-      allies: [self],
-      targetId: undefined,
-      nearestFirst: (bodies) => [...bodies],
-      mayUse: () => false,
-      use: () => {
-        throw new Error("dodge casts nothing");
-      },
-      mayEndUpkeep: false,
-    });
+    return dodge.decide(
+      ruleFor(
+        sim,
+        "dodger",
+        {},
+        { self: dodger(), stepUnits: STEP, foeCentroid, projectiles, ...extra },
+      ),
+    );
   }
 
   it("standing, steps across a Fireball's path, left of it with nothing to choose between", () => {
@@ -144,8 +117,8 @@ describe("play-build's dodge (#2590)", () => {
 
   it("standing, steps away from a wall, then away from the foes", () => {
     expect(ask([shot(0.5)], { sees: (point) => point.y < 0 })?.moveDirection.y).toBeCloseTo(-1, 9);
-    expect(ask([shot(0.5)], {}, [vec2(300, 200)])?.moveDirection.y).toBeCloseTo(-1, 9);
-    expect(ask([shot(0.5)], {}, [vec2(300, -200)])?.moveDirection.y).toBeCloseTo(1, 9);
+    expect(ask([shot(0.5)], {}, vec2(150, 100))?.moveDirection.y).toBeCloseTo(-1, 9);
+    expect(ask([shot(0.5)], {}, vec2(150, -100))?.moveDirection.y).toBeCloseTo(1, 9);
   });
 
   it("follows the shot landing first", () => {

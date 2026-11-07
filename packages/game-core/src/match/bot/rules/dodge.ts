@@ -1,7 +1,6 @@
 import type { Projectile } from "../../../skills/projectile.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
 import type { BehaviourContext } from "../../behaviour.js";
-import type { Participant } from "../../simulation.js";
 import { DODGE_CHANCE, dodgeRoll, NOTHING } from "./shared.js";
 import type { BotRule } from "./types.js";
 
@@ -26,7 +25,7 @@ const TIE_UNITS = 1e-6;
 const dodge: BotRule = {
   order: 36,
   name: "dodge",
-  decide: ({ context, self, foes }) => {
+  decide: ({ context, self }) => {
     if (!context.isBot(self.id)) {
       return undefined;
     }
@@ -64,7 +63,7 @@ const dodge: BotRule = {
     const rightMiss = Math.hypot(offsetX - leftX * reach, offsetY - leftY * reach);
     let side = leftMiss > rightMiss ? 1 : -1;
     if (Math.abs(leftMiss - rightMiss) <= TIE_UNITS) {
-      side = tieBreak(context, self.position, leftX * reach, leftY * reach, foes);
+      side = tieBreak(context, self.position, leftX * reach, leftY * reach);
     }
     if ((side === 1 ? leftMiss : rightMiss) <= DODGE_CLEAR_UNITS) {
       return undefined;
@@ -84,29 +83,18 @@ function fromFoe(context: BehaviourContext, attackerId: string, team: number): b
  * away: the one it sees into, not a wall; then the one farther from the
  * living foes' centroid; then left.
  */
-function tieBreak(
-  context: BehaviourContext,
-  position: Vec2,
-  stepX: number,
-  stepY: number,
-  foes: readonly Participant[],
-): number {
+function tieBreak(context: BehaviourContext, position: Vec2, stepX: number, stepY: number): number {
   const left = context.sees(vec2(position.x + stepX, position.y + stepY));
   const right = context.sees(vec2(position.x - stepX, position.y - stepY));
   if (left !== right) {
     return left ? 1 : -1;
   }
-  if (foes.length === 0) {
+  const centroid = context.foeCentroid;
+  if (centroid === undefined) {
     return 1;
   }
-  let centroidX = 0;
-  let centroidY = 0;
-  for (const foe of foes) {
-    centroidX += foe.position.x / foes.length;
-    centroidY += foe.position.y / foes.length;
-  }
   // Left is farther from the centroid when the centroid lies to its right.
-  const lean = (centroidX - position.x) * stepX + (centroidY - position.y) * stepY;
+  const lean = (centroid.x - position.x) * stepX + (centroid.y - position.y) * stepY;
   return lean <= 0 ? 1 : -1;
 }
 

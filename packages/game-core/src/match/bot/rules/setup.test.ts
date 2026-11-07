@@ -12,7 +12,7 @@ describe("play-build's setups (#1975)", () => {
     match([
       fighter("a", 0, WARRIOR, vec2(400, 400), { behaviour: undefined, skillBar }),
       fighter("b", 0, WARRIOR, vec2(400, 440), { behaviour: undefined, skillBar: [] }),
-      fighter("foe", 1, WARRIOR, vec2(480, 400), { behaviour: undefined, skillBar: [] }),
+      fighter("foe", 1, WARRIOR, vec2(560, 400), { behaviour: undefined, skillBar: [] }),
     ]);
   const enchant = (fight: MatchSimulation): void => {
     fight.get("foe")?.combatant.statuses.apply("vital-blessing", 30, "x", NO_RANKS);
@@ -64,7 +64,7 @@ describe("play-build's Elementalist self-buffs (#1984)", () => {
   const sim = (skillBar: string[]): MatchSimulation =>
     match([
       fighter("e", 0, ELEMENTALIST, vec2(400, 400), { behaviour: undefined, skillBar }),
-      fighter("foe", 1, WARRIOR, vec2(480, 400), { behaviour: undefined, skillBar: [] }),
+      fighter("foe", 1, WARRIOR, vec2(560, 400), { behaviour: undefined, skillBar: [] }),
     ]);
   const CONJURES = {
     fire: "elementalist.conjure-flame",
@@ -121,7 +121,7 @@ describe("play-build's Assassin setups (#2134)", () => {
   const sim = (skillBar: string[]): MatchSimulation =>
     match([
       fighter("a", 0, WARRIOR, vec2(400, 400), { behaviour: undefined, skillBar }),
-      fighter("foe", 1, WARRIOR, vec2(480, 400), { behaviour: undefined, skillBar: [] }),
+      fighter("foe", 1, WARRIOR, vec2(560, 400), { behaviour: undefined, skillBar: [] }),
     ]);
 
   it("casts Way of the Empty Palm only with two off-hand or dual attacks on the bar", () => {
@@ -197,7 +197,7 @@ describe("play-build's Ranger setups (#2159)", () => {
     expect(askBot(sim([CHASER]), "r").useSkillId).toBeUndefined();
     const hurt = match([
       fighter("r", 0, RANGER, vec2(400, 400), { behaviour: undefined, skillBar: [CHASER] }),
-      fighter("foe", 1, WARRIOR, vec2(450, 400), { behaviour: undefined, skillBar: [] }),
+      fighter("foe", 1, WARRIOR, vec2(505, 400), { behaviour: undefined, skillBar: [] }),
     ]);
     const ranger = hurt.get("r")?.combatant;
     if (ranger !== undefined) ranger.health = ranger.maxHealth * 0.3;

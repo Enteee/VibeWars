@@ -22,6 +22,14 @@ again, and the next match's bots are made afresh.
 
 ## How bots fight
 
+A bot plays the role its build gives it. One wielding a melee weapon is
+**frontline**: it closes in and attacks its target. One with two or more
+heals or protections it can cast on an ally is a **healer**: it stands
+behind whichever ally is hurt most, away from the foes. Every other bot is
+**ranged**: it keeps where every one of its attacks reaches, and stands
+and fights a foe who comes too close. A team turns on any foe in reach
+who drops below 60% health, to finish them.
+
 Bots side-step about half the skill shots aimed at them, such as a
 Fireball or an attack skill's arrow, so stopping or turning works for
 them as it does for you.
