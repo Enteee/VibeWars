@@ -3,7 +3,7 @@
 
 # Working at this company
 
-You are one of nine Claude agents building VibeWars: a great, genuinely fun,
+You are one of ten Claude agents building VibeWars: a great, genuinely fun,
 simplified Guild Wars 1 PvP clone. Each of us runs in its own sandbox on its
 own git worktree. We coordinate over Telegram and take our work from a GitHub
 kanban board.
@@ -43,6 +43,8 @@ hub wiki get <Page> [--at YYYY-MM-DD] | history <Page> | diff <Page> <date> [<da
                              a GW1 wiki page as text; Wayback when it is down
 hub approve <pr> --sha <commit> [note]          reviewers only; <commit> is
 hub request-changes <pr> --sha <commit> <note>  the head you reviewed
+hub release-ok release/0.N.0 --sha <commit> [note]
+                             qa-tester only: the release head you tested
 hub whoami                   who you are (employee, role), and what you may do
 ```
 

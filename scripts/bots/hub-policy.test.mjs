@@ -22,6 +22,7 @@ import {
 
 /** A reviewed commit, as `--sha` names it. */
 const SHA = "b02a5cc7";
+const FULL = "b02a5cc7".repeat(5);
 
 /**
  * @param {string} role
@@ -41,8 +42,8 @@ const push = (role, argv, employee = role) => authorize(role, { kind: "push", ar
 const review = (role, argv) => authorize(role, { kind: "review", argv });
 
 describe("the roster", () => {
-  it("is the nine roles, and nothing else is a role", () => {
-    expect(ROLES).toHaveLength(9);
+  it("is the ten roles, and nothing else is a role", () => {
+    expect(ROLES).toHaveLength(10);
     expect(gh("developer-1", ["issue", "list"])).toMatchObject({ allow: false });
     expect(gh("intern", ["issue", "list"])).toMatchObject({ allow: false });
     expect(gh("", ["issue", "list"])).toMatchObject({ allow: false });
@@ -141,12 +142,13 @@ describe("reading host files through gh", () => {
       expect(gh("developer", argv), argv.join(" ")).toMatchObject({ allow: false });
     }
     expect(gh("manager", ["issue", "create", "--body-file", "x"])).toMatchObject({ allow: false });
-    expect(gh("cicd-engineer", ["release", "create", "v1", "--notes-file", "x"])).toMatchObject({
-      allow: false,
-    });
-    expect(gh("cicd-engineer", ["release", "create", "v1", "dist.tgz"])).toMatchObject({
-      allow: false,
-    });
+    const target = ["--target", "release/0.1.0"];
+    expect(
+      gh("release-manager", ["release", "create", "v0.1.0", ...target, "--notes-file", "x"]),
+    ).toMatchObject({ allow: false });
+    expect(
+      gh("release-manager", ["release", "create", "v0.1.0", ...target, "dist.tgz"]),
+    ).toMatchObject({ allow: false });
   });
 
   it("refuses @file field values and --input on the raw API", () => {
@@ -540,21 +542,6 @@ describe("the pipeline", () => {
   it("is operated only by the CI/CD engineer", () => {
     expect(gh("cicd-engineer", ["workflow", "run", "ci.yml"])).toMatchObject({ allow: true });
     expect(gh("cicd-engineer", ["run", "rerun", "123"])).toMatchObject({ allow: true });
-    expect(gh("cicd-engineer", ["release", "create", "v1"])).toMatchObject({ allow: true });
-    for (const argv of [
-      ["release", "create", "v1", "--title", "v1", "--notes", "x"],
-      ["release", "create", "--title", "v1", "v1", "-n", "x", "--target", "main"],
-      ["release", "create", "v1", "-dt", "v1", "--notes=x", "-p"],
-    ]) {
-      expect(gh("cicd-engineer", argv), argv.join(" ")).toMatchObject({ allow: true });
-    }
-    for (const argv of [
-      ["release", "create", "v1", "--title", "v1", "dist.tgz"],
-      ["release", "create", "v1", "-d", "dist.tgz"],
-      ["release", "create", "v1", "--draft", "dist.tgz"],
-    ]) {
-      expect(gh("cicd-engineer", argv), argv.join(" ")).toMatchObject({ allow: false });
-    }
     expect(gh("developer", ["workflow", "disable", "ci.yml"])).toMatchObject({ allow: false });
     expect(gh("developer", ["run", "rerun", "123"])).toMatchObject({ allow: false });
     expect(gh("qa-tester", ["workflow", "disable", "ci.yml"])).toMatchObject({ allow: false });
@@ -933,10 +920,10 @@ describe("board reads", () => {
     }
   });
 
-  it("lets every role but the business-analyst read code-scanning alerts (#184, #893)", () => {
+  it("lets every role but the business-analyst and the release manager read code-scanning alerts (#184, #893, #2707)", () => {
     for (const role of ROLES) {
       expect(authorize(role, { kind: "alerts", argv: ["--pr", "183"] }).allow, role).toBe(
-        role !== "business-analyst",
+        role !== "business-analyst" && role !== "release-manager",
       );
     }
   });
@@ -957,7 +944,179 @@ describe("board reads", () => {
     expect(mayReadAlerts("support")).toBe(false);
     // The first role added since: it advises on flow and needs no open vulnerabilities.
     expect(mayReadAlerts("business-analyst")).toBe(false);
-    expect(ROLES.filter((role) => !mayReadAlerts(role))).toEqual(["business-analyst"]);
+    // Nor the release manager (#2707): it ships what main has, and fixes none.
+    expect(ROLES.filter((role) => !mayReadAlerts(role))).toEqual([
+      "business-analyst",
+      "release-manager",
+    ]);
+  });
+});
+
+describe("releases (#2707)", () => {
+  const target = ["--target", "release/0.3.0"];
+
+  it("are published by the release manager alone, from release/<version>", () => {
+    const create = ["release", "create", "v0.3.0", ...target, "--generate-notes"];
+    expect(gh("release-manager", create)).toMatchObject({ allow: true });
+    expect(
+      gh("release-manager", ["release", "create", "v0.3.0", ...target, "--title", "Dunes"]),
+    ).toMatchObject({ allow: true });
+    for (const role of ["cicd-engineer", "manager", "qa-tester", "lead-dev"]) {
+      expect(gh(role, create), role).toMatchObject({ allow: false });
+    }
+  });
+
+  it("take only the tag, one --target, --title and --generate-notes", () => {
+    for (const argv of [
+      ["release", "create", "v0.3.0"],
+      ["release", "create", "v0.3.0", "--target", "main"],
+      ["release", "create", "v0.3.0", "--target", "release/0.4.0"],
+      ["release", "create", "v0.3.0", ...target, ...target],
+      ["release", "create", "v0.3.0", "--target=release/0.3.0"],
+      ["release", "create", "v0.3.0", ...target, "--notes", "x"],
+      ["release", "create", "v0.3.0", ...target, "--draft"],
+      ["release", "create", "v0.3.0", ...target, "--prerelease"],
+      ["release", "create", "v0.3.0", ...target, "-t", "x"],
+      ["release", "create", "v0.3.0", ...target, "--notes-file", "x"],
+      ["release", "create", "v0.3.0", ...target, "dist.tgz"],
+      ["release", "create", "v1.0.0", "--target", "release/1.0.0"],
+      ["release", "create", "v0.03.0", "--target", "release/0.03.0"],
+      ["release", "upload", "v0.3.0", "dist.tgz"],
+      ["release", "delete", "v0.3.0"],
+    ]) {
+      expect(gh("release-manager", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+  });
+
+  it("are edited in their words only", () => {
+    expect(
+      gh("release-manager", ["release", "edit", "v0.3.0", "--title", "t", "--notes", "n"]),
+    ).toMatchObject({ allow: true });
+    for (const flags of [
+      ["--target", "main"],
+      ["--tag", "v0.4.0"],
+      ["--draft"],
+      ["--draft=false"],
+      ["--prerelease"],
+      ["--latest"],
+      ["--notes-file", "x"],
+      ["--notes=x"],
+    ]) {
+      expect(
+        gh("release-manager", ["release", "edit", "v0.3.0", ...flags]),
+        flags.join(" "),
+      ).toMatchObject({ allow: false });
+    }
+    expect(gh("cicd-engineer", ["release", "edit", "v0.3.0", "--title", "t"])).toMatchObject({
+      allow: false,
+    });
+  });
+
+  it("are pushed as release/0.N.0 by the release manager only, never anything else", () => {
+    expect(push("release-manager", ["release/0.1.0"])).toMatchObject({
+      allow: true,
+      guards: ["release-branch"],
+    });
+    expect(push("release-manager", ["release/0.12.0"])).toMatchObject({ allow: true });
+    for (const argv of [
+      ["main"],
+      ["bot/release-manager/x"],
+      ["release/foo"],
+      ["release/1.0.0"],
+      ["release/0.1.1"],
+      ["release/0.01.0"],
+      ["+release/0.1.0"],
+      ["release/0.1.0:release/0.1.0"],
+      [":release/0.1.0"],
+      ["refs/heads/release/0.1.0"],
+      ["refs/tags/v0.1.0"],
+      ["HEAD:refs/tags/v0.1.0"],
+      ["release/0.1.0", "--force"],
+      ["release/0.1.0", "--delete"],
+    ]) {
+      expect(push("release-manager", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+    for (const role of ["developer", "lead-dev", "cicd-engineer", "qa-tester", "manager"]) {
+      expect(push(role, ["release/0.1.0"]), role).toMatchObject({ allow: false });
+    }
+  });
+
+  it("let release-manager and qa-tester edit only an issue body, the tracking issue hubd checks", () => {
+    for (const role of ["release-manager", "qa-tester"]) {
+      expect(gh(role, ["issue", "edit", "41", "--body", "## Fixes"]), role).toMatchObject({
+        allow: true,
+      });
+      for (const argv of [
+        ["issue", "edit", "41", "--add-project", "VibeWars"],
+        ["issue", "edit", "41", "--title", "Release 0.2.0"],
+        ["issue", "edit", "41", "--body", "x", "--add-label", "bug"],
+        ["issue", "edit", "41", "42", "--body", "x"],
+        ["issue", "edit", "41", "--body=x"],
+      ]) {
+        expect(gh(role, argv), argv.join(" ")).toMatchObject({ allow: false });
+      }
+    }
+    expect(gh("manager", ["issue", "edit", "41", "--add-label", "bug"])).toMatchObject({
+      allow: true,
+    });
+  });
+
+  it("are signed off by qa-tester alone, and no hat lends it", () => {
+    const ok = (/** @type {string} */ role, /** @type {string[]} */ acting = []) =>
+      authorize(role, { kind: "release-ok", argv: ["release/0.1.0", "--sha", FULL] }, { acting });
+    expect(ok("qa-tester")).toMatchObject({ allow: true });
+    for (const role of ["release-manager", "lead-dev", "manager", "developer"]) {
+      expect(ok(role), role).toMatchObject({ allow: false });
+    }
+    expect(ok("lead-dev", ["qa-tester"])).toMatchObject({ allow: false });
+    expect(ok("release-manager", ["qa-tester"])).toMatchObject({ allow: false });
+    expect(
+      authorize("qa-tester", { kind: "release-ok", argv: ["release/0.1.0", SHA] }),
+    ).toMatchObject({ allow: false });
+    expect(
+      authorize("qa-tester", { kind: "release-ok", argv: ["main", "--sha", FULL] }),
+    ).toMatchObject({ allow: false });
+    // A prefix could name a commit nobody tested once another shares it.
+    expect(
+      authorize("qa-tester", { kind: "release-ok", argv: ["release/0.1.0", "--sha", SHA] }),
+    ).toMatchObject({ allow: false });
+  });
+
+  it("are no hat's: a borrowed release-manager seat pushes and publishes nothing", () => {
+    expect(
+      authorize(
+        "developer",
+        { kind: "push", argv: ["release/0.1.0"] },
+        {
+          acting: ["release-manager"],
+          employee: "developer",
+        },
+      ),
+    ).toMatchObject({ allow: false });
+    expect(
+      authorize(
+        "manager",
+        { kind: "gh", argv: ["release", "create", "v0.3.0", ...target] },
+        { acting: ["release-manager"] },
+      ),
+    ).toMatchObject({ allow: false });
+  });
+
+  it("give the release manager its tracking issue, and QA the edit to add its bugs", () => {
+    expect(gh("release-manager", ["issue", "create", "--title", "Release 0.1.0"])).toMatchObject({
+      allow: true,
+    });
+    expect(gh("release-manager", ["issue", "edit", "9", "--body", "x"])).toMatchObject({
+      allow: true,
+    });
+    expect(gh("release-manager", ["issue", "comment", "9", "--body", "x"])).toMatchObject({
+      allow: true,
+    });
+    expect(gh("qa-tester", ["issue", "edit", "9", "--body", "x"])).toMatchObject({ allow: true });
+    expect(gh("release-manager", ["issue", "close", "9"])).toMatchObject({ allow: false });
+    expect(gh("release-manager", ["pr", "create"])).toMatchObject({ allow: false });
+    expect(gh("release-manager", ["project", "item-edit"])).toMatchObject({ allow: false });
+    expect(gh("release-manager", ["pr", "merge", "1", "--squash"])).toMatchObject({ allow: false });
   });
 });
 
@@ -969,8 +1128,8 @@ describe("hub schedule (#678)", () => {
   const schedule = (role, acting = []) =>
     authorize(role, { kind: "schedule", argv: ["ls"] }, { acting });
 
-  it("is kept by the manager, the architect and the lead-dev", () => {
-    for (const role of ["manager", "architect", "lead-dev"]) {
+  it("is kept by the manager, the architect, the lead-dev and the release manager", () => {
+    for (const role of ["manager", "architect", "lead-dev", "release-manager"]) {
       expect(schedule(role), role).toMatchObject({ allow: true });
     }
   });
@@ -979,7 +1138,7 @@ describe("hub schedule (#678)", () => {
     for (const role of ["developer", "qa-tester", "cicd-engineer"]) {
       expect(schedule(role), role).toMatchObject({
         allow: false,
-        reason: "schedule: only manager, architect and lead-dev keep schedules",
+        reason: "schedule: only manager, architect, lead-dev and release-manager keep schedules",
       });
     }
     expect(schedule("qa-tester", ["manager"])).toMatchObject({ allow: false });

@@ -61,6 +61,7 @@ let
     "perf-sec-qa"
     "qa-tester"
     "business-analyst"
+    "release-manager"
   ];
 
   session = "vibewars-llc";
@@ -76,7 +77,7 @@ let
   # terminator indented, the heredoc never ends, and the script dies with a
   # syntax error at its last line. Which is exactly what happened.
   llcUsage = pkgs.writeText "claude-llc-usage.txt" ''
-    claude-llc — a company of nine Claude agents building VibeWars
+    claude-llc — a company of ten Claude agents building VibeWars
 
     usage:
       claude-llc              bring the company up and attach
@@ -507,7 +508,7 @@ let
         git -C "$DEVENV_ROOT" config core.useReplaceRefs false
 
         # ------------------------------------------------------------------------
-        # A restore point, taken before nine agents with push rights start work.
+        # A restore point, taken before agents with push rights start work.
         # This repository was corrupted by an interrupted write once already; a
         # bundle is cheap and is the difference between an inconvenience and a
         # bad afternoon.

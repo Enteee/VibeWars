@@ -4,7 +4,7 @@ import { soundPlayer } from "./sound-player.js";
 
 /**
  * Mute all (#112, #424): the one switch behind the HUD's mute button, the
- * Training Ground's mute key and Options → Sound. It mutes the sound
+ * Training Ground's mute key and the ♪ popovers' Mute all. It mutes the sound
  * effects and the music, saves, and tells whoever shows it, so a mute
  * made in one place shows in the others.
  */

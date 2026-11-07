@@ -3,7 +3,6 @@ import { controlsSection } from "./controls-section.js";
 import { languageSection } from "./language-section.js";
 import { playerSection } from "./player-section.js";
 import { relaySection } from "./relay-section.js";
-import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
 
 /**
  * The Options screen's sections (#423), in the order its list shows them.
@@ -19,13 +18,6 @@ export interface OptionsSection {
   readonly mount: (container: HTMLElement) => () => void;
 }
 
-/** Sound (#424): the same controls the HUD's ♪ popover shows in a match. */
-export const soundSection: OptionsSection = {
-  id: "sound",
-  title: "sound",
-  mount: (container) => mountSoundControls(container, soundControlsDeps()),
-};
-
 /**
  * The sections for a build with `languages`: Language first (#2648),
  * and only when there is a second language to pick.
@@ -34,7 +26,6 @@ export function optionsSections(languages: readonly LanguageCode[]): readonly Op
   return [
     ...(languages.length > 1 ? [languageSection(languages)] : []),
     playerSection,
-    soundSection,
     controlsSection,
     relaySection,
   ];
