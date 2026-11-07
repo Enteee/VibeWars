@@ -1,5 +1,6 @@
 import {
   ANNIHILATION_MATCH_RULES,
+  BOT_REACTION,
   CAPTURE_POINTS_MATCH_RULES,
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
@@ -51,7 +52,7 @@ describe.each(loadAllMaps().map((map) => [map.id, map] as const))("%s bots", (_,
             ...loadoutSpec(resolved),
             spawn: spawn.position,
             facing: 0,
-            behaviour: { kind: "play-build", thinkSeconds: 0.25 },
+            behaviour: { kind: "play-build", reaction: BOT_REACTION },
           };
         }),
     );
@@ -106,7 +107,7 @@ describe("Capture Points bots (#2580)", () => {
             ...loadoutSpec(resolved),
             spawn: spawn.position,
             facing: 0,
-            behaviour: { kind: "play-build", thinkSeconds: 0.25 },
+            behaviour: { kind: "play-build", reaction: BOT_REACTION },
           };
         }),
     );

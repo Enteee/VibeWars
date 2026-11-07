@@ -519,7 +519,8 @@ describe("a member's relay, held for its lobby (#2527)", () => {
     hold.onSeal((to) => minted.push(to));
     hold.seated(seatedAs(["peer-0", "peer-1", "one-too-many"], pub));
     await settle();
-    expect(minted).toEqual(["peer-0", "peer-1", "one-too-many"]);
+    // Seals finish in any order (#2610).
+    expect([...minted].sort()).toEqual(["one-too-many", "peer-0", "peer-1"]);
 
     // Once the admits expire, only the unseated ids free their slots.
     now += RELAY_ADMIT_MS;
