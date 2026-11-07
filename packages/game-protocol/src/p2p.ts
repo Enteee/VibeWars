@@ -2565,13 +2565,19 @@ export function parseChainMarks(value: unknown): ChainMarksMessage | undefined {
   return marks === undefined ? undefined : { marks };
 }
 
-/** A lobby character; `null` is a starter build, a missing one is malformed. */
+/**
+ * A lobby character, its professions only (#2683); `null` is a starter
+ * build, a missing one or one with any other field is malformed.
+ */
 function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefined {
   if (value === null) {
     return null;
   }
   const raw = fields(value);
-  return raw !== undefined && isString(raw.primary) && isNullableString(raw.secondary)
+  return raw !== undefined &&
+    Object.keys(raw).length === 2 &&
+    isString(raw.primary) &&
+    isNullableString(raw.secondary)
     ? { primary: raw.primary, secondary: raw.secondary }
     : undefined;
 }

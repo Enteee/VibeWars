@@ -2277,6 +2277,30 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   [
+    "Team Lobby character with a name (#2683)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamLobby: {
+        stage: "claim",
+        secondsLeft: 1,
+        sides: [
+          {
+            ...teamSide,
+            chosen: {
+              ...teamSide.chosen,
+              members: [
+                { name: "Mhenlo", primary: "monk", secondary: null },
+                teamSide.chosen.members[1],
+              ],
+            },
+          },
+          null,
+        ],
+      },
+    },
+  ],
+  [
     "Team Lobby choice of an unknown reason (#1458)",
     parseWireLobbyState,
     {
