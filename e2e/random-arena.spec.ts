@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { openRail } from "./helpers/menu.js";
@@ -54,9 +54,17 @@ async function queue1v1(page: Page, name: string): Promise<void> {
   await openRail(page, "Random Arena");
   await setTeamSize(page, 1);
   await page.locator("#topbar .screen-ready").click();
-  await expect(page.locator("#topbar .topbar-crumb.is-place")).toHaveText(
-    `Random Arena 1v1 · ${BUILD}`,
-  );
+  // The queue waits in the background (#2743): the screen stays, the icon says so.
+  await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
+  await expect(page.locator(".screen-random-arena")).toBeVisible();
+}
+
+/** The queue icon's flyout, opened. */
+async function queueWindow(page: Page): Promise<Locator> {
+  await page.locator("#topbar .topbar-queue").click();
+  const flyout = page.locator("#topbar .queue-window");
+  await expect(flyout).toBeVisible();
+  return flyout;
 }
 
 test("Random Arena's Ready is greyed out without a character to queue with, or at 8v8 (#1525, #2022)", async ({
@@ -115,7 +123,11 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     // The second page reads the character the first stored: one context, one storage.
     await bob.goto("./");
     await queue1v1(alice, "Alice");
-    await expect(alice.locator(".queue-count")).toHaveText("1 searching · 2 needed");
+    const flyout = await queueWindow(alice);
+    await expect(flyout).toContainText("Random Arena 1v1");
+    await expect(flyout).toContainText("1 searching · 2 needed");
+    await alice.keyboard.press("Escape");
+    await expect(flyout).toBeHidden();
     await queue1v1(bob, "Bob");
 
     for (const page of [alice, bob]) {
@@ -176,20 +188,33 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     await expect(bob.getByRole("button", { name: "Back to menu", exact: true })).toBeVisible();
 
     await alice.getByRole("button", { name: "Queue again", exact: true }).click();
-    await expect(alice.locator(".queue-status")).toHaveText("Searching");
-    await expect(alice.locator("#topbar .topbar-crumb.is-place")).toHaveText(
-      `Random Arena 1v1 · ${BUILD}`,
-    );
+    // Back to the background queue, on Random Arena (#2743).
+    await expect(alice.locator("#topbar .topbar-queue")).toBeVisible();
+    await expect(alice.locator(".screen-random-arena")).toBeVisible();
+    await expect(alice.locator(".screen-queue")).toHaveCount(0);
   } finally {
     await context.close();
   }
 });
 
-test("Leave queue from searching goes back to the menu", async ({ page }) => {
+test("Random Arena queues in the background: the icon sits left of Help, and Leave Queue ends it (#2743)", async ({
+  page,
+}) => {
   await makeCharacter(page);
   await queue1v1(page, "Alice");
-  await expect(page.locator(".queue-status")).toHaveText("Searching");
-  await page.getByRole("button", { name: "Leave queue", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
-  await expect(page.locator(".screen-queue")).toHaveCount(0);
+  // Immediately left of Help.
+  await expect(page.locator("#topbar .topbar-queue + .topbar-help")).toHaveCount(1);
+  const ready = page.locator("#topbar .screen-ready");
+  await expect(ready).toBeDisabled();
+  await expect(ready).toHaveAttribute("title", "You are in a queue.");
+  // Anywhere a lobby member may go: Character Builder, and back.
+  await openRail(page, "Character Builder");
+  await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
+  await openRail(page, "Random Arena");
+  const flyout = await queueWindow(page);
+  await flyout.getByRole("button", { name: "Leave Queue", exact: true }).click();
+  await expect(flyout).toBeHidden();
+  await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
+  await expect(page.locator(".screen-random-arena")).toBeVisible();
+  await expect(ready).toBeEnabled();
 });

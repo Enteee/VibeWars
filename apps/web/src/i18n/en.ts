@@ -516,6 +516,7 @@ export const en = {
   "menu.clone": "Clone",
   "menu.edit": "Edit",
   "menu.invalidTag": "Invalid",
+  "menu.leaveQueueToChange": "Leave the queue to change character.",
   "menu.newCharacter": "New character",
   "menu.noCharacterForQueue": "Make a character first.",
   "menu.noCharacters": "No characters yet.",
@@ -560,6 +561,20 @@ export const en = {
   "paperDoll.statusDuration": "{statuses} −{percent}% duration",
 
   "pips.title": { one: "{sign}{count} pips", other: "{sign}{count} pips" },
+
+  "queue.busy": "You are in a queue.",
+  "queue.fellThrough": "Match fell through, searching again",
+  "queue.guildVsGuild": "Guild vs Guild",
+  "queue.heroesAscent": "Heroes' Ascent · round {round}",
+  "queue.hostOnly": "Only the host can leave the queue.",
+  "queue.inQueue": "In queue",
+  "queue.leave": "Leave Queue",
+  "queue.matchFound": "Match found",
+  "queue.randomArena": "Random Arena {size}",
+  "queue.searching": "{searching} searching · {needed} needed",
+  "queue.teamArena": "Team Arena {size}",
+  "queue.teamSplit": "The team split up",
+  "queue.teamsSearching": { one: "{count} team searching", other: "{count} teams searching" },
 
   "recharge.recharging": {
     one: "{skill}, recharging, {count} second",

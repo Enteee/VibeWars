@@ -169,7 +169,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await debugger_.send("Debugger.pause");
     await joinByCode(guest, hostInvite);
     await guest.locator("#topbar .screen-ready").click();
-    await expect(guest.locator(".queue-count")).toBeVisible();
+    await expect(guest.locator("#topbar .topbar-queue")).toBeVisible();
 
     // The host answers: the join lands late, and is let go.
     await debugger_.send("Debugger.resume");
@@ -177,7 +177,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await host.waitForTimeout(3_000);
     await expect(hostLobbyWindow.locator(".party-member")).toHaveCount(0);
     await expect(hostLobbyWindow).toContainText("Just you.");
-    await expect(guest.locator(".queue-count")).toContainText("searching");
+    await expect(guest.locator("#topbar .topbar-queue")).toBeVisible();
   } finally {
     await context.close();
   }
