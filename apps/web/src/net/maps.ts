@@ -4,7 +4,9 @@ import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { 
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
 import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" with { type: "json" };
 import emberPits from "@vibewars/game-maps/maps/ember-pits/map.json" with { type: "json" };
+import frozenCrossing from "@vibewars/game-maps/maps/frozen-crossing/map.json" with { type: "json" };
 import jungleRuins from "@vibewars/game-maps/maps/jungle-ruins/map.json" with { type: "json" };
+import sandstoneSteps from "@vibewars/game-maps/maps/sandstone-steps/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
 import relicTemples from "@vibewars/game-maps/maps/relic-temples/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
@@ -38,6 +40,9 @@ export const ARENA_MAPS: readonly MapData[] = [
   arenaCrossroads,
   arenaCanyon,
   arenaLongHall,
+  // The medium arenas (#2604).
+  sandstoneSteps,
+  frozenCrossing,
   // The Guild Battle's (#1222).
   guildHallIsle,
   // The Relic Run's (#1374).
