@@ -7,8 +7,9 @@ import type { BotRule } from "./types.js";
 /**
  * Raise a dead ally where the ground is ours (#2628): no living foe
  * within `RANGE_SPELL` of the corpse, or fewer than living allies,
- * itself included, and never while a foe targets it, which would cut
- * the cast short or kill it mid-way. The fewest foes near first, then
+ * itself included, and never while a foe within `RANGE_SPELL` targets
+ * it, which would cut the cast short or kill it mid-way: one further off
+ * has only kept it selected. The fewest foes near first, then
  * the nearest. With no foe alive every corpse is safe: the nearest.
  */
 const raise: BotRule = {
@@ -24,7 +25,11 @@ const raise: BotRule = {
       !other.combatant.dead && other.creature === undefined;
     if (
       context.participants.some(
-        (other) => living(other) && other.combatant.team !== team && other.targetId === self.id,
+        (other) =>
+          living(other) &&
+          other.combatant.team !== team &&
+          other.targetId === self.id &&
+          distance(other.position, self.position) <= RANGE_SPELL,
       )
     ) {
       return undefined;

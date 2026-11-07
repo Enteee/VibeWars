@@ -76,10 +76,15 @@ describe("raise rezzes only where the ground is ours (#2628)", () => {
     expect(raised([corpse, one], [...twoFoes, ...allies, lone, ...helpers])).toBe("one");
   });
 
-  it("raises nothing while a foe targets it", () => {
+  it("raises nothing while a foe within a spell's reach targets it", () => {
+    const close = [foe("f1", vec2(400, 0))];
+    expect(raised([["near", vec2(-300, 0)]], close)).toBe("near");
+    expect(raised([["near", vec2(-300, 0)]], close, {}, "f1")).toBeUndefined();
+  });
+
+  it("raises while a foe beyond a spell's reach only keeps it targeted", () => {
     const far = [foe("f1", vec2(2000, 0))];
-    expect(raised([["near", vec2(-300, 0)]], far)).toBe("near");
-    expect(raised([["near", vec2(-300, 0)]], far, {}, "f1")).toBeUndefined();
+    expect(raised([["near", vec2(-300, 0)]], far, {}, "f1")).toBe("near");
   });
 
   it("raises the nearest with no foe alive", () => {
