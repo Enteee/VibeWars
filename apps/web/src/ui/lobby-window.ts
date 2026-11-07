@@ -1,6 +1,7 @@
 import type { LobbyMode } from "@vibewars/game-protocol";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
 import { LOBBY_ICON } from "./icons.js";
 import { h } from "./kit.js";
 import { ascentLine, waitedLabel } from "./queue-screen.js";
@@ -39,13 +40,6 @@ export interface RailParty {
   readonly ascentRound: number | null;
 }
 
-/** Beside a member whose connection dropped, while its seat is held (#1764). */
-export const PARTY_RECONNECTING = "Reconnecting…";
-/** A guest's word that its host has the lobby closed (#1682). */
-export const PARTY_CLOSED = "Lobby closed";
-/** The window with nobody else in the lobby (#2385): it always has something to say. */
-export const PARTY_ALONE = "Just you.";
-
 /**
  * The mode screen's line while the party is queued (#1766): "Looking for a
  * team… 1:05 · 2 teams searching", the time alone until the queue says
@@ -61,14 +55,15 @@ export function lookingLabel(
   teams: number | undefined,
 ): string {
   const size = `${String(teamSize)}v${String(teamSize)}`;
+  const waited = waitedLabel(queuedMs);
   const looking =
     mode === "team-arena"
-      ? `Team Arena ${size} — searching… ${waitedLabel(queuedMs)}`
-      : `Looking for a team… ${waitedLabel(queuedMs)}`;
+      ? t("lobbyWindow.teamArenaSearching", { size, waited })
+      : t("lobbyWindow.looking", { waited });
   if (teams === undefined || teams === 0) {
     return looking;
   }
-  return `${looking} · ${String(teams)} ${teams === 1 ? "team" : "teams"} searching`;
+  return `${looking} · ${t("lobbyWindow.teamsSearching", { count: teams })}`;
 }
 
 /**
@@ -149,17 +144,19 @@ export function queueLine(party: RailParty): HTMLElement | undefined {
 export function lobbyWindowBody(party: RailParty | undefined): HTMLElement {
   const body = h("div", "lobby-window-body");
   if (party === undefined || isAlone(party)) {
-    body.appendChild(h("p", "lobby-window-alone", PARTY_ALONE));
+    // The window with nobody else in the lobby (#2385): it always has something to say.
+    body.appendChild(h("p", "lobby-window-alone", t("lobbyWindow.alone")));
   } else {
     const list = h("ul", "party-members");
     for (const member of party.members) {
       const row = h("li", memberClass(member));
       row.appendChild(h("span", "party-member-name", member.name));
       if (member.isHost) {
-        row.appendChild(h("span", "party-host-mark", "Host"));
+        row.appendChild(h("span", "party-host-mark", t("lobbyWindow.host")));
       }
       if (member.away) {
-        row.appendChild(h("span", "party-member-away", PARTY_RECONNECTING));
+        // Beside a member whose connection dropped, while its seat is held (#1764).
+        row.appendChild(h("span", "party-member-away", t("lobbyWindow.reconnecting")));
       }
       list.appendChild(row);
     }
@@ -172,7 +169,7 @@ export function lobbyWindowBody(party: RailParty | undefined): HTMLElement {
     glyph.alt = "";
     glyph.src = LOBBY_ICON.closed;
     const closed = body.appendChild(h("span", "party-closed"));
-    closed.append(glyph, PARTY_CLOSED);
+    closed.append(glyph, t("lobbyWindow.closed"));
   }
   return body;
 }

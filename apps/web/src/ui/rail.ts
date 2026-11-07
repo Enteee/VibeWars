@@ -1,5 +1,6 @@
 import type { LobbyMode } from "@vibewars/game-protocol";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import {
   isTeamBuildSize,
@@ -23,27 +24,24 @@ import { queueLine, type RailParty } from "./lobby-window.js";
 /** A screen the rail opens: a lobby's mode, a builder, or the Matches page. */
 export type RailEntry = LobbyMode | "characters" | "teams" | "matches";
 
-/** A guest's mode entries say why they do not open (#1526). */
-export const HOST_PICKS_MODE = "The host picks the mode";
-
 export interface RailItem {
   readonly entry: RailEntry;
   /** The screen's name, as its heading and the entry's hover read. */
-  readonly label: string;
+  readonly label: MessageKey;
   /** Under the icon, short enough for 76 px. */
-  readonly short: string;
+  readonly short: MessageKey;
 }
 
 /** The rail, top to bottom: the modes, then the builders after a divider. */
 export const RAIL: readonly RailItem[] = [
-  { entry: "random-arena", label: "Random Arena", short: "Random" },
-  { entry: "team-arena", label: "Team Arena", short: "Team" },
-  { entry: "heroes-ascent", label: "Heroes' Ascent", short: "Ascent" },
-  { entry: "gvg", label: "GvG", short: "GvG" },
-  { entry: "hosted-game", label: "Hosted Game", short: "Hosted" },
-  { entry: "characters", label: "Character Builder", short: "Characters" },
-  { entry: "teams", label: "Team Builder", short: "Teams" },
-  { entry: "matches", label: "Matches", short: "Matches" },
+  { entry: "random-arena", label: "rail.randomArena", short: "rail.randomArenaShort" },
+  { entry: "team-arena", label: "rail.teamArena", short: "rail.teamArenaShort" },
+  { entry: "heroes-ascent", label: "rail.heroesAscent", short: "rail.heroesAscentShort" },
+  { entry: "gvg", label: "rail.gvg", short: "rail.gvgShort" },
+  { entry: "hosted-game", label: "rail.hostedGame", short: "rail.hostedGameShort" },
+  { entry: "characters", label: "rail.characters", short: "rail.charactersShort" },
+  { entry: "teams", label: "rail.teams", short: "rail.teamsShort" },
+  { entry: "matches", label: "rail.matches", short: "rail.matchesShort" },
 ];
 
 /** The first builder: the divider goes above it. */
@@ -74,13 +72,6 @@ export const TEAM_SIZES_BY_ENTRY: Readonly<Record<RailEntry, readonly TeamSize[]
   teams: TEAM_BUILD_SIZES,
   matches: [],
 };
-
-/** The stepper's title on a screen with no team size. */
-export const NO_TEAM_SIZE_HERE = "Team size is for team modes and Team Builds";
-/** A lobby guest's stepper title: the host's size is everyone's. */
-export const HOST_SETS_TEAM_SIZE = "The host sets the team size";
-/** A queued party's stepper title: the queue is for the size it has (#2107). */
-export const LEAVE_QUEUE_FOR_TEAM_SIZE = "Leave the queue to change the team size";
 
 /** `size` as the stepper reads it, e.g. "2v2". */
 export function teamSizeLabel(size: number): string {
@@ -174,7 +165,7 @@ export function teamSizeStepper(
   const stepper = h("div", "mode-rail-stepper");
   stepper.setAttribute("data-entry", "team-size");
   stepper.setAttribute("role", "group");
-  stepper.setAttribute("aria-label", "Team size");
+  stepper.setAttribute("aria-label", t("rail.teamSize"));
   let shown = value;
   const next = (direction: -1 | 1): TeamSize | undefined => {
     if (shown === undefined) {
@@ -212,8 +203,8 @@ export function teamSizeStepper(
     });
     return node;
   };
-  const smaller = arrow("‹", "Smaller team", -1);
-  const larger = arrow("›", "Larger team", 1);
+  const smaller = arrow("‹", t("rail.smallerTeam"), -1);
+  const larger = arrow("›", t("rail.largerTeam"), 1);
   const size = h("span", "mode-rail-size-value");
   size.setAttribute("aria-live", "polite");
   const draw = (): void => {
@@ -250,14 +241,18 @@ function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLEle
     },
   );
   const field = h("div", "mode-rail-size");
-  field.title = noSizes
-    ? NO_TEAM_SIZE_HERE
-    : guest
-      ? HOST_SETS_TEAM_SIZE
-      : queued
-        ? LEAVE_QUEUE_FOR_TEAM_SIZE
-        : "Team size";
-  field.append(h("span", "mode-rail-label", "Team size"), stepper);
+  // With no size here, a lobby guest's (the host's size is everyone's), and a
+  // queued party's (the queue is for the size it has, #2107) each say why.
+  field.title = t(
+    noSizes
+      ? "rail.noTeamSizeHere"
+      : guest
+        ? "rail.hostSetsTeamSize"
+        : queued
+          ? "rail.leaveQueueForTeamSize"
+          : "rail.teamSize",
+  );
+  field.append(h("span", "mode-rail-label", t("rail.teamSize")), stepper);
   return field;
 }
 
@@ -301,7 +296,8 @@ export function saveRail(entry: RailEntry): void {
 
 /** The name of `entry`'s screen. */
 export function railLabel(entry: RailEntry): string {
-  return RAIL.find((item) => item.entry === entry)?.label ?? "";
+  const item = RAIL.find((each) => each.entry === entry);
+  return item === undefined ? "" : t(item.label);
 }
 
 /** The icon of `entry`; a mask, so it takes the entry's colour (styles.css). */
@@ -316,7 +312,7 @@ export function railIconUrl(entry: RailEntry): string {
  */
 export function modeRail(active: RailEntry, onSwitch: (entry: RailEntry) => void): HTMLElement {
   const rail = h("nav", "mode-rail");
-  rail.setAttribute("aria-label", "Modes");
+  rail.setAttribute("aria-label", t("rail.modes"));
   const guest = shownParty !== undefined && !shownParty.isHost;
   for (const { entry, label, short } of RAIL) {
     if (entry === FIRST_BUILDER) {
@@ -335,10 +331,11 @@ export function modeRail(active: RailEntry, onSwitch: (entry: RailEntry) => void
     const icon = h("span", "mode-rail-icon");
     icon.setAttribute("aria-hidden", "true");
     icon.setAttribute("style", `--icon: url("${railIconUrl(entry)}")`);
-    choice.append(icon, h("span", "mode-rail-label", short));
-    choice.setAttribute("aria-label", label);
+    choice.append(icon, h("span", "mode-rail-label", t(short)));
+    choice.setAttribute("aria-label", t(label));
     choice.setAttribute("aria-pressed", String(entry === active));
-    choice.title = locked ? HOST_PICKS_MODE : label;
+    // A guest's mode entries say why they do not open (#1526).
+    choice.title = t(locked ? "rail.hostPicksMode" : label);
     if (locked) {
       choice.setAttribute("aria-disabled", "true");
     }

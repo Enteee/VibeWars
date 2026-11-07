@@ -1,19 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import type * as Kit from "./kit.js";
 import type { ShownBar } from "./kit.js";
 import {
   barHasMore,
-  CLOSED_LABEL,
-  CLOSED_NAME,
-  CLOSED_TOOLTIP,
   CONNECTING_NOTICE_MS,
-  JOINED_LOBBY_LABEL,
-  JOINING_LOBBY_LABEL,
-  OPEN_LABEL,
-  OPEN_NAME,
-  OPEN_TOOLTIP,
-  OWN_LOBBY_LABEL,
   joinControls,
   partyJoinsNotice,
   paintOwnIcons,
@@ -23,7 +15,6 @@ import {
   type StatusElement,
 } from "./topbar.js";
 import { LOBBY_ICON } from "./icons.js";
-import { COPIED } from "./lobby-screen.js";
 
 const toasts: string[] = [];
 
@@ -212,12 +203,12 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     join.setLobby({ code: OWN, isHost: true, open: false, party: 1, joining: false });
     expect([lobby.hidden, label?.textContent, copy?.textContent]).toEqual([
       false,
-      OWN_LOBBY_LABEL,
+      t("topbar.ownLobby"),
       "Copy invite link",
     ]);
     expect(leave?.hidden).toBe(true);
     join.setLobby({ code: FRIEND, isHost: false, open: true, party: 1, joining: false });
-    expect([label?.textContent, leave?.hidden]).toEqual([JOINED_LOBBY_LABEL, false]);
+    expect([label?.textContent, leave?.hidden]).toEqual([t("topbar.joinedLobby"), false]);
     leave?.fire("click");
     expect(left).toEqual([1]);
     const text = (element: FakeElement): string =>
@@ -296,7 +287,7 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     await vi.waitFor(() => {
       expect(written).toEqual([`https://enteee.github.io/VibeWars/#lobby=${OWN}`]);
     });
-    expect([share.hidden, toasts.at(-1)]).toEqual([true, COPIED]);
+    expect([share.hidden, toasts.at(-1)]).toEqual([true, t("lobby.copied")]);
   });
 
   it("gives the host a toggle, Closed first, that asks for the other state; a guest none (#1682)", () => {
@@ -317,10 +308,10 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
       false,
       [
         ["img", LOBBY_ICON.closed, "", ""],
-        ["span", "", "", CLOSED_LABEL],
+        ["span", "", "", t("topbar.closed")],
       ],
-      CLOSED_NAME,
-      CLOSED_TOOLTIP,
+      t("topbar.closedName"),
+      t("topbar.closedTooltip"),
       "false",
     ]);
     toggle.fire("click");
@@ -329,10 +320,10 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
       false,
       [
         ["img", LOBBY_ICON.open, "", ""],
-        ["span", "", "", OPEN_LABEL],
+        ["span", "", "", t("topbar.open")],
       ],
-      OPEN_NAME,
-      OPEN_TOOLTIP,
+      t("topbar.openName"),
+      t("topbar.openTooltip"),
       "true",
     ]);
     toggle.fire("click");
@@ -384,14 +375,14 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
       copy?.hidden,
       leave?.hidden,
       lobby.classes.has("is-joining"),
-    ]).toEqual([JOINING_LOBBY_LABEL, true, true, true]);
+    ]).toEqual([t("topbar.joiningLobby"), true, true, true]);
     join.setLobby({ code: FRIEND, isHost: false, open: false, party: 2, joining: false });
     expect([
       label?.textContent,
       copy?.hidden,
       leave?.hidden,
       lobby.classes.has("is-joining"),
-    ]).toEqual([JOINED_LOBBY_LABEL, false, false, false]);
+    ]).toEqual([t("topbar.joinedLobby"), false, false, false]);
   });
 
   it("says Connecting… once a join runs a while, until the next bar shows", () => {

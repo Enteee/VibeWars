@@ -1,6 +1,7 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { ARENA_MAPS, modeMapIds } from "../net/maps.js";
 import {
   TEAM_SCHEMA_VERSION,
@@ -12,10 +13,8 @@ import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
 import {
   noTeamBuilds,
-  OPENING_LOBBY,
   renderHostScreen,
   renderTeamBuilder,
-  UNNAMED_TEAM,
   type HostEntry,
   type TeamPlayCallbacks,
 } from "./team-play.js";
@@ -306,7 +305,9 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
   it("shows the lobby's place while it opens, and no Team Build cards: they are Team Builder's", () => {
     for (const entry of ["team-arena", "heroes-ascent", "gvg", "hosted-game"] as const) {
       const root = host(entry);
-      expect(root.everything().some((node) => node.textContent === OPENING_LOBBY)).toBe(true);
+      expect(
+        root.everything().some((node) => node.textContent === t("teamPlay.openingLobby")),
+      ).toBe(true);
       expect(root.all("play-cards")).toHaveLength(0);
       expect(root.everything().some((node) => node.textContent === "Team Builds")).toBe(false);
     }
@@ -321,7 +322,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     };
     const root = render([{ ...team("u"), name: " " }, playable]);
     expect(root.all("play-card-name").map((name) => name.textContent)).toEqual([
-      UNNAMED_TEAM,
+      t("teamPlay.unnamedTeam"),
       "Team p",
     ]);
     expect(root.all("play-card-unplayable").map((line) => line.textContent)).toEqual([

@@ -760,9 +760,6 @@
     "MAX_WIRE_WALLS": { "literal": 1024 },
     "MIN_WIRE_MORALE": { "literal": -60 },
     "NO_SHOW_IGNORE_MS": { "literal": 120000 },
-    "PROTOCOL_MISMATCH_MESSAGE": {
-      "literal": "This tab is running an outdated version of VibeWars. Reload the page."
-    },
     "STROKE_SECONDS": { "literal": 4 },
     "TEAM_LOBBY_STAGE_SECONDS": { "literal": 60 },
     "TICKET_HEARTBEAT_MS": { "literal": 5000 },
@@ -5858,7 +5855,6 @@
     },
     "PeerRefuse": {
       "properties": [
-        { "name": "message", "optional": false, "type": "string" },
         {
           "name": "reason",
           "optional": false,

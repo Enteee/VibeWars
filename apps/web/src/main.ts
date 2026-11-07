@@ -21,7 +21,6 @@ import {
   hostLobby,
   joinFailureNotice,
   joinLobbyByCode,
-  NOT_A_KEY_MESSAGE,
   lobbyClosedNotice,
   lobbyRelayStatus,
   lobbyRefusalNotice,
@@ -31,9 +30,7 @@ import {
   QUEUED_RESULT_SECONDS,
   STAY_TOGETHER_GRACE_SECONDS,
   STAY_TOGETHER_SECONDS,
-  TEAM_PLAN_REJECTED_NOTICE,
   TEAM_RESULT_SECONDS,
-  TEAM_SPLIT_MESSAGE,
   watchHostMove,
   type HostMove,
   type HostedLobby,
@@ -357,7 +354,7 @@ async function main(): Promise<void> {
   });
   const framed = window.top !== window.self;
   if (lobbyLink.kind === "malformed") {
-    notices.add(NOT_A_KEY_MESSAGE);
+    notices.add(t("session.notAKey"));
   }
   if (relayLink.kind === "malformed") {
     notices.add(MALFORMED_RELAY_LINK_NOTICE);
@@ -1547,7 +1544,7 @@ async function main(): Promise<void> {
           screen.show({ kind: "refused", notice });
         },
         onPartyGone: () => {
-          requeue(mode, name, { note: TEAM_SPLIT_MESSAGE });
+          requeue(mode, name, { note: t("session.teamSplit") });
         },
       },
       from.party,
@@ -1606,7 +1603,7 @@ async function main(): Promise<void> {
       return;
     }
     const { mode, name } = queue;
-    requeue(mode, name, { note: TEAM_SPLIT_MESSAGE });
+    requeue(mode, name, { note: t("session.teamSplit") });
   };
 
   const pressStay = (): void => {
@@ -2583,7 +2580,7 @@ async function main(): Promise<void> {
       setStatus("", "online");
       // Said once, on the match screen: the lobby's went with it.
       if (start.teamPlanRejected) {
-        toast(TEAM_PLAN_REJECTED_NOTICE);
+        toast(t("session.teamPlanRejected"));
       }
     } catch (error) {
       console.error("[web] could not enter match", error);
@@ -2684,7 +2681,7 @@ async function main(): Promise<void> {
   const takeFragmentLinks = (): void => {
     const invited = takeLobbyLink();
     if (invited.kind === "malformed") {
-      toast(NOT_A_KEY_MESSAGE);
+      toast(t("session.notAKey"));
     } else if (invited.kind === "invite" && !topbarView.invite(invited.code)) {
       toast(INVITE_IN_LOBBY_NOTICE);
     }
