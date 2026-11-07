@@ -47,18 +47,21 @@ export interface SummaryTable {
 }
 
 /**
- * The two tables: your team first, or team 1 first for a spectator, each
- * in the order the host sent its rows. A column's highest value is the
- * whole match's, so it is flagged in whichever table holds it; a column
- * that is zero throughout flags nobody.
+ * A table a team, two or three (#2684): your team first, then the winner,
+ * then the rest in order; a spectator's from the winner, or team 1 on a
+ * draw. Each in the order the host sent its rows. A column's highest value
+ * is the whole match's, so it is flagged in whichever table holds it; a
+ * column that is zero throughout flags nobody.
  *
  * @param selfTeam `undefined` for a spectator
+ * @param winningTeam `undefined` for a draw
  * @param bots the ids the match roster marks as bots; an id not in it is a player
  */
 export function summaryTables(
   summary: readonly MatchSummaryRow[],
   selfId: string | undefined,
   selfTeam: number | undefined,
+  winningTeam: number | undefined,
   bots: ReadonlySet<string>,
 ): readonly SummaryTable[] {
   const best = new Map(
@@ -72,14 +75,24 @@ export function summaryTables(
       SUMMARY_COLUMNS.filter((column) => row[column] > 0 && row[column] === best.get(column)),
     ),
   });
-  const ours = selfTeam === 1 ? 1 : 0;
-  const table = (team: number, caption: string): SummaryTable => ({
-    caption,
+  const teamCount = Math.max(2, ...summary.map((row) => row.team + 1));
+  const rank = (team: number): number =>
+    team === selfTeam ? 0 : team === winningTeam ? 1 : 2 + team;
+  const teams = Array.from({ length: teamCount }, (_, team) => team).sort(
+    (a, b) => rank(a) - rank(b),
+  );
+  const caption = (team: number): string => {
+    if (team === selfTeam) {
+      return t("summary.yourTeam");
+    }
+    return selfTeam !== undefined && teamCount === 2
+      ? t("summary.theirTeam")
+      : t("summary.team", { team: team + 1 });
+  };
+  return teams.map((team) => ({
+    caption: caption(team),
     lines: summary.filter((row) => row.team === team).map(line),
-  });
-  return selfTeam === undefined
-    ? [table(0, t("summary.team", { team: 1 })), table(1, t("summary.team", { team: 2 }))]
-    : [table(ours, t("summary.yourTeam")), table(1 - ours, t("summary.theirTeam"))];
+  }));
 }
 
 /** Build the tables once, into a new `.match-summary` element appended to `parent`. */
