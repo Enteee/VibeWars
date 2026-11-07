@@ -106,9 +106,8 @@ export function openHubWindow(tmux, session) {
     `VIBEWARS_LLC_RESTART=${required("VIBEWARS_LLC_RESTART")}`,
     `VIBEWARS_CLAUDE_BOXES=${required("VIBEWARS_CLAUDE_BOXES")}`,
     `VIBEWARS_TMUX=${tmux}`,
-    // The runner supervisor's config (#1890); hubd reads the max.
+    // The runner supervisor's config (#1890); its max is in company.json (#2764).
     ...[
-      "VIBEWARS_MAX_RUNNERS",
       "VIBEWARS_RUNNER_CPUS",
       "VIBEWARS_RUNNER_MEMORY_GIB",
       "VIBEWARS_RUNNER_TASKS_MAX",

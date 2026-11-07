@@ -18,7 +18,8 @@
  *     is public, and the one piece of enforcement that does not depend on our
  *     own code being correct
  *  4. write `.bots/company.json`, which hubd and the dashboard read, with
- *     the most employees the company may have (`maxAgents`), asked once
+ *     the most employees the company may have (`maxAgents`) and the most
+ *     CI runners on this machine (`maxRunners`), each asked once
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -38,6 +39,7 @@ import {
 } from "./creds.mjs";
 import { COLUMNS, columnsPlan } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
+import { askMaxRunners } from "./runners-state.mjs";
 
 /**
  * The checks a pull request must carry before QA may merge it.
@@ -451,9 +453,10 @@ let acting = { "lead-dev": ["perf-sec-qa", "qa-tester"] };
  * @type {number | null}
  */
 let maxAgents = null;
+/** @type {unknown} */
+let previous = null;
 try {
-  /** @type {unknown} */
-  const previous = JSON.parse(fs.readFileSync(path.join(ROOT, "company.json"), "utf8"));
+  previous = JSON.parse(fs.readFileSync(path.join(ROOT, "company.json"), "utf8"));
   const existing = obj(previous).acting;
   if (typeof existing === "object" && existing !== null) {
     acting = /** @type {typeof acting} */ (existing);
@@ -478,6 +481,21 @@ while (maxAgents === null) {
     console.error("  A whole number above 0, please.");
   }
 }
+/**
+ * The most company runners on this machine (#2764, ADR-0045), beside the
+ * employee cap and kept across re-runs the same way. hubd and the runner
+ * supervisor read it from here.
+ */
+const prompt = createInterface({ input: process.stdin, output: process.stdout });
+const maxRunners = await askMaxRunners({
+  stored: previous,
+  ask: (question) => prompt.question(question),
+  runnersSetUp: () => githubIdentity(githubHome.runnersGh).state === "ok",
+  say: (line) => {
+    console.log(line);
+  },
+});
+prompt.close();
 
 const config = {
   acting,
@@ -496,6 +514,7 @@ const config = {
   columns: COLUMNS,
   expectedChecks: EXPECTED_CHECKS,
   maxAgents,
+  maxRunners,
 };
 fs.writeFileSync(path.join(ROOT, "company.json"), `${JSON.stringify(config, null, 2)}\n`);
 say("company.json", path.join(ROOT, "company.json"));
