@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { RANGE_SPELL } from "../../../distances.js";
-import { distance, vec2 } from "../../../vec2.js";
+import { RANGE_MELEE, RANGE_SPELL } from "../../../distances.js";
+import { distance, vec2, type Vec2 } from "../../../vec2.js";
+import type { Participant } from "../../simulation.js";
 import position from "./position.js";
-import { POSITION_SLACK } from "./shared.js";
+import { POSITION_SLACK, foeReach } from "./shared.js";
 import { ELEMENTALIST, MONK, WARRIOR, fighter, match, ruleFor } from "./test-support.js";
 
 describe("position (#2545)", () => {
@@ -60,5 +61,163 @@ describe("position (#2545)", () => {
       fighter("foe", 1, WARRIOR, FOE),
     ]);
     expect(position.decide(ruleFor(fight, "w", { targetId: "foe" }))).toBeUndefined();
+  });
+});
+
+describe("position by threat (#2598)", () => {
+  const TARGET = vec2(1200, 400);
+  /** A ranged bot `e` far west of its target, and a second foe `f2` placed later. */
+  const setUp = () => {
+    const fight = match([
+      fighter("e", 0, ELEMENTALIST, vec2(100, 400)),
+      fighter("foe", 1, WARRIOR, TARGET),
+      fighter("f2", 1, ELEMENTALIST, vec2(1500, 700)),
+    ]);
+    const f2 = fight.get("f2");
+    if (f2 === undefined) throw new Error("no f2");
+    return { fight, f2 };
+  };
+  /** Its card-1 spot, with `f2` out of the way. */
+  const straightSpot = (): Vec2 => {
+    const { fight, f2 } = setUp();
+    f2.position = vec2(3000, 3000);
+    const spot = position.decide(ruleFor(fight, "e", { targetId: "foe" }))?.moveTo;
+    if (spot === undefined) throw new Error("no spot");
+    return spot;
+  };
+
+  it("takes the spot turned away from a second foe whose reach covers the straight one", () => {
+    const straight = straightSpot();
+    const { fight, f2 } = setUp();
+    const reach = ruleFor(fight, "e").foeReach(f2);
+    // Just within its reach of the straight spot, south of it: the -20° turn
+    // swings nearer, the +20° one north and out of it.
+    f2.position = vec2(straight.x, straight.y + reach + POSITION_SLACK / 2);
+    const rule = ruleFor(fight, "e", { targetId: "foe" });
+    const spot = position.decide(rule)?.moveTo;
+    if (spot === undefined) throw new Error("no spot");
+    expect(spot.y).toBeLessThan(straight.y - 50);
+    expect(distance(spot, TARGET)).toBeCloseTo(distance(straight, TARGET));
+    expect(distance(spot, f2.position)).toBeGreaterThan(reach + POSITION_SLACK);
+  });
+
+  it("stays on the straight spot when a pillar hides it from that foe", () => {
+    const straight = straightSpot();
+    const { fight, f2 } = setUp();
+    const reach = ruleFor(fight, "e").foeReach(f2);
+    f2.position = vec2(straight.x, straight.y + reach + POSITION_SLACK / 2);
+    const pillar = (from: Vec2, to: Vec2) =>
+      !(from === f2.position && distance(to, straight) < 1e-6);
+    const rule = ruleFor(fight, "e", { targetId: "foe" }, { seesBetween: pillar });
+    const spot = position.decide(rule)?.moveTo;
+    if (spot === undefined) throw new Error("no spot");
+    expect(distance(spot, straight)).toBeLessThan(1e-6);
+  });
+
+  /**
+   * `e` at its spot, its target in reach, `f3` and `f4` on it from the
+   * south; a pillar hides each of `hidden` from everything.
+   */
+  const idle = (hidden: readonly string[] = []) => {
+    const straight = straightSpot();
+    const fight = match([
+      fighter("e", 0, ELEMENTALIST, straight),
+      fighter("foe", 1, WARRIOR, TARGET),
+      fighter("f3", 1, ELEMENTALIST, vec2(straight.x - 30, straight.y + 300)),
+      fighter("f4", 1, ELEMENTALIST, vec2(straight.x + 30, straight.y + 300)),
+    ]);
+    const behind = hidden.map((id) => fight.get(id)?.position);
+    return ruleFor(
+      fight,
+      "e",
+      { targetId: "foe" },
+      { seesBetween: (from) => !behind.includes(from) },
+    );
+  };
+
+  it("at its spot under two foes, moves to one under fewer", () => {
+    const rule = idle();
+    const spot = position.decide(rule)?.moveTo;
+    if (spot === undefined) throw new Error("no move");
+    expect(spot.y).toBeLessThan(rule.self.position.y);
+  });
+
+  it("at its spot under two foes, stays when no spot is under fewer", () => {
+    // Every foe reaches every turn of its spot.
+    expect(position.decide({ ...idle(), foeReach: () => 10_000 })).toBeUndefined();
+  });
+
+  it("at its spot under one foe, stays", () => {
+    expect(position.decide(idle(["f4"]))).toBeUndefined();
+  });
+
+  it("moves a healer behind its ward to the side fewer foes cover", () => {
+    const fight = match([
+      fighter("m", 0, MONK, vec2(100, 400)),
+      fighter("mate", 0, WARRIOR, vec2(700, 400)),
+      fighter("foe", 1, WARRIOR, vec2(1000, 400)),
+      fighter("f2", 1, ELEMENTALIST, vec2(1100, 400)),
+    ]);
+    const mate = fight.get("mate");
+    if (mate !== undefined) mate.combatant.health = mate.combatant.maxHealth * 0.4;
+    const open = ruleFor(fight, "m");
+    const straight = position.decide(open)?.moveTo;
+    if (straight === undefined) throw new Error("no spot");
+    const f2 = fight.get("f2");
+    if (f2 === undefined) throw new Error("no f2");
+    const reach = open.foeReach(f2);
+    f2.position = vec2(straight.x, straight.y - reach - POSITION_SLACK / 2);
+    const spot = position.decide(ruleFor(fight, "m"))?.moveTo;
+    if (spot === undefined) throw new Error("no spot");
+    expect(spot.y).toBeGreaterThan(straight.y + 10);
+    expect(distance(spot, vec2(700, 400))).toBeCloseTo(distance(straight, vec2(700, 400)));
+  });
+
+  it("stands and fights a foe at its elbow, however many cover it", () => {
+    const rule = idle();
+    const foe = rule.foes.find((other) => other.id === "foe");
+    if (foe === undefined) throw new Error("no foe");
+    foe.position = vec2(rule.self.position.x + 50, rule.self.position.y);
+    foe.targetId = "e";
+    expect(position.decide(rule)).toBeUndefined();
+  });
+});
+
+describe("foeReach (#2598)", () => {
+  const fight = match([
+    fighter("e", 0, ELEMENTALIST, vec2(100, 400)),
+    fighter("w", 1, WARRIOR, vec2(600, 400)),
+  ]);
+  const warrior = fight.get("w");
+  if (warrior === undefined) throw new Error("no w");
+  const withWeaponRange = (range: number): Participant => {
+    const { equipment } = warrior.combatant;
+    return {
+      ...warrior,
+      combatant: {
+        ...warrior.combatant,
+        equipment: {
+          ...equipment,
+          mainHand: { ...equipment.mainHand, weapon: { ...equipment.mainHand.weapon, range } },
+        },
+      },
+    };
+  };
+
+  it("is a bow's range over its short skills", () => {
+    expect(foeReach(new Map(), withWeaponRange(1000))).toBe(1000);
+  });
+
+  it("is a melee foe's weapon's, never under RANGE_MELEE", () => {
+    const reach = foeReach(new Map(), warrior);
+    expect(reach).toBeGreaterThanOrEqual(RANGE_MELEE);
+    expect(reach).toBeLessThan(RANGE_SPELL);
+    expect(foeReach(new Map(), withWeaponRange(1))).toBeGreaterThanOrEqual(RANGE_MELEE);
+  });
+
+  it("reads a foe's bar once", () => {
+    const cache = new Map<string, number>();
+    const first = foeReach(cache, warrior);
+    expect(foeReach(cache, withWeaponRange(1000))).toBe(first);
   });
 });

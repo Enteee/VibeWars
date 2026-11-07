@@ -223,6 +223,8 @@ export interface BehaviourCursor {
   upkeepDropSeconds: number;
   /** `play-build` and `guard`: how many decisions it has made, the seed of its next reaction time (#2606). */
   thinks: number;
+  /** `play-build`: each foe's reach, read once from its bar (#2598). */
+  readonly foeReach: Map<string, number>;
 }
 
 export interface BehaviourContext {
@@ -281,6 +283,7 @@ export function createCursor(): BehaviourCursor {
     heldMove: { moveDirection: ZERO, moveTo: undefined },
     upkeepDropSeconds: 0,
     thinks: 0,
+    foeReach: new Map(),
   };
 }
 
