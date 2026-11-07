@@ -1,5 +1,5 @@
 // glass-dunes - D phrygian dominant ("spanish" in Strudel scale names), 66 bpm. mood: epic, mysterious.
-// A warm, wide desert at dusk: a low drone, a soft string pad and a plucked
+// A warm, wide desert at dusk: a low drone, a soft triangle pad and a plucked
 // harp that tells four slow tales over it. Nothing blows and nothing is higher
 // than B4 except a few far bells. Later layers add a strummed figure, a low
 // triangle answer and a muffled drum.
@@ -27,8 +27,8 @@ stack(
   note("d1").s("sine").attack(2).release(3).gain(.5),
   note("d2").s("triangle").attack(2).release(3).gain(.3),
   chord(P).voicing().mode("below:a4")
-    .s("sawtooth").attack(1.2).release(2.5).gain(.14)
-    .lpf(1100).room(.9).roomsize(6).orbit(2),
+    .s("triangle").attack(1.2).release(2.5).gain(.2)
+    .lpf(1400).room(.9).roomsize(6).orbit(2),
   n(lead).scale("d4:spanish")
     .s("harp").gain(.6).release(1.2).room(.8).roomsize(6).orbit(2),
   // 1: a strummed figure and sparse far bells
