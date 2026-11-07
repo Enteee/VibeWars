@@ -3,7 +3,9 @@ import { validateMapData, type MapData, type Objective } from "@vibewars/game-ma
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
 import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" with { type: "json" };
+import ashenCourtyard from "@vibewars/game-maps/maps/ashen-courtyard/map.json" with { type: "json" };
 import frozenCrossing from "@vibewars/game-maps/maps/frozen-crossing/map.json" with { type: "json" };
+import mossVale from "@vibewars/game-maps/maps/moss-vale/map.json" with { type: "json" };
 import sandstoneSteps from "@vibewars/game-maps/maps/sandstone-steps/map.json" with { type: "json" };
 import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
@@ -40,9 +42,11 @@ export const ARENA_MAPS: readonly MapData[] = [
   arenaCrossroads,
   arenaCanyon,
   arenaLongHall,
-  // The medium arenas (#2604).
+  // The medium arenas (#2604, #2605).
   sandstoneSteps,
   frozenCrossing,
+  ashenCourtyard,
+  mossVale,
   // The Guild Battle's (#1222).
   guildHallIsle,
   // The Relic Run's (#1374, #2551).
