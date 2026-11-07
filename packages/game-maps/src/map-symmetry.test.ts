@@ -20,6 +20,8 @@ const SYMMETRIC = [
   "moss-vale",
   "canthan-terraces",
   "sunken-bastion",
+  "shiverpeak-pass",
+  "elonian-plateau",
 ];
 
 /** How far apart a thing and its twin's rotation may be. */

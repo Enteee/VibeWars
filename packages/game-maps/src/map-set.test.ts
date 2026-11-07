@@ -110,7 +110,8 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
   });
 
   it("lets a fighter at each spawn reach the enemy across the arena and hit, without snagging", () => {
-    // Swords, so every hit is a walk into reach: on the longest arena, ~18 s.
+    // Swords, so every hit is a walk into reach: ~26 s across a 4800-wide arena, so 30 s for
+    // each 4800 of width; the large arenas (#2609) walk ~33 s.
     const sworded = STARTER_BUILDS.find((build) => build.name === "June Star Burst (W/E)");
     if (sworded === undefined) throw new Error("no June Star Burst (W/E)");
     const fighter = loadoutOf(sworded);
@@ -150,7 +151,8 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
       });
       sim.requestAttack("a", "b");
       let hit = false;
-      for (let tick = 0; tick < 30 * ruleset.tickRateHz && !hit; tick += 1) {
+      const seconds = 30 * Math.max(1, map.width / 4800);
+      for (let tick = 0; tick < seconds * ruleset.tickRateHz && !hit; tick += 1) {
         hit = sim
           .step(1 / ruleset.tickRateHz)
           .log.some((entry) =>
@@ -177,7 +179,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the two mode arenas of #2550, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), The Courtyard (#2552), Scarred Earth (#2551), the medium arenas Sandstone Steps and Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605) and the large Canthan Terraces and Sunken Bastion (#2607)", () => {
+  it("is the two mode arenas of #2550, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), The Courtyard (#2552), Scarred Earth (#2551), the medium arenas Sandstone Steps and Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605) and the large Canthan Terraces and Sunken Bastion (#2607), Shiverpeak Pass and Elonian Plateau (#2609)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
         "ember-pits",
@@ -193,6 +195,8 @@ describe("the arena set (#444)", () => {
         "moss-vale",
         "canthan-terraces",
         "sunken-bastion",
+        "shiverpeak-pass",
+        "elonian-plateau",
         ...NEW_ARENAS,
       ].sort(),
     );
@@ -635,7 +639,7 @@ describe("Hall of Heroes (#2552)", () => {
 /** Half the narrowest gap a route may squeeze through (#2544): a 200-wide gap passes, a narrower one does not. */
 const ROUTE_HALF_GAP = 100;
 
-// The medium arenas (#2604, #2605) cross the centre in three lanes, the large (#2607) in four.
+// The medium arenas (#2604, #2605) cross the centre in three lanes, the large (#2607, #2609) in four.
 describe.each([
   ["sandstone-steps", 1, 3],
   ["frozen-crossing", 2, 3],
@@ -643,7 +647,9 @@ describe.each([
   ["moss-vale", 8, 3],
   ["canthan-terraces", 1, 4],
   ["sunken-bastion", 2, 4],
-] as const)("the new arena %s (#2604, #2605, #2607)", (id, size, lanes) => {
+  ["shiverpeak-pass", 4, 4],
+  ["elonian-plateau", 8, 4],
+] as const)("the new arena %s (#2604, #2605, #2607, #2609)", (id, size, lanes) => {
   const map = MAPS.find((each) => each.id === id);
   if (map === undefined) throw new Error(`no ${id}`);
   const bounds = { width: map.width, height: map.height };

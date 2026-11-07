@@ -92,29 +92,32 @@ describe("Relic Run bots (#2581)", () => {
 describe("King of the Hill bots (#2582)", () => {
   const map = loadAllMaps().find((candidate) => candidate.mode === "king-of-the-hill");
 
-  /** Who holds the altar after up to 120 s of a 1v1 of bots, and when it was first held. */
-  const play = (seed: string) => {
-    if (map === undefined) throw new Error("no map with ghosts");
-    const altar = map.objectives.find((objective) => objective.kind === "altar");
+  const hill = (arena: MapData, seed: string, participants: readonly ParticipantSpec[]) => {
+    const altar = arena.objectives.find((objective) => objective.kind === "altar");
     if (altar === undefined) throw new Error("no altar");
-    const sim = new MatchSimulation({
+    return new MatchSimulation({
       seed,
       ruleset: RULESET,
-      walls: allWallSegments(map.walls),
-      bounds: { width: map.width, height: map.height },
+      walls: allWallSegments(arena.walls),
+      bounds: { width: arena.width, height: arena.height },
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
       hillField: {
         altar: altar.position,
-        spawns: map.objectives.flatMap((objective) =>
+        spawns: arena.objectives.flatMap((objective) =>
           objective.kind === "ghost-spawn"
             ? [{ team: objective.team, position: objective.position }]
             : [],
         ),
       },
-      // Unlike builds: a mirror match brings both ghosts onto the altar
-      // together, and they contest it for good.
-      participants: casterBots(map, 1, 1),
+      participants,
     });
+  };
+
+  /** Who holds the altar after up to 120 s of a 1v1 of bots, and when it was first held. */
+  const play = (seed: string) => {
+    if (map === undefined) throw new Error("no map with ghosts");
+    // Unlike builds: the two ghosts reach the altar at different times.
+    const sim = hill(map, seed, casterBots(map, 1, 1));
     let heldAt: number | undefined;
     for (let t = 0; t < 120 && heldAt === undefined; t += DT) {
       sim.step(DT);
@@ -127,6 +130,30 @@ describe("King of the Hill bots (#2582)", () => {
     const first = play("hill");
     expect(first.heldAt).toBeDefined();
     expect(play("hill")).toEqual(first);
+  });
+
+  /**
+   * The score after up to 90 s of a 1v1 mirror of bots on The Courtyard,
+   * and when the first point fell (#2600). A mirror brings both ghosts
+   * onto the altar together: they contest it until a bot kills the other
+   * team's ghost.
+   */
+  const mirror = (seed: string) => {
+    const courtyard = loadAllMaps().find((candidate) => candidate.id === "the-courtyard");
+    if (courtyard === undefined) throw new Error("no map the-courtyard");
+    const sim = hill(courtyard, seed, casterBots(courtyard, 1));
+    let scoredAt: number | undefined;
+    for (let t = 0; t < 90 && scoredAt === undefined; t += DT) {
+      sim.step(DT);
+      if ([...sim.score.byTeam.values()].some((points) => points > 0)) scoredAt = t;
+    }
+    return { scoredAt, score: [...sim.score.byTeam] };
+  };
+
+  it("a 1v1 mirror of bots scores a point within 90 s, the same way for the same seed", () => {
+    const first = mirror("hill");
+    expect(first.scoredAt).toBeDefined();
+    expect(mirror("hill")).toEqual(first);
   });
 });
 

@@ -1,20 +1,24 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ANNIHILATION_MATCH_RULES } from "../../match-rules.js";
-import { vec2 } from "../../vec2.js";
+import { ANNIHILATION_MATCH_RULES, KING_OF_THE_HILL_MATCH_RULES } from "../../match-rules.js";
+import { vec2, type Vec2 } from "../../vec2.js";
 import {
   BOT_REACTION,
   createCursor,
   decide,
   INSTANT_REACTION,
+  NO_OBJECTIVES,
   type Behaviour,
+  type BehaviourContext,
   type BehaviourIntent,
   type Reaction,
 } from "../behaviour.js";
 import type { CombatLogEntry } from "../combat-log.js";
+import { ghostId, type HillField } from "../ghost.js";
 import { MatchSimulation } from "../simulation.js";
 import { NO_RANKS } from "../../skills/status.js";
 import {
+  BOT,
   BOUNDS,
   DT,
   ELEMENTALIST,
@@ -29,6 +33,101 @@ import {
   starter,
 } from "./rules/test-support.js";
 import { reactionSeconds } from "./rules/shared.js";
+
+describe("play-build's target in King of the Hill (#2600)", () => {
+  const ALTAR = vec2(800, 400);
+  const FOE_GHOST = ghostId(1);
+
+  /** Team 1's ghost rising at `foeGhostAt`, a bot of team 0 and a badly hurt foe player in its range. */
+  function hill(foeGhostAt: Vec2) {
+    const field: HillField = {
+      altar: ALTAR,
+      spawns: [
+        { team: 0, position: vec2(100, 400) },
+        { team: 1, position: foeGhostAt },
+      ],
+    };
+    return new MatchSimulation({
+      seed: "hill",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      matchRules: KING_OF_THE_HILL_MATCH_RULES,
+      hillField: field,
+      participants: [
+        fighter("bot", 0, ELEMENTALIST, vec2(600, 400)),
+        fighter("foe", 1, WARRIOR, vec2(650, 500), {
+          behaviour: undefined,
+          startHealthFraction: 0.3,
+        }),
+      ],
+    });
+  }
+
+  const targetOf = (sim: MatchSimulation, extra: Partial<BehaviourContext> = {}) =>
+    decide(
+      BOT,
+      createCursor(),
+      contextFor(sim, "bot", { objectives: { ...NO_OBJECTIVES, altar: ALTAR }, ...extra }),
+    ).targetId;
+
+  it("kills the foe's ghost on an altar nobody holds before a foe player about to fall", () => {
+    expect(targetOf(hill(vec2(820, 400)))).toBe(FOE_GHOST);
+  });
+
+  it("kills the foe's ghost holding the altar", () => {
+    expect(
+      targetOf(hill(vec2(820, 400)), {
+        objectives: { ...NO_OBJECTIVES, altar: ALTAR, altarHolder: 1 },
+      }),
+    ).toBe(FOE_GHOST);
+  });
+
+  it("fights as ever while its team holds the altar", () => {
+    expect(
+      targetOf(hill(vec2(820, 400)), {
+        objectives: { ...NO_OBJECTIVES, altar: ALTAR, altarHolder: 0 },
+      }),
+    ).toBe("foe");
+  });
+
+  it("fights as ever while the foe's ghost is off the altar, though in range", () => {
+    expect(targetOf(hill(vec2(700, 300)))).toBe("foe");
+  });
+
+  it("leaves a ghost on the altar beyond spell range alone", () => {
+    const sim = new MatchSimulation({
+      seed: "hill",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      matchRules: KING_OF_THE_HILL_MATCH_RULES,
+      hillField: {
+        altar: vec2(1300, 400),
+        spawns: [
+          { team: 0, position: vec2(100, 400) },
+          { team: 1, position: vec2(1300, 400) },
+        ],
+      },
+      participants: [
+        fighter("bot", 0, ELEMENTALIST, vec2(600, 400)),
+        fighter("foe", 1, WARRIOR, vec2(650, 500), {
+          behaviour: undefined,
+          startHealthFraction: 0.3,
+        }),
+      ],
+    });
+    expect(
+      decide(
+        BOT,
+        createCursor(),
+        contextFor(sim, "bot", { objectives: { ...NO_OBJECTIVES, altar: vec2(1300, 400) } }),
+      ).targetId,
+    ).toBe("foe");
+  });
+
+  it("keeps a target its team called", () => {
+    expect(targetOf(hill(vec2(820, 400)), { calledTargetId: "foe" })).toBe("foe");
+  });
+});
 
 describe("play-build (#1189)", () => {
   it("asks for at most one skill per think", () => {

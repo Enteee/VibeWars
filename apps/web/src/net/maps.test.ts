@@ -54,6 +54,7 @@ describe("randomArenaMapPool", () => {
       "arena-canyon",
       "arena-long-hall",
       "ashen-courtyard",
+      "shiverpeak-pass",
     ]);
   });
 
@@ -64,7 +65,7 @@ describe("randomArenaMapPool", () => {
     expect(randomArenaMapPool("random-arena-1v1")).not.toContain("jungle-ruins");
   });
 
-  it("leaves no arena out of every pool but the Guild Battle's (#1222), the Relic Run's (#1374), King of the Hill's (#1377) and Moss Vale, for 8v8, which Random Arena does not play (#2605)", () => {
+  it("leaves no arena out of every pool but the Guild Battle's (#1222), the Relic Run's (#1374), King of the Hill's (#1377) and Moss Vale (#2605) and Elonian Plateau (#2609), for 8v8, which Random Arena does not play", () => {
     const pooled = new Set(
       (["random-arena-1v1", "random-arena-2v2", "random-arena-4v4"] as const).flatMap((mode) =>
         randomArenaMapPool(mode),
@@ -81,6 +82,7 @@ describe("randomArenaMapPool", () => {
               "hall-of-heroes",
               "scarred-earth",
               "moss-vale",
+              "elonian-plateau",
             ].includes(id),
         )
         .sort(),
@@ -166,7 +168,7 @@ describe("team sizes (#2108)", () => {
     }
   });
 
-  it("draws each medium and large arena at its own size and no other: Sandstone Steps 1v1, Frozen Crossing 2v2 (#2604), Ashen Courtyard 4v4, Moss Vale 8v8 (#2605), Canthan Terraces 1v1, Sunken Bastion 2v2 (#2607)", () => {
+  it("draws each medium and large arena at its own size and no other: Sandstone Steps 1v1, Frozen Crossing 2v2 (#2604), Ashen Courtyard 4v4, Moss Vale 8v8 (#2605), Canthan Terraces 1v1, Sunken Bastion 2v2 (#2607), Shiverpeak Pass 4v4, Elonian Plateau 8v8 (#2609)", () => {
     for (const [id, size] of [
       ["sandstone-steps", 1],
       ["frozen-crossing", 2],
@@ -174,6 +176,8 @@ describe("team sizes (#2108)", () => {
       ["moss-vale", 8],
       ["canthan-terraces", 1],
       ["sunken-bastion", 2],
+      ["shiverpeak-pass", 4],
+      ["elonian-plateau", 8],
     ] as const) {
       expect(sizesOf(id)).toEqual([size]);
       for (const other of [1, 2, 4, 8]) {
@@ -192,6 +196,8 @@ describe("team sizes (#2108)", () => {
     expect(queueMapPool("team-arena-2v2", null)).toContain("frozen-crossing");
     expect(queueMapPool("team-arena-4v4", null)).toContain("ashen-courtyard");
     expect(queueMapPool("team-arena-8v8", null)).toContain("moss-vale");
+    expect(queueMapPool("team-arena-4v4", null)).toContain("shiverpeak-pass");
+    expect(queueMapPool("team-arena-8v8", null)).toContain("elonian-plateau");
     expect(modeMapIds()["hosted-game"]).toEqual(
       expect.arrayContaining([
         "sandstone-steps",
@@ -200,6 +206,8 @@ describe("team sizes (#2108)", () => {
         "moss-vale",
         "canthan-terraces",
         "sunken-bastion",
+        "shiverpeak-pass",
+        "elonian-plateau",
       ]),
     );
   });
@@ -219,6 +227,7 @@ describe("team sizes (#2108)", () => {
       "arena-canyon",
       "arena-long-hall",
       "moss-vale",
+      "elonian-plateau",
       "guild-hall-isle",
       "broken-tower",
       "the-courtyard",
