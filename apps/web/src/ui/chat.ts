@@ -46,7 +46,7 @@ export function chatToSend(
 /** Whose a line is, for its colour: GW1's blue for your side, red for theirs. */
 export type ChatSide = "self" | "ally" | "enemy" | "spectator";
 
-export function chatSide(line: ChatLine, selfId: string, selfTeam: 0 | 1 | null): ChatSide {
+export function chatSide(line: ChatLine, selfId: string, selfTeam: 0 | 1 | 2 | null): ChatSide {
   if (line.fromId === selfId) {
     return "self";
   }
@@ -108,7 +108,7 @@ function isControl(target: EventTarget | null): boolean {
 export interface ChatDeps {
   readonly selfId: string;
   /** This player's team now; `null` spectates, and has no team chat. */
-  readonly selfTeam: () => 0 | 1 | null;
+  readonly selfTeam: () => 0 | 1 | 2 | null;
   readonly send: (channel: ChatChannel, text: string) => void;
 }
 

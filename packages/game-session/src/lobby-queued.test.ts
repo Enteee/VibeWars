@@ -18,7 +18,7 @@ import {
   type WirePartyFormed,
   type WirePartyProposal,
 } from "@vibewars/game-protocol";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 import type { LobbyClosedReason, LobbyConnection } from "./lobby-connection.js";
@@ -340,7 +340,7 @@ async function forgedJoin(
   };
 }
 
-function teamsOf(connection: LobbyConnection): Record<string, 0 | 1 | null> {
+function teamsOf(connection: LobbyConnection): Record<string, 0 | 1 | 2 | null> {
   return Object.fromEntries(
     connection.getSnapshot().players.map((player) => [player.name, player.team]),
   );
@@ -911,6 +911,106 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
   });
 });
 
+describe("a queued three-team Heroes' Ascent round (#2683)", () => {
+  /** Three parties, a side each: HOST and ALLY, FOE, and FOE_2. */
+  const THREE_GROUP: FormedGroup = {
+    ...GROUP,
+    teams: [[HOST, ALLY], [FOE], [FOE_2]],
+    parties: [[HOST, ALLY], [FOE], [FOE_2]],
+    mode: "heroes-ascent",
+  };
+
+  /** How many seats `plan` puts on each team, by team. */
+  const teamSizes = (plan: MatchPlan | undefined): Record<number, number> => {
+    const sizes: Record<number, number> = {};
+    for (const seat of plan?.seats.values() ?? []) {
+      sizes[seat.team] = (sizes[seat.team] ?? 0) + 1;
+    }
+    return sizes;
+  };
+
+  /** The team the seat named `name` plays on in `plan`. */
+  const teamOf = (plan: MatchPlan | undefined, name: string): number | undefined =>
+    [...(plan?.seats.values() ?? [])].find((seat) => seat.name === name)?.team;
+
+  it("seats all three sides, eight each, and plays them as three teams", async () => {
+    const queued = await openQueued({ group: THREE_GROUP, match: fakeMatch() });
+    const ally = await queued.join(ALLY);
+    await queued.join(FOE);
+    expect(ally.getSnapshot().countdownSeconds).toBeNull();
+    await queued.join(FOE_2);
+    await settle();
+    expect(ally.getSnapshot()).toMatchObject({ phase: "starting", countdownSeconds: 5 });
+    await queued.step(COUNTDOWN_SECONDS);
+    const [plan] = queued.plans;
+    expect(plan?.teamCount).toBe(3);
+    expect(teamSizes(plan)).toEqual({ 0: 8, 1: 8, 2: 8 });
+    expect(teamOf(plan, "ticket-4")).toBe(2);
+  });
+
+  it("plays the two sides that came as two teams when nobody of the third did", async () => {
+    const queued = await openQueued({ group: THREE_GROUP, match: fakeMatch() });
+    const ally = await queued.join(ALLY);
+    await queued.join(FOE_2);
+    await queued.step(TIMEOUT_SECONDS);
+    expect(queued.fellThrough).toEqual([]);
+    expect(ally.getSnapshot()).toMatchObject({ phase: "starting", countdownSeconds: 5 });
+    await queued.step(COUNTDOWN_SECONDS);
+    const [plan] = queued.plans;
+    expect(plan?.teamCount).toBe(2);
+    expect(teamSizes(plan)).toEqual({ 0: 8, 1: 8 });
+    // The third side is renumbered into the absent second's place.
+    expect(teamOf(plan, "ticket-4")).toBe(1);
+  });
+
+  it("refuses a third side's join whose proof is checked after it was played as two", async () => {
+    const queued = await openQueued({ group: THREE_GROUP, match: fakeMatch() });
+    await queued.join(ALLY);
+    await queued.join(FOE);
+    await queued.step(TIMEOUT_SECONDS - 1);
+    const late = rawPeer(queued.network);
+    await settle();
+    const join = await forgedJoin(FOE_2, FOE_2, {
+      groupId: GROUP_ID,
+      hostTicketId: HOST,
+      peerId: late.transport.selfId,
+    });
+    // The host's digests for it are held until the timeout has passed.
+    const digest = crypto.subtle.digest.bind(crypto.subtle);
+    const held: (() => void)[] = [];
+    const spy = vi.spyOn(crypto.subtle, "digest").mockImplementation(
+      (algorithm, data) =>
+        new Promise((resolve) => {
+          held.push(() => {
+            resolve(digest(algorithm, data));
+          });
+        }),
+    );
+    late.transport.send("lobby-join", join, "host");
+    await until(() => held.length === 2);
+    queued.lobby.advance(1);
+    spy.mockRestore();
+    for (const release of held) {
+      release();
+    }
+    await until(() => late.notes.length > 0);
+    expect(late.notes).toEqual([{ kind: "refused", reason: "not-admitted" }]);
+    await queued.step(COUNTDOWN_SECONDS);
+    const [plan] = queued.plans;
+    expect(plan?.teamCount).toBe(2);
+    expect(teamSizes(plan)).toEqual({ 0: 8, 1: 8 });
+    expect(teamOf(plan, "Forger")).toBeUndefined();
+  });
+
+  it("falls through, naming the party's ticket, when a side is only partly seated", async () => {
+    const queued = await openQueued({ group: THREE_GROUP, match: fakeMatch() });
+    await queued.join(FOE);
+    await queued.step(TIMEOUT_SECONDS);
+    expect(queued.fellThrough).toEqual([[HOST, FOE_2]]);
+    expect(queued.plans).toEqual([]);
+  });
+});
+
 describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
   /** A 2v2 lobby whose match is over, team 0 (HOST and ALLY) the winner. */
   async function afterMatch(winningTeam: 0 | 1 | null = 0) {
@@ -1024,6 +1124,7 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
         board: board.board(),
         mode: "random-arena-2v2",
         ascentRound: null,
+        teamCount: 2,
         ...(party === undefined ? {} : { party }),
         now: () => now,
         newTicketKey: () => keyOf(String((fresh += 1)).padStart(64, "5")),

@@ -133,7 +133,8 @@ map. Your **Team Builds** are on **Team Builder** alone, and you pick
 none before the lobby. On **Hosted Game**, when the host starts, the lobby
 opens the [Team Lobby](modes.md#team-lobby): propose a Team Build there,
 click a card, which shows each member's weapons and skills, to vote
-for one, then click a seat to take one of its characters.
+for one, then click a seat to take one of its characters. Seats list the
+players and their professions; a character's name shows in the match.
 
 On **Team Arena** (2, 4 or 8 a side, the host's **Team size**),
 **Heroes' Ascent** and **GvG** (8 a side)
