@@ -13,6 +13,7 @@ import {
   callTargetCall,
   middleClickAction,
   pingCall,
+  primaryClickIntent,
   secondaryClickIntents,
 } from "./mouse-intents.js";
 
@@ -119,15 +120,15 @@ const ARENA: ArenaSnapshot = {
 
 describe("secondaryClickIntents", () => {
   it("targets the enemy under the pointer", () => {
-    expect(secondaryClickIntents(MATCH, ARENA, vec2(202, 3), createDoubleClick(), 0)).toEqual([
-      { kind: "target", targetSessionId: "foe" },
-    ]);
+    expect(
+      secondaryClickIntents(MATCH, ARENA, vec2(202, 3), createDoubleClick(), 0, false),
+    ).toEqual([{ kind: "target", targetSessionId: "foe" }]);
   });
 
   it("targets and attacks on a double right click on an enemy", () => {
     const double = createDoubleClick();
-    secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 0);
-    expect(secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 200)).toEqual([
+    secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 0, false);
+    expect(secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 200, false)).toEqual([
       { kind: "target", targetSessionId: "foe" },
       { kind: "attack", targetId: "foe" },
     ]);
@@ -135,8 +136,8 @@ describe("secondaryClickIntents", () => {
 
   it("only targets an ally, however often it is clicked", () => {
     const double = createDoubleClick();
-    secondaryClickIntents(MATCH, ARENA, vec2(100, 0), double, 0);
-    expect(secondaryClickIntents(MATCH, ARENA, vec2(100, 0), double, 200)).toEqual([
+    secondaryClickIntents(MATCH, ARENA, vec2(100, 0), double, 0, false);
+    expect(secondaryClickIntents(MATCH, ARENA, vec2(100, 0), double, 200, false)).toEqual([
       { kind: "target", targetSessionId: "ally" },
     ]);
   });
@@ -150,16 +151,16 @@ describe("secondaryClickIntents", () => {
       stand: { id: "flag-stand", position: vec2(500, 300), holder: undefined },
     };
     const double = createDoubleClick();
-    expect(secondaryClickIntents(MATCH, arena, vec2(5, 290), double, 0)).toEqual([
+    expect(secondaryClickIntents(MATCH, arena, vec2(5, 290), double, 0, false)).toEqual([
       { kind: "target", targetSessionId: "flag/0" },
     ]);
-    expect(secondaryClickIntents(MATCH, arena, vec2(5, 290), double, 200)).toEqual([
+    expect(secondaryClickIntents(MATCH, arena, vec2(5, 290), double, 200, false)).toEqual([
       { kind: "target", targetSessionId: "flag/0" },
       { kind: "attack", targetId: "flag/0" },
     ]);
-    expect(secondaryClickIntents(MATCH, arena, vec2(520, 310), createDoubleClick(), 0)).toEqual([
-      { kind: "target", targetSessionId: "flag-stand" },
-    ]);
+    expect(
+      secondaryClickIntents(MATCH, arena, vec2(520, 310), createDoubleClick(), 0, false),
+    ).toEqual([{ kind: "target", targetSessionId: "flag-stand" }]);
   });
 
   it("targets the stand or a flag under your own body, not yourself (#1299)", () => {
@@ -168,7 +169,7 @@ describe("secondaryClickIntents", () => {
       flags: [{ id: "flag/0", side: "ally", position: vec2(0, 0), carried: false, onStand: false }],
       stand: { id: "flag-stand", position: vec2(200, 0), holder: undefined },
     };
-    expect(secondaryClickIntents(MATCH, arena, vec2(0, 0), createDoubleClick(), 0)).toEqual([
+    expect(secondaryClickIntents(MATCH, arena, vec2(0, 0), createDoubleClick(), 0, false)).toEqual([
       { kind: "target", targetSessionId: "flag/0" },
     ]);
     const onStand: ArenaSnapshot = {
@@ -177,10 +178,10 @@ describe("secondaryClickIntents", () => {
       stand: { id: "flag-stand", position: vec2(0, 0), holder: undefined },
     };
     const double = createDoubleClick();
-    expect(secondaryClickIntents(MATCH, onStand, vec2(0, 0), double, 0)).toEqual([
+    expect(secondaryClickIntents(MATCH, onStand, vec2(0, 0), double, 0, false)).toEqual([
       { kind: "target", targetSessionId: "flag-stand" },
     ]);
-    expect(secondaryClickIntents(MATCH, onStand, vec2(0, 0), double, 200)).toEqual([
+    expect(secondaryClickIntents(MATCH, onStand, vec2(0, 0), double, 200, false)).toEqual([
       { kind: "target", targetSessionId: "flag-stand" },
       { kind: "attack", targetId: "flag-stand" },
     ]);
@@ -191,24 +192,79 @@ describe("secondaryClickIntents", () => {
       ...ARENA,
       stand: { id: "flag-stand", position: vec2(200, 0), holder: undefined },
     };
-    expect(secondaryClickIntents(MATCH, arena, vec2(200, 0), createDoubleClick(), 0)).toEqual([
-      { kind: "target", targetSessionId: "foe" },
-    ]);
+    expect(
+      secondaryClickIntents(MATCH, arena, vec2(200, 0), createDoubleClick(), 0, false),
+    ).toEqual([{ kind: "target", targetSessionId: "foe" }]);
   });
 
   it("targets yourself with no flag object under you", () => {
-    expect(secondaryClickIntents(MATCH, ARENA, vec2(0, 0), createDoubleClick(), 0)).toEqual([
+    expect(secondaryClickIntents(MATCH, ARENA, vec2(0, 0), createDoubleClick(), 0, false)).toEqual([
       { kind: "target", targetSessionId: "me" },
     ]);
   });
 
   it("sends nothing for the ground, and a click there breaks a double", () => {
     const double = createDoubleClick();
-    secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 0);
-    expect(secondaryClickIntents(MATCH, ARENA, vec2(150, 80), double, 100)).toEqual([]);
-    expect(secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 200)).toEqual([
+    secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 0, false);
+    expect(secondaryClickIntents(MATCH, ARENA, vec2(150, 80), double, 100, false)).toEqual([]);
+    expect(secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 200, false)).toEqual([
       { kind: "target", targetSessionId: "foe" },
     ]);
+  });
+});
+
+describe("clicks with the names key held (#2738)", () => {
+  // The foe's name tag, well above its body at (200, 0).
+  const NAME = vec2(200, -40);
+  const HELD: ArenaSnapshot = {
+    ...ARENA,
+    tagBoxes: new Map([["foe", { x: 180, y: -45, width: 40, height: 12 }]]),
+  };
+
+  it("targets on a second right click without attacking, on the body or the name", () => {
+    for (const world of [vec2(200, 0), NAME]) {
+      const double = createDoubleClick();
+      const first = secondaryClickIntents(MATCH, HELD, world, double, 0, true);
+      const second = secondaryClickIntents(MATCH, HELD, world, double, 200, true);
+      expect(first).toEqual([{ kind: "target", targetSessionId: "foe" }]);
+      expect(second).toEqual([{ kind: "target", targetSessionId: "foe" }]);
+    }
+  });
+
+  it("misses the name without the key", () => {
+    expect(secondaryClickIntents(MATCH, HELD, NAME, createDoubleClick(), 0, false)).toEqual([]);
+  });
+
+  it("targets with a left click on a body or its name, and does not walk", () => {
+    expect(primaryClickIntent(HELD, NAME, true)).toEqual({
+      kind: "target",
+      targetSessionId: "foe",
+    });
+    expect(primaryClickIntent(HELD, vec2(200, 0), true)).toEqual({
+      kind: "target",
+      targetSessionId: "foe",
+    });
+  });
+
+  it("walks with a left click on the ground, on yourself, or without the key", () => {
+    expect(primaryClickIntent(HELD, vec2(150, 80), true)).toEqual({
+      kind: "walk-to",
+      x: 150,
+      y: 80,
+    });
+    expect(primaryClickIntent(HELD, vec2(0, 0), true)).toEqual({ kind: "walk-to", x: 0, y: 0 });
+    expect(primaryClickIntent(HELD, vec2(200, 0), false)).toEqual({
+      kind: "walk-to",
+      x: 200,
+      y: 0,
+    });
+  });
+
+  it("calls a foe with a wheel click on its name", () => {
+    expect(middleClickAction(MATCH, HELD, NAME, true)).toEqual({
+      kind: "call",
+      call: { kind: "target", targetId: "foe" },
+    });
   });
 });
 
@@ -219,24 +275,24 @@ describe("middleClickAction (#443)", () => {
   });
 
   it("calls a living foe, and pings a living ally's point and the ground (#1055)", () => {
-    expect(middleClickAction(MATCH, ARENA, vec2(201, 2))).toEqual({
+    expect(middleClickAction(MATCH, ARENA, vec2(201, 2), false)).toEqual({
       kind: "call",
       call: { kind: "target", targetId: "foe" },
     });
-    expect(middleClickAction(MATCH, ARENA, vec2(101, 2))).toEqual({
+    expect(middleClickAction(MATCH, ARENA, vec2(101, 2), false)).toEqual({
       kind: "call",
       call: { kind: "ping", x: 101, y: 2 },
     });
-    expect(middleClickAction(MATCH, ARENA, vec2(150, 60))).toEqual({
+    expect(middleClickAction(MATCH, ARENA, vec2(150, 60), false)).toEqual({
       kind: "call",
       call: { kind: "ping", x: 150, y: 60 },
     });
   });
 
   it("does nothing on yourself, on a corpse, or while you are dead", () => {
-    expect(middleClickAction(MATCH, ARENA, vec2(0, 0))).toEqual({ kind: "none" });
-    expect(middleClickAction(dead("foe"), ARENA, vec2(200, 0))).toEqual({ kind: "none" });
-    expect(middleClickAction(dead("me"), ARENA, vec2(150, 60))).toEqual({ kind: "none" });
+    expect(middleClickAction(MATCH, ARENA, vec2(0, 0), false)).toEqual({ kind: "none" });
+    expect(middleClickAction(dead("foe"), ARENA, vec2(200, 0), false)).toEqual({ kind: "none" });
+    expect(middleClickAction(dead("me"), ARENA, vec2(150, 60), false)).toEqual({ kind: "none" });
   });
 });
 

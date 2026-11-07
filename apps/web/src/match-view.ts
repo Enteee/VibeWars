@@ -23,6 +23,7 @@ import {
   callTargetCall,
   middleClickAction,
   pingCall,
+  primaryClickIntent,
   secondaryClickIntents,
 } from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
@@ -278,6 +279,7 @@ export function toArenaSnapshot(
     // Whose names show is the caller's to say (`withNames`, #253).
     hoverId: undefined,
     showAllNames: false,
+    tagBoxes: undefined,
     // Your team's calls are the caller's (`withCalls`, #443).
     calledId: undefined,
     pings: [],
@@ -946,6 +948,7 @@ export async function startMatchView(
       toArenaSnapshot(match, walls, shrines, flagField, relicField),
       viewport?.pointerWorld(),
       nameReveal.held(),
+      viewport?.scene.nameTagBoxes() ?? new Map(),
     );
     // A watcher has no team, so nobody's calls.
     latestArena = seat === undefined ? arena : withCalls(arena, seat.getCalls());
@@ -1014,11 +1017,23 @@ export async function startMatchView(
       ? undefined
       : viewport?.onButton(({ button, phase, world }) => {
           if (button === "left" && phase === "down") {
-            seat.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
-            viewport.scene.showWalkMarker(world);
+            // With the names key held, a click on a body or its name targets it (#2738).
+            const intent =
+              latestArena === undefined
+                ? ({ kind: "walk-to", x: world.x, y: world.y } as const)
+                : primaryClickIntent(latestArena, world, nameReveal.held());
+            seat.sendIntent(intent);
+            if (intent.kind === "walk-to") {
+              viewport.scene.showWalkMarker(world);
+            }
           } else if (button === "middle" && phase === "down" && latestArena !== undefined) {
             // A wheel click calls a foe, or pings the point (#443, #1055).
-            const action = middleClickAction(seat.getSnapshot(), latestArena, world);
+            const action = middleClickAction(
+              seat.getSnapshot(),
+              latestArena,
+              world,
+              nameReveal.held(),
+            );
             if (action.kind === "call") {
               seat.sendCall(action.call);
             }
@@ -1035,6 +1050,7 @@ export async function startMatchView(
       world,
       doubleClick,
       performance.now(),
+      nameReveal.held(),
     );
     for (const intent of intents) {
       seat.sendIntent(intent);

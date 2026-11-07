@@ -2,10 +2,38 @@ import type { Vec2 } from "@vibewars/game-core";
 import type { ClientIntent, PeerCall } from "@vibewars/game-protocol";
 import type { CallsSnapshot, MatchSnapshot } from "@vibewars/game-session";
 
-import { actorAtPoint, type ArenaSnapshot } from "../render/arena-snapshot.js";
+import {
+  actorAtPoint,
+  type ArenaSnapshot,
+  type RenderableActor,
+} from "../render/arena-snapshot.js";
 import { flagObjectAtPoint } from "../render/flag-objects.js";
 import { attackClickIntents } from "./attack-key.js";
 import type { DoubleClick } from "./double-click.js";
+
+/**
+ * Where the click at `world` lands on a body: with `shift`, the names key
+ * held (#2738), a shown name tag counts as its body.
+ */
+function clicked(arena: ArenaSnapshot, world: Vec2, shift: boolean): RenderableActor | undefined {
+  return actorAtPoint(arena, world, shift ? arena.tagBoxes : undefined);
+}
+
+/**
+ * What a left click sends (#438, #2738): it walks, bodies included, and
+ * keeps the target. With `shift` (the names key held) on another body or
+ * its name, it targets that body instead, and does not walk.
+ */
+export function primaryClickIntent(
+  arena: ArenaSnapshot,
+  world: Vec2,
+  shift: boolean,
+): ClientIntent {
+  const hit = shift ? clicked(arena, world, shift) : undefined;
+  return hit === undefined || hit.team === "self"
+    ? { kind: "walk-to", x: world.x, y: world.y }
+    : { kind: "target", targetSessionId: hit.id };
+}
 
 /**
  * What a right click sends (#438), shared by the match and the Training
@@ -19,7 +47,8 @@ import type { DoubleClick } from "./double-click.js";
  * walks to it as Space does.
  * The ground sends nothing: a missed right click costs nothing, and keeps
  * the target. `doubleClick` is pressed either way, so a click on the
- * ground breaks a double.
+ * ground breaks a double. With `shift` (#2738), a name counts as its body
+ * and a click never attacks, double or not.
  */
 export function secondaryClickIntents(
   snapshot: MatchSnapshot,
@@ -27,8 +56,9 @@ export function secondaryClickIntents(
   world: Vec2,
   doubleClick: DoubleClick,
   nowMs: number,
+  shift: boolean,
 ): ClientIntent[] {
-  const body = actorAtPoint(arena, world)?.id;
+  const body = clicked(arena, world, shift)?.id;
   const flagObject = flagObjectAtPoint(arena.flags, arena.stand, world);
   // #1299: your own body never hides the flag or stand you stand on.
   const hit = body === undefined || body === snapshot.selfSessionId ? (flagObject ?? body) : body;
@@ -38,7 +68,7 @@ export function secondaryClickIntents(
   }
   return [
     { kind: "target", targetSessionId: hit },
-    ...(double ? attackClickIntents(snapshot, hit) : []),
+    ...(double && !shift ? attackClickIntents(snapshot, hit) : []),
   ];
 }
 
@@ -51,19 +81,21 @@ export type MiddleClick =
  * Training Ground: on a living foe, call it for your team; on a living
  * ally or the ground, ping that point (#1055: the party window shows
  * every ally's health, so there is no one to watch). On yourself, on a
- * corpse, or while you are dead: nothing.
+ * corpse, or while you are dead: nothing. With `shift` (#2738), a name
+ * counts as its body.
  */
 export function middleClickAction(
   snapshot: MatchSnapshot,
   arena: ArenaSnapshot,
   world: Vec2,
+  shift: boolean,
 ): MiddleClick {
   const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
   if (self === undefined || self.dead) {
     return { kind: "none" };
   }
   const ping: MiddleClick = { kind: "call", call: { kind: "ping", x: world.x, y: world.y } };
-  const hit = actorAtPoint(arena, world);
+  const hit = clicked(arena, world, shift);
   if (hit === undefined) {
     return ping;
   }

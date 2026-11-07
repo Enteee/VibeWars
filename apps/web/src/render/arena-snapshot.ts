@@ -319,6 +319,12 @@ export interface ArenaSnapshot {
   readonly hoverId: string | undefined;
   /** The names key is held (Shift by default, #302): every name shows (#253). */
   readonly showAllNames: boolean;
+  /**
+   * While the names key is held (#2738), every shown name tag's box by
+   * actor id, world units, so a click on a name hits its body; otherwise
+   * `undefined`.
+   */
+  readonly tagBoxes: ReadonlyMap<string, Rect> | undefined;
   /** The foe your team has called (#443): a chevron over it. */
   readonly calledId: string | undefined;
   /** Your team's pings on the floor (#443). */
@@ -348,6 +354,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   clock: 0,
   hoverId: undefined,
   showAllNames: false,
+  tagBoxes: undefined,
   calledId: undefined,
   pings: [],
   strokes: [],
@@ -409,6 +416,14 @@ export function teamColour(team: RenderableActor["team"]): number {
   return TEAM_COLOURS[team];
 }
 
+/** An axis-aligned box, world units: its top-left corner and size. */
+export interface Rect {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 /**
  * Hit-test a point against actors; used by click-to-target (brief §5).
  *
@@ -416,15 +431,53 @@ export function teamColour(team: RenderableActor["team"]): number {
  * behind it. With nobody living under the point, an ally's corpse is
  * picked, so a resurrection has something to aim at (#812). A foe's
  * corpse never is.
+ *
+ * With `tagBoxes` (the names key held, #2738), an actor is also hit
+ * anywhere in the column from its name tag's top down to its body's
+ * bottom, as wide as the wider of the two, so clicking a name picks its
+ * body. A body under the point still wins over any column; among columns,
+ * the nearest body centre does, under the same corpse rules.
  */
-export function actorAtPoint(snapshot: ArenaSnapshot, point: Vec2): RenderableActor | undefined {
+export function actorAtPoint(
+  snapshot: ArenaSnapshot,
+  point: Vec2,
+  tagBoxes?: ReadonlyMap<string, Rect>,
+): RenderableActor | undefined {
+  const living = (actor: RenderableActor): boolean => !actor.dead;
+  const allyCorpse = (actor: RenderableActor): boolean => actor.dead && actor.team === "ally";
+  const body = (actor: RenderableActor): boolean =>
+    Vec.distance(actor.position, point) <= actor.radius;
+  const column = (actor: RenderableActor): boolean => {
+    const tag = tagBoxes?.get(actor.id);
+    return tag !== undefined && rectContains(tagColumn(actor, tag), point);
+  };
   return (
-    nearestUnder(snapshot.actors, point, (actor) => !actor.dead) ??
-    nearestUnder(snapshot.actors, point, (actor) => actor.dead && actor.team === "ally")
+    nearestUnder(snapshot.actors, point, (actor) => living(actor) && body(actor)) ??
+    nearestUnder(snapshot.actors, point, (actor) => allyCorpse(actor) && body(actor)) ??
+    nearestUnder(snapshot.actors, point, (actor) => living(actor) && column(actor)) ??
+    nearestUnder(snapshot.actors, point, (actor) => allyCorpse(actor) && column(actor))
   );
 }
 
-/** The actor among `actors` that `accepts` nearest `point`, within its radius. */
+/** `actor`'s click column under the names key (#2738): its tag's top to its body's bottom. */
+export function tagColumn(actor: RenderableActor, tag: Rect): Rect {
+  const { x, y } = actor.position;
+  const left = Math.min(tag.x, x - actor.radius);
+  const right = Math.max(tag.x + tag.width, x + actor.radius);
+  const bottom = y + actor.radius;
+  return { x: left, y: tag.y, width: right - left, height: bottom - tag.y };
+}
+
+function rectContains(rect: Rect, point: Vec2): boolean {
+  return (
+    point.x >= rect.x &&
+    point.x <= rect.x + rect.width &&
+    point.y >= rect.y &&
+    point.y <= rect.y + rect.height
+  );
+}
+
+/** The actor among `actors` that `accepts` at `point` whose centre is nearest it. */
 function nearestUnder(
   actors: readonly RenderableActor[],
   point: Vec2,
@@ -437,7 +490,7 @@ function nearestUnder(
       continue;
     }
     const d = Vec.distance(actor.position, point);
-    if (d <= actor.radius && d < bestDistance) {
+    if (d < bestDistance) {
       best = actor;
       bestDistance = d;
     }
@@ -449,15 +502,18 @@ function nearestUnder(
  * `snapshot` with whose names show this frame (#253): the body under
  * `pointer` (in world units, `undefined` once the cursor left the
  * arena), hit-tested like a click, so a foe's corpse is never picked, and
- * every name while `showAllNames`.
+ * every name while `showAllNames`. Then the shown names' `tagBoxes`
+ * (the scene's last frame) count too (#2738), for the hover and the clicks.
  */
 export function withNames(
   snapshot: ArenaSnapshot,
   pointer: Vec2 | undefined,
   showAllNames: boolean,
+  tagBoxes: ReadonlyMap<string, Rect>,
 ): ArenaSnapshot {
-  const hoverId = pointer === undefined ? undefined : actorAtPoint(snapshot, pointer)?.id;
-  return { ...snapshot, hoverId, showAllNames };
+  const boxes = showAllNames ? tagBoxes : undefined;
+  const hoverId = pointer === undefined ? undefined : actorAtPoint(snapshot, pointer, boxes)?.id;
+  return { ...snapshot, hoverId, showAllNames, tagBoxes: boxes };
 }
 
 /**
@@ -621,6 +677,28 @@ export function nameplateLayout(
     textX: left + glyph + gap + text / 2,
     bottom,
   };
+}
+
+/**
+ * The box of `actor`'s name tag (#2738), glyph and name together, world
+ * units, as `nameplateLayout` places them at `zoom`.
+ *
+ * @param textWidth the label's measured width, screen px
+ * @param textHeight the label's measured height, screen px
+ */
+export function nameTagBox(
+  actor: RenderableActor,
+  textWidth: number,
+  textHeight: number,
+  zoom: number,
+): Rect {
+  const layout = nameplateLayout(actor, textWidth, zoom);
+  const text = screenPx(textWidth, zoom);
+  const glyph = layout.glyphX === undefined ? 0 : screenPx(PROFESSION_GLYPH_SIZE, zoom);
+  const left = layout.glyphX === undefined ? layout.textX - text / 2 : layout.glyphX - glyph / 2;
+  const right = layout.textX + text / 2;
+  const height = Math.max(screenPx(textHeight, zoom), glyph);
+  return { x: left, y: layout.bottom - height, width: right - left, height };
 }
 
 /** The primary profession's glyph inside the body (#1037, Q105 B), world units. */

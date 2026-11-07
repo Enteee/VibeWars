@@ -26,12 +26,14 @@ import {
   floatingTextY,
   healthFraction,
   nameShown,
+  nameTagBox,
   nameplateLayout,
   placeFloatingText,
   swingFlashAlpha,
   teamColour,
   type AreaFlash,
   type NameplateLayout,
+  type Rect,
   type SwingFlash,
 } from "./arena-snapshot.js";
 import {
@@ -96,7 +98,7 @@ import {
 } from "./flag-objects.js";
 import { lyingPose } from "./lying-pose.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
-import { screenSized } from "./screen-text.js";
+import { screenPx, screenSized } from "./screen-text.js";
 import {
   BODY_EDGE_WIDTH,
   SELF_RIM,
@@ -175,6 +177,9 @@ const DEAD_INK = "#4a5464";
 /** The same two inks as tints, for the profession glyph before a name (#281). */
 const INK_TINT = 0xd7dee8;
 const DEAD_INK_TINT = 0x4a5464;
+/** The name a click would hit (#2738), in the target ring's colour, and underlined. */
+const HOVER_INK = "#ffd866";
+const HOVER_INK_TINT = TARGET_RING;
 
 /** An off-screen marker's length, tip to base, and width, screen px (#440). */
 const EDGE_MARKER_LENGTH = 12;
@@ -270,6 +275,10 @@ export class ArenaScene extends Phaser.Scene {
   private nameLabels = new Map<string, Phaser.GameObjects.Text>();
   /** The primary profession's glyph before each name, one pooled image per actor (#281). */
   private nameGlyphs = new Map<string, Phaser.GameObjects.Image>();
+  /** Every shown name tag's box, world units, as last drawn (#2738). */
+  private tagBoxes: ReadonlyMap<string, Rect> = new Map();
+  /** The 1 px line under the hovered name (#2738), one reused Graphics. */
+  private nameUnderline: Phaser.GameObjects.Graphics | undefined;
   /** The primary profession's glyph inside each body, one pooled image per actor (#1037). */
   private bodyGlyphs = new Map<string, Phaser.GameObjects.Image>();
   /** The casting skill's type badge by each cast bar, one pooled image per actor (#1125). */
@@ -310,6 +319,11 @@ export class ArenaScene extends Phaser.Scene {
   /** Replace the snapshot to draw on the next frame. */
   public setSnapshot(snapshot: ArenaSnapshot): void {
     this.snapshot = snapshot;
+  }
+
+  /** Every shown name tag's box by actor id, world units, as last drawn (#2738). */
+  public nameTagBoxes(): ReadonlyMap<string, Rect> {
+    return this.tagBoxes;
   }
 
   /** Queue a floating number/label above a world position. */
@@ -1173,6 +1187,9 @@ export class ArenaScene extends Phaser.Scene {
   private updateNameLabels(): void {
     const zoom = this.cameras.main.zoom;
     const seen = new Set<string>();
+    const tagBoxes = new Map<string, Rect>();
+    const underline = (this.nameUnderline ??= this.add.graphics().setDepth(OVERLAY_DEPTH));
+    underline.clear();
     for (const actor of this.snapshot.actors) {
       seen.add(actor.id);
       let label = this.nameLabels.get(actor.id);
@@ -1185,7 +1202,8 @@ export class ArenaScene extends Phaser.Scene {
       }
       // setText skips an unchanged string, but setColor redraws and
       // re-uploads the label's texture every call, so only on a change.
-      const color = actor.dead ? DEAD_INK : INK;
+      const hovered = actor.id === this.snapshot.hoverId;
+      const color = hovered ? HOVER_INK : actor.dead ? DEAD_INK : INK;
       if (label.style.color !== color) {
         label.setColor(color);
       }
@@ -1200,8 +1218,18 @@ export class ArenaScene extends Phaser.Scene {
       // `width` is unscaled: the label's screen px.
       const layout = nameplateLayout(actor, label.width, zoom);
       label.setPosition(layout.textX, layout.bottom).setVisible(shown);
-      this.updateNameGlyph(actor, layout, shown);
+      this.updateNameGlyph(actor, layout, shown, hovered);
+      if (shown) {
+        tagBoxes.set(actor.id, nameTagBox(actor, label.width, label.height, zoom));
+      }
+      if (shown && hovered) {
+        const half = screenPx(label.width, zoom) / 2;
+        underline
+          .lineStyle(screenPx(1, zoom), HOVER_INK_TINT, 1)
+          .lineBetween(layout.textX - half, layout.bottom, layout.textX + half, layout.bottom);
+      }
     }
+    this.tagBoxes = tagBoxes;
     for (const [id, label] of this.nameLabels) {
       if (!seen.has(id)) {
         label.destroy();
@@ -1217,7 +1245,12 @@ export class ArenaScene extends Phaser.Scene {
    * a corpse's. Its frame and tint are set only when they change, as the
    * label's colour is, so a steady frame re-uploads nothing.
    */
-  private updateNameGlyph(actor: RenderableActor, layout: NameplateLayout, shown: boolean): void {
+  private updateNameGlyph(
+    actor: RenderableActor,
+    layout: NameplateLayout,
+    shown: boolean,
+    hovered: boolean,
+  ): void {
     let glyph = this.nameGlyphs.get(actor.id);
     if (actor.profession === undefined || layout.glyphX === undefined) {
       glyph?.setVisible(false);
@@ -1235,7 +1268,7 @@ export class ArenaScene extends Phaser.Scene {
     if (glyph.frame.name !== frame) {
       glyph.setFrame(frame);
     }
-    const tint = actor.dead ? DEAD_INK_TINT : INK_TINT;
+    const tint = hovered ? HOVER_INK_TINT : actor.dead ? DEAD_INK_TINT : INK_TINT;
     if (glyph.tint !== tint) {
       glyph.setTint(tint);
     }
