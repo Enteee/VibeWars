@@ -15,7 +15,9 @@ import {
   body,
   fighter,
   match,
+  ruleFor,
 } from "./test-support.js";
+import fight from "./fight.js";
 
 describe("play-build fights (#1189, #1193, #1965)", () => {
   it("stands and fights a melee foe at its elbow with the bow, by a wall or in the open, however fast it thinks", () => {
@@ -262,5 +264,36 @@ describe("play-build's Ranger attacks (#2159)", () => {
     expect(askBot(sim, "r")).toMatchObject({ useSkillId: SCREAM, targetId: "near" });
     sim.get("near")?.combatant.statuses.apply("bleeding", 10, "x", NO_RANKS);
     expect(askBot(sim, "r")).toMatchObject({ useSkillId: SCREAM, targetId: "foe" });
+  });
+});
+
+describe("a healer fights from its post (#2615)", () => {
+  /** A monk with a foe out of its reach, `mate` beside it or not; nothing in range. */
+  const decide = (mate: boolean) => {
+    const sim = match([
+      fighter("m", 0, MONK, vec2(200, 400)),
+      ...(mate ? [fighter("mate", 0, WARRIOR, vec2(300, 400))] : []),
+      fighter("foe", 1, WARRIOR, vec2(200 + RANGE_SPELL + 200, 400)),
+    ]);
+    return fight.decide(
+      ruleFor(
+        sim,
+        "m",
+        { targetId: "foe" },
+        { check: () => ({ ok: false, reason: "out-of-range" }) },
+      ),
+    );
+  };
+
+  it("neither walks in to cast nor to swing with an ally to cover", () => {
+    const intent = decide(true);
+    expect(intent?.useSkillId).toBeUndefined();
+    expect(intent?.attackTargetId).toBeUndefined();
+    expect(intent?.targetId).toBe("foe");
+  });
+
+  it("walks in to fight with nobody to cover", () => {
+    const intent = decide(false);
+    expect(intent?.useSkillId ?? intent?.attackTargetId).toBeDefined();
   });
 });

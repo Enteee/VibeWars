@@ -1,6 +1,6 @@
 import type { Skill } from "../../../skills/types.js";
 import type { Vec2 } from "../../../vec2.js";
-import type { BehaviourContext, BehaviourIntent } from "../../behaviour.js";
+import type { BehaviourContext, BehaviourCursor, BehaviourIntent } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
 import type { BotRole } from "../role.js";
 
@@ -29,6 +29,8 @@ export interface RuleContext {
   readonly foeCentroid: Vec2 | undefined;
   /** Any participant's role, from the match's cache; a creature: `undefined` (#2549). */
   readonly roleOf: (participant: Participant) => BotRole | undefined;
+  /** Its own memory between thinks; a rule may write to it (#2615). */
+  readonly cursor: BehaviourCursor;
 }
 
 /** One step of `play-build`'s think: the first rule with an answer decides. */

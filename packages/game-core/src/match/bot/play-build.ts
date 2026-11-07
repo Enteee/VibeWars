@@ -204,6 +204,7 @@ function think(
       return check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight";
     },
     mayEndUpkeep: cursor.upkeepDropSeconds <= 0,
+    cursor,
     role,
     foeCentroid: context.foeCentroid,
     roleOf,

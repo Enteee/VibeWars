@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import type { PlayerBuild } from "../../build.js";
-import { distance, vec2, type Vec2 } from "../../vec2.js";
+import { distance, dot, length, sub, vec2, type Vec2 } from "../../vec2.js";
 import type { MatchSimulation } from "../simulation.js";
 import { ELBOW_DISTANCE } from "./rules/shared.js";
 import { DT, ELEMENTALIST, MONK, RANGER, WARRIOR, fighter, match } from "./rules/test-support.js";
 
 const RANGED = ["e0", "r0", "e1", "r1"];
 const SECONDS = 20;
+/** How often a bot thinks. */
+const THINK = 0.25;
 
 /** 4v4 (#2545): `lead`, two ranged bots and a healer a side. */
 function fight(lead: PlayerBuild, seed: string): MatchSimulation {
@@ -89,5 +91,62 @@ describe("bots take positions by role (#2545)", () => {
     it("plays the same fight twice from the same seed", () => {
       expect(play(WARRIOR).positions).toEqual(positions);
     });
+  });
+});
+
+/**
+ * Of the 0.25 s windows a healer bot moved in, across `seeds`' 4v4s of
+ * `comp` a side for `SECONDS`, the share that turned it round (#2615):
+ * its step and the one before both over 5 units and against each other.
+ */
+function healerTurns(comp: readonly PlayerBuild[], seeds: string): number {
+  let turns = 0;
+  let moving = 0;
+  for (const seed of seeds) {
+    const side = (team: number, x: number) =>
+      comp.map((build, i) =>
+        fighter(`${String(team)}-${String(i)}`, team, build, vec2(x, 100 + 200 * i)),
+      );
+    const sim = match([...side(0, 200), ...side(1, 1400)], seed);
+    const healers = [...sim.participants()].filter(({ id }) =>
+      id.endsWith(`-${String(comp.indexOf(MONK))}`),
+    );
+    const last = new Map<string, Vec2>();
+    const steps = new Map<string, Vec2>();
+    let next = THINK;
+    for (let t = 0; t < SECONDS; t += DT) {
+      sim.step(DT);
+      if (t + DT < next) continue;
+      next += THINK;
+      for (const { id, position, combatant } of healers) {
+        const before = last.get(id);
+        last.set(id, position);
+        const step = before === undefined ? undefined : sub(position, before);
+        const previous = steps.get(id);
+        if (combatant.dead || step === undefined) {
+          steps.delete(id);
+          continue;
+        }
+        steps.set(id, step);
+        if (length(step) <= 5) continue;
+        moving += 1;
+        if (previous !== undefined && length(previous) > 5 && dot(step, previous) < 0) turns += 1;
+      }
+    }
+  }
+  return turns / moving;
+}
+
+describe("healer bots hold their post (#2615)", () => {
+  it.each([
+    ["two warriors and an elementalist", [WARRIOR, WARRIOR, ELEMENTALIST, MONK]],
+    ["a warrior, a ranger and an elementalist", [WARRIOR, RANGER, ELEMENTALIST, MONK]],
+  ])("turns a healer beside %s round in at most 3 of every 100 windows it moves in", (_, comp) => {
+    expect(healerTurns(comp, "abcd")).toBeLessThanOrEqual(0.03);
+  });
+
+  it("plays the same fight twice from the same seed", () => {
+    const comp = [WARRIOR, WARRIOR, ELEMENTALIST, MONK];
+    expect(healerTurns(comp, "a")).toBe(healerTurns(comp, "a"));
   });
 });

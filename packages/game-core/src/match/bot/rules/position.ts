@@ -7,6 +7,8 @@ import {
   ELBOW_DISTANCE,
   NOTHING,
   POSITION_SLACK,
+  RESPOT_DISTANCE,
+  WARD_SWITCH,
   healthFraction,
   nearestTo,
   reachable,
@@ -101,15 +103,22 @@ function reach(self: Participant, bar: RuleContext["bar"]): number {
  * centroid, as close as keeps it `HEALER_CLEARANCE` off the nearest foe.
  * Where it stands already does while that ally is within its reach and
  * no foe within `ELBOW_DISTANCE`: every step is a swing or a cast lost.
+ * It keeps its ward and its spot in `cursor` (#2615), so a hit traded or
+ * a foe's step does not turn it round: see `keptWard` and `keptSpot`.
  */
-function coverSpot({ self, allies, foes, foeCentroid }: RuleContext): Spot | undefined {
+function coverSpot({ self, allies, foes, foeCentroid, cursor }: RuleContext): Spot | undefined {
   if (foeCentroid === undefined || foes.length === 0) {
     return undefined;
   }
-  const ward = lookedAfter(
+  const ward = keptWard(
+    cursor.wardId,
     allies.filter((ally) => ally.id !== self.id),
     foeCentroid,
   );
+  if (ward?.id !== cursor.wardId) {
+    cursor.wardId = ward?.id;
+    cursor.coverSpot = undefined;
+  }
   if (ward === undefined) {
     return undefined;
   }
@@ -118,6 +127,7 @@ function coverSpot({ self, allies, foes, foeCentroid }: RuleContext): Spot | und
     distance(ward.position, self.position) <= HEALER_REACH &&
     (near === undefined || distance(near.position, self.position) > ELBOW_DISTANCE)
   ) {
+    cursor.coverSpot = undefined;
     return undefined;
   }
   const back = normalize(sub(ward.position, foeCentroid));
@@ -133,7 +143,40 @@ function coverSpot({ self, allies, foes, foeCentroid }: RuleContext): Spot | und
       break;
     }
   }
-  return { point, watched: ward.position };
+  cursor.coverSpot = keptSpot(cursor.coverSpot, point, foes);
+  return { point: cursor.coverSpot, watched: ward.position };
+}
+
+/**
+ * The ally a healer keeps looking after: `wardId` while it is among
+ * `others`, unless `lookedAfter`'s pick is `WARD_SWITCH` more hurt.
+ */
+function keptWard(
+  wardId: string | undefined,
+  others: readonly Participant[],
+  foeCentroid: Vec2,
+): Participant | undefined {
+  const fresh = lookedAfter(others, foeCentroid);
+  const kept = others.find((ally) => ally.id === wardId);
+  if (kept === undefined || fresh === undefined) {
+    return fresh;
+  }
+  return healthFraction(fresh) <= healthFraction(kept) - WARD_SWITCH ? fresh : kept;
+}
+
+/**
+ * The spot a healer keeps walking to: `kept`, unless `fresh` lies more
+ * than `RESPOT_DISTANCE` from it or a foe stands at its elbow there.
+ */
+export function keptSpot(kept: Vec2 | undefined, fresh: Vec2, foes: readonly Participant[]): Vec2 {
+  if (
+    kept === undefined ||
+    distance(fresh, kept) > RESPOT_DISTANCE ||
+    foes.some((foe) => distance(foe.position, kept) <= ELBOW_DISTANCE)
+  ) {
+    return fresh;
+  }
+  return kept;
 }
 
 /** The ally with the lowest health fraction; all whole, the one nearest `foeCentroid`. */

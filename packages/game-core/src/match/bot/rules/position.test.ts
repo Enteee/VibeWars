@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { RANGE_SPELL } from "../../../distances.js";
 import { distance, vec2 } from "../../../vec2.js";
-import position from "./position.js";
+import position, { keptSpot } from "./position.js";
+import { createCursor } from "../../behaviour.js";
 import { POSITION_SLACK } from "./shared.js";
 import { ELEMENTALIST, MONK, WARRIOR, fighter, match, ruleFor } from "./test-support.js";
 
@@ -60,5 +61,57 @@ describe("position (#2545)", () => {
       fighter("foe", 1, WARRIOR, FOE),
     ]);
     expect(position.decide(ruleFor(fight, "w", { targetId: "foe" }))).toBeUndefined();
+  });
+});
+
+describe("a healer keeps its ward and its spot (#2615)", () => {
+  const FOE = vec2(1000, 400);
+  /** A healer well behind two warriors that trade hits, `a` at `a` and `b` at `b` of their health. */
+  const trading = (a: number, b: number, extra: Parameters<typeof fighter>[] = []) => {
+    const fight = match([
+      fighter("m", 0, MONK, vec2(100, 400)),
+      fighter("a", 0, WARRIOR, vec2(700, 300), { startHealthFraction: a }),
+      fighter("b", 0, WARRIOR, vec2(700, 500), { startHealthFraction: b }),
+      fighter("foe", 1, WARRIOR, FOE),
+      ...extra.map((spec) => fighter(...spec)),
+    ]);
+    return fight;
+  };
+
+  it("keeps its ward while the two trade hits, and switches once the other is clearly worse off", () => {
+    const cursor = createCursor();
+    position.decide(ruleFor(trading(0.5, 0.45), "m", { cursor }));
+    expect(cursor.wardId).toBe("b");
+    position.decide(ruleFor(trading(0.45, 0.5), "m", { cursor }));
+    expect(cursor.wardId).toBe("b");
+    position.decide(ruleFor(trading(0.3, 0.5), "m", { cursor }));
+    expect(cursor.wardId).toBe("a");
+  });
+
+  it("keeps walking to its spot until a fresh one is clearly elsewhere or a foe stands at it", () => {
+    const fresh = () => {
+      const cursor = createCursor();
+      position.decide(ruleFor(trading(1, 0.5), "m", { cursor }));
+      if (cursor.coverSpot === undefined) throw new Error("no spot");
+      return { cursor, spot: cursor.coverSpot };
+    };
+    const { spot } = fresh();
+    const kept = (offset: number, sim = trading(1, 0.5)) => {
+      const { cursor } = fresh();
+      cursor.coverSpot = vec2(spot.x, spot.y + offset);
+      return position.decide(ruleFor(sim, "m", { cursor }))?.moveTo;
+    };
+    expect(kept(50)).toEqual(vec2(spot.x, spot.y + 50));
+    expect(kept(100)).toEqual(spot);
+  });
+
+  it("leaves its kept spot for the fresh one once a foe stands at its elbow there", () => {
+    const sim = trading(1, 0.5);
+    const foe = sim.get("foe");
+    if (foe === undefined) throw new Error("no foe");
+    const kept = vec2(foe.position.x - 90, foe.position.y);
+    const fresh = vec2(kept.x - 50, kept.y);
+    expect(keptSpot(kept, fresh, [foe])).toBe(fresh);
+    expect(keptSpot(vec2(kept.x - 20, kept.y), fresh, [foe])).toEqual(vec2(kept.x - 20, kept.y));
   });
 });

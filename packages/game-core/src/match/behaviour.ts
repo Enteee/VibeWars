@@ -206,6 +206,10 @@ export interface BehaviourCursor {
   heldMove: Pick<BehaviourIntent, "moveDirection" | "moveTo">;
   /** `play-build`: seconds before it may end another maintained enchantment (#2492). */
   upkeepDropSeconds: number;
+  /** `play-build`, a healer: the ally it looks after, kept until another is clearly worse off (#2615). */
+  wardId: string | undefined;
+  /** `play-build`, a healer: the spot it walks to, kept until a fresh one is clearly elsewhere (#2615). */
+  coverSpot: Vec2 | undefined;
 }
 
 export interface BehaviourContext {
@@ -263,6 +267,8 @@ export function createCursor(): BehaviourCursor {
     returning: false,
     heldMove: { moveDirection: ZERO, moveTo: undefined },
     upkeepDropSeconds: 0,
+    wardId: undefined,
+    coverSpot: undefined,
   };
 }
 

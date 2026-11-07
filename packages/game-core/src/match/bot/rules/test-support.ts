@@ -170,6 +170,7 @@ export function ruleFor(
     role: botRole(bar, self.combatant.equipment.mainHand.weapon.range),
     foeCentroid: view.foeCentroid,
     roleOf,
+    cursor: createCursor(),
     ...extra,
   };
 }
