@@ -5,7 +5,7 @@ import { segment, type Segment } from "../geometry.js";
 import { buildNavGraph, createPathFinder } from "../pathing.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, ZERO, type Vec2 } from "../vec2.js";
-import { createCursor, decide, type Behaviour } from "./behaviour.js";
+import { createCursor, decide, NO_OBJECTIVES, type Behaviour } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type CompanionMode, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
@@ -325,6 +325,7 @@ describe("auto-attack", () => {
         isBot: () => false,
         calledTargetId: undefined,
         sees: () => true,
+        objectives: NO_OBJECTIVES,
       },
     );
     expect(intent.attackTargetId).toBe("first");
@@ -384,6 +385,7 @@ describe("follow-and-attack (#467)", () => {
       isBot: () => false,
       calledTargetId: undefined,
       sees: () => true,
+      objectives: NO_OBJECTIVES,
     });
   }
 
