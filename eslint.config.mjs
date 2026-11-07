@@ -7,6 +7,51 @@ import prettier from "eslint-config-prettier/flat";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+import vibewarsRules from "./eslint/no-raw-ui-text.mjs";
+
+/** Files with player-facing text not yet moved onto t() (#2648): see below. */
+const NOT_YET_TRANSLATED = [
+  "apps/web/src/match-view.ts",
+  "apps/web/src/music/music-player.ts",
+  "apps/web/src/ui/arena-notice.ts",
+  "apps/web/src/ui/beat-editor.ts",
+  "apps/web/src/ui/build-banner.ts",
+  "apps/web/src/ui/build-editor.ts",
+  "apps/web/src/ui/character-figure.ts",
+  "apps/web/src/ui/character-preview.ts",
+  "apps/web/src/ui/chat.ts",
+  "apps/web/src/ui/controls-section.ts",
+  "apps/web/src/ui/effects-monitor.ts",
+  "apps/web/src/ui/help-screen.ts",
+  "apps/web/src/ui/hud.ts",
+  "apps/web/src/ui/jukebox.ts",
+  "apps/web/src/ui/kit.ts",
+  "apps/web/src/ui/licences-section.ts",
+  "apps/web/src/ui/lobby-screen.ts",
+  "apps/web/src/ui/lobby-window.ts",
+  "apps/web/src/ui/menu.ts",
+  "apps/web/src/ui/music-controls.ts",
+  "apps/web/src/ui/options-screen.ts",
+  "apps/web/src/ui/paper-doll-weapon.ts",
+  "apps/web/src/ui/paper-doll.ts",
+  "apps/web/src/ui/party-window.ts",
+  "apps/web/src/ui/pips.ts",
+  "apps/web/src/ui/player-section.ts",
+  "apps/web/src/ui/queue-screen.ts",
+  "apps/web/src/ui/rail.ts",
+  "apps/web/src/ui/reconnect-overlay.ts",
+  "apps/web/src/ui/relay-prompt.ts",
+  "apps/web/src/ui/relay-section.ts",
+  "apps/web/src/ui/skill-library-view.ts",
+  "apps/web/src/ui/team-editor.ts",
+  "apps/web/src/ui/team-lobby-screen.ts",
+  "apps/web/src/ui/team-play.ts",
+  "apps/web/src/ui/topbar.ts",
+  "apps/web/src/ui/touch-notice.ts",
+  "apps/web/src/ui/training-panel.ts",
+  "apps/web/src/ui/weapon-set-slots.ts",
+];
+
 /**
  * Type-aware linting is enabled repo-wide. It is slower than syntactic
  * linting, but it is the only way to catch the mistakes that actually matter
@@ -201,6 +246,16 @@ export default defineConfig([
         },
       ],
     },
+  },
+
+  // Player-facing text goes through t() (#2648, ADR-0050). The ignores
+  // are the files not yet moved onto it: each extraction card of #2644
+  // deletes its files from the list, and the last deletes the list.
+  {
+    files: ["apps/web/src/**/*.ts"],
+    ignores: ["apps/web/src/**/*.test.ts", "apps/web/src/i18n/**", ...NOT_YET_TRANSLATED],
+    plugins: { vibewars: vibewarsRules },
+    rules: { "vibewars/no-raw-ui-text": "error" },
   },
 
   // Tests deliberately feed wrong-typed values to validators to prove they are

@@ -10,7 +10,7 @@ import {
 } from "@vibewars/game-core";
 import { LOBBY_MODES, type LobbyMode } from "@vibewars/game-protocol";
 
-import { sanitizeGuildTag, sanitizeName } from "./names.js";
+import { sanitizeCharacterName, sanitizeGuildTag, sanitizeName } from "./names.js";
 
 /**
  * What one finished match looked like (#2528), as its host reports it:
@@ -97,8 +97,10 @@ function parsePlayer(value: unknown): MatchRecordPlayer | undefined {
   }
   const { name, guildTag } = value;
   // Held to what the game shows anywhere else, as the tag is: no bidi,
-  // control or zero-width characters, at most MAX_NAME_LENGTH graphemes.
-  if (typeof name !== "string" || name === "" || sanitizeName(name, "") !== name) {
+  // control or zero-width characters, at most MAX_NAME_LENGTH graphemes;
+  // a bot is named after its build, so up to MAX_CHARACTER_NAME_LENGTH (#2636).
+  const sanitize = value.bot ? sanitizeCharacterName : sanitizeName;
+  if (typeof name !== "string" || name === "" || sanitize(name, "") !== name) {
     return undefined;
   }
   if (

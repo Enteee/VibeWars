@@ -1761,8 +1761,8 @@ describe("a Team Lobby (#1458)", () => {
     expect(seats.map(({ name, bot, build }) => [name, bot, build?.name])).toEqual([
       ["Host", false, WARRIOR.name],
       ["Bob", false, RANGER.name],
-      ["Monk…", true, MONK.name],
-      ["Necromancer…", true, NECRO.name],
+      [MONK.name, true, MONK.name],
+      [NECRO.name, true, NECRO.name],
     ]);
   });
 
@@ -1837,11 +1837,11 @@ describe("a Team Lobby (#1458)", () => {
       ["Host", false, MONK.name],
       ["Warrior/Monk", true, WARRIOR.name],
       ["Ranger/Mesmer", true, RANGER.name],
-      ["Necromancer…", true, NECRO.name],
+      [NECRO.name, true, NECRO.name],
     ]);
     expect(sideSeats(1)).toEqual([
       ["Ann", false, ELE.name],
-      ["Monk…", true, MONK.name],
+      [MONK.name, true, MONK.name],
       ["Ranger/Mesmer", true, RANGER.name],
       ["Warrior/Monk", true, WARRIOR.name],
     ]);

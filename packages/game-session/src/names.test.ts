@@ -179,20 +179,36 @@ describe("sanitizeName", () => {
   });
 });
 
-describe("sanitizeCharacterName (#1460)", () => {
+describe("sanitizeCharacterName (#1460, #2636)", () => {
   it("keeps a name that fits", () => {
     expect(sanitizeCharacterName("Warrior/Monk", "Warrior")).toBe("Warrior/Monk");
-    expect(sanitizeCharacterName("Sixteen letters!", "Monk")).toBe("Sixteen letters!");
+    expect(sanitizeCharacterName("Necromancer/Elementalist", "Necromancer")).toBe(
+      "Necromancer/Elementalist",
+    );
   });
 
-  it("cuts a long one at its last space or slash, never mid-word", () => {
-    expect(sanitizeCharacterName("Necromancer/Elementalist", "Necromancer")).toBe("Necromancer…");
-    expect(sanitizeCharacterName("Monk/Elementalist", "Monk")).toBe("Monk…");
-    expect(sanitizeCharacterName("Fire Nuker of the North", "Elementalist")).toBe("Fire Nuker of…");
+  it("keeps the longest built-in build's name whole, 39 graphemes", () => {
+    const name = "Balthazar FFF Zaishen Trappers 3 (R/Mo)";
+    expect(name).toHaveLength(39);
+    expect(sanitizeCharacterName(name, "Ranger")).toBe(name);
   });
 
-  it("cuts one with no boundary at 15 graphemes and the ellipsis", () => {
-    expect(sanitizeCharacterName("Supercalifragilistic", "Mesmer")).toBe("Supercalifragil…");
+  it("cuts one over 40 at its last space or slash, never mid-word", () => {
+    // 45 graphemes.
+    expect(
+      sanitizeCharacterName("Fire Nuker of the Northern Shiverpeak Passage", "Elementalist"),
+    ).toBe("Fire Nuker of the Northern Shiverpeak…");
+    expect(sanitizeCharacterName(`${"Warrior".repeat(5)}/Monk/Ranger`, "Warrior")).toBe(
+      `${"Warrior".repeat(5)}…`,
+    );
+  });
+
+  it("cuts one with no boundary at 39 graphemes and the ellipsis", () => {
+    expect(sanitizeCharacterName("x".repeat(45), "Mesmer")).toBe(`${"x".repeat(39)}…`);
+  });
+
+  it("leaves a display name cut at 16", () => {
+    expect(sanitizeName("Balthazar FFF Zaishen Trappers", "fallback")).toBe("Balthazar FFF Za");
   });
 
   it("falls back, as a name does, for nothing drawable", () => {
