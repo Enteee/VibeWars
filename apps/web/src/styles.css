@@ -6412,8 +6412,10 @@ button.skill-group-header > .skill-group-rank {
   font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
 }
 
-.beat-editor-code .cm-content {
-  caret-color: var(--accent);
+/* drawSelection() hides the native caret and draws its own, black by default. */
+.beat-editor-code .cm-editor .cm-cursor,
+.beat-editor-code .cm-editor .cm-dropCursor {
+  border-left: 2px solid var(--accent);
 }
 
 .beat-editor-code .cm-gutters {
