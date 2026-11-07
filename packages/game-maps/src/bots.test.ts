@@ -1,5 +1,6 @@
 import {
   ANNIHILATION_MATCH_RULES,
+  BOT_REACTION,
   CAPTURE_POINTS_MATCH_RULES,
   KING_OF_THE_HILL_MATCH_RULES,
   MatchSimulation,
@@ -199,7 +200,7 @@ function casterBots(map: MapData, perTeam: number, shift = 0): ParticipantSpec[]
           ...loadoutSpec(resolved),
           spawn: spawn.position,
           facing: 0,
-          behaviour: { kind: "play-build", thinkSeconds: 0.25 },
+          behaviour: { kind: "play-build", reaction: BOT_REACTION },
         };
       }),
   );

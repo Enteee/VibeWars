@@ -3,7 +3,7 @@ import { getSkill } from "../../../skills/catalog.js";
 import { raisedMaxHealth } from "../../../skills/tick.js";
 import type { Skill } from "../../../skills/types.js";
 import { distance, ZERO, type Vec2 } from "../../../vec2.js";
-import type { BehaviourIntent } from "../../behaviour.js";
+import type { BehaviourIntent, Reaction } from "../../behaviour.js";
 import type { BehaviourContext } from "../../behaviour.js";
 import { FLAG_REACH_UNITS } from "../../flags.js";
 import { carriedRelic } from "../../relics.js";
@@ -205,11 +205,27 @@ export const DODGE_CHANCE = 0.5;
  * finaliser. No RNG state, so a replay dodges the same shots.
  */
 export function dodgeRoll(projectileId: number, participantId: string): number {
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < participantId.length; index += 1) {
-    hash = Math.imul(hash ^ participantId.charCodeAt(index), 0x01000193);
+  return roll(participantId, projectileId, 0x811c9dc5);
+}
+
+/**
+ * How long a bot holds its `thinks`-th decision (#2606), in
+ * `reaction`'s `[minSeconds, maxSeconds)`: as `dodgeRoll`, a pure hash of
+ * its `participantId` and `thinks`, on its own basis so it does not follow
+ * the dodge coin. No RNG state, so a replay reacts as late.
+ */
+export function reactionSeconds(reaction: Reaction, participantId: string, thinks: number): number {
+  const span = reaction.maxSeconds - reaction.minSeconds;
+  return reaction.minSeconds + span * roll(participantId, thinks, 0x9e3779b9);
+}
+
+/** FNV-1a of `text` then `value` from `basis`, then a 32-bit finaliser: in [0, 1). */
+function roll(text: string, value: number, basis: number): number {
+  let hash = basis;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = Math.imul(hash ^ text.charCodeAt(index), 0x01000193);
   }
-  hash = Math.imul(hash ^ projectileId, 0x01000193);
+  hash = Math.imul(hash ^ value, 0x01000193);
   hash = Math.imul(hash ^ (hash >>> 16), 0x85ebca6b);
   hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35);
   return ((hash ^ (hash >>> 16)) >>> 0) / 0x1_0000_0000;

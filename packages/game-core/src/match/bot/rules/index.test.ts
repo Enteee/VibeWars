@@ -44,10 +44,10 @@ describe("BOT_RULES (#2042)", () => {
       "setup",
       "boost",
       "position",
+      "shrines",
       "fight",
       "mimic-elite",
       "pick-up-ghost",
-      "shrines",
       "fetch-relic",
       "close-in",
     ]);

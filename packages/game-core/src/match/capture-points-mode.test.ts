@@ -9,7 +9,7 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
 
 /**
- * Capture Points in the simulation (#1378), on Forgotten Shrines' five
+ * Capture Points in the simulation (#1378), on Scarred Earth's five
  * shrines: standing on one takes it, every 30 s each one owned scores,
  * at 8 minutes the most points win, and a wipe ends it before.
  */
@@ -17,13 +17,13 @@ import { NO_RANKS } from "../skills/status.js";
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 
-/** Forgotten Shrines' shrines (packages/game-maps/maps/forgotten-shrines). */
+/** Scarred Earth's shrines (packages/game-maps/maps/scarred-earth). */
 const SHRINES = [
-  vec2(480, 700),
-  vec2(1100, 260),
-  vec2(1100, 700),
-  vec2(1100, 1140),
-  vec2(1720, 700),
+  vec2(520, 1000),
+  vec2(1600, 300),
+  vec2(1600, 1000),
+  vec2(1600, 1700),
+  vec2(2680, 1000),
 ];
 
 function fighter(id: string, team: number, spawn: Vec2): ParticipantSpec {
@@ -45,13 +45,13 @@ function capturePoints(): MatchSimulation {
     seed: "capture-points",
     matchRules: CAPTURE_POINTS_MATCH_RULES,
     walls: [],
-    bounds: { width: 2200, height: 1400 },
+    bounds: { width: 3200, height: 2000 },
     capturePoints: SHRINES,
     participants: [
-      fighter("a", 0, vec2(220, 560)),
-      fighter("b", 0, vec2(220, 840)),
-      fighter("x", 1, vec2(1980, 840)),
-      fighter("y", 1, vec2(1980, 560)),
+      fighter("a", 0, vec2(280, 620)),
+      fighter("b", 0, vec2(280, 760)),
+      fighter("x", 1, vec2(2920, 1240)),
+      fighter("y", 1, vec2(2920, 1380)),
     ],
   });
 }
@@ -91,7 +91,7 @@ function kill(sim: MatchSimulation, id: string): void {
   combatant.health = 0.2;
 }
 
-describe("Capture Points on Forgotten Shrines (#1378)", () => {
+describe("Capture Points on Scarred Earth (#1378, #2551)", () => {
   it("scores each shrine a team owns every 30 s: two for a minute is 4", () => {
     const sim = capturePoints();
     onShrine(sim, "a", 0);
