@@ -10,8 +10,8 @@ import { TRACKS } from "../music/tracks/index.js";
 import { button, h } from "./kit.js";
 
 /**
- * The Music block (#425), under the sound controls in Options → Sound and
- * the HUD's ♪ popover: what is playing, and the intensity, `Auto` or a
+ * The Music block (#425), under the sound controls in the top bar's and
+ * the HUD's ♪ popovers: what is playing, and the intensity, `Auto` or a
  * level you fix for this session. The track choice stays the jukebox's.
  *
  * `MusicSettings` holds the rules and needs no DOM, so they are tested in
