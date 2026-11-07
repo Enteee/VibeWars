@@ -6965,11 +6965,11 @@ export class MatchSimulation {
         // it fell (#1046) and pays the death penalty (#1133). Only a
         // spirit's death is no soul to reap (GW1: "a non-Spirit creature").
         // Read before the next life starts it again (#2689).
-        const killerId = victim.combatant.lastFoeHitBy;
-        victim.combatant.lastFoeHitBy = undefined;
+        const killerTeam = victim.combatant.lastFoeTeam;
+        victim.combatant.lastFoeTeam = undefined;
         if (victim.creature !== undefined) {
           if (victim.creature.kind === "ghostly-hero") {
-            this.#ghostKilled(killerId);
+            this.#ghostKilled(killerTeam);
           }
           // A Ghostly Hero rises by its own reset, and has no morale (#1377).
           victim.respawnInSeconds =
@@ -7762,14 +7762,13 @@ export class MatchSimulation {
   }
 
   /**
-   * A foe team's Ghostly Hero killed (#2689): the team of `killerId`, its
-   * last foe to hit it, a minion's its master's, gets a morale boost.
+   * A foe team's Ghostly Hero killed (#2689): `killerTeam`, its last
+   * foe's to hit it, a minion's its master's, gets a morale boost.
    * Nobody's, as a masterless minion's, gets none.
    */
-  #ghostKilled(killerId: string | undefined): void {
-    const killer = killerId === undefined ? undefined : this.#participants.get(killerId);
-    if (killer !== undefined && killer.combatant.team !== MASTERLESS_TEAM) {
-      this.moraleBoost(killer.combatant.team, GHOST_MORALE_BOOST);
+  #ghostKilled(killerTeam: number | undefined): void {
+    if (killerTeam !== undefined && killerTeam !== MASTERLESS_TEAM) {
+      this.moraleBoost(killerTeam, GHOST_MORALE_BOOST);
     }
   }
 
@@ -8439,7 +8438,7 @@ export class MatchSimulation {
       attack: undefined,
       knockdownRemaining: 0,
       invulnerableRemaining: 0,
-      lastFoeHitBy: undefined,
+      lastFoeTeam: undefined,
       soulReapingTriggers: [],
       nextMaintainSeq: 0,
       chainMarks: new Map(),

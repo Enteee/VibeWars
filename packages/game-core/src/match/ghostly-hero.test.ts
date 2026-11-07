@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, weaponDamageType } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { NO_RANKS } from "../skills/status.js";
 import { chargeAdrenaline } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { applyIntent } from "./apply-intent.js";
@@ -14,6 +15,7 @@ import {
   ghostId,
   type GhostField,
 } from "./ghost.js";
+import { MASTERLESS_TEAM } from "./minions.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
 /**
@@ -59,6 +61,35 @@ function fighter(
     spawn,
     facing: 0,
     maxHealth: 480,
+  };
+}
+
+/** `owner`'s axe minion on `team`, beside team 0's ghost. */
+function minion(id: string, ownerId: string, team: number): ParticipantSpec {
+  return {
+    ...fighter(id, team, vec2(360, 500)),
+    creature: {
+      ownerId,
+      kind: "minion",
+      look: "bone-minion",
+      name: id,
+      expiresInSeconds: Number.POSITIVE_INFINITY,
+      ageSeconds: 0,
+      summonedAtTick: 0,
+      skillId: undefined,
+      aura: undefined,
+      onDeath: "vanish",
+      ownerDisableSeconds: 0,
+      deathBurst: undefined,
+      onDeathInRange: undefined,
+      pulse: undefined,
+      replacedBy: undefined,
+      corpsesLeft: 0,
+      companionSkillId: undefined,
+      leaderId: undefined,
+      bondStatusId: undefined,
+      mode: "guard",
+    },
   };
 }
 
@@ -129,6 +160,33 @@ describe("the Ghostly Hero (#2689)", () => {
     sim.moraleBoost(1, 10);
     killGhost(sim);
     expect(get(sim, "x").combatant.morale).toBe(10);
+  });
+
+  it("credits a minion's team for a ghost that bleeds out after the minion is gone", () => {
+    const sim = ascent(minion("m", "x", 1));
+    const ghost = get(sim, GHOST_0);
+    expect(applyIntent(sim, "m", { kind: "attack", targetId: GHOST_0 })).toBeNull();
+    stepUntil(sim, () => ghost.combatant.health < ghost.combatant.maxHealth, 5);
+    // The minion dies and leaves at the end of its step.
+    get(sim, "m").combatant.health = 0;
+    stepUntil(sim, () => sim.get("m") === undefined, 1);
+    // Then the ghost dies to a degen, which has no dealer.
+    ghost.combatant.health = 1;
+    ghost.combatant.statuses.apply("bleeding", 10, "a", NO_RANKS);
+    stepUntil(sim, () => ghost.combatant.dead, 5);
+    expect(get(sim, "x").combatant.morale).toBe(10);
+    expect(get(sim, "y").combatant.morale).toBe(10);
+    expect(get(sim, "a").combatant.morale).toBe(0);
+  });
+
+  it("credits nobody for a ghost a masterless creature killed", () => {
+    const sim = ascent(minion("m", "nobody", MASTERLESS_TEAM));
+    get(sim, GHOST_0).combatant.health = 1;
+    expect(applyIntent(sim, "m", { kind: "attack", targetId: GHOST_0 })).toBeNull();
+    stepUntil(sim, () => get(sim, GHOST_0).combatant.dead, 5);
+    for (const id of ["a", "x", "y"]) {
+      expect(get(sim, id).combatant.morale).toBe(0);
+    }
   });
 
   it("uses Cyclone Axe on a foe beside it while it follows its leader, with no altar to draw it", () => {
