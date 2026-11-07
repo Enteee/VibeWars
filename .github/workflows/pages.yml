@@ -141,7 +141,7 @@ jobs:
 
           # An rc deploy runs beside next and release deploys, so another push to
           # gh-pages can land between the fetch and the push: start over then.
-          for attempt in 1 2 3; do
+          for attempt in 1 2 3; do # body unindented: the heredoc below must stay flush
           cd "$RUNNER_TEMP"
           rm -rf "$site"
           git init -q "$site"
@@ -195,5 +195,5 @@ jobs:
             exit 0
           fi
           echo "::warning::push attempt $attempt was refused; retrying"
-          done
+          done # attempts
           exit 1
