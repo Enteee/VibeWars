@@ -5414,7 +5414,7 @@ export class MatchSimulation {
         otherId !== record.id &&
         otherId !== passing &&
         !other.combatant.dead &&
-        !this.#ownSpirit(record, other)
+        !this.#walksThrough(record, other)
       ) {
         this.#bodies.push(other.position);
       }
@@ -8144,7 +8144,7 @@ export class MatchSimulation {
     // the wall never squeezes past. Per body and against the start, so two
     // bodies that already overlap (a shared spawn) can still move apart.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === record.id || other.combatant.dead || this.#ownSpirit(record, other)) {
+      if (otherId === record.id || other.combatant.dead || this.#walksThrough(record, other)) {
         continue;
       }
       const reach = radius + this.#radiusOf(other);
@@ -8168,6 +8168,19 @@ export class MatchSimulation {
   }
 
   /**
+   * Whether `mover` walks through `other` rather than round it: its own
+   * team's spirit, or any of its own team while it carries a relic
+   * (#2581), so an escort on its route never holds the run up.
+   */
+  #walksThrough(mover: ParticipantRecord, other: ParticipantRecord): boolean {
+    return (
+      this.#ownSpirit(mover, other) ||
+      (other.combatant.team === mover.combatant.team &&
+        carriedRelic(this.relics, mover.id) !== undefined)
+    );
+  }
+
+  /**
    * One pass of push-outs for `mover`, a body of `radius` at `position`:
    * bodies, bar its own team's spirits and those in `passing`, then
    * walls, then the edge.
@@ -8187,7 +8200,7 @@ export class MatchSimulation {
         otherId === mover.id ||
         other.combatant.dead ||
         passing.has(otherId) ||
-        this.#ownSpirit(mover, other)
+        this.#walksThrough(mover, other)
       ) {
         continue;
       }
