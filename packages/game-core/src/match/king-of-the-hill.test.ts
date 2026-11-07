@@ -7,6 +7,7 @@ import {
   KING_OF_THE_HILL_MATCH_RULES,
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
+  SHRINE_INVULNERABLE_SECONDS,
 } from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { chargeAdrenaline } from "../skills/testing.js";
@@ -14,7 +15,7 @@ import { distance, vec2, type Vec2 } from "../vec2.js";
 import { applyIntent } from "./apply-intent.js";
 import { CLAIM_SKILL_ID, GHOST_HEALTH, ghostId, type HillField } from "./ghost.js";
 import { ALTAR_REACH_UNITS } from "./relics.js";
-import type { Shrine } from "./priest.js";
+import { priestId, type Shrine } from "./priest.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
 
@@ -532,7 +533,7 @@ describe("King of the Hill with three teams (#2682)", () => {
     expect(sim.score.byTeam.get(2)).toBe(1);
   });
 
-  it("keeps a wiped team out: its priest raises nobody, and its points win nothing at time", () => {
+  it("wipes a team out only once its priest is dead too, and an out team's points win nothing", () => {
     // Five minutes: past the first wave, without eight minutes of steps.
     const SHORT = { ...KING_OF_THE_HILL_MATCH_RULES, timeLimitSeconds: 300 };
     const sim = threeWay(
@@ -547,12 +548,18 @@ describe("King of the Hill with three teams (#2682)", () => {
     stepUntil(sim, () => sim.altarState.holder === 0, CLAIM_SECONDS + 1);
     stepFor(sim, POINT_TICK_SECONDS * 3 + 1);
     expect(sim.score.byTeam.get(0)).toBeGreaterThan(0);
+    // Wiped, with its priest alive: not out, and the wave raises it.
     kill(sim, "a");
     stepUntil(sim, () => get(sim, "a").combatant.dead, 2);
-    // Teams 1 and 2 fight on; team 0's priest lives, but raises nobody.
-    stepFor(sim, PRIEST_WAVE_SECONDS + 1);
     expect(sim.phase).toBe("active");
-    expect(get(sim, "a").combatant.dead).toBe(true);
+    stepUntil(sim, () => !get(sim, "a").combatant.dead, PRIEST_WAVE_SECONDS);
+    // Wiped with its priest: out, while teams 1 and 2 fight on.
+    stepFor(sim, SHRINE_INVULNERABLE_SECONDS + 1);
+    kill(sim, priestId(0));
+    kill(sim, "a");
+    stepUntil(sim, () => get(sim, "a").combatant.dead, 2);
+    expect(sim.get(priestId(0))).toBeUndefined();
+    expect(sim.phase).toBe("active");
     stepUntil(sim, () => sim.phase === "finished", SHORT.timeLimitSeconds);
     // Neither 1 nor 2 scored: a draw, not team 0's win.
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: undefined, reason: "time" });

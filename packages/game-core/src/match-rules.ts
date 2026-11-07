@@ -278,19 +278,19 @@ function leader(score: MatchScore): { team: number | undefined; tied: boolean } 
 }
 
 /**
- * Whether `team` is beaten as it stands (#2682): every member dead in a
- * Relic Run, King of the Hill or Capture Points, and its priest too in
- * annihilation. No kill-count or Guild Battle team is ever beaten so.
+ * Whether `team` is beaten as it stands (#2682, the architect's ruling):
+ * every member dead at once and no living priest, in annihilation, a
+ * Relic Run, King of the Hill or Capture Points; a team that never had a
+ * priest has none living. No kill-count or Guild Battle team is beaten so.
  */
 export function teamBeaten(team: TeamStanding, rules: MatchRules): boolean {
   switch (rules.victory) {
     case "annihilation":
     case "priest-annihilation":
-      return team.living === 0 && !team.priestLives;
     case "relic-run":
     case "king-of-the-hill":
     case "capture-points":
-      return team.living === 0;
+      return team.living === 0 && !team.priestLives;
     case "kill-count":
     case "guild-battle":
       return false;
@@ -427,7 +427,7 @@ function evaluateGuildBattle(
 
 /**
  * Relic Run (#1374, GW1), King of the Hill (#1377) and Capture Points
- * (#1378) alike: a wiped team loses at once, as in annihilation; at time
+ * (#1378) alike: a wiped team with no living priest is out at once, as in annihilation; at time
  * the most points win, and a tie is a draw, as kill-count's.
  * No number of points wins early: `scoreToWin` is kill-count's.
  */

@@ -479,6 +479,10 @@ describe("evaluateMatch: king of the hill (#1377)", () => {
         [2, 1],
       ]),
     };
+    // Wiped with its priest alive, team 0 is not out: the wave may raise it.
+    expect(evaluateMatch(score, standing([0, 0, 0, true], [1, 4, 0], [2, 0, 0]), 100, rules)).toBe(
+      MATCH_IN_PROGRESS,
+    );
     // Team 0 is up again, but out since its wipe.
     const out = standing([0, 2, 0, false, true], [1, 4, 0], [2, 4, 0]);
     expect(evaluateMatch(score, out, 479.9, rules)).toBe(MATCH_IN_PROGRESS);
