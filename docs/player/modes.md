@@ -183,7 +183,9 @@ up yourself; a healer or a badly hurt bot only goes when no one else can.
 It leads the ghost onto the altar and tells it to stay there, and the
 rest wait by the altar. A bot leading the ghost does not stop to fight on
 the way; the others leave the altar only to fight a foe that comes within
-spell range.
+spell range. While your team does not hold the altar, every bot kills the other
+team's Ghostly Hero first once it stands on the altar in their range:
+it is the one foe that keeps your ghost from claiming it.
 
 The Courtyard plays it.
 

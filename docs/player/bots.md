@@ -29,7 +29,9 @@ behind whichever ally is hurt most, away from the foes. Every other bot is
 **ranged**: it keeps where every one of its attacks reaches, and stands
 and fights a foe who comes too close. Ranged bots and healers step to
 where fewer foes can reach them, and use pillars as cover. A team turns
-on any foe in reach who drops below 60% health, to finish them.
+on any foe in reach who drops below 60% health, to finish them. In King
+of the Hill, while your team does not hold the altar, the other team's
+Ghostly Hero on the altar comes before even that.
 
 A badly hurt bot that is losing its fight falls back behind its healer, or
 to its base, and rests out of reach until it has most of its health back.
