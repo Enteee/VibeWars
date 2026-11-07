@@ -31,7 +31,7 @@ const pickUpGhost: BotRule = {
       !ghost.combatant.dead &&
       ghost.creature?.leaderId === undefined &&
       distance(ghost.position, altar) > ALTAR_REACH_UNITS &&
-      sentTo(context, ghost.position, true)
+      sentTo(context, ghost.position, true, false)
     ) {
       return { ...NOTHING, attackTargetId: ghost.id };
     }

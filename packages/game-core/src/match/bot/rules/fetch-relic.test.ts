@@ -129,14 +129,29 @@ describe("fetch-relic: Relic Run bots fetch their relic and return the foe's (#2
     expect(intent.moveTo).toEqual(ALTAR);
   });
 
-  it("leaves the relic to the fight when a foe is within spell range", () => {
+  it("runs for its relic from a fight at the altar, when no teammate is free to", () => {
     const sim = match([
-      body("bot", 0, vec2(300, 400), { behaviour: BOT }),
-      body("foe", 1, vec2(500, 400)),
+      body("near", 0, vec2(650, 400), { behaviour: BOT }),
+      body("other", 0, vec2(750, 400), { behaviour: BOT }),
+      body("foe", 1, vec2(900, 400)),
     ]);
-    const intent = askBot(sim, "bot", BOTH_HOME);
-    expect(intent.attackTargetId).not.toBe(relicId(0));
-    expect(intent.moveTo).not.toEqual(ALTAR);
+    expect(askBot(sim, "near", BOTH_HOME).attackTargetId).toBe(relicId(0));
+    expect(askBot(sim, "other", BOTH_HOME).attackTargetId).not.toBe(relicId(0));
+  });
+
+  it("leaves the relic to a teammate when it is a healer or resting in a fight", () => {
+    for (const near of [
+      fighter("near", 0, MONK, vec2(300, 400)),
+      body("near", 0, vec2(300, 400), { behaviour: BOT, startHealthFraction: REST_FRACTION / 2 }),
+    ]) {
+      const sim = match([
+        near,
+        body("other", 0, vec2(700, 400), { behaviour: BOT }),
+        body("foe", 1, vec2(500, 400)),
+      ]);
+      expect(askBot(sim, "near", BOTH_HOME).attackTargetId).not.toBe(relicId(0));
+      expect(askBot(sim, "other", BOTH_HOME).attackTargetId).toBe(relicId(0));
+    }
   });
 
   it("does nothing outside Relic Run", () => {
