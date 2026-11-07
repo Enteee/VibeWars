@@ -15,6 +15,7 @@ import {
   type PlayerBuild,
 } from "@vibewars/game-core";
 import {
+  MAX_HOSTED_LOBBY_PLAYERS,
   MAX_LOBBY_PLAYERS,
   MAX_TEAM_LOBBY_SIDE,
   MAX_WIRE_CHAT_TEXT,
@@ -554,7 +555,8 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       open: true,
       hostId: PEER_ID,
       matchId: null,
-      players: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
+      // Only a lobby hosted from the menu holds a Team Lobby (#2683).
+      players: Array.from({ length: MAX_HOSTED_LOBBY_PLAYERS }, (_, i) => ({
         id: id(i),
         name: NAME,
         guildTag: GUILD_TAG,

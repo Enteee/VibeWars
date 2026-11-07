@@ -15,6 +15,7 @@ import {
   parsePeerLobbySeat,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
+  MAX_HOSTED_LOBBY_PLAYERS,
   MAX_LOBBY_PLAYERS,
   parseWireKeyChallenge,
   parseWireKeyProof,
@@ -462,9 +463,9 @@ describe("lobby host", () => {
     expect(guest.starts[0]?.mapId).toBe(MAP_IDS[0]);
   });
 
-  it("turns a member away once it holds MAX_LOBBY_PLAYERS, and says so", async () => {
+  it("turns a member away once it holds MAX_HOSTED_LOBBY_PLAYERS, and says so (#2683)", async () => {
     const lobby = await openLobby();
-    for (let i = 1; i < 16; i += 1) {
+    for (let i = 1; i < MAX_HOSTED_LOBBY_PLAYERS; i += 1) {
       await lobby.join(`Guest ${String(i)}`);
     }
     await expect(
@@ -480,7 +481,7 @@ describe("lobby host", () => {
         playerKey: testPlayerKey(),
       }),
     ).rejects.toEqual(new LobbyRefusedError("lobby-full"));
-    expect(playersOf(lobby.host)).toHaveLength(16);
+    expect(playersOf(lobby.host)).toHaveLength(MAX_HOSTED_LOBBY_PLAYERS);
   });
 
   it("drops a member who leaves the room from the lobby", async () => {
