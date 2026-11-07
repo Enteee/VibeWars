@@ -1,5 +1,6 @@
 import {
   ANNIHILATION_MATCH_RULES,
+  CAPTURE_POINTS_MATCH_RULES,
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
   STARTER_BUILDS,
@@ -69,5 +70,68 @@ describe.each(loadAllMaps().map((map) => [map.id, map] as const))("%s bots", (_,
         .log.some((entry) => entry.events.some((event) => event.kind === "damage"));
     }
     expect(damaged).toBe(true);
+  });
+});
+
+describe("Capture Points bots (#2580)", () => {
+  const map = loadAllMaps().find((candidate) =>
+    candidate.objectives.some((objective) => objective.kind === "capture-point"),
+  );
+
+  /** Who owns each shrine after up to 60 s of a 2v2 of bots, and when one was first owned. */
+  const play = (seed: string) => {
+    if (map === undefined) throw new Error("no map with capture points");
+    const participants: ParticipantSpec[] = [0, 1].flatMap((team) =>
+      map.spawnPoints
+        .filter((spawn) => spawn.team === team)
+        .slice(0, 2)
+        .map((spawn, k): ParticipantSpec => {
+          // No healer: one would rightly leave its shrine for a hurt ally.
+          const build = STARTER_BUILDS.find((candidate) => candidate.name === CASTERS[k]);
+          if (build === undefined) throw new Error(`no starter build ${String(CASTERS[k])}`);
+          const loadout = loadoutOf(build);
+          const resolved = resolveLoadout(
+            {
+              primaryProfession: loadout.primaryProfession,
+              secondaryProfession: loadout.secondaryProfession,
+              allocatedRanks: loadout.attributeRanks,
+              equipment: loadout.equipment,
+            },
+            RULESET.combat,
+          );
+          return {
+            id: `${String(team)}-${String(k)}`,
+            team,
+            skillBar: loadout.skillBar,
+            ...loadoutSpec(resolved),
+            spawn: spawn.position,
+            facing: 0,
+            behaviour: { kind: "play-build", thinkSeconds: 0.25 },
+          };
+        }),
+    );
+    const sim = new MatchSimulation({
+      seed,
+      ruleset: RULESET,
+      walls: allWallSegments(map.walls),
+      bounds: { width: map.width, height: map.height },
+      matchRules: CAPTURE_POINTS_MATCH_RULES,
+      capturePoints: map.objectives.flatMap((objective) =>
+        objective.kind === "capture-point" ? [objective.position] : [],
+      ),
+      participants,
+    });
+    let ownedAt: number | undefined;
+    for (let t = 0; t < 60 && ownedAt === undefined; t += DT) {
+      sim.step(DT);
+      if (sim.capturePoints.some(({ owner }) => owner !== null)) ownedAt = t;
+    }
+    return { ownedAt, owners: sim.capturePoints.map(({ owner }) => owner) };
+  };
+
+  it("a 2v2 of bots takes a shrine within 60 s, the same way for the same seed", () => {
+    const first = play("shrines");
+    expect(first.ownedAt).toBeDefined();
+    expect(play("shrines")).toEqual(first);
   });
 });

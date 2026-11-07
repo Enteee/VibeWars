@@ -177,6 +177,10 @@ nobody owns it, with an arc round it showing how far it is toward
 whoever is taking it. The scoreboard shows the points, yours first, and
 the clock.
 
+Bots spread out over the shrines your team does not own yet and stand
+on them until they are taken, leaving one only to fight a foe that
+comes within spell range.
+
 Forgotten Shrines plays it.
 
 ## Team Lobby

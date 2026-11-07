@@ -5,7 +5,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../../../ruleset.js";
 import { getSkill } from "../../../skills/catalog.js";
 import { STARTER_BUILDS } from "../../../starter-builds.js";
 import { type Vec2 } from "../../../vec2.js";
-import { createCursor, decide, type Behaviour } from "../../behaviour.js";
+import { createCursor, decide, NO_OBJECTIVES, type Behaviour } from "../../behaviour.js";
 import { MatchSimulation, loadoutSpec, type ParticipantSpec } from "../../simulation.js";
 import { botUses } from "../skill-intent.js";
 
@@ -75,8 +75,8 @@ export function slotOf(build: PlayerBuild, skillId: string): number {
   return build.skillBar.indexOf(skillId);
 }
 
-/** What the bot `id` would do now, with every skill allowed. */
-export function askBot(sim: MatchSimulation, id: string) {
+/** What the bot `id` would do now, with every skill allowed, playing for `objectives`. */
+export function askBot(sim: MatchSimulation, id: string, objectives = NO_OBJECTIVES) {
   const self = sim.get(id);
   if (self === undefined) throw new Error(`no ${id}`);
   return decide(BOT, createCursor(), {
@@ -88,6 +88,7 @@ export function askBot(sim: MatchSimulation, id: string) {
     isBot: () => true,
     calledTargetId: undefined,
     sees: () => true,
+    objectives,
   });
 }
 
