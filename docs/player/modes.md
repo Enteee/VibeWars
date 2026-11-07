@@ -207,18 +207,27 @@ The Courtyard plays it.
 
 **Hold the shrines.** The map has five **shrines**: one by each base
 and three between, the centre one out in the open. Stand on a shrine to
-capture it. Alone it takes 20 seconds, and each more of your team on it
-makes it faster: four of you take it in 5. With a foe on it too, it is
-contested and nothing moves. A shrine the other team owns is first
-drained to neutral, then filled for you. Walk away and its progress
-stays where it was; a shrine you own stays yours until a foe takes it.
-The shrines show on the compass as □ in the owner's colour.
+capture it. Each of your team on it is a **pip**, your Ghostly Hero
+four; pets, minions and spirits count none. With four pips a neutral
+shrine is yours in 8 seconds, with two in 16, alone in 32; more than four
+go no faster. Foes on it cancel your pips one for one: three of you
+against two of them take it at one pip, in 32 seconds, eight against
+two at four, and equal pips hold it still. With three teams, the
+strongest moves it by its pips less those of both others together; if
+the other two outnumber it, nobody captures, and a shrine anyone owns is
+only drained back to neutral. A shrine another team owns is first drained to
+neutral, then filled for you, so taking it takes twice as long. Walk
+away and its progress stays where it was; a shrine you own stays yours
+until a foe takes it. The shrines show on the compass as □ in the
+owner's colour.
 
 Every 30 seconds, each shrine your team owns scores a point, and a toast
 and a sound announce what each side scored. The dead
 stay down until an ally resurrects them, and each death costs morale.
-Wipe the other team to win at once. After 8 minutes the team with more
-points wins; equal points is a draw. Kills score nothing.
+Get **20 points ahead** of every other team, or wipe the other team, to
+win at once. After 8 minutes the team with more points wins; on equal
+points, the one holding more shrines, then the team that was last ahead
+alone, and if none ever was, it is a draw. Kills score nothing.
 
 Each shrine is a ring on the ground in its owner's colour, grey while
 nobody owns it, with an arc round it showing how far it is toward
@@ -320,6 +329,13 @@ party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
 
+## Three teams
+
+In a three-team match the third team is drawn yellow, beside the blue
+of your side and the red of the other. The scoreboard reads your team
+first, then the others in order, and the end-of-match tables put your
+team first, then the winner.
+
 ## Match records
 
 Every match that is played to its end, in any mode and bots included,
@@ -337,9 +353,9 @@ get one wrong; nothing checks them against the match.
 See them on the **Matches** page, below Team Builder: the last 100,
 newest first, with new ones appearing as they are played. A row is one
 line: each team's players as their primary profession's icon (hover for
-the name), the winner underlined, and the map, duration and when. Every
-row is marked **host-reported**. Click one to see the teams, one tab
-each, the winner's first: the team card. **Clone** copies a team from
+the name), two teams or three, the winner underlined, and the map,
+duration and when. Every row is marked **host-reported**. Click one to
+see the teams, one tab each, the winner's first: the team card. **Clone** copies a team from
 a finished match into your Team Builds, each player's build under
 their name, and opens it. A 1v1 side has no Clone: a Team Build is 2, 4
 or 8.

@@ -1045,6 +1045,41 @@ describe("releases (#2707)", () => {
     ).toMatchObject({ allow: false });
   });
 
+  it("point every pull request at main, so a retarget cannot outrun the merge guard (#2747)", () => {
+    const head = ["--head", "bot/developer/x"];
+    for (const command of [
+      ["pr", "create", ...head],
+      ["pr", "edit", "7"],
+    ]) {
+      for (const base of [[], ["--base", "main"], ["--base=main"], ["-B", "main"], ["-Bmain"]]) {
+        const argv = [...command, ...base];
+        expect(gh("developer", argv), argv.join(" ")).toMatchObject({ allow: true });
+      }
+      for (const base of [
+        ["--base", "release/0.1.0"],
+        ["--base=release/0.1.0"],
+        ["-B", "release/0.1.0"],
+        ["-Brelease/0.1.0"],
+        ["-B=release/0.1.0"],
+        ["-dB", "release/0.1.0"],
+        ["-dB", "main"],
+        ["--base", "main", "--base", "x"],
+        ["--base", "Main"],
+        ["--title", "--base=x"],
+        ["-B"],
+        ["--", "--base", "x"],
+      ]) {
+        const argv = [...command, ...base];
+        for (const role of ["developer", "release-manager"]) {
+          expect(gh(role, argv), `${role}: ${argv.join(" ")}`).toMatchObject({ allow: false });
+        }
+      }
+    }
+    expect(gh("developer", ["pr", "create", ...head, "--base", "release/0.1.0"]).reason).toContain(
+      "pull requests target main only",
+    );
+  });
+
   it("give the release manager its tracking issue, and QA the edit to add its bugs", () => {
     expect(gh("release-manager", ["issue", "create", "--title", "Release 0.1.0"])).toMatchObject({
       allow: true,

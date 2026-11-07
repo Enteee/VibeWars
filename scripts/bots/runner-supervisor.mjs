@@ -65,6 +65,12 @@ export const BACKOFF_MAX_MS = 5 * 60_000;
 export const MEMORY_HEADROOM = 2 * 1024 ** 3;
 /** How often GitHub is asked which runners are busy, and which jobs wait. */
 export const POLL_MS = 60_000;
+/** Load above the CPU count this long, and no runner starts. */
+export const LOAD_GRACE_MS = 5 * 60_000;
+/** Load must stay at or under the CPU count this long to end an episode. */
+export const LOAD_CLEAR_MS = 60_000;
+/** Load above this many times the CPU count refuses at once. */
+export const LOAD_HARD_FACTOR = 2;
 /** How long scaling to 0 waits for queued company jobs. */
 export const DRAIN_MS = 10 * 60_000;
 /** How often the daemon reconciles. */
@@ -191,6 +197,12 @@ export class RunnerSupervisor {
     this.drainSince = null;
     this.lastList = -Infinity;
     this.lastQueuedPoll = -Infinity;
+    this.lastStarvingPoll = -Infinity;
+    this.starved = false;
+    /** @type {number | null} when load1 first went above the CPU count */
+    this.loadHighSince = null;
+    /** @type {number | null} when load1 last dropped to the CPU count or under */
+    this.loadLowSince = null;
     this.queued = true;
     this.lastStatus = "";
     /** @type {Promise<unknown>} the GitHub call in flight; `attempt` never rejects */
@@ -252,6 +264,58 @@ export class RunnerSupervisor {
     }
   }
 
+  /**
+   * Is a company job queued while no runner is up? Asked at most once a
+   * poll, and not knowing is no.
+   *
+   * @returns {Promise<boolean>}
+   */
+  async starving() {
+    if (this.alive > 0) {
+      return false;
+    }
+    const { now } = this.deps;
+    if (now() - this.lastStarvingPoll >= POLL_MS) {
+      this.lastStarvingPoll = now();
+      const queued = await this.call("queuedCompanyJobs", () => this.deps.api.queuedCompanyJobs());
+      this.starved = queued?.value === true;
+    }
+    return this.starved;
+  }
+
+  /** Watches the load every tick, so the dwell is measured with nothing to start. */
+  observeLoad() {
+    const { host, now } = this.deps;
+    if (host.load1() > host.cpus()) {
+      this.loadHighSince ??= now();
+      this.loadLowSince = null;
+      return;
+    }
+    this.loadLowSince ??= now();
+    if (this.loadHighSince !== null && now() - this.loadLowSince >= LOAD_CLEAR_MS) {
+      this.loadHighSince = null;
+    }
+  }
+
+  /**
+   * Why the load forbids a start, or null.
+   *
+   * @returns {string | null}
+   */
+  loadRefusal() {
+    const { host, now } = this.deps;
+    const load = host.load1();
+    const cpus = host.cpus();
+    if (load > LOAD_HARD_FACTOR * cpus) {
+      return `host load ${load.toFixed(1)} is above ${String(LOAD_HARD_FACTOR)} times its ${String(cpus)} CPUs`;
+    }
+    if (load > cpus && this.loadHighSince !== null && now() - this.loadHighSince > LOAD_GRACE_MS) {
+      const minutes = Math.floor((now() - this.loadHighSince) / 60_000);
+      return `host load ${load.toFixed(1)} has been above its ${String(cpus)} CPUs for ${String(minutes)} min`;
+    }
+    return null;
+  }
+
   /** @param {string} why */
   fail(why) {
     this.failures += 1;
@@ -271,6 +335,7 @@ export class RunnerSupervisor {
     const read = target();
     const draining = this.target > 0 && read.n === 0 && this.alive > 0;
     this.target = read.n;
+    this.observeLoad();
     this.reason = read.reason ?? (now() < this.retryAt ? this.backoffReason : null);
     if (config.max === 0) {
       this.reason = "runners are off: VIBEWARS_MAX_RUNNERS is 0";
@@ -411,8 +476,12 @@ export class RunnerSupervisor {
       this.overloaded("host memory is short");
       return false;
     }
-    if (host.load1() > host.cpus()) {
-      this.overloaded("host load is above its CPU count");
+    // The agents alone can hold the load high for hours; with no runner up,
+    // jobs queued for one would then wait for ever. One runner may start for
+    // them, load or not (memory still gates it).
+    const loaded = this.loadRefusal();
+    if (loaded !== null && !(await this.starving())) {
+      this.overloaded(loaded);
       return false;
     }
     if (now() < this.retryAt) {

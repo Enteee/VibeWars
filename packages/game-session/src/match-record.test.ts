@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { toJson } from "./match-harness.test-support.js";
 import {
+  MATCH_RECORD_VERSION,
   MAX_RECORD_DURATION_SECONDS,
   MAX_RECORD_TEAM,
   RECORD_CLOCK_SKEW_SECONDS,
@@ -39,7 +40,7 @@ const player = (name: string, index = 0) => ({
 });
 
 const valid = () => ({
-  v: 1,
+  v: MATCH_RECORD_VERSION,
   mode: "team-arena",
   map: "test-arena",
   endedAt: NOW - 60,
@@ -80,9 +81,16 @@ describe("validateMatchRecord (#2528)", () => {
     expect(read({ ...valid(), winningTeam: null })?.winningTeam).toBeNull();
   });
 
+  it("reads three teams, any of them the winner (#2684)", () => {
+    const third = { players: [player("Cid", 4)] };
+    const out = read({ ...valid(), teams: [...valid().teams, third], winningTeam: 2 });
+    expect(out?.teams).toHaveLength(3);
+    expect(out?.winningTeam).toBe(2);
+  });
+
   it("refuses another version", () => {
-    expect(read({ ...valid(), v: 2 })).toBeUndefined();
-    expect(read({ ...valid(), v: "1" })).toBeUndefined();
+    expect(read({ ...valid(), v: 1 })).toBeUndefined();
+    expect(read({ ...valid(), v: "2" })).toBeUndefined();
   });
 
   it.each([
@@ -91,6 +99,8 @@ describe("validateMatchRecord (#2528)", () => {
     ["map", 3],
     ["endReason", "host-left"],
     ["winningTeam", 2],
+    ["winningTeam", -1],
+    ["winningTeam", 0.5],
     ["endedAt", 1.5],
     ["endedAt", -1],
     ["endedAt", NOW + RECORD_CLOCK_SKEW_SECONDS + 1],
@@ -100,6 +110,7 @@ describe("validateMatchRecord (#2528)", () => {
     ["teams", []],
     ["teams", [{ players: [player("Ann")] }]],
     ["teams", [{ players: [] }, { players: [player("Ann")] }]],
+    ["teams", [1, 2, 3, 4].map((n) => ({ players: [player(`P${String(n)}`, n)] }))],
   ])("refuses a record whose %s is %j", (field, value) => {
     expect(read({ ...valid(), [field]: value })).toBeUndefined();
   });
@@ -152,7 +163,7 @@ describe("validateMatchRecord (#2528)", () => {
     const [first, second] = record.teams;
     const withPeer = { ...first?.players[0], peerId: "abc", ip: "10.0.0.1" };
     const out = read({ ...record, teams: [{ players: [withPeer] }, second] });
-    expect(out?.teams[0].players[0]).toEqual({
+    expect(out?.teams[0]?.players[0]).toEqual({
       name: "Ann",
       guildTag: "VIBE",
       bot: false,

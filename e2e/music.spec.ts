@@ -266,6 +266,17 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toContain("ember-deep");
 
   await code.click();
+  // The drawn caret is the accent colour, not CodeMirror's black on our dark field (#2744).
+  const accent = await page.evaluate(() => {
+    const probe = document.createElement("i");
+    probe.style.color = "var(--accent)";
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).color;
+    probe.remove();
+    return colour;
+  });
+  expect(accent).not.toBe("rgb(0, 0, 0)");
+  await expect(editor.locator(".cm-cursor").first()).toHaveCSS("border-left-color", accent);
   await page.keyboard.press("Control+End");
   await page.keyboard.type("\n.gain(.9)");
   await page.keyboard.press("Control+Enter");

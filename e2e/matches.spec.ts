@@ -3,7 +3,11 @@ import { expect, test } from "@playwright/test";
 import { RECORDS_CHANNEL, recordMessage } from "../apps/web/src/net/transport/broadcast-records.js";
 import { matchRecordEvent } from "../apps/web/src/net/transport/match-records.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
-import { recordTemplate, type MatchRecord } from "../packages/game-session/src/match-record.js";
+import {
+  MATCH_RECORD_VERSION,
+  recordTemplate,
+  type MatchRecord,
+} from "../packages/game-session/src/match-record.js";
 import { openRail } from "./helpers/menu.js";
 
 const played = (index: number): string => {
@@ -19,7 +23,7 @@ test("Clone saves a finished match's team as a Team Build and opens it (#2585)",
 }) => {
   const now = Date.now();
   const record: MatchRecord = {
-    v: 1,
+    v: MATCH_RECORD_VERSION,
     mode: "team-arena",
     map: "arena-crossroads",
     endedAt: Math.floor(now / 1000) - 60,
