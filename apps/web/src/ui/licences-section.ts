@@ -12,7 +12,10 @@ export interface ThirdPartyLicence {
   readonly url: string;
   /** SPDX identifier. */
   readonly spdx: string;
-  /** The licence text, verbatim, from the copy vendored with the work. */
+  /**
+   * The licence text, verbatim, from the copy vendored with the work; for
+   * content credited by link (a CC licence), the notice it asks for.
+   */
   readonly text: string;
 }
 
@@ -29,6 +32,14 @@ export const THIRD_PARTY_LICENCES: readonly ThirdPartyLicence[] = [
     url: "https://github.com/build-wars/gw-skilldata",
     spdx: "MIT",
     text: gwSkilldataLicence,
+  },
+  {
+    name: "PvX wiki",
+    use: "built-in character and team builds",
+    url: "https://gwpvx.fandom.com/wiki/PvX_wiki",
+    spdx: "CC-BY-SA-3.0",
+    // Content, not code: a CC licence is honoured by a notice linking it.
+    text: "Built-in builds are adapted from PvX wiki build pages (gwpvx.fandom.com), community content available under CC BY-SA 3.0, https://www.fandom.com/licensing. Changes: decoded from template codes; builds using skills VibeWars lacks were left out. The adapted build data is shared under the same licence.",
   },
   {
     name: "VCSL",
