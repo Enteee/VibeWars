@@ -1045,6 +1045,45 @@ describe("releases (#2707)", () => {
     ).toMatchObject({ allow: false });
   });
 
+  it("point every pull request at main, so a retarget cannot outrun the merge guard", () => {
+    for (const argv of [
+      ["pr", "create", "--head", "bot/developer/x"],
+      ["pr", "create", "--head", "bot/developer/x", "--base", "main"],
+      ["pr", "create", "--head", "bot/developer/x", "--base=main"],
+      ["pr", "create", "--head", "bot/developer/x", "-B", "main"],
+      ["pr", "create", "--head", "bot/developer/x", "-Bmain"],
+      ["pr", "edit", "7", "--title", "x"],
+    ]) {
+      expect(gh("developer", argv), argv.join(" ")).toMatchObject({ allow: true });
+    }
+    for (const argv of [
+      ["pr", "create", "--base", "release/0.1.0"],
+      ["pr", "create", "--base=release/0.1.0"],
+      ["pr", "create", "-B", "release/0.1.0"],
+      ["pr", "create", "-Brelease/0.1.0"],
+      ["pr", "create", "-B=release/0.1.0"],
+      ["pr", "create", "-dB", "main"],
+      ["pr", "create", "--base", "main", "--base", "release/0.1.0"],
+      ["pr", "create", "--base"],
+      ["pr", "edit", "7", "--base", "release/0.1.0"],
+      ["pr", "edit", "7", "--base=main"],
+      ["pr", "edit", "7", "-B", "main"],
+      ["pr", "edit", "7", "-Brelease/0.1.0"],
+    ]) {
+      expect(gh("developer", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+    expect(
+      gh("asset-designer", [
+        "pr",
+        "create",
+        "--head",
+        "bot/asset-designer/x",
+        "-B",
+        "release/0.1.0",
+      ]),
+    ).toMatchObject({ allow: false });
+  });
+
   it("give the release manager its tracking issue, and QA the edit to add its bugs", () => {
     expect(gh("release-manager", ["issue", "create", "--title", "Release 0.1.0"])).toMatchObject({
       allow: true,
