@@ -1,5 +1,4 @@
 import {
-  PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   parsePeerObserving,
   parsePeerRefuse,
@@ -222,12 +221,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
         return;
       }
       if (message.protocolVersion !== PROTOCOL_VERSION) {
-        fail(
-          new MatchRefusedError({
-            reason: "protocol-mismatch",
-            message: PROTOCOL_MISMATCH_MESSAGE,
-          }),
-        );
+        fail(new MatchRefusedError({ reason: "protocol-mismatch" }));
         return;
       }
       teamCount = message.map.teamCount;

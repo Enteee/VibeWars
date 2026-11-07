@@ -1,6 +1,5 @@
 import {
   MAX_WIRE_STROKES,
-  PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   parseCastRefused,
   parsePeerRefuse,
@@ -67,12 +66,12 @@ import { combatMessage, matchSnapshot, playerSnapshots } from "./wire.js";
  * out make it `lost`.
  */
 
-/** The host turned this player away, and said why. */
+/** The host turned this player away, and said why; the client words `reason`. */
 export class MatchRefusedError extends Error {
   public readonly reason: PeerRefuse["reason"];
 
   public constructor(refusal: PeerRefuse) {
-    super(refusal.message);
+    super(`The host refused: ${refusal.reason}`);
     this.name = "MatchRefusedError";
     this.reason = refusal.reason;
   }
@@ -555,12 +554,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         return;
       }
       if (message.protocolVersion !== PROTOCOL_VERSION) {
-        fail(
-          new MatchRefusedError({
-            reason: "protocol-mismatch",
-            message: PROTOCOL_MISMATCH_MESSAGE,
-          }),
-        );
+        fail(new MatchRefusedError({ reason: "protocol-mismatch" }));
         return;
       }
       welcomed = message;

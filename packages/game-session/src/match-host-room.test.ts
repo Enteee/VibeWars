@@ -1,6 +1,5 @@
 import { ANNIHILATION_MATCH_RULES, SKILL_BAR_SLOTS } from "@vibewars/game-core";
 import {
-  PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   parsePeerRefuse,
   parsePeerWelcome,
@@ -14,7 +13,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { MatchRefusedError, connectMatch } from "./match-client.js";
-import { MATCH_OVER_MESSAGE, RECONNECT_WINDOW_SECONDS, RULESET } from "./match-host.js";
+import { RECONNECT_WINDOW_SECONDS, RULESET } from "./match-host.js";
 import {
   ARENA,
   TICK_SECONDS,
@@ -116,8 +115,8 @@ describe("a P2P match host, as the match room (#375)", () => {
     it("refuses a client on another protocol version, telling it to reload", async () => {
       const match = startMatch();
       const joining = match.join({ ...hello(), protocolVersion: `${PROTOCOL_VERSION}-stale` });
-      await expect(joining).rejects.toThrow(PROTOCOL_MISMATCH_MESSAGE);
       await expect(joining).rejects.toBeInstanceOf(MatchRefusedError);
+      await expect(joining).rejects.toMatchObject({ reason: "protocol-mismatch" });
     });
 
     it("refuses a client that sends no protocol version at all", async () => {
@@ -130,7 +129,7 @@ describe("a P2P match host, as the match room (#375)", () => {
       peer.send("hello", { name: "Tester", build: null, rejoin: null }, "host");
       await settle();
 
-      expect(refusals.map((refusal) => refusal.message)).toEqual([PROTOCOL_MISMATCH_MESSAGE]);
+      expect(refusals).toEqual([{ reason: "protocol-mismatch" }]);
     });
 
     it("leaves no trace of a refused client in the room", async () => {
@@ -139,7 +138,7 @@ describe("a P2P match host, as the match room (#375)", () => {
 
       await expect(
         match.join({ ...hello(), protocolVersion: `${PROTOCOL_VERSION}-stale` }),
-      ).rejects.toThrow(PROTOCOL_MISMATCH_MESSAGE);
+      ).rejects.toMatchObject({ reason: "protocol-mismatch" });
       const { connection: second } = await match.join();
       await match.step(TICK_SECONDS);
 
@@ -180,7 +179,6 @@ describe("a P2P match host, as the match room (#375)", () => {
 
     // There is no other room to be placed in: the host turns the player away.
     const joining = match.join();
-    await expect(joining).rejects.toThrow(MATCH_OVER_MESSAGE);
     await expect(joining).rejects.toMatchObject({ reason: "match-over" });
   });
 

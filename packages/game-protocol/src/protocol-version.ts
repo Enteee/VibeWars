@@ -7,7 +7,7 @@ import schema from "./wire-schema.json" with { type: "json" };
  * else is committed, so two PRs that change the wire do not conflict on
  * a hash. Every peer sends it as `protocolVersion` in its hello and
  * lobby join, and a host refuses one whose value is absent or different
- * (`PROTOCOL_MISMATCH_MESSAGE`), so a stale tab fails loudly at join
+ * (`protocol-mismatch`), so a stale tab fails loudly at join
  * time instead of desynchronising mid-match. It only ever rejects;
  * there is no code path per version (ADR-0016).
  */
