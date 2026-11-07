@@ -10,7 +10,7 @@ import type { DoubleClick } from "./double-click.js";
 /**
  * What a right click sends (#438), shared by the match and the Training
  * Ground so it means the same in both. The left button walks (unless
- * Show names is held, `primaryClickIntent`); the right one picks.
+ * Show names is held, `primaryClickIntents`); the right one picks.
  *
  * A body under `world` is targeted, and a second right click on the same
  * enemy within the double-click window attacks it, as Space would (#298).
@@ -22,7 +22,8 @@ import type { DoubleClick } from "./double-click.js";
  * ground breaks a double.
  *
  * With `shift` (Show names held, #2738) a name is part of its body's hit,
- * and the click only ever targets: a double never attacks.
+ * and the click only ever targets: a double never attacks (a Shift+left
+ * click does).
  */
 export function secondaryClickIntents(
   snapshot: MatchSnapshot,
@@ -49,17 +50,19 @@ export function secondaryClickIntents(
 /**
  * What a left click sends (#438): a walk to `world`. With `shift` (Show
  * names held, #2738), a click on a body or its name targets it instead,
- * and does not walk; on the ground it still walks.
+ * and at once attacks it, as a double right click would on a foe; on the
+ * ground it still walks.
  */
-export function primaryClickIntent(
+export function primaryClickIntents(
+  snapshot: MatchSnapshot,
   arena: ArenaSnapshot,
   world: Vec2,
   shift: boolean,
-): ClientIntent {
+): ClientIntent[] {
   const hit = shift ? actorAtPoint(arena, world, arena.nameBoxes) : undefined;
   return hit === undefined
-    ? { kind: "walk-to", x: world.x, y: world.y }
-    : { kind: "target", targetSessionId: hit.id };
+    ? [{ kind: "walk-to", x: world.x, y: world.y }]
+    : [{ kind: "target", targetSessionId: hit.id }, ...attackClickIntents(snapshot, hit.id)];
 }
 
 /** What a wheel click does (#443). */

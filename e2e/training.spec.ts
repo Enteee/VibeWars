@@ -1608,13 +1608,13 @@ for (const viewport of [
   });
 }
 
-test("(47) under Show names, a click on a name targets it, and never attacks or walks (#2738)", async ({
+test("(47) under Show names, a right click on a name only targets it; a left click attacks (#2738)", async ({
   page,
 }) => {
   // A walk and a wait for a still camera (#721).
   test.setTimeout(60_000);
   // A new character is a warrior with a Sword: an attack on the far dummy
-  // would walk to it, as in (20).
+  // walks to it, as in (20).
   await page.setViewportSize(WIDE);
   await page.goto("./");
   await openRail(page, "Character Builder");
@@ -1636,7 +1636,6 @@ test("(47) under Show names, a click on a name targets it, and never attacks or 
   const bottom = view.onPage({ x: 480, y: 210 - 14 - 19 });
   const name = { x: bottom.x, y: bottom.y - 3 - 6 };
   await page.mouse.dblclick(name.x, name.y, { button: "right" });
-  await page.mouse.click(name.x, name.y);
   await page.keyboard.up(key("show-names"));
   await page.mouse.move(1, 1);
 
@@ -1646,4 +1645,10 @@ test("(47) under Show names, a click on a name targets it, and never attacks or 
   await page.waitForTimeout(1000);
   await expect(page.locator(".training-attacking")).not.toContainText("attacking");
   expect(await stage.getAttribute("data-positions")).toBe(before);
+
+  // One Shift+left click on the name attacks at once.
+  await page.keyboard.down(key("show-names"));
+  await page.mouse.click(name.x, name.y);
+  await page.keyboard.up(key("show-names"));
+  await expect(page.locator(".training-attacking")).toContainText("attacking");
 });

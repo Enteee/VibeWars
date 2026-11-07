@@ -23,7 +23,7 @@ import {
   callTargetCall,
   middleClickAction,
   pingCall,
-  primaryClickIntent,
+  primaryClickIntents,
   secondaryClickIntents,
 } from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
@@ -1012,21 +1012,24 @@ export async function startMatchView(
   // A misclick must never move you (#438): the left button only walks,
   // bodies included, and keeps the target; the right one picks, on its
   // release, so a later drag can pan instead. A watcher's drag still pans.
-  // With Show names held (#2738), a left click on a body or name picks it.
+  // With Show names held (#2738), a left click on a body or name attacks it.
   const doubleClick = createDoubleClick();
   const offPointer =
     seat === undefined
       ? undefined
       : viewport?.onButton(({ button, phase, world }) => {
           if (button === "left" && phase === "down") {
-            const intent = primaryClickIntent(
+            const intents = primaryClickIntents(
+              seat.getSnapshot(),
               latestArena ?? EMPTY_SNAPSHOT,
               world,
               nameReveal.held(),
             );
-            seat.sendIntent(intent);
-            if (intent.kind === "walk-to") {
-              viewport.scene.showWalkMarker(world);
+            for (const intent of intents) {
+              seat.sendIntent(intent);
+              if (intent.kind === "walk-to") {
+                viewport.scene.showWalkMarker(world);
+              }
             }
           } else if (button === "middle" && phase === "down" && latestArena !== undefined) {
             // A wheel click calls a foe, or pings the point (#443, #1055).

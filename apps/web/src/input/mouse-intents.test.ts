@@ -13,7 +13,7 @@ import {
   callTargetCall,
   middleClickAction,
   pingCall,
-  primaryClickIntent,
+  primaryClickIntents,
   secondaryClickIntents,
 } from "./mouse-intents.js";
 
@@ -265,28 +265,30 @@ describe("clicks with Show names held (#2738)", () => {
     );
   });
 
-  it("targets on a left click on a body or name, and does not walk", () => {
-    expect(primaryClickIntent(NAMED, onFoeName, true)).toEqual({
-      kind: "target",
-      targetSessionId: "foe",
-    });
-    expect(primaryClickIntent(NAMED, vec2(101, 2), true)).toEqual({
-      kind: "target",
-      targetSessionId: "ally",
-    });
+  it("targets and attacks a foe on one left click on its body or name, and does not walk", () => {
+    expect(primaryClickIntents(MATCH, NAMED, onFoeName, true)).toEqual([
+      { kind: "target", targetSessionId: "foe" },
+      { kind: "attack", targetId: "foe" },
+    ]);
+    expect(primaryClickIntents(MATCH, NAMED, vec2(201, 2), true)).toEqual([
+      { kind: "target", targetSessionId: "foe" },
+      { kind: "attack", targetId: "foe" },
+    ]);
+  });
+
+  it("only targets an ally on a left click", () => {
+    expect(primaryClickIntents(MATCH, NAMED, vec2(101, 2), true)).toEqual([
+      { kind: "target", targetSessionId: "ally" },
+    ]);
   });
 
   it("walks on a left click on the ground, or on a name when not held", () => {
-    expect(primaryClickIntent(NAMED, vec2(150, 60), true)).toEqual({
-      kind: "walk-to",
-      x: 150,
-      y: 60,
-    });
-    expect(primaryClickIntent(NAMED, onFoeName, false)).toEqual({
-      kind: "walk-to",
-      x: 215,
-      y: -30,
-    });
+    expect(primaryClickIntents(MATCH, NAMED, vec2(150, 60), true)).toEqual([
+      { kind: "walk-to", x: 150, y: 60 },
+    ]);
+    expect(primaryClickIntents(MATCH, NAMED, onFoeName, false)).toEqual([
+      { kind: "walk-to", x: 215, y: -30 },
+    ]);
   });
 
   it("calls a foe on a wheel click on its name", () => {
