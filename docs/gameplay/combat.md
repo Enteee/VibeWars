@@ -2117,7 +2117,10 @@ Annihilation does, "(annihilation)". After **8 minutes** the team with
 more relic points wins; equal points is a **draw**, as in Kill Count.
 No number of points ends it early, and a kill is no point. King of the
 Hill (#1377) ends the same ways, its points for holding the altar. Capture
-Points (#1378) ends the same ways, on shrine points.
+Points (#1378, #2690) ends on a wipe too, and also the moment a team is
+**20 shrine points ahead** of every other; at 8 minutes equal points go
+to the team holding more shrines, then to the one that last led alone,
+and are a draw only if none of them ever did.
 
 A Kill Count match ends when a team reaches 15 kills, or after 3
 minutes, when the team with more kills wins. Score is checked

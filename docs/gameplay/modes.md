@@ -159,18 +159,24 @@ Random Arena does.
 hold the shrines. A Capture Points map has one to five
 `"capture-point"` objectives, shared by no team; one with none, or more
 than five, is refused. A living player within 60 units of a shrine is
-on it; a creature is not. With one team alone on it, its progress moves
-toward that team at one pip per player, 1/20 of a whole fill a second
-each (20 s alone, 5 s for four, no cap). A shrine the foe owns, or the
-foe's progress on it, is drained to 0 first, where it turns neutral,
-and then fills; at a whole fill the team owns it. Two teams on it
-contest it: nothing moves, and contested at 0 it stays neutral. Nobody
-on it, its progress stays, and an owner never loses it but to a foe.
-Every 30 s of match clock each team scores 1 per shrine it owns; a
-shrine taken in that tick counts, since the captures come first. The
-dead stay down and pay the death penalty; a wipe loses at once. At
-**8 minutes** the team with more points wins, equal points is a draw.
-Kills score nothing. The scoreboard reads the points as Kill Count
+on it, a pip; a team's Ghostly Hero is 4 pips, and any other creature
+none (#2690). The team with the most pips nets them against the sum of
+every other team's, and the net is capped at 4 (GW1 wiki Pip): 8 against
+6 is 2, 8 against 2 is 4. A positive net moves the shrine toward that
+team at net/4 of a whole fill per 8 s (8 s at 4, 16 s at 2, 32 s at 1).
+A shrine the foe owns, or the foe's progress on it, is drained to 0
+first, where it turns neutral, and then fills; at a whole fill the team
+owns it. A tie for the most pips, or a net of 0, moves nothing. With
+three teams a negative net (5 against 3 + 3 is −1) captures for nobody:
+it drains a shrine anyone owns to neutral at min(−net, 4) pips, and it
+stays neutral. Nobody on it, its progress stays, and an owner never
+loses it but to a foe. Every 30 s of match clock each team scores 1 per
+shrine it owns; a shrine taken in that tick counts, since the captures
+come first. The dead stay down and pay the death penalty; a wipe loses
+at once. A team **20 points ahead** of every other team in play wins at
+once. At **8 minutes** the most points win; on equal points the team
+holding the most shrines, then the one that last led every other alone;
+tied teams none of which ever led alone draw. Kills score nothing. The scoreboard reads the points as Kill Count
 reads kills. Each shrine draws as the flag stand's ring in its owner's
 colour, grey while neutral, with an arc of its progress in the
 capturer's colour. Scarred Earth plays it: each shrine stands in a broken ring of walls, open

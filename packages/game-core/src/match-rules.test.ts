@@ -42,6 +42,7 @@ function standing(...teams: [number, number, number, boolean?, boolean?][]): Mat
           beyondRaising: false,
           aggression: 0,
           ledAtSeconds: undefined,
+          pointsHeld: 0,
           eliminated,
         },
       ]),
@@ -329,6 +330,7 @@ describe("evaluateMatch: guild battle (#1222)", () => {
     beyondRaising: false,
     aggression: 0,
     ledAtSeconds: undefined,
+    pointsHeld: 0,
     eliminated: false,
     ...overrides,
   });
@@ -503,8 +505,11 @@ describe("evaluateMatch: capture points (#2690)", () => {
   const points = (...byTeam: number[]) => ({
     byTeam: new Map(byTeam.map((value, team) => [team, value])),
   });
-  /** Every team alive, each led last at the given second, or never. */
-  const led = (...at: (number | undefined)[]): MatchStanding => ({
+  /** Every team alive, each led last at the given second, or never; each holding `held`'s shrines, or none. */
+  const led = (
+    at: readonly (number | undefined)[],
+    held: readonly number[] = [],
+  ): MatchStanding => ({
     byTeam: new Map(
       at.map((ledAtSeconds, team) => [
         team,
@@ -516,6 +521,7 @@ describe("evaluateMatch: capture points (#2690)", () => {
           beyondRaising: false,
           aggression: 0,
           ledAtSeconds,
+          pointsHeld: held[team] ?? 0,
           eliminated: false,
         },
       ]),
@@ -524,34 +530,41 @@ describe("evaluateMatch: capture points (#2690)", () => {
 
   it("is won at once by a team 20 points ahead of every other", () => {
     expect(CAPTURE_LEAD_TO_WIN).toBe(20);
-    expect(evaluateMatch(points(20, 1), led(30, undefined), 100, rules)).toBe(MATCH_IN_PROGRESS);
-    expect(evaluateMatch(points(21, 1), led(30, undefined), 100, rules)).toEqual({
+    expect(evaluateMatch(points(20, 1), led([30, undefined]), 100, rules)).toBe(MATCH_IN_PROGRESS);
+    expect(evaluateMatch(points(21, 1), led([30, undefined]), 100, rules)).toEqual({
       phase: "finished",
       winningTeam: 0,
       reason: "score",
     });
     // Twenty ahead of one team, but not of the other: it plays on.
-    expect(evaluateMatch(points(25, 1, 10), led(30, undefined, 20), 100, rules)).toBe(
+    expect(evaluateMatch(points(25, 1, 10), led([30, undefined, 20]), 100, rules)).toBe(
       MATCH_IN_PROGRESS,
     );
   });
 
-  it("goes at time to the most points, and a tie to the team that led last", () => {
-    expect(evaluateMatch(points(3, 5), led(60, 90), 480, rules)).toEqual({
+  it("goes at time to the most points, a tie to the most shrines held, then to the team that led last", () => {
+    expect(evaluateMatch(points(3, 5), led([60, 90]), 480, rules)).toEqual({
       phase: "finished",
       winningTeam: 1,
       reason: "time",
     });
-    expect(evaluateMatch(points(5, 5), led(120, 90), 480, rules)).toEqual({
+    expect(evaluateMatch(points(5, 5), led([120, 90]), 480, rules)).toEqual({
       phase: "finished",
       winningTeam: 0,
       reason: "time",
     });
-    expect(evaluateMatch(points(5, 5, 5), led(60, 150, 90), 480, rules).winningTeam).toBe(1);
+    expect(evaluateMatch(points(5, 5, 5), led([60, 150, 90]), 480, rules).winningTeam).toBe(1);
     // A third team that led last but is behind now does not decide the tie.
-    expect(evaluateMatch(points(5, 5, 4), led(60, 90, 150), 480, rules).winningTeam).toBe(1);
+    expect(evaluateMatch(points(5, 5, 4), led([60, 90, 150]), 480, rules).winningTeam).toBe(1);
+    // Tied on points, the most shrines held decides before who led last.
+    expect(evaluateMatch(points(5, 5), led([120, 90], [1, 2]), 480, rules).winningTeam).toBe(1);
+    expect(evaluateMatch(points(5, 5, 5), led([60, 150, 90], [2, 1, 2]), 480, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 2,
+      reason: "time",
+    });
     // Tied, and neither ever led alone: a draw.
-    expect(evaluateMatch(points(0, 0), led(undefined, undefined), 480, rules).winningTeam).toBe(
+    expect(evaluateMatch(points(0, 0), led([undefined, undefined]), 480, rules).winningTeam).toBe(
       undefined,
     );
   });

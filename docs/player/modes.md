@@ -206,12 +206,14 @@ The Courtyard plays it.
 **Hold the shrines.** The map has five **shrines**: one by each base
 and three between, the centre one out in the open. Stand on a shrine to
 capture it. Each of your team on it is a **pip**, your Ghostly Hero
-four, and a team counts four at most; pets, minions and spirits count
-none. With four pips a neutral shrine is yours in 8 seconds, with two in
-16, alone in 32. Foes on it cancel your pips one for one: three of you
-against two of them take it at one pip, in 32 seconds, and equal pips
-hold it still. With three teams, the strongest moves it by its pips less
-the next strongest's. A shrine another team owns is first drained to
+four; pets, minions and spirits count none. With four pips a neutral
+shrine is yours in 8 seconds, with two in 16, alone in 32; more than four
+go no faster. Foes on it cancel your pips one for one: three of you
+against two of them take it at one pip, in 32 seconds, eight against
+two at four, and equal pips hold it still. With three teams, the
+strongest moves it by its pips less those of both others together; if
+the other two outnumber it, nobody captures, and a shrine anyone owns is
+only drained back to neutral. A shrine another team owns is first drained to
 neutral, then filled for you, so taking it takes twice as long. Walk
 away and its progress stays where it was; a shrine you own stays yours
 until a foe takes it. The shrines show on the compass as □ in the
@@ -222,8 +224,8 @@ and a sound announce what each side scored. The dead
 stay down until an ally resurrects them, and each death costs morale.
 Get **20 points ahead** of every other team, or wipe the other team, to
 win at once. After 8 minutes the team with more points wins; on equal
-points, the team that was last ahead alone wins, and if none ever was,
-it is a draw. Kills score nothing.
+points, the one holding more shrines, then the team that was last ahead
+alone, and if none ever was, it is a draw. Kills score nothing.
 
 Each shrine is a ring on the ground in its owner's colour, grey while
 nobody owns it, with an arc round it showing how far it is toward

@@ -4,10 +4,11 @@ import { FLAG_REACH_UNITS } from "./flags.js";
 /**
  * Heroes' Ascent's Capture Points (#1378, #2690, GW1's wiki "Capture
  * Points"): every player of a team within reach of a shrine is a pip, its
- * Ghostly Hero four, and a team has at most `MAX_PIPS`. The strongest
- * team's pips less the next strongest's move the shrine toward it; a tie
- * at the top holds it still. A shrine a foe owns, or a foe's progress on
- * it, is drained to neutral before it fills again.
+ * Ghostly Hero four. The team with the most pips, less every other team's,
+ * moves the shrine toward it, at most `MAX_PIPS`; a tie at the top holds
+ * it still, and the others outnumbering it drain the shrine to neutral. A
+ * shrine a foe owns, or a foe's progress on it, is drained to neutral
+ * before it fills again.
  *
  * Pure: the simulation says how many pips each team has on each shrine;
  * this decides who owns it, and how far toward whom.
@@ -19,7 +20,7 @@ export const CAPTURE_REACH_UNITS = FLAG_REACH_UNITS;
 /** Seconds `MAX_PIPS` net take to fill a neutral shrine; fewer take proportionally longer. */
 export const CAPTURE_SECONDS = 8;
 
-/** The most pips a team counts on one shrine, however many stand on it. */
+/** The most net pips that move a shrine, however many stand on it (GW1 wiki Pip). */
 export const MAX_PIPS = 4;
 
 /** A team's Ghostly Hero on a shrine is this many pips. */
@@ -54,22 +55,23 @@ export function onCapturePoint(point: Vec2, position: Vec2): boolean {
 }
 
 /**
- * The team that moves a shrine, and by how many pips: each team's
- * `pips`, capped at `MAX_PIPS`, the strongest's less the next strongest's,
- * for any number of teams. `undefined` with nobody on it, or a tie at the top.
+ * How `pips` move a shrine, for any number of teams (GW1 wiki Capture
+ * Points): the team with the most less the sum of every other's, at most
+ * `MAX_PIPS` either way. Positive, it captures for `team`; negative, the
+ * others outnumber it and only drain the shrine to neutral. `undefined`
+ * with nobody on it, a tie at the top, or a net of 0: nothing moves.
  */
 export function netPips(
   pips: ReadonlyMap<number, number>,
 ): { readonly team: number; readonly net: number } | undefined {
-  const ranked = [...pips]
-    .map(([team, count]) => [team, Math.min(count, MAX_PIPS)] as const)
-    .filter(([, count]) => count > 0)
-    .sort((a, b) => b[1] - a[1]);
+  const ranked = [...pips].filter(([, count]) => count > 0).sort((a, b) => b[1] - a[1]);
   const [first, second] = ranked;
   if (first === undefined || first[1] === second?.[1]) {
     return undefined;
   }
-  return { team: first[0], net: first[1] - (second?.[1] ?? 0) };
+  const others = ranked.slice(1).reduce((sum, [, count]) => sum + count, 0);
+  const net = Math.max(-MAX_PIPS, Math.min(MAX_PIPS, first[1] - others));
+  return net === 0 ? undefined : { team: first[0], net };
 }
 
 /**
@@ -87,22 +89,36 @@ export function stepCapturePoints<T extends CapturePointState>(
       if (moving === undefined) {
         return point;
       }
-      return capture(point, moving.team, (moving.net / MAX_PIPS / CAPTURE_SECONDS) * dt);
+      const amount = (Math.abs(moving.net) / MAX_PIPS / CAPTURE_SECONDS) * dt;
+      return moving.net > 0 ? capture(point, moving.team, amount) : neutralise(point, amount);
     }),
   };
+}
+
+/** `point` drained toward neutral by `amount` of a whole fill, and what of `amount` is left over. */
+function drain<T extends CapturePointState>(point: T, amount: number): { point: T; left: number } {
+  const left = point.progress - amount;
+  if (left > PROGRESS_EPSILON) {
+    return { point: { ...point, progress: left }, left: 0 };
+  }
+  // A drain that lands within the epsilon leaves nothing over.
+  return {
+    point: { ...point, owner: null, capturer: null, progress: 0 },
+    left: -left > PROGRESS_EPSILON ? -left : 0,
+  };
+}
+
+/** `point` drained by `amount` of a whole fill, and left neutral once it is (#2690). */
+function neutralise<T extends CapturePointState>(point: T, amount: number): T {
+  return drain(point, amount).point;
 }
 
 /** `point` after `team` moved it by `amount` of a whole fill. */
 function capture<T extends CapturePointState>(point: T, team: number, amount: number): T {
   if (point.capturer !== team && point.progress > 0) {
-    const left = point.progress - amount;
-    if (left > PROGRESS_EPSILON) {
-      return { ...point, progress: left };
-    }
-    // Drained: the shrine is no one's, and what is left of the step fills
-    // it. A drain that lands within the epsilon leaves nothing to fill.
-    const neutral = { ...point, owner: null, capturer: null, progress: 0 };
-    return -left > PROGRESS_EPSILON ? capture(neutral, team, -left) : neutral;
+    // Drained, the shrine is no one's, and what is left of the step fills it.
+    const drained = drain(point, amount);
+    return drained.left > 0 ? capture(drained.point, team, drained.left) : drained.point;
   }
   const progress = point.progress + amount;
   return progress < 1 - PROGRESS_EPSILON

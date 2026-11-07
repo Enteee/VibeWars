@@ -236,6 +236,8 @@ export interface TeamStanding {
    * other team's alone (#2690); `undefined` if it never has.
    */
   readonly ledAtSeconds: number | undefined;
+  /** How many Capture Points shrines it owns now (#2690): a tie at time goes to the most. */
+  readonly pointsHeld: number;
   /**
    * Whether it was beaten, as `teamBeaten` counts it, at an earlier step of
    * this match (#2682): with three teams the match goes on past the first
@@ -477,8 +479,9 @@ function scoreInPlay(score: MatchScore, standing: MatchStanding, rules: MatchRul
 /**
  * Capture Points (#1378, #2690, GW1): a wipe is out at once, as in a Relic
  * Run; `CAPTURE_LEAD_TO_WIN` points ahead of every other team in play wins
- * at once; at time the most points win, and of teams tied on them, the one
- * that led last. Tied teams none of which ever led alone draw.
+ * at once; at time the most points win, of teams tied on them the one
+ * holding the most shrines, and of those the one that led last. Tied teams
+ * none of which ever led alone draw.
  */
 function evaluateCapturePoints(
   score: MatchScore,
@@ -498,9 +501,12 @@ function evaluateCapturePoints(
   if (elapsedSeconds < rules.timeLimitSeconds || first === undefined) {
     return MATCH_IN_PROGRESS;
   }
-  const tied = ranked.filter(([, points]) => points === first[1]);
+  const held = (team: number): number => standing.byTeam.get(team)?.pointsHeld ?? 0;
+  const onPoints = ranked.filter(([, points]) => points === first[1]);
+  const mostHeld = Math.max(...onPoints.map(([team]) => held(team)));
+  const tied = onPoints.filter(([team]) => held(team) === mostHeld);
   if (tied.length === 1) {
-    return { phase: "finished", winningTeam: first[0], reason: "time" };
+    return { phase: "finished", winningTeam: tied[0]?.[0], reason: "time" };
   }
   const ledAt = (team: number): number => standing.byTeam.get(team)?.ledAtSeconds ?? -1;
   const latest = Math.max(...tied.map(([team]) => ledAt(team)));

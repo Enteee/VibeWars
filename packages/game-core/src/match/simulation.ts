@@ -8005,6 +8005,7 @@ export class MatchSimulation {
         beyondRaising: this.#teams.has(team) && raisable === 0,
         aggression: this.#aggression.get(team) ?? 0,
         ledAtSeconds: this.#ledAt.get(team),
+        pointsHeld: this.#capturePoints.filter((point) => point.owner === team).length,
         eliminated: this.#eliminated.has(team),
       });
     }

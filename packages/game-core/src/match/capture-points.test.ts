@@ -48,19 +48,26 @@ const NEUTRAL: CapturePointState = { owner: null, capturer: null, progress: 0 };
 const OURS: CapturePointState = { owner: 0, capturer: 0, progress: 1 };
 
 describe("netPips (#2690)", () => {
-  it("caps each team at four and nets the strongest against the next, for any number of teams", () => {
+  it("nets the strongest against every other, capping the net, not a team, at four", () => {
     expect(MAX_PIPS).toBe(4);
     expect(netPips(pips([0, 7]))).toEqual({ team: 0, net: 4 });
     expect(netPips(pips([0, 3], [1, 2]))).toEqual({ team: 0, net: 1 });
-    expect(netPips(pips([0, 1], [1, 4], [2, 2]))).toEqual({ team: 1, net: 2 });
-    // Capped, five against four is a tie.
-    expect(netPips(pips([0, 5], [1, 4]))).toBeUndefined();
+    expect(netPips(pips([0, 8], [1, 6]))).toEqual({ team: 0, net: 2 });
+    expect(netPips(pips([0, 8], [1, 2]))).toEqual({ team: 0, net: 4 });
+    expect(netPips(pips([0, 5], [1, 4]))).toEqual({ team: 0, net: 1 });
+    expect(netPips(pips([0, 1], [1, 6], [2, 2]))).toEqual({ team: 1, net: 3 });
   });
 
-  it("moves nothing with nobody on it, or a tie at the top of three", () => {
+  it("goes negative when the others together outnumber the strongest of three", () => {
+    expect(netPips(pips([0, 5], [1, 3], [2, 3]))).toEqual({ team: 0, net: -1 });
+    expect(netPips(pips([0, 4], [1, 3], [2, 3], [3, 3]))).toEqual({ team: 0, net: -4 });
+  });
+
+  it("moves nothing with nobody on it, a tie at the top of three, or a net of 0", () => {
     expect(netPips(NOBODY)).toBeUndefined();
     expect(netPips(pips([0, 0], [1, 0]))).toBeUndefined();
     expect(netPips(pips([0, 2], [1, 2], [2, 1]))).toBeUndefined();
+    expect(netPips(pips([0, 4], [1, 2], [2, 2]))).toBeUndefined();
   });
 });
 
@@ -107,6 +114,15 @@ describe("a capture point (#1378, #2690)", () => {
     expect(drained).toEqual(NEUTRAL);
     const filledAndDrained = hold(hold(NEUTRAL, pips([1, 1]), 3), pips([0, 1]), 3);
     expect(filledAndDrained.progress).toBeGreaterThanOrEqual(0);
+  });
+
+  it("is only neutralised, at the negative net, when the others outnumber the strongest", () => {
+    // Blue 5 against Red 3 and Yellow 3 on Blue's shrine: -1, 32 s to drain.
+    const outnumbered = pips([0, 5], [1, 3], [2, 3]);
+    expect(hold(OURS, outnumbered, 31.95).owner).toBe(0);
+    expect(hold(OURS, outnumbered, 32)).toEqual(NEUTRAL);
+    expect(hold(OURS, outnumbered, 60)).toEqual(NEUTRAL);
+    expect(hold(NEUTRAL, outnumbered, 60)).toEqual(NEUTRAL);
   });
 
   it("keeps its progress while nobody is on it, and its owner for good", () => {

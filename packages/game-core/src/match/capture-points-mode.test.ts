@@ -188,9 +188,10 @@ describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
     expect(ours - theirs).toBeGreaterThanOrEqual(CAPTURE_LEAD_TO_WIN);
   });
 
-  it("goes at time, on equal points, to the team that led last", () => {
+  it("goes at time, on equal points, to the team holding the most shrines", () => {
     // A minute: two of team 1 take shrine 4 in 16 s and lead alone at 30 s;
-    // team 0, one on each of two shrines, ties them at 60 s, at time.
+    // team 0, one on each of two shrines, ties them at 60 s, at time, and
+    // holds two shrines to their one.
     const sim = capturePoints({ ...CAPTURE_POINTS_MATCH_RULES, timeLimitSeconds: 60 });
     onShrine(sim, "x", 4);
     onShrine(sim, "y", 4);
@@ -200,13 +201,32 @@ describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
     expect(points(sim)).toEqual([0, 1]);
     run(sim, POINT_TICK_SECONDS);
     expect(points(sim)).toEqual([2, 2]);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "time" });
+  });
+
+  it("goes at time, on equal points and shrines, to the team that led last", () => {
+    // As above, but team 1 then takes shrine 3 as well: at 90 s both have
+    // 4 points and two shrines, and only team 1 ever led alone, at 30 s.
+    const sim = capturePoints({ ...CAPTURE_POINTS_MATCH_RULES, timeLimitSeconds: 90 });
+    onShrine(sim, "x", 4);
+    onShrine(sim, "y", 4);
+    onShrine(sim, "a", 0);
+    onShrine(sim, "b", 1);
+    run(sim, 2 * POINT_TICK_SECONDS + DT);
+    expect(points(sim)).toEqual([2, 2]);
+    onShrine(sim, "x", 3);
+    onShrine(sim, "y", 3);
+    run(sim, POINT_TICK_SECONDS);
+    expect(points(sim)).toEqual([4, 4]);
+    expect(sim.capturePoints.map((point) => point.owner)).toEqual([0, 0, null, 1, 1]);
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "time" });
   });
 
   it("goes on a tie to the team in play that led last, an eliminated team's points aside", () => {
     // Team 2 takes shrine 2 in 16 s and is wiped, out but still scoring
-    // with it: at 30 s team 1 leads alone among the teams in play.
-    const sim = capturePoints({ ...CAPTURE_POINTS_MATCH_RULES, timeLimitSeconds: 60 }, [
+    // with it: at 30 s team 1 leads alone among the teams in play. Team 1
+    // takes a second shrine after 60 s, to hold as many as team 0 at 90 s.
+    const sim = capturePoints({ ...CAPTURE_POINTS_MATCH_RULES, timeLimitSeconds: 90 }, [
       fighter("p", 2, shrine(2)),
       fighter("q", 2, shrine(2)),
     ]);
@@ -221,6 +241,10 @@ describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
     expect([...points(sim), sim.score.byTeam.get(2)]).toEqual([0, 1, 1]);
     run(sim, POINT_TICK_SECONDS);
     expect([...points(sim), sim.score.byTeam.get(2)]).toEqual([2, 2, 2]);
+    onShrine(sim, "x", 3);
+    onShrine(sim, "y", 3);
+    run(sim, POINT_TICK_SECONDS);
+    expect([...points(sim), sim.score.byTeam.get(2)]).toEqual([4, 4, 3]);
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "time" });
   });
 
