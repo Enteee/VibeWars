@@ -297,8 +297,11 @@ channels, as often as they like.
   The host checks it against the `from` it arrives on. One proof a nonce,
   good or bad; none within `LOBBY_PROOF_MS` is refused as `unproven`.
   Pending challenges are capped at the lobby's seat count, and a signature
-  is checked only for a pending one. A held seat goes back only to the key
-  that held it.
+  is checked only for a pending one. A peer refused `unproven` is challenged
+  no more until it leaves, so it costs the host one check, and a join the
+  host would refuse anyway (full, closed) is refused unchallenged. A held
+  seat goes back only to the key that held
+  it.
 - **Another seat's key is only the host's word.** The host checks each
   proof itself and passes on the key, not the proof. A hostile host can
   name any key for any seat. Nothing may treat a key it did not challenge

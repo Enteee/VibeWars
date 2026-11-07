@@ -561,6 +561,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   /** Peers whose queued join was checked, admitted or not: each once, while it is here. */
   const judged = new Set<string>();
   /** Joins waiting on their `lobby-proof` (#2706), by sender: since when, on the lobby's clock. */
+  /**
+   * Peers refused `unproven` (#2706): each is challenged no more while it
+   * is here, so a loop of bad proofs costs the host one check, not one
+   * per message its budget lets through.
+   */
+  const unproven = new Set<string>();
   const pendingProofs = new Map<
     string,
     { readonly join: PeerLobbyJoin; readonly nonce: string; readonly since: number }
@@ -2078,6 +2084,31 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     admit(from, join, null, null);
   };
 
+  /**
+   * Whether a new joiner's `join` is one `seatProven` would refuse,
+   * refusing it if so. Only what needs no proof: a queued lobby's ticket
+   * is still checked once proven.
+   */
+  const refusedUnproven = (join: PeerLobbyJoin, from: string): boolean => {
+    if (members.size >= MAX_LOBBY_PLAYERS) {
+      refuse(from, "lobby-full");
+      return true;
+    }
+    if (queued !== undefined) {
+      // Judged once while it is here: a second ticket is not looked at.
+      return judged.has(from);
+    }
+    if (join.admission !== null) {
+      refuse(from, "not-admitted");
+      return true;
+    }
+    if (!open && from !== local.selfId) {
+      refuse(from, "closed");
+      return true;
+    }
+    return false;
+  };
+
   transport.on("lobby-join", (data, from) => {
     if (closed || !budget.take(from, nowMs()) || (members.has(from) && !away.has(from))) {
       return;
@@ -2092,8 +2123,16 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (join === undefined) {
       return;
     }
+    if (unproven.has(from)) {
+      return;
+    }
     const returning = members.get(from);
     if (returning !== undefined && !mayReturn(returning, join)) {
+      return;
+    }
+    // A join that would be refused once proven is refused unchallenged:
+    // a check is spent only on a join that can take a seat.
+    if (returning === undefined && refusedUnproven(join, from)) {
       return;
     }
     // One challenge a sender, and no more of them than the lobby has
@@ -2134,6 +2173,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       proof === undefined ||
       !options.verifyPlayerProof(pending.join.playerPubkey, fields, proof.sig)
     ) {
+      unproven.add(from);
       refuse(from, "unproven");
       return;
     }
@@ -2621,6 +2661,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       for (const [peerId, pending] of pendingProofs) {
         if (nowMs() - pending.since >= LOBBY_PROOF_MS) {
           pendingProofs.delete(peerId);
+          unproven.add(peerId);
           refuse(peerId, "unproven");
         }
       }
@@ -2710,6 +2751,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     throttled.delete(peerId);
     welcomed.delete(peerId);
     judged.delete(peerId);
+    unproven.delete(peerId);
     pendingProofs.delete(peerId);
     if (peerId === local.selfId) {
       // The host's own player went: there is no lobby without its host.

@@ -29,7 +29,7 @@ import { connectMatch, type PeerMatchConnection } from "./match-client.js";
 import { ARENA, TICK_SECONDS, hello, settle } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
-import type { PlayerKey } from "./player-key.js";
+import type { PlayerKey, VerifyPlayerProof } from "./player-key.js";
 import { testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
 import type { Transport } from "./transport.js";
 
@@ -114,6 +114,8 @@ export async function openLobby(
     matchmaking?: LobbyMatchmakingOptions;
     /** A Hosted Game's team size to begin with (#2104): 4v4 by default. */
     hostedTeamSize?: LobbyTeamSize;
+    /** The proof check (#2706): the test key's by default. */
+    verifyPlayerProof?: VerifyPlayerProof;
   } = {},
 ): Promise<TestLobby> {
   const network = createMemoryNetwork();
@@ -131,7 +133,7 @@ export async function openLobby(
     teamLobby: options.teamLobby ?? false,
     ...(options.matchmaking === undefined ? {} : { matchmaking: options.matchmaking }),
     random: options.random ?? (() => 0.5),
-    verifyPlayerProof: verifyTestProof,
+    verifyPlayerProof: options.verifyPlayerProof ?? verifyTestProof,
     startMatch(plan) {
       const host =
         options.startMatch?.(plan) ??

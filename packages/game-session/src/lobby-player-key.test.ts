@@ -16,8 +16,8 @@ import {
 } from "./lobby-harness.test-support.js";
 import { LOBBY_PROOF_MS } from "./lobby-host.js";
 import { settle } from "./match-harness.test-support.js";
-import type { PlayerKey } from "./player-key.js";
-import { testPlayerKey } from "./player-key.test-support.js";
+import type { PlayerKey, VerifyPlayerProof } from "./player-key.js";
+import { testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
 import type { Transport } from "./transport.js";
 
 /**
@@ -207,8 +207,12 @@ describe("the lobby host's player-key proof (#2706)", () => {
     expect(back.refusals).toEqual(["unproven"]);
     expect(lobby.host.connection.getSnapshot().players[1]?.away).toBe(true);
 
-    const last = await challenged(back, joinOf("Guest", key, token));
-    await prove(back, key.signLobbyProof(fieldsOf(back, last)));
+    // Refused, it is challenged no more until it comes back.
+    await back.transport.leave();
+    await settle();
+    const later = await handPeer(lobby, id);
+    const last = await challenged(later, joinOf("Guest", key, token));
+    await prove(later, key.signLobbyProof(fieldsOf(later, last)));
     expect(lobby.host.connection.getSnapshot().players[1]?.away).toBe(false);
     expect(lobby.host.connection.getSnapshot().players[1]?.playerPubkey).toBe(key.pubkey);
   });
@@ -229,5 +233,43 @@ describe("the lobby host's player-key proof (#2706)", () => {
     await lobby.step(LOBBY_PROOF_MS / 1000 + 0.5);
     await lobby.join("Patient");
     expect(names(lobby)).toEqual(["Host", "Patient"]);
+  });
+
+  it("checks one bad proof a peer while it is here, however often it joins again", async () => {
+    let checks = 0;
+    const verifyPlayerProof: VerifyPlayerProof = (...args) => {
+      checks += 1;
+      return verifyTestProof(...args);
+    };
+    const lobby = await openLobby({ verifyPlayerProof });
+    // The host's own player proved its key too.
+    checks = 0;
+    const peer = await handPeer(lobby);
+    for (let i = 0; i < 50; i += 1) {
+      peer.transport.send("lobby-join", joinOf("Looper", testPlayerKey()), "host");
+      await settle();
+      peer.transport.send("lobby-proof", { sig: "00".repeat(64) }, "host");
+      await settle();
+    }
+    expect(checks).toBe(1);
+    expect(peer.nonces).toHaveLength(1);
+    expect(peer.refusals).toEqual(["unproven"]);
+    // Gone and back, it is a new peer: challenged again.
+    await peer.transport.leave();
+    await settle();
+    const back = await handPeer(lobby, peer.transport.selfId);
+    const key = testPlayerKey();
+    const nonce = await challenged(back, joinOf("Back", key));
+    await prove(back, key.signLobbyProof(fieldsOf(back, nonce)));
+    expect(names(lobby)).toEqual(["Host", "Back"]);
+  });
+
+  it("refuses a join it would refuse anyway without a challenge", async () => {
+    const lobby = await openLobby({ open: false });
+    const peer = await handPeer(lobby);
+    peer.transport.send("lobby-join", joinOf("Shut out", testPlayerKey()), "host");
+    await settle();
+    expect(peer.nonces).toEqual([]);
+    expect(peer.refusals).toEqual(["closed"]);
   });
 });
