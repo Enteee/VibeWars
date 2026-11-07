@@ -11,6 +11,8 @@ import { vec2 } from "../vec2.js";
  * players die in them. Fewer deaths than on `main` means bots that stall
  * rather than commit to kills, so every bot change is measured against
  * `main` with it. Deterministic: the same options give the same count.
+ * Mirror fights (#2624), the same builds on both sides, count each team's
+ * wins: on a field that is the same for both, about as many either way.
  */
 
 const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -34,16 +36,43 @@ export interface BotBenchOptions {
 export function runBotBench({ size, seeds, seconds }: BotBenchOptions): number {
   let deaths = 0;
   for (const seed of seeds) {
-    deaths += fight(size, seed, seconds);
+    const [team0, team1] = fight(size, seed, seconds, false);
+    deaths += team0 + team1;
   }
   return deaths;
 }
 
-function fight(size: number, seed: string, seconds: number): number {
+/**
+ * Of the mirror fights, one a seed, those team 0 won and those team 1 won:
+ * the winner lost fewer players. The rest are draws.
+ */
+export function runMirrorBench({
+  size,
+  seeds,
+  seconds,
+}: BotBenchOptions): readonly [number, number] {
+  const wins: [number, number] = [0, 0];
+  for (const seed of seeds) {
+    const [team0, team1] = fight(size, seed, seconds, true);
+    if (team0 !== team1) {
+      wins[team0 < team1 ? 0 : 1] += 1;
+    }
+  }
+  return wins;
+}
+
+/** Each team's players who died; with `mirror`, both sides play the same builds. */
+function fight(
+  size: number,
+  seed: string,
+  seconds: number,
+  mirror: boolean,
+): readonly [number, number] {
   const participants: ParticipantSpec[] = [];
   for (const team of [0, 1]) {
     for (let i = 0; i < size; i += 1) {
-      const build = STARTER_BUILDS[(i + team + seed.charCodeAt(0)) % STARTER_BUILDS.length];
+      const shift = mirror ? 0 : team;
+      const build = STARTER_BUILDS[(i + shift + seed.charCodeAt(0)) % STARTER_BUILDS.length];
       if (build === undefined) {
         throw new Error("no built-in builds");
       }
@@ -63,20 +92,27 @@ function fight(size: number, seed: string, seconds: number): number {
         skillBar: loadout.skillBar,
         ...loadoutSpec(resolved),
         spawn: vec2(team === 0 ? 200 : 1400, 100 + (600 * i) / Math.max(1, size - 1)),
-        facing: 0,
+        // Each side facing the other.
+        facing: team === 0 ? 0 : Math.PI,
         behaviour: { kind: "play-build", reaction: BOT_REACTION },
       });
     }
   }
   const sim = new MatchSimulation({ seed, ruleset: RULESET, bounds: BOUNDS, participants });
   const dead = new Set<string>();
+  const deaths: [number, number] = [0, 0];
   for (let t = 0; t < seconds; t += DT) {
     sim.step(DT);
     for (const participant of sim.participants()) {
-      if (participant.creature === undefined && participant.combatant.dead) {
+      if (
+        participant.creature === undefined &&
+        participant.combatant.dead &&
+        !dead.has(participant.id)
+      ) {
         dead.add(participant.id);
+        deaths[participant.combatant.team === 0 ? 0 : 1] += 1;
       }
     }
   }
-  return dead.size;
+  return deaths;
 }

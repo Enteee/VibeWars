@@ -61,7 +61,8 @@ export function playBuild(
   cursor: BehaviourCursor,
   context: BehaviourContext,
 ): BehaviourIntent {
-  const hold = (thinks: number) => reactionSeconds(behaviour.reaction, context.self.id, thinks);
+  const hold = (thinks: number) =>
+    reactionSeconds(behaviour.reaction, context.seed, context.self.id, thinks);
   return paced(hold, cursor, context, () => {
     const foes = livingFoes(context);
     return think(

@@ -214,15 +214,19 @@ describe("play-build's reaction time (#2606)", () => {
   });
 
   it("draws the same time from the same bot and decision, 0.15-0.4 s and about 0.275 on average", () => {
-    expect(reactionSeconds(BOT_REACTION, "bot-a", 3)).toBe(
-      reactionSeconds(BOT_REACTION, "bot-a", 3),
+    expect(reactionSeconds(BOT_REACTION, 1, "bot-a", 3)).toBe(
+      reactionSeconds(BOT_REACTION, 1, "bot-a", 3),
     );
-    expect(reactionSeconds(BOT_REACTION, "bot-a", 3)).not.toBe(
-      reactionSeconds(BOT_REACTION, "bot-b", 3),
+    expect(reactionSeconds(BOT_REACTION, 1, "bot-a", 3)).not.toBe(
+      reactionSeconds(BOT_REACTION, 1, "bot-b", 3),
+    );
+    // Another match, another draw (#2624): no id is the quicker in every match.
+    expect(reactionSeconds(BOT_REACTION, 1, "bot-a", 3)).not.toBe(
+      reactionSeconds(BOT_REACTION, 2, "bot-a", 3),
     );
     let sum = 0;
     for (let thinks = 0; thinks < 1000; thinks += 1) {
-      const seconds = reactionSeconds(BOT_REACTION, "bot-a", thinks);
+      const seconds = reactionSeconds(BOT_REACTION, 1, "bot-a", thinks);
       expect(seconds).toBeGreaterThanOrEqual(0.15);
       expect(seconds).toBeLessThan(0.4);
       sum += seconds;
