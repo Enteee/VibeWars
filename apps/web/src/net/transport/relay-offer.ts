@@ -14,6 +14,7 @@
  * shared secret stays on its device, a joiner keeps its offers in memory
  * only, and nothing here logs a config, a secret, a key or an offer.
  */
+import { bytesToHex } from "@noble/hashes/utils.js";
 import {
   isRelayPub,
   MAX_RELAY_PEER_ID,
@@ -25,6 +26,7 @@ import { RELAY_ADMIT_MS, type TicketKey } from "@vibewars/game-session";
 
 import {
   byteLength,
+  eventId,
   isTags,
   openRelayPool,
   signEvent,
@@ -42,7 +44,7 @@ import {
   type RelayOffer,
   type RelaySeal,
 } from "./relay-seal.js";
-import { newTicketKey } from "./ticket-key.js";
+import { newTicketKey, verifyTicketSig } from "./ticket-key.js";
 import {
   credentialExpiry,
   mintTurnCredential,
@@ -63,9 +65,10 @@ const MAX_OFFER_MESSAGE_BYTES = 4096;
 /**
  * After an author's message was of use (an ask the host heard, a seal
  * that opened for this joiner), nothing more from it is opened for this
- * long. Only use charges it: an event's `pubkey` is not verified here,
- * and anyone can claim another's, so nothing short of that may cost an
- * author anything.
+ * long. Only a use whose event is signed by its `pubkey` charges it:
+ * anyone can claim another's pubkey, and an invite holder can make a
+ * message that is of use, so nothing short of both may cost an author
+ * anything (#2553).
  */
 export const OFFER_OPEN_INTERVAL_MS = 5_000;
 
@@ -270,7 +273,7 @@ function topicPublisher(room: RelayOfferRoom, deps: RelayOfferDeps): TopicPublis
 /**
  * Listen on `room`'s topic. `use` gets each message that opens and says
  * whether it was of use, which alone charges its author
- * `OFFER_OPEN_INTERVAL_MS`.
+ * `OFFER_OPEN_INTERVAL_MS`, and only if the event is signed by it.
  */
 function listenTopic(
   room: RelayOfferRoom,
@@ -302,9 +305,9 @@ function listenTopic(
     if (typeof raw !== "object" || raw === null) {
       return;
     }
-    // The signature is the relays' business: the inner seal is what says
-    // who made an offer, and any code holder can make one either way.
-    const { id, pubkey, kind, tags, content } = raw as Record<string, unknown>;
+    // The signature is checked only once a message is of use, before its
+    // author is charged: verifying is far dearer than opening.
+    const { id, pubkey, created_at, kind, tags, content, sig } = raw as Record<string, unknown>;
     if (
       typeof id !== "string" ||
       typeof pubkey !== "string" ||
@@ -339,6 +342,16 @@ function listenTopic(
       .then(async (opened) => (opened === undefined || closed ? false : use(opened, now)))
       .then((used) => {
         if (!used || closed) {
+          return;
+        }
+        // A use is charged to its pubkey, so the event must be that
+        // pubkey's: otherwise an invite holder could claim a real relay
+        // holder's and mute it (#2553).
+        if (typeof created_at !== "number" || typeof sig !== "string") {
+          return;
+        }
+        const digest = eventId({ pubkey, created_at, kind, tags, content });
+        if (id !== bytesToHex(digest) || !verifyTicketSig(pubkey, digest, sig)) {
           return;
         }
         if (usedAt.size >= AUTHOR_LIMIT) {
