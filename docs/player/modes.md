@@ -283,4 +283,7 @@ get one wrong; nothing checks them against the match.
 See them on the **Matches** page, below Team Builder: the last 100,
 newest first, with new ones appearing as they are played. Every row is
 marked **host-reported**. Click one for both teams, each player's
-professions, top attributes and skill bar.
+professions, top attributes and skill bar. **Clone** copies a team from
+a finished match into your Team Builds, each player's build under
+their name, and opens it. A 1v1 side has no Clone: a Team Build is 2, 4
+or 8.

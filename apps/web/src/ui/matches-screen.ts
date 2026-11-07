@@ -13,9 +13,12 @@ import type {
   MatchRecordWatch,
   MatchRecordWatchHandlers,
 } from "../net/transport/match-records.js";
+import { decodeTemplate } from "../storage/gw1-template.js";
+import { isTeamBuildSize } from "../storage/schema.js";
+import { lookOfCharacter, teamFigureCard, type TeamFigureMember } from "./character-card.js";
 import { miniSkillBar, professionLabel } from "./character-preview.js";
 import { formatClock } from "./hud.js";
-import { h, screenBar, syncList } from "./kit.js";
+import { button, h, screenBar, syncList } from "./kit.js";
 import { playerLabelText } from "./player-label.js";
 import { railLabel, railScreen, type RailEntry } from "./rail.js";
 import { topAttributes } from "./team-editor.js";
@@ -28,6 +31,8 @@ export const NO_MATCHES = "No matches yet. Finished matches appear here as they 
 export const MATCHES_OFFLINE = "Can't reach the match relays right now.";
 export const HOST_REPORTED = "Published by the match's host; not verified by anyone else.";
 export const BUILD_UNREADABLE = "Build unreadable";
+/** A Clone's title when a build in its team can't be read (#2585). */
+export const TEAM_UNREADABLE = "A build in this team can't be read";
 
 const END_REASONS: Readonly<Record<MatchEndReason, string>> = {
   score: "Score",
@@ -44,6 +49,8 @@ export interface MatchesScreenOptions {
   readonly watch: (on: MatchRecordWatchHandlers) => MatchRecordWatch;
   /** Unix milliseconds. */
   readonly now: () => number;
+  /** A team's Clone (#2585): save it as a new Team Build and open it. */
+  readonly onCloneTeam: (team: MatchRecordTeam) => void;
 }
 
 export interface MatchesScreen {
@@ -125,10 +132,54 @@ function playerDetail(player: MatchRecordPlayer): HTMLElement {
   return row;
 }
 
-function teamDetail(record: MatchRecord, team: 0 | 1, players: MatchRecordTeam): HTMLElement {
+/** A player as a team card's member row: its name, and the look its template says. */
+function playerMember(player: MatchRecordPlayer): TeamFigureMember {
+  const name = playerLabelText(player.name, player.guildTag);
+  const decoded = decodeTemplate(player.template, "", 0);
+  return {
+    look: decoded.ok ? lookOfCharacter(decoded.character, undefined) : undefined,
+    label: player.bot ? `${name} (bot)` : name,
+  };
+}
+
+/**
+ * A team's Clone (#2585): none for a size no Team Build has, disabled
+ * when a build in it can't be read. One press, one copy.
+ */
+function cloneButton(players: MatchRecordTeam, onClone: () => void): HTMLElement[] {
+  if (!isTeamBuildSize(players.players.length)) {
+    return [];
+  }
+  const clone = button("Clone", "play-card-clone", () => {
+    clone.disabled = true;
+    onClone();
+  });
+  if (players.players.some((player) => !decodeTemplateCode(player.template).ok)) {
+    clone.disabled = true;
+    clone.title = TEAM_UNREADABLE;
+  }
+  return [clone];
+}
+
+function teamDetail(
+  record: MatchRecord,
+  team: 0 | 1,
+  players: MatchRecordTeam,
+  onCloneTeam: (team: MatchRecordTeam) => void,
+): HTMLElement {
   const section = h("section", "match-detail-team");
   section.appendChild(
-    h("h4", "match-detail-result", `Team ${String(team + 1)}: ${teamResult(record, team)}`),
+    teamFigureCard({
+      title: h(
+        "h4",
+        "match-detail-result",
+        `Team ${String(team + 1)}: ${teamResult(record, team)}`,
+      ),
+      members: players.players.map(playerMember),
+      actions: cloneButton(players, () => {
+        onCloneTeam(players);
+      }),
+    }),
   );
   const list = section.appendChild(h("ul", "match-players"));
   for (const player of players.players) {
@@ -137,7 +188,10 @@ function teamDetail(record: MatchRecord, team: 0 | 1, players: MatchRecordTeam):
   return section;
 }
 
-function matchDetail(record: MatchRecord): HTMLElement {
+function matchDetail(
+  record: MatchRecord,
+  onCloneTeam: (team: MatchRecordTeam) => void,
+): HTMLElement {
   const detail = h("div", "match-detail");
   detail.append(
     h(
@@ -145,8 +199,8 @@ function matchDetail(record: MatchRecord): HTMLElement {
       "match-detail-summary",
       `${END_REASONS[record.endReason]} after ${formatClock(record.durationSeconds)}`,
     ),
-    teamDetail(record, 0, record.teams[0]),
-    teamDetail(record, 1, record.teams[1]),
+    teamDetail(record, 0, record.teams[0], onCloneTeam),
+    teamDetail(record, 1, record.teams[1], onCloneTeam),
   );
   return detail;
 }
@@ -155,7 +209,10 @@ function matchDetail(record: MatchRecord): HTMLElement {
 const rowWhen = new WeakMap<HTMLElement, HTMLElement>();
 
 /** A record's row: its summary, a button that opens its detail in place. */
-function matchRow(heard: HeardMatchRecord): HTMLElement {
+function matchRow(
+  heard: HeardMatchRecord,
+  onCloneTeam: (team: MatchRecordTeam) => void,
+): HTMLElement {
   const { record } = heard;
   const row = h("li", "match-row");
   const when = h("span", "match-when");
@@ -186,7 +243,7 @@ function matchRow(heard: HeardMatchRecord): HTMLElement {
       head.setAttribute("aria-expanded", "false");
       return;
     }
-    detail = row.appendChild(matchDetail(record));
+    detail = row.appendChild(matchDetail(record, onCloneTeam));
     head.setAttribute("aria-expanded", "true");
   });
   return row;
@@ -216,7 +273,7 @@ export function renderMatchesScreen(
       list,
       records,
       (heard) => heard.id,
-      matchRow,
+      (heard) => matchRow(heard, options.onCloneTeam),
       (element, heard) => {
         const when = rowWhen.get(element);
         if (when !== undefined) {

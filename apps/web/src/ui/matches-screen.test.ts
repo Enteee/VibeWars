@@ -1,5 +1,5 @@
 import { STARTER_BUILDS } from "@vibewars/game-core";
-import { recordTemplate, type MatchRecord } from "@vibewars/game-session";
+import { recordTemplate, type MatchRecord, type MatchRecordTeam } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { arenaIds } from "../net/maps.js";
@@ -10,6 +10,7 @@ import {
   MATCHES_KEPT,
   MATCHES_OFFLINE,
   NO_MATCHES,
+  TEAM_UNREADABLE,
   relativeTime,
   renderMatchesScreen,
 } from "./matches-screen.js";
@@ -36,6 +37,26 @@ const RECORD: MatchRecord = {
   ],
 };
 
+/** A 2v2: each team can be a Team Build (#2585). */
+const PAIRS: MatchRecord = {
+  ...RECORD,
+  mode: "team-arena",
+  teams: [
+    {
+      players: [
+        { name: "Ann", guildTag: "VIBE", bot: false, template: played(0) },
+        { name: "Bob", guildTag: null, bot: false, template: played(1) },
+      ],
+    },
+    {
+      players: [
+        { name: "Bot A", guildTag: null, bot: true, template: played(2) },
+        { name: "Bot B", guildTag: null, bot: true, template: played(3) },
+      ],
+    },
+  ],
+};
+
 /** Just enough DOM to render the Matches page; the unit tests run in Node. */
 class FakeElement {
   className = "";
@@ -44,10 +65,13 @@ class FakeElement {
   src = "";
   alt = "";
   hidden = false;
+  disabled = false;
   type = "";
   readonly children: FakeElement[] = [];
   parent: FakeElement | undefined;
   readonly attributes = new Map<string, string>();
+  readonly dataset: Record<string, string> = {};
+  readonly getContext = (): null => null;
   readonly listeners = new Map<string, () => void>();
   readonly classList = { add: () => undefined, toggle: () => undefined };
   readonly style = { setProperty: () => undefined };
@@ -139,7 +163,11 @@ class FakeElement {
     // Nothing to show it on.
   }
 
+  /** As a browser does, a disabled button hears no click. */
   click(): void {
+    if (this.disabled) {
+      return;
+    }
     this.listeners.get("click")?.();
   }
 }
@@ -147,6 +175,7 @@ class FakeElement {
 describe("the Matches page (#2532)", () => {
   let on: MatchRecordWatchHandlers | undefined;
   let closed: number;
+  let cloned: MatchRecordTeam[];
 
   const render = (): { root: FakeElement; close: () => void } => {
     const root = new FakeElement();
@@ -161,6 +190,9 @@ describe("the Matches page (#2532)", () => {
         };
       },
       now: () => NOW,
+      onCloneTeam: (team) => {
+        cloned.push(team);
+      },
     });
     return { root, close: () => screen.close() };
   };
@@ -172,6 +204,7 @@ describe("the Matches page (#2532)", () => {
   beforeEach(() => {
     on = undefined;
     closed = 0;
+    cloned = [];
     vi.stubGlobal("localStorage", { getItem: () => null });
     vi.stubGlobal("window", { addEventListener: () => undefined });
     vi.stubGlobal("document", {
@@ -258,7 +291,9 @@ describe("the Matches page (#2532)", () => {
     expect(head.attributes.get("aria-expanded")).toBe("true");
     const detail = root.one("match-detail");
     expect(detail.all("match-player")).toHaveLength(2);
-    expect(detail.all("mini-skill-bar")).toHaveLength(2);
+    expect(detail.all("match-players").flatMap((list) => list.all("mini-skill-bar"))).toHaveLength(
+      2,
+    );
     expect(detail.all("match-professions")[0]?.textContent).not.toBe("");
     expect(detail.all("match-detail-result").map((result) => result.textContent)).toEqual([
       "Team 1: Won",
@@ -281,6 +316,63 @@ describe("the Matches page (#2532)", () => {
     const players = root.all("match-player");
     expect(players[0]?.one("match-build-unreadable").textContent).toBe(BUILD_UNREADABLE);
     expect(players[1]?.all("mini-skill-bar")).toHaveLength(1);
+  });
+
+  it("shows each team as a team card, a member row per player (#2585)", () => {
+    const { root } = render();
+    hear("a", PAIRS);
+    root.one("match-row-head").click();
+    const cards = root.one("match-detail").all("play-card");
+    expect(cards).toHaveLength(2);
+    expect(cards.map((card) => card.one("match-detail-result").textContent)).toEqual([
+      "Team 1: Won",
+      "Team 2: Lost",
+    ]);
+    expect(
+      cards.map((card) =>
+        card.all("play-card-member").map((member) => member.attributes.get("aria-label")),
+      ),
+    ).toEqual([
+      [expect.stringContaining("Ann"), "Bob"],
+      ["Bot A (bot)", "Bot B (bot)"],
+    ]);
+  });
+
+  it("clones a team once however often its Clone is pressed (#2585)", () => {
+    const { root } = render();
+    hear("a", PAIRS);
+    root.one("match-row-head").click();
+    const [first, second] = root.all("play-card-clone");
+    first?.click();
+    first?.click();
+    expect(first?.disabled).toBe(true);
+    expect(second?.disabled).toBe(false);
+    expect(cloned).toEqual([PAIRS.teams[0]]);
+  });
+
+  it("has no Clone for a 1v1, and a disabled one for a team it can't read (#2585)", () => {
+    const { root } = render();
+    hear("solo");
+    root.one("match-row-head").click();
+    expect(root.all("play-card-clone")).toHaveLength(0);
+
+    const [ann, bob] = PAIRS.teams[0].players;
+    if (ann === undefined || bob === undefined) {
+      return;
+    }
+    const unreadable: MatchRecord = {
+      ...PAIRS,
+      endedAt: RECORD.endedAt + 1,
+      teams: [{ players: [ann, { ...bob, template: "!!!" }] }, PAIRS.teams[1]],
+    };
+    hear("pairs", unreadable);
+    const head = root.all("match-row-head")[0];
+    head?.click();
+    const [clone] = root.all("play-card-clone");
+    expect(clone?.disabled).toBe(true);
+    expect(clone?.title).toBe(TEAM_UNREADABLE);
+    clone?.click();
+    expect(cloned).toEqual([]);
   });
 
   it("stops listening when the page closes", () => {
