@@ -69,6 +69,32 @@ Backlog`, judged against the card's column in hubd's copy of the board
   named list of the other roles rather than `"*"`. Nor does it read
   code-scanning alerts.
 
+- **A release branch takes main's commits and nothing else** (#2707). The
+  release manager scopes a release in a `Release 0.N.0` tracking issue,
+  freezes it as `release/0.N.0` from a commit on main, has QA test that
+  branch and publishes it with `gh release create`. Publishing is a
+  production deploy: `pages.yml` puts every published release on the site
+  root. So the branch, the sign-off and the tag are three roles' own, and no
+  hat lends any of them. hubd pushes a new branch only at the next version
+  and from a commit on main no earlier than the last release's start, so
+  none starts before a fix main has; and then only fast-forwards by
+  `git cherry-pick -x` commits, one parent each, each naming a full sha on
+  a freshly fetched main that the branch does not have yet, whose every
+  touched file has the same mode and blob before and after as in that
+  commit. A patch-id would not do: it ignores where a hunk lands, so a guard
+  deleted from one of two identical stretches of a file would pass for one
+  deleted from the other. It pushes exactly the sha it checked, as a
+  compare-and-swap on GitHub's head. hubd merges a pull request only into
+  main, so none reaches a release branch past this check. The release
+  manager and QA edit only an open tracking issue the company wrote, and
+  only its body. qa-tester's `hub release-ok` is
+  recorded for the branch's head in hubd's ledger; `release create` is
+  refused without one on the current head, takes no flag beyond the tag,
+  `--target`, `--title` and `--generate-notes`, and hubd rewrites the
+  target to that signed-off sha, so GitHub cannot tag a newer one. Nothing
+  else can make a tag. A fix that does not pick cleanly waits for the next
+  release rather than being resolved by hand on the branch.
+
 - **The jails share one resource budget** (#358). Jails run as the
   operator's UID, so without a cap one runaway test run takes the host's RAM,
   CPU or process table with it. `claude-bot` starts every jail as a systemd

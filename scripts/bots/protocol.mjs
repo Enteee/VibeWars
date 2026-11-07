@@ -617,6 +617,7 @@ export const ROLE_STYLE = {
   "perf-sec-qa": { emoji: "🛡", name: "Perf/Sec/QA" },
   "qa-tester": { emoji: "🧪", name: "QA Tester" },
   "business-analyst": { emoji: "📈", name: "Business Analyst" },
+  "release-manager": { emoji: "📦", name: "Release manager" },
 };
 
 /**
@@ -846,7 +847,7 @@ export function formatMirror(message, context) {
  * The roles that may ask the operator. A permission, so it changes by pull
  * request like any other; everyone else goes through the manager.
  */
-export const ASKERS = ["manager", "architect", "lead-dev"];
+export const ASKERS = ["manager", "architect", "lead-dev", "release-manager"];
 
 /** Telegram shows at most a handful of buttons legibly on a phone. */
 export const MAX_OPTIONS = 6;

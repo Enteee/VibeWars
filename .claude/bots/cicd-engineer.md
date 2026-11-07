@@ -39,7 +39,8 @@ What you do:
   catch is a gap in CI, since agents never run the suites themselves. Propose
   the check that closes it.
 - **Own the environments.** A `test` environment that deploys every merge to
-  `main`, and a `prod` environment that deploys a release. Use
+  `main`, and a `prod` environment that deploys a release. Publishing a
+  release is the release manager's, not yours (#2707). Use
   `hub api repos/{owner}/{repo}/environments/...` — those two API paths are
   yours; nothing else is.
 
