@@ -113,36 +113,48 @@ async function viewAt(page: Page): Promise<{ x: number; y: number }> {
 }
 
 /**
- * Walks the host's hero onto `to` by held keys, closed loop (#2550):
- * down onto `to`'s row, then along it, each key held until the view
- * passes `to`, then let go, and an overshoot walked back. Timed keys
- * miss under load, but the host's tab is in front, so its view is live.
+ * Walks the host's hero onto `to` (#2550): by held keys down onto
+ * `to`'s row, then along it, each let go `LEAD` short once the view,
+ * which is on the hero, comes that near; then the rest by a ground
+ * click, on screen by now, which the hero walks to exactly. A timed key
+ * misses under load, a key let go by the view overshoots by the lag of
+ * its keyup, but the host's tab is in front, so its view is live.
  */
 async function steerTo(page: Page, to: { readonly x: number; readonly y: number }): Promise<void> {
+  const LEAD = 80;
   await expect(page.locator("#viewport")).toHaveAttribute("data-camera", /^-?\d+,-?\d+$/);
   for (const axis of ["y", "x"] as const) {
-    for (let leg = 0; leg < 4; leg += 1) {
-      const from = (await viewAt(page))[axis];
-      if (Math.abs(to[axis] - from) < NEAR_MEET / 2) {
-        break;
-      }
-      const ahead = to[axis] > from;
-      const towards: KeyAction =
-        axis === "y" ? (ahead ? "move-down" : "move-up") : ahead ? "move-right" : "move-left";
-      await page.keyboard.down(key(towards));
-      await expect
-        .poll(
-          async () => {
-            const at = (await viewAt(page))[axis];
-            return ahead ? at >= to[axis] : at <= to[axis];
-          },
-          { message: `the host's view should pass ${axis} ${String(to[axis])}`, timeout: 20_000 },
-        )
-        .toBe(true);
-      await page.keyboard.up(key(towards));
-      await viewStopsNear(page, to, Infinity, "the host's hero should stop");
+    const from = (await viewAt(page))[axis];
+    if (Math.abs(to[axis] - from) <= LEAD) {
+      continue;
     }
+    const ahead = to[axis] > from;
+    const towards: KeyAction =
+      axis === "y" ? (ahead ? "move-down" : "move-up") : ahead ? "move-right" : "move-left";
+    await page.keyboard.down(key(towards));
+    await expect
+      .poll(
+        async () => {
+          const at = (await viewAt(page))[axis];
+          return ahead ? at >= to[axis] - LEAD : at <= to[axis] + LEAD;
+        },
+        { message: `the host's view should near ${axis} ${String(to[axis])}`, timeout: 20_000 },
+      )
+      .toBe(true);
+    await page.keyboard.up(key(towards));
+    await viewStopsNear(page, to, Infinity, "the host's hero should stop");
   }
+  const canvas = page.locator("#viewport canvas:not(.compass)");
+  await canvas.click({ position: await matchPoint(page, canvas, to) });
+  await expect
+    .poll(
+      async () => {
+        const at = await viewAt(page);
+        return Math.hypot(at.x - to.x, at.y - to.y);
+      },
+      { message: "the host's hero should walk onto the clicked point", timeout: 10_000 },
+    )
+    .toBeLessThan(NEAR_MEET / 4);
 }
 
 /**
