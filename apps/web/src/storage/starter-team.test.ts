@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import { duplicateTeam } from "../ui/team-builder.js";
 import { TeamRepository, createMemoryStore } from "./repository.js";
-import { isStoredTeam } from "./schema.js";
+import { isStoredTeam, TEAM_SCHEMA_VERSION } from "./schema.js";
+import { forgetDiscardedStarter } from "./starter-character.js";
 import { rerollStarterTeam, rollStarterTeam, type StarterTeamKey } from "./starter-team.js";
 
 /** The first start's Team Build (#2036): once per browser, kept by id, rerolled in place. */
@@ -14,6 +15,9 @@ function memoryKey(): StarterTeamKey & { value: string | undefined } {
     load: () => key.value,
     save: (id: string) => {
       key.value = id;
+    },
+    clear: () => {
+      key.value = undefined;
     },
   };
   return key;
@@ -165,5 +169,47 @@ describe("cloning the starter team", () => {
     expect(copy.id).toBe("c");
     expect(copy.name).toBe(`${rolled.name} (copy)`);
     expect(copy.members).toEqual(rolled.members);
+  });
+});
+
+describe("forgetDiscardedStarter on a team's key (#2717)", () => {
+  it("rerolls only the size whose starter team a new version discarded", async () => {
+    const store = createMemoryStore();
+    const teams = new TeamRepository(store);
+    const keys = { 2: memoryKey(), 4: memoryKey() } as const;
+    for (const size of [2, 4] as const) {
+      await rollStarterTeam({
+        teams,
+        key: keys[size],
+        random: () => 0,
+        size,
+        id: `old${String(size)}`,
+        newId: counter(),
+        now: 1,
+      });
+    }
+    // A new version's schema discards the 4v4 starter only.
+    const old4 = await teams.load("old4");
+    await store.put("teams", "old4", { ...old4, schemaVersion: TEAM_SCHEMA_VERSION - 1 });
+
+    const { discarded } = await teams.list();
+    const rolled: (string | undefined)[] = [];
+    for (const size of [2, 4] as const) {
+      forgetDiscardedStarter(keys[size], discarded);
+      const team = await rollStarterTeam({
+        teams,
+        key: keys[size],
+        random: () => 0,
+        size,
+        id: `new${String(size)}`,
+        newId: counter(),
+        now: 2,
+      });
+      rolled.push(team?.id);
+    }
+
+    expect(rolled).toEqual([undefined, "new4"]);
+    expect(keys[2].value).toBe("old2");
+    expect(keys[4].value).toBe("new4");
   });
 });
