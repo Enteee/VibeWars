@@ -28,7 +28,7 @@ const BUILD = "Elementalist/Mesmer";
  * keeps the product free of a test hook. Only 48-byte draws are seeded,
  * which is what @noble/secp256k1 makes a secret key from, each the same
  * whatever drew before it; every other draw stays random. Seeds 1 and 2
- * meet on Canyon, an Annihilation map; the test checks it, so a
+ * meet on Long Hall, an Annihilation map; the test checks it, so a
  * change to formation fails here, loudly.
  */
 async function seedTicketKeys(page: Page, seed: number): Promise<void> {
@@ -129,7 +129,7 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     await expect(aliceSplash.locator(".versus-team.is-theirs")).toContainText("Bob");
     await expect(bobSplash.locator(".versus-team.is-ours")).toContainText("Bob");
     // One lobby, so one planned map.
-    await expect(aliceSplash.locator(".versus-map")).toContainText("Canyon");
+    await expect(aliceSplash.locator(".versus-map")).toContainText("Long Hall");
     await expect(bobSplash.locator(".versus-map")).toHaveText(
       (await aliceSplash.locator(".versus-map").textContent()) ?? "",
     );

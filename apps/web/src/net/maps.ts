@@ -7,6 +7,8 @@ import ashenCourtyard from "@vibewars/game-maps/maps/ashen-courtyard/map.json" w
 import frozenCrossing from "@vibewars/game-maps/maps/frozen-crossing/map.json" with { type: "json" };
 import mossVale from "@vibewars/game-maps/maps/moss-vale/map.json" with { type: "json" };
 import sandstoneSteps from "@vibewars/game-maps/maps/sandstone-steps/map.json" with { type: "json" };
+import canthanTerraces from "@vibewars/game-maps/maps/canthan-terraces/map.json" with { type: "json" };
+import sunkenBastion from "@vibewars/game-maps/maps/sunken-bastion/map.json" with { type: "json" };
 import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
@@ -47,6 +49,9 @@ export const ARENA_MAPS: readonly MapData[] = [
   frozenCrossing,
   ashenCourtyard,
   mossVale,
+  // The large arenas (#2607).
+  canthanTerraces,
+  sunkenBastion,
   // The Guild Battle's (#1222).
   guildHallIsle,
   // The Relic Run's (#1374, #2551).

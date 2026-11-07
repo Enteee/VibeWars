@@ -36,6 +36,7 @@ describe("randomArenaMapPool", () => {
       "arena-canyon",
       "arena-long-hall",
       "sandstone-steps",
+      "canthan-terraces",
     ]);
     expect(randomArenaMapPool("random-arena-2v2")).toEqual([
       "arena-pillars",
@@ -44,6 +45,7 @@ describe("randomArenaMapPool", () => {
       "arena-canyon",
       "arena-long-hall",
       "frozen-crossing",
+      "sunken-bastion",
     ]);
     expect(randomArenaMapPool("random-arena-4v4")).toEqual([
       "arena-pillars",
@@ -162,12 +164,14 @@ describe("team sizes (#2108)", () => {
     }
   });
 
-  it("draws each medium arena at its own size and no other: Sandstone Steps 1v1, Frozen Crossing 2v2 (#2604), Ashen Courtyard 4v4, Moss Vale 8v8 (#2605)", () => {
+  it("draws each medium and large arena at its own size and no other: Sandstone Steps 1v1, Frozen Crossing 2v2 (#2604), Ashen Courtyard 4v4, Moss Vale 8v8 (#2605), Canthan Terraces 1v1, Sunken Bastion 2v2 (#2607)", () => {
     for (const [id, size] of [
       ["sandstone-steps", 1],
       ["frozen-crossing", 2],
       ["ashen-courtyard", 4],
       ["moss-vale", 8],
+      ["canthan-terraces", 1],
+      ["sunken-bastion", 2],
     ] as const) {
       expect(sizesOf(id)).toEqual([size]);
       for (const other of [1, 2, 4, 8]) {
@@ -192,6 +196,8 @@ describe("team sizes (#2108)", () => {
         "frozen-crossing",
         "ashen-courtyard",
         "moss-vale",
+        "canthan-terraces",
+        "sunken-bastion",
       ]),
     );
   });
