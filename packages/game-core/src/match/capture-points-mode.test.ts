@@ -85,19 +85,24 @@ function minion(id: string, ownerId: string, team: number, spawn: Vec2): Partici
   };
 }
 
-/** Two a team at their spawns, on no shrine. */
-function capturePoints(matchRules: MatchRules = CAPTURE_POINTS_MATCH_RULES): MatchSimulation {
+/** Two a team at their spawns, on no shrine, and any `more`. */
+function capturePoints(
+  matchRules: MatchRules = CAPTURE_POINTS_MATCH_RULES,
+  more: ParticipantSpec[] = [],
+): MatchSimulation {
   return new MatchSimulation({
     seed: "capture-points",
     matchRules,
     walls: [],
     bounds: { width: 3200, height: 2000 },
     capturePoints: SHRINES,
+    teamCount: more.some(({ team }) => team === 2) ? 3 : 2,
     participants: [
       fighter("a", 0, vec2(280, 620)),
       fighter("b", 0, vec2(280, 760)),
       fighter("x", 1, vec2(2920, 1240)),
       fighter("y", 1, vec2(2920, 1380)),
+      ...more,
     ],
   });
 }
@@ -195,6 +200,27 @@ describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
     expect(points(sim)).toEqual([0, 1]);
     run(sim, POINT_TICK_SECONDS);
     expect(points(sim)).toEqual([2, 2]);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "time" });
+  });
+
+  it("goes on a tie to the team in play that led last, an eliminated team's points aside", () => {
+    // Team 2 takes shrine 2 in 16 s and is wiped, out but still scoring
+    // with it: at 30 s team 1 leads alone among the teams in play.
+    const sim = capturePoints({ ...CAPTURE_POINTS_MATCH_RULES, timeLimitSeconds: 60 }, [
+      fighter("p", 2, shrine(2)),
+      fighter("q", 2, shrine(2)),
+    ]);
+    onShrine(sim, "x", 4);
+    onShrine(sim, "y", 4);
+    onShrine(sim, "a", 0);
+    onShrine(sim, "b", 1);
+    run(sim, 20);
+    kill(sim, "p");
+    kill(sim, "q");
+    run(sim, POINT_TICK_SECONDS - 20 + DT);
+    expect([...points(sim), sim.score.byTeam.get(2)]).toEqual([0, 1, 1]);
+    run(sim, POINT_TICK_SECONDS);
+    expect([...points(sim), sim.score.byTeam.get(2)]).toEqual([2, 2, 2]);
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "time" });
   });
 

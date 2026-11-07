@@ -5975,7 +5975,11 @@ export class MatchSimulation {
         this.#score = addPoint(this.#score, owner);
       }
     }
-    const lead = soleLeader(this.#score);
+    // An eliminated team's points, which its shrines still add to, have no
+    // say in who leads (#2682).
+    const lead = soleLeader({
+      byTeam: new Map([...this.#score.byTeam].filter(([team]) => !this.#eliminated.has(team))),
+    });
     if (lead !== undefined) {
       this.#ledAt.set(lead, this.#elapsedSeconds);
     }
