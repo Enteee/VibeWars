@@ -4,7 +4,7 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
 import { ascentMapId } from "../net/maps.js";
 import { button, h, readyButton, toast, type ShareLine } from "./kit.js";
-import { relayLine } from "./relay-section.js";
+import { relayLine, relaySharedByLine, relaySharingText } from "./relay-section.js";
 import { playerLabelElement } from "./player-label.js";
 
 /**
@@ -186,6 +186,14 @@ export function mapLabel(map: LobbyMap): string {
   return `${map.name} (${map.size})`;
 }
 
+/** What the lobby says about relays (#2531), from `lobbyRelayStatus`. */
+export interface LobbyRelay {
+  /** The holder whose relay this page reaches its host through, by peer id: `undefined` direct. */
+  readonly relayedVia: string | undefined;
+  /** How many players this page's shared relay holds a login for: 0 when it shares none. */
+  readonly sharingWith: number;
+}
+
 /** The lobby's part of a mode screen (#1526): the bar's map and buttons, and what goes under them. */
 export interface LobbyPanel {
   readonly status: readonly HTMLElement[];
@@ -205,6 +213,7 @@ export function lobbyPanel(
   notice: string | undefined,
   availableMaps: readonly LobbyMap[] = [],
   matchmaking?: LobbyMatchmaking,
+  relay?: LobbyRelay,
 ): LobbyPanel {
   const panel = h("div", "lobby-panel");
   const controls = lobbyControls(snapshot);
@@ -288,9 +297,17 @@ export function lobbyPanel(
     panel.appendChild(h("div", "screen-problem", notice));
   }
 
-  const relay = relayLine();
-  if (relay !== undefined) {
-    panel.appendChild(relay);
+  const ownRelay = relayLine();
+  if (ownRelay !== undefined) {
+    panel.appendChild(ownRelay);
+  }
+  // Whose relay this page reaches its host through: a holder no longer
+  // seated has no lobby name to show.
+  const holder = snapshot.players.find(
+    (p) => relay?.relayedVia !== undefined && p.sessionId === relay.relayedVia,
+  );
+  if (holder !== undefined) {
+    panel.appendChild(relaySharedByLine(holder.name));
   }
 
   if (matchmaking !== undefined && !snapshot.isHost && matchmaking.queuedMs === null) {
@@ -310,6 +327,10 @@ export function lobbyPanel(
     teams.appendChild(teamColumn(team, snapshot, controls, callbacks));
   }
   panel.appendChild(teams);
+
+  if (relay !== undefined && relay.sharingWith > 0) {
+    panel.appendChild(h("div", "screen-info relay-sharing", relaySharingText(relay.sharingWith)));
+  }
 
   const spectators = snapshot.players.filter((p) => p.team === null);
   if (spectators.length > 0) {

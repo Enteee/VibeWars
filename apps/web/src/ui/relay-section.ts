@@ -10,6 +10,7 @@ import {
   type Relay,
   type SharedRelay,
 } from "../net/transport/turn-config.js";
+import { MAX_RELAYED_PER_HOLDER } from "../net/transport/relay-offer.js";
 import { button, h, shareLine, toast } from "./kit.js";
 import type { OptionsSection } from "./options-sections.js";
 
@@ -41,11 +42,12 @@ export function splitRelayUrls(text: string): string[] {
   return text.split(/[\s,]+/).filter((url) => url !== "");
 }
 
-/** What Options says sharing a relay means: who gets it, for how long, and what to lock down. */
-const SHARED_RELAY_EXPLANATION =
-  "A relay from an invite link can be offered to your lobbies: anyone with a lobby's " +
-  "invite link may relay through it for up to 4 hours after its last offer, and that " +
-  "cannot be taken back early. Its operator should set denied-peer-ip for private ranges, " +
+/** What Options says sharing a relay means: who gets it, for how long, and what to lock down (#2531). */
+export const SHARED_RELAY_EXPLANATION =
+  "A relay from an invite link can be shared in any lobby you are in, not only ones you " +
+  "host. Each player gets their own login, good for 1 hour and renewed while they stay, " +
+  `which cannot be taken back early; at most ${String(MAX_RELAYED_PER_HOLDER)} players a ` +
+  "lobby. Its operator should set denied-peer-ip for private ranges, " +
   "no-loopback-peers, no-multicast-peers and quotas on it. Its secret came from the relay " +
   "operator's link and never goes into a lobby offer. A relay with a username and " +
   "credential is never shared. A relay on a LAN address is refused, here and in invite links.";
@@ -178,4 +180,20 @@ export function relayLine(): HTMLElement | undefined {
   return relay === undefined
     ? undefined
     : h("div", "screen-info relay-line", `Relay: ${relayLabel(relay)}`);
+}
+
+/**
+ * "Relay shared by name" for a member whose host connection goes through
+ * another member's relay (#2531). `name` is a lobby name: text, never HTML.
+ */
+export function relaySharedByLine(name: string): HTMLElement {
+  return h("div", "screen-info relay-shared-by", `Relay shared by ${name}`);
+}
+
+/** What a holder's lobby says under the roster while it shares its relay with `count` players (#2531). */
+export function relaySharingText(count: number): string {
+  const players = count === 1 ? "1 player" : `${String(count)} players`;
+  return count >= MAX_RELAYED_PER_HOLDER
+    ? `Sharing your relay with ${players} (limit reached)`
+    : `Sharing your relay with ${players}`;
 }
