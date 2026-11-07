@@ -113,48 +113,48 @@ async function viewAt(page: Page): Promise<{ x: number; y: number }> {
 }
 
 /**
- * Walks the host's hero onto `to` (#2550): by held keys down onto
- * `to`'s row, then along it, each let go `LEAD` short once the view,
- * which is on the hero, comes that near; then the rest by a ground
- * click, on screen by now, which the hero walks to exactly. A timed key
- * misses under load, a key let go by the view overshoots by the lag of
- * its keyup, but the host's tab is in front, so its view is live.
+ * Walks the host's hero onto `to` (#2550) by a closed loop of ground
+ * clicks, each projected from the camera as it stands and at most a
+ * quarter of the canvas off its centre, so it lands on open ground
+ * clear of the HUD. A stale camera only misaims one click, and the
+ * next, read from where the view really is, corrects it; a held key
+ * would overshoot by the lag of its keyup instead.
  */
 async function steerTo(page: Page, to: { readonly x: number; readonly y: number }): Promise<void> {
-  const LEAD = 80;
-  await expect(page.locator("#viewport")).toHaveAttribute("data-camera", /^-?\d+,-?\d+$/);
-  for (const axis of ["y", "x"] as const) {
-    const from = (await viewAt(page))[axis];
-    if (Math.abs(to[axis] - from) <= LEAD) {
-      continue;
+  const stage = page.locator("#viewport");
+  const canvas = page.locator("#viewport canvas:not(.compass)");
+  const speed = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+  const deadline = Date.now() + 40_000;
+  for (;;) {
+    const at = await viewAt(page);
+    const left = Math.hypot(to.x - at.x, to.y - at.y);
+    if (left < NEAR_MEET / 4) {
+      return;
     }
-    const ahead = to[axis] > from;
-    const towards: KeyAction =
-      axis === "y" ? (ahead ? "move-down" : "move-up") : ahead ? "move-right" : "move-left";
-    await page.keyboard.down(key(towards));
+    if (Date.now() > deadline) {
+      throw new Error(`the host's view stopped ${left.toFixed(0)} from ${JSON.stringify(to)}`);
+    }
+    const seen = await projection(stage, canvas);
+    const box = await canvas.boundingBox();
+    if (box === null) {
+      throw new Error("the arena canvas has no box");
+    }
+    const reach = Math.min(box.width, box.height) / 4 / seen.zoom;
+    const step = Math.min(1, reach / left);
+    const goal = { x: at.x + (to.x - at.x) * step, y: at.y + (to.y - at.y) * step };
+    await canvas.click({ position: seen.onCanvas(goal) });
+    // Until the view nears the clicked point; a misaimed click times out into the next.
     await expect
       .poll(
         async () => {
-          const at = (await viewAt(page))[axis];
-          return ahead ? at >= to[axis] - LEAD : at <= to[axis] + LEAD;
+          const now = await viewAt(page);
+          return Math.hypot(goal.x - now.x, goal.y - now.y) < NEAR_MEET / 4;
         },
-        { message: `the host's view should near ${axis} ${String(to[axis])}`, timeout: 20_000 },
+        { timeout: (1000 * Math.min(left, reach)) / speed + 2_000 },
       )
-      .toBe(true);
-    await page.keyboard.up(key(towards));
-    await viewStopsNear(page, to, Infinity, "the host's hero should stop");
+      .toBe(true)
+      .catch(() => undefined);
   }
-  const canvas = page.locator("#viewport canvas:not(.compass)");
-  await canvas.click({ position: await matchPoint(page, canvas, to) });
-  await expect
-    .poll(
-      async () => {
-        const at = await viewAt(page);
-        return Math.hypot(at.x - to.x, at.y - to.y);
-      },
-      { message: "the host's hero should walk onto the clicked point", timeout: 10_000 },
-    )
-    .toBeLessThan(NEAR_MEET / 4);
 }
 
 /**
