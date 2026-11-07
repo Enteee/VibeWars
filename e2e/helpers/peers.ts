@@ -294,8 +294,10 @@ const EMBER_PITS_LANE_Y = 900;
  * short of the foe, then across to it. Every click is on screen, so a
  * long leg takes several; each next one goes out once the view is
  * halfway to the last, so the hero never stops on the way (a stop and the
- * view's glide after it cost seconds a leg). Resolves once the view,
- * which follows the hero, has come to the last point.
+ * view's glide after it cost seconds a leg). A click made while the view
+ * moves lands off by that motion, so once the hero has stopped, the last
+ * point is clicked again from a still view. Resolves once the view, which
+ * follows the hero, has come to it.
  */
 export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Promise<void> {
   const stage = page.locator("#viewport");
@@ -307,10 +309,11 @@ export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Pr
   };
   const start = await camera();
   const towards = Math.sign(foe.x - start.x);
+  const end = { x: foe.x - towards * 300, y: foe.y };
   const route = [
     { x: start.x + towards * 200, y: EMBER_PITS_LANE_Y },
-    { x: foe.x - towards * 300, y: EMBER_PITS_LANE_Y },
-    { x: foe.x - towards * 300, y: foe.y },
+    { x: end.x, y: EMBER_PITS_LANE_Y },
+    end,
   ];
   let from = start;
   for (const to of route) {
@@ -337,7 +340,6 @@ export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Pr
         }
       }
       const goal = step;
-      const last = goal === route.at(-1);
       await canvas.click({ position: view.onCanvas(goal) });
       await expect
         .poll(
@@ -347,10 +349,32 @@ export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Pr
           },
           { message: "the hero should walk there", timeout: 10_000 },
         )
-        .toBeLessThan(last ? 20 : Math.max(20, reach / 2));
+        .toBeLessThan(Math.max(20, reach / 2));
     }
     from = to;
   }
+  await expect
+    .poll(
+      async () => {
+        const was = await camera();
+        await page.waitForTimeout(200);
+        const now = await camera();
+        return Math.hypot(now.x - was.x, now.y - was.y);
+      },
+      { message: "the hero should stop", timeout: 10_000 },
+    )
+    .toBeLessThan(1);
+  const view = await projection(stage, canvas);
+  await canvas.click({ position: view.onCanvas(end) });
+  await expect
+    .poll(
+      async () => {
+        const now = await camera();
+        return Math.hypot(now.x - end.x, now.y - end.y);
+      },
+      { message: "the hero should walk to the last point", timeout: 10_000 },
+    )
+    .toBeLessThan(20);
   const there = await camera();
   expect(Math.hypot(there.x - foe.x, there.y - foe.y)).toBeLessThan(RANGE_SPELL);
 }
