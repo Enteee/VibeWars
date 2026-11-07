@@ -4,7 +4,7 @@ import type { Skill, SkillEffect } from "../../../skills/types.js";
 import { swingProgress } from "../../../skills/weapon-attack.js";
 import type { Participant } from "../../simulation.js";
 import { distance } from "../../../vec2.js";
-import { botUses, interruptAimed } from "../skill-intent.js";
+import { botUses, interruptAimed, isSpikeSkill } from "../skill-intent.js";
 import { botRoll, INTERRUPT_CHANCE } from "./shared.js";
 import type { BotRule } from "./types.js";
 
@@ -99,33 +99,7 @@ function worthOf(skillId: string): number | undefined {
   if (skill.elite) {
     return 2;
   }
-  return hitsHard(skill) ? 3 : undefined;
-}
-
-/**
- * A big hit: an offence skill that deals damage as it lands, an attack
- * skill or a damage spell. Hexes and spirits hurt over time instead.
- */
-function hitsHard(skill: Skill): boolean {
-  return (
-    botUses(skill).includes("offence") &&
-    skill.type !== "hex" &&
-    (skill.attack !== undefined || skill.effects.some(damagesOnLanding))
-  );
-}
-
-/** Damage or life steal as it lands, an `if`'s or a splash's among them. */
-function damagesOnLanding(effect: SkillEffect): boolean {
-  switch (effect.kind) {
-    case "damage":
-    case "life-steal":
-      return true;
-    case "if":
-    case "splash":
-      return effect.effects.some(damagesOnLanding);
-    default:
-      return false;
-  }
+  return isSpikeSkill(skill) ? 3 : undefined;
 }
 
 /** How many other foes stand in the area of `skill`'s splash around `foe`; none splashes: 0. */
