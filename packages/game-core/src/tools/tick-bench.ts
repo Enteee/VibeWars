@@ -71,6 +71,7 @@ const FOLLOWER_BEHAVIOUR: Behaviour = {
   kind: "follow-and-attack",
   drawnTo: undefined,
   engage: "owner-target-then-nearest",
+  skillIds: [],
   aggroUnits: AREA_EARSHOT,
   leashUnits: RANGE_SPELL,
   heelUnits: AREA_IN_THE_AREA,

@@ -17,5 +17,5 @@ export const CREATURE_ARMS: Readonly<Partial<Record<CreatureLook, CreatureArms>>
   guard: { weapon: "spear", offHand: "shield" },
   // No greatsword mark: the sword, scaled to the Lord's size.
   "guild-lord": { weapon: "sword" },
-  "ghostly-hero": { weapon: "sword" },
+  "ghostly-hero": { weapon: "axe" },
 };

@@ -39,6 +39,7 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     attack: undefined,
     knockdownRemaining: 0,
     invulnerableRemaining: 0,
+    lastFoeHitBy: undefined,
     soulReapingTriggers: [],
     nextMaintainSeq: 0,
     chainMarks: new Map(),

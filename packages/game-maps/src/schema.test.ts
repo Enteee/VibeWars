@@ -663,6 +663,7 @@ describe("king of the hill maps (#1377)", () => {
   const hillMap = {
     ...validMap,
     mode: "king-of-the-hill",
+    ghostLevel: 24,
     walls: [],
     spawnPoints: [
       { team: 0, position: { x: 20, y: 50 } },
@@ -699,12 +700,34 @@ describe("king of the hill maps (#1377)", () => {
     ).toThrow(/king-of-the-hill map has 0 altars, not one/);
   });
 
-  it("refuses a ghost spawn on a map of any other mode", () => {
-    expect(() =>
-      validateMapData({
-        ...validMap,
-        objectives: [{ kind: "ghost-spawn", team: 0, position: { x: 50, y: 50 } }],
-      }),
-    ).toThrow(/annihilation map has no ghost spawn/);
+  it("refuses a king of the hill map with no ghost level (#2689)", () => {
+    const { ghostLevel: _, ...levelless } = hillMap;
+    expect(() => validateMapData(levelless)).toThrow(
+      /king-of-the-hill map has ghosts, so a ghostLevel/,
+    );
+  });
+});
+
+describe("ghost maps (#2689)", () => {
+  const ghostMap = {
+    ...validMap,
+    ghostLevel: 20,
+    objectives: [{ kind: "ghost-spawn", team: 0, position: { x: 50, y: 50 } }],
+  };
+
+  it("accepts one ghost spawn per spawning team on a map of any mode with a ghost level", () => {
+    expect(validateMapData(ghostMap).ghostLevel).toBe(20);
+  });
+
+  it("refuses a ghost spawn on a map with no ghost level", () => {
+    const { ghostLevel: _, ...levelless } = ghostMap;
+    expect(() => validateMapData(levelless)).toThrow(/annihilation map has no ghost spawn/);
+  });
+
+  it("refuses a ghost level with no ghost spawn, or one Heroes' Ascent has not", () => {
+    expect(() => validateMapData({ ...ghostMap, objectives: [] })).toThrow(
+      /team 0 has 0 ghost spawns, not one/,
+    );
+    expect(() => validateMapData({ ...ghostMap, ghostLevel: 22 })).toThrow(/ghostLevel/);
   });
 });

@@ -14,7 +14,7 @@ import {
   type Reaction,
 } from "../behaviour.js";
 import type { CombatLogEntry } from "../combat-log.js";
-import { ghostId, type HillField } from "../ghost.js";
+import { ghostId, type GhostField } from "../ghost.js";
 import { MatchSimulation } from "../simulation.js";
 import { NO_RANKS } from "../../skills/status.js";
 import {
@@ -40,7 +40,8 @@ describe("play-build's target in King of the Hill (#2600)", () => {
 
   /** Team 1's ghost rising at `foeGhostAt`, a bot of team 0 and a badly hurt foe player in its range. */
   function hill(foeGhostAt: Vec2) {
-    const field: HillField = {
+    const field: GhostField = {
+      level: 24,
       altar: ALTAR,
       spawns: [
         { team: 0, position: vec2(100, 400) },
@@ -52,7 +53,7 @@ describe("play-build's target in King of the Hill (#2600)", () => {
       ruleset: RULESET,
       bounds: BOUNDS,
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
-      hillField: field,
+      ghostField: field,
       participants: [
         fighter("bot", 0, ELEMENTALIST, vec2(600, 400)),
         fighter("foe", 1, WARRIOR, vec2(650, 500), {
@@ -100,7 +101,8 @@ describe("play-build's target in King of the Hill (#2600)", () => {
       ruleset: RULESET,
       bounds: BOUNDS,
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
-      hillField: {
+      ghostField: {
+        level: 24,
         altar: vec2(1300, 400),
         spawns: [
           { team: 0, position: vec2(100, 400) },

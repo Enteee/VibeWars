@@ -3,11 +3,12 @@ import { describe, expect, it } from "vitest";
 import { KING_OF_THE_HILL_MATCH_RULES } from "../../../match-rules.js";
 import { vec2 } from "../../../vec2.js";
 import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
-import { ghostId, type HillField } from "../../ghost.js";
+import { ghostId, type GhostField } from "../../ghost.js";
 import { MatchSimulation, type ParticipantSpec } from "../../simulation.js";
 import { askBot, body, BOT, BOUNDS, RULESET } from "./test-support.js";
 
-const FIELD: HillField = {
+const FIELD: GhostField = {
+  level: 24,
   altar: vec2(800, 400),
   spawns: [
     { team: 0, position: vec2(100, 400) },
@@ -23,7 +24,7 @@ function hill(participants: readonly ParticipantSpec[]): MatchSimulation {
     ruleset: RULESET,
     bounds: BOUNDS,
     matchRules: KING_OF_THE_HILL_MATCH_RULES,
-    hillField: FIELD,
+    ghostField: FIELD,
     participants,
   });
 }
