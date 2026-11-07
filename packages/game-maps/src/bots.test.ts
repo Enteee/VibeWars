@@ -133,26 +133,42 @@ describe("King of the Hill bots (#2582)", () => {
   });
 
   /**
-   * The score after up to 90 s of a 2v2 mirror of bots on The Courtyard,
-   * and when the first point fell (#2600). A mirror brings both ghosts
-   * onto the altar together: they contest it until a bot kills the other
-   * team's ghost.
+   * The first ghost to die, the first point and the winner in up to 90 s
+   * of a 2v2 mirror of bots on The Courtyard (#2600). A mirror brings both
+   * ghosts onto the altar together: they contest it until a bot kills the
+   * other team's ghost. Then a team scores, or, its damage dealers
+   * spiking (#2631), wipes the other first.
    */
   const mirror = (seed: string) => {
     const courtyard = loadAllMaps().find((candidate) => candidate.id === "the-courtyard");
     if (courtyard === undefined) throw new Error("no map the-courtyard");
     const sim = hill(courtyard, seed, casterBots(courtyard, 2));
+    let ghostDiedAt: number | undefined;
     let scoredAt: number | undefined;
-    for (let t = 0; t < 90 && scoredAt === undefined; t += DT) {
+    for (let t = 0; t < 90 && scoredAt === undefined && sim.outcome.phase !== "finished"; t += DT) {
       sim.step(DT);
+      if (
+        ghostDiedAt === undefined &&
+        [...sim.participants()].some(
+          ({ creature, combatant }) => creature?.kind === "ghostly-hero" && combatant.dead,
+        )
+      ) {
+        ghostDiedAt = t;
+      }
       if ([...sim.score.byTeam.values()].some((points) => points > 0)) scoredAt = t;
     }
-    return { scoredAt, score: [...sim.score.byTeam] };
+    return {
+      ghostDiedAt,
+      scoredAt,
+      winningTeam: sim.outcome.winningTeam,
+      score: [...sim.score.byTeam],
+    };
   };
 
-  it("a 2v2 mirror of bots scores a point within 90 s, the same way for the same seed", () => {
+  it("a 2v2 mirror of bots kills a ghost, then scores a point or wins within 90 s, the same way for the same seed", () => {
     const first = mirror("hill");
-    expect(first.scoredAt).toBeDefined();
+    expect(first.ghostDiedAt).toBeDefined();
+    expect(first.scoredAt ?? first.winningTeam).toBeDefined();
     expect(mirror("hill")).toEqual(first);
   });
 
