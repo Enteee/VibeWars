@@ -176,6 +176,12 @@ export const WARD_SWITCH = 0.15;
 /** A healer walks to a fresh spot only once it is this far from the one it keeps (#2615). */
 export const RESPOT_DISTANCE = 2 * POSITION_SLACK;
 
+/** A bot this far from its team's centre, and ahead of it, waits for the rest (#2621). */
+export const REGROUP_SPREAD = 300;
+
+/** A bot waiting for its team walks on once this near the team's centre (#2621). */
+export const REGROUP_JOINED = 150;
+
 /**
  * A foe at `self`'s elbow, one to stand and fight (#2545): one with a
  * melee weapon within `ELBOW_DISTANCE`, on `self`: targeting or
