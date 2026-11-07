@@ -54,18 +54,23 @@ const fetchRelic: BotRule = {
 
 /**
  * The living teammate of `context.self` with empty hands nearest to
- * `point`, ties to simulation order: a bot, or, when `humans`, a human
- * within `FLAG_REACH_UNITS` of it, about to take it up; one idle at its
- * base stops nobody. A bot with a foe in spell range fights rather than runs, so
- * it is passed over. A bot an earlier rule holds back, a healer behind its
- * ward or one resting below `REST_FRACTION`, runs only while no other can.
+ * `point`, ties to simulation order: a bot, or, for its `own` relic, a
+ * human within `FLAG_REACH_UNITS` of it, about to take it up; one idle at
+ * its base stops nobody. A bot free to run comes first. Then, for its
+ * `own` relic, one with a foe in spell range, which `run-relic` sends
+ * from the fight. Last, one an earlier rule holds back, a healer behind
+ * its ward or one resting below `REST_FRACTION`, out of any fight.
  * `undefined` when that is a human.
  */
-function runner(context: BehaviourContext, point: Vec2, humans: boolean): Participant | undefined {
+export function runner(
+  context: BehaviourContext,
+  point: Vec2,
+  own: boolean,
+): Participant | undefined {
   const team = context.self.combatant.team;
   const { relics } = context.objectives;
   let best: Participant | undefined;
-  let bestHeld = true;
+  let bestTier = Infinity;
   let bestDistance = Infinity;
   for (const mate of context.participants) {
     const bot = context.isBot(mate.id);
@@ -73,25 +78,40 @@ function runner(context: BehaviourContext, point: Vec2, humans: boolean): Partic
       mate.combatant.team !== team ||
       mate.combatant.dead ||
       mate.creature !== undefined ||
-      (!bot && (!humans || distance(mate.position, point) > FLAG_REACH_UNITS)) ||
-      carriedRelic(relics, mate.id) !== undefined ||
-      (bot && fighting(context, mate))
+      (!bot && (!own || distance(mate.position, point) > FLAG_REACH_UNITS)) ||
+      carriedRelic(relics, mate.id) !== undefined
     ) {
       continue;
     }
-    const held = bot && heldBack(mate);
+    const tier = bot ? runnerTier(context, mate, own) : 0;
+    if (tier === undefined) {
+      continue;
+    }
     const away = distance(mate.position, point);
-    if ((bestHeld && !held) || (held === bestHeld && away < bestDistance)) {
+    if (tier < bestTier || (tier === bestTier && away < bestDistance)) {
       best = mate;
-      bestHeld = held;
+      bestTier = tier;
       bestDistance = away;
     }
   }
   return best !== undefined && context.isBot(best.id) ? best : undefined;
 }
 
+/** How late bot `mate` comes as a runner, by `runner`'s order; `undefined` never. */
+function runnerTier(
+  context: BehaviourContext,
+  mate: Participant,
+  own: boolean,
+): number | undefined {
+  const held = heldBack(mate);
+  if (!fighting(context, mate)) {
+    return held ? 2 : 0;
+  }
+  return own && !held ? 1 : undefined;
+}
+
 /** Whether `position` pulls bot `mate` back to its ward, or `rest` stands it still. */
-function heldBack(mate: Participant): boolean {
+export function heldBack(mate: Participant): boolean {
   return roleOf(mate) === "healer" || healthFraction(mate) < REST_FRACTION;
 }
 

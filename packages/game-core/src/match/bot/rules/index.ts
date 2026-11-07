@@ -19,6 +19,7 @@ import raise from "./raise.js";
 import renewSpirit from "./renew-spirit.js";
 import rest from "./rest.js";
 import rider from "./rider.js";
+import runRelic from "./run-relic.js";
 import type { BotRule } from "./types.js";
 import wardTouch from "./ward-touch.js";
 import setup from "./setup.js";
@@ -52,6 +53,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   renewSpirit,
   rest,
   rider,
+  runRelic,
   setup,
   shrines,
   takeMinion,
