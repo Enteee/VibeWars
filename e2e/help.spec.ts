@@ -135,6 +135,16 @@ test("Help lists the third-party licences, each with its full text (#1235)", asy
   await expect(text).toContainText("Permission is hereby granted");
 });
 
+test("without the build's list, Help lists the vendored works and says nothing more (#2643)", async ({
+  page,
+}) => {
+  await page.route("**/licences.json", (route) => route.fulfill({ status: 404 }));
+  const help = await openLicences(page);
+  await expect(help.locator('.licence-entry[data-licence="VCSL"]')).toBeVisible();
+  await expect(help.locator(".licences-bundled")).toBeEmpty();
+  await expect(help.locator('.licence-entry[data-licence="phaser"]')).toHaveCount(0);
+});
+
 test("Help lists every bundled npm package and the VCSL samples, each with its licence (#1242)", async ({
   page,
 }) => {

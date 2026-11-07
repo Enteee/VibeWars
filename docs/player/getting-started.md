@@ -158,8 +158,9 @@ team at your round.
 ## Your name, guild tag and cape
 
 Open **Options** with the ⚙ in the top bar: its first section,
-**player**, holds what is yours whatever you play. Type your **Name**;
-left empty, you play as `Player`. Type a **Guild tag** of 2 to 4 letters
+**player**, holds what is yours whatever you play. The game gives you
+a **Name** on your first visit, like `AshenWolf`; type over it to change
+it. Left empty, you play as `Player`. Type a **Guild tag** of 2 to 4 letters
 or digits beside it, and everyone sees it after your name, like
 `Ente [VIBE]`. With a tag set, the **Guild cape** designer appears under
 it: pick the cape colour, the trim colour and an emblem, and your body

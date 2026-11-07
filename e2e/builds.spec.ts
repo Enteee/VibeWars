@@ -915,6 +915,9 @@ test("the team grid: a full team, eight cells and Health and Energy a member, dr
   ).toHaveCount(0);
   await expect(page.getByRole("button", { name: "New character", exact: true })).toHaveCount(0);
   await expect(page.locator(".team-pick-sub").first()).toHaveText(/^Warrior.* · \d\/8 skills$/);
+  // The cards show they drag (#2643): no line over them says so.
+  await expect(page.locator(".team-pick").first()).toHaveCSS("cursor", "grab");
+  await expect(page.locator(".team-picker-characters")).not.toContainText("drag");
   for (const [row, name] of ["Alpha", "Bravo", "Charlie"].entries()) {
     await copyOnto(page, name, row);
   }
@@ -946,10 +949,12 @@ test("a skill dragged from the Skills tab equips on a member's slot; a refused d
   await page.getByRole("button", { name: "new team" }).click();
   // The Skills tab shows the focused member's: the first, a blank Warrior.
   await page.getByRole("tab", { name: "Skills", exact: true }).click();
-  await expect(page.locator(".team-picker .picker-hint")).toContainText("New Character");
   const library = page.locator(".team-picker");
   await openLibraryGroup(page, "Strength");
   const box = library.locator(".skill-box").first();
+  // It shows it drags (#2643), its card too; no line over the library says so.
+  await expect(box.locator(".skill-box-card")).toHaveCSS("cursor", "grab");
+  await expect(library.locator(".picker-hint")).toHaveCount(0);
   const skillId = (await box.getAttribute("data-skill-id")) ?? "";
   const target = memberRows(page).nth(1).locator(".team-skill").nth(3);
   await box.dragTo(target);

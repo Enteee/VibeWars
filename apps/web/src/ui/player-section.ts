@@ -1,3 +1,4 @@
+import { randomPlayerName } from "@vibewars/game-core";
 import { CAPE_COLOURS, CAPE_EMBLEMS, type WireCape } from "@vibewars/game-protocol";
 import {
   sanitizeGuild,
@@ -36,14 +37,31 @@ export const PLAYER_APPLIES = "Applies from your next lobby.";
 
 const NAME_STORAGE_KEY = `${STORAGE_NAMESPACE}.playerName`;
 
-/** Remember the player's chosen name so they do not retype it every session. */
+/**
+ * A name generated for a browser that cannot keep one, once a page load,
+ * so that two loads in a row compare equal.
+ */
+let unsavedName: string | undefined;
+
+/**
+ * Remember the player's chosen name so they do not retype it every session.
+ * A first visit, with no name stored at all, gets a generated one (#2653),
+ * stored like a typed one; a name emptied on purpose stays empty.
+ */
 export function loadPlayerName(): string {
   try {
-    return localStorage.getItem(NAME_STORAGE_KEY) ?? "";
+    const stored = localStorage.getItem(NAME_STORAGE_KEY);
+    if (stored !== null) {
+      return stored;
+    }
+    const name = randomPlayerName(Math.random);
+    localStorage.setItem(NAME_STORAGE_KEY, name);
+    return name;
   } catch {
-    // Private browsing can throw on localStorage access; a missing
-    // remembered name is not worth failing the whole menu over.
-    return "";
+    // Private browsing can throw on localStorage access; a remembered
+    // name is not worth failing the whole menu over.
+    unsavedName ??= randomPlayerName(Math.random);
+    return unsavedName;
   }
 }
 

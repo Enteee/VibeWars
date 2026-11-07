@@ -11,7 +11,6 @@ import {
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
 import {
-  HOST_GOALS,
   noTeamBuilds,
   OPENING_LOBBY,
   renderHostScreen,
@@ -296,10 +295,10 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     expect(root.all("play-card-new")).toHaveLength(1);
   });
 
-  it("says what each is for, and has no Host button: the lobby is always there (#1526)", () => {
+  it("has no goal line under its heading (#2641), and no Host button: the lobby is always there (#1526)", () => {
     for (const entry of ["team-arena", "heroes-ascent", "gvg", "hosted-game"] as const) {
       const root = host(entry);
-      expect(root.all("rail-goal")[0]?.textContent).toBe(HOST_GOALS[entry]);
+      expect(root.all("rail-goal")).toEqual([]);
       expect(root.everything().some((node) => node.textContent.startsWith("Host a"))).toBe(false);
     }
   });

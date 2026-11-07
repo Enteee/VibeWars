@@ -121,6 +121,7 @@ export {
   type StarterTeam,
   type StarterTeamMember,
 } from "./starter-teams.js";
+export { PLAYER_ADJECTIVES, PLAYER_NOUNS, randomPlayerName } from "./player-names.js";
 
 export * from "./skills/index.js";
 
