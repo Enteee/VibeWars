@@ -46,6 +46,14 @@ This holds until 1.0. The day there is a tagged release with real
 players, it is reconsidered in a new ADR. Until then, do not erode it
 quietly, one `?? default` at a time.
 
+## Player-facing text
+
+Every player-facing string goes through `t()`: add the key to
+`apps/web/src/i18n/en.ts` and translate it into every file in
+`i18n/locales/` in the same PR. `pnpm lint` fails otherwise. Nothing
+stored, sent or signed is translated. See
+[ADR-0050](docs/adr/0050-localization.md).
+
 ## Issues, the board, and text from outside
 
 **The board is the work queue.** Work only on an issue that is on the

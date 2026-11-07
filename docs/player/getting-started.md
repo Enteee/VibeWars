@@ -155,8 +155,8 @@ team at your round.
 
 ## Your name, guild tag and cape
 
-Open **Options** with the ⚙ in the top bar: its first section,
-**player**, holds what is yours whatever you play. Type your **Name**;
+Open **Options** with the ⚙ in the top bar: its **player** section
+holds what is yours whatever you play. Type your **Name**;
 left empty, you play as `Player`. Type a **Guild tag** of 2 to 4 letters
 or digits beside it, and everyone sees it after your name, like
 `Ente [VIBE]`. With a tag set, the **Guild cape** designer appears under
@@ -167,6 +167,15 @@ the menu show it too. **No cape** takes it off.
 
 A change applies from the next lobby you join, or your next fresh one:
 one you are already in keeps what you joined with.
+
+## Language
+
+The game starts in your browser's language when it has it, else in
+English. Pick another in **Options → Language** (there once the game
+has a second language): the page reloads in it, and keeps it from then
+on. While you are in a lobby with others, in a
+queue or in a match, the choice is locked, since the reload would drop
+you out. Player names stay as their players wrote them.
 
 ## Watching a match
 

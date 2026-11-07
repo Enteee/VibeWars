@@ -7,6 +7,7 @@
 import { decodeTemplateCode, type MatchEndReason } from "@vibewars/game-core";
 import type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "@vibewars/game-session";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import { ARENA_MAPS } from "../net/maps.js";
 import type {
   HeardMatchRecord,
@@ -26,21 +27,14 @@ import { railLabel, railScreen, type RailEntry } from "./rail.js";
 /** The most records the page holds; the oldest goes first. */
 export const MATCHES_KEPT = 100;
 
-export const NO_MATCHES = "No matches yet.";
-export const MATCHES_OFFLINE = "Can't reach the match relays right now.";
-export const HOST_REPORTED = "Published by the match's host; not verified by anyone else.";
-export const BUILD_UNREADABLE = "Build unreadable";
-/** A Clone's title when a build in its team can't be read (#2585). */
-export const TEAM_UNREADABLE = "A build in this team can't be read";
-
-const END_REASONS: Readonly<Record<MatchEndReason, string>> = {
-  score: "Score",
-  time: "Time ran out",
-  annihilation: "Annihilation",
-  morale: "Morale",
-  "guild-lord": "Guild Lord slain",
-  aggression: "Aggression at time",
-};
+const END_REASONS = {
+  score: "matches.endScore",
+  time: "matches.endTime",
+  annihilation: "matches.endAnnihilation",
+  morale: "matches.endMorale",
+  "guild-lord": "matches.endGuildLord",
+  aggression: "matches.endAggression",
+} as const satisfies Readonly<Record<MatchEndReason, MessageKey>>;
 
 export interface MatchesScreenOptions {
   readonly onSwitch: (entry: RailEntry) => void;
@@ -61,15 +55,15 @@ export interface MatchesScreen {
 export function relativeTime(endedAt: number, nowSeconds: number): string {
   const ago = Math.max(0, nowSeconds - endedAt);
   if (ago < 60) {
-    return "just now";
+    return t("matches.justNow");
   }
   if (ago < 3600) {
-    return `${String(Math.floor(ago / 60))} min ago`;
+    return t("matches.minutesAgo", { count: Math.floor(ago / 60) });
   }
   if (ago < 86_400) {
-    return `${String(Math.floor(ago / 3600))} h ago`;
+    return t("matches.hoursAgo", { count: Math.floor(ago / 3600) });
   }
-  return `${String(Math.floor(ago / 86_400))} d ago`;
+  return t("matches.daysAgo", { count: Math.floor(ago / 86_400) });
 }
 
 function mapName(mapId: string): string {
@@ -79,9 +73,9 @@ function mapName(mapId: string): string {
 /** "Won", "Lost" or "Draw", for team `team` of `record`. */
 function teamResult(record: MatchRecord, team: 0 | 1): string {
   if (record.winningTeam === null) {
-    return "Draw";
+    return t("matches.draw");
   }
-  return record.winningTeam === team ? "Won" : "Lost";
+  return t(record.winningTeam === team ? "matches.won" : "matches.lost");
 }
 
 /**
@@ -93,18 +87,24 @@ function teamIcons(record: MatchRecord, team: 0 | 1): HTMLElement {
   const icons = h("span", record.winningTeam === team ? "match-team is-winner" : "match-team");
   for (const player of record.teams[team].players) {
     const name = playerLabelText(player.name, player.guildTag);
-    const label = player.bot ? `${name} (bot)` : name;
+    const label = player.bot ? t("matches.bot", { name }) : name;
     const decoded = decodeTemplateCode(player.template);
     if (!decoded.ok) {
       const unknown = icons.appendChild(h("span", "match-player-icon is-unknown", "?"));
-      unknown.title = `${label}: ${BUILD_UNREADABLE}`;
+      unknown.title = t("matches.playerBuild", {
+        player: label,
+        build: t("matches.buildUnreadable"),
+      });
       continue;
     }
     const { primaryProfession, secondaryProfession } = decoded.build;
     const icon = document.createElement("img");
     icon.className = "match-player-icon";
     icon.src = professionIcon(primaryProfession);
-    icon.alt = `${label}: ${professionLabel(primaryProfession, secondaryProfession)}`;
+    icon.alt = t("matches.playerBuild", {
+      player: label,
+      build: professionLabel(primaryProfession, secondaryProfession),
+    });
     icon.title = icon.alt;
     icons.appendChild(icon);
   }
@@ -114,9 +114,9 @@ function teamIcons(record: MatchRecord, team: 0 | 1): HTMLElement {
 /** Between the two teams: which side won, or a draw. */
 function resultMark(record: MatchRecord): string {
   if (record.winningTeam === null) {
-    return "Draw";
+    return t("matches.draw");
   }
-  return record.winningTeam === 0 ? "◂ Won" : "Won ▸";
+  return t(record.winningTeam === 0 ? "matches.wonLeft" : "matches.wonRight");
 }
 
 /** A player as a team card's member row: its name, and the look its template says. */
@@ -125,7 +125,7 @@ function playerMember(player: MatchRecordPlayer): TeamFigureMember {
   const decoded = decodeTemplate(player.template, "", 0);
   return {
     look: decoded.ok ? lookOfCharacter(decoded.character, undefined) : undefined,
-    label: player.bot ? `${name} (bot)` : name,
+    label: player.bot ? t("matches.bot", { name }) : name,
   };
 }
 
@@ -137,13 +137,13 @@ function cloneButton(players: MatchRecordTeam, onClone: () => void): HTMLElement
   if (!isTeamBuildSize(players.players.length)) {
     return [];
   }
-  const clone = button("Clone", "play-card-clone", () => {
+  const clone = button(t("matches.clone"), "play-card-clone", () => {
     clone.disabled = true;
     onClone();
   });
   if (players.players.some((player) => !decodeTemplateCode(player.template).ok)) {
     clone.disabled = true;
-    clone.title = TEAM_UNREADABLE;
+    clone.title = t("matches.teamUnreadable");
   }
   return [clone];
 }
@@ -160,7 +160,7 @@ function teamDetail(
       title: h(
         "h4",
         "match-detail-result",
-        `Team ${String(team + 1)}: ${teamResult(record, team)}`,
+        t("matches.teamResult", { team: team + 1, result: teamResult(record, team) }),
       ),
       members: players.players.map(playerMember),
       actions: cloneButton(players, () => {
@@ -181,7 +181,10 @@ function matchDetail(
     h(
       "p",
       "match-detail-summary",
-      `${END_REASONS[record.endReason]} after ${formatClock(record.durationSeconds)}`,
+      t("matches.endSummary", {
+        reason: t(END_REASONS[record.endReason]),
+        duration: formatClock(record.durationSeconds),
+      }),
     ),
   );
   const tabs = detail.appendChild(h("div", "match-tabs"));
@@ -193,7 +196,7 @@ function matchDetail(
   const sections = order.map((team) => teamDetail(record, team, record.teams[team], onCloneTeam));
   const buttons = order.map((team, position) => {
     const tab = button(
-      `Team ${String(team + 1)} · ${teamResult(record, team)}`,
+      t("matches.teamTab", { team: team + 1, result: teamResult(record, team) }),
       "match-tab",
       () => {
         show(position);
@@ -238,8 +241,8 @@ function matchRow(
     h("span", "match-duration", formatClock(record.durationSeconds)),
     when,
   );
-  const badge = head.appendChild(h("span", "match-host-reported", "host-reported"));
-  badge.title = HOST_REPORTED;
+  const badge = head.appendChild(h("span", "match-host-reported", t("matches.hostReported")));
+  badge.title = t("matches.hostReportedTitle");
   let detail: HTMLElement | undefined;
   head.addEventListener("click", () => {
     if (detail !== undefined) {
@@ -265,14 +268,14 @@ export function renderMatchesScreen(
 ): MatchesScreen {
   screenBar({ crumbs: ["VibeWars"], status: [], actions: [], join: true });
   const body = railScreen(root, "matches", options.onSwitch);
-  const note = body.appendChild(h("p", "matches-note", NO_MATCHES));
+  const note = body.appendChild(h("p", "matches-note", t("matches.noMatches")));
   const list = body.appendChild(h("ol", "match-list"));
   let records: HeardMatchRecord[] = [];
   let offline = false;
 
   const draw = (): void => {
     const nowSeconds = Math.floor(options.now() / 1000);
-    note.textContent = offline ? MATCHES_OFFLINE : NO_MATCHES;
+    note.textContent = t(offline ? "matches.offline" : "matches.noMatches");
     note.hidden = !offline && records.length > 0;
     syncList(
       list,
