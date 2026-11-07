@@ -196,6 +196,13 @@ describe("which casts are worth an interrupt (#2633)", () => {
     expect(askBot(sim, "bot")).toMatchObject({ targetId: "reviver", useSkillId: BLOW });
   });
 
+  it("a Ghostly Hero's altar claim over a heal", () => {
+    const sim = interrupter([BLOW], "healer", "reviver");
+    casting(sim, "healer", HEAL);
+    casting(sim, "reviver", "npc.claim-resource");
+    expect(askBot(sim, "bot")).toMatchObject({ targetId: "reviver", useSkillId: BLOW });
+  });
+
   it("at rank 0 too: a Power Drain with no Domination Magic picks the heal", () => {
     const sim = interrupter([POWER_DRAIN], "hexer", "healer");
     casting(sim, "hexer", HEX);

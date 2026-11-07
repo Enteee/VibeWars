@@ -1,4 +1,5 @@
 import { getSkill } from "../../../skills/catalog.js";
+import { CLAIM_SKILL_ID } from "../../ghost.js";
 import type { Skill, SkillEffect } from "../../../skills/types.js";
 import { swingProgress } from "../../../skills/weapon-attack.js";
 import type { Participant } from "../../simulation.js";
@@ -79,8 +80,9 @@ export default interrupt;
 
 /**
  * How much interrupting the cast of `skillId` is worth (#2633), lower
- * first: a resurrection, a heal or a protection, an elite, a spike.
- * `undefined`: anything else, which is left to land.
+ * first: a resurrection or a Ghostly Hero's altar claim, a heal or a
+ * protection, an elite, a spike. `undefined`: anything else, which is
+ * left to land.
  */
 function worthOf(skillId: string): number | undefined {
   const skill = getSkill(skillId);
@@ -88,7 +90,7 @@ function worthOf(skillId: string): number | undefined {
     return undefined;
   }
   const uses = botUses(skill);
-  if (uses.includes("resurrect")) {
+  if (skillId === CLAIM_SKILL_ID || uses.includes("resurrect")) {
     return 0;
   }
   if (uses.includes("healing") || uses.includes("defence")) {
