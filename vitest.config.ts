@@ -1,6 +1,27 @@
+import { readFileSync } from "node:fs";
+import { availableParallelism } from "node:os";
 import { fileURLToPath } from "node:url";
 
 import { defineConfig } from "vitest/config";
+
+/**
+ * CPUs this process may really use. Node and vitest count the host's CPUs,
+ * but a container's cgroup quota (`cpu.max`) can be far lower: the company
+ * runners have 2, on a many-core host, and vitest's default of one worker
+ * per host CPU made them 5x slower than hosted CI (#2774).
+ */
+function usableCpus(): number {
+  const host = availableParallelism();
+  try {
+    const [quota, period] = readFileSync("/sys/fs/cgroup/cpu.max", "utf8").trim().split(" ");
+    if (quota !== "max") {
+      return Math.max(1, Math.min(host, Math.ceil(Number(quota) / Number(period))));
+    }
+  } catch {
+    // No cgroup v2 quota file: the host count stands.
+  }
+  return host;
+}
 
 /**
  * Tests live next to the code they cover (`*.test.ts`).
@@ -25,6 +46,7 @@ export default defineConfig({
   test: {
     server: { deps: { inline: [/@strudel\//] } },
     environment: "node",
+    maxWorkers: usableCpus(),
     // `scripts/` is plain JSDoc-typed .mjs rather than a workspace package,
     // so it needs its own entry: the claude-bot Telegram bridge keeps its
     // wire contract there (scripts/bots/protocol.mjs) precisely so it can be
