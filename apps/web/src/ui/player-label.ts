@@ -30,17 +30,31 @@ export function playerLabelText(name: string, guildTag: string | null | undefine
  */
 const NAMEPLATE_NAME_GRAPHEMES = 24;
 
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+
+/** Long names already cut: the plate asks again every frame for every actor. */
+const cutNames = new Map<string, string>();
+
 /** `name` cut to fit the name plate, ending in "…" when it was. */
 export function nameplateName(name: string): string {
-  const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-  const graphemes = Array.from(segmenter.segment(name), ({ segment }) => segment);
-  if (graphemes.length <= NAMEPLATE_NAME_GRAPHEMES) {
+  // Never fewer code units than graphemes: a short name fits as it is.
+  if (name.length <= NAMEPLATE_NAME_GRAPHEMES) {
     return name;
   }
-  return `${graphemes
-    .slice(0, NAMEPLATE_NAME_GRAPHEMES - 1)
-    .join("")
-    .trimEnd()}…`;
+  const known = cutNames.get(name);
+  if (known !== undefined) {
+    return known;
+  }
+  const graphemes = Array.from(graphemeSegmenter.segment(name), ({ segment }) => segment);
+  const cut =
+    graphemes.length <= NAMEPLATE_NAME_GRAPHEMES
+      ? name
+      : `${graphemes
+          .slice(0, NAMEPLATE_NAME_GRAPHEMES - 1)
+          .join("")
+          .trimEnd()}…`;
+  cutNames.set(name, cut);
+  return cut;
 }
 
 /**

@@ -18,6 +18,9 @@ describe("nameplateName (#2636)", () => {
   it("keeps a name of up to 24 graphemes whole", () => {
     expect(nameplateName("Ente")).toBe("Ente");
     expect(nameplateName("Wastrel's Collapse (A/E)")).toBe("Wastrel's Collapse (A/E)");
+    const family = "\u{1F468}‍\u{1F469}‍\u{1F467}".repeat(24);
+    expect(nameplateName(family)).toBe(family);
+    expect(nameplateName(family)).toBe(family);
   });
 
   it("cuts a longer one to 23 and an ellipsis, never inside a grapheme", () => {
