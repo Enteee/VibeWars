@@ -65,9 +65,10 @@ export const CHANNELS = [
   "lobby-welcome",
   "lobby-leave",
   "lobby-seat",
-  "relay-login",
   "relay-admit",
   "relay-holding",
+  "relay-offers",
+  "relay-cred",
   "stay-together",
   "party-proposal",
   "party-consent",
@@ -926,6 +927,12 @@ export interface PeerLobbyJoin {
    * sent to the whole room.
    */
   readonly rejoinToken: string | null;
+  /**
+   * Its page's raw P-256 public key (`isRelayPub`, #2529): what lobby
+   * members seal its relay logins to. `null` for a page that has none,
+   * which no relay is shared with.
+   */
+  readonly relayPub: string | null;
 }
 
 /**
@@ -968,25 +975,41 @@ export interface PeerLobbySeat {
   readonly rejoinToken: string;
 }
 
-/** A TURN login a lobby host shares (#2248): what `RTCIceServer` takes. */
-export interface WireRelayLogin {
-  /** 1 to `MAX_RELAY_URLS` `turn:` / `turns:` URLs; the guest checks them. */
-  readonly urls: readonly string[];
-  readonly username: string;
-  readonly credential: string;
+/** The most characters a sealed relay login has on `relay-cred` (#2529). */
+export const MAX_RELAY_SEAL_CHARS = 2048;
+
+/** A seated member as `relay-offers` lists it (#2529): who holders mint for. */
+export interface WireRelayMember {
+  readonly peerId: string;
+  /** Its page's raw P-256 public key, as `PeerLobbyJoin.relayPub`. */
+  readonly pub: string;
 }
 
-/** The most URLs a `WireRelayLogin` carries. */
-const MAX_RELAY_URLS = 4;
+/**
+ * Lobby host to each seated member, on its seat and on every change
+ * (#2529, ADR-0049): the seated members holding a relay, in seat order,
+ * so a member takes logins only from them; and the seated members with
+ * a relay key, so a holder knows whom to mint for.
+ */
+export interface PeerRelayOffers {
+  readonly holders: readonly string[];
+  readonly members: readonly WireRelayMember[];
+}
 
 /**
- * Lobby host to each admitted member, one at a time (#2248): the relay
- * login it shares, or `null` for none. Sent on admission and on every
- * change, so a seated guest needs no Nostr offer, which any member could
- * forge. Never leaves the lobby's data channels.
+ * A holder to its lobby host (#2529): a login for seated member `to`,
+ * sealed to `to`'s key, so the host forwarding it cannot read it. There
+ * is no `from`: the host stamps the sender's own seat.
  */
-export interface PeerRelayLogin {
-  readonly relay: WireRelayLogin | null;
+export interface PeerRelayCredOut {
+  readonly to: string;
+  readonly seal: string;
+}
+
+/** Lobby host to member `to` of a `PeerRelayCredOut` (#2529): the seal, and its seated sender. */
+export interface PeerRelayCredIn {
+  readonly from: string;
+  readonly seal: string;
 }
 
 /** The most characters a peer id on `relay-admit` has: Trystero's are 20. */
@@ -2495,7 +2518,8 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     typeof raw.name !== "string" ||
     guildTag === undefined ||
     admission === undefined ||
-    (raw.rejoinToken !== null && !isRejoinToken(raw.rejoinToken))
+    (raw.rejoinToken !== null && !isRejoinToken(raw.rejoinToken)) ||
+    (raw.relayPub !== null && !isRelayPub(raw.relayPub))
   ) {
     return undefined;
   }
@@ -2507,6 +2531,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     guildCape: parseWireCape(raw.guildCape) ?? null,
     admission,
     rejoinToken: raw.rejoinToken,
+    relayPub: raw.relayPub,
   };
 }
 
@@ -2530,31 +2555,49 @@ export function parsePeerLobbySeat(value: unknown): PeerLobbySeat | undefined {
     : undefined;
 }
 
-/** The `"relay-login"` channel. Shape only: apps/web validates the relay. */
-export function parsePeerRelayLogin(value: unknown): PeerRelayLogin | undefined {
-  const raw = fields(value);
-  if (raw === undefined) {
-    return undefined;
-  }
-  if (raw.relay === null) {
-    return { relay: null };
-  }
-  const relay = fields(raw.relay);
-  if (relay === undefined) {
-    return undefined;
-  }
-  const urls = parseArray(relay.urls, MAX_RELAY_URLS, (url) =>
-    isString(url, MAX_WIRE_TEXT) ? url : undefined,
+/** A peer id on a relay channel: Trystero's are 20 characters. */
+function isRelayPeerId(value: unknown): value is string {
+  return isString(value, MAX_RELAY_PEER_ID) && value.length > 0;
+}
+
+/** A sealed login: the app opens it, so only its size and alphabet are checked here. */
+function isRelaySealText(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.length <= MAX_RELAY_SEAL_CHARS &&
+    /^[A-Za-z0-9_.-]+$/.test(value)
   );
-  if (
-    urls === undefined ||
-    urls.length === 0 ||
-    !isString(relay.username, MAX_WIRE_TEXT) ||
-    !isString(relay.credential, MAX_WIRE_TEXT)
-  ) {
-    return undefined;
-  }
-  return { relay: { urls, username: relay.username, credential: relay.credential } };
+}
+
+/** The `"relay-offers"` channel (#2529). */
+export function parsePeerRelayOffers(value: unknown): PeerRelayOffers | undefined {
+  const raw = fields(value);
+  const holders = parseArray(raw?.holders, MAX_LOBBY_PLAYERS, (id) =>
+    isRelayPeerId(id) ? id : undefined,
+  );
+  const members = parseArray(raw?.members, MAX_LOBBY_PLAYERS, (item) => {
+    const member = fields(item);
+    return member !== undefined && isRelayPeerId(member.peerId) && isRelayPub(member.pub)
+      ? { peerId: member.peerId, pub: member.pub }
+      : undefined;
+  });
+  return holders !== undefined && members !== undefined ? { holders, members } : undefined;
+}
+
+/** The `"relay-cred"` channel as a lobby host hears it from a holder (#2529). */
+export function parsePeerRelayCredOut(value: unknown): PeerRelayCredOut | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isRelayPeerId(raw.to) && isRelaySealText(raw.seal)
+    ? { to: raw.to, seal: raw.seal }
+    : undefined;
+}
+
+/** The `"relay-cred"` channel as a member hears it from its host (#2529). */
+export function parsePeerRelayCredIn(value: unknown): PeerRelayCredIn | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isRelayPeerId(raw.from) && isRelaySealText(raw.seal)
+    ? { from: raw.from, seal: raw.seal }
+    : undefined;
 }
 
 /** A raw P-256 public key (65 bytes) as base64url without padding: 87 characters. */
@@ -2565,10 +2608,7 @@ export function isRelayPub(value: unknown): value is string {
 /** The `"relay-admit"` channel (#2527). */
 export function parsePeerRelayAdmit(value: unknown): PeerRelayAdmit | undefined {
   const raw = fields(value);
-  return raw !== undefined &&
-    isString(raw.peerId, MAX_RELAY_PEER_ID) &&
-    raw.peerId.length > 0 &&
-    isRelayPub(raw.pub)
+  return raw !== undefined && isRelayPeerId(raw.peerId) && isRelayPub(raw.pub)
     ? { peerId: raw.peerId, pub: raw.pub }
     : undefined;
 }

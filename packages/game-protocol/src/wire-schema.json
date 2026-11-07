@@ -24,9 +24,10 @@
     "lobby-welcome",
     "lobby-leave",
     "lobby-seat",
-    "relay-login",
     "relay-admit",
     "relay-holding",
+    "relay-offers",
+    "relay-cred",
     "stay-together",
     "party-proposal",
     "party-consent",
@@ -729,6 +730,7 @@
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
     "MAX_RELAY_PEER_ID": { "literal": 64 },
+    "MAX_RELAY_SEAL_CHARS": { "literal": 2048 },
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
     "MAX_STROKE_POINTS": { "literal": 16 },
     "MAX_TEAM_LOBBY_SIDE": { "literal": 8 },
@@ -864,8 +866,9 @@
         { "literal": "rejoin-challenge" },
         { "literal": "rejoin-proof" },
         { "literal": "relay-admit" },
+        { "literal": "relay-cred" },
         { "literal": "relay-holding" },
-        { "literal": "relay-login" },
+        { "literal": "relay-offers" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
         { "literal": "stay-together" },
@@ -5756,7 +5759,8 @@
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "name", "optional": false, "type": "string" },
         { "name": "protocolVersion", "optional": false, "type": "string" },
-        { "name": "rejoinToken", "optional": false, "type": { "union": ["null", "string"] } }
+        { "name": "rejoinToken", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "relayPub", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
     "PeerLobbyLeave": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
@@ -5867,23 +5871,32 @@
         { "name": "pub", "optional": false, "type": "string" }
       ]
     },
-    "PeerRelayHolding": { "properties": [{ "name": "on", "optional": false, "type": "boolean" }] },
-    "PeerRelayLogin": {
+    "PeerRelayCredIn": {
       "properties": [
+        { "name": "from", "optional": false, "type": "string" },
+        { "name": "seal", "optional": false, "type": "string" }
+      ]
+    },
+    "PeerRelayCredOut": {
+      "properties": [
+        { "name": "seal", "optional": false, "type": "string" },
+        { "name": "to", "optional": false, "type": "string" }
+      ]
+    },
+    "PeerRelayHolding": { "properties": [{ "name": "on", "optional": false, "type": "boolean" }] },
+    "PeerRelayOffers": {
+      "properties": [
+        { "name": "holders", "optional": false, "type": { "array": "string" } },
         {
-          "name": "relay",
+          "name": "members",
           "optional": false,
           "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  { "name": "credential", "optional": false, "type": "string" },
-                  { "name": "urls", "optional": false, "type": { "array": "string" } },
-                  { "name": "username", "optional": false, "type": "string" }
-                ]
-              }
-            ]
+            "array": {
+              "properties": [
+                { "name": "peerId", "optional": false, "type": "string" },
+                { "name": "pub", "optional": false, "type": "string" }
+              ]
+            }
           }
         }
       ]
@@ -7587,11 +7600,10 @@
         }
       ]
     },
-    "WireRelayLogin": {
+    "WireRelayMember": {
       "properties": [
-        { "name": "credential", "optional": false, "type": "string" },
-        { "name": "urls", "optional": false, "type": { "array": "string" } },
-        { "name": "username", "optional": false, "type": "string" }
+        { "name": "peerId", "optional": false, "type": "string" },
+        { "name": "pub", "optional": false, "type": "string" }
       ]
     },
     "WireRelic": {

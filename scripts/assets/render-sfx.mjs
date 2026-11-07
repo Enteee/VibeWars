@@ -105,6 +105,11 @@ if (todo.length === 0) {
   process.exit(0);
 }
 
+const probe = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" });
+if (probe.error !== undefined && "code" in probe.error && probe.error.code === "ENOENT") {
+  throw new Error("ffmpeg not found on PATH: install it to render the sound effects (#2524)");
+}
+
 // The page, built apart from the game (apps/web/vite.sfx.config.ts).
 const pageDir = fs.mkdtempSync(path.join(os.tmpdir(), "sfx-render-"));
 const build = spawnSync(
