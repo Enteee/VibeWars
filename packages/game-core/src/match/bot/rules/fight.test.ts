@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { RANGE_SPELL } from "../../../distances.js";
 import { NO_RANKS } from "../../../skills/status.js";
 import { BOT_REACTION, INSTANT_REACTION } from "../../behaviour.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
@@ -8,6 +9,7 @@ import {
   BOT,
   DT,
   ELEMENTALIST,
+  MONK,
   RANGER,
   WARRIOR,
   askBot,
@@ -87,6 +89,43 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
     expect(at(0.55)).toEqual(["hurt", "hurt"]);
     expect(at(0.65)).toEqual(["held", "held"]);
     expect(at(0.4, 0.5)).toEqual(["held", "held"]);
+  });
+
+  it("focuses a foe healer over a slightly more hurt warrior, not a much more hurt one (#2573)", () => {
+    const at = (fraction: number) => {
+      const sim = match([
+        fighter("a", 0, ELEMENTALIST, vec2(400, 400)),
+        fighter("healer", 1, MONK, vec2(700, 400), { behaviour: undefined }),
+        fighter("warrior", 1, WARRIOR, vec2(700, 500), {
+          behaviour: undefined,
+          startHealthFraction: fraction,
+        }),
+      ]);
+      sim.step(DT);
+      return sim.get("a")?.targetId;
+    };
+    expect(at(0.8)).toBe("healer");
+    expect(at(0.7)).toBe("warrior");
+  });
+
+  it("follows the team's target a little past its range, and no further while a foe is in reach (#2573)", () => {
+    const at = (past: number) => {
+      const held = vec2(400 + RANGE_SPELL + past, 400);
+      const sim = match([
+        fighter("a", 0, ELEMENTALIST, vec2(held.x - 300, 400)),
+        fighter("b", 0, ELEMENTALIST, vec2(400, 400)),
+        fighter("held", 1, WARRIOR, held, { behaviour: undefined }),
+        fighter("own", 1, WARRIOR, vec2(400, 700), { behaviour: undefined }),
+      ]);
+      const a = sim.get("a");
+      if (a !== undefined) {
+        a.targetId = "held";
+      }
+      sim.step(DT);
+      return sim.get("b")?.targetId;
+    };
+    expect(at(100)).toBe("held");
+    expect(at(200)).toBe("own");
   });
 
   it("fights the foe its team called over the most hurt one, and drops the call when it dies (#1193)", () => {
