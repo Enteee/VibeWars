@@ -366,7 +366,7 @@ export function seat(
     character === undefined
       ? undefined
       : lookOfWire(character, choiceBuilds(choice, snapshot)?.[slot]);
-  // A preset's seat is its job (#2148): "Healer Monk".
+  // A preset's seat is its member's name (#2148): "AB Balanced 3 (Mo/Me)".
   const professions =
     character === undefined
       ? undefined

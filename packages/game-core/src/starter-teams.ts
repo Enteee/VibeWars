@@ -107,17 +107,18 @@ function soloTeam(random: () => number, size: number, first: number): StarterTea
 /**
  * A starter team of `size` members by `random` ([0, 1)), never the one
  * named like `not`, so a reroll always changes it; `undefined` when there
- * is none of that size (#2109). A size no PvX team serves gets
- * `pickSoloTeam`.
+ * is none of that size (#2109). A size no PvX team serves, or whose
+ * only one is `not`, gets `pickSoloTeam`.
  */
 export function pickStarterTeam(
   random: () => number,
   size: number,
   not?: Pick<StarterTeam, "name">,
 ): StarterTeam | undefined {
-  const ofSize = STARTER_TEAMS.filter((team) => team.members.length === size);
-  if (ofSize.length > 0) {
-    const pool = ofSize.filter((team) => team.name !== not?.name);
+  const pool = STARTER_TEAMS.filter(
+    (team) => team.members.length === size && team.name !== not?.name,
+  );
+  if (pool.length > 0) {
     return pool[indexBy(random, pool.length)];
   }
   return TEAM_SIZES.includes(size) ? pickSoloTeam(random, size, not) : undefined;
