@@ -67,6 +67,12 @@ in four of those casts.
 A bot takes a human-like moment, a fraction of a second, to react to
 what happens, so a quick interrupt or a late dodge can beat it.
 
+In a three-team fight, such as Heroes' Ascent, bots fight one foe team at
+a time: the team attacking them, or, while nobody is, the most hurt team
+within reach. They do not charge a fresh team while another one is
+attacking them. A target their team called comes first, whichever team
+it is on.
+
 ## Random Arena
 
 A Random Arena has no bots: every place is a real player, and you wait
