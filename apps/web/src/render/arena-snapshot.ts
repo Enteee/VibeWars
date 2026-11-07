@@ -375,13 +375,15 @@ export function withCalls(snapshot: ArenaSnapshot, calls: CallsSnapshot): ArenaS
  * `foe` red, which stay apart under every common colour-vision deficiency,
  * where the old green allies did not. You are drawn in your team's blue;
  * what marks you out is the ink rim the scene adds, not a hue of your own.
- * A three-team match's second foe is GW1's yellow (#2684).
+ * A three-team match's second foe is a lemon-lime: it stays apart from the
+ * ally blue and the foe red under deuteranopia, protanopia and tritanopia
+ * (simulated ΔE76 ≥ 45, #2755), and its tags carry a ◆ as well (`teamMark`).
  */
 const TEAM_COLOURS: Record<RenderableActor["team"], number> = {
   self: 0x59c2ff,
   ally: 0x59c2ff,
   enemy: 0xff7b72,
-  third: 0xe3b341,
+  third: 0xf0ff40,
 };
 
 /**
@@ -395,6 +397,14 @@ export function teamSide(team: number, ours: number): "ally" | "enemy" | "third"
   }
   const firstFoe = ours === 0 ? 1 : 0;
   return team === firstFoe ? "enemy" : "third";
+}
+
+/** The glyph the third team's tags and rows carry, so colour is never the only cue (#2755). */
+export const THIRD_TEAM_MARK = "◆";
+
+/** `text` with the third team's ◆ before it; any other side's text as it is. */
+export function markedForTeam(side: "ally" | "enemy" | "third" | "self", text: string): string {
+  return side === "third" ? `${THIRD_TEAM_MARK} ${text}` : text;
 }
 
 /** Edges every living body, darker than the grid and walls, so no body blends into what it stands on. */

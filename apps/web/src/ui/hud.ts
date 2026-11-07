@@ -31,7 +31,7 @@ import type {
 import { formatNumber, t, type MessageKey } from "../i18n/index.js";
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
-import { teamColour, teamSide } from "../render/arena-snapshot.js";
+import { THIRD_TEAM_MARK, markedForTeam, teamColour, teamSide } from "../render/arena-snapshot.js";
 import { botTagElement } from "./bot-tag.js";
 import { cssColour } from "./character-preview.js";
 import { paintHealthTint } from "./health-tint.js";
@@ -781,11 +781,9 @@ function renderCarriers(
   row.replaceChildren();
   for (const line of lines) {
     const node = element("div", "hud-carrier", row);
-    node.textContent = line.text;
-    node.style.setProperty(
-      "--pip-colour",
-      cssColour(teamColour(teamSide(line.team, selfTeam ?? 0))),
-    );
+    const side = teamSide(line.team, selfTeam ?? 0);
+    node.textContent = markedForTeam(side, line.text);
+    node.style.setProperty("--pip-colour", cssColour(teamColour(side)));
   }
 }
 
@@ -1288,10 +1286,9 @@ function renderScoreboard(
         const node = element("span", part.dead ? "hud-side is-dead" : "hud-side", row);
         node.textContent = part.text;
         if (part.team !== undefined) {
-          node.style.setProperty(
-            "--pip-colour",
-            cssColour(teamColour(teamSide(part.team, selfTeam ?? 0))),
-          );
+          const side = teamSide(part.team, selfTeam ?? 0);
+          node.textContent = markedForTeam(side, part.text);
+          node.style.setProperty("--pip-colour", cssColour(teamColour(side)));
         }
         return;
       }
@@ -1321,6 +1318,9 @@ function renderEnemyPips(
     let line = lines.get(pip.team);
     if (line === undefined) {
       line = element("span", "hud-enemy-row", row);
+      if (teamSide(pip.team, ours) === "third") {
+        element("span", "hud-team-mark", line).textContent = THIRD_TEAM_MARK;
+      }
       line.style.setProperty("--pip-colour", cssColour(teamColour(teamSide(pip.team, ours))));
       lines.set(pip.team, line);
     }

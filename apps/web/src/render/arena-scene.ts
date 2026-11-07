@@ -29,6 +29,7 @@ import {
   nameplateLayout,
   placeFloatingText,
   swingFlashAlpha,
+  markedForTeam,
   teamColour,
   type AreaFlash,
   type NameplateLayout,
@@ -1191,10 +1192,13 @@ export class ArenaScene extends Phaser.Scene {
       }
       const shown = nameShown(this.snapshot, actor);
       label.setText(
-        taggedName({
-          name: playerLabelText(nameplateName(actor.name), actor.guildTag),
-          bot: actor.bot,
-        }),
+        markedForTeam(
+          actor.team,
+          taggedName({
+            name: playerLabelText(nameplateName(actor.name), actor.guildTag),
+            bot: actor.bot,
+          }),
+        ),
       );
       screenSized(label, zoom);
       // `width` is unscaled: the label's screen px.

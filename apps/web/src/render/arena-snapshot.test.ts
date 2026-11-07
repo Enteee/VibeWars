@@ -29,6 +29,7 @@ import {
   withNames,
   placeFloatingText,
   teamColour,
+  markedForTeam,
   teamSide,
   toRenderableGroundEffect,
   type ArenaSnapshot,
@@ -47,6 +48,67 @@ describe("teamColour", () => {
   it("draws a third team apart from both (#2684)", () => {
     expect(teamColour("third")).not.toBe(teamColour("ally"));
     expect(teamColour("third")).not.toBe(teamColour("enemy"));
+  });
+});
+
+/** Machado 2009 (severity 1) matrices, applied to linear sRGB. */
+const CVD = {
+  deuteranopia: [
+    [0.367322, 0.860646, -0.227968],
+    [0.280085, 0.672501, 0.047413],
+    [-0.01182, 0.04294, 0.968881],
+  ],
+  protanopia: [
+    [0.152286, 1.052583, -0.204868],
+    [0.114503, 0.786281, 0.099216],
+    [-0.003882, -0.048116, 1.051998],
+  ],
+  tritanopia: [
+    [1.255528, -0.076749, -0.178779],
+    [-0.078411, 0.930809, 0.147602],
+    [0.004733, 0.691367, 0.3039],
+  ],
+} as const;
+
+const linear = (c: number): number => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+
+/** CIE L*a*b* (D65) of a 0xRRGGBB colour after the matrix `m`. */
+function labOf(hex: number, m: readonly (readonly number[])[]): [number, number, number] {
+  const rgb = [hex >> 16, (hex >> 8) & 255, hex & 255].map((c) => linear(c / 255));
+  const [r = 0, g = 0, b = 0] = m.map(
+    (row) =>
+      (row[0] ?? 0) * (rgb[0] ?? 0) + (row[1] ?? 0) * (rgb[1] ?? 0) + (row[2] ?? 0) * (rgb[2] ?? 0),
+  );
+  const f = (v: number): number => (v > 216 / 24389 ? Math.cbrt(v) : ((24389 / 27) * v + 16) / 116);
+  const fx = f((0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / 0.95047);
+  const fy = f(0.2126729 * r + 0.7151522 * g + 0.072175 * b);
+  const fz = f((0.0193339 * r + 0.119192 * g + 0.9503041 * b) / 1.08883);
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+
+/** CIE76 distance between two colours as someone with `vision` sees them. */
+function seenApart(a: number, b: number, vision: keyof typeof CVD): number {
+  const [l1, a1, b1] = labOf(a, CVD[vision]);
+  const [l2, a2, b2] = labOf(b, CVD[vision]);
+  return Math.hypot(l1 - l2, a1 - a2, b1 - b2);
+}
+
+describe("the third team's colour (#2755)", () => {
+  it.each(Object.keys(CVD) as (keyof typeof CVD)[])(
+    "is at least 45 from the ally blue and the foe red under %s",
+    (vision) => {
+      expect(seenApart(teamColour("third"), teamColour("ally"), vision)).toBeGreaterThanOrEqual(45);
+      expect(seenApart(teamColour("third"), teamColour("enemy"), vision)).toBeGreaterThanOrEqual(
+        45,
+      );
+    },
+  );
+
+  it("marks only the third team with a ◆", () => {
+    expect(markedForTeam("third", "Brynn")).toBe("◆ Brynn");
+    for (const side of ["ally", "enemy", "self"] as const) {
+      expect(markedForTeam(side, "Brynn")).toBe("Brynn");
+    }
   });
 });
 

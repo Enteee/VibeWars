@@ -1,6 +1,7 @@
 import type { MatchSummaryRow } from "@vibewars/game-session";
 
 import { t, type MessageKey } from "../i18n/index.js";
+import { markedForTeam, teamSide } from "../render/arena-snapshot.js";
 import { botTagElement } from "./bot-tag.js";
 import { playerLabelElement } from "./player-label.js";
 import { h } from "./kit.js";
@@ -85,9 +86,10 @@ export function summaryTables(
     if (team === selfTeam) {
       return t("summary.yourTeam");
     }
-    return selfTeam !== undefined && teamCount === 2
-      ? t("summary.theirTeam")
-      : t("summary.team", { team: team + 1 });
+    if (selfTeam !== undefined && teamCount === 2) {
+      return t("summary.theirTeam");
+    }
+    return markedForTeam(teamSide(team, selfTeam ?? 0), t("summary.team", { team: team + 1 }));
   };
   return teams.map((team) => ({
     caption: caption(team),

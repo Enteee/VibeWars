@@ -331,9 +331,10 @@ Ascent lobby joined by code plays round 1's map.
 
 ## Three teams
 
-In a three-team match the third team is drawn yellow, beside the blue
-of your side and the red of the other. The scoreboard reads your team
-first, then the others in order, and the end-of-match tables put your
+In a three-team match the third team is drawn lemon-lime, beside the blue
+of your side and the red of the other, and carries a ◆ before its name tags,
+score rows and end-of-match table, so it is never told apart by colour alone.
+The scoreboard reads your team first, then the others in order, and the end-of-match tables put your
 team first, then the winner.
 
 ## Match records
