@@ -5,7 +5,7 @@ import { vec2 } from "../../../vec2.js";
 import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
 import { ghostId, type HillField } from "../../ghost.js";
 import { MatchSimulation, type ParticipantSpec } from "../../simulation.js";
-import { askBot, body, BOT, BOUNDS, RULESET } from "./test-support.js";
+import { askBot, body, BOT, BOUNDS, fighter, MONK, RULESET, WARRIOR } from "./test-support.js";
 
 const FIELD: HillField = {
   altar: vec2(800, 400),
@@ -46,6 +46,16 @@ describe("lead-ghost: a bot leads its Ghostly Hero onto the altar (#2582)", () =
     const intent = askBot(sim, "bot", HILL);
     expect(intent.moveTo).toEqual(FIELD.altar);
     expect(intent.attackTargetId).toBeUndefined();
+  });
+
+  it("walks a healer leader to the altar, not behind its ally", () => {
+    const sim = hill([
+      fighter("bot", 0, MONK, vec2(300, 400)),
+      fighter("mate", 0, WARRIOR, vec2(300, 1000)),
+      fighter("foe", 1, WARRIOR, vec2(500, 400)),
+    ]);
+    ghostAt(sim, 260, "bot");
+    expect(askBot(sim, "bot", HILL).moveTo).toEqual(FIELD.altar);
   });
 
   it("tells the ghost to stay once it is on the altar", () => {

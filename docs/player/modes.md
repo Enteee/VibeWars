@@ -298,6 +298,12 @@ left, is not published. Records are reported by the host, so a host can
 get one wrong; nothing checks them against the match.
 
 See them on the **Matches** page, below Team Builder: the last 100,
-newest first, with new ones appearing as they are played. Every row is
-marked **host-reported**. Click one for both teams, each player's
-professions, top attributes and skill bar.
+newest first, with new ones appearing as they are played. A row is one
+line: each team's players as their primary profession's icon (hover for
+the name), the winner underlined, and the map, duration and when. Every
+row is marked **host-reported**. Click one to see the teams, one tab
+each: the team card, then each player's professions, top attributes and
+skill bar. **Clone** copies a team from
+a finished match into your Team Builds, each player's build under
+their name, and opens it. A 1v1 side has no Clone: a Team Build is 2, 4
+or 8.

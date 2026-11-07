@@ -9,18 +9,27 @@ import type {
 } from "../behaviour.js";
 import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
+import { botRole, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
 import { HURT_FRACTION, NOTHING, healthFraction, skillsOf } from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
 import { sacrificesTooMuch } from "./skill-intent.js";
 
 /**
+ * Below this share of its health a foe in reach is the team's target
+ * (#2545): one about to fall is worth more than one at full health.
+ */
+const FINISH_FRACTION = 0.6;
+
+/**
  * `play-build` (#1189): a participant playing its own skill bar the way a
  * sensible GW1 hero does. Each think it does what the first of
  * `rules/index.ts`'s `BOT_RULES` with an answer says, one file per rule:
  * interrupt, heal, step away, cleanse, raise, …, fight the team target,
- * and otherwise walk to the nearest foe. A ranged bot stands and fights a
- * foe at its elbow: at equal speed, backing off would never end.
+ * and otherwise walk to the nearest foe. Between casts it takes the spot
+ * its role gives it (#2545): a frontline closes in, a ranged bot holds
+ * near the edge of its reach and steps away from a foe at its elbow, a
+ * healer stands behind the ally it looks after.
  *
  * It reads only what a player reads off the screen: positions, teams,
  * health fractions, the statuses on a body, a foe's cast bar and its
@@ -43,7 +52,18 @@ export function playBuild(
 ): BehaviourIntent {
   return paced(behaviour.thinkSeconds, cursor, context, () => {
     const foes = livingFoes(context);
-    return think(context, cursor, foes, livingMembers(context), teamTarget(context, foes));
+    cursor.role ??= botRole(
+      skillsOf(context.self),
+      context.self.combatant.equipment.mainHand.weapon.range,
+    );
+    return think(
+      context,
+      cursor,
+      foes,
+      livingMembers(context),
+      teamTarget(context, foes),
+      cursor.role,
+    );
   });
 }
 
@@ -91,7 +111,7 @@ export function guard(
       : { ...NOTHING, moveTo: behaviour.post };
   }
   const intent = paced(behaviour.thinkSeconds, cursor, context, () =>
-    think(context, cursor, foes, allies, weakest(self, foes)?.id),
+    think(context, cursor, foes, allies, weakest(self, foes)?.id, undefined),
   );
   return behaviour.rooted ? { ...intent, moveDirection: ZERO, moveTo: undefined } : intent;
 }
@@ -157,6 +177,7 @@ function think(
   foes: readonly Participant[],
   allies: readonly Participant[],
   targetId: string | undefined,
+  role: BotRole | undefined,
 ): BehaviourIntent {
   const self = context.self;
   const rule: RuleContext = {
@@ -180,6 +201,8 @@ function think(
       return check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight";
     },
     mayEndUpkeep: cursor.upkeepDropSeconds <= 0,
+    role,
+    foeCentroid: context.foeCentroid,
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
   for (const { decide } of BOT_RULES) {
@@ -196,10 +219,13 @@ function think(
 
 /**
  * The foe the team called (#1193), while it is alive; else the foe the
- * team's bots already target, if one is alive; else the living foe within
- * spell range with the lowest health fraction, ties to the nearer, then
- * simulation order. A creature only while no other foe is in range. With
- * shrines to hold or a relic to run, the team's target only in range.
+ * team's bots already target, while it is below `FINISH_FRACTION`; else
+ * the weakest foe in spell range once it is below `FINISH_FRACTION`
+ * (#2545), so the team commits to a kill and never drops one for
+ * another; else the team's target, if one is alive; else the living foe
+ * within spell range with the lowest health fraction, ties to the nearer,
+ * then simulation order. A creature only while no other foe is in range.
+ * With shrines to hold or a relic to run, the team's target only in range.
  */
 function teamTarget(context: BehaviourContext, foes: readonly Participant[]): string | undefined {
   const called = foes.find((foe) => foe.id === context.calledTargetId);
@@ -208,6 +234,24 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
   }
   const self = context.self;
   const inRange = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+  const held = heldTarget(context, foes, inRange);
+  if (held !== undefined && healthFraction(held) < FINISH_FRACTION) {
+    return held.id;
+  }
+  const dying = weakest(self, inRange);
+  if (dying !== undefined && healthFraction(dying) < FINISH_FRACTION) {
+    return dying.id;
+  }
+  return (held ?? dying)?.id;
+}
+
+/** The first living foe a bot of `context.self`'s team targets, if it may be fought. */
+function heldTarget(
+  context: BehaviourContext,
+  foes: readonly Participant[],
+  inRange: readonly Participant[],
+): Participant | undefined {
+  const self = context.self;
   const eligible = fightable(inRange);
   // With shrines to hold (#2580) or a relic to run (#2581), a bot leaves
   // them for a foe in its own reach, never for one a teammate fights
@@ -224,10 +268,10 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
     }
     const held = foes.find((foe) => foe.id === ally.targetId);
     if (held !== undefined && eligible(held) && (!objectives || inRange.includes(held))) {
-      return held.id;
+      return held;
     }
   }
-  return weakest(self, inRange)?.id;
+  return undefined;
 }
 
 /** Of `foes`, a creature only while none of them is a fighter. */

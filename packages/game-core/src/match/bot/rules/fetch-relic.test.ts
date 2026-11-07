@@ -72,6 +72,15 @@ describe("fetch-relic: Relic Run bots fetch their relic and return the foe's (#2
     expect(askBot(sim, "bot", dropped).attackTargetId).toBe(relicId(1));
   });
 
+  it("leaves a fighting teammate to its fight and fetches the relic itself", () => {
+    const sim = match([
+      body("bot", 0, vec2(600, 400), { behaviour: BOT }),
+      body("mate", 0, vec2(150, 400), { behaviour: BOT }),
+      body("foe", 1, vec2(150, 200)),
+    ]);
+    expect(askBot(sim, "bot", BOTH_HOME).attackTargetId).toBe(relicId(0));
+  });
+
   it("leaves its relic to a human teammate nearer to it", () => {
     const sim = match([
       body("bot", 0, vec2(300, 400), { behaviour: BOT }),

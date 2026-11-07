@@ -83,14 +83,8 @@ export function matchRecordEvent(record: MatchRecord, now: number): NostrEvent |
  * this build would not accept from someone else is not sent either.
  */
 export function publishMatchRecord(record: MatchRecord, deps: MatchRecordDeps = BROWSER): void {
-  const now = deps.now();
-  const event = matchRecordEvent(record, now);
-  // Checked as a reader gets it: the JSON, not the object it came from.
-  if (
-    event === undefined ||
-    validateMatchRecord(JSON.parse(event.content), new Set(arenaIds()), Math.floor(now / 1000)) ===
-      undefined
-  ) {
+  const event = publishableEvent(record, deps.now());
+  if (event === undefined) {
     return;
   }
   let answers = 0;
@@ -119,6 +113,23 @@ export function publishMatchRecord(record: MatchRecord, deps: MatchRecordDeps = 
   pool.send(event);
 }
 
+/**
+ * `record` as a signed event, or `undefined` for one this build would not
+ * accept from someone else. Checked as a reader gets it: the JSON, not
+ * the object it came from.
+ */
+export function publishableEvent(record: MatchRecord, now: number): NostrEvent | undefined {
+  const event = matchRecordEvent(record, now);
+  if (
+    event === undefined ||
+    validateMatchRecord(JSON.parse(event.content), new Set(arenaIds()), Math.floor(now / 1000)) ===
+      undefined
+  ) {
+    return undefined;
+  }
+  return event;
+}
+
 /** Whether `data` is a relay's NIP-01 `["OK", <id>, …]` for event `id`. */
 function isOkFor(data: unknown, id: string): boolean {
   if (typeof data !== "string") {
@@ -134,7 +145,7 @@ function isOkFor(data: unknown, id: string): boolean {
 }
 
 /** The subscription the Matches page holds, by its id on every relay. */
-const WATCH_SUBSCRIPTION_ID = "vibewars-matches";
+export const WATCH_SUBSCRIPTION_ID = "vibewars-matches";
 
 /** How many records the Matches page asks each relay for. */
 export const MATCH_RECORD_LIMIT = 100;
@@ -188,6 +199,33 @@ export function watchMatchRecords(
   on: MatchRecordWatchHandlers,
   deps: MatchRecordWatchDeps = BROWSER_WATCH,
 ): MatchRecordWatch {
+  const pool = openRelayPool({
+    relays: deps.relays,
+    openSocket: deps.openSocket,
+    request: JSON.stringify([
+      "REQ",
+      WATCH_SUBSCRIPTION_ID,
+      { kinds: [MATCH_RECORD_EVENT_KIND], "#t": [MATCH_RECORD_TOPIC], limit: MATCH_RECORD_LIMIT },
+    ]),
+    hear: recordHearer(on, deps),
+    allDown: on.noRelay,
+  });
+  return {
+    close: () => {
+      pool.close();
+    },
+  };
+}
+
+/**
+ * A reader of relay messages that hands `on.record` each valid, verified
+ * record once: what every record feed parses with, the relays' and the
+ * broadcast build's (#2585) alike.
+ */
+export function recordHearer(
+  on: MatchRecordWatchHandlers,
+  deps: Pick<MatchRecordWatchDeps, "now" | "verifyTicketSig">,
+): (data: unknown) => void {
   const mayVerify = verifyBudget(deps.now, VERIFY_PER_SECOND, MATCH_RECORD_VERIFY_BURST);
   const mapIds = new Set(arenaIds());
   const seen = new Set<string>();
@@ -240,20 +278,5 @@ export function watchMatchRecords(
     on.record({ id, record });
   }
 
-  const pool = openRelayPool({
-    relays: deps.relays,
-    openSocket: deps.openSocket,
-    request: JSON.stringify([
-      "REQ",
-      WATCH_SUBSCRIPTION_ID,
-      { kinds: [MATCH_RECORD_EVENT_KIND], "#t": [MATCH_RECORD_TOPIC], limit: MATCH_RECORD_LIMIT },
-    ]),
-    hear,
-    allDown: on.noRelay,
-  });
-  return {
-    close: () => {
-      pool.close();
-    },
-  };
+  return hear;
 }

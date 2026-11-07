@@ -14,6 +14,7 @@ import mantra from "./mantra.js";
 import mimicElite from "./mimic-elite.js";
 import minionCare from "./minion-care.js";
 import pickUpGhost from "./pick-up-ghost.js";
+import position from "./position.js";
 import raise from "./raise.js";
 import renewSpirit from "./renew-spirit.js";
 import rider from "./rider.js";
@@ -45,6 +46,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   mimicElite,
   minionCare,
   pickUpGhost,
+  position,
   raise,
   renewSpirit,
   rider,
