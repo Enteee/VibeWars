@@ -780,10 +780,10 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
   const cameraX = async (): Promise<number> =>
     Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[0]);
 
-  // A click walks right from team 0's spawns on ember-pits, to y 255:
-  // north of the spawns' cover and south of the corridor's, clear to well
-  // past the goal below, so the walk there meets no wall.
-  const middle = (await projection(stage, canvas)).onPage({ x: 380, y: 255 });
+  // A click walks right from the first spawn (160, 660) on ember-pits, to
+  // y 500: north of the west pillar (y 600 to 800), clear to well past the
+  // goal below, and near enough the centre to be on screen, not under the HUD.
+  const middle = (await projection(stage, canvas)).onPage({ x: 380, y: 500 });
   await page.mouse.click(middle.x, middle.y);
   // Over the canvas, for the wheel; then Close.
   await page.mouse.move(centre.x, centre.y);
