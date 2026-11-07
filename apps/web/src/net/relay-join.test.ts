@@ -40,6 +40,7 @@ function offer(holder: string, expiry: number): RelayOffer {
  */
 function fakeOffers() {
   let ranked: RelayOffer[] = [];
+  const vouched = new WeakSet<RelayOffer>();
   const handlers = new Set<() => void>();
   let closed = false;
   const tell = (): void => {
@@ -52,6 +53,7 @@ function fakeOffers() {
     ranked: () => [...ranked],
     listed: () => undefined,
     fromMember: () => undefined,
+    vouched: (offer) => vouched.has(offer),
     onOffer(handler) {
       handlers.add(handler);
       return () => {
@@ -68,6 +70,11 @@ function fakeOffers() {
     open(...next: RelayOffer[]) {
       ranked = next;
       tell();
+    },
+    /** `offer`, as the host forwarded it from its holder (#2531). */
+    vouch(offer: RelayOffer): RelayOffer {
+      vouched.add(offer);
+      return offer;
     },
     closed: () => closed,
   };
@@ -441,6 +448,59 @@ describe("a relayed member's login, moved in place (#2245, #2529)", () => {
     joiner.fake.open(offer("a", EXPIRY + 3 * 60 * 60), offer("m", EXPIRY + 60 * 60));
     expect(joiner.swaps).toHaveLength(1);
     await joiner.room.leave();
+  });
+
+  it("says whose relay it goes through once the host forwarded its login, and a switch (#2531)", async () => {
+    const joiner = relayedJoiner();
+    let told = 0;
+    joiner.room.onRelayedVia(() => {
+      told += 1;
+    });
+    expect(joiner.room.relayedVia()).toBeUndefined();
+    // Seated on a login off the Nostr relays: its holder is only claimed.
+    await reachHost(joiner);
+    expect(joiner.room.relayedVia()).toBeUndefined();
+    expect(told).toBe(0);
+    // Its holder's login, forwarded by the host, moves it in place.
+    joiner.fake.open(joiner.fake.vouch(offer("a", EXPIRY + 60)));
+    expect(joiner.room.relayedVia()).toBe("a");
+    expect(told).toBe(1);
+    // A newer one from the same holder is no switch.
+    joiner.setIce("failed");
+    joiner.fake.open(
+      joiner.fake.vouch(offer("m", EXPIRY + 60 * 60)),
+      joiner.fake.vouch(offer("a", EXPIRY + 120)),
+    );
+    expect(joiner.swaps).toHaveLength(2);
+    expect(told).toBe(1);
+    joiner.fake.open(joiner.fake.vouch(offer("m", EXPIRY + 60 * 60)));
+    expect(joiner.room.relayedVia()).toBe("m");
+    expect(told).toBe(2);
+    await joiner.room.leave();
+  });
+
+  it("names nobody for a pre-seat seal that claims a seated holder's id (#2531)", async () => {
+    const joiner = relayedJoiner();
+    // Mallory seals her relay as holder "a"; a's own login, forwarded, names another.
+    await reachHost(joiner);
+    const alice = loginAt(OTHER_URL, EXPIRY + 60 * 60);
+    joiner.fake.open(joiner.fake.vouch({ config: alice, holder: "a", name: "Alice" }));
+    expect(joiner.swaps).toEqual([]);
+    expect(joiner.room.relayedVia()).toBeUndefined();
+    await joiner.room.leave();
+  });
+
+  it("says no holder reached directly, or with its own relay (#2531)", async () => {
+    for (const ownRelay of [false, true]) {
+      const joiner = relayedJoiner(ownRelay);
+      joiner.network.join("host");
+      await vi.advanceTimersByTimeAsync(0);
+      joiner.room.reached("host");
+      joiner.fake.open(offer("a", EXPIRY));
+      await vi.advanceTimersByTimeAsync(RELAY_REJOIN_MS);
+      expect(joiner.room.relayedVia()).toBeUndefined();
+      await joiner.room.leave();
+    }
   });
 
   it("restarts at most once per relay each 5 min, unless ICE failed or disconnected", async () => {

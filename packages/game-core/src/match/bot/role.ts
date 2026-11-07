@@ -1,5 +1,7 @@
 import { RANGE_MELEE } from "../../distances.js";
 import type { Skill, TargetRule } from "../../skills/types.js";
+import type { Participant } from "../simulation.js";
+import { skillsOf } from "./rules/shared.js";
 import { botUses } from "./skill-intent.js";
 
 /**
@@ -36,4 +38,23 @@ export function botRole(bar: readonly Skill[], weaponRange: number): BotRole {
     return uses.includes("healing") || uses.includes("defence");
   }).length;
   return support >= HEALER_SKILLS ? "healer" : "ranged";
+}
+
+/**
+ * Each participant's role (#2549), worked out once: bars and weapons are
+ * locked in a match. A creature plays none.
+ */
+const ROLES = new WeakMap<Participant, BotRole>();
+
+/** The role `participant`'s bar gives it, bot or player; a creature: `undefined`. */
+export function roleOf(participant: Participant): BotRole | undefined {
+  if (participant.creature !== undefined) {
+    return undefined;
+  }
+  let role = ROLES.get(participant);
+  if (role === undefined) {
+    role = botRole(skillsOf(participant), participant.combatant.equipment.mainHand.weapon.range);
+    ROLES.set(participant, role);
+  }
+  return role;
 }

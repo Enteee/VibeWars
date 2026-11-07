@@ -15,7 +15,10 @@ import {
   modeLine,
   teamColumn,
   waitingFor,
+  type LobbyRelay,
 } from "./lobby-screen.js";
+import { MAX_RELAYED_PER_HOLDER } from "../net/transport/relay-offer.js";
+import { SHARED_RELAY_EXPLANATION } from "./relay-section.js";
 
 function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
   return {
@@ -621,5 +624,90 @@ describe("lobbyPanel: the map (#1994)", () => {
     ).toEqual([
       "Capture Points: stand on shrines to take them. Each shrine you own scores every 30 s.",
     ]);
+  });
+});
+
+describe("lobbyPanel: shared relays (#2531)", () => {
+  const callbacks = {
+    onSelectMap: () => undefined,
+    onChooseTeam: () => undefined,
+    onToggleReady: () => undefined,
+    onStart: () => undefined,
+    onWatch: () => undefined,
+  };
+  /** The panel's lines of `className` for a guest whose relay status is `relay`. */
+  const lines = (className: string, relay?: LobbyRelay, shown = snapshot("waiting")): string[] => {
+    const { body } = lobbyPanel(shown, callbacks, undefined, [], undefined, relay);
+    return (body as unknown as FakeElement).all(className).map((line) => line.textContent);
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal("document", {
+      createElement: (tagName: string) => Object.assign(new FakeElement(), { tagName }),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("names the member whose relay a relayed member goes through", () => {
+    expect(lines("relay-shared-by", { relayedVia: "guest", sharingWith: 0 })).toEqual([
+      "Relay shared by Guest",
+    ]);
+  });
+
+  it("follows an in-place switch to another holder", () => {
+    expect(lines("relay-shared-by", { relayedVia: "host", sharingWith: 0 })).toEqual([
+      "Relay shared by Host",
+    ]);
+  });
+
+  it("says nothing connected directly, through its own relay, or via a holder who left", () => {
+    expect(lines("relay-shared-by", { relayedVia: undefined, sharingWith: 0 })).toEqual([]);
+    expect(lines("relay-shared-by")).toEqual([]);
+    expect(lines("relay-shared-by", { relayedVia: "gone", sharingWith: 0 })).toEqual([]);
+  });
+
+  it("shows a name as text, whatever it holds", () => {
+    const base = snapshot("waiting");
+    const shown = {
+      ...base,
+      players: base.players.map((p) =>
+        p.sessionId === "guest" ? { ...p, name: "<b>Ann</b>" } : p,
+      ),
+    };
+    expect(lines("relay-shared-by", { relayedVia: "guest", sharingWith: 0 }, shown)).toEqual([
+      "Relay shared by <b>Ann</b>",
+    ]);
+  });
+
+  it("tells a holder how many players it shares with, and when it is at the limit", () => {
+    const sharing = (count: number): string[] =>
+      lines("relay-sharing", { relayedVia: undefined, sharingWith: count });
+    expect(sharing(0)).toEqual([]);
+    expect(sharing(1)).toEqual(["Sharing your relay with 1 player"]);
+    expect(sharing(3)).toEqual(["Sharing your relay with 3 players"]);
+    expect(sharing(MAX_RELAYED_PER_HOLDER)).toEqual([
+      "Sharing your relay with 8 players (limit reached)",
+    ]);
+  });
+
+  it("puts the holder's line under the roster", () => {
+    const { body } = lobbyPanel(snapshot("waiting"), callbacks, undefined, [], undefined, {
+      relayedVia: undefined,
+      sharingWith: 2,
+    });
+    const classes = (body as unknown as FakeElement).children.map((child) => child.className);
+    expect(classes.indexOf("screen-info relay-sharing")).toBe(classes.indexOf("lobby-teams") + 1);
+  });
+});
+
+describe("Options: what sharing a relay means (#2531)", () => {
+  it("says any lobby you are in, a 1 hour login each, the per-lobby cap and the hardening", () => {
+    expect(SHARED_RELAY_EXPLANATION).toContain("any lobby you are in, not only ones you host");
+    expect(SHARED_RELAY_EXPLANATION).toContain("their own login, good for 1 hour");
+    expect(SHARED_RELAY_EXPLANATION).toContain("at most 8 players a lobby");
+    expect(SHARED_RELAY_EXPLANATION).toContain("denied-peer-ip");
   });
 });

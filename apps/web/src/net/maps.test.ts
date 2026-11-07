@@ -35,6 +35,7 @@ describe("randomArenaMapPool", () => {
       "arena-crossroads",
       "arena-canyon",
       "arena-long-hall",
+      "sandstone-steps",
     ]);
     expect(randomArenaMapPool("random-arena-2v2")).toEqual([
       "arena-pillars",
@@ -42,6 +43,7 @@ describe("randomArenaMapPool", () => {
       "arena-crossroads",
       "arena-canyon",
       "arena-long-hall",
+      "frozen-crossing",
     ]);
     expect(randomArenaMapPool("random-arena-4v4")).toEqual([
       "arena-pillars",
@@ -156,6 +158,31 @@ describe("team sizes (#2108)", () => {
         `Hosted Game ${String(size)}`,
       ).not.toHaveLength(0);
     }
+  });
+
+  it("draws each medium arena at its own size and no other: Sandstone Steps 1v1, Frozen Crossing 2v2 (#2604)", () => {
+    for (const [id, size] of [
+      ["sandstone-steps", 1],
+      ["frozen-crossing", 2],
+    ] as const) {
+      expect(sizesOf(id)).toEqual([size]);
+      for (const other of [1, 2, 4, 8]) {
+        expect(teamArenaMapIds(other).includes(id), `Team Arena ${String(other)} ${id}`).toBe(
+          other === size,
+        );
+      }
+      for (const [mode, other] of [
+        ["random-arena-1v1", 1],
+        ["random-arena-2v2", 2],
+        ["random-arena-4v4", 4],
+      ] as const) {
+        expect(randomArenaMapPool(mode).includes(id), `${mode} ${id}`).toBe(other === size);
+      }
+    }
+    expect(queueMapPool("team-arena-2v2", null)).toContain("frozen-crossing");
+    expect(modeMapIds()["hosted-game"]).toEqual(
+      expect.arrayContaining(["sandstone-steps", "frozen-crossing"]),
+    );
   });
 
   it("has no Arena Alpha, Open Field or The Ring, and starts a lobby on Crossroads (#2547)", () => {

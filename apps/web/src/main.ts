@@ -22,6 +22,7 @@ import {
   joinLobbyByCode,
   NOT_A_KEY_MESSAGE,
   lobbyClosedNotice,
+  lobbyRelayStatus,
   lobbyRefusalNotice,
   matchFailureNotice,
   openPartyBoard,
@@ -115,6 +116,7 @@ import {
   hostMaps,
   lobbyPanel,
   type LobbyMatchmaking,
+  type LobbyRelay,
   type LobbyPanel,
 } from "./ui/lobby-screen.js";
 import {
@@ -1139,6 +1141,14 @@ async function main(): Promise<void> {
     })();
   };
 
+  /** What `joined`'s screen says about relays (#2531), if anything. */
+  const relayFor = (joined: LobbyConnection): LobbyRelay | undefined => {
+    const status = lobbyRelayStatus(joined);
+    return status === undefined
+      ? undefined
+      : { relayedVia: status.relayedVia(), sharingWith: status.sharingWith() };
+  };
+
   /** The lobby's part of `entry`'s screen (#1526), once there is a lobby. */
   const panelFor = (entry: HostEntry): LobbyPanel | undefined => {
     if (lobby === undefined || queue !== undefined) {
@@ -1174,6 +1184,7 @@ async function main(): Promise<void> {
           (entry === "heroes-ascent" && ASCENT_PROGRESSION.includes(map.id)),
       ),
       matchmakingFor(entry),
+      relayFor(lobby),
     );
   };
 
@@ -2124,6 +2135,12 @@ async function main(): Promise<void> {
     joined.onChatThrottled(() => {
       if (lobby === joined) {
         chat?.notice("Slow down: your last lines were not sent.");
+      }
+    });
+    // Whose relay it goes through, and how many it shares with, redraw it (#2531).
+    lobbyRelayStatus(joined)?.onChange(() => {
+      if (lobby === joined) {
+        lobbyChanged();
       }
     });
     // A lobby this tab has left says nothing more to it; a party lobby

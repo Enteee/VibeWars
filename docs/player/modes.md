@@ -34,7 +34,11 @@ nobody's, the altar in gold. A player's filled arrow draws over it.
 and each death costs morale. Wipe the other team to win. After 8 minutes,
 the team with the most morale left wins.
 
-Canyon, Crossroads and Long Hall play it.
+Canyon, Crossroads and Long Hall play it, and two bigger, medium-sized
+arenas: **Sandstone Steps** (1v1, 3600x2000), terraced desert ledges
+round a broken obelisk circle, with pillars to kite round; and **Frozen
+Crossing** (2v2, 4000x2200), a frozen river crossed by three bridges,
+ice rocks on each bank.
 
 ## Kill Count
 
