@@ -34,7 +34,11 @@ nobody's, the altar in gold. A player's filled arrow draws over it.
 and each death costs morale. Wipe the other team to win. After 8 minutes,
 the team with the most morale left wins.
 
-Canyon, Crossroads and Long Hall play it.
+Canyon, Crossroads and Long Hall play it, and two bigger, medium-sized
+arenas: **Sandstone Steps** (1v1, 3600x2000), terraced desert ledges
+round a broken obelisk circle, with pillars to kite round; and **Frozen
+Crossing** (2v2, 4000x2200), a frozen river crossed by three bridges,
+ice rocks on each bank.
 
 ## Kill Count
 
@@ -180,8 +184,8 @@ whoever is taking it. The scoreboard shows the points, yours first, and
 the clock.
 
 Bots spread out over the shrines your team does not own yet and stand
-on them until they are taken, leaving one only to fight a foe that
-comes within spell range.
+on them until they are taken. A foe in spell range does not draw them
+off: they step onto a shrine in reach and fight from it.
 
 Scarred Earth plays it: each shrine stands in a broken ring of walls,
 open to the west and east.

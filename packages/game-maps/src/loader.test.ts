@@ -8,8 +8,10 @@ import arenaLongHall from "../maps/arena-long-hall/map.json" with { type: "json"
 import arenaPillars from "../maps/arena-pillars/map.json" with { type: "json" };
 import arenaSplit from "../maps/arena-split/map.json" with { type: "json" };
 import brokenTower from "../maps/broken-tower/map.json" with { type: "json" };
+import frozenCrossing from "../maps/frozen-crossing/map.json" with { type: "json" };
 import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
 import hallOfHeroes from "../maps/hall-of-heroes/map.json" with { type: "json" };
+import sandstoneSteps from "../maps/sandstone-steps/map.json" with { type: "json" };
 import scarredEarth from "../maps/scarred-earth/map.json" with { type: "json" };
 import theCourtyard from "../maps/the-courtyard/map.json" with { type: "json" };
 import { allWallSegments } from "./geometry.js";
@@ -40,8 +42,10 @@ describe("the maps the browser imports", () => {
       arenaPillars,
       arenaSplit,
       brokenTower,
+      frozenCrossing,
       guildHallIsle,
       hallOfHeroes,
+      sandstoneSteps,
       scarredEarth,
       theCourtyard,
     ].map((raw) => validateMapData(raw));

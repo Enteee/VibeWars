@@ -25,6 +25,7 @@ describe("BOT_RULES (#2042)", () => {
       "interrupt",
       "heal",
       "way-out",
+      "flee",
       "dodge",
       "ward-touch",
       "cleanse",
@@ -37,12 +38,13 @@ describe("BOT_RULES (#2042)", () => {
       "take-minion",
       "bind-spirit",
       "rider",
+      "rest",
       "setup",
       "boost",
       "position",
+      "shrines",
       "fight",
       "mimic-elite",
-      "shrines",
       "close-in",
     ]);
   });

@@ -14,7 +14,7 @@ describe("sizeClass (#444, #2547)", () => {
     expect(sizeClass({ width: 4801, height: 100 })).toBe("large");
   });
 
-  it("calls every arena today small", () => {
+  it("calls every arena today small, but Sandstone Steps and Frozen Crossing medium (#2604)", () => {
     expect(Object.fromEntries(loadAllMaps().map((map) => [map.id, sizeClass(map)]))).toEqual({
       "arena-pillars": "small",
       "arena-split": "small",
@@ -26,6 +26,8 @@ describe("sizeClass (#444, #2547)", () => {
       "the-courtyard": "small",
       "hall-of-heroes": "small",
       "scarred-earth": "small",
+      "sandstone-steps": "medium",
+      "frozen-crossing": "medium",
     });
   });
 });

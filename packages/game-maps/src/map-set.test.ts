@@ -177,7 +177,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), The Courtyard (#2552) and Scarred Earth (#2551)", () => {
+  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), The Courtyard (#2552), Scarred Earth (#2551) and the medium arenas Sandstone Steps and Frozen Crossing (#2604)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
         "arena-pillars",
@@ -187,6 +187,8 @@ describe("the arena set (#444)", () => {
         "the-courtyard",
         "hall-of-heroes",
         "scarred-earth",
+        "sandstone-steps",
+        "frozen-crossing",
         ...NEW_ARENAS,
       ].sort(),
     );
@@ -620,5 +622,63 @@ describe("Hall of Heroes (#2552)", () => {
       const path = finder.find(ghost.position, altar) ?? [];
       expect(path.some((point) => Math.abs(point.y - altar.y) > 220)).toBe(true);
     }
+  });
+});
+
+/** Half the narrowest gap a route may squeeze through (#2544): a 200-wide gap passes, a narrower one does not. */
+const ROUTE_HALF_GAP = 100;
+
+describe.each([
+  ["sandstone-steps", 1],
+  ["frozen-crossing", 2],
+] as const)("the medium arena %s (#2604)", (id, size) => {
+  const map = MAPS.find((each) => each.id === id);
+  if (map === undefined) throw new Error(`no ${id}`);
+  const bounds = { width: map.width, height: map.height };
+  const centre = { x: map.width / 2, y: map.height / 2 };
+
+  it("is an Annihilation arena for its one team size, a spawn for each, team 0 by the west edge", () => {
+    expect(map.mode).toBe("annihilation");
+    expect(map.objectives).toEqual([]);
+    expect(map.teamSizes).toEqual([size]);
+    for (const team of [0, 1]) {
+      expect(map.spawnPoints.filter((spawn) => spawn.team === team).length).toBeGreaterThanOrEqual(
+        size,
+      );
+    }
+    for (const spawn of map.spawnPoints.filter((each) => each.team === 0)) {
+      expect(spawn.position.x).toBeLessThanOrEqual(400);
+    }
+  });
+
+  it("has three routes between the bases, north, middle and south, none through a gap under 200", () => {
+    const from = map.spawnPoints.find((spawn) => spawn.team === 0)?.position ?? centre;
+    const to = turned(map, from);
+    const third = map.height / 3;
+    for (const lane of [0, 1, 2]) {
+      // Wall off the other two thirds of the centre line: the way must cross it in this one.
+      const cuts = [0, 1, 2]
+        .filter((other) => other !== lane)
+        .map((other) => ({
+          kind: "rect" as const,
+          x: centre.x - 5,
+          y: other * third,
+          width: 10,
+          height: third,
+        }));
+      const finder = createPathFinder(
+        buildNavGraph(allWallSegments([...map.walls, ...cuts]), bounds, ROUTE_HALF_GAP),
+      );
+      expect(finder.find(from, to), `lane ${String(lane)}`).toBeDefined();
+    }
+  });
+
+  it("has three walls or more within spell range of the centre, cover for a fight there", () => {
+    expect(wallsNear(map, centre)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("keeps its nav graph to 600 nodes", () => {
+    const graph = buildNavGraph(allWallSegments(map.walls), bounds, RADIUS);
+    expect(graph.nodes.length).toBeLessThanOrEqual(600);
   });
 });
