@@ -2,7 +2,7 @@
   "id": "arena-crossroads",
   "name": "Crossroads",
   "mode": "annihilation",
-  "teamSizes": [4, 8],
+  "teamSizes": [1, 2, 4, 8],
   "width": 2600,
   "height": 2600,
   "walls": [

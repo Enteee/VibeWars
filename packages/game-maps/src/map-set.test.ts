@@ -26,8 +26,8 @@ import type { MapData } from "./schema.js";
  */
 
 const RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
-/** The arenas #444 added: the spawn-distance rule is theirs (the small four are small by design). */
-const NEW_ARENAS = new Set(["arena-ring", "arena-crossroads", "arena-long-hall", "arena-canyon"]);
+/** The arenas #444 added: the spawn-distance rule is theirs (the two small mode arenas are small by design). */
+const NEW_ARENAS = new Set(["arena-crossroads", "arena-long-hall", "arena-canyon"]);
 const MAPS = loadAllMaps();
 const TOLERANCE = 1;
 
@@ -175,11 +175,9 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the four small arenas, the four of #444, the guild hall (#1222), the relic temples (#1374), the hill courtyard (#1377) and the forgotten shrines (#1378)", () => {
+  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), the relic temples (#1374), the hill courtyard (#1377) and the forgotten shrines (#1378)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
-        "arena-alpha",
-        "arena-open",
         "arena-pillars",
         "arena-split",
         "guild-hall-isle",

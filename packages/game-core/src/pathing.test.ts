@@ -29,7 +29,7 @@ function rect(x: number, y: number, width: number, height: number): Segment[] {
   return [segment(a, b), segment(b, c), segment(c, d), segment(d, a)];
 }
 
-/** Arena Alpha's three walls (packages/game-maps/maps/arena-alpha). */
+/** The three walls of Arena Alpha, removed in #2547, kept as a fixture. */
 const ARENA_ALPHA = [
   ...rect(440, 0, 24, 260),
   ...rect(440, 380, 24, 260),

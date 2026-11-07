@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   ARENA_MAPS,
+  arenaIds,
   ASCENT_PROGRESSION,
   LOBBY_MODE_MATCH_MODES,
   ascentMapName,
@@ -15,6 +16,7 @@ import {
   modeMapIds,
   queueMapPool,
   randomArenaMapPool,
+  teamArenaMapIds,
 } from "./maps.js";
 
 /** The team sizes the arena `id` declares. */
@@ -29,20 +31,21 @@ function sizesOf(id: string): readonly number[] {
 describe("randomArenaMapPool", () => {
   it("plays each size only on the arenas that declare it (#2108)", () => {
     expect(randomArenaMapPool("random-arena-1v1")).toEqual([
-      "arena-alpha",
-      "arena-open",
       "arena-pillars",
+      "arena-crossroads",
+      "arena-canyon",
+      "arena-long-hall",
     ]);
     expect(randomArenaMapPool("random-arena-2v2")).toEqual([
-      "arena-alpha",
-      "arena-open",
       "arena-pillars",
       "arena-split",
+      "arena-crossroads",
+      "arena-canyon",
+      "arena-long-hall",
     ]);
     expect(randomArenaMapPool("random-arena-4v4")).toEqual([
       "arena-pillars",
       "arena-split",
-      "arena-ring",
       "arena-crossroads",
       "arena-canyon",
       "arena-long-hall",
@@ -53,7 +56,7 @@ describe("randomArenaMapPool", () => {
     for (const id of randomArenaMapPool("random-arena-1v1")) {
       expect(sizesOf(id), id).toContain(1);
     }
-    expect(randomArenaMapPool("random-arena-1v1")).not.toContain("arena-crossroads");
+    expect(randomArenaMapPool("random-arena-1v1")).not.toContain("arena-split");
   });
 
   it("leaves no arena out of every pool but the Guild Battle's (#1222), the Relic Run's (#1374) and King of the Hill's (#1377)", () => {
@@ -129,7 +132,26 @@ describe("team sizes (#2108)", () => {
     for (const mode of ["team-arena-2v2", "team-arena-4v4", "team-arena-8v8"] as const) {
       expect(all).toEqual(expect.arrayContaining(queueMapPool(mode, null)));
     }
-    expect(queueMapPool("team-arena-4v4", null)).not.toContain("arena-alpha");
+    expect(queueMapPool("team-arena-8v8", null)).not.toContain("arena-pillars");
+  });
+
+  it("plays Team Arena and a Hosted Game at 1, 2, 4 and 8 a side on the large arenas (#2547)", () => {
+    for (const size of [1, 2, 4, 8]) {
+      expect(teamArenaMapIds(size), `Team Arena ${String(size)}`).toEqual(
+        expect.arrayContaining(["arena-crossroads", "arena-canyon", "arena-long-hall"]),
+      );
+      expect(
+        mapsForSize(ARENA_MAPS, size).filter((map) => modeMapIds()["hosted-game"].includes(map.id)),
+        `Hosted Game ${String(size)}`,
+      ).not.toHaveLength(0);
+    }
+  });
+
+  it("has no Arena Alpha, Open Field or The Ring, and starts a lobby on Crossroads (#2547)", () => {
+    for (const id of ["arena-alpha", "arena-open", "arena-ring"]) {
+      expect(arenaIds(), id).not.toContain(id);
+    }
+    expect(arenaIds()[0]).toBe("arena-crossroads");
   });
 
   it("picks the maps of a size in their order", () => {
@@ -288,7 +310,7 @@ describe("hostMap (#476)", () => {
       ],
     });
     expect(hostMap("relic-temples")?.hillField).toBeUndefined();
-    expect(hostMap("arena-alpha")?.hillField).toBeUndefined();
+    expect(hostMap("arena-crossroads")?.hillField).toBeUndefined();
   });
 
   it("carries a Guild Battle map's guards in its order, and none elsewhere (#1223)", () => {
@@ -302,7 +324,7 @@ describe("hostMap (#476)", () => {
 describe("mapMode (#1200)", () => {
   it("reads an arena's mode and a training ground's", () => {
     expect(mapMode("arena-pillars")).toBe("kill-count");
-    expect(mapMode("arena-alpha")).toBe("annihilation");
+    expect(mapMode("arena-crossroads")).toBe("annihilation");
     expect(mapMode("training-hall")).toBe("annihilation");
   });
 
@@ -320,7 +342,7 @@ describe("mapShrines (#1199)", () => {
   });
 
   it("gives none on a map without them or one this build does not have", () => {
-    expect(mapShrines("arena-alpha")).toEqual([]);
+    expect(mapShrines("arena-crossroads")).toEqual([]);
     expect(mapShrines("arena-nowhere")).toEqual([]);
   });
 });
