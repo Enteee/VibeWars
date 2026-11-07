@@ -1,5 +1,10 @@
 import { STARTER_BUILDS } from "@vibewars/game-core";
-import { MAX_RECORD_TEAM, recordTemplate, type MatchRecord } from "@vibewars/game-session";
+import {
+  MATCH_RECORD_VERSION,
+  MAX_RECORD_TEAM,
+  recordTemplate,
+  type MatchRecord,
+} from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { arenaIds } from "../maps.js";
@@ -25,7 +30,7 @@ const fail = (): never => {
 const played = (index: number) => recordTemplate(STARTER_BUILDS.at(index) ?? fail());
 
 const RECORD: MatchRecord = {
-  v: 1,
+  v: MATCH_RECORD_VERSION,
   mode: "random-arena",
   map: arenaIds()[0] ?? "",
   endedAt: NOW / 1000,
@@ -83,7 +88,7 @@ describe("match records on Nostr (#2528)", () => {
     expect(event?.tags).toEqual([
       ["d", expect.stringMatching(/^vibewars-match\/[0-9a-f]{32}$/)],
       ["t", "vibewars-matches"],
-      ["v", "1"],
+      ["v", String(MATCH_RECORD_VERSION)],
     ]);
     expect(JSON.parse(event?.content ?? "")).toEqual(RECORD);
     if (event === undefined) {
@@ -157,7 +162,7 @@ describe("match records on Nostr (#2528)", () => {
   });
 
   it("publishes nothing it would not read from someone else", () => {
-    expect(publish({ ...RECORD, teams: [{ players: [] }, RECORD.teams[1]] })).toEqual([]);
+    expect(publish({ ...RECORD, teams: [{ players: [] }, ...RECORD.teams.slice(1)] })).toEqual([]);
     expect(publish({ ...RECORD, map: "nowhere" })).toEqual([]);
   });
 });

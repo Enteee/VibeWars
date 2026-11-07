@@ -31,7 +31,7 @@ import type {
 import { formatNumber, t, type MessageKey } from "../i18n/index.js";
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
-import { teamColour } from "../render/arena-snapshot.js";
+import { teamColour, teamSide } from "../render/arena-snapshot.js";
 import { botTagElement } from "./bot-tag.js";
 import { cssColour } from "./character-preview.js";
 import { paintHealthTint } from "./health-tint.js";
@@ -770,8 +770,10 @@ function renderCarriers(
   for (const line of lines) {
     const node = element("div", "hud-carrier", row);
     node.textContent = line.text;
-    const ally = line.team === (selfTeam ?? 0);
-    node.style.setProperty("--pip-colour", cssColour(teamColour(ally ? "ally" : "enemy")));
+    node.style.setProperty(
+      "--pip-colour",
+      cssColour(teamColour(teamSide(line.team, selfTeam ?? 0))),
+    );
   }
 }
 
@@ -974,8 +976,8 @@ export interface EnemyPip {
 
 /**
  * The pips for `players` as `selfTeam` sees them: every player not on it,
- * in snapshot order. A spectator, with no team, gets every player, grouped
- * by team. Only players in the snapshot get one, so an empty seat has none,
+ * grouped by team, each in snapshot order. A spectator, with no team,
+ * gets every player. Only players in the snapshot get one, so an empty seat has none,
  * and a creature (#1052) never counts.
  */
 export function enemyPips(
@@ -986,7 +988,7 @@ export function enemyPips(
     .filter((player) => player.team !== selfTeam && player.creature === undefined)
     .map(({ name, team, dead }) => ({ name, team, dead }));
   // Stable, so each team keeps its snapshot order.
-  return selfTeam === undefined ? pips.sort((a, b) => a.team - b.team) : pips;
+  return pips.sort((a, b) => a.team - b.team);
 }
 
 /** How many of `team`'s players are alive: its creatures never count (#1052). */
@@ -1077,7 +1079,12 @@ export function scoreboardParts(
   match: ScoreboardMatch,
 ): readonly ScoreboardPart[] {
   const ours = selfTeam ?? 0;
-  const theirs = ours === 0 ? 1 : 0;
+  // Every team but ours, in order: one, or two in a three-team match
+  // (#2684), whose snapshot scores each.
+  const foes = Array.from({ length: Math.max(2, match.score.length) }, (_, team) => team).filter(
+    (team) => team !== ours,
+  );
+  const theirs = foes[0] ?? 1;
   // Rounded up, so the clock reads 0:00 only once time is out.
   const left = timeLimitSeconds === null ? null : Math.ceil(timeLimitSeconds - elapsedSeconds);
   const clock: ScoreboardPart = {
@@ -1087,14 +1094,21 @@ export function scoreboardParts(
   const { score } = match;
   const living: ScoreboardPart = {
     kind: "text",
-    text: t("hud.versus", {
-      ours: livingCount(players, ours),
-      theirs: livingCount(players, theirs),
-    }),
+    text:
+      foes.length === 1
+        ? t("hud.versus", {
+            ours: livingCount(players, ours),
+            theirs: livingCount(players, theirs),
+          })
+        : t("hud.versusThree", {
+            ours: livingCount(players, ours),
+            first: livingCount(players, theirs),
+            second: livingCount(players, foes[1] ?? theirs),
+          }),
   };
   const points: ScoreboardPart = {
     kind: "text",
-    text: `${String(score[ours] ?? 0)} – ${String(score[theirs] ?? 0)}`,
+    text: [ours, ...foes].map((team) => String(score[team] ?? 0)).join(" – "),
   };
   switch (mode) {
     case "annihilation":
@@ -1138,7 +1152,7 @@ export function scoreboardParts(
       ];
     }
     case "priest-annihilation": {
-      const priests = [ours, theirs].map((team): ScoreboardPart => ({
+      const priests = [ours, ...foes].map((team): ScoreboardPart => ({
         kind: "priest",
         team,
         alive: priestLives(players, team),
@@ -1147,14 +1161,18 @@ export function scoreboardParts(
       if (timeUp) {
         return [living, ...priests, clock];
       }
-      return [living, ...priests, raisePart(players, elapsedSeconds), clock];
+      return [living, ...priests, raisePart(players, [ours, ...foes], elapsedSeconds), clock];
     }
   }
 }
 
 /** The next priest wave's countdown (#1199), rounded up as the clock is. */
-function raisePart(players: readonly PlayerSnapshot[], elapsedSeconds: number): ScoreboardPart {
-  if (!priestLives(players, 0) && !priestLives(players, 1)) {
+function raisePart(
+  players: readonly PlayerSnapshot[],
+  teams: readonly number[],
+  elapsedSeconds: number,
+): ScoreboardPart {
+  if (!teams.some((team) => priestLives(players, team))) {
     return { kind: "raise", text: t("hud.raise", { clock: "—" }), soon: false };
   }
   return waveCountdown(elapsedSeconds);
@@ -1242,8 +1260,10 @@ function renderScoreboard(
       case "priest": {
         const node = element("span", part.alive ? "hud-priest" : "hud-priest is-dead", row);
         node.textContent = "✚";
-        const ally = selfTeam === undefined ? part.team === 0 : part.team === selfTeam;
-        node.style.setProperty("--pip-colour", cssColour(teamColour(ally ? "ally" : "enemy")));
+        node.style.setProperty(
+          "--pip-colour",
+          cssColour(teamColour(teamSide(part.team, selfTeam ?? 0))),
+        );
         node.setAttribute("aria-label", part.alive ? t("hud.priest") : t("hud.priestDead"));
         return;
       }
@@ -1256,8 +1276,10 @@ function renderScoreboard(
         const node = element("span", part.dead ? "hud-side is-dead" : "hud-side", row);
         node.textContent = part.text;
         if (part.team !== undefined) {
-          const ally = selfTeam === undefined ? part.team === 0 : part.team === selfTeam;
-          node.style.setProperty("--pip-colour", cssColour(teamColour(ally ? "ally" : "enemy")));
+          node.style.setProperty(
+            "--pip-colour",
+            cssColour(teamColour(teamSide(part.team, selfTeam ?? 0))),
+          );
         }
         return;
       }
@@ -1267,8 +1289,8 @@ function renderScoreboard(
 
 /**
  * Paint `pips` into `row`, one line a team, rebuilt only when one changes.
- * A foe is drawn in the enemy colour; a spectator sees team 1 in the
- * ally's and team 2 in the enemy's, as the splash shows a side.
+ * Each team in the colour `teamSide` gives it: a spectator sees team 1
+ * in the ally's, as the splash shows a side.
  */
 function renderEnemyPips(
   row: HTMLElement,
@@ -1281,15 +1303,13 @@ function renderEnemyPips(
   }
   row.dataset.pips = key;
   const lines = new Map<number, HTMLElement>();
+  const ours = selfTeam ?? 0;
   row.replaceChildren();
   for (const pip of pips) {
     let line = lines.get(pip.team);
     if (line === undefined) {
       line = element("span", "hud-enemy-row", row);
-      line.style.setProperty(
-        "--pip-colour",
-        cssColour(teamColour(selfTeam === undefined && pip.team === 0 ? "ally" : "enemy")),
-      );
+      line.style.setProperty("--pip-colour", cssColour(teamColour(teamSide(pip.team, ours))));
       lines.set(pip.team, line);
     }
     const node = element("span", pip.dead ? "hud-enemy-pip is-dead" : "hud-enemy-pip", line);

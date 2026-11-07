@@ -329,6 +329,13 @@ party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
 
+## Three teams
+
+In a three-team match the third team is drawn yellow, beside the blue
+of your side and the red of the other. The scoreboard reads your team
+first, then the others in order, and the end-of-match tables put your
+team first, then the winner.
+
 ## Match records
 
 Every match that is played to its end, in any mode and bots included,
@@ -346,9 +353,9 @@ get one wrong; nothing checks them against the match.
 See them on the **Matches** page, below Team Builder: the last 100,
 newest first, with new ones appearing as they are played. A row is one
 line: each team's players as their primary profession's icon (hover for
-the name), the winner underlined, and the map, duration and when. Every
-row is marked **host-reported**. Click one to see the teams, one tab
-each, the winner's first: the team card. **Clone** copies a team from
+the name), two teams or three, the winner underlined, and the map,
+duration and when. Every row is marked **host-reported**. Click one to
+see the teams, one tab each, the winner's first: the team card. **Clone** copies a team from
 a finished match into your Team Builds, each player's build under
 their name, and opens it. A 1v1 side has no Clone: a Team Build is 2, 4
 or 8.

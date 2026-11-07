@@ -1,5 +1,5 @@
 import { STARTER_BUILDS } from "@vibewars/game-core";
-import { recordTemplate, type MatchRecord } from "@vibewars/game-session";
+import { MATCH_RECORD_VERSION, recordTemplate, type MatchRecord } from "@vibewars/game-session";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { arenaIds } from "../maps.js";
@@ -24,7 +24,7 @@ const played = (index: number) => recordTemplate(STARTER_BUILDS.at(index) ?? fai
 
 function record(): MatchRecord {
   return {
-    v: 1,
+    v: MATCH_RECORD_VERSION,
     mode: "random-arena",
     map: arenaIds()[0] ?? "",
     endedAt: Math.floor(Date.now() / 1000),

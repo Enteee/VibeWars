@@ -71,7 +71,7 @@ function mapName(mapId: string): string {
 }
 
 /** "Won", "Lost" or "Draw", for team `team` of `record`. */
-function teamResult(record: MatchRecord, team: 0 | 1): string {
+function teamResult(record: MatchRecord, team: number): string {
   if (record.winningTeam === null) {
     return t("matches.draw");
   }
@@ -83,9 +83,9 @@ function teamResult(record: MatchRecord, team: 0 | 1): string {
  * player, the name and both professions on hover, and the winner's
  * underlined. A build it can't read is a question mark.
  */
-function teamIcons(record: MatchRecord, team: 0 | 1): HTMLElement {
+function teamIcons(record: MatchRecord, team: number, players: MatchRecordTeam): HTMLElement {
   const icons = h("span", record.winningTeam === team ? "match-team is-winner" : "match-team");
-  for (const player of record.teams[team].players) {
+  for (const player of players.players) {
     const name = playerLabelText(player.name, player.guildTag);
     const label = player.bot ? t("matches.bot", { name }) : name;
     const decoded = decodeTemplateCode(player.template);
@@ -111,10 +111,16 @@ function teamIcons(record: MatchRecord, team: 0 | 1): HTMLElement {
   return icons;
 }
 
-/** Between the two teams: which side won, or a draw. */
+/**
+ * Between two teams: which side won, or a draw. Three teams (#2684) are
+ * just set apart: the winner's underline says who won.
+ */
 function resultMark(record: MatchRecord): string {
   if (record.winningTeam === null) {
     return t("matches.draw");
+  }
+  if (record.teams.length > 2) {
+    return t("matches.versus");
   }
   return t(record.winningTeam === 0 ? "matches.wonLeft" : "matches.wonRight");
 }
@@ -150,7 +156,7 @@ function cloneButton(players: MatchRecordTeam, onClone: () => void): HTMLElement
 
 function teamDetail(
   record: MatchRecord,
-  team: 0 | 1,
+  team: number,
   players: MatchRecordTeam,
   onCloneTeam: (team: MatchRecordTeam) => void,
 ): HTMLElement {
@@ -191,10 +197,13 @@ function matchDetail(
   tabs.setAttribute("role", "tablist");
   const panel = detail.appendChild(h("div", "match-tab-panel"));
   panel.setAttribute("role", "tabpanel");
-  // The winner's tab first, and open (#2637); a draw keeps Team 1, Team 2.
-  const order: readonly (0 | 1)[] = record.winningTeam === 1 ? [1, 0] : [0, 1];
-  const sections = order.map((team) => teamDetail(record, team, record.teams[team], onCloneTeam));
-  const buttons = order.map((team, position) => {
+  // The winner's tab first, and open (#2637); the rest, or a draw's
+  // every team, in order.
+  const order = record.teams
+    .map((players, team) => ({ players, team }))
+    .sort((a, b) => Number(b.team === record.winningTeam) - Number(a.team === record.winningTeam));
+  const sections = order.map(({ team, players }) => teamDetail(record, team, players, onCloneTeam));
+  const buttons = order.map(({ team }, position) => {
     const tab = button(
       t("matches.teamTab", { team: team + 1, result: teamResult(record, team) }),
       "match-tab",
@@ -234,9 +243,10 @@ function matchRow(
   // The closed row is one scoreboard line (#2585): names wait for the opened row.
   head.append(
     h("span", "match-mode", railLabel(record.mode)),
-    teamIcons(record, 0),
-    h("span", "match-result", resultMark(record)),
-    teamIcons(record, 1),
+    ...record.teams.flatMap((players, team) => [
+      ...(team === 0 ? [] : [h("span", "match-result", resultMark(record))]),
+      teamIcons(record, team, players),
+    ]),
     h("span", "match-map", mapName(record.map)),
     h("span", "match-duration", formatClock(record.durationSeconds)),
     when,

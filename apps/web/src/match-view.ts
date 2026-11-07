@@ -43,6 +43,7 @@ import {
   withCalls,
   withNames,
   teamColour,
+  teamSide,
   toRenderableGroundEffect,
   type ArenaSnapshot,
   type RenderableWall,
@@ -316,9 +317,7 @@ export function toArenaSnapshot(
         team:
           player.sessionId === match.selfSessionId
             ? ("self" as const)
-            : player.team === side
-              ? ("ally" as const)
-              : ("enemy" as const),
+            : teamSide(player.team, side),
         health: player.health,
         maxHealth: player.maxHealth,
         dead: player.dead,
@@ -914,7 +913,13 @@ export async function startMatchView(
       const bots = new Set(
         match.players.filter((player) => player.bot).map((player) => player.sessionId),
       );
-      const tables = summaryTables(match.summary, viewed.selfSessionId, self?.team, bots);
+      const tables = summaryTables(
+        match.summary,
+        viewed.selfSessionId,
+        self?.team,
+        match.winningTeam,
+        bots,
+      );
       const panel = renderSummary(parent, tables);
       panel.classList.add("hud-summary");
       summary = { tables, panel };

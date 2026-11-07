@@ -29,6 +29,7 @@ import {
   withNames,
   placeFloatingText,
   teamColour,
+  teamSide,
   toRenderableGroundEffect,
   type ArenaSnapshot,
   type FloatingText,
@@ -41,6 +42,19 @@ describe("teamColour", () => {
   it("draws you in your team's colour, and the two sides apart", () => {
     expect(teamColour("self")).toBe(teamColour("ally"));
     expect(teamColour("ally")).not.toBe(teamColour("enemy"));
+  });
+
+  it("draws a third team apart from both (#2684)", () => {
+    expect(teamColour("third")).not.toBe(teamColour("ally"));
+    expect(teamColour("third")).not.toBe(teamColour("enemy"));
+  });
+});
+
+describe("teamSide (#2684)", () => {
+  it("is the ally's for ours, the enemy's for the lowest other team, third for the last", () => {
+    expect([0, 1, 2].map((team) => teamSide(team, 0))).toEqual(["ally", "enemy", "third"]);
+    expect([0, 1, 2].map((team) => teamSide(team, 1))).toEqual(["enemy", "ally", "third"]);
+    expect([0, 1, 2].map((team) => teamSide(team, 2))).toEqual(["enemy", "third", "ally"]);
   });
 });
 

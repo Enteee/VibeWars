@@ -57,7 +57,7 @@ export interface RenderableActor {
   /** A creature's shape and kind glyph (#1162); `undefined`: a player or a dummy, a disc. */
   readonly creatureLook: CreatureLook | undefined;
   readonly radius: number;
-  readonly team: "ally" | "enemy" | "self";
+  readonly team: "ally" | "enemy" | "third" | "self";
   readonly health: number;
   readonly maxHealth: number;
   readonly dead: boolean;
@@ -278,7 +278,7 @@ export function toRenderableGroundEffect(
     skillId: effect.skillId,
     position: { x: effect.x, y: effect.y },
     radius: effect.radius,
-    colour: teamColour(effect.team === selfTeam ? "ally" : "enemy"),
+    colour: teamColour(selfTeam === undefined ? "enemy" : teamSide(effect.team, selfTeam)),
     filled: kind === "ward",
   };
 }
@@ -375,12 +375,27 @@ export function withCalls(snapshot: ArenaSnapshot, calls: CallsSnapshot): ArenaS
  * `foe` red, which stay apart under every common colour-vision deficiency,
  * where the old green allies did not. You are drawn in your team's blue;
  * what marks you out is the ink rim the scene adds, not a hue of your own.
+ * A three-team match's second foe is GW1's yellow (#2684).
  */
 const TEAM_COLOURS: Record<RenderableActor["team"], number> = {
   self: 0x59c2ff,
   ally: 0x59c2ff,
   enemy: 0xff7b72,
+  third: 0xe3b341,
 };
+
+/**
+ * The colour team `team` wears to someone on team `ours` (#2684): ours
+ * the ally's, the lowest other team the enemy's, and a third team, if
+ * any, yellow. A watcher sees from team 1's side, as the scoreboard does.
+ */
+export function teamSide(team: number, ours: number): "ally" | "enemy" | "third" {
+  if (team === ours) {
+    return "ally";
+  }
+  const firstFoe = ours === 0 ? 1 : 0;
+  return team === firstFoe ? "enemy" : "third";
+}
 
 /** Edges every living body, darker than the grid and walls, so no body blends into what it stands on. */
 export const BODY_EDGE = 0x0b0f14;
