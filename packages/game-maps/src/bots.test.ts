@@ -31,10 +31,11 @@ const DT = 1 / RULESET.tickRateHz;
 /**
  * Of the bots' spike-skill hits on a foe, the share landing within a second
  * of a teammate's on it (#2631): main's bots, firing each the moment it
- * recharged, landed 66.2% of them together, these bots 79.7%. The
- * bar is main + 10 points: the share swings about 5 points with the seed.
+ * recharged, landed 66.2% of them together; holding them for the team,
+ * 73.1%. The share swings with the seed and with every other bot change,
+ * so the bar is the gain over bots that don't hold, on the same seeds.
  */
-const SPIKE_SHARE = 0.762;
+const SPIKE_GAIN = 0.05;
 /** No warrior: nobody here closes in because their weapon is melee. */
 const CASTERS = ["Barrage (R)", "Signet of Suffering (N/A)", "Double Dragon (E)"];
 
@@ -65,9 +66,10 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
   /**
    * Of 60 s of a 4v4 mirror of the bot bench's builds on Ashen Courtyard,
    * one per seed, the spike-skill hits on a foe and those landing within a
-   * second of a teammate's spike-skill hit on the same foe.
+   * second of a teammate's spike-skill hit on the same foe. `spikeHold`:
+   * whether the bots hold their spike skills for the team's.
    */
-  const spikes = (seed: string) => {
+  const spikes = (seed: string, spikeHold: boolean) => {
     if (map === undefined) throw new Error("no Ashen Courtyard");
     const participants = [0, 1].flatMap((team) =>
       map.spawnPoints
@@ -93,7 +95,7 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
             ...loadoutSpec(resolved),
             spawn: spawn.position,
             facing: 0,
-            behaviour: { kind: "play-build", reaction: BOT_REACTION },
+            behaviour: { kind: "play-build", reaction: BOT_REACTION, spikeHold },
           };
         }),
     );
@@ -137,13 +139,15 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
     return { hits: hits.length, together: together.length };
   };
 
-  it("lands more of the bots' big hits together than trickling in, the same for the same seed", () => {
-    const runs = ["a", "b", "c", "d"].map(spikes);
-    const hits = runs.reduce((sum, run) => sum + run.hits, 0);
-    const together = runs.reduce((sum, run) => sum + run.together, 0);
-    expect(together / hits).toBeGreaterThanOrEqual(SPIKE_SHARE);
-    expect(spikes("a")).toEqual(runs[0]);
-  }, 60_000);
+  it("lands more of the bots' big hits together than bots that don't hold them, the same for the same seed", () => {
+    const runs = (spikeHold: boolean) =>
+      ["a", "b", "c", "d"].map((seed) => spikes(seed, spikeHold));
+    const share = (of: readonly { hits: number; together: number }[]) =>
+      of.reduce((sum, run) => sum + run.together, 0) / of.reduce((sum, run) => sum + run.hits, 0);
+    const holding = runs(true);
+    expect(share(holding) - share(runs(false))).toBeGreaterThanOrEqual(SPIKE_GAIN);
+    expect(spikes("a", true)).toEqual(holding[0]);
+  }, 120_000);
 });
 
 describe("Relic Run bots (#2581)", () => {

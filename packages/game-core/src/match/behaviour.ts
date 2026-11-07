@@ -153,6 +153,12 @@ export type Behaviour =
        * decision from `[minSeconds, maxSeconds)`. Both `0`: every tick.
        */
       readonly reaction: Reaction;
+      /**
+       * Whether its damage dealers hold their spike skills for the team's
+       * (#2631). `false`: each fires the moment it can, the bots the spike
+       * is measured against. Unset: they hold.
+       */
+      readonly spikeHold?: boolean;
     }
   /**
    * A guard's (#1222): hold `post`, and play its bar as `play-build` does

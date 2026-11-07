@@ -362,6 +362,15 @@ describe("damage dealers spike the team's target together (#2631)", () => {
     expect(cursor.spikeTargetId).toBeUndefined();
   });
 
+  it("fires at once, with nobody ready, when it doesn't hold its spike skills", () => {
+    const sim = spike();
+    recharge(sim, "b");
+    expect(fight.decide(ruleFor(sim, "a", { targetId: "foe", spikeHold: false }))).toMatchObject({
+      useSkillId: FLARE,
+      targetId: "foe",
+    });
+  });
+
   it("starts the clock again for a new target", () => {
     const sim = spike();
     recharge(sim, "b");

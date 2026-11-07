@@ -67,6 +67,7 @@ const fight: BotRule = {
     foes,
     allies,
     role,
+    spikeHold,
     targetId,
     nearestFirst,
     mayUse,
@@ -160,7 +161,7 @@ const fight: BotRule = {
     // Read once a think, when it first weighs a spike skill.
     const spike: { read: boolean; lands: number | undefined } = { read: false, lands: undefined };
     const holdsSpike = (held: Skill): boolean => {
-      if (role === undefined || isGhostId(targetId) || target === undefined) {
+      if (!spikeHold || isGhostId(targetId) || target === undefined) {
         return false;
       }
       if (

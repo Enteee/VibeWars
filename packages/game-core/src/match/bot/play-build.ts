@@ -73,6 +73,7 @@ export function playBuild(
       livingMembers(context),
       teamTarget(context, foes),
       roleOf(context.self),
+      behaviour.spikeHold !== false,
     );
   });
 }
@@ -124,7 +125,7 @@ export function guard(
     () => behaviour.thinkSeconds,
     cursor,
     context,
-    () => think(context, cursor, foes, allies, weakest(self, foes)?.id, undefined),
+    () => think(context, cursor, foes, allies, weakest(self, foes)?.id, undefined, false),
   );
   return behaviour.rooted ? { ...intent, moveDirection: ZERO, moveTo: undefined } : intent;
 }
@@ -199,6 +200,7 @@ function think(
   allies: readonly Participant[],
   targetId: string | undefined,
   role: BotRole | undefined,
+  spikeHold: boolean,
 ): BehaviourIntent {
   const self = context.self;
   const rule: RuleContext = {
@@ -225,6 +227,7 @@ function think(
     cursor,
     role,
     foeCentroid: context.foeCentroid,
+    spikeHold,
     roleOf,
     foeReach: (foe) => foeReach(cursor.foeReach, foe),
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
