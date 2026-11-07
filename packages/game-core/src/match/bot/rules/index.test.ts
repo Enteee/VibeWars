@@ -26,6 +26,7 @@ describe("BOT_RULES (#2042)", () => {
       "heal",
       "way-out",
       "flee",
+      "dodge",
       "ward-touch",
       "cleanse",
       "raise",

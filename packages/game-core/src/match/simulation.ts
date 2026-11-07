@@ -4089,6 +4089,7 @@ export class MatchSimulation {
         isStandable(this.#graph, point) && walkIsClear(this.#graph, record.position, point),
       foeCentroid: centroids !== undefined && centroids.foes.count > 0 ? centroids.foes : undefined,
       objectives: this.#botObjectives,
+      projectiles: this.#projectiles,
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;
