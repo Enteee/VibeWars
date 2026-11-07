@@ -296,7 +296,7 @@ export const EMBER_PITS_LANE_Y = 900;
  * moves can land off, most of all on a loaded host, so a hero that
  * stops short is sent on again from where it stands, the view now
  * still. Resolves once the view, which follows the hero, has come to
- * the goal.
+ * the goal and stopped there.
  */
 export async function walkTo(page: Page, canvas: Locator, goal: Point): Promise<void> {
   const stage = page.locator("#viewport");
@@ -372,4 +372,15 @@ export async function walkTo(page: Page, canvas: Locator, goal: Point): Promise<
     }
     from = to;
   }
+  // Within 20 is still on the way: on until the hero stands.
+  await expect
+    .poll(
+      async () => {
+        const was = await camera();
+        await page.waitForTimeout(200);
+        return gap(await camera(), was);
+      },
+      { message: "the hero should stop at the goal", timeout: 5_000, intervals: [0] },
+    )
+    .toBeLessThan(1);
 }
