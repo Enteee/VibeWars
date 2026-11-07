@@ -358,6 +358,18 @@ describe("a queued lobby", () => {
     expect(foe.getSnapshot().mapId).toBe("other-arena");
   });
 
+  it("relays no shared track: its members did not choose each other (#2745)", async () => {
+    const queued = await openQueued();
+    const foe = await queued.join(FOE);
+    const ally = await queued.join(ALLY);
+    await settle();
+    const heard: unknown[] = [];
+    ally.onSharedTrack((share) => heard.push(share));
+    foe.shareTrack("test-track", "s()");
+    await settle();
+    expect(heard).toEqual([]);
+  });
+
   it("refuses a proof for another host, peer id or group, or signed by another ticket", async () => {
     const queued = await openQueued();
     const right = { groupId: GROUP_ID, hostTicketId: HOST };

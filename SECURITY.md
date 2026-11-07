@@ -469,6 +469,27 @@ talks to the game only by `postMessage`. What holds:
 - **A saved edit that stops the music is not replayed.** When the host is
   torn down, for hanging or flooding, while it plays an edited track, the
   edit is removed and the next menu says so once.
+- **Lobby members may hand you code** (#2745). _Share with lobby_ sends a
+  member's edit to the others in a coded lobby, never a matchmade one
+  (both the host and the receiver refuse there). It runs only when you
+  press Play, only in the lobby, and only in the music host. It is never
+  stored: Play, _Back to my music_, the next Play, leaving the lobby and
+  a match starting each destroy the frame and make a new one, so a share
+  that ignores stop still goes silent, and a reload always recovers. A
+  share that hangs or floods is let go; no saved edit is removed for it.
+  The share's source reaches no DOM: its row is the sender's name from
+  the lobby state and your own title for its `trackId`, as text.
+- **`from` is the host's word.** The host relays a share as from the
+  transport's sender, rebuilt from the parsed fields (a sent `from` is
+  refused), after the member, shape and shipped-track checks, and only
+  then charges the sender's one share in ten seconds. A hostile host can
+  name anyone; the receiver only takes a `from` that is a member, and
+  drops shares past a full lobby's rate before parsing them.
+- **WebRTC is taken away.** `connect-src` does not cover WebRTC, so
+  `host/guard.ts` deletes `RTCPeerConnection`, `webkitRTCPeerConnection`,
+  `RTCDataChannel` and `RTCSessionDescription` before the engine loads,
+  and the host refuses to run if any is still reachable. The CSP adds
+  `webrtc 'block'` for browsers that know it.
 
 What does not hold, and why it is acceptable:
 
@@ -487,6 +508,17 @@ What does not hold, and why it is acceptable:
   site's data. Unverified, since the jails have no Firefox; if it is
   confirmed, a crash sentinel follows (an edit playing when the page last
   died without `pagehide` is not replayed).
+- **A nested frame gets fresh constructors.** `default-src 'none'`
+  makes `frame-src 'none'`, which stops loading a URL into a frame, but
+  not an `about:blank` or `srcdoc` frame a pattern makes itself: that
+  frame shares the opaque origin and has its own `RTCPeerConnection`.
+  Where the browser knows `webrtc 'block'`, the inherited CSP stops it;
+  elsewhere a shared track you pressed Play on could open a peer
+  connection. Accepted with the residuals below, as it needs your Play.
+- **A share can hog the frame's thread** until a reload, which drops it,
+  and **play at full scale** past the music slider through its own
+  AudioContext until _Back_. **Frame navigation is a beacon** that you
+  pressed Play. All three need your Play, in a lobby you chose.
 - **The vite dev server answers `Origin: null`**, which any site's
   sandboxed frame sends, so `server.fs.allow` limits it to `apps/web`,
   `packages` and `node_modules`. Never widen it to the repo root: `.bots/`
