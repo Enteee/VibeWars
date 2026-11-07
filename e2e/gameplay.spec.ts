@@ -846,7 +846,13 @@ test("a wheel click on a foe calls it for your team, and the other team never se
 
   // The opponent spawns across the map: meet them to see them.
   await meet(page, canvas, opponent);
-  const foe = (await projection(stage, canvas)).onPage(MEET.foe);
+  // Where the opponent really stopped, which can be 20 off MEET.foe: its view follows it.
+  const [x = NaN, y = NaN] = (
+    (await opponent.locator("#viewport").getAttribute("data-camera")) ?? ""
+  )
+    .split(",")
+    .map(Number);
+  const foe = (await projection(stage, canvas)).onPage({ x, y });
   await page.mouse.click(foe.x, foe.y, { button: "middle" });
   await expect(stage).toHaveAttribute("data-called", /^\S+$/);
   // The called side hears nothing of it.
