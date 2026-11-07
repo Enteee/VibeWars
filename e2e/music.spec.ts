@@ -244,6 +244,19 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   const editor = page.getByRole("dialog", { name: "Beat editor: Ember Deep" });
   const code = editor.locator(".cm-content");
   await expect(code).toContainText("ember-deep");
+  // The shortcuts are on the buttons (#2643), not in a line under the code.
+  await expect(editor.getByRole("button", { name: "Play change", exact: true })).toHaveAttribute(
+    "title",
+    "Play (Ctrl+Enter)",
+  );
+  await expect(editor.getByRole("button", { name: "Stop", exact: true })).toHaveAttribute(
+    "title",
+    "Stop (Ctrl+.)",
+  );
+  await expect(editor.getByRole("button", { name: "Close", exact: true })).toHaveAttribute(
+    "title",
+    "Close (Esc)",
+  );
   // Syntax colours: a keyword is not plain ink.
   await expect(code.locator("span", { hasText: /^let$/ }).first()).toHaveCSS(
     "color",

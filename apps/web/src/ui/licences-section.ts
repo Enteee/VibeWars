@@ -51,9 +51,6 @@ export const THIRD_PARTY_LICENCES: readonly ThirdPartyLicence[] = [
   },
 ];
 
-/** Said where the build's list is not: a dev server has no bundle. */
-export const NO_BUNDLE_NOTE = "Built-in licences appear in a production build.";
-
 /** `json` as the build's list, or `undefined` if it is anything else. */
 export function parseBundledLicences(json: unknown): BundledLicence[] | undefined {
   if (!Array.isArray(json)) {
@@ -132,11 +129,8 @@ export function mountLicences(container: HTMLElement): void {
   panel.appendChild(bundled);
   container.appendChild(panel);
   void fetchBundledLicences().then((entries) => {
-    if (entries === undefined) {
-      bundled.appendChild(h("p", "screen-subtitle", NO_BUNDLE_NOTE));
-      return;
-    }
-    for (const entry of entries) {
+    // A dev server has no bundle (#2643): it lists only the vendored works.
+    for (const entry of entries ?? []) {
       bundled.appendChild(
         licenceEntry(
           entry.name,
