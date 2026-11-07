@@ -559,11 +559,15 @@ test("clicking the ground keeps the target, and Space attacks it from there (#31
   await expect(target).not.toHaveText("no target");
   const before = await readTargetHealth(page);
 
-  // Open ground on the lane, behind the host and away from the foe.
+  // Open ground on the lane, behind the host and away from the foe. The
+  // click has landed once the view, after the hero, heads west for it.
+  const cameraX = async (): Promise<number> =>
+    Number(((await page.locator("#viewport").getAttribute("data-camera")) ?? "").split(",")[0]);
+  const from = await cameraX();
   await canvas.click({
     position: await matchPoint(page, canvas, { x: MEET.host.x - 120, y: LANE_Y }),
   });
-  await page.waitForTimeout(300);
+  await expect.poll(cameraX, { timeout: 10_000 }).toBeLessThan(from - 30);
   await expect(target).not.toHaveText("no target");
 
   await page.keyboard.press(" ");
