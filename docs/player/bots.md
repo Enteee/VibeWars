@@ -25,14 +25,16 @@ again, and the next match's bots are made afresh.
 A bot plays the role its build gives it. One wielding a melee weapon is
 **frontline**: it closes in and attacks its target. One with two or more
 heals or protections it can cast on an ally is a **healer**: it stands
-behind whichever ally is hurt most, away from the foes. Every other bot is
-**ranged**: it keeps where every one of its attacks reaches, and stands
-and fights a foe who comes too close. Ranged bots and healers step to
-where fewer foes can reach them, and use pillars as cover. A team turns
-on any foe in reach who drops below 60% health, to finish them. In King
-of the Hill, while your team does not hold the altar, the other team's
-Ghostly Hero on the altar comes before even that. A bot that gets far ahead
-of its team waits for the rest before it pushes on.
+behind whichever ally is hurt most, away from the foes. When two or more
+foes focus one ally, a healer puts its protection on that ally before the
+hit lands. Every other bot is **ranged**: it keeps where every one of its
+attacks reaches, and stands and fights a foe who comes too close. Ranged
+bots and healers step to where fewer foes can reach them, and use pillars
+as cover. A team turns on any foe in reach who drops below 60% health,
+to finish them. In King of the Hill, while your team does not hold the
+altar, the other team's Ghostly Hero on the altar comes before even that.
+A bot that gets far ahead of its team waits for the rest before it pushes
+on.
 
 A badly hurt bot that is losing its fight falls back behind its healer, or
 to its base, and rests out of reach until it has most of its health back.
