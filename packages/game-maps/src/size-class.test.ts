@@ -14,7 +14,7 @@ describe("sizeClass (#444, #2547)", () => {
     expect(sizeClass({ width: 4801, height: 100 })).toBe("large");
   });
 
-  it("calls every arena today small, but Sandstone Steps, Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605) medium, Canthan Terraces and Sunken Bastion (#2607) large", () => {
+  it("calls every arena today small, but Sandstone Steps, Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605) medium, Canthan Terraces and Sunken Bastion (#2607), Shiverpeak Pass and Elonian Plateau (#2609) large", () => {
     expect(Object.fromEntries(loadAllMaps().map((map) => [map.id, sizeClass(map)]))).toEqual({
       "arena-pillars": "small",
       "arena-split": "small",
@@ -32,6 +32,8 @@ describe("sizeClass (#444, #2547)", () => {
       "moss-vale": "medium",
       "canthan-terraces": "large",
       "sunken-bastion": "large",
+      "shiverpeak-pass": "large",
+      "elonian-plateau": "large",
     });
   });
 });

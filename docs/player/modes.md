@@ -47,6 +47,10 @@ rice terraces walled north to south with staggered gaps, round a ruined
 pagoda; and **Sunken Bastion** (2v2, 5600x3000), a half-flooded fortress
 whose breached curtain wall rings a keep with two gates, marsh rocks
 outside.
+And for the bigger teams: **Shiverpeak Pass** (4v4, 6000x3400),
+two cliff massifs that leave a wide pass strewn with boulders and a narrow
+trail along each edge; and **Elonian Plateau** (8v8, 6400x3600), open
+savanna round five great mesas, with the longest sightlines of any arena.
 
 ## Kill Count
 
