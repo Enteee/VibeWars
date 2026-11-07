@@ -14,7 +14,7 @@ import { openRail, pickCharacter } from "./menu.js";
  * editor, saved, and picked on Random Arena.
  */
 
-/** A built-in build by name: a PvX one (#2554), or a starter team member's ("Warrior/Monk"). */
+/** A built-in build by name: a PvX one (#2554), or a starter team member's ("HA Balanced 3 (R/E)"). */
 function starter(name: string) {
   const build = [
     ...STARTER_BUILDS,
