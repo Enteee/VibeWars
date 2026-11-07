@@ -262,6 +262,7 @@ export {
   nearestLiving,
   resolveTargeting,
 } from "./match/behaviour.js";
+export { isSpikeSkill } from "./match/bot/skill-intent.js";
 
 export type {
   TrainingDummy,

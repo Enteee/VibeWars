@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { RANGE_SPELL } from "../../../distances.js";
 import { NO_RANKS } from "../../../skills/status.js";
-import { BOT_REACTION, INSTANT_REACTION } from "../../behaviour.js";
+import { BOT_REACTION, INSTANT_REACTION, createCursor } from "../../behaviour.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
 import type { MatchSimulation } from "../../simulation.js";
 import {
@@ -19,6 +19,7 @@ import {
   ruleFor,
 } from "./test-support.js";
 import fight from "./fight.js";
+import { SPIKE_HOLD_MAX_SECONDS } from "./shared.js";
 
 describe("play-build fights (#1189, #1193, #1965)", () => {
   it("stands and fights a melee foe at its elbow with the bow, by a wall or in the open, however fast it thinks", () => {
@@ -296,5 +297,146 @@ describe("a healer fights from its post (#2615)", () => {
   it("walks in to fight with nobody to cover", () => {
     const intent = decide(false);
     expect(intent?.useSkillId ?? intent?.attackTargetId).toBeDefined();
+  });
+});
+
+describe("damage dealers spike the team's target together (#2631)", () => {
+  const FLARE = "elementalist.flare";
+  const EMPATHY = "mesmer.empathy";
+  const IMMOLATE = "elementalist.immolate";
+  const RODGORTS = "elementalist.rodgorts-invocation";
+  const INSTANT = { kind: "play-build", reaction: INSTANT_REACTION } as const;
+  /**
+   * Bot `a` with `bar`, beside caster `b` with `mate` unless `lone`,
+   * both thinking as `behaviour`, and a foe at `foeFraction` of its
+   * health in range of both; Fire Magic at `fire` for both.
+   */
+  const spike = ({
+    bar = [FLARE],
+    mate = [FLARE],
+    lone = false,
+    foeFraction = 1,
+    fire = 12,
+    behaviour = BOT,
+  }: {
+    bar?: readonly string[];
+    mate?: readonly string[];
+    lone?: boolean;
+    foeFraction?: number;
+    fire?: number;
+    behaviour?: typeof BOT;
+  } = {}) => {
+    const ranks = new Map([["elementalist.fire-magic", fire]]);
+    return match([
+      body("a", 0, vec2(400, 400), { behaviour, skillBar: [...bar], attributeRanks: ranks }),
+      ...(lone
+        ? []
+        : [
+            body("b", 0, vec2(400, 460), {
+              behaviour,
+              skillBar: [...mate],
+              attributeRanks: ranks,
+            }),
+          ]),
+      body("foe", 1, vec2(700, 400), { startHealthFraction: foeFraction }),
+    ]);
+  };
+  const decideFor = (sim: MatchSimulation, cursor = createCursor()) =>
+    fight.decide(ruleFor(sim, "a", { targetId: "foe", cursor }));
+  const recharge = (sim: MatchSimulation, id: string) => {
+    sim.get(id)?.combatant.cast.startRecharge(FLARE, 10);
+  };
+
+  it("fires with a teammate's spike skill ready too", () => {
+    expect(decideFor(spike())).toMatchObject({ useSkillId: FLARE, targetId: "foe" });
+  });
+
+  it("holds and swings while the teammate's is recharging, then fires after 4 s", () => {
+    const sim = spike();
+    recharge(sim, "b");
+    const cursor = createCursor();
+    expect(decideFor(sim, cursor)).toMatchObject({ useSkillId: undefined, attackTargetId: "foe" });
+    expect(cursor.spikeTargetId).toBe("foe");
+    cursor.spikeHeldSeconds = SPIKE_HOLD_MAX_SECONDS;
+    expect(decideFor(sim, cursor)).toMatchObject({ useSkillId: FLARE, targetId: "foe" });
+    expect(cursor.spikeTargetId).toBeUndefined();
+  });
+
+  it("fires at once, with nobody ready, when it doesn't hold its spike skills", () => {
+    const sim = spike();
+    recharge(sim, "b");
+    expect(fight.decide(ruleFor(sim, "a", { targetId: "foe", spikeHold: false }))).toMatchObject({
+      useSkillId: FLARE,
+      targetId: "foe",
+    });
+  });
+
+  it("starts the clock again for a new target", () => {
+    const sim = spike();
+    recharge(sim, "b");
+    const cursor = createCursor();
+    cursor.spikeTargetId = "other";
+    cursor.spikeHeldSeconds = SPIKE_HOLD_MAX_SECONDS;
+    expect(decideFor(sim, cursor)?.useSkillId).toBeUndefined();
+    expect(cursor.spikeHeldSeconds).toBe(0);
+  });
+
+  it("doesn't count a dazed teammate, slow to cast, as ready", () => {
+    const sim = spike();
+    sim.get("b")?.combatant.statuses.apply("dazed", 10, "x", NO_RANKS);
+    expect(decideFor(sim)?.useSkillId).toBeUndefined();
+  });
+
+  it("still holds at half the target's health, and finishes it below 30% at once", () => {
+    const half = spike({ foeFraction: 0.5 });
+    recharge(half, "b");
+    expect(decideFor(half)?.useSkillId).toBeUndefined();
+    const low = spike({ foeFraction: 0.25 });
+    recharge(low, "b");
+    expect(decideFor(low)?.useSkillId).toBe(FLARE);
+  });
+
+  it("fires a faster spike skill as much later as the slower one takes longer", () => {
+    const sim = spike({ bar: [IMMOLATE], mate: [RODGORTS] });
+    const cursor = createCursor();
+    expect(decideFor(sim, cursor)?.useSkillId).toBeUndefined();
+    expect(cursor.spikeReadySeconds).toBe(0);
+    cursor.spikeReadySeconds = 1;
+    expect(decideFor(sim, cursor)?.useSkillId).toBe(IMMOLATE);
+    expect(cursor.spikeReadySeconds).toBeUndefined();
+  });
+
+  it("lands a 2 s and a 1 s spike skill together", () => {
+    const sim = spike({ bar: [IMMOLATE], mate: [RODGORTS], behaviour: INSTANT });
+    const landed = new Map<string, number>();
+    for (let t = 0; t < 4 && landed.size < 2; t += DT) {
+      for (const entry of sim.step(DT).log) {
+        const hit = entry.events.some(
+          (event) => event.kind === "damage" && event.targetId === "foe",
+        );
+        if (hit && entry.skillId !== undefined && !landed.has(entry.skillId)) {
+          landed.set(entry.skillId, entry.atSeconds);
+        }
+      }
+    }
+    const rodgorts = landed.get(RODGORTS) ?? Number.NaN;
+    expect(Math.abs((landed.get(IMMOLATE) ?? Number.NaN) - rodgorts)).toBeLessThanOrEqual(0.05);
+  });
+
+  it("fires at once as the team's only damage dealer", () => {
+    expect(decideFor(spike({ lone: true }))?.useSkillId).toBe(FLARE);
+  });
+
+  it("casts a hex while it holds its spike skill", () => {
+    const sim = spike({ bar: [FLARE, EMPATHY] });
+    recharge(sim, "b");
+    expect(decideFor(sim)).toMatchObject({ useSkillId: EMPATHY, targetId: "foe" });
+  });
+
+  it("holds and fires the same with no rank in the spike skill's attribute", () => {
+    const held = spike({ fire: 0 });
+    recharge(held, "b");
+    expect(decideFor(held)?.useSkillId).toBeUndefined();
+    expect(decideFor(spike({ fire: 0 }))?.useSkillId).toBe(FLARE);
   });
 });

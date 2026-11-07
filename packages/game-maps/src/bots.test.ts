@@ -7,6 +7,8 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
+  getSkill,
+  isSpikeSkill,
   loadoutOf,
   loadoutSpec,
   resolveLoadout,
@@ -26,6 +28,14 @@ import type { MapData } from "./schema.js";
 
 const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULESET.tickRateHz;
+/**
+ * Of the bots' spike-skill hits on a foe, the share landing within a second
+ * of a teammate's on it (#2631): main's bots, firing each the moment it
+ * recharged, landed 66.2% of them together; holding them for the team,
+ * 73.1%. The share swings with the seed and with every other bot change,
+ * so the bar is the gain over bots that don't hold, on the same seeds.
+ */
+const SPIKE_GAIN = 0.05;
 /** No warrior: nobody here closes in because their weapon is melee. */
 const CASTERS = ["Barrage (R)", "Signet of Suffering (N/A)", "Double Dragon (E)"];
 
@@ -48,6 +58,96 @@ describe.each(loadAllMaps().map((map) => [map.id, map] as const))("%s bots", (_,
     }
     expect(damaged).toBe(true);
   });
+});
+
+describe("bots spike on Ashen Courtyard (#2631)", () => {
+  const map = loadAllMaps().find((candidate) => candidate.id === "ashen-courtyard");
+
+  /**
+   * Of 60 s of a 4v4 mirror of the bot bench's builds on Ashen Courtyard,
+   * one per seed, the spike-skill hits on a foe and those landing within a
+   * second of a teammate's spike-skill hit on the same foe. `spikeHold`:
+   * whether the bots hold their spike skills for the team's.
+   */
+  const spikes = (seed: string, spikeHold: boolean) => {
+    if (map === undefined) throw new Error("no Ashen Courtyard");
+    const participants = [0, 1].flatMap((team) =>
+      map.spawnPoints
+        .filter((spawn) => spawn.team === team)
+        .slice(0, 4)
+        .map((spawn, i): ParticipantSpec => {
+          const build = STARTER_BUILDS[(i + seed.charCodeAt(0)) % STARTER_BUILDS.length];
+          if (build === undefined) throw new Error("no built-in builds");
+          const loadout = loadoutOf(build);
+          const resolved = resolveLoadout(
+            {
+              primaryProfession: loadout.primaryProfession,
+              secondaryProfession: loadout.secondaryProfession,
+              allocatedRanks: loadout.attributeRanks,
+              equipment: loadout.equipment,
+            },
+            RULESET.combat,
+          );
+          return {
+            id: `${String(team)}-${String(i)}`,
+            team,
+            skillBar: loadout.skillBar,
+            ...loadoutSpec(resolved),
+            spawn: spawn.position,
+            facing: 0,
+            behaviour: { kind: "play-build", reaction: BOT_REACTION, spikeHold },
+          };
+        }),
+    );
+    const teamOf = new Map(participants.map(({ id, team }) => [id, team]));
+    const sim = new MatchSimulation({
+      seed,
+      ruleset: RULESET,
+      walls: allWallSegments(map.walls),
+      bounds: { width: map.width, height: map.height },
+      matchRules: ANNIHILATION_MATCH_RULES,
+      participants,
+    });
+    const hits: { readonly at: number; readonly sourceId: string; readonly targetId: string }[] =
+      [];
+    for (let t = 0; t < 60; t += DT) {
+      for (const entry of sim.step(DT).log) {
+        const skill = entry.skillId === undefined ? undefined : getSkill(entry.skillId);
+        const sourceId = entry.sourceId;
+        if (skill === undefined || !isSpikeSkill(skill) || sourceId === undefined) continue;
+        for (const event of entry.events) {
+          const team = teamOf.get(event.targetId);
+          if (
+            event.kind === "damage" &&
+            event.targetId === sim.get(sourceId)?.targetId &&
+            team !== undefined &&
+            team !== teamOf.get(sourceId)
+          ) {
+            hits.push({ at: entry.atSeconds, sourceId, targetId: event.targetId });
+          }
+        }
+      }
+    }
+    const together = hits.filter((hit) =>
+      hits.some(
+        (other) =>
+          other.targetId === hit.targetId &&
+          other.sourceId !== hit.sourceId &&
+          Math.abs(other.at - hit.at) <= 1,
+      ),
+    );
+    return { hits: hits.length, together: together.length };
+  };
+
+  it("lands more of the bots' big hits together than bots that don't hold them, the same for the same seed", () => {
+    const runs = (spikeHold: boolean) =>
+      ["a", "b", "c", "d"].map((seed) => spikes(seed, spikeHold));
+    const share = (of: readonly { hits: number; together: number }[]) =>
+      of.reduce((sum, run) => sum + run.together, 0) / of.reduce((sum, run) => sum + run.hits, 0);
+    const holding = runs(true);
+    expect(share(holding) - share(runs(false))).toBeGreaterThanOrEqual(SPIKE_GAIN);
+    expect(spikes("a", true)).toEqual(holding[0]);
+  }, 120_000);
 });
 
 describe("Relic Run bots (#2581)", () => {
@@ -133,19 +233,29 @@ describe("King of the Hill bots (#2582)", () => {
   });
 
   /**
-   * The score and outcome after up to 90 s of a 2v2 mirror of bots on The
-   * Courtyard, and when the first point fell or the match ended, whichever
-   * came first (#2600). A mirror brings both ghosts onto the altar
-   * together: they contest it until a bot kills the other team's ghost.
-   * One team may then wipe the other before its first point (#2628).
+   * The first ghost to die, and the score and outcome after up to 90 s
+   * of a 2v2 mirror of bots on The Courtyard, and when the first point
+   * fell or the match ended, whichever came first (#2600). A mirror brings
+   * both ghosts onto the altar together: they contest it until a bot kills
+   * the other team's ghost. One team may then wipe the other before its
+   * first point (#2628), its damage dealers spiking (#2631).
    */
   const mirror = (seed: string) => {
     const courtyard = loadAllMaps().find((candidate) => candidate.id === "the-courtyard");
     if (courtyard === undefined) throw new Error("no map the-courtyard");
     const sim = hill(courtyard, seed, casterBots(courtyard, 2));
+    let ghostDiedAt: number | undefined;
     let decidedAt: number | undefined;
     for (let t = 0; t < 90 && decidedAt === undefined; t += DT) {
       sim.step(DT);
+      if (
+        ghostDiedAt === undefined &&
+        [...sim.participants()].some(
+          ({ creature, combatant }) => creature?.kind === "ghostly-hero" && combatant.dead,
+        )
+      ) {
+        ghostDiedAt = t;
+      }
       if (
         [...sim.score.byTeam.values()].some((points) => points > 0) ||
         sim.outcome.winningTeam !== undefined
@@ -154,6 +264,7 @@ describe("King of the Hill bots (#2582)", () => {
       }
     }
     return {
+      ghostDiedAt,
       decidedAt,
       holder: sim.altarState.holder,
       score: [...sim.score.byTeam],
@@ -161,8 +272,9 @@ describe("King of the Hill bots (#2582)", () => {
     };
   };
 
-  it("a 2v2 mirror of bots scores a point or wins within 90 s, the same way for the same seed", () => {
+  it("a 2v2 mirror of bots kills a ghost, then scores a point or wins within 90 s, the same way for the same seed", () => {
     const first = mirror("hill");
+    expect(first.ghostDiedAt).toBeDefined();
     expect(first.decidedAt).toBeDefined();
     // The ghosts' contest ended: a team took the altar, wipe or not.
     expect(first.holder).not.toBeNull();

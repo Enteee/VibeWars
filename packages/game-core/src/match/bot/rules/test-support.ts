@@ -186,6 +186,7 @@ export function ruleFor(
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
     mayEndUpkeep: true,
     role: botRole(bar, self.combatant.equipment.mainHand.weapon.range),
+    spikeHold: true,
     foeCentroid: view.foeCentroid,
     roleOf,
     cursor: createCursor(),

@@ -852,6 +852,35 @@ export function mainDamageType(bar: readonly Skill[]): DamageType | undefined {
   return main;
 }
 
+/**
+ * Whether `skill` is a spike skill (#2631): one that hits the foe it is
+ * cast at on the spot, an attack skill or a damage spell, which bots hold
+ * to fire together. Hexes, shouts, spirits and traps are pressure, cast
+ * as they come.
+ */
+export function isSpikeSkill(skill: Skill): boolean {
+  return (
+    skill.target === "single-enemy" &&
+    skill.type !== "hex" &&
+    skill.type !== "shout" &&
+    (skill.attack !== undefined || skill.effects.some(hitsOnTheSpot))
+  );
+}
+
+/** Damage or life steal as it lands, an `if`'s or a splash's among them. */
+function hitsOnTheSpot(effect: SkillEffect): boolean {
+  switch (effect.kind) {
+    case "damage":
+    case "life-steal":
+      return true;
+    case "if":
+    case "splash":
+      return effect.effects.some(hitsOnTheSpot);
+    default:
+      return false;
+  }
+}
+
 /** An `if`'s and a splash's effects, as well as the effect itself. */
 function flatten(effect: SkillEffect): readonly SkillEffect[] {
   return effect.kind === "if" || effect.kind === "splash" ? [effect, ...effect.effects] : [effect];
