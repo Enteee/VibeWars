@@ -48,6 +48,7 @@ describe("play-build ends its own upkeep when Energy-starved (#2492)", () => {
       foeCentroid: undefined,
       objectives: NO_OBJECTIVES,
       projectiles: [],
+      seed: 0,
     });
   }
 

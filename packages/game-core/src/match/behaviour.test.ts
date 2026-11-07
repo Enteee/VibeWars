@@ -330,6 +330,7 @@ describe("auto-attack", () => {
         foeCentroid: undefined,
         objectives: NO_OBJECTIVES,
         projectiles: [],
+        seed: 0,
       },
     );
     expect(intent.attackTargetId).toBe("first");
@@ -394,6 +395,7 @@ describe("follow-and-attack (#467)", () => {
       foeCentroid: undefined,
       objectives: NO_OBJECTIVES,
       projectiles: [],
+      seed: 0,
     });
   }
 

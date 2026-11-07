@@ -133,7 +133,7 @@ describe("King of the Hill bots (#2582)", () => {
   });
 
   /**
-   * The score after up to 90 s of a 1v1 mirror of bots on The Courtyard,
+   * The score after up to 90 s of a 2v2 mirror of bots on The Courtyard,
    * and when the first point fell (#2600). A mirror brings both ghosts
    * onto the altar together: they contest it until a bot kills the other
    * team's ghost.
@@ -141,7 +141,7 @@ describe("King of the Hill bots (#2582)", () => {
   const mirror = (seed: string) => {
     const courtyard = loadAllMaps().find((candidate) => candidate.id === "the-courtyard");
     if (courtyard === undefined) throw new Error("no map the-courtyard");
-    const sim = hill(courtyard, seed, casterBots(courtyard, 1));
+    const sim = hill(courtyard, seed, casterBots(courtyard, 2));
     let scoredAt: number | undefined;
     for (let t = 0; t < 90 && scoredAt === undefined; t += DT) {
       sim.step(DT);
@@ -150,10 +150,35 @@ describe("King of the Hill bots (#2582)", () => {
     return { scoredAt, score: [...sim.score.byTeam] };
   };
 
-  it("a 1v1 mirror of bots scores a point within 90 s, the same way for the same seed", () => {
+  it("a 2v2 mirror of bots scores a point within 90 s, the same way for the same seed", () => {
     const first = mirror("hill");
     expect(first.scoredAt).toBeDefined();
     expect(mirror("hill")).toEqual(first);
+  });
+
+  /**
+   * The winner of a 4v4 caster mirror on The Courtyard after 120 s: the
+   * team that wiped the other, else the one with more points, else none.
+   */
+  const winner = (seed: string) => {
+    const courtyard = loadAllMaps().find((candidate) => candidate.id === "the-courtyard");
+    if (courtyard === undefined) throw new Error("no map the-courtyard");
+    const sim = hill(courtyard, seed, casterBots(courtyard, 4));
+    for (let t = 0; t < 120 && sim.outcome.winningTeam === undefined; t += DT) {
+      sim.step(DT);
+    }
+    if (sim.outcome.winningTeam !== undefined) return sim.outcome.winningTeam;
+    const team0 = sim.score.byTeam.get(0) ?? 0;
+    const team1 = sim.score.byTeam.get(1) ?? 0;
+    return team0 === team1 ? undefined : team0 > team1 ? 0 : 1;
+  };
+
+  it("a 4v4 caster mirror is won by either team, as the seed falls, not always by team 0 (#2624)", () => {
+    // Before #2624 a bot's reaction times and dodges were a hash of its id
+    // alone, so team 0's ids had the same luck in every match: 6 of 6.
+    const winners = ["a", "b", "c", "d", "e", "f"].map(winner);
+    expect(winners).toContain(0);
+    expect(winners).toContain(1);
   });
 });
 
