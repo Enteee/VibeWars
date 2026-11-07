@@ -1,5 +1,6 @@
 import type { LobbyMode } from "@vibewars/game-protocol";
 
+import { t } from "../i18n/index.js";
 import { isTeamBuildSize, type StoredTeam, type TeamBuildSize } from "../storage/schema.js";
 import { loadStarterTeamId } from "../storage/starter-team.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
@@ -249,9 +250,11 @@ export function renderHostScreen(
   connectionNotice: string | undefined,
   callbacks: TeamPlayCallbacks,
   panel: LobbyPanel | undefined,
+  /** In the Random Arena queue (#2743): no lobby to host until it is left. */
+  queued: boolean,
 ): void {
   const body = teamScreen(root, entry, problems, connectionNotice, callbacks, panel);
-  body.appendChild(panel?.body ?? h("p", "screen-info", OPENING_LOBBY));
+  body.appendChild(panel?.body ?? h("p", "screen-info", queued ? t("queue.busy") : OPENING_LOBBY));
 }
 
 /** Render Team Builder (#1525): the Team Build cards, to make and edit them. */

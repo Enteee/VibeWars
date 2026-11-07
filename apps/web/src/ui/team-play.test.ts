@@ -188,7 +188,15 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
   };
   const host = (entry: HostEntry): FakeElement => {
     const root = new FakeElement();
-    renderHostScreen(root as unknown as HTMLElement, entry, [], undefined, callbacks, undefined);
+    renderHostScreen(
+      root as unknown as HTMLElement,
+      entry,
+      [],
+      undefined,
+      callbacks,
+      undefined,
+      false,
+    );
     return root;
   };
 
