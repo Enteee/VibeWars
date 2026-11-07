@@ -14,6 +14,13 @@ import {
 const MAX_NAME_LENGTH = 16;
 
 /**
+ * Character names are longer (#2636): a built-in one is its PvX build's
+ * name in full, and the longest, "Balthazar FFF Zaishen Trappers 3
+ * (R/Mo)", is 39. Views ellipsise what is too wide for their box.
+ */
+const MAX_CHARACTER_NAME_LENGTH = 40;
+
+/**
  * How much of the raw string is looked at, in UTF-16 units. A join body
  * can carry a megabyte of name, and the passes below cost per unit, so
  * the rest is dropped unread: 16 units per kept character leaves room for
@@ -64,6 +71,12 @@ const MAX_CODE_POINTS_PER_GRAPHEME = 12;
  * six families, or sixteen of nearly anything else.
  */
 const MAX_NAME_CODE_POINTS = 48;
+
+/** The same three code points a grapheme, for a character name. */
+const MAX_CHARACTER_NAME_CODE_POINTS = MAX_CHARACTER_NAME_LENGTH * 3;
+
+/** As `MAX_RAW_NAME_UNITS`, for a character name. */
+const MAX_RAW_CHARACTER_NAME_UNITS = MAX_CHARACTER_NAME_LENGTH * 16;
 
 /** How much of a chat line is looked at, in UTF-16 units: all the wire carries. */
 const MAX_RAW_CHAT_UNITS = MAX_WIRE_CHAT_TEXT;
@@ -212,21 +225,34 @@ export function sanitizeName(raw: unknown, fallback: string): string {
 
 /**
  * A build's name as a character in the Team Lobby (#1460), sanitised as
- * `sanitizeName` does. One too long is cut at its last space or slash
- * that fits and ends in "…", never mid-word: the starters are named
- * "Necromancer/Elementalist", which reads "Necromancer…".
+ * `sanitizeName` does, up to `MAX_CHARACTER_NAME_LENGTH` (#2636). One
+ * too long is cut at its last space or slash that fits and ends in "…",
+ * never mid-word.
  */
 export function sanitizeCharacterName(raw: unknown, fallback: string): string {
   if (typeof raw !== "string") {
     return fallback;
   }
-  const whole = sanitizeText(raw, MAX_RAW_NAME_UNITS, Infinity, Infinity);
-  const name = sanitizeName(raw, fallback);
-  if (whole === "" || whole === name) {
+  const whole = sanitizeText(raw, MAX_RAW_CHARACTER_NAME_UNITS, Infinity, Infinity);
+  const name = sanitizeText(
+    raw,
+    MAX_RAW_CHARACTER_NAME_UNITS,
+    MAX_CHARACTER_NAME_LENGTH,
+    MAX_CHARACTER_NAME_CODE_POINTS,
+  );
+  if (whole === "") {
+    return fallback;
+  }
+  if (whole === name) {
     return name;
   }
   // One grapheme and one code point are left for the ellipsis.
-  const room = sanitizeText(raw, MAX_RAW_NAME_UNITS, MAX_NAME_LENGTH - 1, MAX_NAME_CODE_POINTS - 1);
+  const room = sanitizeText(
+    raw,
+    MAX_RAW_CHARACTER_NAME_UNITS,
+    MAX_CHARACTER_NAME_LENGTH - 1,
+    MAX_CHARACTER_NAME_CODE_POINTS - 1,
+  );
   const boundary = Math.max(room.lastIndexOf(" "), room.lastIndexOf("/"));
   const head = boundary > 0 ? room.slice(0, boundary).trim() : room;
   return `${head}…`;

@@ -11,7 +11,7 @@ import {
 } from "@vibewars/game-core";
 
 import { taggedName } from "../ui/bot-tag.js";
-import { playerLabelText } from "../ui/player-label.js";
+import { nameplateName, playerLabelText } from "../ui/player-label.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import {
   BODY_EDGE,
@@ -1191,7 +1191,10 @@ export class ArenaScene extends Phaser.Scene {
       }
       const shown = nameShown(this.snapshot, actor);
       label.setText(
-        taggedName({ name: playerLabelText(actor.name, actor.guildTag), bot: actor.bot }),
+        taggedName({
+          name: playerLabelText(nameplateName(actor.name), actor.guildTag),
+          bot: actor.bot,
+        }),
       );
       screenSized(label, zoom);
       // `width` is unscaled: the label's screen px.

@@ -1,4 +1,4 @@
-import { pickStarterBuild, randomCharacterName } from "@vibewars/game-core";
+import { pickStarterBuild } from "@vibewars/game-core";
 
 import { fromPlayerBuild, toPlayerBuild } from "./build-validation.js";
 import type { CharacterRepository } from "./repository.js";
@@ -6,8 +6,9 @@ import type { StoredCharacter } from "./schema.js";
 
 /**
  * The character a browser's first start rolls (#853): one starter build at
- * random, saved as a character like any other, once per browser. Which one
- * it is, is remembered by id, so its roster row alone can be rerolled.
+ * random, saved as a character like any other, once per browser, under its
+ * PvX build's name (#2636). Which one it is, is remembered by id, so its
+ * roster row alone can be rerolled.
  */
 
 /** Where the rolled character's id is kept: set means "rolled already". */
@@ -24,11 +25,21 @@ export interface RollStarterOptions {
   readonly id: string;
   /** ms since the epoch. */
   readonly now: number;
-  /** The roster's names: the rolled one is none of them (#1149). */
+  /** The roster's names: the rolled one is none of them (#1149), whatever their case. */
   readonly taken: readonly string[];
 }
 
-/** A starter build by `random`, never like `not`, under a random name not in `taken`. */
+/** `name`, or the first of "`name` 2", "`name` 3"... that is none of `taken`. */
+function freeName(name: string, taken: readonly string[]): string {
+  const names = new Set(taken.map((n) => n.toLowerCase()));
+  let free = name;
+  for (let n = 2; names.has(free.toLowerCase()); n += 1) {
+    free = `${name} ${String(n)}`;
+  }
+  return free;
+}
+
+/** A starter build by `random`, never like `not`, under its name, made free of `taken`. */
 function rollCharacter(
   random: () => number,
   taken: readonly string[],
@@ -37,8 +48,7 @@ function rollCharacter(
   not?: StoredCharacter,
 ): StoredCharacter {
   const build = pickStarterBuild(random, not === undefined ? undefined : toPlayerBuild(not));
-  const name = randomCharacterName(random, new Set(taken.map((n) => n.toLowerCase())));
-  return { ...fromPlayerBuild(build, id, now), name };
+  return { ...fromPlayerBuild(build, id, now), name: freeName(build.name, taken) };
 }
 
 /**
@@ -68,7 +78,7 @@ export async function rollStarterCharacter(
 
 /**
  * `current` as another starter build, never one with its professions:
- * the same id, and a new random name, none of `taken` (the roster's
+ * the same id, and the new build's name, none of `taken` (the roster's
  * names, its own among them). Edits made to it are lost.
  */
 export async function rerollStarterCharacter(

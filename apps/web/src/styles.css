@@ -2398,6 +2398,13 @@ body {
   min-width: 0;
 }
 
+/* A PvX build's name is up to 40 characters (#2636). */
+.team-pick-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .team-pick-sub {
   color: var(--ink-dim);
   font-size: 0.72rem;
@@ -3554,11 +3561,19 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: 0;
   padding: 0.3rem;
   border: 1px solid var(--line);
   border-radius: 4px;
   background: var(--panel);
   font-size: 0.75rem;
+}
+
+.team-lobby-drawer-member-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .screen .team-lobby-drawer-go {
@@ -4057,6 +4072,7 @@ body {
   font-weight: normal;
   text-align: left;
   text-overflow: ellipsis;
+  white-space: nowrap;
   border-left: 3px solid transparent;
 }
 

@@ -66,6 +66,16 @@ describe("validateMatchRecord (#2528)", () => {
     });
   });
 
+  it("reads a bot named after its build, in full (#2636)", () => {
+    const name = "Balthazar FFF Zaishen Trappers 3 (R/Mo)";
+    const bot = { ...player(name, 2), guildTag: null, bot: true };
+    const record = { ...valid(), teams: [valid().teams[0], { players: [bot] }] };
+    expect(read(record)?.teams[1]?.players[0]?.name).toBe(name);
+    expect(
+      read({ ...record, teams: [{ players: [{ ...bot, bot: false }] }, valid().teams[0]] }),
+    ).toBeUndefined();
+  });
+
   it("reads a draw", () => {
     expect(read({ ...valid(), winningTeam: null })?.winningTeam).toBeNull();
   });
@@ -128,13 +138,13 @@ describe("validateMatchRecord (#2528)", () => {
     ).toBeUndefined();
   });
 
-  it("keeps a lobby character name cut to an ellipsis", () => {
-    const name = sanitizeCharacterName("Necromancer/Elementalist", "");
-    expect(name).toBe("Necromancer…");
+  it("keeps a bot's character name cut to an ellipsis", () => {
+    const name = sanitizeCharacterName("Fire Nuker of the Northern Shiverpeak Passage", "");
+    expect(name).toBe("Fire Nuker of the Northern Shiverpeak…");
     const record = valid();
-    const [first, second] = record.teams;
-    const out = read({ ...record, teams: [{ players: [{ ...first?.players[0], name }] }, second] });
-    expect(out?.teams[0].players[0]?.name).toBe(name);
+    const bot = { ...player(name, 2), guildTag: null, bot: true };
+    const out = read({ ...record, teams: [record.teams[0], { players: [bot] }] });
+    expect(out?.teams[1]?.players[0]?.name).toBe(name);
   });
 
   it("drops anything it does not know about a player", () => {

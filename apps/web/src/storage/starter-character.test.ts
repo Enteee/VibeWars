@@ -1,4 +1,4 @@
-import { FIRST_NAMES, STARTER_BUILDS, SURNAMES } from "@vibewars/game-core";
+import { STARTER_BUILDS } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { toPlayerBuild } from "./build-validation.js";
@@ -22,11 +22,6 @@ function memoryKey(): StarterCharacterKey & { value: string | undefined } {
   return key;
 }
 
-/** The name drawn as the `first`th first name and the `last`th surname. */
-function fullName(first: number, last: number): string {
-  return [FIRST_NAMES[first], SURNAMES[last]].join(" ");
-}
-
 describe("rollStarterCharacter", () => {
   it("rolls and saves a starter build once, then never again", async () => {
     const characters = new CharacterRepository(createMemoryStore());
@@ -41,7 +36,9 @@ describe("rollStarterCharacter", () => {
       taken: [],
     });
 
-    expect(rolled?.name).toBe(fullName(0, 0));
+    // Named after its PvX build (#2636), professions and all.
+    expect(rolled?.name).toBe(STARTER_BUILDS[0]?.name);
+    expect(rolled?.name).toBe("Gust (A/E)");
     expect(rolled?.primaryProfession).toBe(STARTER_BUILDS[0]?.primaryProfession);
     expect(await characters.load("a")).toEqual(rolled);
     expect(key.value).toBe("a");
@@ -87,23 +84,20 @@ describe("rollStarterCharacter", () => {
     ).toBeUndefined();
   });
 
-  it("is named none of the roster's names, whatever their case (#1149)", async () => {
-    const characters = new CharacterRepository(createMemoryStore());
-    const first = fullName(0, 0);
-    // The build, then two names: the first one taken.
-    const draws = [0, 0, 0, 0.5, 0.5];
-    let i = 0;
+  it("is named none of the roster's names, whatever their case (#1149, #2636)", async () => {
+    const roll = (taken: readonly string[]) =>
+      rollStarterCharacter({
+        characters: new CharacterRepository(createMemoryStore()),
+        key: memoryKey(),
+        random: () => 0,
+        id: "a",
+        now: 1,
+        taken,
+      });
 
-    const rolled = await rollStarterCharacter({
-      characters,
-      key: memoryKey(),
-      random: () => draws[i++ % draws.length] ?? 0,
-      id: "a",
-      now: 1,
-      taken: [first.toUpperCase()],
-    });
-
-    expect(rolled?.name).toBe(fullName(16, 16));
+    expect((await roll(["GUST (A/E)"]))?.name).toBe("Gust (A/E) 2");
+    expect((await roll(["Gust (A/E)", "gust (a/e) 2", "Gust (A/E) 4"]))?.name).toBe("Gust (A/E) 3");
+    expect((await roll(["Gust (E/Me)"]))?.name).toBe("Gust (A/E)");
   });
 
   it("leaves the key unset when the save fails, so the next start tries again", async () => {
@@ -127,7 +121,7 @@ describe("rollStarterCharacter", () => {
 });
 
 describe("rerollStarterCharacter", () => {
-  it("keeps the id, never yields the same professions, and draws a new name", async () => {
+  it("keeps the id, never yields the same professions, and takes the new build's name", async () => {
     const characters = new CharacterRepository(createMemoryStore());
     for (const build of STARTER_BUILDS) {
       for (const random of [0, 0.5, 0.999]) {
@@ -144,7 +138,7 @@ describe("rerollStarterCharacter", () => {
         }
         expect(current.primaryProfession).toBe(build.primaryProfession);
 
-        // Stepping from `random`: a constant would draw the taken name 20 times.
+        // Stepping from `random`, so each case draws a different build.
         let next = random;
         const stepping = (): number => {
           const value = next;
@@ -156,14 +150,12 @@ describe("rerollStarterCharacter", () => {
         ]);
 
         expect(rerolled.id).toBe("a");
-        expect(rerolled.name).not.toBe(current.name);
         expect([rerolled.primaryProfession, rerolled.secondaryProfession]).not.toEqual([
           current.primaryProfession,
           current.secondaryProfession,
         ]);
-        // The character has a name of its own (#1149): the rest is a starter build's.
-        const { name: _, ...picked } = toPlayerBuild(rerolled);
-        expect(STARTER_BUILDS.map(({ name: _name, ...rest }) => rest)).toContainEqual(picked);
+        // The whole character is a starter build's, its name too (#2636).
+        expect(STARTER_BUILDS).toContainEqual(toPlayerBuild(rerolled));
         expect(await characters.load("a")).toEqual(rerolled);
       }
     }
