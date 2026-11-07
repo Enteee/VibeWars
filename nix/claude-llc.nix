@@ -580,12 +580,14 @@ let
         ${tmux} select-pane -t "$feed_pane" -T TELEGRAM
         ${tmux} select-pane -t "$company_pane" -T COMPANY
         ${tmux} select-pane -t "$board_pane" -T BOARD
-        # The 16 ANSI colours only, so a light terminal reads them too.
+        # Fixed xterm-256 numbers (colour16 and up) with an explicit fg and bg
+        # on every element: a terminal theme remaps the ANSI-16 names, so
+        # contrast would depend on the theme. These it does not remap.
         ${tmux} set-option -w -t "$SESSION:dashboard" pane-border-status top
         ${tmux} set-option -w -t "$SESSION:dashboard" pane-border-format " #[bold]#{pane_title}#[nobold] "
         ${tmux} set-option -w -t "$SESSION:dashboard" pane-border-lines heavy
-        ${tmux} set-option -w -t "$SESSION:dashboard" pane-border-style fg=blue
-        ${tmux} set-option -w -t "$SESSION:dashboard" pane-active-border-style fg=cyan
+        ${tmux} set-option -w -t "$SESSION:dashboard" pane-border-style fg=colour244
+        ${tmux} set-option -w -t "$SESSION:dashboard" pane-active-border-style fg=colour214
         hub_window
 
         for employee in $ready; do
@@ -608,13 +610,19 @@ let
         # ----------------------------------------------------------------------
         ${tmux} set-option -t "$SESSION" mouse on
         ${tmux} set-option -t "$SESSION" status-interval 5
-        ${tmux} set-option -t "$SESSION" status-style "bg=blue,fg=white"
+        ${tmux} set-option -t "$SESSION" status-style "bg=colour236,fg=colour252"
+        ${tmux} set-option -t "$SESSION" window-status-style "bg=colour236,fg=colour250"
+        ${tmux} set-option -t "$SESSION" window-status-bell-style "bg=colour160,fg=colour231,bold"
+        ${tmux} set-option -t "$SESSION" window-status-activity-style "bg=colour236,fg=colour214,underscore"
+        ${tmux} set-option -t "$SESSION" message-style "bg=colour214,fg=colour16"
+        ${tmux} set-option -t "$SESSION" message-command-style "bg=colour214,fg=colour16"
+        ${tmux} set-option -t "$SESSION" mode-style "bg=colour214,fg=colour16"
         ${tmux} set-option -t "$SESSION" window-status-format " #I:#W "
         ${tmux} set-option -t "$SESSION" window-status-current-format " #I:#W "
-        ${tmux} set-option -t "$SESSION" window-status-current-style "bg=cyan,fg=black,bold"
+        ${tmux} set-option -t "$SESSION" window-status-current-style "bg=colour214,fg=colour16,bold"
         ${tmux} set-option -t "$SESSION" status-left "#[bold] VibeWars LLC #[default]"
         ${tmux} set-option -t "$SESSION" status-right \
-          "#[range=user|detach] detach #[norange]|#[range=user|stop] stop #[norange] "
+          "#[range=user|detach] detach #[norange]|#[fg=colour203]#[range=user|stop] stop #[norange]#[fg=default] "
         ${tmux} source-file ${llcTmuxConf}
 
         # Opens on the dashboard, a reboot's `claude-llc up` included: the
