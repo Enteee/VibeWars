@@ -4,14 +4,15 @@ import type { MapData } from "./schema.js";
 export type SizeClass = "small" | "medium" | "large";
 
 /** Up to this, an arena is small: a few seconds across. */
-const SMALL_UP_TO = 1200;
+const SMALL_UP_TO = 3200;
 /** Up to this, medium; beyond it, large. */
-const MEDIUM_UP_TO = 2400;
+const MEDIUM_UP_TO = 4800;
 
 /**
  * The arena's size class, from its longest walkable straight line: the
  * longer side of its bounds, which every arena can be walked along end to
- * end. Today's four are small; a 3200-unit hall is large.
+ * end. Every arena today is small, up to the 3200-unit Long Hall
+ * (#2547); the medium and large ones are #2544's to come.
  */
 export function sizeClass(map: Pick<MapData, "width" | "height">): SizeClass {
   const longest = Math.max(map.width, map.height);

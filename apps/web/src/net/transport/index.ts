@@ -6,7 +6,13 @@ import { relaySibling, withSiblingRoom, type RelayRoomsSource } from "../relay-r
 
 import { BROADCAST_SELF_ID, joinBroadcastRoom } from "./broadcast-channel.js";
 import { joinBroadcastQueue } from "./broadcast-queue.js";
-import { publishMatchRecord } from "./match-records.js";
+import { publishBroadcastRecord, watchBroadcastRecords } from "./broadcast-records.js";
+import {
+  publishMatchRecord,
+  watchMatchRecords,
+  type MatchRecordWatch,
+  type MatchRecordWatchHandlers,
+} from "./match-records.js";
 import { createNostrQueue, type NostrQueue } from "./nostr-queue.js";
 import {
   holdRelay,
@@ -171,13 +177,21 @@ export function watchLobbyRelayAsks(
 }
 
 /**
- * Publish a finished match's record on Nostr (#2528). The broadcast
- * build, which e2e runs, publishes nothing: a test match never reaches
- * the public relays.
+ * Publish a finished match's record (#2528), on the same switch: on
+ * Nostr, or in the broadcast build, which e2e runs, on a channel between
+ * its tabs (#2585), so a test match never reaches the public relays.
  */
 export function publishRecord(record: MatchRecord): void {
   if (import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast") {
+    publishBroadcastRecord(record);
     return;
   }
   publishMatchRecord(record);
+}
+
+/** Watch the finished matches (#2532) until closed, where `publishRecord` posts them. */
+export function watchRecords(on: MatchRecordWatchHandlers): MatchRecordWatch {
+  return import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast"
+    ? watchBroadcastRecords(on)
+    : watchMatchRecords(on);
 }

@@ -675,6 +675,11 @@ const mode = {
   characters: () => solid(helm(12, 16, 4)) + solid("M10.5 4.5V2H13.5V4.5Z"),
   // Three helmets in a row, the middle one taller: the team.
   teams: () => solid(helm(5, 7, 7.5)) + solid(helm(12, 8.4, 3)) + solid(helm(19, 7, 7.5)),
+  // A trophy on its plinth: the matches played, and who won them.
+  matches: () =>
+    solid(
+      "M6.5 2.5H17.5V8.5A5.5 5.5 0 0 1 6.5 8.5Z" + "M11 13.5H13V17.5H11Z" + "M7 17.5H17V21.5H7Z",
+    ) + rule("M6.5 4.5H3.5V6.5A4 4 0 0 0 7.5 10.5M17.5 4.5H20.5V6.5A4 4 0 0 1 16.5 10.5", 1.6),
 };
 
 /** @type {Record<string, Record<string, string>>} */

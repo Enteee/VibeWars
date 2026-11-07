@@ -13,14 +13,15 @@ import { queueLine, type RailParty } from "./lobby-window.js";
 
 /**
  * The mode rail on the left of the menu (#1525, #1522 variant C): the
- * five modes, top to bottom, then Character Builder and Team Builder at
- * its bottom. Each entry is a screen of its own; the one shown is marked.
+ * five modes, top to bottom, then Character Builder, Team Builder and
+ * Matches at its bottom. Each entry is a screen of its own; the one
+ * shown is marked.
  * The modes are the lobby's (#1526): a guest's follow its host, and are
  * locked; the builders are everyone's.
  */
 
-/** A screen the rail opens: a lobby's mode, or a builder. */
-export type RailEntry = LobbyMode | "characters" | "teams";
+/** A screen the rail opens: a lobby's mode, a builder, or the Matches page. */
+export type RailEntry = LobbyMode | "characters" | "teams" | "matches";
 
 /** A guest's mode entries say why they do not open (#1526). */
 export const HOST_PICKS_MODE = "The host picks the mode";
@@ -42,14 +43,15 @@ export const RAIL: readonly RailItem[] = [
   { entry: "hosted-game", label: "Hosted Game", short: "Hosted" },
   { entry: "characters", label: "Character Builder", short: "Characters" },
   { entry: "teams", label: "Team Builder", short: "Teams" },
+  { entry: "matches", label: "Matches", short: "Matches" },
 ];
 
 /** The first builder: the divider goes above it. */
 const FIRST_BUILDER: RailEntry = "characters";
 
-/** Whether `entry` is one of the lobby's modes, not a builder. */
+/** Whether `entry` is one of the lobby's modes, not a builder or the Matches page. */
 export function isModeEntry(entry: RailEntry): entry is LobbyMode {
-  return entry !== "characters" && entry !== "teams";
+  return entry !== "characters" && entry !== "teams" && entry !== "matches";
 }
 
 export type { TeamSize };
@@ -70,6 +72,7 @@ export const TEAM_SIZES_BY_ENTRY: Readonly<Record<RailEntry, readonly TeamSize[]
   "hosted-game": [1, 2, 4, 8],
   characters: [],
   teams: TEAM_BUILD_SIZES,
+  matches: [],
 };
 
 /** The stepper's title on a screen with no team size. */

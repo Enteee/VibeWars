@@ -779,7 +779,7 @@ describe("the approach on Arena Alpha (#211)", () => {
     return [segment(a, b), segment(b, c), segment(c, d), segment(d, a)];
   }
 
-  /** Arena Alpha's three walls (packages/game-maps/maps/arena-alpha). */
+  /** The three walls of Arena Alpha, removed in #2547, kept as a fixture. */
   const WALLS = [...rect(440, 0, 24, 260), ...rect(440, 380, 24, 260), ...rect(300, 300, 120, 24)];
 
   function arena(walls: readonly Segment[], ...participants: ParticipantSpec[]): MatchSimulation {
