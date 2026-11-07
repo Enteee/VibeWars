@@ -194,10 +194,10 @@ export function everyJobSucceeded(runs) {
  * A seat may be held by several employees (`perf-sec-qa`, `perf-sec-qa@2`),
  * and one's approval never overrides another's objection (#2748). Each
  * employee's latest verdict counts; a `request-changes` by A at commit S
- * blocks until A approves, or until anyone in the seat approves another
- * commit after it: the author pushed and the seat re-reviewed. B approving
- * S itself leaves A's objection standing, and a push nobody re-reviewed
- * clears nothing. A ledger line without `by` is malformed and skipped.
+ * blocks until A approves, or until anyone in the seat approves the head
+ * being merged, after it and other than S: the author pushed and the seat
+ * re-reviewed. B approving S itself, or any commit but the head, leaves A's
+ * objection standing, and a push nobody re-reviewed clears nothing. A ledger line without `by` is malformed and skipped.
  *
  * @param {Approval[]} ledger Every verdict ever recorded, any order.
  * @param {{ pr: number, sha: string, required: string[] }} target
@@ -228,7 +228,10 @@ export function approvalsSatisfied(ledger, target) {
       }
       const reReviewed = seat
         .slice(index + 1)
-        .some((entry) => entry.verdict === "approve" && entry.sha !== objection.sha);
+        .some(
+          (entry) =>
+            entry.verdict === "approve" && entry.sha === target.sha && entry.sha !== objection.sha,
+        );
       return reReviewed ? [] : [`${role} (${objection.by})`];
     });
 

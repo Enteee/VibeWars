@@ -391,6 +391,38 @@ describe("approvalsSatisfied", () => {
       expect(verdict).toMatchObject({ ok: true });
     });
 
+    it("does not clear an objection with a later approval of an older commit", () => {
+      const OLDEST = "cccccccccccccccccccccccccccccccccccccccc";
+      const verdict = approvalsSatisfied(
+        [
+          entry("lead-dev", "approve", SHA, 4),
+          entry("perf-sec-qa", "request-changes", OLDER, 2, A),
+          entry("perf-sec-qa", "approve", OLDEST, 3, B),
+          entry("perf-sec-qa", "approve", SHA, 1, B),
+        ],
+        { pr: 22, sha: SHA, required },
+      );
+
+      expect(verdict).toMatchObject({
+        ok: false,
+        changesRequested: ["perf-sec-qa (perf-sec-qa@2)"],
+      });
+    });
+
+    it("does not clear an objection at the head with a slow approval of the previous one", () => {
+      const verdict = approvalsSatisfied(
+        [
+          lead,
+          entry("perf-sec-qa", "request-changes", SHA, 2, A),
+          entry("perf-sec-qa", "approve", OLDER, 3, B),
+          entry("perf-sec-qa", "approve", SHA, 4, B),
+        ],
+        { pr: 22, sha: SHA, required },
+      );
+
+      expect(verdict).toMatchObject({ ok: false });
+    });
+
     it("does not clear an objection with a push nobody re-reviewed", () => {
       const verdict = approvalsSatisfied(
         [
