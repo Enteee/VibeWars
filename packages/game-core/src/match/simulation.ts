@@ -3131,6 +3131,7 @@ export class MatchSimulation {
         whileActivating: undefined,
         rule,
         targetHadLessHealth: this.#hasLessHealth(record, castTargetId),
+        ordinal: record.combatant.cast.nextOrdinal(),
       },
       0,
     );

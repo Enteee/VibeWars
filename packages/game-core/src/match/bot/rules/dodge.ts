@@ -1,7 +1,7 @@
 import type { Projectile } from "../../../skills/projectile.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
 import type { BehaviourContext } from "../../behaviour.js";
-import { DODGE_CHANCE, dodgeRoll, NOTHING } from "./shared.js";
+import { DODGE_CHANCE, botRoll, NOTHING } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -39,7 +39,7 @@ const dodge: BotRule = {
         (shot === undefined ||
           projectile.flightSeconds - projectile.elapsed < shot.flightSeconds - shot.elapsed) &&
         fromFoe(context, projectile.attackerId, self.combatant.team) &&
-        dodgeRoll(context.seed, projectile.id, self.id) < DODGE_CHANCE
+        botRoll(context.seed, projectile.id, self.id) < DODGE_CHANCE
       ) {
         shot = projectile;
       }

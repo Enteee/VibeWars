@@ -91,6 +91,11 @@ export interface ActiveCast {
    * Spoil Victor reads. `false` with no target.
    */
   readonly targetHadLessHealth: boolean;
+  /**
+   * The how-many-th cast its caster began, from 0 (#2633): what tells two
+   * casts of one skill apart, so a bot rolls once for each.
+   */
+  readonly ordinal: number;
 }
 
 /**
@@ -141,6 +146,8 @@ export class CastState {
   readonly #ownerId: string;
   readonly #statuses: StatusSet;
   #activeCast: ActiveCast | undefined;
+  /** How many casts it has begun: the next one's `ordinal`. */
+  #castsBegun = 0;
   /** Each skill's recharge, and apart from it its disable (#914): `[remaining, total]`. */
   readonly #recharge = new Map<string, Wait>();
   readonly #disabled = new Map<string, Wait>();
@@ -238,11 +245,19 @@ export class CastState {
       whileActivating: bears,
       rule,
       targetHadLessHealth,
+      ordinal: this.nextOrdinal(),
     };
     if (bears !== undefined) {
       // No `whileActivating` status scales (#1976).
       this.#statuses.apply(bears, Number.POSITIVE_INFINITY, this.#ownerId, NO_RANKS);
     }
+  }
+
+  /** The `ordinal` of the cast it begins next, mid-action ones included (#2633). */
+  public nextOrdinal(): number {
+    const ordinal = this.#castsBegun;
+    this.#castsBegun += 1;
+    return ordinal;
   }
 
   /** The cast is over, however it ended: its `whileActivating` status goes with it. */
