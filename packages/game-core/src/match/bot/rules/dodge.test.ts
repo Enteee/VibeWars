@@ -8,7 +8,7 @@ import type { BehaviourContext } from "../../behaviour.js";
 import type { CombatLogEntry } from "../../combat-log.js";
 import type { MatchSimulation } from "../../simulation.js";
 import dodge from "./dodge.js";
-import { DODGE_CHANCE, dodgeRoll } from "./shared.js";
+import { DODGE_CHANCE, botRoll } from "./shared.js";
 import { BOT, CONTEXT_SEED, DT, body, match, ruleFor } from "./test-support.js";
 
 const FIREBALL = "elementalist.fireball";
@@ -18,7 +18,7 @@ const STEP = 9;
 /** The first projectile id at or after `from` whose coin for "dodger" is under (or over) the chance. */
 function idWhere(under: boolean, from = 0): number {
   for (let id = from; ; id += 1) {
-    if (dodgeRoll(CONTEXT_SEED, id, "dodger") < DODGE_CHANCE === under) return id;
+    if (botRoll(CONTEXT_SEED, id, "dodger") < DODGE_CHANCE === under) return id;
   }
 }
 const DODGES = idWhere(true);
@@ -134,17 +134,17 @@ describe("play-build's dodge (#2590)", () => {
   });
 });
 
-describe("dodgeRoll (#2590)", () => {
+describe("botRoll (#2590)", () => {
   it("is a pure function of the match seed, the shot and the bot", () => {
-    expect(dodgeRoll(1, 7, "bot-a")).toBe(dodgeRoll(1, 7, "bot-a"));
-    expect(dodgeRoll(1, 7, "bot-a")).not.toBe(dodgeRoll(1, 7, "bot-b"));
-    expect(dodgeRoll(1, 7, "bot-a")).not.toBe(dodgeRoll(2, 7, "bot-a"));
+    expect(botRoll(1, 7, "bot-a")).toBe(botRoll(1, 7, "bot-a"));
+    expect(botRoll(1, 7, "bot-a")).not.toBe(botRoll(1, 7, "bot-b"));
+    expect(botRoll(1, 7, "bot-a")).not.toBe(botRoll(2, 7, "bot-a"));
   });
 
   it("is under the chance for about half of a thousand shots", () => {
     let under = 0;
     for (let id = 0; id < 1000; id += 1) {
-      const roll = dodgeRoll(1, id, "dodger");
+      const roll = botRoll(1, id, "dodger");
       expect(roll).toBeGreaterThanOrEqual(0);
       expect(roll).toBeLessThan(1);
       if (roll < DODGE_CHANCE) under += 1;

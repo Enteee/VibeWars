@@ -232,19 +232,23 @@ export const REST_FRACTION = 0.7;
 /** The share of the skill shots aimed at it a bot side-steps (#2590). */
 export const DODGE_CHANCE = 0.5;
 
+/** The share of the casts worth it a bot tries to interrupt (#2633); it misses the rest. */
+export const INTERRUPT_CHANCE = 0.75;
+
 /**
- * A bot's coin for one shot (#2590), in [0, 1): a pure hash of the match's
- * `seed`, the shot's `projectileId` and the bot's `participantId`, FNV-1a
- * then a 32-bit finaliser. No RNG state, so a replay dodges the same
- * shots; the seed in it, so no id is the luckier one in every match (#2624).
+ * A bot's coin for one thing it may react to, in [0, 1): a shot to dodge
+ * (#2590) or a cast to interrupt (#2633). A pure hash of the match's
+ * `seed`, the thing's `id` and the `key` of who rolls for it, FNV-1a then
+ * a 32-bit finaliser. No RNG state, so a replay rolls the same; the seed
+ * in it, so no id is the luckier one in every match (#2624).
  */
-export function dodgeRoll(seed: number, projectileId: number, participantId: string): number {
-  return roll(participantId, projectileId, 0x811c9dc5 ^ seed);
+export function botRoll(seed: number, id: number, key: string): number {
+  return roll(key, id, 0x811c9dc5 ^ seed);
 }
 
 /**
  * How long a bot holds its `thinks`-th decision (#2606), in
- * `reaction`'s `[minSeconds, maxSeconds)`: as `dodgeRoll`, a pure hash of
+ * `reaction`'s `[minSeconds, maxSeconds)`: as `botRoll`, a pure hash of
  * the match's `seed`, its `participantId` and `thinks`, on its own basis
  * so it does not follow the dodge coin. No RNG state, so a replay reacts
  * as late.

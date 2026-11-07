@@ -41,6 +41,12 @@ Bots side-step about half the skill shots aimed at them, such as a
 Fireball or an attack skill's arrow, so stopping or turning works for
 them as it does for you.
 
+A bot with an interrupt saves it for the casts that matter: a
+resurrection first, then a heal or a protection, an elite skill, or a big
+hit such as an attack skill or a damage spell. It lets everything else,
+and a plain weapon blow, go through. Like a player, it misses about one
+in four of those casts.
+
 A bot takes a human-like moment, a fraction of a second, to react to
 what happens, so a quick interrupt or a late dodge can beat it.
 
