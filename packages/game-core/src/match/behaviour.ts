@@ -264,6 +264,8 @@ export interface BehaviourContext {
   readonly objectives: BotObjectives;
   /** The shots in flight (#2590), in release order. */
   readonly projectiles: readonly Readonly<Projectile>[];
+  /** The match's seed as a number, mixed into a bot's rolls (#2624). */
+  readonly seed: number;
 }
 
 /**

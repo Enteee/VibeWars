@@ -39,7 +39,7 @@ const dodge: BotRule = {
         (shot === undefined ||
           projectile.flightSeconds - projectile.elapsed < shot.flightSeconds - shot.elapsed) &&
         fromFoe(context, projectile.attackerId, self.combatant.team) &&
-        dodgeRoll(projectile.id, self.id) < DODGE_CHANCE
+        dodgeRoll(context.seed, projectile.id, self.id) < DODGE_CHANCE
       ) {
         shot = projectile;
       }

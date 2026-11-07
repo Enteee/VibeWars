@@ -230,23 +230,30 @@ export const REST_FRACTION = 0.7;
 export const DODGE_CHANCE = 0.5;
 
 /**
- * A bot's coin for one shot (#2590), in [0, 1): a pure hash of the shot's
- * `projectileId` and the bot's `participantId`, FNV-1a then a 32-bit
- * finaliser. No RNG state, so a replay dodges the same shots.
+ * A bot's coin for one shot (#2590), in [0, 1): a pure hash of the match's
+ * `seed`, the shot's `projectileId` and the bot's `participantId`, FNV-1a
+ * then a 32-bit finaliser. No RNG state, so a replay dodges the same
+ * shots; the seed in it, so no id is the luckier one in every match (#2624).
  */
-export function dodgeRoll(projectileId: number, participantId: string): number {
-  return roll(participantId, projectileId, 0x811c9dc5);
+export function dodgeRoll(seed: number, projectileId: number, participantId: string): number {
+  return roll(participantId, projectileId, 0x811c9dc5 ^ seed);
 }
 
 /**
  * How long a bot holds its `thinks`-th decision (#2606), in
  * `reaction`'s `[minSeconds, maxSeconds)`: as `dodgeRoll`, a pure hash of
- * its `participantId` and `thinks`, on its own basis so it does not follow
- * the dodge coin. No RNG state, so a replay reacts as late.
+ * the match's `seed`, its `participantId` and `thinks`, on its own basis
+ * so it does not follow the dodge coin. No RNG state, so a replay reacts
+ * as late.
  */
-export function reactionSeconds(reaction: Reaction, participantId: string, thinks: number): number {
+export function reactionSeconds(
+  reaction: Reaction,
+  seed: number,
+  participantId: string,
+  thinks: number,
+): number {
   const span = reaction.maxSeconds - reaction.minSeconds;
-  return reaction.minSeconds + span * roll(participantId, thinks, 0x9e3779b9);
+  return reaction.minSeconds + span * roll(participantId, thinks, 0x9e3779b9 ^ seed);
 }
 
 /** FNV-1a of `text` then `value` from `basis`, then a 32-bit finaliser: in [0, 1). */
