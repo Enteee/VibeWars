@@ -11,6 +11,8 @@ import {
   type SkillEffect,
 } from "@vibewars/game-core";
 
+import { t, type MessageKey } from "../i18n/index.js";
+
 /**
  * The Training Ground's combat log and meter, as pure functions (#2
  * §6.5). No DOM: the panel paints what these return, and vitest checks
@@ -37,8 +39,9 @@ export interface LogFold {
   readonly amount: number;
   readonly startedAt: number;
   readonly endedAt: number;
-  /** The text before " for ", e.g. "regeneration heals You". */
-  readonly label: string;
+  /** Who healed, e.g. "regeneration", and whom, e.g. "You". */
+  readonly by: string;
+  readonly target: string;
 }
 
 /** `m:ss.t`, the session clock as the log shows it. */
@@ -111,15 +114,13 @@ function skillName(skillId: string | undefined): string | undefined {
   return skillId === undefined ? undefined : (getSkill(skillId)?.name ?? skillId);
 }
 
-/** One event as a sentence a player can learn from. */
 /**
- * " (must follow an off-hand attack)", " (only if target is knocked
- * down)": what a chain attack out of sequence needed (#831, #885, #1041).
+ * "must follow an off-hand attack", "only if target is knocked down":
+ * what a chain attack out of sequence needed (#831, #885, #1041).
  */
-function outOfSequence(skillId: string | undefined): string {
+function outOfSequence(skillId: string | undefined): string | undefined {
   const skill = skillId === undefined ? undefined : getSkill(skillId);
-  const needed = skill === undefined ? undefined : chainRequirementText(skill);
-  return needed === undefined ? "" : ` (${needed})`;
+  return skill === undefined ? undefined : chainRequirementText(skill);
 }
 
 /**
@@ -127,12 +128,12 @@ function outOfSequence(skillId: string | undefined): string {
  * (#796, #1008), found among the skill's effects or what its ground
  * effect lands (#1367).
  */
-function interruptRefusal(skillId: string | undefined): string {
+function interruptRefusal(skillId: string | undefined): MessageKey {
   const effects = skillId === undefined ? [] : (getSkill(skillId)?.effects ?? []);
   const interrupt = effects.flatMap(withLanded).find((effect) => effect.kind === "interrupt");
   return interrupt?.kind === "interrupt" && interrupt.only === "spell"
-    ? "not a spell"
-    : "not a spell or chant";
+    ? "combat.interruptRefusedNotSpell"
+    : "combat.interruptRefusedNotSpellOrChant";
 }
 
 /** An effect, then what its trap's spring or its pulse lands, if it is a ground effect. */
@@ -150,36 +151,37 @@ function withLanded(effect: SkillEffect): readonly SkillEffect[] {
   }
 }
 
-export function describeCombatEvent(
+/**
+ * Who or what an entry's event came from, as a row names it: "Fireball
+ * (You)", "Longbow (You)" for a weapon swing (#162), "Soul Reaping (You)"
+ * for an attribute (#633), or, for a status tick, GW1's word for which
+ * way it went (#151): regeneration heals, degeneration hurts. The source,
+ * when exactly one is known.
+ */
+function sourceOf(
   entry: Pick<CombatLogEntry, "cause" | "sourceId" | "skillId" | "weaponId" | "attributeId">,
   event: CombatEvent,
   nameOf: (id: string) => string,
   isCreature: (id: string) => boolean,
-): string {
-  const target = nameOf(event.targetId);
-  const skill = skillName(entry.skillId);
+): { readonly by: string; readonly attribute: string | undefined } {
   const source = entry.sourceId === undefined ? undefined : nameOf(entry.sourceId);
-  // "Fireball (You)", "Longbow (You)" for a weapon swing (#162), "Soul
-  // Reaping (You)" for an attribute (#633), or, for a status tick, GW1's
-  // word for which way it went (#151): regeneration heals, degeneration
-  // hurts. The source, when exactly one is known.
   const attribute =
     entry.cause === "attribute"
-      ? (getAttribute(entry.attributeId ?? "")?.name ?? "an attribute")
+      ? (getAttribute(entry.attributeId ?? "")?.name ?? t("combat.sourceAttribute"))
       : undefined;
   const what =
     attribute ??
     (entry.cause === "weapon"
-      ? (getWeapon(entry.weaponId ?? "")?.name ?? "a weapon")
+      ? (getWeapon(entry.weaponId ?? "")?.name ?? t("combat.sourceWeapon"))
       : entry.cause === "degeneration"
-        ? event.kind === "heal"
-          ? "regeneration"
-          : "degeneration"
-        : (skill ??
+        ? t(event.kind === "heal" ? "combat.sourceRegeneration" : "combat.sourceDegeneration")
+        : (skillName(entry.skillId) ??
           // A Guild Battle's shrine raises on its own (#1222): nobody's, no skill.
-          (entry.cause === "skill" && entry.sourceId === undefined && event.kind === "resurrected"
-            ? "The shrine"
-            : "a skill")));
+          t(
+            entry.cause === "skill" && entry.sourceId === undefined && event.kind === "resurrected"
+              ? "combat.sourceShrine"
+              : "combat.sourceSkill",
+          )));
   // A creature swings its own jaws or bones: "Wolf hits Bob", not
   // "Unarmed (Wolf)" (#1144); a priest raises with no skill: "Priest
   // resurrects Bob" (#1186).
@@ -187,118 +189,202 @@ export function describeCombatEvent(
     (entry.cause === "weapon" || (entry.cause === "skill" && entry.skillId === undefined)) &&
     entry.sourceId !== undefined &&
     isCreature(entry.sourceId);
-  const by =
-    byCreature && source !== undefined
-      ? source
-      : `${what}${source === undefined ? "" : ` (${source})`}`;
+  return {
+    by: byCreature && source !== undefined ? source : withSource(what, source),
+    attribute,
+  };
+}
+
+/** "Fireball (You)": `what`, and whose it was if anyone's. */
+function withSource(what: string, source: string | undefined): string {
+  return source === undefined ? what : t("combat.bySource", { what, source });
+}
+
+/** One event as a sentence a player can learn from. */
+export function describeCombatEvent(
+  entry: Pick<CombatLogEntry, "cause" | "sourceId" | "skillId" | "weaponId" | "attributeId">,
+  event: CombatEvent,
+  nameOf: (id: string) => string,
+  isCreature: (id: string) => boolean,
+): string {
+  const target = nameOf(event.targetId);
+  const source = entry.sourceId === undefined ? undefined : nameOf(entry.sourceId);
+  const { by, attribute } = sourceOf(entry, event, nameOf, isCreature);
   switch (event.kind) {
     case "damage":
-      return `${by} hits ${target} for ${formatAmount(event.amount)}${event.critical ? ", a critical hit" : ""}`;
+      return t(event.critical ? "combat.hitCritical" : "combat.hit", {
+        by,
+        target,
+        amount: formatAmount(event.amount),
+      });
     case "heal":
-      return `${by} heals ${target} for ${formatAmount(event.amount)}`;
+      return t("combat.heal", { by, target, amount: formatAmount(event.amount) });
     case "energy-gain":
-      return `${target} gains ${formatAmount(event.amount)} energy${attribute === undefined ? "" : ` from ${attribute}`}`;
+      return attribute === undefined
+        ? t("combat.energyGain", { target, amount: formatAmount(event.amount) })
+        : t("combat.energyGainFrom", { target, amount: formatAmount(event.amount), attribute });
     case "energy-loss":
-      return `${target} loses ${formatAmount(event.amount)} energy to ${by}`;
+      return t("combat.energyLoss", { target, amount: formatAmount(event.amount), by });
     case "health-lost":
       // Named for the status, not the skill that brought it: not a second hit.
-      return `${STATUS_DEFINITIONS[event.statusId].name}${source === undefined ? "" : ` (${source})`} takes ${formatAmount(event.amount)} health from ${target}`;
+      return t("combat.healthLost", {
+        status: withSource(STATUS_DEFINITIONS[event.statusId].name, source),
+        amount: formatAmount(event.amount),
+        target,
+      });
     case "sacrifice":
-      return `${target} sacrifices ${formatAmount(event.amount)} health`;
+      return t("combat.sacrifice", { target, amount: formatAmount(event.amount) });
     case "health-loss":
-      return `${target} loses ${formatAmount(event.amount)} Health to ${by}`;
+      return t("combat.healthLoss", { target, amount: formatAmount(event.amount), by });
     case "life-stolen":
-      return `${by} steals ${formatAmount(event.amount)} health from ${target}`;
+      return t("combat.lifeStolen", { by, amount: formatAmount(event.amount), target });
     case "death":
-      return `${target} dies`;
+      return t("combat.death", { target });
     case "creature-destroyed":
-      return `${by} destroys ${target}`;
+      return t("combat.creatureDestroyed", { by, target });
     case "resurrected":
-      return `${by} resurrects ${target} (${percent(event.healthFraction)} health, ${percent(event.energyFraction)} energy)`;
-    case "status-applied":
-      return `${target} gains ${STATUS_DEFINITIONS[event.statusId].name} (${
-        event.durationSeconds !== null
-          ? `${formatAmount(event.durationSeconds)} s`
-          : // No end of its own, and no upkeep either (#1789).
+      return t("combat.resurrected", {
+        by,
+        target,
+        health: percent(event.healthFraction),
+        energy: percent(event.energyFraction),
+      });
+    case "status-applied": {
+      const status = STATUS_DEFINITIONS[event.statusId].name;
+      return event.durationSeconds !== null
+        ? t("combat.statusApplied", {
+            target,
+            status,
+            seconds: formatAmount(event.durationSeconds),
+          })
+        : // No end of its own, and no upkeep either (#1789).
+          t(
             MAINTAINED_STATUSES.has(event.statusId)
-            ? "maintained"
-            : "until it ends"
-      })`;
+              ? "combat.statusAppliedMaintained"
+              : "combat.statusAppliedUntilEnds",
+            { target, status },
+          );
+    }
     case "status-removed":
-      return `${by} removes ${STATUS_DEFINITIONS[event.statusId].name} from ${target}`;
+      return t("combat.statusRemoved", {
+        by,
+        status: STATUS_DEFINITIONS[event.statusId].name,
+        target,
+      });
     case "status-expired":
-      return `${STATUS_DEFINITIONS[event.statusId].name} ends on ${target}`;
+      return t("combat.statusExpired", { status: STATUS_DEFINITIONS[event.statusId].name, target });
     case "upkeep-lost":
       // GW1 tells the caster alone; the log names them (#837).
-      return `${STATUS_DEFINITIONS[event.statusId].name} on ${target} was lost: ${nameOf(event.casterId)} could not pay the upkeep`;
+      return t("combat.upkeepLost", {
+        status: STATUS_DEFINITIONS[event.statusId].name,
+        target,
+        caster: nameOf(event.casterId),
+      });
     case "status-spread":
-      return `${target} catches ${STATUS_DEFINITIONS[event.statusId].name} from ${nameOf(event.fromId)}`;
+      return t("combat.statusSpread", {
+        target,
+        status: STATUS_DEFINITIONS[event.statusId].name,
+        from: nameOf(event.fromId),
+      });
     case "interrupted":
-      return `${by} interrupts ${target}'s ${skillName(event.skillId) ?? event.skillId}`;
+      return t("combat.interrupted", {
+        by,
+        target,
+        skill: skillName(event.skillId) ?? event.skillId,
+      });
     case "attack-interrupted":
-      return `${by} interrupts ${target}'s attack`;
+      return t("combat.attackInterrupted", { by, target });
     case "cancelled":
-      return `${target} cancels ${skillName(event.skillId) ?? event.skillId}`;
+      return t("combat.cancelled", { target, skill: skillName(event.skillId) ?? event.skillId });
     case "spell-failed":
-      return `${target}'s ${skillName(event.skillId) ?? event.skillId} fails`;
+      return t("combat.spellFailed", { target, skill: skillName(event.skillId) ?? event.skillId });
     case "interrupt-missed":
       // A picky interrupt says why it let a cast through (#796).
       return event.refusedSkillId === null
-        ? `${by} finds nothing to interrupt on ${target}`
-        : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: ${interruptRefusal(entry.skillId)}`;
-    case "attack-missed":
-      return `${by} misses ${target}${event.reason === "out-of-sequence" ? outOfSequence(entry.skillId) : ""}`;
+        ? t("combat.interruptMissed", { by, target })
+        : t(interruptRefusal(entry.skillId), {
+            by,
+            target,
+            skill: skillName(event.refusedSkillId) ?? event.refusedSkillId,
+          });
+    case "attack-missed": {
+      const needed = event.reason === "out-of-sequence" ? outOfSequence(entry.skillId) : undefined;
+      return needed === undefined
+        ? t("combat.miss", { by, target })
+        : t("combat.missOutOfSequence", { by, target, requirement: needed });
+    }
     case "attack-blocked":
-      return `${target} blocks ${by}`;
+      return t("combat.blocked", { target, by });
     case "invulnerable":
       // A shrine raise's window (#1208) turned it away (#1233).
-      return `${by}: ${target} is invulnerable`;
+      return t("combat.invulnerable", { by, target });
     case "attack-dodged":
-      return `${target} dodges ${by}`;
+      return t("combat.dodged", { target, by });
     case "attack-backfired":
-      return `${by}'s blow at ${target} backfires`;
+      return t("combat.backfired", { by, target });
     case "attack-obstructed":
-      return `${by} is obstructed on the way to ${target}`;
+      return t("combat.obstructed", { by, target });
     case "attack-unreachable":
-      return `${by} can't reach ${target}`;
+      return t("combat.unreachable", { by, target });
     case "knocked-down":
-      return `${by} knocks down ${target} (${formatAmount(event.durationSeconds)} s)`;
+      return t("combat.knockedDown", {
+        by,
+        target,
+        seconds: formatAmount(event.durationSeconds),
+      });
     case "skill-disabled":
-      return `${by} disables ${target}'s ${skillName(event.skillId) ?? event.skillId} for ${formatAmount(event.seconds)} s`;
+      return t("combat.skillDisabled", {
+        by,
+        target,
+        skill: skillName(event.skillId) ?? event.skillId,
+        seconds: formatAmount(event.seconds),
+      });
     case "recharge-lengthened":
-      return `${target}'s ${skillName(event.skillId) ?? event.skillId} takes ${formatAmount(event.seconds)} s longer to recharge`;
+      return t("combat.rechargeLengthened", {
+        target,
+        skill: skillName(event.skillId) ?? event.skillId,
+        seconds: formatAmount(event.seconds),
+      });
     case "shadow-stepped":
-      return `${target} shadow steps to ${nameOf(event.toId)}`;
+      return t("combat.shadowStepped", { target, to: nameOf(event.toId) });
     case "shadow-stepped-away":
-      return `${target} shadow steps away`;
+      return t("combat.shadowSteppedAway", { target });
     case "shadow-stepped-back":
-      return `${target} shadow steps back`;
+      return t("combat.shadowSteppedBack", { target });
     case "shadow-swapped":
-      return `${target} swaps places with ${nameOf(event.withId)}`;
+      return t("combat.shadowSwapped", { target, other: nameOf(event.withId) });
     case "teleported":
-      return `${target} is teleported to ${nameOf(event.toId)}`;
+      return t("combat.teleported", { target, to: nameOf(event.toId) });
     case "companion-stepped":
-      return `${target} leaps to ${nameOf(event.toId)}`;
-    case "skill-used":
-      return `${nameOf(event.casterId)} uses ${skillName(event.skillId) ?? event.skillId}${event.targetId === event.casterId ? "" : ` on ${target}`}`;
-    case "adrenaline-gained": {
-      const from = skillName(event.skillId ?? entry.skillId);
-      return `${target} gains ${adrenalineOf(event.strikes)}${from === undefined ? "" : ` from ${from}`}`;
+      return t("combat.companionStepped", { target, to: nameOf(event.toId) });
+    case "skill-used": {
+      const caster = nameOf(event.casterId);
+      const skill = skillName(event.skillId) ?? event.skillId;
+      return event.targetId === event.casterId
+        ? t("combat.skillUsed", { caster, skill })
+        : t("combat.skillUsedOn", { caster, skill, target });
     }
+    case "adrenaline-gained":
+      return adrenalineGained(target, event.strikes, skillName(event.skillId ?? entry.skillId));
     case "effect-skipped":
-      return `${by}: no effect, ${event.requirement}`;
+      return t("combat.effectSkipped", { by, requirement: event.requirement });
   }
 }
 
 /**
- * "1 strike of adrenaline", "3 strikes of adrenaline"; points short of a
- * whole strike (#2302) as GW1 words them, "4 adrenaline".
+ * "You gain 1 strike of adrenaline", "3 strikes of adrenaline"; points
+ * short of a whole strike (#2302) as GW1 words them, "4 adrenaline".
  */
-function adrenalineOf(strikes: number): string {
+function adrenalineGained(target: string, strikes: number, skill: string | undefined): string {
   if (!Number.isInteger(strikes)) {
-    return `${String(Math.round(strikes * ADRENALINE_PER_STRIKE))} adrenaline`;
+    const points = String(Math.round(strikes * ADRENALINE_PER_STRIKE));
+    return skill === undefined
+      ? t("combat.adrenalinePoints", { target, points })
+      : t("combat.adrenalinePointsFrom", { target, points, skill });
   }
-  return `${String(strikes)} ${strikes === 1 ? "strike" : "strikes"} of adrenaline`;
+  return skill === undefined
+    ? t("combat.adrenalineStrikes", { target, count: strikes })
+    : t("combat.adrenalineStrikesFrom", { target, count: strikes, skill });
 }
 
 /**
@@ -308,7 +394,7 @@ function adrenalineOf(strikes: number): string {
  */
 function hitAdrenaline(event: CombatEvent, hit: LogRow | undefined): LogRow | undefined {
   return event.kind === "adrenaline-gained" && event.skillId === undefined && hit !== undefined
-    ? { ...hit, text: `${hit.text}, +${String(event.strikes)} adrenaline` }
+    ? { ...hit, text: t("combat.hitAdrenaline", { hit: hit.text, strikes: String(event.strikes) }) }
     : undefined;
 }
 
@@ -462,21 +548,19 @@ export class StatusTickBatcher {
         continue;
       }
       const atSeconds = closedAt(open);
-      const row = combatEventToRow(
-        {
-          atSeconds,
-          cause: "degeneration",
-          sourceId: open.sourceId,
-          skillId: undefined,
-          weaponId: undefined,
-          attributeId: undefined,
-        },
+      const tickEntry = {
+        atSeconds,
+        cause: "degeneration",
+        sourceId: open.sourceId,
+        skillId: undefined,
+        weaponId: undefined,
+        attributeId: undefined,
+      } as const;
+      const event: CombatEvent =
         open.kind === "damage"
           ? { kind: open.kind, targetId: open.targetId, amount: open.amount, critical: false }
-          : { kind: open.kind, targetId: open.targetId, amount: open.amount },
-        nameOf,
-        isCreature,
-      );
+          : { kind: open.kind, targetId: open.targetId, amount: open.amount };
+      const row = combatEventToRow(tickEntry, event, nameOf, isCreature);
       // Degeneration stays tick by tick: a damage run is worth reading.
       rows.push(
         open.kind === "heal"
@@ -487,7 +571,8 @@ export class StatusTickBatcher {
                 amount: open.amount,
                 startedAt: atSeconds,
                 endedAt: atSeconds,
-                label: row.text.slice(0, row.text.lastIndexOf(" for ")),
+                by: sourceOf(tickEntry, event, nameOf, isCreature).by,
+                target: nameOf(open.targetId),
               },
             }
           : row,
@@ -508,8 +593,11 @@ export function dividerRow(label: string, atSeconds: number): LogRow {
  */
 export function foldedText(fold: LogFold): string {
   const span = fold.endedAt - fold.startedAt;
-  const total = `${fold.label} for ${formatAmount(fold.amount)}`;
-  return span === 0 ? total : `${total} over ${formatAmount(span)} s`;
+  const { by, target } = fold;
+  const amount = formatAmount(fold.amount);
+  return span === 0
+    ? t("combat.heal", { by, target, amount })
+    : t("combat.healOver", { by, target, amount, seconds: formatAmount(span) });
 }
 
 /**
@@ -645,22 +733,33 @@ export function formatRate(rate: number): string {
 }
 
 export interface MeterRow {
+  /** What the row is, for `data-meter`: the same in every language. */
+  readonly id: string;
   readonly label: string;
   readonly value: string;
 }
 
 export function meterRows(totals: MeterTotals): readonly MeterRow[] {
   return [
-    { label: "dps", value: formatRate(perSecond(totals.damage, totals.seconds)) },
-    { label: "hps", value: formatRate(perSecond(totals.healing, totals.seconds)) },
-    { label: "damage", value: formatAmount(totals.damage) },
     {
-      label: "weapon / skills",
+      id: "dps",
+      label: t("combat.meterDps"),
+      value: formatRate(perSecond(totals.damage, totals.seconds)),
+    },
+    {
+      id: "hps",
+      label: t("combat.meterHps"),
+      value: formatRate(perSecond(totals.healing, totals.seconds)),
+    },
+    { id: "damage", label: t("combat.meterDamage"), value: formatAmount(totals.damage) },
+    {
+      id: "weapon-skills",
+      label: t("combat.meterWeaponSkills"),
       value: `${formatAmount(totals.weaponDamage)} / ${formatAmount(totals.damage - totals.weaponDamage)}`,
     },
-    { label: "healing", value: formatAmount(totals.healing) },
-    { label: "taken", value: formatAmount(totals.taken) },
-    { label: "time", value: formatSimClock(totals.seconds) },
+    { id: "healing", label: t("combat.meterHealing"), value: formatAmount(totals.healing) },
+    { id: "taken", label: t("combat.meterTaken"), value: formatAmount(totals.taken) },
+    { id: "time", label: t("combat.meterTime"), value: formatSimClock(totals.seconds) },
   ];
 }
 
@@ -703,43 +802,47 @@ export function floatingCueFor(
     case "energy-loss":
       // Energy Burn and Energy Tap (#793): blue, as the energy bar, with the
       // word, so it never reads as health.
-      return { text: `−${formatAmount(amount ?? 0)} energy`, tone: "energy", critical: false };
+      return {
+        text: t("combat.floatEnergyLoss", { amount: formatAmount(amount ?? 0) }),
+        tone: "energy",
+        critical: false,
+      };
     case "interrupted":
     case "attack-interrupted":
-      return { text: "interrupted!", tone: "neutral", critical: false };
+      return { text: t("combat.floatInterrupted"), tone: "neutral", critical: false };
     case "cancelled":
       // The caster moved and gave the cast up (#279).
-      return { text: "cancelled", tone: "neutral", critical: false };
+      return { text: t("combat.floatCancelled"), tone: "neutral", critical: false };
     case "spell-failed":
       // Guilt and the like (#1475): over the caster, whose spell it was.
-      return { text: "failed", tone: "neutral", critical: false };
+      return { text: t("combat.floatFailed"), tone: "neutral", critical: false };
     case "attack-missed":
       // A blinded swing paid for and wasted: over the target, so the
       // attacker sees where it went (#6).
-      return { text: "miss", tone: "neutral", critical: false };
+      return { text: t("combat.floatMiss"), tone: "neutral", critical: false };
     case "attack-blocked":
       // Guardian and the like turned the blow aside (#534).
-      return { text: "block", tone: "neutral", critical: false };
+      return { text: t("combat.floatBlock"), tone: "neutral", critical: false };
     case "invulnerable":
       // A body a shrine just raised took none of it (#1233).
-      return { text: "Invulnerable", tone: "neutral", critical: false };
+      return { text: t("combat.floatInvulnerable"), tone: "neutral", critical: false };
     case "attack-dodged":
       // A shot that landed where the target would have been (#159).
-      return { text: "dodge", tone: "neutral", critical: false };
+      return { text: t("combat.floatDodge"), tone: "neutral", critical: false };
     case "attack-backfired":
       // Calculated Risk turned the blow back on its attacker (#2471).
-      return { text: "backfire", tone: "neutral", critical: false };
+      return { text: t("combat.floatBackfire"), tone: "neutral", critical: false };
     case "attack-obstructed":
       // A wall between the bow and its target at release (#160).
-      return { text: "obstructed", tone: "neutral", critical: false };
+      return { text: t("combat.floatObstructed"), tone: "neutral", critical: false };
     case "attack-unreachable":
       // No way round the walls; the attack has ended (#211).
-      return { text: "can't reach", tone: "neutral", critical: false };
+      return { text: t("combat.floatCantReach"), tone: "neutral", critical: false };
     case "knocked-down":
       // Once, as it lands; the lying pose says it for as long as it lasts (#545).
-      return { text: "Knocked down", tone: "neutral", critical: false };
+      return { text: t("combat.floatKnockedDown"), tone: "neutral", critical: false };
     case "death":
-      return { text: "defeated", tone: "damage", critical: false };
+      return { text: t("combat.floatDefeated"), tone: "damage", critical: false };
     default:
       // Status applications/removals already show as markers on the
       // actor; adding text for them too would just be noise.

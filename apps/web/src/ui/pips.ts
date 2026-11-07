@@ -4,6 +4,7 @@
  * and left for degeneration, none at 0. The host sends the clamped net
  * count; this only draws it.
  */
+import { t } from "../i18n/index.js";
 
 /** The most arrows a bar shows: GW1's clamp, which the host applies too. */
 const MAX_ARROWS = 10;
@@ -33,5 +34,6 @@ export function renderPips(element: HTMLElement, pips: number): void {
   element.hidden = pips === 0;
   element.classList.toggle("is-regen", pips > 0);
   element.classList.toggle("is-degen", pips < 0);
-  element.title = pips === 0 ? "" : `${pips > 0 ? "+" : "−"}${String(Math.abs(pips))} pips`;
+  element.title =
+    pips === 0 ? "" : t("pips.title", { sign: pips > 0 ? "+" : "−", count: Math.abs(pips) });
 }

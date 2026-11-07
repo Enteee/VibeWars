@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { NO_WEBGL_NOTICE } from "../apps/web/src/ui/arena-notice.js";
+import { en } from "../apps/web/src/i18n/en.js";
 import { openRail } from "./helpers/menu.js";
 import { startSoloMatch } from "./helpers/peers.js";
 
@@ -29,10 +29,10 @@ test("the editor says the Training Ground needs WebGL, and keeps saying it", asy
   await expect(page.locator("input.editor-name")).toBeVisible();
 
   const notice = page.locator(".editor-layout .training .arena-notice");
-  await expect(notice).toHaveText(NO_WEBGL_NOTICE);
+  await expect(notice).toHaveText(en["arenaNotice.noWebGl"]);
   // An edit re-renders the editor; the notice must survive it.
   await page.locator(".editor-attribute .attribute-pip").first().click();
-  await expect(notice).toHaveText(NO_WEBGL_NOTICE);
+  await expect(notice).toHaveText(en["arenaNotice.noWebGl"]);
   await expect(page.locator(".training-stage")).toHaveCount(0);
 });
 
@@ -43,6 +43,6 @@ test("a match with no WebGL says so where the arena would be, and the HUD runs",
   // The helper waits for the health bar to read "hp": the HUD is fed.
   await startSoloMatch(page);
 
-  await expect(page.locator("#viewport > .arena-notice")).toHaveText(NO_WEBGL_NOTICE);
+  await expect(page.locator("#viewport > .arena-notice")).toHaveText(en["arenaNotice.noWebGl"]);
   await expect(page.locator("#viewport canvas:not(.compass)")).toHaveCount(0);
 });

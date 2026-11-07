@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { NO_UPGRADES, TRAINING_SCENARIOS } from "@vibewars/game-core";
 
+import { t } from "../i18n/index.js";
 import { DEFAULT_KEYMAP, KEYMAP_PRESETS } from "../input/keymap.js";
 import { newCharacter, setProfessions, setRank, setSkill } from "./build-editor.js";
 import {
@@ -81,11 +82,24 @@ describe("buildSignature", () => {
 
 describe("armedHint (#302)", () => {
   it("names the keymap's keys: arrows and Q–F by default, WASD and 1–8 in Classic", () => {
+    const rest = [
+      t("training.hintTarget", { key: t("keys.tab").toLowerCase() }),
+      t("training.hintAttack", { key: t("keys.space").toLowerCase() }),
+      t("training.hintRelease"),
+    ];
     expect(armedHint(DEFAULT_KEYMAP)).toBe(
-      "arrows move · Q–F cast · tab/right-click to target · space/double right-click attack · esc to release",
+      [
+        t("training.hintMoveArrows"),
+        t("training.hintCast", { first: "Q", last: "F" }),
+        ...rest,
+      ].join(" · "),
     );
     expect(armedHint(KEYMAP_PRESETS.classic)).toBe(
-      "WASD move · 1–8 cast · tab/right-click to target · space/double right-click attack · esc to release",
+      [
+        t("training.hintMove", { keys: "WASD" }),
+        t("training.hintCast", { first: "1", last: "8" }),
+        ...rest,
+      ].join(" · "),
     );
   });
 });
@@ -121,7 +135,9 @@ describe("escapeStep (#495)", () => {
 
 describe("overlayMessage", () => {
   it("names the problem of an illegal build", () => {
-    expect(overlayMessage("too many points")).toBe("This build cannot be tested: too many points");
+    expect(overlayMessage("too many points")).toBe(
+      t("training.cannotTest", { problem: "too many points" }),
+    );
   });
 
   it("covers nothing for a legal build, even with an empty bar (#360)", () => {

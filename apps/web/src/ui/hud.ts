@@ -28,6 +28,7 @@ import type {
   SlotRecharge,
 } from "@vibewars/game-session";
 
+import { formatNumber, t, type MessageKey } from "../i18n/index.js";
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import { teamColour } from "../render/arena-snapshot.js";
@@ -236,14 +237,16 @@ export function createHud(
   const controls = element("div", "hud-controls", parent);
   const controlsTop = element("div", "hud-controls-row", controls);
   const leave = element("div", "hud-leave", controlsTop);
-  const mute = controlsTop.appendChild(iconButton("hud-mute", "Mute sounds"));
+  const mute = controlsTop.appendChild(iconButton("hud-mute", t("hud.muteSounds")));
   const controlsUnder = element("div", "hud-controls-row", controls);
-  const help = controlsUnder.appendChild(iconButton("hud-help", "Help", helpIcon()));
+  const help = controlsUnder.appendChild(iconButton("hud-help", t("hud.help"), helpIcon()));
   help.setAttribute("aria-haspopup", "dialog");
-  const options = controlsUnder.appendChild(iconButton("hud-options", "Options", settingsIcon()));
+  const options = controlsUnder.appendChild(
+    iconButton("hud-options", t("hud.options"), settingsIcon()),
+  );
   options.setAttribute("aria-haspopup", "dialog");
-  const fullscreen = controlsUnder.appendChild(iconButton("hud-fullscreen", "Fullscreen"));
-  const music = controlsUnder.appendChild(iconButton("hud-music", "Music"));
+  const fullscreen = controlsUnder.appendChild(iconButton("hud-fullscreen", t("hud.fullscreen")));
+  const music = controlsUnder.appendChild(iconButton("hud-music", t("hud.music")));
   music.setAttribute("aria-haspopup", "dialog");
 
   // Three rows (#484): who, how hurt, and what they are casting. The cast
@@ -258,7 +261,7 @@ export function createHud(
   const swords = attacking.appendChild(document.createElement("img"));
   swords.src = attackingIcon();
   swords.alt = "";
-  attacking.append("attacking");
+  attacking.append(t("hud.attacking"));
   attacking.hidden = true;
   const targetInvulnerable = element("span", "hud-target-invulnerable", targetHeader);
   targetInvulnerable.hidden = true;
@@ -288,7 +291,7 @@ export function createHud(
   const targetEffects = createEffectsMonitor(
     targetPanel,
     TARGET_EFFECT_ICON_PX,
-    "your target's effects",
+    t("hud.targetEffects"),
     "below",
   );
 
@@ -301,7 +304,7 @@ export function createHud(
   const effects = createEffectsMonitor(
     column,
     EFFECT_ICON_PX,
-    "your effects",
+    t("hud.yourEffects"),
     "above",
     onEndUpkeep,
   );
@@ -314,7 +317,7 @@ export function createHud(
   const dropFlag = document.createElement("button");
   dropFlag.type = "button";
   dropFlag.className = "hud-drop";
-  dropFlag.textContent = "Drop flag";
+  dropFlag.textContent = t("hud.dropFlag");
   dropFlag.hidden = true;
   dropFlag.addEventListener("click", onDropFlag);
   status.append(dropFlag);
@@ -401,7 +404,7 @@ export function muteButtonState(muted: boolean): {
 } {
   return {
     // A toggle keeps one name; whether it is on is what aria-pressed says.
-    label: "Mute sounds",
+    label: t("hud.muteSounds"),
     pressed: muted ? "true" : "false",
     icon: soundIcon(muted),
   };
@@ -427,57 +430,58 @@ export function paintMuteButton(button: HTMLButtonElement, muted: boolean): void
  * one-line style of the genre. A `Record` over every rejection, so a new
  * one in game-core does not compile until it has a message here.
  */
-const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
-  "caster-dead": "You are dead.",
-  "caster-knocked-down": "You are knocked down.",
-  "skill-not-on-bar": "That skill is not on your bar.",
-  "still-recharging": "That skill is recharging.",
-  "spent-until-morale-boost": "That skill recharges only on a morale boost.",
-  "already-casting": "You are already using a skill.",
-  "wrong-weapon": "You need another weapon for that.",
-  "insufficient-energy": "Not enough energy.",
-  "insufficient-adrenaline": "Not enough adrenaline.",
-  "no-target": "Select a target first.",
-  "invalid-target-dead": "Your target is dead.",
-  "invalid-target-alive": "That ally is alive.",
-  "invalid-target-self": "You cannot target yourself with that.",
-  "invalid-target-ally": "That skill needs an enemy target.",
-  "invalid-target-enemy": "That skill needs an ally target.",
-  "invalid-target-not-allied-spirit": "Target an allied spirit.",
-  "invalid-target-not-enemy-spirit": "Target an enemy spirit.",
-  "invalid-target-not-enemy-minion": "Target a foe's minion.",
-  "invalid-target-not-own-minion": "Target one of your minions.",
-  "invalid-target-not-allied-minion": "Target an allied minion.",
-  "invalid-target-not-allied-summoned-creature": "Target an allied summoned creature.",
-  "invalid-target-spirit": "Cannot target a spirit.",
-  "out-of-range": "Target is out of range.",
-  "no-line-of-sight": "Target is not in line of sight.",
-  "no-corpse": "No corpse in range.",
-  "no-spirit": "No spirit nearby.",
-  "no-companion": "You have no pet.",
-  "companion-dead": "Your pet is dead.",
-  "companion-too-far": "Your pet is too far away.",
-  "no-animal-to-charm": "There is no animal to charm here.",
-  "invalid-target-creature": "That cannot be revived that way.",
-  "cannot-cast-spells": "You cannot cast spells.",
-  "cannot-attack": "You cannot attack.",
-  "cannot-resurrect": "You cannot resurrect here.",
-  "cannot-shout-or-chant": "You cannot use shouts or chants.",
-  "cannot-use-signets": "You cannot use signets.",
-  "invalid-target-untargetable": "Your spells cannot target that foe.",
-  "invalid-target-unenchantable": "That target cannot be enchanted.",
-  "no-spells": "That target has no spells.",
-  "hands-full": "Your hands are full: drop what you carry first.",
-  "not-your-flag": "That is not your flag.",
-  "flag-on-stand": "Your flag is already on the stand.",
-  "no-flag-carried": "You are not carrying your flag.",
-  "not-your-relic": "That relic is not yours to take.",
+const REFUSALS: Readonly<Record<ActivationRejection, MessageKey>> = {
+  "caster-dead": "hud.refusalCasterDead",
+  "caster-knocked-down": "hud.refusalCasterKnockedDown",
+  "skill-not-on-bar": "hud.refusalSkillNotOnBar",
+  "still-recharging": "hud.refusalStillRecharging",
+  "spent-until-morale-boost": "hud.refusalSpentUntilMoraleBoost",
+  "already-casting": "hud.refusalAlreadyCasting",
+  "wrong-weapon": "hud.refusalWrongWeapon",
+  "insufficient-energy": "hud.refusalInsufficientEnergy",
+  "insufficient-adrenaline": "hud.refusalInsufficientAdrenaline",
+  "no-target": "hud.refusalNoTarget",
+  "invalid-target-dead": "hud.refusalInvalidTargetDead",
+  "invalid-target-alive": "hud.refusalInvalidTargetAlive",
+  "invalid-target-self": "hud.refusalInvalidTargetSelf",
+  "invalid-target-ally": "hud.refusalInvalidTargetAlly",
+  "invalid-target-enemy": "hud.refusalInvalidTargetEnemy",
+  "invalid-target-not-allied-spirit": "hud.refusalInvalidTargetNotAlliedSpirit",
+  "invalid-target-not-enemy-spirit": "hud.refusalInvalidTargetNotEnemySpirit",
+  "invalid-target-not-enemy-minion": "hud.refusalInvalidTargetNotEnemyMinion",
+  "invalid-target-not-own-minion": "hud.refusalInvalidTargetNotOwnMinion",
+  "invalid-target-not-allied-minion": "hud.refusalInvalidTargetNotAlliedMinion",
+  "invalid-target-not-allied-summoned-creature":
+    "hud.refusalInvalidTargetNotAlliedSummonedCreature",
+  "invalid-target-spirit": "hud.refusalInvalidTargetSpirit",
+  "out-of-range": "hud.refusalOutOfRange",
+  "no-line-of-sight": "hud.refusalNoLineOfSight",
+  "no-corpse": "hud.refusalNoCorpse",
+  "no-spirit": "hud.refusalNoSpirit",
+  "no-companion": "hud.refusalNoCompanion",
+  "companion-dead": "hud.refusalCompanionDead",
+  "companion-too-far": "hud.refusalCompanionTooFar",
+  "no-animal-to-charm": "hud.refusalNoAnimalToCharm",
+  "invalid-target-creature": "hud.refusalInvalidTargetCreature",
+  "cannot-cast-spells": "hud.refusalCannotCastSpells",
+  "cannot-attack": "hud.refusalCannotAttack",
+  "cannot-resurrect": "hud.refusalCannotResurrect",
+  "cannot-shout-or-chant": "hud.refusalCannotShoutOrChant",
+  "cannot-use-signets": "hud.refusalCannotUseSignets",
+  "invalid-target-untargetable": "hud.refusalInvalidTargetUntargetable",
+  "invalid-target-unenchantable": "hud.refusalInvalidTargetUnenchantable",
+  "no-spells": "hud.refusalNoSpells",
+  "hands-full": "hud.refusalHandsFull",
+  "not-your-flag": "hud.refusalNotYourFlag",
+  "flag-on-stand": "hud.refusalFlagOnStand",
+  "no-flag-carried": "hud.refusalNoFlagCarried",
+  "not-your-relic": "hud.refusalNotYourRelic",
 };
 
 /** Where an attack's refusal differs from a cast's: it is about the weapon, not a skill. */
-const ATTACK_REFUSALS: Readonly<Partial<Record<ActivationRejection, string>>> = {
-  "invalid-target-self": "You cannot attack yourself.",
-  "invalid-target-ally": "You can only attack an enemy.",
+const ATTACK_REFUSALS: Readonly<Partial<Record<ActivationRejection, MessageKey>>> = {
+  "invalid-target-self": "hud.attackRefusalInvalidTargetSelf",
+  "invalid-target-ally": "hud.attackRefusalInvalidTargetAlly",
 };
 
 /**
@@ -487,14 +491,16 @@ const ATTACK_REFUSALS: Readonly<Partial<Record<ActivationRejection, string>>> = 
 export function describeRefusal(refusal: CastRefusedMessage): string {
   const { reason } = refusal;
   if (!isRejection(reason)) {
-    return refusal.kind === "attack" ? "You cannot attack now." : "You cannot use that skill now.";
+    return refusal.kind === "attack" ? t("hud.refusalUnknownAttack") : t("hud.refusalUnknownSkill");
   }
   if (refusal.kind === "skill" && reason === "wrong-weapon") {
     const needed = getSkill(refusal.skillId)?.attack?.weapon;
     // An attack skill refused for the weapon in hand names the one it needs (ADR-0029).
-    return needed === undefined ? REFUSALS[reason] : `Needs ${neededWeaponText(needed)}.`;
+    return needed === undefined
+      ? t(REFUSALS[reason])
+      : t("hud.refusalNeedsWeapon", { weapon: neededWeaponText(needed) });
   }
-  return (refusal.kind === "attack" ? ATTACK_REFUSALS[reason] : undefined) ?? REFUSALS[reason];
+  return t((refusal.kind === "attack" ? ATTACK_REFUSALS[reason] : undefined) ?? REFUSALS[reason]);
 }
 
 function isRejection(reason: string): reason is ActivationRejection {
@@ -687,21 +693,19 @@ export function objectTargetName(
 ): string | undefined {
   if (targetId === FLAG_STAND_ID) {
     if (stand?.holder === undefined) {
-      return "Flag Stand";
+      return t("hud.flagStand");
     }
-    return stand.holder === selfTeam
-      ? "Flag Stand: held by your team"
-      : "Flag Stand: held by the enemy";
+    return stand.holder === selfTeam ? t("hud.flagStandOurs") : t("hud.flagStandTheirs");
   }
   const relic = targetId === undefined ? undefined : relicTeamOf(targetId);
   if (relic !== undefined) {
-    return relic === selfTeam ? "Your relic" : "Enemy relic";
+    return relic === selfTeam ? t("hud.relicOurs") : t("hud.relicTheirs");
   }
   const team = targetId === undefined ? undefined : flagTeamOf(targetId);
   if (team === undefined) {
     return undefined;
   }
-  return team === selfTeam ? "Your flag" : "Enemy flag";
+  return team === selfTeam ? t("hud.flagOurs") : t("hud.flagTheirs");
 }
 
 /** One line under the scoreboard (#1226): a flag's or relic's carrier, or where it lies. */
@@ -726,13 +730,13 @@ export function carrierLines(
   const yoursFirst = <T extends { readonly team: number }>(objects: readonly T[]): T[] =>
     [...objects].sort((a, b) => Number(a.team !== ours) - Number(b.team !== ours));
   const carrierName = (carrierId: string): string =>
-    match.players.find((player) => player.sessionId === carrierId)?.name ?? "dropped";
+    match.players.find((player) => player.sessionId === carrierId)?.name ?? t("hud.carrierDropped");
   const flags = yoursFirst(match.flags).flatMap(({ team, place }): CarrierLine[] => {
     switch (place.kind) {
       case "carried":
         return [{ team, text: `⚑ ${carrierName(place.carrierId)}` }];
       case "ground":
-        return [{ team, text: "⚑ dropped" }];
+        return [{ team, text: `⚑ ${t("hud.carrierDropped")}` }];
       case "spawn":
       case "stand":
         return [];
@@ -743,9 +747,9 @@ export function carrierLines(
       case "carried":
         return { team, text: `✦ ${carrierName(place.carrierId)}` };
       case "ground":
-        return { team, text: "✦ dropped" };
+        return { team, text: `✦ ${t("hud.carrierDropped")}` };
       case "spawn":
-        return { team, text: "✦ at base" };
+        return { team, text: `✦ ${t("hud.carrierAtBase")}` };
     }
   });
   return [...flags, ...relics];
@@ -810,14 +814,14 @@ export function standBoostToast(
     return undefined;
   }
   return now.holder === (selfTeam ?? 0)
-    ? { text: `Morale boost! +${String(FLAG_MORALE_BOOST)}%`, side: "ours" }
-    : { text: "Enemy morale boost", side: "theirs" };
+    ? { text: t("hud.moraleBoostOurs", { percent: FLAG_MORALE_BOOST }), side: "ours" }
+    : { text: t("hud.moraleBoostTheirs"), side: "theirs" };
 }
 
 /** What a point says in each mode that toasts one, yours then the foe's. */
-const SCORE_TOAST_TEXT: Partial<Record<MatchMode, readonly [string, string]>> = {
-  "relic-run": ["Relic scored!", "Enemy relic scored"],
-  "king-of-the-hill": ["Altar point!", "Enemy altar point"],
+const SCORE_TOAST_TEXT: Partial<Record<MatchMode, readonly [MessageKey, MessageKey]>> = {
+  "relic-run": ["hud.relicScoredOurs", "hud.relicScoredTheirs"],
+  "king-of-the-hill": ["hud.altarPointOurs", "hud.altarPointTheirs"],
 };
 
 /**
@@ -862,24 +866,31 @@ export function objectiveScoreToast(
     return undefined;
   }
   if (ours > 0) {
-    return { text: text[0], side: "ours" };
+    return { text: t(text[0]), side: "ours" };
   }
-  return theirs > 0 ? { text: text[1], side: "theirs" } : undefined;
+  return theirs > 0 ? { text: t(text[1]), side: "theirs" } : undefined;
 }
 
 /** Capture Points' toast for `ours` and `theirs` points gained (#1408), or none for none. */
 function shrineScoreToast(ours: number, theirs: number): ObjectiveToast | undefined {
   if (ours > 0 && theirs > 0) {
     return {
-      text: `Shrines: +${String(ours)}, enemy +${String(theirs)}`,
+      text: t("hud.shrinesBoth", { ours, theirs }),
       side: ours >= theirs ? "ours" : "theirs",
     };
   }
   if (ours > 0) {
-    return { text: `Shrines: +${String(ours)}`, side: "ours" };
+    return { text: t("hud.shrinesOurs", { ours }), side: "ours" };
   }
-  return theirs > 0 ? { text: `Enemy shrines: +${String(theirs)}`, side: "theirs" } : undefined;
+  return theirs > 0 ? { text: t("hud.shrinesTheirs", { theirs }), side: "theirs" } : undefined;
 }
+
+/** The Drop button's name for what you carry. */
+const DROP_LABELS: Readonly<Record<NonNullable<ReturnType<typeof carriedBundle>>, MessageKey>> = {
+  flag: "hud.dropFlag",
+  relic: "hud.dropRelic",
+  ashes: "hud.dropAshes",
+};
 
 /**
  * What `playerId` carries, a flag (#1225), a relic (#1374) or a
@@ -1034,7 +1045,7 @@ export function lordPercent(players: readonly PlayerSnapshot[], team: number): n
 
 /** 1240 as "1,240". */
 function thousands(value: number): string {
-  return Math.round(value).toLocaleString("en-US");
+  return formatNumber(Math.round(value));
 }
 
 /**
@@ -1076,7 +1087,10 @@ export function scoreboardParts(
   const score = [match.scoreTeam0, match.scoreTeam1];
   const living: ScoreboardPart = {
     kind: "text",
-    text: `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))}`,
+    text: t("hud.versus", {
+      ours: livingCount(players, ours),
+      theirs: livingCount(players, theirs),
+    }),
   };
   const points: ScoreboardPart = {
     kind: "text",
@@ -1098,7 +1112,7 @@ export function scoreboardParts(
         return {
           kind: "side",
           team,
-          text: index === 0 ? `Lord ${text}` : text,
+          text: index === 0 ? t("hud.lordPercent", { percent }) : text,
           dead: percent === 0,
         };
       });
@@ -1108,7 +1122,10 @@ export function scoreboardParts(
           ? [
               {
                 kind: "text",
-                text: `agg ${thousands(match.aggression[ours] ?? 0)} v ${thousands(match.aggression[theirs] ?? 0)}`,
+                text: t("hud.aggression", {
+                  ours: thousands(match.aggression[ours] ?? 0),
+                  theirs: thousands(match.aggression[theirs] ?? 0),
+                }),
               },
             ]
           : [];
@@ -1138,7 +1155,7 @@ export function scoreboardParts(
 /** The next priest wave's countdown (#1199), rounded up as the clock is. */
 function raisePart(players: readonly PlayerSnapshot[], elapsedSeconds: number): ScoreboardPart {
   if (!priestLives(players, 0) && !priestLives(players, 1)) {
-    return { kind: "raise", text: "raise —", soon: false };
+    return { kind: "raise", text: t("hud.raise", { clock: "—" }), soon: false };
   }
   return waveCountdown(elapsedSeconds);
 }
@@ -1146,7 +1163,11 @@ function raisePart(players: readonly PlayerSnapshot[], elapsedSeconds: number): 
 /** The countdown to the next wave, a priests' (#1199) or a Guild Battle's shrines' (#1226). */
 function waveCountdown(elapsedSeconds: number): ScoreboardPart {
   const left = Math.ceil(PRIEST_WAVE_SECONDS - (elapsedSeconds % PRIEST_WAVE_SECONDS));
-  return { kind: "raise", text: `raise ${formatClock(left)}`, soon: left <= RAISE_SOON_SECONDS };
+  return {
+    kind: "raise",
+    text: t("hud.raise", { clock: formatClock(left) }),
+    soon: left <= RAISE_SOON_SECONDS,
+  };
 }
 
 /**
@@ -1223,7 +1244,7 @@ function renderScoreboard(
         node.textContent = "✚";
         const ally = selfTeam === undefined ? part.team === 0 : part.team === selfTeam;
         node.style.setProperty("--pip-colour", cssColour(teamColour(ally ? "ally" : "enemy")));
-        node.setAttribute("aria-label", part.alive ? "priest" : "priest (dead)");
+        node.setAttribute("aria-label", part.alive ? t("hud.priest") : t("hud.priestDead"));
         return;
       }
       case "raise": {
@@ -1273,15 +1294,15 @@ function renderEnemyPips(
     }
     const node = element("span", pip.dead ? "hud-enemy-pip is-dead" : "hud-enemy-pip", line);
     node.title = pip.name;
-    node.setAttribute("aria-label", pip.dead ? `${pip.name} (dead)` : pip.name);
+    node.setAttribute("aria-label", pip.dead ? t("hud.pipDead", { name: pip.name }) : pip.name);
   }
 }
 
 /** What the end-of-match line adds for a reason; nothing for a score or a wipe. */
-const OUTCOME_REASONS: Readonly<Record<string, string>> = {
-  time: " (time)",
-  morale: " (morale)",
-  "guild-lord": " (Guild Lord slain)",
+const OUTCOME_REASONS: Readonly<Record<string, MessageKey>> = {
+  time: "hud.outcomeTime",
+  morale: "hud.outcomeMorale",
+  "guild-lord": "hud.outcomeGuildLord",
 };
 
 /**
@@ -1299,12 +1320,26 @@ export function describeOutcome(
 ): string {
   const ours = selfTeam ?? 0;
   const theirs = ours === 0 ? 1 : 0;
+  const reasonKey = reason === undefined ? undefined : OUTCOME_REASONS[reason];
   const why =
     reason === "aggression"
-      ? ` (aggression ${thousands(aggression[ours] ?? 0)} v ${thousands(aggression[theirs] ?? 0)})`
-      : reason === undefined
-        ? ""
-        : (OUTCOME_REASONS[reason] ?? "");
+      ? t("hud.outcomeAggression", {
+          ours: thousands(aggression[ours] ?? 0),
+          theirs: thousands(aggression[theirs] ?? 0),
+        })
+      : reasonKey === undefined
+        ? undefined
+        : t(reasonKey);
+  const result = outcomeResult(winningTeam, reason, selfTeam);
+  return why === undefined ? result : t("hud.outcomeWithReason", { result, reason: why });
+}
+
+/** Who won, as `describeOutcome` says it before the reason. */
+function outcomeResult(
+  winningTeam: number | undefined,
+  reason: string | undefined,
+  selfTeam: number | undefined,
+): string {
   if (winningTeam === undefined) {
     if (
       reason === "annihilation" ||
@@ -1312,14 +1347,14 @@ export function describeOutcome(
       reason === "guild-lord" ||
       reason === "aggression"
     ) {
-      return selfTeam === undefined ? `No winner${why}` : `Defeat${why}`;
+      return selfTeam === undefined ? t("hud.outcomeNoWinner") : t("hud.outcomeDefeat");
     }
-    return `Draw${why}`;
+    return t("hud.outcomeDraw");
   }
   if (selfTeam === undefined) {
-    return `Team ${String(winningTeam + 1)} wins${why}`;
+    return t("hud.outcomeTeamWins", { team: winningTeam + 1 });
   }
-  return winningTeam === selfTeam ? `Victory${why}` : `Defeat${why}`;
+  return winningTeam === selfTeam ? t("hud.outcomeVictory") : t("hud.outcomeDefeat");
 }
 
 /**
@@ -1342,7 +1377,7 @@ export function targetHealthPercent(target: PlayerSnapshot): number {
 export function targetHealthLabel(target: PlayerSnapshot, selfTeam: number | undefined): string {
   const percent = `${String(targetHealthPercent(target))}%`;
   if (target.dead) {
-    return `${percent} · dead`;
+    return `${percent} · ${t("hud.targetDead")}`;
   }
   return target.team === selfTeam
     ? `${percent} · ${String(Math.round(target.health))} / ${String(Math.round(target.maxHealth))}`
@@ -1412,14 +1447,14 @@ export function renderLeave(hud: HudElements, onLeave: () => void): LeaveControl
   const control: LeaveControl = {
     open: () => {
       const question = document.createElement("span");
-      question.textContent = "leave?";
-      const yes = button("yes", () => {
+      question.textContent = t("hud.leaveQuestion");
+      const yes = button(t("hud.leaveYes"), () => {
         if (!left) {
           left = true;
           onLeave();
         }
       });
-      const no = button("no", control.close);
+      const no = button(t("hud.leaveNo"), control.close);
       answers = [yes, no];
       hud.leave.replaceChildren(question, yes, no);
       no.focus();
@@ -1432,10 +1467,10 @@ export function renderLeave(hud: HudElements, onLeave: () => void): LeaveControl
         focused.blur();
       }
       // A phone shows only "leave" (#1297); the rest stays in its name.
-      const leave = button("leave", control.open);
+      const leave = button(t("hud.leave"), control.open);
       const extra = document.createElement("span");
       extra.className = "hud-leave-extra";
-      extra.textContent = " match (F10)";
+      extra.textContent = t("hud.leaveExtra");
       leave.append(extra);
       hud.leave.replaceChildren(leave);
     },
@@ -1479,10 +1514,10 @@ export function targetWeaponIcon(target: PlayerSnapshot | undefined): Profession
 }
 
 /** What each chain mark's icon says on hover (#916), as GW1 means it. */
-const CHAIN_MARK_TITLE: Readonly<Record<ChainRole, string>> = {
-  lead: "lead attack landed",
-  "off-hand": "off-hand attack landed",
-  dual: "dual attack landed",
+const CHAIN_MARK_TITLE: Readonly<Record<ChainRole, MessageKey>> = {
+  lead: "hud.chainLead",
+  "off-hand": "hud.chainOffHand",
+  dual: "hud.chainDual",
 };
 
 /**
@@ -1497,7 +1532,7 @@ export function targetChainIcon(
   const role = target === undefined ? undefined : chainMark(target.sessionId);
   return role === undefined
     ? undefined
-    : { src: chainMarkIcon(role), name: CHAIN_MARK_TITLE[role] };
+    : { src: chainMarkIcon(role), name: t(CHAIN_MARK_TITLE[role]) };
 }
 
 /** Touch the chain icon only when its mark changes, never every frame. */
@@ -1613,7 +1648,9 @@ export function flashTargetCast(
 export function invulnerableLabel(seconds: number): string {
   const whole = Math.ceil(seconds);
   const minutes = Math.floor(whole / 60);
-  return `Invulnerable ${String(minutes)}:${String(whole % 60).padStart(2, "0")}`;
+  return t("hud.invulnerable", {
+    clock: `${String(minutes)}:${String(whole % 60).padStart(2, "0")}`,
+  });
 }
 
 /**
@@ -1632,9 +1669,9 @@ export function ghostLeaderLabel(
   }
   const { leaderId } = creature;
   if (leaderId === null) {
-    return "stays";
+    return t("hud.ghostStays");
   }
-  return `follows ${leaderName(leaderId, self.sessionId, names)}`;
+  return t("hud.ghostFollows", { leader: leaderName(leaderId, self.sessionId, names) });
 }
 
 /** A Ghostly Hero's leader as a viewer names it (#1419): "you", or the leader's name. */
@@ -1643,7 +1680,7 @@ function leaderName(
   selfId: string | undefined,
   names: ReadonlyMap<string, string>,
 ): string {
-  return leaderId === selfId ? "you" : (names.get(leaderId) ?? "an ally");
+  return leaderId === selfId ? t("hud.leaderYou") : (names.get(leaderId) ?? t("hud.leaderAlly"));
 }
 
 /**
@@ -1675,8 +1712,11 @@ export function ghostLeaderToast(
     return undefined;
   }
   return leaderId === null
-    ? `${ghost.name} stays`
-    : `${ghost.name} follows ${leaderName(leaderId, selfId, names)}`;
+    ? t("hud.ghostNameStays", { name: ghost.name })
+    : t("hud.ghostNameFollows", {
+        name: ghost.name,
+        leader: leaderName(leaderId, selfId, names),
+      });
 }
 
 /**
@@ -1711,7 +1751,7 @@ function renderTarget(
     hud.targetText,
     target?.name ??
       (self === undefined ? undefined : objectTargetName(self.targetSessionId, self.team, stand)) ??
-      "no target",
+      t("hud.noTarget"),
   );
   setHidden(hud.targetBot, target?.bot !== true);
   setHidden(hud.attacking, self === undefined || !isAttackingTarget(self, target));
@@ -1722,7 +1762,7 @@ function renderTarget(
   setHidden(hud.targetLeader, leader === undefined);
   setText(hud.targetLeader, leader ?? "");
   // Armor on hover: a number to look up, not to read at a glance.
-  const armor = target === undefined ? "" : `armor ${String(target.armor)}`;
+  const armor = target === undefined ? "" : t("hud.armor", { armor: target.armor });
   if (hud.targetPanel.title !== armor) {
     hud.targetPanel.title = armor;
   }
@@ -1844,7 +1884,10 @@ export function updateHud(
     return;
   }
 
-  const healthText = `${String(Math.round(self.health))} / ${String(Math.round(self.maxHealth))} hp`;
+  const healthText = t("hud.health", {
+    health: Math.round(self.health),
+    max: Math.round(self.maxHealth),
+  });
   setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, healthText);
   setStyle(hud.healthLost.style, "width", percent(lostHealthPercent(self) / 100));
   paintHealthTint(hud.healthRow, self);
@@ -1852,10 +1895,12 @@ export function updateHud(
   const bundle = match === undefined ? undefined : carriedBundle(match, self.sessionId);
   setHidden(hud.dropFlag, bundle === undefined);
   if (bundle !== undefined) {
-    setText(hud.dropFlag, `Drop ${bundle}`);
+    setText(hud.dropFlag, t(DROP_LABELS[bundle]));
   }
   // Counted to the ceiling overcast leaves, the rest of the bar greyed (#461).
-  const energyText = `${energyLabel(self.energy, self.maxEnergy, self.overcast)} en`;
+  const energyText = t("hud.energy", {
+    energy: energyLabel(self.energy, self.maxEnergy, self.overcast),
+  });
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, energyText);
   renderOvercastBand(hud.energyOvercast, self.overcast, self.maxEnergy);
   renderPips(hud.healthPips, self.healthPips);
@@ -1865,8 +1910,9 @@ export function updateHud(
   // slot's own (#463).
   setText(
     hud.gearText,
-    `armor ${String(self.armor)}` +
-      (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`),
+    self.weaponId === undefined
+      ? t("hud.armor", { armor: self.armor })
+      : t("hud.armorWeapon", { armor: self.armor, weapon: describeWeaponName(self.weaponId) }),
   );
 
   const names = new Map(match?.players.map((player) => [player.sessionId, player.name]));

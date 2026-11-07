@@ -7,6 +7,8 @@ import type { ChainRole, StatusId } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type { MatchSnapshot, PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
+
 import { isEliteSkill } from "./icons.js";
 import { dismissToast, setToastHost, toast } from "./kit.js";
 
@@ -152,9 +154,9 @@ describe("targetHealthPercent (#484)", () => {
 
 describe("invulnerableLabel (#1233)", () => {
   it("counts the seconds left, rounded up, as a clock", () => {
-    expect(invulnerableLabel(4.2)).toBe("Invulnerable 0:05");
-    expect(invulnerableLabel(4)).toBe("Invulnerable 0:04");
-    expect(invulnerableLabel(0.01)).toBe("Invulnerable 0:01");
+    expect(invulnerableLabel(4.2)).toBe(t("hud.invulnerable", { clock: "0:05" }));
+    expect(invulnerableLabel(4)).toBe(t("hud.invulnerable", { clock: "0:04" }));
+    expect(invulnerableLabel(0.01)).toBe(t("hud.invulnerable", { clock: "0:01" }));
   });
 });
 
@@ -162,19 +164,19 @@ describe("objectTargetName (#1225)", () => {
   const NOBODY = { holder: undefined, heldSeconds: 0 };
 
   it("names the stand and a flag by whose it is, and nothing else", () => {
-    expect(objectTargetName("flag-stand", 0, NOBODY)).toBe("Flag Stand");
-    expect(objectTargetName("flag/0", 0, NOBODY)).toBe("Your flag");
-    expect(objectTargetName("flag/1", 0, NOBODY)).toBe("Enemy flag");
-    expect(objectTargetName("relic/0", 0, undefined)).toBe("Your relic");
-    expect(objectTargetName("relic/0", 1, undefined)).toBe("Enemy relic");
+    expect(objectTargetName("flag-stand", 0, NOBODY)).toBe(t("hud.flagStand"));
+    expect(objectTargetName("flag/0", 0, NOBODY)).toBe(t("hud.flagOurs"));
+    expect(objectTargetName("flag/1", 0, NOBODY)).toBe(t("hud.flagTheirs"));
+    expect(objectTargetName("relic/0", 0, undefined)).toBe(t("hud.relicOurs"));
+    expect(objectTargetName("relic/0", 1, undefined)).toBe(t("hud.relicTheirs"));
     expect(objectTargetName("peer-1", 0, NOBODY)).toBeUndefined();
     expect(objectTargetName(undefined, 0, NOBODY)).toBeUndefined();
   });
 
   it("names the stand's holder (#1226)", () => {
     const red = { holder: 1, heldSeconds: 30 };
-    expect(objectTargetName("flag-stand", 0, red)).toBe("Flag Stand: held by the enemy");
-    expect(objectTargetName("flag-stand", 1, red)).toBe("Flag Stand: held by your team");
+    expect(objectTargetName("flag-stand", 0, red)).toBe(t("hud.flagStandTheirs"));
+    expect(objectTargetName("flag-stand", 1, red)).toBe(t("hud.flagStandOurs"));
   });
 });
 
@@ -210,7 +212,7 @@ describe("carrierLines (#1226)", () => {
         },
         0,
       ),
-    ).toEqual([{ team: 0, text: "⚑ dropped" }]);
+    ).toEqual([{ team: 0, text: `⚑ ${t("hud.carrierDropped")}` }]);
     expect(
       carrierLines({ flags: [{ team: 1, place: { kind: "stand" } }], relics: [], players }, 0),
     ).toEqual([]);
@@ -223,18 +225,18 @@ describe("carrierLines (#1226)", () => {
     ];
     expect(carrierLines({ flags: [], relics, players }, 1)).toEqual([
       { team: 1, text: "✦ Cynn" },
-      { team: 0, text: "✦ at base" },
+      { team: 0, text: `✦ ${t("hud.carrierAtBase")}` },
     ]);
     const lying = [{ team: 0, place: { kind: "ground" as const, position: { x: 1, y: 2 } } }];
     expect(carrierLines({ flags: [], relics: lying, players }, 0)).toEqual([
-      { team: 0, text: "✦ dropped" },
+      { team: 0, text: `✦ ${t("hud.carrierDropped")}` },
     ]);
   });
 
   it("reads a carrier no longer in the snapshot as dropped", () => {
     const flags = [{ team: 0, place: { kind: "carried" as const, carrierId: "gone" } }];
     expect(carrierLines({ flags, relics: [], players }, 0)).toEqual([
-      { team: 0, text: "⚑ dropped" },
+      { team: 0, text: `⚑ ${t("hud.carrierDropped")}` },
     ]);
   });
 });
@@ -248,8 +250,8 @@ describe("objectiveScoreToast in a Relic Run (#1387)", () => {
     altar: undefined,
     capturePoints: [],
   });
-  const ours = { text: "Relic scored!", side: "ours" };
-  const theirs = { text: "Enemy relic scored", side: "theirs" };
+  const ours = { text: t("hud.relicScoredOurs"), side: "ours" };
+  const theirs = { text: t("hud.relicScoredTheirs"), side: "theirs" };
   const toast = (
     before: Parameters<typeof objectiveScoreToast>[0],
     after: Parameters<typeof objectiveScoreToast>[1],
@@ -302,8 +304,8 @@ describe("objectiveScoreToast in King of the Hill (#1399)", () => {
     altar,
     capturePoints: [],
   });
-  const ours = { text: "Altar point!", side: "ours" };
-  const theirs = { text: "Enemy altar point", side: "theirs" };
+  const ours = { text: t("hud.altarPointOurs"), side: "ours" };
+  const theirs = { text: t("hud.altarPointTheirs"), side: "theirs" };
   const toast = (
     before: Parameters<typeof objectiveScoreToast>[0],
     after: Parameters<typeof objectiveScoreToast>[1],
@@ -364,38 +366,47 @@ describe("objectiveScoreToast in Capture Points (#1408)", () => {
   ) => objectiveScoreToast(before, after, selfTeam, "capture-points");
 
   it("counts your side's points as ours and the foe's as theirs", () => {
-    expect(toast(score(0, 0), score(2, 0), 0)).toEqual({ text: "Shrines: +2", side: "ours" });
+    expect(toast(score(0, 0), score(2, 0), 0)).toEqual({
+      text: t("hud.shrinesOurs", { ours: 2 }),
+      side: "ours",
+    });
     expect(toast(score(0, 0), score(2, 0), 1)).toEqual({
-      text: "Enemy shrines: +2",
+      text: t("hud.shrinesTheirs", { theirs: 2 }),
       side: "theirs",
     });
-    expect(toast(score(4, 3), score(4, 4), 1)).toEqual({ text: "Shrines: +1", side: "ours" });
+    expect(toast(score(4, 3), score(4, 4), 1)).toEqual({
+      text: t("hud.shrinesOurs", { ours: 1 }),
+      side: "ours",
+    });
   });
 
   it("toasts a tick where both sides score once, sounding for whoever gained more", () => {
     expect(toast(score(0, 0), score(3, 2), 0)).toEqual({
-      text: "Shrines: +3, enemy +2",
+      text: t("hud.shrinesBoth", { ours: 3, theirs: 2 }),
       side: "ours",
     });
     expect(toast(score(0, 0), score(2, 2), 1)).toEqual({
-      text: "Shrines: +2, enemy +2",
+      text: t("hud.shrinesBoth", { ours: 2, theirs: 2 }),
       side: "ours",
     });
     expect(toast(score(0, 0), score(3, 1), 1)).toEqual({
-      text: "Shrines: +1, enemy +3",
+      text: t("hud.shrinesBoth", { ours: 1, theirs: 3 }),
       side: "theirs",
     });
   });
 
   it("reads a spectator's side as team 0's", () => {
     expect(toast(score(0, 0), score(1, 2), undefined)).toEqual({
-      text: "Shrines: +1, enemy +2",
+      text: t("hud.shrinesBoth", { ours: 1, theirs: 2 }),
       side: "theirs",
     });
   });
 
   it("sums two ticks missed between frames", () => {
-    expect(toast(score(2, 0), score(6, 0), 0)).toEqual({ text: "Shrines: +4", side: "ours" });
+    expect(toast(score(2, 0), score(6, 0), 0)).toEqual({
+      text: t("hud.shrinesOurs", { ours: 4 }),
+      side: "ours",
+    });
   });
 
   it("says nothing without a point, on the first snapshot, or after the placeholder", () => {
@@ -415,20 +426,20 @@ describe("standBoostToast (#1226)", () => {
 
   it("toasts the boost to its side and the foe's, once, as the count starts again", () => {
     expect(standBoostToast(at(200, 0, 119.95), at(200.05, 0, 0), 0)).toEqual({
-      text: "Morale boost! +10%",
+      text: t("hud.moraleBoostOurs", { percent: 10 }),
       side: "ours",
     });
     expect(standBoostToast(at(200, 0, 119.95), at(200.05, 0, 0), 1)).toEqual({
-      text: "Enemy morale boost",
+      text: t("hud.moraleBoostTheirs"),
       side: "theirs",
     });
     expect(standBoostToast(at(200, 1, 119.9), at(200.2, 1, 0.1), undefined)).toEqual({
-      text: "Enemy morale boost",
+      text: t("hud.moraleBoostTheirs"),
       side: "theirs",
     });
     // Frames missed across it: still the boost.
     expect(standBoostToast(at(200, 0, 110), at(215, 0, 5), 0)).toEqual({
-      text: "Morale boost! +10%",
+      text: t("hud.moraleBoostOurs", { percent: 10 }),
       side: "ours",
     });
     expect(standBoostToast(at(200.05, 0, 0), at(200.1, 0, 0.05), 0)).toBeUndefined();
@@ -574,7 +585,9 @@ describe("targetHealthLabel (#484)", () => {
   });
 
   it("says dead", () => {
-    expect(targetHealthLabel(player({ health: 0, dead: true }), 0)).toBe("0% · dead");
+    expect(targetHealthLabel(player({ health: 0, dead: true }), 0)).toBe(
+      `0% · ${t("hud.targetDead")}`,
+    );
   });
 });
 
@@ -712,8 +725,12 @@ describe("scoreboardText (#881)", () => {
   ];
 
   it("counts the living per side, your own first, beside the clock", () => {
-    expect(scoreboardText(players, 0, 42, null, "annihilation", board(0, 0))).toBe("2 v 1 · 0:42");
-    expect(scoreboardText(players, 1, 42, null, "annihilation", board(0, 0))).toBe("1 v 2 · 0:42");
+    expect(scoreboardText(players, 0, 42, null, "annihilation", board(0, 0))).toBe(
+      `${t("hud.versus", { ours: 2, theirs: 1 })} · 0:42`,
+    );
+    expect(scoreboardText(players, 1, 42, null, "annihilation", board(0, 0))).toBe(
+      `${t("hud.versus", { ours: 1, theirs: 2 })} · 0:42`,
+    );
   });
 
   it("counts no creature, alive or not (#1052)", () => {
@@ -739,26 +756,34 @@ describe("scoreboardText (#881)", () => {
         "annihilation",
         board(0, 0),
       ),
-    ).toBe("2 v 1 · 0:42");
+    ).toBe(`${t("hud.versus", { ours: 2, theirs: 1 })} · 0:42`);
   });
 
   it("reads team 1 first for a spectator", () => {
     expect(scoreboardText(players, undefined, 432, null, "annihilation", board(0, 0))).toBe(
-      "2 v 1 · 7:12",
+      `${t("hud.versus", { ours: 2, theirs: 1 })} · 7:12`,
     );
   });
 
   it("counts down from the match's limit, reading 0:00 only once time is out (#476)", () => {
-    expect(scoreboardText(players, 0, 0, 180, "annihilation", board(0, 0))).toBe("2 v 1 · 3:00");
-    expect(scoreboardText(players, 0, 42.5, 180, "annihilation", board(0, 0))).toBe("2 v 1 · 2:18");
-    expect(scoreboardText(players, 0, 179.5, 180, "annihilation", board(0, 0))).toBe(
-      "2 v 1 · 0:01",
+    expect(scoreboardText(players, 0, 0, 180, "annihilation", board(0, 0))).toBe(
+      `${t("hud.versus", { ours: 2, theirs: 1 })} · 3:00`,
     );
-    expect(scoreboardText(players, 0, 181, 180, "annihilation", board(0, 0))).toBe("2 v 1 · 0:00");
+    expect(scoreboardText(players, 0, 42.5, 180, "annihilation", board(0, 0))).toBe(
+      `${t("hud.versus", { ours: 2, theirs: 1 })} · 2:18`,
+    );
+    expect(scoreboardText(players, 0, 179.5, 180, "annihilation", board(0, 0))).toBe(
+      `${t("hud.versus", { ours: 2, theirs: 1 })} · 0:01`,
+    );
+    expect(scoreboardText(players, 0, 181, 180, "annihilation", board(0, 0))).toBe(
+      `${t("hud.versus", { ours: 2, theirs: 1 })} · 0:00`,
+    );
   });
 
   it("counts the living, not the score, in Annihilation", () => {
-    expect(scoreboardText(players, 0, 42, null, "annihilation", board(4, 0))).toBe("2 v 1 · 0:42");
+    expect(scoreboardText(players, 0, 42, null, "annihilation", board(4, 0))).toBe(
+      `${t("hud.versus", { ours: 2, theirs: 1 })} · 0:42`,
+    );
   });
 
   describe("on a Priest Annihilation map (#1199)", () => {
@@ -785,7 +810,9 @@ describe("scoreboardText (#881)", () => {
     it("counts the living, not the priests, then each priest and the next raise", () => {
       expect(
         scoreboardText(priests(false, false), 0, 73, 720, "priest-annihilation", board(0, 0)),
-      ).toBe("2 v 1 · ✚ ✚ · raise 0:47 · 10:47");
+      ).toBe(
+        `${t("hud.versus", { ours: 2, theirs: 1 })} · ✚ ✚ · ${t("hud.raise", { clock: "0:47" })} · 10:47`,
+      );
     });
 
     it("strikes out a dead priest, your own side's first", () => {
@@ -810,7 +837,7 @@ describe("scoreboardText (#881)", () => {
     it("reads raise — once both priests are dead", () => {
       expect(
         scoreboardText(priests(true, true), 0, 73, 720, "priest-annihilation", board(0, 0)),
-      ).toBe("2 v 1 · ✚ ✚ · raise — · 10:47");
+      ).toBe(`${t("hud.versus", { ours: 2, theirs: 1 })} · ✚ ✚ · raise — · 10:47`);
     });
 
     it("counts down to the next wave, every 2 minutes of match clock", () => {
@@ -823,23 +850,47 @@ describe("scoreboardText (#881)", () => {
           "priest-annihilation",
           board(0, 0),
         ).find((part) => part.kind === "raise");
-      expect(raise(0)).toEqual({ kind: "raise", text: "raise 2:00", soon: false });
-      expect(raise(119)).toEqual({ kind: "raise", text: "raise 0:01", soon: true });
-      expect(raise(120)).toEqual({ kind: "raise", text: "raise 2:00", soon: false });
-      expect(raise(121)).toEqual({ kind: "raise", text: "raise 1:59", soon: false });
-      expect(raise(114.5)).toEqual({ kind: "raise", text: "raise 0:06", soon: false });
-      expect(raise(115)).toEqual({ kind: "raise", text: "raise 0:05", soon: true });
+      expect(raise(0)).toEqual({
+        kind: "raise",
+        text: t("hud.raise", { clock: "2:00" }),
+        soon: false,
+      });
+      expect(raise(119)).toEqual({
+        kind: "raise",
+        text: t("hud.raise", { clock: "0:01" }),
+        soon: true,
+      });
+      expect(raise(120)).toEqual({
+        kind: "raise",
+        text: t("hud.raise", { clock: "2:00" }),
+        soon: false,
+      });
+      expect(raise(121)).toEqual({
+        kind: "raise",
+        text: t("hud.raise", { clock: "1:59" }),
+        soon: false,
+      });
+      expect(raise(114.5)).toEqual({
+        kind: "raise",
+        text: t("hud.raise", { clock: "0:06" }),
+        soon: false,
+      });
+      expect(raise(115)).toEqual({
+        kind: "raise",
+        text: t("hud.raise", { clock: "0:05" }),
+        soon: true,
+      });
     });
 
     it("drops the raise once time is out", () => {
       expect(
         scoreboardText(priests(false, false), 0, 720, 720, "priest-annihilation", board(0, 0)),
-      ).toBe("2 v 1 · ✚ ✚ · 0:00");
+      ).toBe(`${t("hud.versus", { ours: 2, theirs: 1 })} · ✚ ✚ · 0:00`);
     });
 
     it("leaves the other modes' scoreboards without priests", () => {
       expect(scoreboardText(priests(false, false), 0, 42, null, "annihilation", board(0, 0))).toBe(
-        "2 v 1 · 0:42",
+        `${t("hud.versus", { ours: 2, theirs: 1 })} · 0:42`,
       );
     });
   });
@@ -898,14 +949,14 @@ describe("the Guild Battle scoreboard (#1226)", () => {
 
   it("reads both lords, the stand held to its boost, the wave and the clock, yours first", () => {
     expect(scoreboardText(players, 0, 73, LIMIT, "guild-battle", held(0, 48))).toBe(
-      "Lord 82% · 64% · ⚑ 1:12 · raise 0:47 · 26:47",
+      `${t("hud.lordPercent", { percent: 82 })} · 64% · ⚑ 1:12 · ${t("hud.raise", { clock: "0:47" })} · 26:47`,
     );
     expect(scoreboardText(players, 1, 73, LIMIT, "guild-battle", held(0, 48))).toBe(
-      "Lord 64% · 82% · ⚑ 1:12 · raise 0:47 · 26:47",
+      `${t("hud.lordPercent", { percent: 64 })} · 82% · ⚑ 1:12 · ${t("hud.raise", { clock: "0:47" })} · 26:47`,
     );
     // A spectator reads team 0 first.
     expect(scoreboardText(players, undefined, 73, LIMIT, "guild-battle", held(0, 48))).toBe(
-      "Lord 82% · 64% · ⚑ 1:12 · raise 0:47 · 26:47",
+      `${t("hud.lordPercent", { percent: 82 })} · 64% · ⚑ 1:12 · ${t("hud.raise", { clock: "0:47" })} · 26:47`,
     );
   });
 
@@ -930,14 +981,18 @@ describe("the Guild Battle scoreboard (#1226)", () => {
       held(undefined, 0),
     );
     expect(parts.slice(0, 2)).toEqual([
-      { kind: "side", team: 0, text: "Lord 1%", dead: false },
+      { kind: "side", team: 0, text: t("hud.lordPercent", { percent: 1 }), dead: false },
       { kind: "side", team: 1, text: "0%", dead: true },
     ]);
   });
 
   it("ticks the shrines' wave with no priest, pulsing its last seconds", () => {
     const parts = scoreboardParts(players, 0, 117, LIMIT, "guild-battle", held(undefined, 0));
-    expect(parts).toContainEqual({ kind: "raise", text: "raise 0:03", soon: true });
+    expect(parts).toContainEqual({
+      kind: "raise",
+      text: t("hud.raise", { clock: "0:03" }),
+      soon: true,
+    });
   });
 
   it("adds each side's aggression, yours first, only in the last 3 minutes", () => {
@@ -961,10 +1016,12 @@ describe("the Guild Battle scoreboard (#1226)", () => {
         "guild-battle",
         held(undefined, 0, aggression),
       ),
-    ).toBe("Lord 82% · 64% · ⚑ — · raise 1:00 · agg 1,240 v 980 · 3:00");
+    ).toBe(
+      `${t("hud.lordPercent", { percent: 82 })} · 64% · ⚑ — · ${t("hud.raise", { clock: "1:00" })} · ${t("hud.aggression", { ours: "1,240", theirs: "980" })} · 3:00`,
+    );
     expect(
       scoreboardText(players, 1, LIMIT + 1, LIMIT, "guild-battle", held(undefined, 0, aggression)),
-    ).toContain("agg 980 v 1,240 · 0:00");
+    ).toContain(`${t("hud.aggression", { ours: "980", theirs: "1,240" })} · 0:00`);
   });
 });
 
@@ -993,43 +1050,83 @@ describe("King of the Hill's scoreboard (#1377)", () => {
 
 describe("describeOutcome", () => {
   it("reads as victory for the winning team's own players", () => {
-    expect(describeOutcome(0, "score", 0, [])).toBe("Victory");
+    expect(describeOutcome(0, "score", 0, [])).toBe(t("hud.outcomeVictory"));
   });
 
   it("reads as defeat for the losing team's players", () => {
-    expect(describeOutcome(0, "score", 1, [])).toBe("Defeat");
+    expect(describeOutcome(0, "score", 1, [])).toBe(t("hud.outcomeDefeat"));
   });
 
   it("calls out a draw", () => {
-    expect(describeOutcome(undefined, "time", 0, [])).toBe("Draw (time)");
+    expect(describeOutcome(undefined, "time", 0, [])).toBe(
+      t("hud.outcomeWithReason", { result: t("hud.outcomeDraw"), reason: t("hud.outcomeTime") }),
+    );
   });
 
   it("notes when a match ended on the clock rather than on score", () => {
-    expect(describeOutcome(1, "time", 1, [])).toBe("Victory (time)");
-    expect(describeOutcome(1, "score", 1, [])).toBe("Victory");
+    expect(describeOutcome(1, "time", 1, [])).toBe(
+      t("hud.outcomeWithReason", { result: t("hud.outcomeVictory"), reason: t("hud.outcomeTime") }),
+    );
+    expect(describeOutcome(1, "score", 1, [])).toBe(t("hud.outcomeVictory"));
   });
 
   it("falls back to naming the team for a spectator with no team of their own", () => {
-    expect(describeOutcome(1, "score", undefined, [])).toBe("Team 2 wins");
+    expect(describeOutcome(1, "score", undefined, [])).toBe(t("hud.outcomeTeamWins", { team: 2 }));
   });
 
   it("reads an annihilation win plainly and a win at time as by morale (#846)", () => {
-    expect(describeOutcome(0, "annihilation", 0, [])).toBe("Victory");
-    expect(describeOutcome(0, "annihilation", 1, [])).toBe("Defeat");
-    expect(describeOutcome(1, "morale", 1, [])).toBe("Victory (morale)");
-    expect(describeOutcome(1, "morale", 0, [])).toBe("Defeat (morale)");
-    expect(describeOutcome(1, "morale", undefined, [])).toBe("Team 2 wins (morale)");
+    expect(describeOutcome(0, "annihilation", 0, [])).toBe(t("hud.outcomeVictory"));
+    expect(describeOutcome(0, "annihilation", 1, [])).toBe(t("hud.outcomeDefeat"));
+    expect(describeOutcome(1, "morale", 1, [])).toBe(
+      t("hud.outcomeWithReason", {
+        result: t("hud.outcomeVictory"),
+        reason: t("hud.outcomeMorale"),
+      }),
+    );
+    expect(describeOutcome(1, "morale", 0, [])).toBe(
+      t("hud.outcomeWithReason", {
+        result: t("hud.outcomeDefeat"),
+        reason: t("hud.outcomeMorale"),
+      }),
+    );
+    expect(describeOutcome(1, "morale", undefined, [])).toBe(
+      t("hud.outcomeWithReason", {
+        result: t("hud.outcomeTeamWins", { team: 2 }),
+        reason: t("hud.outcomeMorale"),
+      }),
+    );
   });
 
   it("says why a Guild Battle ended: a lord slain, or aggression at time, both sides' (#1222, #1226)", () => {
-    expect(describeOutcome(0, "guild-lord", 0, [])).toBe("Victory (Guild Lord slain)");
-    expect(describeOutcome(0, "guild-lord", 1, [])).toBe("Defeat (Guild Lord slain)");
-    expect(describeOutcome(1, "aggression", 1, [980, 1240])).toBe(
-      "Victory (aggression 1,240 v 980)",
+    expect(describeOutcome(0, "guild-lord", 0, [])).toBe(
+      t("hud.outcomeWithReason", {
+        result: t("hud.outcomeVictory"),
+        reason: t("hud.outcomeGuildLord"),
+      }),
     );
-    expect(describeOutcome(undefined, "guild-lord", 0, [])).toBe("Defeat (Guild Lord slain)");
+    expect(describeOutcome(0, "guild-lord", 1, [])).toBe(
+      t("hud.outcomeWithReason", {
+        result: t("hud.outcomeDefeat"),
+        reason: t("hud.outcomeGuildLord"),
+      }),
+    );
+    expect(describeOutcome(1, "aggression", 1, [980, 1240])).toBe(
+      t("hud.outcomeWithReason", {
+        result: t("hud.outcomeVictory"),
+        reason: t("hud.outcomeAggression", { ours: "1,240", theirs: "980" }),
+      }),
+    );
+    expect(describeOutcome(undefined, "guild-lord", 0, [])).toBe(
+      t("hud.outcomeWithReason", {
+        result: t("hud.outcomeDefeat"),
+        reason: t("hud.outcomeGuildLord"),
+      }),
+    );
     expect(describeOutcome(undefined, "aggression", 1, [500, 500])).toBe(
-      "Defeat (aggression 500 v 500)",
+      t("hud.outcomeWithReason", {
+        result: t("hud.outcomeDefeat"),
+        reason: t("hud.outcomeAggression", { ours: "500", theirs: "500" }),
+      }),
     );
   });
 
@@ -1047,11 +1144,23 @@ describe("describeOutcome", () => {
   });
 
   it("calls an annihilation match nobody won a defeat for both teams, never a draw (#846)", () => {
-    expect(describeOutcome(undefined, "annihilation", 0, [])).toBe("Defeat");
-    expect(describeOutcome(undefined, "annihilation", 1, [])).toBe("Defeat");
-    expect(describeOutcome(undefined, "morale", 0, [])).toBe("Defeat (morale)");
-    expect(describeOutcome(undefined, "annihilation", undefined, [])).toBe("No winner");
-    expect(describeOutcome(undefined, "morale", undefined, [])).toBe("No winner (morale)");
+    expect(describeOutcome(undefined, "annihilation", 0, [])).toBe(t("hud.outcomeDefeat"));
+    expect(describeOutcome(undefined, "annihilation", 1, [])).toBe(t("hud.outcomeDefeat"));
+    expect(describeOutcome(undefined, "morale", 0, [])).toBe(
+      t("hud.outcomeWithReason", {
+        result: t("hud.outcomeDefeat"),
+        reason: t("hud.outcomeMorale"),
+      }),
+    );
+    expect(describeOutcome(undefined, "annihilation", undefined, [])).toBe(
+      t("hud.outcomeNoWinner"),
+    );
+    expect(describeOutcome(undefined, "morale", undefined, [])).toBe(
+      t("hud.outcomeWithReason", {
+        result: t("hud.outcomeNoWinner"),
+        reason: t("hud.outcomeMorale"),
+      }),
+    );
   });
 });
 
@@ -1087,9 +1196,13 @@ describe("a Ghostly Hero's leader (#1377, #1419)", () => {
 
   describe("ghostLeaderLabel", () => {
     it("says whom your team's ghost follows, or that it stays", () => {
-      expect(ghostLeaderLabel(me, ghost(0, "me"), names)).toBe("follows you");
-      expect(ghostLeaderLabel(me, ghost(0, "ally"), names)).toBe("follows Devona");
-      expect(ghostLeaderLabel(me, ghost(0, null), names)).toBe("stays");
+      expect(ghostLeaderLabel(me, ghost(0, "me"), names)).toBe(
+        t("hud.ghostFollows", { leader: t("hud.leaderYou") }),
+      );
+      expect(ghostLeaderLabel(me, ghost(0, "ally"), names)).toBe(
+        t("hud.ghostFollows", { leader: "Devona" }),
+      );
+      expect(ghostLeaderLabel(me, ghost(0, null), names)).toBe(t("hud.ghostStays"));
     });
 
     it("says nothing of the foe's ghost, a dead one, or any other target", () => {
@@ -1102,13 +1215,21 @@ describe("a Ghostly Hero's leader (#1377, #1419)", () => {
 
   describe("ghostLeaderToast", () => {
     it("toasts whom your team's ghost now follows, or that it stays", () => {
-      expect(toast(ghosts(null), ghosts("me"))).toBe("Ghostly Hero follows you");
-      expect(toast(ghosts(null), ghosts("ally"))).toBe("Ghostly Hero follows Devona");
-      expect(toast(ghosts("me"), ghosts(null))).toBe("Ghostly Hero stays");
+      expect(toast(ghosts(null), ghosts("me"))).toBe(
+        t("hud.ghostNameFollows", { name: "Ghostly Hero", leader: t("hud.leaderYou") }),
+      );
+      expect(toast(ghosts(null), ghosts("ally"))).toBe(
+        t("hud.ghostNameFollows", { name: "Ghostly Hero", leader: "Devona" }),
+      );
+      expect(toast(ghosts("me"), ghosts(null))).toBe(
+        t("hud.ghostNameStays", { name: "Ghostly Hero" }),
+      );
     });
 
     it("toasts a leader handed from one ally to another once, as the new one", () => {
-      expect(toast(ghosts("ally"), ghosts("me"))).toBe("Ghostly Hero follows you");
+      expect(toast(ghosts("ally"), ghosts("me"))).toBe(
+        t("hud.ghostNameFollows", { name: "Ghostly Hero", leader: t("hud.leaderYou") }),
+      );
       expect(toast(ghosts("me"), ghosts("me"))).toBeUndefined();
     });
 
@@ -1127,7 +1248,9 @@ describe("a Ghostly Hero's leader (#1377, #1419)", () => {
 
   describe("ghostNameplate", () => {
     it("names the leader of your team's ghost, and of both to a spectator", () => {
-      expect(ghostNameplate(ghost(0, "me"), me, names)).toBe("Ghostly Hero › you");
+      expect(ghostNameplate(ghost(0, "me"), me, names)).toBe(
+        `Ghostly Hero › ${t("hud.leaderYou")}`,
+      );
       expect(ghostNameplate(ghost(0, "ally"), me, names)).toBe("Ghostly Hero › Devona");
       expect(ghostNameplate(ghost(1, "ally"), undefined, names)).toBe("Ghostly Hero › Devona");
     });
@@ -1150,23 +1273,27 @@ describe("describeRefusal", () => {
   const attack = (reason: string): CastRefusedMessage => ({ kind: "attack", reason });
 
   it("says why a cast was refused, in one short line", () => {
-    expect(describeRefusal(cast("out-of-range"))).toBe("Target is out of range.");
-    expect(describeRefusal(cast("no-line-of-sight"))).toBe("Target is not in line of sight.");
-    expect(describeRefusal(cast("no-target"))).toBe("Select a target first.");
-    expect(describeRefusal(cast("insufficient-energy"))).toBe("Not enough energy.");
-    expect(describeRefusal(cast("no-corpse"))).toBe("No corpse in range.");
+    expect(describeRefusal(cast("out-of-range"))).toBe(t("hud.refusalOutOfRange"));
+    expect(describeRefusal(cast("no-line-of-sight"))).toBe(t("hud.refusalNoLineOfSight"));
+    expect(describeRefusal(cast("no-target"))).toBe(t("hud.refusalNoTarget"));
+    expect(describeRefusal(cast("insufficient-energy"))).toBe(t("hud.refusalInsufficientEnergy"));
+    expect(describeRefusal(cast("no-corpse"))).toBe(t("hud.refusalNoCorpse"));
   });
 
   it("says a spent skill waits for a morale boost (#474)", () => {
     expect(describeRefusal(cast("spent-until-morale-boost"))).toBe(
-      "That skill recharges only on a morale boost.",
+      t("hud.refusalSpentUntilMoraleBoost"),
     );
   });
 
   it("talks about the weapon, not a skill, when an attack is refused", () => {
-    expect(describeRefusal(attack("invalid-target-ally"))).toBe("You can only attack an enemy.");
-    expect(describeRefusal(attack("invalid-target-self"))).toBe("You cannot attack yourself.");
-    expect(describeRefusal(attack("invalid-target-dead"))).toBe("Your target is dead.");
+    expect(describeRefusal(attack("invalid-target-ally"))).toBe(
+      t("hud.attackRefusalInvalidTargetAlly"),
+    );
+    expect(describeRefusal(attack("invalid-target-self"))).toBe(
+      t("hud.attackRefusalInvalidTargetSelf"),
+    );
+    expect(describeRefusal(attack("invalid-target-dead"))).toBe(t("hud.refusalInvalidTargetDead"));
   });
 
   it("names the weapon an attack skill needs", () => {
@@ -1176,15 +1303,19 @@ describe("describeRefusal", () => {
       skillId,
       reason: "wrong-weapon",
     });
-    expect(describeRefusal(refused("warrior.swift-chop"))).toBe("Needs an axe.");
-    expect(describeRefusal(refused("ranger.barrage"))).toBe("Needs a bow.");
+    expect(describeRefusal(refused("warrior.swift-chop"))).toBe(
+      t("hud.refusalNeedsWeapon", { weapon: "an axe" }),
+    );
+    expect(describeRefusal(refused("ranger.barrage"))).toBe(
+      t("hud.refusalNeedsWeapon", { weapon: "a bow" }),
+    );
   });
 
   it("still says something for a reason this client does not know", () => {
-    expect(describeRefusal(cast("time-travel"))).toBe("You cannot use that skill now.");
-    expect(describeRefusal(attack("time-travel"))).toBe("You cannot attack now.");
+    expect(describeRefusal(cast("time-travel"))).toBe(t("hud.refusalUnknownSkill"));
+    expect(describeRefusal(attack("time-travel"))).toBe(t("hud.refusalUnknownAttack"));
     // Not fooled by what every object has.
-    expect(describeRefusal(cast("toString"))).toBe("You cannot use that skill now.");
+    expect(describeRefusal(cast("toString"))).toBe(t("hud.refusalUnknownSkill"));
   });
 });
 
@@ -1286,8 +1417,8 @@ describe("isEliteSkill (#459)", () => {
 
 describe("muteButtonState", () => {
   it("keeps one name and says with aria-pressed whether the sound is muted", () => {
-    expect(muteButtonState(false)).toMatchObject({ label: "Mute sounds", pressed: "false" });
-    expect(muteButtonState(true)).toMatchObject({ label: "Mute sounds", pressed: "true" });
+    expect(muteButtonState(false)).toMatchObject({ label: t("hud.muteSounds"), pressed: "false" });
+    expect(muteButtonState(true)).toMatchObject({ label: t("hud.muteSounds"), pressed: "true" });
   });
 
   it("shows what the sound is now, not what a click does", () => {
@@ -1383,16 +1514,16 @@ describe("targetChainIcon (#916)", () => {
 
   it("shows your mark on the target, named for alt and title", () => {
     const icon = targetChainIcon(foe("bob"), yours);
-    expect(icon?.name).toBe("lead attack landed");
+    expect(icon?.name).toBe(t("hud.chainLead"));
     expect(icon?.src).toMatch(/icons\/ui\/chain-lead\.svg$/);
     expect(targetChainIcon(foe("cy"), yours)?.src).toMatch(/icons\/ui\/chain-off-hand\.svg$/);
-    expect(targetChainIcon(foe("dee"), yours)?.name).toBe("dual attack landed");
+    expect(targetChainIcon(foe("dee"), yours)?.name).toBe(t("hud.chainDual"));
   });
 
   it("follows the target: another target shows its own mark, or none", () => {
-    expect(targetChainIcon(foe("cy"), yours)?.name).toBe("off-hand attack landed");
+    expect(targetChainIcon(foe("cy"), yours)?.name).toBe(t("hud.chainOffHand"));
     expect(targetChainIcon(foe("eve"), yours)).toBeUndefined();
-    expect(targetChainIcon(foe("bob"), yours)?.name).toBe("lead attack landed");
+    expect(targetChainIcon(foe("bob"), yours)?.name).toBe(t("hud.chainLead"));
   });
 
   it("is nothing with no target, or once the mark has run out", () => {
@@ -1424,7 +1555,7 @@ describe("targetEffectRows (#835)", () => {
   it("shows the target's statuses in the order the host sent them", () => {
     const rows = targetEffectRows(self.sessionId, foe, names, 10);
     expect(rows.map((row) => [row.id, row.casterName, row.fraction])).toEqual([
-      ["bleeding", "you", 1],
+      ["bleeding", t("effects.you"), 1],
       ["crippled", "Cynn", 0.5],
     ]);
   });
@@ -1449,7 +1580,7 @@ describe("targetEffectRows (#835)", () => {
   it("shows what your own monitor does when you target yourself", () => {
     const me = { ...ally, sessionId: "me" };
     expect(targetEffectRows(me.sessionId, me, names, 10)).toEqual([
-      expect.objectContaining({ id: "armor-boost", yours: true, casterName: "you" }),
+      expect.objectContaining({ id: "armor-boost", yours: true, casterName: t("effects.you") }),
     ]);
   });
 });

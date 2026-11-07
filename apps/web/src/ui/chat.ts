@@ -1,6 +1,7 @@
 import { MAX_CHAT_GRAPHEMES, type ChatChannel } from "@vibewars/game-protocol";
 import type { ChatLine } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
 import { isHelpOverlayOpen } from "./help-screen.js";
 import { chatIcon } from "./icons.js";
 import { button, h, iconButton } from "./kit.js";
@@ -124,11 +125,11 @@ export interface ChatPanel {
 export function mountChat(deps: ChatDeps): ChatPanel {
   const log = new ChatLog();
   const root = h("section", "chat");
-  root.setAttribute("aria-label", "chat");
+  root.setAttribute("aria-label", t("chat.label"));
   const lines = h("div", "chat-lines");
   lines.setAttribute("role", "log");
   lines.setAttribute("aria-live", "polite");
-  const toggle = iconButton("chat-toggle", "Chat (Enter)", chatIcon());
+  const toggle = iconButton("chat-toggle", t("chat.toggle"), chatIcon());
   const form = h("div", "chat-form");
   let channel: ChatChannel = "all";
   const channelButton = button("", "chat-channel", () => {
@@ -143,8 +144,8 @@ export function mountChat(deps: ChatDeps): ChatPanel {
   // graphemes, so a line of emoji stops near half that: a bound on size,
   // and the host cuts to whole graphemes itself.
   input.maxLength = MAX_CHAT_GRAPHEMES + 1;
-  input.placeholder = "! all · # team";
-  input.setAttribute("aria-label", "chat message");
+  input.placeholder = t("chat.placeholder");
+  input.setAttribute("aria-label", t("chat.message"));
   form.append(channelButton, input);
   const bar = h("div", "chat-bar");
   bar.append(toggle, form);
@@ -154,10 +155,13 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     if (deps.selfTeam() === null) {
       channel = "all";
     }
-    channelButton.textContent = channel === "all" ? "All" : "Team";
+    channelButton.textContent = t(channel === "all" ? "chat.all" : "chat.team");
     channelButton.dataset.channel = channel;
     channelButton.disabled = deps.selfTeam() === null;
-    channelButton.setAttribute("aria-label", `channel: ${channel}, click to switch`);
+    channelButton.setAttribute(
+      "aria-label",
+      t(channel === "all" ? "chat.switchFromAll" : "chat.switchFromTeam"),
+    );
   };
   paintChannel();
 
@@ -200,20 +204,24 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     const row = h("div", "chat-line");
     row.dataset.channel = line.channel;
     row.dataset.from = line.fromId;
-    const tag = h("span", "chat-line-channel", line.channel === "team" ? "[Team]" : "[All]");
+    const tag = h(
+      "span",
+      "chat-line-channel",
+      `[${t(line.channel === "team" ? "chat.team" : "chat.all")}]`,
+    );
     const name = button(line.name, "chat-line-name", () => {
       if (line.fromId === deps.selfId) {
         return;
       }
       log.mute(line.fromId, true);
       repaint();
-      notice(`You muted ${line.name} for this session.`, () => {
+      notice(t("chat.muted", { name: line.name }), () => {
         log.mute(line.fromId, false);
         repaint();
       });
     });
     name.dataset.side = chatSide(line, deps.selfId, deps.selfTeam());
-    name.title = line.fromId === deps.selfId ? "" : `Mute ${line.name}`;
+    name.title = line.fromId === deps.selfId ? "" : t("chat.mute", { name: line.name });
     row.append(tag, " ", name, ": ", h("span", "chat-line-text", line.text));
     return fading(row, at);
   };
@@ -229,7 +237,7 @@ export function mountChat(deps: ChatDeps): ChatPanel {
   const notice = (text: string, undo?: () => void): void => {
     const row = h("div", "chat-line chat-notice", text);
     if (undo !== undefined) {
-      row.append(" ", button("Unmute", "chat-unmute", undo));
+      row.append(" ", button(t("chat.unmute"), "chat-unmute", undo));
     }
     lines.append(fading(row, Date.now()));
     follow();
