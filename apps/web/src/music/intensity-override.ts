@@ -3,7 +3,7 @@ import type { Intensity } from "./director.js";
 /**
  * The player's intensity override (#425): `auto` lets the director decide,
  * a level holds the music there. One store for the whole page, read by the
- * music and written by Options → Sound, the HUD's ♪ popover and the beat
+ * music and written by the top bar's and the HUD's ♪ popovers and the beat
  * editor (#373), so there is never a second override to disagree with it.
  *
  * Session only (Q55): it lives in memory and is never saved, so every page

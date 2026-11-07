@@ -8,7 +8,7 @@ import { mountMusicControls, musicControlsDeps, type MusicControlsDeps } from ".
 /**
  * The sound controls (#424): mute all, the sound effects volume, and the
  * music's own volume and mute. They exist once and render in two places,
- * Options → Sound and the HUD's ♪ popover, so there is never a second
+ * the top bar's ♪ popover and the HUD's, so there is never a second
  * volume control to disagree with this one. Every change applies at once
  * and is saved; the volumes ramp to it rather than jump.
  * The Music block (#425) sits under them, in both places too.

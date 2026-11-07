@@ -442,7 +442,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
 
   const music = iconButton("topbar-music", "Music");
 
-  // The same mute all as the HUD's and Options → Sound (#424).
+  // The same mute all as the HUD's and the ♪ popovers' (#424).
   const mute = iconButton("topbar-mute", "Mute sounds");
   paintMuteButton(mute, isGloballyMuted());
   onGlobalMute((muted) => {
