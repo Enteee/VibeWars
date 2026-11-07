@@ -1,6 +1,5 @@
 import { en, type Catalog, type MessageKey } from "./en.js";
-import { LANGUAGES, LOCALES, availableLanguages, type LanguageCode } from "./languages.js";
-import { loadLanguage } from "./language-preference.js";
+import { LANGUAGES, type LanguageCode } from "./languages.js";
 import type { Message } from "./message.js";
 
 /**
@@ -55,13 +54,6 @@ export function setLocale(code: LanguageCode, catalog: Catalog): void {
   const root = document.documentElement;
   root.lang = code;
   root.dir = LANGUAGES.find((language) => language.code === code)?.rtl === true ? "rtl" : "ltr";
-}
-
-/** Load the player's language before the first screen draws: `main.ts` awaits it. */
-export async function loadLocale(): Promise<void> {
-  const code = pickLanguage(loadLanguage(), navigator.languages, availableLanguages());
-  const load = LOCALES[code];
-  setLocale(code, load === undefined ? en : (await load()).default);
 }
 
 /** The language in use, for `Intl`. */
