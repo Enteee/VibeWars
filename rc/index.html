@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>VibeWars</title>
+    <!-- Vite copies `public/` to the dist root, which the server then serves. -->
+    <link rel="icon" type="image/svg+xml" href="/VibeWars/rc/icon.svg" />
+    <script type="module" crossorigin src="/VibeWars/rc/assets/main-r7RV1Zbe.js"></script>
+    <link rel="modulepreload" crossorigin href="/VibeWars/rc/assets/preload-helper-CsNSpIhQ.js">
+    <link rel="modulepreload" crossorigin href="/VibeWars/rc/assets/music-urls-Dw3aMrXT.js">
+    <link rel="stylesheet" crossorigin href="/VibeWars/rc/assets/main-IQSkdmZE.css">
+  </head>
+  <body>
+    <div id="app">
+      <!-- The shown screen's place and controls, then the global icons (#1272). -->
+      <header id="topbar">
+        <nav class="topbar-crumbs" aria-label="Where you are">
+          <span class="topbar-crumb is-place">VibeWars</span>
+        </nav>
+        <span class="topbar-back"></span>
+        <span class="topbar-status"></span>
+        <span id="status" class="status" hidden></span>
+        <div class="topbar-tools">
+          <div class="topbar-screen-actions"></div>
+          <div id="topbar-actions" class="topbar-actions"></div>
+        </div>
+      </header>
+      <!-- Menu / character / team / lobby screens. -->
+      <div id="screens"></div>
+      <!-- The Phaser game viewport; shown only during a match. -->
+      <main id="viewport" aria-label="Game viewport"></main>
+    </div>
+  </body>
+</html>
