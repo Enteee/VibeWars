@@ -24,6 +24,14 @@
   --enchantment: #56d4dd;
   /* A shrine raise's invulnerability (art direction palette, #1233). */
   --invulnerable: #f5e6b8;
+  /* A match's kind on the Matches page (#2741), from the art direction
+     palette: condition, friend, preparation, hex, heal. Each is over 3:1
+     on --panel. */
+  --kind-random-arena: #ffa657;
+  --kind-team-arena: #59c2ff;
+  --kind-heroes-ascent: #e3b341;
+  --kind-gvg: #d2a8ff;
+  --kind-hosted-game: #7ee787;
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
@@ -1724,6 +1732,54 @@ body {
 .match-row {
   background: var(--panel);
   border: 1px solid var(--line);
+  border-left: 3px solid var(--kind, var(--line));
+}
+
+/* A kind's colour (#2741), on its row's border and on its icon. */
+[data-kind="random-arena"] {
+  --kind: var(--kind-random-arena);
+}
+
+[data-kind="team-arena"] {
+  --kind: var(--kind-team-arena);
+}
+
+[data-kind="heroes-ascent"] {
+  --kind: var(--kind-heroes-ascent);
+}
+
+[data-kind="gvg"] {
+  --kind: var(--kind-gvg);
+}
+
+[data-kind="hosted-game"] {
+  --kind: var(--kind-hosted-game);
+}
+
+.match-kind-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background: var(--kind, currentcolor);
+  mask: var(--icon) center / contain no-repeat;
+}
+
+/* The kind and size chips above the list (#2741). */
+.match-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+
+.screen .match-chip {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.match-chip .match-kind-icon {
+  width: 14px;
+  height: 14px;
 }
 
 .screen .match-row-head {
