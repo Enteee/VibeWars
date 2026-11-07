@@ -111,7 +111,7 @@ export const MAX_FORM_CYCLES = 128;
  *
  *   last-stand 30.94, clash-of-banners 30.04, hall-of-champions 19.73,
  *   ember-deep 16.25, victors-hymn 14.06, northern-pass 11.65,
- *   first-light 7.60, jungle-veil 6.00, glass-dunes 5.55, ashen-fields 2.41
+ *   first-light 7.60, jungle-veil 6.00, glass-dunes 9.11, ashen-fields 2.41
  */
 export const MAX_EVENTS_PER_SECOND = 31;
 
