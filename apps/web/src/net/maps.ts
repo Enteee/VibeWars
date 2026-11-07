@@ -8,6 +8,8 @@ import elonianPlateau from "@vibewars/game-maps/maps/elonian-plateau/map.json" w
 import frozenCrossing from "@vibewars/game-maps/maps/frozen-crossing/map.json" with { type: "json" };
 import mossVale from "@vibewars/game-maps/maps/moss-vale/map.json" with { type: "json" };
 import sandstoneSteps from "@vibewars/game-maps/maps/sandstone-steps/map.json" with { type: "json" };
+import canthanTerraces from "@vibewars/game-maps/maps/canthan-terraces/map.json" with { type: "json" };
+import sunkenBastion from "@vibewars/game-maps/maps/sunken-bastion/map.json" with { type: "json" };
 import shiverpeakPass from "@vibewars/game-maps/maps/shiverpeak-pass/map.json" with { type: "json" };
 import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
@@ -49,7 +51,9 @@ export const ARENA_MAPS: readonly MapData[] = [
   frozenCrossing,
   ashenCourtyard,
   mossVale,
-  // The large arenas (#2609).
+  // The large arenas (#2607, #2609).
+  canthanTerraces,
+  sunkenBastion,
   shiverpeakPass,
   elonianPlateau,
   // The Guild Battle's (#1222).

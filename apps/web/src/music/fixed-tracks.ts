@@ -28,6 +28,8 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["frozen-crossing", "ashen-fields"],
   ["ashen-courtyard", "ashen-fields"],
   ["moss-vale", "jungle-veil"],
+  ["canthan-terraces", "hall-of-champions"],
+  ["sunken-bastion", "victors-hymn"],
   ["shiverpeak-pass", "northern-pass"],
   ["elonian-plateau", "glass-dunes"],
   ["hall-of-heroes", "hall-of-champions"],

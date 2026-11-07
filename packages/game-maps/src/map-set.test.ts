@@ -179,7 +179,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), The Courtyard (#2552), Scarred Earth (#2551) and the medium arenas Sandstone Steps and Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605) and the large Shiverpeak Pass and Elonian Plateau (#2609)", () => {
+  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), The Courtyard (#2552), Scarred Earth (#2551), the medium arenas Sandstone Steps and Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605) and the large Canthan Terraces and Sunken Bastion (#2607), Shiverpeak Pass and Elonian Plateau (#2609)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
         "arena-pillars",
@@ -193,6 +193,8 @@ describe("the arena set (#444)", () => {
         "frozen-crossing",
         "ashen-courtyard",
         "moss-vale",
+        "canthan-terraces",
+        "sunken-bastion",
         "shiverpeak-pass",
         "elonian-plateau",
         ...NEW_ARENAS,
@@ -634,15 +636,17 @@ describe("Hall of Heroes (#2552)", () => {
 /** Half the narrowest gap a route may squeeze through (#2544): a 200-wide gap passes, a narrower one does not. */
 const ROUTE_HALF_GAP = 100;
 
-// The medium arenas (#2604, #2605) cross the centre in three lanes, the large (#2609) in four.
+// The medium arenas (#2604, #2605) cross the centre in three lanes, the large (#2607, #2609) in four.
 describe.each([
   ["sandstone-steps", 1, 3],
   ["frozen-crossing", 2, 3],
   ["ashen-courtyard", 4, 3],
   ["moss-vale", 8, 3],
+  ["canthan-terraces", 1, 4],
+  ["sunken-bastion", 2, 4],
   ["shiverpeak-pass", 4, 4],
   ["elonian-plateau", 8, 4],
-] as const)("the new arena %s (#2604, #2605, #2609)", (id, size, lanes) => {
+] as const)("the new arena %s (#2604, #2605, #2607, #2609)", (id, size, lanes) => {
   const map = MAPS.find((each) => each.id === id);
   if (map === undefined) throw new Error(`no ${id}`);
   const bounds = { width: map.width, height: map.height };
