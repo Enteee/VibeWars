@@ -2000,7 +2000,7 @@ the living on your side, then theirs, beside the clock, and a pip per
 foe beside it is filled while they live and hollow once they fall
 (#881). Hover a pip for the name. The clock counts down to the end of
 the match.
-In GW1's Kill Count, which Pillar Hall plays, a dead player **respawns**
+In GW1's Kill Count, which Ember Pits plays, a dead player **respawns**
 at a spawn point of their own team after 8 seconds, at full health and
 energy, with all statuses cleared, and there is no death penalty. There
 the scoreboard counts kills instead: `4 – 0 · 2:25` reads your team's

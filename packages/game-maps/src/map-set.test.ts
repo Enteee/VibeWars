@@ -179,11 +179,11 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), The Courtyard (#2552), Scarred Earth (#2551), the medium arenas Sandstone Steps and Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605) and the large Canthan Terraces and Sunken Bastion (#2607), Shiverpeak Pass and Elonian Plateau (#2609)", () => {
+  it("is the two mode arenas of #2550, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), The Courtyard (#2552), Scarred Earth (#2551), the medium arenas Sandstone Steps and Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605) and the large Canthan Terraces and Sunken Bastion (#2607), Shiverpeak Pass and Elonian Plateau (#2609)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
-        "arena-pillars",
-        "arena-split",
+        "ember-pits",
+        "jungle-ruins",
         "guild-hall-isle",
         "broken-tower",
         "the-courtyard",
@@ -202,12 +202,12 @@ describe("the arena set (#444)", () => {
     );
   });
 
-  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Broken Tower, King of the Hill on The Courtyard and Hall of Heroes (#2552), Capture Points on Scarred Earth and Annihilation everywhere else (#476, #1186, #1222, #1374, #1377, #1378, #2551, #2552)", () => {
+  it("plays Kill Count on Ember Pits, Priest Annihilation on Jungle Ruins (#2550), Guild Battle on Guild Hall Isle, Relic Run on Broken Tower, King of the Hill on The Courtyard and Hall of Heroes (#2552), Capture Points on Scarred Earth and Annihilation everywhere else (#476, #1186, #1222, #1374, #1377, #1378, #2551, #2552)", () => {
     expect(MAPS.filter((map) => map.mode === "kill-count").map((map) => map.id)).toEqual([
-      "arena-pillars",
+      "ember-pits",
     ]);
     expect(MAPS.filter((map) => map.mode === "priest-annihilation").map((map) => map.id)).toEqual([
-      "arena-split",
+      "jungle-ruins",
     ]);
     expect(MAPS.filter((map) => map.mode === "guild-battle").map((map) => map.id)).toEqual([
       "guild-hall-isle",
@@ -225,15 +225,18 @@ describe("the arena set (#444)", () => {
     expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 7);
   });
 
-  it("puts each team's shrine on Split Paths behind its spawns (#1186)", () => {
-    const split = MAPS.find((map) => map.id === "arena-split");
-    for (const shrine of split?.objectives ?? []) {
+  it("puts each team's shrine on Jungle Ruins 150-250 behind its spawns (#1186, #2550)", () => {
+    const ruins = MAPS.find((map) => map.id === "jungle-ruins");
+    const centre = (ruins?.width ?? 0) / 2;
+    for (const shrine of ruins?.objectives ?? []) {
       const spawns =
-        split?.spawnPoints.filter((spawn) => "team" in shrine && spawn.team === shrine.team) ?? [];
-      const farthest = Math.max(...spawns.map((spawn) => Math.abs(spawn.position.x - 500)));
-      expect(Math.abs(shrine.position.x - 500)).toBeGreaterThan(farthest);
+        ruins?.spawnPoints.filter((spawn) => "team" in shrine && spawn.team === shrine.team) ?? [];
+      const rearmost = Math.max(...spawns.map((spawn) => Math.abs(spawn.position.x - centre)));
+      const behind = Math.abs(shrine.position.x - centre) - rearmost;
+      expect(behind).toBeGreaterThanOrEqual(150);
+      expect(behind).toBeLessThanOrEqual(250);
     }
-    expect(split?.objectives).toHaveLength(2);
+    expect(ruins?.objectives).toHaveLength(2);
   });
 });
 

@@ -1,5 +1,6 @@
 import { PROFESSIONS, decodeTemplateCode, defaultEquipmentFor } from "@vibewars/game-core";
 
+import { t } from "../i18n/index.js";
 import type { ImportResult } from "./build-transfer.js";
 import { validateBuild } from "./build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, isStoredCharacter, type StoredCharacter } from "./schema.js";
@@ -44,7 +45,7 @@ export function decodeTemplate(text: string, id: string, now: number): TemplateI
     return { ok: false, problems: invalid.map((problem) => problem.message) };
   }
   if (!isStoredCharacter(character)) {
-    return { ok: false, problems: ["Imported build does not match the storage schema."] };
+    return { ok: false, problems: [t("storage.schemaMismatch")] };
   }
   return { ok: true, character, missingSkills };
 }
@@ -58,6 +59,5 @@ export function missingSkillsNote(missing: readonly number[]): string {
   if (missing.length === 0) {
     return "";
   }
-  const count = missing.length === 1 ? "1 skill is" : `${String(missing.length)} skills are`;
-  return `. ${count} not in VibeWars yet: GW1 skill ${missing.join(", ")}.`;
+  return t("storage.missingSkills", { count: missing.length, skills: missing.join(", ") });
 }

@@ -12,7 +12,7 @@ import {
   type StatusId,
 } from "@vibewars/game-core";
 
-import { SKILL_TYPE_NAME } from "../ui/icons.js";
+import { SKILL_TYPE_KEY } from "../ui/icons.js";
 import { composeArenaAtlas, packAtlas } from "../../plugins/arena-atlas.js";
 import {
   BODY_GLYPH_TEXTURE_SIZE,
@@ -59,7 +59,7 @@ describe("the arena atlas (#1671)", () => {
     for (const look of CREATURE_LOOKS) {
       expectFrame(creatureFrame(look), BODY_GLYPH_TEXTURE_SIZE, BODY_GLYPH_TEXTURE_SIZE);
     }
-    for (const type of Object.keys(SKILL_TYPE_NAME) as SkillType[]) {
+    for (const type of Object.keys(SKILL_TYPE_KEY) as SkillType[]) {
       expectFrame(skillTypeFrame(type), CAST_BADGE_TEXTURE_SIZE, CAST_BADGE_TEXTURE_SIZE);
     }
     for (const sprite of PROJECTILE_SPRITES) {

@@ -1,5 +1,6 @@
 import type { WireWeaponSets } from "@vibewars/game-protocol";
 
+import { t } from "../i18n/index.js";
 import type { KeyLabeller } from "../input/key-labels.js";
 import { WEAPON_SET_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import { setDisabled } from "./dom-write.js";
@@ -67,9 +68,13 @@ export function renderWeaponSets(root: HTMLElement, sets: WireWeaponSets | undef
     const main = held === null ? undefined : weaponIcon(held.weaponId);
     const offhandId = held?.offhandId ?? null;
     const off = offhandId === null ? undefined : offhandIcon(offhandId);
-    const name = `Weapon set ${String(index + 1)}`;
     const gear = [main?.name, off?.name].filter((part) => part !== undefined).join(", ");
-    slot.setAttribute("aria-label", held === null ? `${name}: empty` : `${name}: ${gear}`);
+    slot.setAttribute(
+      "aria-label",
+      held === null
+        ? t("weaponSets.empty", { number: index + 1 })
+        : t("weaponSets.holds", { number: index + 1, gear }),
+    );
     slot.title = slot.getAttribute("aria-label") ?? "";
     slot
       .querySelector(".weapon-set-icons")

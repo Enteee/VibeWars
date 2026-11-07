@@ -5,14 +5,14 @@ import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json"
 import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" with { type: "json" };
 import ashenCourtyard from "@vibewars/game-maps/maps/ashen-courtyard/map.json" with { type: "json" };
 import elonianPlateau from "@vibewars/game-maps/maps/elonian-plateau/map.json" with { type: "json" };
+import emberPits from "@vibewars/game-maps/maps/ember-pits/map.json" with { type: "json" };
 import frozenCrossing from "@vibewars/game-maps/maps/frozen-crossing/map.json" with { type: "json" };
+import jungleRuins from "@vibewars/game-maps/maps/jungle-ruins/map.json" with { type: "json" };
 import mossVale from "@vibewars/game-maps/maps/moss-vale/map.json" with { type: "json" };
 import sandstoneSteps from "@vibewars/game-maps/maps/sandstone-steps/map.json" with { type: "json" };
 import canthanTerraces from "@vibewars/game-maps/maps/canthan-terraces/map.json" with { type: "json" };
 import sunkenBastion from "@vibewars/game-maps/maps/sunken-bastion/map.json" with { type: "json" };
 import shiverpeakPass from "@vibewars/game-maps/maps/shiverpeak-pass/map.json" with { type: "json" };
-import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
-import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
 import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
@@ -41,8 +41,8 @@ import { TRAINING_MAPS } from "../training/maps.js";
  */
 export const ARENA_MAPS: readonly MapData[] = [
   // Kill Count's and Priest Annihilation's, then the Annihilation arenas, smallest first.
-  arenaPillars,
-  arenaSplit,
+  emberPits,
+  jungleRuins,
   arenaCrossroads,
   arenaCanyon,
   arenaLongHall,

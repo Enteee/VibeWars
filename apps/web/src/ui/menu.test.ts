@@ -1,13 +1,12 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import type * as Figure from "./character-figure.js";
 import type * as Kit from "./kit.js";
 import {
-  NO_CHARACTER_FOR_QUEUE,
-  PARTY_CANNOT_QUEUE,
   isPlayable,
   randomArenaProblem,
   renderCharacterBuilder,
@@ -82,7 +81,7 @@ describe("rosterTags (#1426)", () => {
   const illegal = { skillBar: ["no.such-skill", null, null, null, null, null, null, null] };
 
   it("marks the starter character Random, and no other", () => {
-    expect(rosterTags(character({ id: "s" }), "s")).toEqual(["Random"]);
+    expect(rosterTags(character({ id: "s" }), "s")).toEqual(["random"]);
     expect(rosterTags(character({ id: "a" }), "s")).toEqual([]);
   });
 
@@ -91,8 +90,8 @@ describe("rosterTags (#1426)", () => {
   });
 
   it("puts Random before Invalid on an invalid starter", () => {
-    expect(rosterTags(character({ id: "s", ...illegal }), "s")).toEqual(["Random", "Invalid"]);
-    expect(rosterTags(character({ id: "a", ...illegal }), "s")).toEqual(["Invalid"]);
+    expect(rosterTags(character({ id: "s", ...illegal }), "s")).toEqual(["random", "invalid"]);
+    expect(rosterTags(character({ id: "a", ...illegal }), "s")).toEqual(["invalid"]);
   });
 });
 
@@ -239,9 +238,8 @@ describe("the character screens (#1525)", () => {
 
   it("Random Arena picks only: no Edit, Clone, Reroll or New, and no text field", () => {
     const nodes = shown(renderRandomArena);
-    expect(labels(nodes)).not.toEqual(
-      expect.arrayContaining([expect.stringMatching(/^(Edit|Clone|Reroll|New character)$/)]),
-    );
+    const editing = [t("menu.edit"), t("menu.clone"), t("menu.reroll"), t("menu.newCharacter")];
+    expect(labels(nodes).filter((label) => editing.includes(label))).toEqual([]);
     expect(nodes.filter((node) => node.tagName === "input")).toHaveLength(0);
     const cards = nodes.filter((node) => node.className === "play-card-open");
     expect(cards.map((card) => card.attributes.get("aria-pressed"))).toEqual(["false", "false"]);
@@ -262,13 +260,13 @@ describe("the character screens (#1525)", () => {
     let nodes = shown(renderRandomArena);
     expect(ready().textContent).toBe("Ready");
     expect(ready().disabled).toBe(true);
-    expect(ready().title).toBe(NO_CHARACTER_FOR_QUEUE);
-    expect(nodes.some((node) => node.textContent === NO_CHARACTER_FOR_QUEUE)).toBe(true);
+    expect(ready().title).toBe(t("menu.noCharacterForQueue"));
+    expect(nodes.some((node) => node.textContent === t("menu.noCharacterForQueue"))).toBe(true);
 
     stored.set(`${STORAGE_NAMESPACE}.activeCharacterId`, "mine");
     nodes = shown(renderRandomArena);
     expect(ready().disabled).toBe(false);
-    expect(nodes.some((node) => node.textContent === NO_CHARACTER_FOR_QUEUE)).toBe(false);
+    expect(nodes.some((node) => node.textContent === t("menu.noCharacterForQueue"))).toBe(false);
     ready().click();
     expect(queued).toEqual(["random-arena-4v4 Rurik"]);
 
@@ -294,28 +292,33 @@ describe("the character screens (#1525)", () => {
   });
 
   it("says why Random Arena cannot queue: no character, then a party (#2022)", () => {
-    expect(randomArenaProblem(false, false)).toBe(NO_CHARACTER_FOR_QUEUE);
-    expect(randomArenaProblem(true, false)).toBe(PARTY_CANNOT_QUEUE);
+    expect(randomArenaProblem(false, false)).toBe(t("menu.noCharacterForQueue"));
+    expect(randomArenaProblem(true, false)).toBe(t("menu.partyCannotQueue"));
     expect(randomArenaProblem(true, true)).toBeUndefined();
   });
 
   it("Random Arena with no characters points to Character Builder", () => {
     const nodes = shown(renderRandomArena, []);
-    expect(nodes.some((node) => node.textContent === "No characters yet.")).toBe(true);
-    press(nodes, "Character Builder");
+    expect(nodes.some((node) => node.textContent === t("menu.noCharacters"))).toBe(true);
+    press(nodes, t("menu.characterBuilder"));
     expect(switched).toEqual(["characters"]);
   });
 
   it("Character Builder has Edit, Clone and Reroll on the starter, and New character", () => {
     const nodes = shown(renderCharacterBuilder);
     expect(labels(nodes).filter((label) => label !== "")).toEqual(
-      expect.arrayContaining(["Edit", "Clone", "Reroll", "New character"]),
+      expect.arrayContaining([
+        t("menu.edit"),
+        t("menu.clone"),
+        t("menu.reroll"),
+        t("menu.newCharacter"),
+      ]),
     );
-    press(nodes, "Edit");
+    press(nodes, t("menu.edit"));
     nodes.find((node) => node.className === "play-card-open" && node.tagName === "button")?.click();
-    press(nodes, "Clone");
-    press(nodes, "Reroll");
-    press(nodes, "New character");
+    press(nodes, t("menu.clone"));
+    press(nodes, t("menu.reroll"));
+    press(nodes, t("menu.newCharacter"));
     expect(edited).toEqual(["mine", "mine"]);
     expect(cloned).toEqual(["rolled"]);
     expect(rerolled).toEqual(["rolled"]);

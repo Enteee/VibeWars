@@ -7,6 +7,7 @@ import {
   type StoredCharacter,
   type StoredTeam,
 } from "./schema.js";
+import { t } from "../i18n/index.js";
 import { STORAGE_NAMESPACE } from "./namespace.js";
 
 /**
@@ -27,16 +28,12 @@ const MATCH_STORE = "matches";
 
 /** The notice shown when `count` stale characters were discarded. */
 export function discardedCharactersNotice(count: number): string {
-  return count === 1
-    ? "A saved character from an older build of the game could not be read and was discarded."
-    : `${String(count)} saved characters from an older build of the game could not be read and were discarded.`;
+  return t("storage.discardedCharacters", { count });
 }
 
 /** The notice shown when `count` stale teams were discarded. */
 export function discardedTeamsNotice(count: number): string {
-  return count === 1
-    ? "A saved team from an older build of the game could not be read and was discarded."
-    : `${String(count)} saved teams from an older build of the game could not be read and were discarded.`;
+  return t("storage.discardedTeams", { count });
 }
 
 /**
@@ -81,9 +78,6 @@ function committed(tx: IDBTransaction): Promise<void> {
     };
   });
 }
-
-/** What the bar says while another tab's older build holds the store open (#1404). */
-export const BLOCKED_NOTICE = "Close your other VibeWars tabs to continue.";
 
 /**
  * Open the store. `onBlocked` runs if another tab holds an older version

@@ -7,6 +7,8 @@ import {
 } from "@vibewars/game-core";
 import type { SkillSlot } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
+
 import { echoTooltipLine } from "./echo-strip.js";
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
 
@@ -157,6 +159,9 @@ export function slotDescription(
   if (listed === undefined && slot.energyCost === 0) {
     return description;
   }
-  const base = listed === undefined || slot.energyCost === listed ? "" : ` (${String(listed)})`;
-  return { ...description, cost: `${String(slot.energyCost)} energy${base}${overcastText(skill)}` };
+  const cost =
+    listed === undefined || slot.energyCost === listed
+      ? t("slotTooltip.energy", { cost: slot.energyCost })
+      : t("slotTooltip.energyListed", { cost: slot.energyCost, listed });
+  return { ...description, cost: `${cost}${overcastText(skill)}` };
 }

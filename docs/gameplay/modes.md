@@ -12,13 +12,13 @@ two. Every map today has two; Heroes' Ascent brings the three-team ones.
 **Annihilation** (GW1's arenas, #846): defeat every foe. The dead stay
 corpses until resurrected, and each death costs morale. Wipe the other
 team to win; after 8 minutes the highest total morale wins, and there is
-no draw. Every arena but Pillar Hall, Split Paths, Guild Hall Isle,
+no draw. Every arena but Ember Pits, Jungle Ruins, Guild Hall Isle,
 Broken Tower, The Courtyard and Scarred Earth plays it.
 
 **Kill Count** (GW1's The Crag): the most kills in 3 minutes. The dead
 respawn at their team's spawn after 8 seconds, and there is no death
 penalty. The first team to 15 kills wins at once; at time the team with
-more kills wins, and equal kills is a draw. Pillar Hall plays it.
+more kills wins, and equal kills is a draw. Ember Pits plays it.
 
 **Priest Annihilation** (GW1, #1186): defeat every foe **and** their
 priest. Each team has a Resurrection Shrine behind its spawns, a map
@@ -35,7 +35,7 @@ resurrected and counts for nobody: no roster, score or morale. A team is
 beaten once every player on it is dead and its priest too; a wiped team
 whose priest lives waits for the wave. After 12 minutes the highest
 total morale wins, then the team whose priest lives; otherwise both
-lose. Split Paths plays it.
+lose. Jungle Ruins plays it.
 
 **Guild Battle** (GW1's Guild versus Guild, #1222): kill the enemy
 **Guild Lord**, 8 against 8. Each base, behind a wall with two gates,

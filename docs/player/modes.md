@@ -58,7 +58,8 @@ savanna round five great mesas, with the longest sightlines of any arena.
 8 seconds, and dying costs no morale. The first team to 15 kills wins at
 once. At time, more kills wins; equal kills is a draw.
 
-Pillar Hall plays it.
+Ember Pits plays it: a ring of broken pillars round an open pit, with a
+corridor along each side, for every team size.
 
 ## Priest Annihilation
 
@@ -71,7 +72,8 @@ and the other team stays down.
 A team loses when all its players and its priest are dead. After 12
 minutes the most morale wins.
 
-Split Paths plays it.
+Jungle Ruins plays it: three lanes joined by cross-paths in the middle,
+each shrine behind a wall at the back of its base.
 
 ## Guild Battle
 

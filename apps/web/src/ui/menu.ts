@@ -1,5 +1,6 @@
 import type { QueueMode } from "@vibewars/game-protocol";
 
+import { t } from "../i18n/index.js";
 import { capeLook } from "../render/cape-shape.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter } from "../storage/schema.js";
@@ -45,11 +46,6 @@ export const RANDOM_ARENA_MODES: readonly {
   { size: 2, mode: "random-arena-2v2", label: "2v2" },
   { size: 4, mode: "random-arena-4v4", label: "4v4" },
 ];
-
-/** Why Random Arena's Ready is greyed out: a queue needs a character to show strangers. */
-export const NO_CHARACTER_FOR_QUEUE = "Make a character first.";
-/** Why it is, while anyone else is in the lobby (#1526): a party queues in card 4. */
-export const PARTY_CANNOT_QUEUE = "Leave the party, or play a Hosted Game";
 
 const CHARACTER_STORAGE_KEY = `${STORAGE_NAMESPACE}.activeCharacterId`;
 
@@ -108,9 +104,11 @@ export function clearStarterCharacterId(): void {
 
 /** "Elementalist / Monk · 5/8 skills". */
 export function rosterSubtitle(character: StoredCharacter): string {
-  const professions = professionLabel(character.primaryProfession, character.secondaryProfession);
-  const skills = `${String(equippedCount(character))}/${String(character.skillBar.length)} skills`;
-  return `${professions} · ${skills}`;
+  return t("character.skillsLine", {
+    professions: professionLabel(character.primaryProfession, character.secondaryProfession),
+    equipped: equippedCount(character),
+    slots: character.skillBar.length,
+  });
 }
 
 /**
@@ -139,20 +137,20 @@ export function isPlayable(character: StoredCharacter): boolean {
 }
 
 /**
- * The tags after a roster row's name (#1426): "Random" on the rolled
- * starter character, so it reads as not yours at a glance, then "Invalid"
+ * The tags after a roster row's name (#1426): "random" on the rolled
+ * starter character, so it reads as not yours at a glance, then "invalid"
  * on a build the rules no longer allow (#1290).
  */
 export function rosterTags(
   character: StoredCharacter,
   starter: string | undefined,
-): ("Random" | "Invalid")[] {
-  const tags: ("Random" | "Invalid")[] = [];
+): ("random" | "invalid")[] {
+  const tags: ("random" | "invalid")[] = [];
   if (character.id === starter) {
-    tags.push("Random");
+    tags.push("random");
   }
   if (!isPlayable(character)) {
-    tags.push("Invalid");
+    tags.push("invalid");
   }
   return tags;
 }
@@ -172,7 +170,9 @@ function characterCard(
   const card = playCard({
     name: character.name,
     tags: rosterTags(character, starter).map((tag) =>
-      h("span", tag === "Random" ? "roster-random-tag" : "roster-invalid-tag", tag),
+      tag === "random"
+        ? h("span", "roster-random-tag", t("menu.randomTag"))
+        : h("span", "roster-invalid-tag", t("menu.invalidTag")),
     ),
     content: [
       characterFigureCard(lookOfCharacter(character, worn), {
@@ -206,10 +206,10 @@ function wornCape(): ReturnType<typeof capeLook> | undefined {
  */
 export function randomArenaProblem(hasCharacter: boolean, alone: boolean): string | undefined {
   if (!hasCharacter) {
-    return NO_CHARACTER_FOR_QUEUE;
+    return t("menu.noCharacterForQueue");
   }
   if (!alone) {
-    return PARTY_CANNOT_QUEUE;
+    return t("menu.partyCannotQueue");
   }
   return undefined;
 }
@@ -259,7 +259,7 @@ export function renderRandomArena(
 
   if (characters.length === 0) {
     body.appendChild(
-      emptyState("No characters yet.", "Character Builder", () => {
+      emptyState(t("menu.noCharacters"), t("menu.characterBuilder"), () => {
         callbacks.onSwitch("characters");
       }),
     );
@@ -332,7 +332,7 @@ export function renderCharacterBuilder(
     };
     // The rolled character is never edited (#1147): Clone gives a copy of
     // it to edit (#2038), and Reroll replaces it at once, unasked (#1146).
-    const clone = button("Clone", "roster-clone", () => {
+    const clone = button(t("menu.clone"), "roster-clone", () => {
       // One copy per press: a double-click must not save two.
       clone.disabled = true;
       callbacks.onCloneStarter(character.id);
@@ -344,21 +344,25 @@ export function renderCharacterBuilder(
           ? {
               actions: [
                 clone,
-                button("Reroll", "roster-reroll", () => {
+                button(t("menu.reroll"), "roster-reroll", () => {
                   callbacks.onRerollCharacter(character.id);
                 }),
               ],
             }
-          : { onOpen: edit, actions: [button("Edit", "roster-edit", edit)] },
+          : { onOpen: edit, actions: [button(t("menu.edit"), "roster-edit", edit)] },
       ),
     );
   }
   if (characters.length > 0) {
-    cards.appendChild(button("New character", "play-card play-card-new", callbacks.onNewCharacter));
+    cards.appendChild(
+      button(t("menu.newCharacter"), "play-card play-card-new", callbacks.onNewCharacter),
+    );
   }
   body.appendChild(cards);
   if (characters.length === 0) {
-    body.appendChild(emptyState("No characters yet.", "New character", callbacks.onNewCharacter));
+    body.appendChild(
+      emptyState(t("menu.noCharacters"), t("menu.newCharacter"), callbacks.onNewCharacter),
+    );
   }
 
   if (rerolled) {

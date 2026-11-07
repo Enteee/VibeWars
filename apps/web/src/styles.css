@@ -3887,6 +3887,7 @@ body {
 .hud-mute:focus-visible,
 .hud-help:hover,
 .hud-help:focus-visible,
+.hud-help[aria-expanded="true"],
 .hud-music:hover,
 .hud-music:focus-visible,
 .hud-music[aria-expanded="true"],

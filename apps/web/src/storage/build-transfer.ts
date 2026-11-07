@@ -5,6 +5,7 @@ import {
   type ProfessionId,
 } from "@vibewars/game-core";
 
+import { t } from "../i18n/index.js";
 import { validateBuild, SKILL_BAR_SLOTS } from "./build-validation.js";
 import {
   CHARACTER_SCHEMA_VERSION,
@@ -105,26 +106,26 @@ function isProfessionId(value: unknown): value is ProfessionId {
 
 function readAttributes(value: unknown, problems: string[]): StoredAttribute[] {
   if (!Array.isArray(value)) {
-    problems.push("attributes must be a list");
+    problems.push(t("storage.notAList", { field: "attributes" }));
     return [];
   }
   const attributes: StoredAttribute[] = [];
   for (const entry of value) {
     if (typeof entry !== "object" || entry === null) {
-      problems.push("every attribute must be an object");
+      problems.push(t("storage.attributeNotObject"));
       continue;
     }
     const record = entry as Record<string, unknown>;
     const { attributeId, rank } = record;
     if (typeof attributeId !== "string") {
-      problems.push("every attribute needs an attributeId");
+      problems.push(t("storage.attributeNeedsId"));
       continue;
     }
     // Integer-and-finite, not just "a number": NaN and Infinity survive a
     // JSON round trip through some encoders and would poison the point
     // arithmetic downstream.
     if (typeof rank !== "number" || !Number.isInteger(rank)) {
-      problems.push(`rank for ${attributeId} must be a whole number`);
+      problems.push(t("storage.attributeRankNotWhole", { attribute: attributeId }));
       continue;
     }
     attributes.push({ attributeId, rank });
@@ -134,11 +135,11 @@ function readAttributes(value: unknown, problems: string[]): StoredAttribute[] {
 
 function readSkillBar(value: unknown, problems: string[]): (string | null)[] {
   if (!Array.isArray(value)) {
-    problems.push("skillBar must be a list");
+    problems.push(t("storage.notAList", { field: "skillBar" }));
     return [];
   }
   if (value.length !== SKILL_BAR_SLOTS) {
-    problems.push(`skillBar must have exactly ${String(SKILL_BAR_SLOTS)} slots`);
+    problems.push(t("storage.skillBarSlots", { slots: SKILL_BAR_SLOTS }));
     return [];
   }
   const bar: (string | null)[] = [];
@@ -149,7 +150,7 @@ function readSkillBar(value: unknown, problems: string[]): (string | null)[] {
       bar.push(entry);
       continue;
     }
-    problems.push("every skill slot must be a skill id or null");
+    problems.push(t("storage.skillSlotInvalid"));
     return [];
   }
   return bar;
@@ -167,10 +168,7 @@ export function importBuild(text: string, id: string, now: number): ImportResult
   try {
     parsed = JSON.parse(text);
   } catch {
-    return {
-      ok: false,
-      problems: ["That is not valid JSON. Paste the whole build, including the braces."],
-    };
+    return { ok: false, problems: [t("storage.buildNotJson")] };
   }
 
   return readBuild(parsed, id, now);
@@ -183,27 +181,28 @@ export function importBuild(text: string, id: string, now: number): ImportResult
  */
 export function readBuild(parsed: unknown, id: string, now: number): ImportResult {
   if (typeof parsed !== "object" || parsed === null) {
-    return { ok: false, problems: ["A build must be a JSON object."] };
+    return { ok: false, problems: [t("storage.buildNotObject")] };
   }
 
   const record = parsed as Record<string, unknown>;
   if (record.format !== BUILD_FORMAT) {
     return {
       ok: false,
-      problems: [`This does not look like a VibeWars build (expected format "${BUILD_FORMAT}").`],
+      problems: [t("storage.buildWrongFormat", { format: BUILD_FORMAT })],
     };
   }
   const formatVersion = record.formatVersion;
   if (typeof formatVersion !== "number" || !Number.isInteger(formatVersion)) {
-    return { ok: false, problems: ["This build has no usable format version."] };
+    return { ok: false, problems: [t("storage.buildNoFormatVersion")] };
   }
   if (formatVersion !== BUILD_FORMAT_VERSION) {
     return {
       ok: false,
       problems: [
-        `This build uses format version ${String(formatVersion)}, but this game ` +
-          `reads only version ${String(BUILD_FORMAT_VERSION)}. It was shared from a ` +
-          `different version of the game; ask for a fresh copy.`,
+        t("storage.buildFormatVersion", {
+          version: formatVersion,
+          supported: BUILD_FORMAT_VERSION,
+        }),
       ],
     };
   }
@@ -212,15 +211,25 @@ export function readBuild(parsed: unknown, id: string, now: number): ImportResul
 
   const name = typeof record.name === "string" ? record.name.trim() : "";
   if (name === "") {
-    problems.push("A build needs a name.");
+    problems.push(t("storage.buildNeedsName"));
   }
 
   if (!isProfessionId(record.primaryProfession)) {
-    problems.push(`Unknown primary profession ${JSON.stringify(record.primaryProfession)}.`);
+    problems.push(
+      t("storage.unknownPrimaryProfession", {
+        // JSON.stringify returns `undefined` for a missing field, which its type hides.
+        profession:
+          record.primaryProfession === undefined
+            ? "undefined"
+            : JSON.stringify(record.primaryProfession),
+      }),
+    );
   }
   const secondaryRaw = record.secondaryProfession ?? null;
   if (secondaryRaw !== null && !isProfessionId(secondaryRaw)) {
-    problems.push(`Unknown secondary profession ${JSON.stringify(secondaryRaw)}.`);
+    problems.push(
+      t("storage.unknownSecondaryProfession", { profession: JSON.stringify(secondaryRaw) }),
+    );
   }
 
   const attributes = readAttributes(record.attributes, problems);
@@ -232,12 +241,12 @@ export function readBuild(parsed: unknown, id: string, now: number): ImportResul
   if (!isProfessionId(record.primaryProfession)) {
     // Unreachable: the check above pushed a problem and returned. Present
     // so the type narrows without a non-null assertion (ADR-0008).
-    return { ok: false, problems: ["Unknown primary profession."] };
+    return { ok: false, problems: [t("storage.unknownPrimaryProfessionPlain")] };
   }
 
   const equipment = parseBuildEquipment(record.equipment);
   if (equipment === undefined) {
-    return { ok: false, problems: ["This build's equipment is missing or malformed."] };
+    return { ok: false, problems: [t("storage.buildEquipmentMalformed")] };
   }
 
   const character: StoredCharacter = {
@@ -265,7 +274,7 @@ export function readBuild(parsed: unknown, id: string, now: number): ImportResul
   // when this is read back. Failing here would mean export and storage
   // disagree about the record shape.
   if (!isStoredCharacter(character)) {
-    return { ok: false, problems: ["Imported build does not match the storage schema."] };
+    return { ok: false, problems: [t("storage.schemaMismatch")] };
   }
 
   return { ok: true, character };

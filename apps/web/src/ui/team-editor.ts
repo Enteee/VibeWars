@@ -7,6 +7,7 @@ import {
   type SkillType,
 } from "@vibewars/game-core";
 
+import { t } from "../i18n/index.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import {
   CHARACTER_SCHEMA_VERSION,
@@ -121,7 +122,9 @@ export interface TeamEditorView {
 /** Save's title (#2110): it always stores, and names the first problem that makes the team not playable. */
 export function saveTitle(problems: readonly TeamEditorProblem[]): string {
   const first = problems.find((problem) => problem.blocking);
-  return first === undefined ? "Save this team" : `Save this team (it has problems: ${first.text})`;
+  return first === undefined
+    ? t("teamEditor.saveTitle")
+    : t("teamEditor.saveTitleProblem", { problem: first.text });
 }
 
 /** `value` as JSON with every object's keys sorted, to compare two builds. */
@@ -156,21 +159,13 @@ export interface TeamEditorProblem {
   readonly blocking: boolean;
 }
 
-/** A message as a sentence: capitalised, with a full stop. */
-function sentence(message: string): string {
-  return `${message.charAt(0).toUpperCase()}${message.slice(1)}.`;
-}
-
 /**
  * What makes this team not playable, in plain sentences (#573): `validateTeam`'s
  * problems. A team is always full (#2225): no empty slot to count.
  */
 export function teamEditorProblems(team: StoredTeam): TeamEditorProblem[] {
   return validateTeam(team).map((problem): TeamEditorProblem => ({
-    text:
-      problem.message === "team name must not be empty"
-        ? "Give the team a name."
-        : sentence(problem.message),
+    text: problem.sentence,
     blocking: true,
   }));
 }
@@ -202,15 +197,13 @@ export function memberStats(character: TeamCharacter): MemberStats | undefined {
     : { health: summary.maxHealth, energy: summary.maxEnergy };
 }
 
-/** The editor's team size title (#2109): the size a build was made at stays. */
-export const TEAM_SIZE_FIXED = "A Team Build's size is fixed: make a new one for another size";
-
 /** The team size stepper in the editor's bar (#2109, #2141), locked at the build's size. */
 function lockedTeamSize(size: TeamBuildSize): HTMLElement {
   const field = h("div", "team-lobby-size");
-  field.title = TEAM_SIZE_FIXED;
+  // The size a build was made at stays (#2109).
+  field.title = t("teamEditor.sizeFixed");
   field.append(
-    h("span", "field-label", "Team size"),
+    h("span", "field-label", t("teamEditor.sizeLabel")),
     teamSizeStepper("teams", size, true, () => undefined),
   );
   return field;
@@ -272,8 +265,8 @@ export function memberSkillCells(character: TeamCharacter): (TeamSkillCell | nul
       skill.cost === undefined
         ? ""
         : skill.cost.kind === "adrenaline"
-          ? `${String(skill.cost.amount)}a`
-          : `${String(energyCostOf(skill, outsideMatch(ranks)))}e`;
+          ? t("teamEditor.costAdrenaline", { amount: skill.cost.amount })
+          : t("teamEditor.costEnergy", { amount: energyCostOf(skill, outsideMatch(ranks)) });
     return { skillId, name: skill.name, type: skill.type, cost, elite: skill.elite };
   });
 }
@@ -285,9 +278,11 @@ export function topAttributes(character: Pick<TeamCharacter, "attributes">): str
     .map((attribute, order) => ({ attribute, order }))
     .sort((a, b) => b.attribute.rank - a.attribute.rank || a.order - b.order)
     .slice(0, 3)
-    .map(
-      ({ attribute }) =>
-        `${getAttribute(attribute.attributeId)?.name ?? attribute.attributeId} ${String(attribute.rank)}`,
+    .map(({ attribute }) =>
+      t("teamEditor.attributeRank", {
+        attribute: getAttribute(attribute.attributeId)?.name ?? attribute.attributeId,
+        rank: attribute.rank,
+      }),
     );
 }
 
@@ -332,7 +327,7 @@ export function memberToggle(
   return {
     glyph: open ? "▲" : "▼",
     expanded: open,
-    label: open ? `close ${character.name}` : `edit ${character.name} here`,
+    label: t(open ? "teamEditor.closeMember" : "teamEditor.editMember", { name: character.name }),
   };
 }
 
@@ -417,7 +412,13 @@ export function mountTeamEditor(
       then();
       return;
     }
-    ask(save, "Discard changes?", "Discard", then, "Keep editing");
+    ask(
+      save,
+      t("teamEditor.discardChanges"),
+      t("teamEditor.discard"),
+      then,
+      t("teamEditor.keepEditing"),
+    );
   };
 
   root.replaceChildren();
@@ -426,18 +427,18 @@ export function mountTeamEditor(
   // The name is the last crumb: the place is the team (#1902).
   const nameInput = document.createElement("input");
   nameInput.className = "editor-name";
-  nameInput.setAttribute("aria-label", "team name");
-  nameInput.placeholder = "Team name";
+  nameInput.setAttribute("aria-label", t("teamEditor.teamNameLabel"));
+  nameInput.placeholder = t("teamEditor.teamName");
   nameInput.value = team.name;
   nameInput.addEventListener("input", () => {
     commit({ ...team, name: nameInput.value });
   });
 
   const chip = problemsChip([]);
-  const unsaved = h("span", "editor-unsaved", "● unsaved");
+  const unsaved = h("span", "editor-unsaved", t("teamEditor.unsaved"));
 
   // Save is the way out (#1902): it stores, then leaves as Esc would.
-  const save = button("Save", "primary", () => {
+  const save = button(t("teamEditor.save"), "primary", () => {
     save.disabled = true;
     callbacks.onSave({ ...team, updatedAt: Date.now() }).then(
       () => {
@@ -446,43 +447,49 @@ export function mountTeamEditor(
         }
         // After leaving, which puts the last screen's toast away.
         callbacks.onClose();
-        toast("Saved");
+        toast(t("teamEditor.saved"));
       },
       (error: unknown) => {
         if (disposed) {
           return;
         }
-        toast(`Not saved: ${error instanceof Error ? error.message : String(error)}`);
+        toast(
+          t("teamEditor.notSaved", {
+            error: error instanceof Error ? error.message : String(error),
+          }),
+        );
         update();
       },
     );
   });
   // Duplicate copies the stored team: with edits pending it would store
   // them unchecked, under the copy, and drop them from this one.
-  const duplicate = button("Duplicate", "", () => {
+  const duplicate = button(t("teamEditor.duplicate"), "", () => {
     callbacks.onDuplicate(team);
   });
   // Share (#577): the team, every build inline, as one line with Copy.
-  const share = shareLine("team to share");
-  const shareButton = button("Share", "", () => {
+  const share = shareLine(t("teamEditor.shareLabel"));
+  const shareButton = button(t("teamEditor.share"), "", () => {
     share.show(exportTeam(team));
   });
-  shareButton.title = "share this team as one line";
-  const remove = button("Delete", "", () => {
+  shareButton.title = t("teamEditor.shareTitle");
+  const remove = button(t("teamEditor.delete"), "", () => {
     ask(
       more.toggle,
-      `Delete ${team.name.trim() === "" ? "this team" : team.name}?`,
-      "Delete",
+      team.name.trim() === ""
+        ? t("teamEditor.deleteUnnamed")
+        : t("teamEditor.deleteNamed", { name: team.name }),
+      t("teamEditor.delete"),
       () => {
         callbacks.onDelete(team.id);
       },
-      "Cancel",
+      t("teamEditor.cancel"),
     );
   });
   const more = moreMenu([shareButton, duplicate, remove], [share.element]);
 
   screenBar({
-    crumbs: ["VibeWars", "Team Builder", nameInput],
+    crumbs: ["VibeWars", t("teamEditor.crumb"), nameInput],
     escape: () => {
       leave(callbacks.onClose);
     },
@@ -537,7 +544,7 @@ export function mountTeamEditor(
     counterBar.appendChild(counterButton);
   }
   const mix = h("span", "team-counter-mix");
-  mix.title = "the team's professions";
+  mix.title = t("teamEditor.professionsTitle");
   counterBar.appendChild(mix);
   panel.appendChild(counterBar);
 
@@ -569,7 +576,7 @@ export function mountTeamEditor(
   // onto any member's slot, its Gear for the open member.
   const charactersPane = h("div", "team-picker-pane team-picker-characters");
   const pickerList = h("div", "team-picker-list");
-  const pickerEmpty = h("p", "team-picker-empty", "You have no characters to copy.");
+  const pickerEmpty = h("p", "team-picker-empty", t("teamEditor.noCharacters"));
   charactersPane.append(pickerList, pickerEmpty);
   const indexOfMember = (characterId: string): number =>
     team.members.findIndex((m) => m.character.id === characterId);
@@ -632,7 +639,7 @@ export function mountTeamEditor(
     },
     refresh: update,
     tooltip,
-    extraTabs: [{ id: "characters", label: "My characters", element: charactersPane }],
+    extraTabs: [{ id: "characters", label: t("teamEditor.myCharacters"), element: charactersPane }],
     tab: lastPanelTab,
     onTab: (tab) => {
       lastPanelTab = tab;
@@ -682,18 +689,18 @@ export function mountTeamEditor(
   const professions = mountProfessions(host);
   const memberName = document.createElement("input");
   memberName.className = "team-member-name";
-  memberName.setAttribute("aria-label", "member name");
+  memberName.setAttribute("aria-label", t("teamEditor.memberName"));
   memberName.addEventListener("input", () => {
     commitMember({ ...openCharacter(), name: memberName.value });
   });
   identity.append(
-    h("h4", "team-member-editor-heading", "Professions"),
+    h("h4", "team-member-editor-heading", t("teamEditor.professions")),
     professions.element,
-    h("h4", "team-member-editor-heading", "Name"),
+    h("h4", "team-member-editor-heading", t("teamEditor.name")),
     memberName,
   );
   const attributes = h("div", "team-member-editor-column");
-  attributes.appendChild(h("h4", "team-member-editor-heading", "Attributes"));
+  attributes.appendChild(h("h4", "team-member-editor-heading", t("teamEditor.attributes")));
   const equipment = h("div", "team-member-editor-column team-member-editor-equipment");
   const bar = h("div", "team-member-editor-column team-member-editor-bar");
   const doll = mountPaperDoll(host);
@@ -720,7 +727,7 @@ export function mountTeamEditor(
   ];
   // Opening it in the Character screen stays (#2226).
   equipment.appendChild(
-    button("Open in the Character screen ›", "team-member-open", () => {
+    button(t("teamEditor.openInCharacter"), "team-member-open", () => {
       if (openMember !== undefined) {
         asking?.dismiss();
         callbacks.onOpenMember(openMember, { opened, team, stored: isStored });
@@ -730,7 +737,7 @@ export function mountTeamEditor(
   memberEditor.append(identity, attributes, equipment, bar);
   const fillMemberEditor = (): void => {
     const character = openCharacter();
-    memberEditor.setAttribute("aria-label", `editing ${character.name}`);
+    memberEditor.setAttribute("aria-label", t("teamEditor.editing", { name: character.name }));
     // Setting an unchanged value would still move the caret to the end.
     if (memberName.value !== character.name) {
       memberName.value = character.name;
@@ -853,7 +860,11 @@ export function mountTeamEditor(
         const from = characters.find((c) => c.id === drag.id);
         const member = memberOf(characterId);
         if (from !== undefined && member !== undefined) {
-          picker.showReason(row, `Replace ${member.name} with ${from.name}`, false);
+          picker.showReason(
+            row,
+            t("teamEditor.replaceMember", { member: member.name, character: from.name }),
+            false,
+          );
         }
       }
     });
@@ -904,7 +915,7 @@ export function mountTeamEditor(
       }
       node.replaceChildren();
       if (cell === null) {
-        node.title = "empty slot";
+        node.title = t("teamEditor.emptySlot");
         delete node.dataset.skillId;
         node.removeAttribute("role");
         node.removeAttribute("tabindex");
@@ -974,7 +985,9 @@ export function mountTeamEditor(
     save.disabled = false;
     save.title = saveTitle(problems);
     duplicate.disabled = !isStored || isTeamUnsaved(opened, team);
-    duplicate.title = duplicate.disabled ? "Save first to duplicate" : "duplicate this team";
+    duplicate.title = t(
+      duplicate.disabled ? "teamEditor.duplicateUnsaved" : "teamEditor.duplicateTitle",
+    );
     // A new team has nothing to delete: Esc leaves it.
     remove.disabled = !isStored;
 
@@ -1009,7 +1022,7 @@ export function mountTeamEditor(
         setText(".team-row-name", character.name);
         const name = row.querySelector<HTMLButtonElement>(".team-row-name");
         if (name !== null) {
-          name.title = `edit ${character.name} in the build editor`;
+          name.title = t("teamEditor.editInBuilder", { name: character.name });
         }
         row.draggable = true;
         fillDot(row.querySelector(".team-row-dot"), character);
@@ -1025,8 +1038,8 @@ export function mountTeamEditor(
         const stats = memberStats(character);
         setText(".team-row-health", stats === undefined ? "–" : String(stats.health));
         setText(".team-row-energy", stats === undefined ? "–" : String(stats.energy));
-        row.querySelector(".team-row-health")?.setAttribute("title", "maximum Health");
-        row.querySelector(".team-row-energy")?.setAttribute("title", "maximum Energy");
+        row.querySelector(".team-row-health")?.setAttribute("title", t("teamEditor.maxHealth"));
+        row.querySelector(".team-row-energy")?.setAttribute("title", t("teamEditor.maxEnergy"));
         setText(
           ".team-row-professions",
           professionLabel(character.primaryProfession, character.secondaryProfession),
@@ -1095,7 +1108,7 @@ export function mountTeamEditor(
           return;
         }
         fillDot(pick.querySelector(".team-row-dot"), character);
-        pick.title = `drag onto a member to replace them with a copy of ${character.name}`;
+        pick.title = t("teamEditor.dragToReplace", { name: character.name });
         const text = pick.querySelector(".team-pick-text");
         if (text !== null) {
           text.replaceChildren(
@@ -1103,7 +1116,14 @@ export function mountTeamEditor(
             h(
               "span",
               "team-pick-sub",
-              `${professionLabel(character.primaryProfession, character.secondaryProfession)} · ${String(equippedCount(character))}/${String(SKILL_BAR_SLOTS)} skills`,
+              t("character.skillsLine", {
+                professions: professionLabel(
+                  character.primaryProfession,
+                  character.secondaryProfession,
+                ),
+                equipped: equippedCount(character),
+                slots: SKILL_BAR_SLOTS,
+              }),
             ),
           );
         }
@@ -1153,12 +1173,12 @@ export function mountTeamEditor(
     }
     ask(
       save,
-      "Discard your edits and open the pasted team?",
-      "Discard",
+      t("teamEditor.discardForPaste"),
+      t("teamEditor.discard"),
       () => {
         callbacks.onImportTeam(result.team);
       },
-      "Keep editing",
+      t("teamEditor.keepEditing"),
     );
     return true;
   });

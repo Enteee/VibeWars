@@ -8,11 +8,18 @@ import {
   type SkillType,
 } from "@vibewars/game-core";
 
+import { locale, t } from "../i18n/index.js";
 import { equippableSkills } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
 import { encodeSkillDrag, equipTarget } from "./build-drop.js";
 import { characterRanks } from "./character-ranks.js";
-import { SKILL_TYPE_NAME, skillIcon, skillIconHtml, skillTypeBadgeHtml } from "./icons.js";
+import {
+  SKILL_TYPE_KEY,
+  skillIcon,
+  skillIconHtml,
+  skillTypeBadgeHtml,
+  skillTypeName,
+} from "./icons.js";
 import { button, h, syncList } from "./kit.js";
 import {
   filterEliteSkills,
@@ -110,7 +117,7 @@ function renderDetails(
   scale.setAttribute("role", "img");
   scale.setAttribute(
     "aria-label",
-    `${attributeName} rank ${String(rank)} of ${String(MAX_ATTRIBUTE_RANK)}`,
+    t("skillLibrary.rankOf", { attribute: attributeName, rank, max: MAX_ATTRIBUTE_RANK }),
   );
   for (let step = 0; step <= MAX_ATTRIBUTE_RANK; step++) {
     const mark = h("span", "skill-scale-step", String(step));
@@ -131,14 +138,14 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
   const search = document.createElement("input");
   search.className = "field-input skill-search";
   search.type = "search";
-  search.placeholder = "Search names and text";
-  search.setAttribute("aria-label", "search skills");
+  search.placeholder = t("skillLibrary.search");
+  search.setAttribute("aria-label", t("skillLibrary.searchLabel"));
   // The library's "Elite" toggle (#459): only elite skills listed.
   let eliteOnly = false;
   // One chip per type the catalogue has (#567); several may be on.
   const types = new Set<SkillType>();
-  const typeOrder = skillTypesOf(IMPLEMENTED_SKILLS, Object.keys(SKILL_TYPE_NAME) as SkillType[]);
-  const typeLabel = (type: SkillType): string => SKILL_TYPE_NAME[type].toLowerCase();
+  const typeOrder = skillTypesOf(IMPLEMENTED_SKILLS, Object.keys(SKILL_TYPE_KEY) as SkillType[]);
+  const typeLabel = (type: SkillType): string => skillTypeName(type).toLocaleLowerCase(locale());
   const chip = (label: string, onClick: () => void): HTMLButtonElement => {
     const made = button(label, "skill-type-chip", onClick);
     made.setAttribute("aria-pressed", "false");
@@ -158,7 +165,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     typeChips.set(type, made);
     chips.appendChild(made);
   }
-  const eliteChip = chip("Elite only", () => {
+  const eliteChip = chip(t("skillLibrary.eliteOnly"), () => {
     eliteOnly = !eliteOnly;
     filtersChanged();
   });
@@ -167,20 +174,20 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
 
   // The filters in one popover (#2463), under a "Filters · N" button, and
   // what is on shown beside it as tags that each turn theirs off.
-  const filterButton = button("Filters", "skill-filter-button", () => {
+  const filterButton = button(t("skillLibrary.filters"), "skill-filter-button", () => {
     // The popover opens and shuts it.
   });
   const filterPopover = h("div", "skill-filter-popover");
-  filterPopover.setAttribute("aria-label", "Skill filters");
+  filterPopover.setAttribute("aria-label", t("skillLibrary.filtersLabel"));
   /** The open popover's own close, which refocuses the button. */
   let closeFilters: (() => void) | undefined;
-  const done = button("Done", "skill-filter-done", () => {
+  const done = button(t("skillLibrary.done"), "skill-filter-done", () => {
     closeFilters?.();
   });
   filterPopover.append(
-    h("div", "skill-filter-heading", "Skill type"),
+    h("div", "skill-filter-heading", t("skillLibrary.skillType")),
     chips,
-    h("div", "skill-filter-heading", "Show"),
+    h("div", "skill-filter-heading", t("skillLibrary.show")),
     showChips,
     done,
   );
@@ -205,13 +212,13 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
    * second Enter would wipe every filter.
    */
   const tag = (label: string, name: string, off: () => void): HTMLButtonElement => {
-    const made = button(`${label} ×`, "skill-filter-tag", () => {
+    const made = button(t("skillLibrary.tag", { label }), "skill-filter-tag", () => {
       const at = tagButtons.indexOf(made);
       off();
       filtersChanged();
       (tagButtons[at] ?? tagButtons.at(-1) ?? filterButton).focus();
     });
-    made.setAttribute("aria-label", `remove ${name} filter`);
+    made.setAttribute("aria-label", t("skillLibrary.removeFilter", { name }));
     return made;
   };
   const paintFilters = (): void => {
@@ -229,17 +236,18 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
         ),
       ...(eliteOnly
         ? [
-            tag("elite", "elite", () => {
+            tag(t("skillLibrary.elite"), t("skillLibrary.elite"), () => {
               eliteOnly = false;
             }),
           ]
         : []),
     ];
     const count = active.length;
-    filterButton.textContent = count === 0 ? "Filters" : `Filters · ${String(count)}`;
+    filterButton.textContent =
+      count === 0 ? t("skillLibrary.filters") : t("skillLibrary.filtersCount", { count });
     filterButton.setAttribute(
       "aria-label",
-      count === 0 ? "Filters" : `Filters, ${String(count)} active`,
+      count === 0 ? t("skillLibrary.filters") : t("skillLibrary.filtersActive", { count }),
     );
     tagButtons = [...active];
     if (count >= 2) {
@@ -346,7 +354,13 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     card.appendChild(h("span", "skill-box-cost"));
     card.appendChild(h("span", "skill-box-headline"));
     box.appendChild(card);
-    box.appendChild(h("span", "skill-box-needs", `needs ${skillProfessionName(skill.profession)}`));
+    box.appendChild(
+      h(
+        "span",
+        "skill-box-needs",
+        t("skillLibrary.needs", { profession: skillProfessionName(skill.profession) }),
+      ),
+    );
     const details = h("div", "skill-box-details");
     details.hidden = true;
     box.appendChild(details);
@@ -426,8 +440,10 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     const target = equipTarget(character.skillBar, context.selected());
     const equipText =
       target === undefined
-        ? "pick a slot"
-        : `Equip → ${context.slotLabel(target.slot)}${target.replaces ? " (replace)" : ""}`;
+        ? t("skillLibrary.pickSlot")
+        : t(target.replaces ? "skillLibrary.equipToReplace" : "skillLibrary.equipTo", {
+            slot: context.slotLabel(target.slot),
+          });
     const filtered = (list: readonly Skill[]): readonly Skill[] =>
       filterSkillsByType(
         filterSkillsByText(eliteOnly ? filterEliteSkills(list) : list, search.value),
@@ -469,7 +485,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
       }
       const count = header?.querySelector(".skill-group-count");
       if (count !== null && count !== undefined) {
-        count.textContent = `· ${String(group.skills.length)}`;
+        count.textContent = t("skillLibrary.groupCount", { count: group.skills.length });
       }
       // The rank is shown here because it is exactly what makes every
       // skill under this heading better — the reason to group this way.
@@ -482,7 +498,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
           rank = h("span", "skill-group-rank");
           header?.appendChild(rank);
         }
-        rank.textContent = `rank ${String(ranks.get(group.attributeId) ?? 0)}`;
+        rank.textContent = t("skillLibrary.rank", { rank: ranks.get(group.attributeId) ?? 0 });
       }
       if (boxes instanceof HTMLElement) {
         boxes.hidden = folded;
@@ -506,7 +522,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
               }
             }
             if (onLabel !== null) {
-              const text = on >= 0 ? `on ${context.slotLabel(on)}` : "";
+              const text = on >= 0 ? t("skillLibrary.onSlot", { slot: context.slotLabel(on) }) : "";
               if (onLabel.textContent !== text) {
                 onLabel.textContent = text;
               }
@@ -516,7 +532,9 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
         );
       }
     });
-    lockedSummary.textContent = `Other professions (${String(lockedMatches.length)})`;
+    lockedSummary.textContent = t("skillLibrary.otherProfessions", {
+      count: lockedMatches.length,
+    });
     // Collapsed, the near thousand skills of other professions are
     // counted, not laid out: they come in as it opens (#1220, #2518).
     syncList(

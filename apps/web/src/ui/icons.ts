@@ -16,6 +16,7 @@ import {
   runeDisplayName,
 } from "@vibewars/game-core";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import { CREATURE_GLYPH } from "../render/arena-atlas.js";
 
 /**
@@ -31,30 +32,35 @@ function iconUrl(family: string, id: string): string {
   return `${import.meta.env.BASE_URL}icons/${family}/${id}.svg`;
 }
 
-/** The name a player reads, for `alt` and `title`. */
-export const SKILL_TYPE_NAME: Readonly<Record<SkillType, string>> = {
-  attack: "Attack",
-  spell: "Spell",
-  enchantment: "Enchantment",
-  hex: "Hex",
-  signet: "Signet",
-  shout: "Shout",
-  stance: "Stance",
-  preparation: "Preparation",
-  glyph: "Glyph",
-  chant: "Chant",
-  echo: "Echo",
-  "weapon-spell": "Weapon Spell",
-  "nature-ritual": "Nature Ritual",
-  "binding-ritual": "Binding Ritual",
-  ward: "Ward",
-  well: "Well",
-  "item-spell": "Item Spell",
-  trap: "Trap",
-  "pet-attack": "Pet Attack",
-  form: "Form",
-  skill: "Skill",
+/** Each skill type's name, the one a player reads for `alt` and `title`. */
+export const SKILL_TYPE_KEY: Readonly<Record<SkillType, MessageKey>> = {
+  attack: "skillType.attack",
+  spell: "skillType.spell",
+  enchantment: "skillType.enchantment",
+  hex: "skillType.hex",
+  signet: "skillType.signet",
+  shout: "skillType.shout",
+  stance: "skillType.stance",
+  preparation: "skillType.preparation",
+  glyph: "skillType.glyph",
+  chant: "skillType.chant",
+  echo: "skillType.echo",
+  "weapon-spell": "skillType.weaponSpell",
+  "nature-ritual": "skillType.natureRitual",
+  "binding-ritual": "skillType.bindingRitual",
+  ward: "skillType.ward",
+  well: "skillType.well",
+  "item-spell": "skillType.itemSpell",
+  trap: "skillType.trap",
+  "pet-attack": "skillType.petAttack",
+  form: "skillType.form",
+  skill: "skillType.skill",
 };
+
+/** The name a player reads for `type`. */
+export function skillTypeName(type: SkillType): string {
+  return t(SKILL_TYPE_KEY[type]);
+}
 
 export function skillTypeIcon(type: SkillType): string {
   return iconUrl("skill-type", type);
@@ -178,7 +184,7 @@ export function gearIconImg(icon: GearIcon | undefined): HTMLImageElement | unde
  * icon is.
  */
 export function skillTypeBadgeHtml(type: SkillType): string {
-  const name = SKILL_TYPE_NAME[type];
+  const name = skillTypeName(type);
   return `<img class="skill-type-badge" src="${skillTypeIcon(type)}" alt="${name}" title="${name}" loading="lazy">`;
 }
 

@@ -5,7 +5,8 @@
  * string or template literal with a letter in it where the page shows
  * it: `h()`'s text, `button()`'s label, an assignment to `textContent`,
  * `innerText`, `title`, `placeholder` or `alt`, `setAttribute` of
- * `aria-label`, `title` or `placeholder`, and an exported `const` in
+ * `aria-label`, `title` or `placeholder`, a node's `append`, `prepend`
+ * or `replaceChildren`, `document.createTextNode`, and an exported `const` in
  * `ui/` named like text (`*_LINE`, `*_HINT`...). It looks through `?:`,
  * `||`, `??` and template literals. Text with no letter (`"×"`, `"3"`)
  * passes.
@@ -16,6 +17,7 @@
 const MESSAGE = "Player-facing text goes through t() and i18n/en.ts";
 const SHOWN_PROPERTIES = new Set(["textContent", "innerText", "title", "placeholder", "alt"]);
 const SHOWN_ATTRIBUTES = new Set(["aria-label", "title", "placeholder"]);
+const APPENDING_METHODS = new Set(["append", "prepend", "replaceChildren"]);
 const TEXT_CONSTANT = /_(LINE|HINT|MESSAGE|LABEL|NOTE|TEXT|GOAL)$/;
 const LETTER = /\p{L}/u;
 
@@ -90,6 +92,16 @@ export const noRawUiText = {
           SHOWN_ATTRIBUTES.has(first.value)
         ) {
           report(second);
+        } else if (
+          node.callee.type === "MemberExpression" &&
+          callee !== undefined &&
+          APPENDING_METHODS.has(callee)
+        ) {
+          for (const argument of node.arguments) {
+            report(argument);
+          }
+        } else if (callee === "createTextNode") {
+          report(first);
         }
       },
       AssignmentExpression(node) {

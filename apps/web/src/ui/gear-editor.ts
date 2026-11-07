@@ -56,6 +56,7 @@ import {
   type WeaponSetIndex,
 } from "@vibewars/game-core";
 
+import { formatList, t, type MessageKey } from "../i18n/index.js";
 import type { StoredCharacter, TeamCharacter } from "../storage/schema.js";
 
 /**
@@ -301,13 +302,13 @@ export function modChoices(item: WeaponId | OffhandId, slot: ModSlot): readonly 
  */
 function itemPhrase(id: string, name: string): string {
   if (id === "unarmed") {
-    return "bare hands";
+    return t("gearEditor.bareHands");
   }
   const lower = name.toLowerCase();
   if (id === "daggers") {
     return lower;
   }
-  return /^[aeiou]/.test(lower) ? `an ${lower}` : `a ${lower}`;
+  return t(/^[aeiou]/.test(lower) ? "gearEditor.itemAn" : "gearEditor.itemA", { item: lower });
 }
 
 /**
@@ -321,7 +322,7 @@ export function droppedModNotes(before: StoredCharacter, after: StoredCharacter)
       const id = was[slot];
       if (id !== null && now?.[slot] !== id) {
         const name = getWeaponMod(id)?.name ?? id;
-        notes.push(`Removed ${name}: it does not fit ${itemName}.`);
+        notes.push(t("gearEditor.modRemoved", { mod: name, item: itemName }));
       }
     }
   };
@@ -520,37 +521,44 @@ export interface GearSummary {
 function conditionLabel(condition: ArmorCondition): string {
   switch (condition.kind) {
     case "vs-physical":
-      return "vs physical damage";
+      return t("gearEditor.whenVsPhysical");
     case "vs-elemental":
-      return "vs elemental damage";
+      return t("gearEditor.whenVsElemental");
     case "vs-projectile":
-      return "vs projectile attacks";
+      return t("gearEditor.whenVsProjectile");
     case "attacking":
-      return "while attacking";
+      return t("gearEditor.whenAttacking");
     case "enchantments-at-least":
       return condition.count === 1
-        ? "while enchanted"
-        : `with ${String(condition.count)}+ enchantments`;
+        ? t("gearEditor.whenEnchanted")
+        : t("gearEditor.whenEnchantments", { count: condition.count });
     case "recharging-at-least":
-      return `while ${String(condition.count)}+ skills recharge`;
+      return t("gearEditor.whenRecharging", { count: condition.count });
     case "attribute-at-least":
-      return `with ${String(condition.rank)}+ ${getAttribute(condition.attributeId)?.name ?? condition.attributeId}`;
+      return t("gearEditor.whenAttribute", {
+        rank: condition.rank,
+        attribute: getAttribute(condition.attributeId)?.name ?? condition.attributeId,
+      });
     case "vs-type":
-      return `vs ${condition.type} damage`;
+      return t("gearEditor.whenVsType", { type: condition.type });
     case "affected-by":
-      return `while ${condition.categories.map(categoryPhrase).join(" or ")}`;
+      return t("gearEditor.whenAffectedBy", {
+        statuses: formatList(condition.categories.map(categoryPhrase), "or"),
+      });
     case "no-enchantment":
-      return "while not enchanted";
+      return t("gearEditor.whenNotEnchanted");
     case "health-below":
-      return `below ${String(Math.round(condition.fraction * 100))}% Health`;
+      return t("gearEditor.whenHealthBelow", { percent: Math.round(condition.fraction * 100) });
     case "controls-at-least":
       return condition.creature === "pet"
-        ? "while your pet is alive"
-        : `while you control ${String(condition.count)}+ ${condition.creature === "minion" ? "minions" : "spirits"}`;
+        ? t("gearEditor.whenPetAlive")
+        : t(condition.creature === "minion" ? "gearEditor.whenMinions" : "gearEditor.whenSpirits", {
+            count: condition.count,
+          });
     case "activating":
-      return "while activating a skill";
+      return t("gearEditor.whenActivating");
     case "signets-at-least":
-      return `with ${String(condition.count)}+ signets on your bar`;
+      return t("gearEditor.whenSignets", { count: condition.count });
     case "mod-while":
       return MOD_WHILE_TEXT[condition.while];
   }
@@ -560,30 +568,31 @@ function conditionLabel(condition: ArmorCondition): string {
 function categoryPhrase(category: StatusCategory, index: number): string {
   switch (category) {
     case "condition":
-      return "you have a condition";
+      return t("gearEditor.statusCondition");
     case "hex":
-      return "hexed";
+      return t("gearEditor.statusHex");
     case "enchantment":
-      return "enchanted";
+      return t("gearEditor.statusEnchantment");
     case "stance":
-      return "in a stance";
+      return t("gearEditor.statusStance");
     case "preparation":
-      return "using a preparation";
+      return t("gearEditor.statusPreparation");
     case "glyph":
-      return "under a glyph";
+      return t("gearEditor.statusGlyph");
     case "weapon-spell":
-      return "under a weapon spell";
+      return t("gearEditor.statusWeaponSpell");
     case "form":
-      return "in a form";
+      return t("gearEditor.statusForm");
     case "skill-effect":
-      return "under a skill effect";
+      return t("gearEditor.statusSkillEffect");
     case "item":
-      return "holding ashes";
+      return t("gearEditor.statusItem");
     case "echo":
-      return "under an echo";
+      return t("gearEditor.statusEcho");
     case "shout":
+      return t(index === 0 ? "gearEditor.statusUnderShout" : "gearEditor.statusShout");
     case "chant":
-      return index === 0 ? `under a ${category}` : category;
+      return t(index === 0 ? "gearEditor.statusUnderChant" : "gearEditor.statusChant");
   }
 }
 
@@ -595,7 +604,9 @@ export function describeConditions(conditions: readonly ArmorCondition[]): strin
 /** `+10 armor vs physical damage`. */
 function armorLine(bonus: ConditionalArmor): string {
   const when = describeConditions(bonus.conditions);
-  return when === "" ? `+${String(bonus.amount)} armor` : `+${String(bonus.amount)} armor ${when}`;
+  return when === ""
+    ? t("gearEditor.armor", { amount: bonus.amount })
+    : t("gearEditor.armorWhen", { amount: bonus.amount, when });
 }
 
 /** A tier's count, for a bonus that is one condition with a count. */
@@ -620,7 +631,7 @@ function perSignetLine(bonuses: readonly ConditionalArmor[]): string | undefined
       bonus.conditions[0].count === index + 1,
   );
   return perSignet && first !== undefined
-    ? `+${String(first.amount)} armor per signet on your bar`
+    ? t("gearEditor.armorPerSignet", { amount: first.amount })
     : undefined;
 }
 
@@ -632,7 +643,7 @@ export function insigniaEffectNote(
   effect: Extract<InsigniaEffect, { kind: "conditional-armor" | "physical-reduction" }>,
 ): string {
   if (effect.kind === "physical-reduction") {
-    return `−${String(effect.amount)} physical damage taken`;
+    return t("gearEditor.physicalDamageTaken", { amount: effect.amount });
   }
   const perSignet = perSignetLine(effect.bonuses);
   if (perSignet !== undefined) {
@@ -643,9 +654,22 @@ export function insigniaEffectNote(
       const count = tierCount(bonus);
       return index === 0 || count === undefined
         ? armorLine(bonus)
-        : `+${String(bonus.amount)} at ${String(count)}+`;
+        : t("gearEditor.tierAt", { amount: bonus.amount, count });
     })
     .join(", ");
+}
+
+const PIECE_KEY: Readonly<Record<ArmorSlot, MessageKey>> = {
+  head: "gearEditor.pieceHead",
+  chest: "gearEditor.pieceChest",
+  hands: "gearEditor.pieceHands",
+  legs: "gearEditor.pieceLegs",
+  feet: "gearEditor.pieceFeet",
+};
+
+/** The pieces a bonus is on, as a line names them: "chest, legs". */
+function piecesText(slots: readonly ArmorSlot[]): string {
+  return slots.map((slot) => t(PIECE_KEY[slot])).join(", ");
 }
 
 /**
@@ -676,8 +700,11 @@ function pieceArmorLines(pieceArmor: PieceArmor): string[] {
     }
     const chance = slots.reduce((sum, slot) => sum + HIT_LOCATION_WEIGHTS[slot], 0);
     const average = Math.round(bonus.amount * chance * 10) / 10;
-    const each = perSignet === undefined ? "" : " a signet";
-    return `${line} on ${slots.join(", ")} (avg +${average.toFixed(1)}${each})`;
+    return t(perSignet === undefined ? "gearEditor.onPieces" : "gearEditor.onPiecesPerSignet", {
+      line,
+      pieces: piecesText(slots),
+      average: average.toFixed(1),
+    });
   });
 }
 
@@ -691,13 +718,17 @@ function pieceReductionLines(pieceReduction: PieceReduction): string[] {
     }
   }
   return [...groups].map(([amount, slots]) => {
-    const line = `−${String(amount)} physical damage taken`;
+    const line = t("gearEditor.physicalDamageTaken", { amount });
     if (slots.length === ARMOR_SLOTS.length) {
       return line;
     }
     const chance = slots.reduce((sum, slot) => sum + HIT_LOCATION_WEIGHTS[slot], 0);
     const average = Math.round(amount * chance * 10) / 10;
-    return `${line} on ${slots.join(", ")} (avg −${average.toFixed(1)})`;
+    return t("gearEditor.reductionOnPieces", {
+      line,
+      pieces: piecesText(slots),
+      average: average.toFixed(1),
+    });
   });
 }
 
@@ -726,8 +757,10 @@ export function summariseGear(
       const bonus = rank - base;
       const fromHeadgear = attributeId === headgear ? HEADGEAR_BONUS : 0;
       const sources = [
-        ...(bonus > fromHeadgear ? [`rune +${String(bonus - fromHeadgear)}`] : []),
-        ...(fromHeadgear > 0 ? [`headgear +${String(fromHeadgear)}`] : []),
+        ...(bonus > fromHeadgear
+          ? [t("gearEditor.bonusFromRune", { amount: bonus - fromHeadgear })]
+          : []),
+        ...(fromHeadgear > 0 ? [t("gearEditor.bonusFromHeadgear", { amount: fromHeadgear })] : []),
       ].join(", ");
       attributeBonuses.push({ attributeId, bonus, sources });
     }
@@ -747,7 +780,9 @@ export function summariseGear(
     armor: held.equipment.baseArmor,
     weaponName: weapon.name,
     damageRange: `${dealt(weapon.damageMin)}–${dealt(weapon.damageMax)}`,
-    attackInterval: `${weapon.attackIntervalSeconds.toFixed(2)}s`,
+    attackInterval: t("gearEditor.attackInterval", {
+      seconds: weapon.attackIntervalSeconds.toFixed(2),
+    }),
     unmetRequirement:
       requirementMet || attributeId === undefined
         ? undefined
@@ -781,10 +816,10 @@ export interface RuneChoice {
   readonly rune: EquippedRune;
 }
 
-const TIER_LABEL: Readonly<Record<RuneTier, string>> = {
-  minor: "Minor",
-  major: "Major",
-  superior: "Superior",
+const TIER_KEY: Readonly<Record<RuneTier, MessageKey>> = {
+  minor: "gearEditor.tierMinor",
+  major: "gearEditor.tierMajor",
+  superior: "gearEditor.tierSuperior",
 };
 
 export function encodeRune(rune: EquippedRune): string {
@@ -849,7 +884,9 @@ export function runeChoices(character: StoredCharacter): readonly RuneChoice[] {
       const equipped: EquippedRune = { kind: "universal", runeId: rune.id, tier };
       choices.push({
         key: encodeRune(equipped),
-        label: rune.tiered ? `${TIER_LABEL[tier]} ${rune.name}` : rune.name,
+        label: rune.tiered
+          ? t("gearEditor.tieredRune", { tier: t(TIER_KEY[tier]), rune: rune.name })
+          : rune.name,
         rune: equipped,
       });
     }
@@ -863,9 +900,11 @@ export function runeChoices(character: StoredCharacter): readonly RuneChoice[] {
         key: encodeRune(equipped),
         // The health cost is in the label, not buried in a tooltip: it
         // is the entire decision being made.
-        label:
-          `${runeDisplayName(equipped)} (+${String(ATTRIBUTE_RUNE_TIERS[tier].bonus)}` +
-          (penalty > 0 ? `, −${String(penalty)} health)` : ")"),
+        label: t(penalty > 0 ? "gearEditor.attributeRuneHealth" : "gearEditor.attributeRune", {
+          rune: runeDisplayName(equipped),
+          bonus: ATTRIBUTE_RUNE_TIERS[tier].bonus,
+          penalty,
+        }),
         rune: equipped,
       });
     }
@@ -874,7 +913,7 @@ export function runeChoices(character: StoredCharacter): readonly RuneChoice[] {
   return choices;
 }
 
-export { TIER_LABEL };
+export { TIER_KEY };
 
 /* -------------------------------------------------------------------------- */
 /* Drag and drop                                                               */

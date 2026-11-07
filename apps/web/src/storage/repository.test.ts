@@ -2,7 +2,6 @@ import { defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  BLOCKED_NOTICE,
   CharacterRepository,
   TeamRepository,
   createMemoryStore,
@@ -294,7 +293,6 @@ describe("openIndexedDbStore and other tabs (#1404)", () => {
     void openIndexedDbStore(onBlocked);
     request.onblocked?.();
     expect(onBlocked).toHaveBeenCalledOnce();
-    expect(BLOCKED_NOTICE).toBe("Close your other VibeWars tabs to continue.");
   });
 
   it("closes when a newer build's tab opens it, so that tab never waits", async () => {
