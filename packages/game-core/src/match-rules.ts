@@ -113,10 +113,11 @@ export const KING_OF_THE_HILL_MATCH_RULES: MatchRules = Object.freeze({
 });
 
 /**
- * Heroes' Ascent's Capture Points (#1378): stand on a shrine to take it,
- * and every `POINT_TICK_SECONDS` each one a team owns scores it a point.
- * Otherwise a Relic Run's: a wipe loses at once, the most points at
- * 8 minutes win.
+ * Heroes' Ascent's Capture Points (#1378, #2690): stand on a shrine to
+ * take it, and every `POINT_TICK_SECONDS` each one a team owns scores it
+ * a point. `CAPTURE_LEAD_TO_WIN` points ahead wins at once; a wipe loses
+ * at once; at 8 minutes the most points win, and of teams tied on them,
+ * the one that led last.
  */
 export const CAPTURE_POINTS_MATCH_RULES: MatchRules = Object.freeze({
   ...ANNIHILATION_MATCH_RULES,
@@ -130,6 +131,9 @@ export const CAPTURE_POINTS_MATCH_RULES: MatchRules = Object.freeze({
  * Hill for each this long of one unbroken hold (#1377).
  */
 export const POINT_TICK_SECONDS = 30;
+
+/** Capture Points' shrine points a team needs ahead of every other to win at once (#2690, GW1). */
+export const CAPTURE_LEAD_TO_WIN = 20;
 
 /** A living priest raises its team's dead at every multiple of this, match clock (#1186, GW1). */
 export const PRIEST_WAVE_SECONDS = 120;
@@ -228,6 +232,13 @@ export interface TeamStanding {
    */
   readonly aggression: number;
   /**
+   * When, on the match clock, its Capture Points score last led every
+   * other team's alone (#2690); `undefined` if it never has.
+   */
+  readonly ledAtSeconds: number | undefined;
+  /** How many Capture Points shrines it owns now (#2690): a tie at time goes to the most. */
+  readonly pointsHeld: number;
+  /**
    * Whether it was beaten, as `teamBeaten` counts it, at an earlier step of
    * this match (#2682): with three teams the match goes on past the first
    * beaten team, which stays out whatever happens to it later.
@@ -275,6 +286,12 @@ function leader(score: MatchScore): { team: number | undefined; tied: boolean } 
     }
   }
   return { team: bestTeam, tied };
+}
+
+/** The team with more points than every other, or `undefined` on a tie at the top (#2690). */
+export function soleLeader(score: MatchScore): number | undefined {
+  const { team, tied } = leader(score);
+  return tied ? undefined : team;
 }
 
 /**
@@ -326,8 +343,9 @@ export function evaluateMatch(
       return evaluateGuildBattle(standing, elapsedSeconds, rules);
     case "relic-run":
     case "king-of-the-hill":
-    case "capture-points":
       return evaluateRelicRun(score, standing, elapsedSeconds, rules);
+    case "capture-points":
+      return evaluateCapturePoints(score, standing, elapsedSeconds, rules);
   }
 }
 
@@ -426,9 +444,9 @@ function evaluateGuildBattle(
 }
 
 /**
- * Relic Run (#1374, GW1), King of the Hill (#1377) and Capture Points
- * (#1378) alike: a wiped team with no living priest is out at once, as in annihilation; at time
- * the most points win, and a tie is a draw, as kill-count's.
+ * Relic Run (#1374, GW1) and King of the Hill (#1377) alike: a wiped team
+ * with no living priest is out at once, as in annihilation; at time the
+ * most points win, and a tie is a draw, as kill-count's.
  * No number of points wins early: `scoreToWin` is kill-count's.
  */
 function evaluateRelicRun(
@@ -437,14 +455,67 @@ function evaluateRelicRun(
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
+  return (
+    evaluateWipe(standing, rules) ??
+    evaluateScoreAtTime(scoreInPlay(score, standing, rules), elapsedSeconds, rules)
+  );
+}
+
+/** The last team in play wins once the others are out; `undefined` while two are in. */
+function evaluateWipe(standing: MatchStanding, rules: MatchRules): MatchOutcome | undefined {
   const living = inPlay(standing, rules);
   if (living.length < standing.byTeam.size && living.length <= 1) {
     return { phase: "finished", winningTeam: living[0]?.[0], reason: "annihilation" };
   }
-  // A team already out has no say, however many points it holds (#2682).
-  const inGame = new Set(living.map(([team]) => team));
-  const scored = { byTeam: new Map([...score.byTeam].filter(([team]) => inGame.has(team))) };
-  return evaluateScoreAtTime(scored, elapsedSeconds, rules);
+  return undefined;
+}
+
+/** The score of the teams in play: a team already out has no say, however many points it holds (#2682). */
+function scoreInPlay(score: MatchScore, standing: MatchStanding, rules: MatchRules): MatchScore {
+  const inGame = new Set(inPlay(standing, rules).map(([team]) => team));
+  return { byTeam: new Map([...score.byTeam].filter(([team]) => inGame.has(team))) };
+}
+
+/**
+ * Capture Points (#1378, #2690, GW1): a wipe is out at once, as in a Relic
+ * Run; `CAPTURE_LEAD_TO_WIN` points ahead of every other team in play wins
+ * at once; at time the most points win, of teams tied on them the one
+ * holding the most shrines, and of those the one that led last. Tied teams
+ * none of which ever led alone draw.
+ */
+function evaluateCapturePoints(
+  score: MatchScore,
+  standing: MatchStanding,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  const wipe = evaluateWipe(standing, rules);
+  if (wipe !== undefined) {
+    return wipe;
+  }
+  const ranked = [...scoreInPlay(score, standing, rules).byTeam].sort((a, b) => b[1] - a[1]);
+  const [first, second] = ranked;
+  if (first !== undefined && second !== undefined && first[1] - second[1] >= CAPTURE_LEAD_TO_WIN) {
+    return { phase: "finished", winningTeam: first[0], reason: "score" };
+  }
+  if (elapsedSeconds < rules.timeLimitSeconds || first === undefined) {
+    return MATCH_IN_PROGRESS;
+  }
+  const held = (team: number): number => standing.byTeam.get(team)?.pointsHeld ?? 0;
+  const onPoints = ranked.filter(([, points]) => points === first[1]);
+  const mostHeld = Math.max(...onPoints.map(([team]) => held(team)));
+  const tied = onPoints.filter(([team]) => held(team) === mostHeld);
+  if (tied.length === 1) {
+    return { phase: "finished", winningTeam: tied[0]?.[0], reason: "time" };
+  }
+  const ledAt = (team: number): number => standing.byTeam.get(team)?.ledAtSeconds ?? -1;
+  const latest = Math.max(...tied.map(([team]) => ledAt(team)));
+  const last = tied.filter(([team]) => ledAt(team) === latest);
+  return {
+    phase: "finished",
+    winningTeam: latest >= 0 && last.length === 1 ? last[0]?.[0] : undefined,
+    reason: "time",
+  };
 }
 
 /** The team of the one entry, or `undefined` for none or several. */

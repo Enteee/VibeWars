@@ -37,6 +37,8 @@ import {
   play,
   playersOf,
   provenPeer,
+  WIRE_PLAYER_KEY,
+  answerChallenges,
   seat,
   start,
   type Member,
@@ -46,6 +48,7 @@ import { canStart, type MatchPlan } from "./lobby-host.js";
 import { cryptoTurns, settle, starterBuild, until } from "./match-harness.test-support.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
+import { testPlayerKey } from "./player-key.test-support.js";
 import { sanitizeCharacterName } from "./names.js";
 import type { Transport, TransportTrouble } from "./transport.js";
 
@@ -474,6 +477,7 @@ describe("lobby host", () => {
         guildCape: null,
         timeoutMs: 1000,
         relayPub: null,
+        playerKey: testPlayerKey(),
       }),
     ).rejects.toEqual(new LobbyRefusedError("lobby-full"));
     expect(playersOf(lobby.host)).toHaveLength(16);
@@ -571,6 +575,7 @@ describe("an open or closed lobby (#1682)", () => {
       guildCape: null,
       timeoutMs: 1000,
       relayPub: null,
+      playerKey: testPlayerKey(),
     }).catch((error: unknown) => error);
 
   it("starts closed, and refuses a peer with the key as closed", async () => {
@@ -855,7 +860,7 @@ describe("playing more than one match in a lobby", () => {
 });
 
 describe("joining by code", () => {
-  it("takes no state for another lobby's code, so it never joins the wrong one", async () => {
+  it("is refused by another lobby's host, so it never joins the wrong one", async () => {
     const lobby = await openLobby();
     const transport = lobby.network.join();
     await expect(
@@ -868,15 +873,18 @@ describe("joining by code", () => {
         guildCape: null,
         timeoutMs: 50,
         relayPub: null,
+        playerKey: testPlayerKey(),
       }),
-    ).rejects.toEqual(new LobbyNoAnswerError(50, null));
+      // Its player-key proof names the code it dialled (#2706).
+    ).rejects.toEqual(new LobbyRefusedError("unproven"));
   });
 
   it("says the last trouble its transport told it before the timeout, none if none (#707)", async () => {
-    const lobby = await openLobby();
+    // A room no host is in.
+    const network = createMemoryNetwork();
     const failure = (peerId: string, troubles: readonly TransportTrouble[]): Promise<unknown> => {
       const joining = joinLobby({
-        transport: lobby.network.join(peerId),
+        transport: network.join(peerId),
         code: "zYxWvUtSrQpOnMlKjIhGfEdCbA9876543210_-ZyXwA", // pragma: allowlist secret
         proofKey: PROOF_KEY,
         name: peerId,
@@ -884,9 +892,10 @@ describe("joining by code", () => {
         guildCape: null,
         timeoutMs: 50,
         relayPub: null,
+        playerKey: testPlayerKey(),
       });
       for (const trouble of troubles) {
-        lobby.network.trouble(peerId, trouble);
+        network.trouble(peerId, trouble);
       }
       return joining.catch((error: unknown) => error);
     };
@@ -910,6 +919,7 @@ describe("joining by code", () => {
         guildCape: null,
         timeoutMs: 50,
         relayPub: null,
+        playerKey: testPlayerKey(),
       }),
     ).rejects.toBeInstanceOf(LobbyNoAnswerError);
   });
@@ -1234,6 +1244,7 @@ describe("a Team Lobby (#1458)", () => {
         guildCape: null,
         timeoutMs: 1000,
         relayPub: null,
+        playerKey: testPlayerKey(),
       }),
     ).rejects.toEqual(new LobbyRefusedError("party-full"));
     expect(playersOf(lobby.host)).toHaveLength(2);
@@ -1854,6 +1865,15 @@ describe("a Team Lobby (#1458)", () => {
     expect(bots.every(({ ready, isHost, guildTag }) => ready && !isHost && guildTag === null)).toBe(
       true,
     );
+    // A bot has no player key (#2706); each human seat plays the one it proved.
+    expect(bots.every(({ playerPubkey }) => playerPubkey === null)).toBe(true);
+    const keyOf = (who: Member) =>
+      who.connection.getSnapshot().players.find(({ sessionId }) => sessionId === idOf(who))
+        ?.playerPubkey;
+    expect(seats.flatMap((seat) => (seat.bot ? [] : [seat.playerPubkey]))).toEqual([
+      keyOf(host),
+      keyOf(ann),
+    ]);
   });
 
   it("keeps no bot in a coded lobby once its match is over: the next makes its own (#2029)", async () => {
@@ -1993,6 +2013,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
     admission: null,
     rejoinToken,
     relayPub: null,
+    playerPubkey: WIRE_PLAYER_KEY.pubkey,
   });
 
   /** The nonce `got` was challenged with. */
@@ -2037,6 +2058,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
   it("lets a peer in on a right proof, and proves itself back", async () => {
     const lobby = await openLobby();
     const peer = lobby.network.join();
+    answerChallenges(peer);
     const got = heard(peer);
     await settle();
     await prove(peer, got);
@@ -2053,6 +2075,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
   it("forgets a proven peer that leaves: the same id back hears only a fresh challenge (#1681)", async () => {
     const lobby = await openLobby();
     const peer = lobby.network.join();
+    answerChallenges(peer);
     const got = heard(peer);
     await settle();
     await prove(peer, got);
@@ -2081,6 +2104,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
   it("challenges a proven peer that asks again inside the gate: it keeps its seat and its spent budget (#1681)", async () => {
     const lobby = await openLobby();
     const peer = lobby.network.join();
+    answerChallenges(peer);
     const got = heard(peer);
     await settle();
     await prove(peer, got);
@@ -2325,6 +2349,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
       guildCape: null,
       timeoutMs: 50,
       relayPub: null,
+      playerKey: testPlayerKey(),
     });
     await expect(joining).rejects.toEqual(new LobbyNoAnswerError(50, null));
   });

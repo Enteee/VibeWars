@@ -474,6 +474,8 @@ export const WORK_COLUMN = Object.freeze(
     "perf-sec-qa": "QA",
     "qa-tester": "QA",
     "business-analyst": null,
+    // Woken by Telegram and its own schedule: a release is not a card (#2707).
+    "release-manager": null,
   }),
 );
 

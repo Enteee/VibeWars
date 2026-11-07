@@ -7,6 +7,7 @@ import {
   parseWireTeamProposalBuilds,
   parseWireLobbyState,
   parseWireLobbyWelcome,
+  parsePeerLobbyChallenge,
   parseWireMatchStart,
   parseWirePartyFormed,
   parseWirePartyProposal,
@@ -22,6 +23,7 @@ import {
   type PeerPartyConsent,
   type PeerStayTogether,
   type PeerLobbyHello,
+  type PeerLobbyProof,
   type PeerLobbyLeave,
   type PeerLobbyJoin,
   type WireCape,
@@ -45,6 +47,7 @@ import type {
   MatchStarting,
 } from "./lobby-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
+import type { PlayerKey } from "./player-key.js";
 import { sanitizeChatText, sanitizeName } from "./names.js";
 import { admissionDigest, partyGroupId, type QueuedSeat } from "./queue-admission.js";
 import type { TicketKey } from "./queue-client.js";
@@ -127,6 +130,8 @@ export interface JoinLobbyOptions {
    * members seal its relay logins to. `null` for none.
    */
   readonly relayPub: string | null;
+  /** This browser's player key (#2706): every join proves it to the host. */
+  readonly playerKey: PlayerKey;
 }
 
 function isRefusal(reason: string): reason is LobbyRefusal {
@@ -156,6 +161,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     guildTag: options.guildTag,
     guildCape: options.guildCape,
     relayPub: options.relayPub,
+    playerPubkey: options.playerKey.pubkey,
   };
   /** A coded lobby's join; a queued one's is made with its proof. */
   const codedJoin: Omit<PeerLobbyJoin, "rejoinToken"> = { ...base, admission: null };
@@ -339,6 +345,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       isHost: player.isHost,
       bot: player.bot,
       away: player.away,
+      playerPubkey: player.playerPubkey,
     })),
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
     countdownSeconds: state.countdownSeconds,
@@ -582,6 +589,22 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         if (failJoin !== undefined) {
           trouble = said;
         }
+      }),
+      // Answered from the host once it is known, before that from any peer
+      // the join went to: the proof names that peer, so it is good with
+      // no other host (#2706).
+      transport.on("lobby-challenge", (data, from) => {
+        const challenge = parsePeerLobbyChallenge(data);
+        if (challenge === undefined || (hostId === undefined ? !mayHost(from) : from !== hostId)) {
+          return;
+        }
+        const sig = options.playerKey.signLobbyProof({
+          hostPeerId: from,
+          joinerPeerId: selfId,
+          roomId: code,
+          nonce: challenge.nonce,
+        });
+        transport.send("lobby-proof", { sig } satisfies PeerLobbyProof, from);
       }),
       transport.on("lobby-welcome", (data, from) => {
         const welcome = parseWireLobbyWelcome(data);

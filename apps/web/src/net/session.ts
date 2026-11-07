@@ -42,6 +42,7 @@ import {
   type QueueState,
   type QueuedPlan,
   type QueuedSeat,
+  type PlayerKey,
   type TicketKey,
 } from "@vibewars/game-session";
 
@@ -71,6 +72,7 @@ import {
 import type { NostrQueue } from "./transport/nostr-queue.js";
 import { relayRoomsSwitch } from "./relay-room.js";
 import type { RelayHold } from "./transport/relay-offer.js";
+import { verifyPlayerProof } from "./transport/player-key.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
 import { loadRelay } from "./transport/turn-config.js";
 
@@ -124,6 +126,8 @@ export const HOST_CLOSED_MESSAGE = "The host closed the lobby.";
 export const CONNECTION_LOST_MESSAGE = "Lost the connection to the host.";
 /** A queued lobby (#871) turned this ticket away: its proof did not hold, or it is seated already. */
 export const NOT_ADMITTED_MESSAGE = "The match would not let this ticket in.";
+/** A join whose player key the host could not confirm (#2706). */
+export const UNPROVEN_MESSAGE = "The lobby could not confirm this browser's player key.";
 export const TICKET_USED_MESSAGE = "This ticket is already in the match, in another tab.";
 /** #854 C7's wording. */
 export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
@@ -334,6 +338,7 @@ export function holdInLobby(
 export async function hostLobby(
   name: string,
   guild: Guild,
+  playerKey: PlayerKey,
   teamLobby: boolean,
   hostedTeamSize: LobbyTeamSize,
   queued?: Omit<QueuedPlan, "onDone">,
@@ -377,6 +382,7 @@ export async function hostLobby(
     startMatch,
     teamLobby,
     random: lobbyRandom(import.meta.env.VITE_VIBEWARS_LOBBY_SEED),
+    verifyPlayerProof,
     ...(queued === undefined
       ? // Its party queues for a team mode under a group its room id names (#1766).
         { matchmaking: { roomId: lobbyRoom.roomId, verifyTicketSig, newNonce: newQueueNonce } }
@@ -434,6 +440,7 @@ export async function hostLobby(
       name,
       // The host reaches itself without a relay.
       relayPub: null,
+      playerKey,
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
@@ -464,6 +471,7 @@ export async function joinLobbyByCode(
   code: string,
   name: string,
   guild: Guild,
+  playerKey: PlayerKey,
   queued?: QueuedSeat,
 ): Promise<LobbyConnection> {
   // Refused before any derivation or relay traffic.
@@ -491,6 +499,7 @@ export async function joinLobbyByCode(
       proofKey: lobbyRoom.proofKey,
       name,
       relayPub,
+      playerKey,
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
@@ -644,6 +653,7 @@ export function enterQueue(
   ascentRound: number | null,
   name: string,
   guild: Guild,
+  playerKey: PlayerKey,
   events: RandomArenaEvents,
   party?: PartyPlace,
   teamPlan?: HostedLobby["teamPlan"],
@@ -689,7 +699,7 @@ export function enterQueue(
     try {
       if (group.hostTicketId === key.ticketId) {
         // A queued lobby plays its group's size, never a Hosted Game's.
-        hosted = await hostLobby(name, guild, false, 4, {
+        hosted = await hostLobby(name, guild, playerKey, false, 4, {
           group,
           key,
           verifyTicketSig,
@@ -704,7 +714,7 @@ export function enterQueue(
         });
         lobby = hosted.lobby;
       } else {
-        lobby = await joinLobbyByCode(group.groupId, name, guild, {
+        lobby = await joinLobbyByCode(group.groupId, name, guild, playerKey, {
           group,
           key,
           verifyTicketSig,
@@ -858,6 +868,8 @@ export function joinFailureNotice(
         return NOT_ADMITTED_MESSAGE;
       case "ticket-used":
         return TICKET_USED_MESSAGE;
+      case "unproven":
+        return UNPROVEN_MESSAGE;
       case "fell-through":
         return FELL_THROUGH_MESSAGE;
     }

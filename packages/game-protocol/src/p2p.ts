@@ -58,6 +58,8 @@ export const CHANNELS = [
   "ended",
   "bye",
   "lobby-join",
+  "lobby-challenge",
+  "lobby-proof",
   "lobby-state",
   "lobby-cmd",
   "lobby-note",
@@ -950,6 +952,32 @@ export interface PeerLobbyJoin {
    * which no relay is shared with.
    */
   readonly relayPub: string | null;
+  /**
+   * The player's key (#2706): its x-only secp256k1 public key, as 64
+   * lowercase hex digits. The host seats the join only once its
+   * `lobby-proof` shows the joiner holds the secret half.
+   */
+  readonly playerPubkey: string;
+}
+
+/**
+ * Lobby host to a joiner, on each `lobby-join` (#2706): sign this. It
+ * carries only the nonce: the joiner takes everything else the proof
+ * names from its own connection.
+ */
+export interface PeerLobbyChallenge {
+  /** 32 fresh random bytes as 64 lowercase hex digits. */
+  readonly nonce: string;
+}
+
+/**
+ * Joiner to its lobby host, answering `lobby-challenge` (#2706): its
+ * player key's BIP-340 signature of the `vibewars/lobby-proof` digest,
+ * which names the host, the joiner, the lobby and the nonce.
+ */
+export interface PeerLobbyProof {
+  /** 128 lowercase hex digits. */
+  readonly sig: string;
 }
 
 /**
@@ -1151,6 +1179,11 @@ export interface WireLobbyPlayer {
   readonly bot: boolean;
   /** Its peer dropped (#1764): its seat is held while it may come back. */
   readonly away: boolean;
+  /**
+   * The player key the host saw it prove (#2706), `null` exactly for a
+   * bot. The host's word: only the host checked it.
+   */
+  readonly playerPubkey: string | null;
 }
 
 /** Lobby host to every peer, on every change: the whole lobby, not a delta. */
@@ -1347,6 +1380,9 @@ export const LOBBY_REFUSALS = [
   // A Team Arena's (#2107): its party already has as many humans as a side plays.
   "party-full",
   "host-left",
+  // A join whose player key was not proven (#2706): a proof that does not
+  // verify, or none within `LOBBY_PROOF_MS`.
+  "unproven",
   // A queued lobby's (#871): no proof, one that does not verify, or one
   // brought to a coded lobby; a ticket already seated; the group never filled.
   "not-admitted",
@@ -2578,7 +2614,8 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     guildTag === undefined ||
     admission === undefined ||
     (raw.rejoinToken !== null && !isRejoinToken(raw.rejoinToken)) ||
-    (raw.relayPub !== null && !isRelayPub(raw.relayPub))
+    (raw.relayPub !== null && !isRelayPub(raw.relayPub)) ||
+    !isTicketId(raw.playerPubkey)
   ) {
     return undefined;
   }
@@ -2591,7 +2628,20 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     admission,
     rejoinToken: raw.rejoinToken,
     relayPub: raw.relayPub,
+    playerPubkey: raw.playerPubkey,
   };
+}
+
+/** The `"lobby-challenge"` channel. */
+export function parsePeerLobbyChallenge(value: unknown): PeerLobbyChallenge | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isTicketId(raw.nonce) ? { nonce: raw.nonce } : undefined;
+}
+
+/** The `"lobby-proof"` channel. */
+export function parsePeerLobbyProof(value: unknown): PeerLobbyProof | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isTicketSig(raw.sig) ? { sig: raw.sig } : undefined;
 }
 
 /** The `"lobby-hello"` channel. */
@@ -2785,6 +2835,15 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
   const raw = fields(value);
   const team = parseNullableTeam(raw?.team);
   const guildCape = parseNullableCape(raw?.guildCape);
+  // A bot has no key, and every human one (#2706).
+  const playerPubkey =
+    raw?.bot === true
+      ? raw.playerPubkey === null
+        ? null
+        : undefined
+      : isTicketId(raw?.playerPubkey)
+        ? raw.playerPubkey
+        : undefined;
   return raw !== undefined &&
     isString(raw.id) &&
     isString(raw.name) &&
@@ -2794,7 +2853,8 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     typeof raw.ready === "boolean" &&
     typeof raw.isHost === "boolean" &&
     typeof raw.bot === "boolean" &&
-    typeof raw.away === "boolean"
+    typeof raw.away === "boolean" &&
+    playerPubkey !== undefined
     ? {
         id: raw.id,
         name: raw.name,
@@ -2805,6 +2865,7 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
         isHost: raw.isHost,
         bot: raw.bot,
         away: raw.away,
+        playerPubkey,
       }
     : undefined;
 }

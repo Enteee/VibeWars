@@ -1,4 +1,9 @@
-import { NO_GUILD, createMemoryBoard, type QueueState } from "@vibewars/game-session";
+import {
+  NO_GUILD,
+  createMemoryBoard,
+  type PlayerKey,
+  type QueueState,
+} from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { enterQueue } from "./session.js";
@@ -26,11 +31,19 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** No lobby is met here, so the key never signs (#2706). */
+const PLAYER_KEY: PlayerKey = {
+  pubkey: "ab".repeat(32),
+  signLobbyProof: () => {
+    throw new Error("no lobby is met");
+  },
+};
+
 describe("entering the Random Arena queue (#2090)", () => {
   it("says searching at once, before the NAT check is in", () => {
     vi.stubGlobal("window", new EventTarget());
     const states: QueueState[] = [];
-    const place = enterQueue("random-arena-2v2", null, "Pyro", NO_GUILD, {
+    const place = enterQueue("random-arena-2v2", null, "Pyro", NO_GUILD, PLAYER_KEY, {
       onState: (state) => states.push(state),
       onLobby: () => undefined,
       onRefused: () => undefined,

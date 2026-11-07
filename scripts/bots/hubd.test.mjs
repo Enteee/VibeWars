@@ -44,6 +44,12 @@ fs.appendFileSync(path.join(state, "env.log"), (process.env.GH_CONFIG_DIR ?? "-"
 const remaining = Number(fs.readFileSync(path.join(state, "remaining"), "utf8"));
 const [group, sub] = argv;
 if (group === "api" && sub === "user") { console.log("vibewars-company"); process.exit(0); }
+// Open release tracking issues (#2707), as the test planted them.
+if (group === "api" && sub.startsWith("search/issues?")) {
+  const planted = path.join(state, "search.json");
+  console.log(fs.existsSync(planted) ? fs.readFileSync(planted, "utf8") : JSON.stringify({ items: [] }));
+  process.exit(0);
+}
 if (group === "api" && sub === "rate_limit") {
   const reset = Number(fs.readFileSync(path.join(state, "reset"), "utf8"));
   console.log(JSON.stringify({ resources: { core: {}, graphql: { limit: 5000, remaining, reset } } }));
@@ -63,6 +69,18 @@ if (group === "api" && sub !== "graphql") {
   const target = argv.find((word) => word.startsWith(REPO)) ?? "";
   const rel = target.slice(REPO.length);
   if (rel.startsWith("collaborators")) { console.log("enteee"); process.exit(0); }
+  // CI on a release head (#2707): what the test planted, or no run yet. Held
+  // while release-hold exists, so a test can push in the middle of a poll.
+  const releaseRuns = /^actions\\/runs\\?head_sha=([0-9a-f]+)&event=push/.exec(rel);
+  if (releaseRuns !== null) {
+    fs.writeFileSync(path.join(state, "release-polled-" + releaseRuns[1]), "");
+    while (fs.existsSync(path.join(state, "release-hold"))) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50); }
+    const planted = path.join(state, "release-runs-" + releaseRuns[1] + ".json");
+    console.log(fs.existsSync(planted) ? fs.readFileSync(planted, "utf8") : JSON.stringify({ total_count: 0, workflow_runs: [] }));
+    process.exit(0);
+  }
+  // An issue a test planted, by number (#2707).
+  if (/^issues\\/\\d+$/.test(rel) && fs.existsSync(path.join(state, rel.replace("/", "-") + ".json"))) { process.stdout.write(fs.readFileSync(path.join(state, rel.replace("/", "-") + ".json"), "utf8")); process.exit(0); }
   if (rel === "issues/7") { console.log(JSON.stringify(issue7)); process.exit(0); }
   if (rel.startsWith("issues/7/comments") || rel.startsWith("issues/9/comments")) { console.log(JSON.stringify(restComments)); process.exit(0); }
   if (rel.startsWith("pulls/9/reviews")) { console.log(JSON.stringify([{ user: { login: "drive-by" }, author_association: "NONE", body: "stranger review", state: "COMMENTED", submitted_at: "2026-10-24T12:30:00Z", html_url: "r" }])); process.exit(0); }
@@ -326,6 +344,8 @@ async function startHubd(remaining, before, extra) {
     HUBD_NEW_ISSUES_WINDOW_MS: "4000",
     // Short, so a watch answers within the test (#736).
     HUBD_WATCH_POLL_MS: "300",
+    // Short, so CI on a release head is told within the test (#2707).
+    HUBD_RELEASE_POLL_MS: "300",
     ...extra?.({ root, remote: path.join(dir, "remote.git") }),
   };
   const child = spawn(process.execPath, [HUBD], { env, stdio: ["ignore", "ignore", "pipe"] });
@@ -2114,6 +2134,25 @@ describe("hubd recording verdicts and merging", () => {
     expect(hubd.calls(`pr merge 9 --squash --match-head-commit ${sha}`)).toBe(1);
   }, 20_000);
 
+  it("refuses a pull request into a release branch, which would skip the pick check (#2707)", async () => {
+    const hubd = await startHubd(5000);
+    const sha = greenPull(hubd, "bot/developer/x", ["src/a.ts"]);
+    const pull = readJson(path.join(hubd.state, "pull-9.json"));
+    fs.writeFileSync(
+      path.join(hubd.state, "pull-9.json"),
+      JSON.stringify({
+        ...pull,
+        base: { ref: "release/0.3.0", repo: { full_name: "Enteee/VibeWars" } },
+      }),
+    );
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toContain("#9 targets release/0.3.0");
+    expect(hubd.calls(`pr merge 9 --squash --match-head-commit ${sha}`)).toBe(0);
+  }, 20_000);
+
   it("merges a workflow change only from a cicd-engineer branch of this repository (#1897)", async () => {
     const owned = await startHubd(5000);
     const sha = greenPull(owned, "bot/cicd-engineer@2/ci", [".github/workflows/ci.yml"]);
@@ -2909,7 +2948,12 @@ describe("hub schedule (#678)", () => {
     });
     expect(fs.existsSync(path.join(hubd.hub, "schedules.json"))).toBe(false);
     const told = outbox(hubd).filter((m) => m.text.startsWith("Your own schedules were discarded"));
-    expect(told.map((m) => m.to).sort()).toEqual(["architect", "lead-dev", "manager"]);
+    expect(told.map((m) => m.to).sort()).toEqual([
+      "architect",
+      "lead-dev",
+      "manager",
+      "release-manager",
+    ]);
   }, 20_000);
 });
 
@@ -3293,5 +3337,318 @@ describe("hubd serving hub wiki (#1380)", () => {
     } finally {
       web.close();
     }
+  }, 30_000);
+});
+
+describe("release branches (#2707)", () => {
+  /**
+   * A remote whose main has two commits, and the shared repository on main.
+   *
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   */
+  function seed(hubd) {
+    const { repo, remote } = hubd;
+    sh(["init", "--bare", "-q", remote], hubd.root);
+    sh(["init", "-q", "-b", "main", repo], hubd.root);
+    fs.writeFileSync(path.join(repo, "a.txt"), "a\n");
+    sh(["add", "a.txt"], repo);
+    commit("a", repo);
+    sh(["push", "-q", remote, "main"], repo);
+  }
+
+  /**
+   * A fix on main, pushed: the commit a release picks.
+   *
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @param {string} text
+   * @param {string} [file]
+   */
+  function fixOnMain(hubd, text, file = "a.txt") {
+    const { repo, remote } = hubd;
+    sh(["checkout", "-q", "main"], repo);
+    fs.writeFileSync(path.join(repo, file), text);
+    sh(["add", file], repo);
+    commit(`fix ${text.trim()}`, repo);
+    sh(["push", "-q", remote, "main"], repo);
+    return sh(["rev-parse", "HEAD"], repo).trim();
+  }
+
+  /** @param {Awaited<ReturnType<typeof startHubd>>} hubd */
+  const remoteHead = (hubd) => sh(["rev-parse", "refs/heads/release/0.1.0"], hubd.remote).trim();
+
+  it("starts from main, then takes cherry-picks of main and nothing else", async () => {
+    const hubd = await startHubd(5000);
+    const { repo } = hubd;
+    seed(hubd);
+    sh(["checkout", "-q", "-b", "release/0.1.0"], repo);
+    const push = () => hubd.request("release-manager", "push", ["release/0.1.0"]);
+    const frozen = await push();
+    expect(frozen.code, String(frozen.stderr)).toBe(0);
+
+    const fix = fixOnMain(hubd, "b\n");
+    sh(["checkout", "-q", "release/0.1.0"], repo);
+    sh(["-c", "user.name=t", "-c", "user.email=t@t", "cherry-pick", "-x", fix], repo);
+    const picked = await push();
+    expect(picked.code, String(picked.stderr)).toBe(0);
+    expect(remoteHead(hubd)).toBe(sh(["rev-parse", "HEAD"], repo).trim());
+
+    // A commit of its own, not from main: refused, and GitHub keeps the pick.
+    fs.writeFileSync(path.join(repo, "a.txt"), "sneaked\n");
+    sh(["add", "a.txt"], repo);
+    commit("sneaked", repo);
+    const sneaked = await push();
+    expect(sneaked.code).toBe(77);
+    expect(String(sneaked.reason)).toContain("cherry-pick -x");
+    expect(remoteHead(hubd)).toBe(sh(["rev-parse", "HEAD~1"], repo).trim());
+
+    // A history that does not build on GitHub's head: refused, never forced.
+    sh(["reset", "-q", "--hard", "HEAD~2"], repo);
+    const rewound = fixOnMain(hubd, "c\n", "c.txt");
+    sh(["checkout", "-q", "release/0.1.0"], repo);
+    sh(["-c", "user.name=t", "-c", "user.email=t@t", "cherry-pick", "-x", rewound], repo);
+    const behind = await push();
+    expect(behind.code).toBe(77);
+    expect(String(behind.reason)).toContain("only fast-forward");
+  }, 30_000);
+
+  it("starts a new branch at the next version, no earlier than the last release did", async () => {
+    const hubd = await startHubd(5000);
+    const { repo } = hubd;
+    seed(hubd);
+    const old = sh(["rev-parse", "HEAD"], repo).trim();
+    fixOnMain(hubd, "b\n");
+    sh(["checkout", "-q", "-b", "release/0.1.0"], repo);
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+
+    sh(["checkout", "-q", "-b", "release/0.3.0", "main"], repo);
+    const skipped = await hubd.request("release-manager", "push", ["release/0.3.0"]);
+    expect(skipped.code).toBe(77);
+    expect(String(skipped.reason)).toContain("the next release is 0.2.0");
+
+    // From before the last release's start, say before a security fix.
+    sh(["checkout", "-q", "-b", "release/0.2.0", old], repo);
+    const early = await hubd.request("release-manager", "push", ["release/0.2.0"]);
+    expect(early.code).toBe(77);
+    expect(String(early.reason)).toContain("no earlier than the last release");
+  }, 30_000);
+
+  it("keeps a release head pushed while CI on another is being read", async () => {
+    const hubd = await startHubd(5000);
+    const { repo } = hubd;
+    seed(hubd);
+    fs.writeFileSync(path.join(hubd.state, "release-hold"), "");
+    sh(["checkout", "-q", "-b", "release/0.1.0"], repo);
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+    const first = remoteHead(hubd);
+    await until(
+      () => fs.existsSync(path.join(hubd.state, `release-polled-${first}`)),
+      "the poll reading CI on the first head",
+    );
+
+    const fix = fixOnMain(hubd, "b\n");
+    sh(["checkout", "-q", "release/0.1.0"], repo);
+    sh(["-c", "user.name=t", "-c", "user.email=t@t", "cherry-pick", "-x", fix], repo);
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+    const second = remoteHead(hubd);
+    fs.writeFileSync(
+      path.join(hubd.state, `release-runs-${first}.json`),
+      JSON.stringify({
+        total_count: 1,
+        workflow_runs: [{ name: "ci", status: "completed", conclusion: "success" }],
+      }),
+    );
+    fs.rmSync(path.join(hubd.state, "release-hold"));
+
+    await until(
+      () => releaseNudges(hubd).some((message) => String(message.text).includes("PASS")),
+      "the first head's verdict",
+    );
+    const state = readJson(path.join(hubd.hub, "release.json"));
+    expect(/** @type {{ sha: string }[]} */ (state.ci).map((head) => head.sha)).toEqual([second]);
+  }, 30_000);
+
+  it("refuses a new branch that does not start on main", async () => {
+    const hubd = await startHubd(5000);
+    const { repo } = hubd;
+    seed(hubd);
+    sh(["checkout", "-q", "-b", "release/0.1.0"], repo);
+    fs.writeFileSync(path.join(repo, "a.txt"), "not main\n");
+    sh(["add", "a.txt"], repo);
+    commit("not main", repo);
+    const answer = await hubd.request("release-manager", "push", ["release/0.1.0"]);
+    expect(answer.code).toBe(77);
+    expect(String(answer.reason)).toContain("starts at a commit on main");
+  }, 30_000);
+
+  it("is published only at the head qa-tester signed off, which hub pins as the target", async () => {
+    const hubd = await startHubd(5000);
+    const { repo } = hubd;
+    seed(hubd);
+    sh(["checkout", "-q", "-b", "release/0.1.0"], repo);
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+    const head = remoteHead(hubd);
+    const create = ["release", "create", "v0.1.0", "--target", "release/0.1.0", "--generate-notes"];
+
+    const unsigned = await hubd.request("release-manager", "gh", create);
+    expect(unsigned.code).toBe(77);
+    expect(String(unsigned.reason)).toContain("has not signed off");
+
+    const wrong = await hubd.request("qa-tester", "release-ok", [
+      "release/0.1.0",
+      "--sha",
+      "0000000",
+    ]);
+    expect(wrong.code).toBe(77);
+    const ok = await hubd.request("qa-tester", "release-ok", [
+      "release/0.1.0",
+      "--sha",
+      head,
+      "played it",
+    ]);
+    expect(ok.code, String(ok.reason)).toBe(0);
+
+    const published = await hubd.request("release-manager", "gh", create);
+    expect(published.code, String(published.reason)).toBe(0);
+    expect(hubd.callLog()).toContain(`release create v0.1.0 --target ${head} --generate-notes`);
+    expect(hubd.callLog()).not.toContain("--target release/0.1.0");
+
+    // A pick after the sign-off needs a new one.
+    const fix = fixOnMain(hubd, "b\n");
+    sh(["checkout", "-q", "release/0.1.0"], repo);
+    sh(["-c", "user.name=t", "-c", "user.email=t@t", "cherry-pick", "-x", fix], repo);
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+    const stale = await hubd.request("release-manager", "gh", [
+      "release",
+      "create",
+      "v0.1.0",
+      "--target",
+      "release/0.1.0",
+    ]);
+    expect(stale.code).toBe(77);
+    expect(String(stale.reason)).toContain("has not signed off");
+  }, 30_000);
+
+  it("seeds the release manager's own schedules when one is hired", async () => {
+    const hubd = await startHubd(5000);
+    const cfg = readJson(path.join(hubd.root, "company.json"));
+    writeAtomic(hubd.root, "company.json", JSON.stringify({ ...cfg, maxAgents: 20 }));
+    const first = {
+      hiredAt: 1,
+      by: "operator",
+      reason: "first boot",
+      state: "working",
+      readyAt: null,
+    };
+    writeAtomic(
+      hubd.root,
+      "staff.json",
+      JSON.stringify({ employees: { manager: { role: "manager", ...first } }, recent: [] }),
+    );
+    const hired = await hubd.request("manager", "staff", ["hire", "release-manager", "test"]);
+    expect(hired.code, String(hired.reason)).toBe(0);
+    const { schedules } = readJson(path.join(hubd.hub, "schedules.json"));
+    expect((Array.isArray(schedules) ? schedules : []).map((own) => String(obj(own).name))).toEqual(
+      ["release-cadence", "feature-progress", "qa-status"],
+    );
+  }, 30_000);
+
+  /**
+   * The open tracking issue GitHub's search answers with.
+   *
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @param {string} author
+   * @param {string} body
+   */
+  const tracking = (hubd, author, body) => {
+    fs.writeFileSync(
+      path.join(hubd.state, "search.json"),
+      JSON.stringify({
+        items: [{ number: 40, title: "Release 0.1.0", user: { login: author }, body }],
+      }),
+    );
+  };
+  /** @param {Awaited<ReturnType<typeof startHubd>>} hubd */
+  const releaseNudges = (hubd) =>
+    outboxEntries(hubd)
+      .map(({ message }) => message)
+      .filter((message) => message.to === "release-manager");
+
+  it("tells the release manager once when a listed issue reaches Done", async () => {
+    const hubd = await startHubd(5000);
+    tracking(hubd, "vibewars-company", "## Features\n- [ ] #8\n");
+    await hubd.request("developer", "gh", BOARD_READ);
+    await hubd.request("developer", "gh", MOVE_8_TO_DONE);
+    await until(() => releaseNudges(hubd).length > 0, "the release manager to be told");
+    expect(String(releaseNudges(hubd)[0]?.text)).toContain("#8 is Done; Release 0.1.0 (#40)");
+  }, 20_000);
+
+  it("tells nobody of an unlisted issue, or of a tracking issue someone else wrote", async () => {
+    for (const [author, body] of [
+      ["vibewars-company", "## Features\n- [ ] #9\n"],
+      ["stranger", "## Features\n- [ ] #8\n"],
+    ]) {
+      const hubd = await startHubd(5000);
+      tracking(hubd, author, body);
+      await hubd.request("developer", "gh", BOARD_READ);
+      await hubd.request("developer", "gh", MOVE_8_TO_DONE);
+      await until(() => hubd.calls("api search/issues") > 0, "the tracking issue to be read");
+      await sleep(300);
+      expect(releaseNudges(hubd), author).toEqual([]);
+    }
+  }, 30_000);
+
+  it("lets qa-tester edit an open tracking issue the company wrote, and no other issue", async () => {
+    const hubd = await startHubd(5000);
+    // #8 and #10 are on the board, #7 is the project's own: all visible.
+    const plant = (/** @type {number} */ number, /** @type {Record<string, unknown>} */ issue) => {
+      fs.writeFileSync(
+        path.join(hubd.state, `issues-${String(number)}.json`),
+        JSON.stringify({
+          number,
+          html_url: `https://github.com/Enteee/VibeWars/issues/${String(number)}`,
+          title: "Release 0.1.0",
+          state: "open",
+          user: { login: "vibewars-company" },
+          ...issue,
+        }),
+      );
+    };
+    plant(8, {});
+    plant(10, { user: { login: "stranger" } });
+    await hubd.request("developer", "gh", BOARD_READ);
+    const edit = (/** @type {number} */ number) =>
+      hubd.request("qa-tester", "gh", ["issue", "edit", String(number), "--body", "- [ ] #8"]);
+
+    const ok = await edit(8);
+    expect(ok.code, String(ok.reason)).toBe(0);
+    plant(8, { state: "closed" });
+    for (const number of [7, 8, 10]) {
+      const refused = await edit(number);
+      expect(refused.allow, String(number)).toBe(false);
+      expect(String(refused.reason)).toBe(
+        `#${String(number)} is not an open release's tracking issue, the only one you edit`,
+      );
+    }
+  }, 30_000);
+
+  it("tells the release manager of a sign-off once, however often it is recorded", async () => {
+    const hubd = await startHubd(5000);
+    const { repo, remote } = hubd;
+    sh(["init", "--bare", "-q", remote], hubd.root);
+    sh(["init", "-q", "-b", "main", repo], hubd.root);
+    fs.writeFileSync(path.join(repo, "a.txt"), "a\n");
+    sh(["add", "a.txt"], repo);
+    commit("a", repo);
+    sh(["push", "-q", remote, "main"], repo);
+    sh(["checkout", "-q", "-b", "release/0.1.0"], repo);
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+    const head = sh(["rev-parse", "HEAD"], repo).trim();
+    for (let i = 0; i < 2; i += 1) {
+      const ok = await hubd.request("qa-tester", "release-ok", ["release/0.1.0", "--sha", head]);
+      expect(ok.code, String(ok.reason)).toBe(0);
+    }
+    expect(releaseNudges(hubd).map((message) => String(message.text))).toEqual([
+      `qa-tester signed off release/0.1.0 at ${head.slice(0, 8)}: it may be published.`,
+    ]);
   }, 30_000);
 });

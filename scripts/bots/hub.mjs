@@ -14,6 +14,9 @@
  *   hub approve <pr> --sha <commit> [note]          reviewers only
  *   hub request-changes <pr> --sha <commit> <note>  reviewers only
  *     <commit> is the head you reviewed; a verdict on a moved head is refused
+ *   hub release-ok release/0.N.0 --sha <commit> [note]  qa-tester only: the
+ *     release branch's head you tested, which the release is then tagged at
+ *   hub push release/0.N.0           release-manager only: cherry-picks of main
  *   hub whoami                       who you are, your role, and what it may do
  *   hub wiki get|history|diff <Page> ...  a GW1 wiki page as text, live or
  *                                    from Wayback, and its history (#1380)
@@ -105,7 +108,7 @@ if (argv[0] === "whoami") {
     ["move cards on the board", ["project", "item-edit"]],
     ["restructure the board", ["project", "item-add"]],
     ["operate the pipeline", ["workflow", "run", "ci.yml"]],
-    ["cut releases", ["release", "create", "v1"]],
+    ["publish releases", ["release", "create", "v0.1.0", "--target", "release/0.1.0"]],
     ["merge pull requests", ["pr", "merge", "1"]],
   ];
   for (const [label, probe] of probes) {
@@ -118,6 +121,18 @@ if (argv[0] === "whoami") {
     { acting: ACTING, employee: EMPLOYEE },
   );
   console.log(`  ${pushes.allow ? "yes" : "no "}  push branches (bot/${EMPLOYEE}/*)`);
+  const releases = authorize(
+    ROLE,
+    { kind: "push", argv: ["release/0.1.0"] },
+    { acting: ACTING, employee: EMPLOYEE },
+  );
+  console.log(`  ${releases.allow ? "yes" : "no "}  push release branches (release/0.N.0)`);
+  const signs = authorize(
+    ROLE,
+    { kind: "release-ok", argv: ["release/0.1.0", "--sha", "0000000"] },
+    { acting: ACTING },
+  );
+  console.log(`  ${signs.allow ? "yes" : "no "}  sign off a release branch (release-ok)`);
   const reviews = authorize(
     ROLE,
     { kind: "review", argv: ["approve", "1", "--sha", "0000000"] },
@@ -172,6 +187,9 @@ if (argv[0] === "push") {
   request = { kind: "push", argv: argv.slice(1) };
 } else if (argv[0] === "approve" || argv[0] === "request-changes") {
   request = { kind: "review", argv };
+} else if (argv[0] === "release-ok") {
+  // QA's sign-off on a release branch's head (#2707), as approve is on a PR's.
+  request = { kind: "release-ok", argv: argv.slice(1) };
 } else if (argv[0] === "alerts") {
   // Code-scanning alerts on main or a pull request (#184): a hub verb,
   // because gh has none and `gh api` is refused.

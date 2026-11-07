@@ -266,6 +266,17 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toContain("ember-deep");
 
   await code.click();
+  // The drawn caret is the accent colour, not CodeMirror's black on our dark field (#2744).
+  const accent = await page.evaluate(() => {
+    const probe = document.createElement("i");
+    probe.style.color = "var(--accent)";
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).color;
+    probe.remove();
+    return colour;
+  });
+  expect(accent).not.toBe("rgb(0, 0, 0)");
+  await expect(editor.locator(".cm-cursor").first()).toHaveCSS("border-left-color", accent);
   await page.keyboard.press("Control+End");
   await page.keyboard.type("\n.gain(.9)");
   await page.keyboard.press("Control+Enter");
@@ -601,7 +612,7 @@ async function intensitiesSent(page: Page): Promise<number[]> {
   );
 }
 
-test("Options → Sound names the menu's track, and a fixed intensity reaches the host (#425)", async ({
+test("the ♪ popover names the menu's track, and a fixed intensity reaches the host (#425)", async ({
   page,
 }) => {
   const titles = new Map(
@@ -622,9 +633,7 @@ test("Options → Sound names the menu's track, and a fixed intensity reaches th
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toHaveLength(1);
   const [menuTrack] = await playedTracks(page);
 
-  await page.locator(".topbar-options").click();
-  await page.locator('.options-entry[data-section="sound"]').click();
-  await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
+  await openJukebox(page);
   await expect(page.locator(".music-now-playing-title")).toContainText(
     titles.get(menuTrack ?? "") ?? "no such track",
   );

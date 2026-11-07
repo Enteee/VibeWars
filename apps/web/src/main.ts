@@ -9,6 +9,7 @@ import type {
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 import { watchRecords } from "./net/transport/index.js";
+import { loadPlayerKey } from "./net/transport/player-key.js";
 
 import { ARENA_MAPS, ASCENT_PROGRESSION, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
 import {
@@ -281,6 +282,9 @@ function takeLobbyLink(): LobbyFragment {
 }
 
 /** The served build id this tab last reloaded for (#1268): once per id, never a loop. */
+/** This browser's player key (#2706), made on its first launch: every lobby join proves it. */
+const playerKey = loadPlayerKey(localStorage);
+
 const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
 
 /** A Team Lobby's saved Team Builds, read once as it begins, and the one proposed (#1460). */
@@ -989,7 +993,7 @@ async function main(): Promise<void> {
       const entrant = await readEntrant();
       let own: HostedLobby;
       try {
-        own = await hostLobby(name, entrant.guild, true, loadTeamSize("hosted-game"));
+        own = await hostLobby(name, entrant.guild, playerKey, true, loadTeamSize("hosted-game"));
       } catch (error) {
         opening = false;
         console.warn("[web] could not open a lobby", error);
@@ -1094,7 +1098,7 @@ async function main(): Promise<void> {
       {
         join: async (code) => {
           const entrant = await readEntrant();
-          const joined = await joinLobbyByCode(code, name, entrant.guild);
+          const joined = await joinLobbyByCode(code, name, entrant.guild, playerKey);
           return { joined, entrant };
         },
         movedOn: () => movedOnSince(turn),
@@ -1147,7 +1151,7 @@ async function main(): Promise<void> {
       menuNotice = undefined;
       let joined: LobbyConnection;
       try {
-        joined = await joinLobbyByCode(code, name, entrant.guild);
+        joined = await joinLobbyByCode(code, name, entrant.guild, playerKey);
       } catch (error) {
         console.warn("[web] could not join the lobby", error);
         if (movedOn()) {
@@ -1523,6 +1527,7 @@ async function main(): Promise<void> {
       null,
       name,
       entrant.guild,
+      playerKey,
       {
         // Never past `in-lobby` while a lobby is up, unless it fell through.
         onState: (state) => {
@@ -1786,6 +1791,7 @@ async function main(): Promise<void> {
       current.ascentRound,
       name,
       entrant.guild,
+      playerKey,
       {
         // The queue line says the wait and how many teams it last heard
         // searching (#1881), none while the relays are down; the queue's

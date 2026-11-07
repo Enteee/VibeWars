@@ -66,6 +66,26 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
   await expect(lobby).toHaveText("Your lobby");
 });
 
+test("[?] stays in the bar, shown open, while Help is open; a second press closes it (#2724)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  const icon = page.locator(".topbar-help");
+  await icon.click();
+  const help = page.getByRole("dialog", { name: "Help" });
+  await expect(help).toBeVisible();
+  await expect(icon).toBeVisible();
+  await expect(icon).toHaveAttribute("aria-expanded", "true");
+
+  await help.locator(".options-entry").nth(1).click();
+  await expect(help.locator(".options-entry").nth(1)).toHaveAttribute("aria-current", "page");
+  await expect(icon).toBeVisible();
+
+  await icon.click();
+  await expect(help).toHaveCount(0);
+  await expect(icon).toHaveAttribute("aria-expanded", "false");
+});
+
 test("the HUD's [?] opens Help over a match; Esc closes it and gives focus back (#1257)", async ({
   page,
 }) => {

@@ -21,6 +21,7 @@ import {
   parsePeerLobbyHello,
   parsePeerLobbyLeave,
   parsePeerLobbyJoin,
+  parsePeerLobbyProof,
   parsePeerPartyConsent,
   parsePeerRelayCredOut,
   parsePeerRelayHolding,
@@ -33,6 +34,7 @@ import {
   type LobbyTeamSize,
   type TeamArenaSize,
   type PeerLobbyJoin,
+  type PeerLobbyChallenge,
   type PeerLobbySeat,
   type PeerRelayAdmit,
   type PeerRelayCredIn,
@@ -60,6 +62,7 @@ import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budg
 import type { LobbyCharacter, PartyPlanSeat } from "./lobby-connection.js";
 import { keyGated } from "./key-gate.js";
 import { createLocalPeer } from "./local-peer.js";
+import type { VerifyPlayerProof } from "./player-key.js";
 import {
   RECONNECT_WINDOW_SECONDS,
   type MatchHost,
@@ -102,6 +105,12 @@ export const CHAT_BURST = 5;
  * have sent a consent that verifies, or the team splits (#1078).
  */
 export const PARTY_CONSENT_MS = 5000;
+
+/**
+ * From a `lobby-join`, on the lobby's clock, until its `lobby-proof`
+ * must have come (#2706), or the join is refused.
+ */
+export const LOBBY_PROOF_MS = 10_000;
 
 /**
  * The least time between two `relay-cred` the host forwards from one
@@ -295,6 +304,8 @@ export interface LobbyHostOptions {
   readonly matchmaking?: LobbyMatchmakingOptions;
   /** In [0, 1): what a Team Lobby picks at random. Injected, so a test can seed it. */
   readonly random: () => number;
+  /** Checks a joiner's player-key proof (#2706). Injected: game-session has no curve code. */
+  readonly verifyPlayerProof: VerifyPlayerProof;
 }
 
 /**
@@ -349,7 +360,24 @@ export interface LobbyHost {
   close(moveTo?: string): Promise<void>;
 }
 
-interface Member {
+type Member = MemberBase &
+  (
+    | {
+        /**
+         * A bot's build (#1193): it has no peer, is always ready and plays
+         * this, a slot nobody claimed (#2029).
+         */
+        bot: PlayerBuild;
+        readonly playerPubkey: null;
+      }
+    | {
+        bot: null;
+        /** The player key it proved on joining (#2706). */
+        readonly playerPubkey: string;
+      }
+  );
+
+interface MemberBase {
   readonly id: string;
   name: string;
   /** Sanitised (#1406); `null` for none, and for a bot. */
@@ -367,11 +395,6 @@ interface Member {
   readonly rejoinToken: string | null;
   /** Its page's relay key from its `lobby-join` (#2529); `null` for none, and for a bot. */
   relayPub: string | null;
-  /**
-   * A bot's build (#1193): it has no peer, is always ready and plays
-   * this, a slot nobody claimed (#2029).
-   */
-  bot: PlayerBuild | null;
 }
 
 /**
@@ -394,6 +417,13 @@ const lobbySideOf = (team: WireTeam | null): 0 | 1 | null =>
 /** A queued group's teams: two, or three on a three-team round (#2683). */
 const teamsOf = (group: FormedGroup): readonly WireTeam[] =>
   group.teams.length === 3 ? [0, 1, 2] : [0, 1];
+
+/** A lobby proof's nonce (#2706): 32 fresh random bytes as 64 hex digits. */
+function newProofNonce(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
 
 /** Whether `member` counts as ready: a bot always is (#1193). */
 const isReady = (member: Member): boolean => member.bot !== null || member.ready;
@@ -550,6 +580,17 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const welcomed = new Set<string>();
   /** Peers whose queued join was checked, admitted or not: each once, while it is here. */
   const judged = new Set<string>();
+  /** Joins waiting on their `lobby-proof` (#2706), by sender: since when, on the lobby's clock. */
+  /**
+   * Peers refused `unproven` (#2706): each is challenged no more while it
+   * is here, so a loop of bad proofs costs the host one check, not one
+   * per message its budget lets through.
+   */
+  const unproven = new Set<string>();
+  const pendingProofs = new Map<
+    string,
+    { readonly join: PeerLobbyJoin; readonly nonce: string; readonly since: number }
+  >();
   let phase: LobbyPhase = "waiting";
   let mapId = queued?.group.mapId ?? defaultMap;
   /** A Hosted Game's players a side, the host's pick (#2104). */
@@ -745,6 +786,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       isHost: member.id === local.selfId,
       bot: member.bot !== null,
       away: away.has(member.id),
+      playerPubkey: member.playerPubkey,
     })),
     countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
     queueNonce: queueing?.nonce ?? null,
@@ -852,7 +894,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       };
       const build = assigned.get(member.id) ?? null;
       return member.bot === null
-        ? { ...seat, bot: false, build }
+        ? { ...seat, bot: false, build, playerPubkey: member.playerPubkey }
         : { ...seat, bot: true, build: build ?? member.bot };
     };
     // One away (#1764) is not seated: a bot plays its slot, as `remove`
@@ -1725,6 +1767,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       rejoinToken: null,
       relayPub: null,
       bot: build,
+      playerPubkey: null,
     });
     return id;
   };
@@ -1783,6 +1826,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       rejoinToken,
       relayPub: join.relayPub,
       bot: null,
+      playerPubkey: join.playerPubkey,
     });
     relayAdmission.seated(from);
     forgetForwards(from, false);
@@ -1990,26 +2034,27 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     });
   });
 
-  transport.on("lobby-join", (data, from) => {
-    if (closed || !budget.take(from, nowMs()) || (members.has(from) && !away.has(from))) {
-      return;
-    }
-    // Checked first: a peer of another version is told so, rather than
-    // left waiting for a state that never lists it.
-    if (helloProtocolVersion(data) !== PROTOCOL_VERSION) {
-      refuse(from, "protocol-mismatch");
-      return;
-    }
-    const join = parsePeerLobbyJoin(data);
-    if (join === undefined) {
+  /**
+   * Whether `join` may take back `returning`'s seat: only with the seat's
+   * token (#2157), as a peer id is seen by the whole room, and only with
+   * the key it proved (#2706). Another key is no re-key of the seat.
+   */
+  const mayReturn = (returning: Member, join: PeerLobbyJoin): boolean =>
+    returning.rejoinToken !== null &&
+    join.rejoinToken === returning.rejoinToken &&
+    join.playerPubkey === returning.playerPubkey;
+
+  /** Seat `from`, whose `join` has proved its player key (#2706). */
+  const seatProven = (join: PeerLobbyJoin, from: string): void => {
+    // Seated while it proved.
+    if (members.has(from) && !away.has(from)) {
       return;
     }
     const returning = members.get(from);
     // Back from a drop, it was admitted already: as this peer, on its ticket.
     if (returning !== undefined) {
-      // Only with the seat's token (#2157): a peer id is seen by the whole
-      // room. Not refused, which would tell a prober the seat exists.
-      if (returning.rejoinToken === null || join.rejoinToken !== returning.rejoinToken) {
+      // Not refused, which would tell a prober the seat exists.
+      if (!mayReturn(returning, join)) {
         return;
       }
       // Back from a drop during the match (#596): the seat it held, on its
@@ -2062,6 +2107,102 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return;
     }
     admit(from, join, null, null);
+  };
+
+  /**
+   * Whether a new joiner's `join` is one `seatProven` would refuse,
+   * refusing it if so. Only what needs no proof: a queued lobby's ticket
+   * is still checked once proven.
+   */
+  const refusedUnproven = (join: PeerLobbyJoin, from: string): boolean => {
+    if (members.size >= MAX_LOBBY_PLAYERS) {
+      refuse(from, "lobby-full");
+      return true;
+    }
+    if (queued !== undefined) {
+      // Judged once while it is here: a second ticket is not looked at.
+      return judged.has(from);
+    }
+    if (join.admission !== null) {
+      refuse(from, "not-admitted");
+      return true;
+    }
+    if (!open && from !== local.selfId) {
+      refuse(from, "closed");
+      return true;
+    }
+    return false;
+  };
+
+  transport.on("lobby-join", (data, from) => {
+    if (closed || !budget.take(from, nowMs()) || (members.has(from) && !away.has(from))) {
+      return;
+    }
+    // Checked first: a peer of another version is told so, rather than
+    // left waiting for a state that never lists it.
+    if (helloProtocolVersion(data) !== PROTOCOL_VERSION) {
+      refuse(from, "protocol-mismatch");
+      return;
+    }
+    const join = parsePeerLobbyJoin(data);
+    if (join === undefined) {
+      return;
+    }
+    if (unproven.has(from)) {
+      return;
+    }
+    const returning = members.get(from);
+    if (returning !== undefined && !mayReturn(returning, join)) {
+      return;
+    }
+    // A join that would be refused once proven is refused unchallenged:
+    // a check is spent only on a join that can take a seat.
+    if (returning === undefined && refusedUnproven(join, from)) {
+      return;
+    }
+    // One challenge a sender, and no more of them than the lobby has
+    // seats: a flood grows nothing. A join to the room and then to the
+    // host is two: the second is the one seated, on the first's nonce.
+    const pending = pendingProofs.get(from);
+    if (pending !== undefined) {
+      pendingProofs.set(from, { ...pending, join });
+      return;
+    }
+    if (pendingProofs.size >= MAX_LOBBY_PLAYERS) {
+      refuse(from, "lobby-full");
+      return;
+    }
+    const nonce = newProofNonce();
+    pendingProofs.set(from, { join, nonce, since: nowMs() });
+    transport.send("lobby-challenge", { nonce } satisfies PeerLobbyChallenge, from);
+  });
+
+  // Every join, the host's own player's too, proves its player key
+  // (#2706) before anything else of it is acted on.
+  transport.on("lobby-proof", (data, from) => {
+    const pending = pendingProofs.get(from);
+    // A check costs about a millisecond: made only for a pending challenge.
+    if (closed || pending === undefined || !budget.take(from, nowMs())) {
+      return;
+    }
+    // One proof a nonce, good or bad: a replay finds none pending.
+    pendingProofs.delete(from);
+    const proof = parsePeerLobbyProof(data);
+    const fields = {
+      hostPeerId: transport.selfId,
+      joinerPeerId: from,
+      roomId: code,
+      nonce: pending.nonce,
+    };
+    if (
+      proof === undefined ||
+      !options.verifyPlayerProof(pending.join.playerPubkey, fields, proof.sig)
+    ) {
+      unproven.add(from);
+      refuse(from, "unproven");
+      return;
+    }
+    seatProven(pending.join, from);
   });
 
   // Whether a member holds a relay it shares (#2527): only a seated one counts.
@@ -2582,6 +2723,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       const shown = countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt);
       const shownStage = teamLobby === undefined ? null : countdownLeft(teamLobby.endsAt);
       elapsed += seconds;
+      for (const [peerId, pending] of pendingProofs) {
+        if (nowMs() - pending.since >= LOBBY_PROOF_MS) {
+          pendingProofs.delete(peerId);
+          unproven.add(peerId);
+          refuse(peerId, "unproven");
+        }
+      }
       tellRelayRooms();
       if (queueing !== undefined) {
         gatherParty();
@@ -2644,6 +2792,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         return;
       }
       closed = true;
+      pendingProofs.clear();
       tellRelayRooms();
       if (moveTo !== undefined) {
         const move: WireLobbyMove = { code: moveTo };
@@ -2667,6 +2816,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     throttled.delete(peerId);
     welcomed.delete(peerId);
     judged.delete(peerId);
+    unproven.delete(peerId);
+    pendingProofs.delete(peerId);
     if (peerId === local.selfId) {
       // The host's own player went: there is no lobby without its host.
       void host.close();

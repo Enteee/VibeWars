@@ -37,9 +37,9 @@ describe("SectionSwitcher (#423)", () => {
 
   it("cleans the old section up before it mounts the next", () => {
     const { log, sections } = switcher();
-    sections.show(section("sound"));
+    sections.show(section("relay"));
     sections.show(section("controls"));
-    expect(log).toEqual(["mount sound", "cleanup sound", "clear", "mount controls"]);
+    expect(log).toEqual(["mount relay", "cleanup relay", "clear", "mount controls"]);
     expect(sections.current).toBe("controls");
   });
 
