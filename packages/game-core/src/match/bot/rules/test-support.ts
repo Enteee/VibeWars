@@ -28,7 +28,11 @@ export const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 export const DT = 1 / RULESET.tickRateHz;
 /** A field with edges, as every map has. */
 export const BOUNDS = { width: 1600, height: 800 };
-export const BOT: Behaviour = { kind: "play-build", thinkSeconds: 0.25 };
+/** A bot that holds each decision a steady 0.25 s, so the rules' tests time alike. */
+export const BOT: Behaviour = {
+  kind: "play-build",
+  reaction: { minSeconds: 0.25, maxSeconds: 0.25 },
+};
 
 /** A built-in build by name: a PvX one, or a starter team member's ("Warrior/Monk"). */
 export function starter(name: string): PlayerBuild {
