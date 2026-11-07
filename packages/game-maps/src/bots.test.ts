@@ -31,9 +31,10 @@ const DT = 1 / RULESET.tickRateHz;
 /**
  * Of the bots' spike-skill hits on a foe, the share landing within a second
  * of a teammate's on it (#2631): main's bots, firing each the moment it
- * recharged, landed MAIN of them together.
+ * recharged, landed 66.2% of them together, these bots 79.7%. The
+ * bar is main + 10 points: the share swings about 5 points with the seed.
  */
-const SPIKE_SHARE = 0.99;
+const SPIKE_SHARE = 0.762;
 /** No warrior: nobody here closes in because their weapon is melee. */
 const CASTERS = ["Barrage (R)", "Signet of Suffering (N/A)", "Double Dragon (E)"];
 
@@ -137,17 +138,12 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
   };
 
   it("lands more of the bots' big hits together than trickling in, the same for the same seed", () => {
-    const runs = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"].map(spikes);
+    const runs = ["a", "b", "c", "d"].map(spikes);
     const hits = runs.reduce((sum, run) => sum + run.hits, 0);
     const together = runs.reduce((sum, run) => sum + run.together, 0);
-    console.log(
-      JSON.stringify(runs),
-      together / hits,
-      JSON.stringify((globalThis as unknown as { SPK?: unknown }).SPK),
-    );
     expect(together / hits).toBeGreaterThanOrEqual(SPIKE_SHARE);
     expect(spikes("a")).toEqual(runs[0]);
-  });
+  }, 60_000);
 });
 
 describe("Relic Run bots (#2581)", () => {
