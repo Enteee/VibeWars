@@ -88,7 +88,7 @@ describe("match records on Nostr (#2528)", () => {
     expect(event?.tags).toEqual([
       ["d", expect.stringMatching(/^vibewars-match\/[0-9a-f]{32}$/)],
       ["t", "vibewars-matches"],
-      ["v", "1"],
+      ["v", String(MATCH_RECORD_VERSION)],
     ]);
     expect(JSON.parse(event?.content ?? "")).toEqual(RECORD);
     if (event === undefined) {
