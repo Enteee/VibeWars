@@ -45,6 +45,8 @@ adds its entry in the same pull request.**
   by the build, not by hand (#1242): `apps/web/plugins/licences.ts` writes
   `licences.json` from the bundle's modules, and fails on a licence
   outside its allowlist.
+- Content sources, not only code, are credited here too: first the PvX
+  wiki, whose builds the built-in builds are adapted from (#2557).
 
 ## Alternatives Considered
 
