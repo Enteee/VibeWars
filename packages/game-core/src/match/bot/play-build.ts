@@ -73,6 +73,7 @@ export function playBuild(
       livingMembers(context),
       teamTarget(context, foes),
       roleOf(context.self),
+      behaviour.spikeHold !== false,
     );
   });
 }
@@ -124,7 +125,7 @@ export function guard(
     () => behaviour.thinkSeconds,
     cursor,
     context,
-    () => think(context, cursor, foes, allies, weakest(self, foes)?.id, undefined),
+    () => think(context, cursor, foes, allies, weakest(self, foes)?.id, undefined, false),
   );
   return behaviour.rooted ? { ...intent, moveDirection: ZERO, moveTo: undefined } : intent;
 }
@@ -145,6 +146,12 @@ function paced(
   const holding = { ...NOTHING, targetId: self.targetId };
   cursor.waitSeconds = Math.max(0, cursor.waitSeconds - context.dt);
   cursor.upkeepDropSeconds = Math.max(0, cursor.upkeepDropSeconds - context.dt);
+  if (cursor.spikeTargetId !== undefined) {
+    cursor.spikeHeldSeconds += context.dt;
+  }
+  if (cursor.spikeReadySeconds !== undefined) {
+    cursor.spikeReadySeconds += context.dt;
+  }
   // Nothing new while what it last asked for is still going: the retry
   // bound, so it never presses twice for one skill.
   if (cast.isCasting || cast.inAftercast || self.pendingSkill !== undefined) {
@@ -193,6 +200,7 @@ function think(
   allies: readonly Participant[],
   targetId: string | undefined,
   role: BotRole | undefined,
+  spikeHold: boolean,
 ): BehaviourIntent {
   const self = context.self;
   const rule: RuleContext = {
@@ -219,6 +227,7 @@ function think(
     cursor,
     role,
     foeCentroid: context.foeCentroid,
+    spikeHold,
     roleOf,
     foeReach: (foe) => foeReach(cursor.foeReach, foe),
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),

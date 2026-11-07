@@ -1,4 +1,4 @@
-import { sanitizeName, type MatchRecordTeam } from "@vibewars/game-session";
+import { sanitizeCharacterName, type MatchRecordTeam } from "@vibewars/game-session";
 
 import { teamCharacter, teamOf } from "../ui/team-builder.js";
 import { decodeTemplate } from "./gw1-template.js";
@@ -30,7 +30,7 @@ export function teamFromMatch(
     const { character } = decoded;
     members.push({
       ...teamCharacter(character, character.id),
-      name: sanitizeName(player.name, character.name),
+      name: sanitizeCharacterName(player.name, character.name),
     });
     missingSkills.push(...decoded.missingSkills);
   }

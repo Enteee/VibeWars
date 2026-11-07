@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinByCode, lobbyWindow, openRail, shutLobbyWindow } from "./helpers/menu.js";
 import { copyInvite, hostLobby, openPeers, openToFriends } from "./helpers/peers.js";
 
@@ -182,8 +183,8 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
   }
 });
 
-/** A rolled character's random name (#1149): "Kaelen Ashvale". */
-const ROLLED_NAME = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
+/** A rolled character's name: its PvX build's (#2636), "Gust (A/E)". */
+const ROLLED_NAMES = STARTER_BUILDS.map((build) => build.name);
 
 test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone copies it", async ({
   page,
@@ -199,8 +200,8 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(card).toHaveClass(/is-selected/);
   await expect(page.locator("#topbar .screen-ready")).toBeEnabled();
   const name = card.locator(".play-card-name");
-  await expect(name).toHaveText(ROLLED_NAME);
   const first = await name.innerText();
+  expect(ROLLED_NAMES).toContain(first);
   // Drawn as a match draws it (#1250): the figure, not a lettered dot.
   const figure = card.locator("canvas.character-figure");
   await expect(figure).toBeVisible();
@@ -214,17 +215,17 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(name).toHaveText(first);
 
   // Rerolled at once, unasked (#1146), on Character Builder: another
-  // starter build under another random name (#1149), the same card.
+  // starter build under its own name (#2636), the same card.
   await openRail(page, "Character Builder");
   const actions = card.locator(".play-card-actions");
   await actions.getByRole("button", { name: "Reroll", exact: true }).click();
   await expect(name).not.toHaveText(first);
-  await expect(name).toHaveText(ROLLED_NAME);
   await expect(card).toHaveCount(1);
 
   // It has Clone, not Edit (#1147): Clone opens the editor on a copy of
   // the character shown (#2038), one even for a double-click.
   const rolled = await name.innerText();
+  expect(ROLLED_NAMES).toContain(rolled);
   const professions = await card.locator(".play-card-line").innerText();
   await expect(actions.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
   await actions.getByRole("button", { name: "Clone", exact: true }).dblclick();

@@ -107,6 +107,8 @@ export function renderSummary(parent: HTMLElement, tables: readonly SummaryTable
       if (bot) {
         name.appendChild(botTagElement("match-summary-bot"));
       }
+      // A bot's is its build's, up to 40 characters (#2636): cut, whole here.
+      name.title = row.name;
       name.setAttribute("scope", "row");
       tr.appendChild(name);
       for (const column of SUMMARY_COLUMNS) {
