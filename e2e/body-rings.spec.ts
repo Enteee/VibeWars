@@ -13,10 +13,7 @@ const ARMOR_OF_EARTH = starterKey(ARMORED, "elementalist.armor-of-earth");
 const RADIUS = 14;
 
 const arena = JSON.parse(
-  readFileSync(
-    new URL("../packages/game-maps/maps/arena-pillars/map.json", import.meta.url),
-    "utf8",
-  ),
+  readFileSync(new URL("../packages/game-maps/maps/ember-pits/map.json", import.meta.url), "utf8"),
 ) as {
   readonly spawnPoints: readonly {
     readonly team: number;
@@ -32,7 +29,7 @@ const arena = JSON.parse(
 async function rightEdge(page: Page): Promise<Buffer> {
   const self = arena.spawnPoints.find((spawn) => spawn.team === 0)?.position;
   if (self === undefined) {
-    throw new Error("arena-pillars has no team 0 spawn");
+    throw new Error("ember-pits has no team 0 spawn");
   }
   const view = await projection(
     page.locator("#viewport"),

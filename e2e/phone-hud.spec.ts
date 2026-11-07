@@ -46,7 +46,7 @@ type Frame = Record<string, Box | null>;
 
 /**
  * A match against a bot from the menu on show, the bot targeted, the HUD
- * noted; in `lobby`'s size and map when given, else 1v1 on arena-pillars.
+ * noted; in `lobby`'s size and map when given, else 1v1 on ember-pits.
  */
 async function phoneMatch(
   page: Page,
