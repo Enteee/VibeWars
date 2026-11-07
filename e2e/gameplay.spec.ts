@@ -9,12 +9,10 @@ import { projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
 import { joinFriend } from "./helpers/menu.js";
 import {
-  EMBER_PITS_LANE_Y,
   hostLobby,
   playHouseTeams,
   playOwnTeams,
   startSoloMatch as startMatchFromMenu,
-  walkTo,
 } from "./helpers/peers.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 
@@ -56,22 +54,25 @@ const ARENA = JSON.parse(
   }[];
 };
 
-/** Where a 1v1's opponent starts: team 1's first spawn, across the map. */
-const FOE_SPAWN = (() => {
-  const spawn = ARENA.spawnPoints.find((point) => point.team === 1)?.position;
+/** Where a 1v1's hero on `team` starts: the team's first spawn. */
+function spawnOf(team: number): { readonly x: number; readonly y: number } {
+  const spawn = ARENA.spawnPoints.find((point) => point.team === team)?.position;
   if (spawn === undefined) {
-    throw new Error("ember-pits has no team 1 spawn");
+    throw new Error(`ember-pits has no team ${String(team)} spawn`);
   }
   return spawn;
-})();
+}
+
+/** Ember Pits' middle lane: open from one side's spawns to the other's, between the pillar ring's rows. */
+const LANE_Y = 900;
 
 /**
- * Where a 1v1's two heroes meet, mid-map on the middle lane, 300 apart:
+ * Where a 1v1's two heroes meet, mid-map on the middle lane, 200 apart:
  * within a spell's reach, and each walks half the map, at once (#2550).
  */
 const MEET = {
-  host: { x: ARENA.width / 2 - 150, y: EMBER_PITS_LANE_Y },
-  foe: { x: ARENA.width / 2 + 150, y: EMBER_PITS_LANE_Y },
+  host: { x: ARENA.width / 2 - 100, y: LANE_Y },
+  foe: { x: ARENA.width / 2 + 100, y: LANE_Y },
 };
 
 /** Holds `direction` on `page` for as long as a hero takes to walk `distance`. */
@@ -83,22 +84,42 @@ async function hold(page: Page, direction: KeyAction, distance: number): Promise
   await page.keyboard.up(key(direction));
 }
 
+/** Walks the hero on `page` from `from` to `to` by held keys: across onto `to`'s row, then along it. */
+async function walkByKeys(
+  page: Page,
+  from: { readonly x: number; readonly y: number },
+  to: { readonly x: number; readonly y: number },
+): Promise<void> {
+  await hold(page, to.y < from.y ? "move-up" : "move-down", Math.abs(to.y - from.y));
+  await hold(page, to.x < from.x ? "move-left" : "move-right", Math.abs(to.x - from.x));
+}
+
 /**
- * Walks the host and its one opponent to `MEET`, side by side. The
- * opponent walks by held keys, timed, from its spawn up onto the lane
- * and along it: a key's move goes to the server as it is pressed, so
- * its tab, behind the host's, need draw no frame for it. Steering by its
- * view, as the host does, waits on frames a loaded host gives a tab
- * behind late or never. It ends near `MEET.foe`, not on it.
+ * Walks the host (team 0) and its one opponent (team 1) from their spawns
+ * to `MEET`, at once, by held keys, timed: a key's move goes to the
+ * server as it is pressed, so neither tab need draw a frame for it.
+ * Steering by the view waits on frames a loaded host gives late, and
+ * the tab behind the host's never. Each ends near its point, not on it.
+ * Resolves once the host's view, which follows its hero, stands still.
  */
-async function meet(page: Page, canvas: Locator, opponent: Page): Promise<void> {
+async function meet(page: Page, opponent: Page): Promise<void> {
   await Promise.all([
-    walkTo(page, canvas, MEET.host),
-    (async () => {
-      await hold(opponent, "move-up", FOE_SPAWN.y - MEET.foe.y);
-      await hold(opponent, "move-left", FOE_SPAWN.x - MEET.foe.x);
-    })(),
+    walkByKeys(page, spawnOf(0), MEET.host),
+    walkByKeys(opponent, spawnOf(1), MEET.foe),
   ]);
+  const stage = page.locator("#viewport");
+  let seen = "";
+  await expect
+    .poll(
+      async () => {
+        const was = seen;
+        await page.waitForTimeout(200);
+        seen = (await stage.getAttribute("data-camera")) ?? "";
+        return seen !== "" && seen === was;
+      },
+      { message: "the host's hero should stop", intervals: [0], timeout: 10_000 },
+    )
+    .toBe(true);
 }
 
 /**
@@ -453,9 +474,9 @@ test("Space attacks the nearest enemy with the weapon, and moving stops it (#160
 }) => {
   // A lobby of two, for the reason the test above gives.
   const opponent = await page.context().newPage();
-  const canvas = await startLobbyMatch(page, [opponent]);
+  await startLobbyMatch(page, [opponent]);
   // Near, so the swing comes within the poll below, not after a walk across the map.
-  await meet(page, canvas, opponent);
+  await meet(page, opponent);
   const attacking = page.locator(".hud-attacking");
   await expect(attacking).toBeHidden();
 
@@ -533,12 +554,16 @@ test("clicking the ground keeps the target, and Space attacks it from there (#31
   const opponent = await page.context().newPage();
   const canvas = await startLobbyMatch(page, [opponent]);
   const target = page.locator(".hud-target-text");
+  await meet(page, opponent);
   await page.keyboard.press("Tab");
   await expect(target).not.toHaveText("no target");
   const before = await readTargetHealth(page);
 
-  // Ground clicks across the map towards the foe: each keeps the target.
-  await meet(page, canvas, opponent);
+  // Open ground on the lane, behind the host and away from the foe.
+  await canvas.click({
+    position: await matchPoint(page, canvas, { x: MEET.host.x - 120, y: LANE_Y }),
+  });
+  await page.waitForTimeout(300);
   await expect(target).not.toHaveText("no target");
 
   await page.keyboard.press(" ");
@@ -879,7 +904,7 @@ test("a wheel click on a foe calls it for your team, and the other team never se
   await expect(stage).toHaveAttribute("data-called", "");
 
   // The opponent spawns across the map: meet them to see them.
-  await meet(page, canvas, opponent);
+  await meet(page, opponent);
   // Where the opponent really stopped, near MEET.foe: its view, in front a
   // moment so it draws, follows it.
   await opponent.bringToFront();
