@@ -1,6 +1,7 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
+import { t } from "../i18n/index.js";
 import {
   BUILD_FORMAT,
   BUILD_FORMAT_VERSION,
@@ -181,7 +182,7 @@ describe("build import rejects bad input", () => {
     if (result.ok) {
       return;
     }
-    expect(result.problems[0]).toContain("not valid JSON");
+    expect(result.problems[0]).toBe(t("storage.buildNotJson"));
   });
 
   it("rejects a truncated paste without throwing", () => {
@@ -193,11 +194,15 @@ describe("build import rejects bad input", () => {
   });
 
   it("rejects a blob that is not one of ours", () => {
-    expect(reject({ some: "other tool's json" })[0]).toContain("does not look like");
+    expect(reject({ some: "other tool's json" })[0]).toBe(
+      t("storage.buildWrongFormat", { format: BUILD_FORMAT }),
+    );
   });
 
   it("refuses a future format version rather than guessing", () => {
-    expect(reject({ ...base, formatVersion: 99 })[0]).toContain("reads only version");
+    expect(reject({ ...base, formatVersion: 99 })[0]).toBe(
+      t("storage.buildFormatVersion", { version: 99, supported: BUILD_FORMAT_VERSION }),
+    );
   });
 
   it("rejects an unknown profession", () => {
@@ -209,23 +214,25 @@ describe("build import rejects bad input", () => {
   });
 
   it("rejects a build with no name", () => {
-    expect(reject({ ...base, name: "   " }).join()).toContain("needs a name");
+    expect(reject({ ...base, name: "   " }).join()).toContain(t("storage.buildNeedsName"));
   });
 
   it("rejects a skill bar of the wrong size", () => {
-    expect(reject({ ...base, skillBar: [null, null] }).join()).toContain("exactly");
+    expect(reject({ ...base, skillBar: [null, null] }).join()).toContain(
+      t("storage.skillBarSlots", { slots: SKILL_BAR_SLOTS }),
+    );
   });
 
   it("rejects non-string skill slots", () => {
     const bar = [...emptyBar];
     bar[0] = 7 as unknown as null;
-    expect(reject({ ...base, skillBar: bar }).join()).toContain("skill id or null");
+    expect(reject({ ...base, skillBar: bar }).join()).toContain(t("storage.skillSlotInvalid"));
   });
 
   it("rejects a non-integer attribute rank", () => {
     expect(
       reject({ ...base, attributes: [{ attributeId: "warrior.strength", rank: 1.5 }] }).join(),
-    ).toContain("whole number");
+    ).toContain(t("storage.attributeRankNotWhole", { attribute: "warrior.strength" }));
   });
 
   it("rejects NaN and Infinity ranks that survived encoding", () => {
@@ -341,7 +348,12 @@ describe("build format version", () => {
       if (result.ok) {
         return;
       }
-      expect(result.problems[0]).toMatch(/reads only version/);
+      expect(result.problems[0]).toBe(
+        t("storage.buildFormatVersion", {
+          version: formatVersion,
+          supported: BUILD_FORMAT_VERSION,
+        }),
+      );
     }
   });
 
@@ -352,7 +364,7 @@ describe("build format version", () => {
     if (result.ok) {
       return;
     }
-    expect(result.problems[0]).toMatch(/equipment is missing/);
+    expect(result.problems[0]).toBe(t("storage.buildEquipmentMalformed"));
   });
 
   it("refuses a formatVersion 1 string, shared before GW1's attribute costs (#470)", () => {
@@ -373,8 +385,8 @@ describe("build format version", () => {
       return;
     }
     expect(result.problems).toHaveLength(1);
-    expect(result.problems[0]).toContain(
-      `uses format version 1, but this game reads only version ${String(BUILD_FORMAT_VERSION)}`,
+    expect(result.problems[0]).toBe(
+      t("storage.buildFormatVersion", { version: 1, supported: BUILD_FORMAT_VERSION }),
     );
   });
 

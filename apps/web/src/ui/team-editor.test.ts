@@ -1,6 +1,7 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
+import { t } from "../i18n/index.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   TEAM_BUILD_SIZES,
@@ -155,13 +156,15 @@ describe("teamEditorProblems (#573)", () => {
   });
 
   it("asks for a name in a sentence", () => {
-    expect(texts({ ...teamOf("a", "b"), name: "  " })).toEqual([["Give the team a name.", true]]);
+    expect(texts({ ...teamOf("a", "b"), name: "  " })).toEqual([
+      [t("teamBuilder.nameEmptySentence"), true],
+    ]);
   });
 
   it("names the slot and the name of an illegal member build (#1452)", () => {
     const illegal = { ...character("Bravo"), skillBar: ["monk.orison-of-healing"] };
     expect(texts(membersTeam([character("a"), illegal]))).toEqual([
-      ["Slot 2, Bravo, is not a legal build: open it to see why.", true],
+      [t("teamBuilder.memberIllegalSentence", { slot: 2, name: "Bravo" }), true],
     ]);
   });
 });
@@ -169,7 +172,7 @@ describe("teamEditorProblems (#573)", () => {
 describe("saveTitle (#2110)", () => {
   it("saves a team with problems, naming its first", () => {
     expect(saveTitle(teamEditorProblems({ ...teamOf("a", "b"), name: "" }))).toBe(
-      "Save this team (it has problems: Give the team a name.)",
+      t("teamEditor.saveTitleProblem", { problem: t("teamBuilder.nameEmptySentence") }),
     );
   });
 
@@ -178,7 +181,7 @@ describe("saveTitle (#2110)", () => {
     expect([
       saveTitle(teamEditorProblems(teamOf("a", "b"))),
       saveTitle(teamEditorProblems(teamOf(...ids))),
-    ]).toEqual(["Save this team", "Save this team"]);
+    ]).toEqual([t("teamEditor.saveTitle"), t("teamEditor.saveTitle")]);
   });
 });
 
@@ -294,9 +297,13 @@ describe("memberToggle (#2536)", () => {
     expect(memberToggle(a, undefined)).toEqual({
       glyph: "▼",
       expanded: false,
-      label: "edit a here",
+      label: t("teamEditor.editMember", { name: "a" }),
     });
-    expect(memberToggle(a, "a")).toEqual({ glyph: "▲", expanded: true, label: "close a" });
+    expect(memberToggle(a, "a")).toEqual({
+      glyph: "▲",
+      expanded: true,
+      label: t("teamEditor.closeMember", { name: "a" }),
+    });
   });
 
   it("flips the first member back to ▼ when another opens", () => {

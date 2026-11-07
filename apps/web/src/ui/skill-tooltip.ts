@@ -1,5 +1,6 @@
 import { type DescriptionPart, type SkillDescription } from "@vibewars/game-core";
 
+import { t } from "../i18n/index.js";
 import { skillIconHtml } from "./icons.js";
 
 /**
@@ -112,15 +113,18 @@ export function renderSkillDescription(
 
   const stats = document.createElement("div");
   stats.className = "tip-stats";
-  row(stats, "cost", description.cost);
-  row(stats, "cast", description.castTime);
-  row(stats, "recharge", description.recharge);
+  row(stats, t("skillTooltip.cost"), description.cost);
+  row(stats, t("skillTooltip.cast"), description.castTime);
+  row(stats, t("skillTooltip.recharge"), description.recharge);
   row(
     stats,
-    "target",
+    t("skillTooltip.target"),
     description.rangeText === undefined
       ? description.targetText
-      : `${description.targetText}, ${description.rangeText}`,
+      : t("skillTooltip.targetRange", {
+          target: description.targetText,
+          range: description.rangeText,
+        }),
   );
   node.appendChild(stats);
 }

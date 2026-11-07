@@ -4,6 +4,7 @@ import {
   newVersionCountdown,
   type BuildBanner,
 } from "../build-check.js";
+import { t } from "../i18n/index.js";
 import { button, h } from "./kit.js";
 
 /** What the banner says for `banner`. */
@@ -60,8 +61,8 @@ export function mountBuildBanner(
   const text = h("span", "build-banner-text");
   element.append(
     text,
-    button("Reload now", "primary", callbacks.onReloadNow),
-    button("Not now", "", callbacks.onNotNow),
+    button(t("buildBanner.reloadNow"), "primary", callbacks.onReloadNow),
+    button(t("buildBanner.notNow"), "", callbacks.onNotNow),
   );
   parent.appendChild(element);
   const writeSpace = bannerSpaceWriter((value) => {

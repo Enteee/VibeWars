@@ -1,5 +1,6 @@
 import { ALL_OFFHANDS, ALL_WEAPONS } from "@vibewars/game-core";
 
+import { t } from "../i18n/index.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import type { BuildHost, GearHost } from "./build-editor.js";
 import {
@@ -64,23 +65,27 @@ export function mountGearLibrary(
     return node;
   }
 
-  function group(name: string): HTMLElement {
+  function group(name: string, label: string): HTMLElement {
     const section = h("div", "skill-group");
     section.dataset.group = name;
     const header = h("div", "skill-group-header");
-    header.appendChild(h("span", "skill-group-name", name));
+    header.appendChild(h("span", "skill-group-name", label));
     section.appendChild(header);
     host.appendChild(section);
     return section;
   }
 
   // --- weapons ---------------------------------------------------------
-  const weapons = group("weapons");
+  const weapons = group("weapons", t("gearLibrary.weapons"));
   const weaponBoxes = ALL_WEAPONS.map((weapon) => {
     const node = box({
       name: weapon.name,
       icon: weaponIcon(weapon.id),
-      detail: `${String(weapon.damageMin)}–${String(weapon.damageMax)} · ${weapon.attackIntervalSeconds.toFixed(2)}s`,
+      detail: t("gearLibrary.weaponDetail", {
+        min: weapon.damageMin,
+        max: weapon.damageMax,
+        seconds: weapon.attackIntervalSeconds.toFixed(2),
+      }),
       drag: { from: "weapon-library", weaponId: weapon.id },
       onClick: () => {
         commitGear(context, setWeapon(current(), context.weaponSet(), weapon.id));
@@ -91,12 +96,17 @@ export function mountGearLibrary(
   });
 
   // --- off-hands -------------------------------------------------------
-  const offhands = group("off-hands");
+  const offhands = group("off-hands", t("gearLibrary.offHands"));
   const offhandBoxes = ALL_OFFHANDS.map((offhand) => {
     const node = box({
       name: offhand.name,
       icon: offhandIcon(offhand.id),
-      detail: `+${String(offhand.baseBonus + offhand.metRequirementBonus)} ${offhand.kind}`,
+      detail: t(
+        offhand.kind === "armor" ? "gearLibrary.offhandArmor" : "gearLibrary.offhandEnergy",
+        {
+          amount: offhand.baseBonus + offhand.metRequirementBonus,
+        },
+      ),
       drag: { from: "offhand-library", offhandId: offhand.id },
       onClick: () => {
         commitGear(context, setOffhand(current(), context.weaponSet(), offhand.id));

@@ -1,6 +1,7 @@
 import { defaultBuildEquipment, type Skill } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { equippableSkills } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
 import type { SkillTooltip } from "./skill-tooltip.js";
@@ -251,7 +252,7 @@ describe("the skill library's Filters popover (#2463)", () => {
   });
 
   it("opens from the Filters button, Done closes it, and focus goes back to the button", () => {
-    expect(filterButton().textContent).toBe("Filters");
+    expect(filterButton().textContent).toBe(t("skillLibrary.filters"));
     expect(tagTexts()).toEqual([]);
     filterButton().click();
     expect(popover()).toBeDefined();
@@ -277,7 +278,7 @@ describe("the skill library's Filters popover (#2463)", () => {
   it("counts hex and Elite as 2, tags each, and lists only elite hexes", () => {
     filterButton().click();
     chip("hex").click();
-    chip("Elite only").click();
+    chip(t("skillLibrary.eliteOnly")).click();
     expect(filterButton().textContent).toBe("Filters · 2");
     expect(filterButton().getAttribute("aria-label")).toBe("Filters, 2 active");
     expect(tagTexts()).toEqual(["hex ×", "elite ×", "clear ×"]);
@@ -290,8 +291,8 @@ describe("the skill library's Filters popover (#2463)", () => {
 
   it("Elite on its own lists only elite skills", () => {
     filterButton().click();
-    chip("Elite only").click();
-    expect(chip("Elite only").getAttribute("aria-pressed")).toBe("true");
+    chip(t("skillLibrary.eliteOnly")).click();
+    expect(chip(t("skillLibrary.eliteOnly")).getAttribute("aria-pressed")).toBe("true");
     expect(tagTexts()).toEqual(["elite ×"]);
     expect(listed().sort()).toEqual(ids(equippableSkills(character).filter((s) => s.elite)));
   });
@@ -299,7 +300,7 @@ describe("the skill library's Filters popover (#2463)", () => {
   it("a tag's × turns its filter off, and focus moves to the next tag, then the button", () => {
     filterButton().click();
     chip("hex").click();
-    chip("Elite only").click();
+    chip(t("skillLibrary.eliteOnly")).click();
     one("skill-filter-done").click();
     const [hexTag] = one("skill-filter-tags").children;
     hexTag?.click();
@@ -312,13 +313,13 @@ describe("the skill library's Filters popover (#2463)", () => {
     expect(focus.current).toBe(filterButton());
     filterButton().click();
     expect(chip("hex").getAttribute("aria-pressed")).toBe("false");
-    expect(chip("Elite only").getAttribute("aria-pressed")).toBe("false");
+    expect(chip(t("skillLibrary.eliteOnly")).getAttribute("aria-pressed")).toBe("false");
   });
 
   it("a tag's × moves focus back to the tag left before it, never to clear", () => {
     filterButton().click();
     chip("hex").click();
-    chip("Elite only").click();
+    chip(t("skillLibrary.eliteOnly")).click();
     one("skill-filter-done").click();
     expect(tagTexts()).toEqual(["hex ×", "elite ×", "clear ×"]);
     one("skill-filter-tags").children[1]?.click();
@@ -330,21 +331,21 @@ describe("the skill library's Filters popover (#2463)", () => {
     filterButton().click();
     chip("hex").click();
     chip("enchantment").click();
-    chip("Elite only").click();
+    chip(t("skillLibrary.eliteOnly")).click();
     one("skill-filter-done").click();
     one("skill-filter-tags").children.at(-1)?.click();
     expect(tagTexts()).toEqual([]);
-    expect(filterButton().textContent).toBe("Filters");
+    expect(filterButton().textContent).toBe(t("skillLibrary.filters"));
     expect(focus.current).toBe(filterButton());
     filterButton().click();
-    for (const label of ["hex", "enchantment", "Elite only"]) {
+    for (const label of ["hex", "enchantment", t("skillLibrary.eliteOnly")]) {
       expect(chip(label).getAttribute("aria-pressed")).toBe("false");
     }
   });
 
   it("offers no Not in the game yet chip: every corpus skill plays (#2518)", () => {
     filterButton().click();
-    expect(chip("Elite only")).toBeDefined();
+    expect(chip(t("skillLibrary.eliteOnly"))).toBeDefined();
     expect(() => chip("Not in the game yet")).toThrow("no chip");
   });
 
@@ -357,7 +358,7 @@ describe("the skill library's Filters popover (#2463)", () => {
 
   it("drags a skill's 32 px icon alone, at the pointer, and leaves nothing behind (#2533)", () => {
     filterButton().click();
-    chip("Elite only").click();
+    chip(t("skillLibrary.eliteOnly")).click();
     const box = root.querySelectorAll(".skill-box")[0];
     const skillId = box?.dataset.skillId ?? "";
     expect(skillId).not.toBe("");
@@ -392,7 +393,7 @@ describe("the skill library's Filters popover (#2463)", () => {
 
   it("starts a drag with no data transfer without throwing (#2533)", () => {
     filterButton().click();
-    chip("Elite only").click();
+    chip(t("skillLibrary.eliteOnly")).click();
     const box = root.querySelectorAll(".skill-box")[0];
     expect(() => {
       for (const listener of box?.listeners.get("dragstart") ?? []) {

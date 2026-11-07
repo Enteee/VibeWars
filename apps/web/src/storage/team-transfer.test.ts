@@ -1,8 +1,9 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { teamOf, teamCharacter } from "../ui/team-builder.js";
-import { buildPayload, exportBuild } from "./build-transfer.js";
+import { BUILD_FORMAT_VERSION, buildPayload, exportBuild } from "./build-transfer.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter, type StoredTeam } from "./schema.js";
 import {
   TEAM_FORMAT,
@@ -106,7 +107,9 @@ describe("team import", () => {
     const result = importTeam(code([buildPayload(ALICE)], { formatVersion: 99 }), ids(), 0);
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.problems.join(" ")).toContain("format version 99");
+    expect(!result.ok && result.problems).toEqual([
+      t("storage.teamFormatVersion", { version: 99, supported: TEAM_FORMAT_VERSION }),
+    ]);
   });
 
   it("refuses a version 2 code, from before a Team Build had a size (#2109)", () => {
@@ -117,13 +120,15 @@ describe("team import", () => {
     const result = importTeam(JSON.stringify({ ...sizeless, formatVersion: 2 }), ids(), 0);
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.problems.join(" ")).toContain("format version 2");
+    expect(!result.ok && result.problems).toEqual([
+      t("storage.teamFormatVersion", { version: 2, supported: TEAM_FORMAT_VERSION }),
+    ]);
   });
 
   it("refuses a code without a size a Team Build can have, 1v1 too (#2109, #2141)", () => {
     for (const size of [undefined, 1, 3, 16, "4"]) {
       const result = importTeam(code([buildPayload(ALICE)], { size }), ids(), 0);
-      expect(!result.ok && result.problems).toEqual(["size must be 2, 4 or 8"]);
+      expect(!result.ok && result.problems).toEqual([t("storage.teamSize")]);
     }
   });
 
@@ -135,7 +140,11 @@ describe("team import", () => {
     );
 
     expect(!result.ok && result.problems).toEqual([
-      expect.stringMatching(/^Member 1 \(Alice\): This build uses format version 1/),
+      t("storage.teamMember", {
+        number: 1,
+        name: "Alice",
+        problem: t("storage.buildFormatVersion", { version: 1, supported: BUILD_FORMAT_VERSION }),
+      }),
     ]);
   });
 
@@ -156,23 +165,39 @@ describe("team import", () => {
       return;
     }
     expect(result.problems).toHaveLength(2);
-    expect(result.problems[0]).toMatch(/^Member 1 \(Alice\): Unknown primary profession/);
-    expect(result.problems[1]).toMatch(/^Member 3 \(Carol\): skillBar must have exactly 8 slots/);
+    expect(result.problems[0]).toBe(
+      t("storage.teamMember", {
+        number: 1,
+        name: "Alice",
+        problem: t("storage.unknownPrimaryProfession", { profession: '"bard"' }),
+      }),
+    );
+    expect(result.problems[1]).toBe(
+      t("storage.teamMember", {
+        number: 3,
+        name: "Carol",
+        problem: t("storage.skillBarSlots", { slots: 8 }),
+      }),
+    );
   });
 
   it("refuses no members, fewer or more than its size (#2225), and no name", () => {
     expect(!importTeam(code([]), ids(), 0).ok).toBe(true);
     const short = importTeam(code([buildPayload(BOB)], { size: 2 }), ids(), 0);
-    expect(!short.ok && short.problems).toEqual(["A team of 2 has 2 members, not 1."]);
+    expect(!short.ok && short.problems).toEqual([
+      t("storage.teamMemberCount", { size: 2, found: 1 }),
+    ]);
     // Invalid members, so a read of any of them would add a problem.
     const tooMany = importTeam(code([null, null, null], { size: 2 }), ids(), 0);
-    expect(!tooMany.ok && tooMany.problems).toEqual(["A team of 2 has 2 members, not 3."]);
+    expect(!tooMany.ok && tooMany.problems).toEqual([
+      t("storage.teamMemberCount", { size: 2, found: 3 }),
+    ]);
     const nameless = importTeam(
       code([buildPayload(BOB), buildPayload(BOB)], { name: " ", size: 2 }),
       ids(),
       0,
     );
-    expect(!nameless.ok && nameless.problems).toEqual(["Give the team a name."]);
+    expect(!nameless.ok && nameless.problems).toEqual([t("storage.teamNeedsName")]);
   });
 
   it("never throws on junk", () => {
@@ -200,9 +225,9 @@ describe("looksLikeTeam", () => {
 
 describe("importedTeamSummary", () => {
   it("names the team and counts its members", () => {
-    expect(importedTeamSummary(TEAM)).toBe("Pasted Duo, 2 members. Save to keep it.");
+    expect(importedTeamSummary(TEAM)).toBe(t("storage.teamPasted", { name: "Duo", count: 2 }));
     expect(importedTeamSummary({ ...TEAM, members: TEAM.members.slice(1) })).toBe(
-      "Pasted Duo, 1 member. Save to keep it.",
+      t("storage.teamPasted", { name: "Duo", count: 1 }),
     );
   });
 });

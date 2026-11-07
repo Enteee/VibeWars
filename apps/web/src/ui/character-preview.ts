@@ -12,6 +12,7 @@ import {
   teamColour,
   type RenderableActor,
 } from "../render/arena-snapshot.js";
+import { t } from "../i18n/index.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
 import { professionIcon, skillIcon } from "./icons.js";
@@ -37,7 +38,9 @@ export function professionLabel(
   secondary: ProfessionId | undefined,
 ): string {
   const first = PROFESSIONS[primary].name;
-  return secondary === undefined ? first : `${first} / ${PROFESSIONS[secondary].name}`;
+  return secondary === undefined
+    ? first
+    : t("character.professions", { primary: first, secondary: PROFESSIONS[secondary].name });
 }
 
 /** How many of the eight bar slots are filled. */
@@ -158,7 +161,7 @@ export function miniSkillBar(character: Pick<TeamCharacter, "skillBar">): HTMLEl
       icon.height = MINI_SKILL_ICON_PX;
       node.appendChild(icon);
     }
-    node.title = cell?.name ?? "Empty slot";
+    node.title = cell?.name ?? t("character.emptySlot");
     bar.appendChild(node);
   }
   return bar;

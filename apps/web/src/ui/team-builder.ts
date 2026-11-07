@@ -6,6 +6,7 @@ import {
   type SkillRole,
 } from "@vibewars/game-core";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
 import {
   TEAM_SCHEMA_VERSION,
@@ -101,7 +102,10 @@ export function moveMember(team: StoredTeam, index: number, delta: number): Stor
 }
 
 export interface TeamProblem {
+  /** As a clause, for after a "Not playable:". */
   readonly message: string;
+  /** As a sentence on its own, for the editor's problems chip. */
+  readonly sentence: string;
 }
 
 /**
@@ -112,18 +116,25 @@ export function validateTeam(team: StoredTeam): TeamProblem[] {
   const problems: TeamProblem[] = [];
 
   if (team.name.trim() === "") {
-    problems.push({ message: "team name must not be empty" });
+    problems.push({
+      message: t("teamBuilder.nameEmpty"),
+      sentence: t("teamBuilder.nameEmptySentence"),
+    });
   }
   if (team.members.length !== team.size) {
+    const params = { size: team.size, members: team.members.length };
     problems.push({
-      message: `a team of ${String(team.size)} has ${String(team.size)} members, not ${String(team.members.length)}`,
+      message: t("teamBuilder.sizeWrong", params),
+      sentence: t("teamBuilder.sizeWrongSentence", params),
     });
   }
 
   team.members.forEach(({ character }, index) => {
     if (validateBuild(character).length > 0) {
+      const params = { slot: index + 1, name: character.name };
       problems.push({
-        message: `slot ${String(index + 1)}, ${character.name}, is not a legal build: open it to see why`,
+        message: t("teamBuilder.memberIllegal", params),
+        sentence: t("teamBuilder.memberIllegalSentence", params),
       });
     }
   });
@@ -133,7 +144,7 @@ export function validateTeam(team: StoredTeam): TeamProblem[] {
 
 /** "1 member", "4 members": a builds drawer row's (#2116), a full team's (#2109). */
 export function memberCount(n: number): string {
-  return `${String(n)} ${n === 1 ? "member" : "members"}`;
+  return t("teamBuilder.memberCount", { count: n });
 }
 
 /** Duplicate a team under a new id, so the original is untouched, at its size. */
@@ -161,15 +172,36 @@ export interface TeamCounter {
   readonly wanted: boolean;
 }
 
-const ROLE_COUNTERS: Readonly<Record<SkillRole, { label: string; title: string }>> = {
-  interrupt: { label: "interrupts", title: "skills that interrupt a foe's skill" },
-  healing: { label: "healing", title: "skills that heal" },
-  removal: { label: "removal", title: "skills that remove a condition or a hex" },
-  knockdown: { label: "knockdowns", title: "skills that knock a foe down" },
-  hex: { label: "hexes", title: "skills that hex a foe" },
-  condition: { label: "conditions", title: "skills that give a foe a condition" },
-  defence: { label: "defence", title: "skills that raise armor or block" },
+/** Each counter's label and tooltip, as keys: read as the counters are made. */
+const COUNTER_TEXT: Readonly<Record<TeamCounterId, { label: MessageKey; title: MessageKey }>> = {
+  interrupt: {
+    label: "teamBuilder.counterInterrupts",
+    title: "teamBuilder.counterInterruptsTitle",
+  },
+  healing: { label: "teamBuilder.counterHealing", title: "teamBuilder.counterHealingTitle" },
+  removal: { label: "teamBuilder.counterRemoval", title: "teamBuilder.counterRemovalTitle" },
+  knockdown: {
+    label: "teamBuilder.counterKnockdowns",
+    title: "teamBuilder.counterKnockdownsTitle",
+  },
+  hex: { label: "teamBuilder.counterHexes", title: "teamBuilder.counterHexesTitle" },
+  condition: {
+    label: "teamBuilder.counterConditions",
+    title: "teamBuilder.counterConditionsTitle",
+  },
+  defence: { label: "teamBuilder.counterDefence", title: "teamBuilder.counterDefenceTitle" },
+  energy: { label: "teamBuilder.counterEnergy", title: "teamBuilder.counterEnergyTitle" },
+  adrenaline: {
+    label: "teamBuilder.counterAdrenaline",
+    title: "teamBuilder.counterAdrenalineTitle",
+  },
+  empty: { label: "teamBuilder.counterEmpty", title: "teamBuilder.counterEmptyTitle" },
 };
+
+/** Counter `id`'s label and tooltip in the player's language. */
+function counterText(id: TeamCounterId): { label: string; title: string } {
+  return { label: t(COUNTER_TEXT[id].label), title: t(COUNTER_TEXT[id].title) };
+}
 
 /**
  * What the team's bars hold, counted per copy (#575): the seven skill
@@ -205,28 +237,25 @@ export function teamCounters(members: StoredTeam["members"]): TeamCounter[] {
   return [
     ...SKILL_ROLES.map((role) => ({
       id: role,
-      ...ROLE_COUNTERS[role],
+      ...counterText(role),
       cells: cells.get(role) ?? [],
       wanted: true,
     })),
     {
       id: "energy",
-      label: "energy",
-      title: "skills that cost energy",
+      ...counterText("energy"),
       cells: cells.get("energy") ?? [],
       wanted: false,
     },
     {
       id: "adrenaline",
-      label: "adrenaline",
-      title: "skills that cost adrenaline",
+      ...counterText("adrenaline"),
       cells: cells.get("adrenaline") ?? [],
       wanted: false,
     },
     {
       id: "empty",
-      label: "empty",
-      title: "empty bar slots",
+      ...counterText("empty"),
       cells: cells.get("empty") ?? [],
       wanted: false,
     },
