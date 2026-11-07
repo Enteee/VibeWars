@@ -277,14 +277,6 @@ export const MAX_LOBBY_PLAYERS = 24;
 export const MAX_TEAM_LOBBY_SIDE = 8;
 
 /**
- * The most players a lobby hosts from the menu holds: two sides of
- * `MAX_TEAM_LOBBY_SIDE` (#2683). Only a queued three-team round seats
- * `MAX_LOBBY_PLAYERS`, and it never holds a Team Lobby, whose state at
- * this many seats is what still fits one message.
- */
-export const MAX_HOSTED_LOBBY_PLAYERS = 2 * MAX_TEAM_LOBBY_SIDE;
-
-/**
  * The team sizes a lobby plays (#2104): 1v1, 2v2, 4v4 and 8v8, the maps'
  * own (`TEAM_SIZES_ALL` in game-maps), which the protocol cannot import.
  */

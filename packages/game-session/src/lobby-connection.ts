@@ -22,9 +22,11 @@ import type { Transport } from "./transport.js";
  * callbacks, whoever hosts it.
  */
 
-/** The character a member brings (#580): its name and professions, never its build. */
+/**
+ * The character a member brings (#580): its professions, never its build
+ * nor its name, which would cost a 24-seat lobby its one message (#2683).
+ */
 export interface LobbyCharacter {
-  readonly name: string;
   readonly primary: ProfessionId;
   readonly secondary: ProfessionId | null;
 }

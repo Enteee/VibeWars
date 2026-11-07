@@ -1151,11 +1151,10 @@ export interface WireLobbyMove {
 /**
  * The character a lobby member brings (#580), for the others to see:
  * `null` is a starter build. What it plays with is the match `hello`'s
- * build; this is only its name and professions.
+ * build; this is only its professions: its name would cost a 24-seat
+ * lobby its one message (#2683).
  */
 export interface WireLobbyCharacter {
-  /** In a join, cut to `MAX_WIRE_TEXT`; the host sanitises it. */
-  readonly name: string;
   /** A `ProfessionId`, which the host checks. */
   readonly primary: string;
   readonly secondary: string | null;
@@ -2572,11 +2571,8 @@ function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefi
     return null;
   }
   const raw = fields(value);
-  return raw !== undefined &&
-    typeof raw.name === "string" &&
-    isString(raw.primary) &&
-    isNullableString(raw.secondary)
-    ? { name: raw.name.slice(0, MAX_WIRE_TEXT), primary: raw.primary, secondary: raw.secondary }
+  return raw !== undefined && isString(raw.primary) && isNullableString(raw.secondary)
+    ? { primary: raw.primary, secondary: raw.secondary }
     : undefined;
 }
 

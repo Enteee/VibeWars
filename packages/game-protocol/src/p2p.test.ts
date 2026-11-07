@@ -569,8 +569,8 @@ const teamSide = {
     reason: "votes",
     presetName: null,
     members: [
-      { name: "Mhenlo", primary: "monk", secondary: null },
-      { name: "Devona", primary: "warrior", secondary: "monk" },
+      { primary: "monk", secondary: null },
+      { primary: "warrior", secondary: "monk" },
     ],
   },
   claims: ["peer-2", null],

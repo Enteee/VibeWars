@@ -10,7 +10,6 @@ import {
   type TeamCount,
 } from "@vibewars/game-core";
 import {
-  MAX_HOSTED_LOBBY_PLAYERS,
   MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
   TEAM_ARENA_SIZES,
@@ -447,8 +446,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const { code, mapIds, startMatch, random } = options;
   // A three-team group whose third side never came plays on as two (#2683).
   let { queued } = options;
-  // A lobby hosted from the menu seats two sides; a queued round, three.
-  const capacity = queued === undefined ? MAX_HOSTED_LOBBY_PLAYERS : MAX_LOBBY_PLAYERS;
   const [defaultMap] = mapIds;
   if (defaultMap === undefined) {
     throw new Error("a lobby needs at least one map");
@@ -707,7 +704,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const freeSeats = (): number =>
     Math.max(
       0,
-      Math.min(capacity - members.size, mode === "team-arena" ? arenaSize - humans() : Infinity),
+      Math.min(
+        MAX_LOBBY_PLAYERS - members.size,
+        mode === "team-arena" ? arenaSize - humans() : Infinity,
+      ),
     );
 
   /** Each human on `team`, in join order. */
@@ -720,9 +720,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     return (humans.find((member) => member.id === local.selfId) ?? humans[0])?.id ?? null;
   };
 
-  /** What a build is called on the wire: its name, cut at a word, and professions. */
+  /** What a build is called: its name, cut at a word. */
+  const characterName = (build: PlayerBuild): string =>
+    sanitizeCharacterName(build.name, getProfession(build.primaryProfession).name);
+
+  /** A build on the wire: its professions. */
   const characterOf = (build: PlayerBuild): LobbyCharacter => ({
-    name: sanitizeCharacterName(build.name, getProfession(build.primaryProfession).name),
     primary: build.primaryProfession,
     secondary: build.secondaryProfession ?? null,
   });
@@ -911,7 +914,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       const build = assigned.get(member.id) ?? starterBuild();
       seats.set(freeBotId(), {
         team: member.team,
-        name: characterOf(build).name,
+        name: characterName(build),
         guildTag: null,
         guildCape: null,
         bot: true,
@@ -1198,7 +1201,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       const build = assigned.get(member.id);
       if (member.bot !== null && build !== undefined) {
         member.bot = build;
-        member.name = characterOf(build).name;
+        member.name = characterName(build);
       }
     }
   };
@@ -1805,7 +1808,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     team: WireTeam | null,
     seatKey: string | null,
   ): void => {
-    if (members.size >= capacity) {
+    if (members.size >= MAX_LOBBY_PLAYERS) {
       refuse(from, "lobby-full");
       return;
     }
@@ -2115,7 +2118,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * is still checked once proven.
    */
   const refusedUnproven = (join: PeerLobbyJoin, from: string): boolean => {
-    if (members.size >= capacity) {
+    if (members.size >= MAX_LOBBY_PLAYERS) {
       refuse(from, "lobby-full");
       return true;
     }
@@ -2168,7 +2171,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       pendingProofs.set(from, { ...pending, join });
       return;
     }
-    if (pendingProofs.size >= capacity) {
+    if (pendingProofs.size >= MAX_LOBBY_PLAYERS) {
       refuse(from, "lobby-full");
       return;
     }

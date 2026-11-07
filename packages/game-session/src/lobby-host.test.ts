@@ -15,7 +15,6 @@ import {
   parsePeerLobbySeat,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
-  MAX_HOSTED_LOBBY_PLAYERS,
   MAX_LOBBY_PLAYERS,
   parseWireKeyChallenge,
   parseWireKeyProof,
@@ -463,9 +462,9 @@ describe("lobby host", () => {
     expect(guest.starts[0]?.mapId).toBe(MAP_IDS[0]);
   });
 
-  it("turns a member away once it holds MAX_HOSTED_LOBBY_PLAYERS, and says so (#2683)", async () => {
+  it("turns a member away once it holds MAX_LOBBY_PLAYERS, and says so", async () => {
     const lobby = await openLobby();
-    for (let i = 1; i < MAX_HOSTED_LOBBY_PLAYERS; i += 1) {
+    for (let i = 1; i < MAX_LOBBY_PLAYERS; i += 1) {
       await lobby.join(`Guest ${String(i)}`);
     }
     await expect(
@@ -481,7 +480,7 @@ describe("lobby host", () => {
         playerKey: testPlayerKey(),
       }),
     ).rejects.toEqual(new LobbyRefusedError("lobby-full"));
-    expect(playersOf(lobby.host)).toHaveLength(MAX_HOSTED_LOBBY_PLAYERS);
+    expect(playersOf(lobby.host)).toHaveLength(MAX_LOBBY_PLAYERS);
   });
 
   it("drops a member who leaves the room from the lobby", async () => {
@@ -1563,7 +1562,7 @@ describe("a Team Lobby (#1458)", () => {
     expect(await run([null, null, null, null], draws(0.9))).toEqual([2, "random"]);
   });
 
-  it("plays a random preset team of the team size without a proposal, under its name and jobs (#2148)", async () => {
+  it("plays a random preset team of the team size without a proposal, under its name and its members' professions (#2148, #2683)", async () => {
     const chosen = async (draw: number) => {
       const { lobby, members } = await teamLobby(
         ["Ann"],
@@ -1586,9 +1585,7 @@ describe("a Team Lobby (#1458)", () => {
       proposerId: null,
       reason: "preset",
       presetName: preset.name,
-      // At most 16 long, as a player's name, but cut at a word (#1460).
-      members: preset.members.map(({ name, build }) => ({
-        name: sanitizeCharacterName(name, ""),
+      members: preset.members.map(({ build }) => ({
         primary: build.primaryProfession,
         secondary: build.secondaryProfession ?? null,
       })),

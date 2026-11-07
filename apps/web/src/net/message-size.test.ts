@@ -15,7 +15,6 @@ import {
   type PlayerBuild,
 } from "@vibewars/game-core";
 import {
-  MAX_HOSTED_LOBBY_PLAYERS,
   MAX_LOBBY_PLAYERS,
   MAX_TEAM_LOBBY_SIDE,
   MAX_WIRE_CHAT_TEXT,
@@ -471,8 +470,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     expect(messageBytes(proof)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
-  it("a lobby state: every seat taken, longest names, each bringing a character (#580)", () => {
-    const professions = Object.keys(PROFESSIONS);
+  it("a lobby state: every seat of a three-team round taken, longest names (#580, #2683)", () => {
     const state: WireLobbyState = {
       // A queued lobby's code is its group id, 64 hex digits (#871).
       code: "f".repeat(64),
@@ -492,7 +490,6 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         team: i % 3 === 0 ? null : i % 3 === 1 ? 0 : 1,
         ready: true,
         isHost: i === 0,
-        character: { name: NAME, primary: longest(professions), secondary: longest(professions) },
         bot: false,
         away: false,
         playerPubkey: "ab".repeat(32),
@@ -538,7 +535,6 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         reason: "captain",
         presetName: null,
         members: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, () => ({
-          name: NAME,
           primary: profession,
           secondary: profession,
         })),
@@ -555,8 +551,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       open: true,
       hostId: PEER_ID,
       matchId: null,
-      // Only a lobby hosted from the menu holds a Team Lobby (#2683).
-      players: Array.from({ length: MAX_HOSTED_LOBBY_PLAYERS }, (_, i) => ({
+      players: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
         id: id(i),
         name: NAME,
         guildTag: GUILD_TAG,
@@ -564,7 +559,6 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         team: i % 2 === 0 ? 0 : 1,
         ready: true,
         isHost: i === 0,
-        character: { name: NAME, primary: profession, secondary: profession },
         bot: false,
         away: false,
         playerPubkey: "ab".repeat(32),

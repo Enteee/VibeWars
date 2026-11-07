@@ -6672,7 +6672,6 @@
     "WireKeyProven": { "properties": [{ "name": "mac", "optional": false, "type": "string" }] },
     "WireLobbyCharacter": {
       "properties": [
-        { "name": "name", "optional": false, "type": "string" },
         { "name": "primary", "optional": false, "type": "string" },
         { "name": "secondary", "optional": false, "type": { "union": ["null", "string"] } }
       ]
@@ -7107,11 +7106,6 @@
                                               "array": {
                                                 "properties": [
                                                   {
-                                                    "name": "name",
-                                                    "optional": false,
-                                                    "type": "string"
-                                                  },
-                                                  {
                                                     "name": "primary",
                                                     "optional": false,
                                                     "type": "string"
@@ -7226,11 +7220,6 @@
                                             "type": {
                                               "array": {
                                                 "properties": [
-                                                  {
-                                                    "name": "name",
-                                                    "optional": false,
-                                                    "type": "string"
-                                                  },
                                                   {
                                                     "name": "primary",
                                                     "optional": false,
@@ -8685,7 +8674,6 @@
           "type": {
             "array": {
               "properties": [
-                { "name": "name", "optional": false, "type": "string" },
                 { "name": "primary", "optional": false, "type": "string" },
                 { "name": "secondary", "optional": false, "type": { "union": ["null", "string"] } }
               ]
@@ -8741,7 +8729,6 @@
                                   "type": {
                                     "array": {
                                       "properties": [
-                                        { "name": "name", "optional": false, "type": "string" },
                                         { "name": "primary", "optional": false, "type": "string" },
                                         {
                                           "name": "secondary",
@@ -8845,7 +8832,6 @@
                                   "type": {
                                     "array": {
                                       "properties": [
-                                        { "name": "name", "optional": false, "type": "string" },
                                         { "name": "primary", "optional": false, "type": "string" },
                                         {
                                           "name": "secondary",
@@ -8992,7 +8978,6 @@
                     "type": {
                       "array": {
                         "properties": [
-                          { "name": "name", "optional": false, "type": "string" },
                           { "name": "primary", "optional": false, "type": "string" },
                           {
                             "name": "secondary",
