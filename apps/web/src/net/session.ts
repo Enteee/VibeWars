@@ -48,7 +48,14 @@ import {
 
 import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
-import { arenaIds, hostMap, mapTeamSizes, modeMapIds, queueMapPool } from "./maps.js";
+import {
+  arenaIds,
+  hostMap,
+  mapTeamSizes,
+  modeMapIds,
+  queueMapPool,
+  queueTeamCount,
+} from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
 import {
   checkTransportNat,
@@ -210,9 +217,13 @@ function startMatch(plan: MatchPlan) {
   if (map === undefined) {
     throw new Error(`no arena named ${JSON.stringify(plan.mapId)}`);
   }
+  if (plan.teamCount > map.descriptor.teamCount) {
+    throw new Error(`${plan.mapId} is not made for ${String(plan.teamCount)} teams`);
+  }
   return createMatchHost({
     transport: plan.transport,
-    map,
+    // A two-team match on a three-team map (#2683) plays, and says, two.
+    map: { ...map, descriptor: { ...map.descriptor, teamCount: plan.teamCount } },
     // A match is reproducible from its seed; the lobby's match id is
     // unique only within the lobby, so the code goes in too.
     seed: `${plan.transport.selfId}:${plan.matchId}`,
@@ -769,6 +780,7 @@ export function enterQueue(
       now: () => Date.now(),
       newTicketKey: () => queue.newTicketKey(),
       mapPool: queueMapPool(mode, ascentRound),
+      teamCount: queueTeamCount(mode, ascentRound),
       hardNat,
     });
     client = started;

@@ -256,7 +256,7 @@ export async function provenPeer(
 }
 
 /** The lobby as `who` sees it now. */
-export function playersOf(who: Member): { name: string; team: 0 | 1 | null; ready: boolean }[] {
+export function playersOf(who: Member): { name: string; team: 0 | 1 | 2 | null; ready: boolean }[] {
   return who.connection
     .getSnapshot()
     .players.map(({ name, team, ready }) => ({ name, team, ready }));

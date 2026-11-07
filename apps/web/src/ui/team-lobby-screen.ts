@@ -439,7 +439,7 @@ export function renderTeamLobbyScreen(
   const panel = h("div", "screen screen-team-lobby");
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const team = self?.team ?? null;
-  const side = team === null ? null : lobby.sides[team];
+  const side = team === null || team === 2 ? null : lobby.sides[team];
   const clock = h("span", "team-lobby-clock", clockText(lobby.secondsLeft));
   tickDown(clock, lobby.secondsLeft);
   const status = h("div", "team-lobby-status");
@@ -496,7 +496,7 @@ export function teamLobbyBody(
 ): HTMLElement[] {
   const lobby = snapshot.teamLobby;
   const team = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId)?.team ?? null;
-  const side = lobby === null || team === null ? null : lobby.sides[team];
+  const side = lobby === null || team === null || team === 2 ? null : lobby.sides[team];
   if (lobby === null || side === null) {
     forgetDrawer();
     return [h("div", "screen-info team-lobby-spectating", SPECTATING_LINE)];

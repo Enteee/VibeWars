@@ -27,7 +27,13 @@ import type {
   RelicField,
   Vec2,
 } from "@vibewars/game-core";
-import { isTeamArena, teamSizeOf, type LobbyMode, type QueueMode } from "@vibewars/game-protocol";
+import {
+  isTeamArena,
+  teamSizeOf,
+  type LobbyMode,
+  type QueueMode,
+  type WireTeamCount,
+} from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { TRAINING_MAPS } from "../training/maps.js";
 
@@ -203,6 +209,17 @@ export function queueMapPool(mode: QueueMode, ascentRound: number | null): strin
     default:
       return isTeamArena(mode) ? teamArenaMapIds(teamSizeOf(mode)) : randomArenaMapPool(mode);
   }
+}
+
+/**
+ * The most teams a queued match of `mode` seats (#2683): a Heroes'
+ * Ascent round's, three when its map is made for three, else two.
+ */
+export function queueTeamCount(mode: QueueMode, ascentRound: number | null): WireTeamCount {
+  if (mode !== "heroes-ascent" || ascentRound === null) {
+    return 2;
+  }
+  return hostMap(ascentMapId(ascentRound))?.descriptor.teamCount ?? 2;
 }
 
 /** The modes a Random Arena never plays. */

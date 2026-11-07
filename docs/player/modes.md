@@ -312,9 +312,11 @@ Tower (Relic Run), Scarred Earth (Capture Points), The Courtyard (King
 of the Hill), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 4 · Scarred Earth`.
 You only ever meet a team at the same round, and you wait for one as
-long as it takes: no bots fill in. Win, and your party ascends to the
-next map on its own after 20 seconds; win in the Hall, and you stay to
-defend it. Lose, or leave a match before it ends, and your next Ascent
+long as it takes: no bots fill in. A round on a map made for three
+teams waits for three; two teams that have waited 30 seconds for a third
+play each other instead, and so do two whose third never shows up in the
+lobby. Win, and your party ascends to the next map on its own after 20
+seconds; win in the Hall, and you stay to defend it. Lose, or leave a match before it ends, and your next Ascent
 starts again at round 1; so does leaving the queue or the party. A match
 lost to its host leaving keeps your round.
 

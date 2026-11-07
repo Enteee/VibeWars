@@ -227,6 +227,7 @@ describe("closing the tab while queued (#1881)", () => {
     const client = createQueueClient({
       board: memory.board(),
       ascentRound: null,
+      teamCount: 2,
       mode: "random-arena-4v4",
       now: () => 1_700_000_000_000,
       newTicketKey: () => ({ ticketId, sign: () => "b".repeat(128) }),
