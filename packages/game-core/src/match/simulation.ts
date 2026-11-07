@@ -245,8 +245,10 @@ import {
   createCursor,
   decide,
   nearestLiving,
+  NO_OBJECTIVES,
   type Behaviour,
   type BehaviourCursor,
+  type BotObjectives,
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -1129,6 +1131,8 @@ export class MatchSimulation {
   #claims: number[] = [];
   /** Capture Points' shrines (#1378), who owns each and how far toward whom; `[]` without them. */
   #capturePoints: readonly CapturePoint[];
+  /** What bots play for (#2542), rebuilt when the shrines change. */
+  #botObjectives: BotObjectives = NO_OBJECTIVES;
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
   #pointTicks = 0;
   /** The whole second of match clock the Guild Lords' loss caps are for (#1223). */
@@ -1161,6 +1165,7 @@ export class MatchSimulation {
       this.#relicField === undefined ? undefined : initialRelics(this.#relicField);
     this.#hillField = options.hillField;
     this.#capturePoints = initialCapturePoints(options.capturePoints ?? []);
+    this.#refreshBotObjectives();
     for (const spec of options.participants ?? []) {
       this.add(spec);
     }
@@ -4083,6 +4088,7 @@ export class MatchSimulation {
       walkable: (point) =>
         isStandable(this.#graph, point) && walkIsClear(this.#graph, record.position, point),
       foeCentroid: centroids !== undefined && centroids.foes.count > 0 ? centroids.foes : undefined,
+      objectives: this.#botObjectives,
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;
@@ -5851,6 +5857,14 @@ export class MatchSimulation {
     }
   }
 
+  /** The shrines bots read (#2580), only in Capture Points: one allocation per shrine change. */
+  #refreshBotObjectives(): void {
+    this.#botObjectives =
+      this.#matchRules?.victory === "capture-points"
+        ? { capturePoints: this.#capturePoints }
+        : NO_OBJECTIVES;
+  }
+
   /**
    * The step's shrines (#1378), once every death is in, so a player killed
    * this tick is on none: each moves toward the one team on it, then, at
@@ -5871,6 +5885,7 @@ export class MatchSimulation {
       ),
     );
     this.#capturePoints = stepCapturePoints(this.#capturePoints, dt, presence).state;
+    this.#refreshBotObjectives();
     const due = (this.#pointTicks + 1) * POINT_TICK_SECONDS;
     if (this.#elapsedSeconds + SWING_EPSILON < due) {
       return;

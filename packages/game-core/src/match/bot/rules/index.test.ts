@@ -41,6 +41,7 @@ describe("BOT_RULES (#2042)", () => {
       "position",
       "fight",
       "mimic-elite",
+      "shrines",
       "close-in",
     ]);
   });

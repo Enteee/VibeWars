@@ -6,7 +6,13 @@ import { getSkill } from "../../../skills/catalog.js";
 import { STARTER_BUILDS } from "../../../starter-builds.js";
 import { STARTER_TEAMS } from "../../../starter-teams.js";
 import { add, scale, ZERO, type Vec2 } from "../../../vec2.js";
-import { createCursor, decide, type Behaviour, type BehaviourContext } from "../../behaviour.js";
+import {
+  createCursor,
+  decide,
+  NO_OBJECTIVES,
+  type Behaviour,
+  type BehaviourContext,
+} from "../../behaviour.js";
 import {
   MatchSimulation,
   loadoutSpec,
@@ -88,9 +94,9 @@ export function slotOf(build: PlayerBuild, skillId: string): number {
   return build.skillBar.indexOf(skillId);
 }
 
-/** What the bot `id` would do now, with every skill allowed, its memory `cursor`. */
-export function askBot(sim: MatchSimulation, id: string, cursor = createCursor()) {
-  return decide(BOT, cursor, contextFor(sim, id));
+/** What the bot `id` would do now, with every skill allowed, playing for `objectives`. */
+export function askBot(sim: MatchSimulation, id: string, objectives = NO_OBJECTIVES) {
+  return decide(BOT, createCursor(), contextFor(sim, id, { objectives }));
 }
 
 /** The bot `id`'s view, as the simulation gives it, with every skill allowed and nothing in the way. */
@@ -115,6 +121,7 @@ export function contextFor(
     seesBetween: () => true,
     walkable: () => true,
     foeCentroid: centroidOf(participants, (other) => other.combatant.team !== team),
+    objectives: NO_OBJECTIVES,
     ...extra,
   };
 }

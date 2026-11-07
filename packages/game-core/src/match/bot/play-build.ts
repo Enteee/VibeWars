@@ -223,7 +223,8 @@ function think(
  * team commits to the kill; else the foe the team's bots already target,
  * if one is alive; else the living foe within spell range with the
  * lowest health fraction, ties to the nearer, then simulation order. A
- * creature only while no other foe is in range.
+ * creature only while no other foe is in range. With shrines to hold,
+ * the team's target only in range.
  */
 function teamTarget(context: BehaviourContext, foes: readonly Participant[]): string | undefined {
   const called = foes.find((foe) => foe.id === context.calledTargetId);
@@ -237,6 +238,9 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
   if (dying !== undefined && healthFraction(dying) < FINISH_FRACTION) {
     return dying.id;
   }
+  // With shrines to hold (#2580), a bot leaves one for a foe in its own
+  // reach, never for one a teammate fights across the map.
+  const objectives = context.objectives.capturePoints.length > 0;
   for (const ally of context.participants) {
     if (
       ally.combatant.team !== self.combatant.team ||
@@ -246,7 +250,7 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
       continue;
     }
     const held = foes.find((foe) => foe.id === ally.targetId);
-    if (held !== undefined && eligible(held)) {
+    if (held !== undefined && eligible(held) && (!objectives || inRange.includes(held))) {
       return held.id;
     }
   }
