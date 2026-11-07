@@ -44,6 +44,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import { releaseLock, takeLock } from "./instance-lock.mjs";
+import { pruneRunnerLogs, runnerLogWriter } from "./runner-logs.mjs";
 import {
   STATUS_FILE,
   ensureStateDir,
@@ -120,7 +121,7 @@ export class ApiError extends Error {
  * @typedef {object} Deps
  * @property {() => number} now
  * @property {Api} api
- * @property {(jitconfig: string) => Launched} launch
+ * @property {(jitconfig: string, name: string) => Launched} launch
  * @property {Host} host
  * @property {() => { n: number, reason: string | null }} readTarget
  * @property {(status: import("./runners-state.mjs").RunnersStatus) => void} writeStatus
@@ -180,6 +181,8 @@ export class RunnerSupervisor {
     this.reconciled = false;
     /** @type {string | null} the last refusal or back-off, as the status says it */
     this.reason = null;
+    /** @type {string | null} the kind of the last overload refusal, so a changing number is not a new event */
+    this.reasonKind = null;
     /** @type {string | null} why the back-off runs, while it does */
     this.backoffReason = null;
     /** @type {string | null} */
@@ -407,14 +410,24 @@ export class RunnerSupervisor {
       this.reason = disk;
       return false;
     }
-    if (host.freeBytes() < config.memoryBytes + MEMORY_HEADROOM) {
-      this.overloaded("host memory is short");
+    const free = host.freeBytes();
+    const needed = config.memoryBytes + MEMORY_HEADROOM;
+    if (free < needed) {
+      this.overloaded(
+        "memory",
+        `host memory is short: ${gib(free)} GiB free, ${gib(needed)} GiB needed`,
+      );
       return false;
     }
-    if (host.load1() > host.cpus()) {
-      this.overloaded("host load is above its CPU count");
+    const load = host.load1();
+    if (load > host.cpus()) {
+      this.overloaded(
+        "load",
+        `host load ${load.toFixed(1)} is above its ${String(host.cpus())} CPUs`,
+      );
       return false;
     }
+    this.reasonKind = null;
     if (now() < this.retryAt) {
       return false;
     }
@@ -429,7 +442,7 @@ export class RunnerSupervisor {
       await this.call("remove", () => api.remove(minted.value.id));
       return false;
     }
-    const launched = launch(minted.value.jitconfig);
+    const launched = launch(minted.value.jitconfig, name);
     /** @type {Runner} */
     const runner = {
       name,
@@ -447,11 +460,15 @@ export class RunnerSupervisor {
     return true;
   }
 
-  /** @param {string} why */
-  overloaded(why) {
-    if (this.reason !== `not starting a runner: ${why}`) {
+  /**
+   * @param {string} kind logged when it changes, not when its numbers do
+   * @param {string} why
+   */
+  overloaded(kind, why) {
+    if (this.reasonKind !== kind) {
       this.deps.log(`runners: not starting a runner: ${why}`);
     }
+    this.reasonKind = kind;
     this.reason = `not starting a runner: ${why}`;
   }
 
@@ -815,6 +832,14 @@ function positive(value, fallback) {
   return value !== undefined && /^\d+$/.test(value) && number > 0 ? number : fallback;
 }
 
+/**
+ * @param {number} bytes
+ * @returns {string}
+ */
+function gib(bytes) {
+  return (bytes / 1024 ** 3).toFixed(1);
+}
+
 /** The launcher's fd this process holds the other end of, and never writes. */
 export const LIFELINE_FD = 3;
 
@@ -824,16 +849,28 @@ export const LIFELINE_FD = 3;
  * closes it, and the launcher stops its runner. A restarted supervisor
  * never finds the last one's runners still going.
  *
+ * Its stdout and stderr go to `logFile` (runner-logs.mjs), line by line;
+ * the JIT config reaches the launcher by stdin only, never those streams.
+ *
  * @param {string} command
  * @param {string[]} args
  * @param {Record<string, string>} env
  * @param {string} jitconfig
+ * @param {string} logFile
+ * @param {() => number} [now]
  * @returns {Launched}
  */
-export function spawnLauncher(command, args, env, jitconfig) {
+export function spawnLauncher(command, args, env, jitconfig, logFile, now = Date.now) {
   const child = spawn(command, args, {
     env,
-    stdio: ["pipe", "inherit", "inherit", "pipe"],
+    stdio: ["pipe", "pipe", "pipe", "pipe"],
+  });
+  const writer = runnerLogWriter(logFile, now);
+  child.stdout.on("data", (/** @type {Buffer} */ data) => {
+    writer.chunk("out", data.toString("utf8"));
+  });
+  child.stderr.on("data", (/** @type {Buffer} */ data) => {
+    writer.chunk("err", data.toString("utf8"));
   });
   child.stdin.once("error", () => {
     // A launcher that exits before it reads, or never starts, breaks the
@@ -846,10 +883,14 @@ export function spawnLauncher(command, args, env, jitconfig) {
   return {
     exited: new Promise((resolve) => {
       child.once("error", () => {
+        writer.exited(1);
         resolve(1);
       });
-      child.once("exit", (code, signal) => {
-        resolve(code ?? (signal === null ? 1 : 128));
+      // "close", not "exit": the streams are drained, so the log is whole.
+      child.once("close", (code, signal) => {
+        const status = code ?? (signal === null ? 1 : 128);
+        writer.exited(status);
+        resolve(status);
       });
     }),
     kill: () => child.kill("SIGTERM"),
@@ -907,13 +948,23 @@ if (
     console.error("runner-supervisor: company.json names no repository");
     process.exit(1);
   }
+  const logs = path.join(root, "hub", "runners");
   const gh = ghEnv(env, path.join(credentials, "runners-gh"));
   const launcherEnv = launcherEnvOf(env, scratch);
   const supervisor = new RunnerSupervisor({
     now: () => Date.now(),
     api: githubApi(repo, gh),
-    launch: (jitconfig) =>
-      spawnLauncher("vibewars-runner-jail", launcherArgs(cap), launcherEnv, jitconfig),
+    launch: (jitconfig, name) => {
+      fs.mkdirSync(logs, { recursive: true, mode: 0o700 });
+      pruneRunnerLogs(logs);
+      return spawnLauncher(
+        "vibewars-runner-jail",
+        launcherArgs(cap),
+        launcherEnv,
+        jitconfig,
+        path.join(logs, `${name}.log`),
+      );
+    },
     host: {
       freeBytes: () => os.freemem(),
       load1: () => os.loadavg()[0] ?? 0,

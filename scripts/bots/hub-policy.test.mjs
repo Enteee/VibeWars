@@ -765,9 +765,10 @@ describe("company runners (#1890)", () => {
     ).toMatchObject({ allow: false });
   });
 
-  it("the manager and the business-analyst read it", () => {
+  it("the manager, the business-analyst and the cicd-engineer read it", () => {
     expect(authorize("manager", { kind: "runners", argv: [] })).toEqual({ allow: true });
     expect(authorize("business-analyst", { kind: "runners", argv: [] })).toEqual({ allow: true });
+    expect(authorize("cicd-engineer", { kind: "runners", argv: [] })).toEqual({ allow: true });
     expect(authorize("developer", { kind: "runners", argv: [] })).toMatchObject({ allow: false });
   });
 
@@ -776,6 +777,42 @@ describe("company runners (#1890)", () => {
       expect(authorize("manager", { kind: "runners", argv }), argv.join(" ")).toMatchObject({
         allow: false,
         reason: "usage: company runners [<n>]",
+      });
+    }
+  });
+});
+
+describe("company runners logs (#2729)", () => {
+  const logs = (/** @type {string} */ role, /** @type {string[]} */ ...argv) =>
+    authorize(role, { kind: "runners", argv: ["logs", ...argv] });
+
+  it("the manager, the business-analyst and the cicd-engineer read them; nobody else", () => {
+    for (const role of ROLES) {
+      const reads = ["manager", "business-analyst", "cicd-engineer"].includes(role);
+      expect(logs(role).allow, role).toBe(reads);
+      expect(logs(role, "vibewars-runner-12", "--lines", "400").allow, role).toBe(reads);
+    }
+  });
+
+  it("the cicd-engineer may not scale", () => {
+    expect(authorize("cicd-engineer", { kind: "runners", argv: ["2"] })).toMatchObject({
+      allow: false,
+    });
+  });
+
+  it("refuses a path for a runner name, and a --lines outside 1 to 400", () => {
+    for (const argv of [
+      ["../x"],
+      ["a/b"],
+      ["X"],
+      ["--lines"],
+      ["--lines", "0"],
+      ["--lines", "401"],
+      ["a", "b"],
+    ]) {
+      expect(logs("manager", ...argv), argv.join(" ")).toMatchObject({
+        allow: false,
+        reason: "usage: company runners logs [<runner>] [--lines <n>]",
       });
     }
   });

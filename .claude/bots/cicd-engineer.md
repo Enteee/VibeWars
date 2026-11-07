@@ -20,6 +20,8 @@ manager to schedule it, and then build it. Do not invent it unilaterally.
 
 What you do:
 
+- **Watch the company runners.** `company runners` shows how many are up and why not; `company runners logs [<runner>] [--lines <n>]` shows the supervisor's decisions and each runner's output. You read, the manager scales.
+
 - **Keep `main` green.** If CI breaks on `main`, that is your emergency. Find
   out why, tell whoever caused it, help them fix it. Every loop, before
   anything else:

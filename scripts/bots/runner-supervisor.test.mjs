@@ -236,14 +236,16 @@ describe("runner supervisor", () => {
 
   it("does not start a runner on an overloaded host, and that is no failure", async () => {
     const r = rig();
-    r.host.free = 6 * GIB + MEMORY_HEADROOM - 1;
+    r.host.free = 5 * GIB + MEMORY_HEADROOM;
     await r.supervisor.tick();
     expect(r.launched).toHaveLength(0);
-    expect(r.last()?.reason).toBe("not starting a runner: host memory is short");
+    expect(r.last()?.reason).toBe(
+      "not starting a runner: host memory is short: 7.0 GiB free, 8.0 GiB needed",
+    );
     r.host.free = 64 * GIB;
     r.host.load = 9;
     await r.supervisor.tick();
-    expect(r.last()?.reason).toBe("not starting a runner: host load is above its CPU count");
+    expect(r.last()?.reason).toBe("not starting a runner: host load 9.0 is above its 8 CPUs");
     expect(r.supervisor.failures).toBe(0);
     r.host.load = 1;
     await r.supervisor.tick();
@@ -430,7 +432,7 @@ describe("launchers", () => {
     import { spawnLauncher } from ${JSON.stringify(url("./runner-supervisor.mjs"))};
     const [launcher, ...markers] = process.argv.slice(2);
     for (const marker of markers) {
-      spawnLauncher(process.execPath, [launcher, marker], {}, "jit");
+      spawnLauncher(process.execPath, [launcher, marker], {}, "jit", marker + ".log");
     }
     process.stdout.write("up\\n");
     setInterval(() => {}, 60_000);
@@ -457,12 +459,44 @@ describe("launchers", () => {
     expect(markers.filter((marker) => fs.existsSync(marker))).toEqual(markers);
   });
 
+  it("a launcher's output lands in its log, line by line, with its exit", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "runner-out-"));
+    const file = path.join(dir, "vibewars-runner-1.log");
+    const script =
+      'console.log("hello"); console.error("bad"); process.stdout.write("tail"); process.exit(3)';
+    const launched = spawnLauncher(process.execPath, ["-e", script], {}, "jit", file, () => 0);
+    expect(await launched.exited).toBe(3);
+    expect(fs.readFileSync(file, "utf8").split("\n").sort()).toEqual(
+      [
+        "",
+        "1970-01-01T00:00:00.000Z [err] bad",
+        "1970-01-01T00:00:00.000Z [out] hello",
+        "1970-01-01T00:00:00.000Z [out] tail",
+        "1970-01-01T00:00:00.000Z exited 3",
+      ].sort(),
+    );
+    expect(fs.readFileSync(file, "utf8")).not.toContain("jit");
+  });
+
   it("one that exits unread, or never starts, is an exit code, not a crash", async () => {
     // More than a pipe holds, so the write breaks once the launcher is gone.
     const jitconfig = "x".repeat(1 << 20);
-    const unread = spawnLauncher(process.execPath, ["-e", "process.exit(2)"], {}, jitconfig);
+    const devNull = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "log-")), "x.log");
+    const unread = spawnLauncher(
+      process.execPath,
+      ["-e", "process.exit(2)"],
+      {},
+      jitconfig,
+      devNull,
+    );
     expect(await unread.exited).toBe(2);
-    const missing = spawnLauncher(path.join(os.tmpdir(), "no-such-launcher"), [], {}, jitconfig);
+    const missing = spawnLauncher(
+      path.join(os.tmpdir(), "no-such-launcher"),
+      [],
+      {},
+      jitconfig,
+      devNull,
+    );
     expect(await missing.exited).toBe(1);
   });
 });

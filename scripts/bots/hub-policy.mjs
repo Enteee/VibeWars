@@ -1041,6 +1041,9 @@ function authorizeLoad(role, argv) {
  */
 function authorizeRunners(role, argv) {
   const [n, ...rest] = argv;
+  if (n === "logs") {
+    return authorizeRunnerLogs(role, rest);
+  }
   if (rest.length > 0 || (n !== undefined && !/^\d{1,4}$/.test(n))) {
     return { allow: false, reason: "usage: company runners [<n>]" };
   }
@@ -1049,12 +1052,66 @@ function authorizeRunners(role, argv) {
       ? { allow: true }
       : { allow: false, reason: "only the manager scales the company's runners" };
   }
-  return role === "manager" || role === "business-analyst"
+  return RUNNER_READERS.includes(role)
     ? { allow: true }
     : {
         allow: false,
-        reason: "only the manager and the business-analyst read the company's runners",
+        reason:
+          "only the manager, the business-analyst and the cicd-engineer read the company's runners",
       };
+}
+
+/** Who reads the runners' status and logs; scaling them stays the manager's. */
+const RUNNER_READERS = ["manager", "business-analyst", "cicd-engineer"];
+
+/**
+ * `company runners logs [<runner>] [--lines <n>]` (#2729): read-only.
+ * The runner name is a file name on the host, so it is checked here.
+ *
+ * @param {string} role
+ * @param {string[]} argv `[<runner>] [--lines <n>]`, in either order
+ * @returns {{ allow: boolean, reason?: string }}
+ */
+function authorizeRunnerLogs(role, argv) {
+  const usage = { allow: false, reason: "usage: company runners logs [<runner>] [--lines <n>]" };
+  const parsed = parseRunnerLogsArgs(argv);
+  if (parsed === null) {
+    return usage;
+  }
+  if (!RUNNER_READERS.includes(role)) {
+    return {
+      allow: false,
+      reason:
+        "only the manager, the business-analyst and the cicd-engineer read the company's runner logs",
+    };
+  }
+  return { allow: true };
+}
+
+/**
+ * @param {string[]} argv
+ * @returns {{ runner: string | null, lines: number } | null} null when malformed
+ */
+export function parseRunnerLogsArgs(argv) {
+  /** @type {string | null} */
+  let runner = null;
+  let lines = 80;
+  for (let i = 0; i < argv.length; i += 1) {
+    const word = argv[i] ?? "";
+    if (word === "--lines") {
+      const value = argv[i + 1] ?? "";
+      if (!/^\d{1,3}$/.test(value) || Number(value) < 1 || Number(value) > 400) {
+        return null;
+      }
+      lines = Number(value);
+      i += 1;
+    } else if (runner === null && /^[a-z0-9-]{1,64}$/.test(word)) {
+      runner = word;
+    } else {
+      return null;
+    }
+  }
+  return { runner, lines };
 }
 
 /**

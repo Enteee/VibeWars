@@ -162,7 +162,8 @@ import {
 } from "./kpi.mjs";
 import { idleWaitsDir, parseWaits, WAITS_FILE } from "./waits.mjs";
 import { loadLines } from "./company-load.mjs";
-import { peekRows } from "./peek.mjs";
+import { peekRows, redact } from "./peek.mjs";
+import { formatRunnerLogs, readLogLines, runnerLogIndex } from "./runner-logs.mjs";
 import {
   maxRunners,
   readAlertTold as readRunnersAlertTold,
@@ -196,6 +197,7 @@ import {
   SCHEDULERS,
   authorize,
   parseMerge,
+  parseRunnerLogsArgs,
   parseReview,
   touchesGate,
 } from "./hub-policy.mjs";
@@ -1913,6 +1915,9 @@ function serveLoad(cfg) {
  */
 function serveRunners(argv) {
   const [word] = argv;
+  if (word === "logs") {
+    return serveRunnerLogs(argv.slice(1));
+  }
   if (word !== undefined) {
     const n = Number(word);
     if (n > MAX_RUNNERS) {
@@ -1931,6 +1936,38 @@ function serveRunners(argv) {
   }
   const lines = runnersLines(readRunnersStatus(RUNNERS_STATE), MAX_RUNNERS);
   return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
+}
+
+/**
+ * `company runners logs [<runner>] [--lines <n>]` (#2729): the supervisor's
+ * log tail and the runner logs it keeps, or one runner's output. Host-only
+ * files, read plainly; the policy has checked the arguments.
+ *
+ * @param {string[]} argv
+ * @returns {{ code: number, stdout: string, stderr: string }}
+ */
+function serveRunnerLogs(argv) {
+  const parsed = parseRunnerLogsArgs(argv);
+  if (parsed === null) {
+    return { code: 2, stdout: "", stderr: "company runners logs: bad arguments\n" };
+  }
+  const dir = path.join(ROOT, "hub", "runners");
+  const { runner, lines } = parsed;
+  const index = runnerLogIndex(dir);
+  if (runner !== null) {
+    const found = readLogLines(path.join(dir, `${runner}.log`), lines);
+    if (found === null) {
+      const have = index.map((entry) => entry.name).join(", ") || "none";
+      return {
+        code: 1,
+        stdout: "",
+        stderr: `no log for ${runner}; runners with logs: ${have}\n`,
+      };
+    }
+    return { code: 0, stdout: redact(`${found.join("\n")}\n`), stderr: "" };
+  }
+  const supervisor = readLogLines(path.join(ROOT, "hub", "runner-supervisor.log"), lines);
+  return { code: 0, stdout: formatRunnerLogs({ supervisor, index, now: Date.now() }), stderr: "" };
 }
 
 /**

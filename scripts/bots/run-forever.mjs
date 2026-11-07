@@ -25,6 +25,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import { nextDelay } from "./hub-health.mjs";
 import { releaseLock, takeLock } from "./instance-lock.mjs";
+import { rotateIfLarge } from "./runner-logs.mjs";
 import { SYSTEM, visible } from "./protocol.mjs";
 
 const [name, separator, command, ...args] = process.argv.slice(2);
@@ -52,6 +53,8 @@ if (!takeLock(LOCK)) {
 /** @param {string} text */
 function say(text) {
   process.stdout.write(text);
+  // Over 1 MiB the log moves to `.log.1`: it was unbounded (#2729).
+  rotateIfLarge(LOG);
   fs.appendFileSync(LOG, text);
 }
 

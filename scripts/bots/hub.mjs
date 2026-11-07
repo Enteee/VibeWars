@@ -31,8 +31,9 @@
  *   company fire <employee> "<reason>"  manager only
  *   company load                     manager only: the board, staff and tokens
  *                                    the staffing review is decided on
- *   company runners [<n>]            manager only: the company's CI runners,
- *                                    or scale them to n (#1890)
+ *   company runners [<n>]            the company's CI runners; the manager
+ *                                    scales them to n (#1890)
+ *   company runners logs [<runner>] [--lines <n>]   their output (#2729)
  *     (`company` is this script with `company` as its first word)
  *
  * `whoami` is answered locally, because the policy is pure and bundled in
@@ -200,7 +201,7 @@ if (argv[0] === "push") {
   const [who, ...reason] = rest;
   if (verb === "load" && rest.length === 0) {
     request = { kind: "load", argv: [] };
-  } else if (verb === "runners" && rest.length <= 1) {
+  } else if (verb === "runners" && (rest.length <= 1 || rest[0] === "logs")) {
     request = { kind: "runners", argv: rest };
   } else if ((verb === "hire" || verb === "fire") && who !== undefined && reason.length > 0) {
     request = { kind: "staff", argv: [verb, who, reason.join(" ")] };
@@ -220,7 +221,7 @@ if (argv[0] === "push") {
     console.error(
       'company: usage: company reboot "<reason>" | company reboot --abort | company reboot --workday | company ready\n' +
         '       company hire <role> "<reason>" | company fire <employee> "<reason>" | company load\n' +
-        "       company runners [<n>]",
+        "       company runners [<n>] | company runners logs [<runner>] [--lines <n>]",
     );
     process.exit(2);
   }
