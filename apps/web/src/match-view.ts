@@ -908,7 +908,13 @@ export async function startMatchView(
       const bots = new Set(
         match.players.filter((player) => player.bot).map((player) => player.sessionId),
       );
-      const tables = summaryTables(match.summary, viewed.selfSessionId, self?.team, bots);
+      const tables = summaryTables(
+        match.summary,
+        viewed.selfSessionId,
+        self?.team,
+        match.winningTeam,
+        bots,
+      );
       const panel = renderSummary(parent, tables);
       panel.classList.add("hud-summary");
       summary = { tables, panel };
