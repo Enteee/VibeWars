@@ -59,7 +59,8 @@ test("Clone saves a finished match's team as a Team Build and opens it (#2585)",
   );
   await page.locator(".match-row-head").click();
   const teams = page.locator(".match-detail .play-card");
-  await expect(teams).toHaveCount(2);
+  await expect(page.getByRole("tab")).toHaveText(["Team 1 · Won", "Team 2 · Lost"]);
+  await expect(teams).toHaveCount(1);
   await expect(teams.first().locator(".play-card-member")).toHaveCount(2);
   await teams.first().getByRole("button", { name: "Clone", exact: true }).click();
 

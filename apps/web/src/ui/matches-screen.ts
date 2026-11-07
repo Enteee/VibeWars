@@ -18,6 +18,7 @@ import { isTeamBuildSize } from "../storage/schema.js";
 import { lookOfCharacter, teamFigureCard, type TeamFigureMember } from "./character-card.js";
 import { miniSkillBar, professionLabel } from "./character-preview.js";
 import { formatClock } from "./hud.js";
+import { professionIcon } from "./icons.js";
 import { button, h, screenBar, syncList } from "./kit.js";
 import { playerLabelText } from "./player-label.js";
 import { railLabel, railScreen, type RailEntry } from "./rail.js";
@@ -94,20 +95,39 @@ function playerName(player: MatchRecordPlayer): HTMLElement {
   return name;
 }
 
-/** A team on the row: its players' names, the winner's marked. */
-function teamNames(record: MatchRecord, team: 0 | 1): HTMLElement {
-  const won = record.winningTeam === team;
-  const names = h("span", won ? "match-team is-winner" : "match-team");
-  record.teams[team].players.forEach((player, index) => {
-    if (index > 0) {
-      names.append(", ");
+/**
+ * A team on the closed row (#2585): one primary profession icon per
+ * player, the name and both professions on hover, and the winner's
+ * underlined. A build it can't read is a question mark.
+ */
+function teamIcons(record: MatchRecord, team: 0 | 1): HTMLElement {
+  const icons = h("span", record.winningTeam === team ? "match-team is-winner" : "match-team");
+  for (const player of record.teams[team].players) {
+    const name = playerLabelText(player.name, player.guildTag);
+    const label = player.bot ? `${name} (bot)` : name;
+    const decoded = decodeTemplateCode(player.template);
+    if (!decoded.ok) {
+      const unknown = icons.appendChild(h("span", "match-player-icon is-unknown", "?"));
+      unknown.title = `${label}: ${BUILD_UNREADABLE}`;
+      continue;
     }
-    names.appendChild(playerName(player));
-  });
-  if (won) {
-    names.appendChild(h("span", "match-won", "Won"));
+    const { primaryProfession, secondaryProfession } = decoded.build;
+    const icon = document.createElement("img");
+    icon.className = "match-player-icon";
+    icon.src = professionIcon(primaryProfession);
+    icon.alt = `${label}: ${professionLabel(primaryProfession, secondaryProfession)}`;
+    icon.title = icon.alt;
+    icons.appendChild(icon);
   }
-  return names;
+  return icons;
+}
+
+/** Between the two teams: which side won, or a draw. */
+function resultMark(record: MatchRecord): string {
+  if (record.winningTeam === null) {
+    return "Draw";
+  }
+  return record.winningTeam === 0 ? "◂ Won" : "Won ▸";
 }
 
 /** One player in the detail: name, and the build their template code says. */
@@ -188,20 +208,45 @@ function teamDetail(
   return section;
 }
 
+/** The opened row (#2585): one team at a time, a tab for each. */
 function matchDetail(
   record: MatchRecord,
   onCloneTeam: (team: MatchRecordTeam) => void,
 ): HTMLElement {
   const detail = h("div", "match-detail");
-  detail.append(
+  detail.appendChild(
     h(
       "p",
       "match-detail-summary",
       `${END_REASONS[record.endReason]} after ${formatClock(record.durationSeconds)}`,
     ),
+  );
+  const tabs = detail.appendChild(h("div", "match-tabs"));
+  tabs.setAttribute("role", "tablist");
+  const panel = detail.appendChild(h("div", "match-tab-panel"));
+  panel.setAttribute("role", "tabpanel");
+  const sections = [
     teamDetail(record, 0, record.teams[0], onCloneTeam),
     teamDetail(record, 1, record.teams[1], onCloneTeam),
-  );
+  ];
+  const buttons = ([0, 1] as const).map((team) => {
+    const tab = button(
+      `Team ${String(team + 1)} · ${teamResult(record, team)}`,
+      "match-tab",
+      () => {
+        show(team);
+      },
+    );
+    tab.setAttribute("role", "tab");
+    return tabs.appendChild(tab);
+  });
+  function show(team: number): void {
+    buttons.forEach((tab, index) => {
+      tab.setAttribute("aria-selected", String(index === team));
+    });
+    panel.replaceChildren(sections[team] ?? h("div"));
+  }
+  show(0);
   return detail;
 }
 
@@ -221,20 +266,18 @@ function matchRow(
   head.type = "button";
   head.className = "match-row-head";
   head.setAttribute("aria-expanded", "false");
-  const meta = head.appendChild(h("span", "match-meta"));
-  meta.append(
+  // The closed row is one scoreboard line (#2585): names wait for the opened row.
+  head.append(
     h("span", "match-mode", railLabel(record.mode)),
+    teamIcons(record, 0),
+    h("span", "match-result", resultMark(record)),
+    teamIcons(record, 1),
     h("span", "match-map", mapName(record.map)),
-    when,
     h("span", "match-duration", formatClock(record.durationSeconds)),
+    when,
   );
-  const badge = meta.appendChild(h("span", "match-host-reported", "host-reported"));
+  const badge = head.appendChild(h("span", "match-host-reported", "host-reported"));
   badge.title = HOST_REPORTED;
-  const teams = head.appendChild(h("span", "match-teams"));
-  teams.append(teamNames(record, 0), h("span", "match-versus", "vs"), teamNames(record, 1));
-  if (record.winningTeam === null) {
-    teams.appendChild(h("span", "match-draw", "Draw"));
-  }
   let detail: HTMLElement | undefined;
   head.addEventListener("click", () => {
     if (detail !== undefined) {

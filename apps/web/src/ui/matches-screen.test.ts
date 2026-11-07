@@ -228,7 +228,7 @@ describe("the Matches page (#2532)", () => {
     expect(note.textContent).toBe(MATCHES_OFFLINE);
   });
 
-  it("shows a record's mode, when, duration, teams, winner, bots and host-reported badge", () => {
+  it("shows a record as one line: mode, each player's profession, winner, map, duration, when, badge (#2585)", () => {
     const { root } = render();
     hear("a");
     const [row] = root.all("match-row");
@@ -240,18 +240,27 @@ describe("the Matches page (#2532)", () => {
     expect(badge?.title).toBe(HOST_REPORTED);
     const teams = row?.all("match-team") ?? [];
     expect(teams.map((team) => team.className)).toEqual(["match-team is-winner", "match-team"]);
-    expect(teams[0]?.one("match-player-name").textContent).toBe("Ann [VIBE]");
-    expect(teams[1]?.one("match-player-name").textContent).toBe("Elementalist Botbot");
-    expect(teams[1]?.all("match-bot")).toHaveLength(1);
-    expect(teams[0]?.all("match-bot")).toHaveLength(0);
-    expect(row?.all("match-draw")).toHaveLength(0);
+    expect(row?.one("match-result").textContent).toBe("◂ Won");
+    const icons = teams.map((team) => team.all("match-player-icon"));
+    expect(icons.map((team) => team.length)).toEqual([1, 1]);
+    expect(icons[0]?.[0]?.title).toMatch(/^Ann \[VIBE\]: \S/);
+    expect(icons[1]?.[0]?.title).toMatch(/^Elementalist Bot \(bot\): \S/);
+    expect(icons[0]?.[0]?.src).not.toBe("");
+    // No team card and no names until the row is opened.
+    expect(row?.all("play-card")).toHaveLength(0);
+    expect(row?.all("match-player-name")).toHaveLength(0);
   });
 
-  it("marks a draw, and no team the winner", () => {
+  it("marks a draw, and no team the winner; a second team's win points right", () => {
     const { root } = render();
     hear("a", { ...RECORD, winningTeam: null });
-    expect(root.all("match-draw")).toHaveLength(1);
-    expect(root.all("match-won")).toHaveLength(0);
+    expect(root.one("match-result").textContent).toBe("Draw");
+    expect(root.all("match-team").map((team) => team.className)).toEqual([
+      "match-team",
+      "match-team",
+    ]);
+    hear("b", { ...RECORD, endedAt: RECORD.endedAt + 1, winningTeam: 1 });
+    expect(root.all("match-result")[0]?.textContent).toBe("Won ▸");
   });
 
   it("puts a record heard live at the top when it is the newest", () => {
@@ -290,15 +299,11 @@ describe("the Matches page (#2532)", () => {
     head.click();
     expect(head.attributes.get("aria-expanded")).toBe("true");
     const detail = root.one("match-detail");
-    expect(detail.all("match-player")).toHaveLength(2);
-    expect(detail.all("match-players").flatMap((list) => list.all("mini-skill-bar"))).toHaveLength(
-      2,
-    );
-    expect(detail.all("match-professions")[0]?.textContent).not.toBe("");
-    expect(detail.all("match-detail-result").map((result) => result.textContent)).toEqual([
-      "Team 1: Won",
-      "Team 2: Lost",
-    ]);
+    expect(detail.all("match-player")).toHaveLength(1);
+    expect(detail.one("match-player").one("match-player-name").textContent).toBe("Ann [VIBE]");
+    expect(detail.one("match-players").all("mini-skill-bar")).toHaveLength(1);
+    expect(detail.one("match-professions").textContent).not.toBe("");
+    expect(detail.one("match-detail-result").textContent).toBe("Team 1: Won");
     expect(detail.one("match-detail-summary").textContent).toBe("Annihilation after 5:05");
 
     head.click();
@@ -312,41 +317,53 @@ describe("the Matches page (#2532)", () => {
       return;
     }
     hear("a", { ...RECORD, teams: [{ players: [{ ...ann, template: "!!!" }] }, bot] });
+    expect(root.one("match-player-icon").title).toBe(`Ann [VIBE]: ${BUILD_UNREADABLE}`);
     root.one("match-row-head").click();
-    const players = root.all("match-player");
-    expect(players[0]?.one("match-build-unreadable").textContent).toBe(BUILD_UNREADABLE);
-    expect(players[1]?.all("mini-skill-bar")).toHaveLength(1);
+    expect(root.one("match-player").one("match-build-unreadable").textContent).toBe(
+      BUILD_UNREADABLE,
+    );
+    root.all("match-tab")[1]?.click();
+    expect(root.one("match-player").all("mini-skill-bar")).toHaveLength(1);
   });
 
-  it("shows each team as a team card, a member row per player (#2585)", () => {
+  it("shows one team at a time as a team card, a tab for each, a member row per player (#2585)", () => {
     const { root } = render();
     hear("a", PAIRS);
     root.one("match-row-head").click();
-    const cards = root.one("match-detail").all("play-card");
-    expect(cards).toHaveLength(2);
-    expect(cards.map((card) => card.one("match-detail-result").textContent)).toEqual([
+    const detail = root.one("match-detail");
+    const tabs = detail.all("match-tab");
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Team 1 · Won", "Team 2 · Lost"]);
+    const shown = () => {
+      const cards = detail.all("play-card");
+      expect(cards).toHaveLength(1);
+      return [
+        cards[0]?.one("match-detail-result").textContent,
+        cards[0]?.all("play-card-member").map((member) => member.attributes.get("aria-label")),
+        tabs.map((tab) => tab.attributes.get("aria-selected")),
+      ];
+    };
+    expect(shown()).toEqual([
       "Team 1: Won",
-      "Team 2: Lost",
-    ]);
-    expect(
-      cards.map((card) =>
-        card.all("play-card-member").map((member) => member.attributes.get("aria-label")),
-      ),
-    ).toEqual([
       [expect.stringContaining("Ann"), "Bob"],
-      ["Bot A (bot)", "Bot B (bot)"],
+      ["true", "false"],
     ]);
+    tabs[1]?.click();
+    expect(shown()).toEqual(["Team 2: Lost", ["Bot A (bot)", "Bot B (bot)"], ["false", "true"]]);
   });
 
   it("clones a team once however often its Clone is pressed (#2585)", () => {
     const { root } = render();
     hear("a", PAIRS);
     root.one("match-row-head").click();
-    const [first, second] = root.all("play-card-clone");
-    first?.click();
-    first?.click();
-    expect(first?.disabled).toBe(true);
-    expect(second?.disabled).toBe(false);
+    const first = root.one("play-card-clone");
+    first.click();
+    first.click();
+    expect(first.disabled).toBe(true);
+    // The other team's Clone, and the first's, outlive a switch of tabs.
+    root.all("match-tab")[1]?.click();
+    expect(root.one("play-card-clone").disabled).toBe(false);
+    root.all("match-tab")[0]?.click();
+    expect(root.one("play-card-clone").disabled).toBe(true);
     expect(cloned).toEqual([PAIRS.teams[0]]);
   });
 
