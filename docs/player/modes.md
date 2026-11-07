@@ -113,10 +113,11 @@ The scoreboard shows the points, yours first, and the clock. Under it, a
 line for each relic says where it is: `✦ Name` on its carrier,
 `✦ dropped` on the ground or `✦ at base`.
 
-Bots run the relic too: the one nearest to your relic fetches it unless
-you are nearer, the one nearest to a dropped foe relic sends it home,
-and the rest wait by the altar. A bot carrying your relic walks it
-straight to the altar; the others leave the relic only to fight a foe
+Bots run the relic too: the one nearest to your relic fetches it, unless
+you are about to pick it up yourself; a healer or a badly hurt bot only
+goes when no one else can. The one nearest to a dropped foe relic sends
+it home, and the rest wait by the altar. A bot carrying your relic walks
+it straight to the altar; the others leave the relic only to fight a foe
 that comes within spell range.
 
 Relic Temples plays it.
