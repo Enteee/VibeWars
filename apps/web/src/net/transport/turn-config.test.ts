@@ -9,6 +9,8 @@ import {
   loadRelay,
   loadRelaySharing,
   mintTurnCredential,
+  OWN_CREDENTIAL_TTL_MS,
+  TURN_CREDENTIAL_TTL_MS,
   onRelaySharingChange,
   parseTurnFragment,
   relayHosts,
@@ -211,7 +213,12 @@ describe("a minted credential (#2091)", () => {
 
   it("mints coturn's REST credential: the username's HMAC-SHA1 under the secret", () => {
     // Computed with Node's crypto, outside `mintTurnCredential`, and pinned.
-    const minted = mintTurnCredential(SHARED, "0123456789abcdef", 1_700_000_000_000);
+    const minted = mintTurnCredential(
+      SHARED,
+      "0123456789abcdef",
+      1_700_000_000_000,
+      OWN_CREDENTIAL_TTL_MS,
+    );
     expect(minted).toEqual({
       urls: SHARED.urls,
       username: "1700014400:0123456789abcdef",
@@ -219,6 +226,22 @@ describe("a minted credential (#2091)", () => {
     });
     expect(validateTurnConfig(minted)).toEqual(minted);
     expect(credentialExpiry(minted)).toBe(1_700_014_400_000);
+  });
+
+  it("mints a joiner's for an hour, named by its peer id (#2527)", () => {
+    // Computed with Node's crypto, outside `mintTurnCredential`, and pinned.
+    const minted = mintTurnCredential(
+      SHARED,
+      "peer-abc",
+      1_700_000_000_000,
+      TURN_CREDENTIAL_TTL_MS,
+    );
+    expect(minted).toEqual({
+      urls: SHARED.urls,
+      username: "1700003600:peer-abc",
+      credential: "rUZ/akgYH4gs/EhoqoXDFzi1LzM=", // pragma: allowlist secret
+    });
+    expect(TURN_CREDENTIAL_TTL_MS).toBe(60 * 60 * 1000);
   });
 });
 
@@ -297,7 +320,7 @@ describe("the login a player joins with (#2240)", () => {
     // Each verifies as coturn checks it: the HMAC-SHA1 of its username under the secret.
     for (const login of [first, second]) {
       const tag = login?.username.split(":")[1] ?? "";
-      expect(login).toEqual(mintTurnCredential(LINKED, tag, now));
+      expect(login).toEqual(mintTurnCredential(LINKED, tag, now, OWN_CREDENTIAL_TTL_MS));
     }
   });
 });

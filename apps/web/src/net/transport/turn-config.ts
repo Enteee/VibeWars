@@ -248,18 +248,29 @@ function validateSharedRelay(value: unknown): SharedRelay | undefined {
     : undefined;
 }
 
-/** How long a minted credential lets its holder relay: anyone in the lobby, so not long. */
-export const TURN_CREDENTIAL_TTL_MS = 4 * 60 * 60 * 1000;
+/**
+ * How long a credential minted for another player lets it relay (#2527):
+ * one joiner's, so it is reminted for a seated member rather than long.
+ */
+export const TURN_CREDENTIAL_TTL_MS = 60 * 60 * 1000;
+
+/** How long a credential this player mints for its own joins lasts: it is never shared. */
+export const OWN_CREDENTIAL_TTL_MS = 4 * 60 * 60 * 1000;
 
 /**
- * A credential for `shared` that expires `TURN_CREDENTIAL_TTL_MS` after
- * `nowMs`, as coturn's REST scheme checks it: the username is
- * `<expiry unix seconds>:<tag>`, the credential base64(HMAC-SHA1(secret,
- * username)). `tag` names the lobby in the relay's logs, so its operator
- * can tell one from another and block it.
+ * A credential for `shared` that expires `ttlMs` after `nowMs`, as
+ * coturn's REST scheme checks it: the username is `<expiry unix
+ * seconds>:<tag>`, the credential base64(HMAC-SHA1(secret, username)).
+ * `tag` is the peer id it is for (#2527), or this player's own join's, so
+ * the relay's operator can tell one from another and block it.
  */
-export function mintTurnCredential(shared: SharedRelay, tag: string, nowMs: number): TurnConfig {
-  const expiry = Math.floor((nowMs + TURN_CREDENTIAL_TTL_MS) / 1000);
+export function mintTurnCredential(
+  shared: SharedRelay,
+  tag: string,
+  nowMs: number,
+  ttlMs: number,
+): TurnConfig {
+  const expiry = Math.floor((nowMs + ttlMs) / 1000);
   const username = `${String(expiry)}:${tag}`;
   const mac = hmac(
     sha1,
@@ -413,7 +424,7 @@ export function loadOwnTurnConfig(nowMs: number = Date.now()): TurnConfig | unde
     return undefined;
   }
   if (relay.kind === "rest") {
-    return mintTurnCredential(relay, ownTag(), nowMs);
+    return mintTurnCredential(relay, ownTag(), nowMs, OWN_CREDENTIAL_TTL_MS);
   }
   return { urls: relay.urls, username: relay.username, credential: relay.credential };
 }

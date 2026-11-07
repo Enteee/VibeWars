@@ -1,13 +1,15 @@
-import { IMPLEMENTED_SKILLS, PROFESSIONS, defaultEquipmentFor } from "@vibewars/game-core";
+import {
+  ATTRIBUTE_IDS,
+  IMPLEMENTED_SKILLS,
+  PROFESSIONS,
+  defaultEquipmentFor,
+  encodeTemplateCode,
+  looksLikeTemplate,
+} from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { exportBuild } from "./build-transfer.js";
-import {
-  ATTRIBUTE_IDS,
-  decodeTemplate,
-  encodeTemplate,
-  looksLikeTemplate,
-} from "./gw1-template.js";
+import { decodeTemplate } from "./gw1-template.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "./schema.js";
 
 /**
@@ -82,7 +84,7 @@ function problemsOf(code: string): readonly string[] {
 
 describe("GW1 template codes (#494)", () => {
   it("round-trips professions, bought ranks and the bar, leaving rank 0 out", () => {
-    const encoded = encodeTemplate(WARRIOR_MONK);
+    const encoded = encodeTemplateCode(WARRIOR_MONK);
     if (!encoded.ok) {
       throw new Error(encoded.problem);
     }
@@ -116,7 +118,7 @@ describe("GW1 template codes (#494)", () => {
       attributes: [],
       skillBar: [null, null, null, null, null, null, null, null],
     });
-    expect(encodeTemplate(character)).toEqual({ ok: true, code });
+    expect(encodeTemplateCode(character)).toEqual({ ok: true, code });
   });
 
   it("reads wider fields than it writes", () => {
@@ -167,7 +169,7 @@ describe("GW1 template codes (#494)", () => {
     const character = decoded(code);
     expect(character.name).toBe("Warrior build");
     expect(character.secondaryProfession).toBeUndefined();
-    expect(encodeTemplate(character)).toEqual({ ok: true, code });
+    expect(encodeTemplateCode(character)).toEqual({ ok: true, code });
   });
 
   it("imports skills it does not have as empty slots, and says which", () => {
@@ -208,7 +210,7 @@ describe("GW1 template codes (#494)", () => {
       attributes: [],
       skillBar: ["necromancer.blood-renewal-lite", null, null, null, null, null, null, null],
     };
-    expect(encodeTemplate(vital)).toEqual({
+    expect(encodeTemplateCode(vital)).toEqual({
       ok: false,
       problem: "Vital Transfer is not a GW1 skill, so this build has no GW1 code.",
     });

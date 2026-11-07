@@ -108,6 +108,9 @@ let
       which
       nodejs_24
       pnpm_10
+      # The build renders sound effects to MP3 (#2524), so every role that
+      # runs it needs ffmpeg, the same headless one devenv pins.
+      ffmpeg-headless
       tg
       hub
       board
@@ -480,7 +483,6 @@ let
       imagemagick
       inkscape
       sox
-      ffmpeg
     ];
     # Judges the pipeline, so it needs the same linters CI runs.
     cicd-engineer = with pkgs; [

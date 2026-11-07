@@ -323,3 +323,113 @@ describe("a Heroes' Ascent party's round (#1996)", () => {
     expect(lobby.matches).toHaveLength(0);
   });
 });
+
+describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
+  const lockOf = (who: Member) =>
+    who.connection.getSnapshot().ascentLock?.slots.map(({ claimedBy }) => claimedBy) ?? null;
+  /** `held`, then vacant seats to a side of Heroes' Ascent's 8. */
+  const seats = (...held: (string | null)[]) => [
+    ...held,
+    ...Array.from({ length: 8 - held.length }, () => null),
+  ];
+  const builds = (lobby: TestLobby) => lobby.lobby.teamPlan(HOST_KEY)?.map(({ build }) => build);
+
+  /** Every refusal `who` is sent from now on. */
+  function refusals(who: Member): string[] {
+    const got: string[] = [];
+    who.connection.onRefused((reason) => got.push(reason));
+    return got;
+  }
+
+  /**
+   * The host and Ann's run past its first map: queued at round 0, its
+   * Team Lobby over, then out of the queue again, as after a win.
+   */
+  async function won(): Promise<{
+    lobby: TestLobby;
+    party: Member[];
+    first: ReturnType<typeof builds>;
+  }> {
+    const run = await partyLobby(["Ann"], "heroes-ascent");
+    await queue(run.lobby, 0);
+    const first = builds(run.lobby);
+    run.lobby.host.connection.leaveQueue();
+    await settle();
+    return { ...run, first };
+  }
+
+  it("queues the next map at once, with the first map's Team Build and seats", async () => {
+    const { lobby, party, first } = await won();
+    const ids = party.map((who) => who.transport.selfId);
+    expect(party.map(lockOf)).toEqual([seats(...ids), seats(...ids)]);
+
+    // No vote and no claim: queued as soon as the host finds a match.
+    lobby.host.connection.findMatch(1);
+    await landed();
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+    expect(builds(lobby)).toEqual(first);
+    expect(lobby.lobby.teamPlan(HOST_KEY)?.[0]?.memberKey).toBe(HOST_KEY);
+    expect(party.map((who) => who.connection.getSnapshot().ascentRound)).toEqual([1, 1]);
+  });
+
+  it("opens the first map's Team Lobby again at round 0, and on a new mode", async () => {
+    const { lobby, party } = await won();
+    lobby.host.connection.findMatch(0);
+    await settle();
+    expect(lobby.host.connection.getSnapshot().teamLobby?.stage).toBe("vote");
+    expect(party.map(lockOf)).toEqual([null, null]);
+
+    const other = await won();
+    other.lobby.host.connection.selectMode("team-arena");
+    other.lobby.host.connection.selectMode("heroes-ascent");
+    await settle();
+    expect(other.party.map(lockOf)).toEqual([null, null]);
+    other.lobby.host.connection.findMatch(1);
+    await settle();
+    // Past round 0 with no run recorded: it picks again.
+    expect(other.lobby.host.connection.getSnapshot().teamLobby?.stage).toBe("vote");
+  });
+
+  it("gives a newcomer only the vacant seats, each with its locked build, and a bot the rest", async () => {
+    const { lobby, party, first } = await won();
+    const [host, ann] = party as [Member, Member];
+    // Ann leaves mid-run: her seat stays the run's, vacant.
+    await ann.connection.disconnect();
+    await settle();
+    expect(lockOf(host)).toEqual(seats(host.transport.selfId));
+    const bea = await lobby.join("Bea");
+    const cid = await lobby.join("Cid");
+    await settle();
+    const [hostRefused, beaRefused, cidRefused] = [host, bea, cid].map(refusals);
+
+    lobby.host.connection.findMatch(1);
+    await settle();
+    expect(host.connection.getSnapshot().teamLobby?.stage).toBe("claim");
+    // The run's members keep their seats; a newcomer takes no held one.
+    host.connection.claim(1);
+    host.connection.vote(null);
+    host.connection.chooseTeam(1);
+    bea.connection.claim(0);
+    await settle();
+    expect(hostRefused).toEqual(["ascent-locked", "ascent-locked", "ascent-locked"]);
+    expect(beaRefused).toEqual(["ascent-locked"]);
+    // Two newcomers race for Ann's seat: the first has it.
+    bea.connection.claim(1);
+    await settle();
+    cid.connection.claim(1);
+    await settle();
+    expect(cidRefused).toEqual(["slot-taken"]);
+    expect(host.connection.getSnapshot().teamLobby?.sides[0]?.claims).toEqual(
+      seats(host.transport.selfId, bea.transport.selfId),
+    );
+
+    lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS);
+    await landed();
+    expect(phaseOf(host)).toBe("queued");
+    // Same builds, seat by seat; Cid in the lowest vacant seat, bots in the rest.
+    expect(builds(lobby)).toEqual(first);
+    expect(lockOf(host)).toEqual(
+      seats(host.transport.selfId, bea.transport.selfId, cid.transport.selfId),
+    );
+  });
+});

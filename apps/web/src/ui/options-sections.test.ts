@@ -8,4 +8,8 @@ describe("OPTIONS_SECTIONS (#423)", () => {
     expect(ids[0]).toBe("player");
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  it("has no licences: they live in Help (#2559)", () => {
+    expect(OPTIONS_SECTIONS.map((section) => section.id)).not.toContain("licences");
+  });
 });

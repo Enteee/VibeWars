@@ -1,5 +1,6 @@
 import { SOURCE_URL } from "../source.js";
 import { h, overlayClose, screenBar } from "./kit.js";
+import { mountLicences } from "./licences-section.js";
 import {
   PLAYER_DOC_PAGES,
   playerDocTargets,
@@ -15,7 +16,12 @@ import {
  * exactly as it was. A link to another page switches page in place.
  *
  * The top bar says where you are, `VibeWars > Help > <Page>` (#1272).
+ * After the docs, the third-party licences have a page of their own
+ * (#2559), drawn by code rather than from markdown.
  */
+
+/** The licences page, after the docs: not a doc page, so not in `PLAYER_DOC_PAGES`. */
+const LICENCES_PAGE = { id: "licences", title: "Third-party licences" };
 
 /** The open overlay, closed by `closeHelpOverlay`. */
 let overlay:
@@ -53,7 +59,7 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
   panel.appendChild(body);
 
   const targets = playerDocTargets();
-  const entries = PLAYER_DOC_PAGES.map((page) => {
+  const entries = [...PLAYER_DOC_PAGES, LICENCES_PAGE].map((page) => {
     const entry = document.createElement("button");
     entry.type = "button";
     entry.className = "options-entry";
@@ -73,13 +79,20 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
   source.setAttribute("rel", "noopener");
   nav.appendChild(source);
   const show = (id: string): void => {
-    const page = PLAYER_DOC_PAGES.find((candidate) => candidate.id === id);
-    if (page === undefined) {
-      return;
+    if (id === LICENCES_PAGE.id) {
+      crumb.textContent = LICENCES_PAGE.title;
+      pane.dataset.page = LICENCES_PAGE.id;
+      pane.replaceChildren();
+      mountLicences(pane);
+    } else {
+      const page = PLAYER_DOC_PAGES.find((candidate) => candidate.id === id);
+      if (page === undefined) {
+        return;
+      }
+      crumb.textContent = page.title;
+      pane.dataset.page = page.id;
+      pane.replaceChildren(...renderPlayerDoc(page.markdown, targets).map(toDom));
     }
-    crumb.textContent = page.title;
-    pane.dataset.page = page.id;
-    pane.replaceChildren(...renderPlayerDoc(page.markdown, targets).map(toDom));
     backdrop.scrollTop = 0;
     for (const entry of entries) {
       const selected = entry.dataset.page === id;

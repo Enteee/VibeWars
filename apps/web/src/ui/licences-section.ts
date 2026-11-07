@@ -2,7 +2,6 @@ import gwSkilldataLicence from "@vibewars/game-data/gw-skilldata/LICENSE?raw";
 
 import { h } from "./kit.js";
 import { LICENCES_FILE, type BundledLicence } from "./licences-file.js";
-import type { OptionsSection } from "./options-sections.js";
 
 /** A third-party work the client ships, and the notice its licence asks for. */
 export interface ThirdPartyLicence {
@@ -107,40 +106,35 @@ async function fetchBundledLicences(): Promise<BundledLicence[] | undefined> {
 
 /**
  * Third-party licences (#1235, #1242): the hand-vendored works, then every
- * npm package in the bundle, each with its source and its full text.
+ * npm package in the bundle, each with its source and its full text, drawn
+ * into `container`: Help's page for them (#2559). The bundled list is
+ * fetched now, when the page shows.
  */
-export const licencesSection: OptionsSection = {
-  id: "licences",
-  title: "Third-party licences",
-  mount: (container) => {
-    const panel = h("div", "licences-section");
-    for (const entry of THIRD_PARTY_LICENCES) {
-      panel.appendChild(
-        licenceEntry(entry.name, `${entry.name} (${entry.spdx})`, entry.use, entry.url, entry.text),
+export function mountLicences(container: HTMLElement): void {
+  const panel = h("div", "licences-section");
+  for (const entry of THIRD_PARTY_LICENCES) {
+    panel.appendChild(
+      licenceEntry(entry.name, `${entry.name} (${entry.spdx})`, entry.use, entry.url, entry.text),
+    );
+  }
+  const bundled = h("div", "licences-bundled");
+  panel.appendChild(bundled);
+  container.appendChild(panel);
+  void fetchBundledLicences().then((entries) => {
+    if (entries === undefined) {
+      bundled.appendChild(h("p", "screen-subtitle", NO_BUNDLE_NOTE));
+      return;
+    }
+    for (const entry of entries) {
+      bundled.appendChild(
+        licenceEntry(
+          entry.name,
+          `${entry.name} ${entry.version} (${entry.spdx})`,
+          undefined,
+          entry.url,
+          entry.text,
+        ),
       );
     }
-    const bundled = h("div", "licences-bundled");
-    panel.appendChild(bundled);
-    container.appendChild(panel);
-    void fetchBundledLicences().then((entries) => {
-      if (entries === undefined) {
-        bundled.appendChild(h("p", "screen-subtitle", NO_BUNDLE_NOTE));
-        return;
-      }
-      for (const entry of entries) {
-        bundled.appendChild(
-          licenceEntry(
-            entry.name,
-            `${entry.name} ${entry.version} (${entry.spdx})`,
-            undefined,
-            entry.url,
-            entry.text,
-          ),
-        );
-      }
-    });
-    return () => {
-      panel.remove();
-    };
-  },
-};
+  });
+}

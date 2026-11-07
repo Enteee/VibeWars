@@ -8,6 +8,12 @@
     "declarationMap": false,
     "emitDeclarationOnly": false
   },
-  "include": ["src/**/*.ts", "plugins/**/*.ts", "vite.config.ts"],
+  "include": [
+    "src/**/*.ts",
+    "plugins/**/*.ts",
+    "vite.config.ts",
+    "vite.sfx.config.ts",
+    "sfx-render/**/*.ts"
+  ],
   "exclude": []
 }
