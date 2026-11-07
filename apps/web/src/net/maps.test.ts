@@ -72,7 +72,7 @@ describe("randomArenaMapPool", () => {
             ![
               "guild-hall-isle",
               "broken-tower",
-              "hill-courtyard",
+              "the-courtyard",
               "hall-of-heroes",
               "scarred-earth",
             ].includes(id),
@@ -118,7 +118,7 @@ describe("team sizes (#2108)", () => {
     }
     expect(modeMapIds()["heroes-ascent"]).toEqual([
       "broken-tower",
-      "hill-courtyard",
+      "the-courtyard",
       "scarred-earth",
     ]);
   });
@@ -172,7 +172,7 @@ describe("team sizes (#2108)", () => {
       "arena-long-hall",
       "guild-hall-isle",
       "broken-tower",
-      "hill-courtyard",
+      "the-courtyard",
       "hall-of-heroes",
       "scarred-earth",
     ]);
@@ -219,13 +219,13 @@ describe("the Heroes' Ascent progression (#1996)", () => {
     expect(ASCENT_PROGRESSION.map((id) => [id, hostMap(id)?.mode])).toEqual([
       ["broken-tower", "relic-run"],
       ["scarred-earth", "capture-points"],
-      ["hill-courtyard", "king-of-the-hill"],
+      ["the-courtyard", "king-of-the-hill"],
       ["hall-of-heroes", "king-of-the-hill"],
     ]);
     expect(ASCENT_PROGRESSION.map((_, round) => ascentMapName(round))).toEqual([
       "Broken Tower",
       "Scarred Earth",
-      "Hill Courtyard",
+      "The Courtyard",
       "Hall of Heroes",
     ]);
   });
@@ -248,12 +248,12 @@ describe("hostMap (#476)", () => {
     );
   });
 
-  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Broken Tower, King of the Hill on Hill Courtyard, Capture Points on Scarred Earth, Annihilation elsewhere", () => {
+  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Broken Tower, King of the Hill on The Courtyard, Capture Points on Scarred Earth, Annihilation elsewhere", () => {
     expect(hostMap("arena-pillars")?.mode).toBe("kill-count");
     expect(hostMap("arena-split")?.mode).toBe("priest-annihilation");
     expect(hostMap("guild-hall-isle")?.mode).toBe("guild-battle");
     expect(hostMap("broken-tower")?.mode).toBe("relic-run");
-    expect(hostMap("hill-courtyard")?.mode).toBe("king-of-the-hill");
+    expect(hostMap("the-courtyard")?.mode).toBe("king-of-the-hill");
     expect(hostMap("scarred-earth")?.mode).toBe("capture-points");
     expect(hostMap("scarred-earth")?.capturePoints).toHaveLength(5);
     for (const map of ARENA_MAPS.filter(
@@ -263,7 +263,7 @@ describe("hostMap (#476)", () => {
           "arena-split",
           "guild-hall-isle",
           "broken-tower",
-          "hill-courtyard",
+          "the-courtyard",
           "hall-of-heroes",
           "scarred-earth",
         ].includes(candidate.id),
@@ -308,16 +308,16 @@ describe("hostMap (#476)", () => {
     });
     expect(mapRelicField("broken-tower")).toEqual(hostMap("broken-tower")?.relicField);
     expect(hostMap("guild-hall-isle")?.relicField).toBeUndefined();
-    expect(hostMap("hill-courtyard")?.relicField).toBeUndefined();
+    expect(hostMap("the-courtyard")?.relicField).toBeUndefined();
     expect(mapRelicField("training-hall")).toBeUndefined();
   });
 
   it("carries a King of the Hill map's altar and ghost spawns, and none elsewhere (#1377)", () => {
-    expect(hostMap("hill-courtyard")?.hillField).toEqual({
-      altar: { x: 1000, y: 700 },
+    expect(hostMap("the-courtyard")?.hillField).toEqual({
+      altar: { x: 1500, y: 900 },
       spawns: [
-        { team: 0, position: { x: 200, y: 700 } },
-        { team: 1, position: { x: 1800, y: 700 } },
+        { team: 0, position: { x: 120, y: 900 } },
+        { team: 1, position: { x: 2880, y: 900 } },
       ],
     });
     expect(hostMap("broken-tower")?.hillField).toBeUndefined();
