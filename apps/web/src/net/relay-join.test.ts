@@ -363,11 +363,11 @@ describe("a relayed member's login, moved in place (#2245, #2529)", () => {
     await joiner.room.leave();
   });
 
-  it("does not move onto the same login or one no later", async () => {
+  it("does not move onto the same login, or while its holder has no later one", async () => {
     const joiner = relayedJoiner();
     await reachHost(joiner);
     joiner.fake.open(offer("a", EXPIRY));
-    joiner.fake.open(offer("b", EXPIRY - 60));
+    joiner.fake.open(offer("b", EXPIRY + 60), offer("a", EXPIRY));
     expect(joiner.swaps).toEqual([]);
     await joiner.room.leave();
   });
@@ -386,14 +386,45 @@ describe("a relayed member's login, moved in place (#2245, #2529)", () => {
     await joiner.room.leave();
   });
 
-  it("ranks a new relay from its own holder as any other: a live login for its relay keeps it", async () => {
+  it("follows its holder onto a new relay", async () => {
     const joiner = relayedJoiner();
     await reachHost(joiner);
-    joiner.fake.open(
-      { config: loginAt(OTHER_URL, EXPIRY + 60 * 60), holder: "a", name: "Member a" },
-      offer("c", EXPIRY),
-    );
+    const moved = loginAt(OTHER_URL, EXPIRY + 60 * 60);
+    joiner.fake.open(offer("c", EXPIRY + 2 * 60 * 60), {
+      config: moved,
+      holder: "a",
+      name: "Member a",
+    });
+    expect(joiner.swaps).toEqual([{ peerId: "host", turn: moved }]);
+    await joiner.room.leave();
+  });
+
+  it("never moves onto another holder's newer login for its relay while its holder has one", async () => {
+    const joiner = relayedJoiner();
+    const host = await reachHost(joiner);
+    // A seated member says it holds this relay and seals a bogus login
+    // for it, newer and ranked first: it must not end the connection.
+    joiner.fake.open(offer("m", EXPIRY + 60 * 60), offer("a", EXPIRY));
+    joiner.setIce("failed");
+    joiner.fake.open(offer("m", EXPIRY + 2 * 60 * 60), offer("a", EXPIRY));
     expect(joiner.swaps).toEqual([]);
+    // Nor does a drop rejoin through it: its holder's login still lives.
+    await host.leave();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(joiner.joins).toEqual([DIRECT, { turn: login(EXPIRY), attempt: 1 }]);
+    await joiner.room.leave();
+  });
+
+  it("moves onto the best-ranked live login once its holder leaves the list", async () => {
+    const joiner = relayedJoiner();
+    await reachHost(joiner);
+    joiner.fake.open(offer("m", EXPIRY + 60 * 60), offer("a", EXPIRY));
+    expect(joiner.swaps).toEqual([]);
+    joiner.fake.open(offer("m", EXPIRY + 60 * 60));
+    expect(joiner.swaps).toEqual([{ peerId: "host", turn: login(EXPIRY + 60 * 60) }]);
+    // Then that holder's logins alone move it.
+    joiner.fake.open(offer("a", EXPIRY + 3 * 60 * 60), offer("m", EXPIRY + 60 * 60));
+    expect(joiner.swaps).toHaveLength(1);
     await joiner.room.leave();
   });
 

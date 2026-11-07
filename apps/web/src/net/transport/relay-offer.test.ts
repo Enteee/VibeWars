@@ -1094,6 +1094,50 @@ describe("a joiner's relay offers (#2527)", () => {
     offers.close();
   });
 
+  it("once listed, keeps each holder's login, though another names the same relay host (#2529)", async () => {
+    const relay = fakeRelay();
+    let now = NOW;
+    const key = await newJoinerKey();
+    const offers = watchRelayOffers(
+      ROOM,
+      ROOM_ID,
+      JOINER,
+      deps(relay.openSocket, () => now),
+      joiner(key),
+    );
+    await settle();
+    offers.listed(["b", "c"]);
+    const seals = new Map<string, string>();
+    const holders = ["b", "c"].map((peerId) => {
+      const hold = holder(relay, peerId, () => now, {
+        urls: ["turns:relay.example:5349"],
+        secret: "x",
+      });
+      hold.onSeal((_to, seal) => seals.set(peerId, seal));
+      return hold;
+    });
+    holders[0]?.seated([{ peerId: JOINER, pub: key.pub }]);
+    await settle();
+    // "c" says it holds b's relay too, and mints later: b's login stays.
+    now += 1000;
+    holders[1]?.seated([{ peerId: JOINER, pub: key.pub }]);
+    await settle();
+    offers.fromMember("b", seals.get("b") ?? "");
+    await settle();
+    offers.fromMember("c", seals.get("c") ?? "");
+    await settle();
+    expect(
+      offers
+        .ranked()
+        .map((offer) => offer.holder)
+        .sort(),
+    ).toEqual(["b", "c"]);
+    for (const hold of holders) {
+      hold.close();
+    }
+    offers.close();
+  });
+
   it("stops asking, listening and keeping offers once closed", async () => {
     vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
     const relay = fakeRelay();

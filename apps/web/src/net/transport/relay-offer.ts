@@ -699,11 +699,15 @@ export function watchRelayOffers(
     ) {
       return false;
     }
-    // One relay host name fills one attempt: the newest seal naming it wins.
-    const name = firstHost(offer);
-    for (const [holder, other] of offers) {
-      if (holder !== offer.holder && firstHost(other) === name) {
-        offers.delete(holder);
+    // Before seating, one relay host name fills one attempt: the newest
+    // seal naming it wins. Once listed, a holder's offer is its own: a
+    // member naming another's relay host must not evict its login.
+    if (!isListed()) {
+      const name = firstHost(offer);
+      for (const [holder, other] of offers) {
+        if (holder !== offer.holder && firstHost(other) === name) {
+          offers.delete(holder);
+        }
       }
     }
     offers.set(offer.holder, offer);
