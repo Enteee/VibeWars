@@ -24,7 +24,7 @@ describe("position (#2545)", () => {
     for (const x of [spot.x, spot.x - POSITION_SLACK / 2]) {
       expect(position.decide(ruleFor(ranged(x), "e", { targetId: "foe" }))).toBeUndefined();
     }
-    // Nearer than its spot, it does not back off: that is `kite`'s.
+    // Nearer than its spot, it does not back off: it stands and fights.
     expect(
       position.decide(ruleFor(ranged(spot.x + 100), "e", { targetId: "foe" })),
     ).toBeUndefined();

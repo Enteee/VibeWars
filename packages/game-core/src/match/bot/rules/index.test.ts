@@ -26,7 +26,6 @@ describe("BOT_RULES (#2042)", () => {
       "heal",
       "way-out",
       "ward-touch",
-      "kite",
       "cleanse",
       "raise",
       "renew-spirit",

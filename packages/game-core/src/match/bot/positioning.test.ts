@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { PlayerBuild } from "../../build.js";
 import { distance, vec2, type Vec2 } from "../../vec2.js";
 import type { MatchSimulation } from "../simulation.js";
-import { KITE_DISTANCE } from "./rules/shared.js";
+import { ELBOW_DISTANCE } from "./rules/shared.js";
 import { DT, ELEMENTALIST, MONK, RANGER, WARRIOR, fighter, match } from "./rules/test-support.js";
 
 const RANGED = ["e0", "r0", "e1", "r1"];
@@ -45,7 +45,7 @@ function play(lead: PlayerBuild, seed = "positions") {
       const self = sim.get(id);
       if (self === undefined) throw new Error(`no ${id}`);
       const pressed = fighters(sim, 1 - self.combatant.team).some(
-        (foe) => distance(foe.position, self.position) <= KITE_DISTANCE,
+        (foe) => distance(foe.position, self.position) <= ELBOW_DISTANCE,
       );
       if (!pressed) clear.set(id, (clear.get(id) ?? 0) + 1);
     }

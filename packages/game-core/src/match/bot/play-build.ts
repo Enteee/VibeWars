@@ -11,10 +11,15 @@ import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { botRole, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
-import { KITE_REST_SECONDS, KITE_SECONDS } from "./rules/kite.js";
 import { HURT_FRACTION, NOTHING, healthFraction, skillsOf } from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
 import { sacrificesTooMuch } from "./skill-intent.js";
+
+/**
+ * Below this share of its health a foe in reach is the team's target
+ * (#2545): one about to fall is worth more than one at full health.
+ */
+const FINISH_FRACTION = 0.5;
 
 /**
  * `play-build` (#1189): a participant playing its own skill bar the way a
@@ -126,7 +131,6 @@ function paced(
   const holding = { ...NOTHING, targetId: self.targetId };
   cursor.waitSeconds = Math.max(0, cursor.waitSeconds - context.dt);
   cursor.upkeepDropSeconds = Math.max(0, cursor.upkeepDropSeconds - context.dt);
-  cursor.kiteSeconds = Math.max(0, cursor.kiteSeconds - context.dt);
   // Nothing new while what it last asked for is still going: the retry
   // bound, so it never presses twice for one skill.
   if (cast.isCasting || cast.inAftercast || self.pendingSkill !== undefined) {
@@ -197,18 +201,13 @@ function think(
       return check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight";
     },
     mayEndUpkeep: cursor.upkeepDropSeconds <= 0,
-    mayKite: cursor.kiteSeconds <= 0 || cursor.kiteSeconds > KITE_REST_SECONDS,
     role,
-    teamCentroid: context.teamCentroid,
     foeCentroid: context.foeCentroid,
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
-  for (const { name, decide } of BOT_RULES) {
+  for (const { decide } of BOT_RULES) {
     const intent = decide(rule);
     if (intent !== undefined) {
-      if (name === "kite" && cursor.kiteSeconds <= 0) {
-        cursor.kiteSeconds = KITE_SECONDS + KITE_REST_SECONDS;
-      }
       if (intent.endUpkeep !== undefined) {
         cursor.upkeepDropSeconds = UPKEEP_DROP_SECONDS;
       }
@@ -219,10 +218,12 @@ function think(
 }
 
 /**
- * The foe the team called (#1193), while it is alive; else the foe the
- * team's bots already target, if one is alive; else the living foe within
- * spell range with the lowest health fraction, ties to the nearer, then
- * simulation order. A creature only while no other foe is in range.
+ * The foe the team called (#1193), while it is alive; else the weakest
+ * foe in spell range once it is below `FINISH_FRACTION` (#2545), so the
+ * team commits to the kill; else the foe the team's bots already target,
+ * if one is alive; else the living foe within spell range with the
+ * lowest health fraction, ties to the nearer, then simulation order. A
+ * creature only while no other foe is in range.
  */
 function teamTarget(context: BehaviourContext, foes: readonly Participant[]): string | undefined {
   const called = foes.find((foe) => foe.id === context.calledTargetId);
@@ -232,6 +233,10 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
   const self = context.self;
   const inRange = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
   const eligible = fightable(inRange);
+  const dying = weakest(self, inRange);
+  if (dying !== undefined && healthFraction(dying) < FINISH_FRACTION) {
+    return dying.id;
+  }
   for (const ally of context.participants) {
     if (
       ally.combatant.team !== self.combatant.team ||

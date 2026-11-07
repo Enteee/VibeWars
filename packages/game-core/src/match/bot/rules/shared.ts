@@ -1,3 +1,4 @@
+import { RANGE_MELEE } from "../../../distances.js";
 import { getSkill } from "../../../skills/catalog.js";
 import { raisedMaxHealth } from "../../../skills/tick.js";
 import type { Skill } from "../../../skills/types.js";
@@ -77,8 +78,23 @@ export function spiritUp(context: BehaviourContext, self: Participant, skill: Sk
 /** A ranged bot or healer this far from its spot walks back to it (#2545). */
 export const POSITION_SLACK = 40;
 
-/** A ranged bot or healer with a foe this close steps away (#2545). */
-export const KITE_DISTANCE = 100;
+/** A ranged bot or healer with a melee foe this close stands and fights it (#2545). */
+export const ELBOW_DISTANCE = 100;
+
+/**
+ * A foe at `self`'s elbow, one to stand and fight (#2545): one with a
+ * melee weapon within `ELBOW_DISTANCE`, on `self`: targeting or
+ * attacking it. A ranged foe hits as hard from afar, one on someone else
+ * is no threat to it, and a spirit never walks.
+ */
+export function atElbow(self: Participant, foe: Participant): boolean {
+  return (
+    foe.creature?.kind !== "spirit" &&
+    (foe.targetId === self.id || foe.combatant.attack?.targetId === self.id) &&
+    foe.combatant.equipment.mainHand.weapon.range <= RANGE_MELEE &&
+    distance(foe.position, self.position) <= ELBOW_DISTANCE
+  );
+}
 
 /** How finely `reachable` tries the line back from a spot to the bot. */
 const REACHABLE_STEPS = 8;

@@ -109,7 +109,6 @@ export function contextFor(
     sees: () => true,
     seesBetween: () => true,
     walkable: () => true,
-    teamCentroid: centroidOf(participants, (other) => other.combatant.team === team),
     foeCentroid: centroidOf(participants, (other) => other.combatant.team !== team),
     ...extra,
   };
@@ -155,9 +154,7 @@ export function ruleFor(
     mayUse: () => true,
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
     mayEndUpkeep: true,
-    mayKite: true,
     role: botRole(bar, self.combatant.equipment.mainHand.weapon.range),
-    teamCentroid: view.teamCentroid,
     foeCentroid: view.foeCentroid,
     ...extra,
   };

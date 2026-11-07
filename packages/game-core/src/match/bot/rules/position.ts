@@ -3,7 +3,8 @@ import { add, distance, normalize, scale, sub, ZERO, type Vec2 } from "../../../
 import type { Participant } from "../../simulation.js";
 import { botUses } from "../skill-intent.js";
 import {
-  KITE_DISTANCE,
+  atElbow,
+  ELBOW_DISTANCE,
   NOTHING,
   POSITION_SLACK,
   healthFraction,
@@ -33,7 +34,7 @@ const position: BotRule = {
   name: "position",
   decide: (rule) => {
     const { context, self, foes } = rule;
-    // A foe at its elbow is `kite`'s, and resting from a kite it fights.
+    // A foe at its elbow: at equal speed, backing off would never end.
     if (foes.some((foe) => atElbow(self, foe))) {
       return undefined;
     }
@@ -50,13 +51,9 @@ const position: BotRule = {
       return undefined;
     }
     const moveTo = reachable(context, spot.point);
-    return moveTo === undefined ? undefined : { ...NOTHING, moveTo };
+    return moveTo === undefined ? undefined : { ...NOTHING, targetId: rule.targetId, moveTo };
   },
 };
-
-function atElbow(self: Participant, foe: Participant): boolean {
-  return foe.creature?.kind !== "spirit" && distance(foe.position, self.position) <= KITE_DISTANCE;
-}
 
 interface Spot {
   readonly point: Vec2;
@@ -65,39 +62,45 @@ interface Spot {
 }
 
 /**
- * A ranged bot's spot: on the line from its target back to it,
- * `HOLD_REACH` of its reach out. Never one farther from its target than
- * it stands: a target on its heels stays there at equal speed, so it
- * stands and fights, and only `kite` steps away.
+ * A ranged bot's spot, once its target is out of its reach: on the line
+ * from its target back to it, `HOLD_REACH` of its reach out. Never one
+ * farther from its target than it stands: a target on its heels stays
+ * there at equal speed, so it stands and fights.
  */
 function holdSpot({ self, bar, foes, targetId }: RuleContext): Spot | undefined {
   const target = foes.find((foe) => foe.id === targetId);
   if (target === undefined) {
     return undefined;
   }
-  const hold = HOLD_REACH * reach(self, bar);
+  const shortest = reach(self, bar);
   const back = normalize(sub(self.position, target.position));
-  if (back === ZERO || distance(self.position, target.position) < hold) {
+  if (back === ZERO || distance(self.position, target.position) <= shortest) {
     return undefined;
   }
+  const hold = HOLD_REACH * shortest;
   return { point: add(target.position, scale(back, hold)), watched: target.position };
 }
 
-/** The longest range among its offence skills, else its weapon's. */
+/**
+ * The shortest range among its offence skills, so every one of them
+ * lands from where it holds; none: its weapon's.
+ */
 function reach(self: Participant, bar: RuleContext["bar"]): number {
-  let longest = 0;
+  let shortest = Infinity;
   for (const skill of bar) {
-    if (botUses(skill).includes("offence")) {
-      longest = Math.max(longest, skill.range);
+    if (skill.range > 0 && botUses(skill).includes("offence")) {
+      shortest = Math.min(shortest, skill.range);
     }
   }
-  return longest > 0 ? longest : self.combatant.equipment.mainHand.weapon.range;
+  return shortest < Infinity ? shortest : self.combatant.equipment.mainHand.weapon.range;
 }
 
 /**
  * A healer's spot: behind the ally with the lowest health fraction (all
  * whole, the ally nearest the foes), on the far side from the foes'
  * centroid, as close as keeps it `HEALER_CLEARANCE` off the nearest foe.
+ * Where it stands already does while that ally is within its reach and
+ * no foe within `ELBOW_DISTANCE`: every step is a swing or a cast lost.
  */
 function coverSpot({ self, allies, foes, foeCentroid }: RuleContext): Spot | undefined {
   if (foeCentroid === undefined || foes.length === 0) {
@@ -108,6 +111,13 @@ function coverSpot({ self, allies, foes, foeCentroid }: RuleContext): Spot | und
     foeCentroid,
   );
   if (ward === undefined) {
+    return undefined;
+  }
+  const near = nearestTo(self.position, foes);
+  if (
+    distance(ward.position, self.position) <= HEALER_REACH &&
+    (near === undefined || distance(near.position, self.position) > ELBOW_DISTANCE)
+  ) {
     return undefined;
   }
   const back = normalize(sub(ward.position, foeCentroid));

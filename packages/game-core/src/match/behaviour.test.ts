@@ -327,7 +327,6 @@ describe("auto-attack", () => {
         sees: () => true,
         seesBetween: () => true,
         walkable: () => true,
-        teamCentroid: undefined,
         foeCentroid: undefined,
       },
     );
@@ -390,7 +389,6 @@ describe("follow-and-attack (#467)", () => {
       sees: () => true,
       seesBetween: () => true,
       walkable: () => true,
-      teamCentroid: undefined,
       foeCentroid: undefined,
     });
   }

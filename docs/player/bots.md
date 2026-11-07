@@ -26,9 +26,9 @@ A bot plays the role its build gives it. One wielding a melee weapon is
 **frontline**: it closes in and attacks its target. One with two or more
 heals or protections it can cast on an ally is a **healer**: it stands
 behind whichever ally is hurt most, away from the foes. Every other bot is
-**ranged**: it keeps near the edge of its range, and steps back from a
-foe who comes too close, for a couple of seconds at a time, so a chase
-ends in a fight rather than going on forever.
+**ranged**: it keeps where every one of its attacks reaches, and stands
+and fights a foe who comes too close. A team turns on any foe in reach
+who drops below half health, to finish them.
 
 ## Random Arena
 

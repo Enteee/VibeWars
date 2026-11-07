@@ -23,12 +23,8 @@ export interface RuleContext {
   readonly use: (skill: Skill, targetId: string | undefined) => BehaviourIntent;
   /** Whether its spacing lets it end a maintained enchantment now (#2492). */
   readonly mayEndUpkeep: boolean;
-  /** Whether its last kite's rest is over, or it is still in that kite (#2545). */
-  readonly mayKite: boolean;
   /** Its role (#2545); `undefined` for a guard, which keeps to its post. */
   readonly role: BotRole | undefined;
-  /** Where its team's living players stand on average (#2545). */
-  readonly teamCentroid: Vec2 | undefined;
   /** Where its foes' living players stand on average (#2545). */
   readonly foeCentroid: Vec2 | undefined;
 }

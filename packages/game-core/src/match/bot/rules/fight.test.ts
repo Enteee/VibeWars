@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { NO_RANKS } from "../../../skills/status.js";
-import { distance, vec2, type Vec2 } from "../../../vec2.js";
-import { createCursor } from "../../behaviour.js";
+import { vec2, type Vec2 } from "../../../vec2.js";
 import type { MatchSimulation } from "../../simulation.js";
-import { KITE_REST_SECONDS } from "./kite.js";
-import { KITE_DISTANCE } from "./shared.js";
 import {
   BOT,
   DT,
@@ -19,7 +16,7 @@ import {
 } from "./test-support.js";
 
 describe("play-build fights (#1189, #1193, #1965)", () => {
-  it("steps away from a melee foe at its elbow and shoots it, or by a wall stands and shoots, however fast it thinks (#2545)", () => {
+  it("stands and fights a melee foe at its elbow with the bow, by a wall or in the open, however fast it thinks", () => {
     // By the field's left edge, and in the middle of it.
     for (const x of [10, 800]) {
       for (const thinkSeconds of [0, 0.25]) {
@@ -33,8 +30,7 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
         ]);
         let hits = 0;
         let stood: Vec2 | undefined;
-        // Its step away (#2545) costs it half a second of shooting.
-        for (let t = 0; t < 12; t += DT) {
+        for (let t = 0; t < 10; t += DT) {
           for (const entry of sim.step(DT).log) {
             if (entry.sourceId === "ranger" && entry.weaponId !== undefined) {
               hits += entry.events.filter(
@@ -42,18 +38,11 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
               ).length;
             }
           }
-          // Where it stands once the field's edge has placed it.
+          // Where it stands once the field's edge has placed it: it never leaves.
           stood ??= { ...(sim.get("ranger")?.position ?? vec2(Number.NaN, Number.NaN)) };
         }
-        const label = `x ${String(x)}, thinkSeconds ${String(thinkSeconds)}`;
-        expect(hits, label).toBeGreaterThan(3);
-        const ranger = sim.get("ranger")?.position ?? vec2(Number.NaN, Number.NaN);
-        if (x === 10) {
-          // Cornered: it never leaves.
-          expect(ranger, label).toEqual(stood);
-        } else {
-          expect(distance(ranger, vec2(x + 40, 400)), label).toBeGreaterThan(KITE_DISTANCE);
-        }
+        expect(hits, `x ${String(x)}, thinkSeconds ${String(thinkSeconds)}`).toBeGreaterThan(3);
+        expect(sim.get("ranger")?.position).toEqual(stood);
       }
     }
   });
@@ -71,6 +60,28 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
     sim.step(DT);
     expect(sim.get("a")?.targetId).toBe("hurt");
     expect(sim.get("b")?.targetId).toBe("hurt");
+  });
+
+  it("leaves the team's target for a foe in reach below half its health, to finish it (#2545)", () => {
+    const at = (fraction: number) => {
+      const sim = match([
+        fighter("a", 0, ELEMENTALIST, vec2(400, 400)),
+        fighter("b", 0, ELEMENTALIST, vec2(400, 460)),
+        fighter("held", 1, WARRIOR, vec2(700, 400), { behaviour: undefined }),
+        fighter("hurt", 1, WARRIOR, vec2(700, 600), {
+          behaviour: undefined,
+          startHealthFraction: fraction,
+        }),
+      ]);
+      const a = sim.get("a");
+      if (a !== undefined) {
+        a.targetId = "held";
+      }
+      sim.step(DT);
+      return [sim.get("a")?.targetId, sim.get("b")?.targetId];
+    };
+    expect(at(0.45)).toEqual(["hurt", "hurt"]);
+    expect(at(0.55)).toEqual(["held", "held"]);
   });
 
   it("fights the foe its team called over the most hurt one, and drops the call when it dies (#1193)", () => {
@@ -118,8 +129,7 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
       if (foe !== undefined && attacking) {
         foe.combatant.attack = { targetId: "m", swingElapsed: 0.1, unreachableSeconds: 0 };
       }
-      // Resting from a kite (#2545): a foe at its elbow is one to fight.
-      return askBot(sim, "m", { ...createCursor(), kiteSeconds: KITE_REST_SECONDS });
+      return askBot(sim, "m");
     };
     expect(at([MIDNIGHT], 430, true)).toMatchObject({ useSkillId: MIDNIGHT, targetId: "foe" });
     expect(at([MIDNIGHT], 430, false).useSkillId).toBeUndefined();
