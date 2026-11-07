@@ -19,7 +19,7 @@ describe("runner-tail follow", () => {
     fs.appendFileSync(file, "new1\nhal");
     f.poll();
     expect(out).toEqual(["old", "new1"]);
-    fs.appendFileSync(file, "f ghs_abcdefghijklmnopqrstuvwxyz0123456789\n");
+    fs.appendFileSync(file, `f ${["ghs", "abcdefghijklmnopqrstuvwxyz0123456789"].join("_")}\n`);
     f.poll();
     expect(out.at(-1)).toBe("half [redacted]");
     fs.renameSync(file, `${file}.1`);

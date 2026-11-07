@@ -94,8 +94,8 @@ describe("formatRunnerLogs", () => {
   it("redacts secrets in the final text and says when there is nothing", () => {
     const text = formatRunnerLogs({
       supervisor: [
-        "token ghs_abcdefghijklmnopqrstuvwxyz0123456789",
-        "key sk-ant-api03-abcdefghijklmnop",
+        `token ${["ghs", "abcdefghijklmnopqrstuvwxyz0123456789"].join("_")}`,
+        `key ${["sk", "ant", "api03", "abcdefghijklmnop"].join("-")}`,
       ],
       index: [],
       now: 0,
