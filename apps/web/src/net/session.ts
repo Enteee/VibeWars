@@ -7,7 +7,6 @@ import {
   isLobbyCode,
   isTeamQueueMode,
   type JsonValue,
-  type LobbyPhase,
   type LobbyRefusal,
   type LobbyTeamSize,
   type PeerHello,
@@ -32,7 +31,6 @@ import {
   type Guild,
   type LobbyClosedReason,
   type LobbyConnection,
-  type LobbyRelaySource,
   type MatchPlan,
   type MatchStarting,
   type MatchToWatch,
@@ -234,30 +232,20 @@ function startMatch(plan: MatchPlan) {
 }
 
 /**
- * The login a lobby host tells each seated member (#2248, #2527): minted
- * for it from what `hold` shares now, or none for a lobby that never
- * shares.
- */
-export function lobbyRelaySource(hold: RelayHold | undefined): LobbyRelaySource {
-  return {
-    current: (peerId) => hold?.loginFor(peerId) ?? null,
-    onChange: (handler) => hold?.onChange(handler) ?? (() => undefined),
-  };
-}
-
-/**
- * A member's relay in its lobby (#2527): it seals for each joiner the host
- * admits, and the host hears whether it holds one, until the lobby closes.
+ * A member's relay in its lobby (#2527, #2529): it seals for each joiner
+ * the host admits and for each seated member the host lists, through the
+ * host, and the host hears whether it holds one, until the lobby closes.
  */
 export function holdInLobby(lobby: LobbyConnection, hold: RelayHold | undefined): void {
   if (hold === undefined) {
     return;
   }
-  const seat = (): void => {
-    hold.seated(new Set(lobby.getSnapshot().players.map((p) => p.sessionId)));
-  };
-  lobby.onChange(seat);
-  seat();
+  const stopSeated = lobby.onRelayOffers(({ members }) => {
+    hold.seated(members);
+  });
+  const stopSeals = hold.onSeal((to, seal) => {
+    lobby.sendRelayCred(to, seal);
+  });
   const stopAdmits = lobby.onRelayAdmit((admit) => {
     hold.admit(admit);
   });
@@ -272,6 +260,8 @@ export function holdInLobby(lobby: LobbyConnection, hold: RelayHold | undefined)
   const stopHolding = hold.onChange(tell);
   tell();
   lobby.onClosed(() => {
+    stopSeated();
+    stopSeals();
     stopAdmits();
     stopHolding();
     hold.close();
@@ -337,7 +327,6 @@ export async function hostLobby(
     startMatch,
     teamLobby,
     random: lobbyRandom(import.meta.env.VITE_VIBEWARS_LOBBY_SEED),
-    relay: lobbyRelaySource(hold),
     ...(queued === undefined
       ? // Its party queues for a team mode under a group its room id names (#1766).
         { matchmaking: { roomId: lobbyRoom.roomId, verifyTicketSig, newNonce: newQueueNonce } }
@@ -393,6 +382,8 @@ export async function hostLobby(
       // On its local link, inside the host's key gate.
       proofKey: null,
       name,
+      // The host reaches itself without a relay.
+      relayPub: null,
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
@@ -442,25 +433,27 @@ export async function joinLobbyByCode(
   const guest = joinGuestRoom(lobbyRoom);
   const room = guest.transport;
   try {
+    // Every `lobby-join` carries it, so holders can seal this page logins (#2529).
+    const relayPub = await guest.relayPub();
     joined = await joinLobby({
       transport: room,
       code,
       proofKey: lobbyRoom.proofKey,
       name,
+      relayPub,
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
     });
     guest.reached(joined.getSnapshot().hostId);
-    joined.onRelayLogin((login) => {
-      guest.fromHost(login);
+    joined.onRelayOffers(({ holders }) => {
+      guest.listed(holders);
     });
-    const stopRefreshing = refreshRelayInLobby(joined, () => {
-      guest.refreshRelay(Date.now());
+    joined.onRelayCred(({ from, seal }) => {
+      guest.fromMember(from, seal);
     });
     joined.onClosed(() => {
       window.removeEventListener("pagehide", onPageHide);
-      stopRefreshing();
     });
     // Any member's relay is offered to the lobby's joiners, not only the host's (#2527).
     holdInLobby(
@@ -473,46 +466,6 @@ export async function joinLobbyByCode(
     await room.leave();
     throw error;
   }
-}
-
-/** How often a guest in its lobby, between maps, checks its relay login (#2245). */
-export const RELAY_REFRESH_CHECK_MS = 60_000;
-
-/**
- * Keep a relayed guest's login fresh (#2245): `refresh` on each return
- * from a map to `lobby`, and every `RELAY_REFRESH_CHECK_MS` while in it,
- * so an idle guest is covered too. Never while a map starts or runs. The
- * returned function stops it.
- */
-export function refreshRelayInLobby(
-  lobby: {
-    getSnapshot(): { readonly phase: LobbyPhase };
-    onChange(handler: () => void): void;
-  },
-  refresh: () => void,
-): () => void {
-  const inMap = (): boolean => {
-    const { phase } = lobby.getSnapshot();
-    return phase === "starting" || phase === "in-match";
-  };
-  let wasInMap = inMap();
-  let stopped = false;
-  const timer = setInterval(() => {
-    if (!inMap()) {
-      refresh();
-    }
-  }, RELAY_REFRESH_CHECK_MS);
-  lobby.onChange(() => {
-    const now = inMap();
-    if (wasInMap && !now && !stopped) {
-      refresh();
-    }
-    wasInMap = now;
-  });
-  return () => {
-    stopped = true;
-    clearInterval(timer);
-  };
 }
 
 /** A queued lobby's countdown, from everyone seated to the match: the versus splash's time. */

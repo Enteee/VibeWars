@@ -1995,6 +1995,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
     guildCape: null,
     admission: null,
     rejoinToken,
+    relayPub: null,
   });
 
   /** The nonce `got` was challenged with. */

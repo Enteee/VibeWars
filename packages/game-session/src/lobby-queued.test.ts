@@ -384,6 +384,7 @@ describe("a queued lobby", () => {
         guildTag: null,
         admission: null,
         rejoinToken: null,
+        relayPub: null,
       },
       "host",
     );
