@@ -170,6 +170,12 @@ export const POSITION_SLACK = 40;
 /** A ranged bot or healer with a melee foe this close stands and fights it (#2545). */
 export const ELBOW_DISTANCE = 100;
 
+/** A healer looks after another ally only once that one is this much more hurt than its own (#2615). */
+export const WARD_SWITCH = 0.15;
+
+/** A healer walks to a fresh spot only once it is this far from the one it keeps (#2615). */
+export const RESPOT_DISTANCE = 2 * POSITION_SLACK;
+
 /**
  * A foe at `self`'s elbow, one to stand and fight (#2545): one with a
  * melee weapon within `ELBOW_DISTANCE`, on `self`: targeting or

@@ -42,7 +42,7 @@ const GAMBLE_RECHARGING = 2;
 const fight: BotRule = {
   order: 100,
   name: "fight",
-  decide: ({ context, self, bar, foes, targetId, nearestFirst, mayUse, use }) => {
+  decide: ({ context, self, bar, foes, allies, role, targetId, nearestFirst, mayUse, use }) => {
     if (targetId === undefined) {
       return undefined;
     }
@@ -74,6 +74,9 @@ const fight: BotRule = {
       distance(target.position, self.position) <= RANGE_MELEE &&
       !bar.some((held) => held.attack !== undefined || botUses(held).includes("boost"));
     const holding = holdsGround(self.combatant);
+    // A healer with an ally to cover fights from the post `position` keeps
+    // it on, never walking in: a step in, a step back is the dance of #2615.
+    const covering = role === "healer" && allies.some((ally) => ally.id !== self.id);
     const surroundings: Surroundings = new Map(context.participants.map((body) => [body.id, body]));
     const worthUsing = (held: Skill): boolean => {
       const on = held.target === "self" ? self.combatant : foe;
@@ -127,7 +130,7 @@ const fight: BotRule = {
         (!sendsPet(held) || petFar) &&
         (hasStance || !mirrorsStance(held)) &&
         mayUse(held, castOn(held)) &&
-        (!holding || context.check(held.id, castOn(held)).ok),
+        (!(holding || covering) || context.check(held.id, castOn(held)).ok),
     );
     // A trap goes down under Trapper's Focus or Speed when the bar has one
     // not yet up (#1966).
@@ -145,10 +148,12 @@ const fight: BotRule = {
     if (skill !== undefined) {
       return use(skill, castOn(skill));
     }
-    // The weapon, from where it stands while a step would end what it holds.
+    // The weapon, from where it stands while a step would end what it holds
+    // or take a healer off its post.
+    const reach = holding ? RANGE_MELEE : self.combatant.equipment.mainHand.weapon.range;
     if (
-      holding &&
-      (target === undefined || distance(self.position, target.position) > RANGE_MELEE)
+      (holding || covering) &&
+      (target === undefined || distance(self.position, target.position) > reach)
     ) {
       return { ...NOTHING, targetId };
     }
