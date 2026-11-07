@@ -22,7 +22,7 @@ describe("Options > Language (#2648)", () => {
   const stored = new Map<string, string>();
   beforeEach(() => {
     stored.clear();
-    vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
+    vi.stubGlobal("document", { createElement: () => new FakeElement() });
     vi.stubGlobal("localStorage", {
       getItem: (key: string) => stored.get(key) ?? null,
       setItem: (key: string, value: string) => stored.set(key, value),
@@ -34,7 +34,7 @@ describe("Options > Language (#2648)", () => {
   });
 
   const mount = (reload: () => void): FakeElement => {
-    const container = new FakeElement("div");
+    const container = new FakeElement();
     languageSection(["en", "de", "ja"], reload).mount(container as unknown as HTMLElement);
     const [select] = container.all("language-select");
     if (select === undefined) {
