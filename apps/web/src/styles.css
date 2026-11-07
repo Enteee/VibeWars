@@ -1699,11 +1699,6 @@ body {
   gap: 0.8rem;
 }
 
-.rail-goal {
-  margin: 0;
-  color: var(--ink-dim);
-}
-
 /* The Matches page (#2532): one row a record, newest first. */
 .matches-note {
   margin: 0;

@@ -51,13 +51,6 @@ export const NO_CHARACTER_FOR_QUEUE = "Make a character first.";
 /** Why it is, while anyone else is in the lobby (#1526): a party queues in card 4. */
 export const PARTY_CANNOT_QUEUE = "Leave the party, or play a Hosted Game";
 
-/** What Random Arena is for, under its heading. */
-export const RANDOM_ARENA_GOAL =
-  "Pick a character, then queue: random allies and foes from the server.";
-
-/** What Character Builder is for, under its heading. */
-export const CHARACTER_BUILDER_GOAL = "Make, edit and reroll the characters you play.";
-
 const CHARACTER_STORAGE_KEY = `${STORAGE_NAMESPACE}.activeCharacterId`;
 
 /**
@@ -234,7 +227,7 @@ export function renderRandomArena(
     }
   });
   screenBar({ crumbs: ["VibeWars"], actions: [ready], join: true });
-  const body = railScreen(root, "random-arena", RANDOM_ARENA_GOAL, callbacks.onSwitch);
+  const body = railScreen(root, "random-arena", callbacks.onSwitch);
 
   // Why the last try failed, under the bar it was tried from.
   if (connectionNotice !== undefined) {
@@ -313,7 +306,7 @@ export function renderCharacterBuilder(
   // card's Reroll takes the focus back.
   const rerolled = document.activeElement?.classList.contains("roster-reroll") === true;
   screenBar({ crumbs: ["VibeWars"], actions: [], join: true });
-  const body = railScreen(root, "characters", CHARACTER_BUILDER_GOAL, callbacks.onSwitch);
+  const body = railScreen(root, "characters", callbacks.onSwitch);
 
   if (connectionNotice !== undefined) {
     body.appendChild(h("div", "screen-problem screen-connection-problem", connectionNotice));

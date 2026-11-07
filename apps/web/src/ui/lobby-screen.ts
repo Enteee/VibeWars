@@ -175,12 +175,6 @@ export function modeLine(map: LobbyMap): string {
   return MODE_LINES[map.mode];
 }
 
-/** The modes a draw from `maps` can play, in a line: "Annihilation or Kill Count: drawn at the start". */
-export function drawnModesLine(maps: readonly LobbyMap[]): string {
-  const names = new Set(maps.map((map) => MODE_LINES[map.mode].split(":")[0] ?? map.mode));
-  return `${new Intl.ListFormat("en", { type: "disjunction" }).format(names)}: drawn at the start`;
-}
-
 /** The arena as the picker names it: its name, then its size class, e.g. "Long Hall (small)". */
 export function mapLabel(map: LobbyMap): string {
   return `${map.name} (${map.size})`;
@@ -283,13 +277,8 @@ export function lobbyPanel(
   // The mode follows from the map (#476). It is the only place a player
   // learns it before Start, so it gets a row of its own under the bar
   // rather than being shortened in it (#1272). Team Arena's map is a
-  // placeholder until its draw, so it names what the draw can give (#1994).
-  if (snapshot.mode === "team-arena") {
-    // Drawn among the maps made for its size (#2107).
-    if (sized.length > 0) {
-      panel.appendChild(h("div", "lobby-mode", drawnModesLine(sized)));
-    }
-  } else if (current !== undefined) {
+  // placeholder until its draw, so it has no line until then (#2642).
+  if (snapshot.mode !== "team-arena" && current !== undefined) {
     panel.appendChild(h("div", "lobby-mode", modeLine(current)));
   }
 
