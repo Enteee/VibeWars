@@ -7,6 +7,7 @@ import dodge from "./dodge.js";
 import dropUpkeep from "./drop-upkeep.js";
 import energy from "./energy.js";
 import fetchRelic from "./fetch-relic.js";
+import flee from "./flee.js";
 import fight from "./fight.js";
 import heal from "./heal.js";
 import interrupt from "./interrupt.js";
@@ -16,6 +17,7 @@ import minionCare from "./minion-care.js";
 import position from "./position.js";
 import raise from "./raise.js";
 import renewSpirit from "./renew-spirit.js";
+import rest from "./rest.js";
 import rider from "./rider.js";
 import type { BotRule } from "./types.js";
 import wardTouch from "./ward-touch.js";
@@ -38,6 +40,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   dropUpkeep,
   energy,
   fetchRelic,
+  flee,
   fight,
   heal,
   interrupt,
@@ -47,6 +50,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   position,
   raise,
   renewSpirit,
+  rest,
   rider,
   setup,
   shrines,

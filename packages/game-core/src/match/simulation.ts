@@ -935,6 +935,9 @@ const UPKEEP_RANGE_GRACE_SECONDS = 5;
 /** No body to pass through: a push-out that every body blocks. */
 const NOBODY: ReadonlySet<string> = new Set();
 
+/** The relics of a mode without any, shared so a read allocates nothing. */
+const NO_RELICS: readonly RelicState[] = [];
+
 /** How deep a body at `position` is inside a living body at `other`, their radii summing to `reach`. */
 function penetration(position: Vec2, other: Vec2, reach: number): number {
   return Math.max(0, reach - distance(position, other));
@@ -1282,7 +1285,7 @@ export class MatchSimulation {
 
   /** Every relic and where it is (#1374); `[]` on a map without them. */
   public get relics(): readonly RelicState[] {
-    return this.#relicsState?.relics ?? [];
+    return this.#relicsState?.relics ?? NO_RELICS;
   }
 
   /**

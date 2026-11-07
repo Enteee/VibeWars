@@ -5,7 +5,8 @@ import { lyingPosition } from "../../carried.js";
 import { FLAG_REACH_UNITS } from "../../flags.js";
 import { carriedRelic, relicId } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
-import { NOTHING } from "./shared.js";
+import { roleOf } from "../role.js";
+import { NOTHING, REST_FRACTION, healthFraction } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -56,12 +57,15 @@ const fetchRelic: BotRule = {
  * `point`, ties to simulation order: a bot, or, when `humans`, a human
  * within `FLAG_REACH_UNITS` of it, about to take it up; one idle at its
  * base stops nobody. A bot with a foe in spell range fights rather than runs, so
- * it is passed over. `undefined` when that is a human.
+ * it is passed over. A bot an earlier rule holds back, a healer behind its
+ * ward or one resting below `REST_FRACTION`, runs only while no other can.
+ * `undefined` when that is a human.
  */
 function runner(context: BehaviourContext, point: Vec2, humans: boolean): Participant | undefined {
   const team = context.self.combatant.team;
   const { relics } = context.objectives;
   let best: Participant | undefined;
+  let bestHeld = true;
   let bestDistance = Infinity;
   for (const mate of context.participants) {
     const bot = context.isBot(mate.id);
@@ -75,13 +79,20 @@ function runner(context: BehaviourContext, point: Vec2, humans: boolean): Partic
     ) {
       continue;
     }
+    const held = bot && heldBack(mate);
     const away = distance(mate.position, point);
-    if (away < bestDistance) {
+    if ((bestHeld && !held) || (held === bestHeld && away < bestDistance)) {
       best = mate;
+      bestHeld = held;
       bestDistance = away;
     }
   }
   return best !== undefined && context.isBot(best.id) ? best : undefined;
+}
+
+/** Whether `position` pulls bot `mate` back to its ward, or `rest` stands it still. */
+function heldBack(mate: Participant): boolean {
+  return roleOf(mate) === "healer" || healthFraction(mate) < REST_FRACTION;
 }
 
 /** Whether a living foe of `mate` stands within its spell range. */

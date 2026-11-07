@@ -5,7 +5,8 @@ import { vec2 } from "../../../vec2.js";
 import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
 import { AT_SPAWN } from "../../carried.js";
 import { relicId, type RelicState } from "../../relics.js";
-import { askBot, body, BOT, match } from "./test-support.js";
+import { REST_FRACTION } from "./shared.js";
+import { askBot, body, BOT, fighter, match, MONK } from "./test-support.js";
 
 const ALTAR = vec2(800, 400);
 
@@ -36,6 +37,17 @@ describe("fetch-relic: Relic Run bots fetch their relic and return the foe's (#2
     const escort = askBot(sim, "other", BOTH_HOME);
     expect(escort.attackTargetId).toBeUndefined();
     expect(escort.moveTo).toEqual(ALTAR);
+  });
+
+  it("passes over a healer or a resting bot nearest its relic for a teammate free to run", () => {
+    for (const near of [
+      fighter("near", 0, MONK, vec2(300, 400)),
+      body("near", 0, vec2(300, 400), { behaviour: BOT, startHealthFraction: REST_FRACTION / 2 }),
+    ]) {
+      const sim = match([near, body("other", 0, vec2(500, 400), { behaviour: BOT }), far()]);
+      expect(askBot(sim, "other", BOTH_HOME).attackTargetId).toBe(relicId(0));
+      expect(askBot(sim, "near", BOTH_HOME).attackTargetId).toBeUndefined();
+    }
   });
 
   it("waits by the altar once there, escorting", () => {
