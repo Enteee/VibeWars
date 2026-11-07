@@ -183,7 +183,7 @@ Declarative map documents (`maps/*/`), a zod schema, a loader/validator and
 derived geometry (wall segments, spawn points by team). Annihilation plays on
 `arena-canyon`, `arena-crossroads`, `arena-long-hall` and the medium `sandstone-steps`
 and `frozen-crossing`; each other mode has its
-own maps (`ember-pits`, `jungle-ruins`, `relic-temples`, `forgotten-shrines`,
+own maps (`ember-pits`, `jungle-ruins`, `broken-tower`, `scarred-earth`,
 `hill-courtyard`, `hall-of-heroes`, `guild-hall-isle`).
 Map geometry is original (brief §41) — see ADR-0006 for the format.
 

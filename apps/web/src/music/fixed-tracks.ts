@@ -15,12 +15,12 @@ export const UNKNOWN_MAP_TRACK = "hall-of-champions";
  * builder's Training Ground keeps the menu's (#2020).
  */
 export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
-  ["relic-temples", "northern-pass"],
+  ["broken-tower", "northern-pass"],
   ["guild-hall-isle", "hall-of-champions"],
   ["ember-pits", "ember-deep"],
   ["arena-long-hall", "ember-deep"],
   ["jungle-ruins", "jungle-veil"],
-  ["forgotten-shrines", "jungle-veil"],
+  ["scarred-earth", "jungle-veil"],
   ["arena-crossroads", "last-stand"],
   ["hill-courtyard", "last-stand"],
   ["arena-canyon", "glass-dunes"],

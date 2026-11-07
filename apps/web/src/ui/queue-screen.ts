@@ -90,7 +90,7 @@ export function nextAscentRound(round: number, result: QueuedResult): number {
   }
 }
 
-/** "Round 2 of 4 · Forgotten Shrines" (#1996). */
+/** "Round 2 of 4 · Scarred Earth" (#1996). */
 export function ascentLine(round: number): string {
   return `Round ${String(round + 1)} of ${String(ASCENT_ROUNDS)} · ${ascentMapName(round)}`;
 }

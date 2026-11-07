@@ -73,10 +73,10 @@ describe("randomArenaMapPool", () => {
           (id) =>
             ![
               "guild-hall-isle",
-              "relic-temples",
+              "broken-tower",
               "hill-courtyard",
               "hall-of-heroes",
-              "forgotten-shrines",
+              "scarred-earth",
             ].includes(id),
         )
         .sort(),
@@ -119,10 +119,21 @@ describe("team sizes (#2108)", () => {
       }
     }
     expect(modeMapIds()["heroes-ascent"]).toEqual([
-      "relic-temples",
+      "broken-tower",
       "hill-courtyard",
-      "forgotten-shrines",
+      "scarred-earth",
     ]);
+  });
+
+  it("has a Relic Run and a Capture Points map for 4 and for 8 a side (#2551)", () => {
+    for (const mode of ["relic-run", "capture-points"] as const) {
+      for (const size of [4, 8]) {
+        expect(
+          mapsForSize(ARENA_MAPS, size).some((map) => map.mode === mode),
+          `${mode} ${String(size)}`,
+        ).toBe(true);
+      }
+    }
   });
 
   it("lists every map for a Hosted Game until its host picks a size (#2104)", () => {
@@ -191,10 +202,10 @@ describe("team sizes (#2108)", () => {
       "arena-canyon",
       "arena-long-hall",
       "guild-hall-isle",
-      "relic-temples",
+      "broken-tower",
       "hill-courtyard",
       "hall-of-heroes",
-      "forgotten-shrines",
+      "scarred-earth",
     ]);
   });
 });
@@ -237,14 +248,14 @@ describe("the Heroes' Ascent progression (#1996)", () => {
   it("is four rounds: Relic Run, Capture Points, King of the Hill, then the Hall", () => {
     expect(ASCENT_PROGRESSION).toHaveLength(ASCENT_ROUNDS);
     expect(ASCENT_PROGRESSION.map((id) => [id, hostMap(id)?.mode])).toEqual([
-      ["relic-temples", "relic-run"],
-      ["forgotten-shrines", "capture-points"],
+      ["broken-tower", "relic-run"],
+      ["scarred-earth", "capture-points"],
       ["hill-courtyard", "king-of-the-hill"],
       ["hall-of-heroes", "king-of-the-hill"],
     ]);
     expect(ASCENT_PROGRESSION.map((_, round) => ascentMapName(round))).toEqual([
-      "Relic Temples",
-      "Forgotten Shrines",
+      "Broken Tower",
+      "Scarred Earth",
       "Hill Courtyard",
       "Hall of Heroes",
     ]);
@@ -268,24 +279,24 @@ describe("hostMap (#476)", () => {
     );
   });
 
-  it("carries the mode its map names: Kill Count on Ember Pits, Priest Annihilation on Jungle Ruins, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, King of the Hill on Hill Courtyard, Capture Points on Forgotten Shrines, Annihilation elsewhere", () => {
+  it("carries the mode its map names: Kill Count on Ember Pits, Priest Annihilation on Jungle Ruins, Guild Battle on Guild Hall Isle, Relic Run on Broken Tower, King of the Hill on Hill Courtyard, Capture Points on Scarred Earth, Annihilation elsewhere", () => {
     expect(hostMap("ember-pits")?.mode).toBe("kill-count");
     expect(hostMap("jungle-ruins")?.mode).toBe("priest-annihilation");
     expect(hostMap("guild-hall-isle")?.mode).toBe("guild-battle");
-    expect(hostMap("relic-temples")?.mode).toBe("relic-run");
+    expect(hostMap("broken-tower")?.mode).toBe("relic-run");
     expect(hostMap("hill-courtyard")?.mode).toBe("king-of-the-hill");
-    expect(hostMap("forgotten-shrines")?.mode).toBe("capture-points");
-    expect(hostMap("forgotten-shrines")?.capturePoints).toHaveLength(5);
+    expect(hostMap("scarred-earth")?.mode).toBe("capture-points");
+    expect(hostMap("scarred-earth")?.capturePoints).toHaveLength(5);
     for (const map of ARENA_MAPS.filter(
       (candidate) =>
         ![
           "ember-pits",
           "jungle-ruins",
           "guild-hall-isle",
-          "relic-temples",
+          "broken-tower",
           "hill-courtyard",
           "hall-of-heroes",
-          "forgotten-shrines",
+          "scarred-earth",
         ].includes(candidate.id),
     )) {
       expect(hostMap(map.id)?.capturePoints).toEqual([]);
@@ -319,14 +330,14 @@ describe("hostMap (#476)", () => {
   });
 
   it("carries a Relic Run map's altar and relic spawns, and none elsewhere (#1374)", () => {
-    expect(hostMap("relic-temples")?.relicField).toEqual({
-      altar: { x: 1100, y: 700 },
+    expect(hostMap("broken-tower")?.relicField).toEqual({
+      altar: { x: 1600, y: 900 },
       spawns: [
-        { team: 0, position: { x: 110, y: 700 } },
-        { team: 1, position: { x: 2090, y: 700 } },
+        { team: 0, position: { x: 120, y: 900 } },
+        { team: 1, position: { x: 3080, y: 900 } },
       ],
     });
-    expect(mapRelicField("relic-temples")).toEqual(hostMap("relic-temples")?.relicField);
+    expect(mapRelicField("broken-tower")).toEqual(hostMap("broken-tower")?.relicField);
     expect(hostMap("guild-hall-isle")?.relicField).toBeUndefined();
     expect(hostMap("hill-courtyard")?.relicField).toBeUndefined();
     expect(mapRelicField("training-hall")).toBeUndefined();
@@ -340,7 +351,7 @@ describe("hostMap (#476)", () => {
         { team: 1, position: { x: 1800, y: 700 } },
       ],
     });
-    expect(hostMap("relic-temples")?.hillField).toBeUndefined();
+    expect(hostMap("broken-tower")?.hillField).toBeUndefined();
     expect(hostMap("arena-crossroads")?.hillField).toBeUndefined();
   });
 
