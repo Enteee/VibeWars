@@ -73,7 +73,7 @@ export const ARENA: HostMap = {
   guildLords: [],
   flagField: undefined,
   relicField: undefined,
-  hillField: undefined,
+  ghostField: undefined,
   capturePoints: [],
   guards: [],
 };

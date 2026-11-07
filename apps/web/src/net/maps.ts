@@ -22,7 +22,7 @@ import type {
   BaseGuard,
   FlagField,
   GuildLord,
-  HillField,
+  GhostField,
   MatchMode,
   RelicField,
   Vec2,
@@ -275,30 +275,35 @@ export function mapFlagField(mapId: string): FlagField | undefined {
   return flagFieldOf(map?.objectives ?? []);
 }
 
-/**
- * The altar and the `kind` spawns among a map's objectives: a Relic
- * Run's relics (#1374) or King of the Hill's ghosts (#1377); `undefined`
- * on a map without an altar or without such spawns, the other mode's.
- */
-function altarFieldOf(
-  objectives: readonly Objective[],
-  kind: "relic-spawn" | "ghost-spawn",
-): RelicField | undefined {
+/** The altar and relic spawns among a map's objectives (#1374), or `undefined`. */
+function relicFieldOf(objectives: readonly Objective[]): RelicField | undefined {
   const altar = objectives.find((objective) => objective.kind === "altar");
   const spawns = objectives.flatMap((objective) =>
-    objective.kind === kind ? [{ team: objective.team, position: objective.position }] : [],
+    objective.kind === "relic-spawn"
+      ? [{ team: objective.team, position: objective.position }]
+      : [],
   );
   return altar === undefined || spawns.length === 0 ? undefined : { altar: altar.position, spawns };
 }
 
-/** The altar and relic spawns among a map's objectives (#1374), or `undefined`. */
-function relicFieldOf(objectives: readonly Objective[]): RelicField | undefined {
-  return altarFieldOf(objectives, "relic-spawn");
-}
-
-/** The altar and ghost spawns among a map's objectives (#1377), or `undefined`. */
-function hillFieldOf(objectives: readonly Objective[]): HillField | undefined {
-  return altarFieldOf(objectives, "ghost-spawn");
+/**
+ * A map's ghost spawns at its `ghostLevel`, and its altar if King of the
+ * Hill's (#1377, #2689); `undefined` on a map without ghosts.
+ */
+function ghostFieldOf(map: MapData): GhostField | undefined {
+  if (map.ghostLevel === undefined) {
+    return undefined;
+  }
+  const altar = map.objectives.find((objective) => objective.kind === "altar");
+  return {
+    level: map.ghostLevel,
+    altar: map.mode === "king-of-the-hill" ? altar?.position : undefined,
+    spawns: map.objectives.flatMap((objective) =>
+      objective.kind === "ghost-spawn"
+        ? [{ team: objective.team, position: objective.position }]
+        : [],
+    ),
+  };
 }
 
 /** The altar and relic spawns on `mapId` (#1374), for the renderer: as `mapFlagField`. */
@@ -349,7 +354,7 @@ export function hostMap(mapId: string): HostMap | undefined {
     guildLords: guildLordsOf(map.objectives),
     flagField: flagFieldOf(map.objectives),
     relicField: relicFieldOf(map.objectives),
-    hillField: hillFieldOf(map.objectives),
+    ghostField: ghostFieldOf(map),
     capturePoints: map.objectives.flatMap((objective) =>
       objective.kind === "capture-point" ? [objective.position] : [],
     ),

@@ -122,9 +122,14 @@ in. No Random Arena does.
 Hero onto the altar and hold it. Each team has a **Ghostly Hero** at a
 `"ghost-spawn"` objective in its base, and the map has one `"altar"`;
 a King of the Hill map without exactly one altar and one ghost spawn per
-spawning team is refused. The ghost is a creature (`ghost/<team>`, 600
-Health, armor 60, a sword) that nobody plays and no player's skill bar
-shows. Space on your own living ghost, within 60 units, toggles it
+spawning team is refused. The ghost is a creature (`ghost/<team>`, 640
+Health, armor 60, an axe) that nobody plays and no player's skill bar
+shows. It fights with Cyclone Axe, Disrupting Chop and Swift Chop,
+following or staying, at the map's `ghostLevel` (20, 24 or 28: Axe
+Mastery 12, 14 or 16), which a map with ghost spawns must have and
+which lets a map of any mode have them (#2689). The team of the last
+foe whose damage took its Health, a minion's its master's, gets a +10%
+morale boost when it dies. Space on your own living ghost, within 60 units, toggles it
 between **following** you (a minion's follow-and-attack, you its leader)
 and **staying** where it stands (a guard's hold, unrooted, on a short
 leash); it starts staying at its spawn, and stays when its leader dies

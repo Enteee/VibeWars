@@ -484,7 +484,8 @@ function landDamage(
 
 /**
  * `target` lost `amount` health to `dealer`, by damage of `type` or,
- * `undefined`, a life steal; recorded if that was a foe (#1022).
+ * `undefined`, a life steal; recorded if that was a foe (#1022), the
+ * last such foe's team as the kill's credit (#2689).
  */
 function recordFromFoe(
   target: Combatant,
@@ -493,6 +494,7 @@ function recordFromFoe(
   amount: number,
 ): void {
   if (dealer !== undefined && dealer.team !== target.team) {
+    target.lastFoeTeam = dealer.team;
     target.statuses.recordDamageFromFoe(dealer.id, type, amount, target.cast.isCasting);
   }
 }
