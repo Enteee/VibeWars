@@ -7,6 +7,8 @@ import {
   ELBOW_DISTANCE,
   NOTHING,
   POSITION_SLACK,
+  THREAT_ANGLES,
+  THREAT_MOVE_MIN,
   healthFraction,
   nearestTo,
   reachable,
@@ -28,6 +30,12 @@ const HEALER_CLEARANCE = 0.6 * RANGE_SPELL;
  * the ally it looks after, away from the foes. A frontline closes in, as
  * `fight` and `close-in` have it. A spot it could not see its target
  * from is no spot: it walks in, as before.
+ *
+ * Of its spot turned a little either way about what it watches, it takes
+ * the one the fewest foes can hit (#2598): a pillar between a foe and it
+ * is cover. At its spot already, it moves only with `THREAT_MOVE_MIN`
+ * foes on it, and only to a spot with at least one fewer, so two equal
+ * spots never take turns.
  */
 const position: BotRule = {
   order: 98,
@@ -44,21 +52,96 @@ const position: BotRule = {
         : rule.role === "healer"
           ? coverSpot(rule)
           : undefined;
-    if (spot === undefined || distance(spot.point, self.position) <= POSITION_SLACK) {
+    if (spot === undefined) {
       return undefined;
     }
-    if (!context.seesBetween(spot.point, spot.watched)) {
-      return undefined;
+    let best: Candidate | undefined;
+    if (spot.point === undefined || distance(spot.point, self.position) <= POSITION_SLACK) {
+      const here = threatAt(rule, self.position);
+      if (here < THREAT_MOVE_MIN) {
+        return undefined;
+      }
+      best = safest(rule, self.position, spot.watched);
+      if (best === undefined || best.threat > here - 1) {
+        return undefined;
+      }
+    } else {
+      best = safest(rule, spot.point, spot.watched);
+      if (best === undefined || distance(best.point, self.position) <= POSITION_SLACK) {
+        return undefined;
+      }
     }
-    const moveTo = reachable(context, spot.point);
+    const moveTo = reachable(context, best.point);
     return moveTo === undefined ? undefined : { ...NOTHING, targetId: rule.targetId, moveTo };
   },
 };
 
 interface Spot {
-  readonly point: Vec2;
+  /** Where to stand; `undefined`: where it stands does. */
+  readonly point: Vec2 | undefined;
   /** What it must see from there. */
   readonly watched: Vec2;
+}
+
+interface Candidate {
+  readonly point: Vec2;
+  /** How many foes can hit it there. */
+  readonly threat: number;
+}
+
+/**
+ * Of `point` turned by each of `THREAT_ANGLES` about `watched`, the one
+ * the fewest foes can hit, first in that order on a tie. One it could
+ * not see `watched` from, or stand on, is none; none left: `undefined`.
+ */
+function safest(rule: RuleContext, point: Vec2, watched: Vec2): Candidate | undefined {
+  const { context } = rule;
+  let best: Candidate | undefined;
+  for (const degrees of THREAT_ANGLES) {
+    const candidate = turned(point, watched, degrees);
+    if (!context.walkable(candidate) || !context.seesBetween(candidate, watched)) {
+      continue;
+    }
+    const threat = threatAt(rule, candidate);
+    if (best === undefined || threat < best.threat) {
+      best = { point: candidate, threat };
+    }
+  }
+  return best;
+}
+
+/** `point` turned `degrees` about `about`, the left way for a positive turn. */
+function turned(point: Vec2, about: Vec2, degrees: number): Vec2 {
+  if (degrees === 0) {
+    return point;
+  }
+  const radians = (degrees * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  const dx = point.x - about.x;
+  const dy = point.y - about.y;
+  return { x: about.x + dx * cos - dy * sin, y: about.y + dx * sin + dy * cos };
+}
+
+/**
+ * How many living foes with a bar could hit `point` (#2598): within
+ * their reach and `POSITION_SLACK`, and seeing it. Range first, so a foe
+ * out of it costs no line-of-sight ray.
+ */
+function threatAt(rule: RuleContext, point: Vec2): number {
+  let threat = 0;
+  for (const foe of rule.foes) {
+    if (foe.combatant.dead || foe.skillBar.every((id) => id === null)) {
+      continue;
+    }
+    if (distance(foe.position, point) > rule.foeReach(foe) + POSITION_SLACK) {
+      continue;
+    }
+    if (rule.context.seesBetween(foe.position, point)) {
+      threat += 1;
+    }
+  }
+  return threat;
 }
 
 /**
@@ -74,8 +157,11 @@ function holdSpot({ self, bar, foes, targetId }: RuleContext): Spot | undefined 
   }
   const shortest = reach(self, bar);
   const back = normalize(sub(self.position, target.position));
-  if (back === ZERO || distance(self.position, target.position) <= shortest) {
+  if (back === ZERO) {
     return undefined;
+  }
+  if (distance(self.position, target.position) <= shortest) {
+    return { point: undefined, watched: target.position };
   }
   const hold = HOLD_REACH * shortest;
   return { point: add(target.position, scale(back, hold)), watched: target.position };
@@ -118,7 +204,7 @@ function coverSpot({ self, allies, foes, foeCentroid }: RuleContext): Spot | und
     distance(ward.position, self.position) <= HEALER_REACH &&
     (near === undefined || distance(near.position, self.position) > ELBOW_DISTANCE)
   ) {
-    return undefined;
+    return { point: undefined, watched: ward.position };
   }
   const back = normalize(sub(ward.position, foeCentroid));
   if (back === ZERO) {
