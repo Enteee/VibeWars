@@ -45,9 +45,6 @@ export interface PickerTab {
   readonly element: HTMLElement;
 }
 
-/** The two tabs every picker has. */
-export type LibraryTab = "skills" | "gear";
-
 /** What the picker needs of the screen it sits on. */
 export interface BuildPickerHost<C extends TeamCharacter> extends BuildHost {
   /**
@@ -71,8 +68,6 @@ export interface BuildPickerHost<C extends TeamCharacter> extends BuildHost {
   readonly tab?: string;
   /** Told each tab opened, to open it again next time. */
   readonly onTab?: (tab: string) => void;
-  /** A line over a library, if the screen has something to say there. */
-  readonly hint?: (tab: LibraryTab) => string | undefined;
   /** While true, a skill key over a library skill does nothing. */
   readonly keysBlocked?: () => boolean;
   /**
@@ -211,7 +206,6 @@ export function mountBuildPicker<C extends TeamCharacter>(
     ["gear", gear],
   ]);
   const scrolled = new Map<string, number>();
-  const hint = h("p", "picker-hint");
   let active = host.tab !== undefined && bodies.has(host.tab) ? host.tab : "skills";
 
   const tabs = h("div", "library-tabs");
@@ -241,17 +235,11 @@ export function mountBuildPicker<C extends TeamCharacter>(
     }
     return offered;
   };
-  const showHint = (): void => {
-    const said = active === "skills" || active === "gear" ? host.hint?.(active) : undefined;
-    hint.hidden = said === undefined;
-    hint.textContent = said ?? "";
-  };
   const markTabs = (): void => {
     for (const [id, node] of tabButtons) {
       node.classList.toggle("is-active", id === active);
       node.setAttribute("aria-selected", String(id === active));
     }
-    showHint();
   };
   const open = (tab: string): void => {
     const from = bodies.get(active);
@@ -269,7 +257,7 @@ export function mountBuildPicker<C extends TeamCharacter>(
     markTabs();
     host.onTab?.(tab);
   };
-  element.append(tabs, hint, ...(bodies.get(active)?.elements ?? []));
+  element.append(tabs, ...(bodies.get(active)?.elements ?? []));
   markTabs();
 
   // Why a drop is refused, beside the slot (#2225): never colour alone.
@@ -384,7 +372,6 @@ export function mountBuildPicker<C extends TeamCharacter>(
       if (markGear()) {
         gear.update(gearHost.current());
       }
-      showHint();
       tipped = followTip(tooltip, tipped);
     },
     showLibrary(tab, group) {
