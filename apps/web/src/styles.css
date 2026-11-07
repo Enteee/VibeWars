@@ -3838,6 +3838,14 @@ body {
 .hud-enemy-row {
   display: flex;
   gap: 0.3rem;
+  align-items: center;
+}
+
+/* The third team's ◆ (#2755), in its colour, ahead of its pips. */
+.hud-team-mark {
+  color: var(--pip-colour);
+  font-size: 0.7rem;
+  line-height: 1;
 }
 
 /* Filled in the team's colour while alive; hollow and grey dead. Hover
