@@ -14,6 +14,7 @@
 import type {
   CastRefusedMessage,
   MapDescriptor,
+  WireTeamCount,
   AdrenalineMessage,
   ChainMarksMessage,
   RechargeMessage,
@@ -108,6 +109,18 @@ export const MAX_WIRE_STATUSES = 32;
  * broke off its master, or one that rose masterless. A foe to both teams.
  */
 export const MASTERLESS_WIRE_TEAM = -1;
+
+/**
+ * A match team (#2682): 0, 1 and, in a three-team match, 2. A message
+ * of a match is checked against its `MapDescriptor.teamCount`.
+ */
+export type WireTeam = 0 | 1 | 2;
+
+/** A lobby's side: lobbies seat two teams. */
+export type LobbyTeam = 0 | 1;
+
+/** The most teams a match has (#2682). */
+const MAX_WIRE_TEAMS = 3;
 
 /**
  * The most creatures a snapshot carries (#1052): game-core's
@@ -436,7 +449,7 @@ export interface WirePlayer {
   /** Worn behind the body (#1422); `null` for none, and whenever `guildTag` is. */
   readonly guildCape: WireCape | null;
   /** A match team, or `MASTERLESS_WIRE_TEAM` for a masterless creature (#2092). */
-  readonly team: 0 | 1 | typeof MASTERLESS_WIRE_TEAM;
+  readonly team: WireTeam | typeof MASTERLESS_WIRE_TEAM;
   readonly x: number;
   readonly y: number;
   /** Radians, `atan2` convention, 0 = +x (#187). */
@@ -566,7 +579,7 @@ export interface WireGroundEffect {
   readonly id: number;
   /** The skill that placed it, for its icon. */
   readonly skillId: string;
-  readonly team: 0 | 1;
+  readonly team: WireTeam;
   readonly x: number;
   readonly y: number;
   /** In (0, `MAX_WIRE_RADIUS`]. */
@@ -585,7 +598,7 @@ export const FLAG_PLACES = [...RELIC_PLACES, "stand"] as const;
 
 /** A team's bundle (#1225, #1374), in one of `Place`. */
 export interface WireCarried<Place extends string> {
-  readonly team: 0 | 1;
+  readonly team: WireTeam;
   readonly place: Place;
   /** Who carries it, while `carried`; `null` otherwise. */
   readonly carrierId: string | null;
@@ -604,8 +617,8 @@ export type WireRelic = WireCarried<(typeof RELIC_PLACES)[number]>;
 export interface WireCapturePoint {
   readonly x: number;
   readonly y: number;
-  readonly owner: 0 | 1 | null;
-  readonly capturer: 0 | 1 | null;
+  readonly owner: WireTeam | null;
+  readonly capturer: WireTeam | null;
   /** From 0 to 1, toward `capturer`. */
   readonly progress: number;
 }
@@ -615,7 +628,7 @@ const MAX_WIRE_CAPTURE_POINTS = 5;
 
 /** Who holds the flag stand (#1225), and for how long since the taking or the last boost. */
 export interface WireStand {
-  readonly holder: 0 | 1 | null;
+  readonly holder: WireTeam | null;
   readonly heldSeconds: number;
 }
 
@@ -642,9 +655,10 @@ export interface WireSnapshot {
   /** Only ever grows; a client drops a snapshot whose tick is not above the last it kept. */
   readonly tick: number;
   readonly elapsedSeconds: number;
-  readonly score: readonly [number, number];
+  /** Each team's points by team index (#2682): `teamCount` of them. */
+  readonly score: readonly number[];
   readonly phase: "active" | "finished";
-  readonly winningTeam: 0 | 1 | null;
+  readonly winningTeam: WireTeam | null;
   readonly endReason: EndReason | null;
   readonly players: readonly WirePlayer[];
   /** Oldest first. */
@@ -662,7 +676,7 @@ export interface WireSnapshot {
   /** The altar a relic is run to (#1374), or a ghost claims (#1377); `null` on a map without one. */
   readonly altar: { readonly x: number; readonly y: number } | null;
   /** The team that holds King of the Hill's altar (#1377); `null` for nobody, and off such a map. */
-  readonly altarHolder: 0 | 1 | null;
+  readonly altarHolder: WireTeam | null;
   /** Seconds its holder has kept it since the claim or the last point (#1377); `0` off such a map. */
   readonly altarHeldSeconds: number;
   /** Every Capture Points shrine (#1378); `[]` on a map without them. */
@@ -874,7 +888,7 @@ export interface WireChatLine {
   readonly fromId: string;
   readonly name: string;
   /** `null`: a spectator, who speaks on all chat only. */
-  readonly team: 0 | 1 | null;
+  readonly team: LobbyTeam | null;
   readonly text: string;
 }
 
@@ -887,7 +901,7 @@ export interface WireSummaryRow {
   readonly name: string;
   /** The seat's guild tag (#1406); `null` for none. */
   readonly guildTag: string | null;
-  readonly team: 0 | 1;
+  readonly team: WireTeam;
   readonly damage: number;
   readonly healing: number;
   readonly taken: number;
@@ -898,7 +912,7 @@ export interface WireSummaryRow {
 
 /** Host to every client, once: the match is over, and what each player did in it. */
 export interface WireEnded {
-  readonly winningTeam: 0 | 1 | null;
+  readonly winningTeam: WireTeam | null;
   readonly endReason: EndReason | "host-left";
   readonly summary: readonly WireSummaryRow[];
 }
@@ -1126,7 +1140,7 @@ export interface WireLobbyPlayer {
   /** As `WirePlayer.guildCape` (#1422). */
   readonly guildCape: WireCape | null;
   /** `null` spectates. */
-  readonly team: 0 | 1 | null;
+  readonly team: LobbyTeam | null;
   readonly ready: boolean;
   /** The host's own player: the one who picks the map and starts. */
   readonly isHost: boolean;
@@ -1262,7 +1276,7 @@ export interface WireProposalBuild {
 
 /** Peer to lobby host: what the member asks for. The host decides. */
 export type WireLobbyCommand =
-  | { readonly kind: "choose-team"; readonly team: 0 | 1 | null }
+  | { readonly kind: "choose-team"; readonly team: LobbyTeam | null }
   | { readonly kind: "ready"; readonly ready: boolean }
   | { readonly kind: "select-map"; readonly mapId: string }
   /** Host only, in a Hosted Game (#2104): players a side, one of `LOBBY_TEAM_SIZES`. */
@@ -1415,12 +1429,17 @@ function isSlot(value: unknown): value is number {
   return isCount(value) && value < MAX_WIRE_SLOTS;
 }
 
-function isTeam(value: unknown): value is 0 | 1 {
+/** A team of some match: whose `teamCount` it is checked against once the message is whole. */
+function isTeam(value: unknown): value is WireTeam {
+  return value === 0 || value === 1 || value === 2;
+}
+
+function isLobbyTeam(value: unknown): value is LobbyTeam {
   return value === 0 || value === 1;
 }
 
 /** A body's `WirePlayer.team` (#2092): a match team, or masterless. */
-function isBodyTeam(value: unknown): value is 0 | 1 | typeof MASTERLESS_WIRE_TEAM {
+function isBodyTeam(value: unknown): value is WireTeam | typeof MASTERLESS_WIRE_TEAM {
   return isTeam(value) || value === MASTERLESS_WIRE_TEAM;
 }
 
@@ -1765,7 +1784,7 @@ export function parseWireChatLine(value: unknown): WireChatLine | undefined {
     isOneOf(raw.channel, CHAT_CHANNELS) &&
     isString(raw.fromId) &&
     isString(raw.name) &&
-    (raw.team === null || isTeam(raw.team)) &&
+    (raw.team === null || isLobbyTeam(raw.team)) &&
     isString(raw.text, MAX_WIRE_CHAT_TEXT)
     ? { channel: raw.channel, fromId: raw.fromId, name: raw.name, team: raw.team, text: raw.text }
     : undefined;
@@ -1806,14 +1825,22 @@ function parseMap(value: unknown): MapDescriptor | undefined {
     !isNumber(raw.width) ||
     !isNumber(raw.height) ||
     raw.width <= 0 ||
-    raw.height <= 0
+    raw.height <= 0 ||
+    !(raw.teamCount === 2 || raw.teamCount === 3)
   ) {
     return undefined;
   }
   const walls = parseArray(raw.walls, MAX_WIRE_WALLS, parseWall);
   return walls === undefined
     ? undefined
-    : { id: raw.id, name: raw.name, width: raw.width, height: raw.height, walls };
+    : {
+        id: raw.id,
+        name: raw.name,
+        width: raw.width,
+        height: raw.height,
+        teamCount: raw.teamCount,
+        walls,
+      };
 }
 
 export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
@@ -2055,11 +2082,16 @@ function parseGroundEffect(value: unknown): WireGroundEffect | undefined {
     : undefined;
 }
 
-export function parseWireSnapshotPart(value: unknown): WireSnapshotPart | undefined {
+/** A part of a match of `teamCount` teams (#2682): any other team, or a score for another count, is refused. */
+export function parseWireSnapshotPart(
+  value: unknown,
+  teamCount: WireTeamCount,
+): WireSnapshotPart | undefined {
   const raw = fields(value);
   const snapshot = raw === undefined ? undefined : parseSnapshot(raw);
   return raw === undefined ||
     snapshot === undefined ||
+    !snapshotTeamsWithin(snapshot, teamCount) ||
     !isCount(raw.parts) ||
     raw.parts < 1 ||
     raw.parts > MAX_SNAPSHOT_PARTS ||
@@ -2070,11 +2102,11 @@ export function parseWireSnapshotPart(value: unknown): WireSnapshotPart | undefi
 }
 
 function parseSnapshot(raw: Fields): WireSnapshot | undefined {
-  const score = parseArray(raw.score, 2, parseScore);
+  const score = parseArray(raw.score, MAX_WIRE_TEAMS, parseScore);
   if (
     !isCount(raw.tick) ||
     !isNumber(raw.elapsedSeconds) ||
-    score?.length !== 2 ||
+    score === undefined ||
     !isOneOf(raw.phase, ["active", "finished"] as const) ||
     !(raw.winningTeam === null || isTeam(raw.winningTeam)) ||
     !(raw.endReason === null || isOneOf(raw.endReason, END_REASONS))
@@ -2084,13 +2116,12 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const players = parseArray(raw.players, MAX_WIRE_ACTORS, parsePlayer);
   const projectiles = parseArray(raw.projectiles, MAX_WIRE_PROJECTILES, parseProjectile);
   const groundEffects = parseArray(raw.groundEffects, MAX_WIRE_GROUND_EFFECTS, parseGroundEffect);
-  const flags = parseArray(raw.flags, 2, parseCarried(FLAG_PLACES));
+  const flags = parseArray(raw.flags, MAX_WIRE_TEAMS, parseCarried(FLAG_PLACES));
   const stand = raw.stand === null ? null : parseStand(raw.stand);
-  const aggression = parseArray(raw.aggression, 2, parseScore);
-  const relics = parseArray(raw.relics, 2, parseCarried(RELIC_PLACES));
+  const aggression = parseArray(raw.aggression, MAX_WIRE_TEAMS, parseScore);
+  const relics = parseArray(raw.relics, MAX_WIRE_TEAMS, parseCarried(RELIC_PLACES));
   const altar = raw.altar === null ? null : parsePoint(raw.altar);
   const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
-  const [team0 = 0, team1 = 0] = score;
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
     !isNumber(altarHeldSeconds) ||
@@ -2108,7 +2139,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     : {
         tick: raw.tick,
         elapsedSeconds: raw.elapsedSeconds,
-        score: [team0, team1],
+        score,
         phase: raw.phase,
         winningTeam: raw.winningTeam,
         endReason: raw.endReason,
@@ -2124,6 +2155,30 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         altarHeldSeconds,
         capturePoints,
       };
+}
+
+/**
+ * Whether `snapshot` scores each of `teamCount` teams (#2682), has at
+ * most a flag, a relic and an aggression a team, and names no other team.
+ */
+function snapshotTeamsWithin(snapshot: WireSnapshot, teamCount: WireTeamCount): boolean {
+  const teams = [
+    snapshot.winningTeam,
+    snapshot.altarHolder,
+    snapshot.stand?.holder ?? null,
+    ...snapshot.players.map(({ team }) => (team === MASTERLESS_WIRE_TEAM ? null : team)),
+    ...snapshot.groundEffects.map(({ team }) => team),
+    ...snapshot.flags.map(({ team }) => team),
+    ...snapshot.relics.map(({ team }) => team),
+    ...snapshot.capturePoints.flatMap(({ owner, capturer }) => [owner, capturer]),
+  ];
+  return (
+    snapshot.score.length === teamCount &&
+    snapshot.aggression.length <= teamCount &&
+    snapshot.flags.length <= teamCount &&
+    snapshot.relics.length <= teamCount &&
+    teams.every((team) => team === null || team < teamCount)
+  );
 }
 
 function parseCapturePoint(value: unknown): WireCapturePoint | undefined {
@@ -2163,7 +2218,7 @@ function parseCarried<Place extends string>(
 
 /** A bundle's carrier and spot, as its `place` has them. */
 function carriedFields<Place extends string>(
-  team: 0 | 1,
+  team: WireTeam,
   place: Place,
   raw: Fields,
 ): WireCarried<Place> | undefined {
@@ -2389,13 +2444,14 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
     : undefined;
 }
 
-export function parseWireEnded(value: unknown): WireEnded | undefined {
+/** The end of a match of `teamCount` teams (#2682): any other team is refused. */
+export function parseWireEnded(value: unknown, teamCount: WireTeamCount): WireEnded | undefined {
   const raw = fields(value);
   const summary = parseArray(raw?.summary, MAX_LOBBY_PLAYERS, parseSummaryRow);
   return raw !== undefined &&
-    (raw.winningTeam === null || isTeam(raw.winningTeam)) &&
+    (raw.winningTeam === null || (isTeam(raw.winningTeam) && raw.winningTeam < teamCount)) &&
     isOneOf(raw.endReason, [...END_REASONS, "host-left"] as const) &&
-    summary !== undefined
+    summary?.every(({ team }) => team < teamCount) === true
     ? { winningTeam: raw.winningTeam, endReason: raw.endReason, summary }
     : undefined;
 }
@@ -2714,8 +2770,8 @@ export function parseWireLobbyMove(value: unknown): WireLobbyMove | undefined {
     : undefined;
 }
 
-function parseLobbyTeam(value: unknown): 0 | 1 | null | undefined {
-  return value === null || isTeam(value) ? value : undefined;
+function parseLobbyTeam(value: unknown): LobbyTeam | null | undefined {
+  return value === null || isLobbyTeam(value) ? value : undefined;
 }
 
 function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {

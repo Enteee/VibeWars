@@ -339,6 +339,7 @@ export function hostMap(mapId: string): HostMap | undefined {
       name: map.name,
       width: map.width,
       height: map.height,
+      teamCount: map.teams,
       walls: map.walls.map((wall) =>
         wall.kind === "rect"
           ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }

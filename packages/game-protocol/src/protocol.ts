@@ -465,9 +465,14 @@ export interface PolygonWallDescriptor {
 
 export type WallDescriptor = RectWallDescriptor | PolygonWallDescriptor;
 
+/** How many teams a match has (#2682): two, or Heroes' Ascent's three. */
+export type WireTeamCount = 2 | 3;
+
 export interface MapDescriptor {
   readonly id: string;
   readonly name: string;
+  /** How many teams its match has (#2682): every team on the wire is one of them. */
+  readonly teamCount: WireTeamCount;
   readonly width: number;
   readonly height: number;
   readonly walls: readonly WallDescriptor[];

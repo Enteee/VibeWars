@@ -3,6 +3,7 @@
   "name": "Elonian Plateau",
   "mode": "annihilation",
   "teamSizes": [8],
+  "teams": 2,
   "width": 6400,
   "height": 3600,
   "walls": [

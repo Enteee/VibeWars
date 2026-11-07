@@ -28,11 +28,11 @@ const RULES: MatchRules = {
   deathPenalty: false,
 };
 
-/** `[team, living, total morale, priest lives?]` for each team with members. */
-function standing(...teams: [number, number, number, boolean?][]): MatchStanding {
+/** `[team, living, total morale, priest lives?, eliminated?]` for each team with members. */
+function standing(...teams: [number, number, number, boolean?, boolean?][]): MatchStanding {
   return {
     byTeam: new Map(
-      teams.map(([team, living, morale, priestLives = false]) => [
+      teams.map(([team, living, morale, priestLives = false, eliminated = false]) => [
         team,
         {
           living,
@@ -42,6 +42,7 @@ function standing(...teams: [number, number, number, boolean?][]): MatchStanding
           beyondRaising: false,
           aggression: 0,
           ledAtSeconds: undefined,
+          eliminated,
         },
       ]),
     ),
@@ -232,6 +233,21 @@ describe("evaluateMatch: annihilation (#846)", () => {
     ).toBe(2);
   });
 
+  it("keeps a team eliminated earlier out, alive or not, and gives it no say at time (#2682)", () => {
+    // Team 1 has members up again and the best morale, but it is out.
+    expect(
+      evaluateMatch(NO_KILLS, standing([0, 1, 0], [1, 2, 0, false, true], [2, 0, 0]), 100, rules),
+    ).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
+    expect(
+      evaluateMatch(
+        NO_KILLS,
+        standing([0, 1, -30], [1, 0, 0, false, true], [2, 1, -45]),
+        480,
+        rules,
+      ),
+    ).toEqual({ phase: "finished", winningTeam: 0, reason: "morale" });
+  });
+
   it("goes at time to the highest total morale, dead or alive", () => {
     // 0, −15, −30 beats −15, −15, −30.
     expect(evaluateMatch(NO_KILLS, standing([0, 1, -45], [1, 3, -60]), 480, rules)).toEqual({
@@ -313,6 +329,7 @@ describe("evaluateMatch: guild battle (#1222)", () => {
     beyondRaising: false,
     aggression: 0,
     ledAtSeconds: undefined,
+    eliminated: false,
     ...overrides,
   });
   const guild = (zero: Partial<TeamStanding>, one: Partial<TeamStanding>): MatchStanding => ({
@@ -457,6 +474,28 @@ describe("evaluateMatch: king of the hill (#1377)", () => {
       reason: "annihilation",
     });
   });
+
+  it("with three teams, gives a team wiped earlier no say at time, however many points (#2682)", () => {
+    const score = {
+      byTeam: new Map([
+        [0, 30],
+        [1, 2],
+        [2, 1],
+      ]),
+    };
+    // Wiped with its priest alive, team 0 is not out: the wave may raise it.
+    expect(evaluateMatch(score, standing([0, 0, 0, true], [1, 4, 0], [2, 0, 0]), 100, rules)).toBe(
+      MATCH_IN_PROGRESS,
+    );
+    // Team 0 is up again, but out since its wipe.
+    const out = standing([0, 2, 0, false, true], [1, 4, 0], [2, 4, 0]);
+    expect(evaluateMatch(score, out, 479.9, rules)).toBe(MATCH_IN_PROGRESS);
+    expect(evaluateMatch(score, out, 480, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "time",
+    });
+  });
 });
 
 describe("evaluateMatch: capture points (#2690)", () => {
@@ -477,6 +516,7 @@ describe("evaluateMatch: capture points (#2690)", () => {
           beyondRaising: false,
           aggression: 0,
           ledAtSeconds,
+          eliminated: false,
         },
       ]),
     ),

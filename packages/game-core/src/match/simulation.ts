@@ -40,11 +40,15 @@ import {
   PRIEST_WAVE_SECONDS,
   SHRINE_INVULNERABLE_SECONDS,
   soleLeader,
+  teamBeaten,
+  teamIds,
+  TWO_TEAM_MODES,
   type MatchOutcome,
   type MatchPhase,
   type MatchRules,
   type MatchScore,
   type MatchStanding,
+  type TeamCount,
   type TeamStanding,
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
@@ -730,6 +734,11 @@ export interface MatchSimulationOptions {
    * want.
    */
   readonly matchRules?: MatchRules | undefined;
+  /**
+   * How many teams play (#2682): every participant's team is one of
+   * `teamIds(teamCount)`, but a masterless creature's. Omitted: two.
+   */
+  readonly teamCount?: TeamCount;
   /** Omitted or `[]`: nothing collides with a wall or blocks line of sight. */
   readonly walls?: readonly Segment[];
   /**
@@ -1066,7 +1075,8 @@ export class MatchSimulation {
 
   #tick = 0;
   #elapsedSeconds = 0;
-  #score: MatchScore = emptyScore([0, 1]);
+  readonly #teamCount: TeamCount;
+  #score: MatchScore;
   #outcome: MatchOutcome = MATCH_IN_PROGRESS;
   /**
    * The entries for the next step to report: its own, and a cast that a
@@ -1116,6 +1126,8 @@ export class MatchSimulation {
   readonly #shrines: readonly Shrine[];
   /** Priest waves gone by (#1186): the next is at `PRIEST_WAVE_SECONDS` times one more. */
   #priestWaves = 0;
+  /** The teams beaten earlier this match (#2682): out for good, raised by no wave. */
+  readonly #eliminated = new Set<number>();
   /** The teams with a Guild Lord in the match (#1222), dead or alive. */
   readonly #guildLordTeams: ReadonlySet<number>;
   /** Damage each team dealt to a foe's Guild Lord (#1222), after armor. */
@@ -1162,6 +1174,12 @@ export class MatchSimulation {
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
     this.#matchRules = options.matchRules;
+    this.#teamCount = options.teamCount ?? 2;
+    const victory = this.#matchRules?.victory;
+    if (this.#teamCount !== 2 && victory !== undefined && TWO_TEAM_MODES.includes(victory)) {
+      throw new Error(`a ${victory} match has two teams, not ${String(this.#teamCount)}`);
+    }
+    this.#score = emptyScore(teamIds(this.#teamCount));
     this.#walls = options.walls ?? [];
     this.#bounds = options.bounds;
     this.#graph = buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius);
@@ -1384,6 +1402,11 @@ export class MatchSimulation {
   public add(spec: ParticipantSpec): Participant {
     if (this.#participants.has(spec.id)) {
       throw new Error(`participant ${spec.id} is already in the match`);
+    }
+    if (spec.team !== MASTERLESS_TEAM && !teamIds(this.#teamCount).includes(spec.team)) {
+      throw new Error(
+        `participant ${spec.id}: team ${String(spec.team)} is not one of ${String(this.#teamCount)}`,
+      );
     }
     // Either of these resets every tick, which pins the participant at
     // spawn without a word. Refuse it here instead.
@@ -3714,6 +3737,8 @@ export class MatchSimulation {
     this.#burstLeaving();
     this.#removeLeaving();
     this.#replaceFallen();
+    // Before the wave: a team beaten this step is out, and not raised.
+    this.#eliminateBeaten();
     this.#priestWave();
     // After every death, before the match end: a point on the last tick counts.
     this.#advanceRelics();
@@ -7940,6 +7965,7 @@ export class MatchSimulation {
     ) {
       return;
     }
+    // Kill count is two teams only (`TWO_TEAM_MODES`): the kill is the other's.
     const scoringTeam = victimTeam === 0 ? 1 : 0;
     this.#score = addPoint(this.#score, scoringTeam);
   }
@@ -7975,6 +8001,7 @@ export class MatchSimulation {
         beyondRaising: this.#teams.has(team) && raisable === 0,
         aggression: this.#aggression.get(team) ?? 0,
         ledAtSeconds: this.#ledAt.get(team),
+        eliminated: this.#eliminated.has(team),
       });
     }
     return { byTeam };
@@ -8043,6 +8070,23 @@ export class MatchSimulation {
     }
   }
 
+  /**
+   * Every team beaten as it stands, as the match's victory counts it, is
+   * out for the rest of the match (#2682): with three teams the match goes
+   * on past it, and neither a wave nor the clock brings it back.
+   */
+  #eliminateBeaten(): void {
+    const rules = this.#matchRules;
+    if (rules === undefined) {
+      return;
+    }
+    for (const [team, standing] of this.#standing().byTeam) {
+      if (teamBeaten(standing, rules)) {
+        this.#eliminated.add(team);
+      }
+    }
+  }
+
   /** Whether `team`'s priest is in the match and alive (#1186). */
   #priestLives(team: number): boolean {
     const priest = this.#participants.get(priestId(team));
@@ -8065,7 +8109,7 @@ export class MatchSimulation {
     this.#priestWaves += 1;
     const alone = this.#shrinesRaiseAlone();
     for (const shrine of this.#shrines) {
-      if (!alone && !this.#priestLives(shrine.team)) {
+      if (this.#eliminated.has(shrine.team) || (!alone && !this.#priestLives(shrine.team))) {
         continue;
       }
       const events: CombatEvent[] = [];
