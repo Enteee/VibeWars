@@ -1,5 +1,11 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
-import type { Guild, LobbyConnection, LobbySnapshot, MatchStarting } from "@vibewars/game-session";
+import type {
+  Guild,
+  LobbyConnection,
+  LobbySnapshot,
+  MatchRecordTeam,
+  MatchStarting,
+} from "@vibewars/game-session";
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 import { watchRecords } from "./net/transport/index.js";
@@ -62,6 +68,8 @@ import {
   type KeyValueStore,
 } from "./storage/repository.js";
 import { cloneCharacter } from "./storage/clone-character.js";
+import { missingSkillsNote } from "./storage/gw1-template.js";
+import { teamFromMatch } from "./storage/match-team.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   type StoredCharacter,
@@ -788,6 +796,9 @@ async function main(): Promise<void> {
         onSwitch: switchTo,
         watch: watchRecords,
         now: () => Date.now(),
+        onCloneTeam: (record) => {
+          void cloneMatchTeam(record);
+        },
       });
       return;
     }
@@ -1333,6 +1344,26 @@ async function main(): Promise<void> {
 
   /** The open team editor; every way out of it passes through `showMenu`, to the menu. */
   let teamEditor: TeamEditorView | undefined;
+
+  /** A Matches team's Clone (#2585): saved as a new Team Build, then opened, as a starter's clone is. */
+  const cloneMatchTeam = async (record: MatchRecordTeam): Promise<void> => {
+    const result = teamFromMatch(record, () => crypto.randomUUID(), Date.now());
+    if (!result.ok) {
+      return;
+    }
+    const { team, missingSkills } = result;
+    try {
+      await teams.save(team);
+    } catch (error) {
+      console.warn("[web] could not save the clone", error);
+      showMenu();
+      toast("Could not save the team");
+      return;
+    }
+    const { characters: available } = await characters.list();
+    showTeamEditor(openedTeam(team, true), available);
+    toast(`Cloned ${team.name}${missingSkillsNote(missingSkills)}`);
+  };
 
   const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
     leaveScreen();
