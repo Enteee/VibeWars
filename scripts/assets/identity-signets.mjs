@@ -181,7 +181,7 @@ const plate = (signet, key, name, team, targeted, withSignet) => {
   out += text(
     x0 + (withSignet ? sig + 3 : 0),
     top - 5,
-    name.replace("[", "&#91;"),
+    name.replaceAll("[", "&#91;"),
     11,
     INK,
     ` stroke="${EDGE}" stroke-width="2.4" paint-order="stroke"`,
@@ -211,7 +211,7 @@ SIGNETS.forEach((signet, si) => {
     if (i === 2)
       s += `<rect x="296" y="${String(y - 6)}" width="238" height="32" fill="none" stroke="#ffd866"/>`;
     s += at(316, y + 8, 16 / 24, signet.draw(bytesOf(7 + i)));
-    s += text(332, y + 12, String(n).replace("[", "&#91;"), 12);
+    s += text(332, y + 12, String(n).replaceAll("[", "&#91;"), 12);
     s += `<rect x="332" y="${String(y + 17)}" width="190" height="5" fill="#202836"/><rect x="332" y="${String(y + 17)}" width="${String(190 - i * 24)}" height="5" fill="#3fb950"/>`;
   });
   // 3. SHIFT held: a clump with every plate and its signet, at 1.6x.
