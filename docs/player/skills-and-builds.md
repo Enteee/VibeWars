@@ -175,9 +175,10 @@ one of your characters onto a member to make that member a copy of it. A
 copy is the team's own: changing it, or the character it came from,
 leaves the other as it was. On **Skills**, the skill library shows the
 skills of the member you last clicked; drag one onto any member's slot
-to equip it there, or onto a slot holding it already to move it there.
-A skill of another profession is refused: the slot is marked with a dashed
-border and the reason, and nothing changes. Drag a skill already on a member's bar
+to equip it there. On that member's own bar, a skill already on it moves
+to the slot. A drop a member cannot take, a skill of another profession
+or one already on another member's bar, is marked with a dashed slot and
+the reason, and does nothing. Drag a skill already on a member's bar
 onto any slot to move it there, trading places with what it lands on;
 hold **Shift** as you drop it on another member to copy it instead. A
 bar still holds one elite and no skill twice, so a drop that would break
@@ -187,8 +188,8 @@ A member's **▼** opens it in place (**▲** closes it), under its row: its pro
 attribute ranks, skill bar and equipment change right there. As in the
 Character Builder, click one of its bar slots and **Equip** puts a skill in
 that slot; with none picked it goes to the first empty one. **Gear** holds
-the weapons and off-hands: click one to equip it, or drag it onto the open
-member's hands. One
+the weapons and off-hands of the open member, and is there only while one
+is open: click one to equip it, or drag it onto its hands. One
 member is open at a time; **Esc** closes it. A new profession drops the
 skills and ranks it cannot use, with an **Undo**.
 Press a member's name, or **Open in the Character screen**, to edit it in

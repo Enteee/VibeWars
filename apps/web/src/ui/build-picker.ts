@@ -75,6 +75,11 @@ export interface BuildPickerHost<C extends TeamCharacter> extends BuildHost {
   readonly hint?: (tab: LibraryTab) => string | undefined;
   /** While true, a skill key over a library skill does nothing. */
   readonly keysBlocked?: () => boolean;
+  /**
+   * Whose gear the Gear tab equips, when not `current`'s: the Team
+   * Builder's open member. With none, the tab is not offered.
+   */
+  readonly gearOwner?: () => BuildHost | undefined;
 }
 
 export interface BuildPicker {
@@ -159,7 +164,7 @@ export function mountBuildPicker<C extends TeamCharacter>(
 
   /** Drop `drag` on `to`; a refused drop changes nothing. */
   const drop = (drag: SkillDrag, to: BarSlot, copy: boolean): void => {
-    const dropped = dropSkill(host.bars(), drag, to, copy);
+    const dropped = dropSkill(host.bars(), drag, to, copy, host.shown());
     if ("bars" in dropped) {
       host.commitBars(dropped.bars, dropped.notice);
     }
@@ -183,11 +188,20 @@ export function mountBuildPicker<C extends TeamCharacter>(
     equipTo,
     slotLabel,
   });
-  const gear = mountGearLibrary({
-    current: host.current,
-    commit: host.commit,
-    weaponSet: () => weaponSet,
-  });
+  const gearOwner = (): BuildHost | undefined => (host.gearOwner ?? (() => host))();
+  const gearHost: BuildHost = {
+    current: () => {
+      const owner = gearOwner();
+      if (owner === undefined) {
+        throw new Error("the Gear tab has no one to equip");
+      }
+      return owner.current();
+    },
+    commit: (next) => {
+      gearOwner()?.commit(next);
+    },
+  };
+  const gear = mountGearLibrary({ ...gearHost, weaponSet: () => weaponSet });
   const extraTabs = host.extraTabs ?? [];
   const bodies = new Map<string, Pick<LibraryBody, "elements" | "scroller">>([
     ...extraTabs.map(
@@ -214,6 +228,19 @@ export function mountBuildPicker<C extends TeamCharacter>(
     tabs.appendChild(node);
     return [id, node] as const;
   });
+  /** Offer the Gear tab only while it has someone to equip, leaving it if it had. */
+  const markGear = (): boolean => {
+    const offered = gearOwner() !== undefined;
+    for (const [id, node] of tabButtons) {
+      if (id === "gear") {
+        node.hidden = !offered;
+      }
+    }
+    if (!offered && active === "gear") {
+      open("skills");
+    }
+    return offered;
+  };
   const showHint = (): void => {
     const said = active === "skills" || active === "gear" ? host.hint?.(active) : undefined;
     hint.hidden = said === undefined;
@@ -306,7 +333,7 @@ export function mountBuildPicker<C extends TeamCharacter>(
     }
     const source = decodeGearDrag(event.dataTransfer?.getData("text/plain") ?? "");
     if (active === "gear" && source !== undefined) {
-      commitGear(host, applyGearDrop(host.current(), source, { kind: "library" }));
+      commitGear(gearHost, applyGearDrop(gearHost.current(), source, { kind: "library" }));
     }
   });
 
@@ -353,9 +380,10 @@ export function mountBuildPicker<C extends TeamCharacter>(
   return {
     element,
     update() {
-      const character = host.current();
-      skills.update(character);
-      gear.update(character);
+      skills.update(host.current());
+      if (markGear()) {
+        gear.update(gearHost.current());
+      }
       showHint();
       tipped = followTip(tooltip, tipped);
     },
@@ -422,7 +450,7 @@ export function mountBuildPicker<C extends TeamCharacter>(
           return;
         }
         const to = at();
-        const dropped = dropSkill(host.bars(), dragging.drag, to, event.shiftKey);
+        const dropped = dropSkill(host.bars(), dragging.drag, to, event.shiftKey, host.shown());
         const refused = "refused" in dropped;
         cell.classList.toggle("is-drop-refused", refused);
         cell.classList.toggle("is-drop-target", !refused);

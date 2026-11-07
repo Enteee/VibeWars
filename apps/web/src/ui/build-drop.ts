@@ -200,7 +200,8 @@ export type SkillDrop<C extends TeamCharacter> =
 
 /**
  * `bars` after `drag` is dropped on `to` (#2225, #2227). From the library,
- * an equip by `equipOnBar`. From a slot of the same bar, the two slots
+ * an equip by `equipOnBar`: onto `shown`, the bar the library is for, a
+ * skill already on it moves; onto another member's, it is refused. From a slot of the same bar, the two slots
  * trade places. From another member's bar, the skill moves there, trading
  * places with what it lands on, or with `copy` (the player held Shift) is
  * copied there, the source keeping it. Every bar it changes must stay
@@ -211,6 +212,7 @@ export function dropSkill<C extends TeamCharacter>(
   drag: SkillDrag,
   to: BarSlot,
   copy: boolean,
+  shown: number,
 ): SkillDrop<C> {
   const target = bars[to.member];
   if (target === undefined) {
@@ -222,7 +224,10 @@ export function dropSkill<C extends TeamCharacter>(
   });
   const next = [...bars];
   if (drag.from === "library") {
-    const refusal = equipRefusal(target, drag.skillId);
+    const refusal =
+      to.member === shown || !target.skillBar.includes(drag.skillId)
+        ? equipRefusal(target, drag.skillId)
+        : `${getSkill(drag.skillId)?.name ?? drag.skillId} is already on ${target.name}'s bar`;
     if (refusal !== undefined) {
       return { refused: refusal };
     }

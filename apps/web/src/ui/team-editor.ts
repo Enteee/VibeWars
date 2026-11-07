@@ -582,15 +582,31 @@ export function mountTeamEditor(
     schemaVersion: CHARACTER_SCHEMA_VERSION,
     updatedAt: Date.now(),
   });
-  const commitMember = (next: StoredCharacter): void => {
-    commit(replaceMember(team, teamCharacter(next, next.id)));
-  };
 
   // One member at a time opens in place (#2226): its professions, name,
   // attributes, skill bar and gear, by the Character Builder's own parts.
   let openMember: string | undefined;
   /** The slot of the open member's bar picked for the next equip (#564), if any. */
   let selected: number | undefined;
+  const commitMember = (next: StoredCharacter): void => {
+    const before = memberOf(next.id);
+    // New professions let the picked slot go, as the Character Builder does.
+    if (
+      before?.primaryProfession !== next.primaryProfession ||
+      before.secondaryProfession !== next.secondaryProfession
+    ) {
+      selected = undefined;
+    }
+    commit(replaceMember(team, teamCharacter(next, next.id)));
+  };
+  const openCharacter = (): StoredCharacter => {
+    const member = memberOf(openMember ?? "");
+    if (member === undefined) {
+      throw new Error("no member is open");
+    }
+    return stored(member);
+  };
+  const openHost: BuildHost = { current: openCharacter, commit: commitMember };
   const picker = mountBuildPicker<TeamCharacter>(body, {
     current: () => stored(focusedMember()),
     commit: commitMember,
@@ -625,7 +641,10 @@ export function mountTeamEditor(
     hint: (tab) =>
       tab === "skills"
         ? `Showing ${focusedMember().name}: drag a skill onto any member's slot.`
-        : `Showing ${focusedMember().name}: click to equip, or drag onto the open member's hands.`,
+        : `Equipping ${openCharacter().name}: click to equip, or drag onto their hands.`,
+    keysBlocked: () => asking?.isOpen() === true,
+    // Gear is the open member's alone (#2226), and not offered with none open.
+    gearOwner: () => (openMember === undefined ? undefined : openHost),
   });
   picker.element.classList.add("team-picker");
   panel.appendChild(body);
@@ -647,14 +666,6 @@ export function mountTeamEditor(
   // Esc, or a drop anywhere else, ends a drag with nothing done.
   panel.addEventListener("dragend", endDrag);
 
-  const openCharacter = (): StoredCharacter => {
-    const member = memberOf(openMember ?? "");
-    if (member === undefined) {
-      throw new Error("no member is open");
-    }
-    return stored(member);
-  };
-  const openHost: BuildHost = { current: openCharacter, commit: commitMember };
   const host: GearHost & ProfessionsHost = {
     ...openHost,
     // What new professions dropped is said, with an Undo, as the Character Builder does (#569).
@@ -752,6 +763,10 @@ export function mountTeamEditor(
     row.addEventListener("pointerdown", () => {
       if (focused !== characterId) {
         focused = characterId;
+        // A pick is on the open member's bar: off it, it is let go.
+        if (characterId !== openMember) {
+          selected = undefined;
+        }
         update();
       }
     });

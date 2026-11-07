@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-import { defaultBuildEquipment } from "@vibewars/game-core";
+import { ALL_WEAPONS, defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
@@ -148,6 +148,39 @@ describe("the build picker (#2565)", () => {
     picker.showLibrary("skills");
     expect(tabs(picker).open).toBe("Skills");
     expect(opened).toEqual(["gear", "skills"]);
+  });
+
+  it("equips gear on the gear owner, not on the member the skills show", () => {
+    let open: StoredCharacter | undefined = { ...warrior(), id: "a", name: "A" };
+    const owner = {
+      current: () => open ?? warrior(),
+      commit: (next: StoredCharacter) => {
+        open = next;
+      },
+    };
+    const picker = mount({ gearOwner: () => (open === undefined ? undefined : owner) });
+    const before = character.equipment;
+    picker.showLibrary("gear");
+    // Weapons come first, in the catalog's order.
+    fake(picker.element)
+      .all("gear-box")
+      [ALL_WEAPONS.findIndex((weapon) => weapon.id === "longbow")]?.click();
+    expect(open.equipment.weaponSets[0].mainHand.weaponId).toBe("longbow");
+    expect(character.equipment).toEqual(before);
+  });
+
+  it("offers no Gear tab while it has no owner, and leaves it when the owner goes", () => {
+    let owned = true;
+    const owner = { current: () => character, commit: () => undefined };
+    const picker = mount({ gearOwner: () => (owned ? owner : undefined) });
+    picker.showLibrary("gear");
+    owned = false;
+    picker.update();
+    const gear = fake(picker.element)
+      .all("library-tab")
+      .find((tab) => tab.textContent === "Gear");
+    expect(gear?.hidden).toBe(true);
+    expect(tabs(picker).open).toBe("Skills");
   });
 
   it("toasts what new professions dropped, and Undo puts it back", () => {

@@ -100,7 +100,7 @@ describe("equipTarget (#564)", () => {
 describe("a library skill dropped on a bar (#2225)", () => {
   it("equips to the slot it was dropped on, on that bar alone", () => {
     const bars = [warrior("a"), warrior("b")];
-    expect(barsOf(dropSkill(bars, library(SEVER), { member: 1, slot: 2 }, false))).toEqual([
+    expect(barsOf(dropSkill(bars, library(SEVER), { member: 1, slot: 2 }, false, 0))).toEqual([
       [null, null, null],
       [null, null, SEVER],
     ]);
@@ -108,20 +108,27 @@ describe("a library skill dropped on a bar (#2225)", () => {
 
   it("moves rather than duplicates one already on that bar", () => {
     const bars = [warrior("a", [CHOP, BASH])];
-    expect(barsOf(dropSkill(bars, library(CHOP), { member: 0, slot: 2 }, false))).toEqual([
+    expect(barsOf(dropSkill(bars, library(CHOP), { member: 0, slot: 2 }, false, 0))).toEqual([
       [null, BASH, CHOP],
     ]);
   });
 
+  it("refuses one already on another member's bar, saying why", () => {
+    const bars = [warrior("a", [CHOP]), warrior("b", [SEVER])];
+    expect(dropSkill(bars, library(SEVER), { member: 1, slot: 2 }, false, 0)).toEqual({
+      refused: "Sever Artery is already on b's bar",
+    });
+  });
+
   it("refuses another profession's skill, saying why", () => {
     const monk: TeamCharacter = { ...warrior("m"), name: "Mira", primaryProfession: "monk" };
-    expect(dropSkill([monk], library(SEVER), { member: 0, slot: 0 }, false)).toEqual({
+    expect(dropSkill([monk], library(SEVER), { member: 0, slot: 0 }, false, 0)).toEqual({
       refused: "Monk can't use Sever Artery",
     });
   });
 
   it("refuses what is not a skill in the game", () => {
-    expect(dropSkill([warrior("a")], library("nope"), { member: 0, slot: 0 }, false)).toEqual({
+    expect(dropSkill([warrior("a")], library("nope"), { member: 0, slot: 0 }, false, 0)).toEqual({
       refused: "Not a skill in the game",
     });
   });
@@ -132,6 +139,7 @@ describe("a library skill dropped on a bar (#2225)", () => {
       library(BATTLE_RAGE),
       { member: 0, slot: 4 },
       false,
+      0,
     );
     expect(barsOf(dropped, 8)[0]?.filter((id) => id !== null)).toEqual([BATTLE_RAGE]);
     expect("notice" in dropped && dropped.notice).toBe(
@@ -192,16 +200,18 @@ describe("a bar slot dropped on another (#2227)", () => {
     },
   ])("$what", ({ a, b, from, to, copy, want }) => {
     const bars = [warrior("a", a), warrior("b", b)];
-    expect(barsOf(dropSkill(bars, fromSlot(0, from), { member: 1, slot: to }, copy))).toEqual(want);
+    expect(barsOf(dropSkill(bars, fromSlot(0, from), { member: 1, slot: to }, copy, 0))).toEqual(
+      want,
+    );
   });
 
   it("swaps two slots of one bar, an empty one too, and with Shift still only moves", () => {
     for (const copy of [false, true]) {
       const bars = [warrior("a", [CHOP, null, BASH])];
-      expect(barsOf(dropSkill(bars, fromSlot(0, 0), { member: 0, slot: 2 }, copy))).toEqual([
+      expect(barsOf(dropSkill(bars, fromSlot(0, 0), { member: 0, slot: 2 }, copy, 0))).toEqual([
         [BASH, null, CHOP],
       ]);
-      expect(barsOf(dropSkill(bars, fromSlot(0, 0), { member: 0, slot: 1 }, copy))).toEqual([
+      expect(barsOf(dropSkill(bars, fromSlot(0, 0), { member: 0, slot: 1 }, copy, 0))).toEqual([
         [null, CHOP, BASH],
       ]);
     }
@@ -209,7 +219,7 @@ describe("a bar slot dropped on another (#2227)", () => {
 
   it("leaves the bars themselves when a skill is dropped back on its slot", () => {
     const bars = [warrior("a", [CHOP])];
-    expect(dropSkill(bars, fromSlot(0, 0), { member: 0, slot: 0 }, false)).toEqual({
+    expect(dropSkill(bars, fromSlot(0, 0), { member: 0, slot: 0 }, false, 0)).toEqual({
       bars,
       notice: undefined,
     });
@@ -253,7 +263,7 @@ describe("a bar slot dropped on another (#2227)", () => {
     },
   ])("refuses $what, saying why", ({ a, b, copy, want }) => {
     const bars = [warrior("a", a), warrior("b", b)];
-    expect(dropSkill(bars, fromSlot(0, 0), { member: 1, slot: 0 }, copy)).toEqual({
+    expect(dropSkill(bars, fromSlot(0, 0), { member: 1, slot: 0 }, copy, 0)).toEqual({
       refused: expect.stringContaining(want) as unknown,
     });
   });

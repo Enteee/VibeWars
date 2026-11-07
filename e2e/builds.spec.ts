@@ -633,8 +633,8 @@ test("a member opens in place: its secondary profession and a rank change there 
   await page.getByLabel("team name").fill("Duo");
   const editor = page.locator(".team-member-editor");
   await expect(editor).toHaveCount(0);
-  // The build picker's Gear tab is there before a member opens (#2565).
-  await expect(page.getByRole("tab", { name: "Gear", exact: true })).toBeVisible();
+  // The Gear tab has a member to equip only while one is open.
+  await expect(page.getByRole("tab", { name: "Gear", exact: true })).toBeHidden();
 
   await memberRows(page).first().locator(".team-row-edit").click();
   await expect(editor).toBeVisible();
@@ -956,29 +956,19 @@ test("a skill dragged from the Skills tab equips on a member's slot; a refused d
   await expect(target).toHaveAttribute("data-skill-id", skillId);
   await expect(page.locator(".editor-unsaved")).toBeVisible();
 
-  // The same skill again on that bar moves it there, as in the Character
-  // Builder (#2565).
+  // The same skill again on that bar, another member's than the one the
+  // library shows, is refused: the slot is marked, the reason said, and
+  // the drop does nothing.
   const other = memberRows(page).nth(1).locator(".team-skill").nth(5);
-  await box.dragTo(other);
-  await expect(other).toHaveAttribute("data-skill-id", skillId);
-  await expect(target).not.toHaveAttribute("data-skill-id");
-
-  // Another member's copy dragged onto that bar is refused: the slot is
-  // marked, the reason said, and the drop does nothing.
-  const first = memberRows(page).first().locator(".team-skill").first();
-  await box.dragTo(first);
-  await expect(first).toHaveAttribute("data-skill-id", skillId);
-  const empty = memberRows(page).nth(1).locator(".team-skill").nth(2);
-  await first.hover();
+  await box.hover();
   await page.mouse.down();
-  const spot = await empty.boundingBox();
+  const spot = await other.boundingBox();
   await page.mouse.move((spot?.x ?? 0) + 8, (spot?.y ?? 0) + 8, { steps: 4 });
   await page.mouse.move((spot?.x ?? 0) + 12, (spot?.y ?? 0) + 12, { steps: 2 });
-  await expect(empty).toHaveClass(/is-drop-refused/);
+  await expect(other).toHaveClass(/is-drop-refused/);
   await expect(page.locator(".drop-reason")).toContainText("already on New Character's bar");
   await page.mouse.up();
-  await expect(empty).not.toHaveAttribute("data-skill-id");
-  await expect(first).toHaveAttribute("data-skill-id", skillId);
+  await expect(other).not.toHaveAttribute("data-skill-id");
   await expect(memberRows(page).nth(1).locator(".team-skill:not(.is-empty)")).toHaveCount(1);
 });
 
