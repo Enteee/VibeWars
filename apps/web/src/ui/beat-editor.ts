@@ -107,11 +107,11 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   const evaluateButton = button("Play change", "primary beat-editor-evaluate", () => {
     evaluate();
   });
-  evaluateButton.title = "Ctrl+Enter";
+  evaluateButton.title = "Play (Ctrl+Enter)";
   const stopButton = button("Stop", "beat-editor-stop", () => {
     stop();
   });
-  stopButton.title = "Ctrl+.";
+  stopButton.title = "Stop (Ctrl+.)";
   const resetButton = button("Reset to shipped", "beat-editor-reset", () => {
     reset();
   });
@@ -157,11 +157,6 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   const status = h("p", "beat-editor-status", "Loading the editor…");
   status.setAttribute("role", "status");
   const code = h("div", "beat-editor-code");
-  const hint = h(
-    "p",
-    "beat-editor-hint",
-    "Ctrl+Enter plays your change from the next cycle and keeps it. Ctrl+. stops. Esc closes.",
-  );
   panel.append(
     overlayClose(() => {
       close();
@@ -171,7 +166,6 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
     pasteBox,
     status,
     code,
-    hint,
   );
 
   const paint = (): void => {

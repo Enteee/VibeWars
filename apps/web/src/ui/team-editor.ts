@@ -568,10 +568,9 @@ export function mountTeamEditor(
   // the build picker (#2565) on the focused member: its Skills to drag
   // onto any member's slot, its Gear for the open member.
   const charactersPane = h("div", "team-picker-pane team-picker-characters");
-  const pickerHint = h("p", "picker-hint");
   const pickerList = h("div", "team-picker-list");
   const pickerEmpty = h("p", "team-picker-empty", "You have no characters to copy.");
-  charactersPane.append(pickerHint, pickerList, pickerEmpty);
+  charactersPane.append(pickerList, pickerEmpty);
   const indexOfMember = (characterId: string): number =>
     team.members.findIndex((m) => m.character.id === characterId);
   const memberOf = (characterId: string): TeamCharacter | undefined =>
@@ -638,10 +637,6 @@ export function mountTeamEditor(
     onTab: (tab) => {
       lastPanelTab = tab;
     },
-    hint: (tab) =>
-      tab === "skills"
-        ? `Showing ${focusedMember().name}: drag a skill onto any member's slot.`
-        : `Equipping ${openCharacter().name}: click to equip, or drag onto their hands.`,
     keysBlocked: () => asking?.isOpen() === true,
     // Gear is the open member's alone (#2226), and not offered with none open.
     gearOwner: () => (openMember === undefined ? undefined : openHost),
@@ -1088,8 +1083,6 @@ export function mountTeamEditor(
     }
 
     picker.update();
-    pickerHint.textContent = `${String(characters.length)} ${characters.length === 1 ? "character" : "characters"} · drag one onto a member to copy it there`;
-    pickerHint.hidden = characters.length === 0;
     pickerEmpty.hidden = characters.length > 0;
     syncList(
       pickerList,

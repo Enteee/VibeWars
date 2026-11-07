@@ -2238,7 +2238,7 @@ body {
 
 /* A counter or a found skill marks its cells and dims the rest. */
 .team-skill[role="button"] {
-  cursor: pointer;
+  cursor: grab;
 }
 
 .team-grid.is-highlighting .team-skill:not(.is-marked) {
@@ -2333,12 +2333,6 @@ body {
   flex-direction: column;
   gap: 0.35rem;
   min-height: 0;
-}
-
-.picker-hint {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--ink-dim);
 }
 
 .team-pick[draggable="true"] {
@@ -5076,6 +5070,11 @@ button.skill-group-header > .skill-group-rank {
   cursor: pointer;
 }
 
+/* A card that drags shows it (#2643); a locked one only opens. */
+.skill-box[draggable="true"] .skill-box-card {
+  cursor: grab;
+}
+
 /* The icon on the left (#727), beside the two lines of text, so the row
    is no taller than it was (#581). Every cell is placed, none left to
    auto-placement: the name over the cost and the headline. */
@@ -6424,12 +6423,6 @@ button.skill-group-header > .skill-group-rank {
   color: var(--damage);
   font-family: inherit;
   white-space: pre-wrap;
-}
-
-.beat-editor-hint {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--ink-dim);
 }
 
 /* --- sound controls (#424): Options → Sound and the HUD's ♪ popover ------ */
