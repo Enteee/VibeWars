@@ -7,11 +7,13 @@ import arenaCrossroads from "../maps/arena-crossroads/map.json" with { type: "js
 import arenaLongHall from "../maps/arena-long-hall/map.json" with { type: "json" };
 import arenaPillars from "../maps/arena-pillars/map.json" with { type: "json" };
 import arenaSplit from "../maps/arena-split/map.json" with { type: "json" };
+import ashenCourtyard from "../maps/ashen-courtyard/map.json" with { type: "json" };
 import brokenTower from "../maps/broken-tower/map.json" with { type: "json" };
 import canthanTerraces from "../maps/canthan-terraces/map.json" with { type: "json" };
 import frozenCrossing from "../maps/frozen-crossing/map.json" with { type: "json" };
 import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
 import hallOfHeroes from "../maps/hall-of-heroes/map.json" with { type: "json" };
+import mossVale from "../maps/moss-vale/map.json" with { type: "json" };
 import sandstoneSteps from "../maps/sandstone-steps/map.json" with { type: "json" };
 import scarredEarth from "../maps/scarred-earth/map.json" with { type: "json" };
 import sunkenBastion from "../maps/sunken-bastion/map.json" with { type: "json" };
@@ -43,11 +45,13 @@ describe("the maps the browser imports", () => {
       arenaLongHall,
       arenaPillars,
       arenaSplit,
+      ashenCourtyard,
       brokenTower,
       canthanTerraces,
       frozenCrossing,
       guildHallIsle,
       hallOfHeroes,
+      mossVale,
       sandstoneSteps,
       scarredEarth,
       sunkenBastion,
