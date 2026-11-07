@@ -3,6 +3,7 @@
   "name": "Pillar Hall",
   "mode": "kill-count",
   "teamSizes": [1, 2, 4],
+  "teams": 2,
   "width": 960,
   "height": 640,
   "walls": [

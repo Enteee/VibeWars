@@ -3,6 +3,7 @@
   "name": "Split Paths",
   "mode": "priest-annihilation",
   "teamSizes": [2, 4],
+  "teams": 2,
   "width": 1000,
   "height": 700,
   "walls": [

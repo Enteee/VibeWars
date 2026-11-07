@@ -7,6 +7,7 @@ import {
   KING_OF_THE_HILL_MATCH_RULES,
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
+  SHRINE_INVULNERABLE_SECONDS,
 } from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { chargeAdrenaline } from "../skills/testing.js";
@@ -14,6 +15,7 @@ import { distance, vec2, type Vec2 } from "../vec2.js";
 import { applyIntent } from "./apply-intent.js";
 import { CLAIM_SKILL_ID, GHOST_HEALTH, ghostId, type GhostField } from "./ghost.js";
 import { ALTAR_REACH_UNITS } from "./relics.js";
+import { priestId, type Shrine } from "./priest.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
 
@@ -475,5 +477,94 @@ describe("on the Hall of Heroes (#1995)", () => {
     stepFor(sim, POINT_TICK_SECONDS * 2 + 1);
     expect(points(sim)[0]).toBeGreaterThan(0);
     expect(points(sim)[1]).toBe(0);
+  });
+});
+
+describe("King of the Hill with three teams (#2682)", () => {
+  const THREE: GhostField = {
+    ...FIELD,
+    spawns: [...FIELD.spawns, { team: 2, position: vec2(1500, 120) }],
+  };
+
+  /** `kingOfTheHill` with a third team at the top edge, and its ghost. */
+  function threeWay(
+    shrines: readonly Shrine[] = [],
+    matchRules = KING_OF_THE_HILL_MATCH_RULES,
+  ): MatchSimulation {
+    return new MatchSimulation({
+      seed: "king-of-the-hill-3",
+      matchRules,
+      teamCount: 3,
+      walls: WALLS,
+      bounds: BOUNDS,
+      ghostField: THREE,
+      shrines,
+      participants: [
+        fighter("a", 0, vec2(240, 780)),
+        fighter("x", 1, vec2(2760, 1020)),
+        fighter("p", 2, vec2(1400, 120)),
+      ],
+    });
+  }
+
+  it("has one holder, and a third team takes the altar once the holder's ghost dies", () => {
+    const sim = threeWay();
+    onAltar(sim, 0);
+    stepUntil(sim, () => sim.altarState.holder === 0, CLAIM_SECONDS + 1);
+    onAltar(sim, 2, 30);
+    for (let tick = 0; tick < (2 * CLAIM_SECONDS) / DT; tick += 1) {
+      sim.step(DT);
+      expect(claiming(sim, ghostId(2))).toBe(false);
+    }
+    expect(sim.altarState.holder).toBe(0);
+    kill(sim, GHOST_0);
+    stepFor(sim, 1);
+    onAltar(sim, 2);
+    stepUntil(sim, () => sim.altarState.holder === 2, CLAIM_SECONDS + 1);
+    // Held by the third team's living ghost, it is nobody else's to begin.
+    onAltar(sim, 1, -30);
+    stepFor(sim, 1);
+    expect(claiming(sim, GHOST_1)).toBe(false);
+    expect([...sim.score.byTeam.keys()]).toEqual([0, 1, 2]);
+  });
+
+  it("scores the third team for holding it", () => {
+    const sim = threeWay();
+    onAltar(sim, 2);
+    stepUntil(sim, () => sim.altarState.holder === 2, CLAIM_SECONDS + 1);
+    stepFor(sim, POINT_TICK_SECONDS + DT);
+    expect(sim.score.byTeam.get(2)).toBe(1);
+  });
+
+  it("wipes a team out only once its priest is dead too, and an out team's points win nothing", () => {
+    // Five minutes: past the first wave, without eight minutes of steps.
+    const SHORT = { ...KING_OF_THE_HILL_MATCH_RULES, timeLimitSeconds: 300 };
+    const sim = threeWay(
+      [
+        { team: 0, position: vec2(240, 600) },
+        { team: 1, position: vec2(2760, 1200) },
+        { team: 2, position: vec2(1600, 120) },
+      ],
+      SHORT,
+    );
+    onAltar(sim, 0);
+    stepUntil(sim, () => sim.altarState.holder === 0, CLAIM_SECONDS + 1);
+    stepFor(sim, POINT_TICK_SECONDS * 3 + 1);
+    expect(sim.score.byTeam.get(0)).toBeGreaterThan(0);
+    // Wiped, with its priest alive: not out, and the wave raises it.
+    kill(sim, "a");
+    stepUntil(sim, () => get(sim, "a").combatant.dead, 2);
+    expect(sim.phase).toBe("active");
+    stepUntil(sim, () => !get(sim, "a").combatant.dead, PRIEST_WAVE_SECONDS);
+    // Wiped with its priest: out, while teams 1 and 2 fight on.
+    stepFor(sim, SHRINE_INVULNERABLE_SECONDS + 1);
+    kill(sim, priestId(0));
+    kill(sim, "a");
+    stepUntil(sim, () => get(sim, "a").combatant.dead, 2);
+    expect(sim.get(priestId(0))).toBeUndefined();
+    expect(sim.phase).toBe("active");
+    stepUntil(sim, () => sim.phase === "finished", SHORT.timeLimitSeconds);
+    // Neither 1 nor 2 scored: a draw, not team 0's win.
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: undefined, reason: "time" });
   });
 });

@@ -132,6 +132,12 @@ describe("unseatedTeams (#2108)", () => {
     expect(unseatedTeams({ ...map, teamSizes: [1], spawnPoints: spawns(1) })).toHaveLength(2);
     expect(unseatedTeams({ ...map, teamSizes: [1], spawnPoints: spawns(2) })).toEqual([]);
   });
+
+  it("seats every one of a three-team map's teams, a third with no spawn included (#2682)", () => {
+    expect(unseatedTeams({ ...map, teams: 3, teamSizes: [1], spawnPoints: spawns(2) })).toEqual([
+      "team 2 has 0 spawns, not the 2 its team sizes need",
+    ]);
+  });
 });
 
 describe("loadAllMaps", () => {

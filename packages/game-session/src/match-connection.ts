@@ -152,8 +152,8 @@ export interface StatusSnapshot {
 export interface MatchSnapshot {
   readonly selfSessionId: string;
   readonly players: readonly PlayerSnapshot[];
-  readonly scoreTeam0: number;
-  readonly scoreTeam1: number;
+  /** Each team's points by team index (#2682): one a team. */
+  readonly score: readonly number[];
   readonly elapsedSeconds: number;
   /** "active" or "finished". */
   readonly phase: string;

@@ -3,6 +3,7 @@
   "name": "Canthan Terraces",
   "mode": "annihilation",
   "teamSizes": [1],
+  "teams": 2,
   "width": 5200,
   "height": 2800,
   "walls": [

@@ -3,6 +3,7 @@
   "name": "Moss Vale",
   "mode": "annihilation",
   "teamSizes": [8],
+  "teams": 2,
   "width": 4800,
   "height": 2800,
   "walls": [

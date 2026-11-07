@@ -77,7 +77,7 @@ describe("connectMatch", () => {
       capturePoints: [],
     });
     await settle();
-    expect(connection.getSnapshot().scoreTeam0).toBe(0);
+    expect(connection.getSnapshot().score[0]).toBe(0);
     expect(connection.getSnapshot().phase).toBe("active");
     expect(self(connection)).toEqual(before);
   });
