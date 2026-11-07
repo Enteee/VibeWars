@@ -45,6 +45,13 @@ import { fileURLToPath } from "node:url";
 
 import { releaseLock, takeLock } from "./instance-lock.mjs";
 import {
+  RUNNER_NAME,
+  openRunnerLog,
+  pruneRunnerLogs,
+  redactWindow,
+  runnerLogDir,
+} from "./runner-logs.mjs";
+import {
   STATUS_FILE,
   ensureStateDir,
   maxRunners,
@@ -120,7 +127,7 @@ export class ApiError extends Error {
  * @typedef {object} Deps
  * @property {() => number} now
  * @property {Api} api
- * @property {(jitconfig: string) => Launched} launch
+ * @property {(jitconfig: string, name: string) => Launched} launch
  * @property {Host} host
  * @property {() => { n: number, reason: string | null }} readTarget
  * @property {(status: import("./runners-state.mjs").RunnersStatus) => void} writeStatus
@@ -161,6 +168,14 @@ function credentialRefused(error) {
 }
 
 /**
+ * @param {number} bytes
+ * @returns {string} GiB, one decimal
+ */
+function gib(bytes) {
+  return (bytes / 1024 ** 3).toFixed(1);
+}
+
+/**
  * The state machine. `tick` reconciles once and is never run twice at a
  * time; `stop` is the clean shutdown.
  */
@@ -180,6 +195,8 @@ export class RunnerSupervisor {
     this.reconciled = false;
     /** @type {string | null} the last refusal or back-off, as the status says it */
     this.reason = null;
+    /** @type {string | null} the kind of host refusal last logged, so a new number is not news */
+    this.reasonKind = null;
     /** @type {string | null} why the back-off runs, while it does */
     this.backoffReason = null;
     /** @type {string | null} */
@@ -239,7 +256,8 @@ export class RunnerSupervisor {
       }
       return { value: result };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      // A GitHub error can echo what it was sent: no token reaches a log.
+      const message = redactWindow(error instanceof Error ? error.message : String(error));
       if (credentialRefused(error)) {
         if (this.alert === null) {
           this.deps.log(`runners: ${CREDENTIAL_ALERT} (${message})`);
@@ -325,6 +343,10 @@ export class RunnerSupervisor {
         this.variable = on;
       }
     }
+    if (!(this.reason ?? "").startsWith("not starting a runner: ")) {
+      // The host let one start, or none was wanted: the next refusal is news.
+      this.reasonKind = null;
+    }
     this.writeStatus();
   }
 
@@ -407,14 +429,22 @@ export class RunnerSupervisor {
       this.reason = disk;
       return false;
     }
-    if (host.freeBytes() < config.memoryBytes + MEMORY_HEADROOM) {
-      this.overloaded("host memory is short");
+    const free = host.freeBytes();
+    const needed = config.memoryBytes + MEMORY_HEADROOM;
+    if (free < needed) {
+      this.overloaded(
+        "memory",
+        `host memory ${gib(free)} GiB free is below the ${gib(needed)} GiB a runner needs`,
+      );
       return false;
     }
-    if (host.load1() > host.cpus()) {
-      this.overloaded("host load is above its CPU count");
+    const load = host.load1();
+    const cpus = host.cpus();
+    if (load > cpus) {
+      this.overloaded("load", `host load ${load.toFixed(1)} is above its ${String(cpus)} CPUs`);
       return false;
     }
+    this.reasonKind = null;
     if (now() < this.retryAt) {
       return false;
     }
@@ -429,7 +459,7 @@ export class RunnerSupervisor {
       await this.call("remove", () => api.remove(minted.value.id));
       return false;
     }
-    const launched = launch(minted.value.jitconfig);
+    const launched = launch(minted.value.jitconfig, name);
     /** @type {Runner} */
     const runner = {
       name,
@@ -447,12 +477,19 @@ export class RunnerSupervisor {
     return true;
   }
 
-  /** @param {string} why */
-  overloaded(why) {
-    if (this.reason !== `not starting a runner: ${why}`) {
-      this.deps.log(`runners: not starting a runner: ${why}`);
-    }
+  /**
+   * The host refused a runner. Logged when the kind of refusal changes, not
+   * on every new number; the status always has the numbers.
+   *
+   * @param {"memory" | "load"} kind
+   * @param {string} why
+   */
+  overloaded(kind, why) {
     this.reason = `not starting a runner: ${why}`;
+    if (this.reasonKind !== kind) {
+      this.deps.log(`runners: ${this.reason}`);
+    }
+    this.reasonKind = kind;
   }
 
   /**
@@ -824,17 +861,26 @@ export const LIFELINE_FD = 3;
  * closes it, and the launcher stops its runner. A restarted supervisor
  * never finds the last one's runners still going.
  *
+ * Its stdout and stderr go to its log, line by line (#2729), ended by
+ * `exited <code>`; without a log, nowhere. The JIT config is on stdin
+ * alone, so it never reaches either.
+ *
  * @param {string} command
  * @param {string[]} args
  * @param {Record<string, string>} env
  * @param {string} jitconfig
+ * @param {import("./runner-logs.mjs").RunnerLogWriter | null} [log]
  * @returns {Launched}
  */
-export function spawnLauncher(command, args, env, jitconfig) {
+export function spawnLauncher(command, args, env, jitconfig, log = null) {
   const child = spawn(command, args, {
     env,
-    stdio: ["pipe", "inherit", "inherit", "pipe"],
+    stdio: ["pipe", log === null ? "ignore" : "pipe", log === null ? "ignore" : "pipe", "pipe"],
   });
+  child.stdout?.setEncoding("utf8");
+  child.stderr?.setEncoding("utf8");
+  child.stdout?.on("data", (/** @type {string} */ chunk) => log?.write("out", chunk));
+  child.stderr?.on("data", (/** @type {string} */ chunk) => log?.write("err", chunk));
   child.stdin.once("error", () => {
     // A launcher that exits before it reads, or never starts, breaks the
     // pipe: that is its exit, which `exited` reports, not this one's crash.
@@ -846,10 +892,14 @@ export function spawnLauncher(command, args, env, jitconfig) {
   return {
     exited: new Promise((resolve) => {
       child.once("error", () => {
+        log?.end(1);
         resolve(1);
       });
       child.once("exit", (code, signal) => {
-        resolve(code ?? (signal === null ? 1 : 128));
+        const exit = code ?? (signal === null ? 1 : 128);
+        // What its runner still prints after this is not the launcher's.
+        log?.end(exit);
+        resolve(exit);
       });
     }),
     kill: () => child.kill("SIGTERM"),
@@ -909,11 +959,33 @@ if (
   }
   const gh = ghEnv(env, path.join(credentials, "runners-gh"));
   const launcherEnv = launcherEnvOf(env, scratch);
+  const logs = runnerLogDir(root);
+  fs.mkdirSync(logs, { recursive: true, mode: 0o700 });
   const supervisor = new RunnerSupervisor({
     now: () => Date.now(),
     api: githubApi(repo, gh),
-    launch: (jitconfig) =>
-      spawnLauncher("vibewars-runner-jail", launcherArgs(cap), launcherEnv, jitconfig),
+    launch: (jitconfig, name) => {
+      if (!RUNNER_NAME.test(name)) {
+        // Never a path: a name this cannot file is run without a log.
+        console.error(`runners: ${name} is no log name; its output is dropped`);
+        return spawnLauncher("vibewars-runner-jail", launcherArgs(cap), launcherEnv, jitconfig);
+      }
+      const log = openRunnerLog(path.join(logs, `${name}.log`), {
+        onError: (error) => {
+          console.error(
+            `runners: ${name}: its log stopped: ${error instanceof Error ? error.message : "failed"}`,
+          );
+        },
+      });
+      try {
+        pruneRunnerLogs(logs, new Set([...supervisor.runners.keys(), name]));
+      } catch (error) {
+        console.error(
+          `runners: could not prune runner logs: ${error instanceof Error ? error.message : "failed"}`,
+        );
+      }
+      return spawnLauncher("vibewars-runner-jail", launcherArgs(cap), launcherEnv, jitconfig, log);
+    },
     host: {
       freeBytes: () => os.freemem(),
       load1: () => os.loadavg()[0] ?? 0,

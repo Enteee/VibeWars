@@ -205,7 +205,7 @@ let
         hub_window() {
           mkdir -p "$VIBEWARS_BOT_ROOT/hub"
           ${node} ${llcScripts}/hub-window.mjs open
-          echo "claude-llc: hubd, the supervisor and the runner supervisor started in the hub window (logs: .bots/hub/)"
+          echo "claude-llc: hubd, the supervisor and the runner supervisor started in the hub window, the runners' logs in CI-RUNNERS (logs: .bots/hub/)"
         }
 
         # One employee's pane (#383, #722), the only way an agent starts:
@@ -221,6 +221,7 @@ let
           pkill -f hubd.mjs 2>/dev/null || true
           pkill -f supervisor.mjs 2>/dev/null || true
           pkill -f runner-supervisor.mjs 2>/dev/null || true
+          pkill -f runner-panes.mjs 2>/dev/null || true
         }
 
         # The build the running company was started from, against the

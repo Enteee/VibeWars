@@ -6,9 +6,10 @@
  * hubd once died on startup, and every agent lost GitHub until a human
  * noticed. So claude-llc runs hubd and the supervisor under this, each in a
  * pane of the `hub` window. The command's output goes to the pane and to
- * `$VIBEWARS_BOT_ROOT/hub/<name>.log`. When it exits, for any reason, this
- * says so in the pane, waits as `nextDelay` says (1, 2, 4 … 60 s) and starts
- * it again. Every exit is recorded in `<name>.restarts` for the dashboard.
+ * `$VIBEWARS_BOT_ROOT/hub/<name>.log`, which past 1 MiB becomes
+ * `<name>.log.1`, replacing the one before, and starts again (#2729). When
+ * it exits, for any reason, this says so in the pane, waits as `nextDelay`
+ * says (1, 2, 4 … 60 s) and starts it again. Every exit is recorded in `<name>.restarts` for the dashboard.
  * Five exits in five minutes is a crash loop, and the company is told once,
  * through the sidecar's system outbox.
  *
@@ -26,6 +27,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { nextDelay } from "./hub-health.mjs";
 import { releaseLock, takeLock } from "./instance-lock.mjs";
 import { SYSTEM, visible } from "./protocol.mjs";
+import { appendLog, rotateIfLarge } from "./runner-logs.mjs";
 
 const [name, separator, command, ...args] = process.argv.slice(2);
 if (name === undefined || !/^[a-z][a-z0-9-]*$/.test(name) || separator !== "--" || !command) {
@@ -52,7 +54,8 @@ if (!takeLock(LOCK)) {
 /** @param {string} text */
 function say(text) {
   process.stdout.write(text);
-  fs.appendFileSync(LOG, text);
+  rotateIfLarge(LOG);
+  appendLog(LOG, text);
 }
 
 /**

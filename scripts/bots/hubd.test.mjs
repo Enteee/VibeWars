@@ -2724,6 +2724,28 @@ describe("hubd hiring and firing", () => {
     expect(refused.allow).toBe(false);
   }, 20_000);
 
+  it("company runners logs: the cicd-engineer reads the supervisor's log and a runner's, redacted", async () => {
+    const hubd = await startHubd(5000);
+    const hub = path.join(hubd.root, "hub");
+    fs.mkdirSync(path.join(hub, "runners"), { recursive: true });
+    fs.writeFileSync(path.join(hub, "runner-supervisor.log"), "runners: started r-1\n");
+    fs.writeFileSync(
+      path.join(hub, "runners", "r-1.log"),
+      `t [out] ${"ghs_".concat("x".repeat(36))}\nt exited 0\n`,
+    );
+
+    const overview = await hubd.request("cicd-engineer", "runner-logs", []);
+    expect(overview.code, String(overview.reason)).toBe(0);
+    expect(overview.stdout).toMatch(/^supervisor log, last 80 lines:\nrunners: started r-1\n/);
+    expect(overview.stdout).toMatch(/^ {2}r-1 {2}exited 0 /m);
+    const one = await hubd.request("cicd-engineer", "runner-logs", ["r-1", "--lines", "5"]);
+    expect(one.stdout).toBe("t [out] [redacted]\nt exited 0\n");
+    const missing = await hubd.request("manager", "runner-logs", ["r-2"]);
+    expect(missing.stdout).toBe("no log for r-2; runners with logs: r-1\n");
+    const refused = await hubd.request("developer", "runner-logs", []);
+    expect(refused.allow).toBe(false);
+  }, 20_000);
+
   it("records a hire and a fire in staff.json, and tells the company", async () => {
     const hubd = await startHubd(5000);
     employ(hubd, 4);

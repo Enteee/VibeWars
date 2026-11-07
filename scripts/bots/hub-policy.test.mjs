@@ -16,6 +16,7 @@ import {
   mayReadAlerts,
   parseMerge,
   parseReview,
+  parseRunnerLogsArgv,
   touchesGate,
 } from "./hub-policy.mjs";
 
@@ -765,9 +766,10 @@ describe("company runners (#1890)", () => {
     ).toMatchObject({ allow: false });
   });
 
-  it("the manager and the business-analyst read it", () => {
+  it("the manager, the business-analyst and the cicd-engineer read it", () => {
     expect(authorize("manager", { kind: "runners", argv: [] })).toEqual({ allow: true });
     expect(authorize("business-analyst", { kind: "runners", argv: [] })).toEqual({ allow: true });
+    expect(authorize("cicd-engineer", { kind: "runners", argv: [] })).toEqual({ allow: true });
     expect(authorize("developer", { kind: "runners", argv: [] })).toMatchObject({ allow: false });
   });
 
@@ -778,6 +780,61 @@ describe("company runners (#1890)", () => {
         reason: "usage: company runners [<n>]",
       });
     }
+  });
+});
+
+describe("company runners logs (#2729)", () => {
+  const readers = ["manager", "business-analyst", "cicd-engineer"];
+
+  it("the three readers may read them, and the cicd-engineer still may not scale", () => {
+    for (const role of readers) {
+      for (const argv of [[], ["vibewars-box-a-1"], ["--lines", "400"], ["r-1", "--lines", "1"]]) {
+        expect(authorize(role, { kind: "runner-logs", argv }), `${role} ${argv.join(" ")}`).toEqual(
+          {
+            allow: true,
+          },
+        );
+      }
+    }
+    expect(authorize("cicd-engineer", { kind: "runners", argv: ["2"] })).toMatchObject({
+      allow: false,
+    });
+  });
+
+  it("other roles may not, and no hat lends it", () => {
+    for (const role of ROLES.filter((r) => !readers.includes(r))) {
+      expect(authorize(role, { kind: "runner-logs", argv: [] }), role).toMatchObject({
+        allow: false,
+      });
+    }
+    expect(
+      authorize("developer", { kind: "runner-logs", argv: [] }, { acting: ["manager"] }),
+    ).toMatchObject({ allow: false });
+  });
+
+  it("refuses a path for a runner, and lines outside 1 to 400", () => {
+    for (const argv of [
+      ["../x"],
+      ["a/b"],
+      ["R-1"],
+      ["x".repeat(65)],
+      ["a", "b"],
+      ["--lines"],
+      ["--lines", "0"],
+      ["--lines", "401"],
+      ["--lines", "-5"],
+      ["--follow"],
+    ]) {
+      expect(
+        authorize("cicd-engineer", { kind: "runner-logs", argv }),
+        argv.join(" "),
+      ).toMatchObject({ allow: false });
+    }
+  });
+
+  it("parses the runner and the lines", () => {
+    expect(parseRunnerLogsArgv([])).toEqual({ runner: null, lines: 80 });
+    expect(parseRunnerLogsArgv(["--lines", "5", "r-1"])).toEqual({ runner: "r-1", lines: 5 });
   });
 });
 
