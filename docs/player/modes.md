@@ -126,9 +126,11 @@ doorway on each side.
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
 **Ghostly Hero** in its base, a ghost that fights with a sword and that
 nobody plays. The **altar** is in the centre, the same walk from both
-bases, up a north or a south approach. The **Hall of Heroes**, the King of the
-Hill map that ends the Heroes' Ascent, is a grander hall with a colonnade on
-each approach. Target your ghost with a
+bases. On **The Courtyard** it stands in an open court ringed by four
+clusters of pillars, entered from the four corners. The **Hall of
+Heroes**, the King of the Hill map that ends the Heroes' Ascent, raises
+it on a dais walled to the west and east, up a north or a south approach
+lined with pillars. Target your ghost with a
 **right-click** and press **Space** to tell it to follow you: it walks
 with you and fights what you fight. Press Space on it again and it
 stays where it stands, fighting any foe who comes near. If you die or
@@ -159,7 +161,7 @@ The scoreboard shows the points, yours first, then the altar: `▲` and
 the time to the holder's next point, in the holder's colour, or a grey
 `▲ —` while nobody holds it.
 
-Hill Courtyard plays it.
+The Courtyard plays it.
 
 ## Capture Points
 
@@ -257,7 +259,7 @@ skips the wait, or, for winners, leaves without queueing.
 ## Heroes' Ascent
 
 A queued Heroes' Ascent is four rounds, always in this order: Broken
-Tower (Relic Run), Scarred Earth (Capture Points), Hill Courtyard (King
+Tower (Relic Run), Scarred Earth (Capture Points), The Courtyard (King
 of the Hill), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 4 · Scarred Earth`.
 You only ever meet a team at the same round, and you wait for one as

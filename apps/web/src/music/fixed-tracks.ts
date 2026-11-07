@@ -22,7 +22,7 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["jungle-ruins", "jungle-veil"],
   ["scarred-earth", "jungle-veil"],
   ["arena-crossroads", "last-stand"],
-  ["hill-courtyard", "last-stand"],
+  ["the-courtyard", "last-stand"],
   ["arena-canyon", "glass-dunes"],
   ["sandstone-steps", "clash-of-banners"],
   ["frozen-crossing", "ashen-fields"],

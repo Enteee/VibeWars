@@ -9,7 +9,14 @@ import type { MapData, Wall } from "./schema.js";
  * on team 1, so neither side is favoured. Each new map of the epic joins
  * this list.
  */
-const SYMMETRIC = ["ember-pits", "jungle-ruins", "broken-tower", "scarred-earth"];
+const SYMMETRIC = [
+  "ember-pits",
+  "jungle-ruins",
+  "broken-tower",
+  "scarred-earth",
+  "the-courtyard",
+  "hall-of-heroes",
+];
 
 /** How far apart a thing and its twin's rotation may be. */
 const TOLERANCE = 1;

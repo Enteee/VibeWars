@@ -23,7 +23,7 @@ describe("sizeClass (#444, #2547)", () => {
       "arena-long-hall": "small",
       "guild-hall-isle": "small",
       "broken-tower": "small",
-      "hill-courtyard": "small",
+      "the-courtyard": "small",
       "hall-of-heroes": "small",
       "scarred-earth": "small",
       "sandstone-steps": "medium",

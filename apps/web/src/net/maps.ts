@@ -10,8 +10,8 @@ import sandstoneSteps from "@vibewars/game-maps/maps/sandstone-steps/map.json" w
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
 import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
-import hillCourtyard from "@vibewars/game-maps/maps/hill-courtyard/map.json" with { type: "json" };
 import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
+import theCourtyard from "@vibewars/game-maps/maps/the-courtyard/map.json" with { type: "json" };
 import type {
   BaseGuard,
   FlagField,
@@ -47,8 +47,8 @@ export const ARENA_MAPS: readonly MapData[] = [
   guildHallIsle,
   // The Relic Run's (#1374, #2551).
   brokenTower,
-  // King of the Hill's (#1377).
-  hillCourtyard,
+  // King of the Hill's (#1377, #2552).
+  theCourtyard,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
   hallOfHeroes,
   // Capture Points' (#1378, #2551).
@@ -154,7 +154,7 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
 export const ASCENT_PROGRESSION: readonly string[] = [
   "broken-tower",
   "scarred-earth",
-  "hill-courtyard",
+  "the-courtyard",
   "hall-of-heroes",
 ];
 
