@@ -628,20 +628,22 @@ export function refuseTrackingEdit(argv) {
 
 /**
  * Whether a `pr create` or `pr edit` points a pull request at a base other
- * than main (#2707). hubd's merge guard reads the base before qa-tester's
- * merge runs, so a retarget in between would land an approved PR on a
- * release branch. So no pull request targets anything but main: `pr edit`
- * takes no base at all, `pr create` only `main`, and never in a cluster.
- * Read as gh reads flags, erring on the side of refusing.
+ * than main (#2747). hubd's merge guard reads the base before qa-tester's
+ * merge runs, so a retarget in between would land an approved pull request
+ * on a release branch. Read as gh reads flags, failing closed: every base
+ * named must be exactly `main`, `-B` only on its own, and a word that is
+ * another flag's value but looks like a base flag is refused, not parsed.
  *
  * @param {string[]} argv `["pr", "create" | "edit", ...]`
  * @returns {string | null} why not, if not
  */
 export function refuseBase(argv) {
-  const editing = argv[1] === "edit";
   const words = argv.slice(2);
   for (let i = 0; i < words.length; i += 1) {
     const word = words[i] ?? "";
+    if (word === "--") {
+      break;
+    }
     /** @type {string | undefined} */
     let value;
     if (word === "--base" || word === "-B") {
@@ -656,16 +658,11 @@ export function refuseBase(argv) {
       if (short === null) {
         continue;
       }
-      if (short.at !== 1) {
-        return `-B in a cluster (${word}) is not allowed: pass --base main on its own`;
-      }
-      value = short.glued ?? undefined;
-    }
-    if (editing) {
-      return "a pull request's base is not edited: every pull request targets main";
+      // A cluster (`-dB x`) is refused rather than parsed.
+      value = short.at === 1 ? (short.glued ?? undefined) : undefined;
     }
     if (value !== "main") {
-      return `--base ${value ?? ""} is not allowed: every pull request targets main`;
+      return "pull requests target main only; release branches take cherry-picks, not PRs (#2707)";
     }
   }
   return null;
