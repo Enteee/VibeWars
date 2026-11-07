@@ -21,7 +21,7 @@ import {
 } from "../../simulation.js";
 import { botRole, roleOf } from "../role.js";
 import { botUses } from "../skill-intent.js";
-import { NOTHING, skillsOf } from "./shared.js";
+import { NOTHING, foeReach, skillsOf } from "./shared.js";
 import type { RuleContext } from "./types.js";
 
 export const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -154,6 +154,7 @@ export function ruleFor(
   const self = view.self;
   const bar = skillsOf(self);
   const living = view.participants.filter((other) => !other.combatant.dead);
+  const reaches = new Map<string, number>();
   return {
     context: view,
     self,
@@ -170,6 +171,7 @@ export function ruleFor(
     role: botRole(bar, self.combatant.equipment.mainHand.weapon.range),
     foeCentroid: view.foeCentroid,
     roleOf,
+    foeReach: (foe) => foeReach(reaches, foe),
     ...extra,
   };
 }

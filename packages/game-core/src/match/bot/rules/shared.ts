@@ -6,7 +6,7 @@ import { distance, ZERO, type Vec2 } from "../../../vec2.js";
 import type { BehaviourIntent } from "../../behaviour.js";
 import type { BehaviourContext } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
-import { summonAura } from "../skill-intent.js";
+import { botUses, summonAura } from "../skill-intent.js";
 
 export const NOTHING: BehaviourIntent = {
   moveDirection: ZERO,
@@ -145,4 +145,36 @@ export function dodgeRoll(projectileId: number, participantId: string): number {
   hash = Math.imul(hash ^ (hash >>> 16), 0x85ebca6b);
   hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35);
   return ((hash ^ (hash >>> 16)) >>> 0) / 0x1_0000_0000;
+}
+
+/**
+ * The turns, in degrees, a ranged bot or healer tries its spot at about
+ * what it watches (#2598): the straight one first, then the left before
+ * the right, so a tie keeps the smallest turn.
+ */
+export const THREAT_ANGLES = [0, 20, -20, 40, -40] as const;
+
+/** At its spot, it looks for a safer one only with this many foes able to hit it (#2598). */
+export const THREAT_MOVE_MIN = 2;
+
+/**
+ * How far `foe` can hit from (#2598): the longest range among its offence
+ * skills and its weapon, never under `RANGE_MELEE`: a bow outreaches a
+ * touch skill. Bars are locked in a match, so each foe's is read once
+ * into `cache`.
+ */
+export function foeReach(cache: Map<string, number>, foe: Participant): number {
+  const known = cache.get(foe.id);
+  if (known !== undefined) {
+    return known;
+  }
+  let longest = 0;
+  for (const skill of skillsOf(foe)) {
+    if (botUses(skill).includes("offence")) {
+      longest = Math.max(longest, skill.range);
+    }
+  }
+  const reach = Math.max(RANGE_MELEE, longest, foe.combatant.equipment.mainHand.weapon.range);
+  cache.set(foe.id, reach);
+  return reach;
 }

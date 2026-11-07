@@ -206,6 +206,8 @@ export interface BehaviourCursor {
   heldMove: Pick<BehaviourIntent, "moveDirection" | "moveTo">;
   /** `play-build`: seconds before it may end another maintained enchantment (#2492). */
   upkeepDropSeconds: number;
+  /** `play-build`: each foe's reach, read once from its bar (#2598). */
+  readonly foeReach: Map<string, number>;
 }
 
 export interface BehaviourContext {
@@ -263,6 +265,7 @@ export function createCursor(): BehaviourCursor {
     returning: false,
     heldMove: { moveDirection: ZERO, moveTo: undefined },
     upkeepDropSeconds: 0,
+    foeReach: new Map(),
   };
 }
 

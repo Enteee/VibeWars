@@ -29,6 +29,8 @@ export interface RuleContext {
   readonly foeCentroid: Vec2 | undefined;
   /** Any participant's role, from the match's cache; a creature: `undefined` (#2549). */
   readonly roleOf: (participant: Participant) => BotRole | undefined;
+  /** How far a foe can hit from, cached per match (#2598). */
+  readonly foeReach: (foe: Participant) => number;
 }
 
 /** One step of `play-build`'s think: the first rule with an answer decides. */

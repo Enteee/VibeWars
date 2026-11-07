@@ -27,8 +27,9 @@ A bot plays the role its build gives it. One wielding a melee weapon is
 heals or protections it can cast on an ally is a **healer**: it stands
 behind whichever ally is hurt most, away from the foes. Every other bot is
 **ranged**: it keeps where every one of its attacks reaches, and stands
-and fights a foe who comes too close. A team turns on any foe in reach
-who drops below 60% health, to finish them.
+and fights a foe who comes too close. Ranged bots and healers step to
+where fewer foes can reach them, and use pillars as cover. A team turns
+on any foe in reach who drops below 60% health, to finish them.
 
 A badly hurt bot that is losing its fight falls back behind its healer, or
 to its base, and rests out of reach until it has most of its health back.

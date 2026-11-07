@@ -11,7 +11,7 @@ import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { roleOf, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
-import { HURT_FRACTION, NOTHING, healthFraction, skillsOf } from "./rules/shared.js";
+import { HURT_FRACTION, NOTHING, foeReach, healthFraction, skillsOf } from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
 import { sacrificesTooMuch } from "./skill-intent.js";
 
@@ -200,6 +200,7 @@ function think(
     role,
     foeCentroid: context.foeCentroid,
     roleOf,
+    foeReach: (foe) => foeReach(cursor.foeReach, foe),
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
   for (const { decide } of BOT_RULES) {
