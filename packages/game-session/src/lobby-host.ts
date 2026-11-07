@@ -21,6 +21,7 @@ import {
   parsePeerLobbyLeave,
   parsePeerLobbyJoin,
   parsePeerPartyConsent,
+  parsePeerRelayCredOut,
   parsePeerRelayHolding,
   parsePeerStayTogether,
   parseWireLobbyCommand,
@@ -33,8 +34,8 @@ import {
   type PeerLobbyJoin,
   type PeerLobbySeat,
   type PeerRelayAdmit,
-  type PeerRelayLogin,
-  type WireRelayLogin,
+  type PeerRelayCredIn,
+  type PeerRelayOffers,
   type LobbyRefusal,
   type WireCape,
   type WireChatLine,
@@ -99,6 +100,13 @@ export const CHAT_BURST = 5;
  * have sent a consent that verifies, or the team splits (#1078).
  */
 export const PARTY_CONSENT_MS = 5000;
+
+/**
+ * The least time between two `relay-cred` the host forwards from one
+ * holder to one member (#2529), on the lobby's clock. A holder remints
+ * every 50 min, so a real one never meets it.
+ */
+export const RELAY_CRED_EVERY_MS = 60_000;
 
 /** A party every winner said yes to, waiting for each one's consent (#1078). */
 interface PartyProposal {
@@ -280,20 +288,6 @@ export interface LobbyHostOptions {
   readonly matchmaking?: LobbyMatchmakingOptions;
   /** In [0, 1): what a Team Lobby picks at random. Injected, so a test can seed it. */
   readonly random: () => number;
-  /** The relay login this host shares with its members (#2248). */
-  readonly relay: LobbyRelaySource;
-}
-
-/**
- * The relay login a lobby host shares, minted for one member (#2527),
- * `null` for none, and when it changes (a remint, sharing turned on or
- * off, another relay). Each admitted member is told its own on admission
- * and on every change.
- */
-export interface LobbyRelaySource {
-  current(peerId: string): WireRelayLogin | null;
-  /** `handler` on each change, until the returned function is called. */
-  onChange(handler: () => void): () => void;
 }
 
 /**
@@ -364,6 +358,8 @@ interface Member {
    * (#2157); `null` for the host's own player and a bot, never re-seated so.
    */
   readonly rejoinToken: string | null;
+  /** Its page's relay key from its `lobby-join` (#2529); `null` for none, and for a bot. */
+  relayPub: string | null;
   /**
    * A bot's build (#1193): it has no peer, is always ready and plays
    * this, a slot nobody claimed (#2029).
@@ -435,11 +431,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const { host: transport, local } = createLocalPeer(sizeChecked(gated));
   /** In the order they joined, which is the order they are listed in. */
   const members = new Map<string, Member>();
-  /** The relay login to `to`, an admitted member (#2248): never to anyone else. */
-  const tellRelay = (to: string): void => {
-    const message: PeerRelayLogin = { relay: options.relay.current(to) };
-    transport.send("relay-login", message, to);
-  };
   /** The member peer `peerId` is: never a bot, whatever a peer calls itself (#1193). */
   const peerMember = (peerId: string): Member | undefined => {
     const member = members.get(peerId);
@@ -470,6 +461,53 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     isAway: (peerId) => away.has(peerId),
     freeSeats: () => freeSeats(),
   });
+  /** The `relay-offers` last sent to every member, as JSON: only a change goes again (#2529). */
+  let toldOffers = "";
+  /** When the host last forwarded a `relay-cred` per sender and member, keyed `from\nto` (#2529). */
+  const forwarded = new Map<string, number>();
+  /** Seated members holding a relay, in seat order, and those with a relay key: never a bot. */
+  const relayOffers = (): PeerRelayOffers => {
+    const seated = [...members.values()].filter((member) => member.bot === null);
+    return {
+      holders: seated.filter(({ id }) => relayAdmission.holds(id)).map(({ id }) => id),
+      // The host's own player reaches the host without a relay.
+      members: seated.flatMap(({ id, relayPub }) =>
+        id === local.selfId || relayPub === null ? [] : [{ peerId: id, pub: relayPub }],
+      ),
+    };
+  };
+  /**
+   * The holders and members to every member, away and in a match too, if
+   * they changed (#2529); else to `also` alone, a member back from a drop.
+   */
+  const tellRelayOffers = (also?: string): void => {
+    const offers = relayOffers();
+    const text = JSON.stringify(offers);
+    if (text === toldOffers) {
+      if (also !== undefined) {
+        transport.send("relay-offers", offers, also);
+      }
+      return;
+    }
+    toldOffers = text;
+    for (const member of members.values()) {
+      if (member.bot === null) {
+        transport.send("relay-offers", offers, member.id);
+      }
+    }
+  };
+  /**
+   * Forget the forwards to `peerId`, so the first seal for it after a
+   * seat always goes through; with `asSender`, also those from it.
+   */
+  const forgetForwards = (peerId: string, asSender: boolean): void => {
+    for (const pair of [...forwarded.keys()]) {
+      const [from, to] = pair.split("\n");
+      if (to === peerId || (asSender && from === peerId)) {
+        forwarded.delete(pair);
+      }
+    }
+  };
   const relayRoomsHandlers = new Set<(wanted: boolean) => void>();
   const goneHandlers = new Set<(peerId: string) => void>();
   let relayRoomsWanted = false;
@@ -519,18 +557,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    */
   const draining: { readonly host: MatchHost; readonly room: Transport }[] = [];
   let closed = false;
-  // To every member, one at a time: away and in a match too, which
-  // `broadcast()` skips, since a guest refreshes its login mid-match.
-  const stopRelay = options.relay.onChange(() => {
-    if (closed) {
-      return;
-    }
-    for (const member of members.values()) {
-      if (member.bot === null && member.id !== local.selfId) {
-        tellRelay(member.id);
-      }
-    }
-  });
   /** A queued lobby's countdown: when it ends, in whole ms on the lobby's clock, while it runs. */
   let countdownEndsAt: number | undefined;
   /** A queued lobby starts its match once; after it, the lobby only waits. */
@@ -1674,6 +1700,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       ready: true,
       seatKey: null,
       rejoinToken: null,
+      relayPub: null,
       bot: build,
     });
     return id;
@@ -1731,16 +1758,18 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       ready: false,
       seatKey,
       rejoinToken,
+      relayPub: join.relayPub,
       bot: null,
     });
     relayAdmission.seated(from);
+    forgetForwards(from, false);
     beginCountdown();
     broadcast();
-    // To it alone, after the state that lists it, so it knows the host by then.
+    // After the state that lists it, so it knows the host by then.
     if (rejoinToken !== null) {
       transport.send("lobby-seat", { rejoinToken } satisfies PeerLobbySeat, from);
-      tellRelay(from);
     }
+    tellRelayOffers(from);
   };
 
   /**
@@ -1963,6 +1992,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       // team, to confirm again like everyone else when the match is over.
       away.delete(from);
       relayAdmission.seated(from);
+      returning.relayPub = join.relayPub;
+      forgetForwards(from, false);
       returning.name = sanitizeName(join.name, returning.name);
       const guild = sanitizeGuild(join);
       returning.guildTag = guild.guildTag;
@@ -1983,7 +2014,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       beginCountdown();
       broadcast();
       // A change while it was away may not have reached it.
-      tellRelay(from);
+      tellRelayOffers(from);
       return;
     }
     if (queued !== undefined) {
@@ -2020,6 +2051,32 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
     relayAdmission.holding(from, holding.on);
     tellRelayRooms();
+    tellRelayOffers();
+  });
+
+  // A holder's sealed login for a seated member (#2529): forwarded seated
+  // to seated only, stamped with the sender's own seat, at most one per
+  // pair each `RELAY_CRED_EVERY_MS`. The host cannot open it.
+  transport.on("relay-cred", (data, from) => {
+    if (closed || peerMember(from) === undefined || !budget.take(from, nowMs())) {
+      return;
+    }
+    const cred = parsePeerRelayCredOut(data);
+    if (
+      cred === undefined ||
+      cred.to === from ||
+      cred.to === local.selfId ||
+      peerMember(cred.to) === undefined
+    ) {
+      return;
+    }
+    const pair = `${from}\n${cred.to}`;
+    const last = forwarded.get(pair);
+    if (last !== undefined && nowMs() - last < RELAY_CRED_EVERY_MS) {
+      return;
+    }
+    forwarded.set(pair, nowMs());
+    transport.send("relay-cred", { from, seal: cred.seal } satisfies PeerRelayCredIn, cred.to);
   });
 
   transport.on("lobby-cmd", (data, from) => {
@@ -2129,6 +2186,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     members.delete(peerId);
     relayAdmission.gone(peerId);
     tellRelayRooms();
+    forgetForwards(peerId, true);
+    tellRelayOffers();
     for (const handler of [...goneHandlers]) {
       handler(peerId);
     }
@@ -2519,7 +2578,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         return;
       }
       closed = true;
-      stopRelay();
       tellRelayRooms();
       if (moveTo !== undefined) {
         const move: WireLobbyMove = { code: moveTo };

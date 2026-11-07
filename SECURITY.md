@@ -179,10 +179,20 @@ channels, as often as they like.
   revoked early and outlives its slot, so that cap bounds seals, not valid
   logins: what a lobby draws is bounded by the holder's coturn, which must
   set `denied-peer-ip` for private ranges, `no-loopback-peers`,
-  `no-multicast-peers`, quotas and a per-allocation `max-bps`. A seated guest ignores every seal
-  (#2248): the host tells it its login over the lobby, which only the
-  host can, so a member's seal naming the host's relay with a junk login
-  cannot replace the real one for a rejoin or a refresh. A first join is
+  `no-multicast-peers`, quotas and a per-allocation `max-bps`. Seated, a
+  member stops listening on Nostr and takes logins only as `relay-cred`
+  over the lobby (#2529): the host lists the holders, forwards seated to
+  seated only, stamps the sender itself and passes one per pair a
+  minute, and the member keeps a seal only if its sender is listed and
+  the holder sealed inside is that sender. It moves its connection in
+  place only onto a newer login for the same relay from the holder it
+  relays through, at most once per relay every 5 min unless ICE failed,
+  so another member naming that relay with a junk login cannot replace
+  the real one. Residual, accepted: holding is self-asserted, so once a
+  member's own holder leaves the list, or its host drops, it falls back
+  to the best-ranked listed holder, which a seated member can be. That
+  holder learns the member's address and can hand it a login that does
+  not work. A first join is
   not bound to the host's holders. Residual, accepted: an invite holder
   can seal a relay of its own to a joiner's key, and can grind a first URL
   that ranks first (`rankOffers` hashes the room and that URL), so with

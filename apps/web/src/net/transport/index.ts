@@ -1,4 +1,3 @@
-import type { WireRelayLogin } from "@vibewars/game-protocol";
 import type { LobbyRoom, MatchRecord, Transport } from "@vibewars/game-session";
 
 import { checkNat } from "../nat-check.js";
@@ -24,12 +23,7 @@ import {
   type RelayHold,
 } from "./relay-offer.js";
 import { TRYSTERO_SELF_ID, joinTrysteroRoom } from "./trystero.js";
-import {
-  loadOfferedRelay,
-  loadRelay,
-  onRelaySharingChange,
-  validateTurnConfig,
-} from "./turn-config.js";
+import { loadOfferedRelay, loadRelay, onRelaySharingChange } from "./turn-config.js";
 
 /**
  * Join `room` (#403), derived from a lobby key or a queue room's name
@@ -76,14 +70,20 @@ export function checkTransportNat(): Promise<boolean> {
     : checkNat();
 }
 
-/** A guest's room, how it is told the host answered, the relay login the host shares, and its refresh. */
+/** A guest's room, how it is told the host answered, and the relay logins its lobby shares (#2529). */
 export interface GuestRoom {
   readonly transport: Transport;
   reached(hostId: string): void;
-  /** The host's `relay-login` (#2248): from then on, it asks no more over Nostr. */
-  fromHost(login: WireRelayLogin | null): void;
-  /** Called in the lobby, never in a map (#2245): see `RelayJoin.refreshRelay`. */
-  refreshRelay(nowMs: number): void;
+  /** This page's relay key, for its `lobby-join`: `null` when it has none. */
+  relayPub(): Promise<string | null>;
+  /** The holders the host's `relay-offers` lists: from then on, it asks no more over Nostr. */
+  listed(holders: readonly string[]): void;
+  /** A login seated holder `from` sealed for this page, which the host forwarded. */
+  fromMember(from: string, seal: string): void;
+  /** The holder whose relay the host's connection goes through (#2531): `undefined` direct. */
+  relayedVia(): string | undefined;
+  /** `handler` when `relayedVia` changed. */
+  onRelayedVia(handler: () => void): () => void;
 }
 
 /**
@@ -96,8 +96,11 @@ export function joinGuestRoom(room: LobbyRoom): GuestRoom {
     return {
       transport: joinRoom(room),
       reached: () => undefined,
-      fromHost: () => undefined,
-      refreshRelay: () => undefined,
+      relayPub: () => Promise.resolve(null),
+      listed: () => undefined,
+      fromMember: () => undefined,
+      relayedVia: () => undefined,
+      onRelayedVia: () => () => undefined,
     };
   }
   const offers = watchRelayOffers(room.relay, room.roomId, TRYSTERO_SELF_ID);
@@ -116,13 +119,15 @@ export function joinGuestRoom(room: LobbyRoom): GuestRoom {
     reached: (hostId) => {
       transport.reached(hostId);
     },
-    // A login the guest would not use itself, such as a private address, is none.
-    fromHost: (login) => {
-      offers.fromHost(login === null ? null : (validateTurnConfig(login) ?? null));
+    relayPub: () => offers.pub(),
+    listed: (holders) => {
+      offers.listed(holders);
     },
-    refreshRelay: (nowMs) => {
-      transport.refreshRelay(nowMs);
+    fromMember: (from, seal) => {
+      offers.fromMember(from, seal);
     },
+    relayedVia: () => transport.relayedVia(),
+    onRelayedVia: (handler) => transport.onRelayedVia(handler),
   };
 }
 

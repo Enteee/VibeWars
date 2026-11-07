@@ -118,3 +118,31 @@ export function reachable(context: BehaviourContext, spot: Vec2): Vec2 | undefin
   }
   return undefined;
 }
+
+/** Below this share of its health, a bot under fire falls back to its haven (#2549). */
+export const FLEE_FRACTION = 0.3;
+
+/** It stands this far beyond its healer, on the side away from the foes (#2549). */
+export const FLEE_BEHIND = 60;
+
+/** Out of a foe's reach, a hurt bot rests until this share of its health (#2549). */
+export const REST_FRACTION = 0.7;
+
+/** The share of the skill shots aimed at it a bot side-steps (#2590). */
+export const DODGE_CHANCE = 0.5;
+
+/**
+ * A bot's coin for one shot (#2590), in [0, 1): a pure hash of the shot's
+ * `projectileId` and the bot's `participantId`, FNV-1a then a 32-bit
+ * finaliser. No RNG state, so a replay dodges the same shots.
+ */
+export function dodgeRoll(projectileId: number, participantId: string): number {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < participantId.length; index += 1) {
+    hash = Math.imul(hash ^ participantId.charCodeAt(index), 0x01000193);
+  }
+  hash = Math.imul(hash ^ projectileId, 0x01000193);
+  hash = Math.imul(hash ^ (hash >>> 16), 0x85ebca6b);
+  hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35);
+  return ((hash ^ (hash >>> 16)) >>> 0) / 0x1_0000_0000;
+}

@@ -69,6 +69,7 @@ const joinAs = (name: string, rejoinToken: string | null) => ({
   guildCape: null,
   admission: null,
   rejoinToken,
+  relayPub: null,
 });
 
 /**

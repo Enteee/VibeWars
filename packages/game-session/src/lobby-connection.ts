@@ -9,7 +9,8 @@ import type {
   WirePartyFormed,
   WireProposalBuild,
   PeerRelayAdmit,
-  WireRelayLogin,
+  PeerRelayCredIn,
+  PeerRelayOffers,
   WireTeamLobby,
 } from "@vibewars/game-protocol";
 
@@ -181,11 +182,19 @@ export interface LobbyConnection {
    */
   onMove(handler: (code: string) => void): void;
   /**
-   * The relay login the host shares (#2248), or `null` for none: on
-   * admission and on each change, from the host alone. Shape-checked only.
-   * A handler added after one came is called with the last at once.
+   * The lobby's relay holders and the members they mint for (#2529):
+   * on admission and on each change, from the host alone. A handler
+   * added after one came is called with the last at once.
    */
-  onRelayLogin(handler: (relay: WireRelayLogin | null) => void): void;
+  onRelayOffers(handler: (offers: PeerRelayOffers) => void): () => void;
+  /**
+   * A holder's login sealed to this page's key (#2529), forwarded by the
+   * host, which stamped `from`. Not yet opened, nor checked against the
+   * holders.
+   */
+  onRelayCred(handler: (cred: PeerRelayCredIn) => void): () => void;
+  /** As a holder, send seated member `to` a login sealed to its key, through the host (#2529). */
+  sendRelayCred(to: string, seal: string): void;
   /**
    * The host admitted a joiner's relay ask (#2527): a member holding a
    * relay may mint it a login and seal it to `pub`. From the host alone.

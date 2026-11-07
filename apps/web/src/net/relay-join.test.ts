@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   MAX_RELAY_ATTEMPTS,
   RELAY_ATTEMPT_MS,
-  RELAY_REFRESH_LEFT_MS,
   RELAY_REJOIN_MS,
+  RELAY_RESTART_EVERY_MS,
   joinWithRelayOffers,
 } from "./relay-join.js";
 import { relayRoomsSwitch, withSiblingRoom } from "./relay-room.js";
@@ -14,9 +14,16 @@ import type { RelayOffer } from "./transport/relay-seal.js";
 import type { TrysteroTransport } from "./transport/trystero.js";
 import type { TurnConfig } from "./transport/turn-config.js";
 
+const OTHER_URL = "turn:other.example:3478";
+
 function login(expiry: number): TurnConfig {
+  return loginAt("turn:relay.example:3478", expiry);
+}
+
+/** A login through `url` that runs out at `expiry`, in seconds. */
+function loginAt(url: string, expiry: number): TurnConfig {
   return {
-    urls: ["turn:relay.example:3478"],
+    urls: [url],
     username: `${String(expiry)}:0011223344556677`,
     credential: `minted-${String(expiry)}`,
   };
@@ -29,12 +36,11 @@ function offer(holder: string, expiry: number): RelayOffer {
 
 /**
  * Offers a test hands in, as the Nostr subscription and the host's lobby
- * would: `ranked` is the order the test gives, and the host's login is
- * whatever it was last told.
+ * would: `ranked` is the order the test gives.
  */
 function fakeOffers() {
   let ranked: RelayOffer[] = [];
-  let host: TurnConfig | undefined;
+  const vouched = new WeakSet<RelayOffer>();
   const handlers = new Set<() => void>();
   let closed = false;
   const tell = (): void => {
@@ -43,12 +49,11 @@ function fakeOffers() {
     }
   };
   const offers: RelayOffers = {
+    pub: () => Promise.resolve(null),
     ranked: () => [...ranked],
-    hostLogin: () => host,
-    fromHost(next) {
-      host = next ?? undefined;
-      tell();
-    },
+    listed: () => undefined,
+    fromMember: () => undefined,
+    vouched: (offer) => vouched.has(offer),
     onOffer(handler) {
       handlers.add(handler);
       return () => {
@@ -65,6 +70,11 @@ function fakeOffers() {
     open(...next: RelayOffer[]) {
       ranked = next;
       tell();
+    },
+    /** `offer`, as the host forwarded it from its holder (#2531). */
+    vouch(offer: RelayOffer): RelayOffer {
+      vouched.add(offer);
+      return offer;
     },
     closed: () => closed,
   };
@@ -106,6 +116,7 @@ describe("a joiner's fallback on the relays its lobby's members offer (#2091, #2
             return leave();
           },
           swapIceServers: () => undefined,
+          iceState: () => undefined,
         };
       },
       offers: fake.offers,
@@ -203,14 +214,14 @@ describe("a joiner's fallback on the relays its lobby's members offer (#2091, #2
     expect(joins.at(-1)).toEqual({ turn: login(2), attempt: 2 });
   });
 
-  it("rejoins a dropped host, relayed, through the host's newer login, in the same sibling (#2248)", async () => {
+  it("rejoins a dropped host, relayed, through the best-ranked newer login, in the same sibling (#2529)", async () => {
     const { network, fake, room, joins } = joiner();
     fake.open(offer("a", 1), offer("b", 2));
     await vi.advanceTimersByTimeAsync(RELAY_REJOIN_MS);
     const host = network.join("host");
     await vi.advanceTimersByTimeAsync(0);
     room.reached("host");
-    fake.offers.fromHost(login(5));
+    fake.open(offer("a", 5));
     await host.leave();
     await vi.advanceTimersByTimeAsync(0);
     expect(joins).toEqual([DIRECT, { turn: login(1), attempt: 1 }, { turn: login(5), attempt: 1 }]);
@@ -227,7 +238,7 @@ describe("a joiner's fallback on the relays its lobby's members offer (#2091, #2
     const host = same.network.join("host");
     await vi.advanceTimersByTimeAsync(0);
     same.room.reached("host");
-    same.fake.offers.fromHost(login(1));
+    same.fake.open(offer("a", 1));
     await host.leave();
     await vi.advanceTimersByTimeAsync(0);
     expect(same.joins).toHaveLength(2);
@@ -237,7 +248,7 @@ describe("a joiner's fallback on the relays its lobby's members offer (#2091, #2
     const directHost = direct.network.join("host");
     await vi.advanceTimersByTimeAsync(0);
     direct.room.reached("host");
-    direct.fake.offers.fromHost(login(5));
+    direct.fake.open(offer("a", 5));
     await directHost.leave();
     await vi.advanceTimersByTimeAsync(0);
     expect(direct.joins).toEqual([DIRECT]);
@@ -266,7 +277,11 @@ describe("a joiner's fallback on the relays its lobby's members offer (#2091, #2
         if (turn !== undefined) {
           throw new Error("the relayed room would not open");
         }
-        return { ...network.join("guest"), swapIceServers: () => undefined };
+        return {
+          ...network.join("guest"),
+          swapIceServers: () => undefined,
+          iceState: () => undefined,
+        };
       },
       offers: fake.offers,
       ownRelay: false,
@@ -292,7 +307,7 @@ describe("a joiner's fallback on the relays its lobby's members offer (#2091, #2
   });
 });
 
-describe("a relayed joiner's login, refreshed in place between maps (#2245)", () => {
+describe("a relayed member's login, moved in place (#2245, #2529)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -300,17 +315,17 @@ describe("a relayed joiner's login, refreshed in place between maps (#2245)", ()
     vi.useRealTimers();
   });
 
-  /** The first offer's expiry, in seconds, and a moment it has just under the refresh margin left. */
+  /** The first offer's expiry, in seconds. */
   const EXPIRY = 10_000;
-  const LATE = EXPIRY * 1000 - RELAY_REFRESH_LEFT_MS + 1;
-  const NEWER = login(EXPIRY + 2 * 60 * 60);
+  const NEWER = login(EXPIRY + 60 * 60);
 
-  /** A joiner that may be relayed, recording joins and swaps. */
+  /** A member that may be relayed, recording joins and swaps, its host's ICE as `ice` says. */
   function relayedJoiner(ownRelay = false) {
     const network = createMemoryNetwork();
     const fake = fakeOffers();
     const joins: Join[] = [];
     const swaps: { peerId: string; turn: TurnConfig }[] = [];
+    let ice: RTCIceConnectionState = "connected";
     const room = joinWithRelayOffers({
       selfId: "guest",
       join: (turn, attempt): TrysteroTransport => {
@@ -320,12 +335,16 @@ describe("a relayed joiner's login, refreshed in place between maps (#2245)", ()
           swapIceServers: (peerId, swapped) => {
             swaps.push({ peerId, turn: swapped });
           },
+          iceState: () => ice,
         };
       },
       offers: fake.offers,
       ownRelay,
     });
-    return { network, fake, room, joins, swaps };
+    const setIce = (state: RTCIceConnectionState): void => {
+      ice = state;
+    };
+    return { network, fake, room, joins, swaps, setIce };
   }
 
   /** Relayed through `login(EXPIRY)`, then reached the host. */
@@ -338,64 +357,190 @@ describe("a relayed joiner's login, refreshed in place between maps (#2245)", ()
     return host;
   }
 
-  it("swaps the host's connection onto the host's newer login near expiry, once", async () => {
+  it("moves the host's connection onto a newer login for its relay, in place, once", async () => {
     const joiner = relayedJoiner();
     await reachHost(joiner);
-    joiner.fake.offers.fromHost(NEWER);
-    joiner.room.refreshRelay(LATE);
+    joiner.fake.open({ config: NEWER, holder: "a", name: "Member a" });
     expect(joiner.swaps).toEqual([{ peerId: "host", turn: NEWER }]);
-    // `relayedWith` moved on: the same login swaps nothing again.
-    joiner.room.refreshRelay(LATE + 60_000);
+    // It relays with that one now: the same login moves nothing again.
+    joiner.fake.open({ config: NEWER, holder: "a", name: "Member a" });
     expect(joiner.swaps).toHaveLength(1);
     // In place: no leave, no join.
     expect(joiner.joins).toEqual([DIRECT, { turn: login(EXPIRY), attempt: 1 }]);
     await joiner.room.leave();
   });
 
-  it("does not swap with the margin or more left", async () => {
+  it("does not move onto the same login, or while its holder has no later one", async () => {
     const joiner = relayedJoiner();
     await reachHost(joiner);
-    joiner.fake.offers.fromHost(NEWER);
-    joiner.room.refreshRelay(LATE - 1);
+    joiner.fake.open(offer("a", EXPIRY));
+    joiner.fake.open(offer("b", EXPIRY + 60), offer("a", EXPIRY));
     expect(joiner.swaps).toEqual([]);
     await joiner.room.leave();
   });
 
-  it("does not swap without a newer host login: none, the same login, or one no later", async () => {
+  it("moves onto the best-ranked live login once none names its relay, and stays with none", async () => {
     const joiner = relayedJoiner();
     await reachHost(joiner);
-    joiner.room.refreshRelay(LATE);
-    joiner.fake.offers.fromHost(login(EXPIRY));
-    joiner.room.refreshRelay(LATE);
-    joiner.fake.offers.fromHost(login(EXPIRY - 60));
-    joiner.room.refreshRelay(LATE);
-    joiner.fake.offers.fromHost(null);
-    joiner.room.refreshRelay(LATE);
+    const other = loginAt(OTHER_URL, EXPIRY - 60);
+    joiner.fake.open(
+      { config: other, holder: "b", name: "Member b" },
+      { config: loginAt("turn:third.example:3478", EXPIRY), holder: "c", name: "Member c" },
+    );
+    expect(joiner.swaps).toEqual([{ peerId: "host", turn: other }]);
+    joiner.fake.open();
+    expect(joiner.swaps).toHaveLength(1);
+    await joiner.room.leave();
+  });
+
+  it("ranks a new relay from its own holder as any other: a live login for its relay keeps it", async () => {
+    const joiner = relayedJoiner();
+    await reachHost(joiner);
+    joiner.fake.open(
+      { config: loginAt(OTHER_URL, EXPIRY + 60 * 60), holder: "a", name: "Member a" },
+      offer("c", EXPIRY),
+    );
     expect(joiner.swaps).toEqual([]);
     await joiner.room.leave();
   });
 
-  it("never swaps a joiner with its own relay, or one that reached its host directly", async () => {
+  it("never restarts for a holder that seals a new relay every minute", async () => {
+    const joiner = relayedJoiner();
+    await reachHost(joiner);
+    joiner.setIce("failed");
+    for (let minute = 1; minute <= 10; minute += 1) {
+      await vi.advanceTimersByTimeAsync(60_000);
+      const url = `turn:relay${String(minute)}.example:3478`;
+      joiner.fake.open({
+        config: loginAt(url, EXPIRY + minute * 60),
+        holder: "a",
+        name: "Member a",
+      });
+    }
+    expect(joiner.swaps).toEqual([]);
+    await joiner.room.leave();
+  });
+
+  it("never moves onto another holder's newer login for its relay while its holder has one", async () => {
+    const joiner = relayedJoiner();
+    const host = await reachHost(joiner);
+    // A seated member says it holds this relay and seals a bogus login
+    // for it, newer and ranked first: it must not end the connection.
+    joiner.fake.open(offer("m", EXPIRY + 60 * 60), offer("a", EXPIRY));
+    joiner.setIce("failed");
+    joiner.fake.open(offer("m", EXPIRY + 2 * 60 * 60), offer("a", EXPIRY));
+    expect(joiner.swaps).toEqual([]);
+    // Nor does a drop rejoin through it: its holder's login still lives.
+    await host.leave();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(joiner.joins).toEqual([DIRECT, { turn: login(EXPIRY), attempt: 1 }]);
+    await joiner.room.leave();
+  });
+
+  it("moves onto the best-ranked live login once its holder leaves the list", async () => {
+    const joiner = relayedJoiner();
+    await reachHost(joiner);
+    joiner.fake.open(offer("m", EXPIRY + 60 * 60), offer("a", EXPIRY));
+    expect(joiner.swaps).toEqual([]);
+    joiner.fake.open(offer("m", EXPIRY + 60 * 60));
+    expect(joiner.swaps).toEqual([{ peerId: "host", turn: login(EXPIRY + 60 * 60) }]);
+    // Then that holder's logins alone move it.
+    joiner.fake.open(offer("a", EXPIRY + 3 * 60 * 60), offer("m", EXPIRY + 60 * 60));
+    expect(joiner.swaps).toHaveLength(1);
+    await joiner.room.leave();
+  });
+
+  it("says whose relay it goes through once the host forwarded its login, and a switch (#2531)", async () => {
+    const joiner = relayedJoiner();
+    let told = 0;
+    joiner.room.onRelayedVia(() => {
+      told += 1;
+    });
+    expect(joiner.room.relayedVia()).toBeUndefined();
+    // Seated on a login off the Nostr relays: its holder is only claimed.
+    await reachHost(joiner);
+    expect(joiner.room.relayedVia()).toBeUndefined();
+    expect(told).toBe(0);
+    // Its holder's login, forwarded by the host, moves it in place.
+    joiner.fake.open(joiner.fake.vouch(offer("a", EXPIRY + 60)));
+    expect(joiner.room.relayedVia()).toBe("a");
+    expect(told).toBe(1);
+    // A newer one from the same holder is no switch.
+    joiner.setIce("failed");
+    joiner.fake.open(
+      joiner.fake.vouch(offer("m", EXPIRY + 60 * 60)),
+      joiner.fake.vouch(offer("a", EXPIRY + 120)),
+    );
+    expect(joiner.swaps).toHaveLength(2);
+    expect(told).toBe(1);
+    joiner.fake.open(joiner.fake.vouch(offer("m", EXPIRY + 60 * 60)));
+    expect(joiner.room.relayedVia()).toBe("m");
+    expect(told).toBe(2);
+    await joiner.room.leave();
+  });
+
+  it("names nobody for a pre-seat seal that claims a seated holder's id (#2531)", async () => {
+    const joiner = relayedJoiner();
+    // Mallory seals her relay as holder "a"; a's own login, forwarded, names another.
+    await reachHost(joiner);
+    const alice = loginAt(OTHER_URL, EXPIRY + 60 * 60);
+    joiner.fake.open(joiner.fake.vouch({ config: alice, holder: "a", name: "Alice" }));
+    expect(joiner.swaps).toEqual([]);
+    expect(joiner.room.relayedVia()).toBeUndefined();
+    await joiner.room.leave();
+  });
+
+  it("says no holder reached directly, or with its own relay (#2531)", async () => {
+    for (const ownRelay of [false, true]) {
+      const joiner = relayedJoiner(ownRelay);
+      joiner.network.join("host");
+      await vi.advanceTimersByTimeAsync(0);
+      joiner.room.reached("host");
+      joiner.fake.open(offer("a", EXPIRY));
+      await vi.advanceTimersByTimeAsync(RELAY_REJOIN_MS);
+      expect(joiner.room.relayedVia()).toBeUndefined();
+      await joiner.room.leave();
+    }
+  });
+
+  it("restarts at most once per relay each 5 min, unless ICE failed or disconnected", async () => {
+    const joiner = relayedJoiner();
+    await reachHost(joiner);
+    joiner.fake.open({ config: NEWER, holder: "a", name: "Member a" });
+    const later = (hours: number) => login(EXPIRY + hours * 60 * 60);
+    joiner.fake.open({ config: later(2), holder: "a", name: "Member a" });
+    expect(joiner.swaps).toHaveLength(1);
+    joiner.setIce("failed");
+    joiner.fake.open({ config: later(3), holder: "a", name: "Member a" });
+    expect(joiner.swaps.map(({ turn }) => turn)).toEqual([NEWER, later(3)]);
+
+    // Held back, then run once the limit allows.
+    joiner.setIce("connected");
+    joiner.fake.open({ config: later(4), holder: "a", name: "Member a" });
+    expect(joiner.swaps).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(RELAY_RESTART_EVERY_MS);
+    expect(joiner.swaps.map(({ turn }) => turn)).toEqual([NEWER, later(3), later(4)]);
+    await joiner.room.leave();
+  });
+
+  it("never moves a member with its own relay, or one that reached its host directly", async () => {
     const own = relayedJoiner(true);
     await reachHost(own);
-    own.fake.offers.fromHost(NEWER);
-    own.room.refreshRelay(LATE);
+    own.fake.open({ config: NEWER, holder: "a", name: "Member a" });
     expect(own.swaps).toEqual([]);
     await own.room.leave();
 
     const direct = relayedJoiner();
     direct.room.reached("host");
-    direct.fake.offers.fromHost(NEWER);
-    direct.room.refreshRelay(LATE);
+    direct.fake.open({ config: NEWER, holder: "a", name: "Member a" });
     expect(direct.swaps).toEqual([]);
     await direct.room.leave();
   });
 
-  it("still rejoins through the swapped-in login when the host drops after all", async () => {
+  it("still rejoins through the newest login when the host drops after all", async () => {
     const joiner = relayedJoiner();
     const host = await reachHost(joiner);
-    joiner.fake.offers.fromHost(NEWER);
-    joiner.room.refreshRelay(LATE);
+    joiner.fake.open({ config: NEWER, holder: "a", name: "Member a" });
     await host.leave();
     await vi.advanceTimersByTimeAsync(0);
     expect(joiner.joins).toEqual([
@@ -451,7 +596,11 @@ describe("a relayed joiner's login, refreshed in place between maps (#2245)", ()
       selfId: "guest",
       join: (turn, attempt): TrysteroTransport => {
         joins.push({ turn, attempt });
-        return { ...network(attempt).join("guest"), swapIceServers: () => undefined };
+        return {
+          ...network(attempt).join("guest"),
+          swapIceServers: () => undefined,
+          iceState: () => undefined,
+        };
       },
       offers: fake.offers,
       ownRelay: false,
@@ -460,7 +609,7 @@ describe("a relayed joiner's login, refreshed in place between maps (#2245)", ()
     await vi.advanceTimersByTimeAsync(RELAY_REJOIN_MS);
     expect(heard).toEqual(["+guest"]);
     room.reached("host");
-    fake.offers.fromHost(login(5));
+    fake.open(offer("a", 5));
     // The admit and its linger are over.
     relayRooms.set(false);
     await vi.advanceTimersByTimeAsync(0);
