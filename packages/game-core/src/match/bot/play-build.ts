@@ -16,6 +16,7 @@ import {
   HEALER_PRIORITY,
   HURT_FRACTION,
   NOTHING,
+  foeReach,
   healthFraction,
   reactionSeconds,
   skillsOf,
@@ -215,6 +216,7 @@ function think(
     role,
     foeCentroid: context.foeCentroid,
     roleOf,
+    foeReach: (foe) => foeReach(cursor.foeReach, foe),
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
   for (const { decide } of BOT_RULES) {

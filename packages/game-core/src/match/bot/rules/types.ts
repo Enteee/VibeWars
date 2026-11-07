@@ -31,6 +31,8 @@ export interface RuleContext {
   readonly roleOf: (participant: Participant) => BotRole | undefined;
   /** Its own memory between thinks; a rule may write to it (#2615). */
   readonly cursor: BehaviourCursor;
+  /** How far a foe can hit from, cached per match (#2598). */
+  readonly foeReach: (foe: Participant) => number;
 }
 
 /** One step of `play-build`'s think: the first rule with an answer decides. */
