@@ -9,7 +9,7 @@ import type {
 } from "../behaviour.js";
 import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
-import { botRole, type BotRole } from "./role.js";
+import { roleOf, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
 import { HURT_FRACTION, NOTHING, healthFraction, skillsOf } from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
@@ -52,17 +52,13 @@ export function playBuild(
 ): BehaviourIntent {
   return paced(behaviour.thinkSeconds, cursor, context, () => {
     const foes = livingFoes(context);
-    cursor.role ??= botRole(
-      skillsOf(context.self),
-      context.self.combatant.equipment.mainHand.weapon.range,
-    );
     return think(
       context,
       cursor,
       foes,
       livingMembers(context),
       teamTarget(context, foes),
-      cursor.role,
+      roleOf(context.self),
     );
   });
 }
@@ -203,6 +199,7 @@ function think(
     mayEndUpkeep: cursor.upkeepDropSeconds <= 0,
     role,
     foeCentroid: context.foeCentroid,
+    roleOf,
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
   for (const { decide } of BOT_RULES) {

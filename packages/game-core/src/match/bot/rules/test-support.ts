@@ -19,7 +19,7 @@ import {
   type Participant,
   type ParticipantSpec,
 } from "../../simulation.js";
-import { botRole } from "../role.js";
+import { botRole, roleOf } from "../role.js";
 import { botUses } from "../skill-intent.js";
 import { NOTHING, skillsOf } from "./shared.js";
 import type { RuleContext } from "./types.js";
@@ -177,6 +177,7 @@ export function ruleFor(
     mayEndUpkeep: true,
     role: botRole(bar, self.combatant.equipment.mainHand.weapon.range),
     foeCentroid: view.foeCentroid,
+    roleOf,
     ...extra,
   };
 }

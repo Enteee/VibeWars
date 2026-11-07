@@ -8,6 +8,7 @@ import type { BehaviourContext } from "../../behaviour.js";
 import { FLAG_REACH_UNITS } from "../../flags.js";
 import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
+import { roleOf } from "../role.js";
 import { summonAura } from "../skill-intent.js";
 
 export const NOTHING: BehaviourIntent = {
@@ -83,30 +84,40 @@ export function spiritUp(context: BehaviourContext, self: Participant, skill: Sk
  * ties to simulation order, a bot or, when `humans`, a human within
  * `FLAG_REACH_UNITS` of it, about to take it up, and then no bot goes.
  * A bot with a foe in spell range fights rather than goes, so it is
- * passed over.
+ * passed over. A bot an earlier rule holds back, a healer behind its
+ * ward or one resting below `REST_FRACTION`, goes only while no other can.
  */
 export function sentTo(context: BehaviourContext, point: Vec2, humans: boolean): boolean {
   const team = context.self.combatant.team;
   let best: Participant | undefined;
+  let bestHeld = true;
   let bestDistance = Infinity;
   for (const mate of context.participants) {
+    const bot = context.isBot(mate.id);
     if (
       mate.combatant.team !== team ||
       mate.combatant.dead ||
       mate.creature !== undefined ||
-      (!context.isBot(mate.id) && (!humans || distance(mate.position, point) > FLAG_REACH_UNITS)) ||
+      (!bot && (!humans || distance(mate.position, point) > FLAG_REACH_UNITS)) ||
       carriedRelic(context.objectives.relics, mate.id) !== undefined ||
-      (context.isBot(mate.id) && fighting(context, mate))
+      (bot && fighting(context, mate))
     ) {
       continue;
     }
+    const held = bot && heldBack(mate);
     const away = distance(mate.position, point);
-    if (away < bestDistance) {
+    if ((bestHeld && !held) || (held === bestHeld && away < bestDistance)) {
       best = mate;
+      bestHeld = held;
       bestDistance = away;
     }
   }
   return best?.id === context.self.id;
+}
+
+/** Whether `position` pulls bot `mate` back to its ward, or `rest` stands it still. */
+function heldBack(mate: Participant): boolean {
+  return roleOf(mate) === "healer" || healthFraction(mate) < REST_FRACTION;
 }
 
 /** Whether a living foe of `mate` stands within its spell range. */
@@ -169,6 +180,15 @@ export function reachable(context: BehaviourContext, spot: Vec2): Vec2 | undefin
   }
   return undefined;
 }
+
+/** Below this share of its health, a bot under fire falls back to its haven (#2549). */
+export const FLEE_FRACTION = 0.3;
+
+/** It stands this far beyond its healer, on the side away from the foes (#2549). */
+export const FLEE_BEHIND = 60;
+
+/** Out of a foe's reach, a hurt bot rests until this share of its health (#2549). */
+export const REST_FRACTION = 0.7;
 
 /** The share of the skill shots aimed at it a bot side-steps (#2590). */
 export const DODGE_CHANCE = 0.5;
