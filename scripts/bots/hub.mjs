@@ -34,8 +34,11 @@
  *   company fire <employee> "<reason>"  manager only
  *   company load                     manager only: the board, staff and tokens
  *                                    the staffing review is decided on
- *   company runners [<n>]            manager only: the company's CI runners,
- *                                    or scale them to n (#1890)
+ *   company runners [<n>]            the company's CI runners (manager,
+ *                                    business-analyst, cicd-engineer), or
+ *                                    scale them to n (manager only, #1890)
+ *   company runners logs [<runner>] [--lines <n>]  the supervisor's log and
+ *                                    the runners', or one runner's (#2729)
  *     (`company` is this script with `company` as its first word)
  *
  * `whoami` is answered locally, because the policy is pure and bundled in
@@ -213,11 +216,14 @@ if (argv[0] === "push") {
 } else if (argv[0] === "company") {
   // `company reboot "<reason>"`, `company reboot --abort` and
   // `company ready` (#21); `company hire` and `company fire` (#380);
-  // `company load` (#747); `company runners [<n>]` (#1890).
+  // `company load` (#747); `company runners [<n>]` (#1890);
+  // `company runners logs [<runner>] [--lines <n>]` (#2729).
   const [, verb, ...rest] = argv;
   const [who, ...reason] = rest;
   if (verb === "load" && rest.length === 0) {
     request = { kind: "load", argv: [] };
+  } else if (verb === "runners" && rest[0] === "logs") {
+    request = { kind: "runner-logs", argv: rest.slice(1) };
   } else if (verb === "runners" && rest.length <= 1) {
     request = { kind: "runners", argv: rest };
   } else if ((verb === "hire" || verb === "fire") && who !== undefined && reason.length > 0) {
@@ -238,7 +244,7 @@ if (argv[0] === "push") {
     console.error(
       'company: usage: company reboot "<reason>" | company reboot --abort | company reboot --workday | company ready\n' +
         '       company hire <role> "<reason>" | company fire <employee> "<reason>" | company load\n' +
-        "       company runners [<n>]",
+        "       company runners [<n>] | company runners logs [<runner>] [--lines <n>]",
     );
     process.exit(2);
   }
