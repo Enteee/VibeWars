@@ -41,6 +41,8 @@ export const ROTATE_BYTES = 1024 * 1024;
 export const WINDOW_BYTES = 256 * 1024;
 /** A longer line is cut, and ends in `…`. */
 export const MAX_LINE = 400;
+/** A "line" with no newline this long is written as one, not held forever. */
+export const MAX_PARTIAL = 64 * 1024;
 /** How many runners keep their logs. */
 export const KEEP_LOGS = 20;
 export const DEFAULT_LINES = 80;
@@ -487,6 +489,10 @@ export function openRunnerLog(file, options = {}) {
       }
       const lines = `${partial[stream]}${chunk}`.split("\n");
       partial[stream] = lines.pop() ?? "";
+      if (partial[stream].length > MAX_PARTIAL) {
+        lines.push(partial[stream]);
+        partial[stream] = "";
+      }
       if (lines.length > 0) {
         const at = stamp();
         put(lines.map((line) => `${at} [${stream}] ${line.replace(/\r$/, "")}\n`).join(""));

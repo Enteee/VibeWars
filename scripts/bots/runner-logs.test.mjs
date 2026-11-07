@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   MAX_LINE,
+  MAX_PARTIAL,
   WINDOW_BYTES,
   appendLog,
   cleanTail,
@@ -247,6 +248,21 @@ describe("writing", () => {
       alive: false,
       exitCode: 2,
     });
+  });
+
+  it("writes a line with no newline once it is longer than MAX_PARTIAL", () => {
+    const dir = hub();
+    const file = path.join(dir, "runners", "r-1.log");
+    const log = openRunnerLog(file, { now: () => 0 });
+    const t = new Date(0).toISOString();
+    log.write("out", "y".repeat(MAX_PARTIAL));
+    expect(fs.readFileSync(file, "utf8")).toBe("");
+    log.write("out", "y");
+    expect(fs.readFileSync(file, "utf8")).toBe(`${t} [out] ${"y".repeat(MAX_PARTIAL + 1)}\n`);
+    log.write("out", "z\n");
+    expect(fs.readFileSync(file, "utf8")).toBe(
+      `${t} [out] ${"y".repeat(MAX_PARTIAL + 1)}\n${t} [out] z\n`,
+    );
   });
 
   it("never opens a log that is there already", () => {

@@ -26,6 +26,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   MAX_LINE,
+  MAX_PARTIAL,
   RUNNER_LOG_DIR,
   SUPERVISOR_LOG,
   WINDOW_BYTES,
@@ -38,8 +39,6 @@ export { MAX_LINE };
 export const BACKLOG_BYTES = WINDOW_BYTES;
 /** Of which at most this many lines. */
 export const BACKLOG_LINES = 500;
-/** A "line" with no newline this long is printed as one, not held forever. */
-const MAX_PARTIAL = 64 * 1024;
 const POLL_MS = 500;
 
 const { O_NOFOLLOW, O_RDONLY } = fs.constants;
