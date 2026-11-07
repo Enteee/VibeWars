@@ -1,6 +1,6 @@
 import type { FlagField, RelicField } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import type { MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
+import type { ClientIntent, MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
 import type {
   CombatMessage,
   MatchConnection,
@@ -23,7 +23,7 @@ import {
   callTargetCall,
   middleClickAction,
   pingCall,
-  primaryClickIntent,
+  primaryClickIntents,
   secondaryClickIntents,
 } from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
@@ -1017,14 +1017,17 @@ export async function startMatchView(
       ? undefined
       : viewport?.onButton(({ button, phase, world }) => {
           if (button === "left" && phase === "down") {
-            // With the names key held, a click on a body or its name targets it (#2738).
-            const intent =
+            // With the names key held, a click on a body or its name targets it,
+            // and attacks a foe (#2738).
+            const intents: readonly ClientIntent[] =
               latestArena === undefined
-                ? ({ kind: "walk-to", x: world.x, y: world.y } as const)
-                : primaryClickIntent(latestArena, world, nameReveal.held());
-            seat.sendIntent(intent);
-            if (intent.kind === "walk-to") {
-              viewport.scene.showWalkMarker(world);
+                ? [{ kind: "walk-to", x: world.x, y: world.y }]
+                : primaryClickIntents(seat.getSnapshot(), latestArena, world, nameReveal.held());
+            for (const intent of intents) {
+              seat.sendIntent(intent);
+              if (intent.kind === "walk-to") {
+                viewport.scene.showWalkMarker(world);
+              }
             }
           } else if (button === "middle" && phase === "down" && latestArena !== undefined) {
             // A wheel click calls a foe, or pings the point (#443, #1055).

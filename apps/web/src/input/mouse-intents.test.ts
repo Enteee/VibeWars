@@ -13,7 +13,7 @@ import {
   callTargetCall,
   middleClickAction,
   pingCall,
-  primaryClickIntent,
+  primaryClickIntents,
   secondaryClickIntents,
 } from "./mouse-intents.js";
 
@@ -235,29 +235,39 @@ describe("clicks with the names key held (#2738)", () => {
     expect(secondaryClickIntents(MATCH, HELD, NAME, createDoubleClick(), 0, false)).toEqual([]);
   });
 
-  it("targets with a left click on a body or its name, and does not walk", () => {
-    expect(primaryClickIntent(HELD, NAME, true)).toEqual({
-      kind: "target",
-      targetSessionId: "foe",
-    });
-    expect(primaryClickIntent(HELD, vec2(200, 0), true)).toEqual({
-      kind: "target",
-      targetSessionId: "foe",
-    });
+  it("targets and attacks a foe with one left click on its body or name, and does not walk", () => {
+    for (const world of [NAME, vec2(200, 0)]) {
+      expect(primaryClickIntents(MATCH, HELD, world, true)).toEqual([
+        { kind: "target", targetSessionId: "foe" },
+        { kind: "attack", targetId: "foe" },
+      ]);
+    }
+  });
+
+  it("only targets an ally with a left click", () => {
+    expect(primaryClickIntents(MATCH, HELD, vec2(100, 0), true)).toEqual([
+      { kind: "target", targetSessionId: "ally" },
+    ]);
   });
 
   it("walks with a left click on the ground, on yourself, or without the key", () => {
-    expect(primaryClickIntent(HELD, vec2(150, 80), true)).toEqual({
-      kind: "walk-to",
-      x: 150,
-      y: 80,
-    });
-    expect(primaryClickIntent(HELD, vec2(0, 0), true)).toEqual({ kind: "walk-to", x: 0, y: 0 });
-    expect(primaryClickIntent(HELD, vec2(200, 0), false)).toEqual({
-      kind: "walk-to",
-      x: 200,
-      y: 0,
-    });
+    expect(primaryClickIntents(MATCH, HELD, vec2(150, 80), true)).toEqual([
+      {
+        kind: "walk-to",
+        x: 150,
+        y: 80,
+      },
+    ]);
+    expect(primaryClickIntents(MATCH, HELD, vec2(0, 0), true)).toEqual([
+      { kind: "walk-to", x: 0, y: 0 },
+    ]);
+    expect(primaryClickIntents(MATCH, HELD, vec2(200, 0), false)).toEqual([
+      {
+        kind: "walk-to",
+        x: 200,
+        y: 0,
+      },
+    ]);
   });
 
   it("calls a foe with a wheel click on its name", () => {

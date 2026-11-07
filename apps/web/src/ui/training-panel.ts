@@ -20,7 +20,7 @@ import {
   callTargetCall,
   middleClickAction,
   pingCall,
-  primaryClickIntent,
+  primaryClickIntents,
   secondaryClickIntents,
 } from "../input/mouse-intents.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
@@ -1111,11 +1111,19 @@ export function createTrainingPanel(): TrainingPanel {
       if (button !== "left" || phase !== "down" || !armedBeforeClick) {
         return;
       }
-      // With the names key held, a click on a body or its name targets it (#2738).
-      const intent = primaryClickIntent(latestArena, world, nameReveal.held());
-      session.connection.sendIntent(intent);
-      if (intent.kind === "walk-to") {
-        created.scene.showWalkMarker(world);
+      // With the names key held, a click on a body or its name targets it,
+      // and attacks a foe (#2738).
+      const intents = primaryClickIntents(
+        session.connection.getSnapshot(),
+        latestArena,
+        world,
+        nameReveal.held(),
+      );
+      for (const intent of intents) {
+        session.connection.sendIntent(intent);
+        if (intent.kind === "walk-to") {
+          created.scene.showWalkMarker(world);
+        }
       }
     });
   });

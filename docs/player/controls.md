@@ -50,6 +50,11 @@ These keys are fixed:
   glides back to you.
 - Click a skill on the bar to use it, and a name in the party window to
   target that ally.
+- While you hold **Show names**, a character's name counts as part of it,
+  and the name your click would hit is highlighted. **Left click** a foe
+  or its name to target it and attack at once; an ally is only targeted.
+  Left click the ground to walk, as usual. **Right click** only targets,
+  never attacks, even twice.
 
 ## The top bar
 

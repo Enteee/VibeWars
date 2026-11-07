@@ -22,17 +22,19 @@ function clicked(arena: ArenaSnapshot, world: Vec2, shift: boolean): RenderableA
 /**
  * What a left click sends (#438, #2738): it walks, bodies included, and
  * keeps the target. With `shift` (the names key held) on another body or
- * its name, it targets that body instead, and does not walk.
+ * its name, it targets that body instead, does not walk, and attacks it
+ * at once when it is a foe, as Space would.
  */
-export function primaryClickIntent(
+export function primaryClickIntents(
+  snapshot: MatchSnapshot,
   arena: ArenaSnapshot,
   world: Vec2,
   shift: boolean,
-): ClientIntent {
+): ClientIntent[] {
   const hit = shift ? clicked(arena, world, shift) : undefined;
   return hit === undefined || hit.team === "self"
-    ? { kind: "walk-to", x: world.x, y: world.y }
-    : { kind: "target", targetSessionId: hit.id };
+    ? [{ kind: "walk-to", x: world.x, y: world.y }]
+    : [{ kind: "target", targetSessionId: hit.id }, ...attackClickIntents(snapshot, hit.id)];
 }
 
 /**
