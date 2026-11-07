@@ -81,7 +81,17 @@ describe("fetch-relic: Relic Run bots fetch their relic and return the foe's (#2
     expect(askBot(sim, "bot", BOTH_HOME).attackTargetId).toBe(relicId(0));
   });
 
-  it("leaves its relic to a human teammate nearer to it", () => {
+  it("fetches its relic past a human idle at their base, out of reach of it", () => {
+    const sim = match([
+      body("bot", 0, vec2(300, 400), { behaviour: BOT }),
+      body("human", 0, vec2(200, 400)),
+      far(),
+    ]);
+    const intent = askBot(sim, "bot", BOTH_HOME, (id) => id !== "human");
+    expect(intent.attackTargetId).toBe(relicId(0));
+  });
+
+  it("leaves its relic to a human teammate within reach of it", () => {
     const sim = match([
       body("bot", 0, vec2(300, 400), { behaviour: BOT }),
       body("human", 0, vec2(150, 400)),
