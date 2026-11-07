@@ -292,8 +292,10 @@ const EMBER_PITS_LANE_Y = 900;
  * so a foe on its spawn is off screen and out of every skill's reach.
  * Ground clicks on open ground: onto the middle lane, along it to 300
  * short of the foe, then across to it. Every click is on screen, so a
- * long leg takes several. Resolves once the view, which follows the
- * hero, has come to the last point.
+ * long leg takes several; each next one goes out once the view is
+ * halfway to the last, so the hero never stops on the way (a stop and the
+ * view's glide after it cost seconds a leg). Resolves once the view,
+ * which follows the hero, has come to the last point.
  */
 export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Promise<void> {
   const stage = page.locator("#viewport");
@@ -335,6 +337,7 @@ export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Pr
         }
       }
       const goal = step;
+      const last = goal === route.at(-1);
       await canvas.click({ position: view.onCanvas(goal) });
       await expect
         .poll(
@@ -344,7 +347,7 @@ export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Pr
           },
           { message: "the hero should walk there", timeout: 10_000 },
         )
-        .toBeLessThan(20);
+        .toBeLessThan(last ? 20 : Math.max(20, reach / 2));
     }
     from = to;
   }
