@@ -176,7 +176,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), the relic temples (#1374), the hill courtyard (#1377), the forgotten shrines (#1378) and the medium arenas Sandstone Steps and Frozen Crossing (#2604)", () => {
+  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), the relic temples (#1374), the hill courtyard (#1377), the forgotten shrines (#1378) the medium arenas Sandstone Steps and Frozen Crossing (#2604) and the large Canthan Terraces and Sunken Bastion (#2607)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
         "arena-pillars",
@@ -188,6 +188,8 @@ describe("the arena set (#444)", () => {
         "forgotten-shrines",
         "sandstone-steps",
         "frozen-crossing",
+        "canthan-terraces",
+        "sunken-bastion",
         ...NEW_ARENAS,
       ].sort(),
     );
@@ -536,10 +538,13 @@ const wallsNear = (map: MapData, point: Vec2): number =>
 /** Half the narrowest gap a route may squeeze through (#2544): a 200-wide gap passes, a narrower one does not. */
 const ROUTE_HALF_GAP = 100;
 
+// The medium arenas (#2604) cross the centre in three lanes, the large (#2607) in four.
 describe.each([
-  ["sandstone-steps", 1],
-  ["frozen-crossing", 2],
-] as const)("the medium arena %s (#2604)", (id, size) => {
+  ["sandstone-steps", 1, 3],
+  ["frozen-crossing", 2, 3],
+  ["canthan-terraces", 1, 4],
+  ["sunken-bastion", 2, 4],
+] as const)("the new arena %s (#2604, #2607)", (id, size, lanes) => {
   const map = MAPS.find((each) => each.id === id);
   if (map === undefined) throw new Error(`no ${id}`);
   const bounds = { width: map.width, height: map.height };
@@ -559,20 +564,21 @@ describe.each([
     }
   });
 
-  it("has three routes between the bases, north, middle and south, none through a gap under 200", () => {
+  it(`has ${String(lanes)} routes between the bases, north to south, none through a gap under 200`, () => {
     const from = map.spawnPoints.find((spawn) => spawn.team === 0)?.position ?? centre;
     const to = turned(map, from);
-    const third = map.height / 3;
-    for (const lane of [0, 1, 2]) {
-      // Wall off the other two thirds of the centre line: the way must cross it in this one.
-      const cuts = [0, 1, 2]
+    const band = map.height / lanes;
+    const all = [...Array(lanes).keys()];
+    for (const lane of all) {
+      // Wall off the centre line but for one band: the way must cross it in this one.
+      const cuts = all
         .filter((other) => other !== lane)
         .map((other) => ({
           kind: "rect" as const,
           x: centre.x - 5,
-          y: other * third,
+          y: other * band,
           width: 10,
-          height: third,
+          height: band,
         }));
       const finder = createPathFinder(
         buildNavGraph(allWallSegments([...map.walls, ...cuts]), bounds, ROUTE_HALF_GAP),

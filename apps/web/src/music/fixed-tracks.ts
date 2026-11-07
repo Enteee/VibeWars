@@ -26,6 +26,8 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["arena-canyon", "glass-dunes"],
   ["sandstone-steps", "clash-of-banners"],
   ["frozen-crossing", "ashen-fields"],
+  ["canthan-terraces", "hall-of-champions"],
+  ["sunken-bastion", "victors-hymn"],
   ["hall-of-heroes", "hall-of-champions"],
 ]);
 

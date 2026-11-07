@@ -36,6 +36,7 @@ describe("randomArenaMapPool", () => {
       "arena-canyon",
       "arena-long-hall",
       "sandstone-steps",
+      "canthan-terraces",
     ]);
     expect(randomArenaMapPool("random-arena-2v2")).toEqual([
       "arena-pillars",
@@ -44,6 +45,7 @@ describe("randomArenaMapPool", () => {
       "arena-canyon",
       "arena-long-hall",
       "frozen-crossing",
+      "sunken-bastion",
     ]);
     expect(randomArenaMapPool("random-arena-4v4")).toEqual([
       "arena-pillars",
@@ -149,10 +151,12 @@ describe("team sizes (#2108)", () => {
     }
   });
 
-  it("draws each medium arena at its own size and no other: Sandstone Steps 1v1, Frozen Crossing 2v2 (#2604)", () => {
+  it("draws each medium and large arena at its own size and no other: Sandstone Steps and Canthan Terraces 1v1, Frozen Crossing and Sunken Bastion 2v2 (#2604, #2607)", () => {
     for (const [id, size] of [
       ["sandstone-steps", 1],
       ["frozen-crossing", 2],
+      ["canthan-terraces", 1],
+      ["sunken-bastion", 2],
     ] as const) {
       expect(sizesOf(id)).toEqual([size]);
       for (const other of [1, 2, 4, 8]) {
@@ -170,7 +174,12 @@ describe("team sizes (#2108)", () => {
     }
     expect(queueMapPool("team-arena-2v2", null)).toContain("frozen-crossing");
     expect(modeMapIds()["hosted-game"]).toEqual(
-      expect.arrayContaining(["sandstone-steps", "frozen-crossing"]),
+      expect.arrayContaining([
+        "sandstone-steps",
+        "frozen-crossing",
+        "canthan-terraces",
+        "sunken-bastion",
+      ]),
     );
   });
 

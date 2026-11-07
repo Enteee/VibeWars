@@ -38,7 +38,11 @@ Canyon, Crossroads and Long Hall play it, and two bigger, medium-sized
 arenas: **Sandstone Steps** (1v1, 3600x2000), terraced desert ledges
 round a broken obelisk circle, with pillars to kite round; and **Frozen
 Crossing** (2v2, 4000x2200), a frozen river crossed by three bridges,
-ice rocks on each bank.
+ice rocks on each bank. Two large arenas are bigger still: **Canthan
+Terraces** (1v1, 5200x2800), rice terraces walled north to south with
+staggered gaps, round a ruined pagoda; and **Sunken Bastion** (2v2,
+5600x3000), a half-flooded fortress whose breached curtain wall rings a
+keep with two gates, marsh rocks outside.
 
 ## Kill Count
 
