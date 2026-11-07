@@ -217,6 +217,16 @@ describe("play-build protects the spiked ally (#2627)", () => {
     expect(askBot(sim, "monk").useSkillId).toBeUndefined();
   });
 
+  it("does not recast Protective Bond on an ally it is maintained on", () => {
+    const sim = target(spike(["monk.protective-bond"]), "ally", "foe0", "foe1");
+    expect(askBot(sim, "monk")).toMatchObject({
+      useSkillId: "monk.protective-bond",
+      targetId: "ally",
+    });
+    sim.get("ally")?.combatant.statuses.maintain("protective-bond", "monk", 1, NO_RANKS);
+    expect(askBot(sim, "monk").useSkillId).toBeUndefined();
+  });
+
   it("heals the hurt ally when it holds nothing to protect the spiked one", () => {
     const sim = target(spike(["monk.heal-other"], {}, 0.4), "ally", "foe0", "foe1");
     expect(askBot(sim, "monk")).toMatchObject({ useSkillId: "monk.heal-other", targetId: "other" });

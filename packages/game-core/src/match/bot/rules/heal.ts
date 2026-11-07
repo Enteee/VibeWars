@@ -120,10 +120,16 @@ function spikedAlly(
   return spiked;
 }
 
-/** The statuses `skill` lays on whoever it is cast on. */
+/**
+ * The statuses `skill` lays on whoever it is cast on, maintained ones
+ * included (Protective Bond); none its caster wears instead.
+ */
 function laidStatuses(skill: Skill): StatusId[] {
   return skill.effects.flatMap((effect) =>
-    effect.kind === "apply-status" ? [effect.statusId] : [],
+    (effect.kind === "apply-status" && effect.on === undefined) ||
+    (effect.kind === "maintain-status" && effect.on === "target")
+      ? [effect.statusId]
+      : [],
   );
 }
 
