@@ -11,6 +11,8 @@ import {
   CREDENTIAL_ALERT,
   DRAIN_MS,
   LABEL,
+  LOAD_CLEAR_MS,
+  LOAD_GRACE_MS,
   MEMORY_HEADROOM,
   POLL_MS,
   RunnerSupervisor,
@@ -243,14 +245,56 @@ describe("runner supervisor", () => {
       "not starting a runner: host memory is short: 7.0 GiB free, 8.0 GiB needed",
     );
     r.host.free = 64 * GIB;
-    r.host.load = 9;
+    r.host.load = 17;
     await r.supervisor.tick();
-    expect(r.last()?.reason).toBe("not starting a runner: host load 9.0 is above its 8 CPUs");
+    expect(r.last()?.reason).toBe(
+      "not starting a runner: host load 17.0 is above 2 times its 8 CPUs",
+    );
     expect(r.supervisor.failures).toBe(0);
     r.host.load = 1;
     await r.supervisor.tick();
     expect(r.launched).toHaveLength(1);
     expect(r.last()?.reason).toBeNull();
+  });
+
+  it("tolerates load up to twice the CPUs for five minutes, then refuses", async () => {
+    const r = rig({ target: 2 });
+    r.host.load = 12;
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(2);
+    const slow = rig({ target: 1 });
+    slow.host.load = 12;
+    slow.host.free = 0;
+    await slow.supervisor.tick();
+    slow.host.free = 64 * GIB;
+    slow.t.now += LOAD_GRACE_MS + 1_000;
+    await slow.supervisor.tick();
+    expect(slow.launched).toHaveLength(0);
+    expect(slow.last()?.reason).toBe(
+      "not starting a runner: host load 12.0 has been above its 8 CPUs for 5 min",
+    );
+  });
+
+  it("a short dip does not end the episode, a long one does", async () => {
+    for (const [dip, refuses] of /** @type {[number, boolean][]} */ ([
+      [30_000, true],
+      [LOAD_CLEAR_MS + 1_000, false],
+    ])) {
+      const r = rig({ target: 1 });
+      r.host.load = 12;
+      r.host.free = 0;
+      await r.supervisor.tick();
+      r.t.now += 4 * 60_000;
+      r.host.load = 4;
+      await r.supervisor.tick();
+      r.t.now += dip;
+      await r.supervisor.tick();
+      r.host.load = 12;
+      r.host.free = 64 * GIB;
+      r.t.now += 61_000;
+      await r.supervisor.tick();
+      expect(r.launched.length === 0).toBe(refuses);
+    }
   });
 
   it("starts one runner on an overloaded host when a job is queued and none is up", async () => {
