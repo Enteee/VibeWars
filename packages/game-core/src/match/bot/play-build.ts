@@ -218,13 +218,14 @@ function think(
 }
 
 /**
- * The foe the team called (#1193), while it is alive; else the weakest
- * foe in spell range once it is below `FINISH_FRACTION` (#2545), so the
- * team commits to the kill; else the foe the team's bots already target,
- * if one is alive; else the living foe within spell range with the
- * lowest health fraction, ties to the nearer, then simulation order. A
- * creature only while no other foe is in range. With shrines to hold,
- * the team's target only in range.
+ * The foe the team called (#1193), while it is alive; else the foe the
+ * team's bots already target, while it is below `FINISH_FRACTION`; else
+ * the weakest foe in spell range once it is below `FINISH_FRACTION`
+ * (#2545), so the team commits to a kill and never drops one for
+ * another; else the team's target, if one is alive; else the living foe
+ * within spell range with the lowest health fraction, ties to the nearer,
+ * then simulation order. A creature only while no other foe is in range.
+ * With shrines to hold, the team's target only in range.
  */
 function teamTarget(context: BehaviourContext, foes: readonly Participant[]): string | undefined {
   const called = foes.find((foe) => foe.id === context.calledTargetId);
@@ -233,11 +234,25 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
   }
   const self = context.self;
   const inRange = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
-  const eligible = fightable(inRange);
+  const held = heldTarget(context, foes, inRange);
+  if (held !== undefined && healthFraction(held) < FINISH_FRACTION) {
+    return held.id;
+  }
   const dying = weakest(self, inRange);
   if (dying !== undefined && healthFraction(dying) < FINISH_FRACTION) {
     return dying.id;
   }
+  return (held ?? dying)?.id;
+}
+
+/** The first living foe a bot of `context.self`'s team targets, if it may be fought. */
+function heldTarget(
+  context: BehaviourContext,
+  foes: readonly Participant[],
+  inRange: readonly Participant[],
+): Participant | undefined {
+  const self = context.self;
+  const eligible = fightable(inRange);
   // With shrines to hold (#2580), a bot leaves one for a foe in its own
   // reach, never for one a teammate fights across the map.
   const objectives = context.objectives.capturePoints.length > 0;
@@ -251,10 +266,10 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
     }
     const held = foes.find((foe) => foe.id === ally.targetId);
     if (held !== undefined && eligible(held) && (!objectives || inRange.includes(held))) {
-      return held.id;
+      return held;
     }
   }
-  return weakest(self, inRange)?.id;
+  return undefined;
 }
 
 /** Of `foes`, a creature only while none of them is a fighter. */
