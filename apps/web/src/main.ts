@@ -113,6 +113,7 @@ import {
   flashTitle,
   mountQueueScreen,
   UNREACHABLE,
+  QUEUED_CHARACTER_GONE,
   nextAscentRound,
   nextStreak,
   requeuedSince,
@@ -499,6 +500,8 @@ async function main(): Promise<void> {
         screen: QueueScreen | undefined;
         readonly mode: QueueMode;
         readonly name: string;
+        /** The character queued, the one seated when a match is found. */
+        readonly characterId: string;
         /** By `Date.now`. */
         readonly since: number;
         /** `undefined` until the queue first says where it is. */
@@ -1024,6 +1027,9 @@ async function main(): Promise<void> {
       onDelete: (id: string) => {
         void (async () => {
           await characters.delete(id);
+          if (queue?.characterId === id && queue.screen === undefined) {
+            dropToMenu(QUEUED_CHARACTER_GONE);
+          }
           back();
         })();
       },
@@ -1617,11 +1623,19 @@ async function main(): Promise<void> {
           void (async () => {
             // The queued character as it is now: edits made while queued count.
             const found = await characters.load(id);
-            const fresh = await readEntrant();
+            const fresh: Entrant = {
+              build: await activeBuild(id),
+              characterId: id,
+              guild: playerGuild(),
+            };
             const current = queue;
             if (current?.place !== place || found === undefined) {
               void host?.close();
               void joined.disconnect();
+              // Deleted in another tab while queued: out of the queue, told why.
+              if (current?.place === place) {
+                dropToMenu(QUEUED_CHARACTER_GONE);
+              }
               return;
             }
             current.screen = foundScreen(mode, found.name, name);
@@ -1645,7 +1659,15 @@ async function main(): Promise<void> {
       from.party,
     );
     entered = true;
-    queue = { place, screen: undefined, mode, name, since: Date.now(), state: undefined };
+    queue = {
+      place,
+      screen: undefined,
+      mode,
+      name,
+      characterId: id,
+      since: Date.now(),
+      state: undefined,
+    };
     paintQueue();
     if (early !== undefined) {
       onState(early);

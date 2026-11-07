@@ -218,3 +218,17 @@ test("Random Arena queues in the background: the icon sits left of Help, and Lea
   await expect(page.locator(".screen-random-arena")).toBeVisible();
   await expect(ready).toBeEnabled();
 });
+
+test("deleting the queued character leaves the queue and says why (#2743)", async ({ page }) => {
+  await makeCharacter(page);
+  await queue1v1(page, "Alice");
+  await openRail(page, "Character Builder");
+  await page.locator(".character-card").first().getByRole("button", { name: "edit" }).click();
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
+  await expect(
+    page.getByText("Your queued character was deleted, so you left the queue"),
+  ).toBeVisible();
+  await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
+});
