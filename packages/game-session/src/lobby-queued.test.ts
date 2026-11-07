@@ -18,7 +18,7 @@ import {
   type WirePartyFormed,
   type WirePartyProposal,
 } from "@vibewars/game-protocol";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 import type { LobbyClosedReason, LobbyConnection } from "./lobby-connection.js";
@@ -961,6 +961,45 @@ describe("a queued three-team Heroes' Ascent round (#2683)", () => {
     expect(teamSizes(plan)).toEqual({ 0: 8, 1: 8 });
     // The third side is renumbered into the absent second's place.
     expect(teamOf(plan, "ticket-4")).toBe(1);
+  });
+
+  it("refuses a third side's join whose proof is checked after it was played as two", async () => {
+    const queued = await openQueued({ group: THREE_GROUP, match: fakeMatch() });
+    await queued.join(ALLY);
+    await queued.join(FOE);
+    await queued.step(TIMEOUT_SECONDS - 1);
+    const late = rawPeer(queued.network);
+    await settle();
+    const join = await forgedJoin(FOE_2, FOE_2, {
+      groupId: GROUP_ID,
+      hostTicketId: HOST,
+      peerId: late.transport.selfId,
+    });
+    // The host's digests for it are held until the timeout has passed.
+    const digest = crypto.subtle.digest.bind(crypto.subtle);
+    const held: (() => void)[] = [];
+    const spy = vi.spyOn(crypto.subtle, "digest").mockImplementation(
+      (algorithm, data) =>
+        new Promise((resolve) => {
+          held.push(() => {
+            resolve(digest(algorithm, data));
+          });
+        }),
+    );
+    late.transport.send("lobby-join", join, "host");
+    await until(() => held.length === 2);
+    queued.lobby.advance(1);
+    spy.mockRestore();
+    for (const release of held) {
+      release();
+    }
+    await until(() => late.notes.length > 0);
+    expect(late.notes).toEqual([{ kind: "refused", reason: "not-admitted" }]);
+    await queued.step(COUNTDOWN_SECONDS);
+    const [plan] = queued.plans;
+    expect(plan?.teamCount).toBe(2);
+    expect(teamSizes(plan)).toEqual({ 0: 8, 1: 8 });
+    expect(teamOf(plan, "Forger")).toBeUndefined();
   });
 
   it("falls through, naming the party's ticket, when a side is only partly seated", async () => {

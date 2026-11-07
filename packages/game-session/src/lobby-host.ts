@@ -1996,11 +1996,14 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return;
     }
     sendWelcome(plan, hostDigest, from);
+    // Seated by the lobby's teams now, not when the digests were begun:
+    // played as two meanwhile (#2683), a dropped team has no seat.
+    const seats = queued?.group ?? group;
     const { admission } = join;
     const team =
       admission === null
         ? undefined
-        : teamsOf(group).find((side) => group.teams[side]?.includes(admission.seatKey) === true);
+        : teamsOf(seats).find((side) => seats.teams[side]?.includes(admission.seatKey) === true);
     if (admission === null || team === undefined) {
       refuse(from, "not-admitted");
       return;

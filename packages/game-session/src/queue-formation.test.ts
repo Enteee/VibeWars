@@ -454,6 +454,19 @@ describe("team modes (ADR-0042)", () => {
         expect(groups[0]?.teams).toHaveLength(2);
       });
 
+      it("never takes back two that formed before a third queued", async () => {
+        // X at 0 s, Y at 1 s, Z at 40 s, formed at 41 s: X and Y play as two.
+        const pair = [waited(1, 41), waited(2, 40)];
+        const late = waited(3, 1);
+        const groups = await formThree([...pair, late]);
+        expect(groups.map(members)).toEqual([ids(pair)]);
+        expect(groups[0]?.teams).toHaveLength(2);
+        // A third in time is still a third.
+        expect((await formThree([...pair, waited(3, 10.001)])).map(members)).toEqual([
+          ids([...pair, waited(3, 10.001)]),
+        ]);
+      });
+
       it("forms three of four, and the fourth waits", async () => {
         const four = [waited(1, 5), waited(2, 4), waited(3, 3), waited(4, 2)];
         const groups = await formThree(four);

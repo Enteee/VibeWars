@@ -208,7 +208,24 @@ function takeGroups(
     parties = parties.filter((queued) => !taken.has(queued));
     groups.push(group.map((queued) => queued.ticket));
   };
+  // Two sides that waited long enough for a third by `at` play each
+  // other. The earliest two waited longest: if they have not, no later
+  // two have.
+  const settlePairs = (at: number): void => {
+    for (;;) {
+      const [pair] =
+        teamCount === 3 && parties.length >= 2 ? reachable(parties.slice(0, 2), [parties]) : [];
+      const queuedLast = Math.max(...(pair ?? []).map((queued) => queued.ticket.enteredAt));
+      if (pair === undefined || at - queuedLast < THIRD_TEAM_WAIT_SECONDS * 1000) {
+        return;
+      }
+      take(pair);
+    }
+  };
   queue.forEach((ticket, place) => {
+    // A pair that had stopped waiting before this one queued already
+    // formed as two (#2683): a late third does not take it back.
+    settlePairs(ticket.enteredAt);
     // At a team size of 1, every Random Arena ticket is a solo.
     (isSide(ticket, mode) ? parties : solos).push({ ticket, place });
     const candidates: Queued[][] = [];
@@ -234,17 +251,8 @@ function takeGroups(
       take(best);
     }
   });
-  // Two sides that waited long enough for a third play each other. The
-  // earliest two waited longest: if they have not, no later two have.
-  for (;;) {
-    const [pair] =
-      teamCount === 3 && parties.length >= 2 ? reachable(parties.slice(0, 2), [parties]) : [];
-    const queuedLast = Math.max(...(pair ?? []).map((queued) => queued.ticket.enteredAt));
-    if (pair === undefined || now - queuedLast < THIRD_TEAM_WAIT_SECONDS * 1000) {
-      return groups;
-    }
-    take(pair);
-  }
+  settlePairs(now);
+  return groups;
 }
 
 /**
