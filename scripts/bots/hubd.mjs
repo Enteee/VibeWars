@@ -201,8 +201,10 @@ import {
   parseReleaseCreate,
   parseReleaseOk,
   parseReview,
+  parseRunnerLogsArgv,
   touchesGate,
 } from "./hub-policy.mjs";
+import { readRunnerLogs } from "./runner-logs.mjs";
 import {
   closedIssues,
   parseTracking,
@@ -2388,6 +2390,34 @@ function serveRunners(argv) {
 }
 
 /**
+ * `company runners logs [<runner>] [--lines <n>]` (#2729): the tail of the
+ * supervisor's log and a line per runner log, or one runner's tail, read
+ * from the host-only `hub/runners/` and redacted (runner-logs.mjs).
+ *
+ * @param {string[]} argv checked by the policy
+ * @returns {{ code: number, stdout: string, stderr: string }}
+ */
+function serveRunnerLogs(argv) {
+  const parsed = parseRunnerLogsArgv(argv);
+  if ("error" in parsed) {
+    return { code: 2, stdout: "", stderr: `${parsed.error}\n` };
+  }
+  try {
+    return {
+      code: 0,
+      stdout: readRunnerLogs(HUB, parsed.runner, parsed.lines, Date.now()),
+      stderr: "",
+    };
+  } catch (error) {
+    return {
+      code: 1,
+      stdout: "",
+      stderr: `company runners logs: could not read: ${error instanceof Error ? error.message : "failed"}\n`,
+    };
+  }
+}
+
+/**
  * The supervisor holds no Telegram: what the manager must hear about the
  * runners, their missing credential, hubd passes on, once. The alert told
  * is kept on disk, so a hubd restart does not repeat a standing one.
@@ -3740,6 +3770,12 @@ async function serve(request, verdict, acting) {
 
   if (kind === "runners") {
     const answered = serveRunners(argv);
+    audit({ role, kind, argv, decision: "allowed", code: answered.code });
+    return { allow: true, ...answered };
+  }
+
+  if (kind === "runner-logs") {
+    const answered = serveRunnerLogs(argv);
     audit({ role, kind, argv, decision: "allowed", code: answered.code });
     return { allow: true, ...answered };
   }
