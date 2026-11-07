@@ -182,6 +182,21 @@ describe("a relic carrier", () => {
     });
   });
 
+  it("walks through its own team, never through a foe (#2581)", () => {
+    for (const [blocker, through] of [
+      ["b", true],
+      ["x", false],
+    ] as const) {
+      const sim = carrying();
+      get(sim, blocker).position = vec2(900, 520);
+      applyIntent(sim, "a", { kind: "move", dirX: 0, dirY: -1 });
+      for (let tick = 0; tick < RULES.tickRateHz; tick += 1) {
+        sim.step(DT);
+      }
+      expect(get(sim, "a").position.y < 500).toBe(through);
+    }
+  });
+
   it("keeps it knocked down", () => {
     const sim = carrying();
     get(sim, "a").combatant.knockdownRemaining = 2;
