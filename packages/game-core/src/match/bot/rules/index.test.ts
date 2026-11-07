@@ -38,6 +38,7 @@ describe("BOT_RULES (#2042)", () => {
       "rider",
       "setup",
       "boost",
+      "position",
       "fight",
       "mimic-elite",
       "shrines",

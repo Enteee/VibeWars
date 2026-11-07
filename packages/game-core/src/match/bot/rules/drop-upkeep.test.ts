@@ -43,6 +43,9 @@ describe("play-build ends its own upkeep when Energy-starved (#2492)", () => {
       isBot: () => true,
       calledTargetId: undefined,
       sees: () => true,
+      seesBetween: () => true,
+      walkable: () => true,
+      foeCentroid: undefined,
       objectives: NO_OBJECTIVES,
     });
   }
