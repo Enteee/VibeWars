@@ -179,6 +179,7 @@ import {
   parseOwnSchedules,
   planScheduleCommand,
   scheduleReader,
+  SEEDED_SCHEDULES,
 } from "./schedule.mjs";
 import { createIssueBatch, newIssueMessage, WINDOW_MS } from "./new-issues.mjs";
 import {
@@ -191,14 +192,24 @@ import {
   withStaffLock,
 } from "./staff.mjs";
 import {
+  ISSUE_EDITORS,
   RESTRICTED_PATHS,
   ROLES,
   SCHEDULERS,
   authorize,
   parseMerge,
+  parseReleaseCreate,
+  parseReleaseOk,
   parseReview,
   touchesGate,
 } from "./hub-policy.mjs";
+import {
+  closedIssues,
+  parseTracking,
+  refuseReleaseRange,
+  releaseCiVerdict,
+  releaseFloor,
+} from "./hub-release.mjs";
 import {
   boardNumbers,
   isInternal,
@@ -229,6 +240,13 @@ const CODE_DIR = required("VIBEWARS_CODE");
 const HUB = path.join(ROOT, "hub");
 const AUDIT = path.join(HUB, "audit.jsonl");
 const APPROVALS = path.join(HUB, "approvals.jsonl");
+/** QA's sign-offs on release branches (#2707): `{ branch, sha, by, ts, note }` per line. */
+const RELEASE_OKS = path.join(HUB, "release-oks.jsonl");
+/**
+ * The release manager's nudges (#2707): `{ nudged, ci }`, the events already
+ * told, so each is told once, and the release heads whose CI is awaited.
+ */
+const RELEASE_STATE = path.join(HUB, "release.json");
 const COMPANY = path.join(ROOT, "company.json");
 /** hubd's copy of the board (hub-board.mjs), for the dashboard and the next start. */
 const BOARD_SNAPSHOT = path.join(HUB, "board.json");
@@ -1038,9 +1056,19 @@ async function evaluateGuards(guards, argv) {
   }
   const pr = String(merge.pr);
 
-  const sha = await headSha(pr);
-  if (sha === null) {
+  const pull = obj(await rest(`pulls/${pr}`, cfg));
+  const sha = obj(pull.head).sha;
+  const base = obj(pull.base).ref;
+  if (typeof sha !== "string" || typeof base !== "string") {
     return { ok: false, reason: `could not read pull request #${pr}` };
+  }
+  // A release branch takes main's commits by cherry-pick only, checked by
+  // pushRelease (#2707); a pull request merged into it would skip that.
+  if (base !== "main") {
+    return {
+      ok: false,
+      reason: `#${pr} targets ${base}: pull requests merge into main only; a release takes main's commits by cherry-pick`,
+    };
   }
 
   for (const guard of guards) {
@@ -1234,6 +1262,426 @@ async function refusePush(guard, ref, cfg) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Releases (#2707)                                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What a ref points at on GitHub now: a full sha, null when it does not
+ * exist, or `{ error }` when that cannot be told. `ref` is a validated
+ * `refs/heads/release/0.N.0` or `refs/tags/v0.N.0`, matched whole.
+ *
+ * @param {string} ref
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null | { error: string }>}
+ */
+async function remoteHead(ref, cfg) {
+  const listed = await git(["ls-remote", remoteUrl(cfg), ref]);
+  if (listed.code !== 0) {
+    return { error: `could not read ${ref} on GitHub; try again` };
+  }
+  const line = listed.stdout.split("\n").find((row) => row.endsWith(`\t${ref}`));
+  return line === undefined ? null : (line.split("\t")[0] ?? null);
+}
+
+/**
+ * Push a release branch (#2707). The jail's branch is resolved to a sha once;
+ * that sha's history is checked against the branch on GitHub and a freshly
+ * fetched main (hub-release.mjs); then exactly that sha is pushed, as a
+ * compare-and-swap on the head the check saw, so a branch that moved in
+ * between is refused rather than overwritten.
+ *
+ * @param {string} ref `refs/heads/release/0.N.0`, already fetched into the mirror
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ refused: string } | { code: number, stdout: string, stderr: string, head: string }>}
+ */
+async function pushRelease(ref, cfg) {
+  const resolved = await git(["rev-parse", "--verify", "--end-of-options", `${ref}^{commit}`]);
+  const head = resolved.stdout.trim();
+  if (resolved.code !== 0 || !/^[0-9a-f]{40}$/.test(head)) {
+    return { refused: "could not read the branch you pushed" };
+  }
+  const main = await git([
+    "fetch",
+    "-q",
+    "--no-tags",
+    remoteUrl(cfg),
+    "+refs/heads/main:refs/heads/main",
+  ]);
+  if (main.code !== 0) {
+    return { refused: "could not fetch main, so the branch cannot be checked; try again" };
+  }
+  const old = await remoteHead(ref, cfg);
+  if (old !== null && typeof old === "object") {
+    return { refused: old.error };
+  }
+  /** @type {string | null} */
+  let previous = null;
+  if (old === null) {
+    const listed = await git(["ls-remote", remoteUrl(cfg), "refs/heads/release/*", "refs/tags/v*"]);
+    if (listed.code !== 0) {
+      return { refused: "could not list the earlier releases on GitHub; try again" };
+    }
+    const floor = releaseFloor(
+      Number(/^refs\/heads\/release\/0\.([0-9]+)\.0$/.exec(ref)?.[1]),
+      listed.stdout,
+    );
+    if ("refused" in floor) {
+      return floor;
+    }
+    previous = floor.previous;
+  }
+  const other = old ?? previous;
+  if (other !== null) {
+    const fetched = await git(["fetch", "-q", "--no-tags", remoteUrl(cfg), other]);
+    if (fetched.code !== 0) {
+      return { refused: "could not fetch a release's head on GitHub; try again" };
+    }
+  }
+  const refused = await refuseReleaseRange(
+    { git },
+    { head, old, main: "refs/heads/main", previous },
+  );
+  if (refused !== null) {
+    return { refused };
+  }
+  // An empty lease: the branch must not exist yet.
+  const pushed = await git([
+    "push",
+    `--force-with-lease=${ref}:${old ?? ""}`,
+    remoteUrl(cfg),
+    `${head}:${ref}`,
+  ]);
+  return { ...pushed, head };
+}
+
+/**
+ * @returns {{ branch: string, sha: string, by: string, ts: number, note: string }[]}
+ */
+function readReleaseOks() {
+  if (!fs.existsSync(RELEASE_OKS)) {
+    return [];
+  }
+  return fs
+    .readFileSync(RELEASE_OKS, "utf8")
+    .split("\n")
+    .filter((line) => line.trim() !== "")
+    .map((line) => obj(JSON.parse(line)))
+    .map((row) => ({
+      branch: String(row.branch),
+      sha: String(row.sha),
+      by: String(row.by),
+      ts: Number(row.ts),
+      note: String(row.note),
+    }));
+}
+
+/**
+ * QA's sign-off on a release branch's head (#2707): recorded for the head
+ * GitHub has, and only if that is the commit QA names.
+ *
+ * @param {string[]} argv
+ * @param {string} by the employee signing off
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ refused: string } | { branch: string, sha: string }>}
+ */
+async function recordReleaseOk(argv, by, cfg) {
+  const parsed = parseReleaseOk(argv);
+  if ("error" in parsed) {
+    return { refused: parsed.error };
+  }
+  const head = await remoteHead(`refs/heads/${parsed.branch}`, cfg);
+  if (head === null) {
+    return { refused: `${parsed.branch} does not exist on GitHub` };
+  }
+  if (typeof head === "object") {
+    return { refused: head.error };
+  }
+  if (head !== parsed.sha) {
+    return {
+      refused: `the head of ${parsed.branch} is ${head.slice(0, 8)}, not ${parsed.sha}; test that one`,
+    };
+  }
+  fs.appendFileSync(
+    RELEASE_OKS,
+    `${JSON.stringify({ branch: parsed.branch, sha: head, by, ts: Date.now(), note: parsed.note })}\n`,
+  );
+  return { branch: parsed.branch, sha: head };
+}
+
+/**
+ * The `gh release create` to run (#2707): its target pinned to the commit QA
+ * signed off, which must still be the branch's head, so GitHub cannot tag a
+ * newer one. Refused when there is no sign-off on that head, or the tag
+ * exists already.
+ *
+ * @param {string[]} argv `["release", "create", ...]`, shape already checked by hub-policy
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ refused: string } | { argv: string[], sha: string }>}
+ */
+async function pinRelease(argv, cfg) {
+  const release = parseReleaseCreate(argv);
+  if ("error" in release) {
+    return { refused: release.error };
+  }
+  const head = await remoteHead(`refs/heads/${release.branch}`, cfg);
+  if (head === null) {
+    return { refused: `${release.branch} does not exist on GitHub` };
+  }
+  if (typeof head === "object") {
+    return { refused: head.error };
+  }
+  if (!readReleaseOks().some((ok) => ok.branch === release.branch && ok.sha === head)) {
+    return {
+      refused: `qa-tester has not signed off ${release.branch} at its head ${head.slice(0, 8)} (hub release-ok)`,
+    };
+  }
+  const tag = await remoteHead(`refs/tags/${release.tag}`, cfg);
+  if (tag !== null) {
+    return { refused: typeof tag === "object" ? tag.error : `${release.tag} exists already` };
+  }
+  return {
+    sha: head,
+    argv: [
+      "release",
+      "create",
+      release.tag,
+      "--target",
+      head,
+      ...(release.title === null ? [] : ["--title", release.title]),
+      ...(release.notes ? ["--generate-notes"] : []),
+    ],
+  };
+}
+
+/** The company's GitHub account, which alone writes a tracking issue (#2707). */
+let selfLogin = "";
+
+/**
+ * Why a role outside ISSUE_EDITORS must not edit issue `number` (#2707), or
+ * null: it edits an open release's tracking issue only. Fails closed.
+ *
+ * @param {string} number digits, checked by hub-policy
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>}
+ */
+async function refuseTrackingIssue(number, cfg) {
+  const issue = obj(await rest(`issues/${number}`, cfg));
+  const tracking =
+    issue.state === "open" &&
+    issue.pull_request === undefined &&
+    parseTracking(
+      {
+        number: Number(number),
+        title: String(issue.title),
+        author: String(obj(issue.user).login),
+        body: "",
+      },
+      selfLogin,
+    ) !== null;
+  return tracking
+    ? null
+    : `#${number} is not an open release's tracking issue, the only one you edit`;
+}
+
+/** How often CI on an awaited release head is re-read. */
+const RELEASE_POLL_MS = Number(process.env.HUBD_RELEASE_POLL_MS ?? 60_000);
+/** A release head with no CI verdict this long after its push is given up on. */
+const RELEASE_CI_MS = 3 * 60 * 60_000;
+let nextReleasePoll = 0;
+let releasePolling = false;
+
+/**
+ * @returns {{ nudged: string[], ci: { branch: string, sha: string, since: number }[] }}
+ */
+function readReleaseState() {
+  try {
+    const state = obj(JSON.parse(fs.readFileSync(RELEASE_STATE, "utf8")));
+    return {
+      nudged: Array.isArray(state.nudged) ? state.nudged.map(String) : [],
+      ci: Array.isArray(state.ci)
+        ? state.ci
+            .map(obj)
+            .map((row) => ({
+              branch: String(row.branch),
+              sha: String(row.sha),
+              since: Number(row.since),
+            }))
+            .filter((row) => /^[0-9a-f]{40}$/.test(row.sha) && Number.isFinite(row.since))
+        : [],
+    };
+  } catch {
+    return { nudged: [], ci: [] };
+  }
+}
+
+/**
+ * Tell the release manager about one event, once: `key` names the event.
+ *
+ * @param {string} key
+ * @param {string} text
+ */
+function nudgeRelease(key, text) {
+  const state = readReleaseState();
+  if (state.nudged.includes(key)) {
+    return;
+  }
+  writeAtomic(
+    RELEASE_STATE,
+    JSON.stringify({ ...state, nudged: [...state.nudged, key].slice(-500) }),
+  );
+  tellCompany(`release-${String(Date.now())}`, text, { to: "release-manager" });
+}
+
+/**
+ * Nudge for each issue of the open release that reached Done. The tracking
+ * issue is read only when something did.
+ *
+ * @param {import("./board-history.mjs").Move[]} moves
+ * @param {ReturnType<typeof company>} cfg
+ */
+async function nudgeReleaseMoves(moves, cfg) {
+  const done = moves.filter((move) => move.to === "Done");
+  const open = done.length === 0 ? null : await readTracking(cfg);
+  if (open === null) {
+    return;
+  }
+  for (const move of done) {
+    if ([...open.features, ...open.fixes].includes(move.issue)) {
+      nudgeRelease(
+        `done:${open.version}:${String(move.issue)}`,
+        `#${String(move.issue)} is Done; Release ${open.version} (#${String(open.number)}) lists it.`,
+      );
+    }
+  }
+}
+
+/**
+ * After a merge: if the pull request closes one of the open release's
+ * fixes, tell the release manager the commit to cherry-pick.
+ *
+ * @param {number} pr
+ * @param {ReturnType<typeof company>} cfg
+ */
+async function nudgeMergedFix(pr, cfg) {
+  const open = await readTracking(cfg);
+  if (open === null) {
+    return;
+  }
+  const pull = obj(await rest(`pulls/${String(pr)}`, cfg));
+  const sha = typeof pull.merge_commit_sha === "string" ? pull.merge_commit_sha : "";
+  const fixes = closedIssues(typeof pull.body === "string" ? pull.body : "").filter((issue) =>
+    open.fixes.includes(issue),
+  );
+  if (sha !== "" && fixes.length > 0) {
+    nudgeRelease(
+      `fix:${open.version}:${String(pr)}`,
+      `PR #${String(pr)} merged, closing ${fixes.map((n) => `#${String(n)}`).join(", ")} from Release ${open.version}'s fixes: git cherry-pick -x ${sha}`,
+    );
+  }
+}
+
+/**
+ * The open release's tracking issue: the newest the company wrote, or null.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<import("./hub-release.mjs").Tracking | null>}
+ */
+async function readTracking(cfg) {
+  // REST search, not GraphQL: this runs every few minutes, and the GraphQL
+  // budget is the one the board needs.
+  const query = `repo:${cfg.repo} is:issue is:open in:title "Release" author:${selfLogin}`;
+  const listed = await gh(["api", `search/issues?q=${encodeURIComponent(query)}&per_page=20`]);
+  if (listed.code === 0 && selfLogin !== "") {
+    /** @type {unknown} */
+    let answer;
+    try {
+      answer = JSON.parse(listed.stdout);
+    } catch {
+      return null;
+    }
+    const rows = obj(answer).items;
+    const found = (Array.isArray(rows) ? rows : [])
+      .map(obj)
+      .map((row) =>
+        parseTracking(
+          {
+            number: Number(row.number),
+            title: String(row.title),
+            author: String(obj(row.user).login),
+            body: typeof row.body === "string" ? row.body : "",
+          },
+          selfLogin,
+        ),
+      )
+      .filter((row) => row !== null)
+      .sort((x, y) => y.number - x.number);
+    return found[0] ?? null;
+  }
+  return null;
+}
+
+/**
+ * Tell the release manager how CI on each awaited release head ended.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ */
+async function pollRelease(cfg) {
+  /** @type {string[]} */
+  const ended = [];
+  for (const head of readReleaseState().ci) {
+    if (Date.now() - head.since > RELEASE_CI_MS) {
+      nudgeRelease(
+        `ci:${head.sha}`,
+        `CI on ${head.branch} at ${head.sha.slice(0, 8)}: no result 3 h after the push; look at its runs on GitHub.`,
+      );
+      ended.push(head.sha);
+      continue;
+    }
+    const runs = runsFromRest(
+      await rest(`actions/runs?head_sha=${head.sha}&event=push&per_page=100`, cfg),
+    );
+    const verdict = "error" in runs ? null : releaseCiVerdict(runs.runs);
+    if (verdict === null) {
+      continue;
+    }
+    ended.push(head.sha);
+    nudgeRelease(
+      `ci:${head.sha}`,
+      verdict.pass
+        ? `CI on ${head.branch} at ${head.sha.slice(0, 8)}: PASS.`
+        : `CI on ${head.branch} at ${head.sha.slice(0, 8)}: FAIL (${verdict.failed.join(", ")}).`,
+    );
+  }
+  // Re-read, not the list the loop began with: a push recorded during the
+  // awaits above is kept.
+  const state = readReleaseState();
+  writeAtomic(
+    RELEASE_STATE,
+    JSON.stringify({ ...state, ci: state.ci.filter((head) => !ended.includes(head.sha)) }),
+  );
+}
+
+function maybePollRelease() {
+  if (releasePolling || Date.now() < nextReleasePoll) {
+    return;
+  }
+  nextReleasePoll = Date.now() + RELEASE_POLL_MS;
+  if (readReleaseState().ci.length === 0) {
+    return;
+  }
+  releasePolling = true;
+  pollRelease(company())
+    .catch((/** @type {unknown} */ error) => {
+      console.error(
+        `hubd: release poll: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    })
+    .finally(() => {
+      releasePolling = false;
+    });
+}
+
+/* -------------------------------------------------------------------------- */
 /* Skills                                                                     */
 /* -------------------------------------------------------------------------- */
 
@@ -1394,7 +1842,13 @@ function keepBoard(next, cfg, by = "github") {
     return;
   }
   if (board !== null) {
-    keepHistory(movesBetween(board, next, { repo: cfg.repo, by, ts: Date.now() }));
+    const moves = movesBetween(board, next, { repo: cfg.repo, by, ts: Date.now() });
+    keepHistory(moves);
+    nudgeReleaseMoves(moves, cfg).catch((/** @type {unknown} */ error) => {
+      console.error(
+        `hubd: release nudge: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
   }
   board = next;
   boardSet = boardNumbers(listing(next), cfg.repo);
@@ -2783,6 +3237,9 @@ function recordStaff(role, argv, cfg) {
     `${JSON.stringify(applyStaff(current, request, allowed.employee, now), null, 2)}\n`,
   );
   audit({ role, kind, argv, decision: "allowed" });
+  if (verb === "hire") {
+    seedSchedules(who);
+  }
   tellCompany(
     kind,
     by === "operator"
@@ -2799,6 +3256,19 @@ function recordStaff(role, argv, cfg) {
     stdout: `recorded ${allowed.employee} (takes effect when the supervisor reconciles, #383)\n`,
     stderr: "",
   };
+}
+
+/**
+ * A newly hired role's own schedules (#2707), but those it already has.
+ *
+ * @param {string} role
+ */
+function seedSchedules(role) {
+  for (const argv of SEEDED_SCHEDULES[role] ?? []) {
+    if (!ownSchedules.some((own) => own.role === role && own.name === argv[1])) {
+      schedule(role, [...argv]);
+    }
+  }
 }
 
 /**
@@ -3319,7 +3789,34 @@ async function serve(request, verdict, acting) {
     const result = await gh(pinRepo(pinned, cfg));
     noteHint(pinned, result.code, cfg);
     audit({ role, kind, argv, decision: "allowed", code: result.code, sha: guarded.sha });
+    if (result.code === 0) {
+      // Told on the side: a nudge that fails never fails the merge.
+      nudgeMergedFix(guarded.pr, cfg).catch((/** @type {unknown} */ error) => {
+        console.error(
+          `hubd: release nudge: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      });
+    }
     return { allow: true, ...result };
+  }
+
+  if (kind === "release-ok") {
+    const signed = await recordReleaseOk(argv, employee, cfg);
+    if ("refused" in signed) {
+      audit({ role, kind, argv, decision: "refused", reason: signed.refused });
+      return { allow: false, reason: signed.refused, code: 77 };
+    }
+    audit({ role, kind, argv, decision: "allowed", sha: signed.sha });
+    nudgeRelease(
+      `ok:${signed.branch}:${signed.sha}`,
+      `qa-tester signed off ${signed.branch} at ${signed.sha.slice(0, 8)}: it may be published.`,
+    );
+    return {
+      allow: true,
+      code: 0,
+      stdout: `release-ok recorded for ${signed.branch} at ${signed.sha.slice(0, 8)}\n`,
+      stderr: "",
+    };
   }
 
   if (kind === "alerts") {
@@ -3391,6 +3888,25 @@ async function serve(request, verdict, acting) {
     if (fetched.code !== 0) {
       audit({ role, kind, argv, decision: "allowed", code: fetched.code });
       return { allow: true, ...fetched };
+    }
+    if (verdict.guards?.includes("release-branch") === true) {
+      const pushed = await pushRelease(ref, cfg);
+      if ("refused" in pushed) {
+        audit({ role, kind, argv, decision: "refused-by-guard", reason: pushed.refused });
+        return { allow: false, reason: pushed.refused, code: 77 };
+      }
+      audit({ role, kind, argv, decision: "allowed", code: pushed.code, release: true });
+      if (pushed.code === 0) {
+        const state = readReleaseState();
+        writeAtomic(
+          RELEASE_STATE,
+          JSON.stringify({
+            ...state,
+            ci: [...state.ci, { branch, sha: pushed.head, since: Date.now() }],
+          }),
+        );
+      }
+      return { allow: true, code: pushed.code, stdout: pushed.stdout, stderr: pushed.stderr };
     }
     for (const guard of verdict.guards ?? []) {
       const refused = await refusePush(guard, ref, cfg);
@@ -3467,6 +3983,26 @@ async function serve(request, verdict, acting) {
 
   // `--column` is hub's, not gh's: judged here, and gone before gh runs.
   let ghArgv = argv;
+  if (
+    kind === "gh" &&
+    argv[0] === "issue" &&
+    argv[1] === "edit" &&
+    ![role, ...acting].some((seat) => ISSUE_EDITORS.includes(seat))
+  ) {
+    const refused = await refuseTrackingIssue(argv[2] ?? "", cfg);
+    if (refused !== null) {
+      audit({ role, kind, argv, decision: "refused-by-guard", reason: refused });
+      return { allow: false, reason: refused, code: 77 };
+    }
+  }
+  if (kind === "gh" && argv[0] === "release" && argv[1] === "create") {
+    const pinned = await pinRelease(argv, cfg);
+    if ("refused" in pinned) {
+      audit({ role, kind, argv, decision: "refused-by-guard", reason: pinned.refused });
+      return { allow: false, reason: pinned.refused, code: 77 };
+    }
+    ghArgv = pinned.argv;
+  }
   let column = LANDING_COLUMN;
   /** @type {ReturnType<typeof itemAddTarget>} */
   let target = null;
@@ -4556,6 +5092,7 @@ async function main() {
   console.error(
     `hubd: serving the employees in ${STAFF} on ${cfg.repo} (project ${String(cfg.project)}) as ${login.stdout.trim()}`,
   );
+  selfLogin = login.stdout.trim();
 
   fs.mkdirSync(HUB, { recursive: true });
   fs.mkdirSync(path.dirname(ALIVE), { recursive: true });
@@ -4643,6 +5180,7 @@ async function main() {
     }
     sendNewIssues();
     maybePollWatches();
+    maybePollRelease();
     if (Date.now() - lastProposalCheck > PROPOSAL_POLL_MS) {
       lastProposalCheck = Date.now();
       decideProposals();

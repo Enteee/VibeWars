@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
+  ASKERS,
   MAX_MESSAGE_CHARS,
   MAX_USER_CHARS,
   OPERATOR_HINT,
@@ -1948,5 +1949,11 @@ describe("wakes", () => {
     expect(wakes(named("@qa-tester@2 take #9"), "qa-tester@2")).toBe(true);
     expect(wakes(named("qa-tester@2: take #9"), "qa-tester")).toBe(false);
     expect(wakes(named("qa-tester@3: take #9"), "qa-tester@2")).toBe(false);
+  });
+});
+
+describe("ASKERS", () => {
+  it("lets the release manager ask the operator (#2707), and no implementer", () => {
+    expect(ASKERS).toEqual(["manager", "architect", "lead-dev", "release-manager"]);
   });
 });

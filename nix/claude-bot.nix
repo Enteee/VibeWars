@@ -148,7 +148,7 @@ let
   # Every role that builds or tests the game. They get the Chromium devenv.nix
   # pins, from the same `pkgs`, on PATH and as VIBEWARS_CHROMIUM, which
   # playwright.config.ts prefers, as a case pattern.
-  testRoles = "developer | asset-designer | cicd-engineer | lead-dev | perf-sec-qa | qa-tester";
+  testRoles = "developer | asset-designer | cicd-engineer | lead-dev | perf-sec-qa | qa-tester | release-manager";
   chromium = lib.getExe pkgs.chromium;
 
   # The jails' shared resource budget (#358, ADR-0015): one systemd user slice
@@ -476,7 +476,8 @@ let
 
   # Tools only one role needs. Everything here is reachable from inside the
   # jail only because /nix/store is bind-mounted, so adding a role's tools
-  # costs nothing for the other eight.
+  # costs nothing for the others. The release manager needs only git and
+  # hub, as a developer does: corePath has both.
   roleTools = {
     manager = [ peek ];
     asset-designer = with pkgs; [
