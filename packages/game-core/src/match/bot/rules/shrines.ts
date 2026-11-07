@@ -6,22 +6,23 @@ import { NOTHING } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
- * Capture Points (#2580): no foe in spell range, a bot stands on a shrine
- * its team does not hold yet and fills it, else walks to its goal shrine.
- * Every shrine its team's, it leaves the rest to `close-in`.
+ * Capture Points (#2580): a bot stands on a shrine its team does not hold
+ * yet and fills it, else walks to its goal shrine. With a foe in spell
+ * range (#2551), it steps onto that shrine only if it is in spell range
+ * too, and once on it leaves the rest to `fight`: it fights from the
+ * shrine rather than off it. Every shrine its team's, it leaves the rest
+ * to `close-in`. Before `fight`, which answers whenever a foe is in reach.
  */
 const shrines: BotRule = {
-  order: 115,
+  order: 99,
   name: "shrines",
   decide: ({ context, self, foes, allies }) => {
     const points = context.objectives.capturePoints;
     const team = self.combatant.team;
-    if (
-      points.length === 0 ||
-      foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL)
-    ) {
+    if (points.length === 0) {
       return undefined;
     }
+    const pressed = foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
     if (
       points.some(
         (point) =>
@@ -29,10 +30,13 @@ const shrines: BotRule = {
           (point.owner !== team || point.progress < 1),
       )
     ) {
-      return NOTHING;
+      return pressed ? undefined : NOTHING;
     }
     const goal = goalShrine(points, team, self, allies);
-    return goal === undefined ? undefined : { ...NOTHING, moveTo: goal.position };
+    if (goal === undefined || (pressed && distance(goal.position, self.position) > RANGE_SPELL)) {
+      return undefined;
+    }
+    return { ...NOTHING, moveTo: goal.position };
   },
 };
 

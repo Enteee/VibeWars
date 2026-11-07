@@ -1,5 +1,6 @@
 import { resolveLoadout } from "../equipment/resolve.js";
 import { loadoutOf } from "../join-loadout.js";
+import { BOT_REACTION } from "../match/behaviour.js";
 import { MatchSimulation, loadoutSpec, type ParticipantSpec } from "../match/simulation.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { STARTER_BUILDS } from "../starter-builds.js";
@@ -63,7 +64,7 @@ function fight(size: number, seed: string, seconds: number): number {
         ...loadoutSpec(resolved),
         spawn: vec2(team === 0 ? 200 : 1400, 100 + (600 * i) / Math.max(1, size - 1)),
         facing: 0,
-        behaviour: { kind: "play-build", thinkSeconds: 0.25 },
+        behaviour: { kind: "play-build", reaction: BOT_REACTION },
       });
     }
   }
