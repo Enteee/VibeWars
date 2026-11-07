@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { NO_RANKS, type StatusId } from "../../../skills/status.js";
 import { vec2 } from "../../../vec2.js";
-import { createCursor, decide, type BehaviourCursor } from "../../behaviour.js";
+import { createCursor, decide, NO_OBJECTIVES, type BehaviourCursor } from "../../behaviour.js";
 import type { MatchSimulation } from "../../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./drop-upkeep.js";
 import { BOT, DT, askBot, body, match } from "./test-support.js";
@@ -43,6 +43,10 @@ describe("play-build ends its own upkeep when Energy-starved (#2492)", () => {
       isBot: () => true,
       calledTargetId: undefined,
       sees: () => true,
+      seesBetween: () => true,
+      walkable: () => true,
+      foeCentroid: undefined,
+      objectives: NO_OBJECTIVES,
     });
   }
 

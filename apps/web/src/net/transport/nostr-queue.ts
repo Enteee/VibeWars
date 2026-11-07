@@ -10,7 +10,6 @@
  * see each other's tickets, and a ticket is a few hundred bytes.
  */
 import { sha256 } from "@noble/hashes/sha2.js";
-import { bytesToHex } from "@noble/hashes/utils.js";
 import {
   PROTOCOL_VERSION,
   parseQueueTicket,
@@ -28,13 +27,11 @@ import {
 
 import {
   byteLength,
-  eventId,
-  HEX_128,
-  HEX_64,
-  isTags,
   openRelayPool,
   signEvent,
+  verifyBudget,
   webSocket,
+  wellFormedEvent,
   type NostrEvent,
   type OpenRelaySocket,
 } from "./nostr-relays.js";
@@ -118,37 +115,6 @@ function signedEvent(key: TicketKey, mode: QueueMode, content: string, at: numbe
 }
 
 /**
- * `raw` as an event of ours whose id is its content's, with that id's
- * bytes, or `undefined`. Its signature is not checked yet: that is the
- * expensive part, and budgeted.
- */
-function wellFormedEvent(
-  raw: unknown,
-): { readonly event: NostrEvent; readonly digest: Uint8Array } | undefined {
-  if (typeof raw !== "object" || raw === null) {
-    return undefined;
-  }
-  const { id, pubkey, created_at, kind, tags, content, sig } = raw as Record<string, unknown>;
-  if (
-    typeof id !== "string" ||
-    !HEX_64.test(id) ||
-    typeof pubkey !== "string" ||
-    !HEX_64.test(pubkey) ||
-    typeof created_at !== "number" ||
-    kind !== QUEUE_EVENT_KIND ||
-    !isTags(tags) ||
-    typeof content !== "string" ||
-    typeof sig !== "string" ||
-    !HEX_128.test(sig)
-  ) {
-    return undefined;
-  }
-  const event = { id, pubkey, created_at, kind, tags, content, sig };
-  const digest = eventId(event);
-  return bytesToHex(digest) === id ? { event, digest } : undefined;
-}
-
-/**
  * What a verified event says, if it says it of its own key: a ticket whose
  * id is the event's `pubkey`, of this protocol, or the withdrawal of the
  * ticket that key is.
@@ -193,8 +159,8 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
    */
   const withdrawn = new Map<string, number>();
   let closed = false;
-  let verifyTokens = VERIFY_BURST;
-  let verifyRefilledAt = deps.now();
+  /** Whether the verify budget has room for `count` more; takes them if so. */
+  const mayVerify = verifyBudget(deps.now, VERIFY_PER_SECOND, VERIFY_BURST);
   /**
    * Party ticket id to its last verified `members` and `party`, as text
    * (#1078): a party heartbeats the same consents every 5 s, which need
@@ -225,21 +191,6 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
       return false;
     }
     return withdrawn.has(said.ticket.ticketId);
-  }
-
-  /** Whether the verify budget has room for `count` more; takes them if so. */
-  function mayVerify(count = 1): boolean {
-    const at = deps.now();
-    verifyTokens = Math.min(
-      VERIFY_BURST,
-      verifyTokens + ((at - verifyRefilledAt) * VERIFY_PER_SECOND) / 1000,
-    );
-    verifyRefilledAt = at;
-    if (verifyTokens < count) {
-      return false;
-    }
-    verifyTokens -= count;
-    return true;
   }
 
   /**
@@ -310,7 +261,7 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
     if (id === undefined || seen.has(id) || subscribers.size === 0) {
       return;
     }
-    const formed = wellFormedEvent(raw);
+    const formed = wellFormedEvent(raw, QUEUE_EVENT_KIND);
     if (formed === undefined || !wanted(formed.event) || !mayVerify()) {
       return;
     }

@@ -1158,6 +1158,7 @@ tells Team Arena from GvG without the label.
 | `hosted-game`   | Hosted Game    | An arched door with a keyhole                     |
 | `characters`    | Character      | One helmet, crest up, an eye slit                 |
 | `teams`         | Team Builder   | Three helmets in a row, the middle one taller     |
+| `matches`       | Matches        | A trophy on its plinth, handles out               |
 
 ## Creatures
 

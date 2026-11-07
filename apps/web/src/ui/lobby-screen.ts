@@ -181,7 +181,7 @@ export function drawnModesLine(maps: readonly LobbyMap[]): string {
   return `${new Intl.ListFormat("en", { type: "disjunction" }).format(names)}: drawn at the start`;
 }
 
-/** The arena as the picker names it: its name, then its size class, e.g. "Long Hall (large)". */
+/** The arena as the picker names it: its name, then its size class, e.g. "Long Hall (small)". */
 export function mapLabel(map: LobbyMap): string {
   return `${map.name} (${map.size})`;
 }

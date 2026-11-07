@@ -1704,6 +1704,141 @@ body {
   color: var(--ink-dim);
 }
 
+/* The Matches page (#2532): one row a record, newest first. */
+.matches-note {
+  margin: 0;
+  color: var(--ink-dim);
+}
+
+.match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.match-row {
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.screen .match-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 0;
+  background: none;
+  color: var(--ink-dim);
+  text-align: left;
+}
+
+.match-mode {
+  color: var(--ink);
+}
+
+.match-host-reported {
+  margin-left: auto;
+  padding: 0 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-size: 0.8em;
+}
+
+/* The closed row's teams (#2585): a primary profession icon per player. */
+.match-team {
+  display: inline-flex;
+  gap: 0.2rem;
+  align-items: center;
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
+}
+
+.match-team.is-winner {
+  border-bottom-color: var(--accent);
+}
+
+.match-player-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.match-player-icon.is-unknown {
+  text-align: center;
+  line-height: 18px;
+}
+
+.match-result {
+  font-size: 0.8em;
+  font-weight: bold;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.match-bot {
+  margin-left: 0.3rem;
+  font-size: 0.8em;
+  color: var(--ink-dim);
+}
+
+.match-tabs {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.screen .match-tab {
+  padding: 0.15rem 0.7rem;
+  border-radius: 4px 4px 0 0;
+  color: var(--ink-dim);
+}
+
+.screen .match-tab[aria-selected="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.match-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0 0.8rem 0.7rem;
+}
+
+.match-detail-summary,
+.match-detail-result {
+  margin: 0;
+}
+
+.match-players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.match-player {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.8rem;
+  align-items: center;
+}
+
+.match-professions,
+.match-attributes,
+.match-build-unreadable {
+  color: var(--ink-dim);
+}
+
+.match-player .mini-skill-bar {
+  flex-basis: 100%;
+}
+
 /* The menu's cards (#1453, #1525): characters and Team Builds alike. */
 .play-cards {
   display: grid;

@@ -126,7 +126,7 @@ function setup(
   let combat: (message: CombatMessage) => void = () => undefined;
   const connection = {
     selfSessionId: ME,
-    map: { id: "arena-alpha", name: "Arena Alpha", width: 1, height: 1, walls: [] },
+    map: { id: "guild-hall-isle", name: "Guild Hall Isle", width: 1, height: 1, walls: [] },
     onCombat: (handler: (message: CombatMessage) => void) => {
       combat = handler;
     },

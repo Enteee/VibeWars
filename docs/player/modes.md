@@ -34,8 +34,7 @@ nobody's, the altar in gold. A player's filled arrow draws over it.
 and each death costs morale. Wipe the other team to win. After 8 minutes,
 the team with the most morale left wins.
 
-Arena Alpha, Canyon, Crossroads, Long Hall, Open Field and The Ring play
-it.
+Canyon, Crossroads and Long Hall play it.
 
 ## Kill Count
 
@@ -177,6 +176,10 @@ nobody owns it, with an arc round it showing how far it is toward
 whoever is taking it. The scoreboard shows the points, yours first, and
 the clock.
 
+Bots spread out over the shrines your team does not own yet and stand
+on them until they are taken, leaving one only to fight a foe that
+comes within spell range.
+
 Forgotten Shrines plays it.
 
 ## Team Lobby
@@ -280,3 +283,14 @@ you play. Nothing else that could identify you is: no address, no peer
 id, no lobby. A match that ends because its host left, or that everyone
 left, is not published. Records are reported by the host, so a host can
 get one wrong; nothing checks them against the match.
+
+See them on the **Matches** page, below Team Builder: the last 100,
+newest first, with new ones appearing as they are played. A row is one
+line: each team's players as their primary profession's icon (hover for
+the name), the winner underlined, and the map, duration and when. Every
+row is marked **host-reported**. Click one to see the teams, one tab
+each: the team card, then each player's professions, top attributes and
+skill bar. **Clone** copies a team from
+a finished match into your Team Builds, each player's build under
+their name, and opens it. A 1v1 side has no Clone: a Team Build is 2, 4
+or 8.
