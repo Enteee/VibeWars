@@ -16,13 +16,12 @@ import type {
 import { decodeTemplate } from "../storage/gw1-template.js";
 import { isTeamBuildSize } from "../storage/schema.js";
 import { lookOfCharacter, teamFigureCard, type TeamFigureMember } from "./character-card.js";
-import { miniSkillBar, professionLabel } from "./character-preview.js";
+import { professionLabel } from "./character-preview.js";
 import { formatClock } from "./hud.js";
 import { professionIcon } from "./icons.js";
 import { button, h, screenBar, syncList } from "./kit.js";
 import { playerLabelText } from "./player-label.js";
 import { railLabel, railScreen, type RailEntry } from "./rail.js";
-import { topAttributes } from "./team-editor.js";
 
 /** The most records the page holds; the oldest goes first. */
 export const MATCHES_KEPT = 100;
@@ -86,15 +85,6 @@ function teamResult(record: MatchRecord, team: 0 | 1): string {
   return record.winningTeam === team ? "Won" : "Lost";
 }
 
-/** A player's name as text, never markup, and a bot's mark after it. */
-function playerName(player: MatchRecordPlayer): HTMLElement {
-  const name = h("span", "match-player-name", playerLabelText(player.name, player.guildTag));
-  if (player.bot) {
-    name.appendChild(h("span", "match-bot", "bot"));
-  }
-  return name;
-}
-
 /**
  * A team on the closed row (#2585): one primary profession icon per
  * player, the name and both professions on hover, and the winner's
@@ -128,28 +118,6 @@ function resultMark(record: MatchRecord): string {
     return "Draw";
   }
   return record.winningTeam === 0 ? "◂ Won" : "Won ▸";
-}
-
-/** One player in the detail: name, and the build their template code says. */
-function playerDetail(player: MatchRecordPlayer): HTMLElement {
-  const row = h("li", "match-player");
-  row.appendChild(playerName(player));
-  const decoded = decodeTemplateCode(player.template);
-  if (!decoded.ok) {
-    row.appendChild(h("span", "match-build-unreadable", BUILD_UNREADABLE));
-    return row;
-  }
-  const { build } = decoded;
-  row.append(
-    h(
-      "span",
-      "match-professions",
-      professionLabel(build.primaryProfession, build.secondaryProfession),
-    ),
-    h("span", "match-attributes", topAttributes(build).join(", ")),
-    miniSkillBar(build),
-  );
-  return row;
 }
 
 /** A player as a team card's member row: its name, and the look its template says. */
@@ -201,10 +169,6 @@ function teamDetail(
       }),
     }),
   );
-  const list = section.appendChild(h("ul", "match-players"));
-  for (const player of players.players) {
-    list.appendChild(playerDetail(player));
-  }
   return section;
 }
 
@@ -225,26 +189,25 @@ function matchDetail(
   tabs.setAttribute("role", "tablist");
   const panel = detail.appendChild(h("div", "match-tab-panel"));
   panel.setAttribute("role", "tabpanel");
-  const sections = [
-    teamDetail(record, 0, record.teams[0], onCloneTeam),
-    teamDetail(record, 1, record.teams[1], onCloneTeam),
-  ];
-  const buttons = ([0, 1] as const).map((team) => {
+  // The winner's tab first, and open (#2637); a draw keeps Team 1, Team 2.
+  const order: readonly (0 | 1)[] = record.winningTeam === 1 ? [1, 0] : [0, 1];
+  const sections = order.map((team) => teamDetail(record, team, record.teams[team], onCloneTeam));
+  const buttons = order.map((team, position) => {
     const tab = button(
       `Team ${String(team + 1)} · ${teamResult(record, team)}`,
       "match-tab",
       () => {
-        show(team);
+        show(position);
       },
     );
     tab.setAttribute("role", "tab");
     return tabs.appendChild(tab);
   });
-  function show(team: number): void {
+  function show(position: number): void {
     buttons.forEach((tab, index) => {
-      tab.setAttribute("aria-selected", String(index === team));
+      tab.setAttribute("aria-selected", String(index === position));
     });
-    panel.replaceChildren(sections[team] ?? h("div"));
+    panel.replaceChildren(sections[position] ?? h("div"));
   }
   show(0);
   return detail;

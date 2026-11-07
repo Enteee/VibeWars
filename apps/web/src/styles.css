@@ -1779,12 +1779,6 @@ body {
   text-transform: uppercase;
 }
 
-.match-bot {
-  margin-left: 0.3rem;
-  font-size: 0.8em;
-  color: var(--ink-dim);
-}
-
 .match-tabs {
   display: flex;
   gap: 0.3rem;
@@ -1811,32 +1805,6 @@ body {
 .match-detail-summary,
 .match-detail-result {
   margin: 0;
-}
-
-.match-players {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  margin: 0.3rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.match-player {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.8rem;
-  align-items: center;
-}
-
-.match-professions,
-.match-attributes,
-.match-build-unreadable {
-  color: var(--ink-dim);
-}
-
-.match-player .mini-skill-bar {
-  flex-basis: 100%;
 }
 
 /* The menu's cards (#1453, #1525): characters and Team Builds alike. */
