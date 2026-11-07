@@ -62,7 +62,7 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
     expect(sim.get("b")?.targetId).toBe("hurt");
   });
 
-  it("leaves the team's target for a foe in reach below half its health, to finish it (#2545)", () => {
+  it("leaves the team's target for a foe in reach below 60% of its health, to finish it (#2545)", () => {
     const at = (fraction: number) => {
       const sim = match([
         fighter("a", 0, ELEMENTALIST, vec2(400, 400)),
@@ -80,8 +80,8 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
       sim.step(DT);
       return [sim.get("a")?.targetId, sim.get("b")?.targetId];
     };
-    expect(at(0.45)).toEqual(["hurt", "hurt"]);
-    expect(at(0.55)).toEqual(["held", "held"]);
+    expect(at(0.55)).toEqual(["hurt", "hurt"]);
+    expect(at(0.65)).toEqual(["held", "held"]);
   });
 
   it("fights the foe its team called over the most hurt one, and drops the call when it dies (#1193)", () => {

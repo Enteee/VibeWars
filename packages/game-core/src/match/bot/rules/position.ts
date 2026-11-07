@@ -14,7 +14,7 @@ import {
 import type { BotRule, RuleContext } from "./types.js";
 
 /** A ranged bot holds this share of its reach from its target (#2545). */
-const HOLD_REACH = 0.8;
+const HOLD_REACH = 0.95;
 
 /** A healer stands no farther than this from the ally it looks after (#2545). */
 const HEALER_REACH = 0.8 * RANGE_SPELL;

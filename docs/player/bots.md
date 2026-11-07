@@ -28,7 +28,7 @@ heals or protections it can cast on an ally is a **healer**: it stands
 behind whichever ally is hurt most, away from the foes. Every other bot is
 **ranged**: it keeps where every one of its attacks reaches, and stands
 and fights a foe who comes too close. A team turns on any foe in reach
-who drops below half health, to finish them.
+who drops below 60% health, to finish them.
 
 ## Random Arena
 
