@@ -386,16 +386,31 @@ describe("a relayed member's login, moved in place (#2245, #2529)", () => {
     await joiner.room.leave();
   });
 
-  it("follows its holder onto a new relay", async () => {
+  it("ranks a new relay from its own holder as any other: a live login for its relay keeps it", async () => {
     const joiner = relayedJoiner();
     await reachHost(joiner);
-    const moved = loginAt(OTHER_URL, EXPIRY + 60 * 60);
-    joiner.fake.open(offer("c", EXPIRY + 2 * 60 * 60), {
-      config: moved,
-      holder: "a",
-      name: "Member a",
-    });
-    expect(joiner.swaps).toEqual([{ peerId: "host", turn: moved }]);
+    joiner.fake.open(
+      { config: loginAt(OTHER_URL, EXPIRY + 60 * 60), holder: "a", name: "Member a" },
+      offer("c", EXPIRY),
+    );
+    expect(joiner.swaps).toEqual([]);
+    await joiner.room.leave();
+  });
+
+  it("never restarts for a holder that seals a new relay every minute", async () => {
+    const joiner = relayedJoiner();
+    await reachHost(joiner);
+    joiner.setIce("failed");
+    for (let minute = 1; minute <= 10; minute += 1) {
+      await vi.advanceTimersByTimeAsync(60_000);
+      const url = `turn:relay${String(minute)}.example:3478`;
+      joiner.fake.open({
+        config: loginAt(url, EXPIRY + minute * 60),
+        holder: "a",
+        name: "Member a",
+      });
+    }
+    expect(joiner.swaps).toEqual([]);
     await joiner.room.leave();
   });
 

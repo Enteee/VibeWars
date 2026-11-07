@@ -9,13 +9,13 @@
  * alike (`rankOffers`), so no one votes, and each joiner switches alone.
  *
  * Seated, a member hears logins from the lobby's listed holders alone
- * (#2529). A newer login from the holder it relays through, or the
- * best-ranked live one once that holder has none, moves the host's
- * connection in place, keeping its seat, also during a map (#2245): a 1 h
- * login cannot wait out a 28 min Guild Battle. A relayed member whose
- * host drops joins again through that holder's newest login, else the
- * best-ranked live one, since coturn ends a relayed peer's allocation
- * when its credential expires (#1764).
+ * (#2529). A newer login for its relay from the holder it relays
+ * through, or the best-ranked live one once that holder has none,
+ * moves the host's connection in place, keeping its seat, also during a
+ * map (#2245): a 1 h login cannot wait out a 28 min Guild Battle. A
+ * relayed member whose host drops joins again through that holder's
+ * newest login, else the best-ranked live one, since coturn ends a
+ * relayed peer's allocation when its credential expires (#1764).
  */
 import type { Channel } from "@vibewars/game-protocol";
 import type { Transport } from "@vibewars/game-session";
@@ -218,12 +218,15 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
 
   /**
    * Seated through a relay, move the host's connection in place (#2529):
-   * onto a strictly newer login from the holder it relays through, or,
-   * once that holder has no live login (it left the list, or its login
-   * ran out), onto the best-ranked one. Another member's login naming
-   * the same relay never moves it: holding a relay is self-asserted, and
-   * a bogus one would end the connection. At most once per relay each `RELAY_RESTART_EVERY_MS`, unless
-   * ICE has failed or disconnected; a restart held back runs later.
+   * onto a strictly newer login for its relay from the holder it relays
+   * through, or, once that holder has no live login (it left the list,
+   * or its login ran out), onto the best-ranked one. Another member's
+   * login naming the same relay never moves it: holding a relay is
+   * self-asserted, and a bogus one would end the connection. Nor does a
+   * new relay from its own holder: that is ranked at the next rejoin, so
+   * cycling URLs cannot dodge the restart limit. At most once per relay
+   * each `RELAY_RESTART_EVERY_MS`, unless ICE has failed or
+   * disconnected; a restart held back runs later.
    */
   const move = (): void => {
     if (
@@ -238,6 +241,9 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     const current = relayedWith;
     const ranked = offers.ranked();
     const same = ranked.find(({ holder }) => holder === relayedVia);
+    if (same !== undefined && relayOf(same.config) !== relayOf(current)) {
+      return;
+    }
     const offer = same ?? ranked[0];
     if (
       offer === undefined ||
