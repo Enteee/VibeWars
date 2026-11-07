@@ -6,9 +6,11 @@ import {
 } from "../audio/music-preference.js";
 import { beatEdits, type BeatEditStore } from "../music/beat-edits.js";
 import { music, type MusicFollower } from "../music/play-music.js";
+import { sharedTracks, type SharedTracks } from "../music/shared-tracks.js";
 import { TRACKS, type Track } from "../music/tracks/index.js";
 import { openBeatEditor } from "./beat-editor.js";
 import { musicIcon } from "./icons.js";
+import { sharedMusicSection } from "./shared-music.js";
 import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
 import { button, h, selectableRow, syncList } from "./kit.js";
 import { attachTopbarPopover } from "./topbar-popover.js";
@@ -23,6 +25,7 @@ import { attachTopbarPopover } from "./topbar-popover.js";
  * a track the player edited says so. Rows are the shared selectable rows (#581),
  * updated in place, so the pressed one keeps focus. Every change is saved at once. The rules are
  * plain functions, tested without a DOM; `jukeboxPanel` only draws them.
+ * Tracks lobby members shared (#2745) are listed above the tracks.
  */
 
 export const MODE_NAMES: Readonly<Record<MusicModeKind, string>> = {
@@ -86,6 +89,8 @@ export function jukeboxPanel(
   onClose: () => void,
   player: MusicFollower = music(),
   edits: BeatEditStore = beatEdits,
+  shared: SharedTracks = sharedTracks,
+  inMatch = false,
 ): JukeboxPanel {
   let previewId: string | null = null;
   const panel = h("div", "jukebox");
@@ -110,6 +115,9 @@ export function jukeboxPanel(
   const controls = h("div", "menu-row jukebox-controls");
   controls.append(modeField, editPlaying);
   panel.appendChild(controls);
+
+  const sharedSection = sharedMusicSection(player, shared, TRACKS, inMatch);
+  panel.appendChild(sharedSection.element);
 
   const list = h("div", "entity-list jukebox-list");
   panel.appendChild(list);
@@ -206,6 +214,7 @@ export function jukeboxPanel(
       panel.removeEventListener("keydown", onKeydown);
       unsubscribeEdits();
       unsubscribeMusic();
+      sharedSection.dispose();
       if (previewId !== null) {
         previewId = null;
         player.preview(null);
@@ -221,6 +230,8 @@ export function jukeboxPanel(
 export function attachJukeboxPopover(
   trigger: HTMLButtonElement,
   parent: HTMLElement,
+  inMatch: boolean,
+  shared: SharedTracks = sharedTracks,
 ): { dispose(): void } {
   const paintTrigger = (preference: MusicPreference): void => {
     const icon = trigger.querySelector("img");
@@ -230,7 +241,12 @@ export function attachJukeboxPopover(
   };
   paintTrigger(music().preference);
   return attachTopbarPopover(trigger, parent, (close) => {
-    const panel = jukeboxPanel(close, music());
+    const panel = jukeboxPanel(close, music(), beatEdits, shared, inMatch);
+    // Open, it has heard every share: the ♪'s badge goes, and stays gone.
+    shared.hearAll();
+    const unsubscribeShared = shared.onChange(() => {
+      shared.hearAll();
+    });
     // Above the tracks: in a match, how loud comes before what plays.
     const sound = h("div", "hud-sound");
     panel.element.prepend(sound);
@@ -248,6 +264,7 @@ export function attachJukeboxPopover(
       element: panel.element,
       focus: panel.element.querySelector<HTMLElement>(".jukebox-play") ?? panel.element,
       dispose() {
+        unsubscribeShared();
         unmountSound();
         panel.dispose();
       },

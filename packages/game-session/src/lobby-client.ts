@@ -3,6 +3,9 @@ import {
   MAX_WIRE_CHAT_TEXT,
   PROTOCOL_VERSION,
   parseWireChatLine,
+  parseWireSharedTrack,
+  MAX_LOBBY_PLAYERS,
+  type WireSharedTrack,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
   parseWireLobbyState,
@@ -38,6 +41,7 @@ import {
   type PeerRelayOffers,
 } from "@vibewars/game-protocol";
 
+import { MessageBudget } from "./intent-budget.js";
 import { keyGated } from "./key-gate.js";
 import type {
   ChatLine,
@@ -54,6 +58,12 @@ import type { TicketKey } from "./queue-client.js";
 
 /** Who a chat line is from when nothing of its name is left to show (#479). */
 const UNNAMED_SPEAKER = "Unnamed";
+/**
+ * Shares a host relays to this player a second, at most (#2745): every
+ * other member's one in ten seconds, with room for a full lobby's burst.
+ * Past it, a share is dropped before it is parsed.
+ */
+const SHARED_TRACKS_PER_SECOND = MAX_LOBBY_PLAYERS / 10;
 import { scopeTransport } from "./scoped-transport.js";
 import type { Transport, TransportTrouble } from "./transport.js";
 
@@ -211,6 +221,13 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const admitHandlers = new Set<(admit: PeerRelayAdmit) => void>();
   const chatHandlers: ((line: ChatLine) => void)[] = [];
   const throttledHandlers: (() => void)[] = [];
+  const sharedHandlers: ((share: WireSharedTrack) => void)[] = [];
+  const shareThrottledHandlers: (() => void)[] = [];
+  const sharedBudget = new MessageBudget(
+    SHARED_TRACKS_PER_SECOND,
+    MAX_LOBBY_PLAYERS,
+    () => undefined,
+  );
   const partyHandlers: ((party: WirePartyFormed | null) => void)[] = [];
   const proposalHandlers: (() => void)[] = [];
   /** The host answered a Stay together; a second answer is not heard. */
@@ -251,6 +268,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     credHandlers.clear();
     chatHandlers.length = 0;
     throttledHandlers.length = 0;
+    sharedHandlers.length = 0;
+    shareThrottledHandlers.length = 0;
     partyHandlers.length = 0;
     proposalHandlers.length = 0;
   };
@@ -489,6 +508,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           transport.send("chat", { channel, text: text.slice(0, MAX_WIRE_CHAT_TEXT) }, hostId);
         }
       },
+      shareTrack(trackId, source) {
+        send({ kind: "share-track", trackId, source });
+      },
       onChange(handler) {
         changeHandlers.push(handler);
       },
@@ -552,6 +574,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       },
       onChatThrottled(handler) {
         throttledHandlers.push(handler);
+      },
+      onSharedTrack(handler) {
+        sharedHandlers.push(handler);
+      },
+      onShareThrottled(handler) {
+        shareThrottledHandlers.push(handler);
       },
       stayTogether(key) {
         if (hostId !== undefined && !closed) {
@@ -719,6 +747,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           for (const handler of [...throttledHandlers]) {
             handler();
           }
+        } else if (note.kind === "share-throttled") {
+          for (const handler of [...shareThrottledHandlers]) {
+            handler();
+          }
         } else if (isRefusal(note.reason)) {
           if (failJoin !== undefined) {
             failJoin(new LobbyRefusedError(note.reason));
@@ -758,6 +790,19 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         const line = { ...wire, name: sanitizeName(wire.name, UNNAMED_SPEAKER), text };
         for (const handler of [...chatHandlers]) {
           handler(line);
+        }
+      }),
+      // A host can be anyone: what it relays is held to what an honest one sends.
+      transport.on("shared-track", (data, from) => {
+        if (from !== hostId || !sharedBudget.take(from, Date.now())) {
+          return;
+        }
+        const share = parseWireSharedTrack(data);
+        if (share === undefined) {
+          return;
+        }
+        for (const handler of [...sharedHandlers]) {
+          handler(share);
         }
       }),
       transport.on("party-proposal", (data, from) => {

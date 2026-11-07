@@ -47,6 +47,7 @@ import {
 } from "@vibewars/game-session";
 
 import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
+import { TRACKS } from "../music/tracks/index.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
 import {
   arenaIds,
@@ -376,6 +377,7 @@ export async function hostLobby(
     code,
     proofKey: lobbyRoom.proofKey,
     mapIds: arenaIds(),
+    trackIds: TRACKS.map((track) => track.id),
     modeMaps: modeMapIds(),
     mapTeamSizes: mapTeamSizes(),
     hostedTeamSize,

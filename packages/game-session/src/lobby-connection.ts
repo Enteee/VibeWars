@@ -8,6 +8,7 @@ import type {
   WireAscentLock,
   WirePartyFormed,
   WireProposalBuild,
+  WireSharedTrack,
   PeerRelayAdmit,
   PeerRelayCredIn,
   PeerRelayOffers,
@@ -164,6 +165,11 @@ export interface LobbyConnection {
   claim(slot: number | null): void;
   /** Say `text` on `channel` (#479), in the lobby or its match; the host cleans and routes it. */
   sendChat(channel: ChatChannel, text: string): void;
+  /**
+   * Share `source`, this player's edit of the shipped track `trackId`,
+   * with every other member (#2745). The host relays it, or not.
+   */
+  shareTrack(trackId: string, source: string): void;
   onChange(handler: () => void): void;
   onMatchStarting(handler: (start: MatchStarting) => void): void;
   /** The match on now, to watch (#480); `undefined` while none is. */
@@ -178,6 +184,10 @@ export interface LobbyConnection {
   onChat(handler: (line: ChatLine) => void): void;
   /** The host is dropping this player's lines, too many too fast: once a burst. */
   onChatThrottled(handler: () => void): void;
+  /** A member shared a track (#2745): who, as the host says, and its code, run nowhere here. */
+  onSharedTrack(handler: (share: WireSharedTrack) => void): void;
+  /** The host did not relay this player's share: one in ten seconds. */
+  onShareThrottled(handler: () => void): void;
   /** The lobby is over for this player, and why. */
   onClosed(handler: (reason: LobbyClosedReason) => void): void;
   /**

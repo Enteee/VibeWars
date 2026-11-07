@@ -24,6 +24,7 @@ import { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client
 import type { LobbyClosedReason, LobbyConnection } from "./lobby-connection.js";
 import {
   MAP_IDS,
+  TRACK_IDS,
   MAP_TEAM_SIZES,
   MODE_MAPS,
   openLobby,
@@ -228,6 +229,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     code: GROUP_ID,
     proofKey: null,
     mapIds: MAP_IDS,
+    trackIds: TRACK_IDS,
     modeMaps: MODE_MAPS,
     mapTeamSizes: MAP_TEAM_SIZES,
     hostedTeamSize: 4,

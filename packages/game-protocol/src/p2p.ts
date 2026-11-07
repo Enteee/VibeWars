@@ -93,6 +93,7 @@ export const CHANNELS = [
   "traps",
   "chat",
   "chat-line",
+  "shared-track",
 ] as const;
 
 export type Channel = (typeof CHANNELS)[number];
@@ -249,6 +250,23 @@ export const MAX_CHAT_GRAPHEMES = 200;
  * JSON-escaped, still fits one message (#403).
  */
 export const MAX_WIRE_CHAT_TEXT = 2048;
+
+/**
+ * The most a shared music track's source may weigh (#2745): the UTF-8
+ * bytes of its JSON-escaped form, `sharedSourceBytes`, so a source of
+ * control characters, six bytes each escaped, still fits one message.
+ */
+export const MAX_SHARED_SOURCE_BYTES = 8 * 1024;
+
+/** What `source` weighs on the wire (#2745): the UTF-8 bytes of `JSON.stringify(source)`. */
+export function sharedSourceBytes(source: string): number {
+  let bytes = 0;
+  for (const char of JSON.stringify(source)) {
+    const code = char.codePointAt(0) ?? 0;
+    bytes += code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
+  }
+  return bytes;
+}
 
 /** The most net pips either way (game-core's MAX_PIPS, #504). */
 export const MAX_WIRE_PIPS = 10;
@@ -1329,6 +1347,13 @@ export type WireLobbyCommand =
   | { readonly kind: "leave-queue" }
   | { readonly kind: "play-bots" }
   /**
+   * A music track's code, `source`, the member's edit of the shipped
+   * track `trackId`, for every other member of a coded lobby (#2745).
+   * The host relays it as a `WireSharedTrack`; it runs nowhere but in
+   * a receiver's music frame, and only when they press Play.
+   */
+  | { readonly kind: "share-track"; readonly trackId: string; readonly source: string }
+  /**
    * In a Team Lobby's vote (#1458): slot `slot` of a Team Build of `size`,
    * its build opaque here. One build a message, so a side of large builds
    * still fits: the host collects them, and the proposal stands once all
@@ -1359,15 +1384,27 @@ export type WireLobbyCommand =
       readonly build: JsonValue;
     };
 
+/**
+ * Lobby host to each other member of a coded lobby (#2745): `from`'s
+ * shared track. `from` is the host's word, the sender as its transport
+ * named it; `trackId` and `source` are rebuilt from the parsed command.
+ */
+export interface WireSharedTrack {
+  readonly from: string;
+  readonly trackId: string;
+  readonly source: string;
+}
+
 /** Lobby host to one peer: a start it turned down, or a member it turned away. */
 export interface WireLobbyNote {
-  readonly kind: "start-rejected" | "notice" | "refused" | "chat-throttled";
+  readonly kind: "start-rejected" | "notice" | "refused" | "chat-throttled" | "share-throttled";
   /**
    * For `"start-rejected"`, the words the host is shown. For `"notice"`
    * (#2104), the words this peer is shown: what the host did to its
    * choice, or would not do. For `"refused"`,
    * one of `LOBBY_REFUSALS`. For `"chat-throttled"` (#479), empty: this
-   * peer's chat lines are being dropped, too many too fast.
+   * peer's chat lines are being dropped, too many too fast. For
+   * `"share-throttled"` (#2745), empty: this peer shared a track too soon.
    */
   readonly reason: string;
 }
@@ -1825,6 +1862,26 @@ export function parseWireChatLine(value: unknown): WireChatLine | undefined {
     (raw.team === null || isTeam(raw.team)) &&
     isString(raw.text, MAX_WIRE_CHAT_TEXT)
     ? { channel: raw.channel, fromId: raw.fromId, name: raw.name, team: raw.team, text: raw.text }
+    : undefined;
+}
+
+/** A shared track's source: a string of at most `MAX_SHARED_SOURCE_BYTES` on the wire. */
+function isSharedSource(value: unknown): value is string {
+  // Its escaped form is never shorter than it: a long one is not escaped to find out.
+  return (
+    isString(value, MAX_SHARED_SOURCE_BYTES) && sharedSourceBytes(value) <= MAX_SHARED_SOURCE_BYTES
+  );
+}
+
+/** The `"shared-track"` channel (#2745): nothing but its three fields. */
+export function parseWireSharedTrack(value: unknown): WireSharedTrack | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    Object.keys(raw).length === 3 &&
+    isString(raw.from) &&
+    isString(raw.trackId) &&
+    isSharedSource(raw.source)
+    ? { from: raw.from, trackId: raw.trackId, source: raw.source }
     : undefined;
 }
 
@@ -3034,6 +3091,10 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
     case "leave-queue":
     case "play-bots":
       return { kind: raw.kind };
+    case "share-track":
+      return Object.keys(raw).length === 3 && isString(raw.trackId) && isSharedSource(raw.source)
+        ? { kind: "share-track", trackId: raw.trackId, source: raw.source }
+        : undefined;
     case "propose": {
       if (raw.slot === null) {
         return { kind: "propose", slot: null };
@@ -3081,7 +3142,13 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
 export function parseWireLobbyNote(value: unknown): WireLobbyNote | undefined {
   const raw = fields(value);
   return raw !== undefined &&
-    isOneOf(raw.kind, ["start-rejected", "notice", "refused", "chat-throttled"] as const) &&
+    isOneOf(raw.kind, [
+      "start-rejected",
+      "notice",
+      "refused",
+      "chat-throttled",
+      "share-throttled",
+    ] as const) &&
     isString(raw.reason, MAX_WIRE_TEXT)
     ? { kind: raw.kind, reason: raw.reason }
     : undefined;

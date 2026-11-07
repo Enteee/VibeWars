@@ -61,6 +61,7 @@ import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
 import { music } from "./music/play-music.js";
+import { sharedTracks } from "./music/shared-tracks.js";
 import { TRACKS } from "./music/tracks/index.js";
 import { STRESS_BUILD, startStress, stressMs } from "./music/stress.js";
 import {
@@ -1023,7 +1024,7 @@ async function main(): Promise<void> {
       if (isModeEntry(shownEntry) && shownEntry !== own.lobby.getSnapshot().mode) {
         own.lobby.selectMode(shownEntry);
       }
-      seatLobby(name, own.lobby, entrant);
+      seatLobby(name, own.lobby, entrant, false);
     })();
   };
 
@@ -1058,6 +1059,7 @@ async function main(): Promise<void> {
     const leaving = lobby;
     const ending = hosted;
     lobby = undefined;
+    syncShares();
     hosted = undefined;
     lobbyEntrant = undefined;
     lobbyName = undefined;
@@ -1105,7 +1107,7 @@ async function main(): Promise<void> {
         seat: ({ joined, entrant }) => {
           following = undefined;
           setStatus("", "online");
-          seatLobby(name, joined, entrant);
+          seatLobby(name, joined, entrant, false);
         },
         drop: async ({ joined }) => {
           following = undefined;
@@ -1176,7 +1178,7 @@ async function main(): Promise<void> {
         return;
       }
       setStatus("", "online");
-      seatLobby(name, joined, entrant);
+      seatLobby(name, joined, entrant, false);
     })();
   };
 
@@ -1540,7 +1542,7 @@ async function main(): Promise<void> {
         },
         onLobby: (joined, host) => {
           hosted = host;
-          seatLobby(name, joined, entrant);
+          seatLobby(name, joined, entrant, true);
         },
         onRefused: (notice) => {
           setStatus("could not join", "error");
@@ -1813,7 +1815,7 @@ async function main(): Promise<void> {
           lobby = undefined;
           closeChat();
           hosted = host;
-          seatLobby(name, joined, entrant);
+          seatLobby(name, joined, entrant, true);
           // Its match is the queue's end: the party lobby waits again,
           // as each member finds it back from the match.
           joined.onMatchStarting(() => {
@@ -1855,6 +1857,7 @@ async function main(): Promise<void> {
     const matchRoom = lobby;
     const matchHost = hosted;
     lobby = undefined;
+    syncShares();
     hosted = undefined;
     closeChat();
     void (async () => {
@@ -2161,12 +2164,88 @@ async function main(): Promise<void> {
    * Show `joined`, coded or queued, and play its matches as `name` with
    * `entrant`'s build, every one of them (#1070).
    */
-  const seatLobby = (name: string, joined: LobbyConnection, entrant: Entrant): void => {
+  /** Lobbies the queue found (#2745): nobody in them chose the others, so nothing is shared. */
+  const matchmadeLobbies = new WeakSet<LobbyConnection>();
+  /** The coded lobby shares come from and go to, `undefined` outside one. */
+  let sharesLobby: LobbyConnection | undefined;
+
+  /**
+   * Shared tracks follow the lobby (#2745): every share and the one
+   * playing go with a lobby left; a sender who left takes their row; this
+   * player shares while another human is in their coded lobby.
+   */
+  const syncShares = (): void => {
+    const current = lobby !== undefined && !matchmadeLobbies.has(lobby) ? lobby : undefined;
+    if (current !== sharesLobby) {
+      sharesLobby = current;
+      sharedTracks.clear();
+      music().playShared(null);
+    }
+    if (current === undefined) {
+      sharedTracks.setSender(null);
+      return;
+    }
+    const snapshot = current.getSnapshot();
+    const others = new Set(
+      snapshot.players
+        .filter((player) => !player.bot && player.sessionId !== snapshot.selfSessionId)
+        .map((player) => player.sessionId),
+    );
+    sharedTracks.keep(others);
+    sharedTracks.setSender(
+      others.size === 0
+        ? null
+        : (trackId, source) => {
+            current.shareTrack(trackId, source);
+          },
+    );
+  };
+
+  /** A match starting stops a share playing: its host goes, a fresh one plays the match's music. */
+  const stopShare = (): void => {
+    sharedTracks.setPlaying(null);
+    music().playShared(null);
+  };
+
+  const seatLobby = (
+    name: string,
+    joined: LobbyConnection,
+    entrant: Entrant,
+    matchmade: boolean,
+  ): void => {
     lobby = joined;
     lobbyEntrant = entrant;
     lobbyName = name;
     lobbyNotice = undefined;
+    if (matchmade) {
+      matchmadeLobbies.add(joined);
+    }
+    syncShares();
     mountLobbyChat(joined);
+    // A share from a member of the lobby on now, a coded one (#2745).
+    joined.onSharedTrack((share) => {
+      if (lobby !== joined || matchmade) {
+        return;
+      }
+      const snapshot = joined.getSnapshot();
+      const sender = snapshot.players.find(
+        (player) => player.sessionId === share.from && !player.bot,
+      );
+      if (sender === undefined || share.from === snapshot.selfSessionId) {
+        return;
+      }
+      sharedTracks.add({
+        from: share.from,
+        name: sender.name,
+        trackId: share.trackId,
+        source: share.source,
+      });
+    });
+    joined.onShareThrottled(() => {
+      if (lobby === joined) {
+        toast(t("music.shareThrottled"));
+      }
+    });
     // A lobby out of sight says nothing to the chat.
     joined.onChat((line) => {
       if (lobby === joined) {
@@ -2187,6 +2266,9 @@ async function main(): Promise<void> {
     // A lobby this tab has left says nothing more to it; a party lobby
     // out of sight while its match is up still queues (#1766).
     joined.onChange(() => {
+      if (lobby === joined) {
+        syncShares();
+      }
       if (lobby === joined || teamQueue?.party === joined) {
         syncTeamQueue(joined);
       }
@@ -2250,6 +2332,7 @@ async function main(): Promise<void> {
       }
       // From the lobby or from its match: either way, it is over.
       lobby = undefined;
+      syncShares();
       hosted = undefined;
       lobbyEntrant = undefined;
       closeChat();
@@ -2308,6 +2391,7 @@ async function main(): Promise<void> {
     const leavingLobby = lobby;
     const ending = hosted;
     lobby = undefined;
+    syncShares();
     hosted = undefined;
     closeChat();
     const teamSize = queue === undefined ? 1 : teamSizeOf(queue.mode);
@@ -2475,6 +2559,7 @@ async function main(): Promise<void> {
       return;
     }
     enteringMatch = true;
+    stopShare();
     lobbyNotice = undefined;
     showViewport(true);
     setStatus("watching…", "offline");
@@ -2518,6 +2603,7 @@ async function main(): Promise<void> {
       return;
     }
     enteringMatch = true;
+    stopShare();
     menuNotice = undefined;
     lobbyNotice = undefined;
     clearQueuedEnd();

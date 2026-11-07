@@ -8,10 +8,12 @@
       does nothing (src/music/host/guard.ts). This policy is a second wall:
       Strudel needs eval, a blob Worker for its timers and our own samples,
       and nothing else, so a pasted pattern cannot reach another host.
+      `webrtc 'block'` stops a peer connection where the browser knows
+      it; host/guard.ts deletes the constructors everywhere (#2745).
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'self' 'unsafe-eval' blob: data:; worker-src blob:; connect-src 'self'; media-src 'self' blob: data:; base-uri 'none'; form-action 'none'"
+      content="default-src 'none'; script-src 'self' 'unsafe-eval' blob: data:; worker-src blob:; connect-src 'self'; media-src 'self' blob: data:; base-uri 'none'; form-action 'none'; webrtc 'block'"
     />
     <title>VibeWars music host</title>
   </head>
