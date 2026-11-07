@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { en, type Catalog } from "./en.js";
-import { formatList, locale, pickLanguage, setLocale, t } from "./index.js";
+import { formatList, formatNumber, locale, pickLanguage, setLocale, t } from "./index.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -74,5 +74,35 @@ describe("setLocale (#2648)", () => {
     expect(root).toEqual({ lang: "he", dir: "rtl" });
     setLocale("de", en);
     expect(root).toEqual({ lang: "de", dir: "ltr" });
+  });
+});
+
+describe("Intl formatters (#2711)", () => {
+  const table: Catalog = {
+    ...en,
+    "matches.minutesAgo": { zero: "z", one: "o", two: "t", other: "{count}" },
+  };
+
+  it("builds the plural rules once per language", () => {
+    const spy = vi.spyOn(Intl, "PluralRules");
+    setLocale("en", table);
+    t("matches.minutesAgo", { count: 1 });
+    t("matches.minutesAgo", { count: 2 });
+    expect(spy).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+  });
+
+  it("follows a language switch on the next call", () => {
+    setLocale("en", table);
+    expect(t("matches.minutesAgo", { count: 2 })).toBe("2");
+    expect(formatNumber(1234.5)).toBe("1,234.5");
+    expect(formatList(["a", "b"], "and")).toBe("a and b");
+    expect(formatList(["a", "b"], "or")).toBe("a or b");
+    setLocale("ar", table);
+    expect(t("matches.minutesAgo", { count: 2 })).toBe("t");
+    setLocale("de", table);
+    expect(formatNumber(1234.5)).toBe("1.234,5");
+    expect(formatList(["a", "b"], "and")).toBe("a und b");
+    expect(formatList(["a", "b"], "or")).toBe("a oder b");
   });
 });
