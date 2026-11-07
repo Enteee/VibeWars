@@ -492,6 +492,10 @@ class AStar implements PathFinder {
 
   public find(from: Vec2, to: Vec2): readonly Vec2[] | undefined {
     const graph = this.#graph;
+    // No estimate to a point off every number line is ever the best (#2735).
+    if (![from.x, from.y, to.x, to.y].every(Number.isFinite)) {
+      return undefined;
+    }
     if (isClear(this.#grid, from, to)) {
       return [to];
     }
@@ -521,14 +525,16 @@ class AStar implements PathFinder {
           at = k;
         }
       }
+      if (at < 0) {
+        // Nothing open is reachable at a finite cost: it never would be.
+        return undefined;
+      }
       if (current === goal) {
         return this.#path();
       }
-      if (at >= 0) {
-        // Ordered removal, so the rest keep the order they were opened in.
-        this.#open.copyWithin(at, at + 1, this.#openCount);
-        this.#openCount -= 1;
-      }
+      // Ordered removal, so the rest keep the order they were opened in.
+      this.#open.copyWithin(at, at + 1, this.#openCount);
+      this.#openCount -= 1;
       this.#state[current] = CLOSED;
 
       const here = this.#cost[current] ?? Number.POSITIVE_INFINITY;
