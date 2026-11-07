@@ -116,7 +116,10 @@ export const MASTERLESS_WIRE_TEAM = -1;
  */
 export type WireTeam = 0 | 1 | 2;
 
-/** A lobby's side: lobbies seat two teams. */
+/**
+ * A side a player picks in a lobby: one of two. A queued three-team match
+ * seats its third itself (#2683), so a lobby's players are `WireTeam`s.
+ */
 export type LobbyTeam = 0 | 1;
 
 /** The most teams a match has (#2682). */
@@ -888,7 +891,7 @@ export interface WireChatLine {
   readonly fromId: string;
   readonly name: string;
   /** `null`: a spectator, who speaks on all chat only. */
-  readonly team: LobbyTeam | null;
+  readonly team: WireTeam | null;
   readonly text: string;
 }
 
@@ -1140,7 +1143,7 @@ export interface WireLobbyPlayer {
   /** As `WirePlayer.guildCape` (#1422). */
   readonly guildCape: WireCape | null;
   /** `null` spectates. */
-  readonly team: LobbyTeam | null;
+  readonly team: WireTeam | null;
   readonly ready: boolean;
   /** The host's own player: the one who picks the map and starts. */
   readonly isHost: boolean;
@@ -1784,7 +1787,7 @@ export function parseWireChatLine(value: unknown): WireChatLine | undefined {
     isOneOf(raw.channel, CHAT_CHANNELS) &&
     isString(raw.fromId) &&
     isString(raw.name) &&
-    (raw.team === null || isLobbyTeam(raw.team)) &&
+    (raw.team === null || isTeam(raw.team)) &&
     isString(raw.text, MAX_WIRE_CHAT_TEXT)
     ? { channel: raw.channel, fromId: raw.fromId, name: raw.name, team: raw.team, text: raw.text }
     : undefined;
@@ -2770,13 +2773,17 @@ export function parseWireLobbyMove(value: unknown): WireLobbyMove | undefined {
     : undefined;
 }
 
+function parseNullableTeam(value: unknown): WireTeam | null | undefined {
+  return value === null || isTeam(value) ? value : undefined;
+}
+
 function parseLobbyTeam(value: unknown): LobbyTeam | null | undefined {
   return value === null || isLobbyTeam(value) ? value : undefined;
 }
 
 function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
   const raw = fields(value);
-  const team = parseLobbyTeam(raw?.team);
+  const team = parseNullableTeam(raw?.team);
   const guildCape = parseNullableCape(raw?.guildCape);
   return raw !== undefined &&
     isString(raw.id) &&

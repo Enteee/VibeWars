@@ -987,7 +987,9 @@ describe("a Team Lobby (#1458)", () => {
     const team = who.connection
       .getSnapshot()
       .players.find((player) => player.sessionId === who.transport.selfId)?.team;
-    return team === undefined || team === null ? null : (teamOf(who)?.sides[team] ?? null);
+    return team === undefined || team === null || team === 2
+      ? null
+      : (teamOf(who)?.sides[team] ?? null);
   };
   const idOf = (who: Member) => who.transport.selfId;
 

@@ -206,7 +206,7 @@ export interface MatchHostOptions {
 export type PlannedSeats = ReadonlyMap<string, PlannedSeat>;
 
 export type PlannedSeat = {
-  readonly team: 0 | 1;
+  readonly team: WireTeam;
   readonly name: string;
   readonly guildTag: string | null;
   readonly guildCape: WireCape | null;
@@ -253,7 +253,7 @@ export interface MatchHost {
 /** One player's place in the match, held through a drop. */
 interface Seat {
   readonly playerId: string;
-  readonly team: 0 | 1;
+  readonly team: WireTeam;
   readonly name: string;
   /** Sanitised (#1406); `null` for none, and for a bot. */
   readonly guildTag: string | null;
@@ -388,7 +388,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     {
       readonly name: string;
       readonly guildTag: string | null;
-      readonly team: 0 | 1;
+      readonly team: WireTeam;
       readonly bot: boolean;
       readonly build: PlayerBuild;
     }
@@ -727,7 +727,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    */
   const seatNew = (
     build: PlayerBuild,
-    team: 0 | 1,
+    team: WireTeam,
     nameOf: (playerId: string) => string,
     guild: Guild,
     bot: boolean,
@@ -906,7 +906,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const build = plan?.build ?? resolveJoinLoadout(hello.build, RULESET.attributes, random).build;
     // Without a plan, teams alternate as players arrive, so a 1v1 is
     // adversarial by default.
-    const team: 0 | 1 = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
+    const team: WireTeam = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
     // The lobby's name, tag and cape, whatever the hello says (#53,
     // #1406, #1422). Without a lobby they are the peer's to choose, so
     // they are sanitised before anyone sees them.

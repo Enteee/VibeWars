@@ -7,6 +7,7 @@ import {
   parsePlayerBuild,
   validatePlayerBuild,
   type PlayerBuild,
+  type TeamCount,
 } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
@@ -51,6 +52,7 @@ import {
   type WireTeamChoice,
   type WireTeamProposalBuilds,
   type WireTeamLobby,
+  type WireTeam,
   type WireTeamSide,
 } from "@vibewars/game-protocol";
 
@@ -71,7 +73,7 @@ import {
   type QueuedSeat,
   type VerifyTicketSig,
 } from "./queue-admission.js";
-import { ticketsOf } from "./queue-formation.js";
+import { ticketsOf, type FormedGroup } from "./queue-formation.js";
 import { createRelayAdmission } from "./relay-admission.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { decideStayTogether } from "./stay-together.js";
@@ -216,6 +218,11 @@ export interface MatchPlan {
   readonly mode: LobbyMode;
   /** Every member on a team, by peer id; spectators are not in it. */
   readonly seats: PlannedSeats;
+  /**
+   * Its teams: a queued group's, three on a three-team round (#2683),
+   * else two, whatever the map is made for.
+   */
+  readonly teamCount: TeamCount;
   /** Whether `peerId` is a member on no team, now (#480): who may watch the match. */
   readonly isSpectator: (peerId: string) => boolean;
   /** The room, for this match alone: build the `MatchHost` on it. */
@@ -349,7 +356,7 @@ interface Member {
   guildTag: string | null;
   /** Sanitised (#1422); `null` for none, and whenever `guildTag` is. */
   guildCape: WireCape | null;
-  team: 0 | 1 | null;
+  team: WireTeam | null;
   ready: boolean;
   /** The seat key it was admitted on, in a queued lobby (#882). */
   readonly seatKey: string | null;
@@ -377,12 +384,23 @@ function newRejoinToken(): string {
   ).join("");
 }
 
+/**
+ * `team`'s side in a Team Lobby, which has two (#1458): a third team, a
+ * queued Heroes' Ascent match's (#2683), never holds one.
+ */
+const lobbySideOf = (team: WireTeam | null): 0 | 1 | null =>
+  team === 0 || team === 1 ? team : null;
+
+/** A queued group's teams: two, or three on a three-team round (#2683). */
+const teamsOf = (group: FormedGroup): readonly WireTeam[] =>
+  group.teams.length === 3 ? [0, 1, 2] : [0, 1];
+
 /** Whether `member` counts as ready: a bot always is (#1193). */
 const isReady = (member: Member): boolean => member.bot !== null || member.ready;
 
 /** Whether the lobby satisfies the rules for starting, and if not, why. */
 export function canStart(
-  players: readonly { readonly team: 0 | 1 | null; readonly ready: boolean }[],
+  players: readonly { readonly team: WireTeam | null; readonly ready: boolean }[],
 ): { ok: true } | { ok: false; reason: string } {
   const assigned = players.filter((player) => player.team !== null);
   if (assigned.length === 0) {
@@ -395,7 +413,9 @@ export function canStart(
 }
 
 export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
-  const { code, mapIds, startMatch, queued, random } = options;
+  const { code, mapIds, startMatch, random } = options;
+  // A three-team group whose third side never came plays on as two (#2683).
+  let { queued } = options;
   const [defaultMap] = mapIds;
   if (defaultMap === undefined) {
     throw new Error("a lobby needs at least one map");
@@ -600,7 +620,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       }
     | undefined;
   /** A team mode's queued lobby: each side's seat plan so far (ADR-0042). */
-  const teamPlans: [TeamPlan | undefined, TeamPlan | undefined] = [undefined, undefined];
+  const teamPlans: (TeamPlan | undefined)[] = [];
   /**
    * Heroes' Ascent's party (#2539): recorded each time it queues, applied
    * by a `find-match` past round 0, and gone with round 0 or a new mode.
@@ -650,11 +670,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     );
 
   /** Each human on `team`, in join order. */
-  const humansOn = (team: 0 | 1): Member[] =>
+  const humansOn = (team: WireTeam): Member[] =>
     [...members.values()].filter((member) => member.bot === null && member.team === team);
 
   /** Who breaks a tie on `team`: the host on its own side, else its earliest-joined human. */
-  const captainOf = (team: 0 | 1): string | null => {
+  const captainOf = (team: WireTeam): string | null => {
     const humans = humansOn(team);
     return (humans.find((member) => member.id === local.selfId) ?? humans[0])?.id ?? null;
   };
@@ -733,7 +753,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       ascentLock === undefined
         ? null
         : { slots: ascentLock.claimers.map((claimedBy, slot) => ({ slot, claimedBy })) },
-    teamLobby: teamLobby === undefined ? null : wireTeamLobby(teamLobby, to?.team ?? null),
+    teamLobby:
+      teamLobby === undefined ? null : wireTeamLobby(teamLobby, lobbySideOf(to?.team ?? null)),
   });
 
   const reach = (): LobbyReach => ({
@@ -816,13 +837,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    */
   const start = (
     assigned: ReadonlyMap<string, PlayerBuild> = new Map(),
-    rejected: ReadonlySet<0 | 1> = new Set(),
+    rejected: ReadonlySet<WireTeam> = new Set(),
   ): void => {
     countdownEndsAt = undefined;
     phase = "starting";
     matches += 1;
     const id = `match-${String(matches)}`;
-    const seatOf = (member: Member, team: 0 | 1): PlannedSeat => {
+    const seatOf = (member: Member, team: WireTeam): PlannedSeat => {
       const seat = {
         team,
         name: member.name,
@@ -869,6 +890,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           mapId,
           mode,
           seats,
+          teamCount: queued?.group.teams.length === 3 ? 3 : 2,
           isSpectator: (peerId) => peerMember(peerId)?.team === null,
           transport: room,
         }),
@@ -1411,10 +1433,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (command.kind === "select-team-size") {
       return pickTeamSize(member, command.size);
     }
-    if (member.team === null) {
+    const team = lobbySideOf(member.team);
+    if (team === null) {
       return false;
     }
-    const side = lobby.sides[member.team];
+    const side = lobby.sides[team];
     // A run's Team Build stays, and so does every member who holds a slot of it (#2539).
     const lock = lobby.locked ? ascentLock : undefined;
     if (
@@ -1474,7 +1497,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         side.pending.delete(member.id);
         dropProposal(side, member.id);
         side.proposals.set(member.id, builds);
-        tellProposalBuilds(member.team, member.id, builds);
+        tellProposalBuilds(team, member.id, builds);
         return true;
       }
       case "vote": {
@@ -1688,7 +1711,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * Seat a bot on `team` (#1193), under an id no member has, and say
    * which; the build it is given makes it someone.
    */
-  const addBot = (team: 0 | 1): string => {
+  const addBot = (team: WireTeam): string => {
     const id = freeBotId();
     const build = starterBuild();
     members.set(id, {
@@ -1736,7 +1759,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const admit = (
     from: string,
     join: PeerLobbyJoin,
-    team: 0 | 1 | null,
+    team: WireTeam | null,
     seatKey: string | null,
   ): void => {
     if (members.size >= MAX_LOBBY_PLAYERS) {
@@ -1789,7 +1812,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       queuedStarted ||
       member.team === null ||
       member.seatKey === null ||
-      member.seatKey !== group.teams[member.team][0]
+      member.seatKey !== group.teams[member.team]?.[0]
     ) {
       return;
     }
@@ -1842,14 +1865,14 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     plan: QueuedPlan,
   ): {
     readonly assigned: Map<string, PlayerBuild>;
-    readonly rejected: ReadonlySet<0 | 1>;
+    readonly rejected: ReadonlySet<WireTeam>;
   } => {
     const size = teamSizeOf(plan.group.mode);
     const assigned = new Map<string, PlayerBuild>();
-    const rejected = new Set<0 | 1>();
+    const rejected = new Set<WireTeam>();
     const botBuilds = new Map<string, PlayerBuild>();
-    for (const team of [0, 1] as const) {
-      const keys = plan.group.teams[team];
+    for (const team of teamsOf(plan.group)) {
+      const keys = plan.group.teams[team] ?? [];
       const whole = wholePlan(teamPlans[team], keys, size);
       if (teamPlans[team] !== undefined && whole === undefined) {
         rejected.add(team);
@@ -1930,7 +1953,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const team =
       admission === null
         ? undefined
-        : ([0, 1] as const).find((side) => group.teams[side].includes(admission.seatKey));
+        : teamsOf(group).find((side) => group.teams[side]?.includes(admission.seatKey) === true);
     if (admission === null || team === undefined) {
       refuse(from, "not-admitted");
       return;
@@ -1958,10 +1981,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     ) {
       return;
     }
-    const { group, key } = queued;
+    const plan = queued;
+    const { group, key } = plan;
     void admissionDigest("vibewars-host", group.groupId, key.ticketId, from).then((digest) => {
       if (!closed && !members.has(from)) {
-        sendWelcome(queued, digest, from);
+        sendWelcome(plan, digest, from);
       }
     });
   });
@@ -2001,14 +2025,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       returning.ready = false;
       // The proposals its side lists, and the chosen one, it was told of
       // while here (#1811): it may have missed some.
-      if (teamLobby !== undefined && returning.team !== null) {
-        const side = teamLobby.sides[returning.team];
+      const returningSide = lobbySideOf(returning.team);
+      if (teamLobby !== undefined && returningSide !== null) {
+        const side = teamLobby.sides[returningSide];
         const shown = [...side.proposals];
         if (side.chosen !== undefined && side.chosen.proposerId !== null) {
           shown.push([side.chosen.proposerId, side.chosen.builds]);
         }
         for (const [proposerId, builds] of shown) {
-          tellProposalBuilds(returning.team, proposerId, builds, from);
+          tellProposalBuilds(returningSide, proposerId, builds, from);
         }
       }
       beginCountdown();
@@ -2203,8 +2228,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       leaveQueue();
       return;
     }
-    if (teamLobby !== undefined && leaving !== undefined && leaving.team !== null) {
-      const side = teamLobby.sides[leaving.team];
+    const leavingSide = lobbySideOf(leaving?.team ?? null);
+    if (teamLobby !== undefined && leavingSide !== null) {
+      const side = teamLobby.sides[leavingSide];
       side.pending.delete(peerId);
       dropProposal(side, peerId);
       side.votes.delete(peerId);
@@ -2235,6 +2261,40 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
   };
 
+  /**
+   * Of a three-team group not all seated in time, the two teams every
+   * member of which is, when nobody of the third came (#2683): they play
+   * each other. `undefined` otherwise, and the lobby falls through.
+   */
+  const twoOfThree = (plan: QueuedPlan): readonly WireTeam[] | undefined => {
+    const missing = new Set(unseated(plan));
+    const present = teamsOf(plan.group).filter(
+      (team) => plan.group.teams[team]?.some((seatKey) => missing.has(seatKey)) !== true,
+    );
+    const absent = teamsOf(plan.group).find((team) => !present.includes(team));
+    return plan.group.teams.length === 3 &&
+      present.length === 2 &&
+      absent !== undefined &&
+      plan.group.teams[absent]?.every((seatKey) => missing.has(seatKey)) === true
+      ? present
+      : undefined;
+  };
+
+  /** Play `plan` with only the teams `kept`, renumbered 0 and 1, and count down. */
+  const playAsTwo = (plan: QueuedPlan, kept: readonly WireTeam[]): void => {
+    queued = {
+      ...plan,
+      group: { ...plan.group, teams: kept.map((team) => plan.group.teams[team] ?? []) },
+    };
+    const plans = kept.map((team) => teamPlans[team]);
+    teamPlans.splice(0, teamPlans.length, ...plans);
+    for (const member of members.values()) {
+      const at = member.team === null ? -1 : kept.indexOf(member.team);
+      member.team = at === 0 || at === 1 ? at : null;
+    }
+    beginCountdown();
+    broadcast();
+  };
   /** Not all seated in time: everyone is sent off, and the queue told who never came. */
   const fallThrough = (plan: QueuedPlan): void => {
     closed = true;
@@ -2254,6 +2314,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
     if (countdownEndsAt === undefined) {
       if (clockMs() < plan.timeoutSeconds * 1000) {
+        return true;
+      }
+      const kept = twoOfThree(plan);
+      if (kept !== undefined) {
+        playAsTwo(plan, kept);
         return true;
       }
       fallThrough(plan);
@@ -2281,7 +2346,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const teamSize =
       winningTeam === null || isTeamQueueMode(plan.group.mode)
         ? 0
-        : plan.group.teams[winningTeam].length;
+        : (plan.group.teams[winningTeam]?.length ?? 0);
     vote = {
       teamSize,
       winners:

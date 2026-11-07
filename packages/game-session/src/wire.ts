@@ -36,6 +36,7 @@ import {
   type WireFlag,
   type WireRelic,
   type WireCape,
+  type WireTeam,
   type WirePlayer,
   type WireProjectile,
   type WireSnapshot,
@@ -632,7 +633,7 @@ export interface SeatIdentity {
   readonly guildTag: string | null;
   /** `null` for none (#1422). */
   readonly guildCape: WireCape | null;
-  readonly team: 0 | 1;
+  readonly team: WireTeam;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
   /** A lobby's bot sits in it (#1193). */
@@ -673,7 +674,11 @@ export function wireIdentity(
   }
   const { team } = participant.combatant;
   const ownTeam =
-    team === 0 || team === 1 ? team : team === MASTERLESS_TEAM ? MASTERLESS_WIRE_TEAM : undefined;
+    team === 0 || team === 1 || team === 2
+      ? team
+      : team === MASTERLESS_TEAM
+        ? MASTERLESS_WIRE_TEAM
+        : undefined;
   const sentTeam = creature.ownerId === undefined ? ownTeam : seats.get(creature.ownerId)?.team;
   return sentTeam === undefined
     ? undefined

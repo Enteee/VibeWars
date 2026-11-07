@@ -333,7 +333,7 @@ async function forgedJoin(
   };
 }
 
-function teamsOf(connection: LobbyConnection): Record<string, 0 | 1 | null> {
+function teamsOf(connection: LobbyConnection): Record<string, 0 | 1 | 2 | null> {
   return Object.fromEntries(
     connection.getSnapshot().players.map((player) => [player.name, player.team]),
   );
@@ -1015,6 +1015,7 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
         board: board.board(),
         mode: "random-arena-2v2",
         ascentRound: null,
+        teamCount: 2,
         ...(party === undefined ? {} : { party }),
         now: () => now,
         newTicketKey: () => keyOf(String((fresh += 1)).padStart(64, "5")),

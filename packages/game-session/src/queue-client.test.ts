@@ -65,6 +65,7 @@ class Queue {
       board: this.memory.board(),
       mode: this.mode,
       ascentRound: this.round,
+      teamCount: 2,
       ...(party === undefined ? {} : { party }),
       now: () => this.now,
       newTicketKey: () => fakeKey((this.keys += 1)),
@@ -235,7 +236,7 @@ describe("createQueueClient", () => {
     const c = queue.join();
     await queue.until(() => a.state.kind === "in-lobby" && c.state.kind === "in-lobby");
     const group = inLobby(a.state).group;
-    expect([...group.teams[0], ...group.teams[1]]).not.toContain(noShow);
+    expect(group.teams.flat()).not.toContain(noShow);
   });
 
   it("withdraws on leave(), and the others' count drops", async () => {
@@ -376,7 +377,7 @@ describe("createQueueClient", () => {
     await queue.until(() => a.state.kind === "in-lobby" && b.state.kind === "in-lobby");
     const { key, group } = inLobby(a.state);
 
-    expect([...group.teams[0], ...group.teams[1]]).toContain(key.ticketId);
+    expect(group.teams.flat()).toContain(key.ticketId);
     expect(key.sign(new Uint8Array(32))).toMatch(/^[0-9a-f]{128}$/);
 
     a.fellThrough([ticketIdOf(b)]);

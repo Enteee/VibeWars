@@ -356,7 +356,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
    */
   const forgetProposals = (state: WireLobbyState): void => {
     const team = state.players.find((player) => player.id === selfId)?.team ?? null;
-    const side = team === null ? null : (state.teamLobby?.sides[team] ?? null);
+    const side = team === null || team === 2 ? null : (state.teamLobby?.sides[team] ?? null);
     if (side === null) {
       proposalBuilds.clear();
       return;
