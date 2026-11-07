@@ -54,6 +54,7 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
+import { loadLocale } from "./i18n/index.js";
 import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
@@ -90,6 +91,7 @@ import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-banner.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
+import { setLanguageBusy } from "./ui/language-section.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
 import { needsTouchNotice, showTouchNotice } from "./ui/touch-notice.js";
@@ -305,6 +307,8 @@ async function main(): Promise<void> {
   // Before anything mounts or waits.
   const relayLink = takeRelayLink();
   const lobbyLink = takeLobbyLink();
+  // Every screen reads its text in the player's language (#2648).
+  await loadLocale();
   // A touch-only device is told it needs a keyboard and mouse (#1392)
   // before the menu, which waits until it goes past.
   if (needsTouchNotice((query) => matchMedia(query).matches, loadTouchNoticeDismissed)) {
@@ -999,6 +1003,18 @@ async function main(): Promise<void> {
       seatLobby(name, own.lobby, entrant);
     })();
   };
+
+  // A language pick reloads the page (#2648): not while that drops the
+  // player out of a lobby with others, a queue or a match.
+  setLanguageBusy(
+    () =>
+      !(lobby === undefined || (hosted !== undefined && isAlone(railParty()))) ||
+      match !== undefined ||
+      enteringMatch ||
+      stay !== undefined ||
+      queue !== undefined ||
+      teamQueue !== undefined,
+  );
 
   /** Whether this player is alone in its own lobby, under another name or guild than now. */
   const renamedAlone = (): boolean =>
