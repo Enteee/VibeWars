@@ -1,11 +1,13 @@
 import {
   LONG_BOW_RANGE,
+  RANGE_SPELL,
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
   buildNavGraph,
   createPathFinder,
   Vec,
   distancePointToSegment,
+  hasLineOfSight,
   loadoutOf,
   nearestStandable,
   STARTER_BUILDS,
@@ -175,22 +177,22 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), the relic temples (#1374), the hill courtyard (#1377) and the forgotten shrines (#1378)", () => {
+  it("is the two small mode arenas, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), the hill courtyard (#1377) and Scarred Earth (#2551)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
         "arena-pillars",
         "arena-split",
         "guild-hall-isle",
-        "relic-temples",
+        "broken-tower",
         "hill-courtyard",
         "hall-of-heroes",
-        "forgotten-shrines",
+        "scarred-earth",
         ...NEW_ARENAS,
       ].sort(),
     );
   });
 
-  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, King of the Hill on Hill Courtyard and Hall of Heroes (#1995), Capture Points on Forgotten Shrines and Annihilation everywhere else (#476, #1186, #1222, #1374, #1377, #1378)", () => {
+  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Broken Tower, King of the Hill on Hill Courtyard and Hall of Heroes (#1995), Capture Points on Scarred Earth and Annihilation everywhere else (#476, #1186, #1222, #1374, #1377, #1378, #2551)", () => {
     expect(MAPS.filter((map) => map.mode === "kill-count").map((map) => map.id)).toEqual([
       "arena-pillars",
     ]);
@@ -201,14 +203,14 @@ describe("the arena set (#444)", () => {
       "guild-hall-isle",
     ]);
     expect(MAPS.filter((map) => map.mode === "relic-run").map((map) => map.id)).toEqual([
-      "relic-temples",
+      "broken-tower",
     ]);
     expect(MAPS.filter((map) => map.mode === "king-of-the-hill").map((map) => map.id)).toEqual([
       "hall-of-heroes",
       "hill-courtyard",
     ]);
     expect(MAPS.filter((map) => map.mode === "capture-points").map((map) => map.id)).toEqual([
-      "forgotten-shrines",
+      "scarred-earth",
     ]);
     expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 7);
   });
@@ -339,98 +341,149 @@ describe("Guild Hall Isle (#1222)", () => {
   });
 });
 
-describe("Relic Temples (#1374)", () => {
-  const temples = MAPS.find((map) => map.id === "relic-temples");
-  if (temples === undefined) throw new Error("no relic-temples");
-  const walls = allWallSegments(temples.walls);
-  const bounds = { width: temples.width, height: temples.height };
-  const altar = temples.objectives.find((objective) => objective.kind === "altar");
-  const spawns = temples.objectives.filter((objective) => objective.kind === "relic-spawn");
+/** The walked length of `path`, from `from`. */
+const walked = (from: Vec2, path: readonly Vec2[]): number =>
+  path.reduce(
+    (sum, point, index) =>
+      sum + Vec.distance(index === 0 ? from : (path[index - 1] ?? from), point),
+    0,
+  );
+
+/** How many of `map`'s walls come within spell range of `point`: the cover to fight round it (#2544). */
+const wallsNear = (map: MapData, point: Vec2): number =>
+  map.walls.filter((wall) =>
+    allWallSegments([wall]).some((side) => distancePointToSegment(point, side) <= RANGE_SPELL),
+  ).length;
+
+describe("Broken Tower (#2551)", () => {
+  const tower = MAPS.find((map) => map.id === "broken-tower");
+  if (tower === undefined) throw new Error("no broken-tower");
+  const walls = allWallSegments(tower.walls);
+  const bounds = { width: tower.width, height: tower.height };
+  const altar = tower.objectives.find((objective) => objective.kind === "altar");
+  const relics = tower.objectives.filter((objective) => objective.kind === "relic-spawn");
   if (altar === undefined) throw new Error("no altar");
 
-  /** The walked length of `path`, from `from`. */
-  const walked = (from: Vec2, path: readonly Vec2[]): number =>
-    path.reduce(
-      (sum, point, index) =>
-        sum + Vec.distance(index === 0 ? from : (path[index - 1] ?? from), point),
-      0,
-    );
-
-  it("puts the altar at the centre, and a relic in each base", () => {
-    expect(altar.position).toEqual({ x: temples.width / 2, y: temples.height / 2 });
-    expect(spawns.map((spawn) => spawn.team).sort()).toEqual([0, 1]);
+  it("puts the altar at the centre, and each relic 100-150 inside its own edge, behind its spawns", () => {
+    expect(altar.position).toEqual({ x: tower.width / 2, y: tower.height / 2 });
+    expect(relics.map((relic) => relic.team).sort()).toEqual([0, 1]);
+    for (const relic of relics) {
+      const edge = Math.min(relic.position.x, tower.width - relic.position.x);
+      expect(edge).toBeGreaterThanOrEqual(100);
+      expect(edge).toBeLessThanOrEqual(150);
+      for (const spawn of tower.spawnPoints.filter((each) => each.team === relic.team)) {
+        expect(Math.abs(spawn.position.x - altar.position.x)).toBeLessThan(
+          Math.abs(relic.position.x - altar.position.x),
+        );
+      }
+    }
   });
 
-  it("runs each relic to the altar the same length", () => {
+  it("walls the altar in a tower: no straight line out of it to the north, south, east or west but through a doorway", () => {
+    const { x, y } = altar.position;
+    for (const [dx, dy] of [
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ] as const) {
+      expect(hasLineOfSight(altar.position, { x: x + 400 * dx, y: y + 400 * dy }, walls)).toBe(
+        false,
+      );
+    }
+    for (const [dx, dy] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const) {
+      expect(hasLineOfSight(altar.position, { x: x + 400 * dx, y: y + 400 * dy }, walls)).toBe(
+        true,
+      );
+    }
+  });
+
+  it("runs each relic to the altar the same length, at least 1300", () => {
     const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
-    const lengths = spawns.map((spawn) => {
-      const path = finder.find(spawn.position, altar.position);
-      if (path === undefined) throw new Error(`no run for team ${String(spawn.team)}`);
-      return walked(spawn.position, path);
+    const lengths = relics.map((relic) => {
+      const path = finder.find(relic.position, altar.position);
+      if (path === undefined) throw new Error(`no run for team ${String(relic.team)}`);
+      return walked(relic.position, path);
     });
     expect(lengths[0]).toBeCloseTo(lengths[1] ?? 0, 3);
+    expect(lengths[0]).toBeGreaterThanOrEqual(1300);
   });
 
   it("has two routes from each base: walled off the one, the run goes round the other way", () => {
-    for (const spawn of spawns) {
+    for (const relic of relics) {
       const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
-      const path = finder.find(spawn.position, altar.position) ?? [];
+      const path = finder.find(relic.position, altar.position) ?? [];
       const north = path.some((point) => point.y < altar.position.y - 50);
-      // A wall across the lane the run took, from the divider to the edge.
-      const cut = north
-        ? {
-            kind: "rect" as const,
-            x: spawn.position.x < altar.position.x ? 680 : 1440,
-            y: 0,
-            width: 80,
-            height: 700,
-          }
-        : {
-            kind: "rect" as const,
-            x: spawn.position.x < altar.position.x ? 680 : 1440,
-            y: 700,
-            width: 80,
-            height: 700,
-          };
+      // A wall across the half of the map the run took, from the centre line to the edge.
+      const cut = {
+        kind: "rect" as const,
+        x: relic.position.x < altar.position.x ? 760 : tower.width - 840,
+        y: north ? 0 : altar.position.y,
+        width: 80,
+        height: altar.position.y,
+      };
       const blocked = createPathFinder(
-        buildNavGraph(allWallSegments([...temples.walls, cut]), bounds, RADIUS),
+        buildNavGraph(allWallSegments([...tower.walls, cut]), bounds, RADIUS),
       );
-      const detour = blocked.find(spawn.position, altar.position);
-      expect(detour, JSON.stringify(spawn)).toBeDefined();
+      const detour = blocked.find(relic.position, altar.position);
+      expect(detour, JSON.stringify(relic)).toBeDefined();
       expect(detour?.some((point) => point.y < altar.position.y - 50)).toBe(!north);
+    }
+  });
+
+  it("has three walls or more within spell range of the altar and of each relic", () => {
+    for (const objective of tower.objectives) {
+      expect(wallsNear(tower, objective.position), objective.kind).toBeGreaterThanOrEqual(3);
     }
   });
 });
 
-describe("Forgotten Shrines (#1378)", () => {
-  const shrines = MAPS.find((map) => map.id === "forgotten-shrines");
-  if (shrines === undefined) throw new Error("no forgotten-shrines");
-  const walls = allWallSegments(shrines.walls);
-  const bounds = { width: shrines.width, height: shrines.height };
-  const points = shrines.objectives.map((objective) => objective.position);
-  const centre = { x: shrines.width / 2, y: shrines.height / 2 };
+describe("Scarred Earth (#2551)", () => {
+  const earth = MAPS.find((map) => map.id === "scarred-earth");
+  if (earth === undefined) throw new Error("no scarred-earth");
+  const walls = allWallSegments(earth.walls);
+  const bounds = { width: earth.width, height: earth.height };
+  const points = earth.objectives.map((objective) => objective.position);
+  const middle = earth.width / 2;
 
-  it("has five shrines: one by each base, and three between them, one at the centre", () => {
+  it("has five shrines: one about 500 in from each base's edge, three on the middle column 600 apart", () => {
     expect(points).toHaveLength(5);
-    for (const team of [0, 1]) {
-      const spawns = shrines.spawnPoints.filter((spawn) => spawn.team === team);
-      const nearest = Math.min(
-        ...points.map((point) =>
-          Math.min(...spawns.map((spawn) => Vec.distance(spawn.position, point))),
-        ),
-      );
-      expect(nearest).toBeLessThan(300);
+    const column = points.filter((point) => point.x === middle).map((point) => point.y);
+    expect(column).toHaveLength(3);
+    expect(column).toContain(earth.height / 2);
+    const [north = 0, centre = 0, south = 0] = [...column].sort((a, b) => a - b);
+    expect(centre - north).toBeGreaterThanOrEqual(600);
+    expect(south - centre).toBeGreaterThanOrEqual(600);
+    for (const base of points.filter((point) => point.x !== middle)) {
+      expect(base.y).toBe(earth.height / 2);
+      expect(Math.min(base.x, earth.width - base.x)).toBeGreaterThanOrEqual(450);
+      expect(Math.min(base.x, earth.width - base.x)).toBeLessThanOrEqual(550);
     }
-    expect(points).toContainEqual(centre);
   });
 
-  it("leaves the centre shrine exposed: no wall within 200", () => {
-    expect(walls.every((wall) => distancePointToSegment(centre, wall) >= 200)).toBe(true);
+  it("rings every shrine: walled to the north and south, open to the west and east", () => {
+    for (const point of points) {
+      const out = (dx: number, dy: number): boolean =>
+        hasLineOfSight(point, { x: point.x + 300 * dx, y: point.y + 300 * dy }, walls);
+      expect([out(0, -1), out(0, 1)], JSON.stringify(point)).toEqual([false, false]);
+      expect([out(-1, 0), out(1, 0)], JSON.stringify(point)).toEqual([true, true]);
+    }
+  });
+
+  it("has three walls or more within spell range of every shrine", () => {
+    for (const point of points) {
+      expect(wallsNear(earth, point), JSON.stringify(point)).toBeGreaterThanOrEqual(3);
+    }
   });
 
   it("lets every spawn walk to every shrine", () => {
     const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
-    for (const spawn of shrines.spawnPoints) {
+    for (const spawn of earth.spawnPoints) {
       for (const point of points) {
         expect(finder.find(spawn.position, point), JSON.stringify([spawn, point])).toBeDefined();
       }
@@ -446,14 +499,6 @@ describe("Hill Courtyard (#1377)", () => {
   const altar = courtyard.objectives.find((objective) => objective.kind === "altar");
   const spawns = courtyard.objectives.filter((objective) => objective.kind === "ghost-spawn");
   if (altar === undefined) throw new Error("no altar");
-
-  /** The walked length of `path`, from `from`. */
-  const walked = (from: Vec2, path: readonly Vec2[]): number =>
-    path.reduce(
-      (sum, point, index) =>
-        sum + Vec.distance(index === 0 ? from : (path[index - 1] ?? from), point),
-      0,
-    );
 
   it("puts the altar at the centre, and a ghost in each base", () => {
     expect(altar.position).toEqual({ x: courtyard.width / 2, y: courtyard.height / 2 });

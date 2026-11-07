@@ -211,8 +211,8 @@ describe("hostMaps (#1453)", () => {
       teamSizes: [4],
     },
     {
-      id: "relic-temples",
-      name: "Relic Temples",
+      id: "broken-tower",
+      name: "Broken Tower",
       size: "large",
       mode: "relic-run",
       teamSizes: [4],
@@ -594,15 +594,15 @@ describe("lobbyPanel: the map (#1994)", () => {
   it("names a queued Heroes' Ascent's round map and its mode, not the lobby's (#1996)", () => {
     const ascent = [
       {
-        id: "relic-temples",
-        name: "Relic Temples",
+        id: "broken-tower",
+        name: "Broken Tower",
         size: "medium",
         mode: "relic-run",
         teamSizes: [4, 8],
       },
       {
-        id: "forgotten-shrines",
-        name: "Forgotten Shrines",
+        id: "scarred-earth",
+        name: "Scarred Earth",
         size: "medium",
         mode: "capture-points",
         teamSizes: [4, 8],
@@ -611,13 +611,11 @@ describe("lobbyPanel: the map (#1994)", () => {
     const queued = {
       ...snapshot("waiting"),
       mode: "heroes-ascent",
-      mapId: "relic-temples",
+      mapId: "broken-tower",
       ascentRound: 1,
     } as const;
     const { status, body } = lobbyPanel(queued, callbacks, undefined, ascent);
-    expect((status[0] as unknown as FakeElement).textContent).toBe(
-      "Map: Forgotten Shrines (medium)",
-    );
+    expect((status[0] as unknown as FakeElement).textContent).toBe("Map: Scarred Earth (medium)");
     expect(
       (body as unknown as FakeElement).all("lobby-mode").map((line) => line.textContent),
     ).toEqual([

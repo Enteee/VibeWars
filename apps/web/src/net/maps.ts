@@ -6,10 +6,10 @@ import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" wi
 import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
-import relicTemples from "@vibewars/game-maps/maps/relic-temples/map.json" with { type: "json" };
+import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
 import hillCourtyard from "@vibewars/game-maps/maps/hill-courtyard/map.json" with { type: "json" };
-import forgottenShrines from "@vibewars/game-maps/maps/forgotten-shrines/map.json" with { type: "json" };
+import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
 import type {
   BaseGuard,
   FlagField,
@@ -40,14 +40,14 @@ export const ARENA_MAPS: readonly MapData[] = [
   arenaLongHall,
   // The Guild Battle's (#1222).
   guildHallIsle,
-  // The Relic Run's (#1374).
-  relicTemples,
+  // The Relic Run's (#1374, #2551).
+  brokenTower,
   // King of the Hill's (#1377).
   hillCourtyard,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
   hallOfHeroes,
-  // Capture Points' (#1378).
-  forgottenShrines,
+  // Capture Points' (#1378, #2551).
+  scarredEarth,
 ].map((raw) => validateMapData(raw));
 
 /** The arena a new lobby starts on, the server's default before (#403). */
@@ -147,8 +147,8 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
  * of them: a side that wins moves on to the next, up to the Hall.
  */
 export const ASCENT_PROGRESSION: readonly string[] = [
-  "relic-temples",
-  "forgotten-shrines",
+  "broken-tower",
+  "scarred-earth",
   "hill-courtyard",
   "hall-of-heroes",
 ];
