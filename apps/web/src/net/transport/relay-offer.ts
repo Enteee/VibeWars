@@ -14,7 +14,6 @@
  * shared secret stays on its device, a joiner keeps its offers in memory
  * only, and nothing here logs a config, a secret, a key or an offer.
  */
-import { bytesToHex } from "@noble/hashes/utils.js";
 import {
   isRelayPub,
   MAX_RELAY_PEER_ID,
@@ -26,11 +25,10 @@ import { RELAY_ADMIT_MS, type TicketKey } from "@vibewars/game-session";
 
 import {
   byteLength,
-  eventId,
-  isTags,
   openRelayPool,
   signEvent,
   webSocket,
+  wellFormedEvent,
   type OpenRelaySocket,
   type RelayPool,
 } from "./nostr-relays.js";
@@ -301,22 +299,17 @@ function listenTopic(
     if (!Array.isArray(message) || message[0] !== "EVENT" || message[1] !== SUBSCRIPTION_ID) {
       return;
     }
-    const raw: unknown = message[2];
-    if (typeof raw !== "object" || raw === null) {
-      return;
-    }
+    // The id must be the event's hash before it is seen: otherwise one
+    // relay could echo a real offer's id with junk and shadow it (#2588).
     // The signature is checked only once a message is of use, before its
     // author is charged: verifying is far dearer than opening.
-    const { id, pubkey, created_at, kind, tags, content, sig } = raw as Record<string, unknown>;
-    if (
-      typeof id !== "string" ||
-      typeof pubkey !== "string" ||
-      seen.has(id) ||
-      kind !== RELAY_OFFER_KIND ||
-      !isTags(tags) ||
-      !tags.some(([name, value]) => name === "t" && value === room.topic) ||
-      typeof content !== "string"
-    ) {
+    const wellFormed = wellFormedEvent(message[2], RELAY_OFFER_KIND);
+    if (wellFormed === undefined) {
+      return;
+    }
+    const { event, digest } = wellFormed;
+    const { id, pubkey, tags, content, sig } = event;
+    if (seen.has(id) || !tags.some(([name, value]) => name === "t" && value === room.topic)) {
       return;
     }
     const now = deps.now();
@@ -347,11 +340,7 @@ function listenTopic(
         // A use is charged to its pubkey, so the event must be that
         // pubkey's: otherwise an invite holder could claim a real relay
         // holder's and mute it (#2553).
-        if (typeof created_at !== "number" || typeof sig !== "string") {
-          return;
-        }
-        const digest = eventId({ pubkey, created_at, kind, tags, content });
-        if (id !== bytesToHex(digest) || !verifyTicketSig(pubkey, digest, sig)) {
+        if (!verifyTicketSig(pubkey, digest, sig)) {
           return;
         }
         if (usedAt.size >= AUTHOR_LIMIT) {
