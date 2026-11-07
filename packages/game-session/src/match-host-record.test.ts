@@ -8,7 +8,12 @@ import {
   startMatch,
   starterBuild,
 } from "./match-harness.test-support.js";
-import { recordTemplate, validateMatchRecord, type MatchRecord } from "./match-record.js";
+import {
+  MATCH_RECORD_VERSION,
+  recordTemplate,
+  validateMatchRecord,
+  type MatchRecord,
+} from "./match-record.js";
 
 /** The finished match's record (#2528): what the host hands its publisher. */
 
@@ -58,7 +63,7 @@ describe("a finished match's record (#2528)", () => {
     expect(records).toHaveLength(1);
     const [record] = records;
     expect(record).toMatchObject({
-      v: 1,
+      v: MATCH_RECORD_VERSION,
       mode: "random-arena",
       map: "test-arena",
       endedAt: TEST_NOW_SECONDS,
@@ -111,7 +116,7 @@ describe("a finished match's record (#2528)", () => {
     await match.step(RECONNECT_WINDOW_SECONDS + 2);
 
     expect(records).toHaveLength(1);
-    expect(records[0]?.teams[1].players).toEqual([
+    expect(records[0]?.teams[1]?.players).toEqual([
       expect.objectContaining({ template: played(starterBuild("Elementalist/Mesmer")) }),
     ]);
   });

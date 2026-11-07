@@ -22,7 +22,7 @@ import { sanitizeCharacterName, sanitizeGuildTag, sanitizeName } from "./names.j
  */
 
 /** Rejects a record of another shape, never adapts one. */
-export const MATCH_RECORD_VERSION = 1;
+export const MATCH_RECORD_VERSION = 2;
 
 /** A team holds 1 to this many players, bots included. */
 export const MAX_RECORD_TEAM = 8;
@@ -60,10 +60,11 @@ export interface MatchRecord {
   /** Unix seconds. */
   readonly endedAt: number;
   readonly durationSeconds: number;
-  /** `null` for a draw. */
-  readonly winningTeam: 0 | 1 | null;
+  /** An index into `teams`; `null` for a draw. */
+  readonly winningTeam: number | null;
   readonly endReason: MatchEndReason;
-  readonly teams: readonly [MatchRecordTeam, MatchRecordTeam];
+  /** Two or three (#2684), by team id. */
+  readonly teams: readonly MatchRecordTeam[];
 }
 
 const END_REASONS: Readonly<Record<MatchEndReason, true>> = {
@@ -189,8 +190,7 @@ export function validateMatchRecord(
     !isLobbyMode(mode) ||
     typeof map !== "string" ||
     !mapIds.has(map) ||
-    !isEndReason(endReason) ||
-    (winningTeam !== 0 && winningTeam !== 1 && winningTeam !== null)
+    !isEndReason(endReason)
   ) {
     return undefined;
   }
@@ -200,11 +200,14 @@ export function validateMatchRecord(
   ) {
     return undefined;
   }
-  if (!Array.isArray(value.teams) || value.teams.length !== 2) {
+  if (!Array.isArray(value.teams) || (value.teams.length !== 2 && value.teams.length !== 3)) {
     return undefined;
   }
-  const [first, second] = (value.teams as readonly unknown[]).map(parseTeam);
-  if (first === undefined || second === undefined) {
+  const teams = (value.teams as readonly unknown[]).map(parseTeam);
+  if (
+    teams.some((team) => team === undefined) ||
+    (winningTeam !== null && !isWholeIn(winningTeam, 0, teams.length - 1))
+  ) {
     return undefined;
   }
   return {
@@ -215,6 +218,6 @@ export function validateMatchRecord(
     durationSeconds,
     winningTeam,
     endReason,
-    teams: [first, second],
+    teams: teams.filter((team) => team !== undefined),
   };
 }

@@ -7,6 +7,7 @@ import {
   adrenalineLossIn,
   applyIntent,
   drainAccumulator,
+  teamIds,
   loadoutOf,
   resolveJoinLoadout,
   loadoutSpec,
@@ -310,11 +311,6 @@ function wireTeam(team: number | null | undefined): WireTeam | null {
   return team === 0 || team === 1 || team === 2 ? team : null;
 }
 
-/** A match record's winner: a record has two teams until #2684. */
-function recordWinner(team: number | undefined): 0 | 1 | null {
-  return team === 0 || team === 1 ? team : null;
-}
-
 export function createMatchHost(options: MatchHostOptions): MatchHost {
   const { transport, map, random, maxPlayers, seats: planned } = options;
   const sim = new MatchSimulation({
@@ -422,7 +418,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     });
   /** The finished match as the world may read it (#2528): names and builds, no ids. */
   const record = (endReason: MatchEndReason): MatchRecord => {
-    const team = (side: 0 | 1): MatchRecordTeam => ({
+    const team = (side: number): MatchRecordTeam => ({
       players: [...everSeated.values()]
         .filter((seat) => seat.team === side)
         .map(({ name, guildTag, bot, build }) => ({
@@ -438,9 +434,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       map: map.descriptor.id,
       endedAt: Math.floor(options.nowSeconds()),
       durationSeconds: Math.round(sim.elapsedSeconds),
-      winningTeam: recordWinner(sim.outcome.winningTeam),
+      winningTeam: sim.outcome.winningTeam ?? null,
       endReason,
-      teams: [team(0), team(1)],
+      teams: teamIds(map.descriptor.teamCount).map(team),
     };
   };
   let accumulator = 0;
