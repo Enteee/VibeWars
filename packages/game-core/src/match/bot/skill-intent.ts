@@ -1,5 +1,6 @@
 import type { DamageType } from "../../equipment/types.js";
 import { isCompanionRule } from "../../skills/activation.js";
+import { IMPLEMENTED_SKILLS } from "../../skills/catalog.js";
 import {
   interruptLands,
   isStateCondition,
@@ -914,4 +915,41 @@ function dealsDamage(effect: SkillEffect): boolean {
     default:
       return false;
   }
+}
+
+/**
+ * Whether `skill` takes enchantments off the foe it is cast at (#2634):
+ * Strip Enchantment, Drain Enchantment, Rend Enchantments, Shatter
+ * Enchantment. Before a spike, bots cast one at a protected target.
+ */
+export function stripsEnchantment(skill: Skill): boolean {
+  return (
+    skill.target === "single-enemy" &&
+    skill.effects
+      .flatMap(flatten)
+      .some(
+        (effect) =>
+          effect.kind === "remove-status" &&
+          effect.from !== "caster" &&
+          (effect.category === "enchantment" || effect.orCategory === "enchantment"),
+      )
+  );
+}
+
+/** The statuses a `defence` skill puts on its target, read once on first use. */
+let defenceStatuses: ReadonlySet<StatusId> | undefined;
+
+/**
+ * Whether `statusId` is one a `defence` skill applies (#2634): Protective
+ * Spirit's, Aegis's. A spike strips it first; a damage self-buff is left.
+ */
+export function isDefenceStatus(statusId: StatusId): boolean {
+  defenceStatuses ??= new Set(
+    IMPLEMENTED_SKILLS.filter((skill) => botUses(skill).includes("defence")).flatMap((skill) =>
+      skill.effects
+        .flatMap(flatten)
+        .flatMap((effect) => (effect.kind === "apply-status" ? [effect.statusId] : [])),
+    ),
+  );
+  return defenceStatuses.has(statusId);
 }

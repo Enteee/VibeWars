@@ -14,7 +14,13 @@ import { FLAG_REACH_UNITS } from "../../flags.js";
 import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
 import { roleOf } from "../role.js";
-import { botUses, isSpikeSkill, summonAura } from "../skill-intent.js";
+import {
+  botUses,
+  isDefenceStatus,
+  isSpikeSkill,
+  stripsEnchantment,
+  summonAura,
+} from "../skill-intent.js";
 
 export const NOTHING: BehaviourIntent = {
   moveDirection: ZERO,
@@ -346,7 +352,8 @@ export function spikeSeconds(skill: Skill, caster: Participant, target: Particip
  * a spike skill at it, or holds one it could fire now as `canActivate`
  * reads it (recharged, affordable, not barred by a status, slowed by none,
  * in range), fired `readySeconds` after the spike was first seen ready;
- * "held" with spike skills but none of those; "none" without.
+ * "held" with spike skills but none of those, or while it has a strip to
+ * cast at the target first (#2634); "none" without.
  */
 function spikeOf(
   mate: Participant,
@@ -361,7 +368,6 @@ function spikeOf(
       return casting.remainingSeconds;
     }
   }
-  const away = distance(mate.position, target.position);
   let spike: "held" | "none" = "none";
   for (const id of mate.skillBar) {
     const skill = id === null ? undefined : getSkill(id);
@@ -369,23 +375,58 @@ function spikeOf(
       continue;
     }
     spike = "held";
-    const spell = isSpell(skill.type);
-    const active = combatant.statuses.active;
-    if (
-      away <= skill.range &&
-      (combatant.cast.rechargeRemaining.get(skill.id) ?? 0) <= 0 &&
-      !combatant.cast.spent.has(skill.id) &&
-      !(spell && preventsSpells(active)) &&
-      !(spell && active.some((status) => getStatusDefinition(status.id).castTimeMultiplier > 1)) &&
-      !(skill.type === "attack" && preventsAttacks(active)) &&
-      chainAllows(combatant, skill, target.id) &&
-      combatant.energy >= energyCostOf(skill, combatant, target.combatant) &&
-      (skill.cost?.kind !== "adrenaline" || canAffordAdrenaline(combatant, skill))
-    ) {
-      return Math.max(0, spikeSeconds(skill, mate, target) - readySeconds);
+    if (firesNow(mate, skill, target)) {
+      return stripFirst(mate, target) === undefined
+        ? Math.max(0, spikeSeconds(skill, mate, target) - readySeconds)
+        : "held";
     }
   }
   return spike;
+}
+
+/**
+ * Whether `mate` could fire `skill` at `target` now, as `canActivate`
+ * reads it: recharged, affordable, not barred by a status, slowed by
+ * none, in range.
+ */
+function firesNow(mate: Participant, skill: Skill, target: Participant): boolean {
+  const combatant = mate.combatant;
+  const spell = isSpell(skill.type);
+  const active = combatant.statuses.active;
+  return (
+    distance(mate.position, target.position) <= skill.range &&
+    (combatant.cast.rechargeRemaining.get(skill.id) ?? 0) <= 0 &&
+    !combatant.cast.spent.has(skill.id) &&
+    !(spell && preventsSpells(active)) &&
+    !(spell && active.some((status) => getStatusDefinition(status.id).castTimeMultiplier > 1)) &&
+    !(skill.type === "attack" && preventsAttacks(active)) &&
+    chainAllows(combatant, skill, target.id) &&
+    combatant.energy >= energyCostOf(skill, combatant, target.combatant) &&
+    (skill.cost?.kind !== "adrenaline" || canAffordAdrenaline(combatant, skill))
+  );
+}
+
+/**
+ * The strip skill `mate` casts at `target` before its spike (#2634): one
+ * it could fire now, while `target` bears an enchantment a `defence`
+ * skill put on it, Protective Spirit's or Aegis's. `undefined` with
+ * nothing to strip, or no strip ready: a recharging one holds nobody up.
+ */
+export function stripFirst(mate: Participant, target: Participant): Skill | undefined {
+  const guarded = target.combatant.statuses.active.some(
+    (status) =>
+      getStatusDefinition(status.id).category === "enchantment" && isDefenceStatus(status.id),
+  );
+  if (!guarded) {
+    return undefined;
+  }
+  for (const id of mate.skillBar) {
+    const skill = id === null ? undefined : getSkill(id);
+    if (skill !== undefined && stripsEnchantment(skill) && firesNow(mate, skill, target)) {
+      return skill;
+    }
+  }
+  return undefined;
 }
 
 /**
