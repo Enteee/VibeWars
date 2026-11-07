@@ -352,6 +352,7 @@ export const en = {
   "hud.altarPointOurs": "Altar point!",
   "hud.altarPointTheirs": "Enemy altar point",
   "hud.armor": "armor {armor}",
+  "hud.callTarget": "Click to call this target for your team",
   "hud.armorWeapon": "armor {armor} · {weapon}",
   "hud.attackRefusalInvalidTargetAlly": "You can only attack an enemy.",
   "hud.attackRefusalInvalidTargetSelf": "You cannot attack yourself.",

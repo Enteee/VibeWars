@@ -423,6 +423,13 @@ export async function startMatchView(
     () => {
       seat?.sendIntent({ kind: "drop-bundle" });
     },
+    // A click on the target frame, as the `call-target` key (#2737).
+    () => {
+      const call = seat === undefined ? undefined : callTargetCall(seat.getSnapshot());
+      if (call !== undefined) {
+        seat?.sendCall(call);
+      }
+    },
   );
   // A toast goes under the target frame (#1465): at the bottom centre it
   // would sit on the skill bar.

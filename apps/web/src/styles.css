@@ -705,6 +705,13 @@ body {
   letter-spacing: 0.04em;
 }
 
+/* A foe a click calls for your team (#2737); otherwise the arena under
+   the frame keeps the pointer, as the rest of the top does. */
+.hud-target.is-callable {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .hud-target-header {
   min-height: 1.1em;
 }
