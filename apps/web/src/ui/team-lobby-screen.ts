@@ -44,7 +44,6 @@ export interface TeamLobbyCallbacks {
 
 export const VOTE_TITLE = "Choose a team build";
 export const CLAIM_TITLE = "Take a character";
-export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
 export const NO_PROPOSALS = "No proposals: a random preset team plays";
 /** A 1v1's vote and claim (#2387): every character of the player, one click plays one. */
@@ -510,12 +509,6 @@ export function teamLobbyBody(
   return side.chosen === null ? [] : claimStage(side, side.chosen, snapshot, callbacks);
 }
 
-/** The humans on the player's side: one alone has nobody to vote with. */
-function humansOnSide(snapshot: LobbySnapshot): number {
-  const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
-  return snapshot.players.filter((p) => !p.bot && p.team !== null && p.team === self?.team).length;
-}
-
 /**
  * The Your Team Builds drawer (#2116): whether it is open, its search,
  * and its one expanded row. The lobby redraws on every snapshot, so this
@@ -742,9 +735,6 @@ function voteStage(
   }
   const shown = buildsDrawer(teams, side.size, proposedTeamId, callbacks.onPropose);
   shown.push(h("h3", "menu-column-title", "Proposals"));
-  if (humansOnSide(snapshot) > 1) {
-    shown.push(h("div", "screen-info team-lobby-hint", VOTE_HINT));
-  }
 
   const cards = h("div", "play-cards team-lobby-proposals");
   if (side.proposals.length === 0) {

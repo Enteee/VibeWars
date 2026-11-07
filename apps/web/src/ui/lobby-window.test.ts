@@ -175,9 +175,9 @@ describe("the Lobby window's party (#1526, #2385)", () => {
     expect(text).toBe(PARTY_CLOSED);
   });
 
-  it("says it is just you, the invite link above to bring friends (#2385)", () => {
+  it("says it is just you (#2385, #2642)", () => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
-    expect(PARTY_ALONE).toBe("Just you. Copy the invite link above to bring friends.");
+    expect(PARTY_ALONE).toBe("Just you.");
     const alone = lobbyWindowBody(partyOf(lobby([player("me")]), null, undefined));
     expect((alone as unknown as FakeElement).find("lobby-window-alone")?.textContent).toBe(
       PARTY_ALONE,

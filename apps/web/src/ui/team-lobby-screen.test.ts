@@ -22,7 +22,6 @@ import {
   NO_TEAM_BUILDS,
   SEATS_LINE,
   SPECTATING_LINE,
-  VOTE_HINT,
   clockText,
   drawerRows,
   drawerShowing,
@@ -438,7 +437,8 @@ describe("the Team Lobby's body (#1460)", () => {
     expect(cards.map((card) => card.has("is-voted"))).toEqual([false, true]);
     expect(press(cards[0])?.attributes.get("aria-label")).toBe("Aria's team build");
     expect(cards[1]?.text()).toContain("Your vote ✓");
-    expect(shown.all("team-lobby-hint").map((hint) => hint.textContent)).toEqual([VOTE_HINT]);
+    // No hint that the cards are clicked (#2642): they look pressable.
+    expect(shown.text()).not.toContain("Click a card");
   });
 
   it("votes for a card on a click, and withdraws on a click on its own vote", () => {
@@ -609,11 +609,6 @@ describe("the Team Lobby's body (#1460)", () => {
     const shown = body(lobby("aria", "vote", voteSide([])));
     expect(shown.all("play-card")).toEqual([]);
     expect(shown.all("team-lobby-empty").map((box) => box.textContent)).toEqual([NO_PROPOSALS]);
-  });
-
-  it("gives a side of one player no vote hint", () => {
-    const shown = body(lobby("eli", "vote", { ...voteSide([proposal("eli", [])]), size: 1 }));
-    expect(shown.all("team-lobby-hint")).toEqual([]);
   });
 
   it("lists a 1v1 every character, team members labelled, the active one pressed (#2387)", () => {
