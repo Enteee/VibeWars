@@ -1,3 +1,4 @@
+import { sanitizeName } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
@@ -267,5 +268,48 @@ describe("the Player section of Options (#1513)", () => {
     expect(gold?.attributes.get("aria-pressed")).toBe("true");
     shown.find((node) => node.textContent === "No cape")?.click();
     expect(loadGuildCape()).toBeNull();
+  });
+});
+
+describe("the player's name on a first visit (#2653)", () => {
+  const key = `${STORAGE_NAMESPACE}.playerName`;
+  let stored: Map<string, string>;
+
+  beforeEach(() => {
+    stored = new Map();
+    vi.stubGlobal("localStorage", {
+      getItem: (at: string) => stored.get(at) ?? null,
+      setItem: (at: string, value: string) => stored.set(at, value),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("generates a name, keeps it, and gives the same one next time", () => {
+    const name = loadPlayerName();
+    expect(name).toMatch(/^[A-Z][a-z]+[A-Z][a-z]+$/);
+    expect(sanitizeName(name, "x")).toBe(name);
+    expect(stored.get(key)).toBe(name);
+    expect(loadPlayerName()).toBe(name);
+  });
+
+  it("never replaces a stored name, not even an emptied one", () => {
+    stored.set(key, "Ann");
+    expect(loadPlayerName()).toBe("Ann");
+    stored.set(key, "");
+    expect(loadPlayerName()).toBe("");
+  });
+
+  it("gives the same name all page long when the browser keeps nothing", () => {
+    vi.stubGlobal("localStorage", {
+      getItem: () => {
+        throw new Error("private mode");
+      },
+    });
+    const name = loadPlayerName();
+    expect(name).not.toBe("");
+    expect(loadPlayerName()).toBe(name);
   });
 });
