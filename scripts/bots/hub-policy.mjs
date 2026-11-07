@@ -226,7 +226,8 @@ const RULES = [
   // The CI/CD engineer files the bug when main goes red (#164): it is the
   // one watching, and the failing run is evidence nobody else has to hand.
   // The release manager keeps the release's tracking issue, and QA adds the
-  // bugs it files to that issue's "Fixes to cherry-pick" (#2707).
+  // bugs it files to that issue's "Fixes to cherry-pick" (#2707); neither
+  // edits any other issue, nor anything but the body (refuseTrackingEdit).
   {
     argv: ["issue", "create"],
     roles: ["manager", "architect", "cicd-engineer", "release-manager"],
@@ -606,6 +607,25 @@ export function refuseReleaseEdit(argv) {
   return tags === 1 ? null : "a release edit names exactly one tag";
 }
 
+/** The roles that edit any issue; the others edit a release's tracking issue only. */
+export const ISSUE_EDITORS = ["manager", "architect"];
+
+/**
+ * Whether an `issue edit` is the one the release cycle needs (#2707): the
+ * release manager keeping its tracking issue, QA adding a fix to it. Only
+ * `issue edit <n> --body <text>`: a project, label or title flag would move
+ * the board or rename a spec. hubd checks that `<n>` is a tracking issue.
+ *
+ * @param {string[]} argv `["issue", "edit", ...]`
+ * @returns {string | null} why not, if not
+ */
+export function refuseTrackingEdit(argv) {
+  const [, , issue = "", flag, body] = argv;
+  return argv.length === 5 && /^[1-9][0-9]*$/.test(issue) && flag === "--body" && body !== undefined
+    ? null
+    : "you edit a release's tracking issue only, and only its body: issue edit <n> --body <text>";
+}
+
 /**
  * Whether a `pr close` would also delete the branch. A branch is a
  * developer's work, and closing a pull request is not a decision to throw
@@ -920,6 +940,12 @@ function authorizeAs(role, request, acting, employee) {
     const release = parseReleaseCreate(argv);
     if ("error" in release) {
       return { allow: false, reason: release.error };
+    }
+  }
+  if (best.argv.join(" ") === "issue edit" && !permits(ISSUE_EDITORS, role)) {
+    const refused = refuseTrackingEdit(argv);
+    if (refused !== null) {
+      return { allow: false, reason: refused };
     }
   }
   if (best.argv.join(" ") === "release edit") {
@@ -1319,9 +1345,10 @@ export function parseReleaseOk(argv) {
   if (releaseVersion(branch) === null) {
     return { error: "release-ok names a release/0.N.0 branch" };
   }
-  if (flag !== "--sha" || !/^[0-9a-f]{7,40}$/.test(sha)) {
+  if (flag !== "--sha" || !/^[0-9a-f]{40}$/.test(sha)) {
     return {
-      error: "release-ok names the head you tested: release-ok <branch> --sha <commit> [note]",
+      error:
+        "release-ok names the head you tested, all 40 hex: release-ok <branch> --sha <commit> [note]",
     };
   }
   return { branch, sha, note: note.join(" ") };

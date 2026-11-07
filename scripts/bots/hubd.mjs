@@ -192,6 +192,7 @@ import {
   withStaffLock,
 } from "./staff.mjs";
 import {
+  ISSUE_EDITORS,
   RESTRICTED_PATHS,
   ROLES,
   SCHEDULERS,
@@ -207,6 +208,7 @@ import {
   parseTracking,
   refuseReleaseRange,
   releaseCiVerdict,
+  releaseFloor,
 } from "./hub-release.mjs";
 import {
   boardNumbers,
@@ -412,22 +414,16 @@ function killGroup(child) {
  * @param {string[]} args
  * @param {string} cwd
  * @param {Record<string, string>} [extraEnv]
- * @param {string} [input] what the command reads on stdin; none if absent
  * @returns {Promise<{ code: number, stdout: string, stderr: string, timedOut?: boolean }>}
  */
-function run(file, args, cwd, extraEnv = {}, input) {
+function run(file, args, cwd, extraEnv = {}) {
   return new Promise((resolve) => {
     const child = spawn(file, args, {
       cwd,
       env: { ...process.env, GH_PROMPT_DISABLED: "1", GIT_TERMINAL_PROMPT: "0", ...extraEnv },
-      stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
+      stdio: ["ignore", "pipe", "pipe"],
       detached: true,
     });
-    if (input !== undefined) {
-      // A command that exits before reading it all is not an error here.
-      child.stdin?.on("error", () => undefined);
-      child.stdin?.end(input);
-    }
     let timedOut = false;
     const deadline = setTimeout(() => {
       timedOut = true;
@@ -750,17 +746,6 @@ function git(args) {
 }
 
 /**
- * `git` with `input` on stdin, for `git patch-id` (#2707).
- *
- * @param {string[]} args
- * @param {string} input
- * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
- */
-function gitInput(args, input) {
-  return run("git", [...GIT_PINS, `--git-dir=${MIRROR}`, ...args], HUB, GIT_ENV, input);
-}
-
-/**
  * `git` for output that need not be text, such as a blob: stdout as bytes,
  * never decoded, so a binary file in a skill is exported intact.
  *
@@ -1071,9 +1056,19 @@ async function evaluateGuards(guards, argv) {
   }
   const pr = String(merge.pr);
 
-  const sha = await headSha(pr);
-  if (sha === null) {
+  const pull = obj(await rest(`pulls/${pr}`, cfg));
+  const sha = obj(pull.head).sha;
+  const base = obj(pull.base).ref;
+  if (typeof sha !== "string" || typeof base !== "string") {
     return { ok: false, reason: `could not read pull request #${pr}` };
+  }
+  // A release branch takes main's commits by cherry-pick only, checked by
+  // pushRelease (#2707); a pull request merged into it would skip that.
+  if (base !== "main") {
+    return {
+      ok: false,
+      reason: `#${pr} targets ${base}: pull requests merge into main only; a release takes main's commits by cherry-pick`,
+    };
   }
 
   for (const guard of guards) {
@@ -1297,7 +1292,7 @@ async function remoteHead(ref, cfg) {
  *
  * @param {string} ref `refs/heads/release/0.N.0`, already fetched into the mirror
  * @param {ReturnType<typeof company>} cfg
- * @returns {Promise<{ refused: string } | { code: number, stdout: string, stderr: string }>}
+ * @returns {Promise<{ refused: string } | { code: number, stdout: string, stderr: string, head: string }>}
  */
 async function pushRelease(ref, cfg) {
   const resolved = await git(["rev-parse", "--verify", "--end-of-options", `${ref}^{commit}`]);
@@ -1319,21 +1314,44 @@ async function pushRelease(ref, cfg) {
   if (old !== null && typeof old === "object") {
     return { refused: old.error };
   }
-  if (old !== null) {
-    const fetched = await git(["fetch", "-q", "--no-tags", remoteUrl(cfg), old]);
+  /** @type {string | null} */
+  let previous = null;
+  if (old === null) {
+    const listed = await git(["ls-remote", remoteUrl(cfg), "refs/heads/release/*", "refs/tags/v*"]);
+    if (listed.code !== 0) {
+      return { refused: "could not list the earlier releases on GitHub; try again" };
+    }
+    const floor = releaseFloor(
+      Number(/^refs\/heads\/release\/0\.([0-9]+)\.0$/.exec(ref)?.[1]),
+      listed.stdout,
+    );
+    if ("refused" in floor) {
+      return floor;
+    }
+    previous = floor.previous;
+  }
+  const other = old ?? previous;
+  if (other !== null) {
+    const fetched = await git(["fetch", "-q", "--no-tags", remoteUrl(cfg), other]);
     if (fetched.code !== 0) {
-      return { refused: "could not fetch the branch's head on GitHub; try again" };
+      return { refused: "could not fetch a release's head on GitHub; try again" };
     }
   }
   const refused = await refuseReleaseRange(
-    { git, gitInput },
-    { head, old, main: "refs/heads/main" },
+    { git },
+    { head, old, main: "refs/heads/main", previous },
   );
   if (refused !== null) {
     return { refused };
   }
   // An empty lease: the branch must not exist yet.
-  return git(["push", `--force-with-lease=${ref}:${old ?? ""}`, remoteUrl(cfg), `${head}:${ref}`]);
+  const pushed = await git([
+    "push",
+    `--force-with-lease=${ref}:${old ?? ""}`,
+    remoteUrl(cfg),
+    `${head}:${ref}`,
+  ]);
+  return { ...pushed, head };
 }
 
 /**
@@ -1378,7 +1396,7 @@ async function recordReleaseOk(argv, by, cfg) {
   if (typeof head === "object") {
     return { refused: head.error };
   }
-  if (!head.startsWith(parsed.sha)) {
+  if (head !== parsed.sha) {
     return {
       refused: `the head of ${parsed.branch} is ${head.slice(0, 8)}, not ${parsed.sha}; test that one`,
     };
@@ -1438,13 +1456,42 @@ async function pinRelease(argv, cfg) {
 /** The company's GitHub account, which alone writes a tracking issue (#2707). */
 let selfLogin = "";
 
+/**
+ * Why a role outside ISSUE_EDITORS must not edit issue `number` (#2707), or
+ * null: it edits an open release's tracking issue only. Fails closed.
+ *
+ * @param {string} number digits, checked by hub-policy
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>}
+ */
+async function refuseTrackingIssue(number, cfg) {
+  const issue = obj(await rest(`issues/${number}`, cfg));
+  const tracking =
+    issue.state === "open" &&
+    issue.pull_request === undefined &&
+    parseTracking(
+      {
+        number: Number(number),
+        title: String(issue.title),
+        author: String(obj(issue.user).login),
+        body: "",
+      },
+      selfLogin,
+    ) !== null;
+  return tracking
+    ? null
+    : `#${number} is not an open release's tracking issue, the only one you edit`;
+}
+
 /** How often CI on an awaited release head is re-read. */
-const RELEASE_POLL_MS = 60_000;
+const RELEASE_POLL_MS = Number(process.env.HUBD_RELEASE_POLL_MS ?? 60_000);
+/** A release head with no CI verdict this long after its push is given up on. */
+const RELEASE_CI_MS = 3 * 60 * 60_000;
 let nextReleasePoll = 0;
 let releasePolling = false;
 
 /**
- * @returns {{ nudged: string[], ci: { branch: string, sha: string }[] }}
+ * @returns {{ nudged: string[], ci: { branch: string, sha: string, since: number }[] }}
  */
 function readReleaseState() {
   try {
@@ -1452,7 +1499,14 @@ function readReleaseState() {
     return {
       nudged: Array.isArray(state.nudged) ? state.nudged.map(String) : [],
       ci: Array.isArray(state.ci)
-        ? state.ci.map(obj).map((row) => ({ branch: String(row.branch), sha: String(row.sha) }))
+        ? state.ci
+            .map(obj)
+            .map((row) => ({
+              branch: String(row.branch),
+              sha: String(row.sha),
+              since: Number(row.since),
+            }))
+            .filter((row) => /^[0-9a-f]{40}$/.test(row.sha) && Number.isFinite(row.since))
         : [],
     };
   } catch {
@@ -1572,18 +1626,25 @@ async function readTracking(cfg) {
  * @param {ReturnType<typeof company>} cfg
  */
 async function pollRelease(cfg) {
-  const state = readReleaseState();
-  /** @type {{ branch: string, sha: string }[]} */
-  const waiting = [];
-  for (const head of state.ci) {
+  /** @type {string[]} */
+  const ended = [];
+  for (const head of readReleaseState().ci) {
+    if (Date.now() - head.since > RELEASE_CI_MS) {
+      nudgeRelease(
+        `ci:${head.sha}`,
+        `CI on ${head.branch} at ${head.sha.slice(0, 8)}: no result 3 h after the push; look at its runs on GitHub.`,
+      );
+      ended.push(head.sha);
+      continue;
+    }
     const runs = runsFromRest(
       await rest(`actions/runs?head_sha=${head.sha}&event=push&per_page=100`, cfg),
     );
     const verdict = "error" in runs ? null : releaseCiVerdict(runs.runs);
     if (verdict === null) {
-      waiting.push(head);
       continue;
     }
+    ended.push(head.sha);
     nudgeRelease(
       `ci:${head.sha}`,
       verdict.pass
@@ -1591,7 +1652,13 @@ async function pollRelease(cfg) {
         : `CI on ${head.branch} at ${head.sha.slice(0, 8)}: FAIL (${verdict.failed.join(", ")}).`,
     );
   }
-  writeAtomic(RELEASE_STATE, JSON.stringify({ ...readReleaseState(), ci: waiting }));
+  // Re-read, not the list the loop began with: a push recorded during the
+  // awaits above is kept.
+  const state = readReleaseState();
+  writeAtomic(
+    RELEASE_STATE,
+    JSON.stringify({ ...state, ci: state.ci.filter((head) => !ended.includes(head.sha)) }),
+  );
 }
 
 function maybePollRelease() {
@@ -3830,14 +3897,16 @@ async function serve(request, verdict, acting) {
       }
       audit({ role, kind, argv, decision: "allowed", code: pushed.code, release: true });
       if (pushed.code === 0) {
-        const head = await git(["rev-parse", "--verify", "--end-of-options", `${ref}^{commit}`]);
         const state = readReleaseState();
         writeAtomic(
           RELEASE_STATE,
-          JSON.stringify({ ...state, ci: [...state.ci, { branch, sha: head.stdout.trim() }] }),
+          JSON.stringify({
+            ...state,
+            ci: [...state.ci, { branch, sha: pushed.head, since: Date.now() }],
+          }),
         );
       }
-      return { allow: true, ...pushed };
+      return { allow: true, code: pushed.code, stdout: pushed.stdout, stderr: pushed.stderr };
     }
     for (const guard of verdict.guards ?? []) {
       const refused = await refusePush(guard, ref, cfg);
@@ -3914,6 +3983,18 @@ async function serve(request, verdict, acting) {
 
   // `--column` is hub's, not gh's: judged here, and gone before gh runs.
   let ghArgv = argv;
+  if (
+    kind === "gh" &&
+    argv[0] === "issue" &&
+    argv[1] === "edit" &&
+    ![role, ...acting].some((seat) => ISSUE_EDITORS.includes(seat))
+  ) {
+    const refused = await refuseTrackingIssue(argv[2] ?? "", cfg);
+    if (refused !== null) {
+      audit({ role, kind, argv, decision: "refused-by-guard", reason: refused });
+      return { allow: false, reason: refused, code: 77 };
+    }
+  }
   if (kind === "gh" && argv[0] === "release" && argv[1] === "create") {
     const pinned = await pinRelease(argv, cfg);
     if ("refused" in pinned) {

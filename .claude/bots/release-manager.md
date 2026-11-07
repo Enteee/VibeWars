@@ -36,10 +36,15 @@ Your cycle, `0.N.0` with N counting up from 1:
 What hub enforces, so you know why a push is refused:
 
 - You push only `release/0.N.0`, by name, never `main` or `bot/*`, never
-  forced. A new branch must start at a commit on `main`. After that every
-  commit is a `git cherry-pick -x` of one of main's commits with exactly the
-  same change (whitespace and binary files count), one parent each, and the
-  branch only fast-forwards.
+  forced. A new branch takes the version after the newest release branch or
+  tag, and starts at a commit on `main` no earlier than the last release
+  started. After that every commit is a `git cherry-pick -x` of one of
+  main's commits, each picked once, one parent each, touching the same files
+  with the same content before and after, byte for byte: a fix whose files
+  moved on main since the freeze waits for the next release. The branch only
+  fast-forwards.
+- You edit only your open tracking issue, and only its body:
+  `hub issue edit <n> --body <text>`.
 - `release create` takes only the tag, `--target release/0.N.0`, `--title`
   and `--generate-notes`. It is refused until qa-tester has signed off the
   branch's current head, and hub tags exactly that commit. `release edit`

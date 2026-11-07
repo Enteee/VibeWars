@@ -69,6 +69,18 @@ if (group === "api" && sub !== "graphql") {
   const target = argv.find((word) => word.startsWith(REPO)) ?? "";
   const rel = target.slice(REPO.length);
   if (rel.startsWith("collaborators")) { console.log("enteee"); process.exit(0); }
+  // CI on a release head (#2707): what the test planted, or no run yet. Held
+  // while release-hold exists, so a test can push in the middle of a poll.
+  const releaseRuns = /^actions\\/runs\\?head_sha=([0-9a-f]+)&event=push/.exec(rel);
+  if (releaseRuns !== null) {
+    fs.writeFileSync(path.join(state, "release-polled-" + releaseRuns[1]), "");
+    while (fs.existsSync(path.join(state, "release-hold"))) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50); }
+    const planted = path.join(state, "release-runs-" + releaseRuns[1] + ".json");
+    console.log(fs.existsSync(planted) ? fs.readFileSync(planted, "utf8") : JSON.stringify({ total_count: 0, workflow_runs: [] }));
+    process.exit(0);
+  }
+  // An issue a test planted, by number (#2707).
+  if (/^issues\\/\\d+$/.test(rel) && fs.existsSync(path.join(state, rel.replace("/", "-") + ".json"))) { process.stdout.write(fs.readFileSync(path.join(state, rel.replace("/", "-") + ".json"), "utf8")); process.exit(0); }
   if (rel === "issues/7") { console.log(JSON.stringify(issue7)); process.exit(0); }
   if (rel.startsWith("issues/7/comments") || rel.startsWith("issues/9/comments")) { console.log(JSON.stringify(restComments)); process.exit(0); }
   if (rel.startsWith("pulls/9/reviews")) { console.log(JSON.stringify([{ user: { login: "drive-by" }, author_association: "NONE", body: "stranger review", state: "COMMENTED", submitted_at: "2026-10-24T12:30:00Z", html_url: "r" }])); process.exit(0); }
@@ -332,6 +344,8 @@ async function startHubd(remaining, before, extra) {
     HUBD_NEW_ISSUES_WINDOW_MS: "4000",
     // Short, so a watch answers within the test (#736).
     HUBD_WATCH_POLL_MS: "300",
+    // Short, so CI on a release head is told within the test (#2707).
+    HUBD_RELEASE_POLL_MS: "300",
     ...extra?.({ root, remote: path.join(dir, "remote.git") }),
   };
   const child = spawn(process.execPath, [HUBD], { env, stdio: ["ignore", "ignore", "pipe"] });
@@ -2120,6 +2134,25 @@ describe("hubd recording verdicts and merging", () => {
     expect(hubd.calls(`pr merge 9 --squash --match-head-commit ${sha}`)).toBe(1);
   }, 20_000);
 
+  it("refuses a pull request into a release branch, which would skip the pick check (#2707)", async () => {
+    const hubd = await startHubd(5000);
+    const sha = greenPull(hubd, "bot/developer/x", ["src/a.ts"]);
+    const pull = readJson(path.join(hubd.state, "pull-9.json"));
+    fs.writeFileSync(
+      path.join(hubd.state, "pull-9.json"),
+      JSON.stringify({
+        ...pull,
+        base: { ref: "release/0.3.0", repo: { full_name: "Enteee/VibeWars" } },
+      }),
+    );
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toContain("#9 targets release/0.3.0");
+    expect(hubd.calls(`pr merge 9 --squash --match-head-commit ${sha}`)).toBe(0);
+  }, 20_000);
+
   it("merges a workflow change only from a cicd-engineer branch of this repository (#1897)", async () => {
     const owned = await startHubd(5000);
     const sha = greenPull(owned, "bot/cicd-engineer@2/ci", [".github/workflows/ci.yml"]);
@@ -3378,6 +3411,62 @@ describe("release branches (#2707)", () => {
     expect(String(behind.reason)).toContain("only fast-forward");
   }, 30_000);
 
+  it("starts a new branch at the next version, no earlier than the last release did", async () => {
+    const hubd = await startHubd(5000);
+    const { repo } = hubd;
+    seed(hubd);
+    const old = sh(["rev-parse", "HEAD"], repo).trim();
+    fixOnMain(hubd, "b\n");
+    sh(["checkout", "-q", "-b", "release/0.1.0"], repo);
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+
+    sh(["checkout", "-q", "-b", "release/0.3.0", "main"], repo);
+    const skipped = await hubd.request("release-manager", "push", ["release/0.3.0"]);
+    expect(skipped.code).toBe(77);
+    expect(String(skipped.reason)).toContain("the next release is 0.2.0");
+
+    // From before the last release's start, say before a security fix.
+    sh(["checkout", "-q", "-b", "release/0.2.0", old], repo);
+    const early = await hubd.request("release-manager", "push", ["release/0.2.0"]);
+    expect(early.code).toBe(77);
+    expect(String(early.reason)).toContain("no earlier than the last release");
+  }, 30_000);
+
+  it("keeps a release head pushed while CI on another is being read", async () => {
+    const hubd = await startHubd(5000);
+    const { repo } = hubd;
+    seed(hubd);
+    fs.writeFileSync(path.join(hubd.state, "release-hold"), "");
+    sh(["checkout", "-q", "-b", "release/0.1.0"], repo);
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+    const first = remoteHead(hubd);
+    await until(
+      () => fs.existsSync(path.join(hubd.state, `release-polled-${first}`)),
+      "the poll reading CI on the first head",
+    );
+
+    const fix = fixOnMain(hubd, "b\n");
+    sh(["checkout", "-q", "release/0.1.0"], repo);
+    sh(["-c", "user.name=t", "-c", "user.email=t@t", "cherry-pick", "-x", fix], repo);
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+    const second = remoteHead(hubd);
+    fs.writeFileSync(
+      path.join(hubd.state, `release-runs-${first}.json`),
+      JSON.stringify({
+        total_count: 1,
+        workflow_runs: [{ name: "ci", status: "completed", conclusion: "success" }],
+      }),
+    );
+    fs.rmSync(path.join(hubd.state, "release-hold"));
+
+    await until(
+      () => releaseNudges(hubd).some((message) => String(message.text).includes("PASS")),
+      "the first head's verdict",
+    );
+    const state = readJson(path.join(hubd.hub, "release.json"));
+    expect(/** @type {{ sha: string }[]} */ (state.ci).map((head) => head.sha)).toEqual([second]);
+  }, 30_000);
+
   it("refuses a new branch that does not start on main", async () => {
     const hubd = await startHubd(5000);
     const { repo } = hubd;
@@ -3413,7 +3502,7 @@ describe("release branches (#2707)", () => {
     const ok = await hubd.request("qa-tester", "release-ok", [
       "release/0.1.0",
       "--sha",
-      head.slice(0, 8),
+      head,
       "played it",
     ]);
     expect(ok.code, String(ok.reason)).toBe(0);
@@ -3505,6 +3594,40 @@ describe("release branches (#2707)", () => {
       await until(() => hubd.calls("api search/issues") > 0, "the tracking issue to be read");
       await sleep(300);
       expect(releaseNudges(hubd), author).toEqual([]);
+    }
+  }, 30_000);
+
+  it("lets qa-tester edit an open tracking issue the company wrote, and no other issue", async () => {
+    const hubd = await startHubd(5000);
+    // #8 and #10 are on the board, #7 is the project's own: all visible.
+    const plant = (/** @type {number} */ number, /** @type {Record<string, unknown>} */ issue) => {
+      fs.writeFileSync(
+        path.join(hubd.state, `issues-${String(number)}.json`),
+        JSON.stringify({
+          number,
+          html_url: `https://github.com/Enteee/VibeWars/issues/${String(number)}`,
+          title: "Release 0.1.0",
+          state: "open",
+          user: { login: "vibewars-company" },
+          ...issue,
+        }),
+      );
+    };
+    plant(8, {});
+    plant(10, { user: { login: "stranger" } });
+    await hubd.request("developer", "gh", BOARD_READ);
+    const edit = (/** @type {number} */ number) =>
+      hubd.request("qa-tester", "gh", ["issue", "edit", String(number), "--body", "- [ ] #8"]);
+
+    const ok = await edit(8);
+    expect(ok.code, String(ok.reason)).toBe(0);
+    plant(8, { state: "closed" });
+    for (const number of [7, 8, 10]) {
+      const refused = await edit(number);
+      expect(refused.allow, String(number)).toBe(false);
+      expect(String(refused.reason)).toBe(
+        `#${String(number)} is not an open release's tracking issue, the only one you edit`,
+      );
     }
   }, 30_000);
 

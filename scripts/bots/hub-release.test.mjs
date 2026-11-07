@@ -12,10 +12,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   MAX_TRACKING_BODY,
   closedIssues,
-  exactPatchId,
+  exactChange,
   parseTracking,
   refuseReleaseRange,
   releaseCiVerdict,
+  releaseFloor,
 } from "./hub-release.mjs";
 
 const ENV = {
@@ -31,12 +32,9 @@ const ENV = {
 /** @type {string} */
 let dir;
 
-/**
- * @param {string[]} args
- * @param {string} [input]
- */
-function run(args, input) {
-  const ran = spawnSync("git", args, { cwd: dir, env: ENV, encoding: "utf8", input });
+/** @param {string[]} args */
+function run(args) {
+  const ran = spawnSync("git", args, { cwd: dir, env: ENV, encoding: "utf8" });
   return { code: ran.status ?? 1, stdout: ran.stdout, stderr: ran.stderr };
 }
 
@@ -52,11 +50,6 @@ function sh(args) {
 const repo = {
   /** @param {string[]} args */
   git: (args) => Promise.resolve(run(args)),
-  /**
-   * @param {string[]} args
-   * @param {string} input
-   */
-  gitInput: (args, input) => Promise.resolve(run(args, input)),
 };
 
 /**
@@ -107,15 +100,18 @@ beforeEach(() => {
 });
 
 /** @param {string} head */
-const check = (head) => refuseReleaseRange(repo, { head, old: frozen, main: "main" });
+const check = (head) =>
+  refuseReleaseRange(repo, { head, old: frozen, main: "main", previous: null });
 
 describe("a release branch", () => {
   it("starts at a commit on main, and nowhere else", async () => {
-    expect(await refuseReleaseRange(repo, { head: frozen, old: null, main: "main" })).toBeNull();
+    expect(
+      await refuseReleaseRange(repo, { head: frozen, old: null, main: "main", previous: null }),
+    ).toBeNull();
     const stray = onRelease("x.txt", "x\n", "not on main");
-    expect(await refuseReleaseRange(repo, { head: stray, old: null, main: "main" })).toContain(
-      "starts at a commit on main",
-    );
+    expect(
+      await refuseReleaseRange(repo, { head: stray, old: null, main: "main", previous: null }),
+    ).toContain("starts at a commit on main");
   });
 
   it("takes a cherry-pick of main's commit onto an older base", async () => {
@@ -160,6 +156,52 @@ describe("a release branch", () => {
     expect(await check(head)).toContain("differs");
   });
 
+  it("refuses a pick whose hunk lands elsewhere in the file than main's", async () => {
+    // Two identical stretches: deleting the guard from either gives one patch-id.
+    const stretch = "a\nb\nguard\nc\nd\n";
+    sh(["checkout", "-q", "release"]);
+    const base = commit("g.txt", `${stretch}x\n${stretch}`, "two stretches");
+    sh(["checkout", "-q", "main"]);
+    sh(["cherry-pick", base]);
+    const fix = commit("g.txt", `${stretch}x\na\nb\nc\nd\n`, "drop the second guard");
+    const head = onRelease(
+      "g.txt",
+      `a\nb\nc\nd\nx\n${stretch}`,
+      `drop the first guard\n\n(cherry picked from commit ${fix})`,
+    );
+    const refused = await refuseReleaseRange(repo, {
+      head,
+      old: base,
+      main: "main",
+      previous: null,
+    });
+    expect(refused).toContain("differs");
+  });
+
+  it("refuses a pick of a commit the branch has already", async () => {
+    const fix = commit("a.yml", "a:\n  b: 2\n", "fix");
+    const back = commit("a.yml", "a:\n  b: 1\n", "back");
+    const first = pick(fix);
+    pick(back);
+    sh(["checkout", "-q", "release"]);
+    sh(["cherry-pick", "-x", "--allow-empty", fix]);
+    const again = sh(["rev-parse", "HEAD"]);
+    sh(["checkout", "-q", "main"]);
+    expect(await check(again)).toContain("has " + fix.slice(0, 8) + " already");
+    // Picked in an earlier push, too.
+    expect(
+      await refuseReleaseRange(repo, { head: again, old: first, main: "main", previous: null }),
+    ).toContain("already");
+    // Main's commits the branch started from count as had.
+    const picked = await refuseReleaseRange(repo, {
+      head: onRelease("a.yml", "a:\n  b: 9\n", `x\n\n(cherry picked from commit ${frozen})`),
+      old: frozen,
+      main: "main",
+      previous: null,
+    });
+    expect(picked).toContain("already");
+  });
+
   it("refuses an empty commit", async () => {
     const fix = commit("a.yml", "a:\n  b: 2\n", "fix");
     sh(["checkout", "-q", "release"]);
@@ -185,19 +227,61 @@ describe("a release branch", () => {
     const fix = commit("a.yml", "a:\n  b: 2\n", "fix");
     const head = pick(fix);
     const moved = onRelease("c.txt", "two\n", "moved");
-    expect(await refuseReleaseRange(repo, { head, old: moved, main: "main" })).toContain(
-      "only fast-forward",
-    );
+    expect(
+      await refuseReleaseRange(repo, { head, old: moved, main: "main", previous: null }),
+    ).toContain("only fast-forward");
   });
 });
 
-describe("exactPatchId", () => {
-  it("is the same for a pick and its source, and empty for no change", async () => {
+describe("exactChange", () => {
+  it("is the same for a pick and its source", async () => {
     const fix = commit("a.yml", "a:\n  b: 2\n", "fix");
     const picked = pick(fix);
-    const id = await exactPatchId(repo, fix);
-    expect(id).toMatch(/^[0-9a-f]{40}$/);
-    expect(await exactPatchId(repo, picked)).toBe(id);
+    const change = await exactChange(repo, fix);
+    expect(change).toContain("a.yml");
+    expect(await exactChange(repo, picked)).toBe(change);
+  });
+});
+
+describe("a new release branch's floor", () => {
+  const listed = [
+    "1111111111111111111111111111111111111111\trefs/heads/release/0.1.0",
+    "2222222222222222222222222222222222222222\trefs/heads/release/0.2.0",
+    "3333333333333333333333333333333333333333\trefs/tags/v0.2.0",
+    "4444444444444444444444444444444444444444\trefs/tags/v0.2.0^{}",
+    "5555555555555555555555555555555555555555\trefs/tags/v0.20.0-rc",
+  ].join("\n");
+
+  it("is the next version, after the newest release branch or tag, starting from that one", () => {
+    expect(releaseFloor(3, listed)).toStrictEqual({
+      previous: "3333333333333333333333333333333333333333",
+    });
+    expect(releaseFloor(1, "")).toStrictEqual({ previous: null });
+  });
+
+  it("refuses a skipped, reused or far-off version", () => {
+    for (const minor of [1, 2, 4, 999]) {
+      expect(releaseFloor(minor, listed), String(minor)).toStrictEqual({
+        refused: "the next release is 0.3.0, after the newest release branch or tag",
+      });
+    }
+  });
+
+  it("starts no earlier than the last release did", async () => {
+    const now = sh(["rev-parse", "main"]);
+    // The last release started at `frozen`; its head is the release branch.
+    const previous = sh(["rev-parse", "release"]);
+    expect(
+      await refuseReleaseRange(repo, { head: now, old: null, main: "main", previous }),
+    ).toBeNull();
+    expect(
+      await refuseReleaseRange(repo, {
+        head: sh(["rev-parse", "main~2"]),
+        old: null,
+        main: "main",
+        previous,
+      }),
+    ).toContain("no earlier than the last release");
   });
 });
 

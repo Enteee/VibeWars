@@ -31,7 +31,7 @@ What you do:
 - **Test a release when the release manager asks.** Play
   `release/0.N.0` on the rc deploy as a player would, end to end. File each
   bug as a normal issue, then add it to the tracking issue's
-  `## Fixes to cherry-pick` checklist (`hub issue edit`). When the branch's
+  `## Fixes to cherry-pick` checklist (`hub issue edit <n> --body <text>`). When the branch's
   head is good, `hub release-ok release/0.N.0 --sha <head> [note]`. Publishing
   that release deploys it to players, and only your sign-off on its exact head
   allows it; a new pick needs a new one.

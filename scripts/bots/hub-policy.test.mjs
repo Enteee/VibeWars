@@ -21,6 +21,7 @@ import {
 
 /** A reviewed commit, as `--sha` names it. */
 const SHA = "b02a5cc7";
+const FULL = "b02a5cc7".repeat(5);
 
 /**
  * @param {string} role
@@ -983,9 +984,29 @@ describe("releases (#2707)", () => {
     }
   });
 
+  it("let release-manager and qa-tester edit only an issue body, the tracking issue hubd checks", () => {
+    for (const role of ["release-manager", "qa-tester"]) {
+      expect(gh(role, ["issue", "edit", "41", "--body", "## Fixes"]), role).toMatchObject({
+        allow: true,
+      });
+      for (const argv of [
+        ["issue", "edit", "41", "--add-project", "VibeWars"],
+        ["issue", "edit", "41", "--title", "Release 0.2.0"],
+        ["issue", "edit", "41", "--body", "x", "--add-label", "bug"],
+        ["issue", "edit", "41", "42", "--body", "x"],
+        ["issue", "edit", "41", "--body=x"],
+      ]) {
+        expect(gh(role, argv), argv.join(" ")).toMatchObject({ allow: false });
+      }
+    }
+    expect(gh("manager", ["issue", "edit", "41", "--add-label", "bug"])).toMatchObject({
+      allow: true,
+    });
+  });
+
   it("are signed off by qa-tester alone, and no hat lends it", () => {
     const ok = (/** @type {string} */ role, /** @type {string[]} */ acting = []) =>
-      authorize(role, { kind: "release-ok", argv: ["release/0.1.0", "--sha", SHA] }, { acting });
+      authorize(role, { kind: "release-ok", argv: ["release/0.1.0", "--sha", FULL] }, { acting });
     expect(ok("qa-tester")).toMatchObject({ allow: true });
     for (const role of ["release-manager", "lead-dev", "manager", "developer"]) {
       expect(ok(role), role).toMatchObject({ allow: false });
@@ -996,7 +1017,11 @@ describe("releases (#2707)", () => {
       authorize("qa-tester", { kind: "release-ok", argv: ["release/0.1.0", SHA] }),
     ).toMatchObject({ allow: false });
     expect(
-      authorize("qa-tester", { kind: "release-ok", argv: ["main", "--sha", SHA] }),
+      authorize("qa-tester", { kind: "release-ok", argv: ["main", "--sha", FULL] }),
+    ).toMatchObject({ allow: false });
+    // A prefix could name a commit nobody tested once another shares it.
+    expect(
+      authorize("qa-tester", { kind: "release-ok", argv: ["release/0.1.0", "--sha", SHA] }),
     ).toMatchObject({ allow: false });
   });
 
