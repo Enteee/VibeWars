@@ -28,6 +28,8 @@ export const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 export const DT = 1 / RULESET.tickRateHz;
 /** A field with edges, as every map has. */
 export const BOUNDS = { width: 1600, height: 800 };
+/** The match seed `contextFor` gives a bot's rolls (#2624). */
+export const CONTEXT_SEED = 0;
 /** A bot that holds each decision a steady 0.25 s, so the rules' tests time alike. */
 export const BOT: Behaviour = {
   kind: "play-build",
@@ -135,6 +137,7 @@ export function contextFor(
     foeCentroid: centroidOf(participants, (other) => other.combatant.team !== team),
     objectives: NO_OBJECTIVES,
     projectiles: sim.projectiles,
+    seed: CONTEXT_SEED,
     ...extra,
   };
 }
