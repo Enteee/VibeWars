@@ -3,6 +3,7 @@
   "name": "Guild Hall Isle",
   "mode": "guild-battle",
   "teamSizes": [8],
+  "teams": 2,
   "width": 3000,
   "height": 2000,
   "walls": [

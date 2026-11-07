@@ -4,7 +4,10 @@ Every arena plays one mode, as GW1's Random Arenas do (#476). Which mode
 a match plays follows from its map alone, in a coded lobby and in a
 Random Arena alike: nobody picks one. The lobby shows it under the map
 name. A map names its mode in its `map.json` (`"mode"`), and a map
-without one, or with one the game does not know, is refused.
+without one, or with one the game does not know, is refused. It also
+names how many teams its matches have (`"teams"`, 2 or 3, #2682): every
+spawn belongs to one of them, and Kill Count and Guild Battle maps have
+two. Every map today has two; Heroes' Ascent brings the three-team ones.
 
 **Annihilation** (GW1's arenas, #846): defeat every foe. The dead stay
 corpses until resurrected, and each death costs morale. Wipe the other

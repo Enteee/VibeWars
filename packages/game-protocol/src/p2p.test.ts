@@ -50,9 +50,9 @@ import {
   parseChainMarks,
   parseRecharge,
   parseWireCombatBatch,
-  parseWireEnded,
+  parseWireEnded as parseWireEndedOf,
   parseWireSkillBar,
-  parseWireSnapshotPart,
+  parseWireSnapshotPart as parseWireSnapshotPartOf,
   parseWireWeaponSets,
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
@@ -99,6 +99,10 @@ import { MAX_LOBBY_PLAYERS, MAX_TEAM_LOBBY_SIDE, PROTOCOL_MISMATCH_MESSAGE } fro
 import type { CastRefusedMessage, RechargeMessage } from "./protocol.js";
 import { PROTOCOL_VERSION } from "./protocol-version.js";
 
+/** Every match here has two teams but the three-team cases' (#2682). */
+const parseWireSnapshotPart = (value: unknown) => parseWireSnapshotPartOf(value, 2);
+const parseWireEnded = (value: unknown) => parseWireEndedOf(value, 2);
+
 /** A guild cape (#1422), as the designer makes one. */
 const CAPE = { main: "violet", trim: "white", emblem: "diamond" } as const;
 
@@ -142,6 +146,7 @@ const welcome: PeerWelcome = {
     id: "isle",
     name: "Isle of the Nameless",
     width: 1600,
+    teamCount: 2,
     height: 1200,
     walls: [
       { kind: "rect", x: 10, y: 20, width: 30, height: 40 },
@@ -2462,6 +2467,33 @@ describe("the P2P validators (#82)", () => {
     for (const guildCape of [undefined, "violet", { ...CAPE, trim: "red" }, { ...CAPE, x: 1 }]) {
       expect(parsePeerHello({ ...hello, guildCape })?.guildCape).toBeNull();
       expect(parsePeerLobbyJoin({ ...lobbyJoin, guildCape })?.guildCape).toBeNull();
+    }
+  });
+
+  it("take team 2 in a three-team match, and in a two-team one refuse it (#2682)", () => {
+    const three: WireSnapshotPart = {
+      ...relicked,
+      score: [1, 0, 2],
+      winningTeam: 2,
+      altarHolder: 2,
+      players: [{ ...player, team: 2 }],
+      relics: [...relicked.relics, { team: 2, place: "spawn", carrierId: null, x: null, y: null }],
+      capturePoints: [{ x: 10, y: 20, owner: 2, capturer: 1, progress: 0.5 }],
+    };
+    expect(parseWireSnapshotPartOf(three, 3)).toEqual(three);
+    expect(parseWireSnapshotPartOf(three, 2)).toBeUndefined();
+    expect(parseWireSnapshotPartOf({ ...three, score: [1, 0] }, 3)).toBeUndefined();
+    expect(parseWireSnapshotPartOf({ ...snapshot, players: [{ ...player, team: 3 }] }, 3)).toBe(
+      undefined,
+    );
+    const won: WireEnded = { ...ended, winningTeam: 2, summary: [{ ...summaryRow, team: 2 }] };
+    expect(parseWireEndedOf(won, 3)).toEqual(won);
+    expect(parseWireEndedOf(won, 2)).toBeUndefined();
+    expect(parseWireEndedOf({ ...won, winningTeam: 1 }, 2)).toBeUndefined();
+    for (const teamCount of [3, 1, 4, undefined]) {
+      expect(
+        parsePeerWelcome({ ...welcome, map: { ...welcome.map, teamCount } })?.map.teamCount,
+      ).toBe(teamCount === 3 ? 3 : undefined);
     }
   });
 

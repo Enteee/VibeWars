@@ -13,6 +13,7 @@ import {
   type PeerObserving,
   type WireEnded,
   type WireSnapshot,
+  type WireTeamCount,
 } from "@vibewars/game-protocol";
 
 import type { CombatMessage, ObservedSnapshot, PlayerSnapshot } from "./match-connection.js";
@@ -66,6 +67,11 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
   let lost = false;
   /** Set once `connectObserver` has resolved or rejected. */
   let settled = false;
+  /**
+   * The teams every team on the stream is one of (#2682), `observing`'s
+   * map's. Before it only a host leaving counts, so the most are heard.
+   */
+  let teamCount: WireTeamCount = 3;
   /** Says the observe again until the host answers it (#1805). */
   let observeTimer: unknown;
   let onLostWhileJoining: () => void = () => undefined;
@@ -98,21 +104,25 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
   const assemble = snapshotAssembler();
   // Nothing of the stream counts before `observing`: what comes earlier is
   // a match this peer watched before, its host still draining it (#480).
-  fromHost("snapshot", parseWireSnapshotPart, (part) => {
-    if (!settled) {
-      return;
-    }
-    const snapshot = assemble(part);
-    // Only ever forward: one late or replayed is dropped.
-    if (snapshot === undefined || (latest !== undefined && snapshot.tick <= latest.wire.tick)) {
-      return;
-    }
-    // One naming a status this build has no index for is malformed (#632).
-    const players = playerSnapshots(snapshot);
-    if (players !== undefined) {
-      latest = { wire: snapshot, players };
-    }
-  });
+  fromHost(
+    "snapshot",
+    (value) => parseWireSnapshotPart(value, teamCount),
+    (part) => {
+      if (!settled) {
+        return;
+      }
+      const snapshot = assemble(part);
+      // Only ever forward: one late or replayed is dropped.
+      if (snapshot === undefined || (latest !== undefined && snapshot.tick <= latest.wire.tick)) {
+        return;
+      }
+      // One naming a status this build has no index for is malformed (#632).
+      const players = playerSnapshots(snapshot);
+      if (players !== undefined) {
+        latest = { wire: snapshot, players };
+      }
+    },
+  );
   fromHost("combat", parseWireCombatBatch, (batch) => {
     if (!settled) {
       return;
@@ -124,13 +134,17 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
       }
     }
   });
-  fromHost("ended", parseWireEnded, (message) => {
-    if (message.endReason === "host-left") {
-      loseHost();
-    } else if (settled) {
-      ended = message;
-    }
-  });
+  fromHost(
+    "ended",
+    (value) => parseWireEnded(value, teamCount),
+    (message) => {
+      if (message.endReason === "host-left") {
+        loseHost();
+      } else if (settled) {
+        ended = message;
+      }
+    },
+  );
   unsubscribe.push(
     transport.onPeerLeave((peerId) => {
       if (peerId === hostId) {
@@ -216,6 +230,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
         );
         return;
       }
+      teamCount = message.map.teamCount;
       settled = true;
       clearTimeout(timer);
       clearInterval(observeTimer);

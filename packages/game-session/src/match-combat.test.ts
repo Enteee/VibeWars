@@ -716,7 +716,7 @@ describe("networked combat (P2P)", () => {
     let tick = -1;
     const sent: { tick: number; message: unknown }[] = [];
     spy.on("snapshot", (data) => {
-      tick = parseWireSnapshotPart(data)?.tick ?? tick;
+      tick = parseWireSnapshotPart(data, 2)?.tick ?? tick;
     });
     spy.on("combat", (data) => {
       sent.push({ tick, message: data });
@@ -849,8 +849,7 @@ describe("match rules over the network (P2P)", () => {
     const snapshot = connection.getSnapshot();
     expect(snapshot.elapsedSeconds).toBeGreaterThan(0);
     expect(snapshot.phase).toBe("active");
-    expect(snapshot.scoreTeam0).toBe(0);
-    expect(snapshot.scoreTeam1).toBe(0);
+    expect(snapshot.score).toEqual([0, 0]);
     expect(snapshot.winningTeam).toBeUndefined();
   });
 
@@ -877,8 +876,8 @@ describe("match rules over the network (P2P)", () => {
     );
 
     expect([self(a)?.team, self(b)?.team]).toEqual([0, 1]);
-    expect(a.getSnapshot()).toMatchObject({ scoreTeam0: 1, scoreTeam1: 0 });
-    expect(b.getSnapshot()).toMatchObject({ scoreTeam0: 1, scoreTeam1: 0 });
+    expect(a.getSnapshot()).toMatchObject({ score: [1, 0] });
+    expect(b.getSnapshot()).toMatchObject({ score: [1, 0] });
   });
 });
 

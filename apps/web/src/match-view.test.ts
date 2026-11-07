@@ -50,8 +50,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
   return {
     selfSessionId: "me",
     players,
-    scoreTeam0: 0,
-    scoreTeam1: 0,
+    score: [0, 0],
     elapsedSeconds: 0,
     phase: "active",
     winningTeam: undefined,

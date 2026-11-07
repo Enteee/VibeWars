@@ -3,6 +3,7 @@
   "name": "Shiverpeak Pass",
   "mode": "annihilation",
   "teamSizes": [4],
+  "teams": 2,
   "width": 6000,
   "height": 3400,
   "walls": [

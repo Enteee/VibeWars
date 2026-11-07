@@ -230,8 +230,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
   return {
     selfSessionId: ME,
     players,
-    scoreTeam0: 0,
-    scoreTeam1: 0,
+    score: [0, 0],
     elapsedSeconds: 0,
     phase: "active",
     winningTeam: undefined,

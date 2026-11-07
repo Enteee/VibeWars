@@ -5496,6 +5496,7 @@
         { "literal": "unproven" }
       ]
     },
+    "LobbyTeam": { "union": [{ "literal": 0 }, { "literal": 1 }] },
     "LobbyTeamSize": {
       "union": [{ "literal": 1 }, { "literal": 2 }, { "literal": 4 }, { "literal": 8 }]
     },
@@ -5504,6 +5505,11 @@
         { "name": "height", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "name", "optional": false, "type": "string" },
+        {
+          "name": "teamCount",
+          "optional": false,
+          "type": { "union": [{ "literal": 2 }, { "literal": 3 }] }
+        },
         {
           "name": "walls",
           "optional": false,
@@ -5795,6 +5801,11 @@
               { "name": "id", "optional": false, "type": "string" },
               { "name": "name", "optional": false, "type": "string" },
               {
+                "name": "teamCount",
+                "optional": false,
+                "type": { "union": [{ "literal": 2 }, { "literal": 3 }] }
+              },
+              {
                 "name": "walls",
                 "optional": false,
                 "type": {
@@ -5927,6 +5938,11 @@
               { "name": "height", "optional": false, "type": "number" },
               { "name": "id", "optional": false, "type": "string" },
               { "name": "name", "optional": false, "type": "string" },
+              {
+                "name": "teamCount",
+                "optional": false,
+                "type": { "union": [{ "literal": 2 }, { "literal": 3 }] }
+              },
               {
                 "name": "walls",
                 "optional": false,
@@ -6282,12 +6298,12 @@
         {
           "name": "capturer",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
         {
           "name": "owner",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
         { "name": "progress", "optional": false, "type": "number" },
         { "name": "x", "optional": false, "type": "number" },
@@ -6301,7 +6317,7 @@
         {
           "name": "team",
           "optional": false,
-          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
         { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
@@ -6590,7 +6606,7 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
                 }
               ]
             }
@@ -6599,7 +6615,7 @@
         {
           "name": "winningTeam",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         }
       ]
     },
@@ -6621,7 +6637,7 @@
         {
           "name": "team",
           "optional": false,
-          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
         { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
@@ -6637,7 +6653,7 @@
         {
           "name": "team",
           "optional": false,
-          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
         { "name": "x", "optional": false, "type": "number" },
         { "name": "y", "optional": false, "type": "number" }
@@ -7567,7 +7583,9 @@
         {
           "name": "team",
           "optional": false,
-          "type": { "union": [{ "literal": -1 }, { "literal": 0 }, { "literal": 1 }] }
+          "type": {
+            "union": [{ "literal": -1 }, { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+          }
         },
         { "name": "walking", "optional": false, "type": "boolean" },
         { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -7635,7 +7653,7 @@
         {
           "name": "team",
           "optional": false,
-          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
         { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
@@ -7698,7 +7716,7 @@
         {
           "name": "altarHolder",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
         {
           "name": "capturePoints",
@@ -7709,12 +7727,16 @@
                 {
                   "name": "capturer",
                   "optional": false,
-                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                  "type": {
+                    "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                  }
                 },
                 {
                   "name": "owner",
                   "optional": false,
-                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                  "type": {
+                    "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                  }
                 },
                 { "name": "progress", "optional": false, "type": "number" },
                 { "name": "x", "optional": false, "type": "number" },
@@ -7761,7 +7783,7 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
                 },
                 { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
                 { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
@@ -7783,7 +7805,7 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
                 },
                 { "name": "x", "optional": false, "type": "number" },
                 { "name": "y", "optional": false, "type": "number" }
@@ -8018,7 +8040,14 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": -1 }, { "literal": 0 }, { "literal": 1 }] }
+                  "type": {
+                    "union": [
+                      { "literal": -1 },
+                      { "literal": 0 },
+                      { "literal": 1 },
+                      { "literal": 2 }
+                    ]
+                  }
                 },
                 { "name": "walking", "optional": false, "type": "boolean" },
                 { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -8084,7 +8113,7 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
                 },
                 { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
                 { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
@@ -8092,7 +8121,7 @@
             }
           }
         },
-        { "name": "score", "optional": false, "type": { "tuple": ["number", "number"] } },
+        { "name": "score", "optional": false, "type": { "array": "number" } },
         {
           "name": "stand",
           "optional": false,
@@ -8105,7 +8134,9 @@
                   {
                     "name": "holder",
                     "optional": false,
-                    "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                    "type": {
+                      "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                    }
                   }
                 ]
               }
@@ -8116,7 +8147,7 @@
         {
           "name": "winningTeam",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         }
       ]
     },
@@ -8142,7 +8173,7 @@
         {
           "name": "altarHolder",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
         {
           "name": "capturePoints",
@@ -8153,12 +8184,16 @@
                 {
                   "name": "capturer",
                   "optional": false,
-                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                  "type": {
+                    "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                  }
                 },
                 {
                   "name": "owner",
                   "optional": false,
-                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                  "type": {
+                    "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                  }
                 },
                 { "name": "progress", "optional": false, "type": "number" },
                 { "name": "x", "optional": false, "type": "number" },
@@ -8205,7 +8240,7 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
                 },
                 { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
                 { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
@@ -8227,7 +8262,7 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
                 },
                 { "name": "x", "optional": false, "type": "number" },
                 { "name": "y", "optional": false, "type": "number" }
@@ -8464,7 +8499,14 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": -1 }, { "literal": 0 }, { "literal": 1 }] }
+                  "type": {
+                    "union": [
+                      { "literal": -1 },
+                      { "literal": 0 },
+                      { "literal": 1 },
+                      { "literal": 2 }
+                    ]
+                  }
                 },
                 { "name": "walking", "optional": false, "type": "boolean" },
                 { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -8530,7 +8572,7 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
                 },
                 { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
                 { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
@@ -8538,7 +8580,7 @@
             }
           }
         },
-        { "name": "score", "optional": false, "type": { "tuple": ["number", "number"] } },
+        { "name": "score", "optional": false, "type": { "array": "number" } },
         {
           "name": "stand",
           "optional": false,
@@ -8551,7 +8593,9 @@
                   {
                     "name": "holder",
                     "optional": false,
-                    "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                    "type": {
+                      "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                    }
                   }
                 ]
               }
@@ -8562,7 +8606,7 @@
         {
           "name": "winningTeam",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         }
       ]
     },
@@ -8572,7 +8616,7 @@
         {
           "name": "holder",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         }
       ]
     },
@@ -8626,10 +8670,11 @@
         {
           "name": "team",
           "optional": false,
-          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         }
       ]
     },
+    "WireTeam": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] },
     "WireTeamChoice": {
       "properties": [
         {
@@ -8661,6 +8706,7 @@
         }
       ]
     },
+    "WireTeamCount": { "union": [{ "literal": 2 }, { "literal": 3 }] },
     "WireTeamLobby": {
       "properties": [
         { "name": "secondsLeft", "optional": false, "type": "number" },
@@ -9034,7 +9080,7 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
                 },
                 { "name": "x", "optional": false, "type": "number" },
                 { "name": "y", "optional": false, "type": "number" }

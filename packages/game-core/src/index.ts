@@ -133,6 +133,7 @@ export type {
   MatchRules,
   MatchScore,
   MatchStanding,
+  TeamCount,
   TeamStanding,
 } from "./match-rules.js";
 export {
@@ -152,10 +153,12 @@ export {
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
   RELIC_RUN_MATCH_RULES,
+  TWO_TEAM_MODES,
   addPoint,
   emptyScore,
   evaluateMatch,
   moraleMaximum,
+  teamIds,
 } from "./match-rules.js";
 
 export type {

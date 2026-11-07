@@ -617,6 +617,52 @@ describe("match end", () => {
     expect(participant(sim, "b").combatant.dead).toBe(true);
   });
 
+  it("with three teams, goes on past the first wipe and ends on the second (#2682)", () => {
+    const sim = new MatchSimulation({
+      seed: "annihilation-3",
+      matchRules: ANNIHILATION_MATCH_RULES,
+      teamCount: 3,
+      participants: [
+        spec("a", 0, vec2(0, 0)),
+        spec("b", 1, vec2(200, 0)),
+        spec("c", 2, vec2(0, 200)),
+      ],
+    });
+    participant(sim, "b").combatant.health = 1;
+    participant(sim, "c").combatant.health = 1;
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    stepFor(sim, 10);
+    expect(participant(sim, "b").combatant.dead).toBe(true);
+    // Team 1 is out; teams 0 and 2 fight on.
+    expect(sim.phase).toBe("active");
+
+    sim.setTarget("a", "c");
+    sim.requestSkill("a", 0);
+    stepFor(sim, 2);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
+    expect([...sim.score.byTeam.keys()]).toEqual([0, 1, 2]);
+  });
+
+  it("refuses a team outside its team count, and three teams on a two-team mode (#2682)", () => {
+    expect(
+      () => new MatchSimulation({ seed: "two", participants: [spec("c", 2, vec2(0, 0))] }),
+    ).toThrow("participant c: team 2 is not one of 2");
+    expect(
+      () =>
+        new MatchSimulation({
+          seed: "three",
+          teamCount: 3,
+          participants: [spec("d", 3, vec2(0, 0))],
+        }),
+    ).toThrow("participant d: team 3 is not one of 3");
+    for (const matchRules of [MATCH, { ...MATCH, victory: "guild-battle" as const }]) {
+      expect(() => new MatchSimulation({ seed: "mode", matchRules, teamCount: 3 })).toThrow(
+        `a ${matchRules.victory} match has two teams, not 3`,
+      );
+    }
+  });
+
   it("counts a team whose members all left as wiped (#846)", () => {
     const sim = duel(ANNIHILATION_MATCH_RULES);
     sim.step(DT);

@@ -801,8 +801,7 @@ export function observedSnapshot(
 ): ObservedSnapshot {
   return {
     players,
-    scoreTeam0: snapshot.score[0],
-    scoreTeam1: snapshot.score[1],
+    score: snapshot.score,
     elapsedSeconds: snapshot.elapsedSeconds,
     phase: snapshot.phase,
     winningTeam: absent(snapshot.winningTeam),

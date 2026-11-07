@@ -3,6 +3,7 @@
   "name": "Long Hall",
   "mode": "annihilation",
   "teamSizes": [1, 2, 4, 8],
+  "teams": 2,
   "width": 3200,
   "height": 1100,
   "walls": [
