@@ -37,6 +37,9 @@ Bots side-step about half the skill shots aimed at them, such as a
 Fireball or an attack skill's arrow, so stopping or turning works for
 them as it does for you.
 
+A bot takes a human-like moment, a fraction of a second, to react to
+what happens, so a quick interrupt or a late dodge can beat it.
+
 ## Random Arena
 
 A Random Arena has no bots: every place is a real player, and you wait

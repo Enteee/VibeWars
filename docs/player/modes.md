@@ -116,7 +116,8 @@ The scoreboard shows the points, yours first, and the clock. Under it, a
 line for each relic says where it is: `✦ Name` on its carrier,
 `✦ dropped` on the ground or `✦ at base`.
 
-Relic Temples plays it.
+Broken Tower plays it: the altar stands inside a ruined tower with a
+doorway on each side.
 
 ## King of the Hill
 
@@ -181,10 +182,11 @@ whoever is taking it. The scoreboard shows the points, yours first, and
 the clock.
 
 Bots spread out over the shrines your team does not own yet and stand
-on them until they are taken, leaving one only to fight a foe that
-comes within spell range.
+on them until they are taken. A foe in spell range does not draw them
+off: they step onto a shrine in reach and fight from it.
 
-Forgotten Shrines plays it.
+Scarred Earth plays it: each shrine stands in a broken ring of walls,
+open to the west and east.
 
 ## Team Lobby
 
@@ -252,10 +254,10 @@ skips the wait, or, for winners, leaves without queueing.
 
 ## Heroes' Ascent
 
-A queued Heroes' Ascent is four rounds, always in this order: Relic
-Temples (Relic Run), Forgotten Shrines (Capture Points), Hill Courtyard
-(King of the Hill), then the Hall of Heroes. The Lobby window says where
-you are while you look for a team: `Round 2 of 4 · Forgotten Shrines`.
+A queued Heroes' Ascent is four rounds, always in this order: Broken
+Tower (Relic Run), Scarred Earth (Capture Points), Hill Courtyard (King
+of the Hill), then the Hall of Heroes. The Lobby window says where
+you are while you look for a team: `Round 2 of 4 · Scarred Earth`.
 You only ever meet a team at the same round, and you wait for one as
 long as it takes: no bots fill in. Win, and your party ascends to the
 next map on its own after 20 seconds; win in the Hall, and you stay to

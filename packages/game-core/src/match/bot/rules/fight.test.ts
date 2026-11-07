@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { RANGE_SPELL } from "../../../distances.js";
 import { NO_RANKS } from "../../../skills/status.js";
+import { BOT_REACTION, INSTANT_REACTION } from "../../behaviour.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
 import type { MatchSimulation } from "../../simulation.js";
 import {
@@ -23,11 +24,11 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
   it("stands and fights a melee foe at its elbow with the bow, by a wall or in the open, however fast it thinks", () => {
     // By the field's left edge, and in the middle of it.
     for (const x of [10, 800]) {
-      for (const thinkSeconds of [0, 0.25]) {
+      for (const reaction of [INSTANT_REACTION, BOT_REACTION]) {
         const sim = match([
           // No skills: only the bow can do the damage.
           fighter("ranger", 0, RANGER, vec2(x, 400), {
-            behaviour: { kind: "play-build", thinkSeconds },
+            behaviour: { kind: "play-build", reaction },
             skillBar: [],
           }),
           fighter("foe", 1, WARRIOR, vec2(x + 40, 400), { behaviour: undefined, maxHealth: 1e6 }),
@@ -45,7 +46,7 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
           // Where it stands once the field's edge has placed it: it never leaves.
           stood ??= { ...(sim.get("ranger")?.position ?? vec2(Number.NaN, Number.NaN)) };
         }
-        expect(hits, `x ${String(x)}, thinkSeconds ${String(thinkSeconds)}`).toBeGreaterThan(3);
+        expect(hits, `x ${String(x)}, reaction ${String(reaction.maxSeconds)}`).toBeGreaterThan(3);
         expect(sim.get("ranger")?.position).toEqual(stood);
       }
     }

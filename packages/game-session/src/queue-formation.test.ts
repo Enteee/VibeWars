@@ -395,15 +395,15 @@ describe("team modes (ADR-0042)", () => {
 
     it("never groups sides at different rounds, even the only two queued", async () => {
       const tickets = [hero(1, 0), hero(2, 1)];
-      expect(await formAt(tickets, 0, "relic-temples")).toEqual([]);
-      expect(await formAt(tickets, 1, "forgotten-shrines")).toEqual([]);
+      expect(await formAt(tickets, 0, "broken-tower")).toEqual([]);
+      expect(await formAt(tickets, 1, "scarred-earth")).toEqual([]);
     });
 
     it("groups two sides at round 2 on its map, and leaves the round-1 side waiting", async () => {
       const pair = [hero(2, 1), hero(3, 1)];
-      const groups = await formAt([hero(1, 0), ...pair], 1, "forgotten-shrines");
+      const groups = await formAt([hero(1, 0), ...pair], 1, "scarred-earth");
       expect(groups.map(members)).toEqual([ids(pair)]);
-      expect(groups[0]?.mapId).toBe("forgotten-shrines");
+      expect(groups[0]?.mapId).toBe("scarred-earth");
     });
 
     it("plays a pair at the last round in the Hall", async () => {
