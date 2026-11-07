@@ -330,7 +330,7 @@ export function memberSkillCells(character: TeamCharacter): (TeamSkillCell | nul
 }
 
 /** A member's three highest attribute ranks, highest first: "Strength 12". */
-export function topAttributes(character: TeamCharacter): string[] {
+export function topAttributes(character: Pick<TeamCharacter, "attributes">): string[] {
   return character.attributes
     .filter((attribute) => attribute.rank > 0)
     .map((attribute, order) => ({ attribute, order }))

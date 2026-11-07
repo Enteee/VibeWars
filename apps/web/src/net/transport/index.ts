@@ -7,7 +7,12 @@ import { relaySibling, withSiblingRoom, type RelayRoomsSource } from "../relay-r
 
 import { BROADCAST_SELF_ID, joinBroadcastRoom } from "./broadcast-channel.js";
 import { joinBroadcastQueue } from "./broadcast-queue.js";
-import { publishMatchRecord } from "./match-records.js";
+import {
+  publishMatchRecord,
+  watchMatchRecords,
+  type MatchRecordWatch,
+  type MatchRecordWatchHandlers,
+} from "./match-records.js";
 import { createNostrQueue, type NostrQueue } from "./nostr-queue.js";
 import {
   holdRelay,
@@ -183,4 +188,16 @@ export function publishRecord(record: MatchRecord): void {
     return;
   }
   publishMatchRecord(record);
+}
+
+/**
+ * Watch the finished matches on Nostr (#2532) until closed. The
+ * broadcast build, which e2e runs, hears none: its Matches page is
+ * empty, as no test match ever reaches the public relays.
+ */
+export function watchRecords(on: MatchRecordWatchHandlers): MatchRecordWatch {
+  if (import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast") {
+    return { close: () => undefined };
+  }
+  return watchMatchRecords(on);
 }
