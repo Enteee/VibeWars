@@ -1,12 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { createCursor } from "../../behaviour.js";
-import { vec2 } from "../../../vec2.js";
-import regroup from "./regroup.js";
 import { RANGE_SPELL } from "../../../distances.js";
-import { distance } from "../../../vec2.js";
+import { distance, vec2 } from "../../../vec2.js";
+import { createCursor, decide } from "../../behaviour.js";
+import regroup from "./regroup.js";
 import { NOTHING, REGROUP_SPREAD } from "./shared.js";
-import { DT, MONK, RANGER, WARRIOR, fighter, match, ruleFor } from "./test-support.js";
+import {
+  BOT,
+  DT,
+  MONK,
+  RANGER,
+  WARRIOR,
+  contextFor,
+  fighter,
+  match,
+  ruleFor,
+} from "./test-support.js";
 
 describe("regroup (#2621)", () => {
   /**
@@ -61,6 +70,28 @@ describe("regroup (#2621)", () => {
 
   it("never holds the last of its team alive", () => {
     expect(regroup.decide(rule(700, 100, 1550, false, true))).toBeUndefined();
+  });
+
+  it("forgets it held once another rule answers, a fight with a foe come into reach", () => {
+    const cursor = createCursor();
+    /** What `w` at `x`, its mates at 100, does with a foe at `foe`, thinking afresh. */
+    const think = (x: number, foe: number) => {
+      const sim = match([
+        fighter("w", 0, WARRIOR, vec2(x, 400)),
+        fighter("a", 0, RANGER, vec2(100, 400)),
+        fighter("b", 0, RANGER, vec2(100, 400)),
+        fighter("foe", 1, WARRIOR, vec2(foe, 400)),
+      ]);
+      cursor.waitSeconds = 0;
+      return decide(BOT, cursor, contextFor(sim, "w"));
+    };
+    expect(think(700, 1550).moveTo).toBeUndefined();
+    expect(cursor.regrouping).toBe(true);
+    expect(think(700, 800).targetId).toBe("foe");
+    expect(cursor.regrouping).toBe(false);
+    // The foe gone again, 200 ahead of the centre: not far enough to start a wait.
+    expect(think(400, 1550).moveTo).toBeDefined();
+    expect(cursor.regrouping).toBe(false);
   });
 
   it("leaves a guard to its post", () => {
