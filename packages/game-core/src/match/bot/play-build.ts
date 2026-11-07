@@ -18,6 +18,7 @@ import {
   NOTHING,
   foeReach,
   healthFraction,
+  reactionSeconds,
   skillsOf,
 } from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
@@ -58,7 +59,8 @@ export function playBuild(
   cursor: BehaviourCursor,
   context: BehaviourContext,
 ): BehaviourIntent {
-  return paced(behaviour.thinkSeconds, cursor, context, () => {
+  const hold = (thinks: number) => reactionSeconds(behaviour.reaction, context.self.id, thinks);
+  return paced(hold, cursor, context, () => {
     const foes = livingFoes(context);
     return think(
       context,
@@ -114,18 +116,22 @@ export function guard(
       ? NOTHING
       : { ...NOTHING, moveTo: behaviour.post };
   }
-  const intent = paced(behaviour.thinkSeconds, cursor, context, () =>
-    think(context, cursor, foes, allies, weakest(self, foes)?.id, undefined),
+  const intent = paced(
+    () => behaviour.thinkSeconds,
+    cursor,
+    context,
+    () => think(context, cursor, foes, allies, weakest(self, foes)?.id, undefined),
   );
   return behaviour.rooted ? { ...intent, moveDirection: ZERO, moveTo: undefined } : intent;
 }
 
 /**
- * Think every `thinkSeconds` with `decide`, and in between hold what it
- * last asked for; nothing new while its last skill is still going.
+ * Think with `decide`, then hold what it asked for `hold(thinks)` seconds,
+ * its reaction time (#2606), before thinking again; nothing new while its
+ * last skill is still going, though that time runs on meanwhile.
  */
 function paced(
-  thinkSeconds: number,
+  hold: (thinks: number) => number,
   cursor: BehaviourCursor,
   context: BehaviourContext,
   decide: () => BehaviourIntent,
@@ -143,7 +149,8 @@ function paced(
   if (cursor.waitSeconds > 0) {
     return { ...holding, ...cursor.heldMove };
   }
-  cursor.waitSeconds = thinkSeconds;
+  cursor.waitSeconds = hold(cursor.thinks);
+  cursor.thinks += 1;
   const intent = decide();
   cursor.heldMove = { moveDirection: intent.moveDirection, moveTo: intent.moveTo };
   return intent;

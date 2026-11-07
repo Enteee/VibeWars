@@ -34,6 +34,18 @@ export type Targeting =
   | { readonly kind: "self" }
   | { readonly kind: "fixed"; readonly participantId: string };
 
+/** A `play-build` bot's reaction time (#2606), in seconds: `[minSeconds, maxSeconds)`. */
+export interface Reaction {
+  readonly minSeconds: number;
+  readonly maxSeconds: number;
+}
+
+/** A match bot's (#2542 item 7): a human-like moment to react, not the same tick. */
+export const BOT_REACTION: Reaction = { minSeconds: 0.15, maxSeconds: 0.4 };
+
+/** Every tick: a test bot that reacts at once. */
+export const INSTANT_REACTION: Reaction = { minSeconds: 0, maxSeconds: 0 };
+
 export type Behaviour =
   | { readonly kind: "idle" }
   | {
@@ -134,8 +146,11 @@ export type Behaviour =
    */
   | {
       readonly kind: "play-build";
-      /** Seconds between decisions: the reaction time. `0`: every tick. */
-      readonly thinkSeconds: number;
+      /**
+       * How long it holds each decision before the next (#2606): drawn per
+       * decision from `[minSeconds, maxSeconds)`. Both `0`: every tick.
+       */
+      readonly reaction: Reaction;
     }
   /**
    * A guard's (#1222): hold `post`, and play its bar as `play-build` does
@@ -206,6 +221,8 @@ export interface BehaviourCursor {
   heldMove: Pick<BehaviourIntent, "moveDirection" | "moveTo">;
   /** `play-build`: seconds before it may end another maintained enchantment (#2492). */
   upkeepDropSeconds: number;
+  /** `play-build` and `guard`: how many decisions it has made, the seed of its next reaction time (#2606). */
+  thinks: number;
   /** `play-build`: each foe's reach, read once from its bar (#2598). */
   readonly foeReach: Map<string, number>;
 }
@@ -265,6 +282,7 @@ export function createCursor(): BehaviourCursor {
     returning: false,
     heldMove: { moveDirection: ZERO, moveTo: undefined },
     upkeepDropSeconds: 0,
+    thinks: 0,
     foeReach: new Map(),
   };
 }
