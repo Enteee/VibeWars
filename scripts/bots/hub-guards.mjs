@@ -14,7 +14,8 @@
 /**
  * @typedef {object} Approval
  * @property {number} pr
- * @property {string} role
+ * @property {string} role  The seat signed off, which a covering role may hold.
+ * @property {string} by    The employee who cast it.
  * @property {"approve" | "request-changes"} verdict
  * @property {string} sha   Head commit the verdict was cast against.
  * @property {number} ts
@@ -190,37 +191,54 @@ export function everyJobSucceeded(runs) {
  * merge unreviewed code: get approved, then push whatever you like. Our
  * ledger records the head SHA so the same trick does not work here.
  *
- * A `request-changes` verdict overrides an earlier `approve` from the same
- * role, so a reviewer can withdraw a sign-off it has already given.
+ * A seat may be held by several employees (`perf-sec-qa`, `perf-sec-qa@2`),
+ * and one's approval never overrides another's objection (#2748). Each
+ * employee's latest verdict counts; a `request-changes` by A at commit S
+ * blocks until A approves, or until anyone in the seat approves another
+ * commit after it: the author pushed and the seat re-reviewed. B approving
+ * S itself leaves A's objection standing, and a push nobody re-reviewed
+ * clears nothing. A ledger line without `by` is malformed and skipped.
  *
  * @param {Approval[]} ledger Every verdict ever recorded, any order.
  * @param {{ pr: number, sha: string, required: string[] }} target
  * @returns {{ ok: boolean, missing: string[], stale: string[], changesRequested: string[] }}
  */
 export function approvalsSatisfied(ledger, target) {
-  /** @type {Map<string, Approval>} */
-  const latest = new Map();
-  for (const entry of ledger) {
-    if (entry.pr !== target.pr) {
-      continue;
-    }
-    const previous = latest.get(entry.role);
-    if (previous === undefined || entry.ts >= previous.ts) {
-      latest.set(entry.role, entry);
-    }
-  }
+  // By time, then by ledger position: the sort is stable.
+  const verdicts = ledger
+    .filter((entry) => entry.pr === target.pr && typeof entry.by === "string")
+    .sort((a, b) => a.ts - b.ts);
 
   const missing = [];
   const stale = [];
   const changesRequested = [];
 
   for (const role of target.required) {
-    const verdict = latest.get(role);
-    if (verdict === undefined) {
+    const seat = verdicts.filter((entry) => entry.role === role);
+    /** @type {Map<string, number>} where each employee's latest verdict is in `seat` */
+    const last = new Map();
+    seat.forEach((entry, index) => last.set(entry.by, index));
+    const latest = seat.flatMap((entry, index) =>
+      last.get(entry.by) === index ? [{ entry, index }] : [],
+    );
+
+    const objections = latest.flatMap(({ entry: objection, index }) => {
+      if (objection.verdict !== "request-changes") {
+        return [];
+      }
+      const reReviewed = seat
+        .slice(index + 1)
+        .some((entry) => entry.verdict === "approve" && entry.sha !== objection.sha);
+      return reReviewed ? [] : [`${role} (${objection.by})`];
+    });
+
+    if (seat.length === 0) {
       missing.push(role);
-    } else if (verdict.verdict === "request-changes") {
-      changesRequested.push(role);
-    } else if (verdict.sha !== target.sha) {
+    } else if (objections.length > 0) {
+      changesRequested.push(...objections);
+    } else if (
+      !latest.some(({ entry }) => entry.verdict === "approve" && entry.sha === target.sha)
+    ) {
       stale.push(role);
     }
   }
