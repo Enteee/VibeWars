@@ -161,6 +161,7 @@
       "height": 200
     }
   ],
+  "ghostLevel": 24,
   "objectives": [
     {
       "kind": "ghost-spawn",

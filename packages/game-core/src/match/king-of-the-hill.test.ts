@@ -12,7 +12,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { chargeAdrenaline } from "../skills/testing.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { applyIntent } from "./apply-intent.js";
-import { CLAIM_SKILL_ID, GHOST_HEALTH, ghostId, type HillField } from "./ghost.js";
+import { CLAIM_SKILL_ID, GHOST_HEALTH, ghostId, type GhostField } from "./ghost.js";
 import { ALTAR_REACH_UNITS } from "./relics.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
@@ -68,8 +68,10 @@ const WALLS = [
   ...rect(2120, 980, 60, 200),
 ];
 const BOUNDS = { width: 3000, height: 1800 };
-const FIELD: HillField = {
-  altar: vec2(1500, 900),
+const ALTAR = vec2(1500, 900);
+const FIELD: GhostField = {
+  level: 24,
+  altar: ALTAR,
   spawns: [
     { team: 0, position: vec2(120, 900) },
     { team: 1, position: vec2(2880, 900) },
@@ -98,7 +100,7 @@ function kingOfTheHill(): MatchSimulation {
     matchRules: KING_OF_THE_HILL_MATCH_RULES,
     walls: WALLS,
     bounds: BOUNDS,
-    hillField: FIELD,
+    ghostField: FIELD,
     participants: [
       fighter("a", 0, vec2(240, 780)),
       fighter("b", 0, vec2(240, 1020)),
@@ -147,7 +149,7 @@ function claiming(sim: MatchSimulation, id: string): boolean {
 
 /** `team`'s ghost set down on the altar, claiming it from the next tick. */
 function onAltar(sim: MatchSimulation, team: number, offsetX = 0): void {
-  get(sim, ghostId(team)).position = vec2(FIELD.altar.x + offsetX, FIELD.altar.y);
+  get(sim, ghostId(team)).position = vec2(ALTAR.x + offsetX, ALTAR.y);
 }
 
 /** Team 0's ghost claims the altar, and walks back to its post. */
@@ -197,7 +199,7 @@ describe("a Ghostly Hero (#1377)", () => {
     applyIntent(sim, "a", { kind: "target", targetSessionId: GHOST_0 });
     applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 });
     stepFor(sim, 1);
-    applyIntent(sim, "a", { kind: "walk-to", x: FIELD.altar.x, y: FIELD.altar.y });
+    applyIntent(sim, "a", { kind: "walk-to", x: ALTAR.x, y: ALTAR.y });
     stepUntil(sim, () => claiming(sim, GHOST_0), 20);
     stepUntil(sim, () => sim.altarState.holder === 0, CLAIM_SECONDS + 1);
   });
@@ -207,14 +209,14 @@ describe("a Ghostly Hero (#1377)", () => {
     applyIntent(sim, "a", { kind: "target", targetSessionId: GHOST_0 });
     applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 });
     stepFor(sim, 1);
-    applyIntent(sim, "a", { kind: "walk-to", x: FIELD.altar.x + 110, y: FIELD.altar.y });
+    applyIntent(sim, "a", { kind: "walk-to", x: ALTAR.x + 110, y: ALTAR.y });
     stepUntil(sim, () => claiming(sim, GHOST_0), 20);
   });
 
   it("led onto the altar, fights a foe's ghost adjacent to it, and stays on it", () => {
     const sim = held();
-    get(sim, "a").position = vec2(FIELD.altar.x - 70, FIELD.altar.y);
-    get(sim, "x").position = vec2(FIELD.altar.x + 70, FIELD.altar.y);
+    get(sim, "a").position = vec2(ALTAR.x - 70, ALTAR.y);
+    get(sim, "x").position = vec2(ALTAR.x + 70, ALTAR.y);
     onAltar(sim, 0, -15);
     onAltar(sim, 1, 15);
     expect(applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 })).toBeNull();
@@ -224,7 +226,7 @@ describe("a Ghostly Hero (#1377)", () => {
       const ghost = get(sim, id);
       expect(ghost.combatant.attack?.targetId).toBe(id === GHOST_0 ? GHOST_1 : GHOST_0);
       expect(ghost.combatant.health).toBeLessThan(GHOST_HEALTH);
-      expect(distance(ghost.position, FIELD.altar)).toBeLessThanOrEqual(ALTAR_REACH_UNITS);
+      expect(distance(ghost.position, ALTAR)).toBeLessThanOrEqual(ALTAR_REACH_UNITS);
     }
   });
 
@@ -279,7 +281,7 @@ describe("claiming the altar (#1377)", () => {
     sim.step(DT);
     expect(claiming(sim, GHOST_0)).toBe(true);
     stepFor(sim, CLAIM_SECONDS - 0.2);
-    expect(get(sim, GHOST_0).position).toEqual(FIELD.altar);
+    expect(get(sim, GHOST_0).position).toEqual(ALTAR);
     expect(sim.altarState.holder).toBeNull();
     stepUntil(sim, () => sim.altarState.holder === 0, 0.3);
     expect(sim.altarState.heldSeconds).toBe(0);
@@ -303,7 +305,7 @@ describe("claiming the altar (#1377)", () => {
           creatureDamageScale: undefined,
         },
       },
-      spawn: vec2(FIELD.altar.x + 40, FIELD.altar.y),
+      spawn: vec2(ALTAR.x + 40, ALTAR.y),
       facing: Math.PI,
     });
     onAltar(sim, 0);
@@ -458,7 +460,8 @@ describe("on the Hall of Heroes (#1995)", () => {
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
       walls: HALL_WALLS,
       bounds: { width: 3200, height: 2200 },
-      hillField: {
+      ghostField: {
+        level: 28,
         altar,
         spawns: [
           { team: 0, position: vec2(120, 1100) },

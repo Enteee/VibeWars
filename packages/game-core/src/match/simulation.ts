@@ -316,11 +316,12 @@ import {
   CLAIM_SKILL_ID,
   followBehaviour,
   ghostId,
+  GHOST_MORALE_BOOST,
   ghostSpec,
   isGhostId,
   onHill,
   stayBehaviour,
-  type HillField,
+  type GhostField,
 } from "./ghost.js";
 import { priestId, priestSpec, type Shrine } from "./priest.js";
 import { steerAround } from "./steering.js";
@@ -759,10 +760,11 @@ export interface MatchSimulationOptions {
    */
   readonly relicField?: RelicField | undefined;
   /**
-   * King of the Hill's altar and ghost spawns (#1377): each team's Ghostly
-   * Hero stands at its spawn from the start. Omitted: no ghosts.
+   * A map's ghost spawns, and King of the Hill's altar (#1377, #2689):
+   * each team's Ghostly Hero stands at its spawn from the start.
+   * Omitted: no ghosts.
    */
-  readonly hillField?: HillField | undefined;
+  readonly ghostField?: GhostField | undefined;
   /**
    * Capture Points' shrines (#1378), each neutral at the start. Omitted
    * or `[]`: none.
@@ -1128,8 +1130,8 @@ export class MatchSimulation {
   #relicsState: RelicsState | undefined;
   /** Who reached a relic this step (#1374), in simulation order. */
   #relicArrivals: CarriedArrival[] = [];
-  /** King of the Hill's altar and ghost spawns (#1377); `undefined` on a map without them. */
-  readonly #hillField: HillField | undefined;
+  /** The map's ghost spawns and any altar (#1377, #2689); `undefined` on a map without ghosts. */
+  readonly #ghostField: GhostField | undefined;
   /** Who holds the altar (#1377); nobody on a map without a hill. */
   #altarState: AltarState = UNCLAIMED_ALTAR;
   /** The teams whose ghost finished a claim this step (#1377), in simulation order. */
@@ -1167,7 +1169,7 @@ export class MatchSimulation {
     this.#relicField = options.relicField;
     this.#relicsState =
       this.#relicField === undefined ? undefined : initialRelics(this.#relicField);
-    this.#hillField = options.hillField;
+    this.#ghostField = options.ghostField;
     this.#capturePoints = initialCapturePoints(options.capturePoints ?? []);
     this.#refreshBotObjectives();
     for (const spec of options.participants ?? []) {
@@ -1201,18 +1203,22 @@ export class MatchSimulation {
     for (const lord of lords) {
       this.add(guildLordSpec(lord, facingFoes(lord.team, lord.position)));
     }
-    const ghostSpawns = this.#hillField?.spawns ?? [];
-    for (const spawn of ghostSpawns) {
-      this.add(
-        ghostSpec(
-          spawn,
-          spawnFacing(
-            spawn.position,
-            ghostSpawns.filter((other) => other.team !== spawn.team).map((other) => other.position),
-            ghostSpawns.map((other) => other.position),
+    const ghosts = this.#ghostField;
+    if (ghosts !== undefined) {
+      for (const spawn of ghosts.spawns) {
+        const others = ghosts.spawns.filter((other) => other.team !== spawn.team);
+        this.add(
+          ghostSpec(
+            spawn,
+            ghosts.level,
+            spawnFacing(
+              spawn.position,
+              others.map((other) => other.position),
+              ghosts.spawns.map((other) => other.position),
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
     const placed = new Map<number, number>();
     const bodyguards = new Map<number, Combatant>();
@@ -1294,7 +1300,7 @@ export class MatchSimulation {
    * `undefined` on a map without one.
    */
   public get altar(): Vec2 | undefined {
-    return this.#relicField?.altar ?? this.#hillField?.altar;
+    return this.#relicField?.altar ?? this.#ghostField?.altar;
   }
 
   /** Who holds King of the Hill's altar, and how long since the claim or the last point (#1377). */
@@ -5759,7 +5765,7 @@ export class MatchSimulation {
    */
   #toggleGhost(record: ParticipantRecord, ghostId: string): void {
     const ghost = this.#participants.get(ghostId);
-    const field = this.#hillField;
+    const field = this.#ghostField;
     if (ghost === undefined || ghost.combatant.dead || field === undefined) {
       return;
     }
@@ -5788,7 +5794,7 @@ export class MatchSimulation {
    * (#1377), before anyone acts this step.
    */
   #steadyGhosts(): void {
-    for (const spawn of this.#hillField?.spawns ?? []) {
+    for (const spawn of this.#ghostField?.spawns ?? []) {
       const ghost = this.#participants.get(ghostId(spawn.team));
       const leaderId = ghost?.creature?.leaderId;
       if (ghost === undefined || leaderId === undefined) {
@@ -5807,8 +5813,9 @@ export class MatchSimulation {
    * holding it or the holder's ghost dead.
    */
   #mayClaim(record: ParticipantRecord): boolean {
-    const field = this.#hillField;
-    if (field === undefined || record.combatant.dead || !onHill(field, record.position)) {
+    const field = this.#ghostField;
+    const altar = field?.altar;
+    if (altar === undefined || record.combatant.dead || !onHill(altar, record.position)) {
       return false;
     }
     const { holder } = this.#altarState;
@@ -5860,7 +5867,7 @@ export class MatchSimulation {
   #advanceAltar(dt: number): void {
     const claims = this.#claims;
     this.#claims = [];
-    if (this.#hillField === undefined || this.phase !== "active") {
+    if (this.#ghostField?.altar === undefined || this.phase !== "active") {
       return;
     }
     const { state, scored } = stepAltar(this.#altarState, dt, claimant(claims));
@@ -5889,10 +5896,10 @@ export class MatchSimulation {
         relicSpawns: this.#relicField.spawns,
         altar: this.#relicField.altar,
       };
-    } else if (victory === "king-of-the-hill" && this.#hillField !== undefined) {
+    } else if (victory === "king-of-the-hill" && this.#ghostField !== undefined) {
       this.#botObjectives = {
         ...NO_OBJECTIVES,
-        altar: this.#hillField.altar,
+        altar: this.#ghostField.altar,
         altarHolder: this.#altarState.holder,
       };
     } else {
@@ -6957,7 +6964,13 @@ export class MatchSimulation {
         // a spirit or minion leaves at the end of the step, a pet lies where
         // it fell (#1046) and pays the death penalty (#1133). Only a
         // spirit's death is no soul to reap (GW1: "a non-Spirit creature").
+        // Read before the next life starts it again (#2689).
+        const killerTeam = victim.combatant.lastFoeTeam;
+        victim.combatant.lastFoeTeam = undefined;
         if (victim.creature !== undefined) {
+          if (victim.creature.kind === "ghostly-hero") {
+            this.#ghostKilled(killerTeam);
+          }
           // A Ghostly Hero rises by its own reset, and has no morale (#1377).
           victim.respawnInSeconds =
             victim.creature.onDeath === "rise"
@@ -7749,7 +7762,18 @@ export class MatchSimulation {
   }
 
   /**
-   * A morale boost (GvG's flag stand, HA's altar): `amount` percent to
+   * A foe team's Ghostly Hero killed (#2689): `killerTeam`, its last
+   * foe's to hit it, a minion's its master's, gets a morale boost.
+   * Nobody's, as a masterless minion's, gets none.
+   */
+  #ghostKilled(killerTeam: number | undefined): void {
+    if (killerTeam !== undefined && killerTeam !== MASTERLESS_TEAM) {
+      this.moraleBoost(killerTeam, GHOST_MORALE_BOOST);
+    }
+  }
+
+  /**
+   * A morale boost (GvG's flag stand, HA's ghost): `amount` percent to
    * every member of `team`, dead or alive, up to +10%, companions too but no
    * other creature (#1052, #1133). Not capped at 0,
    * so it lifts a death penalty too. It readies every skill spent until a
@@ -8414,6 +8438,7 @@ export class MatchSimulation {
       attack: undefined,
       knockdownRemaining: 0,
       invulnerableRemaining: 0,
+      lastFoeTeam: undefined,
       soulReapingTriggers: [],
       nextMaintainSeq: 0,
       chainMarks: new Map(),

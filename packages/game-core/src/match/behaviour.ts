@@ -132,6 +132,12 @@ export type Behaviour =
        * the owner, else the nearest foe within `aggroUnits` of itself.
        */
       readonly engage: "owner-target" | "owner-target-then-nearest";
+      /**
+       * Skills it uses on the foe it attacks, the first that may be used
+       * now: a Ghostly Hero's axe skills (#2689). None, a minion's or a
+       * pet's.
+       */
+      readonly skillIds: readonly string[];
       readonly aggroUnits: number;
       readonly leashUnits: number;
       readonly heelUnits: number;
@@ -441,7 +447,12 @@ export function decide(
       };
     }
     case "follow-and-attack":
-      return followAndAttack(behaviour, cursor, context);
+      return withSkill(
+        behaviour.skillIds,
+        followAndAttack(behaviour, cursor, context),
+        cursor,
+        context,
+      );
     case "heal-when-hurt":
       return healWhenHurt(behaviour, context);
     case "play-build":
@@ -658,6 +669,36 @@ function followAndAttack(
     return toOwner;
   }
   return STAND_STILL;
+}
+
+/** How often a follower with skills looks for one to use (#2689): a guard's think. */
+const FOLLOWER_SKILL_SECONDS = 0.25;
+
+/**
+ * `intent`, using the first of `skillIds` that may be used on the foe it
+ * attacks (#2689), looked for every `FOLLOWER_SKILL_SECONDS`.
+ */
+function withSkill(
+  skillIds: readonly string[],
+  intent: BehaviourIntent,
+  cursor: BehaviourCursor,
+  context: BehaviourContext,
+): BehaviourIntent {
+  cursor.waitSeconds = Math.max(0, cursor.waitSeconds - context.dt);
+  const foeId = intent.attackTargetId;
+  const { cast } = context.self.combatant;
+  if (
+    skillIds.length === 0 ||
+    foeId === undefined ||
+    cursor.waitSeconds > 0 ||
+    cast.isCasting ||
+    cast.inAftercast
+  ) {
+    return intent;
+  }
+  cursor.waitSeconds = FOLLOWER_SKILL_SECONDS;
+  const useSkillId = skillIds.find((skillId) => context.check(skillId, foeId).ok);
+  return useSkillId === undefined ? intent : { ...intent, useSkillId };
 }
 
 /**

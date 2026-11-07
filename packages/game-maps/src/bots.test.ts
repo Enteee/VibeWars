@@ -201,7 +201,8 @@ describe("King of the Hill bots (#2582)", () => {
       walls: allWallSegments(arena.walls),
       bounds: { width: arena.width, height: arena.height },
       matchRules: KING_OF_THE_HILL_MATCH_RULES,
-      hillField: {
+      ghostField: {
+        level: 24,
         altar: altar.position,
         spawns: arena.objectives.flatMap((objective) =>
           objective.kind === "ghost-spawn"

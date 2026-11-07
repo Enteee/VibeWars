@@ -101,7 +101,7 @@ const objectiveSchema = z.discriminatedUnion("kind", [
 type SharedKind = Extract<Objective, { kind: "flag-stand" | "altar" | "capture-point" }>["kind"];
 type TeamKind = Exclude<Objective["kind"], SharedKind>;
 
-/** Which team objectives each mode may have; none for a mode not here. */
+/** Which team objectives each mode may have; none for a mode not here. A map with a `ghostLevel` may have `ghost-spawn`s too. */
 const OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly TeamKind[]>>> = {
   "priest-annihilation": ["resurrection-shrine"],
   "guild-battle": ["resurrection-shrine", "guild-lord", "guard", "flag-spawn"],
@@ -187,9 +187,26 @@ export const mapDataSchema = z
     spawnPoints: z.array(spawnPointSchema).min(1),
     /** Required, may be empty: a map without objectives says so. */
     objectives: z.array(objectiveSchema),
+    /**
+     * The level of its Ghostly Heroes (#2689): 20, 24 or 28, by where in
+     * Heroes' Ascent it stands. With it, the map has one `ghost-spawn` per
+     * team, whatever its mode; without it, none. King of the Hill needs one.
+     */
+    ghostLevel: z.union([z.literal(20), z.literal(24), z.literal(28)]).optional(),
   })
   .superRefine((map, context) => {
-    const kinds = OBJECTIVES_BY_MODE[map.mode] ?? [];
+    const byMode = OBJECTIVES_BY_MODE[map.mode] ?? [];
+    const kinds: readonly TeamKind[] =
+      map.ghostLevel !== undefined && !byMode.includes("ghost-spawn")
+        ? [...byMode, "ghost-spawn"]
+        : byMode;
+    if (byMode.includes("ghost-spawn") && map.ghostLevel === undefined) {
+      context.addIssue({
+        code: "custom",
+        path: ["ghostLevel"],
+        message: `a ${map.mode} map has ghosts, so a ghostLevel`,
+      });
+    }
     const shared = SHARED_OBJECTIVES_BY_MODE[map.mode] ?? [];
     const allowed: readonly Objective["kind"][] = [...kinds, ...shared];
     for (const kind of new Set(map.objectives.map((objective) => objective.kind))) {
