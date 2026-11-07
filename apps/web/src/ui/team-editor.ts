@@ -4,12 +4,10 @@ import {
   getAttribute,
   getSkill,
   outsideMatch,
-  type ProfessionId,
   type SkillType,
-  type WeaponSetIndex,
 } from "@vibewars/game-core";
 
-import { SKILL_BAR_SLOTS, equippableSkills } from "../storage/build-validation.js";
+import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   type StoredCharacter,
@@ -19,17 +17,16 @@ import {
 } from "../storage/schema.js";
 import { exportTeam, importTeam, looksLikeTeam } from "../storage/team-transfer.js";
 import {
-  decodeDragSource,
-  describeProfessionChange,
-  equipSkill,
   mountAttributes,
   mountGear,
-  mountGearLibrary,
   mountProfessions,
-  setProfessions,
+  mountSkillBar,
+  type BuildHost,
   type GearHost,
+  type ProfessionsHost,
   type Region,
 } from "./build-editor.js";
+import { mountBuildPicker } from "./build-picker.js";
 import { createCharacterDot } from "./character-figure.js";
 import { characterRanks } from "./character-ranks.js";
 import { equippedCount, professionLabel } from "./character-preview.js";
@@ -49,7 +46,6 @@ import {
   type InlineConfirm,
 } from "./kit.js";
 import {
-  dragSkill,
   moveMember,
   professionMix,
   replaceMember,
@@ -57,13 +53,11 @@ import {
   teamCounters,
   validateTeam,
   type TeamCounter,
-  type TeamProblem,
   type ProfessionMixEntry,
   type TeamCounterId,
 } from "./team-builder.js";
 import { mountPaperDoll } from "./paper-doll.js";
 import { teamSizeStepper } from "./rail.js";
-import { mountSkillLibrary } from "./skill-library-view.js";
 import { createSkillTooltip } from "./skill-tooltip.js";
 
 /**
@@ -206,51 +200,6 @@ export function memberStats(character: TeamCharacter): MemberStats | undefined {
   return summary === undefined
     ? undefined
     : { health: summary.maxHealth, energy: summary.maxEnergy };
-}
-
-/**
- * Why `skillId` may not be dropped on `member`'s bar (#2225), or
- * `undefined` when it may: a skill of another profession, or one already
- * on the bar. Another elite is no refusal: it takes the old one's place.
- */
-export function skillDropRefusal(member: TeamCharacter, skillId: string): string | undefined {
-  const skill = getSkill(skillId);
-  if (skill === undefined) {
-    return "Not a skill in the game";
-  }
-  if (member.skillBar.includes(skillId)) {
-    return `${skill.name} is already on ${member.name}'s bar`;
-  }
-  if (!equippableSkills(member).some((each) => each.id === skillId)) {
-    return `${professionLabel(member.primaryProfession, member.secondaryProfession)} can't use ${skill.name}`;
-  }
-  return undefined;
-}
-
-/**
- * `team` with `skillId` equipped to `slot` of the member `memberId`
- * (#2225), by the Character Builder's rules, and what to tell the player;
- * a refused drop leaves the team as it was.
- */
-export function dropSkill(
-  team: StoredTeam,
-  memberId: string,
-  slot: number,
-  skillId: string,
-): { readonly team: StoredTeam; readonly notice: string | undefined } {
-  const member = team.members.find((each) => each.character.id === memberId)?.character;
-  if (member === undefined || skillDropRefusal(member, skillId) !== undefined) {
-    return { team, notice: undefined };
-  }
-  const change = equipSkill(
-    { ...member, schemaVersion: CHARACTER_SCHEMA_VERSION, updatedAt: Date.now() },
-    slot,
-    skillId,
-  );
-  return {
-    team: replaceMember(team, teamCharacter(change.character, memberId)),
-    notice: change.notice,
-  };
 }
 
 /** The editor's team size title (#2109): the size a build was made at stays. */
@@ -413,18 +362,13 @@ export function markedCells(
   return marked;
 }
 
-/** The Team Builder's right panel tabs (#2225); Gear only while a member is open (#2226). */
-type TeamPanelTab = "characters" | "skills" | "gear";
-
-/** The tab last open, kept for this session (#2225). */
-let lastPanelTab: TeamPanelTab = "characters";
+/** The right panel's tab last open, kept for this session (#2225): My characters first. */
+let lastPanelTab = "characters";
 
 /** What a Team Builder drag carries (#2225). */
 type TeamDrag =
   | { readonly kind: "member"; readonly id: string }
-  | { readonly kind: "character"; readonly id: string }
-  | { readonly kind: "skill"; readonly skillId: string }
-  | { readonly kind: "slot"; readonly id: string; readonly slot: number };
+  | { readonly kind: "character"; readonly id: string };
 
 /** The list key of the open member's editor (#2226), which no character id is. */
 const MEMBER_EDITOR_KEY = "member-editor";
@@ -609,6 +553,7 @@ export function mountTeamEditor(
   const list = h("div", "team-grid team-members");
   list.setAttribute("role", "list");
   gridScroll.appendChild(list);
+  body.appendChild(gridScroll);
   /** The member the Skills tab shows (#2225): the last row pressed, else the first. */
   let focused = team.members[0]?.character.id ?? "";
   const focusedMember = (): TeamCharacter => {
@@ -619,192 +564,123 @@ export function mountTeamEditor(
     return member.character;
   };
 
-  // The right panel (#2225): My characters, to drag onto a member, or
-  // the Skills library of the focused member, to drag onto a slot.
-  const picker = h("aside", "team-picker");
-  const tabs = h("div", "team-picker-tabs");
-  tabs.setAttribute("role", "tablist");
+  // The right panel (#2225): My characters, to drag onto a member, and
+  // the build picker (#2565) on the focused member: its Skills to drag
+  // onto any member's slot, its Gear for the open member.
   const charactersPane = h("div", "team-picker-pane team-picker-characters");
-  const pickerHint = h("p", "team-picker-hint");
+  const pickerHint = h("p", "picker-hint");
   const pickerList = h("div", "team-picker-list");
   const pickerEmpty = h("p", "team-picker-empty", "You have no characters to copy.");
   charactersPane.append(pickerHint, pickerList, pickerEmpty);
-  const skillsPane = h("div", "team-picker-pane team-picker-skills skill-library");
-  const skillsHint = h("p", "team-picker-hint");
-  const library = mountSkillLibrary({
-    current: () => focusedMember(),
-    tooltip,
-    showTip: (anchor, describe) => {
-      const described = describe();
-      if (described !== undefined) {
-        tooltip.show(anchor, described);
-      }
-    },
-    // No slot is picked here: Equip takes the focused member's first empty one.
-    selected: () => undefined,
-    equipTo: (skillId, slot) => {
-      equipOn(focused, slot, skillId);
-    },
-    slotLabel: (slot) => `slot ${String(slot + 1)}`,
-  });
-  skillsPane.append(skillsHint, ...library.elements);
-  const tabButtons = new Map<TeamPanelTab, HTMLButtonElement>();
-  const openTab = (tab: TeamPanelTab): void => {
-    lastPanelTab = tab;
-    update();
-  };
-  for (const [tab, label] of [
-    ["characters", "My characters"],
-    ["skills", "Skills"],
-    ["gear", "Gear"],
-  ] as const) {
-    const tabButton = button(label, "team-picker-tab", () => {
-      openTab(tab);
-    });
-    tabButton.setAttribute("role", "tab");
-    tabButtons.set(tab, tabButton);
-    tabs.appendChild(tabButton);
-  }
-  const gearPane = h("div", "team-picker-pane team-picker-gear skill-library");
-  picker.append(tabs, charactersPane, skillsPane, gearPane);
-  body.append(gridScroll, picker);
-  panel.appendChild(body);
-  // Why a drop is refused, beside the slot (#2225): never colour alone.
-  const dropReason = h("div", "team-drop-reason");
-  dropReason.setAttribute("role", "status");
-  dropReason.hidden = true;
-  panel.appendChild(dropReason);
-
-  /** Equip `skillId` to `slot` of member `memberId`, saying what an elite replaced. */
-  const equipOn = (memberId: string, slot: number, skillId: string): void => {
-    const dropped = dropSkill(team, memberId, slot, skillId);
-    commit(dropped.team);
-    if (dropped.notice !== undefined) {
-      toast(dropped.notice);
-    }
-  };
-
-  // What is being dragged: a row, to reorder; one of my characters, to
-  // copy onto a member; a library skill, to equip on a slot; or a
-  // member's skill, to move or copy to another slot (#2227).
-  let dragging: TeamDrag | undefined;
-  const showReason = (anchor: HTMLElement, text: string, refused: boolean): void => {
-    const box = anchor.getBoundingClientRect();
-    dropReason.textContent = text;
-    dropReason.classList.toggle("is-refused", refused);
-    dropReason.style.left = `${String(box.left)}px`;
-    dropReason.style.top = `${String(box.bottom + 6)}px`;
-    dropReason.hidden = false;
-  };
-  const endDrag = (): void => {
-    dragging = undefined;
-    dropReason.hidden = true;
-    for (const node of Array.from(
-      panel.querySelectorAll(".is-dragging, .is-drop-target, .is-drop-refused"),
-    )) {
-      node.classList.remove("is-dragging", "is-drop-target", "is-drop-refused");
-    }
-  };
-  // Esc, or a drop anywhere else, ends a drag with nothing done.
-  panel.addEventListener("dragend", endDrag);
-  skillsPane.addEventListener("dragstart", (event: DragEvent) => {
-    const source = decodeDragSource(event.dataTransfer?.getData("text/plain") ?? "");
-    if (source?.from === "library") {
-      dragging = { kind: "skill", skillId: source.skillId };
-    }
-  });
   const indexOfMember = (characterId: string): number =>
     team.members.findIndex((m) => m.character.id === characterId);
   const memberOf = (characterId: string): TeamCharacter | undefined =>
     team.members[indexOfMember(characterId)]?.character;
-  // A member's skill dropped on `slot` of member `characterId` (#2227).
-  const slotDrop = (
-    drag: { readonly id: string; readonly slot: number },
-    characterId: string,
-    slot: number,
-    copy: boolean,
-  ): StoredTeam | TeamProblem =>
-    dragSkill(
-      team,
-      { member: indexOfMember(drag.id), slot: drag.slot },
-      { member: indexOfMember(characterId), slot },
-      copy,
-    );
-  // What that drop would do, as the mockup's ghost says it.
-  const slotDropText = (
-    drag: { readonly id: string; readonly slot: number },
-    characterId: string,
-    slot: number,
-    copy: boolean,
-    dropped: StoredTeam | TeamProblem,
-  ): string => {
-    if ("message" in dropped) {
-      return `⊘ ${dropped.message}`;
-    }
-    const where = `${memberOf(characterId)?.name ?? ""} slot ${String(slot + 1)}`;
-    return copy && drag.id !== characterId
-      ? `Shift: Copy to ${where} (stays on ${memberOf(drag.id)?.name ?? ""})`
-      : `Move to ${where}`;
-  };
+  /** `member` as the build editor's parts take it. */
+  const stored = (member: TeamCharacter): StoredCharacter => ({
+    ...member,
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
+    updatedAt: Date.now(),
+  });
 
   // One member at a time opens in place (#2226): its professions, name,
-  // attributes and gear, by the Character Builder's own parts.
+  // attributes, skill bar and gear, by the Character Builder's own parts.
   let openMember: string | undefined;
-  let weaponSet: WeaponSetIndex = 0;
+  /** The slot of the open member's bar picked for the next equip (#564), if any. */
+  let selected: number | undefined;
+  const commitMember = (next: StoredCharacter): void => {
+    const before = memberOf(next.id);
+    // New professions let the picked slot go, as the Character Builder does.
+    if (
+      before?.primaryProfession !== next.primaryProfession ||
+      before.secondaryProfession !== next.secondaryProfession
+    ) {
+      selected = undefined;
+    }
+    commit(replaceMember(team, teamCharacter(next, next.id)));
+  };
   const openCharacter = (): StoredCharacter => {
     const member = memberOf(openMember ?? "");
     if (member === undefined) {
       throw new Error("no member is open");
     }
-    return { ...member, schemaVersion: CHARACTER_SCHEMA_VERSION, updatedAt: Date.now() };
+    return stored(member);
   };
-  const commitMember = (next: StoredCharacter): void => {
-    commit(replaceMember(team, teamCharacter(next, next.id)));
-  };
-  const host: GearHost & {
-    readonly changeProfessions: (
-      primary: ProfessionId,
-      secondary: ProfessionId | undefined,
-    ) => void;
-  } = {
-    current: openCharacter,
+  const openHost: BuildHost = { current: openCharacter, commit: commitMember };
+  const picker = mountBuildPicker<TeamCharacter>(body, {
+    current: () => stored(focusedMember()),
     commit: commitMember,
-    // What new professions dropped is said, with an Undo, as the Character Builder does (#569).
-    changeProfessions: (primary, secondary) => {
-      const before = openCharacter();
-      const after = setProfessions(before, primary, secondary);
-      commitMember(after);
-      const removed = describeProfessionChange(before, after);
-      if (removed.length > 0) {
-        toast(`Removed: ${removed.join(", ")}`, {
-          undo: () => {
-            commitMember(before);
-          },
-        });
+    bars: () => team.members.map((member) => member.character),
+    shown: () => indexOfMember(focusedMember().id),
+    commitBars: (bars, notice) => {
+      commit({
+        ...team,
+        members: bars.map((character) => ({ character })),
+        updatedAt: Date.now(),
+      });
+      if (notice !== undefined) {
+        toast(notice);
       }
     },
-    tooltip,
-    weaponSet: () => weaponSet,
-    selectWeaponSet: (set) => {
-      weaponSet = set;
+    // A slot is picked on the open member's bar, and only it takes the pick.
+    selected: () => (openMember !== undefined && focused === openMember ? selected : undefined),
+    select: (slot) => {
+      selected = slot;
+      if (openMember !== undefined) {
+        focused = openMember;
+      }
       update();
     },
-    showLibrary: (_tab, group) => {
-      openTab("gear");
-      const heading = Array.from(gearPane.querySelectorAll<HTMLElement>(".skill-group")).find(
-        (node) => node.dataset.group === group,
-      );
-      if (heading !== undefined) {
-        gearLibrary.scroller.scrollTop +=
-          heading.getBoundingClientRect().top - gearLibrary.scroller.getBoundingClientRect().top;
-      }
+    refresh: update,
+    tooltip,
+    extraTabs: [{ id: "characters", label: "My characters", element: charactersPane }],
+    tab: lastPanelTab,
+    onTab: (tab) => {
+      lastPanelTab = tab;
+    },
+    hint: (tab) =>
+      tab === "skills"
+        ? `Showing ${focusedMember().name}: drag a skill onto any member's slot.`
+        : `Equipping ${openCharacter().name}: click to equip, or drag onto their hands.`,
+    keysBlocked: () => asking?.isOpen() === true,
+    // Gear is the open member's alone (#2226), and not offered with none open.
+    gearOwner: () => (openMember === undefined ? undefined : openHost),
+  });
+  picker.element.classList.add("team-picker");
+  panel.appendChild(body);
+
+  // What is being dragged: a row, to reorder; or one of my characters, to
+  // copy onto a member. Skills drag by the build picker's rules.
+  let dragging: TeamDrag | undefined;
+  const endDrag = (): void => {
+    dragging = undefined;
+    picker.hideReason();
+    for (const node of Array.from(
+      panel.querySelectorAll(
+        ".team-row.is-dragging, .team-pick.is-dragging, .team-row.is-drop-target",
+      ),
+    )) {
+      node.classList.remove("is-dragging", "is-drop-target");
+    }
+  };
+  // Esc, or a drop anywhere else, ends a drag with nothing done.
+  panel.addEventListener("dragend", endDrag);
+
+  const host: GearHost & ProfessionsHost = {
+    ...openHost,
+    // What new professions dropped is said, with an Undo, as the Character Builder does (#569).
+    changeProfessions: (primary, secondary) => {
+      picker.changeProfessions(openHost, primary, secondary);
+    },
+    tooltip,
+    weaponSet: () => picker.weaponSet(),
+    selectWeaponSet: (set) => {
+      picker.selectWeaponSet(set);
+    },
+    showLibrary: (tab, group) => {
+      picker.showLibrary(tab, group);
     },
   };
-  const gearLibrary = mountGearLibrary(host);
-  gearPane.append(
-    h("p", "team-picker-hint", "Drag a weapon or an off-hand onto the open member's hands."),
-    ...gearLibrary.elements,
-  );
   const memberEditor = h("div", "team-member-editor");
   memberEditor.setAttribute("role", "group");
   const identity = h("div", "team-member-editor-column");
@@ -824,10 +700,27 @@ export function mountTeamEditor(
   const attributes = h("div", "team-member-editor-column");
   attributes.appendChild(h("h4", "team-member-editor-heading", "Attributes"));
   const equipment = h("div", "team-member-editor-column team-member-editor-equipment");
+  const bar = h("div", "team-member-editor-column team-member-editor-bar");
   const doll = mountPaperDoll(host);
   const regions: readonly Region[] = [
     professions,
     mountAttributes(attributes, host),
+    mountSkillBar(bar, {
+      ...openHost,
+      tooltip,
+      // An elite's notice is a toast here, as for a drop on the grid.
+      notice: () => undefined,
+      selected: () => selected,
+      select: (slot) => {
+        selected = slot;
+        focused = openMember ?? focused;
+        update();
+      },
+      picker,
+      bindSlot: (cell, slot) => {
+        picker.bindSlot(cell, () => ({ member: indexOfMember(openMember ?? ""), slot }));
+      },
+    }),
     mountGear(equipment, host, doll),
   ];
   // Opening it in the Character screen stays (#2226).
@@ -839,7 +732,7 @@ export function mountTeamEditor(
       }
     }),
   );
-  memberEditor.append(identity, attributes, equipment);
+  memberEditor.append(identity, attributes, equipment, bar);
   const fillMemberEditor = (): void => {
     const character = openCharacter();
     memberEditor.setAttribute("aria-label", `editing ${character.name}`);
@@ -850,18 +743,16 @@ export function mountTeamEditor(
     for (const region of regions) {
       region.update(character);
     }
-    gearLibrary.update(character);
   };
   /** Open `characterId` in place, closing the one open; or close it, if it is the one. */
   const toggleOpen = (characterId: string): void => {
     doll.close();
-    weaponSet = 0;
     openMember = openMember === characterId ? undefined : characterId;
     if (openMember !== undefined) {
-      // The Skills tab follows the member being edited.
+      // The libraries follow the member being edited.
       focused = openMember;
     }
-    update();
+    picker.selectWeaponSet(0);
   };
 
   const createRow = (characterId: string): HTMLElement => {
@@ -872,6 +763,10 @@ export function mountTeamEditor(
     row.addEventListener("pointerdown", () => {
       if (focused !== characterId) {
         focused = characterId;
+        // A pick is on the open member's bar: off it, it is let go.
+        if (characterId !== openMember) {
+          selected = undefined;
+        }
         update();
       }
     });
@@ -927,79 +822,10 @@ export function mountTeamEditor(
           find();
         }
       });
-      // A filled slot drags its skill to another (#2227): a move, or with
-      // Shift onto another member a copy, Shift as it is at the drop.
-      cell.addEventListener("dragstart", (event: DragEvent) => {
-        event.stopPropagation();
-        const skillId = cell.dataset.skillId;
-        if (dragging !== undefined || skillId === undefined) {
-          return;
-        }
-        tooltip.hide();
-        dragging = { kind: "slot", id: characterId, slot };
-        event.dataTransfer?.setData("text/plain", skillId);
-        if (event.dataTransfer !== null) {
-          event.dataTransfer.effectAllowed = "copyMove";
-        }
-        cell.classList.add("is-dragging");
-      });
-      // A library skill dropped here is equipped, if this member may
-      // hold it: checked against this member, whoever the library shows.
-      cell.addEventListener("dragover", (event: DragEvent) => {
-        if (dragging?.kind === "slot") {
-          const dropped = slotDrop(dragging, characterId, slot, event.shiftKey);
-          const refused = "message" in dropped;
-          cell.classList.toggle("is-drop-refused", refused);
-          cell.classList.toggle("is-drop-target", !refused);
-          if (!refused) {
-            event.preventDefault();
-          }
-          showReason(
-            cell,
-            slotDropText(dragging, characterId, slot, event.shiftKey, dropped),
-            refused,
-          );
-          return;
-        }
-        if (dragging?.kind !== "skill") {
-          return;
-        }
-        const member = memberOf(characterId);
-        const refusal =
-          member === undefined ? "No member" : skillDropRefusal(member, dragging.skillId);
-        cell.classList.toggle("is-drop-refused", refusal !== undefined);
-        cell.classList.toggle("is-drop-target", refusal === undefined);
-        if (refusal === undefined) {
-          event.preventDefault();
-          dropReason.hidden = true;
-        } else {
-          showReason(cell, `⊘ ${refusal}`, true);
-        }
-      });
-      cell.addEventListener("dragleave", () => {
-        cell.classList.remove("is-drop-target", "is-drop-refused");
-        dropReason.hidden = true;
-      });
-      cell.addEventListener("drop", (event: DragEvent) => {
-        if (dragging?.kind === "slot") {
-          event.preventDefault();
-          event.stopPropagation();
-          const dropped = slotDrop(dragging, characterId, slot, event.shiftKey);
-          endDrag();
-          if (!("message" in dropped)) {
-            commit(dropped);
-          }
-          return;
-        }
-        if (dragging?.kind !== "skill") {
-          return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
-        const { skillId } = dragging;
-        endDrag();
-        equipOn(characterId, slot, skillId);
-      });
+      // A filled slot drags its skill to another member's (#2227), and a
+      // library skill drops here (#2225), by the build picker's rules:
+      // checked against this member, whoever the library shows.
+      picker.bindSlot(cell, () => ({ member: indexOf(), slot }));
       skills.appendChild(cell);
     }
     const edit = button("▼", "team-row-edit", () => {
@@ -1032,7 +858,7 @@ export function mountTeamEditor(
         const from = characters.find((c) => c.id === drag.id);
         const member = memberOf(characterId);
         if (from !== undefined && member !== undefined) {
-          showReason(row, `Replace ${member.name} with ${from.name}`, false);
+          picker.showReason(row, `Replace ${member.name} with ${from.name}`, false);
         }
       }
     });
@@ -1043,7 +869,7 @@ export function mountTeamEditor(
     });
     row.addEventListener("drop", (event: DragEvent) => {
       const drag = dragging;
-      if (drag === undefined || drag.kind === "skill" || drag.kind === "slot") {
+      if (drag === undefined) {
         return;
       }
       event.preventDefault();
@@ -1261,22 +1087,7 @@ export function mountTeamEditor(
       });
     }
 
-    // Gear has a member to equip only while one is open.
-    const shownTab = lastPanelTab === "gear" && openMember === undefined ? "skills" : lastPanelTab;
-    for (const [tab, tabButton] of tabButtons) {
-      tabButton.setAttribute("aria-selected", String(tab === shownTab));
-      tabButton.classList.toggle("is-active", tab === shownTab);
-    }
-    const gearTab = tabButtons.get("gear");
-    if (gearTab !== undefined) {
-      gearTab.hidden = openMember === undefined;
-    }
-    charactersPane.hidden = shownTab !== "characters";
-    skillsPane.hidden = shownTab !== "skills";
-    gearPane.hidden = shownTab !== "gear";
-    const member = focusedMember();
-    skillsHint.textContent = `Showing ${member.name}: drag a skill onto any member's slot.`;
-    library.update(member);
+    picker.update();
     pickerHint.textContent = `${String(characters.length)} ${characters.length === 1 ? "character" : "characters"} · drag one onto a member to copy it there`;
     pickerHint.hidden = characters.length === 0;
     pickerEmpty.hidden = characters.length > 0;
@@ -1308,6 +1119,8 @@ export function mountTeamEditor(
   }
 
   function commit(next: StoredTeam): void {
+    // Any edit lets the last profession change's Undo go (#569).
+    picker.dropUndo();
     team = next;
     update();
   }
@@ -1362,7 +1175,7 @@ export function mountTeamEditor(
     dispose() {
       disposed = true;
       doll.close();
-      library.dispose();
+      picker.destroy();
       tooltip.dispose();
       document.removeEventListener("pointerdown", onPointerDown);
       stopPaste();

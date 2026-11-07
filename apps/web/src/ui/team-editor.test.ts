@@ -18,7 +18,6 @@ import {
 import {
   copyOntoMember,
   dragMember,
-  dropSkill,
   isTeamUnsaved,
   markedCells,
   memberSkillCells,
@@ -26,7 +25,6 @@ import {
   memberToggle,
   pastedTeam,
   saveTitle,
-  skillDropRefusal,
   teamEditorProblems,
   topAttributes,
 } from "./team-editor.js";
@@ -119,41 +117,6 @@ describe("copyOntoMember (#1452, #2225)", () => {
     const once = copyOntoMember(teamOf("a", "b"), "a", solo);
     const edited = replaceMember(once, { ...character("a"), name: "Edited" });
     expect(copyOntoMember(edited, "a", solo).members[0]?.character.name).toBe("Solo");
-  });
-});
-
-describe("skillDropRefusal and dropSkill (#2225)", () => {
-  const monk: TeamCharacter = { ...character("m"), name: "Mira", primaryProfession: "monk" };
-
-  it("equips a skill the member may hold to the slot it was dropped on", () => {
-    const { team } = dropSkill(teamOf("a", "b"), "b", 3, "warrior.sever-artery");
-    expect(team.members[1]?.character.skillBar[3]).toBe("warrior.sever-artery");
-    expect(team.members[0]?.character.skillBar[3]).toBeNull();
-  });
-
-  it("refuses another profession's skill, saying why, and changes nothing", () => {
-    const team = membersTeam([character("a"), monk]);
-    expect(skillDropRefusal(monk, "warrior.sever-artery")).toBe("Monk can't use Sever Artery");
-    expect(dropSkill(team, "m", 0, "warrior.sever-artery").team).toBe(team);
-  });
-
-  it("refuses a skill already on the bar", () => {
-    const team = dropSkill(teamOf("a", "b"), "a", 0, "warrior.sever-artery").team;
-    const member = team.members[0]?.character ?? character("a");
-    expect(skillDropRefusal(member, "warrior.sever-artery")).toBe(
-      "Sever Artery is already on a's bar",
-    );
-    expect(dropSkill(team, "a", 5, "warrior.sever-artery").team).toBe(team);
-  });
-
-  it("lets a second elite take the first's place, and says so", () => {
-    const team = dropSkill(teamOf("a", "b"), "a", 0, "warrior.hundred-blades").team;
-    const dropped = dropSkill(team, "a", 4, "warrior.battle-rage");
-    const bar = dropped.team.members[0]?.character.skillBar;
-    expect(bar?.filter((id) => id !== null)).toEqual(["warrior.battle-rage"]);
-    expect(dropped.notice).toBe(
-      "Battle Rage replaced Hundred Blades: only one elite skill per bar.",
-    );
   });
 });
 
