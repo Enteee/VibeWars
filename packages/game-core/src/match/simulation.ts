@@ -39,6 +39,7 @@ import {
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
   SHRINE_INVULNERABLE_SECONDS,
+  teamBeaten,
   teamIds,
   TWO_TEAM_MODES,
   type MatchOutcome,
@@ -1121,6 +1122,8 @@ export class MatchSimulation {
   readonly #shrines: readonly Shrine[];
   /** Priest waves gone by (#1186): the next is at `PRIEST_WAVE_SECONDS` times one more. */
   #priestWaves = 0;
+  /** The teams beaten earlier this match (#2682): out for good, raised by no wave. */
+  readonly #eliminated = new Set<number>();
   /** The teams with a Guild Lord in the match (#1222), dead or alive. */
   readonly #guildLordTeams: ReadonlySet<number>;
   /** Damage each team dealt to a foe's Guild Lord (#1222), after armor. */
@@ -3724,6 +3727,8 @@ export class MatchSimulation {
     this.#burstLeaving();
     this.#removeLeaving();
     this.#replaceFallen();
+    // Before the wave: a team beaten this step is out, and not raised.
+    this.#eliminateBeaten();
     this.#priestWave();
     // After every death, before the match end: a point on the last tick counts.
     this.#advanceRelics();
@@ -7955,6 +7960,7 @@ export class MatchSimulation {
         guildLordLives: this.#guildLordLives(team),
         beyondRaising: this.#teams.has(team) && raisable === 0,
         aggression: this.#aggression.get(team) ?? 0,
+        eliminated: this.#eliminated.has(team),
       });
     }
     return { byTeam };
@@ -8023,6 +8029,23 @@ export class MatchSimulation {
     }
   }
 
+  /**
+   * Every team beaten as it stands, as the match's victory counts it, is
+   * out for the rest of the match (#2682): with three teams the match goes
+   * on past it, and neither a wave nor the clock brings it back.
+   */
+  #eliminateBeaten(): void {
+    const rules = this.#matchRules;
+    if (rules === undefined) {
+      return;
+    }
+    for (const [team, standing] of this.#standing().byTeam) {
+      if (teamBeaten(standing, rules)) {
+        this.#eliminated.add(team);
+      }
+    }
+  }
+
   /** Whether `team`'s priest is in the match and alive (#1186). */
   #priestLives(team: number): boolean {
     const priest = this.#participants.get(priestId(team));
@@ -8045,7 +8068,7 @@ export class MatchSimulation {
     this.#priestWaves += 1;
     const alone = this.#shrinesRaiseAlone();
     for (const shrine of this.#shrines) {
-      if (!alone && !this.#priestLives(shrine.team)) {
+      if (this.#eliminated.has(shrine.team) || (!alone && !this.#priestLives(shrine.team))) {
         continue;
       }
       const events: CombatEvent[] = [];
