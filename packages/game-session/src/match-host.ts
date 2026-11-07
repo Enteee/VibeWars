@@ -1,4 +1,5 @@
 import {
+  BOT_REACTION,
   MINIMAL_GW_INSPIRED_PVP_V1,
   MatchSimulation,
   MatchTally,
@@ -752,8 +753,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         map.spawns.filter((point) => point.team !== team).map((point) => point.position),
         map.spawns.map((point) => point.position),
       ),
-      // As fast as GW1's heroes: a decision every tick (#1193).
-      behaviour: bot ? { kind: "play-build", thinkSeconds: 0 } : undefined,
+      // A human-like moment to react, not the same tick (#2606).
+      behaviour: bot ? { kind: "play-build", reaction: BOT_REACTION } : undefined,
     });
     const seat: Seat = {
       playerId,
