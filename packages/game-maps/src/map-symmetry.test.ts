@@ -16,6 +16,8 @@ const SYMMETRIC = [
   "scarred-earth",
   "the-courtyard",
   "hall-of-heroes",
+  "ashen-courtyard",
+  "moss-vale",
 ];
 
 /** How far apart a thing and its twin's rotation may be. */

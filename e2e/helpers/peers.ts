@@ -287,7 +287,6 @@ interface Point {
 const EMBER_PITS_LANE_Y = 900;
 
 /**
-/**
  * Walks the hero from its spawn on ember-pits, the default map here, to
  * within `RANGE_SPELL` of `foe` (#2550): the map is wider than the view,
  * so a foe on its spawn is off screen and out of every skill's reach.
