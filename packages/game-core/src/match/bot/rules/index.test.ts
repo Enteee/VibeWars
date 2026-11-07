@@ -28,6 +28,7 @@ describe("BOT_RULES (#2042)", () => {
       "carry-relic",
       "flee",
       "dodge",
+      "lead-ghost",
       "ward-touch",
       "cleanse",
       "raise",
@@ -47,6 +48,7 @@ describe("BOT_RULES (#2042)", () => {
       "shrines",
       "fight",
       "mimic-elite",
+      "pick-up-ghost",
       "fetch-relic",
       "close-in",
     ]);

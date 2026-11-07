@@ -223,6 +223,10 @@ export interface BehaviourCursor {
   heldMove: Pick<BehaviourIntent, "moveDirection" | "moveTo">;
   /** `play-build`: seconds before it may end another maintained enchantment (#2492). */
   upkeepDropSeconds: number;
+  /** `play-build`, a healer: the ally it looks after, kept until another is clearly worse off (#2615). */
+  wardId: string | undefined;
+  /** `play-build`, a healer: the spot it walks to, kept until a fresh one is clearly elsewhere (#2615). */
+  coverSpot: Vec2 | undefined;
   /** `play-build` and `guard`: how many decisions it has made, the seed of its next reaction time (#2606). */
   thinks: number;
   /** `play-build`: each foe's reach, read once from its bar (#2598). */
@@ -274,8 +278,13 @@ export interface BotObjectives {
   readonly relics: readonly RelicState[];
   /** Where each team's relic lies at rest (#2581); `[]` in any other mode. */
   readonly relicSpawns: readonly CarriedSpawn[];
-  /** The altar relics are run to (#2581); `undefined` in any other mode. */
+  /**
+   * The altar relics are run to (#2581) or Ghostly Heroes claim (#2582);
+   * `undefined` in any other mode.
+   */
   readonly altar: Vec2 | undefined;
+  /** The team holding King of the Hill's altar (#2582); `null` when nobody does, or in any other mode. */
+  readonly altarHolder: number | null;
 }
 
 /** No objectives: every mode but those with one. */
@@ -284,6 +293,7 @@ export const NO_OBJECTIVES: BotObjectives = {
   relics: [],
   relicSpawns: [],
   altar: undefined,
+  altarHolder: null,
 };
 
 export function createCursor(): BehaviourCursor {
@@ -295,6 +305,8 @@ export function createCursor(): BehaviourCursor {
     returning: false,
     heldMove: { moveDirection: ZERO, moveTo: undefined },
     upkeepDropSeconds: 0,
+    wardId: undefined,
+    coverSpot: undefined,
     thinks: 0,
     foeReach: new Map(),
   };
