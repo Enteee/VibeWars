@@ -225,7 +225,6 @@ const FIRE_ELEMENTALIST: PlayerBuild = {
   },
 };
 
-// Spell interrupts and energy denial, with a cure.
 /** By name: "Warrior/Monk", "Ranger/Mesmer" and so on. */
 export const TEST_BUILDS: readonly PlayerBuild[] = [
   SWORD_WARRIOR,
