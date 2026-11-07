@@ -2091,7 +2091,7 @@ const greenPull = (hubd, branch, files, { crossRepository = false } = {}) => {
   for (const role of ["lead-dev", "perf-sec-qa"]) {
     fs.appendFileSync(
       path.join(hubd.hub, "approvals.jsonl"),
-      `${JSON.stringify({ pr: 9, role, verdict: "approve", sha, ts: 1 })}\n`,
+      `${JSON.stringify({ pr: 9, role, by: role, verdict: "approve", sha, ts: 1 })}\n`,
     );
   }
   return sha;
@@ -2205,7 +2205,7 @@ describe("hubd recording verdicts and merging", () => {
     for (const role of ["lead-dev", "perf-sec-qa"]) {
       fs.appendFileSync(
         path.join(hubd.hub, "approvals.jsonl"),
-        `${JSON.stringify({ pr: 9, role, verdict: "approve", sha: "abc1234def", ts: 1 })}\n`,
+        `${JSON.stringify({ pr: 9, role, by: role, verdict: "approve", sha: "abc1234def", ts: 1 })}\n`,
       );
     }
     hubd.expectChecks(["ci", "legacy"]);
