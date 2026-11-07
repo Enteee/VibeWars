@@ -60,8 +60,7 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
 const MATCH: MatchSnapshot = {
   selfSessionId: "me",
   players: [player("me", 0, 0), player("ally", 0, 100), player("foe", 1, 200)],
-  scoreTeam0: 0,
-  scoreTeam1: 0,
+  score: [0, 0],
   elapsedSeconds: 0,
   phase: "active",
   winningTeam: undefined,

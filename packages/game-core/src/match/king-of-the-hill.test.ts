@@ -474,3 +474,56 @@ describe("on the Hall of Heroes (#1995)", () => {
     expect(points(sim)[1]).toBe(0);
   });
 });
+
+describe("King of the Hill with three teams (#2682)", () => {
+  const THREE: HillField = {
+    ...FIELD,
+    spawns: [...FIELD.spawns, { team: 2, position: vec2(1500, 120) }],
+  };
+
+  /** `kingOfTheHill` with a third team at the top edge, and its ghost. */
+  function threeWay(): MatchSimulation {
+    return new MatchSimulation({
+      seed: "king-of-the-hill-3",
+      matchRules: KING_OF_THE_HILL_MATCH_RULES,
+      teamCount: 3,
+      walls: WALLS,
+      bounds: BOUNDS,
+      hillField: THREE,
+      participants: [
+        fighter("a", 0, vec2(240, 780)),
+        fighter("x", 1, vec2(2760, 1020)),
+        fighter("p", 2, vec2(1400, 120)),
+      ],
+    });
+  }
+
+  it("has one holder, and a third team takes the altar once the holder's ghost dies", () => {
+    const sim = threeWay();
+    onAltar(sim, 0);
+    stepUntil(sim, () => sim.altarState.holder === 0, CLAIM_SECONDS + 1);
+    onAltar(sim, 2, 30);
+    for (let tick = 0; tick < (2 * CLAIM_SECONDS) / DT; tick += 1) {
+      sim.step(DT);
+      expect(claiming(sim, ghostId(2))).toBe(false);
+    }
+    expect(sim.altarState.holder).toBe(0);
+    kill(sim, GHOST_0);
+    stepFor(sim, 1);
+    onAltar(sim, 2);
+    stepUntil(sim, () => sim.altarState.holder === 2, CLAIM_SECONDS + 1);
+    // Held by the third team's living ghost, it is nobody else's to begin.
+    onAltar(sim, 1, -30);
+    stepFor(sim, 1);
+    expect(claiming(sim, GHOST_1)).toBe(false);
+    expect([...sim.score.byTeam.keys()]).toEqual([0, 1, 2]);
+  });
+
+  it("scores the third team for holding it", () => {
+    const sim = threeWay();
+    onAltar(sim, 2);
+    stepUntil(sim, () => sim.altarState.holder === 2, CLAIM_SECONDS + 1);
+    stepFor(sim, POINT_TICK_SECONDS + DT);
+    expect(sim.score.byTeam.get(2)).toBe(1);
+  });
+});

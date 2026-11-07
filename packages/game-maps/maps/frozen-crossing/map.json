@@ -3,6 +3,7 @@
   "name": "Frozen Crossing",
   "mode": "annihilation",
   "teamSizes": [2],
+  "teams": 2,
   "width": 4000,
   "height": 2200,
   "walls": [

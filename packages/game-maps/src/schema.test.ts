@@ -14,6 +14,7 @@ const validMap = {
   name: "Arena Test",
   mode: "annihilation",
   teamSizes: [1],
+  teams: 2,
   width: 100,
   height: 100,
   walls: [
@@ -63,6 +64,25 @@ describe("validateMapData", () => {
     expect(validateMapData({ ...validMap, teamSizes: [8, 1, 4, 2] }).teamSizes).toEqual([
       8, 1, 4, 2,
     ]);
+  });
+
+  it("refuses a map without two or three teams, a spawn of none of them, or three on a two-team mode (#2682)", () => {
+    const { teams: _teams, ...teamless } = validMap;
+    expect(() => validateMapData(teamless)).toThrow(MapValidationError);
+    for (const teams of [0, 1, 4, 2.5]) {
+      expect(() => validateMapData({ ...validMap, teams }), String(teams)).toThrow(
+        MapValidationError,
+      );
+    }
+    const third = { team: 2, position: { x: 50, y: 50 } };
+    const threeTeams = { ...validMap, spawnPoints: [...validMap.spawnPoints, third] };
+    expect(() => validateMapData(threeTeams)).toThrow(/spawn 1 is team 2, not one of 2/);
+    expect(validateMapData({ ...threeTeams, teams: 3 }).teams).toBe(3);
+    for (const mode of ["kill-count", "guild-battle"]) {
+      expect(() => validateMapData({ ...threeTeams, teams: 3, mode }), mode).toThrow(
+        `a ${mode} map has two teams, not 3`,
+      );
+    }
   });
 
   it("knows exactly game-core's modes", () => {

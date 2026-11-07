@@ -39,11 +39,14 @@ import {
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
   SHRINE_INVULNERABLE_SECONDS,
+  teamIds,
+  TWO_TEAM_MODES,
   type MatchOutcome,
   type MatchPhase,
   type MatchRules,
   type MatchScore,
   type MatchStanding,
+  type TeamCount,
   type TeamStanding,
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
@@ -727,6 +730,11 @@ export interface MatchSimulationOptions {
    * want.
    */
   readonly matchRules?: MatchRules | undefined;
+  /**
+   * How many teams play (#2682): every participant's team is one of
+   * `teamIds(teamCount)`, but a masterless creature's. Omitted: two.
+   */
+  readonly teamCount?: TeamCount;
   /** Omitted or `[]`: nothing collides with a wall or blocks line of sight. */
   readonly walls?: readonly Segment[];
   /**
@@ -1062,7 +1070,8 @@ export class MatchSimulation {
 
   #tick = 0;
   #elapsedSeconds = 0;
-  #score: MatchScore = emptyScore([0, 1]);
+  readonly #teamCount: TeamCount;
+  #score: MatchScore;
   #outcome: MatchOutcome = MATCH_IN_PROGRESS;
   /**
    * The entries for the next step to report: its own, and a cast that a
@@ -1156,6 +1165,12 @@ export class MatchSimulation {
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
     this.#matchRules = options.matchRules;
+    this.#teamCount = options.teamCount ?? 2;
+    const victory = this.#matchRules?.victory;
+    if (this.#teamCount !== 2 && victory !== undefined && TWO_TEAM_MODES.includes(victory)) {
+      throw new Error(`a ${victory} match has two teams, not ${String(this.#teamCount)}`);
+    }
+    this.#score = emptyScore(teamIds(this.#teamCount));
     this.#walls = options.walls ?? [];
     this.#bounds = options.bounds;
     this.#graph = buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius);
@@ -1374,6 +1389,11 @@ export class MatchSimulation {
   public add(spec: ParticipantSpec): Participant {
     if (this.#participants.has(spec.id)) {
       throw new Error(`participant ${spec.id} is already in the match`);
+    }
+    if (spec.team !== MASTERLESS_TEAM && !teamIds(this.#teamCount).includes(spec.team)) {
+      throw new Error(
+        `participant ${spec.id}: team ${String(spec.team)} is not one of ${String(this.#teamCount)}`,
+      );
     }
     // Either of these resets every tick, which pins the participant at
     // spawn without a word. Refuse it here instead.
@@ -7900,6 +7920,7 @@ export class MatchSimulation {
     ) {
       return;
     }
+    // Kill count is two teams only (`TWO_TEAM_MODES`): the kill is the other's.
     const scoringTeam = victimTeam === 0 ? 1 : 0;
     this.#score = addPoint(this.#score, scoringTeam);
   }

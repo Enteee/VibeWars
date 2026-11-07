@@ -242,8 +242,7 @@ describe("carrierLines (#1226)", () => {
 describe("objectiveScoreToast in a Relic Run (#1387)", () => {
   const relics = [{ team: 0, place: { kind: "spawn" as const } }];
   const score = (scoreTeam0: number, scoreTeam1: number) => ({
-    scoreTeam0,
-    scoreTeam1,
+    score: [scoreTeam0, scoreTeam1],
     relics,
     altar: undefined,
     capturePoints: [],
@@ -283,8 +282,7 @@ describe("objectiveScoreToast in a Relic Run (#1387)", () => {
 
   it("says nothing on a mid-match rejoin, whose first frame follows the 0-0 placeholder", () => {
     const placeholder = {
-      scoreTeam0: 0,
-      scoreTeam1: 0,
+      score: [0, 0],
       relics: [],
       altar: undefined,
       capturePoints: [],
@@ -296,8 +294,7 @@ describe("objectiveScoreToast in a Relic Run (#1387)", () => {
 describe("objectiveScoreToast in King of the Hill (#1399)", () => {
   const altar = { x: 0, y: 0 };
   const score = (scoreTeam0: number, scoreTeam1: number) => ({
-    scoreTeam0,
-    scoreTeam1,
+    score: [scoreTeam0, scoreTeam1],
     relics: [],
     altar,
     capturePoints: [],
@@ -330,8 +327,7 @@ describe("objectiveScoreToast in King of the Hill (#1399)", () => {
     expect(toast(score(1, 1), score(1, 1), 0)).toBeUndefined();
     expect(toast(undefined, score(1, 0), 0)).toBeUndefined();
     const placeholder = {
-      scoreTeam0: 0,
-      scoreTeam1: 0,
+      score: [0, 0],
       relics: [],
       altar: undefined,
       capturePoints: [],
@@ -351,8 +347,7 @@ describe("objectiveScoreToast in Capture Points (#1408)", () => {
     { position: { x: 9, y: 0 }, owner: 1, capturer: null, progress: 1 },
   ];
   const score = (scoreTeam0: number, scoreTeam1: number) => ({
-    scoreTeam0,
-    scoreTeam1,
+    score: [scoreTeam0, scoreTeam1],
     relics: [],
     altar: undefined,
     capturePoints: shrines,
@@ -459,8 +454,7 @@ describe("carriedBundle (#1225, #1374)", () => {
   ): MatchSnapshot => ({
     selfSessionId: "me",
     players: [],
-    scoreTeam0: 0,
-    scoreTeam1: 0,
+    score: [0, 0],
     elapsedSeconds: 0,
     phase: "active",
     winningTeam: undefined,
@@ -694,8 +688,7 @@ describe("enemyPips (#881)", () => {
 /** The scoreboard's match with these kills, no stand and no aggression. */
 function board(team0: number, team1: number): ScoreboardMatch {
   return {
-    scoreTeam0: team0,
-    scoreTeam1: team1,
+    score: [team0, team1],
     stand: undefined,
     aggression: [],
     altarHolder: undefined,

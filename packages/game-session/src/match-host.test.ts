@@ -226,7 +226,7 @@ describe("the match summary's size (#1057)", () => {
         interrupts: 9_999,
       })),
     };
-    expect(parseWireEnded(ended)).toEqual(ended);
+    expect(parseWireEnded(ended, 2)).toEqual(ended);
     expect(messageBytes(ended)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 });

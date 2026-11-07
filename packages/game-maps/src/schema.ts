@@ -2,6 +2,7 @@ import {
   distancePointToSegment,
   GUARD_ROLE_IDS,
   MINIMAL_GW_INSPIRED_PVP_V1,
+  TWO_TEAM_MODES,
   type MatchMode,
 } from "@vibewars/game-core";
 import { z } from "zod";
@@ -181,6 +182,11 @@ export const mapDataSchema = z
       .array(z.literal(TEAM_SIZES_ALL))
       .min(1)
       .refine((sizes) => new Set(sizes).size === sizes.length, "team sizes must be unique"),
+    /**
+     * How many teams its matches have (#2682): two, or Heroes' Ascent's
+     * three; every spawn is one of theirs. There is no default.
+     */
+    teams: z.union([z.literal(2), z.literal(3)]),
     width: z.number().positive(),
     height: z.number().positive(),
     walls: z.array(wallSchema),
@@ -189,6 +195,22 @@ export const mapDataSchema = z
     objectives: z.array(objectiveSchema),
   })
   .superRefine((map, context) => {
+    if (map.teams !== 2 && TWO_TEAM_MODES.includes(map.mode)) {
+      context.addIssue({
+        code: "custom",
+        path: ["teams"],
+        message: `a ${map.mode} map has two teams, not ${String(map.teams)}`,
+      });
+    }
+    map.spawnPoints.forEach((spawn, index) => {
+      if (spawn.team >= map.teams) {
+        context.addIssue({
+          code: "custom",
+          path: ["spawnPoints", index, "team"],
+          message: `spawn ${String(index)} is team ${String(spawn.team)}, not one of ${String(map.teams)}`,
+        });
+      }
+    });
     const kinds = OBJECTIVES_BY_MODE[map.mode] ?? [];
     const shared = SHARED_OBJECTIVES_BY_MODE[map.mode] ?? [];
     const allowed: readonly Objective["kind"][] = [...kinds, ...shared];

@@ -66,6 +66,7 @@ import {
   type WireTraps,
   type WireCape,
   type WireSummaryRow,
+  type WireTeam,
 } from "@vibewars/game-protocol";
 
 import { createCallBoard, type Team } from "./calls.js";
@@ -223,7 +224,7 @@ export interface MatchHost {
   advance(seconds: number): void;
   readonly phase: "active" | "finished";
   /** The team that won, once it is `finished` with a winner; `null` until then, or for none. */
-  readonly winningTeam: 0 | 1 | null;
+  readonly winningTeam: WireTeam | null;
   /**
    * A lobby's match nobody is playing any more: every seat is gone, and
    * every seated peer that never came has left the room. The lobby then
@@ -305,7 +306,12 @@ function round(value: number, places: number): number {
   return Math.round(value * scale) / scale;
 }
 
-function wireTeam(team: number | null | undefined): 0 | 1 | null {
+function wireTeam(team: number | null | undefined): WireTeam | null {
+  return team === 0 || team === 1 || team === 2 ? team : null;
+}
+
+/** A match record's winner: a record has two teams until #2684. */
+function recordWinner(team: number | undefined): 0 | 1 | null {
   return team === 0 || team === 1 ? team : null;
 }
 
@@ -315,6 +321,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     seed: options.seed,
     ruleset: RULESET,
     matchRules: options.matchRules,
+    teamCount: map.descriptor.teamCount,
     walls: map.walls,
     bounds: map.bounds,
     shrines: map.shrines,
@@ -431,7 +438,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       map: map.descriptor.id,
       endedAt: Math.floor(options.nowSeconds()),
       durationSeconds: Math.round(sim.elapsedSeconds),
-      winningTeam: wireTeam(sim.outcome.winningTeam),
+      winningTeam: recordWinner(sim.outcome.winningTeam),
       endReason,
       teams: [team(0), team(1)],
     };
@@ -1120,7 +1127,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const snapshot = (): WireSnapshot => ({
     tick: sim.tick,
     elapsedSeconds: sim.elapsedSeconds,
-    score: [sim.score.byTeam.get(0) ?? 0, sim.score.byTeam.get(1) ?? 0],
+    score: [...sim.score.byTeam.values()],
     phase: sim.phase,
     winningTeam: wireTeam(sim.outcome.winningTeam),
     endReason: sim.outcome.reason ?? null,

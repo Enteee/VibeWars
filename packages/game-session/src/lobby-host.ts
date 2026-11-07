@@ -2562,7 +2562,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         match = undefined;
         phase = "waiting";
         if (queued !== undefined) {
-          beginVote(queued, winningTeam);
+          // A lobby seats two teams until #2683: a third's win is none of theirs.
+          beginVote(queued, winningTeam === 2 ? null : winningTeam);
         }
         dropCodedBots();
         // Whoever is still away is not coming back to this lobby.

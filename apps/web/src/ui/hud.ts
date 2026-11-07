@@ -836,19 +836,19 @@ const SCORE_TOAST_TEXT: Partial<Record<MatchMode, readonly [string, string]>> = 
  * in on.
  */
 export function objectiveScoreToast(
-  before:
-    | Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics" | "altar" | "capturePoints">
-    | undefined,
-  after: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1">,
+  before: Pick<MatchSnapshot, "score" | "relics" | "altar" | "capturePoints"> | undefined,
+  after: Pick<MatchSnapshot, "score">,
   selfTeam: number | undefined,
   mode: MatchMode,
 ): ObjectiveToast | undefined {
   if (before === undefined) {
     return undefined;
   }
-  const gained0 = Math.max(0, after.scoreTeam0 - before.scoreTeam0);
-  const gained1 = Math.max(0, after.scoreTeam1 - before.scoreTeam1);
-  const [ours, theirs] = (selfTeam ?? 0) === 1 ? [gained1, gained0] : [gained0, gained1];
+  const self = selfTeam ?? 0;
+  const gained = after.score.map((points, team) => Math.max(0, points - (before.score[team] ?? 0)));
+  // Every other team's gain is the enemy's (#2682).
+  const ours = gained[self] ?? 0;
+  const theirs = gained.reduce((sum, points, team) => (team === self ? sum : sum + points), 0);
   if (mode === "capture-points") {
     return before.capturePoints.length === 0 ? undefined : shrineScoreToast(ours, theirs);
   }
@@ -1007,7 +1007,7 @@ export type ScoreboardPart =
 /** What the scoreboard reads of the match besides its bodies and clock. */
 export type ScoreboardMatch = Pick<
   MatchSnapshot,
-  "scoreTeam0" | "scoreTeam1" | "stand" | "aggression" | "altarHolder" | "altarHeldSeconds"
+  "score" | "stand" | "aggression" | "altarHolder" | "altarHeldSeconds"
 >;
 
 /** The clock left at which a Guild Battle shows its aggression (#1226): the last 3 minutes. */
@@ -1073,7 +1073,7 @@ export function scoreboardParts(
     kind: "text",
     text: left === null ? formatClock(elapsedSeconds) : formatClock(left),
   };
-  const score = [match.scoreTeam0, match.scoreTeam1];
+  const { score } = match;
   const living: ScoreboardPart = {
     kind: "text",
     text: `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))}`,

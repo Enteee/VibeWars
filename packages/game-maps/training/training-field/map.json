@@ -3,6 +3,7 @@
   "name": "Training Field",
   "mode": "annihilation",
   "teamSizes": [1],
+  "teams": 2,
   "width": 1400,
   "height": 900,
   "walls": [],

@@ -37,6 +37,7 @@ import {
   type WireSkillBar,
   type WireWeaponSets,
   type WireSnapshot,
+  type WireTeamCount,
 } from "@vibewars/game-protocol";
 
 import {
@@ -243,28 +244,38 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   /** The match clock: the latest snapshot's, or before the first, the welcome's. */
   const elapsed = (): number => latest?.wire.elapsedSeconds ?? welcomed?.elapsedSeconds ?? 0;
 
+  /**
+   * The teams every team on the stream is one of (#2682), the welcome's
+   * map's. Before it only a host leaving counts, so the most are heard.
+   */
+  const teamCount = (): WireTeamCount => welcomed?.map.teamCount ?? 3;
+
   // A tick's snapshot comes in parts (#662); what follows sees it whole.
   const assemble = snapshotAssembler();
   // Nothing of the stream counts before the welcome: what comes earlier is
   // a match this peer watched before, its host still draining it (#480).
-  fromHost("snapshot", parseWireSnapshotPart, (part) => {
-    if (welcomed === undefined) {
-      return;
-    }
-    const snapshot = assemble(part);
-    if (snapshot === undefined) {
-      return;
-    }
-    // Only ever forward: one late or replayed is dropped.
-    if (latest !== undefined && snapshot.tick <= latest.wire.tick) {
-      return;
-    }
-    // One naming a status this build has no index for is malformed (#632).
-    const players = playerSnapshots(snapshot);
-    if (players !== undefined) {
-      latest = { wire: snapshot, players };
-    }
-  });
+  fromHost(
+    "snapshot",
+    (value) => parseWireSnapshotPart(value, teamCount()),
+    (part) => {
+      if (welcomed === undefined) {
+        return;
+      }
+      const snapshot = assemble(part);
+      if (snapshot === undefined) {
+        return;
+      }
+      // Only ever forward: one late or replayed is dropped.
+      if (latest !== undefined && snapshot.tick <= latest.wire.tick) {
+        return;
+      }
+      // One naming a status this build has no index for is malformed (#632).
+      const players = playerSnapshots(snapshot);
+      if (players !== undefined) {
+        latest = { wire: snapshot, players };
+      }
+    },
+  );
   fromHost("combat", parseWireCombatBatch, (batch) => {
     if (welcomed === undefined) {
       return;
@@ -307,17 +318,21 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   fromHost("traps", parseWireTraps, (message) => {
     traps = message.traps;
   });
-  fromHost("ended", parseWireEnded, (message) => {
-    if (message.endReason !== "host-left" && welcomed === undefined) {
-      return;
-    }
-    summary = message.summary;
-    if (message.endReason === "host-left") {
-      loseHost();
-    } else {
-      ended = message;
-    }
-  });
+  fromHost(
+    "ended",
+    (value) => parseWireEnded(value, teamCount()),
+    (message) => {
+      if (message.endReason !== "host-left" && welcomed === undefined) {
+        return;
+      }
+      summary = message.summary;
+      if (message.endReason === "host-left") {
+        loseHost();
+      } else {
+        ended = message;
+      }
+    },
+  );
   unsubscribe.push(
     transport.onPeerLeave((peerId) => {
       if (peerId === hostId) {
@@ -413,8 +428,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
             ? {
                 selfSessionId: welcome.playerId,
                 players: [],
-                scoreTeam0: 0,
-                scoreTeam1: 0,
+                score: [0, 0],
                 elapsedSeconds: welcome.elapsedSeconds,
                 phase: "active",
                 winningTeam: undefined,

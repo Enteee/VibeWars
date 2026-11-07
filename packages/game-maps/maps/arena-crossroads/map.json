@@ -3,6 +3,7 @@
   "name": "Crossroads",
   "mode": "annihilation",
   "teamSizes": [1, 2, 4, 8],
+  "teams": 2,
   "width": 2600,
   "height": 2600,
   "walls": [

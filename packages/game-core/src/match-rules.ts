@@ -147,6 +147,20 @@ export type MatchMode =
   | "king-of-the-hill"
   | "capture-points";
 
+/** How many teams a match has (#2682): two, or Heroes' Ascent's three. */
+export type TeamCount = 2 | 3;
+
+/**
+ * The modes only two teams play (#2682): a kill-count kill scores for
+ * the one other team, and a Guild Battle is one guild against another.
+ */
+export const TWO_TEAM_MODES: readonly MatchMode[] = ["kill-count", "guild-battle"];
+
+/** The team ids of a match of `teamCount` teams: 0, 1 and, of three, 2. */
+export function teamIds(teamCount: TeamCount): readonly number[] {
+  return Array.from({ length: teamCount }, (_, team) => team);
+}
+
 /** Each mode's rules, by the name a map gives it. */
 export const MATCH_MODES: Readonly<Record<MatchMode, MatchRules>> = Object.freeze({
   annihilation: ANNIHILATION_MATCH_RULES,
