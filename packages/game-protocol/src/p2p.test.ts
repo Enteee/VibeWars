@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CHANNELS,
+  MAX_RELAY_SEAL_CHARS,
   MAX_WIRE_CHAT_TEXT,
   MAX_WIRE_COMBATS,
   MAX_WIRE_EVENTS,
@@ -60,7 +61,9 @@ import {
   parsePeerLobbyHello,
   parsePeerLobbyLeave,
   parsePeerLobbySeat,
-  parsePeerRelayLogin,
+  parsePeerRelayCredIn,
+  parsePeerRelayCredOut,
+  parsePeerRelayOffers,
   parsePeerRelayAdmit,
   parsePeerRelayHolding,
   parseWireLobbyWelcome,
@@ -108,13 +111,16 @@ const hello: PeerHello = {
 
 /** 128 bits of hex, as the host makes them; repeated so it reads as no secret. */
 const TOKEN = "0f".repeat(16);
-/** A host's shared relay login (#2248), at every bound. */
 /** A raw P-256 public key's shape (#2527): 87 base64url characters. */
 const PUB = "B" + "A".repeat(86);
-const relayLogin = {
-  urls: Array.from({ length: 4 }, (_, i) => `turn:${String(i)}.example:3478`.padEnd(256, "x")),
-  username: "1".repeat(256),
-  credential: "c".repeat(256),
+/** A sealed relay login's text (#2529), at its bound. */
+const SEAL = "s.".repeat(MAX_RELAY_SEAL_CHARS / 2);
+const relayOffers = {
+  holders: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => `peer-${String(i)}`),
+  members: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
+    peerId: `peer-${String(i)}`,
+    pub: PUB,
+  })),
 };
 
 const challenge = { playerId: "peer-2", nonce: TOKEN };
@@ -463,6 +469,7 @@ const lobbyJoin: PeerLobbyJoin = {
   guildCape: null,
   admission: null,
   rejoinToken: null,
+  relayPub: null,
 };
 
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
@@ -860,8 +867,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["untagged lobby-join (#1406)", parsePeerLobbyJoin, { ...lobbyJoin, guildTag: null }],
   ["returning lobby-join (#2157)", parsePeerLobbyJoin, { ...lobbyJoin, rejoinToken: TOKEN }],
   ["lobby-seat (#2157)", parsePeerLobbySeat, { rejoinToken: TOKEN }],
-  ["relay-login (#2248)", parsePeerRelayLogin, { relay: relayLogin }],
-  ["relay-login of no relay (#2248)", parsePeerRelayLogin, { relay: null }],
+  ["lobby-join with a relay key (#2529)", parsePeerLobbyJoin, { ...lobbyJoin, relayPub: PUB }],
+  ["relay-offers (#2529)", parsePeerRelayOffers, relayOffers],
+  ["relay-offers of no holder (#2529)", parsePeerRelayOffers, { holders: [], members: [] }],
+  ["relay-cred to the host (#2529)", parsePeerRelayCredOut, { to: "p".repeat(64), seal: SEAL }],
+  ["relay-cred from the host (#2529)", parsePeerRelayCredIn, { from: "p", seal: SEAL }],
   ["relay-admit (#2527)", parsePeerRelayAdmit, { peerId: "p".repeat(64), pub: PUB }],
   ["relay-holding on (#2527)", parsePeerRelayHolding, { on: true }],
   ["relay-holding off (#2527)", parsePeerRelayHolding, { on: false }],
@@ -1934,33 +1944,36 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["lobby-seat of a null token (#2157)", parsePeerLobbySeat, { rejoinToken: null }],
   ["lobby-seat of a long token (#2157)", parsePeerLobbySeat, { rejoinToken: "0f".repeat(17) }],
-  ["relay-login of no relay field (#2248)", parsePeerRelayLogin, {}],
   [
-    "relay-login of five URLs (#2248)",
-    parsePeerRelayLogin,
-    { relay: { ...relayLogin, urls: [...relayLogin.urls, "turn:e.example"] } },
-  ],
-  ["relay-login of no URL (#2248)", parsePeerRelayLogin, { relay: { ...relayLogin, urls: [] } }],
-  [
-    "relay-login of an overlong URL (#2248)",
-    parsePeerRelayLogin,
-    { relay: { ...relayLogin, urls: ["t".repeat(257)] } },
+    "lobby-join without a relay key (#2529)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, relayPub: undefined },
   ],
   [
-    "relay-login of an overlong username (#2248)",
-    parsePeerRelayLogin,
-    { relay: { ...relayLogin, username: "1".repeat(257) } },
+    "lobby-join of a short relay key (#2529)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, relayPub: PUB.slice(1) },
   ],
   [
-    "relay-login of an overlong credential (#2248)",
-    parsePeerRelayLogin,
-    { relay: { ...relayLogin, credential: "c".repeat(257) } },
+    "relay-offers of too many holders (#2529)",
+    parsePeerRelayOffers,
+    { ...relayOffers, holders: [...relayOffers.holders, "one-more"] },
   ],
   [
-    "relay-login of a numeric credential (#2248)",
-    parsePeerRelayLogin,
-    { relay: { ...relayLogin, credential: 7 } },
+    "relay-offers of a member with a bad key (#2529)",
+    parsePeerRelayOffers,
+    { ...relayOffers, members: [{ peerId: "p", pub: `${PUB.slice(1)}=` }] },
   ],
+  ["relay-offers of no members (#2529)", parsePeerRelayOffers, { holders: [] }],
+  ["relay-cred of an overlong seal (#2529)", parsePeerRelayCredOut, { to: "p", seal: `${SEAL}s` }],
+  [
+    "relay-cred of a seal off its alphabet (#2529)",
+    parsePeerRelayCredOut,
+    { to: "p", seal: "a/b" },
+  ],
+  ["relay-cred to no one (#2529)", parsePeerRelayCredOut, { seal: SEAL }],
+  ["relay-cred from no one (#2529)", parsePeerRelayCredIn, { to: "p", seal: SEAL }],
+  ["relay-cred of a numeric seal (#2529)", parsePeerRelayCredIn, { from: "p", seal: 7 }],
   ["relay-admit of an empty peer id (#2527)", parsePeerRelayAdmit, { peerId: "", pub: PUB }],
   [
     "relay-admit of a long peer id (#2527)",

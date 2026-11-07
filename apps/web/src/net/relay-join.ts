@@ -8,17 +8,21 @@
  * next sibling, up to `MAX_RELAY_ATTEMPTS`. Every client ranks the offers
  * alike (`rankOffers`), so no one votes, and each joiner switches alone.
  *
- * A relayed joiner whose host drops joins again with the host's newest
- * login, since coturn ends a relayed peer's allocation when its
- * credential expires (#1764). Between maps, a relayed joiner whose login
- * is running out moves onto the host's newer one in place, keeping its
- * seat (#2245).
+ * Seated, a member hears logins from the lobby's listed holders alone
+ * (#2529). A newer login for its relay from the holder it relays
+ * through, or the best-ranked live one once that holder has none,
+ * moves the host's connection in place, keeping its seat, also during a
+ * map (#2245): a 1 h login cannot wait out a 28 min Guild Battle. A
+ * relayed member whose host drops joins again through that holder's
+ * newest login, else the best-ranked live one, since coturn ends a
+ * relayed peer's allocation when its credential expires (#1764).
  */
 import type { Channel } from "@vibewars/game-protocol";
 import type { Transport } from "@vibewars/game-session";
 
 import { HandlerSets } from "./transport/handler-sets.js";
 import type { RelayOffers } from "./transport/relay-offer.js";
+import type { RelayOffer } from "./transport/relay-seal.js";
 import type { TrysteroTransport } from "./transport/trystero.js";
 import { credentialExpiry, type TurnConfig } from "./transport/turn-config.js";
 
@@ -32,23 +36,16 @@ export const RELAY_ATTEMPT_MS = 8_000;
 export const MAX_RELAY_ATTEMPTS = 3;
 
 /**
- * A relayed joiner moves onto a newer login once its own has this little
- * left (#2245): more than the longest map, a Guild Battle's 28 min, so it
- * never has to mid-map, and less than a seated member's login is
- * reminted at (`LOGIN_REMINT_LEFT_MS`), so a newer one is there.
+ * The least time between two in-place ICE restarts onto one relay
+ * (#2529), unless the connection's ICE has failed or disconnected: a
+ * holder sending logins fast cannot keep a member restarting.
  */
-export const RELAY_REFRESH_LEFT_MS = 30 * 60 * 1000;
+export const RELAY_RESTART_EVERY_MS = 5 * 60 * 1000;
 
 /** A joiner's `Transport`, told when the host has answered. */
 export interface RelayJoin extends Transport {
   /** The host answered from `hostId`: no further attempt, and its drop is watched. */
   reached(hostId: string): void;
-  /**
-   * In the lobby, not a map (#2245): if this joiner came in through an
-   * offer, its login has under `RELAY_REFRESH_LEFT_MS` left at `nowMs` and
-   * the host has told it a newer one, move the host's connection onto it.
-   */
-  refreshRelay(nowMs: number): void;
 }
 
 export interface RelayJoinOptions {
@@ -65,6 +62,8 @@ export interface RelayJoinOptions {
   readonly ownRelay: boolean;
   readonly rejoinMs?: number;
   readonly attemptMs?: number;
+  /** The clock restarts are limited by; `Date.now` by default. */
+  readonly now?: () => number;
 }
 
 export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
@@ -75,6 +74,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     ownRelay,
     rejoinMs = RELAY_REJOIN_MS,
     attemptMs = RELAY_ATTEMPT_MS,
+    now = Date.now,
   } = options;
   const handlers = new HandlerSets();
   /** Every channel listened on: a room joined later hears them all. */
@@ -90,10 +90,16 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
   let joinedWith: TurnConfig | undefined;
   /** The login the host's connection relays with now: `joinedWith`, or a newer one swapped in. */
   let relayedWith: TurnConfig | undefined;
+  /** The holder `relayedWith` came from: only its newer logins move the connection in place. */
+  let relayedVia: string | undefined;
   let hostId: string | undefined;
   /** The current attempt has waited its time: the next may begin as soon as an offer is there. */
   let due = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  /** When ICE last restarted in place onto each relay, by its first URL. */
+  const restarted = new Map<string, number>();
+  /** A restart the limit held back, run once the limit allows. */
+  let restartTimer: ReturnType<typeof setTimeout> | undefined;
   let swapping = false;
   let left = false;
 
@@ -123,9 +129,10 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
           // A swapped-in login the drop came after still rejoins: the room
           // itself was joined with the older one.
           if (peerId === hostId && joinedWith !== undefined) {
-            const newest = offers.hostLogin();
-            if (newest !== undefined && newest.username !== joinedWith.username) {
-              void rejoin(newest);
+            const ranked = offers.ranked();
+            const best = ranked.find(({ holder }) => holder === relayedVia) ?? ranked[0];
+            if (best !== undefined && best.config.username !== joinedWith.username) {
+              void rejoin(best);
             }
           }
         }),
@@ -154,14 +161,16 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
   };
 
   /**
-   * Leave and join again through `turn`, into the current attempt's
+   * Leave and join again through `offer`, into the current attempt's
    * sibling. Never rejects: a leave or a join that fails leaves no room,
    * which the player hears as the host being unreachable.
    */
-  const rejoin = async (turn: TurnConfig): Promise<void> => {
+  const rejoin = async (offer: RelayOffer): Promise<void> => {
+    const turn = offer.config;
     swapping = true;
     joinedWith = turn;
     relayedWith = turn;
+    relayedVia = offer.holder;
     try {
       await detach();
       if (!left) {
@@ -200,47 +209,80 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     }
     tried.add(offer.holder);
     attempt += 1;
-    void rejoin(offer.config);
+    void rejoin(offer);
     wait(attemptMs);
+  };
+
+  /** The first URL a login relays through: a login for the same relay names the same one. */
+  const relayOf = (turn: TurnConfig): string => turn.urls[0] ?? "";
+
+  /**
+   * Seated through a relay, move the host's connection in place (#2529):
+   * onto a strictly newer login for its relay from the holder it relays
+   * through, or, once that holder has no live login (it left the list,
+   * or its login ran out), onto the best-ranked one. Another member's
+   * login naming the same relay never moves it: holding a relay is
+   * self-asserted, and a bogus one would end the connection. Nor does a
+   * new relay from its own holder: that is ranked at the next rejoin, so
+   * cycling URLs cannot dodge the restart limit. At most once per relay
+   * each `RELAY_RESTART_EVERY_MS`, unless ICE has failed or
+   * disconnected; a restart held back runs later.
+   */
+  const move = (): void => {
+    if (
+      left ||
+      swapping ||
+      room === undefined ||
+      hostId === undefined ||
+      relayedWith === undefined
+    ) {
+      return;
+    }
+    const current = relayedWith;
+    const ranked = offers.ranked();
+    const same = ranked.find(({ holder }) => holder === relayedVia);
+    if (same !== undefined && relayOf(same.config) !== relayOf(current)) {
+      return;
+    }
+    const offer = same ?? ranked[0];
+    if (
+      offer === undefined ||
+      (credentialExpiry(offer.config) ?? 0) <=
+        (same === undefined ? 0 : (credentialExpiry(current) ?? 0))
+    ) {
+      return;
+    }
+    const next = offer.config;
+    const last = restarted.get(relayOf(next));
+    const ice = room.transport.iceState(hostId);
+    const wait =
+      last === undefined || ice === "failed" || ice === "disconnected"
+        ? 0
+        : last + RELAY_RESTART_EVERY_MS - now();
+    if (wait > 0) {
+      clearTimeout(restartTimer);
+      restartTimer = setTimeout(move, wait);
+      return;
+    }
+    room.transport.swapIceServers(hostId, next);
+    restarted.set(relayOf(next), now());
+    relayedWith = next;
+    relayedVia = offer.holder;
   };
 
   attach(undefined);
   wait(rejoinMs);
-  const stopHearing = offers.onOffer(check);
+  const stopHearing = offers.onOffer(() => {
+    check();
+    move();
+  });
 
   return {
     selfId,
     reached(id) {
       hostId = id;
       clearTimeout(timer);
-    },
-    refreshRelay(nowMs) {
-      // Direct, or through the player's own relay: nothing to refresh.
-      if (
-        left ||
-        swapping ||
-        room === undefined ||
-        hostId === undefined ||
-        relayedWith === undefined
-      ) {
-        return;
-      }
-      const expiry = credentialExpiry(relayedWith);
-      if (expiry === undefined || expiry - nowMs >= RELAY_REFRESH_LEFT_MS) {
-        return;
-      }
-      const newest = offers.hostLogin();
-      const newestExpiry = newest === undefined ? undefined : credentialExpiry(newest);
-      if (
-        newest === undefined ||
-        newestExpiry === undefined ||
-        newest.username === relayedWith.username ||
-        newestExpiry <= expiry
-      ) {
-        return;
-      }
-      room.transport.swapIceServers(hostId, newest);
-      relayedWith = newest;
+      move();
     },
     send(channel, data, to) {
       room?.transport.send(channel, data, to);
@@ -258,6 +300,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     async leave() {
       left = true;
       clearTimeout(timer);
+      clearTimeout(restartTimer);
       stopHearing();
       offers.close();
       await detach();
