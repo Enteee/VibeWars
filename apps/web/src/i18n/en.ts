@@ -484,6 +484,8 @@ export const en = {
   "keys.space": "Space",
   "keys.tab": "Tab",
 
+  "lobby.removeMember": "Remove {name} from the lobby",
+
   "matchView.watching": "Watching · {seconds} s delay",
 
   "matches.bot": "{name} (bot)",

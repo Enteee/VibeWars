@@ -97,6 +97,9 @@ Leave, and a list of who is in it; its badge counts them.
   invite link. A link opened on a lobby's screen or in a match asks you
   to go back to the menu first. If your connection drops, your seat is held
   for 30 seconds.
+- **Remove someone:** as the host, press the **×** next to a player's
+  name in the Lobby window, outside a match. They are told the host removed
+  them, get a fresh lobby of their own, and cannot rejoin yours while it lasts.
 - **Share your relay:** some friends can only reach you through a TURN
   relay. When a friend who runs one sends you its relay link, open it and
   press **Use**: it becomes your relay, and it is offered in any lobby you

@@ -1318,6 +1318,11 @@ export type WireLobbyCommand =
   | { readonly kind: "select-mode"; readonly mode: LobbyMode }
   | { readonly kind: "start" }
   /**
+   * Host only (#2746): send the member `id`, a `WireLobbyPlayer.id`, out
+   * of the lobby, not to come back while it lasts.
+   */
+  | { readonly kind: "remove-member"; readonly id: string }
+  /**
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
    * queue; `leave-queue` takes it out again, `play-bots` plays against
    * bots instead, in this lobby. In Heroes' Ascent it queues at the
@@ -1401,6 +1406,9 @@ export const LOBBY_REFUSALS = [
   // A Heroes' Ascent run's locked Team Build (#2539): no proposal, vote or
   // side, and a claim only of a vacant slot by a member who holds none.
   "ascent-locked",
+  // A member its host removed (#2746), and that player's every later join
+  // to the same lobby, told after the key proof.
+  "removed",
 ] as const;
 
 export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
@@ -3021,6 +3029,8 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return isAscentRound(raw.ascentRound)
         ? { kind: "find-match", ascentRound: raw.ascentRound }
         : undefined;
+    case "remove-member":
+      return isString(raw.id) ? { kind: "remove-member", id: raw.id } : undefined;
     case "start":
     case "leave-queue":
     case "play-bots":

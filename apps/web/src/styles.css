@@ -1677,6 +1677,25 @@ body {
   font-style: italic;
 }
 
+/* The host's (x) by a member (#2746): small, quiet until hovered. */
+.party-member-remove {
+  margin-left: auto;
+  padding: 0 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.party-member-remove:hover,
+.party-member-remove:focus-visible {
+  border-color: var(--damage);
+  color: var(--damage);
+}
+
 .party-host-mark {
   padding: 0 0.3rem;
   border: 1px solid var(--line);
