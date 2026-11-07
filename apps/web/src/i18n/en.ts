@@ -565,6 +565,7 @@ export const en = {
   "pips.title": { one: "{sign}{count} pips", other: "{sign}{count} pips" },
 
   "queue.busy": "You are in a queue.",
+  "queue.characterDeleted": "Your queued character was deleted, so you left the queue",
   "queue.fellThrough": "Match fell through, searching again",
   "queue.guildVsGuild": "Guild vs Guild",
   "queue.heroesAscent": "Heroes' Ascent · round {round}",

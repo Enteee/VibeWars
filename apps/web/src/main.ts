@@ -113,7 +113,6 @@ import {
   flashTitle,
   mountQueueScreen,
   UNREACHABLE,
-  QUEUED_CHARACTER_GONE,
   nextAscentRound,
   nextStreak,
   requeuedSince,
@@ -1028,7 +1027,7 @@ async function main(): Promise<void> {
         void (async () => {
           await characters.delete(id);
           if (queue?.characterId === id && queue.screen === undefined) {
-            dropToMenu(QUEUED_CHARACTER_GONE);
+            dropToMenu(t("queue.characterDeleted"));
           }
           back();
         })();
@@ -1634,7 +1633,7 @@ async function main(): Promise<void> {
               void joined.disconnect();
               // Deleted in another tab while queued: out of the queue, told why.
               if (current?.place === place) {
-                dropToMenu(QUEUED_CHARACTER_GONE);
+                dropToMenu(t("queue.characterDeleted"));
               }
               return;
             }

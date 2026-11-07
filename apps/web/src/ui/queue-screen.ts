@@ -24,8 +24,6 @@ export const MATCH_FOUND = "Match found";
 export const HOST_LEFT = "The host left";
 /** #707's wording, as the menu says it for a join. */
 export const UNREACHABLE = "Couldn't reach the lobby servers";
-/** The queued character was deleted before its match was found. */
-export const QUEUED_CHARACTER_GONE = "Your queued character was deleted, so you left the queue";
 /** The tab title while a match found in a background tab is unseen. */
 export const MATCH_FOUND_TITLE = "Match found!";
 const TITLE_FLASH_MS = 1000;
