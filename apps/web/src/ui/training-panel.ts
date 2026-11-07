@@ -20,6 +20,7 @@ import {
   callTargetCall,
   middleClickAction,
   pingCall,
+  primaryClickIntents,
   secondaryClickIntents,
 } from "../input/mouse-intents.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
@@ -1034,6 +1035,7 @@ export function createTrainingPanel(): TrainingPanel {
           toArenaSnapshot(latestMatch, session.walls, session.shrines, undefined, undefined),
           created.pointerWorld(),
           nameReveal.held(),
+          created.scene.nameTagBoxes(),
         ),
         connection.getCalls(),
       );
@@ -1081,6 +1083,7 @@ export function createTrainingPanel(): TrainingPanel {
         world,
         doubleClick,
         performance.now(),
+        nameReveal.held(),
       );
       for (const intent of intents) {
         session.connection.sendIntent(intent);
@@ -1092,7 +1095,12 @@ export function createTrainingPanel(): TrainingPanel {
       }
       // A wheel click calls a foe, or pings the point (#443, #1055).
       if (button === "middle" && phase === "down") {
-        const action = middleClickAction(session.connection.getSnapshot(), latestArena, world);
+        const action = middleClickAction(
+          session.connection.getSnapshot(),
+          latestArena,
+          world,
+          nameReveal.held(),
+        );
         if (action.kind === "call") {
           session.connection.sendCall(action.call);
         }
@@ -1103,8 +1111,19 @@ export function createTrainingPanel(): TrainingPanel {
       if (button !== "left" || phase !== "down" || !armedBeforeClick) {
         return;
       }
-      session.connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
-      created.scene.showWalkMarker(world);
+      // With Show names held (#2738), a click on a body or name attacks it.
+      const intents = primaryClickIntents(
+        session.connection.getSnapshot(),
+        latestArena,
+        world,
+        nameReveal.held(),
+      );
+      for (const intent of intents) {
+        session.connection.sendIntent(intent);
+        if (intent.kind === "walk-to") {
+          created.scene.showWalkMarker(world);
+        }
+      }
     });
   });
 
