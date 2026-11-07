@@ -29,6 +29,7 @@ import {
   checkChat,
   readChatId,
   telegramBot,
+  telegramCall,
   telegramGroupIdentity,
   telegramIdentity,
   telegramUpdates,
@@ -420,7 +421,16 @@ function writePrivate(file, value) {
  *   fit for the company; the checklist is printed either way
  */
 async function showChat(deps, token, chatId) {
-  const checked = await checkChat(token, chatId, deps.get);
+  return printChecked(deps, chatId, await checkChat(token, chatId, deps.get));
+}
+
+/**
+ * @param {Deps} deps
+ * @param {string} chatId
+ * @param {Awaited<ReturnType<typeof checkChat>>} checked
+ * @returns {string | null} the title if the chat is fit; the checklist is printed
+ */
+function printChecked(deps, chatId, checked) {
   deps.out(`Chat "${checked.title}" (${chatId}):`);
   for (const c of checked.checks) {
     deps.out(`  ${c.good ? "✓" : "✗"} ${c.text}`);
@@ -450,8 +460,14 @@ async function telegramGroup(deps, token) {
   deps.out("  1. New Group, add the manager bot");
   deps.out("  2. Open the group -> Edit -> enable Topics");
   deps.out("  3. Edit -> Administrators -> add the bot, with Manage Topics");
-  deps.out("Waiting for the bot to see it. Ctrl-C to stop.");
-  const pasted = await deps.prompt("Or paste the group's chat id (Enter to wait): ");
+  const me = await telegramCall(token, "getMe", {}, deps.get);
+  const handle = typeof me?.username === "string" ? me.username : "your bot";
+  const hint = `Make the bot see the group: send /start@${handle} in it.`;
+  deps.out(hint);
+  deps.out("In Telegram Web the group's URL ends in its id; a supergroup id starts with -100.");
+  const pasted = await deps.prompt(
+    "Paste the group's chat id, or press Enter to start waiting for the bot to see it: ",
+  );
   if (pasted === null) {
     return INTERRUPTED;
   }
@@ -466,19 +482,36 @@ async function telegramGroup(deps, token) {
   } else {
     // getUpdates hands back a day of backlog, and anyone can add a bot to a
     // group, so what turns up here is a candidate, never a decision.
+    deps.out(`Waiting (up to ${String(POLL_FOR_MS / 60_000)} min). Ctrl-C to stop.`);
     /** @type {Set<string>} */
     const seen = new Set();
+    /** @type {Set<string>} chats whose checklist has been printed */
+    const shown = new Set();
+    let lastError = "";
     let offset = 0;
     for (let waited = 0; waited <= POLL_FOR_MS; waited += POLL_MS) {
       const updates = await telegramUpdates(token, offset, deps.get);
       offset = updates.offset;
+      if (updates.error !== null && updates.error !== lastError) {
+        deps.err(`  ✗ telegram: ${updates.error}`);
+      }
+      lastError = updates.error ?? "";
       for (const chat of updates.chats) {
         seen.add(chat);
       }
       for (const chat of seen) {
-        const title = fit.has(chat) ? null : await showChat(deps, token, chat);
-        if (title !== null) {
-          fit.set(chat, title);
+        if (fit.has(chat)) {
+          continue;
+        }
+        const checked = await checkChat(token, chat, deps.get);
+        if (!shown.has(chat)) {
+          shown.add(chat);
+          printChecked(deps, chat, checked);
+        } else if (checked.ok) {
+          deps.out(`"${checked.title}" is now fit`);
+        }
+        if (checked.ok) {
+          fit.set(chat, checked.title);
         }
       }
       if (fit.size > 0) {
@@ -507,6 +540,9 @@ async function telegramGroup(deps, token) {
       return INTERRUPTED;
     }
     chosen = options[Number(answer.trim()) - 1]?.[0];
+  }
+  if (options.length === 0) {
+    deps.err(`  ${hint}`);
   }
   if (chosen === undefined) {
     deps.err("  ✗ telegram: no group chosen; nothing written");
