@@ -253,6 +253,21 @@ describe("runner supervisor", () => {
     expect(r.last()?.reason).toBeNull();
   });
 
+  it("starts one runner on an overloaded host when a job is queued and none is up", async () => {
+    const r = rig();
+    r.host.load = 20;
+    r.setQueued(true);
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(1);
+    // Memory still gates it.
+    const low = rig();
+    low.host.load = 20;
+    low.host.free = 0;
+    low.setQueued(true);
+    await low.supervisor.tick();
+    expect(low.launched).toHaveLength(0);
+  });
+
   it("refuses to start without the disk cap, and says why", async () => {
     const r = rig();
     r.host.disk = "no disk cap: /s is on the same filesystem as /home; mount one of its own there";

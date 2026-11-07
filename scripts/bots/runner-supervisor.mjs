@@ -194,6 +194,8 @@ export class RunnerSupervisor {
     this.drainSince = null;
     this.lastList = -Infinity;
     this.lastQueuedPoll = -Infinity;
+    this.lastStarvingPoll = -Infinity;
+    this.starved = false;
     this.queued = true;
     this.lastStatus = "";
     /** @type {Promise<unknown>} the GitHub call in flight; `attempt` never rejects */
@@ -253,6 +255,25 @@ export class RunnerSupervisor {
       this.fail(message);
       return null;
     }
+  }
+
+  /**
+   * Is a company job queued while no runner is up? Asked at most once a
+   * poll, and not knowing is no.
+   *
+   * @returns {Promise<boolean>}
+   */
+  async starving() {
+    if (this.alive > 0) {
+      return false;
+    }
+    const { now } = this.deps;
+    if (now() - this.lastStarvingPoll >= POLL_MS) {
+      this.lastStarvingPoll = now();
+      const queued = await this.call("queuedCompanyJobs", () => this.deps.api.queuedCompanyJobs());
+      this.starved = queued?.value === true;
+    }
+    return this.starved;
   }
 
   /** @param {string} why */
@@ -420,7 +441,10 @@ export class RunnerSupervisor {
       return false;
     }
     const load = host.load1();
-    if (load > host.cpus()) {
+    // The agents alone can hold the load above the CPU count for hours; with
+    // no runner up, jobs queued for one would then wait for ever. One runner
+    // may start for them, load or not (memory still gates it).
+    if (load > host.cpus() && !(await this.starving())) {
       this.overloaded(
         "load",
         `host load ${load.toFixed(1)} is above its ${String(host.cpus())} CPUs`,
