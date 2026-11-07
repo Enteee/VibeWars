@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "release/**"]
   pull_request:
 
 permissions:
@@ -129,12 +129,13 @@ jobs:
     # caught on main by e2e, but a push runs only a third of the suite (above):
     # the clash shows within three pushes, or in the nightly e2e-soak (#1885).
     # It need not run for every merge: at most one run per shard and one
-    # pending, always the newest main.
+    # pending, always the newest main. A release branch is keyed on its own
+    # name, so its pushes never displace main's pending run.
     # A pending run replaced by a newer push concludes cancelled, so a red main
     # e2e covers the merges since the last green one (#1620). A pull request
     # gets a group of its own and is never coalesced.
     concurrency:
-      group: ${{ github.event_name == 'push' && format('e2e-main-{0}', matrix.shard) || format('e2e-{0}-{1}', github.run_id, matrix.shard) }}
+      group: ${{ github.event_name == 'push' && format('e2e-{0}-{1}', github.ref_name, matrix.shard) || format('e2e-{0}-{1}', github.run_id, matrix.shard) }}
       cancel-in-progress: false
     strategy:
       fail-fast: false

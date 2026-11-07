@@ -476,7 +476,8 @@ the game page.
 ## The static deploy
 
 `.github/workflows/pages.yml` publishes the client alone to GitHub Pages:
-`/next/` follows `main`, the root follows the latest release (#103). It is
+`/next/` follows `main`, the root follows the latest release (#103),
+and `/rc/` follows the newest `release/*` branch (#2708). It is
 the whole game: online play is peer to peer from the page itself.
 
 - **The write token never meets repository code.** `build` runs the repo
@@ -498,7 +499,7 @@ the whole game: online play is peer to peer from the page itself.
 - **A manual run cannot publish a side branch.** `workflow_dispatch`
   builds whatever `--ref` it is given, so `deploy` is held back by the
   environments' deployment-branch rules instead: `test` accepts `main`,
-  `prod` accepts `main` and tags. Those rules live in the repository
+  `prod` accepts `main` and tags, `rc` accepts `main` and `release/**`. Those rules live in the repository
   settings, not in this repo, so a review cannot see them change. Re-check
   them when anything touches `pages.yml`.
 
