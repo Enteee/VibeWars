@@ -27,6 +27,8 @@ export interface RuleContext {
   readonly role: BotRole | undefined;
   /** Where its foes' living players stand on average (#2545). */
   readonly foeCentroid: Vec2 | undefined;
+  /** Any participant's role, from the match's cache; a creature: `undefined` (#2549). */
+  readonly roleOf: (participant: Participant) => BotRole | undefined;
 }
 
 /** One step of `play-build`'s think: the first rule with an answer decides. */
