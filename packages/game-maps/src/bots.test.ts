@@ -133,19 +133,20 @@ describe("King of the Hill bots (#2582)", () => {
   });
 
   /**
-   * The first ghost to die, the first point and the winner in up to 90 s
-   * of a 2v2 mirror of bots on The Courtyard (#2600). A mirror brings both
-   * ghosts onto the altar together: they contest it until a bot kills the
-   * other team's ghost. Then a team scores, or, its damage dealers
-   * spiking (#2631), wipes the other first.
+   * The first ghost to die, and the score and outcome after up to 90 s
+   * of a 2v2 mirror of bots on The Courtyard, and when the first point
+   * fell or the match ended, whichever came first (#2600). A mirror brings
+   * both ghosts onto the altar together: they contest it until a bot kills
+   * the other team's ghost. One team may then wipe the other before its
+   * first point (#2628), its damage dealers spiking (#2631).
    */
   const mirror = (seed: string) => {
     const courtyard = loadAllMaps().find((candidate) => candidate.id === "the-courtyard");
     if (courtyard === undefined) throw new Error("no map the-courtyard");
     const sim = hill(courtyard, seed, casterBots(courtyard, 2));
     let ghostDiedAt: number | undefined;
-    let scoredAt: number | undefined;
-    for (let t = 0; t < 90 && scoredAt === undefined && sim.outcome.phase !== "finished"; t += DT) {
+    let decidedAt: number | undefined;
+    for (let t = 0; t < 90 && decidedAt === undefined; t += DT) {
       sim.step(DT);
       if (
         ghostDiedAt === undefined &&
@@ -155,20 +156,28 @@ describe("King of the Hill bots (#2582)", () => {
       ) {
         ghostDiedAt = t;
       }
-      if ([...sim.score.byTeam.values()].some((points) => points > 0)) scoredAt = t;
+      if (
+        [...sim.score.byTeam.values()].some((points) => points > 0) ||
+        sim.outcome.winningTeam !== undefined
+      ) {
+        decidedAt = t;
+      }
     }
     return {
       ghostDiedAt,
-      scoredAt,
-      winningTeam: sim.outcome.winningTeam,
+      decidedAt,
+      holder: sim.altarState.holder,
       score: [...sim.score.byTeam],
+      winner: sim.outcome.winningTeam,
     };
   };
 
   it("a 2v2 mirror of bots kills a ghost, then scores a point or wins within 90 s, the same way for the same seed", () => {
     const first = mirror("hill");
     expect(first.ghostDiedAt).toBeDefined();
-    expect(first.scoredAt ?? first.winningTeam).toBeDefined();
+    expect(first.decidedAt).toBeDefined();
+    // The ghosts' contest ended: a team took the altar, wipe or not.
+    expect(first.holder).not.toBeNull();
     expect(mirror("hill")).toEqual(first);
   });
 
