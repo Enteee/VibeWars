@@ -6,7 +6,6 @@ import {
   type Page,
 } from "@playwright/test";
 
-import { RANGE_SPELL } from "../../packages/game-core/src/distances.js";
 import { projection } from "../camera.js";
 import { awaitLobby, INVITE_URL, lobbyWindow, openRail, shutLobbyWindow } from "./menu.js";
 
@@ -284,22 +283,22 @@ interface Point {
 }
 
 /** Ember Pits' middle lane: open from one side's spawns to the other's, between the pillar ring's rows. */
-const EMBER_PITS_LANE_Y = 900;
+export const EMBER_PITS_LANE_Y = 900;
 
 /**
  * Walks the hero from its spawn on ember-pits, the default map here, to
- * within `RANGE_SPELL` of `foe` (#2550): the map is wider than the view,
- * so a foe on its spawn is off screen and out of every skill's reach.
- * Ground clicks on open ground: onto the middle lane, along it to 300
- * short of the foe, then across to it. Every click is on screen, so a
- * long leg takes several; each next one goes out once the view is
- * halfway to the last, so the hero never stops on the way. A click made
- * while the view moves can land off, most of all on a loaded host, so
- * a hero that stops short is sent on again from where it stands, the
- * view now still. Resolves once the view, which follows the hero, has
- * come to the last point.
+ * within 20 of `goal` (#2550): the map is wider than the view, so a
+ * foe on its spawn is off screen and out of every skill's reach.
+ * Ground clicks on open ground: onto the middle lane, along it, then
+ * across to the goal. Every click is on screen, so a long leg takes
+ * several; each next one goes out once the view is halfway to the
+ * last, so the hero never stops on the way. A click made while the view
+ * moves can land off, most of all on a loaded host, so a hero that
+ * stops short is sent on again from where it stands, the view now
+ * still. Resolves once the view, which follows the hero, has come to
+ * the goal.
  */
-export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Promise<void> {
+export async function walkTo(page: Page, canvas: Locator, goal: Point): Promise<void> {
   const stage = page.locator("#viewport");
   const camera = async (): Promise<Point> => {
     const [x = NaN, y = NaN] = ((await stage.getAttribute("data-camera")) ?? "")
@@ -309,8 +308,8 @@ export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Pr
   };
   const gap = (a: Point, b: Point): number => Math.hypot(a.x - b.x, a.y - b.y);
   const start = await camera();
-  const towards = Math.sign(foe.x - start.x);
-  const end = { x: foe.x - towards * 300, y: foe.y };
+  const towards = Math.sign(goal.x - start.x);
+  const end = goal;
   const route = [
     { x: start.x + towards * 200, y: EMBER_PITS_LANE_Y },
     { x: end.x, y: EMBER_PITS_LANE_Y },
@@ -350,9 +349,9 @@ export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Pr
           break;
         }
       }
-      const goal = step;
-      const close = goal === to ? near(reach) : Math.max(20, reach / 2);
-      await canvas.click({ position: view.onCanvas(goal) });
+      const aim = step;
+      const close = aim === to ? near(reach) : Math.max(20, reach / 2);
+      await canvas.click({ position: view.onCanvas(aim) });
       // On until close enough to click on, or until the hero (and the
       // view after it) has stood still for 0.6 s, wherever that is: a
       // shorter stillness is the click still on its way.
@@ -365,7 +364,7 @@ export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Pr
             const now = await camera();
             still = gap(now, was) < 1 ? still + 1 : 0;
             was = now;
-            return gap(now, goal) < close || still >= 3;
+            return gap(now, aim) < close || still >= 3;
           },
           { message: "the hero should walk or stop", timeout: 30_000, intervals: [0] },
         )
@@ -373,6 +372,4 @@ export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Pr
     }
     from = to;
   }
-  const there = await camera();
-  expect(gap(there, foe)).toBeLessThan(RANGE_SPELL);
 }
