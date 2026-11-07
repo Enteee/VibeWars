@@ -25,20 +25,42 @@ again, and the next match's bots are made afresh.
 A bot plays the role its build gives it. One wielding a melee weapon is
 **frontline**: it closes in and attacks its target. One with two or more
 heals or protections it can cast on an ally is a **healer**: it stands
-behind whichever ally is hurt most, away from the foes. Every other bot is
-**ranged**: it keeps where every one of its attacks reaches, and stands
-and fights a foe who comes too close. Ranged bots and healers step to
-where fewer foes can reach them, and use pillars as cover. A team turns
-on any foe in reach who drops below 60% health, to finish them. In King
-of the Hill, while your team does not hold the altar, the other team's
-Ghostly Hero on the altar comes before even that.
+behind whichever ally is hurt most, away from the foes. When two or more
+foes focus one ally, a healer puts its protection on that ally before the
+hit lands. Every other bot is **ranged**: it keeps where every one of its
+attacks reaches, and stands and fights a foe who comes too close. Ranged
+bots and healers step to where fewer foes can reach them, and use pillars
+as cover. A team turns on any foe in reach who drops below 60% health,
+to finish them. In King of the Hill, while your team does not hold the
+altar, the other team's Ghostly Hero on the altar comes before even that.
+A bot that gets far ahead of its team waits for the rest before it pushes
+on.
+
+Bot damage dealers hold their big hits, attack skills and damage spells,
+and fire them together on the team's target, so the damage lands at once
+rather than trickling in for a healer to undo: the slowest spell goes
+first, a quicker one as much later as it is quicker. Meanwhile they keep
+swinging and casting their hexes and conditions. A bot waits at most four
+seconds for its teammates, and doesn't wait at all to finish a foe below
+30% health.
 
 A badly hurt bot that is losing its fight falls back behind its healer, or
 to its base, and rests out of reach until it has most of its health back.
 
+A bot resurrects a fallen ally only when the foes are not on top of the
+body, more of its own team than of theirs standing near it, and never
+while a foe close by is targeting the bot itself.
+
 Bots side-step about half the skill shots aimed at them, such as a
 Fireball or an attack skill's arrow, so stopping or turning works for
 them as it does for you.
+
+A bot with an interrupt saves it for the casts that matter: a
+resurrection or a Ghostly Hero claiming the altar first, then a heal or a
+protection, an elite skill, or a big
+hit such as an attack skill or a damage spell. It lets everything else,
+and a plain weapon blow, go through. Like a player, it misses about one
+in four of those casts.
 
 A bot takes a human-like moment, a fraction of a second, to react to
 what happens, so a quick interrupt or a late dodge can beat it.

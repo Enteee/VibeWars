@@ -5,6 +5,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../../../ruleset.js";
 import { getSkill } from "../../../skills/catalog.js";
 import { STARTER_BUILDS } from "../../../starter-builds.js";
 import { STARTER_TEAMS } from "../../../starter-teams.js";
+import { TEST_BUILDS } from "../../../testing.js";
 import { add, scale, ZERO, type Vec2 } from "../../../vec2.js";
 import {
   createCursor,
@@ -28,17 +29,20 @@ export const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 export const DT = 1 / RULESET.tickRateHz;
 /** A field with edges, as every map has. */
 export const BOUNDS = { width: 1600, height: 800 };
+/** The match seed `contextFor` gives a bot's rolls (#2624). */
+export const CONTEXT_SEED = 0;
 /** A bot that holds each decision a steady 0.25 s, so the rules' tests time alike. */
 export const BOT: Behaviour = {
   kind: "play-build",
   reaction: { minSeconds: 0.25, maxSeconds: 0.25 },
 };
 
-/** A built-in build by name: a PvX one, or a starter team member's ("Warrior/Monk"). */
+/** A build by name: a PvX one, a starter team member's, or a test build ("Warrior/Monk"). */
 export function starter(name: string): PlayerBuild {
   const build = [
     ...STARTER_BUILDS,
     ...STARTER_TEAMS.flatMap((team) => team.members.map((member) => member.build)),
+    ...TEST_BUILDS,
   ].find((candidate) => candidate.name === name);
   if (build === undefined) throw new Error(`no starter build ${name}`);
   return build;
@@ -135,6 +139,7 @@ export function contextFor(
     foeCentroid: centroidOf(participants, (other) => other.combatant.team !== team),
     objectives: NO_OBJECTIVES,
     projectiles: sim.projectiles,
+    seed: CONTEXT_SEED,
     ...extra,
   };
 }
@@ -181,6 +186,7 @@ export function ruleFor(
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
     mayEndUpkeep: true,
     role: botRole(bar, self.combatant.equipment.mainHand.weapon.range),
+    spikeHold: true,
     foeCentroid: view.foeCentroid,
     roleOf,
     cursor: createCursor(),

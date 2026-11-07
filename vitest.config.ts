@@ -34,6 +34,8 @@ export default defineConfig({
       // The client's build plugins (#1242).
       "apps/web/plugins/**/*.test.ts",
       "scripts/**/*.test.mjs",
+      // The repository's own lint rules (#2648).
+      "eslint/**/*.test.mjs",
     ],
     reporters: ["default"],
     // Networked combat tests drive a whole session through multi-second

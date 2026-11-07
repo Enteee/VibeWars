@@ -1,4 +1,6 @@
+import { availableLanguages, type LanguageCode } from "../i18n/languages.js";
 import { controlsSection } from "./controls-section.js";
+import { languageSection } from "./language-section.js";
 import { playerSection } from "./player-section.js";
 import { relaySection } from "./relay-section.js";
 import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
@@ -24,9 +26,18 @@ export const soundSection: OptionsSection = {
   mount: (container) => mountSoundControls(container, soundControlsDeps()),
 };
 
-export const OPTIONS_SECTIONS: readonly OptionsSection[] = [
-  playerSection,
-  soundSection,
-  controlsSection,
-  relaySection,
-];
+/**
+ * The sections for a build with `languages`: Language first (#2648),
+ * and only when there is a second language to pick.
+ */
+export function optionsSections(languages: readonly LanguageCode[]): readonly OptionsSection[] {
+  return [
+    ...(languages.length > 1 ? [languageSection(languages)] : []),
+    playerSection,
+    soundSection,
+    controlsSection,
+    relaySection,
+  ];
+}
+
+export const OPTIONS_SECTIONS: readonly OptionsSection[] = optionsSections(availableLanguages());

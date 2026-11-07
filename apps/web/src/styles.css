@@ -1699,11 +1699,6 @@ body {
   gap: 0.8rem;
 }
 
-.rail-goal {
-  margin: 0;
-  color: var(--ink-dim);
-}
-
 /* The Matches page (#2532): one row a record, newest first. */
 .matches-note {
   margin: 0;
@@ -1779,12 +1774,6 @@ body {
   text-transform: uppercase;
 }
 
-.match-bot {
-  margin-left: 0.3rem;
-  font-size: 0.8em;
-  color: var(--ink-dim);
-}
-
 .match-tabs {
   display: flex;
   gap: 0.3rem;
@@ -1811,32 +1800,6 @@ body {
 .match-detail-summary,
 .match-detail-result {
   margin: 0;
-}
-
-.match-players {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  margin: 0.3rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.match-player {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.8rem;
-  align-items: center;
-}
-
-.match-professions,
-.match-attributes,
-.match-build-unreadable {
-  color: var(--ink-dim);
-}
-
-.match-player .mini-skill-bar {
-  flex-basis: 100%;
 }
 
 /* The menu's cards (#1453, #1525): characters and Team Builds alike. */
@@ -2275,7 +2238,7 @@ body {
 
 /* A counter or a found skill marks its cells and dims the rest. */
 .team-skill[role="button"] {
-  cursor: pointer;
+  cursor: grab;
 }
 
 .team-grid.is-highlighting .team-skill:not(.is-marked) {
@@ -2372,12 +2335,6 @@ body {
   min-height: 0;
 }
 
-.picker-hint {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--ink-dim);
-}
-
 .team-pick[draggable="true"] {
   cursor: grab;
 }
@@ -2439,6 +2396,13 @@ body {
   flex: 1 1 auto;
   flex-direction: column;
   min-width: 0;
+}
+
+/* A PvX build's name is up to 40 characters (#2636). */
+.team-pick-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .team-pick-sub {
@@ -3597,11 +3561,19 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: 0;
   padding: 0.3rem;
   border: 1px solid var(--line);
   border-radius: 4px;
   background: var(--panel);
   font-size: 0.75rem;
+}
+
+.team-lobby-drawer-member-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .screen .team-lobby-drawer-go {
@@ -4100,6 +4072,7 @@ body {
   font-weight: normal;
   text-align: left;
   text-overflow: ellipsis;
+  white-space: nowrap;
   border-left: 3px solid transparent;
 }
 
@@ -5111,6 +5084,11 @@ button.skill-group-header > .skill-group-rank {
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+/* A card that drags shows it (#2643); a locked one only opens. */
+.skill-box[draggable="true"] .skill-box-card {
+  cursor: grab;
 }
 
 /* The icon on the left (#727), beside the two lines of text, so the row
@@ -6461,12 +6439,6 @@ button.skill-group-header > .skill-group-rank {
   color: var(--damage);
   font-family: inherit;
   white-space: pre-wrap;
-}
-
-.beat-editor-hint {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--ink-dim);
 }
 
 /* --- sound controls (#424): Options → Sound and the HUD's ♪ popover ------ */

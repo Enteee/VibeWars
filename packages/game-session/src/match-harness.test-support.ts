@@ -15,6 +15,7 @@ import {
   type MatchRules,
   type PlayerBuild,
 } from "@vibewars/game-core";
+import { TEST_BUILDS } from "@vibewars/game-core/testing";
 import {
   PROTOCOL_VERSION,
   parsePeerRejoinChallenge,
@@ -299,13 +300,14 @@ export function toJson(value: unknown): JsonValue {
 }
 
 /**
- * The built-in build named `name`: a PvX one (#2554), "Gust (E/Me)", or a
- * starter team member's, "Warrior/Monk" and so on.
+ * The build named `name`: a PvX one (#2554), "Gust (E/Me)", a starter team
+ * member's, or a test build, "Warrior/Monk" and so on.
  */
 export function starterBuild(name: string): PlayerBuild {
   const build = [
     ...STARTER_BUILDS,
     ...STARTER_TEAMS.flatMap((team) => team.members.map((member) => member.build)),
+    ...TEST_BUILDS,
   ].find((starter) => starter.name === name);
   if (build === undefined) {
     throw new Error(`no starter build ${name}`);

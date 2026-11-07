@@ -3,6 +3,11 @@
  * #2546: every Good and Great one there, Meta and Provisional included,
  * PvE packs left out. `professions` and `mode` are the PvX file's own,
  * `any` for a secondary PvX leaves open; the code says which it is.
+ *
+ * Adapted from gwpvx.fandom.com, CC BY-SA 3.0
+ * (https://www.fandom.com/licensing); this data is shared under the same
+ * licence. Each build's `name` is its PvX page name, the attribution.
+ * Credited on the Help licences page (#2557).
  */
 export interface PvxBuild {
   readonly professions: string;
@@ -723,9 +728,188 @@ export const PVX_SOLO: readonly PvxBuild[] = [
 ];
 
 /**
- * The PvX builds that do not become a build here, and why: a skill not
- * in the game yet, or a bar the build rules refuse. Never patched to
+ * The PvX wiki's PvP team builds (#2555), from the same list: every Good
+ * and Great one, Provisional included. `members` are the team's member
+ * codes in slot order; how many is the team size it serves, so one of 3,
+ * 6, 7 or 9 serves none.
+ */
+export interface PvxTeam {
+  readonly name: string;
+  readonly rating: string;
+  readonly members: readonly string[];
+}
+
+export const PVX_TEAMS: readonly PvxTeam[] = [
+  {
+    name: "AB April Dual Invoke",
+    rating: "Provisional-Great",
+    members: [
+      "OwZjsod8IOs5/HDLhZ8RYPjJI",
+      "OgdTgYG/HiWIcAQLrybYB0YoBC",
+      "OwcU04HC1vQeRNgaRCE3NTf3ECMA",
+    ],
+  },
+  {
+    name: "AB Balanced",
+    rating: "Provisional-Great",
+    members: [
+      "OQYTgmIL5RqsXpKMlzhW5nsWA",
+      "OgATcXsmV6xQ1oq5yo4Y24XDAA",
+      "OgljowMpZS0C4C+Z/C9C7CAA7YA",
+      "OwEU04HCx6ReRNgAACErETf3EzFA",
+    ],
+  },
+  {
+    name: "AB Grapple Balanced",
+    rating: "Provisional-Great",
+    members: [
+      "OQYUs0IK5qMRFoyeVPu91K/knB",
+      "OAmkEeiMpZmE0m3kxVGzEzwGJ2OG",
+      "OglkgwMpZeOEtQ4Agm3wCI3wn4OG",
+      "OwEU04HCx6ReRNg3NCErETf3EzFA",
+    ],
+  },
+  {
+    name: "Balthazar FFF Zaishen Trappers",
+    rating: "Provisional-Good",
+    members: [
+      "OgAScZMTDXNHKHchLHJHAAXHA",
+      "OgAScZMTDXNHKHchJHAAbHPHA",
+      "OgATYzbiZa4KYT5gLcXCAQ7A4C",
+      "OgBSoYGLKDwsM9STHM0CuA",
+      "OgNToYG3mRZAMIr9icGIhWgLA",
+      "OgBTgU1yUSZAYIXoXIHaBkWAXA",
+      "OACjAuiKpOVzgZ58bGtPbbOnJ",
+      "OACjAuiKpOVTsZ58bGtPbkTnJ",
+    ],
+  },
+  {
+    name: "GvG Dual Elementalist Spike",
+    rating: "Great",
+    members: [
+      "OQYTgmILZSqoScvip4cQr4nQAA",
+      "OQgjExTc4QGWjFLFgFGFMF8VJXA",
+      "OgpSgYGT0ChDAaeDLgcDgC0XA",
+      "OgpjowM5aS0C4C5C/CjVCRlVsXA",
+      "OwET8YIWViiQLKgQgYlom4BcuA",
+      "OwcU04XCz/QeRNgkECE1NTf3ENQA",
+      "OwcT02nCVyLqBULSgouZ67mYCC",
+    ],
+  },
+  {
+    name: "GvG RNE Split",
+    rating: "Provisional-Great",
+    members: [
+      "OgikEGpqqyuk7l3G3XAW5m4GCWyF",
+      "OQASE5JPG2xySBsAAYK8VAA",
+      "OgATcXsm1pq9YUNFHAws5XDAA",
+      "OAdSQYDTUVtBgNFCNiPCTQAAA",
+      "OgpjowM5aS0C4C5C/CjVCRlVsXA",
+      "OgpjgwM5aS0ChDNDAAeD6QgCsXA",
+      "OwET8YIWViiQLKgQgYlom4BcuA",
+      "OwcU04XCz/QeRNgkECE1NTf3ENQA",
+      "OwcT02nCVyLqBULSgouZ67mYCC",
+    ],
+  },
+  {
+    name: "GvG Triple Melee",
+    rating: "Great",
+    members: [
+      "OgijkqqK7SuXebcfBYlbibIYCAA",
+      "OQgjExTc4QGWjFLFgFGFMF8VJXA",
+      "OgATcXsm1pq9YUNFHAws5XDAA",
+      "OAdSQYDTUVtBgNFCNiPCTQzBA",
+      "OwET8YIWViiQLKgQgYlom4BcuA",
+      "OwcU04XCz/QeRNgkECE1NTf3ENQA",
+      "OwcT02nCVyLqBULSgouZ67mYCC",
+    ],
+  },
+  {
+    name: "HA Balanced",
+    rating: "Provisional-Great",
+    members: [
+      "OQYTgmILZSqoSkqgp4cQr4nQAA",
+      "OQkSE5JPiFwyShpYY5rfYBA",
+      "OgYUky7ixMO+6HDi5XPbiFtCBA",
+      "OgljowMpZOIDcRuYsCA6F3YAA",
+      "OQhkAgC8gGKEAQOQPgHwMQRQFwFD",
+      "OASjcMhMJTPTXPTMZMDTjTNCJXA",
+      "OwoS8YITaRBEUECE3VPg1E0XA",
+      "OwUUMwG/EoSkENgbEeR9A3ETfmAA",
+    ],
+  },
+  {
+    name: "HA Dual Elementalist Spike",
+    rating: "Great",
+    members: [
+      "OQYTgmIL5RqAV2rMlzhW5nIAA",
+      "OQkSE5JPiFwyShp8h5rGWBA",
+      "OglSkYGTdVbDrCIDtCxCpCCAA",
+      "OglkowMZ5YmzQsXQM2FIDcxNWAA",
+      "OQhTAQBPU6EYGwDoIIHIDoH4iB",
+      "OASjcMhMJTPTNCZMXPDTjTTMJXA",
+      "OwoS8YITaRBEUECE3VPg1E0XA",
+      "OwUTMwGDVikoB0L6uZ6rH4mwEA",
+    ],
+  },
+  {
+    name: "HA Henchway",
+    rating: "Meta-Good",
+    members: ["OgBSoYWO4ijIv4WMMUGADAA", "OQBTAUBPwhGkDkB3USnLwEAAA"],
+  },
+  {
+    name: "HA Invoke Spike",
+    rating: "Good",
+    members: [
+      "OgRUUsjoY2S5CjV/C9C4C0CeBNCA",
+      "OgRTcMEzWCQzbIHSUIcgW4TQAA",
+      "OghkgwJJTGOEgm3QOUrQ4AtQsgAA",
+      "OglkgwJJTWOEgm3QOUrQ4AtQswHG",
+      "OglkgwMZ5YmEgm3QO0NW4AtwOmAA",
+      "OghjgsMY4SAaeD5QTMhDIDZMJXA",
+      "OwoS8YIT3VCEUEaRBE0XPg1EA",
+      "OwoT04HCVqBUgwLikg+6uZ67mA",
+    ],
+  },
+  {
+    name: "HA IWAY",
+    rating: "Provisional-Great",
+    members: [
+      "OQITEZJbnJqsXpKMleSTZzIAA",
+      "OQITEZKbnwvA2w/svNdzCA",
+      "OQITE5JbnRsAWWK/EDbTZzIAA",
+      "OgYTkw7i3py8Y4ObnepwpVELA",
+      "Owkj8wQopSKEfP3VaR7Y3YfYCAA",
+      "OghiwwhMFWJNN5I8kxMMd9MOB",
+      "OghiwwhMFWJNN5I8kxMMd9QtB",
+    ],
+  },
+  {
+    name: "HA RaO Sway",
+    rating: "Provisional-Good",
+    members: [
+      "OgETIZrexJXHV2rUFmCtZzIAA",
+      "OgYTkwLj15xIs5O9yrTrIWIcA",
+      "OAmkAyhioRuj68xFOteYTm5HO5C",
+      "Owkj8oQrpS3VaRPgKEfY3Y7YCAA",
+      "OghjsMMcIPhVh3kTamxueXjxJ",
+      "Oghiwwh8EWFeTOpZG76NMp2A",
+    ],
+  },
+];
+
+/**
+ * The PvX builds and teams that do not become one here, and why: a skill
+ * not in the game yet, a bar the build rules refuse, or a team of a size
+ * there is not. Never patched to
  * fit. `pvx-builds.test.ts` holds this to exactly what decoding skips,
  * so a skill landing that makes one decode fails it until it is struck.
  */
-export const PVX_SKIPPED: Readonly<Record<string, string>> = {};
+export const PVX_SKIPPED: Readonly<Record<string, string>> = {
+  "Team AB April Dual Invoke": "3 members: no team size has that many.",
+  "Team GvG Dual Elementalist Spike": "7 members: no team size has that many.",
+  "Team GvG RNE Split": "9 members: no team size has that many.",
+  "Team GvG Triple Melee": "7 members: no team size has that many.",
+  "Team HA IWAY": "7 members: no team size has that many.",
+  "Team HA RaO Sway": "6 members: no team size has that many.",
+};

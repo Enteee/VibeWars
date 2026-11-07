@@ -121,7 +121,7 @@ export {
   type StarterTeam,
   type StarterTeamMember,
 } from "./starter-teams.js";
-export { FIRST_NAMES, SURNAMES, randomCharacterName } from "./character-names.js";
+export { PLAYER_ADJECTIVES, PLAYER_NOUNS, randomPlayerName } from "./player-names.js";
 
 export * from "./skills/index.js";
 
@@ -255,6 +255,7 @@ export {
   nearestLiving,
   resolveTargeting,
 } from "./match/behaviour.js";
+export { isSpikeSkill } from "./match/bot/skill-intent.js";
 
 export type {
   TrainingDummy,

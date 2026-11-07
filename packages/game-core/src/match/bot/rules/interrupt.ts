@@ -1,22 +1,27 @@
+import { getSkill } from "../../../skills/catalog.js";
+import { CLAIM_SKILL_ID } from "../../ghost.js";
 import type { Skill, SkillEffect } from "../../../skills/types.js";
 import { swingProgress } from "../../../skills/weapon-attack.js";
 import type { Participant } from "../../simulation.js";
 import { distance } from "../../../vec2.js";
-import { botUses, interruptAimed } from "../skill-intent.js";
+import { botUses, interruptAimed, isSpikeSkill } from "../skill-intent.js";
+import { botRoll, INTERRUPT_CHANCE } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /** How much longer than the interrupt itself a cast or a swing must have left. */
 const INTERRUPT_MARGIN_SECONDS = 0.25;
 
 /**
- * Interrupt a cast it can still beat; with none worth it, a plain swing
- * (#1713). Only what the interrupt would land on, filter and condition
- * read (`interruptAimed`): never a spell interrupt at a signet.
+ * Interrupt a cast worth it that it can still beat (#2633); with none, a
+ * foe's swing of an attack skill (#1713). Only what the interrupt would
+ * land on, filter and condition read (`interruptAimed`): never a spell
+ * interrupt at a signet. It tries `INTERRUPT_CHANCE` of the casts worth
+ * it, one roll for each, and leaves the rest alone, as a player misses.
  */
 const interrupt: BotRule = {
   order: 10,
   name: "interrupt",
-  decide: ({ self, bar, foes, mayUse, use }) => {
+  decide: ({ context, self, bar, foes, mayUse, use }) => {
     const interrupts = bar.filter((skill) => botUses(skill).includes("interrupt"));
     const interrupting = (lands: "cast" | "swing", foe: Participant, leftSeconds: number) =>
       interrupts.find(
@@ -25,23 +30,42 @@ const interrupt: BotRule = {
           interruptAimed(held, self.combatant, foe.combatant) === lands &&
           mayUse(held, foe.id),
       );
-    // Complicate's (#2165): one that splashes goes where the most foes stand.
-    let best: { foe: Participant; skill: Skill; crowd: number } | undefined;
+    // The most important cast first; then Complicate's (#2165), one that
+    // splashes goes where the most foes stand; then the one ending soonest.
+    let best:
+      { foe: Participant; skill: Skill; worth: number; crowd: number; left: number } | undefined;
     for (const foe of foes) {
       const activeCast = foe.combatant.cast.activeCast;
-      const skill =
-        activeCast === undefined
-          ? undefined
-          : interrupting("cast", foe, activeCast.remainingSeconds);
-      const crowd = skill === undefined ? 0 : crowdAround(skill, foe, foes);
-      if (skill !== undefined && (best === undefined || crowd > best.crowd)) {
-        best = { foe, skill, crowd };
+      const worth = activeCast === undefined ? undefined : worthOf(activeCast.skillId);
+      if (
+        activeCast === undefined ||
+        worth === undefined ||
+        botRoll(context.seed, activeCast.ordinal, `${self.id}>${foe.id}`) >= INTERRUPT_CHANCE
+      ) {
+        continue;
+      }
+      const skill = interrupting("cast", foe, activeCast.remainingSeconds);
+      if (skill === undefined) {
+        continue;
+      }
+      const crowd = crowdAround(skill, foe, foes);
+      const left = activeCast.remainingSeconds;
+      if (
+        best === undefined ||
+        worth < best.worth ||
+        (worth === best.worth && (crowd > best.crowd || (crowd === best.crowd && left < best.left)))
+      ) {
+        best = { foe, skill, worth, crowd, left };
       }
     }
     if (best !== undefined) {
       return use(best.skill, best.foe.id);
     }
+    // A plain blow is never worth one: only an attack skill's.
     for (const foe of foes) {
+      if (foe.armedAttack === undefined) {
+        continue;
+      }
       const swing = swingProgress(foe.combatant);
       const skill = interrupting("swing", foe, swing.total - swing.elapsed);
       if (skill !== undefined) {
@@ -53,6 +77,30 @@ const interrupt: BotRule = {
 };
 
 export default interrupt;
+
+/**
+ * How much interrupting the cast of `skillId` is worth (#2633), lower
+ * first: a resurrection or a Ghostly Hero's altar claim, a heal or a
+ * protection, an elite, a spike. `undefined`: anything else, which is
+ * left to land.
+ */
+function worthOf(skillId: string): number | undefined {
+  const skill = getSkill(skillId);
+  if (skill === undefined) {
+    return undefined;
+  }
+  const uses = botUses(skill);
+  if (skillId === CLAIM_SKILL_ID || uses.includes("resurrect")) {
+    return 0;
+  }
+  if (uses.includes("healing") || uses.includes("defence")) {
+    return 1;
+  }
+  if (skill.elite) {
+    return 2;
+  }
+  return isSpikeSkill(skill) ? 3 : undefined;
+}
 
 /** How many other foes stand in the area of `skill`'s splash around `foe`; none splashes: 0. */
 function crowdAround(skill: Skill, foe: Participant, foes: readonly Participant[]): number {

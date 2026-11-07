@@ -153,6 +153,12 @@ export type Behaviour =
        * decision from `[minSeconds, maxSeconds)`. Both `0`: every tick.
        */
       readonly reaction: Reaction;
+      /**
+       * Whether its damage dealers hold their spike skills for the team's
+       * (#2631). `false`: each fires the moment it can, the bots the spike
+       * is measured against. Unset: they hold.
+       */
+      readonly spikeHold?: boolean;
     }
   /**
    * A guard's (#1222): hold `post`, and play its bar as `play-build` does
@@ -227,6 +233,14 @@ export interface BehaviourCursor {
   wardId: string | undefined;
   /** `play-build`, a healer: the spot it walks to, kept until a fresh one is clearly elsewhere (#2615). */
   coverSpot: Vec2 | undefined;
+  /** `play-build`: waiting, ahead of its team, for the rest to catch up (#2621). */
+  regrouping: boolean;
+  /** `play-build`: the team target it holds its spike skills for (#2631), `undefined` while it holds none. */
+  spikeTargetId: string | undefined;
+  /** `play-build`: how long it has held them for `spikeTargetId` (#2631). */
+  spikeHeldSeconds: number;
+  /** `play-build`: how long its team's spike at `spikeTargetId` has been ready, `undefined` while it is not (#2631). */
+  spikeReadySeconds: number | undefined;
   /** `play-build` and `guard`: how many decisions it has made, the seed of its next reaction time (#2606). */
   thinks: number;
   /** `play-build`: each foe's reach, read once from its bar (#2598). */
@@ -264,6 +278,8 @@ export interface BehaviourContext {
   readonly objectives: BotObjectives;
   /** The shots in flight (#2590), in release order. */
   readonly projectiles: readonly Readonly<Projectile>[];
+  /** The match's seed as a number, mixed into a bot's rolls (#2624). */
+  readonly seed: number;
 }
 
 /**
@@ -307,6 +323,10 @@ export function createCursor(): BehaviourCursor {
     upkeepDropSeconds: 0,
     wardId: undefined,
     coverSpot: undefined,
+    regrouping: false,
+    spikeTargetId: undefined,
+    spikeHeldSeconds: 0,
+    spikeReadySeconds: undefined,
     thinks: 0,
     foeReach: new Map(),
   };

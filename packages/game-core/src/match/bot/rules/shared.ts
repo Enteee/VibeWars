@@ -1,7 +1,12 @@
 import { RANGE_MELEE, RANGE_SPELL } from "../../../distances.js";
+import { energyCostOf } from "../../../skills/activation.js";
+import { canAffordAdrenaline } from "../../../skills/adrenaline.js";
 import { getSkill } from "../../../skills/catalog.js";
-import { raisedMaxHealth } from "../../../skills/tick.js";
-import type { Skill } from "../../../skills/types.js";
+import { chainAllows } from "../../../skills/chain.js";
+import { getStatusDefinition, preventsAttacks, preventsSpells } from "../../../skills/status.js";
+import { effectiveActivationSeconds, raisedMaxHealth } from "../../../skills/tick.js";
+import { attackDurationSeconds } from "../../../skills/weapon-attack.js";
+import { isSpell, type Skill } from "../../../skills/types.js";
 import { distance, ZERO, type Vec2 } from "../../../vec2.js";
 import type { BehaviourIntent, Reaction } from "../../behaviour.js";
 import type { BehaviourContext } from "../../behaviour.js";
@@ -9,7 +14,7 @@ import { FLAG_REACH_UNITS } from "../../flags.js";
 import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
 import { roleOf } from "../role.js";
-import { botUses, summonAura } from "../skill-intent.js";
+import { botUses, isSpikeSkill, summonAura } from "../skill-intent.js";
 
 export const NOTHING: BehaviourIntent = {
   moveDirection: ZERO,
@@ -23,6 +28,9 @@ export const NOTHING: BehaviourIntent = {
 
 /** Below this share of its health, an ally is worth a heal. */
 export const HURT_FRACTION = 0.6;
+
+/** How many foes on one ally make it a spike to protect against (#2627). */
+export const SPIKE_FOES = 2;
 
 /** How much more hurt than it is a foe healer counts when the team picks a target (#2573). */
 export const HEALER_PRIORITY = 0.25;
@@ -176,6 +184,12 @@ export const WARD_SWITCH = 0.15;
 /** A healer walks to a fresh spot only once it is this far from the one it keeps (#2615). */
 export const RESPOT_DISTANCE = 2 * POSITION_SLACK;
 
+/** A bot this far from its team's centre, and ahead of it, waits for the rest (#2621). */
+export const REGROUP_SPREAD = 300;
+
+/** A bot waiting for its team walks on once this near the team's centre (#2621). */
+export const REGROUP_JOINED = 150;
+
 /**
  * A foe at `self`'s elbow, one to stand and fight (#2545): one with a
  * melee weapon within `ELBOW_DISTANCE`, on `self`: targeting or
@@ -226,24 +240,35 @@ export const REST_FRACTION = 0.7;
 /** The share of the skill shots aimed at it a bot side-steps (#2590). */
 export const DODGE_CHANCE = 0.5;
 
+/** The share of the casts worth it a bot tries to interrupt (#2633); it misses the rest. */
+export const INTERRUPT_CHANCE = 0.75;
+
 /**
- * A bot's coin for one shot (#2590), in [0, 1): a pure hash of the shot's
- * `projectileId` and the bot's `participantId`, FNV-1a then a 32-bit
- * finaliser. No RNG state, so a replay dodges the same shots.
+ * A bot's coin for one thing it may react to, in [0, 1): a shot to dodge
+ * (#2590) or a cast to interrupt (#2633). A pure hash of the match's
+ * `seed`, the thing's `id` and the `key` of who rolls for it, FNV-1a then
+ * a 32-bit finaliser. No RNG state, so a replay rolls the same; the seed
+ * in it, so no id is the luckier one in every match (#2624).
  */
-export function dodgeRoll(projectileId: number, participantId: string): number {
-  return roll(participantId, projectileId, 0x811c9dc5);
+export function botRoll(seed: number, id: number, key: string): number {
+  return roll(key, id, 0x811c9dc5 ^ seed);
 }
 
 /**
  * How long a bot holds its `thinks`-th decision (#2606), in
- * `reaction`'s `[minSeconds, maxSeconds)`: as `dodgeRoll`, a pure hash of
- * its `participantId` and `thinks`, on its own basis so it does not follow
- * the dodge coin. No RNG state, so a replay reacts as late.
+ * `reaction`'s `[minSeconds, maxSeconds)`: as `botRoll`, a pure hash of
+ * the match's `seed`, its `participantId` and `thinks`, on its own basis
+ * so it does not follow the dodge coin. No RNG state, so a replay reacts
+ * as late.
  */
-export function reactionSeconds(reaction: Reaction, participantId: string, thinks: number): number {
+export function reactionSeconds(
+  reaction: Reaction,
+  seed: number,
+  participantId: string,
+  thinks: number,
+): number {
   const span = reaction.maxSeconds - reaction.minSeconds;
-  return reaction.minSeconds + span * roll(participantId, thinks, 0x9e3779b9);
+  return reaction.minSeconds + span * roll(participantId, thinks, 0x9e3779b9 ^ seed);
 }
 
 /** FNV-1a of `text` then `value` from `basis`, then a 32-bit finaliser: in [0, 1). */
@@ -256,6 +281,111 @@ function roll(text: string, value: number, basis: number): number {
   hash = Math.imul(hash ^ (hash >>> 16), 0x85ebca6b);
   hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35);
   return ((hash ^ (hash >>> 16)) >>> 0) / 0x1_0000_0000;
+}
+
+/** At most this many damage dealers ready to fire make a spike (#2631). */
+export const SPIKE_READY_MAX = 2;
+
+/** A bot that has held a spike skill this long casts it anyway (#2631). */
+export const SPIKE_HOLD_MAX_SECONDS = 4;
+
+/** Below this share of its health the team's target gets no spike held for it: it is finished (#2631). */
+export const SPIKE_FINISH_FRACTION = 0.3;
+
+/**
+ * When the team's spike at `target` lands (#2631), `undefined` while it is
+ * not ready: of `mates`, its living players, at least `SPIKE_READY_MAX`
+ * damage dealers, or all of them if fewer, are casting a spike skill at it
+ * or hold one they could fire at it now. Then the seconds until the last of
+ * those lands, the ones not yet casting firing now, `readySeconds` after the
+ * spike was first seen ready. A bot whose own lands in no more fires: the
+ * slowest at once, a faster one the difference later, so the hits land
+ * together. With one damage dealer there is nobody to wait for: 0.
+ */
+export function spikeLands(
+  mates: readonly Participant[],
+  target: Participant,
+  readySeconds: number,
+): number | undefined {
+  let dealers = 0;
+  let ready = 0;
+  let latest = 0;
+  for (const mate of mates) {
+    const lands = spikeOf(mate, target, readySeconds);
+    if (lands === "none") {
+      continue;
+    }
+    dealers += 1;
+    if (lands !== "held") {
+      ready += 1;
+      latest = Math.max(latest, lands);
+    }
+  }
+  if (dealers <= 1) {
+    return 0;
+  }
+  return ready >= Math.min(SPIKE_READY_MAX, dealers) ? latest : undefined;
+}
+
+/**
+ * How long `skill`, a spike skill, takes `caster` to land on `target`
+ * (#2631), as the simulation times it: a spell's activation, an attack
+ * skill's wind-up to its blow. Projectile travel is not counted.
+ */
+export function spikeSeconds(skill: Skill, caster: Participant, target: Participant): number {
+  if (skill.type !== "attack") {
+    return effectiveActivationSeconds(skill, caster.combatant, target.combatant);
+  }
+  const weapon = caster.combatant.equipment.mainHand.weapon;
+  const base = skill.activationSeconds > 0 ? skill.activationSeconds : weapon.attackIntervalSeconds;
+  return attackDurationSeconds(caster.combatant, base) / 2;
+}
+
+/**
+ * `mate`'s spike at `target`: the seconds until it lands if it is casting
+ * a spike skill at it, or holds one it could fire now as `canActivate`
+ * reads it (recharged, affordable, not barred by a status, slowed by none,
+ * in range), fired `readySeconds` after the spike was first seen ready;
+ * "held" with spike skills but none of those; "none" without.
+ */
+function spikeOf(
+  mate: Participant,
+  target: Participant,
+  readySeconds: number,
+): number | "held" | "none" {
+  const combatant = mate.combatant;
+  const casting = combatant.cast.activeCast;
+  if (casting?.targetId === target.id) {
+    const skill = getSkill(casting.skillId);
+    if (skill !== undefined && isSpikeSkill(skill)) {
+      return casting.remainingSeconds;
+    }
+  }
+  const away = distance(mate.position, target.position);
+  let spike: "held" | "none" = "none";
+  for (const id of mate.skillBar) {
+    const skill = id === null ? undefined : getSkill(id);
+    if (skill === undefined || !isSpikeSkill(skill)) {
+      continue;
+    }
+    spike = "held";
+    const spell = isSpell(skill.type);
+    const active = combatant.statuses.active;
+    if (
+      away <= skill.range &&
+      (combatant.cast.rechargeRemaining.get(skill.id) ?? 0) <= 0 &&
+      !combatant.cast.spent.has(skill.id) &&
+      !(spell && preventsSpells(active)) &&
+      !(spell && active.some((status) => getStatusDefinition(status.id).castTimeMultiplier > 1)) &&
+      !(skill.type === "attack" && preventsAttacks(active)) &&
+      chainAllows(combatant, skill, target.id) &&
+      combatant.energy >= energyCostOf(skill, combatant, target.combatant) &&
+      (skill.cost?.kind !== "adrenaline" || canAffordAdrenaline(combatant, skill))
+    ) {
+      return Math.max(0, spikeSeconds(skill, mate, target) - readySeconds);
+    }
+  }
+  return spike;
 }
 
 /**

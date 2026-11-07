@@ -2,18 +2,10 @@ import { STARTER_BUILDS } from "@vibewars/game-core";
 import { recordTemplate, type MatchRecord, type MatchRecordTeam } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { arenaIds } from "../net/maps.js";
 import type { MatchRecordWatchHandlers } from "../net/transport/match-records.js";
-import {
-  BUILD_UNREADABLE,
-  HOST_REPORTED,
-  MATCHES_KEPT,
-  MATCHES_OFFLINE,
-  NO_MATCHES,
-  TEAM_UNREADABLE,
-  relativeTime,
-  renderMatchesScreen,
-} from "./matches-screen.js";
+import { MATCHES_KEPT, relativeTime, renderMatchesScreen } from "./matches-screen.js";
 
 const NOW = 1_800_000_000_000;
 
@@ -220,12 +212,12 @@ describe("the Matches page (#2532)", () => {
   it("says no match has been played yet, and that the relays are out of reach", () => {
     const { root } = render();
     const note = root.one("matches-note");
-    expect(note.textContent).toBe(NO_MATCHES);
+    expect(note.textContent).toBe(t("matches.noMatches"));
     expect(note.hidden).toBe(false);
     expect(root.all("match-row")).toEqual([]);
 
     on?.noRelay();
-    expect(note.textContent).toBe(MATCHES_OFFLINE);
+    expect(note.textContent).toBe(t("matches.offline"));
   });
 
   it("shows a record as one line: mode, each player's profession, winner, map, duration, when, badge (#2585)", () => {
@@ -234,13 +226,13 @@ describe("the Matches page (#2532)", () => {
     const [row] = root.all("match-row");
     expect(root.one("matches-note").hidden).toBe(true);
     expect(row?.one("match-mode").textContent).toBe("Random Arena");
-    expect(row?.one("match-when").textContent).toBe("2 min ago");
+    expect(row?.one("match-when").textContent).toBe(t("matches.minutesAgo", { count: 2 }));
     expect(row?.one("match-duration").textContent).toBe("5:05");
     const badge = row?.one("match-host-reported");
-    expect(badge?.title).toBe(HOST_REPORTED);
+    expect(badge?.title).toBe(t("matches.hostReportedTitle"));
     const teams = row?.all("match-team") ?? [];
     expect(teams.map((team) => team.className)).toEqual(["match-team is-winner", "match-team"]);
-    expect(row?.one("match-result").textContent).toBe("◂ Won");
+    expect(row?.one("match-result").textContent).toBe(t("matches.wonLeft"));
     const icons = teams.map((team) => team.all("match-player-icon"));
     expect(icons.map((team) => team.length)).toEqual([1, 1]);
     expect(icons[0]?.[0]?.title).toMatch(/^Ann \[VIBE\]: \S/);
@@ -254,13 +246,13 @@ describe("the Matches page (#2532)", () => {
   it("marks a draw, and no team the winner; a second team's win points right", () => {
     const { root } = render();
     hear("a", { ...RECORD, winningTeam: null });
-    expect(root.one("match-result").textContent).toBe("Draw");
+    expect(root.one("match-result").textContent).toBe(t("matches.draw"));
     expect(root.all("match-team").map((team) => team.className)).toEqual([
       "match-team",
       "match-team",
     ]);
     hear("b", { ...RECORD, endedAt: RECORD.endedAt + 1, winningTeam: 1 });
-    expect(root.all("match-result")[0]?.textContent).toBe("Won ▸");
+    expect(root.all("match-result")[0]?.textContent).toBe(t("matches.wonRight"));
   });
 
   it("puts a record heard live at the top when it is the newest", () => {
@@ -269,9 +261,9 @@ describe("the Matches page (#2532)", () => {
     hear("new");
     hear("older", { ...RECORD, endedAt: RECORD.endedAt - 3600 });
     expect(root.all("match-when").map((when) => when.textContent)).toEqual([
-      "2 min ago",
-      "12 min ago",
-      "1 h ago",
+      t("matches.minutesAgo", { count: 2 }),
+      t("matches.minutesAgo", { count: 12 }),
+      t("matches.hoursAgo", { count: 1 }),
     ]);
   });
 
@@ -291,7 +283,7 @@ describe("the Matches page (#2532)", () => {
     expect(durations()).not.toContain("116:40");
   });
 
-  it("opens a record's detail in place: each player's professions, attributes and bar", () => {
+  it("opens a record's detail in place: the team card, and no list under it (#2637)", () => {
     const { root } = render();
     hear("a");
     const head = root.one("match-row-head");
@@ -299,31 +291,66 @@ describe("the Matches page (#2532)", () => {
     head.click();
     expect(head.attributes.get("aria-expanded")).toBe("true");
     const detail = root.one("match-detail");
-    expect(detail.all("match-player")).toHaveLength(1);
-    expect(detail.one("match-player").one("match-player-name").textContent).toBe("Ann [VIBE]");
-    expect(detail.one("match-players").all("mini-skill-bar")).toHaveLength(1);
-    expect(detail.one("match-professions").textContent).not.toBe("");
-    expect(detail.one("match-detail-result").textContent).toBe("Team 1: Won");
-    expect(detail.one("match-detail-summary").textContent).toBe("Annihilation after 5:05");
+    expect(detail.all("play-card")).toHaveLength(1);
+    expect(detail.all("match-players")).toHaveLength(0);
+    expect(detail.all("match-player")).toHaveLength(0);
+    // The card member rows carry the only skill bars.
+    expect(detail.all("mini-skill-bar")).toEqual(detail.one("play-card").all("mini-skill-bar"));
+    expect(detail.one("match-detail-result").textContent).toBe(
+      t("matches.teamResult", { team: 1, result: t("matches.won") }),
+    );
+    expect(detail.one("match-detail-summary").textContent).toBe(
+      t("matches.endSummary", { reason: t("matches.endAnnihilation"), duration: "5:05" }),
+    );
 
     head.click();
     expect(root.all("match-detail")).toHaveLength(0);
   });
 
-  it("says a build it cannot read is unreadable, and shows the rest", () => {
+  it("says a build it cannot read is unreadable", () => {
     const { root } = render();
     const [ann, bot] = [RECORD.teams[0].players[0], RECORD.teams[1]];
     if (ann === undefined) {
       return;
     }
     hear("a", { ...RECORD, teams: [{ players: [{ ...ann, template: "!!!" }] }, bot] });
-    expect(root.one("match-player-icon").title).toBe(`Ann [VIBE]: ${BUILD_UNREADABLE}`);
-    root.one("match-row-head").click();
-    expect(root.one("match-player").one("match-build-unreadable").textContent).toBe(
-      BUILD_UNREADABLE,
+    expect(root.one("match-player-icon").title).toBe(
+      t("matches.playerBuild", { player: "Ann [VIBE]", build: t("matches.buildUnreadable") }),
     );
-    root.all("match-tab")[1]?.click();
-    expect(root.one("match-player").all("mini-skill-bar")).toHaveLength(1);
+  });
+
+  it("puts the winner's tab first and opens it, keeping each team's number (#2637)", () => {
+    const { root } = render();
+    hear("a", { ...PAIRS, winningTeam: 1 });
+    root.one("match-row-head").click();
+    const detail = root.one("match-detail");
+    const tabs = detail.all("match-tab");
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      t("matches.teamTab", { team: 2, result: t("matches.won") }),
+      t("matches.teamTab", { team: 1, result: t("matches.lost") }),
+    ]);
+    expect(tabs.map((tab) => tab.attributes.get("aria-selected"))).toEqual(["true", "false"]);
+    expect(detail.one("match-detail-result").textContent).toBe(
+      t("matches.teamResult", { team: 2, result: t("matches.won") }),
+    );
+    tabs[1]?.click();
+    expect(detail.one("match-detail-result").textContent).toBe(
+      t("matches.teamResult", { team: 1, result: t("matches.lost") }),
+    );
+  });
+
+  it("keeps Team 1 first on a draw (#2637)", () => {
+    const { root } = render();
+    hear("a", { ...PAIRS, winningTeam: null });
+    root.one("match-row-head").click();
+    const tabs = root.one("match-detail").all("match-tab");
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      t("matches.teamTab", { team: 1, result: t("matches.draw") }),
+      t("matches.teamTab", { team: 2, result: t("matches.draw") }),
+    ]);
+    expect(root.one("match-detail-result").textContent).toBe(
+      t("matches.teamResult", { team: 1, result: t("matches.draw") }),
+    );
   });
 
   it("shows one team at a time as a team card, a tab for each, a member row per player (#2585)", () => {
@@ -332,7 +359,10 @@ describe("the Matches page (#2532)", () => {
     root.one("match-row-head").click();
     const detail = root.one("match-detail");
     const tabs = detail.all("match-tab");
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["Team 1 · Won", "Team 2 · Lost"]);
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      t("matches.teamTab", { team: 1, result: t("matches.won") }),
+      t("matches.teamTab", { team: 2, result: t("matches.lost") }),
+    ]);
     const shown = () => {
       const cards = detail.all("play-card");
       expect(cards).toHaveLength(1);
@@ -343,12 +373,16 @@ describe("the Matches page (#2532)", () => {
       ];
     };
     expect(shown()).toEqual([
-      "Team 1: Won",
+      t("matches.teamResult", { team: 1, result: t("matches.won") }),
       [expect.stringContaining("Ann"), "Bob"],
       ["true", "false"],
     ]);
     tabs[1]?.click();
-    expect(shown()).toEqual(["Team 2: Lost", ["Bot A (bot)", "Bot B (bot)"], ["false", "true"]]);
+    expect(shown()).toEqual([
+      t("matches.teamResult", { team: 2, result: t("matches.lost") }),
+      [t("matches.bot", { name: "Bot A" }), t("matches.bot", { name: "Bot B" })],
+      ["false", "true"],
+    ]);
   });
 
   it("clones a team once however often its Clone is pressed (#2585)", () => {
@@ -387,7 +421,7 @@ describe("the Matches page (#2532)", () => {
     head?.click();
     const [clone] = root.all("play-card-clone");
     expect(clone?.disabled).toBe(true);
-    expect(clone?.title).toBe(TEAM_UNREADABLE);
+    expect(clone?.title).toBe(t("matches.teamUnreadable"));
     clone?.click();
     expect(cloned).toEqual([]);
   });
@@ -402,10 +436,10 @@ describe("the Matches page (#2532)", () => {
 describe("a match's relative time (#2532)", () => {
   it("reads just now, minutes, hours, then days", () => {
     const now = 1_000_000;
-    expect(relativeTime(now - 30, now)).toBe("just now");
-    expect(relativeTime(now - 125, now)).toBe("2 min ago");
-    expect(relativeTime(now - 2 * 3600, now)).toBe("2 h ago");
-    expect(relativeTime(now - 3 * 86_400, now)).toBe("3 d ago");
-    expect(relativeTime(now + 60, now)).toBe("just now");
+    expect(relativeTime(now - 30, now)).toBe(t("matches.justNow"));
+    expect(relativeTime(now - 125, now)).toBe(t("matches.minutesAgo", { count: 2 }));
+    expect(relativeTime(now - 2 * 3600, now)).toBe(t("matches.hoursAgo", { count: 2 }));
+    expect(relativeTime(now - 3 * 86_400, now)).toBe(t("matches.daysAgo", { count: 3 }));
+    expect(relativeTime(now + 60, now)).toBe(t("matches.justNow"));
   });
 });

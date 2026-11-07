@@ -44,7 +44,7 @@ export const PARTY_RECONNECTING = "Reconnecting…";
 /** A guest's word that its host has the lobby closed (#1682). */
 export const PARTY_CLOSED = "Lobby closed";
 /** The window with nobody else in the lobby (#2385): it always has something to say. */
-export const PARTY_ALONE = "Just you. Copy the invite link above to bring friends.";
+export const PARTY_ALONE = "Just you.";
 
 /**
  * The mode screen's line while the party is queued (#1766): "Looking for a

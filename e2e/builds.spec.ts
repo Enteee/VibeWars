@@ -340,11 +340,11 @@ test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
 });
 
 test("a rune's bonus stays clear of max, and the pips stay in line (#1102)", async ({ page }) => {
-  // The Warrior/Monk starter wears a rune: its rank reads "12 +1".
-  await bringStarter(page, "Warrior/Monk");
+  // A PvX starter wears a rune on its main attribute: its rank reads "12 +1".
+  await bringStarter(page, "Avatar of Balthazar (D)");
   await openRail(page, "Character Builder");
   await page
-    .locator(".character-card", { hasText: "Warrior/Monk" })
+    .locator(".character-card", { hasText: "Avatar of Balthazar (D)" })
     .first()
     .getByRole("button", { name: "Edit", exact: true })
     .click();
@@ -384,8 +384,8 @@ async function saveCharacters(page: Page, names: readonly string[]): Promise<voi
   }
 }
 
-/** The character the first start rolls (#853) has a random name (#1149): "Kaelen Ashvale". */
-const ROLLED_STARTER = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
+/** The character the first start rolls (#853) is named after its PvX build (#2636): "Gust (A/E)", "Psychic Instability Wastrel's (Me)". */
+const ROLLED_STARTER = /^.+ \([A-Z][a-z]?(?:\/[A-Z][a-z]?)?\)$/;
 
 /** The team editor's member rows, and their names. */
 const memberRows = (page: Page) => page.locator(".team-grid .team-row");
@@ -915,6 +915,9 @@ test("the team grid: a full team, eight cells and Health and Energy a member, dr
   ).toHaveCount(0);
   await expect(page.getByRole("button", { name: "New character", exact: true })).toHaveCount(0);
   await expect(page.locator(".team-pick-sub").first()).toHaveText(/^Warrior.* · \d\/8 skills$/);
+  // The cards show they drag (#2643): no line over them says so.
+  await expect(page.locator(".team-pick").first()).toHaveCSS("cursor", "grab");
+  await expect(page.locator(".team-picker-characters")).not.toContainText("drag");
   for (const [row, name] of ["Alpha", "Bravo", "Charlie"].entries()) {
     await copyOnto(page, name, row);
   }
@@ -946,10 +949,12 @@ test("a skill dragged from the Skills tab equips on a member's slot; a refused d
   await page.getByRole("button", { name: "new team" }).click();
   // The Skills tab shows the focused member's: the first, a blank Warrior.
   await page.getByRole("tab", { name: "Skills", exact: true }).click();
-  await expect(page.locator(".team-picker .picker-hint")).toContainText("New Character");
   const library = page.locator(".team-picker");
   await openLibraryGroup(page, "Strength");
   const box = library.locator(".skill-box").first();
+  // It shows it drags (#2643), its card too; no line over the library says so.
+  await expect(box.locator(".skill-box-card")).toHaveCSS("cursor", "grab");
+  await expect(library.locator(".picker-hint")).toHaveCount(0);
   const skillId = (await box.getAttribute("data-skill-id")) ?? "";
   const target = memberRows(page).nth(1).locator(".team-skill").nth(3);
   await box.dragTo(target);

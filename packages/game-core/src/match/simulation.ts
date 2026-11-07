@@ -1036,6 +1036,8 @@ export class MatchSimulation {
   /** The living bodies a path step steers round, refilled for each one rather than allocated (#277). */
   readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
+  /** `options.seed` as a number: the bots' stateless rolls mix it in (#2624). */
+  readonly #seed: number;
   readonly #participants = new Map<string, ParticipantRecord>();
   /**
    * What every participant's `StatusSet` shares as spent this tick
@@ -1158,9 +1160,8 @@ export class MatchSimulation {
     this.#bounds = options.bounds;
     this.#graph = buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius);
     this.#paths = createPathFinder(this.#graph);
-    this.#rng = createRng(
-      typeof options.seed === "string" ? seedFromString(options.seed) : options.seed,
-    );
+    this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
+    this.#rng = createRng(this.#seed);
     this.#flagField = options.flagField;
     this.#flagsState = this.#flagField === undefined ? undefined : initialFlags(this.#flagField);
     this.#relicField = options.relicField;
@@ -3130,6 +3131,7 @@ export class MatchSimulation {
         whileActivating: undefined,
         rule,
         targetHadLessHealth: this.#hasLessHealth(record, castTargetId),
+        ordinal: record.combatant.cast.nextOrdinal(),
       },
       0,
     );
@@ -4094,6 +4096,7 @@ export class MatchSimulation {
       foeCentroid: centroids !== undefined && centroids.foes.count > 0 ? centroids.foes : undefined,
       objectives: this.#botObjectives,
       projectiles: this.#projectiles,
+      seed: this.#seed,
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;

@@ -12,7 +12,10 @@ export interface ThirdPartyLicence {
   readonly url: string;
   /** SPDX identifier. */
   readonly spdx: string;
-  /** The licence text, verbatim, from the copy vendored with the work. */
+  /**
+   * The licence text, verbatim, from the copy vendored with the work; for
+   * content credited by link (a CC licence), the notice it asks for.
+   */
   readonly text: string;
 }
 
@@ -31,6 +34,14 @@ export const THIRD_PARTY_LICENCES: readonly ThirdPartyLicence[] = [
     text: gwSkilldataLicence,
   },
   {
+    name: "PvX wiki",
+    use: "built-in character and team builds",
+    url: "https://gwpvx.fandom.com/wiki/PvX_wiki",
+    spdx: "CC-BY-SA-3.0",
+    // Content, not code: a CC licence is honoured by a notice linking it.
+    text: "Built-in builds are adapted from PvX wiki build pages (gwpvx.fandom.com), community content available under CC BY-SA 3.0, https://www.fandom.com/licensing. Changes: decoded from template codes; builds using skills VibeWars lacks were left out. The adapted build data is shared under the same licence.",
+  },
+  {
     name: "VCSL",
     use: "music samples",
     url: "https://github.com/sgossner/VCSL",
@@ -39,9 +50,6 @@ export const THIRD_PARTY_LICENCES: readonly ThirdPartyLicence[] = [
     text: "Versilian Community Sample Library, dedicated to the public domain under CC0 1.0 Universal.",
   },
 ];
-
-/** Said where the build's list is not: a dev server has no bundle. */
-export const NO_BUNDLE_NOTE = "Built-in licences appear in a production build.";
 
 /** `json` as the build's list, or `undefined` if it is anything else. */
 export function parseBundledLicences(json: unknown): BundledLicence[] | undefined {
@@ -121,11 +129,8 @@ export function mountLicences(container: HTMLElement): void {
   panel.appendChild(bundled);
   container.appendChild(panel);
   void fetchBundledLicences().then((entries) => {
-    if (entries === undefined) {
-      bundled.appendChild(h("p", "screen-subtitle", NO_BUNDLE_NOTE));
-      return;
-    }
-    for (const entry of entries) {
+    // A dev server has no bundle (#2643): it lists only the vendored works.
+    for (const entry of entries ?? []) {
       bundled.appendChild(
         licenceEntry(
           entry.name,

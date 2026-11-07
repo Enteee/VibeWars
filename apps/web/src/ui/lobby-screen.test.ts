@@ -586,8 +586,8 @@ describe("lobbyPanel: the map (#1994)", () => {
     return (body as unknown as FakeElement).all("lobby-mode").map((line) => line.textContent);
   };
 
-  it("names what Team Arena's draw can play, not its placeholder map's mode", () => {
-    expect(modeLines("team-arena")).toEqual(["Annihilation or Kill Count: drawn at the start"]);
+  it("has no mode line for Team Arena before its draw, not its placeholder map's (#2642)", () => {
+    expect(modeLines("team-arena")).toEqual([]);
   });
 
   it("names the mode of a map that is set", () => {
