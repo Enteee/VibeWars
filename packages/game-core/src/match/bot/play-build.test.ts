@@ -2,6 +2,15 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ANNIHILATION_MATCH_RULES } from "../../match-rules.js";
 import { vec2 } from "../../vec2.js";
+import {
+  BOT_REACTION,
+  createCursor,
+  decide,
+  INSTANT_REACTION,
+  type Behaviour,
+  type BehaviourIntent,
+  type Reaction,
+} from "../behaviour.js";
 import type { CombatLogEntry } from "../combat-log.js";
 import { MatchSimulation } from "../simulation.js";
 import { NO_RANKS } from "../../skills/status.js";
@@ -14,10 +23,12 @@ import {
   RULESET,
   WARRIOR,
   askBot,
+  contextFor,
   fighter,
   match,
   starter,
 } from "./rules/test-support.js";
+import { reactionSeconds } from "./rules/shared.js";
 
 describe("play-build (#1189)", () => {
   it("asks for at most one skill per think", () => {
@@ -60,6 +71,65 @@ describe("play-build (#1189)", () => {
     sim.step(DT);
     expect(sim.get("monk")?.combatant.dead).toBe(true);
     expect(requestSkill).not.toHaveBeenCalled();
+  });
+});
+
+describe("play-build's reaction time (#2606)", () => {
+  /** The ticks at which a lone ranger, asked every tick, makes a new decision; and its moves. */
+  function decisions(reaction: Reaction, ticks: number) {
+    const sim = match([
+      fighter("ranger", 0, RANGER, vec2(400, 400)),
+      fighter("foe", 1, WARRIOR, vec2(1200, 400), { behaviour: undefined }),
+    ]);
+    const behaviour: Behaviour = { kind: "play-build", reaction };
+    const cursor = createCursor();
+    const at: number[] = [];
+    const moves: Pick<BehaviourIntent, "moveDirection" | "moveTo">[] = [];
+    for (let tick = 0; tick < ticks; tick += 1) {
+      const thinks = cursor.thinks;
+      const { moveDirection, moveTo } = decide(behaviour, cursor, contextFor(sim, "ranger"));
+      moves.push({ moveDirection, moveTo });
+      if (cursor.thinks > thinks) at.push(tick);
+    }
+    return { at, moves };
+  }
+
+  it("decides at once, then holds each decision 0.15-0.4 s, its move with it", () => {
+    const { at, moves } = decisions(BOT_REACTION, 200);
+    expect(at[0]).toBe(0);
+    expect(moves.some((move) => move.moveTo !== undefined || move.moveDirection.x !== 0)).toBe(
+      true,
+    );
+    expect(at.length).toBeGreaterThan(20);
+    for (let index = 1; index < at.length; index += 1) {
+      const [from, to] = [at[index - 1] ?? 0, at[index] ?? 0];
+      expect((to - from) * DT).toBeGreaterThanOrEqual(0.15 - 1e-9);
+      expect((to - from) * DT).toBeLessThanOrEqual(0.4 + 1e-9);
+      for (let tick = from + 1; tick < to; tick += 1) expect(moves[tick]).toEqual(moves[from]);
+    }
+  });
+
+  it("decides every tick with no reaction time", () => {
+    const { at } = decisions(INSTANT_REACTION, 20);
+    expect(at).toEqual([...Array(20).keys()]);
+  });
+
+  it("draws the same time from the same bot and decision, 0.15-0.4 s and about 0.275 on average", () => {
+    expect(reactionSeconds(BOT_REACTION, "bot-a", 3)).toBe(
+      reactionSeconds(BOT_REACTION, "bot-a", 3),
+    );
+    expect(reactionSeconds(BOT_REACTION, "bot-a", 3)).not.toBe(
+      reactionSeconds(BOT_REACTION, "bot-b", 3),
+    );
+    let sum = 0;
+    for (let thinks = 0; thinks < 1000; thinks += 1) {
+      const seconds = reactionSeconds(BOT_REACTION, "bot-a", thinks);
+      expect(seconds).toBeGreaterThanOrEqual(0.15);
+      expect(seconds).toBeLessThan(0.4);
+      sum += seconds;
+    }
+    expect(sum / 1000).toBeGreaterThan(0.25);
+    expect(sum / 1000).toBeLessThan(0.3);
   });
 });
 

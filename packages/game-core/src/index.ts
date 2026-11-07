@@ -244,9 +244,17 @@ export type {
   BehaviourContext,
   BehaviourCursor,
   BehaviourIntent,
+  Reaction,
   Targeting,
 } from "./match/behaviour.js";
-export { createCursor, decide, nearestLiving, resolveTargeting } from "./match/behaviour.js";
+export {
+  BOT_REACTION,
+  createCursor,
+  decide,
+  INSTANT_REACTION,
+  nearestLiving,
+  resolveTargeting,
+} from "./match/behaviour.js";
 
 export type {
   TrainingDummy,
