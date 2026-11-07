@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { RECORDS_CHANNEL, recordMessage } from "../apps/web/src/net/transport/broadcast-records.js";
 import { matchRecordEvent } from "../apps/web/src/net/transport/match-records.js";
-import { NOSTR_RELAYS } from "../apps/web/src/net/transport/relays.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { recordTemplate, type MatchRecord } from "../packages/game-session/src/match-record.js";
 import { openRail } from "./helpers/menu.js";
@@ -45,23 +45,18 @@ test("Clone saves a finished match's team as a Team Build and opens it (#2585)",
   if (event === undefined) {
     throw new Error("record too big");
   }
-  // Every relay answers the Matches page's REQ with the one record.
-  const relays = new Set(NOSTR_RELAYS.map((url) => new URL(url).host));
-  await page.routeWebSocket(
-    (url) => relays.has(url.host),
-    (ws) => {
-      ws.onMessage((message) => {
-        const parsed: unknown = JSON.parse(String(message));
-        if (Array.isArray(parsed) && parsed[0] === "REQ" && typeof parsed[1] === "string") {
-          ws.send(JSON.stringify(["EVENT", parsed[1], event]));
-          ws.send(JSON.stringify(["EOSE", parsed[1]]));
-        }
-      });
-    },
-  );
 
   await page.goto("./");
   await openRail(page, "Matches");
+  // Posted as a finished match's host does in this build: the Matches page hears it.
+  await page.evaluate(
+    ([channel, message]) => {
+      const post = new BroadcastChannel(channel);
+      post.postMessage(message);
+      post.close();
+    },
+    [RECORDS_CHANNEL, recordMessage(event)] as const,
+  );
   await page.locator(".match-row-head").click();
   const teams = page.locator(".match-detail .play-card");
   await expect(teams).toHaveCount(2);
