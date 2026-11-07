@@ -16,10 +16,7 @@ export const UNKNOWN_MAP_TRACK = "hall-of-champions";
  */
 export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["relic-temples", "northern-pass"],
-  ["arena-alpha", "hall-of-champions"],
   ["guild-hall-isle", "hall-of-champions"],
-  ["arena-open", "clash-of-banners"],
-  ["arena-ring", "clash-of-banners"],
   ["arena-pillars", "ember-deep"],
   ["arena-long-hall", "ember-deep"],
   ["arena-split", "jungle-veil"],

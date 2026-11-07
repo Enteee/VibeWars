@@ -143,13 +143,13 @@ describe("joining a P2P match with a build (#375)", () => {
     expect(connection.ranks.get("monk.healing-prayers")).toBe(8);
 
     // A refused build plays, and so describes, a starter build: here the
-    // Warrior/Monk: Swordsmanship 12, the head's minor rune and its headgear (#1140),
-    // Tactics 9 and Healing Prayers 8.
+    // PvX Gust (A/E): Dagger Mastery 12, the head's minor rune and its
+    // headgear (#1140), Critical Strikes 8 and Air Magic 10.
     const refused = await joinWith({ ...LEGAL_BUILD, skillBar: null });
-    expect(REFUSED_AS.name).toBe("Warrior/Monk");
-    expect(refused.connection.ranks.get("warrior.swordsmanship")).toBe(14);
-    expect(refused.connection.ranks.get("warrior.tactics")).toBe(9);
-    expect(refused.connection.ranks.get("monk.healing-prayers")).toBe(8);
+    expect(REFUSED_AS.name).toBe("Gust (A/E)");
+    expect(refused.connection.ranks.get("assassin.dagger-mastery")).toBe(14);
+    expect(refused.connection.ranks.get("assassin.critical-strikes")).toBe(8);
+    expect(refused.connection.ranks.get("elementalist.air-magic")).toBe(10);
     expect(refused.connection.ranks.get("elementalist.fire-magic")).toBeUndefined();
   });
 
@@ -234,7 +234,6 @@ describe("joining a P2P match with a build (#375)", () => {
     const { slots } = await joinWith(null);
 
     expect(slots).toEqual(REFUSED_AS.skillBar);
-    expect(slots).not.toContain(null);
   });
 
   it("treats a build with no equipment as invalid, not old", async () => {

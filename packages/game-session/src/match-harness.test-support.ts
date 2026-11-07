@@ -10,6 +10,7 @@
 import {
   ANNIHILATION_MATCH_RULES,
   STARTER_BUILDS,
+  STARTER_TEAMS,
   segment,
   type MatchRules,
   type PlayerBuild,
@@ -297,9 +298,15 @@ export function toJson(value: unknown): JsonValue {
   throw new Error(`not JSON: ${typeof value}`);
 }
 
-/** The starter build named `name` (#852), "Warrior/Monk" and so on. */
+/**
+ * The built-in build named `name`: a PvX one (#2554), "Gust (E/Me)", or a
+ * starter team member's, "Warrior/Monk" and so on.
+ */
 export function starterBuild(name: string): PlayerBuild {
-  const build = STARTER_BUILDS.find((starter) => starter.name === name);
+  const build = [
+    ...STARTER_BUILDS,
+    ...STARTER_TEAMS.flatMap((team) => team.members.map((member) => member.build)),
+  ].find((starter) => starter.name === name);
   if (build === undefined) {
     throw new Error(`no starter build ${name}`);
   }

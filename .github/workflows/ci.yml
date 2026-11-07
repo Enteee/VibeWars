@@ -89,6 +89,9 @@ jobs:
       - name: Typecheck
         run: devenv shell -- pnpm run typecheck
 
+      - name: Render sound effects
+        run: devenv shell -- pnpm run sfx:render
+
       - name: Test
         run: devenv shell -- pnpm run test
 

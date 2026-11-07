@@ -31,8 +31,8 @@ function input(over: Partial<MusicInput> = {}): MusicInput {
   return {
     screen: "match",
     menuDepth: null,
-    mapId: "arena-alpha",
-    matchSeed: "arena-alpha:1",
+    mapId: "guild-hall-isle",
+    matchSeed: "guild-hall-isle:1",
     result: null,
     self: { alive: true, healthFraction: 1 },
     hitsDealtLast5s: 0,
@@ -154,7 +154,7 @@ describe("directMusic: track choice", () => {
     const pinned: MusicMode = { kind: "pinned", trackId: "ember-deep" };
     expect(run([{ screen: "menu" }], pinned)[0]?.trackId).toBe("ember-deep");
     const unknown: MusicMode = { kind: "pinned", trackId: "no-such-track" };
-    expect(run([{ mapId: "arena-alpha" }], unknown)[0]?.trackId).toBe("hall-of-champions");
+    expect(run([{ mapId: "guild-hall-isle" }], unknown)[0]?.trackId).toBe("hall-of-champions");
   });
 
   it("shuffles to any track, the same one all through a context", () => {

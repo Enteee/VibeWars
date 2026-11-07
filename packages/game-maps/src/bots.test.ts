@@ -22,7 +22,7 @@ import { loadAllMaps } from "./loader.js";
 const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULESET.tickRateHz;
 /** No warrior: nobody here closes in because their weapon is melee. */
-const CASTERS = ["Ranger/Mesmer", "Necromancer/Elementalist", "Elementalist/Mesmer"];
+const CASTERS = ["Barrage (R)", "Signet of Suffering (N/A)", "Double Dragon (E)"];
 
 describe.each(loadAllMaps().map((map) => [map.id, map] as const))("%s bots", (_, map) => {
   it("a caster mirror on the map's spawns deals damage within 30 s", () => {

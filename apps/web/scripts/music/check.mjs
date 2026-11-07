@@ -4,7 +4,8 @@
  *
  * Prints, for every track and every intensity level, what the track plays,
  * and exits 1 on any failure `tracks.test.ts` would fail on; with no ids,
- * every sting in every track key too, as `stings.test.ts` checks them. With `--json` the
+ * every sting in every track key too, as `stings.test.ts` checks them, and
+ * every sound effect (#2524). With `--json` the
  * last line of stdout is one JSON object `{ ok, problems, reports }`; Strudel
  * prints a banner on import, so parse that line only.
  */
@@ -17,6 +18,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   allowedSounds,
+  checkSfx,
   checkSting,
   checkTrack,
   MAX_DSP_COST,
@@ -30,6 +32,7 @@ import { checkManifest, checkStingManifest } from "./manifest.mjs";
 const webDir = fileURLToPath(new URL("../..", import.meta.url));
 const tracksDir = path.join(webDir, "src/music/tracks");
 const stingsDir = path.join(webDir, "src/music/stings");
+const sfxDir = path.join(webDir, "src/audio/sfx");
 
 const MOODS =
   fs
@@ -174,10 +177,27 @@ if (positional.length === 0) {
   }
 }
 
+// And every sound effect (#2524), which has no key or tempo to vary.
+let sfxCount = 0;
+if (positional.length === 0) {
+  for (const file of fs.readdirSync(sfxDir).filter((f) => f.endsWith(".strudel.js"))) {
+    sfxCount += 1;
+    problems.push(
+      ...(await checkSfx(
+        {
+          id: file.slice(0, -".strudel.js".length),
+          source: fs.readFileSync(path.join(sfxDir, file), "utf8"),
+        },
+        { allowedSounds: allowed },
+      )),
+    );
+  }
+}
+
 if (!json) {
   console.log(
     problems.length === 0
-      ? `\nok: ${String(tracks.length)} track(s), ${String(stingCount)} sting(s)`
+      ? `\nok: ${String(tracks.length)} track(s), ${String(stingCount)} sting(s), ${String(sfxCount)} sfx`
       : `\n${String(problems.length)} problem(s):`,
   );
   for (const p of problems) console.log(`  FAIL ${p}`);

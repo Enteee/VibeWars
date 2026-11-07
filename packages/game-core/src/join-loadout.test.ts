@@ -56,18 +56,18 @@ describe("resolveJoinLoadout", () => {
 
   it("gives the starter build random picks for no build, without calling it a refusal (#852)", () => {
     expect(resolveJoinLoadout(undefined, RULES, always(0.5))).toEqual({
-      build: starter(2),
-      loadout: loadoutOf(starter(2)),
+      build: starter(Math.floor(STARTER_BUILDS.length / 2)),
+      loadout: loadoutOf(starter(Math.floor(STARTER_BUILDS.length / 2))),
       refused: undefined,
     });
     expect(resolveJoinLoadout(undefined, RULES, always(0)).loadout).toEqual(loadoutOf(starter(0)));
   });
 
   it("gives the starter build random picks for a malformed or an illegal build, and says why (#852)", () => {
-    // 0.5 picks the third of five.
-    const middle = loadoutOf(starter(2));
+    // 0.5 picks the middle one.
+    const middle = loadoutOf(starter(Math.floor(STARTER_BUILDS.length / 2)));
     expect(resolveJoinLoadout({ name: 3 }, RULES, always(0.5))).toEqual({
-      build: starter(2),
+      build: starter(Math.floor(STARTER_BUILDS.length / 2)),
       loadout: middle,
       refused: { kind: "malformed" },
     });
