@@ -32,6 +32,7 @@ export { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budg
 export type { DropReport } from "./intent-budget.js";
 export {
   NO_GUILD,
+  sanitizeCharacterName,
   sanitizeChatText,
   sanitizeGuild,
   sanitizeGuildCape,

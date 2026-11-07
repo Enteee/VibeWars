@@ -23,7 +23,8 @@ one you used last.
 ## Make a character
 
 Your characters are the cards of **Character Builder**, newest first,
-with the random character your first start rolled always last.
+with the character your first start rolled always last: a PvX build,
+named after it.
 
 1. Press **New character**.
 2. Pick a **primary profession**, what your character mainly is, and a
@@ -47,7 +48,8 @@ build and save.
 Not sure what to take? The random starter character is marked
 **Random**, with a dashed outline. **Reroll** on it gives you a fresh
 random build to try. The random builds are well-rated PvP builds from the
-[PvX wiki](https://gwpvx.fandom.com/).
+[PvX wiki](https://gwpvx.fandom.com/), each named as the wiki names it,
+with its professions: "Gust (E/Me)".
 
 **Team Builder** starts with a random Team Build too, a ready-made team
 for a Team Lobby at each size, 2v2, 4v4 and 8v8, marked the same way and

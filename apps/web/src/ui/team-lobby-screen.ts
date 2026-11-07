@@ -591,8 +591,10 @@ function drawerRow(
     const members = h("div", "team-lobby-drawer-members");
     for (const { character } of team.members) {
       const member = h("div", "team-lobby-drawer-member");
+      const name = h("b", "team-lobby-drawer-member-name", character.name);
+      name.title = character.name;
       member.append(
-        h("b", "team-lobby-drawer-member-name", character.name),
+        name,
         // No cape: a team's members wear none, as on Team Builder.
         characterFigureCard(lookOfCharacter(character, undefined), { size: "card" }),
       );
