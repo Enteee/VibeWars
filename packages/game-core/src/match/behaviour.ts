@@ -4,7 +4,6 @@ import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
-import type { BotRole } from "./bot/role.js";
 import type { CapturePoint } from "./capture-points.js";
 import { MASTERLESS_TEAM } from "./minions.js";
 import type { Participant } from "./simulation.js";
@@ -206,8 +205,6 @@ export interface BehaviourCursor {
   heldMove: Pick<BehaviourIntent, "moveTo">;
   /** `play-build`: seconds before it may end another maintained enchantment (#2492). */
   upkeepDropSeconds: number;
-  /** `play-build`: the role its bar gives it (#2545), set at its first think. */
-  role: BotRole | undefined;
 }
 
 export interface BehaviourContext {
@@ -263,7 +260,6 @@ export function createCursor(): BehaviourCursor {
     returning: false,
     heldMove: { moveTo: undefined },
     upkeepDropSeconds: 0,
-    role: undefined,
   };
 }
 

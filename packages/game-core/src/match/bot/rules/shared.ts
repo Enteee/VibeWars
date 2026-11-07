@@ -118,3 +118,12 @@ export function reachable(context: BehaviourContext, spot: Vec2): Vec2 | undefin
   }
   return undefined;
 }
+
+/** Below this share of its health, a bot under fire falls back to its haven (#2549). */
+export const FLEE_FRACTION = 0.3;
+
+/** It stands this far beyond its healer, on the side away from the foes (#2549). */
+export const FLEE_BEHIND = 60;
+
+/** Out of a foe's reach, a hurt bot rests until this share of its health (#2549). */
+export const REST_FRACTION = 0.7;
