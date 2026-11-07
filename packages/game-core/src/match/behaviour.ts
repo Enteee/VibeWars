@@ -1,5 +1,6 @@
 import { AREA_ADJACENT } from "../distances.js";
 import type { ActivationCheck } from "../skills/activation.js";
+import type { Projectile } from "../skills/projectile.js";
 import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
@@ -203,7 +204,7 @@ export interface BehaviourCursor {
   /** `follow-and-attack` and `guard`: walking back to the owner or the post, past the leash. */
   returning: boolean;
   /** `play-build` and `guard`: the movement its last think asked for, held until the next. */
-  heldMove: Pick<BehaviourIntent, "moveTo">;
+  heldMove: Pick<BehaviourIntent, "moveDirection" | "moveTo">;
   /** `play-build`: seconds before it may end another maintained enchantment (#2492). */
   upkeepDropSeconds: number;
   /** `play-build`: the role its bar gives it (#2545), set at its first think. */
@@ -239,6 +240,8 @@ export interface BehaviourContext {
   readonly foeCentroid: Vec2 | undefined;
   /** What a bot plays for besides the foes (#2542). */
   readonly objectives: BotObjectives;
+  /** The shots in flight (#2590), in release order. */
+  readonly projectiles: readonly Readonly<Projectile>[];
 }
 
 /**
@@ -261,7 +264,7 @@ export function createCursor(): BehaviourCursor {
     waypoint: 0,
     children: [],
     returning: false,
-    heldMove: { moveTo: undefined },
+    heldMove: { moveDirection: ZERO, moveTo: undefined },
     upkeepDropSeconds: 0,
     role: undefined,
   };

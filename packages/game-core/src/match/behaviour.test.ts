@@ -329,6 +329,7 @@ describe("auto-attack", () => {
         walkable: () => true,
         foeCentroid: undefined,
         objectives: NO_OBJECTIVES,
+        projectiles: [],
       },
     );
     expect(intent.attackTargetId).toBe("first");
@@ -392,6 +393,7 @@ describe("follow-and-attack (#467)", () => {
       walkable: () => true,
       foeCentroid: undefined,
       objectives: NO_OBJECTIVES,
+      projectiles: [],
     });
   }
 
