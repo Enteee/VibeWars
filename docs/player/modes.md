@@ -178,8 +178,8 @@ whoever is taking it. The scoreboard shows the points, yours first, and
 the clock.
 
 Bots spread out over the shrines your team does not own yet and stand
-on them until they are taken, leaving one only to fight a foe that
-comes within spell range.
+on them until they are taken. A foe in spell range does not draw them
+off: they step onto a shrine in reach and fight from it.
 
 Scarred Earth plays it: each shrine stands in a broken ring of walls,
 open to the west and east.

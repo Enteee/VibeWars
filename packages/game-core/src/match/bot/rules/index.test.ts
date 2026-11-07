@@ -40,9 +40,9 @@ describe("BOT_RULES (#2042)", () => {
       "setup",
       "boost",
       "position",
+      "shrines",
       "fight",
       "mimic-elite",
-      "shrines",
       "close-in",
     ]);
   });
