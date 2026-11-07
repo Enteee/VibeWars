@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { RANGE_SPELL } from "../../../distances.js";
-import { NO_RANKS } from "../../../skills/status.js";
+import { NO_RANKS, type StatusId } from "../../../skills/status.js";
 import { BOT_REACTION, INSTANT_REACTION, createCursor } from "../../behaviour.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
 import type { MatchSimulation } from "../../simulation.js";
@@ -453,7 +453,7 @@ describe("damage dealers strip the protection off the team's target first (#2634
     bar = [FLARE, STRIP],
     lone = false,
     status = "protective-spirit",
-  }: { bar?: readonly string[]; lone?: boolean; status?: string | null } = {}) => {
+  }: { bar?: readonly string[]; lone?: boolean; status?: StatusId | null } = {}) => {
     const ranks = new Map([["elementalist.fire-magic", 12]]);
     const sim = match([
       body("a", 0, vec2(400, 400), { behaviour: BOT, skillBar: [...bar], attributeRanks: ranks }),
