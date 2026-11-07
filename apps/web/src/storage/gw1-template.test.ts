@@ -2,6 +2,7 @@ import {
   ATTRIBUTE_IDS,
   IMPLEMENTED_SKILLS,
   PROFESSIONS,
+  decodeTemplateCode,
   defaultEquipmentFor,
   encodeTemplateCode,
   looksLikeTemplate,
@@ -280,5 +281,25 @@ describe("GW1 template codes (#494)", () => {
     expect(looksLikeTemplate('{"format":"vibewars.team","members":[]}')).toBe(false);
     expect(looksLikeTemplate("Okay")).toBe(false);
     expect(looksLikeTemplate("try OQMAAAAAAAAAAAAA")).toBe(false);
+  });
+
+  it("strips padding and whitespace in linear time (#2572)", () => {
+    const encoded = encodeTemplateCode(WARRIOR_MONK);
+    if (!encoded.ok) {
+      throw new Error(encoded.problem);
+    }
+    const plain = decoded(encoded.code);
+    expect(decoded(`${encoded.code}==`)).toEqual(plain);
+    expect(decoded(` \t${encoded.code}==\n`)).toEqual(plain);
+
+    // Not all `=`: /=+$/ only backtracks when the run stops short of the end.
+    const padding = `${"=".repeat(200_000)}x`;
+    const start = performance.now();
+    expect(looksLikeTemplate(padding)).toBe(false);
+    expect(looksLikeTemplate("==")).toBe(false);
+    expect(looksLikeTemplate("=".repeat(200_000))).toBe(false);
+    expect(problemsOf(padding)).not.toEqual([]);
+    expect(decodeTemplateCode(padding).ok).toBe(false);
+    expect(performance.now() - start).toBeLessThan(200);
   });
 });

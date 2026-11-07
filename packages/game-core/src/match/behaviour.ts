@@ -4,6 +4,7 @@ import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
+import type { CapturePoint } from "./capture-points.js";
 import { MASTERLESS_TEAM } from "./minions.js";
 import type { Participant } from "./simulation.js";
 
@@ -227,7 +228,22 @@ export interface BehaviourContext {
   readonly calledTargetId: string | undefined;
   /** Whether nothing blocks the line of sight from `self` to `point` (#1222). */
   sees(point: Vec2): boolean;
+  /** What a bot plays for besides the foes (#2542). */
+  readonly objectives: BotObjectives;
 }
+
+/**
+ * The match's objectives as bots read them (#2542): a view of the
+ * simulation's own state, built once per tick. A mode without one has it
+ * empty.
+ */
+export interface BotObjectives {
+  /** Capture Points' shrines (#2580), in map order; `[]` in any other mode. */
+  readonly capturePoints: readonly CapturePoint[];
+}
+
+/** No objectives: every mode but those with one. */
+export const NO_OBJECTIVES: BotObjectives = { capturePoints: [] };
 
 export function createCursor(): BehaviourCursor {
   return {

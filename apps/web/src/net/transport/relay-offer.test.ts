@@ -1,8 +1,9 @@
 import { TICKET_HEARTBEAT_MS } from "@vibewars/game-protocol";
-import { RELAY_ADMIT_MS } from "@vibewars/game-session";
+import { RELAY_ADMIT_MS, type TicketKey } from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { OpenRelaySocket } from "./nostr-relays.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
+import { eventId, type NostrEvent, type OpenRelaySocket } from "./nostr-relays.js";
 import {
   LOGIN_REMINT_LEFT_MS,
   MAX_OFFER_CONTENT_BYTES,
@@ -119,7 +120,8 @@ const hex = (bytes: number): string =>
 
 /**
  * An event on `ROOM`'s topic that no key opens, by a fresh author or one
- * it claims: what anyone watching can send, since no signature is checked.
+ * it claims: what anyone watching can send, since no signature is checked
+ * before it opens.
  */
 function garbage(pubkey = hex(32)): object {
   return {
@@ -957,6 +959,73 @@ describe("a joiner's relay offers (#2527)", () => {
     hold.close();
     offers.close();
   });
+
+  // An invite holder's own seal for the joiner, put on the topic claiming
+  // the victim's key: either with its id left over its own key, or with the
+  // id recomputed over the victim's key and signed by its own.
+  it.each([
+    {
+      forgery: "an id over another key",
+      forge: (event: NostrEvent, victim: string) => ({ ...event, pubkey: victim }),
+    },
+    {
+      forgery: "a signature by another key",
+      forge: (event: NostrEvent, victim: string, signer: TicketKey) => {
+        const { created_at, kind, tags, content } = event;
+        const digest = eventId({ pubkey: victim, created_at, kind, tags, content });
+        return { ...event, pubkey: victim, id: bytesToHex(digest), sig: signer.sign(digest) };
+      },
+    },
+  ])(
+    "charges no holder for a seal that claims its key with $forgery (#2553)",
+    async ({ forge }) => {
+      const relay = fakeRelay();
+      const aside = recording(fakeRelay());
+      const now = NOW;
+      const victim = newTicketKey();
+      const malloryKey = newTicketKey();
+      const key = await newJoinerKey();
+      const offers = watchRelayOffers(
+        ROOM,
+        ROOM_ID,
+        JOINER,
+        deps(relay.openSocket, () => now),
+        joiner(key),
+      );
+      await settle();
+      // Sealed where only mallory hears, then forged onto the topic.
+      const mallory = holdRelay(ROOM, options(OTHER).source, "mallory", () => "mallory", {
+        ...deps(aside.openSocket, () => now),
+        newKey: () => malloryKey,
+      });
+      mallory.admit({ peerId: JOINER, pub: key.pub });
+      await settle();
+      const [sent] = aside.sent;
+      if (sent === undefined) throw new Error("nothing sealed");
+      const [, event] = JSON.parse(sent) as [string, NostrEvent];
+      expect(event.pubkey).toBe(malloryKey.ticketId);
+      relay.publish(forge(event, victim.ticketId, malloryKey));
+      await settle();
+      // Of use all the same: any invite holder can seal one under its own key.
+      expect(offers.ranked().map((offer) => offer.holder)).toEqual(["mallory"]);
+
+      // Within the same interval, the victim's own seal opens: the forgery
+      // charged nobody.
+      const hold = holder(
+        relay,
+        HOLDER,
+        () => now,
+        SHARED,
+        () => victim,
+      );
+      hold.admit({ peerId: JOINER, pub: key.pub });
+      await settle();
+      expect(offers.ranked().map((offer) => offer.holder)).toContain(HOLDER);
+      mallory.close();
+      hold.close();
+      offers.close();
+    },
+  );
 
   it("opens an event delivered twice once, and none too big to be a seal", async () => {
     const relay = fakeRelay();
