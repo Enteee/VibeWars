@@ -202,6 +202,8 @@ export function runnerCommand({ jail, unit, bwrap, cpus, memoryGib, tasksMax, in
     "--",
     bwrap,
     ...runnerJailArgs(jail),
+    // The job sizes its workers from the same number as the quota (#2774).
+    ...["--setenv", "VIBEWARS_RUNNER_CPUS", String(cpus)],
     // The runner's hashFiles() starts externals/node20/bin/node whatever the
     // env says (#2006), and nixpkgs ships node24 alone. A symlink written into
     // the overlay fails: its copy-up must chown to root, unmapped in the jail.
