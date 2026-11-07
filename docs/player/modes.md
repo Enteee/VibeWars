@@ -42,6 +42,11 @@ ice rocks on each bank. For the bigger teams: **Ashen Courtyard** (4v4,
 4400x2600), a ruined keep whose walled courtyard has four breaches, ruins
 on its flanks; and **Moss Vale** (8v8, 4800x2800), two wooded ridges
 that split the vale into three lanes, meeting in a clearing in the middle.
+Two large arenas are bigger still: **Canthan Terraces** (1v1, 5200x2800),
+rice terraces walled north to south with staggered gaps, round a ruined
+pagoda; and **Sunken Bastion** (2v2, 5600x3000), a half-flooded fortress
+whose breached curtain wall rings a keep with two gates, marsh rocks
+outside.
 
 ## Kill Count
 

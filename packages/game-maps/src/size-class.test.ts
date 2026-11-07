@@ -14,7 +14,7 @@ describe("sizeClass (#444, #2547)", () => {
     expect(sizeClass({ width: 4801, height: 100 })).toBe("large");
   });
 
-  it("calls every arena today small, but Sandstone Steps, Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605) medium", () => {
+  it("calls every arena today small, but Sandstone Steps, Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605) medium, Canthan Terraces and Sunken Bastion (#2607) large", () => {
     expect(Object.fromEntries(loadAllMaps().map((map) => [map.id, sizeClass(map)]))).toEqual({
       "ember-pits": "small",
       "jungle-ruins": "small",
@@ -30,6 +30,8 @@ describe("sizeClass (#444, #2547)", () => {
       "frozen-crossing": "medium",
       "ashen-courtyard": "medium",
       "moss-vale": "medium",
+      "canthan-terraces": "large",
+      "sunken-bastion": "large",
     });
   });
 });
