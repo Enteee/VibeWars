@@ -75,8 +75,15 @@ const MEET = {
   foe: { x: ARENA.width / 2 + 100, y: LANE_Y },
 };
 
-/** How far from its `MEET` point a hero walked there by timed keys may end. */
+/** How far from its `MEET` point the host, steered there by its view, may end. */
 const NEAR_MEET = 60;
+
+/**
+ * How far from `MEET.foe` the opponent, walked there by timed keys, may
+ * end: a loaded box lets a key go hundreds of ms late (#2550). Nearer
+ * than its spawn, so a view that has not drawn the walk yet is not it.
+ */
+const NEAR_FOE = 400;
 
 /** Holds `direction` on `page` for as long as a hero takes to walk `distance`. */
 async function hold(page: Page, direction: KeyAction, distance: number): Promise<void> {
@@ -97,15 +104,57 @@ async function walkByKeys(
   await hold(page, to.x < from.x ? "move-left" : "move-right", Math.abs(to.x - from.x));
 }
 
+/** Where `page`'s view is: on its hero, which it follows (#721). */
+async function viewAt(page: Page): Promise<{ x: number; y: number }> {
+  const [x = NaN, y = NaN] = ((await page.locator("#viewport").getAttribute("data-camera")) ?? "")
+    .split(",")
+    .map(Number);
+  return { x, y };
+}
+
+/**
+ * Walks the host's hero onto `to` by held keys, closed loop (#2550):
+ * down onto `to`'s row, then along it, each key held until the view
+ * passes `to`, then let go, and an overshoot walked back. Timed keys
+ * miss under load, but the host's tab is in front, so its view is live.
+ */
+async function steerTo(page: Page, to: { readonly x: number; readonly y: number }): Promise<void> {
+  await expect(page.locator("#viewport")).toHaveAttribute("data-camera", /^-?\d+,-?\d+$/);
+  for (const axis of ["y", "x"] as const) {
+    for (let leg = 0; leg < 4; leg += 1) {
+      const from = (await viewAt(page))[axis];
+      if (Math.abs(to[axis] - from) < NEAR_MEET / 2) {
+        break;
+      }
+      const ahead = to[axis] > from;
+      const towards: KeyAction =
+        axis === "y" ? (ahead ? "move-down" : "move-up") : ahead ? "move-right" : "move-left";
+      await page.keyboard.down(key(towards));
+      await expect
+        .poll(
+          async () => {
+            const at = (await viewAt(page))[axis];
+            return ahead ? at >= to[axis] : at <= to[axis];
+          },
+          { message: `the host's view should pass ${axis} ${String(to[axis])}`, timeout: 20_000 },
+        )
+        .toBe(true);
+      await page.keyboard.up(key(towards));
+      await viewStopsNear(page, to, Infinity, "the host's hero should stop");
+    }
+  }
+}
+
 /**
  * Resolves with `page`'s `data-camera` once its view, which follows its
- * hero, has come within `NEAR_MEET` of `point` along the lane and stands
+ * hero, has come within `near` of `point` along the lane and stands
  * still there. Still alone is not enough: a loaded tab draws late, so two
  * equal reads can be a view that has not moved yet (#2550).
  */
 async function viewStopsNear(
   page: Page,
   point: { readonly x: number },
+  near: number,
   message: string,
 ): Promise<string> {
   const stage = page.locator("#viewport");
@@ -117,7 +166,7 @@ async function viewStopsNear(
         await page.waitForTimeout(200);
         seen = (await stage.getAttribute("data-camera")) ?? "";
         const x = Number(seen.split(",")[0]);
-        return seen !== "" && seen === was && Math.abs(x - point.x) < NEAR_MEET;
+        return seen !== "" && seen === was && Math.abs(x - point.x) < near;
       },
       { message, intervals: [0], timeout: 15_000 },
     )
@@ -127,18 +176,15 @@ async function viewStopsNear(
 
 /**
  * Walks the host (team 0) and its one opponent (team 1) from their spawns
- * to `MEET`, at once, by held keys, timed: a key's move goes to the
- * server as it is pressed, so neither tab need draw a frame for it.
- * Steering by the view waits on frames a loaded host gives late, and
- * the tab behind the host's never. Each ends near its point, not on it.
- * Resolves once the host's view stands still near `MEET.host`.
+ * to `MEET`, at once. The host steers by its view, in front and live.
+ * The opponent's keys are timed: a key's move goes to the server as it
+ * is pressed, so its tab, behind the host's, need draw no frame for it,
+ * and it ends within `NEAR_FOE` of its point. Resolves once the host's
+ * view stands still near `MEET.host`.
  */
 async function meet(page: Page, opponent: Page): Promise<void> {
-  await Promise.all([
-    walkByKeys(page, spawnOf(0), MEET.host),
-    walkByKeys(opponent, spawnOf(1), MEET.foe),
-  ]);
-  await viewStopsNear(page, MEET.host, "the host's hero should stop near MEET.host");
+  await Promise.all([steerTo(page, MEET.host), walkByKeys(opponent, spawnOf(1), MEET.foe)]);
+  await viewStopsNear(page, MEET.host, NEAR_MEET, "the host's hero should stop near MEET.host");
 }
 
 /**
@@ -942,11 +988,16 @@ test("a wheel click on a foe calls it for your team, and the other team never se
         });
       }),
   );
-  const seen = await viewStopsNear(opponent, MEET.foe, "the opponent's view should reach it");
+  const seen = await viewStopsNear(
+    opponent,
+    MEET.foe,
+    NEAR_FOE,
+    "the opponent's view should reach it",
+  );
   await page.bringToFront();
   // The host's view drew nothing behind the opponent's: it must be on
   // MEET.host again before its camera aims the click.
-  await viewStopsNear(page, MEET.host, "the host's view should be back on its hero");
+  await viewStopsNear(page, MEET.host, NEAR_MEET, "the host's view should be back on its hero");
   const [x = NaN, y = NaN] = seen.split(",").map(Number);
   const foe = (await projection(stage, canvas)).onPage({ x, y });
   await page.mouse.click(foe.x, foe.y, { button: "middle" });
