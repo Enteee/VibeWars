@@ -51,6 +51,7 @@ import { arenaIds, hostMap, mapTeamSizes, modeMapIds, queueMapPool } from "./map
 import { startHostClock } from "./transport/host-clock.js";
 import {
   checkTransportNat,
+  type GuestRoom,
   joinGuestRoom,
   joinHostRoom,
   joinQueueBoard,
@@ -231,12 +232,50 @@ function startMatch(plan: MatchPlan) {
   });
 }
 
+/** What a lobby's screen says about relays (#2531). */
+export interface LobbyRelayStatus {
+  /** The holder whose relay this page reaches its host through: `undefined` direct, or through its own. */
+  relayedVia(): string | undefined;
+  /** How many players this page's shared relay holds a live login for: 0 when it shares none. */
+  sharingWith(): number;
+  /** `handler` when either may have changed. */
+  onChange(handler: () => void): () => void;
+}
+
+const relayStatuses = new WeakMap<LobbyConnection, LobbyRelayStatus>();
+
+/** `lobby`'s relay status (#2531): `undefined` for a lobby that neither shares nor is relayed. */
+export function lobbyRelayStatus(lobby: LobbyConnection): LobbyRelayStatus | undefined {
+  return relayStatuses.get(lobby);
+}
+
 /**
  * A member's relay in its lobby (#2527, #2529): it seals for each joiner
  * the host admits and for each seated member the host lists, through the
  * host, and the host hears whether it holds one, until the lobby closes.
+ * The lobby's screen hears whose relay `guest` goes through, and how many
+ * players `hold` shares with (#2531).
  */
-export function holdInLobby(lobby: LobbyConnection, hold: RelayHold | undefined): void {
+export function holdInLobby(
+  lobby: LobbyConnection,
+  hold: RelayHold | undefined,
+  guest?: Pick<GuestRoom, "relayedVia" | "onRelayedVia">,
+): void {
+  if (hold === undefined && guest === undefined) {
+    return;
+  }
+  relayStatuses.set(lobby, {
+    relayedVia: () => guest?.relayedVia(),
+    sharingWith: () => hold?.sharingWith() ?? 0,
+    onChange(handler) {
+      const offs = [hold?.onChange(handler), guest?.onRelayedVia(handler)];
+      return () => {
+        for (const off of offs) {
+          off?.();
+        }
+      };
+    },
+  });
   if (hold === undefined) {
     return;
   }
@@ -459,6 +498,7 @@ export async function joinLobbyByCode(
     holdInLobby(
       joined,
       holdLobbyRelay(lobbyRoom, roomSelfId(), () => name),
+      guest,
     );
     return joined;
   } catch (error) {

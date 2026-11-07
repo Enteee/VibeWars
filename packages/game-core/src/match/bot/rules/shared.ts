@@ -24,6 +24,12 @@ export const NOTHING: BehaviourIntent = {
 /** Below this share of its health, an ally is worth a heal. */
 export const HURT_FRACTION = 0.6;
 
+/** How much more hurt than it is a foe healer counts when the team picks a target (#2573). */
+export const HEALER_PRIORITY = 0.25;
+
+/** How far past spell range a bot follows its team's target (#2573). */
+export const FOCUS_REACH = 150;
+
 export function nearestLiving(
   self: Participant,
   foes: readonly Participant[],
