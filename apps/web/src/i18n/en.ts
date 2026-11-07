@@ -463,6 +463,7 @@ export const en = {
   "hud.targetDead": "dead",
   "hud.targetEffects": "your target's effects",
   "hud.versus": "{ours} v {theirs}",
+  "hud.versusThree": "{ours} v {first} v {second}",
   "hud.yourEffects": "your effects",
 
   "keys.alt": "Alt",

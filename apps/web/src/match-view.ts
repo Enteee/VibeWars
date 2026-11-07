@@ -43,6 +43,7 @@ import {
   withCalls,
   withNames,
   teamColour,
+  teamSide,
   toRenderableGroundEffect,
   type ArenaSnapshot,
   type RenderableWall,
@@ -316,9 +317,7 @@ export function toArenaSnapshot(
         team:
           player.sessionId === match.selfSessionId
             ? ("self" as const)
-            : player.team === side
-              ? ("ally" as const)
-              : ("enemy" as const),
+            : teamSide(player.team, side),
         health: player.health,
         maxHealth: player.maxHealth,
         dead: player.dead,
