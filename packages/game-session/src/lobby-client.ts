@@ -14,7 +14,8 @@ import {
   parseWireLobbyMove,
   parsePeerLobbySeat,
   parsePeerRelayAdmit,
-  parsePeerRelayLogin,
+  parsePeerRelayCredIn,
+  parsePeerRelayOffers,
   teamQueueModeOf,
   type JsonValue,
   type LobbyRefusal,
@@ -30,7 +31,9 @@ import {
   type WirePartyFormed,
   type PeerRelayAdmit,
   type PeerRelayHolding,
-  type WireRelayLogin,
+  type PeerRelayCredIn,
+  type PeerRelayCredOut,
+  type PeerRelayOffers,
 } from "@vibewars/game-protocol";
 
 import { keyGated } from "./key-gate.js";
@@ -119,6 +122,11 @@ export interface JoinLobbyOptions {
    * Without it, this player consents to no party of its lobby.
    */
   readonly roomId?: string;
+  /**
+   * This page's relay key (#2529, `PeerLobbyJoin.relayPub`): what
+   * members seal its relay logins to. `null` for none.
+   */
+  readonly relayPub: string | null;
 }
 
 function isRefusal(reason: string): reason is LobbyRefusal {
@@ -147,6 +155,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     name: options.name,
     guildTag: options.guildTag,
     guildCape: options.guildCape,
+    relayPub: options.relayPub,
   };
   /** A coded lobby's join; a queued one's is made with its proof. */
   const codedJoin: Omit<PeerLobbyJoin, "rejoinToken"> = { ...base, admission: null };
@@ -189,9 +198,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const refusedHandlers: ((reason: LobbyRefusal) => void)[] = [];
   const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
   const moveHandlers: ((code: string) => void)[] = [];
-  const relayHandlers: ((relay: WireRelayLogin | null) => void)[] = [];
-  /** The host's last `relay-login`, for a handler added after it came. */
-  let relayLogin: WireRelayLogin | null | undefined;
+  const offersHandlers = new Set<(offers: PeerRelayOffers) => void>();
+  /** The host's last `relay-offers`, for a handler added after it came. */
+  let relayOffers: PeerRelayOffers | undefined;
+  const credHandlers = new Set<(cred: PeerRelayCredIn) => void>();
   const admitHandlers = new Set<(admit: PeerRelayAdmit) => void>();
   const chatHandlers: ((line: ChatLine) => void)[] = [];
   const throttledHandlers: (() => void)[] = [];
@@ -231,7 +241,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     refusedHandlers.length = 0;
     closedHandlers.length = 0;
     moveHandlers.length = 0;
-    relayHandlers.length = 0;
+    offersHandlers.clear();
+    credHandlers.clear();
     chatHandlers.length = 0;
     throttledHandlers.length = 0;
     partyHandlers.length = 0;
@@ -497,11 +508,25 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       onMove(handler) {
         moveHandlers.push(handler);
       },
-      onRelayLogin(handler) {
-        relayHandlers.push(handler);
+      onRelayOffers(handler) {
+        offersHandlers.add(handler);
         // The host sends it on admission, which can beat the handler here.
-        if (relayLogin !== undefined) {
-          handler(relayLogin);
+        if (relayOffers !== undefined) {
+          handler(relayOffers);
+        }
+        return () => {
+          offersHandlers.delete(handler);
+        };
+      },
+      onRelayCred(handler) {
+        credHandlers.add(handler);
+        return () => {
+          credHandlers.delete(handler);
+        };
+      },
+      sendRelayCred(to, seal) {
+        if (hostId !== undefined) {
+          transport.send("relay-cred", { to, seal } satisfies PeerRelayCredOut, hostId);
         }
       },
       onRelayAdmit(handler) {
@@ -622,13 +647,22 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           rejoinToken = seat.rejoinToken;
         }
       }),
-      transport.on("relay-login", (data, from) => {
-        // The host's alone, and only once it is known (#2248).
-        const login = parsePeerRelayLogin(data);
-        if (hostId !== undefined && from === hostId && login !== undefined) {
-          relayLogin = login.relay;
-          for (const handler of [...relayHandlers]) {
-            handler(login.relay);
+      transport.on("relay-offers", (data, from) => {
+        // The host's alone, and only once it is known (#2529).
+        const offers = parsePeerRelayOffers(data);
+        if (hostId !== undefined && from === hostId && offers !== undefined) {
+          relayOffers = offers;
+          for (const handler of [...offersHandlers]) {
+            handler(offers);
+          }
+        }
+      }),
+      transport.on("relay-cred", (data, from) => {
+        // Forwarded by the host alone, which stamped the sender (#2529).
+        const cred = parsePeerRelayCredIn(data);
+        if (hostId !== undefined && from === hostId && cred !== undefined) {
+          for (const handler of [...credHandlers]) {
+            handler(cred);
           }
         }
       }),

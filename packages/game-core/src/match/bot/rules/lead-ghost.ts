@@ -11,7 +11,7 @@ import type { BotRule } from "./types.js";
  * then, so the bot is free to fight.
  */
 const leadGhost: BotRule = {
-  order: 36,
+  order: 34,
   name: "lead-ghost",
   decide: ({ context, self }) => {
     const { altar } = context.objectives;

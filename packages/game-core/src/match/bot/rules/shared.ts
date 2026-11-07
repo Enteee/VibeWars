@@ -167,3 +167,22 @@ export function reachable(context: BehaviourContext, spot: Vec2): Vec2 | undefin
   }
   return undefined;
 }
+
+/** The share of the skill shots aimed at it a bot side-steps (#2590). */
+export const DODGE_CHANCE = 0.5;
+
+/**
+ * A bot's coin for one shot (#2590), in [0, 1): a pure hash of the shot's
+ * `projectileId` and the bot's `participantId`, FNV-1a then a 32-bit
+ * finaliser. No RNG state, so a replay dodges the same shots.
+ */
+export function dodgeRoll(projectileId: number, participantId: string): number {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < participantId.length; index += 1) {
+    hash = Math.imul(hash ^ participantId.charCodeAt(index), 0x01000193);
+  }
+  hash = Math.imul(hash ^ projectileId, 0x01000193);
+  hash = Math.imul(hash ^ (hash >>> 16), 0x85ebca6b);
+  hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35);
+  return ((hash ^ (hash >>> 16)) >>> 0) / 0x1_0000_0000;
+}

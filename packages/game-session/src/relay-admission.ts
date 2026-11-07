@@ -45,6 +45,8 @@ export interface RelayAdmission {
   seated(peerId: string): void;
   /** Member `memberId` holds a relay it shares, or stopped. */
   holding(memberId: string, on: boolean): void;
+  /** Whether member `memberId` last said it holds a relay (#2529). */
+  holds(memberId: string): boolean;
   /** Member `memberId` left the lobby: it holds nothing any more. */
   gone(memberId: string): void;
   /**
@@ -126,6 +128,9 @@ export function createRelayAdmission(lobby: RelayAdmissionLobby): RelayAdmission
       } else {
         holders.delete(memberId);
       }
+    },
+    holds(memberId) {
+      return holders.has(memberId);
     },
     gone(memberId) {
       holders.delete(memberId);

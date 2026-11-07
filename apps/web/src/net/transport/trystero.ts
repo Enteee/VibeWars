@@ -55,6 +55,8 @@ export interface TrysteroTransport extends Transport {
    * or in a browser without `restartIce`.
    */
   swapIceServers(peerId: string, turn: TurnConfig): void;
+  /** The ICE state of the connection to `peerId`, `undefined` for an unknown peer (#2529). */
+  iceState(peerId: string): RTCIceConnectionState | undefined;
 }
 
 /** Whether an ICE server entry is a TURN relay rather than STUN. */
@@ -200,6 +202,9 @@ export function joinTrysteroRoom(
         // The old login runs out and the host drops, which rejoins (ADR-0049).
         console.warn("trystero transport: could not swap the relay", error);
       }
+    },
+    iceState(peerId) {
+      return trystero.getPeers()[peerId]?.iceConnectionState;
     },
     async leave() {
       clearTimeout(relayCheck);

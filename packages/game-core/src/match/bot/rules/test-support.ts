@@ -130,6 +130,7 @@ export function contextFor(
     walkable: () => true,
     foeCentroid: centroidOf(participants, (other) => other.combatant.team !== team),
     objectives: NO_OBJECTIVES,
+    projectiles: sim.projectiles,
     ...extra,
   };
 }

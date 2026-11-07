@@ -3,6 +3,7 @@ import boost from "./boost.js";
 import carryRelic from "./carry-relic.js";
 import cleanse from "./cleanse.js";
 import closeIn from "./close-in.js";
+import dodge from "./dodge.js";
 import dropUpkeep from "./drop-upkeep.js";
 import energy from "./energy.js";
 import fetchRelic from "./fetch-relic.js";
@@ -35,6 +36,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   carryRelic,
   cleanse,
   closeIn,
+  dodge,
   dropUpkeep,
   energy,
   fetchRelic,
