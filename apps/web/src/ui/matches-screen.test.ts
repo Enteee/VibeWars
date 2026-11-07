@@ -291,7 +291,7 @@ describe("the Matches page (#2532)", () => {
     expect(durations()).not.toContain("116:40");
   });
 
-  it("opens a record's detail in place: each player's professions, attributes and bar", () => {
+  it("opens a record's detail in place: the team card, and no list under it (#2637)", () => {
     const { root } = render();
     hear("a");
     const head = root.one("match-row-head");
@@ -299,10 +299,11 @@ describe("the Matches page (#2532)", () => {
     head.click();
     expect(head.attributes.get("aria-expanded")).toBe("true");
     const detail = root.one("match-detail");
-    expect(detail.all("match-player")).toHaveLength(1);
-    expect(detail.one("match-player").one("match-player-name").textContent).toBe("Ann [VIBE]");
-    expect(detail.one("match-players").all("mini-skill-bar")).toHaveLength(1);
-    expect(detail.one("match-professions").textContent).not.toBe("");
+    expect(detail.all("play-card")).toHaveLength(1);
+    expect(detail.all("match-players")).toHaveLength(0);
+    expect(detail.all("match-player")).toHaveLength(0);
+    // The card member rows carry the only skill bars.
+    expect(detail.all("mini-skill-bar")).toEqual(detail.one("play-card").all("mini-skill-bar"));
     expect(detail.one("match-detail-result").textContent).toBe("Team 1: Won");
     expect(detail.one("match-detail-summary").textContent).toBe("Annihilation after 5:05");
 
@@ -310,7 +311,7 @@ describe("the Matches page (#2532)", () => {
     expect(root.all("match-detail")).toHaveLength(0);
   });
 
-  it("says a build it cannot read is unreadable, and shows the rest", () => {
+  it("says a build it cannot read is unreadable", () => {
     const { root } = render();
     const [ann, bot] = [RECORD.teams[0].players[0], RECORD.teams[1]];
     if (ann === undefined) {
@@ -318,12 +319,28 @@ describe("the Matches page (#2532)", () => {
     }
     hear("a", { ...RECORD, teams: [{ players: [{ ...ann, template: "!!!" }] }, bot] });
     expect(root.one("match-player-icon").title).toBe(`Ann [VIBE]: ${BUILD_UNREADABLE}`);
+  });
+
+  it("puts the winner's tab first and opens it, keeping each team's number (#2637)", () => {
+    const { root } = render();
+    hear("a", { ...PAIRS, winningTeam: 1 });
     root.one("match-row-head").click();
-    expect(root.one("match-player").one("match-build-unreadable").textContent).toBe(
-      BUILD_UNREADABLE,
-    );
-    root.all("match-tab")[1]?.click();
-    expect(root.one("match-player").all("mini-skill-bar")).toHaveLength(1);
+    const detail = root.one("match-detail");
+    const tabs = detail.all("match-tab");
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Team 2 · Won", "Team 1 · Lost"]);
+    expect(tabs.map((tab) => tab.attributes.get("aria-selected"))).toEqual(["true", "false"]);
+    expect(detail.one("match-detail-result").textContent).toBe("Team 2: Won");
+    tabs[1]?.click();
+    expect(detail.one("match-detail-result").textContent).toBe("Team 1: Lost");
+  });
+
+  it("keeps Team 1 first on a draw (#2637)", () => {
+    const { root } = render();
+    hear("a", { ...PAIRS, winningTeam: null });
+    root.one("match-row-head").click();
+    const tabs = root.one("match-detail").all("match-tab");
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Team 1 · Draw", "Team 2 · Draw"]);
+    expect(root.one("match-detail-result").textContent).toBe("Team 1: Draw");
   });
 
   it("shows one team at a time as a team card, a tab for each, a member row per player (#2585)", () => {

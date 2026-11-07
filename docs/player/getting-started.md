@@ -55,7 +55,9 @@ with its professions: "Gust (E/Me)".
 for a Team Lobby at each size, 2v2, 4v4 and 8v8, marked the same way and
 always last. Team Builder lists the Team Builds of the sidebar's **Team
 size**, so the random one shown is of the size picked there. **Reroll** puts
-another ready-made team in its place. **Clone** saves a copy of the
+another ready-made team in its place. The ready-made teams are the PvX
+wiki's well-rated PvP team builds; a size PvX has none of gets PvX solo
+builds put together. **Clone** saves a copy of the
 team shown as your own Team Build and opens it, to change as you like.
 
 ## Play a Random Arena

@@ -340,11 +340,11 @@ test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
 });
 
 test("a rune's bonus stays clear of max, and the pips stay in line (#1102)", async ({ page }) => {
-  // The Warrior/Monk starter wears a rune: its rank reads "12 +1".
-  await bringStarter(page, "Warrior/Monk");
+  // A PvX starter wears a rune on its main attribute: its rank reads "12 +1".
+  await bringStarter(page, "Avatar of Balthazar (D)");
   await openRail(page, "Character Builder");
   await page
-    .locator(".character-card", { hasText: "Warrior/Monk" })
+    .locator(".character-card", { hasText: "Avatar of Balthazar (D)" })
     .first()
     .getByRole("button", { name: "Edit", exact: true })
     .click();

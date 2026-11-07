@@ -56,8 +56,8 @@ test("all chat reaches both teams, team chat only its own, as text (#479)", asyn
 });
 
 test("keys typed into chat never cast or move (#479)", async ({ page }) => {
-  // A known bar (#852): slot 5 of Elementalist/Mesmer is Armor of Earth.
-  await bringStarter(page, "Elementalist/Mesmer");
+  // A known bar (#852): slot 5 of Avatar of Balthazar is Rending Aura.
+  await bringStarter(page, "Avatar of Balthazar (D)");
   await page.goto("./");
   await startSoloMatch(page);
   const effects = page.getByRole("list", { name: "your effects" }).getByRole("listitem");
@@ -66,12 +66,12 @@ test("keys typed into chat never cast or move (#479)", async ({ page }) => {
   // Full, whatever Energy Storage made the maximum.
   const full = /^(\d+) \/ \1\b/;
   await expect(energy).toHaveText(full);
-  // Q W E R A S D F are the skill keys; A casts slot 5, Armor of Earth,
-  // a self-cast enchantment (#302) that costs energy as it starts.
+  // Q W E R A S D F are the skill keys; A casts slot 5, Rending Aura,
+  // a self-cast enchantment that costs energy as it starts.
   await say(page, "aaaa wasd qwer f");
   await expect(page.getByRole("log")).toContainText("aaaa wasd qwer f");
-  // Past its 0.75 s activation and the round trip: a leaked key would
-  // have spent energy, then put the enchantment on.
+  // Past the round trip: a leaked key would have spent energy and put
+  // the enchantment on.
   await page.waitForTimeout(1500);
   await expect(energy).toHaveText(full);
   await expect(effects).toHaveCount(0);

@@ -34,6 +34,15 @@ describe("THIRD_PARTY_LICENCES (#1242)", () => {
   });
 });
 
+describe("THIRD_PARTY_LICENCES (#2557)", () => {
+  it("credits the PvX wiki builds, CC BY-SA 3.0, linking the licence", () => {
+    const pvx = THIRD_PARTY_LICENCES.find((entry) => entry.name === "PvX wiki");
+    expect(pvx?.url).toBe("https://gwpvx.fandom.com/wiki/PvX_wiki");
+    expect(pvx?.spdx).toBe("CC-BY-SA-3.0");
+    expect(pvx?.text).toContain("https://www.fandom.com/licensing");
+  });
+});
+
 describe("parseBundledLicences (#1242)", () => {
   const phaser = {
     name: "phaser",

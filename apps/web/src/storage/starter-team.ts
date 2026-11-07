@@ -1,4 +1,4 @@
-import { pickStarterTeam, STARTER_TEAMS, type StarterTeam } from "@vibewars/game-core";
+import { pickStarterTeam, type StarterTeam } from "@vibewars/game-core";
 
 import { teamOf } from "../ui/team-builder.js";
 import { fromPlayerBuild } from "./build-validation.js";
@@ -8,10 +8,9 @@ import type { StoredTeam, TeamCharacter, TeamBuildSize } from "./schema.js";
 
 /**
  * The Team Build a browser's first start rolls (#2036), as it rolls a
- * starter character (#853): one of the curated `STARTER_TEAMS` (#2035) at
- * random for each team size that has one (#2147), saved as a Team Build
- * like any other, once per browser, under the team's archetype name and
- * its members' job names. Which one it is, is remembered by id for its
+ * starter character (#853): a `pickStarterTeam` one (#2555) at random
+ * for each team size (#2147), saved as a Team Build like any other, once
+ * per browser, under the team's name and its members' names. Which one it is, is remembered by id for its
  * size, so its card alone has Clone and Reroll.
  */
 
@@ -56,7 +55,7 @@ export interface RollStarterTeamOptions {
   readonly now: number;
 }
 
-/** `starter` as a Team Build under `id`, its members under their job names. */
+/** `starter` as a Team Build under `id`, its members under their names. */
 function storedStarterTeam(
   starter: StarterTeam,
   size: TeamBuildSize,
@@ -74,11 +73,6 @@ function storedStarterTeam(
     return member;
   });
   return { ...teamOf(id, size, members), name: starter.name, updatedAt: now };
-}
-
-/** The curated team `team` is, by its name; `undefined` once renamed. */
-function shownStarterTeam(team: StoredTeam): StarterTeam | undefined {
-  return STARTER_TEAMS.find((starter) => starter.name === team.name);
 }
 
 /**
@@ -107,7 +101,7 @@ export async function rollStarterTeam(
 }
 
 /**
- * `current` as another curated team, never the one shown: the same id,
+ * `current` as another starter team, never the one shown: the same id,
  * under that team's names, at its size; `current` itself when there is
  * no other of its size.
  */
@@ -118,7 +112,8 @@ export async function rerollStarterTeam(
   newId: () => string,
   now: number,
 ): Promise<StoredTeam> {
-  const starter = pickStarterTeam(random, current.size, shownStarterTeam(current));
+  // By name, so a team of PvX solo builds (#2555) is not drawn again either.
+  const starter = pickStarterTeam(random, current.size, current);
   if (starter === undefined) {
     return current;
   }
