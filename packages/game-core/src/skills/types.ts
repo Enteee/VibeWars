@@ -2580,6 +2580,13 @@ export interface Combatant {
    */
   morale: number;
   /**
+   * The team of the last foe whose damage or steal took its Health
+   * (#2689), since it last died: the kill's credit, kept as the hit lands
+   * so it outlives a hitter gone since, such as a minion. `undefined`:
+   * none yet.
+   */
+  lastFoeTeam: number | undefined;
+  /**
    * Maximum energy lost to overcast (#461), recovering over time; the
    * ceiling energy fills to is `maxEnergy − overcast`, and may be below 0.
    */

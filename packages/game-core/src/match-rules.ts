@@ -147,6 +147,20 @@ export type MatchMode =
   | "king-of-the-hill"
   | "capture-points";
 
+/** How many teams a match has (#2682): two, or Heroes' Ascent's three. */
+export type TeamCount = 2 | 3;
+
+/**
+ * The modes only two teams play (#2682): a kill-count kill scores for
+ * the one other team, and a Guild Battle is one guild against another.
+ */
+export const TWO_TEAM_MODES: readonly MatchMode[] = ["kill-count", "guild-battle"];
+
+/** The team ids of a match of `teamCount` teams: 0, 1 and, of three, 2. */
+export function teamIds(teamCount: TeamCount): readonly number[] {
+  return Array.from({ length: teamCount }, (_, team) => team);
+}
+
 /** Each mode's rules, by the name a map gives it. */
 export const MATCH_MODES: Readonly<Record<MatchMode, MatchRules>> = Object.freeze({
   annihilation: ANNIHILATION_MATCH_RULES,
@@ -213,6 +227,12 @@ export interface TeamStanding {
    * (#1222), after armor; degeneration and life stealing are not counted.
    */
   readonly aggression: number;
+  /**
+   * Whether it was beaten, as `teamBeaten` counts it, at an earlier step of
+   * this match (#2682): with three teams the match goes on past the first
+   * beaten team, which stays out whatever happens to it later.
+   */
+  readonly eliminated: boolean;
 }
 
 /**
@@ -255,6 +275,31 @@ function leader(score: MatchScore): { team: number | undefined; tied: boolean } 
     }
   }
   return { team: bestTeam, tied };
+}
+
+/**
+ * Whether `team` is beaten as it stands (#2682, the architect's ruling):
+ * every member dead at once and no living priest, in annihilation, a
+ * Relic Run, King of the Hill or Capture Points; a team that never had a
+ * priest has none living. No kill-count or Guild Battle team is beaten so.
+ */
+export function teamBeaten(team: TeamStanding, rules: MatchRules): boolean {
+  switch (rules.victory) {
+    case "annihilation":
+    case "priest-annihilation":
+    case "relic-run":
+    case "king-of-the-hill":
+    case "capture-points":
+      return team.living === 0 && !team.priestLives;
+    case "kill-count":
+    case "guild-battle":
+      return false;
+  }
+}
+
+/** The teams neither beaten now nor eliminated before (#2682). */
+function inPlay(standing: MatchStanding, rules: MatchRules): (readonly [number, TeamStanding])[] {
+  return [...standing.byTeam].filter(([, team]) => !team.eliminated && !teamBeaten(team, rules));
 }
 
 /**
@@ -333,16 +378,15 @@ function evaluateAnnihilation(
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
-  const standingTeams = [...standing.byTeam].filter(
-    ([, team]) => team.living > 0 || team.priestLives,
-  );
+  const standingTeams = inPlay(standing, rules);
   if (standingTeams.length < standing.byTeam.size && standingTeams.length <= 1) {
     return { phase: "finished", winningTeam: standingTeams[0]?.[0], reason: "annihilation" };
   }
 
   if (elapsedSeconds >= rules.timeLimitSeconds) {
-    const best = Math.max(...[...standing.byTeam.values()].map((team) => team.morale));
-    const leaders = [...standing.byTeam].filter(([, team]) => team.morale === best);
+    // A team already out has no say, however high its morale (#2682).
+    const best = Math.max(...standingTeams.map(([, team]) => team.morale));
+    const leaders = standingTeams.filter(([, team]) => team.morale === best);
     const withPriest = leaders.filter(([, team]) => team.priestLives);
     const winner =
       leaders.length === 1 ? leaders[0] : withPriest.length === 1 ? withPriest[0] : undefined;
@@ -383,7 +427,7 @@ function evaluateGuildBattle(
 
 /**
  * Relic Run (#1374, GW1), King of the Hill (#1377) and Capture Points
- * (#1378) alike: a wiped team loses at once, as in annihilation; at time
+ * (#1378) alike: a wiped team with no living priest is out at once, as in annihilation; at time
  * the most points win, and a tie is a draw, as kill-count's.
  * No number of points wins early: `scoreToWin` is kill-count's.
  */
@@ -393,11 +437,14 @@ function evaluateRelicRun(
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
-  const living = [...standing.byTeam].filter(([, team]) => team.living > 0);
+  const living = inPlay(standing, rules);
   if (living.length < standing.byTeam.size && living.length <= 1) {
     return { phase: "finished", winningTeam: living[0]?.[0], reason: "annihilation" };
   }
-  return evaluateScoreAtTime(score, elapsedSeconds, rules);
+  // A team already out has no say, however many points it holds (#2682).
+  const inGame = new Set(living.map(([team]) => team));
+  const scored = { byTeam: new Map([...score.byTeam].filter(([team]) => inGame.has(team))) };
+  return evaluateScoreAtTime(scored, elapsedSeconds, rules);
 }
 
 /** The team of the one entry, or `undefined` for none or several. */

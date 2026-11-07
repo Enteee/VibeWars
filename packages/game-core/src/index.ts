@@ -133,6 +133,7 @@ export type {
   MatchRules,
   MatchScore,
   MatchStanding,
+  TeamCount,
   TeamStanding,
 } from "./match-rules.js";
 export {
@@ -152,10 +153,12 @@ export {
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
   RELIC_RUN_MATCH_RULES,
+  TWO_TEAM_MODES,
   addPoint,
   emptyScore,
   evaluateMatch,
   moraleMaximum,
+  teamIds,
 } from "./match-rules.js";
 
 export type {
@@ -221,7 +224,7 @@ export type { CapturePoint } from "./match/capture-points.js";
 export { CAPTURE_REACH_UNITS, CAPTURE_SECONDS } from "./match/capture-points.js";
 export { ALTAR_REACH_UNITS, relicId, relicTeamOf } from "./match/relics.js";
 export type { AltarState } from "./match/altar.js";
-export type { GhostSpawn, HillField } from "./match/ghost.js";
+export type { GhostField, GhostLevel, GhostSpawn } from "./match/ghost.js";
 export { CLAIM_SKILL_ID, ghostId, isGhostId } from "./match/ghost.js";
 export { GUILD_LORD_HEALTH, guildLordId, guildLordLossCap } from "./match/guild-lord.js";
 export type { BaseGuard, GuardRole } from "./match/guards.js";

@@ -43,8 +43,8 @@
     "id": "glass-dunes",
     "title": "Glass Dunes",
     "moods": ["epic", "mysterious"],
-    "bpm": 72,
-    "key": "E phrygian dominant",
+    "bpm": 66,
+    "key": "D phrygian dominant",
     "colour": [],
     "layers": 3,
     "phraseCycles": 8

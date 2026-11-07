@@ -18,6 +18,7 @@ import type { StoredTeam, TeamCharacter, TeamBuildSize } from "./schema.js";
 export interface StarterTeamKey {
   readonly load: () => string | undefined;
   readonly save: (id: string) => void;
+  readonly clear: () => void;
 }
 
 function starterTeamStorageKey(size: TeamBuildSize): string {
@@ -38,6 +39,14 @@ export function saveStarterTeamId(size: TeamBuildSize, id: string): void {
     localStorage.setItem(starterTeamStorageKey(size), id);
   } catch {
     // Unset, the next start rolls again: a second team, not a failure.
+  }
+}
+
+export function clearStarterTeamId(size: TeamBuildSize): void {
+  try {
+    localStorage.removeItem(starterTeamStorageKey(size));
+  } catch {
+    // Still set, the stale id matches no card: as before #2717, not a crash.
   }
 }
 

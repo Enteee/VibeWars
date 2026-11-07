@@ -235,10 +235,11 @@ both are legitimately in scope.
 
 **GitHub Pages** (`.github/workflows/pages.yml`, #103): the client alone, as
 a static site, built with `VIBEWARS_BASE` (a sub-path). `/next/` follows
-`main`, and the root follows the latest release. Online play is peer to peer
+`main`, the root follows the latest release, and `/rc/` follows the newest
+`release/*` branch, so QA tests what will ship (#2708). Online play is peer to peer
 over Trystero (#15, #403): one player's browser hosts the lobby and its
 match, and no server is involved. Each base path gets its own storage
-namespace (`storage/namespace.ts`), so the two builds on one origin never
+namespace (`storage/namespace.ts`), so the builds on one origin never
 read each other's saves. Local play is `pnpm run dev`.
 
 A deploy deletes the previous build's chunks, so a tab left open across it

@@ -3,6 +3,7 @@
   "name": "Scarred Earth",
   "mode": "capture-points",
   "teamSizes": [4, 8],
+  "teams": 2,
   "width": 3200,
   "height": 2000,
   "walls": [

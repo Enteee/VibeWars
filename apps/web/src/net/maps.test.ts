@@ -370,16 +370,18 @@ describe("hostMap (#476)", () => {
     expect(mapRelicField("training-hall")).toBeUndefined();
   });
 
-  it("carries a King of the Hill map's altar and ghost spawns, and none elsewhere (#1377)", () => {
-    expect(hostMap("the-courtyard")?.hillField).toEqual({
+  it("carries a ghost map's level and ghost spawns, King of the Hill's altar, and none elsewhere (#1377, #2689)", () => {
+    expect(hostMap("hall-of-heroes")?.ghostField?.level).toBe(28);
+    expect(hostMap("the-courtyard")?.ghostField).toEqual({
+      level: 24,
       altar: { x: 1500, y: 900 },
       spawns: [
         { team: 0, position: { x: 120, y: 900 } },
         { team: 1, position: { x: 2880, y: 900 } },
       ],
     });
-    expect(hostMap("broken-tower")?.hillField).toBeUndefined();
-    expect(hostMap("arena-crossroads")?.hillField).toBeUndefined();
+    expect(hostMap("broken-tower")?.ghostField).toBeUndefined();
+    expect(hostMap("arena-crossroads")?.ghostField).toBeUndefined();
   });
 
   it("carries a Guild Battle map's guards in its order, and none elsewhere (#1223)", () => {

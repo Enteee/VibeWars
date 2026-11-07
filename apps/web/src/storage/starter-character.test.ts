@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { toPlayerBuild } from "./build-validation.js";
 import { CharacterRepository, createMemoryStore } from "./repository.js";
+import { CHARACTER_SCHEMA_VERSION } from "./schema.js";
 import {
+  forgetDiscardedStarter,
   rerollStarterCharacter,
   rollStarterCharacter,
   type StarterCharacterKey,
@@ -17,6 +19,9 @@ function memoryKey(): StarterCharacterKey & { value: string | undefined } {
     load: () => key.value,
     save: (id: string) => {
       key.value = id;
+    },
+    clear: () => {
+      key.value = undefined;
     },
   };
   return key;
@@ -159,5 +164,57 @@ describe("rerollStarterCharacter", () => {
         expect(await characters.load("a")).toEqual(rerolled);
       }
     }
+  });
+});
+
+describe("forgetDiscardedStarter (#2717)", () => {
+  it("rolls a new starter at the next start when a new version discarded the old one", async () => {
+    const store = createMemoryStore();
+    const characters = new CharacterRepository(store);
+    const key = memoryKey();
+    const old = await rollStarterCharacter({
+      characters,
+      key,
+      random: () => 0,
+      id: "old",
+      now: 1,
+      taken: [],
+    });
+    // A new version's schema: the record is stale, its key is not.
+    await store.put("characters", "old", {
+      ...old,
+      schemaVersion: CHARACTER_SCHEMA_VERSION - 1,
+    });
+
+    // The startup sequence: list, forget, roll.
+    const { characters: roster, discarded } = await characters.list();
+    forgetDiscardedStarter(key, discarded);
+    const rolled = await rollStarterCharacter({
+      characters,
+      key,
+      random: () => 0,
+      id: "new",
+      now: 2,
+      taken: roster.map((c) => c.name),
+    });
+
+    expect(rolled?.id).toBe("new");
+    expect(key.value).toBe("new");
+    expect((await characters.list()).characters.map((c) => c.id)).toEqual(["new"]);
+  });
+
+  it("keeps a key whose starter was not discarded, deleted by the player or not", () => {
+    const key = memoryKey();
+    key.save("mine");
+    forgetDiscardedStarter(key, ["other"]);
+    expect(key.value).toBe("mine");
+    forgetDiscardedStarter(key, []);
+    expect(key.value).toBe("mine");
+  });
+
+  it("leaves an unset key unset", () => {
+    const key = memoryKey();
+    forgetDiscardedStarter(key, ["other"]);
+    expect(key.value).toBeUndefined();
   });
 });

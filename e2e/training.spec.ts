@@ -394,7 +394,7 @@ test("(14) in Weapon DPS, Space swings and the meter's weapon row counts it (#16
   // "weapon / skills": the weapon's share is no longer 0. The walk and
   // swing take ~1.9 s of game time, which runs slower than wall time when
   // the CPU is loaded (#327), so this waits the default.
-  await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//);
+  await expect(meter(page, "weapon-skills")).not.toHaveText(/^0 \//);
   // Named for the weapon that swung, by the character who swung it.
   await expect(page.locator(".training-log")).toContainText(/Wand \(.+\) hits Melee dummy/);
 });
@@ -440,7 +440,7 @@ test("(15) an empty bar is never dimmed, and Space still swings (#360)", async (
   await page.keyboard.press(key("attack"));
   // The walk and swing are game time, slower than wall time under load
   // (#327), so this waits the default.
-  await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//);
+  await expect(meter(page, "weapon-skills")).not.toHaveText(/^0 \//);
 });
 
 test("(16) Tab targets in the arena and never leaves it for the name field (#268)", async ({
@@ -462,7 +462,7 @@ test("(16) Tab targets in the arena and never leaves it for the name field (#268
   // The Space was the arena's: a swing at the dummy Tab picked. ~1.9 s of
   // game time, which runs slower than wall time under load (#327), so
   // this waits the default.
-  await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//);
+  await expect(meter(page, "weapon-skills")).not.toHaveText(/^0 \//);
   await expect(page.locator(".training-log")).toContainText(/Wand \(.+\) hits Melee dummy/);
 });
 

@@ -50,6 +50,7 @@ export type {
   RechargeMessage,
   RechargeSlot,
   MapDescriptor,
+  WireTeamCount,
   WallDescriptor,
   RectWallDescriptor,
   PolygonWallDescriptor,
@@ -155,6 +156,8 @@ export {
 
 export type {
   Channel,
+  LobbyTeam,
+  WireTeam,
   PeerHello,
   WireCape,
   PeerBye,

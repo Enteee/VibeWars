@@ -3,6 +3,7 @@
   "name": "The Courtyard",
   "mode": "king-of-the-hill",
   "teamSizes": [4, 8],
+  "teams": 2,
   "width": 3000,
   "height": 1800,
   "walls": [
@@ -161,6 +162,7 @@
       "height": 200
     }
   ],
+  "ghostLevel": 24,
   "objectives": [
     {
       "kind": "ghost-spawn",

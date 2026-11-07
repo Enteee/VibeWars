@@ -12,6 +12,8 @@
  * there is always a way to cancel and a way out.
  */
 
+import { t, type MessageKey } from "../i18n/index.js";
+
 export type KeyAction =
   | "skill-1"
   | "skill-2"
@@ -202,6 +204,25 @@ const ARROWS: Readonly<Record<string, string>> = {
   ArrowRight: "→",
 };
 
+/** The keys a keyboard prints in words, by code with any side dropped: worded at render. */
+const WORD_KEYS: Readonly<Record<string, MessageKey>> = {
+  Alt: "keys.alt",
+  Backspace: "keys.backspace",
+  CapsLock: "keys.capsLock",
+  Control: "keys.control",
+  Delete: "keys.delete",
+  End: "keys.end",
+  Enter: "keys.enter",
+  Escape: "keys.escape",
+  Home: "keys.home",
+  Insert: "keys.insert",
+  PageDown: "keys.pageDown",
+  PageUp: "keys.pageUp",
+  Shift: "keys.shift",
+  Space: "keys.space",
+  Tab: "keys.tab",
+};
+
 /** A key's label, from its code alone: `KeyQ` is Q, `Digit1` is 1, `ArrowUp` is ↑. */
 export function codeLabel(code: string): string {
   const arrow = ARROWS[code];
@@ -214,13 +235,13 @@ export function codeLabel(code: string): string {
   }
   const numpad = /^Numpad(.+)$/.exec(code);
   if (numpad?.[1] !== undefined) {
-    return `Num ${numpad[1]}`;
+    return t("keys.numpad", { key: numpad[1] });
   }
   const sided = /^(.+?)(?:Left|Right)$/.exec(code);
-  if (sided?.[1] !== undefined && code !== "ArrowLeft" && code !== "ArrowRight") {
-    return sided[1];
-  }
-  return code;
+  const name =
+    sided?.[1] !== undefined && code !== "ArrowLeft" && code !== "ArrowRight" ? sided[1] : code;
+  const word = WORD_KEYS[name];
+  return word === undefined ? name : t(word);
 }
 
 /**

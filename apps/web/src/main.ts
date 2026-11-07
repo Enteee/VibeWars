@@ -54,7 +54,7 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
-import { loadLocale } from "./i18n/index.js";
+import { loadLocale } from "./i18n/load-locale.js";
 import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
@@ -79,8 +79,13 @@ import {
   type StoredTeam,
   type TeamCharacter,
 } from "./storage/schema.js";
-import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-character.js";
 import {
+  forgetDiscardedStarter,
+  rerollStarterCharacter,
+  rollStarterCharacter,
+} from "./storage/starter-character.js";
+import {
+  clearStarterTeamId,
   loadStarterTeamId,
   rerollStarterTeam,
   rollStarterTeam,
@@ -129,6 +134,7 @@ import {
 } from "./ui/team-lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
+  clearStarterCharacterId,
   loadActiveCharacterId,
   loadStarterCharacterId,
   renderCharacterBuilder,
@@ -361,13 +367,21 @@ async function main(): Promise<void> {
   if (persistent) {
     // Its name is none of the roster's (#1149). The list's notices go on
     // the first menu: the stale records they report are gone after this.
-    const { characters: roster, problems } = await characters.list();
-    for (const problem of problems) {
+    // A starter the list discards as stale is rolled again (#2717).
+    const { characters: roster, problems, discarded } = await characters.list();
+    const { problems: teamProblems, discarded: discardedTeams } = await teams.list();
+    for (const problem of [...problems, ...teamProblems]) {
       notices.add(problem);
     }
+    const starterKey = {
+      load: loadStarterCharacterId,
+      save: saveStarterCharacterId,
+      clear: clearStarterCharacterId,
+    };
+    forgetDiscardedStarter(starterKey, discarded);
     const rolled = await rollStarterCharacter({
       characters,
-      key: { load: loadStarterCharacterId, save: saveStarterCharacterId },
+      key: starterKey,
       random: Math.random,
       id: crypto.randomUUID(),
       now: Date.now(),
@@ -379,14 +393,19 @@ async function main(): Promise<void> {
     // And a curated Team Build of every size that has one, each on its
     // own key (#2036, #2147).
     for (const size of TEAM_BUILD_SIZES) {
+      const key = {
+        load: () => loadStarterTeamId(size),
+        save: (id: string) => {
+          saveStarterTeamId(size, id);
+        },
+        clear: () => {
+          clearStarterTeamId(size);
+        },
+      };
+      forgetDiscardedStarter(key, discardedTeams);
       await rollStarterTeam({
         teams,
-        key: {
-          load: () => loadStarterTeamId(size),
-          save: (id) => {
-            saveStarterTeamId(size, id);
-          },
-        },
+        key,
         random: Math.random,
         size,
         id: crypto.randomUUID(),

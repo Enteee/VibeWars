@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CombatEvent, CombatLogEntry } from "@vibewars/game-core";
 
+import { t } from "../i18n/index.js";
 import {
   EMPTY_TOTALS,
   accumulate,
@@ -31,6 +32,9 @@ const NAMES = new Map([
 const nameOf = (id: string): string => NAMES.get(id) ?? id;
 const CREATURES = new Set(["wolf", "priest/0"]);
 const isCreature = (id: string): boolean => CREATURES.has(id);
+
+/** "Fireball (Pyro)": what did it, and whose. */
+const by = (what: string, source: string): string => t("combat.bySource", { what, source });
 
 /** Nobody here is a creature (#2483). */
 const NO_CREATURES = (): undefined => undefined;
@@ -117,18 +121,18 @@ describe("describeCombatEvent", () => {
   it("names the skill, the caster, the target and the amount", () => {
     const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 63.6, critical: false };
     expect(describeCombatEvent(entry([event]), event, nameOf, isCreature)).toBe(
-      "Fireball (Pyro) hits Caster dummy for 64",
+      t("combat.hit", { by: by("Fireball", "Pyro"), target: "Caster dummy", amount: "64" }),
     );
   });
 
   it("says a Fireball found its target invulnerable, and floats it (#1233)", () => {
     const event: CombatEvent = { kind: "invulnerable", targetId: "dummy" };
     expect(describeCombatEvent(entry([event]), event, nameOf, isCreature)).toBe(
-      "Fireball (Pyro): Caster dummy is invulnerable",
+      t("combat.invulnerable", { by: by("Fireball", "Pyro"), target: "Caster dummy" }),
     );
     expect(logToneOf("invulnerable")).toBe("control");
     expect(floatingCueFor("invulnerable", undefined, false)).toEqual({
-      text: "Invulnerable",
+      text: t("combat.floatInvulnerable"),
       tone: "neutral",
       critical: false,
     });
@@ -140,10 +144,10 @@ describe("describeCombatEvent", () => {
     const tick = (event: CombatEvent) =>
       entry([event], { cause: "degeneration", sourceId: undefined, skillId: undefined });
     expect(describeCombatEvent(tick(hurt), hurt, nameOf, isCreature)).toBe(
-      "degeneration hits Caster dummy for 3",
+      t("combat.hit", { by: t("combat.sourceDegeneration"), target: "Caster dummy", amount: "3" }),
     );
     expect(describeCombatEvent(tick(heal), heal, nameOf, isCreature)).toBe(
-      "regeneration heals Caster dummy for 4",
+      t("combat.heal", { by: t("combat.sourceRegeneration"), target: "Caster dummy", amount: "4" }),
     );
   });
 
@@ -156,7 +160,7 @@ describe("describeCombatEvent", () => {
     };
     const spread = entry([event], { cause: "degeneration", skillId: undefined });
     expect(describeCombatEvent(spread, event, nameOf, isCreature)).toBe(
-      "Caster dummy catches Disease from Pyro",
+      t("combat.statusSpread", { target: "Caster dummy", status: "Disease", from: "Pyro" }),
     );
   });
 
@@ -169,11 +173,15 @@ describe("describeCombatEvent", () => {
     };
     const chop = entry([event], { skillId: "warrior.swift-chop" });
     expect(describeCombatEvent(chop, event, nameOf, isCreature)).toBe(
-      "Deep Wound (Pyro) takes 100 health from Caster dummy",
+      t("combat.healthLost", {
+        status: by("Deep Wound", "Pyro"),
+        amount: "100",
+        target: "Caster dummy",
+      }),
     );
     const unknown = entry([event], { sourceId: undefined, skillId: undefined });
     expect(describeCombatEvent(unknown, event, nameOf, isCreature)).toBe(
-      "Deep Wound takes 100 health from Caster dummy",
+      t("combat.healthLost", { status: "Deep Wound", amount: "100", target: "Caster dummy" }),
     );
   });
 
@@ -181,7 +189,11 @@ describe("describeCombatEvent", () => {
     const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 3, critical: false };
     const tick = entry([hurt], { cause: "degeneration", skillId: undefined });
     expect(describeCombatEvent(tick, hurt, nameOf, isCreature)).toBe(
-      "degeneration (Pyro) hits Caster dummy for 3",
+      t("combat.hit", {
+        by: by(t("combat.sourceDegeneration"), "Pyro"),
+        target: "Caster dummy",
+        amount: "3",
+      }),
     );
   });
 
@@ -189,14 +201,18 @@ describe("describeCombatEvent", () => {
     const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 18, critical: false };
     const swing = entry([event], { cause: "weapon", skillId: undefined, weaponId: "sword" });
     expect(describeCombatEvent(swing, event, nameOf, isCreature)).toBe(
-      "Sword (Pyro) hits Caster dummy for 18",
+      t("combat.hit", { by: by("Sword", "Pyro"), target: "Caster dummy", amount: "18" }),
     );
     const crit: CombatEvent = { ...event, amount: 31.1, critical: true };
     expect(describeCombatEvent(swing, crit, nameOf, isCreature)).toBe(
-      "Sword (Pyro) hits Caster dummy for 31, a critical hit",
+      t("combat.hitCritical", { by: by("Sword", "Pyro"), target: "Caster dummy", amount: "31" }),
     );
     expect(describeCombatEvent({ ...swing, weaponId: undefined }, event, nameOf, isCreature)).toBe(
-      "a weapon (Pyro) hits Caster dummy for 18",
+      t("combat.hit", {
+        by: by(t("combat.sourceWeapon"), "Pyro"),
+        target: "Caster dummy",
+        amount: "18",
+      }),
     );
   });
 
@@ -209,13 +225,15 @@ describe("describeCombatEvent", () => {
       weaponId: undefined,
     });
     expect(describeCombatEvent(bite, event, nameOf, isCreature)).toBe(
-      "Wolf hits Caster dummy for 21",
+      t("combat.hit", { by: "Wolf", target: "Caster dummy", amount: "21" }),
     );
     const missed: CombatEvent = { kind: "attack-missed", targetId: "dummy" };
-    expect(describeCombatEvent(bite, missed, nameOf, isCreature)).toBe("Wolf misses Caster dummy");
+    expect(describeCombatEvent(bite, missed, nameOf, isCreature)).toBe(
+      t("combat.miss", { by: "Wolf", target: "Caster dummy" }),
+    );
     const swing = entry([event], { cause: "weapon", skillId: undefined, weaponId: "longbow" });
     expect(describeCombatEvent(swing, event, nameOf, isCreature)).toBe(
-      "Longbow (Pyro) hits Caster dummy for 21",
+      t("combat.hit", { by: by("Longbow", "Pyro"), target: "Caster dummy", amount: "21" }),
     );
   });
 
@@ -228,7 +246,12 @@ describe("describeCombatEvent", () => {
     };
     const wave = entry([event], { sourceId: "priest/0", skillId: undefined });
     expect(describeCombatEvent(wave, event, nameOf, isCreature)).toBe(
-      "Priest resurrects Caster dummy (100% health, 100% energy)",
+      t("combat.resurrected", {
+        by: "Priest",
+        target: "Caster dummy",
+        health: "100%",
+        energy: "100%",
+      }),
     );
   });
 
@@ -241,7 +264,12 @@ describe("describeCombatEvent", () => {
     };
     const wave = entry([event], { sourceId: undefined, skillId: undefined });
     expect(describeCombatEvent(wave, event, nameOf, isCreature)).toBe(
-      "The shrine resurrects Caster dummy (100% health, 100% energy)",
+      t("combat.resurrected", {
+        by: t("combat.sourceShrine"),
+        target: "Caster dummy",
+        health: "100%",
+        energy: "100%",
+      }),
     );
   });
 
@@ -253,10 +281,10 @@ describe("describeCombatEvent", () => {
       attributeId: "necromancer.soul-reaping",
     });
     expect(describeCombatEvent(reaped, event, nameOf, isCreature)).toBe(
-      "Pyro gains 12 energy from Soul Reaping",
+      t("combat.energyGainFrom", { target: "Pyro", amount: "12", attribute: "Soul Reaping" }),
     );
     expect(describeCombatEvent(entry([event]), event, nameOf, isCreature)).toBe(
-      "Pyro gains 12 energy",
+      t("combat.energyGain", { target: "Pyro", amount: "12" }),
     );
   });
 
@@ -268,7 +296,7 @@ describe("describeCombatEvent", () => {
       durationSeconds: 10,
     };
     expect(describeCombatEvent(entry([applied]), applied, nameOf, isCreature)).toBe(
-      "Caster dummy gains Bleeding (10 s)",
+      t("combat.statusApplied", { target: "Caster dummy", status: "Bleeding", seconds: "10" }),
     );
     const maintained: CombatEvent = {
       kind: "status-applied",
@@ -277,7 +305,7 @@ describe("describeCombatEvent", () => {
       durationSeconds: null,
     };
     expect(describeCombatEvent(entry([maintained]), maintained, nameOf, isCreature)).toBe(
-      "Caster dummy gains Mending (maintained)",
+      t("combat.statusAppliedMaintained", { target: "Caster dummy", status: "Mending" }),
     );
     const lost: CombatEvent = {
       kind: "upkeep-lost",
@@ -286,7 +314,7 @@ describe("describeCombatEvent", () => {
       casterId: "you",
     };
     expect(describeCombatEvent(entry([lost]), lost, nameOf, isCreature)).toBe(
-      "Mending on Caster dummy was lost: Pyro could not pay the upkeep",
+      t("combat.upkeepLost", { status: "Mending", target: "Caster dummy", caster: "Pyro" }),
     );
     const interrupted: CombatEvent = {
       kind: "interrupted",
@@ -294,21 +322,27 @@ describe("describeCombatEvent", () => {
       skillId: "elementalist.fireball",
     };
     expect(describeCombatEvent(entry([interrupted]), interrupted, nameOf, isCreature)).toBe(
-      "Fireball (Pyro) interrupts Caster dummy's Fireball",
+      t("combat.interrupted", {
+        by: by("Fireball", "Pyro"),
+        target: "Caster dummy",
+        skill: "Fireball",
+      }),
     );
     // A plain swing Clumsiness cancelled (#1593).
     const swing: CombatEvent = { kind: "attack-interrupted", targetId: "dummy" };
     expect(describeCombatEvent(entry([swing]), swing, nameOf, isCreature)).toBe(
-      "Fireball (Pyro) interrupts Caster dummy's attack",
+      t("combat.attackInterrupted", { by: by("Fireball", "Pyro"), target: "Caster dummy" }),
     );
     const missed: CombatEvent = { kind: "attack-missed", targetId: "dummy" };
     expect(describeCombatEvent(entry([missed]), missed, nameOf, isCreature)).toBe(
-      "Fireball (Pyro) misses Caster dummy",
+      t("combat.miss", { by: by("Fireball", "Pyro"), target: "Caster dummy" }),
     );
     expect(logToneOf("attack-unreachable")).toBe("control");
   });
 
   it("says an off-hand attack out of sequence must follow a lead attack (#831)", () => {
+    const outOfSequence = (skill: string, requirement: string): string =>
+      t("combat.missOutOfSequence", { by: by(skill, "Pyro"), target: "Caster dummy", requirement });
     const missed: CombatEvent = {
       kind: "attack-missed",
       targetId: "dummy",
@@ -321,7 +355,7 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Fox Fangs (Pyro) misses Caster dummy (must follow a lead attack)");
+    ).toBe(outOfSequence("Fox Fangs", "must follow a lead attack"));
     expect(
       describeCombatEvent(
         entry([missed], { skillId: "assassin.death-blossom" }),
@@ -329,7 +363,7 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Death Blossom (Pyro) misses Caster dummy (must follow an off-hand attack)");
+    ).toBe(outOfSequence("Death Blossom", "must follow an off-hand attack"));
     expect(
       describeCombatEvent(
         entry([missed], { skillId: "assassin.moebius-strike" }),
@@ -337,7 +371,7 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Moebius Strike (Pyro) misses Caster dummy (must follow a dual attack)");
+    ).toBe(outOfSequence("Moebius Strike", "must follow a dual attack"));
     expect(
       describeCombatEvent(
         entry([missed], { skillId: "assassin.falling-spider" }),
@@ -345,7 +379,7 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Falling Spider (Pyro) misses Caster dummy (only if target is knocked down)");
+    ).toBe(outOfSequence("Falling Spider", "only if target is knocked down"));
   });
 
   it("says why a picky interrupt let a cast through, and nothing when it found none (#796)", () => {
@@ -356,11 +390,15 @@ describe("describeCombatEvent", () => {
       refusedSkillId: "ranger.barrage",
     };
     expect(describeCombatEvent(entry([refused], spike), refused, nameOf, isCreature)).toBe(
-      "Power Spike (Pyro) can't interrupt Caster dummy's Barrage: not a spell or chant",
+      t("combat.interruptRefusedNotSpellOrChant", {
+        by: by("Power Spike", "Pyro"),
+        target: "Caster dummy",
+        skill: "Barrage",
+      }),
     );
     const idle: CombatEvent = { kind: "interrupt-missed", targetId: "dummy", refusedSkillId: null };
     expect(describeCombatEvent(entry([idle], spike), idle, nameOf, isCreature)).toBe(
-      "Power Spike (Pyro) finds nothing to interrupt on Caster dummy",
+      t("combat.interruptMissed", { by: by("Power Spike", "Pyro"), target: "Caster dummy" }),
     );
   });
 
@@ -377,7 +415,13 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Concussion Shot (Pyro) can't interrupt Caster dummy's Anthem of Flame: not a spell");
+    ).toBe(
+      t("combat.interruptRefusedNotSpell", {
+        by: by("Concussion Shot", "Pyro"),
+        target: "Caster dummy",
+        skill: "Anthem of Flame",
+      }),
+    );
   });
 
   it("finds a spell-only interrupt in what a ground effect lands: not a spell (#1367)", () => {
@@ -393,7 +437,13 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Maelstrom (Pyro) can't interrupt Caster dummy's Troll Unguent: not a spell");
+    ).toBe(
+      t("combat.interruptRefusedNotSpell", {
+        by: by("Maelstrom", "Pyro"),
+        target: "Caster dummy",
+        skill: "Troll Unguent",
+      }),
+    );
   });
 
   it("says whose skill a disable held back, and for how long (#914)", () => {
@@ -410,7 +460,14 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Power Block (Pyro) disables Caster dummy's Fireball for 10 s");
+    ).toBe(
+      t("combat.skillDisabled", {
+        by: by("Power Block", "Pyro"),
+        target: "Caster dummy",
+        skill: "Fireball",
+        seconds: "10",
+      }),
+    );
     expect(logToneOf("skill-disabled")).toBe("control");
   });
 
@@ -428,7 +485,9 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Caster dummy's Fireball takes 47 s longer to recharge");
+    ).toBe(
+      t("combat.rechargeLengthened", { target: "Caster dummy", skill: "Fireball", seconds: "47" }),
+    );
     expect(logToneOf("recharge-lengthened")).toBe("control");
   });
 
@@ -441,7 +500,7 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Caster dummy shadow steps to Pyro");
+    ).toBe(t("combat.shadowStepped", { target: "Caster dummy", to: "Pyro" }));
     expect(logToneOf("shadow-stepped")).toBe("control");
     expect(floatingCueFor("shadow-stepped", undefined, false)).toBeUndefined();
   });
@@ -450,7 +509,7 @@ describe("describeCombatEvent", () => {
     const moved: CombatEvent = { kind: "teleported", targetId: "dummy", toId: "you" };
     expect(
       describeCombatEvent(entry([moved], { skillId: "monk.rebirth" }), moved, nameOf, isCreature),
-    ).toBe("Caster dummy is teleported to Pyro");
+    ).toBe(t("combat.teleported", { target: "Caster dummy", to: "Pyro" }));
     expect(logToneOf("teleported")).toBe("control");
     expect(floatingCueFor("teleported", undefined, false)).toBeUndefined();
   });
@@ -464,10 +523,16 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Backbreaker (Pyro) knocks down Caster dummy (4 s)");
+    ).toBe(
+      t("combat.knockedDown", {
+        by: by("Backbreaker", "Pyro"),
+        target: "Caster dummy",
+        seconds: "4",
+      }),
+    );
     expect(logToneOf("knocked-down")).toBe("control");
     expect(floatingCueFor("knocked-down", undefined, false)).toEqual({
-      text: "Knocked down",
+      text: t("combat.floatKnockedDown"),
       tone: "neutral",
       critical: false,
     });
@@ -487,7 +552,14 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Restore Life (Pyro) resurrects Caster dummy (25% health, 0% energy)");
+    ).toBe(
+      t("combat.resurrected", {
+        by: by("Restore Life", "Pyro"),
+        target: "Caster dummy",
+        health: "25%",
+        energy: "0%",
+      }),
+    );
     expect(logToneOf("resurrected")).toBe("heal");
   });
 
@@ -500,10 +572,16 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       ),
-    ).toBe("Caster dummy loses 8 energy to Energy Burn (Pyro)");
+    ).toBe(
+      t("combat.energyLoss", {
+        target: "Caster dummy",
+        amount: "8",
+        by: by("Energy Burn", "Pyro"),
+      }),
+    );
     expect(logToneOf("energy-loss")).toBe("resource");
     expect(floatingCueFor("energy-loss", 8, false)).toEqual({
-      text: "−8 energy",
+      text: t("combat.floatEnergyLoss", { amount: "8" }),
       tone: "energy",
       critical: false,
     });
@@ -516,7 +594,11 @@ describe("describeCombatEvent", () => {
       skillId: "necromancer.insidious-parasite",
     });
     expect(describeCombatEvent(steal, stolen, nameOf, isCreature)).toBe(
-      "Insidious Parasite (Caster dummy) steals 39 health from Pyro",
+      t("combat.lifeStolen", {
+        by: by("Insidious Parasite", "Caster dummy"),
+        amount: "39",
+        target: "Pyro",
+      }),
     );
     expect(logToneOf("life-stolen")).toBe("damage");
     expect(floatingCueFor("life-stolen", 39, false)).toEqual({
@@ -540,7 +622,11 @@ describe("describeCombatEvent", () => {
       skillId: "necromancer.enfeebling-touch",
     });
     expect(describeCombatEvent(touch, lost, nameOf, isCreature)).toBe(
-      "Pyro loses 53 Health to Enfeebling Touch (Caster dummy)",
+      t("combat.healthLoss", {
+        target: "Pyro",
+        amount: "53",
+        by: by("Enfeebling Touch", "Caster dummy"),
+      }),
     );
     expect(logToneOf("health-loss")).toBe("damage");
     expect(floatingCueFor("health-loss", 53, false)).toEqual({
@@ -564,11 +650,11 @@ describe("describeCombatEvent", () => {
       skillId: "elementalist.fireball",
     };
     expect(describeCombatEvent(entry([cancelled]), cancelled, nameOf, isCreature)).toBe(
-      "Pyro cancels Fireball",
+      t("combat.cancelled", { target: "Pyro", skill: "Fireball" }),
     );
     expect(logToneOf("cancelled")).toBe("control");
     expect(floatingCueFor("cancelled", undefined, false)).toEqual({
-      text: "cancelled",
+      text: t("combat.floatCancelled"),
       tone: "neutral",
       critical: false,
     });
@@ -583,22 +669,22 @@ describe("describeCombatEvent", () => {
         isCreature,
       );
     expect(shot({ kind: "damage", targetId: "dummy", amount: 14, critical: false })).toBe(
-      "Longbow (Pyro) hits Caster dummy for 14",
+      t("combat.hit", { by: by("Longbow", "Pyro"), target: "Caster dummy", amount: "14" }),
     );
     expect(shot({ kind: "attack-missed", targetId: "dummy" })).toBe(
-      "Longbow (Pyro) misses Caster dummy",
+      t("combat.miss", { by: by("Longbow", "Pyro"), target: "Caster dummy" }),
     );
     expect(shot({ kind: "attack-blocked", targetId: "dummy" })).toBe(
-      "Caster dummy blocks Longbow (Pyro)",
+      t("combat.blocked", { target: "Caster dummy", by: by("Longbow", "Pyro") }),
     );
     expect(shot({ kind: "attack-dodged", targetId: "dummy" })).toBe(
-      "Caster dummy dodges Longbow (Pyro)",
+      t("combat.dodged", { target: "Caster dummy", by: by("Longbow", "Pyro") }),
     );
     expect(shot({ kind: "attack-obstructed", targetId: "dummy" })).toBe(
-      "Longbow (Pyro) is obstructed on the way to Caster dummy",
+      t("combat.obstructed", { by: by("Longbow", "Pyro"), target: "Caster dummy" }),
     );
     expect(shot({ kind: "attack-unreachable", targetId: "dummy" })).toBe(
-      "Longbow (Pyro) can't reach Caster dummy",
+      t("combat.unreachable", { by: by("Longbow", "Pyro"), target: "Caster dummy" }),
     );
   });
 });
@@ -608,7 +694,7 @@ describe("combatEventToRow and dividerRow", () => {
     const event: CombatEvent = { kind: "heal", targetId: "you", amount: 40 };
     expect(combatEventToRow(entry([event]), event, nameOf, isCreature)).toEqual({
       time: "0:01.5",
-      text: "Fireball (Pyro) heals Pyro for 40",
+      text: t("combat.heal", { by: by("Fireball", "Pyro"), target: "Pyro", amount: "40" }),
       tone: "heal",
     });
     expect(dividerRow("re-armed", 2)).toEqual({
@@ -652,30 +738,44 @@ describe("appendRows", () => {
       }
       return closed;
     };
+    /** "regeneration heals Pyro for 60 over 19 s", or for a single row, with no span. */
+    const regenText = (amount: string, seconds?: string): string => {
+      const parts = { by: t("combat.sourceRegeneration"), target: "Pyro", amount };
+      return seconds === undefined
+        ? t("combat.heal", parts)
+        : t("combat.healOver", { ...parts, seconds });
+    };
     const run = (from: number, count: number): LogRow[] =>
       Array.from({ length: count }, (_, i) => regen(from + i, 3));
 
     it("writes a single row as before", () => {
-      expect(appendRows([], [regen(12, 3)], 100).rows.map((r) => r.text)).toEqual([
-        "regeneration heals Pyro for 3",
-      ]);
+      expect(appendRows([], [regen(12, 3)], 100).rows.map((r) => r.text)).toEqual([regenText("3")]);
     });
 
     it("folds twenty rows into one, summed, at the first row's time", () => {
       const { rows, replacedLast } = appendRows([], run(12, 20), 100);
-      expect(rows.map((r) => [r.time, r.text])).toEqual([
-        ["0:12.0", "regeneration heals Pyro for 60 over 19 s"],
-      ]);
+      expect(rows.map((r) => [r.time, r.text])).toEqual([["0:12.0", regenText("60", "19")]]);
       expect(replacedLast).toBe(false);
     });
 
     it("says no span for a fold of rows closed at the same time (#1618)", () => {
       expect(appendRows([], [regen(12, 3), regen(12, 3)], 100).rows.map((r) => r.text)).toEqual([
-        "regeneration heals Pyro for 6",
+        regenText("6"),
       ]);
-      const fold = { key: "k", amount: 3, startedAt: 12, endedAt: 12, label: "heals" };
-      expect(foldedText(fold)).toBe("heals for 3");
-      expect(foldedText({ ...fold, amount: 57, endedAt: 31 })).toBe("heals for 57 over 19 s");
+      const fold = {
+        key: "k",
+        amount: 3,
+        startedAt: 12,
+        endedAt: 12,
+        by: "Mending",
+        target: "Pyro",
+      };
+      expect(foldedText(fold)).toBe(
+        t("combat.heal", { by: "Mending", target: "Pyro", amount: "3" }),
+      );
+      expect(foldedText({ ...fold, amount: 57, endedAt: 31 })).toBe(
+        t("combat.healOver", { by: "Mending", target: "Pyro", amount: "57", seconds: "19" }),
+      );
     });
 
     it("lets a hit or a divider end the run", () => {
@@ -694,17 +794,14 @@ describe("appendRows", () => {
       const second = appendRows(first.rows, run(14, 2), 100);
       expect(second.replacedLast).toBe(true);
       expect(second.added).toEqual([]);
-      expect(second.rows.map((r) => r.text)).toEqual([
-        "hit",
-        "regeneration heals Pyro for 12 over 3 s",
-      ]);
+      expect(second.rows.map((r) => r.text)).toEqual(["hit", regenText("12", "3")]);
     });
 
     it("drops nothing for a fold at the cap", () => {
       const full = appendRows([row("a")], [regen(12, 3)], 2);
       const { rows, dropped } = appendRows(full.rows, [regen(13, 3)], 2);
       expect(dropped).toBe(0);
-      expect(rows.map((r) => r.text)).toEqual(["a", "regeneration heals Pyro for 6 over 1 s"]);
+      expect(rows.map((r) => r.text)).toEqual(["a", regenText("6", "1")]);
     });
   });
 });
@@ -830,16 +927,20 @@ describe("formatAmount, formatRate and meterRows", () => {
     expect(formatRate(12.345)).toBe("12.3");
     expect(meterRows({ damage: 128, weaponDamage: 28, healing: 0, taken: 15, seconds: 4 })).toEqual(
       [
-        { label: "dps", value: "32.0" },
-        { label: "hps", value: "0.0" },
-        { label: "damage", value: "128" },
-        { label: "weapon / skills", value: "28 / 100" },
-        { label: "healing", value: "0" },
-        { label: "taken", value: "15" },
-        { label: "time", value: "0:04.0" },
+        { id: "dps", label: t("combat.meterDps"), value: "32.0" },
+        { id: "hps", label: t("combat.meterHps"), value: "0.0" },
+        { id: "damage", label: t("combat.meterDamage"), value: "128" },
+        { id: "weapon-skills", label: t("combat.meterWeaponSkills"), value: "28 / 100" },
+        { id: "healing", label: t("combat.meterHealing"), value: "0" },
+        { id: "taken", label: t("combat.meterTaken"), value: "15" },
+        { id: "time", label: t("combat.meterTime"), value: "0:04.0" },
       ],
     );
-    expect(meterRows(EMPTY_TOTALS)[0]).toEqual({ label: "dps", value: "0.0" });
+    expect(meterRows(EMPTY_TOTALS)[0]).toEqual({
+      id: "dps",
+      label: t("combat.meterDps"),
+      value: "0.0",
+    });
   });
 });
 
@@ -875,17 +976,17 @@ describe("floatingCueFor", () => {
 
   it("calls out interrupts and deaths, and floats nothing for statuses", () => {
     expect(floatingCueFor("interrupted", undefined, false)).toEqual({
-      text: "interrupted!",
+      text: t("combat.floatInterrupted"),
       tone: "neutral",
       critical: false,
     });
     expect(floatingCueFor("attack-interrupted", undefined, false)).toEqual({
-      text: "interrupted!",
+      text: t("combat.floatInterrupted"),
       tone: "neutral",
       critical: false,
     });
     expect(floatingCueFor("death", undefined, false)).toEqual({
-      text: "defeated",
+      text: t("combat.floatDefeated"),
       tone: "damage",
       critical: false,
     });
@@ -895,22 +996,22 @@ describe("floatingCueFor", () => {
 
   it("floats 'miss' over the target of a blinded attack", () => {
     expect(floatingCueFor("attack-missed", undefined, false)).toEqual({
-      text: "miss",
+      text: t("combat.floatMiss"),
       tone: "neutral",
       critical: false,
     });
     expect(floatingCueFor("attack-dodged", undefined, false)).toEqual({
-      text: "dodge",
+      text: t("combat.floatDodge"),
       tone: "neutral",
       critical: false,
     });
     expect(floatingCueFor("attack-blocked", undefined, false)).toEqual({
-      text: "block",
+      text: t("combat.floatBlock"),
       tone: "neutral",
       critical: false,
     });
     expect(floatingCueFor("attack-unreachable", undefined, false)).toEqual({
-      text: "can't reach",
+      text: t("combat.floatCantReach"),
       tone: "neutral",
       critical: false,
     });
@@ -944,7 +1045,9 @@ describe("StatusTickBatcher (#151)", () => {
     const rows = ticks(0, 20, [heal]).flatMap((t) => batcher.push(t, nameOf, isCreature));
     expect(rows).toEqual([]);
     const closed = batcher.advance(1, nameOf, isCreature);
-    expect(texts(closed)).toEqual(["regeneration heals Caster dummy for 4"]);
+    expect(texts(closed)).toEqual([
+      t("combat.heal", { by: t("combat.sourceRegeneration"), target: "Caster dummy", amount: "4" }),
+    ]);
     expect(closed[0]?.time).toBe("0:01.0");
   });
 
@@ -956,8 +1059,8 @@ describe("StatusTickBatcher (#151)", () => {
     ];
     ticks(0, 20, both).forEach((t) => batcher.push(t, nameOf, isCreature));
     expect(texts(batcher.advance(1, nameOf, isCreature))).toEqual([
-      "degeneration hits Caster dummy for 10",
-      "regeneration heals Caster dummy for 6",
+      t("combat.hit", { by: t("combat.sourceDegeneration"), target: "Caster dummy", amount: "10" }),
+      t("combat.heal", { by: t("combat.sourceRegeneration"), target: "Caster dummy", amount: "6" }),
     ]);
   });
 
@@ -969,10 +1072,10 @@ describe("StatusTickBatcher (#151)", () => {
     ];
     const rows = ticks(0, 40, two).flatMap((t) => batcher.push(t, nameOf, isCreature));
     expect(texts([...rows, ...batcher.flush(2, nameOf, isCreature)])).toEqual([
-      "degeneration hits Caster dummy for 10",
-      "degeneration hits Pyro for 10",
-      "degeneration hits Caster dummy for 10",
-      "degeneration hits Pyro for 10",
+      t("combat.hit", { by: t("combat.sourceDegeneration"), target: "Caster dummy", amount: "10" }),
+      t("combat.hit", { by: t("combat.sourceDegeneration"), target: "Pyro", amount: "10" }),
+      t("combat.hit", { by: t("combat.sourceDegeneration"), target: "Caster dummy", amount: "10" }),
+      t("combat.hit", { by: t("combat.sourceDegeneration"), target: "Pyro", amount: "10" }),
     ]);
   });
 
@@ -985,7 +1088,10 @@ describe("StatusTickBatcher (#151)", () => {
       nameOf,
       isCreature,
     );
-    expect(texts(rows)).toEqual(["degeneration hits Caster dummy for 4", "Caster dummy dies"]);
+    expect(texts(rows)).toEqual([
+      t("combat.hit", { by: t("combat.sourceDegeneration"), target: "Caster dummy", amount: "4" }),
+      t("combat.death", { target: "Caster dummy" }),
+    ]);
   });
 
   it("also writes the ticks before a death by a skill", () => {
@@ -997,8 +1103,8 @@ describe("StatusTickBatcher (#151)", () => {
     );
     const finish = entry([{ kind: "death", targetId: "dummy" }], { atSeconds: 0.5 });
     expect(texts(batcher.push(finish, nameOf, isCreature))).toEqual([
-      "degeneration hits Caster dummy for 2",
-      "Caster dummy dies",
+      t("combat.hit", { by: t("combat.sourceDegeneration"), target: "Caster dummy", amount: "2" }),
+      t("combat.death", { target: "Caster dummy" }),
     ]);
   });
 
@@ -1022,7 +1128,10 @@ describe("StatusTickBatcher (#151)", () => {
       isCreature,
     );
     const rows = [...batcher.flush(0.5, nameOf, isCreature), dividerRow("re-armed", 0.5)];
-    expect(texts(rows)).toEqual(["degeneration hits Caster dummy for 3", "── re-armed ──"]);
+    expect(texts(rows)).toEqual([
+      t("combat.hit", { by: t("combat.sourceDegeneration"), target: "Caster dummy", amount: "3" }),
+      "── re-armed ──",
+    ]);
   });
 
   it("never writes a row timed before one already written", () => {
@@ -1053,7 +1162,7 @@ describe("StatusTickBatcher (#151)", () => {
     const batcher = new StatusTickBatcher();
     const hit: CombatEvent = { kind: "damage", targetId: "dummy", amount: 63.6, critical: false };
     expect(texts(batcher.push(entry([hit]), nameOf, isCreature))).toEqual([
-      "Fireball (Pyro) hits Caster dummy for 64",
+      t("combat.hit", { by: by("Fireball", "Pyro"), target: "Caster dummy", amount: "64" }),
     ]);
   });
 });
@@ -1076,10 +1185,10 @@ describe("uses, adrenaline and skipped effects (#1735)", () => {
       targetId: "dummy",
     };
     expect(describeCombatEvent(entry([at], signet), at, nameOf, isCreature)).toBe(
-      "Pyro uses Glowing Signet on Caster dummy",
+      t("combat.skillUsedOn", { caster: "Pyro", skill: "Glowing Signet", target: "Caster dummy" }),
     );
     expect(describeCombatEvent(entry([self]), self, nameOf, isCreature)).toBe(
-      "Caster dummy uses Healing Breeze",
+      t("combat.skillUsed", { caster: "Caster dummy", skill: "Healing Breeze" }),
     );
   });
 
@@ -1092,7 +1201,11 @@ describe("uses, adrenaline and skipped effects (#1735)", () => {
     };
     const batcher = new StatusTickBatcher();
     expect(texts(batcher.push(entry([gained]), nameOf, isCreature))).toEqual([
-      "Pyro gains 2 strikes of adrenaline from Signet of Aggression",
+      t("combat.adrenalineStrikesFrom", {
+        target: "Pyro",
+        count: 2,
+        skill: "Signet of Aggression",
+      }),
     ]);
   });
 
@@ -1106,10 +1219,11 @@ describe("uses, adrenaline and skipped effects (#1735)", () => {
     );
     const batcher = new StatusTickBatcher();
     const rows = [swing, swing].flatMap((each) => batcher.push(each, nameOf, isCreature));
-    expect(texts(rows)).toEqual([
-      "Sword (Pyro) hits Caster dummy for 20, +1 adrenaline",
-      "Sword (Pyro) hits Caster dummy for 20, +1 adrenaline",
-    ]);
+    const swordHit = t("combat.hitAdrenaline", {
+      hit: t("combat.hit", { by: by("Sword", "Pyro"), target: "Caster dummy", amount: "20" }),
+      strikes: "1",
+    });
+    expect(texts(rows)).toEqual([swordHit, swordHit]);
     expect(appendRows([], rows, 10).rows).toHaveLength(2);
   });
 
@@ -1122,7 +1236,10 @@ describe("uses, adrenaline and skipped effects (#1735)", () => {
       requirement: "only if target has Burning",
     };
     expect(describeCombatEvent(entry([skipped], signet), skipped, nameOf, isCreature)).toBe(
-      "Glowing Signet (Pyro): no effect, only if target has Burning",
+      t("combat.effectSkipped", {
+        by: by("Glowing Signet", "Pyro"),
+        requirement: "only if target has Burning",
+      }),
     );
   });
 });

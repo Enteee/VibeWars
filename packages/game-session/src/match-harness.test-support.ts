@@ -50,6 +50,7 @@ export const ARENA: HostMap = {
   descriptor: {
     id: "test-arena",
     name: "Test Arena",
+    teamCount: 2,
     width: 2000,
     height: 1200,
     walls: [{ kind: "rect", x: 990, y: 900, width: 20, height: 200 }],
@@ -72,7 +73,7 @@ export const ARENA: HostMap = {
   guildLords: [],
   flagField: undefined,
   relicField: undefined,
-  hillField: undefined,
+  ghostField: undefined,
   capturePoints: [],
   guards: [],
 };

@@ -74,7 +74,7 @@ async function twoPlayers(spectators: readonly string[] = ["viewer"], timeLimitS
   const b = await match.join();
   // Counted from what a player is sent: the tick it was played on.
   a.transport.on("snapshot", (data) => {
-    ticks = parseWireSnapshotPart(data)?.tick ?? ticks;
+    ticks = parseWireSnapshotPart(data, 2)?.tick ?? ticks;
   });
   return { match, a, b };
 }
@@ -136,7 +136,7 @@ describe("a match's observers (#480)", () => {
 
     expect(lurked).toEqual([]);
     const snapshots = viewed.flatMap(({ channel, data, at }) => {
-      const part = channel === "snapshot" ? parseWireSnapshotPart(data) : undefined;
+      const part = channel === "snapshot" ? parseWireSnapshotPart(data, 2) : undefined;
       return part === undefined ? [] : [{ tick: part.tick, at }];
     });
     expect(snapshots.length).toBeGreaterThan(0);

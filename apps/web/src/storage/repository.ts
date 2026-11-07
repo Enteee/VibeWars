@@ -214,24 +214,30 @@ async function loadCurrent<T>(
  * Every record in the current shape. Any that are not are deleted and
  * reported in a single plain-English line in `problems`, so the roster is
  * never silently short and the player is told once, not once per record.
+ * `discarded` holds their keys, which are their ids, so a pointer to one,
+ * such as the starter's key, can let go of it (#2717).
  */
 async function listCurrent<T>(
   store: KeyValueStore,
   name: string,
   isCurrent: (value: unknown) => value is T,
   discardedNotice: (count: number) => string,
-): Promise<{ records: T[]; problems: string[] }> {
+): Promise<{ records: T[]; problems: string[]; discarded: string[] }> {
   const records: T[] = [];
-  let discarded = 0;
+  const discarded: string[] = [];
   for (const { key, value } of await store.list(name)) {
     if (isCurrent(value)) {
       records.push(value);
     } else {
       await store.delete(name, key);
-      discarded += 1;
+      discarded.push(key);
     }
   }
-  return { records, problems: discarded === 0 ? [] : [discardedNotice(discarded)] };
+  return {
+    records,
+    problems: discarded.length === 0 ? [] : [discardedNotice(discarded.length)],
+    discarded,
+  };
 }
 
 export class CharacterRepository {
@@ -254,16 +260,24 @@ export class CharacterRepository {
     return loadCurrent(this.#store, CHARACTER_STORE, id, isStoredCharacter);
   }
 
-  /** Every saved character, newest first. Stale records are discarded and reported. */
-  public async list(): Promise<{ characters: StoredCharacter[]; problems: string[] }> {
-    const { records: characters, problems } = await listCurrent(
+  /** Every saved character, newest first. Stale records are discarded, reported and their ids returned. */
+  public async list(): Promise<{
+    characters: StoredCharacter[];
+    problems: string[];
+    discarded: string[];
+  }> {
+    const {
+      records: characters,
+      problems,
+      discarded,
+    } = await listCurrent(
       this.#store,
       CHARACTER_STORE,
       isStoredCharacter,
       discardedCharactersNotice,
     );
     characters.sort((a, b) => b.updatedAt - a.updatedAt);
-    return { characters, problems };
+    return { characters, problems, discarded };
   }
 
   public async delete(id: string): Promise<void> {
@@ -291,16 +305,15 @@ export class TeamRepository {
     return loadCurrent(this.#store, TEAM_STORE, id, isStoredTeam);
   }
 
-  /** Every saved team, newest first. Stale records are discarded and reported. */
-  public async list(): Promise<{ teams: StoredTeam[]; problems: string[] }> {
-    const { records: teams, problems } = await listCurrent(
-      this.#store,
-      TEAM_STORE,
-      isStoredTeam,
-      discardedTeamsNotice,
-    );
+  /** Every saved team, newest first. Stale records are discarded, reported and their ids returned. */
+  public async list(): Promise<{ teams: StoredTeam[]; problems: string[]; discarded: string[] }> {
+    const {
+      records: teams,
+      problems,
+      discarded,
+    } = await listCurrent(this.#store, TEAM_STORE, isStoredTeam, discardedTeamsNotice);
     teams.sort((a, b) => b.updatedAt - a.updatedAt);
-    return { teams, problems };
+    return { teams, problems, discarded };
   }
 
   public async delete(id: string): Promise<void> {

@@ -15,6 +15,24 @@ import type { StoredCharacter } from "./schema.js";
 export interface StarterCharacterKey {
   readonly load: () => string | undefined;
   readonly save: (id: string) => void;
+  readonly clear: () => void;
+}
+
+/**
+ * Unsets `key` if the starter it names is one of `discarded`, the ids
+ * a repository's `list` just deleted as stale (#2717): the key would
+ * outlive its record and say "rolled already", so no starter is rolled
+ * in its place and none has Clone or Reroll. A starter the player
+ * deleted is not discarded, and stays rolled (#853). A team's key too.
+ */
+export function forgetDiscardedStarter(
+  key: Pick<StarterCharacterKey, "load" | "clear">,
+  discarded: readonly string[],
+): void {
+  const id = key.load();
+  if (id !== undefined && discarded.includes(id)) {
+    key.clear();
+  }
 }
 
 export interface RollStarterOptions {

@@ -1,6 +1,7 @@
 import type { PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import {
   STATUS_CATEGORY_NAME,
   createEffectsMonitor,
@@ -112,13 +113,19 @@ describe("effectRows (#834)", () => {
       NAMES,
       10,
     );
-    expect(rows.map((row) => row.casterName)).toEqual(["you", "Bob", "someone"]);
+    expect(rows.map((row) => row.casterName)).toEqual([
+      t("effects.you"),
+      "Bob",
+      t("effects.someone"),
+    ]);
   });
 
   it("carries each status's name and category, and an empty list is no rows", () => {
     const [row] = ownRows([status("deep-wound", 20, 10)], ME, NAMES, 10);
     expect(row?.name).toBe("Deep Wound");
-    expect(row !== undefined && STATUS_CATEGORY_NAME[row.category]).toBe("Condition");
+    expect(row !== undefined && t(STATUS_CATEGORY_NAME[row.category])).toBe(
+      t("effects.categoryCondition"),
+    );
     expect(ownRows([], ME, NAMES, 10)).toEqual([]);
   });
 });
@@ -383,7 +390,10 @@ describe("createEffectsMonitor (#834)", () => {
     it("under an endable row of a monitor that ends it", () => {
       const { monitor, root } = mount(24, () => undefined);
       monitor.update([yours]);
-      expect(hover(root, 0).slice(-2)).toEqual(["maintained, −1 energy", "double-click to end"]);
+      expect(hover(root, 0).slice(-2)).toEqual([
+        t("effects.maintainedUpkeep"),
+        t("effects.endHint"),
+      ]);
     });
 
     it("not under a timed row, nor one someone else maintains", () => {
@@ -392,9 +402,9 @@ describe("createEffectsMonitor (#834)", () => {
         row("bleeding", 0.5),
         row("mending", undefined, false, { category: "enchantment", secondsLeft: undefined }),
       ]);
-      expect(hover(root, 0)).not.toContain("double-click to end");
-      expect(hover(root, 1)).toEqual(expect.arrayContaining(["maintained"]));
-      expect(hover(root, 1)).not.toContain("double-click to end");
+      expect(hover(root, 0)).not.toContain(t("effects.endHint"));
+      expect(hover(root, 1)).toEqual(expect.arrayContaining([t("effects.maintained")]));
+      expect(hover(root, 1)).not.toContain(t("effects.endHint"));
     });
 
     it("says a spirit's aura lasts while in its range, not that it is maintained (#1064)", () => {
@@ -406,7 +416,10 @@ describe("createEffectsMonitor (#834)", () => {
           secondsLeft: undefined,
         }),
       ]);
-      expect(hover(root, 0).slice(-2)).toEqual(["from Winnowing", "while in its range"]);
+      expect(hover(root, 0).slice(-2)).toEqual([
+        t("effects.from", { caster: "Winnowing" }),
+        t("effects.inRange"),
+      ]);
     });
 
     it("says one with no end and no upkeep lasts until it ends (#1789)", () => {
@@ -417,14 +430,14 @@ describe("createEffectsMonitor (#834)", () => {
           secondsLeft: undefined,
         }),
       ]);
-      expect(hover(root, 0).slice(-1)).toEqual(["until it ends"]);
+      expect(hover(root, 0).slice(-1)).toEqual([t("effects.untilEnds")]);
     });
 
     it("not in a monitor that cannot end it: the target frame's", () => {
       const { monitor, root } = mount(16);
       monitor.update([yours]);
-      expect(hover(root, 0)).toContain("maintained, −1 energy");
-      expect(hover(root, 0)).not.toContain("double-click to end");
+      expect(hover(root, 0)).toContain(t("effects.maintainedUpkeep"));
+      expect(hover(root, 0)).not.toContain(t("effects.endHint"));
     });
 
     it("opens below the icon in the target frame, at the top of the screen (#1042)", () => {

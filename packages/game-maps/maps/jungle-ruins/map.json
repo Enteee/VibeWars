@@ -3,6 +3,7 @@
   "name": "Jungle Ruins",
   "mode": "priest-annihilation",
   "teamSizes": [2, 4, 8],
+  "teams": 2,
   "width": 3000,
   "height": 1600,
   "walls": [

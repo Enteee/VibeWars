@@ -1,6 +1,5 @@
 import { en, type Catalog, type MessageKey } from "./en.js";
-import { LANGUAGES, LOCALES, availableLanguages, type LanguageCode } from "./languages.js";
-import { loadLanguage } from "./language-preference.js";
+import { LANGUAGES, type LanguageCode } from "./languages.js";
 import type { Message } from "./message.js";
 
 /**
@@ -13,6 +12,11 @@ export type { MessageKey } from "./en.js";
 
 let current: LanguageCode = "en";
 let table: Catalog = en;
+
+// Built once per language, on first use: a new one costs ~35 µs (#2711).
+let pluralRules: Intl.PluralRules | undefined;
+let numberFormat: Intl.NumberFormat | undefined;
+const listFormats = new Map<"and" | "or", Intl.ListFormat>();
 
 /**
  * The language to use: the stored pick, else the first of the browser's
@@ -41,6 +45,9 @@ export function pickLanguage(
 export function setLocale(code: LanguageCode, catalog: Catalog): void {
   current = code;
   table = catalog;
+  pluralRules = undefined;
+  numberFormat = undefined;
+  listFormats.clear();
   if (typeof document === "undefined") {
     return;
   }
@@ -49,20 +56,14 @@ export function setLocale(code: LanguageCode, catalog: Catalog): void {
   root.dir = LANGUAGES.find((language) => language.code === code)?.rtl === true ? "rtl" : "ltr";
 }
 
-/** Load the player's language before the first screen draws: `main.ts` awaits it. */
-export async function loadLocale(): Promise<void> {
-  const code = pickLanguage(loadLanguage(), navigator.languages, availableLanguages());
-  const load = LOCALES[code];
-  setLocale(code, load === undefined ? en : (await load()).default);
-}
-
 /** The language in use, for `Intl`. */
 export function locale(): LanguageCode {
   return current;
 }
 
 function pluralForm(message: Exclude<Message, string>, count: number): string {
-  const category = new Intl.PluralRules(current).select(count);
+  pluralRules ??= new Intl.PluralRules(current);
+  const category = pluralRules.select(count);
   return (category === "other" ? undefined : message[category]) ?? message.other;
 }
 
@@ -102,12 +103,16 @@ export function t(key: MessageKey, params?: Readonly<Record<string, string | num
 
 /** `n` written the player's way: `1,234` or `1.234`. */
 export function formatNumber(n: number): string {
-  return new Intl.NumberFormat(current).format(n);
+  numberFormat ??= new Intl.NumberFormat(current);
+  return numberFormat.format(n);
 }
 
 /** `items` as one list the player's way: "a, b and c", or "a, b or c". */
 export function formatList(items: readonly string[], kind: "and" | "or"): string {
-  return new Intl.ListFormat(current, {
-    type: kind === "and" ? "conjunction" : "disjunction",
-  }).format(items);
+  let format = listFormats.get(kind);
+  if (format === undefined) {
+    format = new Intl.ListFormat(current, { type: kind === "and" ? "conjunction" : "disjunction" });
+    listFormats.set(kind, format);
+  }
+  return format.format(items);
 }

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { key } from "./keys.js";
 import { openLibraryGroup } from "./helpers/library.js";
@@ -10,39 +10,6 @@ import { chooseProfession } from "./helpers/professions.js";
  * Calls on your pet (#1108): Call of Haste goes on the wolf Charm Animal
  * brings, whatever you have selected, and starts recharging.
  */
-
-/**
- * Right-click outward from the middle of the arena, where the camera
- * holds you, until the wolf at your heel is your target.
- */
-async function selectWolf(page: Page): Promise<void> {
-  const canvas = page.locator("#viewport canvas:not(.compass)");
-  const box = await canvas.boundingBox();
-  if (box === null) {
-    throw new Error("no arena");
-  }
-  const target = page.locator(".hud-target-text");
-  for (let radius = 0; radius <= 60; radius += 6) {
-    for (let degrees = 0; degrees < 360; degrees += 30) {
-      const angle = (degrees * Math.PI) / 180;
-      await page.mouse.click(
-        box.x + box.width / 2 + radius * Math.cos(angle),
-        box.y + box.height / 2 + radius * Math.sin(angle),
-        { button: "right" },
-      );
-      const wolf = target.filter({ hasText: "Wolf" });
-      if (
-        await wolf.waitFor({ timeout: 200 }).then(
-          () => true,
-          () => false,
-        )
-      ) {
-        return;
-      }
-    }
-  }
-  throw new Error("no wolf near you");
-}
 
 test("Call of Haste goes on your wolf and recharges (#1108)", async ({ page }) => {
   await page.goto("./");
@@ -63,7 +30,10 @@ test("Call of Haste goes on your wolf and recharges (#1108)", async ({ page }) =
   await page.keyboard.press(key("skill-2"));
   await expect(slot.locator(".recharge-overlay")).toHaveCount(1);
 
-  await selectWolf(page);
+  // Target the wolf from its party-window row, the only companion row:
+  // no aiming at a moving pet on the canvas (#2719).
+  await page.locator(".party-companion .party-row").click();
+  await expect(page.locator(".hud-target-text")).toContainText("Wolf");
   const effects = page.getByRole("list", { name: "your target's effects" });
   await expect(effects.getByAltText("Call of Haste")).toBeVisible();
 });

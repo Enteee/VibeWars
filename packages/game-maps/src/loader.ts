@@ -2,6 +2,8 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { teamIds } from "@vibewars/game-core";
+
 import { MapValidationError, validateMapData, type MapData } from "./schema.js";
 
 export class MapNotFoundError extends Error {
@@ -47,16 +49,15 @@ export function loadMap(mapId: string): MapData {
 }
 
 /**
- * Each team of an arena that has too few spawns for its largest team size
- * (#2108), as a line saying so; none when every team seats its own. A 1v1
+ * Each of an arena's `teams` (#2682) that has too few spawns for its
+ * largest team size (#2108), as a line saying so; none when every team seats its own. A 1v1
  * or a 2v2 still has two spawns a team to start from, and nobody ever
  * shares one. Training grounds, outside `maps/`, seat one player against
  * a pack and are not held to it.
  */
 export function unseatedTeams(map: MapData): string[] {
   const needed = Math.max(2, ...map.teamSizes);
-  const teams = [...new Set(map.spawnPoints.map((spawn) => spawn.team))];
-  return teams.flatMap((team) => {
+  return teamIds(map.teams).flatMap((team) => {
     const count = map.spawnPoints.filter((spawn) => spawn.team === team).length;
     return count >= needed
       ? []

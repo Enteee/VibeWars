@@ -1,6 +1,7 @@
 import type { ChatLine } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import {
   CHAT_LINES_KEPT,
   CHAT_LINE_SHOWN_SECONDS,
@@ -266,7 +267,7 @@ describe("mountChat: closed and open (#2018)", () => {
     expect(isOpen()).toBe(false);
     chat.setInMatch(true);
     expect(isOpen()).toBe(false);
-    expect(toggle.attributes.get("aria-label")).toBe("Chat (Enter)");
+    expect(toggle.attributes.get("aria-label")).toBe(t("chat.toggle"));
     expect(toggle.attributes.get("aria-expanded")).toBe("false");
   });
 
@@ -274,7 +275,7 @@ describe("mountChat: closed and open (#2018)", () => {
     toggle.click();
     expect(isOpen()).toBe(true);
     expect(fakeDocument.activeElement).toBe(input);
-    expect(input.placeholder).toBe("! all · # team");
+    expect(input.placeholder).toBe(t("chat.placeholder"));
     toggle.click();
     expect(isOpen()).toBe(false);
   });

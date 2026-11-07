@@ -146,7 +146,7 @@ doorway on each side.
 ## King of the Hill
 
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
-**Ghostly Hero** in its base, a ghost that fights with a sword and that
+**Ghostly Hero** in its base, a ghost that fights with an axe and that
 nobody plays. The **altar** is in the centre, the same walk from both
 bases. On **The Courtyard** it stands in an open court ringed by four
 clusters of pillars, entered from the four corners. The **Hall of
@@ -159,6 +159,14 @@ stays where it stands, fighting any foe who comes near. If you die or
 leave, it stays. With your ghost targeted, its frame says whom it
 follows, or that it stays. A toast says whom your Ghostly Hero follows
 whenever that changes, and its name over its head shows its leader.
+
+Your ghost has 640 Health, and swings its axe with **Cyclone Axe**,
+**Disrupting Chop** and **Swift Chop**, following or staying. It is
+stronger the higher up the Ascent you are: level 24 on The Courtyard,
+28 in the Hall of Heroes. **Kill the other team's ghost** and every
+member of your team gets a **+10% morale boost**, which first wipes out
+a death penalty and never goes above +10%. Kill it again after it rises
+and you get it again.
 
 Lead it onto or past the altar and it steps onto the altar and keeps
 to it. There it fights any foe beside it, but never steps off after

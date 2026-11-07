@@ -11,6 +11,7 @@ import type {
 import { attachMatchSounds } from "./audio/match-sounds.js";
 import { onGlobalMute, setGlobalMute } from "./audio/global-mute.js";
 import { soundPlayer } from "./audio/sound-player.js";
+import { t } from "./i18n/index.js";
 import { attackKeyIntents, escapeIntent } from "./input/attack-key.js";
 import { createDoubleClick } from "./input/double-click.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
@@ -456,7 +457,7 @@ export async function startMatchView(
   if (seat === undefined) {
     const watching = document.createElement("div");
     watching.className = "hud-watching";
-    watching.textContent = `Watching · ${String(viewed.delaySeconds)} s delay`;
+    watching.textContent = t("matchView.watching", { seconds: viewed.delaySeconds });
     hud.top.insertBefore(watching, hud.carriers);
   }
   /** Whom a watcher's camera and target frame follow (#480). */

@@ -26,6 +26,7 @@ import {
   healthFraction,
   spikeLands,
   spikeSeconds,
+  stripFirst,
 } from "./shared.js";
 import type { BotRule } from "./types.js";
 
@@ -55,7 +56,9 @@ const SPIKE_TOLERANCE = 1e-6;
  * low enough to finish, or it has waited `SPIKE_HOLD_MAX_SECONDS`;
  * meanwhile the bot casts its other skills and swings. A ready spike
  * fires so the hits land together: the slowest skill at once, a faster
- * one the difference later.
+ * one the difference later. Before it, a bot with a strip ready casts it
+ * at the team's target while a defence enchantment is on it (#2634),
+ * and its teammates hold for it.
  */
 const fight: BotRule = {
   order: 100,
@@ -157,6 +160,18 @@ const fight: BotRule = {
       cursor.spikeTargetId = undefined;
       cursor.spikeHeldSeconds = 0;
       cursor.spikeReadySeconds = undefined;
+    }
+    // The protection comes off the team's target before the spike (#2634).
+    const strip =
+      spikeHold && !isGhostId(targetId) && target !== undefined
+        ? stripFirst(self, target)
+        : undefined;
+    if (
+      strip !== undefined &&
+      mayUse(strip, targetId) &&
+      (!(holding || covering) || context.check(strip.id, targetId).ok)
+    ) {
+      return use(strip, targetId);
     }
     // Read once a think, when it first weighs a spike skill.
     const spike: { read: boolean; lands: number | undefined } = { read: false, lands: undefined };

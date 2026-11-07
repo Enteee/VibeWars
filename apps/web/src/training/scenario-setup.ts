@@ -69,7 +69,14 @@ function toMapDescriptor(map: MapData): MapDescriptor {
       ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
       : { kind: "polygon", points: wall.points },
   );
-  return { id: map.id, name: map.name, width: map.width, height: map.height, walls };
+  return {
+    id: map.id,
+    name: map.name,
+    width: map.width,
+    height: map.height,
+    teamCount: map.teams,
+    walls,
+  };
 }
 
 /** Where the player stands: the map's first spawn point for the player's team. */
@@ -101,6 +108,7 @@ export function setupScenario(
     // A fixed seed: the same build against the same scenario reads the
     // same numbers every time, which is what makes it a measurement.
     seed: `training:${scenario.id}`,
+    teamCount: map.teams,
     walls: allWallSegments(map.walls),
     bounds: { width: map.width, height: map.height },
     participants: [

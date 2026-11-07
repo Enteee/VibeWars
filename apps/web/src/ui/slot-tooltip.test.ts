@@ -1,6 +1,7 @@
 import { getSkill, type Skill } from "@vibewars/game-core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { createSlotTooltips, SLOT_TOOLTIP_DELAY_MS, slotDescription } from "./slot-tooltip.js";
 
 // The tooltip itself is DOM; these tests watch whether it is shown and hidden.
@@ -65,13 +66,13 @@ describe("slotDescription (#719)", () => {
     const fireball = skill("elementalist.fireball");
     const copy = { ...slot(fireball.id, 10), copyEndsAt: 32.5 };
     expect(slotDescription(fireball, copy, new Map(), 20.6).effects.at(-1)?.text).toBe(
-      "Echoed: 12 s left",
+      t("echo.secondsLeft", { count: 12 }),
     );
     expect(
       slotDescription(fireball, slot(fireball.id, 10), new Map(), 20.6).effects.map(
         (effect) => effect.text,
       ),
-    ).not.toContain("Echoed: 12 s left");
+    ).not.toContain(t("echo.secondsLeft", { count: 12 }));
   });
 });
 

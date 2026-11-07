@@ -11,19 +11,14 @@ import vibewarsRules from "./eslint/no-raw-ui-text.mjs";
 
 /** Files with player-facing text not yet moved onto t() (#2648): see below. */
 const NOT_YET_TRANSLATED = [
-  "apps/web/src/match-view.ts",
   "apps/web/src/music/music-player.ts",
-  "apps/web/src/ui/arena-notice.ts",
   "apps/web/src/ui/beat-editor.ts",
   "apps/web/src/ui/build-banner.ts",
   "apps/web/src/ui/build-editor.ts",
   "apps/web/src/ui/character-figure.ts",
   "apps/web/src/ui/character-preview.ts",
-  "apps/web/src/ui/chat.ts",
   "apps/web/src/ui/controls-section.ts",
-  "apps/web/src/ui/effects-monitor.ts",
   "apps/web/src/ui/help-screen.ts",
-  "apps/web/src/ui/hud.ts",
   "apps/web/src/ui/jukebox.ts",
   "apps/web/src/ui/kit.ts",
   "apps/web/src/ui/licences-section.ts",
@@ -35,11 +30,9 @@ const NOT_YET_TRANSLATED = [
   "apps/web/src/ui/paper-doll-weapon.ts",
   "apps/web/src/ui/paper-doll.ts",
   "apps/web/src/ui/party-window.ts",
-  "apps/web/src/ui/pips.ts",
   "apps/web/src/ui/player-section.ts",
   "apps/web/src/ui/queue-screen.ts",
   "apps/web/src/ui/rail.ts",
-  "apps/web/src/ui/reconnect-overlay.ts",
   "apps/web/src/ui/relay-prompt.ts",
   "apps/web/src/ui/relay-section.ts",
   "apps/web/src/ui/skill-library-view.ts",
@@ -48,7 +41,6 @@ const NOT_YET_TRANSLATED = [
   "apps/web/src/ui/team-play.ts",
   "apps/web/src/ui/topbar.ts",
   "apps/web/src/ui/touch-notice.ts",
-  "apps/web/src/ui/training-panel.ts",
   "apps/web/src/ui/weapon-set-slots.ts",
 ];
 

@@ -1,5 +1,6 @@
 import type { MatchSummaryRow } from "@vibewars/game-session";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import { botTagElement } from "./bot-tag.js";
 import { playerLabelElement } from "./player-label.js";
 import { h } from "./kit.js";
@@ -21,13 +22,13 @@ export const SUMMARY_COLUMNS = [
 ] as const;
 export type SummaryColumn = (typeof SUMMARY_COLUMNS)[number];
 
-const COLUMN_LABELS: Readonly<Record<SummaryColumn, string>> = {
-  damage: "Damage",
-  healing: "Healing",
-  taken: "Taken",
-  kills: "Kills",
-  deaths: "Deaths",
-  interrupts: "Interrupts",
+const COLUMN_LABELS: Readonly<Record<SummaryColumn, MessageKey>> = {
+  damage: "summary.damage",
+  healing: "summary.healing",
+  taken: "summary.taken",
+  kills: "summary.kills",
+  deaths: "summary.deaths",
+  interrupts: "summary.interrupts",
 };
 
 export interface SummaryLine {
@@ -77,8 +78,8 @@ export function summaryTables(
     lines: summary.filter((row) => row.team === team).map(line),
   });
   return selfTeam === undefined
-    ? [table(0, "Team 1"), table(1, "Team 2")]
-    : [table(ours, "Your team"), table(1 - ours, "Their team")];
+    ? [table(0, t("summary.team", { team: 1 })), table(1, t("summary.team", { team: 2 }))]
+    : [table(ours, t("summary.yourTeam")), table(1 - ours, t("summary.theirTeam"))];
 }
 
 /** Build the tables once, into a new `.match-summary` element appended to `parent`. */
@@ -89,7 +90,10 @@ export function renderSummary(parent: HTMLElement, tables: readonly SummaryTable
     table.className = "match-summary-table";
     table.appendChild(h("caption", undefined, caption));
     const head = table.createTHead().insertRow();
-    for (const label of ["Name", ...SUMMARY_COLUMNS.map((column) => COLUMN_LABELS[column])]) {
+    for (const label of [
+      t("summary.name"),
+      ...SUMMARY_COLUMNS.map((column) => t(COLUMN_LABELS[column])),
+    ]) {
       const cell = h("th", undefined, label);
       cell.setAttribute("scope", "col");
       head.appendChild(cell);
