@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { MatchSimulation, ParticipantSpec } from "../../simulation.js";
 import { NO_RANKS } from "../../../skills/status.js";
 
-import { AREA_ADJACENT } from "../../../distances.js";
+import { AREA_ADJACENT, RANGE_SPELL } from "../../../distances.js";
 import { vec2 } from "../../../vec2.js";
 import {
   DT,
@@ -200,6 +200,14 @@ describe("play-build protects the spiked ally (#2627)", () => {
 
   it("leaves a full-health ally only one foe targets", () => {
     const sim = target(spike([PROTECTIVE_SPIRIT]), "ally", "foe0");
+    expect(askBot(sim, "monk").useSkillId).toBeUndefined();
+  });
+
+  it("does not count a foe beyond spell range of the ally", () => {
+    const sim = target(spike([PROTECTIVE_SPIRIT]), "ally", "foe0", "foe1");
+    const far = sim.get("foe1");
+    if (far === undefined) throw new Error("no foe1");
+    far.position = vec2(480 + RANGE_SPELL + 10, 400);
     expect(askBot(sim, "monk").useSkillId).toBeUndefined();
   });
 

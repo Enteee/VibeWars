@@ -1,6 +1,7 @@
 import type { Participant } from "../../simulation.js";
 import type { Skill } from "../../../skills/types.js";
 import type { StatusId } from "../../../skills/status.js";
+import { RANGE_SPELL } from "../../../distances.js";
 import { distance } from "../../../vec2.js";
 import { botUses, projectsToOthers, summonAura, wardedDamageType } from "../skill-intent.js";
 import { airFirst } from "./setup.js";
@@ -91,8 +92,9 @@ function reaches(self: Participant, patient: Participant, held: Skill): boolean 
 }
 
 /**
- * The ally at least `SPIKE_FOES` foes target (#2627): the one with the most
- * foes on it, then the most hurt, then the first.
+ * The ally at least `SPIKE_FOES` foes within spell range of it target
+ * (#2627): the one with the most foes on it, then the most hurt, then the
+ * first.
  */
 function spikedAlly(
   allies: readonly Participant[],
@@ -103,7 +105,7 @@ function spikedAlly(
   for (const ally of allies) {
     let on = 0;
     for (const foe of foes) {
-      if (foe.targetId === ally.id) {
+      if (foe.targetId === ally.id && distance(foe.position, ally.position) <= RANGE_SPELL) {
         on += 1;
       }
     }
