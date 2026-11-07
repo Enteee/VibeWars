@@ -41,7 +41,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
     code: "g",
     phase: countdownSeconds === null ? "waiting" : "starting",
     mode: "random-arena",
-    mapId: "arena-pillars",
+    mapId: "ember-pits",
     teamSize: 1,
     open: true,
     hostId: "host",

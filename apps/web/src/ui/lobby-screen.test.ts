@@ -217,7 +217,7 @@ describe("hostMaps (#1453)", () => {
       mode: "relic-run",
       teamSizes: [4],
     },
-    { id: "arena-pillars", name: "Pillar Hall", size: "small", mode: "kill-count", teamSizes: [4] },
+    { id: "ember-pits", name: "Ember Pits", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
 
   it("offers every map without a filter", () => {
@@ -227,7 +227,7 @@ describe("hostMaps (#1453)", () => {
   it("offers only the maps playing one of the filter's modes, in their order", () => {
     expect(hostMaps(maps, ["kill-count", "annihilation"]).map((map) => map.id)).toEqual([
       "arena-crossroads",
-      "arena-pillars",
+      "ember-pits",
     ]);
     expect(hostMaps(maps, ["guild-battle"]).map((map) => map.id)).toEqual(["guild-hall-isle"]);
   });
@@ -236,8 +236,8 @@ describe("hostMaps (#1453)", () => {
 describe("modeLine (#476)", () => {
   it("says what the map's mode is, in a line", () => {
     const map = {
-      id: "arena-pillars",
-      name: "Pillar Hall",
+      id: "ember-pits",
+      name: "Ember Pits",
       size: "small",
       teamSizes: [4],
     } as const;
@@ -514,7 +514,7 @@ describe("lobbyPanel: the map (#1994)", () => {
       mode: "annihilation",
       teamSizes: [2, 4],
     },
-    { id: "arena-pillars", name: "Pillar Hall", size: "small", mode: "kill-count", teamSizes: [4] },
+    { id: "ember-pits", name: "Ember Pits", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
   /** The map part of the host's bar in `mode`, on Crossroads. */
   const mapPart = (mode: LobbySnapshot["mode"]): FakeElement => {
@@ -543,7 +543,7 @@ describe("lobbyPanel: the map (#1994)", () => {
     const [select] = selects(mapPart("hosted-game"));
     expect(select?.children.map((option) => option.value)).toEqual([
       "arena-crossroads",
-      "arena-pillars",
+      "ember-pits",
     ]);
     const twos = { ...snapshot("waiting"), mapId: "arena-crossroads", teamSize: 2 };
     const [part] = lobbyPanel(twos, callbacks, undefined, maps).status;

@@ -1,4 +1,11 @@
-import { runTickBench, tickStats, type BenchField, type Vec2 } from "@vibewars/game-core";
+import {
+  MINIMAL_GW_INSPIRED_PVP_V1,
+  buildNavGraph,
+  runTickBench,
+  tickStats,
+  type BenchField,
+  type Vec2,
+} from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
@@ -80,4 +87,21 @@ describe("the tick bench on an arena (#444)", () => {
     );
     expect(tickMs).toHaveLength(ticks);
   });
+});
+
+describe("the nav graph on every map (#2544)", () => {
+  /** The most wall corners a map's graph may have: what pathing stays cheap at. */
+  const MAX_NODES = 600;
+
+  it.each(loadAllMaps().map((map) => [map.id, map] as const))(
+    "%s has at most 600 nav nodes",
+    (_, map) => {
+      const graph = buildNavGraph(
+        allWallSegments(map.walls),
+        { width: map.width, height: map.height },
+        MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
+      );
+      expect(graph.nodes.length).toBeLessThanOrEqual(MAX_NODES);
+    },
+  );
 });

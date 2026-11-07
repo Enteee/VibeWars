@@ -16,8 +16,8 @@ describe("sizeClass (#444, #2547)", () => {
 
   it("calls every arena today small", () => {
     expect(Object.fromEntries(loadAllMaps().map((map) => [map.id, sizeClass(map)]))).toEqual({
-      "arena-pillars": "small",
-      "arena-split": "small",
+      "ember-pits": "small",
+      "jungle-ruins": "small",
       "arena-crossroads": "small",
       "arena-canyon": "small",
       "arena-long-hall": "small",

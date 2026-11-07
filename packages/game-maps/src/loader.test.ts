@@ -5,8 +5,8 @@ import { circleIntersectsSegment } from "@vibewars/game-core";
 import arenaCanyon from "../maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "../maps/arena-crossroads/map.json" with { type: "json" };
 import arenaLongHall from "../maps/arena-long-hall/map.json" with { type: "json" };
-import arenaPillars from "../maps/arena-pillars/map.json" with { type: "json" };
-import arenaSplit from "../maps/arena-split/map.json" with { type: "json" };
+import emberPits from "../maps/ember-pits/map.json" with { type: "json" };
+import jungleRuins from "../maps/jungle-ruins/map.json" with { type: "json" };
 import forgottenShrines from "../maps/forgotten-shrines/map.json" with { type: "json" };
 import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
 import hallOfHeroes from "../maps/hall-of-heroes/map.json" with { type: "json" };
@@ -37,12 +37,12 @@ describe("the maps the browser imports", () => {
       arenaCanyon,
       arenaCrossroads,
       arenaLongHall,
-      arenaPillars,
-      arenaSplit,
+      emberPits,
       forgottenShrines,
       guildHallIsle,
       hallOfHeroes,
       hillCourtyard,
+      jungleRuins,
       relicTemples,
     ].map((raw) => validateMapData(raw));
     expect(imported.map((map) => map.id)).toEqual(listMapIds());

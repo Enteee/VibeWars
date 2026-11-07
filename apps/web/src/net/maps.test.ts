@@ -31,21 +31,21 @@ function sizesOf(id: string): readonly number[] {
 describe("randomArenaMapPool", () => {
   it("plays each size only on the arenas that declare it (#2108)", () => {
     expect(randomArenaMapPool("random-arena-1v1")).toEqual([
-      "arena-pillars",
+      "ember-pits",
       "arena-crossroads",
       "arena-canyon",
       "arena-long-hall",
     ]);
     expect(randomArenaMapPool("random-arena-2v2")).toEqual([
-      "arena-pillars",
-      "arena-split",
+      "ember-pits",
+      "jungle-ruins",
       "arena-crossroads",
       "arena-canyon",
       "arena-long-hall",
     ]);
     expect(randomArenaMapPool("random-arena-4v4")).toEqual([
-      "arena-pillars",
-      "arena-split",
+      "ember-pits",
+      "jungle-ruins",
       "arena-crossroads",
       "arena-canyon",
       "arena-long-hall",
@@ -56,7 +56,7 @@ describe("randomArenaMapPool", () => {
     for (const id of randomArenaMapPool("random-arena-1v1")) {
       expect(sizesOf(id), id).toContain(1);
     }
-    expect(randomArenaMapPool("random-arena-1v1")).not.toContain("arena-split");
+    expect(randomArenaMapPool("random-arena-1v1")).not.toContain("jungle-ruins");
   });
 
   it("leaves no arena out of every pool but the Guild Battle's (#1222), the Relic Run's (#1374) and King of the Hill's (#1377)", () => {
@@ -132,7 +132,9 @@ describe("team sizes (#2108)", () => {
     for (const mode of ["team-arena-2v2", "team-arena-4v4", "team-arena-8v8"] as const) {
       expect(all).toEqual(expect.arrayContaining(queueMapPool(mode, null)));
     }
-    expect(queueMapPool("team-arena-8v8", null)).not.toContain("arena-pillars");
+    for (const id of queueMapPool("team-arena-8v8", null)) {
+      expect(sizesOf(id), id).toContain(8);
+    }
   });
 
   it("plays Team Arena and a Hosted Game at 1, 2, 4 and 8 a side on the large arenas (#2547)", () => {
@@ -156,6 +158,8 @@ describe("team sizes (#2108)", () => {
 
   it("picks the maps of a size in their order", () => {
     expect(mapsForSize(ARENA_MAPS, 8).map((map) => map.id)).toEqual([
+      "ember-pits",
+      "jungle-ruins",
       "arena-crossroads",
       "arena-canyon",
       "arena-long-hall",
@@ -237,9 +241,9 @@ describe("hostMap (#476)", () => {
     );
   });
 
-  it("carries the mode its map names: Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, King of the Hill on Hill Courtyard, Capture Points on Forgotten Shrines, Annihilation elsewhere", () => {
-    expect(hostMap("arena-pillars")?.mode).toBe("kill-count");
-    expect(hostMap("arena-split")?.mode).toBe("priest-annihilation");
+  it("carries the mode its map names: Kill Count on Ember Pits, Priest Annihilation on Jungle Ruins, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, King of the Hill on Hill Courtyard, Capture Points on Forgotten Shrines, Annihilation elsewhere", () => {
+    expect(hostMap("ember-pits")?.mode).toBe("kill-count");
+    expect(hostMap("jungle-ruins")?.mode).toBe("priest-annihilation");
     expect(hostMap("guild-hall-isle")?.mode).toBe("guild-battle");
     expect(hostMap("relic-temples")?.mode).toBe("relic-run");
     expect(hostMap("hill-courtyard")?.mode).toBe("king-of-the-hill");
@@ -248,8 +252,8 @@ describe("hostMap (#476)", () => {
     for (const map of ARENA_MAPS.filter(
       (candidate) =>
         ![
-          "arena-pillars",
-          "arena-split",
+          "ember-pits",
+          "jungle-ruins",
           "guild-hall-isle",
           "relic-temples",
           "hill-courtyard",
@@ -271,7 +275,7 @@ describe("hostMap (#476)", () => {
       { team: 0, position: { x: 450, y: 1000 } },
       { team: 1, position: { x: 2550, y: 1000 } },
     ]);
-    expect(hostMap("arena-split")?.guildLords).toEqual([]);
+    expect(hostMap("jungle-ruins")?.guildLords).toEqual([]);
   });
 
   it("carries a Guild Battle map's flag stand and flag spawns, and none elsewhere (#1225)", () => {
@@ -283,7 +287,7 @@ describe("hostMap (#476)", () => {
       ],
     });
     expect(mapFlagField("guild-hall-isle")).toEqual(hostMap("guild-hall-isle")?.flagField);
-    expect(hostMap("arena-split")?.flagField).toBeUndefined();
+    expect(hostMap("jungle-ruins")?.flagField).toBeUndefined();
     expect(mapFlagField("training-hall")).toBeUndefined();
   });
 
@@ -317,13 +321,13 @@ describe("hostMap (#476)", () => {
     const guards = hostMap("guild-hall-isle")?.guards ?? [];
     expect(guards).toHaveLength(16);
     expect(guards[0]).toEqual({ team: 0, role: "bodyguard", position: { x: 170, y: 1000 } });
-    expect(hostMap("arena-split")?.guards).toEqual([]);
+    expect(hostMap("jungle-ruins")?.guards).toEqual([]);
   });
 });
 
 describe("mapMode (#1200)", () => {
   it("reads an arena's mode and a training ground's", () => {
-    expect(mapMode("arena-pillars")).toBe("kill-count");
+    expect(mapMode("ember-pits")).toBe("kill-count");
     expect(mapMode("arena-crossroads")).toBe("annihilation");
     expect(mapMode("training-hall")).toBe("annihilation");
   });
@@ -335,9 +339,9 @@ describe("mapMode (#1200)", () => {
 
 describe("mapShrines (#1199)", () => {
   it("reads each team's shrine from a priest map's file", () => {
-    expect(mapShrines("arena-split")).toEqual([
-      { team: 0, position: { x: 50, y: 350 } },
-      { team: 1, position: { x: 950, y: 350 } },
+    expect(mapShrines("jungle-ruins")).toEqual([
+      { team: 0, position: { x: 170, y: 800 } },
+      { team: 1, position: { x: 2830, y: 800 } },
     ]);
   });
 

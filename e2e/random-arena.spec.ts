@@ -23,7 +23,7 @@ const BUILD = "Elementalist/Mesmer";
 /**
  * Make `page`'s ticket keys from `seed`, so its group's map is known.
  * The map follows from the tickets' ids (`formGroups`), and the map
- * decides the mode (#476): a 1v1 drawn onto Pillar Hall would play Kill
+ * decides the mode (#476): a 1v1 drawn onto Ember Pits would play Kill
  * Count, where Bob respawns and one kill wins nothing. Pinning the keys
  * keeps the product free of a test hook. Only 48-byte draws are seeded,
  * which is what @noble/secp256k1 makes a secret key from, each the same

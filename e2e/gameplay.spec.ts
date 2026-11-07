@@ -644,13 +644,13 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
 }) => {
   const arena = JSON.parse(
     readFileSync(
-      new URL("../packages/game-maps/maps/arena-pillars/map.json", import.meta.url),
+      new URL("../packages/game-maps/maps/ember-pits/map.json", import.meta.url),
       "utf8",
     ),
   ) as { readonly height: number };
   await page.goto("./");
   await hostLobby(page);
-  await expect(page.locator(".lobby-map select")).toHaveValue("arena-pillars");
+  await expect(page.locator(".lobby-map select")).toHaveValue("ember-pits");
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
@@ -764,9 +764,9 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
   const cameraX = async (): Promise<number> =>
     Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[0]);
 
-  // A click walks right, toward the middle of arena-pillars (960 wide), on
-  // y 255: the lane between its top and centre pillars, clear end to end,
-  // so the walk to the goal below meets none.
+  // A click walks right from team 0's spawns on ember-pits, to y 255:
+  // north of the spawns' cover and south of the corridor's, clear to well
+  // past the goal below, so the walk there meets no wall.
   const middle = (await projection(stage, canvas)).onPage({ x: 380, y: 255 });
   await page.mouse.click(middle.x, middle.y);
   // Over the canvas, for the wheel; then Close.
@@ -819,7 +819,7 @@ test("a wheel click on a foe calls it for your team, and the other team never se
 }) => {
   const arena = JSON.parse(
     readFileSync(
-      new URL("../packages/game-maps/maps/arena-pillars/map.json", import.meta.url),
+      new URL("../packages/game-maps/maps/ember-pits/map.json", import.meta.url),
       "utf8",
     ),
   ) as {
@@ -830,7 +830,7 @@ test("a wheel click on a foe calls it for your team, and the other team never se
   };
   const foeSpawn = arena.spawnPoints.find((spawn) => spawn.team === 1)?.position;
   if (foeSpawn === undefined) {
-    throw new Error("arena-pillars has no team 1 spawn");
+    throw new Error("ember-pits has no team 1 spawn");
   }
   const opponent = await page.context().newPage();
   const canvas = await startLobbyMatch(page, [opponent]);
