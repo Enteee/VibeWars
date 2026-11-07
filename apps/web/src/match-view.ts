@@ -120,6 +120,8 @@ export interface MatchOutcome {
   readonly selfTeam: number | undefined;
   /** Each team's, on a Guild Battle (#1226); `[]` on any other. */
   readonly aggression: readonly number[];
+  /** This player's morale at the end (#2686), in percent; 0 for a spectator. */
+  readonly selfMorale: number;
 }
 
 /**
@@ -913,6 +915,7 @@ export async function startMatchView(
         endReason: match.endReason,
         selfTeam: self?.team,
         aggression: match.aggression,
+        selfMorale: self?.morale ?? 0,
       });
     }
     // The snapshot that says "finished" may land a frame before the `ended` that carries it.

@@ -723,7 +723,7 @@
     "zojuns-haste"
   ],
   "constants": {
-    "ASCENT_ROUNDS": { "literal": 4 },
+    "ASCENT_ROUNDS": { "literal": 10 },
     "FORMATION_SETTLE_MS": { "literal": 3000 },
     "FORMATION_TIMEOUT_MS": { "literal": 20000 },
     "LOBBY_CODE_LENGTH": { "literal": 43 },
@@ -5709,6 +5709,7 @@
             ]
           }
         },
+        { "name": "ascentMorale", "optional": false, "type": "number" },
         {
           "name": "guildCape",
           "optional": false,

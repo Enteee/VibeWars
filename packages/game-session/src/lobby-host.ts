@@ -1,5 +1,7 @@
 import {
   MINIMAL_GW_INSPIRED_PVP_V1 as RULESET,
+  MORALE_CEILING,
+  MORALE_FLOOR,
   STARTER_BUILDS,
   getProfession,
   pickStarterBuild,
@@ -367,6 +369,8 @@ type Member = MemberBase &
         bot: null;
         /** The player key it proved on joining (#2706). */
         readonly playerPubkey: string;
+        /** Its join's Heroes' Ascent morale (#2686), clamped by `carriedMorale`. */
+        readonly ascentMorale: number;
       }
   );
 
@@ -388,6 +392,16 @@ interface MemberBase {
   readonly rejoinToken: string | null;
   /** Its page's relay key from its `lobby-join` (#2529); `null` for none, and for a bot. */
   relayPub: string | null;
+}
+
+/**
+ * A join's claimed Heroes' Ascent morale (#2686), clamped to GW1's
+ * `MORALE_FLOOR`..`MORALE_CEILING`, a whole percent; a non-finite one is 0.
+ */
+export function carriedMorale(claimed: number): number {
+  return Number.isFinite(claimed)
+    ? Math.min(MORALE_CEILING, Math.max(MORALE_FLOOR, Math.trunc(claimed)))
+    : 0;
 }
 
 /**
@@ -872,8 +886,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         guildCape: member.guildCape,
       };
       const build = assigned.get(member.id) ?? null;
+      // Only a queued Heroes' Ascent carries morale from map to map (#2686).
       return member.bot === null
-        ? { ...seat, bot: false, build, playerPubkey: member.playerPubkey }
+        ? {
+            ...seat,
+            bot: false,
+            build,
+            playerPubkey: member.playerPubkey,
+            startMorale: queued?.group.mode === "heroes-ascent" ? member.ascentMorale : 0,
+          }
         : { ...seat, bot: true, build: build ?? member.bot };
     };
     // One away (#1764) is not seated: a bot plays its slot, as `remove`
@@ -1804,6 +1825,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       relayPub: join.relayPub,
       bot: null,
       playerPubkey: join.playerPubkey,
+      ascentMorale: carriedMorale(join.ascentMorale),
     });
     relayAdmission.seated(from);
     forgetForwards(from, false);

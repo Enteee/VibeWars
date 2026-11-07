@@ -218,6 +218,8 @@ export type PlannedSeat = {
       readonly build: PlayerBuild | null;
       /** The player key its lobby host saw it prove (#2706). */
       readonly playerPubkey: string;
+      /** The morale it starts at (#2686): a Heroes' Ascent run's, carried; else 0. */
+      readonly startMorale: number;
     }
 );
 
@@ -724,7 +726,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   /**
    * A new seat on `team` playing `loadout`, named by `nameOf` its player
-   * id and of `guild`; a bot's if `bot`.
+   * id and of `guild`, at `startMorale`; a bot's if `bot`.
    */
   const seatNew = (
     build: PlayerBuild,
@@ -732,6 +734,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     nameOf: (playerId: string) => string,
     guild: Guild,
     bot: boolean,
+    startMorale: number,
   ): Seat => {
     seated += 1;
     const playerId = `player-${String(seated)}`;
@@ -761,6 +764,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         map.spawns.filter((point) => point.team !== team).map((point) => point.position),
         map.spawns.map((point) => point.position),
       ),
+      startMorale,
       // A human-like moment to react, not the same tick (#2606).
       behaviour: bot ? { kind: "play-build", reaction: BOT_REACTION } : undefined,
     });
@@ -917,6 +921,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       (playerId) => plan?.name ?? sanitizeName(hello.name, playerId),
       plan ?? sanitizeGuild(hello),
       false,
+      // A lobby's carried Heroes' Ascent morale (#2686); without a lobby, none.
+      plan === undefined ? 0 : plan.startMorale,
     );
     welcome(seat, from);
   };
@@ -1249,7 +1255,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   // A lobby's bots (#1193) take their seats at once: none of them says hello.
   for (const plan of planned?.values() ?? []) {
     if (plan.bot) {
-      seatNew(plan.build, plan.team, () => plan.name, NO_GUILD, true);
+      seatNew(plan.build, plan.team, () => plan.name, NO_GUILD, true, 0);
     }
   }
 

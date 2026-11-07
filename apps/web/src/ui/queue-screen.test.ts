@@ -11,6 +11,7 @@ import {
   ascentLine,
   endedLines,
   modeLabel,
+  nextAscentMorale,
   nextAscentRound,
   nextStreak,
   queueLines,
@@ -193,6 +194,19 @@ describe("nextAscentRound (#1996)", () => {
     expect(nextAscentRound(2, "loss")).toBe(0);
     expect(nextAscentRound(3, "forfeit")).toBe(0);
     expect(nextAscentRound(2, "host-left")).toBe(2);
+  });
+});
+
+describe("nextAscentMorale (#2686)", () => {
+  it("carries the morale a won map ended at into the next", () => {
+    expect(nextAscentMorale(0, -30, "win")).toBe(-30);
+    expect(nextAscentMorale(-30, 10, "win")).toBe(10);
+  });
+
+  it("ends the run at 0 after a defeat or a forfeit, and keeps the start when the host left", () => {
+    expect(nextAscentMorale(-15, -45, "loss")).toBe(0);
+    expect(nextAscentMorale(-15, -45, "forfeit")).toBe(0);
+    expect(nextAscentMorale(-15, -45, "host-left")).toBe(-15);
   });
 });
 

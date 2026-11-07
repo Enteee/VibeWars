@@ -610,6 +610,12 @@ export interface ParticipantSpec {
   readonly baseEnergyPips?: number;
   /** Health to start (and reset) at, as a fraction of max. Defaults to 1. */
   readonly startHealthFraction?: number | undefined;
+  /**
+   * Morale to start at, in percent (#2686): a Heroes' Ascent run carries
+   * it from map to map. Clamped to `MORALE_FLOOR`..`MORALE_CEILING`.
+   * Defaults to 0.
+   */
+  readonly startMorale?: number | undefined;
   /** Omitted: driven from outside, like a player. */
   readonly behaviour?: Behaviour | undefined;
   /** Omitted: `never`. Death then follows the match rules' respawn. */
@@ -1455,6 +1461,12 @@ export class MatchSimulation {
       hadEnergy: false,
       interact: undefined,
     };
+    // Full at the carried morale's maxima, as at 0 (#2686).
+    if (spec.startMorale !== undefined && spec.startMorale !== 0) {
+      this.#setMorale(record, Math.min(MORALE_CEILING, Math.max(MORALE_FLOOR, spec.startMorale)));
+      record.combatant.health = record.combatant.maxHealth * (spec.startHealthFraction ?? 1);
+      record.combatant.energy = record.combatant.maxEnergy;
+    }
     this.#participants.set(spec.id, record);
     if (countsForTeam(record)) {
       this.#teams.add(spec.team);

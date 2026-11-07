@@ -58,6 +58,7 @@ const joinAs = (name: string, rejoinToken: string | null, relayPub: string | nul
   rejoinToken,
   relayPub,
   playerPubkey: WIRE_PLAYER_KEY.pubkey,
+  ascentMorale: 0,
 });
 
 describe("a lobby host's relay holders (#2529)", () => {

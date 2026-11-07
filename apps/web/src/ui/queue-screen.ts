@@ -1,7 +1,7 @@
-import { ASCENT_ROUNDS, type QueueMode } from "@vibewars/game-protocol";
+import type { QueueMode } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot, QueueState } from "@vibewars/game-session";
 
-import { ascentMapName } from "../net/maps.js";
+import { ASCENT_PROGRESSION, ascentMapName } from "../net/maps.js";
 import { teamColour } from "../render/arena-snapshot.js";
 import { cssColour } from "./character-preview.js";
 import { RANDOM_ARENA_MODES } from "./menu.js";
@@ -81,7 +81,7 @@ export function nextStreak(streak: number, result: QueuedResult): number {
 export function nextAscentRound(round: number, result: QueuedResult): number {
   switch (result) {
     case "win":
-      return Math.min(round + 1, ASCENT_ROUNDS - 1);
+      return Math.min(round + 1, ASCENT_PROGRESSION.length - 1);
     case "loss":
     case "forfeit":
       return 0;
@@ -90,9 +90,27 @@ export function nextAscentRound(round: number, result: QueuedResult): number {
   }
 }
 
+/**
+ * The morale a player carries into the next Heroes' Ascent map (#2686):
+ * a win carries the morale `ended` the map at, a defeat or leaving ends
+ * the run back at 0, and a match lost to its host leaving keeps
+ * `carried`, the morale it started at.
+ */
+export function nextAscentMorale(carried: number, ended: number, result: QueuedResult): number {
+  switch (result) {
+    case "win":
+      return ended;
+    case "loss":
+    case "forfeit":
+      return 0;
+    case "host-left":
+      return carried;
+  }
+}
+
 /** "Round 2 of 4 · Scarred Earth" (#1996). */
 export function ascentLine(round: number): string {
-  return `Round ${String(round + 1)} of ${String(ASCENT_ROUNDS)} · ${ascentMapName(round)}`;
+  return `Round ${String(round + 1)} of ${String(ASCENT_PROGRESSION.length)} · ${ascentMapName(round)}`;
 }
 
 /** "3 wins in a row this visit (not a rating)"; nothing at 0. */
@@ -268,7 +286,7 @@ export function teamEndLine(
       if (ascentRound === null) {
         return { text: `Next match in ${left}`, button: "Leave" };
       }
-      return ascentRound === ASCENT_ROUNDS - 1
+      return ascentRound === ASCENT_PROGRESSION.length - 1
         ? {
             text: `You hold the ${ascentMapName(ascentRound)} · defending in ${left}`,
             button: "Leave",

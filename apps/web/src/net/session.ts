@@ -635,11 +635,13 @@ export function leaveOnPageHide(target: EventTarget, leave: () => void): () => v
  * stayed together, or of a team mode's party (#1766); with `teamPlan`,
  * as that party's host, which sends the match's host its side's seats
  * once in the match's lobby (ADR-0042). A Heroes' Ascent queues at
- * `ascentRound` (#1996), every other mode at `null`.
+ * `ascentRound` (#1996), every other mode at `null`, and its player
+ * brings `ascentMorale` (#2686), the run's from the last map; 0 elsewhere.
  */
 export function enterQueue(
   mode: QueueMode,
   ascentRound: number | null,
+  ascentMorale: number,
   name: string,
   guild: Guild,
   playerKey: PlayerKey,
@@ -692,6 +694,7 @@ export function enterQueue(
           group,
           key,
           verifyTicketSig,
+          ascentMorale,
           countdownSeconds: QUEUED_COUNTDOWN_SECONDS,
           timeoutSeconds: FORMATION_TIMEOUT_MS / 1000,
           stayTogetherSeconds: STAY_TOGETHER_WINDOW_SECONDS,
@@ -707,6 +710,7 @@ export function enterQueue(
           group,
           key,
           verifyTicketSig,
+          ascentMorale,
         });
       }
     } catch (error) {

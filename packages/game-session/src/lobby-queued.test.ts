@@ -167,8 +167,11 @@ interface QueuedLobby {
   }[];
   /** How the host's peer rewrites a party proposal it sends over the room. */
   readonly proposals: ProposalRewrite;
-  /** A joiner holding `ticketId`, on a fresh peer unless one is given. */
-  join(ticketId: string, transport?: Transport): Promise<LobbyConnection>;
+  /**
+   * A joiner holding `ticketId`, on a fresh peer unless one is given,
+   * claiming `ascentMorale` (#2686), 0 unless given.
+   */
+  join(ticketId: string, transport?: Transport, ascentMorale?: number): Promise<LobbyConnection>;
   /** Run the lobby's clock on by `seconds`, a tick at a time. */
   step(seconds: number): Promise<void>;
 }
@@ -199,7 +202,13 @@ function spied(
   };
 }
 
-function joinQueued(transport: Transport, ticketId: string, timeoutMs = 1000, group = GROUP) {
+function joinQueued(
+  transport: Transport,
+  ticketId: string,
+  timeoutMs = 1000,
+  group = GROUP,
+  ascentMorale = 0,
+) {
   return joinLobby({
     transport,
     code: GROUP_ID,
@@ -211,7 +220,7 @@ function joinQueued(transport: Transport, ticketId: string, timeoutMs = 1000, gr
     timeoutMs,
     relayPub: null,
     playerKey: testPlayerKey(),
-    queued: { group, key: keyOf(ticketId), verifyTicketSig },
+    queued: { group, key: keyOf(ticketId), verifyTicketSig, ascentMorale },
   });
 }
 
@@ -258,6 +267,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
       group,
       key: keyOf(hostTicket),
       verifyTicketSig,
+      ascentMorale: 0,
       countdownSeconds: COUNTDOWN_SECONDS,
       timeoutSeconds: TIMEOUT_SECONDS,
       onFellThrough: (noShows) => fellThrough.push(noShows),
@@ -277,7 +287,8 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     done: () => done,
     sent,
     proposals,
-    join: (ticketId, transport = network.join()) => joinQueued(transport, ticketId, 1000, group),
+    join: (ticketId, transport = network.join(), ascentMorale = 0) =>
+      joinQueued(transport, ticketId, 1000, group, ascentMorale),
     async step(seconds) {
       const ticks = Math.round(seconds / TICK_SECONDS);
       for (let i = 0; i < ticks; i += 1) {
@@ -337,6 +348,7 @@ async function forgedJoin(
     admission: { seatKey: ticketId, admissionSig: keyOf(signer).sign(bytes) },
     rejoinToken: null,
     playerPubkey: WIRE_PLAYER_KEY.pubkey,
+    ascentMorale: 0,
   };
 }
 
@@ -393,6 +405,7 @@ describe("a queued lobby", () => {
         rejoinToken: null,
         relayPub: null,
         playerPubkey: WIRE_PLAYER_KEY.pubkey,
+        ascentMorale: 0,
       },
       "host",
     );
@@ -582,6 +595,30 @@ describe("a queued lobby", () => {
     expect(plan?.mapId).toBe("other-arena");
     expect([...(plan?.seats.values() ?? [])].map((seat) => seat.team).sort()).toEqual([0, 0, 1, 1]);
     expect(ally.getSnapshot()).toMatchObject({ phase: "in-match", countdownSeconds: null });
+  });
+
+  it("seats each player's claimed morale in a Heroes' Ascent, clamped, and none elsewhere (#2686)", async () => {
+    const startMorales = async (group: FormedGroup): Promise<Record<string, number>> => {
+      const queued = await openQueued({ group });
+      await queued.join(ALLY, undefined, -30);
+      await queued.join(FOE, undefined, -90);
+      await queued.join(FOE_2, undefined, 25);
+      await settle();
+      await queued.step(COUNTDOWN_SECONDS);
+      const [plan] = queued.plans;
+      return Object.fromEntries(
+        [...(plan?.seats.values() ?? [])].flatMap((seat) =>
+          seat.bot ? [] : [[seat.name, seat.startMorale]],
+        ),
+      );
+    };
+    expect(await startMorales({ ...GROUP, mode: "heroes-ascent" })).toEqual({
+      "ticket-1": 0,
+      "ticket-2": -30,
+      "ticket-3": -60,
+      "ticket-4": 10,
+    });
+    expect(Object.values(await startMorales(GROUP))).toEqual([0, 0, 0, 0]);
   });
 
   it("falls through at the timeout, naming the tickets that never came", async () => {

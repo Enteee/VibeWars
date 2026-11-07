@@ -161,11 +161,19 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
 }
 
 /**
- * Heroes' Ascent's rounds in order (#1996), one map each, `ASCENT_ROUNDS`
- * of them: a side that wins moves on to the next, up to the Hall.
+ * Heroes' Ascent's run in order (#1996, #2686), one map each: a side that
+ * wins moves on to the next, up to the Hall, and a loss ends the run.
+ * GW1's order is Elite Zaishen Battle, The Underworld, Fetid River,
+ * Burial Mounds, Unholy Temples, Forgotten Shrines, Golden Gates, The
+ * Courtyard, Antechamber, (The Vault,) Hall of Heroes. A map not built
+ * yet is absent until its card adds it, and two stand in for theirs:
+ * broken-tower for Unholy Temples (#2695), scarred-earth for Forgotten
+ * Shrines (#2696). Never longer than `ASCENT_ROUNDS`.
  */
 export const ASCENT_PROGRESSION: readonly string[] = [
+  // Unholy Temples' slot.
   "broken-tower",
+  // Forgotten Shrines' slot.
   "scarred-earth",
   "the-courtyard",
   "hall-of-heroes",

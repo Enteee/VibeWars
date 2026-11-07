@@ -307,9 +307,13 @@ skips the wait, or, for winners, leaves without queueing.
 
 ## Heroes' Ascent
 
-A queued Heroes' Ascent is four rounds, always in this order: Broken
-Tower (Relic Run), Scarred Earth (Capture Points), The Courtyard (King
-of the Hill), then the Hall of Heroes. The Lobby window says where
+A queued Heroes' Ascent is a run up GW1's maps, in their order: Elite
+Zaishen Battle, The Underworld, Fetid River, Burial Mounds, Unholy
+Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
+(The Vault,) then the Hall of Heroes. Only the maps built so far are in
+it, so today it is four rounds: Broken Tower (Relic Run, in Unholy
+Temples' place), Scarred Earth (Capture Points, in Forgotten Shrines'),
+The Courtyard (King of the Hill), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 4 · Scarred Earth`.
 You only ever meet a team at the same round, and you wait for one as
 long as it takes: no bots fill in. Win, and your party ascends to the
@@ -317,6 +321,11 @@ next map on its own after 20 seconds; win in the Hall, and you stay to
 defend it. Lose, or leave a match before it ends, and your next Ascent
 starts again at round 1; so does leaving the queue or the party. A match
 lost to its host leaving keeps your round.
+
+Your morale carries through the run: the death penalty or boost you end
+a won map with is what you start the next one with, from −60% to +10%.
+A run that ends, or a player who joins mid-run, starts at 0. Your own
+tab remembers it, until you close it.
 
 The team picks once, in the Team Lobby of its first map, and keeps its
 Team Build and seats for the rest of the run: after a win it queues
