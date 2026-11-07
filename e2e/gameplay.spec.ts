@@ -883,6 +883,17 @@ test("a wheel click on a foe calls it for your team, and the other team never se
   // Where the opponent really stopped, near MEET.foe: its view, in front a
   // moment so it draws, follows it.
   await opponent.bringToFront();
+  // Two frames: the first after it comes to the front may be one queued behind.
+  await opponent.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            resolve();
+          });
+        });
+      }),
+  );
   const there = opponent.locator("#viewport");
   let seen = "";
   await expect
