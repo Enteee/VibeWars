@@ -18,6 +18,7 @@ import minionCare from "./minion-care.js";
 import pickUpGhost from "./pick-up-ghost.js";
 import position from "./position.js";
 import raise from "./raise.js";
+import regroup from "./regroup.js";
 import renewSpirit from "./renew-spirit.js";
 import rest from "./rest.js";
 import rider from "./rider.js";
@@ -54,6 +55,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   pickUpGhost,
   position,
   raise,
+  regroup,
   renewSpirit,
   rest,
   rider,

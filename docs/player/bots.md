@@ -33,6 +33,8 @@ bots and healers step to where fewer foes can reach them, and use pillars
 as cover. A team turns on any foe in reach who drops below 60% health,
 to finish them. In King of the Hill, while your team does not hold the
 altar, the other team's Ghostly Hero on the altar comes before even that.
+A bot that gets far ahead of its team waits for the rest before it pushes
+on.
 
 A badly hurt bot that is losing its fight falls back behind its healer, or
 to its base, and rests out of reach until it has most of its health back.
