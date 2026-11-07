@@ -668,6 +668,15 @@ describe("enemyPips (#881)", () => {
     ]);
   });
 
+  it("groups two foe teams, each in snapshot order (#2684)", () => {
+    const yellow = player({ sessionId: "y", name: "Yellow", team: 2 });
+    expect(enemyPips([yellow, ...players], 0).map((pip) => pip.name)).toEqual([
+      "Foe",
+      "Fallen",
+      "Yellow",
+    ]);
+  });
+
   it("gives a spectator every player, grouped by team", () => {
     expect(enemyPips(players, undefined).map((pip) => pip.name)).toEqual([
       "Ally",
@@ -723,6 +732,18 @@ describe("scoreboardText (#881)", () => {
     );
     expect(scoreboardText(players, 1, 42, null, "annihilation", board(0, 0))).toBe(
       `${t("hud.versus", { ours: 1, theirs: 2 })} · 0:42`,
+    );
+  });
+
+  it("shows each of three teams, your own first, the others in order (#2684)", () => {
+    const three = [...players, player({ sessionId: "e", team: 2 })];
+    const scores = { ...board(0, 0), score: [3, 5, 7] };
+    expect(scoreboardText(three, 1, 42, null, "annihilation", scores)).toBe(
+      `${t("hud.versusThree", { ours: 1, first: 2, second: 1 })} · 0:42`,
+    );
+    expect(scoreboardText(three, 2, 42, null, "kill-count", scores)).toBe("7 – 3 – 5 · 0:42");
+    expect(scoreboardText(three, undefined, 42, null, "kill-count", scores)).toBe(
+      "3 – 5 – 7 · 0:42",
     );
   });
 

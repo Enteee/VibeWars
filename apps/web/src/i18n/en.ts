@@ -463,6 +463,7 @@ export const en = {
   "hud.targetDead": "dead",
   "hud.targetEffects": "your target's effects",
   "hud.versus": "{ours} v {theirs}",
+  "hud.versusThree": "{ours} v {first} v {second}",
   "hud.yourEffects": "your effects",
 
   "keys.alt": "Alt",
@@ -508,6 +509,7 @@ export const en = {
   "matches.teamResult": "Team {team}: {result}",
   "matches.teamTab": "Team {team} · {result}",
   "matches.teamUnreadable": "A build in this team can't be read",
+  "matches.versus": "vs",
   "matches.won": "Won",
   "matches.wonLeft": "◂ Won",
   "matches.wonRight": "Won ▸",

@@ -288,7 +288,7 @@ export function compassView(
       .map((actor) => ({
         id: actor.id,
         ...local(actor.position),
-        kind: actor === self ? "self" : actor.team === "enemy" ? "foe" : "friend",
+        kind: actor === self ? "self" : actor.team === "ally" ? "friend" : "foe",
         targeted: actor.id === arena.targetId,
         called: actor.id === arena.calledId,
         // Any creature, whatever radius its kind is drawn at (#2047).

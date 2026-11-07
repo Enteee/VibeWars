@@ -1,5 +1,10 @@
 import { STARTER_BUILDS } from "@vibewars/game-core";
-import { recordTemplate, type MatchRecord, type MatchRecordTeam } from "@vibewars/game-session";
+import {
+  MATCH_RECORD_VERSION,
+  recordTemplate,
+  type MatchRecord,
+  type MatchRecordTeam,
+} from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
@@ -16,7 +21,7 @@ const fail = (): never => {
 const played = (index: number) => recordTemplate(STARTER_BUILDS.at(index) ?? fail());
 
 const RECORD: MatchRecord = {
-  v: 1,
+  v: MATCH_RECORD_VERSION,
   mode: "random-arena",
   map: arenaIds()[0] ?? "",
   endedAt: NOW / 1000 - 120,
@@ -309,8 +314,8 @@ describe("the Matches page (#2532)", () => {
 
   it("says a build it cannot read is unreadable", () => {
     const { root } = render();
-    const [ann, bot] = [RECORD.teams[0].players[0], RECORD.teams[1]];
-    if (ann === undefined) {
+    const [ann, bot] = [RECORD.teams[0]?.players[0], RECORD.teams[1]];
+    if (ann === undefined || bot === undefined) {
       return;
     }
     hear("a", { ...RECORD, teams: [{ players: [{ ...ann, template: "!!!" }] }, bot] });
@@ -337,6 +342,32 @@ describe("the Matches page (#2532)", () => {
     expect(detail.one("match-detail-result").textContent).toBe(
       t("matches.teamResult", { team: 1, result: t("matches.lost") }),
     );
+  });
+
+  it("shows three teams: on the row, and a tab each, the winner's first (#2684)", () => {
+    const { root } = render();
+    const third = { players: [{ name: "Cid", guildTag: null, bot: false, template: played(2) }] };
+    hear("a", { ...RECORD, teams: [...RECORD.teams, third], winningTeam: 2 });
+    expect(root.all("match-team").map((team) => team.className)).toEqual([
+      "match-team",
+      "match-team",
+      "match-team is-winner",
+    ]);
+    expect(root.all("match-result").map((mark) => mark.textContent)).toEqual([
+      t("matches.versus"),
+      t("matches.versus"),
+    ]);
+    root.one("match-row-head").click();
+    expect(
+      root
+        .one("match-detail")
+        .all("match-tab")
+        .map((tab) => tab.textContent),
+    ).toEqual([
+      t("matches.teamTab", { team: 3, result: t("matches.won") }),
+      t("matches.teamTab", { team: 1, result: t("matches.lost") }),
+      t("matches.teamTab", { team: 2, result: t("matches.lost") }),
+    ]);
   });
 
   it("keeps Team 1 first on a draw (#2637)", () => {
@@ -407,14 +438,15 @@ describe("the Matches page (#2532)", () => {
     root.one("match-row-head").click();
     expect(root.all("play-card-clone")).toHaveLength(0);
 
-    const [ann, bob] = PAIRS.teams[0].players;
-    if (ann === undefined || bob === undefined) {
+    const [ann, bob] = PAIRS.teams[0]?.players ?? [];
+    const second = PAIRS.teams[1];
+    if (ann === undefined || bob === undefined || second === undefined) {
       return;
     }
     const unreadable: MatchRecord = {
       ...PAIRS,
       endedAt: RECORD.endedAt + 1,
-      teams: [{ players: [ann, { ...bob, template: "!!!" }] }, PAIRS.teams[1]],
+      teams: [{ players: [ann, { ...bob, template: "!!!" }] }, second],
     };
     hear("pairs", unreadable);
     const head = root.all("match-row-head")[0];
