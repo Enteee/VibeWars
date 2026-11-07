@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   ANNIHILATION_MATCH_RULES,
+  CAPTURE_LEAD_TO_WIN,
+  CAPTURE_POINTS_MATCH_RULES,
   GUILD_BATTLE_MATCH_RULES,
   KILL_COUNT_MATCH_RULES,
   MATCH_IN_PROGRESS,
@@ -32,7 +34,15 @@ function standing(...teams: [number, number, number, boolean?][]): MatchStanding
     byTeam: new Map(
       teams.map(([team, living, morale, priestLives = false]) => [
         team,
-        { living, morale, priestLives, guildLordLives: false, beyondRaising: false, aggression: 0 },
+        {
+          living,
+          morale,
+          priestLives,
+          guildLordLives: false,
+          beyondRaising: false,
+          aggression: 0,
+          ledAtSeconds: undefined,
+        },
       ]),
     ),
   };
@@ -302,6 +312,7 @@ describe("evaluateMatch: guild battle (#1222)", () => {
     guildLordLives: true,
     beyondRaising: false,
     aggression: 0,
+    ledAtSeconds: undefined,
     ...overrides,
   });
   const guild = (zero: Partial<TeamStanding>, one: Partial<TeamStanding>): MatchStanding => ({
@@ -441,6 +452,72 @@ describe("evaluateMatch: king of the hill (#1377)", () => {
     });
     expect(evaluateMatch(points(2, 2), BOTH_ALIVE, 480, rules).winningTeam).toBeUndefined();
     expect(evaluateMatch(points(3, 0), standing([0, 0, -15], [1, 1, 0]), 100, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "annihilation",
+    });
+  });
+});
+
+describe("evaluateMatch: capture points (#2690)", () => {
+  const rules = CAPTURE_POINTS_MATCH_RULES;
+  const points = (...byTeam: number[]) => ({
+    byTeam: new Map(byTeam.map((value, team) => [team, value])),
+  });
+  /** Every team alive, each led last at the given second, or never. */
+  const led = (...at: (number | undefined)[]): MatchStanding => ({
+    byTeam: new Map(
+      at.map((ledAtSeconds, team) => [
+        team,
+        {
+          living: 4,
+          morale: 0,
+          priestLives: false,
+          guildLordLives: false,
+          beyondRaising: false,
+          aggression: 0,
+          ledAtSeconds,
+        },
+      ]),
+    ),
+  });
+
+  it("is won at once by a team 20 points ahead of every other", () => {
+    expect(CAPTURE_LEAD_TO_WIN).toBe(20);
+    expect(evaluateMatch(points(20, 1), led(30, undefined), 100, rules)).toBe(MATCH_IN_PROGRESS);
+    expect(evaluateMatch(points(21, 1), led(30, undefined), 100, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 0,
+      reason: "score",
+    });
+    // Twenty ahead of one team, but not of the other: it plays on.
+    expect(evaluateMatch(points(25, 1, 10), led(30, undefined, 20), 100, rules)).toBe(
+      MATCH_IN_PROGRESS,
+    );
+  });
+
+  it("goes at time to the most points, and a tie to the team that led last", () => {
+    expect(evaluateMatch(points(3, 5), led(60, 90), 480, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "time",
+    });
+    expect(evaluateMatch(points(5, 5), led(120, 90), 480, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 0,
+      reason: "time",
+    });
+    expect(evaluateMatch(points(5, 5, 5), led(60, 150, 90), 480, rules).winningTeam).toBe(1);
+    // A third team that led last but is behind now does not decide the tie.
+    expect(evaluateMatch(points(5, 5, 4), led(60, 90, 150), 480, rules).winningTeam).toBe(1);
+    // Tied, and neither ever led alone: a draw.
+    expect(evaluateMatch(points(0, 0), led(undefined, undefined), 480, rules).winningTeam).toBe(
+      undefined,
+    );
+  });
+
+  it("is lost at once by a wiped team, whatever the points", () => {
+    expect(evaluateMatch(points(15, 0), standing([0, 0, -15], [1, 1, 0]), 100, rules)).toEqual({
       phase: "finished",
       winningTeam: 1,
       reason: "annihilation",

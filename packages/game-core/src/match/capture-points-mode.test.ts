@@ -1,17 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
-import { CAPTURE_POINTS_MATCH_RULES, POINT_TICK_SECONDS } from "../match-rules.js";
+import {
+  CAPTURE_LEAD_TO_WIN,
+  CAPTURE_POINTS_MATCH_RULES,
+  POINT_TICK_SECONDS,
+  type MatchRules,
+} from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
-import { CAPTURE_SECONDS } from "./capture-points.js";
+import { CAPTURE_SECONDS, MAX_PIPS } from "./capture-points.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
 
 /**
- * Capture Points in the simulation (#1378), on Scarred Earth's five
- * shrines: standing on one takes it, every 30 s each one owned scores,
- * at 8 minutes the most points win, and a wipe ends it before.
+ * Capture Points in the simulation (#1378, #2690), on Scarred Earth's five
+ * shrines: a team's pips on one take it, every 30 s each one owned scores,
+ * 20 points ahead or a wipe ends it, else at 8 minutes the most points win.
  */
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -39,11 +44,52 @@ function fighter(id: string, team: number, spawn: Vec2): ParticipantSpec {
   };
 }
 
+/** Seconds one player alone, one pip, takes to fill a shrine (#2690). */
+const ALONE_SECONDS = CAPTURE_SECONDS * MAX_PIPS;
+
+/** Shrine `i`'s position. */
+function shrine(i: number): Vec2 {
+  const at = SHRINES[i];
+  if (at === undefined) {
+    throw new Error(`no shrine ${String(i)}`);
+  }
+  return at;
+}
+
+/** A standing minion `id` of `ownerId`'s, on `team`, at `spawn`. */
+function minion(id: string, ownerId: string, team: number, spawn: Vec2): ParticipantSpec {
+  return {
+    ...fighter(id, team, spawn),
+    creature: {
+      ownerId,
+      kind: "minion",
+      look: "bone-minion",
+      name: id,
+      expiresInSeconds: Number.POSITIVE_INFINITY,
+      ageSeconds: 0,
+      summonedAtTick: 0,
+      skillId: undefined,
+      aura: undefined,
+      onDeath: "vanish",
+      ownerDisableSeconds: 0,
+      deathBurst: undefined,
+      onDeathInRange: undefined,
+      pulse: undefined,
+      replacedBy: undefined,
+      corpsesLeft: 0,
+      companionSkillId: undefined,
+      leaderId: undefined,
+      bondStatusId: undefined,
+      mode: "guard",
+    },
+  };
+}
+
 /** Two a team at their spawns, on no shrine. */
-function capturePoints(): MatchSimulation {
+function capturePoints(matchRules: MatchRules = CAPTURE_POINTS_MATCH_RULES): MatchSimulation {
   return new MatchSimulation({
     seed: "capture-points",
-    matchRules: CAPTURE_POINTS_MATCH_RULES,
+    matchRules,
     walls: [],
     bounds: { width: 3200, height: 2000 },
     capturePoints: SHRINES,
@@ -66,11 +112,7 @@ function get(sim: MatchSimulation, id: string) {
 
 /** Stand `id` on shrine `i`. */
 function onShrine(sim: MatchSimulation, id: string, i: number): void {
-  const shrine = SHRINES[i];
-  if (shrine === undefined) {
-    throw new Error(`no shrine ${String(i)}`);
-  }
-  get(sim, id).position = shrine;
+  get(sim, id).position = shrine(i);
 }
 
 function points(sim: MatchSimulation): [number, number] {
@@ -91,12 +133,12 @@ function kill(sim: MatchSimulation, id: string): void {
   combatant.health = 0.2;
 }
 
-describe("Capture Points on Scarred Earth (#1378, #2551)", () => {
+describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
   it("scores each shrine a team owns every 30 s: two for a minute is 4", () => {
     const sim = capturePoints();
     onShrine(sim, "a", 0);
     onShrine(sim, "b", 1);
-    run(sim, CAPTURE_SECONDS);
+    run(sim, ALONE_SECONDS);
     expect(sim.capturePoints.map((point) => point.owner)).toEqual([0, 0, null, null, null]);
     expect(points(sim)).toEqual([0, 0]);
     run(sim, 2 * POINT_TICK_SECONDS);
@@ -106,12 +148,20 @@ describe("Capture Points on Scarred Earth (#1378, #2551)", () => {
 
   it("scores a shrine taken on the scoring tick: the capture comes first", () => {
     const sim = capturePoints();
-    run(sim, POINT_TICK_SECONDS - CAPTURE_SECONDS);
+    run(sim, 2 * POINT_TICK_SECONDS - ALONE_SECONDS);
     onShrine(sim, "x", 4);
-    run(sim, CAPTURE_SECONDS);
-    expect(sim.elapsedSeconds).toBeCloseTo(POINT_TICK_SECONDS, 6);
+    run(sim, ALONE_SECONDS);
+    expect(sim.elapsedSeconds).toBeCloseTo(2 * POINT_TICK_SECONDS, 6);
     expect(sim.capturePoints[4]?.owner).toBe(1);
     expect(points(sim)).toEqual([0, 1]);
+  });
+
+  it("is taken by two players together twice as fast as by one", () => {
+    const sim = capturePoints();
+    onShrine(sim, "a", 2);
+    onShrine(sim, "b", 2);
+    run(sim, ALONE_SECONDS / 2);
+    expect(sim.capturePoints[2]?.owner).toBe(0);
   });
 
   it("is won at time by the team with more points", () => {
@@ -123,9 +173,61 @@ describe("Capture Points on Scarred Earth (#1378, #2551)", () => {
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "time" });
   });
 
+  it("is won at once by a team 20 points ahead", () => {
+    const sim = capturePoints();
+    onShrine(sim, "a", 0);
+    onShrine(sim, "b", 1);
+    run(sim, CAPTURE_POINTS_MATCH_RULES.timeLimitSeconds - 1);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "score" });
+    const [ours, theirs] = points(sim);
+    expect(ours - theirs).toBeGreaterThanOrEqual(CAPTURE_LEAD_TO_WIN);
+  });
+
+  it("goes at time, on equal points, to the team that led last", () => {
+    // A minute: two of team 1 take shrine 4 in 16 s and lead alone at 30 s;
+    // team 0, one on each of two shrines, ties them at 60 s, at time.
+    const sim = capturePoints({ ...CAPTURE_POINTS_MATCH_RULES, timeLimitSeconds: 60 });
+    onShrine(sim, "x", 4);
+    onShrine(sim, "y", 4);
+    onShrine(sim, "a", 0);
+    onShrine(sim, "b", 1);
+    run(sim, POINT_TICK_SECONDS + DT);
+    expect(points(sim)).toEqual([0, 1]);
+    run(sim, POINT_TICK_SECONDS);
+    expect(points(sim)).toEqual([2, 2]);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "time" });
+  });
+
+  it("counts a team's Ghostly Hero four pips, and a minion none", () => {
+    const sim = new MatchSimulation({
+      seed: "capture-points-ghost",
+      matchRules: CAPTURE_POINTS_MATCH_RULES,
+      walls: [],
+      bounds: { width: 3200, height: 2000 },
+      capturePoints: SHRINES,
+      ghostField: {
+        level: 24,
+        altar: undefined,
+        spawns: [
+          { team: 0, position: shrine(2) },
+          { team: 1, position: vec2(2920, 1800) },
+        ],
+      },
+      participants: [
+        fighter("a", 0, vec2(280, 620)),
+        fighter("x", 1, vec2(2920, 1240)),
+        minion("m", "x", 1, shrine(0)),
+      ],
+    });
+    run(sim, CAPTURE_SECONDS);
+    expect(sim.capturePoints[2]?.owner).toBe(0);
+    expect(sim.capturePoints[0]).toMatchObject({ owner: null, progress: 0 });
+  });
+
   it("is ended at once by a wipe, whatever the points, and a kill scores none", () => {
     const sim = capturePoints();
     onShrine(sim, "x", 4);
+    onShrine(sim, "y", 4);
     run(sim, POINT_TICK_SECONDS);
     expect(points(sim)).toEqual([0, 1]);
     kill(sim, "x");
@@ -141,7 +243,7 @@ describe("Capture Points on Scarred Earth (#1378, #2551)", () => {
     const sim = capturePoints();
     onShrine(sim, "a", 2);
     kill(sim, "a");
-    run(sim, CAPTURE_SECONDS);
+    run(sim, ALONE_SECONDS);
     expect(sim.capturePoints[2]).toMatchObject({ owner: null, progress: 0 });
   });
 });

@@ -218,7 +218,12 @@ export {
 } from "./match/flags.js";
 export type { RelicField, RelicState } from "./match/relics.js";
 export type { CapturePoint } from "./match/capture-points.js";
-export { CAPTURE_REACH_UNITS, CAPTURE_SECONDS } from "./match/capture-points.js";
+export {
+  CAPTURE_REACH_UNITS,
+  CAPTURE_SECONDS,
+  GHOST_PIPS,
+  MAX_PIPS,
+} from "./match/capture-points.js";
 export { ALTAR_REACH_UNITS, relicId, relicTeamOf } from "./match/relics.js";
 export type { AltarState } from "./match/altar.js";
 export type { GhostField, GhostLevel, GhostSpawn } from "./match/ghost.js";
