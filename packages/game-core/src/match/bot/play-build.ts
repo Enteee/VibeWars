@@ -11,7 +11,15 @@ import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { roleOf, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
-import { HURT_FRACTION, NOTHING, foeReach, healthFraction, skillsOf } from "./rules/shared.js";
+import {
+  FOCUS_REACH,
+  HEALER_PRIORITY,
+  HURT_FRACTION,
+  NOTHING,
+  foeReach,
+  healthFraction,
+  skillsOf,
+} from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
 import { sacrificesTooMuch } from "./skill-intent.js";
 
@@ -220,10 +228,10 @@ function think(
  * team's bots already target, while it is below `FINISH_FRACTION`; else
  * the weakest foe in spell range once it is below `FINISH_FRACTION`
  * (#2545), so the team commits to a kill and never drops one for
- * another; else the team's target, if one is alive; else the living foe
- * within spell range with the lowest health fraction, ties to the nearer,
- * then simulation order. A creature only while no other foe is in range.
- * With shrines to hold, the team's target only in range.
+ * another; else the team's target, if one is alive within `FOCUS_REACH`
+ * past spell range (#2573), or anywhere while no foe is in range; else
+ * `focusPick` in spell range. A creature only while no other foe is in
+ * range. With shrines to hold, the team's target only in range.
  */
 function teamTarget(context: BehaviourContext, foes: readonly Participant[]): string | undefined {
   const called = foes.find((foe) => foe.id === context.calledTargetId);
@@ -240,7 +248,13 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
   if (dying !== undefined && healthFraction(dying) < FINISH_FRACTION) {
     return dying.id;
   }
-  return (held ?? dying)?.id;
+  if (
+    held !== undefined &&
+    (inRange.length === 0 || distance(held.position, self.position) <= RANGE_SPELL + FOCUS_REACH)
+  ) {
+    return held.id;
+  }
+  return focusPick(self, inRange)?.id;
 }
 
 /** The first living foe a bot of `context.self`'s team targets, if it may be fought. */
@@ -281,19 +295,43 @@ function fightable(foes: readonly Participant[]): (foe: Participant) => boolean 
  * to `self`, then simulation order; a creature only while none is a fighter.
  */
 function weakest(self: Participant, foes: readonly Participant[]): Participant | undefined {
+  return lowest(self, foes, healthFraction);
+}
+
+/**
+ * As `weakest`, but a healer counts `HEALER_PRIORITY` more hurt than
+ * it is (#2573): in GW1 PvP the healer is the first spike target.
+ */
+function focusPick(self: Participant, foes: readonly Participant[]): Participant | undefined {
+  return lowest(
+    self,
+    foes,
+    (foe) => healthFraction(foe) - (roleOf(foe) === "healer" ? HEALER_PRIORITY : 0),
+  );
+}
+
+/** Of `foes`, the lowest `score`, ties to the nearer to `self`, then simulation order. */
+function lowest(
+  self: Participant,
+  foes: readonly Participant[],
+  score: (foe: Participant) => number,
+): Participant | undefined {
   const eligible = fightable(foes);
   let best: Participant | undefined;
+  let bestScore = 0;
   for (const foe of foes) {
     if (!eligible(foe)) {
       continue;
     }
+    const foeScore = score(foe);
     if (
       best === undefined ||
-      healthFraction(foe) < healthFraction(best) ||
-      (healthFraction(foe) === healthFraction(best) &&
+      foeScore < bestScore ||
+      (foeScore === bestScore &&
         distance(foe.position, self.position) < distance(best.position, self.position))
     ) {
       best = foe;
+      bestScore = foeScore;
     }
   }
   return best;

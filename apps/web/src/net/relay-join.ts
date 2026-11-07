@@ -46,6 +46,15 @@ export const RELAY_RESTART_EVERY_MS = 5 * 60 * 1000;
 export interface RelayJoin extends Transport {
   /** The host answered from `hostId`: no further attempt, and its drop is watched. */
   reached(hostId: string): void;
+  /**
+   * The holder whose relay the host's connection goes through now (#2531),
+   * by peer id, once it relays with a login the host forwarded from that
+   * holder: `undefined` direct, through the player's own relay, or with a
+   * login off the Nostr relays, whose holder is only claimed.
+   */
+  relayedVia(): string | undefined;
+  /** `handler` when `relayedVia` changed. */
+  onRelayedVia(handler: () => void): () => void;
 }
 
 export interface RelayJoinOptions {
@@ -102,6 +111,23 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
   let restartTimer: ReturnType<typeof setTimeout> | undefined;
   let swapping = false;
   let left = false;
+  const viaHandlers = new Set<() => void>();
+
+  /** `relayedVia()` as last told. */
+  let vouchedVia: string | undefined;
+
+  /** Relay with `offer` from now on, telling whoever listens if whose it shows changed. */
+  const via = (offer: RelayOffer): void => {
+    relayedVia = offer.holder;
+    const shown = offers.vouched(offer) ? offer.holder : undefined;
+    if (shown === vouchedVia) {
+      return;
+    }
+    vouchedVia = shown;
+    for (const handler of [...viaHandlers]) {
+      handler();
+    }
+  };
 
   const listen = (transport: Transport, channel: Channel): (() => void) =>
     transport.on(channel, (data, from) => {
@@ -170,7 +196,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     swapping = true;
     joinedWith = turn;
     relayedWith = turn;
-    relayedVia = offer.holder;
+    via(offer);
     try {
       await detach();
       if (!left) {
@@ -267,7 +293,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
     room.transport.swapIceServers(hostId, next);
     restarted.set(relayOf(next), now());
     relayedWith = next;
-    relayedVia = offer.holder;
+    via(offer);
   };
 
   attach(undefined);
@@ -283,6 +309,13 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
       hostId = id;
       clearTimeout(timer);
       move();
+    },
+    relayedVia: () => vouchedVia,
+    onRelayedVia(handler) {
+      viaHandlers.add(handler);
+      return () => {
+        viaHandlers.delete(handler);
+      };
     },
     send(channel, data, to) {
       room?.transport.send(channel, data, to);
@@ -305,6 +338,7 @@ export function joinWithRelayOffers(options: RelayJoinOptions): RelayJoin {
       offers.close();
       await detach();
       handlers.clear();
+      viaHandlers.clear();
     },
   };
 }

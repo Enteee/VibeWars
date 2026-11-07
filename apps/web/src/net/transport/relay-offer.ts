@@ -421,6 +421,11 @@ export interface RelayHold {
   /** Whether it shares a relay now: Options has a `rest` one and sharing is on. */
   holding(): boolean;
   /**
+   * How many peer ids it holds a live login for (#2531): each seated
+   * member, and each admit still live; 0 when not holding.
+   */
+  sharingWith(): number;
+  /**
    * The host admitted `admit`: mint its peer id a login and publish it
    * sealed to its key, again each `TICKET_HEARTBEAT_MS` while the admit is
    * live. Nothing when not holding, or when it would hold more than
@@ -436,7 +441,7 @@ export interface RelayHold {
   seated(members: readonly WireRelayMember[]): void;
   /** `handler` with each login sealed for seated member `to`, as `relay-cred` text. */
   onSeal(handler: (to: string, seal: string) => void): () => void;
-  /** `handler` when `holding()` may have changed. */
+  /** `handler` when `holding()` or `sharingWith()` may have changed. */
   onChange(handler: () => void): () => void;
   /** Stop for good: every login is dropped. */
   close(): void;
@@ -476,6 +481,28 @@ export function holdRelay(
     }
   };
 
+  /** The peer ids with a live admit at `now`, or seated: who holds a login from it. */
+  const held = (now: number): Set<string> =>
+    new Set([
+      ...[...relayed].filter(([, until]) => until > now).map(([id]) => id),
+      ...members.keys(),
+    ]);
+
+  const sharingWith = (now: number): number =>
+    closed || shared === undefined ? 0 : held(now).size;
+
+  /** `sharingWith` as last told. */
+  let counted = 0;
+
+  /** Tell whoever listens if `sharingWith` changed since it was last told. */
+  const recount = (): void => {
+    const count = sharingWith(deps.now());
+    if (count !== counted) {
+      counted = count;
+      tell();
+    }
+  };
+
   const beat = (): void => {
     const now = deps.now();
     for (const [key, { seal, until }] of seals) {
@@ -489,6 +516,7 @@ export function holdRelay(
       clearInterval(heartbeat);
       heartbeat = undefined;
     }
+    recount();
   };
 
   /**
@@ -554,12 +582,14 @@ export function holdRelay(
     shared = next;
     // A changed relay starts over: every member gets a login for the new one.
     mintAll();
+    counted = sharingWith(deps.now());
     tell();
   });
   const remint = setInterval(mintAll, REMINT_EVERY_MS);
 
   return {
     holding: () => !closed && shared !== undefined,
+    sharingWith: () => sharingWith(deps.now()),
     admit({ peerId, pub }) {
       if (closed || shared === undefined) {
         return;
@@ -571,11 +601,12 @@ export function holdRelay(
           relayed.delete(id);
         }
       }
-      const held = new Set([...relayed.keys(), ...members.keys()]);
-      if (!held.has(peerId) && held.size >= MAX_RELAYED_PER_HOLDER) {
+      const ids = held(now);
+      if (!ids.has(peerId) && ids.size >= MAX_RELAYED_PER_HOLDER) {
         return;
       }
       relayed.set(peerId, Math.max(relayed.get(peerId) ?? 0, now + RELAY_ADMIT_MS));
+      recount();
       const key = `${peerId} ${pub}`;
       seal(peerId, pub, (sealed) => {
         publisher ??= topicPublisher(room, deps);
@@ -594,6 +625,7 @@ export function holdRelay(
           mint(peerId, pub);
         }
       }
+      recount();
     },
     onSeal(handler) {
       sealHandlers.add(handler);
@@ -646,6 +678,12 @@ export interface RelayOffers {
    * for this page, strictly newer than the one it has from `from`.
    */
   fromMember(from: string, seal: string): void;
+  /**
+   * Whether `offer` came through `fromMember` from its own holder
+   * (#2531): the host vouches for who sent it. A seal off the Nostr
+   * relays names a holder anyone with the invite link may claim.
+   */
+  vouched(offer: RelayOffer): boolean;
   /** An offer opened or one was dropped: what `ranked` says may have changed. */
   onOffer(handler: () => void): () => void;
   /** Stop asking and listening, and drop every offer. */
@@ -667,6 +705,8 @@ export function watchRelayOffers(
 ): RelayOffers {
   /** The newest offer per holder: one holder never fills two attempts. */
   const offers = new Map<string, RelayOffer>();
+  /** Offers `fromMember` kept: the host forwarded each from its holder. */
+  const vouched = new WeakSet<RelayOffer>();
   const handlers = new Set<() => void>();
   /** The holders the host lists, once it has. */
   let holders: ReadonlySet<string> | undefined;
@@ -789,10 +829,12 @@ export function watchRelayOffers(
       void openRelaySeal(seal, key, selfId, deps.now()).then((offer) => {
         // Another holder's login, or `from` left the list while it opened.
         if (offer?.holder === from && !closed && holders?.has(from) === true) {
+          vouched.add(offer);
           keep(offer);
         }
       });
     },
+    vouched: (offer) => vouched.has(offer),
     onOffer(handler) {
       handlers.add(handler);
       return () => {
