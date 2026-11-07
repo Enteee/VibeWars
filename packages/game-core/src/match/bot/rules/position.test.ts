@@ -226,6 +226,30 @@ describe("position by threat (#2598)", () => {
     expect(distance(spot, vec2(700, 400))).toBeCloseTo(distance(straight, vec2(700, 400)));
   });
 
+  it("commits to its threat move as to any spot: kept until clearly elsewhere (#2615)", () => {
+    const fight = match([
+      fighter("m", 0, MONK, vec2(100, 400)),
+      fighter("mate", 0, WARRIOR, vec2(700, 400)),
+      fighter("foe", 1, WARRIOR, vec2(1000, 400)),
+      fighter("f2", 1, ELEMENTALIST, vec2(1100, 400)),
+    ]);
+    const mate = fight.get("mate");
+    if (mate !== undefined) mate.combatant.health = mate.combatant.maxHealth * 0.4;
+    const cursor = createCursor();
+    const straight = position.decide(ruleFor(fight, "m", { cursor }))?.moveTo;
+    if (straight === undefined) throw new Error("no spot");
+    expect(cursor.coverSpot).toEqual(straight);
+    const f2 = fight.get("f2");
+    if (f2 === undefined) throw new Error("no f2");
+    const reach = ruleFor(fight, "m").foeReach(f2);
+    f2.position = vec2(straight.x, straight.y - reach - POSITION_SLACK / 2);
+    const turned = position.decide(ruleFor(fight, "m"))?.moveTo;
+    if (turned === undefined) throw new Error("no turned spot");
+    expect(distance(turned, straight)).toBeGreaterThan(10);
+    expect(distance(turned, straight)).toBeLessThanOrEqual(2 * POSITION_SLACK);
+    expect(position.decide(ruleFor(fight, "m", { cursor }))?.moveTo).toEqual(straight);
+  });
+
   it("stands and fights a foe at its elbow, however many cover it", () => {
     const rule = idle();
     const foe = rule.foes.find((other) => other.id === "foe");

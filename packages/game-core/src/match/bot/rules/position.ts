@@ -37,7 +37,7 @@ const HEALER_CLEARANCE = 0.6 * RANGE_SPELL;
  * the one the fewest foes can hit (#2598): a pillar between a foe and it
  * is cover. At its spot already, it moves only with `THREAT_MOVE_MIN`
  * foes on it, and only to a spot with at least one fewer, so two equal
- * spots never take turns.
+ * spots never take turns. A healer commits to the spot it chose (#2615).
  */
 const position: BotRule = {
   order: 98,
@@ -67,9 +67,18 @@ const position: BotRule = {
       if (best === undefined || best.threat > here - 1) {
         return undefined;
       }
+      if (rule.role === "healer") {
+        best = { ...best, point: committed(rule, best.point) };
+      }
     } else {
       best = safest(rule, spot.point, spot.watched);
-      if (best === undefined || distance(best.point, self.position) <= POSITION_SLACK) {
+      if (best === undefined) {
+        return undefined;
+      }
+      if (rule.role === "healer") {
+        best = { ...best, point: committed(rule, best.point) };
+      }
+      if (distance(best.point, self.position) <= POSITION_SLACK) {
         return undefined;
       }
     }
@@ -189,8 +198,9 @@ function reach(self: Participant, bar: RuleContext["bar"]): number {
  * centroid, as close as keeps it `HEALER_CLEARANCE` off the nearest foe.
  * Where it stands already does while that ally is within its reach and
  * no foe within `ELBOW_DISTANCE`: every step is a swing or a cast lost.
- * It keeps its ward and its spot in `cursor` (#2615), so a hit traded or
- * a foe's step does not turn it round: see `keptWard` and `keptSpot`.
+ * It keeps its ward in `cursor` (#2615), and `position` the spot it
+ * chose from this one, so a hit traded or a foe's step does not turn it
+ * round: see `keptWard` and `committed`.
  */
 function coverSpot({ self, allies, foes, foeCentroid, cursor }: RuleContext): Spot | undefined {
   if (foeCentroid === undefined || foes.length === 0) {
@@ -229,8 +239,16 @@ function coverSpot({ self, allies, foes, foeCentroid, cursor }: RuleContext): Sp
       break;
     }
   }
-  cursor.coverSpot = keptSpot(cursor.coverSpot, point, foes);
-  return { point: cursor.coverSpot, watched: ward.position };
+  return { point, watched: ward.position };
+}
+
+/**
+ * A healer's spot once `position` chose it, cover or threat move (#2615):
+ * the one it committed to, kept by `keptSpot` against `fresh`.
+ */
+function committed({ cursor, foes }: RuleContext, fresh: Vec2): Vec2 {
+  cursor.coverSpot = keptSpot(cursor.coverSpot, fresh, foes);
+  return cursor.coverSpot;
 }
 
 /**
