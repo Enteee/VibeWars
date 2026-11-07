@@ -98,6 +98,14 @@ export function saveStarterCharacterId(id: string): void {
   }
 }
 
+export function clearStarterCharacterId(): void {
+  try {
+    localStorage.removeItem(STARTER_STORAGE_KEY);
+  } catch {
+    // Still set, the stale id matches no row: as before #2717, not a crash.
+  }
+}
+
 /** "Elementalist / Monk · 5/8 skills". */
 export function rosterSubtitle(character: StoredCharacter): string {
   const professions = professionLabel(character.primaryProfession, character.secondaryProfession);

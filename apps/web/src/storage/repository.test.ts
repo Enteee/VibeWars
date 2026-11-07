@@ -110,9 +110,11 @@ describe("CharacterRepository", () => {
     await store.put("characters", "char-1", character());
     const repo = new CharacterRepository(store);
 
-    const { characters, problems } = await repo.list();
+    const { characters, problems, discarded } = await repo.list();
     expect(characters.map((c) => c.id)).toEqual(["char-1"]);
     expect(problems).toEqual([discardedCharactersNotice(1)]);
+    // Their ids, so the starter's key can let go of one (#2717).
+    expect(discarded).toEqual(["stale"]);
   });
 
   it("does not bring a discarded record back on the next list", async () => {
@@ -124,7 +126,7 @@ describe("CharacterRepository", () => {
 
     await repo.list();
     expect(await store.get("characters", "stale")).toBeUndefined();
-    expect(await repo.list()).toEqual({ characters: [], problems: [] });
+    expect(await repo.list()).toEqual({ characters: [], problems: [], discarded: [] });
   });
 
   it("reports several discards in one line, not one line each", async () => {
@@ -216,9 +218,10 @@ describe("TeamRepository", () => {
     await store.put("teams", "team-1", team());
     const repo = new TeamRepository(store);
 
-    const { teams, problems } = await repo.list();
+    const { teams, problems, discarded } = await repo.list();
     expect(teams.map((t) => t.id)).toEqual(["team-1"]);
     expect(problems).toEqual([discardedTeamsNotice(1)]);
+    expect(discarded).toEqual(["stale"]);
     expect(await store.get("teams", "stale")).toBeUndefined();
   });
 
