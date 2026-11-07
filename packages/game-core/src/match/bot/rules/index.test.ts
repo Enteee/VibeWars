@@ -25,6 +25,7 @@ describe("BOT_RULES (#2042)", () => {
       "interrupt",
       "heal",
       "way-out",
+      "carry-relic",
       "flee",
       "dodge",
       "ward-touch",
@@ -40,11 +41,13 @@ describe("BOT_RULES (#2042)", () => {
       "rider",
       "rest",
       "setup",
+      "run-relic",
       "boost",
       "position",
       "shrines",
       "fight",
       "mimic-elite",
+      "fetch-relic",
       "close-in",
     ]);
   });

@@ -177,7 +177,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
 });
 
 describe("the arena set (#444)", () => {
-  it("is the two mode arenas of #2550, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), The Courtyard (#2552), Scarred Earth (#2551) and the medium arenas Sandstone Steps and Frozen Crossing (#2604)", () => {
+  it("is the two mode arenas of #2550, three of #444 (#2547 took the rest), the guild hall (#1222), Broken Tower (#2551), The Courtyard (#2552), Scarred Earth (#2551) and the medium arenas Sandstone Steps and Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605)", () => {
     expect(MAPS.map((map) => map.id).sort()).toEqual(
       [
         "ember-pits",
@@ -189,6 +189,8 @@ describe("the arena set (#444)", () => {
         "scarred-earth",
         "sandstone-steps",
         "frozen-crossing",
+        "ashen-courtyard",
+        "moss-vale",
         ...NEW_ARENAS,
       ].sort(),
     );
@@ -634,7 +636,9 @@ const ROUTE_HALF_GAP = 100;
 describe.each([
   ["sandstone-steps", 1],
   ["frozen-crossing", 2],
-] as const)("the medium arena %s (#2604)", (id, size) => {
+  ["ashen-courtyard", 4],
+  ["moss-vale", 8],
+] as const)("the medium arena %s (#2604, #2605)", (id, size) => {
   const map = MAPS.find((each) => each.id === id);
   if (map === undefined) throw new Error(`no ${id}`);
   const bounds = { width: map.width, height: map.height };

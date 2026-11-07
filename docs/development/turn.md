@@ -124,7 +124,7 @@ This gives Alice a secret of her own (coturn's REST scheme, #2240) and prints
 her invite link, which carries it. Send her the link. When she opens it, the
 game asks whether to use your relay. If she says Use, the game mints a fresh
 login from her secret for every join, and by default her lobbies offer your
-relay to their players too, through logins that expire after 4 h (ADR-0049).
+relay to their players too, through logins that expire after 1 h (ADR-0049).
 She can untick that in Options.
 
 To use your own relay, add yourself (`turn-user add me`) and open the link.
