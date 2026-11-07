@@ -611,15 +611,31 @@ let
         ${tmux} set-option -t "$SESSION" mouse on
         ${tmux} set-option -t "$SESSION" status-interval 5
         ${tmux} set-option -t "$SESSION" status-style "bg=colour236,fg=colour252"
-        ${tmux} set-option -t "$SESSION" window-status-style "bg=colour236,fg=colour250"
-        ${tmux} set-option -t "$SESSION" window-status-bell-style "bg=colour160,fg=colour231,bold"
-        ${tmux} set-option -t "$SESSION" window-status-activity-style "bg=colour236,fg=colour214,underscore"
         ${tmux} set-option -t "$SESSION" message-style "bg=colour214,fg=colour16"
         ${tmux} set-option -t "$SESSION" message-command-style "bg=colour214,fg=colour16"
-        ${tmux} set-option -t "$SESSION" mode-style "bg=colour214,fg=colour16"
-        ${tmux} set-option -t "$SESSION" window-status-format " #I:#W "
-        ${tmux} set-option -t "$SESSION" window-status-current-format " #I:#W "
-        ${tmux} set-option -t "$SESSION" window-status-current-style "bg=colour214,fg=colour16,bold"
+        # These are window options: set on the session they reach only its
+        # current window. A hook styles every window made later (employees,
+        # the hub window); the loop styles those already open. Not -g: that
+        # would restyle the operator's own sessions on the same tmux server.
+        winopts=(
+          window-status-style "bg=colour236,fg=colour250"
+          window-status-bell-style "bg=colour160,fg=colour231,bold"
+          window-status-activity-style "bg=colour236,fg=colour214,underscore"
+          window-status-format " #I:#W "
+          window-status-current-format " #I:#W "
+          window-status-current-style "bg=colour214,fg=colour16,bold"
+          mode-style "bg=colour214,fg=colour16"
+        )
+        hook=""
+        for ((i = 0; i < ''${#winopts[@]}; i += 2)); do
+          hook+="set-option -w ''${winopts[i]} \"''${winopts[i + 1]}\"; "
+        done
+        ${tmux} set-hook -t "$SESSION" after-new-window "$hook"
+        for win in $(${tmux} list-windows -t "=$SESSION" -F '#{window_id}'); do
+          for ((i = 0; i < ''${#winopts[@]}; i += 2)); do
+            ${tmux} set-option -w -t "$win" "''${winopts[i]}" "''${winopts[i + 1]}"
+          done
+        done
         ${tmux} set-option -t "$SESSION" status-left "#[bold] VibeWars LLC #[default]"
         ${tmux} set-option -t "$SESSION" status-right \
           "#[range=user|detach] detach #[norange]|#[fg=colour203]#[range=user|stop] stop #[norange]#[fg=default] "
