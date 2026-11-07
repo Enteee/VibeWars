@@ -69,7 +69,11 @@ function hubWindow(command, windows, options = {}) {
 
 describe("hub-window check", () => {
   it("finds the hub window at 99", () => {
-    expect(hubWindow("check", "0 dashboard\n1 manager\n99 hub\n").code).toBe(0);
+    expect(hubWindow("check", "0 dashboard\n1 manager\n99 hub\n100 CI-RUNNERS\n").code).toBe(0);
+  });
+
+  it("does not take the hub window alone, without the runners' window", () => {
+    expect(hubWindow("check", "0 dashboard\n99 hub\n").code).toBe(1);
   });
 
   it("does not take a window at 99 that lost its name for the hub window", () => {
@@ -102,6 +106,15 @@ describe("hub-window open", () => {
     expect(splits[1]).toContain("-e VIBEWARS_CREDENTIALS=/creds");
     expect(open).not.toContain("VIBEWARS_CREDENTIALS");
     expect(splits[0]).not.toContain("VIBEWARS_CREDENTIALS");
+  });
+
+  it("opens the CI-RUNNERS window at 100 with the runner-panes daemon (#2729)", () => {
+    const opens = hubWindow("open", "").calls.filter((c) => c.startsWith("new-window"));
+
+    expect(opens).toHaveLength(2);
+    expect(opens[1]).toMatch(/ -t =hub-test:100 -n CI-RUNNERS /);
+    expect(opens[1]).toMatch(/run-forever\.mjs runner-panes -- .*\/runner-panes\.mjs$/);
+    expect(opens[1]).not.toContain("VIBEWARS_CREDENTIALS");
   });
 
   it("pins the window's name, so check can find it", () => {

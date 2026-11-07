@@ -26,6 +26,9 @@ import { uniquePath } from "./host-path.mjs";
 
 export const HUB_INDEX = "99";
 export const HUB_NAME = "hub";
+/** The runners' window (#2729), just after the hub window: one pane per runner. */
+export const RUNNERS_INDEX = "100";
+export const RUNNERS_NAME = "CI-RUNNERS";
 
 /**
  * @param {string} name
@@ -56,8 +59,8 @@ function run(tmux, args) {
 }
 
 /**
- * Is window 99 the hub window? Whatever else sits there, or a hub window
- * that lost its name, is not.
+ * Are windows 99 and 100 the hub window and the runners' window? Whatever
+ * else sits there, or one that lost its name, is not.
  *
  * @param {string} tmux
  * @param {string} session
@@ -71,7 +74,10 @@ export function hubWindowUp(tmux, session) {
     "-F",
     "#{window_index} #{window_name}",
   ]);
-  return windows.stdout.split("\n").includes(`${HUB_INDEX} ${HUB_NAME}`);
+  const names = windows.stdout.split("\n");
+  return (
+    names.includes(`${HUB_INDEX} ${HUB_NAME}`) && names.includes(`${RUNNERS_INDEX} ${RUNNERS_NAME}`)
+  );
 }
 
 /**
@@ -148,6 +154,30 @@ export function openHubWindow(tmux, session) {
   run(tmux, ["select-pane", "-t", hubdPane, "-T", "HUBD"]);
   run(tmux, ["select-pane", "-t", supervisor.stdout.trim(), "-T", "SUPERVISOR"]);
   run(tmux, ["select-pane", "-t", runners.stdout.trim(), "-T", "RUNNERS"]);
+  // The runners' window (#2729): its first pane is the daemon that makes the
+  // rest. Replaced like the hub window, if something holds its index.
+  const panes = run(tmux, [
+    "new-window",
+    ...["-d", "-k", "-P", "-F", "#{pane_id}"],
+    ...["-t", `=${session}:${RUNNERS_INDEX}`, "-n", RUNNERS_NAME, "-c", root],
+    ...env,
+    daemon("runner-panes"),
+  ]);
+  if (panes.code !== 0) {
+    throw new Error(`could not open the runners window at ${session}:${RUNNERS_INDEX}`);
+  }
+  run(tmux, ["select-pane", "-t", panes.stdout.trim(), "-T", "RUNNER-PANES"]);
+  for (const [option, value] of [
+    ["automatic-rename", "off"],
+    ["allow-rename", "off"],
+    ["pane-border-status", "top"],
+    ["pane-border-format", " #[bold]#{pane_title}#[nobold] "],
+    ["pane-border-lines", "heavy"],
+    ["pane-border-style", "fg=colour244"],
+    ["pane-active-border-style", "fg=colour214"],
+  ]) {
+    run(tmux, ["set-option", "-w", "-t", panes.stdout.trim(), option, value]);
+  }
   // The name is how `check` finds it: nothing may rename it.
   for (const [option, value] of [
     ["automatic-rename", "off"],

@@ -304,7 +304,7 @@ let
             else
               echo "session $SESSION is not running"
             fi
-            for d in hubd supervisor runner-supervisor; do
+            for d in hubd supervisor runner-supervisor runner-panes; do
               if pgrep -f "run-forever.mjs $d" >/dev/null 2>&1; then echo "  $d: running (restarted on exit)"; else echo "  $d: stopped"; fi
             done
             # Running, and its heartbeat fresh: a hung sidecar is stopped too (#583).
