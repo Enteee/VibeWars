@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { t } from "../i18n/index.js";
 import { arenaIds } from "../net/maps.js";
 import type { MatchRecordWatchHandlers } from "../net/transport/match-records.js";
+import { sessionFilter } from "./matches-filter.js";
 import { MATCHES_KEPT, relativeTime, renderMatchesScreen } from "./matches-screen.js";
 
 const NOW = 1_800_000_000_000;
@@ -202,6 +203,8 @@ describe("the Matches page (#2532)", () => {
     on = undefined;
     closed = 0;
     cloned = [];
+    sessionFilter.kinds.clear();
+    sessionFilter.sizes.clear();
     vi.stubGlobal("localStorage", { getItem: () => null });
     vi.stubGlobal("window", { addEventListener: () => undefined });
     vi.stubGlobal("document", {
@@ -456,6 +459,110 @@ describe("the Matches page (#2532)", () => {
     expect(clone?.title).toBe(t("matches.teamUnreadable"));
     clone?.click();
     expect(cloned).toEqual([]);
+  });
+
+  /** The chip whose label is `label`, in the group named `group`. */
+  const chip = (root: FakeElement, group: string, label: string): FakeElement => {
+    const found = root
+      .all("match-chip-group")
+      .find(
+        (each) =>
+          each.attributes.get("aria-label") ===
+          t(group === "kind" ? "matches.filterKind" : "matches.filterSize"),
+      )
+      ?.all("match-chip")
+      .find((each) => each.one("match-chip-label").textContent === label);
+    if (found === undefined) {
+      throw new Error(`no chip ${label}`);
+    }
+    return found;
+  };
+
+  it("shows a chip for each kind and size, every kind's with its icon (#2741)", () => {
+    const { root } = render();
+    const [kinds, sizes] = root.all("match-chip-group");
+    expect(kinds?.all("match-chip").map((each) => each.attributes.get("data-kind"))).toEqual([
+      "random-arena",
+      "team-arena",
+      "heroes-ascent",
+      "gvg",
+      "hosted-game",
+    ]);
+    expect(kinds?.all("match-kind-icon")).toHaveLength(5);
+    expect(sizes?.all("match-chip-label").map((each) => each.textContent)).toEqual([
+      "1v1",
+      "2v2",
+      "4v4",
+      "8v8",
+    ]);
+    for (const each of root.all("match-chip")) {
+      expect(each.attributes.get("aria-pressed")).toBe("false");
+    }
+  });
+
+  it("starts each row with its kind's icon, coloured by its kind (#2741)", () => {
+    const { root } = render();
+    hear("a");
+    hear("b", { ...PAIRS, endedAt: RECORD.endedAt - 60 });
+    const rows = root.all("match-row");
+    expect(rows.map((row) => row.attributes.get("data-kind"))).toEqual([
+      "random-arena",
+      "team-arena",
+    ]);
+    expect(rows[0]?.one("match-row-head").children[0]?.className).toBe("match-kind-icon");
+  });
+
+  it("filters by kind AND size, toggling aria-pressed, and says when nothing fits (#2741)", () => {
+    const { root } = render();
+    hear("a");
+    hear("b", { ...PAIRS, endedAt: RECORD.endedAt - 60 });
+    const team = chip(root, "kind", t("matches.kindTeam"));
+    team.click();
+    expect(team.attributes.get("aria-pressed")).toBe("true");
+    expect(root.all("match-row").map((row) => row.attributes.get("data-kind"))).toEqual([
+      "team-arena",
+    ]);
+
+    chip(root, "size", "1v1").click();
+    expect(root.all("match-row")).toEqual([]);
+    const note = root.one("matches-note");
+    expect(note.hidden).toBe(false);
+    expect(note.textContent).toBe(t("matches.noneFit"));
+
+    team.click();
+    expect(team.attributes.get("aria-pressed")).toBe("false");
+    expect(root.all("match-row").map((row) => row.attributes.get("data-kind"))).toEqual([
+      "random-arena",
+    ]);
+    expect(note.hidden).toBe(true);
+  });
+
+  it("filters a record heard live, and closes an open row it hides (#2741)", () => {
+    const { root } = render();
+    hear("a");
+    root.one("match-row-head").click();
+    expect(root.all("match-detail")).toHaveLength(1);
+    const gvg = chip(root, "kind", t("matches.kindGvg"));
+    gvg.click();
+    expect(root.all("match-row")).toEqual([]);
+    hear("b", { ...PAIRS, endedAt: RECORD.endedAt - 60 });
+    expect(root.all("match-row")).toEqual([]);
+    gvg.click();
+    expect(root.all("match-row")).toHaveLength(2);
+    expect(root.all("match-detail")).toHaveLength(0);
+  });
+
+  it("keeps the filter when the page is left and opened again (#2741)", () => {
+    const first = render();
+    chip(first.root, "size", "2v2").click();
+    first.close();
+    const { root } = render();
+    expect(chip(root, "size", "2v2").attributes.get("aria-pressed")).toBe("true");
+    hear("a");
+    hear("b", { ...PAIRS, endedAt: RECORD.endedAt - 60 });
+    expect(root.all("match-row").map((row) => row.attributes.get("data-kind"))).toEqual([
+      "team-arena",
+    ]);
   });
 
   it("stops listening when the page closes", () => {
