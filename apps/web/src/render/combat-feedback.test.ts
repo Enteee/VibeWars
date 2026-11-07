@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
 import {
   floatingTextY,
   placeFloatingText,
@@ -114,12 +115,12 @@ describe("showCombatFeedback", () => {
   });
 
   it("floats a blinded attack's miss over its target", () => {
-    expect(floated([{ kind: "attack-missed", targetId: "them" }])).toEqual(["miss"]);
+    expect(floated([{ kind: "attack-missed", targetId: "them" }])).toEqual([t("combat.floatMiss")]);
   });
 
   it("floats 'Knocked down' once over whoever went down (#545)", () => {
     expect(floated([{ kind: "knocked-down", targetId: "them", durationSeconds: 4 }])).toEqual([
-      "Knocked down",
+      t("combat.floatKnockedDown"),
     ]);
   });
 
@@ -129,7 +130,7 @@ describe("showCombatFeedback", () => {
         { kind: "attack-dodged", targetId: "them" },
         { kind: "attack-obstructed", targetId: "them" },
       ]),
-    ).toEqual(["dodge", "obstructed"]);
+    ).toEqual([t("combat.floatDodge"), t("combat.floatObstructed")]);
   });
 
   it("weighs weapon swings lighter than skills, so they never drown a skill number", () => {
@@ -220,7 +221,9 @@ describe("showCombatFeedback", () => {
     ];
     expect(floated(tick, "degeneration")).toEqual([]);
     // Dying of it still says so.
-    expect(floated([{ kind: "death", targetId: "them" }], "degeneration")).toEqual(["defeated"]);
+    expect(floated([{ kind: "death", targetId: "them" }], "degeneration")).toEqual([
+      t("combat.floatDefeated"),
+    ]);
     // A real hit still floats.
     expect(floated([{ kind: "damage", targetId: "them", amount: 91, critical: false }])).toEqual([
       "−91",

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { paintRecharge, READY_FLASH_MS, rechargeView } from "./recharge-overlay.js";
 
 describe("rechargeView", () => {
@@ -16,7 +17,7 @@ describe("rechargeView", () => {
     expect(rechargeView({ remaining: 7.4, total: 10, spent: false }, "Fireball", false)).toEqual({
       fraction: 0.74,
       seconds: "7",
-      label: "Fireball, recharging, 7 seconds",
+      label: t("recharge.recharging", { skill: "Fireball", count: 7 }),
     });
   });
 
@@ -26,7 +27,7 @@ describe("rechargeView", () => {
     ).toBe("1");
     const last = rechargeView({ remaining: 0.4, total: 10, spent: false }, "Fireball", false);
     expect(last?.seconds).toBe("");
-    expect(last?.label).toBe("Fireball, recharging, 1 second");
+    expect(last?.label).toBe(t("recharge.recharging", { skill: "Fireball", count: 1 }));
   });
 
   it("snaps the wipe up to the next eighth with reduced motion", () => {
@@ -47,14 +48,14 @@ describe("rechargeView", () => {
     ).toEqual({
       fraction: 1,
       seconds: "",
-      label: "Resurrection Signet, spent until a morale boost",
+      label: t("recharge.spent", { skill: "Resurrection Signet" }),
     });
   });
 
   it("counts a disable down on a spent skill before it shows it spent (#474)", () => {
     expect(
       rechargeView({ remaining: 3.5, total: 4, spent: true }, "Resurrection Signet", false)?.label,
-    ).toBe("Resurrection Signet, recharging, 3 seconds");
+    ).toBe(t("recharge.recharging", { skill: "Resurrection Signet", count: 3 }));
   });
 
   it("never shades more than the whole slot", () => {

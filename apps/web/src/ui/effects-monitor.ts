@@ -7,6 +7,7 @@ import {
 } from "@vibewars/game-core";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import { STATUS_ICON } from "../render/status-icons.js";
 import { setHidden } from "./dom-write.js";
 import { placeTip, type SkillTooltipPlacement } from "./skill-tooltip.js";
@@ -21,21 +22,21 @@ import { SLOT_TOOLTIP_DELAY_MS } from "./slot-tooltip.js";
  * GW1's upkeep monitor; a double-click ends one you maintain.
  */
 
-/** What a player reads a category as, in the hover. */
-export const STATUS_CATEGORY_NAME: Readonly<Record<StatusCategory, string>> = {
-  condition: "Condition",
-  hex: "Hex",
-  enchantment: "Enchantment",
-  stance: "Stance",
-  preparation: "Preparation",
-  glyph: "Glyph",
-  shout: "Shout",
-  chant: "Chant",
-  echo: "Echo",
-  "weapon-spell": "Weapon Spell",
-  item: "Item Spell",
-  form: "Form",
-  "skill-effect": "Effect",
+/** What a player reads a category as, in the hover: its key, worded at render. */
+export const STATUS_CATEGORY_NAME: Readonly<Record<StatusCategory, MessageKey>> = {
+  condition: "effects.categoryCondition",
+  hex: "effects.categoryHex",
+  enchantment: "effects.categoryEnchantment",
+  stance: "effects.categoryStance",
+  preparation: "effects.categoryPreparation",
+  glyph: "effects.categoryGlyph",
+  shout: "effects.categoryShout",
+  chant: "effects.categoryChant",
+  echo: "effects.categoryEcho",
+  "weapon-spell": "effects.categoryWeaponSpell",
+  item: "effects.categoryItemSpell",
+  form: "effects.categoryForm",
+  "skill-effect": "effects.categoryEffect",
 };
 
 export interface EffectRow {
@@ -91,7 +92,7 @@ export function effectRows(
           : undefined,
       secondsLeft: timed === undefined ? undefined : Math.max(0, Math.ceil(timed.left)),
       yours: mine && definition.category === "enchantment",
-      casterName: mine ? "you" : (names.get(status.casterId) ?? "someone"),
+      casterName: mine ? t("effects.you") : (names.get(status.casterId) ?? t("effects.someone")),
       endable: mine && timed === undefined && MAINTAINED_STATUSES.has(status.id),
     };
   });
@@ -125,7 +126,7 @@ export function maintainedRows(players: readonly PlayerSnapshot[], selfId: strin
               fraction: undefined,
               secondsLeft: undefined,
               yours: definition.category === "enchantment",
-              casterName: "you",
+              casterName: t("effects.you"),
               endable: true,
             };
           }),
@@ -155,16 +156,19 @@ interface Icon {
 function renderTip(node: HTMLElement, row: EffectRow, canEnd: boolean): void {
   const title = document.createElement("div");
   title.className = "tip-title";
-  title.textContent = row.bearerName === undefined ? row.name : `${row.name} on ${row.bearerName}`;
+  title.textContent =
+    row.bearerName === undefined
+      ? row.name
+      : t("effects.onBearer", { status: row.name, bearer: row.bearerName });
   const type = document.createElement("div");
   type.className = "tip-type";
-  type.textContent = STATUS_CATEGORY_NAME[row.category];
+  type.textContent = t(STATUS_CATEGORY_NAME[row.category]);
   const effect = document.createElement("div");
   effect.className = "tip-effect";
   effect.textContent = describeStatus(row.id);
   const from = document.createElement("div");
   from.className = "tip-effect";
-  from.textContent = `from ${row.casterName}`;
+  from.textContent = t("effects.from", { caster: row.casterName });
   node.replaceChildren(title, type, effect, from);
   if (row.secondsLeft === undefined || row.fraction !== undefined) {
     const left = document.createElement("div");
@@ -175,20 +179,20 @@ function renderTip(node: HTMLElement, row: EffectRow, canEnd: boolean): void {
     left.textContent =
       row.secondsLeft === undefined
         ? row.category !== "enchantment"
-          ? "while in its range"
+          ? t("effects.inRange")
           : !MAINTAINED_STATUSES.has(row.id)
-            ? "until it ends"
+            ? t("effects.untilEnds")
             : row.endable
-              ? "maintained, −1 energy"
-              : "maintained"
-        : `${String(row.secondsLeft)} s left`;
+              ? t("effects.maintainedUpkeep")
+              : t("effects.maintained")
+        : t("effects.secondsLeft", { count: row.secondsLeft });
     node.appendChild(left);
   }
   // Nothing else says a double-click ends it (#907).
   if (row.endable && canEnd) {
     const hint = document.createElement("div");
     hint.className = "tip-effect";
-    hint.textContent = "double-click to end";
+    hint.textContent = t("effects.endHint");
     node.appendChild(hint);
   }
 }

@@ -12,6 +12,7 @@ import { NO_GUILD, type MatchSnapshot, type SkillSlot } from "@vibewars/game-ses
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { setGlobalMute } from "../audio/global-mute.js";
 import { soundPlayer } from "../audio/sound-player.js";
+import { t } from "../i18n/index.js";
 import { attackKeyIntents, escapeIntent } from "../input/attack-key.js";
 import { createDoubleClick } from "../input/double-click.js";
 import {
@@ -215,12 +216,12 @@ export function createTrainingPanel(): TrainingPanel {
   /* --- DOM ------------------------------------------------------------- */
 
   const root = h("section", "training");
-  root.setAttribute("aria-label", "training ground");
+  root.setAttribute("aria-label", t("training.label"));
 
   const controls = h("div", "training-controls");
   const picker = document.createElement("select");
   picker.className = "training-scenario";
-  picker.setAttribute("aria-label", "scenario");
+  picker.setAttribute("aria-label", t("training.scenario"));
   for (const scenario of TRAINING_SCENARIOS) {
     const option = document.createElement("option");
     option.value = scenario.id;
@@ -230,7 +231,7 @@ export function createTrainingPanel(): TrainingPanel {
   const resetButton = document.createElement("button");
   resetButton.type = "button";
   resetButton.className = "training-reset";
-  resetButton.textContent = "reset";
+  resetButton.textContent = t("training.reset");
   // Fills the window, so the arena plays like a match (Q60, #495).
   const expandButton = document.createElement("button");
   expandButton.type = "button";
@@ -262,7 +263,7 @@ export function createTrainingPanel(): TrainingPanel {
   );
   stage.tabIndex = 0;
   stage.setAttribute("role", "application");
-  stage.setAttribute("aria-label", "training arena");
+  stage.setAttribute("aria-label", t("training.arena"));
   const overlay = h("div", "training-overlay");
   overlay.hidden = true;
   stage.appendChild(overlay);
@@ -294,7 +295,7 @@ export function createTrainingPanel(): TrainingPanel {
   const newest = document.createElement("button");
   newest.type = "button";
   newest.className = "training-log-newest";
-  newest.textContent = "↓ newest";
+  newest.textContent = t("training.newest");
   newest.hidden = true;
   log.append(logRowsEl, newest);
 
@@ -350,7 +351,7 @@ export function createTrainingPanel(): TrainingPanel {
       : NO_PROFESSIONS;
   const nameOf = (id: string): string =>
     id === SELF_ID
-      ? displayName.trim() || "You"
+      ? displayName.trim() || t("training.you")
       : logActorName(id, session?.names, latestMatch?.players);
   // A creature in the latest snapshot (#1052): it swings under its own name (#1144).
   const isCreature = (id: string): boolean =>
@@ -399,7 +400,7 @@ export function createTrainingPanel(): TrainingPanel {
     meter.replaceChildren(
       ...meterRows(totals).flatMap((row) => {
         const value = h("dd", "training-meter-value", row.value);
-        value.dataset.meter = row.label;
+        value.dataset.meter = row.id;
         return [h("dt", "training-meter-label", row.label), value];
       }),
     );
@@ -570,7 +571,7 @@ export function createTrainingPanel(): TrainingPanel {
     renderOvercastBand(energyOvercast, self.overcast, self.maxEnergy);
     renderPips(health.pips, self.healthPips);
     renderPips(energy.pips, self.energyPips);
-    setText(attacking, self.attackTargetSessionId === undefined ? "" : "attacking");
+    setText(attacking, self.attackTargetSessionId === undefined ? "" : t("training.attacking"));
     renderWeaponSets(weaponSets, session?.connection.weaponSets);
     const slots = session?.connection.skillBar ?? [];
     if (changedSlots(paintedSkills, slots).length > 0) {
@@ -725,7 +726,7 @@ export function createTrainingPanel(): TrainingPanel {
     paintSkills(session.connection.skillBar);
     paintOverlay(arming.problem);
     // A meter averaging two builds is a lie; the log keeps the history.
-    restartMeter("re-armed");
+    restartMeter(t("training.rearmed"));
   };
 
   /* --- input ------------------------------------------------------------- */
@@ -824,7 +825,7 @@ export function createTrainingPanel(): TrainingPanel {
         // No HUD here, so the message line says what the mute key did.
         const muted = !soundPlayer().muted;
         setGlobalMute(muted);
-        flash(muted ? "Sound off." : "Sound on.");
+        flash(t(muted ? "training.soundOff" : "training.soundOn"));
       }
       return;
     }
@@ -849,9 +850,11 @@ export function createTrainingPanel(): TrainingPanel {
   };
 
   const paintExpandButton = (): void => {
-    const verb = expanded ? "collapse" : "expand";
-    expandButton.setAttribute("aria-label", `${verb} training ground`);
-    expandButton.title = expanded ? "Collapse" : "Expand";
+    expandButton.setAttribute(
+      "aria-label",
+      t(expanded ? "training.collapseLabel" : "training.expandLabel"),
+    );
+    expandButton.title = t(expanded ? "training.collapse" : "training.expand");
     expandButton.setAttribute("aria-pressed", String(expanded));
     expandButton.innerHTML = expanded ? COLLAPSE_ICON : EXPAND_ICON;
   };
@@ -940,7 +943,7 @@ export function createTrainingPanel(): TrainingPanel {
     for (const participant of [...simulation.participants()]) {
       simulation.resetParticipant(participant.id);
     }
-    restartMeter("reset");
+    restartMeter(t("training.resetDivider"));
   };
   resetButton.addEventListener("click", onReset);
 

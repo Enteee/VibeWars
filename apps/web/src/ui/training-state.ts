@@ -1,5 +1,6 @@
 import type { TrainingScenario } from "@vibewars/game-core";
 
+import { t } from "../i18n/index.js";
 import type { EscapeIntent } from "../input/attack-key.js";
 import type { KeyLabeller } from "../input/key-labels.js";
 import { actionLabel, codeLabel, type KeyAction, type Keymap } from "../input/keymap.js";
@@ -43,17 +44,19 @@ export function armedHint(keymap: Keymap, label: KeyLabeller = codeLabel): strin
     (action) => keymap[action][0],
   );
   const move = moves.every((code, index) => code === ARROW_CODES[index])
-    ? "arrows"
-    : moves.map((code) => (code === undefined ? "" : label(code))).join("");
+    ? t("training.hintMoveArrows")
+    : t("training.hintMove", {
+        keys: moves.map((code) => (code === undefined ? "" : label(code))).join(""),
+      });
   const first = actionLabel(keymap, "skill-1", label);
   const last = actionLabel(keymap, "skill-8", label);
   const key = (action: KeyAction): string => actionLabel(keymap, action, label).toLowerCase();
   return [
-    `${move} move`,
-    `${first}–${last} cast`,
-    `${key("target-next")}/right-click to target`,
-    `${key("attack")}/double right-click attack`,
-    "esc to release",
+    move,
+    t("training.hintCast", { first, last }),
+    t("training.hintTarget", { key: key("target-next") }),
+    t("training.hintAttack", { key: key("attack") }),
+    t("training.hintRelease"),
   ].join(" · ");
 }
 
@@ -102,7 +105,7 @@ export function escapeStep(intent: EscapeIntent | undefined, expanded: boolean):
  * and plays, since walking, targeting and the weapon need no skill (#360).
  */
 export function overlayMessage(problem: string | undefined): string | undefined {
-  return problem === undefined ? undefined : `This build cannot be tested: ${problem}`;
+  return problem === undefined ? undefined : t("training.cannotTest", { problem });
 }
 
 export const SCENARIO_STORAGE_KEY = "vibewars.training.scenario";

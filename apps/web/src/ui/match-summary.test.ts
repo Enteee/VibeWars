@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { MatchSummaryRow } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
 import { summaryTables } from "./match-summary.js";
 
 function row(id: string, team: number, values: Partial<MatchSummaryRow> = {}): MatchSummaryRow {
@@ -32,9 +33,9 @@ const SUMMARY = [
 describe("summaryTables (#1057)", () => {
   it("puts your team first, in the host's order, and flags your row", () => {
     const [ours, theirs] = summaryTables(SUMMARY, "bob", 1, NO_BOTS);
-    expect(ours?.caption).toBe("Your team");
+    expect(ours?.caption).toBe(t("summary.yourTeam"));
     expect(ours?.lines.map((line) => line.row.id)).toEqual(["bob", "dan"]);
-    expect(theirs?.caption).toBe("Their team");
+    expect(theirs?.caption).toBe(t("summary.theirTeam"));
     expect(theirs?.lines.map((line) => line.row.id)).toEqual(["ann", "cat"]);
     expect(ours?.lines.map((line) => line.self)).toEqual([true, false]);
     expect(theirs?.lines.some((line) => line.self)).toBe(false);
@@ -58,7 +59,7 @@ describe("summaryTables (#1057)", () => {
 
   it("shows a spectator team 1 first, with no row of its own", () => {
     const [first, second] = summaryTables(SUMMARY, "spectator-1", undefined, NO_BOTS);
-    expect(first?.caption).toBe("Team 1");
+    expect(first?.caption).toBe(t("summary.team", { team: 1 }));
     expect(first?.lines.map((line) => line.row.id)).toEqual(["ann", "cat"]);
     expect(second?.caption).toBe("Team 2");
     expect([first, second].flatMap((table) => table?.lines ?? []).some((line) => line.self)).toBe(

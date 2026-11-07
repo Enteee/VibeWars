@@ -1,6 +1,8 @@
 import { STATUS_DEFINITIONS } from "@vibewars/game-core";
 import type { SkillSlot } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
+
 /**
  * How long an echo's copy has left in its slot (#1154, #469): a thin
  * strip along the slot's top edge, in the `enchantment` colour, draining
@@ -43,7 +45,7 @@ export function echoStripFraction(copyEndsAt: number, now: number, reducedMotion
 export function echoTooltipLine(slot: SkillSlot, now: number): string | undefined {
   return slot.copyEndsAt === null
     ? undefined
-    : `Echoed: ${String(echoSecondsLeft(slot.copyEndsAt, now))} s left`;
+    : t("echo.secondsLeft", { count: echoSecondsLeft(slot.copyEndsAt, now) });
 }
 
 /** Set `button`'s strip from the render loop, writing only what changed. */

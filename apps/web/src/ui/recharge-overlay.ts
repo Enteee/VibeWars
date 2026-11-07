@@ -1,5 +1,7 @@
 import type { SlotRecharge } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
+
 /**
  * The recharge clock-wipe on a skill slot (#152), shared by the match HUD
  * and the Training Ground so the two cannot drift apart. Both read only
@@ -34,7 +36,7 @@ export function rechargeView(
 ): RechargeView | undefined {
   if (recharge.remaining <= 0 || recharge.total <= 0) {
     return recharge.spent
-      ? { fraction: 1, seconds: "", label: `${skillName}, spent until a morale boost` }
+      ? { fraction: 1, seconds: "", label: t("recharge.spent", { skill: skillName }) }
       : undefined;
   }
   const exact = Math.min(1, recharge.remaining / recharge.total);
@@ -46,7 +48,7 @@ export function rechargeView(
   return {
     fraction,
     seconds: whole >= 1 ? String(whole) : "",
-    label: `${skillName}, recharging, ${String(spoken)} second${spoken === 1 ? "" : "s"}`,
+    label: t("recharge.recharging", { skill: skillName, count: spoken }),
   };
 }
 

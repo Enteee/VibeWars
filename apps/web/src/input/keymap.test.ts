@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { t } from "../i18n/index.js";
 import {
   DEFAULT_KEYMAP,
   KEYMAP_PRESETS,
@@ -186,9 +187,9 @@ describe("key labels", () => {
     expect(codeLabel("Digit1")).toBe("1");
     expect(codeLabel("ArrowUp")).toBe("↑");
     expect(codeLabel("ArrowLeft")).toBe("←");
-    expect(codeLabel("Space")).toBe("Space");
-    expect(codeLabel("ShiftLeft")).toBe("Shift");
-    expect(codeLabel("Tab")).toBe("Tab");
+    expect(codeLabel("Space")).toBe(t("keys.space"));
+    expect(codeLabel("ShiftLeft")).toBe(t("keys.shift"));
+    expect(codeLabel("Tab")).toBe(t("keys.tab"));
   });
 
   it("labels an action by its first key, and an unbound one as nothing", () => {
@@ -206,7 +207,7 @@ describe("key labels", () => {
       ]),
     );
     expect(actionLabel(DEFAULT_KEYMAP, "skill-1", azerty)).toBe("A");
-    expect(azerty("Space")).toBe("Space");
+    expect(azerty("Space")).toBe(t("keys.space"));
     expect(azerty("ArrowUp")).toBe("↑");
   });
 

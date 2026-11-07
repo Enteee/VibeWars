@@ -1,5 +1,7 @@
 import { RECONNECT_WINDOW_SECONDS } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
+
 /**
  * What a guest sees while its match connection is `reconnecting` (#602):
  * the arena dimmed, and "Reconnecting… 27 s" counting down the host's
@@ -39,19 +41,19 @@ export function mountReconnectOverlay(parent: HTMLElement): ReconnectOverlay {
   box.setAttribute("aria-live", "polite");
   const title = document.createElement("div");
   title.className = "reconnect-overlay-title";
-  title.textContent = "Reconnecting…";
+  title.textContent = t("reconnect.title");
   const seconds = document.createElement("span");
   seconds.setAttribute("aria-hidden", "true");
   title.append(" ", seconds);
   const detail = document.createElement("div");
   detail.className = "reconnect-overlay-detail";
-  detail.textContent = "The host's connection dropped. Your seat is held.";
+  detail.textContent = t("reconnect.detail");
   box.append(title, detail);
   scrim.append(box);
   parent.append(scrim);
   return {
     show(left) {
-      seconds.textContent = `${String(left)} s`;
+      seconds.textContent = t("reconnect.seconds", { seconds: left });
       scrim.hidden = false;
     },
     hide() {

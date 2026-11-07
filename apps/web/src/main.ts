@@ -54,7 +54,7 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
-import { loadLocale } from "./i18n/index.js";
+import { loadLocale } from "./i18n/load-locale.js";
 import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
