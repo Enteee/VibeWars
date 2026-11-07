@@ -20,6 +20,30 @@ window and the match summary.
 Bots are made for one match: once it is over, the lobby lists its people
 again, and the next match's bots are made afresh.
 
+## How bots fight
+
+A bot plays the role its build gives it. One wielding a melee weapon is
+**frontline**: it closes in and attacks its target. One with two or more
+heals or protections it can cast on an ally is a **healer**: it stands
+behind whichever ally is hurt most, away from the foes. Every other bot is
+**ranged**: it keeps where every one of its attacks reaches, and stands
+and fights a foe who comes too close. Ranged bots and healers step to
+where fewer foes can reach them, and use pillars as cover. A team turns
+on any foe in reach who drops below 60% health, to finish them. In King
+of the Hill, while your team does not hold the altar, the other team's
+Ghostly Hero on the altar comes before even that. A bot that gets far ahead
+of its team waits for the rest before it pushes on.
+
+A badly hurt bot that is losing its fight falls back behind its healer, or
+to its base, and rests out of reach until it has most of its health back.
+
+Bots side-step about half the skill shots aimed at them, such as a
+Fireball or an attack skill's arrow, so stopping or turning works for
+them as it does for you.
+
+A bot takes a human-like moment, a fraction of a second, to react to
+what happens, so a quick interrupt or a late dodge can beat it.
+
 ## Random Arena
 
 A Random Arena has no bots: every place is a real player, and you wait

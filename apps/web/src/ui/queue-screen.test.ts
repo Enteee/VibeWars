@@ -31,7 +31,7 @@ const GROUP: FormedGroup = {
   hostTicketId: "a",
   teams: [["a"], ["b"]],
   parties: [],
-  mapId: "arena-alpha",
+  mapId: "arena-crossroads",
   mode: "random-arena-1v1",
 };
 
@@ -41,7 +41,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
     code: "g",
     phase: countdownSeconds === null ? "waiting" : "starting",
     mode: "random-arena",
-    mapId: "arena-open",
+    mapId: "arena-pillars",
     teamSize: 1,
     open: true,
     hostId: "host",
@@ -195,8 +195,8 @@ describe("nextAscentRound (#1996)", () => {
 
 describe("ascentLine (#1996)", () => {
   it("names the round out of four and its map", () => {
-    expect(ascentLine(0)).toBe("Round 1 of 4 · Relic Temples");
-    expect(ascentLine(1)).toBe("Round 2 of 4 · Forgotten Shrines");
+    expect(ascentLine(0)).toBe("Round 1 of 4 · Broken Tower");
+    expect(ascentLine(1)).toBe("Round 2 of 4 · Scarred Earth");
     expect(ascentLine(3)).toBe("Round 4 of 4 · Hall of Heroes");
   });
 });
@@ -255,7 +255,7 @@ describe("teamEndAction and teamEndLine (#1997)", () => {
 
   it("names where a won Heroes' Ascent goes on to, and the Hall held (#1996)", () => {
     expect(teamEndLine("requeue", 20, 0)).toEqual({
-      text: "Ascending to Forgotten Shrines in 20 s",
+      text: "Ascending to Scarred Earth in 20 s",
       button: "Leave",
     });
     expect(teamEndLine("requeue", 20, 2)).toEqual({

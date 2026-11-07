@@ -1,29 +1,34 @@
 import { describe, expect, it } from "vitest";
 
+import { RANGE_SPELL } from "../../../distances.js";
 import { NO_RANKS } from "../../../skills/status.js";
+import { BOT_REACTION, INSTANT_REACTION } from "../../behaviour.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
 import type { MatchSimulation } from "../../simulation.js";
 import {
   BOT,
   DT,
   ELEMENTALIST,
+  MONK,
   RANGER,
   WARRIOR,
   askBot,
   body,
   fighter,
   match,
+  ruleFor,
 } from "./test-support.js";
+import fight from "./fight.js";
 
 describe("play-build fights (#1189, #1193, #1965)", () => {
   it("stands and fights a melee foe at its elbow with the bow, by a wall or in the open, however fast it thinks", () => {
     // By the field's left edge, and in the middle of it.
     for (const x of [10, 800]) {
-      for (const thinkSeconds of [0, 0.25]) {
+      for (const reaction of [INSTANT_REACTION, BOT_REACTION]) {
         const sim = match([
           // No skills: only the bow can do the damage.
           fighter("ranger", 0, RANGER, vec2(x, 400), {
-            behaviour: { kind: "play-build", thinkSeconds },
+            behaviour: { kind: "play-build", reaction },
             skillBar: [],
           }),
           fighter("foe", 1, WARRIOR, vec2(x + 40, 400), { behaviour: undefined, maxHealth: 1e6 }),
@@ -41,7 +46,7 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
           // Where it stands once the field's edge has placed it: it never leaves.
           stood ??= { ...(sim.get("ranger")?.position ?? vec2(Number.NaN, Number.NaN)) };
         }
-        expect(hits, `x ${String(x)}, thinkSeconds ${String(thinkSeconds)}`).toBeGreaterThan(3);
+        expect(hits, `x ${String(x)}, reaction ${String(reaction.maxSeconds)}`).toBeGreaterThan(3);
         expect(sim.get("ranger")?.position).toEqual(stood);
       }
     }
@@ -60,6 +65,69 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
     sim.step(DT);
     expect(sim.get("a")?.targetId).toBe("hurt");
     expect(sim.get("b")?.targetId).toBe("hurt");
+  });
+
+  it("leaves the team's target for a foe in reach below 60% of its health, to finish it, unless the target is below it too (#2545)", () => {
+    const at = (fraction: number, heldFraction = 1) => {
+      const sim = match([
+        fighter("a", 0, ELEMENTALIST, vec2(400, 400)),
+        fighter("b", 0, ELEMENTALIST, vec2(400, 460)),
+        fighter("held", 1, WARRIOR, vec2(700, 400), {
+          behaviour: undefined,
+          startHealthFraction: heldFraction,
+        }),
+        fighter("hurt", 1, WARRIOR, vec2(700, 600), {
+          behaviour: undefined,
+          startHealthFraction: fraction,
+        }),
+      ]);
+      const a = sim.get("a");
+      if (a !== undefined) {
+        a.targetId = "held";
+      }
+      sim.step(DT);
+      return [sim.get("a")?.targetId, sim.get("b")?.targetId];
+    };
+    expect(at(0.55)).toEqual(["hurt", "hurt"]);
+    expect(at(0.65)).toEqual(["held", "held"]);
+    expect(at(0.4, 0.5)).toEqual(["held", "held"]);
+  });
+
+  it("focuses a foe healer over a slightly more hurt warrior, not a much more hurt one (#2573)", () => {
+    const at = (fraction: number) => {
+      const sim = match([
+        fighter("a", 0, ELEMENTALIST, vec2(400, 400)),
+        fighter("healer", 1, MONK, vec2(700, 400), { behaviour: undefined }),
+        fighter("warrior", 1, WARRIOR, vec2(700, 500), {
+          behaviour: undefined,
+          startHealthFraction: fraction,
+        }),
+      ]);
+      sim.step(DT);
+      return sim.get("a")?.targetId;
+    };
+    expect(at(0.8)).toBe("healer");
+    expect(at(0.7)).toBe("warrior");
+  });
+
+  it("follows the team's target a little past its range, and no further while a foe is in reach (#2573)", () => {
+    const at = (past: number) => {
+      const held = vec2(400 + RANGE_SPELL + past, 400);
+      const sim = match([
+        fighter("a", 0, ELEMENTALIST, vec2(held.x - 300, 400)),
+        fighter("b", 0, ELEMENTALIST, vec2(400, 400)),
+        fighter("held", 1, WARRIOR, held, { behaviour: undefined }),
+        fighter("own", 1, WARRIOR, vec2(400, 700), { behaviour: undefined }),
+      ]);
+      const a = sim.get("a");
+      if (a !== undefined) {
+        a.targetId = "held";
+      }
+      sim.step(DT);
+      return sim.get("b")?.targetId;
+    };
+    expect(at(100)).toBe("held");
+    expect(at(200)).toBe("own");
   });
 
   it("fights the foe its team called over the most hurt one, and drops the call when it dies (#1193)", () => {
@@ -197,5 +265,36 @@ describe("play-build's Ranger attacks (#2159)", () => {
     expect(askBot(sim, "r")).toMatchObject({ useSkillId: SCREAM, targetId: "near" });
     sim.get("near")?.combatant.statuses.apply("bleeding", 10, "x", NO_RANKS);
     expect(askBot(sim, "r")).toMatchObject({ useSkillId: SCREAM, targetId: "foe" });
+  });
+});
+
+describe("a healer fights from its post (#2615)", () => {
+  /** A monk with a foe out of its reach, `mate` beside it or not; nothing in range. */
+  const decide = (mate: boolean) => {
+    const sim = match([
+      fighter("m", 0, MONK, vec2(200, 400)),
+      ...(mate ? [fighter("mate", 0, WARRIOR, vec2(300, 400))] : []),
+      fighter("foe", 1, WARRIOR, vec2(200 + RANGE_SPELL + 200, 400)),
+    ]);
+    return fight.decide(
+      ruleFor(
+        sim,
+        "m",
+        { targetId: "foe" },
+        { check: () => ({ ok: false, reason: "out-of-range" }) },
+      ),
+    );
+  };
+
+  it("neither walks in to cast nor to swing with an ally to cover", () => {
+    const intent = decide(true);
+    expect(intent?.useSkillId).toBeUndefined();
+    expect(intent?.attackTargetId).toBeUndefined();
+    expect(intent?.targetId).toBe("foe");
+  });
+
+  it("walks in to fight with nobody to cover", () => {
+    const intent = decide(false);
+    expect(intent?.useSkillId ?? intent?.attackTargetId).toBeDefined();
   });
 });

@@ -82,6 +82,23 @@ export function recipientTag(pub: string): string {
   return bytesToHex(sha256(fromBase64Url(pub) ?? new Uint8Array(0)).subarray(0, 16));
 }
 
+/** `seal` as one line for the lobby's `relay-cred` (#2529): its four fields, joined by ".". */
+export function sealText(seal: RelaySeal): string {
+  return [seal.to, seal.epk, seal.iv, seal.ct].join(".");
+}
+
+/** The seal `text` is, or `undefined` for anything not four fields joined by ".". */
+export function sealFromText(text: string): RelaySeal | undefined {
+  const [to, epk, iv, ct, ...rest] = text.split(".");
+  return to === undefined ||
+    epk === undefined ||
+    iv === undefined ||
+    ct === undefined ||
+    rest.length > 0
+    ? undefined
+    : { to, epk, iv, ct };
+}
+
 const ECDH = { name: "ECDH", namedCurve: "P-256" } as const;
 
 /** A fresh joiner key pair, in memory only. */

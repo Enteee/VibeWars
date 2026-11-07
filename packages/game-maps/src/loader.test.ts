@@ -2,26 +2,31 @@ import { describe, expect, it } from "vitest";
 
 import { circleIntersectsSegment } from "@vibewars/game-core";
 
-import arenaAlpha from "../maps/arena-alpha/map.json" with { type: "json" };
 import arenaCanyon from "../maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "../maps/arena-crossroads/map.json" with { type: "json" };
 import arenaLongHall from "../maps/arena-long-hall/map.json" with { type: "json" };
-import arenaOpen from "../maps/arena-open/map.json" with { type: "json" };
 import arenaPillars from "../maps/arena-pillars/map.json" with { type: "json" };
-import arenaRing from "../maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "../maps/arena-split/map.json" with { type: "json" };
-import forgottenShrines from "../maps/forgotten-shrines/map.json" with { type: "json" };
+import elonianPlateau from "../maps/elonian-plateau/map.json" with { type: "json" };
+import ashenCourtyard from "../maps/ashen-courtyard/map.json" with { type: "json" };
+import brokenTower from "../maps/broken-tower/map.json" with { type: "json" };
+import canthanTerraces from "../maps/canthan-terraces/map.json" with { type: "json" };
+import frozenCrossing from "../maps/frozen-crossing/map.json" with { type: "json" };
 import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
 import hallOfHeroes from "../maps/hall-of-heroes/map.json" with { type: "json" };
-import hillCourtyard from "../maps/hill-courtyard/map.json" with { type: "json" };
-import relicTemples from "../maps/relic-temples/map.json" with { type: "json" };
+import mossVale from "../maps/moss-vale/map.json" with { type: "json" };
+import sandstoneSteps from "../maps/sandstone-steps/map.json" with { type: "json" };
+import shiverpeakPass from "../maps/shiverpeak-pass/map.json" with { type: "json" };
+import scarredEarth from "../maps/scarred-earth/map.json" with { type: "json" };
+import sunkenBastion from "../maps/sunken-bastion/map.json" with { type: "json" };
+import theCourtyard from "../maps/the-courtyard/map.json" with { type: "json" };
 import { allWallSegments } from "./geometry.js";
 import { MapNotFoundError, listMapIds, loadAllMaps, loadMap, unseatedTeams } from "./loader.js";
 import { validateMapData } from "./schema.js";
 
 describe("listMapIds", () => {
-  it("includes the bundled arena-alpha map", () => {
-    expect(listMapIds()).toContain("arena-alpha");
+  it("includes the bundled arena-crossroads map", () => {
+    expect(listMapIds()).toContain("arena-crossroads");
   });
 
   it("never lists a training map: they live in training/, outside maps/", () => {
@@ -37,19 +42,24 @@ describe("the maps the browser imports", () => {
     // fs. One file, so this only fails if the two ever stop being the same
     // data, which is the drift to catch.
     const imported = [
-      arenaAlpha,
       arenaCanyon,
       arenaCrossroads,
       arenaLongHall,
-      arenaOpen,
       arenaPillars,
-      arenaRing,
       arenaSplit,
-      forgottenShrines,
+      ashenCourtyard,
+      brokenTower,
+      canthanTerraces,
+      elonianPlateau,
+      frozenCrossing,
       guildHallIsle,
       hallOfHeroes,
-      hillCourtyard,
-      relicTemples,
+      mossVale,
+      sandstoneSteps,
+      scarredEarth,
+      shiverpeakPass,
+      sunkenBastion,
+      theCourtyard,
     ].map((raw) => validateMapData(raw));
     expect(imported.map((map) => map.id)).toEqual(listMapIds());
     for (const map of imported) {
@@ -59,16 +69,16 @@ describe("the maps the browser imports", () => {
 });
 
 describe("loadMap", () => {
-  it("loads and validates arena-alpha", () => {
-    const map = loadMap("arena-alpha");
-    expect(map.id).toBe("arena-alpha");
+  it("loads and validates arena-crossroads", () => {
+    const map = loadMap("arena-crossroads");
+    expect(map.id).toBe("arena-crossroads");
     expect(map.width).toBeGreaterThan(0);
     expect(map.height).toBeGreaterThan(0);
     expect(map.spawnPoints.length).toBeGreaterThan(0);
   });
 
   it("produces walls that convert cleanly to collision segments", () => {
-    const map = loadMap("arena-alpha");
+    const map = loadMap("arena-crossroads");
     const segments = allWallSegments(map.walls);
     expect(segments.length).toBeGreaterThan(0);
     for (const seg of segments) {
@@ -80,13 +90,13 @@ describe("loadMap", () => {
   });
 
   it("has spawn points for at least two teams", () => {
-    const map = loadMap("arena-alpha");
+    const map = loadMap("arena-crossroads");
     const teams = new Set(map.spawnPoints.map((spawn) => spawn.team));
     expect(teams.size).toBeGreaterThanOrEqual(2);
   });
 
   it("keeps every spawn point within the map bounds", () => {
-    const map = loadMap("arena-alpha");
+    const map = loadMap("arena-crossroads");
     for (const spawn of map.spawnPoints) {
       expect(spawn.position.x).toBeGreaterThanOrEqual(0);
       expect(spawn.position.x).toBeLessThanOrEqual(map.width);
@@ -101,7 +111,7 @@ describe("loadMap", () => {
 });
 
 describe("unseatedTeams (#2108)", () => {
-  const map = loadMap("arena-alpha");
+  const map = loadMap("arena-crossroads");
   const spawns = (count: number) =>
     [0, 1].flatMap((team) =>
       Array.from({ length: count }, (_, index) => ({

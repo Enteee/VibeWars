@@ -15,7 +15,9 @@ modes is the **Team size**, `‹ 4v4 ›`: the arrows step to the next
 smaller or larger size the screen plays. Each screen remembers its own,
 and opens at a size it plays (GvG at 8v8). Below that are **Character Builder**, where you
 make your characters, and **Team Builder**, where you make your
-[Team Builds](skills-and-builds.md#team-builds). The game opens on the
+[Team Builds](skills-and-builds.md#team-builds), then
+**Matches**, the [finished matches](modes.md#match-records) as their
+hosts report them. The game opens on the
 one you used last.
 
 ## Make a character
@@ -95,11 +97,14 @@ Leave, and a list of who is in it; its badge counts them.
   for 30 seconds.
 - **Share your relay:** some friends can only reach you through a TURN
   relay. When a friend who runs one sends you its relay link, open it and
-  press **Use**: it becomes your relay, and your lobbies offer it to their
-  players. A friend who cannot reach you directly then joins through it
-  after a few seconds, with nothing to set up. Anyone with your invite
-  link can use it for up to 4 hours. To stop, untick **Share my relay
-  with my lobbies** in **Options → Relay (TURN)**. A relay you type in
+  press **Use**: it becomes your relay, and it is offered in any lobby you
+  are in, not only ones you host. A player who cannot reach the host
+  directly then joins through it after a few seconds, with nothing to set
+  up. Each player gets their own login, good for 1 hour and renewed while
+  they stay, at most 8 players a lobby. A player relayed this way sees
+  **Relay shared by** and the sharer's name in the lobby; while you share,
+  the lobby says **Sharing your relay with** how many players. To stop,
+  untick **Share my relay with my lobbies** in **Options → Relay (TURN)**. A relay you type in
   there by hand is only ever yours.
 - **Your party comes along:** if you had friends in your lobby, the top
   bar asks first (**Join** to go, Esc to stay), and once you are
@@ -108,8 +113,8 @@ Leave, and a list of who is in it; its badge counts them.
   own and is told why.
 
 **The host picks the mode** on the rail, and everyone's screen follows;
-a guest's modes are locked. **Character Builder** and **Team Builder**
-are open to everyone, and opening one does not leave the lobby. On a
+a guest's modes are locked. **Character Builder**, **Team Builder** and
+**Matches** are open to everyone, and opening one does not leave the lobby. On a
 mode's screen, join a team, and when everyone is in, the host presses
 **Start match**; bots play every place nobody takes. The lobby lists
 players by name: what you play is the character you claim in the Team

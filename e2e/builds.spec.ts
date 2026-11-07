@@ -7,7 +7,13 @@ import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { filterChip, openLibraryGroup } from "./helpers/library.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
-import { awaitLobby, openRail, pickCharacter } from "./helpers/menu.js";
+import {
+  awaitLobby,
+  lobbyWindow,
+  openRail,
+  pickCharacter,
+  shutLobbyWindow,
+} from "./helpers/menu.js";
 import { expectTeamSize, setTeamSize, startSoloMatch } from "./helpers/peers.js";
 import { bringStarter } from "./helpers/starter.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
@@ -82,6 +88,24 @@ test("Esc leaves at once without edits, and asks before it discards them; Save l
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
   await expect(roster(page)).toContainText("Kept");
+});
+
+test("the builders' editors' Lobby window has Copy invite link and Closed / Open, as the menu's does (#2566)", async ({
+  page,
+}) => {
+  for (const [screen, create] of [
+    ["Character Builder", "New character"],
+    ["Team Builder", "New team build"],
+  ] as const) {
+    await page.goto("./");
+    await awaitLobby(page);
+    await openRail(page, screen);
+    await page.getByRole("button", { name: create, exact: true }).click();
+    const lobby = await lobbyWindow(page);
+    await expect(lobby.getByRole("button", { name: "Copy invite link" })).toBeVisible();
+    await expect(lobby.locator(".topbar-lobby-open")).toBeVisible();
+    await shutLobbyWindow(page);
+  }
 });
 
 test("the top bar's question stands in for the crumbs and fits the window at any width (#1320)", async ({
@@ -922,10 +946,8 @@ test("a skill dragged from the Skills tab equips on a member's slot; a refused d
   await page.getByRole("button", { name: "new team" }).click();
   // The Skills tab shows the focused member's: the first, a blank Warrior.
   await page.getByRole("tab", { name: "Skills", exact: true }).click();
-  await expect(page.locator(".team-picker-skills .team-picker-hint")).toContainText(
-    "New Character",
-  );
-  const library = page.locator(".team-picker-skills");
+  await expect(page.locator(".team-picker .picker-hint")).toContainText("New Character");
+  const library = page.locator(".team-picker");
   await openLibraryGroup(page, "Strength");
   const box = library.locator(".skill-box").first();
   const skillId = (await box.getAttribute("data-skill-id")) ?? "";
@@ -934,8 +956,9 @@ test("a skill dragged from the Skills tab equips on a member's slot; a refused d
   await expect(target).toHaveAttribute("data-skill-id", skillId);
   await expect(page.locator(".editor-unsaved")).toBeVisible();
 
-  // The same skill again on that bar is refused: the slot is marked, the
-  // reason said, and the drop does nothing.
+  // The same skill again on that bar, another member's than the one the
+  // library shows, is refused: the slot is marked, the reason said, and
+  // the drop does nothing.
   const other = memberRows(page).nth(1).locator(".team-skill").nth(5);
   await box.hover();
   await page.mouse.down();
@@ -943,7 +966,7 @@ test("a skill dragged from the Skills tab equips on a member's slot; a refused d
   await page.mouse.move((spot?.x ?? 0) + 8, (spot?.y ?? 0) + 8, { steps: 4 });
   await page.mouse.move((spot?.x ?? 0) + 12, (spot?.y ?? 0) + 12, { steps: 2 });
   await expect(other).toHaveClass(/is-drop-refused/);
-  await expect(page.locator(".team-drop-reason")).toContainText("already on New Character's bar");
+  await expect(page.locator(".drop-reason")).toContainText("already on New Character's bar");
   await page.mouse.up();
   await expect(other).not.toHaveAttribute("data-skill-id");
   await expect(memberRows(page).nth(1).locator(".team-skill:not(.is-empty)")).toHaveCount(1);
@@ -1875,7 +1898,7 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
 
 /** Open the gear library in the right-hand column. */
 async function openGearLibrary(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.getByRole("tab", { name: "Gear", exact: true }).click();
   await expect(page.locator(".gear-box").first()).toBeVisible();
 }
 
@@ -2237,13 +2260,13 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
 
   // Each tab keeps its own place. The tabs are pressed in place, so the
   // click itself scrolls nothing.
-  const tab = (name: string) => page.getByRole("button", { name, exact: true });
-  await tab("gear").dispatchEvent("click");
+  const tab = (name: string) => page.getByRole("tab", { name, exact: true });
+  await tab("Gear").dispatchEvent("click");
   await expect(page.locator(".gear-box").first()).toBeVisible();
   const gearTop = await scrollLibrary(page, 120);
-  await tab("skills").dispatchEvent("click");
+  await tab("Skills").dispatchEvent("click");
   expect(await libraryScroll(page)).toBe(reshuffled);
-  await tab("gear").dispatchEvent("click");
+  await tab("Gear").dispatchEvent("click");
   expect(await libraryScroll(page)).toBe(gearTop);
 });
 
@@ -2319,7 +2342,7 @@ test("the library remembers which tab you were on while you build", async ({ pag
   await openGearLibrary(page);
   // Equipping updates the editor; the tab must not snap back.
   await equipFromLibrary(page, "Axe");
-  await expect(page.locator(".library-tab.is-active")).toHaveText("gear");
+  await expect(page.locator(".library-tab.is-active")).toHaveText("Gear");
 });
 
 /* --- beside the Training Ground arena (#10) ------------------------------- */
@@ -2719,7 +2742,7 @@ test("a member's skill dragged to another member moves; with Shift it is copied 
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByRole("tab", { name: "Skills", exact: true }).click();
   await openLibraryGroup(page, "Strength");
-  const box = page.locator(".team-picker-skills .skill-box").first();
+  const box = page.locator(".team-picker .skill-box").first();
   const skillId = (await box.getAttribute("data-skill-id")) ?? "";
   const cell = (row: number, slot: number) =>
     memberRows(page).nth(row).locator(".team-skill").nth(slot);

@@ -1,0 +1,303 @@
+{
+  "id": "the-courtyard",
+  "name": "The Courtyard",
+  "mode": "king-of-the-hill",
+  "teamSizes": [4, 8],
+  "width": 3000,
+  "height": 1800,
+  "walls": [
+    {
+      "kind": "rect",
+      "x": 60,
+      "y": 520,
+      "width": 260,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 2680,
+      "y": 1240,
+      "width": 260,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 480,
+      "y": 520,
+      "width": 60,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "x": 2460,
+      "y": 1040,
+      "width": 60,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "x": 480,
+      "y": 1040,
+      "width": 60,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "x": 2460,
+      "y": 520,
+      "width": 60,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "x": 1210,
+      "y": 820,
+      "width": 60,
+      "height": 160
+    },
+    {
+      "kind": "rect",
+      "x": 1730,
+      "y": 820,
+      "width": 60,
+      "height": 160
+    },
+    {
+      "kind": "rect",
+      "x": 1120,
+      "y": 710,
+      "width": 50,
+      "height": 50
+    },
+    {
+      "kind": "rect",
+      "x": 1830,
+      "y": 1040,
+      "width": 50,
+      "height": 50
+    },
+    {
+      "kind": "rect",
+      "x": 1120,
+      "y": 1040,
+      "width": 50,
+      "height": 50
+    },
+    {
+      "kind": "rect",
+      "x": 1830,
+      "y": 710,
+      "width": 50,
+      "height": 50
+    },
+    {
+      "kind": "rect",
+      "x": 1420,
+      "y": 610,
+      "width": 160,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1420,
+      "y": 1130,
+      "width": 160,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1640,
+      "y": 520,
+      "width": 50,
+      "height": 50
+    },
+    {
+      "kind": "rect",
+      "x": 1310,
+      "y": 1230,
+      "width": 50,
+      "height": 50
+    },
+    {
+      "kind": "rect",
+      "x": 1310,
+      "y": 520,
+      "width": 50,
+      "height": 50
+    },
+    {
+      "kind": "rect",
+      "x": 1640,
+      "y": 1230,
+      "width": 50,
+      "height": 50
+    },
+    {
+      "kind": "rect",
+      "x": 1300,
+      "y": 240,
+      "width": 400,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1300,
+      "y": 1500,
+      "width": 400,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 820,
+      "y": 620,
+      "width": 60,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "x": 2120,
+      "y": 980,
+      "width": 60,
+      "height": 200
+    }
+  ],
+  "objectives": [
+    {
+      "kind": "ghost-spawn",
+      "team": 0,
+      "position": {
+        "x": 120,
+        "y": 900
+      }
+    },
+    {
+      "kind": "ghost-spawn",
+      "team": 1,
+      "position": {
+        "x": 2880,
+        "y": 900
+      }
+    },
+    {
+      "kind": "altar",
+      "position": {
+        "x": 1500,
+        "y": 900
+      }
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "position": {
+        "x": 240,
+        "y": 660
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 240,
+        "y": 780
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 240,
+        "y": 1020
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 240,
+        "y": 1140
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 360,
+        "y": 720
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 360,
+        "y": 840
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 360,
+        "y": 960
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 360,
+        "y": 1080
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2760,
+        "y": 1140
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2760,
+        "y": 1020
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2760,
+        "y": 780
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2760,
+        "y": 660
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2640,
+        "y": 1080
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2640,
+        "y": 960
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2640,
+        "y": 840
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2640,
+        "y": 720
+      }
+    }
+  ]
+}

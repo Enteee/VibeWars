@@ -1,7 +1,14 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
-import type { Guild, LobbyConnection, LobbySnapshot, MatchStarting } from "@vibewars/game-session";
+import type {
+  Guild,
+  LobbyConnection,
+  LobbySnapshot,
+  MatchRecordTeam,
+  MatchStarting,
+} from "@vibewars/game-session";
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
+import { watchRecords } from "./net/transport/index.js";
 
 import { ARENA_MAPS, ASCENT_PROGRESSION, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
 import {
@@ -15,6 +22,7 @@ import {
   joinLobbyByCode,
   NOT_A_KEY_MESSAGE,
   lobbyClosedNotice,
+  lobbyRelayStatus,
   lobbyRefusalNotice,
   matchFailureNotice,
   openPartyBoard,
@@ -61,6 +69,8 @@ import {
   type KeyValueStore,
 } from "./storage/repository.js";
 import { cloneCharacter } from "./storage/clone-character.js";
+import { missingSkillsNote } from "./storage/gw1-template.js";
+import { teamFromMatch } from "./storage/match-team.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   type StoredCharacter,
@@ -89,6 +99,7 @@ import {
 } from "./ui/touch-notice-preference.js";
 import { describeOutcome } from "./ui/hud.js";
 import type { SummaryTable } from "./ui/match-summary.js";
+import { renderMatchesScreen, type MatchesScreen } from "./ui/matches-screen.js";
 import {
   mountQueueScreen,
   nextAscentRound,
@@ -105,6 +116,7 @@ import {
   hostMaps,
   lobbyPanel,
   type LobbyMatchmaking,
+  type LobbyRelay,
   type LobbyPanel,
 } from "./ui/lobby-screen.js";
 import {
@@ -605,6 +617,8 @@ async function main(): Promise<void> {
   /** The cape the menu was last drawn with (#1513), to redraw it only for a new one (#2386). */
   let menuCape = "";
 
+  /** The Matches page, while it is the screen. */
+  let matchesScreen: MatchesScreen | undefined;
   const screenTurns = createScreenTurns();
   /**
    * Whose turn joining a lobby is (#1526): a join can wait 20 s for its
@@ -622,6 +636,9 @@ async function main(): Promise<void> {
    */
   const leaveScreen = (): ScreenTurn => {
     idleScreen = false;
+    // The Matches page listens to the relays only while it is open (#2532).
+    matchesScreen?.close();
+    matchesScreen = undefined;
     followsLobby = false;
     teamLobbyShown = false;
     dismissToast();
@@ -775,6 +792,18 @@ async function main(): Promise<void> {
     drawnParty = party === undefined ? "" : `${party.mode}:${String(party.isHost)}`;
     const entry = railEntry();
     drawnEntry = entry;
+    if (entry === "matches") {
+      matchesScreen?.close();
+      matchesScreen = renderMatchesScreen(screenRoot, {
+        onSwitch: switchTo,
+        watch: watchRecords,
+        now: () => Date.now(),
+        onCloneTeam: (record) => {
+          void cloneMatchTeam(record);
+        },
+      });
+      return;
+    }
     if (entry !== "random-arena" && entry !== "characters") {
       void showTeamScreen(entry, turn);
       return;
@@ -1112,6 +1141,14 @@ async function main(): Promise<void> {
     })();
   };
 
+  /** What `joined`'s screen says about relays (#2531), if anything. */
+  const relayFor = (joined: LobbyConnection): LobbyRelay | undefined => {
+    const status = lobbyRelayStatus(joined);
+    return status === undefined
+      ? undefined
+      : { relayedVia: status.relayedVia(), sharingWith: status.sharingWith() };
+  };
+
   /** The lobby's part of `entry`'s screen (#1526), once there is a lobby. */
   const panelFor = (entry: HostEntry): LobbyPanel | undefined => {
     if (lobby === undefined || queue !== undefined) {
@@ -1147,6 +1184,7 @@ async function main(): Promise<void> {
           (entry === "heroes-ascent" && ASCENT_PROGRESSION.includes(map.id)),
       ),
       matchmakingFor(entry),
+      relayFor(lobby),
     );
   };
 
@@ -1187,7 +1225,7 @@ async function main(): Promise<void> {
    * (#1460), where a Team Build is proposed.
    */
   const showTeamScreen = async (
-    entry: Exclude<RailEntry, "random-arena" | "characters">,
+    entry: Exclude<RailEntry, "random-arena" | "characters" | "matches">,
     turn: ScreenTurn,
   ): Promise<void> => {
     const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);
@@ -1317,6 +1355,26 @@ async function main(): Promise<void> {
 
   /** The open team editor; every way out of it passes through `showMenu`, to the menu. */
   let teamEditor: TeamEditorView | undefined;
+
+  /** A Matches team's Clone (#2585): saved as a new Team Build, then opened, as a starter's clone is. */
+  const cloneMatchTeam = async (record: MatchRecordTeam): Promise<void> => {
+    const result = teamFromMatch(record, () => crypto.randomUUID(), Date.now());
+    if (!result.ok) {
+      return;
+    }
+    const { team, missingSkills } = result;
+    try {
+      await teams.save(team);
+    } catch (error) {
+      console.warn("[web] could not save the clone", error);
+      showMenu();
+      toast("Could not save the team");
+      return;
+    }
+    const { characters: available } = await characters.list();
+    showTeamEditor(openedTeam(team, true), available);
+    toast(`Cloned ${team.name}${missingSkillsNote(missingSkills)}`);
+  };
 
   const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
     leaveScreen();
@@ -2077,6 +2135,12 @@ async function main(): Promise<void> {
     joined.onChatThrottled(() => {
       if (lobby === joined) {
         chat?.notice("Slow down: your last lines were not sent.");
+      }
+    });
+    // Whose relay it goes through, and how many it shares with, redraw it (#2531).
+    lobbyRelayStatus(joined)?.onChange(() => {
+      if (lobby === joined) {
+        lobbyChanged();
       }
     });
     // A lobby this tab has left says nothing more to it; a party lobby

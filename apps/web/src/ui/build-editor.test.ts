@@ -16,14 +16,10 @@ import { exportBuild } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import {
-  applySkillDrop,
   budgetSegments,
   canRaise,
-  decodeDragSource,
   describeProfessionChange,
   editorProblems,
-  encodeDragSource,
-  equipTarget,
   followTip,
   isUnsaved,
   loadCode,
@@ -37,7 +33,6 @@ import {
   setRank,
   equipSkill,
   setSkill,
-  swapSkillSlots,
   trySetRank,
   weaponWarning,
 } from "./build-editor.js";
@@ -434,102 +429,6 @@ describe("setSkill", () => {
   });
 });
 
-describe("skill bar drag and drop", () => {
-  const warrior = (): StoredCharacter => ({
-    ...newCharacter("c1"),
-    skillBar: ["a", "b", null, null, null, null, null, null],
-  });
-
-  it("swaps two occupied slots rather than destroying one", () => {
-    // `setSkill` moves and clears the origin, which would delete a skill
-    // when a player drags one slot onto another to reorder.
-    const swapped = swapSkillSlots(warrior(), 0, 1);
-
-    expect(swapped.skillBar.slice(0, 2)).toEqual(["b", "a"]);
-  });
-
-  it("swaps an occupied slot with an empty one", () => {
-    const swapped = swapSkillSlots(warrior(), 0, 3);
-
-    expect(swapped.skillBar[0]).toBeNull();
-    expect(swapped.skillBar[3]).toBe("a");
-  });
-
-  it("is a no-op when a slot is dropped on itself", () => {
-    const before = warrior();
-
-    expect(swapSkillSlots(before, 2, 2)).toBe(before);
-  });
-
-  it("round-trips a drag payload", () => {
-    expect(decodeDragSource(encodeDragSource({ from: "library", skillId: "x.y" }))).toEqual({
-      from: "library",
-      skillId: "x.y",
-    });
-    expect(decodeDragSource(encodeDragSource({ from: "slot", slot: 3 }))).toEqual({
-      from: "slot",
-      slot: 3,
-    });
-  });
-
-  it("refuses a payload dragged in from anywhere else", () => {
-    // A drop can carry text from any application on the desktop. It must
-    // do nothing rather than throw or equip something invented.
-    for (const raw of ["", "nonsense", "slot:", "slot:abc", "slot:-1", "slot:99", "library:"]) {
-      expect(decodeDragSource(raw), `${JSON.stringify(raw)} was accepted`).toBeUndefined();
-    }
-  });
-
-  it("equips from the library on drop", () => {
-    const { character: after } = applySkillDrop(
-      newCharacter("c1"),
-      { from: "library", skillId: "elementalist.fireball" },
-      2,
-    );
-
-    expect(after.skillBar[2]).toBe("elementalist.fireball");
-  });
-
-  it("moves rather than duplicates when dragging a library skill already on the bar", () => {
-    const { character: after } = applySkillDrop(warrior(), { from: "library", skillId: "a" }, 4);
-
-    expect(after.skillBar[4]).toBe("a");
-    expect(after.skillBar.filter((id) => id === "a")).toHaveLength(1);
-  });
-
-  it("swaps when the drag came from another slot", () => {
-    const { character: after } = applySkillDrop(warrior(), { from: "slot", slot: 0 }, 1);
-
-    expect(after.skillBar.slice(0, 2)).toEqual(["b", "a"]);
-  });
-});
-
-describe("equipTarget (#564)", () => {
-  const full = ["a", "b", "c", "d", "e", "f", "g", "h"];
-
-  it("goes to the first empty slot when none is picked", () => {
-    expect(equipTarget(["a", null, "c", null, null, null, null, null], undefined)).toEqual({
-      slot: 1,
-      replaces: false,
-    });
-  });
-
-  it("has nowhere to go on a full bar with none picked: nothing is overwritten", () => {
-    expect(equipTarget(full, undefined)).toBeUndefined();
-  });
-
-  it("goes to the picked slot, replacing what is there", () => {
-    expect(equipTarget(full, 5)).toEqual({ slot: 5, replaces: true });
-  });
-
-  it("goes to a picked empty slot over an earlier empty one", () => {
-    expect(equipTarget([null, null, null, null, null, null, null, null], 6)).toEqual({
-      slot: 6,
-      replaces: false,
-    });
-  });
-});
-
 describe("isUnsaved (#566)", () => {
   const opened = newCharacter("c1");
 
@@ -624,16 +523,6 @@ describe("one elite per bar (#459)", () => {
     const plain = equipSkill(withBarrage(), 4, "ranger.troll-unguent");
     expect(plain.character.skillBar[0]).toBe("ranger.barrage");
     expect(plain.notice).toBeUndefined();
-  });
-
-  it("follows the same rule when an elite is dropped from the library", () => {
-    const { character, notice } = applySkillDrop(
-      withBarrage(),
-      { from: "library", skillId: "warrior.backbreaker" },
-      1,
-    );
-    expect(character.skillBar.slice(0, 2)).toEqual([null, "warrior.backbreaker"]);
-    expect(notice).toBe("Backbreaker replaced Barrage: only one elite skill per bar.");
   });
 
   it("never lets setSkill leave two elites on the bar", () => {

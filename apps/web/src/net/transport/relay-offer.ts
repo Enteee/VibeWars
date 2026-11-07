@@ -19,16 +19,16 @@ import {
   MAX_RELAY_PEER_ID,
   TICKET_HEARTBEAT_MS,
   type PeerRelayAdmit,
-  type WireRelayLogin,
+  type WireRelayMember,
 } from "@vibewars/game-protocol";
 import { RELAY_ADMIT_MS, type TicketKey } from "@vibewars/game-session";
 
 import {
   byteLength,
-  isTags,
   openRelayPool,
   signEvent,
   webSocket,
+  wellFormedEvent,
   type OpenRelaySocket,
   type RelayPool,
 } from "./nostr-relays.js";
@@ -37,12 +37,14 @@ import {
   newJoinerKey,
   openRelaySeal,
   rankOffers,
+  sealFromText,
   sealRelayOffer,
+  sealText,
   type JoinerKey,
   type RelayOffer,
   type RelaySeal,
 } from "./relay-seal.js";
-import { newTicketKey } from "./ticket-key.js";
+import { newTicketKey, verifyTicketSig } from "./ticket-key.js";
 import {
   credentialExpiry,
   mintTurnCredential,
@@ -63,9 +65,10 @@ const MAX_OFFER_MESSAGE_BYTES = 4096;
 /**
  * After an author's message was of use (an ask the host heard, a seal
  * that opened for this joiner), nothing more from it is opened for this
- * long. Only use charges it: an event's `pubkey` is not verified here,
- * and anyone can claim another's, so nothing short of that may cost an
- * author anything.
+ * long. Only a use whose event is signed by its `pubkey` charges it:
+ * anyone can claim another's pubkey, and an invite holder can make a
+ * message that is of use, so nothing short of both may cost an author
+ * anything (#2553).
  */
 export const OFFER_OPEN_INTERVAL_MS = 5_000;
 
@@ -94,14 +97,10 @@ export const MAX_KEPT_OFFERS = 8;
 export const MAX_RELAYED_PER_HOLDER = 8;
 
 /**
- * A seated member's login is reminted once it has this little left
- * (#2527): more than a guest's refresh threshold, so a guest between maps
- * always finds a newer one.
+ * How often a holder mints every seated member a fresh login (#2529):
+ * logins last 1 h, so a member always holds one with 10 min to spare.
  */
-export const LOGIN_REMINT_LEFT_MS = 40 * 60 * 1000;
-
-/** How often a holder tells its lobby its members' logins may have been reminted. */
-export const LOGIN_CHECK_MS = 5 * 60 * 1000;
+export const REMINT_EVERY_MS = 50 * 60 * 1000;
 
 const IV_BYTES = 12;
 const SUBSCRIPTION_ID = "vibewars-relay-offer";
@@ -270,7 +269,7 @@ function topicPublisher(room: RelayOfferRoom, deps: RelayOfferDeps): TopicPublis
 /**
  * Listen on `room`'s topic. `use` gets each message that opens and says
  * whether it was of use, which alone charges its author
- * `OFFER_OPEN_INTERVAL_MS`.
+ * `OFFER_OPEN_INTERVAL_MS`, and only if the event is signed by it.
  */
 function listenTopic(
   room: RelayOfferRoom,
@@ -298,22 +297,17 @@ function listenTopic(
     if (!Array.isArray(message) || message[0] !== "EVENT" || message[1] !== SUBSCRIPTION_ID) {
       return;
     }
-    const raw: unknown = message[2];
-    if (typeof raw !== "object" || raw === null) {
+    // The id must be the event's hash before it is seen: otherwise one
+    // relay could echo a real offer's id with junk and shadow it (#2588).
+    // The signature is checked only once a message is of use, before its
+    // author is charged: verifying is far dearer than opening.
+    const wellFormed = wellFormedEvent(message[2], RELAY_OFFER_KIND);
+    if (wellFormed === undefined) {
       return;
     }
-    // The signature is the relays' business: the inner seal is what says
-    // who made an offer, and any code holder can make one either way.
-    const { id, pubkey, kind, tags, content } = raw as Record<string, unknown>;
-    if (
-      typeof id !== "string" ||
-      typeof pubkey !== "string" ||
-      seen.has(id) ||
-      kind !== RELAY_OFFER_KIND ||
-      !isTags(tags) ||
-      !tags.some(([name, value]) => name === "t" && value === room.topic) ||
-      typeof content !== "string"
-    ) {
+    const { event, digest } = wellFormed;
+    const { id, pubkey, tags, content, sig } = event;
+    if (seen.has(id) || !tags.some(([name, value]) => name === "t" && value === room.topic)) {
       return;
     }
     const now = deps.now();
@@ -339,6 +333,12 @@ function listenTopic(
       .then(async (opened) => (opened === undefined || closed ? false : use(opened, now)))
       .then((used) => {
         if (!used || closed) {
+          return;
+        }
+        // A use is charged to its pubkey, so the event must be that
+        // pubkey's: otherwise an invite holder could claim a real relay
+        // holder's and mute it (#2553).
+        if (!verifyTicketSig(pubkey, digest, sig)) {
           return;
         }
         if (usedAt.size >= AUTHOR_LIMIT) {
@@ -421,21 +421,27 @@ export interface RelayHold {
   /** Whether it shares a relay now: Options has a `rest` one and sharing is on. */
   holding(): boolean;
   /**
+   * How many peer ids it holds a live login for (#2531): each seated
+   * member, and each admit still live; 0 when not holding.
+   */
+  sharingWith(): number;
+  /**
    * The host admitted `admit`: mint its peer id a login and publish it
    * sealed to its key, again each `TICKET_HEARTBEAT_MS` while the admit is
    * live. Nothing when not holding, or when it would hold more than
    * `MAX_RELAYED_PER_HOLDER` peer ids.
    */
   admit(admit: PeerRelayAdmit): void;
-  /** The lobby's members now: an id minted for keeps its slot while seated. */
-  seated(peerIds: ReadonlySet<string>): void;
   /**
-   * The login for seated member `peerId` (#2248), as the host tells it
-   * over the lobby: reminted once it has `LOGIN_REMINT_LEFT_MS` left, and
-   * never refused. `null` when not holding.
+   * The lobby's seated members and their keys now (#2529): each new one,
+   * or one back with a new key, is minted a login at once, and every
+   * member again each `REMINT_EVERY_MS`, never refused. An id minted for
+   * keeps its slot while seated.
    */
-  loginFor(peerId: string): WireRelayLogin | null;
-  /** `handler` when `holding()` may have changed, and each `LOGIN_CHECK_MS` while it holds. */
+  seated(members: readonly WireRelayMember[]): void;
+  /** `handler` with each login sealed for seated member `to`, as `relay-cred` text. */
+  onSeal(handler: (to: string, seal: string) => void): () => void;
+  /** `handler` when `holding()` or `sharingWith()` may have changed. */
   onChange(handler: () => void): () => void;
   /** Stop for good: every login is dropped. */
   close(): void;
@@ -457,13 +463,13 @@ export function holdRelay(
   deps: RelayOfferDeps = BROWSER,
 ): RelayHold {
   const handlers = new Set<() => void>();
+  const sealHandlers = new Set<(to: string, seal: string) => void>();
   let shared = source.load();
   let publisher: TopicPublisher | undefined;
   /** Until when each peer id minted for by an admit has that admit live. */
   const relayed = new Map<string, number>();
-  let members: ReadonlySet<string> = new Set();
-  /** Seated members' logins, by peer id. */
-  const logins = new Map<string, WireRelayLogin>();
+  /** Seated members' keys, by peer id: each was minted a login for that key. */
+  let members = new Map<string, string>();
   /** Live seals, republished each beat until their admit ends. */
   const seals = new Map<string, { readonly seal: RelaySeal; readonly until: number }>();
   let heartbeat: ReturnType<typeof setInterval> | undefined;
@@ -472,6 +478,28 @@ export function holdRelay(
   const tell = (): void => {
     for (const handler of [...handlers]) {
       handler();
+    }
+  };
+
+  /** The peer ids with a live admit at `now`, or seated: who holds a login from it. */
+  const held = (now: number): Set<string> =>
+    new Set([
+      ...[...relayed].filter(([, until]) => until > now).map(([id]) => id),
+      ...members.keys(),
+    ]);
+
+  const sharingWith = (now: number): number =>
+    closed || shared === undefined ? 0 : held(now).size;
+
+  /** `sharingWith` as last told. */
+  let counted = 0;
+
+  /** Tell whoever listens if `sharingWith` changed since it was last told. */
+  const recount = (): void => {
+    const count = sharingWith(deps.now());
+    if (count !== counted) {
+      counted = count;
+      tell();
     }
   };
 
@@ -488,13 +516,58 @@ export function holdRelay(
       clearInterval(heartbeat);
       heartbeat = undefined;
     }
+    recount();
+  };
+
+  /**
+   * A fresh login for `peerId` sealed to `pub`, to `then` once sealed,
+   * unless Options changed the relay meanwhile: that login is for the old one.
+   */
+  const seal = (peerId: string, pub: string, then: (seal: RelaySeal) => void): void => {
+    if (closed || shared === undefined) {
+      return;
+    }
+    const offer: RelayOffer = {
+      config: mintTurnCredential(shared, peerId, deps.now(), TURN_CREDENTIAL_TTL_MS),
+      holder: selfId,
+      name: name(),
+    };
+    const from = shared;
+    void sealRelayOffer(offer, pub, deps.randomBytes(IV_BYTES)).then(
+      (sealed) => {
+        if (!closed && shared === from) {
+          then(sealed);
+        }
+      },
+      () => {
+        // Not a key WebCrypto takes: the host checked its shape only.
+      },
+    );
+  };
+
+  /** Seal seated member `peerId` a fresh login, for the host to forward. */
+  const mint = (peerId: string, pub: string): void => {
+    seal(peerId, pub, (sealed) => {
+      // It left, or came back with another key, while this sealed.
+      if (members.get(peerId) !== pub) {
+        return;
+      }
+      for (const handler of [...sealHandlers]) {
+        handler(peerId, sealText(sealed));
+      }
+    });
+  };
+
+  const mintAll = (): void => {
+    for (const [peerId, pub] of members) {
+      mint(peerId, pub);
+    }
   };
 
   const drop = (): void => {
     clearInterval(heartbeat);
     heartbeat = undefined;
     seals.clear();
-    logins.clear();
     relayed.clear();
     publisher?.close();
     publisher = undefined;
@@ -507,16 +580,16 @@ export function holdRelay(
     }
     drop();
     shared = next;
+    // A changed relay starts over: every member gets a login for the new one.
+    mintAll();
+    counted = sharingWith(deps.now());
     tell();
   });
-  const check = setInterval(() => {
-    if (shared !== undefined) {
-      tell();
-    }
-  }, LOGIN_CHECK_MS);
+  const remint = setInterval(mintAll, REMINT_EVERY_MS);
 
   return {
     holding: () => !closed && shared !== undefined,
+    sharingWith: () => sharingWith(deps.now()),
     admit({ peerId, pub }) {
       if (closed || shared === undefined) {
         return;
@@ -528,66 +601,37 @@ export function holdRelay(
           relayed.delete(id);
         }
       }
-      const held = new Set(relayed.keys());
-      for (const id of logins.keys()) {
-        if (members.has(id)) {
-          held.add(id);
-        }
-      }
-      if (!held.has(peerId) && held.size >= MAX_RELAYED_PER_HOLDER) {
+      const ids = held(now);
+      if (!ids.has(peerId) && ids.size >= MAX_RELAYED_PER_HOLDER) {
         return;
       }
       relayed.set(peerId, Math.max(relayed.get(peerId) ?? 0, now + RELAY_ADMIT_MS));
-      const offer: RelayOffer = {
-        config: mintTurnCredential(shared, peerId, now, TURN_CREDENTIAL_TTL_MS),
-        holder: selfId,
-        name: name(),
-      };
+      recount();
       const key = `${peerId} ${pub}`;
-      const from = shared;
-      void sealRelayOffer(offer, pub, deps.randomBytes(IV_BYTES)).then(
-        (seal) => {
-          // Options changed the relay while it sealed: this login is for the old one.
-          if (closed || shared !== from) {
-            return;
-          }
-          publisher ??= topicPublisher(room, deps);
-          seals.set(key, { seal, until: now + RELAY_ADMIT_MS });
-          publisher.publish({ kind: "seal", seal });
-          heartbeat ??= setInterval(beat, TICKET_HEARTBEAT_MS);
-        },
-        () => {
-          // Not a key WebCrypto takes: the host checked its shape only.
-        },
-      );
+      seal(peerId, pub, (sealed) => {
+        publisher ??= topicPublisher(room, deps);
+        seals.set(key, { seal: sealed, until: now + RELAY_ADMIT_MS });
+        publisher.publish({ kind: "seal", seal: sealed });
+        heartbeat ??= setInterval(beat, TICKET_HEARTBEAT_MS);
+      });
     },
-    seated(peerIds) {
-      members = peerIds;
-      for (const id of [...logins.keys()]) {
-        if (!members.has(id)) {
-          logins.delete(id);
+    seated(seated) {
+      const before = members;
+      members = new Map(
+        seated.filter(({ peerId }) => peerId !== selfId).map(({ peerId, pub }) => [peerId, pub]),
+      );
+      for (const [peerId, pub] of members) {
+        if (before.get(peerId) !== pub) {
+          mint(peerId, pub);
         }
       }
+      recount();
     },
-    loginFor(peerId) {
-      if (closed || shared === undefined) {
-        return null;
-      }
-      const now = deps.now();
-      const held = logins.get(peerId);
-      const expiry = held === undefined ? undefined : credentialExpiry(held);
-      if (held !== undefined && expiry !== undefined && expiry - now >= LOGIN_REMINT_LEFT_MS) {
-        return held;
-      }
-      const { urls, username, credential } = mintTurnCredential(
-        shared,
-        peerId,
-        now,
-        TURN_CREDENTIAL_TTL_MS,
-      );
-      const login = { urls, username, credential };
-      logins.set(peerId, login);
-      return login;
+    onSeal(handler) {
+      sealHandlers.add(handler);
+      return () => {
+        sealHandlers.delete(handler);
+      };
     },
     onChange(handler) {
       handlers.add(handler);
@@ -598,10 +642,12 @@ export function holdRelay(
     close() {
       closed = true;
       stopHearing();
-      clearInterval(check);
+      clearInterval(remint);
       drop();
+      members.clear();
       shared = undefined;
       handlers.clear();
+      sealHandlers.clear();
     },
   };
 }
@@ -610,23 +656,35 @@ export function holdRelay(
 const firstHost = (offer: RelayOffer): string =>
   relayHosts({ urls: offer.config.urls.slice(0, 1) }).toLowerCase();
 
-/** A joiner's view of a lobby's relays, held in memory only. */
+/** A member's view of a lobby's relays, held in memory only. */
 export interface RelayOffers {
+  /** This page's relay key, as its `lobby-join` carries it (#2529); `null` if it has none. */
+  pub(): Promise<string | null>;
   /**
-   * The offers sealed to this joiner, live, one per holder, in
-   * `rankOffers` order. Empty once `fromHost` has been called.
+   * The live offers sealed to this page, one per holder, in `rankOffers`
+   * order: once seated, only those from holders the host lists.
    */
   ranked(): RelayOffer[];
-  /** The login the host told this seated guest (#2248), `undefined` until it has. */
-  hostLogin(): WireRelayLogin | undefined;
   /**
-   * The login the host told this seated guest over the lobby (#2248),
-   * checked by `validateTurnConfig`; `null` for none or a failing one.
-   * From the first call on, it asks no more and opens no seal again: the
-   * host's lobby messages only the host can send. A later call replaces it.
+   * The lobby's holders, as the host lists them (#2529). From the first
+   * call on, it asks no more and opens nothing from the Nostr relays: a
+   * seated member takes logins only from these. An unlisted holder's
+   * offer is dropped.
    */
-  fromHost(login: WireRelayLogin | null): void;
-  /** An offer opened, or the host's login came: what the getters say may have changed. */
+  listed(holders: readonly string[]): void;
+  /**
+   * `seal`, a `relay-cred` the host forwarded from seated member `from`:
+   * kept if `from` is listed when it comes and it opens as `from`'s login
+   * for this page, strictly newer than the one it has from `from`.
+   */
+  fromMember(from: string, seal: string): void;
+  /**
+   * Whether `offer` came through `fromMember` from its own holder
+   * (#2531): the host vouches for who sent it. A seal off the Nostr
+   * relays names a holder anyone with the invite link may claim.
+   */
+  vouched(offer: RelayOffer): boolean;
+  /** An offer opened or one was dropped: what `ranked` says may have changed. */
   onOffer(handler: () => void): () => void;
   /** Stop asking and listening, and drop every offer. */
   close(): void;
@@ -635,8 +693,8 @@ export interface RelayOffers {
 /**
  * Ask for relays into the lobby `room` is, whose room id is `roomId`, as
  * peer `selfId` (#2527): a fresh key pair for this page, an ask on the
- * topic now and every `TICKET_HEARTBEAT_MS` until the host's login comes
- * or it closes, and every seal for that key opened.
+ * topic now and every `TICKET_HEARTBEAT_MS` until the host lists the
+ * holders or it closes, and every seal for that key opened.
  */
 export function watchRelayOffers(
   room: RelayOfferRoom,
@@ -647,8 +705,12 @@ export function watchRelayOffers(
 ): RelayOffers {
   /** The newest offer per holder: one holder never fills two attempts. */
   const offers = new Map<string, RelayOffer>();
+  /** Offers `fromMember` kept: the host forwarded each from its holder. */
+  const vouched = new WeakSet<RelayOffer>();
   const handlers = new Set<() => void>();
-  let host: WireRelayLogin | null | undefined;
+  /** The holders the host lists, once it has. */
+  let holders: ReadonlySet<string> | undefined;
+  const isListed = (): boolean => holders !== undefined;
   let key: JoinerKey | undefined;
   let heartbeat: ReturnType<typeof setInterval> | undefined;
   let closed = false;
@@ -660,8 +722,6 @@ export function watchRelayOffers(
     }
   };
 
-  const heardHost = (): boolean => host !== undefined;
-
   const live = (): RelayOffer[] => {
     const now = deps.now();
     for (const [holder, offer] of offers) {
@@ -672,35 +732,46 @@ export function watchRelayOffers(
     return [...offers.values()];
   };
 
-  const listener = listenTopic(room, deps, async (message, nowMs) => {
-    if (message.kind !== "seal" || key === undefined || host !== undefined) {
-      return false;
-    }
-    const offer = await openRelaySeal(message.seal, key, selfId, nowMs);
-    // The host's login may have come while it opened.
-    if (offer === undefined || closed || heardHost()) {
-      return false;
-    }
+  /** Keep `offer` if it is newer than its holder's: whether it was. */
+  const keep = (offer: RelayOffer): boolean => {
     const held = offers.get(offer.holder);
     if (
-      held === undefined ||
-      (credentialExpiry(held.config) ?? 0) < (credentialExpiry(offer.config) ?? 0)
+      held !== undefined &&
+      (credentialExpiry(held.config) ?? 0) >= (credentialExpiry(offer.config) ?? 0)
     ) {
-      // One relay host name fills one attempt: the newest seal naming it wins.
+      return false;
+    }
+    // Before seating, one relay host name fills one attempt: the newest
+    // seal naming it wins. Once listed, a holder's offer is its own: a
+    // member naming another's relay host must not evict its login.
+    if (!isListed()) {
       const name = firstHost(offer);
       for (const [holder, other] of offers) {
         if (holder !== offer.holder && firstHost(other) === name) {
           offers.delete(holder);
         }
       }
-      offers.set(offer.holder, offer);
-      if (offers.size > MAX_KEPT_OFFERS) {
-        for (const worst of rankOffers(roomId, live()).slice(MAX_KEPT_OFFERS)) {
-          offers.delete(worst.holder);
-        }
-      }
-      tell();
     }
+    offers.set(offer.holder, offer);
+    if (offers.size > MAX_KEPT_OFFERS) {
+      for (const worst of rankOffers(roomId, live()).slice(MAX_KEPT_OFFERS)) {
+        offers.delete(worst.holder);
+      }
+    }
+    tell();
+    return true;
+  };
+
+  const listener = listenTopic(room, deps, async (message, nowMs) => {
+    if (message.kind !== "seal" || key === undefined || holders !== undefined) {
+      return false;
+    }
+    const offer = await openRelaySeal(message.seal, key, selfId, nowMs);
+    // The host may have listed the holders while it opened.
+    if (offer === undefined || closed || isListed()) {
+      return false;
+    }
+    keep(offer);
     return true;
   });
 
@@ -710,38 +781,60 @@ export function watchRelayOffers(
     publisher.close();
   };
 
-  void newKey().then((made) => {
-    if (closed || host !== undefined) {
-      return;
-    }
-    key = made;
-    const ask = (): void => {
-      publisher.publish({ kind: "ask", peerId: selfId, pub: made.pub });
-    };
-    ask();
-    heartbeat = setInterval(ask, TICKET_HEARTBEAT_MS);
-  });
+  const made = newKey().then(
+    (pair) => {
+      if (closed) {
+        return undefined;
+      }
+      key = pair;
+      if (holders === undefined) {
+        const ask = (): void => {
+          publisher.publish({ kind: "ask", peerId: selfId, pub: pair.pub });
+        };
+        ask();
+        heartbeat = setInterval(ask, TICKET_HEARTBEAT_MS);
+      }
+      return pair;
+    },
+    () => undefined,
+  );
 
   return {
+    pub: () => made.then((pair) => pair?.pub ?? null),
     ranked() {
-      return host === undefined ? rankOffers(roomId, live()) : [];
+      return rankOffers(roomId, live());
     },
-    hostLogin() {
-      return host ?? undefined;
-    },
-    fromHost(login) {
+    listed(list) {
       if (closed) {
         return;
       }
-      if (host === undefined) {
+      if (holders === undefined) {
         // Nothing from the Nostr relays is wanted any more.
         stopAsking();
         listener.close();
-        offers.clear();
       }
-      host = login;
+      holders = new Set(list);
+      for (const holder of [...offers.keys()]) {
+        if (!holders.has(holder)) {
+          offers.delete(holder);
+        }
+      }
       tell();
     },
+    fromMember(from, text) {
+      const seal = sealFromText(text);
+      if (closed || key === undefined || holders?.has(from) !== true || seal === undefined) {
+        return;
+      }
+      void openRelaySeal(seal, key, selfId, deps.now()).then((offer) => {
+        // Another holder's login, or `from` left the list while it opened.
+        if (offer?.holder === from && !closed && holders?.has(from) === true) {
+          vouched.add(offer);
+          keep(offer);
+        }
+      });
+    },
+    vouched: (offer) => vouched.has(offer),
     onOffer(handler) {
       handlers.add(handler);
       return () => {
@@ -754,7 +847,6 @@ export function watchRelayOffers(
       listener.close();
       offers.clear();
       key = undefined;
-      host = undefined;
       handlers.clear();
     },
   };

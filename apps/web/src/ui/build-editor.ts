@@ -5,8 +5,6 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   PROFESSIONS,
   accessibleAttributeIds,
-  ALL_OFFHANDS,
-  ALL_WEAPONS,
   ARMOR_SLOTS,
   WEAPON_SETS,
   allowsOffhand,
@@ -34,15 +32,6 @@ import {
   type WeaponSetIndex,
 } from "@vibewars/game-core";
 
-import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
-import {
-  SKILL_ACTIONS,
-  actionForCode,
-  actionLabel,
-  codeLabel,
-  isShortcut,
-} from "../input/keymap.js";
-import { loadKeymap } from "../input/keymap-preference.js";
 import { NoWebGlError } from "../render/arena-viewport.js";
 import {
   exportBuild,
@@ -55,6 +44,9 @@ import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schem
 import { decodeTemplate, missingSkillsNote } from "../storage/gw1-template.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { noWebGlNotice } from "./arena-notice.js";
+import { eliteNotice, equipOnBar } from "./build-drop.js";
+import { mountBuildPicker, type BuildPicker } from "./build-picker.js";
+import { commitGear } from "./gear-library-view.js";
 import { characterRanks } from "./character-ranks.js";
 import {
   canEquipOffhand,
@@ -62,12 +54,10 @@ import {
   clearArmorUpgrades,
   applyGearDrop,
   decodeGearDrag,
-  droppedModNotes,
   encodeGearDrag,
   headgearChoices,
   setHeadgearAttribute,
   setOffhand,
-  setWeapon,
   summariseGear,
   type GearDragSource,
   type GearDropTarget,
@@ -93,14 +83,12 @@ import {
   screenBar,
   shareLine,
   syncList,
-  TAKES_TYPING,
   toast,
   type ChipProblem,
   type InlineConfirm,
 } from "./kit.js";
 import { mountPaperDoll, type PaperDoll } from "./paper-doll.js";
 import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
-import { mountSkillLibrary, type LibraryBody } from "./skill-library-view.js";
 
 /**
  * The character/build editor (brief §17).
@@ -465,44 +453,12 @@ function withArticle(name: string): string {
   return /^[aeiou]/.test(name) ? `an ${name}` : `a ${name}`;
 }
 
-/**
- * The slot of the elite that equipping `skillId` into `slot` pushes off
- * the bar (#459), or -1. Only one elite per bar, and the new one wins:
- * the one already in `slot` is simply replaced, and an elite moving
- * between slots displaces nothing.
- */
-export function displacedEliteSlot(
-  character: StoredCharacter,
-  slot: number,
-  skillId: string | null,
-): number {
-  if (skillId === null || getSkill(skillId)?.elite !== true) {
-    return -1;
-  }
-  return character.skillBar.findIndex(
-    (id, index) => index !== slot && id !== null && id !== skillId && getSkill(id)?.elite === true,
-  );
-}
-
 export function setSkill(
   character: StoredCharacter,
   slot: number,
   skillId: string | null,
 ): StoredCharacter {
-  const skillBar = [...character.skillBar];
-  // Equipping a skill already on the bar moves it rather than duplicating
-  // it, which is what a player dragging a skill onto a new slot means.
-  if (skillId !== null) {
-    const existing = skillBar.indexOf(skillId);
-    if (existing >= 0) {
-      skillBar[existing] = null;
-    }
-  }
-  const displaced = displacedEliteSlot(character, slot, skillId);
-  if (displaced >= 0) {
-    skillBar[displaced] = null;
-  }
-  skillBar[slot] = skillId;
+  const { skillBar } = equipOnBar(character.skillBar, slot, skillId);
   return { ...character, skillBar, updatedAt: Date.now() };
 }
 
@@ -517,97 +473,11 @@ export interface SkillChange {
  * elite's place (#459); `undefined` when nothing needs saying.
  */
 export function equipSkill(character: StoredCharacter, slot: number, skillId: string): SkillChange {
-  const displaced = character.skillBar[displacedEliteSlot(character, slot, skillId)];
-  const next = setSkill(character, slot, skillId);
-  if (displaced === undefined || displaced === null) {
-    return { character: next, notice: undefined };
-  }
-  const name = (id: string): string => getSkill(id)?.name ?? id;
+  const { skillBar, displaced } = equipOnBar(character.skillBar, slot, skillId);
   return {
-    character: next,
-    notice: `${name(skillId)} replaced ${name(displaced)}: only one elite skill per bar.`,
+    character: { ...character, skillBar, updatedAt: Date.now() },
+    notice: eliteNotice(skillId, displaced),
   };
-}
-
-/**
- * Exchange two bar slots.
- *
- * Distinct from `setSkill`, which *moves* a skill and clears wherever it
- * came from — correct when equipping from the library, but it would
- * silently delete a skill when a player drags one slot onto another to
- * reorder their bar.
- */
-export function swapSkillSlots(character: StoredCharacter, a: number, b: number): StoredCharacter {
-  if (a === b) {
-    return character;
-  }
-  const skillBar = [...character.skillBar];
-  const first = skillBar[a] ?? null;
-  const second = skillBar[b] ?? null;
-  skillBar[a] = second;
-  skillBar[b] = first;
-  return { ...character, skillBar, updatedAt: Date.now() };
-}
-
-/** Where a drag started: a library entry, or an existing bar slot. */
-export type SkillDragSource =
-  | { readonly from: "library"; readonly skillId: string }
-  | { readonly from: "slot"; readonly slot: number };
-
-/** Serialised onto the drag event; parsed back on drop. */
-export function encodeDragSource(source: SkillDragSource): string {
-  return source.from === "library" ? `library:${source.skillId}` : `slot:${String(source.slot)}`;
-}
-
-/**
- * Parse a drag payload.
- *
- * Returns `undefined` for anything unrecognised: a drop can carry text
- * dragged from anywhere on the desktop, and that must do nothing rather
- * than throw or equip something nonsensical.
- */
-export function decodeDragSource(raw: string): SkillDragSource | undefined {
-  const [kind, value] = raw.split(":");
-  if (kind === "library" && value !== undefined && value !== "") {
-    return { from: "library", skillId: value };
-  }
-  // `value !== ""` matters: `Number("")` is 0, so a bare "slot:" would
-  // otherwise decode as a valid drag from slot 0.
-  if (kind === "slot" && value !== undefined && value !== "") {
-    const slot = Number(value);
-    if (Number.isInteger(slot) && slot >= 0 && slot < SKILL_BAR_SLOTS) {
-      return { from: "slot", slot };
-    }
-  }
-  return undefined;
-}
-
-/** Apply a completed drag onto `targetSlot`, with `equipSkill`'s notice. */
-export function applySkillDrop(
-  character: StoredCharacter,
-  source: SkillDragSource,
-  targetSlot: number,
-): SkillChange {
-  return source.from === "library"
-    ? equipSkill(character, targetSlot, source.skillId)
-    : { character: swapSkillSlots(character, source.slot, targetSlot), notice: undefined };
-}
-
-/**
- * Where an equip from the library goes (#564): the picked slot, whatever
- * is in it, else the first empty one. A full bar with none picked has no
- * place for it: the player picks the slot to give up, nothing is
- * overwritten silently.
- */
-export function equipTarget(
-  skillBar: readonly (string | null)[],
-  selected: number | undefined,
-): { readonly slot: number; readonly replaces: boolean } | undefined {
-  if (selected !== undefined) {
-    return { slot: selected, replaces: (skillBar[selected] ?? null) !== null };
-  }
-  const empty = skillBar.indexOf(null);
-  return empty === -1 ? undefined : { slot: empty, replaces: false };
 }
 
 /** `value` as JSON with its keys sorted, so two equal builds compare equal. */
@@ -826,38 +696,11 @@ function showCause(scope: ParentNode, cause: ProblemCause): void {
 /* -------------------------------------------------------------------------- */
 
 /** What every region of the editor shares. */
-interface EditorContext {
+interface EditorContext extends SkillBarHost, GearHost, ProfessionsHost {
   /** The character as it stands, the name typed so far included. */
   readonly current: () => StoredCharacter;
   /** Make `next` the character, and have every region show it. */
   readonly commit: (next: StoredCharacter) => void;
-  /** `commit` new professions, toasting what they dropped with an Undo (#569). */
-  readonly changeProfessions: (primary: ProfessionId, secondary: ProfessionId | undefined) => void;
-  /** `commit` a change to the bar, showing its notice until the next change (#459). */
-  readonly equip: (change: SkillChange) => void;
-  /** What the last change has to tell the player. */
-  readonly notice: () => string | undefined;
-  /** One tooltip for the whole editor. */
-  readonly tooltip: SkillTooltip;
-  /**
-   * Show the tooltip at `anchor`, with what `describe` says now; a change
-   * to the character redraws it in place from `describe` again (#1932).
-   */
-  readonly showTip: (anchor: HTMLElement, describe: () => SkillDescription | undefined) => void;
-  /** The bar slot picked for the next equip (#564), if any. */
-  readonly selected: () => number | undefined;
-  /** Pick a bar slot, or none; every region shows it. */
-  readonly select: (slot: number | undefined) => void;
-  /** The weapon set the gear panel shows and edits (#489); screen state, never stored. */
-  readonly weaponSet: () => WeaponSetIndex;
-  /** Show and edit another weapon set; every region shows it. */
-  readonly selectWeaponSet: (set: WeaponSetIndex) => void;
-  /** Open a library tab, scrolled to one of its groups if given (#570). */
-  readonly showLibrary: (tab: LibraryTab, group?: string) => void;
-  /** Equip `skillId` to `slot`, as `equip` does; the pick, used, is let go. */
-  readonly equipTo: (skillId: string, slot: number) => void;
-  /** A bar slot's key, from the player's keymap, as the arena's bar labels it. */
-  readonly slotLabel: (slot: number) => string;
 }
 
 /** A part of the editor, built once, that shows whatever character it is given. */
@@ -879,6 +722,24 @@ export interface BuildHost {
 export interface ProfessionsHost {
   readonly current: () => StoredCharacter;
   readonly changeProfessions: (primary: ProfessionId, secondary: ProfessionId | undefined) => void;
+}
+
+/**
+ * The skill bar's host (#2565): the Character Builder, or a Team Builder
+ * member opened in place. Its slots are the build picker's to drag from
+ * and drop on, and pick the slot its Equip goes to.
+ */
+export interface SkillBarHost extends BuildHost {
+  readonly tooltip: SkillTooltip;
+  /** What the last change to the bar has to tell the player (#459). */
+  readonly notice: () => string | undefined;
+  /** The bar slot picked for the next equip (#564), if any. */
+  readonly selected: () => number | undefined;
+  /** Pick a bar slot, or none; every region shows it. */
+  readonly select: (slot: number | undefined) => void;
+  readonly picker: Pick<BuildPicker, "showLibrary" | "showTip" | "slotLabel">;
+  /** Make `cell` slot `slot` of this bar, for the picker's drags. */
+  readonly bindSlot: (cell: HTMLElement, slot: number) => void;
 }
 
 /** The gear editor's host: the weapon set shown, and the gear library to open. */
@@ -964,36 +825,15 @@ export function mountBuildEditor(
     for (const region of regions) {
       region.update(character);
     }
+    picker.update();
     training?.setBuild(character);
   };
 
   let notice: string | undefined;
   let selected: number | undefined;
-  let weaponSet: WeaponSetIndex = 0;
-  // Read once per open, as the arena's bar does; labels by code until the
-  // browser says what the layout is.
-  const keymap = loadKeymap();
-  let keyLabel: KeyLabeller = codeLabel;
-  let disposed = false;
-  void loadLayoutLabeller().then((label) => {
-    if (label !== undefined && !disposed) {
-      keyLabel = label;
-      update();
-    }
-  });
 
-  // The Undo of the last profession change (#569): one step, and gone
-  // with the next edit of any kind.
-  let dismissUndo: (() => void) | undefined;
-  const dropUndo = (): void => {
-    dismissUndo?.();
-    dismissUndo = undefined;
-  };
-
-  // What the tooltip last showed a description of, to redraw on a change.
-  let tipped: TippedSkill | undefined;
   const commit = (next: StoredCharacter, said: string | undefined): void => {
-    dropUndo();
+    picker.dropUndo();
     // Another profession is another bar to build: the pick goes.
     if (
       next.primaryProfession !== character.primaryProfession ||
@@ -1004,38 +844,20 @@ export function mountBuildEditor(
     character = next;
     notice = said;
     update();
-    tipped = followTip(tooltip, tipped);
     training?.refocus();
   };
 
-  const context: EditorContext = {
+  // The libraries, in the right column once the rest is mounted.
+  const picker = mountBuildPicker<StoredCharacter>(layout, {
     current: () => character,
     commit: (next) => {
       commit(next, undefined);
     },
-    changeProfessions: (primary, secondary) => {
-      const before = character;
-      const after = setProfessions(before, primary, secondary);
-      commit(after, undefined);
-      const removed = describeProfessionChange(before, after);
-      if (removed.length > 0) {
-        dismissUndo = toast(`Removed: ${removed.join(", ")}`, {
-          undo: () => {
-            commit(before, undefined);
-          },
-        });
-      }
-    },
-    equip: (change) => {
-      commit(change.character, change.notice);
-    },
-    notice: () => notice,
-    tooltip,
-    showTip: (anchor, describe) => {
-      const described = describe();
-      if (described !== undefined) {
-        tipped = { anchor, describe };
-        tooltip.show(anchor, described);
+    bars: () => [character],
+    shown: () => 0,
+    commitBars: ([next], said) => {
+      if (next !== undefined) {
+        commit({ ...next, updatedAt: Date.now() }, said);
       }
     },
     selected: () => selected,
@@ -1043,22 +865,43 @@ export function mountBuildEditor(
       selected = slot;
       update();
     },
-    weaponSet: () => weaponSet,
-    selectWeaponSet: (set) => {
-      weaponSet = set;
+    refresh: update,
+    tooltip,
+    keysBlocked: () => bar.isOpen(),
+  });
+  const context: EditorContext = {
+    current: () => character,
+    commit: (next) => {
+      commit(next, undefined);
+    },
+    changeProfessions: (primary, secondary) => {
+      picker.changeProfessions(context, primary, secondary);
+    },
+    notice: () => notice,
+    tooltip,
+    selected: () => selected,
+    select: (slot) => {
+      selected = slot;
       update();
     },
+    picker: {
+      showLibrary: (tab, group) => {
+        picker.showLibrary(tab, group);
+      },
+      showTip: (anchor, describe) => {
+        picker.showTip(anchor, describe);
+      },
+      slotLabel: (slot) => picker.slotLabel(slot),
+    },
+    bindSlot: (cell, slot) => {
+      picker.bindSlot(cell, () => ({ member: 0, slot }));
+    },
+    weaponSet: () => picker.weaponSet(),
+    selectWeaponSet: (set) => {
+      picker.selectWeaponSet(set);
+    },
     showLibrary: (tab, group) => {
-      library.show(tab, group);
-    },
-    equipTo: (skillId, slot) => {
-      selected = undefined;
-      const change = equipSkill(character, slot, skillId);
-      commit(change.character, change.notice);
-    },
-    slotLabel: (slot) => {
-      const action = SKILL_ACTIONS[slot];
-      return action === undefined ? "" : actionLabel(keymap, action, keyLabel);
+      picker.showLibrary(tab, group);
     },
   };
 
@@ -1067,7 +910,7 @@ export function mountBuildEditor(
   const bar = mountCommandBar(context, paperDoll, initial, callbacks, (name) => {
     // Typing changes nothing another region shows but the bar's own
     // marker: the arena hears about the new name directly.
-    dropUndo();
+    picker.dropUndo();
     character = { ...character, name };
     training?.setDisplayName(name);
     bar.update(character);
@@ -1083,44 +926,16 @@ export function mountBuildEditor(
   // Under the arena, or with none at the top of the middle column (#571).
   const stats = mountStats();
   (training?.statsSlot ?? panel).appendChild(stats.element);
-  const library = mountLibrary(layout, context);
+  // After the editor: the right column.
+  layout.appendChild(picker.element);
   regions.push(
     bar,
     stats,
     mountAttributes(panel, context),
     mountSkillBar(panel, context),
     mountGear(panel, context, paperDoll),
-    library,
   );
   update();
-
-  // A skill key over a library skill, hovered or focused, equips it to
-  // that key's slot (#564). Not while typing, nor while the arena has the
-  // keyboard, nor while the bar asks something. Esc is the bar's (#578).
-  const onKeyDown = (event: KeyboardEvent): void => {
-    if (event.defaultPrevented || event.repeat) {
-      return;
-    }
-    const target = event.target;
-    if (
-      isShortcut(event) ||
-      bar.isOpen() ||
-      (target instanceof Element && target.closest(`${TAKES_TYPING}, .training`) !== null)
-    ) {
-      return;
-    }
-    const action = actionForCode(keymap, event.code);
-    const slot = action === undefined ? -1 : SKILL_ACTIONS.indexOf(action);
-    const focused = document.activeElement?.closest<HTMLElement>(".skill-box");
-    const box = focused ?? layout.querySelector<HTMLElement>(".skill-box:hover");
-    const skillId = box?.dataset.skillId;
-    if (slot < 0 || skillId === undefined) {
-      return;
-    }
-    event.preventDefault();
-    context.equipTo(skillId, slot);
-  };
-  document.addEventListener("keydown", onKeyDown);
 
   // A build pasted anywhere but a field imports it (#572), as Load GW1
   // code does (#2004). Other text is ignored; a broken build says why.
@@ -1150,14 +965,11 @@ export function mountBuildEditor(
       bar.leave(then);
     },
     dispose() {
-      disposed = true;
-      dropUndo();
-      document.removeEventListener("keydown", onKeyDown);
       stopPaste();
       bar.dispose();
       tooltip.dispose();
       paperDoll.close();
-      library.dispose();
+      picker.destroy();
       training?.dispose();
     },
   };
@@ -1775,7 +1587,8 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
 
 /* --- skill bar ------------------------------------------------------------- */
 
-function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
+/** The bar of eight slots (#564): pick one, drag between them, Equip or drop onto one. */
+export function mountSkillBar(panel: HTMLElement, context: SkillBarHost): Region {
   const { tooltip } = context;
   // Boxes rather than dropdowns: a bar is a spatial thing, and ordering
   // it by picking from eight identical `<select>`s never matched how
@@ -1802,7 +1615,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
     cell.setAttribute("role", "button");
     const toggle = (): void => {
       context.select(context.selected() === slot ? undefined : slot);
-      context.showLibrary("skills");
+      context.picker.showLibrary("skills");
     };
     cell.addEventListener("click", toggle);
     cell.addEventListener("keydown", (event: KeyboardEvent) => {
@@ -1812,31 +1625,12 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
       }
     });
     cell.dataset.cause = `slot-${String(slot)}`;
-    cell.addEventListener("dragstart", (event: DragEvent) => {
-      event.dataTransfer?.setData("text/plain", encodeDragSource({ from: "slot", slot }));
-    });
+    context.bindSlot(cell, slot);
     cell.addEventListener("mouseenter", () => {
-      context.showTip(cell, () => described.get(slot));
+      context.picker.showTip(cell, () => described.get(slot));
     });
     cell.addEventListener("mouseleave", () => {
       tooltip.hide();
-    });
-    cell.addEventListener("dragover", (event: DragEvent) => {
-      event.preventDefault();
-      cell.classList.add("is-drop-target");
-    });
-    cell.addEventListener("dragleave", () => {
-      cell.classList.remove("is-drop-target");
-    });
-    cell.addEventListener("drop", (event: DragEvent) => {
-      event.preventDefault();
-      cell.classList.remove("is-drop-target");
-      const source = decodeDragSource(event.dataTransfer?.getData("text/plain") ?? "");
-      if (source === undefined) {
-        // Something unrelated was dragged in. Do nothing, loudly nowhere.
-        return;
-      }
-      context.equip(applySkillDrop(context.current(), source, slot));
     });
     return cell;
   };
@@ -1866,7 +1660,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
         } else {
           described.set(slot, description);
         }
-        const label = context.slotLabel(slot);
+        const label = context.picker.slotLabel(slot);
         const warning =
           skill === undefined ? undefined : weaponWarning(skill, carriedWeapons(character));
         const signature = `${label}|${skill === undefined ? "" : `${skill.id}|${description?.cost ?? ""}|${warning?.title ?? ""}`}`;
@@ -1910,118 +1704,9 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
   };
 }
 
-/* --- library (right column) ------------------------------------------------ */
-
-type LibraryTab = "skills" | "gear";
-
-interface LibraryRegion extends Region {
-  /** Open `tab`, scrolled to the group named `group` if given. */
-  show(tab: LibraryTab, group?: string): void;
-  dispose(): void;
-}
-
-function mountLibrary(layout: HTMLElement, context: EditorContext): LibraryRegion {
-  const library = h("aside", "skill-library");
-  layout.appendChild(library);
-
-  // Two libraries in one column rather than two columns: the panel is
-  // already the full height of the editor, and a second permanent column
-  // would squeeze the character sheet for something you only use while
-  // picking one kind of thing. Both are kept, built and up to date; only
-  // the open one is in the page, and each keeps its own scroll.
-  const skills = mountSkillLibrary(context);
-  const gear = mountGearLibrary(context);
-  const bodies: Readonly<Record<LibraryTab, LibraryBody>> = { skills, gear };
-  const scrolled: Record<LibraryTab, number> = { skills: 0, gear: 0 };
-  let active: LibraryTab = "skills";
-
-  const tabs = h("div", "library-tabs");
-  const open = (tab: LibraryTab): void => {
-    if (active === tab) {
-      return;
-    }
-    scrolled[active] = bodies[active].scroller.scrollTop;
-    for (const element of bodies[active].elements) {
-      element.remove();
-    }
-    active = tab;
-    library.append(...bodies[tab].elements);
-    bodies[tab].scroller.scrollTop = scrolled[tab];
-    for (const [other, otherButton] of tabButtons) {
-      otherButton.classList.toggle("is-active", other === tab);
-    }
-  };
-  const tabButtons = (["skills", "gear"] as const).map((tab) => {
-    const node = button(tab, "library-tab", () => {
-      if (active !== tab) {
-        open(tab);
-      }
-    });
-    node.classList.toggle("is-active", tab === active);
-    tabs.appendChild(node);
-    return [tab, node] as const;
-  });
-  library.append(tabs, ...bodies[active].elements);
-
-  // Dropping worn things back onto the library takes them off: a bar skill
-  // on the skills tab, gear on the gear tab. The gesture players reach for
-  // after dragging something out of a slot.
-  library.addEventListener("dragover", (event: DragEvent) => {
-    event.preventDefault();
-  });
-  library.addEventListener("drop", (event: DragEvent) => {
-    event.preventDefault();
-    const raw = event.dataTransfer?.getData("text/plain") ?? "";
-    if (active === "skills") {
-      const source = decodeDragSource(raw);
-      if (source?.from === "slot") {
-        context.commit(setSkill(context.current(), source.slot, null));
-      }
-      return;
-    }
-    const source = decodeGearDrag(raw);
-    if (source !== undefined) {
-      context.commit(applyGearDrop(context.current(), source, { kind: "library" }));
-    }
-  });
-
-  return {
-    update(character) {
-      skills.update(character);
-      gear.update(character);
-    },
-    dispose() {
-      skills.dispose();
-    },
-    show(tab, group) {
-      open(tab);
-      const heading = [...library.querySelectorAll<HTMLElement>(".skill-group")].find(
-        (node) => node.dataset.group === group,
-      );
-      if (heading !== undefined) {
-        const scroller = bodies[tab].scroller;
-        scroller.scrollTop +=
-          heading.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
-      }
-    },
-  };
-}
-
 /* -------------------------------------------------------------------------- */
 /* Gear                                                                        */
 /* -------------------------------------------------------------------------- */
-
-/**
- * `commit` a gear change, toasting each mod a new weapon or off-hand
- * could not keep (#2008); a change that drops none is silent.
- */
-function commitGear(context: BuildHost, next: StoredCharacter): void {
-  const notes = droppedModNotes(context.current(), next);
-  context.commit(next);
-  for (const note of notes) {
-    toast(note);
-  }
-}
 
 /** A labelled `<select>`, the shape this file already uses for professions, kept and refilled. */
 function mountSelectRow(onChange: (value: string) => void): {
@@ -2479,100 +2164,4 @@ function statLine(label: string, value: string): HTMLElement {
   row.appendChild(h("span", "gear-stat-label", label));
   row.appendChild(h("span", "gear-stat-value", value));
   return row;
-}
-
-/**
- * The gear library: everything you could equip, grouped and draggable.
- *
- * Deliberately the same box-and-drag vocabulary as the skill library —
- * same markup, same gestures. A player who has learned to build a skill
- * bar already knows how to use this.
- */
-export function mountGearLibrary(
-  context: Pick<GearHost, "current" | "commit" | "weaponSet">,
-): LibraryBody {
-  const { current } = context;
-  const host = h("div", "skill-groups");
-
-  function box(options: {
-    readonly name: string;
-    readonly icon?: GearIcon | undefined;
-    readonly detail: string;
-    readonly drag: GearDragSource;
-    readonly onClick: () => void;
-  }): HTMLElement {
-    const node = h("div", "skill-box gear-box");
-    node.draggable = true;
-    const name = h("span", "skill-box-name");
-    const icon = gearIconImg(options.icon);
-    if (icon !== undefined) {
-      name.appendChild(icon);
-    }
-    name.appendChild(document.createTextNode(options.name));
-    node.appendChild(name);
-    node.appendChild(h("span", "skill-box-cost", options.detail));
-    node.addEventListener("dragstart", (event: DragEvent) => {
-      event.dataTransfer?.setData("text/plain", encodeGearDrag(options.drag));
-    });
-    // Click-to-equip alongside dragging, as the skill library's Equip:
-    // dragging is the nicer gesture and a poor only option on a trackpad.
-    node.addEventListener("click", options.onClick);
-    return node;
-  }
-
-  function group(name: string): HTMLElement {
-    const section = h("div", "skill-group");
-    section.dataset.group = name;
-    const header = h("div", "skill-group-header");
-    header.appendChild(h("span", "skill-group-name", name));
-    section.appendChild(header);
-    host.appendChild(section);
-    return section;
-  }
-
-  // --- weapons ---------------------------------------------------------
-  const weapons = group("weapons");
-  const weaponBoxes = ALL_WEAPONS.map((weapon) => {
-    const node = box({
-      name: weapon.name,
-      icon: weaponIcon(weapon.id),
-      detail: `${String(weapon.damageMin)}–${String(weapon.damageMax)} · ${weapon.attackIntervalSeconds.toFixed(2)}s`,
-      drag: { from: "weapon-library", weaponId: weapon.id },
-      onClick: () => {
-        commitGear(context, setWeapon(current(), context.weaponSet(), weapon.id));
-      },
-    });
-    weapons.appendChild(node);
-    return { id: weapon.id, node };
-  });
-
-  // --- off-hands -------------------------------------------------------
-  const offhands = group("off-hands");
-  const offhandBoxes = ALL_OFFHANDS.map((offhand) => {
-    const node = box({
-      name: offhand.name,
-      icon: offhandIcon(offhand.id),
-      detail: `+${String(offhand.baseBonus + offhand.metRequirementBonus)} ${offhand.kind}`,
-      drag: { from: "offhand-library", offhandId: offhand.id },
-      onClick: () => {
-        commitGear(context, setOffhand(current(), context.weaponSet(), offhand.id));
-      },
-    });
-    offhands.appendChild(node);
-    return { id: offhand.id, node };
-  });
-
-  return {
-    elements: [host],
-    scroller: host,
-    update(character) {
-      const held = character.equipment.weaponSets[context.weaponSet()];
-      for (const { id, node } of weaponBoxes) {
-        node.classList.toggle("is-equipped", id === held?.mainHand.weaponId);
-      }
-      for (const { id, node } of offhandBoxes) {
-        node.classList.toggle("is-equipped", id === held?.offHand?.offhandId);
-      }
-    },
-  };
 }

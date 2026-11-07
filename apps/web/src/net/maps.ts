@@ -1,18 +1,23 @@
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import { validateMapData, type MapData, type Objective } from "@vibewars/game-maps/schema";
-import arenaAlpha from "@vibewars/game-maps/maps/arena-alpha/map.json" with { type: "json" };
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
 import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" with { type: "json" };
-import arenaOpen from "@vibewars/game-maps/maps/arena-open/map.json" with { type: "json" };
+import ashenCourtyard from "@vibewars/game-maps/maps/ashen-courtyard/map.json" with { type: "json" };
+import elonianPlateau from "@vibewars/game-maps/maps/elonian-plateau/map.json" with { type: "json" };
+import frozenCrossing from "@vibewars/game-maps/maps/frozen-crossing/map.json" with { type: "json" };
+import mossVale from "@vibewars/game-maps/maps/moss-vale/map.json" with { type: "json" };
+import sandstoneSteps from "@vibewars/game-maps/maps/sandstone-steps/map.json" with { type: "json" };
+import canthanTerraces from "@vibewars/game-maps/maps/canthan-terraces/map.json" with { type: "json" };
+import sunkenBastion from "@vibewars/game-maps/maps/sunken-bastion/map.json" with { type: "json" };
+import shiverpeakPass from "@vibewars/game-maps/maps/shiverpeak-pass/map.json" with { type: "json" };
 import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
-import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
-import relicTemples from "@vibewars/game-maps/maps/relic-temples/map.json" with { type: "json" };
+import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
-import hillCourtyard from "@vibewars/game-maps/maps/hill-courtyard/map.json" with { type: "json" };
-import forgottenShrines from "@vibewars/game-maps/maps/forgotten-shrines/map.json" with { type: "json" };
+import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
+import theCourtyard from "@vibewars/game-maps/maps/the-courtyard/map.json" with { type: "json" };
 import type {
   BaseGuard,
   FlagField,
@@ -35,29 +40,36 @@ import { TRAINING_MAPS } from "../training/maps.js";
  * `training/maps.ts` does for the training arenas.
  */
 export const ARENA_MAPS: readonly MapData[] = [
-  // The small four, then #444's, smallest first.
-  arenaAlpha,
-  arenaOpen,
+  // Kill Count's and Priest Annihilation's, then the Annihilation arenas, smallest first.
   arenaPillars,
   arenaSplit,
-  arenaRing,
   arenaCrossroads,
   arenaCanyon,
   arenaLongHall,
+  // The medium arenas (#2604, #2605).
+  sandstoneSteps,
+  frozenCrossing,
+  ashenCourtyard,
+  mossVale,
+  // The large arenas (#2607, #2609).
+  canthanTerraces,
+  sunkenBastion,
+  shiverpeakPass,
+  elonianPlateau,
   // The Guild Battle's (#1222).
   guildHallIsle,
-  // The Relic Run's (#1374).
-  relicTemples,
-  // King of the Hill's (#1377).
-  hillCourtyard,
+  // The Relic Run's (#1374, #2551).
+  brokenTower,
+  // King of the Hill's (#1377, #2552).
+  theCourtyard,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
   hallOfHeroes,
-  // Capture Points' (#1378).
-  forgottenShrines,
+  // Capture Points' (#1378, #2551).
+  scarredEarth,
 ].map((raw) => validateMapData(raw));
 
 /** The arena a new lobby starts on, the server's default before (#403). */
-export const DEFAULT_ARENA_ID = "arena-alpha";
+export const DEFAULT_ARENA_ID = "arena-crossroads";
 
 /** The lobby's map ids, the default first, as `createLobbyHost` wants them. */
 export function arenaIds(): string[] {
@@ -153,9 +165,9 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
  * of them: a side that wins moves on to the next, up to the Hall.
  */
 export const ASCENT_PROGRESSION: readonly string[] = [
-  "relic-temples",
-  "forgotten-shrines",
-  "hill-courtyard",
+  "broken-tower",
+  "scarred-earth",
+  "the-courtyard",
   "hall-of-heroes",
 ];
 

@@ -1,16 +1,17 @@
 import { TICKET_HEARTBEAT_MS } from "@vibewars/game-protocol";
-import { RELAY_ADMIT_MS } from "@vibewars/game-session";
+import { RELAY_ADMIT_MS, type TicketKey } from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { OpenRelaySocket } from "./nostr-relays.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
+import { eventId, type NostrEvent, type OpenRelaySocket } from "./nostr-relays.js";
 import {
-  LOGIN_REMINT_LEFT_MS,
   MAX_OFFER_CONTENT_BYTES,
   MAX_KEPT_OFFERS,
   MAX_OFFER_OPENS_PER_SECOND,
   MAX_RELAYED_PER_HOLDER,
   OFFER_OPEN_INTERVAL_MS,
   RELAY_OFFER_KIND,
+  REMINT_EVERY_MS,
   holdRelay,
   openEnvelope,
   sealEnvelope,
@@ -21,7 +22,14 @@ import {
   type RelayOfferRoom,
   type TopicMessage,
 } from "./relay-offer.js";
-import { newJoinerKey, rankOffers, sealRelayOffer, type JoinerKey } from "./relay-seal.js";
+import {
+  newJoinerKey,
+  openRelaySeal,
+  rankOffers,
+  sealFromText,
+  sealRelayOffer,
+  type JoinerKey,
+} from "./relay-seal.js";
 import { newTicketKey } from "./ticket-key.js";
 import {
   TURN_CREDENTIAL_TTL_MS,
@@ -29,6 +37,10 @@ import {
   mintTurnCredential,
   type SharedRelay,
 } from "./turn-config.js";
+
+/** `peerIds` seated, each with key `pub`. */
+const seatedAs = (peerIds: readonly string[], pub: string) =>
+  peerIds.map((peerId) => ({ peerId, pub }));
 
 /** A lobby's relay topic and key (#2091), as `deriveLobbyRoom` would give them. */
 const ROOM: RelayOfferRoom = { topic: "ab".repeat(32), key: new Uint8Array(32).fill(7) };
@@ -118,17 +130,19 @@ const hex = (bytes: number): string =>
   ).join("");
 
 /**
- * An event on `ROOM`'s topic that no key opens, by a fresh author or one
- * it claims: what anyone watching can send, since no signature is checked.
+ * An event on `ROOM`'s topic whose id is its hash, with `content` that no
+ * key opens unless given, by a fresh author or one it claims: what anyone
+ * watching can send, since no signature is checked before it opens.
  */
-function garbage(pubkey = hex(32)): object {
-  return {
-    id: hex(32),
+function garbage(pubkey = hex(32), content = btoa("x".repeat(64))): NostrEvent {
+  const unsigned = {
     pubkey,
+    created_at: Math.floor(NOW / 1000),
     kind: RELAY_OFFER_KIND,
     tags: [["t", ROOM.topic]],
-    content: btoa("x".repeat(64)),
+    content,
   };
+  return { ...unsigned, id: bytesToHex(eventId(unsigned)), sig: hex(64) };
 }
 
 /** `message` on `ROOM`'s topic under `key`, by a fresh author or one it claims. */
@@ -136,8 +150,8 @@ async function topicEvent(
   message: TopicMessage,
   key = ROOM.key,
   pubkey = hex(32),
-): Promise<object> {
-  return { ...garbage(pubkey), content: await sealEnvelope(message, key, iv()) };
+): Promise<NostrEvent> {
+  return garbage(pubkey, await sealEnvelope(message, key, iv()));
 }
 
 /** Any JSON under the lobby key, as `sealEnvelope` lays it out: what a member could send. */
@@ -500,12 +514,15 @@ describe("a member's relay, held for its lobby (#2527)", () => {
     hold.admit({ peerId: "peer-3", pub });
     await settle();
     expect(sockets.sent).toHaveLength(MAX_RELAYED_PER_HOLDER + 1);
-    // A seated member's login is never refused.
-    expect(hold.loginFor("one-too-many")?.username).toMatch(/:one-too-many$/);
+    // A seated member.s login is never refused.
+    const minted: string[] = [];
+    hold.onSeal((to) => minted.push(to));
+    hold.seated(seatedAs(["peer-0", "peer-1", "one-too-many"], pub));
+    await settle();
+    // Seals finish in any order (#2610).
+    expect([...minted].sort()).toEqual(["one-too-many", "peer-0", "peer-1"]);
 
-    // Seated: peer-0, peer-1, and the member it minted a login for. Once
-    // the admits expire, only the unseated ids free their slots.
-    hold.seated(new Set(["peer-0", "peer-1", "one-too-many"]));
+    // Once the admits expire, only the unseated ids free their slots.
     now += RELAY_ADMIT_MS;
     for (let i = 0; i < MAX_RELAYED_PER_HOLDER - 3; i += 1) {
       hold.admit({ peerId: `late-${String(i)}`, pub });
@@ -517,7 +534,7 @@ describe("a member's relay, held for its lobby (#2527)", () => {
     expect(sockets.sent).toHaveLength(2 * MAX_RELAYED_PER_HOLDER - 2);
 
     // Members that leave free their slots, a login's too.
-    hold.seated(new Set(["peer-0"]));
+    hold.seated(seatedAs(["peer-0"], pub));
     now += RELAY_ADMIT_MS;
     for (let i = 0; i < MAX_RELAYED_PER_HOLDER; i += 1) {
       hold.admit({ peerId: `last-${String(i)}`, pub });
@@ -527,10 +544,12 @@ describe("a member's relay, held for its lobby (#2527)", () => {
     hold.close();
   });
 
-  it("tells a seated member one login until it runs low, then a fresh one", () => {
+  it("seals each seated member a login at once, again every 50 min, and for a new relay (#2529)", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
     const relay = fakeRelay();
     let now = NOW;
     const opts = options(SHARED);
+    const key = await newJoinerKey();
     const hold = holdRelay(
       ROOM,
       opts.source,
@@ -538,27 +557,105 @@ describe("a member's relay, held for its lobby (#2527)", () => {
       () => "Ann",
       deps(relay.openSocket, () => now),
     );
-    const first = hold.loginFor(JOINER);
-    expect(first?.urls).toEqual(SHARED.urls);
-    expect(first?.username).toBe(`${String((NOW + HOUR) / 1000)}:${JOINER}`);
-    expect(Object.keys(first ?? {})).toEqual(["urls", "username", "credential"]);
-    expect(hold.loginFor("someone-else")?.username).not.toBe(first?.username);
+    const sealed: [string, string][] = [];
+    hold.onSeal((to, seal) => sealed.push([to, seal]));
+    /** Each login sealed so far, opened as its member. */
+    const logins = () =>
+      Promise.all(
+        sealed.map(async ([to, text]) => {
+          const seal = sealFromText(text);
+          return seal === undefined ? undefined : (await openRelaySeal(seal, key, to, now))?.config;
+        }),
+      );
 
-    now = NOW + HOUR - LOGIN_REMINT_LEFT_MS;
-    expect(hold.loginFor(JOINER)).toBe(first);
-    now += 1000;
-    const second = hold.loginFor(JOINER);
-    expect(second?.username).toBe(`${String(now / 1000 + HOUR / 1000)}:${JOINER}`);
-    expect(hold.loginFor(JOINER)).toBe(second);
+    // Never for itself.
+    const seated = [
+      { peerId: HOLDER, pub: key.pub },
+      { peerId: JOINER, pub: key.pub },
+    ];
+    hold.seated(seated);
+    await settle();
+    expect((await logins()).map((login) => login?.username)).toEqual([
+      `${String((NOW + HOUR) / 1000)}:${JOINER}`,
+    ]);
+    hold.seated(seated);
+    await settle();
+    expect(sealed).toHaveLength(1);
 
-    // Another relay saved: the logins for the first are dropped.
+    now += REMINT_EVERY_MS;
+    vi.advanceTimersByTime(REMINT_EVERY_MS);
+    await settle();
+    expect((await logins())[1]?.username).toBe(`${String((now + HOUR) / 1000)}:${JOINER}`);
+
+    // Back with a new key: a login at once, sealed to that key.
+    const back = await newJoinerKey();
+    hold.seated([{ peerId: JOINER, pub: back.pub }]);
+    await settle();
+    expect(sealed).toHaveLength(3);
+    const third = sealFromText(sealed[2]?.[1] ?? "");
+    expect(
+      third === undefined ? undefined : await openRelaySeal(third, back, JOINER, now),
+    ).toBeDefined();
+
+    // Another relay saved: a login for it at once; none while none is shared.
     opts.set(OTHER);
-    expect(hold.loginFor(JOINER)?.urls).toEqual(OTHER.urls);
+    await settle();
+    expect(sealed).toHaveLength(4);
     opts.set(undefined);
-    expect(hold.loginFor(JOINER)).toBeNull();
+    vi.advanceTimersByTime(REMINT_EVERY_MS);
+    await settle();
+    expect(sealed).toHaveLength(4);
     opts.set(SHARED);
+    await settle();
     hold.close();
-    expect(hold.loginFor(JOINER)).toBeNull();
+    vi.advanceTimersByTime(REMINT_EVERY_MS);
+    await settle();
+    expect(sealed).toHaveLength(5);
+  });
+
+  it("counts the players it holds a live login for, and says when that changes (#2531)", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    const relay = fakeRelay();
+    let now = NOW;
+    const opts = options(undefined);
+    const key = await newJoinerKey();
+    const hold = holdRelay(
+      ROOM,
+      opts.source,
+      HOLDER,
+      () => "Ann",
+      deps(relay.openSocket, () => now),
+    );
+    let told = 0;
+    hold.onChange(() => {
+      told += 1;
+    });
+    const member = { peerId: "member-peer-id", pub: key.pub };
+    // Not sharing: none, whoever sits.
+    hold.seated([{ peerId: HOLDER, pub: key.pub }, member]);
+    expect(hold.sharingWith()).toBe(0);
+    opts.set(SHARED);
+    expect(hold.sharingWith()).toBe(1);
+    told = 0;
+
+    // An admitted joiner counts until its admit ends, then it is told.
+    hold.admit({ peerId: JOINER, pub: key.pub });
+    expect(hold.sharingWith()).toBe(2);
+    expect(told).toBe(1);
+    await settle();
+    now += RELAY_ADMIT_MS;
+    vi.advanceTimersByTime(RELAY_ADMIT_MS);
+    expect(hold.sharingWith()).toBe(1);
+    expect(told).toBe(2);
+
+    // Seated, the same count tells nothing; one leaving tells.
+    hold.seated([member]);
+    expect(told).toBe(2);
+    hold.seated([]);
+    expect(hold.sharingWith()).toBe(0);
+    expect(told).toBe(3);
+    hold.close();
+    vi.useRealTimers();
   });
 });
 
@@ -577,7 +674,7 @@ describe("a joiner's relay offers (#2527)", () => {
     });
   }
 
-  it("asks at once and each heartbeat, until the host's login comes", async () => {
+  it("asks at once and each heartbeat, until the host lists the holders", async () => {
     vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
     const relay = fakeRelay();
     let now = NOW;
@@ -607,13 +704,11 @@ describe("a joiner's relay offers (#2527)", () => {
       [JOINER, key.pub],
     ]);
 
-    const login = mintTurnCredential(SHARED, JOINER, now, TURN_CREDENTIAL_TTL_MS);
-    offers.fromHost(login);
+    offers.listed([]);
     now += TICKET_HEARTBEAT_MS;
     vi.advanceTimersByTime(TICKET_HEARTBEAT_MS * 3);
     await settle();
     expect(heard).toHaveLength(2);
-    expect(offers.hostLogin()).toEqual(login);
     asks.close();
     offers.close();
   });
@@ -958,6 +1053,77 @@ describe("a joiner's relay offers (#2527)", () => {
     offers.close();
   });
 
+  // An invite holder's own seal for the joiner, put on the topic claiming
+  // the victim's key: either with its id left over its own key, or with the
+  // id recomputed over the victim's key and signed by its own.
+  it.each([
+    {
+      forgery: "an id over another key",
+      // Not its hash, so never opened (#2588).
+      opened: [],
+      forge: (event: NostrEvent, victim: string) => ({ ...event, pubkey: victim }),
+    },
+    {
+      forgery: "a signature by another key",
+      opened: ["mallory"],
+      forge: (event: NostrEvent, victim: string, signer: TicketKey) => {
+        const { created_at, kind, tags, content } = event;
+        const digest = eventId({ pubkey: victim, created_at, kind, tags, content });
+        return { ...event, pubkey: victim, id: bytesToHex(digest), sig: signer.sign(digest) };
+      },
+    },
+  ])(
+    "charges no holder for a seal that claims its key with $forgery (#2553)",
+    async ({ forge, opened }) => {
+      const relay = fakeRelay();
+      const aside = recording(fakeRelay());
+      const now = NOW;
+      const victim = newTicketKey();
+      const malloryKey = newTicketKey();
+      const key = await newJoinerKey();
+      const offers = watchRelayOffers(
+        ROOM,
+        ROOM_ID,
+        JOINER,
+        deps(relay.openSocket, () => now),
+        joiner(key),
+      );
+      await settle();
+      // Sealed where only mallory hears, then forged onto the topic.
+      const mallory = holdRelay(ROOM, options(OTHER).source, "mallory", () => "mallory", {
+        ...deps(aside.openSocket, () => now),
+        newKey: () => malloryKey,
+      });
+      mallory.admit({ peerId: JOINER, pub: key.pub });
+      await settle();
+      const [sent] = aside.sent;
+      if (sent === undefined) throw new Error("nothing sealed");
+      const [, event] = JSON.parse(sent) as [string, NostrEvent];
+      expect(event.pubkey).toBe(malloryKey.ticketId);
+      relay.publish(forge(event, victim.ticketId, malloryKey));
+      await settle();
+      // A well-formed one is of use all the same: any invite holder can
+      // seal one under its own key.
+      expect(offers.ranked().map((offer) => offer.holder)).toEqual(opened);
+
+      // Within the same interval, the victim's own seal opens: the forgery
+      // charged nobody.
+      const hold = holder(
+        relay,
+        HOLDER,
+        () => now,
+        SHARED,
+        () => victim,
+      );
+      hold.admit({ peerId: JOINER, pub: key.pub });
+      await settle();
+      expect(offers.ranked().map((offer) => offer.holder)).toContain(HOLDER);
+      mallory.close();
+      hold.close();
+      offers.close();
+    },
+  );
+
   it("opens an event delivered twice once, and none too big to be a seal", async () => {
     const relay = fakeRelay();
     const offers = watchRelayOffers(
@@ -973,49 +1139,188 @@ describe("a joiner's relay offers (#2527)", () => {
     relay.publish(event);
     await settle();
     expect(decrypt).toHaveBeenCalledTimes(1);
-    relay.publish({ ...garbage(), content: "A".repeat(MAX_OFFER_CONTENT_BYTES + 4) });
-    relay.publish({ ...garbage(), content: "A".repeat(8192) });
+    relay.publish(garbage(hex(32), "A".repeat(MAX_OFFER_CONTENT_BYTES + 4)));
+    relay.publish(garbage(hex(32), "A".repeat(8192)));
     await settle();
     expect(decrypt).toHaveBeenCalledTimes(1);
     offers.close();
   });
 
-  it("takes the host's login instead, and opens no seal from then on", async () => {
-    const relay = fakeRelay();
+  it("opens a real seal that another relay echoed first under its id with junk (#2588)", async () => {
+    const hostile = fakeRelay();
+    const honest = fakeRelay();
+    const aside = recording(fakeRelay());
     const key = await newJoinerKey();
     const offers = watchRelayOffers(
       ROOM,
       ROOM_ID,
       JOINER,
-      deps(relay.openSocket, () => NOW),
+      {
+        ...deps(honest.openSocket, () => NOW),
+        relays: ["wss://hostile.example", "wss://honest.example"],
+        openSocket: (url, handlers) =>
+          (url === "wss://hostile.example" ? hostile : honest).openSocket(url, handlers),
+      },
       joiner(key),
     );
     await settle();
-    const hold = holder(relay, HOLDER, () => NOW);
+    const hold = holdRelay(
+      ROOM,
+      options(SHARED).source,
+      HOLDER,
+      () => HOLDER,
+      deps(aside.openSocket, () => NOW),
+    );
+    hold.admit({ peerId: JOINER, pub: key.pub });
+    await settle();
+    const [sent] = aside.sent;
+    if (sent === undefined) throw new Error("nothing sealed");
+    const [, event] = JSON.parse(sent) as [string, NostrEvent];
+
+    hostile.publish({ ...event, content: garbage().content });
+    honest.publish(event);
+    await settle();
+    expect(offers.ranked().map((offer) => offer.holder)).toEqual([HOLDER]);
+    hold.close();
+    offers.close();
+  });
+
+  it("never opens an event whose id is not its hash (#2588)", async () => {
+    const relay = fakeRelay();
+    const offers = watchRelayOffers(
+      ROOM,
+      ROOM_ID,
+      JOINER,
+      deps(relay.openSocket, () => NOW),
+    );
+    await settle();
+    const decrypt = vi.spyOn(crypto.subtle, "decrypt");
+    relay.publish({ ...garbage(), id: hex(32) });
+    relay.publish({
+      ...garbage(),
+      tags: [
+        ["t", ROOM.topic],
+        ["x", "1"],
+      ],
+    });
+    await settle();
+    expect(decrypt).not.toHaveBeenCalled();
+    offers.close();
+  });
+
+  it("once the host lists the holders, takes logins over the lobby from listed ones alone, newer only (#2529)", async () => {
+    const relay = fakeRelay();
+    let now = NOW;
+    const key = await newJoinerKey();
+    const offers = watchRelayOffers(
+      ROOM,
+      ROOM_ID,
+      JOINER,
+      deps(relay.openSocket, () => now),
+      joiner(key),
+    );
+    expect(await offers.pub()).toBe(key.pub);
+    await settle();
+    const hold = holder(relay, HOLDER, () => now);
     hold.admit({ peerId: JOINER, pub: key.pub });
     await settle();
     expect(offers.ranked()).toHaveLength(1);
-    let told = 0;
-    offers.onOffer(() => {
-      told += 1;
-    });
+    // Off the Nostr relays, its holder is only claimed (#2531).
+    expect(offers.ranked().map((offer) => offers.vouched(offer))).toEqual([false]);
 
-    offers.fromHost(null);
+    // Listed without it: its offer goes, and nothing from Nostr opens again.
+    offers.listed(["other"]);
     expect(offers.ranked()).toEqual([]);
-    expect(offers.hostLogin()).toBeUndefined();
     const decrypt = vi.spyOn(crypto.subtle, "decrypt");
-    const later = holder(relay, "later", () => NOW);
+    const later = holder(relay, "later", () => now);
     later.admit({ peerId: JOINER, pub: key.pub });
+    await settle();
+    const seals: string[] = [];
+    hold.onSeal((_to, seal) => seals.push(seal));
+    hold.seated([{ peerId: JOINER, pub: key.pub }]);
+    await settle();
+    const first = seals[0] ?? "";
+    offers.fromMember(HOLDER, first);
     await settle();
     expect(decrypt).not.toHaveBeenCalled();
     expect(offers.ranked()).toEqual([]);
 
-    const login = mintTurnCredential(OTHER, JOINER, NOW, TURN_CREDENTIAL_TTL_MS);
-    offers.fromHost(login);
-    expect(offers.hostLogin()).toEqual(login);
+    let told = 0;
+    offers.onOffer(() => {
+      told += 1;
+    });
+    offers.listed([HOLDER, "other"]);
+    // Another listed member's name on HOLDER's login: not kept.
+    offers.fromMember("other", first);
+    await settle();
+    expect(offers.ranked()).toEqual([]);
+    offers.fromMember(HOLDER, first);
+    await settle();
+    expect(offers.ranked().map(({ holder: from }) => from)).toEqual([HOLDER]);
+    // The host forwarded it from its holder (#2531).
+    expect(offers.ranked().map((offer) => offers.vouched(offer))).toEqual([true]);
     expect(told).toBe(2);
+    // The same login again is not newer.
+    offers.fromMember(HOLDER, first);
+    await settle();
+    expect(told).toBe(2);
+
+    now += 1000;
+    hold.seated([]);
+    hold.seated([{ peerId: JOINER, pub: key.pub }]);
+    await settle();
+    offers.fromMember(HOLDER, seals[1] ?? "");
+    await settle();
+    expect(told).toBe(3);
+    expect(offers.ranked()[0]?.config.username).toBe(
+      `${String((now + TURN_CREDENTIAL_TTL_MS) / 1000)}:${JOINER}`,
+    );
     hold.close();
     later.close();
+    offers.close();
+  });
+
+  it("once listed, keeps each holder's login, though another names the same relay host (#2529)", async () => {
+    const relay = fakeRelay();
+    let now = NOW;
+    const key = await newJoinerKey();
+    const offers = watchRelayOffers(
+      ROOM,
+      ROOM_ID,
+      JOINER,
+      deps(relay.openSocket, () => now),
+      joiner(key),
+    );
+    await settle();
+    offers.listed(["b", "c"]);
+    const seals = new Map<string, string>();
+    const holders = ["b", "c"].map((peerId) => {
+      const hold = holder(relay, peerId, () => now, {
+        urls: ["turns:relay.example:5349"],
+        secret: "x",
+      });
+      hold.onSeal((_to, seal) => seals.set(peerId, seal));
+      return hold;
+    });
+    holders[0]?.seated([{ peerId: JOINER, pub: key.pub }]);
+    await settle();
+    // "c" says it holds b's relay too, and mints later: b's login stays.
+    now += 1000;
+    holders[1]?.seated([{ peerId: JOINER, pub: key.pub }]);
+    await settle();
+    offers.fromMember("b", seals.get("b") ?? "");
+    await settle();
+    offers.fromMember("c", seals.get("c") ?? "");
+    await settle();
+    expect(
+      offers
+        .ranked()
+        .map((offer) => offer.holder)
+        .sort(),
+    ).toEqual(["b", "c"]);
+    for (const hold of holders) {
+      hold.close();
+    }
     offers.close();
   });
 

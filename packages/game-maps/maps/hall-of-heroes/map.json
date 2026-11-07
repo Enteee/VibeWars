@@ -3,162 +3,208 @@
   "name": "Hall of Heroes",
   "mode": "king-of-the-hill",
   "teamSizes": [8],
-  "width": 2400,
-  "height": 1600,
+  "width": 3200,
+  "height": 2200,
   "walls": [
     {
       "kind": "rect",
-      "x": 420,
-      "y": 380,
-      "width": 40,
+      "x": 60,
+      "y": 720,
+      "width": 260,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 2880,
+      "y": 1440,
+      "width": 260,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 480,
+      "y": 720,
+      "width": 60,
       "height": 240
     },
     {
       "kind": "rect",
-      "x": 420,
+      "x": 2660,
+      "y": 1240,
+      "width": 60,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "x": 480,
+      "y": 1240,
+      "width": 60,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "x": 2660,
+      "y": 720,
+      "width": 60,
+      "height": 240
+    },
+    {
+      "kind": "polygon",
+      "points": [
+        {
+          "x": 1480,
+          "y": 840
+        },
+        {
+          "x": 1340,
+          "y": 840
+        },
+        {
+          "x": 1340,
+          "y": 1360
+        },
+        {
+          "x": 1480,
+          "y": 1360
+        },
+        {
+          "x": 1480,
+          "y": 1320
+        },
+        {
+          "x": 1380,
+          "y": 1320
+        },
+        {
+          "x": 1380,
+          "y": 880
+        },
+        {
+          "x": 1480,
+          "y": 880
+        }
+      ]
+    },
+    {
+      "kind": "polygon",
+      "points": [
+        {
+          "x": 1720,
+          "y": 1360
+        },
+        {
+          "x": 1860,
+          "y": 1360
+        },
+        {
+          "x": 1860,
+          "y": 840
+        },
+        {
+          "x": 1720,
+          "y": 840
+        },
+        {
+          "x": 1720,
+          "y": 880
+        },
+        {
+          "x": 1820,
+          "y": 880
+        },
+        {
+          "x": 1820,
+          "y": 1320
+        },
+        {
+          "x": 1720,
+          "y": 1320
+        }
+      ]
+    },
+    {
+      "kind": "rect",
+      "x": 1050,
+      "y": 700,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 2090,
+      "y": 1440,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1370,
+      "y": 700,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1770,
+      "y": 1440,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1770,
+      "y": 700,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1370,
+      "y": 1440,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 2050,
+      "y": 700,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1090,
+      "y": 1440,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 860,
       "y": 980,
-      "width": 40,
+      "width": 60,
       "height": 240
     },
     {
       "kind": "rect",
-      "x": 1940,
-      "y": 380,
-      "width": 40,
-      "height": 240
-    },
-    {
-      "kind": "rect",
-      "x": 1940,
+      "x": 2280,
       "y": 980,
-      "width": 40,
+      "width": 60,
       "height": 240
     },
     {
       "kind": "rect",
-      "x": 700,
+      "x": 760,
       "y": 300,
-      "width": 120,
-      "height": 120
+      "width": 60,
+      "height": 220
     },
     {
       "kind": "rect",
-      "x": 700,
-      "y": 1180,
-      "width": 120,
-      "height": 120
-    },
-    {
-      "kind": "rect",
-      "x": 1580,
-      "y": 300,
-      "width": 120,
-      "height": 120
-    },
-    {
-      "kind": "rect",
-      "x": 1580,
-      "y": 1180,
-      "width": 120,
-      "height": 120
-    },
-    {
-      "kind": "rect",
-      "x": 700,
-      "y": 500,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 700,
-      "y": 1050,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 1650,
-      "y": 500,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 1650,
-      "y": 1050,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 820,
-      "y": 500,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 820,
-      "y": 1050,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 1530,
-      "y": 500,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 1530,
-      "y": 1050,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 1005,
-      "y": 605,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 1005,
-      "y": 945,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 1345,
-      "y": 605,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 1345,
-      "y": 945,
-      "width": 50,
-      "height": 50
-    },
-    {
-      "kind": "rect",
-      "x": 1160,
-      "y": 200,
-      "width": 80,
-      "height": 80
-    },
-    {
-      "kind": "rect",
-      "x": 1160,
-      "y": 1320,
-      "width": 80,
-      "height": 80
+      "x": 2380,
+      "y": 1680,
+      "width": 60,
+      "height": 220
     }
   ],
   "objectives": [
@@ -166,23 +212,23 @@
       "kind": "ghost-spawn",
       "team": 0,
       "position": {
-        "x": 200,
-        "y": 800
+        "x": 120,
+        "y": 1100
       }
     },
     {
       "kind": "ghost-spawn",
       "team": 1,
       "position": {
-        "x": 2200,
-        "y": 800
+        "x": 3080,
+        "y": 1100
       }
     },
     {
       "kind": "altar",
       "position": {
-        "x": 1200,
-        "y": 800
+        "x": 1600,
+        "y": 1100
       }
     }
   ],
@@ -190,113 +236,113 @@
     {
       "team": 0,
       "position": {
-        "x": 110,
-        "y": 560
+        "x": 240,
+        "y": 860
       }
     },
     {
       "team": 0,
       "position": {
-        "x": 110,
-        "y": 720
+        "x": 240,
+        "y": 980
       }
     },
     {
       "team": 0,
       "position": {
-        "x": 110,
-        "y": 880
+        "x": 240,
+        "y": 1220
       }
     },
     {
       "team": 0,
       "position": {
-        "x": 110,
+        "x": 240,
+        "y": 1340
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 360,
+        "y": 920
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 360,
         "y": 1040
       }
     },
     {
       "team": 0,
       "position": {
-        "x": 250,
-        "y": 560
+        "x": 360,
+        "y": 1160
       }
     },
     {
       "team": 0,
       "position": {
-        "x": 250,
-        "y": 720
+        "x": 360,
+        "y": 1280
       }
     },
     {
-      "team": 0,
+      "team": 1,
       "position": {
-        "x": 250,
-        "y": 880
+        "x": 2960,
+        "y": 1340
       }
     },
     {
-      "team": 0,
+      "team": 1,
       "position": {
-        "x": 250,
+        "x": 2960,
+        "y": 1220
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2960,
+        "y": 980
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2960,
+        "y": 860
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2840,
+        "y": 1280
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2840,
+        "y": 1160
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2840,
         "y": 1040
       }
     },
     {
       "team": 1,
       "position": {
-        "x": 2290,
-        "y": 560
-      }
-    },
-    {
-      "team": 1,
-      "position": {
-        "x": 2290,
-        "y": 720
-      }
-    },
-    {
-      "team": 1,
-      "position": {
-        "x": 2290,
-        "y": 880
-      }
-    },
-    {
-      "team": 1,
-      "position": {
-        "x": 2290,
-        "y": 1040
-      }
-    },
-    {
-      "team": 1,
-      "position": {
-        "x": 2150,
-        "y": 560
-      }
-    },
-    {
-      "team": 1,
-      "position": {
-        "x": 2150,
-        "y": 720
-      }
-    },
-    {
-      "team": 1,
-      "position": {
-        "x": 2150,
-        "y": 880
-      }
-    },
-    {
-      "team": 1,
-      "position": {
-        "x": 2150,
-        "y": 1040
+        "x": 2840,
+        "y": 920
       }
     }
   ]

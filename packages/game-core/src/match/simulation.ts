@@ -245,8 +245,10 @@ import {
   createCursor,
   decide,
   nearestLiving,
+  NO_OBJECTIVES,
   type Behaviour,
   type BehaviourCursor,
+  type BotObjectives,
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -933,6 +935,9 @@ const UPKEEP_RANGE_GRACE_SECONDS = 5;
 /** No body to pass through: a push-out that every body blocks. */
 const NOBODY: ReadonlySet<string> = new Set();
 
+/** The relics of a mode without any, shared so a read allocates nothing. */
+const NO_RELICS: readonly RelicState[] = [];
+
 /** How deep a body at `position` is inside a living body at `other`, their radii summing to `reach`. */
 function penetration(position: Vec2, other: Vec2, reach: number): number {
   return Math.max(0, reach - distance(position, other));
@@ -973,6 +978,15 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
 
 /** How a step toward a waypoint went; see `#stepToward`. */
 type PathStep = "moved" | "stalled" | "held";
+
+/**
+ * Where a team's living players stand on average, and every other
+ * team's (#2545): sums while placed, then means; a count of 0 for none.
+ */
+interface TeamCentroids {
+  readonly team: { x: number; y: number; count: number };
+  readonly foes: { x: number; y: number; count: number };
+}
 
 /**
  * What a status on a body that died stands up there (#1986, #2092), at
@@ -1022,6 +1036,8 @@ export class MatchSimulation {
   /** The living bodies a path step steers round, refilled for each one rather than allocated (#277). */
   readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
+  /** `options.seed` as a number: the bots' stateless rolls mix it in (#2624). */
+  readonly #seed: number;
   readonly #participants = new Map<string, ParticipantRecord>();
   /**
    * What every participant's `StatusSet` shares as spent this tick
@@ -1037,6 +1053,10 @@ export class MatchSimulation {
   readonly #teams = new Set<number>();
   /** Each team's called foe (#443), which its bots fight (#1193). */
   readonly #calledTargets = new Map<number, string>();
+  /** Each team's centroids for its bots (#2545), placed once a tick, reused. */
+  readonly #centroids = new Map<number, TeamCentroids>();
+  /** The tick `#centroids` were last placed at. */
+  #centroidsTick = -1;
   #projectiles: Projectile[] = [];
   #nextProjectileId = 1;
 
@@ -1116,6 +1136,8 @@ export class MatchSimulation {
   #claims: number[] = [];
   /** Capture Points' shrines (#1378), who owns each and how far toward whom; `[]` without them. */
   #capturePoints: readonly CapturePoint[];
+  /** What bots play for (#2542), rebuilt when the shrines change. */
+  #botObjectives: BotObjectives = NO_OBJECTIVES;
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
   #pointTicks = 0;
   /** The whole second of match clock the Guild Lords' loss caps are for (#1223). */
@@ -1138,9 +1160,8 @@ export class MatchSimulation {
     this.#bounds = options.bounds;
     this.#graph = buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius);
     this.#paths = createPathFinder(this.#graph);
-    this.#rng = createRng(
-      typeof options.seed === "string" ? seedFromString(options.seed) : options.seed,
-    );
+    this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
+    this.#rng = createRng(this.#seed);
     this.#flagField = options.flagField;
     this.#flagsState = this.#flagField === undefined ? undefined : initialFlags(this.#flagField);
     this.#relicField = options.relicField;
@@ -1148,6 +1169,7 @@ export class MatchSimulation {
       this.#relicField === undefined ? undefined : initialRelics(this.#relicField);
     this.#hillField = options.hillField;
     this.#capturePoints = initialCapturePoints(options.capturePoints ?? []);
+    this.#refreshBotObjectives();
     for (const spec of options.participants ?? []) {
       this.add(spec);
     }
@@ -1264,7 +1286,7 @@ export class MatchSimulation {
 
   /** Every relic and where it is (#1374); `[]` on a map without them. */
   public get relics(): readonly RelicState[] {
-    return this.#relicsState?.relics ?? [];
+    return this.#relicsState?.relics ?? NO_RELICS;
   }
 
   /**
@@ -2647,6 +2669,7 @@ export class MatchSimulation {
       this.#relicsState = stepRelics(this.#relicField, this.#relicsState, [
         { kind: "drop", carrierId: record.id, position: record.position },
       ]).state;
+      this.#refreshBotObjectives();
     }
   }
 
@@ -4000,8 +4023,55 @@ export class MatchSimulation {
     return check;
   }
 
+  /**
+   * Each team's centroids, and its foes', from its living players'
+   * positions now (#2545): once a tick, into the same objects.
+   */
+  #placeCentroids(): void {
+    this.#centroidsTick = this.#tick;
+    for (const team of this.#teams) {
+      if (!this.#centroids.has(team)) {
+        this.#centroids.set(team, {
+          team: { x: 0, y: 0, count: 0 },
+          foes: { x: 0, y: 0, count: 0 },
+        });
+      }
+    }
+    let x = 0;
+    let y = 0;
+    let count = 0;
+    for (const { team } of this.#centroids.values()) {
+      team.x = 0;
+      team.y = 0;
+      team.count = 0;
+    }
+    for (const { combatant, creature, position } of this.#participants.values()) {
+      const sum = this.#centroids.get(combatant.team)?.team;
+      if (combatant.dead || creature !== undefined || sum === undefined) {
+        continue;
+      }
+      sum.x += position.x;
+      sum.y += position.y;
+      sum.count += 1;
+      x += position.x;
+      y += position.y;
+      count += 1;
+    }
+    for (const { team, foes } of this.#centroids.values()) {
+      foes.count = count - team.count;
+      foes.x = foes.count > 0 ? (x - team.x) / foes.count : 0;
+      foes.y = foes.count > 0 ? (y - team.y) / foes.count : 0;
+      team.x = team.count > 0 ? team.x / team.count : 0;
+      team.y = team.count > 0 ? team.y / team.count : 0;
+    }
+  }
+
   /** Put a behaviour's intent through the same calls a player's messages make. */
   #act(record: ParticipantRecord, behaviour: Behaviour, dt: number): void {
+    if (this.#centroidsTick !== this.#tick) {
+      this.#placeCentroids();
+    }
+    const centroids = this.#centroids.get(record.combatant.team);
     const intent = decide(behaviour, record.cursor, {
       self: record,
       participants: [...this.#participants.values()],
@@ -4019,6 +4089,13 @@ export class MatchSimulation {
         this.#participants.get(participantId)?.behaviour?.kind === "play-build",
       calledTargetId: this.#calledTargets.get(record.combatant.team),
       sees: (point) => hasLineOfSight(record.position, point, this.#walls),
+      seesBetween: (from, to) => hasLineOfSight(from, to, this.#walls),
+      walkable: (point) =>
+        isStandable(this.#graph, point) && walkIsClear(this.#graph, record.position, point),
+      foeCentroid: centroids !== undefined && centroids.foes.count > 0 ? centroids.foes : undefined,
+      objectives: this.#botObjectives,
+      projectiles: this.#projectiles,
+      seed: this.#seed,
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;
@@ -4035,10 +4112,12 @@ export class MatchSimulation {
     }
     this.setTarget(record.id, intent.targetId);
     // Asked only when the attack wanted is not the one going, as a player
-    // presses Space once: a pet switches with its owner (#1046).
+    // presses Space once: a pet switches with its owner (#1046). So is
+    // the walk to a relic (#2581).
     if (
       intent.attackTargetId !== undefined &&
-      record.combatant.attack?.targetId !== intent.attackTargetId
+      record.combatant.attack?.targetId !== intent.attackTargetId &&
+      record.interact?.targetId !== intent.attackTargetId
     ) {
       this.requestAttack(record.id, intent.attackTargetId);
     }
@@ -5340,7 +5419,7 @@ export class MatchSimulation {
         otherId !== record.id &&
         otherId !== passing &&
         !other.combatant.dead &&
-        !this.#ownSpirit(record, other)
+        !this.#walksThrough(record, other)
       ) {
         this.#bodies.push(other.position);
       }
@@ -5657,6 +5736,9 @@ export class MatchSimulation {
       ...this.#livingArrivals(arrivals),
     ]);
     this.#relicsState = next;
+    if (next !== state) {
+      this.#refreshBotObjectives();
+    }
     for (const team of scored) {
       this.#score = addPoint(this.#score, team);
     }
@@ -5781,9 +5863,39 @@ export class MatchSimulation {
       return;
     }
     const { state, scored } = stepAltar(this.#altarState, dt, claimant(claims));
+    const taken = state.holder !== this.#altarState.holder;
     this.#altarState = state;
+    if (taken) {
+      this.#refreshBotObjectives();
+    }
     if (scored !== null) {
       this.#score = addPoint(this.#score, scored);
+    }
+  }
+
+  /**
+   * The shrines (#2580), relics (#2581) or altar holder (#2582) bots
+   * read, only in their mode: one allocation per change to them.
+   */
+  #refreshBotObjectives(): void {
+    const victory = this.#matchRules?.victory;
+    if (victory === "capture-points") {
+      this.#botObjectives = { ...NO_OBJECTIVES, capturePoints: this.#capturePoints };
+    } else if (victory === "relic-run" && this.#relicField !== undefined) {
+      this.#botObjectives = {
+        ...NO_OBJECTIVES,
+        relics: this.relics,
+        relicSpawns: this.#relicField.spawns,
+        altar: this.#relicField.altar,
+      };
+    } else if (victory === "king-of-the-hill" && this.#hillField !== undefined) {
+      this.#botObjectives = {
+        ...NO_OBJECTIVES,
+        altar: this.#hillField.altar,
+        altarHolder: this.#altarState.holder,
+      };
+    } else {
+      this.#botObjectives = NO_OBJECTIVES;
     }
   }
 
@@ -5807,6 +5919,7 @@ export class MatchSimulation {
       ),
     );
     this.#capturePoints = stepCapturePoints(this.#capturePoints, dt, presence).state;
+    this.#refreshBotObjectives();
     const due = (this.#pointTicks + 1) * POINT_TICK_SECONDS;
     if (this.#elapsedSeconds + SWING_EPSILON < due) {
       return;
@@ -8046,7 +8159,7 @@ export class MatchSimulation {
     // the wall never squeezes past. Per body and against the start, so two
     // bodies that already overlap (a shared spawn) can still move apart.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === record.id || other.combatant.dead || this.#ownSpirit(record, other)) {
+      if (otherId === record.id || other.combatant.dead || this.#walksThrough(record, other)) {
         continue;
       }
       const reach = radius + this.#radiusOf(other);
@@ -8070,6 +8183,19 @@ export class MatchSimulation {
   }
 
   /**
+   * Whether `mover` walks through `other` rather than round it: its own
+   * team's spirit, or any of its own team while it carries a relic
+   * (#2581), so an escort on its route never holds the run up.
+   */
+  #walksThrough(mover: ParticipantRecord, other: ParticipantRecord): boolean {
+    return (
+      this.#ownSpirit(mover, other) ||
+      (other.combatant.team === mover.combatant.team &&
+        carriedRelic(this.relics, mover.id) !== undefined)
+    );
+  }
+
+  /**
    * One pass of push-outs for `mover`, a body of `radius` at `position`:
    * bodies, bar its own team's spirits and those in `passing`, then
    * walls, then the edge.
@@ -8089,7 +8215,7 @@ export class MatchSimulation {
         otherId === mover.id ||
         other.combatant.dead ||
         passing.has(otherId) ||
-        this.#ownSpirit(mover, other)
+        this.#walksThrough(mover, other)
       ) {
         continue;
       }

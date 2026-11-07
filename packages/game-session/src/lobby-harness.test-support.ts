@@ -18,7 +18,6 @@ import {
   createLobbyHost,
   type LobbyHost,
   type LobbyMatchmakingOptions,
-  type LobbyRelaySource,
   type MatchPlan,
 } from "./lobby-host.js";
 import { connectMatch, type PeerMatchConnection } from "./match-client.js";
@@ -73,7 +72,13 @@ export interface TestLobby {
   /** Each match the lobby started, with the plan it was started on. */
   readonly matches: { readonly plan: MatchPlan; readonly host: MatchHost }[];
   /** A remote member joining as `name`; resolves once it is in. */
-  join(name?: string, guildTag?: string | null, guildCape?: WireCape | null): Promise<Member>;
+  join(
+    name?: string,
+    guildTag?: string | null,
+    guildCape?: WireCape | null,
+    /** Its page's relay key (#2529): none by default. */
+    relayPub?: string | null,
+  ): Promise<Member>;
   /** Run `seconds` of the lobby's match, a tick at a time, letting messages land between. */
   step(seconds: number): Promise<void>;
 }
@@ -83,12 +88,6 @@ function member(connection: LobbyConnection, transport: Transport): Member {
   connection.onMatchStarting((start) => starts.push(start));
   return { connection, transport, starts };
 }
-
-/** A host that shares no relay (#2248). */
-export const NO_RELAY: LobbyRelaySource = {
-  current: () => null,
-  onChange: () => () => undefined,
-};
 
 export async function openLobby(
   options: {
@@ -106,8 +105,6 @@ export async function openLobby(
     matchmaking?: LobbyMatchmakingOptions;
     /** A Hosted Game's team size to begin with (#2104): 4v4 by default. */
     hostedTeamSize?: LobbyTeamSize;
-    /** The relay login the host shares (#2248): none by default. */
-    relay?: LobbyRelaySource;
   } = {},
 ): Promise<TestLobby> {
   const network = createMemoryNetwork();
@@ -125,7 +122,6 @@ export async function openLobby(
     teamLobby: options.teamLobby ?? false,
     ...(options.matchmaking === undefined ? {} : { matchmaking: options.matchmaking }),
     random: options.random ?? (() => 0.5),
-    relay: options.relay ?? NO_RELAY,
     startMatch(plan) {
       const host =
         options.startMatch?.(plan) ??
@@ -156,6 +152,7 @@ export async function openLobby(
     name: string,
     guildTag: string | null,
     guildCape: WireCape | null,
+    relayPub: string | null,
   ): Promise<Member> =>
     member(
       await joinLobby({
@@ -166,11 +163,12 @@ export async function openLobby(
         guildTag,
         guildCape,
         timeoutMs: 1000,
+        relayPub,
         ...(options.matchmaking === undefined ? {} : { roomId: options.matchmaking.roomId }),
       }),
       transport,
     );
-  const host = await join(lobby.local, null, "Host", null, null);
+  const host = await join(lobby.local, null, "Host", null, null, null);
   lobby.setOpen(options.open ?? true);
   return {
     network,
@@ -178,8 +176,8 @@ export async function openLobby(
     room,
     host,
     matches,
-    join: (name = "Guest", guildTag = null, guildCape = null) =>
-      join(network.join(), PROOF_KEY, name, guildTag, guildCape),
+    join: (name = "Guest", guildTag = null, guildCape = null, relayPub = null) =>
+      join(network.join(), PROOF_KEY, name, guildTag, guildCape, relayPub),
     async step(seconds) {
       const ticks = Math.round(seconds / TICK_SECONDS);
       for (let i = 0; i < ticks; i += 1) {

@@ -7,20 +7,41 @@ import type {
   BehaviourCursor,
   BehaviourIntent,
 } from "../behaviour.js";
+import { isGhostId } from "../ghost.js";
+import { ALTAR_REACH_UNITS } from "../relics.js";
 import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
+import { roleOf, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
-import { HURT_FRACTION, NOTHING, healthFraction, skillsOf } from "./rules/shared.js";
+import regroup from "./rules/regroup.js";
+import {
+  FOCUS_REACH,
+  HEALER_PRIORITY,
+  HURT_FRACTION,
+  NOTHING,
+  foeReach,
+  healthFraction,
+  reactionSeconds,
+  skillsOf,
+} from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
 import { sacrificesTooMuch } from "./skill-intent.js";
+
+/**
+ * Below this share of its health a foe in reach is the team's target
+ * (#2545): one about to fall is worth more than one at full health.
+ */
+const FINISH_FRACTION = 0.6;
 
 /**
  * `play-build` (#1189): a participant playing its own skill bar the way a
  * sensible GW1 hero does. Each think it does what the first of
  * `rules/index.ts`'s `BOT_RULES` with an answer says, one file per rule:
  * interrupt, heal, step away, cleanse, raise, …, fight the team target,
- * and otherwise walk to the nearest foe. A ranged bot stands and fights a
- * foe at its elbow: at equal speed, backing off would never end.
+ * and otherwise walk to the nearest foe. Between casts it takes the spot
+ * its role gives it (#2545): a frontline closes in, a ranged bot holds
+ * near the edge of its reach and steps away from a foe at its elbow, a
+ * healer stands behind the ally it looks after.
  *
  * It reads only what a player reads off the screen: positions, teams,
  * health fractions, the statuses on a body, a foe's cast bar and its
@@ -41,9 +62,18 @@ export function playBuild(
   cursor: BehaviourCursor,
   context: BehaviourContext,
 ): BehaviourIntent {
-  return paced(behaviour.thinkSeconds, cursor, context, () => {
+  const hold = (thinks: number) =>
+    reactionSeconds(behaviour.reaction, context.seed, context.self.id, thinks);
+  return paced(hold, cursor, context, () => {
     const foes = livingFoes(context);
-    return think(context, cursor, foes, livingMembers(context), teamTarget(context, foes));
+    return think(
+      context,
+      cursor,
+      foes,
+      livingMembers(context),
+      teamTarget(context, foes),
+      roleOf(context.self),
+    );
   });
 }
 
@@ -85,23 +115,27 @@ export function guard(
     .sort((a, b) => lordFirst(a) - lordFirst(b));
   const healing = allies.some((ally) => healthFraction(ally) < HURT_FRACTION);
   if (cursor.returning || (foes.length === 0 && !healing)) {
-    cursor.heldMove = { moveTo: undefined };
+    cursor.heldMove = { moveDirection: ZERO, moveTo: undefined };
     return behaviour.rooted || home <= context.stepUnits
       ? NOTHING
       : { ...NOTHING, moveTo: behaviour.post };
   }
-  const intent = paced(behaviour.thinkSeconds, cursor, context, () =>
-    think(context, cursor, foes, allies, weakest(self, foes)?.id),
+  const intent = paced(
+    () => behaviour.thinkSeconds,
+    cursor,
+    context,
+    () => think(context, cursor, foes, allies, weakest(self, foes)?.id, undefined),
   );
   return behaviour.rooted ? { ...intent, moveDirection: ZERO, moveTo: undefined } : intent;
 }
 
 /**
- * Think every `thinkSeconds` with `decide`, and in between hold what it
- * last asked for; nothing new while its last skill is still going.
+ * Think with `decide`, then hold what it asked for `hold(thinks)` seconds,
+ * its reaction time (#2606), before thinking again; nothing new while its
+ * last skill is still going, though that time runs on meanwhile.
  */
 function paced(
-  thinkSeconds: number,
+  hold: (thinks: number) => number,
   cursor: BehaviourCursor,
   context: BehaviourContext,
   decide: () => BehaviourIntent,
@@ -119,9 +153,10 @@ function paced(
   if (cursor.waitSeconds > 0) {
     return { ...holding, ...cursor.heldMove };
   }
-  cursor.waitSeconds = thinkSeconds;
+  cursor.waitSeconds = hold(cursor.thinks);
+  cursor.thinks += 1;
   const intent = decide();
-  cursor.heldMove = { moveTo: intent.moveTo };
+  cursor.heldMove = { moveDirection: intent.moveDirection, moveTo: intent.moveTo };
   return intent;
 }
 
@@ -157,6 +192,7 @@ function think(
   foes: readonly Participant[],
   allies: readonly Participant[],
   targetId: string | undefined,
+  role: BotRole | undefined,
 ): BehaviourIntent {
   const self = context.self;
   const rule: RuleContext = {
@@ -180,11 +216,20 @@ function think(
       return check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight";
     },
     mayEndUpkeep: cursor.upkeepDropSeconds <= 0,
+    cursor,
+    role,
+    foeCentroid: context.foeCentroid,
+    roleOf,
+    foeReach: (foe) => foeReach(cursor.foeReach, foe),
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
-  for (const { decide } of BOT_RULES) {
-    const intent = decide(rule);
+  for (const each of BOT_RULES) {
+    const intent = each.decide(rule);
     if (intent !== undefined) {
+      // Any other answer, a fight first among them, ends a wait for the team (#2621).
+      if (each !== regroup) {
+        cursor.regrouping = false;
+      }
       if (intent.endUpkeep !== undefined) {
         cursor.upkeepDropSeconds = UPKEEP_DROP_SECONDS;
       }
@@ -195,19 +240,89 @@ function think(
 }
 
 /**
- * The foe the team called (#1193), while it is alive; else the foe the
- * team's bots already target, if one is alive; else the living foe within
- * spell range with the lowest health fraction, ties to the nearer, then
- * simulation order. A creature only while no other foe is in range.
+ * The foe the team called (#1193), while it is alive; else, in King of the
+ * Hill, a foe's ghost on an altar the team does not hold (#2600); else
+ * the foe the team's bots already target, while it is below `FINISH_FRACTION`; else
+ * the weakest foe in spell range once it is below `FINISH_FRACTION`
+ * (#2545), so the team commits to a kill and never drops one for
+ * another; else the team's target, if one is alive within `FOCUS_REACH`
+ * past spell range (#2573), or anywhere while no foe is in range; else
+ * `focusPick` in spell range. A creature only while no other foe is in
+ * range. With shrines to hold or a relic to run, the team's target only
+ * in range.
  */
 function teamTarget(context: BehaviourContext, foes: readonly Participant[]): string | undefined {
   const called = foes.find((foe) => foe.id === context.calledTargetId);
   if (called !== undefined) {
     return called.id;
   }
+  const ghost = foeGhostOnAltar(context, foes);
+  if (ghost !== undefined) {
+    return ghost.id;
+  }
   const self = context.self;
   const inRange = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+  const held = heldTarget(context, foes, inRange);
+  if (held !== undefined && healthFraction(held) < FINISH_FRACTION) {
+    return held.id;
+  }
+  const dying = weakest(self, inRange);
+  if (dying !== undefined && healthFraction(dying) < FINISH_FRACTION) {
+    return dying.id;
+  }
+  if (
+    held !== undefined &&
+    (inRange.length === 0 || distance(held.position, self.position) <= RANGE_SPELL + FOCUS_REACH)
+  ) {
+    return held.id;
+  }
+  return focusPick(self, inRange)?.id;
+}
+
+/**
+ * Of `foes`, the Ghostly Hero within spell range of the bot that stands on
+ * an altar its team does not hold (#2600), nearest first, then simulation
+ * order: two ghosts on the altar contest it for good, and one holding it
+ * keeps ours from claiming, so it dies first, creature or not.
+ */
+function foeGhostOnAltar(
+  context: BehaviourContext,
+  foes: readonly Participant[],
+): Participant | undefined {
+  const { altar, altarHolder } = context.objectives;
+  const self = context.self;
+  if (altar === undefined || altarHolder === self.combatant.team) {
+    return undefined;
+  }
+  let nearest: Participant | undefined;
+  let nearestDistance = RANGE_SPELL;
+  for (const foe of foes) {
+    const away = distance(foe.position, self.position);
+    if (
+      isGhostId(foe.id) &&
+      distance(foe.position, altar) <= ALTAR_REACH_UNITS &&
+      (away < nearestDistance || (nearest === undefined && away === nearestDistance))
+    ) {
+      nearest = foe;
+      nearestDistance = away;
+    }
+  }
+  return nearest;
+}
+
+/** The first living foe a bot of `context.self`'s team targets, if it may be fought. */
+function heldTarget(
+  context: BehaviourContext,
+  foes: readonly Participant[],
+  inRange: readonly Participant[],
+): Participant | undefined {
+  const self = context.self;
   const eligible = fightable(inRange);
+  // With shrines to hold (#2580) or a relic to run (#2581), a bot leaves
+  // them for a foe in its own reach, never for one a teammate fights
+  // across the map.
+  const objectives =
+    context.objectives.capturePoints.length > 0 || context.objectives.altar !== undefined;
   for (const ally of context.participants) {
     if (
       ally.combatant.team !== self.combatant.team ||
@@ -217,11 +332,11 @@ function teamTarget(context: BehaviourContext, foes: readonly Participant[]): st
       continue;
     }
     const held = foes.find((foe) => foe.id === ally.targetId);
-    if (held !== undefined && eligible(held)) {
-      return held.id;
+    if (held !== undefined && eligible(held) && (!objectives || inRange.includes(held))) {
+      return held;
     }
   }
-  return weakest(self, inRange)?.id;
+  return undefined;
 }
 
 /** Of `foes`, a creature only while none of them is a fighter. */
@@ -235,19 +350,43 @@ function fightable(foes: readonly Participant[]): (foe: Participant) => boolean 
  * to `self`, then simulation order; a creature only while none is a fighter.
  */
 function weakest(self: Participant, foes: readonly Participant[]): Participant | undefined {
+  return lowest(self, foes, healthFraction);
+}
+
+/**
+ * As `weakest`, but a healer counts `HEALER_PRIORITY` more hurt than
+ * it is (#2573): in GW1 PvP the healer is the first spike target.
+ */
+function focusPick(self: Participant, foes: readonly Participant[]): Participant | undefined {
+  return lowest(
+    self,
+    foes,
+    (foe) => healthFraction(foe) - (roleOf(foe) === "healer" ? HEALER_PRIORITY : 0),
+  );
+}
+
+/** Of `foes`, the lowest `score`, ties to the nearer to `self`, then simulation order. */
+function lowest(
+  self: Participant,
+  foes: readonly Participant[],
+  score: (foe: Participant) => number,
+): Participant | undefined {
   const eligible = fightable(foes);
   let best: Participant | undefined;
+  let bestScore = 0;
   for (const foe of foes) {
     if (!eligible(foe)) {
       continue;
     }
+    const foeScore = score(foe);
     if (
       best === undefined ||
-      healthFraction(foe) < healthFraction(best) ||
-      (healthFraction(foe) === healthFraction(best) &&
+      foeScore < bestScore ||
+      (foeScore === bestScore &&
         distance(foe.position, self.position) < distance(best.position, self.position))
     ) {
       best = foe;
+      bestScore = foeScore;
     }
   }
   return best;

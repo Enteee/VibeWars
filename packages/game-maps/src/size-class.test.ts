@@ -3,29 +3,37 @@ import { describe, expect, it } from "vitest";
 import { loadAllMaps } from "./loader.js";
 import { sizeClass } from "./size-class.js";
 
-describe("sizeClass (#444)", () => {
-  it("is small up to 1200, medium up to 2400, large beyond, by the longer side", () => {
-    expect(sizeClass({ width: 1200, height: 700 })).toBe("small");
-    expect(sizeClass({ width: 900, height: 1201 })).toBe("medium");
-    expect(sizeClass({ width: 2400, height: 2400 })).toBe("medium");
-    expect(sizeClass({ width: 2401, height: 100 })).toBe("large");
+describe("sizeClass (#444, #2547)", () => {
+  it("is small up to 3200, medium up to 4800, large beyond, by the longer side", () => {
+    expect(sizeClass({ width: 2600, height: 2600 })).toBe("small");
+    expect(sizeClass({ width: 2800, height: 1800 })).toBe("small");
+    expect(sizeClass({ width: 3000, height: 2000 })).toBe("small");
+    expect(sizeClass({ width: 3200, height: 1100 })).toBe("small");
+    expect(sizeClass({ width: 900, height: 3201 })).toBe("medium");
+    expect(sizeClass({ width: 4800, height: 4800 })).toBe("medium");
+    expect(sizeClass({ width: 4801, height: 100 })).toBe("large");
   });
 
-  it("calls today's four small and sorts the rest by size", () => {
+  it("calls every arena today small, but Sandstone Steps, Frozen Crossing (#2604), Ashen Courtyard and Moss Vale (#2605) medium, Canthan Terraces and Sunken Bastion (#2607), Shiverpeak Pass and Elonian Plateau (#2609) large", () => {
     expect(Object.fromEntries(loadAllMaps().map((map) => [map.id, sizeClass(map)]))).toEqual({
-      "arena-alpha": "small",
-      "arena-open": "small",
       "arena-pillars": "small",
       "arena-split": "small",
-      "arena-ring": "medium",
-      "arena-crossroads": "large",
-      "arena-canyon": "large",
-      "arena-long-hall": "large",
-      "guild-hall-isle": "large",
-      "relic-temples": "medium",
-      "hill-courtyard": "medium",
-      "hall-of-heroes": "medium",
-      "forgotten-shrines": "medium",
+      "arena-crossroads": "small",
+      "arena-canyon": "small",
+      "arena-long-hall": "small",
+      "guild-hall-isle": "small",
+      "broken-tower": "small",
+      "the-courtyard": "small",
+      "hall-of-heroes": "small",
+      "scarred-earth": "small",
+      "sandstone-steps": "medium",
+      "frozen-crossing": "medium",
+      "ashen-courtyard": "medium",
+      "moss-vale": "medium",
+      "canthan-terraces": "large",
+      "sunken-bastion": "large",
+      "shiverpeak-pass": "large",
+      "elonian-plateau": "large",
     });
   });
 });

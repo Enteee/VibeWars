@@ -604,6 +604,31 @@ restarts or interrupts the track.
   one, there is no sting. It is never queued. A sting that fails to
   evaluate or to query plays nothing and reports no error.
 
+## Effects
+
+The sound effects (#2524, step 10) are Strudel sources too, one per
+`SOUND_IDS` entry in `apps/web/src/audio/sfx/`, in the same palette: the
+built-in synths, with a few more controls than a track needs (pitch
+envelope, tremolo). They are **rendered, not played live**. A cue has to
+start within a frame of the damage number, and must not depend on the music
+engine having loaded or on its latency, so `pnpm sfx:render` evaluates each
+source in headless Chromium, renders cycle 0 through an
+`OfflineAudioContext` (22.05 kHz, mono) and encodes the MP3 the sound
+player already decodes. `sound-player.ts` is unchanged. The MP3s are built
+by `pnpm build`, by `pnpm dev` and by CI, and are not committed.
+
+A source's first line declares its length and peak. The renderer fades 5 ms
+at both ends, normalises, encodes, decodes the result and refuses one whose
+peak is more than 0.5 dB from the declaration or that is silent.
+
+**Renders are not byte-identical.** `Math.random` is seeded before superdough
+makes its noise buffers, and every cue but one renders to the same bytes on
+every run. `objective-ours` and `objective-theirs` (several overlapping
+sawtooth layers) differ in about one render in four, below the audible
+threshold. We did not find the cause, so there is no double-render check in
+CI. Nothing depends on identical bytes: the files are not committed and the
+budget tests (10 KB each, 48 KB) hold either way.
+
 ## Budgets
 
 Step 4 builds to these budgets, and QA (step 8) checks them.

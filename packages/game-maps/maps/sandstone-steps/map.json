@@ -1,0 +1,272 @@
+{
+  "id": "sandstone-steps",
+  "name": "Sandstone Steps",
+  "mode": "annihilation",
+  "teamSizes": [1],
+  "width": 3600,
+  "height": 2000,
+  "walls": [
+    {
+      "kind": "rect",
+      "x": 450,
+      "y": 520,
+      "width": 600,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 2550,
+      "y": 1440,
+      "width": 600,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 1250,
+      "y": 520,
+      "width": 400,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 1950,
+      "y": 1440,
+      "width": 400,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 1950,
+      "y": 520,
+      "width": 400,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 1250,
+      "y": 1440,
+      "width": 400,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 2550,
+      "y": 520,
+      "width": 600,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 450,
+      "y": 1440,
+      "width": 600,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 600,
+      "y": 980,
+      "width": 560,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 2440,
+      "y": 980,
+      "width": 560,
+      "height": 40
+    },
+    {
+      "kind": "rect",
+      "x": 920,
+      "y": 240,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 2620,
+      "y": 1700,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1470,
+      "y": 270,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 2070,
+      "y": 1670,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1070,
+      "y": 740,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 2470,
+      "y": 1200,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1170,
+      "y": 1270,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 2370,
+      "y": 670,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 770,
+      "y": 1210,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 2770,
+      "y": 730,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 1220,
+      "y": 1730,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 2320,
+      "y": 210,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "x": 2077,
+      "y": 785,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "kind": "rect",
+      "x": 1453,
+      "y": 1145,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "kind": "rect",
+      "x": 1765,
+      "y": 605,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "kind": "rect",
+      "x": 1765,
+      "y": 1325,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "kind": "rect",
+      "x": 1453,
+      "y": 785,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "kind": "rect",
+      "x": 2077,
+      "y": 1145,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "kind": "polygon",
+      "points": [
+        {
+          "x": 1720,
+          "y": 975
+        },
+        {
+          "x": 1850,
+          "y": 960
+        },
+        {
+          "x": 1880,
+          "y": 1025
+        },
+        {
+          "x": 1750,
+          "y": 1040
+        }
+      ]
+    }
+  ],
+  "objectives": [],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "position": {
+        "x": 240,
+        "y": 880
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 240,
+        "y": 1120
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 360,
+        "y": 1000
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 3360,
+        "y": 1120
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 3360,
+        "y": 880
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 3240,
+        "y": 1000
+      }
+    }
+  ]
+}

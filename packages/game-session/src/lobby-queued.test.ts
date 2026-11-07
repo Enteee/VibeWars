@@ -26,7 +26,6 @@ import {
   MAP_IDS,
   MAP_TEAM_SIZES,
   MODE_MAPS,
-  NO_RELAY,
   openLobby,
   provenPeer,
 } from "./lobby-harness.test-support.js";
@@ -207,6 +206,7 @@ function joinQueued(transport: Transport, ticketId: string, timeoutMs = 1000, gr
     guildTag: null,
     guildCape: null,
     timeoutMs,
+    relayPub: null,
     queued: { group, key: keyOf(ticketId), verifyTicketSig },
   });
 }
@@ -229,7 +229,6 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     hostedTeamSize: 4,
     teamLobby: false,
     random: () => 0.5,
-    relay: NO_RELAY,
     startMatch(plan) {
       plans.push(plan);
       if (match !== undefined) {
@@ -327,6 +326,7 @@ async function forgedJoin(
     protocolVersion: PROTOCOL_VERSION,
     name: "Forger",
     guildTag: null,
+    relayPub: null,
     guildCape: null,
     admission: { seatKey: ticketId, admissionSig: keyOf(signer).sign(bytes) },
     rejoinToken: null,
@@ -384,6 +384,7 @@ describe("a queued lobby", () => {
         guildTag: null,
         admission: null,
         rejoinToken: null,
+        relayPub: null,
       },
       "host",
     );

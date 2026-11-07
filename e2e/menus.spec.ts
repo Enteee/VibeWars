@@ -379,7 +379,7 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
 }) => {
   await openMenu(page);
   const rail = page.locator(".mode-rail .mode-rail-entry");
-  await expect(rail).toHaveCount(7);
+  await expect(rail).toHaveCount(8);
   for (const label of [
     "Random Arena",
     "Team Arena",
@@ -388,6 +388,7 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
     "Hosted Game",
     "Character Builder",
     "Team Builder",
+    "Matches",
   ]) {
     await expect(
       page.locator(".mode-rail").getByRole("button", { name: label, exact: true }),
@@ -409,12 +410,12 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
   );
 
   // GvG plays one map, so its host sees it named, not picked.
-  await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (large)");
+  await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (small)");
 
   // Heroes' Ascent starts on its first map, and Team Arena draws one for
   // each match: neither is picked (#1994).
   await openRail(page, "Heroes' Ascent");
-  await expect(page.locator("#topbar .lobby-map")).toHaveText(/^Map: Relic Temples \(/);
+  await expect(page.locator("#topbar .lobby-map")).toHaveText(/^Map: Broken Tower \(/);
   await expect(page.locator("#topbar .lobby-map select")).toHaveCount(0);
   await openRail(page, "Team Arena");
   await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: random (Team Arena)");

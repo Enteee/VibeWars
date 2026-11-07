@@ -10,7 +10,7 @@ without one, or with one the game does not know, is refused.
 corpses until resurrected, and each death costs morale. Wipe the other
 team to win; after 8 minutes the highest total morale wins, and there is
 no draw. Every arena but Pillar Hall, Split Paths, Guild Hall Isle,
-Relic Temples, Hill Courtyard and Forgotten Shrines plays it.
+Broken Tower, The Courtyard and Scarred Earth plays it.
 
 **Kill Count** (GW1's The Crag): the most kills in 3 minutes. The dead
 respawn at their team's spawn after 8 seconds, and there is no death
@@ -101,7 +101,7 @@ centre; a Relic Run map without exactly one altar and one relic spawn
 per spawning team is refused. Target your relic and press Space to take
 it up within 60 units, as a flag; you carry it as a flag is carried,
 hands full and at 1/1.2 speed, and it drops the same ways, staying
-where it fell. A carrier who comes within 60 units of the altar scores
+where it fell. A carrier walks through its own team (#2581), never a foe. A carrier who comes within 60 units of the altar scores
 at once, no Space press: a point for the team, and the relic goes home.
 A foe's relic on the ground goes home when you reach it with empty
 hands (a relic in hand refuses it, "hands full"); one at its spawn is
@@ -112,7 +112,8 @@ The dead stay down and pay the death penalty; a wipe loses at once. At
 and no number of points ends it early. Kills score nothing. The
 scoreboard reads the points as Kill Count reads kills, `2 – 1 · 6:40`,
 and the line under it names each relic's place: `✦ Name`, `✦ dropped`
-or `✦ at base`. Relic Temples plays it, and no Random Arena does.
+or `✦ at base`. Broken Tower plays it: the altar stands inside a ruined tower, four doorways
+in. No Random Arena does.
 
 **King of the Hill** (GW1's Heroes' Ascent, #1377): lead your Ghostly
 Hero onto the altar and hold it. Each team has a **Ghostly Hero** at a
@@ -143,7 +144,7 @@ dead stay down and pay the death penalty, a wipe loses at once, and at
 **8 minutes** the most points win, equal points a draw; kills score
 nothing. The scoreboard reads `2 – 1 · ▲ 0:18 · 6:40`: the points,
 then the altar in the stand's slot, the holder's `▲` and the time to
-its next point, or a grey `▲ —`. Hill Courtyard plays it, and no
+its next point, or a grey `▲ —`. The Courtyard plays it, and no
 Random Arena does.
 
 **Capture Points** (GW1's Heroes' Ascent, Forgotten Shrines, #1378):
@@ -164,6 +165,7 @@ dead stay down and pay the death penalty; a wipe loses at once. At
 Kills score nothing. The scoreboard reads the points as Kill Count
 reads kills. Each shrine draws as the flag stand's ring in its owner's
 colour, grey while neutral, with an arc of its progress in the
-capturer's colour. Forgotten Shrines plays it, and no Random Arena does.
+capturer's colour. Scarred Earth plays it: each shrine stands in a broken ring of walls, open
+to the west and east. No Random Arena does.
 
 How each one ends, in full, is in [combat](combat.md#match-end).

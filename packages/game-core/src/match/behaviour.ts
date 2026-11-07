@@ -1,10 +1,14 @@
 import { AREA_ADJACENT } from "../distances.js";
 import type { ActivationCheck } from "../skills/activation.js";
+import type { Projectile } from "../skills/projectile.js";
 import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
+import type { CapturePoint } from "./capture-points.js";
+import type { CarriedSpawn } from "./carried.js";
 import { MASTERLESS_TEAM } from "./minions.js";
+import type { RelicState } from "./relics.js";
 import type { Participant } from "./simulation.js";
 
 /**
@@ -31,6 +35,18 @@ export type Targeting =
   | { readonly kind: "nearest-ally" }
   | { readonly kind: "self" }
   | { readonly kind: "fixed"; readonly participantId: string };
+
+/** A `play-build` bot's reaction time (#2606), in seconds: `[minSeconds, maxSeconds)`. */
+export interface Reaction {
+  readonly minSeconds: number;
+  readonly maxSeconds: number;
+}
+
+/** A match bot's (#2542 item 7): a human-like moment to react, not the same tick. */
+export const BOT_REACTION: Reaction = { minSeconds: 0.15, maxSeconds: 0.4 };
+
+/** Every tick: a test bot that reacts at once. */
+export const INSTANT_REACTION: Reaction = { minSeconds: 0, maxSeconds: 0 };
 
 export type Behaviour =
   | { readonly kind: "idle" }
@@ -132,8 +148,11 @@ export type Behaviour =
    */
   | {
       readonly kind: "play-build";
-      /** Seconds between decisions: the reaction time. `0`: every tick. */
-      readonly thinkSeconds: number;
+      /**
+       * How long it holds each decision before the next (#2606): drawn per
+       * decision from `[minSeconds, maxSeconds)`. Both `0`: every tick.
+       */
+      readonly reaction: Reaction;
     }
   /**
    * A guard's (#1222): hold `post`, and play its bar as `play-build` does
@@ -201,9 +220,19 @@ export interface BehaviourCursor {
   /** `follow-and-attack` and `guard`: walking back to the owner or the post, past the leash. */
   returning: boolean;
   /** `play-build` and `guard`: the movement its last think asked for, held until the next. */
-  heldMove: Pick<BehaviourIntent, "moveTo">;
+  heldMove: Pick<BehaviourIntent, "moveDirection" | "moveTo">;
   /** `play-build`: seconds before it may end another maintained enchantment (#2492). */
   upkeepDropSeconds: number;
+  /** `play-build`, a healer: the ally it looks after, kept until another is clearly worse off (#2615). */
+  wardId: string | undefined;
+  /** `play-build`, a healer: the spot it walks to, kept until a fresh one is clearly elsewhere (#2615). */
+  coverSpot: Vec2 | undefined;
+  /** `play-build`: waiting, ahead of its team, for the rest to catch up (#2621). */
+  regrouping: boolean;
+  /** `play-build` and `guard`: how many decisions it has made, the seed of its next reaction time (#2606). */
+  thinks: number;
+  /** `play-build`: each foe's reach, read once from its bar (#2598). */
+  readonly foeReach: Map<string, number>;
 }
 
 export interface BehaviourContext {
@@ -227,7 +256,49 @@ export interface BehaviourContext {
   readonly calledTargetId: string | undefined;
   /** Whether nothing blocks the line of sight from `self` to `point` (#1222). */
   sees(point: Vec2): boolean;
+  /** Whether nothing blocks the line of sight from `from` to `to` (#2545). */
+  seesBetween(from: Vec2, to: Vec2): boolean;
+  /** Whether `self` could walk straight to `point` and stand there (#2545). */
+  walkable(point: Vec2): boolean;
+  /** Where the living players of every other team stand on average (#2545). */
+  readonly foeCentroid: Vec2 | undefined;
+  /** What a bot plays for besides the foes (#2542). */
+  readonly objectives: BotObjectives;
+  /** The shots in flight (#2590), in release order. */
+  readonly projectiles: readonly Readonly<Projectile>[];
+  /** The match's seed as a number, mixed into a bot's rolls (#2624). */
+  readonly seed: number;
 }
+
+/**
+ * The match's objectives as bots read them (#2542): a view of the
+ * simulation's own state, built once per tick. A mode without one has it
+ * empty.
+ */
+export interface BotObjectives {
+  /** Capture Points' shrines (#2580), in map order; `[]` in any other mode. */
+  readonly capturePoints: readonly CapturePoint[];
+  /** Relic Run's relics (#2581), wherever they are; `[]` in any other mode. */
+  readonly relics: readonly RelicState[];
+  /** Where each team's relic lies at rest (#2581); `[]` in any other mode. */
+  readonly relicSpawns: readonly CarriedSpawn[];
+  /**
+   * The altar relics are run to (#2581) or Ghostly Heroes claim (#2582);
+   * `undefined` in any other mode.
+   */
+  readonly altar: Vec2 | undefined;
+  /** The team holding King of the Hill's altar (#2582); `null` when nobody does, or in any other mode. */
+  readonly altarHolder: number | null;
+}
+
+/** No objectives: every mode but those with one. */
+export const NO_OBJECTIVES: BotObjectives = {
+  capturePoints: [],
+  relics: [],
+  relicSpawns: [],
+  altar: undefined,
+  altarHolder: null,
+};
 
 export function createCursor(): BehaviourCursor {
   return {
@@ -236,8 +307,13 @@ export function createCursor(): BehaviourCursor {
     waypoint: 0,
     children: [],
     returning: false,
-    heldMove: { moveTo: undefined },
+    heldMove: { moveDirection: ZERO, moveTo: undefined },
     upkeepDropSeconds: 0,
+    wardId: undefined,
+    coverSpot: undefined,
+    regrouping: false,
+    thinks: 0,
+    foeReach: new Map(),
   };
 }
 

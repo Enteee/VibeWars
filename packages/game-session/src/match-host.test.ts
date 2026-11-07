@@ -535,16 +535,16 @@ describe("a lobby's bots (#1193)", () => {
     const local = await match.joinLocal();
     await match.step(0.5);
     const targetOf = () => named(local.getSnapshot(), "Elementalist Bot")?.targetSessionId;
-    const warrior = named(local.getSnapshot(), "Warrior Bot")?.sessionId;
-    const monk = named(local.getSnapshot(), "Monk Bot")?.sessionId ?? "";
-    // The nearer of two whole foes, before any call.
-    expect(targetOf()).toBe(warrior);
-    local.sendCall({ kind: "target", targetId: monk });
+    const warrior = named(local.getSnapshot(), "Warrior Bot")?.sessionId ?? "";
+    const monk = named(local.getSnapshot(), "Monk Bot")?.sessionId;
+    // The foe healer first, of two whole foes, before any call (#2573).
+    expect(targetOf()).toBe(monk);
+    local.sendCall({ kind: "target", targetId: warrior });
     await settle();
     // Once the cast under way, if any, is done.
-    for (let t = 0; t < 5 && targetOf() !== monk; t += 0.1) {
+    for (let t = 0; t < 5 && targetOf() !== warrior; t += 0.1) {
       await match.step(0.1);
     }
-    expect(targetOf()).toBe(monk);
+    expect(targetOf()).toBe(warrior);
   });
 });

@@ -15,18 +15,23 @@ export const UNKNOWN_MAP_TRACK = "hall-of-champions";
  * builder's Training Ground keeps the menu's (#2020).
  */
 export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
-  ["relic-temples", "northern-pass"],
-  ["arena-alpha", "hall-of-champions"],
+  ["broken-tower", "northern-pass"],
   ["guild-hall-isle", "hall-of-champions"],
-  ["arena-open", "clash-of-banners"],
-  ["arena-ring", "clash-of-banners"],
   ["arena-pillars", "ember-deep"],
   ["arena-long-hall", "ember-deep"],
   ["arena-split", "jungle-veil"],
-  ["forgotten-shrines", "jungle-veil"],
+  ["scarred-earth", "jungle-veil"],
   ["arena-crossroads", "last-stand"],
-  ["hill-courtyard", "last-stand"],
+  ["the-courtyard", "last-stand"],
   ["arena-canyon", "glass-dunes"],
+  ["sandstone-steps", "clash-of-banners"],
+  ["frozen-crossing", "ashen-fields"],
+  ["ashen-courtyard", "ashen-fields"],
+  ["moss-vale", "jungle-veil"],
+  ["canthan-terraces", "hall-of-champions"],
+  ["sunken-bastion", "victors-hymn"],
+  ["shiverpeak-pass", "northern-pass"],
+  ["elonian-plateau", "glass-dunes"],
   ["hall-of-heroes", "hall-of-champions"],
 ]);
 

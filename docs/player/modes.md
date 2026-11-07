@@ -34,8 +34,23 @@ nobody's, the altar in gold. A player's filled arrow draws over it.
 and each death costs morale. Wipe the other team to win. After 8 minutes,
 the team with the most morale left wins.
 
-Arena Alpha, Canyon, Crossroads, Long Hall, Open Field and The Ring play
-it.
+Canyon, Crossroads and Long Hall play it, and two bigger, medium-sized
+arenas: **Sandstone Steps** (1v1, 3600x2000), terraced desert ledges
+round a broken obelisk circle, with pillars to kite round; and **Frozen
+Crossing** (2v2, 4000x2200), a frozen river crossed by three bridges,
+ice rocks on each bank. For the bigger teams: **Ashen Courtyard** (4v4,
+4400x2600), a ruined keep whose walled courtyard has four breaches, ruins
+on its flanks; and **Moss Vale** (8v8, 4800x2800), two wooded ridges
+that split the vale into three lanes, meeting in a clearing in the middle.
+Two large arenas are bigger still: **Canthan Terraces** (1v1, 5200x2800),
+rice terraces walled north to south with staggered gaps, round a ruined
+pagoda; and **Sunken Bastion** (2v2, 5600x3000), a half-flooded fortress
+whose breached curtain wall rings a keep with two gates, marsh rocks
+outside.
+And for the bigger teams: **Shiverpeak Pass** (4v4, 6000x3400),
+two cliff massifs that leave a wide pass strewn with boulders and a narrow
+trail along each edge; and **Elonian Plateau** (8v8, 6400x3600), open
+savanna round five great mesas, with the longest sightlines of any arena.
 
 ## Kill Count
 
@@ -99,7 +114,8 @@ Target your relic and press **Space** to take it up. Carry it onto the
 altar and you score a point at once, and the relic goes back to your base.
 Every point is announced, with a fanfare that rises for yours and falls
 for theirs. A carrier walks slower and cannot
-attack or use attack skills. It drops the relic when it dies or presses
+attack or use attack skills. It walks through its own team, but a foe
+still blocks it. It drops the relic when it dies or presses
 **Drop relic** above its Health bar, and the relic stays where it fell
 until someone reaches it. Your team takes it up from there. A foe who
 reaches it, with empty hands, sends it home. A foe's relic in its base
@@ -113,16 +129,28 @@ The scoreboard shows the points, yours first, and the clock. Under it, a
 line for each relic says where it is: `✦ Name` on its carrier,
 `✦ dropped` on the ground or `✦ at base`.
 
-Relic Temples plays it.
+Bots run the relic too: the one nearest to your relic fetches it, unless
+you are about to pick it up yourself. A bot out of the fight goes first;
+when all are in it, the nearest leaves it for the relic, so a stand-off
+at the altar never stops the scoring. A healer or a badly hurt bot only
+goes when no one else can, and never from a fight. The one nearest to a
+dropped foe relic sends it home, and the rest wait by the altar. A bot
+carrying your relic walks it straight to the altar; the others leave the
+relic only to fight a foe that comes within spell range.
+
+Broken Tower plays it: the altar stands inside a ruined tower with a
+doorway on each side.
 
 ## King of the Hill
 
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
 **Ghostly Hero** in its base, a ghost that fights with a sword and that
 nobody plays. The **altar** is in the centre, the same walk from both
-bases, up a north or a south approach. The **Hall of Heroes**, the King of the
-Hill map that ends the Heroes' Ascent, is a grander hall with a colonnade on
-each approach. Target your ghost with a
+bases. On **The Courtyard** it stands in an open court ringed by four
+clusters of pillars, entered from the four corners. The **Hall of
+Heroes**, the King of the Hill map that ends the Heroes' Ascent, raises
+it on a dais walled to the west and east, up a north or a south approach
+lined with pillars. Target your ghost with a
 **right-click** and press **Space** to tell it to follow you: it walks
 with you and fights what you fight. Press Space on it again and it
 stays where it stands, fighting any foe who comes near. If you die or
@@ -153,7 +181,17 @@ The scoreboard shows the points, yours first, then the altar: `▲` and
 the time to the holder's next point, in the holder's colour, or a grey
 `▲ —` while nobody holds it.
 
-Hill Courtyard plays it.
+Bots go for the altar too: while your team does not hold it, the one
+nearest to your Ghostly Hero picks it up, unless you are about to pick it
+up yourself; a healer or a badly hurt bot only goes when no one else can.
+It leads the ghost onto the altar and tells it to stay there, and the
+rest wait by the altar. A bot leading the ghost does not stop to fight on
+the way; the others leave the altar only to fight a foe that comes within
+spell range. While your team does not hold the altar, every bot kills the other
+team's Ghostly Hero first once it stands on the altar in their range:
+it is the one foe that keeps your ghost from claiming it.
+
+The Courtyard plays it.
 
 ## Capture Points
 
@@ -177,7 +215,12 @@ nobody owns it, with an arc round it showing how far it is toward
 whoever is taking it. The scoreboard shows the points, yours first, and
 the clock.
 
-Forgotten Shrines plays it.
+Bots spread out over the shrines your team does not own yet and stand
+on them until they are taken. A foe in spell range does not draw them
+off: they step onto a shrine in reach and fight from it.
+
+Scarred Earth plays it: each shrine stands in a broken ring of walls,
+open to the west and east.
 
 ## Team Lobby
 
@@ -245,10 +288,10 @@ skips the wait, or, for winners, leaves without queueing.
 
 ## Heroes' Ascent
 
-A queued Heroes' Ascent is four rounds, always in this order: Relic
-Temples (Relic Run), Forgotten Shrines (Capture Points), Hill Courtyard
-(King of the Hill), then the Hall of Heroes. The Lobby window says where
-you are while you look for a team: `Round 2 of 4 · Forgotten Shrines`.
+A queued Heroes' Ascent is four rounds, always in this order: Broken
+Tower (Relic Run), Scarred Earth (Capture Points), The Courtyard (King
+of the Hill), then the Hall of Heroes. The Lobby window says where
+you are while you look for a team: `Round 2 of 4 · Scarred Earth`.
 You only ever meet a team at the same round, and you wait for one as
 long as it takes: no bots fill in. Win, and your party ascends to the
 next map on its own after 20 seconds; win in the Hall, and you stay to
@@ -280,3 +323,14 @@ you play. Nothing else that could identify you is: no address, no peer
 id, no lobby. A match that ends because its host left, or that everyone
 left, is not published. Records are reported by the host, so a host can
 get one wrong; nothing checks them against the match.
+
+See them on the **Matches** page, below Team Builder: the last 100,
+newest first, with new ones appearing as they are played. A row is one
+line: each team's players as their primary profession's icon (hover for
+the name), the winner underlined, and the map, duration and when. Every
+row is marked **host-reported**. Click one to see the teams, one tab
+each: the team card, then each player's professions, top attributes and
+skill bar. **Clone** copies a team from
+a finished match into your Team Builds, each player's build under
+their name, and opens it. A 1v1 side has no Clone: a Team Build is 2, 4
+or 8.

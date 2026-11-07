@@ -37,7 +37,9 @@ pnpm run readme:shots  # retake the README's four screenshots in docs/media/ (#1
 
 `scripts/dev.mjs` first builds the packages once, so a fresh pull needs no
 manual build, then runs two watchers: `tsc --build --watch` for the
-packages, and Vite for the client. There is no server: the client plays
+packages, and Vite for the client. Both it and `apps/web`'s own `dev`
+script render the sound effects first, so both need `ffmpeg` on the PATH
+(#2589). There is no server: the client plays
 peer to peer (#15, ADR-0022). Two tabs of the dev client on one machine find each other over the public
 Nostr relays, as two browsers anywhere do.
 

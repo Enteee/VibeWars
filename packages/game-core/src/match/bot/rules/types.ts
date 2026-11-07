@@ -1,6 +1,8 @@
 import type { Skill } from "../../../skills/types.js";
-import type { BehaviourContext, BehaviourIntent } from "../../behaviour.js";
+import type { Vec2 } from "../../../vec2.js";
+import type { BehaviourContext, BehaviourCursor, BehaviourIntent } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
+import type { BotRole } from "../role.js";
 
 /** What every rule reads in one think, built once per think. */
 export interface RuleContext {
@@ -21,6 +23,16 @@ export interface RuleContext {
   readonly use: (skill: Skill, targetId: string | undefined) => BehaviourIntent;
   /** Whether its spacing lets it end a maintained enchantment now (#2492). */
   readonly mayEndUpkeep: boolean;
+  /** Its role (#2545); `undefined` for a guard, which keeps to its post. */
+  readonly role: BotRole | undefined;
+  /** Where its foes' living players stand on average (#2545). */
+  readonly foeCentroid: Vec2 | undefined;
+  /** Any participant's role, from the match's cache; a creature: `undefined` (#2549). */
+  readonly roleOf: (participant: Participant) => BotRole | undefined;
+  /** Its own memory between thinks; a rule may write to it (#2615). */
+  readonly cursor: BehaviourCursor;
+  /** How far a foe can hit from, cached per match (#2598). */
+  readonly foeReach: (foe: Participant) => number;
 }
 
 /** One step of `play-build`'s think: the first rule with an answer decides. */
