@@ -384,8 +384,8 @@ async function saveCharacters(page: Page, names: readonly string[]): Promise<voi
   }
 }
 
-/** The character the first start rolls (#853) is named after its PvX build (#2636): "Gust (E/Me)". */
-const ROLLED_STARTER = /^.+ \([A-Z][a-z]?\/[A-Z][a-z]?\)$/;
+/** The character the first start rolls (#853) is named after its PvX build (#2636): "Gust (A/E)", "Psychic Instability Wastrel's (Me)". */
+const ROLLED_STARTER = /^.+ \([A-Z][a-z]?(?:\/[A-Z][a-z]?)?\)$/;
 
 /** The team editor's member rows, and their names. */
 const memberRows = (page: Page) => page.locator(".team-grid .team-row");
