@@ -728,7 +728,7 @@
     "LOBBY_KEY_SALT": { "literal": "vibewars-lobby-key" },
     "MASTERLESS_WIRE_TEAM": { "literal": -1 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
-    "MAX_LOBBY_PLAYERS": { "literal": 16 },
+    "MAX_LOBBY_PLAYERS": { "literal": 24 },
     "MAX_RELAY_PEER_ID": { "literal": 64 },
     "MAX_RELAY_SEAL_CHARS": { "literal": 2048 },
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
@@ -6341,7 +6341,7 @@
         {
           "name": "team",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
         { "name": "text", "optional": false, "type": "string" }
       ]
@@ -6898,7 +6898,7 @@
         {
           "name": "team",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         }
       ]
     },
@@ -7043,7 +7043,9 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                  "type": {
+                    "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                  }
                 }
               ]
             }

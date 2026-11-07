@@ -902,6 +902,67 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
   });
 });
 
+describe("a queued three-team Heroes' Ascent round (#2683)", () => {
+  /** Three parties, a side each: HOST and ALLY, FOE, and FOE_2. */
+  const THREE_GROUP: FormedGroup = {
+    ...GROUP,
+    teams: [[HOST, ALLY], [FOE], [FOE_2]],
+    parties: [[HOST, ALLY], [FOE], [FOE_2]],
+    mode: "heroes-ascent",
+  };
+
+  /** How many seats `plan` puts on each team, by team. */
+  const teamSizes = (plan: MatchPlan | undefined): Record<number, number> => {
+    const sizes: Record<number, number> = {};
+    for (const seat of plan?.seats.values() ?? []) {
+      sizes[seat.team] = (sizes[seat.team] ?? 0) + 1;
+    }
+    return sizes;
+  };
+
+  /** The team the seat named `name` plays on in `plan`. */
+  const teamOf = (plan: MatchPlan | undefined, name: string): number | undefined =>
+    [...(plan?.seats.values() ?? [])].find((seat) => seat.name === name)?.team;
+
+  it("seats all three sides, eight each, and plays them as three teams", async () => {
+    const queued = await openQueued({ group: THREE_GROUP, match: fakeMatch() });
+    const ally = await queued.join(ALLY);
+    await queued.join(FOE);
+    expect(ally.getSnapshot().countdownSeconds).toBeNull();
+    await queued.join(FOE_2);
+    await settle();
+    expect(ally.getSnapshot()).toMatchObject({ phase: "starting", countdownSeconds: 5 });
+    await queued.step(COUNTDOWN_SECONDS);
+    const [plan] = queued.plans;
+    expect(plan?.teamCount).toBe(3);
+    expect(teamSizes(plan)).toEqual({ 0: 8, 1: 8, 2: 8 });
+    expect(teamOf(plan, "ticket-4")).toBe(2);
+  });
+
+  it("plays the two sides that came as two teams when nobody of the third did", async () => {
+    const queued = await openQueued({ group: THREE_GROUP, match: fakeMatch() });
+    const ally = await queued.join(ALLY);
+    await queued.join(FOE_2);
+    await queued.step(TIMEOUT_SECONDS);
+    expect(queued.fellThrough).toEqual([]);
+    expect(ally.getSnapshot()).toMatchObject({ phase: "starting", countdownSeconds: 5 });
+    await queued.step(COUNTDOWN_SECONDS);
+    const [plan] = queued.plans;
+    expect(plan?.teamCount).toBe(2);
+    expect(teamSizes(plan)).toEqual({ 0: 8, 1: 8 });
+    // The third side is renumbered into the absent second's place.
+    expect(teamOf(plan, "ticket-4")).toBe(1);
+  });
+
+  it("falls through, naming the party's ticket, when a side is only partly seated", async () => {
+    const queued = await openQueued({ group: THREE_GROUP, match: fakeMatch() });
+    await queued.join(FOE);
+    await queued.step(TIMEOUT_SECONDS);
+    expect(queued.fellThrough).toEqual([[HOST, FOE_2]]);
+    expect(queued.plans).toEqual([]);
+  });
+});
+
 describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
   /** A 2v2 lobby whose match is over, team 0 (HOST and ALLY) the winner. */
   async function afterMatch(winningTeam: 0 | 1 | null = 0) {
