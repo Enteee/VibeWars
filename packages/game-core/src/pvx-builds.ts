@@ -3,6 +3,11 @@
  * #2546: every Good and Great one there, Meta and Provisional included,
  * PvE packs left out. `professions` and `mode` are the PvX file's own,
  * `any` for a secondary PvX leaves open; the code says which it is.
+ *
+ * Adapted from gwpvx.fandom.com, CC BY-SA 3.0
+ * (https://www.fandom.com/licensing); this data is shared under the same
+ * licence. Each build's `name` is its PvX page name, the attribution.
+ * Credited on the Help licences page (#2557).
  */
 export interface PvxBuild {
   readonly professions: string;
