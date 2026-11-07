@@ -4,6 +4,7 @@ import { loadoutOf } from "../../../join-loadout.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../../../ruleset.js";
 import { getSkill } from "../../../skills/catalog.js";
 import { STARTER_BUILDS } from "../../../starter-builds.js";
+import { STARTER_TEAMS } from "../../../starter-teams.js";
 import { type Vec2 } from "../../../vec2.js";
 import { createCursor, decide, type Behaviour } from "../../behaviour.js";
 import { MatchSimulation, loadoutSpec, type ParticipantSpec } from "../../simulation.js";
@@ -15,8 +16,12 @@ export const DT = 1 / RULESET.tickRateHz;
 export const BOUNDS = { width: 1600, height: 800 };
 export const BOT: Behaviour = { kind: "play-build", thinkSeconds: 0.25 };
 
+/** A built-in build by name: a PvX one, or a starter team member's ("Warrior/Monk"). */
 export function starter(name: string): PlayerBuild {
-  const build = STARTER_BUILDS.find((candidate) => candidate.name === name);
+  const build = [
+    ...STARTER_BUILDS,
+    ...STARTER_TEAMS.flatMap((team) => team.members.map((member) => member.build)),
+  ].find((candidate) => candidate.name === name);
   if (build === undefined) throw new Error(`no starter build ${name}`);
   return build;
 }

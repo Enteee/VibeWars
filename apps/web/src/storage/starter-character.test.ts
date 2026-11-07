@@ -161,11 +161,9 @@ describe("rerollStarterCharacter", () => {
           current.primaryProfession,
           current.secondaryProfession,
         ]);
-        const picked = toPlayerBuild(rerolled);
-        expect(STARTER_BUILDS).toContainEqual({
-          ...picked,
-          name: STARTER_BUILDS.find((b) => b.primaryProfession === picked.primaryProfession)?.name,
-        });
+        // The character has a name of its own (#1149): the rest is a starter build's.
+        const { name: _, ...picked } = toPlayerBuild(rerolled);
+        expect(STARTER_BUILDS.map(({ name: _name, ...rest }) => rest)).toContainEqual(picked);
         expect(await characters.load("a")).toEqual(rerolled);
       }
     }

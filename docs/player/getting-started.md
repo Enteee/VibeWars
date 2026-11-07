@@ -44,7 +44,8 @@ build and save.
 
 Not sure what to take? The random starter character is marked
 **Random**, with a dashed outline. **Reroll** on it gives you a fresh
-random build to try.
+random build to try. The random builds are well-rated PvP builds from the
+[PvX wiki](https://gwpvx.fandom.com/).
 
 **Team Builder** starts with a random Team Build too, a ready-made team
 for a Team Lobby at each size, 2v2, 4v4 and 8v8, marked the same way and

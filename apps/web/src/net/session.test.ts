@@ -259,9 +259,11 @@ describe("a Team Lobby's RNG (#2213)", () => {
     expect(lobbyRandom(undefined)).toBe(secureRandom);
   });
 
-  it("with the e2e build's seed, gives every lobby the same solo foe: a Monk/Elementalist", () => {
-    const foes = [lobbyRandom("11"), lobbyRandom("11")].map((random) => pickStarterBuild(random));
-    expect(foes.map((foe) => foe.name)).toEqual(["Monk/Elementalist", "Monk/Elementalist"]);
+  it("with the e2e build's seed, gives every lobby the same solo foe: a healer Monk", () => {
+    const foes = [lobbyRandom("4404"), lobbyRandom("4404")].map((random) =>
+      pickStarterBuild(random),
+    );
+    expect(foes.map((foe) => foe.name)).toEqual(["Word of Healing (Mo)", "Word of Healing (Mo)"]);
   });
 
   it("refuses a seed that is not a decimal integer, rather than falling back to crypto", () => {
