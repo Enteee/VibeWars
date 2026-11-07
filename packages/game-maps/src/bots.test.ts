@@ -7,6 +7,8 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
+  getSkill,
+  isSpikeSkill,
   loadoutOf,
   loadoutSpec,
   resolveLoadout,
@@ -26,6 +28,12 @@ import type { MapData } from "./schema.js";
 
 const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULESET.tickRateHz;
+/**
+ * Of the bots' spike-skill hits on a foe, the share landing within a second
+ * of a teammate's on it (#2631): main's bots, firing each the moment it
+ * recharged, landed MAIN of them together.
+ */
+const SPIKE_SHARE = 0.99;
 /** No warrior: nobody here closes in because their weapon is melee. */
 const CASTERS = ["Barrage (R)", "Signet of Suffering (N/A)", "Double Dragon (E)"];
 
@@ -47,6 +55,98 @@ describe.each(loadAllMaps().map((map) => [map.id, map] as const))("%s bots", (_,
         .log.some((entry) => entry.events.some((event) => event.kind === "damage"));
     }
     expect(damaged).toBe(true);
+  });
+});
+
+describe("bots spike on Ashen Courtyard (#2631)", () => {
+  const map = loadAllMaps().find((candidate) => candidate.id === "ashen-courtyard");
+
+  /**
+   * Of 60 s of a 4v4 mirror of the bot bench's builds on Ashen Courtyard,
+   * one per seed, the spike-skill hits on a foe and those landing within a
+   * second of a teammate's spike-skill hit on the same foe.
+   */
+  const spikes = (seed: string) => {
+    if (map === undefined) throw new Error("no Ashen Courtyard");
+    const participants = [0, 1].flatMap((team) =>
+      map.spawnPoints
+        .filter((spawn) => spawn.team === team)
+        .slice(0, 4)
+        .map((spawn, i): ParticipantSpec => {
+          const build = STARTER_BUILDS[(i + seed.charCodeAt(0)) % STARTER_BUILDS.length];
+          if (build === undefined) throw new Error("no built-in builds");
+          const loadout = loadoutOf(build);
+          const resolved = resolveLoadout(
+            {
+              primaryProfession: loadout.primaryProfession,
+              secondaryProfession: loadout.secondaryProfession,
+              allocatedRanks: loadout.attributeRanks,
+              equipment: loadout.equipment,
+            },
+            RULESET.combat,
+          );
+          return {
+            id: `${String(team)}-${String(i)}`,
+            team,
+            skillBar: loadout.skillBar,
+            ...loadoutSpec(resolved),
+            spawn: spawn.position,
+            facing: 0,
+            behaviour: { kind: "play-build", reaction: BOT_REACTION },
+          };
+        }),
+    );
+    const teamOf = new Map(participants.map(({ id, team }) => [id, team]));
+    const sim = new MatchSimulation({
+      seed,
+      ruleset: RULESET,
+      walls: allWallSegments(map.walls),
+      bounds: { width: map.width, height: map.height },
+      matchRules: ANNIHILATION_MATCH_RULES,
+      participants,
+    });
+    const hits: { readonly at: number; readonly sourceId: string; readonly targetId: string }[] =
+      [];
+    for (let t = 0; t < 60; t += DT) {
+      for (const entry of sim.step(DT).log) {
+        const skill = entry.skillId === undefined ? undefined : getSkill(entry.skillId);
+        const sourceId = entry.sourceId;
+        if (skill === undefined || !isSpikeSkill(skill) || sourceId === undefined) continue;
+        for (const event of entry.events) {
+          const team = teamOf.get(event.targetId);
+          if (
+            event.kind === "damage" &&
+            event.targetId === sim.get(sourceId)?.targetId &&
+            team !== undefined &&
+            team !== teamOf.get(sourceId)
+          ) {
+            hits.push({ at: entry.atSeconds, sourceId, targetId: event.targetId });
+          }
+        }
+      }
+    }
+    const together = hits.filter((hit) =>
+      hits.some(
+        (other) =>
+          other.targetId === hit.targetId &&
+          other.sourceId !== hit.sourceId &&
+          Math.abs(other.at - hit.at) <= 1,
+      ),
+    );
+    return { hits: hits.length, together: together.length };
+  };
+
+  it("lands more of the bots' big hits together than trickling in, the same for the same seed", () => {
+    const runs = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"].map(spikes);
+    const hits = runs.reduce((sum, run) => sum + run.hits, 0);
+    const together = runs.reduce((sum, run) => sum + run.together, 0);
+    console.log(
+      JSON.stringify(runs),
+      together / hits,
+      JSON.stringify((globalThis as unknown as { SPK?: unknown }).SPK),
+    );
+    expect(together / hits).toBeGreaterThanOrEqual(SPIKE_SHARE);
+    expect(spikes("a")).toEqual(runs[0]);
   });
 });
 

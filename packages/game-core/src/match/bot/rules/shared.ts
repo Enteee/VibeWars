@@ -2,8 +2,10 @@ import { RANGE_MELEE, RANGE_SPELL } from "../../../distances.js";
 import { energyCostOf } from "../../../skills/activation.js";
 import { canAffordAdrenaline } from "../../../skills/adrenaline.js";
 import { getSkill } from "../../../skills/catalog.js";
+import { chainAllows } from "../../../skills/chain.js";
 import { getStatusDefinition, preventsAttacks, preventsSpells } from "../../../skills/status.js";
-import { raisedMaxHealth } from "../../../skills/tick.js";
+import { effectiveActivationSeconds, raisedMaxHealth } from "../../../skills/tick.js";
+import { attackDurationSeconds } from "../../../skills/weapon-attack.js";
 import { isSpell, type Skill } from "../../../skills/types.js";
 import { distance, ZERO, type Vec2 } from "../../../vec2.js";
 import type { BehaviourIntent, Reaction } from "../../behaviour.js";
@@ -29,13 +31,6 @@ export const HURT_FRACTION = 0.6;
 
 /** How much more hurt than it is a foe healer counts when the team picks a target (#2573). */
 export const HEALER_PRIORITY = 0.25;
-
-/**
- * Below this share of its health a foe in reach is the team's target
- * (#2545): one about to fall is worth more than one at full health. Bots
- * hold no spike for it (#2631): they finish it.
- */
-export const FINISH_FRACTION = 0.6;
 
 /** How far past spell range a bot follows its team's target (#2573). */
 export const FOCUS_REACH = 150;
@@ -287,35 +282,78 @@ export const SPIKE_READY_MAX = 2;
 /** A bot that has held a spike skill this long casts it anyway (#2631). */
 export const SPIKE_HOLD_MAX_SECONDS = 4;
 
+/** Below this share of its health the team's target gets no spike held for it: it is finished (#2631). */
+export const SPIKE_FINISH_FRACTION = 0.3;
+
 /**
- * Whether the team's spike at `target` is ready (#2631): of `mates`, its
- * living players, at least `SPIKE_READY_MAX` damage dealers, or all of
- * them if fewer, hold a spike skill they could fire at it now. With one
- * damage dealer there is nobody to wait for.
+ * When the team's spike at `target` lands (#2631), `undefined` while it is
+ * not ready: of `mates`, its living players, at least `SPIKE_READY_MAX`
+ * damage dealers, or all of them if fewer, are casting a spike skill at it
+ * or hold one they could fire at it now. Then the seconds until the last of
+ * those lands, the ones not yet casting firing now, `readySeconds` after the
+ * spike was first seen ready. A bot whose own lands in no more fires: the
+ * slowest at once, a faster one the difference later, so the hits land
+ * together. With one damage dealer there is nobody to wait for: 0.
  */
-export function spikeReady(mates: readonly Participant[], target: Participant): boolean {
+export function spikeLands(
+  mates: readonly Participant[],
+  target: Participant,
+  readySeconds: number,
+): number | undefined {
   let dealers = 0;
   let ready = 0;
+  let latest = 0;
   for (const mate of mates) {
-    const spike = spikeOf(mate, target);
-    if (spike !== "none") {
-      dealers += 1;
+    const lands = spikeOf(mate, target, readySeconds);
+    if (lands === "none") {
+      continue;
     }
-    if (spike === "ready") {
+    dealers += 1;
+    if (lands !== "held") {
       ready += 1;
+      latest = Math.max(latest, lands);
     }
   }
-  return dealers <= 1 || ready >= Math.min(SPIKE_READY_MAX, dealers);
+  if (dealers <= 1) {
+    return 0;
+  }
+  return ready >= Math.min(SPIKE_READY_MAX, dealers) ? latest : undefined;
 }
 
 /**
- * `mate`'s spike at `target`: "ready" with a spike skill it could fire
- * now, as `canActivate` reads it: recharged, affordable, not barred by a
- * status, slowed by none, in range; "held" with spike skills but none of
- * those; "none" without. Read off its bar without allocating.
+ * How long `skill`, a spike skill, takes `caster` to land on `target`
+ * (#2631), as the simulation times it: a spell's activation, an attack
+ * skill's wind-up to its blow. Projectile travel is not counted.
  */
-function spikeOf(mate: Participant, target: Participant): "ready" | "held" | "none" {
+export function spikeSeconds(skill: Skill, caster: Participant, target: Participant): number {
+  if (skill.type !== "attack") {
+    return effectiveActivationSeconds(skill, caster.combatant, target.combatant);
+  }
+  const weapon = caster.combatant.equipment.mainHand.weapon;
+  const base = skill.activationSeconds > 0 ? skill.activationSeconds : weapon.attackIntervalSeconds;
+  return attackDurationSeconds(caster.combatant, base) / 2;
+}
+
+/**
+ * `mate`'s spike at `target`: the seconds until it lands if it is casting
+ * a spike skill at it, or holds one it could fire now as `canActivate`
+ * reads it (recharged, affordable, not barred by a status, slowed by none,
+ * in range), fired `readySeconds` after the spike was first seen ready;
+ * "held" with spike skills but none of those; "none" without.
+ */
+function spikeOf(
+  mate: Participant,
+  target: Participant,
+  readySeconds: number,
+): number | "held" | "none" {
   const combatant = mate.combatant;
+  const casting = combatant.cast.activeCast;
+  if (casting?.targetId === target.id) {
+    const skill = getSkill(casting.skillId);
+    if (skill !== undefined && isSpikeSkill(skill)) {
+      return casting.remainingSeconds;
+    }
+  }
   const away = distance(mate.position, target.position);
   let spike: "held" | "none" = "none";
   for (const id of mate.skillBar) {
@@ -333,10 +371,11 @@ function spikeOf(mate: Participant, target: Participant): "ready" | "held" | "no
       !(spell && preventsSpells(active)) &&
       !(spell && active.some((status) => getStatusDefinition(status.id).castTimeMultiplier > 1)) &&
       !(skill.type === "attack" && preventsAttacks(active)) &&
+      chainAllows(combatant, skill, target.id) &&
       combatant.energy >= energyCostOf(skill, combatant, target.combatant) &&
       (skill.cost?.kind !== "adrenaline" || canAffordAdrenaline(combatant, skill))
     ) {
-      return "ready";
+      return Math.max(0, spikeSeconds(skill, mate, target) - readySeconds);
     }
   }
   return spike;

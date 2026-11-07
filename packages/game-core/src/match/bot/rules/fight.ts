@@ -20,11 +20,12 @@ import {
   takenOffFoe,
 } from "../skill-intent.js";
 import {
-  FINISH_FRACTION,
   NOTHING,
+  SPIKE_FINISH_FRACTION,
   SPIKE_HOLD_MAX_SECONDS,
   healthFraction,
-  spikeReady,
+  spikeLands,
+  spikeSeconds,
 } from "./shared.js";
 import type { BotRule } from "./types.js";
 
@@ -33,6 +34,9 @@ const PET_SEND_UNITS = 300;
 
 /** Other skills recharging that make Oath Shot's risk worth taking (#2159). */
 const GAMBLE_RECHARGING = 2;
+
+/** How much later than its teammates' a spike skill may land and still fire with them (#2631): rounding. */
+const SPIKE_TOLERANCE = 1e-6;
 
 /**
  * With a foe to fight: an offensive skill in bar order, else the weapon.
@@ -49,7 +53,9 @@ const GAMBLE_RECHARGING = 2;
  * A spike skill at the team's target waits for the spike (#2631): until
  * enough of the team's damage dealers could fire with it, the target is
  * low enough to finish, or it has waited `SPIKE_HOLD_MAX_SECONDS`;
- * meanwhile the bot casts its other skills and swings.
+ * meanwhile the bot casts its other skills and swings. A ready spike
+ * fires so the hits land together: the slowest skill at once, a faster
+ * one the difference later.
  */
 const fight: BotRule = {
   order: 100,
@@ -149,23 +155,35 @@ const fight: BotRule = {
     if (cursor.spikeTargetId !== targetId) {
       cursor.spikeTargetId = undefined;
       cursor.spikeHeldSeconds = 0;
+      cursor.spikeReadySeconds = undefined;
     }
-    let spikeHeld: boolean | undefined;
+    // Read once a think, when it first weighs a spike skill.
+    const spike: { read: boolean; lands: number | undefined } = { read: false, lands: undefined };
     const holdsSpike = (held: Skill): boolean => {
       if (role === undefined || isGhostId(targetId) || target === undefined) {
         return false;
       }
-      if (!isSpikeSkill(held) || castOn(held) !== targetId) {
+      if (
+        !isSpikeSkill(held) ||
+        castOn(held) !== targetId ||
+        healthFraction(target) < SPIKE_FINISH_FRACTION ||
+        cursor.spikeHeldSeconds >= SPIKE_HOLD_MAX_SECONDS
+      ) {
         return false;
       }
-      spikeHeld ??=
-        healthFraction(target) >= FINISH_FRACTION &&
-        !spikeReady(allies, target) &&
-        cursor.spikeHeldSeconds < SPIKE_HOLD_MAX_SECONDS;
-      if (spikeHeld) {
+      if (!spike.read) {
+        spike.read = true;
+        spike.lands = spikeLands(allies, target, cursor.spikeReadySeconds ?? 0);
+        cursor.spikeReadySeconds =
+          spike.lands === undefined ? undefined : (cursor.spikeReadySeconds ?? 0);
+      }
+      const holds =
+        spike.lands === undefined ||
+        spike.lands > spikeSeconds(held, self, target) + SPIKE_TOLERANCE;
+      if (holds) {
         cursor.spikeTargetId = targetId;
       }
-      return spikeHeld;
+      return holds;
     };
     const skill = bar.find(
       (held) =>
@@ -180,6 +198,9 @@ const fight: BotRule = {
         (!(holding || covering) || context.check(held.id, castOn(held)).ok) &&
         !holdsSpike(held),
     );
+    if (!spike.read || (skill !== undefined && isSpikeSkill(skill))) {
+      cursor.spikeReadySeconds = undefined;
+    }
     if (skill !== undefined && isSpikeSkill(skill)) {
       cursor.spikeTargetId = undefined;
       cursor.spikeHeldSeconds = 0;

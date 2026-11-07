@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { RANGE_SPELL } from "../../../distances.js";
 import { NO_RANKS } from "../../../skills/status.js";
 import { BOT_REACTION, INSTANT_REACTION, createCursor } from "../../behaviour.js";
-import { STARTER_BUILDS } from "../../../starter-builds.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
 import type { MatchSimulation } from "../../simulation.js";
 import {
@@ -20,7 +19,7 @@ import {
   ruleFor,
 } from "./test-support.js";
 import fight from "./fight.js";
-import { SPIKE_HOLD_MAX_SECONDS, healthFraction } from "./shared.js";
+import { SPIKE_HOLD_MAX_SECONDS } from "./shared.js";
 
 describe("play-build fights (#1189, #1193, #1965)", () => {
   it("stands and fights a melee foe at its elbow with the bow, by a wall or in the open, however fast it thinks", () => {
@@ -304,31 +303,38 @@ describe("a healer fights from its post (#2615)", () => {
 describe("damage dealers spike the team's target together (#2631)", () => {
   const FLARE = "elementalist.flare";
   const EMPATHY = "mesmer.empathy";
+  const IMMOLATE = "elementalist.immolate";
+  const RODGORTS = "elementalist.rodgorts-invocation";
+  const INSTANT = { kind: "play-build", reaction: INSTANT_REACTION } as const;
   /**
-   * Bot `a` with `bar`, beside caster `b` with Flare unless `lone`, and a
-   * foe at `foeFraction` of its health in range of both; Fire Magic at
-   * `fire` for both.
+   * Bot `a` with `bar`, beside caster `b` with `mate` unless `lone`,
+   * both thinking as `behaviour`, and a foe at `foeFraction` of its
+   * health in range of both; Fire Magic at `fire` for both.
    */
   const spike = ({
     bar = [FLARE],
+    mate = [FLARE],
     lone = false,
     foeFraction = 1,
     fire = 12,
+    behaviour = BOT,
   }: {
     bar?: readonly string[];
+    mate?: readonly string[];
     lone?: boolean;
     foeFraction?: number;
     fire?: number;
+    behaviour?: typeof BOT;
   } = {}) => {
     const ranks = new Map([["elementalist.fire-magic", fire]]);
     return match([
-      body("a", 0, vec2(400, 400), { behaviour: BOT, skillBar: [...bar], attributeRanks: ranks }),
+      body("a", 0, vec2(400, 400), { behaviour, skillBar: [...bar], attributeRanks: ranks }),
       ...(lone
         ? []
         : [
             body("b", 0, vec2(400, 460), {
-              behaviour: BOT,
-              skillBar: [FLARE],
+              behaviour,
+              skillBar: [...mate],
               attributeRanks: ranks,
             }),
           ]),
@@ -372,10 +378,40 @@ describe("damage dealers spike the team's target together (#2631)", () => {
     expect(decideFor(sim)?.useSkillId).toBeUndefined();
   });
 
-  it("finishes a target below 60% at once", () => {
-    const sim = spike({ foeFraction: 0.5 });
-    recharge(sim, "b");
-    expect(decideFor(sim)?.useSkillId).toBe(FLARE);
+  it("still holds at half the target's health, and finishes it below 30% at once", () => {
+    const half = spike({ foeFraction: 0.5 });
+    recharge(half, "b");
+    expect(decideFor(half)?.useSkillId).toBeUndefined();
+    const low = spike({ foeFraction: 0.25 });
+    recharge(low, "b");
+    expect(decideFor(low)?.useSkillId).toBe(FLARE);
+  });
+
+  it("fires a faster spike skill as much later as the slower one takes longer", () => {
+    const sim = spike({ bar: [IMMOLATE], mate: [RODGORTS] });
+    const cursor = createCursor();
+    expect(decideFor(sim, cursor)?.useSkillId).toBeUndefined();
+    expect(cursor.spikeReadySeconds).toBe(0);
+    cursor.spikeReadySeconds = 1;
+    expect(decideFor(sim, cursor)?.useSkillId).toBe(IMMOLATE);
+    expect(cursor.spikeReadySeconds).toBeUndefined();
+  });
+
+  it("lands a 2 s and a 1 s spike skill together", () => {
+    const sim = spike({ bar: [IMMOLATE], mate: [RODGORTS], behaviour: INSTANT });
+    const landed = new Map<string, number>();
+    for (let t = 0; t < 4 && landed.size < 2; t += DT) {
+      for (const entry of sim.step(DT).log) {
+        const hit = entry.events.some(
+          (event) => event.kind === "damage" && event.targetId === "foe",
+        );
+        if (hit && entry.skillId !== undefined && !landed.has(entry.skillId)) {
+          landed.set(entry.skillId, entry.atSeconds);
+        }
+      }
+    }
+    const rodgorts = landed.get(RODGORTS) ?? Number.NaN;
+    expect(Math.abs((landed.get(IMMOLATE) ?? Number.NaN) - rodgorts)).toBeLessThanOrEqual(0.05);
   });
 
   it("fires at once as the team's only damage dealer", () => {
@@ -393,48 +429,5 @@ describe("damage dealers spike the team's target together (#2631)", () => {
     recharge(held, "b");
     expect(decideFor(held)?.useSkillId).toBeUndefined();
     expect(decideFor(spike({ fire: 0 }))?.useSkillId).toBe(FLARE);
-  });
-
-  it("in a 4v4 mirror, a target loses 30% of its health within a second, the same every run", () => {
-    const run = () => {
-      const sim = match(
-        [0, 1].flatMap((team) =>
-          [0, 1, 2, 3].map((i) =>
-            fighter(
-              `${String(team)}-${String(i)}`,
-              team,
-              STARTER_BUILDS[i % STARTER_BUILDS.length] ?? WARRIOR,
-              vec2(team === 0 ? 200 : 1400, 100 + 200 * i),
-              {
-                behaviour: { kind: "play-build", reaction: BOT_REACTION },
-              },
-            ),
-          ),
-        ),
-        "spike",
-      );
-      const window = Math.round(1 / DT);
-      const history = new Map<string, number[]>();
-      const spikes: string[] = [];
-      for (let tick = 0; tick < 60 / DT; tick += 1) {
-        sim.step(DT);
-        for (const participant of sim.participants()) {
-          if (participant.creature !== undefined) continue;
-          const seen = history.get(participant.id) ?? [];
-          const now = participant.combatant.dead ? 0 : healthFraction(participant);
-          if (seen.length > 0 && Math.max(...seen) - now >= 0.3) {
-            spikes.push(`${String(tick)} ${participant.id}`);
-            seen.length = 0;
-          }
-          seen.push(now);
-          if (seen.length > window) seen.shift();
-          history.set(participant.id, seen);
-        }
-      }
-      return spikes;
-    };
-    const spikes = run();
-    expect(spikes.length).toBeGreaterThan(0);
-    expect(run()).toEqual(spikes);
   });
 });

@@ -233,6 +233,8 @@ export interface BehaviourCursor {
   spikeTargetId: string | undefined;
   /** `play-build`: how long it has held them for `spikeTargetId` (#2631). */
   spikeHeldSeconds: number;
+  /** `play-build`: how long its team's spike at `spikeTargetId` has been ready, `undefined` while it is not (#2631). */
+  spikeReadySeconds: number | undefined;
   /** `play-build` and `guard`: how many decisions it has made, the seed of its next reaction time (#2606). */
   thinks: number;
   /** `play-build`: each foe's reach, read once from its bar (#2598). */
@@ -318,6 +320,7 @@ export function createCursor(): BehaviourCursor {
     regrouping: false,
     spikeTargetId: undefined,
     spikeHeldSeconds: 0,
+    spikeReadySeconds: undefined,
     thinks: 0,
     foeReach: new Map(),
   };
