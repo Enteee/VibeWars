@@ -5,6 +5,7 @@ import type { Skill } from "../../../skills/types.js";
 import { distance, ZERO, type Vec2 } from "../../../vec2.js";
 import type { BehaviourIntent } from "../../behaviour.js";
 import type { BehaviourContext } from "../../behaviour.js";
+import { FLAG_REACH_UNITS } from "../../flags.js";
 import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
 import { summonAura } from "../skill-intent.js";
@@ -79,9 +80,10 @@ export function spiritUp(context: BehaviourContext, self: Participant, skill: Sk
 /**
  * Whether `self` is the one of its team to go to `point` for an
  * objective (#2581): the living teammate with empty hands nearest to it,
- * ties to simulation order, a bot or, when `humans`, a human. A human
- * nearer, no bot goes. A bot with a foe in spell range fights rather
- * than goes, so it is passed over.
+ * ties to simulation order, a bot or, when `humans`, a human within
+ * `FLAG_REACH_UNITS` of it, about to take it up, and then no bot goes.
+ * A bot with a foe in spell range fights rather than goes, so it is
+ * passed over.
  */
 export function sentTo(context: BehaviourContext, point: Vec2, humans: boolean): boolean {
   const team = context.self.combatant.team;
@@ -92,7 +94,7 @@ export function sentTo(context: BehaviourContext, point: Vec2, humans: boolean):
       mate.combatant.team !== team ||
       mate.combatant.dead ||
       mate.creature !== undefined ||
-      (!humans && !context.isBot(mate.id)) ||
+      (!context.isBot(mate.id) && (!humans || distance(mate.position, point) > FLAG_REACH_UNITS)) ||
       carriedRelic(context.objectives.relics, mate.id) !== undefined ||
       (context.isBot(mate.id) && fighting(context, mate))
     ) {

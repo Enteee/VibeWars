@@ -9,7 +9,7 @@ import type { BotRule } from "./types.js";
  * Relic Run (#2581), no foe in spell range: the team's bot nearest to a
  * foe's relic on the ground returns it; else the one nearest to its own
  * relic, lying at its spawn or on the ground, fetches it, unless a human
- * teammate is nearer. Both by GW1's Interact. The others escort: they
+ * teammate is about to take it up. Both by GW1's Interact. The others escort: they
  * walk to the altar and wait there.
  */
 const fetchRelic: BotRule = {

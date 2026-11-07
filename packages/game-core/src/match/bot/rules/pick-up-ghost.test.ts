@@ -49,7 +49,15 @@ describe("pick-up-ghost: King of the Hill bots fetch their Ghostly Hero (#2582)"
     expect(escort.moveTo).toEqual(FIELD.altar);
   });
 
-  it("leaves the ghost to a human teammate nearer to it", () => {
+  it("takes the ghost past a human idle at their base, out of reach of it", () => {
+    const sim = hill([
+      body("bot", 0, vec2(300, 400), { behaviour: BOT }),
+      body("human", 0, vec2(200, 400)),
+    ]);
+    expect(askBot(sim, "bot", HILL, (id) => id !== "human").attackTargetId).toBe(GHOST);
+  });
+
+  it("leaves the ghost to a human teammate within reach of it", () => {
     const sim = hill([
       body("bot", 0, vec2(300, 400), { behaviour: BOT }),
       body("human", 0, vec2(150, 400)),

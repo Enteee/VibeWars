@@ -9,7 +9,7 @@ import type { BotRule } from "./types.js";
  * King of the Hill (#2582), no foe in spell range: while its team does
  * not hold the altar, the team's bot nearest to its Ghostly Hero, standing
  * off the altar and following nobody, tells it to follow (Space on it),
- * unless a human teammate is nearer. The others escort at the altar.
+ * unless a human teammate is about to take it. The others escort at the altar.
  */
 const pickUpGhost: BotRule = {
   order: 114,
