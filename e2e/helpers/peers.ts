@@ -6,6 +6,8 @@ import {
   type Page,
 } from "@playwright/test";
 
+import { RANGE_SPELL } from "../../packages/game-core/src/distances.js";
+import { projection } from "../camera.js";
 import { awaitLobby, INVITE_URL, lobbyWindow, openRail, shutLobbyWindow } from "./menu.js";
 
 /**
@@ -273,4 +275,79 @@ export async function startSoloMatch(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
   await playOwnTeams([{ page }]);
+}
+
+/** A world point, as the specs read them off a map's JSON. */
+interface Point {
+  readonly x: number;
+  readonly y: number;
+}
+
+/** Ember Pits' middle lane: open from one side's spawns to the other's, between the pillar ring's rows. */
+const EMBER_PITS_LANE_Y = 900;
+
+/**
+ * Walks the hero from its spawn on ember-pits, the default map here, to
+ * within `RANGE_SPELL` of `foe` (#2550): the map is wider than the view,
+ * so a foe on its spawn is off screen and out of every skill's reach.
+ * Ground clicks on open ground: onto the middle lane, along it to 300
+ * short of the foe, then across to it. Every click is on screen, so a
+ * long leg takes several. Resolves once the view, which follows the
+ * hero, has come to the last point.
+ */
+export async function walkIntoRange(page: Page, canvas: Locator, foe: Point): Promise<void> {
+  const stage = page.locator("#viewport");
+  const camera = async (): Promise<Point> => {
+    const [x = NaN, y = NaN] = ((await stage.getAttribute("data-camera")) ?? "")
+      .split(",")
+      .map(Number);
+    return { x, y };
+  };
+  const start = await camera();
+  const towards = Math.sign(foe.x - start.x);
+  const route = [
+    { x: start.x + towards * 200, y: EMBER_PITS_LANE_Y },
+    { x: foe.x - towards * 300, y: EMBER_PITS_LANE_Y },
+    { x: foe.x - towards * 300, y: foe.y },
+  ];
+  let from = start;
+  for (const to of route) {
+    let step = from;
+    while (step !== to) {
+      const view = await projection(stage, canvas);
+      const box = await canvas.boundingBox();
+      if (box === null) {
+        throw new Error("the arena canvas has no box");
+      }
+      // A third of the canvas's shorter side from the centre: on screen,
+      // and clear of the HUD round its edges.
+      const reach = Math.min(box.width, box.height) / 3 / view.zoom;
+      const here = await camera();
+      // The farthest point of the leg within reach.
+      for (let t = 20; t >= 0; t -= 1) {
+        const point =
+          t === 20
+            ? to
+            : { x: from.x + ((to.x - from.x) * t) / 20, y: from.y + ((to.y - from.y) * t) / 20 };
+        if (Math.hypot(point.x - here.x, point.y - here.y) <= reach) {
+          step = point;
+          break;
+        }
+      }
+      const goal = step;
+      await canvas.click({ position: view.onCanvas(goal) });
+      await expect
+        .poll(
+          async () => {
+            const now = await camera();
+            return Math.hypot(now.x - goal.x, now.y - goal.y);
+          },
+          { message: "the hero should walk there", timeout: 10_000 },
+        )
+        .toBeLessThan(20);
+    }
+    from = to;
+  }
+  const there = await camera();
+  expect(Math.hypot(there.x - foe.x, there.y - foe.y)).toBeLessThan(RANGE_SPELL);
 }

@@ -11,6 +11,7 @@ import {
   playHouseTeams,
   playOwnTeams,
   startSoloMatch as startMatchFromMenu,
+  walkIntoRange,
 } from "./helpers/peers.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 
@@ -39,6 +40,26 @@ test.beforeEach(async ({ page }) => {
     );
   }, `${STORAGE_NAMESPACE}.music`);
 });
+
+/** Ember Pits, the map every lobby here plays. */
+const ARENA = JSON.parse(
+  readFileSync(new URL("../packages/game-maps/maps/ember-pits/map.json", import.meta.url), "utf8"),
+) as {
+  readonly height: number;
+  readonly spawnPoints: readonly {
+    readonly team: number;
+    readonly position: { readonly x: number; readonly y: number };
+  }[];
+};
+
+/** Where a 1v1's opponent stands: team 1's first spawn, across the map. */
+const FOE_SPAWN = (() => {
+  const spawn = ARENA.spawnPoints.find((point) => point.team === 1)?.position;
+  if (spawn === undefined) {
+    throw new Error("ember-pits has no team 1 spawn");
+  }
+  return spawn;
+})();
 
 /**
  * Screenshot just the arena.
@@ -392,7 +413,9 @@ test("Space attacks the nearest enemy with the weapon, and moving stops it (#160
 }) => {
   // A lobby of two, for the reason the test above gives.
   const opponent = await page.context().newPage();
-  await startLobbyMatch(page, [opponent]);
+  const canvas = await startLobbyMatch(page, [opponent]);
+  // Near, so the swing comes within the poll below, not after a walk across the map.
+  await walkIntoRange(page, canvas, FOE_SPAWN);
   const attacking = page.locator(".hud-attacking");
   await expect(attacking).toBeHidden();
 
@@ -435,8 +458,8 @@ async function spotShot(
 
 test("clicking the ground walks there, round a wall, and stops (#310)", async ({ page }) => {
   const canvas = await startSoloMatch(page);
-  // Behind the top wall (x 440 to 464, y 0 to 260) from the first spawn, (80, 200).
-  const goal = { x: 520, y: 150 };
+  // Behind the west pillar (x 560 to 620, y 600 to 800) from the first spawn, (160, 660).
+  const goal = { x: 700, y: 700 };
   const empty = await spotShot(page, canvas, goal);
 
   await canvas.click({ position: await matchPoint(page, canvas, goal) });
@@ -474,9 +497,8 @@ test("clicking the ground keeps the target, and Space attacks it from there (#31
   await expect(target).not.toHaveText("no target");
   const before = await readTargetHealth(page);
 
-  // Open ground, short of the top wall and away from both spawns.
-  await canvas.click({ position: await matchPoint(page, canvas, { x: 260, y: 120 }) });
-  await page.waitForTimeout(300);
+  // Ground clicks across the map to the foe: each keeps the target.
+  await walkIntoRange(page, canvas, FOE_SPAWN);
   await expect(target).not.toHaveText("no target");
 
   await page.keyboard.press(" ");
@@ -642,12 +664,6 @@ test("the target panel shows the target's professions before its name (#281)", a
 test("at the arena's bottom edge, an RMB drag down looks past it, and springs back (#721)", async ({
   page,
 }) => {
-  const arena = JSON.parse(
-    readFileSync(
-      new URL("../packages/game-maps/maps/ember-pits/map.json", import.meta.url),
-      "utf8",
-    ),
-  ) as { readonly height: number };
   await page.goto("./");
   await hostLobby(page);
   await expect(page.locator(".lobby-map select")).toHaveValue("ember-pits");
@@ -701,7 +717,7 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
   const panned = atWall + 200 / zoom;
   await expect.poll(cameraY).toBeGreaterThan(panned - 3);
   expect(await cameraY()).toBeLessThan(panned + 3);
-  expect(panned).toBeGreaterThan(arena.height);
+  expect(panned).toBeGreaterThan(ARENA.height);
 
   // Let go: the view is on you again. RETURN_RATE (7/s)
   // brings it within 3 px in about 0.65 s; a loaded runner needs more than
@@ -817,28 +833,14 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
 test("a wheel click on a foe calls it for your team, and the other team never sees it (#443)", async ({
   page,
 }) => {
-  const arena = JSON.parse(
-    readFileSync(
-      new URL("../packages/game-maps/maps/ember-pits/map.json", import.meta.url),
-      "utf8",
-    ),
-  ) as {
-    readonly spawnPoints: readonly {
-      readonly team: number;
-      readonly position: { readonly x: number; readonly y: number };
-    }[];
-  };
-  const foeSpawn = arena.spawnPoints.find((spawn) => spawn.team === 1)?.position;
-  if (foeSpawn === undefined) {
-    throw new Error("ember-pits has no team 1 spawn");
-  }
   const opponent = await page.context().newPage();
   const canvas = await startLobbyMatch(page, [opponent]);
   const stage = page.locator("#viewport");
   await expect(stage).toHaveAttribute("data-called", "");
 
-  // The opponent stands on team 1's first spawn.
-  const foe = (await projection(stage, canvas)).onPage(foeSpawn);
+  // The opponent stands on team 1's first spawn, across the map: walk to see them.
+  await walkIntoRange(page, canvas, FOE_SPAWN);
+  const foe = (await projection(stage, canvas)).onPage(FOE_SPAWN);
   await page.mouse.click(foe.x, foe.y, { button: "middle" });
   await expect(stage).toHaveAttribute("data-called", /^\S+$/);
   // The called side hears nothing of it.
