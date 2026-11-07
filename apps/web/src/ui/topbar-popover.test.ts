@@ -339,7 +339,15 @@ describe("the top bar's Lobby (#2385)", () => {
     badge.fire("animationend");
     button.fire("click");
     const controls = parent.children[0]?.children[1];
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", "me", "Host", "Ann"]);
+    // The host sees an (x) by every other member (#2746).
+    expect(parent.children[0]?.texts()).toEqual([
+      "Lobby",
+      "Copy invite link",
+      "me",
+      "Host",
+      "Ann",
+      "×",
+    ]);
     setParty(party(member("me", true), member("Ann"), member("Bo")));
     expect(parent.children[0]?.texts()).toEqual([
       "Lobby",
@@ -347,7 +355,9 @@ describe("the top bar's Lobby (#2385)", () => {
       "me",
       "Host",
       "Ann",
+      "×",
       "Bo",
+      "×",
     ]);
     // The controls stay put through a repaint, so one keeps its focus.
     expect(parent.children[0]?.children[1]).toBe(controls);
