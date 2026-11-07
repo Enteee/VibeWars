@@ -1,6 +1,7 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
+import { t } from "../i18n/index.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   type StoredCharacter,
@@ -133,7 +134,7 @@ describe("validateTeam", () => {
     };
     const team = teamOf("t1", 2, [member("a"), illegal]);
     expect(validateTeam(team).map((p) => p.message)).toEqual([
-      "slot 2, Bravo, is not a legal build: open it to see why",
+      t("teamBuilder.memberIllegal", { slot: 2, name: "Bravo" }),
     ]);
   });
 });
@@ -149,10 +150,10 @@ describe("validateTeam off its size (#2225)", () => {
   it("flags a team short of its size, or over it, as a stored record cannot hold", () => {
     const team = teamWith("a", "b", "c", "d");
     expect(validateTeam({ ...team, size: 2 }).map((p) => p.message)).toEqual([
-      "a team of 2 has 2 members, not 4",
+      t("teamBuilder.sizeWrong", { size: 2, members: 4 }),
     ]);
     expect(validateTeam({ ...team, size: 8 }).map((p) => p.message)).toEqual([
-      "a team of 8 has 8 members, not 4",
+      t("teamBuilder.sizeWrong", { size: 8, members: 4 }),
     ]);
   });
 });

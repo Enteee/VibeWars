@@ -17,6 +17,7 @@ import {
   type Painter,
   type StandingBody,
 } from "../render/body-painter.js";
+import { t } from "../i18n/index.js";
 import { toPlayerBuild } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
 import type { FigureLook } from "./character-card.js";
@@ -295,7 +296,7 @@ export function createCharacterDot(character: TeamCharacter): HTMLElement {
   if (sets > 1) {
     const dots = document.createElement("span");
     dots.className = "character-ball-sets";
-    dots.setAttribute("aria-label", `${String(sets)} weapon sets`);
+    dots.setAttribute("aria-label", t("character.weaponSets", { count: sets }));
     for (let set = 0; set < sets; set += 1) {
       const dot = document.createElement("span");
       dot.className = set === 0 ? "character-ball-set is-active" : "character-ball-set";

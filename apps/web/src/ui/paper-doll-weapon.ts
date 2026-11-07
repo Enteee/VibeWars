@@ -11,6 +11,7 @@ import {
   type WeaponSetIndex,
 } from "@vibewars/game-core";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import {
   modChoices,
@@ -30,15 +31,22 @@ export const HANDS: readonly Hand[] = ["mainHand", "offHand"];
 
 export const HAND_NUMBER: Readonly<Record<Hand, string>> = { mainHand: "⑥", offHand: "⑦" };
 
-export const HAND_NAME: Readonly<Record<Hand, string>> = {
-  mainHand: "Main hand",
-  offHand: "Off-hand",
+export const HAND_KEY: Readonly<Record<Hand, MessageKey>> = {
+  mainHand: "paperDoll.mainHand",
+  offHand: "paperDoll.offHand",
 };
 
-export const MOD_SLOT_NAME: Readonly<Record<ModSlot, string>> = {
-  prefix: "Prefix",
-  suffix: "Suffix",
-  inscription: "Inscription",
+export const MOD_SLOT_KEY: Readonly<Record<ModSlot, MessageKey>> = {
+  prefix: "paperDoll.modPrefix",
+  suffix: "paperDoll.modSuffix",
+  inscription: "paperDoll.modInscription",
+};
+
+/** A mod slot left empty, as a hand's title lists it: "no prefix". */
+export const NO_MOD_KEY: Readonly<Record<ModSlot, MessageKey>> = {
+  prefix: "paperDoll.noPrefix",
+  suffix: "paperDoll.noSuffix",
+  inscription: "paperDoll.noInscription",
 };
 
 /** What a hand of a set holds, as the paper-doll shows it. */
@@ -124,9 +132,9 @@ export function mountHandPopover(context: PaperDollContext): HandPopover {
 
   const pills = h("div", "paper-doll-pills");
   pills.setAttribute("role", "radiogroup");
-  pills.setAttribute("aria-label", "Attribute");
+  pills.setAttribute("aria-label", t("paperDoll.attribute"));
   const attribute = h("div", "paper-doll-attribute");
-  attribute.append(h("div", "paper-doll-popover-heading", "Attribute"), pills);
+  attribute.append(h("div", "paper-doll-popover-heading", t("paperDoll.attribute")), pills);
   // A radio group: arrows walk it, and what they land on is picked.
   pills.addEventListener("keydown", (event: KeyboardEvent) => {
     const step =
@@ -152,10 +160,10 @@ export function mountHandPopover(context: PaperDollContext): HandPopover {
   const slots = MOD_SLOT_KEYS.map((slot) => {
     const list = h("div", "paper-doll-list is-plain");
     list.setAttribute("role", "listbox");
-    list.setAttribute("aria-label", MOD_SLOT_NAME[slot]);
+    list.setAttribute("aria-label", t(MOD_SLOT_KEY[slot]));
     const column = h("div", "paper-doll-popover-column");
     column.dataset.slot = slot;
-    column.append(h("div", "paper-doll-popover-heading", MOD_SLOT_NAME[slot]), list);
+    column.append(h("div", "paper-doll-popover-heading", t(MOD_SLOT_KEY[slot])), list);
     return { slot, column, list };
   });
   const columns = slots.map((entry) => entry.column);
@@ -201,9 +209,13 @@ export function mountHandPopover(context: PaperDollContext): HandPopover {
           [null, ...modChoices(held.item, slot).map((mod) => mod.id)],
           (id) => id ?? "none",
           (id) =>
-            choice(id === null ? "None" : (getWeaponMod(id)?.name ?? id), undefined, () => {
-              commit(setUpgrade(current(), context.weaponSet(), hand, slot, id));
-            }),
+            choice(
+              id === null ? t("paperDoll.none") : (getWeaponMod(id)?.name ?? id),
+              undefined,
+              () => {
+                commit(setUpgrade(current(), context.weaponSet(), hand, slot, id));
+              },
+            ),
           (node, id) => {
             chosen(node, id === worn);
             note(node, id === null ? "" : (getWeaponMod(id)?.text ?? ""));

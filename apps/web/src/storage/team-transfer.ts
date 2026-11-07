@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import { teamOf, teamCharacter } from "../ui/team-builder.js";
 import { buildPayload, readBuild, type ExportedBuild } from "./build-transfer.js";
 import {
@@ -72,32 +73,27 @@ export function importTeam(text: string, newId: () => string, now: number): Team
   try {
     parsed = JSON.parse(text);
   } catch {
-    return {
-      ok: false,
-      problems: ["That is not valid JSON. Paste the whole team, including the braces."],
-    };
+    return { ok: false, problems: [t("storage.teamNotJson")] };
   }
   if (typeof parsed !== "object" || parsed === null) {
-    return { ok: false, problems: ["A team must be a JSON object."] };
+    return { ok: false, problems: [t("storage.teamNotObject")] };
   }
   const record = parsed as Record<string, unknown>;
   if (record.format !== TEAM_FORMAT) {
     return {
       ok: false,
-      problems: [`This does not look like a VibeWars team (expected format "${TEAM_FORMAT}").`],
+      problems: [t("storage.teamWrongFormat", { format: TEAM_FORMAT })],
     };
   }
   const formatVersion = record.formatVersion;
   if (typeof formatVersion !== "number" || !Number.isInteger(formatVersion)) {
-    return { ok: false, problems: ["This team has no usable format version."] };
+    return { ok: false, problems: [t("storage.teamNoFormatVersion")] };
   }
   if (formatVersion !== TEAM_FORMAT_VERSION) {
     return {
       ok: false,
       problems: [
-        `This team uses format version ${String(formatVersion)}, but this game ` +
-          `reads only version ${String(TEAM_FORMAT_VERSION)}. It was shared from a ` +
-          `different version of the game; ask for a fresh copy.`,
+        t("storage.teamFormatVersion", { version: formatVersion, supported: TEAM_FORMAT_VERSION }),
       ],
     };
   }
@@ -105,14 +101,14 @@ export function importTeam(text: string, newId: () => string, now: number): Team
   const problems: string[] = [];
   const name = typeof record.name === "string" ? record.name.trim() : "";
   if (name === "") {
-    problems.push("Give the team a name.");
+    problems.push(t("storage.teamNeedsName"));
   }
   const size = record.size;
   if (!isTeamBuildSize(size)) {
-    return { ok: false, problems: [...problems, "size must be 2, 4 or 8"] };
+    return { ok: false, problems: [...problems, t("storage.teamSize")] };
   }
   if (!Array.isArray(record.members)) {
-    return { ok: false, problems: [...problems, "members must be a list"] };
+    return { ok: false, problems: [...problems, t("storage.notAList", { field: "members" })] };
   }
   const entries = record.members as readonly unknown[];
   if (entries.length !== size) {
@@ -121,10 +117,7 @@ export function importTeam(text: string, newId: () => string, now: number): Team
     // A team is always its size (#2225).
     return {
       ok: false,
-      problems: [
-        ...problems,
-        `A team of ${String(size)} has ${String(size)} members, not ${String(entries.length)}.`,
-      ],
+      problems: [...problems, t("storage.teamMemberCount", { size, found: entries.length })],
     };
   }
 
@@ -140,9 +133,9 @@ export function importTeam(text: string, newId: () => string, now: number): Team
       entry !== null &&
       typeof (entry as Record<string, unknown>).name === "string"
         ? String((entry as Record<string, unknown>).name)
-        : "unnamed";
+        : t("storage.unnamedMember");
     for (const problem of result.problems) {
-      problems.push(`Member ${String(index + 1)} (${memberName}): ${problem}`);
+      problems.push(t("storage.teamMember", { number: index + 1, name: memberName, problem }));
     }
   });
   if (problems.length > 0) {
@@ -156,5 +149,5 @@ export function importTeam(text: string, newId: () => string, now: number): Team
 /** What a team paste did, for its toast: "Pasted Duo, 2 members. Save to keep it." */
 export function importedTeamSummary(team: StoredTeam): string {
   const count = team.members.length;
-  return `Pasted ${team.name}, ${String(count)} ${count === 1 ? "member" : "members"}. Save to keep it.`;
+  return t("storage.teamPasted", { name: team.name, count });
 }

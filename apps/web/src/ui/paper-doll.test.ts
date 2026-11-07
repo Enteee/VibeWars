@@ -1,6 +1,7 @@
 import { defaultBuildEquipment, type WeaponSetIndex } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import { setOffhand, setRequirementAttribute, setWeapon } from "./gear-editor.js";
 import { mountPaperDoll, type PaperDoll } from "./paper-doll.js";
@@ -435,11 +436,19 @@ describe("the armor paper-doll (#2059)", () => {
     hand("mainHand").click();
     expect(popover().hidden).toBe(false);
     expect(popover().all("paper-doll-popover-title")[0]?.textContent).toBe("⑥ Sword");
-    expect(columns()).toEqual(["Prefix", "Suffix", "Inscription"]);
-    for (const slot of ["Prefix", "Suffix", "Inscription"]) {
-      expect(names(listOf(slot))[0]).toBe("None");
+    expect(columns()).toEqual([
+      t("paperDoll.modPrefix"),
+      t("paperDoll.modSuffix"),
+      t("paperDoll.modInscription"),
+    ]);
+    for (const slot of [
+      t("paperDoll.modPrefix"),
+      t("paperDoll.modSuffix"),
+      t("paperDoll.modInscription"),
+    ]) {
+      expect(names(listOf(slot))[0]).toBe(t("paperDoll.none"));
     }
-    expect(names(listOf("Suffix"))).toContain("of Fortitude");
+    expect(names(listOf(t("paperDoll.modSuffix")))).toContain("of Fortitude");
     // A sword is always Swordsmanship: nothing to pick.
     expect(popover().all("paper-doll-attribute")[0]?.hidden).toBe(true);
   });
@@ -458,7 +467,7 @@ describe("the armor paper-doll (#2059)", () => {
     expect(row("mainHand").text()).toContain("of Fortitude");
 
     // None takes it off.
-    const none = listOf("Suffix").all("paper-doll-choice")[0];
+    const none = listOf(t("paperDoll.modSuffix")).all("paper-doll-choice")[0];
     none?.click();
     expect(character.equipment.weaponSets[0].mainHand.upgrades.suffix).toBeNull();
     expect(hand("mainHand").all("paper-doll-mod")).toHaveLength(0);
@@ -467,7 +476,7 @@ describe("the armor paper-doll (#2059)", () => {
   it("opens ⑦ on the shield: no prefix, its attribute as pills", () => {
     hand("offHand").click();
     expect(popover().all("paper-doll-popover-title")[0]?.textContent).toBe("⑦ Shield");
-    expect(columns()).toEqual(["Suffix", "Inscription"]);
+    expect(columns()).toEqual([t("paperDoll.modSuffix"), t("paperDoll.modInscription")]);
     expect(pills().map((pill) => pill.textContent)).toEqual(["Strength", "Tactics"]);
     const tactics = pills()[1];
     tactics?.click();
@@ -487,7 +496,7 @@ describe("the armor paper-doll (#2059)", () => {
     expect(pills().map((pill) => pill.textContent)).toContain("Energy Storage");
     const pressed = pills().filter((pill) => pill.getAttribute("aria-checked") === "true");
     expect(pressed.map((pill) => pill.textContent)).toEqual(["Fire Magic"]);
-    expect(names(listOf("Inscription"))).toContain('"Let the Memory Live Again"');
+    expect(names(listOf(t("paperDoll.modInscription")))).toContain('"Let the Memory Live Again"');
   });
 
   it("re-lists an open ⑥ for the new set's weapon, and closes when that hand is empty", () => {
@@ -498,7 +507,7 @@ describe("the armor paper-doll (#2059)", () => {
     doll.update(character);
     expect(popover().hidden).toBe(false);
     expect(popover().all("paper-doll-popover-title")[0]?.textContent).toBe("⑥ Staff");
-    expect(names(listOf("Prefix"))).toContain("Insightful");
+    expect(names(listOf(t("paperDoll.modPrefix")))).toContain("Insightful");
 
     set = 2;
     doll.update(character);

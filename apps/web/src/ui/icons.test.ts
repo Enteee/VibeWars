@@ -18,7 +18,7 @@ import {
 } from "@vibewars/game-core";
 
 import {
-  SKILL_TYPE_NAME,
+  SKILL_TYPE_KEY,
   attackingIcon,
   fullscreenIcon,
   insigniaIcon,
@@ -55,7 +55,7 @@ function iconFiles(dir: string): string[] {
 
 describe("icons", () => {
   it("has a file under public/ for every skill type", () => {
-    for (const type of Object.keys(SKILL_TYPE_NAME) as SkillType[]) {
+    for (const type of Object.keys(SKILL_TYPE_KEY) as SkillType[]) {
       expect(fs.existsSync(path.join(PUBLIC, skillTypeIcon(type))), type).toBe(true);
     }
   });

@@ -32,6 +32,7 @@ import {
   type WeaponSetIndex,
 } from "@vibewars/game-core";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import { NoWebGlError } from "../render/arena-viewport.js";
 import {
   exportBuild,
@@ -300,7 +301,7 @@ export function professionChoices(
             .map((attribute) => `${attribute.name}${attribute.isPrimary ? " ★" : ""}`);
     return {
       id,
-      name: id === undefined ? "(none)" : PROFESSIONS[id].name,
+      name: id === undefined ? t("buildEditor.noProfession") : PROFESSIONS[id].name,
       attributes,
       keeps: filled(next.skillBar),
       of,
@@ -329,31 +330,44 @@ export function describeProfessionChange(
       const name = getAttribute(a.attributeId)?.name ?? a.attributeId;
       const back =
         cumulativeCostForRank(a.rank) - cumulativeCostForRank(rankOf(after, a.attributeId));
-      return `${name} ${String(a.rank)} (${String(back)} points back)`;
+      return t("buildEditor.rankDropped", { attribute: name, rank: a.rank, count: back });
     });
   const skills = before.skillBar
     .filter((id, slot): id is string => id !== null && after.skillBar[slot] !== id)
-    .map((id) => `${getSkill(id)?.name ?? id} from the bar`);
+    .map((id) => t("buildEditor.skillDropped", { skill: getSkill(id)?.name ?? id }));
 
   const was = before.equipment.weaponSets[0];
   const now = after.equipment.weaponSets[0];
   const gear: string[] = [];
   const weaponName = (id: string): string => getWeapon(id)?.name ?? id;
   if (was.mainHand.weaponId !== now.mainHand.weaponId) {
-    gear.push(`${weaponName(was.mainHand.weaponId)} → ${weaponName(now.mainHand.weaponId)}`);
+    gear.push(
+      t("buildEditor.gearSwapped", {
+        from: weaponName(was.mainHand.weaponId),
+        to: weaponName(now.mainHand.weaponId),
+      }),
+    );
   }
   if (was.offHand !== null && was.offHand.offhandId !== now.offHand?.offhandId) {
     const name = (id: string): string => getOffhand(id)?.name ?? id;
     gear.push(
       now.offHand === null
         ? name(was.offHand.offhandId)
-        : `${name(was.offHand.offhandId)} → ${name(now.offHand.offhandId)}`,
+        : t("buildEditor.gearSwapped", {
+            from: name(was.offHand.offhandId),
+            to: name(now.offHand.offhandId),
+          }),
     );
   }
   // Sets 2-4 are emptied, not swapped (#489).
   before.equipment.weaponSets.forEach((set, index) => {
     if (index > 0 && set !== null && after.equipment.weaponSets[index] === null) {
-      gear.push(`Set ${String(index + 1)}: ${weaponName(set.mainHand.weaponId)} removed`);
+      gear.push(
+        t("buildEditor.setRemoved", {
+          set: index + 1,
+          weapon: weaponName(set.mainHand.weaponId),
+        }),
+      );
     }
   });
   for (const slot of ARMOR_SLOTS) {
@@ -367,7 +381,7 @@ export function describeProfessionChange(
   const headNow = after.equipment.armor.head.headgearAttributeId;
   if (headWas !== null && headNow !== null && headWas !== headNow) {
     const name = (id: string): string => getAttribute(id)?.name ?? id;
-    gear.push(`Headgear: ${name(headWas)} → ${name(headNow)}`);
+    gear.push(t("buildEditor.headgearMoved", { from: name(headWas), to: name(headNow) }));
   }
   return [...ranks, ...skills, ...gear];
 }
@@ -439,10 +453,10 @@ export function weaponWarning(
   const held = first === undefined ? undefined : getWeapon(first);
   const yours =
     held === undefined || held.id === "unarmed"
-      ? "you have no weapon"
-      : `your weapon is ${withArticle(held.name.toLowerCase())}`;
-  const badge = `Needs ${neededWeaponText(needed)}`;
-  return { badge, title: `${badge} — ${yours}` };
+      ? t("buildEditor.noWeapon")
+      : t("buildEditor.yourWeapon", { weapon: withArticle(held.name.toLowerCase()) });
+  const badge = t("buildEditor.needsWeapon", { weapon: neededWeaponText(needed) });
+  return { badge, title: t("buildEditor.weaponWarning", { badge, yours }) };
 }
 
 /** "a sword", "an axe", "daggers". */
@@ -544,13 +558,13 @@ export type LoadedCode =
 export function loadCode(text: string, id: string, now: number): LoadedCode {
   const code = text.trim();
   if (code === "") {
-    return { ok: false, reason: "empty", problems: ["Paste a code first."] };
+    return { ok: false, reason: "empty", problems: [t("buildEditor.pasteFirst")] };
   }
   if (looksLikeTeam(code)) {
     return {
       ok: false,
       reason: "team",
-      problems: ["That is a team code. Load it on Team Builder."],
+      problems: [t("buildEditor.teamCodeLoad")],
     };
   }
   let result: ImportResult;
@@ -562,7 +576,7 @@ export function loadCode(text: string, id: string, now: number): LoadedCode {
     result = decoded;
     missing = decoded.ok ? decoded.missingSkills : [];
   } else {
-    return { ok: false, reason: "not-a-code", problems: ["That is not a GW1 template code."] };
+    return { ok: false, reason: "not-a-code", problems: [t("buildEditor.notACode")] };
   }
   return result.ok
     ? { ok: true, character: result.character, missingSkills: missing }
@@ -572,7 +586,12 @@ export function loadCode(text: string, id: string, now: number): LoadedCode {
 /** Put a loaded build in the editor, unsaved: the player sees what arrived and chooses to keep it. */
 function loadInto(context: EditorContext, loaded: Extract<LoadedCode, { ok: true }>): void {
   context.commit(loaded.character);
-  toast(`Imported ${loaded.character.name}${missingSkillsNote(loaded.missingSkills)}`);
+  toast(
+    t("buildEditor.imported", {
+      name: loaded.character.name,
+      note: missingSkillsNote(loaded.missingSkills),
+    }),
+  );
 }
 
 /** A message as a sentence: capitalised, with a full stop. */
@@ -606,8 +625,8 @@ export function editorProblems(character: StoredCharacter): EditorProblem[] {
         : undefined;
       const text =
         duplicate === undefined
-          ? `Slot ${String(slot + 1)}: ${sentence(problem.message)}`
-          : `${getSkill(duplicate)?.name ?? duplicate} is on the bar more than once.`;
+          ? t("buildEditor.slotProblem", { slot: slot + 1, problem: sentence(problem.message) })
+          : t("buildEditor.duplicateSkill", { skill: getSkill(duplicate)?.name ?? duplicate });
       return { text, blocking: true, cause: { kind: "slot", slot } };
     }
     if (problem.field.startsWith("equipment")) {
@@ -618,7 +637,7 @@ export function editorProblems(character: StoredCharacter): EditorProblem[] {
       };
     }
     if (problem.field === "character" && problem.message === "name must not be empty") {
-      return { text: "Give the character a name.", blocking: true, cause: { kind: "name" } };
+      return { text: t("buildEditor.nameMissing"), blocking: true, cause: { kind: "name" } };
     }
     if (problem.field === "character" && problem.message.startsWith("secondary profession")) {
       return { text: sentence(problem.message), blocking: true, cause: { kind: "professions" } };
@@ -633,7 +652,7 @@ export function editorProblems(character: StoredCharacter): EditorProblem[] {
   const unspent = remainingPoints(character);
   if (unspent > 0) {
     hints.push({
-      text: `${String(unspent)} attribute point${unspent === 1 ? "" : "s"} unspent.`,
+      text: t("buildEditor.unspentPoints", { count: unspent }),
       blocking: false,
       cause: { kind: "attributes" },
     });
@@ -641,7 +660,7 @@ export function editorProblems(character: StoredCharacter): EditorProblem[] {
   const empty = character.skillBar.filter((id) => id === null).length;
   if (empty > 0) {
     hints.push({
-      text: `${String(empty)} empty skill slot${empty === 1 ? "" : "s"}.`,
+      text: t("buildEditor.emptySlots", { count: empty }),
       blocking: false,
       cause: { kind: "bar" },
     });
@@ -950,12 +969,12 @@ export function mountBuildEditor(
       case "not-a-code":
         return false;
       case "team":
-        toast("That is a team code. Paste it on Team Builder.");
+        toast(t("buildEditor.teamCodePaste"));
         return true;
       case "invalid":
         // Every problem at once: someone fixing a pasted build should not
         // discover its faults one round trip at a time.
-        toast("Could not import", { problems: loaded.problems });
+        toast(t("buildEditor.couldNotImport"), { problems: loaded.problems });
         return true;
     }
   });
@@ -1016,13 +1035,19 @@ function mountCommandBar(
       then();
       return;
     }
-    ask(save, "Discard changes?", "Discard", then, "Keep editing");
+    ask(
+      save,
+      t("buildEditor.discardChanges"),
+      t("buildEditor.discard"),
+      then,
+      t("buildEditor.keepEditing"),
+    );
   };
 
   const nameInput = document.createElement("input");
   nameInput.className = "editor-name";
   nameInput.dataset.cause = "name";
-  nameInput.setAttribute("aria-label", "character name");
+  nameInput.setAttribute("aria-label", t("buildEditor.characterName"));
   nameInput.value = opened.name;
   nameInput.addEventListener("input", () => {
     onName(nameInput.value);
@@ -1031,13 +1056,13 @@ function mountCommandBar(
   const professions = mountProfessions(context);
 
   const budget = h("span", "editor-budget");
-  budget.title = "Attribute points spent";
+  budget.title = t("buildEditor.pointsSpent");
   const chip = problemsChip([]);
-  const unsaved = h("span", "editor-unsaved", "● unsaved");
+  const unsaved = h("span", "editor-unsaved", t("buildEditor.unsaved"));
 
   let disposed = false;
   // Save is the way out (#1902): it stores, then leaves as Esc would.
-  const save = button("Save", "primary", () => {
+  const save = button(t("buildEditor.save"), "primary", () => {
     save.disabled = true;
     callbacks.onSave({ ...context.current(), updatedAt: Date.now() }).then(
       () => {
@@ -1046,13 +1071,17 @@ function mountCommandBar(
         }
         // After leaving, which puts the last screen's toast away.
         callbacks.onClose();
-        toast("Saved");
+        toast(t("buildEditor.saved"));
       },
       (error: unknown) => {
         if (disposed) {
           return;
         }
-        toast(`Not saved: ${error instanceof Error ? error.message : String(error)}`);
+        toast(
+          t("buildEditor.notSaved", {
+            error: error instanceof Error ? error.message : String(error),
+          }),
+        );
         save.disabled = editorProblems(context.current()).some((problem) => problem.blocking);
       },
     );
@@ -1060,8 +1089,8 @@ function mountCommandBar(
 
   // Share (#572): the build as one line, selected, with Copy. Load
   // (#2004) opens in its place: one of the two at a time.
-  const share = shareLine("build to share");
-  const load = loadLine("GW1 code to load", "Paste a GW1 template code", (text) => {
+  const share = shareLine(t("buildEditor.shareLine"));
+  const load = loadLine(t("buildEditor.loadLine"), t("buildEditor.loadPlaceholder"), (text) => {
     const loaded = loadCode(text, context.current().id, Date.now());
     if (!loaded.ok) {
       return loaded.problems;
@@ -1075,11 +1104,11 @@ function mountCommandBar(
   };
   const more = moreMenu(
     [
-      button("Share", "", () => {
+      button(t("buildEditor.share"), "", () => {
         showShare(exportBuild(context.current()));
       }),
       // The same build as a GW1 template code (#494), for GW1's build sites.
-      button("Share as GW1 code", "", () => {
+      button(t("buildEditor.shareGw1"), "", () => {
         const encoded = encodeTemplateCode(context.current());
         if (encoded.ok) {
           showShare(encoded.code);
@@ -1087,7 +1116,7 @@ function mountCommandBar(
           toast(encoded.problem);
         }
       }),
-      button("Load GW1 code", "", () => {
+      button(t("buildEditor.loadGw1"), "", () => {
         share.hide();
         load.show();
       }),
@@ -1095,23 +1124,23 @@ function mountCommandBar(
       ...(onDuplicate === undefined
         ? []
         : [
-            button("Duplicate", "", () => {
+            button(t("buildEditor.duplicate"), "", () => {
               onDuplicate(context.current());
             }),
           ]),
       ...(onDelete === undefined
         ? []
         : [
-            button("Delete", "", () => {
+            button(t("buildEditor.delete"), "", () => {
               const { id, name } = context.current();
               ask(
                 more.toggle,
-                `Delete ${name}?`,
-                "Delete",
+                t("buildEditor.deleteConfirm", { name }),
+                t("buildEditor.delete"),
                 () => {
                   onDelete(id);
                 },
-                "Cancel",
+                t("buildEditor.cancel"),
               );
             }),
           ]),
@@ -1201,7 +1230,7 @@ function mountCommandBar(
       // An invalid build cannot be saved (brief §23); the button says why.
       const firstBlocking = problems.find((problem) => problem.blocking);
       save.disabled = firstBlocking !== undefined;
-      save.title = firstBlocking?.text ?? "Save this character";
+      save.title = firstBlocking?.text ?? t("buildEditor.saveTitle");
     },
     isOpen() {
       return (
@@ -1261,13 +1290,33 @@ export function mountProfessions(
  * keeps, so a change is chosen knowing what it costs. Esc, a click
  * outside, or the button again closes it.
  */
+/** The words of the `which` profession picker. */
+const PICKER_TEXT: Readonly<
+  Record<
+    "primary" | "secondary",
+    { readonly label: MessageKey; readonly opener: MessageKey; readonly grid: MessageKey }
+  >
+> = {
+  primary: {
+    label: "buildEditor.primary",
+    opener: "buildEditor.primaryProfession",
+    grid: "buildEditor.choosePrimary",
+  },
+  secondary: {
+    label: "buildEditor.secondary",
+    opener: "buildEditor.secondaryProfession",
+    grid: "buildEditor.chooseSecondary",
+  },
+};
+
 function professionPicker(
   which: "primary" | "secondary",
   choices: () => readonly ProfessionChoice[],
   onChange: (value: ProfessionId | undefined) => void,
 ): { readonly element: HTMLElement; update(selected: ProfessionId | undefined): void } {
+  const text = PICKER_TEXT[which];
   const wrapper = h("div", "editor-field editor-profession-field");
-  wrapper.appendChild(h("span", "editor-label", which));
+  wrapper.appendChild(h("span", "editor-label", t(text.label)));
   // Menus only: in the arena, colour means team.
   const icon = document.createElement("img");
   icon.className = "profession-icon";
@@ -1283,11 +1332,11 @@ function professionPicker(
   opener.dataset.which = which;
   opener.setAttribute("aria-haspopup", "dialog");
   opener.setAttribute("aria-expanded", "false");
-  opener.setAttribute("aria-label", `${which} profession`);
+  opener.setAttribute("aria-label", t(text.opener));
   opener.append(icon, name);
   const grid = h("div", "profession-grid");
   grid.setAttribute("role", "dialog");
-  grid.setAttribute("aria-label", `choose a ${which} profession`);
+  grid.setAttribute("aria-label", t(text.grid));
   grid.hidden = true;
   wrapper.append(opener, grid);
 
@@ -1335,7 +1384,7 @@ function professionPicker(
           const keeps = h(
             "span",
             "profession-cell-keeps",
-            `keeps ${String(choice.keeps)} of ${String(choice.of)} skills`,
+            t("buildEditor.keepsSkills", { keeps: choice.keeps, count: choice.of }),
           );
           keeps.classList.toggle("is-loss", choice.keeps < choice.of);
           cell.appendChild(keeps);
@@ -1361,9 +1410,10 @@ function professionPicker(
   return {
     element: wrapper,
     update(selected) {
-      const text = selected === undefined ? "(none)" : PROFESSIONS[selected].name;
-      if (name.textContent !== text) {
-        name.textContent = text;
+      const shown =
+        selected === undefined ? t("buildEditor.noProfession") : PROFESSIONS[selected].name;
+      if (name.textContent !== shown) {
+        name.textContent = shown;
       }
       opener.dataset.value = selected ?? "none";
       if (selected === undefined) {
@@ -1493,14 +1543,18 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
           };
 
     if (preview === undefined) {
-      pointsText.textContent = `${String(remainingPoints(character))} attribute points remaining`;
+      pointsText.textContent = t("buildEditor.pointsRemaining", {
+        count: remainingPoints(character),
+      });
     } else {
       const { cost, left } = rankChange(character, preview.attributeId, preview.rank);
-      const label = `${attributeName(preview.attributeId)} ${String(preview.rank)}`;
+      const params = { attribute: attributeName(preview.attributeId), rank: preview.rank };
       pointsText.textContent =
         left < 0
-          ? `${label}: needs ${String(-left)} more points`
-          : `${label}: ${cost >= 0 ? `costs ${String(cost)}` : `refunds ${String(-cost)}`}, ${String(left)} left`;
+          ? t("buildEditor.rankNeeds", { ...params, count: -left })
+          : cost >= 0
+            ? t("buildEditor.rankCosts", { ...params, cost, left })
+            : t("buildEditor.rankRefunds", { ...params, refund: -cost, left });
     }
 
     syncList(
@@ -1511,7 +1565,10 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
       (node, segment) => {
         node.style.width = `${String((segment.points / budget) * 100)}%`;
         node.style.background = colour(segment.attributeId);
-        node.title = `${attributeName(segment.attributeId)}: ${String(segment.points)} points`;
+        node.title = t("buildEditor.budgetSegment", {
+          attribute: attributeName(segment.attributeId),
+          count: segment.points,
+        });
       },
     );
 
@@ -1564,13 +1621,14 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
         const next = row.querySelector(".editor-attribute-next");
         if (next !== null) {
           const cost = nextRankCost(character, attributeId);
-          next.textContent = cost === undefined ? "max" : `next: ${String(cost)} pts`;
+          next.textContent =
+            cost === undefined ? t("buildEditor.rankMax") : t("buildEditor.nextCost", { cost });
         }
         const needs = row.querySelector(".editor-attribute-needs");
         if (needs !== null) {
           needs.textContent =
             refused?.attributeId === attributeId
-              ? `needs ${String(refused.needs)} more points`
+              ? t("buildEditor.needsMore", { count: refused.needs })
               : "";
         }
       },
@@ -1594,7 +1652,7 @@ export function mountSkillBar(panel: HTMLElement, context: SkillBarHost): Region
   // it by picking from eight identical `<select>`s never matched how
   // players think about it.
   const section = h("div", "editor-skills");
-  section.appendChild(h("div", "editor-label", "Skill bar"));
+  section.appendChild(h("div", "editor-label", t("buildEditor.skillBar")));
   const grid = h("div", "skill-bar-grid");
   grid.dataset.cause = "bar";
   section.appendChild(grid);
@@ -1674,7 +1732,7 @@ export function mountSkillBar(panel: HTMLElement, context: SkillBarHost): Region
         cell.classList.toggle("is-elite", skill?.elite === true);
         cell.draggable = skill !== undefined;
         if (skill === undefined || description === undefined) {
-          cell.appendChild(h("span", "skill-slot-empty", "Empty"));
+          cell.appendChild(h("span", "skill-slot-empty", t("buildEditor.emptySlot")));
           return;
         }
         cell.insertAdjacentHTML("beforeend", skillIconHtml(skill.id, SLOT_ICON_PX));
@@ -1691,7 +1749,7 @@ export function mountSkillBar(panel: HTMLElement, context: SkillBarHost): Region
         clear.type = "button";
         clear.className = "skill-slot-clear";
         clear.textContent = "×";
-        clear.title = `Remove ${skill.name}`;
+        clear.title = t("buildEditor.removeSkill", { skill: skill.name });
         clear.addEventListener("click", (event) => {
           // Without this the click also lands on the cell, which would
           // pick the slot as it empties.
@@ -1794,7 +1852,7 @@ function mountGearSlot(
   clear.addEventListener("click", (event) => {
     event.stopPropagation();
   });
-  clear.title = `clear ${label}`;
+  clear.title = t("buildEditor.clearSlot", { slot: label });
   if (onClick !== undefined) {
     cell.addEventListener("click", onClick);
   }
@@ -1839,7 +1897,8 @@ function mountGearSlot(
       cell.classList.toggle("is-disabled", off);
       cell.classList.toggle("is-empty", !off && next.filled === undefined);
       const icon = off ? undefined : next.icon;
-      const text = next.disabledNote ?? next.filled ?? next.emptyNote ?? "empty";
+      const text =
+        next.disabledNote ?? next.filled ?? next.emptyNote ?? t("buildEditor.gearSlotEmpty");
       const signature = `${icon?.src ?? ""}|${text}`;
       if (signature !== shownName) {
         shownName = signature;
@@ -1876,7 +1935,7 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
   const { current, commit } = context;
   const section = h("div", "editor-gear");
   section.dataset.cause = "equipment";
-  section.appendChild(h("div", "editor-label", "Equipment"));
+  section.appendChild(h("div", "editor-label", t("buildEditor.equipment")));
 
   const drop = (target: GearDropTarget) => (source: GearDragSource) => {
     commitGear(context, applyGearDrop(current(), source, target));
@@ -1887,7 +1946,7 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
   // below show and edit the selected one.
   const tabRow = h("div", "gear-set-tabs");
   tabRow.setAttribute("role", "tablist");
-  tabRow.setAttribute("aria-label", "weapon sets");
+  tabRow.setAttribute("aria-label", t("buildEditor.weaponSets"));
   const tabs = WEAPON_SET_INDICES.map((set) => {
     const tab = h("button", "gear-set-tab");
     tab.setAttribute("type", "button");
@@ -1918,8 +1977,9 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
             commit(clearWeaponSet(current(), set));
           });
     if (clear !== undefined) {
-      clear.title = `empty set ${String(set + 1)}`;
-      clear.setAttribute("aria-label", `empty set ${String(set + 1)}`);
+      const empty = t("buildEditor.emptySetAction", { set: set + 1 });
+      clear.title = empty;
+      clear.setAttribute("aria-label", empty);
     }
     const cell = h("div", "gear-set-tab-cell");
     cell.append(tab, ...(clear === undefined ? [] : [clear]));
@@ -1933,7 +1993,7 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
   const handsGrid = h("div", "gear-hands");
   // A hand clicked opens what can go in it (#570).
   const weaponSlot = mountGearSlot(
-    "weapon",
+    t("buildEditor.weaponSlot"),
     context,
     (source) => {
       drop({ kind: "main-hand", set: context.weaponSet() })(source);
@@ -1943,7 +2003,7 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
     },
   );
   const offhandSlot = mountGearSlot(
-    "off-hand",
+    t("buildEditor.offhandSlot"),
     context,
     (source) => {
       drop({ kind: "off-hand", set: context.weaponSet() })(source);
@@ -1963,9 +2023,9 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
 
   // --- armor ----------------------------------------------------------
   const armorHeader = h("div", "editor-subheader");
-  armorHeader.appendChild(h("span", "editor-label", "Armor"));
+  armorHeader.appendChild(h("span", "editor-label", t("buildEditor.armor")));
   armorHeader.appendChild(
-    button("Clear upgrades", "editor-clear-armor", () => {
+    button(t("buildEditor.clearUpgrades"), "editor-clear-armor", () => {
       commit(clearArmorUpgrades(current()));
     }),
   );
@@ -2003,8 +2063,11 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
         entry.tab.classList.toggle("has-problem", troubled.has(entry.set));
         entry.tab.title =
           held === null
-            ? `Set ${String(entry.set + 1)}: empty`
-            : `Set ${String(entry.set + 1)}: ${getWeapon(held.mainHand.weaponId)?.name ?? held.mainHand.weaponId}`;
+            ? t("buildEditor.setEmpty", { set: entry.set + 1 })
+            : t("buildEditor.setHolds", {
+                set: entry.set + 1,
+                weapon: getWeapon(held.mainHand.weaponId)?.name ?? held.mainHand.weaponId,
+              });
         const signature =
           held === null ? "" : `${held.mainHand.weaponId}|${held.offHand?.offhandId ?? ""}`;
         if (signature !== entry.shown) {
@@ -2033,12 +2096,16 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
       offhandSlot.element.dataset.cause = `equipment.weaponSets[${String(selected)}].offHand`;
       weaponSlot.update({
         filled: weapon?.name,
-        emptyNote: "Add a weapon",
+        emptyNote: t("buildEditor.addWeapon"),
         icon: mainHand === undefined ? undefined : weaponIcon(mainHand.weaponId),
         detail:
           weapon === undefined
             ? undefined
-            : `${String(weapon.damageMin)}–${String(weapon.damageMax)} · ${weapon.attackIntervalSeconds.toFixed(2)}s`,
+            : t("buildEditor.weaponDetail", {
+                min: weapon.damageMin,
+                max: weapon.damageMax,
+                interval: weapon.attackIntervalSeconds.toFixed(2),
+              }),
         dragSource:
           mainHand === undefined ? undefined : { from: "hand", set: selected, hand: "mainHand" },
       });
@@ -2048,15 +2115,18 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
         detail:
           offhandDefinition === undefined
             ? undefined
-            : `+${String(offhandDefinition.baseBonus + offhandDefinition.metRequirementBonus)} ${offhandDefinition.kind}`,
+            : t("buildEditor.offhandDetail", {
+                bonus: offhandDefinition.baseBonus + offhandDefinition.metRequirementBonus,
+                kind: offhandDefinition.kind,
+              }),
         // Said in the slot itself rather than left for the player to
         // discover by dragging a shield onto it and seeing nothing happen.
         disabledNote:
           held === null
-            ? "no weapon in this set"
+            ? t("buildEditor.noWeaponInSet")
             : canEquipOffhand(character, selected)
               ? undefined
-              : "both hands full",
+              : t("buildEditor.bothHandsFull"),
         dragSource: offHand === null ? undefined : { from: "hand", set: selected, hand: "offHand" },
         onClear: () => {
           commit(setOffhand(current(), context.weaponSet(), null));
@@ -2091,17 +2161,17 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
  */
 function mountStats(): Region & { readonly element: HTMLElement } {
   const element = h("dl", "editor-stats");
-  element.setAttribute("aria-label", "derived stats");
+  element.setAttribute("aria-label", t("buildEditor.derivedStats"));
   const line = (key: string, label: string): HTMLElement => {
     const value = h("dd", "editor-stat-value");
     value.dataset.stat = key;
     element.append(h("dt", "editor-stat-label", label), value);
     return value;
   };
-  const health = line("health", "health");
-  const energy = line("energy", "energy");
-  const armor = line("armor", "armor");
-  const damage = line("damage", "damage");
+  const health = line("health", t("buildEditor.statHealth"));
+  const energy = line("energy", t("buildEditor.statEnergy"));
+  const armor = line("armor", t("buildEditor.statArmor"));
+  const damage = line("damage", t("buildEditor.statDamage"));
   const needs = h("span", "editor-stat-needs");
   return {
     element,
@@ -2112,14 +2182,17 @@ function mountStats(): Region & { readonly element: HTMLElement } {
         return;
       }
       health.textContent = String(summary.maxHealth);
-      energy.textContent = `${String(summary.maxEnergy)} · ${String(summary.baseEnergyPips)} pips`;
+      energy.textContent = t("buildEditor.energyValue", {
+        energy: summary.maxEnergy,
+        count: summary.baseEnergyPips,
+      });
       armor.textContent = String(summary.armor);
       damage.textContent = `${summary.damageRange} · ${summary.attackInterval}`;
       const unmet = summary.unmetRequirement;
       damage.classList.toggle("is-unmet", unmet !== undefined);
       if (unmet !== undefined) {
         const name = getAttribute(unmet.attributeId)?.name ?? unmet.attributeId;
-        needs.textContent = `needs ${name} ${String(unmet.rank)}`;
+        needs.textContent = t("buildEditor.needsAttribute", { attribute: name, rank: unmet.rank });
         damage.append(" ", needs);
       }
     },
@@ -2133,7 +2206,7 @@ function mountStats(): Region & { readonly element: HTMLElement } {
 function statLines(character: StoredCharacter, set: WeaponSetIndex): HTMLElement[] {
   const summary = summariseGear(character, set);
   if (summary === undefined) {
-    return [h("div", "gear-stat-note", "Empty set")];
+    return [h("div", "gear-stat-note", t("buildEditor.emptySetNote"))];
   }
   const lines: HTMLElement[] = [];
   for (const bonus of summary.attributeBonuses) {
@@ -2152,7 +2225,7 @@ function statLines(character: StoredCharacter, set: WeaponSetIndex): HTMLElement
       h(
         "div",
         "gear-stat-note",
-        `−${String(summary.flatPhysicalReduction)} physical damage per hit`,
+        t("buildEditor.physicalReduction", { amount: summary.flatPhysicalReduction }),
       ),
     );
   }

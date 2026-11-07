@@ -7,6 +7,8 @@ import {
   type SkillType,
 } from "@vibewars/game-core";
 
+import { t } from "../i18n/index.js";
+
 /**
  * The skill library: the browsable, filterable list a player drags from
  * when building a character (brief §17).
@@ -119,7 +121,7 @@ export function groupSkillsByAttribute(skills: readonly Skill[]): readonly Skill
         // reusing it keeps one spelling of "Fire Magic" in the codebase.
         attributeName:
           describeSkill(skill).attributeName ??
-          `No Attribute (${skillProfessionName(skill.profession)})`,
+          t("skillLibrary.noAttribute", { profession: skillProfessionName(skill.profession) }),
         skills: [],
       };
       groups.set(key, group);

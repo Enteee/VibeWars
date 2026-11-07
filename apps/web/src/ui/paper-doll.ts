@@ -12,6 +12,7 @@ import {
   type WeaponSetIndex,
 } from "@vibewars/game-core";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import {
   canEquipOffhand,
@@ -29,11 +30,11 @@ import { button, h, syncList } from "./kit.js";
 import { HELD, PAPER_DOLL_ANCHORS, PAPER_DOLL_SIZE } from "./paper-doll-figure.js";
 import {
   attributeName,
-  HAND_NAME,
+  HAND_KEY,
   HAND_NUMBER,
   HANDS,
   heldIn,
-  MOD_SLOT_NAME,
+  NO_MOD_KEY,
   mountHandPopover,
   type Hand,
 } from "./paper-doll-weapon.js";
@@ -56,12 +57,12 @@ export interface PaperDoll {
 }
 
 /** A piece's name as the player reads it, and its place on the figure. */
-export const PIECE_NAME: Readonly<Record<ArmorSlot, string>> = {
-  head: "Headgear",
-  chest: "Chest",
-  hands: "Gloves",
-  legs: "Leggings",
-  feet: "Boots",
+export const PIECE_KEY: Readonly<Record<ArmorSlot, MessageKey>> = {
+  head: "paperDoll.pieceHead",
+  chest: "paperDoll.pieceChest",
+  hands: "paperDoll.pieceHands",
+  legs: "paperDoll.pieceLegs",
+  feet: "paperDoll.pieceFeet",
 };
 
 const PIECE_NUMBER: Readonly<Record<ArmorSlot, string>> = {
@@ -166,7 +167,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
     hotspot.dataset.cause = `equipment.armor.${slot}`;
     hotspot.setAttribute("aria-haspopup", "dialog");
     hotspot.setAttribute("aria-expanded", "false");
-    hotspot.setAttribute("aria-label", PIECE_NAME[slot]);
+    hotspot.setAttribute("aria-label", t(PIECE_KEY[slot]));
     at(hotspot, PAPER_DOLL_ANCHORS[slot]);
     const icons = h("span", "paper-doll-hotspot-icons");
     hotspot.append(h("span", "paper-doll-hotspot-number", String(index + 1)), icons);
@@ -182,7 +183,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
     const insignia = h("span", "paper-doll-row-part");
     const rune = h("span", "paper-doll-row-part");
     pick.append(
-      h("span", "paper-doll-row-name", PIECE_NAME[slot]),
+      h("span", "paper-doll-row-name", t(PIECE_KEY[slot])),
       h("span", "paper-doll-row-dot", "·"),
       insignia,
       h("span", "paper-doll-row-dot", "·"),
@@ -205,7 +206,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
     hotspot.dataset.slot = hand;
     hotspot.setAttribute("aria-haspopup", "dialog");
     hotspot.setAttribute("aria-expanded", "false");
-    hotspot.setAttribute("aria-label", HAND_NAME[hand]);
+    hotspot.setAttribute("aria-label", t(HAND_KEY[hand]));
     at(hotspot, PAPER_DOLL_ANCHORS[hand]);
     const icons = h("span", "paper-doll-hotspot-icons");
     hotspot.append(h("span", "paper-doll-hotspot-number", String(HANDS.indexOf(hand) + 6)), icons);
@@ -229,21 +230,29 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
   const title = h("div", "paper-doll-popover-title");
   const insigniaList = h("div", "paper-doll-list");
   insigniaList.setAttribute("role", "listbox");
-  insigniaList.setAttribute("aria-label", "Insignia");
+  insigniaList.setAttribute("aria-label", t("paperDoll.insignia"));
   const runeList = h("div", "paper-doll-list");
   runeList.setAttribute("role", "listbox");
-  runeList.setAttribute("aria-label", "Rune");
-  const applyAll = button("Apply insignia to all 5", "paper-doll-apply-all", () => {
-    if (open === undefined || isHand(open)) {
-      return;
-    }
-    commit(setInsigniaOnAll(current(), current().equipment.armor[open].insigniaId));
-  });
+  runeList.setAttribute("aria-label", t("paperDoll.rune"));
+  const applyAll = button(
+    t("paperDoll.applyAll", { count: ARMOR_SLOTS.length }),
+    "paper-doll-apply-all",
+    () => {
+      if (open === undefined || isHand(open)) {
+        return;
+      }
+      commit(setInsigniaOnAll(current(), current().equipment.armor[open].insigniaId));
+    },
+  );
   // Side by side, each list scrolling on its own, so neither pushes the other out of sight.
   const insignias = h("div", "paper-doll-popover-column");
-  insignias.append(h("div", "paper-doll-popover-heading", "Insignia"), insigniaList, applyAll);
+  insignias.append(
+    h("div", "paper-doll-popover-heading", t("paperDoll.insignia")),
+    insigniaList,
+    applyAll,
+  );
   const runeColumn = h("div", "paper-doll-popover-column");
-  runeColumn.append(h("div", "paper-doll-popover-heading", "Rune"), runeList);
+  runeColumn.append(h("div", "paper-doll-popover-heading", t("paperDoll.rune")), runeList);
   // A hand's body (#2151): its attribute under the title, a column per mod slot.
   const handBody = mountHandPopover(context);
   const head = h("div", "paper-doll-popover-head");
@@ -384,8 +393,11 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
       column.hidden = true;
     }
     const piece = character.equipment.armor[slot];
-    title.textContent = `${PIECE_NUMBER[slot]} ${PIECE_NAME[slot]}`;
-    popover.setAttribute("aria-label", PIECE_NAME[slot]);
+    title.textContent = t("paperDoll.numbered", {
+      number: PIECE_NUMBER[slot],
+      name: t(PIECE_KEY[slot]),
+    });
+    popover.setAttribute("aria-label", t(PIECE_KEY[slot]));
     applyAll.disabled = piece.insigniaId === null;
 
     syncList<InsigniaEntry>(
@@ -394,7 +406,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
       (entry) => entry.id ?? "none",
       (entry) =>
         choice(
-          entry.id === null ? "None" : (getInsignia(entry.id)?.name ?? entry.id),
+          entry.id === null ? t("paperDoll.none") : (getInsignia(entry.id)?.name ?? entry.id),
           entry.id === null ? undefined : insigniaIcon(entry.id),
           () => {
             if (open !== undefined && !isHand(open)) {
@@ -422,7 +434,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
       (entry) => entry?.key ?? "none",
       (entry) =>
         choice(
-          entry === null ? "None" : entry.label,
+          entry === null ? t("paperDoll.none") : entry.label,
           entry === null ? undefined : runeIcon(entry.rune),
           () => {
             if (open !== undefined && !isHand(open)) {
@@ -444,8 +456,11 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
       close();
       return;
     }
-    title.textContent = `${HAND_NUMBER[hand]} ${held.name}`;
-    popover.setAttribute("aria-label", `${HAND_NAME[hand]}: ${held.name}`);
+    title.textContent = t("paperDoll.numbered", { number: HAND_NUMBER[hand], name: held.name });
+    popover.setAttribute(
+      "aria-label",
+      t("paperDoll.handHolds", { hand: t(HAND_KEY[hand]), item: held.name }),
+    );
     popover.style.setProperty("--columns", String(held.slots.length));
     handBody.fill(hand, held);
   }
@@ -470,7 +485,11 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
         piece.icons.replaceChildren(slotIcon(insignia), slotIcon(rune));
         piece.insignia.replaceChildren(...named(insignia));
         piece.rune.replaceChildren(...named(rune));
-        piece.hotspot.title = `${PIECE_NAME[piece.slot]}: ${insignia?.name ?? "no insignia"}, ${rune?.name ?? "no rune"}`;
+        piece.hotspot.title = t("paperDoll.pieceWorn", {
+          piece: t(PIECE_KEY[piece.slot]),
+          insignia: insignia?.name ?? t("paperDoll.noInsignia"),
+          rune: rune?.name ?? t("paperDoll.noRune"),
+        });
       }
 
       // The shown set's weapon and off-hand, with their mods (#2151). Bare
@@ -497,7 +516,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
         if (held === undefined) {
           entry.icons.replaceChildren();
           entry.pick.replaceChildren();
-          entry.hotspot.title = `${HAND_NAME[entry.slot]}: empty`;
+          entry.hotspot.title = t("paperDoll.handEmpty", { hand: t(HAND_KEY[entry.slot]) });
           continue;
         }
         const mods = held.slots.map((slot) => {
@@ -506,7 +525,11 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
         });
         entry.icons.replaceChildren(...mods.map((mod) => modGlyph(mod.name)));
         entry.pick.replaceChildren(
-          h("span", "paper-doll-row-name", `${HAND_NUMBER[entry.slot]} ${held.name}`),
+          h(
+            "span",
+            "paper-doll-row-name",
+            t("paperDoll.numbered", { number: HAND_NUMBER[entry.slot], name: held.name }),
+          ),
           ...[
             held.attributeId === null ? undefined : attributeName(held.attributeId),
             ...mods.map((mod) => mod.name),
@@ -517,9 +540,10 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
               : h("span", "paper-doll-row-part", part),
           ]),
         );
-        entry.hotspot.title = `${held.name}: ${mods
-          .map((mod) => mod.name ?? `no ${MOD_SLOT_NAME[mod.slot].toLowerCase()}`)
-          .join(", ")}`;
+        entry.hotspot.title = t("paperDoll.heldMods", {
+          item: held.name,
+          mods: mods.map((mod) => mod.name ?? t(NO_MOD_KEY[mod.slot])).join(", "),
+        });
       }
 
       // An open popover re-lists: a new primary changes which fit.
@@ -592,7 +616,9 @@ function insigniaNote(insigniaId: InsigniaId, slot: ArmorSlot): string {
     return "";
   }
   return effect.kind === "health" || effect.kind === "energy"
-    ? `+${String(perSlotAmount(effect, slot))} ${effect.kind}`
+    ? t(effect.kind === "health" ? "paperDoll.health" : "paperDoll.energy", {
+        amount: perSlotAmount(effect, slot),
+      })
     : insigniaEffectNote(effect);
 }
 
@@ -609,11 +635,16 @@ function runeEffectNote(effect: RuneEffect): string {
   switch (effect.kind) {
     case "health":
     case "energy":
-      return `+${String(effect.amount)} ${effect.kind}`;
+      return t(effect.kind === "health" ? "paperDoll.health" : "paperDoll.energy", {
+        amount: effect.amount,
+      });
     case "flat-physical-reduction":
-      return `−${String(effect.amount)} physical damage taken`;
+      return t("gearEditor.physicalDamageTaken", { amount: effect.amount });
     case "status-duration":
-      return `${effect.statusIds.map((id) => id.replace("-", " ")).join(", ")} −${String(Math.round(effect.reduction * 100))}% duration`;
+      return t("paperDoll.statusDuration", {
+        statuses: effect.statusIds.map((id) => id.replace("-", " ")).join(", "),
+        percent: Math.round(effect.reduction * 100),
+      });
   }
 }
 

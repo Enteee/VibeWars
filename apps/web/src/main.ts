@@ -54,6 +54,7 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
+import { t } from "./i18n/index.js";
 import { loadLocale } from "./i18n/load-locale.js";
 import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
@@ -62,7 +63,6 @@ import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
 import { STRESS_BUILD, startStress, stressMs } from "./music/stress.js";
 import {
-  BLOCKED_NOTICE,
   CharacterRepository,
   TeamRepository,
   createMemoryStore,
@@ -227,7 +227,7 @@ async function openStore(): Promise<{ store: KeyValueStore; persistent: boolean 
   try {
     return {
       store: await openIndexedDbStore(() => {
-        setStatus(BLOCKED_NOTICE, "error");
+        setStatus(t("storage.blocked"), "error");
       }),
       persistent: true,
     };

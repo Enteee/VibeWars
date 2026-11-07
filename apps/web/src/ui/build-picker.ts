@@ -1,5 +1,6 @@
 import type { ProfessionId, SkillDescription, WeaponSetIndex } from "@vibewars/game-core";
 
+import { t } from "../i18n/index.js";
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
   SKILL_ACTIONS,
@@ -212,8 +213,8 @@ export function mountBuildPicker<C extends TeamCharacter>(
   tabs.setAttribute("role", "tablist");
   const tabButtons = [
     ...extraTabs.map((tab) => [tab.id, tab.label] as const),
-    ["skills", "Skills"] as const,
-    ["gear", "Gear"] as const,
+    ["skills", t("buildPicker.skillsTab")] as const,
+    ["gear", t("buildPicker.gearTab")] as const,
   ].map(([id, label]) => {
     const node = button(label, "library-tab", () => {
       open(id);
@@ -359,10 +360,11 @@ export function mountBuildPicker<C extends TeamCharacter>(
       return undefined;
     }
     const bars = host.bars();
-    const where = `${bars[to.member]?.name ?? ""} slot ${String(to.slot + 1)}`;
+    const member = bars[to.member]?.name ?? "";
+    const slot = to.slot + 1;
     return copy
-      ? `Shift: Copy to ${where} (stays on ${bars[drag.member]?.name ?? ""})`
-      : `Move to ${where}`;
+      ? t("buildPicker.copyTo", { member, slot, source: bars[drag.member]?.name ?? "" })
+      : t("buildPicker.moveTo", { member, slot });
   };
 
   return {
@@ -399,7 +401,7 @@ export function mountBuildPicker<C extends TeamCharacter>(
       on.commit(after);
       const removed = describeProfessionChange(before, after);
       if (removed.length > 0) {
-        dismissUndo = toast(`Removed: ${removed.join(", ")}`, {
+        dismissUndo = toast(t("buildPicker.removed", { items: removed.join(", ") }), {
           undo: () => {
             dropUndo();
             on.commit(before);
