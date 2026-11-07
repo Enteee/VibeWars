@@ -80,6 +80,10 @@ export interface GuestRoom {
   listed(holders: readonly string[]): void;
   /** A login seated holder `from` sealed for this page, which the host forwarded. */
   fromMember(from: string, seal: string): void;
+  /** The holder whose relay the host's connection goes through (#2531): `undefined` direct. */
+  relayedVia(): string | undefined;
+  /** `handler` when `relayedVia` changed. */
+  onRelayedVia(handler: () => void): () => void;
 }
 
 /**
@@ -95,6 +99,8 @@ export function joinGuestRoom(room: LobbyRoom): GuestRoom {
       relayPub: () => Promise.resolve(null),
       listed: () => undefined,
       fromMember: () => undefined,
+      relayedVia: () => undefined,
+      onRelayedVia: () => () => undefined,
     };
   }
   const offers = watchRelayOffers(room.relay, room.roomId, TRYSTERO_SELF_ID);
@@ -120,6 +126,8 @@ export function joinGuestRoom(room: LobbyRoom): GuestRoom {
     fromMember: (from, seal) => {
       offers.fromMember(from, seal);
     },
+    relayedVia: () => transport.relayedVia(),
+    onRelayedVia: (handler) => transport.onRelayedVia(handler),
   };
 }
 

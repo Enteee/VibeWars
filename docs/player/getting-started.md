@@ -95,11 +95,14 @@ Leave, and a list of who is in it; its badge counts them.
   for 30 seconds.
 - **Share your relay:** some friends can only reach you through a TURN
   relay. When a friend who runs one sends you its relay link, open it and
-  press **Use**: it becomes your relay, and your lobbies offer it to their
-  players. A friend who cannot reach you directly then joins through it
-  after a few seconds, with nothing to set up. Anyone with your invite
-  link can use it for up to 4 hours. To stop, untick **Share my relay
-  with my lobbies** in **Options → Relay (TURN)**. A relay you type in
+  press **Use**: it becomes your relay, and it is offered in any lobby you
+  are in, not only ones you host. A player who cannot reach the host
+  directly then joins through it after a few seconds, with nothing to set
+  up. Each player gets their own login, good for 1 hour and renewed while
+  they stay, at most 8 players a lobby. A player relayed this way sees
+  **Relay shared by** and the sharer's name in the lobby; while you share,
+  the lobby says **Sharing your relay with** how many players. To stop,
+  untick **Share my relay with my lobbies** in **Options → Relay (TURN)**. A relay you type in
   there by hand is only ever yours.
 - **Your party comes along:** if you had friends in your lobby, the top
   bar asks first (**Join** to go, Esc to stay), and once you are
