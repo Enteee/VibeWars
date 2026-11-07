@@ -7,13 +7,13 @@ import arenaCrossroads from "../maps/arena-crossroads/map.json" with { type: "js
 import arenaLongHall from "../maps/arena-long-hall/map.json" with { type: "json" };
 import arenaPillars from "../maps/arena-pillars/map.json" with { type: "json" };
 import arenaSplit from "../maps/arena-split/map.json" with { type: "json" };
-import forgottenShrines from "../maps/forgotten-shrines/map.json" with { type: "json" };
+import brokenTower from "../maps/broken-tower/map.json" with { type: "json" };
 import frozenCrossing from "../maps/frozen-crossing/map.json" with { type: "json" };
 import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
 import hallOfHeroes from "../maps/hall-of-heroes/map.json" with { type: "json" };
 import hillCourtyard from "../maps/hill-courtyard/map.json" with { type: "json" };
-import relicTemples from "../maps/relic-temples/map.json" with { type: "json" };
 import sandstoneSteps from "../maps/sandstone-steps/map.json" with { type: "json" };
+import scarredEarth from "../maps/scarred-earth/map.json" with { type: "json" };
 import { allWallSegments } from "./geometry.js";
 import { MapNotFoundError, listMapIds, loadAllMaps, loadMap, unseatedTeams } from "./loader.js";
 import { validateMapData } from "./schema.js";
@@ -41,13 +41,13 @@ describe("the maps the browser imports", () => {
       arenaLongHall,
       arenaPillars,
       arenaSplit,
-      forgottenShrines,
+      brokenTower,
       frozenCrossing,
       guildHallIsle,
       hallOfHeroes,
       hillCourtyard,
-      relicTemples,
       sandstoneSteps,
+      scarredEarth,
     ].map((raw) => validateMapData(raw));
     expect(imported.map((map) => map.id)).toEqual(listMapIds());
     for (const map of imported) {

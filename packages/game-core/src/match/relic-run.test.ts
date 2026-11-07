@@ -12,9 +12,9 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
 
 /**
- * A Relic Run in the simulation (#1374), on Relic Temples: runners take
- * up their relic, carry it round a divider onto the altar and score; at
- * 8 minutes the most points win, and a wipe ends it before.
+ * A Relic Run in the simulation (#1374), on Broken Tower (#2551): runners
+ * take up their relic, carry it through a doorway of the ruined tower onto
+ * the altar and score; at 8 minutes the most points win, and a wipe ends it before.
  */
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -30,25 +30,72 @@ function rect(x: number, y: number, width: number, height: number): Segment[] {
   return [segment(a, b), segment(b, c), segment(c, d), segment(d, a)];
 }
 
-/** Relic Temples' walls (packages/game-maps/maps/relic-temples). */
+/** A polygon's sides, closed back to its first point, as a map's polygon wall becomes. */
+function polygon(points: readonly Vec2[]): Segment[] {
+  return points.map((point, index) => segment(point, points[(index + 1) % points.length] ?? point));
+}
+
+/** Broken Tower's walls (packages/game-maps/maps/broken-tower). */
 const WALLS = [
-  ...rect(480, 620, 420, 160),
-  ...rect(560, 0, 240, 260),
-  ...rect(560, 1140, 240, 260),
-  ...rect(980, 520, 60, 60),
-  ...rect(980, 820, 60, 60),
-  ...rect(1160, 520, 60, 60),
-  ...rect(1160, 820, 60, 60),
-  ...rect(1300, 620, 420, 160),
-  ...rect(1400, 0, 240, 260),
-  ...rect(1400, 1140, 240, 260),
+  ...polygon([
+    vec2(1320, 620),
+    vec2(1510, 620),
+    vec2(1510, 660),
+    vec2(1360, 660),
+    vec2(1360, 810),
+    vec2(1320, 810),
+  ]),
+  ...polygon([
+    vec2(1880, 1180),
+    vec2(1690, 1180),
+    vec2(1690, 1140),
+    vec2(1840, 1140),
+    vec2(1840, 990),
+    vec2(1880, 990),
+  ]),
+  ...polygon([
+    vec2(1690, 620),
+    vec2(1880, 620),
+    vec2(1880, 810),
+    vec2(1840, 810),
+    vec2(1840, 660),
+    vec2(1690, 660),
+  ]),
+  ...polygon([
+    vec2(1510, 1180),
+    vec2(1320, 1180),
+    vec2(1320, 990),
+    vec2(1360, 990),
+    vec2(1360, 1140),
+    vec2(1510, 1140),
+  ]),
+  ...rect(640, 780, 60, 240),
+  ...rect(2500, 780, 60, 240),
+  ...rect(440, 540, 60, 160),
+  ...rect(2700, 1100, 60, 160),
+  ...rect(440, 1100, 60, 160),
+  ...rect(2700, 540, 60, 160),
+  ...rect(40, 700, 120, 40),
+  ...rect(3040, 1060, 120, 40),
+  ...rect(40, 1060, 120, 40),
+  ...rect(3040, 700, 120, 40),
+  ...rect(900, 260, 300, 60),
+  ...rect(2000, 1480, 300, 60),
+  ...rect(900, 1480, 300, 60),
+  ...rect(2000, 260, 300, 60),
+  ...rect(1080, 520, 120, 60),
+  ...rect(2000, 1220, 120, 60),
+  ...rect(1120, 1100, 60, 180),
+  ...rect(2020, 520, 60, 180),
+  ...rect(1540, 0, 120, 180),
+  ...rect(1540, 1620, 120, 180),
 ];
-const BOUNDS = { width: 2200, height: 1400 };
+const BOUNDS = { width: 3200, height: 1800 };
 const FIELD: RelicField = {
-  altar: vec2(1100, 700),
+  altar: vec2(1600, 900),
   spawns: [
-    { team: 0, position: vec2(110, 700) },
-    { team: 1, position: vec2(2090, 700) },
+    { team: 0, position: vec2(120, 900) },
+    { team: 1, position: vec2(3080, 900) },
   ],
 };
 
@@ -74,10 +121,10 @@ function relicRun(): MatchSimulation {
     bounds: BOUNDS,
     relicField: FIELD,
     participants: [
-      runner("a", 0, vec2(220, 560)),
-      runner("b", 0, vec2(220, 840)),
-      runner("x", 1, vec2(1980, 840)),
-      runner("y", 1, vec2(1980, 560)),
+      runner("a", 0, vec2(240, 780)),
+      runner("b", 0, vec2(240, 1020)),
+      runner("x", 1, vec2(2960, 1020)),
+      runner("y", 1, vec2(2960, 780)),
     ],
   });
 }
@@ -122,7 +169,7 @@ function kill(sim: MatchSimulation, id: string): void {
   combatant.health = 0.2;
 }
 
-describe("a Relic Run on Relic Temples", () => {
+describe("a Relic Run on Broken Tower", () => {
   it("is won at time by the team with more relic points, 2 to 1", () => {
     const sim = relicRun();
     run(sim, "a");
@@ -175,7 +222,7 @@ describe("a relic carrier", () => {
       SPEED / FLAG_CARRIER_SPEED_MULTIPLIER,
       3,
     );
-    get(sim, "x").position = vec2(900, 300);
+    get(sim, "x").position = vec2(800, 300);
     expect(applyIntent(sim, "a", { kind: "attack", targetId: "x" })).toEqual({
       kind: "attack",
       reason: "hands-full",
