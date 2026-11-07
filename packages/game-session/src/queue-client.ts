@@ -15,6 +15,7 @@
  * forms groups as everyone does, and meets the group holding the
  * leader's ticket with its own key.
  */
+import type { TeamCount } from "@vibewars/game-core";
 import {
   FORMATION_SETTLE_MS,
   NO_SHOW_IGNORE_MS,
@@ -100,6 +101,8 @@ export interface QueueClientOptions {
   readonly newTicketKey: () => TicketKey;
   /** As `formGroups` takes it, the same on every client. */
   readonly mapPool: readonly string[];
+  /** As `formGroups` takes it: 3 on a three-team Heroes' Ascent round (#2683). */
+  readonly teamCount: TeamCount;
   /**
    * Whether this client found its own NAT hard (#2090), put on every
    * ticket it publishes as `hardNat`; the web layer's `checkNat` says.
@@ -139,7 +142,8 @@ export function startingQueueState(mode: QueueMode): QueueState {
 }
 
 export function createQueueClient(options: QueueClientOptions): QueueClient {
-  const { board, mode, ascentRound, party, now, newTicketKey, mapPool, hardNat } = options;
+  const { board, mode, ascentRound, party, now, newTicketKey, mapPool, teamCount, hardNat } =
+    options;
   const needed = 2 * teamSizeOf(mode);
   // A requeue after a fell-through lobby keeps this, and so its place (#854 C7).
   const enteredAt = now();
@@ -276,6 +280,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       ascentRound,
       ignored: stillIgnored(at),
       mapPool,
+      teamCount,
     }).then((groups) => {
       if (!left && ours === generation && state.kind !== "in-lobby") {
         settle(groups, at);

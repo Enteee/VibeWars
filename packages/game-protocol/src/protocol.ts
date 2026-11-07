@@ -264,8 +264,11 @@ export interface ChainMarksMessage {
   readonly marks: readonly WireChainMark[];
 }
 
-/** The maximum players a single lobby accepts (brief §4: not hardcoded to 8). */
-export const MAX_LOBBY_PLAYERS = 16;
+/**
+ * The maximum players a single lobby accepts (brief §4: not hardcoded to 8):
+ * three full Heroes' Ascent parties of eight.
+ */
+export const MAX_LOBBY_PLAYERS = 24;
 
 /**
  * The most a side of a Team Lobby (#1458) may be, humans and bots: a GW1

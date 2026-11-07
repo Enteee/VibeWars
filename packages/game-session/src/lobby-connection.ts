@@ -22,9 +22,11 @@ import type { Transport } from "./transport.js";
  * callbacks, whoever hosts it.
  */
 
-/** The character a member brings (#580): its name and professions, never its build. */
+/**
+ * The character a member brings (#580): its professions, never its build
+ * nor its name, which would cost a 24-seat lobby its one message (#2683).
+ */
 export interface LobbyCharacter {
-  readonly name: string;
   readonly primary: ProfessionId;
   readonly secondary: ProfessionId | null;
 }
@@ -35,7 +37,7 @@ export interface LobbyPlayerSnapshot {
   /** The member's guild tag (#1406), after its name; `null` for none. */
   readonly guildTag: string | null;
   /** `null` spectates. */
-  readonly team: 0 | 1 | null;
+  readonly team: 0 | 1 | 2 | null;
   readonly ready: boolean;
   readonly isHost: boolean;
   /** A bot the host added (#1193): no peer behind it. */
@@ -102,7 +104,7 @@ export interface ChatLine {
   readonly fromId: string;
   readonly name: string;
   /** `null`: a spectator. */
-  readonly team: 0 | 1 | null;
+  readonly team: 0 | 1 | 2 | null;
   readonly text: string;
 }
 

@@ -31,7 +31,7 @@ import type {
 import { formatNumber, t, type MessageKey } from "../i18n/index.js";
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
-import { teamColour, teamSide } from "../render/arena-snapshot.js";
+import { THIRD_TEAM_MARK, markedForTeam, teamColour, teamSide } from "../render/arena-snapshot.js";
 import { botTagElement } from "./bot-tag.js";
 import { cssColour } from "./character-preview.js";
 import { paintHealthTint } from "./health-tint.js";
@@ -213,12 +213,14 @@ export function renderKeyLabels(
 
 /**
  * The HUD, in `parent`. `onEndUpkeep` ends an enchantment you maintain,
- * double-clicked in your effects monitor (#838).
+ * double-clicked in your effects monitor (#838); `onCall` calls your
+ * target for your team, clicked on the target frame (#2737).
  */
 export function createHud(
   parent: HTMLElement,
   onEndUpkeep: (targetId: string, statusId: StatusId) => void,
   onDropFlag: () => void,
+  onCall: () => void,
 ): HudElements {
   const root = element("div", "hud", parent);
 
@@ -253,6 +255,16 @@ export function createHud(
   // row keeps its space when empty, so the HUD never jumps; the effects
   // under it grow downward (#1042), so the health bar never moves.
   const targetPanel = element("div", "hud-target", top);
+  // A click calls the target (#2737); a press keeps the keyboard with the
+  // arena, as a party row does. An effect's icon or a button is its own.
+  targetPanel.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+  });
+  targetPanel.addEventListener("click", (event) => {
+    if (isTargetCallClick(event)) {
+      onCall();
+    }
+  });
   const targetHeader = element("div", "hud-target-header", targetPanel);
   const targetProfessions = element("span", "hud-target-professions", targetHeader);
   const targetText = element("span", "hud-target-text", targetHeader);
@@ -769,11 +781,9 @@ function renderCarriers(
   row.replaceChildren();
   for (const line of lines) {
     const node = element("div", "hud-carrier", row);
-    node.textContent = line.text;
-    node.style.setProperty(
-      "--pip-colour",
-      cssColour(teamColour(teamSide(line.team, selfTeam ?? 0))),
-    );
+    const side = teamSide(line.team, selfTeam ?? 0);
+    node.textContent = markedForTeam(side, line.text);
+    node.style.setProperty("--pip-colour", cssColour(teamColour(side)));
   }
 }
 
@@ -1276,10 +1286,9 @@ function renderScoreboard(
         const node = element("span", part.dead ? "hud-side is-dead" : "hud-side", row);
         node.textContent = part.text;
         if (part.team !== undefined) {
-          node.style.setProperty(
-            "--pip-colour",
-            cssColour(teamColour(teamSide(part.team, selfTeam ?? 0))),
-          );
+          const side = teamSide(part.team, selfTeam ?? 0);
+          node.textContent = markedForTeam(side, part.text);
+          node.style.setProperty("--pip-colour", cssColour(teamColour(side)));
         }
         return;
       }
@@ -1309,6 +1318,9 @@ function renderEnemyPips(
     let line = lines.get(pip.team);
     if (line === undefined) {
       line = element("span", "hud-enemy-row", row);
+      if (teamSide(pip.team, ours) === "third") {
+        element("span", "hud-team-mark", line).textContent = THIRD_TEAM_MARK;
+      }
       line.style.setProperty("--pip-colour", cssColour(teamColour(teamSide(pip.team, ours))));
       lines.set(pip.team, line);
     }
@@ -1757,6 +1769,34 @@ export function ghostNameplate(
   return `${player.name} › ${leaderName(leaderId, self?.sessionId, names)}`;
 }
 
+/**
+ * Whether a click on the target frame calls its target (#2737): the
+ * primary button, and not on an effect's icon or a button in it.
+ */
+export function isTargetCallClick(event: MouseEvent): boolean {
+  const from = event.target;
+  return (
+    event.button === 0 && !(from instanceof Element && from.closest("button, .effect") !== null)
+  );
+}
+
+/**
+ * Whether a click on the target frame calls `target` (#2737): a living
+ * foe while you are alive, as the `call-target` key. A watcher calls nothing.
+ */
+export function isCallableTarget(
+  self: PlayerSnapshot | undefined,
+  target: PlayerSnapshot | undefined,
+): boolean {
+  return (
+    self !== undefined &&
+    !self.dead &&
+    target !== undefined &&
+    !target.dead &&
+    target.team !== self.team
+  );
+}
+
 /** The target frame (#484): header, health bar and cast row. */
 /** `self` is `undefined` for a watcher (#480), who has no target but the player it follows. */
 function renderTarget(
@@ -1781,11 +1821,15 @@ function renderTarget(
   const leader = self === undefined ? undefined : ghostLeaderLabel(self, target, names);
   setHidden(hud.targetLeader, leader === undefined);
   setText(hud.targetLeader, leader ?? "");
-  // Armor on hover: a number to look up, not to read at a glance.
+  // Armor on hover: a number to look up, not to read at a glance. A
+  // living foe, while you are alive, is one a click calls (#2737).
   const armor = target === undefined ? "" : t("hud.armor", { armor: target.armor });
-  if (hud.targetPanel.title !== armor) {
-    hud.targetPanel.title = armor;
+  const callable = isCallableTarget(self, target);
+  const title = callable ? `${armor}\n${t("hud.callTarget")}` : armor;
+  if (hud.targetPanel.title !== title) {
+    hud.targetPanel.title = title;
   }
+  hud.targetPanel.classList.toggle("is-callable", callable);
   setHidden(hud.targetHealth, target === undefined);
   if (target !== undefined) {
     hud.targetHealth.classList.toggle("is-dead", target.dead);

@@ -323,18 +323,25 @@ export async function telegramBot(token, get = (url) => fetch(url)) {
  * @param {string} method
  * @param {Record<string, string>} params
  * @param {Get} get
- * @returns {Promise<unknown>} the result, or null when telegram refused or
- *   could not be reached; the url holds the token, so nothing of a failure
- *   is kept
+ * @returns {Promise<{ ok: true, result: unknown } | { ok: false, code: number | null, description: string }>}
+ *   the url holds the token, so a failure keeps only telegram's own code and
+ *   description, or the name of what was thrown, never its message
  */
 async function telegramResult(token, method, params, get) {
   try {
     const query = new URLSearchParams(params).toString();
     const reply = await get(`https://api.telegram.org/bot${token}/${method}?${query}`);
     const body = parseObject(JSON.stringify(await reply.json()));
-    return reply.ok && body?.ok === true ? (body.result ?? null) : null;
-  } catch {
-    return null;
+    if (reply.ok && body?.ok === true) {
+      return { ok: true, result: body.result ?? null };
+    }
+    return {
+      ok: false,
+      code: typeof body?.error_code === "number" ? body.error_code : null,
+      description: typeof body?.description === "string" ? body.description : "",
+    };
+  } catch (err) {
+    return { ok: false, code: null, description: err instanceof Error ? err.name : "error" };
   }
 }
 
@@ -345,8 +352,9 @@ async function telegramResult(token, method, params, get) {
  * @param {Get} get
  * @returns {Promise<Record<string, unknown> | null>}
  */
-async function telegramCall(token, method, params, get) {
-  return parseObject(JSON.stringify(await telegramResult(token, method, params, get)));
+export async function telegramCall(token, method, params, get) {
+  const reply = await telegramResult(token, method, params, get);
+  return parseObject(JSON.stringify(reply.ok ? reply.result : null));
 }
 
 /**
@@ -357,10 +365,12 @@ async function telegramCall(token, method, params, get) {
  * @param {string} token
  * @param {number} offset
  * @param {Get} [get]
- * @returns {Promise<{ chats: string[], offset: number }>}
+ * @returns {Promise<{ chats: string[], offset: number, error: string | null }>}
+ *   `error` says why asking failed, in words that carry no token
  */
 export async function telegramUpdates(token, offset, get = (url) => fetch(url)) {
-  const result = await telegramResult(token, "getUpdates", { offset: String(offset) }, get);
+  const reply = await telegramResult(token, "getUpdates", { offset: String(offset) }, get);
+  const result = reply.ok ? reply.result : null;
   /** @type {string[]} */
   const chats = [];
   let next = offset;
@@ -378,7 +388,21 @@ export async function telegramUpdates(token, offset, get = (url) => fetch(url)) 
       }
     }
   }
-  return { chats, offset: next };
+  return { chats, offset: next, error: reply.ok ? null : updatesError(reply) };
+}
+
+/**
+ * @param {{ code: number | null, description: string }} failure
+ * @returns {string}
+ */
+function updatesError(failure) {
+  if (failure.code === 409) {
+    return "another process is reading this bot's updates (is the link sidecar running?)";
+  }
+  if (failure.code === 401) {
+    return "the token was refused";
+  }
+  return `getUpdates failed: ${failure.code === null ? "no reply" : String(failure.code)} ${failure.description}`.trim();
 }
 
 /**

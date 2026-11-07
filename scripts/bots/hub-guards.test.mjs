@@ -263,8 +263,9 @@ describe("approvalsSatisfied", () => {
    * @param {"approve" | "request-changes"} verdict
    * @param {string} sha
    * @param {number} ts
+   * @param {string} [by] the employee, the seat's first unless named
    */
-  const entry = (role, verdict, sha, ts) => ({ pr: 22, role, verdict, sha, ts });
+  const entry = (role, verdict, sha, ts, by = role) => ({ pr: 22, role, by, verdict, sha, ts });
 
   it("passes when both reviewers approved the current commit", () => {
     const ledger = [entry("lead-dev", "approve", SHA, 1), entry("perf-sec-qa", "approve", SHA, 2)];
@@ -299,7 +300,7 @@ describe("approvalsSatisfied", () => {
       { pr: 22, sha: SHA, required },
     );
 
-    expect(verdict).toMatchObject({ ok: false, changesRequested: ["perf-sec-qa"] });
+    expect(verdict).toMatchObject({ ok: false, changesRequested: ["perf-sec-qa (perf-sec-qa)"] });
   });
 
   it("lets a reviewer withdraw an approval it already gave", () => {
@@ -312,7 +313,7 @@ describe("approvalsSatisfied", () => {
       { pr: 22, sha: SHA, required },
     );
 
-    expect(verdict).toMatchObject({ ok: false, changesRequested: ["perf-sec-qa"] });
+    expect(verdict).toMatchObject({ ok: false, changesRequested: ["perf-sec-qa (perf-sec-qa)"] });
   });
 
   it("lets a reviewer approve after having requested changes", () => {
@@ -330,8 +331,8 @@ describe("approvalsSatisfied", () => {
 
   it("ignores verdicts belonging to a different pull request", () => {
     const ledger = [
-      { pr: 99, role: "lead-dev", verdict: "approve", sha: SHA, ts: 1 },
-      { pr: 99, role: "perf-sec-qa", verdict: "approve", sha: SHA, ts: 2 },
+      { pr: 99, role: "lead-dev", by: "lead-dev", verdict: "approve", sha: SHA, ts: 1 },
+      { pr: 99, role: "perf-sec-qa", by: "perf-sec-qa", verdict: "approve", sha: SHA, ts: 2 },
     ];
 
     expect(
@@ -350,6 +351,150 @@ describe("approvalsSatisfied", () => {
     );
 
     expect(verdict).toMatchObject({ ok: true });
+  });
+
+  describe("with two employees in a seat (#2748)", () => {
+    const lead = entry("lead-dev", "approve", SHA, 1);
+    const A = "perf-sec-qa@2";
+    const B = "perf-sec-qa";
+
+    it("keeps A's objection standing when B approves the same commit", () => {
+      const ledger = [
+        lead,
+        entry("perf-sec-qa", "request-changes", SHA, 2, A),
+        entry("perf-sec-qa", "approve", SHA, 3, B),
+      ];
+
+      expect(approvalsSatisfied(ledger, { pr: 22, sha: SHA, required })).toMatchObject({
+        ok: false,
+        changesRequested: ["perf-sec-qa (perf-sec-qa@2)"],
+      });
+      expect(
+        approvalsSatisfied([...ledger, entry("perf-sec-qa", "approve", SHA, 4, A)], {
+          pr: 22,
+          sha: SHA,
+          required,
+        }),
+      ).toMatchObject({ ok: true });
+    });
+
+    it("clears an objection when the seat re-reviews a newer commit", () => {
+      const verdict = approvalsSatisfied(
+        [
+          entry("lead-dev", "approve", SHA, 4),
+          entry("perf-sec-qa", "request-changes", OLDER, 2, A),
+          entry("perf-sec-qa", "approve", SHA, 3, B),
+        ],
+        { pr: 22, sha: SHA, required },
+      );
+
+      expect(verdict).toMatchObject({ ok: true });
+    });
+
+    it("does not clear an objection with a later approval of an older commit", () => {
+      const OLDEST = "cccccccccccccccccccccccccccccccccccccccc";
+      const verdict = approvalsSatisfied(
+        [
+          entry("lead-dev", "approve", SHA, 4),
+          entry("perf-sec-qa", "request-changes", OLDER, 2, A),
+          entry("perf-sec-qa", "approve", OLDEST, 3, B),
+          entry("perf-sec-qa", "approve", SHA, 1, B),
+        ],
+        { pr: 22, sha: SHA, required },
+      );
+
+      expect(verdict).toMatchObject({
+        ok: false,
+        changesRequested: ["perf-sec-qa (perf-sec-qa@2)"],
+      });
+    });
+
+    it("does not clear an objection at the head with a slow approval of the previous one", () => {
+      const verdict = approvalsSatisfied(
+        [
+          lead,
+          entry("perf-sec-qa", "request-changes", SHA, 2, A),
+          entry("perf-sec-qa", "approve", OLDER, 3, B),
+          entry("perf-sec-qa", "approve", SHA, 4, B),
+        ],
+        { pr: 22, sha: SHA, required },
+      );
+
+      expect(verdict).toMatchObject({ ok: false });
+    });
+
+    it("does not clear an objection with a push nobody re-reviewed", () => {
+      const verdict = approvalsSatisfied(
+        [
+          entry("lead-dev", "approve", SHA, 4),
+          entry("perf-sec-qa", "approve", OLDER, 1, B),
+          entry("perf-sec-qa", "request-changes", OLDER, 2, A),
+        ],
+        { pr: 22, sha: SHA, required },
+      );
+
+      expect(verdict).toMatchObject({
+        ok: false,
+        changesRequested: ["perf-sec-qa (perf-sec-qa@2)"],
+      });
+    });
+
+    it("does not clear an objection with an approval cast before it", () => {
+      const verdict = approvalsSatisfied(
+        [
+          lead,
+          entry("perf-sec-qa", "approve", SHA, 2, B),
+          entry("perf-sec-qa", "request-changes", OLDER, 2, A),
+        ],
+        { pr: 22, sha: SHA, required },
+      );
+
+      expect(verdict).toMatchObject({ ok: false });
+    });
+
+    it("lets one employee approve, object, and approve again", () => {
+      const verdict = approvalsSatisfied(
+        [
+          lead,
+          entry("perf-sec-qa", "approve", SHA, 2, B),
+          entry("perf-sec-qa", "request-changes", SHA, 3, B),
+          entry("perf-sec-qa", "approve", SHA, 4, B),
+        ],
+        { pr: 22, sha: SHA, required },
+      );
+
+      expect(verdict).toMatchObject({ ok: true });
+    });
+
+    it("names the blocked seat among two required", () => {
+      const verdict = approvalsSatisfied(
+        [
+          lead,
+          entry("perf-sec-qa", "request-changes", SHA, 2, A),
+          entry("perf-sec-qa", "approve", SHA, 3, B),
+        ],
+        { pr: 22, sha: SHA, required },
+      );
+
+      expect(verdict).toMatchObject({
+        ok: false,
+        missing: [],
+        stale: [],
+        changesRequested: ["perf-sec-qa (perf-sec-qa@2)"],
+      });
+    });
+
+    it("skips a ledger line without `by` as malformed", () => {
+      const verdict = approvalsSatisfied(
+        /** @type {never} */ ([
+          lead,
+          { pr: 22, role: "perf-sec-qa", verdict: "approve", sha: SHA, ts: 2 },
+        ]),
+        { pr: 22, sha: SHA, required },
+      );
+
+      expect(verdict).toMatchObject({ ok: false, missing: ["perf-sec-qa"] });
+    });
   });
 
   it("fails an empty ledger", () => {

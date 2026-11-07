@@ -36,19 +36,24 @@ These keys are fixed:
 
 ## Mouse
 
-- **Left click** the ground to walk there. The left button only walks.
+- **Left click** the ground to walk there. Without Shift, the left button only walks.
 - **Right click** a foe or an ally to target it. Right click the same foe
   again, quickly, to attack it.
 - **Right click** a flag or the flag stand, in a Guild Battle, to target
   it; **Space** walks there and takes the flag up or plants it.
 - **Wheel click** a foe to call it for your team: their **T** targets it.
-  On the ground or an ally, it pings that spot.
+  On the ground or an ally, it pings that spot. Or click the target bar
+  at the top to call the foe you have targeted.
 - Click the compass to ping that spot for your team; drag on it to draw a
   line they see for a few seconds.
 - **Wheel** zooms. **Right drag** looks around; let go and the view
   glides back to you.
 - Click a skill on the bar to use it, and a name in the party window to
   target that ally.
+- Hold **Show names** (Shift) and every name shows. While held, clicking
+  a character's name works as clicking its body does. A right click
+  only targets, even twice; a left click targets and attacks at once; a
+  wheel click calls or pings. The name a click would hit is highlighted.
 
 ## The top bar
 

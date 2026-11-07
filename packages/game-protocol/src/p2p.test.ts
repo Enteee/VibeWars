@@ -569,8 +569,8 @@ const teamSide = {
     reason: "votes",
     presetName: null,
     members: [
-      { name: "Mhenlo", primary: "monk", secondary: null },
-      { name: "Devona", primary: "warrior", secondary: "monk" },
+      { primary: "monk", secondary: null },
+      { primary: "warrior", secondary: "monk" },
     ],
   },
   claims: ["peer-2", null],
@@ -1173,7 +1173,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parsePeerChat,
     { channel: "all", text: "x".repeat(MAX_WIRE_CHAT_TEXT + 1) },
   ],
-  ["chat-line on team 2 (#479)", parseWireChatLine, { ...chatLine, team: 2 }],
+  ["chat-line on team 3 (#479, #2683)", parseWireChatLine, { ...chatLine, team: 3 }],
   ["chat-line without a sender (#479)", parseWireChatLine, { ...chatLine, fromId: undefined }],
   ["chat-line with a long name (#479)", parseWireChatLine, { ...chatLine, name: long }],
   [
@@ -2197,9 +2197,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["lobby-state without a host", parseWireLobbyState, { ...lobbyState, hostId: undefined }],
   ["lobby-state with a long code", parseWireLobbyState, { ...lobbyState, code: long }],
   [
-    "lobby-state with a third team",
+    "lobby-state with a fourth team (#2683)",
     parseWireLobbyState,
-    { ...lobbyState, players: [{ ...lobbyState.players[0], team: 2 }] },
+    { ...lobbyState, players: [{ ...lobbyState.players[0], team: 3 }] },
   ],
   [
     "lobby-state with a bot of a string (#1193)",
@@ -2270,6 +2270,30 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
           {
             ...teamSide,
             proposals: Array.from({ length: MAX_TEAM_LOBBY_SIDE + 1 }, () => teamSide.proposals[0]),
+          },
+          null,
+        ],
+      },
+    },
+  ],
+  [
+    "Team Lobby character with a name (#2683)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamLobby: {
+        stage: "claim",
+        secondsLeft: 1,
+        sides: [
+          {
+            ...teamSide,
+            chosen: {
+              ...teamSide.chosen,
+              members: [
+                { name: "Mhenlo", primary: "monk", secondary: null },
+                teamSide.chosen.members[1],
+              ],
+            },
           },
           null,
         ],

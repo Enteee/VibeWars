@@ -75,7 +75,7 @@ describe("summaryTables: three teams (#2684)", () => {
     const tables = summaryTables(three, "ann", 0, 2, NO_BOTS);
     expect(tables.map((table) => table.caption)).toEqual([
       t("summary.yourTeam"),
-      t("summary.team", { team: 3 }),
+      `◆ ${t("summary.team", { team: 3 })}`,
       t("summary.team", { team: 2 }),
     ]);
     expect(tables[1]?.lines.map((line) => line.row.id)).toEqual(["eve"]);
@@ -84,8 +84,8 @@ describe("summaryTables: three teams (#2684)", () => {
   it("shows a spectator the winner first, and team 1 first on a draw", () => {
     const captions = (winner: number | undefined) =>
       summaryTables(three, "spectator-1", undefined, winner, NO_BOTS).map((table) => table.caption);
-    expect(captions(1)).toEqual(["Team 2", "Team 1", "Team 3"]);
-    expect(captions(undefined)).toEqual(["Team 1", "Team 2", "Team 3"]);
+    expect(captions(1)).toEqual(["Team 2", "Team 1", "◆ Team 3"]);
+    expect(captions(undefined)).toEqual(["Team 1", "Team 2", "◆ Team 3"]);
   });
 });
 

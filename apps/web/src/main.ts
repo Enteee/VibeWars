@@ -2201,7 +2201,7 @@ async function main(): Promise<void> {
     const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
     const team = self?.team ?? null;
     const stage = snapshot.teamLobby?.stage;
-    if (snapshot.teamSize !== 1 || team === null || stage === undefined) {
+    if (snapshot.teamSize !== 1 || team === null || team === 2 || stage === undefined) {
       picks.soloProposed = undefined;
       picks.soloClaimed = false;
       return;
