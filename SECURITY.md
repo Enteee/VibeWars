@@ -258,6 +258,12 @@ channels, as often as they like.
   game's name rules, a template of at most 64 characters that re-encodes
   byte for byte and passes `validatePlayerBuild`. A reader of records
   (#2532) must also drop an event over 8 KB before `JSON.parse`.
+- **A player key is a stable identity** (#2706). Every lobby host, and
+  through it every other seat, learns each human player's public key, and
+  it is the same in every lobby that browser joins. That is its purpose,
+  and it also makes a browser linkable across lobbies by anyone who plays
+  with it. Clearing the site's data is the only way to a new one; the Help
+  screen says so (Your player key). Match records do not carry it.
 - **Everything in a snapshot.** A peer receives every snapshot field the
   host sends, for every player. Anything that must stay hidden from a
   player must not be in the snapshot at all.
@@ -283,6 +289,20 @@ channels, as often as they like.
   (`game-session/src/rejoin-proof.ts`). The host checks it against the
   `from` the proof arrives on. A nonce is good for one proof, and a new
   hello from the same peer kills the old one.
+- A joiner proves its player key before it is seated (#2706). The host
+  answers each `lobby-join` with a `lobby-challenge` of 32 fresh random
+  bytes, and the joiner signs, with BIP-340 Schnorr under the tag
+  `vibewars/lobby-proof`, a digest naming the host's peer id, its own, the
+  room, its key and the nonce (`apps/web/src/net/transport/player-key.ts`).
+  The host checks it against the `from` it arrives on. One proof a nonce,
+  good or bad; none within `LOBBY_PROOF_MS` is refused as `unproven`.
+  Pending challenges are capped at the lobby's seat count, and a signature
+  is checked only for a pending one. A held seat goes back only to the key
+  that held it.
+- **Another seat's key is only the host's word.** The host checks each
+  proof itself and passes on the key, not the proof. A hostile host can
+  name any key for any seat. Nothing may treat a key it did not challenge
+  itself as proven.
 - A lobby seat held for a dropped guest (#1764) goes back only to a
   `lobby-join` carrying that seat's lobby rejoin token (#2157): 128 random
   bits the host sends the guest alone in `lobby-seat` when it admits it,
@@ -490,12 +510,17 @@ the whole game: online play is peer to peer from the page itself.
   `enteee.github.io` is one origin. `storage/namespace.ts` keeps the
   release and `next` from reading each other's saves _by accident_. It does
   nothing against another site on that origin, which can read and write
-  them. Saves are builds, a display name and a TURN relay (#972, #1269),
-  and we accept this: every site on that origin is published by the
-  operator alone, so only code the operator deploys can read them. A relay
-  credential is low value, a per-friend password its owner rotates with
-  `turn-link` or revokes with `turn-user remove`. Nothing more secret than
-  that may ever be stored in the browser on Pages.
+  them. Saves are builds, a display name, a TURN relay (#972, #1269) and
+  the player key's secret half (#2706), and we accept this: every site on
+  that origin is published by the operator alone, so only code the
+  operator deploys can read them. A relay credential is low value, a
+  per-friend password its owner rotates with `turn-link` or revokes with
+  `turn-user remove`. The player key is worth more: whoever reads it is
+  that player in every lobby, until the player clears the site's data, and
+  so is any script injected into our own page. It guards a game identity,
+  no account, no money and no other site, so we accept that too. Nothing
+  more secret than a player key may ever be stored in the browser on
+  Pages.
 - **A manual run cannot publish a side branch.** `workflow_dispatch`
   builds whatever `--ref` it is given, so `deploy` is held back by the
   environments' deployment-branch rules instead: `test` accepts `main`,
