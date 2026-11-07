@@ -6,6 +6,7 @@ import {
   openLobby,
   playersOf,
   provenPeer,
+  WIRE_PLAYER_KEY,
   seat,
   start,
   type TestLobby,
@@ -70,6 +71,7 @@ const joinAs = (name: string, rejoinToken: string | null) => ({
   admission: null,
   rejoinToken,
   relayPub: null,
+  playerPubkey: WIRE_PLAYER_KEY.pubkey,
 });
 
 /**
@@ -188,9 +190,9 @@ describe("lobby host against hostile peers", () => {
     }
     await settle();
     // The burst was spent on its join, which goes once, to the host alone
-    // once it proved the key (#1681), and the first MESSAGE_BURST - 1; the
-    // rest were dropped.
-    expect(playersOf(lobby.host)[1]?.team).toBe(MESSAGE_BURST % 2 === 0 ? 0 : 1);
+    // once it proved the key (#1681), its player-key proof (#2706), and the
+    // first MESSAGE_BURST - 2; the rest were dropped.
+    expect(playersOf(lobby.host)[1]?.team).toBe(MESSAGE_BURST % 2 === 0 ? 1 : 0);
     flooder.connection.chooseTeam(null);
     await settle();
     expect(playersOf(lobby.host)[1]?.team).not.toBeNull();

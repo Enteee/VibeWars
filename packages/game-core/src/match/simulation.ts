@@ -39,6 +39,7 @@ import {
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
   SHRINE_INVULNERABLE_SECONDS,
+  soleLeader,
   teamBeaten,
   teamIds,
   TWO_TEAM_MODES,
@@ -297,6 +298,7 @@ import {
   type StandState,
 } from "./flags.js";
 import {
+  GHOST_PIPS,
   initialCapturePoints,
   onCapturePoint,
   stepCapturePoints,
@@ -1154,6 +1156,8 @@ export class MatchSimulation {
   #botObjectives: BotObjectives = NO_OBJECTIVES;
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
   #pointTicks = 0;
+  /** When each team last led every other alone on shrine points (#2690), match clock. */
+  readonly #ledAt = new Map<number, number>();
   /** The whole second of match clock the Guild Lords' loss caps are for (#1223). */
   #lossSecond = 0;
   /** Every ground effect in the match (#1087), in id order. */
@@ -5934,23 +5938,31 @@ export class MatchSimulation {
 
   /**
    * The step's shrines (#1378), once every death is in, so a player killed
-   * this tick is on none: each moves toward the one team on it, then, at
-   * every `POINT_TICK_SECONDS` of match clock, each scores its owner a
-   * point. The capture comes first, so one taken on the scoring tick scores.
+   * this tick is on none: each moves by the pips on it (#2690), a living
+   * player one, a living Ghostly Hero `GHOST_PIPS`, a pet, minion or
+   * spirit none; then, at every `POINT_TICK_SECONDS` of match clock, each
+   * scores its owner a point, and a team then ahead of every other alone
+   * has led last. The capture comes first, so one taken on the scoring tick scores.
    */
   #advanceCapturePoints(dt: number): void {
     if (this.#capturePoints.length === 0 || this.phase !== "active") {
       return;
     }
-    const presence = this.#capturePoints.map((point) =>
-      [...this.#participants.values()].flatMap((record) =>
-        countsForTeam(record) &&
-        !record.combatant.dead &&
-        onCapturePoint(point.position, record.position)
-          ? [record.combatant.team]
-          : [],
-      ),
-    );
+    const presence = this.#capturePoints.map((point) => {
+      const pips = new Map<number, number>();
+      for (const record of this.#participants.values()) {
+        const ghost = record.creature?.kind === "ghostly-hero";
+        if (
+          (countsForTeam(record) || ghost) &&
+          !record.combatant.dead &&
+          onCapturePoint(point.position, record.position)
+        ) {
+          const team = record.combatant.team;
+          pips.set(team, (pips.get(team) ?? 0) + (ghost ? GHOST_PIPS : 1));
+        }
+      }
+      return pips;
+    });
     this.#capturePoints = stepCapturePoints(this.#capturePoints, dt, presence).state;
     this.#refreshBotObjectives();
     const due = (this.#pointTicks + 1) * POINT_TICK_SECONDS;
@@ -5962,6 +5974,14 @@ export class MatchSimulation {
       if (owner !== null) {
         this.#score = addPoint(this.#score, owner);
       }
+    }
+    // An eliminated team's points, which its shrines still add to, have no
+    // say in who leads (#2682).
+    const lead = soleLeader({
+      byTeam: new Map([...this.#score.byTeam].filter(([team]) => !this.#eliminated.has(team))),
+    });
+    if (lead !== undefined) {
+      this.#ledAt.set(lead, this.#elapsedSeconds);
     }
   }
 
@@ -7984,6 +8004,8 @@ export class MatchSimulation {
         guildLordLives: this.#guildLordLives(team),
         beyondRaising: this.#teams.has(team) && raisable === 0,
         aggression: this.#aggression.get(team) ?? 0,
+        ledAtSeconds: this.#ledAt.get(team),
+        pointsHeld: this.#capturePoints.filter((point) => point.owner === team).length,
         eliminated: this.#eliminated.has(team),
       });
     }

@@ -37,7 +37,15 @@ describe("a finished match's record (#2528)", () => {
       seats: new Map<string, PlannedSeat>([
         [
           "host/local",
-          { team: 0, name: "Me", guildTag: "VIBE", guildCape: null, bot: false, build: null },
+          {
+            team: 0,
+            name: "Me",
+            guildTag: "VIBE",
+            guildCape: null,
+            bot: false,
+            playerPubkey: "ab".repeat(32),
+            build: null,
+          },
         ],
         [
           "Elementalist Bot",

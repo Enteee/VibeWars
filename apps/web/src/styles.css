@@ -3887,6 +3887,7 @@ body {
 .hud-mute:focus-visible,
 .hud-help:hover,
 .hud-help:focus-visible,
+.hud-help[aria-expanded="true"],
 .hud-music:hover,
 .hud-music:focus-visible,
 .hud-music[aria-expanded="true"],
@@ -6441,7 +6442,7 @@ button.skill-group-header > .skill-group-rank {
   white-space: pre-wrap;
 }
 
-/* --- sound controls (#424): Options → Sound and the HUD's ♪ popover ------ */
+/* --- sound controls (#424): the top bar's and the HUD's ♪ popovers ------- */
 
 .sound-controls {
   display: flex;

@@ -161,6 +161,7 @@ function player(
     isHost: sessionId === "aria",
     bot,
     away: false,
+    playerPubkey: bot ? null : "ab".repeat(32),
   };
 }
 

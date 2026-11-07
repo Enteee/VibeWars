@@ -70,6 +70,7 @@ function player(
     isHost: false,
     bot: false,
     away: false,
+    playerPubkey: "ab".repeat(32),
     ...overrides,
   };
 }

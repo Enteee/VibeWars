@@ -585,6 +585,11 @@ export async function startMatchView(
   const optionsWindow = attachOptionsWindow(hud.options, parent);
   // Help over the match too (#1257), the same way.
   const openHelp = (): void => {
+    // A press while Help is open closes it (#2724).
+    if (isHelpOverlayOpen()) {
+      closeHelpOverlay();
+      return;
+    }
     openHelpOverlay(parent, () => {
       hud.help.setAttribute("aria-expanded", "false");
       hud.help.focus();

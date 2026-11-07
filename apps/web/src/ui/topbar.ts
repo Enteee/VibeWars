@@ -1,9 +1,18 @@
 import { isGloballyMuted, onGlobalMute, setGlobalMute } from "../audio/global-mute.js";
 import { attachFullscreenButton, fullscreenTarget } from "./fullscreen.js";
+import { closeHelpOverlay, isHelpOverlayOpen } from "./help-screen.js";
 import { paintMuteButton } from "./hud.js";
 import { helpIcon, LOBBY_ICON, lobbyIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
-import { button, h, iconButton, setTopbarSlots, shareLine, type ShownBar } from "./kit.js";
+import {
+  button,
+  h,
+  iconButton,
+  setTopbarSlots,
+  shareLine,
+  type OwnIcon,
+  type ShownBar,
+} from "./kit.js";
 import { copyInviteLink } from "./lobby-screen.js";
 import { lobbyWindowBody, type RailParty } from "./lobby-window.js";
 import { loadPlayerName } from "./player-section.js";
@@ -243,6 +252,20 @@ export function joinControls(
 }
 
 /**
+ * The global icons for the bar's own screen (#1272): Help keeps its [?],
+ * shown open, so a second press closes it (#2724); the beat editor hides
+ * its ♪.
+ */
+export function paintOwnIcons(
+  help: Pick<HTMLElement, "setAttribute">,
+  music: Pick<HTMLElement, "hidden">,
+  own: OwnIcon | undefined,
+): void {
+  help.setAttribute("aria-expanded", String(own === "help"));
+  music.hidden = own === "music";
+}
+
+/**
  * Whether the bar has a ⋯: a screen with buttons beyond its primary one, or
  * one showing the join controls, which fold into it on a phone (#2053).
  * `primaries` holds, per screen button, whether it is the primary one.
@@ -391,7 +414,13 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
 
   const help = iconButton("topbar-help", "Help", helpIcon());
   help.setAttribute("aria-haspopup", "dialog");
+  help.setAttribute("aria-expanded", "false");
+  // A second press closes Help, as one on ⚙ closes Options (#2724).
   help.addEventListener("click", () => {
+    if (isHelpOverlayOpen()) {
+      closeHelpOverlay();
+      return;
+    }
     closeTopbarPopover();
     callbacks.onHelp();
   });
@@ -413,7 +442,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
 
   const music = iconButton("topbar-music", "Music");
 
-  // The same mute all as the HUD's and Options → Sound (#424).
+  // The same mute all as the HUD's and the ♪ popovers' (#424).
   const mute = iconButton("topbar-mute", "Mute sounds");
   paintMuteButton(mute, isGloballyMuted());
   onGlobalMute((muted) => {
@@ -475,8 +504,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     status: part(bar, ".topbar-status"),
     actions: screenActions,
     onShow: (shown) => {
-      help.hidden = shown.own === "help";
-      music.hidden = shown.own === "music";
+      paintOwnIcons(help, music, shown.own);
       if (shown.own === "help") {
         closeTopbarPopover();
       }

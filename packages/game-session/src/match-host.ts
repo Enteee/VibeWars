@@ -213,7 +213,12 @@ export type PlannedSeat = {
   readonly guildCape: WireCape | null;
 } & (
   | { readonly bot: true; readonly build: PlayerBuild }
-  | { readonly bot: false; readonly build: PlayerBuild | null }
+  | {
+      readonly bot: false;
+      readonly build: PlayerBuild | null;
+      /** The player key its lobby host saw it prove (#2706). */
+      readonly playerPubkey: string;
+    }
 );
 
 /** Weapon swaps one seat may have handled (#489): sustained, and at once. */

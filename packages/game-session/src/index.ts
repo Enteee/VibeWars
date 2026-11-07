@@ -85,7 +85,7 @@ export type {
   MatchToWatch,
   PartyPlanSeat,
 } from "./lobby-connection.js";
-export { PARTY_CONSENT_MS, canStart, createLobbyHost } from "./lobby-host.js";
+export { LOBBY_PROOF_MS, PARTY_CONSENT_MS, canStart, createLobbyHost } from "./lobby-host.js";
 export type {
   LobbyHost,
   LobbyHostOptions,
@@ -121,6 +121,7 @@ export type {
   QueueState,
   TicketKey,
 } from "./queue-client.js";
+export type { LobbyProofFields, PlayerKey, VerifyPlayerProof } from "./player-key.js";
 export { decideStayTogether } from "./stay-together.js";
 export type { StayTogetherDecision, StayTogetherInput } from "./stay-together.js";
 export { admissionBytes, admissionDigest, partyGroupId } from "./queue-admission.js";

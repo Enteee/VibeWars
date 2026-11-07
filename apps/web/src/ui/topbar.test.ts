@@ -16,6 +16,7 @@ import {
   OWN_LOBBY_LABEL,
   joinControls,
   partyJoinsNotice,
+  paintOwnIcons,
   paintStatus,
   putsMoreAway,
   showJoin,
@@ -147,6 +148,20 @@ class FakeElement {
     this.listeners.get(type)?.(event);
   }
 }
+
+describe("the top bar's own icons (#1272, #2724)", () => {
+  it("keeps Help's [?], shown open while Help is the bar, and hides the ♪ in the beat editor", () => {
+    const help = new FakeElement("button");
+    const music = new FakeElement("button");
+    const paint = (own: Kit.OwnIcon | undefined): unknown[] => {
+      paintOwnIcons(help, music, own);
+      return [help.hidden, help.getAttribute("aria-expanded"), music.hidden];
+    };
+    expect(paint("help")).toEqual([false, "true", false]);
+    expect(paint(undefined)).toEqual([false, "false", false]);
+    expect(paint("music")).toEqual([false, "false", true]);
+  });
+});
 
 describe("the title bar's lobby and invite links (#1526, #2100)", () => {
   const OWN = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
