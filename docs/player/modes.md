@@ -102,7 +102,8 @@ Target your relic and press **Space** to take it up. Carry it onto the
 altar and you score a point at once, and the relic goes back to your base.
 Every point is announced, with a fanfare that rises for yours and falls
 for theirs. A carrier walks slower and cannot
-attack or use attack skills. It drops the relic when it dies or presses
+attack or use attack skills. It walks through its own team, but a foe
+still blocks it. It drops the relic when it dies or presses
 **Drop relic** above its Health bar, and the relic stays where it fell
 until someone reaches it. Your team takes it up from there. A foe who
 reaches it, with empty hands, sends it home. A foe's relic in its base
@@ -115,6 +116,15 @@ with more points wins; equal points is a draw. Kills score nothing.
 The scoreboard shows the points, yours first, and the clock. Under it, a
 line for each relic says where it is: `✦ Name` on its carrier,
 `✦ dropped` on the ground or `✦ at base`.
+
+Bots run the relic too: the one nearest to your relic fetches it, unless
+you are about to pick it up yourself. A bot out of the fight goes first;
+when all are in it, the nearest leaves it for the relic, so a stand-off
+at the altar never stops the scoring. A healer or a badly hurt bot only
+goes when no one else can, and never from a fight. The one nearest to a
+dropped foe relic sends it home, and the rest wait by the altar. A bot
+carrying your relic walks it straight to the altar; the others leave the
+relic only to fight a foe that comes within spell range.
 
 Broken Tower plays it: the altar stands inside a ruined tower with a
 doorway on each side.

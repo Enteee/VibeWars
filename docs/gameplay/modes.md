@@ -101,7 +101,7 @@ centre; a Relic Run map without exactly one altar and one relic spawn
 per spawning team is refused. Target your relic and press Space to take
 it up within 60 units, as a flag; you carry it as a flag is carried,
 hands full and at 1/1.2 speed, and it drops the same ways, staying
-where it fell. A carrier who comes within 60 units of the altar scores
+where it fell. A carrier walks through its own team (#2581), never a foe. A carrier who comes within 60 units of the altar scores
 at once, no Space press: a point for the team, and the relic goes home.
 A foe's relic on the ground goes home when you reach it with empty
 hands (a relic in hand refuses it, "hands full"); one at its spawn is

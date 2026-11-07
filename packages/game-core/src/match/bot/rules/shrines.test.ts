@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { vec2, type Vec2 } from "../../../vec2.js";
-import type { BotObjectives } from "../../behaviour.js";
+import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
 import type { CapturePoint } from "../../capture-points.js";
 import {
   ANNIHILATION_MATCH_RULES,
@@ -16,7 +16,10 @@ function shrine(position: Vec2, owner: number | null = null, progress = 0): Capt
   return { position, owner, capturer: owner, progress };
 }
 
-const playing = (...capturePoints: CapturePoint[]): BotObjectives => ({ capturePoints });
+const playing = (...capturePoints: CapturePoint[]): BotObjectives => ({
+  ...NO_OBJECTIVES,
+  capturePoints,
+});
 
 describe("shrines: Capture Points bots take and hold shrines (#2580)", () => {
   // The foe is well beyond spell range (420) unless a test says otherwise.
