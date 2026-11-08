@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 
 /**
@@ -28,11 +29,11 @@ export function tooLarge(source: string): boolean {
 }
 
 export function editRemovedNotice(title: string): string {
-  return `Your edit of ${title} was based on an older version and was removed.`;
+  return t("music.editRemoved", { track: title });
 }
 
 export function editStoppedNotice(title: string): string {
-  return `Your edit of ${title} stopped the music and was removed.`;
+  return t("music.editStopped", { track: title });
 }
 
 /** SHA-256 of `source`, hex. */

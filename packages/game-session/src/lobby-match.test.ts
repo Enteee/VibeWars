@@ -16,11 +16,7 @@ import {
   type TestLobby,
 } from "./lobby-harness.test-support.js";
 import { MatchRefusedError, connectMatch } from "./match-client.js";
-import {
-  MATCH_FULL_MESSAGE,
-  OBSERVER_DELAY_SECONDS,
-  RECONNECT_WINDOW_SECONDS,
-} from "./match-host.js";
+import { OBSERVER_DELAY_SECONDS, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { connectObserver } from "./match-observer.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { hello, playerIn, self, settle, toJson, until } from "./match-harness.test-support.js";
@@ -260,7 +256,7 @@ describe("a lobby's own match", () => {
     const spectator = at(members, 2);
     for (let i = 0; i < 3; i += 1) {
       await expect(intrude(spectator)).rejects.toEqual(
-        new MatchRefusedError({ reason: "match-full", message: MATCH_FULL_MESSAGE }),
+        new MatchRefusedError({ reason: "match-full" }),
       );
     }
     const matches = [await play(lobby.host), await play(at(members, 1))];

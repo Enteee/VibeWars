@@ -146,12 +146,14 @@ Code: `apps/web/src/net/transport/nostr-queue.ts` and the queue under
 
 1. Two players, on different networks (a home network and a phone on its
    mobile hotspot), each open the client and press _Random Arena_ in 1 v 1.
-2. Each queue screen counts 2 of 2 searching within a heartbeat (5 s).
+2. Each queue icon's window (the turning ring left of Help) counts 2 of 2
+   searching within a heartbeat (5 s).
 3. Within a few seconds more, both see the versus splash and land in the
    same match, one of them hosting. Play it to its end.
 4. Four seconds after the result, both see it again on the queue
    screen, the winner with "1 win in a row this visit (not a rating)".
-   Both press _Queue again_; one leaves the queue. The other player's count drops
+   Both press _Queue again_, back on Random Arena queued in the background;
+   one presses _Leave Queue_ in the icon's window. The other player's count drops
    back at once, from the withdrawal, and no later than the ticket TTL (15 s).
 
 Pass: every step as written. A pair that queues but never meets, with
@@ -167,12 +169,11 @@ another network.
 1. Four press _Random Arena_ in 2 v 2 and play the match to its end.
 2. Four seconds after the result, the two winners see _Stay together
    (15)_ counting down beside _Queue again_; the losers do not.
-3. Both winners press it. Both land on the searching screen at once,
-   counting 2 searching; one more stranger brings it to 3, a fourth
+3. Both winners press it. Both land on Random Arena at once, queued in
+   the background, the queue icon's window counting 2 searching; one more stranger brings it to 3, a fourth
    to a match, the two winners on one side.
 4. Win again and repeat, but one winner presses _Queue again_ instead:
-   the other sees "The team split up" under the searching screen, queued
-   alone.
+   the other sees "The team split up" on Random Arena, queued alone.
 
 Pass: every step as written.
 

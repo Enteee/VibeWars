@@ -7,7 +7,7 @@ import type {
 } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
-import { ASCENT_LOCKED_MESSAGE } from "../net/session.js";
+import { t } from "../i18n/index.js";
 import { validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
 import {
@@ -41,14 +41,6 @@ export interface TeamLobbyCallbacks {
   readonly onToggleReady: () => void;
   readonly onLeave: () => void;
 }
-
-export const VOTE_TITLE = "Choose a team build";
-export const CLAIM_TITLE = "Take a character";
-export const SPECTATING_LINE = "Teams are choosing their builds";
-export const NO_PROPOSALS = "No proposals: a random preset team plays";
-/** A 1v1's vote and claim (#2387): every character of the player, one click plays one. */
-export const SOLO_TITLE = "Choose your character";
-export const SOLO_STARTING = "Starting…";
 
 /** One character a 1v1 can play (#2387): a saved one, or a Team Build's member. */
 export interface SoloEntry {
@@ -96,61 +88,36 @@ export function soloEntries(
       ),
   ];
 }
-export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Builder.";
-/** Every Team Build has problems (#2110): saved, but none can be proposed. */
-export const NO_PLAYABLE_TEAM_BUILDS =
-  "None of your Team Builds is playable. Fix one in Team Builder.";
-/** None of your Team Builds is the side's size (#2104). */
-export function noTeamBuildOf(size: number): string {
-  return `No ${String(size)}-player Team Builds — make one in the Team Builder.`;
-}
 /** The builds drawer's search found nothing (#2116). */
 export function noTeamBuildNamed(query: string): string {
-  return `No Team Build named “${query}”.`;
+  return t("teamLobby.noTeamBuildNamed", { query });
 }
 /** What the builds drawer lists (#2116): the side's size, and how many it leaves out. */
 export function drawerShowing(size: number, hidden: number): string {
-  const showing = `Showing ${String(size)}-player builds`;
   return hidden === 0
-    ? showing
-    : `${showing} · ${String(hidden)} ${hidden === 1 ? "other" : "others"} hidden`;
+    ? t("teamLobby.drawerShowing", { size })
+    : t("teamLobby.drawerShowingHidden", { size, count: hidden });
 }
-export const BUILDS_DRAWER = "Your Team Builds";
-export const PROPOSE_BUILD = "Propose this build";
-export const WITHDRAW_PROPOSAL = "Withdraw proposal";
-export const SEATS_LINE =
-  "Unclaimed seats are filled when the clock ends: players first, then bots.";
-/** A preset team's card title where it has no name (#2148): a side of one plays a starter build. */
-export const PRESET_TEAM = "Preset team";
-
-/** Why the chosen build won, as the line under it reads. */
-export type ReasonLine =
-  | "Most votes"
-  | "Tie: captain's pick"
-  | "Tie: picked at random"
-  | "No votes: picked at random"
-  | "No proposals: a random preset";
 
 /**
- * The reason line for `choice`. The host says `"random"` both for a tie
+ * Why the chosen build won, as the line under it reads: the reason line for `choice`. The host says `"random"` both for a tie
  * and for a vote nobody cast; `proposals`, the last the vote showed, tell
  * the two apart.
  */
-export function reasonLine(
-  choice: WireTeamChoice,
-  proposals: readonly WireTeamProposal[],
-): ReasonLine {
+export function reasonLine(choice: WireTeamChoice, proposals: readonly WireTeamProposal[]): string {
   switch (choice.reason) {
     case "votes":
-      return "Most votes";
+      return t("teamLobby.reasonVotes");
     case "captain":
-      return "Tie: captain's pick";
+      return t("teamLobby.reasonCaptain");
     case "random":
-      return proposals.some((proposal) => proposal.voterIds.length > 0)
-        ? "Tie: picked at random"
-        : "No votes: picked at random";
+      return t(
+        proposals.some((proposal) => proposal.voterIds.length > 0)
+          ? "teamLobby.reasonTieRandom"
+          : "teamLobby.reasonNoVotes",
+      );
     case "preset":
-      return "No proposals: a random preset";
+      return t("teamLobby.reasonPreset");
   }
 }
 
@@ -234,9 +201,9 @@ function personName(className: string, name: string, captain: boolean): HTMLElem
   text.title = name;
   label.appendChild(text);
   if (captain) {
-    const crown = h("span", "team-lobby-captain", "C");
-    crown.title = "Captain";
-    crown.setAttribute("aria-label", "captain");
+    const crown = h("span", "team-lobby-captain", t("teamLobby.captainMark"));
+    crown.title = t("teamLobby.captain");
+    crown.setAttribute("aria-label", t("teamLobby.captainLabel"));
     label.appendChild(crown);
   }
   return label;
@@ -264,14 +231,14 @@ export function proposalCard(
   const card = teamFigureCard({
     title: personName("team-lobby-card-name", proposer, proposal.proposerId === side.captainId),
     members: cardMembers(proposal.members, snapshot.proposalBuilds.get(proposal.proposerId)),
-    footer: mine ? [votes, h("span", "team-lobby-your-vote", "Your vote ✓")] : [votes],
+    footer: mine ? [votes, h("span", "team-lobby-your-vote", t("teamLobby.yourVote"))] : [votes],
     // A click on your own vote takes it back.
     onOpen: () => {
       onVote?.(mine ? null : proposal.proposerId);
     },
     pressed: mine,
     disabled: onVote === undefined,
-    label: `${proposer}'s team build`,
+    label: t("teamLobby.proposerBuild", { name: proposer }),
   });
   card.classList.toggle("is-voted", mine);
   return card;
@@ -317,7 +284,12 @@ function chosenCard(
   const card = teamFigureCard({
     title:
       choice.proposerId === null
-        ? personName("team-lobby-card-name", choice.presetName ?? PRESET_TEAM, false)
+        ? personName(
+            "team-lobby-card-name",
+            // Where a preset has no name (#2148): a side of one plays a starter build.
+            choice.presetName ?? t("teamLobby.presetTeam"),
+            false,
+          )
         : personName(
             "team-lobby-card-name",
             nameOf(snapshot.players, choice.proposerId),
@@ -372,7 +344,9 @@ export function seat(
       : (presetOf(choice)?.members[slot]?.name ??
         (look === undefined ? character.primary : professionLabel(look.primary, look.secondary)));
   const free =
-    lock !== null && professions !== undefined ? `Open: ${professions} build` : "Sit here";
+    lock !== null && professions !== undefined
+      ? t("teamLobby.openSeat", { professions })
+      : t("teamLobby.sitHere");
   if (professions !== undefined) {
     if (look === undefined) {
       node.append(
@@ -382,7 +356,7 @@ export function seat(
     } else {
       node.appendChild(characterFigureCard(look, { size: "card" }));
     }
-    const label = `${professions}: ${holderName ?? free}`;
+    const label = t("teamLobby.seatLabel", { professions, holder: holderName ?? free });
     node.title = label;
     node.setAttribute("aria-label", label);
   }
@@ -448,12 +422,19 @@ export function renderTeamLobbyScreen(
   if (side !== null) {
     const ready = self?.ready === true;
     actions.push(
-      button(ready ? "Not ready" : "Ready", ready ? "" : "primary", callbacks.onToggleReady),
+      button(
+        t(ready ? "teamLobby.notReady" : "teamLobby.ready"),
+        ready ? "" : "primary",
+        callbacks.onToggleReady,
+      ),
     );
   }
   screenBar({
-    crumbs: ["VibeWars", team === null ? "Team Lobby" : `Team Lobby · Team ${String(team + 1)}`],
-    back: { label: "Leave", onBack: callbacks.onLeave },
+    crumbs: [
+      "VibeWars",
+      team === null ? t("teamLobby.crumb") : t("teamLobby.crumbTeam", { team: team + 1 }),
+    ],
+    back: { label: t("teamLobby.leave"), onBack: callbacks.onLeave },
     // Esc puts the builds drawer away before it leaves (#2116).
     putAway: putAwayBuildsDrawer,
     status: [status],
@@ -499,7 +480,7 @@ export function teamLobbyBody(
   const side = lobby === null || team === null || team === 2 ? null : lobby.sides[team];
   if (lobby === null || side === null) {
     forgetDrawer();
-    return [h("div", "screen-info team-lobby-spectating", SPECTATING_LINE)];
+    return [h("div", "screen-info team-lobby-spectating", t("teamLobby.spectating"))];
   }
   if (lobby.stage === "vote") {
     lastProposals = side.proposals;
@@ -573,7 +554,7 @@ function drawerRow(
   const title = h("span", "team-lobby-drawer-row-title");
   title.appendChild(h("span", "team-lobby-drawer-row-name", team.name));
   if (proposed) {
-    title.appendChild(h("span", "team-lobby-drawer-tag", "proposed"));
+    title.appendChild(h("span", "team-lobby-drawer-tag", t("teamLobby.proposed")));
   }
   title.appendChild(h("span", "team-lobby-drawer-row-size", memberCount(team.members.length)));
   const chips = h("span", "team-lobby-drawer-chips");
@@ -594,7 +575,7 @@ function drawerRow(
       members.appendChild(member);
     }
     const action = button(
-      proposed ? WITHDRAW_PROPOSAL : PROPOSE_BUILD,
+      t(proposed ? "teamLobby.withdrawProposal" : "teamLobby.proposeBuild"),
       proposed ? "team-lobby-drawer-go" : "primary team-lobby-drawer-go",
       () => {
         onPropose(proposed ? undefined : team.id);
@@ -619,28 +600,29 @@ function buildsDrawer(
   onPropose: (teamId: string | undefined) => void,
 ): HTMLElement[] {
   const drawer = h("aside", "team-lobby-drawer");
-  drawer.setAttribute("aria-label", BUILDS_DRAWER);
-  const tab = button(`${BUILDS_DRAWER} ▾`, "team-lobby-drawer-tab", () => {
+  const drawerName = t("teamLobby.buildsDrawer");
+  drawer.setAttribute("aria-label", drawerName);
+  const tab = button(`${drawerName} ▾`, "team-lobby-drawer-tab", () => {
     if (drawerState.open) {
       closeDrawer?.();
     } else {
       show();
     }
   });
-  tab.setAttribute("aria-label", BUILDS_DRAWER);
-  const close = button("Esc ✕", "team-lobby-drawer-close", () => {
+  tab.setAttribute("aria-label", drawerName);
+  const close = button(t("teamLobby.escClose"), "team-lobby-drawer-close", () => {
     closeDrawer?.();
   });
-  close.setAttribute("aria-label", `Close ${BUILDS_DRAWER}`);
+  close.setAttribute("aria-label", t("teamLobby.closeBuildsDrawer"));
   const head = h("div", "team-lobby-drawer-head");
-  head.append(h("h3", "team-lobby-drawer-title", BUILDS_DRAWER), close);
+  head.append(h("h3", "team-lobby-drawer-title", drawerName), close);
 
   const proposable = proposableTeams(teams, size);
   const search = document.createElement("input");
   search.type = "search";
   search.className = "team-lobby-drawer-search";
-  search.placeholder = "Search your Team Builds…";
-  search.setAttribute("aria-label", "Search your Team Builds");
+  search.placeholder = t("teamLobby.search");
+  search.setAttribute("aria-label", t("teamLobby.searchLabel"));
   search.value = drawerState.query;
   search.hidden = proposable.length === 0;
   const body = h("div", "team-lobby-drawer-body");
@@ -653,11 +635,12 @@ function buildsDrawer(
         h(
           "div",
           "screen-info team-lobby-no-teams",
+          // Every Team Build of the size has problems (#2110), or none is the side's size (#2104).
           teams.length === 0
-            ? NO_TEAM_BUILDS
+            ? t("teamLobby.noTeamBuilds")
             : ofSize
-              ? NO_PLAYABLE_TEAM_BUILDS
-              : noTeamBuildOf(size),
+              ? t("teamLobby.noPlayableTeamBuilds")
+              : t("teamLobby.noTeamBuildOf", { size }),
         ),
       );
       return heads;
@@ -736,11 +719,11 @@ function voteStage(
     return [soloChooser(solo.entries, solo.picked, callbacks.onPickSolo)];
   }
   const shown = buildsDrawer(teams, side.size, proposedTeamId, callbacks.onPropose);
-  shown.push(h("h3", "menu-column-title", "Proposals"));
+  shown.push(h("h3", "menu-column-title", t("teamLobby.proposals")));
 
   const cards = h("div", "play-cards team-lobby-proposals");
   if (side.proposals.length === 0) {
-    cards.appendChild(h("div", "team-lobby-empty", NO_PROPOSALS));
+    cards.appendChild(h("div", "team-lobby-empty", t("teamLobby.noProposals")));
   }
   for (const proposal of side.proposals) {
     cards.appendChild(proposalCard(proposal, side, snapshot, callbacks.onVote));
@@ -749,12 +732,15 @@ function voteStage(
   return shown;
 }
 
-/** The title of `stage` (#2387): a 1v1 chooses a character, then starts. */
+/**
+ * The title of `stage` (#2387): a 1v1 chooses a character, every one of
+ * the player's, one click plays one, then starts.
+ */
 function stageTitle(stage: "vote" | "claim", size: number | undefined): string {
   if (size === 1) {
-    return stage === "vote" ? SOLO_TITLE : SOLO_STARTING;
+    return t(stage === "vote" ? "teamLobby.soloTitle" : "teamLobby.soloStarting");
   }
-  return stage === "vote" ? VOTE_TITLE : CLAIM_TITLE;
+  return t(stage === "vote" ? "teamLobby.voteTitle" : "teamLobby.claimTitle");
 }
 
 /**
@@ -771,12 +757,12 @@ function soloChooser(
     const content = [
       characterFigureCard(lookOfCharacter(entry.character, undefined), {
         size: "card",
-        note: entry.team === undefined ? undefined : `Team: ${entry.team}`,
+        note: entry.team === undefined ? undefined : t("teamLobby.teamNote", { team: entry.team }),
       }),
     ];
     const card = playCard({
       name: entry.character.name,
-      tags: entry.legal ? [] : [h("span", "roster-invalid-tag", "Invalid")],
+      tags: entry.legal ? [] : [h("span", "roster-invalid-tag", t("teamLobby.invalid"))],
       content,
       pressed: entry.key === picked && entry.legal,
       disabled: !entry.legal,
@@ -829,9 +815,9 @@ function claimStage(
     h(
       "div",
       "team-lobby-reason",
-      locked ? ASCENT_LOCKED_MESSAGE : reasonLine(choice, lastProposals),
+      locked ? t("session.ascentLocked") : reasonLine(choice, lastProposals),
     ),
     seats,
-    h("div", "screen-info team-lobby-seats-line", SEATS_LINE),
+    h("div", "screen-info team-lobby-seats-line", t("teamLobby.seatsLine")),
   ];
 }

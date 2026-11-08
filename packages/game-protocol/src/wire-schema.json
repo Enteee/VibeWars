@@ -50,7 +50,8 @@
     "strokes",
     "traps",
     "chat",
-    "chat-line"
+    "chat-line",
+    "shared-track"
   ],
   "statusIds": [
     "aegis",
@@ -760,9 +761,6 @@
     "MAX_WIRE_WALLS": { "literal": 1024 },
     "MIN_WIRE_MORALE": { "literal": -60 },
     "NO_SHOW_IGNORE_MS": { "literal": 120000 },
-    "PROTOCOL_MISMATCH_MESSAGE": {
-      "literal": "This tab is running an outdated version of VibeWars. Reload the page."
-    },
     "STROKE_SECONDS": { "literal": 4 },
     "TEAM_LOBBY_STAGE_SECONDS": { "literal": 60 },
     "TICKET_HEARTBEAT_MS": { "literal": 5000 },
@@ -873,6 +871,7 @@
         { "literal": "relay-cred" },
         { "literal": "relay-holding" },
         { "literal": "relay-offers" },
+        { "literal": "shared-track" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
         { "literal": "stay-together" },
@@ -5858,7 +5857,6 @@
     },
     "PeerRefuse": {
       "properties": [
-        { "name": "message", "optional": false, "type": "string" },
         {
           "name": "reason",
           "optional": false,
@@ -6807,6 +6805,13 @@
             }
           ]
         },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "share-track" } },
+            { "name": "source", "optional": false, "type": "string" },
+            { "name": "trackId", "optional": false, "type": "string" }
+          ]
+        },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "start" } }] },
         {
           "properties": [
@@ -6827,6 +6832,7 @@
               { "literal": "chat-throttled" },
               { "literal": "notice" },
               { "literal": "refused" },
+              { "literal": "share-throttled" },
               { "literal": "start-rejected" }
             ]
           }
@@ -7648,6 +7654,13 @@
         },
         { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+      ]
+    },
+    "WireSharedTrack": {
+      "properties": [
+        { "name": "from", "optional": false, "type": "string" },
+        { "name": "source", "optional": false, "type": "string" },
+        { "name": "trackId", "optional": false, "type": "string" }
       ]
     },
     "WireSkillBar": {

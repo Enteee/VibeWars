@@ -1,9 +1,11 @@
+import { t } from "../i18n/index.js";
 import type { Intensity } from "../music/director.js";
 import {
   intensityOverride,
   type IntensityOverride,
   type IntensityOverrideStore,
 } from "../music/intensity-override.js";
+import { moodName } from "../music/mood-name.js";
 import type { Mood } from "../music/mood.js";
 import { music, type MusicFollower } from "../music/play-music.js";
 import { TRACKS } from "../music/tracks/index.js";
@@ -47,7 +49,7 @@ export interface MusicBlockState {
 
 /** "Auto (2)" for Auto, the level itself otherwise. */
 export function intensityChoiceLabel(choice: IntensityOverride, directed: Intensity): string {
-  return choice === "auto" ? `Auto (${String(directed)})` : String(choice);
+  return choice === "auto" ? t("music.autoIntensity", { level: directed }) : String(choice);
 }
 
 export class MusicSettings {
@@ -72,10 +74,10 @@ export class MusicSettings {
     return {
       nowPlaying:
         track === undefined
-          ? "Nothing playing"
+          ? t("music.nothingPlaying")
           : mood === undefined
             ? track.title
-            : `${track.title} (${mood})`,
+            : t("music.trackWithMood", { track: track.title, mood: moodName(mood) }),
       override: this.#deps.override.get(),
       directed: this.#deps.music.intensity,
     };
@@ -106,16 +108,16 @@ export function mountMusicControls(container: HTMLElement, deps: MusicControlsDe
   container.appendChild(block);
 
   const playingField = h("div", "field music-now-playing");
-  playingField.appendChild(h("span", "field-label", "now playing"));
+  playingField.appendChild(h("span", "field-label", t("music.nowPlaying")));
   const title = h("span", "music-now-playing-title");
   title.setAttribute("aria-live", "polite");
   playingField.appendChild(title);
 
   const intensityField = h("div", "field music-intensity");
-  const intensityLabel = h("span", "field-label", "intensity");
+  const intensityLabel = h("span", "field-label", t("music.intensity"));
   const choices = h("div", "music-intensity-choices");
   choices.setAttribute("role", "group");
-  choices.setAttribute("aria-label", "intensity");
+  choices.setAttribute("aria-label", t("music.intensity"));
   const buttons = INTENSITY_CHOICES.map((choice) => {
     const choose = button("", "music-intensity-choice", () => {
       settings.setIntensity(choice);

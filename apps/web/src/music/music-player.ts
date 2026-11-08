@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import {
   parseHostToGame,
   type GameToHost,
@@ -54,6 +55,12 @@ export interface MusicPlayer {
    * host that is up: never queued, so a sting the engine missed is gone.
    */
   sting(sting: { id: StingId; source: string; key: string; cycles: number }): void;
+  /**
+   * A fresh host (#2745): this one is destroyed, not asked to stop, and
+   * whatever it ran with it; the next track loads in a new one. Not a
+   * teardown: nothing is reported.
+   */
+  renew(): void;
   /** Start again what `stop` stopped. */
   play(): void;
   stop(): void;
@@ -112,9 +119,6 @@ export const HEARTBEAT_TIMEOUT_MS = 5_000;
  */
 export const HOST_MESSAGES_PER_SECOND = 100;
 
-export const HUNG_MESSAGE = "The music stopped responding and was switched off.";
-export const FLOODED_MESSAGE = "The music flooded the game with messages and was switched off.";
-
 /** Whether `later` makes `earlier` pointless to send. */
 function supersedes(later: GameToHost, earlier: GameToHost): boolean {
   const track = new Set(["load", "crossfadeTo", "play", "stop"]);
@@ -154,7 +158,7 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     }
   };
 
-  const teardown = (reason: TeardownReason): void => {
+  const close = (): void => {
     stopHeartbeat?.();
     stopHeartbeat = undefined;
     frame?.destroy();
@@ -163,7 +167,11 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     queue = [];
     outstanding = undefined;
     received = 0;
-    report({ message: reason === "hung" ? HUNG_MESSAGE : FLOODED_MESSAGE });
+  };
+
+  const teardown = (reason: TeardownReason): void => {
+    close();
+    report({ message: reason === "hung" ? t("music.hung") : t("music.flooded") });
     for (const handler of tornDown) {
       handler(reason);
     }
@@ -337,6 +345,9 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
         frame.post({ type: "sting", ...sting });
       }
     },
+    renew() {
+      close();
+    },
     play() {
       send({ type: "play" });
     },
@@ -373,7 +384,7 @@ export function createHostFrame(
   iframe.setAttribute("sandbox", HOST_SANDBOX);
   iframe.setAttribute("allow", "autoplay");
   iframe.className = "music-host";
-  iframe.title = "music";
+  iframe.title = t("music.hostFrame");
   iframe.tabIndex = -1;
   iframe.setAttribute("aria-hidden", "true");
   iframe.src = url;

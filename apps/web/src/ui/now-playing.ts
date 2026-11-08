@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import type { Intensity } from "../music/director.js";
 
 /**
@@ -16,7 +17,7 @@ export function nowPlayingText(
   intensity: Intensity,
 ): string | null {
   const track = tracks.find((candidate) => candidate.id === trackId);
-  return track === undefined || intensity >= 2 ? null : `♪ ${track.title}`;
+  return track === undefined || intensity >= 2 ? null : t("music.toast", { track: track.title });
 }
 
 export function createNowPlayingToast(parent: HTMLElement): (text: string | null) => void {

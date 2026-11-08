@@ -587,7 +587,7 @@ export async function startMatchView(
   });
   renderMute(hud, sounds.muted);
   hud.mute.addEventListener("click", toggleMute);
-  const jukebox = attachJukeboxPopover(hud.music, parent);
+  const jukebox = attachJukeboxPopover(hud.music, parent, true);
   // Esc cancels an attack now, so leaving is a button that asks first (#160).
   const leave = renderLeave(hud, callbacks.onLeave);
   // Options over the match (#454), a window like the music's (#2386): the
