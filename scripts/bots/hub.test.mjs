@@ -302,6 +302,11 @@ describe("hub whoami", () => {
     expect(whoami("developer")).toContain("yes  read code-scanning alerts");
     expect(whoami("asset-designer")).toContain("yes  read code-scanning alerts");
   });
+
+  it("says only qa-tester may sign off a release branch (#2837)", () => {
+    expect(whoami("qa-tester")).toContain("yes  sign off a release branch (release-ok)");
+    expect(whoami("developer")).toContain("no   sign off a release branch (release-ok)");
+  });
 });
 
 describe("hub alerts (#184)", () => {
