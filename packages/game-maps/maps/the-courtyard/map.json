@@ -163,6 +163,7 @@
     }
   ],
   "ghostLevel": 24,
+  "gates": [],
   "objectives": [
     {
       "kind": "ghost-spawn",

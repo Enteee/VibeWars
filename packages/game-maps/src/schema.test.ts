@@ -29,6 +29,7 @@ const validMap = {
     },
   ],
   spawnPoints: [{ team: 0, position: { x: 1, y: 1 } }],
+  gates: [],
   objectives: [],
 };
 
@@ -749,5 +750,27 @@ describe("ghost maps (#2689)", () => {
       /team 0 has 0 ghost spawns, not one/,
     );
     expect(() => validateMapData({ ...ghostMap, ghostLevel: 22 })).toThrow(/ghostLevel/);
+  });
+
+  describe("gates (#2691)", () => {
+    const gate = {
+      id: "north",
+      wall: { kind: "rect", x: 80, y: 40, width: 8, height: 40 },
+      plate: { x: 50, y: 50 },
+      team: null,
+    };
+
+    it("accepts a neutral gate with its plate clear of every wall", () => {
+      expect(validateMapData({ ...validMap, gates: [gate] }).gates).toHaveLength(1);
+    });
+
+    it("refuses a plate off the map, and a team that does not spawn", () => {
+      expect(() =>
+        validateMapData({ ...validMap, gates: [{ ...gate, plate: { x: -5, y: 0 } }] }),
+      ).toThrow(/gate north/);
+      expect(() => validateMapData({ ...validMap, gates: [{ ...gate, team: 7 }] })).toThrow(
+        /gate north/,
+      );
+    });
   });
 });

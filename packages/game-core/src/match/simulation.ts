@@ -305,6 +305,14 @@ import {
   type CapturePoint,
 } from "./capture-points.js";
 import {
+  cutShotAtGate,
+  holdsPlate,
+  initialGates,
+  stepGate,
+  type Gate,
+  type GateField,
+} from "./gates.js";
+import {
   carriedRelic,
   initialRelics,
   onAltar,
@@ -781,6 +789,8 @@ export interface MatchSimulationOptions {
    * or `[]`: none.
    */
   readonly capturePoints?: readonly Vec2[];
+  /** The map's gates (#2691); none if omitted. */
+  readonly gates?: readonly GateField[];
   /**
    * The Guild Battle's base guards (#1223), each at its post from the
    * start; a team's Bodyguard cuts the damage to its Guild Lord while it
@@ -1037,15 +1047,28 @@ function faceToward(record: Participant, point: Vec2): void {
   }
 }
 
+/** The walls of one combination of gates, and the paths round them (#2691). */
+interface WallSet {
+  readonly walls: readonly Segment[];
+  readonly graph: NavGraph;
+  readonly paths: PathFinder;
+}
+
 export class MatchSimulation {
   readonly #ruleset: Ruleset;
   readonly #matchRules: MatchRules | undefined;
-  readonly #walls: readonly Segment[];
+  /** The map's walls and every closed gate's (#2691); swapped as a gate moves. */
+  #walls: readonly Segment[];
+  readonly #mapWalls: readonly Segment[];
   readonly #bounds: { readonly width: number; readonly height: number } | undefined;
-  /** Corners an approach or a walk can path through, built once from the walls (#211). */
-  readonly #graph: NavGraph;
+  /** Corners an approach or a walk can path through, from `#walls` (#211). */
+  #graph: NavGraph;
   /** Paths round this match's walls, for the attack's approach and for a walk (#211, #267, #310). */
-  readonly #paths: PathFinder;
+  #paths: PathFinder;
+  /** Walls and paths for each open-or-closed combination of the gates (#2691), built once. */
+  readonly #wallSets = new Map<number, WallSet>();
+  /** Filled in place, so a bot's objectives see each change (#2691). */
+  readonly #gates: Gate[];
   /** The living bodies a path step steers round, refilled for each one rather than allocated (#277). */
   readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
@@ -1180,10 +1203,13 @@ export class MatchSimulation {
       throw new Error(`a ${victory} match has two teams, not ${String(this.#teamCount)}`);
     }
     this.#score = emptyScore(teamIds(this.#teamCount));
-    this.#walls = options.walls ?? [];
+    this.#mapWalls = options.walls ?? [];
     this.#bounds = options.bounds;
-    this.#graph = buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius);
-    this.#paths = createPathFinder(this.#graph);
+    this.#gates = initialGates(options.gates ?? []);
+    const walls = this.#currentWallSet();
+    this.#walls = walls.walls;
+    this.#graph = walls.graph;
+    this.#paths = walls.paths;
     this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
     this.#rng = createRng(this.#seed);
     this.#flagField = options.flagField;
@@ -1331,6 +1357,10 @@ export class MatchSimulation {
   }
 
   /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
+  public get gates(): readonly Gate[] {
+    return this.#gates;
+  }
+
   public get capturePoints(): readonly CapturePoint[] {
     return this.#capturePoints;
   }
@@ -3744,6 +3774,7 @@ export class MatchSimulation {
     this.#advanceRelics();
     this.#advanceAltar(dt);
     this.#advanceCapturePoints(dt);
+    this.#advanceGates(dt);
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
     // After the match end: a lord slain as a boost falls due ends it first.
@@ -5337,8 +5368,8 @@ export class MatchSimulation {
    * when the body no longer sees its next waypoint, shoved round a
    * corner. Otherwise the route is kept: waypoints the body already sees
    * past are dropped, and the last becomes `goal` if the way to it is
-   * still clear. Walls never move, so only the goal or the body can make
-   * a route stale. No way there is not kept: the next tick asks again.
+   * still clear. A gate moving drops every route (#2691), so otherwise
+   * only the goal or the body can make one stale. No way there is not kept: the next tick asks again.
    */
   #route(record: ParticipantRecord, goal: Vec2): readonly Vec2[] | undefined {
     const route = record.route;
@@ -5933,6 +5964,73 @@ export class MatchSimulation {
       };
     } else {
       this.#botObjectives = NO_OBJECTIVES;
+    }
+    if (this.#gates.length > 0) {
+      this.#botObjectives = { ...this.#botObjectives, gates: this.#gates };
+    }
+  }
+
+  /** The walls and paths for how the gates stand now, built the first time they stand so. */
+  #currentWallSet(): WallSet {
+    let closed = 0;
+    this.#gates.forEach((gate, at) => {
+      closed |= gate.open ? 0 : 1 << at;
+    });
+    let set = this.#wallSets.get(closed);
+    if (set === undefined) {
+      const walls = [
+        ...this.#mapWalls,
+        ...this.#gates.flatMap((gate) => (gate.open ? [] : gate.segments)),
+      ];
+      const graph = buildNavGraph(walls, this.#bounds, this.#ruleset.collision.playerRadius);
+      set = { walls, graph, paths: createPathFinder(graph) };
+      this.#wallSets.set(closed, set);
+    }
+    return set;
+  }
+
+  /**
+   * The step's gates (#2691), once every death is in, so a player killed
+   * this tick holds no plate. One that closes stops the shots crossing
+   * it and moves anybody in its way to the nearest ground clear of it.
+   */
+  #advanceGates(dt: number): void {
+    if (this.#gates.length === 0 || this.phase !== "active") {
+      return;
+    }
+    let moved = false;
+    const closing: Gate[] = [];
+    for (const [at, gate] of this.#gates.entries()) {
+      const held = [...this.#participants.values()].some(
+        (record) =>
+          countsForTeam(record) &&
+          !record.combatant.dead &&
+          holdsPlate(gate, record.combatant.team, record.position),
+      );
+      const next = stepGate(gate, held, dt);
+      this.#gates[at] = next;
+      if (next.open !== gate.open) {
+        moved = true;
+        if (!next.open) {
+          closing.push(next);
+        }
+      }
+    }
+    if (!moved) {
+      return;
+    }
+    const set = this.#currentWallSet();
+    this.#walls = set.walls;
+    this.#graph = set.graph;
+    this.#paths = set.paths;
+    for (const record of this.#participants.values()) {
+      record.route = undefined;
+      if (closing.length > 0 && !isStandable(this.#graph, record.position)) {
+        this.#placeAt(record, nearestStandable(this.#graph, record.position));
+      }
+    }
+    for (const gate of closing) {
+      this.#projectiles = this.#projectiles.map((shot) => cutShotAtGate(shot, gate));
     }
   }
 

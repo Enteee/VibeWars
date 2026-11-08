@@ -22,6 +22,7 @@ import {
   type Participant,
   type PlayerBuild,
   type ProfessionId,
+  type GateField,
   type Segment,
   type FlagField,
   type RelicField,
@@ -134,6 +135,8 @@ export interface HostMap {
   /** The mode its matches play (#476): the caller builds `matchRules` from it. */
   readonly mode: MatchMode;
   readonly walls: readonly Segment[];
+  /** Its gates (#2691), in the descriptor's order. */
+  readonly gates: readonly GateField[];
   readonly bounds: { readonly width: number; readonly height: number };
   readonly spawns: readonly SpawnPoint[];
   /** Its resurrection shrines (#1186), `[]` but on a Priest Annihilation or Guild Battle map. */
@@ -317,6 +320,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     matchRules: options.matchRules,
     teamCount: map.descriptor.teamCount,
     walls: map.walls,
+    gates: map.gates,
     bounds: map.bounds,
     shrines: map.shrines,
     guildLords: map.guildLords,
@@ -1159,6 +1163,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     altar: sim.altar ?? null,
     altarHolder: wireTeam(sim.altarState.holder),
     altarHeldSeconds: sim.altarState.heldSeconds,
+    gates: sim.gates.map((gate) => gate.open),
     capturePoints: sim.capturePoints.map((point) => ({
       x: point.position.x,
       y: point.position.y,

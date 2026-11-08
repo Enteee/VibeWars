@@ -53,6 +53,7 @@ export const ARENA: HostMap = {
     teamCount: 2,
     width: 2000,
     height: 1200,
+    gates: [],
     walls: [{ kind: "rect", x: 990, y: 900, width: 20, height: 200 }],
   },
   mode: "annihilation",
@@ -75,6 +76,7 @@ export const ARENA: HostMap = {
   relicField: undefined,
   ghostField: undefined,
   capturePoints: [],
+  gates: [],
   guards: [],
 };
 

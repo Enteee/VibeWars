@@ -73,6 +73,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     altarHolder: undefined,
     altarHeldSeconds: 0,
     capturePoints: [],
+    gates: [],
     summary: undefined,
   };
 }

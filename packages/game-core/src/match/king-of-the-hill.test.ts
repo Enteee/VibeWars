@@ -495,6 +495,7 @@ describe("King of the Hill with three teams (#2682)", () => {
       seed: "king-of-the-hill-3",
       matchRules,
       teamCount: 3,
+      gates: [],
       walls: WALLS,
       bounds: BOUNDS,
       ghostField: THREE,

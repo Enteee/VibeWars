@@ -7,6 +7,7 @@
   "width": 1400,
   "height": 900,
   "walls": [],
+  "gates": [],
   "objectives": [],
   "spawnPoints": [
     { "team": 0, "position": { "x": 200, "y": 450 } },

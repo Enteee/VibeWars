@@ -94,6 +94,7 @@ function snapshot(
     altarHolder: undefined,
     altarHeldSeconds: 0,
     capturePoints: [],
+    gates: [],
     summary: undefined,
   };
 }

@@ -14,7 +14,12 @@ import type { AttackCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
 import type { CapeLook } from "./cape-shape.js";
 import type { RenderablePing } from "./call-marks.js";
-import type { RenderableCapturePoint, RenderableFlag, RenderableStand } from "./flag-objects.js";
+import type {
+  RenderableCapturePoint,
+  RenderableGatePlate,
+  RenderableFlag,
+  RenderableStand,
+} from "./flag-objects.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
 import { screenPx } from "./screen-text.js";
@@ -308,6 +313,8 @@ export interface ArenaSnapshot {
   readonly altar: Vec2 | undefined;
   /** Capture Points' shrines (#1378); `[]` on any other map. */
   readonly capturePoints: readonly RenderableCapturePoint[];
+  /** The plates of the map's gates (#2691); `[]` on a map without them. */
+  readonly gatePlates: readonly RenderableGatePlate[];
   readonly targetId: string | undefined;
   /** Weapon shots in flight (#161). */
   readonly projectiles: readonly RenderableProjectile[];
@@ -347,6 +354,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   stand: undefined,
   altar: undefined,
   capturePoints: [],
+  gatePlates: [],
   targetId: undefined,
   projectiles: [],
   groundEffects: [],

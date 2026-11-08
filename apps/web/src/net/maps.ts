@@ -1,4 +1,4 @@
-import { allWallSegments } from "@vibewars/game-maps/geometry";
+import { allWallSegments, wallToSegments } from "@vibewars/game-maps/geometry";
 import { validateMapData, type MapData, type Objective } from "@vibewars/game-maps/schema";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
@@ -33,6 +33,7 @@ import {
   type LobbyMode,
   type QueueMode,
   type WireTeamCount,
+  type GateDescriptor,
 } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { TRAINING_MAPS } from "../training/maps.js";
@@ -248,6 +249,18 @@ export function mapShrines(mapId: string): readonly MapShrine[] {
 }
 
 /** The resurrection shrines among a map's objectives. */
+function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
+  const { wall, plate, team } = gate;
+  return {
+    wall:
+      wall.kind === "rect"
+        ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
+        : { kind: "polygon", points: wall.points },
+    plate,
+    team: team === 0 || team === 1 || team === 2 ? team : null,
+  };
+}
+
 function shrinesOf(objectives: readonly Objective[]): readonly MapShrine[] {
   return objectives.flatMap((objective) =>
     objective.kind === "resurrection-shrine"
@@ -357,9 +370,15 @@ export function hostMap(mapId: string): HostMap | undefined {
           ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
           : { kind: "polygon", points: wall.points },
       ),
+      gates: map.gates.map(gateDescriptor),
     },
     mode: map.mode,
     walls: allWallSegments(map.walls),
+    gates: map.gates.map((gate) => ({
+      segments: wallToSegments(gate.wall),
+      plate: gate.plate,
+      team: gate.team,
+    })),
     bounds: { width: map.width, height: map.height },
     spawns: map.spawnPoints,
     shrines: shrinesOf(map.objectives),

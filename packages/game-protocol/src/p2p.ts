@@ -20,6 +20,7 @@ import type {
   RechargeMessage,
   RechargeSlot,
   SkillBarSlot,
+  GateDescriptor,
   WallDescriptor,
 } from "./protocol.js";
 import {
@@ -278,6 +279,8 @@ export const MAX_WIRE_MORALE = 10;
 /** The most walls a map holds, and points a polygon wall holds. */
 export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
+/** The most gates a map holds (#2691). */
+export const MAX_WIRE_GATES = 16;
 
 /** The widest area a combat message may draw. */
 export const MAX_WIRE_RADIUS = 200;
@@ -702,6 +705,8 @@ export interface WireSnapshot {
   readonly altarHeldSeconds: number;
   /** Every Capture Points shrine (#1378); `[]` on a map without them. */
   readonly capturePoints: readonly WireCapturePoint[];
+  /** Whether each of the map's gates is open (#2691), in its descriptor's order. */
+  readonly gates: readonly boolean[];
 }
 
 /**
@@ -1934,7 +1939,8 @@ function parseMap(value: unknown): MapDescriptor | undefined {
     return undefined;
   }
   const walls = parseArray(raw.walls, MAX_WIRE_WALLS, parseWall);
-  return walls === undefined
+  const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseGate);
+  return walls === undefined || gates === undefined
     ? undefined
     : {
         id: raw.id,
@@ -1943,7 +1949,24 @@ function parseMap(value: unknown): MapDescriptor | undefined {
         height: raw.height,
         teamCount: raw.teamCount,
         walls,
+        gates,
       };
+}
+
+function parseGate(value: unknown): GateDescriptor | undefined {
+  const raw = fields(value);
+  const wall = raw === undefined ? undefined : parseWall(raw.wall);
+  const plate = raw === undefined ? undefined : parsePoint(raw.plate);
+  return raw !== undefined &&
+    wall !== undefined &&
+    plate !== undefined &&
+    (raw.team === null || raw.team === 0 || raw.team === 1 || raw.team === 2)
+    ? { wall, plate, team: raw.team }
+    : undefined;
+}
+
+function parseGateOpen(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
 }
 
 export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
@@ -2222,6 +2245,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const aggression = parseArray(raw.aggression, MAX_WIRE_TEAMS, parseScore);
   const relics = parseArray(raw.relics, MAX_WIRE_TEAMS, parseCarried(RELIC_PLACES));
   const altar = raw.altar === null ? null : parsePoint(raw.altar);
+  const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseGateOpen);
   const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
@@ -2235,7 +2259,8 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     aggression === undefined ||
     relics === undefined ||
     altar === undefined ||
-    capturePoints === undefined
+    capturePoints === undefined ||
+    gates === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -2255,6 +2280,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         altarHolder,
         altarHeldSeconds,
         capturePoints,
+        gates,
       };
 }
 

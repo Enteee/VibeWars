@@ -5446,6 +5446,59 @@
         { "name": "targetId", "optional": false, "type": "string" }
       ]
     },
+    "GateDescriptor": {
+      "properties": [
+        {
+          "name": "plate",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "x", "optional": false, "type": "number" },
+              { "name": "y", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
+        },
+        {
+          "name": "wall",
+          "optional": false,
+          "type": {
+            "union": [
+              {
+                "properties": [
+                  { "name": "height", "optional": false, "type": "number" },
+                  { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                  { "name": "width", "optional": false, "type": "number" },
+                  { "name": "x", "optional": false, "type": "number" },
+                  { "name": "y", "optional": false, "type": "number" }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                  {
+                    "name": "points",
+                    "optional": false,
+                    "type": {
+                      "array": {
+                        "properties": [
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
     "JsonValue": {
       "union": [
         "null",
@@ -5503,6 +5556,67 @@
     },
     "MapDescriptor": {
       "properties": [
+        {
+          "name": "gates",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "plate",
+                  "optional": false,
+                  "type": {
+                    "properties": [
+                      { "name": "x", "optional": false, "type": "number" },
+                      { "name": "y", "optional": false, "type": "number" }
+                    ]
+                  }
+                },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": {
+                    "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                  }
+                },
+                {
+                  "name": "wall",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      {
+                        "properties": [
+                          { "name": "height", "optional": false, "type": "number" },
+                          { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                          { "name": "width", "optional": false, "type": "number" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      },
+                      {
+                        "properties": [
+                          { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                          {
+                            "name": "points",
+                            "optional": false,
+                            "type": {
+                              "array": {
+                                "properties": [
+                                  { "name": "x", "optional": false, "type": "number" },
+                                  { "name": "y", "optional": false, "type": "number" }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
         { "name": "height", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "name", "optional": false, "type": "string" },
@@ -5798,6 +5912,75 @@
           "optional": false,
           "type": {
             "properties": [
+              {
+                "name": "gates",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      {
+                        "name": "plate",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            { "name": "x", "optional": false, "type": "number" },
+                            { "name": "y", "optional": false, "type": "number" }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "team",
+                        "optional": false,
+                        "type": {
+                          "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                        }
+                      },
+                      {
+                        "name": "wall",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            {
+                              "properties": [
+                                { "name": "height", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "rect" }
+                                },
+                                { "name": "width", "optional": false, "type": "number" },
+                                { "name": "x", "optional": false, "type": "number" },
+                                { "name": "y", "optional": false, "type": "number" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "polygon" }
+                                },
+                                {
+                                  "name": "points",
+                                  "optional": false,
+                                  "type": {
+                                    "array": {
+                                      "properties": [
+                                        { "name": "x", "optional": false, "type": "number" },
+                                        { "name": "y", "optional": false, "type": "number" }
+                                      ]
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
               { "name": "height", "optional": false, "type": "number" },
               { "name": "id", "optional": false, "type": "string" },
               { "name": "name", "optional": false, "type": "string" },
@@ -5935,6 +6118,75 @@
           "optional": false,
           "type": {
             "properties": [
+              {
+                "name": "gates",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      {
+                        "name": "plate",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            { "name": "x", "optional": false, "type": "number" },
+                            { "name": "y", "optional": false, "type": "number" }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "team",
+                        "optional": false,
+                        "type": {
+                          "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                        }
+                      },
+                      {
+                        "name": "wall",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            {
+                              "properties": [
+                                { "name": "height", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "rect" }
+                                },
+                                { "name": "width", "optional": false, "type": "number" },
+                                { "name": "x", "optional": false, "type": "number" },
+                                { "name": "y", "optional": false, "type": "number" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "polygon" }
+                                },
+                                {
+                                  "name": "points",
+                                  "optional": false,
+                                  "type": {
+                                    "array": {
+                                      "properties": [
+                                        { "name": "x", "optional": false, "type": "number" },
+                                        { "name": "y", "optional": false, "type": "number" }
+                                      ]
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
               { "name": "height", "optional": false, "type": "number" },
               { "name": "id", "optional": false, "type": "string" },
               { "name": "name", "optional": false, "type": "string" },
@@ -7803,6 +8055,7 @@
             }
           }
         },
+        { "name": "gates", "optional": false, "type": { "array": "boolean" } },
         {
           "name": "groundEffects",
           "optional": false,
@@ -8260,6 +8513,7 @@
             }
           }
         },
+        { "name": "gates", "optional": false, "type": { "array": "boolean" } },
         {
           "name": "groundEffects",
           "optional": false,

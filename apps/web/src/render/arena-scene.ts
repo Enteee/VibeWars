@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import {
   ALTAR_REACH_UNITS,
   CAPTURE_REACH_UNITS,
+  GATE_PLATE_REACH_UNITS,
   isStatusId,
   isWeaponId,
   type CreatureLook,
@@ -95,6 +96,7 @@ import {
   FLAG_PICK_RADIUS,
   STAND_RADIUS,
   type RenderableCapturePoint,
+  type RenderableGatePlate,
   type RenderableFlag,
 } from "./flag-objects.js";
 import { lyingPose } from "./lying-pose.js";
@@ -429,6 +431,9 @@ export class ArenaScene extends Phaser.Scene {
     for (const point of this.snapshot.capturePoints) {
       this.drawCapturePoint(g, point);
     }
+    for (const plate of this.snapshot.gatePlates) {
+      this.drawGatePlate(g, plate);
+    }
     this.stepCapes(deltaMs / 1000);
     for (const actor of this.snapshot.actors) {
       this.drawActor(g, marks, actor);
@@ -523,6 +528,29 @@ export class ArenaScene extends Phaser.Scene {
    * player must come to count on it, in its owner's colour, neutral grey
    * with none; round it, clockwise from the top, its capturer's progress.
    */
+  /** A gate's plate (#2691), lit while held; an open gate's wall is only its outline. */
+  private drawGatePlate(g: Phaser.GameObjects.Graphics, plate: RenderableGatePlate): void {
+    const { x, y } = plate.position;
+    const colour = plate.side === undefined ? STAND_NEUTRAL : teamColour(plate.side);
+    g.fillStyle(colour, plate.open ? 0.55 : 0.18);
+    g.fillCircle(x, y, GATE_PLATE_REACH_UNITS);
+    g.lineStyle(2, colour, 0.9);
+    g.strokeCircle(x, y, GATE_PLATE_REACH_UNITS);
+    if (plate.open) {
+      g.lineStyle(2, WALL_STROKE, 0.5);
+      if (plate.wall.kind === "rect") {
+        g.strokeRect(plate.wall.x, plate.wall.y, plate.wall.width, plate.wall.height);
+      } else {
+        g.beginPath();
+        for (const point of plate.wall.points) {
+          g.lineTo(point.x, point.y);
+        }
+        g.closePath();
+        g.strokePath();
+      }
+    }
+  }
+
   private drawCapturePoint(g: Phaser.GameObjects.Graphics, point: RenderableCapturePoint): void {
     const { x, y } = point.position;
     const colour = point.owner === undefined ? STAND_NEUTRAL : teamColour(point.owner);

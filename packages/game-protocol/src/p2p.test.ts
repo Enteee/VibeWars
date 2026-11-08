@@ -151,6 +151,7 @@ const welcome: PeerWelcome = {
     width: 1600,
     teamCount: 2,
     height: 1200,
+    gates: [],
     walls: [
       { kind: "rect", x: 10, y: 20, width: 30, height: 40 },
       {
@@ -284,6 +285,7 @@ const snapshot: WireSnapshotPart = {
   altarHolder: null,
   altarHeldSeconds: 0,
   capturePoints: [],
+  gates: [],
 };
 
 /** A Guild Battle's flags (#1225): one carried, one on the ground; and its aggression (#1226). */
@@ -778,6 +780,24 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["snapshot with relics and an altar (#1374)", parseWireSnapshotPart, relicked],
   ["snapshot with a held altar (#1377)", parseWireSnapshotPart, hill],
   ["snapshot with capture points (#1378)", parseWireSnapshotPart, shrined],
+  ["snapshot with gates (#2691)", parseWireSnapshotPart, { ...snapshot, gates: [true, false] }],
+  [
+    "welcome with a gate (#2691)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        gates: [
+          {
+            wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
+            plate: { x: 50, y: 50 },
+            team: null,
+          },
+        ],
+      },
+    },
+  ],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
   [
@@ -1393,6 +1413,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["snapshot without relics (#1374)", parseWireSnapshotPart, { ...snapshot, relics: undefined }],
   ["snapshot without an altar (#1374)", parseWireSnapshotPart, { ...snapshot, altar: undefined }],
+  [
+    "snapshot with a gate that is not a boolean (#2691)",
+    parseWireSnapshotPart,
+    { ...snapshot, gates: [1] },
+  ],
   [
     "snapshot without capture points (#1378)",
     parseWireSnapshotPart,

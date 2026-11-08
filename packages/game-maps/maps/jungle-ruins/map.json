@@ -23,6 +23,7 @@
     { "kind": "rect", "x": 640, "y": 660, "width": 60, "height": 80 },
     { "kind": "rect", "x": 2300, "y": 860, "width": 60, "height": 80 }
   ],
+  "gates": [],
   "objectives": [
     { "kind": "resurrection-shrine", "team": 0, "position": { "x": 170, "y": 800 } },
     { "kind": "resurrection-shrine", "team": 1, "position": { "x": 2830, "y": 800 } }
