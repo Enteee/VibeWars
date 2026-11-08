@@ -212,6 +212,10 @@ describe("runnerCommand", () => {
     ]);
   });
 
+  it("tells the job its CPUs, the same number as the quota (#2774)", () => {
+    expect(env(command, "VIBEWARS_RUNNER_CPUS")).toBe("2");
+  });
+
   it("remounts externals/ with node24 and a node20 link, no write into the overlay (#2006)", () => {
     const ext = "/nix/store/aaa-github-runner/lib/externals";
     const at = command.indexOf(ext);

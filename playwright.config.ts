@@ -74,7 +74,18 @@ export default defineConfig({
     trace: "retain-on-failure",
     // --no-sandbox because the sandbox this runs in cannot nest Chromium's
     // own. Acceptable here: the only page ever loaded is our own client.
-    launchOptions: { executablePath, args: ["--no-sandbox"] },
+    launchOptions: {
+      executablePath,
+      args: [
+        "--no-sandbox",
+        // Quiet background traffic a starved runner cannot spare (#2774).
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--disable-default-apps",
+        "--no-first-run",
+      ],
+    },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
