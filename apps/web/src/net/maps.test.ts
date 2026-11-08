@@ -359,12 +359,14 @@ describe("hostMap (#476)", () => {
   it("carries a Guild Battle map's flag stand and flag spawns, and none elsewhere (#1225)", () => {
     expect(hostMap("guild-hall-isle")?.flagField).toEqual({
       stand: { x: 1500, y: 1000 },
+      beacon: false,
       spawns: [
         { team: 0, position: { x: 560, y: 1000 } },
         { team: 1, position: { x: 2440, y: 1000 } },
       ],
     });
     expect(mapFlagField("guild-hall-isle")).toEqual(hostMap("guild-hall-isle")?.flagField);
+    expect(hostMap("barrow-field")?.flagField?.beacon).toBe(true);
     expect(hostMap("jungle-ruins")?.flagField).toBeUndefined();
     expect(mapFlagField("training-hall")).toBeUndefined();
   });
