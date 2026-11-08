@@ -3926,6 +3926,7 @@ body {
 
 .team-lobby-seat-holder {
   align-self: center;
+  max-width: 100%;
   font-size: 1.05rem;
 }
 
