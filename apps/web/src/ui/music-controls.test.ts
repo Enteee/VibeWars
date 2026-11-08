@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { t } from "../i18n/index.js";
 import type { Intensity } from "../music/director.js";
 import { createIntensityOverride } from "../music/intensity-override.js";
 import {
@@ -62,11 +63,15 @@ describe("the Music block (#425)", () => {
     settings.onChange(() => {
       paints += 1;
     });
-    expect(settings.state.nowPlaying).toBe("Hall of Champions (triumphant)");
+    expect(settings.state.nowPlaying).toBe(
+      t("music.trackWithMood", { track: "Hall of Champions", mood: t("mood.triumphant") }),
+    );
     play("first-light");
-    expect(settings.state.nowPlaying).toBe("First Light (atmospheric)");
+    expect(settings.state.nowPlaying).toBe(
+      t("music.trackWithMood", { track: "First Light", mood: t("mood.atmospheric") }),
+    );
     play(null);
-    expect(settings.state.nowPlaying).toBe("Nothing playing");
+    expect(settings.state.nowPlaying).toBe(t("music.nothingPlaying"));
     expect(paints).toBe(2);
   });
 
@@ -76,7 +81,7 @@ describe("the Music block (#425)", () => {
     direct(2);
     expect(settings.state).toMatchObject({ override: "auto", directed: 2 });
     expect(INTENSITY_CHOICES.map((choice) => intensityChoiceLabel(choice, 2))).toEqual([
-      "Auto (2)",
+      t("music.autoIntensity", { level: 2 }),
       "0",
       "1",
       "2",

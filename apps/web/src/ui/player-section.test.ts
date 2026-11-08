@@ -1,10 +1,10 @@
 import { sanitizeName } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import {
   FIRST_CAPE,
-  PLAYER_APPLIES,
   isInvalidGuildTag,
   loadGuildCape,
   loadGuildTag,
@@ -230,7 +230,7 @@ describe("the Player section of Options (#1513)", () => {
   }
 
   it("says when a change applies", () => {
-    expect(mount().shown.some((node) => node.textContent === PLAYER_APPLIES)).toBe(true);
+    expect(mount().shown.some((node) => node.textContent === t("player.applies"))).toBe(true);
   });
 
   it("shows what is saved, and saves the name and tag on every keystroke", () => {

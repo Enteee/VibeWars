@@ -200,13 +200,6 @@ import { type PlayerBuild } from "@vibewars/game-core";
  * machinery than the problem has (brief §30).
  */
 
-/** Shown on the lobby or the menu once a match is lost for good. */
-const LOST_MATCH_NOTICE = "Lost the connection to the match.";
-/** An invite link to this tab's own lobby (#1526, #2100). */
-const OWN_LOBBY_NOTICE = "That is your own lobby";
-/** An invite link opened over a lobby's screen or a match (#2100), which a join would leave. */
-const INVITE_IN_LOBBY_NOTICE = "Go back to the menu, then open the invite link again.";
-
 /** A new Team Build's member (#2225): what a new character is, as the team's own. */
 function blankMember(): TeamCharacter {
   const blank = newCharacter(crypto.randomUUID());
@@ -243,15 +236,6 @@ async function openStore(): Promise<{ store: KeyValueStore; persistent: boolean 
     return { store: createMemoryStore(), persistent: false };
   }
 }
-
-/** A relay link nothing could be read from (#972), on the first menu. */
-const MALFORMED_RELAY_LINK_NOTICE = "That relay link is not valid. Nothing was saved.";
-/**
- * A relay link opened inside another site's frame (#972): Use is the only
- * defence, and a framing page could overlay a decoy over it, so a framed
- * page never asks. Static hosting sends no `frame-ancestors`.
- */
-const FRAMED_RELAY_LINK_NOTICE = "Open the relay link in its own tab. Nothing was saved.";
 
 /**
  * The relay invite link this page was opened with, if any (#972), taken
@@ -357,14 +341,17 @@ async function main(): Promise<void> {
   const savedRelay = loadRelay(() => {
     notices.add(UNREADABLE_RELAY_NOTICE);
   });
+  // A relay link opened inside another site's frame (#972): Use is the only
+  // defence, and a framing page could overlay a decoy over it, so a framed
+  // page never asks. Static hosting sends no `frame-ancestors`.
   const framed = window.top !== window.self;
   if (lobbyLink.kind === "malformed") {
     notices.add(t("session.notAKey"));
   }
   if (relayLink.kind === "malformed") {
-    notices.add(MALFORMED_RELAY_LINK_NOTICE);
+    notices.add(t("app.malformedRelayLink"));
   } else if (relayLink.kind === "config" && framed) {
-    notices.add(FRAMED_RELAY_LINK_NOTICE);
+    notices.add(t("app.framedRelayLink"));
   }
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
@@ -1217,7 +1204,7 @@ async function main(): Promise<void> {
       const current = lobby?.getSnapshot().code;
       if (current !== undefined && code === current) {
         if (hosted !== undefined) {
-          toast(OWN_LOBBY_NOTICE);
+          toast(t("app.ownLobby"));
         }
         return;
       }
@@ -1367,7 +1354,7 @@ async function main(): Promise<void> {
       onPasteTeam: (text) => {
         const result = importTeam(text, () => crypto.randomUUID(), Date.now());
         if (!result.ok) {
-          toast("Could not import", { problems: result.problems });
+          toast(t("app.couldNotImport"), { problems: result.problems });
           return;
         }
         openPastedTeam(result.team, characterList.characters);
@@ -1490,12 +1477,12 @@ async function main(): Promise<void> {
     } catch (error) {
       console.warn("[web] could not save the clone", error);
       showMenu();
-      toast("Could not save the team");
+      toast(t("app.couldNotSaveTeam"));
       return;
     }
     const { characters: available } = await characters.list();
     showTeamEditor(openedTeam(team, true), available);
-    toast(`Cloned ${team.name}${missingSkillsNote(missingSkills)}`);
+    toast(t("app.cloned", { team: team.name, missing: missingSkillsNote(missingSkills) }));
   };
 
   const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
@@ -2419,7 +2406,7 @@ async function main(): Promise<void> {
     });
     joined.onChatThrottled(() => {
       if (lobby === joined) {
-        chat?.notice("Slow down: your last lines were not sent.");
+        chat?.notice(t("app.chatThrottled"));
       }
     });
     // Whose relay it goes through, and how many it shares with, redraw it (#2531).
@@ -2734,7 +2721,7 @@ async function main(): Promise<void> {
         {
           onConnectionChange: (state) => {
             if (state === "lost") {
-              void exitMatch(LOST_MATCH_NOTICE);
+              void exitMatch(t("app.lostMatch"));
             }
           },
           onLeave: () => {
@@ -2752,7 +2739,7 @@ async function main(): Promise<void> {
       console.error("[web] could not watch the match", error);
       enteringMatch = false;
       if (lobby !== undefined) {
-        lobbyNotice = matchFailureNotice(error) ?? LOST_MATCH_NOTICE;
+        lobbyNotice = matchFailureNotice(error) ?? t("app.lostMatch");
       }
       showMenu();
     }
@@ -2785,7 +2772,7 @@ async function main(): Promise<void> {
               // The host is gone: the arena is frozen for good, so there
               // is nothing to stay for.
               setStatus("disconnected", "error");
-              void exitMatch(LOST_MATCH_NOTICE);
+              void exitMatch(t("app.lostMatch"));
             }
           },
           onLeave: () => {
@@ -2842,7 +2829,7 @@ async function main(): Promise<void> {
       if (isStaleChunkError(error)) {
         void buildWatch?.chunkFailed();
       }
-      const notice = matchFailureNotice(error) ?? LOST_MATCH_NOTICE;
+      const notice = matchFailureNotice(error) ?? t("app.lostMatch");
       // Back to the lobby. If it closed while this was joining, closing it
       // already took the player to the menu, and said why. A queued
       // lobby has no screen of its own to go back to.
@@ -2937,13 +2924,13 @@ async function main(): Promise<void> {
     if (invited.kind === "malformed") {
       toast(t("session.notAKey"));
     } else if (invited.kind === "invite" && !topbarView.invite(invited.code)) {
-      toast(INVITE_IN_LOBBY_NOTICE);
+      toast(t("app.inviteInLobby"));
     }
     const pasted = takeRelayLink();
     if (pasted.kind === "malformed") {
-      toast(MALFORMED_RELAY_LINK_NOTICE);
+      toast(t("app.malformedRelayLink"));
     } else if (pasted.kind === "config" && framed) {
-      toast(FRAMED_RELAY_LINK_NOTICE);
+      toast(t("app.framedRelayLink"));
     } else if (pasted.kind === "config") {
       openRelayPrompt(app, pasted.relay, loadRelay());
     }

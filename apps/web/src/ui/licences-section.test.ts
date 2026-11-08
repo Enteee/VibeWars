@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { THIRD_PARTY_LICENCES, parseBundledLicences } from "./licences-section.js";
 
 describe("THIRD_PARTY_LICENCES (#1235)", () => {
@@ -14,7 +15,7 @@ describe("THIRD_PARTY_LICENCES (#1235)", () => {
     const names = THIRD_PARTY_LICENCES.map((entry) => entry.name);
     expect(new Set(names).size).toBe(names.length);
     for (const entry of THIRD_PARTY_LICENCES) {
-      expect(entry.use).not.toBe("");
+      expect(t(entry.use)).not.toBe("");
       expect(entry.url).toMatch(/^https:\/\//);
       expect(entry.text.trim()).not.toBe("");
     }

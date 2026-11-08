@@ -1,5 +1,6 @@
 import gwSkilldataLicence from "@vibewars/game-data/gw-skilldata/LICENSE?raw";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import { h } from "./kit.js";
 import { LICENCES_FILE, type BundledLicence } from "./licences-file.js";
 
@@ -7,7 +8,7 @@ import { LICENCES_FILE, type BundledLicence } from "./licences-file.js";
 export interface ThirdPartyLicence {
   readonly name: string;
   /** What VibeWars uses it for, in a few words. */
-  readonly use: string;
+  readonly use: MessageKey;
   /** Where its source lives. */
   readonly url: string;
   /** SPDX identifier. */
@@ -28,14 +29,14 @@ export interface ThirdPartyLicence {
 export const THIRD_PARTY_LICENCES: readonly ThirdPartyLicence[] = [
   {
     name: "gw-skilldata",
-    use: "GW1 skill data",
+    use: "licences.useSkillData",
     url: "https://github.com/build-wars/gw-skilldata",
     spdx: "MIT",
     text: gwSkilldataLicence,
   },
   {
     name: "PvX wiki",
-    use: "built-in character and team builds",
+    use: "licences.useBuilds",
     url: "https://gwpvx.fandom.com/wiki/PvX_wiki",
     spdx: "CC-BY-SA-3.0",
     // Content, not code: a CC licence is honoured by a notice linking it.
@@ -43,7 +44,7 @@ export const THIRD_PARTY_LICENCES: readonly ThirdPartyLicence[] = [
   },
   {
     name: "VCSL",
-    use: "music samples",
+    use: "licences.useMusic",
     url: "https://github.com/sgossner/VCSL",
     spdx: "CC0-1.0",
     // CC0 asks for no notice: a dedication, not a licence to reproduce.
@@ -122,7 +123,13 @@ export function mountLicences(container: HTMLElement): void {
   const panel = h("div", "licences-section");
   for (const entry of THIRD_PARTY_LICENCES) {
     panel.appendChild(
-      licenceEntry(entry.name, `${entry.name} (${entry.spdx})`, entry.use, entry.url, entry.text),
+      licenceEntry(
+        entry.name,
+        `${entry.name} (${entry.spdx})`,
+        t(entry.use),
+        entry.url,
+        entry.text,
+      ),
     );
   }
   const bundled = h("div", "licences-bundled");

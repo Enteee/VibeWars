@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import {
   parseHostToGame,
   type GameToHost,
@@ -118,9 +119,6 @@ export const HEARTBEAT_TIMEOUT_MS = 5_000;
  */
 export const HOST_MESSAGES_PER_SECOND = 100;
 
-export const HUNG_MESSAGE = "The music stopped responding and was switched off.";
-export const FLOODED_MESSAGE = "The music flooded the game with messages and was switched off.";
-
 /** Whether `later` makes `earlier` pointless to send. */
 function supersedes(later: GameToHost, earlier: GameToHost): boolean {
   const track = new Set(["load", "crossfadeTo", "play", "stop"]);
@@ -173,7 +171,7 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
 
   const teardown = (reason: TeardownReason): void => {
     close();
-    report({ message: reason === "hung" ? HUNG_MESSAGE : FLOODED_MESSAGE });
+    report({ message: reason === "hung" ? t("music.hung") : t("music.flooded") });
     for (const handler of tornDown) {
       handler(reason);
     }
@@ -386,7 +384,7 @@ export function createHostFrame(
   iframe.setAttribute("sandbox", HOST_SANDBOX);
   iframe.setAttribute("allow", "autoplay");
   iframe.className = "music-host";
-  iframe.title = "music";
+  iframe.title = t("music.hostFrame");
   iframe.tabIndex = -1;
   iframe.setAttribute("aria-hidden", "true");
   iframe.src = url;
