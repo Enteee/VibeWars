@@ -25,8 +25,6 @@ runs:
     # fail the job.
     - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
       id: nix-install-1
-      with:
-        nix_archives_url: https://github.com/nixbuild/nix-quick-install-action/releases/download/nonexistent
       continue-on-error: true
 
     - name: Wait before Nix install attempt 2
@@ -41,8 +39,6 @@ runs:
 
     - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
       id: nix-install-2
-      with:
-        nix_archives_url: https://github.com/nixbuild/nix-quick-install-action/releases/download/nonexistent
       if: steps.nix-install-1.outcome == 'failure'
       continue-on-error: true
 
