@@ -53,7 +53,19 @@ describe("Options > Language (#2648)", () => {
 
   it("lists this build's languages (#2656)", () => {
     expect(OPTIONS_SECTIONS.map((section) => section.id)).toContain("language");
-    expect(availableLanguages()).toEqual(["en", "es", "de", "fr", "pt", "it"]);
+    expect(availableLanguages()).toEqual([
+      "en",
+      "es",
+      "de",
+      "fr",
+      "pt",
+      "it",
+      "nl",
+      "pl",
+      "cs",
+      "sk",
+      "hr",
+    ]);
   });
 
   it("offers each language in its own name, and a pick is stored and reloads", () => {
