@@ -42,6 +42,19 @@ describe("renderTable", () => {
     expect(lines[4]).toMatch(/telegram group\s+error: not a forum\s/);
   });
 
+  it("says why a credential is not wanted, but shows one that is there (#2765)", () => {
+    const runners = (/** @type {import("./creds.mjs").Identity} */ identity) =>
+      renderTable([
+        { name: "github runners", identity, stored: "/c/r", operators: null, off: "runners off" },
+      ]).split("\n")[1];
+    expect(runners({ state: "not set up", who: null, expiry: null, scopes: null })).toMatch(
+      /github runners\s+runners off\s/,
+    );
+    expect(runners({ state: "ok", who: "co", expiry: null, scopes: null })).toMatch(
+      /github runners\s+co\s/,
+    );
+  });
+
   it("says can't tell when an identity is unknown", () => {
     const out = renderTable([
       {

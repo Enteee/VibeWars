@@ -121,7 +121,8 @@ a whole `ci` job in the jail:
    on.
 3. Make a fine-grained token for this repository only, with Administration:
    write and Variables: write, nothing else, and an expiry. Run
-   `claude-llc auth runners` and paste it. It is kept in `runners-gh` in the
+   `claude-llc auth` once step 4's cap is above 0 (or `claude-llc auth runners`
+   at any time) and paste it. It is kept in `runners-gh` in the
    credential home, and only the supervisor uses it. Whoever holds it can
    change branch protection. The supervisor runs under hubd's uid, so a
    compromised hubd could read it too (ADR-0045): decide whether that is
