@@ -2230,6 +2230,8 @@ async function main(): Promise<void> {
       // Only players on a team are sent this; a spectator stays here.
       if (lobby === joined) {
         void enterMatch(name, start, lobbyEntrant ?? entrant);
+      } else {
+        console.warn("[web] a match started in a lobby this page has left");
       }
     });
     const hostMove = watchHostMove(joined);
@@ -2520,6 +2522,7 @@ async function main(): Promise<void> {
     clearQueuedEnd();
     showViewport(true);
     setStatus("entering match…", "offline");
+    console.warn("[dbg] enterMatch start", document.visibilityState);
     try {
       match = await startMatchView(
         viewport,
@@ -2576,6 +2579,7 @@ async function main(): Promise<void> {
           connect: () => connectMatchFor(from, start, name, entrant.guild, entrant.build),
         },
       );
+      console.warn("[dbg] enterMatch done");
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");
       // Said once, on the match screen: the lobby's went with it.

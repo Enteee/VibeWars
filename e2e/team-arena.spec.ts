@@ -112,26 +112,18 @@ async function runTeamLobby(
   }
 }
 
-/*
- * The HUD paints on animation frames, and a page behind the others gets
- * none (#2777): its bar is read with the page in front, as the player
- * looking at it would have it.
- */
-
+/** `page` plays `build`: its skill bar's first skill is the build's. */
 /** The first skill on `page`'s bar, once the HUD shows one. */
 async function firstSkill(page: Page): Promise<string | null> {
-  await page.bringToFront();
   const skill = page.locator(".hud-skills .hud-skill").first();
   await expect(skill).toHaveAttribute("data-skill-id", /./);
   return skill.getAttribute("data-skill-id");
 }
 
-/** `page` plays `build`: its skill bar's first skill is the build's. */
 async function expectPlays(
   page: Page,
   build: (typeof STARTER_BUILDS)[number] | undefined,
 ): Promise<void> {
-  await page.bringToFront();
   await expect(page.locator(".hud-skills .hud-skill").first()).toHaveAttribute(
     "data-skill-id",
     build?.skillBar[0] ?? "",
@@ -144,6 +136,18 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
   test.setTimeout(120_000);
   const { context, pages } = await openPeers(browser, 4);
   const [ann, bea, cid, dot] = pages as [Page, Page, Page, Page];
+  // Each page's console, said when the match fails to show (#2777).
+  const consoles: string[] = [];
+  for (const [who, page] of [
+    ["Ann", ann],
+    ["Bea", bea],
+    ["Cid", cid],
+    ["Dot", dot],
+  ] as const) {
+    page.on("console", (message) => {
+      consoles.push(`${String(Date.now())} ${who} ${message.type()}: ${message.text()}`);
+    });
+  }
 
   try {
     // Save the Quad on Team Builder; Ann's party proposes it.
@@ -178,8 +182,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
         preset.members.slice(0, 2).map(({ build }) => build.skillBar[0]),
       ),
     ).toContainEqual([await firstSkill(cid), await firstSkill(dot)]);
-    // Four a side: the party's two and two bots, in a window painted on frames.
-    await ann.bringToFront();
+    // Four a side: the party's two and two bots.
     await expect(ann.locator(".party-row-bot:visible")).toHaveCount(2);
     await expect(ann.locator(".party-row-name")).toContainText(["Bea"]);
 
@@ -190,6 +193,10 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await shutLobbyWindow(bea);
     await expect(bea.locator(".lobby-panel")).toContainText("Ann");
     await expect(bea.locator(".party-queued")).toHaveCount(0);
+  } catch (error) {
+    await test.info().attach("consoles", { body: consoles.join("\n"), contentType: "text/plain" });
+    console.log(consoles.join("\n"));
+    throw error;
   } finally {
     await context.close();
   }
