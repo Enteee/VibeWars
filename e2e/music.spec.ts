@@ -2,9 +2,10 @@ import { readFileSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
-import { openRail } from "./helpers/menu.js";
+import { joinFriend, openRail } from "./helpers/menu.js";
 import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
-import { startSoloMatch } from "./helpers/peers.js";
+import { hostLobby, openPeers, startSoloMatch } from "./helpers/peers.js";
+import { namePlayer } from "./helpers/player.js";
 import { key } from "./keys.js";
 
 /**
@@ -709,4 +710,73 @@ test("a match starts with a sting in the key of the arena's track (#2523), which
       cycles: 2,
     }),
   );
+});
+
+test("a track shared with the lobby plays only on Play, in a fresh frame, and Back ends it (#2745)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+  try {
+    await recordMessages(guest);
+    await host.goto("./");
+    await namePlayer(host, "Ann");
+    const code = await hostLobby(host);
+    await guest.goto("./");
+    await namePlayer(guest, "Bob");
+    await joinFriend(guest, code);
+
+    await openJukebox(host);
+    const row = host.locator(".jukebox-row", { hasText: "Ember Deep" });
+    await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
+    const editor = host.getByRole("dialog", { name: "Beat editor: Ember Deep" });
+    await expect(editor.locator(".cm-content")).toContainText("ember-deep");
+    await editor.locator(".cm-content").click();
+    await host.keyboard.press("Control+End");
+    await host.keyboard.type("\n.gain(.8)");
+    const share = editor.getByRole("button", { name: "Share with lobby", exact: true });
+    await expect(share).toBeEnabled();
+    await share.click();
+    await expect(editor.getByRole("button", { name: "Shared.", exact: true })).toBeVisible();
+
+    // The ♪ says one share is waiting; nothing of it has run.
+    const badge = guest.locator("#topbar .topbar-music .topbar-badge");
+    await expect(badge).toHaveText("1");
+    const before = await guest.evaluate(() => {
+      const frame = document.querySelector<HTMLIFrameElement>("iframe.music-host");
+      if (frame !== null) {
+        frame.dataset.before = "yes";
+      }
+      return frame !== null;
+    });
+    expect(before).toBe(true);
+    await openJukebox(guest);
+    await expect(badge).toBeHidden();
+    const shared = guest.locator(".jukebox-shared");
+    await expect(shared.getByRole("heading", { name: "Shared with you" })).toBeVisible();
+    const shareRow = shared.locator(".jukebox-shared-row", { hasText: "Ann · Ember Deep" });
+    await expect(shareRow).toBeVisible();
+    const back = shared.getByRole("button", { name: "Back to my music", exact: true });
+    await expect(back).toBeHidden();
+
+    await shareRow.getByRole("button", { name: "Play", exact: true }).click();
+    await expect(shareRow.getByRole("button", { name: "Playing", exact: true })).toBeVisible();
+    await expect(back).toBeVisible();
+    // A frame of its own: the one before is gone.
+    await expect(guest.locator("iframe.music-host[data-before]")).toHaveCount(0);
+    await expect(guest.locator("iframe.music-host")).toHaveCount(1);
+    await expect.poll(() => playedTracks(guest), { timeout: 5_000 }).toContain("ember-deep");
+
+    await guest.evaluate(() => {
+      const frame = document.querySelector<HTMLIFrameElement>("iframe.music-host");
+      if (frame !== null) {
+        frame.dataset.shared = "yes";
+      }
+    });
+    await back.click();
+    await expect(back).toBeHidden();
+    await expect(guest.locator("iframe.music-host[data-shared]")).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
 });

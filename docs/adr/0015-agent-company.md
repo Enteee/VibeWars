@@ -7,7 +7,7 @@ which covers how agents talk; this covers how they reach GitHub.
 
 ## Context
 
-Nine agents run in bubblewrap jails on one machine and share one GitHub
+Ten agents run in bubblewrap jails on one machine and share one GitHub
 identity. GitHub cannot tell them apart, so it cannot enforce who merges,
 who approves or who restructures the board. Whatever enforces that has to
 sit between the agents and the credential.

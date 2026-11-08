@@ -1,11 +1,9 @@
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import {
   PLAY_BOTS_AFTER_MS,
-  MATCH_RUNNING_NOTICE,
-  READY_JOIN_A_TEAM,
-  READY_MATCH_STARTED,
   hostMaps,
   inviteUrl,
   lobbyControls,
@@ -18,7 +16,7 @@ import {
   type LobbyRelay,
 } from "./lobby-screen.js";
 import { MAX_RELAYED_PER_HOLDER } from "../net/transport/relay-offer.js";
-import { SHARED_RELAY_EXPLANATION } from "./relay-section.js";
+import { sharedRelayExplanation } from "./relay-section.js";
 
 function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
   return {
@@ -67,10 +65,10 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
 describe("lobbyControls", () => {
   it("says the match is running and locks everything but leave", () => {
     expect(lobbyControls(snapshot("in-match"))).toEqual({
-      running: MATCH_RUNNING_NOTICE,
+      running: t("lobby.matchRunning"),
       mapDisabled: true,
       teamsDisabled: true,
-      readyProblem: READY_MATCH_STARTED,
+      readyProblem: t("lobby.readyMatchStarted"),
       startDisabled: true,
       canWatch: false,
     });
@@ -81,7 +79,7 @@ describe("lobbyControls", () => {
       running: undefined,
       mapDisabled: true,
       teamsDisabled: true,
-      readyProblem: READY_MATCH_STARTED,
+      readyProblem: t("lobby.readyMatchStarted"),
       startDisabled: true,
       canWatch: false,
     });
@@ -127,13 +125,13 @@ describe("lobbyControls", () => {
         },
       ],
     });
-    expect(controls.readyProblem).toBe(READY_JOIN_A_TEAM);
+    expect(controls.readyProblem).toBe(t("lobby.readyJoinATeam"));
     expect(controls.startDisabled).toBe(true);
   });
 
   it("asks one not in the lobby yet to join a team first (#2124)", () => {
     const shown = { ...snapshot("waiting"), selfSessionId: "stranger" };
-    expect(lobbyControls(shown).readyProblem).toBe(READY_JOIN_A_TEAM);
+    expect(lobbyControls(shown).readyProblem).toBe(t("lobby.readyJoinATeam"));
   });
 
   it("offers Watch to a member on no team, only while the match runs (#480)", () => {
@@ -580,7 +578,7 @@ describe("lobbyPanel: the map (#1994)", () => {
     };
     const started = readyOf(snapshot("starting"));
     expect(started.disabled).toBe(true);
-    expect(started.title).toBe(READY_MATCH_STARTED);
+    expect(started.title).toBe(t("lobby.readyMatchStarted"));
     const open = readyOf(snapshot("waiting"));
     expect(open.disabled).toBe(false);
     expect(open.title).toBe("");
@@ -712,9 +710,9 @@ describe("lobbyPanel: shared relays (#2531)", () => {
 
 describe("Options: what sharing a relay means (#2531)", () => {
   it("says any lobby you are in, a 1 hour login each, the per-lobby cap and the hardening", () => {
-    expect(SHARED_RELAY_EXPLANATION).toContain("any lobby you are in, not only ones you host");
-    expect(SHARED_RELAY_EXPLANATION).toContain("their own login, good for 1 hour");
-    expect(SHARED_RELAY_EXPLANATION).toContain("at most 8 players a lobby");
-    expect(SHARED_RELAY_EXPLANATION).toContain("denied-peer-ip");
+    expect(sharedRelayExplanation()).toContain("any lobby you are in, not only ones you host");
+    expect(sharedRelayExplanation()).toContain("their own login, good for 1 hour");
+    expect(sharedRelayExplanation()).toContain("at most 8 players a lobby");
+    expect(sharedRelayExplanation()).toContain("denied-peer-ip");
   });
 });

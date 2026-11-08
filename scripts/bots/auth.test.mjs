@@ -438,6 +438,60 @@ describe("auth", () => {
     expect(fs.readFileSync(paths(w.root).telegramChat, "utf8").trim()).toBe("-1002");
   });
 
+  it("tells the operator that Enter starts the wait, and what to send", async () => {
+    const w = world({ tables: [rows({}), TG_OK] });
+    expect(await auth(["telegram"], w.deps)).toBe(0);
+    expect(w.printed.some((l) => l.includes("press Enter to start waiting"))).toBe(true);
+    expect(w.printed.join("\n")).toContain("/start@vw_bot");
+  });
+
+  it("prints an unfit group's checklist once however many ticks see it", async () => {
+    const w = world({
+      tables: [rows({})],
+      group: { forum: false, topics: true, chats: [CHAT] },
+    });
+    expect(await auth(["telegram"], w.deps)).toBe(1);
+    expect(w.printed.filter((l) => l === "  ✗ Topics enabled")).toHaveLength(1);
+    expect(w.printed.join("\n")).toContain("/start@vw_bot");
+  });
+
+  it("offers a group that turns fit on a later tick", async () => {
+    const w = world({
+      tables: [rows({}), TG_OK],
+      group: { forum: true, topics: true, chats: [CHAT] },
+    });
+    const fitGet = w.deps.get;
+    let checks = 0;
+    w.deps.get = (url) => {
+      if (url.includes("/getChat?")) {
+        checks += 1;
+        if (checks < 3) {
+          return Promise.resolve(
+            telegramAnswer(url, { forum: false, topics: true, chats: [CHAT] }),
+          );
+        }
+      }
+      return fitGet(url);
+    };
+    expect(await auth(["telegram"], w.deps)).toBe(0);
+    expect(w.printed).toContain('"VW" is now fit');
+    expect(fs.readFileSync(paths(w.root).telegramChat, "utf8").trim()).toBe(CHAT);
+  });
+
+  it("reports a getUpdates conflict once, not as an empty poll", async () => {
+    const w = world({ tables: [rows({})] });
+    const plain = w.deps.get;
+    w.deps.get = (url) =>
+      url.includes("/getUpdates")
+        ? Promise.resolve({
+            ok: false,
+            json: () => Promise.resolve({ ok: false, error_code: 409, description: "Conflict" }),
+          })
+        : plain(url);
+    expect(await auth(["telegram"], w.deps)).toBe(1);
+    expect(w.printed.filter((l) => l.includes("link sidecar"))).toHaveLength(1);
+  });
+
   it("stops at once on Ctrl-C at the token prompt", async () => {
     const w = world({ tables: [rows({})], answer: null });
     expect(await auth(["telegram"], w.deps)).toBe(130);

@@ -10,29 +10,7 @@ import tseslint from "typescript-eslint";
 import vibewarsRules from "./eslint/no-raw-ui-text.mjs";
 
 /** Files with player-facing text not yet moved onto t() (#2648): see below. */
-const NOT_YET_TRANSLATED = [
-  "apps/web/src/music/music-player.ts",
-  "apps/web/src/ui/beat-editor.ts",
-  "apps/web/src/ui/controls-section.ts",
-  "apps/web/src/ui/help-screen.ts",
-  "apps/web/src/ui/jukebox.ts",
-  "apps/web/src/ui/kit.ts",
-  "apps/web/src/ui/licences-section.ts",
-  "apps/web/src/ui/lobby-screen.ts",
-  "apps/web/src/ui/lobby-window.ts",
-  "apps/web/src/ui/music-controls.ts",
-  "apps/web/src/ui/options-screen.ts",
-  "apps/web/src/ui/party-window.ts",
-  "apps/web/src/ui/player-section.ts",
-  "apps/web/src/ui/queue-screen.ts",
-  "apps/web/src/ui/rail.ts",
-  "apps/web/src/ui/relay-prompt.ts",
-  "apps/web/src/ui/relay-section.ts",
-  "apps/web/src/ui/team-lobby-screen.ts",
-  "apps/web/src/ui/team-play.ts",
-  "apps/web/src/ui/topbar.ts",
-  "apps/web/src/ui/touch-notice.ts",
-];
+const NOT_YET_TRANSLATED = ["apps/web/src/ui/kit.ts"];
 
 /**
  * Type-aware linting is enabled repo-wide. It is slower than syntactic

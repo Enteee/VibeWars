@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_MUSIC_PREFERENCE, type MusicPreference } from "../audio/music-preference.js";
+import { t } from "../i18n/index.js";
 import { createIntensityOverride } from "../music/intensity-override.js";
 import { SoundSettings, volumePercent, type SoundControlsDeps } from "./sound-controls.js";
 
@@ -117,8 +118,8 @@ describe("the sound controls (#424)", () => {
   });
 
   it("read a volume as a whole percentage", () => {
-    expect(volumePercent(0)).toBe("0 %");
-    expect(volumePercent(0.35)).toBe("35 %");
-    expect(volumePercent(1)).toBe("100 %");
+    expect(volumePercent(0)).toBe(t("sound.percent", { percent: "0" }));
+    expect(volumePercent(0.35)).toBe(t("sound.percent", { percent: "35" }));
+    expect(volumePercent(1)).toBe(t("sound.percent", { percent: "100" }));
   });
 });

@@ -20,6 +20,7 @@ import {
   pushIdentity,
   telegramGroupIdentity,
   telegramIdentity,
+  telegramUpdates,
 } from "./creds.mjs";
 
 const SECRET = "value-that-must-never-be-printed";
@@ -489,5 +490,34 @@ describe("missingGithubScopes", () => {
 
   it("names both for a token whose scopes could not be read", () => {
     expect(missingGithubScopes(null)).toEqual(["project", "workflow"]);
+  });
+});
+
+describe("telegramUpdates errors", () => {
+  it("names the sidecar on a 409", async () => {
+    const got = await telegramUpdates(SECRET, 0, () =>
+      Promise.resolve({
+        ok: false,
+        json: () =>
+          Promise.resolve({ ok: false, error_code: 409, description: "Conflict: terminated" }),
+      }),
+    );
+    expect(got.chats).toEqual([]);
+    expect(got.error).toContain("link sidecar");
+  });
+
+  it("keeps the token out of the error of a thrown fetch", async () => {
+    const got = await telegramUpdates(SECRET, 0, (url) =>
+      Promise.reject(new Error(`failed: ${url}`)),
+    );
+    expect(got.error).not.toBeNull();
+    expect(got.error).not.toContain(SECRET);
+  });
+
+  it("has no error when telegram answers", async () => {
+    const got = await telegramUpdates(SECRET, 0, () =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ ok: true, result: [] }) }),
+    );
+    expect(got.error).toBeNull();
   });
 });

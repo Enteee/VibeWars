@@ -1,11 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import {
-  HOST_PICKS_MODE,
-  HOST_SETS_TEAM_SIZE,
-  LEAVE_QUEUE_FOR_TEAM_SIZE,
-  NO_TEAM_SIZE_HERE,
   RAIL,
   defaultTeamSize,
   loadRail,
@@ -102,7 +99,7 @@ describe("the mode rail (#1525)", () => {
   });
 
   it("has the five modes, then Character Builder, Team Builder and Matches (#2532)", () => {
-    expect(RAIL.map(({ label }) => label)).toEqual([
+    expect(RAIL.map(({ label }) => t(label))).toEqual([
       "Random Arena",
       "Team Arena",
       "Heroes' Ascent",
@@ -126,7 +123,7 @@ describe("the mode rail (#1525)", () => {
     ]);
     const entries = rail.children.filter((child) => child.tagName === "button");
     expect(entries.map((entry) => entry.attributes.get("aria-label"))).toEqual(
-      RAIL.map(({ label }) => label),
+      RAIL.map(({ label }) => t(label)),
     );
     expect(entries.map((entry) => entry.attributes.get("aria-pressed"))).toEqual(
       RAIL.map(({ entry }) => String(entry === "gvg")),
@@ -157,8 +154,6 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 4,
     });
     saveRail("hosted-game");
@@ -169,7 +164,7 @@ describe("the mode rail (#1525)", () => {
     expect(
       RAIL.map((item) => entry(item.entry)?.attributes.get("aria-disabled") ?? "false"),
     ).toEqual(["true", "true", "true", "false", "true", "false", "false", "false"]);
-    expect(entry("team-arena")?.title).toBe(HOST_PICKS_MODE);
+    expect(entry("team-arena")?.title).toBe(t("rail.hostPicksMode"));
     entry("team-arena")?.click();
     entry("gvg")?.click();
     entry("characters")?.click();
@@ -185,8 +180,6 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 4,
     });
     const rail = modeRail("gvg", () => undefined) as unknown as FakeElement;
@@ -221,8 +214,6 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 4,
     });
     redrawModeRail(root as unknown as HTMLElement, "teams", () => undefined);
@@ -235,7 +226,7 @@ describe("the mode rail (#1525)", () => {
     ]);
   });
 
-  it("lists nobody on a mode screen, only how long it is queued, while it is (#1766, #2385)", () => {
+  it("lists nobody on a mode screen, and no queue line: the top bar's icon has it (#2385, #2743)", () => {
     const member = (name: string, isHost: boolean) => ({
       name,
       isHost,
@@ -248,8 +239,6 @@ describe("the mode rail (#1525)", () => {
       isHost: true,
       open: true,
       queuedMs: 5_000,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 4,
     } as const;
     const parts = (): string[] => {
@@ -262,10 +251,7 @@ describe("the mode rail (#1525)", () => {
     setRailParty({ ...party, members, queuedMs: null });
     expect(parts()).toEqual(["rail-title"]);
     setRailParty({ ...party, members });
-    expect(parts()).toEqual(["party-status", "rail-title"]);
-    // Queued alone, the line still says so: it is the party's only timer.
-    setRailParty({ ...party, members: [member("me", true)] });
-    expect(parts()).toEqual(["party-status", "rail-title"]);
+    expect(parts()).toEqual(["rail-title"]);
   });
 
   it("opens on Random Arena first, and for anything else stored", () => {
@@ -385,7 +371,7 @@ describe("the mode rail (#1525)", () => {
 
   it("shows no size on Character Builder, both arrows off, with why (#2022)", () => {
     expect(shown("characters")).toBe("- — -");
-    expect(sizeField("characters").title).toBe(NO_TEAM_SIZE_HERE);
+    expect(sizeField("characters").title).toBe(t("rail.noTeamSizeHere"));
     expect(shown("teams")).toBe("‹ 4v4 ›");
   });
 
@@ -397,11 +383,9 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 2,
     });
-    expect(sizeField("hosted-game").title).toBe(HOST_SETS_TEAM_SIZE);
+    expect(sizeField("hosted-game").title).toBe(t("rail.hostSetsTeamSize"));
     expect(shown("hosted-game")).toBe("- 2v2 -");
   });
 
@@ -413,15 +397,13 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 2,
     } as const;
     setRailParty(party);
     expect(shown("team-arena")).toBe("- 2v2 ›");
 
     setRailParty({ ...party, queuedMs: 5_000 });
-    expect(sizeField("team-arena").title).toBe(LEAVE_QUEUE_FOR_TEAM_SIZE);
+    expect(sizeField("team-arena").title).toBe(t("rail.leaveQueueForTeamSize"));
     expect(shown("team-arena")).toBe("- 2v2 -");
     // A builder's size is its own filter, queued or not.
     expect(shown("teams")).toBe("‹ 4v4 ›");
@@ -436,8 +418,6 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 2,
     } as const;
     setRailParty(party);
