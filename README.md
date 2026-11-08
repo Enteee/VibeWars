@@ -9,7 +9,7 @@ Team arena PvP in the browser, after Guild Wars 1: a primary and a
 secondary profession from ten, eight skills on the bar, and real-time
 fights at 20 Hz, hosted by one player's browser.
 
-**[▶ Play v0.1.0](https://enteee.github.io/VibeWars/)** — build a
+**[▶ Play VibeWars](https://enteee.github.io/VibeWars/)** — build a
 character, then open your lobby (the lock in the title bar) and send its
 invite link to your friends. Nothing to install; see [Play it](#play-it).
 
