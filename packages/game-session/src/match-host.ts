@@ -188,6 +188,11 @@ export interface MatchHostOptions {
   readonly publishRecord: (record: MatchRecord) => void;
   /** Wall-clock unix seconds, for the record's `endedAt`. */
   readonly nowSeconds: () => number;
+  /**
+   * A player key's signet bits (#2805), `0..MAX_WIRE_SIGNET`: the web
+   * app's generator, which this package cannot import. Run once per seat.
+   */
+  readonly signetOf: (pubkey: string) => number;
 }
 
 /**
@@ -262,6 +267,8 @@ interface Seat {
   readonly secondaryProfession: ProfessionId | undefined;
   /** A bot plays it (#1193): no peer ever, nothing sent to one. */
   readonly bot: boolean;
+  /** Its player key's signet bits (#2805), from the lobby's plan; `null` for a bot or no lobby. */
+  readonly signet: number | null;
   /**
    * The adrenaline the peer was last sent, and the combat it counted its
    * loss from, so only a change goes (#463, #828).
@@ -717,7 +724,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   /**
    * A new seat on `team` playing `loadout`, named by `nameOf` its player
-   * id and of `guild`; a bot's if `bot`.
+   * id and of `guild`, marked with `signet`; a bot's if `bot`.
    */
   const seatNew = (
     build: PlayerBuild,
@@ -725,6 +732,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     nameOf: (playerId: string) => string,
     guild: Guild,
     bot: boolean,
+    signet: number | null,
   ): Seat => {
     seated += 1;
     const playerId = `player-${String(seated)}`;
@@ -766,6 +774,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       primaryProfession: loadout.primaryProfession,
       secondaryProfession: loadout.secondaryProfession,
       bot,
+      signet,
       peerId: undefined,
       token: "",
       droppedAt: undefined,
@@ -910,6 +919,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       (playerId) => plan?.name ?? sanitizeName(hello.name, playerId),
       plan ?? sanitizeGuild(hello),
       false,
+      plan === undefined ? null : options.signetOf(plan.playerPubkey),
     );
     welcome(seat, from);
   };
@@ -1242,7 +1252,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   // A lobby's bots (#1193) take their seats at once: none of them says hello.
   for (const plan of planned?.values() ?? []) {
     if (plan.bot) {
-      seatNew(plan.build, plan.team, () => plan.name, NO_GUILD, true);
+      seatNew(plan.build, plan.team, () => plan.name, NO_GUILD, true, null);
     }
   }
 

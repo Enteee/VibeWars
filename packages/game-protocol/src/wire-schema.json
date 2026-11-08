@@ -752,6 +752,7 @@
     "MAX_WIRE_RADIUS": { "literal": 200 },
     "MAX_WIRE_RANK": { "literal": 16 },
     "MAX_WIRE_RANKS": { "literal": 16 },
+    "MAX_WIRE_SIGNET": { "literal": 8191 },
     "MAX_WIRE_SLOTS": { "literal": 8 },
     "MAX_WIRE_STATUSES": { "literal": 32 },
     "MAX_WIRE_STATUS_INDEX": { "literal": 1023 },
@@ -7556,6 +7557,7 @@
           "optional": false,
           "type": { "union": ["null", "string"] }
         },
+        { "name": "signet", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "statuses",
           "optional": false,
@@ -8016,6 +8018,7 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
+                { "name": "signet", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "statuses",
                   "optional": false,
@@ -8475,6 +8478,7 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
+                { "name": "signet", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "statuses",
                   "optional": false,

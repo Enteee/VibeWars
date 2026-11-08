@@ -2,7 +2,7 @@ import { KILL_COUNT_MATCH_RULES, createRng, seedFromString } from "@vibewars/gam
 import { describe, expect, it } from "vitest";
 
 import { connectMatch, type PeerMatchConnection } from "./match-client.js";
-import { ARENA, TICK_SECONDS, hello, settle } from "./match-harness.test-support.js";
+import { ARENA, TICK_SECONDS, hello, settle, testSignet } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost, type PlannedSeats } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import { messageBytes, type Transport } from "./transport.js";
@@ -111,6 +111,7 @@ async function runScenario(scenario: Scenario): Promise<Result> {
     mode: "random-arena",
     publishRecord: () => undefined,
     nowSeconds: () => 0,
+    signetOf: testSignet,
   });
   const connections: PeerMatchConnection[] = [];
   for (const peerId of seats.keys()) {

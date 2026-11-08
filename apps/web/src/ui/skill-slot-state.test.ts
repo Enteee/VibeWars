@@ -74,6 +74,7 @@ function self(cast: Partial<PlayerSnapshot>): PlayerSnapshot {
     energyPips: 0,
     creature: undefined,
     bot: false,
+    signet: undefined,
     statuses: [],
     ...cast,
   };

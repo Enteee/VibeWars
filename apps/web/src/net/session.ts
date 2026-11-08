@@ -2,6 +2,7 @@ import { MATCH_MODES, createRng, type PlayerBuild } from "@vibewars/game-core";
 import {
   FORMATION_TIMEOUT_MS,
   MAX_LOBBY_PLAYERS,
+  MAX_WIRE_SIGNET,
   PROTOCOL_VERSION,
   isLobbyCode,
   isTeamQueueMode,
@@ -46,6 +47,7 @@ import {
 } from "@vibewars/game-session";
 
 import { isStaleChunkError } from "../build-check.js";
+import { signetWord } from "../identity/signet.js";
 import { TRACKS } from "../music/tracks/index.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
@@ -186,6 +188,8 @@ function startMatch(plan: MatchPlan) {
     matchId: plan.matchId,
     isSpectator: plan.isSpectator,
     mode: plan.mode,
+    // The 13 bits a signet is drawn from (#2805).
+    signetOf: (pubkey) => signetWord(pubkey) & MAX_WIRE_SIGNET,
     // Called mid-tick, before the observers hear "ended": a throw here
     // must not cost them the end of the match.
     publishRecord: (record) => {
