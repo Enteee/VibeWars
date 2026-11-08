@@ -6,15 +6,18 @@
   "teams": 2,
   "width": 560,
   "height": 420,
+  "layers": 1,
+  "decks": [],
+  "transitions": [],
   "walls": [],
   "gates": [],
   "objectives": [],
   "spawnPoints": [
-    { "team": 0, "position": { "x": 100, "y": 210 } },
-    { "team": 1, "position": { "x": 380, "y": 130 } },
-    { "team": 1, "position": { "x": 380, "y": 210 } },
-    { "team": 1, "position": { "x": 380, "y": 290 } },
-    { "team": 1, "position": { "x": 460, "y": 170 } },
-    { "team": 1, "position": { "x": 460, "y": 250 } }
+    { "team": 0, "layer": 0, "position": { "x": 100, "y": 210 } },
+    { "team": 1, "layer": 0, "position": { "x": 380, "y": 130 } },
+    { "team": 1, "layer": 0, "position": { "x": 380, "y": 210 } },
+    { "team": 1, "layer": 0, "position": { "x": 380, "y": 290 } },
+    { "team": 1, "layer": 0, "position": { "x": 460, "y": 170 } },
+    { "team": 1, "layer": 0, "position": { "x": 460, "y": 250 } }
   ]
 }

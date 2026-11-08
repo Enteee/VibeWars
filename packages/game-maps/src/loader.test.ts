@@ -16,6 +16,7 @@ import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json"
 import blackwaterFord from "../maps/blackwater-ford/map.json" with { type: "json" };
 import hallOfHeroes from "../maps/hall-of-heroes/map.json" with { type: "json" };
 import hollowDeep from "../maps/hollow-deep/map.json" with { type: "json" };
+import mosslitCairns from "../maps/mosslit-cairns/map.json" with { type: "json" };
 import jungleRuins from "../maps/jungle-ruins/map.json" with { type: "json" };
 import mossVale from "../maps/moss-vale/map.json" with { type: "json" };
 import sandstoneSteps from "../maps/sandstone-steps/map.json" with { type: "json" };
@@ -61,6 +62,7 @@ describe("the maps the browser imports", () => {
       hollowDeep,
       jungleRuins,
       mossVale,
+      mosslitCairns,
       sandstoneSteps,
       scarredEarth,
       shiverpeakPass,
@@ -122,6 +124,7 @@ describe("unseatedTeams (#2108)", () => {
     [0, 1].flatMap((team) =>
       Array.from({ length: count }, (_, index) => ({
         team,
+        layer: 0,
         position: { x: 100 + team * 700, y: 100 + index * 50 },
       })),
     );

@@ -6,9 +6,13 @@
   "teams": 2,
   "width": 2400,
   "height": 1600,
+  "layers": 1,
+  "decks": [],
+  "transitions": [],
   "walls": [
     {
       "kind": "rect",
+      "layer": 0,
       "x": 620,
       "y": 300,
       "width": 200,
@@ -16,6 +20,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1580,
       "y": 1180,
       "width": 200,
@@ -23,6 +28,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 600,
       "y": 1120,
       "width": 180,
@@ -30,6 +36,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1620,
       "y": 340,
       "width": 180,
@@ -37,6 +44,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 900,
       "y": 500,
       "width": 160,
@@ -44,6 +52,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1340,
       "y": 1000,
       "width": 160,
@@ -51,6 +60,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 880,
       "y": 1010,
       "width": 120,
@@ -58,6 +68,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1400,
       "y": 420,
       "width": 120,
@@ -65,6 +76,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1130,
       "y": 240,
       "width": 140,
@@ -72,6 +84,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1130,
       "y": 1220,
       "width": 140,
@@ -79,6 +92,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 420,
       "y": 640,
       "width": 90,
@@ -86,6 +100,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1890,
       "y": 640,
       "width": 90,
@@ -95,6 +110,7 @@
   "objectives": [
     {
       "kind": "storm-beacon",
+      "layer": 0,
       "position": {
         "x": 1200,
         "y": 800
@@ -103,6 +119,7 @@
     {
       "kind": "resurrection-shrine",
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 140,
         "y": 800
@@ -111,6 +128,7 @@
     {
       "kind": "resurrection-shrine",
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2260,
         "y": 800
@@ -119,6 +137,7 @@
     {
       "kind": "ghost-spawn",
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 140,
         "y": 620
@@ -127,6 +146,7 @@
     {
       "kind": "ghost-spawn",
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2260,
         "y": 980
@@ -135,6 +155,7 @@
     {
       "kind": "flag-spawn",
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 260,
         "y": 980
@@ -143,6 +164,7 @@
     {
       "kind": "flag-spawn",
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2140,
         "y": 620
@@ -152,6 +174,7 @@
   "spawnPoints": [
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 280,
         "y": 500
@@ -159,6 +182,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 280,
         "y": 620
@@ -166,6 +190,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 280,
         "y": 740
@@ -173,6 +198,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 280,
         "y": 860
@@ -180,6 +206,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 360,
         "y": 560
@@ -187,6 +214,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 360,
         "y": 680
@@ -194,6 +222,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 360,
         "y": 800
@@ -201,6 +230,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 360,
         "y": 920
@@ -208,6 +238,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2120,
         "y": 1100
@@ -215,6 +246,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2120,
         "y": 980
@@ -222,6 +254,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2120,
         "y": 860
@@ -229,6 +262,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2120,
         "y": 740
@@ -236,6 +270,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2040,
         "y": 1040
@@ -243,6 +278,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2040,
         "y": 920
@@ -250,6 +286,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2040,
         "y": 800
@@ -257,6 +294,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2040,
         "y": 680

@@ -28,6 +28,7 @@ describe("sizeClass (#444, #2547)", () => {
       "barrow-field": "small",
       "hollow-deep": "medium",
       "blackwater-ford": "small",
+      "mosslit-cairns": "small",
       "scarred-earth": "small",
       "sandstone-steps": "medium",
       "frozen-crossing": "medium",

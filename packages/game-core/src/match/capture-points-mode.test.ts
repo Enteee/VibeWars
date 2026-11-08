@@ -4,6 +4,8 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import {
   CAPTURE_LEAD_TO_WIN,
   CAPTURE_POINTS_MATCH_RULES,
+  CAPTURE_WAVE_SECONDS,
+  MORALE_FLOOR,
   POINT_TICK_SECONDS,
   type MatchRules,
 } from "../match-rules.js";
@@ -295,5 +297,57 @@ describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
     kill(sim, "a");
     run(sim, ALONE_SECONDS);
     expect(sim.capturePoints[2]).toMatchObject({ owner: null, progress: 0 });
+  });
+});
+
+describe("a Capture Points base's shrine (#2845)", () => {
+  function based(): MatchSimulation {
+    return new MatchSimulation({
+      seed: "capture-wave",
+      matchRules: CAPTURE_POINTS_MATCH_RULES,
+      walls: [],
+      bounds: { width: 3200, height: 2000 },
+      capturePoints: SHRINES,
+      shrines: [
+        { team: 0, position: vec2(110, 1000) },
+        { team: 1, position: vec2(3090, 1000) },
+      ],
+      participants: [
+        fighter("a", 0, vec2(280, 620)),
+        fighter("b", 0, vec2(280, 760)),
+        fighter("x", 1, vec2(2920, 1240)),
+        fighter("y", 1, vec2(2920, 1380)),
+      ],
+    });
+  }
+
+  it("raises its dead on the minute, with no priest, at its own base", () => {
+    const sim = based();
+    expect(sim.get("priest-0")).toBeUndefined();
+    kill(sim, "a");
+    run(sim, CAPTURE_WAVE_SECONDS - sim.elapsedSeconds - 1);
+    expect(get(sim, "a").combatant.dead).toBe(true);
+    run(sim, 2);
+    expect(get(sim, "a").combatant.dead).toBe(false);
+    expect(Math.abs(get(sim, "a").position.x - 110)).toBeLessThan(100);
+  });
+
+  it("leaves one at the morale floor down", () => {
+    const sim = based();
+    get(sim, "a").combatant.morale = MORALE_FLOOR;
+    kill(sim, "a");
+    run(sim, CAPTURE_WAVE_SECONDS + 1);
+    expect(get(sim, "a").combatant.dead).toBe(true);
+  });
+
+  it("does not save a team wiped just before the wave", () => {
+    const sim = based();
+    run(sim, CAPTURE_WAVE_SECONDS - 3);
+    kill(sim, "a");
+    kill(sim, "b");
+    sim.step(DT);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "annihilation" });
+    run(sim, 3);
+    expect(get(sim, "a").combatant.dead).toBe(true);
   });
 });

@@ -128,6 +128,9 @@ describe("buildPreload (#2792)", () => {
     // main only, and the shell is not entered.
     expect(t.calls[0]).toEqual(expect.arrayContaining(["clone", "--branch", "main"]));
     expect(t.calls.some((c) => c[0] === "devenv" && c[1] === "shell")).toBe(false);
+    // A github lock node's dir selects a flake subdirectory and fetchTree refuses it.
+    const evalCall = t.calls.find((c) => c[0] === "nix" && c[1] === "eval");
+    expect(evalCall?.at(-1)).toContain('builtins.fetchTree (removeAttrs n.locked ["dir"])');
     expect(readPreload(state)?.storePaths).toEqual(listed);
   });
 

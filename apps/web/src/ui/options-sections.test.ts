@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
+import { availableLanguages } from "../i18n/languages.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { FakeElement } from "./fake-dom.test-support.js";
 import { languageSection, setLanguageBusy } from "./language-section.js";
@@ -43,11 +44,38 @@ describe("Options > Language (#2648)", () => {
     return select;
   };
 
-  it("is hidden with English alone, and first with a second language", () => {
+  it("is hidden with English alone, and after Player with a second language", () => {
     expect(optionsSections(["en"]).map((section) => section.id)).not.toContain("language");
     const sections = optionsSections(["en", "de"]);
-    expect(sections[0]?.id).toBe("language");
-    expect(sections[0]?.title).toBe(t("options.language"));
+    expect(sections[1]?.id).toBe("language");
+    expect(sections[1]?.title).toBe(t("options.language"));
+  });
+
+  it("lists this build's languages (#2656)", () => {
+    expect(OPTIONS_SECTIONS.map((section) => section.id)).toContain("language");
+    expect(availableLanguages()).toEqual([
+      "en",
+      "es",
+      "de",
+      "ja",
+      "fr",
+      "pt",
+      "ru",
+      "it",
+      "nl",
+      "pl",
+      "zh",
+      "cs",
+      "vi",
+      "ko",
+      "uk",
+      "ro",
+      "el",
+      "sk",
+      "th",
+      "bg",
+      "hr",
+    ]);
   });
 
   it("offers each language in its own name, and a pick is stored and reloads", () => {

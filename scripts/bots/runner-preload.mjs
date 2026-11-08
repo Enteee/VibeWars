@@ -41,8 +41,12 @@ const LOCAL_NIX = "{ vibewars.claudeBot.enable = false; }\n";
 /**
  * Every locked input's store path, fetched the way a job's evaluation does,
  * so the sources are in the store and in the fetcher cache.
+ *
+ * `dir` is stripped: it selects a flake subdirectory, is not a fetcher
+ * attribute (fetchTree rejects it on github), and narHash covers the whole
+ * tree. Only `dir` goes, so any other refused attribute still fails loudly.
  */
-const LOCK_SOURCES = `let l = builtins.fromJSON (builtins.readFile ./devenv.lock); in builtins.concatStringsSep "\\n" (map (n: (builtins.fetchTree n.locked).outPath) (builtins.filter (n: n ? locked) (builtins.attrValues l.nodes)))`;
+const LOCK_SOURCES = `let l = builtins.fromJSON (builtins.readFile ./devenv.lock); in builtins.concatStringsSep "\\n" (map (n: (builtins.fetchTree (removeAttrs n.locked ["dir"])).outPath) (builtins.filter (n: n ? locked) (builtins.attrValues l.nodes)))`;
 
 /**
  * @callback Run

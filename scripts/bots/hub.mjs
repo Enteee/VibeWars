@@ -132,7 +132,7 @@ if (argv[0] === "whoami") {
   console.log(`  ${releases.allow ? "yes" : "no "}  push release branches (release/0.N.0)`);
   const signs = authorize(
     ROLE,
-    { kind: "release-ok", argv: ["release/0.1.0", "--sha", "0000000"] },
+    { kind: "release-ok", argv: ["release/0.1.0", "--sha", "0".repeat(40)] },
     { acting: ACTING },
   );
   console.log(`  ${signs.allow ? "yes" : "no "}  sign off a release branch (release-ok)`);

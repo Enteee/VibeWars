@@ -19,6 +19,7 @@ const SYMMETRIC = [
   "barrow-field",
   "hollow-deep",
   "blackwater-ford",
+  "mosslit-cairns",
   "ashen-courtyard",
   "moss-vale",
   "canthan-terraces",

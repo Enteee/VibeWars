@@ -38,6 +38,7 @@ import {
   moraleMaximum,
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
+  CAPTURE_WAVE_SECONDS,
   SHRINE_INVULNERABLE_SECONDS,
   soleLeader,
   teamBeaten,
@@ -1269,6 +1270,13 @@ export class MatchSimulation {
     }
     const ghosts = this.#ghostField;
     if (ghosts !== undefined) {
+      // A priest wave raises it where priests stand; nothing does where
+      // the objective does not need it (#2839).
+      const victory = this.#matchRules?.victory;
+      const riseSeconds =
+        this.#shrines.length === 0 && (victory === "king-of-the-hill" || victory === "relic-run")
+          ? PRIEST_WAVE_SECONDS
+          : Number.POSITIVE_INFINITY;
       for (const spawn of ghosts.spawns) {
         const others = ghosts.spawns.filter((other) => other.team !== spawn.team);
         this.add(
@@ -1280,6 +1288,7 @@ export class MatchSimulation {
               others.map((other) => other.position),
               ghosts.spawns.map((other) => other.position),
             ),
+            riseSeconds,
           ),
         );
       }
@@ -8199,9 +8208,17 @@ export class MatchSimulation {
     return lord !== undefined && !lord.combatant.dead && !this.#leaving.has(lord.id);
   }
 
-  /** Whether the shrines raise with no priest: a Guild Battle's (#1222). */
+  /** Whether the shrines raise with no priest: a Guild Battle's (#1222), a Capture Points base's (#2845). */
   #shrinesRaiseAlone(): boolean {
-    return this.#matchRules?.victory === "guild-battle";
+    const victory = this.#matchRules?.victory;
+    return victory === "guild-battle" || victory === "capture-points";
+  }
+
+  /** Seconds of match clock between the shrines' waves. */
+  #waveSeconds(): number {
+    return this.#matchRules?.victory === "capture-points"
+      ? CAPTURE_WAVE_SECONDS
+      : PRIEST_WAVE_SECONDS;
   }
 
   /**
@@ -8265,11 +8282,13 @@ export class MatchSimulation {
    * clock, each living priest raises its team's dead players above
    * `MORALE_FLOOR` on its shrine, at full Health and Energy, their morale
    * kept. After the step's deaths, so a priest killed this tick raises
-   * nobody. A creature is never raised, a companion neither.
-   * In a Guild Battle (#1222) every shrine raises, with no priest at all.
+   * nobody. A creature is never raised, a companion neither, but for
+   * the Ghostly Hero (#2839), back at its spawn, unlogged and uncounted.
+   * In a Guild Battle (#1222) every shrine raises, with no priest at all;
+   * in Capture Points too, every `CAPTURE_WAVE_SECONDS` (#2845).
    */
   #priestWave(): void {
-    const due = (this.#priestWaves + 1) * PRIEST_WAVE_SECONDS;
+    const due = (this.#priestWaves + 1) * this.#waveSeconds();
     if (this.#shrines.length === 0 || this.#elapsedSeconds + SWING_EPSILON < due) {
       return;
     }
@@ -8282,6 +8301,14 @@ export class MatchSimulation {
       const events: CombatEvent[] = [];
       for (const record of this.#participants.values()) {
         const { combatant } = record;
+        if (
+          record.creature?.kind === "ghostly-hero" &&
+          combatant.team === shrine.team &&
+          combatant.dead
+        ) {
+          this.#reset(record, "respawn");
+          continue;
+        }
         if (
           !countsForTeam(record) ||
           combatant.team !== shrine.team ||

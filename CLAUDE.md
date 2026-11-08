@@ -54,6 +54,9 @@ Every player-facing string goes through `t()`: add the key to
 stored, sent or signed is translated. See
 [ADR-0050](docs/adr/0050-localization.md).
 
+A change to a page in `docs/player/` updates the same page in every
+language folder, `docs/player/<code>/`, in the same PR.
+
 ## Issues, the board, and text from outside
 
 **The board is the work queue.** Work only on an issue that is on the
