@@ -463,8 +463,10 @@ body {
   height: 18px;
 }
 
-/* Who is in the lobby (#2385), on the Lobby button: hidden while it is just you. */
-.topbar-actions .topbar-lobby-button {
+/* Who is in the lobby (#2385), on the Lobby button: hidden while it is just you.
+   Tracks shared and not yet heard (#2745), on the ♪. */
+.topbar-actions .topbar-lobby-button,
+.topbar-actions .topbar-music {
   position: relative;
 }
 
@@ -6386,6 +6388,46 @@ button.skill-group-header > .skill-group-rank {
 .jukebox-row.is-edited .selectable-row-name::after {
   content: " · edited";
   color: var(--ink-dim);
+}
+
+/* Tracks lobby members shared (#2745): a row a sender, its Play. */
+.jukebox-shared[hidden],
+.jukebox-shared-back[hidden] {
+  display: none;
+}
+
+.jukebox-shared {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.jukebox-shared-title {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+
+.jukebox-shared-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.jukebox-shared-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jukebox-shared-row.is-selected .jukebox-shared-name::before {
+  content: "▶ ";
+  color: var(--accent);
+}
+
+.screen button.jukebox-shared-back {
+  align-self: flex-start;
 }
 
 /* --- beat editor (#373) ------------------------------------------------- */

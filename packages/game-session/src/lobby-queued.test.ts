@@ -24,6 +24,7 @@ import { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client
 import type { LobbyClosedReason, LobbyConnection } from "./lobby-connection.js";
 import {
   MAP_IDS,
+  TRACK_IDS,
   MAP_TEAM_SIZES,
   MODE_MAPS,
   openLobby,
@@ -228,6 +229,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     code: GROUP_ID,
     proofKey: null,
     mapIds: MAP_IDS,
+    trackIds: TRACK_IDS,
     modeMaps: MODE_MAPS,
     mapTeamSizes: MAP_TEAM_SIZES,
     hostedTeamSize: 4,
@@ -354,6 +356,18 @@ describe("a queued lobby", () => {
     await settle();
     expect(teamsOf(foe)).toEqual({ "ticket-1": 0, "ticket-3": 1, "ticket-2": 0 });
     expect(foe.getSnapshot().mapId).toBe("other-arena");
+  });
+
+  it("relays no shared track: its members did not choose each other (#2745)", async () => {
+    const queued = await openQueued();
+    const foe = await queued.join(FOE);
+    const ally = await queued.join(ALLY);
+    await settle();
+    const heard: unknown[] = [];
+    ally.onSharedTrack((share) => heard.push(share));
+    foe.shareTrack("test-track", "s()");
+    await settle();
+    expect(heard).toEqual([]);
   });
 
   it("refuses a proof for another host, peer id or group, or signed by another ticket", async () => {

@@ -1,3 +1,5 @@
+import { MAX_SHARED_SOURCE_BYTES, sharedSourceBytes } from "@vibewars/game-protocol";
+
 import { t } from "../i18n/index.js";
 import { beatEdits, shippedHash, tooLarge, type BeatEditStore } from "../music/beat-edits.js";
 import { beatEvaluations } from "../music/beat-evaluations.js";
@@ -10,6 +12,7 @@ import {
 import { musicPlayer, type MusicError, type MusicPlayer } from "../music/music-player.js";
 import { music, type MusicFollower } from "../music/play-music.js";
 import { pastedSource, shareLink } from "../music/share-link.js";
+import { sharedTracks, type SharedTracks } from "../music/shared-tracks.js";
 import { TRACKS, type Track } from "../music/tracks/index.js";
 import type { CodeEditor } from "./code-editor.js";
 import { button, h, overlayClose, shareLine } from "./kit.js";
@@ -24,8 +27,10 @@ import { button, h, overlayClose, shareLine } from "./kit.js";
  *
  * While it is open the editor holds its track over the director and any
  * preview, and its intensity slider holds the level; closing gives both
- * back. Keys typed in it go no further, so none reaches the game. The text
- * area is CodeMirror, its own chunk, loaded when the editor first opens.
+ * back. *Share with lobby* (#2745) sends the text as it is, saved or not,
+ * to the other members of a coded lobby. Keys typed in it go no further,
+ * so none reaches the game. The text area is CodeMirror, its own chunk,
+ * loaded when the editor first opens.
  */
 
 export interface BeatEditorDeps {
@@ -34,6 +39,8 @@ export interface BeatEditorDeps {
   readonly edits: BeatEditStore;
   readonly override: IntensityOverrideStore;
   readonly tracks: readonly Track[];
+  /** Where *Share with lobby* sends (#2745). */
+  readonly shared: SharedTracks;
 }
 
 const defaultDeps = (): BeatEditorDeps => ({
@@ -42,6 +49,7 @@ const defaultDeps = (): BeatEditorDeps => ({
   edits: beatEdits,
   override: intensityOverride,
   tracks: TRACKS,
+  shared: sharedTracks,
 });
 
 interface OpenEditor {
@@ -66,6 +74,9 @@ function listen(player: MusicPlayer): void {
     open?.failed(error);
   });
 }
+
+/** How long *Share with lobby* says *Shared.* (#2745). */
+const SHARED_SHOWN_MS = 2_000;
 
 function level(value: number): MusicLevel {
   return value <= 0 ? 0 : value >= 3 ? 3 : value === 1 ? 1 : 2;
@@ -153,7 +164,20 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   // The link opens under its button, as the build editor's share line does.
   const share = h("span", "beat-editor-share");
   share.append(copyButton, link.element);
-  tools.append(evaluateButton, stopButton, resetButton, intensityField, share, pasteButton);
+  const lobbyButton = button(t("music.shareWithLobby"), "beat-editor-share-lobby", () => {
+    shareWithLobby();
+  });
+  /** While it says *Shared.*, the timer that ends it. */
+  let sharedTimer: number | undefined;
+  tools.append(
+    evaluateButton,
+    stopButton,
+    resetButton,
+    intensityField,
+    share,
+    pasteButton,
+    lobbyButton,
+  );
 
   const status = h("p", "beat-editor-status", t("beatEditor.loading"));
   status.setAttribute("role", "status");
@@ -176,6 +200,39 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   };
   const unsubscribe = edits.subscribe(paint);
   paint();
+
+  /** *Share with lobby*: on in a lobby to share with, the text under the cap. */
+  const paintShare = (): void => {
+    if (sharedTimer !== undefined) {
+      return;
+    }
+    lobbyButton.textContent = t("music.shareWithLobby");
+    const tooLong =
+      editor !== undefined && sharedSourceBytes(editor.text()) > MAX_SHARED_SOURCE_BYTES;
+    lobbyButton.disabled = !deps.shared.canShare || editor === undefined || tooLong;
+    lobbyButton.title = !deps.shared.canShare
+      ? t("music.shareNoLobby")
+      : tooLong
+        ? t("music.shareTooLong")
+        : "";
+  };
+  const unsubscribeShared = deps.shared.onChange(paintShare);
+  code.addEventListener("input", paintShare);
+  code.addEventListener("keyup", paintShare);
+  paintShare();
+
+  function shareWithLobby(): void {
+    if (editor === undefined || !deps.shared.share(track.id, editor.text())) {
+      paintShare();
+      return;
+    }
+    lobbyButton.textContent = t("music.shared");
+    lobbyButton.disabled = true;
+    sharedTimer = window.setTimeout(() => {
+      sharedTimer = undefined;
+      paintShare();
+    }, SHARED_SHOWN_MS);
+  }
 
   function evaluate(): void {
     if (editor === undefined) {
@@ -266,6 +323,8 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
     deps.music.edit(null);
     override.set(restoreOverride);
     unsubscribe();
+    unsubscribeShared();
+    window.clearTimeout(sharedTimer);
     editor?.destroy();
     panel.remove();
     opener?.focus();
@@ -311,6 +370,7 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
       close,
     });
     code.appendChild(editor.element);
+    paintShare();
     status.textContent = "";
     editor.focus();
   });

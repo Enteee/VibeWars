@@ -55,6 +55,12 @@ export interface MusicPlayer {
    * host that is up: never queued, so a sting the engine missed is gone.
    */
   sting(sting: { id: StingId; source: string; key: string; cycles: number }): void;
+  /**
+   * A fresh host (#2745): this one is destroyed, not asked to stop, and
+   * whatever it ran with it; the next track loads in a new one. Not a
+   * teardown: nothing is reported.
+   */
+  renew(): void;
   /** Start again what `stop` stopped. */
   play(): void;
   stop(): void;
@@ -152,7 +158,7 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     }
   };
 
-  const teardown = (reason: TeardownReason): void => {
+  const close = (): void => {
     stopHeartbeat?.();
     stopHeartbeat = undefined;
     frame?.destroy();
@@ -161,6 +167,10 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     queue = [];
     outstanding = undefined;
     received = 0;
+  };
+
+  const teardown = (reason: TeardownReason): void => {
+    close();
     report({ message: reason === "hung" ? t("music.hung") : t("music.flooded") });
     for (const handler of tornDown) {
       handler(reason);
@@ -334,6 +344,9 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
       if (frame !== undefined && ready) {
         frame.post({ type: "sting", ...sting });
       }
+    },
+    renew() {
+      close();
     },
     play() {
       send({ type: "play" });

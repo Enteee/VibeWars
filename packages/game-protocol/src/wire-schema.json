@@ -50,7 +50,8 @@
     "strokes",
     "traps",
     "chat",
-    "chat-line"
+    "chat-line",
+    "shared-track"
   ],
   "statusIds": [
     "aegis",
@@ -870,6 +871,7 @@
         { "literal": "relay-cred" },
         { "literal": "relay-holding" },
         { "literal": "relay-offers" },
+        { "literal": "shared-track" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
         { "literal": "stay-together" },
@@ -6803,6 +6805,13 @@
             }
           ]
         },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "share-track" } },
+            { "name": "source", "optional": false, "type": "string" },
+            { "name": "trackId", "optional": false, "type": "string" }
+          ]
+        },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "start" } }] },
         {
           "properties": [
@@ -6823,6 +6832,7 @@
               { "literal": "chat-throttled" },
               { "literal": "notice" },
               { "literal": "refused" },
+              { "literal": "share-throttled" },
               { "literal": "start-rejected" }
             ]
           }
@@ -7644,6 +7654,13 @@
         },
         { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+      ]
+    },
+    "WireSharedTrack": {
+      "properties": [
+        { "name": "from", "optional": false, "type": "string" },
+        { "name": "source", "optional": false, "type": "string" },
+        { "name": "trackId", "optional": false, "type": "string" }
       ]
     },
     "WireSkillBar": {
