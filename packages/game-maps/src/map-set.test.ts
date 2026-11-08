@@ -464,7 +464,9 @@ describe("Scarred Earth (#2551)", () => {
   if (earth === undefined) throw new Error("no scarred-earth");
   const walls = allWallSegments(earth.walls);
   const bounds = { width: earth.width, height: earth.height };
-  const points = earth.objectives.map((objective) => objective.position);
+  const points = earth.objectives
+    .filter((objective) => objective.kind === "capture-point")
+    .map((objective) => objective.position);
   const middle = earth.width / 2;
 
   it("has five shrines: one about 500 in from each base's edge, three on the middle column 600 apart", () => {
