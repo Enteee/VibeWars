@@ -709,6 +709,7 @@ describe("Insidious Parasite (#935)", () => {
         timeLimitSeconds: 600,
         deathRule: "respawn",
         respawnSeconds: 100,
+        respawnOnWave: false,
         deathPenalty: false,
       },
     });

@@ -186,6 +186,7 @@ describe("Soul Feast (#466)", () => {
       timeLimitSeconds: 600,
       deathRule: "respawn",
       respawnSeconds: 3,
+      respawnOnWave: false,
       deathPenalty: false,
     });
     kill(sim, "a");

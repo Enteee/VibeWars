@@ -146,6 +146,8 @@ const objectiveSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("capture-point"),
     layer: layerSchema,
+    /** The team whose base it stands in, if a match without that team goes without it (#2700). */
+    base: z.literal(2).optional(),
     position: vec2Schema,
   }),
 ]);
@@ -310,6 +312,8 @@ export const mapDataSchema = z
      * team, whatever its mode; without it, none. King of the Hill needs one.
      */
     ghostLevel: z.union([z.literal(20), z.literal(24), z.literal(28)]).optional(),
+    /** One of the Hall of Heroes' (#2700): it plays `HALLS_MATCH_RULES`. */
+    halls: z.literal(true).optional(),
   })
   .superRefine((map, context) => {
     if (map.teams !== 2 && TWO_TEAM_MODES.includes(map.mode)) {

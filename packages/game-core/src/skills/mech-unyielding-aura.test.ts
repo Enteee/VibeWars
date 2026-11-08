@@ -25,6 +25,7 @@ const DP: MatchRules = {
   timeLimitSeconds: 600,
   deathRule: "resurrection-only",
   respawnSeconds: 1,
+  respawnOnWave: false,
   deathPenalty: true,
 };
 

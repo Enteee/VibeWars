@@ -672,7 +672,7 @@ export function createTrainingPanel(): TrainingPanel {
       connection,
       names: setup.names,
       walls: setup.map.walls.map(toRenderableWall),
-      shrines: mapShrines(setup.map.id),
+      shrines: mapShrines(setup.map.id, setup.map.teamCount),
       wallSegments: allWallSegments(setup.map.walls),
       // The same sounds as a match (#112), muted by the same M.
       sounds: attachMatchSounds(connection, soundPlayer()),

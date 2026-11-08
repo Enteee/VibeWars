@@ -6,6 +6,8 @@ import {
   ARENA_MAPS,
   arenaIds,
   ascentMapId,
+  HALL_OF_HEROES_MAPS,
+  mapMatchRules,
   ASCENT_PROGRESSION,
   LOBBY_MODE_MATCH_MODES,
   hostMap,
@@ -80,7 +82,9 @@ describe("randomArenaMapPool", () => {
               "guild-hall-isle",
               "broken-tower",
               "the-courtyard",
-              "hall-of-heroes",
+              "hall-of-heroes-king",
+              "hall-of-heroes-relic",
+              "hall-of-heroes-capture",
               "hollow-deep",
               "blackwater-ford",
               "mosslit-cairns",
@@ -235,7 +239,9 @@ describe("team sizes (#2108)", () => {
       "guild-hall-isle",
       "broken-tower",
       "the-courtyard",
-      "hall-of-heroes",
+      "hall-of-heroes-king",
+      "hall-of-heroes-relic",
+      "hall-of-heroes-capture",
       "hollow-deep",
       "blackwater-ford",
       "mosslit-cairns",
@@ -246,13 +252,19 @@ describe("team sizes (#2108)", () => {
 
 describe("the Hall of Heroes (#1995)", () => {
   it("is a Hosted Game's pick, and a queued Ascent's last round alone (#1996)", () => {
-    expect(modeMapIds()["hosted-game"]).toContain("hall-of-heroes");
-    expect(modeMapIds()["heroes-ascent"]).not.toContain("hall-of-heroes");
-    expect(queueMapPool("heroes-ascent", ASCENT_ROUNDS - 1)).toEqual(["hall-of-heroes"]);
-    expect(modeMapIds()["team-arena"]).not.toContain("hall-of-heroes");
+    expect(modeMapIds()["hosted-game"]).toContain("hall-of-heroes-king");
+    for (const id of HALL_OF_HEROES_MAPS) {
+      expect(modeMapIds()["heroes-ascent"]).not.toContain(id);
+    }
+    expect(queueMapPool("heroes-ascent", ASCENT_ROUNDS - 1)).toEqual([
+      "hall-of-heroes-king",
+      "hall-of-heroes-relic",
+      "hall-of-heroes-capture",
+    ]);
+    expect(modeMapIds()["team-arena"]).not.toContain("hall-of-heroes-king");
     expect(modeMapIds()["team-arena"]).not.toContain("hollow-deep");
     expect(modeMapIds()["hosted-game"]).toContain("blackwater-ford");
-    expect(modeMapIds()["random-arena"]).toContain("hall-of-heroes");
+    expect(modeMapIds()["random-arena"]).toContain("hall-of-heroes-king");
   });
 });
 
@@ -287,7 +299,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       ["broken-tower", "relic-run"],
       ["scarred-earth", "capture-points"],
       ["the-courtyard", "king-of-the-hill"],
-      ["hall-of-heroes", "king-of-the-hill"],
+      ["hall-of-heroes-king", "king-of-the-hill"],
     ]);
     expect(ASCENT_PROGRESSION.map((_, round) => mapName(ascentMapId(round)))).toEqual([
       "Broken Tower",
@@ -333,7 +345,8 @@ describe("hostMap (#476)", () => {
           "guild-hall-isle",
           "broken-tower",
           "the-courtyard",
-          "hall-of-heroes",
+          "hall-of-heroes-king",
+          "hall-of-heroes-capture",
           "scarred-earth",
         ].includes(candidate.id),
     )) {
@@ -375,14 +388,14 @@ describe("hostMap (#476)", () => {
         { team: 1, position: { x: 3080, y: 900 } },
       ],
     });
-    expect(mapRelicField("broken-tower")).toEqual(hostMap("broken-tower")?.relicField);
+    expect(mapRelicField("broken-tower", 2)).toEqual(hostMap("broken-tower")?.relicField);
     expect(hostMap("guild-hall-isle")?.relicField).toBeUndefined();
     expect(hostMap("the-courtyard")?.relicField).toBeUndefined();
-    expect(mapRelicField("training-hall")).toBeUndefined();
+    expect(mapRelicField("training-hall", 2)).toBeUndefined();
   });
 
   it("carries a ghost map's level and ghost spawns, King of the Hill's altar, and none elsewhere (#1377, #2689)", () => {
-    expect(hostMap("hall-of-heroes")?.ghostField?.level).toBe(28);
+    expect(hostMap("hall-of-heroes-king")?.ghostField?.level).toBe(28);
     expect(hostMap("the-courtyard")?.ghostField).toEqual({
       level: 24,
       altar: { x: 1500, y: 900 },
@@ -415,16 +428,38 @@ describe("mapMode (#1200)", () => {
   });
 });
 
+describe("a Hall match of two teams (#2700)", () => {
+  it("goes without the third base: its spawns, ghost, relic, shrine and point", () => {
+    expect(hostMap("hall-of-heroes-king", 2)?.ghostField?.spawns.map((s) => s.team)).toEqual([0, 1]);
+    expect(hostMap("hall-of-heroes-relic", 2)?.relicField?.spawns).toHaveLength(2);
+    expect(hostMap("hall-of-heroes-capture", 2)?.capturePoints).toHaveLength(3);
+    expect(hostMap("hall-of-heroes-capture", 2)?.shrines).toHaveLength(2);
+    expect(hostMap("hall-of-heroes-capture", 2)?.spawns.every((s) => s.team < 2)).toBe(true);
+    expect(mapRelicField("hall-of-heroes-relic", 2)?.spawns).toHaveLength(2);
+    expect(mapShrines("hall-of-heroes-capture", 2)).toHaveLength(2);
+  });
+
+  it("keeps it with three", () => {
+    expect(hostMap("hall-of-heroes-capture", 3)?.capturePoints).toHaveLength(4);
+    expect(hostMap("hall-of-heroes-capture")?.descriptor.teamCount).toBe(3);
+  });
+
+  it("plays the Halls' rules on the Halls' maps only", () => {
+    expect(mapMatchRules("hall-of-heroes-relic", "relic-run").respawnOnWave).toBe(true);
+    expect(mapMatchRules("broken-tower", "relic-run").respawnOnWave).toBe(false);
+  });
+});
+
 describe("mapShrines (#1199)", () => {
   it("reads each team's shrine from a priest map's file", () => {
-    expect(mapShrines("jungle-ruins")).toEqual([
+    expect(mapShrines("jungle-ruins", 2)).toEqual([
       { team: 0, position: { x: 170, y: 800 } },
       { team: 1, position: { x: 2830, y: 800 } },
     ]);
   });
 
   it("gives none on a map without them or one this build does not have", () => {
-    expect(mapShrines("arena-crossroads")).toEqual([]);
-    expect(mapShrines("arena-nowhere")).toEqual([]);
+    expect(mapShrines("arena-crossroads", 2)).toEqual([]);
+    expect(mapShrines("arena-nowhere", 2)).toEqual([]);
   });
 });

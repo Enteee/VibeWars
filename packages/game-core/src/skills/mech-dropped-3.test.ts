@@ -30,6 +30,7 @@ const MATCH: MatchRules = {
   timeLimitSeconds: 600,
   deathRule: "respawn",
   respawnSeconds: 60,
+  respawnOnWave: false,
   deathPenalty: false,
 };
 const HEALING = "monk.healing-prayers";

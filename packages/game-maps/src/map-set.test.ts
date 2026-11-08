@@ -18,7 +18,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
-import { loadAllMaps } from "./loader.js";
+import { loadAllMaps, loadMap } from "./loader.js";
 import type { MapData } from "./schema.js";
 
 /**
@@ -187,7 +187,9 @@ describe("the arena set (#444)", () => {
         "guild-hall-isle",
         "broken-tower",
         "the-courtyard",
-        "hall-of-heroes",
+        "hall-of-heroes-king",
+        "hall-of-heroes-relic",
+        "hall-of-heroes-capture",
         "hollow-deep",
         "blackwater-ford",
         "mosslit-cairns",
@@ -218,12 +220,14 @@ describe("the arena set (#444)", () => {
     ]);
     expect(MAPS.filter((map) => map.mode === "relic-run").map((map) => map.id)).toEqual([
       "broken-tower",
+      "hall-of-heroes-relic",
     ]);
     expect(MAPS.filter((map) => map.mode === "king-of-the-hill").map((map) => map.id)).toEqual([
-      "hall-of-heroes",
+      "hall-of-heroes-king",
       "the-courtyard",
     ]);
     expect(MAPS.filter((map) => map.mode === "capture-points").map((map) => map.id)).toEqual([
+      "hall-of-heroes-capture",
       "mosslit-cairns",
       "scarred-earth",
     ]);
@@ -627,9 +631,33 @@ describe("The Courtyard (#2552)", () => {
   });
 });
 
+describe("the Hall's three maps (#2700)", () => {
+  const halls = ["king", "relic", "capture"].map((mode) => loadMap(`hall-of-heroes-${mode}`));
+
+  it("are one place: the same name, size, walls and spawns, for three teams", () => {
+    for (const map of halls) {
+      expect(map).toMatchObject({
+        name: "Hall of Heroes",
+        teams: 3,
+        halls: true,
+        width: halls[0]?.width,
+        height: halls[0]?.height,
+        walls: halls[0]?.walls,
+        spawnPoints: halls[0]?.spawnPoints,
+      });
+    }
+  });
+
+  it("has 4 capture points of which one is the third base's", () => {
+    const points = halls[2]?.objectives.filter((each) => each.kind === "capture-point") ?? [];
+    expect(points).toHaveLength(4);
+    expect(points.filter((each) => each.base === 2)).toHaveLength(1);
+  });
+});
+
 describe("Hall of Heroes (#2552)", () => {
-  holdsTheHill("hall-of-heroes", [8]);
-  const { altar, ghosts, walls, finder } = hill("hall-of-heroes");
+  holdsTheHill("hall-of-heroes-king", [8]);
+  const { altar, ghosts, walls, finder } = hill("hall-of-heroes-king");
 
   it("raises the altar on a dais walled west and east, open to the north and south", () => {
     expect(sightLines(altar, CARDINALS, walls)).toEqual([false, false, true, true]);

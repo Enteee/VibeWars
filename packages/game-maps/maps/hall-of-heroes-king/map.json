@@ -1,9 +1,12 @@
 {
-  "id": "hall-of-heroes",
+  "id": "hall-of-heroes-king",
   "name": "Hall of Heroes",
   "mode": "king-of-the-hill",
-  "teamSizes": [8],
-  "teams": 2,
+  "teamSizes": [
+    8
+  ],
+  "teams": 3,
+  "halls": true,
   "width": 3200,
   "height": 2200,
   "layers": 1,
@@ -253,6 +256,15 @@
       }
     },
     {
+      "kind": "ghost-spawn",
+      "layer": 0,
+      "team": 2,
+      "position": {
+        "x": 1600,
+        "y": 120
+      }
+    },
+    {
       "kind": "altar",
       "layer": 0,
       "position": {
@@ -388,6 +400,70 @@
       "position": {
         "x": 2840,
         "y": 920
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1360,
+        "y": 240
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1480,
+        "y": 240
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1720,
+        "y": 240
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1840,
+        "y": 240
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1420,
+        "y": 360
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1540,
+        "y": 360
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1660,
+        "y": 360
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1780,
+        "y": 360
       }
     }
   ]

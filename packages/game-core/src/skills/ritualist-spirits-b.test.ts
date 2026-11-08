@@ -36,6 +36,7 @@ const NO_RESPAWN: MatchRules = {
   timeLimitSeconds: 600,
   deathRule: "resurrection-only",
   respawnSeconds: 1,
+  respawnOnWave: false,
   deathPenalty: false,
 };
 const FIELD: FlagField = {

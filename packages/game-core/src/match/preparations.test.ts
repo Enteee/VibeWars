@@ -272,6 +272,7 @@ describe("Apply Poison in the match (#525)", () => {
         timeLimitSeconds: 600,
         deathRule: "respawn",
         respawnSeconds: 1,
+        respawnOnWave: false,
         deathPenalty: false,
       },
     });

@@ -12,7 +12,13 @@ import type { NostrQueue } from "./net/transport/nostr-queue.js";
 import { watchRecords } from "./net/transport/index.js";
 import { loadPlayerKey } from "./net/transport/player-key.js";
 
-import { ARENA_MAPS, ASCENT_PROGRESSION, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
+import {
+  ARENA_MAPS,
+  ASCENT_PROGRESSION,
+  HALL_OF_HEROES_MAPS,
+  LOBBY_MODE_MATCH_MODES,
+  modeMapIds,
+} from "./net/maps.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -1269,7 +1275,8 @@ async function main(): Promise<void> {
     hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter(
       (map) =>
         modeMapIds()[entry].includes(map.id) ||
-        (entry === "heroes-ascent" && ASCENT_PROGRESSION.includes(map.id)),
+        (entry === "heroes-ascent" &&
+          (ASCENT_PROGRESSION.includes(map.id) || HALL_OF_HEROES_MAPS.includes(map.id))),
     );
 
   /** The lobby's part of `entry`'s screen (#1526), once there is a lobby. */
