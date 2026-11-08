@@ -119,6 +119,7 @@ const OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly TeamKind[]
   "guild-battle": ["resurrection-shrine", "guild-lord", "guard", "flag-spawn"],
   "relic-run": ["relic-spawn"],
   "king-of-the-hill": ["ghost-spawn"],
+  "capture-points": ["resurrection-shrine"],
 };
 
 /** Which shared objectives each mode has; none for a mode not here. */

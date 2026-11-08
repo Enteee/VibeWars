@@ -43,11 +43,11 @@ export const LANGUAGES = [
 
 export type LanguageCode = (typeof LANGUAGES)[number]["code"];
 
-/** A language's tables, loaded together: its interface text, game-data names and description sentences. */
+/** A language's tables, loaded together: its interface text, game-data names and, once translated, description sentences (English until then). */
 export interface LocaleTables {
   readonly ui: Catalog;
   readonly game: GameNames;
-  readonly describe: DescribeWords;
+  readonly describe?: DescribeWords;
 }
 
 /**
@@ -58,7 +58,48 @@ export interface LocaleTables {
  * A `describe.ts` is `satisfies DescribeWords`. English
  * is bundled, not here. A translation card adds its languages.
  */
-export const LOCALES: Readonly<Partial<Record<LanguageCode, () => Promise<LocaleTables>>>> = {};
+export const LOCALES: Readonly<Partial<Record<LanguageCode, () => Promise<LocaleTables>>>> = {
+  es: async () => ({
+    ui: (await import("./locales/es/ui.js")).default,
+    game: (await import("./locales/es/game.js")).default,
+  }),
+  de: async () => ({
+    ui: (await import("./locales/de/ui.js")).default,
+    game: (await import("./locales/de/game.js")).default,
+  }),
+  fr: async () => ({
+    ui: (await import("./locales/fr/ui.js")).default,
+    game: (await import("./locales/fr/game.js")).default,
+  }),
+  pt: async () => ({
+    ui: (await import("./locales/pt/ui.js")).default,
+    game: (await import("./locales/pt/game.js")).default,
+  }),
+  it: async () => ({
+    ui: (await import("./locales/it/ui.js")).default,
+    game: (await import("./locales/it/game.js")).default,
+  }),
+  nl: async () => ({
+    ui: (await import("./locales/nl/ui.js")).default,
+    game: (await import("./locales/nl/game.js")).default,
+  }),
+  pl: async () => ({
+    ui: (await import("./locales/pl/ui.js")).default,
+    game: (await import("./locales/pl/game.js")).default,
+  }),
+  cs: async () => ({
+    ui: (await import("./locales/cs/ui.js")).default,
+    game: (await import("./locales/cs/game.js")).default,
+  }),
+  sk: async () => ({
+    ui: (await import("./locales/sk/ui.js")).default,
+    game: (await import("./locales/sk/game.js")).default,
+  }),
+  hr: async () => ({
+    ui: (await import("./locales/hr/ui.js")).default,
+    game: (await import("./locales/hr/game.js")).default,
+  }),
+};
 
 /** The languages the build has, English first, in `LANGUAGES` order. */
 export function availableLanguages(

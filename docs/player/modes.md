@@ -179,7 +179,7 @@ the altar is your team's.
 The team that holds the altar scores a point for every 30 seconds it
 keeps it, even while its own ghost is dead, until another team claims
 it. Every point is announced, as a relic scored is. A dead ghost rises
-in its base 2 minutes later, staying put, here, in a Relic Run and in Capture Points. On a
+in its base 2 minutes later, staying put, here and in a Relic Run. In Capture Points it rises with the base's next wave. On a
 map with priests it rises instead with the priest's next wave, but only
 while its team's priest lives. On any other map a dead ghost stays dead,
 and its +10% can be had only once. It is
@@ -225,8 +225,7 @@ until a foe takes it. The shrines show on the compass as □ in the
 owner's colour.
 
 Every 30 seconds, each shrine your team owns scores a point, and a toast
-and a sound announce what each side scored. The dead
-stay down until an ally resurrects them, and each death costs morale.
+and a sound announce what each side scored. Every 60 seconds of match clock, your team's dead rise at your base's shrine with full Health and Energy, even if a foe stands there, unless their morale is at the floor. The scoreboard counts down to the next wave. Each death costs morale, and a ghost rises on the same wave, at its own spot.
 Get **20 points ahead** of every other team, or wipe the other team, to
 win at once. After 8 minutes the team with more points wins; on equal
 points, the one holding more shrines, then the team that was last ahead
@@ -336,11 +335,14 @@ party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
 
-Two Ascent arenas are built but not yet in the queued run, so for now you
-pick them in a Hosted Game: **The Hollow Deep** (8v8 Annihilation, three
-winding tunnels round a central rock) and **Blackwater Ford** (8v8 Priest
+Three Ascent arenas are built but not yet in the queued run, so for now
+you pick them in a Hosted Game: **The Hollow Deep** (8v8 Annihilation, three
+winding tunnels round a central rock),
+**Blackwater Ford** (8v8 Priest
 Annihilation on a tiny ford, bases nearly in sight, the priest raising
-its dead every 2 minutes).
+its dead every 2 minutes) and
+**Mosslit Cairns** (8v8 Capture Points, five cairns in a shallow zig-zag
+between the bases).
 
 A map may have **gates**: walls that stop bodies, shots and sight while
 closed. Stand on a gate's pressure plate to open it. It closes when

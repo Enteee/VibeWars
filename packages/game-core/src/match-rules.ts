@@ -117,7 +117,8 @@ export const KING_OF_THE_HILL_MATCH_RULES: MatchRules = Object.freeze({
  * take it, and every `POINT_TICK_SECONDS` each one a team owns scores it
  * a point. `CAPTURE_LEAD_TO_WIN` points ahead wins at once; a wipe loses
  * at once; at 8 minutes the most points win, and of teams tied on them,
- * the one that led last.
+ * the one that led last. Each base's shrine raises its team's dead every
+ * `CAPTURE_WAVE_SECONDS` (#2845).
  */
 export const CAPTURE_POINTS_MATCH_RULES: MatchRules = Object.freeze({
   ...ANNIHILATION_MATCH_RULES,
@@ -137,6 +138,9 @@ export const CAPTURE_LEAD_TO_WIN = 20;
 
 /** A living priest raises its team's dead at every multiple of this, match clock (#1186, GW1). */
 export const PRIEST_WAVE_SECONDS = 120;
+
+/** A Capture Points base's shrine raises its team's dead at every multiple of this, match clock (#2845, GW1). */
+export const CAPTURE_WAVE_SECONDS = 60;
 
 /** Seconds a player a shrine raised takes no damage, health loss, hex or condition (#1208, GW1). */
 export const SHRINE_INVULNERABLE_SECONDS = 5;

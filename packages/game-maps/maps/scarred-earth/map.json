@@ -169,6 +169,16 @@
     {
       "kind": "capture-point",
       "position": { "x": 2680, "y": 1000 }
+    },
+    {
+      "kind": "resurrection-shrine",
+      "team": 0,
+      "position": { "x": 200, "y": 1000 }
+    },
+    {
+      "kind": "resurrection-shrine",
+      "team": 1,
+      "position": { "x": 3000, "y": 1000 }
     }
   ],
   "spawnPoints": [

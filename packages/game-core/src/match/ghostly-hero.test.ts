@@ -5,6 +5,7 @@ import { WEAPONS, weaponDamageType } from "../equipment/weapons.js";
 import {
   ANNIHILATION_MATCH_RULES,
   CAPTURE_POINTS_MATCH_RULES,
+  CAPTURE_WAVE_SECONDS,
   KING_OF_THE_HILL_MATCH_RULES,
   PRIEST_ANNIHILATION_MATCH_RULES,
   PRIEST_WAVE_SECONDS,
@@ -293,11 +294,8 @@ describe("when a dead Ghostly Hero rises (#2839)", () => {
     expect(get(sim, "x").combatant.morale).toBe(10);
   });
 
-  it.each([
-    ["King of the Hill", KING_OF_THE_HILL_MATCH_RULES],
-    ["Capture Points", CAPTURE_POINTS_MATCH_RULES],
-  ])("rises 120 s after it died in %s", (_mode, rules) => {
-    const sim = game(rules, []);
+  it("rises 120 s after it died in King of the Hill", () => {
+    const sim = game(KING_OF_THE_HILL_MATCH_RULES, []);
     stepTo(sim, 30);
     kill(sim, GHOST_0);
     const died = sim.elapsedSeconds;
@@ -305,5 +303,18 @@ describe("when a dead Ghostly Hero rises (#2839)", () => {
     expect(get(sim, GHOST_0).combatant.dead).toBe(true);
     stepTo(sim, died + PRIEST_WAVE_SECONDS + 1);
     expect(get(sim, GHOST_0).combatant.dead).toBe(false);
+  });
+
+  it("rises at its spawn on the 60 s wave in Capture Points (#2845)", () => {
+    const sim = game(CAPTURE_POINTS_MATCH_RULES, SHRINES);
+    const ghost = get(sim, GHOST_0);
+    stepTo(sim, 30);
+    ghost.position = vec2(800, 300);
+    kill(sim, GHOST_0);
+    stepTo(sim, CAPTURE_WAVE_SECONDS - 1);
+    expect(ghost.combatant.dead).toBe(true);
+    stepTo(sim, CAPTURE_WAVE_SECONDS + DT);
+    expect(ghost.combatant.dead).toBe(false);
+    expect(ghost.position).toEqual(vec2(300, 500));
   });
 });

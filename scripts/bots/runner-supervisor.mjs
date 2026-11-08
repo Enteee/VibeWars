@@ -935,6 +935,17 @@ export function launcherEnvOf(env, scratch, state) {
 }
 
 /**
+ * The directories scratch must not share a filesystem with.
+ *
+ * @param {string} root the company's state directory
+ * @param {Record<string, string | undefined>} env
+ * @returns {string[]}
+ */
+export function diskCapShared(root, env) {
+  return [root, env.HOME ?? os.homedir()];
+}
+
+/**
  * The disk cap (ADR-0045): scratch must be a filesystem of its own, such as
  * a partition or a dataset with a quota, so a job that fills it cannot fill
  * the disk hubd, git and the jails live on. It compares device numbers, so
@@ -1117,7 +1128,7 @@ if (
       freeBytes: () => os.freemem(),
       load1: () => os.loadavg()[0] ?? 0,
       cpus: () => os.availableParallelism(),
-      diskCapRefusal: () => diskCapRefusal(scratch, [root, env.HOME ?? os.homedir()]),
+      diskCapRefusal: () => diskCapRefusal(scratch, diskCapShared(root, env)),
     },
     readTarget: () => readTarget(state, max),
     writeStatus: (status) => {

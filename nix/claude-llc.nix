@@ -673,6 +673,7 @@ in
           export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
           export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
           export VIBEWARS_CLAUDE_BOXES="$HOME/${config.vibewars.claudeBot.boxes}"
+          export VIBEWARS_RUNNER_SCRATCH="${config.vibewars.runners.scratch}"
           exec ${node} ${llcScripts}/company-init.mjs "$@"
         '';
       };

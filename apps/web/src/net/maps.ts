@@ -18,6 +18,7 @@ import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { 
 import blackwaterFord from "@vibewars/game-maps/maps/blackwater-ford/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
 import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
+import mosslitCairns from "@vibewars/game-maps/maps/mosslit-cairns/map.json" with { type: "json" };
 import hollowDeep from "@vibewars/game-maps/maps/hollow-deep/map.json" with { type: "json" };
 import theCourtyard from "@vibewars/game-maps/maps/the-courtyard/map.json" with { type: "json" };
 import type {
@@ -76,6 +77,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   // The Heroes' Ascent's own (#2693): a Hosted Game's pick until the progression places them.
   hollowDeep,
   blackwaterFord,
+  mosslitCairns,
   // Capture Points' (#1378, #2551).
   scarredEarth,
 ].map((raw) => validateMapData(raw));
@@ -112,7 +114,7 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
 const ASCENT_FINALE_ONLY: readonly string[] = ["hall-of-heroes"];
 
 /** Heroes' Ascent maps (#2693) whose modes Random and Team Arena also play: neither draws them. */
-const ASCENT_ONLY: readonly string[] = ["hollow-deep", "blackwater-ford"];
+const ASCENT_ONLY: readonly string[] = ["hollow-deep", "blackwater-ford", "mosslit-cairns"];
 
 /**
  * Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them: a
