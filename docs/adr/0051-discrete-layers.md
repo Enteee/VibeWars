@@ -12,7 +12,7 @@ The game cannot show a bridge, a platform or anyone standing on one, and the ope
 
 **A position is `x`, `y` and a discrete `layer`.** Layer 0 is the ground, 1 a deck, and 2 exists only on a map that needs it. There is no Z anywhere: no height on a body, no height on a wall, no interpolation along a ramp, no 3D collision or navigation. Range is always the 2D distance.
 
-**A body is on exactly one layer, always.** Only the simulation changes it, on the tick a body inside a map-defined transition area (a ramp, stairs) moves towards the other layer. A move command names a target layer and the simulation validates it; an illegal one is refused and the body stands. Knockback and teleports keep the layer. A respawn takes its spawn's layer.
+**A body is on exactly one layer, always.** Only the simulation changes it, on the tick a body inside a map-defined transition area (a ramp, stairs) moves towards the other layer. A move command names a target layer and the simulation validates it; an illegal one is refused and the body stands. Knockback and teleports keep the layer: a destination that is not walkable on the body's layer is clamped to the nearest point that is, so a knockback stops at a deck's edge and a step beside someone on another layer lands on the stepper's own. A respawn takes its spawn's layer.
 
 **Bodies on different layers do not collide.** Two bodies at the same `x`, `y` on different layers pass freely. Each layer has its own walls and its own walkable area, and a nav graph per layer is linked at the transitions.
 
@@ -22,8 +22,8 @@ The game cannot show a bridge, a platform or anyone standing on one, and the ope
 
 | Attack                       | Rule                                                                                         |
 | ---------------------------- | -------------------------------------------------------------------------------------------- |
-| Melee                        | Same layer only.                                                                             |
-| Area effect                  | Only the layer it was placed on.                                                             |
+| Melee                        | Same layer only (a body on a transition counts as on both).                                  |
+| Area effect                  | Only the layer it belongs to, see below (a body on a transition counts as on both).          |
 | Ranged or spell, same layer  | That layer's walls, as today.                                                                |
 | Ranged or spell, upper→lower | Upper-layer walls. A target under a deck's footprint can't be hit from that deck.            |
 | Ranged or spell, lower→upper | Lower-layer walls. A target on a deck can't be hit by a shooter under that deck's footprint. |
@@ -32,9 +32,9 @@ Everything else is a plain 2D line-of-sight check. Heights are never computed: n
 
 ### Who owns what on a boundary
 
-**A shot in flight belongs to the moment it was released.** `skills/projectile.ts` fixes a shot's path at release, and the layers join that decision: which walls apply, and whether the deck rule forbids the shot, are read once from the shooter's and the target's layers at release and never again. A target that changes layer in flight is treated as today's target that moved: the shot hits if they are still within reach of its aim point in 2D, whichever layer they are on now. A shot needs no layer of its own.
+**A shot in flight belongs to the moment it was released.** `skills/projectile.ts` fixes a shot's path at release, and the layers join that decision: which walls apply, and whether the deck rule forbids the shot, are read once from the shooter's and the target's layers at release and never again. A target that changes layer in flight is treated as today's target that moved: the shot hits if they are still within reach of its aim point in 2D, whichever layer they are on now. A shot needs no layer of its own: what it hits is its target, and an area it carries asks the target for a layer when it lands.
 
-**An area effect belongs to the layer it was placed on.** That is its caster's layer at placement, also when it is placed on a transition or a deck's edge, and it is fixed for the effect's life. `GroundEffect` carries it, next to `position`. A body inside a transition area is reached from either side, as above.
+**An area effect belongs to the layer of what it is centred on.** One centred on a target, like Fireball, or a ground effect anchored at one, takes that target's layer when it resolves: on landing for a shot, so a blast follows a target who climbed in flight, and at placement for a ground effect. One centred on the caster, or placed where the caster stands, takes the caster's layer at placement, also on a transition or a deck's edge. Spells cross layers, so a ground caster's Fireball at a foe on a deck bursts on the deck, and spares whoever is underneath. A ground effect's layer is fixed for its life; `GroundEffect` carries it, next to `position`. A body inside a transition area is reached from either side, as above.
 
 ### The line between simulation and presentation
 
