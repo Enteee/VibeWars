@@ -144,6 +144,10 @@ export function buildPreload({ state, repoUrl, exclude, extra, run = runCommand 
       return { dir, built: false };
     }
 
+    // A committed symlink would make the write land outside the clone.
+    fs.rmSync(path.join(src, "devenv.local.nix"), { force: true });
+    // A committed symlink would make the write land outside the clone.
+    fs.rmSync(path.join(src, "devenv.local.nix"), { force: true });
     fs.writeFileSync(path.join(src, "devenv.local.nix"), LOCAL_NIX);
     // devenv loads this too, and it is no gate path: nothing of it runs here.
     fs.rmSync(path.join(src, "devenv.local.yaml"), { force: true });

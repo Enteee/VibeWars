@@ -25,11 +25,11 @@ const tmp = () => {
  * and the nix commands answer from a table.
  *
  * @param {string} store a directory standing in for /nix/store
- * @param {{ lock?: string, failAt?: string }} [options]
+ * @param {{ lock?: string, failAt?: string, victim?: string }} [options]
  */
 function toolchain(
   store,
-  { lock = '{"nodes":{"nixpkgs":{"locked":{"rev":"abc"}}}}', failAt } = {},
+  { lock = '{"nodes":{"nixpkgs":{"locked":{"rev":"abc"}}}}', failAt, victim } = {},
 ) {
   /** @type {string[][]} */
   const calls = [];
@@ -56,6 +56,9 @@ function toolchain(
       fs.mkdirSync(dest, { recursive: true });
       fs.writeFileSync(path.join(dest, "devenv.lock"), lock);
       fs.writeFileSync(path.join(dest, "devenv.nix"), "{}");
+      if (victim !== undefined) {
+        fs.symlinkSync(victim, path.join(dest, "devenv.local.nix"));
+      }
       return "";
     }
     if (command === "devenv") {
@@ -171,6 +174,20 @@ describe("buildPreload (#2792)", () => {
       run: toolchain(store).run,
     });
     expect(again).toEqual({ dir: other.dir, built: true });
+  });
+
+  it("does not write through a committed devenv.local.nix symlink", () => {
+    const store = tmp();
+    const victim = path.join(tmp(), "outside");
+    fs.writeFileSync(victim, "keep");
+    buildPreload({
+      state: tmp(),
+      repoUrl: "u",
+      exclude: new Set(/** @type {string[]} */ ([])),
+      extra: [],
+      run: toolchain(store, { victim }).run,
+    });
+    expect(fs.readFileSync(victim, "utf8")).toBe("keep");
   });
 
   it("replaces the old preload when main's inputs change, current only ever whole", () => {
