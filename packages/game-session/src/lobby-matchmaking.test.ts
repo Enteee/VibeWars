@@ -141,6 +141,24 @@ describe("a party lobby's matchmaking (#1766)", () => {
     expect(plan).toHaveLength(4);
   });
 
+  it("keeps its mode and size while queued: the host.s picks are ignored (#2781)", async () => {
+    const { lobby, party } = await partyLobby(["Ann"]);
+    const [host] = party as [Member];
+    await queue(lobby);
+    host.connection.selectMode("gvg");
+    host.connection.selectTeamSize(8);
+    await settle();
+
+    for (const who of party) {
+      const snapshot = who.connection.getSnapshot();
+      expect([snapshot.phase, snapshot.mode, snapshot.teamSize]).toEqual([
+        "queued",
+        "team-arena",
+        4,
+      ]);
+    }
+  });
+
   it("gathers each member's key, the host's first, and forms the party once each consented", async () => {
     const { lobby, party } = await partyLobby(["Ann"]);
     const [host, ann] = party as [Member, Member];

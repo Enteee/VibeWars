@@ -7,7 +7,7 @@ import type {
 } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
-import { t } from "../i18n/index.js";
+import { locale, t } from "../i18n/index.js";
 import { validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
 import {
@@ -80,7 +80,7 @@ export function soloEntries(
   return [
     ...characters.map((character) => entry(soloCharacterKey(character.id), character, undefined)),
     ...[...teams]
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => a.name.localeCompare(b.name, locale()))
       .flatMap((team) =>
         team.members.map((member, seat) =>
           entry(`team:${team.id}:${String(seat)}`, member.character, team.name),

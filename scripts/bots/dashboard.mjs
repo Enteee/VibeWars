@@ -40,6 +40,7 @@ import {
 } from "./company-facts.mjs";
 import { boardScreenLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 import { HUBD_ALIVE, hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
+import { maxRunners } from "./runners-state.mjs";
 import { roleOf } from "./staff.mjs";
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
@@ -134,7 +135,12 @@ function build() {
   });
 }
 
-/** @returns {{ project: number, owner: string, columns: string[], maxAgents: number | null } | null} */
+/**
+ * @returns {{
+ *   project: number, owner: string, columns: string[], maxAgents: number | null,
+ *   maxRunners: number | null,
+ * } | null}
+ */
 function company() {
   try {
     /** @type {unknown} */
@@ -145,6 +151,7 @@ function company() {
       owner: typeof cfg.owner === "string" ? cfg.owner : "",
       columns: Array.isArray(cfg.columns) ? cfg.columns.map(String) : [],
       maxAgents: typeof cfg.maxAgents === "number" ? cfg.maxAgents : null,
+      maxRunners: maxRunners(raw),
     };
   } catch {
     return null;
@@ -407,7 +414,7 @@ function linesOf(section, pane) {
           claude: readUsage(usage, now, readLimit(ROOT, staff, now)),
           telegram: telegram(),
           kpi: { file: hubFile("kpis.json"), now },
-          runners: readRunners(process.env),
+          runners: readRunners(process.env, company()?.maxRunners ?? null),
         },
         pane,
       );

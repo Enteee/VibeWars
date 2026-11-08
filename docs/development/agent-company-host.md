@@ -126,9 +126,10 @@ a whole `ci` job in the jail:
    change branch protection. The supervisor runs under hubd's uid, so a
    compromised hubd could read it too (ADR-0045): decide whether that is
    acceptable before you turn runners on.
-4. Set `vibewars.runners.max` in `devenv.local.nix`, and restart the
-   company. `cpus`, `memoryGib` and `tasksMax` there are each runner's
-   cap.
+4. Set the most runners: `claude-llc-init` asks once and stores it as
+   `maxRunners` in `.bots/company.json`. To change it later, edit that
+   number and restart the company. `vibewars.runners.cpus`, `memoryGib` and
+   `tasksMax` in `devenv.local.nix` are each runner's cap.
 
 The dashboard's COMPANY pane shows `runners: <online>/<target> (busy, max)`
 and the supervisor's last refusal. If the supervisor dies with runners

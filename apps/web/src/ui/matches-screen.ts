@@ -8,8 +8,8 @@ import { decodeTemplateCode, type MatchEndReason } from "@vibewars/game-core";
 import { LOBBY_MODES, type LobbyMode } from "@vibewars/game-protocol";
 import type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "@vibewars/game-session";
 
+import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
-import { ARENA_MAPS } from "../net/maps.js";
 import type {
   HeardMatchRecord,
   MatchRecordWatch,
@@ -66,10 +66,6 @@ export function relativeTime(endedAt: number, nowSeconds: number): string {
     return t("matches.hoursAgo", { count: Math.floor(ago / 3600) });
   }
   return t("matches.daysAgo", { count: Math.floor(ago / 86_400) });
-}
-
-function mapName(mapId: string): string {
-  return ARENA_MAPS.find((map) => map.id === mapId)?.name ?? mapId;
 }
 
 /** "Won", "Lost" or "Draw", for team `team` of `record`. */

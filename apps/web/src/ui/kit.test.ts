@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import {
   TOAST_SECONDS,
   chipLabel,
@@ -278,7 +279,7 @@ describe("toast (#566)", () => {
   it("offers Undo when asked, which undoes once and takes the toast down", () => {
     const undo = vi.fn();
     toast("Removed Barrage.", { undo });
-    body.button("Undo").click();
+    body.button(t("kit.undo")).click();
     expect(undo).toHaveBeenCalledOnce();
     expect(body.children).toHaveLength(0);
   });
@@ -338,7 +339,7 @@ describe("toast (#566)", () => {
       setToastHost(column);
       const undo = vi.fn();
       toast("Removed Barrage.", { undo });
-      (column as unknown as FakeNode).button("Undo").click();
+      (column as unknown as FakeNode).button(t("kit.undo")).click();
       expect(undo).toHaveBeenCalledOnce();
       expect((column as unknown as FakeNode).children).toHaveLength(0);
     });
@@ -375,9 +376,9 @@ describe("inlineConfirm (#566)", () => {
     expect(ask?.children.map((child) => child.textContent)).toEqual([
       "Delete Pyro?",
       "delete",
-      "Cancel",
+      t("kit.cancel"),
     ]);
-    expect(focusLog.at(-1)?.textContent).toBe("Cancel");
+    expect(focusLog.at(-1)?.textContent).toBe(t("kit.cancel"));
   });
 
   it("runs the action once on confirm, and puts the anchor back", () => {
@@ -393,7 +394,7 @@ describe("inlineConfirm (#566)", () => {
   it("does nothing on cancel or dismiss but put the anchor back", () => {
     const onConfirm = vi.fn();
     const first = asking(onConfirm);
-    first.bar.button("Cancel").click();
+    first.bar.button(t("kit.cancel")).click();
     expect(first.anchor.hidden).toBe(false);
     expect(focusLog.at(-1)).toBe(first.anchor);
     const second = asking(onConfirm);
@@ -406,10 +407,12 @@ describe("inlineConfirm (#566)", () => {
 describe("chipLabel (#566)", () => {
   it("counts blocking problems first, then hints, else says ready", () => {
     const problem = (blocking: boolean) => ({ text: "x", blocking });
-    expect(chipLabel([problem(true), problem(false), problem(true)])).toBe("2 problems");
-    expect(chipLabel([problem(true)])).toBe("1 problem");
-    expect(chipLabel([problem(false)])).toBe("1 hint");
-    expect(chipLabel([])).toBe("Ready");
+    expect(chipLabel([problem(true), problem(false), problem(true)])).toBe(
+      t("kit.problems", { count: 2 }),
+    );
+    expect(chipLabel([problem(true)])).toBe(t("kit.problems", { count: 1 }));
+    expect(chipLabel([problem(false)])).toBe(t("kit.hints", { count: 1 }));
+    expect(chipLabel([])).toBe(t("kit.ready"));
   });
 });
 

@@ -185,9 +185,8 @@ let
         export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
         # Where each role's Claude logs are, for the dashboard's tokens (#50).
         export VIBEWARS_CLAUDE_BOXES="$HOME/${config.vibewars.claudeBot.boxes}"
-        # The company's CI runners (#1890): the runner supervisor's config,
-        # which hubd reads the max of. Off while max is 0.
-        export VIBEWARS_MAX_RUNNERS="${toString config.vibewars.runners.max}"
+        # The company's CI runners (#1890): the runner supervisor's config.
+        # The most of them is company.json's maxRunners (#2764).
         export VIBEWARS_RUNNER_CPUS="${toString config.vibewars.runners.cpus}"
         export VIBEWARS_RUNNER_MEMORY_GIB="${toString config.vibewars.runners.memoryGib}"
         export VIBEWARS_RUNNER_TASKS_MAX="${toString config.vibewars.runners.tasksMax}"
@@ -577,7 +576,6 @@ let
           -c "$VIBEWARS_CODE" "${node} ${llcScripts}/dashboard.mjs feed")"
         company_pane="$(${tmux} split-window -h -l 40% -t "$board_pane" -P -F '#{pane_id}' \
           -c "$VIBEWARS_CODE" -e "VIBEWARS_CLAUDE_BOXES=$VIBEWARS_CLAUDE_BOXES" \
-          -e "VIBEWARS_MAX_RUNNERS=$VIBEWARS_MAX_RUNNERS" \
           "${node} ${llcScripts}/dashboard.mjs company")"
         ${tmux} select-pane -t "$feed_pane" -T TELEGRAM
         ${tmux} select-pane -t "$company_pane" -T COMPANY

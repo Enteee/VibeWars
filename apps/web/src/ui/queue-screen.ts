@@ -1,8 +1,9 @@
 import { ASCENT_ROUNDS, type QueueMode } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
+import { mapName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
-import { ascentMapName } from "../net/maps.js";
+import { ascentMapId } from "../net/maps.js";
 import { teamColour } from "../render/arena-snapshot.js";
 import { cssColour } from "./character-preview.js";
 import { RANDOM_ARENA_MODES } from "./menu.js";
@@ -219,11 +220,11 @@ export function teamEndLine(
       }
       return ascentRound === ASCENT_ROUNDS - 1
         ? {
-            text: t("queue.defending", { map: ascentMapName(ascentRound), seconds }),
+            text: t("queue.defending", { map: mapName(ascentMapId(ascentRound)), seconds }),
             button: t("queue.leave"),
           }
         : {
-            text: t("queue.ascending", { map: ascentMapName(ascentRound + 1), seconds }),
+            text: t("queue.ascending", { map: mapName(ascentMapId(ascentRound + 1)), seconds }),
             button: t("queue.leave"),
           };
     case "menu":

@@ -1,12 +1,12 @@
 import {
   describeSkill,
   energyCostOf,
-  getAttribute,
   getSkill,
   outsideMatch,
   type SkillType,
 } from "@vibewars/game-core";
 
+import { attributeName, skillName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import {
@@ -267,7 +267,7 @@ export function memberSkillCells(character: TeamCharacter): (TeamSkillCell | nul
         : skill.cost.kind === "adrenaline"
           ? t("teamEditor.costAdrenaline", { amount: skill.cost.amount })
           : t("teamEditor.costEnergy", { amount: energyCostOf(skill, outsideMatch(ranks)) });
-    return { skillId, name: skill.name, type: skill.type, cost, elite: skill.elite };
+    return { skillId, name: skillName(skill.id), type: skill.type, cost, elite: skill.elite };
   });
 }
 
@@ -280,7 +280,7 @@ export function topAttributes(character: Pick<TeamCharacter, "attributes">): str
     .slice(0, 3)
     .map(({ attribute }) =>
       t("teamEditor.attributeRank", {
-        attribute: getAttribute(attribute.attributeId)?.name ?? attribute.attributeId,
+        attribute: attributeName(attribute.attributeId),
         rank: attribute.rank,
       }),
     );

@@ -1,12 +1,12 @@
 import {
   describeSkill,
-  skillProfessionName,
   type ProfessionId,
   type Skill,
   type SkillDescription,
   type SkillType,
 } from "@vibewars/game-core";
 
+import { attributeName, professionName, skillName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
 
 /**
@@ -25,10 +25,17 @@ export interface SkillGroup {
   readonly skills: readonly Skill[];
 }
 
-/** What a search looks through for `skill`: its name and its description's lines. */
+/**
+ * What a search looks through for `skill`: its name as shown, its English
+ * name (players paste names from English guides), and its description's lines.
+ */
 function searchText(skill: Skill): string {
   const { typeText, effects } = describeSkill(skill);
-  return [skill.name, typeText, ...effects.map((effect) => effect.text)].join("\n").toLowerCase();
+  // eslint-disable-next-line no-restricted-syntax -- the English name, on purpose
+  const english = skill.name;
+  return [skillName(skill.id), english, typeText, ...effects.map((effect) => effect.text)]
+    .join("\n")
+    .toLowerCase();
 }
 
 /**
@@ -117,11 +124,10 @@ export function groupSkillsByAttribute(skills: readonly Skill[]): readonly Skill
     if (group === undefined) {
       group = {
         attributeId: skill.attributeId,
-        // `describeSkill` already resolves the readable attribute name, so
-        // reusing it keeps one spelling of "Fire Magic" in the codebase.
         attributeName:
-          describeSkill(skill).attributeName ??
-          t("skillLibrary.noAttribute", { profession: skillProfessionName(skill.profession) }),
+          skill.attributeId === undefined
+            ? t("skillLibrary.noAttribute", { profession: professionName(skill.profession) })
+            : attributeName(skill.attributeId),
         skills: [],
       };
       groups.set(key, group);

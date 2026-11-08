@@ -2,6 +2,7 @@ import type { MatchMode } from "@vibewars/game-core";
 import type { SizeClass } from "@vibewars/game-maps/size-class";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
+import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
 import { ascentMapId } from "../net/maps.js";
@@ -132,7 +133,6 @@ export async function copyInviteLink(code: string, share: ShareLine): Promise<vo
 /** An arena the host may pick, how big it plays (#444), and the mode it plays (#476). */
 export interface LobbyMap {
   readonly id: string;
-  readonly name: string;
   readonly size: SizeClass;
   readonly mode: MatchMode;
   /** The team sizes it is made for (#2108): a Hosted Game lists those for its own (#2104). */
@@ -175,7 +175,7 @@ const SIZE_NAMES: Readonly<Record<SizeClass, MessageKey>> = {
 
 /** The arena as the picker names it: its name, then its size class, e.g. "Long Hall (small)". */
 export function mapLabel(map: LobbyMap): string {
-  return t("lobby.mapLabel", { name: map.name, size: t(SIZE_NAMES[map.size]) });
+  return t("lobby.mapLabel", { name: mapName(map.id), size: t(SIZE_NAMES[map.size]) });
 }
 
 /** What the lobby says about relays (#2531), from `lobbyRelayStatus`. */

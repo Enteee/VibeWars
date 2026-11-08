@@ -13,9 +13,9 @@ import {
   type RuneTier,
   type SkillType,
   type WeaponId,
-  runeDisplayName,
 } from "@vibewars/game-core";
 
+import { itemName, runeName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { CREATURE_GLYPH } from "../render/arena-atlas.js";
 
@@ -125,13 +125,17 @@ export interface GearIcon {
  */
 export function weaponIcon(weaponId: string): GearIcon | undefined {
   const weapon = getWeapon(weaponId);
-  return weapon === undefined ? undefined : { src: WEAPON_ICON[weapon.id], name: weapon.name };
+  return weapon === undefined
+    ? undefined
+    : { src: WEAPON_ICON[weapon.id], name: itemName(weapon.id) };
 }
 
 /** An off-hand's icon (#419), as `weaponIcon`. */
 export function offhandIcon(offhandId: string): GearIcon | undefined {
   const offhand = getOffhand(offhandId);
-  return offhand === undefined ? undefined : { src: OFFHAND_ICON[offhand.id], name: offhand.name };
+  return offhand === undefined
+    ? undefined
+    : { src: OFFHAND_ICON[offhand.id], name: itemName(offhand.id) };
 }
 
 /** An insignia's icon (#2058): the shield plate with its emblem. An id this client does not know gets none. */
@@ -139,7 +143,7 @@ export function insigniaIcon(insigniaId: string): GearIcon | undefined {
   const insignia = getInsignia(insigniaId);
   return insignia === undefined
     ? undefined
-    : { src: iconUrl("insignia", insignia.id), name: insignia.name };
+    : { src: iconUrl("insignia", insignia.id), name: itemName(insignia.id) };
 }
 
 /**
@@ -149,7 +153,7 @@ export function insigniaIcon(insigniaId: string): GearIcon | undefined {
  * An attribute rune of no known profession gets none.
  */
 export function runeIcon(rune: EquippedRune): GearIcon | undefined {
-  const name = runeDisplayName(rune);
+  const name = runeName(rune);
   if (rune.kind === "universal") {
     const src = iconUrl("rune", rune.runeId);
     return getUniversalRune(rune.runeId)?.tiered === false

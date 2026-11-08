@@ -363,7 +363,7 @@ export function boardScreenLines(snapshot, boardColumns, live, nudgeFacts, { row
  *   the pending reboot with the roles between turns, the reason of the one handed to the restarter (#345), or the one awaiting the operator (#960)
  * @property {{ line: string, stale: boolean } | null} build the build the company runs, against the checkout; null when the dashboard runs from the checkout (#557)
  * @property {{ file: Record<string, unknown> | null, now: number }} kpi `kpis.json` as read, null when missing or unreadable (#892)
- * @property {{ status: import("./runners-state.mjs").RunnersStatus | null, max: number }} runners
+ * @property {{ status: import("./runners-state.mjs").RunnersStatus | null, max: number | null }} runners
  *   the runner supervisor's status, null before it ran, and the operator's max (#1890)
  */
 
