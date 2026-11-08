@@ -179,7 +179,10 @@ the altar is your team's.
 The team that holds the altar scores a point for every 30 seconds it
 keeps it, even while its own ghost is dead, until another team claims
 it. Every point is announced, as a relic scored is. A dead ghost rises
-in its base 2 minutes later, staying put. It is
+in its base 2 minutes later, staying put, here, in a Relic Run and in Capture Points. On a
+map with priests it rises instead with the priest's next wave, but only
+while its team's priest lives. On any other map a dead ghost stays dead,
+and its +10% can be had only once. It is
 no player: its death costs no morale and it does not count toward a
 wipe.
 

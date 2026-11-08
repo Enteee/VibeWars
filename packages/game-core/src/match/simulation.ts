@@ -1260,6 +1260,14 @@ export class MatchSimulation {
     }
     const ghosts = this.#ghostField;
     if (ghosts !== undefined) {
+      // A priest wave raises it where priests stand; nothing does where
+      // the objective does not need it (#2839).
+      const victory = this.#matchRules?.victory;
+      const riseSeconds =
+        this.#shrines.length === 0 &&
+        (victory === "king-of-the-hill" || victory === "relic-run" || victory === "capture-points")
+          ? PRIEST_WAVE_SECONDS
+          : Number.POSITIVE_INFINITY;
       for (const spawn of ghosts.spawns) {
         const others = ghosts.spawns.filter((other) => other.team !== spawn.team);
         this.add(
@@ -1271,6 +1279,7 @@ export class MatchSimulation {
               others.map((other) => other.position),
               ghosts.spawns.map((other) => other.position),
             ),
+            riseSeconds,
           ),
         );
       }
@@ -8204,7 +8213,8 @@ export class MatchSimulation {
    * clock, each living priest raises its team's dead players above
    * `MORALE_FLOOR` on its shrine, at full Health and Energy, their morale
    * kept. After the step's deaths, so a priest killed this tick raises
-   * nobody. A creature is never raised, a companion neither.
+   * nobody. A creature is never raised, a companion neither, but for
+   * the Ghostly Hero (#2839), back at its spawn, unlogged and uncounted.
    * In a Guild Battle (#1222) every shrine raises, with no priest at all.
    */
   #priestWave(): void {
@@ -8221,6 +8231,14 @@ export class MatchSimulation {
       const events: CombatEvent[] = [];
       for (const record of this.#participants.values()) {
         const { combatant } = record;
+        if (
+          record.creature?.kind === "ghostly-hero" &&
+          combatant.team === shrine.team &&
+          combatant.dead
+        ) {
+          this.#reset(record, "respawn");
+          continue;
+        }
         if (
           !countsForTeam(record) ||
           combatant.team !== shrine.team ||
