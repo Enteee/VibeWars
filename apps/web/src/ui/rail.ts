@@ -222,12 +222,13 @@ export function teamSizeStepper(
  * it all. A lobby guest's is locked, as its modes are (#1526); in a
  * Hosted Game or a Team Arena it shows the lobby's size, the host's pick
  * (#2104, #2107). There, a queued party's is locked too: the queue is
- * for the size it has.
+ * for the size it has; and every mode's, in the Random Arena queue (#2781).
  */
 function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLElement {
   const guest = party !== undefined && !party.isHost;
   const noSizes = TEAM_SIZES_BY_ENTRY[active].length === 0;
-  const queued = party?.mode === active && party.queuedMs !== null;
+  const queued =
+    (inRandomQueue && isModeEntry(active)) || (party?.mode === active && party.queuedMs !== null);
   const lobbySize =
     (active === "hosted-game" || active === "team-arena") && party?.mode === active
       ? party.teamSize
@@ -258,6 +259,14 @@ function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLEle
 
 /** The lobby the rail screens show, while there is one (#1526). */
 let shownParty: RailParty | undefined;
+
+/** Whether this tab is in the Random Arena queue (#2781), which no size changes. */
+let inRandomQueue = false;
+
+/** Whether every rail screen drawn from now on is in the Random Arena queue; the shell sets it. */
+export function setRailQueued(queued: boolean): void {
+  inRandomQueue = queued;
+}
 
 /** The lobby every rail screen drawn from now on shows; the shell sets it on every change. */
 export function setRailParty(party: RailParty | undefined): void {

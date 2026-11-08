@@ -161,6 +161,7 @@ import {
   redrawModeRail,
   redrawsOnLobbyChange,
   setRailParty,
+  setRailQueued,
   type RailEntry,
 } from "./ui/rail.js";
 import {
@@ -666,6 +667,7 @@ async function main(): Promise<void> {
   const inAnyQueue = (): boolean => queue !== undefined || teamQueue !== undefined;
 
   const paintQueue = (): void => {
+    setRailQueued(queue !== undefined);
     topbarView.setQueue(queueInput());
   };
 
@@ -1350,6 +1352,9 @@ async function main(): Promise<void> {
             showTeamEditor(openedTeam(team, true), characterList.characters);
           }
         })();
+      },
+      onLeaveQueue: () => {
+        leaveAnyQueue();
       },
       onPasteTeam: (text) => {
         const result = importTeam(text, () => crypto.randomUUID(), Date.now());

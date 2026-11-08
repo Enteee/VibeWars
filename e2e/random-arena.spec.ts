@@ -219,6 +219,28 @@ test("Random Arena queues in the background: the icon sits left of Help, and Lea
   await expect(ready).toBeEnabled();
 });
 
+test("queued, Team Arena stays browsable: Find a match waits, saying why, until its Leave Queue (#2781)", async ({
+  page,
+}) => {
+  await makeCharacter(page);
+  await queue1v1(page, "Alice");
+  await openRail(page, "Team Arena");
+  const screen = page.locator(".screen-team-arena");
+  await expect(screen).toContainText("You are in a queue.");
+  const find = page.getByRole("button", { name: "Find a match", exact: true });
+  await expect(find).toBeDisabled();
+  await expect(find).toHaveAttribute("title", "You are in a queue.");
+  // The queue is for the size it has: no mode's size changes under it.
+  const size = page.locator(".mode-rail-size");
+  await expect(size).toHaveAttribute("title", "Leave the queue to change the team size");
+
+  await screen.getByRole("button", { name: "Leave Queue", exact: true }).click();
+  await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
+  // Out of it, the player's own lobby opens here, and finds a match.
+  await expect(find).toBeEnabled();
+  await expect(size).not.toHaveAttribute("title", "Leave the queue to change the team size");
+});
+
 test("deleting the queued character leaves the queue and says why (#2743)", async ({ page }) => {
   await makeCharacter(page);
   await queue1v1(page, "Alice");

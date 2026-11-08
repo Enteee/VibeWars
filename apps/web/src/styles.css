@@ -1365,6 +1365,13 @@ body {
   color: var(--ink);
 }
 
+/* A lobby screen's Find a match and Leave Queue, while in the Random Arena queue (#2781). */
+.screen-queued {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
 .field {
   display: flex;
   flex-direction: column;

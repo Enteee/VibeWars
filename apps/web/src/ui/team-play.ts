@@ -63,6 +63,8 @@ export interface TeamPlayCallbacks {
   readonly onRerollTeam: (id: string) => void;
   /** A team code was pasted on the screen (#577). */
   readonly onPasteTeam: (text: string) => void;
+  /** Leave Queue on a lobby's screen, while in the Random Arena queue (#2781). */
+  readonly onLeaveQueue: () => void;
 }
 
 /**
@@ -254,9 +256,30 @@ export function renderHostScreen(
   queued: boolean,
 ): void {
   const body = teamScreen(root, entry, problems, connectionNotice, callbacks, panel);
-  body.appendChild(
-    panel?.body ?? h("p", "screen-info", queued ? t("queue.busy") : t("teamPlay.openingLobby")),
-  );
+  if (panel !== undefined) {
+    body.appendChild(panel.body);
+  } else if (queued) {
+    body.append(h("p", "screen-info", t("queue.busy")), queuedButtons(entry, callbacks));
+  } else {
+    body.appendChild(h("p", "screen-info", t("teamPlay.openingLobby")));
+  }
+}
+
+/**
+ * A lobby's screen in the Random Arena queue (#2781): no lobby of its own
+ * until the queue is left, so its Find a match waits, saying why, beside
+ * the Leave Queue that frees it. A Hosted Game finds no match.
+ */
+function queuedButtons(entry: HostEntry, callbacks: TeamPlayCallbacks): HTMLElement {
+  const row = h("div", "screen-queued");
+  if (entry !== "hosted-game") {
+    const find = button(t("lobby.findMatch"), "primary lobby-find", () => undefined);
+    find.disabled = true;
+    find.title = t("queue.busy");
+    row.appendChild(find);
+  }
+  row.appendChild(button(t("queue.leaveQueue"), "lobby-leave-queue", callbacks.onLeaveQueue));
+  return row;
 }
 
 /** Render Team Builder (#1525): the Team Build cards, to make and edit them. */

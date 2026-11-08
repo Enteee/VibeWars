@@ -16,6 +16,7 @@ import {
   saveRail,
   saveTeamSize,
   setRailParty,
+  setRailQueued,
   type RailEntry,
   type TeamSize,
 } from "./rail.js";
@@ -96,6 +97,7 @@ describe("the mode rail (#1525)", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     setRailParty(undefined);
+    setRailQueued(false);
   });
 
   it("has the five modes, then Character Builder, Team Builder and Matches (#2532)", () => {
@@ -407,6 +409,18 @@ describe("the mode rail (#1525)", () => {
     expect(shown("team-arena")).toBe("- 2v2 -");
     // A builder's size is its own filter, queued or not.
     expect(shown("teams")).toBe("‹ 4v4 ›");
+  });
+
+  it("locks every mode's stepper in the Random Arena queue, and no builder's (#2781)", () => {
+    setRailQueued(true);
+    for (const entry of ["random-arena", "team-arena", "hosted-game"] as const) {
+      expect(sizeField(entry).title).toBe(t("rail.leaveQueueForTeamSize"));
+    }
+    expect(shown("team-arena")).toBe("- 4v4 -");
+    expect(shown("teams")).toBe("‹ 4v4 ›");
+
+    setRailQueued(false);
+    expect(shown("team-arena")).toBe("‹ 4v4 ›");
   });
 
   it("shows a Hosted Game lobby's team size, the host's pick, not your own (#2104)", () => {
