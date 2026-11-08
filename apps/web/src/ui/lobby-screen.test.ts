@@ -85,6 +85,10 @@ describe("lobbyControls", () => {
     });
   });
 
+  it("says ready waits on the queue while queued, not that a match started (#2802)", () => {
+    expect(lobbyControls(snapshot("queued")).readyProblem).toBe(t("queue.busy"));
+  });
+
   it("shows no line and opens the controls once the lobby is waiting", () => {
     expect(lobbyControls(snapshot("waiting"))).toEqual({
       running: undefined,
