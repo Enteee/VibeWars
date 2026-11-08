@@ -330,6 +330,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       altarHolder: null,
       altarHeldSeconds: 0,
       capturePoints: [],
+      gates: [],
     };
   }
 
@@ -420,7 +421,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       tickIntervalMs: 50,
       elapsedSeconds: FLOAT,
       timeLimitSeconds: FLOAT,
-      map: biggest ?? { id: "", name: "", width: 0, height: 0, teamCount: 2, walls: [] },
+      map: biggest ?? { id: "", name: "", width: 0, height: 0, teamCount: 2, walls: [], gates: [] },
     };
     const longestSkills = [...IMPLEMENTED_SKILLS]
       .sort((a, b) => b.id.length + b.name.length - (a.id.length + a.name.length))

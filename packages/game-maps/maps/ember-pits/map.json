@@ -26,6 +26,7 @@
     { "kind": "rect", "x": 1980, "y": 150, "width": 120, "height": 60 },
     { "kind": "rect", "x": 700, "y": 1590, "width": 120, "height": 60 }
   ],
+  "gates": [],
   "objectives": [],
   "spawnPoints": [
     { "team": 0, "position": { "x": 160, "y": 660 } },

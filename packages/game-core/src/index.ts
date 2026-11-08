@@ -220,6 +220,8 @@ export {
   flagTeamOf,
 } from "./match/flags.js";
 export type { RelicField, RelicState } from "./match/relics.js";
+export type { Gate, GateField } from "./match/gates.js";
+export { GATE_PLATE_REACH_UNITS, GATE_REOPEN_SECONDS } from "./match/gates.js";
 export type { CapturePoint } from "./match/capture-points.js";
 export {
   CAPTURE_REACH_UNITS,

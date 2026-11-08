@@ -72,6 +72,7 @@
     { "kind": "rect", "x": 1540, "y": 0, "width": 120, "height": 180 },
     { "kind": "rect", "x": 1540, "y": 1620, "width": 120, "height": 180 }
   ],
+  "gates": [],
   "objectives": [
     {
       "kind": "relic-spawn",

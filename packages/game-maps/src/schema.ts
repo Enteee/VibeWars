@@ -7,7 +7,7 @@ import {
 } from "@vibewars/game-core";
 import { z } from "zod";
 
-import { allWallSegments } from "./geometry.js";
+import { allWallSegments, wallToSegments } from "./geometry.js";
 
 /**
  * Declarative map format (ADR-0006), validated with zod rather than
@@ -37,6 +37,17 @@ const polygonWallSchema = z.object({
 });
 
 const wallSchema = z.discriminatedUnion("kind", [rectWallSchema, polygonWallSchema]);
+
+/** The most gates on a map (#2691): the match keeps paths for each way they can stand. */
+const MAX_GATES = 6;
+
+/** A wall that a pressure plate opens (#2691); `team` is whose plate it is, `null` for anyone's. */
+const gateSchema = z.object({
+  id: z.string().min(1),
+  wall: wallSchema,
+  plate: vec2Schema,
+  team: z.number().int().nonnegative().nullable(),
+});
 
 const spawnPointSchema = z.object({
   team: z.number().int().nonnegative(),
@@ -193,6 +204,8 @@ export const mapDataSchema = z
     spawnPoints: z.array(spawnPointSchema).min(1),
     /** Required, may be empty: a map without objectives says so. */
     objectives: z.array(objectiveSchema),
+    /** Required, may be empty, as `objectives` (#2691). */
+    gates: z.array(gateSchema).max(MAX_GATES),
     /**
      * The level of its Ghostly Heroes (#2689): 20, 24 or 28, by where in
      * Heroes' Ascent it stands. With it, the map has one `ghost-spawn` per
@@ -281,6 +294,24 @@ export const mapDataSchema = z
       }
     }
     const walls = allWallSegments(map.walls);
+    map.gates.forEach((gate, index) => {
+      const { x, y } = gate.plate;
+      const onMap =
+        x >= BODY_RADIUS &&
+        y >= BODY_RADIUS &&
+        x <= map.width - BODY_RADIUS &&
+        y <= map.height - BODY_RADIUS;
+      const clear = [...walls, ...wallToSegments(gate.wall)].every(
+        (wall) => distancePointToSegment(gate.plate, wall) >= BODY_RADIUS,
+      );
+      if (!onMap || !clear || (gate.team !== null && !teams.has(gate.team))) {
+        context.addIssue({
+          code: "custom",
+          path: ["gates", index],
+          message: `gate ${gate.id} needs a spawning team or none, and its plate on the map and a body clear of every wall`,
+        });
+      }
+    });
     map.objectives.forEach((objective, index) => {
       const { x, y } = objective.position;
       const inBounds =

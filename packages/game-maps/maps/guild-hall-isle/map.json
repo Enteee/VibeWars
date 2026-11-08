@@ -32,6 +32,7 @@
     { "kind": "rect", "x": 1100, "y": 1380, "width": 120, "height": 120 },
     { "kind": "rect", "x": 1780, "y": 1380, "width": 120, "height": 120 }
   ],
+  "gates": [],
   "objectives": [
     { "kind": "guild-lord", "team": 0, "position": { "x": 80, "y": 1000 } },
     { "kind": "guild-lord", "team": 1, "position": { "x": 2920, "y": 1000 } },

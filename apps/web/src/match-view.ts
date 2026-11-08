@@ -1,6 +1,6 @@
-import type { FlagField, RelicField } from "@vibewars/game-core";
+import type { FlagField, RelicField, Segment } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
-import type { MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
+import type { GateDescriptor, MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
 import type {
   CombatMessage,
   MatchConnection,
@@ -83,6 +83,7 @@ import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-s
 import { mapFlagField, mapMode, mapRelicField, mapShrines, type MapShrine } from "./net/maps.js";
 import {
   renderableCapturePoints,
+  renderableGatePlates,
   renderableFlags,
   renderableRelics,
   renderableStand,
@@ -224,6 +225,38 @@ export function toRenderableWall(wall: WallDescriptor): RenderableWall {
     : { kind: "polygon", points: wall.points };
 }
 
+/**
+ * What blocks the eye and the compass for how the gates stand (#2691):
+ * the map's walls and every closed gate's, one array per combination, so
+ * the map layer redraws only when a gate moves.
+ */
+function gateWalls(
+  gates: readonly GateDescriptor[],
+  walls: readonly RenderableWall[],
+  segments: readonly Segment[],
+): (open: readonly boolean[]) => {
+  walls: readonly RenderableWall[];
+  segments: readonly Segment[];
+} {
+  const known = new Map<number, ReturnType<ReturnType<typeof gateWalls>>>();
+  return (open) => {
+    let closed = 0;
+    gates.forEach((_, at) => {
+      closed |= open[at] === true ? 0 : 1 << at;
+    });
+    let set = known.get(closed);
+    if (set === undefined) {
+      const shut = gates.filter((_, at) => open[at] !== true).map((gate) => gate.wall);
+      set = {
+        walls: [...walls, ...shut.map(toRenderableWall)],
+        segments: [...segments, ...allWallSegments(shut)],
+      };
+      known.set(closed, set);
+    }
+    return set;
+  };
+}
+
 /** Every body's name by its id, for the names a Ghostly Hero's leader goes by (#1419). */
 function playerNames(match: MatchSnapshot): ReadonlyMap<string, string> {
   return new Map(match.players.map((player) => [player.sessionId, player.name]));
@@ -236,6 +269,7 @@ export function toArenaSnapshot(
   shrines: readonly MapShrine[],
   flagField: FlagField | undefined,
   relicField: RelicField | undefined,
+  gates: readonly GateDescriptor[] = [],
 ): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
   const names = playerNames(match);
@@ -252,6 +286,7 @@ export function toArenaSnapshot(
     stand: renderableStand(match.stand, flagField, self?.team),
     altar: match.altar,
     capturePoints: renderableCapturePoints(match.capturePoints, self?.team),
+    gatePlates: renderableGatePlates(gates, match.gates, self?.team),
     shrines: shrines.map((shrine) => ({
       position: shrine.position,
       side: shrine.team === side ? "ally" : "enemy",
@@ -410,6 +445,7 @@ export async function startMatchView(
   const walls = viewed.map.walls.map(toRenderableWall);
   // Once per match, for the skill bar's line-of-sight hint (#485).
   const wallSegments = allWallSegments(viewed.map.walls);
+  const blocking = gateWalls(viewed.map.gates, walls, wallSegments);
   const mode = mapMode(viewed.map.id);
   const shrines = mapShrines(viewed.map.id);
   const flagField = mapFlagField(viewed.map.id);
@@ -947,7 +983,14 @@ export async function startMatchView(
     // it, shows the right name.
     partyWindow.update(match);
     const arena = withNames(
-      toArenaSnapshot(match, walls, shrines, flagField, relicField),
+      toArenaSnapshot(
+        match,
+        blocking(match.gates).walls,
+        shrines,
+        flagField,
+        relicField,
+        viewed.map.gates,
+      ),
       viewport?.pointerWorld(),
       nameReveal.held(),
       viewport?.scene.nameTagBoxes() ?? EMPTY_SNAPSHOT.nameBoxes,
@@ -978,7 +1021,7 @@ export async function startMatchView(
         [],
         null,
         () => undefined,
-        wallSegments,
+        blocking(match.gates).segments,
         viewed.timeLimitSeconds,
         mode,
         match,
@@ -1000,7 +1043,7 @@ export async function startMatchView(
       seat.getAdrenaline(),
       seat.getAdrenalineLossIn(),
       (targetId) => seat.getChainMark(targetId),
-      wallSegments,
+      blocking(match.gates).segments,
       seat.timeLimitSeconds,
       mode,
       match,

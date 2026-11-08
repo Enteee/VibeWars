@@ -333,6 +333,13 @@ party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
 
+A map may have **gates**: walls that stop bodies, shots and sight while
+closed. Stand on a gate's pressure plate to open it. It closes when
+nobody is left on the plate, shoving anyone in the doorway to the nearer
+side and stopping shots still on their way through, and cannot be opened
+again for 8 seconds. A plate in a team's colour answers only to that
+team. Bots stand on their own team's plate when no foe is near.
+
 ## Three teams
 
 In a three-team match the third team is drawn lemon-lime, beside the blue

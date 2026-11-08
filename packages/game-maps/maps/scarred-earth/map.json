@@ -148,6 +148,7 @@
     { "kind": "rect", "x": 880, "y": 1180, "width": 60, "height": 120 },
     { "kind": "rect", "x": 2260, "y": 700, "width": 60, "height": 120 }
   ],
+  "gates": [],
   "objectives": [
     {
       "kind": "capture-point",

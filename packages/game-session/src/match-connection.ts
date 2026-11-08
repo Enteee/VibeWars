@@ -185,6 +185,8 @@ export interface MatchSnapshot {
   readonly altarHeldSeconds: number;
   /** Every Capture Points shrine and who holds it (#1378); `[]` on a map without them. */
   readonly capturePoints: readonly CapturePoint[];
+  /** Whether each of the map's gates is open (#2691); `[]` on a map without them. */
+  readonly gates: readonly boolean[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }

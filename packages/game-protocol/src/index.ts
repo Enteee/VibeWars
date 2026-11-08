@@ -50,6 +50,7 @@ export type {
   RechargeSlot,
   MapDescriptor,
   WireTeamCount,
+  GateDescriptor,
   WallDescriptor,
   RectWallDescriptor,
   PolygonWallDescriptor,

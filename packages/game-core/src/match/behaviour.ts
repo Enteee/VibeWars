@@ -6,6 +6,7 @@ import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
 import type { CapturePoint } from "./capture-points.js";
+import type { Gate } from "./gates.js";
 import type { CarriedSpawn } from "./carried.js";
 import { MASTERLESS_TEAM } from "./minions.js";
 import type { RelicState } from "./relics.js";
@@ -309,6 +310,8 @@ export interface BotObjectives {
   readonly altar: Vec2 | undefined;
   /** The team holding King of the Hill's altar (#2582); `null` when nobody does, or in any other mode. */
   readonly altarHolder: number | null;
+  /** The map's gates (#2691), kept current; `[]` on a map without any. */
+  readonly gates: readonly Gate[];
 }
 
 /** No objectives: every mode but those with one. */
@@ -318,6 +321,7 @@ export const NO_OBJECTIVES: BotObjectives = {
   relicSpawns: [],
   altar: undefined,
   altarHolder: null,
+  gates: [],
 };
 
 export function createCursor(): BehaviourCursor {

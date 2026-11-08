@@ -71,6 +71,7 @@ describe("connectMatch", () => {
       altarHolder: null,
       altarHeldSeconds: 0,
       capturePoints: [],
+      gates: [],
     });
     await settle();
     expect(connection.getSnapshot().score[0]).toBe(0);
@@ -106,6 +107,7 @@ describe("connectMatch", () => {
         altarHolder: null,
         altarHeldSeconds: 0,
         capturePoints: [],
+        gates: [],
       },
       transport.selfId,
     );
@@ -164,6 +166,7 @@ describe("connectMatch", () => {
           altarHolder: null,
           altarHeldSeconds: 0,
           capturePoints: [],
+          gates: [],
         },
         transport.selfId,
       );
