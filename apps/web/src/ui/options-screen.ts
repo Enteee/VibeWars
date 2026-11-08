@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import { overlayClose } from "./kit.js";
 import { OPTIONS_SECTIONS } from "./options-sections.js";
 import { attachTopbarPopover } from "./topbar-popover.js";
@@ -71,7 +72,7 @@ export function attachOptionsWindow(
   return attachTopbarPopover(trigger, parent, (close) => {
     const options = optionsPanel(close);
     options.panel.classList.add("screen", "options-screen", "options-window");
-    options.panel.setAttribute("aria-label", "Options");
+    options.panel.setAttribute("aria-label", t("options.label"));
     // A press inside keeps the focus, and so Esc, in the window.
     options.panel.tabIndex = -1;
     windowOpen = true;
@@ -107,7 +108,7 @@ function optionsPanel(close: () => void): {
   body.className = "options-body";
   const nav = document.createElement("nav");
   nav.className = "options-nav";
-  nav.setAttribute("aria-label", "options sections");
+  nav.setAttribute("aria-label", t("options.sections"));
   const pane = document.createElement("section");
   pane.className = "options-pane";
   body.append(nav, pane);

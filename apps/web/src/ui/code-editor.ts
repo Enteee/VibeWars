@@ -15,6 +15,8 @@ import {
 } from "@codemirror/view";
 import { tags } from "@lezer/highlight";
 
+import { t } from "../i18n/index.js";
+
 /**
  * The beat editor's text area (#373): a minimal CodeMirror 6 with line
  * numbers, loaded as its own chunk the first time the editor opens
@@ -139,7 +141,7 @@ export function createCodeEditor(doc: string, keys: CodeEditorKeys): CodeEditor 
         ),
         // No Tab binding: Tab leaves the editor, as everywhere else.
         keymap.of([...defaultKeymap, ...historyKeymap]),
-        EditorView.contentAttributes.of({ "aria-label": "Beat source" }),
+        EditorView.contentAttributes.of({ "aria-label": t("beatEditor.source") }),
       ],
     }),
   });

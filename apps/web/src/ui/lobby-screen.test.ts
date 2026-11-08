@@ -16,7 +16,7 @@ import {
   type LobbyRelay,
 } from "./lobby-screen.js";
 import { MAX_RELAYED_PER_HOLDER } from "../net/transport/relay-offer.js";
-import { SHARED_RELAY_EXPLANATION } from "./relay-section.js";
+import { sharedRelayExplanation } from "./relay-section.js";
 
 function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
   return {
@@ -710,9 +710,9 @@ describe("lobbyPanel: shared relays (#2531)", () => {
 
 describe("Options: what sharing a relay means (#2531)", () => {
   it("says any lobby you are in, a 1 hour login each, the per-lobby cap and the hardening", () => {
-    expect(SHARED_RELAY_EXPLANATION).toContain("any lobby you are in, not only ones you host");
-    expect(SHARED_RELAY_EXPLANATION).toContain("their own login, good for 1 hour");
-    expect(SHARED_RELAY_EXPLANATION).toContain("at most 8 players a lobby");
-    expect(SHARED_RELAY_EXPLANATION).toContain("denied-peer-ip");
+    expect(sharedRelayExplanation()).toContain("any lobby you are in, not only ones you host");
+    expect(sharedRelayExplanation()).toContain("their own login, good for 1 hour");
+    expect(sharedRelayExplanation()).toContain("at most 8 players a lobby");
+    expect(sharedRelayExplanation()).toContain("denied-peer-ip");
   });
 });

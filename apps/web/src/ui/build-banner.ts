@@ -1,9 +1,4 @@
-import {
-  NEW_VERSION_NOTICE,
-  NEW_VERSION_WAITING,
-  newVersionCountdown,
-  type BuildBanner,
-} from "../build-check.js";
+import type { BuildBanner } from "../build-check.js";
 import { t } from "../i18n/index.js";
 import { button, h } from "./kit.js";
 
@@ -11,11 +6,11 @@ import { button, h } from "./kit.js";
 export function buildBannerText(banner: BuildBanner): string {
   switch (banner.kind) {
     case "countdown":
-      return newVersionCountdown(banner.seconds);
+      return t("buildBanner.countdown", { seconds: banner.seconds });
     case "waiting":
-      return NEW_VERSION_WAITING;
+      return t("buildBanner.waiting");
     case "manual":
-      return NEW_VERSION_NOTICE;
+      return t("buildBanner.newVersion");
   }
 }
 

@@ -4,7 +4,9 @@ import {
   type MusicModeKind,
   type MusicPreference,
 } from "../audio/music-preference.js";
+import { formatNumber, t, type MessageKey } from "../i18n/index.js";
 import { beatEdits, type BeatEditStore } from "../music/beat-edits.js";
+import { moodName } from "../music/mood-name.js";
 import { music, type MusicFollower } from "../music/play-music.js";
 import { TRACKS, type Track } from "../music/tracks/index.js";
 import { openBeatEditor } from "./beat-editor.js";
@@ -25,11 +27,11 @@ import { attachTopbarPopover } from "./topbar-popover.js";
  * plain functions, tested without a DOM; `jukeboxPanel` only draws them.
  */
 
-export const MODE_NAMES: Readonly<Record<MusicModeKind, string>> = {
-  auto: "Auto",
-  shuffle: "Shuffle",
-  pinned: "Pinned",
-  off: "Off",
+export const MODE_NAMES: Readonly<Record<MusicModeKind, MessageKey>> = {
+  auto: "jukebox.modeAuto",
+  shuffle: "jukebox.modeShuffle",
+  pinned: "jukebox.modePinned",
+  off: "jukebox.modeOff",
 };
 
 export interface JukeboxRow {
@@ -51,8 +53,8 @@ export function jukeboxRows(
   return tracks.map((track) => ({
     id: track.id,
     title: track.title,
-    moods: track.moods.join(", "),
-    bpm: `${String(track.bpm)} bpm`,
+    moods: track.moods.map((mood) => moodName(mood)).join(", "),
+    bpm: t("jukebox.bpm", { bpm: formatNumber(track.bpm) }),
     pinned: track.id === preference.pinnedTrackId,
     previewing: track.id === previewId,
     edited: edited(track.id),
@@ -91,18 +93,18 @@ export function jukeboxPanel(
   const panel = h("div", "jukebox");
 
   const modeField = h("label", "field");
-  modeField.appendChild(h("span", "field-label", "Music"));
+  modeField.appendChild(h("span", "field-label", t("jukebox.music")));
   const modePicker = document.createElement("select");
   modePicker.className = "jukebox-mode";
   for (const mode of MUSIC_MODES) {
     const option = document.createElement("option");
     option.value = mode;
-    option.textContent = MODE_NAMES[mode];
+    option.textContent = t(MODE_NAMES[mode]);
     modePicker.appendChild(option);
   }
   modeField.appendChild(modePicker);
 
-  const editPlaying = button("Edit what plays", "jukebox-edit-playing", () => {
+  const editPlaying = button(t("jukebox.editPlaying"), "jukebox-edit-playing", () => {
     if (player.nowPlaying !== null) {
       openBeatEditor(player.nowPlaying);
     }
@@ -145,10 +147,10 @@ export function jukeboxPanel(
           name: row.title,
           subtitle: `${row.moods} · ${row.bpm}`,
           actions: [
-            button("Pin", "jukebox-pin", () => {
+            button(t("jukebox.pin"), "jukebox-pin", () => {
               change(pinTrack(player.preference, row.id));
             }),
-            button("Edit", "jukebox-edit", () => {
+            button(t("jukebox.edit"), "jukebox-edit", () => {
               openBeatEditor(row.id);
             }),
           ],
@@ -169,16 +171,16 @@ export function jukeboxPanel(
         const play = node.querySelector(".jukebox-play");
         if (play instanceof HTMLElement) {
           play.setAttribute("aria-pressed", String(row.previewing));
-          play.title = row.previewing ? "Stop the preview" : "Preview";
+          play.title = row.previewing ? t("jukebox.stopPreview") : t("jukebox.preview");
         }
         const edit = node.querySelector(".jukebox-edit");
         if (edit instanceof HTMLElement) {
-          edit.setAttribute("aria-label", `Open ${row.title} in the beat editor`);
-          edit.title = row.edited ? "Open your edit in the beat editor" : "Open in the beat editor";
+          edit.setAttribute("aria-label", t("jukebox.openTrack", { track: row.title }));
+          edit.title = row.edited ? t("jukebox.openEdit") : t("jukebox.open");
         }
         const pin = node.querySelector(".jukebox-pin");
         if (pin instanceof HTMLButtonElement) {
-          pin.textContent = row.pinned ? "Pinned" : "Pin";
+          pin.textContent = row.pinned ? t("jukebox.pinned") : t("jukebox.pin");
           pin.disabled = row.pinned && preference.mode === "pinned";
         }
       },
@@ -243,7 +245,7 @@ export function attachJukeboxPopover(
       },
     });
     panel.element.classList.add("screen", "hud-jukebox");
-    panel.element.setAttribute("aria-label", "Sound and music");
+    panel.element.setAttribute("aria-label", t("jukebox.label"));
     return {
       element: panel.element,
       focus: panel.element.querySelector<HTMLElement>(".jukebox-play") ?? panel.element,

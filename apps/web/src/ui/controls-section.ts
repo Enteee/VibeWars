@@ -1,3 +1,4 @@
+import { t, type MessageKey } from "../i18n/index.js";
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
   KEYMAP_PRESETS,
@@ -26,42 +27,39 @@ import { h } from "./kit.js";
  * without a DOM; `controlsSection` only draws it and forwards keys.
  */
 
-export const ACTION_NAMES: Readonly<Record<KeyAction, string>> = {
-  "skill-1": "Skill 1",
-  "skill-2": "Skill 2",
-  "skill-3": "Skill 3",
-  "skill-4": "Skill 4",
-  "skill-5": "Skill 5",
-  "skill-6": "Skill 6",
-  "skill-7": "Skill 7",
-  "skill-8": "Skill 8",
-  "move-up": "Move up",
-  "move-down": "Move down",
-  "move-left": "Move left",
-  "move-right": "Move right",
-  "target-next": "Next target",
-  "target-closest": "Target the closest foe",
-  "target-called": "Target the called foe",
-  "target-self": "Target yourself",
-  attack: "Attack",
-  "call-target": "Call your target",
-  ping: "Ping under the pointer",
-  "show-names": "Show names (hold)",
-  mute: "Mute",
-  "weapon-set-1": "Weapon set 1",
-  "weapon-set-2": "Weapon set 2",
-  "weapon-set-3": "Weapon set 3",
-  "weapon-set-4": "Weapon set 4",
-  "drop-bundle": "Drop flag, relic or ashes",
+export const ACTION_NAMES: Readonly<Record<KeyAction, MessageKey>> = {
+  "skill-1": "controls.skill1",
+  "skill-2": "controls.skill2",
+  "skill-3": "controls.skill3",
+  "skill-4": "controls.skill4",
+  "skill-5": "controls.skill5",
+  "skill-6": "controls.skill6",
+  "skill-7": "controls.skill7",
+  "skill-8": "controls.skill8",
+  "move-up": "controls.moveUp",
+  "move-down": "controls.moveDown",
+  "move-left": "controls.moveLeft",
+  "move-right": "controls.moveRight",
+  "target-next": "controls.targetNext",
+  "target-closest": "controls.targetClosest",
+  "target-called": "controls.targetCalled",
+  "target-self": "controls.targetSelf",
+  attack: "controls.attack",
+  "call-target": "controls.callTarget",
+  ping: "controls.ping",
+  "show-names": "controls.showNames",
+  mute: "controls.mute",
+  "weapon-set-1": "controls.weaponSet1",
+  "weapon-set-2": "controls.weaponSet2",
+  "weapon-set-3": "controls.weaponSet3",
+  "weapon-set-4": "controls.weaponSet4",
+  "drop-bundle": "controls.dropBundle",
 };
 
-export const PRESET_NAMES: Readonly<Record<keyof typeof KEYMAP_PRESETS, string>> = {
-  vibewars: "VibeWars (Q-F skills, arrows move)",
-  classic: "Classic (1-8 skills, WASD move)",
+export const PRESET_NAMES: Readonly<Record<keyof typeof KEYMAP_PRESETS, MessageKey>> = {
+  vibewars: "controls.presetVibeWars",
+  classic: "controls.presetClassic",
 };
-
-export const SHORTCUT_REFUSAL =
-  "Ctrl, Alt and the Windows/Command key are never used: the browser owns them.";
 
 /** One key cell: an action's primary (0) or secondary (1). */
 export interface KeyCell {
@@ -79,9 +77,9 @@ export function noKeyWarning(map: Keymap, action: KeyAction): string {
     return "";
   }
   if (MOVE_ACTIONS.includes(action)) {
-    return "no key; click the ground to walk";
+    return t("controls.noKeyWalk");
   }
-  return SKILL_ACTIONS.includes(action) ? "no key" : "";
+  return SKILL_ACTIONS.includes(action) ? t("controls.noKey") : "";
 }
 
 export class KeysEditor {
@@ -127,7 +125,7 @@ export class KeysEditor {
   /** What a cell shows: its key, "press a key...", or "-". */
   cellText(cell: KeyCell): string {
     if (this.#isCapturing(cell)) {
-      return "press a key...";
+      return t("controls.pressAKey");
     }
     const code = this.#map[cell.action][cell.index];
     return code === undefined ? "-" : this.label(code);
@@ -180,11 +178,11 @@ export class KeysEditor {
       return true;
     }
     if (isShortcut(key) || /^(?:Control|Alt|Meta|OS)/.test(key.code)) {
-      this.#line = SHORTCUT_REFUSAL;
+      this.#line = t("controls.shortcutRefusal");
       return false;
     }
     if (!isBindable(key.code)) {
-      this.#line = `${this.label(key.code)} belongs to the browser.`;
+      this.#line = t("controls.browserKey", { key: this.label(key.code) });
       return false;
     }
     this.#bind(cell, key.code);
@@ -199,11 +197,16 @@ export class KeysEditor {
     if (displaced !== undefined) {
       const index = this.#map[displaced.action].indexOf(displaced.code) === 0 ? 0 : 1;
       this.#flashed = { action: displaced.action, index };
-      const name = ACTION_NAMES[displaced.action];
+      const name = t(ACTION_NAMES[displaced.action]);
       const left = map[displaced.action][0];
       this.#line =
-        `${this.label(displaced.code)} was ${name}; ` +
-        (left === undefined ? `${name} now has no key.` : `${name} keeps ${this.label(left)}.`);
+        left === undefined
+          ? t("controls.displacedNoKey", { key: this.label(displaced.code), action: name })
+          : t("controls.displacedKeeps", {
+              key: this.label(displaced.code),
+              action: name,
+              left: this.label(left),
+            });
     }
     this.#change(map);
   }
@@ -224,7 +227,9 @@ export class KeysEditor {
  */
 export const controlsSection: OptionsSection = {
   id: "controls",
-  title: "controls",
+  get title() {
+    return t("options.controls");
+  },
   mount: mountControls,
 };
 
@@ -236,18 +241,18 @@ function mountControls(container: HTMLElement): () => void {
   container.appendChild(panel);
 
   const pickerField = h("label", "field");
-  pickerField.appendChild(h("span", "field-label", "Preset"));
+  pickerField.appendChild(h("span", "field-label", t("controls.preset")));
   const picker = document.createElement("select");
   picker.className = "keys-preset";
   for (const [id, name] of Object.entries(PRESET_NAMES)) {
     const option = document.createElement("option");
     option.value = id;
-    option.textContent = name;
+    option.textContent = t(name);
     picker.appendChild(option);
   }
   const custom = document.createElement("option");
   custom.value = "custom";
-  custom.textContent = "Custom";
+  custom.textContent = t("controls.custom");
   // Shown, never picked: a custom map is what editing a preset makes.
   custom.disabled = true;
   picker.appendChild(custom);
@@ -274,7 +279,7 @@ function mountControls(container: HTMLElement): () => void {
   const actions = h("div", "menu-row");
   const reset = document.createElement("button");
   reset.type = "button";
-  reset.textContent = "Reset to VibeWars";
+  reset.textContent = t("controls.reset");
   reset.addEventListener("click", () => {
     editor.reset();
     paint();
@@ -292,13 +297,13 @@ function mountControls(container: HTMLElement): () => void {
       // The four sets read as one group (#489).
       const heading = document.createElement("tr");
       heading.className = "keys-group";
-      const title = h("th", "keys-group-title", "Weapon sets");
+      const title = h("th", "keys-group-title", t("controls.weaponSets"));
       title.setAttribute("colspan", "4");
       heading.appendChild(title);
       body.appendChild(heading);
     }
     const row = document.createElement("tr");
-    row.appendChild(h("th", "keys-action", ACTION_NAMES[action]));
+    row.appendChild(h("th", "keys-action", t(ACTION_NAMES[action])));
     for (const index of [0, 1] as const) {
       const cell: KeyCell = { action, index };
       const td = document.createElement("td");
@@ -324,9 +329,9 @@ function mountControls(container: HTMLElement): () => void {
     body.appendChild(row);
   }
   for (const [name, key] of [
-    ["Cancel action; again: clear target", "Esc"],
-    ["Leave match", "F10"],
-  ] as const) {
+    [t("controls.cancelAction"), t("controls.esc")],
+    [t("controls.leaveMatch"), "F10"],
+  ]) {
     const row = document.createElement("tr");
     row.className = "is-fixed";
     row.appendChild(h("th", "keys-action", name));

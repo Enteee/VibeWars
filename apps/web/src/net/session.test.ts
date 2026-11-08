@@ -22,7 +22,6 @@ import {
   watchHostMove,
   type FollowSteps,
 } from "./session.js";
-import { NEW_VERSION_NOTICE } from "../build-check.js";
 import { t } from "../i18n/index.js";
 
 describe("the notice for a match that would not start (#1268)", () => {
@@ -30,7 +29,7 @@ describe("the notice for a match that would not start (#1268)", () => {
     const gone = new TypeError(
       "error loading dynamically imported module: https://enteee.github.io/VibeWars/next/assets/arena-scene-BD7V1erG.js",
     );
-    expect(matchFailureNotice(gone)).toBe(NEW_VERSION_NOTICE);
+    expect(matchFailureNotice(gone)).toBe(t("buildBanner.newVersion"));
   });
 
   it("leaves any other failure to the caller", () => {

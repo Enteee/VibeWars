@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import { beatEdits, shippedHash, tooLarge, type BeatEditStore } from "../music/beat-edits.js";
 import { beatEvaluations } from "../music/beat-evaluations.js";
 import type { MusicLevel } from "../music/host-protocol.js";
@@ -95,29 +96,29 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   const panel = h("div", "screen beat-editor");
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-modal", "true");
-  panel.setAttribute("aria-label", `Beat editor: ${track.title}`);
+  panel.setAttribute("aria-label", t("beatEditor.label", { track: track.title }));
 
   const bar = h("div", "beat-editor-bar");
   const title = h("h2", "screen-title", track.title);
-  const edited = h("span", "beat-editor-edited", "edited");
+  const edited = h("span", "beat-editor-edited", t("beatEditor.edited"));
   title.appendChild(edited);
   bar.append(title);
 
   const tools = h("div", "menu-row beat-editor-tools");
-  const evaluateButton = button("Play change", "primary beat-editor-evaluate", () => {
+  const evaluateButton = button(t("beatEditor.play"), "primary beat-editor-evaluate", () => {
     evaluate();
   });
-  evaluateButton.title = "Play (Ctrl+Enter)";
-  const stopButton = button("Stop", "beat-editor-stop", () => {
+  evaluateButton.title = t("beatEditor.playTitle");
+  const stopButton = button(t("beatEditor.stop"), "beat-editor-stop", () => {
     stop();
   });
-  stopButton.title = "Stop (Ctrl+.)";
-  const resetButton = button("Reset to shipped", "beat-editor-reset", () => {
+  stopButton.title = t("beatEditor.stopTitle");
+  const resetButton = button(t("beatEditor.reset"), "beat-editor-reset", () => {
     reset();
   });
 
   const intensityField = h("label", "field beat-editor-intensity");
-  intensityField.appendChild(h("span", "field-label", "Intensity"));
+  intensityField.appendChild(h("span", "field-label", t("beatEditor.intensity")));
   const slider = document.createElement("input");
   slider.type = "range";
   slider.min = "0";
@@ -131,18 +132,18 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
     override.set(level(Number(slider.value)));
   });
 
-  const link = shareLine("strudel.cc link");
-  const copyButton = button("Copy strudel.cc link", "beat-editor-copy", () => {
+  const link = shareLine(t("beatEditor.strudelLink"));
+  const copyButton = button(t("beatEditor.copyLink"), "beat-editor-copy", () => {
     if (editor !== undefined) {
       link.show(shareLink(editor.text(), level(Number(slider.value))));
     }
   });
   const pasteBox = document.createElement("textarea");
   pasteBox.className = "beat-editor-paste";
-  pasteBox.placeholder = "Paste a strudel.cc link or code here";
-  pasteBox.setAttribute("aria-label", "Paste a strudel.cc link or code");
+  pasteBox.placeholder = t("beatEditor.pastePlaceholder");
+  pasteBox.setAttribute("aria-label", t("beatEditor.pasteLabel"));
   pasteBox.hidden = true;
-  const pasteButton = button("Paste link or code", "beat-editor-paste-open", () => {
+  const pasteButton = button(t("beatEditor.paste"), "beat-editor-paste-open", () => {
     pasteBox.hidden = !pasteBox.hidden;
     if (!pasteBox.hidden) {
       pasteBox.value = "";
@@ -154,7 +155,7 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   share.append(copyButton, link.element);
   tools.append(evaluateButton, stopButton, resetButton, intensityField, share, pasteButton);
 
-  const status = h("p", "beat-editor-status", "Loading the editor…");
+  const status = h("p", "beat-editor-status", t("beatEditor.loading"));
   status.setAttribute("role", "status");
   const code = h("div", "beat-editor-code");
   panel.append(
@@ -182,18 +183,18 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
     }
     const source = editor.text();
     if (tooLarge(source)) {
-      editor.showError("This beat is over 64 KB, so it was not played or kept.", undefined);
+      editor.showError(t("beatEditor.tooLargeToPlay"), undefined);
       return;
     }
     stopped = false;
-    status.textContent = "Playing…";
+    status.textContent = t("beatEditor.playing");
     evaluations.sent(player.evaluate(source), { kind: "edit", source });
   }
 
   function stop(): void {
     stopped = true;
     player.stop();
-    status.textContent = "Stopped. Ctrl+Enter plays it again.";
+    status.textContent = t("beatEditor.stopped");
   }
 
   function reset(): void {
@@ -210,13 +211,13 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
     const source = pastedSource(text);
     pasteBox.hidden = true;
     if (source === null) {
-      status.textContent = "That strudel.cc link could not be read.";
+      status.textContent = t("beatEditor.unreadableLink");
     } else if (tooLarge(source)) {
-      status.textContent = "That beat is over 64 KB, so it was not pasted.";
+      status.textContent = t("beatEditor.tooLargeToPaste");
     } else {
       editor?.setText(source);
       editor?.clearError();
-      status.textContent = "Pasted. Ctrl+Enter plays it.";
+      status.textContent = t("beatEditor.pasted");
     }
     editor?.focus();
   };
@@ -278,7 +279,7 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
       }
       editor?.clearError();
       status.textContent =
-        done.kind === "reset" ? "Back to the shipped track." : "Playing your change. It is kept.";
+        done.kind === "reset" ? t("beatEditor.backToShipped") : t("beatEditor.kept");
     },
     failed(error) {
       if (error.evaluation === undefined) {
@@ -290,7 +291,7 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
       if (!evaluations.failed(error.evaluation)) {
         return;
       }
-      status.textContent = "That did not play; the last version plays on.";
+      status.textContent = t("beatEditor.didNotPlay");
       editor?.showError(error.message, error.line);
     },
     close,

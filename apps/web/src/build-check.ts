@@ -16,18 +16,6 @@ export const CHECK_EVERY_MS = 5 * 60_000;
 /** How long the banner counts down on an idle screen before it reloads. */
 export const RELOAD_COUNTDOWN_SECONDS = 30;
 
-/** A lazy import that failed while entering a match, and the banner that cannot reload by itself. */
-export const NEW_VERSION_NOTICE = "A new version of VibeWars is out. Reload to play.";
-
-/** The banner on a screen that is not idle: a match, a lobby, an editor, a dialog. */
-export const NEW_VERSION_WAITING =
-  "A new version of VibeWars is out. It loads when you are back on the menu.";
-
-/** The banner counting down on the menu or the ended screen. */
-export function newVersionCountdown(seconds: number): string {
-  return `A new version of VibeWars is out. Reloading in ${String(seconds)} s.`;
-}
-
 /** The id in a `build.json`, or `undefined` for anything that is not one. */
 export function parseBuildFile(json: unknown): string | undefined {
   if (typeof json !== "object" || json === null || !("build" in json)) {

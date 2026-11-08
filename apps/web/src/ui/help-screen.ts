@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import { SOURCE_URL } from "../source.js";
 import { h, overlayClose, screenBar } from "./kit.js";
 import { mountLicences } from "./licences-section.js";
@@ -21,7 +22,12 @@ import {
  */
 
 /** The licences page, after the docs: not a doc page, so not in `PLAYER_DOC_PAGES`. */
-const LICENCES_PAGE = { id: "licences", title: "Third-party licences" };
+const LICENCES_PAGE = {
+  id: "licences",
+  get title() {
+    return t("help.licences");
+  },
+};
 
 /** The open overlay, closed by `closeHelpOverlay`. */
 let overlay:
@@ -39,12 +45,12 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
   const panel = h("div", "screen help-screen");
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-modal", "true");
-  panel.setAttribute("aria-label", "Help");
+  panel.setAttribute("aria-label", t("help.label"));
   panel.appendChild(overlayClose(closeHelpOverlay));
 
   const crumb = h("span");
   const { release } = screenBar({
-    crumbs: ["VibeWars", "Help", crumb],
+    crumbs: ["VibeWars", t("help.label"), crumb],
     escape: closeHelpOverlay,
     actions: [],
     overlay: true,
@@ -53,7 +59,7 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
 
   const body = h("div", "options-body");
   const nav = h("nav", "options-nav");
-  nav.setAttribute("aria-label", "help pages");
+  nav.setAttribute("aria-label", t("help.pages"));
   const pane = h("article", "help-page");
   body.append(nav, pane);
   panel.appendChild(body);
@@ -72,7 +78,7 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
     return entry;
   });
   // The AGPL's network clause: whoever plays it is offered the source (#1442).
-  const source = h("a", "help-source", "Source code");
+  const source = h("a", "help-source", t("help.source"));
   source.setAttribute("href", SOURCE_URL);
   // A new tab, so reading the source never leaves the game.
   source.setAttribute("target", "_blank");

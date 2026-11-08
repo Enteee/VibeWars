@@ -45,7 +45,7 @@ import {
   type TicketKey,
 } from "@vibewars/game-session";
 
-import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
+import { isStaleChunkError } from "../build-check.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
 import {
@@ -980,7 +980,7 @@ export function matchFailureNotice(error: unknown): string | undefined {
     return t(MATCH_REFUSALS[error.reason]);
   }
   if (isStaleChunkError(error)) {
-    return NEW_VERSION_NOTICE;
+    return t("buildBanner.newVersion");
   }
   return undefined;
 }
