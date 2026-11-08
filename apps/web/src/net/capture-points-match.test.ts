@@ -10,7 +10,8 @@ import { describe, expect, it } from "vitest";
 import { hostMap } from "./maps.js";
 
 const DT = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
-const RULES = MATCH_MODES["capture-points"];
+/** A 60 s clock keeps the test well inside its limit: seed 2735 now ends at time, not by its wipe at 127 s. */
+const RULES = { ...MATCH_MODES["capture-points"], timeLimitSeconds: 60 };
 
 /** A side of four bots, on the first starter team that has four. */
 function side(team: 0 | 1): [string, PlannedSeat][] {
