@@ -1,3 +1,4 @@
+import { versionLine } from "../build-info.js";
 import { t } from "../i18n/index.js";
 import { SOURCE_URL } from "../source.js";
 import { h, overlayClose, screenBar } from "./kit.js";
@@ -84,6 +85,8 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
   source.setAttribute("target", "_blank");
   source.setAttribute("rel", "noopener");
   nav.appendChild(source);
+  // Selectable, for a bug report (#2798).
+  nav.appendChild(h("p", "help-version", versionLine(__VIBEWARS_RELEASE__, __VIBEWARS_BUILD__)));
   const show = (id: string): void => {
     if (id === LICENCES_PAGE.id) {
       crumb.textContent = LICENCES_PAGE.title;

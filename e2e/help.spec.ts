@@ -129,9 +129,10 @@ async function openLicences(page: Page): Promise<Locator> {
 test("Help's last page is the third-party licences, not Options' (#2559)", async ({ page }) => {
   const help = await openLicences(page);
   const nav = help.locator(".options-nav");
-  // After the docs, before the source link.
-  await expect(nav.locator(":scope > *").last()).toHaveText("Source code");
-  await expect(nav.locator(":scope > *").nth(-2)).toHaveText("Third-party licences");
+  // After the docs: then the source link, then the release and build.
+  await expect(nav.locator(":scope > *").last()).toHaveClass("help-version");
+  await expect(nav.locator(":scope > *").nth(-2)).toHaveText("Source code");
+  await expect(nav.locator(":scope > *").nth(-3)).toHaveText("Third-party licences");
   const entry = nav.locator('.options-entry[data-page="licences"]');
   await expect(entry).toHaveClass(/is-selected/);
   await expect(entry).toHaveAttribute("aria-current", "page");
@@ -177,4 +178,10 @@ test("Help lists every bundled npm package and the VCSL samples, each with its l
   await expect(phaser.locator(".licence-text")).toBeHidden();
   await phaser.locator("summary").click();
   await expect(phaser.locator(".licence-text")).toContainText("Permission is hereby granted");
+});
+
+test("Help's foot names the release and the build (#2798)", async ({ page }) => {
+  await page.goto("./");
+  await clickTopbarIcon(page, ".topbar-help");
+  await expect(page.locator(".help-version")).toHaveText(/^VibeWars dev · build [\w.-]{1,8}$/);
 });

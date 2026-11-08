@@ -439,6 +439,7 @@ export const en = {
   "help.licences": "Third-party licences",
   "help.pages": "help pages",
   "help.source": "Source code",
+  "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agg {ours} v {theirs}",
   "hud.altarPointOurs": "Altar point!",
