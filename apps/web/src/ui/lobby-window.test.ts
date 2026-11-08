@@ -46,6 +46,10 @@ class FakeElement {
     this.children.push(...children);
   }
 
+  prepend(child: FakeElement): void {
+    this.children.unshift(child);
+  }
+
   find(className: string): FakeElement | undefined {
     for (const child of this.children) {
       if (typeof child === "string") {
@@ -123,8 +127,22 @@ describe("the Lobby window's party (#1526, #2385)", () => {
       isHost: false,
       open: true,
       members: [
-        { id: "host", name: "host", isHost: true, self: false, away: false },
-        { id: "me", name: "me", isHost: false, self: true, away: false },
+        {
+          id: "host",
+          name: "host",
+          signet: expect.any(Number),
+          isHost: true,
+          self: false,
+          away: false,
+        },
+        {
+          id: "me",
+          name: "me",
+          signet: expect.any(Number),
+          isHost: false,
+          self: true,
+          away: false,
+        },
       ],
       queuedMs: null,
       removable: true,
@@ -180,6 +198,20 @@ describe("the Lobby window's party (#1526, #2385)", () => {
       "",
     ]);
     expect(text).toBe(t("lobbyWindow.closed"));
+  });
+
+  it("signs each member's name, and leaves a keyless one bare (#2820)", () => {
+    vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
+    const party = partyOf(
+      lobby([player("host"), player("me", { playerPubkey: null })]),
+      null,
+      false,
+    );
+    const body = lobbyWindowBody(party, () => undefined) as unknown as FakeElement;
+    const rows = body.find("party-members")?.children as FakeElement[];
+    expect(rows.map((row) => (row.find("party-member-name")?.find("signet") ? 1 : 0))).toEqual([
+      1, 0,
+    ]);
   });
 
   it("says it is just you (#2385, #2642)", () => {

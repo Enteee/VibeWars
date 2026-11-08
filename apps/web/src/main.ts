@@ -149,6 +149,7 @@ import {
   type MenuCallbacks,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
+import { signetOf } from "./ui/player-label.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
@@ -2419,6 +2420,7 @@ async function main(): Promise<void> {
       sharedTracks.add({
         from: share.from,
         name: sender.name,
+        signet: signetOf(sender),
         trackId: share.trackId,
         source: share.source,
       });

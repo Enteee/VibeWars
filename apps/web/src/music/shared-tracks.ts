@@ -14,6 +14,8 @@ export interface SharedTrack {
   readonly from: string;
   /** The sender's name, from the lobby state this player already has. */
   readonly name: string;
+  /** The sender's signet (#2820), from the same lobby state. */
+  readonly signet: number | undefined;
   readonly trackId: string;
   readonly source: string;
   /** Whether the ♪ popover was open since it came. */

@@ -13,6 +13,7 @@ import {
 } from "../net/transport/turn-config.js";
 import { MAX_RELAYED_PER_HOLDER } from "../net/transport/relay-offer.js";
 import { button, h, shareLine, toast } from "./kit.js";
+import { signedNamesLine, type KeyedPlayer } from "./player-label.js";
 import type { OptionsSection } from "./options-sections.js";
 
 /**
@@ -179,8 +180,8 @@ export function relayLine(): HTMLElement | undefined {
  * "Relay shared by name" for a member whose host connection goes through
  * another member's relay (#2531). `name` is a lobby name: text, never HTML.
  */
-export function relaySharedByLine(name: string): HTMLElement {
-  return h("div", "screen-info relay-shared-by", t("relay.sharedBy", { name }));
+export function relaySharedByLine(holder: KeyedPlayer): HTMLElement {
+  return signedNamesLine("screen-info relay-shared-by", "relay.sharedBy", "name", [holder]);
 }
 
 /** What a holder's lobby says under the roster while it shares its relay with `count` players (#2531). */
