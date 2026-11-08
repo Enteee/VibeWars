@@ -403,7 +403,7 @@ describe("sweepScratch (#2795)", () => {
     /** @type {string[]} */
     const lines = [];
     sweepScratch(dir, new Set(["live-1"]), (line) => lines.push(line));
-    expect(fs.readdirSync(dir)).toEqual(["live-1", "lost+found"]);
+    expect(fs.readdirSync(dir).sort()).toEqual(["live-1", "lost+found"]);
     expect(fs.existsSync(path.join(outside, "keep"))).toBe(true);
     expect(lines).toHaveLength(2);
     fs.rmSync(dir, { recursive: true });
