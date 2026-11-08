@@ -2,6 +2,10 @@ import { fileURLToPath } from "node:url";
 
 import { defineConfig } from "vitest/config";
 
+import { jobCpus } from "./scripts/ci/job-cpus.mjs";
+
+const cpus = jobCpus(process.env);
+
 /**
  * Tests live next to the code they cover (`*.test.ts`).
  *
@@ -25,6 +29,8 @@ export default defineConfig({
   test: {
     server: { deps: { inline: [/@strudel\//] } },
     environment: "node",
+    // Company runners have a CPU quota far below the host's count (#2774).
+    ...(cpus === undefined ? {} : { maxWorkers: cpus }),
     // `scripts/` is plain JSDoc-typed .mjs rather than a workspace package,
     // so it needs its own entry: the claude-bot Telegram bridge keeps its
     // wire contract there (scripts/bots/protocol.mjs) precisely so it can be

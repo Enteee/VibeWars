@@ -1,6 +1,7 @@
 import { ASCENT_ROUNDS, type QueueMode } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
 import { ascentMapName } from "../net/maps.js";
 import { teamColour } from "../render/arena-snapshot.js";
 import { cssColour } from "./character-preview.js";
@@ -19,13 +20,6 @@ import { relayLine } from "./relay-section.js";
  * eat the click.
  */
 
-export const MATCH_FOUND = "Match found";
-/** *Stay together*, disabled, once the match's host is gone (#882). */
-export const HOST_LEFT = "The host left";
-/** #707's wording, as the menu says it for a join. */
-export const UNREACHABLE = "Couldn't reach the lobby servers";
-/** The tab title while a match found in a background tab is unseen. */
-export const MATCH_FOUND_TITLE = "Match found!";
 const TITLE_FLASH_MS = 1000;
 
 /** "4v4". */
@@ -35,7 +29,7 @@ export function modeLabel(mode: QueueMode): string {
 
 /** "Random Arena 4v4 · Mhenlo". */
 export function queueTitle(mode: QueueMode, characterName: string): string {
-  return `Random Arena ${modeLabel(mode)} · ${characterName}`;
+  return t("queue.title", { mode: modeLabel(mode), character: characterName });
 }
 
 /** Time waited as m:ss. */
@@ -87,7 +81,7 @@ export function streakLine(streak: number): string | undefined {
   if (streak <= 0) {
     return undefined;
   }
-  return `${String(streak)} ${streak === 1 ? "win" : "wins"} in a row this visit (not a rating)`;
+  return t("queue.streak", { count: streak });
 }
 
 /**
@@ -153,14 +147,18 @@ export interface QueueLines {
 export function stayButton(offer: StayOffer): { label: string; enabled: boolean } {
   switch (offer.kind) {
     case "offer":
-      return { label: `Stay together (${String(offer.secondsLeft)})`, enabled: true };
+      return {
+        label: t("queue.stayTogetherCountdown", { seconds: offer.secondsLeft }),
+        enabled: true,
+      };
     case "waiting":
       return {
-        label: `Waiting for your team (${String(offer.secondsLeft)})`,
+        label: t("queue.waitingForTeam", { seconds: offer.secondsLeft }),
         enabled: false,
       };
     case "host-left":
-      return { label: HOST_LEFT, enabled: false };
+      // Disabled, once the match's host is gone (#882).
+      return { label: t("queue.hostLeft"), enabled: false };
   }
 }
 
@@ -214,25 +212,24 @@ export function teamEndLine(
   seconds: number,
   ascentRound: number | null,
 ): { text: string; button: string } {
-  const left = `${String(seconds)} s`;
   switch (action) {
     case "requeue":
       if (ascentRound === null) {
-        return { text: `Next match in ${left}`, button: "Leave" };
+        return { text: t("queue.nextMatchIn", { seconds }), button: t("queue.leave") };
       }
       return ascentRound === ASCENT_ROUNDS - 1
         ? {
-            text: `You hold the ${ascentMapName(ascentRound)} · defending in ${left}`,
-            button: "Leave",
+            text: t("queue.defending", { map: ascentMapName(ascentRound), seconds }),
+            button: t("queue.leave"),
           }
         : {
-            text: `Ascending to ${ascentMapName(ascentRound + 1)} in ${left}`,
-            button: "Leave",
+            text: t("queue.ascending", { map: ascentMapName(ascentRound + 1), seconds }),
+            button: t("queue.leave"),
           };
     case "menu":
-      return { text: `Back to menu in ${left}`, button: "Now" };
+      return { text: t("queue.backToMenuIn", { seconds }), button: t("queue.now") };
     case "lobby":
-      return { text: `Back to lobby in ${left}`, button: "Now" };
+      return { text: t("queue.backToLobbyIn", { seconds }), button: t("queue.now") };
   }
 }
 
@@ -252,8 +249,8 @@ export function versusTeams(snapshot: LobbySnapshot): VersusTeams {
     theirs: snapshot.players.filter((p) => p.team === 1 - ours),
     countdown:
       snapshot.countdownSeconds === null
-        ? "Waiting for everyone to arrive"
-        : `Starting in ${String(snapshot.countdownSeconds)}`,
+        ? t("queue.waitingForEveryone")
+        : t("queue.startingIn", { seconds: snapshot.countdownSeconds }),
   };
 }
 
@@ -282,13 +279,19 @@ export function renderVersusSplash(
   const column = (players: readonly LobbyPlayerSnapshot[], isOurs: boolean): HTMLElement => {
     const node = h("div", `versus-team ${isOurs ? "is-ours" : "is-theirs"}`);
     node.style.setProperty("--team-colour", cssColour(teamColour(isOurs ? "ally" : "enemy")));
-    node.appendChild(h("h3", "versus-team-title", isOurs ? "Your team" : "Their team"));
+    node.appendChild(
+      h("h3", "versus-team-title", t(isOurs ? "queue.yourTeam" : "queue.theirTeam")),
+    );
     for (const player of players) {
       node.appendChild(splashRow(player));
     }
     return node;
   };
-  teams.append(column(ours, true), h("span", "versus-vs", "vs"), column(theirs, false));
+  teams.append(
+    column(ours, true),
+    h("span", "versus-vs", t("queue.versus")),
+    column(theirs, false),
+  );
   splash.append(teams, h("div", "versus-countdown", countdown));
   return splash;
 }
@@ -302,10 +305,12 @@ export function flashTitle(doc: Document): () => void {
     return () => undefined;
   }
   const original = doc.title;
+  // The tab title while a match found in a background tab is unseen.
+  const found = t("queue.matchFoundTitle");
   const timer = setInterval(() => {
-    doc.title = doc.title === MATCH_FOUND_TITLE ? original : MATCH_FOUND_TITLE;
+    doc.title = doc.title === found ? original : found;
   }, TITLE_FLASH_MS);
-  doc.title = MATCH_FOUND_TITLE;
+  doc.title = found;
   const stop = (): void => {
     clearInterval(timer);
     doc.removeEventListener("visibilitychange", onVisible);
@@ -343,9 +348,9 @@ export function mountQueueScreen(
     body.append(relay);
   }
   const splashHost = h("div", "queue-splash");
-  const stay = button("Stay together", "primary", callbacks.onStayTogether);
-  const again = button("Queue again", "primary", callbacks.onQueueAgain);
-  const back = button("Back to menu", "primary", callbacks.onBack);
+  const stay = button(t("queue.stayTogether"), "primary", callbacks.onStayTogether);
+  const again = button(t("queue.queueAgain"), "primary", callbacks.onQueueAgain);
+  const back = button(t("queue.backToMenu"), "primary", callbacks.onBack);
   const actions = h("div", "menu-row queue-actions");
   actions.append(stay, again, back);
   panel.append(body, splashHost, actions);
@@ -392,12 +397,12 @@ export function mountQueueScreen(
         case "splash":
           matchFound();
           set(
-            { status: MATCH_FOUND, action: "none" },
+            { status: t("queue.matchFound"), action: "none" },
             renderVersusSplash(view.snapshot, options.mapName),
           );
           return;
         case "refused":
-          set({ status: "Could not join the match", problem: view.notice, action: "back" });
+          set({ status: t("queue.couldNotJoin"), problem: view.notice, action: "back" });
           return;
         case "ended":
           set(endedLines(view.outcome, view.streak, view.stay));

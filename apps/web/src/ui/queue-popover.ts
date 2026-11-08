@@ -89,7 +89,7 @@ export function queueStatus(
 function randomDetail(state: QueueState | undefined): string | undefined {
   switch (state?.kind) {
     case "searching":
-      return t("queue.searching", { searching: state.searching, needed: state.needed });
+      return t("queue.searchingCount", { searching: state.searching, needed: state.needed });
     case "forming":
     case "in-lobby":
       return t("queue.matchFound");
@@ -132,7 +132,7 @@ export function queueButton(parent: HTMLElement, onLeave: () => void): QueueButt
     const waited = h("div", "queue-window-waited");
     const detail = h("div", "queue-window-detail");
     const hostOnly = h("p", "queue-window-host-only", t("queue.hostOnly"));
-    const leave = button(t("queue.leave"), "", () => {
+    const leave = button(t("queue.leaveQueue"), "", () => {
       close();
       onLeave();
     });

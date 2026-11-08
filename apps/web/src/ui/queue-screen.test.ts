@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import type { LobbySnapshot } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
 import {
-  HOST_LEFT,
   endedLines,
   modeLabel,
   nextAscentRound,
@@ -98,7 +98,10 @@ describe("stayButton (#882)", () => {
       label: "Waiting for your team (9)",
       enabled: false,
     });
-    expect(stayButton({ kind: "host-left" })).toEqual({ label: HOST_LEFT, enabled: false });
+    expect(stayButton({ kind: "host-left" })).toEqual({
+      label: t("queue.hostLeft"),
+      enabled: false,
+    });
   });
 });
 

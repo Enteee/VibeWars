@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import type { PartyMember, RailParty } from "./lobby-window.js";
-import { PARTY_ALONE } from "./lobby-window.js";
 import { queueButton } from "./queue-popover.js";
 import { lobbyButton, lobbyButtonName } from "./topbar.js";
 import { attachTopbarPopover, closeTopbarPopover, isTopbarPopoverOpen } from "./topbar-popover.js";
@@ -321,9 +321,17 @@ describe("the top bar's Lobby (#2385)", () => {
   it("says it is just you, alone or in no lobby yet", () => {
     const { parent, button, setParty } = mount();
     button.fire("click");
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", PARTY_ALONE]);
+    expect(parent.children[0]?.texts()).toEqual([
+      "Lobby",
+      "Copy invite link",
+      t("lobbyWindow.alone"),
+    ]);
     setParty(party(member("me", true)));
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", PARTY_ALONE]);
+    expect(parent.children[0]?.texts()).toEqual([
+      "Lobby",
+      "Copy invite link",
+      t("lobbyWindow.alone"),
+    ]);
   });
 
   it("lists who is in under the lobby's controls, repainting while open on a join or a leave", () => {
@@ -347,7 +355,11 @@ describe("the top bar's Lobby (#2385)", () => {
     // Open, the window shows the join; the badge need not pulse.
     expect(badge.classes.has("is-pulsing")).toBe(false);
     setParty(party(member("me", true)));
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", PARTY_ALONE]);
+    expect(parent.children[0]?.texts()).toEqual([
+      "Lobby",
+      "Copy invite link",
+      t("lobbyWindow.alone"),
+    ]);
   });
 });
 

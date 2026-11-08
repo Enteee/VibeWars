@@ -1,17 +1,9 @@
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { t } from "../i18n/index.js";
 import { LOBBY_ICON } from "./icons.js";
 
-import {
-  PARTY_ALONE,
-  PARTY_CLOSED,
-  PARTY_RECONNECTING,
-  isAlone,
-  lobbyWindowBody,
-  memberClass,
-  partyOf,
-  showsClosed,
-} from "./lobby-window.js";
+import { isAlone, lobbyWindowBody, memberClass, partyOf, showsClosed } from "./lobby-window.js";
 
 /** Just enough of an element for the window and the queue line: its tag, class, picture and parts. */
 class FakeElement {
@@ -130,7 +122,7 @@ describe("the Lobby window's party (#1526, #2385)", () => {
     expect(friend.away).toBe(true);
     expect(memberClass(friend)).toBe("party-member is-away");
     expect(memberClass(me)).toBe("party-member is-self");
-    expect(PARTY_RECONNECTING).toBe("Reconnecting…");
+    expect(t("lobbyWindow.reconnecting")).toBe("Reconnecting…");
     // Still in the party: it may yet come back.
     expect(isAlone(party)).toBe(false);
   });
@@ -162,18 +154,18 @@ describe("the Lobby window's party (#1526, #2385)", () => {
       LOBBY_ICON.closed,
       "",
     ]);
-    expect(text).toBe(PARTY_CLOSED);
+    expect(text).toBe(t("lobbyWindow.closed"));
   });
 
   it("says it is just you (#2385, #2642)", () => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
-    expect(PARTY_ALONE).toBe("Just you.");
+    expect(t("lobbyWindow.alone")).toBe("Just you.");
     const alone = lobbyWindowBody(partyOf(lobby([player("me")]), null));
     expect((alone as unknown as FakeElement).find("lobby-window-alone")?.textContent).toBe(
-      PARTY_ALONE,
+      t("lobbyWindow.alone"),
     );
     const none = lobbyWindowBody(undefined) as unknown as FakeElement;
-    expect(none.find("lobby-window-alone")?.textContent).toBe(PARTY_ALONE);
+    expect(none.find("lobby-window-alone")?.textContent).toBe(t("lobbyWindow.alone"));
   });
 
   it("says how long a queued party has looked, and leaves the queue itself to the top bar's icon (#1766, #2743)", () => {

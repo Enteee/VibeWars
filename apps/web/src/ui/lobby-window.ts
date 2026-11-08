@@ -1,6 +1,7 @@
 import type { LobbyMode } from "@vibewars/game-protocol";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
 import { LOBBY_ICON } from "./icons.js";
 import { h } from "./kit.js";
 
@@ -33,13 +34,6 @@ export interface RailParty {
   /** Its players a side (#2104): in a Hosted Game, the host's pick. */
   readonly teamSize: number;
 }
-
-/** Beside a member whose connection dropped, while its seat is held (#1764). */
-export const PARTY_RECONNECTING = "Reconnecting…";
-/** A guest's word that its host has the lobby closed (#1682). */
-export const PARTY_CLOSED = "Lobby closed";
-/** The window with nobody else in the lobby (#2385): it always has something to say. */
-export const PARTY_ALONE = "Just you.";
 
 /**
  * `snapshot`'s party, queued for `queuedMs` or not: its people, in lobby
@@ -90,17 +84,19 @@ export function isAlone(party: RailParty | undefined): boolean {
 export function lobbyWindowBody(party: RailParty | undefined): HTMLElement {
   const body = h("div", "lobby-window-body");
   if (party === undefined || isAlone(party)) {
-    body.appendChild(h("p", "lobby-window-alone", PARTY_ALONE));
+    // The window with nobody else in the lobby (#2385): it always has something to say.
+    body.appendChild(h("p", "lobby-window-alone", t("lobbyWindow.alone")));
   } else {
     const list = h("ul", "party-members");
     for (const member of party.members) {
       const row = h("li", memberClass(member));
       row.appendChild(h("span", "party-member-name", member.name));
       if (member.isHost) {
-        row.appendChild(h("span", "party-host-mark", "Host"));
+        row.appendChild(h("span", "party-host-mark", t("lobbyWindow.host")));
       }
       if (member.away) {
-        row.appendChild(h("span", "party-member-away", PARTY_RECONNECTING));
+        // Beside a member whose connection dropped, while its seat is held (#1764).
+        row.appendChild(h("span", "party-member-away", t("lobbyWindow.reconnecting")));
       }
       list.appendChild(row);
     }
@@ -113,7 +109,7 @@ export function lobbyWindowBody(party: RailParty | undefined): HTMLElement {
     glyph.alt = "";
     glyph.src = LOBBY_ICON.closed;
     const closed = body.appendChild(h("span", "party-closed"));
-    closed.append(glyph, PARTY_CLOSED);
+    closed.append(glyph, t("lobbyWindow.closed"));
   }
   return body;
 }
