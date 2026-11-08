@@ -39,6 +39,8 @@ describe("queueStatus (#2743)", () => {
     });
     expect(random({ kind: "forming", group: GROUP })?.detail).toBe("Match found");
     expect(random({ kind: "fell-through" })?.detail).toBe("Match fell through, searching again");
+    const first = random({ kind: "searching", searching: 0, teams: 0, needed: 2, waitedMs: 0 });
+    expect(first?.detail).toBeUndefined();
   });
 
   it("names a Team Arena's size and how many teams search, the host's to leave", () => {

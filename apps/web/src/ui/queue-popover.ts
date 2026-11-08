@@ -89,7 +89,10 @@ export function queueStatus(
 function randomDetail(state: QueueState | undefined): string | undefined {
   switch (state?.kind) {
     case "searching":
-      return t("queue.searchingCount", { searching: state.searching, needed: state.needed });
+      // You always count yourself, so none is no tick heard yet.
+      return state.searching === 0
+        ? undefined
+        : t("queue.searchingCount", { searching: state.searching, needed: state.needed });
     case "forming":
     case "in-lobby":
       return t("queue.matchFound");
