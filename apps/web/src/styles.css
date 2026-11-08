@@ -1399,7 +1399,7 @@ body {
 /* What a lobby screen plays, to look at while in the Random Arena queue (#2781). */
 .screen-queued-maps ul {
   margin: 0.3rem 0 0;
-  padding-left: 1.2rem;
+  padding-inline-start: 1.2rem;
 }
 
 .field {
