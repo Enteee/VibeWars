@@ -8,6 +8,7 @@ import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/
 
 import { allWallSegments } from "./geometry.js";
 import { MapValidationError, mapDataSchema, validateMapData, type Wall } from "./schema.js";
+import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 
 const validMap = {
   id: "arena-test",
@@ -17,10 +18,14 @@ const validMap = {
   teams: 2,
   width: 100,
   height: 100,
+  layers: 1,
+  decks: [],
+  transitions: [],
   walls: [
-    { kind: "rect", x: 10, y: 10, width: 5, height: 5 },
+    { kind: "rect", layer: 0, x: 10, y: 10, width: 5, height: 5 },
     {
       kind: "polygon",
+      layer: 0,
       points: [
         { x: 0, y: 0 },
         { x: 10, y: 0 },
@@ -28,7 +33,7 @@ const validMap = {
       ],
     },
   ],
-  spawnPoints: [{ team: 0, position: { x: 1, y: 1 } }],
+  spawnPoints: [{ team: 0, layer: 0, position: { x: 50, y: 50 } }],
   gates: [],
   objectives: [],
 };
@@ -75,7 +80,7 @@ describe("validateMapData", () => {
         MapValidationError,
       );
     }
-    const third = { team: 2, position: { x: 50, y: 50 } };
+    const third = { team: 2, layer: 0, position: { x: 50, y: 50 } };
     const threeTeams = { ...validMap, spawnPoints: [...validMap.spawnPoints, third] };
     expect(() => validateMapData(threeTeams)).toThrow(/spawn 1 is team 2, not one of 2/);
     expect(validateMapData({ ...threeTeams, teams: 3 }).teams).toBe(3);
@@ -99,7 +104,7 @@ describe("validateMapData", () => {
     expect(() =>
       validateMapData({
         ...validMap,
-        walls: [{ kind: "rect", x: 0, y: 0, width: 0, height: 5 }],
+        walls: [{ kind: "rect", layer: 0, x: 0, y: 0, width: 0, height: 5 }],
       }),
     ).toThrow(MapValidationError);
   });
@@ -111,6 +116,7 @@ describe("validateMapData", () => {
         walls: [
           {
             kind: "polygon",
+            layer: 0,
             points: [
               { x: 0, y: 0 },
               { x: 1, y: 1 },
@@ -294,10 +300,10 @@ describe("every map's walls", () => {
   }
 
   it("finds an overlap where there is one", () => {
-    const a = outline({ kind: "rect", x: 0, y: 0, width: 10, height: 10 });
-    const plus = outline({ kind: "rect", x: 4, y: -5, width: 2, height: 20 });
-    const within = outline({ kind: "rect", x: 2, y: 2, width: 2, height: 2 });
-    const beside = outline({ kind: "rect", x: 10, y: 0, width: 5, height: 10 });
+    const a = outline({ kind: "rect", layer: 0, x: 0, y: 0, width: 10, height: 10 });
+    const plus = outline({ kind: "rect", layer: 0, x: 4, y: -5, width: 2, height: 20 });
+    const within = outline({ kind: "rect", layer: 0, x: 2, y: 2, width: 2, height: 2 });
+    const beside = outline({ kind: "rect", layer: 0, x: 10, y: 0, width: 5, height: 10 });
     expect(edges(a).some((e) => edges(plus).some((f) => cross(e, f)))).toBe(true);
     expect(within.some((p) => strictlyInside(p, a))).toBe(true);
     expect(edges(a).some((e) => edges(beside).some((f) => cross(e, f)))).toBe(false);
@@ -329,18 +335,19 @@ describe("resurrection shrines (#1186)", () => {
   const priestMap = {
     ...validMap,
     mode: "priest-annihilation",
-    walls: [{ kind: "rect", x: 45, y: 0, width: 10, height: 40 }],
+    walls: [{ kind: "rect", layer: 0, x: 45, y: 0, width: 10, height: 40 }],
     spawnPoints: [
-      { team: 0, position: { x: 20, y: 50 } },
-      { team: 1, position: { x: 80, y: 50 } },
+      { team: 0, layer: 0, position: { x: 20, y: 50 } },
+      { team: 1, layer: 0, position: { x: 80, y: 50 } },
     ],
     objectives: [
-      { kind: "resurrection-shrine", team: 0, position: { x: 20, y: 80 } },
-      { kind: "resurrection-shrine", team: 1, position: { x: 80, y: 20 } },
+      { kind: "resurrection-shrine", layer: 0, team: 0, position: { x: 20, y: 80 } },
+      { kind: "resurrection-shrine", layer: 0, team: 1, position: { x: 80, y: 20 } },
     ],
   };
   const shrine = (team: number, x: number, y: number) => ({
     kind: "resurrection-shrine",
+    layer: 0,
     team,
     position: { x, y },
   });
@@ -387,16 +394,17 @@ describe("resurrection shrines (#1186)", () => {
 describe("guild battle maps (#1222)", () => {
   const objective = (kind: string, team: number, x: number, y: number) => ({
     kind,
+    layer: 0,
     team,
     position: { x, y },
   });
   const guildMap = {
     ...validMap,
     mode: "guild-battle",
-    walls: [{ kind: "rect", x: 45, y: 0, width: 10, height: 40 }],
+    walls: [{ kind: "rect", layer: 0, x: 45, y: 0, width: 10, height: 40 }],
     spawnPoints: [
-      { team: 0, position: { x: 20, y: 50 } },
-      { team: 1, position: { x: 80, y: 50 } },
+      { team: 0, layer: 0, position: { x: 20, y: 50 } },
+      { team: 1, layer: 0, position: { x: 80, y: 50 } },
     ],
     objectives: [
       objective("resurrection-shrine", 0, 20, 80),
@@ -405,7 +413,7 @@ describe("guild battle maps (#1222)", () => {
       objective("guild-lord", 1, 80, 80),
       objective("flag-spawn", 0, 30, 60),
       objective("flag-spawn", 1, 70, 60),
-      { kind: "flag-stand", position: { x: 50, y: 70 } },
+      { kind: "flag-stand", layer: 0, position: { x: 50, y: 70 } },
     ],
   };
 
@@ -423,7 +431,10 @@ describe("guild battle maps (#1222)", () => {
     expect(() =>
       validateMapData({
         ...guildMap,
-        objectives: [...guildMap.objectives, { kind: "flag-stand", position: { x: 50, y: 80 } }],
+        objectives: [
+          ...guildMap.objectives,
+          { kind: "flag-stand", layer: 0, position: { x: 50, y: 80 } },
+        ],
       }),
     ).toThrow(/guild-battle map has 2 flag stands, not one/);
   });
@@ -444,7 +455,7 @@ describe("guild battle maps (#1222)", () => {
     expect(() =>
       validateMapData({
         ...validMap,
-        objectives: [{ kind: "flag-stand", position: { x: 50, y: 50 } }],
+        objectives: [{ kind: "flag-stand", layer: 0, position: { x: 50, y: 50 } }],
       }),
     ).toThrow(/annihilation map has no flag stand/);
     expect(() =>
@@ -458,7 +469,7 @@ describe("guild battle maps (#1222)", () => {
         ...guildMap,
         objectives: [
           ...guildMap.objectives.filter((candidate) => candidate.kind !== "flag-stand"),
-          { kind: "flag-stand", position: { x: 50, y: 20 } },
+          { kind: "flag-stand", layer: 0, position: { x: 50, y: 20 } },
         ],
       }),
     ).toThrow(/a body clear of every wall/);
@@ -523,6 +534,7 @@ describe("guild battle maps (#1222)", () => {
 describe("guild battle guards (#1223)", () => {
   const guard = (team: number, role: string, x: number, y: number) => ({
     kind: "guard",
+    layer: 0,
     team,
     role,
     position: { x, y },
@@ -532,17 +544,17 @@ describe("guild battle guards (#1223)", () => {
     mode: "guild-battle",
     walls: [],
     spawnPoints: [
-      { team: 0, position: { x: 20, y: 50 } },
-      { team: 1, position: { x: 80, y: 50 } },
+      { team: 0, layer: 0, position: { x: 20, y: 50 } },
+      { team: 1, layer: 0, position: { x: 80, y: 50 } },
     ],
     objectives: [
-      { kind: "resurrection-shrine", team: 0, position: { x: 20, y: 80 } },
-      { kind: "resurrection-shrine", team: 1, position: { x: 80, y: 20 } },
-      { kind: "guild-lord", team: 0, position: { x: 20, y: 20 } },
-      { kind: "guild-lord", team: 1, position: { x: 80, y: 80 } },
-      { kind: "flag-spawn", team: 0, position: { x: 30, y: 60 } },
-      { kind: "flag-spawn", team: 1, position: { x: 70, y: 60 } },
-      { kind: "flag-stand", position: { x: 50, y: 70 } },
+      { kind: "resurrection-shrine", layer: 0, team: 0, position: { x: 20, y: 80 } },
+      { kind: "resurrection-shrine", layer: 0, team: 1, position: { x: 80, y: 20 } },
+      { kind: "guild-lord", layer: 0, team: 0, position: { x: 20, y: 20 } },
+      { kind: "guild-lord", layer: 0, team: 1, position: { x: 80, y: 80 } },
+      { kind: "flag-spawn", layer: 0, team: 0, position: { x: 30, y: 60 } },
+      { kind: "flag-spawn", layer: 0, team: 1, position: { x: 70, y: 60 } },
+      { kind: "flag-stand", layer: 0, position: { x: 50, y: 70 } },
     ],
   };
 
@@ -596,13 +608,13 @@ describe("relic run maps (#1374)", () => {
     mode: "relic-run",
     walls: [],
     spawnPoints: [
-      { team: 0, position: { x: 20, y: 50 } },
-      { team: 1, position: { x: 80, y: 50 } },
+      { team: 0, layer: 0, position: { x: 20, y: 50 } },
+      { team: 1, layer: 0, position: { x: 80, y: 50 } },
     ],
     objectives: [
-      { kind: "relic-spawn", team: 0, position: { x: 20, y: 30 } },
-      { kind: "relic-spawn", team: 1, position: { x: 80, y: 70 } },
-      { kind: "altar", position: { x: 50, y: 50 } },
+      { kind: "relic-spawn", layer: 0, team: 0, position: { x: 20, y: 30 } },
+      { kind: "relic-spawn", layer: 0, team: 1, position: { x: 80, y: 70 } },
+      { kind: "altar", layer: 0, position: { x: 50, y: 50 } },
     ],
   };
 
@@ -620,7 +632,10 @@ describe("relic run maps (#1374)", () => {
     expect(() =>
       validateMapData({
         ...relicMap,
-        objectives: [...relicMap.objectives, { kind: "altar", position: { x: 50, y: 70 } }],
+        objectives: [
+          ...relicMap.objectives,
+          { kind: "altar", layer: 0, position: { x: 50, y: 70 } },
+        ],
       }),
     ).toThrow(/relic-run map has 2 altars, not one/);
   });
@@ -638,15 +653,19 @@ describe("relic run maps (#1374)", () => {
 
   it("refuses relics on a map of any other mode", () => {
     expect(() =>
-      validateMapData({ ...validMap, objectives: [{ kind: "altar", position: { x: 50, y: 50 } }] }),
+      validateMapData({
+        ...validMap,
+        objectives: [{ kind: "altar", layer: 0, position: { x: 50, y: 50 } }],
+      }),
     ).toThrow(/annihilation map has no altar/);
   });
 });
 
 describe("capture points maps (#1378)", () => {
-  const point = (x: number, y: number) => ({ kind: "capture-point", position: { x, y } });
+  const point = (x: number, y: number) => ({ kind: "capture-point", layer: 0, position: { x, y } });
   const base = (team: number, x: number) => ({
     kind: "resurrection-shrine",
+    layer: 0,
     team,
     position: { x, y: 50 },
   });
@@ -656,8 +675,8 @@ describe("capture points maps (#1378)", () => {
     mode: "capture-points",
     walls: [],
     spawnPoints: [
-      { team: 0, position: { x: 20, y: 50 } },
-      { team: 1, position: { x: 80, y: 50 } },
+      { team: 0, layer: 0, position: { x: 20, y: 50 } },
+      { team: 1, layer: 0, position: { x: 80, y: 50 } },
     ],
     objectives: [point(30, 30), point(50, 50), point(70, 70), ...bases],
   };
@@ -702,13 +721,13 @@ describe("king of the hill maps (#1377)", () => {
     ghostLevel: 24,
     walls: [],
     spawnPoints: [
-      { team: 0, position: { x: 20, y: 50 } },
-      { team: 1, position: { x: 80, y: 50 } },
+      { team: 0, layer: 0, position: { x: 20, y: 50 } },
+      { team: 1, layer: 0, position: { x: 80, y: 50 } },
     ],
     objectives: [
-      { kind: "ghost-spawn", team: 0, position: { x: 20, y: 30 } },
-      { kind: "ghost-spawn", team: 1, position: { x: 80, y: 70 } },
-      { kind: "altar", position: { x: 50, y: 50 } },
+      { kind: "ghost-spawn", layer: 0, team: 0, position: { x: 20, y: 30 } },
+      { kind: "ghost-spawn", layer: 0, team: 1, position: { x: 80, y: 70 } },
+      { kind: "altar", layer: 0, position: { x: 50, y: 50 } },
     ],
   };
 
@@ -748,7 +767,7 @@ describe("ghost maps (#2689)", () => {
   const ghostMap = {
     ...validMap,
     ghostLevel: 20,
-    objectives: [{ kind: "ghost-spawn", team: 0, position: { x: 50, y: 50 } }],
+    objectives: [{ kind: "ghost-spawn", layer: 0, team: 0, position: { x: 50, y: 50 } }],
   };
 
   it("accepts one ghost spawn per spawning team on a map of any mode with a ghost level", () => {
@@ -770,7 +789,7 @@ describe("ghost maps (#2689)", () => {
   describe("gates (#2691)", () => {
     const gate = {
       id: "north",
-      wall: { kind: "rect", x: 80, y: 40, width: 8, height: 40 },
+      wall: { kind: "rect", layer: 0, x: 80, y: 40, width: 8, height: 40 },
       plate: { x: 50, y: 50 },
       team: null,
     };
@@ -787,5 +806,162 @@ describe("ghost maps (#2689)", () => {
         /gate north/,
       );
     });
+  });
+});
+
+describe("layers, decks and transitions (#2826, ADR-0051)", () => {
+  const ramp = (from: number, to: number, x = 350) => ({
+    from,
+    to,
+    area: { kind: "rect", x, y: 300, width: 170, height: 200 },
+  });
+  const deck = (id: string, layer: number) => ({
+    id,
+    layer,
+    footprint: { kind: "rect", x: 500, y: 300, width: 600, height: 200 },
+  });
+  const accepts = (overrides: object): void => {
+    expect(() => validateMapData({ ...layerTest, ...overrides })).not.toThrow();
+  };
+  const refuses = (overrides: object, message: RegExp): void => {
+    expect(() => validateMapData({ ...layerTest, ...overrides })).toThrow(message);
+  };
+  const spawnAt = (layer: number, x: number, y: number) => [
+    ...layerTest.spawnPoints,
+    { team: 0, layer, position: { x, y } },
+  ];
+
+  it("validates the test map, which is out of the rotation", () => {
+    expect(validateMapData(layerTest).layers).toBe(2);
+    expect(validateMapData(layerTest).decks).toHaveLength(1);
+  });
+
+  it("requires every new field", () => {
+    const { layers: _layers, ...noLayers } = layerTest;
+    expect(() => validateMapData(noLayers)).toThrow(/layers/);
+    const [first, ...rest] = layerTest.spawnPoints;
+    const { layer: _layer, ...unlayered } = first ?? { layer: 0 };
+    refuses({ spawnPoints: [unlayered, ...rest] }, /spawnPoints\.0\.layer/);
+  });
+
+  it("refuses a layer outside the map's, naming the field", () => {
+    refuses({ spawnPoints: spawnAt(2, 600, 400) }, /spawnPoints\.4\.layer: layer 2/);
+    refuses(
+      { walls: [{ kind: "rect", layer: 2, x: 780, y: 120, width: 40, height: 40 }] },
+      /walls\.0\.layer: layer 2/,
+    );
+    refuses(
+      { objectives: [], mode: "annihilation", decks: [deck("a", 2)] },
+      /decks\.0\.layer: layer 2/,
+    );
+    refuses(
+      { transitions: [...layerTest.transitions, ramp(2, 3)] },
+      /transitions\.2\.from: layer 2/,
+    );
+    refuses({ transitions: [...layerTest.transitions, ramp(1, 2)] }, /transitions\.2\.to: layer 2/);
+  });
+
+  it("refuses a transition that does not go one layer up", () => {
+    refuses(
+      { transitions: [...layerTest.transitions, ramp(1, 0)] },
+      /transitions\.2\.to: .*not one above/,
+    );
+    refuses(
+      { layers: 3, transitions: [...layerTest.transitions, ramp(0, 2)] },
+      /transitions\.2\.to: .*not one above/,
+    );
+  });
+
+  it("refuses a transition outside the map", () => {
+    refuses(
+      { transitions: [...layerTest.transitions, ramp(0, 1, 1500)] },
+      /transitions\.2\.area: .*outside the map/,
+    );
+  });
+
+  it("refuses a transition from a deck that touches none", () => {
+    refuses(
+      {
+        layers: 3,
+        decks: [...layerTest.decks, deck("upper", 2)],
+        transitions: [
+          ...layerTest.transitions,
+          { from: 1, to: 2, area: { kind: "rect", x: 100, y: 100, width: 50, height: 50 } },
+        ],
+      },
+      /transitions\.2\.from: transition 2 touches no deck on layer 1/,
+    );
+  });
+
+  it("refuses a deck on the ground, a duplicate id, and a deck no transition reaches", () => {
+    refuses({ decks: [...layerTest.decks, deck("ground", 0)] }, /decks\.1\.layer: deck ground/);
+    refuses({ decks: [...layerTest.decks, deck("bridge", 1)] }, /decks\.1\.id: deck id bridge/);
+    refuses({ transitions: [] }, /decks\.0: deck bridge has no transition/);
+    refuses(
+      {
+        transitions: [
+          { from: 0, to: 1, area: { kind: "rect", x: 10, y: 10, width: 50, height: 50 } },
+        ],
+      },
+      /decks\.0: deck bridge has no transition/,
+    );
+  });
+
+  it("refuses a layer above the ground with no deck", () => {
+    refuses(
+      { decks: [], spawnPoints: layerTest.spawnPoints.slice(0, 2) },
+      /layers: layer 1 has no deck/,
+    );
+  });
+
+  it("refuses a spawn off its layer's walkable area or on its walls", () => {
+    refuses({ spawnPoints: spawnAt(1, 200, 100) }, /spawnPoints\.4: spawn 4 must be/);
+    refuses({ spawnPoints: spawnAt(1, 800, 400) }, /spawnPoints\.4: spawn 4 must be/);
+    refuses({ spawnPoints: spawnAt(1, 700, 301) }, /spawnPoints\.4: spawn 4 must be/);
+  });
+
+  it("walks a body across where a ramp meets the deck", () => {
+    accepts({ spawnPoints: spawnAt(1, 510, 400) });
+  });
+
+  it("refuses an objective or a plate that does not stand clear on its own layer", () => {
+    const capture = (layer: number, x: number, y: number) => ({
+      mode: "capture-points",
+      spawnPoints: layerTest.spawnPoints,
+      objectives: [
+        { kind: "capture-point", layer, position: { x, y } },
+        { kind: "resurrection-shrine", layer: 0, team: 0, position: { x: 200, y: 200 } },
+        { kind: "resurrection-shrine", layer: 0, team: 1, position: { x: 1400, y: 200 } },
+      ],
+    });
+    accepts(capture(1, 600, 400));
+    refuses(capture(1, 200, 100), /objectives\.0: objective 0 must be/);
+    refuses(capture(1, 800, 400), /objectives\.0: objective 0 must be/);
+    const plate = (layer: number, x: number, y: number) => ({
+      gates: [
+        {
+          id: "g",
+          team: null,
+          plate: { x, y },
+          wall: { kind: "rect", layer, x: 950, y: 320, width: 20, height: 20 },
+        },
+      ],
+    });
+    accepts(plate(1, 600, 400));
+    refuses(plate(1, 200, 100), /gates\.0: gate g/);
+    refuses(plate(1, 800, 400), /gates\.0: gate g/);
+  });
+
+  it("reads only a position's own layer for clearance", () => {
+    // Layer 1's wall stands at (800, 420): on the ground the spot is clear.
+    accepts({ spawnPoints: spawnAt(0, 800, 420) });
+    accepts({
+      walls: [
+        { kind: "rect", layer: 0, x: 780, y: 400, width: 40, height: 40 },
+        { kind: "rect", layer: 1, x: 780, y: 400, width: 40, height: 40 },
+      ],
+      spawnPoints: layerTest.spawnPoints,
+    });
+    refuses({ spawnPoints: spawnAt(1, 782, 420) }, /spawnPoints\.4/);
   });
 });

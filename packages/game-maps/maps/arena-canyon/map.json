@@ -6,9 +6,13 @@
   "teams": 2,
   "width": 2800,
   "height": 1800,
+  "layers": 1,
+  "decks": [],
+  "transitions": [],
   "walls": [
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 899,
@@ -30,6 +34,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1901,
@@ -51,6 +56,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1224.2,
@@ -72,6 +78,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1575.8,
@@ -93,6 +100,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 600,
       "y": 300,
       "width": 100,
@@ -100,6 +108,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 2100,
       "y": 1400,
       "width": 100,
@@ -107,6 +116,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 480,
       "y": 1300,
       "width": 140,
@@ -114,6 +124,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 2180,
       "y": 420,
       "width": 140,
@@ -125,6 +136,7 @@
   "spawnPoints": [
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 220,
         "y": 700
@@ -132,6 +144,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 220,
         "y": 900
@@ -139,6 +152,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 220,
         "y": 1100
@@ -146,6 +160,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 350,
         "y": 900
@@ -153,6 +168,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 220,
         "y": 500
@@ -160,6 +176,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 220,
         "y": 1300
@@ -167,6 +184,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 350,
         "y": 700
@@ -174,6 +192,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 350,
         "y": 1100
@@ -181,6 +200,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2580,
         "y": 1100
@@ -188,6 +208,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2580,
         "y": 900
@@ -195,6 +216,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2580,
         "y": 700
@@ -202,6 +224,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2450,
         "y": 900
@@ -209,6 +232,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2580,
         "y": 1300
@@ -216,6 +240,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2580,
         "y": 500
@@ -223,6 +248,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2450,
         "y": 1100
@@ -230,6 +256,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 2450,
         "y": 700

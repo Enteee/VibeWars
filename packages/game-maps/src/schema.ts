@@ -4,10 +4,17 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   TWO_TEAM_MODES,
   type MatchMode,
+  type Segment,
 } from "@vibewars/game-core";
 import { z } from "zod";
 
-import { allWallSegments, wallToSegments } from "./geometry.js";
+import {
+  allWallSegments,
+  pointInShape,
+  shapeInBounds,
+  shapesOverlap,
+  wallToSegments,
+} from "./geometry.js";
 
 /**
  * Declarative map format (ADR-0006), validated with zod rather than
@@ -36,7 +43,31 @@ const polygonWallSchema = z.object({
   points: z.array(vec2Schema).min(3),
 });
 
-const wallSchema = z.discriminatedUnion("kind", [rectWallSchema, polygonWallSchema]);
+/** An area: a wall's outline, a deck's footprint or a transition's area (ADR-0051). */
+const shapeSchema = z.discriminatedUnion("kind", [rectWallSchema, polygonWallSchema]);
+
+/** A discrete layer (ADR-0051): 0 is the ground; the map's `layers` bounds it. */
+const layerSchema = z.number().int().nonnegative();
+
+/** A shape standing on one layer: walls on other layers do not count (ADR-0051). */
+const wallSchema = z.discriminatedUnion("kind", [
+  rectWallSchema.extend({ layer: layerSchema }),
+  polygonWallSchema.extend({ layer: layerSchema }),
+]);
+
+/** A walkable floor above the ground (ADR-0051). */
+const deckSchema = z.object({
+  id: z.string().min(1),
+  layer: layerSchema,
+  footprint: shapeSchema,
+});
+
+/** A ramp or stairs (ADR-0051): inside `area`, a body moves between `from` and `to`, one above. */
+const transitionSchema = z.object({
+  from: layerSchema,
+  to: layerSchema,
+  area: shapeSchema,
+});
 
 /** The most gates on a map (#2691): the match keeps paths for each way they can stand. */
 const MAX_GATES = 6;
@@ -51,6 +82,7 @@ const gateSchema = z.object({
 
 const spawnPointSchema = z.object({
   team: z.number().int().nonnegative(),
+  layer: layerSchema,
   position: vec2Schema,
 });
 
@@ -66,45 +98,54 @@ const spawnPointSchema = z.object({
 const objectiveSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("resurrection-shrine"),
+    layer: layerSchema,
     team: z.number().int().nonnegative(),
     position: vec2Schema,
   }),
   z.object({
     kind: z.literal("guild-lord"),
+    layer: layerSchema,
     team: z.number().int().nonnegative(),
     position: vec2Schema,
   }),
   z.object({
     kind: z.literal("guard"),
+    layer: layerSchema,
     team: z.number().int().nonnegative(),
     role: z.enum(GUARD_ROLE_IDS),
     position: vec2Schema,
   }),
   z.object({
     kind: z.literal("flag-spawn"),
+    layer: layerSchema,
     team: z.number().int().nonnegative(),
     position: vec2Schema,
   }),
   z.object({
     kind: z.literal("flag-stand"),
+    layer: layerSchema,
     position: vec2Schema,
   }),
   z.object({
     kind: z.literal("relic-spawn"),
+    layer: layerSchema,
     team: z.number().int().nonnegative(),
     position: vec2Schema,
   }),
   z.object({
     kind: z.literal("ghost-spawn"),
+    layer: layerSchema,
     team: z.number().int().nonnegative(),
     position: vec2Schema,
   }),
   z.object({
     kind: z.literal("altar"),
+    layer: layerSchema,
     position: vec2Schema,
   }),
   z.object({
     kind: z.literal("capture-point"),
+    layer: layerSchema,
     position: vec2Schema,
   }),
 ]);
@@ -172,6 +213,56 @@ export type TeamSize = (typeof TEAM_SIZES_ALL)[number];
 /** A body's radius: an objective stands clear of every wall and edge by one. */
 const BODY_RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
 
+/** Points round a body's rim tested against a deck's walkable area. */
+const RIM_SAMPLES = 32;
+
+/** What `standsClear` reads of a map. */
+interface LayeredMap {
+  readonly width: number;
+  readonly height: number;
+  readonly walls: readonly Wall[];
+  readonly decks: readonly Deck[];
+  readonly transitions: readonly Transition[];
+}
+
+/** Whether a body's whole circle at `position` is on `layer`'s walkable area (ADR-0051). */
+function onWalkableArea(map: LayeredMap, position: Vec2Data, layer: number): boolean {
+  const { x, y } = position;
+  if (layer === 0) {
+    return (
+      x >= BODY_RADIUS &&
+      y >= BODY_RADIUS &&
+      x <= map.width - BODY_RADIUS &&
+      y <= map.height - BODY_RADIUS
+    );
+  }
+  const areas = [
+    ...map.decks.filter((deck) => deck.layer === layer).map((deck) => deck.footprint),
+    ...map.transitions
+      .filter((transition) => transition.from === layer || transition.to === layer)
+      .map((transition) => transition.area),
+  ];
+  const rim = Array.from({ length: RIM_SAMPLES }, (_, index) => {
+    const angle = (index / RIM_SAMPLES) * 2 * Math.PI;
+    return { x: x + BODY_RADIUS * Math.cos(angle), y: y + BODY_RADIUS * Math.sin(angle) };
+  });
+  return [position, ...rim].every((point) => areas.some((area) => pointInShape(point, area)));
+}
+
+/** A body at `position` is on `layer`'s walkable area and a radius from that layer's walls, and from `extra`. */
+function standsClear(
+  map: LayeredMap,
+  position: Vec2Data,
+  layer: number,
+  extra: readonly Segment[] = [],
+): boolean {
+  const walls = allWallSegments(map.walls.filter((wall) => wall.layer === layer));
+  return (
+    onWalkableArea(map, position, layer) &&
+    [...walls, ...extra].every((wall) => distancePointToSegment(position, wall) >= BODY_RADIUS)
+  );
+}
+
 export const mapDataSchema = z
   .object({
     id: z
@@ -201,6 +292,12 @@ export const mapDataSchema = z
     teams: z.union([z.literal(2), z.literal(3)]),
     width: z.number().positive(),
     height: z.number().positive(),
+    /** How many layers it has (ADR-0051); layer 0 is the ground. */
+    layers: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+    /** Required, may be empty, as `gates`. */
+    decks: z.array(deckSchema),
+    /** Required, may be empty, as `gates`. */
+    transitions: z.array(transitionSchema),
     walls: z.array(wallSchema),
     spawnPoints: z.array(spawnPointSchema).min(1),
     /** Required, may be empty: a map without objectives says so. */
@@ -294,18 +391,106 @@ export const mapDataSchema = z
         });
       }
     }
-    const walls = allWallSegments(map.walls);
+    const layerInRange = (layer: number, path: (string | number)[]): void => {
+      if (layer >= map.layers) {
+        context.addIssue({
+          code: "custom",
+          path,
+          message: `layer ${String(layer)} is not one of the map's ${String(map.layers)}`,
+        });
+      }
+    };
+    map.walls.forEach((wall, index) => {
+      layerInRange(wall.layer, ["walls", index, "layer"]);
+    });
     map.gates.forEach((gate, index) => {
-      const { x, y } = gate.plate;
-      const onMap =
-        x >= BODY_RADIUS &&
-        y >= BODY_RADIUS &&
-        x <= map.width - BODY_RADIUS &&
-        y <= map.height - BODY_RADIUS;
-      const clear = [...walls, ...wallToSegments(gate.wall)].every(
-        (wall) => distancePointToSegment(gate.plate, wall) >= BODY_RADIUS,
+      layerInRange(gate.wall.layer, ["gates", index, "wall", "layer"]);
+    });
+    map.objectives.forEach((objective, index) => {
+      layerInRange(objective.layer, ["objectives", index, "layer"]);
+    });
+    map.spawnPoints.forEach((spawn, index) => {
+      layerInRange(spawn.layer, ["spawnPoints", index, "layer"]);
+      if (!standsClear(map, spawn.position, spawn.layer)) {
+        context.addIssue({
+          code: "custom",
+          path: ["spawnPoints", index],
+          message: `spawn ${String(index)} must be on its layer's walkable area and a body clear of that layer's walls`,
+        });
+      }
+    });
+    const deckIds = new Set<string>();
+    const touches = (transition: Transition, deck: Deck): boolean =>
+      (transition.to === deck.layer || transition.from === deck.layer) &&
+      shapesOverlap(transition.area, deck.footprint);
+    map.decks.forEach((deck, index) => {
+      layerInRange(deck.layer, ["decks", index, "layer"]);
+      if (deck.layer === 0) {
+        context.addIssue({
+          code: "custom",
+          path: ["decks", index, "layer"],
+          message: `deck ${deck.id} is on layer 0, the ground`,
+        });
+      }
+      if (deckIds.has(deck.id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["decks", index, "id"],
+          message: `deck id ${deck.id} is used twice`,
+        });
+      }
+      deckIds.add(deck.id);
+      const reached = map.transitions.some(
+        (transition) => transition.to === deck.layer && touches(transition, deck),
       );
-      if (!onMap || !clear || (gate.team !== null && !teams.has(gate.team))) {
+      if (!reached) {
+        context.addIssue({
+          code: "custom",
+          path: ["decks", index],
+          message: `deck ${deck.id} has no transition up to it touching it`,
+        });
+      }
+    });
+    map.transitions.forEach((transition, index) => {
+      layerInRange(transition.from, ["transitions", index, "from"]);
+      layerInRange(transition.to, ["transitions", index, "to"]);
+      if (transition.to !== transition.from + 1) {
+        context.addIssue({
+          code: "custom",
+          path: ["transitions", index, "to"],
+          message: `transition ${String(index)} goes to ${String(transition.to)}, not one above ${String(transition.from)}`,
+        });
+      }
+      if (!shapeInBounds(transition.area, map.width, map.height)) {
+        context.addIssue({
+          code: "custom",
+          path: ["transitions", index, "area"],
+          message: `transition ${String(index)}'s area is outside the map`,
+        });
+      }
+      if (
+        transition.from >= 1 &&
+        !map.decks.some((deck) => deck.layer === transition.from && touches(transition, deck))
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["transitions", index, "from"],
+          message: `transition ${String(index)} touches no deck on layer ${String(transition.from)}`,
+        });
+      }
+    });
+    for (let layer = 1; layer < map.layers; layer += 1) {
+      if (!map.decks.some((deck) => deck.layer === layer)) {
+        context.addIssue({
+          code: "custom",
+          path: ["layers"],
+          message: `layer ${String(layer)} has no deck`,
+        });
+      }
+    }
+    map.gates.forEach((gate, index) => {
+      const clear = standsClear(map, gate.plate, gate.wall.layer, wallToSegments(gate.wall));
+      if (!clear || (gate.team !== null && !teams.has(gate.team))) {
         context.addIssue({
           code: "custom",
           path: ["gates", index],
@@ -314,17 +499,8 @@ export const mapDataSchema = z
       }
     });
     map.objectives.forEach((objective, index) => {
-      const { x, y } = objective.position;
-      const inBounds =
-        x >= BODY_RADIUS &&
-        y >= BODY_RADIUS &&
-        x <= map.width - BODY_RADIUS &&
-        y <= map.height - BODY_RADIUS;
-      const clear = walls.every(
-        (wall) => distancePointToSegment(objective.position, wall) >= BODY_RADIUS,
-      );
       const teamed = !("team" in objective) || teams.has(objective.team);
-      if (!teamed || !inBounds || !clear) {
+      if (!teamed || !standsClear(map, objective.position, objective.layer)) {
         context.addIssue({
           code: "custom",
           path: ["objectives", index],
@@ -337,7 +513,10 @@ export const mapDataSchema = z
 export type Vec2Data = z.infer<typeof vec2Schema>;
 export type RectWall = z.infer<typeof rectWallSchema>;
 export type PolygonWall = z.infer<typeof polygonWallSchema>;
+export type Shape = z.infer<typeof shapeSchema>;
 export type Wall = z.infer<typeof wallSchema>;
+export type Deck = z.infer<typeof deckSchema>;
+export type Transition = z.infer<typeof transitionSchema>;
 export type SpawnPoint = z.infer<typeof spawnPointSchema>;
 export type Objective = z.infer<typeof objectiveSchema>;
 export type MapData = z.infer<typeof mapDataSchema>;
