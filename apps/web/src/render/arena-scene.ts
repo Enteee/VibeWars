@@ -529,11 +529,6 @@ export class ArenaScene extends Phaser.Scene {
     g.fillRect(altar.x - 9, altar.y - 9, 18, 18);
   }
 
-  /**
-   * A Capture Points shrine (#1378): the stand's marker as wide as a
-   * player must come to count on it, in its owner's colour, neutral grey
-   * with none; round it, clockwise from the top, its capturer's progress.
-   */
   /** A gate's plate (#2691), lit while held; an open gate's wall is only its outline. */
   private drawGatePlate(g: Phaser.GameObjects.Graphics, plate: RenderableGatePlate): void {
     const { x, y } = plate.position;
@@ -557,6 +552,11 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * A Capture Points shrine (#1378): the stand's marker as wide as a
+   * player must come to count on it, in its owner's colour, neutral grey
+   * with none; round it, clockwise from the top, its capturer's progress.
+   */
   private drawCapturePoint(g: Phaser.GameObjects.Graphics, point: RenderableCapturePoint): void {
     const { x, y } = point.position;
     const colour = point.owner === undefined ? STAND_NEUTRAL : teamColour(point.owner);

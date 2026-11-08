@@ -256,15 +256,43 @@ function clearOf(
   return near >= least;
 }
 
-/**
- * The graph for `walls` in a `bounds`-sized map, for bodies of radius
- * `clearance`. Without `bounds` the field has no edge.
- */
+/** The graph for `walls` in a `bounds`-sized map, for bodies of radius `clearance`. Without `bounds` the field has no edge. */
 export function buildNavGraph(
   walls: readonly Segment[],
-  bounds: { readonly width: number; readonly height: number } | undefined,
+  bounds: NavGraph["bounds"],
   clearance: number,
 ): NavGraph {
+  return navGraphFor(buildGatedNavGraph(walls, [], bounds, clearance), 0);
+}
+
+/**
+ * Every graph a map's gates can make (#2691), built once: the nodes of
+ * the map and of every gate, and for each node and edge the gates, as
+ * bits, that rule it out when closed. `navGraphFor` reads one combination
+ * off it, so a gate moving mid-match costs a filter and no line of sight.
+ */
+export interface GatedNavGraph {
+  readonly walls: readonly Segment[];
+  readonly gates: readonly (readonly Segment[])[];
+  readonly bounds: NavGraph["bounds"];
+  readonly clearance: number;
+  readonly nodes: readonly Vec2[];
+  /** The gates whose corner each node is; 0 for a corner of the map, there however they stand. */
+  readonly cornerOf: readonly number[];
+  /** The gates each node would be too close to. */
+  readonly nodeBlockedBy: readonly number[];
+  readonly edges: readonly (readonly number[])[];
+  /** Beside `edges`: the gates each edge crosses. */
+  readonly edgeBlockedBy: readonly (readonly number[])[];
+}
+
+/** See `GatedNavGraph`; each of `gates` is one gate's segments. */
+export function buildGatedNavGraph(
+  walls: readonly Segment[],
+  gates: readonly (readonly Segment[])[],
+  bounds: NavGraph["bounds"],
+  clearance: number,
+): GatedNavGraph {
   const offset = clearance + 1;
   const inside = (point: Vec2): boolean =>
     bounds === undefined ||
@@ -273,13 +301,28 @@ export function buildNavGraph(
       point.x <= bounds.width - clearance &&
       point.y <= bounds.height - clearance);
 
-  const corners = new Map<string, Vec2>();
-  for (const wall of walls) {
-    for (const end of [wall.a, wall.b]) {
-      corners.set(`${String(end.x)},${String(end.y)}`, end);
+  const corners = new Map<string, { readonly at: Vec2; gates: number }>();
+  const addCorners = (segments: readonly Segment[], gateBit: number): void => {
+    for (const wall of segments) {
+      for (const end of [wall.a, wall.b]) {
+        const key = `${String(end.x)},${String(end.y)}`;
+        const known = corners.get(key);
+        if (known === undefined) {
+          corners.set(key, { at: end, gates: gateBit });
+        } else if (known.gates !== 0) {
+          known.gates |= gateBit;
+        }
+      }
     }
-  }
+  };
+  addCorners(walls, 0);
+  gates.forEach((segments, at) => {
+    addCorners(segments, 1 << at);
+  });
+
   const nodes: Vec2[] = [];
+  const cornerOf: number[] = [];
+  const nodeBlockedBy: number[] = [];
   for (const corner of corners.values()) {
     for (const [dx, dy] of [
       [-1, -1],
@@ -287,20 +330,79 @@ export function buildNavGraph(
       [-1, 1],
       [1, 1],
     ] as const) {
-      const node = vec2(corner.x + dx * offset, corner.y + dy * offset);
-      const fits = walls.every((wall) => distancePointToSegment(node, wall) >= clearance);
-      if (fits && inside(node)) {
+      const node = vec2(corner.at.x + dx * offset, corner.at.y + dy * offset);
+      if (inside(node) && walls.every((wall) => distancePointToSegment(node, wall) >= clearance)) {
+        let blockedBy = 0;
+        gates.forEach((segments, at) => {
+          if (segments.some((wall) => distancePointToSegment(node, wall) < clearance)) {
+            blockedBy |= 1 << at;
+          }
+        });
         nodes.push(node);
+        cornerOf.push(corner.gates);
+        nodeBlockedBy.push(blockedBy);
       }
     }
   }
 
   const grid = buildWallGrid(walls, clearance);
-  const edges = nodes.map((node, i) =>
-    nodes.flatMap((other, j) => (i !== j && isClear(grid, node, other) ? [j] : [])),
-  );
+  const gateGrids = gates.map((segments) => buildWallGrid(segments, clearance));
+  const edges: number[][] = [];
+  const edgeBlockedBy: number[][] = [];
+  nodes.forEach((node, i) => {
+    const seen: number[] = [];
+    const crossed: number[] = [];
+    nodes.forEach((other, j) => {
+      if (i !== j && isClear(grid, node, other)) {
+        let blockedBy = 0;
+        gateGrids.forEach((gateGrid, at) => {
+          if (!isClear(gateGrid, node, other)) {
+            blockedBy |= 1 << at;
+          }
+        });
+        seen.push(j);
+        crossed.push(blockedBy);
+      }
+    });
+    edges.push(seen);
+    edgeBlockedBy.push(crossed);
+  });
+  return { walls, gates, bounds, clearance, nodes, cornerOf, nodeBlockedBy, edges, edgeBlockedBy };
+}
+
+/** The graph for the gates in `closed`, a bit each, as `buildNavGraph` would build it. */
+export function navGraphFor(gated: GatedNavGraph, closed: number): NavGraph {
+  const { bounds, clearance, cornerOf, nodeBlockedBy, edgeBlockedBy } = gated;
+  const walls = [
+    ...gated.walls,
+    ...gated.gates.flatMap((gate, at) => ((closed & (1 << at)) === 0 ? [] : gate)),
+  ];
+  const renumbered = new Int32Array(gated.nodes.length).fill(-1);
+  const nodes: Vec2[] = [];
+  gated.nodes.forEach((node, i) => {
+    const corner = cornerOf[i] ?? 0;
+    if ((corner === 0 || (corner & closed) !== 0) && ((nodeBlockedBy[i] ?? 0) & closed) === 0) {
+      renumbered[i] = nodes.length;
+      nodes.push(node);
+    }
+  });
+  const edges: number[][] = [];
+  gated.edges.forEach((seen, i) => {
+    if (renumbered[i] === -1) {
+      return;
+    }
+    const crossed = edgeBlockedBy[i] ?? [];
+    const kept: number[] = [];
+    seen.forEach((j, at) => {
+      const to = renumbered[j] ?? -1;
+      if (to !== -1 && ((crossed[at] ?? 0) & closed) === 0) {
+        kept.push(to);
+      }
+    });
+    edges.push(kept);
+  });
   const graph: NavGraph = { walls, bounds, clearance, nodes, edges };
-  GRIDS.set(graph, grid);
+  GRIDS.set(graph, buildWallGrid(walls, clearance));
   return graph;
 }
 

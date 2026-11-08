@@ -248,7 +248,6 @@ export function mapShrines(mapId: string): readonly MapShrine[] {
   return shrinesOf(map?.objectives ?? []);
 }
 
-/** The resurrection shrines among a map's objectives. */
 function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
   const { wall, plate, team } = gate;
   return {
@@ -261,6 +260,7 @@ function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
   };
 }
 
+/** The resurrection shrines among a map's objectives. */
 function shrinesOf(objectives: readonly Objective[]): readonly MapShrine[] {
   return objectives.flatMap((objective) =>
     objective.kind === "resurrection-shrine"

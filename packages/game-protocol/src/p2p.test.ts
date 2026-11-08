@@ -1417,6 +1417,21 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["snapshot without relics (#1374)", parseWireSnapshotPart, { ...snapshot, relics: undefined }],
   ["snapshot without an altar (#1374)", parseWireSnapshotPart, { ...snapshot, altar: undefined }],
   [
+    "welcome with more gates than a map holds (#2691)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        gates: Array.from({ length: 7 }, () => ({
+          wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
+          plate: { x: 50, y: 50 },
+          team: null,
+        })),
+      },
+    },
+  ],
+  [
     "snapshot with a gate that is not a boolean (#2691)",
     parseWireSnapshotPart,
     { ...snapshot, gates: [1] },

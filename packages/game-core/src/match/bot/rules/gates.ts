@@ -14,7 +14,10 @@ const gates: BotRule = {
   order: 105,
   name: "gates",
   decide: ({ context, self, foes, allies }) => {
-    if (foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL)) {
+    if (
+      context.objectives.gates.length === 0 ||
+      foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL)
+    ) {
       return undefined;
     }
     const team = self.combatant.team;

@@ -282,8 +282,8 @@ export const MAX_WIRE_SIGNET = 0x1fff;
 /** The most walls a map holds, and points a polygon wall holds. */
 export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
-/** The most gates a map holds (#2691). */
-export const MAX_WIRE_GATES = 16;
+/** The most gates a map holds (#2691), as `MAX_GATES` in game-maps; a peer keeps walls per combination. */
+export const MAX_WIRE_GATES = 6;
 
 /** The widest area a combat message may draw. */
 export const MAX_WIRE_RADIUS = 200;

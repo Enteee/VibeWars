@@ -53,10 +53,12 @@ import {
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
 import {
-  buildNavGraph,
+  buildGatedNavGraph,
+  navGraphFor,
   createPathFinder,
   isStandable,
   nearestStandable,
+  type GatedNavGraph,
   type NavGraph,
   type PathFinder,
   walkIsClear,
@@ -1059,7 +1061,7 @@ export class MatchSimulation {
   readonly #matchRules: MatchRules | undefined;
   /** The map's walls and every closed gate's (#2691); swapped as a gate moves. */
   #walls: readonly Segment[];
-  readonly #mapWalls: readonly Segment[];
+  readonly #gatedGraph: GatedNavGraph;
   readonly #bounds: { readonly width: number; readonly height: number } | undefined;
   /** Corners an approach or a walk can path through, from `#walls` (#211). */
   #graph: NavGraph;
@@ -1203,9 +1205,14 @@ export class MatchSimulation {
       throw new Error(`a ${victory} match has two teams, not ${String(this.#teamCount)}`);
     }
     this.#score = emptyScore(teamIds(this.#teamCount));
-    this.#mapWalls = options.walls ?? [];
     this.#bounds = options.bounds;
     this.#gates = initialGates(options.gates ?? []);
+    this.#gatedGraph = buildGatedNavGraph(
+      options.walls ?? [],
+      this.#gates.map((gate) => gate.segments),
+      this.#bounds,
+      this.#ruleset.collision.playerRadius,
+    );
     const walls = this.#currentWallSet();
     this.#walls = walls.walls;
     this.#graph = walls.graph;
@@ -1356,11 +1363,11 @@ export class MatchSimulation {
     return this.#altarState;
   }
 
-  /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
   public get gates(): readonly Gate[] {
     return this.#gates;
   }
 
+  /** Every Capture Points shrine (#1378), where it is and who holds it; `[]` on a map without them. */
   public get capturePoints(): readonly CapturePoint[] {
     return this.#capturePoints;
   }
@@ -5970,7 +5977,7 @@ export class MatchSimulation {
     }
   }
 
-  /** The walls and paths for how the gates stand now, built the first time they stand so. */
+  /** The walls and paths for how the gates stand now, read off the graph built up front. */
   #currentWallSet(): WallSet {
     let closed = 0;
     this.#gates.forEach((gate, at) => {
@@ -5978,12 +5985,8 @@ export class MatchSimulation {
     });
     let set = this.#wallSets.get(closed);
     if (set === undefined) {
-      const walls = [
-        ...this.#mapWalls,
-        ...this.#gates.flatMap((gate) => (gate.open ? [] : gate.segments)),
-      ];
-      const graph = buildNavGraph(walls, this.#bounds, this.#ruleset.collision.playerRadius);
-      set = { walls, graph, paths: createPathFinder(graph) };
+      const graph = navGraphFor(this.#gatedGraph, closed);
+      set = { walls: graph.walls, graph, paths: createPathFinder(graph) };
       this.#wallSets.set(closed, set);
     }
     return set;
