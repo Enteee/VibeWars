@@ -39,15 +39,15 @@ const rng = (seed) => () => {
 };
 
 /**
- * The arena: grid, wall blocks and a crowd of small fighters in duels. `fall`
- * is the share of fighters already down (hollow `dead` rings); `join` draws
+ * The arena: grid, wall blocks and an 8v8 of small fighters in duels. `fall`
+ * is the share already down (hollow `dead` rings); `walk` how far each has come in from its side edge (1 = arrived); `join` draws
  * newcomers streaking in from the side edges.
- * @type {(w: number, h: number, seed: number, fall: number, join: boolean) => string}
+ * @type {(w: number, h: number, seed: number, fall: number, walk: number, join: boolean) => string}
  */
-function arena(w, h, seed, fall, join) {
+function arena(w, h, seed, fall, walk, join) {
   const rnd = rng(seed),
     u = Math.round(Math.min(w, h) / 16),
-    rad = u * 0.3;
+    rad = u * 0.45;
   /** @type {string[]} */
   const o = [q`<rect width="${w}" height="${h}" fill="${C.floor}"/>`];
   for (let x = 0; x <= w; x += u)
@@ -77,13 +77,24 @@ function arena(w, h, seed, fall, join) {
         : q`<polygon fill="#fff" points="${x},${y - rad * 0.36} ${x + rad * 0.34},${y + rad * 0.26} ${x - rad * 0.34},${y + rad * 0.26}"/>`,
     );
   };
-  const pairs = Math.round((w * h) / (u * u * 5));
-  for (let i = 0; i < pairs; i++) {
-    const mx = rad * 3 + rnd() * (w - rad * 6),
-      my = rad * 3 + rnd() * (h - rad * 6),
-      gap = rad * (2.1 + rnd() * 1.4),
-      a = rnd() * Math.PI;
-    const dx = (Math.cos(a) * gap) / 2,
+  // 8v8, as the game's bots would play it: each friend duels one foe. `walk` is
+  // how far along its path in from its own side edge each one is (1 = there).
+  /** @type {(x: number, y: number, team: "f" | "e", dead: boolean) => void} */
+  const walker = (x, y, team, dead) => {
+    if (walk < 1) {
+      const d = team === "f" ? -1 : 1;
+      o.push(
+        q`<line x1="${x + d * u * 1.8}" y1="${y}" x2="${x + d * rad}" y2="${y}" stroke="${team === "f" ? C.friend : C.foe}" stroke-width="4" opacity=".5" stroke-linecap="round"/>`,
+      );
+    }
+    disc(x, y, team, dead);
+  };
+  for (let i = 0; i < 8; i++) {
+    const mx = w * (0.18 + 0.64 * ((i * 0.37 + rnd() * 0.12) % 1)),
+      my = h * (0.1 + 0.8 * ((i * 0.618 + 0.13) % 1)),
+      gap = rad * (2.2 + rnd() * 1.2),
+      a = rnd() * Math.PI,
+      dx = (Math.cos(a) * gap) / 2,
       dy = (Math.sin(a) * gap) / 2;
     const fd = rnd() < fall / 2,
       ed = !fd && rnd() < fall / 2;
@@ -91,29 +102,27 @@ function arena(w, h, seed, fall, join) {
       [1, fd],
       [-1, ed],
     ])) {
-      if (!dead)
+      const tx = mx + s * dx,
+        ty = my + s * dy,
+        ex = s > 0 ? -rad * 2 : w + rad * 2;
+      if (!dead && walk >= 1)
         o.push(
-          q`<line x1="${mx + s * dx}" y1="${my + s * dy}" x2="${mx - s * dx * 0.2}" y2="${my - s * dy * 0.2}" stroke="#ffd866" stroke-width="3" stroke-linecap="round"/>`,
+          q`<line x1="${tx}" y1="${ty}" x2="${mx - s * dx * 0.2}" y2="${my - s * dy * 0.2}" stroke="#ffd866" stroke-width="3" stroke-linecap="round"/>`,
         );
-      disc(mx + s * dx, my + s * dy, s > 0 ? "f" : "e", dead);
+      walker(ex + (tx - ex) * walk, ty, s > 0 ? "f" : "e", dead);
     }
   }
   if (join) {
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 2; i++) {
       for (const team of /** @type {const} */ (["f", "e"])) {
-        const y = h * (0.08 + 0.84 * rnd()),
-          x = team === "f" ? u * (0.4 + rnd() * 1.4) : w - u * (0.4 + rnd() * 1.4),
-          d = team === "f" ? -1 : 1;
-        o.push(
-          q`<line x1="${x + d * u * 2.2}" y1="${y}" x2="${x + d * rad}" y2="${y}" stroke="${team === "f" ? C.friend : C.foe}" stroke-width="4" opacity=".5" stroke-linecap="round"/>`,
-        );
-        disc(x, y, team, false);
+        const y = h * (0.15 + 0.7 * rnd()),
+          x = team === "f" ? u * (0.5 + rnd()) : w - u * (0.5 + rnd());
+        walker(x, y, team, false);
       }
     }
   }
   return o.join("");
 }
-
 /**
  * One frame. stage: 0 battle, 1 battle with fallen and joiners, 2 Vibe and
  * Wars flying in, 3 the meeting flash, 4 the settled wordmark, 5 plus prompt.
@@ -147,7 +156,7 @@ function frame(w, h, stage) {
       word("Vibe", cx - off, C.friend),
       word("Wars", cx + off, C.foe),
     ].join("");
-  const o = [arena(w, h, 7, stage === 0 ? 0 : 0.5, stage === 1)];
+  const o = [arena(w, h, 7, stage === 0 ? 0 : 0.5, stage === 0 ? 0.3 : 1, stage === 1)];
   if (stage >= 2)
     o.push(
       q`<rect width="${w}" height="${h}" fill="#0a0d12" opacity=".3"/>`,
@@ -207,8 +216,8 @@ try {
     join(out, "2880-splash-live.png"),
   );
   const caps = [
-    "0 s  The battle plays alone",
-    "6 s  Others fall, new ones join",
+    "0 s  An 8v8 walks in from the edges",
+    "6 s  They fight; others fall, new ones join",
     "10 s  Music starts; Vibe and Wars fly in",
     "12 s  They meet: flash, the VibeWars theme",
     "12.5 s  The wordmark settles",
