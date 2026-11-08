@@ -123,6 +123,7 @@ import {
   PLAY_BOTS_AFTER_MS,
   hostMaps,
   lobbyPanel,
+  type LobbyMap,
   type LobbyMatchmaking,
   type LobbyRelay,
   type LobbyPanel,
@@ -161,6 +162,7 @@ import {
   redrawModeRail,
   redrawsOnLobbyChange,
   setRailParty,
+  setRailQueued,
   type RailEntry,
 } from "./ui/rail.js";
 import {
@@ -666,6 +668,9 @@ async function main(): Promise<void> {
   const inAnyQueue = (): boolean => queue !== undefined || teamQueue !== undefined;
 
   const paintQueue = (): void => {
+    setRailQueued(
+      queue !== undefined ? teamSizeOf(queue.mode) : teamQueue?.party.getSnapshot().teamSize,
+    );
     topbarView.setQueue(queueInput());
   };
 
@@ -914,7 +919,8 @@ async function main(): Promise<void> {
   const switchTo = (entry: RailEntry): void => {
     shownEntry = entry;
     menuNotice = undefined;
-    const snapshot = queue === undefined ? lobby?.getSnapshot() : undefined;
+    // Queued, a screen is only looked at: the queued lobby keeps its mode and size (#2781).
+    const snapshot = inAnyQueue() ? undefined : lobby?.getSnapshot();
     if (isModeEntry(entry) && snapshot?.isHost === true && snapshot.mode !== entry) {
       lobby?.selectMode(entry);
       // A Hosted Game or a Team Arena starts at the size its host last
@@ -1250,6 +1256,17 @@ async function main(): Promise<void> {
       : { relayedVia: status.relayedVia(), sharingWith: status.sharingWith() };
   };
 
+  /**
+   * `entry`'s maps as its lobby lists them (#1526): a queued Heroes' Ascent
+   * names its round's map, the Hall's too (#1996).
+   */
+  const mapsFor = (entry: HostEntry): LobbyMap[] =>
+    hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter(
+      (map) =>
+        modeMapIds()[entry].includes(map.id) ||
+        (entry === "heroes-ascent" && ASCENT_PROGRESSION.includes(map.id)),
+    );
+
   /** The lobby's part of `entry`'s screen (#1526), once there is a lobby. */
   const panelFor = (entry: HostEntry): LobbyPanel | undefined => {
     if (lobby === undefined || queue !== undefined) {
@@ -1278,12 +1295,7 @@ async function main(): Promise<void> {
         },
       },
       lobbyNotice,
-      // A queued Heroes' Ascent names its round's map, the Hall's too (#1996).
-      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter(
-        (map) =>
-          modeMapIds()[entry].includes(map.id) ||
-          (entry === "heroes-ascent" && ASCENT_PROGRESSION.includes(map.id)),
-      ),
+      mapsFor(entry),
       matchmakingFor(entry),
       relayFor(lobby),
     );
@@ -1351,6 +1363,9 @@ async function main(): Promise<void> {
           }
         })();
       },
+      onLeaveQueue: () => {
+        leaveAnyQueue();
+      },
       onPasteTeam: (text) => {
         const result = importTeam(text, () => crypto.randomUUID(), Date.now());
         if (!result.ok) {
@@ -1403,7 +1418,7 @@ async function main(): Promise<void> {
         menuNotice,
         callbacks,
         panelFor(entry),
-        queue !== undefined,
+        queue === undefined ? undefined : mapsFor(entry),
       );
       // A Hosted Game's host, or a Team Arena's leader, sets its lobby's
       // size with the sidebar's (#2104, #2107).

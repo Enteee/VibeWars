@@ -1389,6 +1389,19 @@ body {
   color: var(--ink);
 }
 
+/* A lobby screen's Find a match and Leave Queue, while in the Random Arena queue (#2781). */
+.screen-queued {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+/* What a lobby screen plays, to look at while in the Random Arena queue (#2781). */
+.screen-queued-maps ul {
+  margin: 0.3rem 0 0;
+  padding-left: 1.2rem;
+}
+
 .field {
   display: flex;
   flex-direction: column;
