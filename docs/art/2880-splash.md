@@ -31,19 +31,26 @@ and goes through `t()` when built. Not decided; the operator picks one.
 On the phone mock the name is 60 px tall in 1, 2, 3 and 4 and about 50 px in
 5, never clipped. Each PNG is under 160 KB.
 
-## Picked: 1, with a live background
+## Picked: 1, as a sequence over a battle
 
-The operator picked proposal 1 and asked for a lively background: a game
-playing itself behind the wordmark, characters fighting on a random map, new
-ones joining from the side as others die. Mockup:
-`2880-splash-live.png` (hero frame, desktop and phone) and
-`2880-splash-live-storyboard.png` (four moments of one map: clash, first
-hits, two fall as hollow `dead` rings, newcomers streak in from the edges).
-Drawn by `scripts/assets/splash-live.mjs`.
+The operator picked proposal 1 and revised it twice: a crowd of small
+characters fighting on a random map behind it, then a timed intro.
+`2880-splash-live.png` is the final frame (desktop and phone);
+`2880-splash-live-storyboard.png` is the sequence. Drawn by
+`scripts/assets/splash-live.mjs`.
+
+| Time   | What happens                                                                            |
+| ------ | --------------------------------------------------------------------------------------- |
+| 0 s    | The battle plays alone: about 60 duels of small discs, no title                         |
+| 0-10 s | Fighters fall (hollow `dead` rings); new ones streak in from the side edges             |
+| 10 s   | Music starts; "Vibe" flies in from the left and "Wars" from the right, with speed lines |
+| 12 s   | They meet: the screen flashes white, the music turns into the VibeWars theme            |
+| 12.5 s | The wordmark and its split rule settle over the dimmed battle                           |
+| 13 s   | "Press any key to begin" appears                                                        |
 
 Rules for the build: the arena is the real renderer fed by bots on a random
-map, dimmed under a 28% scrim with a darker band behind the name so the name
-reads on any map; the wordmark, rule and prompt are drawn above it and never
-move. The fight stays in the bands above and below the name. Build cost:
-animated, needs a headless bot-vs-bot match on the splash route, with the
-camera fixed and no HUD.
+map, characters at about a third of their normal size, no HUD, fixed camera.
+From the fly-in on, a 30% scrim plus a darker band behind the name keep it
+readable on any map. The wordmark never moves after the meeting. Build cost:
+animated, a headless bot-vs-bot match on the splash route, plus the timing and
+the flash in CSS; the music change belongs to the music epic.
