@@ -3,6 +3,7 @@ import { setGameNames } from "./game-names.js";
 import { pickLanguage, setLocale } from "./index.js";
 import { LOCALES, availableLanguages } from "./languages.js";
 import { loadLanguage } from "./language-preference.js";
+import { loadPlayerDocs } from "../ui/player-docs.js";
 
 /**
  * Load the player's language before the first screen draws: `main.ts`
@@ -16,7 +17,7 @@ export async function loadLocale(): Promise<void> {
     setLocale(code, en);
     return;
   }
-  const tables = await load();
+  const [tables] = await Promise.all([load(), loadPlayerDocs(code)]);
   setLocale(code, tables.ui);
   setGameNames(tables.game);
 }
