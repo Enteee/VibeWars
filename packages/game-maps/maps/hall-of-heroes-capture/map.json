@@ -2,9 +2,7 @@
   "id": "hall-of-heroes-capture",
   "name": "Hall of Heroes",
   "mode": "capture-points",
-  "teamSizes": [
-    8
-  ],
+  "teamSizes": [8],
   "teams": 3,
   "halls": true,
   "width": 3200,

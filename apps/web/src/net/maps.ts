@@ -385,7 +385,10 @@ export interface MapShrine {
 }
 
 /** A map's objectives in a match of `teamCount` teams (#2700): without those of a team not seated. */
-function seatedObjectives(objectives: readonly Objective[], teamCount: number): readonly Objective[] {
+function seatedObjectives(
+  objectives: readonly Objective[],
+  teamCount: number,
+): readonly Objective[] {
   return objectives.filter((objective) => {
     const team = "team" in objective ? objective.team : undefined;
     const base = objective.kind === "capture-point" ? objective.base : undefined;

@@ -7888,7 +7888,9 @@ export class MatchSimulation {
       return Number.POSITIVE_INFINITY;
     }
     const { respawnSeconds, respawnOnWave } = this.#matchRules;
-    return respawnOnWave ? respawnSeconds - (this.#elapsedSeconds % respawnSeconds) : respawnSeconds;
+    return respawnOnWave
+      ? respawnSeconds - (this.#elapsedSeconds % respawnSeconds)
+      : respawnSeconds;
   }
 
   /**
