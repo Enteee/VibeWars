@@ -27,3 +27,5 @@ Say in your merge note that you checked, and what you looked at.
 Update the docs your change makes untrue in the same PR. Do not leave it to QA to find.
 
 A PR that changes what a player sees or does updates the matching `docs/player/` page, or says in its description why no page applies. Those pages are the in-game Help: plain words, no internals (see `CONTRIBUTING.md`, "Documentation").
+
+A change to a `docs/player/*.md` page updates the same page in every `docs/player/<code>/` language folder in the same PR. QA does not merge one that leaves a language behind.
