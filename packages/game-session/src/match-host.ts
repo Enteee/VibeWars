@@ -395,6 +395,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       readonly guildTag: string | null;
       readonly team: WireTeam;
       readonly bot: boolean;
+      readonly pubkey: string | null;
       readonly build: PlayerBuild;
     }
   >();
@@ -425,15 +426,16 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         interrupts: row.interrupts,
       };
     });
-  /** The finished match as the world may read it (#2528): names and builds, no ids. */
+  /** The finished match as the world may read it (#2528): names, public keys and builds, no peer ids. */
   const record = (endReason: MatchEndReason): MatchRecord => {
     const team = (side: number): MatchRecordTeam => ({
       players: [...everSeated.values()]
         .filter((seat) => seat.team === side)
-        .map(({ name, guildTag, bot, build }) => ({
+        .map(({ name, guildTag, bot, pubkey, build }) => ({
           name,
           guildTag,
           bot,
+          pubkey,
           template: recordTemplate(build),
         })),
     });
@@ -736,9 +738,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     nameOf: (playerId: string) => string,
     guild: Guild,
     bot: boolean,
-    signet: number | null,
+    pubkey: string | null,
   ): Seat => {
     seated += 1;
+    const signet = pubkey === null ? null : options.signetOf(pubkey);
     const playerId = `player-${String(seated)}`;
     const loadout = loadoutOf(build);
     // Gear becomes numbers exactly once, before the combatant exists (ADR-0012).
@@ -789,7 +792,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       weaponSets: undefined,
     };
     seats.set(playerId, seat);
-    everSeated.set(playerId, { name: seat.name, guildTag: seat.guildTag, team, bot, build });
+    everSeated.set(playerId, {
+      name: seat.name,
+      guildTag: seat.guildTag,
+      team,
+      bot,
+      pubkey,
+      build,
+    });
     for (const id of everSeated.keys()) {
       if (everSeated.size <= MAX_LOBBY_PLAYERS) {
         break;
@@ -923,7 +933,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       (playerId) => plan?.name ?? sanitizeName(hello.name, playerId),
       plan ?? sanitizeGuild(hello),
       false,
-      plan === undefined ? null : options.signetOf(plan.playerPubkey),
+      plan?.playerPubkey ?? null,
     );
     welcome(seat, from);
   };

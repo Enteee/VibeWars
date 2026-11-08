@@ -248,9 +248,11 @@ channels, as often as they like.
   are third parties we do not run; the list lives in
   `apps/web/src/net/transport/relays.ts` (#392).
 - **Every finished match is public** (#2528; the operator's call: no
-  opt-out). Its record holds each player's in-game name, guild tag and
-  build as a GW1 template code, in any mode, bots marked; no IP, peer id,
-  lobby key or room, and nothing that links two records to one host.
+  opt-out). Its record holds each player's in-game name, guild tag,
+  public player key (#2739; `null` for a bot) and build as a GW1 template
+  code, in any mode, bots marked; no IP, peer id, lobby key or room. The
+  key links every recorded match of one browser, a host who plays
+  included.
   Relays store it (NIP-78, kind 30078) and nobody can delete it. A match
   its host left, or one the e2e (broadcast) build plays, is not
   published. `validateMatchRecord` reads a record as hostile input: known
@@ -263,7 +265,10 @@ channels, as often as they like.
   it is the same in every lobby that browser joins. That is its purpose,
   and it also makes a browser linkable across lobbies by anyone who plays
   with it. Clearing the site's data is the only way to a new one; the Help
-  screen says so (Your player key). Match records do not carry it.
+  screen says so (Your player key). Match records (#2739) publish it on Nostr
+  beside each human's name, so anyone can link every recorded match
+  played by one browser. A host can attach any key to a name, so a
+  signet there proves nothing.
 - **Everything in a snapshot.** A peer receives every snapshot field the
   host sends, for every player. Anything that must stay hidden from a
   player must not be in the snapshot at all.

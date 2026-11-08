@@ -1946,6 +1946,19 @@ body {
   height: 18px;
 }
 
+.match-player-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.match-player-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .match-player-icon.is-unknown {
   text-align: center;
   line-height: 18px;

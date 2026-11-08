@@ -356,8 +356,11 @@ the game uses. Anyone can read it, and there is no opting out. A record
 holds the mode, the map, when the match ended and how long it ran, who
 won and why, and each player's in-game name, guild tag and build (its
 GW1 template code: professions, attributes and skill bar, no
-equipment), with bots marked as bots. Your in-game name is in every record of a match
-you play. Nothing else that could identify you is: no address, no peer
+equipment), with bots marked as bots. Every human's public player key is
+in it too, and draws their signet, the shield beside their name; a signet
+is only the key the match's host reported. Your in-game name and key are
+in every record of a match you play, so anyone can link those matches to
+each other. Nothing else that could identify you is: no address, no peer
 id, no lobby. A match that ends because its host left, or that everyone
 left, is not published. Records are reported by the host, so a host can
 get one wrong; nothing checks them against the match.
