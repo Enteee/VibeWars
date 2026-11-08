@@ -14,6 +14,7 @@ const AFTER_IMAGE = [
 ];
 const ALL_STEPS = [
   ["sudo", "truncate", "-s", "64G", RUNNER_IMAGE],
+  ["sudo", "chmod", "600", RUNNER_IMAGE],
   ["sudo", "mkfs.ext4", "-q", "-F", RUNNER_IMAGE],
   ...AFTER_IMAGE,
 ];
@@ -29,8 +30,8 @@ const ALL_STEPS = [
  * @param {boolean} [options.canAsk]
  * @param {boolean} [options.nixos]
  * @param {boolean} [options.imageExists]
- * @param {string[]} [options.entries]
- * @param {string} [options.fstab]
+ * @param {string[] | null} [options.entries]
+ * @param {string | null} [options.fstab]
  * @param {number} [options.type] the `statfs` magic of scratch
  * @param {string} [options.failing] the command, after sudo, that exits 1
  */
@@ -158,7 +159,7 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
 
   it("stops at a failed mount and prints the rest as manual steps", async () => {
     const { ran, said, checks } = await setUp({ answers: ["y", ""], failing: "mount" });
-    expect(ran).toEqual(ALL_STEPS.slice(0, 4));
+    expect(ran).toEqual(ALL_STEPS.slice(0, 5));
     expect(checks).toBe(1);
     const manual = said.slice(said.indexOf("That failed"));
     expect(manual).toContain(`sudo mount -o loop ${RUNNER_IMAGE} ${SCRATCH}`);
@@ -169,7 +170,7 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
   it("on NixOS prints the fileSystems snippet and leaves fstab alone", async () => {
     const { ran, asked, said } = await setUp({ answers: ["y", ""], nixos: true });
     expect(said).toContain(
-      `fileSystems."${SCRATCH}" = { device = "${RUNNER_IMAGE}"; fsType = "ext4"; options = [ "loop" ]; };`,
+      `fileSystems."${SCRATCH}" = { device = "${RUNNER_IMAGE}"; fsType = "ext4"; options = [ "loop" "nofail" ]; };`,
     );
     expect(said).toContain("gone after a reboot");
     expect(asked).toHaveLength(2);
@@ -179,7 +180,7 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
   it("elsewhere appends to fstab through sudo on yes", async () => {
     const { ran, inputs, said } = await setUp({ answers: ["y", "", "y"] });
     expect(ran.at(-1)).toEqual(["sudo", "tee", "-a", "/etc/fstab"]);
-    expect(inputs).toEqual([`${RUNNER_IMAGE} ${SCRATCH} ext4 loop 0 2\n`]);
+    expect(inputs).toEqual([`${RUNNER_IMAGE} ${SCRATCH} ext4 loop,nofail 0 0\n`]);
     expect(said).toContain("$ sudo tee -a /etc/fstab");
   });
 
@@ -190,6 +191,21 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
     });
     expect(asked).toHaveLength(2);
     expect(ran).toEqual(ALL_STEPS);
+  });
+
+  it("goes on when scratch cannot be read, and mounts nothing", async () => {
+    const { ran, asked, said } = await setUp({ entries: null });
+    expect(asked).toEqual([]);
+    expect(ran).toEqual([]);
+    expect(said).toContain("does not mount over it");
+    expect(said).toContain("Runners stay off");
+  });
+
+  it("goes on when fstab cannot be read, and prints the line", async () => {
+    const { ran, said } = await setUp({ answers: ["y", ""], fstab: null });
+    expect(ran).toEqual(ALL_STEPS);
+    expect(said).toContain(`${RUNNER_IMAGE} ${SCRATCH} ext4 loop,nofail 0 0`);
+    expect(said).toContain("gone after a reboot");
   });
 
   it("says the quota is still the operator's part on a pooled filesystem", async () => {

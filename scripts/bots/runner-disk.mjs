@@ -36,8 +36,8 @@ const POOLED = new Set(["btrfs", "zfs"]);
  * @property {boolean} canAsk stdin is a tty and sudo is on PATH
  * @property {boolean} nixos
  * @property {(file: string) => boolean} exists
- * @property {(dir: string) => string[]} entries a directory's names, none if it is missing
- * @property {() => string} fstab
+ * @property {(dir: string) => string[] | null} entries a directory's names, none if it is missing, null if it cannot be read
+ * @property {() => string | null} fstab null if it cannot be read
  * @property {number} uid
  * @property {number} gid
  */
@@ -66,8 +66,23 @@ export function realRunnerDiskHost(proc, ask, say) {
     canAsk: proc.stdin.isTTY && spawnSync("sudo", ["--version"], { stdio: "ignore" }).status === 0,
     nixos: fs.existsSync("/etc/NIXOS"),
     exists: fs.existsSync,
-    entries: (dir) => (fs.existsSync(dir) ? fs.readdirSync(dir) : []),
-    fstab: () => fs.readFileSync(FSTAB, "utf8"),
+    entries: (dir) => {
+      if (!fs.existsSync(dir)) {
+        return [];
+      }
+      try {
+        return fs.readdirSync(dir);
+      } catch {
+        return null;
+      }
+    },
+    fstab: () => {
+      try {
+        return fs.readFileSync(FSTAB, "utf8");
+      } catch {
+        return null;
+      }
+    },
     uid: proc.getuid?.() ?? 0,
     gid: proc.getgid?.() ?? 0,
   };
@@ -99,6 +114,8 @@ function setupSteps(scratch, image, size, imageExists, { uid, gid }) {
       ? []
       : [
           ["sudo", "truncate", "-s", `${String(size)}G`, image],
+          // Root's 0644 would let any local user read the runners' scratch.
+          ["sudo", "chmod", "600", image],
           ["sudo", "mkfs.ext4", "-q", "-F", image],
         ]),
     ["mkdir", "-p", scratch],
@@ -163,13 +180,20 @@ async function persist(host, scratch, image) {
   if (host.nixos) {
     host.say("  This mount is gone after a reboot until you add this and rebuild:");
     host.say(
-      `    fileSystems."${scratch}" = { device = "${image}"; fsType = "ext4"; options = [ "loop" ]; };`,
+      `    fileSystems."${scratch}" = { device = "${image}"; fsType = "ext4"; options = [ "loop" "nofail" ]; };`,
     );
     return;
   }
   const mountPoint = scratch.replaceAll(" ", "\\040");
-  const listed = host
-    .fstab()
+  // nofail: a missing image must not stop the host booting for an optional disk.
+  const entry = `${image.replaceAll(" ", "\\040")} ${mountPoint} ext4 loop,nofail 0 0`;
+  const fstab = host.fstab();
+  if (fstab === null) {
+    host.say(`  Cannot read ${FSTAB}: this mount is gone after a reboot until it has this line:`);
+    host.say(`    ${entry}`);
+    return;
+  }
+  const listed = fstab
     .split("\n")
     .some(
       (line) => !line.trimStart().startsWith("#") && line.trim().split(/\s+/)[1] === mountPoint,
@@ -177,7 +201,6 @@ async function persist(host, scratch, image) {
   if (listed) {
     return;
   }
-  const entry = `${image.replaceAll(" ", "\\040")} ${mountPoint} ext4 loop 0 2`;
   const answer = await host.ask(`  Append "${entry}" to ${FSTAB}? [y/N] `);
   if (answer.trim().toLowerCase() !== "y") {
     host.say(`  This mount is gone after a reboot until ${FSTAB} has that line.`);
@@ -223,8 +246,11 @@ export async function setUpRunnerDisk({
 
   const imageExists = host.exists(image);
   const defaults = setupSteps(scratch, image, DEFAULT_GIB, imageExists, host);
-  if (host.entries(scratch).length > 0) {
-    host.say(`  ${scratch} is not empty, and init does not mount over it.`);
+  const entries = host.entries(scratch);
+  if (entries === null || entries.length > 0) {
+    host.say(
+      `  ${scratch} is ${entries === null ? "not a directory init can read" : "not empty"}, and init does not mount over it.`,
+    );
     sayManual(host, defaults);
     return;
   }
