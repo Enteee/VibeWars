@@ -21,6 +21,8 @@ export const GATE_PLATE_REACH_UNITS = 30;
 export interface GateField {
   /** The wall it is while closed. */
   readonly segments: readonly Segment[];
+  /** The layer it stands on (ADR-0051). Omitted: the ground. */
+  readonly layer?: number;
   readonly plate: Vec2;
   /** The team whose players its plate answers to; `null` for anyone's. */
   readonly team: number | null;

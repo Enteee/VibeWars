@@ -872,6 +872,21 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     );
   });
 
+  it("refuses a deck outside the map, naming decks", () => {
+    refuses(
+      {
+        decks: [
+          {
+            id: "bridge",
+            layer: 1,
+            footprint: { kind: "rect", x: 500, y: 300, width: 1200, height: 200 },
+          },
+        ],
+      },
+      /decks\.0\.footprint: .*outside the map/,
+    );
+  });
+
   it("refuses a transition outside the map", () => {
     refuses(
       { transitions: [...layerTest.transitions, ramp(0, 1, 1500)] },
