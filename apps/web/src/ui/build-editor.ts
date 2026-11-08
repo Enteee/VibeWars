@@ -502,7 +502,8 @@ export function equipSkill(character: StoredCharacter, slot: number, skillId: st
 function canonical(value: unknown): string {
   return JSON.stringify(value, (_key, inner: unknown) =>
     typeof inner === "object" && inner !== null && !Array.isArray(inner)
-      ? Object.fromEntries(Object.entries(inner).sort(([a], [b]) => a.localeCompare(b)))
+      ? // A comparison key, not shown: fixed locale, so it is the same in every language.
+        Object.fromEntries(Object.entries(inner).sort(([a], [b]) => a.localeCompare(b, "en")))
       : inner,
   );
 }
@@ -516,8 +517,9 @@ export function isUnsaved(opened: StoredCharacter, current: StoredCharacter): bo
   const comparable = (character: StoredCharacter) => ({
     ...character,
     updatedAt: 0,
+    // Ids, compared not shown: fixed locale.
     attributes: [...character.attributes].sort((a, b) =>
-      a.attributeId.localeCompare(b.attributeId),
+      a.attributeId.localeCompare(b.attributeId, "en"),
     ),
   });
   return canonical(comparable(opened)) !== canonical(comparable(current));

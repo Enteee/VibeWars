@@ -764,7 +764,8 @@ export function summariseGear(
       attributeBonuses.push({ attributeId, bonus, sources });
     }
   }
-  attributeBonuses.sort((a, b) => a.attributeId.localeCompare(b.attributeId));
+  // Sorted by id, not by the shown name: fixed locale, the same order in every language.
+  attributeBonuses.sort((a, b) => a.attributeId.localeCompare(b.attributeId, "en"));
 
   const { weapon, attributeId, requirementMet } = mainHand;
   // Unmet, every hit is scaled down (#571): the same multiplier the

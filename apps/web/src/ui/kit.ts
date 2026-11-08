@@ -7,6 +7,8 @@
  * keeps focus, and a hover or a drag survives a change made elsewhere.
  */
 
+import { t } from "../i18n/index.js";
+
 export function h(tag: string, className?: string, text?: string): HTMLElement {
   const node = document.createElement(tag);
   if (className !== undefined) {
@@ -33,8 +35,8 @@ export function button(label: string, className: string, onClick: () => void): H
  */
 export function overlayClose(onClose: () => void): HTMLButtonElement {
   const node = button("×", "overlay-close", onClose);
-  node.setAttribute("aria-label", "Close");
-  node.title = "Close (Esc)";
+  node.setAttribute("aria-label", t("kit.close"));
+  node.title = t("kit.closeEsc");
   return node;
 }
 
@@ -44,7 +46,7 @@ export function overlayClose(onClose: () => void): HTMLButtonElement {
  */
 export function readyButton(ready: boolean, onClick: () => void): HTMLButtonElement {
   return button(
-    ready ? "Not ready" : "Ready",
+    ready ? t("kit.notReady") : t("kit.ready"),
     ready ? "screen-ready" : "primary screen-ready",
     onClick,
   );
@@ -403,7 +405,7 @@ export function inlineConfirm(
   question: string,
   confirmLabel: string,
   onConfirm: () => void,
-  cancelLabel = "Cancel",
+  cancelLabel = t("kit.cancel"),
 ): InlineConfirm {
   const ask = h("span", "inline-confirm");
   ask.setAttribute("role", "group");
@@ -569,11 +571,10 @@ export interface ChipProblem {
 /** The chip's own label: blocking problems, else hints, else ready. */
 export function chipLabel(problems: readonly ChipProblem[]): string {
   const blocking = problems.filter((problem) => problem.blocking).length;
-  const count = (n: number, noun: string): string => `${String(n)} ${noun}${n === 1 ? "" : "s"}`;
   if (blocking > 0) {
-    return count(blocking, "problem");
+    return t("kit.problems", { count: blocking });
   }
-  return problems.length > 0 ? count(problems.length, "hint") : "Ready";
+  return problems.length > 0 ? t("kit.hints", { count: problems.length }) : t("kit.ready");
 }
 
 export interface ProblemsChip {
@@ -694,7 +695,7 @@ export function toast(
   }
   if (undo !== undefined) {
     element.appendChild(
-      button("Undo", "", () => {
+      button(t("kit.undo"), "", () => {
         dismissToast();
         undo();
       }),
@@ -782,14 +783,14 @@ export function shareLine(label: string): ShareLine {
     // Selecting scrolls to the end; the start says whose code it is.
     line.scrollLeft = 0;
   };
-  const copy = button("Copy", "", () => {
+  const copy = button(t("kit.copy"), "", () => {
     // `clipboard` is missing outside a secure context; the promise turns
     // that into a refusal like any other.
     Promise.resolve()
       .then(() => navigator.clipboard.writeText(line.value))
       .then(() => {
         element.hidden = true;
-        toast("Copied");
+        toast(t("kit.copied"));
       }, selectLine);
   });
   element.append(line, copy);
@@ -849,7 +850,7 @@ export function loadLine(
       load();
     }
   });
-  element.append(line, button("Load", "", load), problems);
+  element.append(line, button(t("kit.load"), "", load), problems);
   return {
     element,
     show() {
@@ -912,7 +913,7 @@ export function moreMenu(
       window.addEventListener("resize", refit);
     }
   });
-  toggle.setAttribute("aria-label", "more actions");
+  toggle.setAttribute("aria-label", t("kit.moreActions"));
   toggle.setAttribute("aria-expanded", "false");
   // After the item's own click, which may open what hangs below.
   menu.addEventListener("click", (event) => {
