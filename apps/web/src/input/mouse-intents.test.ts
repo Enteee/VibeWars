@@ -86,6 +86,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     id,
     name: id,
     guildTag: undefined,
+    signet: undefined,
     cape: undefined,
     bot: false,
     position: vec2(x, 0),

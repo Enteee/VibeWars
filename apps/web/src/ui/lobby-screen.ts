@@ -4,11 +4,12 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 
 import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
+import { keySignet } from "../identity/key-signet.js";
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
 import { ascentMapId } from "../net/maps.js";
 import { button, h, readyButton, toast, type ShareLine } from "./kit.js";
 import { relayLine, relaySharedByLine, relaySharingText } from "./relay-section.js";
-import { playerLabelElement } from "./player-label.js";
+import { SIGNET_ROW_PX, playerLabelElement, signetElement } from "./player-label.js";
 
 /**
  * The lobby (brief §21's lobby layout, #580) as a mode screen shows it
@@ -408,6 +409,10 @@ function playerRow(member: LobbyPlayerSnapshot): HTMLElement {
   const row = h("div", "lobby-slot");
   const text = h("span", "lobby-slot-text");
   const player = text.appendChild(playerLabelElement("lobby-player", member.name, member.guildTag));
+  // A bot has no key, so no signet and no empty slot (#2805).
+  if (member.playerPubkey !== null) {
+    player.prepend(signetElement(keySignet(member.playerPubkey), SIGNET_ROW_PX));
+  }
   if (member.isHost) {
     player.appendChild(h("span", "lobby-host", ` ${t("lobby.host")}`));
   }

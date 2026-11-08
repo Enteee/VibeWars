@@ -8,6 +8,7 @@ import {
   FLOATING_TEXT_LINE,
   FLOATING_TEXT_SECONDS,
   FLOATING_TEXT_STACK,
+  NAMEPLATE_SIGNET_SIZE,
   areaFlashAlpha,
   decayAreaFlashes,
   floatingTextY,
@@ -133,6 +134,7 @@ function actor(
     id,
     name: id,
     guildTag: undefined,
+    signet: undefined,
     cape: undefined,
     bot: false,
     position: vec2(x, y),
@@ -456,7 +458,7 @@ describe("actorAtPoint with name tags (#2738)", () => {
   it("gives the same hit at any zoom, the boxes being world units", () => {
     const monk = actor("monk", 100, 100, 14, { team: "enemy", profession: "monk" });
     for (const zoom of [0.5, 2]) {
-      const tag = nameTagBox(monk, 40, 14, zoom);
+      const tag = nameTagBox(monk, 40, 14, zoom, false);
       const onTag = vec2((tag.left + tag.right) / 2, (tag.top + tag.bottom) / 2);
       expect(actorAtPoint(arena([monk]), onTag, new Map([["monk", tag]]))?.id).toBe("monk");
     }
@@ -466,8 +468,8 @@ describe("actorAtPoint with name tags (#2738)", () => {
 describe("nameTagBox (#2738)", () => {
   it("covers the glyph and the label, as tall as the taller", () => {
     const monk = actor("m", 200, 100, 14, { profession: "monk" });
-    const layout = nameplateLayout(monk, 40, 1);
-    expect(nameTagBox(monk, 40, 14, 1)).toEqual({
+    const layout = nameplateLayout(monk, 40, 1, false);
+    expect(nameTagBox(monk, 40, 14, 1, false)).toEqual({
       left: (layout.glyphX ?? 0) - PROFESSION_GLYPH_SIZE / 2,
       top: layout.bottom - Math.max(14, PROFESSION_GLYPH_SIZE),
       right: layout.textX + 20,
@@ -477,8 +479,8 @@ describe("nameTagBox (#2738)", () => {
 
   it("is the label alone with no profession", () => {
     const creature = actor("c", 200, 100, 10);
-    const layout = nameplateLayout(creature, 40, 1);
-    expect(nameTagBox(creature, 40, 14, 1)).toEqual({
+    const layout = nameplateLayout(creature, 40, 1, false);
+    expect(nameTagBox(creature, 40, 14, 1, false)).toEqual({
       left: 180,
       top: layout.bottom - 14,
       right: 220,
@@ -488,8 +490,8 @@ describe("nameTagBox (#2738)", () => {
 
   it("spans more world zoomed out, as the screen-sized label does", () => {
     const creature = actor("c", 200, 100, 10);
-    const near = nameTagBox(creature, 40, 14, 1);
-    const wide = nameTagBox(creature, 40, 14, 0.5);
+    const near = nameTagBox(creature, 40, 14, 1, false);
+    const wide = nameTagBox(creature, 40, 14, 0.5, false);
     expect(wide.right - wide.left).toBeCloseTo(2 * (near.right - near.left), 9);
     expect(wide.bottom - wide.top).toBeCloseTo(2 * (near.bottom - near.top), 9);
   });
@@ -798,7 +800,7 @@ describe("offhandMarkLayout (#276)", () => {
 describe("nameplateLayout (#281)", () => {
   it("centres glyph, gap and name together on the body, on the name's bottom", () => {
     const monk = actor("m", 200, 100, 14, { profession: "monk" });
-    const layout = nameplateLayout(monk, 40, 1);
+    const layout = nameplateLayout(monk, 40, 1, false);
     const glyphLeft = (layout.glyphX ?? 0) - PROFESSION_GLYPH_SIZE / 2;
     const textRight = layout.textX + 40 / 2;
     expect((glyphLeft + textRight) / 2).toBeCloseTo(200, 9);
@@ -812,30 +814,64 @@ describe("nameplateLayout (#281)", () => {
 
   it("lays glyph, gap and name out in screen px, so they span more world zoomed out (#456)", () => {
     const monk = actor("m", 200, 100, 14, { profession: "monk" });
-    const near = nameplateLayout(monk, 40, 1);
-    const wide = nameplateLayout(monk, 40, 0.5);
+    const near = nameplateLayout(monk, 40, 1, false);
+    const wide = nameplateLayout(monk, 40, 0.5, false);
     expect(wide.textX - 200).toBeCloseTo(2 * (near.textX - 200), 9);
     expect(wide.glyphX ?? 0).toBeCloseTo(200 + 2 * ((near.glyphX ?? 0) - 200), 9);
   });
 
   it("moves the glyph left with a longer name", () => {
     const monk = actor("m", 200, 100, 14, { profession: "monk" });
-    expect(nameplateLayout(monk, 120, 1).glyphX ?? 0).toBeLessThan(
-      nameplateLayout(monk, 40, 1).glyphX ?? 0,
+    expect(nameplateLayout(monk, 120, 1, false).glyphX ?? 0).toBeLessThan(
+      nameplateLayout(monk, 40, 1, false).glyphX ?? 0,
     );
   });
 
   it("centres the glyph alone on a zero-width name", () => {
-    const layout = nameplateLayout(actor("m", 200, 100, 14, { profession: "monk" }), 0, 1);
+    const layout = nameplateLayout(actor("m", 200, 100, 14, { profession: "monk" }), 0, 1, false);
     expect(
       (layout.glyphX ?? 0) + (PROFESSION_GLYPH_SIZE + 2) / 2 - PROFESSION_GLYPH_SIZE / 2,
     ).toBeCloseTo(200, 9);
   });
 
   it("centres the name alone, with no glyph, for no profession", () => {
-    const layout = nameplateLayout(actor("d", 200, 100), 40, 1);
+    const layout = nameplateLayout(actor("d", 200, 100), 40, 1, false);
     expect(layout.glyphX).toBeUndefined();
     expect(layout.textX).toBe(200);
+  });
+
+  it("puts a drawn signet between glyph and name, all centred together (#2805)", () => {
+    const monk = actor("m", 200, 100, 14, { profession: "monk", signet: 42 });
+    const layout = nameplateLayout(monk, 40, 1, true);
+    const glyphRight = (layout.glyphX ?? 0) + PROFESSION_GLYPH_SIZE / 2;
+    const signetLeft = (layout.signetX ?? 0) - NAMEPLATE_SIGNET_SIZE / 2;
+    const signetRight = (layout.signetX ?? 0) + NAMEPLATE_SIGNET_SIZE / 2;
+    expect(signetLeft - glyphRight).toBeCloseTo(2, 9);
+    expect(layout.textX - 20 - signetRight).toBeCloseTo(2, 9);
+    expect(((layout.glyphX ?? 0) - PROFESSION_GLYPH_SIZE / 2 + layout.textX + 20) / 2).toBeCloseTo(
+      200,
+      9,
+    );
+  });
+
+  it("leaves no gap for a signet not loaded yet, nor for none, as over a bot (#2805)", () => {
+    const plain = nameplateLayout(actor("m", 200, 100, 14, { profession: "monk" }), 40, 1, false);
+    const loading = actor("m", 200, 100, 14, { profession: "monk", signet: 42 });
+    expect(nameplateLayout(loading, 40, 1, false)).toEqual(plain);
+    const bot = actor("b", 200, 100, 14, { profession: "monk", bot: true });
+    expect(nameplateLayout(bot, 40, 1, true)).toEqual(plain);
+    expect(plain.signetX).toBeUndefined();
+  });
+
+  it("widens the name tag's box by the signet only when it is drawn (#2805)", () => {
+    const marked = actor("m", 200, 100, 14, { signet: 42 });
+    const without = nameTagBox(marked, 40, 14, 1, false);
+    const drawn = nameTagBox(marked, 40, 14, 1, true);
+    expect(drawn.right - drawn.left - (without.right - without.left)).toBeCloseTo(
+      NAMEPLATE_SIGNET_SIZE + 2,
+      9,
+    );
+    expect(drawn.bottom - drawn.top).toBe(NAMEPLATE_SIGNET_SIZE);
   });
 });
 

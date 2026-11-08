@@ -1,3 +1,4 @@
+import { signetParams, signetSvg } from "../identity/signet.js";
 import { h } from "./kit.js";
 
 /**
@@ -55,6 +56,50 @@ export function nameplateName(name: string): string {
           .trimEnd()}…`;
   cutNames.set(name, cut);
   return cut;
+}
+
+/** A signet's size in the party window and the lobby roster (#2805), px. */
+export const SIGNET_ROW_PX = 11;
+
+const signetUrls = new Map<string, string>();
+
+/**
+ * `bits`' signet (#2805) as a `size` px SVG data URL, built once per
+ * pair. An image of its own, so two copies never share a clip path id.
+ */
+export function signetUrl(bits: number, size: number): string {
+  const key = `${String(bits)}/${String(size)}`;
+  let url = signetUrls.get(key);
+  if (url === undefined) {
+    url = `data:image/svg+xml,${encodeURIComponent(signetSvg(signetParams(bits), size))}`;
+    signetUrls.set(key, url);
+  }
+  return url;
+}
+
+/**
+ * A player's signet (#2805), `size` px, just before their name: a
+ * recognition aid, never a proof. Hidden, taking no room, for none.
+ */
+export function signetElement(bits: number | undefined, size: number): HTMLImageElement {
+  const element = document.createElement("img");
+  element.className = "signet";
+  element.alt = "";
+  element.width = size;
+  element.height = size;
+  setSignet(element, bits);
+  return element;
+}
+
+/** Show `bits` in an element `signetElement` made. */
+export function setSignet(element: HTMLImageElement, bits: number | undefined): void {
+  element.hidden = bits === undefined;
+  if (bits !== undefined) {
+    const url = signetUrl(bits, element.width);
+    if (element.src !== url) {
+      element.src = url;
+    }
+  }
 }
 
 /**

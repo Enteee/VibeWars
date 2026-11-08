@@ -50,10 +50,12 @@ These keys are fixed:
   glides back to you.
 - Click a skill on the bar to use it, and a name in the party window to
   target that ally.
-- Hold **Show names** (Shift) and every name shows. While held, clicking
-  a character's name works as clicking its body does. A right click
-  only targets, even twice; a left click targets and attacks at once; a
-  wheel click calls or pings. The name a click would hit is highlighted.
+- Hold **Show names** (Shift) and every name shows, each player's with
+  their signet before it: a small shield that is always the same for the
+  same player. While held, clicking a character's name works as clicking
+  its body does. A right click only targets, even twice; a left click
+  targets and attacks at once; a wheel click calls or pings. The name a
+  click would hit is highlighted.
 
 ## The top bar
 

@@ -4,7 +4,13 @@ import type { ArmedAttackSnapshot, MatchSnapshot, PlayerSnapshot } from "@vibewa
 import { skillName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { botTagElement } from "./bot-tag.js";
-import { guildTagElement, setGuildTag } from "./player-label.js";
+import {
+  SIGNET_ROW_PX,
+  guildTagElement,
+  setGuildTag,
+  setSignet,
+  signetElement,
+} from "./player-label.js";
 import { setHidden } from "./dom-write.js";
 import { healthTint, paintHealthTint, type HealthTint } from "./health-tint.js";
 import {
@@ -32,6 +38,8 @@ export interface PartyRow {
   readonly id: string;
   readonly name: string;
   /** After the name, kept whole when the name is cut short (#1406). */
+  /** Just before the name, kept whole when the name is cut short (#2805); undefined for none. */
+  readonly signet: number | undefined;
   readonly guildTag: string | undefined;
   readonly professions: readonly ProfessionIcon[];
   /** A lobby's bot (#1194): its name wears the BOT tag. */
@@ -55,6 +63,7 @@ function partyRow(player: PlayerSnapshot, self: PlayerSnapshot): PartyRow {
   return {
     id: player.sessionId,
     name: player.name,
+    signet: player.signet,
     guildTag: player.guildTag,
     professions: targetProfessionIcons(player),
     bot: player.bot,
@@ -119,6 +128,7 @@ interface RowElements {
   readonly element: HTMLElement;
   readonly row: HTMLButtonElement;
   readonly professions: HTMLElement;
+  readonly signet: HTMLImageElement;
   readonly name: HTMLElement;
   readonly guildTag: HTMLElement;
   readonly botTag: HTMLElement;
@@ -176,6 +186,7 @@ function createRow(
   });
   const header = span("party-row-header", row);
   const professions = span("party-row-professions", header);
+  const signet = header.appendChild(signetElement(undefined, SIGNET_ROW_PX));
   const name = span("party-row-name", header);
   const guildTag = header.appendChild(guildTagElement());
   const botTag = header.appendChild(botTagElement("party-row-bot"));
@@ -225,6 +236,7 @@ function createRow(
     element,
     row,
     professions,
+    signet,
     name,
     guildTag,
     botTag,
@@ -269,6 +281,7 @@ function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot, 
       }),
     );
   }
+  setSignet(elements.signet, row.signet);
   elements.name.textContent = row.name;
   setGuildTag(elements.guildTag, row.guildTag);
   elements.botTag.hidden = !row.bot;
