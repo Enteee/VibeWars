@@ -2,12 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import type { FormedGroup, LobbySnapshot, QueueState } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
 import {
-  FELL_THROUGH,
-  HOST_LEFT,
-  MATCH_FOUND,
-  TEAM_SPLIT,
-  UNREACHABLE,
   ascentLine,
   endedLines,
   modeLabel,
@@ -132,28 +128,31 @@ describe("queueLines (#880)", () => {
       { kind: "forming", group: GROUP },
       { kind: "in-lobby", group: GROUP, key: { ticketId: "a", sign: () => "" } },
     ] as const) {
-      expect(queueLines(state, false)).toEqual({ status: MATCH_FOUND, action: "leave" });
+      expect(queueLines(state, false)).toEqual({ status: t("queue.matchFound"), action: "leave" });
     }
   });
 
   it("fell-through: says so, and keeps saying it over searching while it is held", () => {
     expect(queueLines({ kind: "fell-through" }, false)).toEqual({
-      status: FELL_THROUGH,
+      status: t("queue.fellThrough"),
       action: "leave",
     });
-    expect(queueLines(searching, true)).toEqual({ status: FELL_THROUGH, action: "leave" });
+    expect(queueLines(searching, true)).toEqual({
+      status: t("queue.fellThrough"),
+      action: "leave",
+    });
   });
 
   it("unreachable: #707's wording and Back to menu", () => {
     expect(queueLines({ kind: "unreachable" }, false)).toEqual({
-      status: UNREACHABLE,
+      status: t("queue.unreachable"),
       action: "back",
     });
   });
 
   it("party-gone: the team split up (#882)", () => {
     expect(queueLines({ kind: "party-gone" }, false)).toEqual({
-      status: TEAM_SPLIT,
+      status: t("queue.teamSplit"),
       action: "leave",
     });
   });
@@ -169,7 +168,10 @@ describe("stayButton (#882)", () => {
       label: "Waiting for your team (9)",
       enabled: false,
     });
-    expect(stayButton({ kind: "host-left" })).toEqual({ label: HOST_LEFT, enabled: false });
+    expect(stayButton({ kind: "host-left" })).toEqual({
+      label: t("queue.hostLeft"),
+      enabled: false,
+    });
   });
 });
 

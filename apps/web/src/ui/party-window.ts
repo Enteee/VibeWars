@@ -1,6 +1,7 @@
 import { PET_ATTACK_SECONDS, getSkill, type CompanionMode } from "@vibewars/game-core";
 import type { ArmedAttackSnapshot, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import { botTagElement } from "./bot-tag.js";
 import { guildTagElement, setGuildTag } from "./player-label.js";
 import { setHidden } from "./dom-write.js";
@@ -143,10 +144,10 @@ function span(className: string, parent: HTMLElement): HTMLElement {
 }
 
 /** The modes a companion's row offers, in its buttons' order (#1110). */
-const COMMANDS: readonly { readonly mode: CompanionMode; readonly label: string }[] = [
-  { mode: "guard", label: "Guard" },
-  { mode: "fight", label: "Fight" },
-  { mode: "heel", label: "Heel" },
+const COMMANDS: readonly { readonly mode: CompanionMode; readonly label: MessageKey }[] = [
+  { mode: "guard", label: "partyWindow.guard" },
+  { mode: "fight", label: "partyWindow.fight" },
+  { mode: "heel", label: "partyWindow.heel" },
 ];
 
 /** Neither focusable nor taking focus on a press: the keyboard stays with the arena. */
@@ -186,7 +187,7 @@ function createRow(
   const points = span("party-health-points", label);
   const pips = bar.appendChild(pipsElement());
   const deadText = span("party-row-dead", row);
-  deadText.textContent = "dead";
+  deadText.textContent = t("partyWindow.dead");
   const commands = new Map<CompanionMode, HTMLButtonElement>();
   let element: HTMLElement = row;
   let armed: RowElements["armed"];
@@ -204,13 +205,13 @@ function createRow(
     element.appendChild(row);
     const orders = span("party-commands", element);
     orders.setAttribute("role", "group");
-    orders.setAttribute("aria-label", "Pet orders");
+    orders.setAttribute("aria-label", t("partyWindow.petOrders"));
     for (const { mode, label } of COMMANDS) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "party-command";
       button.dataset.mode = mode;
-      button.textContent = label;
+      button.textContent = t(label);
       keepFocus(button);
       button.addEventListener("click", () => {
         onCommand(id, mode);
@@ -270,7 +271,9 @@ function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot, 
   elements.name.textContent = row.name;
   setGuildTag(elements.guildTag, row.guildTag);
   elements.botTag.hidden = !row.bot;
-  elements.row.title = `Target ${row.self ? "yourself" : row.name}`;
+  elements.row.title = row.self
+    ? t("partyWindow.targetSelf")
+    : t("partyWindow.target", { name: row.name });
   elements.row.classList.toggle("is-self", row.self);
   elements.row.classList.toggle("is-dead", row.dead);
   elements.row.classList.toggle("is-targeted", row.targeted);
@@ -311,7 +314,7 @@ export function createPartyWindow(
   dock.className = "party-dock";
   const panel = document.createElement("div");
   panel.className = "party-window";
-  panel.setAttribute("aria-label", "Party");
+  panel.setAttribute("aria-label", t("partyWindow.party"));
   panel.hidden = true;
   dock.appendChild(panel);
   parent.appendChild(dock);

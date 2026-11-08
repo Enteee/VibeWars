@@ -98,7 +98,7 @@ import type {
   PeerLobbyJoin,
   WireLobbyState,
 } from "./p2p.js";
-import { MAX_LOBBY_PLAYERS, MAX_TEAM_LOBBY_SIDE, PROTOCOL_MISMATCH_MESSAGE } from "./protocol.js";
+import { MAX_LOBBY_PLAYERS, MAX_TEAM_LOBBY_SIDE } from "./protocol.js";
 import type { CastRefusedMessage, RechargeMessage } from "./protocol.js";
 import { PROTOCOL_VERSION } from "./protocol-version.js";
 
@@ -165,7 +165,7 @@ const welcome: PeerWelcome = {
   },
 };
 
-const refuse: PeerRefuse = { reason: "protocol-mismatch", message: PROTOCOL_MISMATCH_MESSAGE };
+const refuse: PeerRefuse = { reason: "protocol-mismatch" };
 
 const observe: PeerObserve = { protocolVersion: PROTOCOL_VERSION, matchId: "match-2" };
 
@@ -1336,11 +1336,6 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["observing with a negative delay", parsePeerObserving, { ...observing, delaySeconds: -1 }],
   ["observing without a delay", parsePeerObserving, { ...observing, delaySeconds: undefined }],
   ["observing with a zero time limit", parsePeerObserving, { ...observing, timeLimitSeconds: 0 }],
-  [
-    "refuse with a long message",
-    parsePeerRefuse,
-    { ...refuse, message: "x".repeat(MAX_WIRE_TEXT + 1) },
-  ],
   ["snapshot without parts (#662)", parseWireSnapshotPart, { ...snapshot, parts: undefined }],
   ["snapshot without flags (#1225)", parseWireSnapshotPart, { ...snapshot, flags: undefined }],
   ["snapshot without a stand (#1225)", parseWireSnapshotPart, { ...snapshot, stand: undefined }],

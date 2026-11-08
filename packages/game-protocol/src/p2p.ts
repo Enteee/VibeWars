@@ -451,11 +451,9 @@ export const PEER_REFUSALS = [
   "wrong-match",
 ] as const;
 
-/** Host to one client: it is not in, and why. */
+/** Host to one client: it is not in, and why. The client words `reason`. */
 export interface PeerRefuse {
   readonly reason: (typeof PEER_REFUSALS)[number];
-  /** What the player is shown. */
-  readonly message: string;
 }
 
 /**
@@ -1996,10 +1994,8 @@ export function parsePeerObserving(value: unknown): PeerObserving | undefined {
 
 export function parsePeerRefuse(value: unknown): PeerRefuse | undefined {
   const raw = fields(value);
-  return raw !== undefined &&
-    isOneOf(raw.reason, PEER_REFUSALS) &&
-    isString(raw.message, MAX_WIRE_TEXT)
-    ? { reason: raw.reason, message: raw.message }
+  return raw !== undefined && isOneOf(raw.reason, PEER_REFUSALS)
+    ? { reason: raw.reason }
     : undefined;
 }
 

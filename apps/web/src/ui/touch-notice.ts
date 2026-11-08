@@ -1,7 +1,5 @@
+import { t } from "../i18n/index.js";
 import { button, h } from "./kit.js";
-
-/** What the notice says (#1392), and Help's Getting started with it. */
-export const TOUCH_NOTICE_HEADLINE = "VibeWars needs a keyboard and mouse.";
 
 /**
  * Whether this device is touch alone (#1392): a coarse pointer that cannot
@@ -31,20 +29,20 @@ export function showTouchNotice(root: HTMLElement, onContinue: () => void): void
   const panel = h("div", "screen touch-notice");
   panel.setAttribute("role", "alertdialog");
   panel.setAttribute("aria-modal", "true");
-  panel.setAttribute("aria-label", TOUCH_NOTICE_HEADLINE);
-  const where = h("p", "screen-subtitle", "It does not work on a phone or a touch-only tablet. ");
-  where.append(
-    "Open it on a computer: ",
-    h("span", "touch-notice-url", `${location.origin}${location.pathname}`),
-    ".",
-  );
-  const go = button("Continue anyway", "primary touch-notice-continue", () => {
+  const headline = t("touchNotice.headline");
+  panel.setAttribute("aria-label", headline);
+  // One sentence with the address in it, styled apart: split around a mark that stands for it.
+  const mark = "\u0000";
+  const [before = "", after = ""] = t("touchNotice.where", { url: mark }).split(mark);
+  const where = h("p", "screen-subtitle", before);
+  where.append(h("span", "touch-notice-url", `${location.origin}${location.pathname}`), after);
+  const go = button(t("touchNotice.continue"), "primary touch-notice-continue", () => {
     backdrop.remove();
     onContinue();
   });
   panel.append(
-    h("h1", "screen-title", "VibeWars"),
-    h("p", "touch-notice-headline", TOUCH_NOTICE_HEADLINE),
+    h("h1", "screen-title", t("touchNotice.title")),
+    h("p", "touch-notice-headline", headline),
     where,
     go,
   );

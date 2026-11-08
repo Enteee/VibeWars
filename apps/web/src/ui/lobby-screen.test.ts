@@ -1,11 +1,9 @@
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import {
   PLAY_BOTS_AFTER_MS,
-  MATCH_RUNNING_NOTICE,
-  READY_JOIN_A_TEAM,
-  READY_MATCH_STARTED,
   hostMaps,
   inviteUrl,
   lobbyControls,
@@ -67,10 +65,10 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
 describe("lobbyControls", () => {
   it("says the match is running and locks everything but leave", () => {
     expect(lobbyControls(snapshot("in-match"))).toEqual({
-      running: MATCH_RUNNING_NOTICE,
+      running: t("lobby.matchRunning"),
       mapDisabled: true,
       teamsDisabled: true,
-      readyProblem: READY_MATCH_STARTED,
+      readyProblem: t("lobby.readyMatchStarted"),
       startDisabled: true,
       canWatch: false,
     });
@@ -81,7 +79,7 @@ describe("lobbyControls", () => {
       running: undefined,
       mapDisabled: true,
       teamsDisabled: true,
-      readyProblem: READY_MATCH_STARTED,
+      readyProblem: t("lobby.readyMatchStarted"),
       startDisabled: true,
       canWatch: false,
     });
@@ -127,13 +125,13 @@ describe("lobbyControls", () => {
         },
       ],
     });
-    expect(controls.readyProblem).toBe(READY_JOIN_A_TEAM);
+    expect(controls.readyProblem).toBe(t("lobby.readyJoinATeam"));
     expect(controls.startDisabled).toBe(true);
   });
 
   it("asks one not in the lobby yet to join a team first (#2124)", () => {
     const shown = { ...snapshot("waiting"), selfSessionId: "stranger" };
-    expect(lobbyControls(shown).readyProblem).toBe(READY_JOIN_A_TEAM);
+    expect(lobbyControls(shown).readyProblem).toBe(t("lobby.readyJoinATeam"));
   });
 
   it("offers Watch to a member on no team, only while the match runs (#480)", () => {
@@ -580,7 +578,7 @@ describe("lobbyPanel: the map (#1994)", () => {
     };
     const started = readyOf(snapshot("starting"));
     expect(started.disabled).toBe(true);
-    expect(started.title).toBe(READY_MATCH_STARTED);
+    expect(started.title).toBe(t("lobby.readyMatchStarted"));
     const open = readyOf(snapshot("waiting"));
     expect(open.disabled).toBe(false);
     expect(open.title).toBe("");
