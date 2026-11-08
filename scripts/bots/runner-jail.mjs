@@ -17,7 +17,8 @@
  *   fresh scratch directory on disk, so a Nix store restored from the
  *   Actions cache is not charged to the memory cap, and it is deleted when
  *   the runner exits;
- * - the runner's Nix closure and a base userland are mounted over that
+ * - the runner's Nix closure, main's devenv shell (the supervisor's preload,
+ *   #2792) and a base userland are mounted over that
  *   `/nix/store`, each path as an overlay on a tmpfs: the job cannot change
  *   the host's copy, and a cache restore that writes the same path still
  *   succeeds;
@@ -51,7 +52,9 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
 
+import { readPreload } from "./runner-preload.mjs";
 import { listenRunnerProxy, parseAllowlist } from "./runner-proxy.mjs";
+import { runnersStateDir } from "./runners-state.mjs";
 
 /** Where the proxy's socket directory is bound inside the jail. */
 export const PROXY_DIR = "/run/runner-proxy";
@@ -352,16 +355,38 @@ export async function runRunner({ store, jitconfigFile, lifeline, cpus, memoryGi
     log,
   );
   try {
-    const storePaths = fs
+    const own = fs
       .readFileSync(store.closure, "utf8")
       .split("\n")
       .filter((line) => line !== "");
+    const preload = readPreload(runnersStateDir(process.env));
+    const storePaths = [...own, ...(preload?.storePaths.filter((p) => !own.includes(p)) ?? [])];
+    // What is mounted and what is registered are one list: a path the job's
+    // Nix db does not know gets substituted over, and its chmod is EPERM (#2101).
+    const missing = storePaths.find((p) => !fs.existsSync(p));
+    if (missing !== undefined) {
+      log(`${missing} is in the store list but not on the host; not starting`);
+      return 1;
+    }
+    let closure = store.closure;
+    let registration = store.registration;
+    if (preload !== null) {
+      closure = path.join(scratch, "store-paths");
+      registration = path.join(scratch, "registration");
+      fs.writeFileSync(closure, `${storePaths.join("\n")}\n`);
+      fs.writeFileSync(
+        registration,
+        fs.readFileSync(store.registration, "utf8") + fs.readFileSync(preload.registration, "utf8"),
+      );
+      // Nix writes its fetcher cache, so the job gets a copy, not a bind.
+      fs.cpSync(preload.fetcherCache, `${scratch}/home/.cache/nix`, { recursive: true });
+    }
     const [command, ...args] = runnerCommand({
       jail: {
         storeDirs: storePaths.filter((store) => fs.statSync(store).isDirectory()),
         storeFiles: storePaths.filter((store) => !fs.statSync(store).isDirectory()),
-        closure: store.closure,
-        registration: store.registration,
+        closure,
+        registration,
         userland: store.userland,
         etc: store.etc,
         hook: store.hook,

@@ -439,6 +439,24 @@ let
     exec ${node} ${botScripts}/runner-jail.mjs "$@"
   '';
 
+  # `vibewars-runner-preload`: realises main's CI devenv shell on the host so
+  # the jails mount it read-only (#2792, ADR-0045). Logic in runner-preload.mjs;
+  # the supervisor runs it. Main only, and no enterShell hook runs here.
+  runnerPreload = pkgs.writeShellScriptBin "vibewars-runner-preload" ''
+    export PATH=${
+      lib.makeBinPath [
+        pkgs.git
+        pkgs.nix
+        pkgs.devenv
+      ]
+    }:"$PATH"
+    exec ${node} ${botScripts}/runner-preload.mjs \
+      --state "''${VIBEWARS_RUNNERS_STATE:-''${XDG_STATE_HOME:-$HOME/.local/state}/vibewars/runner-supervisor}" \
+      --repo "''${VIBEWARS_REPO:-Enteee/VibeWars}" \
+      --exclude ${runnerClosure}/store-paths \
+      --extra ${pkgs.nix} --extra ${pkgs.bash} --extra ${pkgs.coreutils} "$@"
+  '';
+
   # `claude-bot --smoke support`: support's jail holds no secret and can
   # write nothing shared (#148, ADR-0025), checked from inside it.
   supportSmoke = pkgs.writeShellScript "vibewars-support-smoke" ''
@@ -1305,6 +1323,7 @@ in
       pkgs.claude-code
       pkgs.github-runner
       runnerJail
+      runnerPreload
       # Also on the dev shell's PATH, not just the sandbox's: when an agent
       # reports that `hub` refused something, the quickest way to understand
       # why is to run the same command yourself.
