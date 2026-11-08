@@ -2,7 +2,6 @@ import { AREA_EARSHOT, AREA_IN_THE_AREA, AREA_NEARBY, RANGE_SPELL } from "../dis
 import { baseEnergyPipsFor } from "../equipment/armor.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, weaponDamageType } from "../equipment/weapons.js";
-import { PRIEST_WAVE_SECONDS } from "../match-rules.js";
 import { distance, type Vec2 } from "../vec2.js";
 import { ALTAR_REACH_UNITS } from "./relics.js";
 import type { Behaviour } from "./behaviour.js";
@@ -15,7 +14,10 @@ import type { ParticipantSpec } from "./simulation.js";
  * between following that player and staying where it is. On the altar
  * it claims it by itself, through the simulation's cast path, so an
  * interrupt or a knockdown cuts the claim short. Dead, it rises at its
- * `ghost-spawn` at the priests' interval, staying put.
+ * `ghost-spawn`, staying put (#2839): on a map with priests at the next
+ * priest wave, only while its team's priest lives; where the objective
+ * needs it, King of the Hill, Relic Run and Capture Points,
+ * `PRIEST_WAVE_SECONDS` after it died; anywhere else, never.
  */
 
 /** Where a team's Ghostly Hero starts and rises (#1377), from its map's `ghost-spawn`. */
@@ -117,8 +119,16 @@ export function stayBehaviour(post: Vec2): Behaviour {
   };
 }
 
-/** `spawn`'s ghost at `level`, facing `facing`, staying at its spawn, as the simulation adds it. */
-export function ghostSpec(spawn: GhostSpawn, level: GhostLevel, facing: number): ParticipantSpec {
+/**
+ * `spawn`'s ghost at `level`, facing `facing`, staying at its spawn, as the
+ * simulation adds it; it rises by itself `riseSeconds` after it died.
+ */
+export function ghostSpec(
+  spawn: GhostSpawn,
+  level: GhostLevel,
+  facing: number,
+  riseSeconds: number,
+): ParticipantSpec {
   return {
     id: ghostId(spawn.team),
     team: spawn.team,
@@ -140,8 +150,8 @@ export function ghostSpec(spawn: GhostSpawn, level: GhostLevel, facing: number):
     maxEnergy: GHOST_ENERGY,
     baseEnergyPips: baseEnergyPipsFor("warrior"),
     behaviour: stayBehaviour(spawn.position),
-    // It rises where it started, at the priests' interval (#1186).
-    reset: { kind: "on-death", afterSeconds: PRIEST_WAVE_SECONDS },
+    // It rises where it started (#1186); never by itself on infinity (#2839).
+    reset: { kind: "on-death", afterSeconds: riseSeconds },
     creature: {
       ownerId: undefined,
       kind: "ghostly-hero",
