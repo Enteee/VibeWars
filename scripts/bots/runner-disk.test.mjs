@@ -5,7 +5,8 @@ import { diskCapRefusal } from "./runner-supervisor.mjs";
 
 const SCRATCH = "/state/runners";
 const SHARED = ["/bots", "/home"];
-const MOUNT = ["sudo", "mount", "-o", "loop", RUNNER_IMAGE, SCRATCH];
+const IMAGE_BYTES = 8589934592;
+const MOUNT = ["sudo", "mount", "-o", "loop,nosuid,nodev", RUNNER_IMAGE, SCRATCH];
 const AFTER_IMAGE = [
   ["mkdir", "-p", SCRATCH],
   MOUNT,
@@ -13,9 +14,9 @@ const AFTER_IMAGE = [
   ["chmod", "700", SCRATCH],
 ];
 const ALL_STEPS = [
-  ["sudo", "truncate", "-s", "64G", RUNNER_IMAGE],
+  ["sudo", "fallocate", "-l", "64G", RUNNER_IMAGE],
   ["sudo", "chmod", "600", RUNNER_IMAGE],
-  ["sudo", "mkfs.ext4", "-q", "-F", RUNNER_IMAGE],
+  ["sudo", "mkfs.ext4", "-q", "-F", "-E", "nodiscard", RUNNER_IMAGE],
   ...AFTER_IMAGE,
 ];
 
@@ -90,7 +91,7 @@ async function setUp({
       },
       canAsk,
       nixos,
-      exists: () => imageExists,
+      imageBytes: () => (imageExists ? IMAGE_BYTES : null),
       entries: () => entries,
       fstab: () => fstab,
       uid: 1000,
@@ -118,7 +119,7 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
     const { ran, said } = await setUp({ answers: ["n"] });
     expect(ran).toEqual([]);
     expect(said).toContain("Runners stay off");
-    expect(said).toContain(`sudo mount -o loop ${RUNNER_IMAGE} ${SCRATCH}`);
+    expect(said).toContain(`sudo mount -o loop,nosuid,nodev ${RUNNER_IMAGE} ${SCRATCH}`);
   });
 
   it("treats no tty or no sudo as no, without asking", async () => {
@@ -141,12 +142,15 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
   it("asks the size again until it is whole and at least 8", async () => {
     const { ran, asked } = await setUp({ answers: ["y", "4", "1.5", "128"], nixos: true });
     expect(asked).toHaveLength(4);
-    expect(ran[0]).toEqual(["sudo", "truncate", "-s", "128G", RUNNER_IMAGE]);
+    expect(ran[0]).toEqual(["sudo", "fallocate", "-l", "128G", RUNNER_IMAGE]);
   });
 
-  it("neither truncates nor formats an image that exists", async () => {
+  it("does not format an image that exists, and reserves its space", async () => {
     const { ran, asked } = await setUp({ answers: ["y"], imageExists: true, nixos: true });
-    expect(ran).toEqual(AFTER_IMAGE);
+    expect(ran).toEqual([
+      ["sudo", "fallocate", "-l", String(IMAGE_BYTES), RUNNER_IMAGE],
+      ...AFTER_IMAGE,
+    ]);
     expect(asked[0]).toContain("Mount the existing disk image");
   });
 
@@ -162,15 +166,15 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
     expect(ran).toEqual(ALL_STEPS.slice(0, 5));
     expect(checks).toBe(1);
     const manual = said.slice(said.indexOf("That failed"));
-    expect(manual).toContain(`sudo mount -o loop ${RUNNER_IMAGE} ${SCRATCH}`);
+    expect(manual).toContain(`sudo mount -o loop,nosuid,nodev ${RUNNER_IMAGE} ${SCRATCH}`);
     expect(manual).toContain(`chmod 700 ${SCRATCH}`);
-    expect(manual).not.toContain("truncate");
+    expect(manual).not.toContain("fallocate");
   });
 
   it("on NixOS prints the fileSystems snippet and leaves fstab alone", async () => {
     const { ran, asked, said } = await setUp({ answers: ["y", ""], nixos: true });
     expect(said).toContain(
-      `fileSystems."${SCRATCH}" = { device = "${RUNNER_IMAGE}"; fsType = "ext4"; options = [ "loop" "nofail" ]; };`,
+      `fileSystems."${SCRATCH}" = { device = "${RUNNER_IMAGE}"; fsType = "ext4"; options = [ "loop" "nofail" "nosuid" "nodev" ]; };`,
     );
     expect(said).toContain("gone after a reboot");
     expect(asked).toHaveLength(2);
@@ -180,7 +184,7 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
   it("elsewhere appends to fstab through sudo on yes", async () => {
     const { ran, inputs, said } = await setUp({ answers: ["y", "", "y"] });
     expect(ran.at(-1)).toEqual(["sudo", "tee", "-a", "/etc/fstab"]);
-    expect(inputs).toEqual([`${RUNNER_IMAGE} ${SCRATCH} ext4 loop,nofail 0 0\n`]);
+    expect(inputs).toEqual([`${RUNNER_IMAGE} ${SCRATCH} ext4 loop,nofail,nosuid,nodev 0 0\n`]);
     expect(said).toContain("$ sudo tee -a /etc/fstab");
   });
 
@@ -191,6 +195,13 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
     });
     expect(asked).toHaveLength(2);
     expect(ran).toEqual(ALL_STEPS);
+  });
+
+  it("stops before formatting when the host has no room to reserve the image", async () => {
+    const { ran, said, checks } = await setUp({ answers: ["y", ""], failing: "fallocate" });
+    expect(ran).toEqual(ALL_STEPS.slice(0, 1));
+    expect(checks).toBe(1);
+    expect(said).toContain("Runners stay off");
   });
 
   it("goes on when scratch cannot be read, and mounts nothing", async () => {
@@ -204,7 +215,7 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
   it("goes on when fstab cannot be read, and prints the line", async () => {
     const { ran, said } = await setUp({ answers: ["y", ""], fstab: null });
     expect(ran).toEqual(ALL_STEPS);
-    expect(said).toContain(`${RUNNER_IMAGE} ${SCRATCH} ext4 loop,nofail 0 0`);
+    expect(said).toContain(`${RUNNER_IMAGE} ${SCRATCH} ext4 loop,nofail,nosuid,nodev 0 0`);
     expect(said).toContain("gone after a reboot");
   });
 

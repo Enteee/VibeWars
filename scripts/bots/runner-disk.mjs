@@ -35,7 +35,7 @@ const POOLED = new Set(["btrfs", "zfs"]);
  * @property {(line: string) => void} say
  * @property {boolean} canAsk stdin is a tty and sudo is on PATH
  * @property {boolean} nixos
- * @property {(file: string) => boolean} exists
+ * @property {(file: string) => number | null} imageBytes a file's size, null if it is missing
  * @property {(dir: string) => string[] | null} entries a directory's names, none if it is missing, null if it cannot be read
  * @property {() => string | null} fstab null if it cannot be read
  * @property {number} uid
@@ -65,7 +65,7 @@ export function realRunnerDiskHost(proc, ask, say) {
     say,
     canAsk: proc.stdin.isTTY && spawnSync("sudo", ["--version"], { stdio: "ignore" }).status === 0,
     nixos: fs.existsSync("/etc/NIXOS"),
-    exists: fs.existsSync,
+    imageBytes: (file) => (fs.existsSync(file) ? fs.statSync(file).size : null),
     entries: (dir) => {
       if (!fs.existsSync(dir)) {
         return [];
@@ -104,22 +104,25 @@ function shown(argv) {
  * @param {string} scratch
  * @param {string} image
  * @param {number} size GiB
- * @param {boolean} imageExists
+ * @param {number | null} imageBytes the image's size if it exists
  * @param {{ uid: number, gid: number }} owner
  * @returns {string[][]} the root steps, in order
  */
-function setupSteps(scratch, image, size, imageExists, { uid, gid }) {
+function setupSteps(scratch, image, size, imageBytes, { uid, gid }) {
   return [
-    ...(imageExists
-      ? []
+    // Reserved, not sparse: a sparse image lets a job fill the host disk past
+    // its free space, which is what the cap is for. mkfs would punch the
+    // reservation back out without nodiscard.
+    ...(imageBytes !== null
+      ? [["sudo", "fallocate", "-l", String(imageBytes), image]]
       : [
-          ["sudo", "truncate", "-s", `${String(size)}G`, image],
+          ["sudo", "fallocate", "-l", `${String(size)}G`, image],
           // Root's 0644 would let any local user read the runners' scratch.
           ["sudo", "chmod", "600", image],
-          ["sudo", "mkfs.ext4", "-q", "-F", image],
+          ["sudo", "mkfs.ext4", "-q", "-F", "-E", "nodiscard", image],
         ]),
     ["mkdir", "-p", scratch],
-    ["sudo", "mount", "-o", "loop", image, scratch],
+    ["sudo", "mount", "-o", "loop,nosuid,nodev", image, scratch],
     ["sudo", "chown", `${String(uid)}:${String(gid)}`, scratch],
     ["chmod", "700", scratch],
   ];
@@ -180,13 +183,13 @@ async function persist(host, scratch, image) {
   if (host.nixos) {
     host.say("  This mount is gone after a reboot until you add this and rebuild:");
     host.say(
-      `    fileSystems."${scratch}" = { device = "${image}"; fsType = "ext4"; options = [ "loop" "nofail" ]; };`,
+      `    fileSystems."${scratch}" = { device = "${image}"; fsType = "ext4"; options = [ "loop" "nofail" "nosuid" "nodev" ]; };`,
     );
     return;
   }
   const mountPoint = scratch.replaceAll(" ", "\\040");
   // nofail: a missing image must not stop the host booting for an optional disk.
-  const entry = `${image.replaceAll(" ", "\\040")} ${mountPoint} ext4 loop,nofail 0 0`;
+  const entry = `${image.replaceAll(" ", "\\040")} ${mountPoint} ext4 loop,nofail,nosuid,nodev 0 0`;
   const fstab = host.fstab();
   if (fstab === null) {
     host.say(`  Cannot read ${FSTAB}: this mount is gone after a reboot until it has this line:`);
@@ -244,8 +247,8 @@ export async function setUpRunnerDisk({
   }
   host.say(`  ${refused}`);
 
-  const imageExists = host.exists(image);
-  const defaults = setupSteps(scratch, image, DEFAULT_GIB, imageExists, host);
+  const imageBytes = host.imageBytes(image);
+  const defaults = setupSteps(scratch, image, DEFAULT_GIB, imageBytes, host);
   const entries = host.entries(scratch);
   if (entries === null || entries.length > 0) {
     host.say(
@@ -258,16 +261,17 @@ export async function setUpRunnerDisk({
     sayManual(host, defaults);
     return;
   }
-  const question = imageExists
-    ? `  Mount the existing disk image ${image} at ${scratch}? [y/N] `
-    : `  Create a disk image for the runners at ${image} and mount it at ${scratch}? [y/N] `;
+  const question =
+    imageBytes !== null
+      ? `  Mount the existing disk image ${image} at ${scratch}? [y/N] `
+      : `  Create a disk image for the runners at ${image} and mount it at ${scratch}? [y/N] `;
   if ((await host.ask(question)).trim().toLowerCase() !== "y") {
     sayManual(host, defaults);
     return;
   }
 
-  const size = imageExists ? DEFAULT_GIB : await askSize(host);
-  const steps = setupSteps(scratch, image, size, imageExists, host);
+  const size = imageBytes !== null ? DEFAULT_GIB : await askSize(host);
+  const steps = setupSteps(scratch, image, size, imageBytes, host);
   for (const [index, step] of steps.entries()) {
     host.say(`  $ ${shown(step)}`);
     if (host.run(step).code !== 0) {
