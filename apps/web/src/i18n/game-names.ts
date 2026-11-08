@@ -62,7 +62,11 @@ export function setGameNames(table: GameNames): void {
 }
 
 // An id the data lacks is wrong data: its id is more use shown than hidden.
-const lookup = (kind: keyof GameNames, id: string): string => names[kind][id] ?? id;
+// Only the table's own keys: `constructor` is no name (#2786).
+const lookup = (kind: keyof GameNames, id: string): string => {
+  const table = names[kind];
+  return Object.hasOwn(table, id) ? (table[id] ?? id) : id;
+};
 
 export const skillName = (id: string): string => lookup("skills", id);
 export const statusName = (id: string): string => lookup("statuses", id);
