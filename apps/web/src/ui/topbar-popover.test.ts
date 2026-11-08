@@ -258,6 +258,7 @@ describe("a top-bar popover (#2385)", () => {
 const member = (name: string, isHost = false): PartyMember => ({
   id: name,
   name,
+  signet: undefined,
   isHost,
   self: isHost,
   away: false,

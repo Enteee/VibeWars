@@ -1,3 +1,5 @@
+import { t, type MessageKey } from "../i18n/index.js";
+import { keySignet } from "../identity/key-signet.js";
 import { signetParams, signetSvg } from "../identity/signet.js";
 import { setHidden } from "./dom-write.js";
 import { h } from "./kit.js";
@@ -104,6 +106,48 @@ export function setSignet(element: HTMLImageElement, bits: number | undefined, s
       element.src = url;
     }
   }
+}
+
+/** What it takes to sign a name: a bot's key is `null`. */
+export interface KeyedPlayer {
+  readonly name: string;
+  readonly playerPubkey: string | null;
+}
+
+/** `player`'s signet (#2805); none for a bot, or someone no longer there. */
+export function signetOf(player: KeyedPlayer | undefined): number | undefined {
+  return player === undefined || player.playerPubkey === null
+    ? undefined
+    : keySignet(player.playerPubkey);
+}
+
+/** Stands in for the names while a sentence is translated: no name or message holds it. */
+const NAMES_MARK = "\u0000";
+
+/**
+ * Sentence `key` as a `className` div, its `param` being `players`, each
+ * name an element with its signet (#2820), comma separated.
+ */
+export function signedNamesLine(
+  className: string,
+  key: MessageKey,
+  param: string,
+  players: readonly KeyedPlayer[],
+): HTMLElement {
+  const [before = "", after = ""] = t(key, { [param]: NAMES_MARK }).split(NAMES_MARK);
+  const line = h("div", className, before);
+  players.forEach((player, index) => {
+    if (index > 0) {
+      line.append(", ");
+    }
+    const name = line.appendChild(playerLabelElement("signed-name", player.name, null));
+    const signet = signetOf(player);
+    if (signet !== undefined) {
+      name.prepend(signetElement(signet, SIGNET_ROW_PX));
+    }
+  });
+  line.append(after);
+  return line;
 }
 
 /**

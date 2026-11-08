@@ -8,6 +8,7 @@ import { createSharedTracks } from "./shared-tracks.js";
 const share = (from: string, source = "s(`bd`)") => ({
   from,
   name: `Player ${from}`,
+  signet: undefined,
   trackId: "ruins",
   source,
 });

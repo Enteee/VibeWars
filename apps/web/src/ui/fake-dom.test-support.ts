@@ -108,6 +108,11 @@ export class FakeElement {
     }
   }
 
+  prepend(child: FakeElement): void {
+    this.children.unshift(child);
+    child.parent = this;
+  }
+
   replaceChildren(...children: FakeElement[]): void {
     for (const child of [...this.children]) {
       child.remove();

@@ -233,6 +233,7 @@ describe("the mode rail (#1525)", () => {
 
   it("lists nobody on a mode screen, and no queue line: the top bar's icon has it (#2385, #2743)", () => {
     const member = (name: string, isHost: boolean) => ({
+      signet: undefined,
       id: name,
       name,
       isHost,

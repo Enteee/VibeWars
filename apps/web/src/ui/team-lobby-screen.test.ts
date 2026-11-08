@@ -108,6 +108,10 @@ class FakeElement {
     }
   }
 
+  prepend(child: FakeElement): void {
+    this.children.unshift(child);
+  }
+
   has(name: string): boolean {
     return this.className.split(" ").includes(name);
   }
@@ -420,6 +424,12 @@ describe("the Team Lobby's body (#1460)", () => {
     ]);
     expect(cards.map((card) => card.all("team-lobby-captain").length)).toEqual([1, 0]);
     expect(cards[0]?.all("team-lobby-token").map((token) => token.textContent)).toEqual(["A", "C"]);
+    expect(cards.map((card) => card.all("team-lobby-card-name")[0]?.all("signet").length)).toEqual([
+      1, 1,
+    ]);
+    expect(cards[0]?.all("team-lobby-token").map((token) => token.all("signet").length)).toEqual([
+      1, 1,
+    ]);
     expect(cards.map((card) => card.all("team-lobby-count")[0]?.textContent)).toEqual(["2", "1"]);
     expect(cards[0]?.all("character-figure")).toHaveLength(4);
     // Brann's own vote is marked, and only it.

@@ -3842,10 +3842,11 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.5rem;
+  min-width: 1.5rem;
   height: 1.5rem;
+  padding-inline: 0.2rem;
   border: 1px solid var(--ink-dim);
-  border-radius: 50%;
+  border-radius: 0.75rem;
   font-size: 0.75rem;
 }
 

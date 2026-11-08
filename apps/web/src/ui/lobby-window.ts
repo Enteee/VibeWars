@@ -4,6 +4,7 @@ import type { LobbySnapshot } from "@vibewars/game-session";
 import { t } from "../i18n/index.js";
 import { LOBBY_ICON } from "./icons.js";
 import { h } from "./kit.js";
+import { SIGNET_ROW_PX, signetElement, signetOf } from "./player-label.js";
 
 /**
  * The Lobby window (#1526, ADR-0041, #2385): dropped from the top bar's
@@ -16,6 +17,8 @@ export interface PartyMember {
   /** Its lobby id, what the host's remove names (#2746). */
   readonly id: string;
   readonly name: string;
+  /** Its key's signet (#2820). */
+  readonly signet: number | undefined;
   readonly isHost: boolean;
   readonly self: boolean;
   /** Dropped, its seat held while it may come back (#1764). */
@@ -61,6 +64,7 @@ export function partyOf(
       .map((player) => ({
         id: player.sessionId,
         name: player.name,
+        signet: signetOf(player),
         isHost: player.isHost,
         self: player.sessionId === snapshot.selfSessionId,
         away: player.away,
@@ -125,7 +129,10 @@ export function lobbyWindowBody(
     const list = h("ul", "party-members");
     for (const member of party.members) {
       const row = h("li", memberClass(member));
-      row.appendChild(h("span", "party-member-name", member.name));
+      const name = row.appendChild(h("span", "party-member-name", member.name));
+      if (member.signet !== undefined) {
+        name.prepend(signetElement(member.signet, SIGNET_ROW_PX));
+      }
       if (member.isHost) {
         row.appendChild(h("span", "party-host-mark", t("lobbyWindow.host")));
       }

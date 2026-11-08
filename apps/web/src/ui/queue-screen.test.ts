@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { LobbySnapshot } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
+import { FakeElement } from "./fake-dom.test-support.js";
 import {
   endedLines,
   modeLabel,
@@ -14,6 +15,7 @@ import {
   requeuedSince,
   teamEndAction,
   teamEndLine,
+  renderVersusSplash,
   versusTeams,
   waitedLabel,
 } from "./queue-screen.js";
@@ -207,6 +209,27 @@ describe("requeuedSince (#1997)", () => {
     // Its host is still in the played match's queue, or out of it and not queued again.
     expect(requeuedSince({ phase: "queued", queueNonce: "played" }, "played")).toBe(false);
     expect(requeuedSince({ phase: "waiting", queueNonce: null }, "played")).toBe(false);
+  });
+});
+
+describe("the versus splash's names (#2820)", () => {
+  it("signs a human, and leaves a bot bare", () => {
+    vi.stubGlobal("document", { createElement: () => new FakeElement() });
+    try {
+      const shown = snapshot(0, 3);
+      const players = shown.players.map((p) =>
+        p.name === "Foe" ? { ...p, bot: true, playerPubkey: null } : p,
+      );
+      const splash = renderVersusSplash(
+        { ...shown, players },
+        (id) => id,
+      ) as unknown as FakeElement;
+      expect(splash.all("versus-player-name").map((name) => name.all("signet").length)).toEqual([
+        1, 1, 0,
+      ]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 
