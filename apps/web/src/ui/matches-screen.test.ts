@@ -359,13 +359,13 @@ describe("the Matches page (#2532)", () => {
     const { root } = render();
     hear("a");
     const teams = root.all("match-team");
-    expect(teams[0]?.all("match-player-signet")).toHaveLength(1);
-    expect(teams[1]?.all("match-player-signet")).toHaveLength(0);
+    expect(teams[0]?.all("signet")).toHaveLength(1);
+    expect(teams[1]?.all("signet")).toHaveLength(0);
     root.one("match-row-head").click();
     const detail = root.one("match-detail");
     const headings = detail.all("match-player-heading");
     expect(headings[0]?.title).toBe("Ann [VIBE]");
-    expect(headings[0]?.all("match-player-signet")).toHaveLength(1);
+    expect(headings[0]?.all("signet")).toHaveLength(1);
   });
 
   it("shows three teams: on the row, and a tab each, the winner's first (#2684)", () => {

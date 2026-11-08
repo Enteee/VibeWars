@@ -188,6 +188,11 @@ export interface MatchHostOptions {
   readonly publishRecord: (record: MatchRecord) => void;
   /** Wall-clock unix seconds, for the record's `endedAt`. */
   readonly nowSeconds: () => number;
+  /**
+   * A player key's signet bits (#2805), `0..MAX_WIRE_SIGNET`: the web
+   * app's generator, which this package cannot import. Run once per seat.
+   */
+  readonly signetOf: (pubkey: string) => number;
 }
 
 /**
@@ -262,6 +267,8 @@ interface Seat {
   readonly secondaryProfession: ProfessionId | undefined;
   /** A bot plays it (#1193): no peer ever, nothing sent to one. */
   readonly bot: boolean;
+  /** Its player key's signet bits (#2805), from the lobby's plan; `null` for a bot or no lobby. */
+  readonly signet: number | null;
   /**
    * The adrenaline the peer was last sent, and the combat it counted its
    * loss from, so only a change goes (#463, #828).
@@ -719,7 +726,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   /**
    * A new seat on `team` playing `loadout`, named by `nameOf` its player
-   * id and of `guild`; a bot's if `bot`.
+   * id and of `guild`, marked with `signet`; a bot's if `bot`.
    */
   const seatNew = (
     build: PlayerBuild,
@@ -730,6 +737,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     pubkey: string | null,
   ): Seat => {
     seated += 1;
+    const signet = pubkey === null ? null : options.signetOf(pubkey);
     const playerId = `player-${String(seated)}`;
     const loadout = loadoutOf(build);
     // Gear becomes numbers exactly once, before the combatant exists (ADR-0012).
@@ -769,6 +777,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       primaryProfession: loadout.primaryProfession,
       secondaryProfession: loadout.secondaryProfession,
       bot,
+      signet,
       peerId: undefined,
       token: "",
       droppedAt: undefined,

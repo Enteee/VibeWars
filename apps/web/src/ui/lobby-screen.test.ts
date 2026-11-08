@@ -320,6 +320,10 @@ class FakeElement {
   hidden = false;
   title = "";
   type = "";
+  src = "";
+  alt = "";
+  width = 0;
+  height = 0;
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
   readonly listeners = new Map<string, () => void>();
@@ -345,6 +349,10 @@ class FakeElement {
     for (const child of children) {
       this.appendChild(child);
     }
+  }
+
+  prepend(child: FakeElement): void {
+    this.children.unshift(child);
   }
 
   /** Every element under this one with class `name`, in document order. */
@@ -405,6 +413,13 @@ describe("teamColumn: names only (#2029)", () => {
     expect(team.all("lobby-character")).toEqual([]);
     expect(team.all("character-dot")).toEqual([]);
     expect(team.all("lobby-bots")).toEqual([]);
+  });
+
+  it("draws a signet before each human's name, and no slot for a bot (#2805)", () => {
+    const [guest, mhenlo] = column(1).all("lobby-player");
+    expect(guest?.children[0]?.className).toBe("signet");
+    expect(guest?.children[0]?.src).toMatch(/^data:image\/svg\+xml,/);
+    expect(mhenlo?.all("signet")).toEqual([]);
   });
 
   it("marks no bot: it shows as its slot's character, ready", () => {

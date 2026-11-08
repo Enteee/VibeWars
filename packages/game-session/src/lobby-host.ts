@@ -101,8 +101,8 @@ import { sizeChecked, type Transport } from "./transport.js";
 export const CHAT_LINES_PER_SECOND = 1;
 export const CHAT_BURST = 5;
 
-/** A peer shares one music track in ten seconds (#2745). */
-export const SHARES_PER_SECOND = 1 / 10;
+/** A peer shares one music track in this long (#2745). */
+export const SHARE_INTERVAL_MS = 10_000;
 
 /**
  * From a party's proposal, on the lobby's clock, until each member must
@@ -580,7 +580,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   };
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
   const chatBudget = new MessageBudget(CHAT_LINES_PER_SECOND, CHAT_BURST, () => undefined);
-  const shareBudget = new MessageBudget(SHARES_PER_SECOND, 1, () => undefined);
+  const shareBudget = new MessageBudget(1000 / SHARE_INTERVAL_MS, 1, () => undefined);
   const trackIds = new Set(options.trackIds);
   /** Peers already told their lines are dropped, until one gets through: once a burst. */
   const throttled = new Set<string>();

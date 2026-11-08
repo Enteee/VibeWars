@@ -355,6 +355,7 @@ describe("wireIdentity (#1052)", () => {
         primaryProfession: "necromancer",
         secondaryProfession: undefined,
         bot: false,
+        signet: 1234,
       },
     ],
   ]);
@@ -402,6 +403,7 @@ describe("wireIdentity (#1052)", () => {
       secondaryProfession: null,
       creature: null,
       bot: false,
+      signet: 1234,
     });
   });
 
@@ -422,6 +424,7 @@ describe("wireIdentity (#1052)", () => {
         leaderId: null,
       },
       bot: false,
+      signet: null,
     });
   });
 
@@ -503,6 +506,7 @@ describe("wireIdentity (#1052)", () => {
         leaderId: null,
       },
       bot: false,
+      signet: null,
     });
   });
 

@@ -77,7 +77,13 @@ export type {
   MatchToWatch,
   PartyPlanSeat,
 } from "./lobby-connection.js";
-export { LOBBY_PROOF_MS, PARTY_CONSENT_MS, canStart, createLobbyHost } from "./lobby-host.js";
+export {
+  LOBBY_PROOF_MS,
+  PARTY_CONSENT_MS,
+  SHARE_INTERVAL_MS,
+  canStart,
+  createLobbyHost,
+} from "./lobby-host.js";
 export type {
   LobbyHost,
   LobbyHostOptions,

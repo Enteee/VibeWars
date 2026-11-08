@@ -295,6 +295,7 @@ export function toArenaSnapshot(
         id: player.sessionId,
         name: ghostNameplate(player, self, names),
         guildTag: player.guildTag,
+        signet: player.signet,
         cape: player.guildCape === undefined ? undefined : capeLook(player.guildCape),
         bot: player.bot,
         position: { x: player.x, y: player.y },

@@ -487,6 +487,22 @@ describe("a lobby's bots (#1193)", () => {
     expect(cast).toBeDefined();
   });
 
+  it("marks a human with its key's signet, once per seat, and a bot with none (#2805)", async () => {
+    const keys: string[] = [];
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([bot(1, "Warrior Bot", "Warrior/Monk"), human(0)]),
+      signetOf: (pubkey) => {
+        keys.push(pubkey);
+        return 4242;
+      },
+    });
+    const local = await match.joinLocal();
+    await match.step(1);
+    expect(self(local)?.signet).toBe(4242);
+    expect(named(local.getSnapshot(), "Warrior Bot")?.signet).toBeUndefined();
+    expect(keys).toEqual(["ab".repeat(32)]);
+  });
+
   it("lets no peer play a bot's seat, even one calling itself by the bot's id", async () => {
     const match = startMatch({
       seats: new Map<string, PlannedSeat>([bot(1, "Warrior Bot", "Warrior/Monk"), human(0)]),
