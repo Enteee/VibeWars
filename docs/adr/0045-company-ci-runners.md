@@ -135,7 +135,10 @@ two cannot drift apart.
   quota is the operator's part. So is the disk cap itself:
   `claude-llc-init` runs the same check and can set up a loop-mounted
   image, but only with the operator's explicit `y` and sudo password at a
-  tty, printing every command first (#2766).
+  tty, printing every command first (#2766). Its mount carries
+  `X-fstrim.notrim`, so the periodic `fstrim` skips it and cannot punch
+  holes in the fallocated image; a manual `fstrim <mountpoint>` is not
+  blocked by it. A host that already has the entry edits it by hand.
 - **The runners' token can change branch protection.** Minting a JIT
   config needs _Administration: write_ on the repository, which also edits
   rulesets and branch protection. Whoever holds that token can turn off
