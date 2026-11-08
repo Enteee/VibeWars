@@ -10,6 +10,7 @@ import type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "@vibewars/
 
 import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
+import { signetParams, signetSvg, signetWord } from "../identity/signet.js";
 import type {
   HeardMatchRecord,
   MatchRecordWatch,
@@ -76,6 +77,15 @@ function teamResult(record: MatchRecord, team: number): string {
   return t(record.winningTeam === team ? "matches.won" : "matches.lost");
 }
 
+/** The shield drawn from a human's key (#2739): only what the host reported. */
+function playerSignet(pubkey: string, size: number): HTMLImageElement {
+  const signet = document.createElement("img");
+  signet.className = "match-player-signet";
+  signet.src = `data:image/svg+xml,${encodeURIComponent(signetSvg(signetParams(signetWord(pubkey)), size))}`;
+  signet.alt = "";
+  return signet;
+}
+
 /**
  * A team on the closed row (#2585): one primary profession icon per
  * player, the name and both professions on hover, and the winner's
@@ -86,6 +96,9 @@ function teamIcons(record: MatchRecord, team: number, players: MatchRecordTeam):
   for (const player of players.players) {
     const name = playerLabelText(player.name, player.guildTag);
     const label = player.bot ? t("matches.bot", { name }) : name;
+    if (player.pubkey !== null) {
+      icons.appendChild(playerSignet(player.pubkey, 12));
+    }
     const decoded = decodeTemplateCode(player.template);
     if (!decoded.ok) {
       const unknown = icons.appendChild(h("span", "match-player-icon is-unknown", "?"));
@@ -127,9 +140,17 @@ function resultMark(record: MatchRecord): string {
 function playerMember(player: MatchRecordPlayer): TeamFigureMember {
   const name = playerLabelText(player.name, player.guildTag);
   const decoded = decodeTemplate(player.template, "", 0);
+  const label = player.bot ? t("matches.bot", { name }) : name;
+  const heading = h("span", "match-player-heading");
+  heading.title = label;
+  if (player.pubkey !== null) {
+    heading.appendChild(playerSignet(player.pubkey, 18));
+  }
+  heading.appendChild(h("span", "match-player-name", label));
   return {
     look: decoded.ok ? lookOfCharacter(decoded.character, undefined) : undefined,
-    label: player.bot ? t("matches.bot", { name }) : name,
+    label,
+    heading,
   };
 }
 

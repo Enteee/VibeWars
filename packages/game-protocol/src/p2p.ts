@@ -2648,7 +2648,7 @@ function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefi
 const TICKET_ID = /^[0-9a-f]{64}$/;
 const TICKET_SIG = /^[0-9a-f]{128}$/;
 
-function isTicketId(value: unknown): value is string {
+export function isTicketId(value: unknown): value is string {
   return typeof value === "string" && TICKET_ID.test(value);
 }
 

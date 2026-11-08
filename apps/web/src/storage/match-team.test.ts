@@ -23,7 +23,7 @@ function templateOf(index: number): string {
 }
 
 function player(name: string, template: string, bot = false): MatchRecordPlayer {
-  return { name, guildTag: null, bot, template };
+  return { name, guildTag: null, bot, pubkey: bot ? null : "a".repeat(64), template };
 }
 
 function ids(): () => string {

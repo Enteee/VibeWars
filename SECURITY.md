@@ -263,7 +263,10 @@ channels, as often as they like.
   it is the same in every lobby that browser joins. That is its purpose,
   and it also makes a browser linkable across lobbies by anyone who plays
   with it. Clearing the site's data is the only way to a new one; the Help
-  screen says so (Your player key). Match records do not carry it.
+  screen says so (Your player key). Match records (#2739) publish it on Nostr
+  beside each human's name, so anyone can link every recorded match
+  played by one browser. A host can attach any key to a name, so a
+  signet there proves nothing.
 - **Everything in a snapshot.** A peer receives every snapshot field the
   host sends, for every player. Anything that must stay hidden from a
   player must not be in the snapshot at all.

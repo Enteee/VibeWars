@@ -156,6 +156,7 @@ export {
   parseWireLobbyMove,
   parseWireMatchStart,
   parseWireCape,
+  isTicketId,
 } from "./p2p.js";
 
 export type {

@@ -38,8 +38,16 @@ const RECORD: MatchRecord = {
   winningTeam: 0,
   endReason: "annihilation",
   teams: [
-    { players: [{ name: "Ann", guildTag: "VIBE", bot: false, template: played(0) }] },
-    { players: [{ name: "Elementalist Bot", guildTag: null, bot: true, template: played(1) }] },
+    {
+      players: [
+        { name: "Ann", guildTag: "VIBE", bot: false, pubkey: "a".repeat(64), template: played(0) },
+      ],
+    },
+    {
+      players: [
+        { name: "Elementalist Bot", guildTag: null, bot: true, pubkey: null, template: played(1) },
+      ],
+    },
   ],
 };
 
@@ -146,6 +154,7 @@ describe("match records on Nostr (#2528)", () => {
         name: `${"🏹".repeat(14)}${String(side)}${String(index)}`,
         guildTag: "WWWW",
         bot: false,
+        pubkey: "a".repeat(64),
         template: longest,
       })),
     });
@@ -154,6 +163,22 @@ describe("match records on Nostr (#2528)", () => {
     sockets[0]?.handlers.open();
     const event = sockets[0] === undefined ? undefined : eventSent(sockets[0]);
     expect(event?.content).toBe(JSON.stringify(full));
+  });
+
+  it("publishes three full teams of the longest players with their keys (#2739)", () => {
+    const longest = STARTER_BUILDS.map(recordTemplate).reduce((a, b) =>
+      b.length > a.length ? b : a,
+    );
+    const team = (side: number) => ({
+      players: Array.from({ length: MAX_RECORD_TEAM }, (_, index) => ({
+        name: `${"🏹".repeat(14)}${String(side)}${String(index)}`,
+        guildTag: "WWWW",
+        bot: false,
+        pubkey: "a".repeat(64),
+        template: longest,
+      })),
+    });
+    expect(matchRecordEvent({ ...RECORD, teams: [team(0), team(1), team(2)] }, NOW)).toBeDefined();
   });
 
   it("publishes nothing over 8 KB", () => {

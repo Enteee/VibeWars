@@ -384,6 +384,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       readonly guildTag: string | null;
       readonly team: WireTeam;
       readonly bot: boolean;
+      readonly pubkey: string | null;
       readonly build: PlayerBuild;
     }
   >();
@@ -414,15 +415,16 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         interrupts: row.interrupts,
       };
     });
-  /** The finished match as the world may read it (#2528): names and builds, no ids. */
+  /** The finished match as the world may read it (#2528): names, public keys and builds, no peer ids. */
   const record = (endReason: MatchEndReason): MatchRecord => {
     const team = (side: number): MatchRecordTeam => ({
       players: [...everSeated.values()]
         .filter((seat) => seat.team === side)
-        .map(({ name, guildTag, bot, build }) => ({
+        .map(({ name, guildTag, bot, pubkey, build }) => ({
           name,
           guildTag,
           bot,
+          pubkey,
           template: recordTemplate(build),
         })),
     });
@@ -725,6 +727,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     nameOf: (playerId: string) => string,
     guild: Guild,
     bot: boolean,
+    pubkey: string | null,
   ): Seat => {
     seated += 1;
     const playerId = `player-${String(seated)}`;
@@ -776,7 +779,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       weaponSets: undefined,
     };
     seats.set(playerId, seat);
-    everSeated.set(playerId, { name: seat.name, guildTag: seat.guildTag, team, bot, build });
+    everSeated.set(playerId, {
+      name: seat.name,
+      guildTag: seat.guildTag,
+      team,
+      bot,
+      pubkey,
+      build,
+    });
     for (const id of everSeated.keys()) {
       if (everSeated.size <= MAX_LOBBY_PLAYERS) {
         break;
@@ -910,6 +920,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       (playerId) => plan?.name ?? sanitizeName(hello.name, playerId),
       plan ?? sanitizeGuild(hello),
       false,
+      plan?.playerPubkey ?? null,
     );
     welcome(seat, from);
   };
@@ -1242,7 +1253,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   // A lobby's bots (#1193) take their seats at once: none of them says hello.
   for (const plan of planned?.values() ?? []) {
     if (plan.bot) {
-      seatNew(plan.build, plan.team, () => plan.name, NO_GUILD, true);
+      seatNew(plan.build, plan.team, () => plan.name, NO_GUILD, true, null);
     }
   }
 
