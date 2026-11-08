@@ -174,7 +174,7 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
   it("on NixOS prints the fileSystems snippet and leaves fstab alone", async () => {
     const { ran, asked, said } = await setUp({ answers: ["y", ""], nixos: true });
     expect(said).toContain(
-      `fileSystems."${SCRATCH}" = { device = "${RUNNER_IMAGE}"; fsType = "ext4"; options = [ "loop" "nofail" "nosuid" "nodev" ]; };`,
+      `fileSystems."${SCRATCH}" = { device = "${RUNNER_IMAGE}"; fsType = "ext4"; options = [ "loop" "nofail" "nosuid" "nodev" "X-fstrim.notrim" ]; };`,
     );
     expect(said).toContain("gone after a reboot");
     expect(asked).toHaveLength(2);
@@ -184,7 +184,9 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
   it("elsewhere appends to fstab through sudo on yes", async () => {
     const { ran, inputs, said } = await setUp({ answers: ["y", "", "y"] });
     expect(ran.at(-1)).toEqual(["sudo", "tee", "-a", "/etc/fstab"]);
-    expect(inputs).toEqual([`${RUNNER_IMAGE} ${SCRATCH} ext4 loop,nofail,nosuid,nodev 0 0\n`]);
+    expect(inputs).toEqual([
+      `${RUNNER_IMAGE} ${SCRATCH} ext4 loop,nofail,nosuid,nodev,X-fstrim.notrim 0 0\n`,
+    ]);
     expect(said).toContain("$ sudo tee -a /etc/fstab");
   });
 
@@ -215,7 +217,9 @@ describe("the runner disk step of claude-llc-init (#2766)", () => {
   it("goes on when fstab cannot be read, and prints the line", async () => {
     const { ran, said } = await setUp({ answers: ["y", ""], fstab: null });
     expect(ran).toEqual(ALL_STEPS);
-    expect(said).toContain(`${RUNNER_IMAGE} ${SCRATCH} ext4 loop,nofail,nosuid,nodev 0 0`);
+    expect(said).toContain(
+      `${RUNNER_IMAGE} ${SCRATCH} ext4 loop,nofail,nosuid,nodev,X-fstrim.notrim 0 0`,
+    );
     expect(said).toContain("gone after a reboot");
   });
 

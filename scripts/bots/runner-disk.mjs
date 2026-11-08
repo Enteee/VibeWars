@@ -183,13 +183,14 @@ async function persist(host, scratch, image) {
   if (host.nixos) {
     host.say("  This mount is gone after a reboot until you add this and rebuild:");
     host.say(
-      `    fileSystems."${scratch}" = { device = "${image}"; fsType = "ext4"; options = [ "loop" "nofail" "nosuid" "nodev" ]; };`,
+      `    fileSystems."${scratch}" = { device = "${image}"; fsType = "ext4"; options = [ "loop" "nofail" "nosuid" "nodev" "X-fstrim.notrim" ]; };`,
     );
     return;
   }
   const mountPoint = scratch.replaceAll(" ", "\\040");
   // nofail: a missing image must not stop the host booting for an optional disk.
-  const entry = `${image.replaceAll(" ", "\\040")} ${mountPoint} ext4 loop,nofail,nosuid,nodev 0 0`;
+  // X-fstrim.notrim: a periodic fstrim would punch holes in the image and wear down its reservation.
+  const entry = `${image.replaceAll(" ", "\\040")} ${mountPoint} ext4 loop,nofail,nosuid,nodev,X-fstrim.notrim 0 0`;
   const fstab = host.fstab();
   if (fstab === null) {
     host.say(`  Cannot read ${FSTAB}: this mount is gone after a reboot until it has this line:`);
