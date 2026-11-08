@@ -114,6 +114,26 @@ export const LOCALES: Readonly<Partial<Record<LanguageCode, () => Promise<Locale
     ui: (await import("./locales/th/ui.js")).default,
     game: (await import("./locales/th/game.js")).default,
   }),
+  ru: async () => ({
+    ui: (await import("./locales/ru/ui.js")).default,
+    game: (await import("./locales/ru/game.js")).default,
+  }),
+  uk: async () => ({
+    ui: (await import("./locales/uk/ui.js")).default,
+    game: (await import("./locales/uk/game.js")).default,
+  }),
+  el: async () => ({
+    ui: (await import("./locales/el/ui.js")).default,
+    game: (await import("./locales/el/game.js")).default,
+  }),
+  ro: async () => ({
+    ui: (await import("./locales/ro/ui.js")).default,
+    game: (await import("./locales/ro/game.js")).default,
+  }),
+  bg: async () => ({
+    ui: (await import("./locales/bg/ui.js")).default,
+    game: (await import("./locales/bg/game.js")).default,
+  }),
 };
 
 /** The languages the build has, English first, in `LANGUAGES` order. */

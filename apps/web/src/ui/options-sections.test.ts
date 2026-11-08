@@ -60,6 +60,7 @@ describe("Options > Language (#2648)", () => {
       "ja",
       "fr",
       "pt",
+      "ru",
       "it",
       "nl",
       "pl",
@@ -67,8 +68,12 @@ describe("Options > Language (#2648)", () => {
       "cs",
       "vi",
       "ko",
+      "uk",
+      "ro",
+      "el",
       "sk",
       "th",
+      "bg",
       "hr",
     ]);
   });

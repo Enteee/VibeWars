@@ -188,6 +188,10 @@ own maps (`ember-pits`, `jungle-ruins`, `broken-tower`, `scarred-earth`,
 `the-courtyard`, `hall-of-heroes`, `guild-hall-isle`).
 Map geometry is original (brief §41) — see ADR-0006 for the format.
 
+Elevation is planned as a discrete `layer` beside `x` and `y`, with no Z
+anywhere: the simulation alone decides a body's layer and what crosses
+layers, and the renderer only draws it (ADR-0051, epic #2810).
+
 ### `packages/game-data` — reference data, not a runtime dependency
 
 The GW1 skill-corpus ingestion pipeline (ADR-0004). It parses public
