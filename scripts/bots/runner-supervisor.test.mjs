@@ -473,7 +473,7 @@ describe("runner supervisor", () => {
     await r.supervisor.tick();
     await r.supervisor.stop();
     expect(r.calls).toEqual([]);
-    expect(r.last()?.reason).toBe("runners are off: VIBEWARS_MAX_RUNNERS is 0");
+    expect(r.last()?.reason).toBe("runners are off: maxRunners is 0 (claude-llc-init)");
   });
 
   it("shows a refused target as the reason, at 0", async () => {
