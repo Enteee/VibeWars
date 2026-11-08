@@ -250,10 +250,13 @@ export function renderHostScreen(
   connectionNotice: string | undefined,
   callbacks: TeamPlayCallbacks,
   panel: LobbyPanel | undefined,
+  /** In the Random Arena queue (#2743): no lobby to host until it is left. */
+  queued: boolean,
 ): void {
   const body = teamScreen(root, entry, problems, connectionNotice, callbacks, panel);
-  // Where the lobby goes while this tab has none yet (#1526).
-  body.appendChild(panel?.body ?? h("p", "screen-info", t("teamPlay.openingLobby")));
+  body.appendChild(
+    panel?.body ?? h("p", "screen-info", queued ? t("queue.busy") : t("teamPlay.openingLobby")),
+  );
 }
 
 /** Render Team Builder (#1525): the Team Build cards, to make and edit them. */
