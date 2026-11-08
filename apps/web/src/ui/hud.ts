@@ -138,11 +138,11 @@ export interface HudElements {
   readonly targetEffects: EffectsMonitor;
   /** The target's primary and secondary profession icons, before its name (#281). */
   readonly targetProfessions: HTMLElement;
-  /** The target's name, or "no target", in the panel's header. */
   /** The target's signet (#2819), hidden for a bot, creature or nothing. */
   readonly targetSignet: HTMLImageElement;
   /** The bits it shows, so an unchanged one touches nothing. */
   targetSignetShown: number | undefined;
+  /** The target's name, or "no target", in the panel's header. */
   readonly targetText: HTMLElement;
   /** Whom your team's Ghostly Hero follows, or that it stays (#1377). */
   readonly targetLeader: HTMLElement;
@@ -1809,7 +1809,6 @@ export function isCallableTarget(
   );
 }
 
-/** The target frame (#484): header, health bar and cast row. */
 /** Show `signet` on the target frame (#2819), touching it only when it changes. */
 export function renderTargetSignet(
   hud: Pick<HudElements, "targetSignet" | "targetSignetShown">,
@@ -1821,7 +1820,10 @@ export function renderTargetSignet(
   }
 }
 
-/** `self` is `undefined` for a watcher (#480), who has no target but the player it follows. */
+/**
+ * The target frame (#484): header, health bar and cast row.
+ * `self` is `undefined` for a watcher (#480), who has no target but the player it follows.
+ */
 function renderTarget(
   hud: HudElements,
   self: PlayerSnapshot | undefined,
