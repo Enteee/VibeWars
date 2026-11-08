@@ -64,6 +64,9 @@ function recording(): {
         return calls.length;
       },
       sting: record("sting"),
+      renew: () => {
+        record("renew")(undefined);
+      },
       play: record("play"),
       stop: record("stop"),
       onNowPlaying: record("onNowPlaying"),
@@ -426,6 +429,100 @@ describe("createMusicFollower", () => {
     expect(removed).toEqual([]);
     expect(notices).toEqual([]);
     expect(music.nowPlaying).toBe("first-light");
+  });
+
+  it("plays a share in a fresh host over the director, and Back renews it again for your own (#2745)", () => {
+    const { player, calls } = recording();
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      { get: () => undefined, remove: () => undefined },
+    );
+    music.follow(state("first-light", 0), "phrase");
+    calls.length = 0;
+    music.playShared({ trackId: "first-light", source: "shared" });
+    expect(calls).toEqual([
+      ["renew", undefined],
+      ["load", { ...tracks[0], source: "shared" }],
+    ]);
+    expect(music.sharing).toEqual({ trackId: "first-light", source: "shared" });
+
+    // The director changing its mind plays nothing over the share.
+    calls.length = 0;
+    music.follow(state("clash-of-banners", 0), "phrase");
+    expect(calls.filter(([name]) => name !== "setIntensity")).toEqual([]);
+
+    // A share that ignores stop goes silent on Back: its host is gone.
+    music.playShared(null);
+    expect(calls).toEqual([
+      ["renew", undefined],
+      ["load", tracks[1]],
+    ]);
+    expect(music.sharing).toBeNull();
+  });
+
+  it("refuses a share of a track not shipped (#2745)", () => {
+    const { player, calls } = recording();
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      { get: () => undefined, remove: () => undefined },
+    );
+    calls.length = 0;
+    music.playShared({ trackId: "nowhere", source: "shared" });
+    expect(calls).toEqual([]);
+    expect(music.sharing).toBeNull();
+  });
+
+  it("removes no saved edit when a share stops the music (#2745)", () => {
+    const { player, tearDown } = recording();
+    const edits = new Map([["first-light", { shippedHash: "a".repeat(64), source: "edited" }]]);
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      {
+        get: (trackId) => edits.get(trackId),
+        remove: (trackId) => {
+          edits.delete(trackId);
+        },
+      },
+    );
+    const notices: string[] = [];
+    music.onNotice((notice) => notices.push(notice));
+    music.playShared({ trackId: "first-light", source: "while (true) {}" });
+    tearDown("hung");
+    expect(edits.has("first-light")).toBe(true);
+    expect(notices).toEqual([]);
+    expect(music.sharing).toBeNull();
+  });
+
+  it("ends a share when a preview or the beat editor plays (#2745)", () => {
+    const { player, calls } = recording();
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      { get: () => undefined, remove: () => undefined },
+    );
+    music.playShared({ trackId: "first-light", source: "shared" });
+    calls.length = 0;
+    music.preview("clash-of-banners");
+    expect(calls).toEqual([
+      ["renew", undefined],
+      ["load", tracks[1]],
+    ]);
+    expect(music.sharing).toBeNull();
   });
 
   it("plays a sting in the key of the track the director wants (#2523)", () => {

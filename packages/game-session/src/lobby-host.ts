@@ -42,6 +42,7 @@ import {
   type LobbyRefusal,
   type WireCape,
   type WireChatLine,
+  type WireSharedTrack,
   type WireLobbyCommand,
   type WireLobbyNote,
   type WireLobbyState,
@@ -99,6 +100,9 @@ import { sizeChecked, type Transport } from "./transport.js";
  */
 export const CHAT_LINES_PER_SECOND = 1;
 export const CHAT_BURST = 5;
+
+/** A peer shares one music track in ten seconds (#2745). */
+export const SHARES_PER_SECOND = 1 / 10;
 
 /**
  * From a party's proposal, on the lobby's clock, until each member must
@@ -278,6 +282,8 @@ export interface LobbyHostOptions {
   readonly proofKey: Uint8Array | null;
   /** The playable maps, from game-maps by the caller. The first is the default. */
   readonly mapIds: readonly string[];
+  /** The shipped music tracks' ids (#2745): a share of any other is not relayed. */
+  readonly trackIds: readonly string[];
   /**
    * Each mode's maps (#1526), some of `mapIds`, the first its default: a
    * mode the host picks moves a map outside it to that one.
@@ -574,6 +580,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   };
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
   const chatBudget = new MessageBudget(CHAT_LINES_PER_SECOND, CHAT_BURST, () => undefined);
+  const shareBudget = new MessageBudget(SHARES_PER_SECOND, 1, () => undefined);
+  const trackIds = new Set(options.trackIds);
   /** Peers already told their lines are dropped, until one gets through: once a burst. */
   const throttled = new Set<string>();
   /** Peers a queued lobby has welcomed: each once, while it is here. */
@@ -1730,6 +1738,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       case "team-plan":
         // A queued team mode's alone (ADR-0042).
         return false;
+      case "share-track":
+        // Relayed as it came (#2745), never a choice of the lobby's.
+        return false;
     }
   };
 
@@ -2261,6 +2272,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (command === undefined) {
       return;
     }
+    if (command.kind === "share-track") {
+      shareTrack(from, command.trackId, command.source);
+      return;
+    }
     // A side's seat plan counts until the match starts, through the countdown.
     if (queued !== undefined && command.kind === "team-plan") {
       takeTeamPlan(queued, member, command);
@@ -2291,6 +2306,28 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       broadcast();
     }
   });
+
+  /**
+   * `from`'s music track, for every other human member (#2745), the host
+   * too: in the lobby and through its match, never in a matchmade one,
+   * whose members did not choose each other. A track not shipped is
+   * dropped before it costs the sender their one share in ten seconds.
+   */
+  const shareTrack = (from: string, trackId: string, source: string): void => {
+    if (queued !== undefined || !trackIds.has(trackId)) {
+      return;
+    }
+    if (!shareBudget.take(from, nowMs())) {
+      note("share-throttled", "", from);
+      return;
+    }
+    const shared: WireSharedTrack = { from, trackId, source };
+    for (const to of members.values()) {
+      if (to.bot === null && to.id !== from && !away.has(to.id)) {
+        transport.send("shared-track", shared, to.id);
+      }
+    }
+  };
 
   // Said on purpose (#1764), unlike a drop: its seat is freed now.
   transport.on("lobby-leave", (data, from) => {
@@ -2819,6 +2856,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   transport.onPeerLeave((peerId) => {
     budget.forget(peerId);
     chatBudget.forget(peerId);
+    shareBudget.forget(peerId);
     throttled.delete(peerId);
     welcomed.delete(peerId);
     judged.delete(peerId);

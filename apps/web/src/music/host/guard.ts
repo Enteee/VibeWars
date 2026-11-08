@@ -15,3 +15,26 @@
 export function mayRun(origin: string, self: object, parent: object): boolean {
   return origin === "null" && parent !== self;
 }
+
+/**
+ * The WebRTC constructors (#2745): a pattern could open a peer connection
+ * and send what it likes past `connect-src`, which WebRTC ignores. Music
+ * never needs them.
+ */
+export const WEBRTC_GLOBALS = [
+  "RTCPeerConnection",
+  "webkitRTCPeerConnection",
+  "RTCDataChannel",
+  "RTCSessionDescription",
+] as const;
+
+/**
+ * Delete `WEBRTC_GLOBALS` from `global`: whether none is reachable after.
+ * The host runs only if so, a shared track being someone else's code.
+ */
+export function withoutWebRtc(global: object): boolean {
+  for (const name of WEBRTC_GLOBALS) {
+    Reflect.deleteProperty(global, name);
+  }
+  return WEBRTC_GLOBALS.every((name) => !(name in global));
+}
