@@ -109,6 +109,7 @@ import { describeOutcome } from "./ui/hud.js";
 import type { SummaryTable } from "./ui/match-summary.js";
 import { renderMatchesScreen, type MatchesScreen } from "./ui/matches-screen.js";
 import {
+  ascentStartMorale,
   flashTitle,
   mountQueueScreen,
   nextAscentMorale,
@@ -692,6 +693,7 @@ async function main(): Promise<void> {
     if (teamQueue !== undefined && lobby?.getSnapshot().isHost === true) {
       // Out of the queue, its Heroes' Ascent run is over (#1996).
       ascentRound = 0;
+      ascentMorale = 0;
       lobby.leaveQueue();
     }
   };
@@ -1962,7 +1964,7 @@ async function main(): Promise<void> {
     current.place = enterQueue(
       mode,
       current.ascentRound,
-      current.ascentRound === null ? 0 : ascentMorale,
+      ascentStartMorale(current.ascentRound, ascentMorale),
       name,
       entrant.guild,
       playerKey,

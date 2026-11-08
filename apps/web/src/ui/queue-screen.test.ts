@@ -4,6 +4,7 @@ import type { LobbySnapshot } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
 import {
+  ascentStartMorale,
   endedLines,
   modeLabel,
   nextAscentMorale,
@@ -139,6 +140,14 @@ describe("nextAscentMorale (#2686)", () => {
     expect(nextAscentMorale(-15, -45, "loss")).toBe(0);
     expect(nextAscentMorale(-15, -45, "forfeit")).toBe(0);
     expect(nextAscentMorale(-15, -45, "host-left")).toBe(-15);
+  });
+});
+
+describe("ascentStartMorale (#2686)", () => {
+  it("sends 0 outside Heroes' Ascent and at a run's first map, and the carried morale past it", () => {
+    expect(ascentStartMorale(null, -30)).toBe(0);
+    expect(ascentStartMorale(0, -30)).toBe(0);
+    expect(ascentStartMorale(2, -30)).toBe(-30);
   });
 });
 
