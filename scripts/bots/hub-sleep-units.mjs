@@ -72,6 +72,7 @@ Description=Hibernate the VibeWars company host until its wake time
 
 [Service]
 Type=oneshot
+TimeoutStartSec=30
 ExecStart=${SLEEP_SCRIPT}
 `;
 
@@ -100,6 +101,7 @@ export function sleepNixosSnippet(user) {
     `systemd.services.vibewars-sleep = {`,
     `  path = with pkgs; [ coreutils util-linux systemd ];`,
     `  serviceConfig.Type = "oneshot";`,
+    `  serviceConfig.TimeoutStartSec = 30;`,
     `  script = ''`,
     script,
     `  '';`,

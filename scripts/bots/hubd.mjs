@@ -1931,7 +1931,8 @@ function considerSleep() {
       runnersBusy: runnersBusy(cfg.maxRunners),
       rebootPending: readReboot() !== null || readProposal() !== null,
       inhibitors: pauses.every((pause) => pause.until !== null) ? heldInhibitors() : 0,
-      cancel: cancel ?? (sleptFor === null ? null : { reset: sleptFor }),
+      cancel,
+      sleptFor,
       plan,
     });
     if (decision.kind === "plan") {
@@ -1977,7 +1978,10 @@ function closeSleepPlan(plan, outcome, note) {
 /** Say once that the host is back, after a sleep this hubd carried out. */
 function noticeWake() {
   const now = Date.now();
-  if (awaitingWake && wallClockJumped(lastWallClock, now) && sleptFor !== null) {
+  if (awaitingWake && sleptFor !== null && !wallClockJumped(lastWallClock, now)) {
+    // The reset came with no wake seen: the machine never went down.
+    awaitingWake = now < sleptFor * 1000;
+  } else if (awaitingWake && sleptFor !== null) {
     awaitingWake = false;
     tellCompany(
       "host-back",

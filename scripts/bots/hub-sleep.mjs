@@ -16,6 +16,12 @@
 export const SLEEP_THRESHOLD = 60 * 60;
 /** How long the operator has to cancel, in seconds. */
 export const SLEEP_WARNING = 5 * 60;
+/**
+ * The wake alarm must be at least this far off when the machine goes down,
+ * in seconds: writing the image takes time, and an alarm that passes before
+ * power-off never wakes it.
+ */
+export const MIN_SLEEP = 15 * 60;
 /** Wake this long before the reset when `company.json` says no other, in minutes. */
 export const DEFAULT_WAKE_MARGIN = 5;
 /** The furthest ahead the root oneshot accepts a wake time, in seconds. */
@@ -133,6 +139,7 @@ export function sleepInhibitors(listing) {
  * @property {boolean} rebootPending
  * @property {number} inhibitors
  * @property {{ reset: number } | null} cancel
+ * @property {number | null} sleptFor the reset a sleep was already carried out for
  * @property {SleepPlan | null} plan
  */
 
@@ -140,7 +147,7 @@ export function sleepInhibitors(listing) {
  * @param {SleepInput} input
  * @returns {{ reset: number | null, blocker: string | null }} why not to sleep, if so
  */
-function assess({ now, hibernate, pauses, runnersBusy, rebootPending, inhibitors }) {
+function assess({ now, hibernate, pauses, runnersBusy, rebootPending, inhibitors, plan }) {
   const waiting = pauses.find((pause) => pause.until === null);
   const reset =
     pauses.length === 0 || waiting !== undefined
@@ -159,6 +166,11 @@ function assess({ now, hibernate, pauses, runnersBusy, rebootPending, inhibitors
   }
   if (reset - now <= SLEEP_THRESHOLD) {
     return blocked("the reset is under an hour away");
+  }
+  // A new plan still has its warning to wait out.
+  const nearest = MIN_SLEEP + (plan === null ? SLEEP_WARNING : 0);
+  if (reset - hibernate.wakeMarginMinutes * 60 - now < nearest) {
+    return blocked("the wake alarm would be too close");
   }
   if (reset - hibernate.wakeMarginMinutes * 60 - now > MAX_SLEEP) {
     return blocked("the reset is further away than the wake alarm may be set");
@@ -185,7 +197,7 @@ function assess({ now, hibernate, pauses, runnersBusy, rebootPending, inhibitors
  *   | { kind: "sleep", reason: string, wakeAt: number }}
  */
 export function sleepDecision(input) {
-  const { now, hibernate, cancel, plan } = input;
+  const { now, hibernate, cancel, plan, sleptFor } = input;
   const { reset, blocker } = assess(input);
   if (plan !== null) {
     /** @type {string | null} */
@@ -207,6 +219,9 @@ export function sleepDecision(input) {
   }
   if (cancel?.reset === reset) {
     return { kind: "none", reason: "cancelled for this reset", wakeAt: null };
+  }
+  if (sleptFor === reset) {
+    return { kind: "none", reason: "already slept for this reset", wakeAt: null };
   }
   return {
     kind: "plan",

@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   MAX_SLEEP,
+  MIN_SLEEP,
   SLEEP_THRESHOLD,
   SLEEP_WARNING,
   exitedAfterWake,
@@ -36,6 +37,7 @@ function input(over = {}) {
     rebootPending: false,
     inhibitors: 0,
     cancel: null,
+    sleptFor: null,
     plan: null,
     ...over,
   };
@@ -80,6 +82,14 @@ describe("sleepDecision (#2794)", () => {
       ["a pending reboot", { rebootPending: true }],
       ["an inhibitor", { inhibitors: 1 }],
       ["a cancel for this reset", { cancel: { reset: RESET } }],
+      ["a sleep already carried out for this reset", { sleptFor: RESET, cancel: { reset: 1 } }],
+      [
+        "an alarm too close at margin 60",
+        {
+          hibernate: { wakeMarginMinutes: 60 },
+          pauses: [{ employee: "m", until: NOW + 61 * 60 }],
+        },
+      ],
     ]),
   )("does not plan with %s", (_name, over) => {
     expect(sleepDecision(input(over)).kind).toBe("none");
@@ -90,6 +100,21 @@ describe("sleepDecision (#2794)", () => {
       sleepDecision(input({ pauses: [{ employee: "m", until: NOW + SLEEP_THRESHOLD + 1 }] })).kind,
     ).toBe("plan");
     expect(sleepDecision(input({ cancel: { reset: RESET - 1 } })).kind).toBe("plan");
+  });
+
+  it("keeps the alarm far enough off through the warning", () => {
+    const margin = { hibernate: { wakeMarginMinutes: 60 } };
+    const reset = NOW + 60 * 60 + MIN_SLEEP + SLEEP_WARNING;
+    const pauses = [{ employee: "m", until: reset }];
+    expect(sleepDecision(input({ ...margin, pauses })).kind).toBe("plan");
+    expect(
+      sleepDecision(input({ ...margin, pauses: [{ employee: "m", until: reset - 1 }] })).kind,
+    ).toBe("none");
+    const plan = { ...PLAN, sleepAt: NOW + SLEEP_WARNING, wakeAt: reset - 3600, reset };
+    expect(sleepDecision(input({ ...margin, pauses, plan, now: plan.sleepAt })).kind).toBe("sleep");
+    expect(sleepDecision(input({ ...margin, pauses, plan, now: plan.sleepAt + 1 })).kind).toBe(
+      "abandon",
+    );
   });
 
   it("waits out the warning, then sleeps", () => {

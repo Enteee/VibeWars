@@ -93,7 +93,10 @@ describe("claude-llc-init's hibernation step (#2794)", () => {
   it("stays off and says how when sudo fails", async () => {
     const h = harness({ answers: ["y"], failing: "tee" });
     await expect(askHibernate({ previous: {}, host: h.host })).resolves.toBeNull();
-    expect(h.ran).toHaveLength(1);
+    expect(h.ran).toEqual([
+      ["sudo", "mkdir", "-p", "/usr/local/libexec"],
+      ["sudo", "tee", "/usr/local/libexec/vibewars-sleep"],
+    ]);
     expect(h.said.join("\n")).toContain("by hand");
   });
 

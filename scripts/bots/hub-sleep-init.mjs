@@ -9,6 +9,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
+import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { DEFAULT_WAKE_MARGIN, hibernateSetting, validMargin } from "./hub-sleep.mjs";
@@ -138,6 +139,10 @@ function rootStep(host, argv, input) {
  * @returns {boolean} whether every step worked
  */
 function install(host) {
+  // Debian and Ubuntu do not ship it.
+  if (!rootStep(host, ["sudo", "mkdir", "-p", path.dirname(SLEEP_SCRIPT)])) {
+    return false;
+  }
   /** @type {[string, string, string?][]} */
   const files = [
     [SLEEP_SCRIPT, SLEEP_SCRIPT_TEXT, "755"],

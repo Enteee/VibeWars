@@ -198,7 +198,8 @@ than an hour away, no CI runner has a job, no reboot is pending and no
 systemd inhibitor holds off sleep, hubd says so in the Operator topic with a
 **Cancel** button, waits 5 minutes, and hibernates. It wakes the margin
 before the reset, and says in General that it is back. A cancel holds until
-that reset has passed.
+that reset has passed. With the Telegram sidecar down the sleep still goes
+ahead, with no warning and no way to cancel.
 
 The machine must:
 
