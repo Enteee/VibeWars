@@ -1540,6 +1540,17 @@ body {
   display: none;
 }
 
+/* A player's signet just before their name (#2805): a recognition aid. */
+.signet {
+  flex-shrink: 0;
+  margin-inline-end: 0.3em;
+  vertical-align: -0.1em;
+}
+
+.signet[hidden] {
+  display: none;
+}
+
 .field-hint {
   color: var(--damage);
   font-size: 0.72rem;

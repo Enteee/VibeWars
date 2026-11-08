@@ -122,6 +122,8 @@ export interface PlayerSnapshot {
     | undefined;
   /** A lobby's bot plays it (#1193), not a peer. */
   readonly bot: boolean;
+  /** Its player key's signet bits (#2805), as `WirePlayer.signet`; `undefined` for none. */
+  readonly signet: number | undefined;
 }
 
 /** A companion's armed pet attack (#1167): a pet-attack skill, and when it lapses. */

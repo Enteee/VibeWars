@@ -15,7 +15,7 @@ import { pastedSource, shareLink } from "../music/share-link.js";
 import { sharedTracks, type SharedTracks } from "../music/shared-tracks.js";
 import { TRACKS, type Track } from "../music/tracks/index.js";
 import type { CodeEditor } from "./code-editor.js";
-import { button, h, overlayClose, shareLine } from "./kit.js";
+import { button, h, overlayClose, shareLine, toast } from "./kit.js";
 
 /**
  * The beat editor (#373, #366 §3.7): the source of a track, edited while
@@ -217,12 +217,27 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
         : "";
   };
   const unsubscribeShared = deps.shared.onChange(paintShare);
+  // Too soon by the host's clock (#2779): it was not shared after all.
+  const unsubscribeThrottled = deps.shared.onHostThrottled(() => {
+    window.clearTimeout(sharedTimer);
+    sharedTimer = undefined;
+    paintShare();
+  });
   code.addEventListener("input", paintShare);
   code.addEventListener("keyup", paintShare);
   paintShare();
 
   function shareWithLobby(): void {
-    if (editor === undefined || !deps.shared.share(track.id, editor.text())) {
+    if (editor === undefined) {
+      paintShare();
+      return;
+    }
+    const outcome = deps.shared.share(track.id, editor.text());
+    if (outcome === "throttled") {
+      toast(t("music.shareThrottled"));
+      return;
+    }
+    if (outcome === "refused") {
       paintShare();
       return;
     }
@@ -324,6 +339,7 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
     override.set(restoreOverride);
     unsubscribe();
     unsubscribeShared();
+    unsubscribeThrottled();
     window.clearTimeout(sharedTimer);
     editor?.destroy();
     panel.remove();

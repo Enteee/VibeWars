@@ -41,6 +41,11 @@ export interface RenderableActor {
   readonly name: string;
   /** The player's guild tag (#1406), after the name on its plate; `undefined` for none. */
   readonly guildTag: string | undefined;
+  /**
+   * The player key's signet bits (#2805), drawn just left of the name
+   * wherever the name shows; `undefined` for none, as for a bot.
+   */
+  readonly signet: number | undefined;
   /** The player's guild cape (#1422), drawn behind a standing body; `undefined` for none. */
   readonly cape: CapeLook | undefined;
   /** A lobby's bot (#1194): its name plate wears the BOT tag. */
@@ -672,47 +677,67 @@ export function offhandMarkLayout(
 /** Between the glyph and the name. */
 const PROFESSION_GLYPH_GAP = 2;
 
-/** Where a name and its profession glyph go: centre x of each, and their shared bottom, in world units. */
+/** A player's signet on its name plate (#2805), screen px, and the gap after it. */
+export const NAMEPLATE_SIGNET_SIZE = 16;
+const NAMEPLATE_SIGNET_GAP = 2;
+
+/** The arena's texture for `bits`' signet (#2805), one per bits. */
+export function signetTextureKey(bits: number): string {
+  return `signet-${String(bits)}`;
+}
+
+/**
+ * Where a name, its profession glyph and its signet go: centre x of
+ * each, and their shared bottom, in world units.
+ */
 export interface NameplateLayout {
   /** `undefined`: the actor has no profession, so no glyph. */
   readonly glyphX: number | undefined;
+  /** `undefined`: no signet drawn (#2805), and no gap left for one. */
+  readonly signetX: number | undefined;
   readonly textX: number;
   readonly bottom: number;
 }
 
 /**
- * Lay out an actor's name and the glyph before it (#281): glyph, gap and
- * name centred together on the body, so a long name pushes the glyph left
- * with it, and both sit on `nameLabelBottom`. Both are screen-sized
- * (#456), so their widths are screen px, laid out in world units at `zoom`.
+ * Lay out an actor's name, the glyph before it (#281) and its signet
+ * just left of the name (#2805): all centred together on the body, so a
+ * long name pushes the others left with it, and all sit on
+ * `nameLabelBottom`. Each is screen-sized (#456), so their widths are
+ * screen px, laid out in world units at `zoom`.
  *
  * @param textWidth the label's measured width, screen px, never a
  *   character count: a name can be any script (#192)
+ * @param signetDrawn whether the actor's signet texture is ready to draw;
+ *   until it is, the plate leaves no gap for one
  */
 export function nameplateLayout(
   actor: RenderableActor,
   textWidth: number,
   zoom: number,
+  signetDrawn: boolean,
 ): NameplateLayout {
   const bottom = nameLabelBottom(actor, zoom);
   const { x } = actor.position;
-  if (actor.profession === undefined) {
-    return { glyphX: undefined, textX: x, bottom };
-  }
   const glyph = screenPx(PROFESSION_GLYPH_SIZE, zoom);
-  const gap = screenPx(PROFESSION_GLYPH_GAP, zoom);
+  const glyphRun =
+    actor.profession === undefined ? 0 : glyph + screenPx(PROFESSION_GLYPH_GAP, zoom);
+  const signet = screenPx(NAMEPLATE_SIGNET_SIZE, zoom);
+  const withSignet = signetDrawn && actor.signet !== undefined;
+  const signetRun = withSignet ? signet + screenPx(NAMEPLATE_SIGNET_GAP, zoom) : 0;
   const text = screenPx(textWidth, zoom);
-  const left = x - (glyph + gap + text) / 2;
+  const left = x - (glyphRun + signetRun + text) / 2;
   return {
-    glyphX: left + glyph / 2,
-    textX: left + glyph + gap + text / 2,
+    glyphX: actor.profession === undefined ? undefined : left + glyph / 2,
+    signetX: withSignet ? left + glyphRun + signet / 2 : undefined,
+    textX: left + glyphRun + signetRun + text / 2,
     bottom,
   };
 }
 
 /**
- * The box an actor's drawn name tag covers (#2738): glyph and label laid
- * out by `nameplateLayout`, as tall as the taller of the two. World
+ * The box an actor's drawn name tag covers (#2738): glyph, signet and
+ * label laid out by `nameplateLayout`, as tall as the tallest. World
  * units, so the hit it makes does not change with zoom.
  *
  * @param textWidth the label's width, screen px, as `nameplateLayout`'s
@@ -723,16 +748,23 @@ export function nameTagBox(
   textWidth: number,
   textHeight: number,
   zoom: number,
+  signetDrawn: boolean,
 ): Rect {
-  const layout = nameplateLayout(actor, textWidth, zoom);
+  const layout = nameplateLayout(actor, textWidth, zoom, signetDrawn);
   const text = screenPx(textWidth, zoom);
   const right = layout.textX + text / 2;
   const left =
-    layout.glyphX === undefined
-      ? layout.textX - text / 2
-      : layout.glyphX - screenPx(PROFESSION_GLYPH_SIZE, zoom) / 2;
+    layout.glyphX !== undefined
+      ? layout.glyphX - screenPx(PROFESSION_GLYPH_SIZE, zoom) / 2
+      : layout.signetX !== undefined
+        ? layout.signetX - screenPx(NAMEPLATE_SIGNET_SIZE, zoom) / 2
+        : layout.textX - text / 2;
   const height = screenPx(
-    layout.glyphX === undefined ? textHeight : Math.max(textHeight, PROFESSION_GLYPH_SIZE),
+    Math.max(
+      textHeight,
+      layout.glyphX === undefined ? 0 : PROFESSION_GLYPH_SIZE,
+      layout.signetX === undefined ? 0 : NAMEPLATE_SIGNET_SIZE,
+    ),
     zoom,
   );
   return { left, top: layout.bottom - height, right, bottom: layout.bottom };

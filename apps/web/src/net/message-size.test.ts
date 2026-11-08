@@ -175,6 +175,7 @@ function player(index: number): WirePlayer {
     energyPips: -MAX_WIRE_PIPS,
     creature: null,
     bot: false,
+    signet: null,
     statuses: WIRE_STATUSES,
   };
 }

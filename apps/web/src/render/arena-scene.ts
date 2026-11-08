@@ -12,13 +12,14 @@ import {
 } from "@vibewars/game-core";
 
 import { taggedName } from "../ui/bot-tag.js";
-import { nameplateName, playerLabelText } from "../ui/player-label.js";
+import { nameplateName, playerLabelText, signetUrl } from "../ui/player-label.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import {
   BODY_EDGE,
   DEAD_COLOUR,
   EMPTY_SNAPSHOT,
   EXPLOITED_CORPSE_COLOUR,
+  NAMEPLATE_SIGNET_SIZE,
   SHRINE_RADIUS,
   areaFlashAlpha,
   bodyGlyphLayout,
@@ -30,6 +31,7 @@ import {
   nameTagBox,
   nameplateLayout,
   placeFloatingText,
+  signetTextureKey,
   swingFlashAlpha,
   markedForTeam,
   teamColour,
@@ -285,6 +287,10 @@ export class ArenaScene extends Phaser.Scene {
   private readonly nameBoxes = new Map<string, Rect>();
   /** The primary profession's glyph before each name, one pooled image per actor (#281). */
   private nameGlyphs = new Map<string, Phaser.GameObjects.Image>();
+  /** One signet image per actor with one (#2805), beside its name. */
+  private nameSignets = new Map<string, Phaser.GameObjects.Image>();
+  /** Signet textures asked for and still loading (#2805). */
+  private signetsAdding = new Set<string>();
   /** The primary profession's glyph inside each body, one pooled image per actor (#1037). */
   private bodyGlyphs = new Map<string, Phaser.GameObjects.Image>();
   /** The casting skill's type badge by each cast bar, one pooled image per actor (#1125). */
@@ -1254,11 +1260,16 @@ export class ArenaScene extends Phaser.Scene {
       );
       screenSized(label, zoom);
       // `width` is unscaled: the label's screen px.
-      const layout = nameplateLayout(actor, label.width, zoom);
+      const signetDrawn = this.signetReady(actor.signet);
+      const layout = nameplateLayout(actor, label.width, zoom, signetDrawn);
       label.setPosition(layout.textX, layout.bottom).setVisible(shown);
       this.updateNameGlyph(actor, layout, shown, hovered);
+      this.updateNameSignet(actor, layout, shown);
       if (shown) {
-        this.nameBoxes.set(actor.id, nameTagBox(actor, label.width, label.height, zoom));
+        this.nameBoxes.set(
+          actor.id,
+          nameTagBox(actor, label.width, label.height, zoom, signetDrawn),
+        );
       } else {
         this.nameBoxes.delete(actor.id);
       }
@@ -1287,6 +1298,8 @@ export class ArenaScene extends Phaser.Scene {
         this.nameBoxes.delete(id);
         this.nameGlyphs.get(id)?.destroy();
         this.nameGlyphs.delete(id);
+        this.nameSignets.get(id)?.destroy();
+        this.nameSignets.delete(id);
       }
     }
   }
@@ -1325,6 +1338,45 @@ export class ArenaScene extends Phaser.Scene {
     }
     screenSized(glyph, this.cameras.main.zoom);
     glyph.setPosition(layout.glyphX, layout.bottom).setVisible(shown);
+  }
+
+  /**
+   * Whether `bits`' signet texture is ready (#2805). The first ask adds
+   * it, once per bits, from its SVG; it loads asynchronously, and until
+   * it has, the plate leaves no gap for it.
+   */
+  private signetReady(bits: number | undefined): boolean {
+    if (bits === undefined) {
+      return false;
+    }
+    const key = signetTextureKey(bits);
+    if (this.textures.exists(key)) {
+      return true;
+    }
+    if (!this.signetsAdding.has(key)) {
+      this.signetsAdding.add(key);
+      this.textures.addBase64(key, signetUrl(bits, NAMEPLATE_SIGNET_SIZE));
+    }
+    return false;
+  }
+
+  /** `actor`'s signet just left of its name (#2805): shown with the name, never greyed. */
+  private updateNameSignet(actor: RenderableActor, layout: NameplateLayout, shown: boolean): void {
+    let signet = this.nameSignets.get(actor.id);
+    if (actor.signet === undefined || layout.signetX === undefined) {
+      signet?.setVisible(false);
+      return;
+    }
+    const key = signetTextureKey(actor.signet);
+    if (signet === undefined) {
+      signet = this.add.image(0, 0, key).setOrigin(0.5, 1).setDepth(OVERLAY_DEPTH);
+      this.nameSignets.set(actor.id, signet);
+    }
+    if (signet.texture.key !== key) {
+      signet.setTexture(key);
+    }
+    screenSized(signet, this.cameras.main.zoom);
+    signet.setPosition(layout.signetX, layout.bottom).setVisible(shown);
   }
 
   /**

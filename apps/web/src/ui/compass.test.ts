@@ -30,6 +30,7 @@ function actor(
     id,
     name: id,
     guildTag: undefined,
+    signet: undefined,
     cape: undefined,
     bot: false,
     position: vec2(x, y),

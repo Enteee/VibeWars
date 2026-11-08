@@ -186,6 +186,11 @@ export interface TestMatch {
   joinLocal(peerHello?: PeerHello): Promise<PeerMatchConnection>;
 }
 
+/** A stand-in signet (#2805): a key's first 13 bits, so two keys differ. */
+export function testSignet(pubkey: string): number {
+  return Number.parseInt(pubkey.slice(0, 4), 16) & 0x1fff;
+}
+
 /** The harness's wall clock, unix seconds: what a record's `endedAt` reads. */
 export const TEST_NOW_SECONDS = 1_800_000_000;
 
@@ -200,6 +205,8 @@ export function startMatch(
     spectators?: readonly string[];
     /** Where the finished match's record goes (#2528). */
     publishRecord?: (record: MatchRecord) => void;
+    /** A key's signet bits (#2805); `testSignet` by default. */
+    signetOf?: (pubkey: string) => number;
   } = {},
 ): TestMatch {
   const network = createMemoryNetwork();
@@ -220,6 +227,7 @@ export function startMatch(
     mode: "random-arena",
     publishRecord: options.publishRecord ?? (() => undefined),
     nowSeconds: () => TEST_NOW_SECONDS,
+    signetOf: options.signetOf ?? testSignet,
   });
   return {
     network,

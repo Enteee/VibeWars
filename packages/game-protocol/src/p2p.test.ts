@@ -17,6 +17,7 @@ import {
   MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_RADIUS,
   MAX_WIRE_MORALE,
+  MAX_WIRE_SIGNET,
   MAX_WIRE_PIPS,
   MIN_WIRE_MORALE,
   MAX_WIRE_RANKS,
@@ -217,6 +218,7 @@ const player: WirePlayer = {
   statuses: [status],
   creature: null,
   bot: false,
+  signet: 4242,
 };
 
 /** A Bone Minion of `peer-1`'s (#1052): no professions, its kind's name. */
@@ -233,6 +235,7 @@ const minion: WirePlayer = {
     armedAttack: null,
     leaderId: null,
   },
+  signet: null,
 };
 
 const snapshot: WireSnapshotPart = {
@@ -1689,6 +1692,13 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
       { ...snapshot, players: [{ ...player, morale: value }] },
     ],
   ),
+  ...[undefined, 1.5, -1, MAX_WIRE_SIGNET + 1, "42"].map(
+    (value): [string, (value: unknown) => unknown, unknown] => [
+      `snapshot with a player's signet ${String(value)} (#2805)`,
+      parseWireSnapshotPart,
+      { ...snapshot, players: [{ ...player, signet: value }] },
+    ],
+  ),
   [
     "snapshot with a player missing knockdownRemaining (#545)",
     parseWireSnapshotPart,
@@ -2622,6 +2632,13 @@ describe("the P2P validators (#82)", () => {
   it("accept a masterless body on MASTERLESS_WIRE_TEAM (#2092)", () => {
     const loose = { ...player, team: MASTERLESS_WIRE_TEAM };
     expect(parseWireSnapshotPart({ ...snapshot, players: [loose] })?.players).toEqual([loose]);
+  });
+
+  it("accept a signet of 0 to MAX_WIRE_SIGNET, or none (#2805)", () => {
+    for (const signet of [null, 0, MAX_WIRE_SIGNET]) {
+      const marked = { ...player, signet };
+      expect(parseWireSnapshotPart({ ...snapshot, players: [marked] })?.players).toEqual([marked]);
+    }
   });
 
   it("drop a token from a hello's rejoin: a rejoin is proven, never told (#593)", () => {

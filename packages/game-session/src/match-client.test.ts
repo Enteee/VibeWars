@@ -33,6 +33,7 @@ import {
   self,
   settle,
   startMatch,
+  testSignet,
   until,
 } from "./match-harness.test-support.js";
 import { createMemoryNetwork } from "./memory-transport.js";
@@ -369,6 +370,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     statuses: "statuses",
     creature: "creature",
     bot: "bot",
+    signet: "signet",
   } as const satisfies Record<keyof WirePlayer, keyof PlayerSnapshot>;
 
   it("have one field for each field of the other", () => {
@@ -500,6 +502,7 @@ const WIRE_PLAYER: WirePlayer = {
   creature: null,
   statuses: [],
   bot: false,
+  signet: 4242,
 };
 
 /**
@@ -681,6 +684,7 @@ describe("connectMatch, before the host's match listens (#1805)", () => {
       mode: "random-arena",
       publishRecord: () => undefined,
       nowSeconds: () => 0,
+      signetOf: testSignet,
     });
   }
 
