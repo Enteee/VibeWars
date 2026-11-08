@@ -190,6 +190,7 @@ describe("the arena set (#444)", () => {
         "hall-of-heroes",
         "hollow-deep",
         "blackwater-ford",
+        "mosslit-cairns",
         "scarred-earth",
         "sandstone-steps",
         "frozen-crossing",
@@ -223,9 +224,10 @@ describe("the arena set (#444)", () => {
       "the-courtyard",
     ]);
     expect(MAPS.filter((map) => map.mode === "capture-points").map((map) => map.id)).toEqual([
+      "mosslit-cairns",
       "scarred-earth",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 8);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 9);
   });
 
   it("puts each team's shrine on Jungle Ruins 150-250 behind its spawns (#1186, #2550)", () => {

@@ -83,6 +83,7 @@ describe("randomArenaMapPool", () => {
               "hall-of-heroes",
               "hollow-deep",
               "blackwater-ford",
+              "mosslit-cairns",
               "scarred-earth",
               "moss-vale",
               "elonian-plateau",
@@ -237,6 +238,7 @@ describe("team sizes (#2108)", () => {
       "hall-of-heroes",
       "hollow-deep",
       "blackwater-ford",
+      "mosslit-cairns",
       "scarred-earth",
     ]);
   });
@@ -327,6 +329,7 @@ describe("hostMap (#476)", () => {
           "ember-pits",
           "jungle-ruins",
           "blackwater-ford",
+          "mosslit-cairns",
           "guild-hall-isle",
           "broken-tower",
           "the-courtyard",
