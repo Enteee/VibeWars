@@ -1,5 +1,7 @@
 import { Lexer, type Token, type Tokens } from "marked";
 
+import type { LanguageCode } from "../i18n/languages.js";
+
 /**
  * The player docs (#1257): `docs/player/*.md`, bundled at build time, and
  * turned into a tree of a few safe elements for the Help screen.
@@ -75,6 +77,12 @@ export const PLAYER_DOC_SOURCES: ReadonlyMap<string, string> = byFileName(
   }),
 );
 
+/** Every `docs/player/<code>/*.md` (#2665), fetched only for the language in use. */
+const PLAYER_DOC_TRANSLATIONS = import.meta.glob<string>("../../../../docs/player/*/*.md", {
+  query: "?raw",
+  import: "default",
+});
+
 /** Every `docs/player/img/*`, as `img/<file>`, to its bundled URL. */
 export const PLAYER_DOC_IMAGES: ReadonlyMap<string, string> = new Map(
   [
@@ -128,10 +136,39 @@ export function playerDocPages(sources: ReadonlyMap<string, string>): readonly P
 /** The pages of this build's Help screen. */
 export const PLAYER_DOC_PAGES: readonly PlayerDocPage[] = playerDocPages(PLAYER_DOC_SOURCES);
 
-/** The default targets: this build's pages and images. */
+let helpPages = PLAYER_DOC_PAGES;
+
+/** The pages the Help screen shows: the player's language's, else English. */
+export function helpDocPages(): readonly PlayerDocPage[] {
+  return helpPages;
+}
+
+/**
+ * Fetch `code`'s pages for the Help screen before the first screen draws
+ * (#2665). A language with no folder under `docs/player/` keeps English.
+ */
+export async function loadPlayerDocs(
+  code: LanguageCode,
+  loaders: Readonly<Record<string, () => Promise<string>>> = PLAYER_DOC_TRANSLATIONS,
+): Promise<void> {
+  const files = Object.entries(loaders).filter(([path]) => path.split("/").at(-2) === code);
+  if (files.length === 0) {
+    helpPages = PLAYER_DOC_PAGES;
+    return;
+  }
+  const sources = await Promise.all(
+    files.map(async ([path, load]): Promise<[string, string]> => [
+      path.slice(path.lastIndexOf("/") + 1),
+      await load(),
+    ]),
+  );
+  helpPages = playerDocPages(new Map(sources));
+}
+
+/** The default targets: the Help screen's pages and this build's images. */
 export function playerDocTargets(): DocTargets {
   return {
-    pages: new Set(PLAYER_DOC_PAGES.map((page) => page.id)),
+    pages: new Set(helpPages.map((page) => page.id)),
     images: PLAYER_DOC_IMAGES,
     base: import.meta.env.BASE_URL,
   };
