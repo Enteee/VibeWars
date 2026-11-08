@@ -530,6 +530,8 @@ export function playCard(options: PlayCardOptions): HTMLElement {
   if (typeof options.name === "string") {
     const name = h("span", "play-card-name", options.name);
     name.title = options.name;
+    // A player typed it: it reads, and is cut at its end, in its own direction (#2655).
+    name.dir = "auto";
     head.appendChild(name);
   } else {
     head.appendChild(options.name);

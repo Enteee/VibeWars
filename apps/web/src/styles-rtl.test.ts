@@ -84,4 +84,14 @@ describe("styles.css right to left (#2655)", () => {
     );
     expect(mixed).toEqual([]);
   });
+
+  it("keeps a signed number's sign on its side", () => {
+    // `0 +1`, not `1+ 0`: the sign is a bidi neutral and flips in right to left.
+    const all = perSelector();
+    for (const selector of [".editor-attribute-rank", ".gear-stat-value", ".hud-morale"]) {
+      const own = all.filter((declaration) => declaration.selector === selector);
+      expect(own).toContainEqual({ selector, property: "direction", value: "ltr" });
+      expect(own).toContainEqual({ selector, property: "unicode-bidi", value: "isolate" });
+    }
+  });
 });

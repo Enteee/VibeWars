@@ -62,6 +62,15 @@
   direction: ltr;
 }
 
+/* A signed number reads `0 +1`, not `1+ 0`: the sign is a bidi neutral,
+   so in right to left it would flip to the number's other side. */
+.editor-attribute-rank,
+.gear-stat-value,
+.hud-morale {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 html,
 body {
   margin: 0;
