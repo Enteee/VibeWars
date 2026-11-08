@@ -229,7 +229,7 @@ describe("the arena set (#444)", () => {
       "mosslit-cairns",
       "scarred-earth",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 9);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 10);
   });
 
   it("puts each team's shrine on Jungle Ruins 150-250 behind its spawns (#1186, #2550)", () => {
