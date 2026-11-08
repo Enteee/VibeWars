@@ -20,7 +20,7 @@ const CSS = fs.readFileSync(
  * around the HUD the same way in every language, and offscreen hosts.
  */
 const PINNED_PLACE =
-  /\.hud-skill-row|\.weapon-set|\.compass|\.party-dock|^\.hud-controls|^\.hud-jukebox|#viewport > \.chat|\.music-host|\.skill-drag-image|\.recharge-seconds/;
+  /\.hud-skill-row|\.weapon-set|\.compass|\.party-dock|^\.hud-controls|^\.hud-jukebox|#viewport > \.chat|\.music-host|\.skill-drag-image|\.recharge-seconds|^\.hud-top$|#screens\[style\*="none"\]\) \.now-playing/;
 
 /** Each declaration in the sheet, with the selector of its rule. */
 function declarations(): { selector: string; property: string; value: string }[] {
@@ -36,6 +36,13 @@ function declarations(): { selector: string; property: string; value: string }[]
     }
   }
   return found;
+}
+
+/** Each declaration once per selector of its rule's selector list. */
+function perSelector(): { selector: string; property: string; value: string }[] {
+  return declarations().flatMap(({ selector, property, value }) =>
+    selector.split(",").map((one) => ({ selector: one.trim(), property, value })),
+  );
 }
 
 describe("styles.css right to left (#2655)", () => {
@@ -60,5 +67,21 @@ describe("styles.css right to left (#2655)", () => {
         !PINNED_PLACE.test(selector),
     );
     expect(physical).toEqual([]);
+  });
+
+  it("never mixes a logical inset with a physical side on one selector", () => {
+    // A base `left` beside an override's `inset-inline-start` keeps both in
+    // right to left, and the box lands on the other side.
+    const all = perSelector();
+    const logical = new Set(
+      all
+        .filter(({ property, value }) => property.startsWith("inset-inline") && value !== "auto")
+        .map(({ selector }) => selector),
+    );
+    const mixed = all.filter(
+      ({ selector, property, value }) =>
+        (property === "left" || property === "right") && value !== "auto" && logical.has(selector),
+    );
+    expect(mixed).toEqual([]);
   });
 });

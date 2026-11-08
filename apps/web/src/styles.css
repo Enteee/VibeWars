@@ -695,6 +695,9 @@ body {
   flex: 1 1 auto;
   min-height: 0;
   position: relative;
+  /* What the pinned HUD puts past the left edge on a phone stays cut off
+     in right to left too, rather than scrolling the page (#2655). */
+  overflow-x: clip;
 }
 
 #viewport canvas:not(.compass) {
@@ -6769,6 +6772,13 @@ body:has(#app > .chat) .now-playing {
   inset-inline-end: 1rem;
 }
 
+/* In a match the right is the match buttons and the compass in every
+   language (#2655), so the toast stays on the left. */
+body:has(#screens[style*="none"]) .now-playing {
+  inset-inline: auto;
+  left: 1rem;
+}
+
 .now-playing[hidden] {
   display: none;
 }
@@ -6797,9 +6807,10 @@ body:has(#app > .chat) .now-playing {
     white-space: nowrap;
   }
 
+  /* Fitted against the right-hand compass: the same side in every language. */
   .hud-top {
     top: calc(3.2rem + var(--build-banner-space, 0px));
-    inset-inline-start: 0.6rem;
+    left: 0.6rem;
     transform: none;
     align-items: flex-start;
     max-width: var(--hud-top-width);
@@ -6851,6 +6862,10 @@ body:has(#app > .chat) .now-playing {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  body:has(#screens[style*="none"]) .now-playing {
+    left: 0.6rem;
   }
 }
 
