@@ -463,6 +463,28 @@ body {
   height: 18px;
 }
 
+/* In a queue (#2743): a ring that turns, left of Help. */
+.topbar-queue-ring {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: topbar-queue-turn 1s linear infinite;
+}
+
+@keyframes topbar-queue-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar-queue-ring {
+    animation: none;
+  }
+}
+
 /* Who is in the lobby (#2385), on the Lobby button: hidden while it is just you.
    Tracks shared and not yet heard (#2745), on the ♪. */
 .topbar-actions .topbar-lobby-button,
@@ -529,6 +551,35 @@ body {
   border: 1px solid var(--line);
   text-transform: none;
   letter-spacing: normal;
+}
+
+/* The queue's flyout (#2743), as the Lobby window. */
+#topbar .queue-window {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0.5rem;
+  z-index: 20;
+  width: min(280px, calc(100vw - 1rem));
+  padding: 0.7rem;
+  gap: 0.5rem;
+  background: rgb(14 17 22 / 96%);
+  border: 1px solid var(--line);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.queue-window-title {
+  margin: 0;
+}
+
+.queue-window-waited {
+  font-variant-numeric: tabular-nums;
+}
+
+.queue-window-detail,
+.queue-window-host-only {
+  margin: 0;
+  color: var(--ink-dim);
 }
 
 /* The jukebox from the bar's ♪, just under the bar. */
@@ -1628,17 +1679,6 @@ body {
 .rail-title {
   margin: 0 0 -0.6rem;
   font-size: 1.05rem;
-}
-
-/* How long the party has been queued (#1766), on top of a mode's screen. */
-.party-status {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem 1rem;
-  padding: 0.45rem 0.7rem;
-  background: var(--panel);
-  border: 1px solid var(--line);
 }
 
 /* Who is in this lobby (#1526), in the top bar's Lobby window (#2385). */
@@ -7290,15 +7330,6 @@ body:has(#app > .chat) .now-playing {
 .queue-status {
   font-size: 1.4rem;
   color: var(--accent);
-}
-
-.queue-waited {
-  font-size: 1.1rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.queue-count {
-  color: var(--ink-dim);
 }
 
 .queue-actions {
