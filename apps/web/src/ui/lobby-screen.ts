@@ -86,11 +86,14 @@ export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
     teamsDisabled: !waiting,
     // Readiness is meaningless without a team, so the control is disabled
     // rather than silently doing nothing when pressed. Its hover says why (#2124).
-    readyProblem: !waiting
-      ? t("lobby.readyMatchStarted")
-      : self === undefined || self.team === null
-        ? t("lobby.readyJoinATeam")
-        : undefined,
+    readyProblem:
+      snapshot.phase === "queued"
+        ? t("queue.busy")
+        : !waiting
+          ? t("lobby.readyMatchStarted")
+          : self === undefined || self.team === null
+            ? t("lobby.readyJoinATeam")
+            : undefined,
     startDisabled: !waiting || assigned.length === 0 || !assigned.every((p) => p.ready),
     canWatch: snapshot.phase === "in-match" && self?.team === null,
   };
