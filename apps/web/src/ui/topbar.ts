@@ -5,6 +5,7 @@ import { closeHelpOverlay, isHelpOverlayOpen } from "./help-screen.js";
 import { paintMuteButton } from "./hud.js";
 import { helpIcon, LOBBY_ICON, lobbyIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
+import { sharedTracks } from "../music/shared-tracks.js";
 import {
   button,
   h,
@@ -438,6 +439,23 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   const lobby = lobbyButton(bar, join.controls);
 
   const music = iconButton("topbar-music", t("topbar.music"));
+  // Tracks lobby members shared and this player has not seen (#2745).
+  const musicBadge = h("span", "topbar-badge");
+  musicBadge.hidden = true;
+  music.appendChild(musicBadge);
+  musicBadge.addEventListener("animationend", () => {
+    musicBadge.classList.remove("is-pulsing");
+  });
+  let unheard = 0;
+  sharedTracks.onChange(() => {
+    const next = sharedTracks.unheard();
+    musicBadge.textContent = String(next);
+    musicBadge.hidden = next === 0;
+    if (next > unheard) {
+      musicBadge.classList.add("is-pulsing");
+    }
+    unheard = next;
+  });
 
   // The same mute all as the HUD's and the ♪ popovers' (#424).
   const mute = iconButton("topbar-mute", t("topbar.muteSounds"));
@@ -458,7 +476,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   // screen with the bar's lobby on it: until then nothing could join.
   let joinShown = false;
   let early: string | undefined;
-  attachJukeboxPopover(music, bar);
+  attachJukeboxPopover(music, bar, false);
 
   // On a phone the screen's other buttons and the global icons fold into
   // ⋯ (styles.css); the screen's primary button and an editor's own ⋯ stay out.

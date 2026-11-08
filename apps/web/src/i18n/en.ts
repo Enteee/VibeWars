@@ -584,6 +584,18 @@ export const en = {
   "menu.randomTag": "Random",
   "menu.reroll": "Reroll",
 
+  "music.backToMine": "Back to my music",
+  "music.playShared": "Play",
+  "music.playSharedInLobby": "Play shared tracks in the lobby.",
+  "music.shareNoLobby": "Share in a lobby with other players.",
+  "music.shareThrottled": "Wait a moment before sharing again.",
+  "music.shareTooLong": "Too long to share (8 KB max).",
+  "music.shareWithLobby": "Share with lobby",
+  "music.shared": "Shared.",
+  "music.sharedPlaying": "Playing",
+  "music.sharedRow": "{name} · {title}",
+  "music.sharedWithYou": "Shared with you",
+
   "options.language": "language",
   "options.languageBusy": "Leave the lobby or match first: changing the language reloads the page.",
   "options.languageLabel": "Language",

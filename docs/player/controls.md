@@ -65,4 +65,13 @@ the screen's other buttons fold into **⋯**; only its main button stays out.
 ⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it.
 Help closes with the × at its top right, Esc, or another press of [?].
 
+**Share a beat with your lobby.** In the beat editor (♪, then **Edit**),
+**Share with lobby** sends what you have typed, saved or not, to everyone
+else in a lobby you hosted or joined by link (never one the queue found;
+at most 8 KB, one share every ten seconds). They see a badge on ♪, and
+under **Shared with you** in its window a row per player, "Ann · Ember Deep",
+with **Play**. Nothing plays until you press Play, only outside a match;
+**Back to my music** returns to yours. A shared beat is never saved: it is
+gone when you leave the lobby or reload.
+
 In Auto, the menus share one song that builds as you go deeper, and each map always has its own song.
