@@ -70,8 +70,8 @@ export const ARENA_MAPS: readonly MapData[] = [
   // The Guild Battle's (#1222).
   guildHallIsle,
   // The Relic Run's (#1374, #2551).
-  brokenTower,
   cinderSanctum,
+  brokenTower,
   // King of the Hill's (#1377, #2552).
   theCourtyard,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.

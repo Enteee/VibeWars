@@ -186,6 +186,7 @@ describe("the arena set (#444)", () => {
         "jungle-ruins",
         "guild-hall-isle",
         "broken-tower",
+        "cinder-sanctum",
         "the-courtyard",
         "hall-of-heroes",
         "hollow-deep",

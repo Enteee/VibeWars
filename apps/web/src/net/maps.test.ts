@@ -79,6 +79,7 @@ describe("randomArenaMapPool", () => {
             ![
               "guild-hall-isle",
               "broken-tower",
+              "cinder-sanctum",
               "the-courtyard",
               "hall-of-heroes",
               "hollow-deep",
@@ -129,6 +130,7 @@ describe("team sizes (#2108)", () => {
       }
     }
     expect(modeMapIds()["heroes-ascent"]).toEqual([
+      "cinder-sanctum",
       "broken-tower",
       "the-courtyard",
       "scarred-earth",
@@ -233,6 +235,7 @@ describe("team sizes (#2108)", () => {
       "moss-vale",
       "elonian-plateau",
       "guild-hall-isle",
+      "cinder-sanctum",
       "broken-tower",
       "the-courtyard",
       "hall-of-heroes",
@@ -332,6 +335,7 @@ describe("hostMap (#476)", () => {
           "mosslit-cairns",
           "guild-hall-isle",
           "broken-tower",
+          "cinder-sanctum",
           "the-courtyard",
           "hall-of-heroes",
           "scarred-earth",
