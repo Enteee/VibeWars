@@ -8936,6 +8936,7 @@
         { "name": "interrupts", "optional": false, "type": "number" },
         { "name": "kills", "optional": false, "type": "number" },
         { "name": "name", "optional": false, "type": "string" },
+        { "name": "signet", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "taken", "optional": false, "type": "number" },
         {
           "name": "team",

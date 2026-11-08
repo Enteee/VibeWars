@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { MatchSummaryRow } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
-import { summaryTables } from "./match-summary.js";
+import { renderSummary, summaryTables } from "./match-summary.js";
+import { SIGNET_ROW_PX, signetUrl } from "./player-label.js";
 
 function row(id: string, team: number, values: Partial<MatchSummaryRow> = {}): MatchSummaryRow {
   return {
@@ -11,6 +12,7 @@ function row(id: string, team: number, values: Partial<MatchSummaryRow> = {}): M
     name: id,
     guildTag: null,
     team,
+    signet: null,
     damage: 0,
     healing: 0,
     taken: 0,
@@ -103,5 +105,82 @@ describe("summaryTables: bots (#1241)", () => {
         ["dan", false],
       ]),
     );
+  });
+});
+
+/** Just enough DOM for `renderSummary`; the unit tests run in Node. */
+class FakeElement {
+  className = "";
+  textContent = "";
+  title = "";
+  alt = "";
+  src = "";
+  hidden = false;
+  width = 0;
+  height = 0;
+  readonly children: FakeElement[] = [];
+  readonly classList = { toggle: () => undefined };
+
+  setAttribute(): void {
+    return undefined;
+  }
+
+  appendChild(child: FakeElement): FakeElement {
+    this.children.push(child);
+    return child;
+  }
+
+  append(...nodes: (FakeElement | string)[]): void {
+    for (const node of nodes) {
+      if (typeof node !== "string") {
+        this.appendChild(node);
+      }
+    }
+  }
+
+  createTHead(): FakeElement {
+    return this.appendChild(new FakeElement());
+  }
+
+  createTBody(): FakeElement {
+    return this.appendChild(new FakeElement());
+  }
+
+  insertRow(): FakeElement {
+    return this.appendChild(new FakeElement());
+  }
+
+  all(name: string): FakeElement[] {
+    return this.children.flatMap((child) => [
+      ...(child.className.split(" ").includes(name) ? [child] : []),
+      ...child.all(name),
+    ]);
+  }
+}
+
+describe("renderSummary: signets (#2822)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("puts a human's signet before the name, and shows none for a bot", () => {
+    vi.stubGlobal("document", { createElement: () => new FakeElement() });
+    const parent = new FakeElement();
+    renderSummary(
+      parent as unknown as HTMLElement,
+      summaryTables(
+        [row("ann", 0, { signet: 7 }), row("cat", 1)],
+        "ann",
+        0,
+        undefined,
+        new Set(["cat"]),
+      ),
+    );
+    const [human, bot] = parent.all("match-summary-name");
+    expect(human?.children[0]?.className).toBe("signet");
+    expect(human?.children[0]?.hidden).toBe(false);
+    expect(human?.children[0]?.src).toBe(signetUrl(7, SIGNET_ROW_PX));
+    expect(bot?.children[0]?.className).toBe("signet");
+    expect(bot?.children[0]?.hidden).toBe(true);
   });
 });
