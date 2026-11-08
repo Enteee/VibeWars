@@ -2,6 +2,7 @@ import type { ChatLine } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
+import { SIGNET_ROW_PX, signetUrl } from "./player-label.js";
 import {
   CHAT_LINES_KEPT,
   CHAT_LINE_SHOWN_SECONDS,
@@ -55,7 +56,7 @@ describe("ChatLog (#479)", () => {
   it(`keeps the last ${String(CHAT_LINES_KEPT)} lines`, () => {
     const log = new ChatLog();
     for (let i = 0; i < CHAT_LINES_KEPT + 5; i += 1) {
-      log.add(line("ann", 0, String(i)), 0);
+      log.add({ line: line("ann", 0, String(i)), at: 0, signet: undefined });
     }
     const kept = log.visible();
     expect(kept).toHaveLength(CHAT_LINES_KEPT);
@@ -64,10 +65,10 @@ describe("ChatLog (#479)", () => {
 
   it("hides a muted sender's lines, kept and new, until unmuted", () => {
     const log = new ChatLog();
-    log.add(line("ann", 0, "one"), 0);
-    log.add(line("bob", 1, "two"), 0);
+    log.add({ line: line("ann", 0, "one"), at: 0, signet: undefined });
+    log.add({ line: line("bob", 1, "two"), at: 0, signet: undefined });
     log.mute("bob", true);
-    expect(log.add(line("bob", 1, "three"), 0)).toBe(false);
+    expect(log.add({ line: line("bob", 1, "three"), at: 0, signet: undefined })).toBe(false);
     expect(log.visible().map(({ line: kept }) => kept.text)).toEqual(["one"]);
     log.mute("bob", false);
     expect(log.visible().map(({ line: kept }) => kept.text)).toEqual(["one", "two", "three"]);
@@ -86,6 +87,7 @@ class FakeElement {
   src = "";
   maxLength = 0;
   disabled = false;
+  hidden = false;
   scrollTop = 0;
   readonly scrollHeight = 0;
   readonly isConnected = true;
@@ -218,6 +220,7 @@ const key = (name: string) => ({
 
 describe("mountChat: closed and open (#2018)", () => {
   const windowListeners: ((event: unknown) => void)[] = [];
+  const signets = new Map<string, number>();
   let sent: string[];
   let chat: ChatPanel;
   let root: FakeElement;
@@ -229,6 +232,7 @@ describe("mountChat: closed and open (#2018)", () => {
     vi.useFakeTimers();
     windowListeners.length = 0;
     sent = [];
+    signets.clear();
     fakeDocument.activeElement = null;
     vi.stubGlobal("document", fakeDocument);
     vi.stubGlobal("window", {
@@ -251,6 +255,7 @@ describe("mountChat: closed and open (#2018)", () => {
       selfId: "me",
       selfTeam: () => 0,
       send: (channel, text) => sent.push(`${channel}:${text}`),
+      signetOf: (fromId) => signets.get(fromId),
     });
     root = chat.root as unknown as FakeElement;
     input = root.find("chat-input");
@@ -261,6 +266,46 @@ describe("mountChat: closed and open (#2018)", () => {
     chat.dispose();
     vi.unstubAllGlobals();
     vi.useRealTimers();
+  });
+
+  describe("the sender's signet (#2821)", () => {
+    const say = (fromId: string, text: string): void => {
+      chat.add({ channel: "all", fromId, name: fromId, team: 0, text });
+    };
+    const signetOfRow = (index: number): FakeElement => {
+      const signet = root.all("chat-line")[index]?.children.find((c) => c.className === "signet");
+      if (signet === undefined) {
+        throw new Error("no signet element");
+      }
+      return signet;
+    };
+
+    it("shows on a human's line, before the name", () => {
+      signets.set("ann", 5);
+      say("ann", "hi");
+      const row = root.find("chat-line");
+      expect(signetOfRow(0).hidden).toBe(false);
+      expect(signetOfRow(0).src).toBe(signetUrl(5, SIGNET_ROW_PX));
+      expect(row.children.indexOf(signetOfRow(0))).toBeLessThan(
+        row.children.indexOf(row.find("chat-line-name")),
+      );
+    });
+
+    it("is hidden when the sender has none", () => {
+      say("bot", "hi");
+      expect(signetOfRow(0).hidden).toBe(true);
+    });
+
+    it("stays on the line after its sender leaves, through a repaint", () => {
+      signets.set("ann", 5);
+      signets.set("bob", 9);
+      say("ann", "hi");
+      say("bob", "yo");
+      signets.delete("ann");
+      root.all("chat-line-name")[1]?.click();
+      expect(root.all("chat-line")[0]?.dataset.from).toBe("ann");
+      expect(signetOfRow(0).src).toBe(signetUrl(5, SIGNET_ROW_PX));
+    });
   });
 
   it("mounts closed, in and out of a match, with its icon named for Enter", () => {
