@@ -38,6 +38,10 @@ const turned = (map: MapData, point: Vec2): Vec2 => ({
   y: map.height - point.y,
 });
 
+/** Whether an objective stands in a three-team map's third base (#2700). */
+const ofThirdBase = (objective: MapData["objectives"][number]): boolean =>
+  ("team" in objective && objective.team === 2) || ("base" in objective && objective.base === 2);
+
 const near = (a: Vec2, b: Vec2): boolean => Vec.distance(a, b) <= TOLERANCE;
 
 const sameSegment = (a: Segment, b: Segment): boolean =>
@@ -55,14 +59,15 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
         JSON.stringify(wall),
       ).toBe(true);
     }
-    for (const spawn of map.spawnPoints) {
+    // A third base (#2700) has no image: the turn swaps the first two teams.
+    for (const spawn of map.spawnPoints.filter((each) => each.team !== 2)) {
       const image = turned(map, spawn.position);
       expect(
         map.spawnPoints.some((other) => other.team !== spawn.team && near(other.position, image)),
         JSON.stringify(spawn),
       ).toBe(true);
     }
-    for (const objective of map.objectives) {
+    for (const objective of map.objectives.filter((each) => !ofThirdBase(each))) {
       const image = turned(map, objective.position);
       // A shared objective, the flag stand (#1225), the altar (#1374) or a
       // capture point (#1378), has another of its kind at its image, or is it.
@@ -231,7 +236,7 @@ describe("the arena set (#444)", () => {
       "mosslit-cairns",
       "scarred-earth",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 9);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 11);
   });
 
   it("puts each team's shrine on Jungle Ruins 150-250 behind its spawns (#1186, #2550)", () => {
@@ -554,7 +559,9 @@ const DIAGONALS = [
 
 /** The checks every King of the Hill map of #2552 passes. */
 function holdsTheHill(id: string, seats: readonly number[]): void {
-  const { map, altar, ghosts, finder } = hill(id);
+  const { map, altar, ghosts: allGhosts, finder } = hill(id);
+  // A third base (#2700) has its own test: these are the two facing bases.
+  const ghosts = allGhosts.filter((ghost) => ghost.team !== 2);
 
   it("seats every team size it lists, and puts the altar at the centre", () => {
     expect(map.teamSizes).toEqual(seats);
@@ -657,16 +664,26 @@ describe("the Hall's three maps (#2700)", () => {
 
 describe("Hall of Heroes (#2552)", () => {
   holdsTheHill("hall-of-heroes-king", [8]);
-  const { altar, ghosts, walls, finder } = hill("hall-of-heroes-king");
+  const { map, altar, ghosts, walls, finder } = hill("hall-of-heroes-king");
 
   it("raises the altar on a dais walled west and east, open to the north and south", () => {
     expect(sightLines(altar, CARDINALS, walls)).toEqual([false, false, true, true]);
   });
 
   it("leads every base's way in round the dais, by the north or the south approach", () => {
-    for (const ghost of ghosts) {
+    for (const ghost of ghosts.filter((each) => each.team !== 2)) {
       const path = finder.find(ghost.position, altar) ?? [];
       expect(path.some((point) => Math.abs(point.y - altar.y) > 220)).toBe(true);
+    }
+  });
+
+  it("puts the third base (#2700) north of the altar, behind its spawns, with a way to it", () => {
+    const third = ghosts.find((ghost) => ghost.team === 2);
+    if (third === undefined) throw new Error("no third ghost");
+    expect(third.position.y).toBeLessThan(altar.y);
+    expect(finder.find(third.position, altar)).toBeDefined();
+    for (const spawn of map.spawnPoints.filter((each) => each.team === 2)) {
+      expect(third.position.y).toBeLessThan(spawn.position.y);
     }
   });
 });

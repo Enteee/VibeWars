@@ -190,7 +190,9 @@ describe("Relic Run bots (#2581)", () => {
 });
 
 describe("King of the Hill bots (#2582)", () => {
-  const map = loadAllMaps().find((candidate) => candidate.mode === "king-of-the-hill");
+  const map = loadAllMaps().find(
+    (candidate) => candidate.mode === "king-of-the-hill" && candidate.teams === 2,
+  );
 
   const hill = (arena: MapData, seed: string, participants: readonly ParticipantSpec[]) => {
     const altar = arena.objectives.find((objective) => objective.kind === "altar");
