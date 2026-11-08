@@ -166,9 +166,15 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
       await press(bea, card);
       await expect(card).toHaveAttribute("aria-pressed", "true");
     });
+    // The queue is the top bar's icon's (#2743).
     for (const page of [ann, bea]) {
-      await expect(page.locator(".party-queued")).toContainText("Team Arena 4v4 — searching…");
+      await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
     }
+    await bea.locator("#topbar .topbar-queue").click();
+    const flyout = bea.locator("#topbar .queue-window");
+    await expect(flyout).toContainText("Team Arena 4v4");
+    await expect(flyout).toContainText("Only the host can leave the queue.");
+    await bea.keyboard.press("Escape");
     await expect(ann.getByRole("button", { name: "Leave the queue" })).toBeVisible();
 
     // The other party plays a random 4v4 preset team: nobody proposes (#2148).
@@ -200,7 +206,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await expect((await lobbyWindow(bea)).locator(".topbar-leave")).toBeVisible();
     await shutLobbyWindow(bea);
     await expect(bea.locator(".lobby-panel")).toContainText("Ann");
-    await expect(bea.locator(".party-queued")).toHaveCount(0);
+    await expect(bea.locator("#topbar .topbar-queue")).toBeHidden();
   } catch (error) {
     await test.info().attach("consoles", { body: consoles.join("\n"), contentType: "text/plain" });
     console.log(consoles.join("\n"));
@@ -224,9 +230,11 @@ test("#2107: a Team Arena leader picks 2v2, and the party queues for Team Arena 
     await setTeamSize(ann, 2);
     await expectTeamSize(bea, 2, { locked: true });
     await runTeamLobby([ann, bea], undefined, 2);
-    for (const page of [ann, bea]) {
-      await expect(page.locator(".party-queued")).toContainText("Team Arena 2v2 — searching…");
-    }
+    await ann.locator("#topbar .topbar-queue").click();
+    await expect(ann.locator("#topbar .queue-window")).toContainText("Team Arena 2v2");
+    await expect(
+      ann.locator("#topbar .queue-window").getByRole("button", { name: "Leave Queue" }),
+    ).toBeVisible();
   } finally {
     await context.close();
   }

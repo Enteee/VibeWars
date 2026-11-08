@@ -5,6 +5,7 @@ import { closeHelpOverlay, isHelpOverlayOpen } from "./help-screen.js";
 import { paintMuteButton } from "./hud.js";
 import { helpIcon, LOBBY_ICON, lobbyIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
+import { sharedTracks } from "../music/shared-tracks.js";
 import {
   button,
   h,
@@ -18,6 +19,7 @@ import { copyInviteLink } from "./lobby-screen.js";
 import { lobbyWindowBody, type RailParty } from "./lobby-window.js";
 import { loadPlayerName } from "./player-section.js";
 import { attachOptionsWindow } from "./options-screen.js";
+import { queueButton, type QueueStatusInput } from "./queue-popover.js";
 import { attachTopbarPopover, closeTopbarPopover } from "./topbar-popover.js";
 
 /**
@@ -58,6 +60,8 @@ export interface TopbarCallbacks {
   readonly onLeave: () => void;
   /** The host's Closed / Open toggle (#1682): let friends with the invite link join, or stop them. */
   readonly onSetOpen: (open: boolean) => void;
+  /** The queue flyout's Leave Queue (#2743): out of whichever queue this tab is in. */
+  readonly onLeaveQueue: () => void;
 }
 
 /** The lobby the bar names (#1526): this tab's own, or the one it joined. */
@@ -371,6 +375,8 @@ export interface Topbar {
   setLobby(lobby: BarLobby | undefined): void;
   /** Who is in that lobby (#2385): the Lobby button's badge and its window. */
   setParty(party: RailParty | undefined): void;
+  /** The queue this tab is in (#2743): its icon and flyout; none hides them. */
+  setQueue(queue: QueueStatusInput | undefined): void;
   /**
    * Join the lobby an invite link names (#2100): `false` on a bar that
    * cannot. Before the first menu, it waits for it.
@@ -414,6 +420,9 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     callbacks.onHelp();
   });
 
+  // Left of Help while in any queue (#2743).
+  const queue = queueButton(bar, callbacks.onLeaveQueue);
+
   const options = iconButton("topbar-options", t("topbar.options"), settingsIcon());
   attachOptionsWindow(options, bar, callbacks.onOptionsClosed);
 
@@ -430,6 +439,23 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   const lobby = lobbyButton(bar, join.controls);
 
   const music = iconButton("topbar-music", t("topbar.music"));
+  // Tracks lobby members shared and this player has not seen (#2745).
+  const musicBadge = h("span", "topbar-badge");
+  musicBadge.hidden = true;
+  music.appendChild(musicBadge);
+  musicBadge.addEventListener("animationend", () => {
+    musicBadge.classList.remove("is-pulsing");
+  });
+  let unheard = 0;
+  sharedTracks.onChange(() => {
+    const next = sharedTracks.unheard();
+    musicBadge.textContent = String(next);
+    musicBadge.hidden = next === 0;
+    if (next > unheard) {
+      musicBadge.classList.add("is-pulsing");
+    }
+    unheard = next;
+  });
 
   // The same mute all as the HUD's and the ♪ popovers' (#424).
   const mute = iconButton("topbar-mute", t("topbar.muteSounds"));
@@ -444,13 +470,13 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   const fullscreen = iconButton("topbar-fullscreen", t("fullscreen.enter"));
   attachFullscreenButton(fullscreen, fullscreenTarget());
 
-  actions.append(help, options, lobby.element, music, mute, fullscreen);
+  actions.append(queue.element, help, options, lobby.element, music, mute, fullscreen);
   actions.before(join.element);
   // An invite link the page opened with (#2100) waits for the first
   // screen with the bar's lobby on it: until then nothing could join.
   let joinShown = false;
   let early: string | undefined;
-  attachJukeboxPopover(music, bar);
+  attachJukeboxPopover(music, bar, false);
 
   // On a phone the screen's other buttons and the global icons fold into
   // ⋯ (styles.css); the screen's primary button and an editor's own ⋯ stay out.
@@ -530,6 +556,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   return {
     setLobby: join.setLobby,
     setParty: lobby.setParty,
+    setQueue: queue.setQueue,
     invite(code) {
       if (!joinShown) {
         early = code;

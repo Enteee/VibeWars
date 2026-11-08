@@ -154,8 +154,6 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 4,
     });
     saveRail("hosted-game");
@@ -182,8 +180,6 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 4,
     });
     const rail = modeRail("gvg", () => undefined) as unknown as FakeElement;
@@ -218,8 +214,6 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 4,
     });
     redrawModeRail(root as unknown as HTMLElement, "teams", () => undefined);
@@ -232,7 +226,7 @@ describe("the mode rail (#1525)", () => {
     ]);
   });
 
-  it("lists nobody on a mode screen, only how long it is queued, while it is (#1766, #2385)", () => {
+  it("lists nobody on a mode screen, and no queue line: the top bar's icon has it (#2385, #2743)", () => {
     const member = (name: string, isHost: boolean) => ({
       name,
       isHost,
@@ -245,8 +239,6 @@ describe("the mode rail (#1525)", () => {
       isHost: true,
       open: true,
       queuedMs: 5_000,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 4,
     } as const;
     const parts = (): string[] => {
@@ -259,10 +251,7 @@ describe("the mode rail (#1525)", () => {
     setRailParty({ ...party, members, queuedMs: null });
     expect(parts()).toEqual(["rail-title"]);
     setRailParty({ ...party, members });
-    expect(parts()).toEqual(["party-status", "rail-title"]);
-    // Queued alone, the line still says so: it is the party's only timer.
-    setRailParty({ ...party, members: [member("me", true)] });
-    expect(parts()).toEqual(["party-status", "rail-title"]);
+    expect(parts()).toEqual(["rail-title"]);
   });
 
   it("opens on Random Arena first, and for anything else stored", () => {
@@ -394,8 +383,6 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 2,
     });
     expect(sizeField("hosted-game").title).toBe(t("rail.hostSetsTeamSize"));
@@ -410,8 +397,6 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 2,
     } as const;
     setRailParty(party);
@@ -433,8 +418,6 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       teamSize: 2,
     } as const;
     setRailParty(party);
