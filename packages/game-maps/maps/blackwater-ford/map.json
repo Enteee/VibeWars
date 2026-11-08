@@ -1,0 +1,203 @@
+{
+  "id": "blackwater-ford",
+  "name": "Blackwater Ford",
+  "mode": "priest-annihilation",
+  "teamSizes": [8],
+  "teams": 2,
+  "width": 1600,
+  "height": 1000,
+  "walls": [
+    {
+      "kind": "rect",
+      "x": 480,
+      "y": 200,
+      "width": 140,
+      "height": 80
+    },
+    {
+      "kind": "rect",
+      "x": 980,
+      "y": 720,
+      "width": 140,
+      "height": 80
+    },
+    {
+      "kind": "rect",
+      "x": 650,
+      "y": 560,
+      "width": 90,
+      "height": 160
+    },
+    {
+      "kind": "rect",
+      "x": 860,
+      "y": 280,
+      "width": 90,
+      "height": 160
+    },
+    {
+      "kind": "rect",
+      "x": 480,
+      "y": 760,
+      "width": 120,
+      "height": 70
+    },
+    {
+      "kind": "rect",
+      "x": 1000,
+      "y": 170,
+      "width": 120,
+      "height": 70
+    }
+  ],
+  "objectives": [
+    {
+      "kind": "resurrection-shrine",
+      "team": 0,
+      "position": {
+        "x": 110,
+        "y": 500
+      }
+    },
+    {
+      "kind": "resurrection-shrine",
+      "team": 1,
+      "position": {
+        "x": 1490,
+        "y": 500
+      }
+    },
+    {
+      "kind": "ghost-spawn",
+      "team": 0,
+      "position": {
+        "x": 110,
+        "y": 330
+      }
+    },
+    {
+      "kind": "ghost-spawn",
+      "team": 1,
+      "position": {
+        "x": 1490,
+        "y": 670
+      }
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "position": {
+        "x": 230,
+        "y": 290
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 230,
+        "y": 390
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 230,
+        "y": 490
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 230,
+        "y": 590
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 310,
+        "y": 340
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 310,
+        "y": 440
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 310,
+        "y": 540
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 310,
+        "y": 640
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1370,
+        "y": 710
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1370,
+        "y": 610
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1370,
+        "y": 510
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1370,
+        "y": 410
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1290,
+        "y": 660
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1290,
+        "y": 560
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1290,
+        "y": 460
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1290,
+        "y": 360
+      }
+    }
+  ],
+  "ghostLevel": 20,
+  "gates": []
+}

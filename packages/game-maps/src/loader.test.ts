@@ -12,7 +12,9 @@ import canthanTerraces from "../maps/canthan-terraces/map.json" with { type: "js
 import emberPits from "../maps/ember-pits/map.json" with { type: "json" };
 import frozenCrossing from "../maps/frozen-crossing/map.json" with { type: "json" };
 import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
+import blackwaterFord from "../maps/blackwater-ford/map.json" with { type: "json" };
 import hallOfHeroes from "../maps/hall-of-heroes/map.json" with { type: "json" };
+import hollowDeep from "../maps/hollow-deep/map.json" with { type: "json" };
 import jungleRuins from "../maps/jungle-ruins/map.json" with { type: "json" };
 import mossVale from "../maps/moss-vale/map.json" with { type: "json" };
 import sandstoneSteps from "../maps/sandstone-steps/map.json" with { type: "json" };
@@ -46,6 +48,7 @@ describe("the maps the browser imports", () => {
       arenaCrossroads,
       arenaLongHall,
       ashenCourtyard,
+      blackwaterFord,
       brokenTower,
       canthanTerraces,
       elonianPlateau,
@@ -53,6 +56,7 @@ describe("the maps the browser imports", () => {
       frozenCrossing,
       guildHallIsle,
       hallOfHeroes,
+      hollowDeep,
       jungleRuins,
       mossVale,
       sandstoneSteps,

@@ -15,8 +15,10 @@ import sunkenBastion from "@vibewars/game-maps/maps/sunken-bastion/map.json" wit
 import shiverpeakPass from "@vibewars/game-maps/maps/shiverpeak-pass/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
 import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
+import blackwaterFord from "@vibewars/game-maps/maps/blackwater-ford/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
 import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
+import hollowDeep from "@vibewars/game-maps/maps/hollow-deep/map.json" with { type: "json" };
 import theCourtyard from "@vibewars/game-maps/maps/the-courtyard/map.json" with { type: "json" };
 import type {
   BaseGuard,
@@ -71,6 +73,9 @@ export const ARENA_MAPS: readonly MapData[] = [
   theCourtyard,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
   hallOfHeroes,
+  // The Heroes' Ascent's own (#2693): a Hosted Game's pick until the progression places them.
+  hollowDeep,
+  blackwaterFord,
   // Capture Points' (#1378, #2551).
   scarredEarth,
 ].map((raw) => validateMapData(raw));
@@ -106,6 +111,9 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
  */
 const ASCENT_FINALE_ONLY: readonly string[] = ["hall-of-heroes"];
 
+/** Heroes' Ascent maps (#2693) whose modes Random and Team Arena also play: neither draws them. */
+const ASCENT_ONLY: readonly string[] = ["hollow-deep", "blackwater-ford"];
+
 /**
  * Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them: a
  * team mode's only those that suit its team size (#2108), so its draw never seats 8 on a map
@@ -117,6 +125,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
     const modes = LOBBY_MODE_MATCH_MODES[mode];
     return arenaIds().filter(
       (id) =>
+        (mode === "hosted-game" || !ASCENT_ONLY.includes(id)) &&
         (modes === undefined || modes.includes(mapMode(id))) &&
         (size === undefined || suits(id, size)),
     );
@@ -135,7 +144,9 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
 /** Team Arena's map ids at `size` a side (#2107), in `arenaIds`' order: its modes' maps that suit it (#2108). */
 export function teamArenaMapIds(size: number): string[] {
   const modes = LOBBY_MODE_MATCH_MODES["team-arena"] ?? [];
-  return arenaIds().filter((id) => modes.includes(mapMode(id)) && suits(id, size));
+  return arenaIds().filter(
+    (id) => !ASCENT_ONLY.includes(id) && modes.includes(mapMode(id)) && suits(id, size),
+  );
 }
 
 /** The arenas among `maps` that suit a side of `size` (#2108), in their order. */
@@ -163,7 +174,7 @@ function suits(mapId: string, size: number): boolean {
  */
 export function randomArenaMapPool(mode: QueueMode): string[] {
   return mapsForSize(ARENA_MAPS, teamSizeOf(mode))
-    .filter((map) => !NOT_RANDOM.includes(map.mode))
+    .filter((map) => !NOT_RANDOM.includes(map.mode) && !ASCENT_ONLY.includes(map.id))
     .map((map) => map.id);
 }
 
