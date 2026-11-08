@@ -46,11 +46,11 @@ The maps as they are today get no converter and no migration (ADR-0016). The sch
 
 ## Considered and rejected
 
-Cross-layer combat, from #2811:
+Cross-layer combat, from #2811, where the choice was that ranged and spells cross, melee does not and a deck blocks sight:
 
 - **Same layer only.** The simplest rules, but a bridge becomes a separate, safe arena and height means nothing.
 - **Everything crosses, layers ignored.** Nothing to build, but the deck is scenery and people under a bridge are hit through it.
-- **The chosen one: ranged and spells cross, melee does not, a deck blocks sight.** Bridges give real cover and real positions, for only 2D checks.
+- **A height bonus** (longer range or more damage from above). Not decided, and out for now: it touches every ranged skill and should be tuned from real play. It can be added later as a single numeric rule.
 
 The model itself, from #2810:
 
