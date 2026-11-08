@@ -973,6 +973,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["select-team-size of one (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 1 }],
   ["select-mode (#1526)", parseWireLobbyCommand, { kind: "select-mode", mode: "heroes-ascent" }],
   ["start", parseWireLobbyCommand, { kind: "start" }],
+  ["remove-member (#2746)", parseWireLobbyCommand, { kind: "remove-member", id: "peer-2" }],
   ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match", ascentRound: null }],
   [
     "find-match at a Heroes' Ascent round (#1996)",
@@ -1084,6 +1085,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["a proposal's builds with no proposer (#1811)", parseWireTeamProposalBuilds, { builds: [] }],
   ["a call of an unknown kind (#443)", parsePeerCall, { kind: "focus", targetId: "peer-2" }],
   ["a call with no target (#443)", parsePeerCall, { kind: "target" }],
+  ["a remove-member with no id (#2746)", parseWireLobbyCommand, { kind: "remove-member" }],
+  [
+    "a remove-member with an id past the wire's (#2746)",
+    parseWireLobbyCommand,
+    { kind: "remove-member", id: long },
+  ],
   ["a ping at NaN (#443)", parsePeerCall, { kind: "ping", x: Number.NaN, y: 0 }],
   ["a ping with a string for y (#443)", parsePeerCall, { kind: "ping", x: 0, y: "0" }],
   ["a stroke of one point (#2391)", parsePeerCall, { ...strokeCall, points: [[1, 2]] }],

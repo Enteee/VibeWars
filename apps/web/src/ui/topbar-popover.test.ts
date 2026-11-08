@@ -256,6 +256,7 @@ describe("a top-bar popover (#2385)", () => {
 });
 
 const member = (name: string, isHost = false): PartyMember => ({
+  id: name,
   name,
   isHost,
   self: isHost,
@@ -270,6 +271,7 @@ const party = (...members: PartyMember[]): RailParty => ({
   members,
   queuedMs: null,
   teamSize: 4,
+  removable: true,
 });
 
 describe("the top bar's Lobby (#2385)", () => {
@@ -280,7 +282,11 @@ describe("the top bar's Lobby (#2385)", () => {
     // The lobby's controls (#2385), as the bar's join hands them over.
     const controls = new FakeElement("div");
     controls.textContent = "Copy invite link";
-    const lobby = lobbyButton(parent as unknown as HTMLElement, controls as unknown as HTMLElement);
+    const lobby = lobbyButton(
+      parent as unknown as HTMLElement,
+      controls as unknown as HTMLElement,
+      () => undefined,
+    );
     const button = lobby.element as unknown as FakeElement;
     const badge = button.children.find((child) => child.className === "topbar-badge");
     if (badge === undefined) {
@@ -340,7 +346,15 @@ describe("the top bar's Lobby (#2385)", () => {
     badge.fire("animationend");
     button.fire("click");
     const controls = parent.children[0]?.children[1];
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", "me", "Host", "Ann"]);
+    // The host sees an (x) by every other member (#2746).
+    expect(parent.children[0]?.texts()).toEqual([
+      "Lobby",
+      "Copy invite link",
+      "me",
+      "Host",
+      "Ann",
+      "×",
+    ]);
     setParty(party(member("me", true), member("Ann"), member("Bo")));
     expect(parent.children[0]?.texts()).toEqual([
       "Lobby",
@@ -348,7 +362,9 @@ describe("the top bar's Lobby (#2385)", () => {
       "me",
       "Host",
       "Ann",
+      "×",
       "Bo",
+      "×",
     ]);
     // The controls stay put through a repaint, so one keeps its focus.
     expect(parent.children[0]?.children[1]).toBe(controls);

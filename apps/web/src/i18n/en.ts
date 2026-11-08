@@ -655,6 +655,7 @@ export const en = {
   "lobbyWindow.closed": "Lobby closed",
   "lobbyWindow.host": "Host",
   "lobbyWindow.reconnecting": "Reconnecting…",
+  "lobbyWindow.removeMember": "Remove {name} from the lobby",
 
   "matchView.watching": "Watching · {seconds} s delay",
 
@@ -962,6 +963,8 @@ export const en = {
   "session.protocolMismatch":
     "This tab is running an outdated version of VibeWars. Reload the page.",
   "session.refused": "The host turned that down.",
+  "session.removeInMatch": "Members cannot be removed during a match.",
+  "session.removed": "The host removed you from the lobby.",
   "session.seatRefused": "That seat is not one of the chosen team build's.",
   "session.seatTaken": "Someone took that seat first.",
   "session.teamPlanRejected":

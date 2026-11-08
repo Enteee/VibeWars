@@ -825,6 +825,8 @@ export function joinFailureNotice(
         return t("session.lobbyClosed");
       case "host-left":
         return t("session.hostClosed");
+      case "removed":
+        return t("session.removed");
       // A queued lobby (#871) turned this ticket away: its proof did not hold, or it is seated already.
       case "not-admitted":
         return t("session.notAdmitted");
@@ -945,6 +947,8 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
       return t("session.seatRefused");
     case "ascent-locked":
       return t("session.ascentLocked");
+    case "in-match":
+      return t("session.removeInMatch");
     default:
       return t("session.refused");
   }
@@ -960,6 +964,8 @@ export function lobbyClosedNotice(reason: LobbyClosedReason): string {
       return t("session.connectionLost");
     case "fell-through":
       return t("session.fellThrough");
+    case "removed":
+      return t("session.removed");
   }
 }
 

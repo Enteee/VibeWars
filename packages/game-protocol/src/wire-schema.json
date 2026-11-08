@@ -5481,6 +5481,7 @@
         { "literal": "closed" },
         { "literal": "fell-through" },
         { "literal": "host-left" },
+        { "literal": "in-match" },
         { "literal": "invalid-proposal" },
         { "literal": "invalid-slot" },
         { "literal": "invalid-vote" },
@@ -5490,6 +5491,7 @@
         { "literal": "not-pickable" },
         { "literal": "party-full" },
         { "literal": "protocol-mismatch" },
+        { "literal": "removed" },
         { "literal": "slot-taken" },
         { "literal": "ticket-used" },
         { "literal": "unproven" }
@@ -6731,6 +6733,12 @@
             { "name": "memberKey", "optional": false, "type": { "union": ["null", "string"] } },
             { "name": "size", "optional": false, "type": "number" },
             { "name": "slot", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "id", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "remove-member" } }
           ]
         },
         {

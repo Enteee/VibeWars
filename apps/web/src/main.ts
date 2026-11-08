@@ -767,6 +767,9 @@ async function main(): Promise<void> {
     onSetOpen: (open) => {
       hosted?.setOpen(open);
     },
+    onRemoveMember: (id) => {
+      lobby?.removeMember(id);
+    },
     onLeaveQueue: () => {
       leaveAnyQueue();
     },
@@ -2070,7 +2073,14 @@ async function main(): Promise<void> {
 
   /** The rail and the title bar name `snapshot`'s party, or none (#1526). */
   const syncParty = (snapshot: LobbySnapshot | undefined): void => {
-    const party = snapshot === undefined ? undefined : partyOf(snapshot, queuedMsOf(snapshot));
+    const party =
+      snapshot === undefined
+        ? undefined
+        : partyOf(
+            snapshot,
+            queuedMsOf(snapshot),
+            lobby !== undefined && matchmadeLobbies.has(lobby),
+          );
     setRailParty(party);
     topbarView.setParty(party);
     paintQueue();

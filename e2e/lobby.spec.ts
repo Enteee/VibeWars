@@ -807,3 +807,28 @@ test("a player leaves their team without leaving the lobby, and their Ready clea
   await expect(page.getByRole("button", { name: "Ready", exact: true })).toBeDisabled();
   await expect(page.getByRole("button", { name: "join team 1" })).toBeEnabled();
 });
+
+test("the host removes a guest with the (x), who cannot come back to that lobby (#2746)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+  try {
+    const invite = await hostLobby(host, "Host");
+    await joinLobby(guest, "Guest", invite);
+
+    await expect((await lobbyWindow(host)).locator(".party-member")).toHaveCount(2);
+    await expect((await lobbyWindow(guest)).locator(".party-member-remove")).toHaveCount(0);
+    await shutLobbyWindow(guest);
+    await (await lobbyWindow(host)).locator(".party-member-remove").click();
+
+    await expect(guest.getByText("The host removed you from the lobby.")).toBeVisible();
+    await expect(await lobbyWindow(host)).toContainText("Just you.");
+
+    await joinByCode(guest, invite);
+    await expect(guest.getByText("The host removed you from the lobby.")).toBeVisible();
+    await expect(await lobbyWindow(host)).toContainText("Just you.");
+  } finally {
+    await context.close();
+  }
+});

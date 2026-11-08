@@ -156,6 +156,7 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
+      removable: true,
       teamSize: 4,
     });
     saveRail("hosted-game");
@@ -182,6 +183,7 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
+      removable: true,
       teamSize: 4,
     });
     const rail = modeRail("gvg", () => undefined) as unknown as FakeElement;
@@ -216,6 +218,7 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
+      removable: true,
       teamSize: 4,
     });
     redrawModeRail(root as unknown as HTMLElement, "teams", () => undefined);
@@ -230,6 +233,7 @@ describe("the mode rail (#1525)", () => {
 
   it("lists nobody on a mode screen, and no queue line: the top bar's icon has it (#2385, #2743)", () => {
     const member = (name: string, isHost: boolean) => ({
+      id: name,
       name,
       isHost,
       self: isHost,
@@ -241,6 +245,7 @@ describe("the mode rail (#1525)", () => {
       isHost: true,
       open: true,
       queuedMs: 5_000,
+      removable: true,
       teamSize: 4,
     } as const;
     const parts = (): string[] => {
@@ -385,6 +390,7 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
+      removable: true,
       teamSize: 2,
     });
     expect(sizeField("hosted-game").title).toBe(t("rail.hostSetsTeamSize"));
@@ -399,6 +405,7 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
+      removable: true,
       teamSize: 2,
     } as const;
     setRailParty(party);
@@ -433,6 +440,7 @@ describe("the mode rail (#1525)", () => {
       open: false,
       members: [],
       queuedMs: null,
+      removable: true,
       teamSize: 2,
     } as const;
     setRailParty(party);
