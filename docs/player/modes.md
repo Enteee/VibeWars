@@ -333,6 +333,12 @@ party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
 
+Two Ascent arenas are built but not yet in the queued run, so for now you
+pick them in a Hosted Game: **The Hollow Deep** (8v8 Annihilation, three
+winding tunnels round a central rock) and **Blackwater Ford** (8v8 Priest
+Annihilation on a tiny ford, bases nearly in sight, the priest raising
+its dead every 2 minutes).
+
 A map may have **gates**: walls that stop bodies, shots and sight while
 closed. Stand on a gate's pressure plate to open it. It closes when
 nobody is left on the plate, shoving anyone in the doorway to the nearer

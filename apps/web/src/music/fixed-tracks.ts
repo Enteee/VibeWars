@@ -33,6 +33,8 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["shiverpeak-pass", "northern-pass"],
   ["elonian-plateau", "glass-dunes"],
   ["hall-of-heroes", "hall-of-champions"],
+  ["hollow-deep", "ember-deep"],
+  ["blackwater-ford", "jungle-veil"],
 ]);
 
 export type MenuScreen =
