@@ -22,7 +22,8 @@ import type { StoredCharacter } from "../storage/schema.js";
 export function buildSignature(character: StoredCharacter): string {
   const attributes = [...character.attributes]
     .filter((attribute) => attribute.rank > 0)
-    .sort((a, b) => a.attributeId.localeCompare(b.attributeId))
+    // Part of a stored signature: fixed locale.
+    .sort((a, b) => a.attributeId.localeCompare(b.attributeId, "en"))
     .map((attribute) => `${attribute.attributeId}=${String(attribute.rank)}`);
   return JSON.stringify([
     character.primaryProfession,

@@ -56,7 +56,7 @@ import {
   type WeaponSetIndex,
 } from "@vibewars/game-core";
 
-import { formatList, t, type MessageKey } from "../i18n/index.js";
+import { formatList, locale, t, type MessageKey } from "../i18n/index.js";
 import type { StoredCharacter, TeamCharacter } from "../storage/schema.js";
 
 /**
@@ -292,7 +292,7 @@ export function modSlotsOf(item: WeaponId | OffhandId): readonly ModSlot[] {
 /** Every mod that may sit in `item`'s `slot`, by name; none for a slot it lacks (#2008). */
 export function modChoices(item: WeaponId | OffhandId, slot: ModSlot): readonly WeaponMod[] {
   return WEAPON_MODS.filter((mod) => modFits(mod, item, slot)).sort((a, b) =>
-    a.name.localeCompare(b.name),
+    a.name.localeCompare(b.name, locale()),
   );
 }
 
@@ -765,7 +765,8 @@ export function summariseGear(
       attributeBonuses.push({ attributeId, bonus, sources });
     }
   }
-  attributeBonuses.sort((a, b) => a.attributeId.localeCompare(b.attributeId));
+  // Sorted by id, not by the shown name: fixed locale, the same order in every language.
+  attributeBonuses.sort((a, b) => a.attributeId.localeCompare(b.attributeId, "en"));
 
   const { weapon, attributeId, requirementMet } = mainHand;
   // Unmet, every hit is scaled down (#571): the same multiplier the

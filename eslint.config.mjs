@@ -9,9 +9,6 @@ import tseslint from "typescript-eslint";
 
 import vibewarsRules from "./eslint/no-raw-ui-text.mjs";
 
-/** Files with player-facing text not yet moved onto t() (#2648): see below. */
-const NOT_YET_TRANSLATED = ["apps/web/src/ui/kit.ts"];
-
 /**
  * Type-aware linting is enabled repo-wide. It is slower than syntactic
  * linting, but it is the only way to catch the mistakes that actually matter
@@ -208,12 +205,10 @@ export default defineConfig([
     },
   },
 
-  // Player-facing text goes through t() (#2648, ADR-0050). The ignores
-  // are the files not yet moved onto it: each extraction card of #2644
-  // deletes its files from the list, and the last deletes the list.
+  // Player-facing text goes through t() (#2648, ADR-0050).
   {
     files: ["apps/web/src/**/*.ts"],
-    ignores: ["apps/web/src/**/*.test.ts", "apps/web/src/i18n/**", ...NOT_YET_TRANSLATED],
+    ignores: ["apps/web/src/**/*.test.ts", "apps/web/src/i18n/**"],
     plugins: { vibewars: vibewarsRules },
     rules: { "vibewars/no-raw-ui-text": "error" },
   },
