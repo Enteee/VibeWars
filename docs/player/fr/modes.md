@@ -347,6 +347,8 @@ défendre. Perds, ou quitte un match avant sa fin, et ta prochaine Ascension
 recommence à la manche 1 ; pareil si tu quittes la file ou le groupe. Un match
 perdu parce que son hôte est parti garde ta manche.
 
+Le Hall tire au sort un de trois modes pour chaque match : Roi de la colline, Course aux reliques ou Points de capture, pour deux ou trois équipes. À deux, la troisième base reste fermée, et son point de capture avec elle. Un match dans le Hall dure 12 minutes et le plus de points gagne ; les Points de capture se terminent aussi plus tôt sur une avance de 20. La mort ne coûte pas de moral. Les morts reviennent ensemble à leur base à chaque minute pleine de l'horloge du match : une équipe décimée n'est donc pas battue. Au Roi de la colline, l'équipe qui tient l'autel continue de marquer après la mort de son fantôme, jusqu'à ce qu'une autre équipe le prenne, et ses morts reviennent sur l'autel. Une égalité va à l'équipe qui a marqué en dernier ou, aux Points de capture, à celle qui a fait le dernier kill.
+
 L'équipe choisit une fois, dans le Salon d'équipe de sa première carte, et garde
 son Build d'équipe et ses places pour le reste de la course : après une victoire,
 elle repart en file sans vote ni choix de places. Celui qui part en pleine course

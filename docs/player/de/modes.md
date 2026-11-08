@@ -273,6 +273,8 @@ in der Hall, bleibst du, um sie zu verteidigen. Verlierst du oder verlässt ein 
 Aufstieg wieder bei Runde 1; das Gleiche gilt, wenn du die Warteschlange oder die Gruppe verlässt. Ein Match, das verloren
 geht, weil sein Host gegangen ist, behält deine Runde.
 
+Die Hall lost für jedes Match einen von drei Modi aus: King of the Hill, Reliktlauf oder Punkte erobern, für zwei oder drei Teams. Bei zwei Teams bleibt die dritte Basis geschlossen und mit ihr ihr Eroberungspunkt. Ein Match in der Hall dauert 12 Minuten, und die meisten Punkte gewinnen; Punkte erobern endet außerdem vorzeitig bei 20 Punkten Vorsprung. Der Tod kostet keine Moral. Die Toten kehren gemeinsam zu jeder vollen Minute der Matchuhr in ihre Basis zurück, ein ausgelöschtes Team ist also nicht geschlagen. Bei King of the Hill punktet das Team, das den Altar hält, auch nach dem Tod seines Geists weiter, bis ein anderes Team ihn beansprucht, und seine Toten kehren auf dem Altar zurück. Ein Gleichstand geht an das Team, das zuletzt gepunktet hat, bei Punkte erobern an das Team mit dem letzten Kill.
+
 Das Team wählt einmal, in der Team-Lobby seiner ersten Karte, und behält seinen Team-Build und seine Plätze für den Rest
 des Laufs: Nach einem Sieg meldet es sich ohne Abstimmung und ohne Nehmen wieder an. Wer mitten im Lauf geht, gibt seinen
 Platz frei, aber nicht dessen Build. Wer zwischen den Karten neu zur Gruppe stößt, kann nur die freien Plätze nehmen

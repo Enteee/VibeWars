@@ -324,6 +324,8 @@ seconds; win in the Hall, and you stay to defend it. Lose, or leave a match befo
 starts again at round 1; so does leaving the queue or the party. A match
 lost to its host leaving keeps your round.
 
+The Hall draws one of three modes for each match: King of the Hill, Relic Run or Capture Points, for two or three teams. With two, the third base stays closed, and with it its capture point. A Hall match runs 12 minutes and the most points win; Capture Points also ends early on a lead of 20. Death costs no morale. The dead return together at their base on every full minute of the match clock, so a wiped team is not beaten. In King of the Hill, the team holding the altar keeps scoring after its ghost dies, until another team claims it, and its dead return on the altar. A tie goes to the team that scored last, or in Capture Points to the team with the most recent kill.
+
 The team picks once, in the Team Lobby of its first map, and keeps its
 Team Build and seats for the rest of the run: after a win it queues
 again with no vote and no claim. Someone who leaves mid-run frees their

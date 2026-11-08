@@ -347,6 +347,8 @@ do fim, e sua próxima Ascensão recomeça na rodada 1; o mesmo vale para
 sair da fila ou do grupo. Uma partida perdida porque o host saiu mantém
 sua rodada.
 
+O Hall sorteia um de três modos para cada partida: Rei da Colina, Corrida da Relíquia ou Captura de Pontos, para duas ou três equipes. Com duas, a terceira base fica fechada, e com ela seu ponto de captura. Uma partida no Hall dura 12 minutos e vence quem tiver mais pontos; a Captura de Pontos também termina antes com uma vantagem de 20. Morrer não custa moral. Os mortos voltam juntos à sua base a cada minuto cheio do relógio da partida, então uma equipe eliminada não está derrotada. No Rei da Colina, a equipe que controla o altar continua pontuando depois que seu fantasma morre, até outra equipe tomá-lo, e seus mortos voltam no altar. Um empate vai para a equipe que pontuou por último ou, na Captura de Pontos, para a que fez a eliminação mais recente.
+
 A equipe escolhe uma vez, na Sala de Equipe do primeiro mapa, e mantém sua
 Build de Equipe e seus assentos no resto da campanha: depois de uma
 vitória, volta à fila sem votação nem escolha. Quem sai no meio da
