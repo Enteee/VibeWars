@@ -326,6 +326,16 @@ describe("the foe's relic to your Ghostly Hero (#2695)", () => {
     stepUntil(sim, () => sim.carriesBundle("a"), 10);
   }
 
+  it("goes on when a whole team dies, and the base raises it on the wave", () => {
+    const sim = foeRelicRun();
+    kill(sim, "x");
+    stepUntil(sim, () => get(sim, "x").combatant.dead, 15);
+    sim.step(DT);
+    expect(sim.phase).toBe("active");
+    stepUntil(sim, () => !get(sim, "x").combatant.dead, 125);
+    expect(sim.phase).toBe("active");
+  }, 30_000);
+
   it("scores when the foe's relic is touched to your own ghost", () => {
     const sim = foeRelicRun();
     grab(sim);

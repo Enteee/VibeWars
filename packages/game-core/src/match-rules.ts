@@ -42,6 +42,8 @@ export interface MatchRules {
   readonly leadToWin?: number | undefined;
   /** Of Relic Run teams tied at time, the last to score wins (#2695); without it, a draw. */
   readonly lastScorerBreaksTie?: boolean | undefined;
+  /** A team all dead is not beaten: its base raises it on the wave (#2695); without it, a wipe loses. */
+  readonly wipeSurvived?: boolean | undefined;
 }
 
 /**
@@ -111,13 +113,15 @@ export const FOE_RELIC_LEAD_TO_WIN = 3;
 /**
  * The Relic Run where a team carries the foe's relic to its own Ghostly
  * Hero (#2695, GW1): `FOE_RELIC_LEAD_TO_WIN` points ahead wins at once,
- * and of teams tied at time the last to score wins. By its map, not its
+ * of teams tied at time the last to score wins, and a wipe loses nothing:
+ * the base raises its dead. By its map, not its
  * mode, so it is not in `MATCH_MODES`.
  */
 export const FOE_RELIC_RUN_MATCH_RULES: MatchRules = Object.freeze({
   ...RELIC_RUN_MATCH_RULES,
   leadToWin: FOE_RELIC_LEAD_TO_WIN,
   lastScorerBreaksTie: true,
+  wipeSurvived: true,
 });
 
 /**
@@ -323,9 +327,13 @@ export function soleLeader(score: MatchScore): number | undefined {
  * Whether `team` is beaten as it stands (#2682, the architect's ruling):
  * every member dead at once and no living priest, in annihilation, a
  * Relic Run, King of the Hill or Capture Points; a team that never had a
- * priest has none living. No kill-count or Guild Battle team is beaten so.
+ * priest has none living. No kill-count or Guild Battle team is beaten
+ * so, nor one whose rules say `wipeSurvived` (#2695).
  */
 export function teamBeaten(team: TeamStanding, rules: MatchRules): boolean {
+  if (rules.wipeSurvived === true) {
+    return false;
+  }
   switch (rules.victory) {
     case "annihilation":
     case "priest-annihilation":
