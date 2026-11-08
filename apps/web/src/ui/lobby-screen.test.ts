@@ -191,7 +191,6 @@ describe("mapLabel (#444)", () => {
     expect(
       mapLabel({
         id: "arena-long-hall",
-        name: "Long Hall",
         size: "small",
         mode: "annihilation",
         teamSizes: [4],
@@ -204,26 +203,23 @@ describe("hostMaps (#1453)", () => {
   const maps = [
     {
       id: "arena-crossroads",
-      name: "Crossroads",
       size: "small",
       mode: "annihilation",
       teamSizes: [4],
     },
     {
       id: "guild-hall-isle",
-      name: "Guild Hall Isle",
       size: "large",
       mode: "guild-battle",
       teamSizes: [4],
     },
     {
       id: "broken-tower",
-      name: "Broken Tower",
       size: "large",
       mode: "relic-run",
       teamSizes: [4],
     },
-    { id: "ember-pits", name: "Ember Pits", size: "small", mode: "kill-count", teamSizes: [4] },
+    { id: "ember-pits", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
 
   it("offers every map without a filter", () => {
@@ -243,7 +239,6 @@ describe("modeLine (#476)", () => {
   it("says what the map's mode is, in a line", () => {
     const map = {
       id: "ember-pits",
-      name: "Ember Pits",
       size: "small",
       teamSizes: [4],
     } as const;
@@ -517,12 +512,11 @@ describe("lobbyPanel: the map (#1994)", () => {
   const maps = [
     {
       id: "arena-crossroads",
-      name: "Crossroads",
       size: "small",
       mode: "annihilation",
       teamSizes: [2, 4],
     },
-    { id: "ember-pits", name: "Ember Pits", size: "small", mode: "kill-count", teamSizes: [4] },
+    { id: "ember-pits", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
   /** The map part of the host's bar in `mode`, on Crossroads. */
   const mapPart = (mode: LobbySnapshot["mode"]): FakeElement => {
@@ -603,7 +597,6 @@ describe("lobbyPanel: the map (#1994)", () => {
     const ascent = [
       {
         id: "broken-tower",
-        name: "Broken Tower",
         size: "medium",
         mode: "relic-run",
         teamSizes: [4, 8],

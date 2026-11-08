@@ -322,8 +322,6 @@ const PEEK = path.join(ROOT, "peek");
  * its status, and makes no runner call of its own. Host-only, outside ROOT.
  */
 const RUNNERS_STATE = runnersStateDir(process.env);
-/** The most runners the operator allows; 0, its default, keeps them off. */
-const MAX_RUNNERS = maxRunners(process.env);
 /** The agents' Claude logs, for `company load`'s tokens (#747): the dashboard's reader. */
 const usage = usageReader(process.env.VIBEWARS_CLAUDE_BOXES);
 
@@ -339,6 +337,7 @@ const REPO_SCOPED = new Set(["issue", "pr", "label", "run", "workflow", "release
  *   repo: string, owner: string, project: number, projectId: string, expectedChecks: string[],
  *   columns: string[], acting: Record<string, string[] | undefined>,
  *   board: import("./hub-board.mjs").BoardIds | null, maxAgents: number | null,
+ *   maxRunners: number | null,
  * }}
  */
 function company() {
@@ -363,6 +362,8 @@ function company() {
     columns: Array.isArray(cfg.columns) ? cfg.columns.map(String) : [],
     // Required for hiring; `staff` refuses every request without it.
     maxAgents: typeof cfg.maxAgents === "number" ? cfg.maxAgents : null,
+    // Required for `company runners` (#2764), which refuses without it.
+    maxRunners: maxRunners(raw),
   };
 }
 
@@ -2362,20 +2363,30 @@ function serveLoad(cfg) {
 /**
  * `company runners` (#1890): the supervisor's status, as the dashboard
  * shows it; `company runners <n>` sets the target it reads, within the
- * operator's max.
+ * operator's max, `company.json`'s `maxRunners` (#2764), read on every
+ * request. The supervisor reads that max once, at start, and refuses a
+ * target above its own; so while its status names a lower max, that one
+ * caps the target too, until a restart applies the new one.
  *
  * @param {string[]} argv `[]` or `[n]`, checked by the policy
+ * @param {number} max
  * @returns {{ code: number, stdout: string, stderr: string }}
  */
-function serveRunners(argv) {
+function serveRunners(argv, max) {
   const [word] = argv;
+  const status = readRunnersStatus(RUNNERS_STATE);
   if (word !== undefined) {
     const n = Number(word);
-    if (n > MAX_RUNNERS) {
+    const cap = status === null ? max : Math.min(max, status.max);
+    if (n > cap) {
+      const why =
+        cap < max
+          ? `the running supervisor's max of ${String(cap)}; a company restart applies company.json's ${String(max)}`
+          : `the operator's max of ${String(max)}; the operator raises maxRunners in .bots/company.json and restarts the company`;
       return {
         code: 1,
         stdout: "",
-        stderr: `company runners: ${String(n)} is above the operator's max of ${String(MAX_RUNNERS)} (VIBEWARS_MAX_RUNNERS)\n`,
+        stderr: `company runners: ${String(n)} is above ${why}\n`,
       };
     }
     writeRunnersTarget(RUNNERS_STATE, n);
@@ -2385,7 +2396,7 @@ function serveRunners(argv) {
       stderr: "",
     };
   }
-  const lines = runnersLines(readRunnersStatus(RUNNERS_STATE), MAX_RUNNERS);
+  const lines = runnersLines(status, max);
   return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
 }
 
@@ -3769,7 +3780,12 @@ async function serve(request, verdict, acting) {
   }
 
   if (kind === "runners") {
-    const answered = serveRunners(argv);
+    if (cfg.maxRunners === null) {
+      const reason = "company.json has no maxRunners; re-run claude-llc-init";
+      audit({ role, kind, argv, decision: "refused", reason });
+      return { allow: false, reason, code: 77 };
+    }
+    const answered = serveRunners(argv, cfg.maxRunners);
     audit({ role, kind, argv, decision: "allowed", code: answered.code });
     return { allow: true, ...answered };
   }

@@ -1243,18 +1243,10 @@ in
     };
 
     # The company's CI runners (#1890, ADR-0045), which claude-llc's runner
-    # supervisor keeps alive. Off until the operator raises `max`, after the
-    # ADR's spike runs a whole `ci` job in the jail.
+    # supervisor keeps alive. The most of them is company.json's
+    # maxRunners, which claude-llc-init asks for (#2764); these are each
+    # runner's own limits.
     runners = {
-      max = lib.mkOption {
-        type = lib.types.ints.unsigned;
-        default = 0;
-        description = ''
-          The most company runners `company runners <n>` may ask for
-          (VIBEWARS_MAX_RUNNERS). 0 keeps them off, and the supervisor makes
-          no GitHub call.
-        '';
-      };
       cpus = lib.mkOption {
         type = lib.types.ints.positive;
         default = 2;

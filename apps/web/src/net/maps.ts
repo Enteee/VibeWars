@@ -177,11 +177,6 @@ export const ASCENT_PROGRESSION: readonly string[] = [
   "hall-of-heroes",
 ];
 
-/** The name of the map Heroes' Ascent plays at `round` (#1996). */
-export function ascentMapName(round: number): string {
-  return hostMap(ascentMapId(round))?.descriptor.name ?? ascentMapId(round);
-}
-
 /** The id of the map Heroes' Ascent plays at `round` (#1996). */
 export function ascentMapId(round: number): string {
   const id = ASCENT_PROGRESSION[round];

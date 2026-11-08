@@ -1,16 +1,14 @@
 import {
   ADRENALINE_PER_STRIKE,
   MAINTAINED_STATUSES,
-  STATUS_DEFINITIONS,
   chainRequirementText,
-  getAttribute,
   getSkill,
-  getWeapon,
   type CombatEvent,
   type CombatLogEntry,
   type SkillEffect,
 } from "@vibewars/game-core";
 
+import { attributeName, itemName, skillName, statusName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 
 /**
@@ -110,8 +108,8 @@ function percent(fraction: number): string {
   return `${String(Math.round(fraction * 100))}%`;
 }
 
-function skillName(skillId: string | undefined): string | undefined {
-  return skillId === undefined ? undefined : (getSkill(skillId)?.name ?? skillId);
+function skillLabel(skillId: string | undefined): string | undefined {
+  return skillId === undefined ? undefined : skillName(skillId);
 }
 
 /**
@@ -167,15 +165,19 @@ function sourceOf(
   const source = entry.sourceId === undefined ? undefined : nameOf(entry.sourceId);
   const attribute =
     entry.cause === "attribute"
-      ? (getAttribute(entry.attributeId ?? "")?.name ?? t("combat.sourceAttribute"))
+      ? entry.attributeId === undefined
+        ? t("combat.sourceAttribute")
+        : attributeName(entry.attributeId)
       : undefined;
   const what =
     attribute ??
     (entry.cause === "weapon"
-      ? (getWeapon(entry.weaponId ?? "")?.name ?? t("combat.sourceWeapon"))
+      ? entry.weaponId === undefined
+        ? t("combat.sourceWeapon")
+        : itemName(entry.weaponId)
       : entry.cause === "degeneration"
         ? t(event.kind === "heal" ? "combat.sourceRegeneration" : "combat.sourceDegeneration")
-        : (skillName(entry.skillId) ??
+        : (skillLabel(entry.skillId) ??
           // A Guild Battle's shrine raises on its own (#1222): nobody's, no skill.
           t(
             entry.cause === "skill" && entry.sourceId === undefined && event.kind === "resurrected"
@@ -228,7 +230,7 @@ export function describeCombatEvent(
     case "health-lost":
       // Named for the status, not the skill that brought it: not a second hit.
       return t("combat.healthLost", {
-        status: withSource(STATUS_DEFINITIONS[event.statusId].name, source),
+        status: withSource(statusName(event.statusId), source),
         amount: formatAmount(event.amount),
         target,
       });
@@ -250,7 +252,7 @@ export function describeCombatEvent(
         energy: percent(event.energyFraction),
       });
     case "status-applied": {
-      const status = STATUS_DEFINITIONS[event.statusId].name;
+      const status = statusName(event.statusId);
       return event.durationSeconds !== null
         ? t("combat.statusApplied", {
             target,
@@ -268,36 +270,36 @@ export function describeCombatEvent(
     case "status-removed":
       return t("combat.statusRemoved", {
         by,
-        status: STATUS_DEFINITIONS[event.statusId].name,
+        status: statusName(event.statusId),
         target,
       });
     case "status-expired":
-      return t("combat.statusExpired", { status: STATUS_DEFINITIONS[event.statusId].name, target });
+      return t("combat.statusExpired", { status: statusName(event.statusId), target });
     case "upkeep-lost":
       // GW1 tells the caster alone; the log names them (#837).
       return t("combat.upkeepLost", {
-        status: STATUS_DEFINITIONS[event.statusId].name,
+        status: statusName(event.statusId),
         target,
         caster: nameOf(event.casterId),
       });
     case "status-spread":
       return t("combat.statusSpread", {
         target,
-        status: STATUS_DEFINITIONS[event.statusId].name,
+        status: statusName(event.statusId),
         from: nameOf(event.fromId),
       });
     case "interrupted":
       return t("combat.interrupted", {
         by,
         target,
-        skill: skillName(event.skillId) ?? event.skillId,
+        skill: skillName(event.skillId),
       });
     case "attack-interrupted":
       return t("combat.attackInterrupted", { by, target });
     case "cancelled":
-      return t("combat.cancelled", { target, skill: skillName(event.skillId) ?? event.skillId });
+      return t("combat.cancelled", { target, skill: skillName(event.skillId) });
     case "spell-failed":
-      return t("combat.spellFailed", { target, skill: skillName(event.skillId) ?? event.skillId });
+      return t("combat.spellFailed", { target, skill: skillName(event.skillId) });
     case "interrupt-missed":
       // A picky interrupt says why it let a cast through (#796).
       return event.refusedSkillId === null
@@ -305,7 +307,7 @@ export function describeCombatEvent(
         : t(interruptRefusal(entry.skillId), {
             by,
             target,
-            skill: skillName(event.refusedSkillId) ?? event.refusedSkillId,
+            skill: skillName(event.refusedSkillId),
           });
     case "attack-missed": {
       const needed = event.reason === "out-of-sequence" ? outOfSequence(entry.skillId) : undefined;
@@ -336,13 +338,13 @@ export function describeCombatEvent(
       return t("combat.skillDisabled", {
         by,
         target,
-        skill: skillName(event.skillId) ?? event.skillId,
+        skill: skillName(event.skillId),
         seconds: formatAmount(event.seconds),
       });
     case "recharge-lengthened":
       return t("combat.rechargeLengthened", {
         target,
-        skill: skillName(event.skillId) ?? event.skillId,
+        skill: skillName(event.skillId),
         seconds: formatAmount(event.seconds),
       });
     case "shadow-stepped":
@@ -359,13 +361,13 @@ export function describeCombatEvent(
       return t("combat.companionStepped", { target, to: nameOf(event.toId) });
     case "skill-used": {
       const caster = nameOf(event.casterId);
-      const skill = skillName(event.skillId) ?? event.skillId;
+      const skill = skillName(event.skillId);
       return event.targetId === event.casterId
         ? t("combat.skillUsed", { caster, skill })
         : t("combat.skillUsedOn", { caster, skill, target });
     }
     case "adrenaline-gained":
-      return adrenalineGained(target, event.strikes, skillName(event.skillId ?? entry.skillId));
+      return adrenalineGained(target, event.strikes, skillLabel(event.skillId ?? entry.skillId));
     case "effect-skipped":
       return t("combat.effectSkipped", { by, requirement: event.requirement });
   }

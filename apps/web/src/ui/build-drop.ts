@@ -1,5 +1,6 @@
-import { PROFESSIONS, getSkill } from "@vibewars/game-core";
+import { getSkill } from "@vibewars/game-core";
 
+import { professionName, skillName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
 import { SKILL_BAR_SLOTS, equippableSkills } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
@@ -137,18 +138,20 @@ export function eliteNotice(skillId: string, displaced: string | undefined): str
   if (displaced === undefined) {
     return undefined;
   }
-  const name = (id: string): string => getSkill(id)?.name ?? id;
-  return t("buildDrop.eliteReplaced", { skill: name(skillId), displaced: name(displaced) });
+  return t("buildDrop.eliteReplaced", {
+    skill: skillName(skillId),
+    displaced: skillName(displaced),
+  });
 }
 
 /** `member`'s professions as a player reads them: "Monk", "Warrior / Monk". */
 function professionsOf(member: TeamCharacter): string {
   const { primaryProfession: primary, secondaryProfession: secondary } = member;
   return secondary === undefined
-    ? PROFESSIONS[primary].name
+    ? professionName(primary)
     : t("buildDrop.professions", {
-        primary: PROFESSIONS[primary].name,
-        secondary: PROFESSIONS[secondary].name,
+        primary: professionName(primary),
+        secondary: professionName(secondary),
       });
 }
 
@@ -164,7 +167,10 @@ export function equipRefusal(member: TeamCharacter, skillId: string): string | u
     return t("buildDrop.notASkill");
   }
   if (!equippableSkills(member).some((each) => each.id === skillId)) {
-    return t("buildDrop.cantUse", { professions: professionsOf(member), skill: skill.name });
+    return t("buildDrop.cantUse", {
+      professions: professionsOf(member),
+      skill: skillName(skillId),
+    });
   }
   return undefined;
 }
@@ -188,13 +194,13 @@ export function slotRefusal(
   const skill = getSkill(skillId);
   const others = member.skillBar.filter((id, at): id is string => at !== slot && id !== null);
   if (skill === undefined || others.includes(skillId)) {
-    return t("buildDrop.alreadyOnBar", { skill: skill?.name ?? skillId, member: member.name });
+    return t("buildDrop.alreadyOnBar", { skill: skillName(skillId), member: member.name });
   }
   const elite = skill.elite ? others.find((id) => getSkill(id)?.elite === true) : undefined;
   if (elite !== undefined) {
     return t("buildDrop.alreadyHasElite", {
       member: member.name,
-      elite: getSkill(elite)?.name ?? elite,
+      elite: skillName(elite),
     });
   }
   return undefined;
@@ -235,7 +241,7 @@ export function dropSkill<C extends TeamCharacter>(
       to.member === shown || !target.skillBar.includes(drag.skillId)
         ? equipRefusal(target, drag.skillId)
         : t("buildDrop.alreadyOnBar", {
-            skill: getSkill(drag.skillId)?.name ?? drag.skillId,
+            skill: skillName(drag.skillId),
             member: target.name,
           });
     if (refusal !== undefined) {

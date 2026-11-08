@@ -7,6 +7,7 @@ import {
 } from "@vibewars/game-core";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
+import { statusName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { STATUS_ICON } from "../render/status-icons.js";
 import { setHidden } from "./dom-write.js";
@@ -83,7 +84,7 @@ export function effectRows(
       id: status.id,
       bearerId: bearer.sessionId,
       bearerName: undefined,
-      name: definition.name,
+      name: statusName(status.id),
       category: definition.category,
       // A maintained one has no bar: it is not running out.
       fraction:
@@ -121,7 +122,7 @@ export function maintainedRows(players: readonly PlayerSnapshot[], selfId: strin
               id: status.id,
               bearerId: player.sessionId,
               bearerName: player.name,
-              name: definition.name,
+              name: statusName(status.id),
               category: definition.category,
               fraction: undefined,
               secondsLeft: undefined,

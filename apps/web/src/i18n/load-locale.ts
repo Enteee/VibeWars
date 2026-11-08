@@ -1,4 +1,5 @@
 import { en } from "./en.js";
+import { setGameNames } from "./game-names.js";
 import { pickLanguage, setLocale } from "./index.js";
 import { LOCALES, availableLanguages } from "./languages.js";
 import { loadLanguage } from "./language-preference.js";
@@ -11,5 +12,11 @@ import { loadLanguage } from "./language-preference.js";
 export async function loadLocale(): Promise<void> {
   const code = pickLanguage(loadLanguage(), navigator.languages, availableLanguages());
   const load = LOCALES[code];
-  setLocale(code, load === undefined ? en : (await load()).default);
+  if (load === undefined) {
+    setLocale(code, en);
+    return;
+  }
+  const tables = await load();
+  setLocale(code, tables.ui);
+  setGameNames(tables.game);
 }

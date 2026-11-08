@@ -6,7 +6,7 @@
  * runners past the manager-only `company runners`, nor forge their status.
  *
  * Each is validated on read: a target that is not a whole number in
- * `0..VIBEWARS_MAX_RUNNERS` is refused and counts as 0, and a status that is
+ * `0..maxRunners` is refused and counts as 0, and a status that is
  * not the current shape counts as none.
  */
 import fs from "node:fs";
@@ -39,16 +39,73 @@ export function runnersStateDir(env) {
 }
 
 /**
- * The most runners the operator allows, `VIBEWARS_MAX_RUNNERS`: 0 when it
- * is unset or not a whole number, so runners stay off until the operator
- * raises it, after ADR-0045's spike.
+ * The most runners the operator allows (#2764): `company.json`'s
+ * `maxRunners`, which `claude-llc-init` asks for beside `maxAgents`. A
+ * whole number ≥ 0, or null when it is missing or anything else: the
+ * caller refuses a malformed cap, never reads it as 0.
  *
- * @param {Record<string, string | undefined>} env
- * @returns {number}
+ * @param {unknown} config the parsed `company.json`
+ * @returns {number | null}
  */
-export function maxRunners(env) {
-  const value = Number(env.VIBEWARS_MAX_RUNNERS ?? "");
-  return /^\d+$/.test(env.VIBEWARS_MAX_RUNNERS ?? "") && Number.isSafeInteger(value) ? value : 0;
+export function maxRunners(config) {
+  const value =
+    typeof config === "object" && config !== null
+      ? /** @type {Record<string, unknown>} */ (config).maxRunners
+      : undefined;
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
+
+/**
+ * An answer to `claude-llc-init`'s runner cap: Enter is 0, a whole number
+ * ≥ 0 is itself, anything else is null and asked again.
+ *
+ * @param {string} answer
+ * @returns {number | null}
+ */
+export function parseMaxRunners(answer) {
+  const trimmed = answer.trim();
+  if (trimmed === "") {
+    return 0;
+  }
+  const value = Number(trimmed);
+  return /^\d+$/.test(trimmed) && Number.isSafeInteger(value) ? value : null;
+}
+
+/**
+ * `claude-llc-init`'s runner cap: the stored one when `company.json` has a
+ * valid one, otherwise asked until the answer is a whole number ≥ 0. A cap
+ * above 0 is warned about, and gets a hint when the runners token is not
+ * set up, but is kept: it is only a ceiling.
+ *
+ * @param {{
+ *   stored: unknown,
+ *   ask: (question: string) => Promise<string>,
+ *   runnersSetUp: () => boolean,
+ *   say: (line: string) => void,
+ * }} deps `stored` is the previous `company.json`, or null on a first run
+ * @returns {Promise<number>}
+ */
+export async function askMaxRunners({ stored, ask, runnersSetUp, say }) {
+  const kept = maxRunners(stored);
+  if (kept !== null) {
+    return kept;
+  }
+  for (;;) {
+    const cap = parseMaxRunners(
+      await ask("  Most CI runners the company may run on this machine [0]: "),
+    );
+    if (cap === null) {
+      say("  A whole number, 0 or more, please.");
+      continue;
+    }
+    if (cap > 0) {
+      say("  Company runners run any branch's code on this machine: see ADR-0045.");
+      if (!runnersSetUp()) {
+        say("  github runners: not set up. Run claude-llc auth runners before raising the target.");
+      }
+    }
+    return cap;
+  }
 }
 
 /**
@@ -259,12 +316,12 @@ export function readStatus(dir) {
  * line of its own: the dashboard's and `company runners`'s.
  *
  * @param {RunnersStatus | null} status
- * @param {number} max the max as this host's config says, for a supervisor that never ran
+ * @param {number | null} max `company.json`'s, for a supervisor that never ran; null when it has none
  * @returns {string[]}
  */
 export function runnersLines(status, max) {
   if (status === null) {
-    return [`runners: not started (max ${String(max)})`];
+    return [`runners: not started (max ${max === null ? "?" : String(max)})`];
   }
   const busy = status.runners.filter((runner) => runner.busy).length;
   const line = `runners: ${String(status.runners.length)}/${String(status.target)} (busy ${String(busy)}, max ${String(status.max)})`;
