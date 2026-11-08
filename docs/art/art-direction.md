@@ -1222,6 +1222,74 @@ down, they drop nothing and show no weapon. The glyph, the bars and
 picking follow the drawn radius; the simulation's collision radius is
 still 10. Ornaments are in `creature-shape.ts`, arms in `creature-arms.ts`.
 
+## 2.5D: Graphic layers (direction D)
+
+Picked by the operator on #2811, for the 2.5D epic #2810. Gameplay height is
+a discrete layer, 0 for the ground and 1 for a bridge or platform, so the art
+only has to answer one question: **which layer is this on?** The reference is
+`docs/art/2811-option-d.png` and `docs/art/2811-occlusion-d1.png`, drawn by
+`scripts/assets/arena-2-5d.mjs`. All art under this direction is original.
+
+The one rule above still holds: layer and team are read by shape first.
+
+### Palette
+
+| Part                   | Hex       | Note                              |
+| ---------------------- | --------- | --------------------------------- |
+| Page, edges            | `#10151c` |                                   |
+| Floor                  | `#26303f` | Grid lines `#34415a`, 1 px        |
+| Deck top               | `#a0b2c7` | `#8fa4bd` lifted 15% toward white |
+| Deck base colour       | `#8fa4bd` | Side face is this shaded 40%      |
+| Ramp                   | `#a9bbd0` |                                   |
+| Wall                   | `#4b5a70` | Top front edge `#a9bbd0`, 2 px    |
+| Support                | `#62748c` | Front face shaded 30%             |
+| Deck shadow            | `#080b10` | 55% opacity                       |
+| Tint zone under a deck | `#0d131c` | 55% opacity                       |
+| Friend                 | `#59c2ff` |                                   |
+| Foe                    | `#ff7b72` |                                   |
+
+### Planes
+
+- **The deck is the lightest plane**, so the upper layer reads first. Its
+  front edge carries a **white lip**, 3 px at the mockup's scale, and its top
+  has thin plank lines, the deck colour shaded 15%.
+- **Hard offset shadow.** The deck casts its own footprint onto the ground,
+  moved 1.3 world cells right and down. No blur.
+- **Tint zone.** The ground under the deck's footprint is a step darker and
+  cooler, so everything below is visibly below.
+- **Side faces** are flat, half a layer deep (`slab` 0.5), in the shaded deck
+  colour.
+- **Supports** are plain square pillars, 0.6 cells across, from the ground to
+  the underside of the deck, with a darker front face.
+- **Walls** are flat boxes in the wall colour with a lit top front edge.
+- **Elevation offset:** one height unit is 34 px at the mockup's 40 px cell
+  (`hz`), and layer 1 stands 2.4 height units (about 82 px) up. Everything on a
+  layer moves up by that one offset; there is no in-between height except on
+  a ramp.
+
+### Characters
+
+A flat disc, radius 0.34 of a character's height, in the team colour, with a
+white ring and the ring (friend) or triangle (foe) in white at its centre.
+Its small shadow is offset right and down at 35% black, the same language as
+the deck's.
+
+### Occlusion: D1, the x-ray outline
+
+The structure stays solid. **Only the hidden part of a character** is redrawn
+over the structure, as a flat team-coloured dashed outline with its ring or
+triangle inside and **no fill**. An empty outline can never be mistaken for a
+normal token, and two overlapping outlines stay legible.
+
+### Edge cases
+
+| Case                       | How it reads                                                             |
+| -------------------------- | ------------------------------------------------------------------------ |
+| Same spot on two layers    | The upper one is a normal disc on the deck; the lower one is its outline |
+| Halfway up a ramp          | A normal disc at the ramp's height at that point, never an outline       |
+| Directly under a deck edge | Only the part behind the deck is outline; the rest stays a normal disc   |
+| Behind a wall              | The hidden part is the same outline as under a deck                      |
+
 ## Sizes
 
 - Icons are drawn on a 24×24 grid with strokes of at least 2 units.
