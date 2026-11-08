@@ -2522,7 +2522,6 @@ async function main(): Promise<void> {
     clearQueuedEnd();
     showViewport(true);
     setStatus("entering match…", "offline");
-    console.warn("[dbg] enterMatch start", document.visibilityState);
     try {
       match = await startMatchView(
         viewport,
@@ -2579,7 +2578,6 @@ async function main(): Promise<void> {
           connect: () => connectMatchFor(from, start, name, entrant.guild, entrant.build),
         },
       );
-      console.warn("[dbg] enterMatch done");
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");
       // Said once, on the match screen: the lobby's went with it.

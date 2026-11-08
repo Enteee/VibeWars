@@ -175,6 +175,14 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await formParty([cid, dot], ["Cid", "Dot"]);
     await runTeamLobby([cid, dot]);
 
+    // Met, the queued lobby counts down five seconds before the match
+    // starts (QUEUED_COUNTDOWN_SECONDS), then four pages boot an arena
+    // each: on a busy runner that is past expect's 15 s (#2777).
+    for (const page of [ann, bea, cid, dot]) {
+      await expect(page.locator(".hud-skills .hud-skill").first()).toBeAttached({
+        timeout: 25_000,
+      });
+    }
     await expectPlays(ann, QUAD[0]);
     await expectPlays(bea, QUAD[1]);
     expect(

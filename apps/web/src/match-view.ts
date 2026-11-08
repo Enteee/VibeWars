@@ -385,9 +385,7 @@ export async function startMatchView(
   let viewport: ArenaViewport | undefined;
   let notice: HTMLElement | undefined;
   try {
-    console.warn("[dbg] viewport…");
     viewport = await createArenaViewport(parent);
-    console.warn("[dbg] viewport ok");
   } catch (error) {
     if (!(error instanceof NoWebGlError)) {
       throw error;
@@ -400,7 +398,6 @@ export async function startMatchView(
   let viewed: ViewedMatch;
   try {
     viewed = await viewedMatch(options);
-    console.warn("[dbg] connected");
   } catch (error) {
     // Refused, or the host never answered: no arena to leave behind.
     viewport?.destroy();
