@@ -899,10 +899,11 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
   await page.mouse.up({ button: "left" });
   await expect.poll(cameraX, { timeout: 10_000 }).toBeGreaterThan(goal + 100 / zoom - 3);
 
-  // Let go, the pointer back at the centre: the view is on you, at the goal, within 1 s.
+  // Let go, the pointer back at the centre: the view comes home to you, at the goal. The rate
+  // is pinned by camera-rig.test.ts; a pan that never returns still fails at this deadline.
   await page.mouse.up({ button: "right" });
   await page.mouse.move(centre.x, centre.y);
-  await expect.poll(cameraX, { timeout: 1_000 }).toBeLessThan(goal + 5);
+  await expect.poll(cameraX, { timeout: 5_000 }).toBeLessThan(goal + 5);
   expect(await cameraX()).toBeGreaterThan(goal - 5);
 });
 
