@@ -69,7 +69,8 @@ what happens, so a quick interrupt or a late dodge can beat it.
 
 In a three-team fight, such as Heroes' Ascent, bots fight one foe team at
 a time: the team attacking them, or, while nobody is, the most hurt team
-within reach. They do not charge a fresh team while another one is
+within reach. They stay on that team until another sets clearly more
+players on them, and do not charge a fresh team while another one is
 attacking them. A target their team called comes first, whichever team
 it is on. Only players count: a team's ghost or guards standing nearby
 do not make bots turn on that team.

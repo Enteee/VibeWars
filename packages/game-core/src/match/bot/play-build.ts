@@ -66,7 +66,8 @@ export function playBuild(
     reactionSeconds(behaviour.reaction, context.seed, context.self.id, thinks);
   return paced(hold, cursor, context, () => {
     const foes = livingFoes(context);
-    const front = foeFront(context, foes);
+    const front = foeFront(context, foes, cursor.front);
+    cursor.front = front;
     return think(
       context,
       cursor,
@@ -201,6 +202,9 @@ function livingFoes(context: BehaviourContext): Participant[] {
   );
 }
 
+/** How many more of its players another team must have on ours to become the front (#2685). */
+const FRONT_SWITCH_MARGIN = 2;
+
 /**
  * With foes of two or more teams (#2685), the team to fight: the one
  * engaging ours, the most of its living members targeting one of us; else
@@ -208,10 +212,17 @@ function livingFoes(context: BehaviourContext): Participant[] {
  * spell range; else the weakest of all. Ties to the lower team. So a team
  * does not charge a fresh one while another is attacking it. Only players
  * count: a team's ghost, guards or priest neither rank it nor engage for
- * it. Undefined with players of one foe team: every foe is fought, as in
- * a two-team match.
+ * it. The `kept` front stays while one of its players engages ours or is
+ * in reach, until another team engages ours with `FRONT_SWITCH_MARGIN`
+ * more: engaging counts flicker as foes retarget, and a bot that followed
+ * them would run between teams and finish nobody. Undefined with
+ * players of one foe team: every foe is fought, as in a two-team match.
  */
-function foeFront(context: BehaviourContext, foes: readonly Participant[]): number | undefined {
+function foeFront(
+  context: BehaviourContext,
+  foes: readonly Participant[],
+  kept: number | undefined,
+): number | undefined {
   const self = context.self;
   const ours = new Set(
     context.participants
@@ -237,6 +248,14 @@ function foeFront(context: BehaviourContext, foes: readonly Participant[]): numb
   }
   if (teams.size < 2) {
     return undefined;
+  }
+  const current = kept === undefined ? undefined : teams.get(kept);
+  if (
+    current !== undefined &&
+    (current.engaging > 0 || current.near) &&
+    ![...teams.values()].some((team) => team.engaging >= current.engaging + FRONT_SWITCH_MARGIN)
+  ) {
+    return kept;
   }
   const ranked = [...teams.entries()].sort(
     ([a, one], [b, other]) =>

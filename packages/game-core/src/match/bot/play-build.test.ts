@@ -386,6 +386,42 @@ describe("play-build with three teams (#2685)", () => {
     expect(targetOf(sim)).toBe("p");
   });
 
+  it("keeps fighting its front while both teams engage it one each", () => {
+    const sim = threeWay(vec2(700, 400), 1, vec2(700, 300), 0.5);
+    sim.setTarget("x", "bot");
+    sim.setTarget("p", "bot");
+    const kept = { ...createCursor(), front: 1 };
+    decide(BOT, kept, contextFor(sim, "bot"));
+    expect(kept.front).toBe(1);
+    const fresh = createCursor();
+    decide(BOT, fresh, contextFor(sim, "bot"));
+    expect(fresh.front).toBe(2);
+  });
+
+  it("turns on a team that sets two more on it than its front", () => {
+    const sim = new MatchSimulation({
+      seed: "three-way",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      matchRules: ANNIHILATION_MATCH_RULES,
+      teamCount: 3,
+      participants: [
+        fighter("bot", 0, ELEMENTALIST, vec2(600, 400)),
+        fighter("x", 1, WARRIOR, vec2(700, 400), {
+          behaviour: undefined,
+          startHealthFraction: 0.3,
+        }),
+        fighter("p", 2, WARRIOR, vec2(700, 300), { behaviour: undefined }),
+        fighter("q", 2, WARRIOR, vec2(650, 300), { behaviour: undefined }),
+      ],
+    });
+    sim.setTarget("p", "bot");
+    sim.setTarget("q", "bot");
+    const cursor = { ...createCursor(), front: 1 };
+    decide(BOT, cursor, contextFor(sim, "bot"));
+    expect(cursor.front).toBe(2);
+  });
+
   it("keeps a target its team called, of either team", () => {
     const sim = threeWay(vec2(700, 400), 1, vec2(700, 300), 1);
     sim.setTarget("p", "bot");
