@@ -3270,6 +3270,13 @@ body {
   font-size: 0.85rem;
 }
 
+.help-version {
+  margin: 0.6rem 0 0;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+  user-select: text;
+}
+
 .help-page {
   min-width: 0;
   overflow-x: auto;

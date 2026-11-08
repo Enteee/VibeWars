@@ -178,3 +178,9 @@ test("Help lists every bundled npm package and the VCSL samples, each with its l
   await phaser.locator("summary").click();
   await expect(phaser.locator(".licence-text")).toContainText("Permission is hereby granted");
 });
+
+test("Help's foot names the release and the build (#2798)", async ({ page }) => {
+  await page.goto("./");
+  await clickTopbarIcon(page, ".topbar-help");
+  await expect(page.locator(".help-version")).toHaveText(/^VibeWars dev · build [\w.-]{1,8}$/);
+});
