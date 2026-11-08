@@ -7,7 +7,7 @@ import { looksLikeTeam } from "../storage/team-transfer.js";
 import { lookOfCharacter, teamFigureCard } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { button, h, listenForPaste, screenBar } from "./kit.js";
-import type { LobbyPanel } from "./lobby-screen.js";
+import { mapLabel, type LobbyMap, type LobbyPanel } from "./lobby-screen.js";
 import {
   loadTeamBuildSize,
   onTeamSizeChange,
@@ -63,6 +63,8 @@ export interface TeamPlayCallbacks {
   readonly onRerollTeam: (id: string) => void;
   /** A team code was pasted on the screen (#577). */
   readonly onPasteTeam: (text: string) => void;
+  /** Leave Queue on a lobby's screen, while in the Random Arena queue (#2781). */
+  readonly onLeaveQueue: () => void;
 }
 
 /**
@@ -250,13 +252,50 @@ export function renderHostScreen(
   connectionNotice: string | undefined,
   callbacks: TeamPlayCallbacks,
   panel: LobbyPanel | undefined,
-  /** In the Random Arena queue (#2743): no lobby to host until it is left. */
-  queued: boolean,
+  /** In the Random Arena queue (#2743), `entry`'s maps to preview: no lobby until it is left. */
+  queuedMaps: readonly LobbyMap[] | undefined,
 ): void {
   const body = teamScreen(root, entry, problems, connectionNotice, callbacks, panel);
-  body.appendChild(
-    panel?.body ?? h("p", "screen-info", queued ? t("queue.busy") : t("teamPlay.openingLobby")),
-  );
+  if (panel !== undefined) {
+    body.appendChild(panel.body);
+  } else if (queuedMaps !== undefined) {
+    body.append(
+      h("p", "screen-info", t("queue.busy")),
+      mapPreview(queuedMaps),
+      queuedButtons(entry, callbacks),
+    );
+  } else {
+    body.appendChild(h("p", "screen-info", t("teamPlay.openingLobby")));
+  }
+}
+
+/**
+ * The maps a lobby of this screen plays, as its lobby lists them, to look
+ * at and not to pick (#2781): in the Random Arena queue there is no lobby.
+ */
+function mapPreview(maps: readonly LobbyMap[]): HTMLElement {
+  const preview = h("div", "screen-queued-maps");
+  const list = h("ul", "lobby-map");
+  list.append(...maps.map((map) => h("li", undefined, mapLabel(map))));
+  preview.append(h("span", "field-label", t("teamPlay.queuedMaps")), list);
+  return preview;
+}
+
+/**
+ * A lobby's screen in the Random Arena queue (#2781): no lobby of its own
+ * until the queue is left, so its Find a match waits, saying why, beside
+ * the Leave Queue that frees it. A Hosted Game finds no match.
+ */
+function queuedButtons(entry: HostEntry, callbacks: TeamPlayCallbacks): HTMLElement {
+  const row = h("div", "screen-queued");
+  if (entry !== "hosted-game") {
+    const find = button(t("lobby.findMatch"), "primary lobby-find", () => undefined);
+    find.disabled = true;
+    find.title = t("queue.busy");
+    row.appendChild(find);
+  }
+  row.appendChild(button(t("queue.leaveQueue"), "lobby-leave-queue", callbacks.onLeaveQueue));
+  return row;
 }
 
 /** Render Team Builder (#1525): the Team Build cards, to make and edit them. */
