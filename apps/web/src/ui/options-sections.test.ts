@@ -59,11 +59,16 @@ describe("Options > Language (#2648)", () => {
       "de",
       "fr",
       "pt",
+      "ru",
       "it",
       "nl",
       "pl",
       "cs",
+      "uk",
+      "ro",
+      "el",
       "sk",
+      "bg",
       "hr",
     ]);
   });
