@@ -1,4 +1,5 @@
 import { signetParams, signetSvg } from "../identity/signet.js";
+import { setHidden } from "./dom-write.js";
 import { h } from "./kit.js";
 
 /**
@@ -87,15 +88,18 @@ export function signetElement(bits: number | undefined, size: number): HTMLImage
   element.alt = "";
   element.width = size;
   element.height = size;
-  setSignet(element, bits);
+  setSignet(element, bits, size);
   return element;
 }
 
-/** Show `bits` in an element `signetElement` made. */
-export function setSignet(element: HTMLImageElement, bits: number | undefined): void {
-  element.hidden = bits === undefined;
+/**
+ * Show `bits` in an element `signetElement` made at `size`, passed in
+ * because reading a rendered image's width forces a layout per row.
+ */
+export function setSignet(element: HTMLImageElement, bits: number | undefined, size: number): void {
+  setHidden(element, bits === undefined);
   if (bits !== undefined) {
-    const url = signetUrl(bits, element.width);
+    const url = signetUrl(bits, size);
     if (element.src !== url) {
       element.src = url;
     }

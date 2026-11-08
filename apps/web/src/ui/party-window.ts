@@ -37,9 +37,9 @@ export const FULL_ROWS = 8;
 export interface PartyRow {
   readonly id: string;
   readonly name: string;
-  /** After the name, kept whole when the name is cut short (#1406). */
   /** Just before the name, kept whole when the name is cut short (#2805); undefined for none. */
   readonly signet: number | undefined;
+  /** After the name, kept whole when the name is cut short (#1406). */
   readonly guildTag: string | undefined;
   readonly professions: readonly ProfessionIcon[];
   /** A lobby's bot (#1194): its name wears the BOT tag. */
@@ -281,7 +281,7 @@ function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot, 
       }),
     );
   }
-  setSignet(elements.signet, row.signet);
+  setSignet(elements.signet, row.signet, SIGNET_ROW_PX);
   elements.name.textContent = row.name;
   setGuildTag(elements.guildTag, row.guildTag);
   elements.botTag.hidden = !row.bot;
