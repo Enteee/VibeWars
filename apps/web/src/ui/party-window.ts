@@ -1,6 +1,7 @@
-import { PET_ATTACK_SECONDS, getSkill, type CompanionMode } from "@vibewars/game-core";
+import { PET_ATTACK_SECONDS, type CompanionMode } from "@vibewars/game-core";
 import type { ArmedAttackSnapshot, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
+import { skillName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { botTagElement } from "./bot-tag.js";
 import { guildTagElement, setGuildTag } from "./player-label.js";
@@ -294,7 +295,7 @@ function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot, 
     root.hidden = row.armedAttack === undefined;
     if (row.armedAttack !== undefined) {
       icon.src = skillIcon(row.armedAttack.skillId);
-      root.title = getSkill(row.armedAttack.skillId)?.name ?? row.armedAttack.skillId;
+      root.title = skillName(row.armedAttack.skillId);
     }
   }
 }

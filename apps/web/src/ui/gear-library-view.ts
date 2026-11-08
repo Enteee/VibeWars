@@ -1,5 +1,6 @@
 import { ALL_OFFHANDS, ALL_WEAPONS } from "@vibewars/game-core";
 
+import { itemName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import type { BuildHost, GearHost } from "./build-editor.js";
@@ -79,7 +80,7 @@ export function mountGearLibrary(
   const weapons = group("weapons", t("gearLibrary.weapons"));
   const weaponBoxes = ALL_WEAPONS.map((weapon) => {
     const node = box({
-      name: weapon.name,
+      name: itemName(weapon.id),
       icon: weaponIcon(weapon.id),
       detail: t("gearLibrary.weaponDetail", {
         min: weapon.damageMin,
@@ -99,7 +100,7 @@ export function mountGearLibrary(
   const offhands = group("off-hands", t("gearLibrary.offHands"));
   const offhandBoxes = ALL_OFFHANDS.map((offhand) => {
     const node = box({
-      name: offhand.name,
+      name: itemName(offhand.id),
       icon: offhandIcon(offhand.id),
       detail: t(
         offhand.kind === "armor" ? "gearLibrary.offhandArmor" : "gearLibrary.offhandEnergy",

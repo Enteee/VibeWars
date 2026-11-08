@@ -375,6 +375,7 @@ export const en = {
   "gearEditor.pieceHead": "head",
   "gearEditor.pieceLegs": "legs",
   "gearEditor.reductionOnPieces": "{line} on {pieces} (avg −{average})",
+  "gearEditor.runeOfAttribute": "{tier} Rune of {attribute}",
   "gearEditor.statusChant": "chant",
   "gearEditor.statusCondition": "you have a condition",
   "gearEditor.statusEcho": "under an echo",

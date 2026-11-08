@@ -31,7 +31,6 @@ import {
   primaryAttributeOf,
   reconcileEquipment,
   resolveLoadout,
-  runeDisplayName,
   type ArmorCondition,
   type StatusCategory,
   type ArmorPiece,
@@ -56,7 +55,8 @@ import {
   type WeaponSetIndex,
 } from "@vibewars/game-core";
 
-import { formatList, t, type MessageKey } from "../i18n/index.js";
+import { attributeName, itemName, runeName } from "../i18n/game-names.js";
+import { formatList, locale, t, type MessageKey } from "../i18n/index.js";
 import type { StoredCharacter, TeamCharacter } from "../storage/schema.js";
 
 /**
@@ -292,7 +292,7 @@ export function modSlotsOf(item: WeaponId | OffhandId): readonly ModSlot[] {
 /** Every mod that may sit in `item`'s `slot`, by name; none for a slot it lacks (#2008). */
 export function modChoices(item: WeaponId | OffhandId, slot: ModSlot): readonly WeaponMod[] {
   return WEAPON_MODS.filter((mod) => modFits(mod, item, slot)).sort((a, b) =>
-    a.name.localeCompare(b.name),
+    itemName(a.id).localeCompare(itemName(b.id), locale()),
   );
 }
 
@@ -317,12 +317,11 @@ function itemPhrase(id: string, name: string): string {
  */
 export function droppedModNotes(before: StoredCharacter, after: StoredCharacter): string[] {
   const notes: string[] = [];
-  const lost = (was: ItemUpgrades, now: ItemUpgrades | undefined, itemName: string): void => {
+  const lost = (was: ItemUpgrades, now: ItemUpgrades | undefined, item: string): void => {
     for (const slot of MOD_SLOT_KEYS) {
       const id = was[slot];
       if (id !== null && now?.[slot] !== id) {
-        const name = getWeaponMod(id)?.name ?? id;
-        notes.push(t("gearEditor.modRemoved", { mod: name, item: itemName }));
+        notes.push(t("gearEditor.modRemoved", { mod: itemName(id), item }));
       }
     }
   };
@@ -332,7 +331,7 @@ export function droppedModNotes(before: StoredCharacter, after: StoredCharacter)
       return;
     }
     if (now.mainHand.weaponId !== was.mainHand.weaponId) {
-      const name = getWeapon(now.mainHand.weaponId)?.name ?? now.mainHand.weaponId;
+      const name = itemName(now.mainHand.weaponId);
       lost(was.mainHand.upgrades, now.mainHand.upgrades, itemPhrase(now.mainHand.weaponId, name));
     }
     if (
@@ -340,7 +339,7 @@ export function droppedModNotes(before: StoredCharacter, after: StoredCharacter)
       now.offHand !== null &&
       now.offHand.offhandId !== was.offHand.offhandId
     ) {
-      const name = getOffhand(now.offHand.offhandId)?.name ?? now.offHand.offhandId;
+      const name = itemName(now.offHand.offhandId);
       lost(was.offHand.upgrades, now.offHand.upgrades, itemPhrase(now.offHand.offhandId, name));
     }
   });
@@ -537,7 +536,7 @@ function conditionLabel(condition: ArmorCondition): string {
     case "attribute-at-least":
       return t("gearEditor.whenAttribute", {
         rank: condition.rank,
-        attribute: getAttribute(condition.attributeId)?.name ?? condition.attributeId,
+        attribute: attributeName(condition.attributeId),
       });
     case "vs-type":
       return t("gearEditor.whenVsType", { type: condition.type });
@@ -778,7 +777,7 @@ export function summariseGear(
     maxEnergy: held.maxEnergy,
     baseEnergyPips: held.baseEnergyPips,
     armor: held.equipment.baseArmor,
-    weaponName: weapon.name,
+    weaponName: itemName(weapon.id),
     damageRange: `${dealt(weapon.damageMin)}–${dealt(weapon.damageMax)}`,
     attackInterval: t("gearEditor.attackInterval", {
       seconds: weapon.attackIntervalSeconds.toFixed(2),
@@ -815,12 +814,6 @@ export interface RuneChoice {
   readonly label: string;
   readonly rune: EquippedRune;
 }
-
-const TIER_KEY: Readonly<Record<RuneTier, MessageKey>> = {
-  minor: "gearEditor.tierMinor",
-  major: "gearEditor.tierMajor",
-  superior: "gearEditor.tierSuperior",
-};
 
 export function encodeRune(rune: EquippedRune): string {
   return rune.kind === "attribute"
@@ -884,9 +877,7 @@ export function runeChoices(character: StoredCharacter): readonly RuneChoice[] {
       const equipped: EquippedRune = { kind: "universal", runeId: rune.id, tier };
       choices.push({
         key: encodeRune(equipped),
-        label: rune.tiered
-          ? t("gearEditor.tieredRune", { tier: t(TIER_KEY[tier]), rune: rune.name })
-          : rune.name,
+        label: runeName(equipped),
         rune: equipped,
       });
     }
@@ -901,7 +892,7 @@ export function runeChoices(character: StoredCharacter): readonly RuneChoice[] {
         // The health cost is in the label, not buried in a tooltip: it
         // is the entire decision being made.
         label: t(penalty > 0 ? "gearEditor.attributeRuneHealth" : "gearEditor.attributeRune", {
-          rune: runeDisplayName(equipped),
+          rune: runeName(equipped),
           bonus: ATTRIBUTE_RUNE_TIERS[tier].bonus,
           penalty,
         }),
@@ -912,8 +903,6 @@ export function runeChoices(character: StoredCharacter): readonly RuneChoice[] {
 
   return choices;
 }
-
-export { TIER_KEY };
 
 /* -------------------------------------------------------------------------- */
 /* Drag and drop                                                               */

@@ -53,6 +53,7 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
+import { mapName } from "./i18n/game-names.js";
 import { t } from "./i18n/index.js";
 import { loadLocale } from "./i18n/load-locale.js";
 import { startMatchView, type MatchView } from "./match-view.js";
@@ -411,7 +412,6 @@ async function main(): Promise<void> {
   // The arenas a host can pick, built into the client (#403).
   const availableMaps = ARENA_MAPS.map((map) => ({
     id: map.id,
-    name: map.name,
     size: sizeClass(map),
     mode: map.mode,
     teamSizes: map.teamSizes,
@@ -1678,7 +1678,7 @@ async function main(): Promise<void> {
       {
         mode,
         characterName,
-        mapName: (mapId) => ARENA_MAPS.find((map) => map.id === mapId)?.name ?? mapId,
+        mapName,
       },
       {
         onBack: () => {
