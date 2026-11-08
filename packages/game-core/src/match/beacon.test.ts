@@ -65,7 +65,8 @@ function strikesOver(sim: MatchSimulation, seconds: number): string[] {
   const struck: string[] = [];
   for (let tick = 0; tick < Math.round(seconds / DT); tick += 1) {
     for (const entry of sim.step(DT).log) {
-      if (entry.cause === "skill" && entry.sourceId === undefined) {
+      if (entry.cause === "beacon") {
+        expect(entry.area).toMatchObject({ x: STAND.x, y: STAND.y });
         struck.push(
           ...entry.events.flatMap((event) => (event.kind === "damage" ? [event.targetId] : [])),
         );

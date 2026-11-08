@@ -340,7 +340,8 @@ for now you pick it in a Hosted Game: 8v8 Priest Annihilation among low
 earthen mounds, the priest raising its dead every 2 minutes. Carry your flag
 onto the **Storm Beacon** in the middle and it strikes one random foe within
 earshot of it for 50 lightning damage every 2.5 seconds, until the other team
-plants its flag there.
+plants its flag there. Each strike is a bolt from the beacon to whoever it hit,
+visible to both teams, and the combat log names it as Beacon Lightning.
 Three Ascent arenas are built but not yet in the queued run, so for now
 you pick them in a Hosted Game: **The Hollow Deep** (8v8 Annihilation, three
 winding tunnels round a central rock),

@@ -6166,16 +6166,16 @@ export class MatchSimulation {
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
     });
-    // From nobody: no player is credited, and the log names no one.
+    // From nobody: no player is credited. The cause names the beacon, and the area is where the bolt starts.
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,
-      cause: "skill",
+      cause: "beacon",
       sourceId: undefined,
       skillId: undefined,
       weaponId: undefined,
       attributeId: undefined,
-      area: undefined,
+      area: { x: field.stand.x, y: field.stand.y, radius: BEACON_STRIKE_RADIUS },
       doubleStrike: false,
       events,
     });

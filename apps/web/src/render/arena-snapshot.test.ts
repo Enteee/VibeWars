@@ -10,6 +10,7 @@ import {
   FLOATING_TEXT_STACK,
   NAMEPLATE_SIGNET_SIZE,
   areaFlashAlpha,
+  beaconBoltPoints,
   decayAreaFlashes,
   floatingTextY,
   actorAtPoint,
@@ -41,6 +42,17 @@ import {
 } from "./arena-snapshot.js";
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import { LYING_WIDTH } from "./lying-pose.js";
+
+describe("beaconBoltPoints (#2694)", () => {
+  it("starts and ends exactly on its ends, and keeps its shape", () => {
+    const bolt = { id: 7, from: vec2(0, 0), to: vec2(400, 0) };
+    const points = beaconBoltPoints(bolt);
+    expect(points[0]).toEqual({ x: 0, y: 0 });
+    expect(points.at(-1)).toEqual({ x: 400, y: 0 });
+    expect(points.some((point) => point.y !== 0)).toBe(true);
+    expect(beaconBoltPoints(bolt)).toEqual(points);
+  });
+});
 
 describe("teamColour", () => {
   it("draws you in your team's colour, and the two sides apart", () => {
