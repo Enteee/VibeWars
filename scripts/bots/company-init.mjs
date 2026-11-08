@@ -39,6 +39,8 @@ import {
 } from "./creds.mjs";
 import { COLUMNS, columnsPlan } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
+import { realRunnerDiskHost, setUpRunnerDisk } from "./runner-disk.mjs";
+import { diskCapRefusal, diskCapShared, runnerScratchDir } from "./runner-supervisor.mjs";
 import { askMaxRunners } from "./runners-state.mjs";
 
 /**
@@ -496,6 +498,28 @@ const maxRunners = await askMaxRunners({
   },
 });
 prompt.close();
+
+await setUpRunnerDisk({
+  cap: maxRunners,
+  scratch: runnerScratchDir(process.env),
+  shared: diskCapShared(ROOT, process.env),
+  refusal: diskCapRefusal,
+  host: realRunnerDiskHost(
+    process,
+    // One readline per question: sudo must not find the terminal in raw mode.
+    async (question) => {
+      const line = createInterface({ input: process.stdin, output: process.stdout });
+      try {
+        return await line.question(question);
+      } finally {
+        line.close();
+      }
+    },
+    (line) => {
+      console.log(line);
+    },
+  ),
+});
 
 const config = {
   acting,
