@@ -869,11 +869,12 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
   }
   await expect(stage).toHaveAttribute("data-zoom-step", "Close");
   await expect.poll(cameraX, { timeout: 15_000 }).toBeGreaterThan(350);
-  let last = NaN;
+  // Both: the view still eases to Close after the camera has stopped, and every leg below uses zoom.
+  let last = "";
   await expect
     .poll(
       async () => {
-        const now = await cameraX();
+        const now = `${String(await cameraX())} ${String(await stage.getAttribute("data-zoom"))}`;
         const settled = now === last;
         last = now;
         return settled;
