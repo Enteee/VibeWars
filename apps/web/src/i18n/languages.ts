@@ -53,7 +53,28 @@ export interface LocaleTables {
  * game: (await import("./locales/<code>/game.js")).default })`. English
  * is bundled, not here. A translation card adds its languages.
  */
-export const LOCALES: Readonly<Partial<Record<LanguageCode, () => Promise<LocaleTables>>>> = {};
+export const LOCALES: Readonly<Partial<Record<LanguageCode, () => Promise<LocaleTables>>>> = {
+  es: async () => ({
+    ui: (await import("./locales/es/ui.js")).default,
+    game: (await import("./locales/es/game.js")).default,
+  }),
+  de: async () => ({
+    ui: (await import("./locales/de/ui.js")).default,
+    game: (await import("./locales/de/game.js")).default,
+  }),
+  fr: async () => ({
+    ui: (await import("./locales/fr/ui.js")).default,
+    game: (await import("./locales/fr/game.js")).default,
+  }),
+  pt: async () => ({
+    ui: (await import("./locales/pt/ui.js")).default,
+    game: (await import("./locales/pt/game.js")).default,
+  }),
+  it: async () => ({
+    ui: (await import("./locales/it/ui.js")).default,
+    game: (await import("./locales/it/game.js")).default,
+  }),
+};
 
 /** The languages the build has, English first, in `LANGUAGES` order. */
 export function availableLanguages(
