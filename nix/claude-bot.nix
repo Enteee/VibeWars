@@ -251,6 +251,7 @@ let
     check "no git config of the operator's" "$(test -e "$HOME/.config/git" && echo present)" ""
     check "the company never signs" "$(git config commit.gpgsign)/$(git config tag.gpgsign)" "false/false"
     check "no global git config" "$(git config --global --list 2>/dev/null)" ""
+    check "commits are by the employee" "$(git config user.name)" "$VIBEWARS_BOT_EMPLOYEE"
     # #83: HEAD is the operator's, and everything else at the top of .git is
     # the jail's own scratch, so only what the host reads can be refused.
     refused "writing .git/HEAD" "touch '$common/HEAD'"
@@ -1153,18 +1154,16 @@ let
 
         # #2878: the jail never sees the operator's git config (it signs
         # commits with a key the jail lacks). Its own settings are environment
-        # entries; the identity is the host's, left out when the host has none.
+        # entries; the identity is the employee's (Q25).
         gitConfig=(
           branch.autoSetupMerge false
           gc.worktreePruneExpire never
           gc.auto 0
           commit.gpgsign false
           tag.gpgsign false
+          user.name "$employee"
+          user.email "''${employee/@/-}@vibewars.invalid"
         )
-        for key in user.name user.email; do
-          value="$(git config --global "$key" 2>/dev/null || true)"
-          if [ -n "$value" ]; then gitConfig+=("$key" "$value"); fi
-        done
         gitConfigEnv=()
         for ((i = 0; i < ''${#gitConfig[@]}; i += 2)); do
           gitConfigEnv+=(
