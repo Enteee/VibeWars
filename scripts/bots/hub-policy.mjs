@@ -809,7 +809,8 @@ export function authorize(role, request, options = {}) {
   const { employee } = options;
   const direct = authorizeAs(role, request, acting, employee);
   // Hiring and firing is the manager's own; no hat lends it (#380), nor the
-  // load it is decided on (#747), nor the company's runners (#1890). Nor
+  // load it is decided on (#747), nor the company's runners (#1890) or
+  // their logs (#2729). Nor
   // does a hat lend a schedule (#678).
   // Nor a release (#2707): the branch, the sign-off and the tag are three
   // roles' own, so that no one of them publishes alone.
@@ -818,6 +819,7 @@ export function authorize(role, request, options = {}) {
     request.kind === "staff" ||
     request.kind === "load" ||
     request.kind === "runners" ||
+    request.kind === "runner-logs" ||
     request.kind === "schedule" ||
     request.kind === "release-ok" ||
     (request.kind === "push" && request.argv[0]?.startsWith("release/") === true) ||
@@ -868,6 +870,9 @@ function authorizeAs(role, request, acting, employee) {
   }
   if (request.kind === "runners") {
     return authorizeRunners(role, argv);
+  }
+  if (request.kind === "runner-logs") {
+    return authorizeRunnerLogs(role, argv);
   }
   if (request.kind === "schedule") {
     return SCHEDULERS.includes(role)
@@ -1244,8 +1249,9 @@ function authorizeLoad(role, argv) {
 /**
  * `company runners [<n>]` (#1890): how many company CI runners run, and
  * how many should. Setting `n` is the manager's alone, next to hiring; the
- * business-analyst may read it, as it reads the load. Whether `n` is within
- * the operator's max is hubd's to decide.
+ * business-analyst may read it, as it reads the load, and the
+ * cicd-engineer, who checks the runners' health (#2729). Whether `n` is
+ * within the operator's max is hubd's to decide.
  *
  * @param {string} role
  * @param {string[]} argv `[]` to read, `[n]` to set
@@ -1261,11 +1267,67 @@ function authorizeRunners(role, argv) {
       ? { allow: true }
       : { allow: false, reason: "only the manager scales the company's runners" };
   }
-  return role === "manager" || role === "business-analyst"
+  return RUNNER_READERS.includes(role)
     ? { allow: true }
     : {
         allow: false,
-        reason: "only the manager and the business-analyst read the company's runners",
+        reason:
+          "only the manager, the business-analyst and the cicd-engineer read the company's runners",
+      };
+}
+
+/** Who may read the company's runners and their logs (#2729). */
+const RUNNER_READERS = ["manager", "business-analyst", "cicd-engineer"];
+
+/**
+ * `company runners logs [<runner>] [--lines <n>]`, as words: the runner
+ * by its name alone, never a path, and 1 to 400 lines.
+ *
+ * @param {string[]} argv
+ * @returns {{ runner: string | null, lines: number } | { error: string }}
+ */
+export function parseRunnerLogsArgv(argv) {
+  const usage = { error: "usage: company runners logs [<runner>] [--lines <n>]" };
+  /** @type {string | null} */
+  let runner = null;
+  let lines = 80;
+  for (let i = 0; i < argv.length; i += 1) {
+    const word = argv[i] ?? "";
+    if (word === "--lines") {
+      const n = argv[i + 1] ?? "";
+      if (!/^\d{1,3}$/.test(n) || Number(n) < 1 || Number(n) > 400) {
+        return { error: "company runners logs: --lines is 1 to 400" };
+      }
+      lines = Number(n);
+      i += 1;
+    } else if (runner === null && /^[a-z0-9-]{1,64}$/.test(word) && !word.startsWith("-")) {
+      runner = word;
+    } else {
+      return usage;
+    }
+  }
+  return { runner, lines };
+}
+
+/**
+ * `company runners logs` (#2729): the supervisor's log and the runners',
+ * read-only, for those who read the runners.
+ *
+ * @param {string} role
+ * @param {string[]} argv
+ * @returns {{ allow: boolean, reason?: string }}
+ */
+function authorizeRunnerLogs(role, argv) {
+  const parsed = parseRunnerLogsArgv(argv);
+  if ("error" in parsed) {
+    return { allow: false, reason: parsed.error };
+  }
+  return RUNNER_READERS.includes(role)
+    ? { allow: true }
+    : {
+        allow: false,
+        reason:
+          "only the manager, the business-analyst and the cicd-engineer read the runners' logs",
       };
 }
 

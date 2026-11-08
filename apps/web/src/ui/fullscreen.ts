@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import { fullscreenIcon } from "./icons.js";
 
 /**
@@ -14,9 +15,9 @@ export function fullscreenButtonState(fullscreen: boolean): {
   readonly icon: string;
 } {
   return {
-    label: "Fullscreen",
+    label: t("fullscreen.enter"),
     pressed: fullscreen ? "true" : "false",
-    title: fullscreen ? "Leave fullscreen" : "Fullscreen",
+    title: t(fullscreen ? "fullscreen.leave" : "fullscreen.enter"),
     icon: fullscreenIcon(fullscreen),
   };
 }

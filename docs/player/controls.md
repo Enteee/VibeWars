@@ -36,19 +36,24 @@ These keys are fixed:
 
 ## Mouse
 
-- **Left click** the ground to walk there. The left button only walks.
+- **Left click** the ground to walk there. Without Shift, the left button only walks.
 - **Right click** a foe or an ally to target it. Right click the same foe
   again, quickly, to attack it.
 - **Right click** a flag or the flag stand, in a Guild Battle, to target
   it; **Space** walks there and takes the flag up or plants it.
 - **Wheel click** a foe to call it for your team: their **T** targets it.
-  On the ground or an ally, it pings that spot.
+  On the ground or an ally, it pings that spot. Or click the target bar
+  at the top to call the foe you have targeted.
 - Click the compass to ping that spot for your team; drag on it to draw a
   line they see for a few seconds.
 - **Wheel** zooms. **Right drag** looks around; let go and the view
   glides back to you.
 - Click a skill on the bar to use it, and a name in the party window to
   target that ally.
+- Hold **Show names** (Shift) and every name shows. While held, clicking
+  a character's name works as clicking its body does. A right click
+  only targets, even twice; a left click targets and attacks at once; a
+  wheel click calls or pings. The name a click would hit is highlighted.
 
 ## The top bar
 
@@ -59,5 +64,14 @@ but Lobby, sit at the top right of the screen. In a narrow window, these icons a
 the screen's other buttons fold into **⋯**; only its main button stays out.
 ⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it.
 Help closes with the × at its top right, Esc, or another press of [?].
+
+**Share a beat with your lobby.** In the beat editor (♪, then **Edit**),
+**Share with lobby** sends what you have typed, saved or not, to everyone
+else in a lobby you hosted or joined by link (never one the queue found;
+at most 8 KB, one share every ten seconds). They see a badge on ♪, and
+under **Shared with you** in its window a row per player, "Ann · Ember Deep",
+with **Play**. Nothing plays until you press Play, only outside a match;
+**Back to my music** returns to yours. A shared beat is never saved: it is
+gone when you leave the lobby or reload.
 
 In Auto, the menus share one song that builds as you go deeper, and each map always has its own song.

@@ -5,13 +5,17 @@
  * output, restarts it whenever it exits and tells everyone if it
  * crash-loops. This is the only way any of them starts.
  *
- *   hub-window.mjs open    open it at index 99, replacing whatever is there
- *   hub-window.mjs check   exit 0 if window 99 is the hub window, 1 if not
+ * After it, at index 100, the CI-RUNNERS window (#2729): its first pane runs
+ * the `runner-panes` daemon, also under run-forever, which opens a pane per
+ * runner tailing its log (runner-panes.mjs).
+ *
+ *   hub-window.mjs open    open both, replacing whatever is at 99 and 100
+ *   hub-window.mjs check   exit 0 if both are there, 1 if not
  *
  * Index 99 keeps it last however many role windows open after it. `open`
  * replaces a window already at 99 rather than failing on it (#315): the
  * company must never be left with hubd stopped and nothing to restart it.
- * The window's name is pinned, so `check` can tell it from anything else.
+ * The windows' names are pinned, so `check` can tell them from anything else.
  *
  * claude-llc runs it, with VIBEWARS_TMUX set to the tmux the session runs
  * on, and the variables the daemons read in its environment.
@@ -26,6 +30,8 @@ import { uniquePath } from "./host-path.mjs";
 
 export const HUB_INDEX = "99";
 export const HUB_NAME = "hub";
+export const RUNNERS_INDEX = "100";
+export const RUNNERS_NAME = "CI-RUNNERS";
 
 /**
  * @param {string} name
@@ -44,7 +50,7 @@ function required(name) {
  * @param {string[]} args
  * @returns {{ code: number, stdout: string }}
  */
-function run(tmux, args) {
+export function run(tmux, args) {
   const result = spawnSync(tmux, args, { encoding: "utf8" });
   if (result.error !== undefined) {
     throw new Error(`${tmux} ${args.join(" ")}: ${result.error.message}`);
@@ -56,8 +62,8 @@ function run(tmux, args) {
 }
 
 /**
- * Is window 99 the hub window? Whatever else sits there, or a hub window
- * that lost its name, is not.
+ * Are the hub window at 99 and the CI-RUNNERS window at 100 both there?
+ * Whatever else sits at either, or one that lost its name, is not.
  *
  * @param {string} tmux
  * @param {string} session
@@ -71,7 +77,10 @@ export function hubWindowUp(tmux, session) {
     "-F",
     "#{window_index} #{window_name}",
   ]);
-  return windows.stdout.split("\n").includes(`${HUB_INDEX} ${HUB_NAME}`);
+  const lines = windows.stdout.split("\n");
+  return (
+    lines.includes(`${HUB_INDEX} ${HUB_NAME}`) && lines.includes(`${RUNNERS_INDEX} ${RUNNERS_NAME}`)
+  );
 }
 
 /**
@@ -97,9 +106,8 @@ export function openHubWindow(tmux, session) {
     `VIBEWARS_LLC_RESTART=${required("VIBEWARS_LLC_RESTART")}`,
     `VIBEWARS_CLAUDE_BOXES=${required("VIBEWARS_CLAUDE_BOXES")}`,
     `VIBEWARS_TMUX=${tmux}`,
-    // The runner supervisor's config (#1890); hubd reads the max.
+    // The runner supervisor's config (#1890); its max is in company.json (#2764).
     ...[
-      "VIBEWARS_MAX_RUNNERS",
       "VIBEWARS_RUNNER_CPUS",
       "VIBEWARS_RUNNER_MEMORY_GIB",
       "VIBEWARS_RUNNER_TASKS_MAX",
@@ -148,14 +156,40 @@ export function openHubWindow(tmux, session) {
   run(tmux, ["select-pane", "-t", hubdPane, "-T", "HUBD"]);
   run(tmux, ["select-pane", "-t", supervisor.stdout.trim(), "-T", "SUPERVISOR"]);
   run(tmux, ["select-pane", "-t", runners.stdout.trim(), "-T", "RUNNERS"]);
-  // The name is how `check` finds it: nothing may rename it.
+  pinWindow(tmux, hubdPane);
+
+  // The runners' window: runner-panes opens the rest of its panes.
+  const panes = run(tmux, [
+    "new-window",
+    ...["-d", "-k", "-P", "-F", "#{pane_id}"],
+    ...["-t", `=${session}:${RUNNERS_INDEX}`, "-n", RUNNERS_NAME, "-c", root],
+    ...env,
+    daemon("runner-panes"),
+  ]);
+  if (panes.code !== 0) {
+    throw new Error(`could not open the CI-RUNNERS window at ${session}:${RUNNERS_INDEX}`);
+  }
+  const panesPane = panes.stdout.trim();
+  run(tmux, ["select-pane", "-t", panesPane, "-T", "RUNNER-PANES"]);
+  pinWindow(tmux, panesPane);
+}
+
+/**
+ * The name is how `check` finds a window: nothing may rename it. Each pane
+ * shows its title on its border.
+ *
+ * @param {string} tmux
+ * @param {string} pane any pane of the window
+ * @returns {void}
+ */
+function pinWindow(tmux, pane) {
   for (const [option, value] of [
     ["automatic-rename", "off"],
     ["allow-rename", "off"],
     ["pane-border-status", "top"],
     ["pane-border-format", " #[bold]#{pane_title}#[nobold] "],
   ]) {
-    run(tmux, ["set-option", "-w", "-t", hubdPane, option, value]);
+    run(tmux, ["set-option", "-w", "-t", pane, option, value]);
   }
 }
 

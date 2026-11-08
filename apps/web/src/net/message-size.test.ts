@@ -18,6 +18,10 @@ import {
   MAX_LOBBY_PLAYERS,
   MAX_TEAM_LOBBY_SIDE,
   MAX_WIRE_CHAT_TEXT,
+  MAX_SHARED_SOURCE_BYTES,
+  MAX_WIRE_STRING,
+  sharedSourceBytes,
+  type WireSharedTrack,
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_COMBATS,
   MAX_WIRE_PIPS,
@@ -470,8 +474,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     expect(messageBytes(proof)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
-  it("a lobby state: every seat taken, longest names, each bringing a character (#580)", () => {
-    const professions = Object.keys(PROFESSIONS);
+  it("a lobby state: every seat of a three-team round taken, longest names (#580, #2683)", () => {
     const state: WireLobbyState = {
       // A queued lobby's code is its group id, 64 hex digits (#871).
       code: "f".repeat(64),
@@ -491,7 +494,6 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         team: i % 3 === 0 ? null : i % 3 === 1 ? 0 : 1,
         ready: true,
         isHost: i === 0,
-        character: { name: NAME, primary: longest(professions), secondary: longest(professions) },
         bot: false,
         away: false,
         playerPubkey: "ab".repeat(32),
@@ -537,7 +539,6 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         reason: "captain",
         presetName: null,
         members: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, () => ({
-          name: NAME,
           primary: profession,
           secondary: profession,
         })),
@@ -562,7 +563,6 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         team: i % 2 === 0 ? 0 : 1,
         ready: true,
         isHost: i === 0,
-        character: { name: NAME, primary: profession, secondary: profession },
         bot: false,
         away: false,
         playerPubkey: "ab".repeat(32),
@@ -614,5 +614,19 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       .reduce((a, b) => (messageBytes(b) > messageBytes(a) ? b : a));
     const line: WireChatLine = { channel: "team", fromId: PEER_ID, name: NAME, team: 1, text };
     expect(messageBytes(line)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+
+  it("a shared track, either way, at the cap in quotes, controls or multibyte (#2745)", () => {
+    const track = "t".repeat(MAX_WIRE_STRING);
+    for (const piece of ['"', "\\", "\u0001", "\u{10ffff}", "\u0800"]) {
+      let source = "";
+      while (sharedSourceBytes(source + piece) <= MAX_SHARED_SOURCE_BYTES) {
+        source += piece;
+      }
+      const command: WireLobbyCommand = { kind: "share-track", trackId: track, source };
+      const shared: WireSharedTrack = { from: PEER_ID, trackId: track, source };
+      expect(messageBytes(command), piece).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+      expect(messageBytes(shared), piece).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+    }
   });
 });

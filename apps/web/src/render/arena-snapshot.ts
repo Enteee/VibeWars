@@ -319,6 +319,11 @@ export interface ArenaSnapshot {
   readonly hoverId: string | undefined;
   /** The names key is held (Shift by default, #302): every name shows (#253). */
   readonly showAllNames: boolean;
+  /**
+   * Each drawn name tag's box (#2738), in world units, by actor id: while
+   * `showAllNames`, a click on a name hits its actor.
+   */
+  readonly nameBoxes: ReadonlyMap<string, Rect>;
   /** The foe your team has called (#443): a chevron over it. */
   readonly calledId: string | undefined;
   /** Your team's pings on the floor (#443). */
@@ -348,6 +353,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   clock: 0,
   hoverId: undefined,
   showAllNames: false,
+  nameBoxes: new Map(),
   calledId: undefined,
   pings: [],
   strokes: [],
@@ -375,13 +381,15 @@ export function withCalls(snapshot: ArenaSnapshot, calls: CallsSnapshot): ArenaS
  * `foe` red, which stay apart under every common colour-vision deficiency,
  * where the old green allies did not. You are drawn in your team's blue;
  * what marks you out is the ink rim the scene adds, not a hue of your own.
- * A three-team match's second foe is GW1's yellow (#2684).
+ * A three-team match's second foe is a lemon-lime: it stays apart from the
+ * ally blue and the foe red under deuteranopia, protanopia and tritanopia
+ * (simulated ΔE76 ≥ 45, #2755), and its tags carry a ◆ as well (`teamMark`).
  */
 const TEAM_COLOURS: Record<RenderableActor["team"], number> = {
   self: 0x59c2ff,
   ally: 0x59c2ff,
   enemy: 0xff7b72,
-  third: 0xe3b341,
+  third: 0xf0ff40,
 };
 
 /**
@@ -395,6 +403,14 @@ export function teamSide(team: number, ours: number): "ally" | "enemy" | "third"
   }
   const firstFoe = ours === 0 ? 1 : 0;
   return team === firstFoe ? "enemy" : "third";
+}
+
+/** The glyph the third team's tags and rows carry, so colour is never the only cue (#2755). */
+export const THIRD_TEAM_MARK = "◆";
+
+/** `text` with the third team's ◆ before it; any other side's text as it is. */
+export function markedForTeam(side: "ally" | "enemy" | "third" | "self", text: string): string {
+  return side === "third" ? `${THIRD_TEAM_MARK} ${text}` : text;
 }
 
 /** Edges every living body, darker than the grid and walls, so no body blends into what it stands on. */
@@ -416,12 +432,70 @@ export function teamColour(team: RenderableActor["team"]): number {
  * behind it. With nobody living under the point, an ally's corpse is
  * picked, so a resurrection has something to aim at (#812). A foe's
  * corpse never is.
+ *
+ * With `tagBoxes` (#2738: while Show names is held), an actor is also hit
+ * anywhere in the column from its name tag's top down to its body's
+ * bottom, as wide as the wider of the two. A body under the point still
+ * wins; among columns, the nearest body centre does.
  */
-export function actorAtPoint(snapshot: ArenaSnapshot, point: Vec2): RenderableActor | undefined {
+export function actorAtPoint(
+  snapshot: ArenaSnapshot,
+  point: Vec2,
+  tagBoxes?: ReadonlyMap<string, Rect>,
+): RenderableActor | undefined {
+  const living = (actor: RenderableActor): boolean => !actor.dead;
+  const allyCorpse = (actor: RenderableActor): boolean => actor.dead && actor.team === "ally";
   return (
-    nearestUnder(snapshot.actors, point, (actor) => !actor.dead) ??
-    nearestUnder(snapshot.actors, point, (actor) => actor.dead && actor.team === "ally")
+    nearestUnder(snapshot.actors, point, living) ??
+    nearestInColumn(snapshot.actors, point, living, tagBoxes) ??
+    nearestUnder(snapshot.actors, point, allyCorpse) ??
+    nearestInColumn(snapshot.actors, point, allyCorpse, tagBoxes)
   );
+}
+
+/** An axis-aligned box, in world units. */
+export interface Rect {
+  readonly left: number;
+  readonly top: number;
+  readonly right: number;
+  readonly bottom: number;
+}
+
+/**
+ * The actor among `actors` that `accepts` whose name-and-body column
+ * holds `point`, nearest by body centre; nothing without `tagBoxes`, or
+ * for an actor with no tag drawn (yourself).
+ */
+function nearestInColumn(
+  actors: readonly RenderableActor[],
+  point: Vec2,
+  accepts: (actor: RenderableActor) => boolean,
+  tagBoxes: ReadonlyMap<string, Rect> | undefined,
+): RenderableActor | undefined {
+  if (tagBoxes === undefined) {
+    return undefined;
+  }
+  let best: RenderableActor | undefined;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const actor of actors) {
+    const tag = tagBoxes.get(actor.id);
+    if (tag === undefined || !accepts(actor)) {
+      continue;
+    }
+    const { x, y } = actor.position;
+    const r = actor.radius;
+    const inside =
+      point.x >= Math.min(tag.left, x - r) &&
+      point.x <= Math.max(tag.right, x + r) &&
+      point.y >= tag.top &&
+      point.y <= y + r;
+    const d = Vec.distance(actor.position, point);
+    if (inside && d < bestDistance) {
+      best = actor;
+      bestDistance = d;
+    }
+  }
+  return best;
 }
 
 /** The actor among `actors` that `accepts` nearest `point`, within its radius. */
@@ -449,15 +523,20 @@ function nearestUnder(
  * `snapshot` with whose names show this frame (#253): the body under
  * `pointer` (in world units, `undefined` once the cursor left the
  * arena), hit-tested like a click, so a foe's corpse is never picked, and
- * every name while `showAllNames`.
+ * every name while `showAllNames`. Then a name is part of the hit
+ * (#2738): `nameBoxes` are the tags the scene drew last frame.
  */
 export function withNames(
   snapshot: ArenaSnapshot,
   pointer: Vec2 | undefined,
   showAllNames: boolean,
+  nameBoxes: ReadonlyMap<string, Rect>,
 ): ArenaSnapshot {
-  const hoverId = pointer === undefined ? undefined : actorAtPoint(snapshot, pointer)?.id;
-  return { ...snapshot, hoverId, showAllNames };
+  const hoverId =
+    pointer === undefined
+      ? undefined
+      : actorAtPoint(snapshot, pointer, showAllNames ? nameBoxes : undefined)?.id;
+  return { ...snapshot, hoverId, showAllNames, nameBoxes };
 }
 
 /**
@@ -621,6 +700,34 @@ export function nameplateLayout(
     textX: left + glyph + gap + text / 2,
     bottom,
   };
+}
+
+/**
+ * The box an actor's drawn name tag covers (#2738): glyph and label laid
+ * out by `nameplateLayout`, as tall as the taller of the two. World
+ * units, so the hit it makes does not change with zoom.
+ *
+ * @param textWidth the label's width, screen px, as `nameplateLayout`'s
+ * @param textHeight its height, screen px
+ */
+export function nameTagBox(
+  actor: RenderableActor,
+  textWidth: number,
+  textHeight: number,
+  zoom: number,
+): Rect {
+  const layout = nameplateLayout(actor, textWidth, zoom);
+  const text = screenPx(textWidth, zoom);
+  const right = layout.textX + text / 2;
+  const left =
+    layout.glyphX === undefined
+      ? layout.textX - text / 2
+      : layout.glyphX - screenPx(PROFESSION_GLYPH_SIZE, zoom) / 2;
+  const height = screenPx(
+    layout.glyphX === undefined ? textHeight : Math.max(textHeight, PROFESSION_GLYPH_SIZE),
+    zoom,
+  );
+  return { left, top: layout.bottom - height, right, bottom: layout.bottom };
 }
 
 /** The primary profession's glyph inside the body (#1037, Q105 B), world units. */

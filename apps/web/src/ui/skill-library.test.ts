@@ -1,5 +1,7 @@
 import { IMPLEMENTED_SKILLS, describeSkill, getSkill } from "@vibewars/game-core";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+
+import { ENGLISH_NAMES, setGameNames } from "../i18n/game-names.js";
 
 import {
   filterEliteSkills,
@@ -65,6 +67,24 @@ describe("filterSkillsByText", () => {
 
   it("returns nothing for a query that matches nothing", () => {
     expect(filterSkillsByText(IMPLEMENTED_SKILLS, "zzzz")).toEqual([]);
+  });
+
+  describe("in another language (#2663)", () => {
+    afterEach(() => {
+      setGameNames(ENGLISH_NAMES);
+    });
+
+    it("finds a skill by the name shown and by its English one", () => {
+      setGameNames({
+        ...ENGLISH_NAMES,
+        skills: { ...ENGLISH_NAMES.skills, "monk.healing-breeze": "Heilende Brise" },
+      });
+      const ids = (query: string) =>
+        filterSkillsByText(IMPLEMENTED_SKILLS, query).map((skill) => skill.id);
+
+      expect(ids("heilende brise")).toEqual(["monk.healing-breeze"]);
+      expect(ids("healing breeze")).toContain("monk.healing-breeze");
+    });
   });
 });
 

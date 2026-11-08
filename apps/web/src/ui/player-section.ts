@@ -7,6 +7,7 @@ import {
   type Guild,
 } from "@vibewars/game-session";
 
+import { t, type MessageKey } from "../i18n/index.js";
 import { SELF_RIM, paintEmblem } from "../render/body-painter.js";
 import {
   CAPE_PALETTE,
@@ -28,12 +29,11 @@ import type { OptionsSection } from "./options-sections.js";
  */
 export const playerSection: OptionsSection = {
   id: "player",
-  title: "player",
+  get title() {
+    return t("options.player");
+  },
   mount: mountPlayer,
 };
-
-/** Under the fields: a lobby or match already joined keeps what it joined with. */
-export const PLAYER_APPLIES = "Applies from your next lobby.";
 
 const NAME_STORAGE_KEY = `${STORAGE_NAMESPACE}.playerName`;
 
@@ -161,8 +161,27 @@ export function pickCape(cape: WireCape | null, pick: CapePick): WireCape | null
   }
 }
 
-/** Shown under the guild tag field while what is typed is no tag (#1406). */
-export const GUILD_TAG_HINT = "2–4 letters or digits";
+const COLOUR_NAMES: Readonly<Record<CapeColour, MessageKey>> = {
+  gold: "player.colourGold",
+  violet: "player.colourViolet",
+  white: "player.colourWhite",
+  black: "player.colourBlack",
+  lime: "player.colourLime",
+  orange: "player.colourOrange",
+  teal: "player.colourTeal",
+  pink: "player.colourPink",
+};
+
+const EMBLEM_NAMES: Readonly<Record<CapeEmblem, MessageKey>> = {
+  disc: "player.emblemDisc",
+  bar: "player.emblemBar",
+  chevron: "player.emblemChevron",
+  diamond: "player.emblemDiamond",
+  triangle: "player.emblemTriangle",
+  cross: "player.emblemCross",
+  ring: "player.emblemRing",
+  "half-disc": "player.emblemHalfDisc",
+};
 
 /** Whether `typed` should show as invalid: something, but not a tag. */
 export function isInvalidGuildTag(typed: string): boolean {
@@ -174,10 +193,10 @@ function mountPlayer(container: HTMLElement): () => void {
   container.appendChild(panel);
 
   const nameField = h("label", "field");
-  nameField.appendChild(h("span", "field-label", "Name"));
+  nameField.appendChild(h("span", "field-label", t("player.name")));
   const nameInput = document.createElement("input");
   nameInput.className = "field-input";
-  nameInput.placeholder = "Player";
+  nameInput.placeholder = t("player.namePlaceholder");
   nameInput.value = loadPlayerName();
   nameInput.addEventListener("input", () => {
     savePlayerName(nameInput.value);
@@ -185,13 +204,13 @@ function mountPlayer(container: HTMLElement): () => void {
   nameField.appendChild(nameInput);
   // The guild tag beside it (#1406): `Ente [VIBE]` to everyone else.
   const tagField = h("label", "field player-guild-tag");
-  tagField.appendChild(h("span", "field-label", "Guild tag"));
+  tagField.appendChild(h("span", "field-label", t("player.guildTag")));
   const tagInput = document.createElement("input");
   tagInput.className = "field-input";
-  tagInput.placeholder = "TAG";
+  tagInput.placeholder = t("player.guildTagPlaceholder");
   tagInput.maxLength = 4;
   tagInput.value = loadGuildTag();
-  const tagHint = h("span", "field-hint", GUILD_TAG_HINT);
+  const tagHint = h("span", "field-hint", t("player.guildTagHint"));
   const showTagValidity = (): void => {
     const invalid = isInvalidGuildTag(tagInput.value);
     tagInput.setAttribute("aria-invalid", String(invalid));
@@ -224,7 +243,7 @@ function mountPlayer(container: HTMLElement): () => void {
   };
   showCape();
   panel.appendChild(designer.root);
-  panel.appendChild(h("p", "player-applies", PLAYER_APPLIES));
+  panel.appendChild(h("p", "player-applies", t("player.applies")));
   return () => {
     panel.remove();
   };
@@ -243,7 +262,7 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
   readonly show: (cape: WireCape | null) => void;
 } {
   const root = h("div", "player-cape");
-  root.appendChild(h("span", "field-label", "Guild cape"));
+  root.appendChild(h("span", "field-label", t("player.guildCape")));
   const pressed: {
     readonly button: HTMLButtonElement;
     readonly on: (cape: WireCape) => boolean;
@@ -258,33 +277,33 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
         onPick({ part, colour });
       });
       swatch.style.setProperty("--swatch", cssColour(CAPE_PALETTE[colour]));
-      swatch.setAttribute("aria-label", colour);
-      swatch.title = colour;
+      swatch.setAttribute("aria-label", t(COLOUR_NAMES[colour]));
+      swatch.title = t(COLOUR_NAMES[colour]);
       swatch.dataset.colour = colour;
       row.appendChild(swatch);
       pressed.push({ button: swatch, on: (cape) => cape[part] === colour });
     }
     root.appendChild(row);
   };
-  swatchRow("main", "Cape");
-  swatchRow("trim", "Trim");
+  swatchRow("main", t("player.cape"));
+  swatchRow("trim", t("player.trim"));
   const emblems = h("div", "player-cape-row");
   emblems.setAttribute("role", "group");
-  emblems.setAttribute("aria-label", "Emblem");
-  emblems.appendChild(h("span", "player-cape-row-label", "Emblem"));
+  emblems.setAttribute("aria-label", t("player.emblem"));
+  emblems.appendChild(h("span", "player-cape-row-label", t("player.emblem")));
   for (const emblem of CAPE_EMBLEMS) {
     const choice = button("", "player-cape-emblem", () => {
       onPick({ part: "emblem", emblem });
     });
-    choice.setAttribute("aria-label", emblem);
-    choice.title = emblem;
+    choice.setAttribute("aria-label", t(EMBLEM_NAMES[emblem]));
+    choice.title = t(EMBLEM_NAMES[emblem]);
     choice.dataset.emblem = emblem;
     choice.appendChild(emblemIcon(emblem));
     emblems.appendChild(choice);
     pressed.push({ button: choice, on: (cape) => cape.emblem === emblem });
   }
   root.appendChild(emblems);
-  const none = button("No cape", "player-cape-none", () => {
+  const none = button(t("player.noCape"), "player-cape-none", () => {
     onPick({ part: "none" });
   });
   root.appendChild(none);

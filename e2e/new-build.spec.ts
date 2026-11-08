@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from "@playwright/test";
 
-import { NEW_VERSION_NOTICE, NEW_VERSION_WAITING } from "../apps/web/src/build-check.js";
+import { en } from "../apps/web/src/i18n/en.js";
 import { hostLobby, startSoloMatch } from "./helpers/peers.js";
 
 /**
@@ -18,7 +18,7 @@ test("the menu counts down to a reload; a match only says it is waiting", async 
   await expect(banner).toContainText(/Reloading in \d+ s\./);
 
   await startSoloMatch(page);
-  await expect(banner).toHaveText(new RegExp(`^${NEW_VERSION_WAITING}`));
+  await expect(banner).toHaveText(new RegExp(`^${en["buildBanner.waiting"]}`));
   await expect(banner).not.toContainText("Reloading in");
 });
 
@@ -43,7 +43,7 @@ test("a match chunk the deploy removed says a new version is out, not a lost con
   await page.getByRole("button", { name: "Ready", exact: true }).click();
 
   // Back on the lobby, which says why.
-  await expect(page.locator(".screen-problem")).toHaveText(NEW_VERSION_NOTICE);
+  await expect(page.locator(".screen-problem")).toHaveText(en["buildBanner.newVersion"]);
   await expect(page.getByText("Lost the connection to the match.")).toHaveCount(0);
 });
 

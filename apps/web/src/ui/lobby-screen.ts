@@ -1,6 +1,9 @@
 import type { MatchMode } from "@vibewars/game-core";
+import type { SizeClass } from "@vibewars/game-maps/size-class";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
+import { mapName } from "../i18n/game-names.js";
+import { t, type MessageKey } from "../i18n/index.js";
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
 import { ascentMapId } from "../net/maps.js";
 import { button, h, readyButton, toast, type ShareLine } from "./kit.js";
@@ -36,17 +39,9 @@ export interface LobbyMatchmaking {
 
 /** The host may play against bots after this long with no other team (Q191). */
 export const PLAY_BOTS_AFTER_MS = 60_000;
-/** A guest's word on a team-mode screen: matchmaking is the host's. */
-export const HOST_STARTS_MATCHMAKING = "The host starts matchmaking";
 
 /** The teams a player can pick. Two for now; the map decides capacity. */
 export const SELECTABLE_TEAMS = [0, 1] as const;
-
-export const MATCH_RUNNING_NOTICE = "A match is still running. The lobby opens again when it ends.";
-
-// Why Ready is disabled, as its hover says (#2124).
-export const READY_MATCH_STARTED = "The match has already started.";
-export const READY_JOIN_A_TEAM = "Join a team first.";
 
 /**
  * The invite link to lobby `code` (#2100): this page's own origin and
@@ -86,15 +81,15 @@ export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const assigned = snapshot.players.filter((p) => p.team !== null);
   return {
-    running: snapshot.phase === "in-match" ? MATCH_RUNNING_NOTICE : undefined,
+    running: snapshot.phase === "in-match" ? t("lobby.matchRunning") : undefined,
     mapDisabled: !waiting,
     teamsDisabled: !waiting,
     // Readiness is meaningless without a team, so the control is disabled
-    // rather than silently doing nothing when pressed.
+    // rather than silently doing nothing when pressed. Its hover says why (#2124).
     readyProblem: !waiting
-      ? READY_MATCH_STARTED
+      ? t("lobby.readyMatchStarted")
       : self === undefined || self.team === null
-        ? READY_JOIN_A_TEAM
+        ? t("lobby.readyJoinATeam")
         : undefined,
     startDisabled: !waiting || assigned.length === 0 || !assigned.every((p) => p.ready),
     canWatch: snapshot.phase === "in-match" && self?.team === null,
@@ -111,14 +106,13 @@ export function waitingFor(snapshot: LobbySnapshot): string | undefined {
   }
   const assigned = snapshot.players.filter((p) => p.team !== null);
   if (assigned.length === 0) {
-    return "Waiting for someone to join a team";
+    return t("lobby.waitingForJoin");
   }
   const notReady = assigned.filter((p) => !p.ready).map((p) => p.name);
-  return notReady.length === 0 ? undefined : `Waiting for ${notReady.join(", ")} to ready up`;
+  return notReady.length === 0
+    ? undefined
+    : t("lobby.waitingForReady", { names: notReady.join(", ") });
 }
-
-export const COPIED = "Copied";
-export const COPY_BY_HAND = "Could not copy: the invite link is selected, copy it by hand";
 
 /**
  * Copy lobby `code`'s invite link (#2100), and say so. A browser may
@@ -129,18 +123,17 @@ export async function copyInviteLink(code: string, share: ShareLine): Promise<vo
   const url = inviteUrl(code);
   try {
     await navigator.clipboard.writeText(url);
-    toast(COPIED);
+    toast(t("lobby.copied"));
   } catch {
     share.show(url);
-    toast(COPY_BY_HAND);
+    toast(t("lobby.copyByHand"));
   }
 }
 
 /** An arena the host may pick, how big it plays (#444), and the mode it plays (#476). */
 export interface LobbyMap {
   readonly id: string;
-  readonly name: string;
-  readonly size: string;
+  readonly size: SizeClass;
   readonly mode: MatchMode;
   /** The team sizes it is made for (#2108): a Hosted Game lists those for its own (#2104). */
   readonly teamSizes: readonly number[];
@@ -158,26 +151,31 @@ export function hostMaps(
 }
 
 /** What each mode is, in a line, as the lobby shows it under the map (#476). */
-const MODE_LINES: Readonly<Record<MatchMode, string>> = {
-  annihilation: "Annihilation: defeat every foe",
-  "kill-count": "Kill Count: most kills in 3 minutes",
-  "priest-annihilation": "Priest Annihilation: defeat every foe and their priest",
-  "guild-battle": "Guild Battle: kill the enemy Guild Lord",
-  "relic-run": "Relic Run: carry your relic to the altar. Most points in 8 minutes wins.",
-  "king-of-the-hill":
-    "King of the Hill: lead your Ghostly Hero onto the altar. Hold it to score; most points in 8 minutes wins.",
-  "capture-points":
-    "Capture Points: stand on shrines to take them. Each shrine you own scores every 30 s.",
+const MODE_LINES: Readonly<Record<MatchMode, MessageKey>> = {
+  annihilation: "lobby.modeAnnihilation",
+  "kill-count": "lobby.modeKillCount",
+  "priest-annihilation": "lobby.modePriestAnnihilation",
+  "guild-battle": "lobby.modeGuildBattle",
+  "relic-run": "lobby.modeRelicRun",
+  "king-of-the-hill": "lobby.modeKingOfTheHill",
+  "capture-points": "lobby.modeCapturePoints",
 };
 
 /** The mode `map` plays, in a line: "Kill Count: most kills in 3 minutes". */
 export function modeLine(map: LobbyMap): string {
-  return MODE_LINES[map.mode];
+  return t(MODE_LINES[map.mode]);
 }
+
+/** Each size class as the picker writes it. */
+const SIZE_NAMES: Readonly<Record<SizeClass, MessageKey>> = {
+  small: "lobby.sizeSmall",
+  medium: "lobby.sizeMedium",
+  large: "lobby.sizeLarge",
+};
 
 /** The arena as the picker names it: its name, then its size class, e.g. "Long Hall (small)". */
 export function mapLabel(map: LobbyMap): string {
-  return `${map.name} (${map.size})`;
+  return t("lobby.mapLabel", { name: mapName(map.id), size: t(SIZE_NAMES[map.size]) });
 }
 
 /** What the lobby says about relays (#2531), from `lobbyRelayStatus`. */
@@ -227,7 +225,7 @@ export function lobbyPanel(
   const sized = availableMaps.filter((map) => map.teamSizes.includes(snapshot.teamSize));
   if (snapshot.mode === "hosted-game" && snapshot.isHost && sized.length > 1) {
     mapPart = h("label", "lobby-map");
-    mapPart.appendChild(h("span", "field-label", "Map"));
+    mapPart.appendChild(h("span", "field-label", t("lobby.map")));
     const select = document.createElement("select");
     for (const map of sized) {
       const option = document.createElement("option");
@@ -242,12 +240,12 @@ export function lobbyPanel(
     });
     mapPart.appendChild(select);
   } else if (snapshot.mode === "team-arena") {
-    mapPart = h("div", "lobby-map", "Map: random (Team Arena)");
+    mapPart = h("div", "lobby-map", t("lobby.mapRandom"));
   } else {
     mapPart = h(
       "div",
       "lobby-map",
-      `Map: ${current === undefined ? shownMapId : mapLabel(current)}`,
+      t("lobby.mapShown", { map: current === undefined ? shownMapId : mapLabel(current) }),
     );
   }
 
@@ -260,7 +258,7 @@ export function lobbyPanel(
   // A member on no team has nothing to ready while the match runs, but
   // can watch it (#480).
   const actions: HTMLElement[] = controls.canWatch
-    ? [button("Watch", "primary lobby-watch", callbacks.onWatch)]
+    ? [button(t("lobby.watch"), "primary lobby-watch", callbacks.onWatch)]
     : matchmaking === undefined
       ? [readyToggle]
       : [];
@@ -269,7 +267,7 @@ export function lobbyPanel(
       actions.push(...matchmakingButtons(matchmaking, controls));
     }
   } else if (snapshot.isHost) {
-    const start = button("Start match", ready ? "primary" : "", callbacks.onStart);
+    const start = button(t("lobby.startMatch"), ready ? "primary" : "", callbacks.onStart);
     start.disabled = controls.startDisabled;
     actions.push(start);
   }
@@ -300,7 +298,8 @@ export function lobbyPanel(
   }
 
   if (matchmaking !== undefined && !snapshot.isHost && matchmaking.queuedMs === null) {
-    panel.appendChild(h("div", "screen-info lobby-waiting", HOST_STARTS_MATCHMAKING));
+    // A guest's word on a team-mode screen: matchmaking is the host's.
+    panel.appendChild(h("div", "screen-info lobby-waiting", t("lobby.hostStartsMatchmaking")));
   }
 
   // Everyone sees it, not only the host: a guest who is the one being
@@ -324,7 +323,11 @@ export function lobbyPanel(
   const spectators = snapshot.players.filter((p) => p.team === null);
   if (spectators.length > 0) {
     panel.appendChild(
-      h("div", "lobby-spectators", `Spectating: ${spectators.map((p) => p.name).join(", ")}`),
+      h(
+        "div",
+        "lobby-spectators",
+        t("lobby.spectating", { names: spectators.map((p) => p.name).join(", ") }),
+      ),
     );
   }
 
@@ -345,15 +348,15 @@ export function matchmakingButtons(
   controls: LobbyControls,
 ): HTMLElement[] {
   if (matchmaking.queuedMs === null) {
-    const find = button("Find a match", "primary lobby-find", matchmaking.onFindMatch);
+    const find = button(t("lobby.findMatch"), "primary lobby-find", matchmaking.onFindMatch);
     find.disabled = controls.mapDisabled;
     return [find];
   }
-  const leave = button("Leave the queue", "lobby-leave-queue", matchmaking.onLeaveQueue);
+  const leave = button(t("lobby.leaveQueue"), "lobby-leave-queue", matchmaking.onLeaveQueue);
   const { onPlayBots } = matchmaking;
   return matchmaking.queuedMs < PLAY_BOTS_AFTER_MS || onPlayBots === undefined
     ? [leave]
-    : [button("Play against bots", "primary lobby-play-bots", onPlayBots), leave];
+    : [button(t("lobby.playBots"), "primary lobby-play-bots", onPlayBots), leave];
 }
 
 /**
@@ -370,20 +373,22 @@ export function teamColumn(
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const column = h("div", "lobby-team");
   const title = h("div", "lobby-team-header");
-  title.appendChild(h("h3", "lobby-team-title", `Team ${String(team + 1)}`));
+  title.appendChild(h("h3", "lobby-team-title", t("lobby.team", { team: team + 1 })));
   // On their own team a player sees Leave, back to unassigned (#2199).
   const own = self?.team === team;
-  const verb = own ? "Leave" : "Join";
-  const choose = button(verb, "lobby-join", () => {
+  const choose = button(t(own ? "lobby.leaveTeam" : "lobby.joinTeam"), "lobby-join", () => {
     callbacks.onChooseTeam(own ? null : team);
   });
-  choose.setAttribute("aria-label", `${verb} team ${String(team + 1)}`);
+  choose.setAttribute(
+    "aria-label",
+    t(own ? "lobby.leaveTeamLabel" : "lobby.joinTeamLabel", { team: team + 1 }),
+  );
   choose.disabled = controls.teamsDisabled;
   title.appendChild(choose);
   column.appendChild(title);
   const members = snapshot.players.filter((p) => p.team === team);
   if (members.length === 0) {
-    column.appendChild(h("div", "lobby-slot-empty", "Empty"));
+    column.appendChild(h("div", "lobby-slot-empty", t("lobby.empty")));
   }
   for (const member of members) {
     column.appendChild(playerRow(member));
@@ -401,14 +406,14 @@ function playerRow(member: LobbyPlayerSnapshot): HTMLElement {
   const text = h("span", "lobby-slot-text");
   const player = text.appendChild(playerLabelElement("lobby-player", member.name, member.guildTag));
   if (member.isHost) {
-    player.appendChild(h("span", "lobby-host", " (host)"));
+    player.appendChild(h("span", "lobby-host", ` ${t("lobby.host")}`));
   }
   row.appendChild(text);
   row.appendChild(
     h(
       "span",
       member.ready ? "lobby-ready is-ready" : "lobby-ready",
-      member.ready ? "Ready" : "Not ready",
+      t(member.ready ? "lobby.ready" : "lobby.notReady"),
     ),
   );
   return row;

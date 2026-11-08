@@ -5,6 +5,7 @@ import type {
   LobbySnapshot,
   MatchRecordTeam,
   MatchStarting,
+  QueueState,
 } from "@vibewars/game-session";
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
@@ -21,7 +22,6 @@ import {
   hostLobby,
   joinFailureNotice,
   joinLobbyByCode,
-  NOT_A_KEY_MESSAGE,
   lobbyClosedNotice,
   lobbyRelayStatus,
   lobbyRefusalNotice,
@@ -31,9 +31,7 @@ import {
   QUEUED_RESULT_SECONDS,
   STAY_TOGETHER_GRACE_SECONDS,
   STAY_TOGETHER_SECONDS,
-  TEAM_PLAN_REJECTED_NOTICE,
   TEAM_RESULT_SECONDS,
-  TEAM_SPLIT_MESSAGE,
   watchHostMove,
   type HostMove,
   type HostedLobby,
@@ -55,12 +53,14 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
+import { mapName } from "./i18n/game-names.js";
 import { t } from "./i18n/index.js";
 import { loadLocale } from "./i18n/load-locale.js";
 import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
 import { music } from "./music/play-music.js";
+import { sharedTracks } from "./music/shared-tracks.js";
 import { TRACKS } from "./music/tracks/index.js";
 import { STRESS_BUILD, startStress, stressMs } from "./music/stress.js";
 import {
@@ -109,6 +109,7 @@ import { describeOutcome } from "./ui/hud.js";
 import type { SummaryTable } from "./ui/match-summary.js";
 import { renderMatchesScreen, type MatchesScreen } from "./ui/matches-screen.js";
 import {
+  flashTitle,
   mountQueueScreen,
   nextAscentRound,
   nextStreak,
@@ -123,6 +124,7 @@ import {
   PLAY_BOTS_AFTER_MS,
   hostMaps,
   lobbyPanel,
+  type LobbyMap,
   type LobbyMatchmaking,
   type LobbyRelay,
   type LobbyPanel,
@@ -143,12 +145,13 @@ import {
   rosterOrder,
   saveActiveCharacterId,
   saveStarterCharacterId,
+  type MenuCallbacks,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
-import { isAlone, lookingLabel, partyOf } from "./ui/lobby-window.js";
+import { isAlone, partyOf } from "./ui/lobby-window.js";
 import {
   isModeEntry,
   loadRail,
@@ -160,6 +163,7 @@ import {
   redrawModeRail,
   redrawsOnLobbyChange,
   setRailParty,
+  setRailQueued,
   type RailEntry,
 } from "./ui/rail.js";
 import {
@@ -171,6 +175,7 @@ import {
 } from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import { closeTopbarPopover, isTopbarPopoverOpen } from "./ui/topbar-popover.js";
+import type { QueueStatusInput } from "./ui/queue-popover.js";
 import { duplicateTeam, newTeam, replaceMember, teamCharacter } from "./ui/team-builder.js";
 import {
   mountTeamEditor,
@@ -197,13 +202,6 @@ import { type PlayerBuild } from "@vibewars/game-core";
  * five screens and one connection at a time, and a router would be more
  * machinery than the problem has (brief §30).
  */
-
-/** Shown on the lobby or the menu once a match is lost for good. */
-const LOST_MATCH_NOTICE = "Lost the connection to the match.";
-/** An invite link to this tab's own lobby (#1526, #2100). */
-const OWN_LOBBY_NOTICE = "That is your own lobby";
-/** An invite link opened over a lobby's screen or a match (#2100), which a join would leave. */
-const INVITE_IN_LOBBY_NOTICE = "Go back to the menu, then open the invite link again.";
 
 /** A new Team Build's member (#2225): what a new character is, as the team's own. */
 function blankMember(): TeamCharacter {
@@ -241,15 +239,6 @@ async function openStore(): Promise<{ store: KeyValueStore; persistent: boolean 
     return { store: createMemoryStore(), persistent: false };
   }
 }
-
-/** A relay link nothing could be read from (#972), on the first menu. */
-const MALFORMED_RELAY_LINK_NOTICE = "That relay link is not valid. Nothing was saved.";
-/**
- * A relay link opened inside another site's frame (#972): Use is the only
- * defence, and a framing page could overlay a decoy over it, so a framed
- * page never asks. Static hosting sends no `frame-ancestors`.
- */
-const FRAMED_RELAY_LINK_NOTICE = "Open the relay link in its own tab. Nothing was saved.";
 
 /**
  * The relay invite link this page was opened with, if any (#972), taken
@@ -355,14 +344,17 @@ async function main(): Promise<void> {
   const savedRelay = loadRelay(() => {
     notices.add(UNREADABLE_RELAY_NOTICE);
   });
+  // A relay link opened inside another site's frame (#972): Use is the only
+  // defence, and a framing page could overlay a decoy over it, so a framed
+  // page never asks. Static hosting sends no `frame-ancestors`.
   const framed = window.top !== window.self;
   if (lobbyLink.kind === "malformed") {
-    notices.add(NOT_A_KEY_MESSAGE);
+    notices.add(t("session.notAKey"));
   }
   if (relayLink.kind === "malformed") {
-    notices.add(MALFORMED_RELAY_LINK_NOTICE);
+    notices.add(t("app.malformedRelayLink"));
   } else if (relayLink.kind === "config" && framed) {
-    notices.add(FRAMED_RELAY_LINK_NOTICE);
+    notices.add(t("app.framedRelayLink"));
   }
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
@@ -422,7 +414,6 @@ async function main(): Promise<void> {
   // The arenas a host can pick, built into the client (#403).
   const availableMaps = ARENA_MAPS.map((map) => ({
     id: map.id,
-    name: map.name,
     size: sizeClass(map),
     mode: map.mode,
     teamSizes: map.teamSizes,
@@ -483,16 +474,23 @@ async function main(): Promise<void> {
    */
   let menuNotice: string | undefined;
   /**
-   * The Random Arena queue and its screen (#880), from *Random Arena* to
-   * the menu again: through its lobby and its match, which show the
-   * splash and end on the menu rather than a lobby screen.
+   * The Random Arena queue (#880), from *Random Arena* to the menu again.
+   * It waits in the background, the top bar's queue icon saying so
+   * (#2743); its screen mounts once a match is found, for the splash, the
+   * match and the ended view.
    */
   let queue:
     | {
         readonly place: RandomArenaQueue;
-        readonly screen: QueueScreen;
+        screen: QueueScreen | undefined;
         readonly mode: QueueMode;
         readonly name: string;
+        /** The character queued, the one seated when a match is found. */
+        readonly characterId: string;
+        /** By `Date.now`. */
+        readonly since: number;
+        /** `undefined` until the queue first says where it is. */
+        state: QueueState | undefined;
       }
     | undefined;
   /**
@@ -529,6 +527,8 @@ async function main(): Promise<void> {
         readonly ascentRound: number | null;
       }
     | undefined;
+  /** A team's match found while the tab was hidden (#2743): its title flashing. */
+  let stopTeamFlash: (() => void) | undefined;
   /** Set while *Random Arena* is reading the character, so a second press makes no second ticket. */
   let joiningQueue = false;
   /** Queued wins in a row this visit (#881): page memory only, never stored. */
@@ -632,8 +632,61 @@ async function main(): Promise<void> {
     endedOutcome = undefined;
     endedSummary = undefined;
     queue?.place.leave();
-    queue?.screen.dispose();
+    queue?.screen?.dispose();
     queue = undefined;
+    paintQueue();
+  };
+
+  /**
+   * The queue the top bar's icon names (#2743): Random Arena's while it
+   * waits in the background, or the team's while its party lobby is queued;
+   * none once a match is found.
+   */
+  const queueInput = (): QueueStatusInput | undefined => {
+    if (queue !== undefined) {
+      return queue.screen === undefined
+        ? { kind: "random", mode: queue.mode, since: queue.since, state: queue.state }
+        : undefined;
+    }
+    const team = teamQueue;
+    const snapshot = lobby?.getSnapshot();
+    if (team === undefined || snapshot === undefined || queuedMsOf(snapshot) === null) {
+      return undefined;
+    }
+    return {
+      kind: "team",
+      mode: snapshot.mode,
+      teamSize: snapshot.teamSize,
+      ascentRound: team.ascentRound,
+      since: team.since,
+      teams: team.teams,
+      isHost: snapshot.isHost,
+    };
+  };
+
+  /** Whether this tab is in a queue: no second one, no lobby to host or join (#2743). */
+  const inAnyQueue = (): boolean => queue !== undefined || teamQueue !== undefined;
+
+  const paintQueue = (): void => {
+    setRailQueued(
+      queue !== undefined ? teamSizeOf(queue.mode) : teamQueue?.party.getSnapshot().teamSize,
+    );
+    topbarView.setQueue(queueInput());
+  };
+
+  /** The queue flyout's Leave Queue (#2743): out of the Random Arena queue, or the host's team out of its. */
+  const leaveAnyQueue = (): void => {
+    if (queue !== undefined) {
+      dropQueue();
+      openOwnLobby();
+      redrawRail();
+      return;
+    }
+    if (teamQueue !== undefined && lobby?.getSnapshot().isHost === true) {
+      // Out of the queue, its Heroes' Ascent run is over (#1996).
+      ascentRound = 0;
+      lobby.leaveQueue();
+    }
   };
 
   /**
@@ -717,6 +770,9 @@ async function main(): Promise<void> {
     onRemoveMember: (id) => {
       lobby?.removeMember(id);
     },
+    onLeaveQueue: () => {
+      leaveAnyQueue();
+    },
   });
 
   const showViewport = (visible: boolean): void => {
@@ -788,8 +844,11 @@ async function main(): Promise<void> {
     // never keeps saying where the player was: idle, it says nothing (#454).
     // Error paths set theirs after.
     setStatus("", "offline");
-    // Any way off the queue screen leaves the queue (#880).
-    dropQueue();
+    // Any way off the queue screen leaves the queue (#880); one waiting
+    // in the background goes on (#2743).
+    if (queue?.screen !== undefined) {
+      dropQueue();
+    }
     editor?.dispose();
     editor = undefined;
     teamEditor?.dispose();
@@ -863,7 +922,8 @@ async function main(): Promise<void> {
   const switchTo = (entry: RailEntry): void => {
     shownEntry = entry;
     menuNotice = undefined;
-    const snapshot = queue === undefined ? lobby?.getSnapshot() : undefined;
+    // Queued, a screen is only looked at: the queued lobby keeps its mode and size (#2781).
+    const snapshot = inAnyQueue() ? undefined : lobby?.getSnapshot();
     if (isModeEntry(entry) && snapshot?.isHost === true && snapshot.mode !== entry) {
       lobby?.selectMode(entry);
       // A Hosted Game or a Team Arena starts at the size its host last
@@ -883,72 +943,71 @@ async function main(): Promise<void> {
   ): void => {
     // Both carry the Random Arena join controls: its NAT check starts now (#2090).
     startNatCheck();
-    (entry === "random-arena" ? renderRandomArena : renderCharacterBuilder)(
-      screenRoot,
-      {
-        onRandomArena: (mode, name) => {
-          void enterRandomArena(mode, name);
-        },
-        onSwitch: switchTo,
-        onNewCharacter: () => {
-          showCharacterEditor(newCharacter(crypto.randomUUID()));
-        },
-        onEditCharacter: (id) => {
-          void (async () => {
-            const character = await characters.load(id);
-            if (character !== undefined) {
-              showCharacterEditor(character);
-            }
-          })();
-        },
-        onCloneStarter: (id) => {
-          void (async () => {
-            const character = await characters.load(id);
-            if (character === undefined) {
-              showMenu();
-              return;
-            }
-            // Only the random starter has Clone: a copy of the character shown,
-            // as the editor's Duplicate makes (#2038).
-            const copy = cloneCharacter(character, crypto.randomUUID(), Date.now());
-            try {
-              await characters.save(copy);
-            } catch (error) {
-              console.warn("[web] could not save the clone", error);
-              showMenu();
-              return;
-            }
-            showCharacterEditor(copy);
-          })();
-        },
-        onRerollCharacter: (id) => {
-          void (async () => {
-            const character = await characters.load(id);
-            if (character !== undefined) {
-              await rerollStarterCharacter(
-                characters,
-                character,
-                Math.random,
-                Date.now(),
-                list.map((c) => c.name),
-              );
-            }
-            showMenu();
-          })();
-        },
-        // The menu persists the choice itself; re-render so the
-        // highlighted row matches what was just picked, without a round
-        // trip to storage for a list we already hold.
-        onSelectCharacter: () => {
-          renderMenuWith(entry, list, problems);
-          // The lobby lists, and plays, the one picked (#1526).
-          void refreshEntrant();
-        },
+    const callbacks: MenuCallbacks = {
+      onRandomArena: (mode, name) => {
+        void enterRandomArena(mode, name);
       },
-      list,
-      problems,
-      menuNotice,
-    );
+      onSwitch: switchTo,
+      onNewCharacter: () => {
+        showCharacterEditor(newCharacter(crypto.randomUUID()));
+      },
+      onEditCharacter: (id) => {
+        void (async () => {
+          const character = await characters.load(id);
+          if (character !== undefined) {
+            showCharacterEditor(character);
+          }
+        })();
+      },
+      onCloneStarter: (id) => {
+        void (async () => {
+          const character = await characters.load(id);
+          if (character === undefined) {
+            showMenu();
+            return;
+          }
+          // Only the random starter has Clone: a copy of the character shown,
+          // as the editor's Duplicate makes (#2038).
+          const copy = cloneCharacter(character, crypto.randomUUID(), Date.now());
+          try {
+            await characters.save(copy);
+          } catch (error) {
+            console.warn("[web] could not save the clone", error);
+            showMenu();
+            return;
+          }
+          showCharacterEditor(copy);
+        })();
+      },
+      onRerollCharacter: (id) => {
+        void (async () => {
+          const character = await characters.load(id);
+          if (character !== undefined) {
+            await rerollStarterCharacter(
+              characters,
+              character,
+              Math.random,
+              Date.now(),
+              list.map((c) => c.name),
+            );
+          }
+          showMenu();
+        })();
+      },
+      // The menu persists the choice itself; re-render so the
+      // highlighted row matches what was just picked, without a round
+      // trip to storage for a list we already hold.
+      onSelectCharacter: () => {
+        renderMenuWith(entry, list, problems);
+        // The lobby lists, and plays, the one picked (#1526).
+        void refreshEntrant();
+      },
+    };
+    if (entry === "random-arena") {
+      renderRandomArena(screenRoot, callbacks, list, problems, menuNotice, inAnyQueue());
+    } else {
+      renderCharacterBuilder(screenRoot, callbacks, list, problems, menuNotice);
+    }
   };
 
   /** The build editor for `character`; every way out of it goes `back`. */
@@ -960,6 +1019,9 @@ async function main(): Promise<void> {
       onDelete: (id: string) => {
         void (async () => {
           await characters.delete(id);
+          if (queue?.characterId === id && queue.screen === undefined) {
+            dropToMenu(t("queue.characterDeleted"));
+          }
           back();
         })();
       },
@@ -1026,7 +1088,7 @@ async function main(): Promise<void> {
       if (isModeEntry(shownEntry) && shownEntry !== own.lobby.getSnapshot().mode) {
         own.lobby.selectMode(shownEntry);
       }
-      seatLobby(name, own.lobby, entrant);
+      seatLobby(name, own.lobby, entrant, false);
     })();
   };
 
@@ -1061,6 +1123,7 @@ async function main(): Promise<void> {
     const leaving = lobby;
     const ending = hosted;
     lobby = undefined;
+    syncShares();
     hosted = undefined;
     lobbyEntrant = undefined;
     lobbyName = undefined;
@@ -1108,7 +1171,7 @@ async function main(): Promise<void> {
         seat: ({ joined, entrant }) => {
           following = undefined;
           setStatus("", "online");
-          seatLobby(name, joined, entrant);
+          seatLobby(name, joined, entrant, false);
         },
         drop: async ({ joined }) => {
           following = undefined;
@@ -1139,13 +1202,18 @@ async function main(): Promise<void> {
    * and only then sends them after it (#1553).
    */
   const joinWith = (code: string, name: string): void => {
+    // Nobody joins a lobby from a queue (#2743): leave it first.
+    if (inAnyQueue()) {
+      toast(t("queue.busy"));
+      return;
+    }
     const turn = joinTurns.take();
     const movedOn = (): boolean => movedOnSince(turn);
     void (async () => {
       const current = lobby?.getSnapshot().code;
       if (current !== undefined && code === current) {
         if (hosted !== undefined) {
-          toast(OWN_LOBBY_NOTICE);
+          toast(t("app.ownLobby"));
         }
         return;
       }
@@ -1179,7 +1247,7 @@ async function main(): Promise<void> {
         return;
       }
       setStatus("", "online");
-      seatLobby(name, joined, entrant);
+      seatLobby(name, joined, entrant, false);
     })();
   };
 
@@ -1190,6 +1258,17 @@ async function main(): Promise<void> {
       ? undefined
       : { relayedVia: status.relayedVia(), sharingWith: status.sharingWith() };
   };
+
+  /**
+   * `entry`'s maps as its lobby lists them (#1526): a queued Heroes' Ascent
+   * names its round's map, the Hall's too (#1996).
+   */
+  const mapsFor = (entry: HostEntry): LobbyMap[] =>
+    hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter(
+      (map) =>
+        modeMapIds()[entry].includes(map.id) ||
+        (entry === "heroes-ascent" && ASCENT_PROGRESSION.includes(map.id)),
+    );
 
   /** The lobby's part of `entry`'s screen (#1526), once there is a lobby. */
   const panelFor = (entry: HostEntry): LobbyPanel | undefined => {
@@ -1219,12 +1298,7 @@ async function main(): Promise<void> {
         },
       },
       lobbyNotice,
-      // A queued Heroes' Ascent names its round's map, the Hall's too (#1996).
-      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter(
-        (map) =>
-          modeMapIds()[entry].includes(map.id) ||
-          (entry === "heroes-ascent" && ASCENT_PROGRESSION.includes(map.id)),
-      ),
+      mapsFor(entry),
       matchmakingFor(entry),
       relayFor(lobby),
     );
@@ -1292,10 +1366,13 @@ async function main(): Promise<void> {
           }
         })();
       },
+      onLeaveQueue: () => {
+        leaveAnyQueue();
+      },
       onPasteTeam: (text) => {
         const result = importTeam(text, () => crypto.randomUUID(), Date.now());
         if (!result.ok) {
-          toast("Could not import", { problems: result.problems });
+          toast(t("app.couldNotImport"), { problems: result.problems });
           return;
         }
         openPastedTeam(result.team, characterList.characters);
@@ -1337,7 +1414,15 @@ async function main(): Promise<void> {
     };
     const problems = [...teamList.problems, ...notices.draw(entry)];
     if (isHostEntry(entry)) {
-      renderHostScreen(screenRoot, entry, problems, menuNotice, callbacks, panelFor(entry));
+      renderHostScreen(
+        screenRoot,
+        entry,
+        problems,
+        menuNotice,
+        callbacks,
+        panelFor(entry),
+        queue === undefined ? undefined : mapsFor(entry),
+      );
       // A Hosted Game's host, or a Team Arena's leader, sets its lobby's
       // size with the sidebar's (#2104, #2107).
       if (entry === "hosted-game" || entry === "team-arena") {
@@ -1410,12 +1495,12 @@ async function main(): Promise<void> {
     } catch (error) {
       console.warn("[web] could not save the clone", error);
       showMenu();
-      toast("Could not save the team");
+      toast(t("app.couldNotSaveTeam"));
       return;
     }
     const { characters: available } = await characters.list();
     showTeamEditor(openedTeam(team, true), available);
-    toast(`Cloned ${team.name}${missingSkillsNote(missingSkills)}`);
+    toast(t("app.cloned", { team: team.name, missing: missingSkillsNote(missingSkills) }));
   };
 
   const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
@@ -1456,23 +1541,20 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Queue for a Random Arena with the active character (#880): the queue
-   * screen until a group's lobby seats this player, its splash while it
-   * counts down, then the match. Whether it queued: not without an
-   * active character, while already queueing, or with a party (#1526).
-   * This tab's own lobby closes first; the menu opens a fresh one after.
+   * Queue for a Random Arena with the active character (#880): in the
+   * background, the player staying where they are (#2743), until a group's
+   * lobby seats this player; then the queue screen's splash while it counts
+   * down, and the match. Whether it queued: not without an active
+   * character, while already in a queue, or with a party (#1526). This
+   * tab's own lobby closes first; leaving the queue opens a fresh one.
    */
   const enterRandomArena = async (
     mode: QueueMode,
     name: string,
-    from: { readonly party?: PartyPlace; readonly note?: string } = {},
+    from: { readonly party?: PartyPlace } = {},
   ): Promise<boolean> => {
     startNatCheck();
-    if (
-      queue !== undefined ||
-      joiningQueue ||
-      (from.party === undefined && !isAlone(railParty()))
-    ) {
+    if (inAnyQueue() || joiningQueue || (from.party === undefined && !isAlone(railParty()))) {
       from.party?.board.close();
       return false;
     }
@@ -1499,20 +1581,124 @@ async function main(): Promise<void> {
       from.party?.board.close();
       return false;
     }
-    leaveScreen();
     menuNotice = undefined;
-    setStatus("in queue", "online");
-    const screen = mountQueueScreen(
+    /** A state the queue says while it is still being entered waits for its place. */
+    let entered = false;
+    let early: QueueState | undefined;
+    // Never past `in-lobby` while a lobby is up, unless it fell through.
+    const onState = (state: QueueState): void => {
+      if (!entered) {
+        early = state;
+        return;
+      }
+      const current = queue;
+      if (current?.place !== place) {
+        return;
+      }
+      current.state = state;
+      if (state.kind === "unreachable") {
+        dropToMenu(t("queue.unreachable"));
+        return;
+      }
+      // Its lobby fell through before the match: back to the background.
+      if (
+        current.screen !== undefined &&
+        (state.kind === "searching" || state.kind === "fell-through") &&
+        match === undefined &&
+        !enteringMatch
+      ) {
+        current.screen.dispose();
+        current.screen = undefined;
+        showMenu();
+      }
+      paintQueue();
+    };
+    const place = enterQueue(
+      mode,
+      null,
+      name,
+      entrant.guild,
+      playerKey,
+      {
+        onState,
+        onLobby: (joined, host) => {
+          void (async () => {
+            // The queued character as it is now: edits made while queued count.
+            const found = await characters.load(id);
+            const fresh: Entrant = {
+              build: await activeBuild(id),
+              characterId: id,
+              guild: playerGuild(),
+            };
+            const current = queue;
+            if (current?.place !== place || found === undefined) {
+              void host?.close();
+              void joined.disconnect();
+              // Deleted in another tab while queued: out of the queue, told why.
+              if (current?.place === place) {
+                dropToMenu(t("queue.characterDeleted"));
+              }
+              return;
+            }
+            current.screen = foundScreen(mode, found.name, name);
+            paintQueue();
+            hosted = host;
+            seatLobby(name, joined, fresh, true);
+          })();
+        },
+        onRefused: (notice) => {
+          if (queue?.screen === undefined) {
+            dropToMenu(notice);
+            return;
+          }
+          setStatus("could not join", "error");
+          queue.screen.show({ kind: "refused", notice });
+        },
+        onPartyGone: () => {
+          requeue(mode, name, { note: t("session.teamSplit") });
+        },
+      },
+      from.party,
+    );
+    entered = true;
+    queue = {
+      place,
+      screen: undefined,
+      mode,
+      name,
+      characterId: id,
+      since: Date.now(),
+      state: undefined,
+    };
+    paintQueue();
+    if (early !== undefined) {
+      onState(early);
+    }
+    // The player stays where they are; Ready there now says they are queued.
+    redrawRail();
+    music().menu("queue");
+    return true;
+  };
+
+  /**
+   * A queued match found (#2743): off the screen the player is on, as its
+   * Back would leave it, and onto the queue screen's splash.
+   */
+  const foundScreen = (mode: QueueMode, characterName: string, name: string): QueueScreen => {
+    editor?.dispose();
+    editor = undefined;
+    teamEditor?.dispose();
+    teamEditor = undefined;
+    leaveScreen();
+    setStatus("match found", "online");
+    return mountQueueScreen(
       screenRoot,
       {
         mode,
-        characterName: stored.name,
-        mapName: (mapId) => ARENA_MAPS.find((map) => map.id === mapId)?.name ?? mapId,
+        characterName,
+        mapName,
       },
       {
-        onLeave: () => {
-          void leaveLobby();
-        },
         onBack: () => {
           void leaveLobby();
         },
@@ -1524,40 +1710,14 @@ async function main(): Promise<void> {
         },
       },
     );
-    const { note } = from;
-    const place = enterQueue(
-      mode,
-      null,
-      name,
-      entrant.guild,
-      playerKey,
-      {
-        // Never past `in-lobby` while a lobby is up, unless it fell through.
-        onState: (state) => {
-          // The split is news until a match is found.
-          screen.show({
-            kind: "queue",
-            state,
-            ...(note === undefined || state.kind !== "searching" ? {} : { note }),
-          });
-        },
-        onLobby: (joined, host) => {
-          hosted = host;
-          seatLobby(name, joined, entrant);
-        },
-        onRefused: (notice) => {
-          setStatus("could not join", "error");
-          screen.show({ kind: "refused", notice });
-        },
-        onPartyGone: () => {
-          requeue(mode, name, { note: TEAM_SPLIT_MESSAGE });
-        },
-      },
-      from.party,
-    );
-    queue = { place, screen, mode, name };
-    music().menu("queue");
-    return true;
+  };
+
+  /** The background queue refused or dropped (#2743): out of it, `notice` on the menu. */
+  const dropToMenu = (notice: string): void => {
+    dropQueue();
+    menuNotice = notice;
+    openOwnLobby();
+    redrawRail();
   };
 
   /** Out of this queue and into a fresh one of `mode`, alone or as `from.party`. */
@@ -1566,11 +1726,16 @@ async function main(): Promise<void> {
     name: string,
     from: { readonly party?: PartyPlace; readonly note?: string } = {},
   ): void => {
+    // From the ended view, the background queue's screen is the menu's.
+    const fromScreen = queue?.screen !== undefined;
     dropQueue();
     void enterRandomArena(mode, name, from).then((queued) => {
       // The character went meanwhile: the menu, where *Random Arena* is greyed.
-      if (!queued) {
+      if (fromScreen || !queued) {
         showMenu();
+      }
+      if (queued && from.note !== undefined) {
+        toast(from.note);
       }
     });
   };
@@ -1594,7 +1759,7 @@ async function main(): Promise<void> {
       return;
     }
     const offer = stayOffer();
-    queue.screen.show({
+    queue.screen?.show({
       kind: "ended",
       outcome: endedOutcome,
       streak: queueStreak,
@@ -1609,7 +1774,7 @@ async function main(): Promise<void> {
       return;
     }
     const { mode, name } = queue;
-    requeue(mode, name, { note: TEAM_SPLIT_MESSAGE });
+    requeue(mode, name, { note: t("session.teamSplit") });
   };
 
   const pressStay = (): void => {
@@ -1702,7 +1867,7 @@ async function main(): Promise<void> {
       ? Date.now() - teamQueue.since
       : null;
 
-  /** The queue line's wait, each second; the screen again once Play against bots is offered. */
+  /** The party's wait, each second; the screen again once Play against bots is offered. */
   const tickTeamQueue = (): void => {
     const current = teamQueue;
     if (current === undefined || current.parked !== undefined || lobby !== current.party) {
@@ -1714,9 +1879,6 @@ async function main(): Promise<void> {
       return;
     }
     syncParty(snapshot);
-    for (const label of document.querySelectorAll(".party-queued")) {
-      label.textContent = lookingLabel(snapshot.mode, snapshot.teamSize, queuedMs, current.teams);
-    }
     if (!current.playBotsShown && queuedMs >= PLAY_BOTS_AFTER_MS) {
       current.playBotsShown = true;
       redrawRail();
@@ -1805,6 +1967,7 @@ async function main(): Promise<void> {
           } else if (state.kind === "unreachable") {
             current.teams = undefined;
           }
+          paintQueue();
         },
         onLobby: (joined, host) => {
           if (teamQueue !== current || current.parked !== undefined || lobby !== current.party) {
@@ -1816,7 +1979,12 @@ async function main(): Promise<void> {
           lobby = undefined;
           closeChat();
           hosted = host;
-          seatLobby(name, joined, entrant);
+          seatLobby(name, joined, entrant, true);
+          // Found (#2743): the tab says so, and an editor goes as its Back would.
+          stopTeamFlash = flashTitle(document);
+          if (editor !== undefined || teamEditor !== undefined) {
+            showMenu();
+          }
           // Its match is the queue's end: the party lobby waits again,
           // as each member finds it back from the match.
           joined.onMatchStarting(() => {
@@ -1858,6 +2026,7 @@ async function main(): Promise<void> {
     const matchRoom = lobby;
     const matchHost = hosted;
     lobby = undefined;
+    syncShares();
     hosted = undefined;
     closeChat();
     void (async () => {
@@ -1891,22 +2060,23 @@ async function main(): Promise<void> {
     }
     teamQueue = undefined;
     clearInterval(ending.timer);
+    stopTeamFlash?.();
+    stopTeamFlash = undefined;
     ending.place?.leave();
     ending.pressed?.board.close();
     unpark(ending);
     if (lobby === ending.party && ending.party.getSnapshot().isHost) {
       ending.party.leaveQueue();
     }
+    paintQueue();
   };
 
   /** The rail and the title bar name `snapshot`'s party, or none (#1526). */
   const syncParty = (snapshot: LobbySnapshot | undefined): void => {
-    const party =
-      snapshot === undefined
-        ? undefined
-        : partyOf(snapshot, queuedMsOf(snapshot), teamQueue?.teams);
+    const party = snapshot === undefined ? undefined : partyOf(snapshot, queuedMsOf(snapshot));
     setRailParty(party);
     topbarView.setParty(party);
+    paintQueue();
     topbarView.setLobby(
       snapshot === undefined
         ? undefined
@@ -1948,7 +2118,7 @@ async function main(): Promise<void> {
     if (queue !== undefined) {
       // A queued lobby has nothing to choose: it is the versus splash.
       setStatus("match found", "online");
-      queue.screen.show({ kind: "splash", snapshot });
+      queue.screen?.show({ kind: "splash", snapshot });
       return;
     }
     syncParty(snapshot);
@@ -2035,7 +2205,7 @@ async function main(): Promise<void> {
     const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
     const team = self?.team ?? null;
     const stage = snapshot.teamLobby?.stage;
-    if (snapshot.teamSize !== 1 || team === null || stage === undefined) {
+    if (snapshot.teamSize !== 1 || team === null || team === 2 || stage === undefined) {
       picks.soloProposed = undefined;
       picks.soloClaimed = false;
       return;
@@ -2164,12 +2334,88 @@ async function main(): Promise<void> {
    * Show `joined`, coded or queued, and play its matches as `name` with
    * `entrant`'s build, every one of them (#1070).
    */
-  const seatLobby = (name: string, joined: LobbyConnection, entrant: Entrant): void => {
+  /** Lobbies the queue found (#2745): nobody in them chose the others, so nothing is shared. */
+  const matchmadeLobbies = new WeakSet<LobbyConnection>();
+  /** The coded lobby shares come from and go to, `undefined` outside one. */
+  let sharesLobby: LobbyConnection | undefined;
+
+  /**
+   * Shared tracks follow the lobby (#2745): every share and the one
+   * playing go with a lobby left; a sender who left takes their row; this
+   * player shares while another human is in their coded lobby.
+   */
+  const syncShares = (): void => {
+    const current = lobby !== undefined && !matchmadeLobbies.has(lobby) ? lobby : undefined;
+    if (current !== sharesLobby) {
+      sharesLobby = current;
+      sharedTracks.clear();
+      music().playShared(null);
+    }
+    if (current === undefined) {
+      sharedTracks.setSender(null);
+      return;
+    }
+    const snapshot = current.getSnapshot();
+    const others = new Set(
+      snapshot.players
+        .filter((player) => !player.bot && player.sessionId !== snapshot.selfSessionId)
+        .map((player) => player.sessionId),
+    );
+    sharedTracks.keep(others);
+    sharedTracks.setSender(
+      others.size === 0
+        ? null
+        : (trackId, source) => {
+            current.shareTrack(trackId, source);
+          },
+    );
+  };
+
+  /** A match starting stops a share playing: its host goes, a fresh one plays the match's music. */
+  const stopShare = (): void => {
+    sharedTracks.setPlaying(null);
+    music().playShared(null);
+  };
+
+  const seatLobby = (
+    name: string,
+    joined: LobbyConnection,
+    entrant: Entrant,
+    matchmade: boolean,
+  ): void => {
     lobby = joined;
     lobbyEntrant = entrant;
     lobbyName = name;
     lobbyNotice = undefined;
+    if (matchmade) {
+      matchmadeLobbies.add(joined);
+    }
+    syncShares();
     mountLobbyChat(joined);
+    // A share from a member of the lobby on now, a coded one (#2745).
+    joined.onSharedTrack((share) => {
+      if (lobby !== joined || matchmade) {
+        return;
+      }
+      const snapshot = joined.getSnapshot();
+      const sender = snapshot.players.find(
+        (player) => player.sessionId === share.from && !player.bot,
+      );
+      if (sender === undefined || share.from === snapshot.selfSessionId) {
+        return;
+      }
+      sharedTracks.add({
+        from: share.from,
+        name: sender.name,
+        trackId: share.trackId,
+        source: share.source,
+      });
+    });
+    joined.onShareThrottled(() => {
+      if (lobby === joined) {
+        toast(t("music.shareThrottled"));
+      }
+    });
     // A lobby out of sight says nothing to the chat.
     joined.onChat((line) => {
       if (lobby === joined) {
@@ -2178,7 +2424,7 @@ async function main(): Promise<void> {
     });
     joined.onChatThrottled(() => {
       if (lobby === joined) {
-        chat?.notice("Slow down: your last lines were not sent.");
+        chat?.notice(t("app.chatThrottled"));
       }
     });
     // Whose relay it goes through, and how many it shares with, redraw it (#2531).
@@ -2190,6 +2436,9 @@ async function main(): Promise<void> {
     // A lobby this tab has left says nothing more to it; a party lobby
     // out of sight while its match is up still queues (#1766).
     joined.onChange(() => {
+      if (lobby === joined) {
+        syncShares();
+      }
       if (lobby === joined || teamQueue?.party === joined) {
         syncTeamQueue(joined);
       }
@@ -2236,6 +2485,8 @@ async function main(): Promise<void> {
       // Only players on a team are sent this; a spectator stays here.
       if (lobby === joined) {
         void enterMatch(name, start, lobbyEntrant ?? entrant);
+      } else {
+        console.warn("[web] a match started in a lobby this page has left");
       }
     });
     const hostMove = watchHostMove(joined);
@@ -2253,6 +2504,7 @@ async function main(): Promise<void> {
       }
       // From the lobby or from its match: either way, it is over.
       lobby = undefined;
+      syncShares();
       hosted = undefined;
       lobbyEntrant = undefined;
       closeChat();
@@ -2311,6 +2563,7 @@ async function main(): Promise<void> {
     const leavingLobby = lobby;
     const ending = hosted;
     lobby = undefined;
+    syncShares();
     hosted = undefined;
     closeChat();
     const teamSize = queue === undefined ? 1 : teamSizeOf(queue.mode);
@@ -2478,6 +2731,7 @@ async function main(): Promise<void> {
       return;
     }
     enteringMatch = true;
+    stopShare();
     lobbyNotice = undefined;
     showViewport(true);
     setStatus("watching…", "offline");
@@ -2487,7 +2741,7 @@ async function main(): Promise<void> {
         {
           onConnectionChange: (state) => {
             if (state === "lost") {
-              void exitMatch(LOST_MATCH_NOTICE);
+              void exitMatch(t("app.lostMatch"));
             }
           },
           onLeave: () => {
@@ -2505,7 +2759,7 @@ async function main(): Promise<void> {
       console.error("[web] could not watch the match", error);
       enteringMatch = false;
       if (lobby !== undefined) {
-        lobbyNotice = matchFailureNotice(error) ?? LOST_MATCH_NOTICE;
+        lobbyNotice = matchFailureNotice(error) ?? t("app.lostMatch");
       }
       showMenu();
     }
@@ -2521,6 +2775,7 @@ async function main(): Promise<void> {
       return;
     }
     enteringMatch = true;
+    stopShare();
     menuNotice = undefined;
     lobbyNotice = undefined;
     clearQueuedEnd();
@@ -2537,7 +2792,7 @@ async function main(): Promise<void> {
               // The host is gone: the arena is frozen for good, so there
               // is nothing to stay for.
               setStatus("disconnected", "error");
-              void exitMatch(LOST_MATCH_NOTICE);
+              void exitMatch(t("app.lostMatch"));
             }
           },
           onLeave: () => {
@@ -2586,7 +2841,7 @@ async function main(): Promise<void> {
       setStatus("", "online");
       // Said once, on the match screen: the lobby's went with it.
       if (start.teamPlanRejected) {
-        toast(TEAM_PLAN_REJECTED_NOTICE);
+        toast(t("session.teamPlanRejected"));
       }
     } catch (error) {
       console.error("[web] could not enter match", error);
@@ -2594,7 +2849,7 @@ async function main(): Promise<void> {
       if (isStaleChunkError(error)) {
         void buildWatch?.chunkFailed();
       }
-      const notice = matchFailureNotice(error) ?? LOST_MATCH_NOTICE;
+      const notice = matchFailureNotice(error) ?? t("app.lostMatch");
       // Back to the lobby. If it closed while this was joining, closing it
       // already took the player to the menu, and said why. A queued
       // lobby has no screen of its own to go back to.
@@ -2687,15 +2942,15 @@ async function main(): Promise<void> {
   const takeFragmentLinks = (): void => {
     const invited = takeLobbyLink();
     if (invited.kind === "malformed") {
-      toast(NOT_A_KEY_MESSAGE);
+      toast(t("session.notAKey"));
     } else if (invited.kind === "invite" && !topbarView.invite(invited.code)) {
-      toast(INVITE_IN_LOBBY_NOTICE);
+      toast(t("app.inviteInLobby"));
     }
     const pasted = takeRelayLink();
     if (pasted.kind === "malformed") {
-      toast(MALFORMED_RELAY_LINK_NOTICE);
+      toast(t("app.malformedRelayLink"));
     } else if (pasted.kind === "config" && framed) {
-      toast(FRAMED_RELAY_LINK_NOTICE);
+      toast(t("app.framedRelayLink"));
     } else if (pasted.kind === "config") {
       openRelayPrompt(app, pasted.relay, loadRelay());
     }

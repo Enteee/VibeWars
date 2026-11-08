@@ -112,7 +112,7 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(guestLabel).toHaveText("Your lobby");
     const ownInvite = await copyInvite(guest);
     // Alone, the host's Lobby counts nobody, and its window says so (#2385).
-    await expect(host.locator("#topbar .topbar-badge")).toBeHidden();
+    await expect(host.locator("#topbar .topbar-lobby-button .topbar-badge")).toBeHidden();
     await expect(await lobbyWindow(host)).toContainText("Just you.");
 
     await joinByCode(guest, hostInvite);
@@ -120,7 +120,7 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(guestLabel).toHaveText("Lobby");
     await expect(leave).toBeVisible();
     await shutLobbyWindow(guest);
-    await expect(host.locator("#topbar .topbar-badge")).toHaveText("2");
+    await expect(host.locator("#topbar .topbar-lobby-button .topbar-badge")).toHaveText("2");
     await expect((await lobbyWindow(host)).locator(".party-member")).toHaveCount(2);
     // A party queues in card 4: alone only.
     await expect(guest.locator("#topbar .screen-ready")).toBeDisabled();
@@ -169,7 +169,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await debugger_.send("Debugger.pause");
     await joinByCode(guest, hostInvite);
     await guest.locator("#topbar .screen-ready").click();
-    await expect(guest.locator(".queue-count")).toBeVisible();
+    await expect(guest.locator("#topbar .topbar-queue")).toBeVisible();
 
     // The host answers: the join lands late, and is let go.
     await debugger_.send("Debugger.resume");
@@ -177,7 +177,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await host.waitForTimeout(3_000);
     await expect(hostLobbyWindow.locator(".party-member")).toHaveCount(0);
     await expect(hostLobbyWindow).toContainText("Just you.");
-    await expect(guest.locator(".queue-count")).toContainText("searching");
+    await expect(guest.locator("#topbar .topbar-queue")).toBeVisible();
   } finally {
     await context.close();
   }
@@ -296,12 +296,15 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   await expect(own).toHaveText(["Ready"]);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
-  // Lobby sits between Options and Music (#2385).
+  // Lobby sits between Options and Music (#2385); the queue icon, before
+  // Help, hides while nothing is queued (#2743).
+  await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
   expect(
     await page
       .locator("#topbar .topbar-actions > button")
       .evaluateAll((buttons) => buttons.map((node) => node.getAttribute("class") ?? "")),
   ).toEqual([
+    "topbar-queue",
     "topbar-help",
     "topbar-options",
     "topbar-lobby-button",

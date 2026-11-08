@@ -26,7 +26,10 @@
  * - At start and at stop, every offline runner with our host's name and
  *   our label that is not one of ours alive is deleted: what a host crash
  *   leaves behind.
- * - `VIBEWARS_MAX_RUNNERS` of 0, its default, makes no GitHub call at all.
+ * - `company.json`'s `maxRunners` (#2764), asked by `claude-llc-init`, is
+ *   read once at start: changing it takes a supervisor restart, and
+ *   `company runners <n>` is the live knob below it. Missing or malformed,
+ *   the supervisor exits; 0 makes no GitHub call at all.
  *
  * GitHub calls run one at a time, with the runners' own `GH_CONFIG_DIR`
  * (`claude-llc auth runners`) and nothing of the company's. A missing or
@@ -44,6 +47,13 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import { releaseLock, takeLock } from "./instance-lock.mjs";
+import {
+  RUNNER_NAME,
+  openRunnerLog,
+  pruneRunnerLogs,
+  redactWindow,
+  runnerLogDir,
+} from "./runner-logs.mjs";
 import {
   STATUS_FILE,
   ensureStateDir,
@@ -126,7 +136,7 @@ export class ApiError extends Error {
  * @typedef {object} Deps
  * @property {() => number} now
  * @property {Api} api
- * @property {(jitconfig: string) => Launched} launch
+ * @property {(jitconfig: string, name: string) => Launched} launch
  * @property {Host} host
  * @property {() => { n: number, reason: string | null }} readTarget
  * @property {(status: import("./runners-state.mjs").RunnersStatus) => void} writeStatus
@@ -167,6 +177,14 @@ function credentialRefused(error) {
 }
 
 /**
+ * @param {number} bytes
+ * @returns {string} GiB, one decimal
+ */
+function gib(bytes) {
+  return (bytes / 1024 ** 3).toFixed(1);
+}
+
+/**
  * The state machine. `tick` reconciles once and is never run twice at a
  * time; `stop` is the clean shutdown.
  */
@@ -186,6 +204,8 @@ export class RunnerSupervisor {
     this.reconciled = false;
     /** @type {string | null} the last refusal or back-off, as the status says it */
     this.reason = null;
+    /** @type {string | null} the kind of host refusal last logged, so a new number is not news */
+    this.reasonKind = null;
     /** @type {string | null} why the back-off runs, while it does */
     this.backoffReason = null;
     /** @type {string | null} */
@@ -251,7 +271,8 @@ export class RunnerSupervisor {
       }
       return { value: result };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      // A GitHub error can echo what it was sent: no token reaches a log.
+      const message = redactWindow(error instanceof Error ? error.message : String(error));
       if (credentialRefused(error)) {
         if (this.alert === null) {
           this.deps.log(`runners: ${CREDENTIAL_ALERT} (${message})`);
@@ -338,7 +359,7 @@ export class RunnerSupervisor {
     this.observeLoad();
     this.reason = read.reason ?? (now() < this.retryAt ? this.backoffReason : null);
     if (config.max === 0) {
-      this.reason = "runners are off: VIBEWARS_MAX_RUNNERS is 0";
+      this.reason = "runners are off: maxRunners is 0 (claude-llc-init)";
       this.writeStatus();
       return;
     }
@@ -389,6 +410,10 @@ export class RunnerSupervisor {
       if ((await this.call("setVariable", () => this.deps.api.setVariable(on))) !== null) {
         this.variable = on;
       }
+    }
+    if (!(this.reason ?? "").startsWith("not starting a runner: ")) {
+      // The host let one start, or none was wanted: the next refusal is news.
+      this.reasonKind = null;
     }
     this.writeStatus();
   }
@@ -472,8 +497,13 @@ export class RunnerSupervisor {
       this.reason = disk;
       return false;
     }
-    if (host.freeBytes() < config.memoryBytes + MEMORY_HEADROOM) {
-      this.overloaded("host memory is short");
+    const free = host.freeBytes();
+    const needed = config.memoryBytes + MEMORY_HEADROOM;
+    if (free < needed) {
+      this.overloaded(
+        "memory",
+        `host memory ${gib(free)} GiB free is below the ${gib(needed)} GiB a runner needs`,
+      );
       return false;
     }
     // The agents alone can hold the load high for hours; with no runner up,
@@ -481,9 +511,10 @@ export class RunnerSupervisor {
     // them, load or not (memory still gates it).
     const loaded = this.loadRefusal();
     if (loaded !== null && !(await this.starving())) {
-      this.overloaded(loaded);
+      this.overloaded("load", loaded);
       return false;
     }
+    this.reasonKind = null;
     if (now() < this.retryAt) {
       return false;
     }
@@ -498,7 +529,7 @@ export class RunnerSupervisor {
       await this.call("remove", () => api.remove(minted.value.id));
       return false;
     }
-    const launched = launch(minted.value.jitconfig);
+    const launched = launch(minted.value.jitconfig, name);
     /** @type {Runner} */
     const runner = {
       name,
@@ -516,12 +547,19 @@ export class RunnerSupervisor {
     return true;
   }
 
-  /** @param {string} why */
-  overloaded(why) {
-    if (this.reason !== `not starting a runner: ${why}`) {
-      this.deps.log(`runners: not starting a runner: ${why}`);
-    }
+  /**
+   * The host refused a runner. Logged when the kind of refusal changes, not
+   * on every new number; the status always has the numbers.
+   *
+   * @param {"memory" | "load"} kind
+   * @param {string} why
+   */
+  overloaded(kind, why) {
     this.reason = `not starting a runner: ${why}`;
+    if (this.reasonKind !== kind) {
+      this.deps.log(`runners: ${this.reason}`);
+    }
+    this.reasonKind = kind;
   }
 
   /**
@@ -893,17 +931,26 @@ export const LIFELINE_FD = 3;
  * closes it, and the launcher stops its runner. A restarted supervisor
  * never finds the last one's runners still going.
  *
+ * Its stdout and stderr go to its log, line by line (#2729), ended by
+ * `exited <code>`; without a log, nowhere. The JIT config is on stdin
+ * alone, so it never reaches either.
+ *
  * @param {string} command
  * @param {string[]} args
  * @param {Record<string, string>} env
  * @param {string} jitconfig
+ * @param {import("./runner-logs.mjs").RunnerLogWriter | null} [log]
  * @returns {Launched}
  */
-export function spawnLauncher(command, args, env, jitconfig) {
+export function spawnLauncher(command, args, env, jitconfig, log = null) {
   const child = spawn(command, args, {
     env,
-    stdio: ["pipe", "inherit", "inherit", "pipe"],
+    stdio: ["pipe", log === null ? "ignore" : "pipe", log === null ? "ignore" : "pipe", "pipe"],
   });
+  child.stdout?.setEncoding("utf8");
+  child.stderr?.setEncoding("utf8");
+  child.stdout?.on("data", (/** @type {string} */ chunk) => log?.write("out", chunk));
+  child.stderr?.on("data", (/** @type {string} */ chunk) => log?.write("err", chunk));
   child.stdin.once("error", () => {
     // A launcher that exits before it reads, or never starts, breaks the
     // pipe: that is its exit, which `exited` reports, not this one's crash.
@@ -915,10 +962,14 @@ export function spawnLauncher(command, args, env, jitconfig) {
   return {
     exited: new Promise((resolve) => {
       child.once("error", () => {
+        log?.end(1);
         resolve(1);
       });
       child.once("exit", (code, signal) => {
-        resolve(code ?? (signal === null ? 1 : 128));
+        const exit = code ?? (signal === null ? 1 : 128);
+        // What its runner still prints after this is not the launcher's.
+        log?.end(exit);
+        resolve(exit);
       });
     }),
     kill: () => child.kill("SIGTERM"),
@@ -956,7 +1007,6 @@ if (
     console.error(`runner-supervisor: another holds ${lock}; not starting a second`);
     process.exit(1);
   }
-  const max = maxRunners(env);
   const cap = {
     cpus: positive(env.VIBEWARS_RUNNER_CPUS, 2),
     memoryGib: positive(env.VIBEWARS_RUNNER_MEMORY_GIB, 6),
@@ -976,13 +1026,40 @@ if (
     console.error("runner-supervisor: company.json names no repository");
     process.exit(1);
   }
+  const max = maxRunners(company);
+  if (max === null) {
+    console.error("runner-supervisor: company.json has no maxRunners; re-run claude-llc-init");
+    process.exit(1);
+  }
   const gh = ghEnv(env, path.join(credentials, "runners-gh"));
   const launcherEnv = launcherEnvOf(env, scratch);
+  const logs = runnerLogDir(root);
+  fs.mkdirSync(logs, { recursive: true, mode: 0o700 });
   const supervisor = new RunnerSupervisor({
     now: () => Date.now(),
     api: githubApi(repo, gh),
-    launch: (jitconfig) =>
-      spawnLauncher("vibewars-runner-jail", launcherArgs(cap), launcherEnv, jitconfig),
+    launch: (jitconfig, name) => {
+      if (!RUNNER_NAME.test(name)) {
+        // Never a path: a name this cannot file is run without a log.
+        console.error(`runners: ${name} is no log name; its output is dropped`);
+        return spawnLauncher("vibewars-runner-jail", launcherArgs(cap), launcherEnv, jitconfig);
+      }
+      const log = openRunnerLog(path.join(logs, `${name}.log`), {
+        onError: (error) => {
+          console.error(
+            `runners: ${name}: its log stopped: ${error instanceof Error ? error.message : "failed"}`,
+          );
+        },
+      });
+      try {
+        pruneRunnerLogs(logs, new Set([...supervisor.runners.keys(), name]));
+      } catch (error) {
+        console.error(
+          `runners: could not prune runner logs: ${error instanceof Error ? error.message : "failed"}`,
+        );
+      }
+      return spawnLauncher("vibewars-runner-jail", launcherArgs(cap), launcherEnv, jitconfig, log);
+    },
     host: {
       freeBytes: () => os.freemem(),
       load1: () => os.loadavg()[0] ?? 0,

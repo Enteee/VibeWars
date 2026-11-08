@@ -1,19 +1,9 @@
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { t } from "../i18n/index.js";
 import { LOBBY_ICON } from "./icons.js";
 
-import {
-  PARTY_ALONE,
-  PARTY_CLOSED,
-  PARTY_RECONNECTING,
-  isAlone,
-  lobbyWindowBody,
-  lookingLabel,
-  memberClass,
-  partyOf,
-  queueLine,
-  showsClosed,
-} from "./lobby-window.js";
+import { isAlone, lobbyWindowBody, memberClass, partyOf, showsClosed } from "./lobby-window.js";
 
 /** Just enough of an element for the window and the queue line: its tag, class, picture and parts. */
 class FakeElement {
@@ -124,7 +114,6 @@ describe("the Lobby window's party (#1526, #2385)", () => {
         player("me"),
       ]),
       null,
-      undefined,
     );
     expect(party).toEqual({
       code: "ACDEFG",
@@ -137,19 +126,13 @@ describe("the Lobby window's party (#1526, #2385)", () => {
         { id: "me", name: "me", isHost: false, self: true, away: false },
       ],
       queuedMs: null,
-      teams: undefined,
-      ascentRound: null,
       inMatch: false,
     });
     expect(isAlone(party)).toBe(false);
   });
 
   it("greys a member whose connection dropped, and says it is reconnecting (#1764)", () => {
-    const party = partyOf(
-      lobby([player("me"), player("friend", { away: true, team: 1 })]),
-      null,
-      undefined,
-    );
+    const party = partyOf(lobby([player("me"), player("friend", { away: true, team: 1 })]), null);
     const [me, friend] = party.members;
     if (me === undefined || friend === undefined) {
       throw new Error("two members");
@@ -157,21 +140,19 @@ describe("the Lobby window's party (#1526, #2385)", () => {
     expect(friend.away).toBe(true);
     expect(memberClass(friend)).toBe("party-member is-away");
     expect(memberClass(me)).toBe("party-member is-self");
-    expect(PARTY_RECONNECTING).toBe("Reconnecting…");
+    expect(t("lobbyWindow.reconnecting")).toBe("Reconnecting…");
     // Still in the party: it may yet come back.
     expect(isAlone(party)).toBe(false);
   });
 
   it("is alone with only bots for company, and with no lobby at all", () => {
-    expect(
-      isAlone(partyOf(lobby([player("me"), player("Bot", { bot: true })]), null, undefined)),
-    ).toBe(true);
+    expect(isAlone(partyOf(lobby([player("me"), player("Bot", { bot: true })]), null))).toBe(true);
     expect(isAlone(undefined)).toBe(true);
   });
 
   it("tells a guest its host has the lobby closed, and nothing while open; the host never (#1682)", () => {
     const party = (isHost: boolean, open: boolean) =>
-      showsClosed({ ...partyOf(lobby([player("me")]), null, undefined), isHost, open });
+      showsClosed({ ...partyOf(lobby([player("me")]), null), isHost, open });
     expect(party(false, false)).toBe(true);
     expect(party(false, true)).toBe(false);
     expect(party(true, false)).toBe(false);
@@ -180,7 +161,7 @@ describe("the Lobby window's party (#1526, #2385)", () => {
   it("puts the host's closed padlock before a guest's Lobby closed (#2382)", () => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
     const guest = {
-      ...partyOf(lobby([player("me")]), null, undefined),
+      ...partyOf(lobby([player("me")]), null),
       isHost: false,
       open: false,
     };
@@ -191,35 +172,26 @@ describe("the Lobby window's party (#1526, #2385)", () => {
       LOBBY_ICON.closed,
       "",
     ]);
-    expect(text).toBe(PARTY_CLOSED);
+    expect(text).toBe(t("lobbyWindow.closed"));
   });
 
   it("says it is just you (#2385, #2642)", () => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
-    expect(PARTY_ALONE).toBe("Just you.");
-    const alone = lobbyWindowBody(partyOf(lobby([player("me")]), null, undefined), () => undefined);
+    expect(t("lobbyWindow.alone")).toBe("Just you.");
+    const alone = lobbyWindowBody(partyOf(lobby([player("me")]), null), () => undefined);
     expect((alone as unknown as FakeElement).find("lobby-window-alone")?.textContent).toBe(
-      PARTY_ALONE,
+      t("lobbyWindow.alone"),
     );
     const none = lobbyWindowBody(undefined, () => undefined) as unknown as FakeElement;
-    expect(none.find("lobby-window-alone")?.textContent).toBe(PARTY_ALONE);
+    expect(none.find("lobby-window-alone")?.textContent).toBe(t("lobbyWindow.alone"));
   });
 
-  it("leaves the queue's wait to the mode screen's line, shown only while queued (#1766, #2385)", () => {
+  it("says how long a queued party has looked, and leaves the queue itself to the top bar's icon (#1766, #2743)", () => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
-    const queued = {
-      ...partyOf(lobby([player("me"), player("Ann")]), 65_000, 2),
-      ascentRound: 1,
-    };
-    expect(queueLine({ ...queued, queuedMs: null })).toBeUndefined();
-    const line = queueLine(queued) as unknown as FakeElement;
-    expect(line.className).toBe("party-status");
-    expect(line.find("party-ascent")).toBeDefined();
-    expect(line.find("party-queued")?.textContent).toBe(
-      lookingLabel(queued.mode, queued.teamSize, 65_000, 2),
-    );
+    const queued = partyOf(lobby([player("me"), player("Ann")]), 65_000);
+    expect(queued.queuedMs).toBe(65_000);
     const body = lobbyWindowBody(queued, () => undefined) as unknown as FakeElement;
-    expect([body.find("party-queued"), body.find("party-ascent")]).toEqual([undefined, undefined]);
+    expect([body.find("party-status"), body.find("party-queued")]).toEqual([undefined, undefined]);
   });
 
   it("gives the host an (x) by each other member, not its own row, and none in a match (#2746)", () => {
@@ -232,7 +204,7 @@ describe("the Lobby window's party (#1526, #2385)", () => {
     ];
     const hosting = { ...lobby(players), isHost: true, hostId: "me" };
     const removed: string[] = [];
-    const body = lobbyWindowBody(partyOf(hosting, null, undefined), (member) => {
+    const body = lobbyWindowBody(partyOf(hosting, null), (member) => {
       removed.push(member.id);
     }) as unknown as FakeElement;
     const buttons = body.findAll("party-member-remove");
@@ -243,7 +215,7 @@ describe("the Lobby window's party (#1526, #2385)", () => {
     buttons[1]?.listeners.get("click")?.();
     expect(removed).toEqual(["Bo"]);
 
-    const inMatch = partyOf({ ...hosting, phase: "in-match" }, null, undefined);
+    const inMatch = partyOf({ ...hosting, phase: "in-match" }, null);
     expect(
       (lobbyWindowBody(inMatch, () => undefined) as unknown as FakeElement).findAll(
         "party-member-remove",
@@ -253,36 +225,8 @@ describe("the Lobby window's party (#1526, #2385)", () => {
 
   it("gives a guest no (x) (#2746)", () => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
-    const guest = partyOf(lobby([player("host", { isHost: true }), player("me")]), null, undefined);
+    const guest = partyOf(lobby([player("host", { isHost: true }), player("me")]), null);
     const body = lobbyWindowBody(guest, () => undefined) as unknown as FakeElement;
     expect(body.findAll("party-member-remove")).toEqual([]);
-  });
-
-  it("says how long a queued party has looked for a team (#1766)", () => {
-    expect(partyOf(lobby([player("me")]), 65_000, 2)).toMatchObject({ queuedMs: 65_000, teams: 2 });
-    expect(lookingLabel("gvg", 8, 65_000, undefined)).toBe("Looking for a team… 1:05");
-  });
-
-  it("carries a queued Heroes' Ascent party's round from its lobby (#1996)", () => {
-    const queued = { ...lobby([player("me")]), phase: "queued", ascentRound: 1 } as const;
-    expect(partyOf(queued, 5_000, 1).ascentRound).toBe(1);
-  });
-
-  it("says how many teams are searching, its own included (#1881)", () => {
-    expect(lookingLabel("gvg", 8, 65_000, 1)).toBe("Looking for a team… 1:05 · 1 team searching");
-    expect(lookingLabel("gvg", 8, 65_000, 2)).toBe("Looking for a team… 1:05 · 2 teams searching");
-  });
-
-  it("names a Team Arena's size (#2107)", () => {
-    expect(lookingLabel("team-arena", 2, 65_000, undefined)).toBe(
-      "Team Arena 2v2 — searching… 1:05",
-    );
-    expect(lookingLabel("team-arena", 8, 65_000, 2)).toBe(
-      "Team Arena 8v8 — searching… 1:05 · 2 teams searching",
-    );
-  });
-
-  it("says the time alone before the queue has heard a team, a follower's own leader included (#1881)", () => {
-    expect(lookingLabel("gvg", 8, 65_000, 0)).toBe("Looking for a team… 1:05");
   });
 });

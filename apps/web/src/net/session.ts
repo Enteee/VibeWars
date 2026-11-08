@@ -2,7 +2,6 @@ import { MATCH_MODES, createRng, type PlayerBuild } from "@vibewars/game-core";
 import {
   FORMATION_TIMEOUT_MS,
   MAX_LOBBY_PLAYERS,
-  PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   isLobbyCode,
   isTeamQueueMode,
@@ -46,9 +45,18 @@ import {
   type TicketKey,
 } from "@vibewars/game-session";
 
-import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
+import { isStaleChunkError } from "../build-check.js";
+import { TRACKS } from "../music/tracks/index.js";
+import { t, type MessageKey } from "../i18n/index.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
-import { arenaIds, hostMap, mapTeamSizes, modeMapIds, queueMapPool } from "./maps.js";
+import {
+  arenaIds,
+  hostMap,
+  mapTeamSizes,
+  modeMapIds,
+  queueMapPool,
+  queueTeamCount,
+} from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
 import {
   checkTransportNat,
@@ -85,15 +93,6 @@ export const JOIN_TIMEOUT_MS = 20_000;
 /** How long a seated player waits for the match host to let them in. */
 const MATCH_TIMEOUT_MS = 10_000;
 
-/**
- * #15's wording: a wrong key, an unreachable host and a closed, empty
- * lobby, whose host is in no room (#1682), cannot be told apart.
- */
-export const NO_ANSWER_MESSAGE =
-  "Couldn't reach that lobby. Check the invite link, and ask the host to open it.";
-/** Not a 43-character lobby key (#2100). Nothing was sent anywhere. */
-export const NOT_A_KEY_MESSAGE = "That invite link is broken.";
-
 /** What was given cannot be a lobby key, so it was never looked for (#1681). */
 export class NotALobbyKeyError extends Error {
   public constructor() {
@@ -101,48 +100,6 @@ export class NotALobbyKeyError extends Error {
     this.name = "NotALobbyKeyError";
   }
 }
-/** No relay socket opened: the joiner never got as far as looking (#707). */
-export const NO_RELAY_MESSAGE = "Couldn't reach the lobby servers. Check your internet connection.";
-/** A host was found and offered a connection that never came up (#707). */
-export const PEER_UNREACHABLE_MESSAGE =
-  "Found the lobby, but couldn't connect to its host. One of your networks blocks direct connections.";
-/** Its second line when no TURN relay is saved (#972). */
-export const TURN_RELAY_HINT =
-  "A TURN relay link from a friend can fix this: open it, or enter the relay in Options.";
-export const LOBBY_FULL_MESSAGE = "That lobby is full.";
-/** A Team Arena whose party has as many players as a side (#2107). */
-export const PARTY_FULL_MESSAGE = "Party is full.";
-/** Told only after the key proof (#1682): a closed lobby with guests is still in its room. */
-export const LOBBY_CLOSED_MESSAGE = "That lobby is closed. Ask the host to open it.";
-export const HOST_CLOSED_MESSAGE = "The host closed the lobby.";
-/** Its host removed this player (#2746), and keeps them out of that lobby. */
-export const REMOVED_MESSAGE = "The host removed you from the lobby.";
-/** True whichever side dropped: a guest cannot tell its own drop from the host's. */
-export const CONNECTION_LOST_MESSAGE = "Lost the connection to the host.";
-/** A queued lobby (#871) turned this ticket away: its proof did not hold, or it is seated already. */
-export const NOT_ADMITTED_MESSAGE = "The match would not let this ticket in.";
-/** A join whose player key the host could not confirm (#2706). */
-export const UNPROVEN_MESSAGE = "The lobby could not confirm this browser's player key.";
-export const TICKET_USED_MESSAGE = "This ticket is already in the match, in another tab.";
-/** #854 C7's wording. */
-export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
-/** A queued party's team plan (ADR-0042) was not whole at the start (#1822). */
-export const TEAM_PLAN_REJECTED_NOTICE =
-  "Your party's team plan was not accepted; a preset team plays for you.";
-/** A joined player's ask the host turned down (#1194). */
-export const REFUSED_MESSAGE = "The host turned that down.";
-export const NOT_HOST_MESSAGE = "Only the host can do that.";
-/** A map picked outside a Hosted Game (#1994). */
-export const NOT_PICKABLE_MESSAGE = "Only a Hosted Game lets the host pick the map.";
-/** A Team Lobby's refusals (#1460). */
-export const PROPOSAL_REFUSED_MESSAGE =
-  "That team build cannot be proposed: it needs your side's size and legal builds.";
-export const VOTE_REFUSED_MESSAGE = "That proposal is gone: vote for another.";
-export const SEAT_TAKEN_MESSAGE = "Someone took that seat first.";
-export const SEAT_REFUSED_MESSAGE = "That seat is not one of the chosen team build's.";
-export const ASCENT_LOCKED_MESSAGE =
-  "Locked for this Heroes' Ascent run: your team won with this build.";
-
 /** A lobby hosted in this tab, and how to end it for everyone. */
 export interface HostedLobby {
   readonly lobby: LobbyConnection;
@@ -212,9 +169,13 @@ function startMatch(plan: MatchPlan) {
   if (map === undefined) {
     throw new Error(`no arena named ${JSON.stringify(plan.mapId)}`);
   }
+  if (plan.teamCount > map.descriptor.teamCount) {
+    throw new Error(`${plan.mapId} is not made for ${String(plan.teamCount)} teams`);
+  }
   return createMatchHost({
     transport: plan.transport,
-    map,
+    // A two-team match on a three-team map (#2683) plays, and says, two.
+    map: { ...map, descriptor: { ...map.descriptor, teamCount: plan.teamCount } },
     // A match is reproducible from its seed; the lobby's match id is
     // unique only within the lobby, so the code goes in too.
     seed: `${plan.transport.selfId}:${plan.matchId}`,
@@ -367,6 +328,7 @@ export async function hostLobby(
     code,
     proofKey: lobbyRoom.proofKey,
     mapIds: arenaIds(),
+    trackIds: TRACKS.map((track) => track.id),
     modeMaps: modeMapIds(),
     mapTeamSizes: mapTeamSizes(),
     hostedTeamSize,
@@ -539,8 +501,6 @@ export const STAY_TOGETHER_WINDOW_SECONDS =
  * for its answer: the host's consent window, and the same grace.
  */
 export const PARTY_ANSWER_MS = PARTY_CONSENT_MS + STAY_TOGETHER_GRACE_SECONDS * 1000;
-/** #882's wording, for a party that did not form or did not last. */
-export const TEAM_SPLIT_MESSAGE = "The team split up";
 /**
  * How often the queue client ticks, in seconds of the host clock: often
  * enough that the wait reads smoothly, and a settle window ends close to
@@ -771,6 +731,7 @@ export function enterQueue(
       now: () => Date.now(),
       newTicketKey: () => queue.newTicketKey(),
       mapPool: queueMapPool(mode, ascentRound),
+      teamCount: queueTeamCount(mode, ascentRound),
       hardNat,
     });
     client = started;
@@ -799,14 +760,16 @@ export function enterQueue(
 }
 
 /**
- * The second line of `PEER_UNREACHABLE_MESSAGE` on a page that may have
+ * The last line of an unreachable host's notice on a page that may have
  * come over IPv6 loopback (#707): Firefox gathers no ICE candidates there,
  * and `localhost` goes to `::1` first when something listens on it.
  * Nothing redirects, since saved characters live with the origin and
  * would seem lost.
  */
 export function loopbackHint(port: string): string {
-  return `Firefox can't connect over IPv6 loopback (::1). Open http://127.0.0.1${port === "" ? "" : `:${port}`} instead.`;
+  return t("session.loopbackHint", {
+    address: `http://127.0.0.1${port === "" ? "" : `:${port}`}`,
+  });
 }
 
 /** Hostnames a page may have reached over `::1`. */
@@ -824,49 +787,60 @@ export function joinFailureNotice(
   relayed: boolean,
 ): string {
   if (error instanceof NotALobbyKeyError) {
-    return NOT_A_KEY_MESSAGE;
+    // Not a 43-character lobby key (#2100). Nothing was sent anywhere.
+    return t("session.notAKey");
   }
   if (error instanceof LobbyNoAnswerError) {
     // As far as the join got: past that, a wrong key and an unreachable
     // host still cannot be told apart.
     switch (error.trouble) {
+      // No relay socket opened: the joiner never got as far as looking (#707).
       case "no-relay":
-        return NO_RELAY_MESSAGE;
+        return t("session.noRelay");
+      // A host was found and offered a connection that never came up (#707);
+      // a TURN relay is what fixes it, if none is saved (#972).
       case "peer-unreachable":
         return [
-          PEER_UNREACHABLE_MESSAGE,
-          ...(relayed ? [] : [TURN_RELAY_HINT]),
+          t("session.peerUnreachable"),
+          ...(relayed ? [] : [t("session.turnRelayHint")]),
           ...(IPV6_LOOPBACK_NAMES.includes(where.hostname) ? [loopbackHint(where.port)] : []),
         ].join("\n");
+      // #15's wording: a wrong key, an unreachable host and a closed, empty
+      // lobby, whose host is in no room (#1682), cannot be told apart.
       case null:
-        return NO_ANSWER_MESSAGE;
+        return t("session.noAnswer");
     }
   }
   if (error instanceof LobbyRefusedError) {
     switch (error.reason) {
       case "protocol-mismatch":
-        return PROTOCOL_MISMATCH_MESSAGE;
+        return t("session.protocolMismatch");
       case "lobby-full":
-        return LOBBY_FULL_MESSAGE;
+        return t("session.lobbyFull");
+      // A Team Arena whose party has as many players as a side (#2107).
       case "party-full":
-        return PARTY_FULL_MESSAGE;
+        return t("session.partyFull");
+      // Told only after the key proof (#1682): a closed lobby with guests is still in its room.
       case "closed":
-        return LOBBY_CLOSED_MESSAGE;
+        return t("session.lobbyClosed");
       case "host-left":
-        return HOST_CLOSED_MESSAGE;
+        return t("session.hostClosed");
       case "removed":
-        return REMOVED_MESSAGE;
+        return t("session.removed");
+      // A queued lobby (#871) turned this ticket away: its proof did not hold, or it is seated already.
       case "not-admitted":
-        return NOT_ADMITTED_MESSAGE;
+        return t("session.notAdmitted");
       case "ticket-used":
-        return TICKET_USED_MESSAGE;
+        return t("session.ticketUsed");
+      // A join whose player key the host could not confirm (#2706).
       case "unproven":
-        return UNPROVEN_MESSAGE;
+        return t("session.unproven");
+      // #854 C7's wording.
       case "fell-through":
-        return FELL_THROUGH_MESSAGE;
+        return t("session.fellThrough");
     }
   }
-  return "Could not join the lobby.";
+  return t("session.couldNotJoin");
 }
 
 /** Where a guest's host went (#1553): the key it left for, and who it is. */
@@ -936,7 +910,10 @@ export async function followHost<T>(
     steps.fallBack(
       steps.movedOn()
         ? undefined
-        : `Could not follow ${move.host}: ${joinFailureNotice(error, where, relayed)}`,
+        : t("session.couldNotFollow", {
+            host: move.host,
+            reason: joinFailureNotice(error, where, relayed),
+          }),
     );
     return;
   }
@@ -951,25 +928,27 @@ export async function followHost<T>(
 export function lobbyRefusalNotice(reason: LobbyRefusal): string {
   switch (reason) {
     case "lobby-full":
-      return LOBBY_FULL_MESSAGE;
+      return t("session.lobbyFull");
     case "party-full":
-      return PARTY_FULL_MESSAGE;
+      return t("session.partyFull");
     case "not-host":
-      return NOT_HOST_MESSAGE;
+      return t("session.notHost");
+    // A map picked outside a Hosted Game (#1994).
     case "not-pickable":
-      return NOT_PICKABLE_MESSAGE;
+      return t("session.notPickable");
+    // A Team Lobby's refusals (#1460).
     case "invalid-proposal":
-      return PROPOSAL_REFUSED_MESSAGE;
+      return t("session.proposalRefused");
     case "invalid-vote":
-      return VOTE_REFUSED_MESSAGE;
+      return t("session.voteRefused");
     case "slot-taken":
-      return SEAT_TAKEN_MESSAGE;
+      return t("session.seatTaken");
     case "invalid-slot":
-      return SEAT_REFUSED_MESSAGE;
+      return t("session.seatRefused");
     case "ascent-locked":
-      return ASCENT_LOCKED_MESSAGE;
+      return t("session.ascentLocked");
     default:
-      return REFUSED_MESSAGE;
+      return t("session.refused");
   }
 }
 
@@ -977,15 +956,25 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
 export function lobbyClosedNotice(reason: LobbyClosedReason): string {
   switch (reason) {
     case "host-left":
-      return HOST_CLOSED_MESSAGE;
+      return t("session.hostClosed");
+    // True whichever side dropped: a guest cannot tell its own drop from the host's.
     case "connection-lost":
-      return CONNECTION_LOST_MESSAGE;
+      return t("session.connectionLost");
     case "fell-through":
-      return FELL_THROUGH_MESSAGE;
+      return t("session.fellThrough");
     case "removed":
-      return REMOVED_MESSAGE;
+      return t("session.removed");
   }
 }
+
+/** How each of the match host's refusals reads (the wire carries only the reason). */
+const MATCH_REFUSALS: Readonly<Record<MatchRefusedError["reason"], MessageKey>> = {
+  "protocol-mismatch": "session.protocolMismatch",
+  "match-full": "session.matchFull",
+  "match-over": "session.matchOver",
+  "not-a-spectator": "session.notASpectator",
+  "wrong-match": "session.wrongMatch",
+};
 
 /**
  * What the player is told when the match would not let them in. A
@@ -994,10 +983,10 @@ export function lobbyClosedNotice(reason: LobbyClosedReason): string {
  */
 export function matchFailureNotice(error: unknown): string | undefined {
   if (error instanceof MatchRefusedError) {
-    return error.message;
+    return t(MATCH_REFUSALS[error.reason]);
   }
   if (isStaleChunkError(error)) {
-    return NEW_VERSION_NOTICE;
+    return t("buildBanner.newVersion");
   }
   return undefined;
 }

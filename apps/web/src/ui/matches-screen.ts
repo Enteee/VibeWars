@@ -5,10 +5,11 @@
  */
 
 import { decodeTemplateCode, type MatchEndReason } from "@vibewars/game-core";
+import { LOBBY_MODES, type LobbyMode } from "@vibewars/game-protocol";
 import type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "@vibewars/game-session";
 
+import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
-import { ARENA_MAPS } from "../net/maps.js";
 import type {
   HeardMatchRecord,
   MatchRecordWatch,
@@ -21,8 +22,9 @@ import { professionLabel } from "./character-preview.js";
 import { formatClock } from "./hud.js";
 import { professionIcon } from "./icons.js";
 import { button, h, screenBar, syncList } from "./kit.js";
+import { MATCH_KINDS, MATCH_SIZES, matchesFilter, sessionFilter } from "./matches-filter.js";
 import { playerLabelText } from "./player-label.js";
-import { railLabel, railScreen, type RailEntry } from "./rail.js";
+import { railIconUrl, railLabel, railScreen, type RailEntry } from "./rail.js";
 
 /** The most records the page holds; the oldest goes first. */
 export const MATCHES_KEPT = 100;
@@ -64,10 +66,6 @@ export function relativeTime(endedAt: number, nowSeconds: number): string {
     return t("matches.hoursAgo", { count: Math.floor(ago / 3600) });
   }
   return t("matches.daysAgo", { count: Math.floor(ago / 86_400) });
-}
-
-function mapName(mapId: string): string {
-  return ARENA_MAPS.find((map) => map.id === mapId)?.name ?? mapId;
 }
 
 /** "Won", "Lost" or "Draw", for team `team` of `record`. */
@@ -224,6 +222,61 @@ function matchDetail(
   return detail;
 }
 
+/** A kind's icon, a mask in the kind's colour (#2741). */
+function kindIcon(mode: LobbyMode): HTMLElement {
+  const icon = h("span", "match-kind-icon");
+  icon.setAttribute("aria-hidden", "true");
+  icon.setAttribute("style", `--icon: url("${railIconUrl(mode)}")`);
+  return icon;
+}
+
+/** A chip toggling `value` in `chosen` (#2741); `label` follows its icon. */
+function filterChip<T>(
+  label: string,
+  chosen: Set<T>,
+  value: T,
+  onChange: () => void,
+  mode?: LobbyMode,
+): HTMLButtonElement {
+  const chip = button("", "skill-type-chip match-chip", () => {
+    if (!chosen.delete(value)) {
+      chosen.add(value);
+    }
+    chip.setAttribute("aria-pressed", String(chosen.has(value)));
+    onChange();
+  });
+  chip.setAttribute("aria-pressed", String(chosen.has(value)));
+  if (mode !== undefined) {
+    chip.setAttribute("data-kind", mode);
+    chip.append(kindIcon(mode));
+  }
+  chip.append(h("span", "match-chip-label", label));
+  return chip;
+}
+
+/**
+ * The two chip groups (#2741): kinds, then sizes. Within a group a match
+ * fits any pressed chip; it must fit both groups.
+ */
+function filterChips(onChange: () => void): HTMLElement {
+  const filters = h("div", "match-filters");
+  const kinds = filters.appendChild(h("div", "skill-type-chips match-chip-group"));
+  kinds.setAttribute("role", "group");
+  kinds.setAttribute("aria-label", t("matches.filterKind"));
+  for (const mode of LOBBY_MODES) {
+    kinds.appendChild(filterChip(t(MATCH_KINDS[mode]), sessionFilter.kinds, mode, onChange, mode));
+  }
+  const sizes = filters.appendChild(h("div", "skill-type-chips match-chip-group"));
+  sizes.setAttribute("role", "group");
+  sizes.setAttribute("aria-label", t("matches.filterSize"));
+  for (const size of MATCH_SIZES) {
+    sizes.appendChild(
+      filterChip(t("matches.sizeChip", { size }), sessionFilter.sizes, size, onChange),
+    );
+  }
+  return filters;
+}
+
 /** Each row's "when", which a redraw brings up to date. */
 const rowWhen = new WeakMap<HTMLElement, HTMLElement>();
 
@@ -234,6 +287,7 @@ function matchRow(
 ): HTMLElement {
   const { record } = heard;
   const row = h("li", "match-row");
+  row.setAttribute("data-kind", record.mode);
   const when = h("span", "match-when");
   rowWhen.set(row, when);
   const head = row.appendChild(document.createElement("button"));
@@ -242,6 +296,7 @@ function matchRow(
   head.setAttribute("aria-expanded", "false");
   // The closed row is one scoreboard line (#2585): names wait for the opened row.
   head.append(
+    kindIcon(record.mode),
     h("span", "match-mode", railLabel(record.mode)),
     ...record.teams.flatMap((players, team) => [
       ...(team === 0 ? [] : [h("span", "match-result", resultMark(record))]),
@@ -278,6 +333,11 @@ export function renderMatchesScreen(
 ): MatchesScreen {
   screenBar({ crumbs: ["VibeWars"], status: [], actions: [], join: true });
   const body = railScreen(root, "matches", options.onSwitch);
+  body.appendChild(
+    filterChips(() => {
+      draw();
+    }),
+  );
   const note = body.appendChild(h("p", "matches-note", t("matches.noMatches")));
   const list = body.appendChild(h("ol", "match-list"));
   let records: HeardMatchRecord[] = [];
@@ -285,11 +345,15 @@ export function renderMatchesScreen(
 
   const draw = (): void => {
     const nowSeconds = Math.floor(options.now() / 1000);
-    note.textContent = t(offline ? "matches.offline" : "matches.noMatches");
-    note.hidden = !offline && records.length > 0;
+    // A row the filter hides leaves the list, so it comes back closed.
+    const shown = records.filter((heard) => matchesFilter(heard.record, sessionFilter));
+    note.textContent = t(
+      offline ? "matches.offline" : records.length === 0 ? "matches.noMatches" : "matches.noneFit",
+    );
+    note.hidden = !offline && shown.length > 0;
     syncList(
       list,
-      records,
+      shown,
       (heard) => heard.id,
       (heard) => matchRow(heard, options.onCloneTeam),
       (element, heard) => {

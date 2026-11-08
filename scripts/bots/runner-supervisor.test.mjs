@@ -24,6 +24,7 @@ import {
   parseRunners,
   spawnLauncher,
 } from "./runner-supervisor.mjs";
+import { openRunnerLog } from "./runner-logs.mjs";
 
 const GIB = 1024 ** 3;
 const JIT = "c2VjcmV0LWppdC1jb25maWc=";
@@ -241,7 +242,9 @@ describe("runner supervisor", () => {
     r.host.free = 6 * GIB + MEMORY_HEADROOM - 1;
     await r.supervisor.tick();
     expect(r.launched).toHaveLength(0);
-    expect(r.last()?.reason).toBe("not starting a runner: host memory is short");
+    expect(r.last()?.reason).toBe(
+      "not starting a runner: host memory 8.0 GiB free is below the 8.0 GiB a runner needs",
+    );
     r.host.free = 64 * GIB;
     r.host.load = 17;
     await r.supervisor.tick();
@@ -253,6 +256,45 @@ describe("runner supervisor", () => {
     await r.supervisor.tick();
     expect(r.launched).toHaveLength(1);
     expect(r.last()?.reason).toBeNull();
+  });
+
+  it("logs a host refusal once per kind, not on every new number", async () => {
+    const r = rig();
+    r.host.load = 17;
+    await r.supervisor.tick();
+    r.host.load = 20.5;
+    await r.supervisor.tick();
+    expect(r.last()?.reason).toBe(
+      "not starting a runner: host load 20.5 is above 2 times its 8 CPUs",
+    );
+    r.host.load = 1;
+    r.host.free = GIB;
+    await r.supervisor.tick();
+    r.host.free = 2 * GIB;
+    await r.supervisor.tick();
+    expect(r.logs).toEqual([
+      "runners: not starting a runner: host load 17.0 is above 2 times its 8 CPUs",
+      "runners: not starting a runner: host memory 1.0 GiB free is below the 8.0 GiB a runner needs",
+    ]);
+    r.host.free = 64 * GIB;
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(1);
+    r.host.free = GIB;
+    r.state.target = { n: 2, reason: null };
+    await r.supervisor.tick();
+    expect(r.logs.filter((line) => line.includes("memory"))).toHaveLength(2);
+  });
+
+  it("never logs a token a GitHub error echoes", async () => {
+    const r = rig();
+    const token = `ghs_${"Q".repeat(36)}`;
+    const jit = "eyJyc2FwYXJhbXMiOnsiTW9kdWx1cyI6IjEyMzQ1Njc4OTAifX0=";
+    r.failMint(new ApiError(`POST generate-jitconfig: HTTP 422 ${token} ${jit}`, 422));
+    await r.supervisor.tick();
+    expect(r.logs.join("\n")).toContain("HTTP 422");
+    expect(r.logs.join("\n")).not.toContain(token);
+    expect(r.logs.join("\n")).not.toContain(jit);
+    expect(JSON.stringify(r.statuses)).not.toContain(token);
   });
 
   it("tolerates load up to twice the CPUs for five minutes, then refuses", async () => {
@@ -431,7 +473,7 @@ describe("runner supervisor", () => {
     await r.supervisor.tick();
     await r.supervisor.stop();
     expect(r.calls).toEqual([]);
-    expect(r.last()?.reason).toBe("runners are off: VIBEWARS_MAX_RUNNERS is 0");
+    expect(r.last()?.reason).toBe("runners are off: maxRunners is 0 (claude-llc-init)");
   });
 
   it("shows a refused target as the reason, at 0", async () => {
@@ -514,6 +556,27 @@ describe("launchers", () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
     expect(markers.filter((marker) => fs.existsSync(marker))).toEqual(markers);
+  });
+
+  it("pipes its output, line by line, into its log, ended by its exit", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "launcher-log-"));
+    const file = path.join(dir, "r-1.log");
+    const launched = spawnLauncher(
+      process.execPath,
+      [
+        "-e",
+        "const jit = require('fs').readFileSync(0, 'utf8'); console.log('hello'); console.error('oops'); process.exitCode = 3;",
+      ],
+      {},
+      JIT,
+      openRunnerLog(file),
+    );
+    expect(await launched.exited).toBe(3);
+    const text = fs.readFileSync(file, "utf8");
+    expect(text).toMatch(/^\S+ \[out\] hello$/m);
+    expect(text).toMatch(/^\S+ \[err\] oops$/m);
+    expect(text).toMatch(/\n\S+ exited 3\n$/);
+    expect(text).not.toContain(JIT);
   });
 
   it("one that exits unread, or never starts, is an exit code, not a crash", async () => {

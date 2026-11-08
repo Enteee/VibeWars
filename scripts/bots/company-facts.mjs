@@ -18,7 +18,7 @@ import {
 import { ROLES } from "./hub-policy.mjs";
 import { withJailDir } from "./jail-fs.mjs";
 import { readRoster } from "./presence.mjs";
-import { maxRunners, readStatus, runnersStateDir } from "./runners-state.mjs";
+import { readStatus, runnersStateDir } from "./runners-state.mjs";
 import { parseStaff } from "./staff.mjs";
 
 /**
@@ -131,8 +131,9 @@ export function readUsage(reader, now, limit) {
  * and the operator's max for when it has not run yet.
  *
  * @param {Record<string, string | undefined>} env
- * @returns {{ status: import("./runners-state.mjs").RunnersStatus | null, max: number }}
+ * @param {number | null} max `company.json`'s `maxRunners`, null when it has none
+ * @returns {{ status: import("./runners-state.mjs").RunnersStatus | null, max: number | null }}
  */
-export function readRunners(env) {
-  return { status: readStatus(runnersStateDir(env)), max: maxRunners(env) };
+export function readRunners(env, max) {
+  return { status: readStatus(runnersStateDir(env)), max };
 }

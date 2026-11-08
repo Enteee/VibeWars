@@ -93,6 +93,7 @@ export const CHANNELS = [
   "traps",
   "chat",
   "chat-line",
+  "shared-track",
 ] as const;
 
 export type Channel = (typeof CHANNELS)[number];
@@ -118,7 +119,10 @@ export const MASTERLESS_WIRE_TEAM = -1;
  */
 export type WireTeam = 0 | 1 | 2;
 
-/** A lobby's side: lobbies seat two teams. */
+/**
+ * A side a player picks in a lobby: one of two. A queued three-team match
+ * seats its third itself (#2683), so a lobby's players are `WireTeam`s.
+ */
 export type LobbyTeam = 0 | 1;
 
 /** The most teams a match has (#2682). */
@@ -246,6 +250,23 @@ export const MAX_CHAT_GRAPHEMES = 200;
  * JSON-escaped, still fits one message (#403).
  */
 export const MAX_WIRE_CHAT_TEXT = 2048;
+
+/**
+ * The most a shared music track's source may weigh (#2745): the UTF-8
+ * bytes of its JSON-escaped form, `sharedSourceBytes`, so a source of
+ * control characters, six bytes each escaped, still fits one message.
+ */
+export const MAX_SHARED_SOURCE_BYTES = 8 * 1024;
+
+/** What `source` weighs on the wire (#2745): the UTF-8 bytes of `JSON.stringify(source)`. */
+export function sharedSourceBytes(source: string): number {
+  let bytes = 0;
+  for (const char of JSON.stringify(source)) {
+    const code = char.codePointAt(0) ?? 0;
+    bytes += code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
+  }
+  return bytes;
+}
 
 /** The most net pips either way (game-core's MAX_PIPS, #504). */
 export const MAX_WIRE_PIPS = 10;
@@ -430,11 +451,9 @@ export const PEER_REFUSALS = [
   "wrong-match",
 ] as const;
 
-/** Host to one client: it is not in, and why. */
+/** Host to one client: it is not in, and why. The client words `reason`. */
 export interface PeerRefuse {
   readonly reason: (typeof PEER_REFUSALS)[number];
-  /** What the player is shown. */
-  readonly message: string;
 }
 
 /**
@@ -890,7 +909,7 @@ export interface WireChatLine {
   readonly fromId: string;
   readonly name: string;
   /** `null`: a spectator, who speaks on all chat only. */
-  readonly team: LobbyTeam | null;
+  readonly team: WireTeam | null;
   readonly text: string;
 }
 
@@ -1148,11 +1167,10 @@ export interface WireLobbyMove {
 /**
  * The character a lobby member brings (#580), for the others to see:
  * `null` is a starter build. What it plays with is the match `hello`'s
- * build; this is only its name and professions.
+ * build; this is only its professions: its name would cost a 24-seat
+ * lobby its one message (#2683).
  */
 export interface WireLobbyCharacter {
-  /** In a join, cut to `MAX_WIRE_TEXT`; the host sanitises it. */
-  readonly name: string;
   /** A `ProfessionId`, which the host checks. */
   readonly primary: string;
   readonly secondary: string | null;
@@ -1168,7 +1186,7 @@ export interface WireLobbyPlayer {
   /** As `WirePlayer.guildCape` (#1422). */
   readonly guildCape: WireCape | null;
   /** `null` spectates. */
-  readonly team: LobbyTeam | null;
+  readonly team: WireTeam | null;
   readonly ready: boolean;
   /** The host's own player: the one who picks the map and starts. */
   readonly isHost: boolean;
@@ -1332,6 +1350,13 @@ export type WireLobbyCommand =
   | { readonly kind: "leave-queue" }
   | { readonly kind: "play-bots" }
   /**
+   * A music track's code, `source`, the member's edit of the shipped
+   * track `trackId`, for every other member of a coded lobby (#2745).
+   * The host relays it as a `WireSharedTrack`; it runs nowhere but in
+   * a receiver's music frame, and only when they press Play.
+   */
+  | { readonly kind: "share-track"; readonly trackId: string; readonly source: string }
+  /**
    * In a Team Lobby's vote (#1458): slot `slot` of a Team Build of `size`,
    * its build opaque here. One build a message, so a side of large builds
    * still fits: the host collects them, and the proposal stands once all
@@ -1362,15 +1387,27 @@ export type WireLobbyCommand =
       readonly build: JsonValue;
     };
 
+/**
+ * Lobby host to each other member of a coded lobby (#2745): `from`'s
+ * shared track. `from` is the host's word, the sender as its transport
+ * named it; `trackId` and `source` are rebuilt from the parsed command.
+ */
+export interface WireSharedTrack {
+  readonly from: string;
+  readonly trackId: string;
+  readonly source: string;
+}
+
 /** Lobby host to one peer: a start it turned down, or a member it turned away. */
 export interface WireLobbyNote {
-  readonly kind: "start-rejected" | "notice" | "refused" | "chat-throttled";
+  readonly kind: "start-rejected" | "notice" | "refused" | "chat-throttled" | "share-throttled";
   /**
    * For `"start-rejected"`, the words the host is shown. For `"notice"`
    * (#2104), the words this peer is shown: what the host did to its
    * choice, or would not do. For `"refused"`,
    * one of `LOBBY_REFUSALS`. For `"chat-throttled"` (#479), empty: this
-   * peer's chat lines are being dropped, too many too fast.
+   * peer's chat lines are being dropped, too many too fast. For
+   * `"share-throttled"` (#2745), empty: this peer shared a track too soon.
    */
   readonly reason: string;
 }
@@ -1828,9 +1865,29 @@ export function parseWireChatLine(value: unknown): WireChatLine | undefined {
     isOneOf(raw.channel, CHAT_CHANNELS) &&
     isString(raw.fromId) &&
     isString(raw.name) &&
-    (raw.team === null || isLobbyTeam(raw.team)) &&
+    (raw.team === null || isTeam(raw.team)) &&
     isString(raw.text, MAX_WIRE_CHAT_TEXT)
     ? { channel: raw.channel, fromId: raw.fromId, name: raw.name, team: raw.team, text: raw.text }
+    : undefined;
+}
+
+/** A shared track's source: a string of at most `MAX_SHARED_SOURCE_BYTES` on the wire. */
+function isSharedSource(value: unknown): value is string {
+  // Its escaped form is never shorter than it: a long one is not escaped to find out.
+  return (
+    isString(value, MAX_SHARED_SOURCE_BYTES) && sharedSourceBytes(value) <= MAX_SHARED_SOURCE_BYTES
+  );
+}
+
+/** The `"shared-track"` channel (#2745): nothing but its three fields. */
+export function parseWireSharedTrack(value: unknown): WireSharedTrack | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    Object.keys(raw).length === 3 &&
+    isString(raw.from) &&
+    isString(raw.trackId) &&
+    isSharedSource(raw.source)
+    ? { from: raw.from, trackId: raw.trackId, source: raw.source }
     : undefined;
 }
 
@@ -1945,10 +2002,8 @@ export function parsePeerObserving(value: unknown): PeerObserving | undefined {
 
 export function parsePeerRefuse(value: unknown): PeerRefuse | undefined {
   const raw = fields(value);
-  return raw !== undefined &&
-    isOneOf(raw.reason, PEER_REFUSALS) &&
-    isString(raw.message, MAX_WIRE_TEXT)
-    ? { reason: raw.reason, message: raw.message }
+  return raw !== undefined && isOneOf(raw.reason, PEER_REFUSALS)
+    ? { reason: raw.reason }
     : undefined;
 }
 
@@ -2571,17 +2626,20 @@ export function parseChainMarks(value: unknown): ChainMarksMessage | undefined {
   return marks === undefined ? undefined : { marks };
 }
 
-/** A lobby character; `null` is a starter build, a missing one is malformed. */
+/**
+ * A lobby character, its professions only (#2683); `null` is a starter
+ * build, a missing one or one with any other field is malformed.
+ */
 function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefined {
   if (value === null) {
     return null;
   }
   const raw = fields(value);
   return raw !== undefined &&
-    typeof raw.name === "string" &&
+    Object.keys(raw).length === 2 &&
     isString(raw.primary) &&
     isNullableString(raw.secondary)
-    ? { name: raw.name.slice(0, MAX_WIRE_TEXT), primary: raw.primary, secondary: raw.secondary }
+    ? { primary: raw.primary, secondary: raw.secondary }
     : undefined;
 }
 
@@ -2828,13 +2886,17 @@ export function parseWireLobbyMove(value: unknown): WireLobbyMove | undefined {
     : undefined;
 }
 
+function parseNullableTeam(value: unknown): WireTeam | null | undefined {
+  return value === null || isTeam(value) ? value : undefined;
+}
+
 function parseLobbyTeam(value: unknown): LobbyTeam | null | undefined {
   return value === null || isLobbyTeam(value) ? value : undefined;
 }
 
 function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
   const raw = fields(value);
-  const team = parseLobbyTeam(raw?.team);
+  const team = parseNullableTeam(raw?.team);
   const guildCape = parseNullableCape(raw?.guildCape);
   // A bot has no key, and every human one (#2706).
   const playerPubkey =
@@ -3035,6 +3097,10 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
     case "leave-queue":
     case "play-bots":
       return { kind: raw.kind };
+    case "share-track":
+      return Object.keys(raw).length === 3 && isString(raw.trackId) && isSharedSource(raw.source)
+        ? { kind: "share-track", trackId: raw.trackId, source: raw.source }
+        : undefined;
     case "propose": {
       if (raw.slot === null) {
         return { kind: "propose", slot: null };
@@ -3082,7 +3148,13 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
 export function parseWireLobbyNote(value: unknown): WireLobbyNote | undefined {
   const raw = fields(value);
   return raw !== undefined &&
-    isOneOf(raw.kind, ["start-rejected", "notice", "refused", "chat-throttled"] as const) &&
+    isOneOf(raw.kind, [
+      "start-rejected",
+      "notice",
+      "refused",
+      "chat-throttled",
+      "share-throttled",
+    ] as const) &&
     isString(raw.reason, MAX_WIRE_TEXT)
     ? { kind: raw.kind, reason: raw.reason }
     : undefined;

@@ -68,8 +68,13 @@ function hubWindow(command, windows, options = {}) {
 }
 
 describe("hub-window check", () => {
-  it("finds the hub window at 99", () => {
-    expect(hubWindow("check", "0 dashboard\n1 manager\n99 hub\n").code).toBe(0);
+  it("finds the hub window at 99 and CI-RUNNERS at 100", () => {
+    expect(hubWindow("check", "0 dashboard\n1 manager\n99 hub\n100 CI-RUNNERS\n").code).toBe(0);
+  });
+
+  it("does not count the hub window as up without CI-RUNNERS, so both are reopened", () => {
+    expect(hubWindow("check", "0 dashboard\n99 hub\n").code).toBe(1);
+    expect(hubWindow("check", "0 dashboard\n99 hub\n100 node\n").code).toBe(1);
   });
 
   it("does not take a window at 99 that lost its name for the hub window", () => {
@@ -102,6 +107,17 @@ describe("hub-window open", () => {
     expect(splits[1]).toContain("-e VIBEWARS_CREDENTIALS=/creds");
     expect(open).not.toContain("VIBEWARS_CREDENTIALS");
     expect(splits[0]).not.toContain("VIBEWARS_CREDENTIALS");
+  });
+
+  it("opens CI-RUNNERS at 100, its first pane the runner-panes daemon", () => {
+    const result = hubWindow("open", "0 dashboard\n100 node\n");
+
+    const opens = result.calls.filter((c) => c.startsWith("new-window"));
+    expect(opens).toHaveLength(2);
+    expect(opens[1]).toMatch(/ -k /);
+    expect(opens[1]).toMatch(/ -t =hub-test:100 -n CI-RUNNERS /);
+    expect(opens[1]).toMatch(/run-forever\.mjs runner-panes -- .*\/runner-panes\.mjs$/);
+    expect(opens[1]).not.toContain("VIBEWARS_CREDENTIALS");
   });
 
   it("pins the window's name, so check can find it", () => {

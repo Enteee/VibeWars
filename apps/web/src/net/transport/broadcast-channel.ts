@@ -7,7 +7,9 @@
  *
  * Peers find each other by `hello`, sent on join and every second after.
  * One silent for `PEER_TIMEOUT_MS` counts as gone, so a killed page is
- * noticed even though it never said `bye`.
+ * noticed even though it never said `bye`. A live page can go silent
+ * for seconds while it boots an arena (#2777), so that is no time to
+ * call a host gone; a page that closes says `bye` anyway.
  */
 import { CHANNELS } from "@vibewars/game-protocol";
 import type { Channel } from "@vibewars/game-protocol";
@@ -18,7 +20,7 @@ import { oversizedCheck } from "./oversized.js";
 import { APP_ID } from "./relays.js";
 
 export const HEARTBEAT_MS = 1000;
-export const PEER_TIMEOUT_MS = 3000;
+export const PEER_TIMEOUT_MS = 10_000;
 
 type Frame =
   | { kind: "hello"; from: string }

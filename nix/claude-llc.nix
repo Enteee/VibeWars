@@ -185,9 +185,8 @@ let
         export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
         # Where each role's Claude logs are, for the dashboard's tokens (#50).
         export VIBEWARS_CLAUDE_BOXES="$HOME/${config.vibewars.claudeBot.boxes}"
-        # The company's CI runners (#1890): the runner supervisor's config,
-        # which hubd reads the max of. Off while max is 0.
-        export VIBEWARS_MAX_RUNNERS="${toString config.vibewars.runners.max}"
+        # The company's CI runners (#1890): the runner supervisor's config.
+        # The most of them is company.json's maxRunners (#2764).
         export VIBEWARS_RUNNER_CPUS="${toString config.vibewars.runners.cpus}"
         export VIBEWARS_RUNNER_MEMORY_GIB="${toString config.vibewars.runners.memoryGib}"
         export VIBEWARS_RUNNER_TASKS_MAX="${toString config.vibewars.runners.tasksMax}"
@@ -206,7 +205,7 @@ let
         hub_window() {
           mkdir -p "$VIBEWARS_BOT_ROOT/hub"
           ${node} ${llcScripts}/hub-window.mjs open
-          echo "claude-llc: hubd, the supervisor and the runner supervisor started in the hub window (logs: .bots/hub/)"
+          echo "claude-llc: hubd, the supervisor and the runner supervisor started in the hub window, the runners' logs in CI-RUNNERS (logs: .bots/hub/)"
         }
 
         # One employee's pane (#383, #722), the only way an agent starts:
@@ -222,6 +221,7 @@ let
           pkill -f hubd.mjs 2>/dev/null || true
           pkill -f supervisor.mjs 2>/dev/null || true
           pkill -f runner-supervisor.mjs 2>/dev/null || true
+          pkill -f runner-panes.mjs 2>/dev/null || true
         }
 
         # The build the running company was started from, against the
@@ -576,7 +576,6 @@ let
           -c "$VIBEWARS_CODE" "${node} ${llcScripts}/dashboard.mjs feed")"
         company_pane="$(${tmux} split-window -h -l 40% -t "$board_pane" -P -F '#{pane_id}' \
           -c "$VIBEWARS_CODE" -e "VIBEWARS_CLAUDE_BOXES=$VIBEWARS_CLAUDE_BOXES" \
-          -e "VIBEWARS_MAX_RUNNERS=$VIBEWARS_MAX_RUNNERS" \
           "${node} ${llcScripts}/dashboard.mjs company")"
         ${tmux} select-pane -t "$feed_pane" -T TELEGRAM
         ${tmux} select-pane -t "$company_pane" -T COMPANY
@@ -681,6 +680,7 @@ in
       claude-llc-doctor = {
         description = "Print the company's credentials: identity, expiry, scopes, whose";
         exec = ''
+          export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
           export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
           exec ${node} ${llcScripts}/doctor.mjs
         '';

@@ -12,6 +12,7 @@ import { NO_GUILD, type MatchSnapshot, type SkillSlot } from "@vibewars/game-ses
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { setGlobalMute } from "../audio/global-mute.js";
 import { soundPlayer } from "../audio/sound-player.js";
+import { skillName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
 import { attackKeyIntents, escapeIntent } from "../input/attack-key.js";
 import { createDoubleClick } from "../input/double-click.js";
@@ -20,6 +21,7 @@ import {
   callTargetCall,
   middleClickAction,
   pingCall,
+  primaryClickIntents,
   secondaryClickIntents,
 } from "../input/mouse-intents.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
@@ -543,7 +545,7 @@ export function createTrainingPanel(): TrainingPanel {
         `<span class="skill-range-mark" aria-hidden="true"></span>`,
       );
       button.classList.toggle("is-elite", isEliteSkill(slot.id));
-      button.setAttribute("aria-label", slot.name);
+      button.setAttribute("aria-label", skillName(slot.id));
       return button;
     });
     labelWeaponSets(weaponSets, keymap, keyLabel);
@@ -628,7 +630,7 @@ export function createTrainingPanel(): TrainingPanel {
       button.classList.toggle("is-silenced", barred[index] === true);
       button.classList.toggle("is-mid-action", lit[index] === true);
       // The same wipe as the match HUD (#152).
-      paintRecharge(button, recharges[index], slot.name, reducedMotion);
+      paintRecharge(button, recharges[index], skillName(slot.id), reducedMotion);
       paintEchoStrip(button, slot, now, reducedMotion);
     });
   };
@@ -1034,6 +1036,7 @@ export function createTrainingPanel(): TrainingPanel {
           toArenaSnapshot(latestMatch, session.walls, session.shrines, undefined, undefined),
           created.pointerWorld(),
           nameReveal.held(),
+          created.scene.nameTagBoxes(),
         ),
         connection.getCalls(),
       );
@@ -1081,6 +1084,7 @@ export function createTrainingPanel(): TrainingPanel {
         world,
         doubleClick,
         performance.now(),
+        nameReveal.held(),
       );
       for (const intent of intents) {
         session.connection.sendIntent(intent);
@@ -1092,7 +1096,12 @@ export function createTrainingPanel(): TrainingPanel {
       }
       // A wheel click calls a foe, or pings the point (#443, #1055).
       if (button === "middle" && phase === "down") {
-        const action = middleClickAction(session.connection.getSnapshot(), latestArena, world);
+        const action = middleClickAction(
+          session.connection.getSnapshot(),
+          latestArena,
+          world,
+          nameReveal.held(),
+        );
         if (action.kind === "call") {
           session.connection.sendCall(action.call);
         }
@@ -1103,8 +1112,19 @@ export function createTrainingPanel(): TrainingPanel {
       if (button !== "left" || phase !== "down" || !armedBeforeClick) {
         return;
       }
-      session.connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
-      created.scene.showWalkMarker(world);
+      // With Show names held (#2738), a click on a body or name attacks it.
+      const intents = primaryClickIntents(
+        session.connection.getSnapshot(),
+        latestArena,
+        world,
+        nameReveal.held(),
+      );
+      for (const intent of intents) {
+        session.connection.sendIntent(intent);
+        if (intent.kind === "walk-to") {
+          created.scene.showWalkMarker(world);
+        }
+      }
     });
   });
 

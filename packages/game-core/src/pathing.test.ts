@@ -116,6 +116,16 @@ describe("createPathFinder", () => {
     expect(everyLegClear(walls, from, path ?? [])).toBe(true);
   });
 
+  it("finds nothing, and ends, for an end that is not a number (#2735)", () => {
+    const walls = rect(200, 100, 40, 200);
+    const finder = createPathFinder(buildNavGraph(walls, undefined, CLEARANCE));
+    expect(finder.find(vec2(100, 180), vec2(Number.NaN, 180))).toBeUndefined();
+    expect(finder.find(vec2(Number.NaN, Number.NaN), vec2(340, 180))).toBeUndefined();
+    expect(finder.find(vec2(100, 180), vec2(Number.POSITIVE_INFINITY, 180))).toBeUndefined();
+    // It still finds the way after.
+    expect(finder.find(vec2(100, 180), vec2(340, 180))).toHaveLength(3);
+  });
+
   it("does not hand back the spot a body already stands on", () => {
     const walls = rect(200, 100, 40, 200);
     const graph = buildNavGraph(walls, undefined, CLEARANCE);

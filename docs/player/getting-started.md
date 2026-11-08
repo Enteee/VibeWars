@@ -66,8 +66,17 @@ The quickest way into a fight. On **Random Arena**, click the card of
 the character you play as, pick a team size, **1v1**, **2v2** or
 **4v4**, with the arrows of the rail's **Team size**, then press **Ready** in the title
 bar, and wait: you are put in a team with other players, against
-another team, on a random map. Closing the tab while you wait takes you
-out of the queue at once.
+another team, on a random map. The queue waits in the background: you
+stay on Random Arena and may go anywhere meanwhile, your builds,
+equipment, Options, Help or the music editor, but not change character,
+host or join a lobby, or change a mode's team size. Team Arena and the
+other lobby screens say you are in a queue and list their maps, their
+**Find a match** off, beside a **Leave Queue**; the team size reads the
+size you queued at, on every mode. A turning ring left of **Help** in the top bar
+shows you are queued; click it for the queue, the time waited, how many
+are searching and **Leave Queue**. When a match is found you are taken
+to its versus screen from wherever you are. Closing the tab while you
+wait takes you out of the queue at once.
 
 When the match ends you can **Queue again**, or **Stay together** with
 the team you just played with.
@@ -136,17 +145,19 @@ map. Your **Team Builds** are on **Team Builder** alone, and you pick
 none before the lobby. On **Hosted Game**, when the host starts, the lobby
 opens the [Team Lobby](modes.md#team-lobby): propose a Team Build there,
 click a card, which shows each member's weapons and skills, to vote
-for one, then click a seat to take one of its characters.
+for one, then click a seat to take one of its characters. Seats list the
+players and their professions; a character's name shows in the match.
 
 On **Team Arena** (2, 4 or 8 a side, the host's **Team size**),
 **Heroes' Ascent** and **GvG** (8 a side)
 your lobby is one side, your party, and there is no Start or bot count:
 the host presses **Find a match**. The Team Lobby comes first, with only
 Team Builds of exactly that size; every seat nobody claims is a bot.
-Then the party is queued, and a line on top of the mode's screen says **Looking for a
-team…** (in Team Arena, **Team Arena 2v2 — searching…** with its size)
-with the time waited and how many teams of that mode are
-searching, yours included: `1:05 · 2 teams searching`. Closing the
+Then the party is queued, and the same turning ring left of **Help**
+shows it: its window names the queue (**Team Arena 2v2**, **Heroes'
+Ascent · round 3**, **Guild vs Guild**) with the time waited, and in
+Team Arena how many teams are searching, yours included: `2 teams
+searching`. Only the host has **Leave Queue** there. Closing the
 host's tab takes the party out of the queue at once. When another
 queued team of the same mode turns up, you play them on one of the
 mode's maps, each side with its own builds, and come back to your lobby

@@ -934,6 +934,23 @@ test("a wheel click on a foe calls it for your team, and the other team never se
   await opponent.close();
 });
 
+test("a click on the target bar calls your target for your team (#2737)", async ({ page }) => {
+  const opponent = await page.context().newPage();
+  await startLobbyMatch(page, [opponent]);
+  const stage = page.locator("#viewport");
+  await expect(stage).toHaveAttribute("data-called", "");
+
+  // Attack targets the opponent; the bar then holds a foe a click calls.
+  await page.keyboard.press(key("attack"));
+  const bar = page.locator(".hud-target.is-callable");
+  await expect(bar).toBeVisible();
+  await bar.click();
+  await expect(stage).toHaveAttribute("data-called", /^\S+$/);
+  await page.waitForTimeout(500);
+  await expect(opponent.locator("#viewport")).toHaveAttribute("data-called", "");
+  await opponent.close();
+});
+
 test("a click on the compass pings, and a drag on it draws a line gone by 4 s later (#2391)", async ({
   page,
 }) => {

@@ -1,6 +1,7 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { ARENA_MAPS, modeMapIds } from "../net/maps.js";
 import {
   TEAM_SCHEMA_VERSION,
@@ -10,12 +11,11 @@ import {
 } from "../storage/schema.js";
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
+import { mapLabel, type LobbyMap } from "./lobby-screen.js";
 import {
   noTeamBuilds,
-  OPENING_LOBBY,
   renderHostScreen,
   renderTeamBuilder,
-  UNNAMED_TEAM,
   type HostEntry,
   type TeamPlayCallbacks,
 } from "./team-play.js";
@@ -99,6 +99,7 @@ class FakeElement {
   maxLength = -1;
   hidden = false;
   type = "";
+  disabled = false;
   readonly children: FakeElement[] = [];
   parent: FakeElement | undefined;
   readonly attributes = new Map<string, string>();
@@ -163,6 +164,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
   let added: number;
   let cloned: string[];
   let rerolled: string[];
+  let leftQueue: number;
   /** The starter team ids by size (#2147). */
   let starterIds: Map<string, string>;
   const callbacks: TeamPlayCallbacks = {
@@ -180,15 +182,26 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     onRerollTeam: (id) => {
       rerolled.push(id);
     },
+    onLeaveQueue: () => {
+      leftQueue += 1;
+    },
   };
   const render = (teams: readonly StoredTeam[]): FakeElement => {
     const root = new FakeElement();
     renderTeamBuilder(root as unknown as HTMLElement, teams, [], undefined, callbacks);
     return root;
   };
-  const host = (entry: HostEntry): FakeElement => {
+  const host = (entry: HostEntry, queuedMaps?: readonly LobbyMap[]): FakeElement => {
     const root = new FakeElement();
-    renderHostScreen(root as unknown as HTMLElement, entry, [], undefined, callbacks, undefined);
+    renderHostScreen(
+      root as unknown as HTMLElement,
+      entry,
+      [],
+      undefined,
+      callbacks,
+      undefined,
+      queuedMaps,
+    );
     return root;
   };
 
@@ -197,6 +210,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     added = 0;
     cloned = [];
     rerolled = [];
+    leftQueue = 0;
     starterIds = new Map();
     vi.stubGlobal("localStorage", {
       getItem: (key: string) =>
@@ -306,10 +320,38 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
   it("shows the lobby's place while it opens, and no Team Build cards: they are Team Builder's", () => {
     for (const entry of ["team-arena", "heroes-ascent", "gvg", "hosted-game"] as const) {
       const root = host(entry);
-      expect(root.everything().some((node) => node.textContent === OPENING_LOBBY)).toBe(true);
+      expect(
+        root.everything().some((node) => node.textContent === t("teamPlay.openingLobby")),
+      ).toBe(true);
       expect(root.all("play-cards")).toHaveLength(0);
       expect(root.everything().some((node) => node.textContent === "Team Builds")).toBe(false);
     }
+  });
+
+  const maps: readonly LobbyMap[] = [
+    { id: "a", size: "small", mode: "annihilation", teamSizes: [1, 2] },
+    { id: "b", size: "large", mode: "kill-count", teamSizes: [8] },
+  ];
+
+  it("in the Random Arena queue, says so, its Find a match off with why, beside Leave Queue (#2781)", () => {
+    for (const entry of ["team-arena", "heroes-ascent", "gvg"] as const) {
+      const root = host(entry, maps);
+      expect(root.everything().some((node) => node.textContent === t("queue.busy"))).toBe(true);
+      const [find] = root.all("lobby-find");
+      expect(find?.textContent).toBe(t("lobby.findMatch"));
+      expect(find?.disabled).toBe(true);
+      expect(find?.title).toBe(t("queue.busy"));
+    }
+    const hosted = host("hosted-game", maps);
+    // The maps to look at, not to pick: a list.
+    expect(
+      hosted.all("lobby-map").flatMap((list) => list.children.map((item) => item.textContent)),
+    ).toEqual(maps.map(mapLabel));
+    expect(hosted.all("lobby-find")).toEqual([]);
+    const [leave] = hosted.all("lobby-leave-queue");
+    expect(leave?.textContent).toBe(t("queue.leaveQueue"));
+    leave?.click();
+    expect(leftQueue).toBe(1);
   });
 
   it("names an unnamed team and says why a team is not playable (#2110)", () => {
@@ -321,7 +363,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     };
     const root = render([{ ...team("u"), name: " " }, playable]);
     expect(root.all("play-card-name").map((name) => name.textContent)).toEqual([
-      UNNAMED_TEAM,
+      t("teamPlay.unnamedTeam"),
       "Team p",
     ]);
     expect(root.all("play-card-unplayable").map((line) => line.textContent)).toEqual([

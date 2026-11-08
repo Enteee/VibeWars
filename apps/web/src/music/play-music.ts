@@ -28,6 +28,8 @@ import { TRACKS } from "./tracks/index.js";
  * intensity override (#425) over the director's level. A track the player
  * edited plays the edit, wherever it plays, until the edit stops the music
  * (#878): then it is removed, and the shipped track plays from then on.
+ * A track shared in the lobby (#2745) plays over all of it, in a host of
+ * its own, until the player goes back to their own music.
  */
 
 type PlayableTrack = MusicTrack & {
@@ -37,6 +39,12 @@ type PlayableTrack = MusicTrack & {
   /** Its scale, "D aeolian": the key a sting plays in over it (#2523). */
   readonly key: string;
 };
+
+/** A lobby member's shared track (#2745), as the follower plays it. */
+export interface SharedPlay {
+  readonly trackId: string;
+  readonly source: string;
+}
 
 export interface MusicFollower {
   /**
@@ -65,6 +73,15 @@ export interface MusicFollower {
    * so what it evaluates replaces that track; `null` lets go.
    */
   edit(trackId: string | null): void;
+  /**
+   * Play `source`, a lobby member's shared `trackId` (#2745), now, over
+   * everything else, in a fresh host; `null` goes back to the player's
+   * own music, in a fresh host too. Nothing of it is saved, and a share
+   * that hangs or floods is only let go: no edit is removed for it.
+   */
+  playShared(share: SharedPlay | null): void;
+  /** The shared track playing, or `null`. */
+  readonly sharing: SharedPlay | null;
   /** The director's intensity, last it said, whatever the override plays. */
   readonly intensity: Intensity;
   /** The track you hear: `null` when nothing plays, or the music is muted. */
@@ -90,6 +107,7 @@ export function createMusicFollower(
   let previewId: string | null = null;
   let editId: string | null = null;
   let directed: string | null = null;
+  let sharing: SharedPlay | null = null;
   /** The director's level, and the one the player was last told to play. */
   let intensity: Intensity = 0;
   let played: Intensity = 0;
@@ -106,6 +124,12 @@ export function createMusicFollower(
   // A hung or flooding edit would do it again on every load: it goes.
   // A shipped track that did it is the next play's to try again.
   player.onTornDown(() => {
+    if (sharing !== null) {
+      sharing = null;
+      playingId = null;
+      changed();
+      return;
+    }
     const track = tracks.find((candidate) => candidate.id === playingId);
     if (track === undefined || edits.get(track.id) === undefined) {
       return;
@@ -126,6 +150,9 @@ export function createMusicFollower(
    * or on the next phrase, or the next cycle when a match starts (#2530).
    */
   const play = (when: "now" | "on-phrase" | "on-cycle"): void => {
+    if (sharing !== null) {
+      return;
+    }
     const wanted = editId ?? previewId ?? directed;
     if (wanted === playingId) {
       return;
@@ -158,6 +185,15 @@ export function createMusicFollower(
     playIntensity();
     changed();
   });
+
+  /** Out of a share, its host with it: what the player plays next loads in a fresh one. */
+  const endShare = (): void => {
+    if (sharing !== null) {
+      sharing = null;
+      player.renew();
+      playingId = null;
+    }
+  };
 
   const follow = (state: MusicState, landOn: LandOn): void => {
     directed = state.trackId;
@@ -233,14 +269,45 @@ export function createMusicFollower(
       changed();
     },
     preview(trackId) {
+      if (trackId !== null) {
+        endShare();
+      }
       previewId = tracks.some((track) => track.id === trackId) ? trackId : null;
       play(previewId === null ? "on-phrase" : "now");
       changed();
     },
     edit(trackId) {
+      if (trackId !== null) {
+        endShare();
+      }
       editId = tracks.some((track) => track.id === trackId) ? trackId : null;
       play(editId === null ? "on-phrase" : "now");
       changed();
+    },
+    playShared(share) {
+      const track =
+        share === null ? undefined : tracks.find((candidate) => candidate.id === share.trackId);
+      if (share !== null && track === undefined) {
+        return;
+      }
+      if (share === null && sharing === null) {
+        return;
+      }
+      // Never asked to stop: the old host goes, and what it ran with it.
+      player.renew();
+      playingId = null;
+      sharing = null;
+      if (share !== null && track !== undefined) {
+        sharing = { trackId: share.trackId, source: share.source };
+        playingId = track.id;
+        player.load({ ...track, source: share.source });
+      } else {
+        play("now");
+      }
+      changed();
+    },
+    get sharing() {
+      return sharing;
     },
     get intensity() {
       return intensity;

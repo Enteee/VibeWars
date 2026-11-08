@@ -313,6 +313,7 @@ async function startHubd(remaining, before, extra) {
       },
       columns: [],
       expectedChecks: [],
+      maxRunners: 0,
     }),
   );
 
@@ -331,7 +332,6 @@ async function startHubd(remaining, before, extra) {
     VIBEWARS_CREDENTIALS: path.join(dir, "creds"),
     // The runner supervisor's state (#1890), never the operator's own.
     VIBEWARS_RUNNERS_STATE: path.join(dir, "runners"),
-    VIBEWARS_MAX_RUNNERS: "",
     GH_TOKEN: "operator-token",
     GITHUB_TOKEN: "operator-token",
     // Something only hubd's environment holds, to prove a filter cannot
@@ -2091,7 +2091,7 @@ const greenPull = (hubd, branch, files, { crossRepository = false } = {}) => {
   for (const role of ["lead-dev", "perf-sec-qa"]) {
     fs.appendFileSync(
       path.join(hubd.hub, "approvals.jsonl"),
-      `${JSON.stringify({ pr: 9, role, verdict: "approve", sha, ts: 1 })}\n`,
+      `${JSON.stringify({ pr: 9, role, by: role, verdict: "approve", sha, ts: 1 })}\n`,
     );
   }
   return sha;
@@ -2205,7 +2205,7 @@ describe("hubd recording verdicts and merging", () => {
     for (const role of ["lead-dev", "perf-sec-qa"]) {
       fs.appendFileSync(
         path.join(hubd.hub, "approvals.jsonl"),
-        `${JSON.stringify({ pr: 9, role, verdict: "approve", sha: "abc1234def", ts: 1 })}\n`,
+        `${JSON.stringify({ pr: 9, role, by: role, verdict: "approve", sha: "abc1234def", ts: 1 })}\n`,
       );
     }
     hubd.expectChecks(["ci", "legacy"]);
@@ -2729,15 +2729,34 @@ describe("hubd hiring and firing", () => {
     expect(refused.allow).toBe(false);
   }, 20_000);
 
+  /**
+   * Set `company.json`'s `maxRunners`, or drop it for null.
+   *
+   * @param {{ root: string }} hubd
+   * @param {number | null} max
+   */
+  const capRunners = (hubd, max) => {
+    const cfg = readJson(path.join(hubd.root, "company.json"));
+    if (max === null) {
+      delete cfg.maxRunners;
+    } else {
+      cfg.maxRunners = max;
+    }
+    writeAtomic(hubd.root, "company.json", JSON.stringify(cfg));
+  };
+
   it("company runners: the manager sets the target within the max, and reads the status", async () => {
-    const hubd = await startHubd(5000, undefined, () => ({ VIBEWARS_MAX_RUNNERS: "2" }));
+    const hubd = await startHubd(5000);
+    capRunners(hubd, 2);
     const state = path.join(path.dirname(hubd.root), "runners");
 
     const before = await hubd.request("manager", "runners", []);
     expect(before.stdout).toBe("runners: not started (max 2)\n");
     const over = await hubd.request("manager", "runners", ["3"]);
     expect(over.code).toBe(1);
-    expect(String(over.stderr)).toMatch(/above the operator's max of 2/);
+    expect(String(over.stderr)).toBe(
+      "company runners: 3 is above the operator's max of 2; the operator raises maxRunners in .bots/company.json and restarts the company\n",
+    );
     expect(fs.existsSync(path.join(state, "target"))).toBe(false);
 
     const set = await hubd.request("manager", "runners", ["2"]);
@@ -2760,6 +2779,81 @@ describe("hubd hiring and firing", () => {
     const read = await hubd.request("business-analyst", "runners", []);
     expect(read.stdout).toBe("runners: 1/2 (busy 1, max 2)\n");
     const refused = await hubd.request("business-analyst", "runners", ["1"]);
+    expect(refused.allow).toBe(false);
+  }, 20_000);
+
+  it("company runners: a cap changed without a restart holds to the lower of company.json's and the supervisor's (#2764)", async () => {
+    const hubd = await startHubd(5000);
+    const state = path.join(path.dirname(hubd.root), "runners");
+    fs.mkdirSync(state, { recursive: true });
+    /** @param {number} max the running supervisor's */
+    const running = (max) => {
+      fs.writeFileSync(
+        path.join(state, "status.json"),
+        JSON.stringify({
+          at: 1,
+          target: 0,
+          max,
+          runners: [],
+          variable: false,
+          reason: null,
+          alert: null,
+        }),
+      );
+    };
+
+    running(2);
+    capRunners(hubd, 4);
+    const raised = await hubd.request("manager", "runners", ["3"]);
+    expect(raised.code).toBe(1);
+    expect(String(raised.stderr)).toBe(
+      "company runners: 3 is above the running supervisor's max of 2; a company restart applies company.json's 4\n",
+    );
+    expect(fs.existsSync(path.join(state, "target"))).toBe(false);
+
+    running(4);
+    capRunners(hubd, 2);
+    const lowered = await hubd.request("manager", "runners", ["3"]);
+    expect(lowered.code).toBe(1);
+    expect(String(lowered.stderr)).toMatch(/above the operator's max of 2;/);
+    expect(fs.existsSync(path.join(state, "target"))).toBe(false);
+
+    running(4);
+    capRunners(hubd, 4);
+    const within = await hubd.request("manager", "runners", ["3"]);
+    expect(within.code, String(within.reason)).toBe(0);
+  }, 20_000);
+
+  it("company runners: refused while company.json has no maxRunners (#2764)", async () => {
+    const hubd = await startHubd(5000);
+    capRunners(hubd, null);
+    for (const argv of [[], ["1"]]) {
+      const answer = await hubd.request("manager", "runners", argv);
+      expect(answer.allow).toBe(false);
+      expect(String(answer.reason)).toBe("company.json has no maxRunners; re-run claude-llc-init");
+    }
+    expect(fs.existsSync(path.join(path.dirname(hubd.root), "runners", "target"))).toBe(false);
+  }, 20_000);
+
+  it("company runners logs: the cicd-engineer reads the supervisor's log and a runner's, redacted", async () => {
+    const hubd = await startHubd(5000);
+    const hub = path.join(hubd.root, "hub");
+    fs.mkdirSync(path.join(hub, "runners"), { recursive: true });
+    fs.writeFileSync(path.join(hub, "runner-supervisor.log"), "runners: started r-1\n");
+    fs.writeFileSync(
+      path.join(hub, "runners", "r-1.log"),
+      `t [out] ${"ghs_".concat("x".repeat(36))}\nt exited 0\n`,
+    );
+
+    const overview = await hubd.request("cicd-engineer", "runner-logs", []);
+    expect(overview.code, String(overview.reason)).toBe(0);
+    expect(overview.stdout).toMatch(/^supervisor log, last 80 lines:\nrunners: started r-1\n/);
+    expect(overview.stdout).toMatch(/^ {2}r-1 {2}exited 0 /m);
+    const one = await hubd.request("cicd-engineer", "runner-logs", ["r-1", "--lines", "5"]);
+    expect(one.stdout).toBe("t [out] [redacted]\nt exited 0\n");
+    const missing = await hubd.request("manager", "runner-logs", ["r-2"]);
+    expect(missing.stdout).toBe("no log for r-2; runners with logs: r-1\n");
+    const refused = await hubd.request("developer", "runner-logs", []);
     expect(refused.allow).toBe(false);
   }, 20_000);
 

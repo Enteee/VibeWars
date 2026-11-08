@@ -1,13 +1,13 @@
 import {
   describeSkill,
   MAX_ATTRIBUTE_RANK,
-  skillProfessionName,
   IMPLEMENTED_SKILLS,
   type Skill,
   type SkillDescription,
   type SkillType,
 } from "@vibewars/game-core";
 
+import { professionName, skillName } from "../i18n/game-names.js";
 import { locale, t } from "../i18n/index.js";
 import { equippableSkills } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
@@ -302,7 +302,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     });
     card.setAttribute("aria-expanded", "false");
     card.insertAdjacentHTML("beforeend", skillIconHtml(skill.id, LIBRARY_ICON_PX));
-    card.appendChild(h("span", "skill-box-name", skill.name));
+    card.appendChild(h("span", "skill-box-name", skillName(skill.id)));
     card.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
     card.appendChild(h("span", "skill-box-cost"));
     card.appendChild(h("span", "skill-box-headline"));
@@ -349,7 +349,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     });
     card.setAttribute("aria-expanded", "false");
     card.insertAdjacentHTML("beforeend", skillIconHtml(skill.id, LIBRARY_ICON_PX));
-    card.appendChild(h("span", "skill-box-name", skill.name));
+    card.appendChild(h("span", "skill-box-name", skillName(skill.id)));
     card.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
     card.appendChild(h("span", "skill-box-cost"));
     card.appendChild(h("span", "skill-box-headline"));
@@ -358,7 +358,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
       h(
         "span",
         "skill-box-needs",
-        t("skillLibrary.needs", { profession: skillProfessionName(skill.profession) }),
+        t("skillLibrary.needs", { profession: professionName(skill.profession) }),
       ),
     );
     const details = h("div", "skill-box-details");
