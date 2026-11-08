@@ -35,16 +35,19 @@ import {
   telegramUpdates,
 } from "./creds.mjs";
 import { collect, renderTable } from "./doctor.mjs";
+import { readRunnerCap } from "./runners-state.mjs";
 
 /** @typedef {import("./creds.mjs").Identity} Identity */
 /** @typedef {import("./doctor.mjs").Row} Row */
+/** @typedef {import("./runners-state.mjs").RunnerCap} RunnerCap */
 
 /** The steps, in the order they run. */
 export const STEPS = /** @type {const} */ (["claude", "github", "push", "telegram"]);
 
 /**
- * Steps that run only when named: the runner supervisor's admin token
- * (#1890), which a company without company runners never needs.
+ * Steps that run when named, or when the company wants them: the runner
+ * supervisor's admin token (#1890), which only a company whose runner cap
+ * is above 0 needs (#2765). It runs after `github`: same repository.
  */
 export const OPTIONAL_STEPS = /** @type {const} */ (["runners"]);
 
@@ -68,9 +71,10 @@ const POLL_FOR_MS = 10 * 60_000;
 export const USAGE = `claude-llc auth [claude | github | push | telegram | runners]
 
   Sign the company's accounts in: Claude, GitHub, the push key, Telegram
-  (the manager bot, then the group it runs in). \`runners\` runs only when
-  named: the company CI runners' own token (#1890), fine-grained, for this
-  repository only, with Administration and Variables write and an expiry.
+  (the manager bot, then the group it runs in), and, when maxRunners in
+  .bots/company.json is above 0, the company CI runners' own token (#1890),
+  fine-grained, for this repository only, with Administration and Variables
+  write and an expiry. \`runners\` alone signs that token in whatever the cap.
   Shows what is signed in (as claude-llc doctor does), runs the sign-in of
   each credential that is not, or only of the one named, and prints no
   secret. Interactive: run it in a terminal.`;
@@ -109,12 +113,17 @@ function identityOf(rows, step) {
  *
  * @param {Row[]} rows the doctor's
  * @param {Step | null} only the step named on the command line
+ * @param {RunnerCap} cap
  * @returns {Planned[]}
  */
-export function plan(rows, only) {
+export function plan(rows, only, cap) {
   const github = identityOf(rows, "github");
+  const runners = cap.ok && cap.max > 0;
   /** @type {readonly Step[]} */
-  const steps = only === null ? STEPS : [only];
+  const steps =
+    only === null
+      ? STEPS.flatMap((step) => (step === "github" && runners ? [step, ...OPTIONAL_STEPS] : [step]))
+      : [only];
   return steps.map((step) => {
     const identity = identityOf(rows, step);
     const mismatch =
@@ -182,7 +191,9 @@ function mismatchLine(key, login) {
  *   runs a child on the TTY; `input`, when given, is its stdin instead
  * @property {(question: string) => Promise<string | null>} prompt reads a
  *   line with echo off; `null` is Ctrl-C
- * @property {(root: string) => Promise<{ rows: Row[] }>} collect the doctor's rows
+ * @property {RunnerCap} cap the company's runner cap: plain `auth` signs the
+ *   runners token in only when it is above 0 (#2765)
+ * @property {(root: string, cap: RunnerCap) => Promise<{ rows: Row[] }>} collect the doctor's rows
  * @property {Record<Step, () => Identity | Promise<Identity>>} check one credential again
  * @property {import("./creds.mjs").Get} get
  * @property {(ms: number) => Promise<void>} sleep
@@ -582,12 +593,12 @@ export async function auth(argv, deps) {
     return 1;
   }
 
-  const before = (await deps.collect(deps.root)).rows;
+  const before = (await deps.collect(deps.root, deps.cap)).rows;
   deps.out(renderTable(before));
   deps.out("");
   let githubLogin =
     identityOf(before, "github").state === "ok" ? identityOf(before, "github").who : null;
-  for (const planned of plan(before, only)) {
+  for (const planned of plan(before, only, deps.cap)) {
     if (planned.mismatch !== null) {
       deps.err(mismatchLine(planned.mismatch, githubLogin ?? "?"));
       continue;
@@ -611,10 +622,10 @@ export async function auth(argv, deps) {
     }
   }
 
-  const rows = (await deps.collect(deps.root)).rows;
+  const rows = (await deps.collect(deps.root, deps.cap)).rows;
   deps.out("");
   deps.out(renderTable(rows));
-  const failing = plan(rows, only).filter((p) => p.run || p.mismatch !== null);
+  const failing = plan(rows, only, deps.cap).filter((p) => p.run || p.mismatch !== null);
   if (failing.length > 0) {
     deps.err(`not signed in: ${failing.map((p) => p.step).join(", ")}`);
     return 1;
@@ -681,11 +692,17 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error("claude-llc auth: VIBEWARS_CREDENTIALS is not set (run it through claude-llc).");
     process.exit(2);
   }
+  const botRoot = process.env.VIBEWARS_BOT_ROOT;
+  if (botRoot === undefined || botRoot === "") {
+    console.error("claude-llc auth: VIBEWARS_BOT_ROOT is not set (run it through claude-llc).");
+    process.exit(2);
+  }
   const p = paths(root);
   // The children on the TTY get Ctrl-C too; this stops auth with them.
   process.on("SIGINT", () => process.exit(130));
   process.exitCode = await auth(process.argv.slice(2), {
     root,
+    cap: readRunnerCap(botRoot),
     tty: process.stdin.isTTY,
     env: process.env,
     spawn: spawnOnTty,

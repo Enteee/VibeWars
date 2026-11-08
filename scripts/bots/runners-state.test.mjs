@@ -12,9 +12,11 @@ import {
   parseStatus,
   parseTarget,
   readAlertTold,
+  readRunnerCap,
   readStatus,
   readTarget,
   runnersLines,
+  runnersOff,
   runnersStateDir,
   writeAlertTold,
   writeTarget,
@@ -98,11 +100,39 @@ describe("runners state", () => {
     expect(retried.said.filter((line) => line.includes("0 or more"))).toHaveLength(2);
   });
 
-  it("init hints at claude-llc auth runners for a cap above 0 without the token, and keeps it", async () => {
+  it("init hints at claude-llc auth for a cap above 0 without the token, and keeps it", async () => {
     const unset = await ask(null, ["3"], false);
     expect(unset.cap).toBe(3);
-    expect(unset.said.at(-1)).toMatch(/not set up\. Run claude-llc auth runners/);
+    expect(unset.said.at(-1)).toBe(
+      "  github runners: not set up. Run claude-llc auth before raising the target.",
+    );
+    const kept = await ask({ maxRunners: 2 }, [], false);
+    expect(kept).toEqual({ cap: 2, asked: [], said: [unset.said.at(-1)] });
     expect((await ask(null, ["0"], false)).said).toEqual([]);
+  });
+
+  it("auth reads the cap from company.json: none is 0, a bad one is refused (#2765)", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "runners-"));
+    const refused = { ok: false, reason: "company.json refused: run claude-llc-init" };
+    try {
+      expect(readRunnerCap(dir)).toEqual({ ok: true, max: 0 });
+      const write = (/** @type {string} */ text) => {
+        fs.writeFileSync(path.join(dir, "company.json"), text);
+      };
+      write(JSON.stringify({ maxAgents: 12, maxRunners: 4 }));
+      expect(readRunnerCap(dir)).toEqual({ ok: true, max: 4 });
+      write(JSON.stringify({ maxAgents: 12 }));
+      expect(readRunnerCap(dir)).toEqual(refused);
+      write(JSON.stringify({ maxRunners: "4" }));
+      expect(readRunnerCap(dir)).toEqual(refused);
+      write("{");
+      expect(readRunnerCap(dir)).toEqual(refused);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+    expect(runnersOff({ ok: true, max: 0 })).toBe("runners off");
+    expect(runnersOff({ ok: true, max: 1 })).toBeNull();
+    expect(runnersOff(refused)).toBe(refused.reason);
   });
 
   it("no jail binds company.json, nor a directory holding it (#2764)", () => {
