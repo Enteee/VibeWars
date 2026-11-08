@@ -5,7 +5,7 @@ import type { Wall } from "./schema.js";
 
 describe("wallToSegments", () => {
   it("turns a rect into 4 segments forming its perimeter", () => {
-    const wall: Wall = { kind: "rect", x: 0, y: 0, width: 10, height: 5 };
+    const wall: Wall = { kind: "rect", layer: 0, x: 0, y: 0, width: 10, height: 5 };
     const segments = wallToSegments(wall);
     expect(segments).toHaveLength(4);
 
@@ -28,6 +28,7 @@ describe("wallToSegments", () => {
   it("turns a polygon into N segments closed back to the first point", () => {
     const wall: Wall = {
       kind: "polygon",
+      layer: 0,
       points: [
         { x: 0, y: 0 },
         { x: 10, y: 0 },
@@ -44,6 +45,7 @@ describe("wallToSegments", () => {
   it("handles a larger polygon without losing or duplicating an edge", () => {
     const wall: Wall = {
       kind: "polygon",
+      layer: 0,
       points: [
         { x: 0, y: 0 },
         { x: 10, y: 0 },
@@ -59,8 +61,8 @@ describe("wallToSegments", () => {
 describe("allWallSegments", () => {
   it("flattens multiple walls into one segment list", () => {
     const walls: Wall[] = [
-      { kind: "rect", x: 0, y: 0, width: 10, height: 10 },
-      { kind: "rect", x: 20, y: 20, width: 5, height: 5 },
+      { kind: "rect", layer: 0, x: 0, y: 0, width: 10, height: 10 },
+      { kind: "rect", layer: 0, x: 20, y: 20, width: 5, height: 5 },
     ];
     expect(allWallSegments(walls)).toHaveLength(8);
   });

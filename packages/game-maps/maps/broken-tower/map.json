@@ -6,9 +6,13 @@
   "teams": 2,
   "width": 3200,
   "height": 1800,
+  "layers": 1,
+  "decks": [],
+  "transitions": [],
   "walls": [
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         { "x": 1320, "y": 620 },
         { "x": 1510, "y": 620 },
@@ -20,6 +24,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         { "x": 1880, "y": 1180 },
         { "x": 1690, "y": 1180 },
@@ -31,6 +36,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         { "x": 1690, "y": 620 },
         { "x": 1880, "y": 620 },
@@ -42,6 +48,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         { "x": 1510, "y": 1180 },
         { "x": 1320, "y": 1180 },
@@ -51,107 +58,126 @@
         { "x": 1510, "y": 1140 }
       ]
     },
-    { "kind": "rect", "x": 640, "y": 780, "width": 60, "height": 240 },
-    { "kind": "rect", "x": 2500, "y": 780, "width": 60, "height": 240 },
-    { "kind": "rect", "x": 440, "y": 540, "width": 60, "height": 160 },
-    { "kind": "rect", "x": 2700, "y": 1100, "width": 60, "height": 160 },
-    { "kind": "rect", "x": 440, "y": 1100, "width": 60, "height": 160 },
-    { "kind": "rect", "x": 2700, "y": 540, "width": 60, "height": 160 },
-    { "kind": "rect", "x": 40, "y": 700, "width": 120, "height": 40 },
-    { "kind": "rect", "x": 3040, "y": 1060, "width": 120, "height": 40 },
-    { "kind": "rect", "x": 40, "y": 1060, "width": 120, "height": 40 },
-    { "kind": "rect", "x": 3040, "y": 700, "width": 120, "height": 40 },
-    { "kind": "rect", "x": 900, "y": 260, "width": 300, "height": 60 },
-    { "kind": "rect", "x": 2000, "y": 1480, "width": 300, "height": 60 },
-    { "kind": "rect", "x": 900, "y": 1480, "width": 300, "height": 60 },
-    { "kind": "rect", "x": 2000, "y": 260, "width": 300, "height": 60 },
-    { "kind": "rect", "x": 1080, "y": 520, "width": 120, "height": 60 },
-    { "kind": "rect", "x": 2000, "y": 1220, "width": 120, "height": 60 },
-    { "kind": "rect", "x": 1120, "y": 1100, "width": 60, "height": 180 },
-    { "kind": "rect", "x": 2020, "y": 520, "width": 60, "height": 180 },
-    { "kind": "rect", "x": 1540, "y": 0, "width": 120, "height": 180 },
-    { "kind": "rect", "x": 1540, "y": 1620, "width": 120, "height": 180 }
+    { "kind": "rect", "layer": 0, "x": 640, "y": 780, "width": 60, "height": 240 },
+    { "kind": "rect", "layer": 0, "x": 2500, "y": 780, "width": 60, "height": 240 },
+    { "kind": "rect", "layer": 0, "x": 440, "y": 540, "width": 60, "height": 160 },
+    { "kind": "rect", "layer": 0, "x": 2700, "y": 1100, "width": 60, "height": 160 },
+    { "kind": "rect", "layer": 0, "x": 440, "y": 1100, "width": 60, "height": 160 },
+    { "kind": "rect", "layer": 0, "x": 2700, "y": 540, "width": 60, "height": 160 },
+    { "kind": "rect", "layer": 0, "x": 40, "y": 700, "width": 120, "height": 40 },
+    { "kind": "rect", "layer": 0, "x": 3040, "y": 1060, "width": 120, "height": 40 },
+    { "kind": "rect", "layer": 0, "x": 40, "y": 1060, "width": 120, "height": 40 },
+    { "kind": "rect", "layer": 0, "x": 3040, "y": 700, "width": 120, "height": 40 },
+    { "kind": "rect", "layer": 0, "x": 900, "y": 260, "width": 300, "height": 60 },
+    { "kind": "rect", "layer": 0, "x": 2000, "y": 1480, "width": 300, "height": 60 },
+    { "kind": "rect", "layer": 0, "x": 900, "y": 1480, "width": 300, "height": 60 },
+    { "kind": "rect", "layer": 0, "x": 2000, "y": 260, "width": 300, "height": 60 },
+    { "kind": "rect", "layer": 0, "x": 1080, "y": 520, "width": 120, "height": 60 },
+    { "kind": "rect", "layer": 0, "x": 2000, "y": 1220, "width": 120, "height": 60 },
+    { "kind": "rect", "layer": 0, "x": 1120, "y": 1100, "width": 60, "height": 180 },
+    { "kind": "rect", "layer": 0, "x": 2020, "y": 520, "width": 60, "height": 180 },
+    { "kind": "rect", "layer": 0, "x": 1540, "y": 0, "width": 120, "height": 180 },
+    { "kind": "rect", "layer": 0, "x": 1540, "y": 1620, "width": 120, "height": 180 }
   ],
   "gates": [],
   "objectives": [
     {
       "kind": "relic-spawn",
+      "layer": 0,
       "team": 0,
       "position": { "x": 120, "y": 900 }
     },
     {
       "kind": "relic-spawn",
+      "layer": 0,
       "team": 1,
       "position": { "x": 3080, "y": 900 }
     },
     {
       "kind": "altar",
+      "layer": 0,
       "position": { "x": 1600, "y": 900 }
     }
   ],
   "spawnPoints": [
     {
       "team": 0,
+      "layer": 0,
       "position": { "x": 240, "y": 660 }
     },
     {
       "team": 0,
+      "layer": 0,
       "position": { "x": 240, "y": 780 }
     },
     {
       "team": 0,
+      "layer": 0,
       "position": { "x": 240, "y": 1020 }
     },
     {
       "team": 0,
+      "layer": 0,
       "position": { "x": 240, "y": 1140 }
     },
     {
       "team": 0,
+      "layer": 0,
       "position": { "x": 360, "y": 720 }
     },
     {
       "team": 0,
+      "layer": 0,
       "position": { "x": 360, "y": 840 }
     },
     {
       "team": 0,
+      "layer": 0,
       "position": { "x": 360, "y": 960 }
     },
     {
       "team": 0,
+      "layer": 0,
       "position": { "x": 360, "y": 1080 }
     },
     {
       "team": 1,
+      "layer": 0,
       "position": { "x": 2960, "y": 1140 }
     },
     {
       "team": 1,
+      "layer": 0,
       "position": { "x": 2960, "y": 1020 }
     },
     {
       "team": 1,
+      "layer": 0,
       "position": { "x": 2960, "y": 780 }
     },
     {
       "team": 1,
+      "layer": 0,
       "position": { "x": 2960, "y": 660 }
     },
     {
       "team": 1,
+      "layer": 0,
       "position": { "x": 2840, "y": 1080 }
     },
     {
       "team": 1,
+      "layer": 0,
       "position": { "x": 2840, "y": 960 }
     },
     {
       "team": 1,
+      "layer": 0,
       "position": { "x": 2840, "y": 840 }
     },
     {
       "team": 1,
+      "layer": 0,
       "position": { "x": 2840, "y": 720 }
     }
   ]
