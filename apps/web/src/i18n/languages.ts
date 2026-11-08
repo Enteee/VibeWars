@@ -1,4 +1,5 @@
 import type { Catalog } from "./en.js";
+import type { GameNames } from "./game-names.js";
 
 /**
  * The 30 most written languages on the web (#2644: W3Techs, content
@@ -40,14 +41,19 @@ export const LANGUAGES = [
 
 export type LanguageCode = (typeof LANGUAGES)[number]["code"];
 
+/** A language's tables, loaded together: its interface text and its game-data names. */
+export interface LocaleTables {
+  readonly ui: Catalog;
+  readonly game: GameNames;
+}
+
 /**
  * The translations this build has, each its own lazy chunk:
- * `() => import("./locales/<code>/ui.js")`. English is bundled, not here.
- * A translation card adds its languages.
+ * `async () => ({ ui: (await import("./locales/<code>/ui.js")).default,
+ * game: (await import("./locales/<code>/game.js")).default })`. English
+ * is bundled, not here. A translation card adds its languages.
  */
-export const LOCALES: Readonly<
-  Partial<Record<LanguageCode, () => Promise<{ readonly default: Catalog }>>>
-> = {};
+export const LOCALES: Readonly<Partial<Record<LanguageCode, () => Promise<LocaleTables>>>> = {};
 
 /** The languages the build has, English first, in `LANGUAGES` order. */
 export function availableLanguages(

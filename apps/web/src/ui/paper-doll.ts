@@ -1,7 +1,6 @@
 import {
   ARMOR_SLOTS,
   getInsignia,
-  getWeaponMod,
   getUniversalRune,
   perSlotAmount,
   type ArmorSlot,
@@ -12,6 +11,7 @@ import {
   type WeaponSetIndex,
 } from "@vibewars/game-core";
 
+import { attributeName, itemName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import {
@@ -29,7 +29,6 @@ import { gearIconImg, insigniaIcon, runeIcon } from "./icons.js";
 import { button, h, syncList } from "./kit.js";
 import { HELD, PAPER_DOLL_ANCHORS, PAPER_DOLL_SIZE } from "./paper-doll-figure.js";
 import {
-  attributeName,
   HAND_KEY,
   HAND_NUMBER,
   HANDS,
@@ -406,7 +405,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
       (entry) => entry.id ?? "none",
       (entry) =>
         choice(
-          entry.id === null ? t("paperDoll.none") : (getInsignia(entry.id)?.name ?? entry.id),
+          entry.id === null ? t("paperDoll.none") : itemName(entry.id),
           entry.id === null ? undefined : insigniaIcon(entry.id),
           () => {
             if (open !== undefined && !isHand(open)) {
@@ -521,7 +520,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
         }
         const mods = held.slots.map((slot) => {
           const id = held.upgrades[slot];
-          return { slot, name: id === null ? undefined : (getWeaponMod(id)?.name ?? id) };
+          return { slot, name: id === null ? undefined : itemName(id) };
         });
         entry.icons.replaceChildren(...mods.map((mod) => modGlyph(mod.name)));
         entry.pick.replaceChildren(

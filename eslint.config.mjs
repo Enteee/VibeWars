@@ -213,6 +213,33 @@ export default defineConfig([
     rules: { "vibewars/no-raw-ui-text": "error" },
   },
 
+  // Game data is drawn by name through i18n/game-names.ts (#2663), so a
+  // translation shows everywhere at once; the data's own `name` is English.
+  {
+    files: ["apps/web/src/ui/**/*.ts"],
+    ignores: ["apps/web/src/**/*.test.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "MemberExpression[property.name='name'][object.name=/^(skill|status|profession|attribute|map|weapon|offhand|definition)$/]",
+          message: "Draw game data through i18n/game-names.ts: skillName(id), mapName(id)...",
+        },
+        {
+          selector:
+            "MemberExpression[property.name='name'] > CallExpression.object[callee.name=/^get(Skill|Attribute|Profession|StatusDefinition|Weapon|Offhand|Insignia|UniversalRune|WeaponMod)$/]",
+          message: "Draw game data through i18n/game-names.ts: skillName(id), mapName(id)...",
+        },
+        {
+          selector:
+            "MemberExpression[property.name='name'] > MemberExpression.object[object.name=/^(PROFESSIONS|STATUS_DEFINITIONS|WEAPONS|OFFHANDS|INSIGNIAS|UNIVERSAL_RUNES)$/]",
+          message: "Draw game data through i18n/game-names.ts: skillName(id), mapName(id)...",
+        },
+      ],
+    },
+  },
+
   // Tests deliberately feed wrong-typed values to validators to prove they are
   // rejected, so the rules that assume well-typed inputs only create noise.
   {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { en, type Catalog, type MessageKey } from "./en.js";
+import { ENGLISH_NAMES, type GameNames } from "./game-names.js";
 import { LANGUAGES, LOCALES } from "./languages.js";
 import type { Message } from "./message.js";
 
@@ -48,4 +49,31 @@ describe.each(catalogs)("the %s catalog (#2648)", (code, catalog) => {
       }
     }
   });
+});
+
+/** Every game-name table present (#2663), by its folder's code. */
+const gameFiles = import.meta.glob<{ default: GameNames }>("./locales/*/game.ts", { eager: true });
+const folder = (path: string): string => path.split("/")[2] ?? path;
+
+describe("the game-name tables (#2663)", () => {
+  it("come with every language's catalog, and only with one", () => {
+    expect(Object.keys(gameFiles).map(folder).sort()).toEqual(
+      Object.keys(files).map(folder).sort(),
+    );
+  });
+
+  describe.each(Object.entries(gameFiles).map(([path, module]) => [folder(path), module.default]))(
+    "the %s table",
+    (_code, table) => {
+      it.each(Object.keys(ENGLISH_NAMES) as (keyof GameNames)[])(
+        "names every %s id there is, and no other",
+        (kind) => {
+          expect(Object.keys(table[kind]).sort()).toEqual(Object.keys(ENGLISH_NAMES[kind]).sort());
+          for (const [id, name] of Object.entries(table[kind])) {
+            expect(name.trim(), id).not.toBe("");
+          }
+        },
+      );
+    },
+  );
 });

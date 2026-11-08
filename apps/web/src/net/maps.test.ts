@@ -1,12 +1,13 @@
 import { ASCENT_ROUNDS, teamSizeOf } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
+import { mapName } from "../i18n/game-names.js";
 import {
   ARENA_MAPS,
   arenaIds,
+  ascentMapId,
   ASCENT_PROGRESSION,
   LOBBY_MODE_MATCH_MODES,
-  ascentMapName,
   hostMap,
   mapFlagField,
   mapMode,
@@ -280,7 +281,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       ["the-courtyard", "king-of-the-hill"],
       ["hall-of-heroes", "king-of-the-hill"],
     ]);
-    expect(ASCENT_PROGRESSION.map((_, round) => ascentMapName(round))).toEqual([
+    expect(ASCENT_PROGRESSION.map((_, round) => mapName(ascentMapId(round)))).toEqual([
       "Broken Tower",
       "Scarred Earth",
       "The Courtyard",
