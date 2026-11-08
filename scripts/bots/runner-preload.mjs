@@ -144,13 +144,12 @@ export function buildPreload({ state, repoUrl, exclude, extra, run = runCommand 
       return { dir, built: false };
     }
 
-    // A committed symlink would make the write land outside the clone.
-    fs.rmSync(path.join(src, "devenv.local.nix"), { force: true });
-    // A committed symlink would make the write land outside the clone.
-    fs.rmSync(path.join(src, "devenv.local.nix"), { force: true });
+    // Committed files devenv would read, or a symlink that would redirect a
+    // write outside the clone: only what this writes, and what devenv makes, stays.
+    for (const name of ["devenv.local.nix", "devenv.local.yaml", ".devenv", ".devenv.flake.nix"]) {
+      fs.rmSync(path.join(src, name), { recursive: true, force: true });
+    }
     fs.writeFileSync(path.join(src, "devenv.local.nix"), LOCAL_NIX);
-    // devenv loads this too, and it is no gate path: nothing of it runs here.
-    fs.rmSync(path.join(src, "devenv.local.yaml"), { force: true });
     const env = { ...process.env, HOME: home };
     run("devenv", ["print-dev-env"], { cwd: src, env });
     const shell = fs.realpathSync(path.join(src, ".devenv", "gc", "shell"));
