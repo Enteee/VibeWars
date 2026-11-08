@@ -18,7 +18,18 @@ runs:
     # the store with tar as the runner user, and cannot write into the
     # root-owned store a multi-user install (cachix/install-nix-action) makes.
     # Third-party actions are pinned to a commit, not a movable tag.
+    #
+    # It fetches its Nix tarball from a GitHub release, and now and then the
+    # download arrives corrupt ("zstd: unsupported format", #2800). A step
+    # cannot retry itself, so a failure is followed by one more attempt; the
+    # second is not allowed to fail silently.
     - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
+      id: nix-install
+      continue-on-error: true
+
+    - name: Install Nix again after a failed download
+      if: steps.nix-install.outcome == 'failure'
+      uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
 
     # A company runner pulls the 1.1 GB store cache at ~1 MB/s; the download's
     # token expires partway ("Failed to restore"), and the half-extracted
