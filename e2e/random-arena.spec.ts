@@ -233,12 +233,17 @@ test("queued, Team Arena stays browsable: Find a match waits, saying why, until 
   // The queue is for the size it has: no mode's size changes under it.
   const size = page.locator(".mode-rail-size");
   await expect(size).toHaveAttribute("title", "Leave the queue to change the team size");
+  await expect(size).toContainText("1v1");
+  // Its maps, to look at: a list, nothing to pick.
+  await expect(screen.locator(".screen-queued-maps li").first()).toBeVisible();
+  await expect(screen.locator("select")).toHaveCount(0);
 
   await screen.getByRole("button", { name: "Leave Queue", exact: true }).click();
   await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
   // Out of it, the player's own lobby opens here, and finds a match.
   await expect(find).toBeEnabled();
   await expect(size).not.toHaveAttribute("title", "Leave the queue to change the team size");
+  await expect(size).not.toContainText("1v1");
 });
 
 test("deleting the queued character leaves the queue and says why (#2743)", async ({ page }) => {

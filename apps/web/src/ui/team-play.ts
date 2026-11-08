@@ -7,7 +7,7 @@ import { looksLikeTeam } from "../storage/team-transfer.js";
 import { lookOfCharacter, teamFigureCard } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { button, h, listenForPaste, screenBar } from "./kit.js";
-import type { LobbyPanel } from "./lobby-screen.js";
+import { mapLabel, type LobbyMap, type LobbyPanel } from "./lobby-screen.js";
 import {
   loadTeamBuildSize,
   onTeamSizeChange,
@@ -252,17 +252,33 @@ export function renderHostScreen(
   connectionNotice: string | undefined,
   callbacks: TeamPlayCallbacks,
   panel: LobbyPanel | undefined,
-  /** In the Random Arena queue (#2743): no lobby to host until it is left. */
-  queued: boolean,
+  /** In the Random Arena queue (#2743), `entry`'s maps to preview: no lobby until it is left. */
+  queuedMaps: readonly LobbyMap[] | undefined,
 ): void {
   const body = teamScreen(root, entry, problems, connectionNotice, callbacks, panel);
   if (panel !== undefined) {
     body.appendChild(panel.body);
-  } else if (queued) {
-    body.append(h("p", "screen-info", t("queue.busy")), queuedButtons(entry, callbacks));
+  } else if (queuedMaps !== undefined) {
+    body.append(
+      h("p", "screen-info", t("queue.busy")),
+      mapPreview(queuedMaps),
+      queuedButtons(entry, callbacks),
+    );
   } else {
     body.appendChild(h("p", "screen-info", t("teamPlay.openingLobby")));
   }
+}
+
+/**
+ * The maps a lobby of this screen plays, as its lobby lists them, to look
+ * at and not to pick (#2781): in the Random Arena queue there is no lobby.
+ */
+function mapPreview(maps: readonly LobbyMap[]): HTMLElement {
+  const preview = h("div", "screen-queued-maps");
+  const list = h("ul", "lobby-map");
+  list.append(...maps.map((map) => h("li", undefined, mapLabel(map))));
+  preview.append(h("span", "field-label", t("teamPlay.queuedMaps")), list);
+  return preview;
 }
 
 /**

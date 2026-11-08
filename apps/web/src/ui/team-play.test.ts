@@ -11,6 +11,7 @@ import {
 } from "../storage/schema.js";
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
+import { mapLabel, type LobbyMap } from "./lobby-screen.js";
 import {
   noTeamBuilds,
   renderHostScreen,
@@ -190,7 +191,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     renderTeamBuilder(root as unknown as HTMLElement, teams, [], undefined, callbacks);
     return root;
   };
-  const host = (entry: HostEntry, queued = false): FakeElement => {
+  const host = (entry: HostEntry, queuedMaps?: readonly LobbyMap[]): FakeElement => {
     const root = new FakeElement();
     renderHostScreen(
       root as unknown as HTMLElement,
@@ -199,7 +200,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
       undefined,
       callbacks,
       undefined,
-      queued,
+      queuedMaps,
     );
     return root;
   };
@@ -327,16 +328,25 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     }
   });
 
+  const maps: readonly LobbyMap[] = [
+    { id: "a", name: "Long Hall", size: "small", mode: "annihilation", teamSizes: [1, 2] },
+    { id: "b", name: "Broken Tower", size: "large", mode: "kill-count", teamSizes: [8] },
+  ];
+
   it("in the Random Arena queue, says so, its Find a match off with why, beside Leave Queue (#2781)", () => {
     for (const entry of ["team-arena", "heroes-ascent", "gvg"] as const) {
-      const root = host(entry, true);
+      const root = host(entry, maps);
       expect(root.everything().some((node) => node.textContent === t("queue.busy"))).toBe(true);
       const [find] = root.all("lobby-find");
       expect(find?.textContent).toBe(t("lobby.findMatch"));
       expect(find?.disabled).toBe(true);
       expect(find?.title).toBe(t("queue.busy"));
     }
-    const hosted = host("hosted-game", true);
+    const hosted = host("hosted-game", maps);
+    // The maps to look at, not to pick: a list.
+    expect(
+      hosted.all("lobby-map").flatMap((list) => list.children.map((item) => item.textContent)),
+    ).toEqual(maps.map(mapLabel));
     expect(hosted.all("lobby-find")).toEqual([]);
     const [leave] = hosted.all("lobby-leave-queue");
     expect(leave?.textContent).toBe(t("queue.leaveQueue"));

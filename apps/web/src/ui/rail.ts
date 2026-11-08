@@ -222,20 +222,24 @@ export function teamSizeStepper(
  * it all. A lobby guest's is locked, as its modes are (#1526); in a
  * Hosted Game or a Team Arena it shows the lobby's size, the host's pick
  * (#2104, #2107). There, a queued party's is locked too: the queue is
- * for the size it has; and every mode's, in the Random Arena queue (#2781).
+ * for the size it has; and in any queue, every mode screen shows the queued
+ * size, locked; Team Builder builds at any (#2781).
  */
 function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLElement {
   const guest = party !== undefined && !party.isHost;
   const noSizes = TEAM_SIZES_BY_ENTRY[active].length === 0;
   const queued =
-    (inRandomQueue && isModeEntry(active)) || (party?.mode === active && party.queuedMs !== null);
+    (queuedSize !== undefined && isModeEntry(active)) ||
+    (party?.mode === active && party.queuedMs !== null);
   const lobbySize =
     (active === "hosted-game" || active === "team-arena") && party?.mode === active
       ? party.teamSize
       : undefined;
   const stepper = teamSizeStepper(
     active,
-    noSizes ? undefined : (lobbySize ?? loadTeamSize(active)),
+    noSizes
+      ? undefined
+      : ((isModeEntry(active) ? queuedSize : undefined) ?? lobbySize ?? loadTeamSize(active)),
     noSizes || guest || queued,
     (size) => {
       teamSizeListener?.(size);
@@ -260,12 +264,12 @@ function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLEle
 /** The lobby the rail screens show, while there is one (#1526). */
 let shownParty: RailParty | undefined;
 
-/** Whether this tab is in the Random Arena queue (#2781), which no size changes. */
-let inRandomQueue = false;
+/** The size this tab is queued at, Random or team (#2781), while it is: no size changes it. */
+let queuedSize: number | undefined;
 
-/** Whether every rail screen drawn from now on is in the Random Arena queue; the shell sets it. */
-export function setRailQueued(queued: boolean): void {
-  inRandomQueue = queued;
+/** The queued size every rail screen drawn from now on shows; the shell sets it. */
+export function setRailQueued(size: number | undefined): void {
+  queuedSize = size;
 }
 
 /** The lobby every rail screen drawn from now on shows; the shell sets it on every change. */

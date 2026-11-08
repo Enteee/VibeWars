@@ -70,8 +70,9 @@ another team, on a random map. The queue waits in the background: you
 stay on Random Arena and may go anywhere meanwhile, your builds,
 equipment, Options, Help or the music editor, but not change character,
 host or join a lobby, or change a mode's team size. Team Arena and the
-other lobby screens say you are in a queue, their **Find a match** off,
-beside a **Leave Queue**. A turning ring left of **Help** in the top bar
+other lobby screens say you are in a queue and list their maps, their
+**Find a match** off, beside a **Leave Queue**; the team size reads the
+size you queued at, on every mode. A turning ring left of **Help** in the top bar
 shows you are queued; click it for the queue, the time waited, how many
 are searching and **Leave Queue**. When a match is found you are taken
 to its versus screen from wherever you are. Closing the tab while you
