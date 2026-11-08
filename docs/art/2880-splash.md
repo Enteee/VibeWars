@@ -30,3 +30,20 @@ and goes through `t()` when built. Not decided; the operator picks one.
 
 On the phone mock the name is 60 px tall in 1, 2, 3 and 4 and about 50 px in
 5, never clipped. Each PNG is under 160 KB.
+
+## Picked: 1, with a live background
+
+The operator picked proposal 1 and asked for a lively background: a game
+playing itself behind the wordmark, characters fighting on a random map, new
+ones joining from the side as others die. Mockup:
+`2880-splash-live.png` (hero frame, desktop and phone) and
+`2880-splash-live-storyboard.png` (four moments of one map: clash, first
+hits, two fall as hollow `dead` rings, newcomers streak in from the edges).
+Drawn by `scripts/assets/splash-live.mjs`.
+
+Rules for the build: the arena is the real renderer fed by bots on a random
+map, dimmed under a 28% scrim with a darker band behind the name so the name
+reads on any map; the wordmark, rule and prompt are drawn above it and never
+move. The fight stays in the bands above and below the name. Build cost:
+animated, needs a headless bot-vs-bot match on the splash route, with the
+camera fixed and no HUD.
