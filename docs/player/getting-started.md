@@ -188,9 +188,9 @@ one you are already in keeps what you joined with.
 ## Language
 
 The game starts in your browser's language when it has it, else in
-English. Pick another in **Options → Language** (there once the game
-has a second language): the page reloads in it, and keeps it from then
-on. While you are in a lobby with others, in a
+English. Pick another in **Options → Language**: the page reloads in it, and
+keeps it from then on. Skill, map and item names and these Help pages
+are in English for now. While you are in a lobby with others, in a
 queue or in a match, the choice is locked, since the reload would drop
 you out. Player names stay as their players wrote them.
 
