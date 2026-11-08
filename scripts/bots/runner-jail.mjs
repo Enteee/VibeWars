@@ -38,13 +38,12 @@
  * it breaks, the supervisor is gone, however it died, and the runner is
  * stopped: a restarted supervisor would otherwise start a second set.
  *
- *     node runner-jail.mjs --jitconfig <file | -> [--lifeline <fd>] [--cpus 2] [--memory-gib 6] [--tasks-max 2048]
+ *     node runner-jail.mjs --jitconfig <file | -> --id <runner name> [--lifeline <fd>] [--cpus 2] [--memory-gib 6] [--tasks-max 2048]
  *
  * `VIBEWARS_RUNNER_JAIL` holds the jail's store paths as JSON, which the
  * `vibewars-runner-jail` wrapper in `nix/claude-bot.nix` sets.
  */
 import { spawn } from "node:child_process";
-import crypto from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
@@ -297,6 +296,35 @@ export function removeScratch(dir) {
 }
 
 /**
+ * Deletes every direct child of the scratch directory that `live` does not
+ * name: what a jail killed before its `finally` left behind. A symlink is
+ * unlinked, never followed. One that cannot be removed is logged.
+ *
+ * @param {string} dir
+ * @param {ReadonlySet<string>} live names of the runners still going
+ * @param {(line: string) => void} log
+ */
+export function sweepScratch(dir, live, log) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (live.has(entry.name)) {
+      continue;
+    }
+    try {
+      if (entry.isDirectory()) {
+        removeScratch(path.join(dir, entry.name));
+      } else {
+        fs.unlinkSync(path.join(dir, entry.name));
+      }
+      log(`runners: swept scratch ${entry.name}`);
+    } catch (error) {
+      log(
+        `runners: could not sweep ${entry.name}: ${error instanceof Error ? error.message : "failed"}`,
+      );
+    }
+  }
+}
+
+/**
  * Watches a lifeline: an fd nothing is written to, which ends when the
  * process holding its other end exits.
  *
@@ -326,16 +354,16 @@ export function watchLifeline(fd) {
  * @param {object} options
  * @param {RunnerStore} options.store
  * @param {string} options.jitconfigFile `-` for stdin
+ * @param {string} options.id the runner's name, and its scratch directory's: how the supervisor knows whose it is
  * @param {Promise<void> | null} options.lifeline stops the runner when it resolves
  * @param {number} options.cpus
  * @param {number} options.memoryGib
  * @param {number} options.tasksMax
  * @returns {Promise<number>} the runner's exit code
  */
-export async function runRunner({ store, jitconfigFile, lifeline, cpus, memoryGib, tasksMax }) {
+export async function runRunner({ store, jitconfigFile, id, lifeline, cpus, memoryGib, tasksMax }) {
   const fromStdin = jitconfigFile === "-";
   const jitconfig = parseJitconfig(fs.readFileSync(fromStdin ? 0 : jitconfigFile, "utf8"));
-  const id = crypto.randomBytes(4).toString("hex");
   fs.mkdirSync(store.scratch, { recursive: true, mode: 0o700 });
   fs.chmodSync(store.scratch, 0o700);
   const scratch = path.join(store.scratch, id);
@@ -471,6 +499,7 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
   const { values } = parseArgs({
     options: {
       jitconfig: { type: "string" },
+      id: { type: "string" },
       lifeline: { type: "string" },
       cpus: { type: "string" },
       "memory-gib": { type: "string" },
@@ -478,7 +507,11 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
     },
   });
   const storeJson = process.env.VIBEWARS_RUNNER_JAIL;
-  if (values.jitconfig === undefined || storeJson === undefined) {
+  if (
+    values.jitconfig === undefined ||
+    storeJson === undefined ||
+    !/^[a-z0-9-]{1,64}$/.test(values.id ?? "")
+  ) {
     console.error(
       "usage: runner-jail.mjs --jitconfig <file | -> [--lifeline <fd>] [--cpus 2] [--memory-gib 6] [--tasks-max 2048]",
     );
@@ -490,6 +523,7 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
   process.exitCode = await runRunner({
     store: parseRunnerStore(storeJson),
     jitconfigFile: values.jitconfig,
+    id: values.id ?? "",
     lifeline: lifeline?.cut ?? null,
     cpus: positive(values.cpus, "cpus", DEFAULT_CPUS),
     memoryGib: positive(values["memory-gib"], "memory-gib", DEFAULT_MEMORY_GIB),

@@ -43,7 +43,7 @@ paths. A supervisor that keeps runners going is part 2 (#1888).
 - `/nix`, `HOME` and the work dir are a fresh per-jail **scratch directory
   on disk** (mode 0700, under `$XDG_STATE_HOME/vibewars/runners/`, never
   under the hub, a worktree or the credentials), deleted when the runner
-  exits. Not tmpfs:
+  exits (the jail's `finally`; the supervisor sweeps what a killed jail left, at start and after each exit, #2795). Not tmpfs:
   tmpfs is charged to the scope's memory, and devenv's restored store
   alone is several GiB.
 - The runner's Nix closure and a base userland (bash, coreutils, findutils,

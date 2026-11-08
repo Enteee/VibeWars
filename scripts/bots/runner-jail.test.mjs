@@ -19,6 +19,7 @@ import {
   NIX_STORE_PATHS,
   parseRunnerStore,
   removeScratch,
+  sweepScratch,
   runnerCommand,
   runnerJailArgs,
   sendJitconfig,
@@ -385,6 +386,27 @@ describe("removeScratch", () => {
     fs.chmodSync(path.dirname(store), 0o555);
     removeScratch(dir);
     expect(fs.existsSync(dir)).toBe(false);
+  });
+});
+
+describe("sweepScratch (#2795)", () => {
+  it("removes the directories no live runner owns, and unlinks a symlink without following it", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "runner-sweep-"));
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), "runner-outside-"));
+    fs.writeFileSync(path.join(outside, "keep"), "");
+    for (const name of ["live-1", "dead-1"]) {
+      fs.mkdirSync(path.join(dir, name, "nix"), { recursive: true });
+    }
+    fs.chmodSync(path.join(dir, "dead-1", "nix"), 0o555);
+    fs.symlinkSync(outside, path.join(dir, "link"));
+    /** @type {string[]} */
+    const lines = [];
+    sweepScratch(dir, new Set(["live-1"]), (line) => lines.push(line));
+    expect(fs.readdirSync(dir)).toEqual(["live-1"]);
+    expect(fs.existsSync(path.join(outside, "keep"))).toBe(true);
+    expect(lines).toHaveLength(2);
+    fs.rmSync(dir, { recursive: true });
+    fs.rmSync(outside, { recursive: true });
   });
 });
 

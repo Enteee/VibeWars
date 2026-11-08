@@ -47,6 +47,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import { releaseLock, takeLock } from "./instance-lock.mjs";
+import { sweepScratch } from "./runner-jail.mjs";
 import {
   RUNNER_NAME,
   openRunnerLog,
@@ -130,6 +131,7 @@ export class ApiError extends Error {
  * @property {() => number} load1
  * @property {() => number} cpus
  * @property {() => string | null} diskCapRefusal why scratch has no disk cap, null when it has one
+ * @property {(live: ReadonlySet<string>) => void} sweepScratch deletes every scratch directory not named by a live runner
  */
 
 /**
@@ -202,6 +204,7 @@ export class RunnerSupervisor {
     /** @type {boolean | null} what COMPANY_RUNNERS was last set to; null before the first */
     this.variable = null;
     this.reconciled = false;
+    this.swept = false;
     /** @type {string | null} the last refusal or back-off, as the status says it */
     this.reason = null;
     /** @type {string | null} the kind of host refusal last logged, so a new number is not news */
@@ -358,6 +361,11 @@ export class RunnerSupervisor {
     this.target = read.n;
     this.observeLoad();
     this.reason = read.reason ?? (now() < this.retryAt ? this.backoffReason : null);
+    if (!this.swept) {
+      // Before any runner starts: whatever is there is a dead runner's.
+      this.sweep();
+      this.swept = true;
+    }
     if (config.max === 0) {
       this.reason = "runners are off: maxRunners is 0 (claude-llc-init)";
       this.writeStatus();
@@ -569,6 +577,8 @@ export class RunnerSupervisor {
   exited(runner, code) {
     this.runners.delete(runner.name);
     this.deps.log(`runners: ${runner.name} exited ${String(code)}`);
+    // The jail's own cleanup does not run when it is killed.
+    this.sweep();
     // A signal to the whole group can reach a runner before `stop` marks it.
     const halted = runner.killed || this.stopped;
     if (halted || code !== 0 || !runner.busy) {
@@ -586,6 +596,17 @@ export class RunnerSupervisor {
       this.backoffReason = null;
     }
     this.writeStatus();
+  }
+
+  /** Scratch directories belong to live runners, by name; nothing else keeps one. */
+  sweep() {
+    try {
+      this.deps.host.sweepScratch(new Set(this.runners.keys()));
+    } catch (error) {
+      this.deps.log(
+        `runners: could not sweep scratch: ${error instanceof Error ? error.message : "failed"}`,
+      );
+    }
   }
 
   /** @returns {Promise<void>} what a crash left: offline, ours by host and label, not alive */
@@ -980,11 +1001,13 @@ export function spawnLauncher(command, args, env, jitconfig, log = null) {
  * The launcher's command line: no JIT config in it, ever; that goes on stdin.
  *
  * @param {{ cpus: number, memoryGib: number, tasksMax: number }} cap
+ * @param {string} name the runner's name, which is also its scratch directory's
  * @returns {string[]}
  */
-export function launcherArgs({ cpus, memoryGib, tasksMax }) {
+export function launcherArgs({ cpus, memoryGib, tasksMax }, name) {
   return [
     ...["--jitconfig", "-"],
+    ...["--id", name],
     ...["--lifeline", String(LIFELINE_FD)],
     ...["--cpus", String(cpus)],
     ...["--memory-gib", String(memoryGib)],
@@ -1042,7 +1065,12 @@ if (
       if (!RUNNER_NAME.test(name)) {
         // Never a path: a name this cannot file is run without a log.
         console.error(`runners: ${name} is no log name; its output is dropped`);
-        return spawnLauncher("vibewars-runner-jail", launcherArgs(cap), launcherEnv, jitconfig);
+        return spawnLauncher(
+          "vibewars-runner-jail",
+          launcherArgs(cap, name),
+          launcherEnv,
+          jitconfig,
+        );
       }
       const log = openRunnerLog(path.join(logs, `${name}.log`), {
         onError: (error) => {
@@ -1058,13 +1086,24 @@ if (
           `runners: could not prune runner logs: ${error instanceof Error ? error.message : "failed"}`,
         );
       }
-      return spawnLauncher("vibewars-runner-jail", launcherArgs(cap), launcherEnv, jitconfig, log);
+      return spawnLauncher(
+        "vibewars-runner-jail",
+        launcherArgs(cap, name),
+        launcherEnv,
+        jitconfig,
+        log,
+      );
     },
     host: {
       freeBytes: () => os.freemem(),
       load1: () => os.loadavg()[0] ?? 0,
       cpus: () => os.availableParallelism(),
       diskCapRefusal: () => diskCapRefusal(scratch, [root, env.HOME ?? os.homedir()]),
+      sweepScratch: (live) => {
+        sweepScratch(scratch, live, (line) => {
+          console.error(line);
+        });
+      },
     },
     readTarget: () => readTarget(state, max),
     writeStatus: (status) => {
