@@ -5481,6 +5481,7 @@
         { "literal": "closed" },
         { "literal": "fell-through" },
         { "literal": "host-left" },
+        { "literal": "in-match" },
         { "literal": "invalid-proposal" },
         { "literal": "invalid-slot" },
         { "literal": "invalid-vote" },

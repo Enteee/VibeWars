@@ -271,7 +271,7 @@ const party = (...members: PartyMember[]): RailParty => ({
   members,
   queuedMs: null,
   teamSize: 4,
-  inMatch: false,
+  removable: true,
 });
 
 describe("the top bar's Lobby (#2385)", () => {

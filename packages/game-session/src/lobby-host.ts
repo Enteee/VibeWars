@@ -2465,7 +2465,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return;
     }
     if (phase === "starting" || phase === "in-match") {
-      note("notice", "Members cannot be removed during a match.", member.id);
+      refuse(member.id, "in-match");
       return;
     }
     if (target.playerPubkey !== null) {

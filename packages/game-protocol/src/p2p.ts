@@ -1446,6 +1446,8 @@ export const LOBBY_REFUSALS = [
   // A member its host removed (#2746), and that player's every later join
   // to the same lobby, told after the key proof.
   "removed",
+  // A remove-member order while its match is on or starting (#2746).
+  "in-match",
 ] as const;
 
 export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];

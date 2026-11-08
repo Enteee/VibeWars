@@ -114,6 +114,7 @@ describe("the Lobby window's party (#1526, #2385)", () => {
         player("me"),
       ]),
       null,
+      false,
     );
     expect(party).toEqual({
       code: "ACDEFG",
@@ -126,13 +127,17 @@ describe("the Lobby window's party (#1526, #2385)", () => {
         { id: "me", name: "me", isHost: false, self: true, away: false },
       ],
       queuedMs: null,
-      inMatch: false,
+      removable: true,
     });
     expect(isAlone(party)).toBe(false);
   });
 
   it("greys a member whose connection dropped, and says it is reconnecting (#1764)", () => {
-    const party = partyOf(lobby([player("me"), player("friend", { away: true, team: 1 })]), null);
+    const party = partyOf(
+      lobby([player("me"), player("friend", { away: true, team: 1 })]),
+      null,
+      false,
+    );
     const [me, friend] = party.members;
     if (me === undefined || friend === undefined) {
       throw new Error("two members");
@@ -146,13 +151,15 @@ describe("the Lobby window's party (#1526, #2385)", () => {
   });
 
   it("is alone with only bots for company, and with no lobby at all", () => {
-    expect(isAlone(partyOf(lobby([player("me"), player("Bot", { bot: true })]), null))).toBe(true);
+    expect(isAlone(partyOf(lobby([player("me"), player("Bot", { bot: true })]), null, false))).toBe(
+      true,
+    );
     expect(isAlone(undefined)).toBe(true);
   });
 
   it("tells a guest its host has the lobby closed, and nothing while open; the host never (#1682)", () => {
     const party = (isHost: boolean, open: boolean) =>
-      showsClosed({ ...partyOf(lobby([player("me")]), null), isHost, open });
+      showsClosed({ ...partyOf(lobby([player("me")]), null, false), isHost, open });
     expect(party(false, false)).toBe(true);
     expect(party(false, true)).toBe(false);
     expect(party(true, false)).toBe(false);
@@ -161,7 +168,7 @@ describe("the Lobby window's party (#1526, #2385)", () => {
   it("puts the host's closed padlock before a guest's Lobby closed (#2382)", () => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
     const guest = {
-      ...partyOf(lobby([player("me")]), null),
+      ...partyOf(lobby([player("me")]), null, false),
       isHost: false,
       open: false,
     };
@@ -178,7 +185,7 @@ describe("the Lobby window's party (#1526, #2385)", () => {
   it("says it is just you (#2385, #2642)", () => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
     expect(t("lobbyWindow.alone")).toBe("Just you.");
-    const alone = lobbyWindowBody(partyOf(lobby([player("me")]), null), () => undefined);
+    const alone = lobbyWindowBody(partyOf(lobby([player("me")]), null, false), () => undefined);
     expect((alone as unknown as FakeElement).find("lobby-window-alone")?.textContent).toBe(
       t("lobbyWindow.alone"),
     );
@@ -188,7 +195,7 @@ describe("the Lobby window's party (#1526, #2385)", () => {
 
   it("says how long a queued party has looked, and leaves the queue itself to the top bar's icon (#1766, #2743)", () => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
-    const queued = partyOf(lobby([player("me"), player("Ann")]), 65_000);
+    const queued = partyOf(lobby([player("me"), player("Ann")]), 65_000, false);
     expect(queued.queuedMs).toBe(65_000);
     const body = lobbyWindowBody(queued, () => undefined) as unknown as FakeElement;
     expect([body.find("party-status"), body.find("party-queued")]).toEqual([undefined, undefined]);
@@ -204,7 +211,7 @@ describe("the Lobby window's party (#1526, #2385)", () => {
     ];
     const hosting = { ...lobby(players), isHost: true, hostId: "me" };
     const removed: string[] = [];
-    const body = lobbyWindowBody(partyOf(hosting, null), (member) => {
+    const body = lobbyWindowBody(partyOf(hosting, null, false), (member) => {
       removed.push(member.id);
     }) as unknown as FakeElement;
     const buttons = body.findAll("party-member-remove");
@@ -214,18 +221,27 @@ describe("the Lobby window's party (#1526, #2385)", () => {
     ]);
     buttons[1]?.listeners.get("click")?.();
     expect(removed).toEqual(["Bo"]);
+  });
 
-    const inMatch = partyOf({ ...hosting, phase: "in-match" }, null);
-    expect(
-      (lobbyWindowBody(inMatch, () => undefined) as unknown as FakeElement).findAll(
-        "party-member-remove",
-      ),
-    ).toEqual([]);
+  it.each([
+    ["starting", "starting", false],
+    ["in its match", "in-match", false],
+    ["matchmade", "waiting", true],
+  ] as const)("gives a host no (x) in a lobby %s (#2746)", (_, phase, matchmade) => {
+    vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
+    const players = [player("me", { isHost: true }), player("Ann")];
+    const party = partyOf(
+      { ...lobby(players), isHost: true, hostId: "me", phase },
+      null,
+      matchmade,
+    );
+    const body = lobbyWindowBody(party, () => undefined) as unknown as FakeElement;
+    expect(body.findAll("party-member-remove")).toEqual([]);
   });
 
   it("gives a guest no (x) (#2746)", () => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
-    const guest = partyOf(lobby([player("host", { isHost: true }), player("me")]), null);
+    const guest = partyOf(lobby([player("host", { isHost: true }), player("me")]), null, false);
     const body = lobbyWindowBody(guest, () => undefined) as unknown as FakeElement;
     expect(body.findAll("party-member-remove")).toEqual([]);
   });

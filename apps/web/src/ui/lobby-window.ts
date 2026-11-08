@@ -35,18 +35,22 @@ export interface RailParty {
   readonly queuedMs: number | null;
   /** Its players a side (#2104): in a Hosted Game, the host's pick. */
   readonly teamSize: number;
-  /** Its match is on (#2746): nobody is removed from it then. */
-  readonly inMatch: boolean;
+  /** Its host may remove members (#2746): a coded lobby's, before its match. */
+  readonly removable: boolean;
 }
 
 /**
- * `snapshot`'s party, queued for `queuedMs` or not: its people, in lobby
- * order.
+ * `snapshot`'s party, queued for `queuedMs` or not, and `matchmade` or
+ * coded: its people, in lobby order.
  */
-export function partyOf(snapshot: LobbySnapshot, queuedMs: number | null): RailParty {
+export function partyOf(
+  snapshot: LobbySnapshot,
+  queuedMs: number | null,
+  matchmade: boolean,
+): RailParty {
   return {
     queuedMs,
-    inMatch: snapshot.phase === "in-match",
+    removable: !matchmade && snapshot.phase !== "starting" && snapshot.phase !== "in-match",
     teamSize: snapshot.teamSize,
     code: snapshot.code,
     mode: snapshot.mode,
@@ -129,7 +133,7 @@ export function lobbyWindowBody(
         // Beside a member whose connection dropped, while its seat is held (#1764).
         row.appendChild(h("span", "party-member-away", t("lobbyWindow.reconnecting")));
       }
-      if (party.isHost && !member.self && !party.inMatch) {
+      if (party.isHost && !member.self && party.removable) {
         row.appendChild(removeButton(member, onRemove));
       }
       list.appendChild(row);

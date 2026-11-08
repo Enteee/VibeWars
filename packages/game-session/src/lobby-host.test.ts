@@ -2383,11 +2383,11 @@ describe("the host removes a member (#2746)", () => {
     const guest = await lobby.join("Ann");
     await seat([lobby.host, guest], [0, 1]);
     await start(lobby);
-    const told: string[] = [];
-    lobby.host.connection.onNotice((text) => told.push(text));
+    const refused: string[] = [];
+    lobby.host.connection.onRefused((reason) => refused.push(reason));
     lobby.host.connection.removeMember(guest.connection.selfSessionId);
     await settle();
-    expect(told).toEqual(["Members cannot be removed during a match."]);
+    expect(refused).toEqual(["in-match"]);
     expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Ann"]);
   });
 

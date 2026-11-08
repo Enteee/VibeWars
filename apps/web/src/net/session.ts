@@ -947,6 +947,8 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
       return t("session.seatRefused");
     case "ascent-locked":
       return t("session.ascentLocked");
+    case "in-match":
+      return t("session.removeInMatch");
     default:
       return t("session.refused");
   }
