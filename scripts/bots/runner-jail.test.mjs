@@ -399,10 +399,11 @@ describe("sweepScratch (#2795)", () => {
     }
     fs.chmodSync(path.join(dir, "dead-1", "nix"), 0o555);
     fs.symlinkSync(outside, path.join(dir, "link"));
+    fs.mkdirSync(path.join(dir, "lost+found"));
     /** @type {string[]} */
     const lines = [];
     sweepScratch(dir, new Set(["live-1"]), (line) => lines.push(line));
-    expect(fs.readdirSync(dir)).toEqual(["live-1"]);
+    expect(fs.readdirSync(dir)).toEqual(["live-1", "lost+found"]);
     expect(fs.existsSync(path.join(outside, "keep"))).toBe(true);
     expect(lines).toHaveLength(2);
     fs.rmSync(dir, { recursive: true });

@@ -306,7 +306,8 @@ export function removeScratch(dir) {
  */
 export function sweepScratch(dir, live, log) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (live.has(entry.name)) {
+    // lost+found is the filesystem's own, on the mount the disk cap needs.
+    if (live.has(entry.name) || entry.name === "lost+found") {
       continue;
     }
     try {

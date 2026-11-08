@@ -600,6 +600,10 @@ export class RunnerSupervisor {
 
   /** Scratch directories belong to live runners, by name; nothing else keeps one. */
   sweep() {
+    // Without a filesystem of its own, the directory is not ours to empty.
+    if (this.deps.host.diskCapRefusal() !== null) {
+      return;
+    }
     try {
       this.deps.host.sweepScratch(new Set(this.runners.keys()));
     } catch (error) {

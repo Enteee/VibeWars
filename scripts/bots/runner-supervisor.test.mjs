@@ -227,6 +227,13 @@ describe("runner supervisor", () => {
     expect(r.sweeps[1]?.[0]).toMatch(/^vibewars-box-/);
   });
 
+  it("sweeps nothing while scratch has no filesystem of its own", async () => {
+    const r = rig({ target: 1 });
+    r.host.disk = "no disk cap";
+    await r.supervisor.tick();
+    expect(r.sweeps).toEqual([]);
+  });
+
   it("removes the registration of a runner that exits without a job", async () => {
     const r = rig({ target: 2 });
     await r.supervisor.tick();
