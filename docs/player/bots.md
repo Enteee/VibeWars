@@ -67,7 +67,7 @@ in four of those casts.
 A bot takes a human-like moment, a fraction of a second, to react to
 what happens, so a quick interrupt or a late dodge can beat it.
 
-In a three-team fight, such as Heroes' Ascent, bots fight one foe team at
+In a three-team fight, bots fight one foe team at
 a time: the team attacking them, or, while nobody is, the most hurt team
 within reach. They stay on that team until another sets clearly more
 players on them, and do not charge a fresh team while another one is

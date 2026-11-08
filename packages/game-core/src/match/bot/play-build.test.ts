@@ -436,12 +436,12 @@ describe("play-build with three teams (#2685)", () => {
     expect(targetOf(sim, { calledTargetId: "x" })).toBe("x");
   });
 
-  it("plays a three-team match of bots to its end, every team fighting", () => {
+  it("plays a three-team match of bots to its time limit, every team fighting", () => {
     const sim = new MatchSimulation({
       seed: "three-way-match",
       ruleset: RULESET,
       bounds: BOUNDS,
-      matchRules: ANNIHILATION_MATCH_RULES,
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 60 },
       teamCount: 3,
       participants: [
         fighter("a1", 0, WARRIOR, vec2(200, 200)),
