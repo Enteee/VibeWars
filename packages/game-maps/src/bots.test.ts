@@ -316,9 +316,7 @@ describe("King of the Hill bots (#2582)", () => {
 });
 
 describe("Capture Points bots (#2580)", () => {
-  const map = loadAllMaps().find((candidate) =>
-    candidate.objectives.some((objective) => objective.kind === "capture-point"),
-  );
+  const map = loadAllMaps().find((candidate) => candidate.id === "scarred-earth");
 
   /** Who owns each shrine after up to 60 s of a 2v2 of bots, and when one was first owned. */
   const play = (seed: string) => {
@@ -347,6 +345,31 @@ describe("Capture Points bots (#2580)", () => {
     const first = play("shrines");
     expect(first.ownedAt).toBeDefined();
     expect(play("shrines")).toEqual(first);
+  });
+
+  it("bots finish a match on Mosslit Cairns (#2696)", () => {
+    // Two a side: a full 8v8 takes 15 s here, too near the 20 s test limit.
+    const cairns = loadAllMaps().find((candidate) => candidate.id === "mosslit-cairns");
+    if (cairns === undefined) throw new Error("no map mosslit-cairns");
+    const sim = new MatchSimulation({
+      seed: "cairns",
+      ruleset: RULESET,
+      walls: allWallSegments(cairns.walls),
+      bounds: { width: cairns.width, height: cairns.height },
+      matchRules: CAPTURE_POINTS_MATCH_RULES,
+      capturePoints: cairns.objectives.flatMap((objective) =>
+        objective.kind === "capture-point" ? [objective.position] : [],
+      ),
+      participants: casterBots(cairns, 2),
+    });
+    for (
+      let t = 0;
+      t <= CAPTURE_POINTS_MATCH_RULES.timeLimitSeconds + 1 && sim.phase !== "finished";
+      t += DT
+    ) {
+      sim.step(DT);
+    }
+    expect(sim.phase).toBe("finished");
   });
 });
 
