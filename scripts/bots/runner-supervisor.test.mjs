@@ -691,7 +691,12 @@ describe("parseRunners", () => {
 });
 
 describe("launcherEnvOf (#1988)", () => {
-  const base = { PATH: "/bin", HOME: "/home/op", VIBEWARS_RUNNER_SCRATCH: "/s" };
+  const base = {
+    PATH: "/bin",
+    HOME: "/home/op",
+    VIBEWARS_RUNNER_SCRATCH: "/s",
+    VIBEWARS_RUNNERS_STATE: "/st",
+  };
   const company = { PATH: "/bin", HOME: "/home/op", VIBEWARS_CREDENTIALS: "/secret" };
 
   it("passes the user bus when both are set, and nothing else of the env", () => {
@@ -700,7 +705,7 @@ describe("launcherEnvOf (#1988)", () => {
       XDG_RUNTIME_DIR: "/run/user/1000",
       DBUS_SESSION_BUS_ADDRESS: "unix:x",
     };
-    expect(launcherEnvOf(env, "/s")).toEqual({
+    expect(launcherEnvOf(env, "/s", "/st")).toEqual({
       ...base,
       XDG_RUNTIME_DIR: "/run/user/1000",
       DBUS_SESSION_BUS_ADDRESS: "unix:x",
@@ -709,11 +714,11 @@ describe("launcherEnvOf (#1988)", () => {
 
   it("passes the one that is set", () => {
     const env = { ...company, XDG_RUNTIME_DIR: "/run/user/1000" };
-    expect(launcherEnvOf(env, "/s")).toEqual({ ...base, XDG_RUNTIME_DIR: "/run/user/1000" });
+    expect(launcherEnvOf(env, "/s", "/st")).toEqual({ ...base, XDG_RUNTIME_DIR: "/run/user/1000" });
   });
 
   it("passes neither when neither is set", () => {
-    expect(launcherEnvOf(company, "/s")).toEqual(base);
+    expect(launcherEnvOf(company, "/s", "/st")).toEqual(base);
   });
 });
 

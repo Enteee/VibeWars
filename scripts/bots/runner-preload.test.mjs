@@ -147,6 +147,32 @@ describe("buildPreload (#2792)", () => {
     expect(again.calls.some((c) => c[0] === "devenv")).toBe(false);
   });
 
+  it("rebuilds when the runner closure changes, or when a build died before its roots", () => {
+    const store = tmp();
+    const state = tmp();
+    const opts = { state, repoUrl: "u", extra: [] };
+    const first = buildPreload({
+      ...opts,
+      exclude: new Set(/** @type {string[]} */ ([])),
+      run: toolchain(store).run,
+    });
+    const other = buildPreload({
+      ...opts,
+      exclude: new Set(["/nix/store/x"]),
+      run: toolchain(store).run,
+    });
+    expect(other.built).toBe(true);
+    expect(other.dir).not.toBe(first.dir);
+
+    fs.rmSync(path.join(other.dir, "complete"));
+    const again = buildPreload({
+      ...opts,
+      exclude: new Set(["/nix/store/x"]),
+      run: toolchain(store).run,
+    });
+    expect(again).toEqual({ dir: other.dir, built: true });
+  });
+
   it("replaces the old preload when main's inputs change, current only ever whole", () => {
     const state = tmp();
     const store = tmp();

@@ -913,11 +913,18 @@ export function runnerScratchDir(env) {
  *
  * @param {Record<string, string | undefined>} env
  * @param {string} scratch
- * @returns {Record<string, string>}
+ * @param {string} scratch
+ * @param {string} state the supervisor's state directory, where the preload is
  */
-export function launcherEnvOf(env, scratch) {
+export function launcherEnvOf(env, scratch, state) {
   /** @type {Record<string, string>} */
-  const out = { PATH: env.PATH ?? "", HOME: env.HOME ?? "", VIBEWARS_RUNNER_SCRATCH: scratch };
+  const out = {
+    PATH: env.PATH ?? "",
+    HOME: env.HOME ?? "",
+    VIBEWARS_RUNNER_SCRATCH: scratch,
+    // The jail reads the supervisor's preload from here (#2792).
+    VIBEWARS_RUNNERS_STATE: state,
+  };
   for (const name of ["XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS"]) {
     const value = env[name];
     if (value !== undefined && value !== "") {
@@ -1078,7 +1085,7 @@ if (
     process.exit(1);
   }
   const gh = ghEnv(env, path.join(credentials, "runners-gh"));
-  const launcherEnv = launcherEnvOf(env, scratch);
+  const launcherEnv = launcherEnvOf(env, scratch, state);
   const logs = runnerLogDir(root);
   fs.mkdirSync(logs, { recursive: true, mode: 0o700 });
   const supervisor = new RunnerSupervisor({

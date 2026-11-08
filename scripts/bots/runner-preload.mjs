@@ -32,6 +32,9 @@ import { pathToFileURL } from "node:url";
 /** The files whose content decides the shell's closure. */
 export const INPUT_FILES = ["devenv.lock", "devenv.nix", "devenv.yaml"];
 
+/** Written after the GC roots: only a directory holding it is a whole preload. */
+const COMPLETE = "complete";
+
 /** What the action writes, so the shell is the one CI's jobs enter. */
 const LOCAL_NIX = "{ vibewars.claudeBot.enable = false; }\n";
 
@@ -121,9 +124,16 @@ export function buildPreload({ state, repoUrl, exclude, extra, run = runCommand 
   fs.mkdirSync(root, { recursive: true, mode: 0o700 });
   try {
     run("git", ["clone", "--quiet", "--depth", "1", "--branch", "main", repoUrl, src]);
-    const name = `preload-${inputHash(src)}`;
+    // What is left out depends on the runner's closure, so a host rebuild
+    // that changes it must not keep a list built against the old one.
+    const name = `preload-${crypto
+      .createHash("sha256")
+      .update(inputHash(src))
+      .update([...exclude].sort().join("\n"))
+      .digest("hex")
+      .slice(0, 16)}`;
     const dir = path.join(root, name);
-    if (fs.existsSync(path.join(dir, "registration"))) {
+    if (fs.existsSync(path.join(dir, COMPLETE))) {
       swapCurrent(root, name);
       return { dir, built: false };
     }
@@ -170,6 +180,7 @@ export function buildPreload({ state, repoUrl, exclude, extra, run = runCommand 
         });
       }
     }
+    fs.rmSync(dir, { recursive: true, force: true });
     fs.renameSync(tmp, dir);
     fs.mkdirSync(path.join(dir, "roots"));
     roots.forEach((p, i) => {
@@ -181,6 +192,8 @@ export function buildPreload({ state, repoUrl, exclude, extra, run = runCommand 
         p,
       ]);
     });
+    // Last: a directory without it is a build that died, and is rebuilt.
+    fs.writeFileSync(path.join(dir, COMPLETE), "");
     swapCurrent(root, name);
     return { dir, built: true };
   } finally {
