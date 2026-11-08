@@ -361,6 +361,31 @@ describe("play-build with three teams (#2685)", () => {
     expect(targetOf(threeWay(vec2(700, 400), 1, vec2(1550, 400), 0.3))).toBe("x");
   });
 
+  it("fights a team's players in reach, not another team's ghost beside it", () => {
+    const sim = new MatchSimulation({
+      seed: "three-way",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      matchRules: KING_OF_THE_HILL_MATCH_RULES,
+      teamCount: 3,
+      ghostField: {
+        level: 24,
+        altar: vec2(1300, 700),
+        spawns: [
+          { team: 0, position: vec2(100, 400) },
+          { team: 1, position: vec2(650, 450) },
+          { team: 2, position: vec2(1500, 100) },
+        ],
+      },
+      participants: [
+        fighter("bot", 0, ELEMENTALIST, vec2(600, 400)),
+        fighter("x", 1, WARRIOR, vec2(1550, 750), { behaviour: undefined }),
+        fighter("p", 2, WARRIOR, vec2(700, 300), { behaviour: undefined }),
+      ],
+    });
+    expect(targetOf(sim)).toBe("p");
+  });
+
   it("keeps a target its team called, of either team", () => {
     const sim = threeWay(vec2(700, 400), 1, vec2(700, 300), 1);
     sim.setTarget("p", "bot");

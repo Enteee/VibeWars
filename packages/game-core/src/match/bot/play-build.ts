@@ -206,8 +206,10 @@ function livingFoes(context: BehaviourContext): Participant[] {
  * engaging ours, the most of its living members targeting one of us; else
  * the weakest by health of those with a member within `FOCUS_REACH` past
  * spell range; else the weakest of all. Ties to the lower team. So a team
- * does not charge a fresh one while another is attacking it. Undefined
- * with one foe team: every foe is fought, as in a two-team match.
+ * does not charge a fresh one while another is attacking it. Only players
+ * count: a team's ghost, guards or priest neither rank it nor engage for
+ * it. Undefined with players of one foe team: every foe is fought, as in
+ * a two-team match.
  */
 function foeFront(context: BehaviourContext, foes: readonly Participant[]): number | undefined {
   const self = context.self;
@@ -221,6 +223,9 @@ function foeFront(context: BehaviourContext, foes: readonly Participant[]): numb
     { engaging: number; health: number; count: number; near: boolean }
   >();
   for (const foe of foes) {
+    if (foe.creature !== undefined) {
+      continue;
+    }
     const team = teams.get(foe.combatant.team) ?? { engaging: 0, health: 0, count: 0, near: false };
     teams.set(foe.combatant.team, team);
     if (foe.targetId !== undefined && ours.has(foe.targetId)) {
@@ -243,12 +248,9 @@ function foeFront(context: BehaviourContext, foes: readonly Participant[]): numb
   return ranked[0]?.[0];
 }
 
-/** Where the living fighters of `team` among `foes` stand on average, or undefined with none. */
-function centroid(foes: readonly Participant[], team: number): Vec2 | undefined {
+/** Where the living players of `team` among `foes` stand on average; `foeFront` names only a team with one. */
+function centroid(foes: readonly Participant[], team: number): Vec2 {
   const members = foes.filter((foe) => foe.combatant.team === team && foe.creature === undefined);
-  if (members.length === 0) {
-    return undefined;
-  }
   const sum = members.reduce(
     (at, foe) => ({ x: at.x + foe.position.x, y: at.y + foe.position.y }),
     ZERO,
