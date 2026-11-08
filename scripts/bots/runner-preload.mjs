@@ -145,6 +145,8 @@ export function buildPreload({ state, repoUrl, exclude, extra, run = runCommand 
     }
 
     fs.writeFileSync(path.join(src, "devenv.local.nix"), LOCAL_NIX);
+    // devenv loads this too, and it is no gate path: nothing of it runs here.
+    fs.rmSync(path.join(src, "devenv.local.yaml"), { force: true });
     const env = { ...process.env, HOME: home };
     run("devenv", ["print-dev-env"], { cwd: src, env });
     const shell = fs.realpathSync(path.join(src, ".devenv", "gc", "shell"));
