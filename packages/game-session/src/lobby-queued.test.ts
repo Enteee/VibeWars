@@ -33,7 +33,7 @@ import {
   answerChallenges,
 } from "./lobby-harness.test-support.js";
 import { PARTY_CONSENT_MS, createLobbyHost, type LobbyHost, type MatchPlan } from "./lobby-host.js";
-import { ARENA, TICK_SECONDS, settle, until } from "./match-harness.test-support.js";
+import { ARENA, TICK_SECONDS, settle, testSignet, until } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import { testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
@@ -254,6 +254,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
         mode: plan.mode,
         publishRecord: () => undefined,
         nowSeconds: () => 0,
+        signetOf: testSignet,
       });
     },
     queued: {

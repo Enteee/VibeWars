@@ -17,6 +17,7 @@ import {
   TICK_SECONDS,
   settle,
   startMatch,
+  testSignet,
   type TestMatch,
 } from "./match-harness.test-support.js";
 import { createMemoryNetwork } from "./memory-transport.js";
@@ -334,6 +335,7 @@ describe("an observe said again (#1805)", () => {
       mode: "random-arena",
       publishRecord: () => undefined,
       nowSeconds: () => 0,
+      signetOf: testSignet,
     });
     await vi.advanceTimersByTimeAsync(HELLO_RESEND_MS);
     await viewing;

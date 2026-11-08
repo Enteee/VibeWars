@@ -88,6 +88,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     energyPips: 0,
     creature: undefined,
     bot: false,
+    signet: undefined,
     statuses: [],
     ...fields,
   };
@@ -1373,6 +1374,7 @@ describe("isAttackingTarget", () => {
     energyPips: 0,
     creature: undefined,
     bot: false,
+    signet: undefined,
     statuses: [],
   });
 
@@ -1484,6 +1486,7 @@ describe("targetProfessionIcons (#281)", () => {
     energyPips: 0,
     creature: undefined,
     bot: false,
+    signet: undefined,
     statuses: [],
   });
 

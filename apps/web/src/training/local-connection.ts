@@ -142,6 +142,8 @@ function toPlayerSnapshot(
           },
     // The Training Ground has dummies, not a lobby's bots.
     bot: false,
+    // No lobby, so no key to draw one from (#2805).
+    signet: undefined,
   };
 }
 

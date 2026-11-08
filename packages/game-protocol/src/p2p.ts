@@ -275,6 +275,9 @@ export const MAX_WIRE_PIPS = 10;
 export const MIN_WIRE_MORALE = -60;
 export const MAX_WIRE_MORALE = 10;
 
+/** A signet's bits (#2805): the 13 a player key's signet reads, `0..MAX_WIRE_SIGNET`. */
+export const MAX_WIRE_SIGNET = 0x1fff;
+
 /** The most walls a map holds, and points a polygon wall holds. */
 export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
@@ -526,6 +529,12 @@ export interface WirePlayer {
   readonly creature: WireCreature | null;
   /** A lobby's bot plays it (#1193), not a peer. */
   readonly bot: boolean;
+  /**
+   * Its player key's signet (#2805), the 13 bits `0..MAX_WIRE_SIGNET`
+   * the shield is drawn from; `null` for a seat with no key, a bot and
+   * every creature. The host reports it: a recognition aid, not a proof.
+   */
+  readonly signet: number | null;
 }
 
 /** What makes a body a creature (#1052). */
@@ -1507,6 +1516,13 @@ function isMorale(value: unknown): value is number {
   );
 }
 
+function isNullableSignet(value: unknown): value is number | null {
+  return (
+    value === null ||
+    (isNumber(value) && Number.isInteger(value) && value >= 0 && value <= MAX_WIRE_SIGNET)
+  );
+}
+
 /** A skill-bar slot index. */
 function isSlot(value: unknown): value is number {
   return isCount(value) && value < MAX_WIRE_SLOTS;
@@ -2047,7 +2063,8 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.invulnerableSeconds) ||
     !isPips(raw.healthPips) ||
     !isPips(raw.energyPips) ||
-    typeof raw.bot !== "boolean"
+    typeof raw.bot !== "boolean" ||
+    !isNullableSignet(raw.signet)
   ) {
     return undefined;
   }
@@ -2093,6 +2110,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         statuses,
         creature,
         bot: raw.bot,
+        signet: raw.signet,
       };
 }
 

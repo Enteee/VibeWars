@@ -42,6 +42,7 @@ describe("a hosted 4v4 on Scarred Earth (#2735)", () => {
       mode: "hosted-game",
       publishRecord: (record) => records.push(record),
       nowSeconds: () => 0,
+      signetOf: () => 0,
     });
     const ticks = Math.ceil(RULES.timeLimitSeconds / DT) + 1;
     for (let tick = 0; tick < ticks && host.phase === "active"; tick += 1) {
