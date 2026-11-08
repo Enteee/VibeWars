@@ -937,6 +937,8 @@ export interface WireSummaryRow {
   /** The seat's guild tag (#1406); `null` for none. */
   readonly guildTag: string | null;
   readonly team: WireTeam;
+  /** The seat's signet bits (#2822); `null` for a bot. */
+  readonly signet: number | null;
   readonly damage: number;
   readonly healing: number;
   readonly taken: number;
@@ -2568,6 +2570,7 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
     typeof raw.name === "string" &&
     isNullableString(raw.guildTag) &&
     isTeam(raw.team) &&
+    isNullableSignet(raw.signet) &&
     isCount(raw.damage) &&
     isCount(raw.healing) &&
     isCount(raw.taken) &&
@@ -2579,6 +2582,7 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
         name: raw.name.slice(0, MAX_WIRE_TEXT),
         guildTag: raw.guildTag,
         team: raw.team,
+        signet: raw.signet,
         damage: raw.damage,
         healing: raw.healing,
         taken: raw.taken,

@@ -219,6 +219,8 @@ export interface MatchSummaryRow {
   /** The seat's guild tag (#1406); `null` for none. */
   readonly guildTag: string | null;
   readonly team: number;
+  /** The player's signet bits (#2822); `null` for a bot. */
+  readonly signet: number | null;
   readonly damage: number;
   readonly healing: number;
   readonly taken: number;

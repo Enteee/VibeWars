@@ -3,7 +3,7 @@ import type { MatchSummaryRow } from "@vibewars/game-session";
 import { t, type MessageKey } from "../i18n/index.js";
 import { markedForTeam, teamSide } from "../render/arena-snapshot.js";
 import { botTagElement } from "./bot-tag.js";
-import { playerLabelElement } from "./player-label.js";
+import { SIGNET_ROW_PX, playerLabelElement, signetElement } from "./player-label.js";
 import { h } from "./kit.js";
 
 /**
@@ -118,6 +118,7 @@ export function renderSummary(parent: HTMLElement, tables: readonly SummaryTable
       const tr = body.insertRow();
       tr.classList.toggle("is-self", self);
       const name = h("th", "match-summary-name");
+      name.appendChild(signetElement(row.signet ?? undefined, SIGNET_ROW_PX));
       name.appendChild(playerLabelElement("player-label", row.name, row.guildTag));
       if (bot) {
         name.appendChild(botTagElement("match-summary-bot"));

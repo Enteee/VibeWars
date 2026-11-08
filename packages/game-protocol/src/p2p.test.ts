@@ -453,6 +453,7 @@ const summaryRow = {
   name: "Ann",
   guildTag: "Ab1",
   team: 0,
+  signet: 4242,
   damage: 1200,
   healing: 340,
   taken: 900,
@@ -815,6 +816,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     "ended by a wipe (#846)",
     parseWireEnded,
     { winningTeam: 1, endReason: "annihilation", summary: [] },
+  ],
+  [
+    "a bot's summary row, no signet (#2822)",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, signet: null }] },
   ],
   [
     "ended at time by morale (#846)",
@@ -1938,6 +1944,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "ended with a summary past the cap",
     parseWireEnded,
     { ...ended, summary: Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, () => summaryRow) },
+  ],
+  [
+    "summary row with a signet out of range (#2822)",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, signet: MAX_WIRE_SIGNET + 1 }] },
+  ],
+  [
+    "summary row without a signet (#2822)",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, signet: undefined }] },
   ],
   [
     "ended with a negative tally",

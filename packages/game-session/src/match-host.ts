@@ -396,6 +396,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       readonly team: WireTeam;
       readonly bot: boolean;
       readonly pubkey: string | null;
+      readonly signet: number | null;
       readonly build: PlayerBuild;
     }
   >();
@@ -411,13 +412,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   );
   /** One whole-number line per seat the match ever had. */
   const summary = (): WireSummaryRow[] =>
-    [...everSeated].map(([id, { name, guildTag, team }]) => {
+    [...everSeated].map(([id, { name, guildTag, team, signet }]) => {
       const row = tally.row(id);
       return {
         id,
         name,
         guildTag,
         team,
+        signet,
         damage: Math.round(row.damage),
         healing: Math.round(row.healing),
         taken: Math.round(row.taken),
@@ -798,6 +800,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       team,
       bot,
       pubkey,
+      signet,
       build,
     });
     for (const id of everSeated.keys()) {
