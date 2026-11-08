@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>#2811 2.5D art direction: five options (mockup, not for merge)</title>
+    <style>
+      body {
+        background: #0e1116;
+        color: #d7dee8;
+        font:
+          14px/1.45 system-ui,
+          sans-serif;
+        max-width: 1200px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      img {
+        width: 100%;
+        border: 1px solid #2b3440;
+      }
+      h2 {
+        margin-top: 36px;
+      }
+      td,
+      th {
+        border: 1px solid #2b3440;
+        padding: 4px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      table {
+        border-collapse: collapse;
+        margin: 8px 0;
+      }
+      th {
+        width: 190px;
+      }
+      .dim {
+        color: #7d8899;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>2.5D art direction: five options</h1>
+    <p class="dim">
+      The same scene in each: a layer-0 courtyard, a raised bridge (layer 1) with fighters on top
+      and underneath, a ramp, walls, two teams. Blue ring = friend, red triangle = foe in all five.
+      Original art; no GW1 assets. Mockup, not for merge; the operator picks one.
+    </p>
+    <p>
+      <b>Edge cases shown in each:</b> a red and a blue character at the same spot on different
+      layers (centre), a character halfway up the ramp (left), and a character directly under the
+      deck's front edge.
+    </p>
+    <h2>A · Sunken courtyard</h2>
+    <img src="../art/2811-option-a.png" alt="A · Sunken courtyard" />
+    <table>
+      <tr>
+        <th>Direction</th>
+        <td>
+          Classic GW-inspired arena: weathered flagstone, a stone bridge on blocky piers, soft
+          painterly shadow and vignette. Muted, earthy, serious.
+        </td>
+      </tr>
+      <tr>
+        <th>Elevation and layers</th>
+        <td>
+          Raised deck 2.4 units, slab front face with masonry courses, four piers, a blurred drop
+          shadow on the floor below; the ramp climbs to the deck's left edge.
+        </td>
+      </tr>
+      <tr>
+        <th>Characters</th>
+        <td>
+          Soft-shaded bodies with a dark outline, team tabard colour, ring (friend) or triangle
+          (foe) over the head; a character under the deck gets a dashed ground ring.
+        </td>
+      </tr>
+      <tr>
+        <th>Readability risks</th>
+        <td>
+          Stone-on-stone: floor, deck and walls share one hue family, so layer depends on the shadow
+          and the front face. Under-deck characters are partly hidden by piers and the slab edge.
+          Deuteranopia: team shapes survive, red/blue stay apart by lightness.
+        </td>
+      </tr>
+      <tr>
+        <th>Production and render cost</th>
+        <td>
+          Floor, walls, ramp, piers cache as one static layer; only the deck slab and characters
+          depth-sort (about 3 groups). Cheapest of the 3D-looking options.
+        </td>
+      </tr>
+    </table>
+    <h2>B · Tabletop diorama</h2>
+    <img src="../art/2811-option-b.png" alt="B · Tabletop diorama" />
+    <table>
+      <tr>
+        <th>Direction</th>
+        <td>
+          A bright floating tabletop slab: grass, timber deck with rope rail, stone blocks. Toy-like
+          and friendly, the clearest at a glance.
+        </td>
+      </tr>
+      <tr>
+        <th>Elevation and layers</th>
+        <td>
+          Isometric camera. Elevation is the timber deck on logs with a visible earth-cut base, the
+          sloped ramp and a clear gap showing grass under the deck.
+        </td>
+      </tr>
+      <tr>
+        <th>Characters</th>
+        <td>
+          Chess-pawn tokens on a base disc with thick outlines; a ring or triangle above each. Same
+          pawn on either layer.
+        </td>
+      </tr>
+      <tr>
+        <th>Readability risks</th>
+        <td>
+          Strongest layer separation (colour shift grass to timber, plus the gap). Risk: an
+          isometric view hides characters behind tall walls and the deck's back corner. The pawn
+          silhouette is the most colour-blind-safe. It departs most from GW1's seriousness.
+        </td>
+      </tr>
+      <tr>
+        <th>Production and render cost</th>
+        <td>
+          Isometric needs a different projection for every map and input picking; static layer still
+          caches. Slab and ramp are two extra draw groups. Costs the most to fit existing maps.
+        </td>
+      </tr>
+    </table>
+    <h2>C · Torchlit ruin</h2>
+    <img src="../art/2811-option-c.png" alt="C · Torchlit ruin" />
+    <table>
+      <tr>
+        <th>Direction</th>
+        <td>
+          A dark ruined hall lit by torches: near-black floor, rough timber scaffold and iron-dark
+          stone, fog and vignette. Moody and tense.
+        </td>
+      </tr>
+      <tr>
+        <th>Elevation and layers</th>
+        <td>
+          Light does the layering: torches on the deck edge halo the upper layer, a deep shadow
+          pools under it and the torchlight pools on the ground.
+        </td>
+      </tr>
+      <tr>
+        <th>Characters</th>
+        <td>
+          Hooded dark silhouettes with a team-coloured rim and a glowing core; ring or triangle
+          above the head.
+        </td>
+      </tr>
+      <tr>
+        <th>Readability risks</th>
+        <td>
+          Highest atmosphere, lowest readability. Under-deck characters sit in near-black and rely
+          on the rim light; the vignette also swallows the arena corners. Deuteranopia: blue and tan
+          rims stay apart, but both are dim. Would need a brightness floor for ranked play.
+        </td>
+      </tr>
+      <tr>
+        <th>Production and render cost</th>
+        <td>
+          Lighting is baked into the static layer, so it caches; the torch flicker and fog need a
+          per-frame overlay. Dynamic spell light would need extra passes.
+        </td>
+      </tr>
+    </table>
+    <h2>D · Graphic layers</h2>
+    <img src="../art/2811-option-d.png" alt="D · Graphic layers" />
+    <table>
+      <tr>
+        <th>Direction</th>
+        <td>
+          Clean graphic fantasy: flat planes, hard drop shadows and a tinted ground below. Built
+          from the game's own circles and rings, so it carries over the existing HUD.
+        </td>
+      </tr>
+      <tr>
+        <th>Elevation and layers</th>
+        <td>
+          A hard offset shadow and a darker, cooler tint zone mark everything under the deck; the
+          deck is the lightest plane, with a white lip.
+        </td>
+      </tr>
+      <tr>
+        <th>Characters</th>
+        <td>
+          Flat discs with a white ring, plus the ring or triangle at the centre: shape first, colour
+          second, as the art direction demands.
+        </td>
+      </tr>
+      <tr>
+        <th>Readability risks</th>
+        <td>
+          Best readability of an under-deck character and of the team shapes, and the cleanest
+          deuteranopia result. Weakest GW1 mood: it reads as a diagram, not a place.
+        </td>
+      </tr>
+      <tr>
+        <th>Production and render cost</th>
+        <td>
+          Everything flat: one static layer, shadows as fixed polygons. The cheapest to produce and
+          to render; the least art for a human artist to maintain.
+        </td>
+      </tr>
+    </table>
+    <h2>E · Bastion</h2>
+    <img src="../art/2811-option-e.png" alt="E · Bastion" />
+    <table>
+      <tr>
+        <th>Direction</th>
+        <td>
+          Ornate fortifications: crenellated towers, a rampart bridge with an arcade, warm brick and
+          stone. Heroic and martial.
+        </td>
+      </tr>
+      <tr>
+        <th>Elevation and layers</th>
+        <td>
+          The deck is a thick rampart slab with five arches in its front face and a parapet of
+          merlons; piers have plinths. The tall walls also carry crenellations.
+        </td>
+      </tr>
+      <tr>
+        <th>Characters</th>
+        <td>
+          Heraldic figures: a kite-shield tabard in the team colour with a spear and helm; ring or
+          triangle above.
+        </td>
+      </tr>
+      <tr>
+        <th>Readability risks</th>
+        <td>
+          Elevation reads from the arcade and parapet, which are unmistakable. Risk: tall
+          crenellated walls and arches add clutter behind characters, and an under-deck character
+          sits behind the arches' dark band. Deuteranopia: shield colours stay separate in
+          lightness.
+        </td>
+      </tr>
+      <tr>
+        <th>Production and render cost</th>
+        <td>
+          Most unique art per map (arches, merlons, plinths): the most production work. The static
+          layer still caches; merlons and arches are fixed geometry.
+        </td>
+      </tr>
+    </table>
+    <h2>Deuteranopia simulation, A–E</h2>
+    <img src="../art/2811-deuteranopia.png" alt="deuteranopia simulation of all five" />
+    <p class="dim">Row 1: A, B, C. Row 2: D, E.</p>
+  </body>
+</html>
