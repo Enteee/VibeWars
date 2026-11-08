@@ -214,9 +214,11 @@ const FRONT_SWITCH_MARGIN = 2;
  * count: a team's ghost, guards or priest neither rank it nor engage for
  * it. The `kept` front stays while one of its players engages ours or is
  * in reach, until another team engages ours with `FRONT_SWITCH_MARGIN`
- * more: engaging counts flicker as foes retarget, and a bot that followed
- * them would run between teams and finish nobody. Undefined with
- * players of one foe team: every foe is fought, as in a two-team match.
+ * more, or with every living player it has and more than the front: engaging
+ * counts flicker as foes retarget, and a bot that followed them would run
+ * between teams and finish nobody; a lone attacker still turns it.
+ * Undefined with players of one foe team: every foe is fought, as in a
+ * two-team match.
  */
 function foeFront(
   context: BehaviourContext,
@@ -253,7 +255,11 @@ function foeFront(
   if (
     current !== undefined &&
     (current.engaging > 0 || current.near) &&
-    ![...teams.values()].some((team) => team.engaging >= current.engaging + FRONT_SWITCH_MARGIN)
+    ![...teams.values()].some(
+      (team) =>
+        team.engaging > current.engaging &&
+        team.engaging >= Math.min(current.engaging + FRONT_SWITCH_MARGIN, team.count),
+    )
   ) {
     return kept;
   }

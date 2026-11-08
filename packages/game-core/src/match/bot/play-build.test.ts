@@ -398,6 +398,14 @@ describe("play-build with three teams (#2685)", () => {
     expect(fresh.front).toBe(2);
   });
 
+  it("turns on a lone attacker while its front is near but idle", () => {
+    const sim = threeWay(vec2(700, 400), 1, vec2(700, 300), 1);
+    sim.setTarget("p", "bot");
+    const cursor = { ...createCursor(), front: 1 };
+    decide(BOT, cursor, contextFor(sim, "bot"));
+    expect(cursor.front).toBe(2);
+  });
+
   it("turns on a team that sets two more on it than its front", () => {
     const sim = new MatchSimulation({
       seed: "three-way",
