@@ -248,9 +248,11 @@ channels, as often as they like.
   are third parties we do not run; the list lives in
   `apps/web/src/net/transport/relays.ts` (#392).
 - **Every finished match is public** (#2528; the operator's call: no
-  opt-out). Its record holds each player's in-game name, guild tag and
-  build as a GW1 template code, in any mode, bots marked; no IP, peer id,
-  lobby key or room, and nothing that links two records to one host.
+  opt-out). Its record holds each player's in-game name, guild tag,
+  public player key (#2739; `null` for a bot) and build as a GW1 template
+  code, in any mode, bots marked; no IP, peer id, lobby key or room. The
+  key links every recorded match of one browser, a host who plays
+  included.
   Relays store it (NIP-78, kind 30078) and nobody can delete it. A match
   its host left, or one the e2e (broadcast) build plays, is not
   published. `validateMatchRecord` reads a record as hostile input: known
