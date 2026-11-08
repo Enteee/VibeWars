@@ -2,6 +2,7 @@ import { isGloballyMuted, onGlobalMute, setGlobalMute } from "../audio/global-mu
 import { saveMusicPreference, type MusicPreference } from "../audio/music-preference.js";
 import { saveSfxVolume } from "../audio/sfx-volume-preference.js";
 import { soundPlayer, type SoundPlayer } from "../audio/sound-player.js";
+import { formatNumber, t } from "../i18n/index.js";
 import { music, type MusicFollower } from "../music/play-music.js";
 import { mountMusicControls, musicControlsDeps, type MusicControlsDeps } from "./music-controls.js";
 
@@ -119,7 +120,7 @@ export class SoundSettings {
 
 /** "70 %", for a volume of 0.7. */
 export function volumePercent(volume: number): string {
-  return `${String(Math.round(volume * 100))} %`;
+  return t("sound.percent", { percent: formatNumber(Math.round(volume * 100)) });
 }
 
 function checkbox(container: HTMLElement, className: string, label: string): HTMLInputElement {
@@ -163,10 +164,10 @@ export function mountSoundControls(container: HTMLElement, deps: SoundControlsDe
   panel.className = "sound-controls";
   container.appendChild(panel);
 
-  const muteAll = checkbox(panel, "sound-mute-all", "Mute all");
-  const sfx = slider(panel, "sound-sfx-volume", "sound effects volume");
-  const musicVolume = slider(panel, "sound-music-volume", "music volume");
-  const musicMute = checkbox(panel, "sound-music-mute", "Mute music");
+  const muteAll = checkbox(panel, "sound-mute-all", t("sound.muteAll"));
+  const sfx = slider(panel, "sound-sfx-volume", t("sound.sfxVolume"));
+  const musicVolume = slider(panel, "sound-music-volume", t("sound.musicVolume"));
+  const musicMute = checkbox(panel, "sound-music-mute", t("sound.muteMusic"));
   const unmountMusic = mountMusicControls(panel, deps.musicBlock);
 
   muteAll.addEventListener("change", () => {

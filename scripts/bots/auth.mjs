@@ -29,21 +29,25 @@ import {
   checkChat,
   readChatId,
   telegramBot,
+  telegramCall,
   telegramGroupIdentity,
   telegramIdentity,
   telegramUpdates,
 } from "./creds.mjs";
 import { collect, renderTable } from "./doctor.mjs";
+import { readRunnerCap } from "./runners-state.mjs";
 
 /** @typedef {import("./creds.mjs").Identity} Identity */
 /** @typedef {import("./doctor.mjs").Row} Row */
+/** @typedef {import("./runners-state.mjs").RunnerCap} RunnerCap */
 
 /** The steps, in the order they run. */
 export const STEPS = /** @type {const} */ (["claude", "github", "push", "telegram"]);
 
 /**
- * Steps that run only when named: the runner supervisor's admin token
- * (#1890), which a company without company runners never needs.
+ * Steps that run when named, or when the company wants them: the runner
+ * supervisor's admin token (#1890), which only a company whose runner cap
+ * is above 0 needs (#2765). It runs after `github`: same repository.
  */
 export const OPTIONAL_STEPS = /** @type {const} */ (["runners"]);
 
@@ -67,9 +71,10 @@ const POLL_FOR_MS = 10 * 60_000;
 export const USAGE = `claude-llc auth [claude | github | push | telegram | runners]
 
   Sign the company's accounts in: Claude, GitHub, the push key, Telegram
-  (the manager bot, then the group it runs in). \`runners\` runs only when
-  named: the company CI runners' own token (#1890), fine-grained, for this
-  repository only, with Administration and Variables write and an expiry.
+  (the manager bot, then the group it runs in), and, when maxRunners in
+  .bots/company.json is above 0, the company CI runners' own token (#1890),
+  fine-grained, for this repository only, with Administration and Variables
+  write and an expiry. \`runners\` alone signs that token in whatever the cap.
   Shows what is signed in (as claude-llc doctor does), runs the sign-in of
   each credential that is not, or only of the one named, and prints no
   secret. Interactive: run it in a terminal.`;
@@ -108,12 +113,17 @@ function identityOf(rows, step) {
  *
  * @param {Row[]} rows the doctor's
  * @param {Step | null} only the step named on the command line
+ * @param {RunnerCap} cap
  * @returns {Planned[]}
  */
-export function plan(rows, only) {
+export function plan(rows, only, cap) {
   const github = identityOf(rows, "github");
+  const runners = cap.ok && cap.max > 0;
   /** @type {readonly Step[]} */
-  const steps = only === null ? STEPS : [only];
+  const steps =
+    only === null
+      ? STEPS.flatMap((step) => (step === "github" && runners ? [step, ...OPTIONAL_STEPS] : [step]))
+      : [only];
   return steps.map((step) => {
     const identity = identityOf(rows, step);
     const mismatch =
@@ -181,7 +191,9 @@ function mismatchLine(key, login) {
  *   runs a child on the TTY; `input`, when given, is its stdin instead
  * @property {(question: string) => Promise<string | null>} prompt reads a
  *   line with echo off; `null` is Ctrl-C
- * @property {(root: string) => Promise<{ rows: Row[] }>} collect the doctor's rows
+ * @property {RunnerCap} cap the company's runner cap: plain `auth` signs the
+ *   runners token in only when it is above 0 (#2765)
+ * @property {(root: string, cap: RunnerCap) => Promise<{ rows: Row[] }>} collect the doctor's rows
  * @property {Record<Step, () => Identity | Promise<Identity>>} check one credential again
  * @property {import("./creds.mjs").Get} get
  * @property {(ms: number) => Promise<void>} sleep
@@ -420,7 +432,16 @@ function writePrivate(file, value) {
  *   fit for the company; the checklist is printed either way
  */
 async function showChat(deps, token, chatId) {
-  const checked = await checkChat(token, chatId, deps.get);
+  return printChecked(deps, chatId, await checkChat(token, chatId, deps.get));
+}
+
+/**
+ * @param {Deps} deps
+ * @param {string} chatId
+ * @param {Awaited<ReturnType<typeof checkChat>>} checked
+ * @returns {string | null} the title if the chat is fit; the checklist is printed
+ */
+function printChecked(deps, chatId, checked) {
   deps.out(`Chat "${checked.title}" (${chatId}):`);
   for (const c of checked.checks) {
     deps.out(`  ${c.good ? "✓" : "✗"} ${c.text}`);
@@ -450,8 +471,14 @@ async function telegramGroup(deps, token) {
   deps.out("  1. New Group, add the manager bot");
   deps.out("  2. Open the group -> Edit -> enable Topics");
   deps.out("  3. Edit -> Administrators -> add the bot, with Manage Topics");
-  deps.out("Waiting for the bot to see it. Ctrl-C to stop.");
-  const pasted = await deps.prompt("Or paste the group's chat id (Enter to wait): ");
+  const me = await telegramCall(token, "getMe", {}, deps.get);
+  const handle = typeof me?.username === "string" ? me.username : "your bot";
+  const hint = `Make the bot see the group: send /start@${handle} in it.`;
+  deps.out(hint);
+  deps.out("In Telegram Web the group's URL ends in its id; a supergroup id starts with -100.");
+  const pasted = await deps.prompt(
+    "Paste the group's chat id, or press Enter to start waiting for the bot to see it: ",
+  );
   if (pasted === null) {
     return INTERRUPTED;
   }
@@ -466,19 +493,36 @@ async function telegramGroup(deps, token) {
   } else {
     // getUpdates hands back a day of backlog, and anyone can add a bot to a
     // group, so what turns up here is a candidate, never a decision.
+    deps.out(`Waiting (up to ${String(POLL_FOR_MS / 60_000)} min). Ctrl-C to stop.`);
     /** @type {Set<string>} */
     const seen = new Set();
+    /** @type {Set<string>} chats whose checklist has been printed */
+    const shown = new Set();
+    let lastError = "";
     let offset = 0;
     for (let waited = 0; waited <= POLL_FOR_MS; waited += POLL_MS) {
       const updates = await telegramUpdates(token, offset, deps.get);
       offset = updates.offset;
+      if (updates.error !== null && updates.error !== lastError) {
+        deps.err(`  ✗ telegram: ${updates.error}`);
+      }
+      lastError = updates.error ?? "";
       for (const chat of updates.chats) {
         seen.add(chat);
       }
       for (const chat of seen) {
-        const title = fit.has(chat) ? null : await showChat(deps, token, chat);
-        if (title !== null) {
-          fit.set(chat, title);
+        if (fit.has(chat)) {
+          continue;
+        }
+        const checked = await checkChat(token, chat, deps.get);
+        if (!shown.has(chat)) {
+          shown.add(chat);
+          printChecked(deps, chat, checked);
+        } else if (checked.ok) {
+          deps.out(`"${checked.title}" is now fit`);
+        }
+        if (checked.ok) {
+          fit.set(chat, checked.title);
         }
       }
       if (fit.size > 0) {
@@ -507,6 +551,9 @@ async function telegramGroup(deps, token) {
       return INTERRUPTED;
     }
     chosen = options[Number(answer.trim()) - 1]?.[0];
+  }
+  if (options.length === 0) {
+    deps.err(`  ${hint}`);
   }
   if (chosen === undefined) {
     deps.err("  ✗ telegram: no group chosen; nothing written");
@@ -546,12 +593,12 @@ export async function auth(argv, deps) {
     return 1;
   }
 
-  const before = (await deps.collect(deps.root)).rows;
+  const before = (await deps.collect(deps.root, deps.cap)).rows;
   deps.out(renderTable(before));
   deps.out("");
   let githubLogin =
     identityOf(before, "github").state === "ok" ? identityOf(before, "github").who : null;
-  for (const planned of plan(before, only)) {
+  for (const planned of plan(before, only, deps.cap)) {
     if (planned.mismatch !== null) {
       deps.err(mismatchLine(planned.mismatch, githubLogin ?? "?"));
       continue;
@@ -575,10 +622,10 @@ export async function auth(argv, deps) {
     }
   }
 
-  const rows = (await deps.collect(deps.root)).rows;
+  const rows = (await deps.collect(deps.root, deps.cap)).rows;
   deps.out("");
   deps.out(renderTable(rows));
-  const failing = plan(rows, only).filter((p) => p.run || p.mismatch !== null);
+  const failing = plan(rows, only, deps.cap).filter((p) => p.run || p.mismatch !== null);
   if (failing.length > 0) {
     deps.err(`not signed in: ${failing.map((p) => p.step).join(", ")}`);
     return 1;
@@ -645,11 +692,17 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error("claude-llc auth: VIBEWARS_CREDENTIALS is not set (run it through claude-llc).");
     process.exit(2);
   }
+  const botRoot = process.env.VIBEWARS_BOT_ROOT;
+  if (botRoot === undefined || botRoot === "") {
+    console.error("claude-llc auth: VIBEWARS_BOT_ROOT is not set (run it through claude-llc).");
+    process.exit(2);
+  }
   const p = paths(root);
   // The children on the TTY get Ctrl-C too; this stops auth with them.
   process.on("SIGINT", () => process.exit(130));
   process.exitCode = await auth(process.argv.slice(2), {
     root,
+    cap: readRunnerCap(botRoot),
     tty: process.stdin.isTTY,
     env: process.env,
     spawn: spawnOnTty,

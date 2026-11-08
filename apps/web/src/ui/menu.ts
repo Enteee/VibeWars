@@ -225,6 +225,8 @@ export function renderRandomArena(
   characters: readonly StoredCharacter[] = [],
   characterProblems: readonly string[] = [],
   connectionNotice?: string,
+  /** In a queue (#2743): its character stays, and Ready cannot queue again. */
+  queued = false,
 ): void {
   // No way back from here, so Esc has nothing to do but cancel (#578).
   // Options is the top bar's ⚙ (#1272), Music its ♪ (#1453).
@@ -250,8 +252,14 @@ export function renderRandomArena(
   const activeExists = characters.some((c) => c.id === active && isPlayable(c));
   const starter = loadStarterCharacterId();
   const worn = wornCape();
+  const hint = h("p", "random-arena-hint");
   /** Choose who to play, and keep the focus on the card a key chose. */
   const choose = (id: string): void => {
+    if (queued) {
+      hint.textContent = t("menu.leaveQueueToChange");
+      hint.hidden = false;
+      return;
+    }
     saveActiveCharacterId(id);
     callbacks.onSelectCharacter(id);
     root.querySelector<HTMLElement>(".play-card.is-selected .play-card-open")?.focus();
@@ -289,9 +297,8 @@ export function renderRandomArena(
 
   // Only alone (#1526): queueing closes the lobby, and a party does not queue yet.
   const alone = isAlone(railParty());
-  const hint = h("p", "random-arena-hint");
   body.appendChild(hint);
-  const problem = randomArenaProblem(activeExists, alone);
+  const problem = queued ? t("queue.busy") : randomArenaProblem(activeExists, alone);
   ready.disabled = problem !== undefined;
   ready.title = problem ?? "";
   hint.textContent = problem ?? "";

@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import type { PartyMember, RailParty } from "./lobby-window.js";
-import { PARTY_ALONE } from "./lobby-window.js";
+import { queueButton } from "./queue-popover.js";
 import { lobbyButton, lobbyButtonName } from "./topbar.js";
 import { attachTopbarPopover, closeTopbarPopover, isTopbarPopoverOpen } from "./topbar-popover.js";
 
@@ -269,8 +270,6 @@ const party = (...members: PartyMember[]): RailParty => ({
   members,
   queuedMs: null,
   teamSize: 4,
-  teams: undefined,
-  ascentRound: null,
 });
 
 describe("the top bar's Lobby (#2385)", () => {
@@ -322,9 +321,17 @@ describe("the top bar's Lobby (#2385)", () => {
   it("says it is just you, alone or in no lobby yet", () => {
     const { parent, button, setParty } = mount();
     button.fire("click");
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", PARTY_ALONE]);
+    expect(parent.children[0]?.texts()).toEqual([
+      "Lobby",
+      "Copy invite link",
+      t("lobbyWindow.alone"),
+    ]);
     setParty(party(member("me", true)));
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", PARTY_ALONE]);
+    expect(parent.children[0]?.texts()).toEqual([
+      "Lobby",
+      "Copy invite link",
+      t("lobbyWindow.alone"),
+    ]);
   });
 
   it("lists who is in under the lobby's controls, repainting while open on a join or a leave", () => {
@@ -348,6 +355,83 @@ describe("the top bar's Lobby (#2385)", () => {
     // Open, the window shows the join; the badge need not pulse.
     expect(badge.classes.has("is-pulsing")).toBe(false);
     setParty(party(member("me", true)));
-    expect(parent.children[0]?.texts()).toEqual(["Lobby", "Copy invite link", PARTY_ALONE]);
+    expect(parent.children[0]?.texts()).toEqual([
+      "Lobby",
+      "Copy invite link",
+      t("lobbyWindow.alone"),
+    ]);
+  });
+});
+
+describe("the top bar's queue icon (#2743)", () => {
+  const mount = () => {
+    const parent = new FakeElement("div");
+    const left: string[] = [];
+    const queue = queueButton(parent as unknown as HTMLElement, () => {
+      left.push("left");
+    });
+    return { ...queue, parent, button: queue.element as unknown as FakeElement, left };
+  };
+  /** What the open flyout shows: its hidden parts left out. */
+  const shown = (node: FakeElement | undefined): string[] =>
+    node === undefined || node.hidden
+      ? []
+      : [
+          ...(node.textContent === "" ? [] : [node.textContent]),
+          ...node.children.flatMap((child) => shown(child)),
+        ];
+
+  it("hides without a queue, shows with one, and says what it is", () => {
+    const { button, setQueue } = mount();
+    expect(button.hidden).toBe(true);
+    expect(button.getAttribute("aria-label")).toBe("In queue");
+    expect(button.title).toBe("In queue");
+    setQueue({ kind: "random", mode: "random-arena-4v4", since: Date.now(), state: undefined });
+    expect(button.hidden).toBe(false);
+    setQueue(undefined);
+    expect(button.hidden).toBe(true);
+  });
+
+  it("opens on the queue, the wait and Leave Queue, which leaves and shuts it", () => {
+    const { parent, button, setQueue, left } = mount();
+    setQueue({
+      kind: "random",
+      mode: "random-arena-2v2",
+      since: Date.now(),
+      state: { kind: "searching", searching: 3, teams: 3, needed: 4, waitedMs: 0 },
+    });
+    button.fire("click");
+    expect(shown(parent.children[0])).toEqual([
+      "Random Arena 2v2",
+      "0:00",
+      "3 searching · 4 needed",
+      "Leave Queue",
+    ]);
+    const leave = parent.children[0]?.children.find((child) => child.tagName === "button");
+    leave?.fire("click");
+    expect(left).toEqual(["left"]);
+    expect(isTopbarPopoverOpen()).toBe(false);
+  });
+
+  it("tells a team's guest only its host can leave, and shuts when the queue ends by itself", () => {
+    const { parent, button, setQueue } = mount();
+    setQueue({
+      kind: "team",
+      mode: "gvg",
+      teamSize: 8,
+      ascentRound: null,
+      since: Date.now(),
+      teams: undefined,
+      isHost: false,
+    });
+    button.fire("click");
+    expect(shown(parent.children[0])).toEqual([
+      "Guild vs Guild",
+      "0:00",
+      "Only the host can leave the queue.",
+    ]);
+    setQueue(undefined);
+    expect(isTopbarPopoverOpen()).toBe(false);
+    expect(parent.children).toEqual([]);
   });
 });

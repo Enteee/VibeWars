@@ -23,7 +23,8 @@ run it, not waited out.
 A real `MatchHost` with every peer a real `connectMatch` client, over the
 in-memory `Transport`, in one Node process. Seats are planned as a lobby
 plans them. Sizes are 1v1, 4v4 and 8v8, six seconds of match each; a
-lobby seats at most 16 (`MAX_LOBBY_PLAYERS`), so there is no 16v16.
+lobby seats at most 24 (`MAX_LOBBY_PLAYERS`, three parties of eight), so
+there is no 16v16.
 
 Half the peers move continuously (a new direction 10×/second) and
 constantly attempt to cast. Most cast attempts are rejected for range or

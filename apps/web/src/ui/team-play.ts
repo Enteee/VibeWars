@@ -1,12 +1,13 @@
 import type { LobbyMode } from "@vibewars/game-protocol";
 
+import { t } from "../i18n/index.js";
 import { isTeamBuildSize, type StoredTeam, type TeamBuildSize } from "../storage/schema.js";
 import { loadStarterTeamId } from "../storage/starter-team.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { lookOfCharacter, teamFigureCard } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { button, h, listenForPaste, screenBar } from "./kit.js";
-import type { LobbyPanel } from "./lobby-screen.js";
+import { mapLabel, type LobbyMap, type LobbyPanel } from "./lobby-screen.js";
 import {
   loadTeamBuildSize,
   onTeamSizeChange,
@@ -41,12 +42,9 @@ export function isHostEntry(entry: RailEntry): entry is HostEntry {
   return HOST_ENTRIES.has(entry);
 }
 
-/** Where the lobby goes while this tab has none yet (#1526). */
-export const OPENING_LOBBY = "Opening your lobby…";
-
 /** Under the cards while there are no Team Builds of the picked size (#2109). */
 export function noTeamBuilds(size: TeamSize): string {
-  return `No ${teamSizeLabel(size)} Team Builds yet.`;
+  return t("teamPlay.noTeamBuilds", { size: teamSizeLabel(size) });
 }
 
 /** A Team Build card's tag (#2109): its filled slots of its size, "3/4". */
@@ -65,6 +63,8 @@ export interface TeamPlayCallbacks {
   readonly onRerollTeam: (id: string) => void;
   /** A team code was pasted on the screen (#577). */
   readonly onPasteTeam: (text: string) => void;
+  /** Leave Queue on a lobby's screen, while in the Random Arena queue (#2781). */
+  readonly onLeaveQueue: () => void;
 }
 
 /**
@@ -84,18 +84,18 @@ function starterTeamCard(
   team: StoredTeam,
   callbacks: TeamPlayCallbacks,
 ): HTMLElement {
-  const clone = button("Clone", "play-card-clone", () => {
+  const clone = button(t("teamPlay.clone"), "play-card-clone", () => {
     // One copy per press: a double-click must not save two.
     clone.disabled = true;
     callbacks.onCloneStarterTeam(team.id);
   });
   const card = teamFigureCard({
     title: team.name,
-    tags: [h("span", "roster-random-tag", "Random"), sizeTag(team)],
+    tags: [h("span", "roster-random-tag", t("teamPlay.random")), sizeTag(team)],
     members,
     actions: [
       clone,
-      button("Reroll", "play-card-reroll", () => {
+      button(t("teamPlay.reroll"), "play-card-reroll", () => {
         callbacks.onRerollTeam(team.id);
       }),
     ],
@@ -115,8 +115,6 @@ function rerollFocused(): boolean {
 }
 
 /** What a saved team without a name is called on its card (#2110); its stored name stays empty. */
-export const UNNAMED_TEAM = "Unnamed team";
-
 /**
  * A saved team that could not be proposed (#2110): Save always stores,
  * so its card says why, by its first problem.
@@ -125,7 +123,7 @@ function unplayable(team: StoredTeam): HTMLElement[] {
   const first = validateTeam(team)[0];
   return first === undefined
     ? []
-    : [h("span", "play-card-unplayable", `Not playable: ${first.message}`)];
+    : [h("span", "play-card-unplayable", t("teamPlay.notPlayable", { problem: first.message }))];
 }
 
 /**
@@ -138,7 +136,7 @@ function teamCards(
   callbacks: TeamPlayCallbacks,
 ): HTMLElement {
   const section = h("div", "team-play-builds");
-  section.appendChild(h("h3", "menu-column-title", "Team Builds"));
+  section.appendChild(h("h3", "menu-column-title", t("teamPlay.teamBuilds")));
   const starter = loadStarterTeamId(size);
   const cards = h("div", "play-cards");
   const shown = teams.filter((team) => team.size === size);
@@ -149,22 +147,27 @@ function teamCards(
     // No cape: a team's members wear none, as in the lobby.
     const members = team.members.map(({ character }) => ({
       look: lookOfCharacter(character, undefined),
-      label: `${character.name}, ${professionLabel(character.primaryProfession, character.secondaryProfession)}`,
+      label: t("teamPlay.memberLabel", {
+        name: character.name,
+        professions: professionLabel(character.primaryProfession, character.secondaryProfession),
+      }),
     }));
     cards.appendChild(
       team.id === starter
         ? starterTeamCard(members, team, callbacks)
         : teamFigureCard({
-            title: team.name.trim() === "" ? UNNAMED_TEAM : team.name,
+            title: team.name.trim() === "" ? t("teamPlay.unnamedTeam") : team.name,
             tags: [sizeTag(team)],
             members,
             footer: unplayable(team),
             onOpen: edit,
-            actions: [button("Edit", "play-card-edit", edit)],
+            actions: [button(t("teamPlay.edit"), "play-card-edit", edit)],
           }),
     );
   }
-  cards.appendChild(button("New team build", "play-card play-card-new", callbacks.onNewTeam));
+  cards.appendChild(
+    button(t("teamPlay.newTeamBuild"), "play-card play-card-new", callbacks.onNewTeam),
+  );
   section.appendChild(cards);
   if (shown.length === 0) {
     section.appendChild(h("p", "team-play-hint", noTeamBuilds(size)));
@@ -249,9 +252,50 @@ export function renderHostScreen(
   connectionNotice: string | undefined,
   callbacks: TeamPlayCallbacks,
   panel: LobbyPanel | undefined,
+  /** In the Random Arena queue (#2743), `entry`'s maps to preview: no lobby until it is left. */
+  queuedMaps: readonly LobbyMap[] | undefined,
 ): void {
   const body = teamScreen(root, entry, problems, connectionNotice, callbacks, panel);
-  body.appendChild(panel?.body ?? h("p", "screen-info", OPENING_LOBBY));
+  if (panel !== undefined) {
+    body.appendChild(panel.body);
+  } else if (queuedMaps !== undefined) {
+    body.append(
+      h("p", "screen-info", t("queue.busy")),
+      mapPreview(queuedMaps),
+      queuedButtons(entry, callbacks),
+    );
+  } else {
+    body.appendChild(h("p", "screen-info", t("teamPlay.openingLobby")));
+  }
+}
+
+/**
+ * The maps a lobby of this screen plays, as its lobby lists them, to look
+ * at and not to pick (#2781): in the Random Arena queue there is no lobby.
+ */
+function mapPreview(maps: readonly LobbyMap[]): HTMLElement {
+  const preview = h("div", "screen-queued-maps");
+  const list = h("ul", "lobby-map");
+  list.append(...maps.map((map) => h("li", undefined, mapLabel(map))));
+  preview.append(h("span", "field-label", t("teamPlay.queuedMaps")), list);
+  return preview;
+}
+
+/**
+ * A lobby's screen in the Random Arena queue (#2781): no lobby of its own
+ * until the queue is left, so its Find a match waits, saying why, beside
+ * the Leave Queue that frees it. A Hosted Game finds no match.
+ */
+function queuedButtons(entry: HostEntry, callbacks: TeamPlayCallbacks): HTMLElement {
+  const row = h("div", "screen-queued");
+  if (entry !== "hosted-game") {
+    const find = button(t("lobby.findMatch"), "primary lobby-find", () => undefined);
+    find.disabled = true;
+    find.title = t("queue.busy");
+    row.appendChild(find);
+  }
+  row.appendChild(button(t("queue.leaveQueue"), "lobby-leave-queue", callbacks.onLeaveQueue));
+  return row;
 }
 
 /** Render Team Builder (#1525): the Team Build cards, to make and edit them. */

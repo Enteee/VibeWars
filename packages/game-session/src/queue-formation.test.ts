@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { TeamCount } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   TICKET_TTL_MS,
@@ -10,6 +11,7 @@ import {
 
 import {
   ROOM_PREFIX,
+  THIRD_TEAM_WAIT_SECONDS,
   formGroups,
   groupOf,
   ticketsOf,
@@ -77,11 +79,12 @@ function form(
     ascentRound: roundOf(mode),
     ignored,
     mapPool: MAPS,
+    teamCount: 2,
   });
 }
 
 function members(group: FormedGroup): string[] {
-  return [...group.teams[0], ...group.teams[1]].sort();
+  return group.teams.flat().sort();
 }
 
 /** The seat keys `tickets` bring: each solo's id, each party's members. */
@@ -324,6 +327,7 @@ describe("formGroups (#869)", () => {
       ascentRound: null,
       ignored: new Set<string>(),
       mapPool: [],
+      teamCount: 2 as const,
     };
     await expect(formGroups({ ...empty, tickets: [] })).resolves.toEqual([]);
     await expect(
@@ -383,14 +387,20 @@ describe("team modes (ADR-0042)", () => {
       ...side(n, "heroes-ascent", 1),
       ascentRound: round,
     });
-    const formAt = (tickets: readonly QueueTicket[], round: number, map: string) =>
+    const formAt = (
+      tickets: readonly QueueTicket[],
+      round: number,
+      map: string,
+      { teamCount = 2, now = NOW }: { teamCount?: TeamCount; now?: number } = {},
+    ) =>
       formGroups({
         tickets,
-        now: NOW,
+        now,
         mode: "heroes-ascent",
         ascentRound: round,
         ignored: new Set(),
         mapPool: [map],
+        teamCount,
       });
 
     it("never groups sides at different rounds, even the only two queued", async () => {
@@ -409,6 +419,64 @@ describe("team modes (ADR-0042)", () => {
     it("plays a pair at the last round in the Hall", async () => {
       const groups = await formAt([hero(1, 3), hero(2, 3)], 3, "hall-of-heroes");
       expect(groups.map((group) => group.mapId)).toEqual(["hall-of-heroes"]);
+    });
+
+    describe("of three teams (#2683)", () => {
+      /** Side `n` at round 2, queued `ago` seconds before `NOW`. */
+      const waited = (n: number, ago: number): QueueTicket => ({
+        ...hero(n, 2),
+        enteredAt: NOW - ago * 1_000,
+      });
+      /** Formed at `now`, each side heard from just then. */
+      const formThree = (tickets: readonly QueueTicket[], now = NOW) =>
+        formAt(
+          tickets.map((ticket) => ({ ...ticket, heartbeatAt: now })),
+          2,
+          "the-courtyard",
+          { teamCount: 3, now },
+        );
+
+      it("seats three sides as three teams, one a side", async () => {
+        const three = [waited(1, 5), waited(2, 4), waited(3, 3)];
+        const groups = await formThree(three);
+        expect(groups.map(members)).toEqual([ids(three)]);
+        expect(groups[0]?.teams.map((team) => team.length)).toEqual([1, 1, 1]);
+        expect(groups[0]?.teams.flat().sort()).toEqual(ids(three));
+      });
+
+      it("has two wait for a third, and play each other after THIRD_TEAM_WAIT_SECONDS", async () => {
+        expect(THIRD_TEAM_WAIT_SECONDS).toBe(30);
+        const two = [waited(1, 40), waited(2, 10)];
+        expect(await formThree(two)).toEqual([]);
+        expect(await formThree(two, NOW + 19_999)).toEqual([]);
+        const groups = await formThree(two, NOW + 20_000);
+        expect(groups.map(members)).toEqual([ids(two)]);
+        expect(groups[0]?.teams).toHaveLength(2);
+      });
+
+      it("never takes back two that formed before a third queued", async () => {
+        // X at 0 s, Y at 1 s, Z at 40 s, formed at 41 s: X and Y play as two.
+        const pair = [waited(1, 41), waited(2, 40)];
+        const late = waited(3, 1);
+        const groups = await formThree([...pair, late]);
+        expect(groups.map(members)).toEqual([ids(pair)]);
+        expect(groups[0]?.teams).toHaveLength(2);
+        // A third in time is still a third.
+        expect((await formThree([...pair, waited(3, 10.001)])).map(members)).toEqual([
+          ids([...pair, waited(3, 10.001)]),
+        ]);
+      });
+
+      it("forms three of four, and the fourth waits", async () => {
+        const four = [waited(1, 5), waited(2, 4), waited(3, 3), waited(4, 2)];
+        const groups = await formThree(four);
+        expect(groups.map(members)).toEqual([ids(four.slice(0, 3))]);
+      });
+
+      it("never takes a side that left during the wait", async () => {
+        // Side 2, queued 35 s ago, is gone: side 1 waits on, now with side 3.
+        expect(await formThree([waited(1, 40), waited(3, 2)])).toEqual([]);
+      });
     });
   });
 
@@ -453,9 +521,9 @@ describe("hard NAT (#2090)", () => {
     return (await form(tickets, mode)).map((group) =>
       [
         ...new Set(
-          [...group.teams[0], ...group.teams[1]].map(
-            (key) => numbers.get(key) ?? numbers.get(`0${key.slice(1)}`) ?? -1,
-          ),
+          group.teams
+            .flat()
+            .map((key) => numbers.get(key) ?? numbers.get(`0${key.slice(1)}`) ?? -1),
         ),
       ].sort((a, b) => a - b),
     );

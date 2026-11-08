@@ -81,7 +81,10 @@ export function playerLabelElement(
   guildTag: string | null | undefined,
 ): HTMLElement {
   const label = h("span", className);
-  label.appendChild(h("span", "player-label-name", name));
+  const nameElement = h("span", "player-label-name", name);
+  // A name in another script reads in its own direction, whatever the page's (#2655).
+  nameElement.dir = "auto";
+  label.appendChild(nameElement);
   const { tag } = playerLabel(name, guildTag);
   if (tag !== undefined) {
     // A space between, so the label reads, and copies, as `Ente [VIBE]`.

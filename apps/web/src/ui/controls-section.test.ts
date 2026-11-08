@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { DEFAULT_KEYMAP, KEYMAP_PRESETS, type Keymap } from "../input/keymap.js";
 
-import { KeysEditor, SHORTCUT_REFUSAL, noKeyWarning, type KeyPress } from "./controls-section.js";
+import { KeysEditor, noKeyWarning, type KeyPress } from "./controls-section.js";
 
 function key(code: string, held: Partial<Omit<KeyPress, "code">> = {}): KeyPress {
   return { code, ctrlKey: false, altKey: false, metaKey: false, ...held };
@@ -22,7 +23,7 @@ describe("KeysEditor (#309)", () => {
   it("binds the next key a waiting cell hears, and saves it", () => {
     const { editor: keys, save } = editor();
     keys.startCapture(SKILL_1);
-    expect(keys.cellText(SKILL_1)).toBe("press a key...");
+    expect(keys.cellText(SKILL_1)).toBe(t("controls.pressAKey"));
 
     expect(keys.press(key("KeyZ"))).toBe(true);
     expect(keys.map["skill-1"]).toEqual(["KeyZ"]);
@@ -54,14 +55,14 @@ describe("KeysEditor (#309)", () => {
     const { editor: keys, save } = editor();
     keys.startCapture(SKILL_1);
     expect(keys.press(key("KeyZ", { ctrlKey: true }))).toBe(false);
-    expect(keys.line).toBe(SHORTCUT_REFUSAL);
+    expect(keys.line).toBe(t("controls.shortcutRefusal"));
     expect(keys.capturing).toEqual(SKILL_1);
     expect(save).not.toHaveBeenCalled();
 
     // The Enter a refused press lets through clicks the cell again; the
     // reason stays.
     keys.startCapture(SKILL_1);
-    expect(keys.line).toBe(SHORTCUT_REFUSAL);
+    expect(keys.line).toBe(t("controls.shortcutRefusal"));
   });
 
   it("refuses a modifier key on its own, Alt and Meta as Ctrl", () => {
@@ -73,7 +74,7 @@ describe("KeysEditor (#309)", () => {
       key("MetaLeft"),
     ]) {
       expect(keys.press(press)).toBe(false);
-      expect(keys.line).toBe(SHORTCUT_REFUSAL);
+      expect(keys.line).toBe(t("controls.shortcutRefusal"));
     }
     expect(keys.capturing).toEqual(SKILL_1);
   });
@@ -82,7 +83,7 @@ describe("KeysEditor (#309)", () => {
     const { editor: keys, save } = editor();
     keys.startCapture(SKILL_1);
     expect(keys.press(key("F5"))).toBe(false);
-    expect(keys.line).toBe("F5 belongs to the browser.");
+    expect(keys.line).toBe(t("controls.browserKey", { key: "F5" }));
     expect(keys.capturing).toEqual(SKILL_1);
     expect(save).not.toHaveBeenCalled();
   });
@@ -104,7 +105,9 @@ describe("KeysEditor (#309)", () => {
     expect(keys.map["skill-2"]).toEqual(["KeyQ"]);
     expect(keys.map["skill-1"]).toEqual([]);
     expect(keys.flashed).toEqual(SKILL_1);
-    expect(keys.line).toBe("Q was Skill 1; Skill 1 now has no key.");
+    expect(keys.line).toBe(
+      t("controls.displacedNoKey", { key: "Q", action: t("controls.skill1") }),
+    );
   });
 
   it("says what a displaced action keeps, when it had a second key", () => {
@@ -113,7 +116,9 @@ describe("KeysEditor (#309)", () => {
     keys.press(key("KeyW"));
     expect(keys.map["move-up"]).toEqual(["ArrowUp"]);
     expect(keys.flashed).toEqual({ action: "move-up", index: 0 });
-    expect(keys.line).toBe("W was Move up; Move up keeps ↑.");
+    expect(keys.line).toBe(
+      t("controls.displacedKeeps", { key: "W", action: t("controls.moveUp"), left: "↑" }),
+    );
   });
 
   it("replaces the whole map with a preset, and reads Custom once edited", () => {
@@ -152,8 +157,8 @@ describe("KeysEditor (#309)", () => {
 describe("noKeyWarning (#309)", () => {
   it("warns on a skill or move with no key, and says how to move without one", () => {
     const empty: Keymap = { ...DEFAULT_KEYMAP, "skill-3": [], "move-up": [], mute: [] };
-    expect(noKeyWarning(empty, "skill-3")).toBe("no key");
-    expect(noKeyWarning(empty, "move-up")).toBe("no key; click the ground to walk");
+    expect(noKeyWarning(empty, "skill-3")).toBe(t("controls.noKey"));
+    expect(noKeyWarning(empty, "move-up")).toBe(t("controls.noKeyWalk"));
     expect(noKeyWarning(empty, "mute")).toBe("");
     expect(noKeyWarning(empty, "skill-1")).toBe("");
   });

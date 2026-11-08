@@ -43,6 +43,8 @@ export const PROOF_KEY = new TextEncoder().encode("the test lobby's proof key");
 
 /** The maps the test lobby offers; the first is its default. */
 export const MAP_IDS = ["test-arena", "other-arena"] as const;
+/** The tracks a share may name (#2745). */
+export const TRACK_IDS = ["test-track"] as const;
 
 /** Each mode's maps (#1526): GvG plays only the other arena, the rest both. */
 export const MODE_MAPS: Readonly<Record<LobbyMode, readonly string[]>> = {
@@ -127,6 +129,7 @@ export async function openLobby(
     code: CODE,
     proofKey: PROOF_KEY,
     mapIds: MAP_IDS,
+    trackIds: TRACK_IDS,
     modeMaps: MODE_MAPS,
     mapTeamSizes: MAP_TEAM_SIZES,
     hostedTeamSize: options.hostedTeamSize ?? 4,
@@ -256,7 +259,7 @@ export async function provenPeer(
 }
 
 /** The lobby as `who` sees it now. */
-export function playersOf(who: Member): { name: string; team: 0 | 1 | null; ready: boolean }[] {
+export function playersOf(who: Member): { name: string; team: 0 | 1 | 2 | null; ready: boolean }[] {
   return who.connection
     .getSnapshot()
     .players.map(({ name, team, ready }) => ({ name, team, ready }));

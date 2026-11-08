@@ -6,7 +6,7 @@
  * runners past the manager-only `company runners`, nor forge their status.
  *
  * Each is validated on read: a target that is not a whole number in
- * `0..VIBEWARS_MAX_RUNNERS` is refused and counts as 0, and a status that is
+ * `0..maxRunners` is refused and counts as 0, and a status that is
  * not the current shape counts as none.
  */
 import fs from "node:fs";
@@ -39,16 +39,115 @@ export function runnersStateDir(env) {
 }
 
 /**
- * The most runners the operator allows, `VIBEWARS_MAX_RUNNERS`: 0 when it
- * is unset or not a whole number, so runners stay off until the operator
- * raises it, after ADR-0045's spike.
+ * The most runners the operator allows (#2764): `company.json`'s
+ * `maxRunners`, which `claude-llc-init` asks for beside `maxAgents`. A
+ * whole number ≥ 0, or null when it is missing or anything else: the
+ * caller refuses a malformed cap, never reads it as 0.
  *
- * @param {Record<string, string | undefined>} env
- * @returns {number}
+ * @param {unknown} config the parsed `company.json`
+ * @returns {number | null}
  */
-export function maxRunners(env) {
-  const value = Number(env.VIBEWARS_MAX_RUNNERS ?? "");
-  return /^\d+$/.test(env.VIBEWARS_MAX_RUNNERS ?? "") && Number.isSafeInteger(value) ? value : 0;
+export function maxRunners(config) {
+  const value =
+    typeof config === "object" && config !== null
+      ? /** @type {Record<string, unknown>} */ (config).maxRunners
+      : undefined;
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
+
+/** @typedef {{ ok: true, max: number } | { ok: false, reason: string }} RunnerCap */
+
+/** @type {RunnerCap} */
+const CAP_REFUSED = { ok: false, reason: "company.json refused: run claude-llc-init" };
+
+/**
+ * The runner cap as `claude-llc auth` and `doctor` see it (#2765), from
+ * `<botRoot>/company.json`: 0 before `claude-llc-init` has written the
+ * file, refused when the file is not JSON or its `maxRunners` is not one
+ * `maxRunners` accepts.
+ *
+ * @param {string} botRoot
+ * @returns {RunnerCap}
+ */
+export function readRunnerCap(botRoot) {
+  let text;
+  try {
+    text = fs.readFileSync(path.join(botRoot, "company.json"), "utf8");
+  } catch (error) {
+    return error instanceof Error && "code" in error && error.code === "ENOENT"
+      ? { ok: true, max: 0 }
+      : CAP_REFUSED;
+  }
+  /** @type {unknown} */
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return CAP_REFUSED;
+  }
+  const max = maxRunners(parsed);
+  return max === null ? CAP_REFUSED : { ok: true, max };
+}
+
+/**
+ * Why the runners token is not wanted, or null when the cap allows runners:
+ * the doctor's row says this rather than `not set up` (#2765).
+ *
+ * @param {RunnerCap} cap
+ * @returns {string | null}
+ */
+export function runnersOff(cap) {
+  if (!cap.ok) {
+    return cap.reason;
+  }
+  return cap.max === 0 ? "runners off" : null;
+}
+
+/**
+ * An answer to `claude-llc-init`'s runner cap: Enter is 0, a whole number
+ * ≥ 0 is itself, anything else is null and asked again.
+ *
+ * @param {string} answer
+ * @returns {number | null}
+ */
+export function parseMaxRunners(answer) {
+  const trimmed = answer.trim();
+  if (trimmed === "") {
+    return 0;
+  }
+  const value = Number(trimmed);
+  return /^\d+$/.test(trimmed) && Number.isSafeInteger(value) ? value : null;
+}
+
+/**
+ * `claude-llc-init`'s runner cap: the stored one when `company.json` has a
+ * valid one, otherwise asked until the answer is a whole number ≥ 0. A cap
+ * asked for above 0 is warned about. A cap above 0, kept or asked for, gets
+ * a hint when the runners token is not set up (#2765), and is kept: it is
+ * only a ceiling.
+ *
+ * @param {{
+ *   stored: unknown,
+ *   ask: (question: string) => Promise<string>,
+ *   runnersSetUp: () => boolean,
+ *   say: (line: string) => void,
+ * }} deps `stored` is the previous `company.json`, or null on a first run
+ * @returns {Promise<number>}
+ */
+export async function askMaxRunners({ stored, ask, runnersSetUp, say }) {
+  let cap = maxRunners(stored);
+  while (cap === null) {
+    cap = parseMaxRunners(await ask("  Most CI runners the company may run on this machine [0]: "));
+    if (cap === null) {
+      say("  A whole number, 0 or more, please.");
+    } else if (cap > 0) {
+      say("  Company runners run any branch's code on this machine: see ADR-0045.");
+    }
+  }
+  if (cap > 0 && !runnersSetUp()) {
+    say("  github runners: not set up. Run claude-llc auth before raising the target.");
+  }
+  return cap;
 }
 
 /**
@@ -259,12 +358,12 @@ export function readStatus(dir) {
  * line of its own: the dashboard's and `company runners`'s.
  *
  * @param {RunnersStatus | null} status
- * @param {number} max the max as this host's config says, for a supervisor that never ran
+ * @param {number | null} max `company.json`'s, for a supervisor that never ran; null when it has none
  * @returns {string[]}
  */
 export function runnersLines(status, max) {
   if (status === null) {
-    return [`runners: not started (max ${String(max)})`];
+    return [`runners: not started (max ${max === null ? "?" : String(max)})`];
   }
   const busy = status.runners.filter((runner) => runner.busy).length;
   const line = `runners: ${String(status.runners.length)}/${String(status.target)} (busy ${String(busy)}, max ${String(status.max)})`;

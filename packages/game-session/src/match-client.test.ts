@@ -24,12 +24,7 @@ import {
   connectMatch,
 } from "./match-client.js";
 import type { PlayerSnapshot } from "./match-connection.js";
-import {
-  MATCH_FULL_MESSAGE,
-  MATCH_OVER_MESSAGE,
-  RECONNECT_WINDOW_SECONDS,
-  createMatchHost,
-} from "./match-host.js";
+import { RECONNECT_WINDOW_SECONDS, createMatchHost } from "./match-host.js";
 import {
   ARENA,
   TEST_MATCH_ID,
@@ -196,7 +191,7 @@ describe("connectMatch", () => {
   it("is refused when the match is full, and when it is over", async () => {
     const full = startMatch({ maxPlayers: 1 });
     await full.join();
-    await expect(full.join()).rejects.toThrow(MATCH_FULL_MESSAGE);
+    await expect(full.join()).rejects.toMatchObject({ reason: "match-full" });
 
     const over = startMatch({
       matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 0.1 },
@@ -205,7 +200,6 @@ describe("connectMatch", () => {
     await over.step(0.2);
     expect(over.host.phase).toBe("finished");
     const refused = over.join();
-    await expect(refused).rejects.toThrow(MATCH_OVER_MESSAGE);
     await expect(refused).rejects.toMatchObject({ reason: "match-over" });
   });
 
@@ -706,7 +700,7 @@ describe("connectMatch, before the host's match listens (#1805)", () => {
     const host = listen(hostTransport, 0.1);
     host.advance(0.2);
     expect(host.phase).toBe("finished");
-    const refused = expect(joining).rejects.toThrow(MATCH_OVER_MESSAGE);
+    const refused = expect(joining).rejects.toMatchObject({ reason: "match-over" });
     await vi.advanceTimersByTimeAsync(HELLO_RESEND_MS);
     await refused;
     const said = hellos();

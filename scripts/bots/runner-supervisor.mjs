@@ -26,7 +26,10 @@
  * - At start and at stop, every offline runner with our host's name and
  *   our label that is not one of ours alive is deleted: what a host crash
  *   leaves behind.
- * - `VIBEWARS_MAX_RUNNERS` of 0, its default, makes no GitHub call at all.
+ * - `company.json`'s `maxRunners` (#2764), asked by `claude-llc-init`, is
+ *   read once at start: changing it takes a supervisor restart, and
+ *   `company runners <n>` is the live knob below it. Missing or malformed,
+ *   the supervisor exits; 0 makes no GitHub call at all.
  *
  * GitHub calls run one at a time, with the runners' own `GH_CONFIG_DIR`
  * (`claude-llc auth runners`) and nothing of the company's. A missing or
@@ -356,7 +359,7 @@ export class RunnerSupervisor {
     this.observeLoad();
     this.reason = read.reason ?? (now() < this.retryAt ? this.backoffReason : null);
     if (config.max === 0) {
-      this.reason = "runners are off: VIBEWARS_MAX_RUNNERS is 0";
+      this.reason = "runners are off: maxRunners is 0 (claude-llc-init)";
       this.writeStatus();
       return;
     }
@@ -1004,7 +1007,6 @@ if (
     console.error(`runner-supervisor: another holds ${lock}; not starting a second`);
     process.exit(1);
   }
-  const max = maxRunners(env);
   const cap = {
     cpus: positive(env.VIBEWARS_RUNNER_CPUS, 2),
     memoryGib: positive(env.VIBEWARS_RUNNER_MEMORY_GIB, 6),
@@ -1022,6 +1024,11 @@ if (
   const repo = typeof named === "string" ? named : "";
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) {
     console.error("runner-supervisor: company.json names no repository");
+    process.exit(1);
+  }
+  const max = maxRunners(company);
+  if (max === null) {
+    console.error("runner-supervisor: company.json has no maxRunners; re-run claude-llc-init");
     process.exit(1);
   }
   const gh = ghEnv(env, path.join(credentials, "runners-gh"));

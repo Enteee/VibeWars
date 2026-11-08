@@ -453,6 +453,7 @@ describe("party consents on the Nostr queue board (#1078)", () => {
       ascentRound: null,
       ignored: new Set(),
       mapPool: ["arena"],
+      teamCount: 2,
     });
     expect(groups.map((group) => group.parties)).toEqual([[realTicket.members]]);
   });

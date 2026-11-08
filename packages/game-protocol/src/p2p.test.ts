@@ -4,6 +4,8 @@ import {
   CHANNELS,
   MAX_RELAY_SEAL_CHARS,
   MAX_WIRE_CHAT_TEXT,
+  MAX_SHARED_SOURCE_BYTES,
+  sharedSourceBytes,
   MAX_WIRE_COMBATS,
   MAX_WIRE_EVENTS,
   MAX_SNAPSHOT_PARTS,
@@ -36,6 +38,7 @@ import {
   parseWireStrokes,
   parseWireTraps,
   parseWireChatLine,
+  parseWireSharedTrack,
   parsePeerHello,
   parsePeerObserve,
   parsePeerObserving,
@@ -95,7 +98,7 @@ import type {
   PeerLobbyJoin,
   WireLobbyState,
 } from "./p2p.js";
-import { MAX_LOBBY_PLAYERS, MAX_TEAM_LOBBY_SIDE, PROTOCOL_MISMATCH_MESSAGE } from "./protocol.js";
+import { MAX_LOBBY_PLAYERS, MAX_TEAM_LOBBY_SIDE } from "./protocol.js";
 import type { CastRefusedMessage, RechargeMessage } from "./protocol.js";
 import { PROTOCOL_VERSION } from "./protocol-version.js";
 import { ASCENT_ROUNDS } from "./queue.js";
@@ -163,7 +166,7 @@ const welcome: PeerWelcome = {
   },
 };
 
-const refuse: PeerRefuse = { reason: "protocol-mismatch", message: PROTOCOL_MISMATCH_MESSAGE };
+const refuse: PeerRefuse = { reason: "protocol-mismatch" };
 
 const observe: PeerObserve = { protocolVersion: PROTOCOL_VERSION, matchId: "match-2" };
 
@@ -571,8 +574,8 @@ const teamSide = {
     reason: "votes",
     presetName: null,
     members: [
-      { name: "Mhenlo", primary: "monk", secondary: null },
-      { name: "Devona", primary: "warrior", secondary: "monk" },
+      { primary: "monk", secondary: null },
+      { primary: "warrior", secondary: "monk" },
     ],
   },
   claims: ["peer-2", null],
@@ -621,6 +624,7 @@ const longest = Array.from({ length: MAX_STROKE_POINTS }, (_, i) => [i, i * 2]);
 const calls = { target: { targetId: "peer-2", callerId: "peer-1" }, pings: [ping] };
 
 const chatLine = { channel: "all", fromId: "peer-2", name: "Ann", team: 0, text: "gg" };
+const sharedTrack = { from: "peer-2", trackId: "ruins", source: "s(`bd sd`).gain(0.8)" };
 
 /** A proposed member's build (#1811): ids only. */
 const proposalBuild = {
@@ -867,6 +871,17 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     { traps: Array.from({ length: MAX_WIRE_GROUND_EFFECTS }, () => trap) },
   ],
   ["chat (#479)", parsePeerChat, { channel: "team", text: "spike the monk" }],
+  ["shared-track (#2745)", parseWireSharedTrack, sharedTrack],
+  [
+    "shared-track at the cap (#2745)",
+    parseWireSharedTrack,
+    { ...sharedTrack, source: "x".repeat(MAX_SHARED_SOURCE_BYTES - 2) },
+  ],
+  [
+    "share-track (#2745)",
+    parseWireLobbyCommand,
+    { kind: "share-track", trackId: "ruins", source: sharedTrack.source },
+  ],
   [
     "chat as long as the wire takes (#479)",
     parsePeerChat,
@@ -1180,8 +1195,39 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parsePeerChat,
     { channel: "all", text: "x".repeat(MAX_WIRE_CHAT_TEXT + 1) },
   ],
-  ["chat-line on team 2 (#479)", parseWireChatLine, { ...chatLine, team: 2 }],
+  ["chat-line on team 3 (#479, #2683)", parseWireChatLine, { ...chatLine, team: 3 }],
   ["chat-line without a sender (#479)", parseWireChatLine, { ...chatLine, fromId: undefined }],
+  [
+    "a share-track one byte over the cap (#2745)",
+    parseWireLobbyCommand,
+    { kind: "share-track", trackId: "ruins", source: "x".repeat(MAX_SHARED_SOURCE_BYTES - 1) },
+  ],
+  [
+    "a share-track over the cap in UTF-8 bytes, not in characters (#2745)",
+    parseWireLobbyCommand,
+    { kind: "share-track", trackId: "ruins", source: "é".repeat(MAX_SHARED_SOURCE_BYTES / 2) },
+  ],
+  [
+    "a share-track over the cap once escaped (#2745)",
+    parseWireLobbyCommand,
+    { kind: "share-track", trackId: "ruins", source: "\u0001".repeat(MAX_SHARED_SOURCE_BYTES / 4) },
+  ],
+  [
+    "a share-track naming its sender (#2745)",
+    parseWireLobbyCommand,
+    { kind: "share-track", trackId: "ruins", source: "s()", from: "someone" },
+  ],
+  [
+    "a share-track without a track (#2745)",
+    parseWireLobbyCommand,
+    { kind: "share-track", trackId: 7, source: "s()" },
+  ],
+  [
+    "a shared-track with an extra field (#2745)",
+    parseWireSharedTrack,
+    { ...sharedTrack, name: "x" },
+  ],
+  ["a shared-track without a sender (#2745)", parseWireSharedTrack, { ...sharedTrack, from: 1 }],
   ["chat-line with a long name (#479)", parseWireChatLine, { ...chatLine, name: long }],
   [
     "chat-line past the wire's bound (#479)",
@@ -1297,11 +1343,6 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["observing with a negative delay", parsePeerObserving, { ...observing, delaySeconds: -1 }],
   ["observing without a delay", parsePeerObserving, { ...observing, delaySeconds: undefined }],
   ["observing with a zero time limit", parsePeerObserving, { ...observing, timeLimitSeconds: 0 }],
-  [
-    "refuse with a long message",
-    parsePeerRefuse,
-    { ...refuse, message: "x".repeat(MAX_WIRE_TEXT + 1) },
-  ],
   ["snapshot without parts (#662)", parseWireSnapshotPart, { ...snapshot, parts: undefined }],
   ["snapshot without flags (#1225)", parseWireSnapshotPart, { ...snapshot, flags: undefined }],
   ["snapshot without a stand (#1225)", parseWireSnapshotPart, { ...snapshot, stand: undefined }],
@@ -2218,9 +2259,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["lobby-state without a host", parseWireLobbyState, { ...lobbyState, hostId: undefined }],
   ["lobby-state with a long code", parseWireLobbyState, { ...lobbyState, code: long }],
   [
-    "lobby-state with a third team",
+    "lobby-state with a fourth team (#2683)",
     parseWireLobbyState,
-    { ...lobbyState, players: [{ ...lobbyState.players[0], team: 2 }] },
+    { ...lobbyState, players: [{ ...lobbyState.players[0], team: 3 }] },
   ],
   [
     "lobby-state with a bot of a string (#1193)",
@@ -2291,6 +2332,30 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
           {
             ...teamSide,
             proposals: Array.from({ length: MAX_TEAM_LOBBY_SIDE + 1 }, () => teamSide.proposals[0]),
+          },
+          null,
+        ],
+      },
+    },
+  ],
+  [
+    "Team Lobby character with a name (#2683)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamLobby: {
+        stage: "claim",
+        secondsLeft: 1,
+        sides: [
+          {
+            ...teamSide,
+            chosen: {
+              ...teamSide.chosen,
+              members: [
+                { name: "Mhenlo", primary: "monk", secondary: null },
+                teamSide.chosen.members[1],
+              ],
+            },
           },
           null,
         ],
@@ -2451,6 +2516,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     [{ ...combat, doubleStrike: true }],
   ],
 ];
+
+describe("sharedSourceBytes (#2745)", () => {
+  it("weighs a source as the UTF-8 bytes of its JSON form", () => {
+    expect(sharedSourceBytes("ab")).toBe(4);
+    expect(sharedSourceBytes('"')).toBe(4);
+    expect(sharedSourceBytes("\u0001")).toBe(8);
+    expect(sharedSourceBytes("é")).toBe(4);
+    expect(sharedSourceBytes("🎵")).toBe(6);
+  });
+});
 
 describe("the P2P channels (#82)", () => {
   it("each fit a Trystero action name, 32 bytes of UTF-8 (#16)", () => {

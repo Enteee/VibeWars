@@ -28,7 +28,8 @@ export const PING_SECONDS = 2.6;
  */
 export const STROKES_PER_SECOND = 15;
 
-export type Team = 0 | 1;
+/** A match team: 0, 1 and, in a three-team match (#2683), 2. */
+export type Team = 0 | 1 | 2;
 
 export interface CallBoard {
   /**
@@ -90,7 +91,7 @@ interface TeamCalls {
   nextStrokeId: number;
 }
 
-const TEAMS: readonly Team[] = [0, 1];
+const TEAMS: readonly Team[] = [0, 1, 2];
 
 export function createCallBoard(bounds: {
   readonly width: number;
@@ -99,6 +100,7 @@ export function createCallBoard(bounds: {
   const teams: Record<Team, TeamCalls> = {
     0: { target: null, pings: [], nextPingId: 1, strokes: [], fresh: [], nextStrokeId: 1 },
     1: { target: null, pings: [], nextPingId: 1, strokes: [], fresh: [], nextStrokeId: 1 },
+    2: { target: null, pings: [], nextPingId: 1, strokes: [], fresh: [], nextStrokeId: 1 },
   };
   // Keyed by player, so a reconnect does not refill it; on the match clock.
   const strokeBudget = new MessageBudget(STROKES_PER_SECOND, STROKES_PER_SECOND, () => undefined);

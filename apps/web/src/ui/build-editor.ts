@@ -14,12 +14,10 @@ import {
   encodeTemplateCode,
   getAttribute,
   getOffhand,
-  getSkill,
   getWeapon,
   looksLikeTemplate,
   neededWeaponText,
   reconcileEquipment,
-  runeDisplayName,
   totalCost,
   weaponReachable,
   wieldsFor,
@@ -32,6 +30,13 @@ import {
   type WeaponSetIndex,
 } from "@vibewars/game-core";
 
+import {
+  attributeName,
+  itemName,
+  professionName,
+  runeName,
+  skillName,
+} from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { NoWebGlError } from "../render/arena-viewport.js";
 import {
@@ -298,10 +303,10 @@ export function professionChoices(
         : PROFESSIONS[id].attributes
             // A secondary brings everything but its primary attribute.
             .filter((attribute) => which === "primary" || !attribute.isPrimary)
-            .map((attribute) => `${attribute.name}${attribute.isPrimary ? " ★" : ""}`);
+            .map((attribute) => `${attributeName(attribute.id)}${attribute.isPrimary ? " ★" : ""}`);
     return {
       id,
-      name: id === undefined ? t("buildEditor.noProfession") : PROFESSIONS[id].name,
+      name: id === undefined ? t("buildEditor.noProfession") : professionName(id),
       attributes,
       keeps: filled(next.skillBar),
       of,
@@ -327,35 +332,33 @@ export function describeProfessionChange(
   const ranks = before.attributes
     .filter((a) => a.rank > rankOf(after, a.attributeId))
     .map((a) => {
-      const name = getAttribute(a.attributeId)?.name ?? a.attributeId;
+      const name = attributeName(a.attributeId);
       const back =
         cumulativeCostForRank(a.rank) - cumulativeCostForRank(rankOf(after, a.attributeId));
       return t("buildEditor.rankDropped", { attribute: name, rank: a.rank, count: back });
     });
   const skills = before.skillBar
     .filter((id, slot): id is string => id !== null && after.skillBar[slot] !== id)
-    .map((id) => t("buildEditor.skillDropped", { skill: getSkill(id)?.name ?? id }));
+    .map((id) => t("buildEditor.skillDropped", { skill: skillName(id) }));
 
   const was = before.equipment.weaponSets[0];
   const now = after.equipment.weaponSets[0];
   const gear: string[] = [];
-  const weaponName = (id: string): string => getWeapon(id)?.name ?? id;
   if (was.mainHand.weaponId !== now.mainHand.weaponId) {
     gear.push(
       t("buildEditor.gearSwapped", {
-        from: weaponName(was.mainHand.weaponId),
-        to: weaponName(now.mainHand.weaponId),
+        from: itemName(was.mainHand.weaponId),
+        to: itemName(now.mainHand.weaponId),
       }),
     );
   }
   if (was.offHand !== null && was.offHand.offhandId !== now.offHand?.offhandId) {
-    const name = (id: string): string => getOffhand(id)?.name ?? id;
     gear.push(
       now.offHand === null
-        ? name(was.offHand.offhandId)
+        ? itemName(was.offHand.offhandId)
         : t("buildEditor.gearSwapped", {
-            from: name(was.offHand.offhandId),
-            to: name(now.offHand.offhandId),
+            from: itemName(was.offHand.offhandId),
+            to: itemName(now.offHand.offhandId),
           }),
     );
   }
@@ -365,7 +368,7 @@ export function describeProfessionChange(
       gear.push(
         t("buildEditor.setRemoved", {
           set: index + 1,
-          weapon: weaponName(set.mainHand.weaponId),
+          weapon: itemName(set.mainHand.weaponId),
         }),
       );
     }
@@ -373,15 +376,16 @@ export function describeProfessionChange(
   for (const slot of ARMOR_SLOTS) {
     const rune = before.equipment.armor[slot].rune;
     if (rune !== null && after.equipment.armor[slot].rune === null) {
-      gear.push(runeDisplayName(rune));
+      gear.push(runeName(rune));
     }
   }
   // Moved, not removed, when it left both professions (#1140).
   const headWas = before.equipment.armor.head.headgearAttributeId;
   const headNow = after.equipment.armor.head.headgearAttributeId;
   if (headWas !== null && headNow !== null && headWas !== headNow) {
-    const name = (id: string): string => getAttribute(id)?.name ?? id;
-    gear.push(t("buildEditor.headgearMoved", { from: name(headWas), to: name(headNow) }));
+    gear.push(
+      t("buildEditor.headgearMoved", { from: attributeName(headWas), to: attributeName(headNow) }),
+    );
   }
   return [...ranks, ...skills, ...gear];
 }
@@ -454,7 +458,7 @@ export function weaponWarning(
   const yours =
     held === undefined || held.id === "unarmed"
       ? t("buildEditor.noWeapon")
-      : t("buildEditor.yourWeapon", { weapon: withArticle(held.name.toLowerCase()) });
+      : t("buildEditor.yourWeapon", { weapon: withArticle(itemName(held.id).toLowerCase()) });
   const badge = t("buildEditor.needsWeapon", { weapon: neededWeaponText(needed) });
   return { badge, title: t("buildEditor.weaponWarning", { badge, yours }) };
 }
@@ -498,7 +502,8 @@ export function equipSkill(character: StoredCharacter, slot: number, skillId: st
 function canonical(value: unknown): string {
   return JSON.stringify(value, (_key, inner: unknown) =>
     typeof inner === "object" && inner !== null && !Array.isArray(inner)
-      ? Object.fromEntries(Object.entries(inner).sort(([a], [b]) => a.localeCompare(b)))
+      ? // A comparison key, not shown: fixed locale, so it is the same in every language.
+        Object.fromEntries(Object.entries(inner).sort(([a], [b]) => a.localeCompare(b, "en")))
       : inner,
   );
 }
@@ -512,8 +517,9 @@ export function isUnsaved(opened: StoredCharacter, current: StoredCharacter): bo
   const comparable = (character: StoredCharacter) => ({
     ...character,
     updatedAt: 0,
+    // Ids, compared not shown: fixed locale.
     attributes: [...character.attributes].sort((a, b) =>
-      a.attributeId.localeCompare(b.attributeId),
+      a.attributeId.localeCompare(b.attributeId, "en"),
     ),
   });
   return canonical(comparable(opened)) !== canonical(comparable(current));
@@ -626,7 +632,7 @@ export function editorProblems(character: StoredCharacter): EditorProblem[] {
       const text =
         duplicate === undefined
           ? t("buildEditor.slotProblem", { slot: slot + 1, problem: sentence(problem.message) })
-          : t("buildEditor.duplicateSkill", { skill: getSkill(duplicate)?.name ?? duplicate });
+          : t("buildEditor.duplicateSkill", { skill: skillName(duplicate) });
       return { text, blocking: true, cause: { kind: "slot", slot } };
     }
     if (problem.field.startsWith("equipment")) {
@@ -1411,7 +1417,7 @@ function professionPicker(
     element: wrapper,
     update(selected) {
       const shown =
-        selected === undefined ? t("buildEditor.noProfession") : PROFESSIONS[selected].name;
+        selected === undefined ? t("buildEditor.noProfession") : professionName(selected);
       if (name.textContent !== shown) {
         name.textContent = shown;
       }
@@ -1514,9 +1520,6 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
     );
     return row;
   };
-
-  const attributeName = (attributeId: string): string =>
-    getAttribute(attributeId)?.name ?? attributeId;
 
   const render = (character: StoredCharacter): void => {
     const shown = accessibleAttributeIds(
@@ -1736,7 +1739,7 @@ export function mountSkillBar(panel: HTMLElement, context: SkillBarHost): Region
           return;
         }
         cell.insertAdjacentHTML("beforeend", skillIconHtml(skill.id, SLOT_ICON_PX));
-        cell.appendChild(h("span", "skill-slot-name", skill.name));
+        cell.appendChild(h("span", "skill-slot-name", skillName(skill.id)));
         cell.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
         cell.appendChild(h("span", "skill-slot-cost", description.cost));
         // An attack skill the weapon cannot use (#417): it still saves.
@@ -1749,7 +1752,7 @@ export function mountSkillBar(panel: HTMLElement, context: SkillBarHost): Region
         clear.type = "button";
         clear.className = "skill-slot-clear";
         clear.textContent = "×";
-        clear.title = t("buildEditor.removeSkill", { skill: skill.name });
+        clear.title = t("buildEditor.removeSkill", { skill: skillName(skill.id) });
         clear.addEventListener("click", (event) => {
           // Without this the click also lands on the cell, which would
           // pick the slot as it empties.
@@ -2066,7 +2069,7 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
             ? t("buildEditor.setEmpty", { set: entry.set + 1 })
             : t("buildEditor.setHolds", {
                 set: entry.set + 1,
-                weapon: getWeapon(held.mainHand.weaponId)?.name ?? held.mainHand.weaponId,
+                weapon: itemName(held.mainHand.weaponId),
               });
         const signature =
           held === null ? "" : `${held.mainHand.weaponId}|${held.offHand?.offhandId ?? ""}`;
@@ -2095,7 +2098,7 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
       weaponSlot.element.dataset.cause = `equipment.weaponSets[${String(selected)}].mainHand`;
       offhandSlot.element.dataset.cause = `equipment.weaponSets[${String(selected)}].offHand`;
       weaponSlot.update({
-        filled: weapon?.name,
+        filled: weapon === undefined ? undefined : itemName(weapon.id),
         emptyNote: t("buildEditor.addWeapon"),
         icon: mainHand === undefined ? undefined : weaponIcon(mainHand.weaponId),
         detail:
@@ -2110,7 +2113,7 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
           mainHand === undefined ? undefined : { from: "hand", set: selected, hand: "mainHand" },
       });
       offhandSlot.update({
-        filled: offhandDefinition?.name,
+        filled: offhandDefinition === undefined ? undefined : itemName(offhandDefinition.id),
         icon: offHand === null ? undefined : offhandIcon(offHand.offhandId),
         detail:
           offhandDefinition === undefined
@@ -2137,7 +2140,7 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
         "+1",
         headgearChoices(character).map((id) => ({
           value: id,
-          label: getAttribute(id)?.name ?? id,
+          label: attributeName(id),
         })),
         character.equipment.armor.head.headgearAttributeId ?? "",
       );
@@ -2191,7 +2194,7 @@ function mountStats(): Region & { readonly element: HTMLElement } {
       const unmet = summary.unmetRequirement;
       damage.classList.toggle("is-unmet", unmet !== undefined);
       if (unmet !== undefined) {
-        const name = getAttribute(unmet.attributeId)?.name ?? unmet.attributeId;
+        const name = attributeName(unmet.attributeId);
         needs.textContent = t("buildEditor.needsAttribute", { attribute: name, rank: unmet.rank });
         damage.append(" ", needs);
       }
@@ -2210,12 +2213,7 @@ function statLines(character: StoredCharacter, set: WeaponSetIndex): HTMLElement
   }
   const lines: HTMLElement[] = [];
   for (const bonus of summary.attributeBonuses) {
-    lines.push(
-      statLine(
-        getAttribute(bonus.attributeId)?.name ?? bonus.attributeId,
-        `+${String(bonus.bonus)}`,
-      ),
-    );
+    lines.push(statLine(attributeName(bonus.attributeId), `+${String(bonus.bonus)}`));
   }
   for (const line of summary.conditionalArmor) {
     lines.push(h("div", "gear-stat-note", line));

@@ -19,8 +19,10 @@ import {
   telegramGroupIdentity,
   telegramIdentity,
 } from "./creds.mjs";
+import { readRunnerCap, runnersOff } from "./runners-state.mjs";
 
 /** @typedef {import("./creds.mjs").Identity} Identity */
+/** @typedef {import("./runners-state.mjs").RunnerCap} RunnerCap */
 
 /**
  * @typedef {object} Row
@@ -29,17 +31,22 @@ import {
  * @property {string} stored
  * @property {boolean | null} operators `null`: cannot tell, or not applicable
  * @property {boolean} [applicable] false: never the operator's by construction
+ * @property {string} [off] why the credential is not wanted, said instead of
+ *   `not set up` (#2765)
  */
 
 /**
- * @param {Identity} identity
+ * @param {Row} row
  * @returns {string}
  */
-function describe(identity) {
+function describe({ identity, off }) {
   if (identity.state === "ok") {
     return identity.who ?? "(logged in, name unknown)";
   }
-  return identity.state === "error" ? `error: ${identity.note ?? "unknown"}` : "not set up";
+  if (identity.state === "error") {
+    return `error: ${identity.note ?? "unknown"}`;
+  }
+  return off ?? "not set up";
 }
 
 /**
@@ -64,7 +71,7 @@ export function renderTable(rows) {
   const header = ["credential", "identity", "expiry", "scopes", "stored", "operator's"];
   const body = rows.map((row) => [
     row.name,
-    describe(row.identity),
+    describe(row),
     row.identity.expiry ?? "-",
     row.identity.scopes ?? "-",
     row.stored,
@@ -81,10 +88,13 @@ export function renderTable(rows) {
 
 /**
  * @param {string} root the credential home
+ * @param {RunnerCap} cap the company's runner cap: whether the runners
+ *   token is wanted at all
  * @returns {Promise<{ rows: Row[], dir: string }>}
  */
-export async function collect(root) {
+export async function collect(root, cap) {
   const p = paths(root);
+  const off = runnersOff(cap);
   const operatorGithub = githubIdentity(null);
   const company = {
     claude: claudeIdentity(p.claude),
@@ -119,6 +129,7 @@ export async function collect(root) {
       identity: company.runners,
       stored: p.runnersGh,
       operators: isOperators(company.runners.who, operatorGithub.who),
+      ...(off === null ? {} : { off }),
     },
     {
       name: "telegram",
@@ -159,7 +170,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     );
     process.exit(2);
   }
+  const botRoot = process.env.VIBEWARS_BOT_ROOT;
+  if (botRoot === undefined || botRoot === "") {
+    console.error("claude-llc doctor: VIBEWARS_BOT_ROOT is not set (run it through claude-llc).");
+    process.exit(2);
+  }
   console.log(dirLine(root));
   console.log("");
-  console.log(renderTable((await collect(root)).rows));
+  console.log(renderTable((await collect(root, readRunnerCap(botRoot))).rows));
 }

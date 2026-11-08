@@ -13,7 +13,6 @@
 export { PROTOCOL_VERSION, fingerprint } from "./protocol-version.js";
 
 export {
-  PROTOCOL_MISMATCH_MESSAGE,
   CHAIN_ROLES,
   MAX_LOBBY_PLAYERS,
   MAX_TEAM_LOBBY_SIDE,
@@ -107,6 +106,9 @@ export {
   parseWireTraps,
   parsePeerChat,
   parseWireChatLine,
+  parseWireSharedTrack,
+  MAX_SHARED_SOURCE_BYTES,
+  sharedSourceBytes,
   parsePeerRejoinChallenge,
   parsePeerRejoinProof,
   parseWireKeyChallenge,
@@ -173,6 +175,7 @@ export type {
   ChatChannel,
   PeerChat,
   WireChatLine,
+  WireSharedTrack,
   PeerRejoinChallenge,
   PeerRejoinProof,
   WireKeyChallenge,

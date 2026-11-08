@@ -1,22 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import type { FormedGroup, LobbySnapshot, QueueState } from "@vibewars/game-session";
+import type { LobbySnapshot } from "@vibewars/game-session";
 
+import { t } from "../i18n/index.js";
 import {
-  FELL_THROUGH,
-  HOST_LEFT,
-  MATCH_FOUND,
-  TEAM_SPLIT,
-  UNREACHABLE,
-  ascentLine,
   endedLines,
   modeLabel,
   nextAscentMorale,
   nextAscentRound,
   nextStreak,
-  queueLines,
   queueTitle,
-  searchingLabel,
   stayButton,
   streakLine,
   requeuedSince,
@@ -25,16 +18,6 @@ import {
   versusTeams,
   waitedLabel,
 } from "./queue-screen.js";
-
-const GROUP: FormedGroup = {
-  groupId: "g",
-  room: "ra-g",
-  hostTicketId: "a",
-  teams: [["a"], ["b"]],
-  parties: [],
-  mapId: "arena-crossroads",
-  mode: "random-arena-1v1",
-};
 
 function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapshot {
   return {
@@ -104,60 +87,6 @@ describe("the queue screen's words (#880)", () => {
     expect(waitedLabel(75_000)).toBe("1:15");
     expect(waitedLabel(-5)).toBe("0:00");
   });
-
-  it("counts who is searching against who is needed", () => {
-    expect(searchingLabel(3, 8)).toBe("3 searching · 8 needed");
-  });
-});
-
-describe("queueLines (#880)", () => {
-  const searching: QueueState = {
-    kind: "searching",
-    searching: 3,
-    teams: 3,
-    needed: 8,
-    waitedMs: 65_000,
-  };
-
-  it("searching: the wait, the count and Leave queue", () => {
-    expect(queueLines(searching, false)).toEqual({
-      status: "Searching",
-      waited: "1:05",
-      count: "3 searching · 8 needed",
-      action: "leave",
-    });
-  });
-
-  it("forming and in-lobby: Match found, still leavable", () => {
-    for (const state of [
-      { kind: "forming", group: GROUP },
-      { kind: "in-lobby", group: GROUP, key: { ticketId: "a", sign: () => "" } },
-    ] as const) {
-      expect(queueLines(state, false)).toEqual({ status: MATCH_FOUND, action: "leave" });
-    }
-  });
-
-  it("fell-through: says so, and keeps saying it over searching while it is held", () => {
-    expect(queueLines({ kind: "fell-through" }, false)).toEqual({
-      status: FELL_THROUGH,
-      action: "leave",
-    });
-    expect(queueLines(searching, true)).toEqual({ status: FELL_THROUGH, action: "leave" });
-  });
-
-  it("unreachable: #707's wording and Back to menu", () => {
-    expect(queueLines({ kind: "unreachable" }, false)).toEqual({
-      status: UNREACHABLE,
-      action: "back",
-    });
-  });
-
-  it("party-gone: the team split up (#882)", () => {
-    expect(queueLines({ kind: "party-gone" }, false)).toEqual({
-      status: TEAM_SPLIT,
-      action: "leave",
-    });
-  });
 });
 
 describe("stayButton (#882)", () => {
@@ -170,7 +99,10 @@ describe("stayButton (#882)", () => {
       label: "Waiting for your team (9)",
       enabled: false,
     });
-    expect(stayButton({ kind: "host-left" })).toEqual({ label: HOST_LEFT, enabled: false });
+    expect(stayButton({ kind: "host-left" })).toEqual({
+      label: t("queue.hostLeft"),
+      enabled: false,
+    });
   });
 });
 
@@ -207,14 +139,6 @@ describe("nextAscentMorale (#2686)", () => {
     expect(nextAscentMorale(-15, -45, "loss")).toBe(0);
     expect(nextAscentMorale(-15, -45, "forfeit")).toBe(0);
     expect(nextAscentMorale(-15, -45, "host-left")).toBe(-15);
-  });
-});
-
-describe("ascentLine (#1996)", () => {
-  it("names the round out of four and its map", () => {
-    expect(ascentLine(0)).toBe("Round 1 of 4 · Broken Tower");
-    expect(ascentLine(1)).toBe("Round 2 of 4 · Scarred Earth");
-    expect(ascentLine(3)).toBe("Round 4 of 4 · Hall of Heroes");
   });
 });
 

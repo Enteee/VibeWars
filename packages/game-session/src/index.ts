@@ -46,15 +46,7 @@ export { spawnPoint } from "./spawn-points.js";
 export type { SpawnPoint } from "./spawn-points.js";
 export type { Json } from "./transport.js";
 export { createLocalPeer } from "./local-peer.js";
-export {
-  MATCH_FULL_MESSAGE,
-  MATCH_OVER_MESSAGE,
-  NOT_A_SPECTATOR_MESSAGE,
-  OBSERVER_DELAY_SECONDS,
-  RECONNECT_WINDOW_SECONDS,
-  WRONG_MATCH_MESSAGE,
-  createMatchHost,
-} from "./match-host.js";
+export { OBSERVER_DELAY_SECONDS, RECONNECT_WINDOW_SECONDS, createMatchHost } from "./match-host.js";
 export type {
   HostMap,
   MatchHost,

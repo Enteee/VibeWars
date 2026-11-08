@@ -21,7 +21,8 @@ import { messageBytes, type Transport } from "./transport.js";
  * Half the players move in a new direction 10 times a second and try a
  * random skill; the other half stop and auto-attack the foe beside them,
  * so they walk the path finder every tick (#267). As on the server, but
- * 16v16 is gone: a lobby seats at most 16 (`MAX_LOBBY_PLAYERS`).
+ * 16v16 is gone: a lobby seats at most 24 (`MAX_LOBBY_PLAYERS`, three
+ * parties of eight).
  */
 
 interface Scenario {

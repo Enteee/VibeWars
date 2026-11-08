@@ -1,5 +1,4 @@
 import {
-  getAttribute,
   getOffhand,
   getWeapon,
   getWeaponMod,
@@ -11,6 +10,7 @@ import {
   type WeaponSetIndex,
 } from "@vibewars/game-core";
 
+import { attributeName, itemName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import {
@@ -79,7 +79,7 @@ export function heldIn(
     }
     return {
       item: worn.weaponId,
-      name: weapon.name,
+      name: itemName(weapon.id),
       attributeId:
         weapon.requirement.kind === "fixed"
           ? weapon.requirement.attributeId
@@ -96,7 +96,7 @@ export function heldIn(
   }
   return {
     item: worn.offhandId,
-    name: offhand.name,
+    name: itemName(offhand.id),
     attributeId:
       offhand.requirement.kind === "fixed"
         ? offhand.requirement.attributeId
@@ -105,10 +105,6 @@ export function heldIn(
     slots: modSlotsOf(worn.offhandId),
     upgrades: worn.upgrades,
   };
-}
-
-export function attributeName(id: string): string {
-  return getAttribute(id)?.name ?? id;
 }
 
 export interface HandPopover {
@@ -209,13 +205,9 @@ export function mountHandPopover(context: PaperDollContext): HandPopover {
           [null, ...modChoices(held.item, slot).map((mod) => mod.id)],
           (id) => id ?? "none",
           (id) =>
-            choice(
-              id === null ? t("paperDoll.none") : (getWeaponMod(id)?.name ?? id),
-              undefined,
-              () => {
-                commit(setUpgrade(current(), context.weaponSet(), hand, slot, id));
-              },
-            ),
+            choice(id === null ? t("paperDoll.none") : itemName(id), undefined, () => {
+              commit(setUpgrade(current(), context.weaponSet(), hand, slot, id));
+            }),
           (node, id) => {
             chosen(node, id === worn);
             note(node, id === null ? "" : (getWeaponMod(id)?.text ?? ""));

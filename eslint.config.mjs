@@ -9,31 +9,6 @@ import tseslint from "typescript-eslint";
 
 import vibewarsRules from "./eslint/no-raw-ui-text.mjs";
 
-/** Files with player-facing text not yet moved onto t() (#2648): see below. */
-const NOT_YET_TRANSLATED = [
-  "apps/web/src/music/music-player.ts",
-  "apps/web/src/ui/beat-editor.ts",
-  "apps/web/src/ui/controls-section.ts",
-  "apps/web/src/ui/help-screen.ts",
-  "apps/web/src/ui/jukebox.ts",
-  "apps/web/src/ui/kit.ts",
-  "apps/web/src/ui/licences-section.ts",
-  "apps/web/src/ui/lobby-screen.ts",
-  "apps/web/src/ui/lobby-window.ts",
-  "apps/web/src/ui/music-controls.ts",
-  "apps/web/src/ui/options-screen.ts",
-  "apps/web/src/ui/party-window.ts",
-  "apps/web/src/ui/player-section.ts",
-  "apps/web/src/ui/queue-screen.ts",
-  "apps/web/src/ui/rail.ts",
-  "apps/web/src/ui/relay-prompt.ts",
-  "apps/web/src/ui/relay-section.ts",
-  "apps/web/src/ui/team-lobby-screen.ts",
-  "apps/web/src/ui/team-play.ts",
-  "apps/web/src/ui/topbar.ts",
-  "apps/web/src/ui/touch-notice.ts",
-];
-
 /**
  * Type-aware linting is enabled repo-wide. It is slower than syntactic
  * linting, but it is the only way to catch the mistakes that actually matter
@@ -230,14 +205,39 @@ export default defineConfig([
     },
   },
 
-  // Player-facing text goes through t() (#2648, ADR-0050). The ignores
-  // are the files not yet moved onto it: each extraction card of #2644
-  // deletes its files from the list, and the last deletes the list.
+  // Player-facing text goes through t() (#2648, ADR-0050).
   {
     files: ["apps/web/src/**/*.ts"],
-    ignores: ["apps/web/src/**/*.test.ts", "apps/web/src/i18n/**", ...NOT_YET_TRANSLATED],
+    ignores: ["apps/web/src/**/*.test.ts", "apps/web/src/i18n/**"],
     plugins: { vibewars: vibewarsRules },
     rules: { "vibewars/no-raw-ui-text": "error" },
+  },
+
+  // Game data is drawn by name through i18n/game-names.ts (#2663), so a
+  // translation shows everywhere at once; the data's own `name` is English.
+  {
+    files: ["apps/web/src/ui/**/*.ts"],
+    ignores: ["apps/web/src/**/*.test.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "MemberExpression[property.name='name'][object.name=/^(skill|status|profession|attribute|map|weapon|offhand|definition)$/]",
+          message: "Draw game data through i18n/game-names.ts: skillName(id), mapName(id)...",
+        },
+        {
+          selector:
+            "MemberExpression[property.name='name'] > CallExpression.object[callee.name=/^get(Skill|Attribute|Profession|StatusDefinition|Weapon|Offhand|Insignia|UniversalRune|WeaponMod)$/]",
+          message: "Draw game data through i18n/game-names.ts: skillName(id), mapName(id)...",
+        },
+        {
+          selector:
+            "MemberExpression[property.name='name'] > MemberExpression.object[object.name=/^(PROFESSIONS|STATUS_DEFINITIONS|WEAPONS|OFFHANDS|INSIGNIAS|UNIVERSAL_RUNES)$/]",
+          message: "Draw game data through i18n/game-names.ts: skillName(id), mapName(id)...",
+        },
+      ],
+    },
   },
 
   // Tests deliberately feed wrong-typed values to validators to prove they are

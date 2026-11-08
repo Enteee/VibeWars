@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { t } from "../i18n/index.js";
 import type { GameToHost, HostToGame } from "./host-protocol.js";
 import {
   CROSSFADE_CYCLES,
-  FLOODED_MESSAGE,
   HOST_MESSAGES_PER_SECOND,
   HEARTBEAT_MS,
   HEARTBEAT_TIMEOUT_MS,
-  HUNG_MESSAGE,
   createMusicPlayer,
   measuringMusic,
   type MusicError,
@@ -181,7 +180,7 @@ describe("createMusicPlayer", () => {
     advance(HEARTBEAT_MS);
     advance(HEARTBEAT_TIMEOUT_MS + HEARTBEAT_MS);
     expect(frames[0]?.destroyed).toBe(true);
-    expect(errors).toEqual([{ message: HUNG_MESSAGE }]);
+    expect(errors).toEqual([{ message: t("music.hung") }]);
 
     player.setIntensity(3);
     expect(frames).toHaveLength(1);
@@ -273,7 +272,7 @@ describe("a host that floods the game (#878)", () => {
     expect(frames[0]?.destroyed).toBe(false);
     frames[0]?.receive(null);
     expect(frames[0]?.destroyed).toBe(true);
-    expect(errors).toEqual([{ message: FLOODED_MESSAGE }]);
+    expect(errors).toEqual([{ message: t("music.flooded") }]);
     expect(reasons).toEqual(["flooded"]);
   });
 

@@ -157,11 +157,19 @@ files in the supervisor's state directory (`runners-state.mjs`), which no
 jail binds: the target, which hubd writes for the manager's `company
 runners <n>`, and the status, which the supervisor writes and hubd and
 the dashboard read. Both are validated on read: a target that is not a
-whole number up to `VIBEWARS_MAX_RUNNERS` counts as 0.
+whole number up to `maxRunners` counts as 0.
 
-- `VIBEWARS_MAX_RUNNERS` (`vibewars.runners.max`) defaults to 0: runners
-  stay off, and the supervisor makes no GitHub call, until the operator
-  raises it.
+- The most runners is `maxRunners` in `company.json` (#2764), asked by
+  `claude-llc-init` beside the employee cap `maxAgents`. It was the Nix
+  option `vibewars.runners.max`, which an operator starting the company
+  had to find, set and rebuild for; both caps on the company's size now
+  live in one place, asked once. At 0 runners stay off and the supervisor
+  makes no GitHub call. hubd reads it on every `company runners`; the
+  supervisor reads it once at start, so changing it takes a supervisor
+  restart, and `company runners <n>` stays the live knob below it. A
+  `company.json` without a whole number ≥ 0 there is refused by both,
+  never read as 0. `company.json` is host-only: `.bots` is 0700 and no
+  jail binds it, so no agent can raise the cap.
 - Each runner's JIT config is minted, then piped to `runner-jail.mjs
 --jitconfig -` on stdin: never argv, a file or a log line.
 - Each launcher gets a lifeline, `--lifeline 3`: a pipe the supervisor

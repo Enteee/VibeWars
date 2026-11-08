@@ -1,3 +1,4 @@
+import { t } from "../i18n/index.js";
 import {
   relayHosts,
   saveRelay,
@@ -8,9 +9,6 @@ import { button, h, toast } from "./kit.js";
 
 /** How long Use stays disabled after the prompt opens, as a browser's permission prompt does. */
 const ARM_USE_MS = 500;
-
-/** What Use means for the player's lobbies (#2240); Options can untick it. */
-const RELAY_PROMPT_SHARING = "Your lobbies will offer this relay to their players.";
 
 /** The open prompt's close, so a second link replaces it rather than stacking on it. */
 let closeOpen: (() => void) | undefined;
@@ -33,20 +31,20 @@ export function openRelayPrompt(
   const panel = h("div", "screen relay-prompt");
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-modal", "true");
-  panel.setAttribute("aria-label", "Relay link");
+  panel.setAttribute("aria-label", t("relayPrompt.label"));
 
   const question =
     saved === undefined
-      ? `Use relay ${relayHosts(offered)} for connections?`
-      : `Use relay ${relayHosts(offered)} for connections, instead of ${relayHosts(saved)}?`;
+      ? t("relayPrompt.question", { relay: relayHosts(offered) })
+      : t("relayPrompt.questionReplace", {
+          relay: relayHosts(offered),
+          saved: relayHosts(saved),
+        });
   panel.append(
     h("p", "relay-prompt-question", question),
-    h(
-      "p",
-      "screen-subtitle",
-      "Only use a relay from someone you trust: whoever runs it sees your IP address and when you play.",
-    ),
-    h("p", "screen-subtitle relay-prompt-share", RELAY_PROMPT_SHARING),
+    h("p", "screen-subtitle", t("relayPrompt.trust")),
+    // What Use means for the player's lobbies (#2240); Options can untick it.
+    h("p", "screen-subtitle relay-prompt-share", t("relayPrompt.sharing")),
   );
 
   const close = (): void => {
@@ -62,13 +60,13 @@ export function openRelayPrompt(
       close();
     }
   };
-  const use = button("Use", "primary relay-prompt-use", () => {
+  const use = button(t("relayPrompt.use"), "primary relay-prompt-use", () => {
     saveRelay(offered);
     saveRelaySharing(true);
     close();
-    toast(`Relay: ${relayHosts(offered)}`);
+    toast(t("relayPrompt.toast", { relay: relayHosts(offered) }));
   });
-  const ignore = button("Ignore", "relay-prompt-ignore", close);
+  const ignore = button(t("relayPrompt.ignore"), "relay-prompt-ignore", close);
   // A page that opens this link mid double-click must not land the second click on Use.
   use.disabled = true;
   window.setTimeout(() => {

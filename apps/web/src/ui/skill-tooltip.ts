@@ -1,5 +1,6 @@
 import { type DescriptionPart, type SkillDescription } from "@vibewars/game-core";
 
+import { attributeName, skillName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
 import { skillIconHtml } from "./icons.js";
 
@@ -77,7 +78,7 @@ export function renderSkillDescription(
     const heading = document.createElement("div");
     const title = document.createElement("div");
     title.className = "tip-title";
-    title.textContent = description.name;
+    title.textContent = skillName(description.id);
     heading.append(title, type);
     header.appendChild(heading);
     node.appendChild(header);
@@ -94,10 +95,10 @@ export function renderSkillDescription(
   }
 
   // A "No Attribute" skill has no line here, as in GW1 (#445).
-  if (description.attributeName !== undefined) {
+  if (description.attributeId !== undefined) {
     const attribute = document.createElement("div");
     attribute.className = "tip-attribute";
-    attribute.textContent = description.attributeName;
+    attribute.textContent = attributeName(description.attributeId);
     node.appendChild(attribute);
   }
 

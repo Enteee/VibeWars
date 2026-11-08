@@ -36,7 +36,6 @@ import {
   MAX_LOBBY_PLAYERS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_GROUND_EFFECTS,
-  PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   helloProtocolVersion,
   parseClientIntent,
@@ -129,12 +128,6 @@ export const RECONNECT_WINDOW_SECONDS = 30;
  */
 export const OBSERVER_DELAY_SECONDS = 10;
 
-/** What the players are shown when the host turns them away. */
-export const MATCH_FULL_MESSAGE = "This match is full.";
-export const MATCH_OVER_MESSAGE = "This match is over.";
-export const NOT_A_SPECTATOR_MESSAGE = "Only a spectator may watch this match.";
-export const WRONG_MATCH_MESSAGE = "That match is not being played any more.";
-
 /** The arena, already built from game-maps by the caller: game-session does not depend on it. */
 export interface HostMap {
   readonly descriptor: MapDescriptor;
@@ -207,7 +200,7 @@ export interface MatchHostOptions {
 export type PlannedSeats = ReadonlyMap<string, PlannedSeat>;
 
 export type PlannedSeat = {
-  readonly team: 0 | 1;
+  readonly team: WireTeam;
   readonly name: string;
   readonly guildTag: string | null;
   readonly guildCape: WireCape | null;
@@ -261,7 +254,7 @@ export interface MatchHost {
 /** One player's place in the match, held through a drop. */
 interface Seat {
   readonly playerId: string;
-  readonly team: 0 | 1;
+  readonly team: WireTeam;
   readonly name: string;
   /** Sanitised (#1406); `null` for none, and for a bot. */
   readonly guildTag: string | null;
@@ -391,7 +384,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     {
       readonly name: string;
       readonly guildTag: string | null;
-      readonly team: 0 | 1;
+      readonly team: WireTeam;
       readonly bot: boolean;
       readonly build: PlayerBuild;
     }
@@ -467,8 +460,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const newToken = (): string =>
     Array.from({ length: 32 }, () => Math.floor(random() * 16).toString(16)).join("");
 
-  const refuse = (peerId: string, reason: PeerRefuse["reason"], message: string): void => {
-    const refusal: PeerRefuse = { reason, message };
+  const refuse = (peerId: string, reason: PeerRefuse["reason"]): void => {
+    const refusal: PeerRefuse = { reason };
     transport.send("refuse", refusal, peerId);
   };
 
@@ -730,7 +723,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    */
   const seatNew = (
     build: PlayerBuild,
-    team: 0 | 1,
+    team: WireTeam,
     nameOf: (playerId: string) => string,
     guild: Guild,
     bot: boolean,
@@ -811,7 +804,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     // Checked first: a client of another version, or of none, is told so
     // rather than left waiting for a welcome that never comes.
     if (helloProtocolVersion(data) !== PROTOCOL_VERSION) {
-      refuse(from, "protocol-mismatch", PROTOCOL_MISMATCH_MESSAGE);
+      refuse(from, "protocol-mismatch");
       return;
     }
     const hello = parsePeerHello(data);
@@ -819,7 +812,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     if (finished) {
-      refuse(from, "match-over", MATCH_OVER_MESSAGE);
+      refuse(from, "match-over");
       return;
     }
     challenges.delete(from);
@@ -846,7 +839,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     if (helloProtocolVersion(data) !== PROTOCOL_VERSION) {
-      refuse(from, "protocol-mismatch", PROTOCOL_MISMATCH_MESSAGE);
+      refuse(from, "protocol-mismatch");
       return;
     }
     const observe = parsePeerObserve(data);
@@ -855,16 +848,16 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
     // A player has a seat and a viewer none: one peer is never both.
     if (seatOfPeer.has(from) || !options.isSpectator(from)) {
-      refuse(from, "not-a-spectator", NOT_A_SPECTATOR_MESSAGE);
+      refuse(from, "not-a-spectator");
       return;
     }
     if (observe.matchId !== options.matchId) {
-      refuse(from, "wrong-match", WRONG_MATCH_MESSAGE);
+      refuse(from, "wrong-match");
       return;
     }
     // Over, and its end already sent on to whoever watched.
     if (finished && delayed.length === 0) {
-      refuse(from, "match-over", MATCH_OVER_MESSAGE);
+      refuse(from, "match-over");
       return;
     }
     observers.add(from);
@@ -903,7 +896,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       (planned !== null && plan === undefined) ||
       plan?.bot === true
     ) {
-      refuse(from, "match-full", MATCH_FULL_MESSAGE);
+      refuse(from, "match-full");
       return;
     }
     awaited.delete(from);
@@ -911,7 +904,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const build = plan?.build ?? resolveJoinLoadout(hello.build, RULESET.attributes, random).build;
     // Without a plan, teams alternate as players arrive, so a 1v1 is
     // adversarial by default.
-    const team: 0 | 1 = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
+    const team: WireTeam = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
     // The lobby's name, tag and cape, whatever the hello says (#53,
     // #1406, #1422). Without a lobby they are the peer's to choose, so
     // they are sanitised before anyone sees them.
@@ -968,7 +961,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     if (finished) {
-      refuse(from, "match-over", MATCH_OVER_MESSAGE);
+      refuse(from, "match-over");
       return;
     }
     const held = seats.get(challenge.playerId);

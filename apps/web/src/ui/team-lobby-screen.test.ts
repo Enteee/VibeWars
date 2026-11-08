@@ -8,20 +8,12 @@ import { defaultBuildEquipment, STARTER_TEAMS } from "@vibewars/game-core";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ASCENT_LOCKED_MESSAGE } from "../net/session.js";
+import { t } from "../i18n/index.js";
 import type { StoredCharacter, StoredTeam, TeamBuildSize } from "../storage/schema.js";
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
 import type * as Kit from "./kit.js";
 import {
-  NO_PROPOSALS,
-  SOLO_STARTING,
-  SOLO_TITLE,
-  PRESET_TEAM,
-  NO_PLAYABLE_TEAM_BUILDS,
-  NO_TEAM_BUILDS,
-  SEATS_LINE,
-  SPECTATING_LINE,
   clockText,
   drawerRows,
   drawerShowing,
@@ -589,7 +581,7 @@ describe("the Team Lobby's body (#1460)", () => {
     const shown = body(lobby("aria", "vote", voteSide([])), [team("unnamed", "", 4)]);
     expect(drawerOf(shown).rows()).toEqual([]);
     expect(shown.all("team-lobby-no-teams").map((line) => line.textContent)).toEqual([
-      NO_PLAYABLE_TEAM_BUILDS,
+      t("teamLobby.noPlayableTeamBuilds"),
     ]);
   });
 
@@ -597,7 +589,7 @@ describe("the Team Lobby's body (#1460)", () => {
     const shown = body(lobby("aria", "vote", voteSide([])));
     expect(drawerOf(shown).rows()).toEqual([]);
     expect(shown.all("team-lobby-no-teams").map((line) => line.textContent)).toEqual([
-      NO_TEAM_BUILDS,
+      t("teamLobby.noTeamBuilds"),
     ]);
     const tags = (element: FakeElement): string[] => [
       element.tagName,
@@ -609,7 +601,9 @@ describe("the Team Lobby's body (#1460)", () => {
   it("shows one dashed box where the cards would be when nobody proposed", () => {
     const shown = body(lobby("aria", "vote", voteSide([])));
     expect(shown.all("play-card")).toEqual([]);
-    expect(shown.all("team-lobby-empty").map((box) => box.textContent)).toEqual([NO_PROPOSALS]);
+    expect(shown.all("team-lobby-empty").map((box) => box.textContent)).toEqual([
+      t("teamLobby.noProposals"),
+    ]);
   });
 
   it("lists a 1v1 every character, team members labelled, the active one pressed (#2387)", () => {
@@ -701,7 +695,9 @@ describe("the Team Lobby's body (#1460)", () => {
       callbacks,
       undefined,
     );
-    expect((bar.status as readonly FakeElement[])[0]?.text()).toContain(SOLO_STARTING);
+    expect((bar.status as readonly FakeElement[])[0]?.text()).toContain(
+      t("teamLobby.soloStarting"),
+    );
     expect(root.all("team-lobby-seat")).toEqual([]);
     expect(root.all("team-lobby-result")).toHaveLength(1);
     renderTeamLobbyScreen(
@@ -713,13 +709,13 @@ describe("the Team Lobby's body (#1460)", () => {
       callbacks,
       undefined,
     );
-    expect((bar.status as readonly FakeElement[])[0]?.text()).toContain(SOLO_TITLE);
+    expect((bar.status as readonly FakeElement[])[0]?.text()).toContain(t("teamLobby.soloTitle"));
     vi.useRealTimers();
   });
 
   it("shows a spectator one line and nothing of either side", () => {
     const shown = body(lobby("watcher", "vote", voteSide([proposal("aria", [])])));
-    expect(shown.text()).toBe(SPECTATING_LINE);
+    expect(shown.text()).toBe(t("teamLobby.spectating"));
   });
 
   it("lifts the chosen build, fades the rest, and says why", () => {
@@ -744,7 +740,7 @@ describe("the Team Lobby's body (#1460)", () => {
       "Tie: captain's pick",
     ]);
     expect(shown.all("team-lobby-seats-line").map((line) => line.textContent)).toEqual([
-      SEATS_LINE,
+      t("teamLobby.seatsLine"),
     ]);
   });
 
@@ -802,7 +798,7 @@ describe("the Team Lobby's body (#1460)", () => {
     ]);
     expect(seats.map((seat) => seat.disabled)).toEqual([true, true, false, false]);
     expect(newcomer.all("team-lobby-reason").map((line) => line.textContent)).toEqual([
-      ASCENT_LOCKED_MESSAGE,
+      t("session.ascentLocked"),
     ]);
     seats[2]?.click();
     expect(sent).toEqual([{ kind: "claim", value: 2 }]);
@@ -975,6 +971,6 @@ describe("the Team Lobby's body (#1460)", () => {
     );
     expect(
       shown.all("play-card").map((card) => card.all("team-lobby-name-text")[0]?.textContent),
-    ).toEqual([PRESET_TEAM]);
+    ).toEqual([t("teamLobby.presetTeam")]);
   });
 });

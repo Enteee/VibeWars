@@ -1,9 +1,4 @@
-import {
-  getSkill,
-  MINIMAL_GW_INSPIRED_PVP_V1,
-  PROFESSIONS,
-  type ProfessionId,
-} from "@vibewars/game-core";
+import { MINIMAL_GW_INSPIRED_PVP_V1, type ProfessionId } from "@vibewars/game-core";
 
 import {
   BODY_EDGE,
@@ -12,6 +7,7 @@ import {
   teamColour,
   type RenderableActor,
 } from "../render/arena-snapshot.js";
+import { professionName, skillName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
@@ -37,10 +33,10 @@ export function professionLabel(
   primary: ProfessionId,
   secondary: ProfessionId | undefined,
 ): string {
-  const first = PROFESSIONS[primary].name;
+  const first = professionName(primary);
   return secondary === undefined
     ? first
-    : t("character.professions", { primary: first, secondary: PROFESSIONS[secondary].name });
+    : t("character.professions", { primary: first, secondary: professionName(secondary) });
 }
 
 /** How many of the eight bar slots are filled. */
@@ -130,8 +126,7 @@ export function miniSkillCells(
     if (skillId === null) {
       return null;
     }
-    const skill = getSkill(skillId);
-    return { name: skill?.name ?? skillId, icon: skillIcon(skillId) };
+    return { name: skillName(skillId), icon: skillIcon(skillId) };
   });
 }
 

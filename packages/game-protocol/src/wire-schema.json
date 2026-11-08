@@ -50,7 +50,8 @@
     "strokes",
     "traps",
     "chat",
-    "chat-line"
+    "chat-line",
+    "shared-track"
   ],
   "statusIds": [
     "aegis",
@@ -730,7 +731,7 @@
     "LOBBY_KEY_SALT": { "literal": "vibewars-lobby-key" },
     "MASTERLESS_WIRE_TEAM": { "literal": -1 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
-    "MAX_LOBBY_PLAYERS": { "literal": 16 },
+    "MAX_LOBBY_PLAYERS": { "literal": 24 },
     "MAX_RELAY_PEER_ID": { "literal": 64 },
     "MAX_RELAY_SEAL_CHARS": { "literal": 2048 },
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
@@ -760,9 +761,6 @@
     "MAX_WIRE_WALLS": { "literal": 1024 },
     "MIN_WIRE_MORALE": { "literal": -60 },
     "NO_SHOW_IGNORE_MS": { "literal": 120000 },
-    "PROTOCOL_MISMATCH_MESSAGE": {
-      "literal": "This tab is running an outdated version of VibeWars. Reload the page."
-    },
     "STROKE_SECONDS": { "literal": 4 },
     "TEAM_LOBBY_STAGE_SECONDS": { "literal": 60 },
     "TICKET_HEARTBEAT_MS": { "literal": 5000 },
@@ -873,6 +871,7 @@
         { "literal": "relay-cred" },
         { "literal": "relay-holding" },
         { "literal": "relay-offers" },
+        { "literal": "shared-track" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
         { "literal": "stay-together" },
@@ -5859,7 +5858,6 @@
     },
     "PeerRefuse": {
       "properties": [
-        { "name": "message", "optional": false, "type": "string" },
         {
           "name": "reason",
           "optional": false,
@@ -6352,7 +6350,7 @@
         {
           "name": "team",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
         { "name": "text", "optional": false, "type": "string" }
       ]
@@ -6673,7 +6671,6 @@
     "WireKeyProven": { "properties": [{ "name": "mac", "optional": false, "type": "string" }] },
     "WireLobbyCharacter": {
       "properties": [
-        { "name": "name", "optional": false, "type": "string" },
         { "name": "primary", "optional": false, "type": "string" },
         { "name": "secondary", "optional": false, "type": { "union": ["null", "string"] } }
       ]
@@ -6809,6 +6806,13 @@
             }
           ]
         },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "share-track" } },
+            { "name": "source", "optional": false, "type": "string" },
+            { "name": "trackId", "optional": false, "type": "string" }
+          ]
+        },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "start" } }] },
         {
           "properties": [
@@ -6829,6 +6833,7 @@
               { "literal": "chat-throttled" },
               { "literal": "notice" },
               { "literal": "refused" },
+              { "literal": "share-throttled" },
               { "literal": "start-rejected" }
             ]
           }
@@ -6910,7 +6915,7 @@
         {
           "name": "team",
           "optional": false,
-          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         }
       ]
     },
@@ -7060,7 +7065,9 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                  "type": {
+                    "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                  }
                 }
               ]
             }
@@ -7105,11 +7112,6 @@
                                             "type": {
                                               "array": {
                                                 "properties": [
-                                                  {
-                                                    "name": "name",
-                                                    "optional": false,
-                                                    "type": "string"
-                                                  },
                                                   {
                                                     "name": "primary",
                                                     "optional": false,
@@ -7225,11 +7227,6 @@
                                             "type": {
                                               "array": {
                                                 "properties": [
-                                                  {
-                                                    "name": "name",
-                                                    "optional": false,
-                                                    "type": "string"
-                                                  },
                                                   {
                                                     "name": "primary",
                                                     "optional": false,
@@ -7658,6 +7655,13 @@
         },
         { "name": "x", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "y", "optional": false, "type": { "union": ["null", "number"] } }
+      ]
+    },
+    "WireSharedTrack": {
+      "properties": [
+        { "name": "from", "optional": false, "type": "string" },
+        { "name": "source", "optional": false, "type": "string" },
+        { "name": "trackId", "optional": false, "type": "string" }
       ]
     },
     "WireSkillBar": {
@@ -8684,7 +8688,6 @@
           "type": {
             "array": {
               "properties": [
-                { "name": "name", "optional": false, "type": "string" },
                 { "name": "primary", "optional": false, "type": "string" },
                 { "name": "secondary", "optional": false, "type": { "union": ["null", "string"] } }
               ]
@@ -8740,7 +8743,6 @@
                                   "type": {
                                     "array": {
                                       "properties": [
-                                        { "name": "name", "optional": false, "type": "string" },
                                         { "name": "primary", "optional": false, "type": "string" },
                                         {
                                           "name": "secondary",
@@ -8844,7 +8846,6 @@
                                   "type": {
                                     "array": {
                                       "properties": [
-                                        { "name": "name", "optional": false, "type": "string" },
                                         { "name": "primary", "optional": false, "type": "string" },
                                         {
                                           "name": "secondary",
@@ -8991,7 +8992,6 @@
                     "type": {
                       "array": {
                         "properties": [
-                          { "name": "name", "optional": false, "type": "string" },
                           { "name": "primary", "optional": false, "type": "string" },
                           {
                             "name": "secondary",

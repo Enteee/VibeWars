@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_MUSIC_PREFERENCE } from "../audio/music-preference.js";
+import { t } from "../i18n/index.js";
 import { chooseMode, jukeboxRows, pinTrack } from "./jukebox.js";
 
 const tracks = [
@@ -25,8 +26,8 @@ describe("the jukebox", () => {
       {
         id: "first-light",
         title: "First Light",
-        moods: "atmospheric, mysterious",
-        bpm: "84 bpm",
+        moods: `${t("mood.atmospheric")}, ${t("mood.mysterious")}`,
+        bpm: t("jukebox.bpm", { bpm: "84" }),
         pinned: false,
         previewing: true,
         edited: false,
@@ -34,8 +35,8 @@ describe("the jukebox", () => {
       {
         id: "last-stand",
         title: "Last Stand",
-        moods: "epic",
-        bpm: "140 bpm",
+        moods: t("mood.epic"),
+        bpm: t("jukebox.bpm", { bpm: "140" }),
         pinned: true,
         previewing: false,
         edited: true,

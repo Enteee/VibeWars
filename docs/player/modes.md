@@ -252,7 +252,7 @@ the party sees it locked. It starts at the size the leader last picked
 in Team Arena, 4v4 at first. A party never picks a size smaller than its players,
 and a party with as many players as its size takes nobody more ("Party
 is full"). Two parties only ever meet at the same size, and the queue
-line on top of the mode's screen names it: "Team Arena 2v2 — searching…". In a Hosted Game the host sets
+icon's window in the top bar names it: "Team Arena 2v2". In a Hosted Game the host sets
 the team size with its arrows, 1v1 to 8v8, before the Team Lobby,
 and both sides play exactly that many; the Team Lobby shows no Team size. A guest sees the host's, locked. The host's map list
 shows only maps made for that size, and a size the map does not suit
@@ -266,6 +266,8 @@ A queued party ([Find a match](getting-started.md#host-or-join-a-match)
 on Team Arena, Heroes' Ascent or GvG) gets a Team Lobby of its own side
 only, as big as the mode's team (Team Arena's picked size, 8 for the others)
 however many are in the party; bots play the seats nobody claims.
+While it is queued you may browse the other modes: the party keeps its
+mode and size until it leaves the queue.
 Each stage lasts 60 seconds and ends early once everyone in the Team
 Lobby is ready.
 
@@ -316,9 +318,11 @@ Temples' place), Scarred Earth (Capture Points, in Forgotten Shrines'),
 The Courtyard (King of the Hill), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 4 · Scarred Earth`.
 You only ever meet a team at the same round, and you wait for one as
-long as it takes: no bots fill in. Win, and your party ascends to the
-next map on its own after 20 seconds; win in the Hall, and you stay to
-defend it. Lose, or leave a match before it ends, and your next Ascent
+long as it takes: no bots fill in. A round on a map made for three
+teams waits for three; two teams that have waited 30 seconds for a third
+play each other instead, and so do two whose third never shows up in the
+lobby. Win, and your party ascends to the next map on its own after 20
+seconds; win in the Hall, and you stay to defend it. Lose, or leave a match before it ends, and your next Ascent
 starts again at round 1; so does leaving the queue or the party. A match
 lost to its host leaving keeps your round.
 
@@ -340,9 +344,10 @@ Ascent lobby joined by code plays round 1's map.
 
 ## Three teams
 
-In a three-team match the third team is drawn yellow, beside the blue
-of your side and the red of the other. The scoreboard reads your team
-first, then the others in order, and the end-of-match tables put your
+In a three-team match the third team is drawn lemon-lime, beside the blue
+of your side and the red of the other, and carries a ◆ before its name tags,
+score rows and end-of-match table, so it is never told apart by colour alone.
+The scoreboard reads your team first, then the others in order, and the end-of-match tables put your
 team first, then the winner.
 
 ## Match records
@@ -368,3 +373,12 @@ see the teams, one tab each, the winner's first: the team card. **Clone** copies
 a finished match into your Team Builds, each player's build under
 their name, and opens it. A 1v1 side has no Clone: a Team Build is 2, 4
 or 8.
+
+Each row starts with its mode's icon, and the icon and the row's left
+edge are in the mode's colour: orange Random, blue Team, gold Ascent,
+violet GvG, green Hosted. Above the list, chips filter it by **Kind**
+(Random, Team, Ascent, GvG, Hosted) and **Size** (1v1, 2v2, 4v4, 8v8):
+press any number, and a match shows if it fits one pressed kind and one
+pressed size; a group with none pressed lets all through. Size is the
+largest team, bots included, so a 3v2 Hosted Game fits no size. The
+chips stay as you left them until the page reloads.

@@ -1,11 +1,9 @@
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import {
   PLAY_BOTS_AFTER_MS,
-  MATCH_RUNNING_NOTICE,
-  READY_JOIN_A_TEAM,
-  READY_MATCH_STARTED,
   hostMaps,
   inviteUrl,
   lobbyControls,
@@ -18,7 +16,7 @@ import {
   type LobbyRelay,
 } from "./lobby-screen.js";
 import { MAX_RELAYED_PER_HOLDER } from "../net/transport/relay-offer.js";
-import { SHARED_RELAY_EXPLANATION } from "./relay-section.js";
+import { sharedRelayExplanation } from "./relay-section.js";
 
 function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
   return {
@@ -67,10 +65,10 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
 describe("lobbyControls", () => {
   it("says the match is running and locks everything but leave", () => {
     expect(lobbyControls(snapshot("in-match"))).toEqual({
-      running: MATCH_RUNNING_NOTICE,
+      running: t("lobby.matchRunning"),
       mapDisabled: true,
       teamsDisabled: true,
-      readyProblem: READY_MATCH_STARTED,
+      readyProblem: t("lobby.readyMatchStarted"),
       startDisabled: true,
       canWatch: false,
     });
@@ -81,7 +79,7 @@ describe("lobbyControls", () => {
       running: undefined,
       mapDisabled: true,
       teamsDisabled: true,
-      readyProblem: READY_MATCH_STARTED,
+      readyProblem: t("lobby.readyMatchStarted"),
       startDisabled: true,
       canWatch: false,
     });
@@ -127,13 +125,13 @@ describe("lobbyControls", () => {
         },
       ],
     });
-    expect(controls.readyProblem).toBe(READY_JOIN_A_TEAM);
+    expect(controls.readyProblem).toBe(t("lobby.readyJoinATeam"));
     expect(controls.startDisabled).toBe(true);
   });
 
   it("asks one not in the lobby yet to join a team first (#2124)", () => {
     const shown = { ...snapshot("waiting"), selfSessionId: "stranger" };
-    expect(lobbyControls(shown).readyProblem).toBe(READY_JOIN_A_TEAM);
+    expect(lobbyControls(shown).readyProblem).toBe(t("lobby.readyJoinATeam"));
   });
 
   it("offers Watch to a member on no team, only while the match runs (#480)", () => {
@@ -193,7 +191,6 @@ describe("mapLabel (#444)", () => {
     expect(
       mapLabel({
         id: "arena-long-hall",
-        name: "Long Hall",
         size: "small",
         mode: "annihilation",
         teamSizes: [4],
@@ -206,26 +203,23 @@ describe("hostMaps (#1453)", () => {
   const maps = [
     {
       id: "arena-crossroads",
-      name: "Crossroads",
       size: "small",
       mode: "annihilation",
       teamSizes: [4],
     },
     {
       id: "guild-hall-isle",
-      name: "Guild Hall Isle",
       size: "large",
       mode: "guild-battle",
       teamSizes: [4],
     },
     {
       id: "broken-tower",
-      name: "Broken Tower",
       size: "large",
       mode: "relic-run",
       teamSizes: [4],
     },
-    { id: "ember-pits", name: "Ember Pits", size: "small", mode: "kill-count", teamSizes: [4] },
+    { id: "ember-pits", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
 
   it("offers every map without a filter", () => {
@@ -245,7 +239,6 @@ describe("modeLine (#476)", () => {
   it("says what the map's mode is, in a line", () => {
     const map = {
       id: "ember-pits",
-      name: "Ember Pits",
       size: "small",
       teamSizes: [4],
     } as const;
@@ -519,12 +512,11 @@ describe("lobbyPanel: the map (#1994)", () => {
   const maps = [
     {
       id: "arena-crossroads",
-      name: "Crossroads",
       size: "small",
       mode: "annihilation",
       teamSizes: [2, 4],
     },
-    { id: "ember-pits", name: "Ember Pits", size: "small", mode: "kill-count", teamSizes: [4] },
+    { id: "ember-pits", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
   /** The map part of the host's bar in `mode`, on Crossroads. */
   const mapPart = (mode: LobbySnapshot["mode"]): FakeElement => {
@@ -580,7 +572,7 @@ describe("lobbyPanel: the map (#1994)", () => {
     };
     const started = readyOf(snapshot("starting"));
     expect(started.disabled).toBe(true);
-    expect(started.title).toBe(READY_MATCH_STARTED);
+    expect(started.title).toBe(t("lobby.readyMatchStarted"));
     const open = readyOf(snapshot("waiting"));
     expect(open.disabled).toBe(false);
     expect(open.title).toBe("");
@@ -605,7 +597,6 @@ describe("lobbyPanel: the map (#1994)", () => {
     const ascent = [
       {
         id: "broken-tower",
-        name: "Broken Tower",
         size: "medium",
         mode: "relic-run",
         teamSizes: [4, 8],
@@ -712,9 +703,9 @@ describe("lobbyPanel: shared relays (#2531)", () => {
 
 describe("Options: what sharing a relay means (#2531)", () => {
   it("says any lobby you are in, a 1 hour login each, the per-lobby cap and the hardening", () => {
-    expect(SHARED_RELAY_EXPLANATION).toContain("any lobby you are in, not only ones you host");
-    expect(SHARED_RELAY_EXPLANATION).toContain("their own login, good for 1 hour");
-    expect(SHARED_RELAY_EXPLANATION).toContain("at most 8 players a lobby");
-    expect(SHARED_RELAY_EXPLANATION).toContain("denied-peer-ip");
+    expect(sharedRelayExplanation()).toContain("any lobby you are in, not only ones you host");
+    expect(sharedRelayExplanation()).toContain("their own login, good for 1 hour");
+    expect(sharedRelayExplanation()).toContain("at most 8 players a lobby");
+    expect(sharedRelayExplanation()).toContain("denied-peer-ip");
   });
 });
