@@ -283,9 +283,11 @@ describe("queueMapPool (#1766)", () => {
     expect(queueMapPool("random-arena-2v2", null)).toEqual(randomArenaMapPool("random-arena-2v2"));
   });
 
-  it("draws a Heroes' Ascent's match from its round's one map (#1996)", () => {
+  it("draws a Heroes' Ascent's match from its round's one map, the Hall's from its three (#1996, #2700)", () => {
     expect(ASCENT_PROGRESSION.map((_, round) => queueMapPool("heroes-ascent", round))).toEqual(
-      ASCENT_PROGRESSION.map((id) => [id]),
+      ASCENT_PROGRESSION.map((id) =>
+        HALL_OF_HEROES_MAPS.includes(id) ? HALL_OF_HEROES_MAPS : [id],
+      ),
     );
     expect(() => queueMapPool("heroes-ascent", null)).toThrow();
     expect(() => queueMapPool("heroes-ascent", ASCENT_ROUNDS)).toThrow();
@@ -346,6 +348,7 @@ describe("hostMap (#476)", () => {
           "broken-tower",
           "the-courtyard",
           "hall-of-heroes-king",
+          "hall-of-heroes-relic",
           "hall-of-heroes-capture",
           "scarred-earth",
         ].includes(candidate.id),
@@ -430,7 +433,9 @@ describe("mapMode (#1200)", () => {
 
 describe("a Hall match of two teams (#2700)", () => {
   it("goes without the third base: its spawns, ghost, relic, shrine and point", () => {
-    expect(hostMap("hall-of-heroes-king", 2)?.ghostField?.spawns.map((s) => s.team)).toEqual([0, 1]);
+    expect(hostMap("hall-of-heroes-king", 2)?.ghostField?.spawns.map((s) => s.team)).toEqual([
+      0, 1,
+    ]);
     expect(hostMap("hall-of-heroes-relic", 2)?.relicField?.spawns).toHaveLength(2);
     expect(hostMap("hall-of-heroes-capture", 2)?.capturePoints).toHaveLength(3);
     expect(hostMap("hall-of-heroes-capture", 2)?.shrines).toHaveLength(2);
