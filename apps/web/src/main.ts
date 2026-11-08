@@ -2421,6 +2421,7 @@ async function main(): Promise<void> {
     joined.onShareThrottled(() => {
       if (lobby === joined) {
         toast(t("music.shareThrottled"));
+        sharedTracks.hostThrottled();
       }
     });
     // A lobby out of sight says nothing to the chat.
