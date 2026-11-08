@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  untilWallClock,
   boardChanges,
   gaveUpText,
   hasWaking,
@@ -57,6 +58,35 @@ function scratch() {
   dirs.push(dir);
   return dir;
 }
+
+describe("untilWallClock (#2794)", () => {
+  it("ends at the wall-clock time when the clock jumps forward", async () => {
+    let clock = 0;
+    const waits = /** @type {number[]} */ ([]);
+    await untilWallClock(3600, {
+      now: () => clock,
+      pause: (ms) => {
+        waits.push(ms);
+        // The first wait spans a hibernate; timers never saw the hour pass.
+        clock = 3_600_000;
+        return Promise.resolve();
+      },
+    });
+    expect(waits).toEqual([30_000]);
+  });
+
+  it("does not wait for a time already past", async () => {
+    let waited = false;
+    await untilWallClock(1, {
+      now: () => 5000,
+      pause: () => {
+        waited = true;
+        return Promise.resolve();
+      },
+    });
+    expect(waited).toBe(false);
+  });
+});
 
 describe("nextPause", () => {
   it("doubles while turns stay short, up to the cap", () => {

@@ -41,6 +41,7 @@ import { COLUMNS, columnsPlan } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { realRunnerDiskHost, setUpRunnerDisk } from "./runner-disk.mjs";
 import { diskCapRefusal, diskCapShared, runnerScratchDir } from "./runner-supervisor.mjs";
+import { askHibernate, realHibernateHost } from "./hub-sleep-init.mjs";
 import { askMaxRunners } from "./runners-state.mjs";
 
 /**
@@ -521,6 +522,29 @@ await setUpRunnerDisk({
   ),
 });
 
+/**
+ * Whether this machine may hibernate through usage limits (#2794), asked
+ * once like the caps above and read by hubd from here.
+ */
+const hibernate = await askHibernate({
+  previous,
+  host: realHibernateHost(
+    process,
+    // One readline per question, as above: sudo needs the terminal.
+    async (question) => {
+      const line = createInterface({ input: process.stdin, output: process.stdout });
+      try {
+        return await line.question(question);
+      } finally {
+        line.close();
+      }
+    },
+    (line) => {
+      console.log(line);
+    },
+  ),
+});
+
 const config = {
   acting,
   repo: REPO,
@@ -539,6 +563,7 @@ const config = {
   expectedChecks: EXPECTED_CHECKS,
   maxAgents,
   maxRunners,
+  hibernate,
 };
 fs.writeFileSync(path.join(ROOT, "company.json"), `${JSON.stringify(config, null, 2)}\n`);
 say("company.json", path.join(ROOT, "company.json"));

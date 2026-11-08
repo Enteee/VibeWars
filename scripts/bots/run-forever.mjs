@@ -25,6 +25,7 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { nextDelay } from "./hub-health.mjs";
+import { exitedAfterWake, wallClockJumped } from "./hub-sleep.mjs";
 import { releaseLock, takeLock } from "./instance-lock.mjs";
 import { SYSTEM, visible } from "./protocol.mjs";
 import { appendLog, rotateIfLarge } from "./runner-logs.mjs";
@@ -94,6 +95,17 @@ for (const signal of /** @type {const} */ (["SIGTERM", "SIGINT", "SIGHUP"])) {
   });
 }
 
+/** The last wake from hibernation seen (#2794): the wall clock jumps, timers do not. */
+const clock = { last: Date.now(), /** @type {number | null} */ wokeAt: null };
+function lookAtClock() {
+  const now = Date.now();
+  if (wallClockJumped(clock.last, now)) {
+    clock.wokeAt = now;
+  }
+  clock.last = now;
+}
+setInterval(lookAtClock, 10_000).unref();
+
 /** @type {{ startedAt: number, exitedAt: number }[]} */
 let runs = [];
 let alerted = false;
@@ -125,8 +137,13 @@ for (;;) {
     process.exit(0);
   }
 
+  lookAtClock();
   const exitedAt = Date.now();
-  runs = [...runs, { startedAt, exitedAt }].filter((run) => exitedAt - run.exitedAt < 60 * 60_000);
+  // A connection a wake dropped is no crash, so it is not counted (#2794).
+  runs = [
+    ...runs,
+    ...(exitedAfterWake(clock.wokeAt, exitedAt) ? [] : [{ startedAt, exitedAt }]),
+  ].filter((run) => exitedAt - run.exitedAt < 60 * 60_000);
   fs.writeFileSync(RESTARTS, JSON.stringify(runs.map((run) => run.exitedAt)));
   const { delayMs, crashLooping } = nextDelay(runs, exitedAt);
   const after = Math.round((exitedAt - startedAt) / 1000);

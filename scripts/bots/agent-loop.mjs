@@ -14,6 +14,11 @@
  *   agent-loop.mjs gave-up <employee>
  *       tell the company the loop has stopped for good; the manager's keeps
  *       trying (#384), and the message says so
+ *   agent-loop.mjs until <unix-seconds>
+ *       wait for a wall-clock time, counting time hibernated (#2794)
+ *   agent-loop.mjs limit-pause <state-dir> <seconds>
+ *       write <state>/limit-pause for hubd and print when the pause ends,
+ *       or nothing if the reset is unknown
  *   agent-loop.mjs limited <employee> <state-dir> <previous>
  *       print how long to wait out Claude's usage limit (`limitPause`),
  *       and tell the company, once for all roles (#308)
@@ -62,6 +67,8 @@ export const SHORT_TURN = 60;
 
 /** The shortest wait for a usage limit, and the margin past its reset. */
 export const LIMIT_MARGIN = 60;
+/** How long a wall-clock wait goes before looking at the clock again, in ms. */
+const UNTIL_STEP_MS = 30_000;
 
 /** The longest wait for a usage limit with a known reset. */
 export const LIMIT_MAX = 6 * 60 * 60;
@@ -120,6 +127,21 @@ export function limitPause({ until, now, previous }) {
     return Math.min(LIMIT_MAX, Math.max(LIMIT_MARGIN, until - now + LIMIT_MARGIN));
   }
   return Math.min(LIMIT_UNKNOWN_MAX, Math.max(LIMIT_UNKNOWN_MIN, previous * 2));
+}
+
+/**
+ * Wait for a wall-clock time (#2794). A Node timer runs on the monotonic
+ * clock, which does not count time hibernated, so the wait is cut in
+ * pieces and the wall clock asked after each.
+ *
+ * @param {number} until unix seconds
+ * @param {{ now?: () => number, pause?: (ms: number) => Promise<unknown> }} [clockHooks]
+ * @returns {Promise<void>}
+ */
+export async function untilWallClock(until, { now = Date.now, pause = sleep } = {}) {
+  for (let left = until * 1000 - now(); left > 0; left = until * 1000 - now()) {
+    await pause(Math.min(UNTIL_STEP_MS, left));
+  }
 }
 
 /**
@@ -602,6 +624,21 @@ async function main() {
     await sleep(seconds(args[0]) * 1000);
     return;
   }
+  if (command === "until") {
+    await untilWallClock(seconds(args[0]));
+    return;
+  }
+  if (command === "limit-pause") {
+    const state = args[0];
+    if (state === undefined || state === "") {
+      console.error("agent-loop: limit-pause needs the employee's state directory");
+      process.exit(2);
+    }
+    const until = limitedUntil(state);
+    fs.writeFileSync(path.join(state, "limit-pause"), until === null ? "" : `${String(until)}\n`);
+    console.log(until === null ? "" : String(Math.floor(Date.now() / 1000) + seconds(args[1])));
+    return;
+  }
   if (command === "gave-up") {
     const employee = employeeName(args[0]);
     tellCompany(env("VIBEWARS_BOT_ROOT"), `${employee}-stopped`, gaveUpText(employee));
@@ -645,7 +682,7 @@ async function main() {
   console.error(
     "usage: agent-loop.mjs pause <previous> <ran> <failed> | wait <employee> <seconds> | " +
       "idle <employee> | " +
-      "sleep <seconds> | disk | gave-up <employee> | " +
+      "sleep <seconds> | until <unix-seconds> | limit-pause <state-dir> <seconds> | disk | gave-up <employee> | " +
       "limited <employee> <state-dir> <previous> | resumed <employee>",
   );
   process.exit(2);

@@ -13,7 +13,7 @@
  *
  * See docs/adr/0015-agent-company.md.
  */
-import { execFile, spawn } from "node:child_process";
+import { execFile, spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -161,6 +161,16 @@ import {
   unreadCiRunJobs,
 } from "./kpi.mjs";
 import { idleWaitsDir, parseWaits, WAITS_FILE } from "./waits.mjs";
+import {
+  hibernateSetting,
+  parseLimitPause,
+  parseSleepCancel,
+  parseSleepPlan,
+  sleepDecision,
+  sleepInhibitors,
+  wallClockJumped,
+} from "./hub-sleep.mjs";
+import { SLEEP_REQUEST } from "./hub-sleep-units.mjs";
 import { loadLines } from "./company-load.mjs";
 import { peekRows } from "./peek.mjs";
 import {
@@ -286,6 +296,8 @@ const REBOOT = path.join(ROOT, "reboot.json");
 const PROPOSAL = path.join(ROOT, "reboot-proposal.json");
 /** The operator's decision on it, written only by the sidecar, from a checked tap. */
 const DECISION = path.join(ROOT, "link", "reboot-decision.json");
+const SLEEP_PLAN = path.join(ROOT, "sleep-plan.json");
+const SLEEP_CANCEL = path.join(ROOT, "link", "sleep-cancel.json");
 /** Who is employed (#62): hubd is its only writer. */
 const STAFF = path.join(ROOT, "staff.json");
 /** The heartbeat, `{ ts, inFlight }`: see `heartbeat`. */
@@ -337,7 +349,7 @@ const REPO_SCOPED = new Set(["issue", "pr", "label", "run", "workflow", "release
  *   repo: string, owner: string, project: number, projectId: string, expectedChecks: string[],
  *   columns: string[], acting: Record<string, string[] | undefined>,
  *   board: import("./hub-board.mjs").BoardIds | null, maxAgents: number | null,
- *   maxRunners: number | null,
+ *   maxRunners: number | null, hibernate: { wakeMarginMinutes: number } | null,
  * }}
  */
 function company() {
@@ -364,6 +376,8 @@ function company() {
     maxAgents: typeof cfg.maxAgents === "number" ? cfg.maxAgents : null,
     // Required for `company runners` (#2764), which refuses without it.
     maxRunners: maxRunners(raw),
+    // Off unless the operator said yes in claude-llc-init (#2794).
+    hibernate: hibernateSetting(raw),
   };
 }
 
@@ -1830,6 +1844,147 @@ function tellSidecar(name, notice) {
     path.join(outbox, `${String(Date.now())}-sidecar-${name}.json`),
     JSON.stringify(notice),
   );
+}
+
+/* Hibernating the host while every agent waits on the usage limit (#2794). */
+
+/** The reset the last sleep was carried out for: not planned again if it failed. */
+let sleptFor = /** @type {number | null} */ (null);
+/** A sleep was carried out and its wake is yet to be seen. */
+let awaitingWake = false;
+let lastWallClock = Date.now();
+
+/**
+ * @param {string} file
+ * @returns {unknown} the parsed file, `null` if it is missing or not JSON
+ */
+function readJsonFile(file) {
+  try {
+    return /** @type {unknown} */ (JSON.parse(fs.readFileSync(file, "utf8")));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Every employee's wall-clock reset, from the marker its loop holds for the
+ * length of a limit pause; `null` for one with no marker or no known reset.
+ *
+ * @returns {{ employee: string, until: number | null }[]}
+ */
+function limitPauses() {
+  return [...staffed.keys()].map((employee) => {
+    try {
+      const text = fs.readFileSync(path.join(ROOT, "agents", employee, "limit-pause"), "utf8");
+      return { employee, until: parseLimitPause(text) };
+    } catch {
+      return { employee, until: null };
+    }
+  });
+}
+
+/**
+ * Is a CI runner on a job? A company with runners and no status from their
+ * supervisor counts as yes: not knowing is no reason to pull the plug.
+ *
+ * @param {number | null} max `company.json`'s `maxRunners`
+ * @returns {boolean}
+ */
+function runnersBusy(max) {
+  const status = readRunnersStatus(RUNNERS_STATE);
+  return status === null ? (max ?? 0) > 0 : status.runners.some((runner) => runner.busy);
+}
+
+/** @returns {number} held sleep inhibitors; one when they cannot be listed */
+function heldInhibitors() {
+  const listed = spawnSync(
+    "systemd-inhibit",
+    ["--list", "--mode=block", "--no-legend", "--no-pager"],
+    { encoding: "utf8", timeout: 5_000 },
+  );
+  return listed.status === 0 ? sleepInhibitors(listed.stdout) : 1;
+}
+
+/**
+ * Decide about hibernating, and act on it: announce a plan, drop one that
+ * no longer holds, or hand the wake time to the root oneshot.
+ *
+ * @returns {void}
+ */
+function considerSleep() {
+  try {
+    const cfg = company();
+    const plan = parseSleepPlan(readJsonFile(SLEEP_PLAN));
+    if (cfg.hibernate === null && plan === null) {
+      return;
+    }
+    const now = Math.floor(Date.now() / 1000);
+    const cancel = parseSleepCancel(readJsonFile(SLEEP_CANCEL));
+    if (cancel !== null && cancel.reset < now) {
+      fs.rmSync(SLEEP_CANCEL, { force: true });
+    }
+    const pauses = limitPauses();
+    const decision = sleepDecision({
+      now,
+      hibernate: cfg.hibernate,
+      pauses,
+      runnersBusy: runnersBusy(cfg.maxRunners),
+      rebootPending: readReboot() !== null || readProposal() !== null,
+      inhibitors: pauses.every((pause) => pause.until !== null) ? heldInhibitors() : 0,
+      cancel: cancel ?? (sleptFor === null ? null : { reset: sleptFor }),
+      plan,
+    });
+    if (decision.kind === "plan") {
+      const id = randomBytes(16).toString("hex");
+      const { sleepAt, wakeAt, reset } = decision;
+      writeAtomic(SLEEP_PLAN, JSON.stringify({ id, sleepAt, wakeAt, reset }));
+      tellSidecar("sleep-plan", { sleepPlan: id });
+    } else if (plan !== null && decision.kind === "abandon") {
+      closeSleepPlan(
+        plan,
+        decision.reason === "cancelled" ? "cancelled" : "abandoned",
+        decision.reason,
+      );
+    } else if (plan !== null && decision.kind === "sleep") {
+      try {
+        writeAtomic(SLEEP_REQUEST, `${String(decision.wakeAt)}\n`);
+      } catch (error) {
+        sleptFor = plan.reset;
+        const why = error instanceof Error ? error.message : "failed";
+        closeSleepPlan(plan, "abandoned", `could not ask for it (${why})`);
+        return;
+      }
+      sleptFor = plan.reset;
+      awaitingWake = true;
+      closeSleepPlan(plan, "slept", "");
+    }
+  } catch (error) {
+    console.error(`hubd: sleep: ${error instanceof Error ? error.message : "failed"}`);
+  }
+}
+
+/**
+ * @param {import("./hub-sleep.mjs").SleepPlan} plan
+ * @param {"cancelled" | "abandoned" | "slept"} outcome
+ * @param {string} note
+ * @returns {void}
+ */
+function closeSleepPlan(plan, outcome, note) {
+  fs.rmSync(SLEEP_PLAN, { force: true });
+  tellSidecar("sleep-closed", { sleepClosed: plan.id, outcome, note });
+}
+
+/** Say once that the host is back, after a sleep this hubd carried out. */
+function noticeWake() {
+  const now = Date.now();
+  if (awaitingWake && wallClockJumped(lastWallClock, now) && sleptFor !== null) {
+    awaitingWake = false;
+    tellCompany(
+      "host-back",
+      `Host is back from hibernation; agents resume at ${clock(sleptFor * 1000)}.`,
+    );
+  }
+  lastWallClock = now;
 }
 
 /**
@@ -5230,6 +5385,7 @@ async function main() {
         console.error(`hubd: board: ${error instanceof Error ? error.message : "failed"}`);
       }
     }
+    noticeWake();
     sendNewIssues();
     maybePollWatches();
     maybePollRelease();
@@ -5241,6 +5397,7 @@ async function main() {
       lastNudgeCheck = Date.now();
       sendNudges();
       relayRunnersAlert();
+      considerSleep();
     }
     if (Date.now() - lastKpis >= KPI_EVERY_MS) {
       lastKpis = Date.now();
