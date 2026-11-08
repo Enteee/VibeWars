@@ -15,9 +15,10 @@ import type { ParticipantSpec } from "./simulation.js";
  * it claims it by itself, through the simulation's cast path, so an
  * interrupt or a knockdown cuts the claim short. Dead, it rises at its
  * `ghost-spawn`, staying put (#2839): on a map with priests at the next
- * priest wave, only while its team's priest lives; where the objective
- * needs it, King of the Hill, Relic Run and Capture Points,
- * `PRIEST_WAVE_SECONDS` after it died; anywhere else, never.
+ * priest wave, only while its team's priest lives; in Capture Points at
+ * the next wave of its base's shrine (#2845); where the objective needs
+ * it, King of the Hill and Relic Run, `PRIEST_WAVE_SECONDS` after it
+ * died; anywhere else, never.
  */
 
 /** Where a team's Ghostly Hero starts and rises (#1377), from its map's `ghost-spawn`. */

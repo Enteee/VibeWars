@@ -10,6 +10,7 @@ import {
   type ActivationRejection,
   type ChainRole,
   PRIEST_WAVE_SECONDS,
+  CAPTURE_WAVE_SECONDS,
   STAND_HOLD_SECONDS,
   STATUS_DEFINITIONS,
   type MatchMode,
@@ -1138,8 +1139,9 @@ export function scoreboardParts(
       return [living, clock];
     case "kill-count":
     case "relic-run":
-    case "capture-points":
       return [points, clock];
+    case "capture-points":
+      return [points, waveCountdown(elapsedSeconds, CAPTURE_WAVE_SECONDS), clock];
     case "king-of-the-hill":
       return [points, altarPart(match.altarHolder, match.altarHeldSeconds), clock];
     case "guild-battle": {
@@ -1169,7 +1171,7 @@ export function scoreboardParts(
       return [
         ...lords,
         ...(stand === undefined ? [] : [stand]),
-        waveCountdown(elapsedSeconds),
+        waveCountdown(elapsedSeconds, PRIEST_WAVE_SECONDS),
         ...aggression,
         clock,
       ];
@@ -1198,12 +1200,12 @@ function raisePart(
   if (!teams.some((team) => priestLives(players, team))) {
     return { kind: "raise", text: t("hud.raise", { clock: "—" }), soon: false };
   }
-  return waveCountdown(elapsedSeconds);
+  return waveCountdown(elapsedSeconds, PRIEST_WAVE_SECONDS);
 }
 
-/** The countdown to the next wave, a priests' (#1199) or a Guild Battle's shrines' (#1226). */
-function waveCountdown(elapsedSeconds: number): ScoreboardPart {
-  const left = Math.ceil(PRIEST_WAVE_SECONDS - (elapsedSeconds % PRIEST_WAVE_SECONDS));
+/** The countdown to the next wave: a priests' (#1199), or the shrines' of a Guild Battle (#1226) or Capture Points (#2845). */
+function waveCountdown(elapsedSeconds: number, intervalSeconds: number): ScoreboardPart {
+  const left = Math.ceil(intervalSeconds - (elapsedSeconds % intervalSeconds));
   return {
     kind: "raise",
     text: t("hud.raise", { clock: formatClock(left) }),
