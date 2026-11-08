@@ -9,6 +9,7 @@ import {
   inlineConfirm,
   keepInside,
   overlayClose,
+  playCard,
   screenBar,
   selectableRow,
   setToastHost,
@@ -129,6 +130,7 @@ class FakeNode {
   hidden = false;
   type = "";
   title = "";
+  dir = "";
   readonly attributes = new Map<string, string>();
   /** The page itself: what is below it is connected (#578). */
   isPage = false;
@@ -777,5 +779,21 @@ describe("keepInside (#2028)", () => {
     const shown = panel(8, 448);
     keepInside(shown);
     expect(shown.style.maxWidth).toBe("1084px");
+  });
+});
+
+describe("playCard (#2655)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement, body: new FakeNode() });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("lets a typed name read in its own direction, so a right-to-left page cuts its end", () => {
+    const card = playCard({ name: "Elaine Wastrel", content: [] }) as unknown as FakeNode;
+    const name = card.children[0]?.children[0]?.children[0];
+    expect(name?.className).toBe("play-card-name");
+    expect(name?.dir).toBe("auto");
   });
 });

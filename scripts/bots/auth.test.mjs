@@ -33,6 +33,9 @@ function telegramAnswer(
   return { ok: true, json: () => Promise.resolve({ ok: true, result }) };
 }
 
+/** @type {import("./runners-state.mjs").RunnerCap} runners off */
+const OFF = { ok: true, max: 0 };
+
 /** @type {Identity} */
 const NONE = { state: "not set up", who: null, expiry: null, scopes: null };
 
@@ -86,6 +89,7 @@ afterEach(() => {
  * @param {boolean} [options.tty]
  * @param {{ forum: boolean, topics: boolean, chats: string[], title?: string }} [options.group] what telegram says of the chats the bot sees
  * @param {string[]} [options.answers] prompt answers after the token
+ * @param {import("./runners-state.mjs").RunnerCap} [options.cap]
  */
 function world({
   tables,
@@ -96,6 +100,7 @@ function world({
   tty = true,
   group = { forum: true, topics: true, chats: [CHAT] },
   answers = ["", "y"],
+  cap = OFF,
 }) {
   const root = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "auth-")), "creds");
   homes.push(path.dirname(root));
@@ -114,6 +119,7 @@ function world({
   /** @type {Deps} */
   const deps = {
     root,
+    cap,
     tty,
     env: { PATH: "/bin", HOME: "/home/x", GH_TOKEN: TOKEN, ANTHROPIC_API_KEY: TOKEN },
     spawn: (command, args, env, input) => {
@@ -181,6 +187,7 @@ describe("plan", () => {
         "telegram group": ok("VW"),
       }),
       null,
+      OFF,
     );
     expect(steps.map((s) => [s.step, s.run])).toEqual([
       ["claude", false],
@@ -191,7 +198,7 @@ describe("plan", () => {
   });
 
   it("runs the telegram step while the bot is ok but its group is not", () => {
-    const steps = plan(rows({ telegram: ok("@vw") }), "telegram");
+    const steps = plan(rows({ telegram: ok("@vw") }), "telegram", OFF);
     expect(steps.map((s) => [s.step, s.run])).toEqual([["telegram", true]]);
   });
 
@@ -201,19 +208,53 @@ describe("plan", () => {
       { claude: true, "github api": null },
     );
     expect(
-      plan(table, null)
+      plan(table, null, OFF)
         .filter((s) => s.run)
         .map((s) => s.step),
     ).toEqual(["push", "telegram"]);
   });
 
   it("plans only the step named", () => {
-    expect(plan(rows({}), "push").map((s) => s.step)).toEqual(["push"]);
+    expect(plan(rows({}), "push", OFF).map((s) => s.step)).toEqual(["push"]);
   });
 
   it("calls a push key greeted as someone else a mismatch", () => {
-    const [push] = plan(rows({ "github api": ok("company"), "github push": ok("me") }), "push");
+    const [push] = plan(
+      rows({ "github api": ok("company"), "github push": ok("me") }),
+      "push",
+      OFF,
+    );
     expect(push).toMatchObject({ run: false, mismatch: "me" });
+  });
+
+  it("plans the runners step after github only when the cap is above 0 (#2765)", () => {
+    const runnersRow = (/** @type {Identity} */ identity) => ({
+      name: "github runners",
+      identity,
+      stored: "/c/runners-gh",
+      operators: null,
+    });
+    const unset = [...rows({}), runnersRow(NONE)];
+    expect(plan(unset, null, { ok: true, max: 4 }).map((s) => [s.step, s.run])).toEqual([
+      ["claude", true],
+      ["github", true],
+      ["runners", true],
+      ["push", true],
+      ["telegram", true],
+    ]);
+    expect(plan(unset, null, OFF).map((s) => s.step)).not.toContain("runners");
+    expect(
+      plan(unset, null, { ok: false, reason: "company.json refused: run claude-llc-init" }).map(
+        (s) => s.step,
+      ),
+    ).not.toContain("runners");
+    expect(plan(unset, "runners", OFF).map((s) => [s.step, s.run])).toEqual([["runners", true]]);
+
+    const signedIn = [...rows({}), runnersRow(ok("co"))];
+    const [, , runners] = plan(signedIn, null, { ok: true, max: 4 });
+    expect(runners).toMatchObject({ step: "runners", run: false });
+    const expired = [...rows({}), runnersRow({ ...NONE, state: "error", note: "expired" })];
+    expect(plan(expired, null, { ok: true, max: 4 })[2]).toMatchObject({ run: true });
   });
 });
 
@@ -343,6 +384,37 @@ describe("auth", () => {
     expect(gh?.env.GH_CONFIG_DIR).toBe(path.join(w.root, "runners-gh"));
     expect(gh?.env.GH_TOKEN).toBeUndefined();
     expect(w.printed.join("\n")).not.toContain(TOKEN);
+  });
+
+  it("signs the runners' token in unnamed when the cap is above 0, and not again once ok (#2765)", async () => {
+    const signed = rows({
+      claude: ok("c"),
+      "github api": ok("co"),
+      "github push": ok("co"),
+      telegram: ok("@vw"),
+      "telegram group": ok("VW"),
+    });
+    const runnersRow = (/** @type {Identity} */ identity) => ({
+      name: "github runners",
+      identity,
+      stored: "/c/runners-gh",
+      operators: null,
+    });
+    const w = world({
+      tables: [
+        [...signed, runnersRow(NONE)],
+        [...signed, runnersRow(ok("co"))],
+      ],
+      checks: { runners: [ok("co")] },
+      answers: [TOKEN],
+      cap: { ok: true, max: 4 },
+    });
+    expect(await auth([], w.deps)).toBe(0);
+    expect(w.spawned.map((s) => s.env.GH_CONFIG_DIR)).toEqual([path.join(w.root, "runners-gh")]);
+
+    const again = world({ tables: [[...signed, runnersRow(ok("co"))]], cap: { ok: true, max: 4 } });
+    expect(await auth([], again.deps)).toBe(0);
+    expect(again.spawned).toEqual([]);
   });
 
   it("writes no telegram token that getMe refuses", async () => {

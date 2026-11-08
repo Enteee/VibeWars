@@ -680,6 +680,7 @@ in
       claude-llc-doctor = {
         description = "Print the company's credentials: identity, expiry, scopes, whose";
         exec = ''
+          export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
           export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
           exec ${node} ${llcScripts}/doctor.mjs
         '';
