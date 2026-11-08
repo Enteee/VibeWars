@@ -645,6 +645,12 @@ describe("relic run maps (#1374)", () => {
 
 describe("capture points maps (#1378)", () => {
   const point = (x: number, y: number) => ({ kind: "capture-point", position: { x, y } });
+  const base = (team: number, x: number) => ({
+    kind: "resurrection-shrine",
+    team,
+    position: { x, y: 50 },
+  });
+  const bases = [base(0, 15), base(1, 85)];
   const captureMap = {
     ...validMap,
     mode: "capture-points",
@@ -653,13 +659,22 @@ describe("capture points maps (#1378)", () => {
       { team: 0, position: { x: 20, y: 50 } },
       { team: 1, position: { x: 80, y: 50 } },
     ],
-    objectives: [point(30, 30), point(50, 50), point(70, 70)],
+    objectives: [point(30, 30), point(50, 50), point(70, 70), ...bases],
   };
 
   it("accepts one to five capture points", () => {
-    expect(validateMapData(captureMap).objectives).toHaveLength(3);
-    expect(validateMapData({ ...captureMap, objectives: [point(50, 50)] }).objectives).toHaveLength(
-      1,
+    expect(validateMapData(captureMap).objectives).toHaveLength(5);
+    expect(
+      validateMapData({ ...captureMap, objectives: [point(50, 50), ...bases] }).objectives,
+    ).toHaveLength(3);
+  });
+
+  it("refuses a team with no base shrine (#2845)", () => {
+    expect(() =>
+      validateMapData({ ...captureMap, objectives: [point(50, 50), base(0, 15)] }),
+    ).toThrow(/team 1 has 0 resurrection shrines, not one/);
+    expect(() => validateMapData({ ...captureMap, objectives: [point(50, 50)] })).toThrow(
+      /team 0 has 0 resurrection shrines, not one/,
     );
   });
 

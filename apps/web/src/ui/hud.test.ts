@@ -1064,6 +1064,23 @@ describe("the Guild Battle scoreboard (#1226)", () => {
     ]);
   });
 
+  it("counts Capture Points' base wave down from a minute (#2845)", () => {
+    const wave = (elapsed: number) =>
+      scoreboardParts(players, 0, elapsed, 480, "capture-points", board(0, 0)).find(
+        (part) => part.kind === "raise",
+      );
+    expect(wave(0)).toEqual({
+      kind: "raise",
+      text: t("hud.raise", { clock: "1:00" }),
+      soon: false,
+    });
+    expect(wave(117)).toEqual({
+      kind: "raise",
+      text: t("hud.raise", { clock: "0:03" }),
+      soon: true,
+    });
+  });
+
   it("ticks the shrines' wave with no priest, pulsing its last seconds", () => {
     const parts = scoreboardParts(players, 0, 117, LIMIT, "guild-battle", held(undefined, 0));
     expect(parts).toContainEqual({
