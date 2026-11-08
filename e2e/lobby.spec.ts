@@ -811,11 +811,9 @@ test("a player leaves their team without leaving the lobby, and their Ready clea
 test("the host removes a guest with the (x), who cannot come back to that lobby (#2746)", async ({
   browser,
 }) => {
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
   try {
-    const host = await hostContext.newPage();
-    const guest = await guestContext.newPage();
     const invite = await hostLobby(host, "Host");
     await joinLobby(guest, "Guest", invite);
 
@@ -831,7 +829,6 @@ test("the host removes a guest with the (x), who cannot come back to that lobby 
     await expect(guest.getByText("The host removed you from the lobby.")).toBeVisible();
     await expect(await lobbyWindow(host)).toContainText("Just you.");
   } finally {
-    await guestContext.close();
-    await hostContext.close();
+    await context.close();
   }
 });

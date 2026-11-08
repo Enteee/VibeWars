@@ -1778,7 +1778,7 @@ body {
 
 /* The host's (x) by a member (#2746): small, quiet until hovered. */
 .party-member-remove {
-  margin-left: auto;
+  margin-inline-start: auto;
   padding: 0 0.35rem;
   border: 1px solid transparent;
   border-radius: 3px;
