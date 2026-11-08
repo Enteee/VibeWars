@@ -7,6 +7,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -183,13 +184,13 @@ describe("the next spell fails (#1475)", () => {
   });
 
   it("describes them", () => {
-    expect(describeStatus("guilt")).toBe(
+    expect(describeStatus("guilt", undefined, EN_WORDS, EN_NAMES)).toBe(
       "the next spell it casts at a foe fails: steals up to 12 energy",
     );
-    expect(describeStatus("shame")).toBe(
+    expect(describeStatus("shame", undefined, EN_WORDS, EN_NAMES)).toBe(
       "the next spell it casts at an ally fails: steals up to 12 energy",
     );
-    expect(describeStatus("mistrust")).toBe(
+    expect(describeStatus("mistrust", undefined, EN_WORDS, EN_NAMES)).toBe(
       "the next spell it casts at a foe fails: deals 50 damage, nearby foes take 38 damage",
     );
   });
@@ -231,7 +232,7 @@ describe("Fragility (#1475)", () => {
   });
 
   it("describes it", () => {
-    expect(describeStatus("fragility")).toBe(
+    expect(describeStatus("fragility", undefined, EN_WORDS, EN_NAMES)).toBe(
       "takes 17 damage whenever it gains a new condition or loses a condition",
     );
   });

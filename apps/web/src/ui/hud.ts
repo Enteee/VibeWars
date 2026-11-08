@@ -80,6 +80,7 @@ import {
 } from "./skill-slot-state.js";
 import { createSlotTooltips, type SlotTooltips } from "./slot-tooltip.js";
 import { echoStripHtml, paintEchoStrip } from "./echo-strip.js";
+import { describeWords } from "../i18n/describe-words.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -516,7 +517,7 @@ export function describeRefusal(refusal: CastRefusedMessage): string {
     // An attack skill refused for the weapon in hand names the one it needs (ADR-0029).
     return needed === undefined
       ? t(REFUSALS[reason])
-      : t("hud.refusalNeedsWeapon", { weapon: neededWeaponText(needed) });
+      : t("hud.refusalNeedsWeapon", { weapon: neededWeaponText(needed, describeWords()) });
   }
   return t((refusal.kind === "attack" ? ATTACK_REFUSALS[reason] : undefined) ?? REFUSALS[reason]);
 }

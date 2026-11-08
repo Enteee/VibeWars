@@ -1,3 +1,5 @@
+import type { DescribeWords } from "@vibewars/game-core";
+
 import type { Catalog } from "./en.js";
 import type { GameNames } from "./game-names.js";
 
@@ -41,16 +43,19 @@ export const LANGUAGES = [
 
 export type LanguageCode = (typeof LANGUAGES)[number]["code"];
 
-/** A language's tables, loaded together: its interface text and its game-data names. */
+/** A language's tables, loaded together: its interface text, game-data names and description sentences. */
 export interface LocaleTables {
   readonly ui: Catalog;
   readonly game: GameNames;
+  readonly describe: DescribeWords;
 }
 
 /**
  * The translations this build has, each its own lazy chunk:
  * `async () => ({ ui: (await import("./locales/<code>/ui.js")).default,
- * game: (await import("./locales/<code>/game.js")).default })`. English
+ * game: (await import("./locales/<code>/game.js")).default,
+ * describe: (await import("./locales/<code>/describe.js")).default })`.
+ * A `describe.ts` is `satisfies DescribeWords`. English
  * is bundled, not here. A translation card adds its languages.
  */
 export const LOCALES: Readonly<Partial<Record<LanguageCode, () => Promise<LocaleTables>>>> = {};

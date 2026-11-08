@@ -10,6 +10,7 @@ import { getSkill } from "./catalog.js";
 import { effectiveArmor, skillDamage } from "./damage.js";
 import { describeStatus } from "./describe.js";
 import { effectiveMaxHealth } from "./tick.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Caster staples 2 (#1872): Elemental Resistance, Physical Resistance,
@@ -101,10 +102,18 @@ describe("caster staples 2's data (#1872)", () => {
   );
 
   it("each tooltip says what its status does", () => {
-    expect(describeStatus("elemental-resistance")).toContain("+40 elemental armor");
-    expect(describeStatus("elemental-resistance")).toContain("−14 physical armor");
-    expect(describeStatus("physical-resistance")).toContain("+40 physical armor");
-    expect(describeStatus("physical-resistance")).toContain("−14 elemental armor");
+    expect(describeStatus("elemental-resistance", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "+40 elemental armor",
+    );
+    expect(describeStatus("elemental-resistance", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "−14 physical armor",
+    );
+    expect(describeStatus("physical-resistance", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "+40 physical armor",
+    );
+    expect(describeStatus("physical-resistance", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "−14 elemental armor",
+    );
   });
 });
 

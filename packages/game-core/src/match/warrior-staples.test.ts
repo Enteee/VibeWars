@@ -14,6 +14,7 @@ import { blockChanceOf } from "../skills/tick.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Warrior staples (#1549): a `remove-status` that takes one named
@@ -409,20 +410,20 @@ describe("Enraging Charge (#1549)", () => {
 describe("the texts (#1549)", () => {
   const ranks = warrior().attributeRanks;
   const text = (id: string): string[] =>
-    describeSkill(skill(id), ranks).effects.map((effect) => effect.text);
+    describeSkill(skill(id), ranks, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text);
 
   it("say what each does", () => {
     expect(text(CHARGE)).toEqual([
       "Removes Crippled",
       'Applies "Charge!" for 11s (moves at 133% speed)',
     ]);
-    expect(describeStatus("riposte", ranks)).toBe(
+    expect(describeStatus("riposte", ranks, EN_WORDS, EN_NAMES)).toBe(
       "blocks the next melee attack. The next time you block a melee attack: deals 68 damage",
     );
-    expect(describeStatus("deadly-riposte", ranks)).toBe(
+    expect(describeStatus("deadly-riposte", ranks, EN_WORDS, EN_NAMES)).toBe(
       "blocks the next melee attack. The next time you block a melee attack: deals 75 damage, applies Bleeding for 21s (−3 Health degeneration)",
     );
-    expect(describeStatus("enraging-charge", ranks)).toBe(
+    expect(describeStatus("enraging-charge", ranks, EN_WORDS, EN_NAMES)).toBe(
       "moves at 125% speed, ends if you hit with an attack. Whenever you hit with a melee attack: gain 2 strikes of adrenaline",
     );
   });

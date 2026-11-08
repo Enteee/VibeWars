@@ -9,6 +9,7 @@ import { getSkill } from "./catalog.js";
 import { describeStatus } from "./describe.js";
 import { NO_RANKS } from "./status.js";
 import type { Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Unyielding Aura (#2470), its PvP version: a maintained resurrection at
@@ -189,7 +190,7 @@ describe("Unyielding Aura (#2470)", () => {
   });
 
   it("describes the end-death and the exploited corpse", () => {
-    const text = describeStatus("unyielding-aura");
+    const text = describeStatus("unyielding-aura", undefined, EN_WORDS, EN_NAMES);
     expect(text).toContain("dies when it ends");
     expect(text).toContain("leaves an exploited corpse");
     expect(text).toContain("no death penalty");

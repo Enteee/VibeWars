@@ -13,6 +13,7 @@ import { applyDamage, applyEffects, type CombatEvent } from "./effects.js";
 import { NO_RANKS, ownSkillBoost, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Vengeance, Healing Burst, Hypochondria, Iron Mist and Chilling Winds
@@ -208,7 +209,7 @@ describe("Vengeance (#2311)", () => {
   });
 
   it("describes all three", () => {
-    const text = describeStatus("vengeance");
+    const text = describeStatus("vengeance", undefined, EN_WORDS, EN_NAMES);
     expect(text).toContain("+25% damage");
     expect(text).toContain("no death penalty");
     expect(text).toContain("dies when it ends");
@@ -259,9 +260,12 @@ describe("Healing Burst (#2311)", () => {
   });
 
   it("says what the party gains", () => {
-    const lines = describeSkill(skill("monk.healing-burst"), ranked(12)).effects.map(
-      ({ text }) => text,
-    );
+    const lines = describeSkill(
+      skill("monk.healing-burst"),
+      ranked(12),
+      EN_WORDS,
+      EN_NAMES,
+    ).effects.map(({ text }) => text);
     expect(lines.join("\n")).toContain("Divine Favor bonus");
   });
 });
@@ -316,7 +320,12 @@ describe("Hypochondria (#2311)", () => {
   });
 
   it("says where they come from", () => {
-    const lines = describeSkill(skill("mesmer.hypochondria")).effects.map(({ text }) => text);
+    const lines = describeSkill(
+      skill("mesmer.hypochondria"),
+      undefined,
+      EN_WORDS,
+      EN_NAMES,
+    ).effects.map(({ text }) => text);
     expect(lines).toContain("Moves all conditions from foes in the area around it to the target");
   });
 });
@@ -374,8 +383,12 @@ describe("Iron Mist (#2311)", () => {
     expect(sim.requestSkill("e", 1)?.check).toEqual({ ok: true });
     sim.step(DT);
     expect(e.overcast).toBeCloseTo(2, 1);
-    expect(describeStatus("iron-mist")).toContain("Overcast you by 2");
-    expect(describeStatus("iron-mist")).toContain("that target a foe");
+    expect(describeStatus("iron-mist", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "Overcast you by 2",
+    );
+    expect(describeStatus("iron-mist", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "that target a foe",
+    );
   });
 });
 
@@ -448,7 +461,7 @@ describe("Chilling Winds (#2311)", () => {
   });
 
   it("says what it lengthens", () => {
-    expect(describeStatus("chilling-winds", ranked(12))).toContain(
+    expect(describeStatus("chilling-winds", ranked(12), EN_WORDS, EN_NAMES)).toContain(
       "the next Water Magic hex on the bearer lasts 85% longer",
     );
   });

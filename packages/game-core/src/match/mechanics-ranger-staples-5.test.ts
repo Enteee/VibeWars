@@ -13,6 +13,7 @@ import { lowRankMisses } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Ranger staples 5 (#2133): two preparations, a stance and two bow
@@ -250,7 +251,7 @@ describe("Disrupting Accuracy and a critical rider bound to the bow (#2133)", ()
   });
 
   it("says so", () => {
-    expect(describeStatus("disrupting-accuracy")).toContain(
+    expect(describeStatus("disrupting-accuracy", undefined, EN_WORDS, EN_NAMES)).toContain(
       "every time you land a critical hit with a bow: interrupts",
     );
   });
@@ -311,7 +312,9 @@ describe("Oath Shot and missChanceAtOrBelowRank (#2133)", () => {
   });
 
   it("says so", () => {
-    const texts = describeSkill(skill(OATH_SHOT)).effects.map((effect) => effect.text);
+    const texts = describeSkill(skill(OATH_SHOT), undefined, EN_WORDS, EN_NAMES).effects.map(
+      (effect) => effect.text,
+    );
     expect(texts).toContain("50% chance to miss with Expertise 7 or less");
   });
 });
@@ -391,7 +394,7 @@ describe("Storm Chaser and elemental damage as one type (#2133)", () => {
   });
 
   it("says so", () => {
-    expect(describeStatus("storm-chaser")).toContain(
+    expect(describeStatus("storm-chaser", undefined, EN_WORDS, EN_NAMES)).toContain(
       "Whenever you take elemental damage from a foe",
     );
   });
@@ -414,7 +417,9 @@ describe("Screaming Shot and target-within (#2133)", () => {
   });
 
   it("says so", () => {
-    const texts = describeSkill(skill(SCREAMING_SHOT)).effects.map((effect) => effect.text);
+    const texts = describeSkill(skill(SCREAMING_SHOT), undefined, EN_WORDS, EN_NAMES).effects.map(
+      (effect) => effect.text,
+    );
     expect(texts.some((text) => text.startsWith("If target is within earshot"))).toBe(true);
   });
 });

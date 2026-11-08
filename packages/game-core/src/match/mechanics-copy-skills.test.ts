@@ -10,6 +10,7 @@ import { aggregateModifiers } from "../skills/status.js";
 import type { Aura } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Take what another has (#1965): Arcane Mimicry borrows an ally's elite,
@@ -224,7 +225,12 @@ describe("Mirrored Stance (#1965)", () => {
     const skill = getSkill(MIRRORED);
     expect(skill).toBeDefined();
     if (skill !== undefined) {
-      const { effects } = describeSkill(skill, new Map([["assassin.shadow-arts", 12]]));
+      const { effects } = describeSkill(
+        skill,
+        new Map([["assassin.shadow-arts", 12]]),
+        EN_WORDS,
+        EN_NAMES,
+      );
       expect(effects.map(({ text }) => text).join("\n")).toMatch(/you enter the same stance/i);
     }
   });

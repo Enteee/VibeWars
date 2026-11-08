@@ -13,6 +13,7 @@ import { getStatusDefinition, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Magnitude, Skill } from "./types.js";
 import { criticalChance, doubleStrikeChance, weaponSnapshotOf } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Single-skill mechanics (#2504): Scorpion Wire, Expunge Enchantments,
@@ -93,7 +94,7 @@ function scaled(
 
 /** `skillId`'s tooltip at 12, its effects' lines joined. */
 const described = (skillId: string): string =>
-  describeSkill(skill(skillId), ranksAt(12))
+  describeSkill(skill(skillId), ranksAt(12), EN_WORDS, EN_NAMES)
     .effects.map(({ text }) => text)
     .join("; ");
 

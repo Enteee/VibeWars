@@ -9,6 +9,7 @@ import { describeSkill } from "../skills/describe.js";
 import { NO_RANKS, HEALTH_PER_PIP } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Wells (#1104): a ground effect anchored on the corpse its skill
@@ -277,7 +278,7 @@ describe("Well of Suffering (#1104)", () => {
     if (skill === undefined) {
       throw new Error(`no skill ${WELL}`);
     }
-    const lines = describeSkill(skill, new Map([[DEATH, 12]]));
+    const lines = describeSkill(skill, new Map([[DEATH, 12]]), EN_WORDS, EN_NAMES);
     expect(lines.effects.map(({ text }) => text)).toEqual([
       "Exploits the nearest corpse, or sacrifices 66% Health if none is near",
       "Creates a well at its location for 26 seconds",

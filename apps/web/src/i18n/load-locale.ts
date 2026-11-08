@@ -1,3 +1,4 @@
+import { setDescribeWords } from "./describe-words.js";
 import { en } from "./en.js";
 import { setGameNames } from "./game-names.js";
 import { pickLanguage, setLocale } from "./index.js";
@@ -20,4 +21,5 @@ export async function loadLocale(): Promise<void> {
   const [tables] = await Promise.all([load(), loadPlayerDocs(code)]);
   setLocale(code, tables.ui);
   setGameNames(tables.game);
+  setDescribeWords(tables.describe);
 }

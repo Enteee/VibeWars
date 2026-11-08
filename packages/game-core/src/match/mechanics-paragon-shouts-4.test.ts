@@ -14,6 +14,7 @@ import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Paragon riders (#1955): Angelic Bond's one negation for the whole
@@ -279,7 +280,7 @@ describe('"Brace Yourself!" (#1955)', () => {
 
 describe("tooltips (#1955)", () => {
   function texts(id: string): string[] {
-    return describeSkill(skill(id), RANKS).effects.map((effect) => effect.text);
+    return describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text);
   }
 
   it("say what each rider does", () => {

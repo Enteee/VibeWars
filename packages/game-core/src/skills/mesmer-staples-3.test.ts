@@ -15,6 +15,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Mesmer staples 3 (#1627): Ether Feast, Drain Delusions, Signet of
@@ -86,7 +87,7 @@ function damages(events: readonly CombatEvent[], id: string): number[] {
 }
 
 function described(id: string): string[] {
-  return describeSkill(skill(id), RANKS).effects.map(({ text }) => text);
+  return describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
 }
 
 describe("the five are the corpus's (#1627)", () => {

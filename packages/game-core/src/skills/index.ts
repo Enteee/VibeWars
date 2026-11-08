@@ -29,6 +29,8 @@ export {
   neededWeaponText,
   overcastText,
 } from "./describe.js";
+export { EN_NAMES, EN_WORDS } from "./describe-words.js";
+export type { DescribeNames, DescribeWords } from "./describe-words.js";
 
 export type { CorpusRef, MissingMechanic, SkillCoverage, UnimplementedSkill } from "./coverage.js";
 export {

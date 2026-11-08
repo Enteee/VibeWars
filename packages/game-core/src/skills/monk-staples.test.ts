@@ -14,6 +14,7 @@ import { NO_RANKS, StatusSet } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses } from "./tick.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * The Monk staples (#987): Heal Other, Reversal of Fortune turning the
@@ -228,7 +229,7 @@ describe("Reversal of Fortune (#987)", () => {
   });
 
   it("says so", () => {
-    expect(describeStatus("reversal-of-fortune")).toBe(
+    expect(describeStatus("reversal-of-fortune", undefined, EN_WORDS, EN_NAMES)).toBe(
       "the next damage or life steal heals for that much instead, up to 15...67",
     );
   });
@@ -375,7 +376,7 @@ describe("Restore Condition (#987)", () => {
   });
 
   it("says so", () => {
-    const described = describeSkill(skill("monk.restore-condition"), RANKS);
+    const described = describeSkill(skill("monk.restore-condition"), RANKS, EN_WORDS, EN_NAMES);
     expect(described.effects.map(({ text }) => text)).toEqual([
       "Removes all conditions",
       "Heals 58 for each condition removed",

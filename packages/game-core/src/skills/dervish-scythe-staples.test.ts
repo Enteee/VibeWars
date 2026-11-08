@@ -15,6 +15,7 @@ import { moveSpeedMultiplier } from "./tick.js";
 import { fireTriggers, type FiredTrigger } from "./triggers.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
 import { attackHitRiders, resolveSwing } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * The Dervish scythe staples (#939): Vow of Strength, Sand Shards, Pious
@@ -160,7 +161,9 @@ describe("Sand Shards (#939)", () => {
     expect(skill("dervish.sand-shards").activationSeconds).toBe(0);
     expect(self.statuses.get("sand-shards")?.remainingSeconds).toBe(30);
     expect(self.statuses.get("sand-shards")?.hitsLeft).toBe(4);
-    expect(describeStatus("sand-shards")).toContain("ends after 4 hits with a scythe");
+    expect(describeStatus("sand-shards", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "ends after 4 hits with a scythe",
+    );
   });
 
   it("four scythe hits splash 50 earth on the foe beside the one hit, then it ends", () => {

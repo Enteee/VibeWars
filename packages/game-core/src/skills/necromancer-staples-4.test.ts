@@ -12,6 +12,7 @@ import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { statAt } from "./scaling.js";
 import { NO_RANKS, getStatusDefinition } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Necromancer staples 4 (#2230): Virulence, Chilblains, Deathly Swarm,
@@ -155,7 +156,7 @@ describe("Chilblains (#2230)", () => {
     expect(damaged(events)).toEqual(["f", "g"]);
     expect([target, beside, far].map((each) => each.statuses.size)).toEqual([1, 1, 3]);
     expect(
-      describeSkill(skill("necromancer.chilblains"), RANKS)
+      describeSkill(skill("necromancer.chilblains"), RANKS, EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" | "),
     ).toMatch(/37 cold/);

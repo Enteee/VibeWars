@@ -14,6 +14,7 @@ import { NO_RANKS } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { attackDurationSeconds, resolveAttackSkillOutcome, resolveSwing } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Weapon gates (#2335): Warrior's Cunning's unblockable melee attacks and
@@ -252,7 +253,7 @@ describe("Dwarven Battle Stance: only with a hammer (#2335)", () => {
 describe("tooltips (#2335)", () => {
   it("say the weapon", () => {
     const text = (id: string): string[] =>
-      describeSkill(skill(id), RANK_12).effects.map(({ text }) => text);
+      describeSkill(skill(id), RANK_12, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
     expect(text("warrior.warriors-cunning")).toEqual([
       "Applies Warrior's Cunning for 10s (melee attacks cannot be blocked)",
     ]);

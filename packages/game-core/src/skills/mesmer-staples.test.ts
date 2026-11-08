@@ -14,6 +14,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Mesmer staples (#1570): Power Leak, Blackout, Shatter Hex, Psychic
@@ -86,7 +87,7 @@ function damageIn(events: readonly CombatEvent[], id: string): number {
 }
 
 function described(id: string): string[] {
-  return describeSkill(skill(id), RANKS).effects.map(({ text }) => text);
+  return describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
 }
 
 describe("the five are the corpus's (#1570)", () => {
@@ -250,7 +251,7 @@ describe("Arcane Conundrum (#1570)", () => {
         { id: "dazed", ranks: NO_RANKS },
       ]).castTimeMultiplier,
     ).toBe(4);
-    expect(describeStatus("arcane-conundrum")).toBe(
+    expect(describeStatus("arcane-conundrum", undefined, EN_WORDS, EN_NAMES)).toBe(
       "spells take 2× as long to cast, its caster gains 6 energy when it ends",
     );
   });

@@ -15,6 +15,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { NO_RANKS, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { isEasilyInterrupted, type Combatant, type Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Monk staples 6 (#1748): Ethereal Light, Gift of Health, Live
@@ -68,7 +69,7 @@ function healed(events: readonly CombatEvent[], id = "ally"): number {
 }
 
 function described(id: string): string[] {
-  return describeSkill(skill(id), RANKS).effects.map(({ text }) => text);
+  return describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
 }
 
 describe("the eight are the corpus's (#1748)", () => {

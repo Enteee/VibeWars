@@ -13,6 +13,7 @@ import { effectiveArmor, skillDamage, type DamagePacket } from "./damage.js";
 import type { CombatEvent } from "./effects.js";
 import type { Skill } from "./types.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Warrior mechanics 4 (#2180): Disarm, Desperation Blow, Decapitate,
@@ -200,7 +201,9 @@ describe("Disarm (#2180): interrupted-attack, disable-skill attacks", () => {
   });
 
   it("reads as GW1 words it", () => {
-    const lines = describeSkill(skill(DISARM)).effects.map(({ text }) => text);
+    const lines = describeSkill(skill(DISARM), undefined, EN_WORDS, EN_NAMES).effects.map(
+      ({ text }) => text,
+    );
     expect(lines.join(" | ")).toContain("If that action was an attack");
     expect(lines.join(" | ")).toContain("all of the target's attack skills are disabled");
   });
@@ -350,7 +353,7 @@ describe("Battle Rage (#2180): adrenaline faster from attacks, ends on a non-adr
   });
 
   it("reads as GW1 words it", () => {
-    const text = describeSkill(skill(BATTLE_RAGE))
+    const text = describeSkill(skill(BATTLE_RAGE), undefined, EN_WORDS, EN_NAMES)
       .effects.map((line) => line.text)
       .join(" ");
     expect(text).toContain("from attacks");

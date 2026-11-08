@@ -12,6 +12,7 @@ import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * The Warrior and Monk staples (#936): Protective Spirit's cap on a hit,
@@ -110,7 +111,7 @@ describe("Protective Spirit (#936)", () => {
   });
 
   it("says so", () => {
-    expect(describeStatus("protective-spirit")).toBe(
+    expect(describeStatus("protective-spirit", undefined, EN_WORDS, EN_NAMES)).toBe(
       "damage from a single hit is capped at 10% of max health",
     );
   });
@@ -210,7 +211,12 @@ describe("Infuse Health (#936)", () => {
   });
 
   it("says what it costs and what it gives", () => {
-    const described = describeSkill(skill(INFUSE), new Map([["monk.healing-prayers", 12]]));
+    const described = describeSkill(
+      skill(INFUSE),
+      new Map([["monk.healing-prayers", 12]]),
+      EN_WORDS,
+      EN_NAMES,
+    );
     expect(described.effects.map(({ text }) => text)).toEqual([
       "Lose half your health; heal for 129% of it",
     ]);
@@ -230,9 +236,9 @@ describe('Cyclone Axe and "For Great Justice!" (#936)', () => {
         bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 4, atTwelve: 10.4 } },
       },
     });
-    expect(describeSkill(skill("warrior.cyclone-axe")).targetText).toBe(
-      "One foe, and foes adjacent around you",
-    );
+    expect(
+      describeSkill(skill("warrior.cyclone-axe"), undefined, EN_WORDS, EN_NAMES).targetText,
+    ).toBe("One foe, and foes adjacent around you");
   });
 
   it('"For Great Justice!" is a 5 e, 45 s shout: 8 s of one more strike per hit', () => {
@@ -249,6 +255,8 @@ describe('Cyclone Axe and "For Great Justice!" (#936)', () => {
     expect(
       aggregateModifiers([{ id: "for-great-justice", ranks: NO_RANKS }]).extraStrikesPerHit,
     ).toBe(1);
-    expect(describeStatus("for-great-justice")).toBe("gain 1 more strike of adrenaline per hit");
+    expect(describeStatus("for-great-justice", undefined, EN_WORDS, EN_NAMES)).toBe(
+      "gain 1 more strike of adrenaline per hit",
+    );
   });
 });

@@ -16,6 +16,7 @@ import { makeCombatant } from "./testing.js";
 import { effectiveActivationSeconds } from "./tick.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
 import { resolveAttackSkill } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Mechanics (#2459): Twin Moon Sweep's release takes a Dervish
@@ -246,7 +247,9 @@ describe("Twin Moon Sweep (#2459)", () => {
 
   it("says its release on its card", () => {
     expect(
-      describeSkill(skill(SWEEP), new Map([[SCYTHE_MASTERY, 12]])).effects.map(({ text }) => text),
+      describeSkill(skill(SWEEP), new Map([[SCYTHE_MASTERY, 12]]), EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      ),
     ).toEqual([
       "As it is used: you gain 18 health",
       "As it is used: lose 1 Dervish enchantment",

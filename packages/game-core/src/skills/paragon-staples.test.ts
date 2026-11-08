@@ -15,6 +15,7 @@ import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveSwing } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Paragon staples (#2222): Song of Power, Ballad of Restoration, Leader's
@@ -79,7 +80,9 @@ describe("the six are the corpus's (#2222)", () => {
     ["theyre-on-fire", /29% less damage from foes suffering from Burning/],
     ["find-their-weakness", /next time you land a critical hit: .*Deep Wound/],
   ])("%s reads as GW1 words it", (id, text) => {
-    const texts = describeSkill(skill(`paragon.${id}`), RANKS).effects.map(({ text }) => text);
+    const texts = describeSkill(skill(`paragon.${id}`), RANKS, EN_WORDS, EN_NAMES).effects.map(
+      ({ text }) => text,
+    );
     expect(texts.join(" / ")).toMatch(text);
   });
 });

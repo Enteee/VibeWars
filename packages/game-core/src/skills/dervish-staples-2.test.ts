@@ -16,6 +16,7 @@ import { makeCombatant } from "./testing.js";
 import { blockChanceOf, effectiveMaxHealth } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveAttackSkill } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Dervish staples 2 (#1604): Irresistible Sweep, Crippling Sweep, Rending
@@ -91,7 +92,9 @@ describe("the eight are the corpus's (#1604)", () => {
   });
 
   it("says Guiding Hands' next 2 attacks cannot be blocked", () => {
-    expect(describeStatus("guiding-hands")).toMatch(/your next 2 attacks cannot be blocked/);
+    expect(describeStatus("guiding-hands", undefined, EN_WORDS, EN_NAMES)).toMatch(
+      /your next 2 attacks cannot be blocked/,
+    );
   });
 });
 

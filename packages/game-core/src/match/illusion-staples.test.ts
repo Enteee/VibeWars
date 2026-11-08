@@ -9,6 +9,7 @@ import { NO_RANKS, HEALTH_PER_PIP, aggregateModifiers, type StatusId } from "../
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Mesmer Illusion Magic staples (#1228): Conjure Phantasm, Imagined
@@ -210,7 +211,9 @@ describe.each([
   });
 
   it("describes both", () => {
-    expect(describeStatus(hex)).toMatch(/^−3 Health degeneration\. When it ends: applies /);
+    expect(describeStatus(hex, undefined, EN_WORDS, EN_NAMES)).toMatch(
+      /^−3 Health degeneration\. When it ends: applies /,
+    );
   });
 });
 

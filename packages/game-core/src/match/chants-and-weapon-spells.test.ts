@@ -17,6 +17,7 @@ import { blocks, resolveAttackSkill, resolveSwing } from "../skills/weapon-attac
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -181,7 +182,7 @@ describe("Anthem of Flame on an attack skill (#758)", () => {
   });
 
   it("reads as what it does", () => {
-    const description = describeSkill(skill(ANTHEM));
+    const description = describeSkill(skill(ANTHEM), undefined, EN_WORDS, EN_NAMES);
     expect(description.typeText).toBe("Chant.");
     expect(description.effects.map((effect) => effect.text)).toEqual([
       "Applies Anthem of Flame for 10s (next attack skill: Burning 3s)",
@@ -249,7 +250,7 @@ describe("Weapon of Warding (#758)", () => {
   });
 
   it("reads as what it does", () => {
-    const description = describeSkill(skill(WARDING));
+    const description = describeSkill(skill(WARDING), undefined, EN_WORDS, EN_NAMES);
     expect(description.typeText).toBe("Weapon Spell.");
     expect(description.effects.map((effect) => effect.text)).toEqual([
       "Applies Weapon of Warding for 3s (+4 Health regeneration, " +

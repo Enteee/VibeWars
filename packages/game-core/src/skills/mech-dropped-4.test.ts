@@ -11,6 +11,7 @@ import { getSkill } from "./catalog.js";
 import { describeStatus } from "./describe.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
 import type { Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Six from the dropped lists (#2453): Stoneflesh Aura's rank-scaled damage
@@ -200,7 +201,7 @@ describe("Extinguish (#2453)", () => {
 
 describe("Icy Shackles (#2453)", () => {
   it("says it is 90% slower while enchanted", () => {
-    expect(describeStatus("icy-shackles", NO_RANKS)).toContain(
+    expect(describeStatus("icy-shackles", NO_RANKS, EN_WORDS, EN_NAMES)).toContain(
       "moves at 10% speed while enchanted",
     );
   });
@@ -263,7 +264,7 @@ describe("Smiter's Boon (#2453)", () => {
   });
 
   it("says what it doubles", () => {
-    expect(describeStatus("smiters-boon", NO_RANKS)).toBe(
+    expect(describeStatus("smiters-boon", NO_RANKS, EN_WORDS, EN_NAMES)).toBe(
       "Smiting Prayers spells have double the Divine Favor bonus",
     );
   });
@@ -387,8 +388,8 @@ describe("Ward of Weakness (#2453)", () => {
   });
 
   it("says what it answers", () => {
-    expect(describeStatus("ward-of-weakness", new Map([[EARTH, 12]]))).toContain(
-      "takes elemental damage",
-    );
+    expect(
+      describeStatus("ward-of-weakness", new Map([[EARTH, 12]]), EN_WORDS, EN_NAMES),
+    ).toContain("takes elemental damage");
   });
 });

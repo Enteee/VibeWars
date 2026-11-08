@@ -21,6 +21,7 @@ import {
 import { makeCombatant, withStatusDefinitions } from "./testing.js";
 import { effectiveActivationSeconds } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * One rule for "your X skills cost less, cast faster, heal less, recharge
@@ -423,7 +424,7 @@ describe("says what each does (#1761)", () => {
   ])("%s", (id, text) => {
     const described = skill(id);
     const ranks = new Map([[described.attributeId ?? "", 12]]);
-    const lines = describeSkill(described, ranks)
+    const lines = describeSkill(described, ranks, EN_WORDS, EN_NAMES)
       .effects.map((line) => line.text)
       .join(" | ");
     expect(lines.toLowerCase()).toContain(text.toLowerCase());
@@ -436,7 +437,7 @@ describe("scales with its caster's rank (#2158)", () => {
     [12, "recharge 45% faster"],
   ])("Way of the Empty Palm at Deadly Arts %i: %s", (rank, text) => {
     const ranks = new Map([["assassin.deadly-arts", rank]]);
-    const lines = describeSkill(skill("assassin.way-of-the-empty-palm"), ranks)
+    const lines = describeSkill(skill("assassin.way-of-the-empty-palm"), ranks, EN_WORDS, EN_NAMES)
       .effects.map((line) => line.text)
       .join(" | ");
     expect(lines).toContain(text);

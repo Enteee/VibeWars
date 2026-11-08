@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { describeStatus } from "./describe.js";
 import type * as Status from "./status.js";
 import type { StatusDefinition } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * A test-local status (#1370): two triggers that do the same thing, one
@@ -30,7 +31,7 @@ vi.mock("./status.js", async (importOriginal) => {
 
 describe("weapon-bound trigger lines (#1370)", () => {
   it("say the same effects twice: once with an axe, once with no weapon", () => {
-    const text = describeStatus("test-axe-or-any");
+    const text = describeStatus("test-axe-or-any", undefined, EN_WORDS, EN_NAMES);
     expect(text).toContain("whenever it attacks with an axe");
     expect(text).toMatch(/whenever it attacks(?! with)/);
   });

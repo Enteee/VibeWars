@@ -95,6 +95,7 @@ import {
 } from "./kit.js";
 import { mountPaperDoll, type PaperDoll } from "./paper-doll.js";
 import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
+import { describeNames, describeWords } from "../i18n/describe-words.js";
 
 /**
  * The character/build editor (brief §17).
@@ -459,7 +460,7 @@ export function weaponWarning(
     held === undefined || held.id === "unarmed"
       ? t("buildEditor.noWeapon")
       : t("buildEditor.yourWeapon", { weapon: withArticle(itemName(held.id).toLowerCase()) });
-  const badge = t("buildEditor.needsWeapon", { weapon: neededWeaponText(needed) });
+  const badge = t("buildEditor.needsWeapon", { weapon: neededWeaponText(needed, describeWords()) });
   return { badge, title: t("buildEditor.weaponWarning", { badge, yours }) };
 }
 
@@ -1715,7 +1716,10 @@ export function mountSkillBar(panel: HTMLElement, context: SkillBarHost): Region
         cell.setAttribute("aria-pressed", String(isSelected));
         const skillId = character.skillBar[slot] ?? null;
         const skill = skillId === null ? undefined : available.find((s) => s.id === skillId);
-        const description = skill === undefined ? undefined : describeSkill(skill, ranks);
+        const description =
+          skill === undefined
+            ? undefined
+            : describeSkill(skill, ranks, describeWords(), describeNames());
         if (description === undefined) {
           described.delete(slot);
         } else {

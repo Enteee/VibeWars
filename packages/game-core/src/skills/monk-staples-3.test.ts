@@ -12,6 +12,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { NO_RANKS, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Monk staples 3 (#1039): Cure Hex heals what it cleanses, Smite
@@ -70,7 +71,7 @@ function healed(events: readonly CombatEvent[], id = "ally"): number {
 }
 
 function described(id: string): string[] {
-  return describeSkill(skill(id), RANKS).effects.map(({ text }) => text);
+  return describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
 }
 
 describe("Cure Hex (#1039)", () => {

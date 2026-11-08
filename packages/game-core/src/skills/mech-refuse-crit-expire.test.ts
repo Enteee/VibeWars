@@ -21,6 +21,7 @@ import {
   weaponSnapshotOf,
   type BlowRule,
 } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Refusals, crit immunity and faster expiry (#2373): Frigid Armor's
@@ -102,7 +103,7 @@ const remaining = (sim: MatchSimulation, id: string, statusId: StatusId): number
   get(sim, id).combatant.statuses.get(statusId)?.remainingSeconds;
 
 function lines(skillId: string, ranks: ReadonlyMap<string, number> | undefined): string[] {
-  return describeSkill(skillOf(skillId), ranks).effects.map(({ text }) => text);
+  return describeSkill(skillOf(skillId), ranks, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
 }
 
 describe("the four are the corpus's (#2373)", () => {
