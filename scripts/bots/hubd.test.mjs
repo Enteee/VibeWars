@@ -2755,7 +2755,7 @@ describe("hubd hiring and firing", () => {
     const over = await hubd.request("manager", "runners", ["3"]);
     expect(over.code).toBe(1);
     expect(String(over.stderr)).toBe(
-      "company runners: 3 is above the operator's max of 2; the operator raises it with claude-llc-init\n",
+      "company runners: 3 is above the operator's max of 2; the operator raises maxRunners in .bots/company.json and restarts the company\n",
     );
     expect(fs.existsSync(path.join(state, "target"))).toBe(false);
 
@@ -2780,6 +2780,48 @@ describe("hubd hiring and firing", () => {
     expect(read.stdout).toBe("runners: 1/2 (busy 1, max 2)\n");
     const refused = await hubd.request("business-analyst", "runners", ["1"]);
     expect(refused.allow).toBe(false);
+  }, 20_000);
+
+  it("company runners: a cap changed without a restart holds to the lower of company.json's and the supervisor's (#2764)", async () => {
+    const hubd = await startHubd(5000);
+    const state = path.join(path.dirname(hubd.root), "runners");
+    fs.mkdirSync(state, { recursive: true });
+    /** @param {number} max the running supervisor's */
+    const running = (max) => {
+      fs.writeFileSync(
+        path.join(state, "status.json"),
+        JSON.stringify({
+          at: 1,
+          target: 0,
+          max,
+          runners: [],
+          variable: false,
+          reason: null,
+          alert: null,
+        }),
+      );
+    };
+
+    running(2);
+    capRunners(hubd, 4);
+    const raised = await hubd.request("manager", "runners", ["3"]);
+    expect(raised.code).toBe(1);
+    expect(String(raised.stderr)).toBe(
+      "company runners: 3 is above the running supervisor's max of 2; a company restart applies company.json's 4\n",
+    );
+    expect(fs.existsSync(path.join(state, "target"))).toBe(false);
+
+    running(4);
+    capRunners(hubd, 2);
+    const lowered = await hubd.request("manager", "runners", ["3"]);
+    expect(lowered.code).toBe(1);
+    expect(String(lowered.stderr)).toMatch(/above the operator's max of 2;/);
+    expect(fs.existsSync(path.join(state, "target"))).toBe(false);
+
+    running(4);
+    capRunners(hubd, 4);
+    const within = await hubd.request("manager", "runners", ["3"]);
+    expect(within.code, String(within.reason)).toBe(0);
   }, 20_000);
 
   it("company runners: refused while company.json has no maxRunners (#2764)", async () => {

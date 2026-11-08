@@ -2364,7 +2364,9 @@ function serveLoad(cfg) {
  * `company runners` (#1890): the supervisor's status, as the dashboard
  * shows it; `company runners <n>` sets the target it reads, within the
  * operator's max, `company.json`'s `maxRunners` (#2764), read on every
- * request.
+ * request. The supervisor reads that max once, at start, and refuses a
+ * target above its own; so while its status names a lower max, that one
+ * caps the target too, until a restart applies the new one.
  *
  * @param {string[]} argv `[]` or `[n]`, checked by the policy
  * @param {number} max
@@ -2372,13 +2374,19 @@ function serveLoad(cfg) {
  */
 function serveRunners(argv, max) {
   const [word] = argv;
+  const status = readRunnersStatus(RUNNERS_STATE);
   if (word !== undefined) {
     const n = Number(word);
-    if (n > max) {
+    const cap = status === null ? max : Math.min(max, status.max);
+    if (n > cap) {
+      const why =
+        cap < max
+          ? `the running supervisor's max of ${String(cap)}; a company restart applies company.json's ${String(max)}`
+          : `the operator's max of ${String(max)}; the operator raises maxRunners in .bots/company.json and restarts the company`;
       return {
         code: 1,
         stdout: "",
-        stderr: `company runners: ${String(n)} is above the operator's max of ${String(max)}; the operator raises it with claude-llc-init\n`,
+        stderr: `company runners: ${String(n)} is above ${why}\n`,
       };
     }
     writeRunnersTarget(RUNNERS_STATE, n);
@@ -2388,7 +2396,7 @@ function serveRunners(argv, max) {
       stderr: "",
     };
   }
-  const lines = runnersLines(readRunnersStatus(RUNNERS_STATE), max);
+  const lines = runnersLines(status, max);
   return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
 }
 
