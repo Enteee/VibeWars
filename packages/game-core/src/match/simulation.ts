@@ -14,6 +14,10 @@ import {
   firstHit,
   hasLineOfSight,
   resolveCircleCircleCollision,
+  clampToAreas,
+  pointInArea,
+  type Area,
+  type MapLayers,
   resolveCircleSegmentCollision,
 } from "../geometry.js";
 import type { Segment } from "../geometry.js";
@@ -611,6 +615,8 @@ export interface ParticipantSpec {
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly equipment: ResolvedEquipment;
   readonly spawn: Vec2;
+  /** The layer it spawns on (ADR-0051). Omitted: the ground. */
+  readonly layer?: number;
   /** Where it faces at the start and after every reset, in radians (`atan2`, 0 = +x). */
   readonly facing: number;
   /** Defaults to the ruleset's base health. */
@@ -674,6 +680,10 @@ export interface Participant {
   readonly skillBar: SkillBar;
   readonly spawn: Vec2;
   position: Vec2;
+  /** The one layer it is on (ADR-0051); only the simulation changes it. */
+  layer: number;
+  /** The layer its walk is headed for; read only while it has a `walkGoal`. */
+  targetLayer: number;
   /**
    * Where it faces, in radians, `atan2` convention, in (−π, π], 0 = +x.
    * Where it last pushed, or at what it is casting at or swinging at,
@@ -752,6 +762,8 @@ export interface MatchSimulationOptions {
   readonly teamCount?: TeamCount;
   /** Omitted or `[]`: nothing collides with a wall or blocks line of sight. */
   readonly walls?: readonly Segment[];
+  /** The floors above the ground and the ways up (ADR-0051). Omitted: only the ground. */
+  readonly layers?: MapLayers;
   /**
    * The map's size: no body leaves it, and an attack's approach never
    * paths outside it (#211). Omitted: an open field with no edge
@@ -965,6 +977,18 @@ const NOBODY: ReadonlySet<string> = new Set();
 const NO_RELICS: readonly RelicState[] = [];
 
 /** How deep a body at `position` is inside a living body at `other`, their radii summing to `reach`. */
+const NO_WALLS: readonly Segment[] = [];
+
+/** Each layer's walkable areas, by layer: a deck's, and a transition's for both its ends. */
+function floorsOf(layers: MapLayers | undefined): readonly (readonly Area[])[] {
+  return Array.from({ length: layers?.count ?? 1 }, (_, layer) => [
+    ...(layers?.decks ?? []).filter((deck) => deck.layer === layer).map((deck) => deck.footprint),
+    ...(layers?.transitions ?? [])
+      .filter((transition) => transition.from === layer || transition.to === layer)
+      .map((transition) => transition.area),
+  ]);
+}
+
 function penetration(position: Vec2, other: Vec2, reach: number): number {
   return Math.max(0, reach - distance(position, other));
 }
@@ -1062,6 +1086,9 @@ export class MatchSimulation {
   readonly #matchRules: MatchRules | undefined;
   /** The map's walls and every closed gate's (#2691); swapped as a gate moves. */
   #walls: readonly Segment[];
+  readonly #layers: MapLayers | undefined;
+  /** Each layer's walkable areas, by layer; the ground's is the whole map. */
+  readonly #floors: readonly (readonly Area[])[];
   readonly #gatedGraph: GatedNavGraph;
   readonly #bounds: { readonly width: number; readonly height: number } | undefined;
   /** Corners an approach or a walk can path through, from `#walls` (#211). */
@@ -1145,6 +1172,8 @@ export class MatchSimulation {
     readonly creature: CreatureTemplate;
     readonly count: number;
     readonly at: Vec2;
+    /** The layer of the one it replaces (ADR-0051). */
+    readonly layer: number;
     /** Whose ranks it stands up at; `undefined`: its owner's as it does. */
     readonly ranks: ReadonlyMap<string, number> | undefined;
   }[] = [];
@@ -1207,6 +1236,8 @@ export class MatchSimulation {
     }
     this.#score = emptyScore(teamIds(this.#teamCount));
     this.#bounds = options.bounds;
+    this.#layers = options.layers;
+    this.#floors = floorsOf(options.layers);
     this.#gates = initialGates(options.gates ?? []);
     this.#gatedGraph = buildGatedNavGraph(
       options.walls ?? [],
@@ -1465,12 +1496,17 @@ export class MatchSimulation {
     if (reset?.kind === "on-interval" && !(reset.everySeconds > 0)) {
       throw new Error(`participant ${spec.id}: on-interval needs everySeconds above 0`);
     }
+    if (spec.layer !== undefined && !this.#isLayer(spec.layer)) {
+      throw new Error(`participant ${spec.id}: no layer ${String(spec.layer)}`);
+    }
     const record: ParticipantRecord = {
       id: spec.id,
       combatant: this.#combatant(spec),
       skillBar: spec.skillBar,
       spawn: spec.spawn,
       position: spec.spawn,
+      layer: spec.layer ?? 0,
+      targetLayer: spec.layer ?? 0,
       facing: spec.facing,
       inputDirection: ZERO,
       walkGoal: undefined,
@@ -1610,6 +1646,7 @@ export class MatchSimulation {
         skillId,
         template,
         at,
+        owner.layer,
         ranks,
         companion,
       );
@@ -1629,6 +1666,7 @@ export class MatchSimulation {
     template: CreatureTemplate,
     count: number,
     at: Vec2,
+    layer: number,
     ranks: ReadonlyMap<string, number>,
     skillId: string,
   ): void {
@@ -1636,7 +1674,18 @@ export class MatchSimulation {
     for (let i = 0; i < fits; i += 1) {
       const id = creatureId(undefined, this.#nextCreature);
       this.#nextCreature += 1;
-      this.#addCreature(id, MASTERLESS_TEAM, undefined, 0, skillId, template, at, ranks, false);
+      this.#addCreature(
+        id,
+        MASTERLESS_TEAM,
+        undefined,
+        0,
+        skillId,
+        template,
+        at,
+        layer,
+        ranks,
+        false,
+      );
     }
   }
 
@@ -1653,6 +1702,7 @@ export class MatchSimulation {
     skillId: string | undefined,
     template: CreatureTemplate,
     at: Vec2,
+    layer: number,
     ranks: ReadonlyMap<string, number>,
     companion: boolean,
   ): void {
@@ -1671,6 +1721,7 @@ export class MatchSimulation {
         template.attack === undefined ? 0 : (ranks.get(template.attack.attributeId) ?? 0),
       ),
       spawn: at,
+      layer,
       facing,
       // Spawning Power is the summoner's (#1098), for what they create: spirits
       // and minions. A pet is charmed, not created, and is not on the wiki's
@@ -2800,12 +2851,24 @@ export class MatchSimulation {
    * Only the point is kept here. The next step settles it, once however
    * many clicks arrived since: settling costs a path search, and a client
    * may send hundreds of clicks a second.
+   *
+   * `layer` is the one the walk is headed for (ADR-0051), omitted for the
+   * body's own. A layer the map lacks, or one with no floor at `point`, is
+   * refused and the body stands.
    */
-  public walkTo(id: string, point: Vec2): void {
+  public walkTo(id: string, point: Vec2, layer?: number): void {
     const record = this.#participants.get(id);
     if (record === undefined || record.combatant.dead || record.combatant.knockdownRemaining > 0) {
       return;
     }
+    const targetLayer = layer ?? record.layer;
+    if (targetLayer !== record.layer && !this.#hasFloorAt(targetLayer, point)) {
+      record.inputDirection = ZERO;
+      record.walkGoal = undefined;
+      record.route = undefined;
+      return;
+    }
+    record.targetLayer = targetLayer;
     record.inputDirection = ZERO;
     this.#moveInterrupts(record);
     record.walkGoal = point;
@@ -5501,6 +5564,7 @@ export class MatchSimulation {
       if (
         otherId !== record.id &&
         otherId !== passing &&
+        other.layer === record.layer &&
         !other.combatant.dead &&
         !this.#walksThrough(record, other)
       ) {
@@ -7325,6 +7389,7 @@ export class MatchSimulation {
         skillId: creature.skillId ?? "",
         ...creature.replacedBy,
         at: record.position,
+        layer: record.layer,
         ranks: undefined,
       });
     }
@@ -7350,6 +7415,7 @@ export class MatchSimulation {
         creature,
         count,
         at: record.position,
+        layer: record.layer,
         ranks,
       });
     }
@@ -7369,6 +7435,7 @@ export class MatchSimulation {
           creature,
           count,
           at: record.position,
+          layer: record.layer,
           ranks,
         });
       }
@@ -7383,9 +7450,9 @@ export class MatchSimulation {
    */
   #replaceFallen(): void {
     const replacements = this.#replacements.splice(0);
-    for (const { ownerId, skillId, creature, count, at, ranks } of replacements) {
+    for (const { ownerId, skillId, creature, count, at, layer, ranks } of replacements) {
       if (ownerId === undefined) {
-        this.#summonMasterless(creature, count, at, ranks ?? new Map(), skillId);
+        this.#summonMasterless(creature, count, at, layer, ranks ?? new Map(), skillId);
         continue;
       }
       const owner = this.#participants.get(ownerId);
@@ -7587,6 +7654,45 @@ export class MatchSimulation {
   }
 
   /** Put `record` beside `target`, facing it, as `#recordSteps` describes. */
+  #isLayer(layer: number): boolean {
+    return Number.isInteger(layer) && layer >= 0 && layer < this.#floors.length;
+  }
+
+  /** Whether `layer` is one of the map's and has floor under `point` (ADR-0051). */
+  #hasFloorAt(layer: number, point: Vec2): boolean {
+    return (
+      this.#isLayer(layer) &&
+      (layer === 0 || (this.#floors[layer] ?? []).some((area) => pointInArea(point, area)))
+    );
+  }
+
+  /** The walls a body on `layer` meets: the ground's are `#walls`, with its gates. */
+  #wallsOn(layer: number): readonly Segment[] {
+    return layer === 0 ? this.#walls : (this.#layers?.walls.get(layer) ?? NO_WALLS);
+  }
+
+  /**
+   * A body walking to another layer takes the next one up or down on the
+   * tick it moves inside a transition between the two (ADR-0051).
+   */
+  #changeLayer(record: ParticipantRecord): void {
+    if (
+      this.#layers === undefined ||
+      record.walkGoal === undefined ||
+      record.targetLayer === record.layer
+    ) {
+      return;
+    }
+    const next = record.layer + Math.sign(record.targetLayer - record.layer);
+    const from = Math.min(record.layer, next);
+    for (const transition of this.#layers.transitions) {
+      if (transition.from === from && pointInArea(record.position, transition.area)) {
+        record.layer = next;
+        return;
+      }
+    }
+  }
+
   #stepBeside(record: ParticipantRecord, target: ParticipantRecord): void {
     const radius = this.#ruleset.collision.playerRadius;
     const away =
@@ -7596,7 +7702,9 @@ export class MatchSimulation {
     const beside = add(target.position, scale(away, 2 * radius));
     this.#placeAt(
       record,
-      hasLineOfSight(target.position, beside, this.#walls) ? beside : target.position,
+      hasLineOfSight(target.position, beside, this.#wallsOn(record.layer))
+        ? beside
+        : target.position,
     );
     faceToward(record, target.position);
   }
@@ -7757,7 +7865,7 @@ export class MatchSimulation {
     const from = record.position;
     const away = normalize(sub(from, selection.position));
     const goal = add(from, scale(away, SHADOW_STEP_AWAY_DISTANCE));
-    const impact = firstHit(from, goal, this.#walls);
+    const impact = firstHit(from, goal, this.#wallsOn(record.layer));
     const position =
       impact === undefined
         ? goal
@@ -8296,6 +8404,7 @@ export class MatchSimulation {
     combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
     combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
     emptyAdrenaline(combatant);
+    record.layer = record.spec.layer ?? 0;
     let position = nearestStandable(this.#graph, at);
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
       position = this.#pushOut(record, position, this.#radiusOf(record), NOBODY);
@@ -8354,6 +8463,7 @@ export class MatchSimulation {
     for (const [otherId, other] of this.#participants) {
       if (
         other.creature?.ownerId === record.id &&
+        other.layer === record.layer &&
         !other.combatant.dead &&
         penetration(start, other.position, radius + this.#radiusOf(other)) > 0
       ) {
@@ -8378,7 +8488,12 @@ export class MatchSimulation {
     // the wall never squeezes past. Per body and against the start, so two
     // bodies that already overlap (a shared spawn) can still move apart.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === record.id || other.combatant.dead || this.#walksThrough(record, other)) {
+      if (
+        otherId === record.id ||
+        other.layer !== record.layer ||
+        other.combatant.dead ||
+        this.#walksThrough(record, other)
+      ) {
         continue;
       }
       const reach = radius + this.#radiusOf(other);
@@ -8390,7 +8505,11 @@ export class MatchSimulation {
       }
     }
 
+    const moved = position.x !== start.x || position.y !== start.y;
     record.position = position;
+    if (moved) {
+      this.#changeLayer(record);
+    }
   }
 
   /**
@@ -8432,6 +8551,7 @@ export class MatchSimulation {
     for (const [otherId, other] of this.#participants) {
       if (
         otherId === mover.id ||
+        other.layer !== mover.layer ||
         other.combatant.dead ||
         passing.has(otherId) ||
         this.#walksThrough(mover, other)
@@ -8450,8 +8570,14 @@ export class MatchSimulation {
     // and a wall ends up outside the wall rather than inside it — being
     // pushed through level geometry is far worse than overlapping a
     // teammate for one tick.
-    for (const wallSegment of this.#walls) {
+    for (const wallSegment of this.#wallsOn(mover.layer)) {
       position = resolveCircleSegmentCollision(position, radius, wallSegment);
+    }
+
+    // Above the ground a body stays on its floor: this is what stops a
+    // knockback at a deck's edge and lands a step on the stepper's layer.
+    if (mover.layer > 0) {
+      position = clampToAreas(position, this.#floors[mover.layer] ?? []);
     }
 
     // The map's edge last (#244), so nobody walks off it out of sight.
@@ -8508,6 +8634,7 @@ export class MatchSimulation {
     record.combatant.lastCombatAt = this.#elapsedSeconds;
     record.combatant.statuses.clear();
     record.position = record.spawn;
+    record.layer = record.spec.layer ?? 0;
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;
     record.walkGoal = undefined;
@@ -8544,6 +8671,7 @@ export class MatchSimulation {
     if (companion !== undefined) {
       this.#reset(companion, why);
       companion.position = record.position;
+      companion.layer = record.layer;
       this.#stepStart.set(companion.id, record.position);
     }
   }

@@ -303,3 +303,64 @@ export function resolveCircleCircleCollision(
   const pushDirection = scale(offset, 1 / distanceBetween);
   return add(otherCenter, scale(pushDirection, minimumDistance));
 }
+
+/** An area of floor, as a polygon's corners: a deck's footprint or a ramp's (ADR-0051). */
+export type Area = readonly Vec2[];
+
+/**
+ * What a map has above its ground (ADR-0051). A deck is a walkable floor
+ * on its layer, a transition joins `from` to `to`, one above. `walls` are
+ * those of the layers above the ground, by layer.
+ */
+export interface MapLayers {
+  readonly count: number;
+  readonly decks: readonly { readonly layer: number; readonly footprint: Area }[];
+  readonly transitions: readonly {
+    readonly from: number;
+    readonly to: number;
+    readonly area: Area;
+  }[];
+  readonly walls: ReadonlyMap<number, readonly Segment[]>;
+}
+
+/** Whether `point` is inside `area`, by counting the edges a ray from it crosses. */
+export function pointInArea(point: Vec2, area: Area): boolean {
+  let inside = false;
+  let previous = area[area.length - 1];
+  for (const corner of area) {
+    if (
+      previous !== undefined &&
+      corner.y > point.y !== previous.y > point.y &&
+      point.x <
+        ((previous.x - corner.x) * (point.y - corner.y)) / (previous.y - corner.y) + corner.x
+    ) {
+      inside = !inside;
+    }
+    previous = corner;
+  }
+  return inside;
+}
+
+/** `point` itself if it is in any of `areas`, otherwise the nearest point of any of their edges. */
+export function clampToAreas(point: Vec2, areas: readonly Area[]): Vec2 {
+  let nearest = point;
+  let least = Number.POSITIVE_INFINITY;
+  for (const area of areas) {
+    if (pointInArea(point, area)) {
+      return point;
+    }
+    let previous = area[area.length - 1];
+    for (const corner of area) {
+      if (previous !== undefined) {
+        const candidate = closestPointOnSegment(point, segment(previous, corner));
+        const away = distance(point, candidate);
+        if (away < least) {
+          least = away;
+          nearest = candidate;
+        }
+      }
+      previous = corner;
+    }
+  }
+  return nearest;
+}

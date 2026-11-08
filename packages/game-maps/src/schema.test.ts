@@ -920,6 +920,20 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     refuses({ spawnPoints: spawnAt(1, 700, 301) }, /spawnPoints\.4: spawn 4 must be/);
   });
 
+  it("refuses a deck footprint outside the map, naming decks", () => {
+    refuses(
+      {
+        decks: [
+          {
+            ...deck("bridge", 1),
+            footprint: { kind: "rect", x: 500, y: 300, width: 5000, height: 200 },
+          },
+        ],
+      },
+      /decks\.0\.footprint: deck bridge's footprint is outside the map/,
+    );
+  });
+
   it("walks a body across where a ramp meets the deck", () => {
     accepts({ spawnPoints: spawnAt(1, 510, 400) });
   });
