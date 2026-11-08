@@ -177,7 +177,7 @@ equipo de tu ronda.
 Abre **Opciones** con el ⚙ de la barra superior: su sección **jugador** tiene
 lo que es tuyo juegues a lo que juegues. El juego te da un **Nombre** en tu
 primera visita, como `AshenWolf`; escribe encima para cambiarlo. Si lo dejas
-vacío, juegas como `Player`. Escribe una **Etiqueta de gremio** de 2 a 4 letras
+vacío, juegas como `Jugador`. Escribe una **Etiqueta de gremio** de 2 a 4 letras
 o dígitos al lado, y todos la verán tras tu nombre, como `Ente [VIBE]`. Con una
 etiqueta puesta, aparece debajo el diseñador de **Capa de gremio**: elige el
 color de la capa, el del ribete y un emblema, y tu cuerpo llevará la capa en
@@ -216,7 +216,7 @@ tu dirección IP.
 
 - Haz clic en el suelo para caminar hasta allí, o muévete con las flechas.
 - Clic derecho en un enemigo para seleccionarlo, o pulsa **Tab** para el
-  siguiente. Pulsa **Espacio**, o clic derecho otra vez en el enemigo, para
+  siguiente. Pulsa **Space**, o clic derecho otra vez en el enemigo, para
   atacarlo.
 - Tus ocho habilidades están en **Q W E R** y **A S D F**, primero el hueco 1.
   También puedes hacer clic en una habilidad de la barra para usarla.

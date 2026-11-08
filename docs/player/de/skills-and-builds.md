@@ -37,10 +37,10 @@ Angriffs-Skills für ein paar Sekunden ab. Zauber sind nicht betroffen.
 
 Du hast **200 Punkte** zu vergeben. Jeder Rang eines Attributs kostet mehr als der
 letzte, bis Rang 12; die Zeile zeigt, was der nächste kostet. Zwölf, zwölf und drei
-verbraucht alles. Runen und Kopfbedeckung können bis zu vier Ränge obendrauf
+verbraucht alles. Runen und Kopfschutz können bis zu vier Ränge obendrauf
 geben; siehe [Ausrüstung](equipment.md). Steigerst du das Attribut, das ein Skill
 nutzt, wird er stärker: Zahlen, die mit dem Attribut wachsen, sind grün und fett
-und gelten für deine aktuellen Ränge samt Runen und Kopfbedeckung.
+und gelten für deine aktuellen Ränge samt Runen und Kopfschutz.
 
 Im Kampf können sich deine Ränge eine Weile ändern. Weakness nimmt jedem einen weg.
 Manche Verhexungen setzen die Attribute eines Gegners auf 0, und Master of Magic

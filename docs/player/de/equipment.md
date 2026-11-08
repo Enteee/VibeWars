@@ -140,7 +140,7 @@ Upgrade-Plätze:
   physischen Schaden oder beim Angreifen;
 - eine **Rune**.
 
-Deine **Kopfbedeckung** gibt +1 auf ein Attribut deiner Wahl.
+Dein **Kopfschutz** gibt +1 auf ein Attribut deiner Wahl.
 
 Im Editor ist Rüstung eine Figur. Klick auf ein nummeriertes Teil daran oder seine Zeile
 daneben, um Insignie und Rune zu wählen; jede Wahl sagt, was sie auf diesem Teil tut.

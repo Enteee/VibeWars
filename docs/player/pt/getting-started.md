@@ -165,8 +165,8 @@ o grupo entra na fila, e o mesmo anel girando à esquerda de **Ajuda**
 mostra isso: a janela dele diz o nome da fila (**Arena de Equipes 2v2**,
 **Ascensão dos Heróis · rodada 3**, **Guilda contra Guilda**) com o tempo
 de espera e, em Arena de Equipes, quantas equipes estão buscando,
-incluindo a sua: `2 teams
-searching`. Só o host tem **Sair da fila** ali. Fechar a aba do host tira
+incluindo a sua: `2 equipes
+buscando`. Só o host tem **Sair da fila** ali. Fechar a aba do host tira
 o grupo da fila na hora. Quando aparece outra equipe na fila do mesmo
 modo, vocês jogam em um dos mapas do modo, cada lado com suas builds, e
 voltam à sua sala depois. O host pode pressionar **Sair da fila** a
@@ -182,7 +182,7 @@ equipe da sua rodada.
 Abra **Opções** com o ⚙ na barra superior: a seção **jogador** guarda o
 que é seu em qualquer modo. O jogo dá a você um **Nome** na primeira
 visita, como `AshenWolf`; digite por cima para mudar. Se ficar vazio, você
-joga como `Player`. Digite ao lado uma **Tag da guilda** de 2 a 4 letras
+joga como `Jogador`. Digite ao lado uma **Tag da guilda** de 2 a 4 letras
 ou dígitos, e todos a veem depois do seu nome, como `Ente [VIBE]`. Com
 uma tag definida, o criador de **Capa da guilda** aparece embaixo: escolha
 a cor da capa, a cor da barra e um emblema, e seu corpo usa a capa em toda

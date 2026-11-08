@@ -52,7 +52,7 @@ Ci si gioca su Guild Hall Isle.
 
 I morti restano a terra finché un alleato non li resuscita, e ogni morte costa morale. Elimina l'altra squadra per vincere subito. Dopo 8 minuti vince la squadra con più punti; a parità è un pareggio. Le uccisioni non valgono punti.
 
-Il tabellone mostra i punti, i tuoi per primi, e il tempo. Sotto, una riga per ogni reliquia dice dov'è: `✦ Name` sul portatore, `✦ dropped` a terra o `✦ at base`.
+Il tabellone mostra i punti, i tuoi per primi, e il tempo. Sotto, una riga per ogni reliquia dice dov'è: `✦ Name` sul portatore, `✦ a terra` o `✦ alla base`.
 
 Anche i bot corrono con la reliquia: il più vicino alla tua reliquia va a prenderla, a meno che non stia per prenderla tu. Parte per primo un bot fuori dallo scontro; se sono tutti impegnati, il più vicino lascia lo scontro per la reliquia, così una situazione di stallo all'altare non ferma mai i punti. Un guaritore o un bot gravemente ferito va solo se non può andare nessun altro, e mai durante uno scontro. Il più vicino a una reliquia nemica caduta la rimanda alla base, e gli altri aspettano vicino all'altare. Un bot che porta la tua reliquia la conduce dritto all'altare; gli altri la lasciano solo per combattere un nemico che arriva a portata d'incantesimo.
 

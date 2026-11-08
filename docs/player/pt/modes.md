@@ -142,7 +142,7 @@ nada.
 
 O placar mostra os pontos, os seus primeiro, e o relógio. Embaixo, uma
 linha para cada relíquia diz onde ela está: `✦ Name` em quem carrega,
-`✦ dropped` no chão ou `✦ at base`.
+`✦ largada` no chão ou `✦ na base`.
 
 Os bots também levam a relíquia: o mais próximo da sua relíquia vai
 buscá-la, a menos que você esteja prestes a pegá-la. Um bot fora da luta

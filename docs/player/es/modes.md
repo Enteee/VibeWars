@@ -92,8 +92,8 @@ menos de daño, así que mátalo primero. Cada 2 minutos, el santuario de cada
 equipo devuelve a sus muertos.
 
 Cada equipo tiene una **bandera** en su base, y la **base de bandera** está en
-el centro. Selecciona tu bandera y pulsa **Espacio** para cogerla; llévala a la
-base de bandera, selecciónala y pulsa **Espacio** para plantarla. Quien la lleva
+el centro. Selecciona tu bandera y pulsa **Space** para cogerla; llévala a la
+base de bandera, selecciónala y pulsa **Space** para plantarla. Quien la lleva
 camina más despacio y no puede atacar ni usar habilidades de ataque; la suelta
 si muere, cambia de armas o pulsa **Soltar bandera** sobre su barra de salud.
 Plantar la tuya en la base de bandera manda a casa la bandera enemiga que
@@ -119,7 +119,7 @@ Se juega en Guild Hall Isle.
 **Lleva tu reliquia al altar.** Cada equipo tiene una **reliquia** en su base, y
 el **altar** está en el centro, a la misma distancia de ambas bases, por una
 ruta norte o sur; el altar aparece en la brújula como ◆. Selecciona tu reliquia
-y pulsa **Espacio** para cogerla. Llévala al altar y anotas un punto al instante,
+y pulsa **Space** para cogerla. Llévala al altar y anotas un punto al instante,
 y la reliquia vuelve a tu base. Cada punto se anuncia, con una fanfarria que
 sube para los tuyos y baja para los suyos. Quien la lleva camina más despacio y
 no puede atacar ni usar habilidades de ataque. Atraviesa a su propio equipo, pero
@@ -158,8 +158,8 @@ Courtyard** está en un patio abierto rodeado por cuatro grupos de pilares, con
 entrada por las cuatro esquinas. **Hall of Heroes**, el mapa de Rey de la colina
 que cierra el Ascenso de los Héroes, lo eleva sobre un estrado amurallado al
 oeste y al este, con una subida norte y otra sur flanqueadas de pilares.
-Selecciona a tu fantasma con un **clic derecho** y pulsa **Espacio** para decirle
-que te siga: camina contigo y lucha contra lo mismo que tú. Pulsa Espacio sobre
+Selecciona a tu fantasma con un **clic derecho** y pulsa **Space** para decirle
+que te siga: camina contigo y lucha contra lo mismo que tú. Pulsa Space sobre
 él otra vez y se queda donde está, luchando contra cualquier enemigo que se
 acerque. Si mueres o te vas, se queda. Con tu fantasma seleccionado, su marco
 dice a quién sigue o que se queda. Un aviso dice a quién sigue tu Héroe Fantasmal

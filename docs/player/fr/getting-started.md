@@ -183,7 +183,7 @@ ta manche.
 Ouvre les **Options** avec le ⚙ de la barre du haut : sa section **joueur**
 contient ce qui est à toi quoi que tu joues. Le jeu te donne un **Nom** à ta
 première visite, comme `AshenWolf` ; écris par-dessus pour le changer. Vide, tu
-joues sous le nom `Player`. Tape un **Tag de guilde** de 2 à 4 lettres ou
+joues sous le nom `Joueur`. Tape un **Tag de guilde** de 2 à 4 lettres ou
 chiffres à côté, et tout le monde le voit après ton nom, comme `Ente [VIBE]`.
 Avec un tag, le créateur de **Cape de guilde** apparaît en dessous : choisis la
 couleur de la cape, celle de la bordure et un emblème, et ton corps porte la
