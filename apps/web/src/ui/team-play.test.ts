@@ -329,8 +329,8 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
   });
 
   const maps: readonly LobbyMap[] = [
-    { id: "a", name: "Long Hall", size: "small", mode: "annihilation", teamSizes: [1, 2] },
-    { id: "b", name: "Broken Tower", size: "large", mode: "kill-count", teamSizes: [8] },
+    { id: "a", size: "small", mode: "annihilation", teamSizes: [1, 2] },
+    { id: "b", size: "large", mode: "kill-count", teamSizes: [8] },
   ];
 
   it("in the Random Arena queue, says so, its Find a match off with why, beside Leave Queue (#2781)", () => {
