@@ -34,6 +34,8 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["elonian-plateau", "glass-dunes"],
   ["hall-of-heroes", "hall-of-champions"],
   ["barrow-field", "jungle-veil"],
+  ["hollow-deep", "ember-deep"],
+  ["blackwater-ford", "jungle-veil"],
 ]);
 
 export type MenuScreen =

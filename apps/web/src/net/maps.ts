@@ -16,8 +16,10 @@ import shiverpeakPass from "@vibewars/game-maps/maps/shiverpeak-pass/map.json" w
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
 import barrowField from "@vibewars/game-maps/maps/barrow-field/map.json" with { type: "json" };
 import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
+import blackwaterFord from "@vibewars/game-maps/maps/blackwater-ford/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
 import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
+import hollowDeep from "@vibewars/game-maps/maps/hollow-deep/map.json" with { type: "json" };
 import theCourtyard from "@vibewars/game-maps/maps/the-courtyard/map.json" with { type: "json" };
 import type {
   BaseGuard,
@@ -74,6 +76,9 @@ export const ARENA_MAPS: readonly MapData[] = [
   hallOfHeroes,
   // The Heroes' Ascent's own (#2694): a Hosted Game's pick until the progression places it.
   barrowField,
+  // The Heroes' Ascent's own (#2693): a Hosted Game's pick until the progression places them.
+  hollowDeep,
+  blackwaterFord,
   // Capture Points' (#1378, #2551).
   scarredEarth,
 ].map((raw) => validateMapData(raw));
@@ -109,8 +114,8 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
  */
 const ASCENT_FINALE_ONLY: readonly string[] = ["hall-of-heroes"];
 
-/** Heroes' Ascent maps (#2694) whose modes Random and Team Arena also play: neither draws them. */
-const ASCENT_ONLY: readonly string[] = ["barrow-field"];
+/** Heroes' Ascent maps (#2693, #2694) whose modes Random and Team Arena also play: neither draws them. */
+const ASCENT_ONLY: readonly string[] = ["barrow-field", "hollow-deep", "blackwater-ford"];
 
 /**
  * Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them: a

@@ -82,6 +82,8 @@ describe("randomArenaMapPool", () => {
               "the-courtyard",
               "hall-of-heroes",
               "barrow-field",
+              "hollow-deep",
+              "blackwater-ford",
               "scarred-earth",
               "moss-vale",
               "elonian-plateau",
@@ -235,6 +237,8 @@ describe("team sizes (#2108)", () => {
       "the-courtyard",
       "hall-of-heroes",
       "barrow-field",
+      "hollow-deep",
+      "blackwater-ford",
       "scarred-earth",
     ]);
   });
@@ -248,6 +252,8 @@ describe("the Hall of Heroes (#1995)", () => {
     expect(modeMapIds()["team-arena"]).not.toContain("hall-of-heroes");
     expect(modeMapIds()["team-arena"]).not.toContain("barrow-field");
     expect(modeMapIds()["hosted-game"]).toContain("barrow-field");
+    expect(modeMapIds()["team-arena"]).not.toContain("hollow-deep");
+    expect(modeMapIds()["hosted-game"]).toContain("blackwater-ford");
     expect(modeMapIds()["random-arena"]).toContain("hall-of-heroes");
   });
 });
@@ -325,6 +331,7 @@ describe("hostMap (#476)", () => {
           "ember-pits",
           "jungle-ruins",
           "barrow-field",
+          "blackwater-ford",
           "guild-hall-isle",
           "broken-tower",
           "the-courtyard",

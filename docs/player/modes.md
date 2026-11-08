@@ -339,6 +339,11 @@ earthen mounds, the priest raising its dead every 2 minutes. Carry your flag
 onto the **Storm Beacon** in the middle and it strikes one random foe within
 earshot of it for 50 lightning damage every 2.5 seconds, until the other team
 plants its flag there.
+Two Ascent arenas are built but not yet in the queued run, so for now you
+pick them in a Hosted Game: **The Hollow Deep** (8v8 Annihilation, three
+winding tunnels round a central rock) and **Blackwater Ford** (8v8 Priest
+Annihilation on a tiny ford, bases nearly in sight, the priest raising
+its dead every 2 minutes).
 
 A map may have **gates**: walls that stop bodies, shots and sight while
 closed. Stand on a gate's pressure plate to open it. It closes when
