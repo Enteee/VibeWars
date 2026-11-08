@@ -7,6 +7,7 @@ import arenaCrossroads from "../maps/arena-crossroads/map.json" with { type: "js
 import arenaLongHall from "../maps/arena-long-hall/map.json" with { type: "json" };
 import elonianPlateau from "../maps/elonian-plateau/map.json" with { type: "json" };
 import ashenCourtyard from "../maps/ashen-courtyard/map.json" with { type: "json" };
+import barrowField from "../maps/barrow-field/map.json" with { type: "json" };
 import brokenTower from "../maps/broken-tower/map.json" with { type: "json" };
 import canthanTerraces from "../maps/canthan-terraces/map.json" with { type: "json" };
 import emberPits from "../maps/ember-pits/map.json" with { type: "json" };
@@ -46,6 +47,7 @@ describe("the maps the browser imports", () => {
       arenaCrossroads,
       arenaLongHall,
       ashenCourtyard,
+      barrowField,
       brokenTower,
       canthanTerraces,
       elonianPlateau,

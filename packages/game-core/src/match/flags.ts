@@ -36,6 +36,8 @@ export const FLAG_CARRIER_SPEED_MULTIPLIER = 1.2;
 export interface FlagField {
   readonly stand: Vec2;
   readonly spawns: readonly CarriedSpawn[];
+  /** The stand is a Storm Beacon (#2694): it strikes foes instead of boosting morale. */
+  readonly beacon?: boolean | undefined;
 }
 
 /** Where a flag is: always exactly one of these, a bundle's three and the stand. */
@@ -191,7 +193,12 @@ export function stepFlags(
         ? dropFlag(next, action.carrierId, action.position)
         : interact(field, next, action);
   }
-  if (next.stand.holder === undefined || next.stand !== state.stand || holder === undefined) {
+  if (
+    field.beacon === true ||
+    next.stand.holder === undefined ||
+    next.stand !== state.stand ||
+    holder === undefined
+  ) {
     return { ...next, boostTeam: undefined };
   }
   const heldSeconds = next.stand.heldSeconds + dt;

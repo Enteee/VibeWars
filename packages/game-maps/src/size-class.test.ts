@@ -25,6 +25,7 @@ describe("sizeClass (#444, #2547)", () => {
       "broken-tower": "small",
       "the-courtyard": "small",
       "hall-of-heroes": "small",
+      "barrow-field": "small",
       "scarred-earth": "small",
       "sandstone-steps": "medium",
       "frozen-crossing": "medium",

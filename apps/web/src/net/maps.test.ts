@@ -81,6 +81,7 @@ describe("randomArenaMapPool", () => {
               "broken-tower",
               "the-courtyard",
               "hall-of-heroes",
+              "barrow-field",
               "scarred-earth",
               "moss-vale",
               "elonian-plateau",
@@ -233,6 +234,7 @@ describe("team sizes (#2108)", () => {
       "broken-tower",
       "the-courtyard",
       "hall-of-heroes",
+      "barrow-field",
       "scarred-earth",
     ]);
   });
@@ -244,6 +246,8 @@ describe("the Hall of Heroes (#1995)", () => {
     expect(modeMapIds()["heroes-ascent"]).not.toContain("hall-of-heroes");
     expect(queueMapPool("heroes-ascent", ASCENT_ROUNDS - 1)).toEqual(["hall-of-heroes"]);
     expect(modeMapIds()["team-arena"]).not.toContain("hall-of-heroes");
+    expect(modeMapIds()["team-arena"]).not.toContain("barrow-field");
+    expect(modeMapIds()["hosted-game"]).toContain("barrow-field");
     expect(modeMapIds()["random-arena"]).toContain("hall-of-heroes");
   });
 });
@@ -320,6 +324,7 @@ describe("hostMap (#476)", () => {
         ![
           "ember-pits",
           "jungle-ruins",
+          "barrow-field",
           "guild-hall-isle",
           "broken-tower",
           "the-courtyard",

@@ -14,6 +14,7 @@ import canthanTerraces from "@vibewars/game-maps/maps/canthan-terraces/map.json"
 import sunkenBastion from "@vibewars/game-maps/maps/sunken-bastion/map.json" with { type: "json" };
 import shiverpeakPass from "@vibewars/game-maps/maps/shiverpeak-pass/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
+import barrowField from "@vibewars/game-maps/maps/barrow-field/map.json" with { type: "json" };
 import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
 import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
@@ -71,6 +72,8 @@ export const ARENA_MAPS: readonly MapData[] = [
   theCourtyard,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
   hallOfHeroes,
+  // The Heroes' Ascent's own (#2694): a Hosted Game's pick until the progression places it.
+  barrowField,
   // Capture Points' (#1378, #2551).
   scarredEarth,
 ].map((raw) => validateMapData(raw));
@@ -106,6 +109,9 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
  */
 const ASCENT_FINALE_ONLY: readonly string[] = ["hall-of-heroes"];
 
+/** Heroes' Ascent maps (#2694) whose modes Random and Team Arena also play: neither draws them. */
+const ASCENT_ONLY: readonly string[] = ["barrow-field"];
+
 /**
  * Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them: a
  * team mode's only those that suit its team size (#2108), so its draw never seats 8 on a map
@@ -117,6 +123,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
     const modes = LOBBY_MODE_MATCH_MODES[mode];
     return arenaIds().filter(
       (id) =>
+        (mode === "hosted-game" || !ASCENT_ONLY.includes(id)) &&
         (modes === undefined || modes.includes(mapMode(id))) &&
         (size === undefined || suits(id, size)),
     );
@@ -135,7 +142,9 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
 /** Team Arena's map ids at `size` a side (#2107), in `arenaIds`' order: its modes' maps that suit it (#2108). */
 export function teamArenaMapIds(size: number): string[] {
   const modes = LOBBY_MODE_MATCH_MODES["team-arena"] ?? [];
-  return arenaIds().filter((id) => modes.includes(mapMode(id)) && suits(id, size));
+  return arenaIds().filter(
+    (id) => !ASCENT_ONLY.includes(id) && modes.includes(mapMode(id)) && suits(id, size),
+  );
 }
 
 /** The arenas among `maps` that suit a side of `size` (#2108), in their order. */
@@ -163,7 +172,7 @@ function suits(mapId: string, size: number): boolean {
  */
 export function randomArenaMapPool(mode: QueueMode): string[] {
   return mapsForSize(ARENA_MAPS, teamSizeOf(mode))
-    .filter((map) => !NOT_RANDOM.includes(map.mode))
+    .filter((map) => !NOT_RANDOM.includes(map.mode) && !ASCENT_ONLY.includes(map.id))
     .map((map) => map.id);
 }
 
@@ -277,15 +286,18 @@ function guildLordsOf(objectives: readonly Objective[]): readonly GuildLord[] {
 }
 
 /**
- * The flag stand and flag spawns among a map's objectives (#1225), or
- * `undefined` on a map without a stand.
+ * The flag stand or Storm Beacon (#2694) and flag spawns among a map's
+ * objectives (#1225), or `undefined` on a map without a stand.
  */
 function flagFieldOf(objectives: readonly Objective[]): FlagField | undefined {
-  const stand = objectives.find((objective) => objective.kind === "flag-stand");
+  const stand = objectives.find(
+    (objective) => objective.kind === "flag-stand" || objective.kind === "storm-beacon",
+  );
   return stand === undefined
     ? undefined
     : {
         stand: stand.position,
+        beacon: stand.kind === "storm-beacon",
         spawns: objectives.flatMap((objective) =>
           objective.kind === "flag-spawn"
             ? [{ team: objective.team, position: objective.position }]

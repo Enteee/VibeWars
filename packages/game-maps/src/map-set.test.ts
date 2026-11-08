@@ -188,6 +188,7 @@ describe("the arena set (#444)", () => {
         "broken-tower",
         "the-courtyard",
         "hall-of-heroes",
+        "barrow-field",
         "scarred-earth",
         "sandstone-steps",
         "frozen-crossing",
@@ -207,6 +208,7 @@ describe("the arena set (#444)", () => {
       "ember-pits",
     ]);
     expect(MAPS.filter((map) => map.mode === "priest-annihilation").map((map) => map.id)).toEqual([
+      "barrow-field",
       "jungle-ruins",
     ]);
     expect(MAPS.filter((map) => map.mode === "guild-battle").map((map) => map.id)).toEqual([
@@ -222,7 +224,7 @@ describe("the arena set (#444)", () => {
     expect(MAPS.filter((map) => map.mode === "capture-points").map((map) => map.id)).toEqual([
       "scarred-earth",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 7);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 8);
   });
 
   it("puts each team's shrine on Jungle Ruins 150-250 behind its spawns (#1186, #2550)", () => {

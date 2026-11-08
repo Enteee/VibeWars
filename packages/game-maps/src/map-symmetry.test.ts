@@ -16,6 +16,7 @@ const SYMMETRIC = [
   "scarred-earth",
   "the-courtyard",
   "hall-of-heroes",
+  "barrow-field",
   "ashen-courtyard",
   "moss-vale",
   "canthan-terraces",
