@@ -53,6 +53,7 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
+import { keySignet } from "./identity/key-signet.js";
 import { mapName } from "./i18n/game-names.js";
 import { t } from "./i18n/index.js";
 import { loadLocale } from "./i18n/load-locale.js";
@@ -2332,6 +2333,10 @@ async function main(): Promise<void> {
         null,
       send: (channel, text) => {
         joined.sendChat(channel, text);
+      },
+      signetOf: (fromId) => {
+        const key = joined.getSnapshot().players.find((p) => p.sessionId === fromId)?.playerPubkey;
+        return key === null || key === undefined ? undefined : keySignet(key);
       },
     });
     app.append(chat.root);
