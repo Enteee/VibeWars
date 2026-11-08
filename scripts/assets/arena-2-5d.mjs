@@ -186,8 +186,9 @@ const ALL = { ...BASE, ...EXTRA };
 /**
  * Build an SVG for one style.
  * @param {string} id
+ * @param {string} [occ] occlusion variant: "" | "ghost" | "fade" | "marker"
  */
-function scene(id) {
+function scene(id, occ = "") {
   const S = ALL[id];
   /** @type {string[]} */
   const out = [];
@@ -324,18 +325,20 @@ function scene(id) {
   };
 
   // ---------- characters ----------
+  /** @type {(c: Char) => boolean} */
+  const isUnder = (c) =>
+    c[3] === 0 &&
+    c[1] > BRIDGE.x0 - 0.3 &&
+    c[1] < BRIDGE.x1 + 0.3 &&
+    c[2] > BRIDGE.y0 - 0.3 &&
+    c[2] < BRIDGE.y1 + 0.3;
   /** @type {(c: Char) => void} */
   const char = (c) => {
     const [t, x, y] = c;
     const z = charZ(c);
     const [X, Y] = Q(x, y, z);
     const col = teamCol(t);
-    const under =
-      c[3] === 0 &&
-      x > BRIDGE.x0 - 0.3 &&
-      x < BRIDGE.x1 + 0.3 &&
-      y > BRIDGE.y0 - 0.3 &&
-      y < BRIDGE.y1 + 0.3;
+    const under = isUnder(c);
     out.push("<!--c0-->");
     if (S.hooks?.char) {
       S.hooks.char(ctx, c, X, Y, col, under);
@@ -603,6 +606,7 @@ function scene(id) {
   for (const it of items.sort((a, b) => a[0] - b[0])) it[1]();
 
   // ---------- group 2: the deck ----------
+  if (occ === "fade") out.push('<g opacity=".38">'); // roof fade: the deck lets the layer below show through
   const { x0, y0, x1, y1 } = BRIDGE;
   const zt = DECK;
   const zb = DECK - S.slab;
@@ -685,11 +689,46 @@ function scene(id) {
     }
   }
 
+  if (occ === "fade") out.push("</g>");
   // ---------- group 3: characters on the upper layer ----------
   for (const c of CHARS.filter((c) => c[3] === 1).sort(
     (a, b) => depth(a[1], a[2]) - depth(b[1], b[2]),
   ))
     char(c);
+
+  // ---------- occlusion cue for characters hidden under the deck ----------
+  const hidden = CHARS.filter(isUnder);
+  if (occ === "ghost") {
+    // outlined translucent silhouette drawn over the occluder
+    defs.push(
+      '<filter id="gh" x="-30%" y="-30%" width="160%" height="160%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.6" result="d"/><feFlood flood-color="#fff"/><feComposite in2="d" operator="in" result="o"/><feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
+    );
+    for (const c of hidden) {
+      const at = out.length;
+      char(c);
+      const body = out
+        .splice(at)
+        .join("")
+        .replace(/<!--c[01]-->/g, "");
+      out.push(`<g opacity=".92" filter="url(#gh)">${body}</g>`);
+    }
+  }
+  if (occ === "marker") {
+    // a pip floats over the occluder at the character's head; a tether drops to the footprint
+    for (const c of hidden) {
+      const [X, Y] = Q(c[1], c[2], 0);
+      const col = teamCol(c[0]);
+      const py = Y - u * 0.9;
+      out.push(
+        `<line x1="${f(X)}" y1="${f(py)}" x2="${f(X)}" y2="${f(Y)}" stroke="${col}" stroke-width="2" stroke-dasharray="3 3"/>`,
+      );
+      ellipse(X, Y, u * 0.3, u * 0.12, "none", `stroke="${col}" stroke-width="2"`);
+      out.push(
+        `<circle cx="${f(X)}" cy="${f(py)}" r="${f(u * 0.24)}" fill="${S.edge}" stroke="#fff" stroke-width="2.4"/>`,
+      );
+      glyph(c[0], X, py, u * 0.15, col);
+    }
+  }
 
   // ---------- atmosphere over everything ----------
   if (id === "c") {
@@ -726,6 +765,19 @@ const onlyChars = (svg) =>
 const raster = (svg, png, w) => {
   execFileSync("inkscape", [svg, "-o", png, "-w", String(w)], { stdio: "ignore" });
 };
+
+if (process.argv[3] === "occlusion") {
+  // #2811 follow-up: D and G, three ways to show a player hidden under the deck
+  for (const id of ["d", "g"])
+    for (const occ of ["ghost", "fade", "marker"]) {
+      const svg = join(tmp, `${id}-${occ}.svg`);
+      writeFileSync(svg, scene(id, occ));
+      const png = join(outDir, `2811-occlusion-${id}-${occ}.png`);
+      raster(svg, png, 1200);
+      execFileSync("magick", [png, "-colors", "160", "-strip", `PNG8:${png}`]);
+    }
+  process.exit(0);
+}
 
 /** @type {string[]} */
 const pngs = [];
