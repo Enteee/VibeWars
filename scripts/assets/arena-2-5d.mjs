@@ -6,6 +6,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { EXTRA } from "./arena-2-5d-styles.mjs";
 
 const outDir = process.argv[2] ?? "docs/art";
 mkdirSync(outDir, { recursive: true });
@@ -17,7 +18,20 @@ const H = 560;
 const DECK = 2.4; // layer 1 height, world units
 /** @typedef {[number, number]} Pt */
 /** @typedef {[string, number, number, number]} Char  team, x, y, layer */
-/** @typedef {{name:string,iso:boolean,sx:number,sy:number,hz:number,bg:[string,string],floor:string,deck:string,wall:string,ramp:string,pillar:string,friend:string,foe:string,slab:number,edge:string}} Style */
+/** @typedef {{name:string,iso:boolean,sx:number,sy:number,hz:number,bg:[string,string],floor:string,deck:string,wall:string,ramp:string,pillar:string,friend:string,foe:string,slab:number,edge:string,label?:string,hooks?:Hooks,polyFx?:(fill:string,extra:string)=>{fill:string,extra:string},voxel?:boolean,wrap?:string,pixel?:number,post?:string[],tone?:{from:string,to:string}}} Style */
+/**
+ * What a style's hooks may use. All coordinates are world units unless named px.
+ * @typedef {{S:Style,out:string[],defs:string[],u:number,W:number,H:number,DECK:number,BRIDGE:{x0:number,y0:number,x1:number,y1:number},RAMP:{x0:number,y0:number,x1:number,y1:number},
+ *   Q:(x:number,y:number,z?:number)=>Pt,f:(n:number)=>string,pts:(a:Pt[])=>string,poly:(a:Pt[],fill:string,extra?:string)=>void,
+ *   box:(x0:number,y0:number,x1:number,y1:number,z0:number,z1:number,c:string,o?:{sw?:number,front?:string,side?:string,top?:string})=>void,
+ *   blocks:(x0:number,y1:number,x1:number,z0:number,z1:number,rows:number,line:string,w?:number)=>void,
+ *   ellipse:(cx:number,cy:number,rx:number,ry:number,fill:string,extra?:string)=>void,
+ *   glyph:(t:string,X:number,Y:number,r:number,col?:string)=>void,
+ *   mix:(a:string,b:string,t:number)=>string,shade:(c:string,t:number)=>string,lift:(c:string,t:number)=>string,rampZ:(x:number)=>number}} Ctx */
+/**
+ * @typedef {{bgAdd?:(c:Ctx)=>void,floorAdd?:(c:Ctx)=>void,shadow?:(c:Ctx)=>void,wallAdd?:(c:Ctx,w:number[])=>void,
+ *   pillar?:(c:Ctx,x:number,y:number)=>void,deckAdd?:(c:Ctx)=>void,over?:(c:Ctx)=>void,
+ *   char?:(c:Ctx,ch:Char,X:number,Y:number,col:string,under:boolean)=>void}} Hooks */
 /** @type {(n: number) => string} */
 const f = (n) => String(Math.round(n * 10) / 10);
 
@@ -78,7 +92,7 @@ const shade = (c, t) => mix(c, "#000000", t);
 const lift = (c, t) => mix(c, "#ffffff", t);
 
 /** @type {Record<string, Style>} */
-const STYLES = {
+const BASE = {
   a: {
     name: "A · Sunken courtyard",
     iso: false,
@@ -166,12 +180,15 @@ const STYLES = {
   },
 };
 
+/** @type {Record<string, Style>} */
+const ALL = { ...BASE, ...EXTRA };
+
 /**
  * Build an SVG for one style.
  * @param {string} id
  */
 function scene(id) {
-  const S = STYLES[id];
+  const S = ALL[id];
   /** @type {string[]} */
   const out = [];
   /** @type {(x: number, y: number, z?: number) => Pt} */
@@ -196,14 +213,36 @@ function scene(id) {
   /** @type {(arr: Pt[]) => string} */
   const pts = (arr) => arr.map((p) => `${f(p[0])},${f(p[1])}`).join(" ");
   /** @type {(arr: Pt[], fill: string, extra?: string) => void} */
-  const poly = (arr, fill, extra = "") =>
-    out.push(`<polygon points="${pts(arr)}" fill="${fill}" ${extra}/>`);
+  const poly = (arr, fill, extra = "") => {
+    const fx = S.polyFx ? S.polyFx(fill, extra) : { fill, extra };
+    out.push(`<polygon points="${pts(arr)}" fill="${fx.fill}" ${fx.extra}/>`);
+  };
   /** @type {string[]} */
   const defs = [];
 
   // box faces: top, front (y=y1), right (x=x1; zero width in oblique views)
   /** @type {(x0: number, y0: number, x1: number, y1: number, z0: number, z1: number, c: string, o?: {sw?: number, front?: string, side?: string, top?: string}) => void} */
   const box = (x0, y0, x1, y1, z0, z1, c, o = {}) => {
+    if (S.voxel && x1 - x0 > 1.05) {
+      // voxel look: one cube per world unit, back to front
+      const nx = Math.round(x1 - x0);
+      const ny = Math.max(1, Math.round(y1 - y0));
+      /** @type {[number, number][]} */
+      const cells = [];
+      for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) cells.push([i, j]);
+      cells.sort((a, b) => a[1] - a[0] - (b[1] - b[0]));
+      for (const [i, j] of cells) {
+        const k = ((i * 7 + j * 13) % 5) * 0.018;
+        const cx0 = x0 + ((x1 - x0) * i) / nx;
+        const cy0 = y0 + ((y1 - y0) * j) / ny;
+        box(cx0, cy0, cx0 + (x1 - x0) / nx, cy0 + (y1 - y0) / ny, z0, z1, mix(c, "#ffffff", k), {
+          ...o,
+          top: o.top && mix(o.top, "#ffffff", k),
+          sw: 0,
+        });
+      }
+      return;
+    }
     const st = `stroke="${S.edge}" stroke-width="${f(o.sw ?? 1)}" stroke-linejoin="round"`;
     poly(
       [Q(x0, y1, z0), Q(x1, y1, z0), Q(x1, y1, z1), Q(x0, y1, z1)],
@@ -259,6 +298,31 @@ function scene(id) {
       );
   };
 
+  /** @type {Ctx} */
+  const ctx = {
+    S,
+    out,
+    defs,
+    u,
+    W,
+    H,
+    DECK,
+    BRIDGE,
+    RAMP,
+    Q,
+    f,
+    pts,
+    poly,
+    box,
+    blocks,
+    ellipse,
+    glyph,
+    mix,
+    shade,
+    lift,
+    rampZ,
+  };
+
   // ---------- characters ----------
   /** @type {(c: Char) => void} */
   const char = (c) => {
@@ -272,7 +336,10 @@ function scene(id) {
       x < BRIDGE.x1 + 0.3 &&
       y > BRIDGE.y0 - 0.3 &&
       y < BRIDGE.y1 + 0.3;
-    if (id === "a") {
+    out.push("<!--c0-->");
+    if (S.hooks?.char) {
+      S.hooks.char(ctx, c, X, Y, col, under);
+    } else if (id === "a") {
       ellipse(X, Y + 1, u * 0.34, u * 0.13, "#000", 'opacity=".4"');
       out.push(
         `<rect x="${f(X - u * 0.22)}" y="${f(Y - u * 0.62)}" width="${f(u * 0.44)}" height="${f(u * 0.62)}" rx="${f(u * 0.16)}" fill="${col}" stroke="${S.edge}" stroke-width="1.2"/>`,
@@ -336,6 +403,7 @@ function scene(id) {
       );
       glyph(t, X, Y - u * 1.1, u * 0.09, "#f1e2b6");
     }
+    out.push("<!--c1-->");
   };
 
   // ---------- backdrop ----------
@@ -349,6 +417,7 @@ function scene(id) {
     `<filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .35 0"/><feComposite in2="SourceAlpha" operator="in"/></filter>`,
   );
   out.push(`<rect width="${f(W)}" height="${f(H)}" fill="url(#bg)"/>`);
+  S.hooks?.bgAdd?.(ctx);
 
   // ---------- floor ----------
   const fl = [Q(0, 0, 0), Q(20, 0, 0), Q(20, 12, 0), Q(0, 12, 0)];
@@ -367,6 +436,7 @@ function scene(id) {
     ellipse(...Q(10, 12, -2.4), 270, 22, "#000", 'opacity=".18" filter="url(#soft)"');
   }
   poly(fl, S.floor, `stroke="${S.edge}" stroke-width="${f(id === "b" ? 2 : 1)}"`);
+  S.hooks?.floorAdd?.(ctx);
   if (id === "a" || id === "e") {
     // flagstone courses
     for (let y = 1; y < 12; y += 1.5)
@@ -427,7 +497,8 @@ function scene(id) {
           Q(BRIDGE.x1, BRIDGE.y1, 0),
           Q(BRIDGE.x0, BRIDGE.y1, 0),
         ];
-  if (id === "d") poly(sh, "#080b10", 'opacity=".55"');
+  if (S.hooks?.shadow) S.hooks.shadow(ctx);
+  else if (id === "d") poly(sh, "#080b10", 'opacity=".55"');
   else
     out.push(
       `<g filter="url(#soft)"><polygon points="${pts(sh)}" fill="#000" opacity="${f(id === "c" ? 0.8 : id === "b" ? 0.3 : 0.5)}"/></g>`,
@@ -497,6 +568,7 @@ function scene(id) {
           out.push(
             `<polyline points="${pts([Q(x0, y1, tall), Q(x1, y1, tall)])}" stroke="#a9bbd0" stroke-width="2" fill="none"/>`,
           );
+        S.hooks?.wallAdd?.(ctx, w);
       },
     ]);
   }
@@ -504,6 +576,10 @@ function scene(id) {
     items.push([
       depth(px, py + 0.6),
       () => {
+        if (S.hooks?.pillar) {
+          S.hooks.pillar(ctx, px, py);
+          return;
+        }
         box(px, py, px + 0.6, py + 0.6, 0, DECK - S.slab, S.pillar, {
           front: shade(S.pillar, 0.3),
         });
@@ -534,6 +610,7 @@ function scene(id) {
     top: id === "d" ? lift(S.deck, 0.15) : S.deck,
     front: id === "d" ? shade(S.deck, 0.4) : shade(S.deck, 0.34),
   });
+  S.hooks?.deckAdd?.(ctx);
   if (id === "a") {
     blocks(x0, y1, x1, zb, zt, 2, S.edge, 0.8);
     out.push(
@@ -631,44 +708,96 @@ function scene(id) {
     );
     out.push(`<rect width="${f(W)}" height="${f(H)}" fill="url(#vig)"/>`);
   }
+  S.hooks?.over?.(ctx);
   out.push(
-    `<text x="16" y="${f(H - 14)}" font-family="sans-serif" font-size="15" font-weight="700" fill="${id === "b" ? "#26333d" : "#d7dee8"}" opacity=".85">${S.name}</text>`,
+    `<text x="16" y="${f(H - 14)}" font-family="sans-serif" font-size="15" font-weight="700" fill="${S.label ?? (id === "b" ? "#26333d" : "#d7dee8")}" opacity=".85">${S.name}</text>`,
   );
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${f(W)}" height="${f(H)}" viewBox="0 0 ${f(W)} ${f(H)}"><defs>${defs.join("")}</defs>${out.join("")}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${f(W)}" height="${f(H)}" viewBox="0 0 ${f(W)} ${f(H)}"><defs>${defs.join("")}</defs>${S.wrap ? `<g filter="url(#${S.wrap})">` : ""}${out.join("")}${S.wrap ? "</g>" : ""}</svg>`;
 }
 
+/** @type {(svg: string) => string} */
+const stripChars = (svg) => svg.replace(/<!--c0-->[\s\S]*?<!--c1-->/g, "");
+/** @type {(svg: string) => string} */
+const onlyChars = (svg) =>
+  svg.slice(0, svg.indexOf("</defs>") + 7) +
+  [...svg.matchAll(/<!--c0-->[\s\S]*?<!--c1-->/g)].map((m) => m[0]).join("") +
+  "</svg>";
+/** @type {(svg: string, png: string, w: number) => void} */
+const raster = (svg, png, w) => {
+  execFileSync("inkscape", [svg, "-o", png, "-w", String(w)], { stdio: "ignore" });
+};
+
+/** @type {string[]} */
 const pngs = [];
-for (const id of Object.keys(STYLES)) {
+for (const id of Object.keys(ALL)) {
+  const S = ALL[id];
   const svg = join(tmp, `${id}.svg`);
   const png = join(outDir, `2811-option-${id}.png`);
-  writeFileSync(svg, scene(id));
-  execFileSync("inkscape", [svg, "-o", png, "-w", "1200"], { stdio: "ignore" });
-  execFileSync("magick", [png, "-colors", "160", "-strip", `PNG8:${png}`]);
+  const text = scene(id);
+  writeFileSync(svg, text);
+  if (S.post) {
+    // environment gets a raster treatment; characters are composited crisp on top
+    const env = join(tmp, `${id}-env.svg`);
+    const ch = join(tmp, `${id}-chars.svg`);
+    writeFileSync(env, stripChars(text));
+    writeFileSync(ch, onlyChars(text));
+    raster(env, png, 1200);
+    execFileSync("magick", [png, ...S.post, png]);
+    raster(ch, join(tmp, `${id}-chars.png`), 1200);
+    execFileSync("magick", [
+      png,
+      join(tmp, `${id}-chars.png`),
+      "-composite",
+      "-colors",
+      "48",
+      "-strip",
+      `PNG8:${png}`,
+    ]);
+  } else if (S.pixel) {
+    raster(svg, png, S.pixel);
+    execFileSync("magick", [
+      png,
+      "-colors",
+      "28",
+      "+dither",
+      "-filter",
+      "point",
+      "-resize",
+      "1200x",
+      "-strip",
+      `PNG8:${png}`,
+    ]);
+  } else {
+    raster(svg, png, 1200);
+    execFileSync("magick", [png, "-colors", "160", "-strip", `PNG8:${png}`]);
+  }
   pngs.push(png);
 }
-// deuteranopia simulation (Machado 2009, severity 1.0), all five in one strip
+// deuteranopia simulation (Machado 2009, severity 1.0), five per row
 const sim = pngs.map((p, i) => {
   const o = join(tmp, `deut-${f(i)}.png`);
   execFileSync("magick", [
     p,
     "-resize",
-    "480x",
+    "384x",
     "-color-matrix",
     "0.367322 0.860646 -0.227968  0.280085 0.672501 0.047413  -0.011820 0.042940 0.968881",
     o,
   ]);
   return o;
 });
+/** @type {string[]} */
+const rows = [];
+for (let i = 0; i < sim.length; i += 5) {
+  const row = join(tmp, `row-${f(i)}.png`);
+  execFileSync("magick", [...sim.slice(i, i + 5), "+append", row]);
+  rows.push(row);
+}
 execFileSync("magick", [
-  ...sim.slice(0, 3),
-  "+append",
-  "(",
-  ...sim.slice(3),
-  "+append",
-  ")",
+  ...rows,
   "-append",
   "-colors",
-  "160",
+  "128",
   "-strip",
   `PNG8:${join(outDir, "2811-deuteranopia.png")}`,
 ]);
