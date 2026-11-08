@@ -266,3 +266,27 @@ Runners are ephemeral (JIT config, one job, jail wiped, #1890), so it cannot.
 **Capacity:** CI is the merge gate, so runner queue wait now blocks merges.
 A dead runner fails an `analyze` job, which blocks the merge until it is
 re-run. If the queue wait outgrows hosted, scale with `company runners <n>`.
+
+## Amendment (2026-11-08, #2792): main's devenv shell is preloaded into the jail
+
+Every job filled an empty `/nix`, so a CI run with eight devenv jobs unpacked
+the whole shell eight times (devenv setup 12-20 min; hosted median 53 s). The
+supervisor now runs `vibewars-runner-preload` at start and hourly
+(`scripts/bots/runner-preload.mjs`). It realises the shell of a fresh clone of
+**main only** (`devenv print-dev-env`, so no `enterShell` hook runs on the
+host) under a `HOME` of its own, and writes `preload/current/` in the state
+directory: `store-paths`, a `registration` dumped for exactly those paths, and
+the Nix fetcher cache. `current` is a symlink swapped by rename, so a jail
+never reads a half-built list; a failed build leaves the previous one.
+
+The jail mounts the union of the runner's closure and that list, each path an
+overlay on a tmpfs as before, with one combined registration. The mounted set
+and the registered set are the same list; a path missing on the host aborts
+that jail's start (the #2101 failure otherwise). The fetcher cache is copied
+into the job's `HOME`, since Nix writes it.
+
+This is not the rejected persistent shared `/nix/store`: the lower layers are
+read-only and built only from reviewed code on main, and every write lands in
+the per-job tmpfs. A branch that changes `devenv.lock` fetches only what it
+changed. Spike: 593 overlays start in about 0.3 s; `devenv shell` from an
+empty db took 29 s, 0 NARs.
