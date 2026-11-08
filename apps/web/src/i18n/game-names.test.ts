@@ -75,6 +75,15 @@ describe("game-data names (#2663)", () => {
     expect(mapName("no-such-map")).toBe("no-such-map");
   });
 
+  it("show an id that is an Object key as itself, never the prototype's (#2786)", () => {
+    for (const id of ["constructor", "__proto__", "toString", "hasOwnProperty"]) {
+      expect(skillName(id)).toBe(id);
+      expect(statusName(id)).toBe(id);
+      expect(itemName(id)).toBe(id);
+      expect(mapName(id)).toBe(id);
+    }
+  });
+
   it("come from the picked language's table", () => {
     const de: GameNames = {
       ...ENGLISH_NAMES,
