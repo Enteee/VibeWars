@@ -10,8 +10,10 @@ import {
   MATCH_MODES,
   PRIEST_ANNIHILATION_MATCH_RULES,
   KING_OF_THE_HILL_MATCH_RULES,
+  FOE_RELIC_RUN_MATCH_RULES,
   RELIC_RUN_MATCH_RULES,
   addPoint,
+  type MatchScore,
   emptyScore,
   evaluateMatch,
   type MatchRules,
@@ -575,5 +577,34 @@ describe("evaluateMatch: capture points (#2690)", () => {
       winningTeam: 1,
       reason: "annihilation",
     });
+  });
+});
+
+describe("evaluateMatch: the foe's relic run (#2695)", () => {
+  const rules = FOE_RELIC_RUN_MATCH_RULES;
+  const after = (...teams: number[]): MatchScore =>
+    teams.reduce<MatchScore>((score, team) => addPoint(score, team), emptyScore([0, 1]));
+
+  it("ends at a 3-point lead, not before", () => {
+    expect(evaluateMatch(after(0, 0), BOTH_ALIVE, 100, rules)).toBe(MATCH_IN_PROGRESS);
+    expect(evaluateMatch(after(0, 1, 0, 0), BOTH_ALIVE, 100, rules)).toBe(MATCH_IN_PROGRESS);
+    expect(evaluateMatch(after(0, 0, 0), BOTH_ALIVE, 100, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 0,
+      reason: "score",
+    });
+  });
+
+  it("goes at time to the most points, and a tie to the last to score", () => {
+    expect(evaluateMatch(after(1, 0, 0), BOTH_ALIVE, 480, rules).winningTeam).toBe(0);
+    expect(evaluateMatch(after(0, 1), BOTH_ALIVE, 480, rules)).toEqual({
+      phase: "finished",
+      winningTeam: 1,
+      reason: "time",
+    });
+  });
+
+  it("is a draw at time with nobody having scored", () => {
+    expect(evaluateMatch(after(), BOTH_ALIVE, 480, rules).winningTeam).toBeUndefined();
   });
 });

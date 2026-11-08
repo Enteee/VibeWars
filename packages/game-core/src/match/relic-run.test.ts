@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { segment, type Segment } from "../geometry.js";
-import { RELIC_RUN_MATCH_RULES } from "../match-rules.js";
+import { FOE_RELIC_RUN_MATCH_RULES, RELIC_RUN_MATCH_RULES } from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { applyIntent } from "./apply-intent.js";
 import { FLAG_CARRIER_SPEED_MULTIPLIER } from "./flags.js";
+import { ghostId } from "./ghost.js";
 import { relicId, type RelicField } from "./relics.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
@@ -91,8 +92,10 @@ const WALLS = [
   ...rect(1540, 1620, 120, 180),
 ];
 const BOUNDS = { width: 3200, height: 1800 };
-const FIELD: RelicField = {
+const FIELD: RelicField & { altar: Vec2 } = {
   altar: vec2(1600, 900),
+  relicTarget: "altar",
+  relicCarry: "own",
   spawns: [
     { team: 0, position: vec2(120, 900) },
     { team: 1, position: vec2(3080, 900) },
@@ -279,5 +282,78 @@ describe("a relic carrier", () => {
     expect(get(sim, "a").combatant.dead).toBe(true);
     expect(points(sim)).toEqual([1, 0]);
     expect(sim.relics[0]).toEqual({ team: 0, place: { kind: "spawn" } });
+  });
+});
+
+describe("the foe's relic to your Ghostly Hero (#2695)", () => {
+  const GHOST_POST = vec2(400, 900);
+  const FOE_FIELD: RelicField = {
+    altar: undefined,
+    relicTarget: "own-ghost",
+    relicCarry: "foe",
+    spawns: [
+      { team: 0, position: vec2(900, 900) },
+      { team: 1, position: vec2(1000, 900) },
+    ],
+  };
+
+  function foeRelicRun(): MatchSimulation {
+    return new MatchSimulation({
+      seed: "foe-relic-run",
+      matchRules: FOE_RELIC_RUN_MATCH_RULES,
+      walls: [],
+      bounds: BOUNDS,
+      relicField: FOE_FIELD,
+      ghostField: {
+        level: 20,
+        altar: undefined,
+        spawns: [
+          { team: 0, position: GHOST_POST },
+          { team: 1, position: vec2(2800, 900) },
+        ],
+      },
+      shrines: [
+        { team: 0, position: vec2(200, 900) },
+        { team: 1, position: vec2(3000, 900) },
+      ],
+      participants: [runner("a", 0, vec2(950, 900)), runner("x", 1, vec2(2900, 900))],
+    });
+  }
+
+  function grab(sim: MatchSimulation): void {
+    expect(applyIntent(sim, "a", { kind: "target", targetSessionId: relicId(1) })).toBeNull();
+    expect(applyIntent(sim, "a", { kind: "attack", targetId: relicId(1) })).toBeNull();
+    stepUntil(sim, () => sim.carriesBundle("a"), 10);
+  }
+
+  it("scores when the foe's relic is touched to your own ghost", () => {
+    const sim = foeRelicRun();
+    grab(sim);
+    applyIntent(sim, "a", { kind: "walk-to", x: GHOST_POST.x, y: GHOST_POST.y });
+    stepUntil(sim, () => points(sim)[0] === 1, 20);
+    expect(sim.carriesBundle("a")).toBe(false);
+    expect(sim.relics[1]).toEqual({ team: 1, place: { kind: "spawn" } });
+  });
+
+  it("does not score on a dead ghost", () => {
+    const sim = foeRelicRun();
+    grab(sim);
+    kill(sim, ghostId(0));
+    stepUntil(sim, () => get(sim, ghostId(0)).combatant.dead, 5);
+    applyIntent(sim, "a", { kind: "walk-to", x: GHOST_POST.x, y: GHOST_POST.y });
+    for (let tick = 0; tick < 12 / DT; tick += 1) {
+      sim.step(DT);
+    }
+    expect(points(sim)).toEqual([0, 0]);
+    expect(sim.carriesBundle("a")).toBe(true);
+  });
+
+  it("will not lead the ghost away from its post", () => {
+    const sim = foeRelicRun();
+    get(sim, "a").position = vec2(GHOST_POST.x + 40, GHOST_POST.y);
+    applyIntent(sim, "a", { kind: "attack", targetId: ghostId(0) });
+    sim.step(DT);
+    sim.step(DT);
+    expect(get(sim, ghostId(0)).creature?.leaderId).toBeUndefined();
   });
 });

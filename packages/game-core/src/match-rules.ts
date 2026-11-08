@@ -38,6 +38,10 @@ export interface MatchRules {
   readonly respawnSeconds: number;
   /** Whether a death costs morale, and a foe's death wins some back (#843, GW1). */
   readonly deathPenalty: boolean;
+  /** A Relic Run won at once by this many points ahead (#2695); without it, only at time. */
+  readonly leadToWin?: number | undefined;
+  /** Of Relic Run teams tied at time, the last to score wins (#2695); without it, a draw. */
+  readonly lastScorerBreaksTie?: boolean | undefined;
 }
 
 /**
@@ -99,6 +103,21 @@ export const RELIC_RUN_MATCH_RULES: MatchRules = Object.freeze({
   ...ANNIHILATION_MATCH_RULES,
   victory: "relic-run",
   timeLimitSeconds: 480,
+});
+
+/** The lead that ends a Relic Run where the foe's relic is carried (#2695, GW1). */
+export const FOE_RELIC_LEAD_TO_WIN = 3;
+
+/**
+ * The Relic Run where a team carries the foe's relic to its own Ghostly
+ * Hero (#2695, GW1): `FOE_RELIC_LEAD_TO_WIN` points ahead wins at once,
+ * and of teams tied at time the last to score wins. By its map, not its
+ * mode, so it is not in `MATCH_MODES`.
+ */
+export const FOE_RELIC_RUN_MATCH_RULES: MatchRules = Object.freeze({
+  ...RELIC_RUN_MATCH_RULES,
+  leadToWin: FOE_RELIC_LEAD_TO_WIN,
+  lastScorerBreaksTie: true,
 });
 
 /**
@@ -209,6 +228,8 @@ export interface MatchScore {
    * points (#1378) instead.
    */
   readonly byTeam: ReadonlyMap<number, number>;
+  /** The team that scored last (#2695); `undefined` before anyone has. */
+  readonly lastScorer?: number | undefined;
 }
 
 /** Every team that had members, as it stands, even with all of them gone (#846). */
@@ -453,15 +474,54 @@ function evaluateGuildBattle(
  * most points win, and a tie is a draw, as kill-count's.
  * No number of points wins early: `scoreToWin` is kill-count's.
  */
+/** `rules.leadToWin` points ahead of every other team wins at once (#2695). */
+function evaluateRelicLead(score: MatchScore, rules: MatchRules): MatchOutcome | undefined {
+  const lead = rules.leadToWin;
+  if (lead === undefined) {
+    return undefined;
+  }
+  for (const [team, points] of score.byTeam) {
+    const ahead = [...score.byTeam].every(
+      ([other, theirs]) => other === team || points - theirs >= lead,
+    );
+    if (ahead) {
+      return { phase: "finished", winningTeam: team, reason: "score" };
+    }
+  }
+  return undefined;
+}
+
+/** At time, teams tied on the most points go to the last of them to score (#2695). */
+function evaluateRelicTie(
+  score: MatchScore,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome | undefined {
+  const last = score.lastScorer;
+  if (
+    rules.lastScorerBreaksTie !== true ||
+    elapsedSeconds < rules.timeLimitSeconds ||
+    last === undefined ||
+    !leader(score).tied ||
+    score.byTeam.get(last) !== Math.max(...score.byTeam.values())
+  ) {
+    return undefined;
+  }
+  return { phase: "finished", winningTeam: last, reason: "time" };
+}
+
 function evaluateRelicRun(
   score: MatchScore,
   standing: MatchStanding,
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
+  const inGame = scoreInPlay(score, standing, rules);
   return (
     evaluateWipe(standing, rules) ??
-    evaluateScoreAtTime(scoreInPlay(score, standing, rules), elapsedSeconds, rules)
+    evaluateRelicLead(inGame, rules) ??
+    evaluateRelicTie(inGame, elapsedSeconds, rules) ??
+    evaluateScoreAtTime(inGame, elapsedSeconds, rules)
   );
 }
 
@@ -477,7 +537,10 @@ function evaluateWipe(standing: MatchStanding, rules: MatchRules): MatchOutcome 
 /** The score of the teams in play: a team already out has no say, however many points it holds (#2682). */
 function scoreInPlay(score: MatchScore, standing: MatchStanding, rules: MatchRules): MatchScore {
   const inGame = new Set(inPlay(standing, rules).map(([team]) => team));
-  return { byTeam: new Map([...score.byTeam].filter(([team]) => inGame.has(team))) };
+  return {
+    byTeam: new Map([...score.byTeam].filter(([team]) => inGame.has(team))),
+    lastScorer: score.lastScorer,
+  };
 }
 
 /**
@@ -531,7 +594,7 @@ function lone(teams: readonly (readonly [number, TeamStanding])[]): number | und
 export function addPoint(score: MatchScore, team: number): MatchScore {
   const byTeam = new Map(score.byTeam);
   byTeam.set(team, (byTeam.get(team) ?? 0) + 1);
-  return { byTeam };
+  return { byTeam, lastScorer: team };
 }
 
 export function emptyScore(teams: readonly number[]): MatchScore {

@@ -149,6 +149,10 @@ luchar contra un enemigo que entre en alcance de hechizo.
 Se juega en Broken Tower: el altar está dentro de una torre en ruinas con una
 entrada a cada lado.
 
+### Cinder Sanctum
+
+Aquí la Carrera de reliquias del Ascenso de los Héroes se juega al revés. Cada base tiene la reliquia de su equipo y su Héroe Fantasmal, y no hay altar. **Coge la reliquia enemiga de su base y llévala a tu propio Héroe Fantasmal** para sumar un punto. El fantasma debe estar vivo y no se mueve de su puesto. No puedes llevar tu propia reliquia: si la recoges donde cayó, vuelve a casa. Un equipo con **3 puntos de ventaja gana al instante**. A los 8 minutos gana quien tenga más puntos, y un empate es para el último equipo que puntuó. Cada base resucita a sus muertos, y a su fantasma, cada 2 minutos. Los bots van juntos a por la reliquia enemiga y la traen a casa.
+
 ## Rey de la colina
 
 **Lleva a tu Héroe Fantasmal al altar y mantenlo.** Cada equipo tiene un **Héroe
@@ -317,8 +321,7 @@ espera o, para los ganadores, sale sin volver a la cola.
 
 ## Ascenso de los Héroes
 
-Un Ascenso de los Héroes en cola son cuatro rondas, siempre en este orden: Broken
-Tower (Carrera de reliquias), Scarred Earth (Puntos de captura), The Courtyard (Rey
+Un Ascenso de los Héroes en cola son cuatro rondas, siempre en este orden: Cinder Sanctum (Carrera de reliquias), Scarred Earth (Puntos de captura), The Courtyard (Rey
 de la colina) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
 buscas un equipo: `Round 2 of 4 · Scarred Earth`. Solo te enfrentas a un equipo de
 tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. Una ronda en
