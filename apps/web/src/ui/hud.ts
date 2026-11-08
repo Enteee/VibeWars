@@ -49,6 +49,7 @@ import {
 } from "./icons.js";
 import {
   createEffectsMonitor,
+  type EffectCaster,
   effectRows,
   maintainedRows,
   type EffectRow,
@@ -58,6 +59,7 @@ import { percent, setHidden, setStyle, setText } from "./dom-write.js";
 import { iconButton } from "./kit.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
+import { SIGNET_ROW_PX, setSignet, signetElement } from "./player-label.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
   castFailures,
@@ -137,6 +139,10 @@ export interface HudElements {
   /** The target's primary and secondary profession icons, before its name (#281). */
   readonly targetProfessions: HTMLElement;
   /** The target's name, or "no target", in the panel's header. */
+  /** The target's signet (#2819), hidden for a bot, creature or nothing. */
+  readonly targetSignet: HTMLImageElement;
+  /** The bits it shows, so an unchanged one touches nothing. */
+  targetSignetShown: number | undefined;
   readonly targetText: HTMLElement;
   /** Whom your team's Ghostly Hero follows, or that it stays (#1377). */
   readonly targetLeader: HTMLElement;
@@ -182,6 +188,9 @@ export interface HudElements {
   /** Fullscreen on and off (#454). */
   readonly fullscreen: HTMLButtonElement;
 }
+
+/** A signet's size in the target frame, beside its larger name (#2819), px. */
+const SIGNET_TARGET_PX = 14;
 
 function element(tag: string, className: string, parent: HTMLElement): HTMLElement {
   const node = document.createElement(tag);
@@ -261,6 +270,7 @@ export function createHud(
   });
   const targetHeader = element("div", "hud-target-header", targetPanel);
   const targetProfessions = element("span", "hud-target-professions", targetHeader);
+  const targetSignet = targetHeader.appendChild(signetElement(undefined, SIGNET_TARGET_PX));
   const targetText = element("span", "hud-target-text", targetHeader);
   const targetBot = targetHeader.appendChild(botTagElement("hud-target-bot"));
   const attacking = element("span", "hud-attacking", targetHeader);
@@ -368,6 +378,8 @@ export function createHud(
     targetPanel,
     targetEffects,
     targetProfessions,
+    targetSignet,
+    targetSignetShown: undefined,
     targetText,
     targetLeader,
     targetBot,
@@ -719,6 +731,8 @@ export interface CarrierLine {
   /** The flag's or relic's team, whose colour the line is in. */
   readonly team: number;
   readonly text: string;
+  /** Its carrier's signet (#2819); `undefined` for none carrying it, or a bot. */
+  readonly signet: number | undefined;
 }
 
 /**
@@ -735,14 +749,16 @@ export function carrierLines(
   const ours = selfTeam ?? 0;
   const yoursFirst = <T extends { readonly team: number }>(objects: readonly T[]): T[] =>
     [...objects].sort((a, b) => Number(a.team !== ours) - Number(b.team !== ours));
-  const carrierName = (carrierId: string): string =>
-    match.players.find((player) => player.sessionId === carrierId)?.name ?? t("hud.carrierDropped");
+  const carrier = (mark: string, carrierId: string): Pick<CarrierLine, "text" | "signet"> => {
+    const held = match.players.find((player) => player.sessionId === carrierId);
+    return { text: `${mark} ${held?.name ?? t("hud.carrierDropped")}`, signet: held?.signet };
+  };
   const flags = yoursFirst(match.flags).flatMap(({ team, place }): CarrierLine[] => {
     switch (place.kind) {
       case "carried":
-        return [{ team, text: `⚑ ${carrierName(place.carrierId)}` }];
+        return [{ team, ...carrier("⚑", place.carrierId) }];
       case "ground":
-        return [{ team, text: `⚑ ${t("hud.carrierDropped")}` }];
+        return [{ team, text: `⚑ ${t("hud.carrierDropped")}`, signet: undefined }];
       case "spawn":
       case "stand":
         return [];
@@ -751,11 +767,11 @@ export function carrierLines(
   const relics = yoursFirst(match.relics).map(({ team, place }): CarrierLine => {
     switch (place.kind) {
       case "carried":
-        return { team, text: `✦ ${carrierName(place.carrierId)}` };
+        return { team, ...carrier("✦", place.carrierId) };
       case "ground":
-        return { team, text: `✦ ${t("hud.carrierDropped")}` };
+        return { team, text: `✦ ${t("hud.carrierDropped")}`, signet: undefined };
       case "spawn":
-        return { team, text: `✦ ${t("hud.carrierAtBase")}` };
+        return { team, text: `✦ ${t("hud.carrierAtBase")}`, signet: undefined };
     }
   });
   return [...flags, ...relics];
@@ -777,6 +793,9 @@ function renderCarriers(
     const node = element("div", "hud-carrier", row);
     const side = teamSide(line.team, selfTeam ?? 0);
     node.textContent = markedForTeam(side, line.text);
+    if (line.signet !== undefined) {
+      node.prepend(signetElement(line.signet, SIGNET_ROW_PX));
+    }
     node.style.setProperty("--pip-colour", cssColour(teamColour(side)));
   }
 }
@@ -1791,6 +1810,17 @@ export function isCallableTarget(
 }
 
 /** The target frame (#484): header, health bar and cast row. */
+/** Show `signet` on the target frame (#2819), touching it only when it changes. */
+export function renderTargetSignet(
+  hud: Pick<HudElements, "targetSignet" | "targetSignetShown">,
+  signet: number | undefined,
+): void {
+  if (hud.targetSignetShown !== signet) {
+    hud.targetSignetShown = signet;
+    setSignet(hud.targetSignet, signet, SIGNET_TARGET_PX);
+  }
+}
+
 /** `self` is `undefined` for a watcher (#480), who has no target but the player it follows. */
 function renderTarget(
   hud: HudElements,
@@ -1800,6 +1830,7 @@ function renderTarget(
   names: ReadonlyMap<string, string>,
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
+  renderTargetSignet(hud, target?.signet);
   setText(
     hud.targetText,
     target?.name ??
@@ -1849,12 +1880,12 @@ const TARGET_EFFECT_ICON_PX = 16;
 export function targetEffectRows(
   selfId: string,
   target: PlayerSnapshot | undefined,
-  names: ReadonlyMap<string, string>,
+  casters: ReadonlyMap<string, EffectCaster>,
   now: number | undefined,
 ): EffectRow[] {
   return target === undefined || target.dead || now === undefined
     ? []
-    : effectRows(target, selfId, names, now);
+    : effectRows(target, selfId, casters, now);
 }
 
 /** How far past the latest snapshot the effects count down, s: ten snapshots. */
@@ -1885,10 +1916,11 @@ export function updateFollowed(
   match: MatchSnapshot,
 ): void {
   const names = new Map(match.players.map((player) => [player.sessionId, player.name]));
+  const casters = new Map(match.players.map((player) => [player.sessionId, player]));
   renderTarget(hud, undefined, followed, match.stand, names);
   renderTargetChain(hud.targetChain, undefined);
   hud.targetEffects.update(
-    targetEffectRows(viewerId, followed, names, matchNow(hud, match.elapsedSeconds)),
+    targetEffectRows(viewerId, followed, casters, matchNow(hud, match.elapsedSeconds)),
   );
 }
 
@@ -1973,19 +2005,20 @@ export function updateHud(
   );
 
   const names = new Map(match?.players.map((player) => [player.sessionId, player.name]));
+  const casters = new Map(match?.players.map((player) => [player.sessionId, player]));
   const now = match === undefined ? undefined : matchNow(hud, match.elapsedSeconds);
   hud.effects.update(
     self.dead || now === undefined
       ? []
       : [
-          ...effectRows(self, self.sessionId, names, now),
+          ...effectRows(self, self.sessionId, casters, now),
           ...maintainedRows(match?.players ?? [], self.sessionId),
         ],
   );
 
   renderTarget(hud, self, target, match?.stand, names);
   renderTargetChain(hud.targetChain, targetChainIcon(target, chainMark));
-  hud.targetEffects.update(targetEffectRows(self.sessionId, target, names, now));
+  hud.targetEffects.update(targetEffectRows(self.sessionId, target, casters, now));
 
   // Grey out skills the player cannot currently afford or the weapon in
   // hand cannot use (#417), and mark those that cannot reach the target. The server is still the authority on

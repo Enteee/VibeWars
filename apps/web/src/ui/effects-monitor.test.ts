@@ -5,6 +5,7 @@ import { t } from "../i18n/index.js";
 import {
   STATUS_CATEGORY_NAME,
   createEffectsMonitor,
+  type EffectCaster,
   effectRows,
   maintainedRows,
   type EffectRow,
@@ -19,8 +20,8 @@ import { SLOT_TOOLTIP_DELAY_MS } from "./slot-tooltip.js";
 
 const ME = "me";
 const NAMES = new Map([
-  [ME, "Ann"],
-  ["bob", "Bob"],
+  [ME, { name: "Ann", signet: undefined }],
+  ["bob", { name: "Bob", signet: undefined }],
 ]);
 
 function status(
@@ -36,7 +37,7 @@ function status(
 function ownRows(
   statuses: readonly StatusSnapshot[],
   selfId: string,
-  names: ReadonlyMap<string, string>,
+  names: ReadonlyMap<string, EffectCaster>,
   now: number,
 ): EffectRow[] {
   return effectRows({ sessionId: ME, statuses }, selfId, names, now);
@@ -100,6 +101,26 @@ describe("effectRows (#834)", () => {
       10,
     );
     expect(rows.map((row) => row.yours)).toEqual([true, false, false]);
+  });
+
+  it("carries a human caster's signet, none for you or one who has left (#2819)", () => {
+    const casters = new Map([
+      [ME, { name: "Ann", signet: 7 }],
+      ["ally", { name: "Bob", signet: 9 }],
+      ["bot", { name: "Bot", signet: undefined }],
+    ]);
+    const rows = ownRows(
+      [
+        status("armor-boost", 20, 10, ME),
+        status("bleeding", 20, 10, "ally"),
+        status("poison", 20, 10, "bot"),
+        status("crippled", 20, 10, "gone"),
+      ],
+      ME,
+      casters,
+      10,
+    );
+    expect(rows.map((row) => row.casterSignet)).toEqual([undefined, 9, undefined, undefined]);
   });
 
   it("names the caster: you, their name, or someone who has left", () => {
@@ -200,6 +221,10 @@ class FakeElement {
     child.parent = this;
   }
 
+  prepend(child: FakeElement): void {
+    this.children.unshift(child);
+  }
+
   replaceChildren(...children: FakeElement[]): void {
     for (const child of [...this.children]) {
       child.remove();
@@ -225,12 +250,14 @@ function row(
     id,
     bearerId: ME,
     bearerName: undefined,
+    bearerSignet: undefined,
     name: id,
     category: "condition",
     fraction,
     secondsLeft: 5,
     yours,
     casterName: "Bob",
+    casterSignet: undefined,
     endable: false,
     ...more,
   };
@@ -420,6 +447,22 @@ describe("createEffectsMonitor (#834)", () => {
         t("effects.from", { caster: "Winnowing" }),
         t("effects.inRange"),
       ]);
+    });
+
+    it("draws the bearer's and the caster's signet, none without one (#2819)", () => {
+      const { monitor, root } = mount();
+      monitor.update([
+        row("bleeding", 1, false, { bearerName: "Ann", bearerSignet: 3, casterSignet: 9 }),
+        row("poison", 1),
+      ]);
+      const tip = (): FakeElement | undefined =>
+        (document.body as unknown as FakeElement).children.at(-1);
+      hover(root, 0);
+      expect(tip()?.children[0]?.children.map((child) => child.className)).toEqual(["signet"]);
+      expect(tip()?.children[3]?.children.map((child) => child.className)).toEqual(["signet"]);
+      hover(root, 1);
+      expect(tip()?.children[0]?.children).toEqual([]);
+      expect(tip()?.children[3]?.children).toEqual([]);
     });
 
     it("says one with no end and no upkeep lasts until it ends (#1789)", () => {

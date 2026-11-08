@@ -11,6 +11,7 @@ import { statusName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { STATUS_ICON } from "../render/status-icons.js";
 import { setHidden } from "./dom-write.js";
+import { SIGNET_ROW_PX, signetElement } from "./player-label.js";
 import { placeTip, type SkillTooltipPlacement } from "./skill-tooltip.js";
 import { SLOT_TOOLTIP_DELAY_MS } from "./slot-tooltip.js";
 
@@ -40,12 +41,17 @@ export const STATUS_CATEGORY_NAME: Readonly<Record<StatusCategory, MessageKey>> 
   "skill-effect": "effects.categoryEffect",
 };
 
+/** Who put a status on, as the rows name them (#2819). */
+export type EffectCaster = Pick<PlayerSnapshot, "name" | "signet">;
+
 export interface EffectRow {
   readonly id: StatusId;
   /** Who bears it: with `id`, the row's identity, as two allies may bear one status. */
   readonly bearerId: string;
   /** The bearer's name, for a row you maintain on someone else (#838); otherwise `undefined`. */
   readonly bearerName: string | undefined;
+  /** That bearer's signet (#2819); `undefined` for no bearer named, or a bot. */
+  readonly bearerSignet: number | undefined;
   readonly name: string;
   readonly category: StatusCategory;
   /** How much of its duration is left, 0 to 1; `undefined`: no bar. */
@@ -59,23 +65,27 @@ export interface EffectRow {
   readonly yours: boolean;
   /** "you", the caster's name, or "someone" for a caster no longer here. */
   readonly casterName: string;
+  /** The caster's signet (#2819); `undefined` for you, a bot or someone who has left. */
+  readonly casterSignet: number | undefined;
   /** A maintained enchantment of yours (#838): a double-click ends it. */
   readonly endable: boolean;
 }
 
 /**
  * The monitor's rows for `bearer`'s statuses, as sent, at match clock
- * `now`. `names` maps a session id to the name the host settled on.
+ * `now`. `casters` maps a session id to the name the host settled on
+ * and the signet its key draws.
  */
 export function effectRows(
   bearer: Pick<PlayerSnapshot, "sessionId" | "statuses">,
   selfId: string,
-  names: ReadonlyMap<string, string>,
+  casters: ReadonlyMap<string, EffectCaster>,
   now: number,
 ): EffectRow[] {
   return bearer.statuses.map((status) => {
     const definition = STATUS_DEFINITIONS[status.id];
     const mine = status.casterId === selfId;
+    const caster = casters.get(status.casterId);
     const timed =
       status.endsAt === null || status.durationSeconds === null
         ? undefined
@@ -84,6 +94,7 @@ export function effectRows(
       id: status.id,
       bearerId: bearer.sessionId,
       bearerName: undefined,
+      bearerSignet: undefined,
       name: statusName(status.id),
       category: definition.category,
       // A maintained one has no bar: it is not running out.
@@ -93,7 +104,8 @@ export function effectRows(
           : undefined,
       secondsLeft: timed === undefined ? undefined : Math.max(0, Math.ceil(timed.left)),
       yours: mine && definition.category === "enchantment",
-      casterName: mine ? t("effects.you") : (names.get(status.casterId) ?? t("effects.someone")),
+      casterName: mine ? t("effects.you") : (caster?.name ?? t("effects.someone")),
+      casterSignet: mine ? undefined : caster?.signet,
       endable: mine && timed === undefined && MAINTAINED_STATUSES.has(status.id),
     };
   });
@@ -122,12 +134,14 @@ export function maintainedRows(players: readonly PlayerSnapshot[], selfId: strin
               id: status.id,
               bearerId: player.sessionId,
               bearerName: player.name,
+              bearerSignet: player.signet,
               name: statusName(status.id),
               category: definition.category,
               fraction: undefined,
               secondsLeft: undefined,
               yours: definition.category === "enchantment",
               casterName: t("effects.you"),
+              casterSignet: undefined,
               endable: true,
             };
           }),
@@ -161,6 +175,9 @@ function renderTip(node: HTMLElement, row: EffectRow, canEnd: boolean): void {
     row.bearerName === undefined
       ? row.name
       : t("effects.onBearer", { status: row.name, bearer: row.bearerName });
+  if (row.bearerSignet !== undefined) {
+    title.prepend(signetElement(row.bearerSignet, SIGNET_ROW_PX));
+  }
   const type = document.createElement("div");
   type.className = "tip-type";
   type.textContent = t(STATUS_CATEGORY_NAME[row.category]);
@@ -170,6 +187,9 @@ function renderTip(node: HTMLElement, row: EffectRow, canEnd: boolean): void {
   const from = document.createElement("div");
   from.className = "tip-effect";
   from.textContent = t("effects.from", { caster: row.casterName });
+  if (row.casterSignet !== undefined) {
+    from.prepend(signetElement(row.casterSignet, SIGNET_ROW_PX));
+  }
   node.replaceChildren(title, type, effect, from);
   if (row.secondsLeft === undefined || row.fraction !== undefined) {
     const left = document.createElement("div");
@@ -336,7 +356,9 @@ export function createEffectsMonitor(
       if (
         tipFor !== undefined &&
         timer === undefined &&
-        (open?.secondsLeft !== tipRow?.secondsLeft || open?.casterName !== tipRow?.casterName)
+        (open?.secondsLeft !== tipRow?.secondsLeft ||
+          open?.casterName !== tipRow?.casterName ||
+          open?.casterSignet !== tipRow?.casterSignet)
       ) {
         show(tipFor);
       }

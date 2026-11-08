@@ -38,6 +38,7 @@ import {
   objectiveScoreToast,
   standBoostToast,
   carrierLines,
+  renderTargetSignet,
   type ScoreboardMatch,
   skillSlotHtml,
   castRowSkill,
@@ -49,6 +50,7 @@ import {
   targetChainIcon,
   targetWeaponIcon,
 } from "./hud.js";
+import { signetUrl } from "./player-label.js";
 
 /** A target on team 1, at full health of 480 and casting nothing. */
 function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
@@ -183,7 +185,60 @@ describe("objectTargetName (#1225)", () => {
   });
 });
 
+describe("renderTargetSignet (#2819)", () => {
+  const frame = () => ({
+    targetSignet: { hidden: true, src: "" } as HTMLImageElement,
+    targetSignetShown: undefined as number | undefined,
+  });
+
+  it("shows a player's signet, and none for a bot", () => {
+    const hud = frame();
+    renderTargetSignet(hud, 5);
+    expect(hud.targetSignet.hidden).toBe(false);
+    expect(hud.targetSignet.src).toBe(signetUrl(5, 14));
+    const bot = frame();
+    renderTargetSignet(bot, undefined);
+    expect(bot.targetSignet.hidden).toBe(true);
+  });
+
+  it("clears when the target changes to one without a signet", () => {
+    const hud = frame();
+    renderTargetSignet(hud, 5);
+    renderTargetSignet(hud, undefined);
+    expect(hud.targetSignet.hidden).toBe(true);
+  });
+
+  it("touches nothing while the signet is the same", () => {
+    const hud = frame();
+    renderTargetSignet(hud, 5);
+    hud.targetSignet.src = "untouched";
+    renderTargetSignet(hud, 5);
+    expect(hud.targetSignet.src).toBe("untouched");
+  });
+});
+
 describe("carrierLines (#1226)", () => {
+  it("carries the carrier's signet, none once dropped or for a bot (#2819)", () => {
+    const players = [player({ sessionId: "c", signet: 4 }), player({ sessionId: "b" })];
+    const line = (carrierId: string) =>
+      carrierLines(
+        { flags: [{ team: 0, place: { kind: "carried", carrierId } }], relics: [], players },
+        0,
+      )[0]?.signet;
+    expect(line("c")).toBe(4);
+    expect(line("b")).toBeUndefined();
+    expect(
+      carrierLines(
+        {
+          flags: [{ team: 0, place: { kind: "ground", position: { x: 0, y: 0 } } }],
+          relics: [],
+          players,
+        },
+        0,
+      )[0]?.signet,
+    ).toBeUndefined();
+  });
+
   const players = [
     player({ sessionId: "me", name: "Mhenlo", team: 0 }),
     player({ sessionId: "foe", name: "Cynn", team: 1 }),
@@ -1556,9 +1611,9 @@ describe("targetChainIcon (#916)", () => {
 describe("targetEffectRows (#835)", () => {
   const self = player({ sessionId: "me", team: 0 });
   const names = new Map([
-    ["me", "Ann"],
-    ["foe", "Mhenlo"],
-    ["ally", "Cynn"],
+    ["me", { name: "Ann", signet: undefined }],
+    ["foe", { name: "Mhenlo", signet: undefined }],
+    ["ally", { name: "Cynn", signet: undefined }],
   ]);
   const foe = player({
     statuses: [
