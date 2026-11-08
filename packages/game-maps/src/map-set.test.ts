@@ -709,3 +709,19 @@ describe.each([
     expect(graph.nodes.length).toBeLessThanOrEqual(600);
   });
 });
+
+describe("Cinder Sanctum (#2695)", () => {
+  const sanctum = MAPS.find((each) => each.id === "cinder-sanctum");
+  if (sanctum === undefined) throw new Error("no cinder-sanctum");
+
+  it("carries the foe's relic to its own ghost, with no altar", () => {
+    expect([sanctum.relicTarget, sanctum.relicCarry]).toEqual(["own-ghost", "foe"]);
+    expect(sanctum.objectives.some((each) => each.kind === "altar")).toBe(false);
+  });
+
+  it("keeps its nav graph to 600 nodes", () => {
+    const bounds = { width: sanctum.width, height: sanctum.height };
+    const graph = buildNavGraph(allWallSegments(sanctum.walls), bounds, RADIUS);
+    expect(graph.nodes.length).toBeLessThanOrEqual(600);
+  });
+});

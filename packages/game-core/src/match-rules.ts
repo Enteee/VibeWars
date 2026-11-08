@@ -468,12 +468,6 @@ function evaluateGuildBattle(
   return MATCH_IN_PROGRESS;
 }
 
-/**
- * Relic Run (#1374, GW1) and King of the Hill (#1377) alike: a wiped team
- * with no living priest is out at once, as in annihilation; at time the
- * most points win, and a tie is a draw, as kill-count's.
- * No number of points wins early: `scoreToWin` is kill-count's.
- */
 /** `rules.leadToWin` points ahead of every other team wins at once (#2695). */
 function evaluateRelicLead(score: MatchScore, rules: MatchRules): MatchOutcome | undefined {
   const lead = rules.leadToWin;
@@ -510,6 +504,13 @@ function evaluateRelicTie(
   return { phase: "finished", winningTeam: last, reason: "time" };
 }
 
+/**
+ * Relic Run (#1374, GW1) and King of the Hill (#1377) alike: a wiped team
+ * with no living priest is out at once, as in annihilation; at time the
+ * most points win, and a tie is a draw, as kill-count's.
+ * No number of points wins early, but a lead can (#2695): `scoreToWin`
+ * is kill-count's.
+ */
 function evaluateRelicRun(
   score: MatchScore,
   standing: MatchStanding,

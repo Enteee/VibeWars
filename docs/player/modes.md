@@ -323,7 +323,8 @@ skips the wait, or, for winners, leaves without queueing.
 
 ## Heroes' Ascent
 
-A queued Heroes' Ascent is four rounds, always in this order: Cinder Sanctum (Relic Run), Scarred Earth (Capture Points), The Courtyard (King
+A queued Heroes' Ascent is four rounds, always in this order: Cinder
+Sanctum (Relic Run), Scarred Earth (Capture Points), The Courtyard (King
 of the Hill), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 4 · Scarred Earth`.
 You only ever meet a team at the same round, and you wait for one as
