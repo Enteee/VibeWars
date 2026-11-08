@@ -72,6 +72,12 @@ export function inputHash(dir) {
     hash.update(`${name}\0`);
     hash.update(fs.existsSync(file) ? fs.readFileSync(file) : "");
   }
+  // devenv.nix imports the files under nix/.
+  const nix = path.join(dir, "nix");
+  for (const name of fs.existsSync(nix) ? fs.readdirSync(nix).sort() : []) {
+    hash.update(`nix/${name}\0`);
+    hash.update(fs.readFileSync(path.join(nix, name)));
+  }
   return hash.digest("hex").slice(0, 16);
 }
 
