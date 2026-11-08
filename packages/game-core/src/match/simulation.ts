@@ -967,6 +967,9 @@ const KNOCKDOWN_EPSILON = 1e-9;
 /** What a use of a skill spares when that skill put nothing on its own user (#999). */
 const NONE_SPARED: ReadonlySet<StatusId> = new Set();
 
+/** The ramps of a map without any, shared so `#climb` allocates nothing per body. */
+const NO_TRANSITIONS: MatchLayers["transitions"] = [];
+
 /** Each layer's decks and ramps, indexed by layer; the ground's stays empty. */
 function walkableAreas(layers: MatchLayers | undefined): readonly (readonly Polygon[])[] {
   if (layers === undefined) {
@@ -984,20 +987,20 @@ function walkableAreas(layers: MatchLayers | undefined): readonly (readonly Poly
   );
 }
 
-/** From each ramp towards the nearest deck it climbs to. */
+/** From each ramp towards the nearest edge of a deck it climbs to. */
 function uphillDirections(layers: MatchLayers | undefined): readonly Vec2[] {
   return (layers?.transitions ?? []).map((transition) => {
     const foot = polygonCentre(transition.area);
     let nearest = foot;
     let least = Number.POSITIVE_INFINITY;
     for (const deck of layers?.decks ?? []) {
-      const centre = polygonCentre(deck.footprint);
-      if (deck.layer === transition.to && distance(foot, centre) < least) {
-        least = distance(foot, centre);
-        nearest = centre;
+      const edge = closestPointOnPolygon(foot, deck.footprint);
+      if (deck.layer === transition.to && distance(foot, edge) < least) {
+        least = distance(foot, edge);
+        nearest = edge;
       }
     }
-    return nearest === foot ? ZERO : normalize(sub(nearest, foot));
+    return normalize(sub(nearest, foot));
   });
 }
 
@@ -6131,7 +6134,7 @@ export class MatchSimulation {
    * none named, uphill or downhill as `direction` points.
    */
   #climb(record: ParticipantRecord, direction: Vec2): void {
-    const transitions = this.#layers?.transitions ?? [];
+    const transitions = this.#layers?.transitions ?? NO_TRANSITIONS;
     const named = record.walkGoal === undefined ? undefined : record.walkLayer;
     for (const [at, transition] of transitions.entries()) {
       if (
@@ -8468,6 +8471,7 @@ export class MatchSimulation {
     combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
     combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
     emptyAdrenaline(combatant);
+    record.layer = record.spec.layer ?? 0;
     let position = nearestStandable(this.#graph, at);
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
       position = this.#pushOut(record, position, this.#radiusOf(record), NOBODY);

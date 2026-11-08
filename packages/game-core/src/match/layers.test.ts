@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import type { Polygon, Segment } from "../geometry.js";
+import { PRIEST_WAVE_SECONDS } from "../match-rules.js";
+import { NO_RANKS } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { BOUNDS, DT, fighter, RANGER, RULESET } from "./bot/rules/test-support.js";
 import {
   MatchSimulation,
   type MatchLayers,
+  type MatchSimulationOptions,
   type Participant,
   type ParticipantSpec,
 } from "./simulation.js";
@@ -43,7 +46,10 @@ function spec(
   });
 }
 
-function arena(participants: readonly ParticipantSpec[]): MatchSimulation {
+function arena(
+  participants: readonly ParticipantSpec[],
+  options: Partial<MatchSimulationOptions> = {},
+): MatchSimulation {
   return new MatchSimulation({
     seed: "layers",
     ruleset: RULESET,
@@ -51,6 +57,7 @@ function arena(participants: readonly ParticipantSpec[]): MatchSimulation {
     walls: [],
     layers: LAYERS,
     participants,
+    ...options,
   });
 }
 
@@ -101,6 +108,23 @@ describe("a body's layer (ADR-0051)", () => {
     sim.setInputDirection("a", vec2(-1, 0));
     run(sim, 2);
     expect(get(sim, "a").layer).toBe(0);
+  });
+
+  it("climbs a ramp joining a long deck side-on, beside a nearer-centred deck", () => {
+    const sim = arena([spec("a", 0, vec2(530, 620), 0)], {
+      layers: {
+        count: 2,
+        walls: [[], []],
+        decks: [
+          { layer: 1, footprint: rect(100, 300, 1000, 200) },
+          { layer: 1, footprint: rect(490, 640, 80, 60) },
+        ],
+        transitions: [{ from: 0, to: 1, area: rect(480, 500, 100, 100) }],
+      },
+    });
+    sim.setInputDirection("a", vec2(0, -1));
+    run(sim, 1);
+    expect(get(sim, "a").layer).toBe(1);
   });
 
   it("does not change layer standing still on a ramp", () => {
@@ -184,6 +208,23 @@ describe("a body's layer (ADR-0051)", () => {
     sim.resetParticipant("b");
     expect(get(sim, "a").layer).toBe(0);
     expect(get(sim, "b").layer).toBe(1);
+  });
+
+  it("rises at a shrine on its spawn's layer, having died on a deck", () => {
+    const sim = arena([spec("a", 0, vec2(400, 400), 0)], {
+      shrines: [{ team: 0, position: vec2(150, 400) }],
+    });
+    sim.walkTo("a", vec2(600, 450), 1);
+    run(sim, 6);
+    expect(get(sim, "a").layer).toBe(1);
+    const { combatant } = get(sim, "a");
+    combatant.statuses.apply("burning", 10, "nobody", NO_RANKS);
+    combatant.health = 0.2;
+    run(sim, PRIEST_WAVE_SECONDS - sim.elapsedSeconds + 1);
+    const risen = get(sim, "a");
+    expect(risen.combatant.dead).toBe(false);
+    expect(risen.layer).toBe(0);
+    expect(risen.position.x).toBeLessThan(240);
   });
 
   it("refuses a participant on a layer the map does not have", () => {
