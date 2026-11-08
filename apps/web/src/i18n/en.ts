@@ -692,8 +692,8 @@ export const en = {
   "matches.teamUnreadable": "A build in this team can't be read",
   "matches.versus": "vs",
   "matches.won": "Won",
-  "matches.wonLeft": "◂ Won",
-  "matches.wonRight": "Won ▸",
+  "matches.wonLeft": "‹ Won",
+  "matches.wonRight": "Won ›",
 
   "menu.characterBuilder": "Character Builder",
   "menu.clone": "Clone",

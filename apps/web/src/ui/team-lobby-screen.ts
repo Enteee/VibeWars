@@ -199,6 +199,8 @@ function personName(className: string, name: string, captain: boolean): HTMLElem
   const label = h("span", className);
   const text = h("span", "team-lobby-name-text", name);
   text.title = name;
+  // A player typed it: it reads, and is cut at its end, in its own direction (#2655).
+  text.dir = "auto";
   label.appendChild(text);
   if (captain) {
     const crown = h("span", "team-lobby-captain", t("teamLobby.captainMark"));
