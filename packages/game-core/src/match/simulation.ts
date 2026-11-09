@@ -16,6 +16,7 @@ import {
   closestPointOnPolygon,
   pointInPolygon,
   polygonCentre,
+  progressAlong,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
   type Polygon,
@@ -1058,6 +1059,13 @@ function uphillDirections(layers: MatchLayers | undefined): readonly Vec2[] {
   });
 }
 
+/** How far along a ramp a body must walk before it is on the other layer (#2972). */
+const RAMP_CLIMBS_FROM = 0.85;
+const RAMP_DESCENDS_FROM = 0.15;
+
+/** How near a route's waypoint at a ramp's foot counts as there, in units. */
+const RAMP_FOOT_REACHED_UNITS = 8;
+
 /** At most this many push-out passes per move; see `advanceMovement`. */
 const MOVEMENT_RELAX_PASSES = 4;
 
@@ -1359,11 +1367,11 @@ export class MatchSimulation {
       this.#bounds,
       this.#ruleset.collision.playerRadius,
     );
+    this.#uphill = uphillDirections(this.#layers);
     const walls = this.#currentWallSet();
     this.#walls = walls.walls;
     this.#graphs = walls.graphs;
     this.#paths = walls.paths;
-    this.#uphill = uphillDirections(this.#layers);
     this.#layerWalls = this.#wallsByLayer();
     this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
     this.#rng = createRng(this.#seed);
@@ -5669,10 +5677,13 @@ export class MatchSimulation {
       const graph = this.#graphOn(record.layer);
       const next = waypoints[0];
       if (next !== undefined && walkIsClear(graph, record.position, next)) {
-        // A waypoint on another layer stays, however clear the line past it.
+        // A waypoint on another layer stays, however clear the line past it,
+        // and so does the one before it, the way onto a ramp, until the body is at it.
         for (
           let after = waypoints[1];
           after !== undefined &&
+          (after.layer === record.layer ||
+            distance(record.position, waypoints[0] ?? after) <= RAMP_FOOT_REACHED_UNITS) &&
           waypoints[0]?.layer === record.layer &&
           walkIsClear(graph, record.position, after);
           after = waypoints[1]
@@ -6476,7 +6487,9 @@ export class MatchSimulation {
    * A body inside a ramp that walked towards its other layer is on it
    * from this tick (ADR-0051): with a route, only if its next waypoint
    * is this ramp's, on that layer; steered, uphill or downhill as
-   * `direction` points.
+   * `direction` points. Only near the far end (#2972): a ramp's top
+   * overlaps its deck, so a body turned to the ground there would walk
+   * off under it.
    */
   #climb(record: ParticipantRecord, direction: Vec2): void {
     const transitions = this.#layers?.transitions ?? NO_TRANSITIONS;
@@ -6496,7 +6509,11 @@ export class MatchSimulation {
           ? (direction.x * uphill.x + direction.y * uphill.y) * (upward ? 1 : -1) > 0
           : next.layer === (upward ? transition.to : transition.from) &&
             pointInPolygon(next, transition.area);
-      if (wants) {
+      const t = progressAlong(transition.area, uphill, record.position);
+      const nearFarEnd =
+        (uphill.x === 0 && uphill.y === 0) ||
+        (upward ? t >= RAMP_CLIMBS_FROM : t <= RAMP_DESCENDS_FROM);
+      if (wants && nearFarEnd) {
         record.layer = upward ? transition.to : transition.from;
         this.#refreshFloors(record);
         return;
@@ -6513,7 +6530,13 @@ export class MatchSimulation {
     let set = this.#wallSets.get(closed);
     if (set === undefined) {
       const graphs = this.#gatedGraphs.map((gated) => navGraphFor(gated, closed));
-      const paths = createLayeredPathFinder(graphs, this.#layers?.transitions ?? []);
+      const paths = createLayeredPathFinder(
+        graphs,
+        (this.#layers?.transitions ?? []).map((transition, at) => ({
+          ...transition,
+          uphill: this.#uphill[at] ?? ZERO,
+        })),
+      );
       const walls = [
         ...this.#mapWalls,
         ...this.#gates.flatMap((gate) => (gate.open ? [] : gate.segments)),

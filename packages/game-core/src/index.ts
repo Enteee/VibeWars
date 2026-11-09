@@ -19,7 +19,7 @@ export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
 export { beaconStrikeArea } from "./match/beacon.js";
 
 export type { Polygon, Segment } from "./geometry.js";
-export { pointInPolygon } from "./geometry.js";
+export { pointInPolygon, progressAlong } from "./geometry.js";
 export {
   buildLayeredNavGraph,
   buildNavGraph,

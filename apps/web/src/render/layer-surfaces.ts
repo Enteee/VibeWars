@@ -1,4 +1,4 @@
-import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
+import { pointInPolygon, progressAlong, type Vec2 } from "@vibewars/game-core";
 
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { creatureOutline } from "./creature-shape.js";
@@ -74,15 +74,6 @@ function uphillOf(structure: MapStructure, ramp: Transition): Vec2 | undefined {
     : { x: 0, y: Math.sign(nearest.y) };
 }
 
-/** How far along `box` `position` is going `uphill`: 0 at the low end, 1 at the high, clamped. */
-function progressAlong(box: Box, uphill: Vec2, position: Vec2): number {
-  const across =
-    uphill.x !== 0
-      ? (uphill.x > 0 ? position.x - box.left : box.right - position.x) / (box.right - box.left)
-      : (uphill.y > 0 ? position.y - box.top : box.bottom - position.y) / (box.bottom - box.top);
-  return Math.min(Math.max(across, 0), 1);
-}
-
 /** The height a ramp draws at `t` of the way up. */
 function rampLift(ramp: Transition, t: number): number {
   return elevationOf(ramp.from) + t * (elevationOf(ramp.to) - elevationOf(ramp.from));
@@ -99,7 +90,7 @@ export function liftAt(structure: MapStructure, position: Vec2, layer: number): 
   if (ramp === undefined || uphill === undefined) {
     return elevationOf(layer);
   }
-  return rampLift(ramp, progressAlong(boxOf(ramp.area), uphill, position));
+  return rampLift(ramp, progressAlong(shapeOutline(ramp.area), uphill, position));
 }
 
 /** Whether a disc of `radius` at `position` reaches into `box`. */
@@ -158,7 +149,7 @@ export function rampDrawing(structure: MapStructure, ramp: Transition): RampDraw
   const box = boxOf(ramp.area);
   const lifted = (point: Vec2): Vec2 => ({
     x: point.x,
-    y: point.y - rampLift(ramp, progressAlong(box, uphill, point)),
+    y: point.y - rampLift(ramp, progressAlong(shapeOutline(ramp.area), uphill, point)),
   });
   const width = box.right - box.left;
   const height = box.bottom - box.top;

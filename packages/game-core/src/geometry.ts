@@ -354,3 +354,27 @@ export function polygonCentre(polygon: Polygon): Vec2 {
   }
   return { x: x / polygon.length, y: y / polygon.length };
 }
+
+/** How far along `polygon` `point` lies going `direction`: 0 at its rear, 1 at its front, clamped. */
+export function progressAlong(polygon: Polygon, direction: Vec2, point: Vec2): number {
+  const [low, high] = extentAlong(polygon, direction);
+  return high === low ? 0 : Math.min(Math.max((dot(point, direction) - low) / (high - low), 0), 1);
+}
+
+/** The point on `polygon`'s centre line, going `direction`, at progress `t` along it. */
+export function pointAlong(polygon: Polygon, direction: Vec2, t: number): Vec2 {
+  const centre = polygonCentre(polygon);
+  const [low, high] = extentAlong(polygon, direction);
+  return add(centre, scale(direction, low + t * (high - low) - dot(centre, direction)));
+}
+
+function extentAlong(polygon: Polygon, direction: Vec2): readonly [number, number] {
+  let low = Number.POSITIVE_INFINITY;
+  let high = Number.NEGATIVE_INFINITY;
+  for (const corner of polygon) {
+    const along = dot(corner, direction);
+    low = Math.min(low, along);
+    high = Math.max(high, along);
+  }
+  return [low, high];
+}
