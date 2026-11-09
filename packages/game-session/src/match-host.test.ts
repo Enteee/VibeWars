@@ -1,4 +1,6 @@
 import {
+  CAPTURE_POINTS_MATCH_RULES,
+  HALLS_MATCH_RULES,
   NO_UPGRADES,
   MatchSimulation,
   NO_RANKS,
@@ -561,6 +563,38 @@ describe("a lobby's bots (#1193)", () => {
       await match.step(1);
       expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
     });
+
+    it.each([...Object.values(HALLS_MATCH_RULES), CAPTURE_POINTS_MATCH_RULES])(
+      "does not put out a team with a teammate still loading (#2890)",
+      async (matchRules) => {
+        const records: MatchRecord[] = [];
+        const guest = (name: string, key: string): PlannedSeat => ({
+          ...human(0)[1],
+          name,
+          playerPubkey: key.repeat(32),
+        });
+        const match = startMatch({
+          matchRules,
+          publishRecord: (record) => records.push(record),
+          seats: new Map<string, PlannedSeat>([
+            human(1),
+            ["peer-1", guest("Guest", "cd")],
+            ["peer-2", guest("Loading", "ef")],
+          ]),
+        });
+        await match.joinLocal();
+        const { transport } = await match.join();
+        const loading = match.network.join("peer-2");
+        await match.step(TICK);
+        await transport.leave();
+        await match.step(RECONNECT_WINDOW_SECONDS + 1);
+        expect(records).toEqual([]);
+
+        await loading.leave();
+        await match.step(1);
+        expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
+      },
+    );
 
     it("forfeits a side whose humans all leave before saying hello", async () => {
       const records: MatchRecord[] = [];

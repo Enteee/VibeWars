@@ -1218,6 +1218,8 @@ export class MatchSimulation {
    * still in the standing, wiped, rather than gone.
    */
   readonly #teams = new Set<number>();
+  /** Teams with a member the host has not seated yet (#2890). */
+  #awaitedTeams: ReadonlySet<number> = new Set();
   /** Each team's called foe (#443), which its bots fight (#1193). */
   readonly #calledTargets = new Map<number, string>();
   /** Each team's centroids for its bots (#2545), placed once a tick, reused. */
@@ -1699,6 +1701,11 @@ export class MatchSimulation {
     if (left.length <= 1) {
       this.#outcome = { phase: "finished", winningTeam: left[0], reason: "annihilation" };
     }
+  }
+
+  /** Tell the match which teams still have a member on the way: none of them is empty (#2890). */
+  public setAwaitedTeams(teams: ReadonlySet<number>): void {
+    this.#awaitedTeams = teams;
   }
 
   /**
@@ -8766,7 +8773,7 @@ export class MatchSimulation {
     const byTeam = new Map<number, TeamStanding>();
     for (const [team, { members: count, living, morale, raisable }] of members) {
       byTeam.set(team, {
-        members: count,
+        members: count + (this.#awaitedTeams.has(team) ? 1 : 0),
         living,
         morale,
         priestLives: this.#priestLives(team),

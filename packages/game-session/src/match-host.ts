@@ -368,6 +368,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const awaited = new Set(
     [...(planned ?? [])].flatMap(([peerId, plan]) => (plan.bot ? [] : [peerId])),
   );
+  /** A team with a member still on the way is not empty (#2890). */
+  const syncAwaitedTeams = (): void => {
+    sim.setAwaitedTeams(
+      new Set([...awaited].flatMap((peerId) => planned?.get(peerId)?.team ?? [])),
+    );
+  };
+  syncAwaitedTeams();
   /** At most one per peer: a new rejoin hello kills the old nonce. */
   const challenges = new Map<string, Challenge>();
   /**
@@ -936,6 +943,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return;
     }
     awaited.delete(from);
+    syncAwaitedTeams();
     // The lobby's build if it assigned one, whatever the hello brings (#1458).
     const build = plan?.build ?? resolveJoinLoadout(hello.build, RULESET.attributes, random).build;
     // Without a plan, teams alternate as players arrive, so a 1v1 is
@@ -1119,6 +1127,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     budget.forget(peerId);
     departed.delete(peerId);
     const plan = awaited.delete(peerId) ? planned?.get(peerId) : undefined;
+    syncAwaitedTeams();
     if (plan !== undefined && !finished) {
       forfeitIfNoHumans(plan.team);
     }

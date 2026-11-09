@@ -288,7 +288,7 @@ export function withLatestTeam(recent: readonly number[], team: number): readonl
 }
 
 export interface TeamStanding {
-  /** Members still in the match, dead or alive (#2890). */
+  /** Members still in the match, dead or alive, or on the way to it (#2890). */
   readonly members: number;
   /** Members alive. */
   readonly living: number;
