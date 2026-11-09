@@ -122,6 +122,8 @@ Tre arene dell'Ascesa si possono scegliere anche in una Partita ospitata: **The 
 
 Una mappa può avere delle **porte**: muri che bloccano corpi, tiri e vista finché sono chiuse. Sali sulla piastra a pressione di una porta per aprirla. Si chiude quando non resta nessuno sulla piastra, spingendo chi è sulla soglia verso il lato più vicino e fermando i tiri ancora in passaggio, e non si può riaprire per 8 secondi. Una piastra nel colore di una squadra risponde solo a quella squadra. I bot salgono sulla piastra della propria squadra quando non ci sono nemici vicini.
 
+Ogni percorso inizia con la **Battaglia degli Zaishen d'élite**, senza coda: il tuo gruppo contro sei Zaishen controllati da bot (2 Monaci, un Elementalista e altri 3). Il cronometro parte quando uno di voi attraversa la linea di partenza. Uccidete tutti e sei in meno di 30 secondi e il gruppo inizia il percorso con +10% di morale; in meno di 60, +8%; in meno di 80, +6%; in meno di 100, +4%; in meno di 120, +2%; più lentamente, niente. Se vincete, il gruppo si mette da solo in coda per la prima mappa. Se cade tutto il gruppo, il percorso è finito.
+
 ## Tre squadre
 
 In una partita a tre squadre la terza è disegnata in giallo lime, accanto al blu del tuo schieramento e al rosso dell'altro, e ha un ◆ prima di targhette, righe del punteggio e tabella di fine partita, così non si distingue mai solo dal colore. Il tabellone mostra prima la tua squadra, poi le altre in ordine, e le tabelle di fine partita mettono prima la tua squadra, poi la vincitrice.

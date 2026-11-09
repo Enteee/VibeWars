@@ -8,6 +8,7 @@ import arenaLongHall from "../maps/arena-long-hall/map.json" with { type: "json"
 import elonianPlateau from "../maps/elonian-plateau/map.json" with { type: "json" };
 import ashenCourtyard from "../maps/ashen-courtyard/map.json" with { type: "json" };
 import barrowField from "../maps/barrow-field/map.json" with { type: "json" };
+import eliteZaishenBattle from "../maps/elite-zaishen-battle/map.json" with { type: "json" };
 import brokenTower from "../maps/broken-tower/map.json" with { type: "json" };
 import cinderSanctum from "../maps/cinder-sanctum/map.json" with { type: "json" };
 import canthanTerraces from "../maps/canthan-terraces/map.json" with { type: "json" };
@@ -58,6 +59,7 @@ describe("the maps the browser imports", () => {
       brokenTower,
       canthanTerraces,
       cinderSanctum,
+      eliteZaishenBattle,
       elonianPlateau,
       emberPits,
       frozenCrossing,

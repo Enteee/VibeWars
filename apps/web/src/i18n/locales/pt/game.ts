@@ -2137,6 +2137,7 @@ export default {
     "hall-of-heroes-king": "Salão dos Heróis",
     "hall-of-heroes-relic": "Salão dos Heróis",
     "barrow-field": "Campo dos Túmulos",
+    "elite-zaishen-battle": "Batalha dos Zaishen de Elite",
     "hollow-deep": "Profundezas Ocas",
     "blackwater-ford": "Vau das Águas Negras",
     "mosslit-cairns": "Marcos de Musgo",

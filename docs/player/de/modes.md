@@ -279,6 +279,8 @@ geht, weil sein Host gegangen ist, behält deine Runde.
 
 Die Hall lost für jedes Match einen von drei Modi aus: King of the Hill, Reliktlauf oder Punkte erobern, für zwei oder drei Teams. Bei zwei Teams bleibt die dritte Basis geschlossen und mit ihr ihr Eroberungspunkt. Ein Match in der Hall dauert 12 Minuten, und die meisten Punkte gewinnen; Punkte erobern endet außerdem vorzeitig bei 20 Punkten Vorsprung. Der Tod kostet keine Moral. Die Toten kehren gemeinsam zu jeder vollen Minute der Matchuhr in ihre Basis zurück, ein ausgelöschtes Team ist also nicht geschlagen. Bei King of the Hill punktet das Team, das den Altar hält, auch nach dem Tod seines Geists weiter, bis ein anderes Team ihn beansprucht, und seine Toten kehren auf dem Altar zurück. Ein Gleichstand geht an das Team, das zuletzt gepunktet hat, bei Punkte erobern an das Team mit dem letzten Kill.
 
+Jeder Lauf beginnt mit der **Elite-Zaishen-Schlacht**, ohne Warteschlange: Deine Gruppe gegen sechs von Bots gespielte Zaishen (2 Mönche, ein Elementarmagier und 3 weitere). Die Uhr startet, sobald jemand von euch die Startlinie überquert. Tötet ihr alle sechs in unter 30 Sekunden, startet die Gruppe mit +10 % Moral; unter 60 mit +8 %, unter 80 mit +6 %, unter 100 mit +4 %, unter 120 mit +2 %; langsamer gibt es nichts. Nach einem Sieg stellt sich die Gruppe von selbst für die erste Karte an. Fällt die ganze Gruppe, ist der Lauf vorbei.
+
 Deine Moral bleibt den ganzen Lauf über erhalten: Mit der Todesstrafe oder dem Bonus, mit dem du eine gewonnene Karte
 beendest, beginnst du die nächste, von −60 % bis +10 %. Ein Lauf, der endet, oder ein Spieler, der mitten im Lauf dazustößt,
 beginnt bei 0. Dein eigener Tab merkt sie sich, bis du ihn schließt.

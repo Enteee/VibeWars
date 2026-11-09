@@ -2137,6 +2137,7 @@ export default {
     "hall-of-heroes-king": "Halle der Helden",
     "hall-of-heroes-relic": "Halle der Helden",
     "barrow-field": "Hügelgräberfeld",
+    "elite-zaishen-battle": "Elite-Zaishen-Schlacht",
     "hollow-deep": "Die Hohle Tiefe",
     "blackwater-ford": "Schwarzwasserfurt",
     "mosslit-cairns": "Moosschein-Steinmale",

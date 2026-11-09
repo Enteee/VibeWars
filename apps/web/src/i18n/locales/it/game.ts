@@ -2137,6 +2137,7 @@ export default {
     "hall-of-heroes-king": "Sala degli eroi",
     "hall-of-heroes-relic": "Sala degli eroi",
     "barrow-field": "Campo dei tumuli",
+    "elite-zaishen-battle": "Battaglia degli Zaishen d'élite",
     "hollow-deep": "Le cavità profonde",
     "blackwater-ford": "Guado dell'acqua nera",
     "mosslit-cairns": "Tumuli muschiosi",

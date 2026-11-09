@@ -77,6 +77,7 @@ export const ARENA: HostMap = {
   relicField: undefined,
   ghostField: undefined,
   capturePoints: [],
+  startLine: undefined,
   gates: [],
   guards: [],
 };

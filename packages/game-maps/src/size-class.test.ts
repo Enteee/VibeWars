@@ -29,6 +29,7 @@ describe("sizeClass (#444, #2547)", () => {
       "hall-of-heroes-relic": "small",
       "hall-of-heroes-capture": "small",
       "barrow-field": "small",
+      "elite-zaishen-battle": "small",
       "hollow-deep": "medium",
       "blackwater-ford": "small",
       "mosslit-cairns": "small",

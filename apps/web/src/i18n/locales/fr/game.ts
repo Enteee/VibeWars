@@ -2137,6 +2137,7 @@ export default {
     "hall-of-heroes-king": "Hall des héros",
     "hall-of-heroes-relic": "Hall des héros",
     "barrow-field": "Champ des tumulus",
+    "elite-zaishen-battle": "Bataille des Zaishen d'élite",
     "hollow-deep": "Les Profondeurs creuses",
     "blackwater-ford": "Gué de l'Eau-noire",
     "mosslit-cairns": "Cairns moussus",

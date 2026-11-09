@@ -156,12 +156,18 @@ const objectiveSchema = z.discriminatedUnion("kind", [
     layer: layerSchema,
     position: vec2Schema,
   }),
+  // The Elite Zaishen Battle's (#2692): a party member entering it starts the clock.
+  z.object({
+    kind: z.literal("start-line"),
+    layer: layerSchema,
+    area: rectWallSchema,
+  }),
 ]);
 
 /** An objective that belongs to no team. */
 type SharedKind = Extract<
   Objective,
-  { kind: "flag-stand" | "altar" | "capture-point" | "storm-beacon" }
+  { kind: "flag-stand" | "altar" | "capture-point" | "storm-beacon" | "start-line" }
 >["kind"];
 type TeamKind = Exclude<Objective["kind"], SharedKind>;
 
@@ -183,6 +189,7 @@ const OWN_GHOST_RELIC_OBJECTIVES: readonly TeamKind[] = [
 
 /** Which shared objectives each mode has; none for a mode not here. */
 const SHARED_OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly SharedKind[]>>> = {
+  annihilation: ["start-line"],
   "priest-annihilation": ["storm-beacon"],
   "guild-battle": ["flag-stand"],
   "relic-run": ["altar"],
@@ -197,6 +204,7 @@ const SHARED_COUNTS: Readonly<Record<SharedKind, { readonly min: number; readonl
     altar: { min: 1, max: 1 },
     "capture-point": { min: 1, max: 5 },
     "storm-beacon": { min: 0, max: 1 },
+    "start-line": { min: 0, max: 1 },
   };
 
 /** The kinds a map of a mode that has them has exactly one of per spawning team. */
@@ -220,6 +228,7 @@ const OBJECTIVE_NAMES: Readonly<Record<Objective["kind"], string>> = {
   altar: "altar",
   "capture-point": "capture point",
   "storm-beacon": "Storm Beacon",
+  "start-line": "start line",
 };
 
 /**
@@ -551,6 +560,17 @@ export const mapDataSchema = z
       }
     });
     map.objectives.forEach((objective, index) => {
+      if (objective.kind === "start-line") {
+        const { x, y, width, height } = objective.area;
+        if (x < 0 || y < 0 || x + width > map.width || y + height > map.height) {
+          context.addIssue({
+            code: "custom",
+            path: ["objectives", index],
+            message: `objective ${String(index)} must lie on the map`,
+          });
+        }
+        return;
+      }
       const teamed = !("team" in objective) || teams.has(objective.team);
       if (!teamed || !standsClear(map, objective.position, objective.layer)) {
         context.addIssue({

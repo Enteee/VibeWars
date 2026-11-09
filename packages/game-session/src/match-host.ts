@@ -27,6 +27,7 @@ import {
   type FlagField,
   type RelicField,
   type GhostField,
+  type StartLine,
   type GuildLord,
   type BaseGuard,
   type CapturePointSite,
@@ -151,6 +152,8 @@ export interface HostMap {
   readonly ghostField: GhostField | undefined;
   /** Its shrines (#1378), `[]` but on a Capture Points map. */
   readonly capturePoints: readonly CapturePointSite[];
+  /** Its start line (#2692), `undefined` but on the Elite Zaishen Battle. */
+  readonly startLine: StartLine | undefined;
   /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
   readonly guards: readonly BaseGuard[];
 }
@@ -337,6 +340,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     relicField: map.relicField,
     ghostField: map.ghostField,
     capturePoints: map.capturePoints,
+    startLine: map.startLine,
     guards: map.guards,
   });
   const seats = new Map<string, Seat>();
@@ -1071,6 +1075,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const side = [...seats.values()].filter((seat) => seat.team === team);
     if (
       options.mode !== "heroes-ascent" ||
+      // The Zaishen are HA's one all-NPC side (#2692).
+      (map.startLine !== undefined && team === 1) ||
       side.some((seat) => !seat.bot) ||
       [...awaited].some((peerId) => planned?.get(peerId)?.team === team)
     ) {
@@ -1289,9 +1295,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         winningTeam: wireTeam(sim.outcome.winningTeam),
         endReason: sim.outcome.reason ?? "time",
         summary: summary(),
+        clearSeconds: sim.clearSeconds,
       };
       transport.send("ended", ended, live);
-      options.publishRecord(record(sim.outcome.reason ?? "time"));
+      // The Elite Zaishen Battle has no opposing players to record (#2692).
+      if (map.startLine === undefined) {
+        options.publishRecord(record(sim.outcome.reason ?? "time"));
+      }
     }
     // A match nobody watches holds nothing.
     if (observers.size > 0) {
@@ -1356,7 +1366,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       finished = true;
       observers.clear();
       delayed = [];
-      const ended: WireEnded = { winningTeam: null, endReason: reason, summary: summary() };
+      const ended: WireEnded = {
+        winningTeam: null,
+        endReason: reason,
+        summary: summary(),
+        clearSeconds: null,
+      };
       transport.send("ended", ended);
       await transport.leave();
     },
