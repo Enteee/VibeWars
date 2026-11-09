@@ -671,8 +671,8 @@ export interface WireCapturePoint {
   readonly progress: number;
 }
 
-/** The most shrines a map has (#1378). */
-const MAX_WIRE_CAPTURE_POINTS = 5;
+/** The most shrines a map has (#1378); the map schema's `MAX_CAPTURE_POINTS`. */
+export const MAX_WIRE_CAPTURE_POINTS = 7;
 
 /** Who holds the flag stand (#1225), and for how long since the taking or the last boost. */
 export interface WireStand {

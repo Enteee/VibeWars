@@ -769,13 +769,13 @@ describe("capture points maps (#1378)", () => {
     );
   });
 
-  it("refuses a capture points map with none, or six", () => {
+  it("refuses a capture points map with none, or eight", () => {
     expect(() => validateMapData({ ...captureMap, objectives: [] })).toThrow(
-      /capture-points map has 0 capture points, not 1 to 5/,
+      /capture-points map has 0 capture points, not 1 to 7/,
     );
-    const six = [20, 30, 40, 50, 60, 70].map((x) => point(x, 30));
-    expect(() => validateMapData({ ...captureMap, objectives: six })).toThrow(
-      /capture-points map has 6 capture points, not 1 to 5/,
+    const eight = [20, 30, 40, 50, 60, 70, 80, 90].map((x) => point(x, 30));
+    expect(() => validateMapData({ ...captureMap, objectives: eight })).toThrow(
+      /capture-points map has 8 capture points, not 1 to 7/,
     );
   });
 

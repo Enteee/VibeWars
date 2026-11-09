@@ -22,6 +22,7 @@ import hallOfHeroesKing from "../maps/hall-of-heroes-king/map.json" with { type:
 import hallOfHeroesRelic from "../maps/hall-of-heroes-relic/map.json" with { type: "json" };
 import hollowDeep from "../maps/hollow-deep/map.json" with { type: "json" };
 import mosslitCairns from "../maps/mosslit-cairns/map.json" with { type: "json" };
+import wardensGallery from "../maps/wardens-gallery/map.json" with { type: "json" };
 import jungleRuins from "../maps/jungle-ruins/map.json" with { type: "json" };
 import mossVale from "../maps/moss-vale/map.json" with { type: "json" };
 import sandstoneSteps from "../maps/sandstone-steps/map.json" with { type: "json" };
@@ -78,6 +79,7 @@ describe("the maps the browser imports", () => {
       shiverpeakPass,
       sunkenBastion,
       theCourtyard,
+      wardensGallery,
     ].map((raw) => validateMapData(raw));
     expect(imported.map((map) => map.id)).toEqual(listMapIds());
     for (const map of imported) {

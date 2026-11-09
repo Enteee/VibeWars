@@ -25,6 +25,7 @@ import hallOfHeroesKing from "@vibewars/game-maps/maps/hall-of-heroes-king/map.j
 import hallOfHeroesRelic from "@vibewars/game-maps/maps/hall-of-heroes-relic/map.json" with { type: "json" };
 import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
 import mosslitCairns from "@vibewars/game-maps/maps/mosslit-cairns/map.json" with { type: "json" };
+import wardensGallery from "@vibewars/game-maps/maps/wardens-gallery/map.json" with { type: "json" };
 import hollowDeep from "@vibewars/game-maps/maps/hollow-deep/map.json" with { type: "json" };
 import theCourtyard from "@vibewars/game-maps/maps/the-courtyard/map.json" with { type: "json" };
 import {
@@ -100,6 +101,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   hollowDeep,
   blackwaterFord,
   mosslitCairns,
+  wardensGallery,
   // The Heroes' Ascent's own, in Golden Gates' slot (#2697).
   brazenCauseway,
   // Capture Points' (#1378, #2551).
@@ -156,6 +158,7 @@ const ASCENT_ONLY: readonly string[] = [
   "hollow-deep",
   "blackwater-ford",
   "mosslit-cairns",
+  "wardens-gallery",
   "brazen-causeway",
   ELITE_ZAISHEN_MAP,
 ];
@@ -242,6 +245,7 @@ export const ASCENT_PROGRESSION: readonly string[] = [
   // Golden Gates' slot.
   "brazen-causeway",
   "the-courtyard",
+  "wardens-gallery",
   "hall-of-heroes-king",
 ];
 

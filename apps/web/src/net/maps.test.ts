@@ -1,4 +1,5 @@
-import { ASCENT_ROUNDS, teamSizeOf } from "@vibewars/game-protocol";
+import { MAX_CAPTURE_POINTS } from "@vibewars/game-maps/schema";
+import { ASCENT_ROUNDS, MAX_WIRE_CAPTURE_POINTS, teamSizeOf } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import { mapName } from "../i18n/game-names.js";
@@ -32,6 +33,12 @@ function sizesOf(id: string): readonly number[] {
   }
   return map.teamSizes;
 }
+
+describe("the wire and the map schema (#2698)", () => {
+  it("carries every capture point a map may have", () => {
+    expect(MAX_WIRE_CAPTURE_POINTS).toBe(MAX_CAPTURE_POINTS);
+  });
+});
 
 describe("randomArenaMapPool", () => {
   it("plays each size only on the arenas that declare it (#2108)", () => {
@@ -93,6 +100,7 @@ describe("randomArenaMapPool", () => {
               "hollow-deep",
               "blackwater-ford",
               "mosslit-cairns",
+              "wardens-gallery",
               "brazen-causeway",
               "scarred-earth",
               "moss-vale",
@@ -146,6 +154,7 @@ describe("team sizes (#2108)", () => {
       "mosslit-cairns",
       "brazen-causeway",
       "the-courtyard",
+      "wardens-gallery",
     ]);
   });
 
@@ -259,6 +268,7 @@ describe("team sizes (#2108)", () => {
       "hollow-deep",
       "blackwater-ford",
       "mosslit-cairns",
+      "wardens-gallery",
       "brazen-causeway",
       "scarred-earth",
     ]);
@@ -343,6 +353,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       ["mosslit-cairns", "capture-points"],
       ["brazen-causeway", "priest-annihilation"],
       ["the-courtyard", "king-of-the-hill"],
+      ["wardens-gallery", "capture-points"],
       ["hall-of-heroes-king", "king-of-the-hill"],
     ]);
     expect(ASCENT_PROGRESSION.map((_, round) => mapName(ascentMapId(round)))).toEqual([
@@ -353,6 +364,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       "Mosslit Cairns",
       "The Brazen Causeway",
       "The Courtyard",
+      "The Warden's Gallery",
       "Hall of Heroes",
     ]);
   });
@@ -391,6 +403,7 @@ describe("hostMap (#476)", () => {
           "barrow-field",
           "blackwater-ford",
           "mosslit-cairns",
+          "wardens-gallery",
           "brazen-causeway",
           "guild-hall-isle",
           "broken-tower",

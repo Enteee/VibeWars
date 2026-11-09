@@ -9,6 +9,7 @@ import {
   MAX_WIRE_COMBATS,
   MAX_WIRE_EVENTS,
   MAX_SNAPSHOT_PARTS,
+  MAX_WIRE_CAPTURE_POINTS,
   MAX_WIRE_PINGS,
   MAX_STROKE_POINTS,
   MAX_WIRE_STROKES,
@@ -1480,21 +1481,22 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a capture point past full (#1378)",
     parseWireSnapshotPart,
-    { ...shrined, capturePoints: [{ x: 1, y: 1, owner: 0, capturer: 0, progress: 1.5 }] },
+    { ...shrined, capturePoints: [{ x: 1, y: 1, layer: 0, owner: 0, capturer: 0, progress: 1.5 }] },
   ],
   [
     "snapshot with a capture point of a third team (#1378)",
     parseWireSnapshotPart,
-    { ...shrined, capturePoints: [{ x: 1, y: 1, owner: 2, capturer: 2, progress: 1 }] },
+    { ...shrined, capturePoints: [{ x: 1, y: 1, layer: 0, owner: 2, capturer: 2, progress: 1 }] },
   ],
   [
-    "snapshot with six capture points (#1378)",
+    "snapshot with one capture point too many (#1378)",
     parseWireSnapshotPart,
     {
       ...shrined,
-      capturePoints: Array.from({ length: 6 }, () => ({
+      capturePoints: Array.from({ length: MAX_WIRE_CAPTURE_POINTS + 1 }, () => ({
         x: 1,
         y: 1,
+        layer: 0,
         owner: null,
         capturer: null,
         progress: 0,
@@ -2669,6 +2671,21 @@ describe("the P2P channels (#82)", () => {
 });
 
 describe("the P2P validators (#82)", () => {
+  it("passes a snapshot with as many capture points as a map may have (#2698)", () => {
+    const seven: WireSnapshotPart = {
+      ...shrined,
+      capturePoints: Array.from({ length: MAX_WIRE_CAPTURE_POINTS }, (_, x) => ({
+        x,
+        y: 1,
+        layer: 0,
+        owner: null,
+        capturer: null,
+        progress: 0,
+      })),
+    };
+    expect(parseWireSnapshotPart(seven)).toEqual(seven);
+  });
+
   it.each(VALID)("accept a %s that survives a JSON round trip unchanged", (_, parse, fixture) => {
     const wire: unknown = JSON.parse(JSON.stringify(fixture));
     expect(wire).toEqual(fixture);
