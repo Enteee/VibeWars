@@ -182,7 +182,9 @@ async function takeSeat(page: Page, seat: number): Promise<void> {
 
 /** Whether `page` is a 1v1's: its click ends both stages, with no seat to take (#2387). */
 async function isSolo(page: Page): Promise<boolean> {
-  return (await page.locator(SOLO_PICK).count()) > 0;
+  const stage = page.locator(".team-lobby-stage");
+  await expect(stage).toHaveText(VOTE_STAGE);
+  return (await stage.textContent()) === "Choose your character";
 }
 
 /**
