@@ -1,4 +1,4 @@
-import { RECONNECT_WINDOW_SECONDS } from "@vibewars/game-session";
+import { type ConnectionState, RECONNECT_WINDOW_SECONDS } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
 
@@ -66,7 +66,7 @@ export function mountReconnectOverlay(parent: HTMLElement): ReconnectOverlay {
 }
 
 export interface ReconnectCountdown {
-  connectionChanged(state: "online" | "reconnecting" | "lost"): void;
+  connectionChanged(state: ConnectionState): void;
   dispose(): void;
 }
 

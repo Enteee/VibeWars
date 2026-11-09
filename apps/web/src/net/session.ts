@@ -48,6 +48,7 @@ import {
   type QueuedSeat,
   type PlayerKey,
   type TicketKey,
+  type ConnectionState,
 } from "@vibewars/game-session";
 
 import { isStaleChunkError } from "../build-check.js";
@@ -979,6 +980,20 @@ export function lobbyClosedNotice(reason: LobbyClosedReason): string {
       return t("session.fellThrough");
     case "removed":
       return t("session.removed");
+  }
+}
+
+/** What ends a match for `state`: nothing while the host may still be there. */
+export function matchEndedNotice(state: ConnectionState): string | undefined {
+  switch (state) {
+    case "online":
+    case "reconnecting":
+      return undefined;
+    // True whichever side dropped: a guest cannot tell its own drop from the host's.
+    case "lost":
+      return t("app.lostMatch");
+    case "host-left":
+      return t("queue.hostLeft");
   }
 }
 

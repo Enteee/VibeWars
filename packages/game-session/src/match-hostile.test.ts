@@ -254,7 +254,7 @@ describe("P2P match robustness (#375)", () => {
 
     // What must not happen is a client that believes it is still in a
     // match that no longer exists.
-    expect(states).toContain("lost");
+    expect(states).toContain("host-left");
 
     // A new host, nothing hand-reset, and the game is playable again.
     const next = startMatch();

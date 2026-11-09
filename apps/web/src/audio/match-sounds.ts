@@ -1,4 +1,4 @@
-import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
+import type { ConnectionState, MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 
 import { soundsForCombat, soundsForSnapshot } from "./combat-sounds.js";
 import type { SoundId } from "./sound-ids.js";
@@ -18,7 +18,7 @@ export interface MatchSounds {
    * first snapshot back is a fresh start, so casts that ran through the
    * drop are not replayed.
    */
-  connectionChanged(state: "online" | "reconnecting" | "lost"): void;
+  connectionChanged(state: ConnectionState): void;
   /** A connection cannot unsubscribe, so this silences its handlers instead. */
   dispose(): void;
 }

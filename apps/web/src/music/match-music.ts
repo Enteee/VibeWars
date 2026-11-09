@@ -1,5 +1,10 @@
 import { LONG_BOW_RANGE, type CombatEvent } from "@vibewars/game-core";
-import type { MatchConnection, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
+import type {
+  ConnectionState,
+  MatchConnection,
+  MatchSnapshot,
+  PlayerSnapshot,
+} from "@vibewars/game-session";
 
 import { hitsForCombat } from "../audio/combat-sounds.js";
 import {
@@ -28,7 +33,7 @@ export interface MatchMusic {
   /** Feed every snapshot the view draws. */
   snapshot(next: MatchSnapshot): void;
   /** While the connection is down the music holds where it was. */
-  connectionChanged(state: "online" | "reconnecting" | "lost"): void;
+  connectionChanged(state: ConnectionState): void;
   /** A connection cannot unsubscribe, so this silences its handlers instead. */
   dispose(): void;
 }
