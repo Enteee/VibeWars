@@ -1261,6 +1261,13 @@ export default {
   "topbar.help": "Súgó",
   "topbar.inviteLinkLabel": "lobbi meghívó linkje",
   "topbar.join": "Belép",
+  "topbar.joinCancel": "Mégse",
+  "topbar.joinConfirm": "Belép",
+  "topbar.joinLobby": "Belépés lobbiba",
+  "topbar.joinLobbyField": "Illessz be egy lobbi meghívó linket",
+  "topbar.joinNotALink": "Ez nem lobbi meghívó link.",
+  "topbar.joinOtherBuild":
+    "Ez a link a játék egy másik verziójához tartozik. Nyisd meg közvetlenül.",
   "topbar.joinedLobby": "Lobbi",
   "topbar.joiningLobby": "Belépés…",
   "topbar.leave": "Kilép",

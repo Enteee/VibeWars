@@ -1274,6 +1274,13 @@ export default {
   "topbar.help": "Βοήθεια",
   "topbar.inviteLinkLabel": "σύνδεσμος πρόσκλησης λόμπι",
   "topbar.join": "Είσοδος",
+  "topbar.joinCancel": "Άκυρο",
+  "topbar.joinConfirm": "Είσοδος",
+  "topbar.joinLobby": "Είσοδος σε λόμπι",
+  "topbar.joinLobbyField": "Επικόλλησε σύνδεσμο πρόσκλησης λόμπι",
+  "topbar.joinNotALink": "Αυτός δεν είναι σύνδεσμος πρόσκλησης λόμπι.",
+  "topbar.joinOtherBuild":
+    "Αυτός ο σύνδεσμος είναι για άλλη έκδοση του παιχνιδιού. Άνοιξέ τον απευθείας.",
   "topbar.joinedLobby": "Λόμπι",
   "topbar.joiningLobby": "Είσοδος…",
   "topbar.leave": "Έξοδος",

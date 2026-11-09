@@ -60,7 +60,7 @@ Diese Tasten sind fest:
 ## Die obere Leiste
 
 Außerhalb eines Matches liegen oben **[?]** (diese Hilfe), **⚙** (Optionen),
-**Lobby** (dein Einladungslink, Offen/Zu, Verlassen und wer in deiner Lobby ist; das Abzeichen zählt sie),
+**Lobby** (dein Einladungslink, Lobby beitreten, Offen/Zu, Verlassen und wer in deiner Lobby ist; das Abzeichen zählt sie),
 **♪** (Musik: was läuft und wie laut), Ton aus und Vollbild. Im Match liegen dieselben Knöpfe,
 außer Lobby, oben rechts am Bildschirm. In einem schmalen Fenster klappen diese Symbole und die
 übrigen Knöpfe des Bildschirms unter **⋯** ein; nur sein Hauptknopf bleibt draußen.

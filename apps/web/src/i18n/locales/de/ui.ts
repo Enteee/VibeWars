@@ -1272,6 +1272,13 @@ export default {
   "topbar.help": "Hilfe",
   "topbar.inviteLinkLabel": "Lobby-Einladungslink",
   "topbar.join": "Beitreten",
+  "topbar.joinCancel": "Abbrechen",
+  "topbar.joinConfirm": "Beitreten",
+  "topbar.joinLobby": "Lobby beitreten",
+  "topbar.joinLobbyField": "Lobby-Einladungslink einfügen",
+  "topbar.joinNotALink": "Das ist kein Lobby-Einladungslink.",
+  "topbar.joinOtherBuild":
+    "Dieser Link gehört zu einer anderen Version des Spiels. Öffne ihn direkt.",
   "topbar.joinedLobby": "Lobby",
   "topbar.joiningLobby": "Beitritt…",
   "topbar.leave": "Verlassen",

@@ -1260,6 +1260,13 @@ export default {
   "topbar.help": "Help",
   "topbar.inviteLinkLabel": "lobby-uitnodigingslink",
   "topbar.join": "Meedoen",
+  "topbar.joinCancel": "Annuleren",
+  "topbar.joinConfirm": "Meedoen",
+  "topbar.joinLobby": "Lobby binnengaan",
+  "topbar.joinLobbyField": "Plak een lobby-uitnodigingslink",
+  "topbar.joinNotALink": "Dat is geen lobby-uitnodigingslink.",
+  "topbar.joinOtherBuild":
+    "Die link is voor een andere versie van het spel. Open hem rechtstreeks.",
   "topbar.joinedLobby": "Lobby",
   "topbar.joiningLobby": "Meedoen…",
   "topbar.leave": "Verlaten",
