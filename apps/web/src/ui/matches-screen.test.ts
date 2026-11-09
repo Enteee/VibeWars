@@ -460,12 +460,48 @@ describe("the Matches page (#2532)", () => {
     expect(cloned).toEqual([PAIRS.teams[0]]);
   });
 
-  it("has no Clone for a 1v1, and a disabled one for a team it can't read (#2585)", () => {
+  it("clones a 1v1's side once however often its Clone is pressed (#2885)", () => {
     const { root } = render();
     hear("solo");
     root.one("match-row-head").click();
-    expect(root.all("play-card-clone")).toHaveLength(0);
+    const clone = root.one("play-card-clone");
+    expect(clone.disabled).toBe(false);
+    clone.click();
+    clone.click();
+    expect(clone.disabled).toBe(true);
+    expect(cloned).toEqual([RECORD.teams[0]]);
+  });
 
+  it("disables a 1v1's Clone when its build can't be read (#2885)", () => {
+    const { root } = render();
+    const [first, second] = RECORD.teams;
+    const [player] = first?.players ?? [];
+    if (player === undefined || second === undefined) {
+      return;
+    }
+    hear("solo", { ...RECORD, teams: [{ players: [{ ...player, template: "!!!" }] }, second] });
+    root.one("match-row-head").click();
+    const clone = root.one("play-card-clone");
+    expect(clone.disabled).toBe(true);
+    expect(clone.title).toBe(t("matches.buildUnreadable"));
+    clone.click();
+    expect(cloned).toEqual([]);
+  });
+
+  it("has no Clone for a size with no build, like a team of three (#2885)", () => {
+    const { root } = render();
+    const [ann, bob] = PAIRS.teams[0]?.players ?? [];
+    const second = PAIRS.teams[1];
+    if (ann === undefined || bob === undefined || second === undefined) {
+      return;
+    }
+    hear("three", { ...PAIRS, teams: [{ players: [ann, bob, ann] }, second] });
+    root.one("match-row-head").click();
+    expect(root.all("play-card-clone")).toHaveLength(0);
+  });
+
+  it("disables a team's Clone when a build in it can't be read (#2585)", () => {
+    const { root } = render();
     const [ann, bob] = PAIRS.teams[0]?.players ?? [];
     const second = PAIRS.teams[1];
     if (ann === undefined || bob === undefined || second === undefined) {

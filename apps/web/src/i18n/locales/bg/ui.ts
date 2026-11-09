@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "По-бавно: последните ти редове не бяха изпратени.",
   "app.cloned": "Клониран: {team}{missing}",
   "app.couldNotImport": "Неуспешен импорт",
+  "app.couldNotSaveCharacter": "Героят не можа да се запази",
   "app.couldNotSaveTeam": "Отборът не можа да се запази",
   "app.framedRelayLink": "Отвори линка за релето в отделен раздел. Нищо не е запазено.",
   "app.inviteInLobby": "Върни се в менюто и отвори линка за покана отново.",

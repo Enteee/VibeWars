@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Pelan-pelan: pesan terakhirmu tidak terkirim.",
   "app.cloned": "Berhasil klon {team}{missing}",
   "app.couldNotImport": "Gagal mengimpor",
+  "app.couldNotSaveCharacter": "Karakter tidak dapat disimpan",
   "app.couldNotSaveTeam": "Gagal menyimpan tim",
   "app.framedRelayLink": "Buka link relay di tab tersendiri. Belum ada yang disimpan.",
   "app.inviteInLobby": "Kembali ke menu, lalu buka lagi link undangannya.",

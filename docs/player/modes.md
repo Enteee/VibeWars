@@ -383,8 +383,7 @@ the name), two teams or three, the winner underlined, and the map,
 duration and when. Every row is marked **host-reported**. Click one to
 see the teams, one tab each, the winner's first: the team card. **Clone** copies a team from
 a finished match into your Team Builds, each player's build under
-their name, and opens it. A 1v1 side has no Clone: a Team Build is 2, 4
-or 8.
+their name, and opens it. On a 1v1 side, Clone saves the player's build as a new character and opens that, because a Team Build is 2, 4 or 8.
 
 Each row starts with its mode's icon, and the icon and the row's left
 edge are in the mode's colour: orange Random, blue Team, gold Ascent,

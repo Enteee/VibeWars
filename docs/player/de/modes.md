@@ -316,8 +316,7 @@ Du siehst sie auf der Seite **Matches**, unter dem Team-Editor: die letzten 100,
 gespielt werden. Jeder Eintrag ist eine Zeile: die Spieler jedes Teams als Symbol ihrer Primärklasse (fahre mit der Maus darüber für den
 Namen), zwei oder drei Teams, der Gewinner unterstrichen, und die Karte, Dauer und Zeitpunkt. Jede Zeile ist mit **vom Host gemeldet**
 markiert. Klick auf eine, um die Teams zu sehen, ein Tab pro Team, das des Gewinners zuerst: die Teamkarte. **Klonen** kopiert ein Team
-aus einem beendeten Match in deine Team-Builds, jeden Build unter dem Namen seines Spielers, und öffnet es. Eine 1v1-Seite hat kein
-Klonen: Ein Team-Build hat 2, 4 oder 8 Mitglieder.
+aus einem beendeten Match in deine Team-Builds, jeden Build unter dem Namen seines Spielers, und öffnet es. Bei einer 1v1-Seite speichert Klonen den Build des Spielers als neuen Charakter und öffnet ihn, denn ein Team-Build hat 2, 4 oder 8 Mitglieder.
 
 Jede Zeile beginnt mit dem Symbol ihres Modus, und das Symbol und der linke Rand der Zeile sind in der Farbe des Modus: Orange Zufall,
 Blau Team, Gold Aufstieg, Violett GvG, Grün Gehostet. Über der Liste filtern Chips nach **Art** (Zufall, Team, Aufstieg, GvG, Gehostet) und

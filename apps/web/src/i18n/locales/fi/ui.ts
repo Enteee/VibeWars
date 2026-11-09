@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Hidasta vähän: viimeisimpiä viestejäsi ei lähetetty.",
   "app.cloned": "Kloonattu: {team}{missing}",
   "app.couldNotImport": "Tuonti epäonnistui",
+  "app.couldNotSaveCharacter": "Hahmoa ei voitu tallentaa",
   "app.couldNotSaveTeam": "Tiimin tallennus epäonnistui",
   "app.framedRelayLink": "Avaa relay-linkki omassa välilehdessään. Mitään ei tallennettu.",
   "app.inviteInLobby": "Palaa valikkoon ja avaa kutsulinkki uudelleen.",

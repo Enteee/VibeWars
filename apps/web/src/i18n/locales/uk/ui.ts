@@ -6,6 +6,7 @@ export default {
   "app.chatThrottled": "Не так швидко: останні рядки не надіслано.",
   "app.cloned": "Клоновано {team}{missing}",
   "app.couldNotImport": "Не вдалося імпортувати",
+  "app.couldNotSaveCharacter": "Не вдалося зберегти персонажа",
   "app.couldNotSaveTeam": "Не вдалося зберегти команду",
   "app.framedRelayLink":
     "Відкрий посилання на ретранслятор в окремій вкладці. Нічого не збережено.",

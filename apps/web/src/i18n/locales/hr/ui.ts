@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Uspori: tvoje zadnje poruke nisu poslane.",
   "app.cloned": "Kloniran je {team}{missing}",
   "app.couldNotImport": "Uvoz nije uspio",
+  "app.couldNotSaveCharacter": "Lik nije moguće spremiti",
   "app.couldNotSaveTeam": "Tim nije spremljen",
   "app.framedRelayLink": "Otvori poveznicu releja u zasebnoj kartici. Ništa nije spremljeno.",
   "app.inviteInLobby": "Vrati se u izbornik pa ponovno otvori pozivnicu.",

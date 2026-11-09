@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Yavaşla: son satırların gönderilmedi.",
   "app.cloned": "{team} kopyalandı{missing}",
   "app.couldNotImport": "İçe aktarılamadı",
+  "app.couldNotSaveCharacter": "Karakter kaydedilemedi",
   "app.couldNotSaveTeam": "Takım kaydedilemedi",
   "app.framedRelayLink": "Relay bağlantısını kendi sekmesinde aç. Hiçbir şey kaydedilmedi.",
   "app.inviteInLobby": "Menüye dön, sonra davet bağlantısını yeniden aç.",
