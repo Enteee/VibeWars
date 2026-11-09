@@ -41,6 +41,7 @@ Ces touches sont fixes :
 
 - **Clic gauche** au sol pour y marcher. Sans Shift, le bouton gauche ne fait
   que marcher.
+- Sur les cartes à plateformes surélevées, un clic gauche mène à la surface visible, et **Alt + clic gauche** au sol en dessous. Un anneau sous le curseur indique une plateforme, un anneau en pointillés le sol.
 - **Clic droit** sur un ennemi ou un allié pour le cibler. Clic droit sur le
   même ennemi à nouveau, rapidement, pour l'attaquer.
 - **Clic droit** sur un drapeau ou le Socle du drapeau, en Bataille de guilde ou sur Barrow Field,
@@ -64,7 +65,7 @@ Ces touches sont fixes :
 ## La barre du haut
 
 Hors match, la barre du haut contient **[?]** (cette Aide), **⚙** (Options),
-**Salon** (ton lien d'invitation, Ouvert/Fermé, Quitter, et qui est dans ton
+**Salon** (ton lien d'invitation, Rejoindre un salon, Ouvert/Fermé, Quitter, et qui est dans ton
 salon ; sa pastille les compte), **♪** (la musique : ce qui joue, et à quel
 volume), la coupure du son et le plein écran. En match, les mêmes boutons,
 sauf Salon, sont en haut à droite de l'écran. Dans une fenêtre étroite, ces

@@ -92,7 +92,7 @@ describe("traps through the P2P host (#1105)", () => {
         struck.push(casterSessionId);
       }
     });
-    b.connection.sendIntent({ kind: "walk-to", x: trap.x, y: trap.y });
+    b.connection.sendIntent({ kind: "walk-to", layer: 0, x: trap.x, y: trap.y });
     await match.step(3);
     expect(c.connection.getSnapshot().traps).toEqual([]);
     expect(c.heard.length).toBe(heardBefore + 1);
@@ -107,7 +107,7 @@ describe("traps through the P2P host (#1105)", () => {
     if (trap === undefined) {
       throw new Error("no trap set");
     }
-    b.connection.sendIntent({ kind: "walk-to", x: trap.x, y: trap.y });
+    b.connection.sendIntent({ kind: "walk-to", layer: 0, x: trap.x, y: trap.y });
     let seen: readonly unknown[] = [];
     for (let i = 0; i < 40 && seen.length === 0; i += 1) {
       await match.step(TICK_SECONDS * 3);

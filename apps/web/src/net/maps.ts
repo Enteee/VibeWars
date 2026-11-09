@@ -357,7 +357,7 @@ function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
 function shrinesOf(objectives: readonly Objective[]): readonly MapShrine[] {
   return objectives.flatMap((objective) =>
     objective.kind === "resurrection-shrine"
-      ? [{ team: objective.team, position: objective.position }]
+      ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
       : [],
   );
 }
@@ -365,7 +365,9 @@ function shrinesOf(objectives: readonly Objective[]): readonly MapShrine[] {
 /** The Guild Lords among a map's objectives (#1222). */
 function guildLordsOf(objectives: readonly Objective[]): readonly GuildLord[] {
   return objectives.flatMap((objective) =>
-    objective.kind === "guild-lord" ? [{ team: objective.team, position: objective.position }] : [],
+    objective.kind === "guild-lord"
+      ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
+      : [],
   );
 }
 
@@ -381,10 +383,11 @@ function flagFieldOf(objectives: readonly Objective[]): FlagField | undefined {
     ? undefined
     : {
         stand: stand.position,
+        standLayer: stand.layer,
         beacon: stand.kind === "storm-beacon",
         spawns: objectives.flatMap((objective) =>
           objective.kind === "flag-spawn"
-            ? [{ team: objective.team, position: objective.position }]
+            ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
             : [],
         ),
       };
@@ -407,11 +410,12 @@ function relicFieldOf(
   const altar = objectives.find((objective) => objective.kind === "altar");
   const spawns = objectives.flatMap((objective) =>
     objective.kind === "relic-spawn"
-      ? [{ team: objective.team, position: objective.position }]
+      ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
       : [],
   );
   return {
     altar: altar?.position,
+    altarLayer: altar?.layer ?? 0,
     relicTarget: map.relicTarget,
     relicCarry: map.relicCarry,
     spawns,
@@ -430,9 +434,10 @@ function ghostFieldOf(map: MapData, objectives: readonly Objective[]): GhostFiel
   return {
     level: map.ghostLevel,
     altar: map.mode === "king-of-the-hill" ? altar?.position : undefined,
+    altarLayer: altar?.layer ?? 0,
     spawns: objectives.flatMap((objective) =>
       objective.kind === "ghost-spawn"
-        ? [{ team: objective.team, position: objective.position }]
+        ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
         : [],
     ),
   };
@@ -448,7 +453,14 @@ export function mapRelicField(mapId: string, teamCount: number): RelicField | un
 function guardsOf(objectives: readonly Objective[]): readonly BaseGuard[] {
   return objectives.flatMap((objective) =>
     objective.kind === "guard"
-      ? [{ team: objective.team, role: objective.role, position: objective.position }]
+      ? [
+          {
+            team: objective.team,
+            role: objective.role,
+            position: objective.position,
+            layer: objective.layer,
+          },
+        ]
       : [],
   );
 }
@@ -525,7 +537,7 @@ export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | und
     relicField: relicFieldOf(map, objectives),
     ghostField: ghostFieldOf(map, objectives),
     capturePoints: objectives.flatMap((objective) =>
-      objective.kind === "capture-point" ? [objective.position] : [],
+      objective.kind === "capture-point" ? [{ ...objective.position, layer: objective.layer }] : [],
     ),
     guards: guardsOf(objectives),
   };

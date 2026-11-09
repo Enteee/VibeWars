@@ -6,6 +6,7 @@ import type {
   MatchConnection,
   MatchSnapshot,
   ObserverConnection,
+  ConnectionState,
 } from "@vibewars/game-session";
 
 import { attachMatchSounds } from "./audio/match-sounds.js";
@@ -120,7 +121,7 @@ import { button, setToastHost, toast } from "./ui/kit.js";
 export interface MatchViewCallbacks {
   readonly onLeave: () => void;
   /** Surfaces connection trouble so the shell can tell the player. */
-  readonly onConnectionChange?: (state: "online" | "reconnecting" | "lost") => void;
+  readonly onConnectionChange?: (state: ConnectionState) => void;
   /** Once, on the first snapshot of the match finished (#881): how it ended for this player. */
   readonly onFinished?: (outcome: MatchOutcome) => void;
 }
@@ -166,7 +167,7 @@ interface ViewedMatch {
   getSnapshot(): MatchSnapshot | undefined;
   onCombat(handler: (message: CombatMessage) => void): void;
   /** A watcher is never reconnecting: its host gone, it is lost. */
-  onConnectionChange(handler: (state: "online" | "reconnecting" | "lost") => void): void;
+  onConnectionChange(handler: (state: ConnectionState) => void): void;
   disconnect(): Promise<void>;
 }
 
@@ -207,9 +208,7 @@ async function viewedMatch(options: MatchViewOptions): Promise<ViewedMatch> {
       watched.onCombat(handler);
     },
     onConnectionChange: (handler) => {
-      watched.onLost(() => {
-        handler("lost");
-      });
+      watched.onLost(handler);
     },
     disconnect: () => watched.disconnect(),
   };
@@ -1080,13 +1079,14 @@ export async function startMatchView(
   const offPointer =
     seat === undefined
       ? undefined
-      : viewport?.onButton(({ button, phase, world }) => {
+      : viewport?.onButton(({ button, phase, world, altKey }) => {
           if (button === "left" && phase === "down") {
             const intents = primaryClickIntents(
               seat.getSnapshot(),
               latestArena ?? EMPTY_SNAPSHOT,
               world,
               nameReveal.held(),
+              altKey,
             );
             for (const intent of intents) {
               seat.sendIntent(intent);

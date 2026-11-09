@@ -16,6 +16,7 @@ export type RenderItem =
   | { readonly kind: "support"; readonly deckLayer: number }
   | { readonly kind: "side-face"; readonly deckLayer: number }
   | { readonly kind: "deck"; readonly deckLayer: number }
+  | { readonly kind: "hidden-outline" }
   | { readonly kind: "effect" }
   | { readonly kind: "cast-badge" }
   | { readonly kind: "ui" }
@@ -27,6 +28,7 @@ const WALL = 2;
 const SUPPORT = 3;
 const SIDE_FACE = 4;
 const DECK = 5;
+const HIDDEN_OUTLINE = 90;
 const EFFECT = 100;
 const CAST_BADGE = 100.5;
 const UI = 110;
@@ -47,6 +49,8 @@ export function renderOrder(item: RenderItem): number {
       return (item.deckLayer - 1) * LAYER_STACK + SIDE_FACE;
     case "deck":
       return (item.deckLayer - 1) * LAYER_STACK + DECK;
+    case "hidden-outline":
+      return HIDDEN_OUTLINE;
     case "effect":
       return EFFECT;
     case "cast-badge":

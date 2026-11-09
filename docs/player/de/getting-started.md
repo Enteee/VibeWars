@@ -99,7 +99,7 @@ Liste, wer drin ist; das Abzeichen zählt sie.
   Ein Gast sieht das Schloss und „Lobby geschlossen“ im Lobby-Fenster, solange sie zu
   ist.
 - **Beitreten:** Öffne den Einladungslink, den du bekommen hast, in einem neuen Tab oder
-  füge ihn in die Adressleiste eines offenen ein. Deine eigene Lobby bleibt offen, bis
+  füge ihn in die Adressleiste eines offenen ein. **Lobby beitreten** im Lobby-Fenster nimmt den Link ebenfalls an. Deine eigene Lobby bleibt offen, bis
   der Beitritt durch ist. Danach steht im Lobby-Fenster **Lobby**, und **Verlassen**
   bringt dich zurück in eine neue eigene Lobby mit einem neuen Einladungslink. Ein Link,
   der auf einem Lobby-Bildschirm oder im Match geöffnet wird, bittet dich, erst ins Menü

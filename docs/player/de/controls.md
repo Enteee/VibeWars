@@ -37,6 +37,7 @@ Diese Tasten sind fest:
 ## Maus
 
 - **Linksklick** auf den Boden: Du läufst dorthin. Ohne Shift läuft die linke Taste nur.
+- Auf Karten mit erhöhten Plattformen führt ein Linksklick auf die sichtbare Fläche, **Alt + Linksklick** auf den Boden darunter. Ein Ring am Mauszeiger zeigt eine Plattform an, ein gestrichelter Ring den Boden.
 - **Rechtsklick** auf einen Gegner oder Verbündeten visiert ihn an. Klicke denselben
   Gegner kurz danach noch einmal rechts, um ihn anzugreifen.
 - **Rechtsklick** auf eine Flagge oder den Flaggenstand in einer Gildenschlacht oder auf dem Barrow Field
@@ -60,7 +61,7 @@ Diese Tasten sind fest:
 ## Die obere Leiste
 
 Außerhalb eines Matches liegen oben **[?]** (diese Hilfe), **⚙** (Optionen),
-**Lobby** (dein Einladungslink, Offen/Zu, Verlassen und wer in deiner Lobby ist; das Abzeichen zählt sie),
+**Lobby** (dein Einladungslink, Lobby beitreten, Offen/Zu, Verlassen und wer in deiner Lobby ist; das Abzeichen zählt sie),
 **♪** (Musik: was läuft und wie laut), Ton aus und Vollbild. Im Match liegen dieselben Knöpfe,
 außer Lobby, oben rechts am Bildschirm. In einem schmalen Fenster klappen diese Symbole und die
 übrigen Knöpfe des Bildschirms unter **⋯** ein; nur sein Hauptknopf bleibt draußen.

@@ -235,7 +235,7 @@ Aufstieg der Helden oder in GvG) bekommt eine Team-Lobby nur für ihre eigene Se
 niemand nimmt.
 Während sie wartet, kannst du die anderen Modi ansehen: Die Gruppe behält ihren Modus und ihre Größe, bis sie die
 Warteschlange verlässt.
-Jede Phase dauert 60 Sekunden und endet früher, sobald alle in der Team-Lobby bereit sind.
+Jede Phase dauert 30 Sekunden und endet früher, sobald alle in der Team-Lobby bereit sind. Abstimmen und einen Platz nehmen macht dich bereit.
 
 **Abstimmen.** Jeder auf einer Seite darf einen Team-Build genau in der Größe dieser Seite vorschlagen, ein Vorschlag pro
 Spieler. Deine Team-Builds öffnen sich über den Tab **Deine Team-Builds** rechts: Suche sie nach Namen, klick auf einen,
@@ -243,7 +243,7 @@ um seine Mitglieder zu sehen, dann **Diesen Build vorschlagen**; bei deinem **Vo
 Nur deine Team-Builds dieser Größe und ohne Probleme werden gezeigt; das Fenster sagt, wie viele anderer Größen es
 weglässt. Jeder darf für einen der Vorschläge seiner Seite stimmen, auch den eigenen. Jeder Vorschlag ist eine Karte,
 die jedes Mitglied mit seinen Waffen zeigt, mit seinen Skills und den Initialen derer, die dafür gestimmt haben: Klick
-auf eine Karte, um zu stimmen, und noch einmal, um deine Stimme zurückzunehmen. Nichts wird für dich vorgeschlagen: Das
+auf eine Karte, um zu stimmen, oder auf eine andere, um deine Stimme zu ändern; zurücknehmen kannst du sie nicht. Nichts wird für dich vorgeschlagen: Das
 Menü erstellt und bearbeitet nur Team-Builds. Ein neuer Vorschlag ersetzt deinen alten, und seine Stimmen gehen auf null
 zurück. Die meisten Stimmen gewinnen. Bei einem Gleichstand entscheidet die Stimme des Kapitäns: der Host auf der Seite des
 Hosts, auf der anderen der, der zuerst beigetreten ist. Mit Vorschlägen und ohne Stimmen wird einer zufällig gewählt. Ohne
@@ -254,7 +254,7 @@ Start des Matches. Jede Seite würfelt ihr eigenes, also können beide dasselbe 
 Stimmen oder die Wahl der anderen.
 
 **Nehmen.** Die Charaktere des gewählten Builds sind Plätze, jeder der Charakter mit seinen Waffen über seinen Skills: Klick
-auf einen freien Platz, um ihn zu nehmen, oder auf deinen, um ihn freizugeben, wer zuerst kommt, mahlt zuerst, einer pro
+auf einen freien Platz, um ihn zu nehmen, oder auf einen anderen freien, um zu wechseln, wer zuerst kommt, mahlt zuerst, einer pro
 Spieler. Wer nichts genommen hat, bekommt den ersten freien, und Bots spielen den Rest unter dem Namen ihres Charakters.
 Dann startet das Match, oder eine wartende Gruppe kommt in die Warteschlange.
 
@@ -290,6 +290,8 @@ Platz frei, aber nicht dessen Build. Wer zwischen den Karten neu zur Gruppe stö
 Niederlage beginnt von vorn: Der nächste Lauf stimmt neu ab. Das Gleiche gilt, wenn du deinem Host in eine andere Gruppe
 folgst, deren Host für den alten Lauf nicht bürgen kann. Die Runde merkt sich der Host deiner Gruppe, und nur, bis du den
 Tab schließt. Eine Lobby des Aufstiegs der Helden, der per Code beigetreten wurde, spielt die Karte von Runde 1.
+
+Eine Gruppe mit weniger als 8 Spielern geht mit Bots auf den freien Plätzen in die Warteschlange und nutzt dabei ihren Team-Build, aber eine Seite hat immer mindestens einen Menschen, und ein reines Bot-Team ist nie ein Gegner. Verlässt der letzte Mensch einer Seite ein Match, gibt diese Seite auf und ihr Lauf endet.
 
 **Barrow Field** ist eine Arena des Aufstiegs, die du auch in einem Gehosteten Spiel wählen kannst: 8v8 Priestervernichtung zwischen niedrigen Erdhügeln, und der Priester erweckt alle 2 Minuten seine Toten. Trage deine Flagge auf das **Storm Beacon** in der Mitte, und es trifft alle 2,5 Sekunden einen zufälligen Gegner in Hörweite mit 50 Blitzschaden, bis das andere Team dort seine Flagge pflanzt. Jeder Einschlag ist ein Blitz vom Beacon zum Getroffenen, für beide Teams sichtbar.
 

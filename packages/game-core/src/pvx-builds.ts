@@ -65,7 +65,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "Avatar of Balthazar",
     rating: "Meta-Great",
-    code: "OgCjkqqK7OuXvN3PAXuBAIYAA",
+    code: "OgCjkqqK7SuXebcfBYlbibIYih",
   },
   {
     professions: "D_any",
@@ -114,7 +114,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "March Signet of Suffering",
     rating: "Provisional-Great",
-    code: "OgSiQws8QVbDgtCB99RcgBAA",
+    code: "OgSiQws8QVbDgtCB99RcgZv",
   },
   {
     professions: "E_any",
@@ -149,14 +149,14 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "Invoke Lightning",
     rating: "Great",
-    code: "OgBSgYGTAaLgeDcD0ChDAAAAA",
+    code: "OgBCgMzEg2Co3A3AtQ4AoAAA",
   },
   {
     professions: "E_any",
     mode: "PvP",
     name: "Lightning Surge",
     rating: "Meta-Great",
-    code: "OgBSgYmSNDfDeDcDAA0ChDCAA",
+    code: "OgBCgMrUzw3g3A3ADItQ4gAA",
   },
   {
     professions: "E_any",
@@ -233,7 +233,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "JQ",
     name: "Wastrel's Capper",
     rating: "Meta-Great",
-    code: "OQdUAOBP0PR5AhQ3UyAAAoAIQTQA",
+    code: "OQdUAOBP0PN5gQ4NVGEwQBIwJI",
   },
   {
     professions: "Me_any",
@@ -247,7 +247,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "FA",
     name: "Psychic Instability Wastrel's",
     rating: "Meta-Great",
-    code: "OQBTAUBPQqJIESG4mKHAAAFAAA",
+    code: "OQBDAqwDONhQoM4mmDKCoAAA",
   },
   {
     professions: "Me_any",
@@ -261,14 +261,14 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "HA",
     name: "Panic",
     rating: "Provisional-Good",
-    code: "OQBTAQBPUh0zgiwDmBaAAAAA",
+    code: "OQBDAowjKkeGUEewMQDCAAA",
   },
   {
     professions: "Me_any",
     mode: "PvP",
     name: "Air of Disenchantment",
     rating: "Meta-Good",
-    code: "OQBTAyAPSCPbCAAonCAAAgIQAA",
+    code: "OQBDAZwTS4ZTAGg9UtAgQEBCA",
   },
   {
     professions: "Me_any",
@@ -282,7 +282,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "Power Block",
     rating: "Great",
-    code: "OQhkAoC8AGKUBApTGAAwMQRARQyF",
+    code: "OQhkAoC8AGKTBg0lBEAzgiARI5C",
   },
   {
     professions: "Me_any",
@@ -303,14 +303,14 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "RA",
     name: "Power Block",
     rating: "Great",
-    code: "OQBTAQBP0pA4BupAAAAAgIIAA",
+    code: "OQBDAowjOFAPwNl0p81AEBBA",
   },
   {
     professions: "Me_any",
     mode: "RA",
     name: "Psychic Distraction",
     rating: "Good",
-    code: "OQBTAQBPQqDyDQD4miIAAAAQAA",
+    code: "OQBDAowDOdQPgG4mSEqAqABA",
   },
   {
     professions: "Me_E",
@@ -338,7 +338,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "GvG",
     name: "Energy Surge",
     rating: "Meta-Great",
-    code: "OQhkAoC8AGKEpDAAAwMwJQRARQyF",
+    code: "OQhkAoC8AGKDpzDAAmBngiARI5C",
   },
   {
     professions: "Mo_A",
@@ -394,7 +394,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "RA",
     name: "Healing Burst",
     rating: "Meta-Great",
-    code: "OwEU04nA1KSNgeRAA3ETfQgAA8FA",
+    code: "OwEU04nA1KSNgeR3N3ETfQg1E8F",
   },
   {
     professions: "Mo_W",
@@ -415,7 +415,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "JQ",
     name: "Degen Pressure",
     rating: "Provisional-Good",
-    code: "OAdVUSzdUv+jBktnfzAA1AbABOBB",
+    code: "OAdVUSzdUv+jBktnfzBM1AbABOBB",
   },
   {
     professions: "N_A",
@@ -450,21 +450,21 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "FA",
     name: "Pain of Disenchantment Healer",
     rating: "Good",
-    code: "OAhjYgHaIPPVAAAQaO5inTsxJ",
+    code: "OAhjYgHaIPP1GRGTaO5inTsxJ",
   },
   {
     professions: "P_any",
     mode: "GvG",
     name: "May Spiker",
     rating: "Meta-Great",
-    code: "OQCjUymIqSPYFZBZWYAAVYubCAA",
+    code: "OQCjUymIqOP4icQ2CH+rwubBA",
   },
   {
     professions: "P_W",
     mode: "PvP",
     name: "Flesh Wound",
     rating: "Provisional-Great",
-    code: "OQGlUhlrJeGoJ9jZhFk9gxVwT4uBAA",
+    code: "OQGlUhlrJeGo58jtwB5HMXhn4uLy",
   },
   {
     professions: "P_W",
@@ -492,7 +492,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "Apply Poison",
     rating: "Provisional-Great",
-    code: "OgATcXsmV6xQ1oqp4AAY24XDAA",
+    code: "OgATcXsm15xoaqaFHEzs5XDAA",
   },
   {
     professions: "R_any",
@@ -541,7 +541,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "May Apply Poison",
     rating: "Good",
-    code: "OgMU8m7ix8OAAEjq5xMb+15VAA",
+    code: "OgMU8m7ix8O3aEjq5xMb+15VBA",
   },
   {
     professions: "R_N",
@@ -555,14 +555,14 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "FA",
     name: "May Toucher",
     rating: "Good",
-    code: "OgQTQ4zc5pGyJAAoGNhwhVmaA",
+    code: "OgQTQ4zc5pGyJ+1oGNhwhVmaA",
   },
   {
     professions: "R_N",
     mode: "GvG",
     name: "Turret",
     rating: "Provisional-Great",
-    code: "OgQTcmLnZ6xQ1AxQ3a1gCEAoRA",
+    code: "OgQTcmLnZ6xQ1AxQ3a1gCUAoRA",
   },
   {
     professions: "R_P",
@@ -590,7 +590,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "Soul Twisting",
     rating: "Good",
-    code: "OACjAyhG5SYThTWPPOyTqTAAJXA",
+    code: "OACjAyhG5OYzwp17xJPVnFskL",
   },
   {
     professions: "Rt_any",
@@ -618,7 +618,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "FA",
     name: "Soul Twisting",
     rating: "Great",
-    code: "OAOjAyhDJTWPPOhTAAYTWTST1EA",
+    code: "OAOjAyhDJPWvHX4s6hNtmSzaC",
   },
   {
     professions: "Rt_N",
@@ -639,7 +639,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "Rampage as One Axe",
     rating: "Good",
-    code: "OgETIZreRKXLqYviqAAg2YzQAA",
+    code: "OgETIZrexJXHV2rUlaDtZzIAA",
   },
   {
     professions: "W_any",
@@ -667,7 +667,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "May Axe",
     rating: "Meta-Great",
-    code: "OQASEZJPRFAweFAwU0K/EBA",
+    code: "OQASEZJPRFhyeFAwU0K/EBA",
   },
   {
     professions: "W_A",
@@ -792,7 +792,7 @@ export const PVX_TEAMS: readonly PvxTeam[] = [
       "OQgjExTc4QGWjFLFgFGFMF8VJXA",
       "OgpSgYGT0ChDAaeDLgcDgC0XA",
       "OgpjowM5aS0C4C5C/CjVCRlVsXA",
-      "OQhkAoC8AGKEpDAAAwMwJQRARQyF",
+      "OQhkAoC8AGKDpzDAAmBngiARI5C",
       "OwET8YIWViiQLKgQgYlom4BcuA",
       "OwcU04XCz/QeRNgkECE1NTf3ENQA",
       "OwcT02nCVyLqBULSgouZ67mYCC",
@@ -930,9 +930,9 @@ export const PVX_TEAMS: readonly PvxTeam[] = [
 /**
  * The PvX builds and teams that do not become one here, and why: a skill
  * not in the game yet, a bar the build rules refuse, or a team of a size
- * there is not. Never patched to
- * fit, but for six teams the operator had completed to a size there is
- * (#2874). `pvx-builds.test.ts` holds this to exactly what decoding skips,
+ * there is not. An empty slot is filled only with a skill the build's
+ * own PvX page names for it (#2911), and a team only completed to a size
+ * there is for the six the operator chose (#2874). `pvx-builds.test.ts` holds this to exactly what decoding skips,
  * so a skill landing that makes one decode fails it until it is struck.
  */
 export const PVX_SKIPPED: Readonly<Record<string, string>> = {};

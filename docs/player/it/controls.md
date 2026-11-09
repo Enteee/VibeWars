@@ -29,6 +29,7 @@ Questi tasti sono fissi:
 ## Mouse
 
 - **Clic sinistro** sul terreno per camminare fin lì. Senza Shift, il tasto sinistro serve solo a camminare.
+- Nelle mappe con piattaforme rialzate, il clic sinistro porta alla superficie che vedi e **Alt + clic sinistro** al terreno sottostante. Un anello sotto il cursore indica una piattaforma, uno tratteggiato il terreno.
 - **Clic destro** su un nemico o un alleato per bersagliarlo. Clicca di nuovo col destro sullo stesso nemico, rapidamente, per attaccarlo.
 - **Clic destro** su una bandiera o sulla Base bandiera, in una Battaglia di gilda o su Barrow Field, per bersagliarla; **Space** ti ci porta e prende o pianta la bandiera.
 - **Clic con la rotellina** su un nemico per segnalarlo alla tua squadra: il loro **T** lo bersaglia. Sul terreno o su un alleato fa un ping in quel punto. Oppure clicca sulla barra del bersaglio in alto per segnalare il nemico che hai bersagliato.
@@ -39,7 +40,7 @@ Questi tasti sono fissi:
 
 ## La barra superiore
 
-Fuori dalla partita, la barra superiore contiene **[?]** (questo Aiuto), **⚙** (Opzioni), **Lobby** (il tuo link d'invito, Aperta/Chiusa, Esci e chi c'è nella tua lobby; il badge li conta), **♪** (musica: cosa suona e a che volume), il silenzioso e lo schermo intero. In partita gli stessi pulsanti, tranne Lobby, stanno in alto a destra. In una finestra stretta, queste icone e gli altri pulsanti della schermata si raccolgono in **⋯**; resta fuori solo il pulsante principale. ⚙ apre Opzioni in una finestra sotto la barra, con la schermata ancora dietro; Esc, × o un clic fuori la chiudono. Aiuto si chiude con la × in alto a destra, con Esc o premendo di nuovo [?].
+Fuori dalla partita, la barra superiore contiene **[?]** (questo Aiuto), **⚙** (Opzioni), **Lobby** (il tuo link d'invito, Entra in una lobby, Aperta/Chiusa, Esci e chi c'è nella tua lobby; il badge li conta), **♪** (musica: cosa suona e a che volume), il silenzioso e lo schermo intero. In partita gli stessi pulsanti, tranne Lobby, stanno in alto a destra. In una finestra stretta, queste icone e gli altri pulsanti della schermata si raccolgono in **⋯**; resta fuori solo il pulsante principale. ⚙ apre Opzioni in una finestra sotto la barra, con la schermata ancora dietro; Esc, × o un clic fuori la chiudono. Aiuto si chiude con la × in alto a destra, con Esc o premendo di nuovo [?].
 
 **Condividi un beat con la tua lobby.** Nell'editor del beat (♪, poi **Modifica**), **Condividi in lobby** invia ciò che hai scritto, salvato o no, a tutti gli altri in una lobby che ospiti o a cui ti sei unito tramite link (mai in una trovata dalla coda; al massimo 8 KB, una condivisione ogni dieci secondi). Vedono un badge su ♪, e in **Condivisi con te** nella sua finestra una riga per giocatore, "Ann · Ember Deep", con **Avvia**. Non parte nulla finché non premi Avvia, e solo fuori dalla partita; **Torna alla mia musica** riporta alla tua. Un beat condiviso non viene mai salvato: sparisce quando lasci la lobby o ricarichi.
 

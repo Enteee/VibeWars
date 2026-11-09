@@ -34,14 +34,12 @@ for the decisions behind this repository (start with
 **Requirements:** a desktop browser, a keyboard and a mouse. VibeWars
 does not work on a phone or a touch-only tablet.
 
-Open the GitHub Pages build:
-[the release](https://enteee.github.io/VibeWars/), or
-[the latest `main`](https://enteee.github.io/VibeWars/next/)
-(unreleased, may break). Every player is always in a lobby of your own.
+Open [the game](https://enteee.github.io/VibeWars/) on GitHub Pages.
+Every player is always in a lobby of your own.
 Open it (the lock in the title bar), press **Copy invite link** and send
 it; a friend opens the link, and the host's mode is the party's. The
 host's tab runs the match, so it has to stay open: if it closes, the
-lobby ends for everyone. The two builds keep separate saved characters.
+lobby ends for everyone.
 
 In a match, the default keys are:
 

@@ -162,10 +162,10 @@ export interface LobbyConnection {
   sendTeamPlan(seats: readonly PartyPlanSeat[]): void;
   /** In a Team Lobby's vote (#1458): propose `members` for this side, or withdraw with `null`. */
   propose(members: readonly PlayerBuild[] | null): void;
-  /** In a Team Lobby's vote: vote for `proposerId`'s proposal, or withdraw with `null`. */
-  vote(proposerId: string | null): void;
-  /** In a Team Lobby's claim: take slot `slot` of the chosen build, or let it go with `null`. */
-  claim(slot: number | null): void;
+  /** In a Team Lobby's vote: vote for `proposerId`'s proposal. */
+  vote(proposerId: string): void;
+  /** In a Team Lobby's claim: take slot `slot` of the chosen build. */
+  claim(slot: number): void;
   /** Say `text` on `channel` (#479), in the lobby or its match; the host cleans and routes it. */
   sendChat(channel: ChatChannel, text: string): void;
   /**

@@ -763,7 +763,8 @@
     "MIN_WIRE_MORALE": { "literal": -60 },
     "NO_SHOW_IGNORE_MS": { "literal": 120000 },
     "STROKE_SECONDS": { "literal": 4 },
-    "TEAM_LOBBY_STAGE_SECONDS": { "literal": 60 },
+    "TEAM_LOBBY_CLAIM_SECONDS": { "literal": 30 },
+    "TEAM_LOBBY_VOTE_SECONDS": { "literal": 30 },
     "TICKET_HEARTBEAT_MS": { "literal": 5000 },
     "TICKET_TTL_MS": { "literal": 15000 }
   },
@@ -958,6 +959,7 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+            { "name": "layer", "optional": false, "type": "number" },
             { "name": "x", "optional": false, "type": "number" },
             { "name": "y", "optional": false, "type": "number" }
           ]
@@ -6389,6 +6391,7 @@
     "WalkToIntent": {
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+        { "name": "layer", "optional": false, "type": "number" },
         { "name": "x", "optional": false, "type": "number" },
         { "name": "y", "optional": false, "type": "number" }
       ]
@@ -6556,6 +6559,7 @@
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
+        { "name": "layer", "optional": false, "type": "number" },
         {
           "name": "owner",
           "optional": false,
@@ -6569,6 +6573,7 @@
     "WireCarried": {
       "properties": [
         { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "place", "optional": false, "type": { "typeParameter": "Place" } },
         {
           "name": "team",
@@ -6881,6 +6886,7 @@
     "WireFlag": {
       "properties": [
         { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "place",
           "optional": false,
@@ -7013,7 +7019,7 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "claim" } },
-            { "name": "slot", "optional": false, "type": { "union": ["null", "number"] } }
+            { "name": "slot", "optional": false, "type": "number" }
           ]
         },
         {
@@ -7083,7 +7089,7 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "vote" } },
-            { "name": "proposerId", "optional": false, "type": { "union": ["null", "string"] } }
+            { "name": "proposerId", "optional": false, "type": "string" }
           ]
         }
       ]
@@ -7909,6 +7915,7 @@
     "WireRelic": {
       "properties": [
         { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "place",
           "optional": false,
@@ -8004,6 +8011,7 @@
                     "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
                   }
                 },
+                { "name": "layer", "optional": false, "type": "number" },
                 {
                   "name": "owner",
                   "optional": false,
@@ -8041,6 +8049,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,
@@ -8375,6 +8384,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,
@@ -8464,6 +8474,7 @@
                     "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
                   }
                 },
+                { "name": "layer", "optional": false, "type": "number" },
                 {
                   "name": "owner",
                   "optional": false,
@@ -8501,6 +8512,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,
@@ -8837,6 +8849,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,

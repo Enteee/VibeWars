@@ -31,15 +31,14 @@ import { memberCount, validateTeam } from "./team-builder.js";
  */
 
 export interface TeamLobbyCallbacks {
-  /** Vote for `proposerId`'s proposal, or withdraw with `null`. */
-  readonly onVote: (proposerId: string | null) => void;
+  /** Vote for `proposerId`'s proposal. */
+  readonly onVote: (proposerId: string) => void;
   /** Propose the saved Team Build `teamId`, or withdraw with `undefined`. */
   readonly onPropose: (teamId: string | undefined) => void;
-  /** Take seat `slot` of the chosen build, or leave yours with `null`. */
-  readonly onClaim: (slot: number | null) => void;
+  /** Take seat `slot` of the chosen build. */
+  readonly onClaim: (slot: number) => void;
   /** At 1v1 (#2387), play the character of the chooser's entry `key`. */
   readonly onPickSolo: (key: string) => void;
-  readonly onToggleReady: () => void;
   readonly onLeave: () => void;
 }
 
@@ -98,28 +97,6 @@ export function drawerShowing(size: number, hidden: number): string {
   return hidden === 0
     ? t("teamLobby.drawerShowing", { size })
     : t("teamLobby.drawerShowingHidden", { size, count: hidden });
-}
-
-/**
- * Why the chosen build won, as the line under it reads: the reason line for `choice`. The host says `"random"` both for a tie
- * and for a vote nobody cast; `proposals`, the last the vote showed, tell
- * the two apart.
- */
-export function reasonLine(choice: WireTeamChoice, proposals: readonly WireTeamProposal[]): string {
-  switch (choice.reason) {
-    case "votes":
-      return t("teamLobby.reasonVotes");
-    case "captain":
-      return t("teamLobby.reasonCaptain");
-    case "random":
-      return t(
-        proposals.some((proposal) => proposal.voterIds.length > 0)
-          ? "teamLobby.reasonTieRandom"
-          : "teamLobby.reasonNoVotes",
-      );
-    case "preset":
-      return t("teamLobby.reasonPreset");
-  }
 }
 
 /** Seconds as the clock shows them: 38 as "0:38". */
@@ -228,7 +205,7 @@ export function proposalCard(
   proposal: WireTeamProposal,
   side: WireTeamSide,
   snapshot: LobbySnapshot,
-  onVote: ((proposerId: string | null) => void) | undefined,
+  onVote: (proposerId: string) => void,
 ): HTMLElement {
   const mine = proposal.voterIds.includes(snapshot.selfSessionId);
   const proposer = personOf(snapshot.players, proposal.proposerId);
@@ -249,12 +226,13 @@ export function proposalCard(
     title: personName("team-lobby-card-name", proposer, proposal.proposerId === side.captainId),
     members: cardMembers(proposal.members, snapshot.proposalBuilds.get(proposal.proposerId)),
     footer: mine ? [votes, h("span", "team-lobby-your-vote", t("teamLobby.yourVote"))] : [votes],
-    // A click on your own vote takes it back.
+    // A vote can move to another card, never be taken back (#2872).
     onOpen: () => {
-      onVote?.(mine ? null : proposal.proposerId);
+      if (!mine) {
+        onVote(proposal.proposerId);
+      }
     },
     pressed: mine,
-    disabled: onVote === undefined,
     label: t("teamLobby.proposerBuild", { name: proposer.name }),
   });
   card.classList.toggle("is-voted", mine);
@@ -292,32 +270,6 @@ function choiceBuilds(
   });
 }
 
-/** The chosen build as a card: its proposer, or the preset team's name, and its characters. */
-function chosenCard(
-  choice: WireTeamChoice,
-  side: WireTeamSide,
-  snapshot: LobbySnapshot,
-): HTMLElement {
-  const card = teamFigureCard({
-    title:
-      choice.proposerId === null
-        ? personName(
-            "team-lobby-card-name",
-            // Where a preset has no name (#2148): a side of one plays a starter build.
-            { name: choice.presetName ?? t("teamLobby.presetTeam"), signet: undefined },
-            false,
-          )
-        : personName(
-            "team-lobby-card-name",
-            personOf(snapshot.players, choice.proposerId),
-            choice.proposerId === side.captainId,
-          ),
-    members: cardMembers(choice.members, choiceBuilds(choice, snapshot), presetOf(choice)),
-  });
-  card.classList.add("is-chosen");
-  return card;
-}
-
 /**
  * Seat `slot` of the chosen build: its character as the character card
  * draws it (#1863), holding its weapons over its skills, and who sits in
@@ -328,14 +280,16 @@ export function seat(
   choice: WireTeamChoice,
   side: WireTeamSide,
   snapshot: LobbySnapshot,
-  onClaim: (slot: number | null) => void,
+  onClaim: (slot: number) => void,
 ): HTMLElement {
   const character = choice.members[slot];
   const holder = side.claims[slot] ?? null;
   const mine = holder === snapshot.selfSessionId;
-  // Your own seat lets go; someone else's cannot be taken.
+  // Your own seat stays yours (#2872); someone else's cannot be taken.
   const node = button("", "team-lobby-seat", () => {
-    onClaim(mine ? null : slot);
+    if (!mine) {
+      onClaim(slot);
+    }
   });
   node.disabled = holder !== null && !mine;
   // A Heroes' Ascent run keeps its seats (#2539): only a vacant one, by a member who holds none.
@@ -386,11 +340,6 @@ export function seat(
   return node;
 }
 
-/**
- * The last proposals the vote showed: the claim stage's carry none
- * (#1458), but its result fades them behind the chosen one.
- */
-let lastProposals: readonly WireTeamProposal[] = [];
 /** The clock between two states: the host sends whole seconds only on a change. */
 let ticking: ReturnType<typeof setInterval> | undefined;
 
@@ -437,16 +386,6 @@ export function renderTeamLobbyScreen(
   const status = h("div", "team-lobby-status");
   status.append(h("span", "team-lobby-stage", stageTitle(lobby.stage, side?.size)), clock);
   const actions: HTMLElement[] = [];
-  if (side !== null) {
-    const ready = self?.ready === true;
-    actions.push(
-      button(
-        t(ready ? "teamLobby.notReady" : "teamLobby.ready"),
-        ready ? "" : "primary",
-        callbacks.onToggleReady,
-      ),
-    );
-  }
   screenBar({
     crumbs: [
       "VibeWars",
@@ -501,7 +440,6 @@ export function teamLobbyBody(
     return [h("div", "screen-info team-lobby-spectating", t("teamLobby.spectating"))];
   }
   if (lobby.stage === "vote") {
-    lastProposals = side.proposals;
     return voteStage(side, snapshot, teams, proposedTeamId, solo, callbacks);
   }
   forgetDrawer();
@@ -511,7 +449,7 @@ export function teamLobbyBody(
 /**
  * The Your Team Builds drawer (#2116): whether it is open, its search,
  * and its one expanded row. The lobby redraws on every snapshot, so this
- * outlives the elements, as `lastProposals` does.
+ * outlives the elements.
  */
 const drawerState: { open: boolean; query: string; expanded: string | undefined } = {
   open: false,
@@ -808,34 +746,13 @@ function claimStage(
   snapshot: LobbySnapshot,
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
-  // The chosen card lifted, the rest faded behind it.
-  const result = h("div", "play-cards team-lobby-result");
-  result.appendChild(chosenCard(choice, side, snapshot));
-  // A 1v1 takes its one seat itself (#2387): the card it starts with, alone.
+  // A 1v1 takes its one seat itself (#2387), so has none to show.
   if (side.size === 1) {
-    return [result];
-  }
-  // A locked run's build was voted in on its first map (#2539), not now.
-  const locked = snapshot.ascentLock !== null;
-  for (const proposal of locked ? [] : lastProposals) {
-    if (proposal.proposerId !== choice.proposerId) {
-      const faded = proposalCard(proposal, side, snapshot, undefined);
-      faded.classList.add("is-faded");
-      result.appendChild(faded);
-    }
+    return [];
   }
   const seats = h("div", "team-lobby-seats");
   for (let slot = 0; slot < choice.members.length; slot += 1) {
     seats.appendChild(seat(slot, choice, side, snapshot, callbacks.onClaim));
   }
-  return [
-    result,
-    h(
-      "div",
-      "team-lobby-reason",
-      locked ? t("session.ascentLocked") : reasonLine(choice, lastProposals),
-    ),
-    seats,
-    h("div", "screen-info team-lobby-seats-line", t("teamLobby.seatsLine")),
-  ];
+  return [seats, h("div", "screen-info team-lobby-seats-line", t("teamLobby.seatsLine"))];
 }

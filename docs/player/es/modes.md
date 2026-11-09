@@ -281,8 +281,8 @@ en Arena por equipos, Ascenso de los Héroes o GvG) tiene una Sala de equipo sol
 su propio bando, tan grande como el equipo del modo (el tamaño elegido en Arena por
 equipos, 8 en los demás) aunque el grupo sea menor; los bots juegan los asientos
 que nadie reclama. Mientras está en cola puedes ver los otros modos: el grupo
-conserva su modo y tamaño hasta salir de la cola. Cada etapa dura 60 segundos y
-termina antes si todos en la Sala de equipo están listos.
+conserva su modo y tamaño hasta salir de la cola. Cada etapa dura 30 segundos y
+termina antes si todos en la Sala de equipo están listos. Votar y tomar un asiento te marcan como listo.
 
 **Votar.** Cualquiera de un bando puede proponer una build de equipo de exactamente
 el tamaño de ese bando, una propuesta cada uno. Tus builds de equipo se abren desde
@@ -292,7 +292,7 @@ propuesta**. Esc la cierra. Solo aparecen tus builds de equipo de ese tamaño y 
 problemas; el panel indica cuántas de otros tamaños deja fuera. Cualquiera puede
 votar una de las propuestas de su bando, incluida la suya. Cada propuesta es una
 carta que muestra a cada miembro con sus armas, con sus habilidades, y las iniciales
-de quien la votó: haz clic en una carta para votar, y otra vez para retirar tu voto.
+de quien la votó: haz clic en una carta para votar, o en otra para cambiar tu voto; no puedes retirarlo.
 Nada se propone por ti: el menú solo crea y edita builds de equipo. Una propuesta
 nueva sustituye a la anterior, y sus votos vuelven a cero. Gana la más votada. En
 caso de empate decide el voto del capitán: el anfitrión en su bando, y el primero
@@ -306,7 +306,7 @@ bando ve las propuestas, los votos ni la elección del otro.
 
 **Reclamar.** Los personajes de la build elegida son asientos, cada uno con el
 personaje sosteniendo sus armas sobre sus habilidades: haz clic en un asiento libre
-para tomarlo, o en el tuyo para dejarlo, por orden de llegada, uno cada uno. Quien
+para tomarlo, o en otro libre para cambiar, por orden de llegada, uno cada uno. Quien
 no reclamó nada recibe el primero libre, y los bots juegan el resto, con el nombre
 de su personaje. Entonces empieza la partida, o un grupo en cola entra en la cola.
 
@@ -350,6 +350,8 @@ sigues a tu anfitrión a otro grupo, cuyo anfitrión no puede responder del reco
 anterior. La ronda la recuerda el anfitrión de tu grupo, y solo hasta que cierres la
 pestaña. Una sala de Ascenso de los Héroes a la que entras por código juega el mapa
 de la ronda 1.
+
+Un grupo de menos de 8 entra en la cola con bots en los puestos vacíos, usando su build de equipo, pero un bando siempre tiene al menos un humano, y un equipo de bots nunca es rival. Si el último humano de un bando abandona una partida, ese bando se rinde y su recorrido termina.
 
 **Barrow Field** es una arena del Ascenso que también se elige en una Partida alojada: Aniquilación de sacerdote 8v8 entre túmulos bajos de tierra, y el sacerdote resucita a sus muertos cada 2 minutos. Lleva tu bandera al **Storm Beacon** del centro y golpeará a un enemigo al azar a distancia de oído con 50 de daño de rayo cada 2,5 segundos, hasta que el otro equipo plante allí su bandera. Cada golpe es un rayo del faro a quien alcanza, visible para ambos equipos.
 

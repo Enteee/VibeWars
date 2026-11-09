@@ -282,8 +282,8 @@ only, as big as the mode's team (Team Arena's picked size, 8 for the others)
 however many are in the party; bots play the seats nobody claims.
 While it is queued you may browse the other modes: the party keeps its
 mode and size until it leaves the queue.
-Each stage lasts 60 seconds and ends early once everyone in the Team
-Lobby is ready.
+Each stage lasts 30 seconds and ends early once everyone in the Team
+Lobby is ready. Voting and taking a seat mark you ready.
 
 **Vote.** Anyone on a side may propose a Team Build of exactly that
 side's size, one proposal each. Your Team Builds open from the **Your
@@ -294,8 +294,8 @@ no problems are listed; the drawer says how many of other sizes it
 leaves out. Anyone may vote for one of their
 side's proposals, their own included. Each proposal is a card
 showing each member holding its weapons, with its skills, and the
-initials of who voted for it: click a card to vote, and click it again
-to take your vote back. Nothing is proposed for you: the menu only
+initials of who voted for it: click a card to vote, or another to
+change your vote; a vote cannot be taken back. Nothing is proposed for you: the menu only
 makes and edits Team Builds. A new proposal replaces your old one, and
 the votes for it go back to none. The most votes wins. On a tie the captain's
 vote decides: the host on the host's side, the earliest to
@@ -309,7 +309,7 @@ Neither side sees the other's proposals, votes or choice.
 
 **Claim.** The chosen build's characters are seats, each the character
 holding its weapons over its skills: click a free seat
-to take it, or your own to leave it, first come, first served, one each. Whoever claimed nothing gets the first free one, and
+to take it, or another free one to move, first come, first served, one each. Whoever claimed nothing gets the first free one, and
 bots play the rest, under their character's name. Then the match starts, or a queued party
 joins the queue.
 
@@ -357,6 +357,8 @@ over: the next run votes again. So does following your host to another
 party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
+
+A party of fewer than 8 queues with bots in its empty seats, using its Team Build, but a side always has at least one human, and no team of bots is ever an opponent. If the last human of a side leaves a match, that side forfeits and its run ends.
 
 **Barrow Field** is an Ascent arena, and a Hosted Game's pick too: 8v8 Priest Annihilation among low
 earthen mounds, the priest raising its dead every 2 minutes. Carry your flag

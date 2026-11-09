@@ -198,7 +198,7 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
 
   it("names this tab's own lobby without Leave, and a joined one with it; never its key", () => {
     const { join, left, lobby } = mount();
-    const [label, copy, , leave] = lobby.children;
+    const [label, copy, , , leave] = lobby.children;
     expect(lobby.hidden).toBe(true);
     join.setLobby({ code: OWN, isHost: true, open: false, party: 1, joining: false });
     expect([lobby.hidden, label?.textContent, copy?.textContent]).toEqual([
@@ -219,7 +219,7 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     expect(lobby.hidden).toBe(true);
   });
 
-  it("has no key field", () => {
+  it("has no key field: a pasted invite link is the one thing typed (#2882)", () => {
     const { join } = mount();
     const inputs = (element: FakeElement): FakeElement[] => [
       ...(element.tagName === "input" && element.className !== "editor-share-line"
@@ -228,15 +228,20 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
       ...element.children.flatMap(inputs),
     ];
     expect(inputs(join.element as unknown as FakeElement)).toEqual([]);
-    expect(inputs(join.controls as unknown as FakeElement)).toEqual([]);
+    expect(inputs(join.controls as unknown as FakeElement).map((node) => node.className)).toEqual([
+      "field-input lobby-join-input",
+    ]);
   });
 
   it("hands Copy invite link, the toggle and Leave to the Lobby window; the bar keeps Connecting… and the confirm (#2385)", () => {
     const { join, lobby, share, connecting, confirm } = mount();
-    expect((join.controls as unknown as FakeElement).children).toEqual([lobby, share]);
+    expect(
+      (join.controls as unknown as FakeElement).children.map((child) => child.className),
+    ).toEqual([lobby.className, share.className, "lobby-join-field"]);
     expect(lobby.children.map((child) => child.className)).toEqual([
       "lobby-code-label",
       "lobby-copy",
+      "lobby-join-open",
       "topbar-lobby-open",
       "topbar-leave",
     ]);
@@ -249,7 +254,7 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
 
   it("keeps the Lobby window's controls on every bar; only the bar's join status follows `join` (#2566)", () => {
     const { join, lobby } = mount();
-    const [, copy, toggle, leave] = lobby.children;
+    const [, copy, , toggle, leave] = lobby.children;
     const looks = () => [
       (join.controls as unknown as FakeElement).hidden,
       lobby.hidden,
@@ -292,7 +297,7 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
 
   it("gives the host a toggle, Closed first, that asks for the other state; a guest none (#1682)", () => {
     const { join, opened, lobby } = mount();
-    const toggle = lobby.children[2];
+    const toggle = lobby.children[3];
     if (toggle === undefined) {
       throw new Error("no toggle");
     }
@@ -368,7 +373,7 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
 
   it("names the lobby a guest follows its host to greyed, Joining…, with neither Copy nor Leave (#1553)", () => {
     const { join, lobby } = mount();
-    const [label, copy, , leave] = lobby.children;
+    const [label, copy, , , leave] = lobby.children;
     join.setLobby({ code: FRIEND, isHost: false, open: false, party: 0, joining: true });
     expect([
       label?.textContent,

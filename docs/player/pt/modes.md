@@ -293,8 +293,8 @@ Arena de Equipes, 8 nos outros), não importa quantos estejam no grupo; os
 bots jogam nos assentos que ninguém pegar.
 Enquanto está na fila, você pode ver os outros modos: o grupo mantém o
 modo e o tamanho até sair da fila.
-Cada etapa dura 60 segundos e termina antes quando todos na Sala de
-Equipe estiverem prontos.
+Cada etapa dura 30 segundos e termina antes quando todos na Sala de
+Equipe estiverem prontos. Votar e pegar um assento marcam você como pronto.
 
 **Votação.** Qualquer pessoa de um lado pode propor uma Build de Equipe
 exatamente do tamanho desse lado, uma proposta cada. Suas Builds de
@@ -305,8 +305,8 @@ desse tamanho e sem problemas; a gaveta diz quantas de outros tamanhos
 ficaram de fora. Qualquer pessoa pode votar em uma das propostas do seu
 lado, inclusive a própria. Cada proposta é um cartão que mostra cada
 membro segurando as armas, com as habilidades e as iniciais de quem votou
-nela: clique em um cartão para votar, e clique de novo para retirar seu
-voto. Ninguém propõe nada em seu lugar: o menu só cria e edita Builds de Equipe.
+nela: clique em um cartão para votar, ou em outro para mudar seu
+voto; não é possível retirá-lo. Ninguém propõe nada em seu lugar: o menu só cria e edita Builds de Equipe.
 Uma proposta nova substitui a anterior, e os votos nela voltam a zero.
 Vence quem tiver mais votos. Em um empate, decide o voto do capitão: o
 host no lado do host, o primeiro a entrar no outro. Com propostas e sem
@@ -320,7 +320,7 @@ lado vê as propostas, os votos ou a escolha do outro.
 
 **Escolha.** Os personagens da build escolhida são assentos, cada um com o
 personagem segurando as armas sobre as habilidades: clique em um assento
-livre para pegá-lo, ou no seu para largá-lo, quem chegar primeiro leva, um
+livre para pegá-lo, ou em outro livre para trocar, quem chegar primeiro leva, um
 cada. Quem não pegou nada recebe o primeiro livre, e os bots jogam os
 outros, com o nome do personagem. Então a partida começa, ou um grupo na
 fila entra na fila.
@@ -368,6 +368,8 @@ para seguir seu host até outro grupo, cujo host não pode garantir a
 campanha antiga. A rodada é lembrada pelo host do seu grupo, e só até você
 fechar a aba. Uma sala de Ascensão dos Heróis por código joga o mapa da
 rodada 1.
+
+Um grupo com menos de 8 entra na fila com bots nos lugares vazios, usando sua Build de Equipe, mas um lado sempre tem pelo menos um humano, e uma equipe de bots nunca é adversária. Se o último humano de um lado sair de uma partida, esse lado desiste e sua subida termina.
 
 **Barrow Field** é uma arena da Ascensão que você também pode escolher em uma Partida Hospedada: Aniquilação de Sacerdotes 8v8 entre montes baixos de terra, com o sacerdote ressuscitando seus mortos a cada 2 minutos. Leve sua bandeira ao **Storm Beacon** no centro e ele atinge um inimigo aleatório ao alcance da voz com 50 de dano de raio a cada 2,5 segundos, até a outra equipe plantar a bandeira dela lá. Cada golpe é um raio do farol até quem ele atingiu, visível para as duas equipes.
 

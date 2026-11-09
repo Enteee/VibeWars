@@ -183,7 +183,7 @@ describe("createLocalConnection", () => {
     const { connection } = targetDummy();
     const self = () => connection.getSnapshot().players.find((p) => p.sessionId === SELF_ID);
     expect(self()?.walking).toBe(false);
-    connection.sendIntent({ kind: "walk-to", x: 40, y: 40 });
+    connection.sendIntent({ kind: "walk-to", layer: 0, x: 40, y: 40 });
     expect(self()?.walking).toBe(true);
     connection.advance(TICK_SECONDS);
     expect(self()?.walking).toBe(true);

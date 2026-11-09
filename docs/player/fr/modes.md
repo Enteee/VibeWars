@@ -295,8 +295,8 @@ seul camp, de la taille de l'équipe du mode (la taille choisie en Arène d'équ
 8 pour les autres) quel que soit le nombre de joueurs du groupe ; les bots jouent
 les places que personne ne prend. En file, tu peux parcourir les autres modes :
 le groupe garde son mode et sa taille jusqu'à ce qu'il quitte la file.
-Chaque étape dure 60 secondes et se termine plus tôt quand tout le monde dans le
-Salon d'équipe est prêt.
+Chaque étape dure 30 secondes et se termine plus tôt quand tout le monde dans le
+Salon d'équipe est prêt. Voter et prendre une place te marquent comme prêt.
 
 **Vote.** Toute personne d'un camp peut proposer un Build d'équipe d'exactement
 la taille de ce camp, une proposition chacun. Tes Builds d'équipe s'ouvrent depuis
@@ -307,7 +307,7 @@ problème sont listés ; le panneau indique combien il en masque d'autres taille
 Chacun peut voter pour l'une des propositions de son camp, la sienne comprise.
 Chaque proposition est une carte montrant chaque membre tenant ses armes, avec
 ses compétences, et les initiales de ceux qui ont voté pour elle : clique sur une
-carte pour voter, et clique de nouveau pour retirer ton vote. Rien n'est proposé
+carte pour voter, ou sur une autre pour changer ton vote ; tu ne peux pas le retirer. Rien n'est proposé
 à ta place : le menu sert seulement à créer et modifier des Builds d'équipe. Une
 nouvelle proposition remplace ton ancienne, et ses votes retombent à zéro. Le plus
 de votes l'emporte. En cas d'égalité, le vote du capitaine décide : l'hôte du côté
@@ -322,7 +322,7 @@ camp ne voit les propositions, les votes ou le choix de l'autre.
 
 **Choix des places.** Les personnages du build choisi sont des places, chacune le
 personnage tenant ses armes au-dessus de ses compétences : clique sur une place
-libre pour la prendre, ou sur la tienne pour la quitter, premier arrivé premier
+libre pour la prendre, ou sur une autre place libre pour changer, premier arrivé premier
 servi, une chacun. Celui qui n'a rien pris reçoit la première place libre, et les
 bots jouent le reste, sous le nom de leur personnage. Ensuite le match commence,
 ou un groupe en file entre dans la file.
@@ -370,6 +370,8 @@ suis ton hôte dans un autre groupe, dont l'hôte ne peut pas répondre de l'anc
 course. La manche est retenue par l'hôte de ton groupe, et seulement jusqu'à ce
 que tu fermes l'onglet. Un salon d'Ascension des héros rejoint par code joue la
 carte de la manche 1.
+
+Un groupe de moins de 8 entre en file avec des bots aux places vides, selon son Build d'équipe, mais un camp compte toujours au moins un humain, et une équipe de bots n'est jamais un adversaire. Si le dernier humain d'un camp quitte un match, ce camp déclare forfait et sa course s'arrête.
 
 **Barrow Field** est une arène de l'Ascension que tu peux aussi choisir en Partie hébergée. C'est une Annihilation de prêtre en 8v8 parmi de basses buttes de terre, où le prêtre relève ses morts toutes les 2 minutes. Porte ton drapeau sur le **Storm Beacon** au centre : il frappe un ennemi au hasard à portée d'oreille pour 50 dégâts de foudre toutes les 2,5 secondes, jusqu'à ce que l'autre équipe y plante son drapeau. Chaque frappe est un éclair du phare vers sa victime, visible par les deux équipes.
 

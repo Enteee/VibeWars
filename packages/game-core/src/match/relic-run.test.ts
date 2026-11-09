@@ -159,7 +159,7 @@ function run(sim: MatchSimulation, id: string): void {
   expect(applyIntent(sim, id, { kind: "attack", targetId: relicId(team) })).toBeNull();
   stepUntil(sim, () => sim.carriesBundle(id), 20);
   const before = sim.score.byTeam.get(team) ?? 0;
-  applyIntent(sim, id, { kind: "walk-to", x: FIELD.altar.x, y: FIELD.altar.y });
+  applyIntent(sim, id, { kind: "walk-to", layer: 0, x: FIELD.altar.x, y: FIELD.altar.y });
   stepUntil(sim, () => (sim.score.byTeam.get(team) ?? 0) > before, 30);
   expect(sim.carriesBundle(id)).toBe(false);
   expect(sim.relics[team]).toEqual({ team, place: { kind: "spawn" } });
@@ -259,7 +259,10 @@ describe("a relic carrier", () => {
     const where = get(sim, "a").position;
     kill(sim, "a");
     sim.step(DT);
-    expect(sim.relics[0]).toEqual({ team: 0, place: { kind: "ground", position: where } });
+    expect(sim.relics[0]).toEqual({
+      team: 0,
+      place: { kind: "ground", position: where, layer: 0 },
+    });
     get(sim, "x").position = vec2(1000, 400);
     expect(applyIntent(sim, "x", { kind: "attack", targetId: relicId(0) })).toBeNull();
     stepUntil(sim, () => sim.relics[0]?.place.kind === "spawn", 10);
@@ -339,7 +342,7 @@ describe("the foe's relic to your Ghostly Hero (#2695)", () => {
   it("scores when the foe's relic is touched to your own ghost", () => {
     const sim = foeRelicRun();
     grab(sim);
-    applyIntent(sim, "a", { kind: "walk-to", x: GHOST_POST.x, y: GHOST_POST.y });
+    applyIntent(sim, "a", { kind: "walk-to", layer: 0, x: GHOST_POST.x, y: GHOST_POST.y });
     stepUntil(sim, () => points(sim)[0] === 1, 20);
     expect(sim.carriesBundle("a")).toBe(false);
     expect(sim.relics[1]).toEqual({ team: 1, place: { kind: "spawn" } });
@@ -350,7 +353,7 @@ describe("the foe's relic to your Ghostly Hero (#2695)", () => {
     grab(sim);
     kill(sim, ghostId(0));
     stepUntil(sim, () => get(sim, ghostId(0)).combatant.dead, 5);
-    applyIntent(sim, "a", { kind: "walk-to", x: GHOST_POST.x, y: GHOST_POST.y });
+    applyIntent(sim, "a", { kind: "walk-to", layer: 0, x: GHOST_POST.x, y: GHOST_POST.y });
     for (let tick = 0; tick < 12 / DT; tick += 1) {
       sim.step(DT);
     }
