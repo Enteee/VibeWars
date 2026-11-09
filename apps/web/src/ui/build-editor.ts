@@ -1,6 +1,7 @@
 import {
   describePrimaryAttribute,
   describeSkill,
+  LARGEST_RANK_COST,
   MAX_ATTRIBUTE_RANK,
   MINIMAL_GW_INSPIRED_PVP_V1,
   PROFESSIONS,
@@ -1512,10 +1513,19 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
       render(context.current());
     });
 
+    // Holds the widest text the next column can show in this language, once,
+    // so the column fits it and no rank bought ever moves the pips.
+    const nextSizer = h("span", "editor-attribute-next-sizer");
+    nextSizer.setAttribute("aria-hidden", "true");
+    const nextCost = t("buildEditor.nextCost", { cost: LARGEST_RANK_COST });
+    const rankMax = t("buildEditor.rankMax");
+    nextSizer.textContent = nextCost.length >= rankMax.length ? nextCost : rankMax;
+
     row.append(
       h("span", "editor-attribute-name"),
       pips,
       h("span", "editor-attribute-rank"),
+      nextSizer,
       h("span", "editor-attribute-next"),
       h("span", "editor-attribute-needs"),
     );
