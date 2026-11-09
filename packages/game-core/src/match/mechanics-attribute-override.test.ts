@@ -10,6 +10,7 @@ import type { Combatant, Skill } from "../skills/types.js";
 import { vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Attributes set or borrowed (#1929): Wail of Doom's "all of target foe's
@@ -234,10 +235,16 @@ describe("an elite borrowing (#2502)", () => {
 
 describe("tooltips (#1929)", () => {
   it("say what each sets or lends", () => {
-    expect(describeStatus("wail-of-doom")).toContain("attributes set to 0");
-    expect(describeStatus("atrophy")).toContain("primary attribute set to 0");
-    expect(describeStatus("master-of-magic")).toContain("elemental attributes set to 13");
-    expect(describeStatus("signet-of-illusions")).toContain(
+    expect(describeStatus("wail-of-doom", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "attributes set to 0",
+    );
+    expect(describeStatus("atrophy", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "primary attribute set to 0",
+    );
+    expect(describeStatus("master-of-magic", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "elemental attributes set to 13",
+    );
+    expect(describeStatus("signet-of-illusions", undefined, EN_WORDS, EN_NAMES)).toContain(
       "your next 3 spells use Illusion Magic",
     );
     for (const [id, text] of [
@@ -246,7 +253,9 @@ describe("tooltips (#1929)", () => {
       ["elementalist.master-of-magic", "elemental attributes set to 13"],
       ["mesmer.signet-of-illusions", "use Illusion Magic"],
     ] as const) {
-      expect(JSON.stringify(describeSkill(skill(id))), id).toContain(text);
+      expect(JSON.stringify(describeSkill(skill(id), undefined, EN_WORDS, EN_NAMES)), id).toContain(
+        text,
+      );
     }
   });
 });

@@ -14,6 +14,7 @@ import { getStatusDefinition, NO_RANKS } from "./status.js";
 import { chargeAdrenaline, makeCombatant, strikesOf } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { landBlow, PLAIN_BLOW, resolveSwing, weaponSnapshotOf } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Calculated Risk (#2471): a hex whose bearer's blows hit 10 harder, and
@@ -120,7 +121,7 @@ describe("Calculated Risk is the corpus's (#2471)", () => {
 
   it("says its cap at the rank it is read at", () => {
     const text = (rank: number): string =>
-      describeSkill(skillOf(RISK), ranks(rank))
+      describeSkill(skillOf(RISK), ranks(rank), EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" ");
     expect(text(0)).toContain("50% chance to deal its damage to it instead, up to 15");

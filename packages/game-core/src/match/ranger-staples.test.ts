@@ -20,6 +20,7 @@ import {
 import { vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Ranger staples (#976): Lightning Reflexes and Escape, two stances
@@ -190,7 +191,7 @@ describe("Lightning Reflexes (#976)", () => {
   });
 
   it("says so", () => {
-    expect(describeStatus("lightning-reflexes")).toBe(
+    expect(describeStatus("lightning-reflexes", undefined, EN_WORDS, EN_NAMES)).toBe(
       "attacks 33% faster, 75% chance to block attacks",
     );
   });
@@ -253,7 +254,7 @@ describe("Escape (#976)", () => {
   });
 
   it("says so", () => {
-    expect(describeStatus("escape")).toBe(
+    expect(describeStatus("escape", undefined, EN_WORDS, EN_NAMES)).toBe(
       "moves at 133% speed, 75% chance to block attacks, ends if you make a melee attack",
     );
   });

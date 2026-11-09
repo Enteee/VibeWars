@@ -11,6 +11,7 @@ import { getSkill } from "./catalog.js";
 import { describeStatus } from "./describe.js";
 import { aggregateModifiers } from "./status.js";
 import type { Combatant } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Monk staples (#2286): Essence Bond, Life Barrier, Retribution, Scourge
@@ -275,9 +276,9 @@ describe("Retribution (#2286)", () => {
   });
 
   it("describes its cap at its caster's rank", () => {
-    expect(describeStatus("retribution", R12)).toContain("of every attack");
-    expect(describeStatus("retribution", R12)).toContain("17");
-    expect(describeStatus("retribution")).toContain("5...17");
+    expect(describeStatus("retribution", R12, EN_WORDS, EN_NAMES)).toContain("of every attack");
+    expect(describeStatus("retribution", R12, EN_WORDS, EN_NAMES)).toContain("17");
+    expect(describeStatus("retribution", undefined, EN_WORDS, EN_NAMES)).toContain("5...17");
   });
 });
 
@@ -297,8 +298,8 @@ describe("Scourge Healing (#2286)", () => {
   });
 
   it("deals the scaled amount, before armor, at rank 12 and rank 0", () => {
-    const describedAt12 = describeStatus("scourge-healing", R12);
-    const describedAt0 = describeStatus("scourge-healing", R0);
+    const describedAt12 = describeStatus("scourge-healing", R12, EN_WORDS, EN_NAMES);
+    const describedAt0 = describeStatus("scourge-healing", R0, EN_WORDS, EN_NAMES);
     expect(describedAt12).toContain("67");
     expect(describedAt0).toContain("15");
   });
@@ -413,17 +414,21 @@ describe("Restful Breeze (#2286)", () => {
 
 describe("Monk staples' tooltips (#2286)", () => {
   it("Healing Seed heals its bearer, not its caster", () => {
-    expect(describeStatus("healing-seed", R12)).toContain(": it and adjacent allies");
-    expect(describeStatus("healing-seed", R12)).not.toContain("you and");
+    expect(describeStatus("healing-seed", R12, EN_WORDS, EN_NAMES)).toContain(
+      ": it and adjacent allies",
+    );
+    expect(describeStatus("healing-seed", R12, EN_WORDS, EN_NAMES)).not.toContain("you and");
   });
 
   it("Divine Boon says who is healed, for which spells, in one sentence", () => {
-    expect(describeStatus("divine-boon", R12)).toBe(
+    expect(describeStatus("divine-boon", R12, EN_WORDS, EN_NAMES)).toBe(
       "whenever you cast a Protection Prayers or Divine Favor spell on an ally, that ally is healed for 51 and you lose 1 energy",
     );
   });
 
   it("Restful Breeze ends on its bearer's skill, not yours", () => {
-    expect(describeStatus("restful-breeze", R12)).toContain("ends if the bearer uses a skill");
+    expect(describeStatus("restful-breeze", R12, EN_WORDS, EN_NAMES)).toContain(
+      "ends if the bearer uses a skill",
+    );
   });
 });

@@ -8,6 +8,7 @@ import { describeSkill } from "../skills/describe.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Elementalist Fire Magic staples in a match (#1366): the single-target
@@ -252,7 +253,9 @@ describe("Fire Magic texts (#1366)", () => {
     if (found === undefined) {
       throw new Error(`unknown skill ${id}`);
     }
-    return describeSkill(found, new Map([[FIRE, 12]])).effects.map((effect) => effect.text);
+    return describeSkill(found, new Map([[FIRE, 12]]), EN_WORDS, EN_NAMES).effects.map(
+      (effect) => effect.text,
+    );
   };
 
   it("says what each does", () => {

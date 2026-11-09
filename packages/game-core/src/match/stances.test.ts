@@ -11,6 +11,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -178,10 +179,16 @@ describe("stances (#523)", () => {
   it("describes a stance as one, and Wild Throw's removal", () => {
     const text = (id: string) => {
       const skill = getSkill(id);
-      return skill === undefined ? [] : describeSkill(skill).effects.map((effect) => effect.text);
+      return skill === undefined
+        ? []
+        : describeSkill(skill, undefined, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text);
     };
     const sprint = getSkill(SPRINT);
-    expect(sprint === undefined ? undefined : describeSkill(sprint).typeText).toBe("Stance.");
+    expect(
+      sprint === undefined
+        ? undefined
+        : describeSkill(sprint, undefined, EN_WORDS, EN_NAMES).typeText,
+    ).toBe("Stance.");
     expect(text(SPRINT)).toEqual(["For 8s, moves at 125% speed"]);
     expect(text(DASH)).toEqual(["For 3s, moves at 150% speed"]);
     expect(text(WILD_THROW)).toEqual([

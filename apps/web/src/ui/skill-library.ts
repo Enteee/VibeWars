@@ -8,6 +8,7 @@ import {
 
 import { attributeName, professionName, skillName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
+import { describeNames, describeWords } from "../i18n/describe-words.js";
 
 /**
  * The skill library: the browsable, filterable list a player drags from
@@ -30,7 +31,7 @@ export interface SkillGroup {
  * name (players paste names from English guides), and its description's lines.
  */
 function searchText(skill: Skill): string {
-  const { typeText, effects } = describeSkill(skill);
+  const { typeText, effects } = describeSkill(skill, undefined, describeWords(), describeNames());
   // eslint-disable-next-line no-restricted-syntax -- the English name, on purpose
   const english = skill.name;
   return [skillName(skill.id), english, typeText, ...effects.map((effect) => effect.text)]
@@ -151,7 +152,7 @@ export function toBoxModel(
 ): SkillBoxModel {
   return {
     skill,
-    description: describeSkill(skill, ranks),
+    description: describeSkill(skill, ranks, describeWords(), describeNames()),
     equipped: equippedIds.has(skill.id),
   };
 }

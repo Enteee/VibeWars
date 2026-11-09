@@ -58,7 +58,7 @@ export function allWallSegments(walls: readonly WallShape[]): Segment[] {
 }
 
 /** The corners of a shape. */
-function shapeVertices(shape: WallShape): Vec2[] {
+export function shapeVertices(shape: WallShape): Vec2[] {
   return wallToSegments(shape).map((side) => side.a);
 }
 

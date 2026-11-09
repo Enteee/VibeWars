@@ -15,6 +15,7 @@ import { makeCombatant } from "./testing.js";
 import type { FiredTrigger } from "./triggers.js";
 import type { Skill } from "./types.js";
 import { attackHitRiders } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Counts and charges (#2438): Mantra of Signets' armor per signet on the
@@ -112,7 +113,7 @@ function amounts(log: readonly CombatLogEntry[], skillId: string, kind: "heal" |
 }
 
 function text(id: string, ranks: ReadonlyMap<string, number>): string {
-  return describeSkill(skill(id), ranks)
+  return describeSkill(skill(id), ranks, EN_WORDS, EN_NAMES)
     .effects.map(({ text: line }) => line)
     .join(" ");
 }
@@ -184,7 +185,9 @@ describe("Mantra of Signets (#2438)", () => {
   });
 
   it("says what it counts", () => {
-    expect(describeStatus("mantra-of-signets", new Map([[INSPIRATION, 12]]))).toContain("armor");
+    expect(
+      describeStatus("mantra-of-signets", new Map([[INSPIRATION, 12]]), EN_WORDS, EN_NAMES),
+    ).toContain("armor");
     expect(text(MANTRA, new Map([[INSPIRATION, 12]]))).toContain(
       "Stacks once for each signet you have equipped",
     );
@@ -306,10 +309,10 @@ describe("Harrier's Grasp (#2438)", () => {
   });
 
   it("says how often it takes effect", () => {
-    expect(describeStatus("harriers-grasp", new Map([[WIND, 0]]))).toContain(
+    expect(describeStatus("harriers-grasp", new Map([[WIND, 0]]), EN_WORDS, EN_NAMES)).toContain(
       "ends after it takes effect once",
     );
-    expect(describeStatus("harriers-grasp", new Map([[WIND, 12]]))).toContain(
+    expect(describeStatus("harriers-grasp", new Map([[WIND, 12]]), EN_WORDS, EN_NAMES)).toContain(
       "ends after it takes effect 3 times",
     );
   });
@@ -362,9 +365,9 @@ describe("Glyph of Restoration (#2438)", () => {
     [0, "150%"],
     [12, "350%"],
   ])("at Energy Storage %i says %s of the spell's cost", (rank, share) => {
-    expect(describeStatus("glyph-of-restoration", new Map([[ENERGY_STORAGE, rank]]))).toContain(
-      `healed for ${share} of that skill's energy cost`,
-    );
+    expect(
+      describeStatus("glyph-of-restoration", new Map([[ENERGY_STORAGE, rank]]), EN_WORDS, EN_NAMES),
+    ).toContain(`healed for ${share} of that skill's energy cost`);
   });
 
   const SPELLS = [

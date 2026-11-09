@@ -13,6 +13,7 @@ import { effectiveMaxHealth } from "./tick.js";
 import type { Combatant } from "./types.js";
 import { weaponSnapshotOf } from "./weapon-attack.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * The five Dervish Avatars at their rank-12 values: Melandru and Dwayna
@@ -141,10 +142,12 @@ describe("Avatar of Melandru (#1437)", () => {
   it("reads as GW1 words it", () => {
     const skill = getSkill(SKILL);
     if (skill === undefined) throw new Error("no Avatar of Melandru");
-    const description = describeSkill(skill);
+    const description = describeSkill(skill, undefined, EN_WORDS, EN_NAMES);
     expect(description.typeText).toBe("Elite Form.");
     expect(description.effects.map(({ text }) => text)).toContain("Disabled for 45s after use");
-    expect(describeStatus("avatar-of-melandru")).toContain("+30 elemental armor");
+    expect(describeStatus("avatar-of-melandru", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "+30 elemental armor",
+    );
   });
 });
 
@@ -197,7 +200,7 @@ describe("Avatar of Balthazar (#1455)", () => {
   });
 
   it("reads as GW1 words it", () => {
-    const text = describeStatus("avatar-of-balthazar");
+    const text = describeStatus("avatar-of-balthazar", undefined, EN_WORDS, EN_NAMES);
     expect(text).toContain("+20 physical armor");
     expect(text).toContain("gain adrenaline 25% faster");
   });
@@ -311,8 +314,14 @@ describe("Avatar of Lyssa (#1455)", () => {
   });
 
   it("reads as GW1 words it", () => {
-    expect(describeStatus("avatar-of-lyssa")).toContain("Dervish enchantments recharge 50% faster");
-    expect(describeStatus("avatar-of-grenth")).toContain("scythe attacks deal dark damage");
-    expect(describeStatus("avatar-of-grenth")).toContain("immune to Disease");
+    expect(describeStatus("avatar-of-lyssa", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "Dervish enchantments recharge 50% faster",
+    );
+    expect(describeStatus("avatar-of-grenth", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "scythe attacks deal dark damage",
+    );
+    expect(describeStatus("avatar-of-grenth", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "immune to Disease",
+    );
   });
 });

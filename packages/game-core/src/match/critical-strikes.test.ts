@@ -15,6 +15,7 @@ import { vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Critical Strikes staples (#1315): Critical Strike crits on every blow,
@@ -282,9 +283,12 @@ describe("Critical Strikes texts (#1315)", () => {
     if (found === undefined) {
       throw new Error(`unknown skill ${id}`);
     }
-    return describeSkill(found, new Map([["assassin.critical-strikes", 12]])).effects.map(
-      (effect) => effect.text,
-    );
+    return describeSkill(
+      found,
+      new Map([["assassin.critical-strikes", 12]]),
+      EN_WORDS,
+      EN_NAMES,
+    ).effects.map((effect) => effect.text);
   };
 
   it("says what each does", () => {
@@ -298,7 +302,7 @@ describe("Critical Strikes texts (#1315)", () => {
     expect(lines("assassin.unsuspecting-strike")).toContain(
       "If target is above 90% Health: +63 damage",
     );
-    expect(describeStatus("critical-defenses")).toBe(
+    expect(describeStatus("critical-defenses", undefined, EN_WORDS, EN_NAMES)).toBe(
       "75% chance to block attacks, refreshes every time you land a critical hit",
     );
   });

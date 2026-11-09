@@ -14,6 +14,7 @@ import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -212,7 +213,7 @@ describe("Glyph of Lesser Energy (#526)", () => {
   it("is a glyph: one at a time, and its tooltip says what it does", () => {
     expect(getStatusDefinition("glyph-of-lesser-energy").category).toBe("glyph");
     expect(EXCLUSIVE_CATEGORIES.has("glyph")).toBe(true);
-    const described = describeSkill(skill(GLYPH));
+    const described = describeSkill(skill(GLYPH), undefined, EN_WORDS, EN_NAMES);
     expect(described.typeText).toBe("Glyph.");
     expect(described.effects.map((effect) => effect.text)).toEqual([
       "For 15s, your next 2 spells cost 16 less energy",
@@ -421,7 +422,8 @@ describe("glyphs on the next spell (#1730)", () => {
   });
 
   it("says what each does", () => {
-    const text = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    const text = (id: string) =>
+      describeSkill(skill(id), undefined, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
     expect(text(CONCENTRATION)).toEqual(["For 15s, your next spell cannot be interrupted"]);
     expect(text(SACRIFICE)).toEqual([
       "For 15s, your next spell casts instantly and takes 30s longer to recharge, ends if you use a skill that is not a spell",

@@ -32,6 +32,7 @@ import {
 } from "./skill-library.js";
 import { appendParts, renderSkillDescription, type SkillTooltip } from "./skill-tooltip.js";
 import { attachTopbarPopover } from "./topbar-popover.js";
+import { describeNames, describeWords } from "../i18n/describe-words.js";
 
 /**
  * The skill library (#2225): the Character Builder's, and the Team
@@ -326,7 +327,9 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     // The hover tooltip stays beside the inline details (#549 Q3), as in
     // GW1's skill window.
     box.addEventListener("mouseenter", () => {
-      context.showTip(box, () => describeSkill(skill, characterRanks(context.current())));
+      context.showTip(box, () =>
+        describeSkill(skill, characterRanks(context.current()), describeWords(), describeNames()),
+      );
     });
     box.addEventListener("mouseleave", () => {
       tooltip.hide();
@@ -365,7 +368,9 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     details.hidden = true;
     box.appendChild(details);
     box.addEventListener("mouseenter", () => {
-      context.showTip(box, () => describeSkill(skill, characterRanks(context.current())));
+      context.showTip(box, () =>
+        describeSkill(skill, characterRanks(context.current()), describeWords(), describeNames()),
+      );
     });
     box.addEventListener("mouseleave", () => {
       tooltip.hide();
@@ -375,7 +380,7 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
 
   /** A card's cost, headline and open details, as of `ranks`: the same for a locked card. */
   const paintCard = (box: HTMLElement, skill: Skill, ranks: ReadonlyMap<string, number>): void => {
-    const description = describeSkill(skill, ranks);
+    const description = describeSkill(skill, ranks, describeWords(), describeNames());
     const cost = box.querySelector(".skill-box-cost");
     if (cost !== null && cost.textContent !== description.cost) {
       cost.textContent = description.cost;

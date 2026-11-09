@@ -10,6 +10,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Pulses (#1113): a ground effect that lands its effects again and
@@ -113,7 +114,7 @@ describe("Symbol of Wrath (#1113)", () => {
     if (skill === undefined) {
       throw new Error("no Symbol of Wrath");
     }
-    const described = describeSkill(skill, new Map([[SMITING, 12]]));
+    const described = describeSkill(skill, new Map([[SMITING, 12]]), EN_WORDS, EN_NAMES);
     expect(described.effects.map(({ text }) => text)).toEqual([
       "Creates a symbol at your target's location for 5 seconds",
       "Every 1s for 5s, foes adjacent: deals 34 holy damage",

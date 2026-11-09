@@ -11,6 +11,7 @@ import { resolveSkillEffects, type CombatEvent, type SkillOutcome } from "./effe
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Necromancer staples 3 (#1640): Dark Pact, Lifebane Strike, Taste of
@@ -68,7 +69,7 @@ function damages(events: readonly CombatEvent[]): number[] {
 }
 
 function described(id: string): string {
-  return describeSkill(skill(id), RANKS)
+  return describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES)
     .effects.map(({ text }) => text)
     .join(" | ");
 }

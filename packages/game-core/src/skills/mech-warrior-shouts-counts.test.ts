@@ -15,6 +15,7 @@ import { aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
 import { criticalChance, weaponSnapshotOf } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Warrior shouts that count (#2320): "I Will Avenge You!", "Fear Me!",
@@ -410,7 +411,7 @@ describe("in a match (#2320)", () => {
 
 describe("tooltips (#2320)", () => {
   const text = (id: string): string =>
-    describeSkill(skill(id), RANK_12)
+    describeSkill(skill(id), RANK_12, EN_WORDS, EN_NAMES)
       .effects.map(({ text }) => text)
       .join(" | ");
 
@@ -427,7 +428,9 @@ describe("tooltips (#2320)", () => {
 
   it('say foes in earshot "lose" energy, not "target loses"', () => {
     expect(
-      describeSkill(skill("warrior.fear-me"), RANK_12).effects.map(({ text }) => text),
+      describeSkill(skill("warrior.fear-me"), RANK_12, EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      ),
     ).toContain("Foes in earshot around you lose 5 energy");
   });
 });

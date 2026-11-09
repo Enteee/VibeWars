@@ -16,6 +16,7 @@ import { attackDamageDeltaOf } from "./tick.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, SkillEffect } from "./types.js";
 import { resolveSwing } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Ranger staples (#2317): Choking Gas, Dryder's Defenses, Healing Spring,
@@ -379,7 +380,9 @@ describe("Healing Spring (#2317)", () => {
   const SPRING = "ranger.healing-spring";
 
   it("reads as healing you and allies, not foes", () => {
-    const texts = describeSkill(skill(SPRING), RANK_12).effects.map(({ text }) => text);
+    const texts = describeSkill(skill(SPRING), RANK_12, EN_WORDS, EN_NAMES).effects.map(
+      ({ text }) => text,
+    );
     expect(texts).toContain("Every 2s for 10s, you and allies adjacent: heals for 51");
   });
 

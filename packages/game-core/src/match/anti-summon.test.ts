@@ -16,6 +16,7 @@ import {
   type ParticipantSpec,
 } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The anti-summon skills (#1528): Banish, Banishing Strike, Holy Spear
@@ -249,7 +250,9 @@ describe("the skill texts (#1528)", () => {
     if (skill === undefined) {
       throw new Error(`no skill ${id}`);
     }
-    return describeSkill(skill, caster(id).attributeRanks).effects.map((effect) => effect.text);
+    return describeSkill(skill, caster(id).attributeRanks, EN_WORDS, EN_NAMES).effects.map(
+      (effect) => effect.text,
+    );
   };
 
   it("says what each does", () => {

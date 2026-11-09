@@ -13,6 +13,7 @@ import { describeSkill } from "./describe.js";
 import { NO_RANKS, aggregateModifiers, ownSkillBoost, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Dropped leftovers (#2446): Healer's Boon spares the Divine Favor
@@ -123,7 +124,7 @@ function healed(log: readonly CombatLogEntry[], skillId: string, targetId: strin
 }
 
 function lines(id: string, ranks: ReadonlyMap<string, number>): string {
-  return describeSkill(skill(id), ranks)
+  return describeSkill(skill(id), ranks, EN_WORDS, EN_NAMES)
     .effects.map(({ text }) => text)
     .join(" ");
 }

@@ -15,6 +15,7 @@ import { NO_RANKS, aggregateModifiers, untargetableByFoeSpells } from "./status.
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { attackDurationSeconds } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Monk and Ranger mechanics (#2189): Spell Shield, Withdraw Hexes,
@@ -41,7 +42,7 @@ function skill(id: string): Skill {
 }
 
 function described(id: string): string[] {
-  return describeSkill(skill(id), RANKS).effects.map(({ text }) => text);
+  return describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
 }
 
 function wielding(weapon: Weapon): Combatant["equipment"] {

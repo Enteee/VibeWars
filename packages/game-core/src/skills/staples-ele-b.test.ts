@@ -12,6 +12,7 @@ import { describeStatus } from "./describe.js";
 import { NO_RANKS } from "./status.js";
 import { rankOf } from "./tick.js";
 import type { Combatant } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Elementalist staples (#2289): Armor of Frost, Phoenix, Incendiary
@@ -267,7 +268,7 @@ describe("Incendiary Bonds (#2289)", () => {
   });
 
   it("says it strikes on expiry, or at once on a death", () => {
-    expect(describeStatus("incendiary-bonds")).toMatch(
+    expect(describeStatus("incendiary-bonds", undefined, EN_WORDS, EN_NAMES)).toMatch(
       /^when it expires, or at once if target foe dies while hexed with this, target and nearby foes take 20 fire damage/,
     );
   });
@@ -379,7 +380,9 @@ describe("Rust (#2289)", () => {
   });
 
   it("says the hexed foe's signets take twice as long", () => {
-    expect(describeStatus("rust")).toBe("the target's signets take 2× as long to cast");
+    expect(describeStatus("rust", undefined, EN_WORDS, EN_NAMES)).toBe(
+      "the target's signets take 2× as long to cast",
+    );
   });
 
   it("doubles a hexed foe's signet activation", () => {

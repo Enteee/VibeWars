@@ -8,6 +8,7 @@ import { resolveSkillEffects, type CombatEvent } from "./effects.js";
 import { NO_RANKS } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * A spell's "deals X damage, Y more if ..." is one hit in GW1 (#2330):
@@ -115,8 +116,8 @@ describe("a spell's conditional bonus lands in the same hit (#2330)", () => {
 
   it("words Smite's bonus as Mystic Twister's, on its hit's line", () => {
     const ranks = new Map([["monk.smiting-prayers", 12]]);
-    expect(describeSkill(skill("monk.smite"), ranks).effects.map(({ text }) => text)).toEqual([
-      "Deals 46 holy damage; if target is attacking: +30",
-    ]);
+    expect(
+      describeSkill(skill("monk.smite"), ranks, EN_WORDS, EN_NAMES).effects.map(({ text }) => text),
+    ).toEqual(["Deals 46 holy damage; if target is attacking: +30"]);
   });
 });
