@@ -366,7 +366,7 @@ lado más cercano y deteniendo los disparos que aún la atraviesan, y no se pued
 otra vez durante 8 segundos. Una placa del color de un equipo solo responde a ese
 equipo. Los bots se colocan en la placa de su equipo si no hay enemigos cerca.
 
-Cada recorrido empieza con la **Batalla de los Zaishen de élite**, sin cola: tu grupo contra seis Zaishen controlados por bots (2 Monjes, un Elementalista y 3 más). El reloj arranca cuando uno de vosotros cruza la línea de salida. Si matáis a los seis en menos de 30 segundos, el grupo empieza el recorrido con +10 % de moral; en menos de 60, +8 %; en menos de 80, +6 %; en menos de 100, +4 %; en menos de 120, +2 %; más lento, nada. Si ganáis, el grupo entra solo en la cola de su primer mapa. Si cae todo el grupo, el recorrido termina.
+Cada recorrido empieza con la **Batalla de los Zaishen de élite**, sin cola: tu grupo contra seis Zaishen controlados por bots (2 Monjes, un Elementalista y 3 más). El reloj arranca cuando uno de vosotros cruza la línea de salida o muere el primer Zaishen, lo que ocurra antes. Si matáis a los seis en menos de 30 segundos, el grupo empieza el recorrido con +10 % de moral; en menos de 60, +8 %; en menos de 80, +6 %; en menos de 100, +4 %; en menos de 120, +2 %; más lento, nada. Si ganáis, el grupo entra solo en la cola de su primer mapa. Si cae todo el grupo, o si queda algún Zaishen vivo al cumplirse el límite de 8 minutos, el recorrido termina.
 
 ## Tres equipos
 

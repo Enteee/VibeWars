@@ -340,7 +340,7 @@ seconds; win in the Hall, and you stay to defend it. Lose, or leave a match befo
 starts again at round 1; so does leaving the queue or the party. A match
 lost to its host leaving keeps your round.
 
-Every run starts with the **Elite Zaishen Battle**, with no queue: your party against six Zaishen played by bots (2 Monks, an Elementalist and 3 others). The clock starts when one of you crosses the start line. Kill all six in under 30 seconds and the party starts the run at +10% morale; under 60, +8%; under 80, +6%; under 100, +4%; under 120, +2%; slower, nothing. Win and your party queues for its first map on its own. Wipe and the run is over.
+Every run starts with the **Elite Zaishen Battle**, with no queue: your party against six Zaishen played by bots (2 Monks, an Elementalist and 3 others). The clock starts when one of you crosses the start line or the first Zaishen dies, whichever comes first. Kill all six in under 30 seconds and the party starts the run at +10% morale; under 60, +8%; under 80, +6%; under 100, +4%; under 120, +2%; slower, nothing. Win and your party queues for its first map on its own. Wipe, or still have a Zaishen alive when the 8-minute limit is reached, and the run is over.
 
 Your morale carries through the run: the death penalty or boost you end
 a won map with is what you start the next one with, from −60% to +10%.
