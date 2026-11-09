@@ -363,15 +363,28 @@ test("a rune's bonus stays clear of max, and the pips stay in line (#1102)", asy
     }
     return found;
   };
+  type Box = Awaited<ReturnType<typeof box>>;
+  const pipLefts = async (): Promise<number[]> =>
+    page
+      .locator(".editor-attribute .attribute-pips")
+      .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left));
   // The bonus's own box, not its cell's: the cell is the column, text spills past it.
-  const bonus = await box(boosted.first().locator(".editor-attribute-bonus"));
-  const next = await box(boosted.first().locator(".editor-attribute-next"));
-  expect(bonus.x + bonus.width).toBeLessThanOrEqual(next.x);
+  const bonusAndNext = async (): Promise<[Box, Box]> => [
+    await box(boosted.first().locator(".editor-attribute-bonus")),
+    await box(boosted.first().locator(".editor-attribute-next")),
+  ];
 
-  const pipLefts = await page
-    .locator(".editor-attribute .attribute-pips")
-    .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left));
-  expect(new Set(pipLefts).size).toBe(1);
+  // At 1280 px the list is too narrow for one line (#2931): the cost is on the line below.
+  const [foldedBonus, foldedNext] = await bonusAndNext();
+  expect(foldedBonus.y + foldedBonus.height).toBeLessThanOrEqual(foldedNext.y);
+  expect(new Set(await pipLefts()).size).toBe(1);
+
+  // Wide enough for one line: the cost is beside the bonus, and clear of it.
+  await page.setViewportSize({ width: 1600, height: 720 });
+  await expect(boosted.first().locator(".editor-attribute-next")).toHaveCSS("grid-row-start", "1");
+  const [bonus, next] = await bonusAndNext();
+  expect(bonus.x + bonus.width).toBeLessThanOrEqual(next.x);
+  expect(new Set(await pipLefts()).size).toBe(1);
 });
 
 /** The attribute list, as the words themselves lay out (#2931): a Range measures the text, a span's box would not. */
