@@ -14,6 +14,7 @@ import canthanTerraces from "@vibewars/game-maps/maps/canthan-terraces/map.json"
 import sunkenBastion from "@vibewars/game-maps/maps/sunken-bastion/map.json" with { type: "json" };
 import shiverpeakPass from "@vibewars/game-maps/maps/shiverpeak-pass/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
+import barrowField from "@vibewars/game-maps/maps/barrow-field/map.json" with { type: "json" };
 import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
 import cinderSanctum from "@vibewars/game-maps/maps/cinder-sanctum/map.json" with { type: "json" };
 import blackwaterFord from "@vibewars/game-maps/maps/blackwater-ford/map.json" with { type: "json" };
@@ -76,6 +77,8 @@ export const ARENA_MAPS: readonly MapData[] = [
   theCourtyard,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
   hallOfHeroes,
+  // The Heroes' Ascent's own (#2694): a Hosted Game's pick until the progression places it.
+  barrowField,
   // The Heroes' Ascent's own (#2693): a Hosted Game's pick until the progression places them.
   hollowDeep,
   blackwaterFord,
@@ -115,8 +118,13 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
  */
 const ASCENT_FINALE_ONLY: readonly string[] = ["hall-of-heroes"];
 
-/** Heroes' Ascent maps (#2693) whose modes Random and Team Arena also play: neither draws them. */
-const ASCENT_ONLY: readonly string[] = ["hollow-deep", "blackwater-ford", "mosslit-cairns"];
+/** Heroes' Ascent maps (#2693, #2694) whose modes Random and Team Arena also play: neither draws them. */
+const ASCENT_ONLY: readonly string[] = [
+  "barrow-field",
+  "hollow-deep",
+  "blackwater-ford",
+  "mosslit-cairns",
+];
 
 /**
  * Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them: a
@@ -292,15 +300,18 @@ function guildLordsOf(objectives: readonly Objective[]): readonly GuildLord[] {
 }
 
 /**
- * The flag stand and flag spawns among a map's objectives (#1225), or
- * `undefined` on a map without a stand.
+ * The flag stand or Storm Beacon (#2694) and flag spawns among a map's
+ * objectives (#1225), or `undefined` on a map without a stand.
  */
 function flagFieldOf(objectives: readonly Objective[]): FlagField | undefined {
-  const stand = objectives.find((objective) => objective.kind === "flag-stand");
+  const stand = objectives.find(
+    (objective) => objective.kind === "flag-stand" || objective.kind === "storm-beacon",
+  );
   return stand === undefined
     ? undefined
     : {
         stand: stand.position,
+        beacon: stand.kind === "storm-beacon",
         spawns: objectives.flatMap((objective) =>
           objective.kind === "flag-spawn"
             ? [{ team: objective.team, position: objective.position }]

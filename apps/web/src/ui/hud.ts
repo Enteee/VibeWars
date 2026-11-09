@@ -710,10 +710,15 @@ export function objectTargetName(
   targetId: string | undefined,
   selfTeam: number,
   stand: StandState | undefined,
+  /** The stand is a Storm Beacon (#2694). */
+  beacon = false,
 ): string | undefined {
   if (targetId === FLAG_STAND_ID) {
     if (stand?.holder === undefined) {
-      return t("hud.flagStand");
+      return t(beacon ? "hud.stormBeacon" : "hud.flagStand");
+    }
+    if (beacon) {
+      return t(stand.holder === selfTeam ? "hud.stormBeaconOurs" : "hud.stormBeaconTheirs");
     }
     return stand.holder === selfTeam ? t("hud.flagStandOurs") : t("hud.flagStandTheirs");
   }
@@ -1832,6 +1837,7 @@ function renderTarget(
   self: PlayerSnapshot | undefined,
   target: PlayerSnapshot | undefined,
   stand: StandState | undefined,
+  beacon: boolean,
   names: ReadonlyMap<string, string>,
 ): void {
   renderTargetProfessions(hud.targetProfessions, target);
@@ -1839,7 +1845,9 @@ function renderTarget(
   setText(
     hud.targetText,
     target?.name ??
-      (self === undefined ? undefined : objectTargetName(self.targetSessionId, self.team, stand)) ??
+      (self === undefined
+        ? undefined
+        : objectTargetName(self.targetSessionId, self.team, stand, beacon)) ??
       t("hud.noTarget"),
   );
   setHidden(hud.targetBot, target?.bot !== true);
@@ -1922,7 +1930,7 @@ export function updateFollowed(
 ): void {
   const names = new Map(match.players.map((player) => [player.sessionId, player.name]));
   const casters = new Map(match.players.map((player) => [player.sessionId, player]));
-  renderTarget(hud, undefined, followed, match.stand, names);
+  renderTarget(hud, undefined, followed, match.stand, false, names);
   renderTargetChain(hud.targetChain, undefined);
   hud.targetEffects.update(
     targetEffectRows(viewerId, followed, casters, matchNow(hud, match.elapsedSeconds)),
@@ -1945,6 +1953,8 @@ export function updateHud(
   timeLimitSeconds: number | null,
   /** The map's mode (#476), which decides what the scoreboard counts (#1200). */
   mode: MatchMode,
+  /** The map's stand is a Storm Beacon (#2694). */
+  beacon: boolean,
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
@@ -2021,7 +2031,7 @@ export function updateHud(
         ],
   );
 
-  renderTarget(hud, self, target, match?.stand, names);
+  renderTarget(hud, self, target, match?.stand, beacon, names);
   renderTargetChain(hud.targetChain, targetChainIcon(target, chainMark));
   hud.targetEffects.update(targetEffectRows(self.sessionId, target, casters, now));
 

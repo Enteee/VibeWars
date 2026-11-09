@@ -42,7 +42,7 @@ function placed(...entries: readonly (readonly [Combatant, Vec2])[]): Surroundin
   return new Map(
     entries.map(([combatant, position]) => [
       combatant.id,
-      { combatant, position, creature: undefined, corpseExploited: false },
+      { combatant, position, floors: 1, layer: 0, creature: undefined, corpseExploited: false },
     ]),
   );
 }

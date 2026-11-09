@@ -88,7 +88,7 @@ function use(
     surroundings: new Map(
       placed.map(([combatant, position]) => [
         combatant.id,
-        { combatant, position, creature: undefined, corpseExploited: false },
+        { combatant, position, floors: 1, layer: 0, creature: undefined, corpseExploited: false },
       ]),
     ),
     skill: skill(skillId),

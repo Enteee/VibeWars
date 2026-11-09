@@ -260,6 +260,58 @@ export function swingFlashAlpha(flash: SwingFlash): number {
 }
 
 /**
+ * The Storm Beacon's strike (#2694): a jagged bolt from the beacon to the
+ * body it hit, the same for both teams. It is what teaches the rule.
+ */
+export interface BeaconBolt {
+  readonly id: number;
+  readonly from: Vec2;
+  readonly to: Vec2;
+  /** Seconds of life remaining. */
+  readonly remainingSeconds: number;
+}
+
+/** Long enough to follow back to the beacon; a strike comes every 2.5 s. */
+export const BEACON_BOLT_SECONDS = 0.35;
+const BEACON_BOLT_SEGMENTS = 8;
+/** How far a joint strays sideways from the straight line. */
+const BEACON_BOLT_JITTER = 14;
+
+/** Every bolt `dt` seconds older, the faded ones gone. */
+export function decayBeaconBolts(bolts: readonly BeaconBolt[], dt: number): BeaconBolt[] {
+  return bolts
+    .map((bolt) => ({ ...bolt, remainingSeconds: bolt.remainingSeconds - dt }))
+    .filter((bolt) => bolt.remainingSeconds > 0);
+}
+
+export function beaconBoltAlpha(bolt: BeaconBolt): number {
+  return Math.max(0, Math.min(1, bolt.remainingSeconds / BEACON_BOLT_SECONDS));
+}
+
+/**
+ * The bolt's joints, ends exact. The zig-zag comes from its id, so a bolt
+ * keeps its shape while it fades.
+ */
+export function beaconBoltPoints(bolt: Pick<BeaconBolt, "id" | "from" | "to">): Vec2[] {
+  const dx = bolt.to.x - bolt.from.x;
+  const dy = bolt.to.y - bolt.from.y;
+  const length = Math.hypot(dx, dy) || 1;
+  return Array.from({ length: BEACON_BOLT_SEGMENTS + 1 }, (_, joint) => {
+    const along = joint / BEACON_BOLT_SEGMENTS;
+    const side =
+      joint === 0 || joint === BEACON_BOLT_SEGMENTS
+        ? 0
+        : (joint % 2 === 0 ? 1 : -1) *
+          BEACON_BOLT_JITTER *
+          (0.4 + 0.6 * Math.abs(Math.sin(bolt.id * 12.9898 + joint * 78.233)));
+    return {
+      x: bolt.from.x + dx * along - (dy / length) * side,
+      y: bolt.from.y + dy * along + (dx / length) * side,
+    };
+  });
+}
+
+/**
  * A ward or a trap on the ground (#1087, #1105): a circle in its side's
  * colour, its skill's icon at the centre. A ward's is a translucent
  * disc; a trap's, its outline alone.

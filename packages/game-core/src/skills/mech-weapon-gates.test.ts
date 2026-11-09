@@ -92,7 +92,7 @@ function cast(skillId: string, caster: Combatant, ranks = RANK_12) {
 function swing(caster: Combatant, target: Combatant) {
   return resolveSwing({
     attacker: caster,
-    target: { combatant: target, position: vec2(40, 0), creature: undefined },
+    target: { combatant: target, position: vec2(40, 0), floors: 1, layer: 0, creature: undefined },
     surroundings: new Map(),
     rng: blocking(),
     rules: RULES,

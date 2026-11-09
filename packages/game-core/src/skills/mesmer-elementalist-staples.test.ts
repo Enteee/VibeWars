@@ -69,7 +69,7 @@ function use(
 }
 
 function at(combatant: Combatant, position: Vec2): SurroundingBody {
-  return { combatant, position, creature: undefined, corpseExploited: false };
+  return { combatant, position, floors: 1, layer: 0, creature: undefined, corpseExploited: false };
 }
 
 describe("Cry of Frustration (#938)", () => {
@@ -131,6 +131,7 @@ describe("Ice Spikes and Deep Freeze (#938)", () => {
       skill: skill(skillId),
       caster: user,
       casterPosition: vec2(0, 0),
+      casterLayer: 0,
       primary: at(target, vec2(300, 0)),
       candidates: [
         at(user, vec2(0, 0)),

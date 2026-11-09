@@ -162,7 +162,7 @@ function strike(skillId: string, caster: Combatant, target: Combatant) {
 function swing(caster: Combatant, target: Combatant) {
   return resolveSwing({
     attacker: caster,
-    target: { combatant: target, position: vec2(40, 0), creature: undefined },
+    target: { combatant: target, position: vec2(40, 0), floors: 1, layer: 0, creature: undefined },
     surroundings: new Map(),
     rng: blocking(),
     rules: RULES.combat,

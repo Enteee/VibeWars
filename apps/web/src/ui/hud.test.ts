@@ -183,6 +183,13 @@ describe("objectTargetName (#1225)", () => {
     expect(objectTargetName("flag-stand", 0, red)).toBe(t("hud.flagStandTheirs"));
     expect(objectTargetName("flag-stand", 1, red)).toBe(t("hud.flagStandOurs"));
   });
+
+  it("calls a beacon map's stand the Storm Beacon (#2694)", () => {
+    const red = { holder: 1, heldSeconds: 30 };
+    expect(objectTargetName("flag-stand", 0, NOBODY, true)).toBe(t("hud.stormBeacon"));
+    expect(objectTargetName("flag-stand", 0, red, true)).toBe(t("hud.stormBeaconTheirs"));
+    expect(objectTargetName("flag-stand", 1, red, true)).toBe(t("hud.stormBeaconOurs"));
+  });
 });
 
 describe("renderTargetSignet (#2819)", () => {

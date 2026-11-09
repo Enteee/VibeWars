@@ -179,6 +179,8 @@ describe("a backfired blow (#2471)", () => {
       target: {
         combatant: victim,
         position: vec2(40, 0),
+        floors: 1,
+        layer: 0,
         creature: undefined,
       },
       surroundings: new Map(),
@@ -303,7 +305,13 @@ describe("a backfired blow still hit (#2471)", () => {
       attacker.statuses.apply("apply-poison", 24, "x", NO_RANKS);
       const { events, fired } = resolveSwing({
         attacker,
-        target: { combatant: victim, position: vec2(40, 0), creature: undefined },
+        target: {
+          combatant: victim,
+          position: vec2(40, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+        },
         surroundings: new Map(),
         rng: stream(10, at, 0),
         rules: RULES.combat,

@@ -63,7 +63,7 @@ const position: BotRule = {
       if (here < THREAT_MOVE_MIN) {
         return undefined;
       }
-      best = safest(rule, self.position, spot.watched);
+      best = safest(rule, self.position, spot.watched, spot.watchedLayer);
       if (best === undefined || best.threat > here - 1) {
         return undefined;
       }
@@ -71,7 +71,7 @@ const position: BotRule = {
         best = { ...best, point: committed(rule, best.point) };
       }
     } else {
-      best = safest(rule, spot.point, spot.watched);
+      best = safest(rule, spot.point, spot.watched, spot.watchedLayer);
       if (best === undefined) {
         return undefined;
       }
@@ -92,6 +92,8 @@ interface Spot {
   readonly point: Vec2 | undefined;
   /** What it must see from there. */
   readonly watched: Vec2;
+  /** The layer `watched` is on (ADR-0051). */
+  readonly watchedLayer: number;
 }
 
 interface Candidate {
@@ -105,12 +107,20 @@ interface Candidate {
  * the fewest foes can hit, first in that order on a tie. One it could
  * not see `watched` from, or stand on, is none; none left: `undefined`.
  */
-function safest(rule: RuleContext, point: Vec2, watched: Vec2): Candidate | undefined {
+function safest(
+  rule: RuleContext,
+  point: Vec2,
+  watched: Vec2,
+  watchedLayer: number,
+): Candidate | undefined {
   const { context } = rule;
   let best: Candidate | undefined;
   for (const degrees of THREAT_ANGLES) {
     const candidate = turned(point, watched, degrees);
-    if (!context.walkable(candidate) || !context.seesBetween(candidate, watched)) {
+    if (
+      !context.walkable(candidate) ||
+      !context.seesBetween(candidate, watched, context.self.layer, watchedLayer)
+    ) {
       continue;
     }
     const threat = threatAt(rule, candidate);
@@ -148,7 +158,7 @@ function threatAt(rule: RuleContext, point: Vec2): number {
     if (distance(foe.position, point) > rule.foeReach(foe) + POSITION_SLACK) {
       continue;
     }
-    if (rule.context.seesBetween(foe.position, point)) {
+    if (rule.context.seesBetween(foe.position, point, foe.layer, rule.context.self.layer)) {
       threat += 1;
     }
   }
@@ -172,10 +182,14 @@ function holdSpot({ self, bar, foes, targetId }: RuleContext): Spot | undefined 
     return undefined;
   }
   if (distance(self.position, target.position) <= shortest) {
-    return { point: undefined, watched: target.position };
+    return { point: undefined, watched: target.position, watchedLayer: target.layer };
   }
   const hold = HOLD_REACH * shortest;
-  return { point: add(target.position, scale(back, hold)), watched: target.position };
+  return {
+    point: add(target.position, scale(back, hold)),
+    watched: target.position,
+    watchedLayer: target.layer,
+  };
 }
 
 /**
@@ -224,7 +238,7 @@ function coverSpot({ self, allies, foes, foeCentroid, cursor }: RuleContext): Sp
     (near === undefined || distance(near.position, self.position) > ELBOW_DISTANCE)
   ) {
     cursor.coverSpot = undefined;
-    return { point: undefined, watched: ward.position };
+    return { point: undefined, watched: ward.position, watchedLayer: ward.layer };
   }
   const back = normalize(sub(ward.position, foeCentroid));
   if (back === ZERO) {
@@ -239,7 +253,7 @@ function coverSpot({ self, allies, foes, foeCentroid, cursor }: RuleContext): Sp
       break;
     }
   }
-  return { point, watched: ward.position };
+  return { point, watched: ward.position, watchedLayer: ward.layer };
 }
 
 /**

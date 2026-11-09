@@ -85,7 +85,7 @@ function swingDamage(who: Combatant, hexed = false): number {
   }
   const events: readonly CombatEvent[] = resolveSwing({
     attacker: who,
-    target: { combatant: dummy, position: vec2(40, 0), creature: undefined },
+    target: { combatant: dummy, position: vec2(40, 0), floors: 1, layer: 0, creature: undefined },
     surroundings: new Map(),
     rng: scripted(),
     rules: RULES.combat,

@@ -180,13 +180,17 @@ function sourceOf(
         : itemName(entry.weaponId)
       : entry.cause === "degeneration"
         ? t(event.kind === "heal" ? "combat.sourceRegeneration" : "combat.sourceDegeneration")
-        : (skillLabel(entry.skillId) ??
-          // A Guild Battle's shrine raises on its own (#1222): nobody's, no skill.
-          t(
-            entry.cause === "skill" && entry.sourceId === undefined && event.kind === "resurrected"
-              ? "combat.sourceShrine"
-              : "combat.sourceSkill",
-          )));
+        : entry.cause === "beacon"
+          ? t("combat.sourceBeacon")
+          : (skillLabel(entry.skillId) ??
+            // A Guild Battle's shrine raises on its own (#1222): nobody's, no skill.
+            t(
+              entry.cause === "skill" &&
+                entry.sourceId === undefined &&
+                event.kind === "resurrected"
+                ? "combat.sourceShrine"
+                : "combat.sourceSkill",
+            )));
   // A creature swings its own jaws or bones: "Wolf hits Bob", not
   // "Unarmed (Wolf)" (#1144); a priest raises with no skill: "Priest
   // resurrects Bob" (#1186).

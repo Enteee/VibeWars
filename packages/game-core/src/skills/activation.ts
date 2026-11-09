@@ -1,6 +1,7 @@
 import type { SkillBar } from "../build.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange, hasLineOfSight, type Segment } from "../geometry.js";
+import { feelsHeight, heightRange } from "../match/layer-rules.js";
 import type { CreatureKind } from "../match/simulation.js";
 import {
   EXPERTISE_ATTRIBUTE,
@@ -159,6 +160,12 @@ export interface ActivationRequest {
    */
   readonly skillBar: SkillBar;
   readonly losBlockers: readonly Segment[];
+  /** A deck stands between caster and target (ADR-0051's footprint rule): melee ignores it. */
+  readonly deckBlocked?: boolean;
+  /** Whether caster and target share a floor (ADR-0051): melee needs it. */
+  readonly sharesFloorWithTarget?: boolean;
+  /** Which way the layers tilt a bow or spear attack skill's range: `heightStep`. */
+  readonly heightStep?: number;
 }
 
 /**
@@ -422,10 +429,22 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   // Range and line of sight only apply when there is a distinct target to
   // measure against; a self-cast is always in range of itself.
   if (skill.target !== "self" && request.targetPosition !== undefined) {
-    if (!distanceWithinRange(request.casterPosition, request.targetPosition, skill.range)) {
+    const weapon = request.caster.equipment.mainHand.weapon;
+    const reach =
+      skill.attack !== undefined && feelsHeight(weapon.id)
+        ? heightRange(skill.range, request.heightStep ?? 0)
+        : skill.range;
+    const melee = skill.attack !== undefined && weapon.projectileSpeed === undefined;
+    if (
+      !distanceWithinRange(request.casterPosition, request.targetPosition, reach) ||
+      (request.sharesFloorWithTarget === false && melee)
+    ) {
       return reject("out-of-range");
     }
-    if (!hasLineOfSight(request.casterPosition, request.targetPosition, request.losBlockers)) {
+    if (
+      (request.deckBlocked === true && !melee) ||
+      !hasLineOfSight(request.casterPosition, request.targetPosition, request.losBlockers)
+    ) {
       return reject("no-line-of-sight");
     }
   }

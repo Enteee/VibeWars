@@ -512,7 +512,7 @@ export interface SkillBarSlot {
 export interface CombatMessage<Event> {
   readonly casterSessionId: string;
   /** What this was. Read this, never `skillId === ""`, to tell them apart. */
-  readonly cause: "skill" | "weapon" | "degeneration" | "attribute";
+  readonly cause: "skill" | "weapon" | "degeneration" | "attribute" | "beacon";
   /** The skill, when `cause` is `"skill"`; `""` otherwise. */
   readonly skillId: string;
   /** The weapon, when `cause` is `"weapon"`; `""` otherwise (#162). */

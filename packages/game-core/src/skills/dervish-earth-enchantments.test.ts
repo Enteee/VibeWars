@@ -99,7 +99,7 @@ function crowd(self: Combatant): {
   const surroundings: Surroundings = new Map(
     placed.map(([combatant, position]) => [
       combatant.id,
-      { combatant, position, creature: undefined, corpseExploited: false },
+      { combatant, position, floors: 1, layer: 0, creature: undefined, corpseExploited: false },
     ]),
   );
   return { target: placed[1]?.[0] ?? foe("missing"), surroundings };
