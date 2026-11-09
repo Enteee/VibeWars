@@ -8,7 +8,7 @@ import {
   type MatchEndReason,
   type PlayerBuild,
 } from "@vibewars/game-core";
-import { LOBBY_MODES, type LobbyMode } from "@vibewars/game-protocol";
+import { LOBBY_MODES, isTicketId, type LobbyMode } from "@vibewars/game-protocol";
 
 import { sanitizeCharacterName, sanitizeGuildTag, sanitizeName } from "./names.js";
 
@@ -17,12 +17,12 @@ import { sanitizeCharacterName, sanitizeGuildTag, sanitizeName } from "./names.j
  * published on Nostr for anyone to read, and so public. A host can lie
  * about any of it; the event's signature proves only that the record
  * arrived intact. Nothing in it identifies a player beyond the in-game
- * name and guild tag they played under: no peer id, no address, no
- * lobby key or room.
+ * name and guild tag they played under and their public player key
+ * (#2739): no peer id, no address, no lobby key or room.
  */
 
 /** Rejects a record of another shape, never adapts one. */
-export const MATCH_RECORD_VERSION = 2;
+export const MATCH_RECORD_VERSION = 3;
 
 /** A team holds 1 to this many players, bots included. */
 export const MAX_RECORD_TEAM = 8;
@@ -40,6 +40,12 @@ export interface MatchRecordPlayer {
   readonly name: string;
   readonly guildTag: string | null;
   readonly bot: boolean;
+  /**
+   * The public player key the host reports for this seat (#2739), which
+   * draws the player's signet; `null` exactly for a bot. A host can
+   * attach any key to a name, so it proves nothing.
+   */
+  readonly pubkey: string | null;
   /**
    * The build as played (the lobby's, or the hello's once the host
    * accepted it) as a GW1 template code: professions, ranks and bar in
@@ -110,6 +116,10 @@ function parsePlayer(value: unknown): MatchRecordPlayer | undefined {
   ) {
     return undefined;
   }
+  const { pubkey } = value;
+  if ((pubkey !== null && !isTicketId(pubkey)) || (pubkey === null) !== value.bot) {
+    return undefined;
+  }
   const { template } = value;
   if (typeof template !== "string" || template.length > MAX_TEMPLATE_LENGTH) {
     return undefined;
@@ -134,7 +144,7 @@ function parsePlayer(value: unknown): MatchRecordPlayer | undefined {
   if (validatePlayerBuild(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes).length > 0) {
     return undefined;
   }
-  return { name, guildTag, bot: value.bot, template };
+  return { name, guildTag, bot: value.bot, pubkey, template };
 }
 
 /**

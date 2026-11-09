@@ -10,7 +10,8 @@ import { describe, expect, it } from "vitest";
 import { hostMap } from "./maps.js";
 
 const DT = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
-const RULES = MATCH_MODES["capture-points"];
+/** A 60 s clock keeps the test well inside its limit: seed 2735 now ends at time, not by its wipe at 127 s. */
+const RULES = { ...MATCH_MODES["capture-points"], timeLimitSeconds: 60 };
 
 /** A side of four bots, on the first starter team that has four. */
 function side(team: 0 | 1): [string, PlannedSeat][] {
@@ -22,7 +23,7 @@ function side(team: 0 | 1): [string, PlannedSeat][] {
 }
 
 describe("a hosted 4v4 on Scarred Earth (#2735)", () => {
-  it("runs to its end, by a wipe, a 20-point lead or at time, and says which", () => {
+  it("runs to its end, by a 20-point lead or at time, and says which", () => {
     const map = hostMap("scarred-earth");
     if (map === undefined) {
       throw new Error("no Scarred Earth");
@@ -42,6 +43,7 @@ describe("a hosted 4v4 on Scarred Earth (#2735)", () => {
       mode: "hosted-game",
       publishRecord: (record) => records.push(record),
       nowSeconds: () => 0,
+      signetOf: () => 0,
     });
     const ticks = Math.ceil(RULES.timeLimitSeconds / DT) + 1;
     for (let tick = 0; tick < ticks && host.phase === "active"; tick += 1) {
@@ -49,6 +51,6 @@ describe("a hosted 4v4 on Scarred Earth (#2735)", () => {
     }
     expect(host.phase).toBe("finished");
     expect(records).toHaveLength(1);
-    expect(["annihilation", "score", "time"]).toContain(records[0]?.endReason);
+    expect(["score", "time"]).toContain(records[0]?.endReason);
   });
 });

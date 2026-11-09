@@ -19,6 +19,7 @@ import {
 } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { button, h, playCard, screenBar } from "./kit.js";
+import { SIGNET_ROW_PX, signetElement, signetOf } from "./player-label.js";
 import { memberCount, validateTeam } from "./team-builder.js";
 
 /**
@@ -168,9 +169,16 @@ export function drawerRows(teams: readonly StoredTeam[], size: number, query: st
   };
 }
 
-/** The member at `sessionId`'s name, or the id itself for someone already gone. */
-function nameOf(players: readonly LobbyPlayerSnapshot[], sessionId: string): string {
-  return players.find((player) => player.sessionId === sessionId)?.name ?? sessionId;
+/** Who a card or a seat names, with their signet (#2820) when they have one. */
+interface Person {
+  readonly name: string;
+  readonly signet: number | undefined;
+}
+
+/** The member at `sessionId`; the id itself, unsigned, for someone already gone. */
+function personOf(players: readonly LobbyPlayerSnapshot[], sessionId: string): Person {
+  const player = players.find((candidate) => candidate.sessionId === sessionId);
+  return { name: player?.name ?? sessionId, signet: signetOf(player) };
 }
 
 /**
@@ -195,8 +203,12 @@ function cardMembers(
 }
 
 /** A name, with the captain's crown token after it when it is theirs. */
-function personName(className: string, name: string, captain: boolean): HTMLElement {
+function personName(className: string, person: Person, captain: boolean): HTMLElement {
+  const { name, signet } = person;
   const label = h("span", className);
+  if (signet !== undefined) {
+    label.appendChild(signetElement(signet, SIGNET_ROW_PX));
+  }
   const text = h("span", "team-lobby-name-text", name);
   text.title = name;
   // A player typed it: it reads, and is cut at its end, in its own direction (#2655).
@@ -219,13 +231,16 @@ export function proposalCard(
   onVote: ((proposerId: string | null) => void) | undefined,
 ): HTMLElement {
   const mine = proposal.voterIds.includes(snapshot.selfSessionId);
-  const proposer = nameOf(snapshot.players, proposal.proposerId);
+  const proposer = personOf(snapshot.players, proposal.proposerId);
   const votes = h("span", "team-lobby-votes");
   const tokens = h("span", "team-lobby-tokens");
   for (const voterId of proposal.voterIds) {
-    const name = nameOf(snapshot.players, voterId);
-    const token = h("span", "team-lobby-token", initial(name));
-    token.title = name;
+    const voter = personOf(snapshot.players, voterId);
+    const token = h("span", "team-lobby-token", initial(voter.name));
+    if (voter.signet !== undefined) {
+      token.prepend(signetElement(voter.signet, SIGNET_ROW_PX));
+    }
+    token.title = voter.name;
     token.classList.toggle("is-self", voterId === snapshot.selfSessionId);
     tokens.appendChild(token);
   }
@@ -240,7 +255,7 @@ export function proposalCard(
     },
     pressed: mine,
     disabled: onVote === undefined,
-    label: t("teamLobby.proposerBuild", { name: proposer }),
+    label: t("teamLobby.proposerBuild", { name: proposer.name }),
   });
   card.classList.toggle("is-voted", mine);
   return card;
@@ -289,12 +304,12 @@ function chosenCard(
         ? personName(
             "team-lobby-card-name",
             // Where a preset has no name (#2148): a side of one plays a starter build.
-            choice.presetName ?? t("teamLobby.presetTeam"),
+            { name: choice.presetName ?? t("teamLobby.presetTeam"), signet: undefined },
             false,
           )
         : personName(
             "team-lobby-card-name",
-            nameOf(snapshot.players, choice.proposerId),
+            personOf(snapshot.players, choice.proposerId),
             choice.proposerId === side.captainId,
           ),
     members: cardMembers(choice.members, choiceBuilds(choice, snapshot), presetOf(choice)),
@@ -334,7 +349,8 @@ export function seat(
   }
   node.classList.toggle("is-mine", mine);
   node.classList.toggle("is-taken", holder !== null && !mine);
-  const holderName = holder === null ? undefined : nameOf(snapshot.players, holder);
+  const holderPerson = holder === null ? undefined : personOf(snapshot.players, holder);
+  const holderName = holderPerson?.name;
   const look =
     character === undefined
       ? undefined
@@ -363,9 +379,9 @@ export function seat(
     node.setAttribute("aria-label", label);
   }
   node.appendChild(
-    holderName === undefined
+    holderPerson === undefined
       ? h("span", "team-lobby-seat-free", free)
-      : personName("team-lobby-seat-holder", holderName, holder === side.captainId),
+      : personName("team-lobby-seat-holder", holderPerson, holder === side.captainId),
   );
   return node;
 }

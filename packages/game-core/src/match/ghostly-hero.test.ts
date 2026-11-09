@@ -2,6 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, weaponDamageType } from "../equipment/weapons.js";
+import {
+  ANNIHILATION_MATCH_RULES,
+  CAPTURE_POINTS_MATCH_RULES,
+  CAPTURE_WAVE_SECONDS,
+  KING_OF_THE_HILL_MATCH_RULES,
+  PRIEST_ANNIHILATION_MATCH_RULES,
+  PRIEST_WAVE_SECONDS,
+  type MatchRules,
+} from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { NO_RANKS } from "../skills/status.js";
 import { chargeAdrenaline } from "../skills/testing.js";
@@ -16,6 +25,7 @@ import {
   type GhostField,
 } from "./ghost.js";
 import { MASTERLESS_TEAM } from "./minions.js";
+import { priestId, type Shrine } from "./priest.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
 /**
@@ -213,4 +223,98 @@ describe("the Ghostly Hero (#2689)", () => {
       stepUntil(sim, () => (w.cast.rechargeRemaining.get(skillId) ?? 0) > 0, 3);
     },
   );
+});
+
+describe("when a dead Ghostly Hero rises (#2839)", () => {
+  const SHRINES: readonly Shrine[] = [
+    { team: 0, position: vec2(100, 500) },
+    { team: 1, position: vec2(1900, 500) },
+  ];
+
+  function game(matchRules: MatchRules, shrines: readonly Shrine[]): MatchSimulation {
+    return new MatchSimulation({
+      seed: "ghost-rises",
+      bounds: { width: 2000, height: 1000 },
+      matchRules,
+      shrines,
+      ghostField: FIELD,
+      participants: [fighter("a", 0, vec2(200, 900)), fighter("x", 1, vec2(1800, 900))],
+    });
+  }
+
+  /** Step until the match clock reaches `seconds`. */
+  function stepTo(sim: MatchSimulation, seconds: number): void {
+    while (sim.elapsedSeconds < seconds - DT / 2) {
+      sim.step(DT);
+    }
+  }
+
+  /** Kill `id` where it stands, as burning would. */
+  function kill(sim: MatchSimulation, id: string): void {
+    const victim = get(sim, id);
+    victim.combatant.statuses.apply("burning", 10, "x", NO_RANKS);
+    victim.combatant.health = 0.2;
+    stepUntil(sim, () => victim.combatant.dead, 2);
+  }
+
+  it("is back at the next wave while its priest lives, and at the wave after", () => {
+    const sim = game(PRIEST_ANNIHILATION_MATCH_RULES, SHRINES);
+    const ghost = get(sim, GHOST_0);
+    stepTo(sim, 30);
+    ghost.position = vec2(800, 300);
+    kill(sim, GHOST_0);
+    stepTo(sim, PRIEST_WAVE_SECONDS - 1);
+    expect(ghost.combatant.dead).toBe(true);
+    stepTo(sim, PRIEST_WAVE_SECONDS + DT);
+    expect(ghost.combatant.dead).toBe(false);
+    expect(ghost.combatant.health).toBe(GHOST_HEALTH);
+    expect(ghost.position).toEqual(vec2(300, 500));
+
+    kill(sim, GHOST_0);
+    stepTo(sim, PRIEST_WAVE_SECONDS * 2 - 1);
+    expect(ghost.combatant.dead).toBe(true);
+    stepTo(sim, PRIEST_WAVE_SECONDS * 2 + DT);
+    expect(ghost.combatant.dead).toBe(false);
+  });
+
+  it("does not rise once its priest is dead", () => {
+    const sim = game(PRIEST_ANNIHILATION_MATCH_RULES, SHRINES);
+    kill(sim, GHOST_0);
+    kill(sim, priestId(0));
+    stepTo(sim, PRIEST_WAVE_SECONDS * 3 + DT);
+    expect(get(sim, GHOST_0).combatant.dead).toBe(true);
+  });
+
+  it("never rises with no priests in plain Annihilation, its boost given once", () => {
+    const sim = game(ANNIHILATION_MATCH_RULES, []);
+    killGhost(sim);
+    stepUntil(sim, () => get(sim, "x").combatant.morale === 10, 1);
+    stepTo(sim, PRIEST_WAVE_SECONDS * 3);
+    expect(get(sim, GHOST_0).combatant.dead).toBe(true);
+    expect(get(sim, "x").combatant.morale).toBe(10);
+  });
+
+  it("rises 120 s after it died in King of the Hill", () => {
+    const sim = game(KING_OF_THE_HILL_MATCH_RULES, []);
+    stepTo(sim, 30);
+    kill(sim, GHOST_0);
+    const died = sim.elapsedSeconds;
+    stepTo(sim, died + PRIEST_WAVE_SECONDS - 1);
+    expect(get(sim, GHOST_0).combatant.dead).toBe(true);
+    stepTo(sim, died + PRIEST_WAVE_SECONDS + 1);
+    expect(get(sim, GHOST_0).combatant.dead).toBe(false);
+  });
+
+  it("rises at its spawn on the 60 s wave in Capture Points (#2845)", () => {
+    const sim = game(CAPTURE_POINTS_MATCH_RULES, SHRINES);
+    const ghost = get(sim, GHOST_0);
+    stepTo(sim, 30);
+    ghost.position = vec2(800, 300);
+    kill(sim, GHOST_0);
+    stepTo(sim, CAPTURE_WAVE_SECONDS - 1);
+    expect(ghost.combatant.dead).toBe(true);
+    stepTo(sim, CAPTURE_WAVE_SECONDS + DT);
+    expect(ghost.combatant.dead).toBe(false);
+    expect(ghost.position).toEqual(vec2(300, 500));
+  });
 });

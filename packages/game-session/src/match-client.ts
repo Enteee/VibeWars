@@ -442,6 +442,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 altarHolder: undefined,
                 altarHeldSeconds: 0,
                 capturePoints: [],
+                gates: [],
                 traps,
                 summary,
               }

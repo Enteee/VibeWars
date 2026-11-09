@@ -3,6 +3,7 @@ import type { MusicFollower } from "../music/play-music.js";
 import type { SharedTracks } from "../music/shared-tracks.js";
 import type { Track } from "../music/tracks/index.js";
 import { button, h, syncList } from "./kit.js";
+import { SIGNET_ROW_PX, setSignet, signetElement } from "./player-label.js";
 
 /**
  * The ♪ popover's *Shared with you* (#2745): a row a lobby member who
@@ -41,6 +42,7 @@ export function sharedMusicSection(
       (row) => {
         const node = h("div", "jukebox-shared-row");
         const label = h("span", "jukebox-shared-name");
+        label.append(signetElement(undefined, SIGNET_ROW_PX), h("span", "jukebox-shared-text"));
         const play = button(t("music.playShared"), "jukebox-shared-play", () => {
           const current = shared.rows().find((candidate) => candidate.from === row.from);
           if (current === undefined || inMatch) {
@@ -53,7 +55,11 @@ export function sharedMusicSection(
         return node;
       },
       (node, row) => {
-        const label = node.querySelector(".jukebox-shared-name");
+        const signet = node.querySelector(".signet");
+        if (signet instanceof HTMLImageElement) {
+          setSignet(signet, row.signet, SIGNET_ROW_PX);
+        }
+        const label = node.querySelector(".jukebox-shared-text");
         if (label !== null) {
           label.textContent = t("music.sharedRow", { name: row.name, title: row.title });
         }

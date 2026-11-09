@@ -8,8 +8,10 @@ import {
   type Segment,
 } from "./geometry.js";
 import {
+  buildGatedNavGraph,
   buildNavGraph,
   createPathFinder,
+  navGraphFor,
   nearestStandable,
   walkIsClear,
   type NavGraph,
@@ -133,6 +135,29 @@ describe("createPathFinder", () => {
     const path = createPathFinder(graph).find(corner, vec2(340, 280)) ?? [];
     expect(path.length).toBeGreaterThan(0);
     expect(distance(path[0] ?? corner, corner)).toBeGreaterThan(1);
+  });
+});
+
+describe("gated graphs (#2691)", () => {
+  const walls = [...rect(100, 100, 50, 50), ...rect(400, 300, 60, 40)];
+  const gates = [rect(200, 0, 10, 300), rect(300, 250, 10, 250), rect(120, 350, 200, 10)];
+  const bounds = { width: 600, height: 500 };
+
+  it("reads each combination off as a full build would make it", () => {
+    const gated = buildGatedNavGraph(walls, gates, bounds, CLEARANCE);
+    for (let closed = 0; closed < 1 << gates.length; closed += 1) {
+      const shut = gates.flatMap((gate, at) => ((closed & (1 << at)) === 0 ? [] : gate));
+      const { nodes, edges } = navGraphFor(gated, closed);
+      const built = buildNavGraph([...walls, ...shut], bounds, CLEARANCE);
+      expect(nodes).toEqual(built.nodes);
+      expect(edges).toEqual(built.edges);
+    }
+  });
+
+  it("knows the combination's walls", () => {
+    const gated = buildGatedNavGraph(walls, gates, bounds, CLEARANCE);
+    expect(walkIsClear(navGraphFor(gated, 0), vec2(150, 200), vec2(260, 200))).toBe(true);
+    expect(walkIsClear(navGraphFor(gated, 1), vec2(150, 200), vec2(260, 200))).toBe(false);
   });
 });
 

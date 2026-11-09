@@ -6,6 +6,7 @@ import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
 import type { CapturePoint } from "./capture-points.js";
+import type { Gate } from "./gates.js";
 import type { CarriedSpawn } from "./carried.js";
 import { MASTERLESS_TEAM } from "./minions.js";
 import type { RelicState } from "./relics.js";
@@ -241,6 +242,8 @@ export interface BehaviourCursor {
   coverSpot: Vec2 | undefined;
   /** `play-build`: waiting, ahead of its team, for the rest to catch up (#2621). */
   regrouping: boolean;
+  /** `play-build`, foes of two teams or more: the team it fights, kept while that team still fights (#2685). */
+  front: number | undefined;
   /** `play-build`: the team target it holds its spike skills for (#2631), `undefined` while it holds none. */
   spikeTargetId: string | undefined;
   /** `play-build`: how long it has held them for `spikeTargetId` (#2631). */
@@ -307,6 +310,8 @@ export interface BotObjectives {
   readonly altar: Vec2 | undefined;
   /** The team holding King of the Hill's altar (#2582); `null` when nobody does, or in any other mode. */
   readonly altarHolder: number | null;
+  /** The map's gates (#2691), kept current; `[]` on a map without any. */
+  readonly gates: readonly Gate[];
 }
 
 /** No objectives: every mode but those with one. */
@@ -316,6 +321,7 @@ export const NO_OBJECTIVES: BotObjectives = {
   relicSpawns: [],
   altar: undefined,
   altarHolder: null,
+  gates: [],
 };
 
 export function createCursor(): BehaviourCursor {
@@ -330,6 +336,7 @@ export function createCursor(): BehaviourCursor {
     wardId: undefined,
     coverSpot: undefined,
     regrouping: false,
+    front: undefined,
     spikeTargetId: undefined,
     spikeHeldSeconds: 0,
     spikeReadySeconds: undefined,

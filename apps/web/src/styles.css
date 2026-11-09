@@ -1540,6 +1540,17 @@ body {
   display: none;
 }
 
+/* A player's signet just before their name (#2805): a recognition aid. */
+.signet {
+  flex-shrink: 0;
+  margin-inline-end: 0.3em;
+  vertical-align: -0.1em;
+}
+
+.signet[hidden] {
+  display: none;
+}
+
 .field-hint {
   color: var(--damage);
   font-size: 0.72rem;
@@ -1776,6 +1787,25 @@ body {
   font-style: italic;
 }
 
+/* The host's (x) by a member (#2746): small, quiet until hovered. */
+.party-member-remove {
+  margin-inline-start: auto;
+  padding: 0 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.party-member-remove:hover,
+.party-member-remove:focus-visible {
+  border-color: var(--damage);
+  color: var(--damage);
+}
+
 .party-host-mark {
   padding: 0 0.3rem;
   border: 1px solid var(--line);
@@ -1914,6 +1944,19 @@ body {
 .match-player-icon {
   width: 18px;
   height: 18px;
+}
+
+.match-player-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.match-player-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .match-player-icon.is-unknown {
@@ -3270,6 +3313,13 @@ body {
   font-size: 0.85rem;
 }
 
+.help-version {
+  margin: 0.6rem 0 0;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+  user-select: text;
+}
+
 .help-page {
   min-width: 0;
   overflow-x: auto;
@@ -3805,10 +3855,11 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.5rem;
+  min-width: 1.5rem;
   height: 1.5rem;
+  padding-inline: 0.2rem;
   border: 1px solid var(--ink-dim);
-  border-radius: 50%;
+  border-radius: 0.75rem;
   font-size: 0.75rem;
 }
 
@@ -3888,6 +3939,7 @@ body {
 
 .team-lobby-seat-holder {
   align-self: center;
+  max-width: 100%;
   font-size: 1.05rem;
 }
 

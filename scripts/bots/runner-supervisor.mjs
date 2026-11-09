@@ -84,6 +84,8 @@ export const LOAD_CLEAR_MS = 60_000;
 export const LOAD_HARD_FACTOR = 2;
 /** How long scaling to 0 waits for queued company jobs. */
 export const DRAIN_MS = 10 * 60_000;
+/** How often main's devenv shell is re-realised for the jails (#2792). */
+export const PRELOAD_MS = 60 * 60_000;
 /** How often the daemon reconciles. */
 const TICK_MS = 5_000;
 
@@ -184,6 +186,50 @@ function credentialRefused(error) {
  */
 function gib(bytes) {
   return (bytes / 1024 ** 3).toFixed(1);
+}
+
+/**
+ * Runs the preload (#2792) once at start and then every `PRELOAD_MS`, one at
+ * a time and without holding a tick: runners start before it finishes, and a
+ * failed build is logged, the previous `current` staying.
+ */
+export class PreloadSchedule {
+  /**
+   * @param {object} deps
+   * @param {() => number} deps.now
+   * @param {() => Promise<number>} deps.run the exit code of `vibewars-runner-preload`
+   * @param {(line: string) => void} deps.log
+   */
+  constructor({ now, run, log }) {
+    this.now = now;
+    this.runBuild = run;
+    this.log = log;
+    this.next = -Infinity;
+    this.running = false;
+  }
+
+  /** Starts a build when one is due; returns at once. */
+  due() {
+    if (this.running || this.now() < this.next) {
+      return;
+    }
+    this.running = true;
+    this.next = this.now() + PRELOAD_MS;
+    this.runBuild().then(
+      (code) => {
+        this.running = false;
+        if (code !== 0) {
+          this.log(`runner-preload: exited ${String(code)}; the previous preload stays`);
+        }
+      },
+      (/** @type {unknown} */ error) => {
+        this.running = false;
+        this.log(
+          `runner-preload: ${error instanceof Error ? error.message : "failed"}; the previous preload stays`,
+        );
+      },
+    );
+  }
 }
 
 /**
@@ -892,11 +938,18 @@ export function runnerScratchDir(env) {
  *
  * @param {Record<string, string | undefined>} env
  * @param {string} scratch
- * @returns {Record<string, string>}
+ * @param {string} scratch
+ * @param {string} state the supervisor's state directory, where the preload is
  */
-export function launcherEnvOf(env, scratch) {
+export function launcherEnvOf(env, scratch, state) {
   /** @type {Record<string, string>} */
-  const out = { PATH: env.PATH ?? "", HOME: env.HOME ?? "", VIBEWARS_RUNNER_SCRATCH: scratch };
+  const out = {
+    PATH: env.PATH ?? "",
+    HOME: env.HOME ?? "",
+    VIBEWARS_RUNNER_SCRATCH: scratch,
+    // The jail reads the supervisor's preload from here (#2792).
+    VIBEWARS_RUNNERS_STATE: state,
+  };
   for (const name of ["XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS"]) {
     const value = env[name];
     if (value !== undefined && value !== "") {
@@ -904,6 +957,17 @@ export function launcherEnvOf(env, scratch) {
     }
   }
   return out;
+}
+
+/**
+ * The directories scratch must not share a filesystem with.
+ *
+ * @param {string} root the company's state directory
+ * @param {Record<string, string | undefined>} env
+ * @returns {string[]}
+ */
+export function diskCapShared(root, env) {
+  return [root, env.HOME ?? os.homedir()];
 }
 
 /**
@@ -1059,7 +1123,7 @@ if (
     process.exit(1);
   }
   const gh = ghEnv(env, path.join(credentials, "runners-gh"));
-  const launcherEnv = launcherEnvOf(env, scratch);
+  const launcherEnv = launcherEnvOf(env, scratch, state);
   const logs = runnerLogDir(root);
   fs.mkdirSync(logs, { recursive: true, mode: 0o700 });
   const supervisor = new RunnerSupervisor({
@@ -1102,7 +1166,7 @@ if (
       freeBytes: () => os.freemem(),
       load1: () => os.loadavg()[0] ?? 0,
       cpus: () => os.availableParallelism(),
-      diskCapRefusal: () => diskCapRefusal(scratch, [root, env.HOME ?? os.homedir()]),
+      diskCapRefusal: () => diskCapRefusal(scratch, diskCapShared(root, env)),
       sweepScratch: (live) => {
         sweepScratch(scratch, live, (line) => {
           console.error(line);
@@ -1143,7 +1207,31 @@ if (
     process.on(signal, () => void stop(signal));
   }
   // Until a signal: `stop` exits, and a tick after it does nothing.
+  const preload = new PreloadSchedule({
+    now: () => Date.now(),
+    run: () =>
+      new Promise((resolve, reject) => {
+        const child = spawn("vibewars-runner-preload", [], {
+          // No GitHub credential: it clones public main.
+          env: {
+            PATH: env.PATH ?? "",
+            HOME: env.HOME ?? "",
+            VIBEWARS_RUNNERS_STATE: state,
+            VIBEWARS_REPO: repo,
+          },
+          stdio: "inherit",
+        });
+        child.on("error", reject);
+        child.on("exit", (code) => {
+          resolve(code ?? 1);
+        });
+      }),
+    log: (line) => {
+      console.error(line);
+    },
+  });
   for (;;) {
+    preload.due();
     await supervisor.tick();
     await sleep(TICK_MS);
   }

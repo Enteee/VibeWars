@@ -452,6 +452,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       startMatch() {
         send({ kind: "start" });
       },
+      removeMember(id) {
+        send({ kind: "remove-member", id });
+      },
       findMatch(ascentRound) {
         send({ kind: "find-match", ascentRound });
       },
@@ -754,7 +757,11 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         } else if (isRefusal(note.reason)) {
           if (failJoin !== undefined) {
             failJoin(new LobbyRefusedError(note.reason));
-          } else if (note.reason === "host-left" || note.reason === "fell-through") {
+          } else if (
+            note.reason === "host-left" ||
+            note.reason === "fell-through" ||
+            note.reason === "removed"
+          ) {
             close(note.reason);
           } else {
             for (const handler of [...refusedHandlers]) {

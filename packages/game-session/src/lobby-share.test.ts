@@ -1,6 +1,7 @@
 import type { WireSharedTrack } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
+import { SHARE_INTERVAL_MS } from "./lobby-host.js";
 import { openLobby, start, type Member } from "./lobby-harness.test-support.js";
 import { settle } from "./match-harness.test-support.js";
 
@@ -67,7 +68,7 @@ describe("sharing a track (#2745)", () => {
     expect(bob.throttled()).toBe(0);
     expect(host.throttled()).toBe(0);
 
-    await lobby.step(10.5);
+    await lobby.step(SHARE_INTERVAL_MS / 1000 + 0.5);
     ann.member.connection.shareTrack("test-track", "later");
     await settle();
     expect(host.shares.map((share) => share.source)).toEqual(["first", "later"]);

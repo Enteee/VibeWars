@@ -1,13 +1,9 @@
+import { versionLine } from "../build-info.js";
 import { t } from "../i18n/index.js";
 import { SOURCE_URL } from "../source.js";
 import { h, overlayClose, screenBar } from "./kit.js";
 import { mountLicences } from "./licences-section.js";
-import {
-  PLAYER_DOC_PAGES,
-  playerDocTargets,
-  renderPlayerDoc,
-  type DocNode,
-} from "./player-docs.js";
+import { helpDocPages, playerDocTargets, renderPlayerDoc, type DocNode } from "./player-docs.js";
 
 /**
  * The Help screen (#1257): the player docs of `docs/player/`, the page
@@ -21,7 +17,7 @@ import {
  * (#2559), drawn by code rather than from markdown.
  */
 
-/** The licences page, after the docs: not a doc page, so not in `PLAYER_DOC_PAGES`. */
+/** The licences page, after the docs: not a doc page, so not in `helpDocPages()`. */
 const LICENCES_PAGE = {
   id: "licences",
   get title() {
@@ -64,8 +60,9 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
   body.append(nav, pane);
   panel.appendChild(body);
 
+  const pages = helpDocPages();
   const targets = playerDocTargets();
-  const entries = [...PLAYER_DOC_PAGES, LICENCES_PAGE].map((page) => {
+  const entries = [...pages, LICENCES_PAGE].map((page) => {
     const entry = document.createElement("button");
     entry.type = "button";
     entry.className = "options-entry";
@@ -84,6 +81,8 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
   source.setAttribute("target", "_blank");
   source.setAttribute("rel", "noopener");
   nav.appendChild(source);
+  // Selectable, for a bug report (#2798).
+  nav.appendChild(h("p", "help-version", versionLine(__VIBEWARS_RELEASE__, __VIBEWARS_BUILD__)));
   const show = (id: string): void => {
     if (id === LICENCES_PAGE.id) {
       crumb.textContent = LICENCES_PAGE.title;
@@ -91,7 +90,7 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
       pane.replaceChildren();
       mountLicences(pane);
     } else {
-      const page = PLAYER_DOC_PAGES.find((candidate) => candidate.id === id);
+      const page = pages.find((candidate) => candidate.id === id);
       if (page === undefined) {
         return;
       }
@@ -120,7 +119,7 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
     }
   });
 
-  show(pageId ?? PLAYER_DOC_PAGES[0]?.id ?? "");
+  show(pageId ?? pages[0]?.id ?? "");
   backdrop.appendChild(panel);
   parent.appendChild(backdrop);
   overlay = { element: backdrop, onClose, release };

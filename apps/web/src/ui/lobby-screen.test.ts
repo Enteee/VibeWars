@@ -13,6 +13,7 @@ import {
   modeLine,
   teamColumn,
   waitingFor,
+  waitingLine,
   type LobbyRelay,
 } from "./lobby-screen.js";
 import { MAX_RELAYED_PER_HOLDER } from "../net/transport/relay-offer.js";
@@ -83,6 +84,10 @@ describe("lobbyControls", () => {
       startDisabled: true,
       canWatch: false,
     });
+  });
+
+  it("says ready waits on the queue while queued, not that a match started (#2802)", () => {
+    expect(lobbyControls(snapshot("queued")).readyProblem).toBe(t("queue.busy"));
   });
 
   it("shows no line and opens the controls once the lobby is waiting", () => {
@@ -277,12 +282,12 @@ describe("waitingFor (#580)", () => {
           player("Cynn", 1, false),
         ],
       }),
-    ).toBe("Waiting for Mhenlo, Cynn to ready up");
+    ).toMatchObject([{ name: "Mhenlo" }, { name: "Cynn" }]);
   });
 
   it("asks for someone on a team when nobody is on one", () => {
-    expect(waitingFor({ ...snapshot("waiting"), players: [player("Host", null, false)] })).toBe(
-      "Waiting for someone to join a team",
+    expect(waitingFor({ ...snapshot("waiting"), players: [player("Host", null, false)] })).toEqual(
+      [],
     );
   });
 
@@ -316,6 +321,10 @@ class FakeElement {
   hidden = false;
   title = "";
   type = "";
+  src = "";
+  alt = "";
+  width = 0;
+  height = 0;
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
   readonly listeners = new Map<string, () => void>();
@@ -337,10 +346,25 @@ class FakeElement {
     return child;
   }
 
-  append(...children: FakeElement[]): void {
+  append(...children: (FakeElement | string)[]): void {
     for (const child of children) {
-      this.appendChild(child);
+      if (typeof child === "string") {
+        const text = new FakeElement();
+        text.textContent = child;
+        this.appendChild(text);
+      } else {
+        this.appendChild(child);
+      }
     }
+  }
+
+  prepend(child: FakeElement): void {
+    this.children.unshift(child);
+  }
+
+  /** Its words and its children's, as they read. */
+  text(): string {
+    return this.textContent + this.children.map((child) => child.text()).join("");
   }
 
   /** Every element under this one with class `name`, in document order. */
@@ -401,6 +425,34 @@ describe("teamColumn: names only (#2029)", () => {
     expect(team.all("lobby-character")).toEqual([]);
     expect(team.all("character-dot")).toEqual([]);
     expect(team.all("lobby-bots")).toEqual([]);
+  });
+
+  it("draws a signet before each human's name, and no slot for a bot (#2805)", () => {
+    const [guest, mhenlo] = column(1).all("lobby-player");
+    expect(guest?.children[0]?.className).toBe("signet");
+    expect(guest?.children[0]?.src).toMatch(/^data:image\/svg\+xml,/);
+    expect(mhenlo?.all("signet")).toEqual([]);
+  });
+
+  it("writes the waiting line with each name an element, signed, commas kept (#2820)", () => {
+    const line = waitingLine([
+      { ...bot, name: "Mhenlo", playerPubkey: "ab".repeat(32) },
+      { ...bot, name: "Cynn" },
+    ]) as unknown as FakeElement;
+    const [first, comma, second, after] = line.children;
+    expect(line.textContent).toBe("Waiting for ");
+    expect(first?.all("player-label-name")[0]?.textContent).toBe("Mhenlo");
+    expect(first?.children[0]?.className).toBe("signet");
+    expect(comma?.textContent).toBe(", ");
+    expect(second?.all("player-label-name")[0]?.textContent).toBe("Cynn");
+    expect(second?.all("signet")).toEqual([]);
+    expect(after?.textContent).toBe(" to ready up");
+  });
+
+  it("writes nobody-on-a-team as plain words", () => {
+    const line = waitingLine([]) as unknown as FakeElement;
+    expect(line.textContent).toBe("Waiting for someone to join a team");
+    expect(line.children).toEqual([]);
   });
 
   it("marks no bot: it shows as its slot's character, ready", () => {
@@ -636,7 +688,7 @@ describe("lobbyPanel: shared relays (#2531)", () => {
   /** The panel's lines of `className` for a guest whose relay status is `relay`. */
   const lines = (className: string, relay?: LobbyRelay, shown = snapshot("waiting")): string[] => {
     const { body } = lobbyPanel(shown, callbacks, undefined, [], undefined, relay);
-    return (body as unknown as FakeElement).all(className).map((line) => line.textContent);
+    return (body as unknown as FakeElement).all(className).map((line) => line.text());
   };
 
   beforeEach(() => {

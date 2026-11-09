@@ -106,6 +106,9 @@ Leave, and a list of who is in it; its badge counts them.
   invite link. A link opened on a lobby's screen or in a match asks you
   to go back to the menu first. If your connection drops, your seat is held
   for 30 seconds.
+- **Remove someone:** as the host, press the **×** next to a player's
+  name in the Lobby window, outside a match. They are told the host removed
+  them, get a fresh lobby of their own, and cannot rejoin yours while it lasts.
 - **Share your relay:** some friends can only reach you through a TURN
   relay. When a friend who runs one sends you its relay link, open it and
   press **Use**: it becomes your relay, and it is offered in any lobby you
@@ -185,9 +188,9 @@ one you are already in keeps what you joined with.
 ## Language
 
 The game starts in your browser's language when it has it, else in
-English. Pick another in **Options → Language** (there once the game
-has a second language): the page reloads in it, and keeps it from then
-on. While you are in a lobby with others, in a
+English. Pick another in **Options → Language**: the page reloads in it, and
+keeps it from then on. Skill, map and item names and these Help pages
+are in English for now. While you are in a lobby with others, in a
 queue or in a match, the choice is locked, since the reload would drop
 you out. Player names stay as their players wrote them.
 

@@ -4,11 +4,17 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 
 import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
+import { keySignet } from "../identity/key-signet.js";
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
 import { ascentMapId } from "../net/maps.js";
 import { button, h, readyButton, toast, type ShareLine } from "./kit.js";
 import { relayLine, relaySharedByLine, relaySharingText } from "./relay-section.js";
-import { playerLabelElement } from "./player-label.js";
+import {
+  SIGNET_ROW_PX,
+  playerLabelElement,
+  signedNamesLine,
+  signetElement,
+} from "./player-label.js";
 
 /**
  * The lobby (brief §21's lobby layout, #580) as a mode screen shows it
@@ -86,32 +92,41 @@ export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
     teamsDisabled: !waiting,
     // Readiness is meaningless without a team, so the control is disabled
     // rather than silently doing nothing when pressed. Its hover says why (#2124).
-    readyProblem: !waiting
-      ? t("lobby.readyMatchStarted")
-      : self === undefined || self.team === null
-        ? t("lobby.readyJoinATeam")
-        : undefined,
+    readyProblem:
+      snapshot.phase === "queued"
+        ? t("queue.busy")
+        : !waiting
+          ? t("lobby.readyMatchStarted")
+          : self === undefined || self.team === null
+            ? t("lobby.readyJoinATeam")
+            : undefined,
     startDisabled: !waiting || assigned.length === 0 || !assigned.every((p) => p.ready),
     canWatch: snapshot.phase === "in-match" && self?.team === null,
   };
 }
 
 /**
- * Why Start is disabled while the lobby waits (#580), naming the players
- * it waits for; `undefined` when it is not waiting on anyone.
+ * Who keeps Start disabled while the lobby waits (#580): the players it
+ * waits for, none if nobody has joined a team; `undefined` when it is
+ * not waiting on anyone.
  */
-export function waitingFor(snapshot: LobbySnapshot): string | undefined {
+export function waitingFor(snapshot: LobbySnapshot): readonly LobbyPlayerSnapshot[] | undefined {
   if (snapshot.phase !== "waiting") {
     return undefined;
   }
   const assigned = snapshot.players.filter((p) => p.team !== null);
   if (assigned.length === 0) {
-    return t("lobby.waitingForJoin");
+    return [];
   }
-  const notReady = assigned.filter((p) => !p.ready).map((p) => p.name);
-  return notReady.length === 0
-    ? undefined
-    : t("lobby.waitingForReady", { names: notReady.join(", ") });
+  const notReady = assigned.filter((p) => !p.ready);
+  return notReady.length === 0 ? undefined : notReady;
+}
+
+/** The line saying what `waitingFor` found: its names signed (#2820), or that nobody has joined. */
+export function waitingLine(players: readonly LobbyPlayerSnapshot[]): HTMLElement {
+  return players.length === 0
+    ? h("div", "screen-info lobby-waiting", t("lobby.waitingForJoin"))
+    : signedNamesLine("screen-info lobby-waiting", "lobby.waitingForReady", "names", players);
 }
 
 /**
@@ -294,7 +309,7 @@ export function lobbyPanel(
     (p) => relay?.relayedVia !== undefined && p.sessionId === relay.relayedVia,
   );
   if (holder !== undefined) {
-    panel.appendChild(relaySharedByLine(holder.name));
+    panel.appendChild(relaySharedByLine(holder));
   }
 
   if (matchmaking !== undefined && !snapshot.isHost && matchmaking.queuedMs === null) {
@@ -306,7 +321,7 @@ export function lobbyPanel(
   // waited for should know. Nobody waits on Ready for matchmaking.
   const waiting = matchmaking === undefined ? waitingFor(snapshot) : undefined;
   if (waiting !== undefined) {
-    panel.appendChild(h("div", "screen-info lobby-waiting", waiting));
+    panel.appendChild(waitingLine(waiting));
   }
 
   const teams = h("div", "lobby-teams");
@@ -322,13 +337,7 @@ export function lobbyPanel(
 
   const spectators = snapshot.players.filter((p) => p.team === null);
   if (spectators.length > 0) {
-    panel.appendChild(
-      h(
-        "div",
-        "lobby-spectators",
-        t("lobby.spectating", { names: spectators.map((p) => p.name).join(", ") }),
-      ),
-    );
+    panel.appendChild(signedNamesLine("lobby-spectators", "lobby.spectating", "names", spectators));
   }
 
   // Nothing went wrong, so this is not a `screen-problem`.
@@ -405,6 +414,10 @@ function playerRow(member: LobbyPlayerSnapshot): HTMLElement {
   const row = h("div", "lobby-slot");
   const text = h("span", "lobby-slot-text");
   const player = text.appendChild(playerLabelElement("lobby-player", member.name, member.guildTag));
+  // A bot has no key, so no signet and no empty slot (#2805).
+  if (member.playerPubkey !== null) {
+    player.prepend(signetElement(keySignet(member.playerPubkey), SIGNET_ROW_PX));
+  }
   if (member.isHost) {
     player.appendChild(h("span", "lobby-host", ` ${t("lobby.host")}`));
   }

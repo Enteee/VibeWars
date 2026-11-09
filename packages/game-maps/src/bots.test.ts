@@ -302,16 +302,21 @@ describe("King of the Hill bots (#2582)", () => {
   it("a 4v4 caster mirror is won by either team, as the seed falls, not always by team 0 (#2624)", () => {
     // Before #2624 a bot's reaction times and dodges were a hash of its id
     // alone, so team 0's ids had the same luck in every match: 6 of 6.
-    const winners = ["a", "b", "c", "d", "e", "f"].map(winner);
+    // The seeds are ordered only for speed: "a" and "b" have different winners,
+    // so a passing run plays two matches. If a bot change shifts the outcomes
+    // the test gets slower, not wrong; reorder them then.
+    const winners = new Set<number | undefined>();
+    for (const seed of ["a", "b", "c", "d", "e", "f"]) {
+      winners.add(winner(seed));
+      if (winners.has(0) && winners.has(1)) break;
+    }
     expect(winners).toContain(0);
     expect(winners).toContain(1);
   });
 });
 
 describe("Capture Points bots (#2580)", () => {
-  const map = loadAllMaps().find((candidate) =>
-    candidate.objectives.some((objective) => objective.kind === "capture-point"),
-  );
+  const map = loadAllMaps().find((candidate) => candidate.id === "scarred-earth");
 
   /** Who owns each shrine after up to 60 s of a 2v2 of bots, and when one was first owned. */
   const play = (seed: string) => {
@@ -340,6 +345,31 @@ describe("Capture Points bots (#2580)", () => {
     const first = play("shrines");
     expect(first.ownedAt).toBeDefined();
     expect(play("shrines")).toEqual(first);
+  });
+
+  it("bots finish a match on Mosslit Cairns (#2696)", () => {
+    // Two a side: a full 8v8 takes 15 s here, too near the 20 s test limit.
+    const cairns = loadAllMaps().find((candidate) => candidate.id === "mosslit-cairns");
+    if (cairns === undefined) throw new Error("no map mosslit-cairns");
+    const sim = new MatchSimulation({
+      seed: "cairns",
+      ruleset: RULESET,
+      walls: allWallSegments(cairns.walls),
+      bounds: { width: cairns.width, height: cairns.height },
+      matchRules: CAPTURE_POINTS_MATCH_RULES,
+      capturePoints: cairns.objectives.flatMap((objective) =>
+        objective.kind === "capture-point" ? [objective.position] : [],
+      ),
+      participants: casterBots(cairns, 2),
+    });
+    for (
+      let t = 0;
+      t <= CAPTURE_POINTS_MATCH_RULES.timeLimitSeconds + 1 && sim.phase !== "finished";
+      t += DT
+    ) {
+      sim.step(DT);
+    }
+    expect(sim.phase).toBe("finished");
   });
 });
 

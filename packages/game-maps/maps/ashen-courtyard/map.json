@@ -6,9 +6,13 @@
   "teams": 2,
   "width": 4400,
   "height": 2600,
+  "layers": 1,
+  "decks": [],
+  "transitions": [],
   "walls": [
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1600,
       "y": 850,
       "width": 200,
@@ -16,6 +20,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 2600,
       "y": 1710,
       "width": 200,
@@ -23,6 +28,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 2060,
       "y": 850,
       "width": 740,
@@ -30,6 +36,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1600,
       "y": 1710,
       "width": 740,
@@ -37,6 +44,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1600,
       "y": 890,
       "width": 40,
@@ -44,6 +52,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 2760,
       "y": 1430,
       "width": 40,
@@ -51,6 +60,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1600,
       "y": 1430,
       "width": 40,
@@ -58,6 +68,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 2760,
       "y": 890,
       "width": 40,
@@ -65,6 +76,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1900,
       "y": 1060,
       "width": 80,
@@ -72,6 +84,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 2420,
       "y": 1460,
       "width": 80,
@@ -79,6 +92,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2050,
@@ -100,6 +114,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2350,
@@ -121,6 +136,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 950,
@@ -150,6 +166,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3450,
@@ -179,6 +196,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 1220,
       "y": 470,
       "width": 110,
@@ -186,6 +204,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 3070,
       "y": 2020,
       "width": 110,
@@ -193,6 +212,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2026,
@@ -218,6 +238,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2374,
@@ -243,6 +264,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 900,
@@ -272,6 +294,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3500,
@@ -301,6 +324,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1191,
@@ -326,6 +350,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3209,
@@ -351,6 +376,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1798,
@@ -380,6 +406,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2602,
@@ -409,6 +436,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 700,
       "y": 1000,
       "width": 160,
@@ -416,6 +444,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 3540,
       "y": 1560,
       "width": 160,
@@ -423,6 +452,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 700,
       "y": 1560,
       "width": 160,
@@ -430,6 +460,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 3540,
       "y": 1000,
       "width": 160,
@@ -437,6 +468,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1220,
@@ -462,6 +494,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3180,
@@ -487,16 +520,19 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 2160,
       "y": 1260,
       "width": 80,
       "height": 80
     }
   ],
+  "gates": [],
   "objectives": [],
   "spawnPoints": [
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 160,
         "y": 1060
@@ -504,6 +540,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 160,
         "y": 1220
@@ -511,6 +548,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 160,
         "y": 1380
@@ -518,6 +556,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 160,
         "y": 1540
@@ -525,6 +564,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 300,
         "y": 1140
@@ -532,6 +572,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 300,
         "y": 1460
@@ -539,6 +580,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4240,
         "y": 1540
@@ -546,6 +588,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4240,
         "y": 1380
@@ -553,6 +596,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4240,
         "y": 1220
@@ -560,6 +604,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4240,
         "y": 1060
@@ -567,6 +612,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4100,
         "y": 1460
@@ -574,6 +620,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4100,
         "y": 1140

@@ -32,6 +32,14 @@ if (!/^[\w.-]+$/.test(BUILD)) {
   );
 }
 
+// The release it ships as (#2798): `pages.yml` passes it for each target.
+const RELEASE = process.env.VIBEWARS_RELEASE ?? "dev";
+if (!/^[\w.-]+$/.test(RELEASE)) {
+  throw new Error(
+    `VIBEWARS_RELEASE must be letters, digits, ".", "_" or "-", got ${JSON.stringify(RELEASE)}`,
+  );
+}
+
 /** `build.json` beside `index.html`: the id a running tab compares its own to. */
 function buildFile(): Plugin {
   return {
@@ -56,7 +64,10 @@ export default defineConfig({
   // (`/VibeWars/`, `/VibeWars/next/`). Read at config time, so it is not a
   // `VITE_` variable. Dev and the server-served build stay at the root.
   base: process.env.VIBEWARS_BASE ?? "/",
-  define: { __VIBEWARS_BUILD__: JSON.stringify(BUILD) },
+  define: {
+    __VIBEWARS_BUILD__: JSON.stringify(BUILD),
+    __VIBEWARS_RELEASE__: JSON.stringify(RELEASE),
+  },
   // Every bundled npm package's licence, for Options (#1242, ADR-0039), and
   // the arena's icon sheet (#1671).
   plugins: [licencesPlugin(), arenaAtlasPlugin(), buildFile()],

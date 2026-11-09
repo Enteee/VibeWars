@@ -76,6 +76,7 @@ function toMapDescriptor(map: MapData): MapDescriptor {
     height: map.height,
     teamCount: map.teams,
     walls,
+    gates: [],
   };
 }
 

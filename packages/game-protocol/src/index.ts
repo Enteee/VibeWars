@@ -50,6 +50,7 @@ export type {
   RechargeSlot,
   MapDescriptor,
   WireTeamCount,
+  GateDescriptor,
   WallDescriptor,
   RectWallDescriptor,
   PolygonWallDescriptor,
@@ -80,6 +81,7 @@ export {
   MAX_WIRE_STROKES,
   STROKE_SECONDS,
   MAX_WIRE_MORALE,
+  MAX_WIRE_SIGNET,
   MAX_CHAT_GRAPHEMES,
   MAX_WIRE_CHAT_TEXT,
   CHAT_CHANNELS,
@@ -156,6 +158,7 @@ export {
   parseWireLobbyMove,
   parseWireMatchStart,
   parseWireCape,
+  isTicketId,
 } from "./p2p.js";
 
 export type {

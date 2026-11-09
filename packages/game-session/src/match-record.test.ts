@@ -36,6 +36,7 @@ const player = (name: string, index = 0) => ({
   name,
   guildTag: "VIBE",
   bot: false,
+  pubkey: "a".repeat(64),
   template: template(index),
 });
 
@@ -49,7 +50,7 @@ const valid = () => ({
   endReason: "annihilation",
   teams: [
     { players: [player("Ann", 0), player("Bo", 1)] },
-    { players: [{ ...player("Elementalist Bot", 2), guildTag: null, bot: true }] },
+    { players: [{ ...player("Elementalist Bot", 2), guildTag: null, bot: true, pubkey: null }] },
   ],
 });
 
@@ -62,14 +63,14 @@ describe("validateMatchRecord (#2528)", () => {
       ...record,
       teams: [
         { players: [{ name: "Ann", guildTag: "VIBE", bot: false }, { name: "Bo" }] },
-        { players: [{ name: "Elementalist Bot", guildTag: null, bot: true }] },
+        { players: [{ name: "Elementalist Bot", guildTag: null, bot: true, pubkey: null }] },
       ],
     });
   });
 
   it("reads a bot named after its build, in full (#2636)", () => {
     const name = "Balthazar FFF Zaishen Trappers 3 (R/Mo)";
-    const bot = { ...player(name, 2), guildTag: null, bot: true };
+    const bot = { ...player(name, 2), guildTag: null, bot: true, pubkey: null };
     const record = { ...valid(), teams: [valid().teams[0], { players: [bot] }] };
     expect(read(record)?.teams[1]?.players[0]?.name).toBe(name);
     expect(
@@ -153,7 +154,7 @@ describe("validateMatchRecord (#2528)", () => {
     const name = sanitizeCharacterName("Fire Nuker of the Northern Shiverpeak Passage", "");
     expect(name).toBe("Fire Nuker of the Northern Shiverpeak…");
     const record = valid();
-    const bot = { ...player(name, 2), guildTag: null, bot: true };
+    const bot = { ...player(name, 2), guildTag: null, bot: true, pubkey: null };
     const out = read({ ...record, teams: [record.teams[0], { players: [bot] }] });
     expect(out?.teams[1]?.players[0]?.name).toBe(name);
   });
@@ -167,8 +168,32 @@ describe("validateMatchRecord (#2528)", () => {
       name: "Ann",
       guildTag: "VIBE",
       bot: false,
+      pubkey: "a".repeat(64),
       template: template(0),
     });
+  });
+
+  it("holds a human's key and a bot's null (#2739)", () => {
+    const out = read(valid());
+    expect(out?.teams[0]?.players[0]?.pubkey).toBe("a".repeat(64));
+    expect(out?.teams[1]?.players[0]?.pubkey).toBeNull();
+  });
+
+  it("rejects a record of the previous version (#2739)", () => {
+    expect(read({ ...valid(), v: MATCH_RECORD_VERSION - 1 })).toBeUndefined();
+  });
+
+  it.each([
+    ["a human without a key", { pubkey: null }],
+    ["a human with no key field", { pubkey: undefined }],
+    ["a key that is not hex", { pubkey: "z".repeat(64) }],
+    ["a key too short", { pubkey: "a".repeat(63) }],
+    ["a key in capitals", { pubkey: "A".repeat(64) }],
+    ["a bot with a key", { bot: true, name: "Elementalist Bot", guildTag: null }],
+  ])("rejects %s (#2739)", (_case, change) => {
+    const record = valid();
+    const changed = { ...player("Ann"), ...change };
+    expect(read({ ...record, teams: [{ players: [changed] }, record.teams[1]] })).toBeUndefined();
   });
 });
 

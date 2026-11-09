@@ -4,6 +4,7 @@ import type { LobbySnapshot } from "@vibewars/game-session";
 import { t } from "../i18n/index.js";
 import { LOBBY_ICON } from "./icons.js";
 import { h } from "./kit.js";
+import { SIGNET_ROW_PX, signetElement, signetOf } from "./player-label.js";
 
 /**
  * The Lobby window (#1526, ADR-0041, #2385): dropped from the top bar's
@@ -13,7 +14,11 @@ import { h } from "./kit.js";
 
 /** One person in the party: a bot is the lobby's, not the party's. */
 export interface PartyMember {
+  /** Its lobby id, what the host's remove names (#2746). */
+  readonly id: string;
   readonly name: string;
+  /** Its key's signet (#2820). */
+  readonly signet: number | undefined;
   readonly isHost: boolean;
   readonly self: boolean;
   /** Dropped, its seat held while it may come back (#1764). */
@@ -33,15 +38,22 @@ export interface RailParty {
   readonly queuedMs: number | null;
   /** Its players a side (#2104): in a Hosted Game, the host's pick. */
   readonly teamSize: number;
+  /** Its host may remove members (#2746): a coded lobby's, before its match. */
+  readonly removable: boolean;
 }
 
 /**
- * `snapshot`'s party, queued for `queuedMs` or not: its people, in lobby
- * order.
+ * `snapshot`'s party, queued for `queuedMs` or not, and `matchmade` or
+ * coded: its people, in lobby order.
  */
-export function partyOf(snapshot: LobbySnapshot, queuedMs: number | null): RailParty {
+export function partyOf(
+  snapshot: LobbySnapshot,
+  queuedMs: number | null,
+  matchmade: boolean,
+): RailParty {
   return {
     queuedMs,
+    removable: !matchmade && snapshot.phase !== "starting" && snapshot.phase !== "in-match",
     teamSize: snapshot.teamSize,
     code: snapshot.code,
     mode: snapshot.mode,
@@ -50,7 +62,9 @@ export function partyOf(snapshot: LobbySnapshot, queuedMs: number | null): RailP
     members: snapshot.players
       .filter((player) => !player.bot)
       .map((player) => ({
+        id: player.sessionId,
         name: player.name,
+        signet: signetOf(player),
         isHost: player.isHost,
         self: player.sessionId === snapshot.selfSessionId,
         away: player.away,
@@ -80,8 +94,33 @@ export function isAlone(party: RailParty | undefined): boolean {
   return party === undefined || party.members.length <= 1;
 }
 
-/** What the Lobby window shows of `party`; none in a lobby yet reads as alone. */
-export function lobbyWindowBody(party: RailParty | undefined): HTMLElement {
+/** The host's (x) by `member` (#2746): removes them at once, no confirm. */
+function removeButton(
+  member: PartyMember,
+  onRemove: (member: PartyMember) => void,
+): HTMLButtonElement {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "party-member-remove";
+  button.textContent = "×";
+  const label = t("lobbyWindow.removeMember", { name: member.name });
+  button.title = label;
+  button.setAttribute("aria-label", label);
+  button.addEventListener("click", () => {
+    onRemove(member);
+  });
+  return button;
+}
+
+/**
+ * What the Lobby window shows of `party`; none in a lobby yet reads as
+ * alone. Its host sees an (x) by each other member, outside a match,
+ * that `onRemove`s them (#2746).
+ */
+export function lobbyWindowBody(
+  party: RailParty | undefined,
+  onRemove: (member: PartyMember) => void,
+): HTMLElement {
   const body = h("div", "lobby-window-body");
   if (party === undefined || isAlone(party)) {
     // The window with nobody else in the lobby (#2385): it always has something to say.
@@ -90,13 +129,19 @@ export function lobbyWindowBody(party: RailParty | undefined): HTMLElement {
     const list = h("ul", "party-members");
     for (const member of party.members) {
       const row = h("li", memberClass(member));
-      row.appendChild(h("span", "party-member-name", member.name));
+      const name = row.appendChild(h("span", "party-member-name", member.name));
+      if (member.signet !== undefined) {
+        name.prepend(signetElement(member.signet, SIGNET_ROW_PX));
+      }
       if (member.isHost) {
         row.appendChild(h("span", "party-host-mark", t("lobbyWindow.host")));
       }
       if (member.away) {
         // Beside a member whose connection dropped, while its seat is held (#1764).
         row.appendChild(h("span", "party-member-away", t("lobbyWindow.reconnecting")));
+      }
+      if (party.isHost && !member.self && party.removable) {
+        row.appendChild(removeButton(member, onRemove));
       }
       list.appendChild(row);
     }

@@ -42,6 +42,7 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     energyPips: 0,
     creature: undefined,
     bot: false,
+    signet: undefined,
     statuses: [],
   };
 }
@@ -66,6 +67,7 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     altarHolder: undefined,
     altarHeldSeconds: 0,
     capturePoints: [],
+    gates: [],
     summary: undefined,
   };
 }

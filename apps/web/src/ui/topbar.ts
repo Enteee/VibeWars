@@ -60,6 +60,8 @@ export interface TopbarCallbacks {
   readonly onLeave: () => void;
   /** The host's Closed / Open toggle (#1682): let friends with the invite link join, or stop them. */
   readonly onSetOpen: (open: boolean) => void;
+  /** The host's (x) by a member in the Lobby window (#2746): out, not to come back. */
+  readonly onRemoveMember: (id: string) => void;
   /** The queue flyout's Leave Queue (#2743): out of whichever queue this tab is in. */
   readonly onLeaveQueue: () => void;
 }
@@ -310,7 +312,11 @@ export interface LobbyButton {
  * the window is shut, and in the window the lobby's `controls` over the
  * people in it, repainted while open.
  */
-export function lobbyButton(parent: HTMLElement, controls: HTMLElement): LobbyButton {
+export function lobbyButton(
+  parent: HTMLElement,
+  controls: HTMLElement,
+  onRemoveMember: (id: string) => void,
+): LobbyButton {
   const element = iconButton("topbar-lobby-button", lobbyButtonName(1), lobbyIcon());
   element.title = t("topbar.lobby");
   const badge = h("span", "topbar-badge");
@@ -327,10 +333,14 @@ export function lobbyButton(parent: HTMLElement, controls: HTMLElement): LobbyBu
     panel.setAttribute("aria-label", t("topbar.lobby"));
     panel.tabIndex = -1;
     // Only the people repaint: a control keeps its focus through a join.
-    let people = lobbyWindowBody(party);
+    const body = (): HTMLElement =>
+      lobbyWindowBody(party, (member) => {
+        onRemoveMember(member.id);
+      });
+    let people = body();
     panel.append(h("h3", "lobby-window-title", t("topbar.lobby")), controls, people);
     paintWindow = () => {
-      const next = lobbyWindowBody(party);
+      const next = body();
       people.replaceWith(next);
       people = next;
     };
@@ -436,7 +446,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     callbacks.onSetOpen,
   );
   join.element.hidden = true;
-  const lobby = lobbyButton(bar, join.controls);
+  const lobby = lobbyButton(bar, join.controls, callbacks.onRemoveMember);
 
   const music = iconButton("topbar-music", t("topbar.music"));
   // Tracks lobby members shared and this player has not seen (#2745).

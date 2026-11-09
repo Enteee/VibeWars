@@ -53,6 +53,7 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
+import { keySignet } from "./identity/key-signet.js";
 import { mapName } from "./i18n/game-names.js";
 import { t } from "./i18n/index.js";
 import { loadLocale } from "./i18n/load-locale.js";
@@ -148,6 +149,7 @@ import {
   type MenuCallbacks,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
+import { signetOf } from "./ui/player-label.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
@@ -766,6 +768,9 @@ async function main(): Promise<void> {
     },
     onSetOpen: (open) => {
       hosted?.setOpen(open);
+    },
+    onRemoveMember: (id) => {
+      lobby?.removeMember(id);
     },
     onLeaveQueue: () => {
       leaveAnyQueue();
@@ -2070,7 +2075,14 @@ async function main(): Promise<void> {
 
   /** The rail and the title bar name `snapshot`'s party, or none (#1526). */
   const syncParty = (snapshot: LobbySnapshot | undefined): void => {
-    const party = snapshot === undefined ? undefined : partyOf(snapshot, queuedMsOf(snapshot));
+    const party =
+      snapshot === undefined
+        ? undefined
+        : partyOf(
+            snapshot,
+            queuedMsOf(snapshot),
+            lobby !== undefined && matchmadeLobbies.has(lobby),
+          );
     setRailParty(party);
     topbarView.setParty(party);
     paintQueue();
@@ -2323,6 +2335,10 @@ async function main(): Promise<void> {
       send: (channel, text) => {
         joined.sendChat(channel, text);
       },
+      signetOf: (fromId) => {
+        const key = joined.getSnapshot().players.find((p) => p.sessionId === fromId)?.playerPubkey;
+        return key === null || key === undefined ? undefined : keySignet(key);
+      },
     });
     app.append(chat.root);
   };
@@ -2404,6 +2420,7 @@ async function main(): Promise<void> {
       sharedTracks.add({
         from: share.from,
         name: sender.name,
+        signet: signetOf(sender),
         trackId: share.trackId,
         source: share.source,
       });
@@ -2411,6 +2428,7 @@ async function main(): Promise<void> {
     joined.onShareThrottled(() => {
       if (lobby === joined) {
         toast(t("music.shareThrottled"));
+        sharedTracks.hostThrottled();
       }
     });
     // A lobby out of sight says nothing to the chat.

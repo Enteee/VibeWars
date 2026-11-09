@@ -20,6 +20,7 @@ import type {
   RechargeMessage,
   RechargeSlot,
   SkillBarSlot,
+  GateDescriptor,
   WallDescriptor,
 } from "./protocol.js";
 import {
@@ -275,9 +276,14 @@ export const MAX_WIRE_PIPS = 10;
 export const MIN_WIRE_MORALE = -60;
 export const MAX_WIRE_MORALE = 10;
 
+/** A signet's bits (#2805): the 13 a player key's signet reads, `0..MAX_WIRE_SIGNET`. */
+export const MAX_WIRE_SIGNET = 0x1fff;
+
 /** The most walls a map holds, and points a polygon wall holds. */
 export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
+/** The most gates a map holds (#2691), as `MAX_GATES` in game-maps; a peer keeps walls per combination. */
+export const MAX_WIRE_GATES = 6;
 
 /** The widest area a combat message may draw. */
 export const MAX_WIRE_RADIUS = 200;
@@ -526,6 +532,12 @@ export interface WirePlayer {
   readonly creature: WireCreature | null;
   /** A lobby's bot plays it (#1193), not a peer. */
   readonly bot: boolean;
+  /**
+   * Its player key's signet (#2805), the 13 bits `0..MAX_WIRE_SIGNET`
+   * the shield is drawn from; `null` for a seat with no key, a bot and
+   * every creature. The host reports it: a recognition aid, not a proof.
+   */
+  readonly signet: number | null;
 }
 
 /** What makes a body a creature (#1052). */
@@ -702,6 +714,8 @@ export interface WireSnapshot {
   readonly altarHeldSeconds: number;
   /** Every Capture Points shrine (#1378); `[]` on a map without them. */
   readonly capturePoints: readonly WireCapturePoint[];
+  /** Whether each of the map's gates is open (#2691), in its descriptor's order. */
+  readonly gates: readonly boolean[];
 }
 
 /**
@@ -923,6 +937,8 @@ export interface WireSummaryRow {
   /** The seat's guild tag (#1406); `null` for none. */
   readonly guildTag: string | null;
   readonly team: WireTeam;
+  /** The seat's signet bits (#2822); `null` for a bot. */
+  readonly signet: number | null;
   readonly damage: number;
   readonly healing: number;
   readonly taken: number;
@@ -1336,6 +1352,11 @@ export type WireLobbyCommand =
   | { readonly kind: "select-mode"; readonly mode: LobbyMode }
   | { readonly kind: "start" }
   /**
+   * Host only (#2746): send the member `id`, a `WireLobbyPlayer.id`, out
+   * of the lobby, not to come back while it lasts.
+   */
+  | { readonly kind: "remove-member"; readonly id: string }
+  /**
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
    * queue; `leave-queue` takes it out again, `play-bots` plays against
    * bots instead, in this lobby. In Heroes' Ascent it queues at the
@@ -1438,6 +1459,11 @@ export const LOBBY_REFUSALS = [
   // A Heroes' Ascent run's locked Team Build (#2539): no proposal, vote or
   // side, and a claim only of a vacant slot by a member who holds none.
   "ascent-locked",
+  // A member its host removed (#2746), and that player's every later join
+  // to the same lobby, told after the key proof.
+  "removed",
+  // A remove-member order while its match is on or starting (#2746).
+  "in-match",
 ] as const;
 
 export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
@@ -1494,6 +1520,13 @@ function isMorale(value: unknown): value is number {
     Number.isInteger(value) &&
     value >= MIN_WIRE_MORALE &&
     value <= MAX_WIRE_MORALE
+  );
+}
+
+function isNullableSignet(value: unknown): value is number | null {
+  return (
+    value === null ||
+    (isNumber(value) && Number.isInteger(value) && value >= 0 && value <= MAX_WIRE_SIGNET)
   );
 }
 
@@ -1924,7 +1957,8 @@ function parseMap(value: unknown): MapDescriptor | undefined {
     return undefined;
   }
   const walls = parseArray(raw.walls, MAX_WIRE_WALLS, parseWall);
-  return walls === undefined
+  const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseGate);
+  return walls === undefined || gates === undefined
     ? undefined
     : {
         id: raw.id,
@@ -1933,7 +1967,24 @@ function parseMap(value: unknown): MapDescriptor | undefined {
         height: raw.height,
         teamCount: raw.teamCount,
         walls,
+        gates,
       };
+}
+
+function parseGate(value: unknown): GateDescriptor | undefined {
+  const raw = fields(value);
+  const wall = raw === undefined ? undefined : parseWall(raw.wall);
+  const plate = raw === undefined ? undefined : parsePoint(raw.plate);
+  return raw !== undefined &&
+    wall !== undefined &&
+    plate !== undefined &&
+    (raw.team === null || raw.team === 0 || raw.team === 1 || raw.team === 2)
+    ? { wall, plate, team: raw.team }
+    : undefined;
+}
+
+function parseGateOpen(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
 }
 
 export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
@@ -2037,7 +2088,8 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.invulnerableSeconds) ||
     !isPips(raw.healthPips) ||
     !isPips(raw.energyPips) ||
-    typeof raw.bot !== "boolean"
+    typeof raw.bot !== "boolean" ||
+    !isNullableSignet(raw.signet)
   ) {
     return undefined;
   }
@@ -2083,6 +2135,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         statuses,
         creature,
         bot: raw.bot,
+        signet: raw.signet,
       };
 }
 
@@ -2212,6 +2265,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const aggression = parseArray(raw.aggression, MAX_WIRE_TEAMS, parseScore);
   const relics = parseArray(raw.relics, MAX_WIRE_TEAMS, parseCarried(RELIC_PLACES));
   const altar = raw.altar === null ? null : parsePoint(raw.altar);
+  const gates = parseArray(raw.gates, MAX_WIRE_GATES, parseGateOpen);
   const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
@@ -2225,7 +2279,8 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     aggression === undefined ||
     relics === undefined ||
     altar === undefined ||
-    capturePoints === undefined
+    capturePoints === undefined ||
+    gates === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -2245,6 +2300,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         altarHolder,
         altarHeldSeconds,
         capturePoints,
+        gates,
       };
 }
 
@@ -2514,6 +2570,7 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
     typeof raw.name === "string" &&
     isNullableString(raw.guildTag) &&
     isTeam(raw.team) &&
+    isNullableSignet(raw.signet) &&
     isCount(raw.damage) &&
     isCount(raw.healing) &&
     isCount(raw.taken) &&
@@ -2525,6 +2582,7 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
         name: raw.name.slice(0, MAX_WIRE_TEXT),
         guildTag: raw.guildTag,
         team: raw.team,
+        signet: raw.signet,
         damage: raw.damage,
         healing: raw.healing,
         taken: raw.taken,
@@ -2638,7 +2696,7 @@ function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefi
 const TICKET_ID = /^[0-9a-f]{64}$/;
 const TICKET_SIG = /^[0-9a-f]{128}$/;
 
-function isTicketId(value: unknown): value is string {
+export function isTicketId(value: unknown): value is string {
   return typeof value === "string" && TICKET_ID.test(value);
 }
 
@@ -3083,6 +3141,8 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return isAscentRound(raw.ascentRound)
         ? { kind: "find-match", ascentRound: raw.ascentRound }
         : undefined;
+    case "remove-member":
+      return isString(raw.id) ? { kind: "remove-member", id: raw.id } : undefined;
     case "start":
     case "leave-queue":
     case "play-bots":

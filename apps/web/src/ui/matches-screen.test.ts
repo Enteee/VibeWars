@@ -30,8 +30,16 @@ const RECORD: MatchRecord = {
   winningTeam: 0,
   endReason: "annihilation",
   teams: [
-    { players: [{ name: "Ann", guildTag: "VIBE", bot: false, template: played(0) }] },
-    { players: [{ name: "Elementalist Bot", guildTag: null, bot: true, template: played(1) }] },
+    {
+      players: [
+        { name: "Ann", guildTag: "VIBE", bot: false, pubkey: "a".repeat(64), template: played(0) },
+      ],
+    },
+    {
+      players: [
+        { name: "Elementalist Bot", guildTag: null, bot: true, pubkey: null, template: played(1) },
+      ],
+    },
   ],
 };
 
@@ -42,14 +50,14 @@ const PAIRS: MatchRecord = {
   teams: [
     {
       players: [
-        { name: "Ann", guildTag: "VIBE", bot: false, template: played(0) },
-        { name: "Bob", guildTag: null, bot: false, template: played(1) },
+        { name: "Ann", guildTag: "VIBE", bot: false, pubkey: "a".repeat(64), template: played(0) },
+        { name: "Bob", guildTag: null, bot: false, pubkey: "a".repeat(64), template: played(1) },
       ],
     },
     {
       players: [
-        { name: "Bot A", guildTag: null, bot: true, template: played(2) },
-        { name: "Bot B", guildTag: null, bot: true, template: played(3) },
+        { name: "Bot A", guildTag: null, bot: true, pubkey: null, template: played(2) },
+        { name: "Bot B", guildTag: null, bot: true, pubkey: null, template: played(3) },
       ],
     },
   ],
@@ -347,9 +355,26 @@ describe("the Matches page (#2532)", () => {
     );
   });
 
+  it("draws a signet for each human and none for a bot (#2739)", () => {
+    const { root } = render();
+    hear("a");
+    const teams = root.all("match-team");
+    expect(teams[0]?.all("signet")).toHaveLength(1);
+    expect(teams[1]?.all("signet")).toHaveLength(0);
+    root.one("match-row-head").click();
+    const detail = root.one("match-detail");
+    const headings = detail.all("match-player-heading");
+    expect(headings[0]?.title).toBe("Ann [VIBE]");
+    expect(headings[0]?.all("signet")).toHaveLength(1);
+  });
+
   it("shows three teams: on the row, and a tab each, the winner's first (#2684)", () => {
     const { root } = render();
-    const third = { players: [{ name: "Cid", guildTag: null, bot: false, template: played(2) }] };
+    const third = {
+      players: [
+        { name: "Cid", guildTag: null, bot: false, pubkey: "a".repeat(64), template: played(2) },
+      ],
+    };
     hear("a", { ...RECORD, teams: [...RECORD.teams, third], winningTeam: 2 });
     expect(root.all("match-team").map((team) => team.className)).toEqual([
       "match-team",

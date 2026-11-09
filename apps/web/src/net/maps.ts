@@ -1,4 +1,4 @@
-import { allWallSegments } from "@vibewars/game-maps/geometry";
+import { allWallSegments, wallToSegments } from "@vibewars/game-maps/geometry";
 import { validateMapData, type MapData, type Objective } from "@vibewars/game-maps/schema";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
@@ -15,8 +15,11 @@ import sunkenBastion from "@vibewars/game-maps/maps/sunken-bastion/map.json" wit
 import shiverpeakPass from "@vibewars/game-maps/maps/shiverpeak-pass/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
 import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
+import blackwaterFord from "@vibewars/game-maps/maps/blackwater-ford/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
 import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
+import mosslitCairns from "@vibewars/game-maps/maps/mosslit-cairns/map.json" with { type: "json" };
+import hollowDeep from "@vibewars/game-maps/maps/hollow-deep/map.json" with { type: "json" };
 import theCourtyard from "@vibewars/game-maps/maps/the-courtyard/map.json" with { type: "json" };
 import type {
   BaseGuard,
@@ -33,6 +36,7 @@ import {
   type LobbyMode,
   type QueueMode,
   type WireTeamCount,
+  type GateDescriptor,
 } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { TRAINING_MAPS } from "../training/maps.js";
@@ -70,6 +74,10 @@ export const ARENA_MAPS: readonly MapData[] = [
   theCourtyard,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
   hallOfHeroes,
+  // The Heroes' Ascent's own (#2693): a Hosted Game's pick until the progression places them.
+  hollowDeep,
+  blackwaterFord,
+  mosslitCairns,
   // Capture Points' (#1378, #2551).
   scarredEarth,
 ].map((raw) => validateMapData(raw));
@@ -105,6 +113,9 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
  */
 const ASCENT_FINALE_ONLY: readonly string[] = ["hall-of-heroes"];
 
+/** Heroes' Ascent maps (#2693) whose modes Random and Team Arena also play: neither draws them. */
+const ASCENT_ONLY: readonly string[] = ["hollow-deep", "blackwater-ford", "mosslit-cairns"];
+
 /**
  * Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them: a
  * team mode's only those that suit its team size (#2108), so its draw never seats 8 on a map
@@ -116,6 +127,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
     const modes = LOBBY_MODE_MATCH_MODES[mode];
     return arenaIds().filter(
       (id) =>
+        (mode === "hosted-game" || !ASCENT_ONLY.includes(id)) &&
         (modes === undefined || modes.includes(mapMode(id))) &&
         (size === undefined || suits(id, size)),
     );
@@ -134,7 +146,9 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
 /** Team Arena's map ids at `size` a side (#2107), in `arenaIds`' order: its modes' maps that suit it (#2108). */
 export function teamArenaMapIds(size: number): string[] {
   const modes = LOBBY_MODE_MATCH_MODES["team-arena"] ?? [];
-  return arenaIds().filter((id) => modes.includes(mapMode(id)) && suits(id, size));
+  return arenaIds().filter(
+    (id) => !ASCENT_ONLY.includes(id) && modes.includes(mapMode(id)) && suits(id, size),
+  );
 }
 
 /** The arenas among `maps` that suit a side of `size` (#2108), in their order. */
@@ -162,7 +176,7 @@ function suits(mapId: string, size: number): boolean {
  */
 export function randomArenaMapPool(mode: QueueMode): string[] {
   return mapsForSize(ARENA_MAPS, teamSizeOf(mode))
-    .filter((map) => !NOT_RANDOM.includes(map.mode))
+    .filter((map) => !NOT_RANDOM.includes(map.mode) && !ASCENT_ONLY.includes(map.id))
     .map((map) => map.id);
 }
 
@@ -245,6 +259,18 @@ export function mapMode(mapId: string): MatchMode {
 export function mapShrines(mapId: string): readonly MapShrine[] {
   const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
   return shrinesOf(map?.objectives ?? []);
+}
+
+function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
+  const { wall, plate, team } = gate;
+  return {
+    wall:
+      wall.kind === "rect"
+        ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
+        : { kind: "polygon", points: wall.points },
+    plate,
+    team: team === 0 || team === 1 || team === 2 ? team : null,
+  };
 }
 
 /** The resurrection shrines among a map's objectives. */
@@ -357,9 +383,15 @@ export function hostMap(mapId: string): HostMap | undefined {
           ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
           : { kind: "polygon", points: wall.points },
       ),
+      gates: map.gates.map(gateDescriptor),
     },
     mode: map.mode,
     walls: allWallSegments(map.walls),
+    gates: map.gates.map((gate) => ({
+      segments: wallToSegments(gate.wall),
+      plate: gate.plate,
+      team: gate.team,
+    })),
     bounds: { width: map.width, height: map.height },
     spawns: map.spawnPoints,
     shrines: shrinesOf(map.objectives),

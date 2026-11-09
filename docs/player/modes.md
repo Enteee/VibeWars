@@ -179,7 +179,10 @@ the altar is your team's.
 The team that holds the altar scores a point for every 30 seconds it
 keeps it, even while its own ghost is dead, until another team claims
 it. Every point is announced, as a relic scored is. A dead ghost rises
-in its base 2 minutes later, staying put. It is
+in its base 2 minutes later, staying put, here and in a Relic Run. In Capture Points it rises with the base's next wave. On a
+map with priests it rises instead with the priest's next wave, but only
+while its team's priest lives. On any other map a dead ghost stays dead,
+and its +10% can be had only once. It is
 no player: its death costs no morale and it does not count toward a
 wipe.
 
@@ -222,10 +225,9 @@ until a foe takes it. The shrines show on the compass as □ in the
 owner's colour.
 
 Every 30 seconds, each shrine your team owns scores a point, and a toast
-and a sound announce what each side scored. The dead
-stay down until an ally resurrects them, and each death costs morale.
-Get **20 points ahead** of every other team, or wipe the other team, to
-win at once. After 8 minutes the team with more points wins; on equal
+and a sound announce what each side scored. Every 60 seconds of match clock, your team's dead rise at your base's shrine with full Health and Energy, even if a foe stands there, unless their morale is at the floor. The scoreboard counts down to the next wave. Each death costs morale, and a ghost rises on the same wave, at its own spot.
+Get **20 points ahead** of every other team to
+win at once. A wipe does not end the match. After 8 minutes the team with more points wins; on equal
 points, the one holding more shrines, then the team that was last ahead
 alone, and if none ever was, it is a draw. Kills score nothing.
 
@@ -333,6 +335,22 @@ party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
 
+Three Ascent arenas are built but not yet in the queued run, so for now
+you pick them in a Hosted Game: **The Hollow Deep** (8v8 Annihilation, three
+winding tunnels round a central rock),
+**Blackwater Ford** (8v8 Priest
+Annihilation on a tiny ford, bases nearly in sight, the priest raising
+its dead every 2 minutes) and
+**Mosslit Cairns** (8v8 Capture Points, five cairns in a shallow zig-zag
+between the bases).
+
+A map may have **gates**: walls that stop bodies, shots and sight while
+closed. Stand on a gate's pressure plate to open it. It closes when
+nobody is left on the plate, shoving anyone in the doorway to the nearer
+side and stopping shots still on their way through, and cannot be opened
+again for 8 seconds. A plate in a team's colour answers only to that
+team. Bots stand on their own team's plate when no foe is near.
+
 ## Three teams
 
 In a three-team match the third team is drawn lemon-lime, beside the blue
@@ -349,8 +367,11 @@ the game uses. Anyone can read it, and there is no opting out. A record
 holds the mode, the map, when the match ended and how long it ran, who
 won and why, and each player's in-game name, guild tag and build (its
 GW1 template code: professions, attributes and skill bar, no
-equipment), with bots marked as bots. Your in-game name is in every record of a match
-you play. Nothing else that could identify you is: no address, no peer
+equipment), with bots marked as bots. Every human's public player key is
+in it too, and draws their signet, the shield beside their name; a signet
+is only the key the match's host reported. Your in-game name and key are
+in every record of a match you play, so anyone can link those matches to
+each other. Nothing else that could identify you is: no address, no peer
 id, no lobby. A match that ends because its host left, or that everyone
 left, is not published. Records are reported by the host, so a host can
 get one wrong; nothing checks them against the match.

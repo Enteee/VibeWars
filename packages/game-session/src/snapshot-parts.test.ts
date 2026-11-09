@@ -53,6 +53,7 @@ function player(index: number): WirePlayer {
     energyPips: 0,
     creature: null,
     bot: false,
+    signet: null,
     statuses: Array.from({ length: MAX_WIRE_STATUSES }, (_, i) => ({
       status: i,
       endsAt: 1000 / 3,
@@ -111,6 +112,7 @@ function snapshot(
     altarHolder: null,
     altarHeldSeconds: 0,
     capturePoints: [],
+    gates: [],
   };
 }
 

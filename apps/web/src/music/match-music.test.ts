@@ -60,6 +60,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     energyPips: 0,
     creature: undefined,
     bot: false,
+    signet: undefined,
     statuses: [],
     ...extra,
   };
@@ -94,6 +95,7 @@ function snapshot(
     altarHolder: undefined,
     altarHeldSeconds: 0,
     capturePoints: [],
+    gates: [],
     summary: undefined,
   };
 }

@@ -18,7 +18,42 @@ runs:
     # the store with tar as the runner user, and cannot write into the
     # root-owned store a multi-user install (cachix/install-nix-action) makes.
     # Third-party actions are pinned to a commit, not a movable tag.
+    #
+    # It fetches its Nix tarball from a GitHub release, and now and then the
+    # download arrives corrupt ("zstd: unsupported format", #2800). A step
+    # cannot retry itself, so up to three attempts; the last one is allowed to
+    # fail the job.
     - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
+      id: nix-install-1
+      continue-on-error: true
+
+    - name: Wait before Nix install attempt 2
+      if: steps.nix-install-1.outcome == 'failure'
+      shell: bash
+      run: |
+        echo "::warning::Nix install failed (attempt 1 of 3), retrying"
+        sleep 15
+        # A failed extraction can leave files tar would then skip over. Not on
+        # a company runner: there /nix holds the jail's overlaid store.
+        [ -n "${VIBEWARS_NIX_REGISTRATION:-}" ] || rm -rf /nix/* || true
+
+    - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
+      id: nix-install-2
+      if: steps.nix-install-1.outcome == 'failure'
+      continue-on-error: true
+
+    - name: Wait before Nix install attempt 3
+      if: steps.nix-install-2.outcome == 'failure'
+      shell: bash
+      run: |
+        echo "::warning::Nix install failed (attempt 2 of 3), retrying"
+        sleep 15
+        # A failed extraction can leave files tar would then skip over. Not on
+        # a company runner: there /nix holds the jail's overlaid store.
+        [ -n "${VIBEWARS_NIX_REGISTRATION:-}" ] || rm -rf /nix/* || true
+
+    - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
+      if: steps.nix-install-2.outcome == 'failure'
 
     # A company runner pulls the 1.1 GB store cache at ~1 MB/s; the download's
     # token expires partway ("Failed to restore"), and the half-extracted

@@ -48,6 +48,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     energyPips: 0,
     creature: undefined,
     bot: false,
+    signet: undefined,
     statuses: [],
     ...overrides,
   };
@@ -73,6 +74,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     altarHolder: undefined,
     altarHeldSeconds: 0,
     capturePoints: [],
+    gates: [],
     summary: undefined,
   };
 }

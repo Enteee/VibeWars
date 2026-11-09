@@ -101,8 +101,8 @@ import { sizeChecked, type Transport } from "./transport.js";
 export const CHAT_LINES_PER_SECOND = 1;
 export const CHAT_BURST = 5;
 
-/** A peer shares one music track in ten seconds (#2745). */
-export const SHARES_PER_SECOND = 1 / 10;
+/** A peer shares one music track in this long (#2745). */
+export const SHARE_INTERVAL_MS = 10_000;
 
 /**
  * From a party's proposal, on the lobby's clock, until each member must
@@ -580,7 +580,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   };
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
   const chatBudget = new MessageBudget(CHAT_LINES_PER_SECOND, CHAT_BURST, () => undefined);
-  const shareBudget = new MessageBudget(SHARES_PER_SECOND, 1, () => undefined);
+  const shareBudget = new MessageBudget(1000 / SHARE_INTERVAL_MS, 1, () => undefined);
   const trackIds = new Set(options.trackIds);
   /** Peers already told their lines are dropped, until one gets through: once a burst. */
   const throttled = new Set<string>();
@@ -600,6 +600,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     { readonly join: PeerLobbyJoin; readonly nonce: string; readonly since: number }
   >();
   let phase: LobbyPhase = "waiting";
+  /** The player keys of members the host removed (#2746): refused for the lobby's life. */
+  const removedKeys = new Set<string>();
   let mapId = queued?.group.mapId ?? defaultMap;
   /** A Hosted Game's players a side, the host's pick (#2104). */
   let hostedSize: LobbyTeamSize = options.hostedTeamSize;
@@ -1672,6 +1674,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         }
         return true;
       }
+      // Taken before any phase's commands (#2746).
+      case "remove-member":
+        return false;
       case "start": {
         if (member.id !== local.selfId) {
           return false;
@@ -2104,6 +2109,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       tellRelayOffers(from);
       return;
     }
+    // A key its host removed stays out (#2746), told only after the proof.
+    if (removedKeys.has(join.playerPubkey)) {
+      refuse(from, "removed");
+      return;
+    }
     if (queued !== undefined) {
       // One proof per peer while it is here: a refused one stays refused.
       if (!judged.has(from)) {
@@ -2281,6 +2291,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       takeTeamPlan(queued, member, command);
       return;
     }
+    if (command.kind === "remove-member") {
+      removeMember(member, command.id);
+      return;
+    }
     // Queued, the host may only take its party out, or play against bots (#1766).
     if (phase === "queued") {
       if (member.id === local.selfId && command.kind === "leave-queue") {
@@ -2434,6 +2448,31 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       phase = "waiting";
     }
     broadcast();
+  };
+
+  /**
+   * The host sends `id` off (#2746), as if it left, and refuses its key
+   * for as long as this lobby lasts. Never itself or a bot, and not while
+   * a match is on: its seat is the match's. A queued lobby has no host.
+   */
+  const removeMember = (member: Member, id: string): void => {
+    if (member.id !== local.selfId) {
+      refuse(member.id, "not-host");
+      return;
+    }
+    const target = peerMember(id);
+    if (queued !== undefined || target === undefined || target.id === local.selfId) {
+      return;
+    }
+    if (phase === "starting" || phase === "in-match") {
+      refuse(member.id, "in-match");
+      return;
+    }
+    if (target.playerPubkey !== null) {
+      removedKeys.add(target.playerPubkey);
+    }
+    refuse(target.id, "removed");
+    remove(target.id);
   };
 
   /** Remove the away members `gone` picks. */

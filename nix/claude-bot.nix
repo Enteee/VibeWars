@@ -247,6 +247,11 @@ let
     check "the host never repacks refs (packed-refs is a pinned file bind)" \
       "$(git config gc.auto)/$(git config gc.packRefs)/$(git config maintenance.auto)" "0/false/false"
     check "auto-gc never prunes worktrees" "$(git config gc.worktreePruneExpire)" "never"
+    # #2878: the operator's global config is not here, and nothing signs.
+    check "no git config of the operator's" "$(test -e "$HOME/.config/git" && echo present)" ""
+    check "the company never signs" "$(git config commit.gpgsign)/$(git config tag.gpgsign)" "false/false"
+    check "no global git config" "$(git config --global --list 2>/dev/null)" ""
+    check "commits are by the employee" "$(git config user.name)" "$VIBEWARS_BOT_EMPLOYEE"
     # #83: HEAD is the operator's, and everything else at the top of .git is
     # the jail's own scratch, so only what the host reads can be refused.
     refused "writing .git/HEAD" "touch '$common/HEAD'"
@@ -437,6 +442,24 @@ let
       '$store + {scratch: $scratch}')"
     export VIBEWARS_RUNNER_JAIL
     exec ${node} ${botScripts}/runner-jail.mjs "$@"
+  '';
+
+  # `vibewars-runner-preload`: realises main's CI devenv shell on the host so
+  # the jails mount it read-only (#2792, ADR-0045). Logic in runner-preload.mjs;
+  # the supervisor runs it. Main only, and no enterShell hook runs here.
+  runnerPreload = pkgs.writeShellScriptBin "vibewars-runner-preload" ''
+    export PATH=${
+      lib.makeBinPath [
+        pkgs.git
+        pkgs.nix
+        pkgs.devenv
+      ]
+    }:"$PATH"
+    exec ${node} ${botScripts}/runner-preload.mjs \
+      --state "''${VIBEWARS_RUNNERS_STATE:-''${XDG_STATE_HOME:-$HOME/.local/state}/vibewars/runner-supervisor}" \
+      --repo "''${VIBEWARS_REPO:-Enteee/VibeWars}" \
+      --exclude ${runnerClosure}/store-paths \
+      --extra ${pkgs.nix} --extra ${pkgs.bash} --extra ${pkgs.coreutils} "$@"
   '';
 
   # `claude-bot --smoke support`: support's jail holds no secret and can
@@ -1129,6 +1152,26 @@ let
           exec "''${launch[@]}" "''${jailArgs[@]}" -- "''${jailCommand[@]}"
         fi
 
+        # #2878: the jail never sees the operator's git config (it signs
+        # commits with a key the jail lacks). Its own settings are environment
+        # entries; the identity is the employee's (Q25).
+        gitConfig=(
+          branch.autoSetupMerge false
+          gc.worktreePruneExpire never
+          gc.auto 0
+          commit.gpgsign false
+          tag.gpgsign false
+          user.name "$employee"
+          user.email "''${employee/@/-}@vibewars.invalid"
+        )
+        gitConfigEnv=()
+        for ((i = 0; i < ''${#gitConfig[@]}; i += 2)); do
+          gitConfigEnv+=(
+            --setenv "GIT_CONFIG_KEY_$((i / 2))" "''${gitConfig[i]}"
+            --setenv "GIT_CONFIG_VALUE_$((i / 2))" "''${gitConfig[i + 1]}"
+          )
+        done
+
         exec "''${launch[@]}" \
           --die-with-parent \
           --unshare-all \
@@ -1149,7 +1192,6 @@ let
           --bind "$boxDir/config" "$HOME/.claude" \
           --bind "$boxDir/claude.json" "$HOME/.claude.json" \
           --bind "$creds" "$HOME/.claude/.credentials.json" \
-          --ro-bind-try "$HOME/.config/git" "$HOME/.config/git" \
           --tmpfs "$DEVENV_ROOT/.git" \
           --ro-bind "$DEVENV_ROOT/.git/HEAD" "$DEVENV_ROOT/.git/HEAD" \
           --ro-bind "$DEVENV_ROOT/.git/config" "$DEVENV_ROOT/.git/config" \
@@ -1187,13 +1229,9 @@ let
           --setenv VIBEWARS_ENV "development" \
           --setenv ENABLE_CLAUDEAI_MCP_SERVERS false \
           --setenv CLAUDE_CODE_DISABLE_BUNDLED_SKILLS 1 \
-          --setenv GIT_CONFIG_COUNT 3 \
-          --setenv GIT_CONFIG_KEY_0 branch.autoSetupMerge \
-          --setenv GIT_CONFIG_VALUE_0 false \
-          --setenv GIT_CONFIG_KEY_1 gc.worktreePruneExpire \
-          --setenv GIT_CONFIG_VALUE_1 never \
-          --setenv GIT_CONFIG_KEY_2 gc.auto \
-          --setenv GIT_CONFIG_VALUE_2 0 \
+          --setenv GIT_CONFIG_GLOBAL /dev/null \
+          --setenv GIT_CONFIG_COUNT "$((''${#gitConfig[@]} / 2))" \
+          "''${gitConfigEnv[@]}" \
           "''${chromiumEnv[@]}" \
           -- "''${jailCommand[@]}"
   '';
@@ -1305,6 +1343,7 @@ in
       pkgs.claude-code
       pkgs.github-runner
       runnerJail
+      runnerPreload
       # Also on the dev shell's PATH, not just the sandbox's: when an agent
       # reports that `hub` refused something, the quickest way to understand
       # why is to run the same command yourself.

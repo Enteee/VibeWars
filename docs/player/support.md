@@ -13,4 +13,6 @@ Your identity in VibeWars is a key that lives in this browser. It is
 made the first time you play, and every lobby you join checks that you
 hold it. There is no account behind it and no way to export it: clearing
 this site's data in your browser gives you a new one. Other players see
-your key, so they can tell it is the same you across lobbies.
+your key, so they can tell it is the same you across lobbies. It is also
+published in the public record of every match you finish, so anyone can
+read it, not only people you play with, and link those matches together.

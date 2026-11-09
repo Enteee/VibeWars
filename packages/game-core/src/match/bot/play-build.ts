@@ -1,6 +1,6 @@
 import { RANGE_SPELL } from "../../distances.js";
 import type { Skill } from "../../skills/types.js";
-import { distance, ZERO } from "../../vec2.js";
+import { distance, ZERO, type Vec2 } from "../../vec2.js";
 import type {
   Behaviour,
   BehaviourContext,
@@ -66,14 +66,17 @@ export function playBuild(
     reactionSeconds(behaviour.reaction, context.seed, context.self.id, thinks);
   return paced(hold, cursor, context, () => {
     const foes = livingFoes(context);
+    const front = foeFront(context, foes, cursor.front);
+    cursor.front = front;
     return think(
       context,
       cursor,
       foes,
       livingMembers(context),
-      teamTarget(context, foes),
+      teamTarget(context, foes, front),
       roleOf(context.self),
       behaviour.spikeHold !== false,
+      front === undefined ? context.foeCentroid : centroid(foes, front),
     );
   });
 }
@@ -125,7 +128,17 @@ export function guard(
     () => behaviour.thinkSeconds,
     cursor,
     context,
-    () => think(context, cursor, foes, allies, weakest(self, foes)?.id, undefined, false),
+    () =>
+      think(
+        context,
+        cursor,
+        foes,
+        allies,
+        weakest(self, foes)?.id,
+        undefined,
+        false,
+        context.foeCentroid,
+      ),
   );
   return behaviour.rooted ? { ...intent, moveDirection: ZERO, moveTo: undefined } : intent;
 }
@@ -189,9 +202,91 @@ function livingFoes(context: BehaviourContext): Participant[] {
   );
 }
 
+/** How many more of its players another team must have on ours to become the front (#2685). */
+const FRONT_SWITCH_MARGIN = 2;
+
+/**
+ * With foes of two or more teams (#2685), the team to fight: the one
+ * engaging ours, the most of its living members targeting one of us; else
+ * the weakest by health of those with a member within `FOCUS_REACH` past
+ * spell range; else the weakest of all. Ties to the lower team. So a team
+ * does not charge a fresh one while another is attacking it. Only players
+ * count: a team's ghost, guards or priest neither rank it nor engage for
+ * it. The `kept` front stays while one of its players engages ours or is
+ * in reach, until another team engages ours with `FRONT_SWITCH_MARGIN`
+ * more, or with every living player it has and more than the front: engaging
+ * counts flicker as foes retarget, and a bot that followed them would run
+ * between teams and finish nobody; a lone attacker still turns it.
+ * Undefined with players of one foe team: every foe is fought, as in a
+ * two-team match.
+ */
+function foeFront(
+  context: BehaviourContext,
+  foes: readonly Participant[],
+  kept: number | undefined,
+): number | undefined {
+  const self = context.self;
+  const ours = new Set(
+    context.participants
+      .filter((other) => other.combatant.team === self.combatant.team)
+      .map((other) => other.id),
+  );
+  const teams = new Map<
+    number,
+    { engaging: number; health: number; count: number; near: boolean }
+  >();
+  for (const foe of foes) {
+    if (foe.creature !== undefined) {
+      continue;
+    }
+    const team = teams.get(foe.combatant.team) ?? { engaging: 0, health: 0, count: 0, near: false };
+    teams.set(foe.combatant.team, team);
+    if (foe.targetId !== undefined && ours.has(foe.targetId)) {
+      team.engaging += 1;
+    }
+    team.health += healthFraction(foe);
+    team.count += 1;
+    team.near ||= distance(foe.position, self.position) <= RANGE_SPELL + FOCUS_REACH;
+  }
+  if (teams.size < 2) {
+    return undefined;
+  }
+  const current = kept === undefined ? undefined : teams.get(kept);
+  if (
+    current !== undefined &&
+    (current.engaging > 0 || current.near) &&
+    ![...teams.values()].some(
+      (team) =>
+        team.engaging > current.engaging &&
+        team.engaging >= Math.min(current.engaging + FRONT_SWITCH_MARGIN, team.count),
+    )
+  ) {
+    return kept;
+  }
+  const ranked = [...teams.entries()].sort(
+    ([a, one], [b, other]) =>
+      other.engaging - one.engaging ||
+      Number(other.near) - Number(one.near) ||
+      one.health / one.count - other.health / other.count ||
+      a - b,
+  );
+  return ranked[0]?.[0];
+}
+
+/** Where the living players of `team` among `foes` stand on average; `foeFront` names only a team with one. */
+function centroid(foes: readonly Participant[], team: number): Vec2 {
+  const members = foes.filter((foe) => foe.combatant.team === team && foe.creature === undefined);
+  const sum = members.reduce(
+    (at, foe) => ({ x: at.x + foe.position.x, y: at.y + foe.position.y }),
+    ZERO,
+  );
+  return { x: sum.x / members.length, y: sum.y / members.length };
+}
+
 /**
  * One decision against `foes`, for `allies` (its own included), with
- * `targetId` the one to fight: the first of `BOT_RULES` with an answer.
+ * `targetId` the one to fight and `foeCentroid` where its foes stand: the
+ * first of `BOT_RULES` with an answer.
  */
 function think(
   context: BehaviourContext,
@@ -201,6 +296,7 @@ function think(
   targetId: string | undefined,
   role: BotRole | undefined,
   spikeHold: boolean,
+  foeCentroid: Vec2 | undefined,
 ): BehaviourIntent {
   const self = context.self;
   const rule: RuleContext = {
@@ -226,7 +322,7 @@ function think(
     mayEndUpkeep: cursor.upkeepDropSeconds <= 0,
     cursor,
     role,
-    foeCentroid: context.foeCentroid,
+    foeCentroid,
     spikeHold,
     roleOf,
     foeReach: (foe) => foeReach(cursor.foeReach, foe),
@@ -258,17 +354,23 @@ function think(
  * past spell range (#2573), or anywhere while no foe is in range; else
  * `focusPick` in spell range. A creature only while no other foe is in
  * range. With shrines to hold or a relic to run, the team's target only
- * in range.
+ * in range. With two foe teams, all but the call and the ghost come from
+ * the `front` team (#2685).
  */
-function teamTarget(context: BehaviourContext, foes: readonly Participant[]): string | undefined {
-  const called = foes.find((foe) => foe.id === context.calledTargetId);
+function teamTarget(
+  context: BehaviourContext,
+  all: readonly Participant[],
+  front: number | undefined,
+): string | undefined {
+  const called = all.find((foe) => foe.id === context.calledTargetId);
   if (called !== undefined) {
     return called.id;
   }
-  const ghost = foeGhostOnAltar(context, foes);
+  const ghost = foeGhostOnAltar(context, all);
   if (ghost !== undefined) {
     return ghost.id;
   }
+  const foes = front === undefined ? all : all.filter((foe) => foe.combatant.team === front);
   const self = context.self;
   const inRange = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
   const held = heldTarget(context, foes, inRange);

@@ -22,6 +22,7 @@ import {
   type Participant,
   type PlayerBuild,
   type ProfessionId,
+  type GateField,
   type Segment,
   type FlagField,
   type RelicField,
@@ -134,6 +135,8 @@ export interface HostMap {
   /** The mode its matches play (#476): the caller builds `matchRules` from it. */
   readonly mode: MatchMode;
   readonly walls: readonly Segment[];
+  /** Its gates (#2691), in the descriptor's order. */
+  readonly gates: readonly GateField[];
   readonly bounds: { readonly width: number; readonly height: number };
   readonly spawns: readonly SpawnPoint[];
   /** Its resurrection shrines (#1186), `[]` but on a Priest Annihilation or Guild Battle map. */
@@ -188,6 +191,11 @@ export interface MatchHostOptions {
   readonly publishRecord: (record: MatchRecord) => void;
   /** Wall-clock unix seconds, for the record's `endedAt`. */
   readonly nowSeconds: () => number;
+  /**
+   * A player key's signet bits (#2805), `0..MAX_WIRE_SIGNET`: the web
+   * app's generator, which this package cannot import. Run once per seat.
+   */
+  readonly signetOf: (pubkey: string) => number;
 }
 
 /**
@@ -262,6 +270,8 @@ interface Seat {
   readonly secondaryProfession: ProfessionId | undefined;
   /** A bot plays it (#1193): no peer ever, nothing sent to one. */
   readonly bot: boolean;
+  /** Its player key's signet bits (#2805), from the lobby's plan; `null` for a bot or no lobby. */
+  readonly signet: number | null;
   /**
    * The adrenaline the peer was last sent, and the combat it counted its
    * loss from, so only a change goes (#463, #828).
@@ -317,6 +327,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     matchRules: options.matchRules,
     teamCount: map.descriptor.teamCount,
     walls: map.walls,
+    gates: map.gates,
     bounds: map.bounds,
     shrines: map.shrines,
     guildLords: map.guildLords,
@@ -384,6 +395,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       readonly guildTag: string | null;
       readonly team: WireTeam;
       readonly bot: boolean;
+      readonly pubkey: string | null;
+      readonly signet: number | null;
       readonly build: PlayerBuild;
     }
   >();
@@ -399,13 +412,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   );
   /** One whole-number line per seat the match ever had. */
   const summary = (): WireSummaryRow[] =>
-    [...everSeated].map(([id, { name, guildTag, team }]) => {
+    [...everSeated].map(([id, { name, guildTag, team, signet }]) => {
       const row = tally.row(id);
       return {
         id,
         name,
         guildTag,
         team,
+        signet,
         damage: Math.round(row.damage),
         healing: Math.round(row.healing),
         taken: Math.round(row.taken),
@@ -414,15 +428,16 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         interrupts: row.interrupts,
       };
     });
-  /** The finished match as the world may read it (#2528): names and builds, no ids. */
+  /** The finished match as the world may read it (#2528): names, public keys and builds, no peer ids. */
   const record = (endReason: MatchEndReason): MatchRecord => {
     const team = (side: number): MatchRecordTeam => ({
       players: [...everSeated.values()]
         .filter((seat) => seat.team === side)
-        .map(({ name, guildTag, bot, build }) => ({
+        .map(({ name, guildTag, bot, pubkey, build }) => ({
           name,
           guildTag,
           bot,
+          pubkey,
           template: recordTemplate(build),
         })),
     });
@@ -717,7 +732,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   /**
    * A new seat on `team` playing `loadout`, named by `nameOf` its player
-   * id and of `guild`; a bot's if `bot`.
+   * id and of `guild`, marked with `signet`; a bot's if `bot`.
    */
   const seatNew = (
     build: PlayerBuild,
@@ -725,8 +740,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     nameOf: (playerId: string) => string,
     guild: Guild,
     bot: boolean,
+    pubkey: string | null,
   ): Seat => {
     seated += 1;
+    const signet = pubkey === null ? null : options.signetOf(pubkey);
     const playerId = `player-${String(seated)}`;
     const loadout = loadoutOf(build);
     // Gear becomes numbers exactly once, before the combatant exists (ADR-0012).
@@ -766,6 +783,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       primaryProfession: loadout.primaryProfession,
       secondaryProfession: loadout.secondaryProfession,
       bot,
+      signet,
       peerId: undefined,
       token: "",
       droppedAt: undefined,
@@ -776,7 +794,15 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       weaponSets: undefined,
     };
     seats.set(playerId, seat);
-    everSeated.set(playerId, { name: seat.name, guildTag: seat.guildTag, team, bot, build });
+    everSeated.set(playerId, {
+      name: seat.name,
+      guildTag: seat.guildTag,
+      team,
+      bot,
+      pubkey,
+      signet,
+      build,
+    });
     for (const id of everSeated.keys()) {
       if (everSeated.size <= MAX_LOBBY_PLAYERS) {
         break;
@@ -910,6 +936,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       (playerId) => plan?.name ?? sanitizeName(hello.name, playerId),
       plan ?? sanitizeGuild(hello),
       false,
+      plan?.playerPubkey ?? null,
     );
     welcome(seat, from);
   };
@@ -1159,6 +1186,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     altar: sim.altar ?? null,
     altarHolder: wireTeam(sim.altarState.holder),
     altarHeldSeconds: sim.altarState.heldSeconds,
+    gates: sim.gates.map((gate) => gate.open),
     capturePoints: sim.capturePoints.map((point) => ({
       x: point.position.x,
       y: point.position.y,
@@ -1242,7 +1270,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   // A lobby's bots (#1193) take their seats at once: none of them says hello.
   for (const plan of planned?.values() ?? []) {
     if (plan.bot) {
-      seatNew(plan.build, plan.team, () => plan.name, NO_GUILD, true);
+      seatNew(plan.build, plan.team, () => plan.name, NO_GUILD, true, null);
     }
   }
 

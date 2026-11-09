@@ -1,3 +1,7 @@
+import { t, type MessageKey } from "../i18n/index.js";
+import { keySignet } from "../identity/key-signet.js";
+import { signetParams, signetSvg } from "../identity/signet.js";
+import { setHidden } from "./dom-write.js";
 import { h } from "./kit.js";
 
 /**
@@ -55,6 +59,95 @@ export function nameplateName(name: string): string {
           .trimEnd()}…`;
   cutNames.set(name, cut);
   return cut;
+}
+
+/** A signet's size in the party window and the lobby roster (#2805), px. */
+export const SIGNET_ROW_PX = 11;
+
+const signetUrls = new Map<string, string>();
+
+/**
+ * `bits`' signet (#2805) as a `size` px SVG data URL, built once per
+ * pair. An image of its own, so two copies never share a clip path id.
+ */
+export function signetUrl(bits: number, size: number): string {
+  const key = `${String(bits)}/${String(size)}`;
+  let url = signetUrls.get(key);
+  if (url === undefined) {
+    url = `data:image/svg+xml,${encodeURIComponent(signetSvg(signetParams(bits), size))}`;
+    signetUrls.set(key, url);
+  }
+  return url;
+}
+
+/**
+ * A player's signet (#2805), `size` px, just before their name: a
+ * recognition aid, never a proof. Hidden, taking no room, for none.
+ */
+export function signetElement(bits: number | undefined, size: number): HTMLImageElement {
+  const element = document.createElement("img");
+  element.className = "signet";
+  element.alt = "";
+  element.width = size;
+  element.height = size;
+  setSignet(element, bits, size);
+  return element;
+}
+
+/**
+ * Show `bits` in an element `signetElement` made at `size`, passed in
+ * because reading a rendered image's width forces a layout per row.
+ */
+export function setSignet(element: HTMLImageElement, bits: number | undefined, size: number): void {
+  setHidden(element, bits === undefined);
+  if (bits !== undefined) {
+    const url = signetUrl(bits, size);
+    if (element.src !== url) {
+      element.src = url;
+    }
+  }
+}
+
+/** What it takes to sign a name: a bot's key is `null`. */
+export interface KeyedPlayer {
+  readonly name: string;
+  readonly playerPubkey: string | null;
+}
+
+/** `player`'s signet (#2805); none for a bot, or someone no longer there. */
+export function signetOf(player: KeyedPlayer | undefined): number | undefined {
+  return player === undefined || player.playerPubkey === null
+    ? undefined
+    : keySignet(player.playerPubkey);
+}
+
+/** Stands in for the names while a sentence is translated: no name or message holds it. */
+const NAMES_MARK = "\u0000";
+
+/**
+ * Sentence `key` as a `className` div, its `param` being `players`, each
+ * name an element with its signet (#2820), comma separated.
+ */
+export function signedNamesLine(
+  className: string,
+  key: MessageKey,
+  param: string,
+  players: readonly KeyedPlayer[],
+): HTMLElement {
+  const [before = "", after = ""] = t(key, { [param]: NAMES_MARK }).split(NAMES_MARK);
+  const line = h("div", className, before);
+  players.forEach((player, index) => {
+    if (index > 0) {
+      line.append(", ");
+    }
+    const name = line.appendChild(playerLabelElement("signed-name", player.name, null));
+    const signet = signetOf(player);
+    if (signet !== undefined) {
+      name.prepend(signetElement(signet, SIGNET_ROW_PX));
+    }
+  });
+  line.append(after);
+  return line;
 }
 
 /**

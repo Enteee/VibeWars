@@ -6,9 +6,13 @@
   "teams": 2,
   "width": 6000,
   "height": 3400,
+  "layers": 1,
+  "decks": [],
+  "transitions": [],
   "walls": [
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1500,
@@ -50,6 +54,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 4500,
@@ -91,6 +96,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2745,
@@ -120,6 +126,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3255,
@@ -149,6 +156,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2240,
@@ -178,6 +186,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3760,
@@ -207,6 +216,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1605,
@@ -236,6 +246,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 4395,
@@ -265,6 +276,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1350,
@@ -294,6 +306,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 4650,
@@ -323,6 +336,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 880,
@@ -348,6 +362,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 5120,
@@ -373,6 +388,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2168,
@@ -402,6 +418,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3832,
@@ -431,6 +448,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 990,
@@ -456,6 +474,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 5010,
@@ -481,6 +500,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3104,
@@ -509,10 +529,12 @@
       ]
     }
   ],
+  "gates": [],
   "objectives": [],
   "spawnPoints": [
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 340,
         "y": 1460
@@ -520,6 +542,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 340,
         "y": 1620
@@ -527,6 +550,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 340,
         "y": 1780
@@ -534,6 +558,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 340,
         "y": 1940
@@ -541,6 +566,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 5660,
         "y": 1940
@@ -548,6 +574,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 5660,
         "y": 1780
@@ -555,6 +582,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 5660,
         "y": 1620
@@ -562,6 +590,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 5660,
         "y": 1460

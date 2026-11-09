@@ -329,3 +329,139 @@ describe("play-build in a whole match (#1189)", () => {
     expect(survival(true)).toBeGreaterThan(survival(false));
   });
 });
+
+describe("play-build with three teams (#2685)", () => {
+  /** A bot of team 0 between a team-1 foe and a team-2 foe, neither a bot. */
+  function threeWay(x: Vec2, xHealth: number, p: Vec2, pHealth: number): MatchSimulation {
+    return new MatchSimulation({
+      seed: "three-way",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      matchRules: ANNIHILATION_MATCH_RULES,
+      teamCount: 3,
+      participants: [
+        fighter("bot", 0, ELEMENTALIST, vec2(600, 400)),
+        fighter("x", 1, WARRIOR, x, { behaviour: undefined, startHealthFraction: xHealth }),
+        fighter("p", 2, WARRIOR, p, { behaviour: undefined, startHealthFraction: pHealth }),
+      ],
+    });
+  }
+
+  const targetOf = (sim: MatchSimulation, extra: Partial<BehaviourContext> = {}) =>
+    decide(BOT, createCursor(), contextFor(sim, "bot", extra)).targetId;
+
+  it("fights the team attacking it, not a weaker one that is not", () => {
+    const sim = threeWay(vec2(700, 400), 0.4, vec2(700, 300), 1);
+    sim.setTarget("p", "bot");
+    expect(targetOf(sim)).toBe("p");
+  });
+
+  it("with no team attacking, fights the weaker team in reach", () => {
+    expect(targetOf(threeWay(vec2(700, 400), 1, vec2(700, 300), 0.5))).toBe("p");
+    expect(targetOf(threeWay(vec2(700, 400), 1, vec2(1550, 400), 0.3))).toBe("x");
+  });
+
+  it("fights a team's players in reach, not another team's ghost beside it", () => {
+    const sim = new MatchSimulation({
+      seed: "three-way",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      matchRules: KING_OF_THE_HILL_MATCH_RULES,
+      teamCount: 3,
+      ghostField: {
+        level: 24,
+        altar: vec2(1300, 700),
+        spawns: [
+          { team: 0, position: vec2(100, 400) },
+          { team: 1, position: vec2(650, 450) },
+          { team: 2, position: vec2(1500, 100) },
+        ],
+      },
+      participants: [
+        fighter("bot", 0, ELEMENTALIST, vec2(600, 400)),
+        fighter("x", 1, WARRIOR, vec2(1550, 750), { behaviour: undefined }),
+        fighter("p", 2, WARRIOR, vec2(700, 300), { behaviour: undefined }),
+      ],
+    });
+    expect(targetOf(sim)).toBe("p");
+  });
+
+  it("keeps fighting its front while both teams engage it one each", () => {
+    const sim = threeWay(vec2(700, 400), 1, vec2(700, 300), 0.5);
+    sim.setTarget("x", "bot");
+    sim.setTarget("p", "bot");
+    const kept = { ...createCursor(), front: 1 };
+    decide(BOT, kept, contextFor(sim, "bot"));
+    expect(kept.front).toBe(1);
+    const fresh = createCursor();
+    decide(BOT, fresh, contextFor(sim, "bot"));
+    expect(fresh.front).toBe(2);
+  });
+
+  it("turns on a lone attacker while its front is near but idle", () => {
+    const sim = threeWay(vec2(700, 400), 1, vec2(700, 300), 1);
+    sim.setTarget("p", "bot");
+    const cursor = { ...createCursor(), front: 1 };
+    decide(BOT, cursor, contextFor(sim, "bot"));
+    expect(cursor.front).toBe(2);
+  });
+
+  it("turns on a team that sets two more on it than its front", () => {
+    const sim = new MatchSimulation({
+      seed: "three-way",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      matchRules: ANNIHILATION_MATCH_RULES,
+      teamCount: 3,
+      participants: [
+        fighter("bot", 0, ELEMENTALIST, vec2(600, 400)),
+        fighter("x", 1, WARRIOR, vec2(700, 400), {
+          behaviour: undefined,
+          startHealthFraction: 0.3,
+        }),
+        fighter("p", 2, WARRIOR, vec2(700, 300), { behaviour: undefined }),
+        fighter("q", 2, WARRIOR, vec2(650, 300), { behaviour: undefined }),
+      ],
+    });
+    sim.setTarget("p", "bot");
+    sim.setTarget("q", "bot");
+    const cursor = { ...createCursor(), front: 1 };
+    decide(BOT, cursor, contextFor(sim, "bot"));
+    expect(cursor.front).toBe(2);
+  });
+
+  it("keeps a target its team called, of either team", () => {
+    const sim = threeWay(vec2(700, 400), 1, vec2(700, 300), 1);
+    sim.setTarget("p", "bot");
+    expect(targetOf(sim, { calledTargetId: "x" })).toBe("x");
+  });
+
+  it("plays a three-team match of bots to its time limit, every team fighting", () => {
+    const sim = new MatchSimulation({
+      seed: "three-way-match",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 60 },
+      teamCount: 3,
+      participants: [
+        fighter("a1", 0, WARRIOR, vec2(200, 200)),
+        fighter("a2", 0, MONK, vec2(150, 250)),
+        fighter("b1", 1, WARRIOR, vec2(1400, 200)),
+        fighter("b2", 1, MONK, vec2(1450, 250)),
+        fighter("c1", 2, WARRIOR, vec2(800, 700)),
+        fighter("c2", 2, MONK, vec2(800, 750)),
+      ],
+    });
+    const dealt = new Set<number>();
+    for (let t = 0; t < 600 && sim.phase === "active"; t += DT) {
+      for (const entry of sim.step(DT).log) {
+        const source = entry.sourceId === undefined ? undefined : sim.get(entry.sourceId);
+        if (source !== undefined && entry.events.some((event) => event.kind === "damage")) {
+          dealt.add(source.combatant.team);
+        }
+      }
+    }
+    expect(sim.phase).toBe("finished");
+    expect([...dealt].sort()).toEqual([0, 1, 2]);
+  });
+});

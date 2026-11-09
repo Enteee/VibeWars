@@ -95,9 +95,10 @@ export interface PartyPlanSeat {
 /**
  * Why a lobby closed: the host closed it or left, or its peer was gone
  * for the whole reconnect window, which this side cannot tell from its
- * own connection dropping, or a queued lobby's group never filled (#871).
+ * own connection dropping, or a queued lobby's group never filled (#871),
+ * or the host removed this member (#2746).
  */
-export type LobbyClosedReason = "host-left" | "connection-lost" | "fell-through";
+export type LobbyClosedReason = "host-left" | "connection-lost" | "fell-through" | "removed";
 
 /** A chat line (#479), with its sender's name and team as it was sent. */
 export interface ChatLine {
@@ -140,6 +141,8 @@ export interface LobbyConnection {
   /** Host only (#1526): the lobby's mode, and a map of it. */
   selectMode(mode: LobbyMode): void;
   startMatch(): void;
+  /** Host only (#2746): the member `id` out of the lobby, not to come back. */
+  removeMember(id: string): void;
   /**
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
    * queue; in Heroes' Ascent at `ascentRound` (#1996), `null` otherwise.
