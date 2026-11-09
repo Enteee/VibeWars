@@ -2135,6 +2135,7 @@ export default {
     "the-courtyard": "Der Innenhof",
     "hall-of-heroes": "Halle der Helden",
     "barrow-field": "Hügelgräberfeld",
+    "elite-zaishen-battle": "Elite-Zaishen-Schlacht",
     "hollow-deep": "Die Hohle Tiefe",
     "blackwater-ford": "Schwarzwasserfurt",
     "mosslit-cairns": "Moosschein-Steinmale",

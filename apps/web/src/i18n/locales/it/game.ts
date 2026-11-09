@@ -2135,6 +2135,7 @@ export default {
     "the-courtyard": "Il cortile",
     "hall-of-heroes": "Sala degli eroi",
     "barrow-field": "Campo dei tumuli",
+    "elite-zaishen-battle": "Battaglia degli Zaishen d'élite",
     "hollow-deep": "Le cavità profonde",
     "blackwater-ford": "Guado dell'acqua nera",
     "mosslit-cairns": "Tumuli muschiosi",
