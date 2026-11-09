@@ -296,6 +296,45 @@ describe("parallel", () => {
     expect(distance(at(sim, "dummy"), at(sim, "p"))).toBeLessThanOrEqual(100 + STEP);
     expect(log.some((entry) => entry.cause === "skill" && entry.sourceId === "dummy")).toBe(true);
   });
+
+  const chaseAndCast: Behaviour = {
+    kind: "parallel",
+    behaviours: [
+      { kind: "chase", targeting: { kind: "nearest-enemy" }, standOffUnits: 100 },
+      castLoop(),
+    ],
+  };
+
+  it("never cancels its own cast by walking (#2946)", () => {
+    const sim = new MatchSimulation({
+      seed: "parallel-no-cancel",
+      participants: [spec("dummy", 1, vec2(0, 0), chaseAndCast), spec("p", 0, vec2(800, 0))],
+    });
+    const events = run(sim, 8).flatMap((entry) => (entry.sourceId === "dummy" ? entry.events : []));
+    expect(events.filter((event) => event.kind === "cancelled")).toEqual([]);
+    expect(events.some((event) => event.kind === "damage")).toBe(true);
+  });
+
+  it("stands still while it casts (#2946)", () => {
+    const sim = new MatchSimulation({
+      seed: "parallel-stands",
+      participants: [spec("dummy", 1, vec2(0, 0), chaseAndCast), spec("p", 0, vec2(800, 0))],
+    });
+    let castingTicks = 0;
+    let previous = at(sim, "dummy");
+    let wasCasting = false;
+    for (let i = 0; i < Math.round(8 / DT); i += 1) {
+      sim.step(DT);
+      const isCasting = sim.get("dummy")?.combatant.cast.isCasting === true;
+      if (wasCasting && isCasting) {
+        castingTicks += 1;
+        expect(at(sim, "dummy")).toEqual(previous);
+      }
+      previous = at(sim, "dummy");
+      wasCasting = isCasting;
+    }
+    expect(castingTicks).toBeGreaterThan(0);
+  });
 });
 
 describe("auto-attack", () => {
