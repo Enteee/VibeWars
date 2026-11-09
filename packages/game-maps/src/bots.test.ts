@@ -16,7 +16,7 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { allWallSegments } from "./geometry.js";
+import { allWallSegments, wallToSegments } from "./geometry.js";
 import { loadAllMaps } from "./loader.js";
 import type { MapData } from "./schema.js";
 
@@ -363,6 +363,35 @@ describe("Capture Points bots (#2580)", () => {
         objective.kind === "capture-point" ? [objective.position] : [],
       ),
       participants: casterBots(cairns, 2),
+    });
+    for (
+      let t = 0;
+      t <= CAPTURE_POINTS_MATCH_RULES.timeLimitSeconds + 1 && sim.phase !== "finished";
+      t += DT
+    ) {
+      sim.step(DT);
+    }
+    expect(sim.phase).toBe("finished");
+  });
+
+  it("bots finish a match on The Warden's Gallery (#2698)", () => {
+    const gallery = loadAllMaps().find((candidate) => candidate.id === "wardens-gallery");
+    if (gallery === undefined) throw new Error("no map wardens-gallery");
+    const sim = new MatchSimulation({
+      seed: "gallery",
+      ruleset: RULESET,
+      walls: allWallSegments(gallery.walls),
+      gates: gallery.gates.map((gate) => ({
+        segments: wallToSegments(gate.wall),
+        plate: gate.plate,
+        team: gate.team,
+      })),
+      bounds: { width: gallery.width, height: gallery.height },
+      matchRules: CAPTURE_POINTS_MATCH_RULES,
+      capturePoints: gallery.objectives.flatMap((objective) =>
+        objective.kind === "capture-point" ? [objective.position] : [],
+      ),
+      participants: casterBots(gallery, 2),
     });
     for (
       let t = 0;

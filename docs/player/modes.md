@@ -327,10 +327,10 @@ A queued Heroes' Ascent is a run up GW1's maps, in their order: Elite
 Zaishen Battle, The Underworld, Fetid River, Burial Mounds, Unholy
 Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
 (The Vault,) then the Hall of Heroes. Only the maps built so far are in
-it, so today it is seven rounds: The Hollow Deep (Annihilation), Blackwater Ford (Priest Annihilation), Barrow Field (Priest Annihilation), Cinder Sanctum (Relic Run, in Unholy
+it, so today it is eight rounds: The Hollow Deep (Annihilation), Blackwater Ford (Priest Annihilation), Barrow Field (Priest Annihilation), Cinder Sanctum (Relic Run, in Unholy
 Temples' place), Mosslit Cairns (Capture Points, in Forgotten Shrines'),
-The Courtyard (King of the Hill), then the Hall of Heroes. The Lobby window says where
-you are while you look for a team: `Round 2 of 7 · Blackwater Ford`.
+The Courtyard (King of the Hill), The Warden's Gallery (Capture Points, in Antechamber's), then the Hall of Heroes. The Lobby window says where
+you are while you look for a team: `Round 2 of 8 · Blackwater Ford`.
 You only ever meet a team at the same round, and you wait for one as
 long as it takes: no bots fill in. A round on a map made for three
 teams waits for three; two teams that have waited 30 seconds for a third

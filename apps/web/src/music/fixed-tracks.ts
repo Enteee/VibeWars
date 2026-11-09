@@ -41,6 +41,7 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["hollow-deep", "ember-deep"],
   ["blackwater-ford", "jungle-veil"],
   ["mosslit-cairns", "jungle-veil"],
+  ["wardens-gallery", "last-stand"],
 ]);
 
 export type MenuScreen =

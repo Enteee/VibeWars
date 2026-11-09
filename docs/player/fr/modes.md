@@ -337,10 +337,10 @@ l'attente, ou, pour les gagnants, part sans repartir en file.
 
 ## Ascension des héros
 
-Une Ascension des héros en file se joue en sept manches, toujours dans cet
+Une Ascension des héros en file se joue en huit manches, toujours dans cet
 ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Barrow Field (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The
-Courtyard (Roi de la colline), puis le Hall of Heroes. La fenêtre Salon dit où tu
-en es pendant que tu cherches une équipe : `Round 2 of 7 · Blackwater Ford`.
+Courtyard (Roi de la colline), The Warden's Gallery (Points de capture), puis le Hall of Heroes. La fenêtre Salon dit où tu
+en es pendant que tu cherches une équipe : `Round 2 of 8 · Blackwater Ford`.
 Tu ne rencontres jamais qu'une équipe à la même manche, et tu en attends une aussi
 longtemps qu'il faut : aucun bot ne comble. Une manche sur une carte faite pour
 trois équipes en attend trois ; deux équipes qui ont attendu une troisième pendant

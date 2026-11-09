@@ -336,10 +336,10 @@ na fila.
 
 ## Ascensão dos Heróis
 
-Uma Ascensão dos Heróis na fila tem sete rodadas, sempre nesta ordem:
+Uma Ascensão dos Heróis na fila tem oito rodadas, sempre nesta ordem:
 The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), Barrow Field (Aniquilação de Sacerdotes), Cinder Sanctum (Corrida da Relíquia), Mosslit Cairns (Captura de Pontos), The
-Courtyard (Rei da Colina) e depois o Hall of Heroes. A janela da Sala diz
-onde você está enquanto procura uma equipe: `Round 2 of 7 · Blackwater Ford`.
+Courtyard (Rei da Colina), The Warden's Gallery (Captura de Pontos) e depois o Hall of Heroes. A janela da Sala diz
+onde você está enquanto procura uma equipe: `Round 2 of 8 · Blackwater Ford`.
 Você só encontra equipes na mesma rodada e espera por uma o tempo que for
 preciso: nenhum bot completa. Uma rodada em um mapa feito para três
 equipes espera três; duas equipes que esperaram 30 segundos pela terceira

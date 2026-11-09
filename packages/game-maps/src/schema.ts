@@ -193,7 +193,7 @@ const SHARED_COUNTS: Readonly<Record<SharedKind, { readonly min: number; readonl
   {
     "flag-stand": { min: 1, max: 1 },
     altar: { min: 1, max: 1 },
-    "capture-point": { min: 1, max: 5 },
+    "capture-point": { min: 1, max: 7 },
     "storm-beacon": { min: 0, max: 1 },
   };
 

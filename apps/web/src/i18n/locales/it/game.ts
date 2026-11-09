@@ -2138,6 +2138,7 @@ export default {
     "hollow-deep": "Le cavità profonde",
     "blackwater-ford": "Guado dell'acqua nera",
     "mosslit-cairns": "Tumuli muschiosi",
+    "wardens-gallery": "La galleria del guardiano",
     "scarred-earth": "Terra sfregiata",
     "training-hall": "Sala d'addestramento",
     "training-pillars": "Pilastri d'addestramento",

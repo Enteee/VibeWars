@@ -2138,6 +2138,7 @@ export default {
     "hollow-deep": "Les Profondeurs creuses",
     "blackwater-ford": "Gué de l'Eau-noire",
     "mosslit-cairns": "Cairns moussus",
+    "wardens-gallery": "La Galerie du Gardien",
     "scarred-earth": "Terre balafrée",
     "training-hall": "Salle d'entraînement",
     "training-pillars": "Piliers d'entraînement",

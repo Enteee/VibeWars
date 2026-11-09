@@ -21,6 +21,7 @@ import blackwaterFord from "@vibewars/game-maps/maps/blackwater-ford/map.json" w
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
 import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
 import mosslitCairns from "@vibewars/game-maps/maps/mosslit-cairns/map.json" with { type: "json" };
+import wardensGallery from "@vibewars/game-maps/maps/wardens-gallery/map.json" with { type: "json" };
 import hollowDeep from "@vibewars/game-maps/maps/hollow-deep/map.json" with { type: "json" };
 import theCourtyard from "@vibewars/game-maps/maps/the-courtyard/map.json" with { type: "json" };
 import type {
@@ -84,6 +85,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   hollowDeep,
   blackwaterFord,
   mosslitCairns,
+  wardensGallery,
   // Capture Points' (#1378, #2551).
   scarredEarth,
 ].map((raw) => validateMapData(raw));
@@ -131,6 +133,7 @@ const ASCENT_ONLY: readonly string[] = [
   "hollow-deep",
   "blackwater-ford",
   "mosslit-cairns",
+  "wardens-gallery",
 ];
 
 /**
@@ -212,6 +215,7 @@ export const ASCENT_PROGRESSION: readonly string[] = [
   "cinder-sanctum",
   "mosslit-cairns",
   "the-courtyard",
+  "wardens-gallery",
   "hall-of-heroes",
 ];
 

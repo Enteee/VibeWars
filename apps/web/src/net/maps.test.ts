@@ -86,6 +86,7 @@ describe("randomArenaMapPool", () => {
               "hollow-deep",
               "blackwater-ford",
               "mosslit-cairns",
+              "wardens-gallery",
               "scarred-earth",
               "moss-vale",
               "elonian-plateau",
@@ -137,6 +138,7 @@ describe("team sizes (#2108)", () => {
       "cinder-sanctum",
       "mosslit-cairns",
       "the-courtyard",
+      "wardens-gallery",
     ]);
   });
 
@@ -246,6 +248,7 @@ describe("team sizes (#2108)", () => {
       "hollow-deep",
       "blackwater-ford",
       "mosslit-cairns",
+      "wardens-gallery",
       "scarred-earth",
     ]);
   });
@@ -301,6 +304,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       ["cinder-sanctum", "relic-run"],
       ["mosslit-cairns", "capture-points"],
       ["the-courtyard", "king-of-the-hill"],
+      ["wardens-gallery", "capture-points"],
       ["hall-of-heroes", "king-of-the-hill"],
     ]);
     expect(ASCENT_PROGRESSION.map((_, round) => mapName(ascentMapId(round)))).toEqual([
@@ -310,6 +314,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       "Cinder Sanctum",
       "Mosslit Cairns",
       "The Courtyard",
+      "The Warden's Gallery",
       "Hall of Heroes",
     ]);
   });
@@ -348,6 +353,7 @@ describe("hostMap (#476)", () => {
           "barrow-field",
           "blackwater-ford",
           "mosslit-cairns",
+          "wardens-gallery",
           "guild-hall-isle",
           "broken-tower",
           "cinder-sanctum",
