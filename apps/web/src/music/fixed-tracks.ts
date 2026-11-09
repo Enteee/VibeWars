@@ -41,6 +41,7 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["hollow-deep", "ember-deep"],
   ["blackwater-ford", "jungle-veil"],
   ["mosslit-cairns", "jungle-veil"],
+  ["brazen-causeway", "clash-of-banners"],
   ["elite-zaishen-battle", "hall-of-champions"],
 ]);
 

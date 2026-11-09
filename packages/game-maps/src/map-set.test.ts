@@ -204,6 +204,7 @@ describe("the arena set (#444)", () => {
         "hollow-deep",
         "blackwater-ford",
         "mosslit-cairns",
+        "brazen-causeway",
         "scarred-earth",
         "sandstone-steps",
         "frozen-crossing",
@@ -225,6 +226,7 @@ describe("the arena set (#444)", () => {
     expect(MAPS.filter((map) => map.mode === "priest-annihilation").map((map) => map.id)).toEqual([
       "barrow-field",
       "blackwater-ford",
+      "brazen-causeway",
       "jungle-ruins",
     ]);
     expect(MAPS.filter((map) => map.mode === "guild-battle").map((map) => map.id)).toEqual([
@@ -242,7 +244,7 @@ describe("the arena set (#444)", () => {
       "mosslit-cairns",
       "scarred-earth",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 11);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 12);
   });
 
   it("puts each team's shrine on Jungle Ruins 150-250 behind its spawns (#1186, #2550)", () => {

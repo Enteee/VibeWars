@@ -1,0 +1,359 @@
+{
+  "id": "brazen-causeway",
+  "name": "The Brazen Causeway",
+  "mode": "priest-annihilation",
+  "teamSizes": [8],
+  "teams": 2,
+  "width": 2000,
+  "height": 1600,
+  "layers": 1,
+  "decks": [],
+  "transitions": [],
+  "walls": [
+    {
+      "kind": "polygon",
+      "layer": 0,
+      "points": [
+        {
+          "x": 650,
+          "y": 350
+        },
+        {
+          "x": 1350,
+          "y": 350
+        },
+        {
+          "x": 1600,
+          "y": 600
+        },
+        {
+          "x": 1600,
+          "y": 1000
+        },
+        {
+          "x": 1350,
+          "y": 1250
+        },
+        {
+          "x": 650,
+          "y": 1250
+        },
+        {
+          "x": 400,
+          "y": 1000
+        },
+        {
+          "x": 400,
+          "y": 600
+        }
+      ]
+    },
+    {
+      "kind": "polygon",
+      "layer": 0,
+      "points": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 300,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 300
+        }
+      ]
+    },
+    {
+      "kind": "polygon",
+      "layer": 0,
+      "points": [
+        {
+          "x": 2000,
+          "y": 1600
+        },
+        {
+          "x": 1700,
+          "y": 1600
+        },
+        {
+          "x": 2000,
+          "y": 1300
+        }
+      ]
+    },
+    {
+      "kind": "polygon",
+      "layer": 0,
+      "points": [
+        {
+          "x": 2000,
+          "y": 0
+        },
+        {
+          "x": 2000,
+          "y": 300
+        },
+        {
+          "x": 1700,
+          "y": 0
+        }
+      ]
+    },
+    {
+      "kind": "polygon",
+      "layer": 0,
+      "points": [
+        {
+          "x": 0,
+          "y": 1600
+        },
+        {
+          "x": 0,
+          "y": 1300
+        },
+        {
+          "x": 300,
+          "y": 1600
+        }
+      ]
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 800,
+      "y": 120,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 1100,
+      "y": 200,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 1100,
+      "y": 1380,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 800,
+      "y": 1300,
+      "width": 100,
+      "height": 100
+    }
+  ],
+  "objectives": [
+    {
+      "kind": "resurrection-shrine",
+      "layer": 0,
+      "team": 0,
+      "position": {
+        "x": 110,
+        "y": 800
+      }
+    },
+    {
+      "kind": "resurrection-shrine",
+      "layer": 0,
+      "team": 1,
+      "position": {
+        "x": 1890,
+        "y": 800
+      }
+    },
+    {
+      "kind": "ghost-spawn",
+      "layer": 0,
+      "team": 0,
+      "position": {
+        "x": 110,
+        "y": 960
+      }
+    },
+    {
+      "kind": "ghost-spawn",
+      "layer": 0,
+      "team": 1,
+      "position": {
+        "x": 1890,
+        "y": 640
+      }
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 230,
+        "y": 720
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 230,
+        "y": 790
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 230,
+        "y": 860
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 230,
+        "y": 930
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 310,
+        "y": 755
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 310,
+        "y": 825
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 310,
+        "y": 895
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 310,
+        "y": 965
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1770,
+        "y": 880
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1770,
+        "y": 810
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1770,
+        "y": 740
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1770,
+        "y": 670
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1690,
+        "y": 845
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1690,
+        "y": 775
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1690,
+        "y": 705
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1690,
+        "y": 635
+      }
+    }
+  ],
+  "ghostLevel": 20,
+  "gates": [
+    {
+      "id": "west-gate",
+      "wall": {
+        "kind": "rect",
+        "layer": 0,
+        "x": 140,
+        "y": 560,
+        "width": 305,
+        "height": 30
+      },
+      "plate": {
+        "x": 290,
+        "y": 650
+      },
+      "team": 0
+    },
+    {
+      "id": "east-gate",
+      "wall": {
+        "kind": "rect",
+        "layer": 0,
+        "x": 1555,
+        "y": 1010,
+        "width": 305,
+        "height": 30
+      },
+      "plate": {
+        "x": 1710,
+        "y": 950
+      },
+      "team": 1
+    }
+  ]
+}
