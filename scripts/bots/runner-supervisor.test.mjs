@@ -6,6 +6,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  PRELOAD_MS,
+  PreloadSchedule,
   ApiError,
   BACKOFF_MAX_MS,
   CREDENTIAL_ALERT,
@@ -689,7 +691,12 @@ describe("parseRunners", () => {
 });
 
 describe("launcherEnvOf (#1988)", () => {
-  const base = { PATH: "/bin", HOME: "/home/op", VIBEWARS_RUNNER_SCRATCH: "/s" };
+  const base = {
+    PATH: "/bin",
+    HOME: "/home/op",
+    VIBEWARS_RUNNER_SCRATCH: "/s",
+    VIBEWARS_RUNNERS_STATE: "/st",
+  };
   const company = { PATH: "/bin", HOME: "/home/op", VIBEWARS_CREDENTIALS: "/secret" };
 
   it("passes the user bus when both are set, and nothing else of the env", () => {
@@ -698,7 +705,7 @@ describe("launcherEnvOf (#1988)", () => {
       XDG_RUNTIME_DIR: "/run/user/1000",
       DBUS_SESSION_BUS_ADDRESS: "unix:x",
     };
-    expect(launcherEnvOf(env, "/s")).toEqual({
+    expect(launcherEnvOf(env, "/s", "/st")).toEqual({
       ...base,
       XDG_RUNTIME_DIR: "/run/user/1000",
       DBUS_SESSION_BUS_ADDRESS: "unix:x",
@@ -707,10 +714,42 @@ describe("launcherEnvOf (#1988)", () => {
 
   it("passes the one that is set", () => {
     const env = { ...company, XDG_RUNTIME_DIR: "/run/user/1000" };
-    expect(launcherEnvOf(env, "/s")).toEqual({ ...base, XDG_RUNTIME_DIR: "/run/user/1000" });
+    expect(launcherEnvOf(env, "/s", "/st")).toEqual({ ...base, XDG_RUNTIME_DIR: "/run/user/1000" });
   });
 
   it("passes neither when neither is set", () => {
-    expect(launcherEnvOf(company, "/s")).toEqual(base);
+    expect(launcherEnvOf(company, "/s", "/st")).toEqual(base);
+  });
+});
+
+describe("preload schedule", () => {
+  it("builds at start, then hourly, one at a time, and logs a failure", async () => {
+    let t = 0;
+    const runs = [];
+    /** @type {(code: number) => void} */
+    let finish = (/** @type {number} */ _code) => undefined;
+    const log = [];
+    const schedule = new PreloadSchedule({
+      now: () => t,
+      run: () =>
+        new Promise((resolve) => {
+          runs.push(t);
+          finish = resolve;
+        }),
+      log: (line) => log.push(line),
+    });
+    schedule.due();
+    schedule.due();
+    expect(runs).toEqual([0]);
+    finish(1);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(log).toEqual(["runner-preload: exited 1; the previous preload stays"]);
+    t = PRELOAD_MS - 1;
+    schedule.due();
+    expect(runs).toEqual([0]);
+    t = PRELOAD_MS;
+    schedule.due();
+    expect(runs).toEqual([0, PRELOAD_MS]);
   });
 });

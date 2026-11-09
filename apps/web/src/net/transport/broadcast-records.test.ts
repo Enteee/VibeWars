@@ -32,8 +32,22 @@ function record(): MatchRecord {
     winningTeam: 0,
     endReason: "annihilation",
     teams: [
-      { players: [{ name: "Ann", guildTag: null, bot: false, template: played(0) }] },
-      { players: [{ name: "Elementalist Bot", guildTag: null, bot: true, template: played(1) }] },
+      {
+        players: [
+          { name: "Ann", guildTag: null, bot: false, pubkey: "a".repeat(64), template: played(0) },
+        ],
+      },
+      {
+        players: [
+          {
+            name: "Elementalist Bot",
+            guildTag: null,
+            bot: true,
+            pubkey: null,
+            template: played(1),
+          },
+        ],
+      },
     ],
   };
 }

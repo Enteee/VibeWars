@@ -46,6 +46,7 @@ import {
 } from "@vibewars/game-session";
 
 import { isStaleChunkError } from "../build-check.js";
+import { keySignet } from "../identity/key-signet.js";
 import { TRACKS } from "../music/tracks/index.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
@@ -186,6 +187,8 @@ function startMatch(plan: MatchPlan) {
     matchId: plan.matchId,
     isSpectator: plan.isSpectator,
     mode: plan.mode,
+    // The 13 bits a signet is drawn from (#2805).
+    signetOf: keySignet,
     // Called mid-tick, before the observers hear "ended": a throw here
     // must not cost them the end of the match.
     publishRecord: (record) => {
@@ -829,6 +832,8 @@ export function joinFailureNotice(
         return t("session.lobbyClosed");
       case "host-left":
         return t("session.hostClosed");
+      case "removed":
+        return t("session.removed");
       // A queued lobby (#871) turned this ticket away: its proof did not hold, or it is seated already.
       case "not-admitted":
         return t("session.notAdmitted");
@@ -949,6 +954,8 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
       return t("session.seatRefused");
     case "ascent-locked":
       return t("session.ascentLocked");
+    case "in-match":
+      return t("session.removeInMatch");
     default:
       return t("session.refused");
   }
@@ -964,6 +971,8 @@ export function lobbyClosedNotice(reason: LobbyClosedReason): string {
       return t("session.connectionLost");
     case "fell-through":
       return t("session.fellThrough");
+    case "removed":
+      return t("session.removed");
   }
 }
 

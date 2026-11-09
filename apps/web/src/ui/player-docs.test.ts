@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   PLAYER_DOC_PAGES,
   PLAYER_DOC_SOURCES,
+  helpDocPages,
+  loadPlayerDocs,
   playerDocPages,
   renderPlayerDoc,
   type DocNode,
@@ -25,6 +27,98 @@ function elements(nodes: readonly DocNode[]): Extract<DocNode, { kind: "element"
 function textOf(nodes: readonly DocNode[]): string {
   return nodes.map((node) => (node.kind === "text" ? node.text : textOf(node.children))).join("");
 }
+
+/** Every `docs/player/<code>/*.md`, by language and then by file name. */
+const TRANSLATED_DOCS = new Map<string, Map<string, string>>();
+for (const [path, markdown] of Object.entries(
+  import.meta.glob<string>("../../../../docs/player/*/*.md", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }),
+)) {
+  const [code = "", file = ""] = path.split("/").slice(-2);
+  TRANSLATED_DOCS.set(
+    code,
+    (TRANSLATED_DOCS.get(code) ?? new Map<string, string>()).set(file, markdown),
+  );
+}
+
+/** The anchors a page's headings get, as GitHub writes them. */
+function anchors(markdown: string): Set<string> {
+  const seen = new Map<string, number>();
+  const found = new Set<string>();
+  for (const [, heading = ""] of markdown.matchAll(/^#{1,6}\s+(.+?)\s*$/gm)) {
+    const slug = heading
+      .toLowerCase()
+      .replace(/[^\p{L}\p{M}\p{N}\s_-]/gu, "")
+      .replace(/\s/g, "-");
+    const count = seen.get(slug) ?? 0;
+    seen.set(slug, count + 1);
+    found.add(count === 0 ? slug : `${slug}-${String(count)}`);
+  }
+  return found;
+}
+
+/** Each `[..](page.md#anchor)` in `sources` that no heading answers. */
+function brokenAnchors(sources: ReadonlyMap<string, string>): string[] {
+  return [...sources].flatMap(([file, markdown]) =>
+    [...markdown.matchAll(/\]\(([a-z0-9-]+\.md)#([^)]+)\)/g)]
+      .filter(([, page = "", anchor = ""]) => !anchors(sources.get(page) ?? "").has(anchor))
+      .map(([, page = "", anchor = ""]) => `${file} -> ${page}#${anchor}`),
+  );
+}
+
+describe("docs/player in other languages (#2665)", () => {
+  afterEach(async () => {
+    await loadPlayerDocs("en", {});
+  });
+
+  it("every language folder has exactly the English file set", () => {
+    const english = [...PLAYER_DOC_SOURCES.keys()].sort();
+    for (const [code, sources] of TRANSLATED_DOCS) {
+      expect([...sources.keys()].sort(), code).toEqual(english);
+    }
+  });
+
+  it("every link to an anchor resolves to a heading in its own language", () => {
+    expect(brokenAnchors(PLAYER_DOC_SOURCES)).toEqual([]);
+    for (const [code, sources] of TRANSLATED_DOCS) {
+      expect(brokenAnchors(sources), code).toEqual([]);
+    }
+  });
+
+  it("finds an anchor no heading in that language answers", () => {
+    const sources = new Map([
+      ["a.md", "[x](b.md#armor) [y](b.md#rustung) [z](b.md#rustung-1)"],
+      ["b.md", "# Rüstung\n\n## Rustung\n\n## Rustung\n"],
+    ]);
+    expect(brokenAnchors(sources)).toEqual(["a.md -> b.md#armor"]);
+  });
+
+  it("anchors keep a translated heading's letters", () => {
+    expect(anchors("## Équipe & Rüstung")).toEqual(new Set(["équipe--rüstung"]));
+  });
+
+  it("shows English for a language with no folder", async () => {
+    await loadPlayerDocs("de", { "../../docs/player/fr/index.md": () => Promise.resolve("") });
+    expect(helpDocPages()).toBe(PLAYER_DOC_PAGES);
+  });
+
+  it("shows a language's pages in the order of its own index.md", async () => {
+    const page = (markdown: string) => () => Promise.resolve(markdown);
+    await loadPlayerDocs("de", {
+      "../../docs/player/de/index.md": page("- [Zwei](two.md)\n- [Eins](one.md)\n"),
+      "../../docs/player/de/one.md": page("# Eins\n"),
+      "../../docs/player/de/two.md": page("# Zwei\n"),
+      "../../docs/player/fr/one.md": page("# Un\n"),
+    });
+    expect(helpDocPages().map((doc) => [doc.id, doc.title, doc.markdown])).toEqual([
+      ["two", "Zwei", "# Zwei\n"],
+      ["one", "Eins", "# Eins\n"],
+    ]);
+  });
+});
 
 describe("docs/player (#1257)", () => {
   it("index.md lists every page in docs/player once, and each one it lists exists", () => {

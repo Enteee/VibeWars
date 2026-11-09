@@ -54,6 +54,7 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
     energyPips: 0,
     creature: undefined,
     bot: false,
+    signet: undefined,
     statuses: [],
   };
 }
@@ -77,6 +78,7 @@ const MATCH: MatchSnapshot = {
   altarHolder: undefined,
   altarHeldSeconds: 0,
   capturePoints: [],
+  gates: [],
   summary: undefined,
 };
 
@@ -85,6 +87,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     id,
     name: id,
     guildTag: undefined,
+    signet: undefined,
     cape: undefined,
     bot: false,
     position: vec2(x, 0),

@@ -19,13 +19,13 @@ export interface OptionsSection {
 }
 
 /**
- * The sections for a build with `languages`: Language first (#2648),
- * and only when there is a second language to pick.
+ * The sections for a build with `languages`: Language after Player, which
+ * Options opens on (#1513), and only when there is a second language to pick.
  */
 export function optionsSections(languages: readonly LanguageCode[]): readonly OptionsSection[] {
   return [
-    ...(languages.length > 1 ? [languageSection(languages)] : []),
     playerSection,
+    ...(languages.length > 1 ? [languageSection(languages)] : []),
     controlsSection,
     relaySection,
   ];

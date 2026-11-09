@@ -45,6 +45,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     energyPips: 0,
     creature: undefined,
     bot: false,
+    signet: undefined,
     statuses: [],
     ...overrides,
   };
@@ -70,6 +71,7 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     altarHolder: undefined,
     altarHeldSeconds: 0,
     capturePoints: [],
+    gates: [],
     summary: undefined,
   };
 }
@@ -213,6 +215,8 @@ class FakeElement {
   tabIndex = 0;
   hidden = false;
   src = "";
+  width = 0;
+  height = 0;
   alt = "";
   parent: FakeElement | undefined;
   readonly dataset: Record<string, string> = {};
@@ -351,12 +355,24 @@ describe("createPartyWindow (#1055)", () => {
   it("shows the BOT tag after a bot's name, and on no one else's (#1194)", () => {
     party.update(match([ME, player("bot-1", { name: "Monk Bot", bot: true })]));
     const tags = panel().children.map((row) => {
-      const [, , , tag] = row.children[0]?.children ?? [];
+      const [, , , , tag] = row.children[0]?.children ?? [];
       return tag === undefined ? undefined : { text: tag.textContent, hidden: tag.hidden };
     });
     expect(tags).toEqual([
       { text: "BOT", hidden: true },
       { text: "BOT", hidden: false },
+    ]);
+  });
+
+  it("draws a signet before each human's name, and none, taking no room, for a bot (#2805)", () => {
+    party.update(match([{ ...ME, signet: 42 }, player("bot-1", { name: "Monk Bot", bot: true })]));
+    const signets = panel().children.map((row) => {
+      const [, signet] = row.children[0]?.children ?? [];
+      return { hidden: signet?.hidden, marked: signet?.src.startsWith("data:image/svg+xml,") };
+    });
+    expect(signets).toEqual([
+      { hidden: false, marked: true },
+      { hidden: true, marked: false },
     ]);
   });
 

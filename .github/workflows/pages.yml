@@ -75,14 +75,29 @@ jobs:
         id: built
         env:
           REPO_NAME: ${{ github.event.repository.name }}
+          SOURCE_REF: ${{ steps.source.outputs.ref }}
         run: |
           base="/$REPO_NAME/"
+          release=next
           if [ "$TARGET" = next ]; then
             base="${base}next/"
           elif [ "$TARGET" = rc ]; then
             base="${base}rc/"
+            # A push builds the commit, so the branch is the event's ref; a
+            # hand-run builds the latest release/* branch itself.
+            branch=$SOURCE_REF
+            case "$branch" in release/*) ;; *) branch=$GITHUB_REF_NAME ;; esac
+            release="${branch#release/}-rc"
+          else
+            # A release event runs on its tag, a hand-run on the latest one.
+            tag=$SOURCE_REF
+            [ "$GITHUB_EVENT_NAME" != release ] || tag=$GITHUB_REF_NAME
+            git fetch --depth=1 origin "refs/tags/$tag:refs/tags/$tag"
+            tag=$(git describe --tags --exact-match HEAD)
+            release="${tag#v}"
           fi
-          VIBEWARS_BUILD="$(git rev-parse HEAD)" VIBEWARS_BASE="$base" devenv shell -- pnpm --filter "@vibewars/web..." run build
+          echo "release: $release"
+          VIBEWARS_BUILD="$(git rev-parse HEAD)" VIBEWARS_RELEASE="$release" VIBEWARS_BASE="$base" devenv shell -- pnpm --filter "@vibewars/web..." run build
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

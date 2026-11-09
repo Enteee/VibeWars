@@ -7,12 +7,15 @@
  */
 
 import { MAX_SHARED_SOURCE_BYTES, sharedSourceBytes } from "@vibewars/game-protocol";
+import { SHARE_INTERVAL_MS } from "@vibewars/game-session";
 
 export interface SharedTrack {
   /** The sender's member id, the host's word. */
   readonly from: string;
   /** The sender's name, from the lobby state this player already has. */
   readonly name: string;
+  /** The sender's signet (#2820), from the same lobby state. */
+  readonly signet: number | undefined;
   readonly trackId: string;
   readonly source: string;
   /** Whether the ♪ popover was open since it came. */
@@ -43,20 +46,30 @@ export interface SharedTracks {
   setSender(send: ShareSender | null): void;
   /** Whether `share` sends anywhere. */
   readonly canShare: boolean;
-  /** Share `source`, this player's `trackId`, with the lobby: whether it was sent. */
-  share(trackId: string, source: string): boolean;
+  /** Share `source`, this player's `trackId`, with the lobby. */
+  share(trackId: string, source: string): ShareOutcome;
+  /** The host turned this player's share down as too soon (#2779). */
+  hostThrottled(): void;
   /** Called after anything changed; returns the unsubscribe. */
   onChange(listener: () => void): () => void;
+  /** Called when the host turned a share down as too soon; returns the unsubscribe. */
+  onHostThrottled(listener: () => void): () => void;
 }
+
+/** A share went out, was too soon after the last (#2779), or cannot go. */
+export type ShareOutcome = "sent" | "throttled" | "refused";
 
 /** Sends this player's share to their lobby. */
 export type ShareSender = (trackId: string, source: string) => void;
 
-export function createSharedTracks(): SharedTracks {
+export function createSharedTracks(now: () => number = () => performance.now()): SharedTracks {
   const shares = new Map<string, SharedTrack>();
   let playing: string | null = null;
   let sender: ShareSender | null = null;
+  /** When this player's last share went out. */
+  let lastSentAt: number | null = null;
   const listeners = new Set<() => void>();
+  const throttleListeners = new Set<() => void>();
   const changed = (): void => {
     for (const listener of [...listeners]) {
       listener();
@@ -129,15 +142,30 @@ export function createSharedTracks(): SharedTracks {
     },
     share(trackId, source) {
       if (sender === null || sharedSourceBytes(source) > MAX_SHARED_SOURCE_BYTES) {
-        return false;
+        return "refused";
       }
+      if (lastSentAt !== null && now() - lastSentAt < SHARE_INTERVAL_MS) {
+        return "throttled";
+      }
+      lastSentAt = now();
       sender(trackId, source);
-      return true;
+      return "sent";
+    },
+    hostThrottled() {
+      for (const listener of [...throttleListeners]) {
+        listener();
+      }
     },
     onChange(listener) {
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
+      };
+    },
+    onHostThrottled(listener) {
+      throttleListeners.add(listener);
+      return () => {
+        throttleListeners.delete(listener);
       };
     },
   };

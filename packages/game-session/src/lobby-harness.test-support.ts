@@ -26,7 +26,7 @@ import {
   type MatchPlan,
 } from "./lobby-host.js";
 import { connectMatch, type PeerMatchConnection } from "./match-client.js";
-import { ARENA, TICK_SECONDS, hello, settle } from "./match-harness.test-support.js";
+import { ARENA, TICK_SECONDS, hello, settle, testSignet } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import type { PlayerKey, VerifyPlayerProof } from "./player-key.js";
@@ -156,6 +156,7 @@ export async function openLobby(
           mode: plan.mode,
           publishRecord: () => undefined,
           nowSeconds: () => 0,
+          signetOf: testSignet,
         });
       matches.push({ plan, host });
       return host;

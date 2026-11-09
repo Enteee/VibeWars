@@ -39,3 +39,10 @@ interface ImportMeta {
  * one. `vite.config.ts` stamps it from `VIBEWARS_BUILD`.
  */
 declare const __VIBEWARS_BUILD__: string;
+
+/**
+ * The release this build ships as (#2798): `0.1.0`, `0.2.0-rc` or `next`
+ * from `pages.yml`, `dev` for every other build. `vite.config.ts` stamps
+ * it from `VIBEWARS_RELEASE`.
+ */
+declare const __VIBEWARS_RELEASE__: string;

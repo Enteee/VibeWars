@@ -8,6 +8,7 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
+  MAX_WIRE_SIGNET,
   MAX_WIRE_STATUSES,
   parseWireEnded,
   type PeerHello,
@@ -218,6 +219,7 @@ describe("the match summary's size (#1057)", () => {
         name: "\u{1D54E}".repeat(16),
         guildTag: "WWWW",
         team: i % 2 === 0 ? 0 : 1,
+        signet: MAX_WIRE_SIGNET,
         damage: 9_999_999,
         healing: 9_999_999,
         taken: 9_999_999,
@@ -487,6 +489,39 @@ describe("a lobby's bots (#1193)", () => {
       cast = named(local.getSnapshot(), "Elementalist Bot")?.castingSkillId;
     }
     expect(cast).toBeDefined();
+  });
+
+  it("marks a human with its key's signet, once per seat, and a bot with none (#2805)", async () => {
+    const keys: string[] = [];
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([bot(1, "Warrior Bot", "Warrior/Monk"), human(0)]),
+      signetOf: (pubkey) => {
+        keys.push(pubkey);
+        return 4242;
+      },
+    });
+    const local = await match.joinLocal();
+    await match.step(1);
+    expect(self(local)?.signet).toBe(4242);
+    expect(named(local.getSnapshot(), "Warrior Bot")?.signet).toBeUndefined();
+    expect(keys).toEqual(["ab".repeat(32)]);
+  });
+
+  it("carries each seat's signet into the summary, none for a bot (#2822)", async () => {
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([bot(1, "Warrior Bot", "Warrior/Monk"), human(0)]),
+      signetOf: () => 4242,
+    });
+    const local = await match.joinLocal();
+    await match.step(1);
+    await match.host.close("host-left");
+    await settle();
+    const signets = local
+      .getSnapshot()
+      .summary?.map(({ id, signet }) => [id === local.selfSessionId, signet]);
+    expect(signets).toHaveLength(2);
+    expect(signets).toContainEqual([true, 4242]);
+    expect(signets).toContainEqual([false, null]);
   });
 
   it("lets no peer play a bot's seat, even one calling itself by the bot's id", async () => {

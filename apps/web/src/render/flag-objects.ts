@@ -13,7 +13,9 @@ import {
   type StandState,
   type Vec2,
 } from "@vibewars/game-core";
+import type { GateDescriptor } from "@vibewars/game-protocol";
 import type { PlayerSnapshot } from "@vibewars/game-session";
+import type { RenderableWall } from "./arena-snapshot.js";
 
 /**
  * A Guild Battle's flags and flag stand as the arena draws them (#1225),
@@ -185,6 +187,29 @@ export interface RenderableCapturePoint {
   readonly owner: FlagSide | undefined;
   /** The progress ring: whose colour, and how much of the circle; `undefined` for none. */
   readonly ring: { readonly side: FlagSide; readonly fraction: number } | undefined;
+}
+
+/** A gate's pressure plate (#2691), in your side's colour, or none for anyone's. */
+export interface RenderableGatePlate {
+  readonly position: Vec2;
+  readonly side: FlagSide | undefined;
+  readonly open: boolean;
+  /** The wall it opens: an open gate leaves its outline on the ground. */
+  readonly wall: RenderableWall;
+}
+
+/** Every gate's plate, from your side's view; `[]` on a map without them. */
+export function renderableGatePlates(
+  gates: readonly GateDescriptor[],
+  open: readonly boolean[],
+  selfTeam: number | undefined,
+): RenderableGatePlate[] {
+  return gates.map((gate, at) => ({
+    position: gate.plate,
+    side: gate.team === null ? undefined : sideOf(gate.team, selfTeam),
+    open: open[at] === true,
+    wall: gate.wall,
+  }));
 }
 
 /** Every shrine, from your side's view; `[]` on a map without them. */

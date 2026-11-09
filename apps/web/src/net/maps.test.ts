@@ -81,6 +81,9 @@ describe("randomArenaMapPool", () => {
               "broken-tower",
               "the-courtyard",
               "hall-of-heroes",
+              "hollow-deep",
+              "blackwater-ford",
+              "mosslit-cairns",
               "scarred-earth",
               "moss-vale",
               "elonian-plateau",
@@ -233,6 +236,9 @@ describe("team sizes (#2108)", () => {
       "broken-tower",
       "the-courtyard",
       "hall-of-heroes",
+      "hollow-deep",
+      "blackwater-ford",
+      "mosslit-cairns",
       "scarred-earth",
     ]);
   });
@@ -246,6 +252,8 @@ describe("the Hall of Heroes (#1995)", () => {
       "hall-of-heroes",
     ]);
     expect(modeMapIds()["team-arena"]).not.toContain("hall-of-heroes");
+    expect(modeMapIds()["team-arena"]).not.toContain("hollow-deep");
+    expect(modeMapIds()["hosted-game"]).toContain("blackwater-ford");
     expect(modeMapIds()["random-arena"]).toContain("hall-of-heroes");
   });
 });
@@ -322,6 +330,8 @@ describe("hostMap (#476)", () => {
         ![
           "ember-pits",
           "jungle-ruins",
+          "blackwater-ford",
+          "mosslit-cairns",
           "guild-hall-isle",
           "broken-tower",
           "the-courtyard",

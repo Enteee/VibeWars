@@ -7,6 +7,7 @@ import {
   STAND_RADIUS,
   flagObjectAtPoint,
   renderableCapturePoints,
+  renderableGatePlates,
   renderableFlags,
   renderableRelics,
   renderableStand,
@@ -166,5 +167,27 @@ describe("Capture Points' shrines as the arena draws them (#1378)", () => {
     expect(filling).toMatchObject({ owner: undefined, ring: { side: "enemy", fraction: 0.6 } });
     expect(held?.ring).toBeUndefined();
     expect(untouched?.ring).toBeUndefined();
+  });
+});
+
+describe("renderableGatePlates (#2691)", () => {
+  const wall = { kind: "rect", x: 0, y: 0, width: 8, height: 90 } as const;
+  const plate = { x: 50, y: 50 };
+
+  it("says whose plate it is from your side, and whether its gate is open", () => {
+    const gates = [
+      { wall, plate, team: 1 },
+      { wall, plate, team: null },
+    ] as const;
+    expect(
+      renderableGatePlates(gates, [true, false], 1).map(({ side, open }) => ({ side, open })),
+    ).toEqual([
+      { side: "ally", open: true },
+      { side: undefined, open: false },
+    ]);
+  });
+
+  it("draws a gate closed before the first snapshot says otherwise", () => {
+    expect(renderableGatePlates([{ wall, plate, team: null }], [], 0)[0]?.open).toBe(false);
   });
 });

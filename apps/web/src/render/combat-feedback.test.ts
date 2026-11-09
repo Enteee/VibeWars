@@ -49,6 +49,7 @@ function player(sessionId: string): PlayerSnapshot {
     energyPips: 0,
     creature: undefined,
     bot: false,
+    signet: undefined,
     statuses: [],
   };
 }
@@ -72,6 +73,7 @@ const SNAPSHOT: MatchSnapshot = {
   altarHolder: undefined,
   altarHeldSeconds: 0,
   capturePoints: [],
+  gates: [],
   summary: undefined,
 };
 

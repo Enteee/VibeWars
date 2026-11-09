@@ -17,6 +17,7 @@ import {
   MAX_WIRE_GROUND_EFFECTS,
   MAX_WIRE_RADIUS,
   MAX_WIRE_MORALE,
+  MAX_WIRE_SIGNET,
   MAX_WIRE_PIPS,
   MIN_WIRE_MORALE,
   MAX_WIRE_RANKS,
@@ -152,6 +153,7 @@ const welcome: PeerWelcome = {
     width: 1600,
     teamCount: 2,
     height: 1200,
+    gates: [],
     walls: [
       { kind: "rect", x: 10, y: 20, width: 30, height: 40 },
       {
@@ -217,6 +219,7 @@ const player: WirePlayer = {
   statuses: [status],
   creature: null,
   bot: false,
+  signet: 4242,
 };
 
 /** A Bone Minion of `peer-1`'s (#1052): no professions, its kind's name. */
@@ -233,6 +236,7 @@ const minion: WirePlayer = {
     armedAttack: null,
     leaderId: null,
   },
+  signet: null,
 };
 
 const snapshot: WireSnapshotPart = {
@@ -285,6 +289,7 @@ const snapshot: WireSnapshotPart = {
   altarHolder: null,
   altarHeldSeconds: 0,
   capturePoints: [],
+  gates: [],
 };
 
 /** A Guild Battle's flags (#1225): one carried, one on the ground; and its aggression (#1226). */
@@ -449,6 +454,7 @@ const summaryRow = {
   name: "Ann",
   guildTag: "Ab1",
   team: 0,
+  signet: 4242,
   damage: 1200,
   healing: 340,
   taken: 900,
@@ -780,6 +786,24 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["snapshot with relics and an altar (#1374)", parseWireSnapshotPart, relicked],
   ["snapshot with a held altar (#1377)", parseWireSnapshotPart, hill],
   ["snapshot with capture points (#1378)", parseWireSnapshotPart, shrined],
+  ["snapshot with gates (#2691)", parseWireSnapshotPart, { ...snapshot, gates: [true, false] }],
+  [
+    "welcome with a gate (#2691)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        gates: [
+          {
+            wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
+            plate: { x: 50, y: 50 },
+            team: null,
+          },
+        ],
+      },
+    },
+  ],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
   [
@@ -794,6 +818,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     "ended by a wipe (#846)",
     parseWireEnded,
     { winningTeam: 1, endReason: "annihilation", summary: [] },
+  ],
+  [
+    "a bot's summary row, no signet (#2822)",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, signet: null }] },
   ],
   [
     "ended at time by morale (#846)",
@@ -980,6 +1009,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["select-team-size of one (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 1 }],
   ["select-mode (#1526)", parseWireLobbyCommand, { kind: "select-mode", mode: "heroes-ascent" }],
   ["start", parseWireLobbyCommand, { kind: "start" }],
+  ["remove-member (#2746)", parseWireLobbyCommand, { kind: "remove-member", id: "peer-2" }],
   ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match", ascentRound: null }],
   [
     "find-match at a Heroes' Ascent round (#1996)",
@@ -1091,6 +1121,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["a proposal's builds with no proposer (#1811)", parseWireTeamProposalBuilds, { builds: [] }],
   ["a call of an unknown kind (#443)", parsePeerCall, { kind: "focus", targetId: "peer-2" }],
   ["a call with no target (#443)", parsePeerCall, { kind: "target" }],
+  ["a remove-member with no id (#2746)", parseWireLobbyCommand, { kind: "remove-member" }],
+  [
+    "a remove-member with an id past the wire's (#2746)",
+    parseWireLobbyCommand,
+    { kind: "remove-member", id: long },
+  ],
   ["a ping at NaN (#443)", parsePeerCall, { kind: "ping", x: Number.NaN, y: 0 }],
   ["a ping with a string for y (#443)", parsePeerCall, { kind: "ping", x: 0, y: "0" }],
   ["a stroke of one point (#2391)", parsePeerCall, { ...strokeCall, points: [[1, 2]] }],
@@ -1394,6 +1430,26 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["snapshot without relics (#1374)", parseWireSnapshotPart, { ...snapshot, relics: undefined }],
   ["snapshot without an altar (#1374)", parseWireSnapshotPart, { ...snapshot, altar: undefined }],
   [
+    "welcome with more gates than a map holds (#2691)",
+    parsePeerWelcome,
+    {
+      ...welcome,
+      map: {
+        ...welcome.map,
+        gates: Array.from({ length: 7 }, () => ({
+          wall: { kind: "rect", x: 0, y: 0, width: 8, height: 90 },
+          plate: { x: 50, y: 50 },
+          team: null,
+        })),
+      },
+    },
+  ],
+  [
+    "snapshot with a gate that is not a boolean (#2691)",
+    parseWireSnapshotPart,
+    { ...snapshot, gates: [1] },
+  ],
+  [
     "snapshot without capture points (#1378)",
     parseWireSnapshotPart,
     { ...snapshot, capturePoints: undefined },
@@ -1664,6 +1720,13 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
       { ...snapshot, players: [{ ...player, morale: value }] },
     ],
   ),
+  ...[undefined, 1.5, -1, MAX_WIRE_SIGNET + 1, "42"].map(
+    (value): [string, (value: unknown) => unknown, unknown] => [
+      `snapshot with a player's signet ${String(value)} (#2805)`,
+      parseWireSnapshotPart,
+      { ...snapshot, players: [{ ...player, signet: value }] },
+    ],
+  ),
   [
     "snapshot with a player missing knockdownRemaining (#545)",
     parseWireSnapshotPart,
@@ -1888,6 +1951,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "ended with a summary past the cap",
     parseWireEnded,
     { ...ended, summary: Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, () => summaryRow) },
+  ],
+  [
+    "summary row with a signet out of range (#2822)",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, signet: MAX_WIRE_SIGNET + 1 }] },
+  ],
+  [
+    "summary row without a signet (#2822)",
+    parseWireEnded,
+    { ...ended, summary: [{ ...summaryRow, signet: undefined }] },
   ],
   [
     "ended with a negative tally",
@@ -2611,6 +2684,13 @@ describe("the P2P validators (#82)", () => {
   it("accept a masterless body on MASTERLESS_WIRE_TEAM (#2092)", () => {
     const loose = { ...player, team: MASTERLESS_WIRE_TEAM };
     expect(parseWireSnapshotPart({ ...snapshot, players: [loose] })?.players).toEqual([loose]);
+  });
+
+  it("accept a signet of 0 to MAX_WIRE_SIGNET, or none (#2805)", () => {
+    for (const signet of [null, 0, MAX_WIRE_SIGNET]) {
+      const marked = { ...player, signet };
+      expect(parseWireSnapshotPart({ ...snapshot, players: [marked] })?.players).toEqual([marked]);
+    }
   });
 
   it("drop a token from a hello's rejoin: a rejoin is proven, never told (#593)", () => {

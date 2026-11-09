@@ -122,6 +122,8 @@ export interface PlayerSnapshot {
     | undefined;
   /** A lobby's bot plays it (#1193), not a peer. */
   readonly bot: boolean;
+  /** Its player key's signet bits (#2805), as `WirePlayer.signet`; `undefined` for none. */
+  readonly signet: number | undefined;
 }
 
 /** A companion's armed pet attack (#1167): a pet-attack skill, and when it lapses. */
@@ -183,6 +185,8 @@ export interface MatchSnapshot {
   readonly altarHeldSeconds: number;
   /** Every Capture Points shrine and who holds it (#1378); `[]` on a map without them. */
   readonly capturePoints: readonly CapturePoint[];
+  /** Whether each of the map's gates is open (#2691); `[]` on a map without them. */
+  readonly gates: readonly boolean[];
   /** What each player did, from the host's `ended` (#1057); `undefined` until then. */
   readonly summary: readonly MatchSummaryRow[] | undefined;
 }
@@ -215,6 +219,8 @@ export interface MatchSummaryRow {
   /** The seat's guild tag (#1406); `null` for none. */
   readonly guildTag: string | null;
   readonly team: number;
+  /** The player's signet bits (#2822); `null` for a bot. */
+  readonly signet: number | null;
   readonly damage: number;
   readonly healing: number;
   readonly taken: number;

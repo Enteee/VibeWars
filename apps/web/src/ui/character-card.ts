@@ -137,6 +137,8 @@ export interface TeamFigureMember {
   readonly look: FigureLook | undefined;
   /** Its title and label only, as "Ser Bash, Warrior". */
   readonly label: string;
+  /** Above its row: the Matches page's signet and name (#2739). */
+  readonly heading?: HTMLElement;
 }
 
 export interface TeamFigureCardOptions {
@@ -168,7 +170,10 @@ export function teamFigureCard({
   ...card
 }: TeamFigureCardOptions): HTMLElement {
   const members = h("span", "play-card-members");
-  for (const { look, label } of shown) {
+  for (const { look, label, heading } of shown) {
+    if (heading !== undefined) {
+      members.appendChild(heading);
+    }
     const member =
       look === undefined ? unknownMember(label) : characterFigureCard(look, { size: "row", label });
     member.className += " play-card-member";

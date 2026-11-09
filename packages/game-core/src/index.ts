@@ -17,7 +17,7 @@ export { clampInputDirection, integrateMovement } from "./movement.js";
 
 export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
 
-export type { Segment } from "./geometry.js";
+export type { Polygon, Segment } from "./geometry.js";
 export {
   buildNavGraph,
   createPathFinder,
@@ -152,6 +152,7 @@ export {
   PRIEST_ANNIHILATION_MATCH_RULES,
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
+  CAPTURE_WAVE_SECONDS,
   RELIC_RUN_MATCH_RULES,
   TWO_TEAM_MODES,
   addPoint,
@@ -177,6 +178,7 @@ export type {
   CreatureOrder,
   CreatureLook,
   GroundEffect,
+  MatchLayers,
   MatchSimulationOptions,
   Participant,
   ParticipantSpec,
@@ -220,6 +222,8 @@ export {
   flagTeamOf,
 } from "./match/flags.js";
 export type { RelicField, RelicState } from "./match/relics.js";
+export type { Gate, GateField } from "./match/gates.js";
+export { GATE_PLATE_REACH_UNITS, GATE_REOPEN_SECONDS } from "./match/gates.js";
 export type { CapturePoint } from "./match/capture-points.js";
 export {
   CAPTURE_REACH_UNITS,

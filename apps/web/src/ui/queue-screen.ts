@@ -8,7 +8,7 @@ import { teamColour } from "../render/arena-snapshot.js";
 import { cssColour } from "./character-preview.js";
 import { RANDOM_ARENA_MODES } from "./menu.js";
 import { button, h, screenBar } from "./kit.js";
-import { playerLabelElement } from "./player-label.js";
+import { SIGNET_ROW_PX, playerLabelElement, signetElement, signetOf } from "./player-label.js";
 import { renderSummary, type SummaryTable } from "./match-summary.js";
 import { relayLine } from "./relay-section.js";
 
@@ -286,7 +286,13 @@ export function versusTeams(snapshot: LobbySnapshot): VersusTeams {
 function splashRow(player: LobbyPlayerSnapshot): HTMLElement {
   const row = h("div", "versus-player");
   const text = h("span", "versus-player-text");
-  text.appendChild(playerLabelElement("versus-player-name", player.name, player.guildTag));
+  const label = text.appendChild(
+    playerLabelElement("versus-player-name", player.name, player.guildTag),
+  );
+  const signet = signetOf(player);
+  if (signet !== undefined) {
+    label.prepend(signetElement(signet, SIGNET_ROW_PX));
+  }
   row.appendChild(text);
   return row;
 }

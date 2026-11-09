@@ -752,6 +752,7 @@
     "MAX_WIRE_RADIUS": { "literal": 200 },
     "MAX_WIRE_RANK": { "literal": 16 },
     "MAX_WIRE_RANKS": { "literal": 16 },
+    "MAX_WIRE_SIGNET": { "literal": 8191 },
     "MAX_WIRE_SLOTS": { "literal": 8 },
     "MAX_WIRE_STATUSES": { "literal": 32 },
     "MAX_WIRE_STATUS_INDEX": { "literal": 1023 },
@@ -5446,6 +5447,59 @@
         { "name": "targetId", "optional": false, "type": "string" }
       ]
     },
+    "GateDescriptor": {
+      "properties": [
+        {
+          "name": "plate",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "x", "optional": false, "type": "number" },
+              { "name": "y", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
+        },
+        {
+          "name": "wall",
+          "optional": false,
+          "type": {
+            "union": [
+              {
+                "properties": [
+                  { "name": "height", "optional": false, "type": "number" },
+                  { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                  { "name": "width", "optional": false, "type": "number" },
+                  { "name": "x", "optional": false, "type": "number" },
+                  { "name": "y", "optional": false, "type": "number" }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                  {
+                    "name": "points",
+                    "optional": false,
+                    "type": {
+                      "array": {
+                        "properties": [
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
     "JsonValue": {
       "union": [
         "null",
@@ -5481,6 +5535,7 @@
         { "literal": "closed" },
         { "literal": "fell-through" },
         { "literal": "host-left" },
+        { "literal": "in-match" },
         { "literal": "invalid-proposal" },
         { "literal": "invalid-slot" },
         { "literal": "invalid-vote" },
@@ -5490,6 +5545,7 @@
         { "literal": "not-pickable" },
         { "literal": "party-full" },
         { "literal": "protocol-mismatch" },
+        { "literal": "removed" },
         { "literal": "slot-taken" },
         { "literal": "ticket-used" },
         { "literal": "unproven" }
@@ -5501,6 +5557,67 @@
     },
     "MapDescriptor": {
       "properties": [
+        {
+          "name": "gates",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "plate",
+                  "optional": false,
+                  "type": {
+                    "properties": [
+                      { "name": "x", "optional": false, "type": "number" },
+                      { "name": "y", "optional": false, "type": "number" }
+                    ]
+                  }
+                },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": {
+                    "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                  }
+                },
+                {
+                  "name": "wall",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      {
+                        "properties": [
+                          { "name": "height", "optional": false, "type": "number" },
+                          { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                          { "name": "width", "optional": false, "type": "number" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      },
+                      {
+                        "properties": [
+                          { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                          {
+                            "name": "points",
+                            "optional": false,
+                            "type": {
+                              "array": {
+                                "properties": [
+                                  { "name": "x", "optional": false, "type": "number" },
+                                  { "name": "y", "optional": false, "type": "number" }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
         { "name": "height", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "name", "optional": false, "type": "string" },
@@ -5797,6 +5914,75 @@
           "optional": false,
           "type": {
             "properties": [
+              {
+                "name": "gates",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      {
+                        "name": "plate",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            { "name": "x", "optional": false, "type": "number" },
+                            { "name": "y", "optional": false, "type": "number" }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "team",
+                        "optional": false,
+                        "type": {
+                          "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                        }
+                      },
+                      {
+                        "name": "wall",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            {
+                              "properties": [
+                                { "name": "height", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "rect" }
+                                },
+                                { "name": "width", "optional": false, "type": "number" },
+                                { "name": "x", "optional": false, "type": "number" },
+                                { "name": "y", "optional": false, "type": "number" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "polygon" }
+                                },
+                                {
+                                  "name": "points",
+                                  "optional": false,
+                                  "type": {
+                                    "array": {
+                                      "properties": [
+                                        { "name": "x", "optional": false, "type": "number" },
+                                        { "name": "y", "optional": false, "type": "number" }
+                                      ]
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
               { "name": "height", "optional": false, "type": "number" },
               { "name": "id", "optional": false, "type": "string" },
               { "name": "name", "optional": false, "type": "string" },
@@ -5934,6 +6120,75 @@
           "optional": false,
           "type": {
             "properties": [
+              {
+                "name": "gates",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      {
+                        "name": "plate",
+                        "optional": false,
+                        "type": {
+                          "properties": [
+                            { "name": "x", "optional": false, "type": "number" },
+                            { "name": "y", "optional": false, "type": "number" }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "team",
+                        "optional": false,
+                        "type": {
+                          "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
+                        }
+                      },
+                      {
+                        "name": "wall",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            {
+                              "properties": [
+                                { "name": "height", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "rect" }
+                                },
+                                { "name": "width", "optional": false, "type": "number" },
+                                { "name": "x", "optional": false, "type": "number" },
+                                { "name": "y", "optional": false, "type": "number" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "polygon" }
+                                },
+                                {
+                                  "name": "points",
+                                  "optional": false,
+                                  "type": {
+                                    "array": {
+                                      "properties": [
+                                        { "name": "x", "optional": false, "type": "number" },
+                                        { "name": "y", "optional": false, "type": "number" }
+                                      ]
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
               { "name": "height", "optional": false, "type": "number" },
               { "name": "id", "optional": false, "type": "string" },
               { "name": "name", "optional": false, "type": "string" },
@@ -6601,6 +6856,7 @@
                 { "name": "interrupts", "optional": false, "type": "number" },
                 { "name": "kills", "optional": false, "type": "number" },
                 { "name": "name", "optional": false, "type": "string" },
+                { "name": "signet", "optional": false, "type": { "union": ["null", "number"] } },
                 { "name": "taken", "optional": false, "type": "number" },
                 {
                   "name": "team",
@@ -6732,6 +6988,12 @@
             { "name": "memberKey", "optional": false, "type": { "union": ["null", "string"] } },
             { "name": "size", "optional": false, "type": "number" },
             { "name": "slot", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "id", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "remove-member" } }
           ]
         },
         {
@@ -7557,6 +7819,7 @@
           "optional": false,
           "type": { "union": ["null", "string"] }
         },
+        { "name": "signet", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "statuses",
           "optional": false,
@@ -7796,6 +8059,7 @@
             }
           }
         },
+        { "name": "gates", "optional": false, "type": { "array": "boolean" } },
         {
           "name": "groundEffects",
           "optional": false,
@@ -8017,6 +8281,7 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
+                { "name": "signet", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "statuses",
                   "optional": false,
@@ -8253,6 +8518,7 @@
             }
           }
         },
+        { "name": "gates", "optional": false, "type": { "array": "boolean" } },
         {
           "name": "groundEffects",
           "optional": false,
@@ -8476,6 +8742,7 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
+                { "name": "signet", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "statuses",
                   "optional": false,
@@ -8671,6 +8938,7 @@
         { "name": "interrupts", "optional": false, "type": "number" },
         { "name": "kills", "optional": false, "type": "number" },
         { "name": "name", "optional": false, "type": "string" },
+        { "name": "signet", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "taken", "optional": false, "type": "number" },
         {
           "name": "team",

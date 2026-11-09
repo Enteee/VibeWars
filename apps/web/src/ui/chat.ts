@@ -6,6 +6,7 @@ import { isHelpOverlayOpen } from "./help-screen.js";
 import { chatIcon } from "./icons.js";
 import { button, h, iconButton } from "./kit.js";
 import { isOptionsWindowOpen } from "./options-screen.js";
+import { SIGNET_ROW_PX, signetElement } from "./player-label.js";
 
 /**
  * Chat (#479): the panel at the lower left, in the lobby, on the menu's
@@ -60,6 +61,8 @@ export function chatSide(line: ChatLine, selfId: string, selfTeam: 0 | 1 | 2 | n
 export interface KeptLine {
   readonly line: ChatLine;
   readonly at: number;
+  /** The sender's signet as the line arrived (#2821), so it outlasts them; `undefined` for none. */
+  readonly signet: number | undefined;
 }
 
 /** The lines kept, newest last, and who this player muted for the session. */
@@ -67,11 +70,11 @@ export class ChatLog {
   readonly #lines: KeptLine[] = [];
   readonly #muted = new Set<string>();
 
-  /** Keep `line`, arrived `at`; whether it shows, which a muted sender's does not. */
-  public add(line: ChatLine, at: number): boolean {
-    this.#lines.push({ line, at });
+  /** Keep `kept`; whether it shows, which a muted sender's does not. */
+  public add(kept: KeptLine): boolean {
+    this.#lines.push(kept);
     this.#lines.splice(0, Math.max(0, this.#lines.length - CHAT_LINES_KEPT));
-    return !this.#muted.has(line.fromId);
+    return !this.#muted.has(kept.line.fromId);
   }
 
   public mute(id: string, muted: boolean): void {
@@ -110,6 +113,8 @@ export interface ChatDeps {
   /** This player's team now; `null` spectates, and has no team chat. */
   readonly selfTeam: () => 0 | 1 | 2 | null;
   readonly send: (channel: ChatChannel, text: string) => void;
+  /** The sender's signet now (#2821); `undefined` for a bot or someone not known yet. */
+  readonly signetOf: (fromId: string) => number | undefined;
 }
 
 export interface ChatPanel {
@@ -200,7 +205,7 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     return row;
   };
 
-  const lineElement = ({ line, at }: KeptLine): HTMLElement => {
+  const lineElement = ({ line, at, signet }: KeptLine): HTMLElement => {
     const row = h("div", "chat-line");
     row.dataset.channel = line.channel;
     row.dataset.from = line.fromId;
@@ -222,7 +227,14 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     });
     name.dataset.side = chatSide(line, deps.selfId, deps.selfTeam());
     name.title = line.fromId === deps.selfId ? "" : t("chat.mute", { name: line.name });
-    row.append(tag, " ", name, ": ", h("span", "chat-line-text", line.text));
+    row.append(
+      tag,
+      " ",
+      signetElement(signet, SIGNET_ROW_PX),
+      name,
+      ": ",
+      h("span", "chat-line-text", line.text),
+    );
     return fading(row, at);
   };
 
@@ -315,9 +327,9 @@ export function mountChat(deps: ChatDeps): ChatPanel {
   return {
     root,
     add(line) {
-      const at = Date.now();
-      if (log.add(line, at)) {
-        lines.append(lineElement({ line, at }));
+      const kept = { line, at: Date.now(), signet: deps.signetOf(line.fromId) };
+      if (log.add(kept)) {
+        lines.append(lineElement(kept));
         while (lines.childElementCount > CHAT_LINES_KEPT) {
           lines.firstElementChild?.remove();
         }

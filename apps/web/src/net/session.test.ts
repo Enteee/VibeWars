@@ -52,6 +52,11 @@ describe("the notice for a closed lobby (#515)", () => {
     expect(lobbyClosedNotice("host-left")).toBe(t("session.hostClosed"));
   });
 
+  it("says the host removed this player (#2746)", () => {
+    expect(lobbyClosedNotice("removed")).toBe(t("session.removed"));
+    expect(t("session.removed")).toBe("The host removed you from the lobby.");
+  });
+
   it("blames no one when the host's peer was gone for the whole window", () => {
     expect(lobbyClosedNotice("connection-lost")).toBe(t("session.connectionLost"));
     expect(t("session.connectionLost")).not.toBe(t("session.hostClosed"));

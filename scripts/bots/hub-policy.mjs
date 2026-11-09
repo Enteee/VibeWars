@@ -138,6 +138,10 @@ export const GATE_PATHS = [
   ".markdownlint.jsonc",
   "vitest.config.ts",
   "devenv.nix",
+  // What the host's Nix evaluates (the runner preload, #2792): a locked input
+  // or an import repointed here runs on the host as the supervisor's user.
+  "devenv.lock",
+  "devenv.yaml",
   "playwright.config.ts",
   "scripts/bots/hub-policy.mjs",
   "scripts/bots/hub-release.mjs",
@@ -160,8 +164,7 @@ export const GATE_PATHS = [
   "scripts/bots/hub.mjs",
   "scripts/bots/hub-alerts.mjs",
   "scripts/bots/instance-lock.mjs",
-  "nix/claude-bot.nix",
-  "nix/claude-llc.nix",
+  "nix/",
   ".github/CODEOWNERS",
   // The briefings and skills: instructions to every agent, so a bad one can
   // tell them to skip a gate (#27).

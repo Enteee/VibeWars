@@ -49,6 +49,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     energyPips: 0,
     creature: undefined,
     bot: false,
+    signet: undefined,
     statuses: [],
   };
   return {
@@ -70,6 +71,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     altarHolder: undefined,
     altarHeldSeconds: 0,
     capturePoints: [],
+    gates: [],
     summary: undefined,
   };
 }

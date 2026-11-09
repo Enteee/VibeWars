@@ -10,6 +10,7 @@ import type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "@vibewars/
 
 import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
+import { keySignet } from "../identity/key-signet.js";
 import type {
   HeardMatchRecord,
   MatchRecordWatch,
@@ -23,7 +24,7 @@ import { formatClock } from "./hud.js";
 import { professionIcon } from "./icons.js";
 import { button, h, screenBar, syncList } from "./kit.js";
 import { MATCH_KINDS, MATCH_SIZES, matchesFilter, sessionFilter } from "./matches-filter.js";
-import { playerLabelText } from "./player-label.js";
+import { playerLabelText, signetElement } from "./player-label.js";
 import { railIconUrl, railLabel, railScreen, type RailEntry } from "./rail.js";
 
 /** The most records the page holds; the oldest goes first. */
@@ -86,6 +87,9 @@ function teamIcons(record: MatchRecord, team: number, players: MatchRecordTeam):
   for (const player of players.players) {
     const name = playerLabelText(player.name, player.guildTag);
     const label = player.bot ? t("matches.bot", { name }) : name;
+    if (player.pubkey !== null) {
+      icons.appendChild(signetElement(keySignet(player.pubkey), 12));
+    }
     const decoded = decodeTemplateCode(player.template);
     if (!decoded.ok) {
       const unknown = icons.appendChild(h("span", "match-player-icon is-unknown", "?"));
@@ -127,9 +131,17 @@ function resultMark(record: MatchRecord): string {
 function playerMember(player: MatchRecordPlayer): TeamFigureMember {
   const name = playerLabelText(player.name, player.guildTag);
   const decoded = decodeTemplate(player.template, "", 0);
+  const label = player.bot ? t("matches.bot", { name }) : name;
+  const heading = h("span", "match-player-heading");
+  heading.title = label;
+  if (player.pubkey !== null) {
+    heading.appendChild(signetElement(keySignet(player.pubkey), 18));
+  }
+  heading.appendChild(h("span", "match-player-name", label));
   return {
     look: decoded.ok ? lookOfCharacter(decoded.character, undefined) : undefined,
-    label: player.bot ? t("matches.bot", { name }) : name,
+    label,
+    heading,
   };
 }
 

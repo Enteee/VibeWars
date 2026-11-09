@@ -475,6 +475,16 @@ export interface MapDescriptor {
   readonly width: number;
   readonly height: number;
   readonly walls: readonly WallDescriptor[];
+  /** Its gates (#2691), in the order the snapshot's `gates` says how each stands. */
+  readonly gates: readonly GateDescriptor[];
+}
+
+/** A wall a pressure plate opens (#2691). */
+export interface GateDescriptor {
+  readonly wall: WallDescriptor;
+  readonly plate: { readonly x: number; readonly y: number };
+  /** Whose plate it is; `null` for anyone's. */
+  readonly team: 0 | 1 | 2 | null;
 }
 
 /** One slot of a `SkillBarMessage`: what the HUD needs to draw it. */

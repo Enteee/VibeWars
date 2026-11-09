@@ -624,6 +624,7 @@ export type WireIdentity = Pick<
   | "secondaryProfession"
   | "creature"
   | "bot"
+  | "signet"
 >;
 
 /** What a seat says about who sits in it. */
@@ -638,6 +639,8 @@ export interface SeatIdentity {
   readonly secondaryProfession: ProfessionId | undefined;
   /** A lobby's bot sits in it (#1193). */
   readonly bot: boolean;
+  /** Its player key's signet bits (#2805); `null` for a bot or a seat with no key. */
+  readonly signet: number | null;
 }
 
 /**
@@ -666,6 +669,7 @@ export function wireIdentity(
       secondaryProfession: seat.secondaryProfession ?? null,
       creature: null,
       bot: seat.bot,
+      signet: seat.signet,
     };
   }
   const { creature } = participant;
@@ -698,6 +702,7 @@ export function wireIdentity(
           leaderId: creature.leaderId ?? null,
         },
         bot: false,
+        signet: null,
       };
 }
 
@@ -762,6 +767,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     statuses,
     creature: player.creature ?? undefined,
     bot: player.bot,
+    signet: absent(player.signet),
   };
 }
 
@@ -823,6 +829,7 @@ export function observedSnapshot(
     altar: absent(snapshot.altar),
     altarHolder: absent(snapshot.altarHolder),
     altarHeldSeconds: snapshot.altarHeldSeconds,
+    gates: snapshot.gates,
     capturePoints: snapshot.capturePoints.map(({ x, y, owner, capturer, progress }) => ({
       position: { x, y },
       owner,

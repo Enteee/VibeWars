@@ -33,14 +33,14 @@ test("Clone saves a finished match's team as a Team Build and opens it (#2585)",
     teams: [
       {
         players: [
-          { name: "Ann", guildTag: null, bot: false, template: played(0) },
-          { name: "Bob", guildTag: null, bot: false, template: played(1) },
+          { name: "Ann", guildTag: null, bot: false, pubkey: "a".repeat(64), template: played(0) },
+          { name: "Bob", guildTag: null, bot: false, pubkey: "a".repeat(64), template: played(1) },
         ],
       },
       {
         players: [
-          { name: "Bot A", guildTag: null, bot: true, template: played(2) },
-          { name: "Bot B", guildTag: null, bot: true, template: played(3) },
+          { name: "Bot A", guildTag: null, bot: true, pubkey: null, template: played(2) },
+          { name: "Bot B", guildTag: null, bot: true, pubkey: null, template: played(3) },
         ],
       },
     ],
