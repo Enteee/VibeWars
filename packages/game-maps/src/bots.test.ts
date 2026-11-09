@@ -196,9 +196,7 @@ describe("Relic Run bots (#2581)", () => {
 });
 
 describe("King of the Hill bots (#2582)", () => {
-  const map = loadAllMaps().find(
-    (candidate) => candidate.mode === "king-of-the-hill" && candidate.teams === 2,
-  );
+  const map = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
 
   const hill = (arena: MapData, seed: string, participants: readonly ParticipantSpec[]) => {
     const altar = arena.objectives.find((objective) => objective.kind === "altar");
@@ -213,7 +211,7 @@ describe("King of the Hill bots (#2582)", () => {
         level: 24,
         altar: altar.position,
         spawns: arena.objectives.flatMap((objective) =>
-          objective.kind === "ghost-spawn"
+          objective.kind === "ghost-spawn" && objective.team < 2
             ? [{ team: objective.team, position: objective.position }]
             : [],
         ),
