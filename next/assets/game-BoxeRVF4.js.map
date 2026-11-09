@@ -1,1 +1,0 @@
-{"version":3,"file":"game-BoxeRVF4.js","names":["ENGLISH_NAMES","game_default"],"sources":["../../src/i18n/locales/ro/game.ts"],"sourcesContent":["import { ENGLISH_NAMES } from \"../../game-names.js\";\n\nexport default ENGLISH_NAMES;\n"],"mappings":"A,uCAEA,IAAAC,EAAeD,E"}
