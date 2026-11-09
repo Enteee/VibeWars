@@ -8,8 +8,13 @@ import {
 } from "./arena-snapshot.js";
 import {
   altHeld,
+  deckSideLow,
+  DECK_SLAB,
+  drawnLayerAt,
+  liftAt,
   occludersOf,
   pickSurface,
+  rampDrawing,
   RING_PATH,
   traceHiddenOutline,
 } from "./layer-surfaces.js";
@@ -126,5 +131,91 @@ describe("clicking a character on a layered map (#2831)", () => {
   it("finds a body under a deck through its outline", () => {
     const arena = { ...EMPTY_SNAPSHOT, structure: BRIDGE, actors: [actor("under", 150, 0)] };
     expect(actorAtPoint(arena, { x: 205, y: 150 })?.id).toBe("under");
+  });
+});
+
+describe("liftAt (#2958)", () => {
+  const deck = (layer: number, x: number, y: number, width: number, height: number) => ({
+    layer,
+    footprint: { kind: "rect" as const, x, y, width, height },
+  });
+  const ramp = (from: number, to: number, x: number, y: number, width: number, height: number) => ({
+    from,
+    to,
+    area: { kind: "rect" as const, x, y, width, height },
+  });
+  const HEIGHTS: MapStructure = {
+    layerCount: 3,
+    decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
+    transitions: [
+      ramp(0, 1, 300, 250, 140, 200),
+      ramp(0, 1, 760, 250, 140, 200),
+      ramp(1, 2, 540, 150, 120, 120),
+    ],
+  };
+  const STEP = ELEVATION_STEP;
+
+  it.each([
+    ["west ramp", { x: 300, y: 350 }, { x: 370, y: 350 }, { x: 440, y: 350 }, 0],
+    ["east ramp", { x: 900, y: 350 }, { x: 830, y: 350 }, { x: 760, y: 350 }, 0],
+    ["1 to 2 ramp", { x: 600, y: 270 }, { x: 600, y: 210 }, { x: 600, y: 150 }, 1],
+  ])("%s: low end, midpoint, high end", (_name, low, mid, high, base) => {
+    expect(liftAt(HEIGHTS, low, base)).toBeCloseTo(base * STEP);
+    expect(liftAt(HEIGHTS, mid, base)).toBeCloseTo((base + 0.5) * STEP);
+    expect(liftAt(HEIGHTS, high, base + 1)).toBeCloseTo((base + 1) * STEP);
+  });
+
+  it("does not depend on which of the ramp's layers the body is on", () => {
+    expect(liftAt(HEIGHTS, { x: 370, y: 350 }, 1)).toBe(liftAt(HEIGHTS, { x: 370, y: 350 }, 0));
+  });
+
+  it("leaves a layer the ramp does not join at its own height", () => {
+    expect(liftAt(HEIGHTS, { x: 600, y: 260 }, 0)).toBe(0);
+  });
+
+  it("is the layer's height off every ramp", () => {
+    expect(liftAt(HEIGHTS, { x: 600, y: 400 }, 1)).toBe(STEP);
+    expect(liftAt(HEIGHTS, { x: 100, y: 100 }, 0)).toBe(0);
+  });
+
+  it("never steps on a walk from the ground to the deck", () => {
+    const walked = 5;
+    let last = 0;
+    for (let x = 280; x <= 460; x += walked) {
+      const layer = x < 300 ? 0 : 1;
+      const lift = liftAt(HEIGHTS, { x, y: 350 }, layer);
+      expect(Math.abs(lift - last)).toBeLessThanOrEqual((walked / 140) * STEP + 1e-9);
+      last = lift;
+    }
+    expect(last).toBe(STEP);
+  });
+
+  it("draws a body on a ramp in the ramp's upper layer, so its deck does not cover it", () => {
+    expect(drawnLayerAt(HEIGHTS, { x: 430, y: 350 }, 0)).toBe(1);
+    expect(drawnLayerAt(HEIGHTS, { x: 600, y: 260 }, 0)).toBe(0);
+    expect(drawnLayerAt(HEIGHTS, { x: 100, y: 100 }, 0)).toBe(0);
+  });
+
+  it("slopes the drawing from the lower layer's height to the upper's", () => {
+    const [west] = HEIGHTS.transitions;
+    if (west === undefined) throw new Error("no ramp");
+    const drawn = rampDrawing(HEIGHTS, west);
+    expect(drawn?.slope).toEqual([
+      { x: 300, y: 250 },
+      { x: 440, y: 250 - STEP },
+      { x: 440, y: 450 - STEP },
+      { x: 300, y: 450 },
+    ]);
+    expect(drawn?.side[2]).toEqual({ x: 440, y: 450 });
+    expect(drawn?.chevrons).toHaveLength(3);
+  });
+
+  it("makes a deck on a ground wall a slab, and leaves other decks solid", () => {
+    const [bridge, platform] = HEIGHTS.decks;
+    if (bridge === undefined || platform === undefined) throw new Error("no decks");
+    const pillar = { kind: "rect" as const, layer: 0, x: 450, y: 420, width: 24, height: 24 };
+    expect(deckSideLow(bridge, [pillar])).toBe(STEP - DECK_SLAB);
+    expect(deckSideLow(bridge, [])).toBe(0);
+    expect(deckSideLow(platform, [pillar])).toBe(STEP);
   });
 });

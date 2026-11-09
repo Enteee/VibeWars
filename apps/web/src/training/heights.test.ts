@@ -1,4 +1,9 @@
-import { MatchSimulation, TRAINING_SCENARIOS, scenarioParticipants } from "@vibewars/game-core";
+import {
+  MatchSimulation,
+  TRAINING_SCENARIOS,
+  baseEnergyPipsFor,
+  scenarioParticipants,
+} from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import { describe, expect, it } from "vitest";
 
@@ -30,17 +35,13 @@ function inside(
   return x >= area.x && x <= area.x + area.width && y >= area.y && y <= area.y + area.height;
 }
 
-/** The hunter at `from`, the player standing at `to`; every step it takes until it stops. */
+/** A chasing fireball dummy at `from`, the player standing at `to`; every step it takes until it stops. */
 function chase(from: Spot, to: Spot): readonly Spot[] {
   const [template] = scenarioParticipants(
     { ...scenario, dummies: scenario.dummies.filter(({ id }) => id === "under-bridge") },
     to,
   );
-  const [hunter] = scenarioParticipants(
-    { ...scenario, dummies: scenario.dummies.filter(({ id }) => id === "hunter") },
-    to,
-  );
-  if (template === undefined || hunter === undefined) throw new Error("no dummies");
+  if (template === undefined) throw new Error("no dummies");
   const simulation = new MatchSimulation({
     seed: "heights",
     teamCount: map.teams,
@@ -49,7 +50,29 @@ function chase(from: Spot, to: Spot): readonly Spot[] {
     layers: matchLayers(map),
     participants: [
       { ...template, id: "you", team: 0, spawn: { x: to.x, y: to.y }, layer: to.layer },
-      { ...hunter, spawn: { x: from.x, y: from.y }, layer: from.layer },
+      {
+        ...template,
+        id: "hunter",
+        team: 1,
+        spawn: { x: from.x, y: from.y },
+        layer: from.layer,
+        skillBar: ["elementalist.fireball"],
+        attributeRanks: new Map([["elementalist.fire-magic", 12]]),
+        baseEnergyPips: baseEnergyPipsFor("elementalist"),
+        behaviour: {
+          kind: "parallel",
+          behaviours: [
+            { kind: "chase", targeting: { kind: "nearest-enemy" }, standOffUnits: 250 },
+            {
+              kind: "cast-loop",
+              skillIds: ["elementalist.fireball"],
+              targeting: { kind: "nearest-enemy" },
+              gapSeconds: 0,
+              firstLegal: true,
+            },
+          ],
+        },
+      },
     ],
   });
   const steps: Spot[] = [];
@@ -89,5 +112,14 @@ describe("the hunter on Training Heights (#2937)", () => {
 
   it("goes up a ramp after a player on the bridge", () => {
     expectClimbed(chase({ x: 1100, y: 350, layer: 0 }, { x: 450, y: 350, layer: 1 }), 1);
+  });
+});
+
+describe("the Heights scenario (#2958)", () => {
+  it("has nothing that attacks: every dummy is idle", () => {
+    expect(scenario.dummies.length).toBeGreaterThan(0);
+    for (const dummy of scenario.dummies) {
+      expect(dummy.behaviour.kind).toBe("idle");
+    }
   });
 });

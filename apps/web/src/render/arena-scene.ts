@@ -5,7 +5,6 @@ import {
   CAPTURE_REACH_UNITS,
   GATE_PLATE_REACH_UNITS,
   isStatusId,
-  pointInPolygon,
   isWeaponId,
   type CreatureLook,
   type StatusId,
@@ -56,10 +55,14 @@ import {
 import {
   altHeld,
   CREATURE_PATH,
+  deckSideLow,
+  drawnLayerAt,
+  liftAt,
   occludersOf,
   pickSurface,
+  rampDrawing,
+  shapeHoldsCentre,
   RING_PATH,
-  shapeOutline,
   traceHiddenOutline,
   type Occluder,
 } from "./layer-surfaces.js";
@@ -161,6 +164,8 @@ const WALL_FILL = 0x202836;
 const DECK_FILL = 0x2c3648;
 const DECK_SIDE_FILL = 0x151b26;
 const RAMP_FILL = 0x262f3f;
+const RAMP_CHEVRON = 0x4a5a72;
+const RAMP_CHEVRON_WIDTH = 2;
 /** How far apart the side face's stacked outlines lie, in world units. */
 const SIDE_FACE_SLICE = 2;
 /** The hover marker on a layered map (#2831), its dashes on the ground. */
@@ -168,15 +173,6 @@ const HOVER_RING = 0xd7dee8;
 const HOVER_RADIUS = 12;
 const HOVER_DASHES = 8;
 
-/** Whether `wall`'s middle lies inside `shape`: a wall under a deck is a support. */
-function shapeHoldsCentre(shape: RenderableShape, wall: RenderableShape): boolean {
-  const corners = shapeOutline(wall);
-  const sum = corners.reduce((at, c) => ({ x: at.x + c.x, y: at.y + c.y }), { x: 0, y: 0 });
-  return pointInPolygon(
-    { x: sum.x / corners.length, y: sum.y / corners.length },
-    shapeOutline(shape),
-  );
-}
 const WALL_STROKE = 0x3b4759;
 const TARGET_RING = 0xffd866;
 /** The `condition` orange: your team's called foe wears its chevron (#443). */
@@ -567,12 +563,16 @@ export class ArenaScene extends Phaser.Scene {
     const seen = new Set<string>();
     const lifted = actors.map((actor) => {
       seen.add(actor.id);
-      const target = elevationOf(actor.layer);
+      const target = liftAt(structure, actor.position, actor.layer);
       const known = this.elevations.get(actor.id);
       const lift =
         known === undefined || this.reducedMotion ? target : easeElevation(known, target, dt);
       this.elevations.set(actor.id, lift);
-      return { ...actor, position: { x: actor.position.x, y: actor.position.y - lift } };
+      return {
+        ...actor,
+        layer: drawnLayerAt(structure, actor.position, actor.layer),
+        position: { x: actor.position.x, y: actor.position.y - lift },
+      };
     });
     for (const id of this.elevations.keys()) {
       if (!seen.has(id)) {
@@ -1758,12 +1758,11 @@ export class ArenaScene extends Phaser.Scene {
     // flickers as the camera moves (#2393): 1 CSS px, as the edge markers.
     const line = 1 / next.zoom;
     this.drawGrid(g, line);
-    g.fillStyle(RAMP_FILL, 1);
-    for (const transition of next.structure.transitions) {
-      this.fillShape(g, transition.area);
-    }
     for (const graphics of this.structureGraphics.values()) {
       graphics.clear();
+    }
+    for (const transition of next.structure.transitions) {
+      this.drawRamp(next.structure, transition, line);
     }
     for (const wall of next.walls) {
       const deckLayer = next.structure.decks.find(
@@ -1780,7 +1779,7 @@ export class ArenaScene extends Phaser.Scene {
       );
     }
     for (const deck of next.structure.decks) {
-      this.drawDeck(deck, line);
+      this.drawDeck(deck, next.walls, line);
     }
     this.occluders = occludersOf(next.walls, next.structure);
     this.drawnMap = next;
@@ -1844,12 +1843,57 @@ export class ArenaScene extends Phaser.Scene {
     return graphics;
   }
 
+  /** A ramp sloping from its lower layer's height to its upper's, chevrons pointing uphill. */
+  private drawRamp(
+    structure: MapStructure,
+    ramp: MapStructure["transitions"][number],
+    line: number,
+  ): void {
+    const g = this.structureAt({ kind: "ramp", upperLayer: Math.max(ramp.from, ramp.to) });
+    const drawing = rampDrawing(structure, ramp);
+    if (drawing === undefined) {
+      g.fillStyle(RAMP_FILL, 1);
+      this.fillShape(g, ramp.area);
+      return;
+    }
+    g.fillStyle(DECK_SIDE_FILL, 1);
+    this.fillFan(g, drawing.side);
+    g.fillStyle(RAMP_FILL, 1);
+    this.fillFan(g, drawing.slope);
+    g.lineStyle(line * RAMP_CHEVRON_WIDTH, RAMP_CHEVRON, 1);
+    for (const chevron of drawing.chevrons) {
+      g.strokePoints(
+        chevron.map(({ x, y }) => new Phaser.Math.Vector2(x, y)),
+        false,
+        false,
+      );
+    }
+  }
+
+  /** Fills the convex outline `points`, as triangles from its first. */
+  private fillFan(g: Phaser.GameObjects.Graphics, points: readonly Vec2[]): void {
+    const [first] = points;
+    if (first === undefined) {
+      return;
+    }
+    for (let i = 1; i + 1 < points.length; i += 1) {
+      const [b, c] = [points[i], points[i + 1]];
+      if (b !== undefined && c !== undefined) {
+        g.fillTriangle(first.x, first.y, b.x, b.y, c.x, c.y);
+      }
+    }
+  }
+
   /** A deck at its layer's height, its side face reaching down one layer. */
-  private drawDeck(deck: MapStructure["decks"][number], line: number): void {
+  private drawDeck(
+    deck: MapStructure["decks"][number],
+    walls: readonly RenderableWall[],
+    line: number,
+  ): void {
     const top = elevationOf(deck.layer);
     const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
     side.fillStyle(DECK_SIDE_FILL, 1);
-    for (let lift = elevationOf(deck.layer - 1); lift < top; lift += SIDE_FACE_SLICE) {
+    for (let lift = deckSideLow(deck, walls); lift < top; lift += SIDE_FACE_SLICE) {
       side.save();
       side.translateCanvas(0, -lift);
       this.fillShape(side, deck.footprint);

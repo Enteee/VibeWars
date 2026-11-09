@@ -22,7 +22,7 @@ import type {
 } from "./flag-objects.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
-import { elevationOf } from "./render-order.js";
+import { liftAt } from "./layer-surfaces.js";
 import { screenPx } from "./screen-text.js";
 
 /**
@@ -543,7 +543,10 @@ export function actorAtPoint(
       ? snapshot.actors
       : snapshot.actors.map((actor) => ({
           ...actor,
-          position: { x: actor.position.x, y: actor.position.y - elevationOf(actor.layer) },
+          position: {
+            x: actor.position.x,
+            y: actor.position.y - liftAt(snapshot.structure, actor.position, actor.layer),
+          },
         }));
   return (
     nearestUnder(actors, point, living) ??

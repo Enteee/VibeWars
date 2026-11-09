@@ -21,6 +21,182 @@ export function shapeOutline(shape: RenderableShape): readonly Vec2[] {
       ];
 }
 
+type Transition = MapStructure["transitions"][number];
+
+interface Box {
+  readonly left: number;
+  readonly top: number;
+  readonly right: number;
+  readonly bottom: number;
+}
+
+function boxOf(shape: RenderableShape): Box {
+  const outline = shapeOutline(shape);
+  const xs = outline.map(({ x }) => x);
+  const ys = outline.map(({ y }) => y);
+  return {
+    left: Math.min(...xs),
+    top: Math.min(...ys),
+    right: Math.max(...xs),
+    bottom: Math.max(...ys),
+  };
+}
+
+/** The ramp `layer`'s body at `position` stands on, if any. */
+function rampAt(structure: MapStructure, position: Vec2, layer: number): Transition | undefined {
+  return structure.transitions.find(
+    ({ from, to, area }) =>
+      (from === layer || to === layer) && pointInPolygon(position, shapeOutline(area)),
+  );
+}
+
+/** The cardinal direction `ramp` climbs: toward the nearest deck of its `to` layer. */
+function uphillOf(structure: MapStructure, ramp: Transition): Vec2 | undefined {
+  const box = boxOf(ramp.area);
+  const centre = { x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2 };
+  let nearest: Vec2 | undefined;
+  for (const deck of structure.decks) {
+    if (deck.layer !== ramp.to) {
+      continue;
+    }
+    const footprint = boxOf(deck.footprint);
+    const x = Math.min(Math.max(centre.x, footprint.left), footprint.right) - centre.x;
+    const y = Math.min(Math.max(centre.y, footprint.top), footprint.bottom) - centre.y;
+    if (nearest === undefined || x * x + y * y < nearest.x * nearest.x + nearest.y * nearest.y) {
+      nearest = { x, y };
+    }
+  }
+  if (nearest === undefined) {
+    return undefined;
+  }
+  return Math.abs(nearest.x) >= Math.abs(nearest.y)
+    ? { x: Math.sign(nearest.x), y: 0 }
+    : { x: 0, y: Math.sign(nearest.y) };
+}
+
+/** How far along `box` `position` is going `uphill`: 0 at the low end, 1 at the high, clamped. */
+function progressAlong(box: Box, uphill: Vec2, position: Vec2): number {
+  const across =
+    uphill.x !== 0
+      ? (uphill.x > 0 ? position.x - box.left : box.right - position.x) / (box.right - box.left)
+      : (uphill.y > 0 ? position.y - box.top : box.bottom - position.y) / (box.bottom - box.top);
+  return Math.min(Math.max(across, 0), 1);
+}
+
+/** The height a ramp draws at `t` of the way up. */
+function rampLift(ramp: Transition, t: number): number {
+  return elevationOf(ramp.from) + t * (elevationOf(ramp.to) - elevationOf(ramp.from));
+}
+
+/**
+ * The drawn lift of a body on `layer` at `position`: its layer's height,
+ * or on a ramp of its layer the ramp's height at that point, which does
+ * not depend on which of the ramp's two layers the body is on.
+ */
+export function liftAt(structure: MapStructure, position: Vec2, layer: number): number {
+  const ramp = rampAt(structure, position, layer);
+  const uphill = ramp === undefined ? undefined : uphillOf(structure, ramp);
+  if (ramp === undefined || uphill === undefined) {
+    return elevationOf(layer);
+  }
+  return rampLift(ramp, progressAlong(boxOf(ramp.area), uphill, position));
+}
+
+/**
+ * The layer a body draws on: a ramp's upper one while it is on that ramp.
+ * A ramp's top overlaps its deck, and a body walking down it has already
+ * become the lower layer's, which would put it under that deck.
+ */
+export function drawnLayerAt(structure: MapStructure, position: Vec2, layer: number): number {
+  const ramp = rampAt(structure, position, layer);
+  return ramp === undefined ? layer : Math.max(ramp.from, ramp.to);
+}
+
+/** A ramp as it draws: all points already lifted. */
+export interface RampDrawing {
+  readonly slope: readonly Vec2[];
+  readonly side: readonly Vec2[];
+  readonly chevrons: readonly (readonly Vec2[])[];
+}
+
+/** Where the chevrons of a ramp sit, as shares of its length. */
+const CHEVRON_AT = [0.25, 0.5, 0.75];
+/** A chevron's arms: how far back along the ramp, how wide across it, as shares. */
+const CHEVRON_BACK = 0.1;
+const CHEVRON_WIDE = 0.28;
+
+/** The slope, south side face and uphill chevrons of `ramp`; none if no deck tops it. */
+export function rampDrawing(structure: MapStructure, ramp: Transition): RampDrawing | undefined {
+  const uphill = uphillOf(structure, ramp);
+  if (uphill === undefined) {
+    return undefined;
+  }
+  const box = boxOf(ramp.area);
+  const lifted = (point: Vec2): Vec2 => ({
+    x: point.x,
+    y: point.y - rampLift(ramp, progressAlong(box, uphill, point)),
+  });
+  const width = box.right - box.left;
+  const height = box.bottom - box.top;
+  const length = uphill.x !== 0 ? width : height;
+  const wide = uphill.x !== 0 ? height : width;
+  const centre = { x: box.left + width / 2, y: box.top + height / 2 };
+  const onRamp = (t: number, across: number): Vec2 =>
+    lifted({
+      x: centre.x + uphill.x * (t - 0.5) * length - uphill.y * across * wide,
+      y: centre.y + uphill.y * (t - 0.5) * length + uphill.x * across * wide,
+    });
+  const southWest = { x: box.left, y: box.bottom };
+  const southEast = { x: box.right, y: box.bottom };
+  const ground = elevationOf(ramp.from);
+  return {
+    slope: [
+      lifted({ x: box.left, y: box.top }),
+      lifted({ x: box.right, y: box.top }),
+      lifted(southEast),
+      lifted(southWest),
+    ],
+    side: [
+      lifted(southWest),
+      lifted(southEast),
+      { x: southEast.x, y: southEast.y - ground },
+      { x: southWest.x, y: southWest.y - ground },
+    ],
+    chevrons: CHEVRON_AT.map((t) => [
+      onRamp(t - CHEVRON_BACK, -CHEVRON_WIDE),
+      onRamp(t, 0),
+      onRamp(t - CHEVRON_BACK, CHEVRON_WIDE),
+    ]),
+  };
+}
+
+/** How thick a deck on pillars draws: the rest of its height is open air. */
+export const DECK_SLAB = 10;
+
+/** Whether `wall`'s middle lies inside `shape`: a wall under a deck is a support. */
+export function shapeHoldsCentre(shape: RenderableShape, wall: RenderableShape): boolean {
+  const corners = shapeOutline(wall);
+  const sum = corners.reduce((at, c) => ({ x: at.x + c.x, y: at.y + c.y }), { x: 0, y: 0 });
+  return pointInPolygon(
+    { x: sum.x / corners.length, y: sum.y / corners.length },
+    shapeOutline(shape),
+  );
+}
+
+/**
+ * The lowest lift of `deck`'s side face: a layer-1 deck standing on a
+ * ground wall is a slab, every other deck is solid down to the layer below.
+ */
+export function deckSideLow(
+  deck: MapStructure["decks"][number],
+  walls: readonly RenderableWall[],
+): number {
+  const onPillars =
+    deck.layer === 1 &&
+    walls.some((wall) => wall.layer === 0 && shapeHoldsCentre(deck.footprint, wall));
+  return onPillars ? elevationOf(deck.layer) - DECK_SLAB : elevationOf(deck.layer - 1);
+}
+
 /** A place a click can name: the layer, and the point on it in the simulation's terms. */
 export interface Surface {
   readonly layer: number;
@@ -104,12 +280,7 @@ export function occludersOf(
       occluder(wall, elevationOf(wall.layer), elevationOf(wall.layer), wall.layer),
     ),
     ...structure.decks.map((deck) =>
-      occluder(
-        deck.footprint,
-        elevationOf(deck.layer - 1),
-        elevationOf(deck.layer),
-        deck.layer - 1,
-      ),
+      occluder(deck.footprint, deckSideLow(deck, walls), elevationOf(deck.layer), deck.layer - 1),
     ),
   ];
 }
