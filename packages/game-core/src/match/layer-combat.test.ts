@@ -381,7 +381,7 @@ describe("spirits and spreading conditions across layers (ADR-0051)", () => {
     const sim = arena([
       spec("owner", 0, vec2(900, 400), 1),
       spirit("s", vec2(600, 400), 1, {
-        skillId: "ritualist.restoration-magic",
+        skillId: "ritualist.preservation",
         pulse: { everySeconds: 1, heal: 40, radius: 300, pulsed: 0 },
       }),
       spec("under", 0, vec2(640, 400), 0, { startHealthFraction: 0.2 }),
@@ -395,7 +395,7 @@ describe("spirits and spreading conditions across layers (ADR-0051)", () => {
     const sim = arena([
       spec("owner", 0, vec2(900, 400), 1),
       spirit("s", vec2(600, 400), 1, {
-        skillId: "ritualist.restoration-magic",
+        skillId: "ritualist.preservation",
         pulse: { everySeconds: 1, heal: 40, radius: 300, pulsed: 0 },
       }),
       spec("level", 0, vec2(640, 400), 1, { startHealthFraction: 0.2 }),
