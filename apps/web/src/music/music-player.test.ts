@@ -78,7 +78,7 @@ function opened() {
 describe("createMusicPlayer", () => {
   it("makes no host before the first gesture, and one on it", () => {
     const { player, frames, click } = setup();
-    player.load(track);
+    player.load(track, null);
     expect(frames).toHaveLength(0);
     click();
     click();
@@ -88,7 +88,7 @@ describe("createMusicPlayer", () => {
   it("queues calls until the host is ready, keeping only the last of each kind", () => {
     const { player, frames, click } = setup();
     player.setIntensity(1);
-    player.load(track);
+    player.load(track, null);
     player.setIntensity(2);
     player.crossfadeTo({ ...track, id: "ashen-fields" }, "cycle");
     click();
@@ -134,7 +134,13 @@ describe("createMusicPlayer", () => {
     player.onNowPlaying((id) => playing.push(id));
     player.onError((error) => errors.push(error));
     frames[0]?.receive({ type: "ready" });
-    frames[0]?.receive({ type: "playing", trackId: "first-light", cycle: 0, cps: 0.3 });
+    frames[0]?.receive({
+      type: "playing",
+      trackId: "first-light",
+      cycle: 0,
+      cps: 0.3,
+      heardAtEpochMs: 1,
+    });
     frames[0]?.receive({ type: "error", message: "Unexpected token (3:0)", line: 3 });
     expect(playing).toEqual(["first-light"]);
     expect(errors).toEqual([{ message: "Unexpected token (3:0)", line: 3 }]);
@@ -299,7 +305,7 @@ describe("a host that floods the game (#878)", () => {
     for (let i = 0; i < 3; i += 1) {
       frames[0]?.receive({ type: "error", message: "bad", seq });
     }
-    player.load(track);
+    player.load(track, null);
     frames[0]?.receive({ type: "error", message: "playing" });
     frames[0]?.receive({ type: "error", message: "playing" });
     expect(errors).toEqual([{ message: "bad", evaluation: seq }, { message: "playing" }]);

@@ -25,8 +25,11 @@ export interface HostTrack {
 export type LandOn = "phrase" | "cycle";
 
 export type GameToHost =
-  /** Play this track now, replacing whatever plays. */
-  | ({ readonly type: "load" } & HostTrack)
+  /**
+   * Play this track, replacing whatever plays: its first beat at
+   * `startAtEpochMs` or as soon after as the host can, or, with `null`, now.
+   */
+  | ({ readonly type: "load"; readonly startAtEpochMs: number | null } & HostTrack)
   /**
    * Switch to this track on the playing one's next phrase boundary, or on
    * its next cycle, fading over `cycles`.
@@ -111,6 +114,8 @@ export type HostToGame =
       readonly trackId: string;
       readonly cycle: number;
       readonly cps: number;
+      /** When the track's first beat comes out of the speakers. */
+      readonly heardAtEpochMs: number;
     }
   | { readonly type: "evaluated"; readonly seq: number }
   /**
@@ -178,7 +183,10 @@ export function parseGameToHost(data: unknown): GameToHost | null {
         return null;
       }
       if (message.type === "load") {
-        return { type: "load", ...parsed };
+        const { startAtEpochMs } = message;
+        return startAtEpochMs === null || finite(startAtEpochMs, 0, Number.MAX_SAFE_INTEGER)
+          ? { type: "load", startAtEpochMs, ...parsed }
+          : null;
       }
       return finite(message.cycles, 0, 16) &&
         (message.landOn === "phrase" || message.landOn === "cycle")
@@ -233,11 +241,12 @@ export function parseHostToGame(data: unknown): HostToGame | null {
         ? { type: "evaluated", seq: message.seq as number }
         : null;
     case "playing": {
-      const { trackId, cycle, cps } = message;
+      const { trackId, cycle, cps, heardAtEpochMs } = message;
       return text(trackId, MAX_TEXT_LENGTH) &&
         finite(cycle, 0, Number.MAX_SAFE_INTEGER) &&
-        finite(cps, 0, 100)
-        ? { type: "playing", trackId, cycle, cps }
+        finite(cps, 0, 100) &&
+        finite(heardAtEpochMs, 0, Number.MAX_SAFE_INTEGER)
+        ? { type: "playing", trackId, cycle, cps, heardAtEpochMs }
         : null;
     }
     case "error": {

@@ -7,6 +7,7 @@ import {
   initAudio,
   registerSynthSounds,
   samples,
+  superdough,
   webaudioOutput,
   webaudioRepl,
   type Output,
@@ -31,7 +32,8 @@ import { busGate, type BusGate } from "./bus-gate.js";
 import { crossfade, isTempoMark, overTrack } from "./crossfade.js";
 import { dropLate } from "./late-notes.js";
 import { catchUpTick, leadClock } from "./lead-clock.js";
-import { makeLayer, type TrackClock } from "./layer.js";
+import { firstBeatDelay } from "./first-beat.js";
+import { makeLayer, placedAt, type TrackClock } from "./layer.js";
 import { reverbPins } from "./reverb-pins.js";
 import { stingStart } from "./sting-start.js";
 import { startAudioStress } from "./audio-stress.js";
@@ -71,6 +73,18 @@ const AUDIO_START_MS = 3_000;
 const LEAD_SECONDS = 0.75;
 /** The cyclist's own lookahead (interval plus overlap): the most its clock may move on at once. */
 const CYCLIST_LOOKAHEAD_SECONDS = 0.2;
+/** What the cyclist adds to a note's time, its default `latency`. */
+const CYCLIST_LATENCY_SECONDS = 0.1;
+/**
+ * On top of `LEAD_SECONDS`, the least notice a timed start gets (#2936):
+ * more than what the scheduler has queried already, and, with the lead,
+ * more than the splash's 2 s flight, which starts when this is reported.
+ */
+const FIRST_BEAT_MARGIN_SECONDS = 1.35;
+/** How far ahead an inaudible prefetch is placed: superdough skips what is already past. */
+const PREFETCH_AHEAD_SECONDS = 0.05;
+/** The longest a timed start waits for its first samples. */
+const PREFETCH_MS = 2_000;
 /**
  * A note due to start sooner than this after the audio clock is left out
  * rather than started with its attack cut off (#1991): about a render
@@ -342,8 +356,60 @@ export async function startEngine(): Promise<void> {
     out.connect(bus);
   };
 
+  /** Where the scheduler counts from: what its next tick will use, if the tempo just changed. */
+  const tempoMark = (): { readonly cycle: number; readonly seconds: number } =>
+    scheduler.num_ticks_since_cps_change === 0
+      ? { cycle: scheduler.lastEnd, seconds: scheduler.clock.getPhase() }
+      : {
+          cycle: scheduler.num_cycles_at_cps_change,
+          seconds: scheduler.seconds_at_cps_change,
+        };
+
+  /** When a note on `cycle` starts in the audio context, as the cyclist works it out. */
+  const audioTimeOf = (cycle: number): number => {
+    const mark = tempoMark();
+    return (cycle - mark.cycle) / scheduler.cps + mark.seconds + CYCLIST_LATENCY_SECONDS;
+  };
+
+  const cycleAt = (audioTime: number): number => {
+    const mark = tempoMark();
+    return (audioTime - mark.seconds - CYCLIST_LATENCY_SECONDS) * scheduler.cps + mark.cycle;
+  };
+
   const announce = (track: Playing): void => {
-    post({ type: "playing", trackId: track.trackId, cycle: track.clock.origin, cps: track.cps });
+    // Safari has no `outputLatency`.
+    const latency = context.baseLatency + (context.outputLatency || 0);
+    const untilHeard = audioTimeOf(track.clock.origin) - context.currentTime + latency;
+    post({
+      type: "playing",
+      trackId: track.trackId,
+      cycle: track.clock.origin,
+      cps: track.cps,
+      heardAtEpochMs: Date.now() + untilHeard * 1000,
+    });
+  };
+
+  /**
+   * Fetch and decode every sample of the pattern's first cycle, inaudibly,
+   * so that none is still on its way when it is due. `samples()` only
+   * registers them. One that fails is left to fail when it is played.
+   */
+  const prefetch = async (pattern: core.Pattern, cps: number): Promise<void> => {
+    const saved = levels;
+    levels = [{ from: 0, level: 3 }];
+    try {
+      const at = context.currentTime + PREFETCH_AHEAD_SECONDS;
+      const fetched = Promise.allSettled(
+        pattern
+          .queryArc(0, 1)
+          .filter((hap) => !isTempoMark(hap.value))
+          .map((hap) => superdough({ ...record(hap.value), gain: 0 }, at, 0.01, cps)),
+      );
+      // The queue is serial: a slow network must not hold up the menu's load.
+      await within(fetched, PREFETCH_MS, "the first samples are slow").catch(() => undefined);
+    } finally {
+      levels = saved;
+    }
   };
 
   /** What a scheduler that is about to start needs: a clock `LEAD_SECONDS` ahead, and the bus open. */
@@ -366,6 +432,13 @@ export async function startEngine(): Promise<void> {
         return [];
       }
     });
+
+  /** Stop the scheduler. Cycles start again from 0, and so does the intensity schedule. */
+  const halt = (): void => {
+    levels = [{ from: 0, level: levelAt(levels, position()) }];
+    scheduler.stop();
+    gate?.stop();
+  };
 
   /** Play `pattern`, with the sting, if one plays, on top. */
   const schedule = async (pattern: core.Pattern): Promise<void> => {
@@ -423,18 +496,49 @@ export async function startEngine(): Promise<void> {
     }
   };
 
-  /** Play `track` now, in place of anything playing or planned. */
-  const load = async (track: HostTrack, askedAt: number): Promise<void> => {
+  /**
+   * Where a track must be placed to start at `startAtEpochMs`, or as soon
+   * after as can be, on a scheduler just started: only a running one can say.
+   */
+  const originFor = async (startAtEpochMs: number): Promise<number> => {
+    await schedule(core.silence);
+    const delay = firstBeatDelay({
+      startAtEpochMs,
+      nowEpochMs: Date.now(),
+      leadSeconds: LEAD_SECONDS,
+      marginSeconds: FIRST_BEAT_MARGIN_SECONDS,
+    });
+    return Math.max(position(), cycleAt(context.currentTime + delay));
+  };
+
+  /** Play `track`, in place of anything playing or planned: now, or from `startAtEpochMs`. */
+  const load = async (
+    track: HostTrack,
+    startAtEpochMs: number | null,
+    askedAt: number,
+  ): Promise<void> => {
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
     await ensureAudio();
-    clock.origin = scheduler.started ? Math.floor(position()) : 0;
+    if (startAtEpochMs !== null) {
+      await prefetch(pattern, cps);
+      // A cold start, so that the times the scheduler counts from are fresh.
+      if (scheduler.started) {
+        halt();
+      }
+    }
+    scheduler.setCps(cps);
+    clock.origin =
+      startAtEpochMs !== null
+        ? await originFor(startAtEpochMs)
+        : scheduler.started
+          ? Math.floor(position())
+          : 0;
     switching = undefined;
     // A sting belongs to the music it was played over.
     sting = undefined;
     playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, clock };
     pins.reset();
-    scheduler.setCps(cps);
-    await schedule(pattern.late(clock.origin));
+    await schedule(placedAt(pattern, clock.origin));
     announce(playing);
     heard("load", askedAt, 0);
   };
@@ -450,8 +554,9 @@ export async function startEngine(): Promise<void> {
     landOn: LandOn,
     askedAt: number,
   ): Promise<void> => {
-    if (playing === undefined || !scheduler.started) {
-      await load(track, askedAt);
+    // A track still waiting for its first beat has nothing to fade from.
+    if (playing === undefined || !scheduler.started || playing.clock.origin > position()) {
+      await load(track, null, askedAt);
       return;
     }
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
@@ -501,7 +606,7 @@ export async function startEngine(): Promise<void> {
   const handle = async (message: GameToHost, askedAt: number): Promise<void> => {
     switch (message.type) {
       case "load":
-        await load(message, askedAt);
+        await load(message, message.startAtEpochMs, askedAt);
         return;
       case "crossfadeTo":
         await crossfadeTo(message, message.cycles, message.landOn, askedAt);
@@ -515,15 +620,12 @@ export async function startEngine(): Promise<void> {
         }
         return;
       case "stop":
-        // Cycles start again from 0, and so does the intensity schedule.
-        levels = [{ from: 0, level: levelAt(levels, position()) }];
+        halt();
         if (switching !== undefined) {
           playing = switching.next;
           switching = undefined;
         }
         sting = undefined;
-        scheduler.stop();
-        gate?.stop();
         return;
       case "setIntensity":
         levels = scheduleLevel(levels, message.level, nextCycle(position()));

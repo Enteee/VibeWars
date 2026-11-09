@@ -59,6 +59,11 @@ declare module "@strudel/webaudio" {
       /** The end of what the scheduler has queried, in cycles. */
       readonly lastEnd: number;
       readonly cps: number;
+      /** Ticks since the tempo last changed; at 0 the next tick restarts the sums below. */
+      readonly num_ticks_since_cps_change: number;
+      /** The cycle, and the clock time, the scheduler counts its current tempo from. */
+      readonly num_cycles_at_cps_change: number;
+      readonly seconds_at_cps_change: number;
       /** zyklus: `getPhase` is the next slot's time, `duration` a slot's length, in seconds. */
       readonly clock: { getPhase(): number; readonly duration: number };
       setCps(cps: number): void;
@@ -87,6 +92,13 @@ declare module "@strudel/webaudio" {
   export const webaudioOutput: Output;
   export function registerSynthSounds(): void;
   export function samples(map: string, baseUrl: string): Promise<void>;
+  /** Plays one sound at `t`; settles once its sample is fetched and decoded. */
+  export function superdough(
+    value: object,
+    t: number,
+    duration: number,
+    cps: number,
+  ): Promise<void>;
   export function initAudio(options?: object): Promise<void>;
   export function getSuperdoughAudioController(): {
     readonly output: { readonly destinationGain: GainNode };
