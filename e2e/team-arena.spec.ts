@@ -3,7 +3,6 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
-import { STARTER_TEAMS } from "../packages/game-core/src/starter-teams.js";
 import { joinFriend, lobbyWindow, openRail, shutLobbyWindow } from "./helpers/menu.js";
 import {
   copyInvite,
@@ -81,6 +80,17 @@ async function formParty(
   await expect(guest.locator(".lobby-panel")).toContainText("The host starts matchmaking");
 }
 
+/** `leader` proposes the saved Quad, and both vote for it, which readies them (#2872). */
+async function voteQuad(leader: Page, member: Page): Promise<void> {
+  await leader.bringToFront();
+  await proposeTeam(leader, "Quad");
+  for (const page of [leader, member]) {
+    const card = page.locator(".team-lobby-proposals .play-card-open").first();
+    await press(page, card);
+    await expect(card).toHaveAttribute("aria-pressed", "true");
+  }
+}
+
 /**
  * The party's Team Lobby, both ready to end each stage; the host takes
  * seat 0, the guest seat 1, of the side's `seats`.
@@ -95,7 +105,7 @@ async function runTeamLobby(
     await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
   }
   await vote?.(guest);
-  // Nobody can vote for no proposal: the 30 s run out.
+  // Both votes end the stage; without them its 30 s run out.
   for (const page of [host, guest]) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character", {
       timeout: 40_000,
@@ -110,13 +120,6 @@ async function runTeamLobby(
 }
 
 /** `page` plays `build`: its skill bar's first skill is the build's. */
-/** The first skill on `page`'s bar, once the HUD shows one. */
-async function firstSkill(page: Page): Promise<string | null> {
-  const skill = page.locator(".hud-skills .hud-skill").first();
-  await expect(skill).toHaveAttribute("data-skill-id", /./);
-  return skill.getAttribute("data-skill-id");
-}
-
 async function expectPlays(
   page: Page,
   build: (typeof STARTER_BUILDS)[number] | undefined,
@@ -156,13 +159,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await expect(ann.locator(".toast")).toHaveText("Saved");
 
     await formParty([ann, bea], ["Ann", "Bea"]);
-    await runTeamLobby([ann, bea], async () => {
-      await ann.bringToFront();
-      await proposeTeam(ann, "Quad");
-      const card = bea.getByRole("button", { name: "Ann's team build" });
-      await press(bea, card);
-      await expect(card).toHaveAttribute("aria-pressed", "true");
-    });
+    await runTeamLobby([ann, bea], () => voteQuad(ann, bea));
     // The queue is the top bar's icon's (#2743).
     for (const page of [ann, bea]) {
       await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
@@ -174,9 +171,9 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await bea.keyboard.press("Escape");
     await expect(ann.getByRole("button", { name: "Leave the queue" })).toBeVisible();
 
-    // The other party plays a random 4v4 preset team: nobody proposes (#2148).
+    // The other party votes for the Quad too, so no stage runs its clock (#2872).
     await formParty([cid, dot], ["Cid", "Dot"]);
-    await runTeamLobby([cid, dot]);
+    await runTeamLobby([cid, dot], () => voteQuad(cid, dot));
 
     // Met, the queued lobby counts down five seconds before the match
     // starts (QUEUED_COUNTDOWN_SECONDS), then four pages boot an arena
@@ -188,11 +185,8 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     }
     await expectPlays(ann, QUAD[0]);
     await expectPlays(bea, QUAD[1]);
-    expect(
-      STARTER_TEAMS.filter((preset) => preset.members.length === 4).map((preset) =>
-        preset.members.slice(0, 2).map(({ build }) => build.skillBar[0]),
-      ),
-    ).toContainEqual([await firstSkill(cid), await firstSkill(dot)]);
+    await expectPlays(cid, QUAD[0]);
+    await expectPlays(dot, QUAD[1]);
     // Four a side: the party's two and two bots.
     await expect(ann.locator(".party-row-bot:visible")).toHaveCount(2);
     await expect(ann.locator(".party-row-name")).toContainText(["Bea"]);
