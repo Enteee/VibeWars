@@ -353,7 +353,7 @@ function referenceBuildNavGraph(
   const edges = nodes.map((node, i) =>
     nodes.flatMap((other, j) => (i !== j && refIsClear(graph, node, other) ? [j] : [])),
   );
-  return { walls, bounds, clearance, nodes, edges };
+  return { walls, outlineWalls: 0, walkable: [], bounds, clearance, nodes, edges };
 }
 
 /**

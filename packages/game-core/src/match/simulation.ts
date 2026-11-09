@@ -13,8 +13,12 @@ import {
   distanceWithinRange,
   firstHit,
   hasLineOfSight,
+  closestPointOnPolygon,
+  pointInPolygon,
+  polygonCentre,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
+  type Polygon,
 } from "../geometry.js";
 import type { Segment } from "../geometry.js";
 import {
@@ -54,14 +58,15 @@ import {
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
 import {
-  buildGatedNavGraph,
+  buildLayeredNavGraph,
+  createLayeredPathFinder,
   navGraphFor,
-  createPathFinder,
   isStandable,
   nearestStandable,
   type GatedNavGraph,
+  type LayeredPathFinder,
   type NavGraph,
-  type PathFinder,
+  type RouteWaypoint,
   walkIsClear,
 } from "../pathing.js";
 import {
@@ -342,6 +347,7 @@ import {
 } from "./ghost.js";
 import { priestId, priestSpec, type Shrine } from "./priest.js";
 import { steerAround } from "./steering.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * One match, steppable, with no transport attached (ADR-0017).
@@ -604,6 +610,20 @@ function hasMorale(participant: Participant): boolean {
   return participant.creature === undefined || participant.creature.onDeath === "lie";
 }
 
+/** A map's discrete layers (ADR-0051): layer 0 is the ground, and needs no area. */
+export interface MatchLayers {
+  readonly count: number;
+  /** Each layer's walls, indexed by layer, and without any gate's. */
+  readonly walls: readonly (readonly Segment[])[];
+  readonly decks: readonly { readonly layer: number; readonly footprint: Polygon }[];
+  /** Ramps and stairs: inside `area`, a body moves between `from` and `to`, one above it. */
+  readonly transitions: readonly {
+    readonly from: number;
+    readonly to: number;
+    readonly area: Polygon;
+  }[];
+}
+
 export interface ParticipantSpec {
   readonly id: string;
   readonly team: number;
@@ -611,6 +631,8 @@ export interface ParticipantSpec {
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly equipment: ResolvedEquipment;
   readonly spawn: Vec2;
+  /** The layer it spawns and respawns on (ADR-0051). Omitted: the ground. */
+  readonly layer?: number;
   /** Where it faces at the start and after every reset, in radians (`atan2`, 0 = +x). */
   readonly facing: number;
   /** Defaults to the ruleset's base health. */
@@ -674,6 +696,8 @@ export interface Participant {
   readonly skillBar: SkillBar;
   readonly spawn: Vec2;
   position: Vec2;
+  /** The one layer it is on (ADR-0051): only a ramp changes it, and a respawn. */
+  layer: number;
   /**
    * Where it faces, in radians, `atan2` convention, in (−π, π], 0 = +x.
    * Where it last pushed, or at what it is casting at or swinging at,
@@ -687,6 +711,8 @@ export interface Participant {
    * point as clicked.
    */
   walkGoal: Vec2 | undefined;
+  /** The layer a click-to-walk named; `undefined` when it named none. Read only while walking. */
+  walkLayer: number | undefined;
   /**
    * A targeted skill pressed out of range or out of sight, being walked
    * to (#415, #499); `undefined` when there is none. It goes off on
@@ -752,6 +778,8 @@ export interface MatchSimulationOptions {
   readonly teamCount?: TeamCount;
   /** Omitted or `[]`: nothing collides with a wall or blocks line of sight. */
   readonly walls?: readonly Segment[];
+  /** Omitted: one layer, the ground, and `walls` is its walls. */
+  readonly layers?: MatchLayers | undefined;
   /**
    * The map's size: no body leaves it, and an attack's approach never
    * paths outside it (#211). Omitted: an open field with no edge
@@ -847,12 +875,14 @@ interface ParticipantRecord extends Participant {
    * passing `passing`'s body; `undefined` when it does not. Asked anew
    * every tick.
    */
-  followGoal: { readonly point: Vec2; readonly passing: string | undefined } | undefined;
+  followGoal:
+    | { readonly point: Vec2; readonly layer: number; readonly passing: string | undefined }
+    | undefined;
   /**
    * The way an approach, a walk or a follow last planned (#1157), to
    * `goal`; `undefined` until one is asked for, and once its order ends.
    */
-  route: { goal: Vec2; waypoints: Vec2[] } | undefined;
+  route: { goal: Vec2; layer: number; waypoints: RouteWaypoint[] } | undefined;
   /**
    * Maximum health and energy before morale (#843): the participant's,
    * or its loadout's since the last `rearm`.
@@ -940,6 +970,43 @@ const KNOCKDOWN_EPSILON = 1e-9;
 
 /** What a use of a skill spares when that skill put nothing on its own user (#999). */
 const NONE_SPARED: ReadonlySet<StatusId> = new Set();
+
+/** The ramps of a map without any, shared so `#climb` allocates nothing per body. */
+const NO_TRANSITIONS: MatchLayers["transitions"] = [];
+
+/** Each layer's decks and ramps, indexed by layer; the ground's stays empty. */
+function walkableAreas(layers: MatchLayers | undefined): readonly (readonly Polygon[])[] {
+  if (layers === undefined) {
+    return [];
+  }
+  return Array.from({ length: layers.count }, (_, layer) =>
+    layer === 0
+      ? []
+      : [
+          ...layers.decks.filter((deck) => deck.layer === layer).map((deck) => deck.footprint),
+          ...layers.transitions
+            .filter((transition) => transition.from === layer || transition.to === layer)
+            .map((transition) => transition.area),
+        ],
+  );
+}
+
+/** From each ramp towards the nearest edge of a deck it climbs to. */
+function uphillDirections(layers: MatchLayers | undefined): readonly Vec2[] {
+  return (layers?.transitions ?? []).map((transition) => {
+    const foot = polygonCentre(transition.area);
+    let nearest = foot;
+    let least = Number.POSITIVE_INFINITY;
+    for (const deck of layers?.decks ?? []) {
+      const edge = closestPointOnPolygon(foot, deck.footprint);
+      if (deck.layer === transition.to && distance(foot, edge) < least) {
+        least = distance(foot, edge);
+        nearest = edge;
+      }
+    }
+    return normalize(sub(nearest, foot));
+  });
+}
 
 /** At most this many push-out passes per move; see `advanceMovement`. */
 const MOVEMENT_RELAX_PASSES = 4;
@@ -1053,8 +1120,9 @@ function faceToward(record: Participant, point: Vec2): void {
 /** The walls of one combination of gates, and the paths round them (#2691). */
 interface WallSet {
   readonly walls: readonly Segment[];
-  readonly graph: NavGraph;
-  readonly paths: PathFinder;
+  /** One a layer. */
+  readonly graphs: readonly NavGraph[];
+  readonly paths: LayeredPathFinder;
 }
 
 export class MatchSimulation {
@@ -1062,12 +1130,22 @@ export class MatchSimulation {
   readonly #matchRules: MatchRules | undefined;
   /** The map's walls and every closed gate's (#2691); swapped as a gate moves. */
   #walls: readonly Segment[];
-  readonly #gatedGraph: GatedNavGraph;
+  /** Omitted on a map of one layer. */
+  readonly #layers: MatchLayers | undefined;
+  /** Where a body may stand on each layer above the ground: its decks and ramps. */
+  readonly #walkable: readonly (readonly Polygon[])[];
+  /** Each ramp's way up, as a direction, in `#layers.transitions`' order. */
+  readonly #uphill: readonly Vec2[];
+  /** `#walls` for each layer: what collision reads, swapped as a gate moves. */
+  #layerWalls: readonly (readonly Segment[])[];
+  readonly #gatedGraphs: readonly GatedNavGraph[];
+  /** The map's walls, without any gate's; what `#walls` builds on. */
+  readonly #mapWalls: readonly Segment[];
   readonly #bounds: { readonly width: number; readonly height: number } | undefined;
-  /** Corners an approach or a walk can path through, from `#walls` (#211). */
-  #graph: NavGraph;
+  /** Corners an approach or a walk can path through, one graph a layer (#211). */
+  #graphs: readonly NavGraph[];
   /** Paths round this match's walls, for the attack's approach and for a walk (#211, #267, #310). */
-  #paths: PathFinder;
+  #paths: LayeredPathFinder;
   /** Walls and paths for each open-or-closed combination of the gates (#2691), built once. */
   readonly #wallSets = new Map<number, WallSet>();
   /** Filled in place, so a bot's objectives see each change (#2691). */
@@ -1208,16 +1286,26 @@ export class MatchSimulation {
     this.#score = emptyScore(teamIds(this.#teamCount));
     this.#bounds = options.bounds;
     this.#gates = initialGates(options.gates ?? []);
-    this.#gatedGraph = buildGatedNavGraph(
-      options.walls ?? [],
-      this.#gates.map((gate) => gate.segments),
+    this.#layers = options.layers;
+    this.#walkable = walkableAreas(this.#layers);
+    this.#mapWalls = options.walls ?? [];
+    this.#gatedGraphs = buildLayeredNavGraph(
+      this.#layers === undefined
+        ? [{ walls: this.#mapWalls, walkable: [] }]
+        : this.#layers.walls.map((walls, layer) => ({
+            walls,
+            walkable: this.#walkable[layer] ?? [],
+          })),
+      this.#gates.map((gate) => ({ layer: gate.layer ?? 0, segments: gate.segments })),
       this.#bounds,
       this.#ruleset.collision.playerRadius,
     );
     const walls = this.#currentWallSet();
     this.#walls = walls.walls;
-    this.#graph = walls.graph;
+    this.#graphs = walls.graphs;
     this.#paths = walls.paths;
+    this.#uphill = uphillDirections(this.#layers);
+    this.#layerWalls = this.#wallsByLayer();
     this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
     this.#rng = createRng(this.#seed);
     this.#flagField = options.flagField;
@@ -1465,15 +1553,21 @@ export class MatchSimulation {
     if (reset?.kind === "on-interval" && !(reset.everySeconds > 0)) {
       throw new Error(`participant ${spec.id}: on-interval needs everySeconds above 0`);
     }
+    const layer = spec.layer ?? 0;
+    if (!this.#isLayer(layer)) {
+      throw new Error(`participant ${spec.id}: layer ${String(layer)} is not one of the map's`);
+    }
     const record: ParticipantRecord = {
       id: spec.id,
       combatant: this.#combatant(spec),
       skillBar: spec.skillBar,
       spawn: spec.spawn,
       position: spec.spawn,
+      layer,
       facing: spec.facing,
       inputDirection: ZERO,
       walkGoal: undefined,
+      walkLayer: undefined,
       pendingSkill: undefined,
       targetId: undefined,
       respawnInSeconds: 0,
@@ -1671,6 +1765,8 @@ export class MatchSimulation {
         template.attack === undefined ? 0 : (ranks.get(template.attack.attributeId) ?? 0),
       ),
       spawn: at,
+      // Where its summoner stands (ADR-0051); nobody summoned a masterless one.
+      layer: (ownerId === undefined ? undefined : this.#participants.get(ownerId)?.layer) ?? 0,
       facing,
       // Spawning Power is the summoner's (#1098), for what they create: spirits
       // and minions. A pet is charmed, not created, and is not on the wiki's
@@ -2797,18 +2893,28 @@ export class MatchSimulation {
    *
    * Knocked down, the click is refused, not kept for rising (#468).
    *
+   * `layer` is the layer the click names (ADR-0051). One the point is not
+   * on is refused and the body stands. Omitted, no layer is named, and a
+   * ramp takes the body the way it is walking.
+   *
    * Only the point is kept here. The next step settles it, once however
    * many clicks arrived since: settling costs a path search, and a client
    * may send hundreds of clicks a second.
    */
-  public walkTo(id: string, point: Vec2): void {
+  public walkTo(id: string, point: Vec2, layer?: number): void {
     const record = this.#participants.get(id);
     if (record === undefined || record.combatant.dead || record.combatant.knockdownRemaining > 0) {
       return;
     }
     record.inputDirection = ZERO;
+    if (layer !== undefined && !this.#isOnLayer(point, layer)) {
+      record.walkGoal = undefined;
+      record.route = undefined;
+      return;
+    }
     this.#moveInterrupts(record);
     record.walkGoal = point;
+    record.walkLayer = layer;
     record.route = undefined;
     record.walkSettled = false;
     record.walkStalledSeconds = 0;
@@ -4174,7 +4280,8 @@ export class MatchSimulation {
       sees: (point) => hasLineOfSight(record.position, point, this.#walls),
       seesBetween: (from, to) => hasLineOfSight(from, to, this.#walls),
       walkable: (point) =>
-        isStandable(this.#graph, point) && walkIsClear(this.#graph, record.position, point),
+        isStandable(this.#graphOn(record.layer), point) &&
+        walkIsClear(this.#graphOn(record.layer), record.position, point),
       foeCentroid: centroids !== undefined && centroids.foes.count > 0 ? centroids.foes : undefined,
       objectives: this.#botObjectives,
       projectiles: this.#projectiles,
@@ -4185,7 +4292,11 @@ export class MatchSimulation {
     record.followGoal =
       intent.moveTo === undefined
         ? undefined
-        : { point: intent.moveTo, passing: record.creature?.ownerId };
+        : {
+            point: intent.moveTo,
+            layer: this.#leaderLayer(record),
+            passing: record.creature?.ownerId,
+          };
     if (following && record.followGoal === undefined) {
       record.route = undefined;
     }
@@ -4747,7 +4858,7 @@ export class MatchSimulation {
             casterId: record.id,
             targetId: skipped.targetId,
             skillId: skill.id,
-            requirement: conditionRequirementText(skipped.condition, ranks),
+            requirement: conditionRequirementText(skipped.condition, ranks, EN_WORDS, EN_NAMES),
           },
         ];
   }
@@ -5387,29 +5498,63 @@ export class MatchSimulation {
    * still clear. A gate moving drops every route (#2691), so otherwise
    * only the goal or the body can make one stale. No way there is not kept: the next tick asks again.
    */
-  #route(record: ParticipantRecord, goal: Vec2): readonly Vec2[] | undefined {
+  #route(
+    record: ParticipantRecord,
+    goal: Vec2,
+    layer: number,
+  ): readonly RouteWaypoint[] | undefined {
     const route = record.route;
-    if (route !== undefined && distance(goal, route.goal) <= REPLAN_GOAL_UNITS) {
+    if (route?.layer === layer && distance(goal, route.goal) <= REPLAN_GOAL_UNITS) {
       const { waypoints } = route;
+      const graph = this.#graphOn(record.layer);
       const next = waypoints[0];
-      if (next !== undefined && walkIsClear(this.#graph, record.position, next)) {
+      if (next !== undefined && walkIsClear(graph, record.position, next)) {
+        // A waypoint on another layer stays, however clear the line past it.
         for (
           let after = waypoints[1];
-          after !== undefined && walkIsClear(this.#graph, record.position, after);
+          after !== undefined &&
+          waypoints[0]?.layer === record.layer &&
+          walkIsClear(graph, record.position, after);
           after = waypoints[1]
         ) {
           waypoints.shift();
         }
         const before = waypoints.at(-2) ?? record.position;
-        if (walkIsClear(this.#graph, before, goal)) {
-          waypoints[waypoints.length - 1] = goal;
+        if (walkIsClear(this.#graphOn(layer), before, goal)) {
+          const last = waypoints.at(-1);
+          if (last?.x !== goal.x || last.y !== goal.y) {
+            waypoints[waypoints.length - 1] = { x: goal.x, y: goal.y, layer };
+          }
           return waypoints;
         }
       }
     }
-    const waypoints = this.#paths.find(record.position, goal);
-    record.route = waypoints === undefined ? undefined : { goal, waypoints: [...waypoints] };
+    const waypoints = this.#paths.find(record.position, record.layer, goal, layer);
+    record.route = waypoints === undefined ? undefined : { goal, layer, waypoints };
     return waypoints;
+  }
+
+  /** The graph of paths on `layer`; a body's layer is one the map has. */
+  #graphOn(layer: number): NavGraph {
+    const graph = this.#graphs[layer];
+    if (graph === undefined) {
+      throw new Error(`no layer ${String(layer)}`);
+    }
+    return graph;
+  }
+
+  /** The layer a behaviour's walk goes to: its leader's, or the one it is on. */
+  #leaderLayer(record: ParticipantRecord): number {
+    const ownerId = record.creature?.leaderId ?? record.creature?.ownerId;
+    return (
+      (ownerId === undefined ? undefined : this.#participants.get(ownerId)?.layer) ?? record.layer
+    );
+  }
+
+  /** A chase's goal: where `target` stands, or the nearest spot to it a deck has room for. */
+  #chaseGoal(position: Vec2, layer: number): Vec2 {
+    const graph = this.#graphOn(layer);
+    return graph.walkable.length === 0 ? position : nearestStandable(graph, position);
   }
 
   /**
@@ -5425,7 +5570,11 @@ export class MatchSimulation {
    */
   #approach(
     record: ParticipantRecord,
-    target: { readonly id: string | undefined; readonly position: Vec2 },
+    target: {
+      readonly id: string | undefined;
+      readonly position: Vec2;
+      readonly layer: number;
+    },
     reach: number,
     progress: { unreachableSeconds: number },
     dt: number,
@@ -5438,16 +5587,22 @@ export class MatchSimulation {
       record.route = undefined;
       return "arrived";
     }
-    const next = this.#route(record, target.position)?.[0];
+    const next = this.#route(
+      record,
+      this.#chaseGoal(target.position, target.layer),
+      target.layer,
+    )?.[0];
     if (next === undefined) {
       // No way there, this tick. It has to last before the approach ends
-      // (#218); meanwhile, steer straight at the target, which is what
-      // usually shoves a squeezed body back out (#211).
+      // (#218); meanwhile, on its own layer, steer straight at the target,
+      // which is what usually shoves a squeezed body back out (#211).
       if (this.#stalledFor(progress, dt)) {
         record.route = undefined;
         return "unreachable";
       }
-      this.advanceMovement(record, sub(target.position, record.position), dt);
+      if (target.layer === record.layer) {
+        this.advanceMovement(record, sub(target.position, record.position), dt);
+      }
       return "walking";
     }
     // A path that leads nowhere counts as none: an approach that cannot
@@ -5501,6 +5656,7 @@ export class MatchSimulation {
       if (
         otherId !== record.id &&
         otherId !== passing &&
+        other.layer === record.layer &&
         !other.combatant.dead &&
         !this.#walksThrough(record, other)
       ) {
@@ -5552,10 +5708,12 @@ export class MatchSimulation {
    */
   #advanceWalk(record: ParticipantRecord, dt: number): void {
     if (record.walkGoal !== undefined && !record.walkSettled) {
-      const spot = nearestStandable(this.#graph, record.walkGoal);
-      const path = this.#paths.find(record.position, spot);
+      const layer = record.walkLayer ?? record.layer;
+      const spot = nearestStandable(this.#graphOn(layer), record.walkGoal);
+      const path = this.#paths.find(record.position, record.layer, spot, layer);
       record.walkGoal = path === undefined ? undefined : spot;
-      record.route = path === undefined ? undefined : { goal: spot, waypoints: [...path] };
+      record.walkLayer = layer;
+      record.route = path === undefined ? undefined : { goal: spot, layer, waypoints: path };
       record.walkSettled = true;
     }
     const goal = record.walkGoal;
@@ -5567,7 +5725,8 @@ export class MatchSimulation {
       record.route = undefined;
       return;
     }
-    const path = this.#route(record, goal);
+    const layer = record.walkLayer ?? record.layer;
+    const path = this.#route(record, goal, layer);
     const left = path === undefined ? Number.POSITIVE_INFINITY : pathLength(record.position, path);
     if (left < record.walkLeast - STALL_FRACTION * this.#stepUnits(record, dt)) {
       record.walkLeast = left;
@@ -5586,8 +5745,10 @@ export class MatchSimulation {
     const next = path?.[0];
     if (next === undefined) {
       // As the approach does: straight at it usually shoves a squeezed
-      // body back out (#211).
-      this.advanceMovement(record, sub(goal, record.position), dt);
+      // body back out (#211). Only on its own layer.
+      if (layer === record.layer) {
+        this.advanceMovement(record, sub(goal, record.position), dt);
+      }
     } else {
       this.#stepToward(record, next, undefined, path?.length === 1, dt);
     }
@@ -5610,11 +5771,18 @@ export class MatchSimulation {
     if (goal === undefined || record.combatant.attack !== undefined) {
       return;
     }
-    const path = this.#route(record, nearestStandable(this.#graph, goal.point));
+    const path = this.#route(
+      record,
+      nearestStandable(this.#graphOn(goal.layer), goal.point),
+      goal.layer,
+    );
     const next = path?.[0];
     if (next !== undefined) {
       this.#stepToward(record, next, goal.passing, path?.length === 1, dt);
-    } else if (!isStandable(this.#graph, record.position)) {
+    } else if (
+      goal.layer === record.layer &&
+      !isStandable(this.#graphOn(record.layer), record.position)
+    ) {
       this.advanceMovement(record, sub(goal.point, record.position), dt);
     }
   }
@@ -5713,7 +5881,7 @@ export class MatchSimulation {
     const ghost = isGhostId(interact.targetId) ? interact.targetId : undefined;
     const approach = this.#approach(
       record,
-      { id: ghost, position },
+      { id: ghost, position, layer: record.layer },
       FLAG_REACH_UNITS,
       interact,
       dt,
@@ -5986,6 +6154,85 @@ export class MatchSimulation {
     }
   }
 
+  /** Each layer's walls with the gates as they stand now; `[]` on a map of one layer. */
+  #wallsByLayer(): readonly (readonly Segment[])[] {
+    return (this.#layers?.walls ?? []).map((walls, layer) => [
+      ...walls,
+      ...this.#gates
+        .filter((gate) => !gate.open && (gate.layer ?? 0) === layer)
+        .flatMap((gate) => gate.segments),
+    ]);
+  }
+
+  /** The walls a body on `layer` collides with. */
+  #wallsOn(layer: number): readonly Segment[] {
+    return this.#layerWalls[layer] ?? this.#walls;
+  }
+
+  #isLayer(layer: number): boolean {
+    return Number.isInteger(layer) && layer >= 0 && layer < (this.#layers?.count ?? 1);
+  }
+
+  /** Whether `point` is a place to stand on `layer`: the ground is everywhere. */
+  #isOnLayer(point: Vec2, layer: number): boolean {
+    return (
+      this.#isLayer(layer) &&
+      (layer === 0 || (this.#walkable[layer] ?? []).some((area) => pointInPolygon(point, area)))
+    );
+  }
+
+  /**
+   * `position`, or the nearest point `layer` can be stood on (ADR-0051), so
+   * a walk, a step or a teleport stops at a deck's edge.
+   */
+  #clampToLayer(position: Vec2, layer: number): Vec2 {
+    if (layer === 0 || this.#isOnLayer(position, layer)) {
+      return position;
+    }
+    let nearest = position;
+    let least = Number.POSITIVE_INFINITY;
+    for (const area of this.#walkable[layer] ?? []) {
+      const point = closestPointOnPolygon(position, area);
+      const away = distance(position, point);
+      if (away < least) {
+        least = away;
+        nearest = point;
+      }
+    }
+    return nearest;
+  }
+
+  /**
+   * A body inside a ramp that walked towards its other layer is on it
+   * from this tick (ADR-0051): with a route, only if its next waypoint
+   * is this ramp's, on that layer; steered, uphill or downhill as
+   * `direction` points.
+   */
+  #climb(record: ParticipantRecord, direction: Vec2): void {
+    const transitions = this.#layers?.transitions ?? NO_TRANSITIONS;
+    const steered = record.inputDirection.x !== 0 || record.inputDirection.y !== 0;
+    const next = steered ? undefined : record.route?.waypoints[0];
+    for (const [at, transition] of transitions.entries()) {
+      if (
+        (record.layer !== transition.from && record.layer !== transition.to) ||
+        !pointInPolygon(record.position, transition.area)
+      ) {
+        continue;
+      }
+      const upward = record.layer === transition.from;
+      const uphill = this.#uphill[at] ?? ZERO;
+      const wants =
+        next === undefined
+          ? (direction.x * uphill.x + direction.y * uphill.y) * (upward ? 1 : -1) > 0
+          : next.layer === (upward ? transition.to : transition.from) &&
+            pointInPolygon(next, transition.area);
+      if (wants) {
+        record.layer = upward ? transition.to : transition.from;
+        return;
+      }
+    }
+  }
+
   /** The walls and paths for how the gates stand now, read off the graph built up front. */
   #currentWallSet(): WallSet {
     let closed = 0;
@@ -5994,8 +6241,13 @@ export class MatchSimulation {
     });
     let set = this.#wallSets.get(closed);
     if (set === undefined) {
-      const graph = navGraphFor(this.#gatedGraph, closed);
-      set = { walls: graph.walls, graph, paths: createPathFinder(graph) };
+      const graphs = this.#gatedGraphs.map((gated) => navGraphFor(gated, closed));
+      const paths = createLayeredPathFinder(graphs, this.#layers?.transitions ?? []);
+      const walls = [
+        ...this.#mapWalls,
+        ...this.#gates.flatMap((gate) => (gate.open ? [] : gate.segments)),
+      ];
+      set = { walls, graphs, paths };
       this.#wallSets.set(closed, set);
     }
     return set;
@@ -6033,12 +6285,17 @@ export class MatchSimulation {
     }
     const set = this.#currentWallSet();
     this.#walls = set.walls;
-    this.#graph = set.graph;
+    this.#layerWalls = this.#wallsByLayer();
+    this.#graphs = set.graphs;
     this.#paths = set.paths;
     for (const record of this.#participants.values()) {
       record.route = undefined;
-      if (closing.length > 0 && !isStandable(this.#graph, record.position)) {
-        this.#placeAt(record, nearestStandable(this.#graph, record.position));
+      const graph = this.#graphOn(record.layer);
+      if (
+        closing.some((gate) => (gate.layer ?? 0) === record.layer) &&
+        !isStandable(graph, record.position)
+      ) {
+        this.#placeAt(record, nearestStandable(graph, record.position));
       }
     }
     for (const gate of closing) {
@@ -7596,7 +7853,9 @@ export class MatchSimulation {
     const beside = add(target.position, scale(away, 2 * radius));
     this.#placeAt(
       record,
-      hasLineOfSight(target.position, beside, this.#walls) ? beside : target.position,
+      hasLineOfSight(target.position, beside, this.#wallsOn(record.layer))
+        ? beside
+        : target.position,
     );
     faceToward(record, target.position);
   }
@@ -7757,7 +8016,7 @@ export class MatchSimulation {
     const from = record.position;
     const away = normalize(sub(from, selection.position));
     const goal = add(from, scale(away, SHADOW_STEP_AWAY_DISTANCE));
-    const impact = firstHit(from, goal, this.#walls);
+    const impact = firstHit(from, goal, this.#wallsOn(record.layer));
     const position =
       impact === undefined
         ? goal
@@ -8296,7 +8555,8 @@ export class MatchSimulation {
     combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
     combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
     emptyAdrenaline(combatant);
-    let position = nearestStandable(this.#graph, at);
+    record.layer = record.spec.layer ?? 0;
+    let position = nearestStandable(this.#graphOn(record.layer), at);
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
       position = this.#pushOut(record, position, this.#radiusOf(record), NOBODY);
     }
@@ -8378,7 +8638,12 @@ export class MatchSimulation {
     // the wall never squeezes past. Per body and against the start, so two
     // bodies that already overlap (a shared spawn) can still move apart.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === record.id || other.combatant.dead || this.#walksThrough(record, other)) {
+      if (
+        otherId === record.id ||
+        other.layer !== record.layer ||
+        other.combatant.dead ||
+        this.#walksThrough(record, other)
+      ) {
         continue;
       }
       const reach = radius + this.#radiusOf(other);
@@ -8390,7 +8655,11 @@ export class MatchSimulation {
       }
     }
 
+    const moved = position.x !== start.x || position.y !== start.y;
     record.position = position;
+    if (moved) {
+      this.#climb(record, direction);
+    }
   }
 
   /**
@@ -8432,6 +8701,7 @@ export class MatchSimulation {
     for (const [otherId, other] of this.#participants) {
       if (
         otherId === mover.id ||
+        other.layer !== mover.layer ||
         other.combatant.dead ||
         passing.has(otherId) ||
         this.#walksThrough(mover, other)
@@ -8450,7 +8720,7 @@ export class MatchSimulation {
     // and a wall ends up outside the wall rather than inside it — being
     // pushed through level geometry is far worse than overlapping a
     // teammate for one tick.
-    for (const wallSegment of this.#walls) {
+    for (const wallSegment of this.#wallsOn(mover.layer)) {
       position = resolveCircleSegmentCollision(position, radius, wallSegment);
     }
 
@@ -8464,7 +8734,7 @@ export class MatchSimulation {
         Math.min(Math.max(position.y, radius), bounds.height - radius),
       );
     }
-    return position;
+    return this.#clampToLayer(position, mover.layer);
   }
 
   /**
@@ -8508,6 +8778,7 @@ export class MatchSimulation {
     record.combatant.lastCombatAt = this.#elapsedSeconds;
     record.combatant.statuses.clear();
     record.position = record.spawn;
+    record.layer = record.spec.layer ?? 0;
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;
     record.walkGoal = undefined;
@@ -8544,6 +8815,7 @@ export class MatchSimulation {
     if (companion !== undefined) {
       this.#reset(companion, why);
       companion.position = record.position;
+      companion.layer = record.layer;
       this.#stepStart.set(companion.id, record.position);
     }
   }

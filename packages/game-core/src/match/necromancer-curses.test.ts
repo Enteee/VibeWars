@@ -13,6 +13,7 @@ import { attackMissChanceOf } from "../skills/tick.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -148,7 +149,9 @@ describe("Barbs (#1332)", () => {
     const match = sim();
     hex(match, 0);
     expect(get(match, "a").statuses.get("barbs")?.sourceId).toBe("n");
-    expect(describeStatus("barbs", CURSES_12)).toBe("take +14 from physical damage");
+    expect(describeStatus("barbs", CURSES_12, EN_WORDS, EN_NAMES)).toBe(
+      "take +14 from physical damage",
+    );
   });
 
   it("a weapon hit deals 14 more, a spell no more", () => {
@@ -179,7 +182,7 @@ describe("Price of Failure (#1332)", () => {
     const match = sim();
     hex(match, 1);
     expect(get(match, "a").statuses.get("price-of-failure")?.sourceId).toBe("n");
-    expect(describeStatus("price-of-failure")).toBe(
+    expect(describeStatus("price-of-failure", undefined, EN_WORDS, EN_NAMES)).toBe(
       "25% of attacks miss, takes 37 damage whenever it fails to hit",
     );
   });
@@ -246,8 +249,12 @@ describe("Suffering and Lingering Curse (#1332)", () => {
   });
 
   it("describes them", () => {
-    expect(describeStatus("suffering")).toBe("−2 Health degeneration");
-    expect(describeStatus("lingering-curse")).toBe("−3 Health degeneration, −25% healing");
+    expect(describeStatus("suffering", undefined, EN_WORDS, EN_NAMES)).toBe(
+      "−2 Health degeneration",
+    );
+    expect(describeStatus("lingering-curse", undefined, EN_WORDS, EN_NAMES)).toBe(
+      "−3 Health degeneration, −25% healing",
+    );
   });
 });
 
@@ -256,7 +263,7 @@ describe("Defile Flesh (#1332)", () => {
     const match = sim();
     hex(match, 3);
     expect(get(match, "a").statuses.get("defile-flesh")?.sourceId).toBe("n");
-    expect(describeStatus("defile-flesh")).toBe("−33% healing");
+    expect(describeStatus("defile-flesh", undefined, EN_WORDS, EN_NAMES)).toBe("−33% healing");
   });
 
   it("turns a 100 heal into two-thirds of it, and with Lingering Curse floors it at 60", () => {
@@ -271,7 +278,7 @@ describe("Rigor Mortis (#1332)", () => {
     const match = sim();
     hex(match, 4);
     expect(get(match, "a").statuses.get("rigor-mortis")?.sourceId).toBe("n");
-    expect(describeStatus("rigor-mortis")).toBe("cannot block");
+    expect(describeStatus("rigor-mortis", undefined, EN_WORDS, EN_NAMES)).toBe("cannot block");
   });
 
   it("a bearer in a blocking stance takes every hit", () => {

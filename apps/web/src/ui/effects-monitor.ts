@@ -14,6 +14,7 @@ import { setHidden } from "./dom-write.js";
 import { SIGNET_ROW_PX, signetElement } from "./player-label.js";
 import { placeTip, type SkillTooltipPlacement } from "./skill-tooltip.js";
 import { SLOT_TOOLTIP_DELAY_MS } from "./slot-tooltip.js";
+import { describeNames, describeWords } from "../i18n/describe-words.js";
 
 /**
  * The effects monitor (#834, #483): one icon per status on a player, in
@@ -183,7 +184,7 @@ function renderTip(node: HTMLElement, row: EffectRow, canEnd: boolean): void {
   type.textContent = t(STATUS_CATEGORY_NAME[row.category]);
   const effect = document.createElement("div");
   effect.className = "tip-effect";
-  effect.textContent = describeStatus(row.id);
+  effect.textContent = describeStatus(row.id, undefined, describeWords(), describeNames());
   const from = document.createElement("div");
   from.className = "tip-effect";
   from.textContent = t("effects.from", { caster: row.casterName });

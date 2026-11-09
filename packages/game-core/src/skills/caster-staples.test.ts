@@ -10,6 +10,7 @@ import { getSkill } from "./catalog.js";
 import { describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Caster staples (#1870): Blood Renewal, Meekness, Ethereal Burden, Sum of
@@ -296,7 +297,9 @@ describe("Aura of Stability (#1870)", () => {
     });
     cast(match, "mo", "ally");
     expect(get(match, "ally").combatant.statuses.get("aura-of-stability")?.durationSeconds).toBe(7);
-    expect(describeStatus("aura-of-stability")).toBe("cannot be knocked down");
+    expect(describeStatus("aura-of-stability", undefined, EN_WORDS, EN_NAMES)).toBe(
+      "cannot be knocked down",
+    );
   });
 
   it("refuses its caster", () => {

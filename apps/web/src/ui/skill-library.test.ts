@@ -11,6 +11,7 @@ import {
   lockedSkills,
   skillTypesOf,
 } from "./skill-library.js";
+import { EN_NAMES, EN_WORDS } from "@vibewars/game-core";
 
 /**
  * The library's filtering and grouping, tested without a DOM — the same
@@ -42,7 +43,9 @@ describe("filterSkillsByText", () => {
     expect(matched.map((skill) => skill.name)).toContain("Deflect Arrows");
     // The description counts too (#567): Dual Shot "shoots 2 arrows" (#1539).
     for (const skill of matched) {
-      const lines = describeSkill(skill).effects.map((effect) => effect.text);
+      const lines = describeSkill(skill, undefined, EN_WORDS, EN_NAMES).effects.map(
+        (effect) => effect.text,
+      );
       expect([skill.name, ...lines].join(" ").toLowerCase()).toContain("arrow");
     }
   });
@@ -52,7 +55,9 @@ describe("filterSkillsByText", () => {
     expect(matched.length).toBeGreaterThan(0);
     for (const skill of matched) {
       expect(skill.name.toLowerCase()).not.toContain("knocks down");
-      const lines = describeSkill(skill).effects.map((effect) => effect.text.toLowerCase());
+      const lines = describeSkill(skill, undefined, EN_WORDS, EN_NAMES).effects.map((effect) =>
+        effect.text.toLowerCase(),
+      );
       expect(lines.some((line) => line.includes("knocks down"))).toBe(true);
     }
   });

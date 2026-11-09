@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { TeamCharacter } from "../storage/schema.js";
 import { characterRanks } from "./character-ranks.js";
 import { toBoxModel } from "./skill-library.js";
+import { EN_NAMES, EN_WORDS } from "@vibewars/game-core";
 
 /** A Necromancer with Death Magic 12 bought and a superior Death Magic rune on. */
 function necromancer(): TeamCharacter {
@@ -37,8 +38,18 @@ describe("characterRanks (#1900)", () => {
     if (golem === undefined) {
       throw new Error("Animate Flesh Golem is in the catalog");
     }
-    const atFifteen = describeSkill(golem, new Map([["necromancer.death-magic", 15]]));
-    const atTwelve = describeSkill(golem, new Map([["necromancer.death-magic", 12]]));
+    const atFifteen = describeSkill(
+      golem,
+      new Map([["necromancer.death-magic", 15]]),
+      EN_WORDS,
+      EN_NAMES,
+    );
+    const atTwelve = describeSkill(
+      golem,
+      new Map([["necromancer.death-magic", 12]]),
+      EN_WORDS,
+      EN_NAMES,
+    );
     const card = toBoxModel(golem, characterRanks(necromancer()), new Set()).description;
     expect(card.effects).toEqual(atFifteen.effects);
     expect(card.effects).not.toEqual(atTwelve.effects);

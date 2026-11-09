@@ -12,6 +12,7 @@ import { resolveSkillEffects, type CombatEvent, type SkillOutcome } from "./effe
 import { NO_RANKS } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Elementalist staples (#2288): Searing Heat, Gust, Lightning Bolt,
@@ -199,7 +200,9 @@ describe("Searing Heat (#2288)", () => {
   });
 
   it("says its Burning lands when it ends, and creates its symbol once (#2329)", () => {
-    const lines = describeSkill(skill(SEARING), ranked(0)).effects.map((effect) => effect.text);
+    const lines = describeSkill(skill(SEARING), ranked(0), EN_WORDS, EN_NAMES).effects.map(
+      (effect) => effect.text,
+    );
     expect(lines).toEqual([
       "Creates a symbol at your target's location for 5 seconds",
       "Every 1s for 5s, foes nearby: deals 10 fire damage",
@@ -407,7 +410,7 @@ describe("Gust (#2288)", () => {
   });
 
   it("says whom it knocks down", () => {
-    const text = describeSkill(skill(GUST), ranked(12))
+    const text = describeSkill(skill(GUST), ranked(12), EN_WORDS, EN_NAMES)
       .effects.map((line) => line.text)
       .join("\n");
     expect(text).toMatch(/Adjacent foes around the target and you take 59 cold damage/);
@@ -461,7 +464,7 @@ describe("Mirror of Ice (#2288)", () => {
   });
 
   it("says when it recharges faster", () => {
-    const text = describeSkill(skill(MIRROR), ranked(12))
+    const text = describeSkill(skill(MIRROR), ranked(12), EN_WORDS, EN_NAMES)
       .effects.map((line) => line.text)
       .join("\n");
     expect(text).toMatch(

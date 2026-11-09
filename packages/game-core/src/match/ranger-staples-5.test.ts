@@ -12,6 +12,7 @@ import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Ranger staples 4 (#1742): four preparations and two bow attacks, on
@@ -282,8 +283,12 @@ describe("Seeking Arrows and endsWhenBearerMisses (#1742)", () => {
   });
 
   it("says so", () => {
-    expect(describeStatus("seeking-arrows")).toContain("attacks cannot be blocked");
-    expect(describeStatus("seeking-arrows")).toContain("ends if you fail to hit");
+    expect(describeStatus("seeking-arrows", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "attacks cannot be blocked",
+    );
+    expect(describeStatus("seeking-arrows", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "ends if you fail to hit",
+    );
   });
 });
 
@@ -345,7 +350,9 @@ describe("Read the Wind and projectileSpeedMultiplier (#1742)", () => {
   });
 
   it("says so", () => {
-    expect(describeStatus("read-the-wind")).toContain("arrows move 2× as fast");
+    expect(describeStatus("read-the-wind", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "arrows move 2× as fast",
+    );
   });
 });
 
@@ -382,7 +389,9 @@ describe("Crossfire and target-near-caster-ally (#1742)", () => {
   });
 
   it("says so", () => {
-    const texts = describeSkill(skill(CROSSFIRE)).effects.map((effect) => effect.text);
+    const texts = describeSkill(skill(CROSSFIRE), undefined, EN_WORDS, EN_NAMES).effects.map(
+      (effect) => effect.text,
+    );
     expect(texts).toContain("If target is near any of your allies: cannot be blocked");
   });
 });

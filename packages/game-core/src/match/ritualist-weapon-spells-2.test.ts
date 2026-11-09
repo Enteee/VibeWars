@@ -14,6 +14,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Ritualist's second weapon spells (#1022): Vengeful Weapon and Weapon
@@ -158,14 +159,14 @@ describe("the four skills (#1022)", () => {
 
 describe("the three weapon spells' tooltips (#1022)", () => {
   it("say the next hurt, and the hits without a weapon", () => {
-    expect(describeStatus("weapon-of-remedy")).toBe(
+    expect(describeStatus("weapon-of-remedy", undefined, EN_WORDS, EN_NAMES)).toBe(
       "the next time it takes damage or life steal from a foe: " +
         "steals 68 Health from that foe, loses 2 conditions",
     );
-    expect(describeStatus("vengeful-weapon")).toBe(
+    expect(describeStatus("vengeful-weapon", undefined, EN_WORDS, EN_NAMES)).toBe(
       "the next time it takes damage or life steal from a foe: steals 51 Health from that foe",
     );
-    expect(describeStatus("splinter-weapon")).toBe(
+    expect(describeStatus("splinter-weapon", undefined, EN_WORDS, EN_NAMES)).toBe(
       "your attacks: Adjacent foes take 25 damage, ends after 4 hits",
     );
   });

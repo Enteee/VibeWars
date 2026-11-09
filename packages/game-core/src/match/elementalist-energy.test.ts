@@ -7,6 +7,7 @@ import { describeSkill, describeStatus } from "../skills/describe.js";
 import { vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Elementalist energy engine in a match (#1614): the four Attunements'
@@ -129,7 +130,7 @@ describe("Attunements (#1614)", () => {
     use(match, FIRE);
     const status = match.get("n")?.combatant.statuses.get("fire-attunement");
     expect(status?.durationSeconds).toBe(55);
-    expect(describeStatus("fire-attunement")).toBe(
+    expect(describeStatus("fire-attunement", undefined, EN_WORDS, EN_NAMES)).toBe(
       "whenever you use a Fire Magic skill: you gain 1 energy plus 30% of that skill's base energy cost",
     );
   });
@@ -159,8 +160,10 @@ describe("Kinetic Armor (#1614)", () => {
   it("gives +68 armor for 12 s, renewed by a spell, not by a glyph", () => {
     const match = sim();
     use(match, "elementalist.kinetic-armor");
-    expect(describeStatus("kinetic-armor")).toContain("+68 armor");
-    expect(describeStatus("kinetic-armor")).toContain("renewed whenever you cast a spell");
+    expect(describeStatus("kinetic-armor", undefined, EN_WORDS, EN_NAMES)).toContain("+68 armor");
+    expect(describeStatus("kinetic-armor", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "renewed whenever you cast a spell",
+    );
     const before = remaining(match, "kinetic-armor");
     use(match, "elementalist.glyph-of-lesser-energy");
     expect(remaining(match, "kinetic-armor")).toBeLessThan(before - 3);
@@ -196,9 +199,12 @@ describe("Steam (#1614)", () => {
     expect(damage(use(match, STEAM))).toEqual([52, 52]);
     expect(match.get("a")?.combatant.statuses.get("blind")?.durationSeconds).toBe(9);
     expect(
-      describeSkill(steam(), new Map([["elementalist.water-magic", 12]])).effects.map(
-        ({ text }) => text,
-      ),
+      describeSkill(
+        steam(),
+        new Map([["elementalist.water-magic", 12]]),
+        EN_WORDS,
+        EN_NAMES,
+      ).effects.map(({ text }) => text),
     ).toEqual([
       "Deals 52 cold damage",
       "If target has Burning: applies Blind for 9s (90% of attacks miss)",

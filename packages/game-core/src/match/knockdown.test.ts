@@ -14,6 +14,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -224,9 +225,11 @@ describe("Backbreaker knocks down (#544)", () => {
 
   it("describes itself", () => {
     const skill = getSkill(BACKBREAKER);
-    expect(skill === undefined ? [] : describeSkill(skill).effects.map((e) => e.text)).toContain(
-      "Knocks down for 4s",
-    );
+    expect(
+      skill === undefined
+        ? []
+        : describeSkill(skill, undefined, EN_WORDS, EN_NAMES).effects.map((e) => e.text),
+    ).toContain("Knocks down for 4s");
   });
 });
 

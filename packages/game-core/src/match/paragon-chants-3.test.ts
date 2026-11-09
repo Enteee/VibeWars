@@ -14,6 +14,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Paragon chants 3 (#1505): a chant that holds how the bearer's next skill
@@ -249,16 +250,16 @@ describe("nextSkillRule (#1505)", () => {
   });
 
   it("describes each rule", () => {
-    expect(describeStatus("song-of-concentration", new Map())).toBe(
+    expect(describeStatus("song-of-concentration", new Map(), EN_WORDS, EN_NAMES)).toBe(
       "your next skill cannot be interrupted",
     );
-    expect(describeStatus("anthem-of-guidance", new Map())).toBe(
+    expect(describeStatus("anthem-of-guidance", new Map(), EN_WORDS, EN_NAMES)).toBe(
       "your next attack skill cannot be blocked",
     );
-    expect(describeStatus("energizing-chorus", new Map())).toBe(
+    expect(describeStatus("energizing-chorus", new Map(), EN_WORDS, EN_NAMES)).toBe(
       "your next shout or chant costs 6 less energy",
     );
-    expect(describeStatus("anthem-of-envy", new Map())).toContain("+18 damage");
+    expect(describeStatus("anthem-of-envy", new Map(), EN_WORDS, EN_NAMES)).toContain("+18 damage");
   });
 });
 

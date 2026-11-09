@@ -14,6 +14,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Ritualist spirits (#1550): spirit blows that steal, double on a hex or
@@ -254,7 +255,9 @@ describe("death bursts (#1550)", () => {
     creature.expiresInSeconds = 10.5 - creature.ageSeconds;
     expect(sum(eventsOf(stepFor(sim, 11.5), "r"), "damage", "f")).toBe(10);
     expect(
-      describeSkill(skillOf(DESTRUCTION), new Map()).effects.map((each) => each.text),
+      describeSkill(skillOf(DESTRUCTION), new Map(), EN_WORDS, EN_NAMES).effects.map(
+        (each) => each.text,
+      ),
     ).toContain(
       "When it dies, non-spirit foes in the area take 1 damage per second it lived (max 150)",
     );
@@ -345,7 +348,7 @@ describe("a flat lose-health (#1550)", () => {
 
 describe("the texts (#1550)", () => {
   const lines = (id: string): string[] =>
-    describeSkill(skillOf(id), RANKS).effects.map((each) => each.text);
+    describeSkill(skillOf(id), RANKS, EN_WORDS, EN_NAMES).effects.map((each) => each.text);
 
   it("names the on-hit effects and the bursts", () => {
     expect(lines(BLOODSONG)).toContain("Its attacks: steals up to 21 Health");
@@ -374,8 +377,8 @@ describe("the texts (#1550)", () => {
   });
 
   it("says it scaled, at rank 0 too (#1631)", () => {
-    const line = describeSkill(skillOf(ANGUISH), new Map()).effects.find(({ text }) =>
-      text.startsWith("Its attacks deal"),
+    const line = describeSkill(skillOf(ANGUISH), new Map(), EN_WORDS, EN_NAMES).effects.find(
+      ({ text }) => text.startsWith("Its attacks deal"),
     );
     expect(line?.text).toBe("Its attacks deal 5 damage");
     expect(line?.magnitude?.atZero).toBe(5);

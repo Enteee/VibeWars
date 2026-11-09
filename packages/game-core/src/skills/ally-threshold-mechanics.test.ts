@@ -14,6 +14,7 @@ import { NO_RANKS, STATUS_DEFINITIONS, getStatusDefinition, type StatusId } from
 import { makeCombatant } from "./testing.js";
 import { fireChangeTriggers, type SpreadGainedCondition } from "./triggers.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * "The next time damage drops Health below N%" and "the next fatal damage
@@ -128,7 +129,7 @@ describe("the four are the corpus's (#1789)", () => {
 
   it("says what each does", () => {
     const text = (id: string) =>
-      describeSkill(skill(id), RANKS)
+      describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES)
         .effects.map((effect) => effect.text)
         .join(" ");
     expect(text(JUDGES)).toContain("would kill it is negated");

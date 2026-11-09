@@ -9,6 +9,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -230,12 +231,14 @@ describe("Epidemic (#1501)", () => {
 
 describe("what the tooltips say (#1501)", () => {
   it("describes them", () => {
-    expect(describeStatus("wastrels-demise")).toBe(
+    expect(describeStatus("wastrels-demise", undefined, EN_WORDS, EN_NAMES)).toBe(
       "each second, it and adjacent foes take 8 damage, 8 more each second, ends if the bearer uses a skill",
     );
-    expect(describeSkill(getSkill(EPIDEMIC) ?? fail()).effects.map(({ text }) => text)).toContain(
-      "Adjacent foes get the target's conditions, with the time each has left",
-    );
+    expect(
+      describeSkill(getSkill(EPIDEMIC) ?? fail(), undefined, EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      ),
+    ).toContain("Adjacent foes get the target's conditions, with the time each has left");
   });
 });
 

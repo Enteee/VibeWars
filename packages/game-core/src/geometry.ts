@@ -16,6 +16,9 @@ export interface Segment {
   readonly b: Vec2;
 }
 
+/** An area, as its corners in order: a deck's footprint or a ramp's (ADR-0051). */
+export type Polygon = readonly Vec2[];
+
 export function segment(a: Vec2, b: Vec2): Segment {
   return { a, b };
 }
@@ -302,4 +305,52 @@ export function resolveCircleCircleCollision(
 
   const pushDirection = scale(offset, 1 / distanceBetween);
   return add(otherCenter, scale(pushDirection, minimumDistance));
+}
+
+/** Whether `point` is inside `polygon`, by counting the edges a ray from it crosses. */
+export function pointInPolygon(point: Vec2, polygon: Polygon): boolean {
+  let inside = false;
+  let previous = polygon[polygon.length - 1];
+  for (const corner of polygon) {
+    if (
+      previous !== undefined &&
+      corner.y > point.y !== previous.y > point.y &&
+      point.x <
+        ((previous.x - corner.x) * (point.y - corner.y)) / (previous.y - corner.y) + corner.x
+    ) {
+      inside = !inside;
+    }
+    previous = corner;
+  }
+  return inside;
+}
+
+/** The point on `polygon`'s outline nearest to `point`. */
+export function closestPointOnPolygon(point: Vec2, polygon: Polygon): Vec2 {
+  let nearest = point;
+  let least = Number.POSITIVE_INFINITY;
+  let previous = polygon[polygon.length - 1];
+  for (const corner of polygon) {
+    if (previous !== undefined) {
+      const candidate = closestPointOnSegment(point, { a: previous, b: corner });
+      const away = distance(point, candidate);
+      if (away < least) {
+        least = away;
+        nearest = candidate;
+      }
+    }
+    previous = corner;
+  }
+  return nearest;
+}
+
+/** The average of `polygon`'s corners. */
+export function polygonCentre(polygon: Polygon): Vec2 {
+  let x = 0;
+  let y = 0;
+  for (const corner of polygon) {
+    x += corner.x;
+    y += corner.y;
+  }
+  return { x: x / polygon.length, y: y / polygon.length };
 }

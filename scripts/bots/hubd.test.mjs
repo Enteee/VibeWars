@@ -79,6 +79,13 @@ if (group === "api" && sub !== "graphql") {
     console.log(fs.existsSync(planted) ? fs.readFileSync(planted, "utf8") : JSON.stringify({ total_count: 0, workflow_runs: [] }));
     process.exit(0);
   }
+  // The latest published release (#2891): what the test planted, or none.
+  if (rel === "releases/latest") {
+    const planted = path.join(state, "release-latest.json");
+    if (fs.existsSync(planted)) { console.log(fs.readFileSync(planted, "utf8")); process.exit(0); }
+    if (fs.existsSync(path.join(state, "release-latest-fails"))) { console.error("HTTP 500: Server Error"); process.exit(1); }
+    console.error("gh: Not Found (HTTP 404)"); process.exit(1);
+  }
   // An issue a test planted, by number (#2707).
   if (/^issues\\/\\d+$/.test(rel) && fs.existsSync(path.join(state, rel.replace("/", "-") + ".json"))) { process.stdout.write(fs.readFileSync(path.join(state, rel.replace("/", "-") + ".json"), "utf8")); process.exit(0); }
   if (rel === "issues/7") { console.log(JSON.stringify(issue7)); process.exit(0); }
@@ -3560,6 +3567,62 @@ describe("release branches (#2707)", () => {
     const state = readJson(path.join(hubd.hub, "release.json"));
     expect(/** @type {{ sha: string }[]} */ (state.ci).map((head) => head.sha)).toEqual([second]);
   }, 30_000);
+
+  it("refuses a release started or published within 48 h of the last one (#2891)", async () => {
+    const hubd = await startHubd(5000);
+    const { repo } = hubd;
+    seed(hubd);
+    const latest = path.join(hubd.state, "release-latest.json");
+    const publishedAt = (/** @type {number} */ agoMs) =>
+      JSON.stringify({
+        tag_name: "v0.6.0",
+        published_at: new Date(Date.now() - agoMs).toISOString(),
+      });
+    const hour = 3_600_000;
+    sh(["checkout", "-q", "-b", "release/0.1.0"], repo);
+
+    // Inside the gap: a new branch is refused with the opening time, and nothing is pushed.
+    fs.writeFileSync(latest, publishedAt(47 * hour));
+    const early = await hubd.request("release-manager", "push", ["release/0.1.0"]);
+    expect(early.code).toBe(77);
+    expect(String(early.reason)).toMatch(
+      /v0\.6\.0\) was published at .*; the next may start at \d{4}-/,
+    );
+    expect(sh(["ls-remote", hubd.remote, "refs/heads/release/*"], repo).trim()).toBe("");
+
+    // GitHub failing, or answering nonsense: refused.
+    fs.rmSync(latest);
+    fs.writeFileSync(path.join(hubd.state, "release-latest-fails"), "");
+    const down = await hubd.request("release-manager", "push", ["release/0.1.0"]);
+    expect(down.code).toBe(77);
+    expect(String(down.reason)).toContain("could not read the last release");
+    fs.rmSync(path.join(hubd.state, "release-latest-fails"));
+    fs.writeFileSync(latest, "not json");
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(77);
+
+    // No release yet (404): allowed. Past 48 h: allowed.
+    fs.rmSync(latest);
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+
+    // A branch that exists is not gated, so a frozen release can take its fixes.
+    fs.writeFileSync(latest, publishedAt(1 * hour));
+    const fix = fixOnMain(hubd, "b\n");
+    sh(["checkout", "-q", "release/0.1.0"], repo);
+    sh(["-c", "user.name=t", "-c", "user.email=t@t", "cherry-pick", "-x", fix], repo);
+    expect((await hubd.request("release-manager", "push", ["release/0.1.0"])).code).toBe(0);
+
+    // Publishing inside the gap is refused, even signed off.
+    const head = remoteHead(hubd);
+    const ok = await hubd.request("qa-tester", "release-ok", ["release/0.1.0", "--sha", head]);
+    expect(ok.code, String(ok.reason)).toBe(0);
+    const create = ["release", "create", "v0.1.0", "--target", "release/0.1.0", "--generate-notes"];
+    const refused = await hubd.request("release-manager", "gh", create);
+    expect(refused.code).toBe(77);
+    expect(String(refused.reason)).toContain("the next may start at");
+    fs.writeFileSync(latest, publishedAt(49 * hour));
+    const published = await hubd.request("release-manager", "gh", create);
+    expect(published.code, String(published.reason)).toBe(0);
+  }, 60_000);
 
   it("refuses a new branch that does not start on main", async () => {
     const hubd = await startHubd(5000);

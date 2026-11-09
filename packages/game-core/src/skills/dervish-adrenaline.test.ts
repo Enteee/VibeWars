@@ -15,6 +15,7 @@ import { chargeAdrenaline, makeCombatant, strikesOf } from "./testing.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
 import { cleaveVictims, resolveAttackSkill } from "./weapon-attack.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * A scythe's attack skill cleaves (#977), Zealous Sweep pays out for each
@@ -379,16 +380,18 @@ describe("Mystic Twister (#977)", () => {
   });
 
   it("reads its bonus on its card", () => {
-    expect(describeSkill(skill("dervish.mystic-twister"), RANKS).effects[0]?.text).toBe(
-      "Deals 50 cold damage; if you have an enchantment: +50",
-    );
+    expect(
+      describeSkill(skill("dervish.mystic-twister"), RANKS, EN_WORDS, EN_NAMES).effects[0]?.text,
+    ).toBe("Deals 50 cold damage; if you have an enchantment: +50");
   });
 });
 
 describe("Zealous Sweep's card (#977)", () => {
   it("says it cleaves, and what it gains per foe hit", () => {
     expect(
-      describeSkill(skill("dervish.zealous-sweep"), RANKS).effects.map(({ text }) => text),
+      describeSkill(skill("dervish.zealous-sweep"), RANKS, EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      ),
     ).toEqual([
       "+17 damage",
       "Hits up to 2 adjacent foes too",

@@ -11,6 +11,7 @@ import { effectiveArmor, skillDamage } from "./damage.js";
 import { describeStatus } from "./describe.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
 import type { Combatant } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Staples (#2278): Lightning Surge, Ward Against Harm, Mark of
@@ -211,8 +212,12 @@ describe("Ward Against Harm (#2278)", () => {
   );
 
   it("describes its status at its caster's rank", () => {
-    expect(describeStatus("ward-against-harm", R12)).toContain("+22 elemental armor");
-    expect(describeStatus("ward-against-harm", R0)).toContain("+12 elemental armor");
+    expect(describeStatus("ward-against-harm", R12, EN_WORDS, EN_NAMES)).toContain(
+      "+22 elemental armor",
+    );
+    expect(describeStatus("ward-against-harm", R0, EN_WORDS, EN_NAMES)).toContain(
+      "+12 elemental armor",
+    );
   });
 });
 

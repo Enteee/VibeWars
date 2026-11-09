@@ -14,6 +14,7 @@ import { blockChanceOf } from "../skills/tick.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Warrior Tactics stances (#1329): Bonetti's Defense, Deflect Arrows and
@@ -341,19 +342,19 @@ describe("Balanced Stance (#1329)", () => {
 describe("the Tactics stances' tooltips (#1329)", () => {
   it("say what each does in GW1's words", () => {
     const ranks = new Map<string, number>();
-    expect(describeStatus("bonettis-defense", ranks)).toMatchInlineSnapshot(
+    expect(describeStatus("bonettis-defense", ranks, EN_WORDS, EN_NAMES)).toMatchInlineSnapshot(
       `"75% chance to block attacks, ends if you use a skill. You gain 5 Energy for each successful melee attack blocked"`,
     );
-    expect(describeStatus("deflect-arrows", ranks)).toMatchInlineSnapshot(
+    expect(describeStatus("deflect-arrows", ranks, EN_WORDS, EN_NAMES)).toMatchInlineSnapshot(
       `"75% chance to block attacks. If you block a projectile attack, adjacent foes suffer from Bleeding for 13 seconds"`,
     );
-    expect(describeStatus("gladiators-defense", ranks)).toMatchInlineSnapshot(
+    expect(describeStatus("gladiators-defense", ranks, EN_WORDS, EN_NAMES)).toMatchInlineSnapshot(
       `"75% chance to block attacks. Whenever you block a melee attack this way, the attacker suffers 29 damage"`,
     );
-    expect(describeStatus("disciplined-stance", ranks)).toMatchInlineSnapshot(
+    expect(describeStatus("disciplined-stance", ranks, EN_WORDS, EN_NAMES)).toMatchInlineSnapshot(
       `"+10 armor, 75% chance to block attacks, ends if you use an adrenal skill"`,
     );
-    expect(describeStatus("balanced-stance", ranks)).toMatchInlineSnapshot(
+    expect(describeStatus("balanced-stance", ranks, EN_WORDS, EN_NAMES)).toMatchInlineSnapshot(
       `"cannot be knocked down, you do not suffer extra damage from a critical attack"`,
     );
   });

@@ -21,6 +21,7 @@ import {
   scenarioParticipants,
   type TrainingScenario,
 } from "./training-scenarios.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The training catalogue's gate, in the style of `coverage.test.ts`: a
@@ -192,7 +193,8 @@ describe("armor-ladder, headless", () => {
 
     const skill = getSkill(FIREBALL);
     const tooltip = skill
-      ? describeSkill(skill, new Map([["elementalist.fire-magic", 12]])).effects[0]?.magnitude
+      ? describeSkill(skill, new Map([["elementalist.fire-magic", 12]]), EN_WORDS, EN_NAMES)
+          .effects[0]?.magnitude
       : undefined;
     expect(tooltip?.current).toBe(91);
     const expected = Object.fromEntries(

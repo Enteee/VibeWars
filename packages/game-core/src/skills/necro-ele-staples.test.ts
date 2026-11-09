@@ -15,6 +15,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { NO_RANKS, aggregateModifiers, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Necromancer and Elementalist staples (#1540): Blood is Power, Order of
@@ -65,7 +66,7 @@ function damageIn(events: readonly CombatEvent[], id: string): number {
 }
 
 function described(id: string): string[] {
-  return describeSkill(skill(id), RANKS).effects.map(({ text }) => text);
+  return describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
 }
 
 describe("the eight are the corpus's (#1540)", () => {

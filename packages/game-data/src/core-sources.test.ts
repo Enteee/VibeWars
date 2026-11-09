@@ -25,4 +25,19 @@ describe("game-core sources", () => {
       );
     expect(readers).toEqual([]);
   });
+
+  it("import nothing from the client or from i18n (#2664)", () => {
+    const offenders = fs
+      .readdirSync(CORE_SRC, { recursive: true, encoding: "utf8" })
+      .map((file) => file.split(path.sep).join("/"))
+      .filter((file) => file.endsWith(".ts"))
+      .filter((file) =>
+        [
+          ...fs
+            .readFileSync(path.join(CORE_SRC, file), "utf8")
+            .matchAll(/\bfrom\s+"([^"]+)"|\bimport\(\s*"([^"]+)"/g),
+        ].some(([, from, dynamic]) => /apps\/web|i18n/.test(from ?? dynamic ?? "")),
+      );
+    expect(offenders).toEqual([]);
+  });
 });

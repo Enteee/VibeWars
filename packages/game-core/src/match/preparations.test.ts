@@ -16,6 +16,7 @@ import { resolveAttackSkill, resolveSwing } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -295,10 +296,13 @@ describe("Apply Poison in the match (#525)", () => {
     expect(getStatusDefinition("apply-poison").category).toBe("preparation");
     const skill = getSkill(APPLY_POISON);
     expect(skill?.type).toBe("preparation");
-    expect(skill && describeSkill(skill).typeText).toBe("Preparation.");
-    expect(skill && describeSkill(skill).effects.map((effect) => effect.text)).toEqual([
-      "For 24s, foes your physical attacks hit get Poison for 13s",
-    ]);
+    expect(skill && describeSkill(skill, undefined, EN_WORDS, EN_NAMES).typeText).toBe(
+      "Preparation.",
+    );
+    expect(
+      skill &&
+        describeSkill(skill, undefined, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text),
+    ).toEqual(["For 24s, foes your physical attacks hit get Poison for 13s"]);
   });
 
   it("a second preparation ends the first, restarting it at its full duration", () => {

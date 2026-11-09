@@ -17,13 +17,20 @@ export { clampInputDirection, integrateMovement } from "./movement.js";
 
 export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
 
-export type { Segment } from "./geometry.js";
+export type { Polygon, Segment } from "./geometry.js";
 export {
+  buildLayeredNavGraph,
   buildNavGraph,
+  createLayeredPathFinder,
   createPathFinder,
+  navGraphFor,
   nearestStandable,
+  type LayeredPathFinder,
   type NavGraph,
+  type NavLayer,
+  type NavTransition,
   type PathFinder,
+  type RouteWaypoint,
 } from "./pathing.js";
 export {
   circleIntersectsSegment,
@@ -178,6 +185,7 @@ export type {
   CreatureOrder,
   CreatureLook,
   GroundEffect,
+  MatchLayers,
   MatchSimulationOptions,
   Participant,
   ParticipantSpec,

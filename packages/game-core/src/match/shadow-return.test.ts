@@ -9,6 +9,7 @@ import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Shadow Step and return (#1826): a returning status's end, for any
@@ -287,7 +288,7 @@ describe("the five's descriptions (#1826)", () => {
     if (skill === undefined) {
       throw new Error(`unknown skill ${id}`);
     }
-    return describeSkill(skill)
+    return describeSkill(skill, undefined, EN_WORDS, EN_NAMES)
       .effects.map((line) => line.text)
       .join(" | ");
   };

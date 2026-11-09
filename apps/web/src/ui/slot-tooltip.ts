@@ -11,6 +11,7 @@ import { t } from "../i18n/index.js";
 
 import { echoTooltipLine } from "./echo-strip.js";
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
+import { describeNames, describeWords } from "../i18n/describe-words.js";
 
 /**
  * The hover tooltip on a skill bar's slots in play (#485), shared by the
@@ -145,7 +146,7 @@ export function slotDescription(
   ranks: ReadonlyMap<string, number>,
   now: number,
 ): SkillDescription {
-  const described = describeSkill(skill, ranks);
+  const described = describeSkill(skill, ranks, describeWords(), describeNames());
   const echoed = echoTooltipLine(slot, now);
   const description =
     echoed === undefined
@@ -163,5 +164,5 @@ export function slotDescription(
     listed === undefined || slot.energyCost === listed
       ? t("slotTooltip.energy", { cost: slot.energyCost })
       : t("slotTooltip.energyListed", { cost: slot.energyCost, listed });
-  return { ...description, cost: `${cost}${overcastText(skill)}` };
+  return { ...description, cost: `${cost}${overcastText(skill, describeWords())}` };
 }

@@ -12,6 +12,7 @@ import { describeSkill, describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
 import type { Combatant, Skill } from "./types.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Dervish and Assassin staples (#1551): Mystic Sandstorm, Grenth's Grasp,
@@ -113,14 +114,21 @@ describe("the eight are the corpus's (#1551)", () => {
   });
 
   it("says Grenth's Grasp rides attack skills, not every physical attack", () => {
-    expect(describeStatus("grenths-grasp")).toMatch(/foes your attack skills hit get Crippled/);
-    expect(describeStatus("grenths-grasp")).not.toMatch(/physical attacks/);
+    expect(describeStatus("grenths-grasp", undefined, EN_WORDS, EN_NAMES)).toMatch(
+      /foes your attack skills hit get Crippled/,
+    );
+    expect(describeStatus("grenths-grasp", undefined, EN_WORDS, EN_NAMES)).not.toMatch(
+      /physical attacks/,
+    );
   });
 
   it("says Wearying Strike's Weakness comes without a Dervish enchantment", () => {
-    const texts = describeSkill(skill("dervish.wearying-strike"), RANKS).effects.map(
-      ({ text }) => text,
-    );
+    const texts = describeSkill(
+      skill("dervish.wearying-strike"),
+      RANKS,
+      EN_WORDS,
+      EN_NAMES,
+    ).effects.map(({ text }) => text);
     expect(texts.join(" ")).toMatch(/If you have no Dervish enchantment/);
   });
 });

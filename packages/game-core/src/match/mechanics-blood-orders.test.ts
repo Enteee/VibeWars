@@ -12,6 +12,7 @@ import type { Combatant, Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Blood Magic orders and leeches (#1979): Order of the Vampire, Dark Fury,
@@ -169,7 +170,7 @@ describe("Order of the Vampire (#1979)", () => {
 
   it("says so", () => {
     expect(
-      describeSkill(skill("necromancer.order-of-the-vampire"))
+      describeSkill(skill("necromancer.order-of-the-vampire"), undefined, EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" "),
     ).toContain("If you have no other Necromancer enchantment");
@@ -223,7 +224,7 @@ describe("Awaken the Blood (#1979)", () => {
 
   it("says so", () => {
     expect(
-      describeSkill(skill("necromancer.awaken-the-blood"))
+      describeSkill(skill("necromancer.awaken-the-blood"), undefined, EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" "),
     ).toContain("your Health sacrifices are 50% larger");

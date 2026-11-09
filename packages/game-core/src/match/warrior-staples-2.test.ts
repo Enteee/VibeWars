@@ -15,6 +15,7 @@ import { makeCombatant } from "../skills/testing.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Warrior staples 2 (#1592): a holds-a-shield condition, a
@@ -402,19 +403,19 @@ describe("Sun and Moon Slash (#1592)", () => {
 describe("the texts (#1592)", () => {
   const ranks = warrior().attributeRanks;
   const text = (id: string): string[] =>
-    describeSkill(skill(id), ranks).effects.map((effect) => effect.text);
+    describeSkill(skill(id), ranks, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text);
 
   it("say what each does", () => {
     expect(text(SHIELD_BASH)).toEqual([
       "If you hold a shield: applies Shield Bash for 10s (blocks the next melee attack. The next time you block a melee attack: knocks down for 2s)",
     ]);
-    expect(describeStatus("shield-stance", ranks)).toBe(
+    expect(describeStatus("shield-stance", ranks, EN_WORDS, EN_NAMES)).toBe(
       "75% chance to block attacks, −15 damage taken (2 per rank of Strength, at most 15)",
     );
-    expect(describeStatus("shield-stance", new Map([["warrior.strength", 3]]))).toBe(
-      "75% chance to block attacks, −6 damage taken (2 per rank of Strength, at most 15)",
-    );
-    expect(describeStatus("rage-of-the-ntouka", ranks)).toBe(
+    expect(
+      describeStatus("shield-stance", new Map([["warrior.strength", 3]]), EN_WORDS, EN_NAMES),
+    ).toBe("75% chance to block attacks, −6 damage taken (2 per rank of Strength, at most 15)");
+    expect(describeStatus("rage-of-the-ntouka", ranks, EN_WORDS, EN_NAMES)).toBe(
       "whenever you use an adrenal skill: that skill takes 3 seconds longer to recharge",
     );
   });
