@@ -69,6 +69,17 @@ describe("the PvX solo builds (#2554)", () => {
     expect(new Set(bars).size).toBe(bars.length);
   });
 
+  it("leaves exactly the empty slots no build's own page names a skill for (#2911)", () => {
+    const empty = (code: string): number => {
+      const decoded = decodeTemplateCode(code);
+      return decoded.ok ? decoded.build.skillBar.filter((slot) => slot === null).length : 0;
+    };
+    const sum = (codes: readonly string[]): number =>
+      codes.reduce((total, code) => total + empty(code), 0);
+    expect(sum(PVX_SOLO.map((build) => build.code))).toBe(73);
+    expect(sum(PVX_TEAMS.flatMap((team) => team.members))).toBe(20);
+  });
+
   it("keeps the first of two codes for one bar, and skips the second", () => {
     const [first] = PVX_SOLO;
     if (first === undefined) throw new Error("no PvX builds");
