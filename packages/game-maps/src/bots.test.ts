@@ -6,6 +6,7 @@ import {
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
   PRIEST_ANNIHILATION_MATCH_RULES,
+  PRIEST_WAVE_SECONDS,
   RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
   getSkill,
@@ -194,7 +195,9 @@ describe("Relic Run bots (#2581)", () => {
 });
 
 describe("King of the Hill bots (#2582)", () => {
-  const map = loadAllMaps().find((candidate) => candidate.mode === "king-of-the-hill");
+  const map = loadAllMaps().find(
+    (candidate) => candidate.mode === "king-of-the-hill" && candidate.teams === 2,
+  );
 
   const hill = (arena: MapData, seed: string, participants: readonly ParticipantSpec[]) => {
     const altar = arena.objectives.find((objective) => objective.kind === "altar");
@@ -236,6 +239,31 @@ describe("King of the Hill bots (#2582)", () => {
     expect(first.heldAt).toBeDefined();
     expect(play("hill")).toEqual(first);
   });
+
+  it("takes the Hall's altar with one player idle, its ghosts' mutual kill costing a priest wave (#2700)", () => {
+    const hall = loadAllMaps().find((candidate) => candidate.id === "hall-of-heroes-king");
+    if (hall === undefined) throw new Error("no map hall-of-heroes-king");
+    const twoTeams = {
+      ...hall,
+      objectives: hall.objectives.filter(
+        (objective) => objective.kind !== "ghost-spawn" || objective.team < 2,
+      ),
+    };
+    // This seed's ghosts die together on the altar before either claim ends.
+    const sim = hill(
+      twoTeams,
+      "d",
+      casterBots(hall, 8, 1).map((spec) =>
+        spec.id === "0-0" ? { ...spec, behaviour: undefined } : spec,
+      ),
+    );
+    let heldAt: number | undefined;
+    for (let t = 0; t < 180 && heldAt === undefined; t += DT) {
+      sim.step(DT);
+      if (sim.altarState.holder !== null) heldAt = t;
+    }
+    expect(heldAt).toBeGreaterThan(PRIEST_WAVE_SECONDS);
+  }, 60_000);
 
   /**
    * The first ghost to die, and the score and outcome after up to 90 s

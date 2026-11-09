@@ -412,7 +412,7 @@ describe("a King of the Hill match (#1377)", () => {
   });
 });
 
-/** Hall of Heroes (#1995, rebuilt by #2552): packages/game-maps/maps/hall-of-heroes. */
+/** Hall of Heroes (#1995, rebuilt by #2552): packages/game-maps/maps/hall-of-heroes-king. */
 const HALL_WALLS = [
   ...rect(60, 720, 260, 40),
   ...rect(2880, 1440, 260, 40),

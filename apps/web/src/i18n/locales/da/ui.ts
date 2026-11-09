@@ -635,12 +635,15 @@ export default {
   "lobby.modeGuildBattle": "Laugskamp: dræb fjendens Laugsherre",
   "lobby.modeKillCount": "Drabstælling: flest drab på 3 minutter",
   "lobby.modeKingOfTheHill":
-    "Kongen af bakken: før din Spøgelseshelt op på alteret. Hold det for at score; flest point på 8 minutter vinder.",
+    "Kongen af bakken: før din Spøgelseshelt op på alteret. Hold det for at score; flest point på {minutes} minutter vinder.",
+  "lobby.modeNameCapturePoints": "Erobring",
+  "lobby.modeNameKingOfTheHill": "Kongen af bakken",
+  "lobby.modeNameRelicRun": "Relikvieløb",
   "lobby.modePriestAnnihilation": "Præsteudslettelse: besejr alle fjender og deres præst",
   "lobby.modeRelicRun":
-    "Relikvieløb: bær din relikvie til alteret. Flest point på 8 minutter vinder.",
+    "Relikvieløb: bær din relikvie til alteret. Flest point på {minutes} minutter vinder.",
   "lobby.modeRelicRunFoe":
-    "Relikvieløb: bær fjendens relikvie til din Spøgelseshelt. 3 points forspring vinder; efter 8 minutter vinder flest point.",
+    "Relikvieløb: bær fjendens relikvie til din Spøgelseshelt. 3 points forspring vinder; efter {minutes} minutter vinder flest point.",
   "lobby.notReady": "Ikke klar",
   "lobby.playBots": "Spil mod bots",
   "lobby.ready": "Klar",

@@ -324,7 +324,7 @@ Un Ascenso de los Héroes en cola son nueve rondas, siempre en este orden: The H
 Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Brazen Causeway (Aniquilación de sacerdote), The Courtyard (Rey
 de la colina), The Warden's Gallery (Puntos de captura) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
 buscas un equipo: `Round 2 of 9 · Blackwater Ford`. Solo te enfrentas a un equipo de
-tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. Una ronda en
+tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. La única excepción: desde la ronda 2, un equipo solo en su ronda durante 60 segundos puede adelantarse. Se enfrenta a un equipo que espere en cualquier ronda posterior antes de la Hall, ambos juegan el mapa del equipo más avanzado y el ganador sigue desde allí. Una ronda en
 un mapa hecho para tres equipos espera a tres; dos equipos que hayan esperado 30
 segundos a un tercero juegan entre ellos, y también dos cuyo tercero nunca aparece
 en la sala. Si ganas, tu grupo asciende solo al siguiente mapa tras 20 segundos; si
@@ -332,6 +332,8 @@ ganas en el Hall, te quedas a defenderlo. Si pierdes, o sales de una partida ant
 de que termine, tu próximo Ascenso empieza otra vez en la ronda 1; también si sales
 de la cola o del grupo. Una partida perdida porque se fue su anfitrión conserva tu
 ronda.
+
+El Hall sortea uno de tres modos en cada partida: Rey de la colina, Carrera de reliquias o Puntos de captura, para dos o tres equipos. Con dos, la tercera base queda cerrada, y con ella su punto de captura. Una partida en el Hall dura 12 minutos y ganan los puntos; Puntos de captura también termina antes con una ventaja de 20. Morir no cuesta moral. Los muertos vuelven juntos a su base en cada minuto completo del reloj de la partida, así que un equipo aniquilado no está vencido. En Rey de la colina, el equipo que tiene el altar sigue puntuando tras morir su fantasma, hasta que otro equipo lo reclame, y sus muertos vuelven en el altar. Un empate es para el equipo que puntuó por última vez o, en Puntos de captura, para el que logró la última baja.
 
 Tu moral se mantiene durante todo el recorrido: la penalización por muerte o la
 bonificación con la que terminas un mapa ganado es con la que empiezas el siguiente,
@@ -366,7 +368,7 @@ lado más cercano y deteniendo los disparos que aún la atraviesan, y no se pued
 otra vez durante 8 segundos. Una placa del color de un equipo solo responde a ese
 equipo. Los bots se colocan en la placa de su equipo si no hay enemigos cerca.
 
-Cada recorrido empieza con la **Batalla de los Zaishen de élite**, sin cola: tu grupo contra seis Zaishen controlados por bots (2 Monjes, un Elementalista y 3 más). El reloj arranca cuando uno de vosotros cruza la línea de salida. Si matáis a los seis en menos de 30 segundos, el grupo empieza el recorrido con +10 % de moral; en menos de 60, +8 %; en menos de 80, +6 %; en menos de 100, +4 %; en menos de 120, +2 %; más lento, nada. Si ganáis, el grupo entra solo en la cola de su primer mapa. Si cae todo el grupo, el recorrido termina.
+Cada recorrido empieza con la **Batalla de los Zaishen de élite**, sin cola: tu grupo contra seis Zaishen controlados por bots (2 Monjes, un Elementalista y 3 más). El reloj arranca cuando uno de vosotros cruza la línea de salida o muere el primer Zaishen, lo que ocurra antes. Si matáis a los seis en menos de 30 segundos, el grupo empieza el recorrido con +10 % de moral; en menos de 60, +8 %; en menos de 80, +6 %; en menos de 100, +4 %; en menos de 120, +2 %; más lento, nada. Si ganáis, el grupo entra solo en la cola de su primer mapa. Si cae todo el grupo, o si queda algún Zaishen vivo al cumplirse el límite de 8 minutos, el recorrido termina.
 
 ## Tres equipos
 

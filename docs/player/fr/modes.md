@@ -342,7 +342,7 @@ ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre
 Courtyard (Roi de la colline), The Warden's Gallery (Points de capture), puis le Hall of Heroes. La fenêtre Salon dit où tu
 en es pendant que tu cherches une équipe : `Round 2 of 9 · Blackwater Ford`.
 Tu ne rencontres jamais qu'une équipe à la même manche, et tu en attends une aussi
-longtemps qu'il faut : aucun bot ne comble. Une manche sur une carte faite pour
+longtemps qu'il faut : aucun bot ne comble. Seule exception : à partir de la manche 2, une équipe seule à sa manche pendant 60 secondes peut prendre de l'avance. Elle rencontre une équipe qui attend à n'importe quelle manche ultérieure avant le Hall, les deux jouent la carte de l'équipe la plus avancée, et la gagnante continue à partir de là. Une manche sur une carte faite pour
 trois équipes en attend trois ; deux équipes qui ont attendu une troisième pendant
 30 secondes jouent l'une contre l'autre, tout comme deux dont la troisième ne se
 présente jamais dans le salon. Gagne, et ton groupe monte tout seul à la carte
@@ -350,6 +350,8 @@ suivante après 20 secondes ; gagne dans le Hall of Heroes, et tu y restes pour 
 défendre. Perds, ou quitte un match avant sa fin, et ta prochaine Ascension
 recommence à la manche 1 ; pareil si tu quittes la file ou le groupe. Un match
 perdu parce que son hôte est parti garde ta manche.
+
+Le Hall tire au sort un de trois modes pour chaque match : Roi de la colline, Course aux reliques ou Points de capture, pour deux ou trois équipes. À deux, la troisième base reste fermée, et son point de capture avec elle. Un match dans le Hall dure 12 minutes et le plus de points gagne ; les Points de capture se terminent aussi plus tôt sur une avance de 20. La mort ne coûte pas de moral. Les morts reviennent ensemble à leur base à chaque minute pleine de l'horloge du match : une équipe décimée n'est donc pas battue. Au Roi de la colline, l'équipe qui tient l'autel continue de marquer après la mort de son fantôme, jusqu'à ce qu'une autre équipe le prenne, et ses morts reviennent sur l'autel. Une égalité va à l'équipe qui a marqué en dernier ou, aux Points de capture, à celle qui a fait le dernier kill.
 
 Ton moral te suit tout au long de la course : la pénalité de mort ou le bonus
 avec lequel tu termines une carte gagnée est celui avec lequel tu commences la
@@ -387,7 +389,7 @@ encore en route, et ne peut plus être ouverte pendant 8 secondes. Une plaque à
 couleur d'une équipe ne répond qu'à cette équipe. Les bots se tiennent sur la
 plaque de leur équipe quand aucun ennemi n'est proche.
 
-Chaque parcours commence par la **Bataille des Zaishen d'élite**, sans file d'attente : votre groupe contre six Zaishen joués par des bots (2 Moines, un Élémentaliste et 3 autres). Le chrono démarre quand l'un de vous franchit la ligne de départ. Tuez les six en moins de 30 secondes et le groupe commence le parcours à +10 % de moral ; en moins de 60, +8 % ; en moins de 80, +6 % ; en moins de 100, +4 % ; en moins de 120, +2 % ; plus lentement, rien. En cas de victoire, le groupe rejoint seul la file de sa première carte. Si tout le groupe tombe, le parcours est terminé.
+Chaque parcours commence par la **Bataille des Zaishen d'élite**, sans file d'attente : votre groupe contre six Zaishen joués par des bots (2 Moines, un Élémentaliste et 3 autres). Le chrono démarre quand l'un de vous franchit la ligne de départ ou quand le premier Zaishen meurt, selon ce qui arrive en premier. Tuez les six en moins de 30 secondes et le groupe commence le parcours à +10 % de moral ; en moins de 60, +8 % ; en moins de 80, +6 % ; en moins de 100, +4 % ; en moins de 120, +2 % ; plus lentement, rien. En cas de victoire, le groupe rejoint seul la file de sa première carte. Si tout le groupe tombe, ou si un Zaishen est encore en vie à la limite de 8 minutes, le parcours est terminé.
 
 ## Trois équipes
 

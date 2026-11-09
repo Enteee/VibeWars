@@ -4,12 +4,12 @@ import {
   loadoutSpec,
   PLAYER_TEAM,
   scenarioParticipants,
+  type MatchLayers,
   type ResolvedLoadout,
   type SkillBar,
   type TrainingScenario,
 } from "@vibewars/game-core";
-import { allWallSegments } from "@vibewars/game-maps/geometry";
-import type { MatchLayers } from "@vibewars/game-core";
+import { allWallSegments, shapeVertices, wallToSegments } from "@vibewars/game-maps/geometry";
 import type { MapData } from "@vibewars/game-maps/schema";
 import type { MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
 import { structureOf, type LoadedStructure } from "../net/maps.js";
@@ -57,19 +57,6 @@ export function playerArming(character: StoredCharacter): PlayerArming {
   };
 }
 
-/** A dev build's layered map (#2830): never in `TRAINING_MAPS`. */
-export interface DevTrainingMap {
-  readonly map: MapData;
-  readonly layers: MatchLayers;
-  readonly dummyLayers: ReadonlyMap<string, number>;
-}
-
-const devMaps = new Map<string, DevTrainingMap>();
-
-export function addDevTrainingMap(dev: DevTrainingMap): void {
-  devMaps.set(dev.map.id, dev);
-}
-
 export interface TrainingSetup {
   readonly simulation: MatchSimulation;
   readonly map: MapDescriptor;
@@ -96,6 +83,25 @@ function toMapDescriptor(map: MapData): MapDescriptor {
   };
 }
 
+/** `map`'s layers, as the simulation takes them (ADR-0051). */
+export function matchLayers(map: MapData): MatchLayers {
+  return {
+    count: map.layers,
+    walls: Array.from({ length: map.layers }, (_, layer) =>
+      map.walls.filter((wall) => wall.layer === layer).flatMap(wallToSegments),
+    ),
+    decks: map.decks.map((deck) => ({
+      layer: deck.layer,
+      footprint: shapeVertices(deck.footprint),
+    })),
+    transitions: map.transitions.map((transition) => ({
+      from: transition.from,
+      to: transition.to,
+      area: shapeVertices(transition.area),
+    })),
+  };
+}
+
 /** Where the player stands: the map's first spawn point for the player's team. */
 export function playerSpawn(map: MapData): { x: number; y: number } {
   const spawn = map.spawnPoints.find((point) => point.team === PLAYER_TEAM);
@@ -106,7 +112,7 @@ export function playerSpawn(map: MapData): { x: number; y: number } {
 }
 
 export function trainingMap(scenario: TrainingScenario): MapData {
-  const map = TRAINING_MAPS.get(scenario.mapId) ?? devMaps.get(scenario.mapId)?.map;
+  const map = TRAINING_MAPS.get(scenario.mapId);
   if (map === undefined) {
     throw new Error(`scenario ${scenario.id} names unknown map ${scenario.mapId}`);
   }
@@ -121,7 +127,6 @@ export function setupScenario(
   const arming = playerArming(character);
   const spawn = playerSpawn(map);
   const firstDummy = scenario.dummies[0];
-  const dev = devMaps.get(map.id);
   const simulation = new MatchSimulation({
     // A fixed seed: the same build against the same scenario reads the
     // same numbers every time, which is what makes it a measurement.
@@ -129,7 +134,7 @@ export function setupScenario(
     teamCount: map.teams,
     walls: allWallSegments(map.walls),
     bounds: { width: map.width, height: map.height },
-    layers: dev?.layers,
+    layers: matchLayers(map),
     participants: [
       {
         id: SELF_ID,
@@ -142,10 +147,7 @@ export function setupScenario(
         // the lesson, not the walk back.
         reset: { kind: "on-death", afterSeconds: 3 },
       },
-      ...scenarioParticipants(scenario, spawn).map((participant) => ({
-        ...participant,
-        layer: dev?.dummyLayers.get(participant.id) ?? 0,
-      })),
+      ...scenarioParticipants(scenario, spawn),
     ],
   });
   return {

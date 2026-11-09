@@ -2133,7 +2133,9 @@ export default {
     "cinder-sanctum": "Santuário das Cinzas",
     "broken-tower": "Torre Quebrada",
     "the-courtyard": "O Pátio",
-    "hall-of-heroes": "Salão dos Heróis",
+    "hall-of-heroes-capture": "Salão dos Heróis",
+    "hall-of-heroes-king": "Salão dos Heróis",
+    "hall-of-heroes-relic": "Salão dos Heróis",
     "barrow-field": "Campo dos Túmulos",
     "elite-zaishen-battle": "Batalha dos Zaishen de Elite",
     "hollow-deep": "Profundezas Ocas",
@@ -2144,6 +2146,7 @@ export default {
     "scarred-earth": "Terra Marcada",
     "training-hall": "Salão de Treino",
     "training-pillars": "Pilares de Treino",
+    "training-heights": "Alturas de treino",
     "training-field": "Campo de Treino",
   },
 } satisfies GameNames;

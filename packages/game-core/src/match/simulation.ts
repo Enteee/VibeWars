@@ -46,6 +46,7 @@ import {
   SHRINE_INVULNERABLE_SECONDS,
   soleLeader,
   teamBeaten,
+  withLatestTeam,
   teamIds,
   TWO_TEAM_MODES,
   type MatchOutcome,
@@ -1299,6 +1300,8 @@ export class MatchSimulation {
   #relicsState: RelicsState | undefined;
   /** Who reached a relic this step (#1374), in simulation order. */
   #relicArrivals: CarriedArrival[] = [];
+  #recentKillTeams: readonly number[] = [];
+  #recentScoringTeams: readonly number[] = [];
   /** The map's ghost spawns and any altar (#1377, #2689); `undefined` on a map without ghosts. */
   readonly #ghostField: GhostField | undefined;
   /** Who holds the altar (#1377); nobody on a map without a hill. */
@@ -1308,8 +1311,8 @@ export class MatchSimulation {
   /** Capture Points' shrines (#1378), who owns each and how far toward whom; `[]` without them. */
   #capturePoints: readonly CapturePoint[];
   readonly #startLine: StartLine | undefined;
-  /** When team 0 first entered the start line (#2692); `undefined` until it does. */
-  #startLineCrossedAt: number | undefined;
+  /** When team 0 first entered the start line or a team 1 member first died (#2933); `undefined` until then. */
+  #clearClockStartedAt: number | undefined;
   /** What bots play for (#2542), rebuilt when the shrines change. */
   #botObjectives: BotObjectives = NO_OBJECTIVES;
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
@@ -1470,12 +1473,14 @@ export class MatchSimulation {
 
   /**
    * Seconds on the start line's clock (#2692), `null` on a map without
-   * one. A party that never crossed it is timed from the match's start.
+   * one. It starts when the party crosses the line or the first of team 1
+   * dies, whichever comes first (#2933); until then it runs from the
+   * match's start.
    */
   public get clearSeconds(): number | null {
     return this.#startLine === undefined
       ? null
-      : this.#elapsedSeconds - (this.#startLineCrossedAt ?? 0);
+      : this.#elapsedSeconds - (this.#clearClockStartedAt ?? 0);
   }
 
   /** Who won and why, once `phase` is `"finished"`. */
@@ -6160,6 +6165,7 @@ export class MatchSimulation {
     }
     for (const team of scored) {
       this.#score = addPoint(this.#score, team);
+      this.#recentScoringTeams = withLatestTeam(this.#recentScoringTeams, team);
     }
   }
 
@@ -6314,6 +6320,7 @@ export class MatchSimulation {
     }
     if (scored !== null) {
       this.#score = addPoint(this.#score, scored);
+      this.#recentScoringTeams = withLatestTeam(this.#recentScoringTeams, scored);
     }
   }
 
@@ -6557,24 +6564,31 @@ export class MatchSimulation {
     }
   }
 
-  /** The first of team 0 on the start line starts the clock (#2692). */
+  /**
+   * The first of team 0 on the start line starts the clock (#2692), or the
+   * first death on team 1, so a party cannot let the Zaishen come to it and
+   * step over the line for the last kill (#2933). One removed is not dead.
+   */
   #watchStartLine(): void {
     const line = this.#startLine;
-    if (line === undefined || this.#startLineCrossedAt !== undefined || this.phase !== "active") {
+    if (line === undefined || this.#clearClockStartedAt !== undefined || this.phase !== "active") {
       return;
     }
     for (const record of this.#participants.values()) {
-      if (
-        countsForTeam(record) &&
-        record.combatant.team === 0 &&
-        !record.combatant.dead &&
-        record.layer === line.layer &&
-        record.position.x >= line.x &&
-        record.position.x <= line.x + line.width &&
-        record.position.y >= line.y &&
-        record.position.y <= line.y + line.height
-      ) {
-        this.#startLineCrossedAt = this.#elapsedSeconds;
+      if (!countsForTeam(record)) {
+        continue;
+      }
+      const started =
+        record.combatant.team === 0
+          ? !record.combatant.dead &&
+            record.layer === line.layer &&
+            record.position.x >= line.x &&
+            record.position.x <= line.x + line.width &&
+            record.position.y >= line.y &&
+            record.position.y <= line.y + line.height
+          : record.combatant.team === 1 && record.combatant.dead;
+      if (started) {
+        this.#clearClockStartedAt = this.#elapsedSeconds;
         return;
       }
     }
@@ -7746,6 +7760,9 @@ export class MatchSimulation {
           this.#companionDied(victim, victim.creature);
           continue;
         }
+        if (killerTeam !== undefined && this.#teams.has(killerTeam)) {
+          this.#recentKillTeams = withLatestTeam(this.#recentKillTeams, killerTeam);
+        }
         victim.respawnInSeconds = this.#respawnSeconds(victim);
         if (!spared) {
           this.#deathPenalty(victim);
@@ -8481,6 +8498,17 @@ export class MatchSimulation {
     }
   }
 
+  /** Where `record` respawns: its spawn, or the altar its team holds in the Halls' King of the Hill (#2700). */
+  #respawnPlace(record: ParticipantRecord): Vec2 {
+    const altar = this.#ghostField?.altar;
+    return altar !== undefined &&
+      record.creature === undefined &&
+      this.#matchRules?.respawnOnWave === true &&
+      this.#altarState.holder === record.combatant.team
+      ? altar
+      : record.spawn;
+  }
+
   /**
    * How long `record` stays dead: its own `on-death` reset if it has one,
    * else the match rules'. Without match rules, or under
@@ -8494,7 +8522,10 @@ export class MatchSimulation {
     if (this.#matchRules?.deathRule !== "respawn") {
       return Number.POSITIVE_INFINITY;
     }
-    return this.#matchRules.respawnSeconds;
+    const { respawnSeconds, respawnOnWave } = this.#matchRules;
+    return respawnOnWave
+      ? respawnSeconds - (this.#elapsedSeconds % respawnSeconds)
+      : respawnSeconds;
   }
 
   /**
@@ -8744,7 +8775,11 @@ export class MatchSimulation {
         eliminated: this.#eliminated.has(team),
       });
     }
-    return { byTeam };
+    return {
+      byTeam,
+      recentKillTeams: this.#recentKillTeams,
+      recentScoringTeams: this.#recentScoringTeams,
+    };
   }
 
   /**
@@ -8950,7 +8985,12 @@ export class MatchSimulation {
     if (outcome.phase !== "finished") {
       return;
     }
-    this.#outcome = outcome;
+    // Only the Elite Zaishen Battle has a start line, and it is won only by
+    // killing all six (#2933): annihilation's other ending is the time limit.
+    this.#outcome =
+      this.#startLine !== undefined && outcome.reason !== "annihilation"
+        ? { phase: "finished", winningTeam: 1, reason: "time" }
+        : outcome;
   }
 
   private advanceMovement(record: ParticipantRecord, direction: Vec2, dt: number): void {
@@ -9136,6 +9176,7 @@ export class MatchSimulation {
    * morale boost (#474).
    */
   #reset(record: ParticipantRecord, why: "respawn" | "reset"): void {
+    const returnsTo = why === "respawn" ? this.#respawnPlace(record) : record.spawn;
     if (why === "reset") {
       record.combatant.overcast = 0;
       this.#setMorale(record, 0);
@@ -9149,7 +9190,7 @@ export class MatchSimulation {
     emptyAdrenaline(record.combatant);
     record.combatant.lastCombatAt = this.#elapsedSeconds;
     record.combatant.statuses.clear();
-    record.position = record.spawn;
+    record.position = returnsTo;
     record.layer = record.spec.layer ?? 0;
     this.#refreshFloors(record);
     record.facing = record.spec.facing;
@@ -9181,7 +9222,7 @@ export class MatchSimulation {
     record.outOfCombatSeconds = 0;
     record.history.clear();
     record.combatant.moving = false;
-    this.#stepStart.set(record.id, record.spawn);
+    this.#stepStart.set(record.id, returnsTo);
     // A companion comes back with its owner, alive, beside them (#1046),
     // wherever it was summoned.
     const companion = record.creature === undefined ? this.#companionOf(record) : undefined;

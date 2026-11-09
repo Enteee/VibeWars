@@ -677,12 +677,15 @@ export default {
   "lobby.modeGuildBattle": "Bătălie de bresle: ucide Lordul breslei inamice",
   "lobby.modeKillCount": "Număr de ucideri: cele mai multe ucideri în 3 minute",
   "lobby.modeKingOfTheHill":
-    "Regele dealului: condu-ți Eroul Fantomatic pe altar. Ține-l acolo ca să marchezi; câștigă cine are cele mai multe puncte în 8 minute.",
+    "Regele dealului: condu-ți Eroul Fantomatic pe altar. Ține-l acolo ca să marchezi; câștigă cine are cele mai multe puncte în {minutes} minute.",
+  "lobby.modeNameCapturePoints": "Capturare de puncte",
+  "lobby.modeNameKingOfTheHill": "Regele dealului",
+  "lobby.modeNameRelicRun": "Cursa relicvelor",
   "lobby.modePriestAnnihilation": "Anihilare cu preot: învinge toți inamicii și preotul lor",
   "lobby.modeRelicRun":
-    "Cursa relicvelor: du-ți relicva la altar. Câștigă cine are cele mai multe puncte în 8 minute.",
+    "Cursa relicvelor: du-ți relicva la altar. Câștigă cine are cele mai multe puncte în {minutes} minute.",
   "lobby.modeRelicRunFoe":
-    "Cursa relicvelor: du relicva inamicului la Eroul tău Fantomatic. Câștigă un avans de 3 puncte; după 8 minute, cine are cele mai multe puncte.",
+    "Cursa relicvelor: du relicva inamicului la Eroul tău Fantomatic. Câștigă un avans de 3 puncte; după {minutes} minute, cine are cele mai multe puncte.",
   "lobby.notReady": "Nepregătit",
   "lobby.playBots": "Joacă contra boților",
   "lobby.ready": "Gata",

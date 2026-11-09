@@ -51,6 +51,7 @@ const MAPS: Readonly<Record<string, { width: number; height: number; playerSpawn
   "training-hall": { width: 560, height: 420, playerSpawn: vec2(100, 210) },
   "training-pillars": { width: 560, height: 420, playerSpawn: vec2(90, 210) },
   "training-field": { width: 1400, height: 900, playerSpawn: vec2(200, 450) },
+  "training-heights": { width: 1200, height: 700, playerSpawn: vec2(120, 350) },
 };
 
 describe("every training scenario", () => {

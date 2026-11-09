@@ -590,12 +590,15 @@ export default {
   "lobby.modeGuildBattle": "Chiến Bang: hạ Lãnh chúa Bang của địch",
   "lobby.modeKillCount": "Đếm hạ gục: nhiều lượt hạ nhất trong 3 phút",
   "lobby.modeKingOfTheHill":
-    "Vua đồi: dẫn Anh hùng Ma lên tế đàn. Giữ để ghi điểm; nhiều điểm nhất trong 8 phút sẽ thắng.",
+    "Vua đồi: dẫn Anh hùng Ma lên tế đàn. Giữ để ghi điểm; nhiều điểm nhất trong {minutes} phút sẽ thắng.",
+  "lobby.modeNameCapturePoints": "Chiếm điểm",
+  "lobby.modeNameKingOfTheHill": "Vua đồi",
+  "lobby.modeNameRelicRun": "Vận chuyển thánh tích",
   "lobby.modePriestAnnihilation": "Diệt tư tế: hạ gục mọi địch và tư tế của chúng",
   "lobby.modeRelicRun":
-    "Vận chuyển thánh tích: mang thánh tích tới tế đàn. Nhiều điểm nhất trong 8 phút sẽ thắng.",
+    "Vận chuyển thánh tích: mang thánh tích tới tế đàn. Nhiều điểm nhất trong {minutes} phút sẽ thắng.",
   "lobby.modeRelicRunFoe":
-    "Vận chuyển thánh tích: mang thánh tích của địch tới Anh hùng Ma của bạn. Dẫn trước 3 điểm sẽ thắng; sau 8 phút, nhiều điểm nhất sẽ thắng.",
+    "Vận chuyển thánh tích: mang thánh tích của địch tới Anh hùng Ma của bạn. Dẫn trước 3 điểm sẽ thắng; sau {minutes} phút, nhiều điểm nhất sẽ thắng.",
   "lobby.notReady": "Chưa sẵn sàng",
   "lobby.playBots": "Đấu với bot",
   "lobby.ready": "Sẵn sàng",

@@ -49,6 +49,19 @@ describe("setupScenario", () => {
   });
 });
 
+describe("the heights scenario (#2937)", () => {
+  it("starts each dummy on its own layer", () => {
+    const scenario = TRAINING_SCENARIOS.find(({ id }) => id === "heights");
+    if (scenario === undefined) throw new Error("no heights");
+    const { simulation } = setupScenario(scenario, newCharacter("c1"));
+    const layerOf = (id: string) => simulation.get(id)?.layer;
+    for (const dummy of scenario.dummies) {
+      expect(layerOf(dummy.id), dummy.id).toBe(dummy.layer);
+    }
+    expect(new Set(scenario.dummies.map(({ layer }) => layer))).toEqual(new Set([0, 1, 2]));
+  });
+});
+
 describe("playerArming", () => {
   it("keeps the bar's gaps, as the server does (#347)", () => {
     const character = setSkill(

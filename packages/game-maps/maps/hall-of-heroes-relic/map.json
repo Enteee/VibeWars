@@ -1,9 +1,12 @@
 {
-  "id": "hall-of-heroes",
+  "id": "hall-of-heroes-relic",
   "name": "Hall of Heroes",
-  "mode": "king-of-the-hill",
+  "mode": "relic-run",
+  "relicTarget": "altar",
+  "relicCarry": "own",
   "teamSizes": [8],
-  "teams": 2,
+  "teams": 3,
+  "halls": true,
   "width": 3200,
   "height": 2200,
   "layers": 1,
@@ -217,25 +220,56 @@
     {
       "kind": "rect",
       "layer": 0,
-      "x": 760,
-      "y": 300,
+      "x": 1570,
+      "y": 480,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 1570,
+      "y": 1660,
+      "width": 60,
+      "height": 60
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 1220,
+      "y": 160,
       "width": 60,
       "height": 220
     },
     {
       "kind": "rect",
       "layer": 0,
-      "x": 2380,
-      "y": 1680,
+      "x": 1920,
+      "y": 1820,
+      "width": 60,
+      "height": 220
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 1920,
+      "y": 160,
+      "width": 60,
+      "height": 220
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 1220,
+      "y": 1820,
       "width": 60,
       "height": 220
     }
   ],
-  "ghostLevel": 28,
   "gates": [],
   "objectives": [
     {
-      "kind": "ghost-spawn",
+      "kind": "relic-spawn",
       "layer": 0,
       "team": 0,
       "position": {
@@ -244,12 +278,21 @@
       }
     },
     {
-      "kind": "ghost-spawn",
+      "kind": "relic-spawn",
       "layer": 0,
       "team": 1,
       "position": {
         "x": 3080,
         "y": 1100
+      }
+    },
+    {
+      "kind": "relic-spawn",
+      "layer": 0,
+      "team": 2,
+      "position": {
+        "x": 1600,
+        "y": 120
       }
     },
     {
@@ -388,6 +431,70 @@
       "position": {
         "x": 2840,
         "y": 920
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1360,
+        "y": 240
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1480,
+        "y": 240
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1720,
+        "y": 240
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1840,
+        "y": 240
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1420,
+        "y": 360
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1540,
+        "y": 360
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1660,
+        "y": 360
+      }
+    },
+    {
+      "team": 2,
+      "layer": 0,
+      "position": {
+        "x": 1780,
+        "y": 360
       }
     }
   ]

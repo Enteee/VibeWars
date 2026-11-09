@@ -6,7 +6,7 @@ import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { keySignet } from "../identity/key-signet.js";
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
-import { ASCENT_PROGRESSION } from "../net/maps.js";
+import { ASCENT_PROGRESSION, isHallsMap, mapMatchRules } from "../net/maps.js";
 import { button, h, readyButton, toast, type ShareLine } from "./kit.js";
 import { relayLine, relaySharedByLine, relaySharingText } from "./relay-section.js";
 import {
@@ -37,6 +37,8 @@ export interface LobbyScreenCallbacks {
 export interface LobbyMatchmaking {
   /** How long the party has looked for a team; `null` while it is not queued. */
   readonly queuedMs: number | null;
+  /** The map of the group the queue formed (#2687); `undefined` until it has. */
+  readonly groupMapId: string | undefined;
   readonly onFindMatch: () => void;
   readonly onLeaveQueue: () => void;
   /** `undefined` where bots are not offered: Heroes' Ascent waits for a side (#1996). */
@@ -180,7 +182,9 @@ const MODE_LINES: Readonly<Record<MatchMode, MessageKey>> = {
 
 /** The mode `map` plays, in a line: "Kill Count: most kills in 3 minutes". */
 export function modeLine(map: LobbyMap): string {
-  return t(map.relicCarry === "foe" ? "lobby.modeRelicRunFoe" : MODE_LINES[map.mode]);
+  return t(map.relicCarry === "foe" ? "lobby.modeRelicRunFoe" : MODE_LINES[map.mode], {
+    minutes: mapMatchRules(map.id, map.mode).timeLimitSeconds / 60,
+  });
 }
 
 /** Each size class as the picker writes it. */
@@ -190,9 +194,22 @@ const SIZE_NAMES: Readonly<Record<SizeClass, MessageKey>> = {
   large: "lobby.sizeLarge",
 };
 
-/** The arena as the picker names it: its name, then its size class, e.g. "Long Hall (small)". */
+/** What each of the Hall's modes is called in the picker (#2700). */
+const HALLS_MODE_NAMES: Readonly<Partial<Record<MatchMode, MessageKey>>> = {
+  "relic-run": "lobby.modeNameRelicRun",
+  "king-of-the-hill": "lobby.modeNameKingOfTheHill",
+  "capture-points": "lobby.modeNameCapturePoints",
+};
+
+/**
+ * The arena as the picker names it: its name, then its size class, e.g.
+ * "Long Hall (small)"; a Hall of Heroes map by its mode, the three being
+ * one place (#2700).
+ */
 export function mapLabel(map: LobbyMap): string {
-  return t("lobby.mapLabel", { name: mapName(map.id), size: t(SIZE_NAMES[map.size]) });
+  const hallsMode = isHallsMap(map.id) ? HALLS_MODE_NAMES[map.mode] : undefined;
+  const qualifier = hallsMode === undefined ? t(SIZE_NAMES[map.size]) : t(hallsMode);
+  return t("lobby.mapLabel", { name: mapName(map.id), size: qualifier });
 }
 
 /** What the lobby says about relays (#2531), from `lobbyRelayStatus`. */
@@ -233,9 +250,11 @@ export function lobbyPanel(
   // else sees it as a label rather than a control they would be refused
   // on clicking. Team Arena draws its own at the start.
   // A party queued in Heroes' Ascent is bound for its round's map, not
-  // the lobby's (#1996). A host's round with no map yet is wrong data: the
-  // lobby's map is shown (#2686).
+  // the lobby's (#1996), until a group is formed: a party that skipped
+  // ahead plays the group's map (#2687). A host's round with no map yet is
+  // wrong data: the lobby's map is shown (#2686).
   const shownMapId =
+    matchmaking?.groupMapId ??
     (snapshot.ascentRound === null ? undefined : ASCENT_PROGRESSION[snapshot.ascentRound]) ??
     snapshot.mapId;
   const current = availableMaps.find((map) => map.id === shownMapId);

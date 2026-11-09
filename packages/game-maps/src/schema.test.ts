@@ -200,6 +200,7 @@ describe("every training map", () => {
     expect(maps.map(({ map }) => map.id).sort()).toEqual([
       "training-field",
       "training-hall",
+      "training-heights",
       "training-pillars",
     ]);
   });
@@ -207,15 +208,28 @@ describe("every training map", () => {
   it("is named for its directory, compact, and spawns one player against dummy slots", () => {
     for (const { dir, map } of maps) {
       expect(map.id).toBe(dir);
-      // The field (#497) is the one big enough to run in: 1400 by 900.
-      expect(map.width, map.id).toBeLessThanOrEqual(map.id === "training-field" ? 1400 : 600);
-      expect(map.height, map.id).toBeLessThanOrEqual(map.id === "training-field" ? 900 : 450);
+      // The field (#497) is big enough to run in, the heights (#2937) to climb in.
+      const roomy = map.id === "training-field" || map.id === "training-heights";
+      expect(map.width, map.id).toBeLessThanOrEqual(roomy ? 1400 : 600);
+      expect(map.height, map.id).toBeLessThanOrEqual(roomy ? 900 : 450);
       expect(
         map.spawnPoints.filter((s) => s.team === 0),
         map.id,
       ).toHaveLength(1);
       expect(map.spawnPoints.filter((s) => s.team === 1).length, map.id).toBeGreaterThan(0);
     }
+  });
+
+  it("training-heights has decks on layers 1 and 2, and a ramp joining each pair (#2937)", () => {
+    const heights = maps.find(({ map }) => map.id === "training-heights")?.map;
+    if (heights === undefined) throw new Error("no training-heights");
+    expect(heights.decks.map(({ layer }) => layer).sort()).toEqual([1, 2]);
+    expect(heights.transitions.map(({ from, to }) => [from, to])).toEqual(
+      expect.arrayContaining([
+        [0, 1],
+        [1, 2],
+      ]),
+    );
   });
 
   it("keeps every spawn inside the bounds and out of the walls", () => {

@@ -2,7 +2,7 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
-import { ARENA_MAPS } from "../net/maps.js";
+import { ARENA_MAPS, ASCENT_PROGRESSION } from "../net/maps.js";
 import {
   PLAY_BOTS_AFTER_MS,
   hostMaps,
@@ -275,6 +275,29 @@ describe("modeLine (#476)", () => {
   });
 });
 
+describe("a Hall of Heroes map in the lobby (#2700)", () => {
+  const map = { id: "hall-of-heroes-king", size: "small", teamSizes: [8] } as const;
+
+  it("states the Hall's 12 minutes", () => {
+    expect(modeLine({ ...map, mode: "king-of-the-hill" })).toContain("in 12 minutes");
+    expect(modeLine({ ...map, id: "hall-of-heroes-relic", mode: "relic-run" })).toContain(
+      "in 12 minutes",
+    );
+  });
+
+  it("is told apart in the picker by its mode", () => {
+    expect(mapLabel({ ...map, mode: "king-of-the-hill" })).toBe(
+      "Hall of Heroes (King of the Hill)",
+    );
+    expect(mapLabel({ ...map, id: "hall-of-heroes-relic", mode: "relic-run" })).toBe(
+      "Hall of Heroes (Relic Run)",
+    );
+    expect(mapLabel({ ...map, id: "hall-of-heroes-capture", mode: "capture-points" })).toBe(
+      "Hall of Heroes (Capture Points)",
+    );
+  });
+});
+
 describe("waitingFor (#580)", () => {
   const player = (name: string, team: 0 | 1 | null, ready: boolean) => ({
     sessionId: name,
@@ -519,6 +542,7 @@ describe("matchmakingButtons (#1766)", () => {
   const pressed: string[] = [];
   const matchmaking = (queuedMs: number | null) => ({
     queuedMs,
+    groupMapId: undefined,
     onFindMatch: () => pressed.push("find"),
     onLeaveQueue: () => pressed.push("leave"),
     onPlayBots: () => pressed.push("bots"),
@@ -691,6 +715,34 @@ describe("lobbyPanel: the map (#1994)", () => {
     ).toEqual([
       "Capture Points: stand on shrines to take them. Each shrine you own scores every 30 s.",
     ]);
+  });
+
+  it("shows the group's map once a party that skipped ahead is formed into one (#2687)", () => {
+    const ascent = ASCENT_PROGRESSION.slice(0, 4).map((id, index) => ({
+      id,
+      name: `Round ${String(index)}`,
+      size: "small" as const,
+      mode: "capture-points" as const,
+      teamSizes: [8],
+    }));
+    const queued = {
+      ...snapshot("waiting"),
+      mode: "heroes-ascent",
+      ascentRound: 1,
+    } as const;
+    const matchmaking = {
+      queuedMs: 70_000,
+      onFindMatch: () => undefined,
+      onLeaveQueue: () => undefined,
+      onPlayBots: undefined,
+    };
+    const shown = (groupMapId: string | undefined): string | null | undefined =>
+      (
+        lobbyPanel(queued, callbacks, undefined, ascent, { ...matchmaking, groupMapId })
+          .status[0] as unknown as FakeElement
+      ).textContent;
+    expect(shown(undefined)).toBe("Map: Blackwater Ford (small)");
+    expect(shown(ASCENT_PROGRESSION[3])).toBe("Map: Cinder Sanctum (small)");
   });
 
   it("shows the lobby's map for a round a hostile host claims past the maps (#2686)", () => {

@@ -2133,7 +2133,9 @@ export default {
     "cinder-sanctum": "Sanctuaire de cendres",
     "broken-tower": "Tour brisée",
     "the-courtyard": "La Cour",
-    "hall-of-heroes": "Hall des héros",
+    "hall-of-heroes-capture": "Hall des héros",
+    "hall-of-heroes-king": "Hall des héros",
+    "hall-of-heroes-relic": "Hall des héros",
     "barrow-field": "Champ des tumulus",
     "elite-zaishen-battle": "Bataille des Zaishen d'élite",
     "hollow-deep": "Les Profondeurs creuses",
@@ -2144,6 +2146,7 @@ export default {
     "scarred-earth": "Terre balafrée",
     "training-hall": "Salle d'entraînement",
     "training-pillars": "Piliers d'entraînement",
+    "training-heights": "Hauteurs d'entraînement",
     "training-field": "Terrain d'entraînement",
   },
 } satisfies GameNames;

@@ -1,9 +1,4 @@
-import {
-  FOE_RELIC_RUN_MATCH_RULES,
-  MATCH_MODES,
-  createRng,
-  type PlayerBuild,
-} from "@vibewars/game-core";
+import { createRng, type PlayerBuild } from "@vibewars/game-core";
 import {
   FORMATION_TIMEOUT_MS,
   MAX_LOBBY_PLAYERS,
@@ -61,7 +56,10 @@ import {
   hostMap,
   mapTeamSizes,
   modeMapIds,
+  mapMatchRules,
+  ASCENT_PROGRESSION,
   queueMapPool,
+  queueSkipping,
   queueTeamCount,
 } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
@@ -172,22 +170,22 @@ export function lobbyRandom(seed: string | undefined): () => number {
 
 /** Build the match the lobby planned, on its map and by its mode. Throws for a map it does not have. */
 function startMatch(plan: MatchPlan) {
-  const map = hostMap(plan.mapId);
-  if (map === undefined) {
+  const map = hostMap(plan.mapId, plan.teamCount);
+  const made = hostMap(plan.mapId);
+  if (map === undefined || made === undefined) {
     throw new Error(`no arena named ${JSON.stringify(plan.mapId)}`);
   }
-  if (plan.teamCount > map.descriptor.teamCount) {
+  if (plan.teamCount > made.descriptor.teamCount) {
     throw new Error(`${plan.mapId} is not made for ${String(plan.teamCount)} teams`);
   }
   return createMatchHost({
     transport: plan.transport,
     // A two-team match on a three-team map (#2683) plays, and says, two.
-    map: { ...map, descriptor: { ...map.descriptor, teamCount: plan.teamCount } },
+    map,
     // A match is reproducible from its seed; the lobby's match id is
     // unique only within the lobby, so the code goes in too.
     seed: `${plan.transport.selfId}:${plan.matchId}`,
-    matchRules:
-      map.relicField?.relicCarry === "foe" ? FOE_RELIC_RUN_MATCH_RULES : MATCH_MODES[map.mode],
+    matchRules: mapMatchRules(plan.mapId, map.mode),
     random: secureRandom,
     maxPlayers: MAX_LOBBY_PLAYERS,
     seats: plan.seats,
@@ -744,8 +742,14 @@ export function enterQueue(
       ...(party === undefined ? {} : { party: party.party }),
       now: () => Date.now(),
       newTicketKey: () => queue.newTicketKey(),
-      mapPool: queueMapPool(mode, ascentRound),
-      teamCount: queueTeamCount(mode, ascentRound),
+      round: (round) =>
+        round !== null && round >= ASCENT_PROGRESSION.length
+          ? undefined
+          : {
+              mapPool: queueMapPool(mode, round),
+              teamCount: queueTeamCount(mode, round),
+              skipping: queueSkipping(mode, round),
+            },
       hardNat,
     });
     client = started;

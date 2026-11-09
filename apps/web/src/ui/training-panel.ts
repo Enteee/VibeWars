@@ -232,17 +232,6 @@ export function createTrainingPanel(): TrainingPanel {
     option.textContent = scenario.label;
     picker.appendChild(option);
   }
-  // A dev build's layered map (#2830); a production bundle holds neither it nor this.
-  let devScenario: TrainingScenario | undefined;
-  if (import.meta.env.DEV) {
-    void import("../training/dev-layer-test.js").then(({ LAYER_TEST_SCENARIO }) => {
-      devScenario = LAYER_TEST_SCENARIO;
-      const option = document.createElement("option");
-      option.value = LAYER_TEST_SCENARIO.id;
-      option.textContent = LAYER_TEST_SCENARIO.label;
-      picker.appendChild(option);
-    });
-  }
   const resetButton = document.createElement("button");
   resetButton.type = "button";
   resetButton.className = "training-reset";
@@ -688,7 +677,7 @@ export function createTrainingPanel(): TrainingPanel {
         toRenderableWall(wall, setup.structure.wallLayers[at] ?? 0),
       ),
       structure: setup.structure.structure,
-      shrines: mapShrines(setup.map.id),
+      shrines: mapShrines(setup.map.id, setup.map.teamCount),
       wallSegments: allWallSegments(setup.map.walls),
       // The same sounds as a match (#112), muted by the same M.
       sounds: attachMatchSounds(connection, soundPlayer()),
@@ -944,9 +933,7 @@ export function createTrainingPanel(): TrainingPanel {
   document.addEventListener("pointerdown", onDocumentPointerDown, { capture: true });
 
   const onPickScenario = (): void => {
-    const scenario =
-      getTrainingScenario(picker.value) ??
-      (picker.value === devScenario?.id ? devScenario : undefined);
+    const scenario = getTrainingScenario(picker.value);
     if (scenario === undefined || character === undefined) {
       return;
     }

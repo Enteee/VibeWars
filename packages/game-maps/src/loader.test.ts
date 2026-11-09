@@ -17,7 +17,9 @@ import frozenCrossing from "../maps/frozen-crossing/map.json" with { type: "json
 import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
 import blackwaterFord from "../maps/blackwater-ford/map.json" with { type: "json" };
 import brazenCauseway from "../maps/brazen-causeway/map.json" with { type: "json" };
-import hallOfHeroes from "../maps/hall-of-heroes/map.json" with { type: "json" };
+import hallOfHeroesCapture from "../maps/hall-of-heroes-capture/map.json" with { type: "json" };
+import hallOfHeroesKing from "../maps/hall-of-heroes-king/map.json" with { type: "json" };
+import hallOfHeroesRelic from "../maps/hall-of-heroes-relic/map.json" with { type: "json" };
 import hollowDeep from "../maps/hollow-deep/map.json" with { type: "json" };
 import mosslitCairns from "../maps/mosslit-cairns/map.json" with { type: "json" };
 import wardensGallery from "../maps/wardens-gallery/map.json" with { type: "json" };
@@ -65,7 +67,9 @@ describe("the maps the browser imports", () => {
       emberPits,
       frozenCrossing,
       guildHallIsle,
-      hallOfHeroes,
+      hallOfHeroesCapture,
+      hallOfHeroesKing,
+      hallOfHeroesRelic,
       hollowDeep,
       jungleRuins,
       mossVale,
@@ -178,10 +182,10 @@ describe("every bundled map", () => {
     expect(maps.length).toBeGreaterThan(1);
   });
 
-  it("has spawn points for exactly two teams", () => {
+  it("has spawn points for exactly its teams", () => {
     for (const map of maps) {
       const teams = new Set(map.spawnPoints.map((spawn) => spawn.team));
-      expect([...teams].sort(), map.id).toEqual([0, 1]);
+      expect([...teams].sort(), map.id).toEqual([...Array(map.teams).keys()]);
     }
   });
 
@@ -247,8 +251,10 @@ describe("every bundled map", () => {
     }
   });
 
-  it("gives every map a unique, non-empty display name", () => {
-    const names = maps.map((map) => map.name);
+  it("gives every map but the Hall's three, one place (#2700), a unique, non-empty display name", () => {
+    const names = maps
+      .filter((map) => map.halls !== true || map.mode === "king-of-the-hill")
+      .map((map) => map.name);
     expect(new Set(names).size).toBe(names.length);
     for (const name of names) {
       expect(name.length).toBeGreaterThan(0);

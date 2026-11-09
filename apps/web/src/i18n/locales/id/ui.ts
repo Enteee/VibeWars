@@ -594,11 +594,15 @@ export default {
   "lobby.modeGuildBattle": "Perang Guild: bunuh Penguasa Guild musuh",
   "lobby.modeKillCount": "Hitung Kill: kill terbanyak dalam 3 menit",
   "lobby.modeKingOfTheHill":
-    "Raja Bukit: pimpin Pahlawan Hantu-mu ke altar. Kuasai untuk mencetak poin; poin terbanyak dalam 8 menit menang.",
+    "Raja Bukit: pimpin Pahlawan Hantu-mu ke altar. Kuasai untuk mencetak poin; poin terbanyak dalam {minutes} menit menang.",
+  "lobby.modeNameCapturePoints": "Rebut Titik",
+  "lobby.modeNameKingOfTheHill": "Raja Bukit",
+  "lobby.modeNameRelicRun": "Lari Relik",
   "lobby.modePriestAnnihilation": "Pemusnahan Pendeta: kalahkan semua musuh dan pendetanya",
-  "lobby.modeRelicRun": "Lari Relik: bawa relikmu ke altar. Poin terbanyak dalam 8 menit menang.",
+  "lobby.modeRelicRun":
+    "Lari Relik: bawa relikmu ke altar. Poin terbanyak dalam {minutes} menit menang.",
   "lobby.modeRelicRunFoe":
-    "Lari Relik: bawa relik musuh ke Pahlawan Hantu-mu. Unggul 3 poin menang; setelah 8 menit, poin terbanyak menang.",
+    "Lari Relik: bawa relik musuh ke Pahlawan Hantu-mu. Unggul 3 poin menang; setelah {minutes} menit, poin terbanyak menang.",
   "lobby.notReady": "Belum siap",
   "lobby.playBots": "Lawan bot",
   "lobby.ready": "Siap",

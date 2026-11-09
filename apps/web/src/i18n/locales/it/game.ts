@@ -2133,7 +2133,9 @@ export default {
     "cinder-sanctum": "Santuario di cenere",
     "broken-tower": "Torre spezzata",
     "the-courtyard": "Il cortile",
-    "hall-of-heroes": "Sala degli eroi",
+    "hall-of-heroes-capture": "Sala degli eroi",
+    "hall-of-heroes-king": "Sala degli eroi",
+    "hall-of-heroes-relic": "Sala degli eroi",
     "barrow-field": "Campo dei tumuli",
     "elite-zaishen-battle": "Battaglia degli Zaishen d'élite",
     "hollow-deep": "Le cavità profonde",
@@ -2144,6 +2146,7 @@ export default {
     "scarred-earth": "Terra sfregiata",
     "training-hall": "Sala d'addestramento",
     "training-pillars": "Pilastri d'addestramento",
+    "training-heights": "Alture di addestramento",
     "training-field": "Campo d'addestramento",
   },
 } satisfies GameNames;

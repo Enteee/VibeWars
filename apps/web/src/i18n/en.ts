@@ -638,11 +638,15 @@ export const en = {
   "lobby.modeGuildBattle": "Guild Battle: kill the enemy Guild Lord",
   "lobby.modeKillCount": "Kill Count: most kills in 3 minutes",
   "lobby.modeKingOfTheHill":
-    "King of the Hill: lead your Ghostly Hero onto the altar. Hold it to score; most points in 8 minutes wins.",
+    "King of the Hill: lead your Ghostly Hero onto the altar. Hold it to score; most points in {minutes} minutes wins.",
+  "lobby.modeNameCapturePoints": "Capture Points",
+  "lobby.modeNameKingOfTheHill": "King of the Hill",
+  "lobby.modeNameRelicRun": "Relic Run",
   "lobby.modePriestAnnihilation": "Priest Annihilation: defeat every foe and their priest",
-  "lobby.modeRelicRun": "Relic Run: carry your relic to the altar. Most points in 8 minutes wins.",
+  "lobby.modeRelicRun":
+    "Relic Run: carry your relic to the altar. Most points in {minutes} minutes wins.",
   "lobby.modeRelicRunFoe":
-    "Relic Run: carry the foe's relic to your Ghostly Hero. A 3-point lead wins; after 8 minutes, most points.",
+    "Relic Run: carry the foe's relic to your Ghostly Hero. A 3-point lead wins; after {minutes} minutes, most points.",
   "lobby.notReady": "Not ready",
   "lobby.playBots": "Play against bots",
   "lobby.ready": "Ready",

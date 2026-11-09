@@ -332,7 +332,10 @@ Temples' place), Mosslit Cairns (Capture Points, in Forgotten Shrines'),
 The Brazen Causeway (Priest Annihilation), The Courtyard (King of the Hill), The Warden's Gallery (Capture Points, in Antechamber's), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 9 · Blackwater Ford`.
 You only ever meet a team at the same round, and you wait for one as
-long as it takes: no bots fill in. A round on a map made for three
+long as it takes: no bots fill in. The one exception: from round 2 on, a team
+alone at its round for 60 seconds may skip ahead. It meets a team waiting at
+any later round before the Hall, both play the later team's map, and the
+winner goes on from there. A round on a map made for three
 teams waits for three; two teams that have waited 30 seconds for a third
 play each other instead, and so do two whose third never shows up in the
 lobby. Win, and your party ascends to the next map on its own after 20
@@ -340,7 +343,9 @@ seconds; win in the Hall, and you stay to defend it. Lose, or leave a match befo
 starts again at round 1; so does leaving the queue or the party. A match
 lost to its host leaving keeps your round.
 
-Every run starts with the **Elite Zaishen Battle**, with no queue: your party against six Zaishen played by bots (2 Monks, an Elementalist and 3 others). The clock starts when one of you crosses the start line. Kill all six in under 30 seconds and the party starts the run at +10% morale; under 60, +8%; under 80, +6%; under 100, +4%; under 120, +2%; slower, nothing. Win and your party queues for its first map on its own. Wipe and the run is over.
+The Hall draws one of three modes for each match: King of the Hill, Relic Run or Capture Points, for two or three teams. With two, the third base stays closed, and with it its capture point. A Hall match runs 12 minutes and the most points win; Capture Points also ends early on a lead of 20. Death costs no morale. The dead return together at their base on every full minute of the match clock, so a wiped team is not beaten. In King of the Hill, the team holding the altar keeps scoring after its ghost dies, until another team claims it, and its dead return on the altar. A tie goes to the team that scored last, or in Capture Points to the team with the most recent kill.
+
+Every run starts with the **Elite Zaishen Battle**, with no queue: your party against six Zaishen played by bots (2 Monks, an Elementalist and 3 others). The clock starts when one of you crosses the start line or the first Zaishen dies, whichever comes first. Kill all six in under 30 seconds and the party starts the run at +10% morale; under 60, +8%; under 80, +6%; under 100, +4%; under 120, +2%; slower, nothing. Win and your party queues for its first map on its own. Wipe, or still have a Zaishen alive when the 8-minute limit is reached, and the run is over.
 
 Your morale carries through the run: the death penalty or boost you end
 a won map with is what you start the next one with, from −60% to +10%.

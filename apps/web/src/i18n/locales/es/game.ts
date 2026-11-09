@@ -2133,7 +2133,9 @@ export default {
     "cinder-sanctum": "Santuario de ceniza",
     "broken-tower": "Torre rota",
     "the-courtyard": "El patio",
-    "hall-of-heroes": "Salón de los héroes",
+    "hall-of-heroes-capture": "Salón de los héroes",
+    "hall-of-heroes-king": "Salón de los héroes",
+    "hall-of-heroes-relic": "Salón de los héroes",
     "barrow-field": "Campo de túmulos",
     "elite-zaishen-battle": "Batalla de los Zaishen de élite",
     "hollow-deep": "La hondonada",
@@ -2144,6 +2146,7 @@ export default {
     "scarred-earth": "Tierra marcada",
     "training-hall": "Sala de entrenamiento",
     "training-pillars": "Pilares de entrenamiento",
+    "training-heights": "Alturas de entrenamiento",
     "training-field": "Campo de entrenamiento",
   },
 } satisfies GameNames;

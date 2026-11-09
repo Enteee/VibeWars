@@ -341,7 +341,7 @@ The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), 
 Courtyard (Rei da Colina), The Warden's Gallery (Captura de Pontos) e depois o Hall of Heroes. A janela da Sala diz
 onde você está enquanto procura uma equipe: `Round 2 of 9 · Blackwater Ford`.
 Você só encontra equipes na mesma rodada e espera por uma o tempo que for
-preciso: nenhum bot completa. Uma rodada em um mapa feito para três
+preciso: nenhum bot completa. A única exceção: a partir da rodada 2, uma equipe sozinha na sua rodada por 60 segundos pode avançar. Ela enfrenta uma equipe que espera em qualquer rodada posterior antes do Hall, as duas jogam o mapa da equipe mais adiantada e a vencedora segue a partir dali. Uma rodada em um mapa feito para três
 equipes espera três; duas equipes que esperaram 30 segundos pela terceira
 jogam entre si, assim como duas cuja terceira nunca aparece na sala. Vença
 e seu grupo sobe sozinho para o próximo mapa depois de 20 segundos; vença
@@ -349,6 +349,8 @@ no Hall e você fica para defendê-lo. Perca, ou saia de uma partida antes
 do fim, e sua próxima Ascensão recomeça na rodada 1; o mesmo vale para
 sair da fila ou do grupo. Uma partida perdida porque o host saiu mantém
 sua rodada.
+
+O Hall sorteia um de três modos para cada partida: Rei da Colina, Corrida da Relíquia ou Captura de Pontos, para duas ou três equipes. Com duas, a terceira base fica fechada, e com ela seu ponto de captura. Uma partida no Hall dura 12 minutos e vence quem tiver mais pontos; a Captura de Pontos também termina antes com uma vantagem de 20. Morrer não custa moral. Os mortos voltam juntos à sua base a cada minuto cheio do relógio da partida, então uma equipe eliminada não está derrotada. No Rei da Colina, a equipe que controla o altar continua pontuando depois que seu fantasma morre, até outra equipe tomá-lo, e seus mortos voltam no altar. Um empate vai para a equipe que pontuou por último ou, na Captura de Pontos, para a que fez a eliminação mais recente.
 
 Sua moral acompanha você por toda a campanha: a penalidade de morte ou o
 bônus com que você termina um mapa vencido é o que você leva para o
@@ -387,7 +389,7 @@ a atravessam, e não pode ser aberto de novo por 8 segundos. Uma placa na
 cor de uma equipe só responde a essa equipe. Os bots ficam na placa da
 própria equipe quando não há inimigo por perto.
 
-Cada percurso começa com a **Batalha dos Zaishen de Elite**, sem fila: seu grupo contra seis Zaishen controlados por bots (2 Monges, um Elementalista e mais 3). O relógio começa quando um de vocês cruza a linha de partida. Matem os seis em menos de 30 segundos e o grupo começa o percurso com +10% de moral; em menos de 60, +8%; em menos de 80, +6%; em menos de 100, +4%; em menos de 120, +2%; mais devagar, nada. Se vencerem, o grupo entra sozinho na fila do primeiro mapa. Se o grupo inteiro cair, o percurso acaba.
+Cada percurso começa com a **Batalha dos Zaishen de Elite**, sem fila: seu grupo contra seis Zaishen controlados por bots (2 Monges, um Elementalista e mais 3). O relógio começa quando um de vocês cruza a linha de partida ou o primeiro Zaishen morre, o que acontecer primeiro. Matem os seis em menos de 30 segundos e o grupo começa o percurso com +10% de moral; em menos de 60, +8%; em menos de 80, +6%; em menos de 100, +4%; em menos de 120, +2%; mais devagar, nada. Se vencerem, o grupo entra sozinho na fila do primeiro mapa. Se o grupo inteiro cair, ou se algum Zaishen ainda estiver vivo ao fim do limite de 8 minutos, o percurso acaba.
 
 ## Três equipes
 
