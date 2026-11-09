@@ -323,6 +323,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         carrierId: `${PEER_ID}${String(team)}`,
         x: null,
         y: null,
+        layer: null,
       })),
       stand: { holder: 1, heldSeconds: FLOAT },
       aggression: [],

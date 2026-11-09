@@ -1,5 +1,6 @@
-import { distance, type Vec2 } from "../vec2.js";
+import type { Vec2 } from "../vec2.js";
 import { FLAG_REACH_UNITS } from "./flags.js";
+import { atObjective, type BodyOnFloors } from "./layer-rules.js";
 
 /**
  * Heroes' Ascent's Capture Points (#1378, #2690, GW1's wiki "Capture
@@ -42,16 +43,30 @@ export interface CapturePointState {
 /** A shrine on the map, and how it stands. */
 export interface CapturePoint extends CapturePointState {
   readonly position: Vec2;
+  /** The layer it stands on (ADR-0051). */
+  readonly layer: number;
 }
 
-/** A shrine at each of `positions`, neutral, nobody's progress on it. */
-export function initialCapturePoints(positions: readonly Vec2[]): CapturePoint[] {
-  return positions.map((position) => ({ position, owner: null, capturer: null, progress: 0 }));
+/** Where a map puts a shrine. Omitted `layer`: the ground. */
+export type CapturePointSite = Vec2 & { readonly layer?: number };
+
+/** A shrine at each of `sites`, neutral, nobody's progress on it. */
+export function initialCapturePoints(sites: readonly CapturePointSite[]): CapturePoint[] {
+  return sites.map(({ x, y, layer }) => ({
+    position: { x, y },
+    layer: layer ?? 0,
+    owner: null,
+    capturer: null,
+    progress: 0,
+  }));
 }
 
-/** Whether `position` is on the shrine at `point`. */
-export function onCapturePoint(point: Vec2, position: Vec2): boolean {
-  return distance(point, position) <= CAPTURE_REACH_UNITS;
+/** Whether `body` is on the shrine `point`: in reach, and on its layer or a ramp to it. */
+export function onCapturePoint(
+  point: Pick<CapturePoint, "position" | "layer">,
+  body: BodyOnFloors,
+): boolean {
+  return atObjective(point.position, point.layer, body, CAPTURE_REACH_UNITS);
 }
 
 /**

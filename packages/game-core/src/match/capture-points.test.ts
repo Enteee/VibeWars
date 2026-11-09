@@ -12,6 +12,7 @@ import {
   stepCapturePoints,
   type CapturePointState,
 } from "./capture-points.js";
+import { floorOf, type BodyOnFloors } from "./layer-rules.js";
 
 /**
  * Capture Points' shrines (#1378, #2690), pure: how pips net, who takes
@@ -131,18 +132,28 @@ describe("a capture point (#1378, #2690)", () => {
     expect(hold(OURS, NOBODY, 60)).toEqual(OURS);
   });
 
+  it("counts a body on its layer or a ramp to it, not one beneath it (ADR-0051)", () => {
+    const shrine = { position: vec2(500, 500), layer: 1 };
+    const at = (floors: number): BodyOnFloors => ({ position: vec2(500, 500), floors });
+    expect(onCapturePoint(shrine, at(floorOf(1)))).toBe(true);
+    expect(onCapturePoint(shrine, at(floorOf(0)))).toBe(false);
+    expect(onCapturePoint(shrine, at(floorOf(0) | floorOf(1)))).toBe(true);
+  });
+
   it("counts a player within reach, and each shrine apart", () => {
     const point = vec2(500, 500);
-    expect(onCapturePoint(point, vec2(500 + CAPTURE_REACH_UNITS, 500))).toBe(true);
-    expect(onCapturePoint(point, vec2(501 + CAPTURE_REACH_UNITS, 500))).toBe(false);
+    const shrine = { position: point, layer: 0 };
+    const onFloor = (x: number): BodyOnFloors => ({ position: vec2(x, 500), floors: floorOf(0) });
+    expect(onCapturePoint(shrine, onFloor(500 + CAPTURE_REACH_UNITS))).toBe(true);
+    expect(onCapturePoint(shrine, onFloor(501 + CAPTURE_REACH_UNITS))).toBe(false);
     const { state } = stepCapturePoints(
       initialCapturePoints([point, vec2(900, 500)]),
       CAPTURE_SECONDS,
       [pips([0, 4]), NOBODY],
     );
     expect(state).toEqual([
-      { ...OURS, position: point },
-      { ...NEUTRAL, position: vec2(900, 500) },
+      { ...OURS, position: point, layer: 0 },
+      { ...NEUTRAL, position: vec2(900, 500), layer: 0 },
     ]);
   });
 });

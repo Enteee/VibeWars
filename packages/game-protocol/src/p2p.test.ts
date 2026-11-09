@@ -297,8 +297,8 @@ const snapshot: WireSnapshotPart = {
 const flagged: WireSnapshotPart = {
   ...snapshot,
   flags: [
-    { team: 0, place: "carried", carrierId: "peer-1", x: null, y: null },
-    { team: 1, place: "ground", carrierId: null, x: 1400, y: 980 },
+    { team: 0, place: "carried", carrierId: "peer-1", x: null, y: null, layer: null },
+    { team: 1, place: "ground", carrierId: null, x: 1400, y: 980, layer: 0 },
   ],
   stand: { holder: 0, heldSeconds: 37.5 },
   aggression: [1240, 980],
@@ -308,8 +308,8 @@ const flagged: WireSnapshotPart = {
 const relicked: WireSnapshotPart = {
   ...snapshot,
   relics: [
-    { team: 0, place: "carried", carrierId: "peer-1", x: null, y: null },
-    { team: 1, place: "ground", carrierId: null, x: 1300, y: 500 },
+    { team: 0, place: "carried", carrierId: "peer-1", x: null, y: null, layer: null },
+    { team: 1, place: "ground", carrierId: null, x: 1300, y: 500, layer: 0 },
   ],
   altar: { x: 1100, y: 700 },
 };
@@ -326,9 +326,9 @@ const hill: WireSnapshotPart = {
 const shrined: WireSnapshotPart = {
   ...snapshot,
   capturePoints: [
-    { x: 480, y: 700, owner: 0, capturer: 0, progress: 1 },
-    { x: 1100, y: 700, owner: 0, capturer: 0, progress: 0.4 },
-    { x: 1720, y: 700, owner: null, capturer: null, progress: 0 },
+    { x: 480, y: 700, layer: 0, owner: 0, capturer: 0, progress: 1 },
+    { x: 1100, y: 700, layer: 0, owner: 0, capturer: 0, progress: 0.4 },
+    { x: 1720, y: 700, layer: 0, owner: null, capturer: null, progress: 0 },
   ],
 };
 
@@ -782,8 +782,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     {
       ...flagged,
       flags: [
-        { team: 0, place: "spawn", carrierId: null, x: null, y: null },
-        { team: 1, place: "stand", carrierId: null, x: null, y: null },
+        { team: 0, place: "spawn", carrierId: null, x: null, y: null, layer: null },
+        { team: 1, place: "stand", carrierId: null, x: null, y: null, layer: null },
       ],
       stand: { holder: null, heldSeconds: 0 },
       aggression: [],
@@ -1409,22 +1409,31 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a carried flag and no carrier (#1225)",
     parseWireSnapshotPart,
-    { ...flagged, flags: [{ team: 0, place: "carried", carrierId: null, x: null, y: null }] },
+    {
+      ...flagged,
+      flags: [{ team: 0, place: "carried", carrierId: null, x: null, y: null, layer: null }],
+    },
   ],
   [
     "snapshot with a flag on the ground nowhere (#1225)",
     parseWireSnapshotPart,
-    { ...flagged, flags: [{ team: 1, place: "ground", carrierId: null, x: null, y: 2 }] },
+    { ...flagged, flags: [{ team: 1, place: "ground", carrierId: null, x: null, y: 2, layer: 0 }] },
   ],
   [
     "snapshot with a flag at its spawn and a carrier (#1225)",
     parseWireSnapshotPart,
-    { ...flagged, flags: [{ team: 1, place: "spawn", carrierId: "peer-1", x: null, y: null }] },
+    {
+      ...flagged,
+      flags: [{ team: 1, place: "spawn", carrierId: "peer-1", x: null, y: null, layer: null }],
+    },
   ],
   [
     "snapshot with a flag of team 2 (#1225)",
     parseWireSnapshotPart,
-    { ...flagged, flags: [{ team: 2, place: "spawn", carrierId: null, x: null, y: null }] },
+    {
+      ...flagged,
+      flags: [{ team: 2, place: "spawn", carrierId: null, x: null, y: null, layer: null }],
+    },
   ],
   [
     "snapshot with a stand held for negative time (#1225)",
@@ -1485,12 +1494,18 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a relic on the stand (#1374)",
     parseWireSnapshotPart,
-    { ...relicked, relics: [{ team: 0, place: "stand", carrierId: null, x: null, y: null }] },
+    {
+      ...relicked,
+      relics: [{ team: 0, place: "stand", carrierId: null, x: null, y: null, layer: null }],
+    },
   ],
   [
     "snapshot with a relic on the ground nowhere (#1374)",
     parseWireSnapshotPart,
-    { ...relicked, relics: [{ team: 1, place: "ground", carrierId: null, x: 1, y: null }] },
+    {
+      ...relicked,
+      relics: [{ team: 1, place: "ground", carrierId: null, x: 1, y: null, layer: 0 }],
+    },
   ],
   [
     "snapshot with an altar nowhere (#1374)",
@@ -2676,8 +2691,11 @@ describe("the P2P validators (#82)", () => {
       winningTeam: 2,
       altarHolder: 2,
       players: [{ ...player, team: 2 }],
-      relics: [...relicked.relics, { team: 2, place: "spawn", carrierId: null, x: null, y: null }],
-      capturePoints: [{ x: 10, y: 20, owner: 2, capturer: 1, progress: 0.5 }],
+      relics: [
+        ...relicked.relics,
+        { team: 2, place: "spawn", carrierId: null, x: null, y: null, layer: null },
+      ],
+      capturePoints: [{ x: 10, y: 20, layer: 0, owner: 2, capturer: 1, progress: 0.5 }],
     };
     expect(parseWireSnapshotPartOf(three, 3)).toEqual(three);
     expect(parseWireSnapshotPartOf(three, 2)).toBeUndefined();

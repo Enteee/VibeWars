@@ -372,6 +372,17 @@ describe("resurrection shrines (#1186)", () => {
     expect(validateMapData(priestMap).objectives).toHaveLength(2);
   });
 
+  it("refuses an objective with no layer, or one off the map's layers (#2900)", () => {
+    const { layer: _layer, ...layerless } = shrine(0, 20, 80);
+    const objectives = (first: object) => [first, shrine(1, 80, 20)];
+    expect(() => validateMapData({ ...priestMap, objectives: objectives(layerless) })).toThrow(
+      MapValidationError,
+    );
+    expect(() =>
+      validateMapData({ ...priestMap, objectives: objectives({ ...layerless, layer: 1 }) }),
+    ).toThrow(/layer 1 is not one of the map's/);
+  });
+
   it("refuses objectives missing altogether", () => {
     const { objectives: _objectives, ...without } = validMap;
     expect(() => validateMapData(without)).toThrow(MapValidationError);

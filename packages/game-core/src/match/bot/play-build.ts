@@ -7,8 +7,7 @@ import type {
   BehaviourCursor,
   BehaviourIntent,
 } from "../behaviour.js";
-import { isGhostId } from "../ghost.js";
-import { ALTAR_REACH_UNITS } from "../relics.js";
+import { isGhostId, onHill } from "../ghost.js";
 import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { roleOf, type BotRole } from "./role.js";
@@ -120,7 +119,7 @@ export function guard(
     .sort((a, b) => lordFirst(a) - lordFirst(b));
   const healing = allies.some((ally) => healthFraction(ally) < HURT_FRACTION);
   if (cursor.returning || (foes.length === 0 && !healing)) {
-    cursor.heldMove = { moveDirection: ZERO, moveTo: undefined };
+    cursor.heldMove = { moveDirection: ZERO, moveTo: undefined, moveToLayer: undefined };
     return behaviour.rooted || home <= context.stepUnits
       ? NOTHING
       : { ...NOTHING, moveTo: behaviour.post };
@@ -177,7 +176,11 @@ function paced(
   cursor.waitSeconds = hold(cursor.thinks);
   cursor.thinks += 1;
   const intent = decide();
-  cursor.heldMove = { moveDirection: intent.moveDirection, moveTo: intent.moveTo };
+  cursor.heldMove = {
+    moveDirection: intent.moveDirection,
+    moveTo: intent.moveTo,
+    moveToLayer: intent.moveToLayer,
+  };
   return intent;
 }
 
@@ -409,7 +412,7 @@ function foeGhostOnAltar(
   context: BehaviourContext,
   foes: readonly Participant[],
 ): Participant | undefined {
-  const { altar, altarHolder } = context.objectives;
+  const { altar, altarLayer, altarHolder } = context.objectives;
   const self = context.self;
   if (altar === undefined || altarHolder === self.combatant.team) {
     return undefined;
@@ -420,7 +423,7 @@ function foeGhostOnAltar(
     const away = distance(foe.position, self.position);
     if (
       isGhostId(foe.id) &&
-      distance(foe.position, altar) <= ALTAR_REACH_UNITS &&
+      onHill(altar, altarLayer, foe) &&
       (away < nearestDistance || (nearest === undefined && away === nearestDistance))
     ) {
       nearest = foe;
