@@ -96,7 +96,7 @@ export default {
   "buildEditor.needsAttribute": "butuh {attribute} {rank}",
   "buildEditor.needsMore": { other: "butuh {count} poin lagi" },
   "buildEditor.needsWeapon": "Butuh {weapon}",
-  "buildEditor.nextCost": "berikutnya: {cost} poin",
+  "buildEditor.nextCostHeading": "Biaya peringkat berikutnya",
   "buildEditor.noProfession": "(tidak ada)",
   "buildEditor.noWeapon": "kamu tidak punya senjata",
   "buildEditor.noWeaponInSet": "tidak ada senjata di set ini",

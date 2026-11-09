@@ -118,7 +118,7 @@ export default {
     other: "mai trebuie {count} de puncte",
   },
   "buildEditor.needsWeapon": "Necesită {weapon}",
-  "buildEditor.nextCost": "următorul: {cost} pct",
+  "buildEditor.nextCostHeading": "Următorul rang costă",
   "buildEditor.noProfession": "(niciuna)",
   "buildEditor.noWeapon": "nu ai armă",
   "buildEditor.noWeaponInSet": "nicio armă în acest set",

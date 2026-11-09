@@ -111,7 +111,7 @@ export default {
     other: "нужни са още {count} точки",
   },
   "buildEditor.needsWeapon": "Изисква {weapon}",
-  "buildEditor.nextCost": "следващ: {cost} т.",
+  "buildEditor.nextCostHeading": "Следващият ранг струва",
   "buildEditor.noProfession": "(няма)",
   "buildEditor.noWeapon": "нямаш оръжие",
   "buildEditor.noWeaponInSet": "няма оръжие в този комплект",

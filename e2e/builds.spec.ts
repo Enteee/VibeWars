@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { codeLabel } from "../apps/web/src/input/keymap.js";
 import deUi from "../apps/web/src/i18n/locales/de/ui.js";
+import huUi from "../apps/web/src/i18n/locales/hu/ui.js";
 import idUi from "../apps/web/src/i18n/locales/id/ui.js";
 import { exportBuild } from "../apps/web/src/storage/build-transfer.js";
 import { CHARACTER_SCHEMA_VERSION } from "../apps/web/src/storage/schema.js";
@@ -362,60 +363,138 @@ test("a rune's bonus stays clear of max, and the pips stay in line (#1102)", asy
     }
     return found;
   };
+  type Box = Awaited<ReturnType<typeof box>>;
+  const pipLefts = async (): Promise<number[]> =>
+    page
+      .locator(".editor-attribute .attribute-pips")
+      .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left));
   // The bonus's own box, not its cell's: the cell is the column, text spills past it.
-  const bonus = await box(boosted.first().locator(".editor-attribute-bonus"));
-  const next = await box(boosted.first().locator(".editor-attribute-next"));
-  expect(bonus.x + bonus.width).toBeLessThanOrEqual(next.x);
+  const bonusAndNext = async (): Promise<[Box, Box]> => [
+    await box(boosted.first().locator(".editor-attribute-bonus")),
+    await box(boosted.first().locator(".editor-attribute-next")),
+  ];
 
-  const pipLefts = await page
-    .locator(".editor-attribute .attribute-pips")
-    .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left));
-  expect(new Set(pipLefts).size).toBe(1);
+  // At 1280 px the list is too narrow for one line (#2931): the cost is on the line below.
+  const [foldedBonus, foldedNext] = await bonusAndNext();
+  expect(foldedBonus.y + foldedBonus.height).toBeLessThanOrEqual(foldedNext.y);
+  expect(new Set(await pipLefts()).size).toBe(1);
+
+  // Wide enough for one line: the cost is beside the bonus, and clear of it.
+  await page.setViewportSize({ width: 1600, height: 720 });
+  await expect(boosted.first().locator(".editor-attribute-next")).toHaveCSS("grid-row-start", "1");
+  const [bonus, next] = await bonusAndNext();
+  expect(bonus.x + bonus.width).toBeLessThanOrEqual(next.x);
+  expect(new Set(await pipLefts()).size).toBe(1);
 });
+
+/** The attribute list, as the words themselves lay out (#2931): a Range measures the text, a span's box would not. */
+async function expectAttributesFit(page: Page): Promise<void> {
+  const rows = page.locator(".editor-attribute");
+  const broken = await rows.evaluateAll((all) =>
+    all.flatMap((row) => {
+      const name = row.querySelector(".editor-attribute-name");
+      const own = Array.from(name?.childNodes ?? []).find((node) => node.nodeType === 3);
+      if (own === undefined) {
+        return ["no name text"];
+      }
+      return Array.from((own.textContent ?? "").matchAll(/\S+/g)).flatMap((word) => {
+        const range = document.createRange();
+        range.setStart(own, word.index);
+        range.setEnd(own, word.index + word[0].length);
+        const rects = Array.from(range.getClientRects());
+        return rects.length === 1 && (rects[0]?.width ?? 0) > 0 ? [] : [word[0]];
+      });
+    }),
+  );
+  expect(broken).toEqual([]);
+  const costInRow = await rows.evaluateAll((all) =>
+    all.map((row) => {
+      const cost = row.querySelector(".editor-attribute-next");
+      if (cost === null) {
+        return false;
+      }
+      const range = document.createRange();
+      range.selectNodeContents(cost);
+      const text = range.getBoundingClientRect();
+      const box = row.getBoundingClientRect();
+      return text.width > 0 && text.left >= box.left && text.right <= box.right;
+    }),
+  );
+  expect(costInRow).not.toContain(false);
+}
+
+/** Where each row's pips start. */
+async function pipLefts(page: Page): Promise<Set<number>> {
+  return new Set(
+    await page
+      .locator(".editor-attribute .attribute-pips")
+      .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left)),
+  );
+}
+
+/** The list fits, has one header, and raising a rank to 12 moves no pip. */
+async function expectAttributeListHolds(
+  page: Page,
+  ui: Pick<typeof deUi, "buildEditor.nextCostHeading" | "buildEditor.rankMax">,
+): Promise<void> {
+  const rows = page.locator(".editor-attribute");
+  const heading = page.locator(".editor-attributes-cost-heading");
+  await expect(rows.first()).toBeVisible();
+  await expect(heading).toHaveCount(1);
+  await expect(heading).toBeVisible();
+  await expect(heading).toHaveText(ui["buildEditor.nextCostHeading"]);
+  await expectAttributesFit(page);
+  const before = await pipLefts(page);
+  expect(before.size).toBe(1);
+  await pip(rows.first(), 12).click();
+  await expect(rows.first().locator(".editor-attribute-next")).toHaveText(
+    ui["buildEditor.rankMax"],
+  );
+  await expectAttributesFit(page);
+  expect(await pipLefts(page)).toEqual(before);
+}
 
 for (const { locale, ui } of [
   { locale: "de-DE", ui: deUi },
   { locale: "id-ID", ui: idUi },
+  { locale: "hu-HU", ui: huUi },
 ]) {
-  test.describe(`the next-rank text in ${locale} (#2923)`, () => {
-    test.use({ locale, viewport: { width: 1280, height: 720 } });
+  for (const width of [380, 1280]) {
+    test.describe(`the attribute list in ${locale} at ${String(width)} px (#2931)`, () => {
+      test.use({ locale, viewport: { width, height: 720 } });
 
-    test("stays inside its row, and the pips stay in line", async ({ page }) => {
-      await page.goto("./");
-      await page
-        .locator(".mode-rail")
-        .getByRole("button", { name: ui["rail.characters"], exact: true })
-        .click();
-      await page.getByRole("button", { name: ui["menu.newCharacter"], exact: true }).click();
-      const rows = page.locator(".editor-attribute");
-      await expect(rows.first()).toBeVisible();
-
-      const check = async (): Promise<void> => {
-        const inRow = await rows.evaluateAll((all) =>
-          all.map((row) => {
-            const next = row.querySelector(".editor-attribute-next");
-            return (
-              next !== null &&
-              next.getBoundingClientRect().right <= row.getBoundingClientRect().right
-            );
-          }),
-        );
-        expect(inRow).not.toContain(false);
-        const pipLefts = await page
-          .locator(".editor-attribute .attribute-pips")
-          .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left));
-        expect(new Set(pipLefts).size).toBe(1);
-      };
-
-      await check();
-      await pip(rows.first(), 12).click();
-      await expect(rows.first().locator(".editor-attribute-next")).toHaveText(
-        ui["buildEditor.rankMax"],
-      );
-      await check();
+      test("breaks no word and keeps the pips in line", async ({ page }) => {
+        await page.goto("./");
+        await page
+          .locator(".mode-rail")
+          .getByRole("button", { name: ui["rail.characters"], exact: true })
+          .click();
+        await page.getByRole("button", { name: ui["menu.newCharacter"], exact: true }).click();
+        if (locale === "de-DE") {
+          // Wiederherstellungsmagie, the longest name there is.
+          await chooseProfession(page, "secondary", "ritualist");
+        }
+        await expectAttributeListHolds(page, ui);
+      });
     });
-  });
+  }
 }
+
+test.describe("the attribute list in a team member's editor in de-DE (#2931)", () => {
+  test.use({ locale: "de-DE", viewport: { width: 1280, height: 720 } });
+
+  test("breaks no word and keeps the pips in line", async ({ page }) => {
+    await page.goto("./");
+    const rail = page.locator(".mode-rail");
+    await rail.getByRole("button", { name: deUi["rail.teams"], exact: true }).click();
+    await rail.getByRole("button", { name: deUi["rail.largerTeam"], exact: true }).click();
+    await page.getByRole("button", { name: deUi["teamPlay.newTeamBuild"] }).click();
+    await memberRows(page).first().locator(".team-row-edit").click();
+    await expect(page.locator(".team-member-editor")).toBeVisible();
+    await chooseProfession(page, "secondary", "ritualist");
+    await expectAttributeListHolds(page, deUi);
+  });
+});
 
 /** Save characters named `names` from the main menu, one after another. */
 async function saveCharacters(page: Page, names: readonly string[]): Promise<void> {
@@ -2350,11 +2429,11 @@ test("a pip sets its rank, the top pip lowers by one, and the next rank is price
   await newCharacter(page);
   const strength = page.locator(".editor-attribute", { hasText: "Strength" });
   const rank = strength.locator(".editor-attribute-rank");
-  await expect(strength.locator(".editor-attribute-next")).toHaveText("next: 1 pts");
+  await expect(strength.locator(".editor-attribute-next")).toHaveText("+1");
   // The starter's headgear is of Strength: +1 on every rank (#1140).
   await pip(strength, 5).click();
   await expect(rank).toHaveText("5 +1");
-  await expect(strength.locator(".editor-attribute-next")).toHaveText("next: 6 pts");
+  await expect(strength.locator(".editor-attribute-next")).toHaveText("+6");
   await pip(strength, 5).click();
   await expect(rank).toHaveText("4 +1");
   await pip(strength, 2).click();

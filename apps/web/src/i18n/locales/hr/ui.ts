@@ -118,7 +118,7 @@ export default {
     other: "treba još {count} bodova",
   },
   "buildEditor.needsWeapon": "Treba: {weapon}",
-  "buildEditor.nextCost": "sljedeće: {cost} b.",
+  "buildEditor.nextCostHeading": "Sljedeći rang stoji",
   "buildEditor.noProfession": "(nema)",
   "buildEditor.noWeapon": "nemaš oružje",
   "buildEditor.noWeaponInSet": "nema oružja u ovom kompletu",

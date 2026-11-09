@@ -96,7 +96,7 @@ export default {
   "buildEditor.needsAttribute": "cần {attribute} {rank}",
   "buildEditor.needsMore": { other: "cần thêm {count} điểm" },
   "buildEditor.needsWeapon": "Cần {weapon}",
-  "buildEditor.nextCost": "tiếp: {cost} điểm",
+  "buildEditor.nextCostHeading": "Bậc tiếp theo tốn",
   "buildEditor.noProfession": "(không)",
   "buildEditor.noWeapon": "bạn không có vũ khí",
   "buildEditor.noWeaponInSet": "bộ này không có vũ khí",

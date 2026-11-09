@@ -96,7 +96,7 @@ export default {
   "buildEditor.needsAttribute": "需要 {attribute} {rank}",
   "buildEditor.needsMore": { other: "还需 {count} 点" },
   "buildEditor.needsWeapon": "需要 {weapon}",
-  "buildEditor.nextCost": "下一级：{cost} 点",
+  "buildEditor.nextCostHeading": "下一级消耗",
   "buildEditor.noProfession": "（无）",
   "buildEditor.noWeapon": "你没有武器",
   "buildEditor.noWeaponInSet": "此组没有武器",

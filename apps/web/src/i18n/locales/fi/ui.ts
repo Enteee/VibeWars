@@ -112,7 +112,7 @@ export default {
     other: "tarvitsee {count} pistettä lisää",
   },
   "buildEditor.needsWeapon": "Vaatii: {weapon}",
-  "buildEditor.nextCost": "seuraava: {cost} p",
+  "buildEditor.nextCostHeading": "Seuraava taso maksaa",
   "buildEditor.noProfession": "(ei mitään)",
   "buildEditor.noWeapon": "sinulla ei ole asetta",
   "buildEditor.noWeaponInSet": "ei asetta tässä sarjassa",

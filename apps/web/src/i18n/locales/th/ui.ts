@@ -96,7 +96,7 @@ export default {
   "buildEditor.needsAttribute": "ต้องมี {attribute} {rank}",
   "buildEditor.needsMore": { other: "ขาดอีก {count} แต้ม" },
   "buildEditor.needsWeapon": "ต้องใช้ {weapon}",
-  "buildEditor.nextCost": "ถัดไป: {cost} แต้ม",
+  "buildEditor.nextCostHeading": "ค่าระดับถัดไป",
   "buildEditor.noProfession": "(ไม่มี)",
   "buildEditor.noWeapon": "คุณไม่มีอาวุธ",
   "buildEditor.noWeaponInSet": "ไม่มีอาวุธในชุดนี้",

@@ -1451,7 +1451,8 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
   points.append(pointsText, bar);
   const list = h("div", "editor-attributes");
   list.dataset.cause = "attributes";
-  panel.append(points, list);
+  const costHeading = h("div", "editor-attributes-cost-heading", t("buildEditor.nextCostHeading"));
+  panel.append(points, costHeading, list);
 
   /** The pip under the pointer, previewed on its row and the points line. */
   let hover: { readonly attributeId: string; readonly pip: number } | undefined;
@@ -1513,20 +1514,22 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
       render(context.current());
     });
 
-    // Holds the widest text the next column can show in this language, once,
-    // so the column fits it and no rank bought ever moves the pips.
-    const nextSizer = h("span", "editor-attribute-next-sizer");
-    nextSizer.setAttribute("aria-hidden", "true");
-    const nextCost = t("buildEditor.nextCost", { cost: LARGEST_RANK_COST });
-    const rankMax = t("buildEditor.rankMax");
-    nextSizer.textContent = nextCost.length >= rankMax.length ? nextCost : rankMax;
+    // Hold the two widest texts the next column can show, so the column fits
+    // both in any script and no rank bought ever moves the pips.
+    const sizers = [`+${String(LARGEST_RANK_COST)}`, t("buildEditor.rankMax")].map((text) => {
+      const sizer = h("span", "editor-attribute-next-sizer", text);
+      sizer.setAttribute("aria-hidden", "true");
+      return sizer;
+    });
+    const next = h("span", "editor-attribute-next");
+    next.title = t("buildEditor.nextCostHeading");
 
     row.append(
       h("span", "editor-attribute-name"),
       pips,
       h("span", "editor-attribute-rank"),
-      nextSizer,
-      h("span", "editor-attribute-next"),
+      ...sizers,
+      next,
       h("span", "editor-attribute-needs"),
     );
     return row;
@@ -1635,8 +1638,7 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
         const next = row.querySelector(".editor-attribute-next");
         if (next !== null) {
           const cost = nextRankCost(character, attributeId);
-          next.textContent =
-            cost === undefined ? t("buildEditor.rankMax") : t("buildEditor.nextCost", { cost });
+          next.textContent = cost === undefined ? t("buildEditor.rankMax") : `+${String(cost)}`;
         }
         const needs = row.querySelector(".editor-attribute-needs");
         if (needs !== null) {

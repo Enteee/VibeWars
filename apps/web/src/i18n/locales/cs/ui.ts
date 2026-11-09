@@ -122,7 +122,7 @@ export default {
     other: "chybí {count} bodů",
   },
   "buildEditor.needsWeapon": "Vyžaduje {weapon}",
-  "buildEditor.nextCost": "další: {cost} b.",
+  "buildEditor.nextCostHeading": "Další úroveň stojí",
   "buildEditor.noProfession": "(žádné)",
   "buildEditor.noWeapon": "nemáš zbraň",
   "buildEditor.noWeaponInSet": "v této sadě není zbraň",
