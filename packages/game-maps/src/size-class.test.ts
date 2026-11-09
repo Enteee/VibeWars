@@ -24,7 +24,7 @@ describe("sizeClass (#444, #2547)", () => {
       "guild-hall-isle": "small",
       "broken-tower": "small",
       "cinder-sanctum": "small",
-      "the-courtyard": "small",
+      "threefold-keep": "small",
       "hall-of-heroes-king": "small",
       "hall-of-heroes-relic": "small",
       "hall-of-heroes-capture": "small",

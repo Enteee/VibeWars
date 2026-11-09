@@ -2132,7 +2132,7 @@ export default {
     "guild-hall-isle": "Isola della sala di gilda",
     "cinder-sanctum": "Santuario di cenere",
     "broken-tower": "Torre spezzata",
-    "the-courtyard": "Il cortile",
+    "threefold-keep": "La Rocca Triplice",
     "hall-of-heroes-capture": "Sala degli eroi",
     "hall-of-heroes-king": "Sala degli eroi",
     "hall-of-heroes-relic": "Sala degli eroi",

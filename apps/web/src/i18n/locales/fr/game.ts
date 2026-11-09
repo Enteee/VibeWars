@@ -2132,7 +2132,7 @@ export default {
     "guild-hall-isle": "Île du hall de guilde",
     "cinder-sanctum": "Sanctuaire de cendres",
     "broken-tower": "Tour brisée",
-    "the-courtyard": "La Cour",
+    "threefold-keep": "Le Donjon Triple",
     "hall-of-heroes-capture": "Hall des héros",
     "hall-of-heroes-king": "Hall des héros",
     "hall-of-heroes-relic": "Hall des héros",

@@ -160,8 +160,10 @@ home.
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
 **Ghostly Hero** in its base, a ghost that fights with an axe and that
 nobody plays. The **altar** is in the centre, the same walk from both
-bases. On **The Courtyard** it stands in an open court ringed by four
-clusters of pillars, entered from the four corners. The **Hall of
+bases. On **Threefold Keep**, three teams (two when no third is free) fight for it
+inside a walled keep. Its doors open only from within, by a plate inside: walk
+round to an open corner to get in. At most 12 points a team, and if every foe
+stands at -60% morale you win at once. The **Hall of
 Heroes**, the King of the Hill map that ends the Heroes' Ascent, raises
 it on a dais walled to the west and east, up a north or a south approach
 lined with pillars. Target your ghost with a
@@ -174,7 +176,7 @@ whenever that changes, and its name over its head shows its leader.
 
 Your ghost has 640 Health, and swings its axe with **Cyclone Axe**,
 **Disrupting Chop** and **Swift Chop**, following or staying. It is
-stronger the higher up the Ascent you are: level 24 on The Courtyard,
+stronger the higher up the Ascent you are: level 24 on Threefold Keep,
 28 in the Hall of Heroes. **Kill the other team's ghost** and every
 member of your team gets a **+10% morale boost**, which first wipes out
 a death penalty and never goes above +10%. Kill it again after it rises
@@ -216,7 +218,7 @@ spell range. While your team does not hold the altar, every bot kills the other
 team's Ghostly Hero first once it stands on the altar in their range:
 it is the one foe that keeps your ghost from claiming it.
 
-The Courtyard plays it.
+Threefold Keep plays it.
 
 ## Capture Points
 
@@ -329,7 +331,7 @@ Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
 (The Vault,) then the Hall of Heroes. Only the maps built so far are in
 it, so today it is nine rounds: The Hollow Deep (Annihilation), Blackwater Ford (Priest Annihilation), Barrow Field (Priest Annihilation), Cinder Sanctum (Relic Run, in Unholy
 Temples' place), Mosslit Cairns (Capture Points, in Forgotten Shrines'),
-The Brazen Causeway (Priest Annihilation), The Courtyard (King of the Hill), The Warden's Gallery (Capture Points, in Antechamber's), then the Hall of Heroes. The Lobby window says where
+The Brazen Causeway (Priest Annihilation), Threefold Keep (King of the Hill), The Warden's Gallery (Capture Points, in Antechamber's), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 9 · Blackwater Ford`.
 You only ever meet a team at the same round, and you wait for one as
 long as it takes: no bots fill in. The one exception: from round 2 on, a team

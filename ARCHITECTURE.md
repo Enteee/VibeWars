@@ -185,7 +185,7 @@ derived geometry (wall segments, spawn points by team). Annihilation plays on
 `frozen-crossing`, `ashen-courtyard` and `moss-vale`, and the large `canthan-terraces`,
 `sunken-bastion`, `shiverpeak-pass` and `elonian-plateau`; each other mode has its
 own maps (`ember-pits`, `jungle-ruins`, `broken-tower`, `scarred-earth`,
-`the-courtyard`, `hall-of-heroes-king`, `hall-of-heroes-relic`, `hall-of-heroes-capture`, `guild-hall-isle`).
+`threefold-keep`, `hall-of-heroes-king`, `hall-of-heroes-relic`, `hall-of-heroes-capture`, `guild-hall-isle`).
 Map geometry is original (brief §41) — see ADR-0006 for the format.
 
 Elevation is planned as a discrete `layer` beside `x` and `y`, with no Z

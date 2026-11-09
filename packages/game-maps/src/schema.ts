@@ -1,5 +1,6 @@
 import {
   distancePointToSegment,
+  firstHit,
   GUARD_ROLE_IDS,
   MINIMAL_GW_INSPIRED_PVP_V1,
   TWO_TEAM_MODES,
@@ -78,6 +79,8 @@ const gateSchema = z.object({
   wall: wallSchema,
   plate: vec2Schema,
   team: z.number().int().nonnegative().nullable(),
+  /** Its plate stands on the altar's side (#2699): only from inside does it open. */
+  oneWay: z.literal(true).optional(),
 });
 
 const spawnPointSchema = z.object({
@@ -345,6 +348,8 @@ export const mapDataSchema = z
     ghostLevel: z.union([z.literal(20), z.literal(24), z.literal(28)]).optional(),
     /** One of the Hall of Heroes' (#2700): it plays `HALLS_MATCH_RULES`. */
     halls: z.literal(true).optional(),
+    /** Threefold Keep (#2699): it plays `THREEFOLD_KEEP_MATCH_RULES`. */
+    keep: z.literal(true).optional(),
     /** Where a relic scores (#2695): a Relic Run map says, no other map does. */
     relicTarget: z.enum(["altar", "own-ghost"]).optional(),
     /** Whose relic a team carries (#2695): a Relic Run map says, no other map does. */
@@ -552,6 +557,20 @@ export const mapDataSchema = z
         });
       }
     }
+    const altar = map.objectives.find((objective) => objective.kind === "altar")?.position;
+    map.gates.forEach((gate, index) => {
+      if (
+        gate.oneWay === true &&
+        (altar === undefined ||
+          firstHit(gate.plate, altar, wallToSegments(gate.wall)) !== undefined)
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["gates", index, "plate"],
+          message: `one-way gate ${gate.id} needs its plate on the altar's side`,
+        });
+      }
+    });
     map.gates.forEach((gate, index) => {
       const clear = standsClear(map, gate.plate, gate.wall.layer, wallToSegments(gate.wall));
       if (!clear || (gate.team !== null && !teams.has(gate.team))) {

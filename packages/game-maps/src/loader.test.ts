@@ -29,7 +29,7 @@ import sandstoneSteps from "../maps/sandstone-steps/map.json" with { type: "json
 import shiverpeakPass from "../maps/shiverpeak-pass/map.json" with { type: "json" };
 import scarredEarth from "../maps/scarred-earth/map.json" with { type: "json" };
 import sunkenBastion from "../maps/sunken-bastion/map.json" with { type: "json" };
-import theCourtyard from "../maps/the-courtyard/map.json" with { type: "json" };
+import threefoldKeep from "../maps/threefold-keep/map.json" with { type: "json" };
 import { allWallSegments } from "./geometry.js";
 import { MapNotFoundError, listMapIds, loadAllMaps, loadMap, unseatedTeams } from "./loader.js";
 import { validateMapData } from "./schema.js";
@@ -78,7 +78,7 @@ describe("the maps the browser imports", () => {
       scarredEarth,
       shiverpeakPass,
       sunkenBastion,
-      theCourtyard,
+      threefoldKeep,
       wardensGallery,
     ].map((raw) => validateMapData(raw));
     expect(imported.map((map) => map.id)).toEqual(listMapIds());

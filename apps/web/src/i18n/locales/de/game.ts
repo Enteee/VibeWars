@@ -2132,7 +2132,7 @@ export default {
     "guild-hall-isle": "Gildenhallen-Insel",
     "cinder-sanctum": "Aschenheiligtum",
     "broken-tower": "Zerbrochener Turm",
-    "the-courtyard": "Der Innenhof",
+    "threefold-keep": "Die Dreifache Feste",
     "hall-of-heroes-capture": "Halle der Helden",
     "hall-of-heroes-king": "Halle der Helden",
     "hall-of-heroes-relic": "Halle der Helden",
