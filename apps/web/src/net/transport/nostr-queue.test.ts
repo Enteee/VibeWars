@@ -450,10 +450,8 @@ describe("party consents on the Nostr queue board (#1078)", () => {
       tickets: heard.flatMap((event) => (event.kind === "ticket" ? [event.ticket] : [])),
       now: NOW,
       mode: "random-arena-2v2",
-      ascentRound: null,
       ignored: new Set(),
-      mapPool: ["arena"],
-      teamCount: 2,
+      round: () => ({ mapPool: ["arena"], teamCount: 2, skipping: false }),
     });
     expect(groups.map((group) => group.parties)).toEqual([[realTicket.members]]);
   });

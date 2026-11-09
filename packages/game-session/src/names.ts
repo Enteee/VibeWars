@@ -287,12 +287,14 @@ export function sanitizeGuildCape(raw: unknown): WireCape | null {
 export interface Guild {
   /** `null` for none. */
   readonly guildTag: string | null;
+  /** The hero rank shown beside the name (#2702); 0 for none. */
+  readonly heroRank: number;
   /** `null` for none, and whenever `guildTag` is. */
   readonly guildCape: WireCape | null;
 }
 
 /** A bot's guild: none. */
-export const NO_GUILD: Guild = { guildTag: null, guildCape: null };
+export const NO_GUILD: Guild = { guildTag: null, heroRank: 0, guildCape: null };
 
 /**
  * What a join or hello brought for a guild (#1406, #1422), sanitised: no
@@ -300,10 +302,15 @@ export const NO_GUILD: Guild = { guildTag: null, guildCape: null };
  */
 export function sanitizeGuild(raw: {
   readonly guildTag: unknown;
+  readonly heroRank: number;
   readonly guildCape: unknown;
 }): Guild {
   const guildTag = sanitizeGuildTag(raw.guildTag);
-  return { guildTag, guildCape: guildTag === null ? null : sanitizeGuildCape(raw.guildCape) };
+  return {
+    guildTag,
+    heroRank: raw.heroRank,
+    guildCape: guildTag === null ? null : sanitizeGuildCape(raw.guildCape),
+  };
 }
 
 /**

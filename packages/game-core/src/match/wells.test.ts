@@ -247,6 +247,7 @@ describe("Well of Suffering (#1104)", () => {
       timeLimitSeconds: 600,
       deathRule: "respawn",
       respawnSeconds: 3,
+      respawnOnWave: false,
       deathPenalty: false,
     });
     kill(sim, "x");

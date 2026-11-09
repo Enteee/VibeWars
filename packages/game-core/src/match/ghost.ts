@@ -2,8 +2,9 @@ import { AREA_EARSHOT, AREA_IN_THE_AREA, AREA_NEARBY, RANGE_SPELL } from "../dis
 import { baseEnergyPipsFor } from "../equipment/armor.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, weaponDamageType } from "../equipment/weapons.js";
-import { distance, type Vec2 } from "../vec2.js";
+import type { Vec2 } from "../vec2.js";
 import { ALTAR_REACH_UNITS } from "./relics.js";
+import { atObjective, type BodyOnFloors } from "./layer-rules.js";
 import type { Behaviour } from "./behaviour.js";
 import type { ParticipantSpec } from "./simulation.js";
 
@@ -25,6 +26,8 @@ import type { ParticipantSpec } from "./simulation.js";
 export interface GhostSpawn {
   readonly team: number;
   readonly position: Vec2;
+  /** The layer it starts on (ADR-0051). Omitted: the ground. */
+  readonly layer?: number;
 }
 
 /**
@@ -34,6 +37,8 @@ export interface GhostSpawn {
 export interface GhostField {
   readonly level: GhostLevel;
   readonly altar: Vec2 | undefined;
+  /** The layer the altar is on (ADR-0051). Omitted: the ground. */
+  readonly altarLayer?: number;
   readonly spawns: readonly GhostSpawn[];
 }
 
@@ -75,9 +80,9 @@ export function isGhostId(id: string): boolean {
   return /^ghost\/\d+$/.test(id);
 }
 
-/** Whether a ghost at `position` stands near enough `altar` to claim it. */
-export function onHill(altar: Vec2, position: Vec2): boolean {
-  return distance(position, altar) <= ALTAR_REACH_UNITS;
+/** Whether `body` stands near enough `altar`, on `layer`, to claim it. */
+export function onHill(altar: Vec2, layer: number, body: BodyOnFloors): boolean {
+  return atObjective(altar, layer, body, ALTAR_REACH_UNITS);
 }
 
 /**
@@ -89,7 +94,7 @@ export function onHill(altar: Vec2, position: Vec2): boolean {
  * of the altar's reach. On the altar it fights a foe adjacent to it,
  * and never steps off after one.
  */
-export function followBehaviour(altar: Vec2 | undefined): Behaviour {
+export function followBehaviour(altar: Vec2 | undefined, altarLayer: number): Behaviour {
   return {
     kind: "follow-and-attack",
     drawnTo:
@@ -97,6 +102,7 @@ export function followBehaviour(altar: Vec2 | undefined): Behaviour {
         ? undefined
         : {
             point: altar,
+            layer: altarLayer,
             withinUnits: ALTAR_REACH_UNITS + AREA_IN_THE_AREA,
             holdUnits: ALTAR_REACH_UNITS,
           },
@@ -146,6 +152,7 @@ export function ghostSpec(
       },
     },
     spawn: spawn.position,
+    layer: spawn.layer ?? 0,
     facing,
     maxHealth: GHOST_HEALTH,
     maxEnergy: GHOST_ENERGY,

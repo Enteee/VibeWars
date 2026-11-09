@@ -80,6 +80,7 @@ export {
 export type { AttributeAllocation, AttributeModifier } from "./attributes.js";
 export {
   AttributeRankError,
+  LARGEST_RANK_COST,
   MAX_ATTRIBUTE_RANK,
   MAX_EFFECTIVE_RANK,
   cumulativeCostForRank,
@@ -115,6 +116,7 @@ export {
 export type { JoinLoadout, JoinRefusal } from "./join-loadout.js";
 export { loadoutOf, resolveJoinLoadout } from "./join-loadout.js";
 export { STARTER_BUILDS, pickBuildFrom, pickStarterBuild } from "./starter-builds.js";
+export { ELITE_ZAISHEN_MAP, drawZaishen, zaishenMoraleBoost } from "./elite-zaishen.js";
 export {
   ATTRIBUTE_IDS,
   decodeTemplateCode,
@@ -155,7 +157,10 @@ export {
   KILL_MORALE_PERCENT,
   KING_OF_THE_HILL_MATCH_RULES,
   MATCH_IN_PROGRESS,
+  HALLS_MATCH_RULES,
+  isHallsMode,
   MATCH_MODES,
+  type HallsMode,
   MORALE_CEILING,
   MORALE_FLOOR,
   PRIEST_ANNIHILATION_MATCH_RULES,
@@ -195,6 +200,7 @@ export type {
   SkillRequest,
   StepResult,
   WeaponSetRequest,
+  StartLine,
 } from "./match/simulation.js";
 export {
   countsForTeam,
@@ -234,7 +240,7 @@ export {
 export type { RelicCarry, RelicField, RelicState, RelicTarget } from "./match/relics.js";
 export type { Gate, GateField } from "./match/gates.js";
 export { GATE_PLATE_REACH_UNITS, GATE_REOPEN_SECONDS } from "./match/gates.js";
-export type { CapturePoint } from "./match/capture-points.js";
+export type { CapturePoint, CapturePointSite } from "./match/capture-points.js";
 export {
   CAPTURE_REACH_UNITS,
   CAPTURE_SECONDS,

@@ -39,7 +39,7 @@ export interface MusicError {
 
 export interface MusicPlayer {
   /** Play `track` now. */
-  load(track: MusicTrack): void;
+  load(track: MusicTrack, startAtEpochMs: number | null): void;
   /** Switch to `track` on the playing track's next phrase boundary, or its next cycle. */
   crossfadeTo(track: MusicTrack, landOn: LandOn): void;
   setIntensity(level: MusicLevel): void;
@@ -64,7 +64,8 @@ export interface MusicPlayer {
   /** Start again what `stop` stopped. */
   play(): void;
   stop(): void;
-  onNowPlaying(handler: (trackId: string) => void): void;
+  /** `heardAtEpochMs`: when the track's first beat comes out of the speakers. */
+  onNowPlaying(handler: (trackId: string, heardAtEpochMs: number) => void): void;
   onError(handler: (error: MusicError) => void): void;
   /** The host replaced the pattern with this evaluation's source. */
   onEvaluated(handler: (evaluation: number) => void): void;
@@ -129,7 +130,7 @@ function supersedes(later: GameToHost, earlier: GameToHost): boolean {
 }
 
 export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
-  const nowPlaying: ((trackId: string) => void)[] = [];
+  const nowPlaying: ((trackId: string, heardAtEpochMs: number) => void)[] = [];
   const errors: ((error: MusicError) => void)[] = [];
   const evaluated: ((evaluation: number) => void)[] = [];
   const statsHandlers: ((stats: MusicStats) => void)[] = [];
@@ -232,7 +233,7 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
         return;
       case "playing":
         for (const handler of nowPlaying) {
-          handler(message.trackId);
+          handler(message.trackId, message.heardAtEpochMs);
         }
         return;
       case "error":
@@ -318,9 +319,9 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
   });
 
   return {
-    load(track) {
+    load(track, startAtEpochMs) {
       trackFailed = false;
-      send({ type: "load", ...trackMessage(track) });
+      send({ type: "load", startAtEpochMs, ...trackMessage(track) });
     },
     crossfadeTo(track, landOn) {
       // A fresh host has nothing to fade from; it plays the track at once.

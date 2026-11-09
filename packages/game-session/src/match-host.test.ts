@@ -14,15 +14,18 @@ import {
   type PeerHello,
   type WireCape,
   type WireEnded,
+  type LobbyMode,
 } from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  RECONNECT_WINDOW_SECONDS,
   RULESET,
   WEAPON_SWAPS_PER_SECOND,
   WEAPON_SWAP_BURST,
   type PlannedSeats,
 } from "./match-host.js";
+import type { MatchRecord } from "./match-record.js";
 import {
   ARENA,
   answerChallenges,
@@ -164,6 +167,19 @@ describe("a P2P match (#375)", () => {
   });
 });
 
+describe("hero rank (#2702)", () => {
+  it("shows a hello's rank in the snapshot and the summary", async () => {
+    const match = startMatch();
+    const { connection } = await match.join(hello({ name: "Ann", heroRank: 7 }));
+    await match.step(1 / RULESET.tickRateHz);
+    expect(playerIn(connection.getSnapshot(), connection.selfSessionId)?.heroRank).toBe(7);
+
+    await match.host.close("host-left");
+    await settle();
+    expect(connection.getSnapshot().summary?.map(({ heroRank }) => heroRank)).toEqual([7]);
+  });
+});
+
 describe("guild tags (#1406)", () => {
   it("seats a hello's tag, sanitised, in every snapshot and the summary; a bad one as none", async () => {
     const match = startMatch();
@@ -189,13 +205,17 @@ describe("guild capes (#1422)", () => {
   it("seats a hello's cape in every snapshot, and none without a valid tag or for a bad one", async () => {
     const match = startMatch();
     const { connection: ann } = await match.join(
-      hello({ name: "Ann", guildTag: "Vb1", guildCape: CAPE }),
+      hello({ name: "Ann", guildTag: "Vb1", heroRank: 0, guildCape: CAPE }),
     );
     const { connection: bob } = await match.join(
-      hello({ name: "Bob", guildTag: "[x]", guildCape: CAPE }),
+      hello({ name: "Bob", guildTag: "[x]", heroRank: 0, guildCape: CAPE }),
     );
     // A modified client's: the parser reads no cape out of it.
-    const odd = { ...hello({ name: "Cy", guildTag: "Cy" }), guildCape: { ...CAPE, main: "red" } };
+    const odd = {
+      ...hello({ name: "Cy", guildTag: "Cy" }),
+      heroRank: 0,
+      guildCape: { ...CAPE, main: "red" },
+    };
     const { connection: cy } = await match.join(odd as unknown as PeerHello);
     await match.step(1 / RULESET.tickRateHz);
 
@@ -214,10 +234,12 @@ describe("the match summary's size (#1057)", () => {
     const ended: WireEnded = {
       winningTeam: 0,
       endReason: "annihilation",
+      clearSeconds: null,
       summary: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
         id: `player-${String(1000 + i)}`,
         name: "\u{1D54E}".repeat(16),
         guildTag: "WWWW",
+        heroRank: 0,
         team: i % 2 === 0 ? 0 : 1,
         signet: MAX_WIRE_SIGNET,
         damage: 9_999_999,
@@ -426,6 +448,7 @@ describe("a Team Lobby's seats (#1458)", () => {
             team: 0,
             name: "Me",
             guildTag: null,
+            heroRank: 0,
             guildCape: null,
             bot: false,
             playerPubkey: "ab".repeat(32),
@@ -448,7 +471,15 @@ describe("a lobby's bots (#1193)", () => {
   const bot = (team: 0 | 1, name: string, build: string) =>
     [
       name,
-      { team, name, guildTag: null, guildCape: null, bot: true, build: starterBuild(build) },
+      {
+        team,
+        name,
+        guildTag: null,
+        heroRank: 0,
+        guildCape: null,
+        bot: true,
+        build: starterBuild(build),
+      },
     ] as const;
   const human = (team: 0 | 1) =>
     [
@@ -457,6 +488,7 @@ describe("a lobby's bots (#1193)", () => {
         team,
         name: "Me",
         guildTag: "VIBE",
+        heroRank: 0,
         guildCape: CAPE,
         bot: false,
         playerPubkey: "ab".repeat(32),
@@ -466,6 +498,140 @@ describe("a lobby's bots (#1193)", () => {
     ] as const;
   const named = (snapshot: MatchSnapshot, name: string) =>
     snapshot.players.find((player) => player.name === name);
+
+  describe("a side's last human leaving (#2688)", () => {
+    /** The local human on team 1, `peer-1` and a bot against them; `peer-1` leaves. */
+    async function lastHumanLeaves(mode: LobbyMode) {
+      const records: MatchRecord[] = [];
+      const match = startMatch({
+        mode,
+        publishRecord: (record) => records.push(record),
+        seats: new Map<string, PlannedSeat>([
+          human(1),
+          ["peer-1", { ...human(0)[1], name: "Guest", playerPubkey: "cd".repeat(32) }],
+          bot(0, "Henchman", "Monk/Elementalist"),
+        ]),
+      });
+      const local = await match.joinLocal();
+      const { transport } = await match.join();
+      await match.step(TICK);
+      await transport.leave();
+      await match.step(RECONNECT_WINDOW_SECONDS + 1);
+      return { records, henchman: named(local.getSnapshot(), "Henchman") };
+    }
+
+    it("forfeits a Heroes' Ascent side: its bots go and the other side wins", async () => {
+      const { records, henchman } = await lastHumanLeaves("heroes-ascent");
+      expect(henchman).toBeUndefined();
+      expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
+    });
+
+    /** The local human on team 1; `peer-1`, `peer-2` and a bot against them, none yet seated. */
+    function loadingSide(publishRecord: (record: MatchRecord) => void) {
+      const guest = (name: string, key: string): PlannedSeat => ({
+        ...human(0)[1],
+        name,
+        playerPubkey: key.repeat(32),
+      });
+      return startMatch({
+        mode: "heroes-ascent",
+        publishRecord,
+        seats: new Map<string, PlannedSeat>([
+          human(1),
+          ["peer-1", guest("Guest", "cd")],
+          ["peer-2", guest("Loading", "ef")],
+          bot(0, "Henchman", "Monk/Elementalist"),
+        ]),
+      });
+    }
+
+    it("waits for a teammate still loading, and forfeits once they go too", async () => {
+      const records: MatchRecord[] = [];
+      const match = loadingSide((record) => records.push(record));
+      const local = await match.joinLocal();
+      const { transport } = await match.join();
+      const loading = match.network.join("peer-2");
+      await match.step(TICK);
+      await transport.leave();
+      await match.step(RECONNECT_WINDOW_SECONDS + 1);
+      expect(named(local.getSnapshot(), "Henchman")?.bot).toBe(true);
+      expect(records).toEqual([]);
+
+      await loading.leave();
+      await match.step(1);
+      expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
+    });
+
+    it("forfeits a side whose humans all leave before saying hello", async () => {
+      const records: MatchRecord[] = [];
+      const match = loadingSide((record) => records.push(record));
+      await match.joinLocal();
+      const guests = [match.network.join("peer-1"), match.network.join("peer-2")];
+      await match.step(TICK);
+      await Promise.all(guests.map((guest) => guest.leave()));
+      await match.step(1);
+      expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
+    });
+
+    /** The local human on team 1 against a side planned all bots. */
+    async function allBotSide(mode: LobbyMode) {
+      const records: MatchRecord[] = [];
+      const match = startMatch({
+        mode,
+        publishRecord: (record) => records.push(record),
+        seats: new Map<string, PlannedSeat>([human(1), bot(0, "Henchman", "Monk/Elementalist")]),
+      });
+      const local = await match.joinLocal();
+      await match.step(TICK);
+      return { records, henchman: named(local.getSnapshot(), "Henchman") };
+    }
+
+    it("forfeits a Heroes' Ascent side that starts with only bots", async () => {
+      const { records, henchman } = await allBotSide("heroes-ascent");
+      expect(henchman).toBeUndefined();
+      expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
+    });
+
+    /** A guest alone on team 0 against a bot on team 1, on an Elite Zaishen Battle's map (#2692). */
+    async function zaishenFight() {
+      const match = startMatch({
+        mode: "heroes-ascent",
+        map: { ...ARENA, startLine: { layer: 0, x: 0, y: 0, width: 10, height: 10 } },
+        seats: new Map<string, PlannedSeat>([
+          ["peer-1", { ...human(0)[1], name: "Guest", playerPubkey: "cd".repeat(32) }],
+          bot(1, "Zaishen Monk", "Monk/Elementalist"),
+        ]),
+      });
+      const { transport } = await match.join();
+      await match.step(TICK);
+      return { match, transport };
+    }
+
+    it("keeps the Zaishen in the fight, all bots as they are (#2692)", async () => {
+      const { match } = await zaishenFight();
+      expect(match.host.phase).toBe("active");
+    });
+
+    it("forfeits the party when its last human leaves the Zaishen (#2692)", async () => {
+      const { match, transport } = await zaishenFight();
+      await transport.leave();
+      await match.step(RECONNECT_WINDOW_SECONDS + 1);
+      expect(match.host.phase).toBe("finished");
+      expect(match.host.winningTeam).toBe(1);
+    });
+
+    it("lets a side of only bots play on in other modes", async () => {
+      const { records, henchman } = await allBotSide("team-arena");
+      expect(henchman?.bot).toBe(true);
+      expect(records).toEqual([]);
+    });
+
+    it("leaves other modes' bots playing on", async () => {
+      const { records, henchman } = await lastHumanLeaves("team-arena");
+      expect(henchman?.bot).toBe(true);
+      expect(records).toEqual([]);
+    });
+  });
 
   it("seats a bot at once, on its team, and it casts at a foe in range within 10 s", async () => {
     const match = startMatch({

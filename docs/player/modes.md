@@ -282,8 +282,8 @@ only, as big as the mode's team (Team Arena's picked size, 8 for the others)
 however many are in the party; bots play the seats nobody claims.
 While it is queued you may browse the other modes: the party keeps its
 mode and size until it leaves the queue.
-Each stage lasts 60 seconds and ends early once everyone in the Team
-Lobby is ready.
+Each stage lasts 30 seconds and ends early once everyone in the Team
+Lobby is ready. Voting and taking a seat mark you ready.
 
 **Vote.** Anyone on a side may propose a Team Build of exactly that
 side's size, one proposal each. Your Team Builds open from the **Your
@@ -294,8 +294,8 @@ no problems are listed; the drawer says how many of other sizes it
 leaves out. Anyone may vote for one of their
 side's proposals, their own included. Each proposal is a card
 showing each member holding its weapons, with its skills, and the
-initials of who voted for it: click a card to vote, and click it again
-to take your vote back. Nothing is proposed for you: the menu only
+initials of who voted for it: click a card to vote, or another to
+change your vote; a vote cannot be taken back. Nothing is proposed for you: the menu only
 makes and edits Team Builds. A new proposal replaces your old one, and
 the votes for it go back to none. The most votes wins. On a tie the captain's
 vote decides: the host on the host's side, the earliest to
@@ -309,7 +309,7 @@ Neither side sees the other's proposals, votes or choice.
 
 **Claim.** The chosen build's characters are seats, each the character
 holding its weapons over its skills: click a free seat
-to take it, or your own to leave it, first come, first served, one each. Whoever claimed nothing gets the first free one, and
+to take it, or another free one to move, first come, first served, one each. Whoever claimed nothing gets the first free one, and
 bots play the rest, under their character's name. Then the match starts, or a queued party
 joins the queue.
 
@@ -327,18 +327,27 @@ A queued Heroes' Ascent is a run up GW1's maps, in their order: Elite
 Zaishen Battle, The Underworld, Fetid River, Burial Mounds, Unholy
 Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
 (The Vault,) then the Hall of Heroes. Only the maps built so far are in
-it, so today it is seven rounds: The Hollow Deep (Annihilation), Blackwater Ford (Priest Annihilation), Barrow Field (Priest Annihilation), Cinder Sanctum (Relic Run, in Unholy
+it, so today it is eight rounds: The Hollow Deep (Annihilation), Blackwater Ford (Priest Annihilation), Barrow Field (Priest Annihilation), Cinder Sanctum (Relic Run, in Unholy
 Temples' place), Mosslit Cairns (Capture Points, in Forgotten Shrines'),
-The Courtyard (King of the Hill), then the Hall of Heroes. The Lobby window says where
-you are while you look for a team: `Round 2 of 7 · Blackwater Ford`.
+The Brazen Causeway (Priest Annihilation), The Courtyard (King of the Hill), then the Hall of Heroes. The Lobby window says where
+you are while you look for a team: `Round 2 of 8 · Blackwater Ford`.
 You only ever meet a team at the same round, and you wait for one as
-long as it takes: no bots fill in. A round on a map made for three
+long as it takes: no bots fill in. The one exception: from round 2 on, a team
+alone at its round for 60 seconds may skip ahead. It meets a team waiting at
+any later round before the Hall, both play the later team's map, and the
+winner goes on from there. A round on a map made for three
 teams waits for three; two teams that have waited 30 seconds for a third
 play each other instead, and so do two whose third never shows up in the
 lobby. Win, and your party ascends to the next map on its own after 20
 seconds; win in the Hall, and you stay to defend it. Lose, or leave a match before it ends, and your next Ascent
 starts again at round 1; so does leaving the queue or the party. A match
 lost to its host leaving keeps your round.
+
+The Hall draws one of three modes for each match: King of the Hill, Relic Run or Capture Points, for two or three teams. With two, the third base stays closed, and with it its capture point. A Hall match runs 12 minutes and the most points win; Capture Points also ends early on a lead of 20. Death costs no morale. The dead return together at their base on every full minute of the match clock, so a wiped team is not beaten, but a team whose players have all left is out. In King of the Hill, the team holding the altar keeps scoring after its ghost dies, until another team claims it, and its dead return on the altar. A tie goes to the team that scored last, or in Capture Points to the team with the most recent kill.
+
+Every run starts with the **Elite Zaishen Battle**, with no queue: your party against six Zaishen played by bots (2 Monks, an Elementalist and 3 others). The clock starts when one of you crosses the start line or the first Zaishen dies, whichever comes first. Kill all six in under 30 seconds and the party starts the run at +10% morale; under 60, +8%; under 80, +6%; under 100, +4%; under 120, +2%; slower, nothing. Win and your party queues for its first map on its own. Wipe, or still have a Zaishen alive when the 8-minute limit is reached, and the run is over.
+
+Every win in a run earns **fame**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 for the first thirteen, then 40 each, at most 300 a day (the day turns at 15:00 UTC). The Elite Zaishen Battle earns none. Your total fame sets your **hero rank**, from 1 at 25 fame to 15 at 100,000, shown as ★ and a number beside your name. Options > Player shows both. Both are kept on your device.
 
 Your morale carries through the run: the death penalty or boost you end
 a won map with is what you start the next one with, from −60% to +10%.
@@ -356,6 +365,8 @@ party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
 
+A party of fewer than 8 queues with bots in its empty seats, using its Team Build, but a side always has at least one human, and no team of bots is ever an opponent. If the last human of a side leaves a match, that side forfeits and its run ends.
+
 **Barrow Field** is an Ascent arena, and a Hosted Game's pick too: 8v8 Priest Annihilation among low
 earthen mounds, the priest raising its dead every 2 minutes. Carry your flag
 onto the **Storm Beacon** in the middle and it strikes one random foe within
@@ -369,7 +380,7 @@ winding tunnels round a central rock),
 Annihilation on a tiny ford, bases nearly in sight, the priest raising
 its dead every 2 minutes) and
 **Mosslit Cairns** (8v8 Capture Points, five cairns in a shallow zig-zag
-between the bases).
+between the bases). A fourth is **The Brazen Causeway** (8v8 Priest Annihilation on a ring round a sunken pit: a narrow gap passes each base's gate, which stands wide open only while one of its team holds the Gate Lock plate).
 
 A map may have **gates**: walls that stop bodies, shots and sight while
 closed. Stand on a gate's pressure plate to open it. It closes when

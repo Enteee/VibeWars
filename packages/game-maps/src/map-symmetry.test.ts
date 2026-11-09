@@ -16,11 +16,14 @@ const SYMMETRIC = [
   "cinder-sanctum",
   "scarred-earth",
   "the-courtyard",
-  "hall-of-heroes",
+  "hall-of-heroes-king",
+  "hall-of-heroes-relic",
+  "hall-of-heroes-capture",
   "barrow-field",
   "hollow-deep",
   "blackwater-ford",
   "mosslit-cairns",
+  "brazen-causeway",
   "ashen-courtyard",
   "moss-vale",
   "canthan-terraces",
@@ -62,6 +65,14 @@ function twins(a: readonly Point[], b: readonly Point[], turn: (p: Point) => Poi
 const otherTeam = (team: number | undefined): number | undefined =>
   team === undefined ? undefined : 1 - team;
 
+/** What a two-team match keeps (#2700): a third team's base has no twin, and is no one's edge. */
+const twoTeamObjectives = (map: MapData): MapData["objectives"] =>
+  map.objectives.filter(
+    (objective) =>
+      !("team" in objective && objective.team === 2) &&
+      !(objective.kind === "capture-point" && objective.base === 2),
+  );
+
 describe.each(SYMMETRIC)("%s (#2544)", (id) => {
   const map: MapData = loadMap(id);
   const turn = (p: Point): Point => ({ x: map.width - p.x, y: map.height - p.y });
@@ -76,7 +87,7 @@ describe.each(SYMMETRIC)("%s (#2544)", (id) => {
   });
 
   it("has every spawn's 180° twin on the other team", () => {
-    for (const spawn of map.spawnPoints) {
+    for (const spawn of map.spawnPoints.filter((each) => each.team < 2)) {
       expect(
         map.spawnPoints.some(
           (other) => other.team === 1 - spawn.team && near(turn(spawn.position), other.position),
@@ -87,10 +98,11 @@ describe.each(SYMMETRIC)("%s (#2544)", (id) => {
   });
 
   it("has every objective's 180° twin, of the other team if it has one", () => {
-    for (const objective of map.objectives) {
+    const placed = twoTeamObjectives(map).filter((objective) => objective.kind !== "start-line");
+    for (const objective of placed) {
       const team = "team" in objective ? objective.team : undefined;
       expect(
-        map.objectives.some(
+        placed.some(
           (other) =>
             other.kind === objective.kind &&
             ("team" in other ? other.team : undefined) === otherTeam(team) &&

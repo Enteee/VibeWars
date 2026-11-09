@@ -76,6 +76,7 @@ function player(
     sessionId,
     name: sessionId,
     guildTag: null,
+    heroRank: 0,
     team: null,
     ready: false,
     isHost: false,

@@ -115,6 +115,7 @@ const hello: PeerHello = {
   protocolVersion: PROTOCOL_VERSION,
   name: "Mhenlo",
   guildTag: "VIBE",
+  heroRank: 0,
   guildCape: CAPE,
   build: { profession: "monk", skills: ["healing-breeze", null] },
   rejoin: null,
@@ -186,6 +187,7 @@ const player: WirePlayer = {
   id: "peer-1",
   name: "Mhenlo",
   guildTag: "VIBE",
+  heroRank: 0,
   guildCape: CAPE,
   team: 0,
   x: 120.5,
@@ -297,8 +299,8 @@ const snapshot: WireSnapshotPart = {
 const flagged: WireSnapshotPart = {
   ...snapshot,
   flags: [
-    { team: 0, place: "carried", carrierId: "peer-1", x: null, y: null },
-    { team: 1, place: "ground", carrierId: null, x: 1400, y: 980 },
+    { team: 0, place: "carried", carrierId: "peer-1", x: null, y: null, layer: null },
+    { team: 1, place: "ground", carrierId: null, x: 1400, y: 980, layer: 0 },
   ],
   stand: { holder: 0, heldSeconds: 37.5 },
   aggression: [1240, 980],
@@ -308,8 +310,8 @@ const flagged: WireSnapshotPart = {
 const relicked: WireSnapshotPart = {
   ...snapshot,
   relics: [
-    { team: 0, place: "carried", carrierId: "peer-1", x: null, y: null },
-    { team: 1, place: "ground", carrierId: null, x: 1300, y: 500 },
+    { team: 0, place: "carried", carrierId: "peer-1", x: null, y: null, layer: null },
+    { team: 1, place: "ground", carrierId: null, x: 1300, y: 500, layer: 0 },
   ],
   altar: { x: 1100, y: 700 },
 };
@@ -326,9 +328,9 @@ const hill: WireSnapshotPart = {
 const shrined: WireSnapshotPart = {
   ...snapshot,
   capturePoints: [
-    { x: 480, y: 700, owner: 0, capturer: 0, progress: 1 },
-    { x: 1100, y: 700, owner: 0, capturer: 0, progress: 0.4 },
-    { x: 1720, y: 700, owner: null, capturer: null, progress: 0 },
+    { x: 480, y: 700, layer: 0, owner: 0, capturer: 0, progress: 1 },
+    { x: 1100, y: 700, layer: 0, owner: 0, capturer: 0, progress: 0.4 },
+    { x: 1720, y: 700, layer: 0, owner: null, capturer: null, progress: 0 },
   ],
 };
 
@@ -454,6 +456,7 @@ const summaryRow = {
   id: "player-1",
   name: "Ann",
   guildTag: "Ab1",
+  heroRank: 0,
   team: 0,
   signet: 4242,
   damage: 1200,
@@ -464,7 +467,12 @@ const summaryRow = {
   interrupts: 3,
 } as const;
 
-const ended: WireEnded = { winningTeam: null, endReason: "host-left", summary: [summaryRow] };
+const ended: WireEnded = {
+  winningTeam: null,
+  endReason: "host-left",
+  summary: [summaryRow],
+  clearSeconds: null,
+};
 
 const refused: CastRefusedMessage = {
   kind: "skill",
@@ -484,6 +492,7 @@ const lobbyJoin: PeerLobbyJoin = {
   protocolVersion: PROTOCOL_VERSION,
   name: "Mhenlo",
   guildTag: "vb",
+  heroRank: 0,
   guildCape: null,
   admission: null,
   rejoinToken: null,
@@ -522,6 +531,7 @@ const lobbyState: WireLobbyState = {
       id: "peer-1/local",
       name: "Host",
       guildTag: "VIBE",
+      heroRank: 0,
       guildCape: CAPE,
       team: 0,
       ready: true,
@@ -534,6 +544,7 @@ const lobbyState: WireLobbyState = {
       id: "peer-3",
       name: "Watcher",
       guildTag: null,
+      heroRank: 0,
       guildCape: null,
       team: null,
       ready: false,
@@ -546,6 +557,7 @@ const lobbyState: WireLobbyState = {
       id: "bot-1",
       name: "Monk Bot",
       guildTag: null,
+      heroRank: 0,
       guildCape: null,
       team: 1,
       ready: true,
@@ -777,8 +789,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     {
       ...flagged,
       flags: [
-        { team: 0, place: "spawn", carrierId: null, x: null, y: null },
-        { team: 1, place: "stand", carrierId: null, x: null, y: null },
+        { team: 0, place: "spawn", carrierId: null, x: null, y: null, layer: null },
+        { team: 1, place: "stand", carrierId: null, x: null, y: null, layer: null },
       ],
       stand: { holder: null, heldSeconds: 0 },
       aggression: [],
@@ -818,7 +830,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "ended by a wipe (#846)",
     parseWireEnded,
-    { winningTeam: 1, endReason: "annihilation", summary: [] },
+    { winningTeam: 1, endReason: "annihilation", summary: [], clearSeconds: null },
   ],
   [
     "a bot's summary row, no signet (#2822)",
@@ -828,7 +840,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "ended at time by morale (#846)",
     parseWireEnded,
-    { winningTeam: null, endReason: "morale", summary: [] },
+    { winningTeam: null, endReason: "morale", summary: [], clearSeconds: null },
   ],
   [
     "ended with a full summary (#1057)",
@@ -1064,9 +1076,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["withdraw a proposal (#1458)", parseWireLobbyCommand, { kind: "propose", slot: null }],
   ["vote (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: "peer-2" }],
-  ["withdraw a vote (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: null }],
   ["claim (#1458)", parseWireLobbyCommand, { kind: "claim", slot: 1 }],
-  ["let a claim go (#1458)", parseWireLobbyCommand, { kind: "claim", slot: null }],
   [
     "a team plan's human seat (ADR-0042)",
     parseWireLobbyCommand,
@@ -1278,6 +1288,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello without a name", parsePeerHello, { ...hello, name: undefined }],
   ["hello without a guild tag (#1406)", parsePeerHello, { ...hello, guildTag: undefined }],
   ["hello with a numeric guild tag (#1406)", parsePeerHello, { ...hello, guildTag: 7 }],
+  ["hello with hero rank 16 (#2702)", parsePeerHello, { ...hello, heroRank: 16 }],
+  ["hello with a fractional hero rank (#2702)", parsePeerHello, { ...hello, heroRank: 1.5 }],
+  ["lobby-join with hero rank 16 (#2702)", parsePeerLobbyJoin, { ...lobbyJoin, heroRank: 16 }],
   [
     "lobby-join without a guild tag (#1406)",
     parsePeerLobbyJoin,
@@ -1406,22 +1419,31 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a carried flag and no carrier (#1225)",
     parseWireSnapshotPart,
-    { ...flagged, flags: [{ team: 0, place: "carried", carrierId: null, x: null, y: null }] },
+    {
+      ...flagged,
+      flags: [{ team: 0, place: "carried", carrierId: null, x: null, y: null, layer: null }],
+    },
   ],
   [
     "snapshot with a flag on the ground nowhere (#1225)",
     parseWireSnapshotPart,
-    { ...flagged, flags: [{ team: 1, place: "ground", carrierId: null, x: null, y: 2 }] },
+    { ...flagged, flags: [{ team: 1, place: "ground", carrierId: null, x: null, y: 2, layer: 0 }] },
   ],
   [
     "snapshot with a flag at its spawn and a carrier (#1225)",
     parseWireSnapshotPart,
-    { ...flagged, flags: [{ team: 1, place: "spawn", carrierId: "peer-1", x: null, y: null }] },
+    {
+      ...flagged,
+      flags: [{ team: 1, place: "spawn", carrierId: "peer-1", x: null, y: null, layer: null }],
+    },
   ],
   [
     "snapshot with a flag of team 2 (#1225)",
     parseWireSnapshotPart,
-    { ...flagged, flags: [{ team: 2, place: "spawn", carrierId: null, x: null, y: null }] },
+    {
+      ...flagged,
+      flags: [{ team: 2, place: "spawn", carrierId: null, x: null, y: null, layer: null }],
+    },
   ],
   [
     "snapshot with a stand held for negative time (#1225)",
@@ -1482,12 +1504,18 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a relic on the stand (#1374)",
     parseWireSnapshotPart,
-    { ...relicked, relics: [{ team: 0, place: "stand", carrierId: null, x: null, y: null }] },
+    {
+      ...relicked,
+      relics: [{ team: 0, place: "stand", carrierId: null, x: null, y: null, layer: null }],
+    },
   ],
   [
     "snapshot with a relic on the ground nowhere (#1374)",
     parseWireSnapshotPart,
-    { ...relicked, relics: [{ team: 1, place: "ground", carrierId: null, x: 1, y: null }] },
+    {
+      ...relicked,
+      relics: [{ team: 1, place: "ground", carrierId: null, x: 1, y: null, layer: 0 }],
+    },
   ],
   [
     "snapshot with an altar nowhere (#1374)",
@@ -1966,7 +1994,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   ["ended by an unknown reason", parseWireEnded, { ...ended, endReason: "forfeit" }],
-  ["ended without a winner", parseWireEnded, { endReason: "score", summary: [] }],
+  [
+    "ended without a winner",
+    parseWireEnded,
+    { endReason: "score", summary: [], clearSeconds: null },
+  ],
   ["ended without a summary", parseWireEnded, { winningTeam: null, endReason: "time" }],
   [
     "ended with a summary past the cap",
@@ -2545,7 +2577,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["propose without a build (#1458)", parseWireLobbyCommand, { kind: "propose", slot: 0, size: 1 }],
   ["vote of a number (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: 2 }],
+  ["vote of null (#2872)", parseWireLobbyCommand, { kind: "vote", proposerId: null }],
   ["claim of a string (#1458)", parseWireLobbyCommand, { kind: "claim", slot: "1" }],
+  ["claim of null (#2872)", parseWireLobbyCommand, { kind: "claim", slot: null }],
   ["claim of NaN (#1458)", parseWireLobbyCommand, { kind: "claim", slot: Number.NaN }],
   ["choose-team without a team", parseWireLobbyCommand, { kind: "choose-team" }],
   ["choose-team of a string", parseWireLobbyCommand, { kind: "choose-team", team: "0" }],
@@ -2667,8 +2701,11 @@ describe("the P2P validators (#82)", () => {
       winningTeam: 2,
       altarHolder: 2,
       players: [{ ...player, team: 2 }],
-      relics: [...relicked.relics, { team: 2, place: "spawn", carrierId: null, x: null, y: null }],
-      capturePoints: [{ x: 10, y: 20, owner: 2, capturer: 1, progress: 0.5 }],
+      relics: [
+        ...relicked.relics,
+        { team: 2, place: "spawn", carrierId: null, x: null, y: null, layer: null },
+      ],
+      capturePoints: [{ x: 10, y: 20, layer: 0, owner: 2, capturer: 1, progress: 0.5 }],
     };
     expect(parseWireSnapshotPartOf(three, 3)).toEqual(three);
     expect(parseWireSnapshotPartOf(three, 2)).toBeUndefined();
@@ -2771,5 +2808,15 @@ describe("the P2P validators (#82)", () => {
       expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
       expect(parsed).not.toHaveProperty("skills");
     });
+  });
+});
+
+describe("heroRank (#2702)", () => {
+  it.each([0, 15])("takes rank %d in a hello", (heroRank) => {
+    expect(parsePeerHello({ ...hello, heroRank })?.heroRank).toBe(heroRank);
+  });
+
+  it.each([16, -1, 1.5, "3", null, undefined])("refuses %s in a hello", (heroRank) => {
+    expect(parsePeerHello({ ...hello, heroRank })).toBeUndefined();
   });
 });

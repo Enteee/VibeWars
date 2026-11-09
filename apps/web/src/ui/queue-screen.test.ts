@@ -10,6 +10,7 @@ import {
   modeLabel,
   nextAscentMorale,
   nextAscentRound,
+  nextAscentWins,
   nextStreak,
   queueTitle,
   stayButton,
@@ -37,6 +38,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         sessionId: "me",
         name: "Me",
         guildTag: null,
+        heroRank: 0,
         team: selfTeam,
         ready: false,
         isHost: false,
@@ -48,6 +50,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         sessionId: "mate",
         name: "Mate",
         guildTag: null,
+        heroRank: 0,
         team: selfTeam,
         ready: false,
         isHost: false,
@@ -59,6 +62,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         sessionId: "foe",
         name: "Foe",
         guildTag: null,
+        heroRank: 0,
         team: selfTeam === 0 ? 1 : 0,
         ready: false,
         isHost: true,
@@ -118,17 +122,38 @@ describe("nextStreak (#881)", () => {
   });
 });
 
+describe("nextAscentWins (#2702)", () => {
+  it("counts a run's wins, and a win at the first round starts a new run", () => {
+    expect(nextAscentWins(0, 0, "win")).toBe(1);
+    expect(nextAscentWins(1, 1, "win")).toBe(2);
+    // A member who stayed while the host left the queue still holds the old streak.
+    expect(nextAscentWins(5, 0, "win")).toBe(1);
+  });
+
+  it("ends with the run, and stands when the host left", () => {
+    expect(nextAscentWins(5, 3, "loss")).toBe(0);
+    expect(nextAscentWins(5, 3, "forfeit")).toBe(0);
+    expect(nextAscentWins(5, 3, "host-left")).toBe(5);
+  });
+});
+
 describe("nextAscentRound (#1996)", () => {
   it("moves on with a win, to the Hall and no further", () => {
-    expect(nextAscentRound(0, "win")).toBe(1);
-    expect(nextAscentRound(5, "win")).toBe(6);
-    expect(nextAscentRound(6, "win")).toBe(6);
+    expect(nextAscentRound(0, 0, "win")).toBe(1);
+    expect(nextAscentRound(6, 6, "win")).toBe(7);
+    expect(nextAscentRound(7, 7, "win")).toBe(7);
+  });
+
+  it("moves on from the map played when it skipped ahead (#2687)", () => {
+    expect(nextAscentRound(2, 4, "win")).toBe(5);
+    expect(nextAscentRound(2, 4, "loss")).toBe(0);
+    expect(nextAscentRound(2, 4, "host-left")).toBe(2);
   });
 
   it("starts again at the first after a defeat or a forfeit, and stands when the host left", () => {
-    expect(nextAscentRound(2, "loss")).toBe(0);
-    expect(nextAscentRound(3, "forfeit")).toBe(0);
-    expect(nextAscentRound(2, "host-left")).toBe(2);
+    expect(nextAscentRound(2, 2, "loss")).toBe(0);
+    expect(nextAscentRound(3, 3, "forfeit")).toBe(0);
+    expect(nextAscentRound(2, 2, "host-left")).toBe(2);
   });
 });
 
@@ -146,9 +171,9 @@ describe("nextAscentMorale (#2686)", () => {
 });
 
 describe("ascentStartMorale (#2686)", () => {
-  it("sends 0 outside Heroes' Ascent and at a run's first map, and the carried morale past it", () => {
+  it("sends 0 outside Heroes' Ascent and the carried morale in it", () => {
     expect(ascentStartMorale(null, -30)).toBe(0);
-    expect(ascentStartMorale(0, -30)).toBe(0);
+    expect(ascentStartMorale(0, 10)).toBe(10);
     expect(ascentStartMorale(2, -30)).toBe(-30);
   });
 });
@@ -210,11 +235,11 @@ describe("teamEndAction and teamEndLine (#1997)", () => {
       text: "Ascending to Blackwater Ford in 20 s",
       button: "Leave",
     });
-    expect(teamEndLine("requeue", 20, 5)).toEqual({
+    expect(teamEndLine("requeue", 20, 6)).toEqual({
       text: "Ascending to Hall of Heroes in 20 s",
       button: "Leave",
     });
-    expect(teamEndLine("requeue", 5, 6)).toEqual({
+    expect(teamEndLine("requeue", 5, 7)).toEqual({
       text: "You hold the Hall of Heroes · defending in 5 s",
       button: "Leave",
     });

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { parseLobbyFragment, takeFragmentPart } from "./fragment.js";
+import {
+  MAX_PASTED_LINK_LENGTH,
+  parseLobbyFragment,
+  readPastedLobbyLink,
+  takeFragmentPart,
+} from "./fragment.js";
 import { parseTurnFragment } from "./transport/turn-config.js";
 
 const KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
@@ -54,5 +59,54 @@ describe("parseLobbyFragment (#2100)", () => {
       expect(parseLobbyFragment(hash), hash).toEqual({ kind: "malformed", rest: "" });
     }
     expect(parseLobbyFragment("#x=1&lobby=nope")).toEqual({ kind: "malformed", rest: "x=1" });
+  });
+});
+
+describe("readPastedLobbyLink (#2882)", () => {
+  const here = { origin: "https://vibe.example", pathname: "/VibeWars/" };
+  const good = `https://vibe.example/VibeWars/#lobby=${KEY}`;
+  const read = (text: string): ReturnType<typeof readPastedLobbyLink> =>
+    readPastedLobbyLink(text, here);
+
+  it("takes this build's link, whitespace around it or not", () => {
+    expect(read(`  ${good}\n`)).toEqual({ kind: "link", fragment: `#lobby=${KEY}` });
+  });
+
+  it("keeps the whole fragment of a link carrying a relay", () => {
+    expect(read(`${good}&turn=abc`)).toEqual({
+      kind: "link",
+      fragment: `#lobby=${KEY}&turn=abc`,
+    });
+  });
+
+  it.each([
+    ["empty", "   "],
+    ["no URL", "not a link"],
+    ["no fragment", "https://vibe.example/VibeWars/"],
+    ["a relay only", "https://vibe.example/VibeWars/#turn=abc"],
+    ["a bad key", "https://vibe.example/VibeWars/#lobby=short"],
+    ["two keys", `${good}&lobby=${KEY}`],
+    ["javascript:", `javascript:alert(1)//#lobby=${KEY}`],
+    ["data:", `data:text/html,x#lobby=${KEY}`],
+  ])("is no link: %s", (_name, text) => {
+    expect(read(text)).toEqual({ kind: "malformed" });
+  });
+
+  it("refuses anything longer than the limit", () => {
+    const padded = `${good}&x=${"a".repeat(MAX_PASTED_LINK_LENGTH)}`.slice(
+      0,
+      MAX_PASTED_LINK_LENGTH + 1,
+    );
+    expect(padded).toHaveLength(2049);
+    expect(read(padded)).toEqual({ kind: "malformed" });
+  });
+
+  it.each([
+    ["another site", `https://evil.example/VibeWars/#lobby=${KEY}`],
+    ["another scheme", `http://vibe.example/VibeWars/#lobby=${KEY}`],
+    ["another build's path", `https://vibe.example/VibeWars/next/#lobby=${KEY}`],
+    ["index.html", `https://vibe.example/VibeWars/index.html#lobby=${KEY}`],
+  ])("is another build: %s", (_name, text) => {
+    expect(read(text)).toEqual({ kind: "other-build" });
   });
 });

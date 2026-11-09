@@ -46,7 +46,7 @@ describe("renderableFlags", () => {
     const flags = renderableFlags(
       [
         { team: 0, place: { kind: "stand" } },
-        { team: 1, place: { kind: "ground", position: vec2(10, 20) } },
+        { team: 1, place: { kind: "ground", position: vec2(10, 20), layer: 0 } },
       ],
       FIELD,
       [],
@@ -90,7 +90,7 @@ describe("renderableRelics (#1374)", () => {
   it("draws each relic as a flag where it is, and a right click picks a lying one", () => {
     const relics = renderableRelics(
       [
-        { team: 0, place: { kind: "ground", position: vec2(600, 400) } },
+        { team: 0, place: { kind: "ground", position: vec2(600, 400), layer: 0 } },
         { team: 1, place: { kind: "carried", carrierId: "x" } },
       ],
       RELICS,
@@ -111,7 +111,7 @@ describe("flagObjectAtPoint", () => {
 
   it("picks a flag lying near the point before the stand", () => {
     const flags = renderableFlags(
-      [{ team: 0, place: { kind: "ground", position: vec2(1500, 1020) } }],
+      [{ team: 0, place: { kind: "ground", position: vec2(1500, 1020), layer: 0 } }],
       FIELD,
       [],
       0,
@@ -142,26 +142,28 @@ describe("Capture Points' shrines as the arena draws them (#1378)", () => {
   it("tints each by its owner from your team, grey for nobody's", () => {
     const points = renderableCapturePoints(
       [
-        { position: at, owner: 1, capturer: 1, progress: 1 },
-        { position: at, owner: null, capturer: null, progress: 0 },
+        { position: at, layer: 0, owner: 1, capturer: 1, progress: 1 },
+        { position: at, layer: 0, owner: null, capturer: null, progress: 0 },
       ],
       1,
     );
     expect(points.map((point) => point.owner)).toEqual(["ally", undefined]);
     // A spectator reads team 0 as theirs, as the scoreboard does.
     expect(
-      renderableCapturePoints([{ position: at, owner: 1, capturer: 1, progress: 1 }], undefined)[0]
-        ?.owner,
+      renderableCapturePoints(
+        [{ position: at, layer: 0, owner: 1, capturer: 1, progress: 1 }],
+        undefined,
+      )[0]?.owner,
     ).toBe("enemy");
   });
 
   it("rings the capturer's progress, and none on a shrine owned in full or untouched", () => {
     const [draining, filling, held, untouched] = renderableCapturePoints(
       [
-        { position: at, owner: 0, capturer: 0, progress: 0.25 },
-        { position: at, owner: null, capturer: 1, progress: 0.6 },
-        { position: at, owner: 0, capturer: 0, progress: 1 },
-        { position: at, owner: null, capturer: null, progress: 0 },
+        { position: at, layer: 0, owner: 0, capturer: 0, progress: 0.25 },
+        { position: at, layer: 0, owner: null, capturer: 1, progress: 0.6 },
+        { position: at, layer: 0, owner: 0, capturer: 0, progress: 1 },
+        { position: at, layer: 0, owner: null, capturer: null, progress: 0 },
       ],
       0,
     );

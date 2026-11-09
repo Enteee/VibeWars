@@ -15,6 +15,7 @@ import {
   type CapeColour,
   type CapeEmblem,
 } from "../render/cape-shape.js";
+import { heroRankOf, loadFame } from "../storage/fame.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { canvasPainter } from "./character-figure.js";
 import { cssColour } from "./character-preview.js";
@@ -129,7 +130,16 @@ export function saveGuildCape(cape: WireCape | null): void {
 
 /** The remembered tag if it is a valid one, and the cape with it (#1406, #1422). */
 export function playerGuild(): Guild {
-  return sanitizeGuild({ guildTag: loadGuildTag(), guildCape: loadGuildCape() });
+  return sanitizeGuild({
+    guildTag: loadGuildTag(),
+    heroRank: heroRankOf(loadFame().total),
+    guildCape: loadGuildCape(),
+  });
+}
+
+/** Whether `a` is what the player typed in `b`: a rank is earned, so it is no rename (#2702). */
+export function sameTypedGuild(a: Guild | undefined, b: Guild): boolean {
+  return a?.guildTag === b.guildTag && JSON.stringify(a.guildCape) === JSON.stringify(b.guildCape);
 }
 
 /** Whether the cape designer shows for the tag `typed` (#1422): only a valid tag wears a cape. */
@@ -228,6 +238,10 @@ function mountPlayer(container: HTMLElement): () => void {
   identityRow.appendChild(nameField);
   identityRow.appendChild(tagField);
   panel.appendChild(identityRow);
+  const { total } = loadFame();
+  panel.appendChild(
+    h("p", "player-fame", t("player.fameAndRank", { fame: total, rank: heroRankOf(total) })),
+  );
 
   // The cape designer under it (#1422), only while the tag is valid: the
   // cape is the guild's.

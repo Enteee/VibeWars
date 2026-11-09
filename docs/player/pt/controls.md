@@ -39,6 +39,7 @@ Estas teclas são fixas:
 ## Mouse
 
 - **Clique esquerdo** no chão para andar até lá. Sem Shift, o botão esquerdo só anda.
+- Nos mapas com plataformas elevadas, o clique esquerdo vai para a superfície que vês e **Alt + clique esquerdo** para o chão por baixo. Um anel sob o cursor indica uma plataforma; um tracejado, o chão.
 - **Clique direito** em um inimigo ou aliado para mirar nele. Clique
   direito de novo no mesmo inimigo, rápido, para atacá-lo.
 - **Clique direito** em uma bandeira ou no suporte da bandeira, em uma
@@ -64,7 +65,7 @@ Estas teclas são fixas:
 ## A barra superior
 
 Fora de uma partida, a barra superior tem **[?]** (esta Ajuda), **⚙** (Opções),
-**Sala** (seu link de convite, Aberta/Fechada, Sair, e quem está na sua sala; o selo conta as pessoas),
+**Sala** (seu link de convite, Entrar em uma sala, Aberta/Fechada, Sair, e quem está na sua sala; o selo conta as pessoas),
 **♪** (música: o que toca e em que volume), o mudo do som e a tela cheia. Em uma partida, os mesmos botões,
 menos Sala, ficam no canto superior direito da tela. Em uma janela estreita, esses ícones e
 os outros botões da tela se recolhem em **⋯**; só o botão principal fica de fora.

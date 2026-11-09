@@ -119,6 +119,8 @@ export interface WalkToIntent {
   readonly kind: "walk-to";
   readonly x: number;
   readonly y: number;
+  /** The layer the click names (ADR-0051); 0 on a map of one layer. */
+  readonly layer: number;
 }
 
 /**
@@ -282,7 +284,8 @@ export const LOBBY_TEAM_SIZES = [1, 2, 4, 8] as const;
 export type LobbyTeamSize = (typeof LOBBY_TEAM_SIZES)[number];
 
 /** How long each stage of a Team Lobby (#1458) lasts, on the lobby's clock. */
-export const TEAM_LOBBY_STAGE_SECONDS = 60;
+export const TEAM_LOBBY_VOTE_SECONDS = 30;
+export const TEAM_LOBBY_CLAIM_SECONDS = 30;
 
 /**
  * Every message a client is allowed to send during a match.
@@ -373,13 +376,14 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
 
   if (
     record.kind === "walk-to" &&
-    hasOnlyKeys(record, ["kind", "x", "y"]) &&
+    hasOnlyKeys(record, ["kind", "x", "y", "layer"]) &&
+    isWireLayer(record.layer) &&
     typeof record.x === "number" &&
     typeof record.y === "number" &&
     Number.isFinite(record.x) &&
     Number.isFinite(record.y)
   ) {
-    return { kind: "walk-to", x: record.x, y: record.y };
+    return { kind: "walk-to", x: record.x, y: record.y, layer: record.layer };
   }
 
   if (
@@ -422,6 +426,13 @@ function isIntentId(value: unknown): value is string {
 
 function isWeaponSetNumber(value: unknown): value is 0 | 1 | 2 | 3 {
   return value === 0 || value === 1 || value === 2 || value === 3;
+}
+
+/** A body's highest layer: a map has at most three (ADR-0051). */
+const MAX_WIRE_LAYER = 2;
+
+export function isWireLayer(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= MAX_WIRE_LAYER;
 }
 
 function hasOnlyKeys(record: Record<string, unknown>, keys: readonly string[]): boolean {

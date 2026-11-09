@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { t } from "../i18n/index.js";
 import type { PartyMember, RailParty } from "./lobby-window.js";
 import { queueButton } from "./queue-popover.js";
-import { lobbyButton, lobbyButtonName } from "./topbar.js";
+import { joinControls, lobbyButton, lobbyButtonName } from "./topbar.js";
 import { attachTopbarPopover, closeTopbarPopover, isTopbarPopoverOpen } from "./topbar-popover.js";
 
 type Listener = (event: FakeEvent) => void;
@@ -29,6 +29,7 @@ class FakeElement {
   src = "";
   alt = "";
   tabIndex = 0;
+  value = "";
   parent: FakeElement | undefined;
   readonly tagName: string;
   children: FakeElement[] = [];
@@ -41,6 +42,13 @@ class FakeElement {
     },
     remove: (name: string): void => {
       this.classes.delete(name);
+    },
+    toggle: (name: string, on: boolean): void => {
+      if (on) {
+        this.classes.add(name);
+      } else {
+        this.classes.delete(name);
+      }
     },
   };
 
@@ -276,7 +284,9 @@ const party = (...members: PartyMember[]): RailParty => ({
 });
 
 describe("the top bar's Lobby (#2385)", () => {
-  const mount = (): { parent: FakeElement; button: FakeElement; badge: FakeElement } & ReturnType<
+  const mount = (
+    onClosed: () => void = () => undefined,
+  ): { parent: FakeElement; button: FakeElement; badge: FakeElement } & ReturnType<
     typeof lobbyButton
   > => {
     const parent = new FakeElement("div");
@@ -287,6 +297,7 @@ describe("the top bar's Lobby (#2385)", () => {
       parent as unknown as HTMLElement,
       controls as unknown as HTMLElement,
       () => undefined,
+      onClosed,
     );
     const button = lobby.element as unknown as FakeElement;
     const badge = button.children.find((child) => child.className === "topbar-badge");
@@ -295,6 +306,15 @@ describe("the top bar's Lobby (#2385)", () => {
     }
     return { ...lobby, parent, button, badge };
   };
+
+  it("tells the controls when it shuts, so Join lobby's field goes with it (#2882)", () => {
+    const onClosed = vi.fn();
+    const { button } = mount(onClosed);
+    button.fire("click");
+    expect(onClosed).not.toHaveBeenCalled();
+    button.fire("click");
+    expect(onClosed).toHaveBeenCalledOnce();
+  });
 
   it("counts the players on its badge and in its name once someone else is in", () => {
     const { button, badge, setParty } = mount();
@@ -450,5 +470,120 @@ describe("the top bar's queue icon (#2743)", () => {
     setQueue(undefined);
     expect(isTopbarPopoverOpen()).toBe(false);
     expect(parent.children).toEqual([]);
+  });
+});
+
+describe("the Lobby window's Join lobby (#2882)", () => {
+  const KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
+  const GOOD = `https://vibe.example/VibeWars/#lobby=${KEY}`;
+  const page2882 = { origin: "https://vibe.example", pathname: "/VibeWars/", hash: "" };
+
+  const find = (root: FakeElement, className: string): FakeElement => {
+    const search = (node: FakeElement): FakeElement | undefined =>
+      node.className.split(" ").includes(className)
+        ? node
+        : node.children.map(search).find((found) => found !== undefined);
+    const found = search(root);
+    if (found === undefined) {
+      throw new Error(`no .${className}`);
+    }
+    return found;
+  };
+
+  const mount = () => {
+    page2882.hash = "";
+    vi.stubGlobal("location", page2882);
+    const join = joinControls(
+      () => "Mira",
+      () => undefined,
+      () => undefined,
+      () => undefined,
+    );
+    const root = join.controls as unknown as FakeElement;
+    join.setLobby({ code: KEY, isHost: true, open: false, party: 1, joining: false });
+    const open = find(root, "lobby-join-open");
+    const field = find(root, "lobby-join-field");
+    const input = find(root, "lobby-join-input");
+    const message = find(root, "lobby-join-message");
+    open.fire("click");
+    return { join, root, open, field, input, message };
+  };
+
+  it("opens the field on the button, focused, with nothing in it", () => {
+    const { field, input, message } = mount();
+    expect(field.hidden).toBe(false);
+    expect(focused()).toBe(input);
+    expect(input.value).toBe("");
+    expect(message.hidden).toBe(true);
+  });
+
+  it("hands a good link to the page's hash and closes, by Enter", () => {
+    const { field, input } = mount();
+    input.value = GOOD;
+    input.fire("keydown", { key: "Enter" });
+    expect(page2882.hash).toBe(`#lobby=${KEY}`);
+    expect(field.hidden).toBe(true);
+    expect(input.value).toBe("");
+  });
+
+  it("does the same on the Join button", () => {
+    const { root, field, input } = mount();
+    input.value = GOOD;
+    find(root, "lobby-join-confirm").fire("click");
+    expect(page2882.hash).toBe(`#lobby=${KEY}`);
+    expect(field.hidden).toBe(true);
+  });
+
+  it.each([
+    ["not a link", "topbar.joinNotALink"],
+    [`https://other.example/#lobby=${KEY}`, "topbar.joinOtherBuild"],
+  ] as const)("says what is wrong with %s, joins nothing and stays open", (text, key) => {
+    const { field, input, message } = mount();
+    input.value = text;
+    input.fire("keydown", { key: "Enter" });
+    expect(page2882.hash).toBe("");
+    expect(field.hidden).toBe(false);
+    expect(input.value).toBe(text);
+    expect(message.textContent).toBe(t(key));
+    expect(message.hidden).toBe(false);
+  });
+
+  it("closes and empties on Cancel, giving focus back", () => {
+    const { root, open, field, input, message } = mount();
+    input.value = "bad";
+    input.fire("keydown", { key: "Enter" });
+    find(root, "lobby-join-cancel").fire("click");
+    expect(field.hidden).toBe(true);
+    expect(input.value).toBe("");
+    expect(message.hidden).toBe(true);
+    expect(focused()).toBe(open);
+  });
+
+  it("closes on Esc, which leaves the window open, and keeps typing from shortcuts", () => {
+    const { field, input } = mount();
+    const stopped = vi.fn();
+    input.value = "half";
+    input.fire("keydown", { key: "a", stopPropagation: stopped });
+    expect(stopped).toHaveBeenCalledOnce();
+    expect(field.hidden).toBe(false);
+    input.fire("keydown", { key: "Escape", stopPropagation: stopped });
+    expect(stopped).toHaveBeenCalledTimes(2);
+    expect(field.hidden).toBe(true);
+    expect(input.value).toBe("");
+  });
+
+  it("closes with the window", () => {
+    const { join, field, input } = mount();
+    input.value = "half";
+    join.closeJoinField();
+    expect(field.hidden).toBe(true);
+    expect(input.value).toBe("");
+  });
+
+  it("hides the button, and the field, while a join runs", () => {
+    const { join, open, field } = mount();
+    join.setLobby({ code: KEY, isHost: true, open: false, party: 1, joining: true });
+    expect(open.hidden).toBe(true);
+    expect(field.hidden).toBe(true);
   });
 });

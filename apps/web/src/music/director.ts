@@ -1,6 +1,6 @@
 import { seedFromString } from "@vibewars/game-core";
 
-import { MENU_TRACK, mapTrack } from "./fixed-tracks.js";
+import { MENU_TRACK, SPLASH_TRACK, mapTrack } from "./fixed-tracks.js";
 import { moodsFor } from "./map-moods.js";
 import type { Mood } from "./mood.js";
 
@@ -45,7 +45,7 @@ export interface TrackChoice {
 }
 
 export interface MusicInput {
-  readonly screen: "menu" | "training" | "match" | "result";
+  readonly screen: "splash" | "menu" | "training" | "match" | "result";
   /** Menu and training: how deep in the menus the player is (#1993). */
   readonly menuDepth: 0 | 1 | null;
   /** Training and match only. */
@@ -88,6 +88,8 @@ export interface MusicState {
  */
 function contextOf(input: MusicInput): string {
   switch (input.screen) {
+    case "splash":
+      return "splash";
     case "menu":
     case "training":
       return "menu";
@@ -106,6 +108,8 @@ function contextOf(input: MusicInput): string {
 export function targetIntensity(input: MusicInput, layers: number): Intensity {
   const depth = MENU_LEVEL[Math.max(0, Math.min(input.menuDepth ?? 0, layers - 1))] ?? 0;
   switch (input.screen) {
+    case "splash":
+      return 0;
     case "menu":
       return depth;
     case "training": {
@@ -153,6 +157,8 @@ function pick(tracks: readonly TrackChoice[], seed: string): TrackChoice | undef
 /** Auto's song: fixed on a menu and a map (#1993), by mood for a result. */
 function autoTrack(input: MusicInput, seed: string, tracks: readonly TrackChoice[]): string | null {
   switch (input.screen) {
+    case "splash":
+      return SPLASH_TRACK;
     case "menu":
     case "training":
       return MENU_TRACK;

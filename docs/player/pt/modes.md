@@ -293,8 +293,8 @@ Arena de Equipes, 8 nos outros), não importa quantos estejam no grupo; os
 bots jogam nos assentos que ninguém pegar.
 Enquanto está na fila, você pode ver os outros modos: o grupo mantém o
 modo e o tamanho até sair da fila.
-Cada etapa dura 60 segundos e termina antes quando todos na Sala de
-Equipe estiverem prontos.
+Cada etapa dura 30 segundos e termina antes quando todos na Sala de
+Equipe estiverem prontos. Votar e pegar um assento marcam você como pronto.
 
 **Votação.** Qualquer pessoa de um lado pode propor uma Build de Equipe
 exatamente do tamanho desse lado, uma proposta cada. Suas Builds de
@@ -305,8 +305,8 @@ desse tamanho e sem problemas; a gaveta diz quantas de outros tamanhos
 ficaram de fora. Qualquer pessoa pode votar em uma das propostas do seu
 lado, inclusive a própria. Cada proposta é um cartão que mostra cada
 membro segurando as armas, com as habilidades e as iniciais de quem votou
-nela: clique em um cartão para votar, e clique de novo para retirar seu
-voto. Ninguém propõe nada em seu lugar: o menu só cria e edita Builds de Equipe.
+nela: clique em um cartão para votar, ou em outro para mudar seu
+voto; não é possível retirá-lo. Ninguém propõe nada em seu lugar: o menu só cria e edita Builds de Equipe.
 Uma proposta nova substitui a anterior, e os votos nela voltam a zero.
 Vence quem tiver mais votos. Em um empate, decide o voto do capitão: o
 host no lado do host, o primeiro a entrar no outro. Com propostas e sem
@@ -320,7 +320,7 @@ lado vê as propostas, os votos ou a escolha do outro.
 
 **Escolha.** Os personagens da build escolhida são assentos, cada um com o
 personagem segurando as armas sobre as habilidades: clique em um assento
-livre para pegá-lo, ou no seu para largá-lo, quem chegar primeiro leva, um
+livre para pegá-lo, ou em outro livre para trocar, quem chegar primeiro leva, um
 cada. Quem não pegou nada recebe o primeiro livre, e os bots jogam os
 outros, com o nome do personagem. Então a partida começa, ou um grupo na
 fila entra na fila.
@@ -336,12 +336,12 @@ na fila.
 
 ## Ascensão dos Heróis
 
-Uma Ascensão dos Heróis na fila tem sete rodadas, sempre nesta ordem:
-The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), Barrow Field (Aniquilação de Sacerdotes), Cinder Sanctum (Corrida da Relíquia), Mosslit Cairns (Captura de Pontos), The
+Uma Ascensão dos Heróis na fila tem oito rodadas, sempre nesta ordem:
+The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), Barrow Field (Aniquilação de Sacerdotes), Cinder Sanctum (Corrida da Relíquia), Mosslit Cairns (Captura de Pontos), The Brazen Causeway (Aniquilação de Sacerdotes), The
 Courtyard (Rei da Colina) e depois o Hall of Heroes. A janela da Sala diz
-onde você está enquanto procura uma equipe: `Round 2 of 7 · Blackwater Ford`.
+onde você está enquanto procura uma equipe: `Round 2 of 8 · Blackwater Ford`.
 Você só encontra equipes na mesma rodada e espera por uma o tempo que for
-preciso: nenhum bot completa. Uma rodada em um mapa feito para três
+preciso: nenhum bot completa. A única exceção: a partir da rodada 2, uma equipe sozinha na sua rodada por 60 segundos pode avançar. Ela enfrenta uma equipe que espera em qualquer rodada posterior antes do Hall, as duas jogam o mapa da equipe mais adiantada e a vencedora segue a partir dali. Uma rodada em um mapa feito para três
 equipes espera três; duas equipes que esperaram 30 segundos pela terceira
 jogam entre si, assim como duas cuja terceira nunca aparece na sala. Vença
 e seu grupo sobe sozinho para o próximo mapa depois de 20 segundos; vença
@@ -349,6 +349,8 @@ no Hall e você fica para defendê-lo. Perca, ou saia de uma partida antes
 do fim, e sua próxima Ascensão recomeça na rodada 1; o mesmo vale para
 sair da fila ou do grupo. Uma partida perdida porque o host saiu mantém
 sua rodada.
+
+O Hall sorteia um de três modos para cada partida: Rei da Colina, Corrida da Relíquia ou Captura de Pontos, para duas ou três equipes. Com duas, a terceira base fica fechada, e com ela seu ponto de captura. Uma partida no Hall dura 12 minutos e vence quem tiver mais pontos; a Captura de Pontos também termina antes com uma vantagem de 20. Morrer não custa moral. Os mortos voltam juntos à sua base a cada minuto cheio do relógio da partida, então uma equipe eliminada não está derrotada, mas uma equipe cujos jogadores saíram todos está fora. No Rei da Colina, a equipe que controla o altar continua pontuando depois que seu fantasma morre, até outra equipe tomá-lo, e seus mortos voltam no altar. Um empate vai para a equipe que pontuou por último ou, na Captura de Pontos, para a que fez a eliminação mais recente.
 
 Sua moral acompanha você por toda a campanha: a penalidade de morte ou o
 bônus com que você termina um mapa vencido é o que você leva para o
@@ -367,6 +369,8 @@ campanha antiga. A rodada é lembrada pelo host do seu grupo, e só até você
 fechar a aba. Uma sala de Ascensão dos Heróis por código joga o mapa da
 rodada 1.
 
+Um grupo com menos de 8 entra na fila com bots nos lugares vazios, usando sua Build de Equipe, mas um lado sempre tem pelo menos um humano, e uma equipe de bots nunca é adversária. Se o último humano de um lado sair de uma partida, esse lado desiste e sua subida termina.
+
 **Barrow Field** é uma arena da Ascensão que você também pode escolher em uma Partida Hospedada: Aniquilação de Sacerdotes 8v8 entre montes baixos de terra, com o sacerdote ressuscitando seus mortos a cada 2 minutos. Leve sua bandeira ao **Storm Beacon** no centro e ele atinge um inimigo aleatório ao alcance da voz com 50 de dano de raio a cada 2,5 segundos, até a outra equipe plantar a bandeira dela lá. Cada golpe é um raio do farol até quem ele atingiu, visível para as duas equipes.
 
 Três arenas da Ascensão também podem ser escolhidas em uma Partida Hospedada: **The Hollow Deep** (8v8 de Aniquilação, três túneis sinuosos
@@ -375,7 +379,7 @@ em volta de uma rocha central),
 com as bases quase à vista e o sacerdote trazendo os mortos a cada 2
 minutos) e
 **Mosslit Cairns** (8v8 de Captura de Pontos, cinco montes de pedras em um
-leve zigue-zague entre as bases).
+leve zigue-zague entre as bases). A quarta é **The Brazen Causeway** (8v8 de Aniquilação de Sacerdotes em um anel ao redor de um fosso: uma passagem estreita contorna o portão de cada base, que só fica aberto enquanto alguém da equipe estiver na placa da fechadura).
 
 Um mapa pode ter **portões**: muros que param corpos, disparos e visão
 enquanto fechados. Fique sobre a placa de pressão de um portão para
@@ -384,6 +388,10 @@ estiver na passagem para o lado mais próximo e parando disparos que ainda
 a atravessam, e não pode ser aberto de novo por 8 segundos. Uma placa na
 cor de uma equipe só responde a essa equipe. Os bots ficam na placa da
 própria equipe quando não há inimigo por perto.
+
+Cada percurso começa com a **Batalha dos Zaishen de Elite**, sem fila: seu grupo contra seis Zaishen controlados por bots (2 Monges, um Elementalista e mais 3). O relógio começa quando um de vocês cruza a linha de partida ou o primeiro Zaishen morre, o que acontecer primeiro. Matem os seis em menos de 30 segundos e o grupo começa o percurso com +10% de moral; em menos de 60, +8%; em menos de 80, +6%; em menos de 100, +4%; em menos de 120, +2%; mais devagar, nada. Se vencerem, o grupo entra sozinho na fila do primeiro mapa. Se o grupo inteiro cair, ou se algum Zaishen ainda estiver vivo ao fim do limite de 8 minutos, o percurso acaba.
+
+Cada vitória de um percurso dá **fama**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 nas treze primeiras e depois 40 cada, no máximo 300 por dia (o dia vira às 15:00 UTC). A Batalha dos Zaishen de Elite não dá fama. Sua fama total define sua **patente de herói**, de 1 com 25 de fama a 15 com 100.000, mostrada como ★ e um número ao lado do seu nome. Opções > Jogador mostra as duas. As duas ficam no seu dispositivo.
 
 ## Três equipes
 

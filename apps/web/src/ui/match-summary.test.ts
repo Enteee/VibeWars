@@ -11,6 +11,7 @@ function row(id: string, team: number, values: Partial<MatchSummaryRow> = {}): M
     id,
     name: id,
     guildTag: null,
+    heroRank: 0,
     team,
     signet: null,
     damage: 0,

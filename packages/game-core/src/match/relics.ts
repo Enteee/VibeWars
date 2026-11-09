@@ -1,17 +1,19 @@
-import { distance, type Vec2 } from "../vec2.js";
+import type { Vec2 } from "../vec2.js";
 import {
   AT_SPAWN,
   carriedBy,
   carriedObjectId,
   carriedObjectTeam,
   dropCarried,
-  lyingPosition,
+  lyingPoint,
   type CarriedArrival,
   type CarriedDrop,
   type CarriedObject,
+  type CarriedPoint,
   type CarriedSpawn,
 } from "./carried.js";
 import { FLAG_REACH_UNITS } from "./flags.js";
+import { atObjective, type BodyOnFloors } from "./layer-rules.js";
 
 /**
  * Heroes' Ascent's Relic Run (#1374, GW1): each team has one relic in
@@ -36,6 +38,8 @@ export type RelicCarry = "own" | "foe";
 /** A Relic Run map's objectives: one `relic-spawn` per team, and its altar if it scores there. */
 export interface RelicField {
   readonly altar: Vec2 | undefined;
+  /** The layer the altar is on (ADR-0051). Omitted: the ground. */
+  readonly altarLayer?: number;
   readonly relicTarget: RelicTarget;
   readonly relicCarry: RelicCarry;
   readonly spawns: readonly CarriedSpawn[];
@@ -89,9 +93,12 @@ export function carriedRelic(
   return carriedBy(relics, carrierId);
 }
 
-/** Whether `position` is on the altar: near enough for a carrier to score. */
-export function onAltar(field: RelicField, position: Vec2): boolean {
-  return field.altar !== undefined && distance(position, field.altar) <= ALTAR_REACH_UNITS;
+/** Whether `body` is on the altar: near enough for a carrier to score, on its layer or a ramp to it. */
+export function onAltar(field: RelicField, body: BodyOnFloors): boolean {
+  return (
+    field.altar !== undefined &&
+    atObjective(field.altar, field.altarLayer ?? 0, body, ALTAR_REACH_UNITS)
+  );
 }
 
 /** Whether `team` carries `relicTeam`'s relic where its map's `carry` says so, rather than sending it home. */
@@ -100,16 +107,26 @@ export function carriesRelic(carry: RelicCarry, relicTeam: number, team: number)
 }
 
 /**
- * Where a player walks to for `targetId`: a relic at its spawn or on the
- * ground. `undefined` for one carried, and for an id that names none.
+ * Where a player walks to for `targetId`, and on which layer: a relic
+ * at its spawn or on the ground. `undefined` for one carried, and for
+ * an id that names none.
  */
+export function relicTargetPoint(
+  field: RelicField,
+  relics: readonly RelicState[],
+  targetId: string,
+): CarriedPoint | undefined {
+  const relic = relics.find(({ team }) => relicId(team) === targetId);
+  return relic === undefined ? undefined : lyingPoint(field.spawns, relic);
+}
+
+/** `relicTargetPoint`, without its layer. */
 export function relicTargetPosition(
   field: RelicField,
   relics: readonly RelicState[],
   targetId: string,
 ): Vec2 | undefined {
-  const relic = relics.find(({ team }) => relicId(team) === targetId);
-  return relic === undefined ? undefined : lyingPosition(field.spawns, relic);
+  return relicTargetPoint(field, relics, targetId)?.position;
 }
 
 /**
@@ -195,7 +212,9 @@ export function stepRelics(
         break;
       }
       case "drop":
-        next = { relics: dropCarried(next.relics, action.carrierId, action.position) };
+        next = {
+          relics: dropCarried(next.relics, action.carrierId, action.position, action.layer),
+        };
         break;
       case "interact":
         next = interact(field, next, action);

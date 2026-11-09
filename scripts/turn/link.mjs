@@ -8,8 +8,8 @@
  */
 import { tls } from "./settings.mjs";
 
-/** The game's latest main, where #972's link reading lands first. */
-export const DEFAULT_BASE = "https://enteee.github.io/VibeWars/next/";
+/** The site root, which serves the latest release: a friend lands on a tested build. */
+export const DEFAULT_BASE = "https://enteee.github.io/VibeWars/";
 
 /**
  * The host the links name: `host` when set, else the external IPv4's public

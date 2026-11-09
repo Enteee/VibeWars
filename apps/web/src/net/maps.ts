@@ -14,24 +14,37 @@ import canthanTerraces from "@vibewars/game-maps/maps/canthan-terraces/map.json"
 import sunkenBastion from "@vibewars/game-maps/maps/sunken-bastion/map.json" with { type: "json" };
 import shiverpeakPass from "@vibewars/game-maps/maps/shiverpeak-pass/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
+import eliteZaishenBattle from "@vibewars/game-maps/maps/elite-zaishen-battle/map.json" with { type: "json" };
 import barrowField from "@vibewars/game-maps/maps/barrow-field/map.json" with { type: "json" };
 import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
 import cinderSanctum from "@vibewars/game-maps/maps/cinder-sanctum/map.json" with { type: "json" };
 import blackwaterFord from "@vibewars/game-maps/maps/blackwater-ford/map.json" with { type: "json" };
-import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
+import brazenCauseway from "@vibewars/game-maps/maps/brazen-causeway/map.json" with { type: "json" };
+import hallOfHeroesCapture from "@vibewars/game-maps/maps/hall-of-heroes-capture/map.json" with { type: "json" };
+import hallOfHeroesKing from "@vibewars/game-maps/maps/hall-of-heroes-king/map.json" with { type: "json" };
+import hallOfHeroesRelic from "@vibewars/game-maps/maps/hall-of-heroes-relic/map.json" with { type: "json" };
 import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
 import mosslitCairns from "@vibewars/game-maps/maps/mosslit-cairns/map.json" with { type: "json" };
 import hollowDeep from "@vibewars/game-maps/maps/hollow-deep/map.json" with { type: "json" };
 import theCourtyard from "@vibewars/game-maps/maps/the-courtyard/map.json" with { type: "json" };
+import {
+  FOE_RELIC_RUN_MATCH_RULES,
+  HALLS_MATCH_RULES,
+  MATCH_MODES,
+  isHallsMode,
+} from "@vibewars/game-core";
 import type {
+  MatchRules,
   BaseGuard,
   FlagField,
   GuildLord,
   GhostField,
   MatchMode,
   RelicField,
+  StartLine,
   Vec2,
 } from "@vibewars/game-core";
+import { ELITE_ZAISHEN_MAP } from "@vibewars/game-core";
 import {
   isTeamArena,
   teamSizeOf,
@@ -77,13 +90,18 @@ export const ARENA_MAPS: readonly MapData[] = [
   // King of the Hill's (#1377, #2552).
   theCourtyard,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
-  hallOfHeroes,
+  hallOfHeroesKing,
+  hallOfHeroesRelic,
+  hallOfHeroesCapture,
   // The Heroes' Ascent's own (#2694), and a Hosted Game's pick.
   barrowField,
+  eliteZaishenBattle,
   // The Heroes' Ascent's own (#2693): a Hosted Game's pick until the progression places them.
   hollowDeep,
   blackwaterFord,
   mosslitCairns,
+  // The Heroes' Ascent's own, in Golden Gates' slot (#2697).
+  brazenCauseway,
   // Capture Points' (#1378, #2551).
   scarredEarth,
 ].map((raw) => validateMapData(raw));
@@ -119,11 +137,18 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
     "hosted-game": undefined,
   };
 
+/** The Hall of Heroes (#2700): one map per mode, so the map draw is the mode draw. */
+export const HALL_OF_HEROES_MAPS: readonly string[] = [
+  "hall-of-heroes-king",
+  "hall-of-heroes-relic",
+  "hall-of-heroes-capture",
+];
+
 /**
  * Maps only a queued Heroes' Ascent's last round plays (#1996): a coded
  * Ascent lobby never draws the Hall of Heroes (#1995).
  */
-const ASCENT_FINALE_ONLY: readonly string[] = ["hall-of-heroes"];
+const ASCENT_FINALE_ONLY: readonly string[] = HALL_OF_HEROES_MAPS;
 
 /** Heroes' Ascent maps (#2693, #2694) whose modes Random and Team Arena also play: neither draws them. */
 const ASCENT_ONLY: readonly string[] = [
@@ -131,6 +156,8 @@ const ASCENT_ONLY: readonly string[] = [
   "hollow-deep",
   "blackwater-ford",
   "mosslit-cairns",
+  "brazen-causeway",
+  ELITE_ZAISHEN_MAP,
 ];
 
 /**
@@ -144,6 +171,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
     const modes = LOBBY_MODE_MATCH_MODES[mode];
     return arenaIds().filter(
       (id) =>
+        id !== ELITE_ZAISHEN_MAP &&
         (mode === "hosted-game" || !ASCENT_ONLY.includes(id)) &&
         (modes === undefined || modes.includes(mapMode(id))) &&
         (size === undefined || suits(id, size)),
@@ -211,9 +239,20 @@ export const ASCENT_PROGRESSION: readonly string[] = [
   // Unholy Temples' slot.
   "cinder-sanctum",
   "mosslit-cairns",
+  // Golden Gates' slot.
+  "brazen-causeway",
   "the-courtyard",
-  "hall-of-heroes",
+  "hall-of-heroes-king",
 ];
+
+/** The round Heroes' Ascent plays `mapId` at (#2687); every map of a drawn pool is that pool's round. */
+export function ascentRoundOf(mapId: string): number {
+  const round = ASCENT_PROGRESSION.findIndex((_, at) => ascentMapPool(at).includes(mapId));
+  if (round < 0) {
+    throw new RangeError(`no Heroes' Ascent round plays ${mapId}`);
+  }
+  return round;
+}
 
 /** The id of the map Heroes' Ascent plays at `round` (#1996). */
 export function ascentMapId(round: number): string {
@@ -222,6 +261,12 @@ export function ascentMapId(round: number): string {
     throw new RangeError(`no Heroes' Ascent round ${String(round)}`);
   }
   return id;
+}
+
+/** The maps Heroes' Ascent draws from at `round` (#2700): the Hall's three, else the round's one. */
+export function ascentMapPool(round: number): string[] {
+  const id = ascentMapId(round);
+  return HALL_OF_HEROES_MAPS.includes(id) ? [...HALL_OF_HEROES_MAPS] : [id];
 }
 
 /**
@@ -236,7 +281,7 @@ export function queueMapPool(mode: QueueMode, ascentRound: number | null): strin
       if (ascentRound === null) {
         throw new RangeError("a Heroes' Ascent queue has a round");
       }
-      return [ascentMapId(ascentRound)];
+      return ascentMapPool(ascentRound);
     case "gvg":
       return modeMapIds()[mode];
     default:
@@ -253,6 +298,16 @@ export function queueTeamCount(mode: QueueMode, ascentRound: number | null): Wir
     return 2;
   }
   return hostMap(ascentMapId(ascentRound))?.descriptor.teamCount ?? 2;
+}
+
+/**
+ * Whether a side at `round` may skip ahead, or be skipped to (#2687):
+ * every Heroes' Ascent round between The Underworld and the Hall.
+ */
+export function queueSkipping(mode: QueueMode, round: number | null): boolean {
+  return (
+    mode === "heroes-ascent" && round !== null && round > 0 && round < ASCENT_PROGRESSION.length - 1
+  );
 }
 
 /** The modes a Random Arena never plays. */
@@ -280,9 +335,9 @@ export function mapMode(mapId: string): MatchMode {
  * host plays it by, as `mapMode` reads the mode: none on a map without
  * them, or one this build does not have.
  */
-export function mapShrines(mapId: string): readonly MapShrine[] {
+export function mapShrines(mapId: string, teamCount: number): readonly MapShrine[] {
   const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
-  return shrinesOf(map?.objectives ?? []);
+  return shrinesOf(seatedObjectives(map?.objectives ?? [], teamCount));
 }
 
 /** A map's floors, and each wall's layer in the order of its `walls` (ADR-0051). */
@@ -333,7 +388,7 @@ function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {
 function shrinesOf(objectives: readonly Objective[]): readonly MapShrine[] {
   return objectives.flatMap((objective) =>
     objective.kind === "resurrection-shrine"
-      ? [{ team: objective.team, position: objective.position }]
+      ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
       : [],
   );
 }
@@ -341,7 +396,9 @@ function shrinesOf(objectives: readonly Objective[]): readonly MapShrine[] {
 /** The Guild Lords among a map's objectives (#1222). */
 function guildLordsOf(objectives: readonly Objective[]): readonly GuildLord[] {
   return objectives.flatMap((objective) =>
-    objective.kind === "guild-lord" ? [{ team: objective.team, position: objective.position }] : [],
+    objective.kind === "guild-lord"
+      ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
+      : [],
   );
 }
 
@@ -357,10 +414,11 @@ function flagFieldOf(objectives: readonly Objective[]): FlagField | undefined {
     ? undefined
     : {
         stand: stand.position,
+        standLayer: stand.layer,
         beacon: stand.kind === "storm-beacon",
         spawns: objectives.flatMap((objective) =>
           objective.kind === "flag-spawn"
-            ? [{ team: objective.team, position: objective.position }]
+            ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
             : [],
         ),
       };
@@ -373,18 +431,22 @@ export function mapFlagField(mapId: string): FlagField | undefined {
 }
 
 /** A Relic Run map's relic spawns, altar and variant (#1374, #2695), or `undefined`. */
-function relicFieldOf(map: MapData | undefined): RelicField | undefined {
+function relicFieldOf(
+  map: MapData | undefined,
+  objectives: readonly Objective[],
+): RelicField | undefined {
   if (map?.relicTarget === undefined || map.relicCarry === undefined) {
     return undefined;
   }
-  const altar = map.objectives.find((objective) => objective.kind === "altar");
-  const spawns = map.objectives.flatMap((objective) =>
+  const altar = objectives.find((objective) => objective.kind === "altar");
+  const spawns = objectives.flatMap((objective) =>
     objective.kind === "relic-spawn"
-      ? [{ team: objective.team, position: objective.position }]
+      ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
       : [],
   );
   return {
     altar: altar?.position,
+    altarLayer: altar?.layer ?? 0,
     relicTarget: map.relicTarget,
     relicCarry: map.relicCarry,
     spawns,
@@ -395,33 +457,41 @@ function relicFieldOf(map: MapData | undefined): RelicField | undefined {
  * A map's ghost spawns at its `ghostLevel`, and its altar if King of the
  * Hill's (#1377, #2689); `undefined` on a map without ghosts.
  */
-function ghostFieldOf(map: MapData): GhostField | undefined {
+function ghostFieldOf(map: MapData, objectives: readonly Objective[]): GhostField | undefined {
   if (map.ghostLevel === undefined) {
     return undefined;
   }
-  const altar = map.objectives.find((objective) => objective.kind === "altar");
+  const altar = objectives.find((objective) => objective.kind === "altar");
   return {
     level: map.ghostLevel,
     altar: map.mode === "king-of-the-hill" ? altar?.position : undefined,
-    spawns: map.objectives.flatMap((objective) =>
+    altarLayer: altar?.layer ?? 0,
+    spawns: objectives.flatMap((objective) =>
       objective.kind === "ghost-spawn"
-        ? [{ team: objective.team, position: objective.position }]
+        ? [{ team: objective.team, position: objective.position, layer: objective.layer }]
         : [],
     ),
   };
 }
 
 /** The altar and relic spawns on `mapId` (#1374), for the renderer: as `mapFlagField`. */
-export function mapRelicField(mapId: string): RelicField | undefined {
+export function mapRelicField(mapId: string, teamCount: number): RelicField | undefined {
   const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
-  return relicFieldOf(map);
+  return relicFieldOf(map, seatedObjectives(map?.objectives ?? [], teamCount));
 }
 
 /** The base guards among a map's objectives (#1223), in its order. */
 function guardsOf(objectives: readonly Objective[]): readonly BaseGuard[] {
   return objectives.flatMap((objective) =>
     objective.kind === "guard"
-      ? [{ team: objective.team, role: objective.role, position: objective.position }]
+      ? [
+          {
+            team: objective.team,
+            role: objective.role,
+            position: objective.position,
+            layer: objective.layer,
+          },
+        ]
       : [],
   );
 }
@@ -432,19 +502,60 @@ export interface MapShrine {
   readonly position: Vec2;
 }
 
-/** The map `mapId` names, built for a `MatchHost`; `undefined` for no such map. */
-export function hostMap(mapId: string): HostMap | undefined {
+function startLineOf(objectives: readonly Objective[]): StartLine | undefined {
+  for (const objective of objectives) {
+    if (objective.kind === "start-line") {
+      const { x, y, width, height } = objective.area;
+      return { layer: objective.layer, x, y, width, height };
+    }
+  }
+  return undefined;
+}
+
+/** A map's objectives in a match of `teamCount` teams (#2700): without those of a team not seated. */
+function seatedObjectives(
+  objectives: readonly Objective[],
+  teamCount: number,
+): readonly Objective[] {
+  return objectives.filter((objective) => {
+    const team = "team" in objective ? objective.team : undefined;
+    const base = objective.kind === "capture-point" ? objective.base : undefined;
+    return (team ?? 0) < teamCount && (base ?? 0) < teamCount;
+  });
+}
+
+/** Whether `mapId` is one of the Hall of Heroes' (#2700). */
+export function isHallsMap(mapId: string): boolean {
+  return ARENA_MAPS.find((candidate) => candidate.id === mapId)?.halls === true;
+}
+
+/** The rules a match on `mapId` of `mode` plays (#2700): the Hall's, the map's, or the mode's. */
+export function mapMatchRules(mapId: string, mode: MatchMode): MatchRules {
+  const map = ARENA_MAPS.find((candidate) => candidate.id === mapId);
+  if (map?.halls === true && isHallsMode(mode)) {
+    return HALLS_MATCH_RULES[mode];
+  }
+  return map?.relicCarry === "foe" ? FOE_RELIC_RUN_MATCH_RULES : MATCH_MODES[mode];
+}
+
+/**
+ * The map `mapId` names, built for a `MatchHost` of `teamCount` teams, its
+ * file's unless told otherwise; `undefined` for no such map.
+ */
+export function hostMap(mapId: string, teamCount?: WireTeamCount): HostMap | undefined {
   const map = ARENA_MAPS.find((candidate) => candidate.id === mapId);
   if (map === undefined) {
     return undefined;
   }
+  const seated = teamCount ?? map.teams;
+  const objectives = seatedObjectives(map.objectives, seated);
   return {
     descriptor: {
       id: map.id,
       name: map.name,
       width: map.width,
       height: map.height,
-      teamCount: map.teams,
+      teamCount: seated,
       walls: map.walls.map((wall) =>
         wall.kind === "rect"
           ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
@@ -460,15 +571,16 @@ export function hostMap(mapId: string): HostMap | undefined {
       team: gate.team,
     })),
     bounds: { width: map.width, height: map.height },
-    spawns: map.spawnPoints,
-    shrines: shrinesOf(map.objectives),
-    guildLords: guildLordsOf(map.objectives),
-    flagField: flagFieldOf(map.objectives),
-    relicField: relicFieldOf(map),
-    ghostField: ghostFieldOf(map),
-    capturePoints: map.objectives.flatMap((objective) =>
-      objective.kind === "capture-point" ? [objective.position] : [],
+    spawns: map.spawnPoints.filter((spawn) => spawn.team < seated),
+    shrines: shrinesOf(objectives),
+    guildLords: guildLordsOf(objectives),
+    flagField: flagFieldOf(objectives),
+    relicField: relicFieldOf(map, objectives),
+    ghostField: ghostFieldOf(map, objectives),
+    capturePoints: objectives.flatMap((objective) =>
+      objective.kind === "capture-point" ? [{ ...objective.position, layer: objective.layer }] : [],
     ),
-    guards: guardsOf(map.objectives),
+    startLine: startLineOf(objectives),
+    guards: guardsOf(objectives),
   };
 }

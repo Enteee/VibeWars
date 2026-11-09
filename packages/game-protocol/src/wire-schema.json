@@ -731,6 +731,7 @@
     "LOBBY_KEY_SALT": { "literal": "vibewars-lobby-key" },
     "MASTERLESS_WIRE_TEAM": { "literal": -1 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
+    "MAX_HERO_RANK": { "literal": 15 },
     "MAX_LOBBY_PLAYERS": { "literal": 24 },
     "MAX_RELAY_PEER_ID": { "literal": 64 },
     "MAX_RELAY_SEAL_CHARS": { "literal": 2048 },
@@ -763,7 +764,8 @@
     "MIN_WIRE_MORALE": { "literal": -60 },
     "NO_SHOW_IGNORE_MS": { "literal": 120000 },
     "STROKE_SECONDS": { "literal": 4 },
-    "TEAM_LOBBY_STAGE_SECONDS": { "literal": 60 },
+    "TEAM_LOBBY_CLAIM_SECONDS": { "literal": 30 },
+    "TEAM_LOBBY_VOTE_SECONDS": { "literal": 30 },
     "TICKET_HEARTBEAT_MS": { "literal": 5000 },
     "TICKET_TTL_MS": { "literal": 15000 }
   },
@@ -958,6 +960,7 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+            { "name": "layer", "optional": false, "type": "number" },
             { "name": "x", "optional": false, "type": "number" },
             { "name": "y", "optional": false, "type": "number" }
           ]
@@ -5792,6 +5795,7 @@
           }
         },
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "heroRank", "optional": false, "type": "number" },
         { "name": "name", "optional": false, "type": "string" },
         { "name": "protocolVersion", "optional": false, "type": "string" },
         {
@@ -5890,6 +5894,7 @@
           }
         },
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "heroRank", "optional": false, "type": "number" },
         { "name": "name", "optional": false, "type": "string" },
         { "name": "playerPubkey", "optional": false, "type": "string" },
         { "name": "protocolVersion", "optional": false, "type": "string" },
@@ -6389,6 +6394,7 @@
     "WalkToIntent": {
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+        { "name": "layer", "optional": false, "type": "number" },
         { "name": "x", "optional": false, "type": "number" },
         { "name": "y", "optional": false, "type": "number" }
       ]
@@ -6556,6 +6562,7 @@
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
+        { "name": "layer", "optional": false, "type": "number" },
         {
           "name": "owner",
           "optional": false,
@@ -6569,6 +6576,7 @@
     "WireCarried": {
       "properties": [
         { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "place", "optional": false, "type": { "typeParameter": "Place" } },
         {
           "name": "team",
@@ -6831,6 +6839,7 @@
     },
     "WireEnded": {
       "properties": [
+        { "name": "clearSeconds", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "endReason",
           "optional": false,
@@ -6856,6 +6865,7 @@
                 { "name": "deaths", "optional": false, "type": "number" },
                 { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "healing", "optional": false, "type": "number" },
+                { "name": "heroRank", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
                 { "name": "interrupts", "optional": false, "type": "number" },
                 { "name": "kills", "optional": false, "type": "number" },
@@ -6881,6 +6891,7 @@
     "WireFlag": {
       "properties": [
         { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "place",
           "optional": false,
@@ -7013,7 +7024,7 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "claim" } },
-            { "name": "slot", "optional": false, "type": { "union": ["null", "number"] } }
+            { "name": "slot", "optional": false, "type": "number" }
           ]
         },
         {
@@ -7083,7 +7094,7 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "vote" } },
-            { "name": "proposerId", "optional": false, "type": { "union": ["null", "string"] } }
+            { "name": "proposerId", "optional": false, "type": "string" }
           ]
         }
       ]
@@ -7173,6 +7184,7 @@
           }
         },
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "heroRank", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "isHost", "optional": false, "type": "boolean" },
         { "name": "name", "optional": false, "type": "string" },
@@ -7319,6 +7331,7 @@
                   }
                 },
                 { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "heroRank", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
                 { "name": "isHost", "optional": false, "type": "boolean" },
                 { "name": "name", "optional": false, "type": "string" },
@@ -7808,6 +7821,7 @@
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "health", "optional": false, "type": "number" },
         { "name": "healthPips", "optional": false, "type": "number" },
+        { "name": "heroRank", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "invulnerableSeconds", "optional": false, "type": "number" },
         { "name": "knockdownRemaining", "optional": false, "type": "number" },
@@ -7909,6 +7923,7 @@
     "WireRelic": {
       "properties": [
         { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "place",
           "optional": false,
@@ -8004,6 +8019,7 @@
                     "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
                   }
                 },
+                { "name": "layer", "optional": false, "type": "number" },
                 {
                   "name": "owner",
                   "optional": false,
@@ -8041,6 +8057,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,
@@ -8267,6 +8284,7 @@
                 { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "health", "optional": false, "type": "number" },
                 { "name": "healthPips", "optional": false, "type": "number" },
+                { "name": "heroRank", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
                 { "name": "invulnerableSeconds", "optional": false, "type": "number" },
                 { "name": "knockdownRemaining", "optional": false, "type": "number" },
@@ -8375,6 +8393,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,
@@ -8464,6 +8483,7 @@
                     "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
                   }
                 },
+                { "name": "layer", "optional": false, "type": "number" },
                 {
                   "name": "owner",
                   "optional": false,
@@ -8501,6 +8521,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,
@@ -8729,6 +8750,7 @@
                 { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "health", "optional": false, "type": "number" },
                 { "name": "healthPips", "optional": false, "type": "number" },
+                { "name": "heroRank", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
                 { "name": "invulnerableSeconds", "optional": false, "type": "number" },
                 { "name": "knockdownRemaining", "optional": false, "type": "number" },
@@ -8837,6 +8859,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,
@@ -8941,6 +8964,7 @@
         { "name": "deaths", "optional": false, "type": "number" },
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "healing", "optional": false, "type": "number" },
+        { "name": "heroRank", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "interrupts", "optional": false, "type": "number" },
         { "name": "kills", "optional": false, "type": "number" },

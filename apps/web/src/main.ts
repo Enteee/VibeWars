@@ -12,7 +12,14 @@ import type { NostrQueue } from "./net/transport/nostr-queue.js";
 import { watchRecords } from "./net/transport/index.js";
 import { loadPlayerKey } from "./net/transport/player-key.js";
 
-import { ARENA_MAPS, ASCENT_PROGRESSION, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
+import {
+  ARENA_MAPS,
+  ASCENT_PROGRESSION,
+  HALL_OF_HEROES_MAPS,
+  LOBBY_MODE_MATCH_MODES,
+  ascentRoundOf,
+  modeMapIds,
+} from "./net/maps.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -23,6 +30,7 @@ import {
   joinFailureNotice,
   joinLobbyByCode,
   lobbyClosedNotice,
+  matchEndedNotice,
   lobbyRelayStatus,
   lobbyRefusalNotice,
   matchFailureNotice,
@@ -115,6 +123,7 @@ import {
   mountQueueScreen,
   nextAscentMorale,
   nextAscentRound,
+  nextAscentWins,
   nextStreak,
   requeuedSince,
   teamEndAction,
@@ -154,7 +163,7 @@ import { dismissToast, toast } from "./ui/kit.js";
 import { signetOf } from "./ui/player-label.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
-import { loadPlayerName, playerGuild } from "./ui/player-section.js";
+import { loadPlayerName, playerGuild, sameTypedGuild } from "./ui/player-section.js";
 import { isAlone, partyOf } from "./ui/lobby-window.js";
 import {
   isModeEntry,
@@ -189,14 +198,18 @@ import {
   type TeamEditorView,
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
+import { recordAscentWin } from "./storage/fame.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
+import { startSplashFight } from "./ui/splash-fight.js";
+import { shouldShowSplash } from "./ui/splash-gate.js";
+import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
 import {
   teamQueueModeOf,
   teamSizeOf,
   type LobbyMode,
   type QueueMode,
 } from "@vibewars/game-protocol";
-import { type PlayerBuild } from "@vibewars/game-core";
+import { type PlayerBuild, zaishenMoraleBoost } from "@vibewars/game-core";
 
 /**
  * Application shell: owns which screen is showing and the connections
@@ -290,8 +303,6 @@ interface TeamPicks {
   soloKey: string | undefined;
   /** The build this side was last proposed at 1v1 (#2141). */
   soloProposed: PlayerBuild | undefined;
-  /** A click picked, so the claim stage readies too. */
-  soloClicked: boolean;
   /** The claim stage this side already claimed its one seat in. */
   soloClaimed: boolean;
 }
@@ -470,6 +481,8 @@ async function main(): Promise<void> {
    * `match === undefined` and pull the player back to the lobby screen.
    */
   let enteringMatch = false;
+  /** The match in view has its result: nothing said over it. */
+  let matchFinished = false;
   let lobbyNotice: string | undefined;
   /** While the lobby is in a Team Lobby (#1460). */
   let teamPicks: TeamPicks | undefined;
@@ -530,6 +543,10 @@ async function main(): Promise<void> {
         finished: boolean;
         /** The Heroes' Ascent round its lobby queued at (#1996); `null` in other modes. */
         readonly ascentRound: number | null;
+        /** The round its match plays: a later one when it skipped ahead (#2687). */
+        playedRound: number | null;
+        /** The map of the group it was formed into (#2687); `undefined` until then. */
+        groupMapId: string | undefined;
       }
     | undefined;
   /** A team's match found while the tab was hidden (#2743): its title flashing. */
@@ -544,6 +561,8 @@ async function main(): Promise<void> {
    * once the run ends.
    */
   let ascentRound = 0;
+  /** The Heroes' Ascent run's wins so far, which set each win's fame (#2702). */
+  let ascentWins = 0;
   /**
    * This player's morale in its Heroes' Ascent run (#2686), from the end
    * of the last map won, which it starts the next at. Page memory like
@@ -696,6 +715,7 @@ async function main(): Promise<void> {
     if (teamQueue !== undefined && lobby?.getSnapshot().isHost === true) {
       // Out of the queue, its Heroes' Ascent run is over (#1996).
       ascentRound = 0;
+      ascentWins = 0;
       ascentMorale = 0;
       lobby.leaveQueue();
     }
@@ -1087,10 +1107,7 @@ async function main(): Promise<void> {
       }
       // Renamed while the key was derived: nobody can be in it yet, so it
       // opens again under the new name and tag.
-      if (
-        name !== loadPlayerName() ||
-        JSON.stringify(entrant.guild) !== JSON.stringify(playerGuild())
-      ) {
+      if (name !== loadPlayerName() || !sameTypedGuild(entrant.guild, playerGuild())) {
         await own.lobby.disconnect();
         await own.close();
         openOwnLobby();
@@ -1121,8 +1138,7 @@ async function main(): Promise<void> {
     hosted !== undefined &&
     lobby === hosted.lobby &&
     isAlone(railParty()) &&
-    (lobbyName !== loadPlayerName() ||
-      JSON.stringify(lobbyEntrant?.guild) !== JSON.stringify(playerGuild()));
+    (lobbyName !== loadPlayerName() || !sameTypedGuild(lobbyEntrant?.guild, playerGuild()));
 
   /**
    * Out of the lobby this tab is in, ending it for everyone if it is this
@@ -1132,6 +1148,7 @@ async function main(): Promise<void> {
     endTeamQueue();
     // Out of the party, its Heroes' Ascent run is over (#1996).
     ascentRound = 0;
+    ascentWins = 0;
     ascentMorale = 0;
     const leaving = lobby;
     const ending = hosted;
@@ -1167,6 +1184,7 @@ async function main(): Promise<void> {
     following = move.code;
     // A new host cannot vouch for the old one's Heroes' Ascent run (#2539).
     ascentRound = 0;
+    ascentWins = 0;
     ascentMorale = 0;
     setRailParty(undefined);
     topbarView.setParty(undefined);
@@ -1281,7 +1299,8 @@ async function main(): Promise<void> {
     hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter(
       (map) =>
         modeMapIds()[entry].includes(map.id) ||
-        (entry === "heroes-ascent" && ASCENT_PROGRESSION.includes(map.id)),
+        (entry === "heroes-ascent" &&
+          (ASCENT_PROGRESSION.includes(map.id) || HALL_OF_HEROES_MAPS.includes(map.id))),
     );
 
   /** The lobby's part of `entry`'s screen (#1526), once there is a lobby. */
@@ -1331,12 +1350,14 @@ async function main(): Promise<void> {
     startNatCheck();
     return {
       queuedMs: queuedMsOf(lobby.getSnapshot()),
+      groupMapId: teamQueue?.groupMapId,
       onFindMatch: () => {
         lobby?.findMatch(roundFor(entry));
       },
       onLeaveQueue: () => {
         // Out of the queue, its Heroes' Ascent run is over (#1996).
         ascentRound = 0;
+        ascentWins = 0;
         ascentMorale = 0;
         lobby?.leaveQueue();
       },
@@ -1955,6 +1976,8 @@ async function main(): Promise<void> {
       teams: undefined,
       finished: false,
       ascentRound: snapshot.ascentRound,
+      playedRound: snapshot.ascentRound,
+      groupMapId: undefined,
     };
     teamQueue = started;
     music().menu("queue");
@@ -2002,6 +2025,15 @@ async function main(): Promise<void> {
             current.teams = state.teams;
           } else if (state.kind === "unreachable") {
             current.teams = undefined;
+          } else if (state.kind === "fell-through") {
+            // That group is gone: the party is bound for its own round again.
+            current.playedRound = current.ascentRound;
+            current.groupMapId = undefined;
+            redrawRail();
+          } else if (state.kind === "in-lobby" && current.ascentRound !== null) {
+            current.playedRound = ascentRoundOf(state.group.mapId);
+            current.groupMapId = state.group.mapId;
+            redrawRail();
           }
           paintQueue();
         },
@@ -2258,9 +2290,6 @@ async function main(): Promise<void> {
       if (!picks.soloClaimed && (snapshot.teamLobby?.sides[team]?.chosen ?? null) !== null) {
         picks.soloClaimed = true;
         joined.claim(0);
-        if (picks.soloClicked) {
-          joined.setReady(true);
-        }
       }
       return;
     }
@@ -2279,9 +2308,9 @@ async function main(): Promise<void> {
       return;
     }
     teamPicks.soloKey = key;
-    teamPicks.soloClicked = true;
     proposeSolo(lobby, lobby.getSnapshot(), teamPicks);
-    lobby.setReady(true);
+    // A 1v1's click is its vote (#2872): its own proposal, and ready.
+    lobby.vote(lobby.selfSessionId);
     lobbyChanged();
   };
 
@@ -2299,7 +2328,6 @@ async function main(): Promise<void> {
         solo: [],
         soloKey: active === undefined ? undefined : soloCharacterKey(active),
         soloProposed: undefined,
-        soloClicked: false,
         soloClaimed: false,
       };
       teamPicks = picks;
@@ -2334,12 +2362,6 @@ async function main(): Promise<void> {
         onPickSolo: pickSolo,
         onClaim: (slot) => {
           lobby?.claim(slot);
-        },
-        onToggleReady: () => {
-          const self = lobby
-            ?.getSnapshot()
-            .players.find((p) => p.sessionId === lobby?.selfSessionId);
-          lobby?.setReady(!(self?.ready ?? false));
         },
         onLeave: () => {
           void leaveLobby();
@@ -2674,13 +2696,18 @@ async function main(): Promise<void> {
     // A team's match (#1766): back in the party's own lobby, the match's
     // end no news.
     const team = teamQueue?.parked === undefined ? undefined : teamQueue;
-    const said = team?.finished === true ? undefined : notice;
+    const said = matchFinished ? undefined : notice;
     if (team !== undefined) {
       // Left before the end, a Heroes' Ascent run is over, unless it was
       // lost to its host leaving (#1996).
       if (!team.finished && team.ascentRound !== null) {
         const result = notice === undefined ? "forfeit" : "host-left";
-        ascentRound = nextAscentRound(team.ascentRound, result);
+        ascentRound = nextAscentRound(
+          team.ascentRound,
+          team.playedRound ?? team.ascentRound,
+          result,
+        );
+        ascentWins = nextAscentWins(ascentWins, team.ascentRound, result);
         ascentMorale = nextAscentMorale(ascentMorale, ascentMorale, result);
       }
       endTeamQueue();
@@ -2779,6 +2806,7 @@ async function main(): Promise<void> {
       return;
     }
     enteringMatch = true;
+    matchFinished = false;
     stopShare();
     lobbyNotice = undefined;
     showViewport(true);
@@ -2788,12 +2816,16 @@ async function main(): Promise<void> {
         viewport,
         {
           onConnectionChange: (state) => {
-            if (state === "lost") {
-              void exitMatch(t("app.lostMatch"));
+            const notice = matchEndedNotice(state);
+            if (notice !== undefined) {
+              void exitMatch(notice);
             }
           },
           onLeave: () => {
             void exitMatch();
+          },
+          onFinished: () => {
+            matchFinished = true;
           },
         },
         {
@@ -2823,6 +2855,7 @@ async function main(): Promise<void> {
       return;
     }
     enteringMatch = true;
+    matchFinished = false;
     stopShare();
     menuNotice = undefined;
     lobbyNotice = undefined;
@@ -2836,17 +2869,19 @@ async function main(): Promise<void> {
           // Reconnecting is the HUD's to say (#181); the top bar is hidden
           // in a match (#454).
           onConnectionChange: (state) => {
-            if (state === "lost") {
+            const notice = matchEndedNotice(state);
+            if (notice !== undefined) {
               // The host is gone: the arena is frozen for good, so there
               // is nothing to stay for.
               setStatus("disconnected", "error");
-              void exitMatch(t("app.lostMatch"));
+              void exitMatch(notice);
             }
           },
           onLeave: () => {
             void exitMatch();
           },
           onFinished: (finished) => {
+            matchFinished = true;
             const team = teamQueue?.parked === undefined ? undefined : teamQueue;
             if (team !== undefined) {
               team.finished = true;
@@ -2854,12 +2889,26 @@ async function main(): Promise<void> {
             const { winningTeam, endReason, selfTeam, aggression } = finished;
             // A draw is no win.
             const won = selfTeam !== undefined && winningTeam === selfTeam;
+            if (finished.clearSeconds !== undefined) {
+              // The Elite Zaishen Battle (#2692): the boost starts the run, or the wipe ends it.
+              ascentMorale = won ? zaishenMoraleBoost(finished.clearSeconds) : 0;
+              startTeamEnd(won ? "requeue" : "lobby", lobby, null);
+              return;
+            }
             if (queue === undefined) {
               // A team match, queued by its party or in a coded lobby (#1997).
               if (team !== undefined) {
                 queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
                 if (team.ascentRound !== null) {
-                  ascentRound = nextAscentRound(team.ascentRound, won ? "win" : "loss");
+                  ascentRound = nextAscentRound(
+                    team.ascentRound,
+                    team.playedRound ?? team.ascentRound,
+                    won ? "win" : "loss",
+                  );
+                  ascentWins = nextAscentWins(ascentWins, team.ascentRound, won ? "win" : "loss");
+                  if (won) {
+                    recordAscentWin(ascentWins);
+                  }
                   ascentMorale = nextAscentMorale(
                     ascentMorale,
                     finished.selfMorale,
@@ -2870,7 +2919,7 @@ async function main(): Promise<void> {
               startTeamEnd(
                 teamEndAction(won, team !== undefined),
                 team?.party,
-                team?.ascentRound ?? null,
+                team?.playedRound ?? null,
               );
               return;
             }
@@ -2983,23 +3032,48 @@ async function main(): Promise<void> {
   };
   const buildWatch = watchServedBuild();
 
-  showMenu();
-  if (lobbyLink.kind === "invite") {
-    topbarView.invite(lobbyLink.code);
-  }
-  if (relayLink.kind === "config" && !framed) {
-    openRelayPrompt(app, relayLink.relay, savedRelay);
+  const enterMenu = (): void => {
+    splash = undefined;
+    showMenu();
+    if (lobbyLink.kind === "invite") {
+      topbarView.invite(lobbyLink.code);
+    }
+    if (relayLink.kind === "config" && !framed) {
+      openRelayPrompt(app, relayLink.relay, savedRelay);
+    }
+  };
+  let splash: Splash | undefined;
+  if (
+    shouldShowSplash({
+      forced: new URLSearchParams(window.location.search).has("splash"),
+      seen: splashSeen(),
+      joining: lobbyLink.kind === "invite" || relayLink.kind === "config",
+      framed,
+      disabled: import.meta.env.VITE_VIBEWARS_SPLASH === "off",
+    })
+  ) {
+    splash = showSplash(document.body, {
+      startFight: startSplashFight,
+      playTheme: (startAtEpochMs, onHeard) => music().splash(startAtEpochMs, onHeard),
+      onDone: enterMenu,
+    });
+  } else {
+    enterMenu();
   }
   // An invite link pasted into this open tab only changes the fragment:
   // nothing reloads, so it is taken out and asked about here.
   const takeFragmentLinks = (): void => {
     const invited = takeLobbyLink();
+    const pasted = takeRelayLink();
+    // Its prompt goes on the menu, so the splash ends first.
+    if (invited.kind === "invite" || pasted.kind === "config") {
+      splash?.end();
+    }
     if (invited.kind === "malformed") {
       toast(t("session.notAKey"));
     } else if (invited.kind === "invite" && !topbarView.invite(invited.code)) {
       toast(t("app.inviteInLobby"));
     }
-    const pasted = takeRelayLink();
     if (pasted.kind === "malformed") {
       toast(t("app.malformedRelayLink"));
     } else if (pasted.kind === "config" && framed) {

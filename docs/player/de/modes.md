@@ -235,7 +235,7 @@ Aufstieg der Helden oder in GvG) bekommt eine Team-Lobby nur für ihre eigene Se
 niemand nimmt.
 Während sie wartet, kannst du die anderen Modi ansehen: Die Gruppe behält ihren Modus und ihre Größe, bis sie die
 Warteschlange verlässt.
-Jede Phase dauert 60 Sekunden und endet früher, sobald alle in der Team-Lobby bereit sind.
+Jede Phase dauert 30 Sekunden und endet früher, sobald alle in der Team-Lobby bereit sind. Abstimmen und einen Platz nehmen macht dich bereit.
 
 **Abstimmen.** Jeder auf einer Seite darf einen Team-Build genau in der Größe dieser Seite vorschlagen, ein Vorschlag pro
 Spieler. Deine Team-Builds öffnen sich über den Tab **Deine Team-Builds** rechts: Suche sie nach Namen, klick auf einen,
@@ -243,7 +243,7 @@ um seine Mitglieder zu sehen, dann **Diesen Build vorschlagen**; bei deinem **Vo
 Nur deine Team-Builds dieser Größe und ohne Probleme werden gezeigt; das Fenster sagt, wie viele anderer Größen es
 weglässt. Jeder darf für einen der Vorschläge seiner Seite stimmen, auch den eigenen. Jeder Vorschlag ist eine Karte,
 die jedes Mitglied mit seinen Waffen zeigt, mit seinen Skills und den Initialen derer, die dafür gestimmt haben: Klick
-auf eine Karte, um zu stimmen, und noch einmal, um deine Stimme zurückzunehmen. Nichts wird für dich vorgeschlagen: Das
+auf eine Karte, um zu stimmen, oder auf eine andere, um deine Stimme zu ändern; zurücknehmen kannst du sie nicht. Nichts wird für dich vorgeschlagen: Das
 Menü erstellt und bearbeitet nur Team-Builds. Ein neuer Vorschlag ersetzt deinen alten, und seine Stimmen gehen auf null
 zurück. Die meisten Stimmen gewinnen. Bei einem Gleichstand entscheidet die Stimme des Kapitäns: der Host auf der Seite des
 Hosts, auf der anderen der, der zuerst beigetreten ist. Mit Vorschlägen und ohne Stimmen wird einer zufällig gewählt. Ohne
@@ -254,7 +254,7 @@ Start des Matches. Jede Seite würfelt ihr eigenes, also können beide dasselbe 
 Stimmen oder die Wahl der anderen.
 
 **Nehmen.** Die Charaktere des gewählten Builds sind Plätze, jeder der Charakter mit seinen Waffen über seinen Skills: Klick
-auf einen freien Platz, um ihn zu nehmen, oder auf deinen, um ihn freizugeben, wer zuerst kommt, mahlt zuerst, einer pro
+auf einen freien Platz, um ihn zu nehmen, oder auf einen anderen freien, um zu wechseln, wer zuerst kommt, mahlt zuerst, einer pro
 Spieler. Wer nichts genommen hat, bekommt den ersten freien, und Bots spielen den Rest unter dem Namen ihres Charakters.
 Dann startet das Match, oder eine wartende Gruppe kommt in die Warteschlange.
 
@@ -267,15 +267,21 @@ zurück. Ein Knopf unter dem Ergebnis überspringt die Wartezeit oder geht für 
 
 ## Aufstieg der Helden
 
-Ein Aufstieg der Helden aus der Warteschlange hat sieben Runden, immer in dieser Reihenfolge: The Hollow Deep (Vernichtung), Blackwater Ford (Priestervernichtung), Barrow Field (Priestervernichtung), Cinder Sanctum (Reliktlauf),
-Mosslit Cairns (Punkte erobern), The Courtyard (King of the Hill), dann die Hall of Heroes. Das Lobby-Fenster sagt dir,
-wo du bist, während du ein Team suchst: `Runde 2 von 7 · Blackwater Ford`. Du triffst immer nur ein Team in derselben Runde
-und wartest so lange wie nötig: Keine Bots springen ein. Eine Runde auf einer Karte für drei Teams wartet auf drei; zwei
+Ein Aufstieg der Helden aus der Warteschlange hat acht Runden, immer in dieser Reihenfolge: The Hollow Deep (Vernichtung), Blackwater Ford (Priestervernichtung), Barrow Field (Priestervernichtung), Cinder Sanctum (Reliktlauf),
+Mosslit Cairns (Punkte erobern), The Brazen Causeway (Priestervernichtung), The Courtyard (King of the Hill), dann die Hall of Heroes. Das Lobby-Fenster sagt dir,
+wo du bist, während du ein Team suchst: `Runde 2 von 8 · Blackwater Ford`. Du triffst immer nur ein Team in derselben Runde
+und wartest so lange wie nötig: Keine Bots springen ein. Die einzige Ausnahme: Ab Runde 2 darf ein Team, das 60 Sekunden allein in seiner Runde wartet, vorrücken. Es trifft auf ein Team, das in einer beliebigen späteren Runde vor der Hall wartet, beide spielen die Karte des weiter fortgeschrittenen Teams, und der Sieger macht von dort aus weiter. Eine Runde auf einer Karte für drei Teams wartet auf drei; zwei
 Teams, die 30 Sekunden auf ein drittes gewartet haben, spielen stattdessen gegeneinander, ebenso zwei, deren drittes nie
 in der Lobby erscheint. Gewinnst du, steigt deine Gruppe nach 20 Sekunden von selbst zur nächsten Karte auf; gewinnst du
 in der Hall, bleibst du, um sie zu verteidigen. Verlierst du oder verlässt ein Match vor dem Ende, beginnt dein nächster
 Aufstieg wieder bei Runde 1; das Gleiche gilt, wenn du die Warteschlange oder die Gruppe verlässt. Ein Match, das verloren
 geht, weil sein Host gegangen ist, behält deine Runde.
+
+Die Hall lost für jedes Match einen von drei Modi aus: King of the Hill, Reliktlauf oder Punkte erobern, für zwei oder drei Teams. Bei zwei Teams bleibt die dritte Basis geschlossen und mit ihr ihr Eroberungspunkt. Ein Match in der Hall dauert 12 Minuten, und die meisten Punkte gewinnen; Punkte erobern endet außerdem vorzeitig bei 20 Punkten Vorsprung. Der Tod kostet keine Moral. Die Toten kehren gemeinsam zu jeder vollen Minute der Matchuhr in ihre Basis zurück, ein ausgelöschtes Team ist also nicht geschlagen, ein Team, dessen Spieler alle gegangen sind, aber schon. Bei King of the Hill punktet das Team, das den Altar hält, auch nach dem Tod seines Geists weiter, bis ein anderes Team ihn beansprucht, und seine Toten kehren auf dem Altar zurück. Ein Gleichstand geht an das Team, das zuletzt gepunktet hat, bei Punkte erobern an das Team mit dem letzten Kill.
+
+Jeder Lauf beginnt mit der **Elite-Zaishen-Schlacht**, ohne Warteschlange: Deine Gruppe gegen sechs von Bots gespielte Zaishen (2 Mönche, ein Elementarmagier und 3 weitere). Die Uhr startet, sobald jemand von euch die Startlinie überquert oder der erste Zaishen stirbt, je nachdem, was zuerst geschieht. Tötet ihr alle sechs in unter 30 Sekunden, startet die Gruppe mit +10 % Moral; unter 60 mit +8 %, unter 80 mit +6 %, unter 100 mit +4 %, unter 120 mit +2 %; langsamer gibt es nichts. Nach einem Sieg stellt sich die Gruppe von selbst für die erste Karte an. Fällt die ganze Gruppe oder lebt nach Ablauf der 8 Minuten noch ein Zaishen, ist der Lauf vorbei.
+
+Jeder Sieg in einem Lauf bringt **Ruhm**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 für die ersten dreizehn, danach je 40, höchstens 300 pro Tag (der Tag wechselt um 15:00 UTC). Die Elite-Zaishen-Schlacht bringt keinen. Dein Gesamtruhm ergibt deinen **Heldenrang**, von 1 bei 25 Ruhm bis 15 bei 100.000, angezeigt als ★ und Zahl neben deinem Namen. Unter Optionen > Spieler siehst du beides. Beides wird auf deinem Gerät gespeichert.
 
 Deine Moral bleibt den ganzen Lauf über erhalten: Mit der Todesstrafe oder dem Bonus, mit dem du eine gewonnene Karte
 beendest, beginnst du die nächste, von −60 % bis +10 %. Ein Lauf, der endet, oder ein Spieler, der mitten im Lauf dazustößt,
@@ -289,11 +295,13 @@ Niederlage beginnt von vorn: Der nächste Lauf stimmt neu ab. Das Gleiche gilt, 
 folgst, deren Host für den alten Lauf nicht bürgen kann. Die Runde merkt sich der Host deiner Gruppe, und nur, bis du den
 Tab schließt. Eine Lobby des Aufstiegs der Helden, der per Code beigetreten wurde, spielt die Karte von Runde 1.
 
+Eine Gruppe mit weniger als 8 Spielern geht mit Bots auf den freien Plätzen in die Warteschlange und nutzt dabei ihren Team-Build, aber eine Seite hat immer mindestens einen Menschen, und ein reines Bot-Team ist nie ein Gegner. Verlässt der letzte Mensch einer Seite ein Match, gibt diese Seite auf und ihr Lauf endet.
+
 **Barrow Field** ist eine Arena des Aufstiegs, die du auch in einem Gehosteten Spiel wählen kannst: 8v8 Priestervernichtung zwischen niedrigen Erdhügeln, und der Priester erweckt alle 2 Minuten seine Toten. Trage deine Flagge auf das **Storm Beacon** in der Mitte, und es trifft alle 2,5 Sekunden einen zufälligen Gegner in Hörweite mit 50 Blitzschaden, bis das andere Team dort seine Flagge pflanzt. Jeder Einschlag ist ein Blitz vom Beacon zum Getroffenen, für beide Teams sichtbar.
 
 Drei Aufstiegs-Arenen kannst du auch in einem Gehosteten Spiel wählen: **The Hollow Deep** (8v8 Vernichtung, drei gewundene Tunnel um einen zentralen Felsen), **Blackwater
 Ford** (8v8 Priestervernichtung an einer winzigen Furt, die Basen fast in Sichtweite, der Priester holt alle 2 Minuten seine
-Toten zurück) und **Mosslit Cairns** (8v8 Punkte erobern, fünf Steinhügel in einem flachen Zickzack zwischen den Basen).
+Toten zurück) und **Mosslit Cairns** (8v8 Punkte erobern, fünf Steinhügel in einem flachen Zickzack zwischen den Basen). Dazu kommt als vierte **The Brazen Causeway** (8v8 Priestervernichtung auf einem Ring um eine Grube: An jedem Tor einer Basis führt eine schmale Lücke vorbei, und das Tor steht nur offen, solange jemand aus dem Team auf der Torschloss-Platte steht).
 
 Eine Karte kann **Tore** haben: Mauern, die im geschlossenen Zustand Körper, Schüsse und Sicht aufhalten. Stell dich auf die
 Druckplatte eines Tors, um es zu öffnen. Es schließt, wenn niemand mehr auf der Platte steht, schiebt jeden im Durchgang auf

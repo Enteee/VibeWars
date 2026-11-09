@@ -7,7 +7,9 @@ import { botTagElement } from "./bot-tag.js";
 import {
   SIGNET_ROW_PX,
   guildTagElement,
+  heroRankElement,
   setGuildTag,
+  setHeroRank,
   setSignet,
   signetElement,
 } from "./player-label.js";
@@ -41,6 +43,8 @@ export interface PartyRow {
   readonly signet: number | undefined;
   /** After the name, kept whole when the name is cut short (#1406). */
   readonly guildTag: string | undefined;
+  /** After the tag (#2702); 0 for none. */
+  readonly heroRank: number;
   readonly professions: readonly ProfessionIcon[];
   /** A lobby's bot (#1194): its name wears the BOT tag. */
   readonly bot: boolean;
@@ -65,6 +69,7 @@ function partyRow(player: PlayerSnapshot, self: PlayerSnapshot): PartyRow {
     name: player.name,
     signet: player.signet,
     guildTag: player.guildTag,
+    heroRank: player.heroRank,
     professions: targetProfessionIcons(player),
     bot: player.bot,
     self: player.sessionId === self.sessionId,
@@ -131,6 +136,7 @@ interface RowElements {
   readonly signet: HTMLImageElement;
   readonly name: HTMLElement;
   readonly guildTag: HTMLElement;
+  readonly heroRank: HTMLElement;
   readonly botTag: HTMLElement;
   readonly bar: HTMLElement;
   readonly fill: HTMLElement;
@@ -189,6 +195,7 @@ function createRow(
   const signet = header.appendChild(signetElement(undefined, SIGNET_ROW_PX));
   const name = span("party-row-name", header);
   const guildTag = header.appendChild(guildTagElement());
+  const heroRank = header.appendChild(heroRankElement());
   const botTag = header.appendChild(botTagElement("party-row-bot"));
   const bar = span("hud-bar party-health", row);
   const fill = span("hud-bar-fill", bar);
@@ -239,6 +246,7 @@ function createRow(
     signet,
     name,
     guildTag,
+    heroRank,
     botTag,
     bar,
     fill,
@@ -284,6 +292,7 @@ function paintRow(elements: RowElements, row: PartyRow, player: PlayerSnapshot, 
   setSignet(elements.signet, row.signet, SIGNET_ROW_PX);
   elements.name.textContent = row.name;
   setGuildTag(elements.guildTag, row.guildTag);
+  setHeroRank(elements.heroRank, row.heroRank);
   elements.botTag.hidden = !row.bot;
   elements.row.title = row.self
     ? t("partyWindow.targetSelf")

@@ -1,8 +1,18 @@
 import { pure } from "@strudel/core";
 import { describe, expect, it } from "vitest";
 
-import { makeLayer, type TrackClock } from "./layer.js";
+import { makeLayer, placedAt, type TrackClock } from "./layer.js";
 import type { LevelChange } from "./transitions.js";
+
+describe("placedAt (#2936)", () => {
+  it("is silent before a future origin, and plays its cycle 0 on it", () => {
+    const placed = placedAt(pure("crash"), 2.5);
+    expect(placed.queryArc(0, 2.5)).toHaveLength(0);
+    const first = placed.queryArc(2.5, 3);
+    expect(first).toHaveLength(1);
+    expect(first[0]?.wholeOrPart().begin.valueOf()).toBe(2.5);
+  });
+});
 
 describe("layer", () => {
   it("reads the intensity on the scheduler's clock for a track placed after cycle 0", () => {

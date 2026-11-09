@@ -1,6 +1,6 @@
 import { RANGE_SPELL } from "../../../distances.js";
 import { distance } from "../../../vec2.js";
-import { lyingPosition } from "../../carried.js";
+import { lyingPoint } from "../../carried.js";
 import { carriesRelic, relicId } from "../../relics.js";
 import { escort, NOTHING, relicGoal, sentTo } from "./shared.js";
 import type { BotRule } from "./types.js";
@@ -40,15 +40,15 @@ const fetchRelic: BotRule = {
       if (!carriesRelic(relicCarry, relic.team, team)) {
         continue;
       }
-      const lying = lyingPosition(relicSpawns, relic);
-      if (lying !== undefined && sentTo(context, lying, true, true)) {
+      const lying = lyingPoint(relicSpawns, relic);
+      if (lying !== undefined && sentTo(context, lying.position, true, true)) {
         return { ...NOTHING, attackTargetId: relicId(relic.team) };
       }
       if (relicCarry === "foe" && lying !== undefined) {
-        return escort(self, lying);
+        return escort(self, lying.position, lying.layer);
       }
     }
-    return escort(self, goal);
+    return escort(self, goal.position, goal.layer);
   },
 };
 

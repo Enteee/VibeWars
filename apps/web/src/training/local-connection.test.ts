@@ -32,7 +32,8 @@ function targetDummy(character = pyro()) {
       selfId: SELF_ID,
       map: setup.map,
       nameOf: (id) => (id === SELF_ID ? "Tester" : (setup.names.get(id) ?? id)),
-      guildOf: (id) => (id === SELF_ID ? { guildTag: "VIBE", guildCape: CAPE } : NO_GUILD),
+      guildOf: (id) =>
+        id === SELF_ID ? { guildTag: "VIBE", heroRank: 0, guildCape: CAPE } : NO_GUILD,
       professionsOf: (id) =>
         id === SELF_ID ? { primary: "elementalist", secondary: undefined } : NO_PROFESSIONS,
     }),
@@ -183,7 +184,7 @@ describe("createLocalConnection", () => {
     const { connection } = targetDummy();
     const self = () => connection.getSnapshot().players.find((p) => p.sessionId === SELF_ID);
     expect(self()?.walking).toBe(false);
-    connection.sendIntent({ kind: "walk-to", x: 40, y: 40 });
+    connection.sendIntent({ kind: "walk-to", layer: 0, x: 40, y: 40 });
     expect(self()?.walking).toBe(true);
     connection.advance(TICK_SECONDS);
     expect(self()?.walking).toBe(true);

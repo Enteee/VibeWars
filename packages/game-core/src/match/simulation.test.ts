@@ -27,6 +27,7 @@ const MATCH: MatchRules = {
   timeLimitSeconds: 600,
   deathRule: "respawn",
   respawnSeconds: 8,
+  respawnOnWave: false,
   deathPenalty: false,
 };
 

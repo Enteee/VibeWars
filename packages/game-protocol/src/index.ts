@@ -17,7 +17,8 @@ export {
   MAX_LOBBY_PLAYERS,
   MAX_TEAM_LOBBY_SIDE,
   LOBBY_TEAM_SIZES,
-  TEAM_LOBBY_STAGE_SECONDS,
+  TEAM_LOBBY_CLAIM_SECONDS,
+  TEAM_LOBBY_VOTE_SECONDS,
   isLobbyCode,
   parseClientIntent,
   COMPANION_MODES,
@@ -65,6 +66,7 @@ export type {
 export {
   CHANNELS,
   MAX_WIRE_STRING,
+  MAX_HERO_RANK,
   MAX_WIRE_TEXT,
   MAX_WIRE_STATUSES,
   MAX_WIRE_CREATURES,
@@ -261,6 +263,7 @@ export {
   inPartyOrder,
   parseQueueTicket,
   teamQueueModeOf,
+  lobbyModeOfQueue,
   teamSizeOf,
 } from "./queue.js";
 export type { QueueMode, QueueTicket, TeamArenaSize, TicketParty } from "./queue.js";

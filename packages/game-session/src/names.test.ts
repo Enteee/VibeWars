@@ -292,14 +292,16 @@ describe("sanitizeGuildCape (#1422)", () => {
   });
 
   it("is none without a valid tag: the cape is the guild's", () => {
-    expect(sanitizeGuild({ guildTag: " Vb ", guildCape: cape })).toEqual({
+    expect(sanitizeGuild({ guildTag: " Vb ", heroRank: 0, guildCape: cape })).toEqual({
       guildTag: "Vb",
+      heroRank: 0,
       guildCape: cape,
     });
-    expect(sanitizeGuild({ guildTag: null, guildCape: cape })).toEqual({
+    expect(sanitizeGuild({ guildTag: null, heroRank: 0, guildCape: cape })).toEqual({
       guildTag: null,
+      heroRank: 0,
       guildCape: null,
     });
-    expect(sanitizeGuild({ guildTag: "[x]", guildCape: cape }).guildCape).toBeNull();
+    expect(sanitizeGuild({ guildTag: "[x]", heroRank: 0, guildCape: cape }).guildCape).toBeNull();
   });
 });

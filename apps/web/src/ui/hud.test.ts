@@ -58,6 +58,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     sessionId: "foe",
     name: "Mhenlo",
     guildTag: undefined,
+    heroRank: 0,
     guildCape: undefined,
     x: 0,
     y: 0,
@@ -238,7 +239,7 @@ describe("carrierLines (#1226)", () => {
     expect(
       carrierLines(
         {
-          flags: [{ team: 0, place: { kind: "ground", position: { x: 0, y: 0 } } }],
+          flags: [{ team: 0, place: { kind: "ground", position: { x: 0, y: 0 }, layer: 0 } }],
           relics: [],
           players,
         },
@@ -270,7 +271,7 @@ describe("carrierLines (#1226)", () => {
       carrierLines(
         {
           flags: [
-            { team: 0, place: { kind: "ground", position: { x: 1, y: 2 } } },
+            { team: 0, place: { kind: "ground", position: { x: 1, y: 2 }, layer: 0 } },
             { team: 1, place: { kind: "spawn" } },
           ],
           relics: [],
@@ -293,7 +294,9 @@ describe("carrierLines (#1226)", () => {
       { team: 1, text: "✦ Cynn" },
       { team: 0, text: `✦ ${t("hud.carrierAtBase")}` },
     ]);
-    const lying = [{ team: 0, place: { kind: "ground" as const, position: { x: 1, y: 2 } } }];
+    const lying = [
+      { team: 0, place: { kind: "ground" as const, position: { x: 1, y: 2 }, layer: 0 } },
+    ];
     expect(carrierLines({ flags: [], relics: lying, players }, 0)).toEqual([
       { team: 0, text: `✦ ${t("hud.carrierDropped")}` },
     ]);
@@ -415,8 +418,8 @@ describe("objectiveScoreToast in King of the Hill (#1399)", () => {
 
 describe("objectiveScoreToast in Capture Points (#1408)", () => {
   const shrines = [
-    { position: { x: 0, y: 0 }, owner: 0, capturer: null, progress: 1 },
-    { position: { x: 9, y: 0 }, owner: 1, capturer: null, progress: 1 },
+    { position: { x: 0, y: 0 }, layer: 0, owner: 0, capturer: null, progress: 1 },
+    { position: { x: 9, y: 0 }, layer: 0, owner: 1, capturer: null, progress: 1 },
   ];
   const score = (scoreTeam0: number, scoreTeam1: number) => ({
     score: [scoreTeam0, scoreTeam1],
@@ -1427,6 +1430,7 @@ describe("isAttackingTarget", () => {
     sessionId,
     name: sessionId,
     guildTag: undefined,
+    heroRank: 0,
     guildCape: undefined,
     x: 0,
     y: 0,
@@ -1540,6 +1544,7 @@ describe("targetProfessionIcons (#281)", () => {
     sessionId: "foe",
     name: "foe",
     guildTag: undefined,
+    heroRank: 0,
     guildCape: undefined,
     x: 0,
     y: 0,

@@ -1,4 +1,5 @@
 import type { FlagField, RelicField, Segment } from "@vibewars/game-core";
+import { ELITE_ZAISHEN_MAP } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import type { GateDescriptor, MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
 import type {
@@ -6,6 +7,7 @@ import type {
   MatchConnection,
   MatchSnapshot,
   ObserverConnection,
+  ConnectionState,
 } from "@vibewars/game-session";
 
 import { attachMatchSounds } from "./audio/match-sounds.js";
@@ -120,12 +122,21 @@ import { button, setToastHost, toast } from "./ui/kit.js";
 export interface MatchViewCallbacks {
   readonly onLeave: () => void;
   /** Surfaces connection trouble so the shell can tell the player. */
-  readonly onConnectionChange?: (state: "online" | "reconnecting" | "lost") => void;
+  readonly onConnectionChange?: (state: ConnectionState) => void;
   /** Once, on the first snapshot of the match finished (#881): how it ended for this player. */
   readonly onFinished?: (outcome: MatchOutcome) => void;
 }
 
 /** How a match ended, as `describeOutcome` reads it; `selfTeam` is undefined for a spectator. */
+/**
+ * Whether a finished match's outcome is all here: the Elite Zaishen
+ * Battle's clock (#2692) comes on the `ended`, which can land a frame
+ * after the snapshot that says "finished".
+ */
+export function outcomeArrived(mapId: string, match: Pick<MatchSnapshot, "summary">): boolean {
+  return mapId !== ELITE_ZAISHEN_MAP || match.summary !== undefined;
+}
+
 export interface MatchOutcome {
   readonly winningTeam: number | undefined;
   readonly endReason: string | undefined;
@@ -134,6 +145,8 @@ export interface MatchOutcome {
   readonly aggression: readonly number[];
   /** This player's morale at the end (#2686), in percent; 0 for a spectator. */
   readonly selfMorale: number;
+  /** Seconds on the Elite Zaishen Battle's clock (#2692); `undefined` in any other match. */
+  readonly clearSeconds: number | undefined;
 }
 
 /**
@@ -166,7 +179,7 @@ interface ViewedMatch {
   getSnapshot(): MatchSnapshot | undefined;
   onCombat(handler: (message: CombatMessage) => void): void;
   /** A watcher is never reconnecting: its host gone, it is lost. */
-  onConnectionChange(handler: (state: "online" | "reconnecting" | "lost") => void): void;
+  onConnectionChange(handler: (state: ConnectionState) => void): void;
   disconnect(): Promise<void>;
 }
 
@@ -207,9 +220,7 @@ async function viewedMatch(options: MatchViewOptions): Promise<ViewedMatch> {
       watched.onCombat(handler);
     },
     onConnectionChange: (handler) => {
-      watched.onLost(() => {
-        handler("lost");
-      });
+      watched.onLost(handler);
     },
     disconnect: () => watched.disconnect(),
   };
@@ -343,6 +354,7 @@ export function toArenaSnapshot(
         id: player.sessionId,
         name: ghostNameplate(player, self, names),
         guildTag: player.guildTag,
+        heroRank: player.heroRank,
         signet: player.signet,
         cape: player.guildCape === undefined ? undefined : capeLook(player.guildCape),
         bot: player.bot,
@@ -462,9 +474,9 @@ export async function startMatchView(
   const wallSegments = allWallSegments(viewed.map.walls);
   const blocking = gateWalls(viewed.map.gates, walls, wallSegments);
   const mode = mapMode(viewed.map.id);
-  const shrines = mapShrines(viewed.map.id);
+  const shrines = mapShrines(viewed.map.id, viewed.map.teamCount);
   const flagField = mapFlagField(viewed.map.id);
-  const relicField = mapRelicField(viewed.map.id);
+  const relicField = mapRelicField(viewed.map.id, viewed.map.teamCount);
   const camera =
     viewport === undefined
       ? undefined
@@ -961,7 +973,7 @@ export async function startMatchView(
       toast(objective.text);
       sounds.play(objective.side === "ours" ? "objective-ours" : "objective-theirs");
     }
-    if (match.phase === "finished" && !finished) {
+    if (match.phase === "finished" && !finished && outcomeArrived(viewed.map.id, match)) {
       finished = true;
       callbacks.onFinished?.({
         winningTeam: match.winningTeam,
@@ -969,6 +981,8 @@ export async function startMatchView(
         selfTeam: self?.team,
         aggression: match.aggression,
         selfMorale: self?.morale ?? 0,
+        // By the map played, not the wire: a host of any other match cannot claim the boost.
+        clearSeconds: viewed.map.id === ELITE_ZAISHEN_MAP ? match.clearSeconds : undefined,
       });
     }
     // The snapshot that says "finished" may land a frame before the `ended` that carries it.
@@ -1080,13 +1094,14 @@ export async function startMatchView(
   const offPointer =
     seat === undefined
       ? undefined
-      : viewport?.onButton(({ button, phase, world }) => {
+      : viewport?.onButton(({ button, phase, world, altKey }) => {
           if (button === "left" && phase === "down") {
             const intents = primaryClickIntents(
               seat.getSnapshot(),
               latestArena ?? EMPTY_SNAPSHOT,
               world,
               nameReveal.held(),
+              altKey,
             );
             for (const intent of intents) {
               seat.sendIntent(intent);

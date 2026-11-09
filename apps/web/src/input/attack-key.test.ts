@@ -16,6 +16,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     sessionId,
     name: sessionId,
     guildTag: undefined,
+    heroRank: 0,
     guildCape: undefined,
     x: 0,
     y: 0,

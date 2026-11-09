@@ -281,8 +281,8 @@ en Arena por equipos, Ascenso de los Héroes o GvG) tiene una Sala de equipo sol
 su propio bando, tan grande como el equipo del modo (el tamaño elegido en Arena por
 equipos, 8 en los demás) aunque el grupo sea menor; los bots juegan los asientos
 que nadie reclama. Mientras está en cola puedes ver los otros modos: el grupo
-conserva su modo y tamaño hasta salir de la cola. Cada etapa dura 60 segundos y
-termina antes si todos en la Sala de equipo están listos.
+conserva su modo y tamaño hasta salir de la cola. Cada etapa dura 30 segundos y
+termina antes si todos en la Sala de equipo están listos. Votar y tomar un asiento te marcan como listo.
 
 **Votar.** Cualquiera de un bando puede proponer una build de equipo de exactamente
 el tamaño de ese bando, una propuesta cada uno. Tus builds de equipo se abren desde
@@ -292,7 +292,7 @@ propuesta**. Esc la cierra. Solo aparecen tus builds de equipo de ese tamaño y 
 problemas; el panel indica cuántas de otros tamaños deja fuera. Cualquiera puede
 votar una de las propuestas de su bando, incluida la suya. Cada propuesta es una
 carta que muestra a cada miembro con sus armas, con sus habilidades, y las iniciales
-de quien la votó: haz clic en una carta para votar, y otra vez para retirar tu voto.
+de quien la votó: haz clic en una carta para votar, o en otra para cambiar tu voto; no puedes retirarlo.
 Nada se propone por ti: el menú solo crea y edita builds de equipo. Una propuesta
 nueva sustituye a la anterior, y sus votos vuelven a cero. Gana la más votada. En
 caso de empate decide el voto del capitán: el anfitrión en su bando, y el primero
@@ -306,7 +306,7 @@ bando ve las propuestas, los votos ni la elección del otro.
 
 **Reclamar.** Los personajes de la build elegida son asientos, cada uno con el
 personaje sosteniendo sus armas sobre sus habilidades: haz clic en un asiento libre
-para tomarlo, o en el tuyo para dejarlo, por orden de llegada, uno cada uno. Quien
+para tomarlo, o en otro libre para cambiar, por orden de llegada, uno cada uno. Quien
 no reclamó nada recibe el primero libre, y los bots juegan el resto, con el nombre
 de su personaje. Entonces empieza la partida, o un grupo en cola entra en la cola.
 
@@ -320,11 +320,11 @@ espera o, para los ganadores, sale sin volver a la cola.
 
 ## Ascenso de los Héroes
 
-Un Ascenso de los Héroes en cola son siete rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Barrow Field (Aniquilación de sacerdote), Cinder
-Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Courtyard (Rey
+Un Ascenso de los Héroes en cola son ocho rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Barrow Field (Aniquilación de sacerdote), Cinder
+Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Brazen Causeway (Aniquilación de sacerdote), The Courtyard (Rey
 de la colina) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
-buscas un equipo: `Round 2 of 7 · Blackwater Ford`. Solo te enfrentas a un equipo de
-tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. Una ronda en
+buscas un equipo: `Round 2 of 8 · Blackwater Ford`. Solo te enfrentas a un equipo de
+tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. La única excepción: desde la ronda 2, un equipo solo en su ronda durante 60 segundos puede adelantarse. Se enfrenta a un equipo que espere en cualquier ronda posterior antes de la Hall, ambos juegan el mapa del equipo más avanzado y el ganador sigue desde allí. Una ronda en
 un mapa hecho para tres equipos espera a tres; dos equipos que hayan esperado 30
 segundos a un tercero juegan entre ellos, y también dos cuyo tercero nunca aparece
 en la sala. Si ganas, tu grupo asciende solo al siguiente mapa tras 20 segundos; si
@@ -332,6 +332,8 @@ ganas en el Hall, te quedas a defenderlo. Si pierdes, o sales de una partida ant
 de que termine, tu próximo Ascenso empieza otra vez en la ronda 1; también si sales
 de la cola o del grupo. Una partida perdida porque se fue su anfitrión conserva tu
 ronda.
+
+El Hall sortea uno de tres modos en cada partida: Rey de la colina, Carrera de reliquias o Puntos de captura, para dos o tres equipos. Con dos, la tercera base queda cerrada, y con ella su punto de captura. Una partida en el Hall dura 12 minutos y ganan los puntos; Puntos de captura también termina antes con una ventaja de 20. Morir no cuesta moral. Los muertos vuelven juntos a su base en cada minuto completo del reloj de la partida, así que un equipo aniquilado no está vencido, pero un equipo cuyos jugadores se han ido todos queda fuera. En Rey de la colina, el equipo que tiene el altar sigue puntuando tras morir su fantasma, hasta que otro equipo lo reclame, y sus muertos vuelven en el altar. Un empate es para el equipo que puntuó por última vez o, en Puntos de captura, para el que logró la última baja.
 
 Tu moral se mantiene durante todo el recorrido: la penalización por muerte o la
 bonificación con la que terminas un mapa ganado es con la que empiezas el siguiente,
@@ -349,13 +351,15 @@ anterior. La ronda la recuerda el anfitrión de tu grupo, y solo hasta que cierr
 pestaña. Una sala de Ascenso de los Héroes a la que entras por código juega el mapa
 de la ronda 1.
 
+Un grupo de menos de 8 entra en la cola con bots en los puestos vacíos, usando su build de equipo, pero un bando siempre tiene al menos un humano, y un equipo de bots nunca es rival. Si el último humano de un bando abandona una partida, ese bando se rinde y su recorrido termina.
+
 **Barrow Field** es una arena del Ascenso que también se elige en una Partida alojada: Aniquilación de sacerdote 8v8 entre túmulos bajos de tierra, y el sacerdote resucita a sus muertos cada 2 minutos. Lleva tu bandera al **Storm Beacon** del centro y golpeará a un enemigo al azar a distancia de oído con 50 de daño de rayo cada 2,5 segundos, hasta que el otro equipo plante allí su bandera. Cada golpe es un rayo del faro a quien alcanza, visible para ambos equipos.
 
 Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow Deep** (Aniquilación
 8v8, tres túneles sinuosos alrededor de una roca central), **Blackwater Ford**
 (Aniquilación de sacerdote 8v8 en un vado diminuto, las bases casi a la vista, el
 sacerdote resucitando a sus muertos cada 2 minutos) y **Mosslit Cairns** (Puntos de
-captura 8v8, cinco túmulos en un zigzag poco profundo entre las bases).
+captura 8v8, cinco túmulos en un zigzag poco profundo entre las bases). La cuarta es **The Brazen Causeway** (Aniquilación de sacerdote 8v8 en un anillo alrededor de un foso: junto a la puerta de cada base pasa un hueco estrecho, y la puerta solo está abierta mientras alguien de su equipo pise la placa de la cerradura).
 
 Un mapa puede tener **puertas**: muros que detienen cuerpos, disparos y visión
 mientras están cerradas. Colócate en la placa de presión de una puerta para abrirla.
@@ -363,6 +367,10 @@ Se cierra cuando no queda nadie en la placa, empujando a quien esté en el umbra
 lado más cercano y deteniendo los disparos que aún la atraviesan, y no se puede abrir
 otra vez durante 8 segundos. Una placa del color de un equipo solo responde a ese
 equipo. Los bots se colocan en la placa de su equipo si no hay enemigos cerca.
+
+Cada recorrido empieza con la **Batalla de los Zaishen de élite**, sin cola: tu grupo contra seis Zaishen controlados por bots (2 Monjes, un Elementalista y 3 más). El reloj arranca cuando uno de vosotros cruza la línea de salida o muere el primer Zaishen, lo que ocurra antes. Si matáis a los seis en menos de 30 segundos, el grupo empieza el recorrido con +10 % de moral; en menos de 60, +8 %; en menos de 80, +6 %; en menos de 100, +4 %; en menos de 120, +2 %; más lento, nada. Si ganáis, el grupo entra solo en la cola de su primer mapa. Si cae todo el grupo, o si queda algún Zaishen vivo al cumplirse el límite de 8 minutos, el recorrido termina.
+
+Cada victoria de un recorrido da **fama**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 las trece primeras y luego 40 cada una, con un máximo de 300 al día (el día cambia a las 15:00 UTC). La Batalla de los Zaishen de élite no da fama. Tu fama total fija tu **rango de héroe**, de 1 con 25 de fama a 15 con 100 000, que se muestra como ★ y un número junto a tu nombre. Puedes ver ambos en Opciones > Jugador. Ambos se guardan en tu dispositivo.
 
 ## Tres equipos
 

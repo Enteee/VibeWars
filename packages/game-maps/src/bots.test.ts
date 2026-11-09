@@ -5,6 +5,8 @@ import {
   KING_OF_THE_HILL_MATCH_RULES,
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
+  PRIEST_ANNIHILATION_MATCH_RULES,
+  PRIEST_WAVE_SECONDS,
   RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
   getSkill,
@@ -16,7 +18,8 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { allWallSegments } from "./geometry.js";
+import { allWallSegments, wallToSegments } from "./geometry.js";
+import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import type { MapData } from "./schema.js";
 
@@ -192,7 +195,9 @@ describe("Relic Run bots (#2581)", () => {
 });
 
 describe("King of the Hill bots (#2582)", () => {
-  const map = loadAllMaps().find((candidate) => candidate.mode === "king-of-the-hill");
+  const map = loadAllMaps().find(
+    (candidate) => candidate.mode === "king-of-the-hill" && candidate.teams === 2,
+  );
 
   const hill = (arena: MapData, seed: string, participants: readonly ParticipantSpec[]) => {
     const altar = arena.objectives.find((objective) => objective.kind === "altar");
@@ -234,6 +239,31 @@ describe("King of the Hill bots (#2582)", () => {
     expect(first.heldAt).toBeDefined();
     expect(play("hill")).toEqual(first);
   });
+
+  it("takes the Hall's altar with one player idle, its ghosts' mutual kill costing a priest wave (#2700)", () => {
+    const hall = loadAllMaps().find((candidate) => candidate.id === "hall-of-heroes-king");
+    if (hall === undefined) throw new Error("no map hall-of-heroes-king");
+    const twoTeams = {
+      ...hall,
+      objectives: hall.objectives.filter(
+        (objective) => objective.kind !== "ghost-spawn" || objective.team < 2,
+      ),
+    };
+    // This seed's ghosts die together on the altar before either claim ends.
+    const sim = hill(
+      twoTeams,
+      "d",
+      casterBots(hall, 8, 1).map((spec) =>
+        spec.id === "0-0" ? { ...spec, behaviour: undefined } : spec,
+      ),
+    );
+    let heldAt: number | undefined;
+    for (let t = 0; t < 180 && heldAt === undefined; t += DT) {
+      sim.step(DT);
+      if (sim.altarState.holder !== null) heldAt = t;
+    }
+    expect(heldAt).toBeGreaterThan(PRIEST_WAVE_SECONDS);
+  }, 60_000);
 
   /**
    * The first ghost to die, and the score and outcome after up to 90 s
@@ -372,6 +402,71 @@ describe("Capture Points bots (#2580)", () => {
       sim.step(DT);
     }
     expect(sim.phase).toBe("finished");
+  });
+});
+
+describe("The Brazen Causeway (#2697)", () => {
+  const map = loadAllMaps().find((candidate) => candidate.id === "brazen-causeway");
+  if (map === undefined) throw new Error("no map brazen-causeway");
+
+  it("guards each base with its own gate", () => {
+    expect(map.gates.map(({ team }) => team)).toEqual([0, 1]);
+  });
+
+  it("keeps its nav graph to 600 nodes", () => {
+    const closed = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    expect(layeredFinder(closed, RULESET.collision.playerRadius).nodeCount).toBeLessThanOrEqual(
+      600,
+    );
+  });
+
+  it("leaves a way from base to base with both gates closed", () => {
+    const closed = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const finder = layeredFinder(closed, RULESET.collision.playerRadius);
+    const spawnOf = (team: number) => {
+      const spawn = map.spawnPoints.find((candidate) => candidate.team === team);
+      if (spawn === undefined) throw new Error(`no spawn for team ${String(team)}`);
+      return spawn;
+    };
+    expect(finder.find(spawnOf(0).position, 0, spawnOf(1).position, 0)).toBeDefined();
+  });
+
+  it("bots open their gate, then fight it out before the time limit", () => {
+    // Two a side: one to stand on each plate, and one free to go and fight.
+    const sim = new MatchSimulation({
+      seed: "causeway",
+      ruleset: RULESET,
+      walls: allWallSegments(map.walls),
+      gates: map.gates.map((gate) => ({
+        segments: wallToSegments(gate.wall),
+        plate: gate.plate,
+        team: gate.team,
+      })),
+      bounds: { width: map.width, height: map.height },
+      matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
+      shrines: map.objectives.flatMap((objective) =>
+        objective.kind === "resurrection-shrine"
+          ? [{ team: objective.team, position: objective.position }]
+          : [],
+      ),
+      participants: casterBots(map, 2),
+    });
+    let opened = false;
+    let died = false;
+    let seconds = 0;
+    while (
+      seconds <= PRIEST_ANNIHILATION_MATCH_RULES.timeLimitSeconds + 1 &&
+      sim.phase !== "finished"
+    ) {
+      sim.step(DT);
+      seconds += DT;
+      opened ||= sim.gates.some(({ open }) => open);
+      died ||= [...sim.participants()].some(({ combatant }) => combatant.dead);
+    }
+    expect(opened).toBe(true);
+    expect(died).toBe(true);
+    expect(sim.phase).toBe("finished");
+    expect(seconds).toBeLessThan(PRIEST_ANNIHILATION_MATCH_RULES.timeLimitSeconds);
   });
 });
 

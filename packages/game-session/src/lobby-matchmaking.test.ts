@@ -1,12 +1,14 @@
-import { pickStarterTeam } from "@vibewars/game-core";
+import { ELITE_ZAISHEN_MAP, pickStarterTeam } from "@vibewars/game-core";
 import {
-  TEAM_LOBBY_STAGE_SECONDS,
+  TEAM_LOBBY_VOTE_SECONDS,
   type LobbyMode,
   type WirePartyFormed,
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import { openLobby, type Member, type TestLobby } from "./lobby-harness.test-support.js";
+import type { MatchPlan } from "./lobby-host.js";
+import type { MatchHost } from "./match-host.js";
 import { PARTY_CONSENT_MS } from "./lobby-host.js";
 import { settle } from "./match-harness.test-support.js";
 import { admissionDigest, partyGroupId, type VerifyTicketSig } from "./queue-admission.js";
@@ -48,8 +50,10 @@ async function landed(): Promise<void> {
 async function partyLobby(
   guests: readonly string[],
   mode: LobbyMode = "team-arena",
+  match?: FakeMatch,
 ): Promise<{ lobby: TestLobby; party: Member[] }> {
   const lobby = await openLobby({
+    ...(match === undefined ? {} : { startMatch: () => match as unknown as MatchHost }),
     teamLobby: true,
     matchmaking: { roomId: ROOM_ID, verifyTicketSig, newNonce: () => NONCE },
   });
@@ -65,12 +69,59 @@ async function partyLobby(
   return { lobby, party };
 }
 
+interface FakeMatch {
+  readonly phase: "active" | "finished";
+  readonly winningTeam: 0 | 1 | null;
+  readonly draining: false;
+  advance(): void;
+  retire(): void;
+  close(): Promise<void>;
+  finish(winningTeam: 0 | 1): void;
+}
+
+/** A match that ends when a test says. */
+function fakeMatch(): FakeMatch {
+  let phase: "active" | "finished" = "active";
+  let winner: 0 | 1 | null = null;
+  return {
+    get phase() {
+      return phase;
+    },
+    get winningTeam() {
+      return winner;
+    },
+    draining: false,
+    advance: () => undefined,
+    retire: () => undefined,
+    close: () => Promise.resolve(),
+    finish(winningTeam) {
+      phase = "finished";
+      winner = winningTeam;
+    },
+  };
+}
+
+/** A Heroes' Ascent party, through its Elite Zaishen Battle (#2692) and queued at round 0. */
+async function ascentQueued(guests: readonly string[]): Promise<{
+  lobby: TestLobby;
+  party: Member[];
+}> {
+  const match = fakeMatch();
+  const run = await partyLobby(guests, "heroes-ascent", match);
+  await queue(run.lobby, 0);
+  match.finish(0);
+  await run.lobby.step(1);
+  run.lobby.host.connection.findMatch(0);
+  await landed();
+  return run;
+}
+
 /** Find a match, at `ascentRound` in Heroes' Ascent, and run the Team Lobby's vote and claim out. */
 async function queue(lobby: TestLobby, ascentRound: number | null = null): Promise<void> {
   lobby.host.connection.findMatch(ascentRound);
   await settle();
   for (let stage = 0; stage < 2; stage += 1) {
-    lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS);
+    lobby.lobby.advance(TEAM_LOBBY_VOTE_SECONDS);
     await settle();
   }
   await landed();
@@ -332,12 +383,74 @@ describe("a Heroes' Ascent party's round (#1996)", () => {
   });
 
   it("never plays against bots: it waits for a side at its round", async () => {
-    const { lobby, party } = await partyLobby(["Ann"], "heroes-ascent");
-    await queue(lobby, 0);
+    const { lobby, party } = await ascentQueued(["Ann"]);
     lobby.host.connection.playAgainstBots();
     await settle();
 
     expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+    // The Elite Zaishen Battle's alone (#2692).
+    expect(lobby.matches).toHaveLength(1);
+  });
+});
+
+describe("a Heroes' Ascent run's Elite Zaishen Battle (#2692)", () => {
+  async function fought(): Promise<{
+    lobby: TestLobby;
+    party: Member[];
+    match: FakeMatch;
+    plans: MatchPlan[];
+  }> {
+    const match = fakeMatch();
+    const plans: MatchPlan[] = [];
+    const lobby = await openLobby({
+      startMatch: (plan) => {
+        plans.push(plan);
+        return match as unknown as MatchHost;
+      },
+      teamLobby: true,
+      matchmaking: { roomId: ROOM_ID, verifyTicketSig, newNonce: () => NONCE },
+    });
+    const party = [lobby.host, await lobby.join("Ann")];
+    lobby.host.connection.selectMode("heroes-ascent");
+    party.forEach((who) => {
+      who.connection.chooseTeam(0);
+    });
+    await settle();
+    await queue(lobby, 0);
+    return { lobby, party, match, plans };
+  }
+
+  it("starts a run: six Zaishen bots on team 1, on its map, with no queue", async () => {
+    const { party, plans } = await fought();
+    expect(plans.map((plan) => plan.mapId)).toEqual([ELITE_ZAISHEN_MAP]);
+    const foes = [...(plans[0]?.seats.values() ?? [])].filter((seat) => seat.team === 1);
+    expect(foes).toHaveLength(6);
+    expect(foes.every((seat) => seat.bot)).toBe(true);
+    expect(foes.map((seat) => seat.name)).toContain("Zaishen Monk 2");
+    expect(party.map(phaseOf)).toEqual(["in-match", "in-match"]);
+  });
+
+  it("queues the run's first map once won, without choosing again", async () => {
+    const { lobby, party, match, plans } = await fought();
+    match.finish(0);
+    await lobby.step(1);
+    lobby.host.connection.findMatch(0);
+    await landed();
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+    expect(plans).toHaveLength(1);
+  });
+
+  it("is fought again after a wipe", async () => {
+    const { lobby, match, plans } = await fought();
+    match.finish(1);
+    await lobby.step(1);
+    await queue(lobby, 0);
+    expect(plans).toHaveLength(2);
+  });
+
+  it("is not fought past the first map", async () => {
+    const { lobby } = await partyLobby(["Ann"], "heroes-ascent", fakeMatch());
+    await queue(lobby, 1);
     expect(lobby.matches).toHaveLength(0);
   });
 });
@@ -368,8 +481,7 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
     party: Member[];
     first: ReturnType<typeof builds>;
   }> {
-    const run = await partyLobby(["Ann"], "heroes-ascent");
-    await queue(run.lobby, 0);
+    const run = await ascentQueued(["Ann"]);
     const first = builds(run.lobby);
     run.lobby.host.connection.leaveQueue();
     await settle();
@@ -408,6 +520,32 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
     expect(other.lobby.host.connection.getSnapshot().teamLobby?.stage).toBe("vote");
   });
 
+  it("readies a locked seat from the start of the claim, a newcomer only by taking theirs (#2872)", async () => {
+    const { lobby, party } = await won();
+    const [host, ann] = party as [Member, Member];
+    await ann.connection.disconnect();
+    await settle();
+    const bea = await lobby.join("Bea");
+    await settle();
+    const readiness = () =>
+      host.connection
+        .getSnapshot()
+        .players.map((player) => [player.name === "Bea", player.ready] as const);
+
+    lobby.host.connection.findMatch(1);
+    await settle();
+    expect(host.connection.getSnapshot().teamLobby?.stage).toBe("claim");
+    expect(readiness()).toEqual([
+      [false, true],
+      [true, false],
+    ]);
+
+    // Bea's seat is the last to be taken, so it ends the stage, with no clock.
+    bea.connection.claim(1);
+    await landed();
+    expect(phaseOf(host)).toBe("queued");
+  });
+
   it("gives a newcomer only the vacant seats, each with its locked build, and a bot the rest", async () => {
     const { lobby, party, first } = await won();
     const [host, ann] = party as [Member, Member];
@@ -425,7 +563,7 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
     expect(host.connection.getSnapshot().teamLobby?.stage).toBe("claim");
     // The run's members keep their seats; a newcomer takes no held one.
     host.connection.claim(1);
-    host.connection.vote(null);
+    host.connection.vote(host.transport.selfId);
     host.connection.chooseTeam(1);
     bea.connection.claim(0);
     await settle();
@@ -441,7 +579,7 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
       seats(host.transport.selfId, bea.transport.selfId),
     );
 
-    lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS);
+    lobby.lobby.advance(TEAM_LOBBY_VOTE_SECONDS);
     await landed();
     expect(phaseOf(host)).toBe("queued");
     // Same builds, seat by seat; Cid in the lowest vacant seat, bots in the rest.

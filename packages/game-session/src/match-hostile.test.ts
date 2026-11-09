@@ -254,7 +254,7 @@ describe("P2P match robustness (#375)", () => {
 
     // What must not happen is a client that believes it is still in a
     // match that no longer exists.
-    expect(states).toContain("lost");
+    expect(states).toContain("host-left");
 
     // A new host, nothing hand-reset, and the game is playable again.
     const next = startMatch();
@@ -387,7 +387,14 @@ describe("a P2P host survives hostile peers (#375)", () => {
       const name = typeof value === "string" ? value : "";
       raw.send(
         "hello",
-        { protocolVersion: PROTOCOL_VERSION, name, guildTag: null, build: value, rejoin: null },
+        {
+          protocolVersion: PROTOCOL_VERSION,
+          name,
+          guildTag: null,
+          heroRank: 0,
+          build: value,
+          rejoin: null,
+        },
         "host",
       );
     }
@@ -466,10 +473,15 @@ describe("a P2P host survives hostile peers (#375)", () => {
     const { connection: forger, transport } = await match.join();
     await match.step(TICK);
 
-    const forgedEnd = { winningTeam: 1, endReason: "score", summary: [] };
+    const forgedEnd = { winningTeam: 1, endReason: "score", summary: [], clearSeconds: null };
     transport.send("ended", forgedEnd, "host");
     transport.send("ended", forgedEnd);
-    transport.send("ended", { winningTeam: null, endReason: "host-left", summary: [] });
+    transport.send("ended", {
+      winningTeam: null,
+      endReason: "host-left",
+      summary: [],
+      clearSeconds: null,
+    });
     transport.send("refuse", { reason: "match-full", message: "go away" });
     transport.send("snapshot", { anything: true });
     transport.send("welcome", { anything: true }, "host");

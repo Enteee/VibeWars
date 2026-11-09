@@ -179,7 +179,7 @@ describe("a Ghostly Hero (#1377)", () => {
     expect(applyIntent(sim, "a", { kind: "target", targetSessionId: GHOST_0 })).toBeNull();
     expect(applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 })).toBeNull();
     stepFor(sim, 1);
-    applyIntent(sim, "a", { kind: "walk-to", x: 1000, y: 900 });
+    applyIntent(sim, "a", { kind: "walk-to", layer: 0, x: 1000, y: 900 });
     expect(get(sim, GHOST_0).creature?.leaderId).toBe("a");
     stepFor(sim, 4);
     // At its leader's heel, far from its spawn.
@@ -190,7 +190,7 @@ describe("a Ghostly Hero (#1377)", () => {
     stepFor(sim, 1);
     const stayed = get(sim, GHOST_0).position;
     expect(get(sim, GHOST_0).creature?.leaderId).toBeUndefined();
-    applyIntent(sim, "a", { kind: "walk-to", x: 240, y: 780 });
+    applyIntent(sim, "a", { kind: "walk-to", layer: 0, x: 240, y: 780 });
     stepFor(sim, 4);
     expect(get(sim, GHOST_0).position).toEqual(stayed);
     expect(distance(get(sim, "a").position, stayed)).toBeGreaterThan(300);
@@ -201,7 +201,7 @@ describe("a Ghostly Hero (#1377)", () => {
     applyIntent(sim, "a", { kind: "target", targetSessionId: GHOST_0 });
     applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 });
     stepFor(sim, 1);
-    applyIntent(sim, "a", { kind: "walk-to", x: ALTAR.x, y: ALTAR.y });
+    applyIntent(sim, "a", { kind: "walk-to", layer: 0, x: ALTAR.x, y: ALTAR.y });
     stepUntil(sim, () => claiming(sim, GHOST_0), 20);
     stepUntil(sim, () => sim.altarState.holder === 0, CLAIM_SECONDS + 1);
   });
@@ -211,7 +211,7 @@ describe("a Ghostly Hero (#1377)", () => {
     applyIntent(sim, "a", { kind: "target", targetSessionId: GHOST_0 });
     applyIntent(sim, "a", { kind: "attack", targetId: GHOST_0 });
     stepFor(sim, 1);
-    applyIntent(sim, "a", { kind: "walk-to", x: ALTAR.x + 110, y: ALTAR.y });
+    applyIntent(sim, "a", { kind: "walk-to", layer: 0, x: ALTAR.x + 110, y: ALTAR.y });
     stepUntil(sim, () => claiming(sim, GHOST_0), 20);
   });
 
@@ -237,7 +237,7 @@ describe("a Ghostly Hero (#1377)", () => {
     get(sim, "x").position = vec2(200, 900);
     expect(applyIntent(sim, "x", { kind: "attack", targetId: GHOST_0 })).toBeNull();
     expect(get(sim, "x").combatant.attack?.targetId).toBe(GHOST_0);
-    applyIntent(sim, "x", { kind: "walk-to", x: 1000, y: 900 });
+    applyIntent(sim, "x", { kind: "walk-to", layer: 0, x: 1000, y: 900 });
     stepFor(sim, 3);
     expect(distance(get(sim, GHOST_0).position, vec2(120, 900))).toBeLessThan(150);
   });
@@ -253,7 +253,7 @@ describe("a Ghostly Hero (#1377)", () => {
     // Space by another ally leads it again: it was staying.
     applyIntent(sim, "b", { kind: "attack", targetId: GHOST_0 });
     stepFor(sim, 2);
-    applyIntent(sim, "b", { kind: "walk-to", x: 1000, y: 1000 });
+    applyIntent(sim, "b", { kind: "walk-to", layer: 0, x: 1000, y: 1000 });
     stepFor(sim, 4);
     expect(distance(get(sim, GHOST_0).position, where)).toBeGreaterThan(200);
   });
@@ -412,7 +412,7 @@ describe("a King of the Hill match (#1377)", () => {
   });
 });
 
-/** Hall of Heroes (#1995, rebuilt by #2552): packages/game-maps/maps/hall-of-heroes. */
+/** Hall of Heroes (#1995, rebuilt by #2552): packages/game-maps/maps/hall-of-heroes-king. */
 const HALL_WALLS = [
   ...rect(60, 720, 260, 40),
   ...rect(2880, 1440, 260, 40),

@@ -90,6 +90,7 @@ function toPlayerSnapshot(
     // A creature (#1052) is named for its kind and has no professions.
     name: participant.creature?.name ?? name,
     guildTag: (participant.creature === undefined ? guild.guildTag : null) ?? undefined,
+    heroRank: participant.creature === undefined ? guild.heroRank : 0,
     guildCape: (participant.creature === undefined ? guild.guildCape : null) ?? undefined,
     x: participant.position.x,
     y: participant.position.y,

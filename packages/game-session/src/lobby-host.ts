@@ -10,12 +10,15 @@ import {
   validatePlayerBuild,
   type PlayerBuild,
   type TeamCount,
+  ELITE_ZAISHEN_MAP,
+  drawZaishen,
 } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
   TEAM_ARENA_SIZES,
-  TEAM_LOBBY_STAGE_SECONDS,
+  TEAM_LOBBY_CLAIM_SECONDS,
+  TEAM_LOBBY_VOTE_SECONDS,
   helloProtocolVersion,
   isTeamArenaSize,
   isTeamQueueMode,
@@ -29,6 +32,7 @@ import {
   parsePeerRelayHolding,
   parsePeerStayTogether,
   parseWireLobbyCommand,
+  lobbyModeOfQueue,
   teamQueueModeOf,
   teamSizeOf,
   type LobbyMode,
@@ -392,6 +396,8 @@ interface MemberBase {
   name: string;
   /** Sanitised (#1406); `null` for none, and for a bot. */
   guildTag: string | null;
+  /** Self-reported (#2702); 0 for none, and for a bot. */
+  heroRank: number;
   /** Sanitised (#1422); `null` for none, and whenever `guildTag` is. */
   guildCape: WireCape | null;
   team: WireTeam | null;
@@ -617,6 +623,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   /** The player keys of members the host removed (#2746): refused for the lobby's life. */
   const removedKeys = new Set<string>();
   let mapId = queued?.group.mapId ?? defaultMap;
+  /** The match on is a run's Elite Zaishen Battle (#2692). */
+  let zaishenFight = false;
+  /** This party won it, and its next queue is the run's first (#2692). */
+  let zaishenBeaten = false;
   /** A Hosted Game's players a side, the host's pick (#2104). */
   let hostedSize: LobbyTeamSize = options.hostedTeamSize;
   /** A Team Arena's players a side, its leader's pick (#2107). */
@@ -807,6 +817,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       id: member.id,
       name: member.name,
       guildTag: member.guildTag,
+      heroRank: member.heroRank,
       guildCape: member.guildCape,
       team: member.team,
       ready: isReady(member),
@@ -907,6 +918,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const start = (
     assigned: ReadonlyMap<string, PlayerBuild> = new Map(),
     rejected: ReadonlySet<WireTeam> = new Set(),
+    playedMap?: string,
   ): void => {
     countdownEndsAt = undefined;
     phase = "starting";
@@ -917,6 +929,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         team,
         name: member.name,
         guildTag: member.guildTag,
+        heroRank: member.heroRank,
         guildCape: member.guildCape,
       };
       const build = assigned.get(member.id) ?? null;
@@ -947,6 +960,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         team: member.team,
         name: characterName(build),
         guildTag: null,
+        heroRank: 0,
         guildCape: null,
         bot: true,
         build,
@@ -963,8 +977,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         id,
         host: startMatch({
           matchId: id,
-          mapId,
-          mode,
+          mapId: playedMap ?? mapId,
+          mode: queued === undefined ? mode : lobbyModeOfQueue(queued.group.mode),
           seats,
           teamCount: queued?.group.teams.length === 3 ? 3 : 2,
           isSpectator: (peerId) => peerMember(peerId)?.team === null,
@@ -992,7 +1006,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     for (const [peerId, seat] of seats) {
       if (!seat.bot) {
         const message: WireMatchStart = {
-          mapId,
+          mapId: playedMap ?? mapId,
           matchId: id,
           teamPlanRejected: rejected.has(seat.team),
         };
@@ -1038,7 +1052,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     phase = "team-lobby";
     teamLobby = {
       stage: "vote",
-      endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
+      endsAt: clockMs() + TEAM_LOBBY_VOTE_SECONDS * 1000,
       sides: [emptySide(size), emptySide(forQueue ? 0 : size)],
       forQueue,
       ascentRound,
@@ -1073,9 +1087,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return false;
     }
     phase = "team-lobby";
-    teamLobby = {
+    const lobby: TeamLobby = {
       stage: "claim",
-      endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
+      endsAt: clockMs() + TEAM_LOBBY_CLAIM_SECONDS * 1000,
       sides: [
         {
           ...emptySide(lock.chosen.builds.length),
@@ -1088,9 +1102,40 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       ascentRound,
       locked: true,
     };
+    teamLobby = lobby;
     clearReady();
+    readyThoseWithNoSeatToPick(lobby);
+    if (everyoneReady()) {
+      endStage(lobby);
+      return false;
+    }
     return true;
   };
+
+  /**
+   * A claim's start (#2872): a lone human on a side of one holds its seat,
+   * and whoever holds a seat already, or has none left to take, is ready.
+   */
+  const readyThoseWithNoSeatToPick = (lobby: TeamLobby): void => {
+    for (const team of [0, 1] as const) {
+      const side = lobby.sides[team];
+      const humans = humansOn(team);
+      const [lone] = humans;
+      if (side.claims.length === 1 && side.claims[0] === null && lone !== undefined) {
+        side.claims[0] = lone.id;
+      }
+      for (const human of humans) {
+        // Nothing starts without one who is away (#2872).
+        human.ready = !away.has(human.id) && hasNothingLeftToDo(lobby, side, human);
+      }
+    }
+  };
+
+  /** Whether `member` has done what `lobby`'s stage asks: voted, or sits (#2872). */
+  const hasNothingLeftToDo = (lobby: TeamLobby, side: TeamSide, member: Member): boolean =>
+    lobby.stage === "vote"
+      ? side.votes.has(member.id)
+      : side.claims.includes(member.id) || !side.claims.includes(null);
 
   /** Whether `team` plays a preset team: nobody proposed, or nobody is there to. */
   const playsPreset = (team: 0 | 1, side: TeamSide): boolean =>
@@ -1176,8 +1221,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         side.claims = Array.from({ length: side.chosen.builds.length }, () => null);
       }
       lobby.stage = "claim";
-      lobby.endsAt = clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000;
+      lobby.endsAt = clockMs() + TEAM_LOBBY_CLAIM_SECONDS * 1000;
       clearReady();
+      readyThoseWithNoSeatToPick(lobby);
+      if (everyoneReady()) {
+        endStage(lobby);
+        return;
+      }
       broadcast();
       return;
     }
@@ -1194,6 +1244,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         ascentLock = { chosen, claimers: seats.map((seat) => seat.holder) };
       }
       teamLobby = undefined;
+      if (lobby.ascentRound === 0 && !zaishenBeaten) {
+        fightZaishen(seats);
+        return;
+      }
       beginQueueing(seats, lobby.ascentRound);
       return;
     }
@@ -1246,6 +1300,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (matchmaking === undefined) {
       return;
     }
+    zaishenBeaten = false;
     const nonce = matchmaking.newNonce();
     const current: NonNullable<typeof queueing> = {
       nonce,
@@ -1372,6 +1427,33 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     start(assigned);
   };
 
+  /** A run's first step (#2692): the party's seats against the six Zaishen, no queue. */
+  const fightZaishen = (seats: readonly PartySeat[]): void => {
+    const assigned = new Map<string, PlayerBuild>();
+    for (const seat of seats) {
+      const holder = seat.holder === null ? undefined : peerMember(seat.holder);
+      assigned.set(holder?.team === 0 ? holder.id : addBot(0), seat.build);
+    }
+    const names = new Map<string, string>();
+    for (const zaishen of drawZaishen(random)) {
+      const id = addBot(1);
+      assigned.set(id, zaishen.build);
+      names.set(id, zaishen.name);
+    }
+    nameSlotBots(assigned);
+    for (const [id, name] of names) {
+      const bot = members.get(id);
+      if (bot !== undefined) {
+        bot.name = name;
+      }
+    }
+    zaishenFight = true;
+    start(assigned, new Set(), ELITE_ZAISHEN_MAP);
+    if (match === undefined) {
+      zaishenFight = false;
+    }
+  };
+
   /** A party member's key for its consent (#1766): once each, and no key twice. */
   const takePartyKey = (from: string, memberKey: string | null): void => {
     const current = queueing;
@@ -1494,9 +1576,19 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           }
         }
       }
-      teamLobby.endsAt = clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000;
+      teamLobby.endsAt = clockMs() + TEAM_LOBBY_VOTE_SECONDS * 1000;
     }
     clearReady();
+    return true;
+  };
+
+  /** `member` has acted, so is ready (#2872). False when that ended the stage. */
+  const markReady = (lobby: TeamLobby, member: Member): boolean => {
+    member.ready = true;
+    if (everyoneReady()) {
+      endStage(lobby);
+      return false;
+    }
     return true;
   };
 
@@ -1522,22 +1614,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         command.kind === "vote" ||
         command.kind === "choose-team" ||
         (command.kind === "claim" &&
-          (lock.claimers.includes(member.id) ||
-            (command.slot !== null && (lock.claimers[command.slot] ?? null) !== null))))
+          (lock.claimers.includes(member.id) || (lock.claimers[command.slot] ?? null) !== null)))
     ) {
       refuse(member.id, "ascent-locked");
       return false;
     }
     switch (command.kind) {
-      case "ready": {
-        const changed = member.ready !== command.ready;
-        member.ready = command.ready;
-        if (command.ready && everyoneReady()) {
-          endStage(lobby);
-          return false;
-        }
-        return changed;
-      }
       case "propose": {
         if (lobby.stage !== "vote") {
           return false;
@@ -1580,29 +1662,19 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         if (lobby.stage !== "vote") {
           return false;
         }
-        if (command.proposerId === null) {
-          return side.votes.delete(member.id);
-        }
         if (!side.proposals.has(command.proposerId)) {
           refuse(member.id, "invalid-vote");
           return false;
         }
-        const changed = side.votes.get(member.id) !== command.proposerId;
+        const changed = side.votes.get(member.id) !== command.proposerId || !member.ready;
         side.votes.set(member.id, command.proposerId);
-        return changed;
+        return markReady(lobby, member) && changed;
       }
       case "claim": {
         if (lobby.stage !== "claim") {
           return false;
         }
         const held = side.claims.indexOf(member.id);
-        if (command.slot === null) {
-          if (held < 0) {
-            return false;
-          }
-          side.claims[held] = null;
-          return true;
-        }
         const { slot } = command;
         if (!Number.isInteger(slot) || slot < 0 || slot >= side.claims.length) {
           refuse(member.id, "invalid-slot");
@@ -1619,7 +1691,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           side.claims[held] = null;
         }
         side.claims[slot] = member.id;
-        return true;
+        return markReady(lobby, member);
       }
       default:
         // The lobby's own choices were made before the Team Lobby began.
@@ -1733,10 +1805,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         ) {
           return false;
         }
-        // Past round 0 a run keeps its Team Build (#2539); round 0, or no
-        // run recorded, picks again.
+        // Past round 0 a run keeps its Team Build (#2539), as does the queue
+        // after its Elite Zaishen Battle (#2692); else it picks again.
         const lock =
-          command.ascentRound !== null && command.ascentRound > 0 ? ascentLock : undefined;
+          command.ascentRound !== null && (command.ascentRound > 0 || zaishenBeaten)
+            ? ascentLock
+            : undefined;
         ascentLock = lock;
         // The party is everyone here, on the one side; its seats nobody
         // claims are bots.
@@ -1800,6 +1874,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       id,
       name: id,
       guildTag: null,
+      heroRank: 0,
       guildCape: null,
       team,
       ready: true,
@@ -2110,6 +2185,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       returning.name = sanitizeName(join.name, returning.name);
       const guild = sanitizeGuild(join);
       returning.guildTag = guild.guildTag;
+      returning.heroRank = guild.heroRank;
       returning.guildCape = guild.guildCape;
       returning.ready = false;
       // The proposals its side lists, and the chosen one, it was told of
@@ -2123,6 +2199,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         }
         for (const [proposerId, builds] of shown) {
           tellProposalBuilds(returningSide, proposerId, builds, from);
+        }
+        // Its vote or seat stands (#2872); it was all the stage waited for.
+        returning.ready = hasNothingLeftToDo(teamLobby, side, returning);
+        if (everyoneReady()) {
+          // Ahead of the next stage's messages, as a change while it was
+          // away may not have reached it.
+          tellRelayOffers(from);
+          endStage(teamLobby);
+          return;
         }
       }
       beginCountdown();
@@ -2870,6 +2955,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         // round, and ready cleared, so nobody is dragged into a match
         // they did not confirm.
         const { winningTeam } = match.host;
+        zaishenBeaten = zaishenFight && winningTeam === 0;
+        zaishenFight = false;
         if (match.host.draining) {
           match.host.retire();
           draining.push(match);

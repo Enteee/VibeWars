@@ -13,7 +13,7 @@ import { askBot, body, BOT, BOUNDS, DT, match, RULESET } from "./test-support.js
 
 /** A shrine at `position`, `owner`'s at `progress`; neutral and empty by default. */
 function shrine(position: Vec2, owner: number | null = null, progress = 0): CapturePoint {
-  return { position, owner, capturer: owner, progress };
+  return { position, layer: 0, owner, capturer: owner, progress };
 }
 
 const playing = (...capturePoints: CapturePoint[]): BotObjectives => ({
@@ -24,6 +24,18 @@ const playing = (...capturePoints: CapturePoint[]): BotObjectives => ({
 describe("shrines: Capture Points bots take and hold shrines (#2580)", () => {
   // The foe is well beyond spell range (420) unless a test says otherwise.
   const far = (extra: Parameters<typeof body>[3] = {}) => body("foe", 1, vec2(1500, 700), extra);
+
+  it("walks to a shrine on its layer, not the one it stands on (ADR-0051)", () => {
+    const sim = match([body("bot", 0, vec2(100, 100), { behaviour: BOT }), far()]);
+    const deck = { ...shrine(vec2(600, 100)), layer: 1 };
+    expect(askBot(sim, "bot", playing(deck)).moveToLayer).toBe(1);
+  });
+
+  it("does not stand on a shrine on a layer above it (ADR-0051)", () => {
+    const sim = match([body("bot", 0, vec2(100, 100), { behaviour: BOT }), far()]);
+    const deck = { ...shrine(vec2(110, 100)), layer: 1 };
+    expect(askBot(sim, "bot", playing(deck)).moveTo).toEqual(vec2(110, 100));
+  });
 
   it("stands on a shrine its team does not own, with no foe in reach, to fill it", () => {
     const sim = match([body("bot", 0, vec2(100, 100), { behaviour: BOT }), far()]);

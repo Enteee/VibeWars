@@ -60,20 +60,38 @@ export function nextStreak(streak: number, result: QueuedResult): number {
 }
 
 /**
- * The Heroes' Ascent round after `result` at `round` (#1996): a win
- * moves on, and in the Hall defends it; a defeat or leaving before the
- * end starts again at the first; a match lost to its host leaving
- * stands.
+ * The Heroes' Ascent round after `result` of a party at `round` that
+ * played round `played` (#1996): a win moves on from the map played,
+ * which a party skipping ahead had not reached (#2687), and in the Hall
+ * defends it; a defeat or leaving before the end starts again at the
+ * first; a match lost to its host leaving stands.
  */
-export function nextAscentRound(round: number, result: QueuedResult): number {
+export function nextAscentRound(round: number, played: number, result: QueuedResult): number {
   switch (result) {
     case "win":
-      return Math.min(round + 1, ASCENT_PROGRESSION.length - 1);
+      return Math.min(played + 1, ASCENT_PROGRESSION.length - 1);
     case "loss":
     case "forfeit":
       return 0;
     case "host-left":
       return round;
+  }
+}
+
+/**
+ * The Heroes' Ascent run's streak of wins after `result` of a party at
+ * `round` (#2702): a win at the first round starts a run, which each
+ * member reads from the host's round, not from what this tab saw.
+ */
+export function nextAscentWins(wins: number, round: number, result: QueuedResult): number {
+  switch (result) {
+    case "win":
+      return round === 0 ? 1 : wins + 1;
+    case "loss":
+    case "forfeit":
+      return 0;
+    case "host-left":
+      return wins;
   }
 }
 
@@ -96,12 +114,12 @@ export function nextAscentMorale(carried: number, ended: number, result: QueuedR
 }
 
 /**
- * The morale a join sends for a ticket at `round` (#2686): `carried`
- * only past the first map, since round 0 (or no Heroes' Ascent at all)
- * starts a run, whoever ended the last one.
+ * The morale a join sends for a ticket at `round` (#2686): `carried`,
+ * which at round 0 is the Elite Zaishen Battle's boost (#2692); outside
+ * Heroes' Ascent, none.
  */
 export function ascentStartMorale(round: number | null, carried: number): number {
-  return round === null || round === 0 ? 0 : carried;
+  return round === null ? 0 : carried;
 }
 
 /** "3 wins in a row this visit (not a rating)"; nothing at 0. */
@@ -287,7 +305,7 @@ function splashRow(player: LobbyPlayerSnapshot): HTMLElement {
   const row = h("div", "versus-player");
   const text = h("span", "versus-player-text");
   const label = text.appendChild(
-    playerLabelElement("versus-player-name", player.name, player.guildTag),
+    playerLabelElement("versus-player-name", player.name, player.guildTag, player.heroRank),
   );
   const signet = signetOf(player);
   if (signet !== undefined) {

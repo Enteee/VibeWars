@@ -46,6 +46,7 @@ import {
   SHRINE_INVULNERABLE_SECONDS,
   soleLeader,
   teamBeaten,
+  withLatestTeam,
   teamIds,
   TWO_TEAM_MODES,
   type MatchOutcome,
@@ -58,6 +59,7 @@ import {
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
 import {
+  atObjective,
   deckBlocksSight,
   feelsHeight,
   floorOf,
@@ -299,6 +301,7 @@ import {
   isCarriedObjectId,
   type CarriedArrival,
   type CarriedDrop,
+  type CarriedPoint,
 } from "./carried.js";
 import {
   FLAG_CARRIER_SPEED_MULTIPLIER,
@@ -307,7 +310,7 @@ import {
   carriedFlag,
   dropFlag,
   flagRefusal,
-  flagTargetPosition,
+  flagTargetPoint,
   flagTeamOf,
   initialFlags,
   stepFlags,
@@ -322,6 +325,7 @@ import {
   onCapturePoint,
   stepCapturePoints,
   type CapturePoint,
+  type CapturePointSite,
 } from "./capture-points.js";
 import {
   cutShotAtGate,
@@ -337,7 +341,7 @@ import {
   ALTAR_REACH_UNITS,
   onAltar,
   relicRefusal,
-  relicTargetPosition,
+  relicTargetPoint,
   relicTeamOf,
   stepRelics,
   type RelicField,
@@ -795,6 +799,15 @@ export interface PendingSkill {
   unreachableSeconds: number;
 }
 
+/** A rect on a layer: the Elite Zaishen Battle's start line (#2692). */
+export interface StartLine {
+  readonly layer: number;
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface MatchSimulationOptions {
   readonly seed: string | number;
   readonly ruleset?: Ruleset;
@@ -852,7 +865,9 @@ export interface MatchSimulationOptions {
    * Capture Points' shrines (#1378), each neutral at the start. Omitted
    * or `[]`: none.
    */
-  readonly capturePoints?: readonly Vec2[];
+  readonly capturePoints?: readonly CapturePointSite[];
+  /** The Elite Zaishen Battle's start line (#2692); none if omitted. */
+  readonly startLine?: StartLine | undefined;
   /** The map's gates (#2691); none if omitted. */
   readonly gates?: readonly GateField[];
   /**
@@ -1285,6 +1300,8 @@ export class MatchSimulation {
   #relicsState: RelicsState | undefined;
   /** Who reached a relic this step (#1374), in simulation order. */
   #relicArrivals: CarriedArrival[] = [];
+  #recentKillTeams: readonly number[] = [];
+  #recentScoringTeams: readonly number[] = [];
   /** The map's ghost spawns and any altar (#1377, #2689); `undefined` on a map without ghosts. */
   readonly #ghostField: GhostField | undefined;
   /** Who holds the altar (#1377); nobody on a map without a hill. */
@@ -1293,6 +1310,9 @@ export class MatchSimulation {
   #claims: number[] = [];
   /** Capture Points' shrines (#1378), who owns each and how far toward whom; `[]` without them. */
   #capturePoints: readonly CapturePoint[];
+  readonly #startLine: StartLine | undefined;
+  /** When team 0 first entered the start line or a team 1 member first died (#2933); `undefined` until then. */
+  #clearClockStartedAt: number | undefined;
   /** What bots play for (#2542), rebuilt when the shrines change. */
   #botObjectives: BotObjectives = NO_OBJECTIVES;
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
@@ -1352,6 +1372,7 @@ export class MatchSimulation {
       this.#relicField === undefined ? undefined : initialRelics(this.#relicField);
     this.#ghostField = options.ghostField;
     this.#capturePoints = initialCapturePoints(options.capturePoints ?? []);
+    this.#startLine = options.startLine;
     this.#refreshBotObjectives();
     for (const spec of options.participants ?? []) {
       this.add(spec);
@@ -1448,6 +1469,18 @@ export class MatchSimulation {
 
   public get phase(): MatchPhase {
     return this.#outcome.phase;
+  }
+
+  /**
+   * Seconds on the start line's clock (#2692), `null` on a map without
+   * one. It starts when the party crosses the line or the first of team 1
+   * dies, whichever comes first (#2933); until then it runs from the
+   * match's start.
+   */
+  public get clearSeconds(): number | null {
+    return this.#startLine === undefined
+      ? null
+      : this.#elapsedSeconds - (this.#clearClockStartedAt ?? 0);
   }
 
   /** Who won and why, once `phase` is `"finished"`. */
@@ -1651,6 +1684,21 @@ export class MatchSimulation {
       }
     }
     return record;
+  }
+
+  /**
+   * Take `team` out for good (#2688), whatever the victory rule: the last
+   * of `teams`, every team in the match, seated yet or not, wins at once.
+   */
+  public forfeit(team: number, teams: ReadonlySet<number>): void {
+    if (this.#outcome.phase === "finished") {
+      return;
+    }
+    this.#eliminated.add(team);
+    const left = [...teams].filter((other) => !this.#eliminated.has(other));
+    if (left.length <= 1) {
+      this.#outcome = { phase: "finished", winningTeam: left[0], reason: "annihilation" };
+    }
   }
 
   /**
@@ -2902,11 +2950,11 @@ export class MatchSimulation {
   /** `record`'s flag or relic, if it carries one, lies where it is (#1225, #1374). */
   #dropBundle(record: ParticipantRecord): void {
     if (this.#flagsState !== undefined) {
-      this.#flagsState = dropFlag(this.#flagsState, record.id, record.position);
+      this.#flagsState = dropFlag(this.#flagsState, record.id, record.position, record.layer);
     }
     if (this.#relicsState !== undefined && this.#relicField !== undefined) {
       this.#relicsState = stepRelics(this.#relicField, this.#relicsState, [
-        { kind: "drop", carrierId: record.id, position: record.position },
+        { kind: "drop", carrierId: record.id, position: record.position, layer: record.layer },
       ]).state;
       this.#refreshBotObjectives();
     }
@@ -3959,6 +4007,7 @@ export class MatchSimulation {
     // After every death, before the match end: a point on the last tick counts.
     this.#advanceRelics();
     this.#advanceAltar(dt);
+    this.#watchStartLine();
     this.#advanceCapturePoints(dt);
     this.#advanceGates(dt);
     // After every death this step, so two teams wiped in it both lose.
@@ -4368,7 +4417,7 @@ export class MatchSimulation {
         ? undefined
         : {
             point: intent.moveTo,
-            layer: this.#leaderLayer(record),
+            layer: intent.moveToLayer ?? this.#leaderLayer(record),
             passing: record.creature?.ownerId,
           };
     if (following && record.followGoal === undefined) {
@@ -5979,8 +6028,8 @@ export class MatchSimulation {
     if (interact === undefined) {
       return;
     }
-    const position = this.#interactPosition(interact.targetId);
-    if (position === undefined) {
+    const point = this.#interactPoint(interact.targetId);
+    if (point === undefined) {
       record.interact = undefined;
       return;
     }
@@ -5993,11 +6042,12 @@ export class MatchSimulation {
     }
     // A ghost is a body: walked past, as an attack's target is.
     const ghost = isGhostId(interact.targetId) ? interact.targetId : undefined;
+    // Reached as a blow is: on its layer, or in a ramp to it (ADR-0051).
     const approach = this.#approach(
       record,
-      { id: ghost, position, layer: record.layer, floors: record.floors },
+      { id: ghost, ...point },
       FLAG_REACH_UNITS,
-      false,
+      true,
       interact,
       dt,
     );
@@ -6042,27 +6092,35 @@ export class MatchSimulation {
       : flagRefusal(this.#flagField, this.#flagsState, id, combatant.team, targetId);
   }
 
-  /** Where the walk to `targetId`, a flag, the stand or a relic, ends; `undefined` for nowhere. */
-  #interactPosition(targetId: string): Vec2 | undefined {
+  /** Where the walk to `targetId`, a flag, the stand or a relic, ends, and on which floors; `undefined` for nowhere. */
+  #interactPoint(
+    targetId: string,
+  ): { readonly position: Vec2; readonly layer: number; readonly floors: number } | undefined {
     if (isGhostId(targetId)) {
       const ghost = this.#participants.get(targetId);
-      return ghost === undefined || ghost.combatant.dead ? undefined : ghost.position;
-    }
-    if (relicTeamOf(targetId) !== undefined) {
-      return this.#relicField === undefined
+      return ghost === undefined || ghost.combatant.dead
         ? undefined
-        : relicTargetPosition(this.#relicField, this.relics, targetId);
+        : { position: ghost.position, layer: ghost.layer, floors: ghost.floors };
     }
-    return this.#flagField === undefined
-      ? undefined
-      : flagTargetPosition(this.#flagField, this.flags, targetId);
+    let point: CarriedPoint | undefined;
+    if (relicTeamOf(targetId) !== undefined) {
+      point =
+        this.#relicField === undefined
+          ? undefined
+          : relicTargetPoint(this.#relicField, this.relics, targetId);
+    } else if (this.#flagField !== undefined) {
+      point = flagTargetPoint(this.#flagField, this.flags, targetId);
+    }
+    return point === undefined ? undefined : { ...point, floors: floorOf(point.layer) };
   }
 
   /** The drops of every bundle carrier `objects` has who died this step, where they lie. */
   #deathDrops(objects: readonly (FlagState | RelicState)[]): CarriedDrop[] {
     return fallenDrops(objects, (carrierId) => {
       const carrier = this.#participants.get(carrierId);
-      return carrier?.combatant.dead === true ? carrier.position : undefined;
+      return carrier?.combatant.dead === true
+        ? { position: carrier.position, layer: carrier.layer }
+        : undefined;
     });
   }
 
@@ -6107,18 +6165,20 @@ export class MatchSimulation {
     }
     for (const team of scored) {
       this.#score = addPoint(this.#score, team);
+      this.#recentScoringTeams = withLatestTeam(this.#recentScoringTeams, team);
     }
   }
 
   /** Whether `carrier` is where its relic scores: the altar, or within its reach of its own living ghost (#2695). */
   #atRelicTarget(field: RelicField, carrier: ParticipantRecord): boolean {
     if (field.relicTarget === "altar") {
-      return onAltar(field, carrier.position);
+      return onAltar(field, carrier);
     }
     const ghost = this.#participants.get(ghostId(carrier.combatant.team));
     return (
       ghost !== undefined &&
       !ghost.combatant.dead &&
+      sharesFloor(ghost.floors, carrier.floors) &&
       distance(ghost.position, carrier.position) <= ALTAR_REACH_UNITS
     );
   }
@@ -6150,7 +6210,7 @@ export class MatchSimulation {
     if (ghost.creature?.leaderId === record.id) {
       this.#stay(ghost, ghost.position);
     } else {
-      ghost.behaviour = followBehaviour(field.altar);
+      ghost.behaviour = followBehaviour(field.altar, field.altarLayer ?? 0);
       ghost.cursor = createCursor();
       if (ghost.creature !== undefined) {
         ghost.creature.leaderId = record.id;
@@ -6193,7 +6253,11 @@ export class MatchSimulation {
   #mayClaim(record: ParticipantRecord): boolean {
     const field = this.#ghostField;
     const altar = field?.altar;
-    if (altar === undefined || record.combatant.dead || !onHill(altar, record.position)) {
+    if (
+      altar === undefined ||
+      record.combatant.dead ||
+      !onHill(altar, field?.altarLayer ?? 0, record)
+    ) {
       return false;
     }
     const { holder } = this.#altarState;
@@ -6256,6 +6320,7 @@ export class MatchSimulation {
     }
     if (scored !== null) {
       this.#score = addPoint(this.#score, scored);
+      this.#recentScoringTeams = withLatestTeam(this.#recentScoringTeams, scored);
     }
   }
 
@@ -6274,11 +6339,13 @@ export class MatchSimulation {
         relicSpawns: this.#relicField.spawns,
         relicCarry: this.#relicField.relicCarry,
         altar: this.#relicField.altar,
+        altarLayer: this.#relicField.altarLayer ?? 0,
       };
     } else if (victory === "king-of-the-hill" && this.#ghostField !== undefined) {
       this.#botObjectives = {
         ...NO_OBJECTIVES,
         altar: this.#ghostField.altar,
+        altarLayer: this.#ghostField.altarLayer ?? 0,
         altarHolder: this.#altarState.holder,
       };
     } else {
@@ -6498,6 +6565,36 @@ export class MatchSimulation {
   }
 
   /**
+   * The first of team 0 on the start line starts the clock (#2692), or the
+   * first death on team 1, so a party cannot let the Zaishen come to it and
+   * step over the line for the last kill (#2933). One removed is not dead.
+   */
+  #watchStartLine(): void {
+    const line = this.#startLine;
+    if (line === undefined || this.#clearClockStartedAt !== undefined || this.phase !== "active") {
+      return;
+    }
+    for (const record of this.#participants.values()) {
+      if (!countsForTeam(record)) {
+        continue;
+      }
+      const started =
+        record.combatant.team === 0
+          ? !record.combatant.dead &&
+            record.layer === line.layer &&
+            record.position.x >= line.x &&
+            record.position.x <= line.x + line.width &&
+            record.position.y >= line.y &&
+            record.position.y <= line.y + line.height
+          : record.combatant.team === 1 && record.combatant.dead;
+      if (started) {
+        this.#clearClockStartedAt = this.#elapsedSeconds;
+        return;
+      }
+    }
+  }
+
+  /**
    * The step's shrines (#1378), once every death is in, so a player killed
    * this tick is on none: each moves by the pips on it (#2690), a living
    * player one, a living Ghostly Hero `GHOST_PIPS`, a pet, minion or
@@ -6516,7 +6613,7 @@ export class MatchSimulation {
         if (
           (countsForTeam(record) || ghost) &&
           !record.combatant.dead &&
-          onCapturePoint(point.position, record.position)
+          onCapturePoint(point, record)
         ) {
           const team = record.combatant.team;
           pips.set(team, (pips.get(team) ?? 0) + (ghost ? GHOST_PIPS : 1));
@@ -6593,7 +6690,7 @@ export class MatchSimulation {
         !body.combatant.dead &&
         body.creature?.kind !== "spirit" &&
         body.combatant.team !== state.owner &&
-        distance(body.position, field.stand) <= BEACON_STRIKE_RADIUS,
+        atObjective(field.stand, field.standLayer ?? 0, body, BEACON_STRIKE_RADIUS),
     );
     if (foes.length === 0) {
       return;
@@ -7663,6 +7760,9 @@ export class MatchSimulation {
           this.#companionDied(victim, victim.creature);
           continue;
         }
+        if (killerTeam !== undefined && this.#teams.has(killerTeam)) {
+          this.#recentKillTeams = withLatestTeam(this.#recentKillTeams, killerTeam);
+        }
         victim.respawnInSeconds = this.#respawnSeconds(victim);
         if (!spared) {
           this.#deathPenalty(victim);
@@ -8398,6 +8498,17 @@ export class MatchSimulation {
     }
   }
 
+  /** Where `record` respawns: its spawn, or the altar its team holds in the Halls' King of the Hill (#2700). */
+  #respawnPlace(record: ParticipantRecord): Vec2 {
+    const altar = this.#ghostField?.altar;
+    return altar !== undefined &&
+      record.creature === undefined &&
+      this.#matchRules?.respawnOnWave === true &&
+      this.#altarState.holder === record.combatant.team
+      ? altar
+      : record.spawn;
+  }
+
   /**
    * How long `record` stays dead: its own `on-death` reset if it has one,
    * else the match rules'. Without match rules, or under
@@ -8411,7 +8522,10 @@ export class MatchSimulation {
     if (this.#matchRules?.deathRule !== "respawn") {
       return Number.POSITIVE_INFINITY;
     }
-    return this.#matchRules.respawnSeconds;
+    const { respawnSeconds, respawnOnWave } = this.#matchRules;
+    return respawnOnWave
+      ? respawnSeconds - (this.#elapsedSeconds % respawnSeconds)
+      : respawnSeconds;
   }
 
   /**
@@ -8664,7 +8778,11 @@ export class MatchSimulation {
         eliminated: this.#eliminated.has(team),
       });
     }
-    return { byTeam };
+    return {
+      byTeam,
+      recentKillTeams: this.#recentKillTeams,
+      recentScoringTeams: this.#recentScoringTeams,
+    };
   }
 
   /**
@@ -8805,7 +8923,7 @@ export class MatchSimulation {
         ) {
           continue;
         }
-        this.#raiseAtShrine(record, shrine.position);
+        this.#raiseAtShrine(record, shrine);
         events.push({
           kind: "resurrected",
           targetId: record.id,
@@ -8836,7 +8954,7 @@ export class MatchSimulation {
    * `record` back from the dead on a shrine at `at`, pushed clear as anyone
    * is (#1186), and invulnerable for its first seconds (#1208).
    */
-  #raiseAtShrine(record: ParticipantRecord, at: Vec2): void {
+  #raiseAtShrine(record: ParticipantRecord, shrine: Shrine): void {
     const { combatant } = record;
     combatant.statuses.clear();
     combatant.dead = false;
@@ -8845,8 +8963,8 @@ export class MatchSimulation {
     combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
     combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
     emptyAdrenaline(combatant);
-    record.layer = record.spec.layer ?? 0;
-    let position = nearestStandable(this.#graphOn(record.layer), at);
+    record.layer = shrine.layer ?? 0;
+    let position = nearestStandable(this.#graphOn(record.layer), shrine.position);
     for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
       position = this.#pushOut(record, position, this.#radiusOf(record), NOBODY);
     }
@@ -8870,7 +8988,12 @@ export class MatchSimulation {
     if (outcome.phase !== "finished") {
       return;
     }
-    this.#outcome = outcome;
+    // Only the Elite Zaishen Battle has a start line, and it is won only by
+    // killing all six (#2933): annihilation's other ending is the time limit.
+    this.#outcome =
+      this.#startLine !== undefined && outcome.reason !== "annihilation"
+        ? { phase: "finished", winningTeam: 1, reason: "time" }
+        : outcome;
   }
 
   private advanceMovement(record: ParticipantRecord, direction: Vec2, dt: number): void {
@@ -9056,6 +9179,7 @@ export class MatchSimulation {
    * morale boost (#474).
    */
   #reset(record: ParticipantRecord, why: "respawn" | "reset"): void {
+    const returnsTo = why === "respawn" ? this.#respawnPlace(record) : record.spawn;
     if (why === "reset") {
       record.combatant.overcast = 0;
       this.#setMorale(record, 0);
@@ -9069,7 +9193,7 @@ export class MatchSimulation {
     emptyAdrenaline(record.combatant);
     record.combatant.lastCombatAt = this.#elapsedSeconds;
     record.combatant.statuses.clear();
-    record.position = record.spawn;
+    record.position = returnsTo;
     record.layer = record.spec.layer ?? 0;
     this.#refreshFloors(record);
     record.facing = record.spec.facing;
@@ -9101,7 +9225,7 @@ export class MatchSimulation {
     record.outOfCombatSeconds = 0;
     record.history.clear();
     record.combatant.moving = false;
-    this.#stepStart.set(record.id, record.spawn);
+    this.#stepStart.set(record.id, returnsTo);
     // A companion comes back with its owner, alive, beside them (#1046),
     // wherever it was summoned.
     const companion = record.creature === undefined ? this.#companionOf(record) : undefined;

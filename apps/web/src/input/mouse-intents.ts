@@ -4,6 +4,7 @@ import type { CallsSnapshot, MatchSnapshot } from "@vibewars/game-session";
 
 import { actorAtPoint, type ArenaSnapshot } from "../render/arena-snapshot.js";
 import { flagObjectAtPoint } from "../render/flag-objects.js";
+import { pickSurface } from "../render/layer-surfaces.js";
 import { attackClickIntents } from "./attack-key.js";
 import type { DoubleClick } from "./double-click.js";
 
@@ -48,7 +49,8 @@ export function secondaryClickIntents(
 }
 
 /**
- * What a left click sends (#438): a walk to `world`. With `shift` (Show
+ * What a left click sends (#438): a walk to the surface drawn at `world`,
+ * or with `below` (Alt, #2831) the one under it. With `shift` (Show
  * names held, #2738), a click on a body or its name targets it instead,
  * and at once attacks it, as a double right click would on a foe; on the
  * ground it still walks.
@@ -58,11 +60,14 @@ export function primaryClickIntents(
   arena: ArenaSnapshot,
   world: Vec2,
   shift: boolean,
+  below: boolean,
 ): ClientIntent[] {
   const hit = shift ? actorAtPoint(arena, world, arena.nameBoxes) : undefined;
-  return hit === undefined
-    ? [{ kind: "walk-to", x: world.x, y: world.y }]
-    : [{ kind: "target", targetSessionId: hit.id }, ...attackClickIntents(snapshot, hit.id)];
+  if (hit !== undefined) {
+    return [{ kind: "target", targetSessionId: hit.id }, ...attackClickIntents(snapshot, hit.id)];
+  }
+  const { layer, point } = pickSurface(arena.structure, world, below);
+  return [{ kind: "walk-to", x: point.x, y: point.y, layer }];
 }
 
 /** What a wheel click does (#443). */

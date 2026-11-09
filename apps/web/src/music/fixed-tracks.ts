@@ -7,6 +7,9 @@
 /** Every menu screen's song. */
 export const MENU_TRACK = "first-light";
 
+/** The splash screen's song (#2884): the game's own theme. */
+export const SPLASH_TRACK = "vibe-wars";
+
 /** Played on a map this table does not know: wrong data. */
 export const UNKNOWN_MAP_TRACK = "hall-of-champions";
 
@@ -33,11 +36,15 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["sunken-bastion", "victors-hymn"],
   ["shiverpeak-pass", "northern-pass"],
   ["elonian-plateau", "glass-dunes"],
-  ["hall-of-heroes", "hall-of-champions"],
+  ["hall-of-heroes-king", "hall-of-champions"],
+  ["hall-of-heroes-relic", "hall-of-champions"],
+  ["hall-of-heroes-capture", "hall-of-champions"],
   ["barrow-field", "jungle-veil"],
   ["hollow-deep", "ember-deep"],
   ["blackwater-ford", "jungle-veil"],
   ["mosslit-cairns", "jungle-veil"],
+  ["brazen-causeway", "clash-of-banners"],
+  ["elite-zaishen-battle", "hall-of-champions"],
 ]);
 
 export type MenuScreen =

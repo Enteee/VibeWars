@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { RECONNECT_WINDOW_SECONDS, type PlannedSeat } from "./match-host.js";
 import {
+  ARENA,
   TEST_NOW_SECONDS,
   helloAs,
   startMatch,
@@ -30,6 +31,21 @@ function recording() {
 }
 
 describe("a finished match's record (#2528)", () => {
+  it("is not published for an Elite Zaishen Battle (#2692)", async () => {
+    const { records, publishRecord } = recording();
+    const match = startMatch({
+      map: { ...ARENA, startLine: { layer: 0, x: 0, y: 0, width: 10, height: 10 } },
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 1 },
+      publishRecord,
+    });
+    await match.joinLocal(helloAs("Warrior/Monk"));
+
+    await match.step(2);
+
+    expect(match.host.phase).toBe("finished");
+    expect(records).toHaveLength(0);
+  });
+
   it("is published once, with both teams' names, builds and the result", async () => {
     const { records, publishRecord } = recording();
     const match = startMatch({
@@ -41,6 +57,7 @@ describe("a finished match's record (#2528)", () => {
             team: 0,
             name: "Me",
             guildTag: "VIBE",
+            heroRank: 0,
             guildCape: null,
             bot: false,
             playerPubkey: "ab".repeat(32),
@@ -54,6 +71,7 @@ describe("a finished match's record (#2528)", () => {
             team: 1,
             name: "Elementalist Bot",
             guildTag: null,
+            heroRank: 0,
             guildCape: null,
             bot: true,
             build: starterBuild("Elementalist/Mesmer"),

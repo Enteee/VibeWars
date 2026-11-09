@@ -217,6 +217,7 @@ function joinQueued(
     proofKey: null,
     name: `ticket-${ticketId.slice(0, 1)}`,
     guildTag: null,
+    heroRank: 0,
     guildCape: null,
     timeoutMs,
     relayPub: null,
@@ -346,6 +347,7 @@ async function forgedJoin(
     protocolVersion: PROTOCOL_VERSION,
     name: "Forger",
     guildTag: null,
+    heroRank: 0,
     relayPub: null,
     guildCape: null,
     admission: { seatKey: ticketId, admissionSig: keyOf(signer).sign(bytes) },
@@ -416,6 +418,7 @@ describe("a queued lobby", () => {
         protocolVersion: PROTOCOL_VERSION,
         name: "Bare",
         guildTag: null,
+        heroRank: 0,
         admission: null,
         rejoinToken: null,
         relayPub: null,
@@ -553,6 +556,7 @@ describe("a queued lobby", () => {
               ready: false,
               isHost: false,
               guildTag: null,
+              heroRank: 0,
               guildCape: null,
               bot: false,
               away: false,
@@ -634,6 +638,21 @@ describe("a queued lobby", () => {
       "ticket-4": 10,
     });
     expect(Object.values(await startMorales(GROUP))).toEqual([0, 0, 0, 0]);
+  });
+
+  it("starts a queued match in the lobby mode of its queue (#2688)", async () => {
+    const planned = async (group: FormedGroup): Promise<string | undefined> => {
+      const queued = await openQueued({ group });
+      await queued.join(ALLY);
+      await queued.join(FOE);
+      await queued.join(FOE_2);
+      await settle();
+      await queued.step(COUNTDOWN_SECONDS);
+      return queued.plans[0]?.mode;
+    };
+    expect(await planned({ ...GROUP, mode: "heroes-ascent" })).toBe("heroes-ascent");
+    expect(await planned({ ...GROUP, mode: "team-arena-2v2" })).toBe("team-arena");
+    expect(await planned(GROUP)).toBe("random-arena");
   });
 
   it("falls through at the timeout, naming the tickets that never came", async () => {
@@ -1176,11 +1195,10 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
         board: board.board(),
         mode: "random-arena-2v2",
         ascentRound: null,
-        teamCount: 2,
         ...(party === undefined ? {} : { party }),
         now: () => now,
         newTicketKey: () => keyOf(String((fresh += 1)).padStart(64, "5")),
-        mapPool: ["other-arena"],
+        round: () => ({ mapPool: ["other-arena"], teamCount: 2, skipping: false }),
         hardNat: false,
       });
     const clients = [

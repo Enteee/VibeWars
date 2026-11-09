@@ -21,7 +21,6 @@ import {
   noTeamBuildNamed,
   proposableTeams,
   putAwayBuildsDrawer,
-  reasonLine,
   renderTeamLobbyScreen,
   soloCharacterKey,
   soloEntries,
@@ -33,12 +32,19 @@ import {
 // The figure draws on a canvas, which Node has none of: a bare one,
 // naming what it holds as the real one does.
 /** The title bar's status, as the last screen drawn put it there. */
-const bar = vi.hoisted(() => ({ status: [] as readonly unknown[] }));
+const bar = vi.hoisted(() => ({
+  status: [] as readonly unknown[],
+  actions: [] as readonly unknown[],
+}));
 
 vi.mock("./kit.js", async (original) => ({
   ...(await original<typeof Kit>()),
-  screenBar: (options: { readonly status?: readonly unknown[] }) => {
+  screenBar: (options: {
+    readonly status?: readonly unknown[];
+    readonly actions?: readonly unknown[];
+  }) => {
     bar.status = options.status ?? [];
+    bar.actions = options.actions ?? [];
     return { back: undefined, release: () => undefined };
   },
 }));
@@ -152,6 +158,7 @@ function player(
     sessionId,
     name,
     guildTag: null,
+    heroRank: 0,
     team,
     ready: false,
     isHost: sessionId === "aria",
@@ -274,20 +281,6 @@ function team(id: string, name: string, size: TeamBuildSize, filled: number = si
 }
 
 describe("the Team Lobby's words (#1460)", () => {
-  it("reads every reason, telling a random tie from a vote nobody cast", () => {
-    const voted = [proposal("aria", ["brann"]), proposal("brann", ["cass"])];
-    const unvoted = [proposal("aria", []), proposal("brann", [])];
-    expect(reasonLine({ ...SUNRISE, reason: "votes" }, voted)).toBe("Most votes");
-    expect(reasonLine({ ...SUNRISE, reason: "captain" }, voted)).toBe("Tie: captain's pick");
-    expect(reasonLine({ ...SUNRISE, reason: "random" }, voted)).toBe("Tie: picked at random");
-    expect(reasonLine({ ...SUNRISE, reason: "random" }, unvoted)).toBe(
-      "No votes: picked at random",
-    );
-    expect(
-      reasonLine({ ...SUNRISE, proposerId: null, reason: "preset", presetName: "AB Balanced" }, []),
-    ).toBe("No proposals: a random preset");
-  });
-
   it("shows the clock as m:ss and a voter as an initial", () => {
     expect([clockText(38), clockText(60), clockText(0), clockText(-3)]).toEqual([
       "0:38",
@@ -347,7 +340,6 @@ describe("the Team Lobby's body (#1460)", () => {
     onPropose: (teamId) => sent.push({ kind: "propose", value: teamId }),
     onClaim: (slot) => sent.push({ kind: "claim", value: slot }),
     onPickSolo: (key) => sent.push({ kind: "pick", value: key }),
-    onToggleReady: () => undefined,
     onLeave: () => undefined,
   };
   const body = (
@@ -444,16 +436,13 @@ describe("the Team Lobby's body (#1460)", () => {
     expect(shown.text()).not.toContain("Click a card");
   });
 
-  it("votes for a card on a click, and withdraws on a click on its own vote", () => {
+  it("votes for a card on a click, and a click on its own vote sends nothing", () => {
     const cards = body(
       lobby("brann", "vote", voteSide([proposal("aria", []), proposal("brann", ["brann"])])),
     ).all("play-card");
     press(cards[0])?.click();
     press(cards[1])?.click();
-    expect(sent).toEqual([
-      { kind: "vote", value: "aria" },
-      { kind: "vote", value: null },
-    ]);
+    expect(sent).toEqual([{ kind: "vote", value: "aria" }]);
   });
 
   /** The drawer's tab, the drawer, and its rows' heads, in `shown`. */
@@ -709,7 +698,7 @@ describe("the Team Lobby's body (#1460)", () => {
       t("teamLobby.soloStarting"),
     );
     expect(root.all("team-lobby-seat")).toEqual([]);
-    expect(root.all("team-lobby-result")).toHaveLength(1);
+    expect(root.all("play-card")).toEqual([]);
     renderTeamLobbyScreen(
       root as unknown as HTMLElement,
       lobby("brann", "vote", { ...voteSide([]), size: 1 }),
@@ -728,33 +717,31 @@ describe("the Team Lobby's body (#1460)", () => {
     expect(shown.text()).toBe(t("teamLobby.spectating"));
   });
 
-  it("lifts the chosen build, fades the rest, and says why", () => {
-    // The vote first: the claim's state carries no proposals.
-    body(
-      lobby("brann", "vote", voteSide([proposal("aria", ["aria"]), proposal("brann", ["brann"])])),
-    );
+  it("shows only the seats at the claim: no build card, no reason, no ready button (#2872)", () => {
     const shown = body(lobby("brann", "claim", claimSide([null, null, null, null])));
-    const cards = shown.all("team-lobby-result")[0]?.all("play-card") ?? [];
-    expect(
-      cards.map((card) => [
-        card.all("team-lobby-name-text")[0]?.textContent,
-        card.has("is-chosen"),
-        card.has("is-faded"),
-      ]),
-    ).toEqual([
-      ["Aria", true, false],
-      ["Brann", false, true],
-    ]);
-    expect(press(cards[1])?.disabled).toBe(true);
-    expect(shown.all("team-lobby-reason").map((line) => line.textContent)).toEqual([
-      "Tie: captain's pick",
-    ]);
-    expect(shown.all("team-lobby-seats-line").map((line) => line.textContent)).toEqual([
-      t("teamLobby.seatsLine"),
-    ]);
+    expect(shown.all("play-card")).toEqual([]);
+    expect(shown.all("team-lobby-seat")).toHaveLength(4);
+    expect(shown.text()).not.toContain(t("session.ascentLocked"));
+    expect((bar.actions as readonly FakeElement[]).map((action) => action.text())).toEqual([]);
   });
 
-  it("seats: a free one is taken, your own let go, someone else's is locked", () => {
+  it("sends nothing for a click on your own seat or your own vote (#2872)", () => {
+    const seats = body(lobby("brann", "claim", claimSide(["brann", null, null, null]))).all(
+      "team-lobby-seat",
+    );
+    seats[0]?.click();
+    expect(sent).toEqual([]);
+    seats[1]?.click();
+    expect(sent).toEqual([{ kind: "claim", value: 1 }]);
+    sent.length = 0;
+    const cards = body(lobby("brann", "vote", voteSide([proposal("aria", ["brann"])]))).all(
+      "play-card",
+    );
+    press(cards[0])?.click();
+    expect(sent).toEqual([]);
+  });
+
+  it("seats: a free one is taken, your own stays, someone else's is locked", () => {
     const seats = body(lobby("brann", "claim", claimSide(["aria", "brann", null, null]))).all(
       "team-lobby-seat",
     );
@@ -780,10 +767,7 @@ describe("the Team Lobby's body (#1460)", () => {
     expect(seats[1]?.has("is-mine")).toBe(true);
     seats[1]?.click();
     seats[2]?.click();
-    expect(sent).toEqual([
-      { kind: "claim", value: null },
-      { kind: "claim", value: 2 },
-    ]);
+    expect(sent).toEqual([{ kind: "claim", value: 2 }]);
   });
 
   it("keeps a won Heroes' Ascent run's seats, a vacant one open to a newcomer alone (#2539)", () => {
@@ -807,12 +791,9 @@ describe("the Team Lobby's body (#1460)", () => {
       "Ranger: Open: Ranger build",
     ]);
     expect(seats.map((seat) => seat.disabled)).toEqual([true, true, false, false]);
-    expect(newcomer.all("team-lobby-reason").map((line) => line.textContent)).toEqual([
-      t("session.ascentLocked"),
-    ]);
     seats[2]?.click();
     expect(sent).toEqual([{ kind: "claim", value: 2 }]);
-    // A newcomer seated in a vacant slot may let go of it.
+    // A newcomer seated in a vacant slot may still move.
     expect(
       locked("cass", ["aria", "brann", "cass", null])
         .all("team-lobby-seat")
@@ -871,7 +852,7 @@ describe("the Team Lobby's body (#1460)", () => {
       expect(waiting?.all("is-empty")).toHaveLength(32);
     });
 
-    it("draws them on the chosen card and its seats, never by name; a house seat stays a '?' (#1863)", () => {
+    it("draws them on the seats, never by name; a house seat stays a '?' (#1863)", () => {
       body(lobby("brann", "vote", voteSide([proposal("aria", [])])));
       const shown = body(
         lobby(
@@ -891,14 +872,6 @@ describe("the Team Lobby's body (#1460)", () => {
           ARIAS,
         ),
       );
-      const chosen = shown.all("is-chosen")[0];
-      const rows = chosen?.all("character-card-row") ?? [];
-      expect(rows.map((row) => row.attributes.get("aria-label"))).toEqual([
-        "Warrior",
-        "Monk",
-        "Elementalist",
-      ]);
-      expect(chosen?.all("is-house")).toHaveLength(1);
       const seats = shown.all("team-lobby-seat");
       const [warrior] = seats;
       expect(
@@ -918,22 +891,7 @@ describe("the Team Lobby's body (#1460)", () => {
     });
   });
 
-  it("names the random preset team when nobody proposed (#2148)", () => {
-    body(lobby("aria", "vote", voteSide([])));
-    const shown = body(
-      lobby("aria", "claim", {
-        ...claimSide([null, null, null, null]),
-        chosen: { ...SUNRISE, proposerId: null, reason: "preset", presetName: "AB Balanced" },
-      }),
-    );
-    const cards = shown.all("play-card");
-    expect(cards.map((card) => card.all("team-lobby-name-text")[0]?.textContent)).toEqual([
-      "AB Balanced",
-    ]);
-    expect(shown.all("team-lobby-reason")[0]?.textContent).toBe("No proposals: a random preset");
-  });
-
-  it("draws the preset's job names and skill bars on its card and seats (#2148)", () => {
+  it("draws the preset's job names and skill bars on its seats (#2148)", () => {
     const preset = STARTER_TEAMS.find((team) => team.members.length === 4);
     if (preset === undefined) throw new Error("no 4-member starter team");
     const shown = body(
@@ -952,8 +910,6 @@ describe("the Team Lobby's body (#1460)", () => {
       }),
     );
     const jobs = preset.members.map(({ name }) => name);
-    const rows = shown.all("is-chosen")[0]?.all("character-card-row") ?? [];
-    expect(rows.map((row) => row.attributes.get("aria-label"))).toEqual(jobs);
     const seats = shown.all("team-lobby-seat");
     expect(seats.map((seat) => seat.attributes.get("aria-label"))).toEqual(
       jobs.map((job) => `${job}: Sit here`),
@@ -963,24 +919,5 @@ describe("the Team Lobby's body (#1460)", () => {
         seat.all("mini-skill").filter((cell) => !cell.className.includes("is-empty")),
       ).not.toHaveLength(0);
     }
-  });
-
-  it("titles a side of one's preset, which has no name, a preset team (#2148)", () => {
-    const shown = body(
-      lobby("aria", "claim", {
-        ...claimSide([null]),
-        size: 1,
-        chosen: {
-          ...SUNRISE,
-          proposerId: null,
-          reason: "preset",
-          presetName: null,
-          members: SUNRISE.members.slice(0, 1),
-        },
-      }),
-    );
-    expect(
-      shown.all("play-card").map((card) => card.all("team-lobby-name-text")[0]?.textContent),
-    ).toEqual([t("teamLobby.presetTeam")]);
   });
 });

@@ -14,6 +14,7 @@ import {
   joinFailureNotice,
   leaveOnPageHide,
   lobbyClosedNotice,
+  matchEndedNotice,
   lobbyRandom,
   lobbyRefusalNotice,
   loopbackHint,
@@ -44,6 +45,21 @@ describe("the notice for a match that would not start (#1268)", () => {
     expect(notice("protocol-mismatch")).toBe(t("session.protocolMismatch"));
     expect(notice("not-a-spectator")).toBe(t("session.notASpectator"));
     expect(notice("wrong-match")).toBe(t("session.wrongMatch"));
+  });
+});
+
+describe("the notice for a match that ended under the player (#2905)", () => {
+  it("says the host left when the host said so", () => {
+    expect(matchEndedNotice("host-left")).toBe(t("queue.hostLeft"));
+  });
+
+  it("says the connection was lost when the host went without a word", () => {
+    expect(matchEndedNotice("lost")).toBe(t("app.lostMatch"));
+  });
+
+  it("says nothing while the host may still be there", () => {
+    expect(matchEndedNotice("online")).toBeUndefined();
+    expect(matchEndedNotice("reconnecting")).toBeUndefined();
   });
 });
 
@@ -230,11 +246,10 @@ describe("closing the tab while queued (#1881)", () => {
     const client = createQueueClient({
       board: memory.board(),
       ascentRound: null,
-      teamCount: 2,
       mode: "random-arena-4v4",
       now: () => 1_700_000_000_000,
       newTicketKey: () => ({ ticketId, sign: () => "b".repeat(128) }),
-      mapPool: ["arena-a"],
+      round: () => ({ mapPool: ["arena-a"], teamCount: 2, skipping: false }),
       hardNat: false,
     });
     await client.tick();

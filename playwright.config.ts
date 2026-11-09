@@ -103,6 +103,7 @@ export default defineConfig({
       VIBEWARS_BASE: BASE,
       VITE_VIBEWARS_TRANSPORT: "broadcast",
       VITE_VIBEWARS_LOBBY_SEED: "4404",
+      VITE_VIBEWARS_SPLASH: "off",
       VIBEWARS_BUILD: E2E_BUILD,
     },
     reuseExistingServer: false,

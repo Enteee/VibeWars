@@ -1,5 +1,6 @@
 import { isGloballyMuted, onGlobalMute, setGlobalMute } from "../audio/global-mute.js";
 import { t } from "../i18n/index.js";
+import { readPastedLobbyLink } from "../net/fragment.js";
 import { attachFullscreenButton, fullscreenTarget } from "./fullscreen.js";
 import { closeHelpOverlay, isHelpOverlayOpen } from "./help-screen.js";
 import { paintMuteButton } from "./hud.js";
@@ -96,8 +97,10 @@ export const CONNECTING_NOTICE_MS = 3000;
 export interface JoinControls {
   /** The bar's: "Connecting…" and a host's "your party joins too" (#1553). */
   readonly element: HTMLElement;
-  /** The Lobby window's, on top: the lobby's label, Copy invite link, Closed / Open and Leave. */
+  /** The Lobby window's, on top: the lobby's label, Copy invite link, Join lobby, Closed / Open and Leave. */
   readonly controls: HTMLElement;
+  /** The Lobby window shut: Join lobby's field goes with it, emptied (#2882). */
+  readonly closeJoinField: () => void;
   /** A new bar shows: a join it was waiting on has ended, either way. */
   readonly settle: () => void;
   /**
@@ -147,9 +150,68 @@ export function joinControls(
   const toggleLabel = h("span", "topbar-lobby-open-label", t("topbar.closed"));
   toggle.append(toggleGlyph, toggleLabel);
   const leave = button(t("topbar.leave"), "topbar-leave", onLeave);
-  lobby.append(lobbyLabel, copy, toggle, leave);
+  // Join lobby (#2882): a pasted link goes in through the page's own
+  // `hashchange`, exactly as one pasted into the address bar does.
+  const joinField = h("div", "lobby-join-field");
+  const joinInput = document.createElement("input");
+  joinInput.type = "text";
+  joinInput.className = "field-input lobby-join-input";
+  joinInput.placeholder = t("topbar.joinLobbyField");
+  joinInput.setAttribute("aria-label", t("topbar.joinLobbyField"));
+  joinInput.autocomplete = "off";
+  joinInput.spellcheck = false;
+  const joinMessage = h("p", "lobby-join-message");
+  joinMessage.setAttribute("role", "alert");
+  const sayJoinError = (message: string): void => {
+    joinMessage.textContent = message;
+    joinMessage.hidden = message === "";
+    joinInput.setAttribute("aria-invalid", String(message !== ""));
+  };
+  const closeJoinField = (): void => {
+    joinField.hidden = true;
+    joinInput.value = "";
+    sayJoinError("");
+  };
+  closeJoinField();
+  const joinLobby = button(t("topbar.joinLobby"), "lobby-join-open", () => {
+    joinField.hidden = false;
+    joinInput.focus();
+  });
+  const putJoinFieldAway = (): void => {
+    closeJoinField();
+    joinLobby.focus();
+  };
+  const submitJoinField = (): void => {
+    const pasted = readPastedLobbyLink(joinInput.value, location);
+    if (pasted.kind === "link") {
+      putJoinFieldAway();
+      location.hash = pasted.fragment;
+    } else {
+      sayJoinError(
+        t(pasted.kind === "other-build" ? "topbar.joinOtherBuild" : "topbar.joinNotALink"),
+      );
+    }
+  };
+  joinInput.addEventListener("keydown", (event: KeyboardEvent) => {
+    // Typed here, so never a shortcut's; Esc takes the field, not the window.
+    event.stopPropagation();
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submitJoinField();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      putJoinFieldAway();
+    }
+  });
+  const joinActions = h("div", "lobby-join-actions");
+  joinActions.append(
+    button(t("topbar.joinConfirm"), "lobby-join-confirm", submitJoinField),
+    button(t("topbar.joinCancel"), "lobby-join-cancel", putJoinFieldAway),
+  );
+  joinField.append(joinInput, joinActions, joinMessage);
+  lobby.append(lobbyLabel, copy, joinLobby, toggle, leave);
   const controls = h("div", "lobby-window-controls");
-  controls.append(lobby, share.element);
+  controls.append(lobby, share.element, joinField);
   // Shown once a join has run a while; the lobby, or the menu again with
   // why it failed, puts it away when it ends.
   const connecting = h("span", "topbar-connecting", t("topbar.connecting"));
@@ -197,6 +259,7 @@ export function joinControls(
   return {
     element: group,
     controls,
+    closeJoinField,
     settle: () => {
       shown += 1;
       connecting.hidden = true;
@@ -227,6 +290,10 @@ export function joinControls(
       );
       lobby.classList.toggle("is-joining", joining);
       copy.hidden = joining;
+      joinLobby.hidden = joining;
+      if (joining) {
+        closeJoinField();
+      }
       share.hide();
       party = shown?.isHost === true ? shown.party : 0;
       if (party <= 1) {
@@ -316,6 +383,7 @@ export function lobbyButton(
   parent: HTMLElement,
   controls: HTMLElement,
   onRemoveMember: (id: string) => void,
+  onClosed: () => void,
 ): LobbyButton {
   const element = iconButton("topbar-lobby-button", lobbyButtonName(1), lobbyIcon());
   element.title = t("topbar.lobby");
@@ -349,6 +417,7 @@ export function lobbyButton(
       focus: panel,
       dispose() {
         paintWindow = undefined;
+        onClosed();
       },
     };
   });
@@ -446,7 +515,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     callbacks.onSetOpen,
   );
   join.element.hidden = true;
-  const lobby = lobbyButton(bar, join.controls, callbacks.onRemoveMember);
+  const lobby = lobbyButton(bar, join.controls, callbacks.onRemoveMember, join.closeJoinField);
 
   const music = iconButton("topbar-music", t("topbar.music"));
   // Tracks lobby members shared and this player has not seen (#2745).

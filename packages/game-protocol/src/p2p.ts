@@ -29,6 +29,7 @@ import {
   LOBBY_MODES,
   MAX_LOBBY_PLAYERS,
   isLobbyCode,
+  isWireLayer,
   MAX_TEAM_LOBBY_SIDE,
   LOBBY_TEAM_SIZES,
   type LobbyTeamSize,
@@ -104,6 +105,9 @@ export const MAX_WIRE_STRING = 64;
 
 /** The longest sentence a player is shown, such as a refusal's `message`. */
 export const MAX_WIRE_TEXT = 256;
+
+/** The highest hero rank (#2702). */
+export const MAX_HERO_RANK = 15;
 
 /** The most statuses one player carries in a snapshot. */
 export const MAX_WIRE_STATUSES = 32;
@@ -282,12 +286,6 @@ export const MAX_WIRE_SIGNET = 0x1fff;
 /** The most walls a map holds, and points a polygon wall holds. */
 export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
-/** A body's highest layer: a map has at most three (ADR-0051). */
-const MAX_WIRE_LAYER = 2;
-
-function isWireLayer(value: unknown): value is number {
-  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= MAX_WIRE_LAYER;
-}
 
 /** The most gates a map holds (#2691), as `MAX_GATES` in game-maps; a peer keeps walls per combination. */
 export const MAX_WIRE_GATES = 6;
@@ -343,6 +341,8 @@ export interface PeerHello {
    * `null` for none. The host sanitises it: an invalid one becomes `null`.
    */
   readonly guildTag: string | null;
+  /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
+  readonly heroRank: number;
   /**
    * The guild cape the player designed (#1422); `null` for none, and for
    * anything that is not a cape. The host drops it without a valid tag.
@@ -480,6 +480,8 @@ export interface WirePlayer {
   readonly name: string;
   /** 2–4 letters or digits (#1406), as the host sanitised it; `null` for none and for every bot. */
   readonly guildTag: string | null;
+  /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
+  readonly heroRank: number;
   /** Worn behind the body (#1422); `null` for none, and whenever `guildTag` is. */
   readonly guildCape: WireCape | null;
   /** A match team, or `MASTERLESS_WIRE_TEAM` for a masterless creature (#2092). */
@@ -647,6 +649,8 @@ export interface WireCarried<Place extends string> {
   /** Where it lies, while `ground`; `null` otherwise. */
   readonly x: number | null;
   readonly y: number | null;
+  /** The discrete layer it lies on (ADR-0051), while `ground`; `null` otherwise. */
+  readonly layer: number | null;
 }
 
 /** A Guild Battle's flag (#1225): one a team, or none on a map without a stand. */
@@ -659,6 +663,8 @@ export type WireRelic = WireCarried<(typeof RELIC_PLACES)[number]>;
 export interface WireCapturePoint {
   readonly x: number;
   readonly y: number;
+  /** The discrete layer it stands on (ADR-0051), 0 to `MAX_WIRE_LAYER`. */
+  readonly layer: number;
   readonly owner: WireTeam | null;
   readonly capturer: WireTeam | null;
   /** From 0 to 1, toward `capturer`. */
@@ -945,6 +951,8 @@ export interface WireSummaryRow {
   readonly name: string;
   /** The seat's guild tag (#1406); `null` for none. */
   readonly guildTag: string | null;
+  /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
+  readonly heroRank: number;
   readonly team: WireTeam;
   /** The seat's signet bits (#2822); `null` for a bot. */
   readonly signet: number | null;
@@ -961,6 +969,8 @@ export interface WireEnded {
   readonly winningTeam: WireTeam | null;
   readonly endReason: EndReason | "host-left";
   readonly summary: readonly WireSummaryRow[];
+  /** Seconds on the Elite Zaishen Battle's clock (#2692); `null` in any other match. */
+  readonly clearSeconds: number | null;
 }
 
 /**
@@ -974,6 +984,8 @@ export interface PeerLobbyJoin {
   readonly name: string;
   /** As `PeerHello.guildTag` (#1406). */
   readonly guildTag: string | null;
+  /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
+  readonly heroRank: number;
   /** As `PeerHello.guildCape` (#1422). */
   readonly guildCape: WireCape | null;
   /**
@@ -1214,6 +1226,8 @@ export interface WireLobbyPlayer {
   readonly name: string;
   /** As `WirePlayer.guildTag` (#1406). */
   readonly guildTag: string | null;
+  /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
+  readonly heroRank: number;
   /** As `WirePlayer.guildCape` (#1422). */
   readonly guildCape: WireCape | null;
   /** `null` spectates. */
@@ -1400,10 +1414,10 @@ export type WireLobbyCommand =
       readonly build: JsonValue;
     }
   | { readonly kind: "propose"; readonly slot: null }
-  /** In a Team Lobby's vote: vote for a proposal on one's own side; `null` withdraws. */
-  | { readonly kind: "vote"; readonly proposerId: string | null }
-  /** In a Team Lobby's claim: take that slot of the chosen build; `null` lets it go. */
-  | { readonly kind: "claim"; readonly slot: number | null }
+  /** In a Team Lobby's vote: vote for a proposal on one's own side. */
+  | { readonly kind: "vote"; readonly proposerId: string }
+  /** In a Team Lobby's claim: take that slot of the chosen build. */
+  | { readonly kind: "claim"; readonly slot: number }
   /**
    * A team mode's party host to its match host (ADR-0042): seat `slot` of
    * its side of `size`, played by the human `memberKey` or, `null`, a
@@ -1629,6 +1643,10 @@ function parseString(value: unknown): string | undefined {
   return isString(value) ? value : undefined;
 }
 
+function isHeroRank(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= MAX_HERO_RANK;
+}
+
 /** A client's guild tag as typed (#1406), cut to `MAX_WIRE_TEXT`: the host sanitises it. */
 function parseRawGuildTag(value: unknown): string | null | undefined {
   if (value === null) {
@@ -1734,12 +1752,16 @@ export function parsePeerHello(value: unknown): PeerHello | undefined {
   const guildTag = parseRawGuildTag(raw.guildTag);
   const build = parseJson(raw.build);
   const rejoin = parseRejoin(raw.rejoin);
-  return guildTag === undefined || build === undefined || rejoin === undefined
+  return guildTag === undefined ||
+    build === undefined ||
+    rejoin === undefined ||
+    !isHeroRank(raw.heroRank)
     ? undefined
     : {
         protocolVersion: raw.protocolVersion,
         name: raw.name.slice(0, MAX_WIRE_TEXT),
         guildTag,
+        heroRank: raw.heroRank,
         // A client's: what is not a cape is no cape, never a refused join.
         guildCape: parseWireCape(raw.guildCape) ?? null,
         build,
@@ -2072,6 +2094,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isString(raw.id) ||
     !isString(raw.name) ||
     !isNullableString(raw.guildTag) ||
+    !isHeroRank(raw.heroRank) ||
     !isBodyTeam(raw.team) ||
     !isNumber(raw.x) ||
     !isNumber(raw.y) ||
@@ -2118,6 +2141,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         id: raw.id,
         name: raw.name,
         guildTag: raw.guildTag,
+        heroRank: raw.heroRank,
         guildCape,
         team: raw.team,
         x: raw.x,
@@ -2350,6 +2374,7 @@ function parseCapturePoint(value: unknown): WireCapturePoint | undefined {
   return raw !== undefined &&
     isNumber(raw.x) &&
     isNumber(raw.y) &&
+    isWireLayer(raw.layer) &&
     (raw.owner === null || isTeam(raw.owner)) &&
     (raw.capturer === null || isTeam(raw.capturer)) &&
     isNumber(raw.progress) &&
@@ -2358,6 +2383,7 @@ function parseCapturePoint(value: unknown): WireCapturePoint | undefined {
     ? {
         x: raw.x,
         y: raw.y,
+        layer: raw.layer,
         owner: raw.owner,
         capturer: raw.capturer,
         progress: raw.progress,
@@ -2386,16 +2412,16 @@ function carriedFields<Place extends string>(
   place: Place,
   raw: Fields,
 ): WireCarried<Place> | undefined {
-  const { carrierId, x, y } = raw;
+  const { carrierId, x, y, layer } = raw;
   const kind: string = place;
   const carrier = kind === "carried" ? (isString(carrierId) ? carrierId : undefined) : null;
   const spot =
     kind === "ground"
-      ? isNumber(x) && isNumber(y)
-        ? { x, y }
+      ? isNumber(x) && isNumber(y) && isWireLayer(layer)
+        ? { x, y, layer }
         : undefined
-      : x === null && y === null
-        ? { x: null, y: null }
+      : x === null && y === null && layer === null
+        ? { x: null, y: null, layer: null }
         : undefined;
   return carrier === undefined || (carrier === null && carrierId !== null) || spot === undefined
     ? undefined
@@ -2586,6 +2612,7 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
     isString(raw.id) &&
     typeof raw.name === "string" &&
     isNullableString(raw.guildTag) &&
+    isHeroRank(raw.heroRank) &&
     isTeam(raw.team) &&
     isNullableSignet(raw.signet) &&
     isCount(raw.damage) &&
@@ -2598,6 +2625,7 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
         id: raw.id,
         name: raw.name.slice(0, MAX_WIRE_TEXT),
         guildTag: raw.guildTag,
+        heroRank: raw.heroRank,
         team: raw.team,
         signet: raw.signet,
         damage: raw.damage,
@@ -2617,8 +2645,14 @@ export function parseWireEnded(value: unknown, teamCount: WireTeamCount): WireEn
   return raw !== undefined &&
     (raw.winningTeam === null || (isTeam(raw.winningTeam) && raw.winningTeam < teamCount)) &&
     isOneOf(raw.endReason, [...END_REASONS, "host-left"] as const) &&
-    summary?.every(({ team }) => team < teamCount) === true
-    ? { winningTeam: raw.winningTeam, endReason: raw.endReason, summary }
+    summary?.every(({ team }) => team < teamCount) === true &&
+    (raw.clearSeconds === null || (isNumber(raw.clearSeconds) && raw.clearSeconds >= 0))
+    ? {
+        winningTeam: raw.winningTeam,
+        endReason: raw.endReason,
+        summary,
+        clearSeconds: raw.clearSeconds,
+      }
     : undefined;
 }
 
@@ -2742,6 +2776,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     !isString(raw.protocolVersion) ||
     typeof raw.name !== "string" ||
     guildTag === undefined ||
+    !isHeroRank(raw.heroRank) ||
     admission === undefined ||
     (raw.rejoinToken !== null && !isRejoinToken(raw.rejoinToken)) ||
     (raw.relayPub !== null && !isRelayPub(raw.relayPub)) ||
@@ -2754,6 +2789,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     protocolVersion: raw.protocolVersion,
     name: raw.name.slice(0, MAX_WIRE_TEXT),
     guildTag,
+    heroRank: raw.heroRank,
     // As the hello's.
     guildCape: parseWireCape(raw.guildCape) ?? null,
     admission,
@@ -2980,6 +3016,7 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     isString(raw.id) &&
     isString(raw.name) &&
     isNullableString(raw.guildTag) &&
+    isHeroRank(raw.heroRank) &&
     guildCape !== undefined &&
     team !== undefined &&
     typeof raw.ready === "boolean" &&
@@ -2991,6 +3028,7 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
         id: raw.id,
         name: raw.name,
         guildTag: raw.guildTag,
+        heroRank: raw.heroRank,
         guildCape,
         team,
         ready: raw.ready,
@@ -3184,13 +3222,9 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
         : undefined;
     }
     case "vote":
-      return isNullableString(raw.proposerId)
-        ? { kind: "vote", proposerId: raw.proposerId }
-        : undefined;
+      return isString(raw.proposerId) ? { kind: "vote", proposerId: raw.proposerId } : undefined;
     case "claim":
-      return raw.slot === null || isNumber(raw.slot)
-        ? { kind: "claim", slot: raw.slot }
-        : undefined;
+      return isNumber(raw.slot) ? { kind: "claim", slot: raw.slot } : undefined;
     case "team-plan": {
       const build = parseJson(raw.build);
       return isCount(raw.slot) &&

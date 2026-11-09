@@ -6,6 +6,7 @@ import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
 import type { CapturePoint } from "./capture-points.js";
+import { atObjective } from "./layer-rules.js";
 import type { Gate } from "./gates.js";
 import type { CarriedSpawn } from "./carried.js";
 import { MASTERLESS_TEAM } from "./minions.js";
@@ -122,7 +123,12 @@ export type Behaviour =
        * one. `undefined`: none, as a minion's.
        */
       readonly drawnTo:
-        | { readonly point: Vec2; readonly withinUnits: number; readonly holdUnits: number }
+        | {
+            readonly point: Vec2;
+            readonly layer: number;
+            readonly withinUnits: number;
+            readonly holdUnits: number;
+          }
         | undefined;
       /**
        * Whom it goes for (#1046). `"owner-target"`: a companion's, the foe
@@ -208,6 +214,8 @@ export interface BehaviourIntent {
    * (#1153); `undefined` for none. The simulation owns the path.
    */
   readonly moveTo: Vec2 | undefined;
+  /** The layer `moveTo` is on, an objective's (ADR-0051); omitted: the walker's leader's or its own. */
+  readonly moveToLayer?: number | undefined;
   readonly targetId: string | undefined;
   readonly useSkillId: string | undefined;
   /** Whom to attack with the weapon, through `requestAttack`. */
@@ -233,7 +241,7 @@ export interface BehaviourCursor {
   /** `follow-and-attack` and `guard`: walking back to the owner or the post, past the leash. */
   returning: boolean;
   /** `play-build` and `guard`: the movement its last think asked for, held until the next. */
-  heldMove: Pick<BehaviourIntent, "moveDirection" | "moveTo">;
+  heldMove: Pick<BehaviourIntent, "moveDirection" | "moveTo" | "moveToLayer">;
   /** `play-build`: seconds before it may end another maintained enchantment (#2492). */
   upkeepDropSeconds: number;
   /** `play-build`, a healer: the ally it looks after, kept until another is clearly worse off (#2615). */
@@ -310,6 +318,8 @@ export interface BotObjectives {
    * `undefined` in any other mode.
    */
   readonly altar: Vec2 | undefined;
+  /** The layer `altar` is on (ADR-0051); 0 in any other mode. */
+  readonly altarLayer: number;
   /** The team holding King of the Hill's altar (#2582); `null` when nobody does, or in any other mode. */
   readonly altarHolder: number | null;
   /** The map's gates (#2691), kept current; `[]` on a map without any. */
@@ -323,6 +333,7 @@ export const NO_OBJECTIVES: BotObjectives = {
   relicSpawns: [],
   relicCarry: "own",
   altar: undefined,
+  altarLayer: 0,
   altarHolder: null,
   gates: [],
 };
@@ -632,9 +643,13 @@ function followAndAttack(
   // attack skill sets `attack` (#1079).
   const ownerFoe = livingFoe(owner.combatant.attack?.targetId);
   const drawnTo = behaviour.drawnTo;
-  if (drawnTo !== undefined && distance(owner.position, drawnTo.point) <= drawnTo.withinUnits) {
+  if (
+    drawnTo !== undefined &&
+    atObjective(drawnTo.point, drawnTo.layer, owner, drawnTo.withinUnits)
+  ) {
     const toPoint = distance(drawnTo.point, self.position);
-    if (toPoint <= drawnTo.holdUnits) {
+    const there = atObjective(drawnTo.point, drawnTo.layer, self, drawnTo.holdUnits);
+    if (there) {
       // Adjacent, so the swing needs no step: a foe that backs off is let
       // go, and the walk back to the point ends the attack.
       const adjacent = (other: Participant): boolean =>
@@ -647,7 +662,9 @@ function followAndAttack(
         return { ...STAND_STILL, targetId: foe, attackTargetId: foe };
       }
     }
-    return toPoint > context.stepUnits ? { ...STAND_STILL, moveTo: drawnTo.point } : STAND_STILL;
+    return toPoint > context.stepUnits || !there
+      ? { ...STAND_STILL, moveTo: drawnTo.point, moveToLayer: drawnTo.layer }
+      : STAND_STILL;
   }
   const mode = self.creature?.mode;
   if (behaviour.engage === "owner-target" && mode === "heel") {
@@ -761,7 +778,8 @@ function statusCadence(
  * Every child decides, each with its own cursor. The first child that
  * moves steers; the first that casts picks the skill and its target,
  * and otherwise the first that targets anything does. Every status is
- * applied, and the first maintained enchantment one ends.
+ * applied, and the first maintained enchantment one ends. A body that
+ * is casting stands still, or a child's walking would cancel its cast.
  */
 function parallel(
   behaviour: Extract<Behaviour, { kind: "parallel" }>,
@@ -777,9 +795,10 @@ function parallel(
   const steering = intents.find(
     (intent) => intent.moveDirection !== ZERO || intent.moveTo !== undefined,
   );
+  const moves = !context.self.combatant.cast.isCasting;
   return {
-    moveDirection: steering?.moveDirection ?? ZERO,
-    moveTo: steering?.moveTo,
+    moveDirection: moves ? (steering?.moveDirection ?? ZERO) : ZERO,
+    moveTo: moves ? steering?.moveTo : undefined,
     targetId: (casting ?? intents.find((intent) => intent.targetId !== undefined))?.targetId,
     useSkillId: casting?.useSkillId,
     attackTargetId: intents.find((intent) => intent.attackTargetId !== undefined)?.attackTargetId,

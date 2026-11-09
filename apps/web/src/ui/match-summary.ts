@@ -119,7 +119,7 @@ export function renderSummary(parent: HTMLElement, tables: readonly SummaryTable
       tr.classList.toggle("is-self", self);
       const name = h("th", "match-summary-name");
       name.appendChild(signetElement(row.signet ?? undefined, SIGNET_ROW_PX));
-      name.appendChild(playerLabelElement("player-label", row.name, row.guildTag));
+      name.appendChild(playerLabelElement("player-label", row.name, row.guildTag, row.heroRank));
       if (bot) {
         name.appendChild(botTagElement("match-summary-bot"));
       }

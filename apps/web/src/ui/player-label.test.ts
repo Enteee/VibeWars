@@ -1,16 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { nameplateName, playerLabel, playerLabelText } from "./player-label.js";
+import { nameplateName, playerLabel, heroRankText, playerLabelText } from "./player-label.js";
 
 describe("playerLabel (#1406)", () => {
   it("puts a player's guild tag after their name, in brackets", () => {
     expect(playerLabel("Ente", "VIBE")).toEqual({ name: "Ente", tag: "[VIBE]" });
-    expect(playerLabelText("Ente", "VIBE")).toBe("Ente [VIBE]");
+    expect(playerLabelText("Ente", "VIBE", 0)).toBe("Ente [VIBE]");
   });
 
   it("is the bare name without a tag, from the snapshot's undefined or the wire's null", () => {
     expect(playerLabel("Ente", undefined)).toEqual({ name: "Ente", tag: undefined });
-    expect(playerLabelText("Ente", null)).toBe("Ente");
+    expect(playerLabelText("Ente", null, 0)).toBe("Ente");
+  });
+
+  it("puts a hero rank after the tag, and none at rank 0 (#2702)", () => {
+    expect(playerLabelText("Ente", "VIBE", 3)).toBe("Ente [VIBE] ★3");
+    expect(playerLabelText("Ente", null, 15)).toBe("Ente ★15");
+    expect(heroRankText(0)).toBeUndefined();
   });
 });
 

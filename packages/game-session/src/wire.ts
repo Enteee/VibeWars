@@ -592,16 +592,20 @@ export function wireCarried<Place extends FlagPlace>({
     carrierId: where.kind === "carried" ? where.carrierId : null,
     x: where.kind === "ground" ? where.position.x : null,
     y: where.kind === "ground" ? where.position.y : null,
+    layer: where.kind === "ground" ? where.layer : null,
   };
 }
 
 /** A validated wire relic as game-core's (#1374): a bundle's three places. */
-function relicState({ team, place, carrierId, x, y }: WireRelic): RelicState {
+function relicState({ team, place, carrierId, x, y, layer }: WireRelic): RelicState {
   switch (place) {
     case "carried":
       return { team, place: { kind: "carried", carrierId: carrierId ?? "" } };
     case "ground":
-      return { team, place: { kind: "ground", position: { x: x ?? 0, y: y ?? 0 } } };
+      return {
+        team,
+        place: { kind: "ground", position: { x: x ?? 0, y: y ?? 0 }, layer: layer ?? 0 },
+      };
     case "spawn":
       return { team, place: { kind: "spawn" } };
   }
@@ -618,6 +622,7 @@ export type WireIdentity = Pick<
   WirePlayer,
   | "name"
   | "guildTag"
+  | "heroRank"
   | "guildCape"
   | "team"
   | "primaryProfession"
@@ -632,6 +637,8 @@ export interface SeatIdentity {
   readonly name: string;
   /** `null` for none (#1406). */
   readonly guildTag: string | null;
+  /** 0 for none (#2702). */
+  readonly heroRank: number;
   /** `null` for none (#1422). */
   readonly guildCape: WireCape | null;
   readonly team: WireTeam;
@@ -663,6 +670,7 @@ export function wireIdentity(
     return {
       name: seat.name,
       guildTag: seat.guildTag,
+      heroRank: seat.heroRank,
       guildCape: seat.guildCape,
       team: seat.team,
       primaryProfession: seat.primaryProfession,
@@ -689,6 +697,7 @@ export function wireIdentity(
     : {
         name: creature.name,
         guildTag: null,
+        heroRank: 0,
         guildCape: null,
         team: sentTeam,
         primaryProfession: null,
@@ -729,6 +738,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     sessionId: player.id,
     name: player.name,
     guildTag: absent(player.guildTag),
+    heroRank: player.heroRank,
     guildCape: absent(player.guildCape),
     x: player.x,
     y: player.y,
@@ -831,8 +841,9 @@ export function observedSnapshot(
     altarHolder: absent(snapshot.altarHolder),
     altarHeldSeconds: snapshot.altarHeldSeconds,
     gates: snapshot.gates,
-    capturePoints: snapshot.capturePoints.map(({ x, y, owner, capturer, progress }) => ({
+    capturePoints: snapshot.capturePoints.map(({ x, y, layer, owner, capturer, progress }) => ({
       position: { x, y },
+      layer,
       owner,
       capturer,
       progress,

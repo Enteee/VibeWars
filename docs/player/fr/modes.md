@@ -295,8 +295,8 @@ seul camp, de la taille de l'équipe du mode (la taille choisie en Arène d'équ
 8 pour les autres) quel que soit le nombre de joueurs du groupe ; les bots jouent
 les places que personne ne prend. En file, tu peux parcourir les autres modes :
 le groupe garde son mode et sa taille jusqu'à ce qu'il quitte la file.
-Chaque étape dure 60 secondes et se termine plus tôt quand tout le monde dans le
-Salon d'équipe est prêt.
+Chaque étape dure 30 secondes et se termine plus tôt quand tout le monde dans le
+Salon d'équipe est prêt. Voter et prendre une place te marquent comme prêt.
 
 **Vote.** Toute personne d'un camp peut proposer un Build d'équipe d'exactement
 la taille de ce camp, une proposition chacun. Tes Builds d'équipe s'ouvrent depuis
@@ -307,7 +307,7 @@ problème sont listés ; le panneau indique combien il en masque d'autres taille
 Chacun peut voter pour l'une des propositions de son camp, la sienne comprise.
 Chaque proposition est une carte montrant chaque membre tenant ses armes, avec
 ses compétences, et les initiales de ceux qui ont voté pour elle : clique sur une
-carte pour voter, et clique de nouveau pour retirer ton vote. Rien n'est proposé
+carte pour voter, ou sur une autre pour changer ton vote ; tu ne peux pas le retirer. Rien n'est proposé
 à ta place : le menu sert seulement à créer et modifier des Builds d'équipe. Une
 nouvelle proposition remplace ton ancienne, et ses votes retombent à zéro. Le plus
 de votes l'emporte. En cas d'égalité, le vote du capitaine décide : l'hôte du côté
@@ -322,7 +322,7 @@ camp ne voit les propositions, les votes ou le choix de l'autre.
 
 **Choix des places.** Les personnages du build choisi sont des places, chacune le
 personnage tenant ses armes au-dessus de ses compétences : clique sur une place
-libre pour la prendre, ou sur la tienne pour la quitter, premier arrivé premier
+libre pour la prendre, ou sur une autre place libre pour changer, premier arrivé premier
 servi, une chacun. Celui qui n'a rien pris reçoit la première place libre, et les
 bots jouent le reste, sous le nom de leur personnage. Ensuite le match commence,
 ou un groupe en file entre dans la file.
@@ -337,12 +337,12 @@ l'attente, ou, pour les gagnants, part sans repartir en file.
 
 ## Ascension des héros
 
-Une Ascension des héros en file se joue en sept manches, toujours dans cet
-ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Barrow Field (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The
+Une Ascension des héros en file se joue en huit manches, toujours dans cet
+ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Barrow Field (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The Brazen Causeway (Annihilation de prêtre), The
 Courtyard (Roi de la colline), puis le Hall of Heroes. La fenêtre Salon dit où tu
-en es pendant que tu cherches une équipe : `Round 2 of 7 · Blackwater Ford`.
+en es pendant que tu cherches une équipe : `Round 2 of 8 · Blackwater Ford`.
 Tu ne rencontres jamais qu'une équipe à la même manche, et tu en attends une aussi
-longtemps qu'il faut : aucun bot ne comble. Une manche sur une carte faite pour
+longtemps qu'il faut : aucun bot ne comble. Seule exception : à partir de la manche 2, une équipe seule à sa manche pendant 60 secondes peut prendre de l'avance. Elle rencontre une équipe qui attend à n'importe quelle manche ultérieure avant le Hall, les deux jouent la carte de l'équipe la plus avancée, et la gagnante continue à partir de là. Une manche sur une carte faite pour
 trois équipes en attend trois ; deux équipes qui ont attendu une troisième pendant
 30 secondes jouent l'une contre l'autre, tout comme deux dont la troisième ne se
 présente jamais dans le salon. Gagne, et ton groupe monte tout seul à la carte
@@ -350,6 +350,8 @@ suivante après 20 secondes ; gagne dans le Hall of Heroes, et tu y restes pour 
 défendre. Perds, ou quitte un match avant sa fin, et ta prochaine Ascension
 recommence à la manche 1 ; pareil si tu quittes la file ou le groupe. Un match
 perdu parce que son hôte est parti garde ta manche.
+
+Le Hall tire au sort un de trois modes pour chaque match : Roi de la colline, Course aux reliques ou Points de capture, pour deux ou trois équipes. À deux, la troisième base reste fermée, et son point de capture avec elle. Un match dans le Hall dure 12 minutes et le plus de points gagne ; les Points de capture se terminent aussi plus tôt sur une avance de 20. La mort ne coûte pas de moral. Les morts reviennent ensemble à leur base à chaque minute pleine de l'horloge du match : une équipe décimée n'est donc pas battue, mais une équipe dont tous les joueurs sont partis est éliminée. Au Roi de la colline, l'équipe qui tient l'autel continue de marquer après la mort de son fantôme, jusqu'à ce qu'une autre équipe le prenne, et ses morts reviennent sur l'autel. Une égalité va à l'équipe qui a marqué en dernier ou, aux Points de capture, à celle qui a fait le dernier kill.
 
 Ton moral te suit tout au long de la course : la pénalité de mort ou le bonus
 avec lequel tu termines une carte gagnée est celui avec lequel tu commences la
@@ -369,13 +371,15 @@ course. La manche est retenue par l'hôte de ton groupe, et seulement jusqu'à c
 que tu fermes l'onglet. Un salon d'Ascension des héros rejoint par code joue la
 carte de la manche 1.
 
+Un groupe de moins de 8 entre en file avec des bots aux places vides, selon son Build d'équipe, mais un camp compte toujours au moins un humain, et une équipe de bots n'est jamais un adversaire. Si le dernier humain d'un camp quitte un match, ce camp déclare forfait et sa course s'arrête.
+
 **Barrow Field** est une arène de l'Ascension que tu peux aussi choisir en Partie hébergée. C'est une Annihilation de prêtre en 8v8 parmi de basses buttes de terre, où le prêtre relève ses morts toutes les 2 minutes. Porte ton drapeau sur le **Storm Beacon** au centre : il frappe un ennemi au hasard à portée d'oreille pour 50 dégâts de foudre toutes les 2,5 secondes, jusqu'à ce que l'autre équipe y plante son drapeau. Chaque frappe est un éclair du phare vers sa victime, visible par les deux équipes.
 
 Trois arènes d'Ascension se choisissent aussi en Partie hébergée : **The Hollow Deep** (Annihilation
 8v8, trois tunnels sinueux autour d'un rocher central), **Blackwater Ford**
 (Annihilation de prêtre 8v8 sur un tout petit gué, les bases presque en vue, le
 prêtre relevant ses morts toutes les 2 minutes) et **Mosslit Cairns** (Points de
-capture 8v8, cinq cairns en léger zigzag entre les bases).
+capture 8v8, cinq cairns en léger zigzag entre les bases). La quatrième est **The Brazen Causeway** (Annihilation de prêtre 8v8 sur un anneau autour d'une fosse : un passage étroit longe la porte de chaque base, qui ne reste ouverte que tant qu'un membre de son équipe se tient sur la plaque de la serrure).
 
 Une carte peut avoir des **portes** : des murs qui arrêtent les corps, les tirs et
 la vue quand ils sont fermés. Tiens-toi sur la plaque de pression d'une porte pour
@@ -384,6 +388,10 @@ ceux qui sont dans l'embrasure vers le côté le plus proche et en arrêtant les
 encore en route, et ne peut plus être ouverte pendant 8 secondes. Une plaque à la
 couleur d'une équipe ne répond qu'à cette équipe. Les bots se tiennent sur la
 plaque de leur équipe quand aucun ennemi n'est proche.
+
+Chaque parcours commence par la **Bataille des Zaishen d'élite**, sans file d'attente : votre groupe contre six Zaishen joués par des bots (2 Moines, un Élémentaliste et 3 autres). Le chrono démarre quand l'un de vous franchit la ligne de départ ou quand le premier Zaishen meurt, selon ce qui arrive en premier. Tuez les six en moins de 30 secondes et le groupe commence le parcours à +10 % de moral ; en moins de 60, +8 % ; en moins de 80, +6 % ; en moins de 100, +4 % ; en moins de 120, +2 % ; plus lentement, rien. En cas de victoire, le groupe rejoint seul la file de sa première carte. Si tout le groupe tombe, ou si un Zaishen est encore en vie à la limite de 8 minutes, le parcours est terminé.
+
+Chaque victoire d'un parcours rapporte de la **renommée** : 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 pour les treize premières, puis 40 chacune, au plus 300 par jour (le jour change à 15:00 UTC). La Bataille des Zaishen d'élite n'en rapporte pas. Votre renommée totale fixe votre **rang de héros**, de 1 à 25 de renommée à 15 à 100 000, affiché par ★ et un nombre à côté de votre nom. Options > Joueur montre les deux. Les deux sont conservés sur votre appareil.
 
 ## Trois équipes
 

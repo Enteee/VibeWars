@@ -38,9 +38,7 @@ test("a match chunk the deploy removed says a new version is out, not a lost con
   // The Team Lobby (#1460): a 1v1 plays the active character, its one
   // seat taken for it (#2387). The match's chunk is fetched once it starts.
   await expect(page.locator(".team-lobby-stage")).toHaveText("Choose your character");
-  await page.getByRole("button", { name: "Ready", exact: true }).click();
-  await expect(page.locator(".team-lobby-stage")).toHaveText("Starting…");
-  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await page.locator('.team-lobby-solo .play-card-open[aria-pressed="true"]').click();
 
   // Back on the lobby, which says why.
   await expect(page.locator(".screen-problem")).toHaveText(en["buildBanner.newVersion"]);

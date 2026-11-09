@@ -22,6 +22,7 @@ import type {
 } from "./flag-objects.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import type { RenderableProjectile } from "./projectiles.js";
+import { elevationOf } from "./render-order.js";
 import { screenPx } from "./screen-text.js";
 
 /**
@@ -41,6 +42,8 @@ export interface RenderableActor {
   readonly name: string;
   /** The player's guild tag (#1406), after the name on its plate; `undefined` for none. */
   readonly guildTag: string | undefined;
+  /** Beside the name on its plate (#2702); 0 for none. */
+  readonly heroRank: number;
   /**
    * The player key's signet bits (#2805), drawn just left of the name
    * wherever the name shows; `undefined` for none, as for a bot.
@@ -534,11 +537,19 @@ export function actorAtPoint(
 ): RenderableActor | undefined {
   const living = (actor: RenderableActor): boolean => !actor.dead;
   const allyCorpse = (actor: RenderableActor): boolean => actor.dead && actor.team === "ally";
+  // A body on a deck is drawn lifted (ADR-0051): a click finds it there.
+  const actors =
+    snapshot.structure.layerCount === 1
+      ? snapshot.actors
+      : snapshot.actors.map((actor) => ({
+          ...actor,
+          position: { x: actor.position.x, y: actor.position.y - elevationOf(actor.layer) },
+        }));
   return (
-    nearestUnder(snapshot.actors, point, living) ??
-    nearestInColumn(snapshot.actors, point, living, tagBoxes) ??
-    nearestUnder(snapshot.actors, point, allyCorpse) ??
-    nearestInColumn(snapshot.actors, point, allyCorpse, tagBoxes)
+    nearestUnder(actors, point, living) ??
+    nearestInColumn(actors, point, living, tagBoxes) ??
+    nearestUnder(actors, point, allyCorpse) ??
+    nearestInColumn(actors, point, allyCorpse, tagBoxes)
   );
 }
 

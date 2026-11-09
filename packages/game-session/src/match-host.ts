@@ -27,9 +27,10 @@ import {
   type FlagField,
   type RelicField,
   type GhostField,
-  type Vec2,
+  type StartLine,
   type GuildLord,
   type BaseGuard,
+  type CapturePointSite,
   type Shrine,
 } from "@vibewars/game-core";
 import {
@@ -150,7 +151,9 @@ export interface HostMap {
   /** Its ghost spawns and any altar (#1377, #2689), `undefined` on a map without ghosts. */
   readonly ghostField: GhostField | undefined;
   /** Its shrines (#1378), `[]` but on a Capture Points map. */
-  readonly capturePoints: readonly Vec2[];
+  readonly capturePoints: readonly CapturePointSite[];
+  /** Its start line (#2692), `undefined` but on the Elite Zaishen Battle. */
+  readonly startLine: StartLine | undefined;
   /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
   readonly guards: readonly BaseGuard[];
 }
@@ -211,6 +214,7 @@ export type PlannedSeat = {
   readonly team: WireTeam;
   readonly name: string;
   readonly guildTag: string | null;
+  readonly heroRank: number;
   readonly guildCape: WireCape | null;
 } & (
   | { readonly bot: true; readonly build: PlayerBuild }
@@ -266,6 +270,7 @@ interface Seat {
   readonly name: string;
   /** Sanitised (#1406); `null` for none, and for a bot. */
   readonly guildTag: string | null;
+  readonly heroRank: number;
   /** Sanitised (#1422); `null` for none, and whenever `guildTag` is. */
   readonly guildCape: WireCape | null;
   readonly primaryProfession: ProfessionId;
@@ -337,6 +342,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     relicField: map.relicField,
     ghostField: map.ghostField,
     capturePoints: map.capturePoints,
+    startLine: map.startLine,
     guards: map.guards,
   });
   const seats = new Map<string, Seat>();
@@ -395,6 +401,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     {
       readonly name: string;
       readonly guildTag: string | null;
+      readonly heroRank: number;
       readonly team: WireTeam;
       readonly bot: boolean;
       readonly pubkey: string | null;
@@ -414,12 +421,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   );
   /** One whole-number line per seat the match ever had. */
   const summary = (): WireSummaryRow[] =>
-    [...everSeated].map(([id, { name, guildTag, team, signet }]) => {
+    [...everSeated].map(([id, { name, guildTag, heroRank, team, signet }]) => {
       const row = tally.row(id);
       return {
         id,
         name,
         guildTag,
+        heroRank,
         team,
         signet,
         damage: Math.round(row.damage),
@@ -783,6 +791,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       team,
       name: nameOf(playerId),
       guildTag: guild.guildTag,
+      heroRank: guild.heroRank,
       guildCape: guild.guildCape,
       primaryProfession: loadout.primaryProfession,
       secondaryProfession: loadout.secondaryProfession,
@@ -801,6 +810,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     everSeated.set(playerId, {
       name: seat.name,
       guildTag: seat.guildTag,
+      heroRank: seat.heroRank,
       team,
       bot,
       pubkey,
@@ -1058,6 +1068,31 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sim.remove(seat.playerId);
     seats.delete(seat.playerId);
     swapBudget.forget(seat.playerId);
+    if (!seat.bot) {
+      forfeitIfNoHumans(seat.team);
+    }
+  };
+
+  /**
+   * Henchmen never carry a Heroes' Ascent side alone (#2688): a side with
+   * no human seated and none still on the way is out, and its bots go.
+   */
+  const forfeitIfNoHumans = (team: number): void => {
+    const side = [...seats.values()].filter((seat) => seat.team === team);
+    if (
+      options.mode !== "heroes-ascent" ||
+      // The Zaishen are HA's one all-NPC side (#2692).
+      (map.startLine !== undefined && team === 1) ||
+      side.some((seat) => !seat.bot) ||
+      [...awaited].some((peerId) => planned?.get(peerId)?.team === team)
+    ) {
+      return;
+    }
+    for (const bot of side) {
+      free(bot);
+    }
+    const teams = [...(planned?.values() ?? []), ...seats.values()].map((seat) => seat.team);
+    sim.forfeit(team, new Set(teams));
   };
 
   transport.on("bye", (data, from) => {
@@ -1083,7 +1118,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   transport.onPeerLeave((peerId) => {
     budget.forget(peerId);
     departed.delete(peerId);
-    awaited.delete(peerId);
+    const plan = awaited.delete(peerId) ? planned?.get(peerId) : undefined;
+    if (plan !== undefined && !finished) {
+      forfeitIfNoHumans(plan.team);
+    }
     challenges.delete(peerId);
     proving.delete(peerId);
     unobserve(peerId);
@@ -1197,6 +1235,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     capturePoints: sim.capturePoints.map((point) => ({
       x: point.position.x,
       y: point.position.y,
+      layer: point.layer,
       owner: wireTeam(point.owner),
       capturer: wireTeam(point.capturer),
       // Within [0, 1] by construction; rounded as the other floats are.
@@ -1262,9 +1301,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         winningTeam: wireTeam(sim.outcome.winningTeam),
         endReason: sim.outcome.reason ?? "time",
         summary: summary(),
+        clearSeconds: sim.clearSeconds,
       };
       transport.send("ended", ended, live);
-      options.publishRecord(record(sim.outcome.reason ?? "time"));
+      // The Elite Zaishen Battle has no opposing players to record (#2692).
+      if (map.startLine === undefined) {
+        options.publishRecord(record(sim.outcome.reason ?? "time"));
+      }
     }
     // A match nobody watches holds nothing.
     if (observers.size > 0) {
@@ -1279,6 +1322,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     if (plan.bot) {
       seatNew(plan.build, plan.team, () => plan.name, NO_GUILD, true, null, 0);
     }
+  }
+
+  // A human away when the stage clock ran out left only bots planned (#2688).
+  for (const team of new Set([...(planned?.values() ?? [])].map((plan) => plan.team))) {
+    forfeitIfNoHumans(team);
   }
 
   return {
@@ -1324,7 +1372,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       finished = true;
       observers.clear();
       delayed = [];
-      const ended: WireEnded = { winningTeam: null, endReason: reason, summary: summary() };
+      const ended: WireEnded = {
+        winningTeam: null,
+        endReason: reason,
+        summary: summary(),
+        clearSeconds: null,
+      };
       transport.send("ended", ended);
       await transport.leave();
     },

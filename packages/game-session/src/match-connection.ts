@@ -44,6 +44,8 @@ export interface PlayerSnapshot {
   readonly name: string;
   /** The player's guild tag (#1406), drawn after the name; `undefined` for none. */
   readonly guildTag: string | undefined;
+  /** The player's hero rank (#2702), 0 for none. */
+  readonly heroRank: number;
   /** Worn behind the body (#1422); `undefined` for none. */
   readonly guildCape: WireCape | undefined;
   readonly x: number;
@@ -165,6 +167,8 @@ export interface MatchSnapshot {
   readonly winningTeam: number | undefined;
   /** "score", "time", "annihilation", "morale", "guild-lord", "aggression", "host-left", or `undefined` while active. */
   readonly endReason: string | undefined;
+  /** Seconds on the Elite Zaishen Battle's clock (#2692), only once it has ended. */
+  readonly clearSeconds?: number | undefined;
   /** Weapon shots and flying spells in flight, oldest first (#160, #535). */
   readonly projectiles: readonly ProjectileSnapshot[];
   /** Wards on the ground, oldest first (#1087). */
@@ -220,6 +224,8 @@ export interface MatchSummaryRow {
   readonly name: string;
   /** The seat's guild tag (#1406); `null` for none. */
   readonly guildTag: string | null;
+  /** The seat's hero rank (#2702), 0 for none. */
+  readonly heroRank: number;
   readonly team: number;
   /** The player's signet bits (#2822); `null` for a bot. */
   readonly signet: number | null;
@@ -281,10 +287,17 @@ export type CombatMessage = WireCombatMessage<CombatEvent>;
 /** What one `"combat"` message carries: a tick's entries, in combat-log order (#288). */
 export type CombatBatchMessage = WireCombatBatchMessage<CombatEvent>;
 
+/**
+ * Where a match's link to its host stands. `host-left` is the host saying
+ * it is going; `lost` is it gone without a word, which a guest cannot tell
+ * from its own drop.
+ */
+export type ConnectionState = "online" | "reconnecting" | "lost" | "host-left";
+
 export interface MatchConnection {
   readonly selfSessionId: string;
   /** Notifies when the connection drops and when it comes back. */
-  onConnectionChange(handler: (state: "online" | "reconnecting" | "lost") => void): void;
+  onConnectionChange(handler: (state: ConnectionState) => void): void;
   /** The match's static geometry, received once on join (brief §19). */
   readonly map: MapDescriptor;
   /**

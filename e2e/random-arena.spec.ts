@@ -197,6 +197,61 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
   }
 });
 
+/** Queue seeds 1 and 2, which make Alice the host, into a match, both in the arena. */
+async function meetInMatch(alice: Page, bob: Page): Promise<void> {
+  await seedTicketKeys(alice, 1);
+  await seedTicketKeys(bob, 2);
+  await makeCharacter(alice);
+  await bob.goto("./");
+  await queue1v1(alice, "Alice");
+  await queue1v1(bob, "Bob");
+  for (const page of [alice, bob]) {
+    await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp", {
+      timeout: 60_000,
+    });
+  }
+}
+
+async function leaveMatch(page: Page): Promise<void> {
+  const leave = page.locator(".hud-leave");
+  await leave.getByRole("button", { name: "leave match" }).click();
+  await leave.getByRole("button", { name: "yes" }).click();
+}
+
+test("#2905: the host leaving a queued match tells the guest the host left", async ({
+  browser,
+}) => {
+  test.setTimeout(150_000);
+  const { context, pages } = await openPeers(browser, 2);
+  const [alice, bob] = pages as [Page, Page];
+  try {
+    await meetInMatch(alice, bob);
+    await leaveMatch(alice);
+    await expect(bob.getByText("The host left")).toBeVisible();
+    await expect(bob.getByText("Lost the connection to the match.")).toHaveCount(0);
+    await expect(bob.locator(".hud-leave")).toBeHidden();
+  } finally {
+    await context.close();
+  }
+});
+
+test("#2905: a guest leaving a queued match leaves the host playing, with no notice", async ({
+  browser,
+}) => {
+  test.setTimeout(150_000);
+  const { context, pages } = await openPeers(browser, 2);
+  const [alice, bob] = pages as [Page, Page];
+  try {
+    await meetInMatch(alice, bob);
+    await leaveMatch(bob);
+    await expect(bob.locator(".hud-leave")).toBeHidden();
+    await expect(alice.locator(".hud-leave")).toBeVisible();
+    await expect(alice.getByText("Lost the connection to the match.")).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
 test("Random Arena queues in the background: the icon sits left of Help, and Leave Queue ends it (#2743)", async ({
   page,
 }) => {

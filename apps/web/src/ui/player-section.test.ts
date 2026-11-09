@@ -11,6 +11,7 @@ import {
   loadPlayerName,
   pickCape,
   playerGuild,
+  sameTypedGuild,
   playerGuildTag,
   playerSection,
   saveGuildCape,
@@ -105,9 +106,9 @@ describe("the cape designer (#1422)", () => {
     expect(loadGuildCape()).toBeNull();
     saveGuildCape(FIRST_CAPE);
     expect(loadGuildCape()).toEqual(FIRST_CAPE);
-    expect(playerGuild()).toEqual({ guildTag: null, guildCape: null });
+    expect(playerGuild()).toEqual({ guildTag: null, heroRank: 0, guildCape: null });
     saveGuildTag("VIBE");
-    expect(playerGuild()).toEqual({ guildTag: "VIBE", guildCape: FIRST_CAPE });
+    expect(playerGuild()).toEqual({ guildTag: "VIBE", heroRank: 0, guildCape: FIRST_CAPE });
     // Cleared, the tag takes the cape off but keeps it for when it is back.
     saveGuildTag("");
     expect(playerGuild().guildCape).toBeNull();
@@ -268,6 +269,20 @@ describe("the Player section of Options (#1513)", () => {
     expect(gold?.attributes.get("aria-pressed")).toBe("true");
     shown.find((node) => node.textContent === "No cape")?.click();
     expect(loadGuildCape()).toBeNull();
+  });
+});
+
+describe("sameTypedGuild (#2702)", () => {
+  const guild = { guildTag: "VIBE", heroRank: 3, guildCape: null };
+
+  it("does not call an earned rank a rename", () => {
+    expect(sameTypedGuild(guild, { ...guild, heroRank: 4 })).toBe(true);
+  });
+
+  it("calls a new tag or cape one, and so no guild at all", () => {
+    expect(sameTypedGuild(guild, { ...guild, guildTag: "NEW" })).toBe(false);
+    expect(sameTypedGuild(guild, { ...guild, guildCape: FIRST_CAPE })).toBe(false);
+    expect(sameTypedGuild(undefined, guild)).toBe(false);
   });
 });
 

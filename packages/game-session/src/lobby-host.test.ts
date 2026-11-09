@@ -11,7 +11,8 @@ import {
   type LobbyMode,
   type LobbyTeamSize,
   PROTOCOL_VERSION,
-  TEAM_LOBBY_STAGE_SECONDS,
+  TEAM_LOBBY_CLAIM_SECONDS,
+  TEAM_LOBBY_VOTE_SECONDS,
   parsePeerLobbySeat,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
@@ -474,6 +475,7 @@ describe("lobby host", () => {
         proofKey: PROOF_KEY,
         name: "Late",
         guildTag: null,
+        heroRank: 0,
         guildCape: null,
         timeoutMs: 1000,
         relayPub: null,
@@ -572,6 +574,7 @@ describe("an open or closed lobby (#1682)", () => {
       proofKey: PROOF_KEY,
       name,
       guildTag: null,
+      heroRank: 0,
       guildCape: null,
       timeoutMs: 1000,
       relayPub: null,
@@ -709,7 +712,7 @@ describe("playing more than one match in a lobby", () => {
     // The match ended with its host: nothing more is ticked, nothing throws.
     await lobby.step(2);
     expect(lobby.matches[0]?.host.phase).toBe("finished");
-    expect(lost).toEqual(["lost", "lost"]);
+    expect(lost).toEqual(["host-left", "host-left"]);
   });
 
   it("returns to waiting by itself once everyone has left its match", async () => {
@@ -870,6 +873,7 @@ describe("joining by code", () => {
         proofKey: PROOF_KEY,
         name: "Lost",
         guildTag: null,
+        heroRank: 0,
         guildCape: null,
         timeoutMs: 50,
         relayPub: null,
@@ -889,6 +893,7 @@ describe("joining by code", () => {
         proofKey: PROOF_KEY,
         name: peerId,
         guildTag: null,
+        heroRank: 0,
         guildCape: null,
         timeoutMs: 50,
         relayPub: null,
@@ -916,6 +921,7 @@ describe("joining by code", () => {
         proofKey: PROOF_KEY,
         name: "Alone",
         guildTag: null,
+        heroRank: 0,
         guildCape: null,
         timeoutMs: 50,
         relayPub: null,
@@ -1010,17 +1016,9 @@ describe("a Team Lobby (#1458)", () => {
     return got;
   }
 
-  /** Everyone on a side ready, which ends the stage. */
-  async function allReady(members: readonly Member[]): Promise<void> {
-    for (const who of members) {
-      who.connection.setReady(true);
-    }
-    await settle();
-  }
-
   /** Run the stage's clock out. */
   async function timeOut(lobby: TestLobby): Promise<void> {
-    lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS);
+    lobby.lobby.advance(TEAM_LOBBY_VOTE_SECONDS);
     await settle();
   }
 
@@ -1038,7 +1036,7 @@ describe("a Team Lobby (#1458)", () => {
     if (host === undefined || ann === undefined || bob === undefined) {
       throw new Error("three members");
     }
-    expect(teamOf(host)).toMatchObject({ stage: "vote", secondsLeft: TEAM_LOBBY_STAGE_SECONDS });
+    expect(teamOf(host)).toMatchObject({ stage: "vote", secondsLeft: TEAM_LOBBY_VOTE_SECONDS });
     // A Hosted Game's sides are its team size, 4 until the host picks (#2104).
     expect(host.connection.getSnapshot().teamSize).toBe(4);
     expect(sideOf(host)?.size).toBe(4);
@@ -1241,6 +1239,7 @@ describe("a Team Lobby (#1458)", () => {
         proofKey: PROOF_KEY,
         name: "Late",
         guildTag: null,
+        heroRank: 0,
         guildCape: null,
         timeoutMs: 1000,
         relayPub: null,
@@ -1269,7 +1268,7 @@ describe("a Team Lobby (#1458)", () => {
     await settle();
     ann.connection.vote(idOf(host));
     ann.connection.setReady(true);
-    lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS / 2);
+    lobby.lobby.advance(TEAM_LOBBY_VOTE_SECONDS / 2);
     await settle();
     const told = members.map((who) => {
       const got: string[] = [];
@@ -1285,7 +1284,7 @@ describe("a Team Lobby (#1458)", () => {
     ]);
     expect(sideOf(ann)).toMatchObject({ size: 4, proposals: [] });
     expect(sideOf(bob)).toMatchObject({ size: 4, proposals: [] });
-    expect(teamOf(ann)?.secondsLeft).toBe(TEAM_LOBBY_STAGE_SECONDS);
+    expect(teamOf(ann)?.secondsLeft).toBe(TEAM_LOBBY_VOTE_SECONDS);
     expect(playersOf(ann).map(({ ready }) => ready)).toEqual([false, false, false]);
     // Of the new size, a proposal stands; of the old, it is refused.
     const refused = refusals(ann);
@@ -1450,9 +1449,6 @@ describe("a Team Lobby (#1458)", () => {
     ann.connection.vote(idOf(host));
     await settle();
     expect(sideOf(host)?.proposals[0]?.voterIds).toEqual([idOf(host), idOf(ann)]);
-    ann.connection.vote(null);
-    await settle();
-    expect(sideOf(host)?.proposals[0]?.voterIds).toEqual([idOf(host)]);
   });
 
   it("sends a proposal's builds once it stands, to its side alone, again on a rejoin, never for a withdrawal (#1811)", async () => {
@@ -1546,11 +1542,14 @@ describe("a Team Lobby (#1458)", () => {
       const proposers = [a, b, c].map((who) => (who === undefined ? "" : idOf(who)));
       votes.forEach((choice, i) => {
         if (choice !== null) {
-          members[i]?.connection.vote(proposers[choice] ?? null);
+          members[i]?.connection.vote(proposers[choice] ?? "");
         }
       });
       await settle();
-      await timeOut(lobby);
+      // Four votes end the stage by themselves.
+      if (teamOf(lobby.host)?.stage === "vote") {
+        await timeOut(lobby);
+      }
       const chosen = sideOf(lobby.host)?.chosen;
       return [proposers.indexOf(chosen?.proposerId ?? ""), chosen?.reason];
     };
@@ -1602,12 +1601,8 @@ describe("a Team Lobby (#1458)", () => {
     await begin(lobby);
     await timeOut(lobby);
     const build = STARTER_BUILDS.at(-1);
-    expect(sideOf(lobby.host)?.chosen).toMatchObject({
-      proposerId: null,
-      reason: "preset",
-      presetName: null,
-      members: [{ primary: build?.primaryProfession }],
-    });
+    const [seat0] = [...(lobby.matches[0]?.plan.seats.values() ?? [])];
+    expect(seat0?.build?.primaryProfession).toBe(build?.primaryProfession);
   });
 
   it("plays preset teams of the team size when neither side chose, and a team mode's of its size (#2104)", async () => {
@@ -1648,26 +1643,168 @@ describe("a Team Lobby (#1458)", () => {
     expect(await sizes(arena.lobby, arena.members)).toEqual([4, 4]);
   });
 
-  it("ends a stage early once every human on both sides is ready", async () => {
-    const { lobby, members } = await teamLobby(["Ann"], [0, 1]);
+  it("gives each stage 30 seconds (#2872)", async () => {
+    const { lobby } = await teamLobby(["Ann"], [0, 1]);
     await begin(lobby);
-    lobby.lobby.advance(5);
-    await settle();
-    expect(teamOf(lobby.host)?.secondsLeft).toBe(TEAM_LOBBY_STAGE_SECONDS - 5);
-    lobby.host.connection.setReady(true);
-    await settle();
-    expect(teamOf(lobby.host)?.stage).toBe("vote");
-    await allReady(members);
-    expect(teamOf(lobby.host)).toMatchObject({
-      stage: "claim",
-      secondsLeft: TEAM_LOBBY_STAGE_SECONDS,
-    });
-    expect(lobby.host.connection.getSnapshot().players.map(({ ready }) => ready)).toEqual([
-      false,
-      false,
-    ]);
-    await allReady(members);
+    expect(teamOf(lobby.host)).toMatchObject({ stage: "vote", secondsLeft: 30 });
+    await timeOut(lobby);
+    expect(teamOf(lobby.host)).toMatchObject({ stage: "claim", secondsLeft: 30 });
+    await timeOut(lobby);
     expect(lobby.matches).toHaveLength(1);
+  });
+
+  it("readies a voter for good, and the last vote ends the stage (#2872)", async () => {
+    const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 0, 1]);
+    const [host, ann, bob] = members;
+    if (host === undefined || ann === undefined || bob === undefined) {
+      throw new Error("three members");
+    }
+    await begin(lobby);
+    host.connection.propose([WARRIOR, RANGER, MONK, NECRO]);
+    ann.connection.propose([ELE, MONK, RANGER, WARRIOR]);
+    bob.connection.propose([ELE, MONK, RANGER, WARRIOR]);
+    await settle();
+    const readyOf = (name: string): boolean | undefined =>
+      playersOf(host).find((player) => player.name === name)?.ready;
+    ann.connection.vote(idOf(host));
+    await settle();
+    expect(readyOf("Ann")).toBe(true);
+    ann.connection.vote(idOf(ann));
+    await settle();
+    expect(readyOf("Ann")).toBe(true);
+    // A toggle no longer counts in here.
+    ann.connection.setReady(false);
+    bob.connection.setReady(true);
+    await settle();
+    expect(readyOf("Ann")).toBe(true);
+    expect(readyOf("Bob")).toBe(false);
+    // The proposal it voted for withdrawn: the vote drops, ready stays.
+    ann.connection.vote(idOf(host));
+    await settle();
+    host.connection.propose(null);
+    await settle();
+    expect(sideOf(ann)?.proposals.flatMap(({ voterIds }) => voterIds)).toEqual([]);
+    expect(readyOf("Ann")).toBe(true);
+    host.connection.vote(idOf(ann));
+    bob.connection.vote(idOf(bob));
+    await settle();
+    expect(teamOf(host)?.stage).toBe("claim");
+  });
+
+  it("readies a seat taker for good, and the last seat ends the stage (#2872)", async () => {
+    const { lobby, members } = await teamLobby(["Ann"], [0, 0]);
+    const [host, ann] = members;
+    if (host === undefined || ann === undefined) {
+      throw new Error("two members");
+    }
+    await begin(lobby);
+    await timeOut(lobby);
+    const refused = refusals(ann);
+    ann.connection.claim(0);
+    await settle();
+    ann.connection.claim(1);
+    await settle();
+    expect(sideOf(ann)?.claims).toEqual([null, idOf(ann), null, null]);
+    expect(playersOf(host).map(({ ready }) => ready)).toEqual([false, true]);
+    expect(refused).toEqual([]);
+    expect(lobby.matches).toEqual([]);
+    host.connection.claim(0);
+    await settle();
+    expect(lobby.matches).toHaveLength(1);
+  });
+
+  it("gives a lone human on a side of one its seat and ends the claim at once (#2872)", async () => {
+    const { lobby, members } = await teamLobby(
+      ["Ann"],
+      [0, 1],
+      draws(),
+      "hosted-game",
+      undefined,
+      1,
+    );
+    await begin(lobby);
+    await timeOut(lobby);
+    expect(members).toHaveLength(2);
+    expect(lobby.matches).toHaveLength(1);
+  });
+
+  it("gives a returner its ready back only with a standing vote (#2872)", async () => {
+    const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 0, 1]);
+    const [host, ann, bob] = members;
+    if (host === undefined || ann === undefined || bob === undefined) {
+      throw new Error("three members");
+    }
+    await begin(lobby);
+    host.connection.propose([WARRIOR, RANGER, MONK, NECRO]);
+    await settle();
+    ann.connection.vote(idOf(host));
+    await settle();
+    lobby.network.partition("host", ann.transport.selfId);
+    await settle();
+    lobby.network.heal();
+    await until(() => host.connection.getSnapshot().players[1]?.away === false);
+    const readyOf = (name: string): boolean | undefined =>
+      playersOf(host).find((player) => player.name === name)?.ready;
+    expect(readyOf("Ann")).toBe(true);
+    expect(readyOf("Bob")).toBe(false);
+  });
+
+  /** How many `relay-offers` `who` receives from now on. */
+  function countOffers(who: Member): () => number {
+    let received = 0;
+    who.transport.on("relay-offers", () => {
+      received += 1;
+    });
+    return () => received;
+  }
+
+  /** A Team Lobby where Ann voted and then dropped, and only she is waited for. */
+  async function annAwayInTheVote() {
+    const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 0, 1]);
+    const [host, ann, bob] = members;
+    if (host === undefined || ann === undefined || bob === undefined) {
+      throw new Error("three members");
+    }
+    await begin(lobby);
+    host.connection.propose([WARRIOR, RANGER, MONK, NECRO]);
+    bob.connection.propose([WARRIOR, RANGER, MONK, NECRO]);
+    await settle();
+    ann.connection.vote(idOf(host));
+    bob.connection.vote(idOf(bob));
+    await settle();
+    lobby.network.partition("host", ann.transport.selfId);
+    await settle();
+    host.connection.vote(idOf(host));
+    await settle();
+    return { lobby, host, ann, bob };
+  }
+
+  it("tells a returner the relay offers when its standing vote ends the vote (#2912)", async () => {
+    const { lobby, host, ann } = await annAwayInTheVote();
+    expect(teamOf(host)?.stage).toBe("vote");
+    const offers = countOffers(ann);
+    lobby.network.heal();
+    await until(() => teamOf(host)?.stage === "claim");
+    expect(offers()).toBeGreaterThan(0);
+  });
+
+  it("tells a returner the relay offers when its standing seat ends the claim (#2912)", async () => {
+    const { lobby, host, ann, bob } = await annAwayInTheVote();
+    lobby.network.heal();
+    await until(() => teamOf(host)?.stage === "claim");
+    await settle();
+    ann.connection.claim(1);
+    bob.connection.claim(0);
+    await settle();
+    lobby.network.partition("host", ann.transport.selfId);
+    await settle();
+    host.connection.claim(0);
+    await settle();
+    expect(host.connection.getSnapshot().phase).toBe("team-lobby");
+    const offers = countOffers(ann);
+    lobby.network.heal();
+    await until(() => host.connection.getSnapshot().phase !== "team-lobby");
+    expect(offers()).toBeGreaterThan(0);
   });
 
   it("seats claims first come first served, the rest of the humans in join order, then bots", async () => {
@@ -1741,8 +1878,7 @@ describe("a Team Lobby (#1458)", () => {
       ["Host", 0, false],
       ["Bob", 0, false],
     ]);
-    // The rest ready: the vote is over at once, with a preset team.
-    await allReady([host, bob]);
+    // The rest had voted: the vote is over at once, with a preset team.
     expect(sideOf(host)?.chosen?.reason).toBe("preset");
   });
 
@@ -1764,7 +1900,7 @@ describe("a Team Lobby (#1458)", () => {
     // Its claim is free, and nobody plays it until the claim is over.
     expect(sideOf(host)?.claims).toEqual([null, null, null, null]);
     expect(host.connection.getSnapshot().players.some(({ bot }) => bot)).toBe(false);
-    await allReady([host, bob]);
+    await timeOut(lobby);
     const seats = [...(lobby.matches[0]?.plan.seats.values() ?? [])].filter(
       (seat) => seat.team === 0,
     );
@@ -1788,7 +1924,7 @@ describe("a Team Lobby (#1458)", () => {
     expect(teamOf(host)?.stage).toBe("claim");
     const size = sideOf(host)?.claims.length;
     // Late in the claim stage: its window outlasts the stage.
-    lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS - 10);
+    lobby.lobby.advance(TEAM_LOBBY_CLAIM_SECONDS - 10);
     lobby.network.partition("host", idOf(ann));
     await settle();
     lobby.lobby.advance(10);
@@ -1835,10 +1971,6 @@ describe("a Team Lobby (#1458)", () => {
     host.connection.claim(2);
     ann.connection.claim(0);
     await settle();
-    expect(sideOf(host)?.claims).toEqual([null, null, idOf(host), null]);
-    expect(sideOf(ann)?.claims).toEqual([idOf(ann), null, null, null]);
-    await allReady([host, ann]);
-
     const seats = [...(lobby.matches[0]?.plan.seats.values() ?? [])];
     const sideSeats = (team: 0 | 1) =>
       seats
@@ -1936,7 +2068,9 @@ describe("a Team Lobby (#1458)", () => {
       ["Ann", false, false],
     ]);
 
-    await allReady([host, ann]);
+    host.connection.setReady(true);
+    ann.connection.setReady(true);
+    await settle();
     await toStart();
     expect(host.connection.getSnapshot().phase).toBe("in-match");
     expect(host.connection.getSnapshot().players.filter(({ bot }) => bot)).toHaveLength(2);
@@ -2007,6 +2141,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
     protocolVersion: PROTOCOL_VERSION,
     name,
     guildTag: null,
+    heroRank: 0,
     guildCape: null,
     admission: null,
     rejoinToken,
@@ -2345,6 +2480,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
       proofKey: PROOF_KEY,
       name: "Fooled",
       guildTag: null,
+      heroRank: 0,
       guildCape: null,
       timeoutMs: 50,
       relayPub: null,

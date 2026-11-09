@@ -482,6 +482,7 @@ describe("adrenaline is lost out of combat (#828)", () => {
         timeLimitSeconds: 600,
         deathRule: "respawn",
         respawnSeconds: 8,
+        respawnOnWave: false,
         deathPenalty: false,
       },
       participants: [

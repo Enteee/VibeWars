@@ -20,6 +20,7 @@ import {
   PROTOCOL_VERSION,
   parsePeerRejoinChallenge,
   type JsonValue,
+  type LobbyMode,
   type PeerHello,
   type PeerRejoinProof,
   type WireCape,
@@ -76,6 +77,7 @@ export const ARENA: HostMap = {
   relicField: undefined,
   ghostField: undefined,
   capturePoints: [],
+  startLine: undefined,
   gates: [],
   guards: [],
 };
@@ -146,6 +148,7 @@ export function hello(
   overrides: Partial<{
     name: string;
     guildTag: string | null;
+    heroRank: number;
     guildCape: WireCape | null;
     build: JsonValue;
     rejoin: PeerHello["rejoin"];
@@ -155,6 +158,7 @@ export function hello(
     protocolVersion: PROTOCOL_VERSION,
     name: overrides.name ?? "Tester",
     guildTag: overrides.guildTag ?? null,
+    heroRank: overrides.heroRank ?? 0,
     guildCape: overrides.guildCape ?? null,
     build: overrides.build ?? null,
     rejoin: overrides.rejoin ?? null,
@@ -207,6 +211,8 @@ export function startMatch(
     publishRecord?: (record: MatchRecord) => void;
     /** A key's signet bits (#2805); `testSignet` by default. */
     signetOf?: (pubkey: string) => number;
+    /** What the lobby is for (#2528); Random Arena by default. */
+    mode?: LobbyMode;
   } = {},
 ): TestMatch {
   const network = createMemoryNetwork();
@@ -224,7 +230,7 @@ export function startMatch(
     seats: options.seats ?? null,
     matchId: TEST_MATCH_ID,
     isSpectator: (peerId) => options.spectators?.includes(peerId) ?? false,
-    mode: "random-arena",
+    mode: options.mode ?? "random-arena",
     publishRecord: options.publishRecord ?? (() => undefined),
     nowSeconds: () => TEST_NOW_SECONDS,
     signetOf: options.signetOf ?? testSignet,
