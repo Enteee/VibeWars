@@ -524,7 +524,14 @@ describe("energy-refill and the energy-gained count (#2472)", () => {
     const at = (combatant: Combatant, x: number) =>
       [
         combatant.id,
-        { combatant, position: vec2(x, 0), creature: undefined, corpseExploited: false },
+        {
+          combatant,
+          position: vec2(x, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ] as const;
     const ctx: SkillContext = {
       ...context(caster, target),
@@ -1808,7 +1815,14 @@ describe("spread-conditions (#1501)", () => {
     const at = (combatant: Combatant, x: number) =>
       [
         combatant.id,
-        { combatant, position: vec2(x, 0), creature: undefined, corpseExploited: false },
+        {
+          combatant,
+          position: vec2(x, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ] as const;
     const ctx: SkillContext = {
       ...context(caster, target),

@@ -367,6 +367,8 @@ campanha antiga. A rodada é lembrada pelo host do seu grupo, e só até você
 fechar a aba. Uma sala de Ascensão dos Heróis por código joga o mapa da
 rodada 1.
 
+**Barrow Field** é uma arena da Ascensão já construída, mas ainda fora da fila; por enquanto você a escolhe em uma Partida Hospedada: Aniquilação de Sacerdotes 8v8 entre montes baixos de terra, com o sacerdote ressuscitando seus mortos a cada 2 minutos. Leve sua bandeira ao **Storm Beacon** no centro e ele atinge um inimigo aleatório ao alcance da voz com 50 de dano de raio a cada 2,5 segundos, até a outra equipe plantar a bandeira dela lá. Cada golpe é um raio do farol até quem ele atingiu, visível para as duas equipes.
+
 Três arenas da Ascensão estão prontas, mas ainda não fazem parte da
 campanha na fila, então por enquanto você as escolhe em uma Partida
 Hospedada: **The Hollow Deep** (8v8 de Aniquilação, três túneis sinuosos
@@ -419,8 +421,7 @@ a vencedora sublinhada, e o mapa, a duração e quando. Toda linha é marcada
 como **informado pelo host**. Clique em uma para ver as equipes, uma aba
 cada, a da vencedora primeiro: o cartão da equipe. **Clonar** copia uma
 equipe de uma partida terminada para suas Builds de Equipe, a build de
-cada jogador com o nome dele, e a abre. Um lado de 1v1 não tem Clonar: uma
-Build de Equipe é de 2, 4 ou 8.
+cada jogador com o nome dele, e a abre. Em um lado de 1v1, Clonar salva a build do jogador como um novo personagem e o abre, porque uma Build de Equipe é de 2, 4 ou 8.
 
 Cada linha começa com o ícone do modo, e o ícone e a borda esquerda da
 linha ficam na cor do modo: laranja Aleatória, azul Equipe, dourado

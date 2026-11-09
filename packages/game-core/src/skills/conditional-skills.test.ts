@@ -217,13 +217,22 @@ describe("Energy Surge (#920)", () => {
     const surroundings: Surroundings = new Map([
       [
         "foe",
-        { combatant: target, position: vec2(0, 0), creature: undefined, corpseExploited: false },
+        {
+          combatant: target,
+          position: vec2(0, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ],
       [
         "near",
         {
           combatant: near,
           position: vec2(AREA_NEARBY, 0),
+          floors: 1,
+          layer: 0,
           creature: undefined,
           corpseExploited: false,
         },
@@ -233,13 +242,22 @@ describe("Energy Surge (#920)", () => {
         {
           combatant: far,
           position: vec2(2 * AREA_NEARBY, 0),
+          floors: 1,
+          layer: 0,
           creature: undefined,
           corpseExploited: false,
         },
       ],
       [
         "ally",
-        { combatant: ally, position: vec2(0, 1), creature: undefined, corpseExploited: false },
+        {
+          combatant: ally,
+          position: vec2(0, 1),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ],
     ]);
     return { target, near, far, ally, surroundings };

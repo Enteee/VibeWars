@@ -75,7 +75,14 @@ function scene(rank = 12) {
       ] as const
     ).map(([combatant, x]) => [
       combatant.id,
-      { combatant, position: vec2(x, 0), creature: undefined, corpseExploited: false },
+      {
+        combatant,
+        position: vec2(x, 0),
+        floors: 1,
+        layer: 0,
+        creature: undefined,
+        corpseExploited: false,
+      },
     ]),
   );
   return { a, w, f, surroundings };
@@ -97,7 +104,7 @@ function swing(a: Combatant, w: Combatant, surroundings: Surroundings): number {
   const before = a.health;
   resolveSwing({
     attacker: w,
-    target: { combatant: a, position: vec2(0, 0), creature: undefined },
+    target: { combatant: a, position: vec2(0, 0), floors: 1, layer: 0, creature: undefined },
     surroundings,
     rng: steady(),
     rules: RULES,

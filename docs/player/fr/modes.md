@@ -369,6 +369,8 @@ course. La manche est retenue par l'hôte de ton groupe, et seulement jusqu'à c
 que tu fermes l'onglet. Un salon d'Ascension des héros rejoint par code joue la
 carte de la manche 1.
 
+**Barrow Field** est une arène de l'Ascension construite mais pas encore dans la file : pour l'instant, tu la choisis en Partie hébergée. C'est une Annihilation de prêtre en 8v8 parmi de basses buttes de terre, où le prêtre relève ses morts toutes les 2 minutes. Porte ton drapeau sur le **Storm Beacon** au centre : il frappe un ennemi au hasard à portée d'oreille pour 50 dégâts de foudre toutes les 2,5 secondes, jusqu'à ce que l'autre équipe y plante son drapeau. Chaque frappe est un éclair du phare vers sa victime, visible par les deux équipes.
+
 Trois arènes d'Ascension sont construites mais pas encore dans la course en file :
 pour l'instant, tu les choisis en Partie hébergée : **The Hollow Deep** (Annihilation
 8v8, trois tunnels sinueux autour d'un rocher central), **Blackwater Ford**
@@ -417,8 +419,7 @@ leur profession principale (survole pour le nom), deux ou trois équipes, le gag
 souligné, et la carte, la durée et quand. Chaque ligne est marquée **déclaré par
 l'hôte**. Clique sur l'une pour voir les équipes, un onglet chacune, le gagnant
 d'abord : la carte d'équipe. **Cloner** copie une équipe d'un match terminé dans tes
-Builds d'équipe, le build de chaque joueur sous son nom, et l'ouvre. Un camp 1v1 n'a
-pas de Cloner : un Build d'équipe compte 2, 4 ou 8 membres.
+Builds d'équipe, le build de chaque joueur sous son nom, et l'ouvre. Pour un camp 1v1, Cloner enregistre le build du joueur comme nouveau personnage et l'ouvre, car un Build d'équipe compte 2, 4 ou 8 membres.
 
 Chaque ligne commence par l'icône de son mode, et l'icône et le bord gauche de la
 ligne sont à la couleur du mode : orange Aléatoire, bleu Équipe, or Ascension, violet

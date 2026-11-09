@@ -58,11 +58,25 @@ function around(
   return new Map<string, SurroundingBody>([
     [
       caster.id,
-      { combatant: caster, position: vec2(0, 0), creature: undefined, corpseExploited: false },
+      {
+        combatant: caster,
+        position: vec2(0, 0),
+        floors: 1,
+        layer: 0,
+        creature: undefined,
+        corpseExploited: false,
+      },
     ],
     [
       target.id,
-      { combatant: target, position: allyAt, creature: undefined, corpseExploited: false },
+      {
+        combatant: target,
+        position: allyAt,
+        floors: 1,
+        layer: 0,
+        creature: undefined,
+        corpseExploited: false,
+      },
     ],
     ...spirits.map((position, index) => {
       const id = `spirit${String(index)}`;
@@ -70,6 +84,8 @@ function around(
       const candidate: SurroundingBody = {
         combatant: spirit,
         position,
+        floors: 1,
+        layer: 0,
         creature: {
           ownerId: "f",
           kind: "spirit",

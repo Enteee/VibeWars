@@ -8,6 +8,8 @@ import {
   FLOATING_TEXT_OFFSET_X,
   FLOATING_TEXT_OFFSET_Y,
   FLOATING_TEXT_SECONDS,
+  BEACON_BOLT_SECONDS,
+  type BeaconBolt,
   SWING_FLASH_GAP,
   SWING_FLASH_SECONDS,
   teamColour,
@@ -27,6 +29,8 @@ export interface FloatingTextSink {
   addFloatingText(text: FloatingText): void;
   addAreaFlash(flash: AreaFlash): void;
   addSwingFlash(flash: SwingFlash): void;
+  /** The Storm Beacon struck a body (#2694). */
+  addBeaconBolt(bolt: BeaconBolt): void;
   /** An actor's swing struck twice: its off hand stabs too (#561). */
   struckTwice(actorId: string): void;
   /** A skill landed on these bodies (#1139). */
@@ -43,6 +47,7 @@ const COLOURS: Record<FloatingCue["tone"], number> = {
 let nextFloatingId = 0;
 let nextFlashId = 0;
 let nextSwingId = 0;
+let nextBoltId = 0;
 
 /** Whether a weapon swings rather than shoots. An unknown one does neither. */
 function isMelee(weaponId: string | undefined): boolean {
@@ -87,6 +92,24 @@ export function swingFlashFor(
 }
 
 /** Turn server combat events into floating numbers above the right actor. */
+/** The bolt a Storm Beacon's strike draws (#2694); nothing for any other message. */
+export function beaconBoltFor(
+  message: CombatMessage,
+  snapshot: MatchSnapshot,
+): Omit<BeaconBolt, "id"> | undefined {
+  if (message.cause !== "beacon" || message.area === undefined) {
+    return undefined;
+  }
+  const struck = snapshot.players.find((p) => p.sessionId === message.events[0]?.targetId);
+  return struck === undefined
+    ? undefined
+    : {
+        from: vec2(message.area.x, message.area.y),
+        to: vec2(struck.x, struck.y),
+        remainingSeconds: BEACON_BOLT_SECONDS,
+      };
+}
+
 export function showCombatFeedback(
   scene: FloatingTextSink,
   message: CombatMessage,
@@ -105,7 +128,13 @@ export function showCombatFeedback(
     scene.addImpacts(impacts);
   }
 
-  if (message.area !== undefined) {
+  const bolt = beaconBoltFor(message, snapshot);
+  if (bolt !== undefined) {
+    nextBoltId += 1;
+    scene.addBeaconBolt({ id: nextBoltId, ...bolt });
+  }
+
+  if (message.area !== undefined && message.cause !== "beacon") {
     // In the caster's side's colour, from where you stand: never the
     // yellow that means "your target".
     const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);

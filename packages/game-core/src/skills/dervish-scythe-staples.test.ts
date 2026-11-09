@@ -73,7 +73,7 @@ function around(...placed: readonly [Combatant, Vec2][]): Surroundings {
   return new Map(
     placed.map(([combatant, position]) => [
       combatant.id,
-      { combatant, position, creature: undefined, corpseExploited: false },
+      { combatant, position, floors: 1, layer: 0, creature: undefined, corpseExploited: false },
     ]),
   );
 }
@@ -254,7 +254,13 @@ describe("Sand Shards (#939)", () => {
     );
     resolveSwing({
       attacker: self,
-      target: { combatant: target, position: vec2(40, 0), creature: undefined },
+      target: {
+        combatant: target,
+        position: vec2(40, 0),
+        floors: 1,
+        layer: 0,
+        creature: undefined,
+      },
       surroundings,
       rng: createRng(5),
       rules: RULES,

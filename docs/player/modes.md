@@ -356,6 +356,14 @@ party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
 
+**Barrow Field** is an Ascent arena built but not yet in the queued run, so
+for now you pick it in a Hosted Game: 8v8 Priest Annihilation among low
+earthen mounds, the priest raising its dead every 2 minutes. Carry your flag
+onto the **Storm Beacon** in the middle and it strikes one random foe within
+earshot of it for 50 lightning damage every 2.5 seconds, until the other team
+plants its flag there. Each strike is a bolt from the beacon to whoever it hit,
+visible to both teams.
+
 Three Ascent arenas are built but not yet in the queued run, so for now
 you pick them in a Hosted Game: **The Hollow Deep** (8v8 Annihilation, three
 winding tunnels round a central rock),
@@ -404,8 +412,7 @@ the name), two teams or three, the winner underlined, and the map,
 duration and when. Every row is marked **host-reported**. Click one to
 see the teams, one tab each, the winner's first: the team card. **Clone** copies a team from
 a finished match into your Team Builds, each player's build under
-their name, and opens it. A 1v1 side has no Clone: a Team Build is 2, 4
-or 8.
+their name, and opens it. On a 1v1 side, Clone saves the player's build as a new character and opens that, because a Team Build is 2, 4 or 8.
 
 Each row starts with its mode's icon, and the icon and the row's left
 edge are in the mode's colour: orange Random, blue Team, gold Ascent,

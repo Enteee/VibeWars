@@ -58,6 +58,16 @@ import {
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
 import {
+  deckBlocksSight,
+  feelsHeight,
+  floorOf,
+  floorsAt,
+  heightDamageMultiplier,
+  heightRange,
+  heightStep,
+  sharesFloor,
+} from "./layer-rules.js";
+import {
   buildLayeredNavGraph,
   createLayeredPathFinder,
   navGraphFor,
@@ -235,6 +245,7 @@ import {
   strikeCount,
   unblockableNow,
   weaponSnapshotOf,
+  blowKind,
   withEndedStatuses,
 } from "../skills/weapon-attack.js";
 import {
@@ -334,6 +345,14 @@ import {
   type RelicsState,
 } from "./relics.js";
 import { guardSpec, type BaseGuard } from "./guards.js";
+import {
+  BEACON_STRIKE_RADIUS,
+  beaconStrikeArea,
+  UNOWNED_BEACON,
+  beaconLightning,
+  stepBeacon,
+  type BeaconState,
+} from "./beacon.js";
 import { UNCLAIMED_ALTAR, claimant, mayClaim, stepAltar, type AltarState } from "./altar.js";
 import {
   CLAIM_SKILL_ID,
@@ -570,6 +589,8 @@ export interface GroundEffect {
   /** The owner's, as it was placed. */
   readonly team: number;
   readonly position: Vec2;
+  /** The layer it lies on (ADR-0051), fixed as it was placed. */
+  readonly layer: number;
   readonly act: GroundAct;
   /** How long it was placed for. */
   readonly durationSeconds: number;
@@ -705,6 +726,11 @@ export interface Participant {
   position: Vec2;
   /** The one layer it is on (ADR-0051): only a ramp changes it, and a respawn. */
   layer: number;
+  /**
+   * The floors it stands on (ADR-0051): its layer's bit and, inside a ramp,
+   * both the ramp connects. What melee and areas read.
+   */
+  floors: number;
   /**
    * Where it faces, in radians, `atan2` convention, in (−π, π], 0 = +x.
    * Where it last pushed, or at what it is casting at or swinging at,
@@ -980,6 +1006,8 @@ const NONE_SPARED: ReadonlySet<StatusId> = new Set();
 
 /** The ramps of a map without any, shared so `#climb` allocates nothing per body. */
 const NO_TRANSITIONS: MatchLayers["transitions"] = [];
+/** The decks of a map without any: the deck rule is then nothing to look up. */
+const NO_DECKS: MatchLayers["decks"] = [];
 
 /** Each layer's decks and ramps, indexed by layer; the ground's stays empty. */
 function walkableAreas(layers: MatchLayers | undefined): readonly (readonly Polygon[])[] {
@@ -1249,6 +1277,8 @@ export class MatchSimulation {
   #flagsState: FlagsState | undefined;
   /** Who reached a flag or the stand this step (#1225), in simulation order. */
   #flagArrivals: CarriedArrival[] = [];
+  /** Whose Storm Beacon strikes, and how far to its next strike (#2694). */
+  #beaconState: BeaconState = UNOWNED_BEACON;
   /** The altar and relic spawns (#1374); `undefined` on a map without them. */
   readonly #relicField: RelicField | undefined;
   /** Where every relic is (#1374); `undefined` without a field. */
@@ -1571,6 +1601,7 @@ export class MatchSimulation {
       spawn: spec.spawn,
       position: spec.spawn,
       layer,
+      floors: this.#floorsFor(spec.spawn, layer),
       facing: spec.facing,
       inputDirection: ZERO,
       walkGoal: undefined,
@@ -2052,13 +2083,14 @@ export class MatchSimulation {
     owner: ParticipantRecord,
     skillId: string,
     effect: CreateGroundEffect,
-    position: Vec2,
+    anchor: ParticipantRecord,
   ): void {
     this.#addGroundEffect({
       skillId,
       ownerId: owner.id,
       team: owner.combatant.team,
-      position,
+      position: anchor.position,
+      layer: anchor.layer,
       act: effect.act,
       durationSeconds: resolveMagnitude(effect.durationSeconds, owner.combatant),
       pulsed: 0,
@@ -2078,36 +2110,43 @@ export class MatchSimulation {
       // Ended early, a pulse effect still lands its end (#2329).
       const owner = ended === undefined ? undefined : this.#participants.get(ended.ownerId);
       if (ended?.act.kind === "pulse" && ended.act.atEnd !== undefined && owner !== undefined) {
-        this.#landPulse(owner, ended.skillId, ended.position, ended.act.atEnd, ended.pulsed);
+        this.#landPulse(
+          owner,
+          ended.skillId,
+          ended.position,
+          ended.layer,
+          ended.act.atEnd,
+          ended.pulsed,
+        );
       }
     }
   }
 
   /**
-   * Where a ground effect `owner` leaves lands (#1104): where it stands,
-   * where the corpse its skill exploited lies, or where its target stands
-   * (#1113), as they are now. A well or a symbol does not follow a body
-   * that later moves, stands up or respawns. Nowhere, when a target
-   * anchor has no target.
+   * The body a ground effect `owner` leaves is anchored at (#1104): the
+   * one standing there, whose position and layer it takes (ADR-0051):
+   * itself, the corpse its skill exploited, or its target (#1113), as they
+   * are now. A well or a symbol does not follow a body that later moves,
+   * stands up or respawns. Nobody, when a target anchor has no target.
    */
   #groundAnchor(
     owner: ParticipantRecord,
     effect: CreateGroundEffect,
     corpse: ParticipantRecord | undefined,
     primary: ParticipantRecord | undefined,
-  ): Vec2 | undefined {
+  ): ParticipantRecord | undefined {
     switch (effect.anchor) {
       case "caster":
-        return owner.position;
+        return owner;
       case "corpse":
         // A corpse skill with neither a corpse nor a well's sacrifice
         // (#1730) never resolves, so this is a bug.
         if (corpse === undefined) {
           throw new Error(`${owner.id}: a corpse-anchored ground effect with no corpse`);
         }
-        return corpse.position;
+        return corpse;
       case "target":
-        return primary?.position;
+        return primary;
     }
   }
 
@@ -2165,13 +2204,14 @@ export class MatchSimulation {
             !body.combatant.dead &&
             body.creature?.kind !== "spirit" &&
             body.combatant.team !== effect.team &&
+            sharesFloor(body.floors, floorOf(effect.layer)) &&
             distance(body.position, effect.position) <= trap.triggerRadius,
         );
       if (!triggered) {
         continue;
       }
       sprung.add(effect.id);
-      this.#landPulse(owner, effect.skillId, effect.position, trap.spring, 1);
+      this.#landPulse(owner, effect.skillId, effect.position, effect.layer, trap.spring, 1);
       if (trap.spring.count > 1) {
         pulsing.push(effect);
       }
@@ -2189,6 +2229,7 @@ export class MatchSimulation {
         ownerId: trap.ownerId,
         team: trap.team,
         position: trap.position,
+        layer: trap.layer,
         act: { kind: "pulse", pulse: spring },
         durationSeconds: spring.count * spring.everySeconds,
         pulsed: 1,
@@ -2224,11 +2265,11 @@ export class MatchSimulation {
         age >= pulse.delaySeconds + effect.pulsed * pulse.everySeconds - SWING_EPSILON
       ) {
         effect.pulsed += 1;
-        this.#landPulse(owner, effect.skillId, effect.position, pulse, effect.pulsed);
+        this.#landPulse(owner, effect.skillId, effect.position, effect.layer, pulse, effect.pulsed);
       }
       if (atEnd !== undefined && effect.remainingSeconds <= SWING_EPSILON) {
         gone.add(effect.id);
-        this.#landPulse(owner, effect.skillId, effect.position, atEnd, effect.pulsed);
+        this.#landPulse(owner, effect.skillId, effect.position, effect.layer, atEnd, effect.pulsed);
       }
     }
     if (gone.size > 0) {
@@ -2262,6 +2303,7 @@ export class MatchSimulation {
           body.combatant.dead ||
           body.combatant.team !== record.combatant.team ||
           body.creature?.kind === "spirit" ||
+          !sharesFloor(body.floors, floorOf(record.layer)) ||
           distance(record.position, body.position) > pulse.radius
         ) {
           continue;
@@ -2429,6 +2471,7 @@ export class MatchSimulation {
     owner: ParticipantRecord,
     skillId: string,
     position: Vec2,
+    layer: number,
     rule: PulseEnd,
     pulsed: number,
   ): void {
@@ -2444,9 +2487,10 @@ export class MatchSimulation {
         skill: pulsing,
         caster: owner.combatant,
         casterPosition: position,
+        casterLayer: layer,
         primary: undefined,
         candidates: [...this.#participants.values()],
-        losBlockers: this.#walls,
+        losBlockers: this.#wallsOn(layer),
       }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
@@ -2489,6 +2533,8 @@ export class MatchSimulation {
       readonly sourceId: string;
       readonly team: number;
       readonly position: Vec2;
+      /** The one floor it reaches (ADR-0051): its bearer's layer, or a ward's. */
+      readonly floors: number;
       readonly aura: Aura;
       /** Its owner's, as the status lands (#1976): a spirit's summoner, a ward's caster. */
       readonly ranks: ReadonlyMap<string, number>;
@@ -2502,6 +2548,7 @@ export class MatchSimulation {
           sourceId: record.id,
           team: record.combatant.team,
           position: record.position,
+          floors: floorOf(record.layer),
           aura,
           ranks: statusRanks(aura.statusId, (owner ?? record).combatant),
         });
@@ -2520,6 +2567,7 @@ export class MatchSimulation {
             sourceId: record.id,
             team: record.combatant.team,
             position: record.position,
+            floors: floorOf(record.layer),
             aura,
             ranks: statusRanks(aura.statusId, record.combatant),
           });
@@ -2534,6 +2582,7 @@ export class MatchSimulation {
           sourceId: effect.ownerId,
           team: effect.team,
           position: effect.position,
+          floors: floorOf(effect.layer),
           aura: effect.act.aura,
           ranks:
             owner === undefined ? NO_RANKS : statusRanks(effect.act.aura.statusId, owner.combatant),
@@ -2549,11 +2598,12 @@ export class MatchSimulation {
         continue;
       }
       const wears = new Map<StatusId, { sourceId: string; ranks: ReadonlyMap<string, number> }>();
-      for (const { sourceId, team, position, aura, ranks } of sources) {
+      for (const { sourceId, team, position, floors, aura, ranks } of sources) {
         if (
           !wears.has(aura.statusId) &&
           !(aura.excludesSource === true && sourceId === body.id) &&
           reaches(aura.affects, team, body.combatant.team) &&
+          sharesFloor(floors, body.floors) &&
           distance(position, body.position) <= aura.radius &&
           (!getStatusDefinition(aura.statusId).onlyWhileHoldingItem || this.carriesBundle(body.id))
         ) {
@@ -2640,6 +2690,7 @@ export class MatchSimulation {
           (burst.effect === "resurrect" && other.creature !== undefined) ||
           other.creature?.kind === "spirit" ||
           (burst.affects !== "all" && ally !== (burst.affects === "allies")) ||
+          !sharesFloor(other.floors, floorOf(spirit.layer)) ||
           distance(other.position, spirit.position) > burst.radius ||
           (burst.effect === "apply-status" &&
             other.combatant.health >=
@@ -3780,7 +3831,7 @@ export class MatchSimulation {
       // a bearer it could matter to.
       const nearSpirit =
         modifiers.healthPerSecondNearSpirit !== 0 &&
-        spiritsWithin(this.#participants.values(), record.position, AREA_EARSHOT) > 0;
+        spiritsWithin(this.#participants.values(), record, AREA_EARSHOT) > 0;
       // Signet of Ghostly Might's (#1827): who put each status on a
       // summoned creature that destroys it as it runs out.
       const destroyers = new Map(
@@ -3914,6 +3965,7 @@ export class MatchSimulation {
     this.checkMatchEnd();
     // After the match end: a lord slain as a boost falls due ends it first.
     this.#advanceFlags(dt);
+    this.#advanceBeacon(dt);
 
     const log = this.#log.concat(this.#reaped);
     this.#log = [];
@@ -4057,6 +4109,7 @@ export class MatchSimulation {
         // Immune (#1455): not caught, and free to catch it once that ends.
         if (
           outbreak.infected.has(other.id) ||
+          !sharesFloor(other.floors, floorOf(record.layer)) ||
           distance(record.position, other.position) > AREA_ADJACENT ||
           other.combatant.statuses.isImmuneTo(status.id)
         ) {
@@ -4168,6 +4221,7 @@ export class MatchSimulation {
     // A pet skill acts on the pet, whatever was asked (#1046).
     const targetedId = isCompanionRule(skill.target) ? this.#companionOf(record)?.id : targetId;
     const target = targetedId === undefined ? undefined : this.#participants.get(targetedId);
+    const aimed = skill.target === "self" ? record : target;
     const check = canActivate({
       skill,
       caster: record.combatant,
@@ -4184,7 +4238,13 @@ export class MatchSimulation {
       skillBar: resolvedBar(record.skillBar, record.combatant.cast).map(
         (slot) => slot?.key ?? null,
       ),
-      losBlockers: this.#walls,
+      losBlockers: this.#wallsOn(record.layer),
+      deckBlocked: aimed !== undefined && this.#deckBlocks(record, aimed),
+      sharesFloorWithTarget: aimed === undefined || sharesFloor(record.floors, aimed.floors),
+      heightStep:
+        aimed === undefined
+          ? 0
+          : heightStep(record.floors, record.layer, aimed.floors, aimed.layer),
     });
     // A carrier's hands are full (#1225, GW1): no attack skill, before
     // anything walks in. Read from the bundles, not a status a cleanse
@@ -4209,7 +4269,7 @@ export class MatchSimulation {
     if (
       check.ok &&
       skill.effects.some(({ kind }) => kind === "drain-nearest-spirit") &&
-      nearestSpiritWithin(this.#participants.values(), record.position, AREA_EARSHOT) === undefined
+      nearestSpiritWithin(this.#participants.values(), record, AREA_EARSHOT) === undefined
     ) {
       return { ok: false, reason: "no-spirit" };
     }
@@ -4290,8 +4350,9 @@ export class MatchSimulation {
       isBot: (participantId) =>
         this.#participants.get(participantId)?.behaviour?.kind === "play-build",
       calledTargetId: this.#calledTargets.get(record.combatant.team),
-      sees: (point) => hasLineOfSight(record.position, point, this.#walls),
-      seesBetween: (from, to) => hasLineOfSight(from, to, this.#walls),
+      sees: (point, layer = record.layer) =>
+        this.#seesAcross(record.position, record.layer, point, layer),
+      seesBetween: (from, to, fromLayer, toLayer) => this.#seesAcross(from, fromLayer, to, toLayer),
       walkable: (point) =>
         isStandable(this.#graphOn(record.layer), point) &&
         walkIsClear(this.#graphOn(record.layer), record.position, point),
@@ -4438,6 +4499,7 @@ export class MatchSimulation {
     if (
       this.#failsSpell(record, skill, targetRecord, cast.key) ||
       this.#failsTouch(record, skill, targetRecord, cast.key) ||
+      this.#failsFloor(record, skill, targetRecord, cast.key) ||
       this.#failsByChance(record, skill, cast.key)
     ) {
       return;
@@ -4531,6 +4593,7 @@ export class MatchSimulation {
       skill,
       caster: record.combatant,
       casterPosition: record.position,
+      casterLayer: record.layer,
       primary,
       // Only an area looks past the primary: skip the copy every other
       // cast would make for nothing. A flying spell's area is found
@@ -4539,7 +4602,9 @@ export class MatchSimulation {
         skill.area === undefined || (flight !== undefined && flight.spread !== true)
           ? []
           : [...this.#participants.values()],
-      losBlockers: this.#walls,
+      losBlockers: this.#wallsOn(
+        skill.area?.origin === "target" && primary !== undefined ? primary.layer : record.layer,
+      ),
     });
     // An item spell's ashes take the hands (#1434): a flag, a relic or the
     // ashes held fall first, the ashes' drop effect before the new ones.
@@ -4689,9 +4754,9 @@ export class MatchSimulation {
         );
       }
       for (const ground of grounds) {
-        const position = this.#groundAnchor(record, ground, site, primary);
-        if (position !== undefined) {
-          this.#placeGroundEffect(record, skill.id, ground, position);
+        const anchor = this.#groundAnchor(record, ground, site, primary);
+        if (anchor !== undefined) {
+          this.#placeGroundEffect(record, skill.id, ground, anchor);
         }
       }
     });
@@ -4740,7 +4805,7 @@ export class MatchSimulation {
       const modifiers = aggregateModifiers(record.combatant.statuses.active);
       const nearSpiritShare =
         modifiers.spellRechargeFasterNearSpirit !== 0 &&
-        spiritsWithin(this.#participants.values(), record.position, AREA_EARSHOT) > 0
+        spiritsWithin(this.#participants.values(), record, AREA_EARSHOT) > 0
           ? modifiers.spellRechargeFasterNearSpirit
           : 0;
       const enchantmentShares = modifiers.enchantmentRechargeFaster
@@ -4967,6 +5032,31 @@ export class MatchSimulation {
         events: [{ kind: "spell-failed", targetId: record.id, skillId: skill.id }],
       },
     ]);
+    return true;
+  }
+
+  /**
+   * Whether a melee attack skill's blow finds its target off the attacker's
+   * floors (ADR-0051), the target having left in the wind-up: nothing
+   * lands, and it recharges as a failed skill does.
+   */
+  #failsFloor(
+    record: ParticipantRecord,
+    skill: Skill,
+    target: ParticipantRecord | undefined,
+    key: string,
+  ): boolean {
+    const { weapon } = record.combatant.equipment.mainHand;
+    if (
+      skill.attack === undefined ||
+      target === undefined ||
+      blowKind(weapon) !== "melee" ||
+      sharesFloor(record.floors, target.floors)
+    ) {
+      return false;
+    }
+    beginRecharge(record.combatant.cast, skill, skill.rechargeSeconds, key);
+    this.#logWeapon(record.id, weapon.id, [{ kind: "attack-obstructed", targetId: target.id }]);
     return true;
   }
 
@@ -5451,6 +5541,7 @@ export class MatchSimulation {
             ? other.combatant.team !== bearer.team
             : other.combatant.team === bearer.team && other.combatant.id !== bearer.id) &&
           !other.combatant.dead &&
+          sharesFloor(other.floors, floorOf(from.layer)) &&
           distance(from.position, other.position) <= effect.radius,
       )
       .flatMap((other) =>
@@ -5587,14 +5678,16 @@ export class MatchSimulation {
       readonly id: string | undefined;
       readonly position: Vec2;
       readonly layer: number;
+      readonly floors: number;
     },
     reach: number,
+    melee: boolean,
     progress: { unreachableSeconds: number },
     dt: number,
   ): "arrived" | "walking" | "unreachable" {
     if (
       distanceWithinRange(record.position, target.position, reach) &&
-      hasLineOfSight(record.position, target.position, this.#walls)
+      this.#clearTo(record, target, melee)
     ) {
       faceToward(record, target.position);
       record.route = undefined;
@@ -5836,7 +5929,15 @@ export class MatchSimulation {
       return;
     }
 
-    const approach = this.#approach(record, target, skill.range, pending, dt);
+    const approach = this.#approach(
+      record,
+      target,
+      this.#skillReach(record, skill, target),
+      skill.attack !== undefined &&
+        blowKind(record.combatant.equipment.mainHand.weapon) === "melee",
+      pending,
+      dt,
+    );
     if (approach === "unreachable") {
       record.pendingSkill = undefined;
       const unreachable: CombatEvent = { kind: "attack-unreachable", targetId: target.id };
@@ -5894,8 +5995,9 @@ export class MatchSimulation {
     const ghost = isGhostId(interact.targetId) ? interact.targetId : undefined;
     const approach = this.#approach(
       record,
-      { id: ghost, position, layer: record.layer },
+      { id: ghost, position, layer: record.layer, floors: record.floors },
       FLAG_REACH_UNITS,
+      false,
       interact,
       dt,
     );
@@ -6202,6 +6304,64 @@ export class MatchSimulation {
     return this.#layerWalls[layer] ?? this.#walls;
   }
 
+  /** The floors a body at `position` on `layer` stands on (ADR-0051). */
+  #floorsFor(position: Vec2, layer: number): number {
+    return this.#layers === undefined ? 1 : floorsAt(position, layer, this.#layers.transitions);
+  }
+
+  #refreshFloors(record: ParticipantRecord): void {
+    record.floors = this.#floorsFor(record.position, record.layer);
+  }
+
+  /** Whether a deck stands between `from` and `target` (ADR-0051's footprint rule). */
+  #deckBlocks(from: ParticipantRecord, target: ParticipantRecord): boolean {
+    return deckBlocksSight(
+      this.#layers?.decks ?? NO_DECKS,
+      from.position,
+      from.layer,
+      target.position,
+      target.layer,
+    );
+  }
+
+  /** ADR-0051's sight: the shooter's layer's walls and the footprint rule. */
+  #seesAcross(from: Vec2, fromLayer: number, to: Vec2, toLayer: number): boolean {
+    return (
+      hasLineOfSight(from, to, this.#wallsOn(fromLayer)) &&
+      !deckBlocksSight(this.#layers?.decks ?? NO_DECKS, from, fromLayer, to, toLayer)
+    );
+  }
+
+  /**
+   * Whether an attack from `record` gets to `target` (ADR-0051): a blow
+   * needs a shared floor and the attacker's walls clear, and no deck
+   * footprint comes into it; a shot is `#seesAcross`.
+   */
+  #clearTo(
+    record: ParticipantRecord,
+    target: Pick<ParticipantRecord, "position" | "layer" | "floors">,
+    melee: boolean,
+  ): boolean {
+    return melee
+      ? sharesFloor(record.floors, target.floors) &&
+          hasLineOfSight(record.position, target.position, this.#wallsOn(record.layer))
+      : this.#seesAcross(record.position, record.layer, target.position, target.layer);
+  }
+
+  /** `range` as a bow or spear in `record`'s hands has it at `target`; other weapons keep it. */
+  #heightReach(record: ParticipantRecord, target: ParticipantRecord, range: number): number {
+    return feelsHeight(record.combatant.equipment.mainHand.weapon.id)
+      ? heightRange(range, heightStep(record.floors, record.layer, target.floors, target.layer))
+      : range;
+  }
+
+  /** The range a skill reaches `target` from: an attack skill's fires the weapon, so it feels height. */
+  #skillReach(record: ParticipantRecord, skill: Skill, target: ParticipantRecord): number {
+    return skill.attack === undefined
+      ? skill.range
+      : this.#heightReach(record, target, skill.range);
+  }
+
   #isLayer(layer: number): boolean {
     return Number.isInteger(layer) && layer >= 0 && layer < (this.#layers?.count ?? 1);
   }
@@ -6261,6 +6421,7 @@ export class MatchSimulation {
             pointInPolygon(next, transition.area);
       if (wants) {
         record.layer = upward ? transition.to : transition.from;
+        this.#refreshFloors(record);
         return;
       }
     }
@@ -6412,6 +6573,57 @@ export class MatchSimulation {
   }
 
   /**
+   * The Storm Beacon's strike (#2694), once the step's flags are planted:
+   * every `BEACON_STRIKE_SECONDS` its owner holds it, one random living
+   * foe in earshot of it takes Beacon Lightning. A spirit is no target,
+   * as it is none for a trap. With nobody in earshot, nothing is drawn.
+   */
+  #advanceBeacon(dt: number): void {
+    const field = this.#flagField;
+    if (field?.beacon !== true || this.#flagsState === undefined || this.phase !== "active") {
+      return;
+    }
+    const { state, strikes } = stepBeacon(this.#beaconState, this.#flagsState.stand.holder, dt);
+    this.#beaconState = state;
+    if (!strikes) {
+      return;
+    }
+    const foes = [...this.#participants.values()].filter(
+      (body) =>
+        !body.combatant.dead &&
+        body.creature?.kind !== "spirit" &&
+        body.combatant.team !== state.owner &&
+        distance(body.position, field.stand) <= BEACON_STRIKE_RADIUS,
+    );
+    if (foes.length === 0) {
+      return;
+    }
+    const target = foes[this.#rng.nextInt(0, foes.length)];
+    if (target === undefined) {
+      return;
+    }
+    const events = beaconLightning(target.combatant, {
+      rng: this.#rng,
+      rules: this.#ruleset.combat,
+      surroundings: this.#participants,
+    });
+    // From nobody: no player is credited. The cause names the beacon, and the area is where the bolt starts.
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "beacon",
+      sourceId: undefined,
+      skillId: undefined,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: beaconStrikeArea(field.stand),
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
+  }
+
+  /**
    * The attack step (ADR-0026): drop an attack whose target is no longer
    * a living enemy, pause while casting, through the aftercast and while
    * a skill walks in (#499), walk into reach, then swing.
@@ -6459,14 +6671,24 @@ export class MatchSimulation {
       record.behaviour?.kind === "auto-attack" &&
       record.behaviour.reach !== undefined &&
       !(
-        distanceWithinRange(record.position, target.position, weapon.range) &&
-        hasLineOfSight(record.position, target.position, this.#walls)
+        distanceWithinRange(
+          record.position,
+          target.position,
+          this.#heightReach(record, target, weapon.range),
+        ) && this.#clearTo(record, target, weapon.projectileSpeed === undefined)
       )
     ) {
       record.combatant.attack = undefined;
       return;
     }
-    const approach = this.#approach(record, target, weapon.range, attack, dt);
+    const approach = this.#approach(
+      record,
+      target,
+      this.#heightReach(record, target, weapon.range),
+      weapon.projectileSpeed === undefined,
+      attack,
+      dt,
+    );
     if (approach === "unreachable") {
       record.combatant.attack = undefined;
       this.#logWeapon(record.id, weapon.id, [{ kind: "attack-unreachable", targetId: target.id }]);
@@ -6781,7 +7003,7 @@ export class MatchSimulation {
         return [...events, ...this.#failedToHit(record.combatant, target, skillHit, events)];
       }
     }
-    if (!hasLineOfSight(record.position, target.position, this.#walls)) {
+    if (!this.#seesAcross(record.position, record.layer, target.position, target.layer)) {
       events.push({ kind: "attack-obstructed", targetId: target.id });
       if (skillHit?.kind !== "spell") {
         bearerMissed(record.combatant, events);
@@ -6796,7 +7018,7 @@ export class MatchSimulation {
     // Along the whole flight, once: the path is fixed from here (#215). A
     // shot led round a corner, or at a target stepping behind a pillar,
     // stops at the wall, a unit short of it so it lands on the near side.
-    const impact = firstHit(from, leadPoint, this.#walls);
+    const impact = firstHit(from, leadPoint, this.#wallsOn(record.layer));
     const aimPoint =
       impact === undefined
         ? leadPoint
@@ -6817,6 +7039,12 @@ export class MatchSimulation {
       skillHit,
       unblockable: attacked.unblockable,
       spent: attacked.spent,
+      heightDamage:
+        skillHit?.kind !== "spell" && feelsHeight(record.combatant.equipment.mainHand.weapon.id)
+          ? heightDamageMultiplier(
+              heightStep(record.floors, record.layer, target.floors, target.layer),
+            )
+          : 1,
     });
     this.#nextProjectileId += 1;
     return events;
@@ -7055,6 +7283,7 @@ export class MatchSimulation {
       this.#ruleset.combat,
       events,
       this.#participants,
+      projectile.heightDamage,
     );
     if (critical && attacker !== undefined) {
       landedCritical(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);
@@ -7132,9 +7361,10 @@ export class MatchSimulation {
           skill,
           caster,
           casterPosition: projectile.from,
+          casterLayer: this.#participants.get(caster.id)?.layer ?? target.layer,
           primary: target,
           candidates: skill.area === undefined ? [] : [...this.#participants.values()],
-          losBlockers: this.#walls,
+          losBlockers: this.#wallsOn(target.layer),
         }),
         rng: this.#rng,
         rules: this.#ruleset.combat,
@@ -7498,6 +7728,7 @@ export class MatchSimulation {
         rule === undefined ||
         skillId === undefined ||
         record.combatant.dead ||
+        !sharesFloor(victim.floors, floorOf(record.layer)) ||
         !distanceWithinRange(record.position, victim.position, RANGE_NATURE_RITUAL)
       ) {
         continue;
@@ -7548,6 +7779,7 @@ export class MatchSimulation {
         other.creature?.kind === "spirit" ||
         bodyType(other) !== type ||
         combatant.health >= rule.belowHealthFraction * effectiveMaxHealth(combatant) ||
+        !sharesFloor(other.floors, floorOf(spirit.layer)) ||
         !distanceWithinRange(spirit.position, other.position, RANGE_NATURE_RITUAL)
       ) {
         continue;
@@ -7580,9 +7812,10 @@ export class MatchSimulation {
       return events;
     }
     const reached = [...this.#participants.values()].filter(
-      ({ combatant, creature, position }) =>
+      ({ combatant, creature, position, floors }) =>
         !combatant.dead &&
         creature?.kind !== "spirit" &&
+        sharesFloor(floors, floorOf(victim.layer)) &&
         distance(position, victim.position) <= radius &&
         combatant.statuses.active.some(
           ({ id }) => getStatusDefinition(id).category === "condition",
@@ -7903,6 +8136,7 @@ export class MatchSimulation {
     const from = record.position;
     const to = other.position;
     other.position = from;
+    this.#refreshFloors(other);
     this.#placeAt(record, to);
     this.#placeAt(other, from);
     faceToward(record, other.position);
@@ -7926,6 +8160,7 @@ export class MatchSimulation {
       }
     }
     record.position = position;
+    this.#refreshFloors(record);
     record.walkGoal = undefined;
     record.route = undefined;
     record.history.clear();
@@ -8069,10 +8304,15 @@ export class MatchSimulation {
     rule: CorpseRule,
     target: ParticipantRecord | undefined,
   ): ParticipantRecord | undefined {
-    const centre = rule.near === "target" ? target?.position : record.position;
+    const centre = rule.near === "target" ? target : record;
     return centre === undefined
       ? undefined
-      : nearestFreshCorpse(centre, rule.radius, this.#participants.values());
+      : nearestFreshCorpse(
+          centre.position,
+          floorOf(centre.layer),
+          rule.radius,
+          this.#participants.values(),
+        );
   }
 
   /**
@@ -8089,7 +8329,12 @@ export class MatchSimulation {
   ): ParticipantRecord | undefined {
     const reach =
       rule.pick === "random"
-        ? freshCorpsesWithin(record.position, rule.radius, this.#participants.values())
+        ? freshCorpsesWithin(
+            record.position,
+            floorOf(record.layer),
+            rule.radius,
+            this.#participants.values(),
+          )
         : undefined;
     const corpse =
       reach === undefined
@@ -8108,7 +8353,12 @@ export class MatchSimulation {
    * exploited (#1915), once each, and returns them, nearest first.
    */
   #exploitEveryCorpse(record: ParticipantRecord, rule: CorpseRule): ParticipantRecord[] {
-    const corpses = freshCorpsesWithin(record.position, rule.radius, this.#participants.values());
+    const corpses = freshCorpsesWithin(
+      record.position,
+      floorOf(record.layer),
+      rule.radius,
+      this.#participants.values(),
+    );
     for (const corpse of corpses) {
       this.#markExploited(corpse);
     }
@@ -8598,6 +8848,7 @@ export class MatchSimulation {
       position = this.#pushOut(record, position, this.#radiusOf(record), NOBODY);
     }
     record.position = position;
+    this.#refreshFloors(record);
     record.inputDirection = ZERO;
     record.history.clear();
     this.#stepStart.set(record.id, position);
@@ -8695,6 +8946,7 @@ export class MatchSimulation {
     const moved = position.x !== start.x || position.y !== start.y;
     record.position = position;
     if (moved) {
+      this.#refreshFloors(record);
       this.#climb(record, direction);
     }
   }
@@ -8816,6 +9068,7 @@ export class MatchSimulation {
     record.combatant.statuses.clear();
     record.position = record.spawn;
     record.layer = record.spec.layer ?? 0;
+    this.#refreshFloors(record);
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;
     record.walkGoal = undefined;
@@ -8853,6 +9106,7 @@ export class MatchSimulation {
       this.#reset(companion, why);
       companion.position = record.position;
       companion.layer = record.layer;
+      this.#refreshFloors(companion);
       this.#stepStart.set(companion.id, record.position);
     }
   }

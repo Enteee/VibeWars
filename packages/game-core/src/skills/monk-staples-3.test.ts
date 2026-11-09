@@ -128,13 +128,22 @@ describe("Smite Condition (#1039)", () => {
     const surroundings: Surroundings = new Map([
       [
         "ally",
-        { combatant: target, position: vec2(0, 0), creature: undefined, corpseExploited: false },
+        {
+          combatant: target,
+          position: vec2(0, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ],
       [
         "near",
         {
           combatant: near,
           position: vec2(AREA_ADJACENT, 0),
+          floors: 1,
+          layer: 0,
           creature: undefined,
           corpseExploited: false,
         },
@@ -144,6 +153,8 @@ describe("Smite Condition (#1039)", () => {
         {
           combatant: far,
           position: vec2(2 * AREA_IN_THE_AREA, 0),
+          floors: 1,
+          layer: 0,
           creature: undefined,
           corpseExploited: false,
         },
@@ -153,6 +164,8 @@ describe("Smite Condition (#1039)", () => {
         {
           combatant: friend,
           position: vec2(0, AREA_ADJACENT),
+          floors: 1,
+          layer: 0,
           creature: undefined,
           corpseExploited: false,
         },

@@ -94,7 +94,7 @@ function around(caster: Combatant, others: readonly (readonly [Combatant, Vec2])
   return new Map(
     [[caster, vec2(0, 0)] as const, ...others].map(([combatant, position]) => [
       combatant.id,
-      { combatant, position, creature: undefined, corpseExploited: false },
+      { combatant, position, floors: 1, layer: 0, creature: undefined, corpseExploited: false },
     ]),
   );
 }

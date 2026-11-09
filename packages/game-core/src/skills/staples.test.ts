@@ -111,6 +111,7 @@ function land(
     skill: skill(id),
     caster,
     casterPosition: vec2(0, 0),
+    casterLayer: 0,
     primary,
     candidates: [primary, ...others],
     losBlockers: [],
@@ -129,6 +130,8 @@ function land(
 const at = (combatant: Combatant, position: Vec2): TargetCandidate => ({
   combatant,
   position,
+  floors: 1,
+  layer: 0,
   creature: undefined,
 });
 

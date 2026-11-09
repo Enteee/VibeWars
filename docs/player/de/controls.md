@@ -39,7 +39,7 @@ Diese Tasten sind fest:
 - **Linksklick** auf den Boden: Du läufst dorthin. Ohne Shift läuft die linke Taste nur.
 - **Rechtsklick** auf einen Gegner oder Verbündeten visiert ihn an. Klicke denselben
   Gegner kurz danach noch einmal rechts, um ihn anzugreifen.
-- **Rechtsklick** auf eine Flagge oder den Flaggenstand in einer Gildenschlacht
+- **Rechtsklick** auf eine Flagge oder den Flaggenstand in einer Gildenschlacht oder auf dem Barrow Field
   visiert sie an; **Space** läuft hin und nimmt die Flagge auf oder setzt sie.
 - **Mausrad-Klick** auf einen Gegner sagt ihn für dein Team an: Ihr **T** visiert
   ihn an. Auf den Boden oder einen Verbündeten pingt er diese Stelle. Oder klick

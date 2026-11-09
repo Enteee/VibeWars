@@ -647,13 +647,14 @@ export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | un
 }
 
 /**
- * Whether `skill`, used now by a bot at `position` with `healthFraction`
+ * Whether `skill`, used now by a bot at `position` on `floor` with `healthFraction`
  * of its Health, would be a well's sacrifice it should not make (#1730):
  * no fresh corpse in reach, and too little Health. On a corpse it may.
  */
 export function sacrificesTooMuch(
   skill: Skill,
   position: Vec2,
+  floor: number,
   healthFraction: number,
   bodies: Iterable<CorpseCandidate>,
 ): boolean {
@@ -661,7 +662,7 @@ export function sacrificesTooMuch(
   return (
     rule?.elseSacrificePercent !== undefined &&
     healthFraction < WELL_SACRIFICE_FLOOR &&
-    nearestFreshCorpse(position, rule.radius, bodies) === undefined
+    nearestFreshCorpse(position, floor, rule.radius, bodies) === undefined
   );
 }
 

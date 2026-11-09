@@ -5,6 +5,7 @@ import { rankOf } from "../../../skills/tick.js";
 import type { Skill, Surroundings } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
 import { isGhostId } from "../../ghost.js";
+import { feelsHeight, heightRange, heightStep } from "../../layer-rules.js";
 import {
   blindsUser,
   botUses,
@@ -239,7 +240,15 @@ const fight: BotRule = {
     }
     // The weapon, from where it stands while a step would end what it holds
     // or take a healer off its post.
-    const reach = holding ? RANGE_MELEE : self.combatant.equipment.mainHand.weapon.range;
+    const { weapon } = self.combatant.equipment.mainHand;
+    const reach = holding
+      ? RANGE_MELEE
+      : target === undefined || !feelsHeight(weapon.id)
+        ? weapon.range
+        : heightRange(
+            weapon.range,
+            heightStep(self.floors, self.layer, target.floors, target.layer),
+          );
     if (
       (holding || covering) &&
       (target === undefined || distance(self.position, target.position) > reach)

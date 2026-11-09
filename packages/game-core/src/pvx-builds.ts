@@ -746,6 +746,7 @@ export const PVX_TEAMS: readonly PvxTeam[] = [
     members: [
       "OwZjsod8IOs5/HDLhZ8RYPjJI",
       "OgdTgYG/HiWIcAQLrybYB0YoBC",
+      "OgdTgYG/HiWIcAQLrybYB0YoBC",
       "OwcU04HC1vQeRNgaRCE3NTf3ECMA",
     ],
   },
@@ -791,6 +792,7 @@ export const PVX_TEAMS: readonly PvxTeam[] = [
       "OQgjExTc4QGWjFLFgFGFMF8VJXA",
       "OgpSgYGT0ChDAaeDLgcDgC0XA",
       "OgpjowM5aS0C4C5C/CjVCRlVsXA",
+      "OQhkAoC8AGKEpDAAAwMwJQRARQyF",
       "OwET8YIWViiQLKgQgYlom4BcuA",
       "OwcU04XCz/QeRNgkECE1NTf3ENQA",
       "OwcT02nCVyLqBULSgouZ67mYCC",
@@ -805,7 +807,6 @@ export const PVX_TEAMS: readonly PvxTeam[] = [
       "OgATcXsm1pq9YUNFHAws5XDAA",
       "OAdSQYDTUVtBgNFCNiPCTQAAA",
       "OgpjowM5aS0C4C5C/CjVCRlVsXA",
-      "OgpjgwM5aS0ChDNDAAeD6QgCsXA",
       "OwET8YIWViiQLKgQgYlom4BcuA",
       "OwcU04XCz/QeRNgkECE1NTf3ENQA",
       "OwcT02nCVyLqBULSgouZ67mYCC",
@@ -815,6 +816,7 @@ export const PVX_TEAMS: readonly PvxTeam[] = [
     name: "GvG Triple Melee",
     rating: "Great",
     members: [
+      "OgijkqqK7SuXebcfBYlbibIYCAA",
       "OgijkqqK7SuXebcfBYlbibIYCAA",
       "OQgjExTc4QGWjFLFgFGFMF8VJXA",
       "OgATcXsm1pq9YUNFHAws5XDAA",
@@ -876,6 +878,7 @@ export const PVX_TEAMS: readonly PvxTeam[] = [
     rating: "Provisional-Great",
     members: [
       "OQITEZJbnJqsXpKMleSTZzIAA",
+      "OQITEZJbnJqsXpKMleSTZzIAA",
       "OQITEZKbnwvA2w/svNdzCA",
       "OQITE5JbnRsAWWK/EDbTZzIAA",
       "OgYTkw7i3py8Y4ObnepwpVELA",
@@ -888,6 +891,8 @@ export const PVX_TEAMS: readonly PvxTeam[] = [
     name: "HA RaO Sway",
     rating: "Provisional-Good",
     members: [
+      "OgETIZrexJXHV2rUFmCtZzIAA",
+      "OgETIZrexJXHV2rUFmCtZzIAA",
       "OgETIZrexJXHV2rUFmCtZzIAA",
       "OgYTkwLj15xIs5O9yrTrIWIcA",
       "OAmkAyhioRuj68xFOteYTm5HO5C",
@@ -902,14 +907,8 @@ export const PVX_TEAMS: readonly PvxTeam[] = [
  * The PvX builds and teams that do not become one here, and why: a skill
  * not in the game yet, a bar the build rules refuse, or a team of a size
  * there is not. Never patched to
- * fit. `pvx-builds.test.ts` holds this to exactly what decoding skips,
+ * fit, but for six teams the operator had completed to a size there is
+ * (#2874). `pvx-builds.test.ts` holds this to exactly what decoding skips,
  * so a skill landing that makes one decode fails it until it is struck.
  */
-export const PVX_SKIPPED: Readonly<Record<string, string>> = {
-  "Team AB April Dual Invoke": "3 members: no team size has that many.",
-  "Team GvG Dual Elementalist Spike": "7 members: no team size has that many.",
-  "Team GvG RNE Split": "9 members: no team size has that many.",
-  "Team GvG Triple Melee": "7 members: no team size has that many.",
-  "Team HA IWAY": "7 members: no team size has that many.",
-  "Team HA RaO Sway": "6 members: no team size has that many.",
-};
+export const PVX_SKIPPED: Readonly<Record<string, string>> = {};

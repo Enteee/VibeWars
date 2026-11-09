@@ -149,7 +149,10 @@ function sweep(
   target = makeCombatant({ id: "foe", team: 1, maxHealth: 1000, health: 1000 }),
 ): CombatEvent[] {
   const at = (combatant: Combatant, position: Vec2) =>
-    [combatant.id, { combatant, position, creature: undefined, corpseExploited: false }] as const;
+    [
+      combatant.id,
+      { combatant, position, floors: 1, layer: 0, creature: undefined, corpseExploited: false },
+    ] as const;
   const surroundings: Surroundings = new Map([at(self, vec2(0, 0)), at(target, vec2(30, 0))]);
   return resolveAttackSkill(
     {

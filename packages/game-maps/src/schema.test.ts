@@ -421,6 +421,35 @@ describe("guild battle maps (#1222)", () => {
     expect(validateMapData(guildMap).objectives).toHaveLength(7);
   });
 
+  it("takes a Storm Beacon on Priest Annihilation only with a flag spawn per team (#2694)", () => {
+    const shrines = [
+      objective("resurrection-shrine", 0, 20, 80),
+      objective("resurrection-shrine", 1, 80, 20),
+    ];
+    const beacon = { kind: "storm-beacon", layer: 0, position: { x: 50, y: 70 } };
+    const priest = { ...guildMap, mode: "priest-annihilation" };
+    expect(
+      validateMapData({
+        ...priest,
+        objectives: [
+          ...shrines,
+          beacon,
+          objective("flag-spawn", 0, 30, 60),
+          objective("flag-spawn", 1, 70, 60),
+        ],
+      }).objectives,
+    ).toHaveLength(5);
+    expect(() => validateMapData({ ...priest, objectives: [...shrines, beacon] })).toThrow(
+      /team 0 has 0 flag spawns, not one/,
+    );
+    expect(() =>
+      validateMapData({
+        ...priest,
+        objectives: [...shrines, objective("flag-spawn", 0, 30, 60)],
+      }),
+    ).toThrow(/priest-annihilation map has no flag spawn/);
+  });
+
   it("refuses a guild battle map with no flag stand, or two (#1225)", () => {
     expect(() =>
       validateMapData({

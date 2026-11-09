@@ -58,7 +58,7 @@ function foe(id = "foe", overrides: Partial<Combatant> = {}): Combatant {
 }
 
 function at(combatant: Combatant, position: Vec2): TargetCandidate {
-  return { combatant, position, creature: undefined };
+  return { combatant, position, floors: 1, layer: 0, creature: undefined };
 }
 
 /** `user` pays for `skillId` and it lands on `targets`. */
@@ -131,6 +131,7 @@ describe("Water Trident (#997)", () => {
       skill: skill(WATER_TRIDENT),
       caster: elementalist,
       casterPosition: vec2(0, 0),
+      casterLayer: 0,
       primary: at(target, vec2(300, 0)),
       candidates: [
         at(near, vec2(300, 20)),
@@ -201,6 +202,7 @@ describe("Searing Flames (#997)", () => {
       skill: skill(SEARING_FLAMES),
       caster: elementalist,
       casterPosition: vec2(0, 0),
+      casterLayer: 0,
       primary: at(target, vec2(300, 0)),
       candidates: [at(nearby, vec2(300, AREA_NEARBY)), at(beyond, vec2(300 + AREA_NEARBY + 1, 0))],
       losBlockers: [],

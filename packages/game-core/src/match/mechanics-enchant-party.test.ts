@@ -100,7 +100,14 @@ function around(...combatants: readonly Combatant[]): Surroundings {
   return new Map(
     combatants.map((combatant, index) => [
       combatant.id,
-      { combatant, position: vec2(index * 40, 0), creature: undefined, corpseExploited: false },
+      {
+        combatant,
+        position: vec2(index * 40, 0),
+        floors: 1,
+        layer: 0,
+        creature: undefined,
+        corpseExploited: false,
+      },
     ]),
   );
 }
@@ -248,7 +255,13 @@ describe("Dark Apostasy (#1975)", () => {
     victim.statuses.apply("arcane-echo", 30, "x", NO_RANKS);
     resolveSwing({
       attacker,
-      target: { combatant: victim, position: vec2(40, 0), creature: undefined },
+      target: {
+        combatant: victim,
+        position: vec2(40, 0),
+        floors: 1,
+        layer: 0,
+        creature: undefined,
+      },
       surroundings: around(attacker, victim),
       rng: createRng(3),
       rules: { ...RULES.combat, criticalBaseChance, criticalChancePerRank: 0 },

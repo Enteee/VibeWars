@@ -1,4 +1,5 @@
 import { hasLineOfSight, type Segment } from "../geometry.js";
+import { floorOf, sharesFloor } from "../match/layer-rules.js";
 import { distance, type Vec2 } from "../vec2.js";
 import type { Creature } from "../match/simulation.js";
 import type { Combatant, Skill } from "./types.js";
@@ -27,8 +28,23 @@ import type { Combatant, Skill } from "./types.js";
 export interface TargetCandidate {
   readonly combatant: Combatant;
   readonly position: Vec2;
+  /** The layer it is on: the one an area centred on it belongs to (ADR-0051). */
+  readonly layer: number;
+  /** The floors it stands on (ADR-0051): `layer-rules`' `floorsAt`. */
+  readonly floors: number;
   /** `undefined`: a player or a training dummy, not a creature (#1052), so a party member (#474). */
   readonly creature: Creature | undefined;
+}
+
+/** Where an area sits: its centre, and the layer it belongs to (ADR-0051). */
+export type AreaCentre = Pick<TargetCandidate, "position" | "layer">;
+
+/**
+ * Whether a body at `position` on `floors` stands in the area of
+ * `radius` about `at` (ADR-0051): the one test every area asks.
+ */
+export function inArea(position: Vec2, floors: number, at: AreaCentre, radius: number): boolean {
+  return sharesFloor(floors, floorOf(at.layer)) && distance(position, at.position) <= radius;
 }
 
 /**
@@ -38,12 +54,12 @@ export interface TargetCandidate {
  */
 export function spiritsWithin(
   candidates: Iterable<TargetCandidate>,
-  at: Vec2,
+  at: AreaCentre,
   radius: number,
 ): number {
   let spirits = 0;
-  for (const { combatant, position, creature } of candidates) {
-    if (creature?.kind === "spirit" && !combatant.dead && distance(position, at) <= radius) {
+  for (const { combatant, position, floors, creature } of candidates) {
+    if (creature?.kind === "spirit" && !combatant.dead && inArea(position, floors, at, radius)) {
       spirits += 1;
     }
   }
@@ -57,14 +73,14 @@ export function spiritsWithin(
  */
 export function nearestSpiritWithin(
   candidates: Iterable<TargetCandidate>,
-  at: Vec2,
+  at: AreaCentre,
   radius: number,
 ): Combatant | undefined {
   const spirits = [...candidates].filter(
-    ({ combatant, position, creature }) =>
-      creature?.kind === "spirit" && !combatant.dead && distance(position, at) <= radius,
+    ({ combatant, position, floors, creature }) =>
+      creature?.kind === "spirit" && !combatant.dead && inArea(position, floors, at, radius),
   );
-  return nearestFirst(spirits, at)[0];
+  return nearestFirst(spirits, at.position)[0];
 }
 
 /**
@@ -75,16 +91,16 @@ export function nearestSpiritWithin(
 export function ownCreaturesWithin(
   candidates: Iterable<TargetCandidate>,
   owner: Combatant,
-  at: Vec2,
+  at: AreaCentre,
   radius: number,
 ): number {
   let creatures = 0;
-  for (const { combatant, position, creature } of candidates) {
+  for (const { combatant, position, floors, creature } of candidates) {
     if (
       (creature?.kind === "spirit" || creature?.kind === "minion") &&
       creature.ownerId === owner.id &&
       !combatant.dead &&
-      distance(position, at) <= radius
+      inArea(position, floors, at, radius)
     ) {
       creatures += 1;
     }
@@ -96,6 +112,8 @@ export interface TargetSelection {
   readonly skill: Skill;
   readonly caster: Combatant;
   readonly casterPosition: Vec2;
+  /** The caster's layer, or a ground effect's (ADR-0051): what `origin: "caster"` reaches. */
+  readonly casterLayer: number;
   /** What the skill was cast at: the caster itself for a self skill. */
   readonly primary: TargetCandidate | undefined;
   /** Everyone who could be caught, in any order. */
@@ -124,6 +142,9 @@ export function resolveTargets(selection: TargetSelection): readonly Combatant[]
   if (origin === undefined) {
     return [];
   }
+  const floorsAtOrigin = floorOf(
+    area.origin === "caster" ? selection.casterLayer : (primary?.layer ?? 0),
+  );
   // A self skill's primary is its caster, who is in their own area only
   // when the area says so.
   const first =
@@ -131,7 +152,7 @@ export function resolveTargets(selection: TargetSelection): readonly Combatant[]
       ? []
       : [primary.combatant];
 
-  const caught = selection.candidates.filter(({ combatant, position }) => {
+  const caught = selection.candidates.filter(({ combatant, position, floors }) => {
     if (combatant.dead || combatant.id === primary?.combatant.id) {
       return false;
     }
@@ -143,6 +164,7 @@ export function resolveTargets(selection: TargetSelection): readonly Combatant[]
       return false;
     }
     return (
+      sharesFloor(floors, floorsAtOrigin) &&
       distance(position, origin) <= area.radius &&
       hasLineOfSight(origin, position, selection.losBlockers)
     );

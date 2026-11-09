@@ -48,7 +48,14 @@ function use(
     surroundings: new Map(
       [...new Set([user, target, ...party])].map((combatant, index) => [
         combatant.id,
-        { combatant, position: vec2(index * 100, 0), creature: undefined, corpseExploited: false },
+        {
+          combatant,
+          position: vec2(index * 100, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ]),
     ),
     skill: skill(skillId),

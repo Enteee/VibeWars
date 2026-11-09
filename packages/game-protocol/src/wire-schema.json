@@ -1003,6 +1003,7 @@
                   "type": {
                     "union": [
                       { "literal": "attribute" },
+                      { "literal": "beacon" },
                       { "literal": "degeneration" },
                       { "literal": "skill" },
                       { "literal": "weapon" }
@@ -5388,6 +5389,7 @@
           "type": {
             "union": [
               { "literal": "attribute" },
+              { "literal": "beacon" },
               { "literal": "degeneration" },
               { "literal": "skill" },
               { "literal": "weapon" }
@@ -6636,6 +6638,7 @@
           "type": {
             "union": [
               { "literal": "attribute" },
+              { "literal": "beacon" },
               { "literal": "degeneration" },
               { "literal": "skill" },
               { "literal": "weapon" }
@@ -6701,6 +6704,7 @@
             "type": {
               "union": [
                 { "literal": "attribute" },
+                { "literal": "beacon" },
                 { "literal": "degeneration" },
                 { "literal": "skill" },
                 { "literal": "weapon" }
