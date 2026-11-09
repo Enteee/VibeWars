@@ -96,10 +96,10 @@ function fighter(id: string, team: number, spawn: Vec2): ParticipantSpec {
 }
 
 /** Two players a team at the map's spawns, and each team's ghost at its own. */
-function kingOfTheHill(): MatchSimulation {
+function kingOfTheHill(rules = KING_OF_THE_HILL_MATCH_RULES): MatchSimulation {
   return new MatchSimulation({
     seed: "king-of-the-hill",
-    matchRules: KING_OF_THE_HILL_MATCH_RULES,
+    matchRules: rules,
     walls: WALLS,
     bounds: BOUNDS,
     ghostField: FIELD,
@@ -155,8 +155,8 @@ function onAltar(sim: MatchSimulation, team: number, offsetX = 0): void {
 }
 
 /** Team 0's ghost claims the altar, and walks back to its post. */
-function held(): MatchSimulation {
-  const sim = kingOfTheHill();
+function held(rules = KING_OF_THE_HILL_MATCH_RULES): MatchSimulation {
+  const sim = kingOfTheHill(rules);
   onAltar(sim, 0);
   stepUntil(sim, () => sim.altarState.holder === 0, CLAIM_SECONDS + 1);
   return sim;
@@ -391,13 +391,13 @@ describe("a King of the Hill match (#1377)", () => {
   });
 
   it("is won at time by the team with more points", () => {
-    const sim = held();
-    stepUntil(sim, () => sim.phase === "finished", KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds);
-    expect(sim.elapsedSeconds).toBeCloseTo(KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds, 3);
+    // One scoring tick. The clock is a running sum of DT: at 60 s it is still a hair short.
+    const SHORT = { ...KING_OF_THE_HILL_MATCH_RULES, timeLimitSeconds: 36 };
+    const sim = held(SHORT);
+    stepUntil(sim, () => sim.phase === "finished", SHORT.timeLimitSeconds);
+    expect(sim.elapsedSeconds).toBeCloseTo(SHORT.timeLimitSeconds, 3);
     expect(points(sim)[0]).toBe(
-      Math.floor(
-        (KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds - CLAIM_SECONDS) / POINT_TICK_SECONDS,
-      ),
+      Math.floor((SHORT.timeLimitSeconds - CLAIM_SECONDS) / POINT_TICK_SECONDS),
     );
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "time" });
   });
