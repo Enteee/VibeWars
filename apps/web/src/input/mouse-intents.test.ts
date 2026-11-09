@@ -301,7 +301,12 @@ describe("clicks with Show names held (#2738)", () => {
 
   it("walks to the deck drawn at the click, and under it with Alt (#2831)", () => {
     const deck = { kind: "rect", x: 100, y: 100, width: 100, height: 100 } as const;
-    const structure = { layerCount: 2, decks: [{ layer: 1, footprint: deck }], transitions: [] };
+    const structure = {
+      layerCount: 2,
+      decks: [{ layer: 1, footprint: deck }],
+      transitions: [],
+      water: [],
+    };
     const layered = { ...NAMED, actors: [], structure };
     expect(
       primaryClickIntents(MATCH, layered, vec2(150, 150 - ELEVATION_STEP), false, false),

@@ -65,3 +65,37 @@ export function arenaPalette(layerCount: number): ArenaPalette {
 export const DECK_SHADOW = { colour: 0x080b10, alpha: 0.55, offset: 32 };
 export const DECK_TINT = { colour: 0x0d131c, alpha: 0.55 };
 export const DECK_LIP = 0xffffff;
+
+/** How a depth of water looks (#2984): line widths are CSS px. */
+export interface WaterLook {
+  readonly fill: number;
+  readonly fillAlpha: number;
+  readonly shore: number;
+  readonly shoreWidth: number;
+  readonly ripple: number;
+  readonly rippleAlpha: number;
+}
+
+/**
+ * Deep water is dark, opaque and hard-shored: it cannot be walked. Shallow
+ * is pale and see-through, its shore soft, the floor showing. They differ
+ * by value and shore, not by hue alone (docs/art/art-direction.md).
+ */
+export const WATER_LOOK: Record<"deep" | "shallow", WaterLook> = {
+  deep: {
+    fill: 0x0a1320,
+    fillAlpha: 1,
+    shore: 0xc4dcee,
+    shoreWidth: 3,
+    ripple: 0x4e6c8a,
+    rippleAlpha: 0.7,
+  },
+  shallow: {
+    fill: 0x8fb8d6,
+    fillAlpha: 0.3,
+    shore: 0x8fb8d6,
+    shoreWidth: 1,
+    ripple: 0xe2f1fc,
+    rippleAlpha: 0.5,
+  },
+};

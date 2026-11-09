@@ -12,7 +12,9 @@ import {
   buildNavGraph,
   createPathFinder,
   navGraphFor,
+  minRampLength,
   nearestStandable,
+  RAMP_WAYPOINT_MOST_INSET,
   walkIsClear,
   type NavGraph,
 } from "./pathing.js";
@@ -158,6 +160,13 @@ describe("gated graphs (#2691)", () => {
     const gated = buildGatedNavGraph(walls, gates, bounds, CLEARANCE);
     expect(walkIsClear(navGraphFor(gated, 0), vec2(150, 200), vec2(260, 200))).toBe(true);
     expect(walkIsClear(navGraphFor(gated, 1), vec2(150, 200), vec2(260, 200))).toBe(false);
+  });
+});
+
+describe("minRampLength (#2995)", () => {
+  it("is the length at which a ramp's waypoint inset reaches its cap", () => {
+    expect(minRampLength(14)).toBeCloseTo(107.14, 2);
+    expect((14 + 1) / minRampLength(14)).toBeCloseTo(RAMP_WAYPOINT_MOST_INSET);
   });
 });
 

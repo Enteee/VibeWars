@@ -3,6 +3,9 @@ import {
   firstHit,
   GUARD_ROLE_IDS,
   MINIMAL_GW_INSPIRED_PVP_V1,
+  minRampLength,
+  rampLength,
+  rampUphill,
   TWO_TEAM_MODES,
   type MatchMode,
   type Segment,
@@ -612,6 +615,21 @@ export const mapDataSchema = z
           code: "custom",
           path: ["transitions", index, "from"],
           message: `transition ${String(index)} touches no deck on layer ${String(transition.from)}`,
+        });
+      }
+      // Measured as pathing measures it (#2995); a ramp with no deck to climb
+      // to has no uphill, and the layers' own checks already say so.
+      const above = map.decks
+        .filter((deck) => deck.layer === transition.to)
+        .map((deck) => shapeVertices(deck.footprint));
+      const area = shapeVertices(transition.area);
+      const length = rampLength(area, rampUphill(area, above));
+      const least = minRampLength(MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      if (above.length > 0 && length < least) {
+        context.addIssue({
+          code: "custom",
+          path: ["transitions", index],
+          message: `transition ${String(index)} is ${length.toFixed(1)} long uphill, shorter than the ${least.toFixed(1)} a body needs to route over it`,
         });
       }
     });

@@ -984,6 +984,18 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     );
   });
 
+  it("refuses a ramp too short uphill for a route over it, and keeps one long enough (#2995)", () => {
+    const [, far] = layerTest.transitions;
+    const uphillBy = (width: number) => ({
+      transitions: [
+        { from: 0, to: 1, area: { kind: "rect", x: 520 - width, y: 300, width, height: 200 } },
+        ...(far === undefined ? [] : [far]),
+      ],
+    });
+    refuses(uphillBy(100), /transitions\.0: transition 0 is 100\.0 long uphill/);
+    accepts(uphillBy(140));
+  });
+
   it("refuses a transition from a deck that touches none", () => {
     refuses(
       {

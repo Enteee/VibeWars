@@ -1,14 +1,8 @@
-import {
-  closestPointOnPolygon,
-  pointInPolygon,
-  polygonCentre,
-  segment,
-  type Polygon,
-  type Segment,
-} from "../geometry.js";
+import { pointInPolygon, segment, type Polygon, type Segment } from "../geometry.js";
 import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
 import { HEIGHT_DAMAGE_PERCENT, HEIGHT_RANGE_PERCENT } from "../match-rules.js";
-import { add, distance, dot, normalize, scale, sub, type Vec2 } from "../vec2.js";
+import { rampUphill } from "../pathing.js";
+import { add, distance, dot, scale, type Vec2 } from "../vec2.js";
 
 /**
  * The rule table of ADR-0051, as plain questions about a position and a
@@ -141,19 +135,12 @@ export function uphillDirections(
   transitions: readonly FloorTransition[],
   decks: readonly DeckFootprint[],
 ): readonly Vec2[] {
-  return transitions.map((transition) => {
-    const foot = polygonCentre(transition.area);
-    let nearest = foot;
-    let least = Number.POSITIVE_INFINITY;
-    for (const deck of decks) {
-      const edge = closestPointOnPolygon(foot, deck.footprint);
-      if (deck.layer === transition.to && distance(foot, edge) < least) {
-        least = distance(foot, edge);
-        nearest = edge;
-      }
-    }
-    return normalize(sub(nearest, foot));
-  });
+  return transitions.map((transition) =>
+    rampUphill(
+      transition.area,
+      decks.filter((deck) => deck.layer === transition.to).map((deck) => deck.footprint),
+    ),
+  );
 }
 
 /**

@@ -161,6 +161,8 @@ import {
   steadyLighting,
   type LightSample,
 } from "./lighting-model.js";
+import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
+import { waterShapeOf, type WaterShape } from "./water-shape.js";
 import { screenPx, screenSized } from "./screen-text.js";
 import {
   BODY_EDGE_WIDTH,
@@ -278,9 +280,9 @@ const IMPACT_LINE_WIDTH = 1.5;
  * numbers, which were over the bodies before the split, so a long name may
  * cover a badge's top edge.
  */
-const GROUND_DEPTH = -1;
-/** A layered map's opaque floor: under the ward and trap circles on it. */
-const FLOOR_DEPTH = -2;
+const GROUND_DEPTH = renderOrder({ kind: "ground-effect" });
+/** A layered map's opaque floor and the grid: under the water and the ward and trap circles on it. */
+const FLOOR_DEPTH = renderOrder({ kind: "floor" });
 /** The wards on a lit map: over its light, which never darkens them (ADR-0052). */
 const LIT_GROUND_DEPTH = renderOrder({ kind: "lit-ground-effect" });
 const MAP_DEPTH = renderOrder({ kind: "terrain" });
@@ -328,6 +330,13 @@ export class ArenaScene extends Phaser.Scene {
   }[] = [];
   /** The static structure, one object per place in `renderOrder`. */
   private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** The map's water (#2984), built when the map changes. */
+  private waterShapes: readonly WaterShape[] = [];
+  /** The ripples on each layer's water, drawn every frame. */
+  private readonly rippleGraphics = new Map<
+    number,
+    { readonly graphics: Phaser.GameObjects.Graphics; readonly painter: WaterPainter }
+  >();
   /** `snapshot.actors` where they draw this frame: lifted by their layers. */
   private drawnActors: readonly RenderableActor[] = [];
   /** Each body's lift now, while it eases to its layer's. */
@@ -537,6 +546,7 @@ export class ArenaScene extends Phaser.Scene {
     this.updateLighting(time);
     this.updateGroundEffects();
     this.drawMap();
+    this.drawRipples();
     // Over the grid and walls, under the actors: a flash never hides a
     // health bar, a status or the target ring.
     this.areaFlashes = decayAreaFlashes(this.areaFlashes, deltaMs / 1000);
@@ -1871,11 +1881,20 @@ export class ArenaScene extends Phaser.Scene {
     // flickers as the camera moves (#2393): 1 CSS px, as the edge markers.
     const line = 1 / next.zoom;
     const palette = arenaPalette(next.structure.layerCount);
-    this.drawFloor(palette);
-    this.drawGrid(g, line, palette);
+    this.drawFloor(palette, line);
     this.drawDeckShadows(g, next.structure);
     for (const graphics of this.structureGraphics.values()) {
       graphics.clear();
+    }
+    if (next.structure.water !== this.drawnMap?.structure.water) {
+      this.waterShapes = next.structure.water.map(waterShapeOf);
+    }
+    for (const shape of this.waterShapes) {
+      const surface = this.structureAt({ kind: "water", layer: shape.layer, part: "surface" });
+      surface.save();
+      surface.translateCanvas(0, -elevationOf(shape.layer));
+      WATER_ART[waterArtKey(shape.depth)].surface(this.waterPainter(surface), shape, line);
+      surface.restore();
     }
     for (const transition of next.structure.transitions) {
       const lit = litStructurePalette(palette, next.lighting, transition.area, transition.from);
@@ -2209,13 +2228,69 @@ export class ArenaScene extends Phaser.Scene {
     g.strokePoints(points, true);
   }
 
-  private drawFloor(palette: ArenaPalette): void {
+  /** The floor and its grid, under the water and the ward circles on it (#2984). */
+  private drawFloor(palette: ArenaPalette, line: number): void {
     const g = this.floorGraphics;
-    g?.clear();
-    if (g !== undefined && palette.floor !== undefined) {
+    if (g === undefined) {
+      return;
+    }
+    g.clear();
+    if (palette.floor !== undefined) {
       g.fillStyle(palette.floor, 1);
       g.fillRect(0, 0, this.arena.width, this.arena.height);
     }
+    this.drawGrid(g, line, palette);
+  }
+
+  /** The water's ripples (#2984), at render time; still under reduced motion. */
+  private drawRipples(): void {
+    for (const { graphics } of this.rippleGraphics.values()) {
+      graphics.clear();
+    }
+    const line = 1 / (this.view?.zoom ?? 1);
+    for (const shape of this.waterShapes) {
+      const { graphics, painter } = this.ripplesAt(shape.layer);
+      graphics.save();
+      graphics.translateCanvas(0, -elevationOf(shape.layer));
+      WATER_ART[waterArtKey(shape.depth)].ripples(
+        painter,
+        shape,
+        line,
+        this.now,
+        this.reducedMotion,
+      );
+      graphics.restore();
+    }
+  }
+
+  private ripplesAt(layer: number): {
+    readonly graphics: Phaser.GameObjects.Graphics;
+    readonly painter: WaterPainter;
+  } {
+    let ripples = this.rippleGraphics.get(layer);
+    if (ripples === undefined) {
+      const graphics = this.add
+        .graphics()
+        .setDepth(renderOrder({ kind: "water", layer, part: "ripples" }));
+      ripples = { graphics, painter: this.waterPainter(graphics) };
+      this.rippleGraphics.set(layer, ripples);
+    }
+    return ripples;
+  }
+
+  /** `g` as water draws through it: outlines filled as triangles, as a wall's are. */
+  private waterPainter(g: Phaser.GameObjects.Graphics): WaterPainter {
+    return {
+      fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
+      lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
+      fillOutline: (outline) => {
+        this.fillShape(g, { kind: "polygon", points: outline });
+      },
+      strokeOutline: (outline) => {
+        this.strokeShape(g, { kind: "polygon", points: outline });
+      },
+      lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
+    };
   }
 
   /** The grid over the arena's bounds, not the screen, and its edge in `wall-stroke`; outside is `bg`. */
