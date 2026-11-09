@@ -15,6 +15,7 @@ import sunkenBastion from "@vibewars/game-maps/maps/sunken-bastion/map.json" wit
 import shiverpeakPass from "@vibewars/game-maps/maps/shiverpeak-pass/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
 import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
+import cinderSanctum from "@vibewars/game-maps/maps/cinder-sanctum/map.json" with { type: "json" };
 import blackwaterFord from "@vibewars/game-maps/maps/blackwater-ford/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
 import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
@@ -69,6 +70,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   // The Guild Battle's (#1222).
   guildHallIsle,
   // The Relic Run's (#1374, #2551).
+  cinderSanctum,
   brokenTower,
   // King of the Hill's (#1377, #2552).
   theCourtyard,
@@ -190,14 +192,14 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
  * GW1's order is Elite Zaishen Battle, The Underworld, Fetid River,
  * Burial Mounds, Unholy Temples, Forgotten Shrines, Golden Gates, The
  * Courtyard, Antechamber, (The Vault,) Hall of Heroes. A map not built
- * yet is absent until its card adds it, and broken-tower stands in for
+ * yet is absent until its card adds it, and cinder-sanctum stands in for
  * Unholy Temples (#2695). Never longer than `ASCENT_ROUNDS`.
  */
 export const ASCENT_PROGRESSION: readonly string[] = [
   "hollow-deep",
   "blackwater-ford",
   // Unholy Temples' slot.
-  "broken-tower",
+  "cinder-sanctum",
   "mosslit-cairns",
   "the-courtyard",
   "hall-of-heroes",
@@ -325,15 +327,23 @@ export function mapFlagField(mapId: string): FlagField | undefined {
   return flagFieldOf(map?.objectives ?? []);
 }
 
-/** The altar and relic spawns among a map's objectives (#1374), or `undefined`. */
-function relicFieldOf(objectives: readonly Objective[]): RelicField | undefined {
-  const altar = objectives.find((objective) => objective.kind === "altar");
-  const spawns = objectives.flatMap((objective) =>
+/** A Relic Run map's relic spawns, altar and variant (#1374, #2695), or `undefined`. */
+function relicFieldOf(map: MapData | undefined): RelicField | undefined {
+  if (map?.relicTarget === undefined || map.relicCarry === undefined) {
+    return undefined;
+  }
+  const altar = map.objectives.find((objective) => objective.kind === "altar");
+  const spawns = map.objectives.flatMap((objective) =>
     objective.kind === "relic-spawn"
       ? [{ team: objective.team, position: objective.position }]
       : [],
   );
-  return altar === undefined || spawns.length === 0 ? undefined : { altar: altar.position, spawns };
+  return {
+    altar: altar?.position,
+    relicTarget: map.relicTarget,
+    relicCarry: map.relicCarry,
+    spawns,
+  };
 }
 
 /**
@@ -359,7 +369,7 @@ function ghostFieldOf(map: MapData): GhostField | undefined {
 /** The altar and relic spawns on `mapId` (#1374), for the renderer: as `mapFlagField`. */
 export function mapRelicField(mapId: string): RelicField | undefined {
   const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
-  return relicFieldOf(map?.objectives ?? []);
+  return relicFieldOf(map);
 }
 
 /** The base guards among a map's objectives (#1223), in its order. */
@@ -409,7 +419,7 @@ export function hostMap(mapId: string): HostMap | undefined {
     shrines: shrinesOf(map.objectives),
     guildLords: guildLordsOf(map.objectives),
     flagField: flagFieldOf(map.objectives),
-    relicField: relicFieldOf(map.objectives),
+    relicField: relicFieldOf(map),
     ghostField: ghostFieldOf(map),
     capturePoints: map.objectives.flatMap((objective) =>
       objective.kind === "capture-point" ? [objective.position] : [],

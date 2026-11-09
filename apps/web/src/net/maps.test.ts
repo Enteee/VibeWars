@@ -79,6 +79,7 @@ describe("randomArenaMapPool", () => {
             ![
               "guild-hall-isle",
               "broken-tower",
+              "cinder-sanctum",
               "the-courtyard",
               "hall-of-heroes",
               "hollow-deep",
@@ -131,7 +132,7 @@ describe("team sizes (#2108)", () => {
     expect(modeMapIds()["heroes-ascent"]).toEqual([
       "hollow-deep",
       "blackwater-ford",
-      "broken-tower",
+      "cinder-sanctum",
       "mosslit-cairns",
       "the-courtyard",
     ]);
@@ -235,6 +236,7 @@ describe("team sizes (#2108)", () => {
       "moss-vale",
       "elonian-plateau",
       "guild-hall-isle",
+      "cinder-sanctum",
       "broken-tower",
       "the-courtyard",
       "hall-of-heroes",
@@ -290,7 +292,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
     expect(ASCENT_PROGRESSION.map((id) => [id, hostMap(id)?.mode])).toEqual([
       ["hollow-deep", "annihilation"],
       ["blackwater-ford", "priest-annihilation"],
-      ["broken-tower", "relic-run"],
+      ["cinder-sanctum", "relic-run"],
       ["mosslit-cairns", "capture-points"],
       ["the-courtyard", "king-of-the-hill"],
       ["hall-of-heroes", "king-of-the-hill"],
@@ -298,7 +300,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
     expect(ASCENT_PROGRESSION.map((_, round) => mapName(ascentMapId(round)))).toEqual([
       "The Hollow Deep",
       "Blackwater Ford",
-      "Broken Tower",
+      "Cinder Sanctum",
       "Mosslit Cairns",
       "The Courtyard",
       "Hall of Heroes",
@@ -340,6 +342,7 @@ describe("hostMap (#476)", () => {
           "mosslit-cairns",
           "guild-hall-isle",
           "broken-tower",
+          "cinder-sanctum",
           "the-courtyard",
           "hall-of-heroes",
           "scarred-earth",
@@ -378,6 +381,8 @@ describe("hostMap (#476)", () => {
   it("carries a Relic Run map's altar and relic spawns, and none elsewhere (#1374)", () => {
     expect(hostMap("broken-tower")?.relicField).toEqual({
       altar: { x: 1600, y: 900 },
+      relicTarget: "altar",
+      relicCarry: "own",
       spawns: [
         { team: 0, position: { x: 120, y: 900 } },
         { team: 1, position: { x: 3080, y: 900 } },

@@ -637,6 +637,8 @@ export default {
   "lobby.modePriestAnnihilation": "Papirtás: győzz le minden ellenséget és a papjukat",
   "lobby.modeRelicRun":
     "Ereklyefutam: vidd az ereklyédet az oltárhoz. 8 perc után a legtöbb pont nyer.",
+  "lobby.modeRelicRunFoe":
+    "Ereklyefutam: vidd az ellenség ereklyéjét a Kísértethősödhöz. 3 pont előny nyer; 8 perc után a legtöbb pont.",
   "lobby.notReady": "Nem kész",
   "lobby.playBots": "Játék botok ellen",
   "lobby.ready": "Kész",

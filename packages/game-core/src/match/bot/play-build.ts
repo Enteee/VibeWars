@@ -433,7 +433,9 @@ function heldTarget(
   // them for a foe in its own reach, never for one a teammate fights
   // across the map.
   const objectives =
-    context.objectives.capturePoints.length > 0 || context.objectives.altar !== undefined;
+    context.objectives.capturePoints.length > 0 ||
+    context.objectives.altar !== undefined ||
+    context.objectives.relics.length > 0;
   for (const ally of context.participants) {
     if (
       ally.combatant.team !== self.combatant.team ||

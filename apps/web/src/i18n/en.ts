@@ -636,6 +636,8 @@ export const en = {
     "King of the Hill: lead your Ghostly Hero onto the altar. Hold it to score; most points in 8 minutes wins.",
   "lobby.modePriestAnnihilation": "Priest Annihilation: defeat every foe and their priest",
   "lobby.modeRelicRun": "Relic Run: carry your relic to the altar. Most points in 8 minutes wins.",
+  "lobby.modeRelicRunFoe":
+    "Relic Run: carry the foe's relic to your Ghostly Hero. A 3-point lead wins; after 8 minutes, most points.",
   "lobby.notReady": "Not ready",
   "lobby.playBots": "Play against bots",
   "lobby.ready": "Ready",

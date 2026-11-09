@@ -143,6 +143,18 @@ relic only to fight a foe that comes within spell range.
 Broken Tower plays it: the altar stands inside a ruined tower with a
 doorway on each side.
 
+### Cinder Sanctum
+
+Heroes' Ascent's Relic Run is played the other way round here. Each base
+holds its team's relic and its Ghostly Hero, and there is no altar. **Take
+the foe's relic from their base and bring it to your own Ghostly Hero**
+for a point. The ghost must be alive, and it stays at its post. You cannot
+carry your own relic: picking it up where it fell sends it home. A team
+**3 points ahead wins at once**. At 8 minutes the most points win, and a
+tie goes to the last team to score. Each base raises its dead, and its
+ghost, every 2 minutes. Bots go for the foe's relic together and bring it
+home.
+
 ## King of the Hill
 
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
@@ -315,7 +327,7 @@ A queued Heroes' Ascent is a run up GW1's maps, in their order: Elite
 Zaishen Battle, The Underworld, Fetid River, Burial Mounds, Unholy
 Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
 (The Vault,) then the Hall of Heroes. Only the maps built so far are in
-it, so today it is six rounds: The Hollow Deep (Annihilation), Blackwater Ford (Priest Annihilation), Broken Tower (Relic Run, in Unholy
+it, so today it is six rounds: The Hollow Deep (Annihilation), Blackwater Ford (Priest Annihilation), Cinder Sanctum (Relic Run, in Unholy
 Temples' place), Mosslit Cairns (Capture Points, in Forgotten Shrines'),
 The Courtyard (King of the Hill), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 6 · Blackwater Ford`.

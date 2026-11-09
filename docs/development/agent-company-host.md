@@ -189,6 +189,36 @@ the manager withdraws it with `company reboot --abort`. Only your taps
 count, on the proposal's own message: a button pressed by anyone else in
 the group, or an "approved" typed anywhere, approves nothing.
 
+## Hibernating during a usage limit
+
+`claude-llc-init` offers this, default no; the answer is `hibernate` in
+`.bots/company.json` (`{ "wakeMarginMinutes": 1..60 }` or `null`, off).
+When every staffed agent is paused on a usage limit with a known reset more
+than an hour away, no CI runner has a job, no reboot is pending and no
+systemd inhibitor holds off sleep, hubd says so in the Operator topic with a
+**Cancel** button, waits 5 minutes, and hibernates. It wakes the margin
+before the reset, and says in General that it is back. A cancel holds until
+that reset has passed. With the Telegram sidecar down the sleep still goes
+ahead, with no warning and no way to cancel.
+
+The machine must:
+
+- **Unlock its disk unattended.** Otherwise it sits at the passphrase prompt
+  until someone comes. Setting that up is yours.
+- **Wake from hibernate on its RTC alarm.** Not every firmware does; init
+  offers a real test. If the alarm does not fire, the host stays down until
+  someone notices. By hand: `sudo rtcwake -m no -s 300 && systemctl hibernate`.
+
+hubd has no sudo. It writes the wake time to `/run/vibewars-sleep/request`,
+and a root path unit starts a oneshot that refuses anything but a decimal
+time at least 14 minutes ahead and within 7 days and 1 hour, then runs `rtcwake -m no`
+and `systemctl hibernate`. Refusals are in the journal
+(`journalctl -u vibewars-sleep`). Init installs
+`/usr/local/libexec/vibewars-sleep`, `vibewars-sleep.path` and
+`.service` in `/etc/systemd/system`, and a tmpfiles rule for the directory,
+owned by the operator. On NixOS it prints the configuration to add instead,
+and hibernation stays off until that is in and init has run again.
+
 ## Scaling the company by hand
 
 `claude-llc hire <role> [reason]` and `claude-llc fire <employee> [reason]`

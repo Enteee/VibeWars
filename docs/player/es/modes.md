@@ -149,6 +149,10 @@ luchar contra un enemigo que entre en alcance de hechizo.
 Se juega en Broken Tower: el altar está dentro de una torre en ruinas con una
 entrada a cada lado.
 
+### Cinder Sanctum
+
+Aquí la Carrera de reliquias del Ascenso de los Héroes se juega al revés. Cada base tiene la reliquia de su equipo y su Héroe Fantasmal, y no hay altar. **Coge la reliquia enemiga de su base y llévala a tu propio Héroe Fantasmal** para sumar un punto. El fantasma debe estar vivo y no se mueve de su puesto. No puedes llevar tu propia reliquia: si la recoges donde cayó, vuelve a casa. Un equipo con **3 puntos de ventaja gana al instante**. A los 8 minutos gana quien tenga más puntos, y un empate es para el último equipo que puntuó. Cada base resucita a sus muertos, y a su fantasma, cada 2 minutos. Los bots van juntos a por la reliquia enemiga y la traen a casa.
+
 ## Rey de la colina
 
 **Lleva a tu Héroe Fantasmal al altar y mantenlo.** Cada equipo tiene un **Héroe

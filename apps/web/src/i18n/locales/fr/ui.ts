@@ -674,6 +674,8 @@ export default {
     "Annihilation de prêtre : élimine tous les ennemis et leur prêtre",
   "lobby.modeRelicRun":
     "Course aux reliques : porte ta relique à l'autel. Le plus de points en 8 minutes l'emporte.",
+  "lobby.modeRelicRunFoe":
+    "Course aux reliques : porte la relique ennemie à ton Héros fantomatique. 3 points d'avance l'emportent ; après 8 minutes, le plus de points.",
   "lobby.notReady": "Pas prêt",
   "lobby.playBots": "Jouer contre des bots",
   "lobby.ready": "Prêt",

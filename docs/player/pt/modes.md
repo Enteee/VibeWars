@@ -157,6 +157,10 @@ contra um inimigo que chegue ao alcance de feitiço.
 Broken Tower joga esse modo: o altar fica dentro de uma torre em ruínas
 com uma porta de cada lado.
 
+### Cinder Sanctum
+
+Aqui a Corrida da Relíquia da Ascensão dos Heróis é jogada ao contrário. Cada base tem a relíquia da sua equipe e o seu Herói Fantasmagórico, e não há altar. **Pegue a relíquia inimiga na base dela e leve-a ao seu próprio Herói Fantasmagórico** para marcar um ponto. O fantasma precisa estar vivo e fica no seu posto. Você não pode carregar a própria relíquia: pegá-la onde caiu a manda de volta para casa. Uma equipe com **3 pontos de vantagem vence na hora**. Aos 8 minutos vence quem tiver mais pontos, e um empate fica com a última equipe a marcar. Cada base revive seus mortos, e seu fantasma, a cada 2 minutos. Os bots vão juntos atrás da relíquia inimiga e a trazem para casa.
+
 ## Rei da Colina
 
 **Leve seu Herói Fantasmagórico até o altar e controle-o.** Cada equipe
@@ -333,7 +337,7 @@ na fila.
 ## Ascensão dos Heróis
 
 Uma Ascensão dos Heróis na fila tem seis rodadas, sempre nesta ordem:
-The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), Broken Tower (Corrida da Relíquia), Mosslit Cairns (Captura de Pontos), The
+The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), Cinder Sanctum (Corrida da Relíquia), Mosslit Cairns (Captura de Pontos), The
 Courtyard (Rei da Colina) e depois o Hall of Heroes. A janela da Sala diz
 onde você está enquanto procura uma equipe: `Round 2 of 6 · Blackwater Ford`.
 Você só encontra equipes na mesma rodada e espera por uma o tempo que for

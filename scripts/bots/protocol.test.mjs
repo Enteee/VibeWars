@@ -1331,6 +1331,23 @@ describe("routeAnswer", () => {
       };
     };
 
+    it("turns the operator's tap on Cancel into a cancel for that reset (#2794)", () => {
+      const plan = { id: "b".repeat(32), sleepAt: 1, wakeAt: 2, reset: 3 };
+      const open = { ...withOpen, sleepPlan: { plan, messageId: PROPOSAL_MESSAGE } };
+      const data = `s:${plan.id}:cancel`;
+      expect(routeAnswer(press(data), store(false), open)?.sleepCancel).toEqual({
+        id: plan.id,
+        reset: 3,
+      });
+      for (const update of [
+        press(data, { messageId: 999 }),
+        press(data, { from: { id: 999, first_name: "Someone" } }),
+      ]) {
+        expect(routeAnswer(update, store(false), open)?.sleepCancel).toBeUndefined();
+      }
+      expect(routeAnswer(press(data), store(false), withOpen)?.sleepCancel).toBeUndefined();
+    });
+
     it("turns the operator's tap on the proposal into a decision for hubd", () => {
       expect(routeAnswer(press(`r:${id}:approve`), store(false), withOpen)).toEqual({
         deliveries: [],

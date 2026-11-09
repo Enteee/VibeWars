@@ -88,6 +88,8 @@ function rig({ max = 4, target = 1 } = {}) {
       return queued;
     },
   };
+  /** @type {string[][]} */
+  const sweeps = [];
   const supervisor = new RunnerSupervisor({
     now: () => t.now,
     api,
@@ -119,6 +121,7 @@ function rig({ max = 4, target = 1 } = {}) {
       load1: () => host.load,
       cpus: () => host.cpus,
       diskCapRefusal: () => host.disk,
+      sweepScratch: (live) => sweeps.push([...live].sort()),
     },
     readTarget: () => state.target,
     writeStatus: (status) => statuses.push(status),
@@ -132,6 +135,7 @@ function rig({ max = 4, target = 1 } = {}) {
     logs,
     statuses,
     launched,
+    sweeps,
     host,
     state,
     supervisor,
@@ -212,6 +216,24 @@ describe("runner supervisor", () => {
     await r.supervisor.tick();
     expect(r.launched).toHaveLength(4);
     expect(r.last()?.reason).toBeNull();
+  });
+
+  it("sweeps scratch before the first runner starts, and after each exit, sparing the live", async () => {
+    const r = rig({ target: 2 });
+    await r.supervisor.tick();
+    expect(r.sweeps).toEqual([[]]);
+    r.launched[0]?.exit(1);
+    await r.settle();
+    expect(r.sweeps).toHaveLength(2);
+    expect(r.sweeps[1]).toHaveLength(1);
+    expect(r.sweeps[1]?.[0]).toMatch(/^vibewars-box-/);
+  });
+
+  it("sweeps nothing while scratch has no filesystem of its own", async () => {
+    const r = rig({ target: 1 });
+    r.host.disk = "no disk cap";
+    await r.supervisor.tick();
+    expect(r.sweeps).toEqual([]);
   });
 
   it("removes the registration of a runner that exits without a job", async () => {
@@ -494,8 +516,8 @@ describe("runner supervisor", () => {
     expect(r.launched.map((l) => l.jitconfig)).toEqual([JIT, JIT]);
     expect(r.logs.join("\n")).not.toContain(JIT);
     expect(JSON.stringify(r.statuses)).not.toContain(JIT);
-    const args = launcherArgs({ cpus: 2, memoryGib: 6, tasksMax: 2048 });
-    expect(args.slice(0, 2)).toEqual(["--jitconfig", "-"]);
+    const args = launcherArgs({ cpus: 2, memoryGib: 6, tasksMax: 2048 }, "vibewars-box-1");
+    expect(args.slice(0, 4)).toEqual(["--jitconfig", "-", "--id", "vibewars-box-1"]);
     expect(args.some((arg) => arg.includes(JIT))).toBe(false);
   });
 

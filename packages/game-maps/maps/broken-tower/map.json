@@ -2,6 +2,8 @@
   "id": "broken-tower",
   "name": "Broken Tower",
   "mode": "relic-run",
+  "relicTarget": "altar",
+  "relicCarry": "own",
   "teamSizes": [4, 8],
   "teams": 2,
   "width": 3200,
