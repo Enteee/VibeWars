@@ -8,6 +8,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -137,7 +138,7 @@ describe("Soul Barbs (#1403)", () => {
   });
 
   it("describes it", () => {
-    expect(describeStatus("soul-barbs")).toBe(
+    expect(describeStatus("soul-barbs", undefined, EN_WORDS, EN_NAMES)).toBe(
       "takes 27 damage whenever it gains a hex or an enchantment",
     );
   });
@@ -167,7 +168,7 @@ describe("Scourge Enchantment (#1403)", () => {
   });
 
   it("describes it", () => {
-    expect(describeStatus("scourge-enchantment")).toBe(
+    expect(describeStatus("scourge-enchantment", undefined, EN_WORDS, EN_NAMES)).toBe(
       "whenever it gains an enchantment, the caster of that enchantment takes 63 holy damage",
     );
   });
@@ -195,7 +196,9 @@ describe("Defile Defenses (#1403)", () => {
   });
 
   it("describes it", () => {
-    expect(describeStatus("defile-defenses")).toBe("takes 102 damage the next time it blocks");
+    expect(describeStatus("defile-defenses", undefined, EN_WORDS, EN_NAMES)).toBe(
+      "takes 102 damage the next time it blocks",
+    );
   });
 });
 
@@ -255,7 +258,7 @@ describe("Hex Breaker (#1403)", () => {
   });
 
   it("describes it", () => {
-    expect(describeStatus("hex-breaker")).toBe(
+    expect(describeStatus("hex-breaker", undefined, EN_WORDS, EN_NAMES)).toBe(
       "the next hex fails, and its caster takes 39 damage",
     );
   });

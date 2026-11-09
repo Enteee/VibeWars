@@ -15,6 +15,7 @@ import {
 import { makeCombatant } from "./testing.js";
 import { attackDamageDeltaOf, effectiveActivationSeconds } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Mechanics (#2501): statuses renewed by an event or reapplied while
@@ -315,6 +316,6 @@ describe("the tooltips say it (#2501)", () => {
     ["signet-of-mystic-speed", wind(12), "your next 3 enchantments that target you"],
   ] as const)("%s", (id, ranks, text) => {
     expect(getStatusDefinition(id).name).not.toBe("");
-    expect(describeStatus(id, ranks)).toContain(text);
+    expect(describeStatus(id, ranks, EN_WORDS, EN_NAMES)).toContain(text);
   });
 });

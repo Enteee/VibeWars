@@ -11,6 +11,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { NO_RANKS, STATUS_DEFINITIONS, getStatusDefinition, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, SkillEffect, SurroundingBody, Surroundings } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Hexes know their attribute (#1765): "if target foe has a Water Magic
@@ -128,15 +129,16 @@ describe("a hex's attribute (#1765)", () => {
   });
 
   it("names the attribute or profession in an if's line and a removal", () => {
-    const text = describeSkill(skill("elementalist.icy-prism"), RANKS)
+    const text = describeSkill(skill("elementalist.icy-prism"), RANKS, EN_WORDS, EN_NAMES)
       .effects.map((effect) => effect.text)
       .join("\n");
     expect(text).toContain("If target has a Water Magic hex");
-    const gust = describeSkill(skill("elementalist.freezing-gust"), RANKS)
+    const gust = describeSkill(skill("elementalist.freezing-gust"), RANKS, EN_WORDS, EN_NAMES)
       .effects.map((effect) => effect.text)
       .join("\n");
     expect(gust).toContain("If target has no Water Magic hex");
-    const shatter = describeSkill(skill("mesmer.shatter-delusions"), RANKS).effects[0]?.text;
+    const shatter = describeSkill(skill("mesmer.shatter-delusions"), RANKS, EN_WORDS, EN_NAMES)
+      .effects[0]?.text;
     expect(shatter).toBe("Removes 1 Mesmer hex");
   });
 });

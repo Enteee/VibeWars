@@ -15,6 +15,7 @@ import { makeCombatant } from "./testing.js";
 import { effectiveActivationSeconds } from "./tick.js";
 import { fireTriggers } from "./triggers.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Mesmer skill-use punishers (#1473): Wastrel's Worry, Overload,
@@ -596,20 +597,28 @@ describe("Mind Blast (#1473)", () => {
 describe("descriptions (#1473)", () => {
   it("say the new primitives plainly", () => {
     const ranks = RANKS;
-    expect(describeStatus("migraine")).toContain("skills but attacks take 2× as long to activate");
-    expect(describeStatus("frustration")).toContain("is interrupted");
-    expect(describeStatus("price-of-pride")).toContain("uses an elite skill");
-    expect(describeStatus("visions-of-regret")).toContain("if it has no other Mesmer hex");
-    const humility = describeSkill(skill("mesmer.signet-of-humility"), ranks)
+    expect(describeStatus("migraine", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "skills but attacks take 2× as long to activate",
+    );
+    expect(describeStatus("frustration", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "is interrupted",
+    );
+    expect(describeStatus("price-of-pride", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "uses an elite skill",
+    );
+    expect(describeStatus("visions-of-regret", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "if it has no other Mesmer hex",
+    );
+    const humility = describeSkill(skill("mesmer.signet-of-humility"), ranks, EN_WORDS, EN_NAMES)
       .effects.map(({ text }) => text)
       .join(" ");
     expect(humility).toContain("The target's elite skill is disabled for 13 seconds");
     expect(humility).toContain("All of your non-Mesmer skills are disabled for 4 seconds");
-    const unnatural = describeSkill(skill("mesmer.unnatural-signet"), ranks)
+    const unnatural = describeSkill(skill("mesmer.unnatural-signet"), ranks, EN_WORDS, EN_NAMES)
       .effects.map(({ text }) => text)
       .join(" ");
     expect(unnatural).toContain("All of your non-Mesmer skills except signets are disabled");
-    const overload = describeSkill(skill("mesmer.overload"), ranks)
+    const overload = describeSkill(skill("mesmer.overload"), ranks, EN_WORDS, EN_NAMES)
       .effects.map(({ text }) => text)
       .join(" ");
     expect(overload).toContain("If target is using a skill");

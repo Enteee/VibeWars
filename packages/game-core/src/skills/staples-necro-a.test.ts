@@ -11,6 +11,7 @@ import { getSkill } from "./catalog.js";
 import { describeStatus } from "./describe.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
 import type { Combatant } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Necromancer staples (#2313): Unholy Feast, Tainted Flesh, Dark Aura,
@@ -392,7 +393,11 @@ describe("Weaken Knees (#2313)", () => {
 
 describe("the new triggers read as the corpus does (#2313)", () => {
   it("names Tainted Flesh's melee hit and Dark Aura's loss as its caster's", () => {
-    expect(describeStatus("tainted-flesh")).toMatch(/hit by a foe's melee attack/);
-    expect(describeStatus("dark-aura")).toMatch(/sacrifices Health: you lose 5 Health/);
+    expect(describeStatus("tainted-flesh", undefined, EN_WORDS, EN_NAMES)).toMatch(
+      /hit by a foe's melee attack/,
+    );
+    expect(describeStatus("dark-aura", undefined, EN_WORDS, EN_NAMES)).toMatch(
+      /sacrifices Health: you lose 5 Health/,
+    );
   });
 });

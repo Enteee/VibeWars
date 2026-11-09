@@ -8,6 +8,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Preservation, Rejuvenation and Recovery (#2477), their PvP versions: a
@@ -172,6 +173,8 @@ describe("Preservation (#2477): one ally a pulse", () => {
     const text = describeSkill(
       preservation,
       new Map([["ritualist.restoration-magic", rank]]),
+      EN_WORDS,
+      EN_NAMES,
     ).effects.map((line) => line.text);
     expect(text).toContain(
       `Every 4 seconds: heals the most hurt non-spirit ally in its range for ${String(amount)} Health`,
@@ -222,7 +225,7 @@ describe("Rejuvenation (#2477): a heal that costs the spirit", () => {
   });
 
   it("describes the heal and its cost", () => {
-    const text = describeStatus("rejuvenation");
+    const text = describeStatus("rejuvenation", undefined, EN_WORDS, EN_NAMES);
     expect(text).toContain("every second");
     expect(text).toContain("loses 3...9 Health for each one healed");
   });
@@ -250,6 +253,8 @@ describe("Recovery (#2477): conditions expire faster, by rank", () => {
   );
 
   it("describes its share at its Ritualist's rank", () => {
-    expect(describeStatus("recovery")).toContain("expire 20%...44% faster");
+    expect(describeStatus("recovery", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "expire 20%...44% faster",
+    );
   });
 });

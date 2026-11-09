@@ -39,6 +39,7 @@ import {
 import { TEAM_FORMAT } from "../storage/team-transfer.js";
 import { characterRanks } from "./character-ranks.js";
 import { setHeadgearAttribute, setWeapon } from "./gear-editor.js";
+import { EN_NAMES, EN_WORDS } from "@vibewars/game-core";
 
 /**
  * The editor's *rules* are tested here; its DOM rendering is covered by
@@ -648,7 +649,7 @@ describe("followTip (#1932)", () => {
     let character = setProfessions(newCharacter("c1"), "warrior", undefined);
     const tipped = {
       anchor: { isConnected: true },
-      describe: () => describeSkill(signet, characterRanks(character)),
+      describe: () => describeSkill(signet, characterRanks(character), EN_WORDS, EN_NAMES),
     };
     const before = scaled(tipped.describe().effects[0]?.parts);
     character = setRank(character, "warrior.tactics", 9);

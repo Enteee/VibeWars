@@ -1,3 +1,4 @@
+import { setDescribeWords } from "./describe-words.js";
 import { en } from "./en.js";
 import { setGameNames } from "./game-names.js";
 import { pickLanguage, setLocale } from "./index.js";
@@ -23,6 +24,7 @@ export async function loadLocale(
     const [tables] = await Promise.all([load(), loadPlayerDocs(code)]);
     setLocale(code, tables.ui);
     setGameNames(tables.game);
+    setDescribeWords(tables.describe);
   } catch (error: unknown) {
     // Offline, or a stale deploy's chunk: English, so the boot is never blank.
     console.warn("[web] could not load the language", code, error);

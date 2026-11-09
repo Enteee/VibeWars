@@ -8,6 +8,7 @@ import { getSkill } from "../skills/catalog.js";
 import { describeSkill, describeStatus } from "../skills/describe.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -92,11 +93,15 @@ describe("Weaken Armor (#763)", () => {
     expect(skill?.cost).toEqual({ kind: "energy", amount: 5 });
     expect(skill?.activationSeconds).toBe(0.5);
     expect(skill?.rechargeSeconds).toBe(5);
-    expect(describeStatus("cracked-armor")).toBe("−20 armor (not below 60)");
+    expect(describeStatus("cracked-armor", undefined, EN_WORDS, EN_NAMES)).toBe(
+      "−20 armor (not below 60)",
+    );
     if (skill !== undefined) {
-      expect(JSON.stringify(describeSkill(skill, new Map([["necromancer.curses", 12]])))).toContain(
-        "Cracked Armor",
-      );
+      expect(
+        JSON.stringify(
+          describeSkill(skill, new Map([["necromancer.curses", 12]]), EN_WORDS, EN_NAMES),
+        ),
+      ).toContain("Cracked Armor");
     }
   });
 });

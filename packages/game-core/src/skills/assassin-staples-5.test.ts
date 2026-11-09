@@ -12,6 +12,7 @@ import { NO_RANKS, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { ChainRole, Combatant, Skill } from "./types.js";
 import { resolveAttackSkillOutcome } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Assassin staples 5 (#1757): Desperate Strike, Repeating Strike, Impale,
@@ -151,7 +152,7 @@ describe("the five are the corpus's (#1757)", () => {
 
   it("names what each does in its text", () => {
     const text = (id: string) =>
-      describeSkill(skill(id), RANKS)
+      describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES)
         .effects.map(({ text: line }) => line)
         .join(" | ");
     expect(text("assassin.desperate-strike")).toContain("If you have less than 74% Health");

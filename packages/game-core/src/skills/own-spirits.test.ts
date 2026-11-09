@@ -9,6 +9,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * "Your spirits within earshot" (#1777): a splash that reaches only the
@@ -177,18 +178,20 @@ describe("own-spirits splash (#1777)", () => {
     if (skill === undefined) {
       throw new Error(`no skill ${BOON}`);
     }
-    expect(JSON.stringify(describeSkill(skill, ranks))).toContain("Your spirits in earshot");
+    expect(JSON.stringify(describeSkill(skill, ranks, EN_WORDS, EN_NAMES))).toContain(
+      "Your spirits in earshot",
+    );
   });
 
   it("says Spiritleech Aura steals with the spirit's attacks, not yours", () => {
-    expect(describeStatus("spiritleech-aura")).toBe(
+    expect(describeStatus("spiritleech-aura", undefined, EN_WORDS, EN_NAMES)).toBe(
       "attacks deal 17 less damage, physical attacks steal up to 17 Health",
     );
     const leech = getSkill(LEECH);
     if (leech === undefined) {
       throw new Error(`no skill ${LEECH}`);
     }
-    const text = JSON.stringify(describeSkill(leech, new Map()));
+    const text = JSON.stringify(describeSkill(leech, new Map(), EN_WORDS, EN_NAMES));
     expect(text).toContain("physical attacks steal up to 17 Health");
     expect(text).not.toContain("your physical attacks");
   });

@@ -12,6 +12,7 @@ import { energyCostOf } from "./activation.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Necromancer staples (#2314): Ulcerous Lungs, Blood Bond, Poisoned Heart,
@@ -365,11 +366,11 @@ describe("their tooltips (#2314)", () => {
     ],
     ["cultists-fervor", "Whenever you cast a Necromancer spell"],
   ])("%s reads as the corpus says it", (id, text) => {
-    expect(describeStatus(id, R12)).toContain(text);
+    expect(describeStatus(id, R12, EN_WORDS, EN_NAMES)).toContain(text);
   });
 
   it("Blood Drinker bleeds you at 90% Health or more", () => {
-    expect(describeSkill(skill(DRINKER), R12).effects[0]?.text).toMatch(
+    expect(describeSkill(skill(DRINKER), R12, EN_WORDS, EN_NAMES).effects[0]?.text).toMatch(
       /^If you have at least 90% Health: /,
     );
   });

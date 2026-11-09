@@ -11,6 +11,7 @@ import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Shots that fly differently (#1914): Focused Shot, Needling Shot, Forked
@@ -350,7 +351,7 @@ describe("Dancing Daggers (#1914)", () => {
 describe("the texts (#1914)", () => {
   const ranks = user().attributeRanks;
   const text = (id: string): string[] =>
-    describeSkill(skill(id), ranks).effects.map((effect) => effect.text);
+    describeSkill(skill(id), ranks, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text);
 
   it("say what each does", () => {
     expect(text(FOCUSED_SHOT)).toEqual([

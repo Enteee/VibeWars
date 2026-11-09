@@ -13,6 +13,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Ranger staples 2 (#1629): a hit rider for one weapon class, an
@@ -503,15 +504,15 @@ describe("Antidote Signet (#1629)", () => {
 describe("the texts (#1629)", () => {
   const ranks = ranger().attributeRanks;
   const text = (id: string): string[] =>
-    describeSkill(skill(id), ranks).effects.map((effect) => effect.text);
+    describeSkill(skill(id), ranks, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text);
 
   it("say what each does", () => {
     expect(text(PRECISION_SHOT)).toContain("Easily interrupted");
     expect(text(VOLLEY)[0]).toBe("All your preparations are removed");
-    expect(describeStatus("kindle-arrows", ranks)).toBe(
+    expect(describeStatus("kindle-arrows", ranks, EN_WORDS, EN_NAMES)).toBe(
       "bow attacks deal fire damage, foes your bow attacks hit take 20 fire damage",
     );
-    expect(describeStatus("ignite-arrows", ranks)).toBe(
+    expect(describeStatus("ignite-arrows", ranks, EN_WORDS, EN_NAMES)).toBe(
       "foes your bow attacks hit take 15 fire damage, and so do foes adjacent to them",
     );
   });

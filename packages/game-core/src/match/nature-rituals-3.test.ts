@@ -19,6 +19,7 @@ import {
   type ParticipantSpec,
 } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Nature rituals 3 (#1886): Edge of Extinction and Pestilence answer a
@@ -319,7 +320,8 @@ describe("tooltips (#1886)", () => {
       ["ranger.beast-mastery", 12],
       ["ranger.wilderness-survival", 12],
     ]);
-    const lines = (id: string) => describeSkill(skillOf(id), ranks).effects.map(({ text }) => text);
+    const lines = (id: string) =>
+      describeSkill(skillOf(id), ranks, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
     expect(lines("ranger.edge-of-extinction")).toContain(
       "When a non-spirit dies in its range, each of its type in its range below 90% Health takes 43 damage",
     );

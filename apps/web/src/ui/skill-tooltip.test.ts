@@ -2,6 +2,7 @@ import { describeSkill, getSkill, type SkillDescription } from "@vibewars/game-c
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createSkillTooltip, renderSkillDescription } from "./skill-tooltip.js";
+import { EN_NAMES, EN_WORDS } from "@vibewars/game-core";
 
 /**
  * Scaled numbers in skill text (#1932). The unit tests run in Node, so the
@@ -57,7 +58,7 @@ function healingSignet(tactics: number): SkillDescription {
   if (skill === undefined) {
     throw new Error("no Healing Signet");
   }
-  return describeSkill(skill, new Map([["warrior.tactics", tactics]]));
+  return describeSkill(skill, new Map([["warrior.tactics", tactics]]), EN_WORDS, EN_NAMES);
 }
 
 describe("scaled numbers in skill text (#1932)", () => {

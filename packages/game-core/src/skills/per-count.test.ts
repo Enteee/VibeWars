@@ -12,6 +12,7 @@ import { makeCombatant } from "./testing.js";
 import { fireTriggers } from "./triggers.js";
 import type { Combatant, DamageEffect, PerCount, Surroundings } from "./types.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
 
@@ -85,7 +86,7 @@ const lines = (skillId: string): string[] => {
   if (skill === undefined) {
     throw new Error(`unknown skill ${skillId}`);
   }
-  return describeSkill(skill, RANKS).effects.map((effect) => effect.text);
+  return describeSkill(skill, RANKS, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text);
 };
 
 const ENCHANTMENTS: readonly StatusId[] = ["guardian", "regeneration"];
@@ -305,7 +306,9 @@ describe("Channeling (#1760)", () => {
     expect(castsSpell(mesmer, surroundings)).toEqual([
       { kind: "energy-gain", targetId: "caster", amount: 2 },
     ]);
-    expect(describeStatus("channeling")).toMatch(/gain 1 energy for each foe in the area/);
+    expect(describeStatus("channeling", undefined, EN_WORDS, EN_NAMES)).toMatch(
+      /gain 1 energy for each foe in the area/,
+    );
   });
 });
 
@@ -322,7 +325,7 @@ describe("Arcane Zeal (#1760)", () => {
     expect(castsSpell(dervish, new Map())).toEqual([
       { kind: "energy-gain", targetId: "caster", amount: 6 },
     ]);
-    expect(describeStatus("arcane-zeal")).toMatch(
+    expect(describeStatus("arcane-zeal", undefined, EN_WORDS, EN_NAMES)).toMatch(
       /gain 2 energy for each enchantment on you \(maximum 6\)/,
     );
   });
@@ -349,7 +352,7 @@ describe("Mystic Vigor (#1760)", () => {
     dervish.statuses.apply("guardian", 30, dervish.id, NO_RANKS);
     dervish.statuses.apply("regeneration", 30, dervish.id, NO_RANKS);
     expect(hits()).toEqual([{ kind: "heal", targetId: "caster", amount: 25 }]);
-    expect(describeStatus("mystic-vigor")).toMatch(
+    expect(describeStatus("mystic-vigor", undefined, EN_WORDS, EN_NAMES)).toMatch(
       /heals 13 Health for each enchantment on you \(maximum 25\)/,
     );
   });

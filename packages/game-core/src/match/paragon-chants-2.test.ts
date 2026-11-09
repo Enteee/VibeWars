@@ -13,6 +13,7 @@ import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Paragon chants 2 (#1483): a chant that holds the bearer's next skill of
@@ -255,8 +256,10 @@ describe("a next-skill chant in a match (#1483)", () => {
   });
 
   it("each says what it does", () => {
-    expect(describeStatus("aria-of-zeal", new Map())).toBe("with your next spell: gain 5 energy");
-    expect(describeStatus("song-of-purification", new Map())).toBe(
+    expect(describeStatus("aria-of-zeal", new Map(), EN_WORDS, EN_NAMES)).toBe(
+      "with your next spell: gain 5 energy",
+    );
+    expect(describeStatus("song-of-purification", new Map(), EN_WORDS, EN_NAMES)).toBe(
       "with your next 5 skills: removes 1 condition",
     );
   });

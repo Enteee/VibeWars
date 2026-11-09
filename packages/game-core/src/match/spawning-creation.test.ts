@@ -13,6 +13,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Ritualist Spawning Power creation staples (#1316): Boon of Creation,
@@ -319,7 +320,7 @@ describe("a splash's sides and cap (#1316)", () => {
 describe("the tooltips (#1316)", () => {
   const ranks = new Map([["ritualist.spawning-power", 12]]);
   const text = (id: string): string[] =>
-    describeSkill(skillOf(id), ranks).effects.map(({ text }) => text);
+    describeSkill(skillOf(id), ranks, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
 
   it("words each as the corpus does, at the rank-12 numbers", () => {
     expect(text(BOON)).toEqual([

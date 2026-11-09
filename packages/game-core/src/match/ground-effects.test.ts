@@ -17,6 +17,7 @@ import {
   type Participant,
   type ParticipantSpec,
 } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Ground effects (#1087): a circle that is not a body, projecting a status
@@ -368,7 +369,7 @@ describe("Ward Against Melee (#1087)", () => {
     if (skill === undefined) {
       throw new Error(`no skill ${WARD}`);
     }
-    const lines = describeSkill(skill, new Map([[EARTH, 12]]));
+    const lines = describeSkill(skill, new Map([[EARTH, 12]]), EN_WORDS, EN_NAMES);
     expect(lines.effects.map(({ text }) => text)).toEqual([
       "Creates a ward at your location for 17 seconds",
       "Non-spirit allies in the area: 50% chance to block melee attacks",

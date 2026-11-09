@@ -7,6 +7,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Triggers on a change to the bearer's statuses (#887): Contagion answers
@@ -100,7 +101,7 @@ describe("Contagion (#887)", () => {
       { kind: "status-applied", targetId: "e", statusId: "weakness", durationSeconds: 26 },
       { kind: "sacrifice", targetId: "n", amount: 30 },
     ]);
-    expect(describeStatus("contagion")).toBe(
+    expect(describeStatus("contagion", undefined, EN_WORDS, EN_NAMES)).toBe(
       "whenever you gain a new condition: foes in the area suffer it too. " +
         "Whenever you gain a new condition: you sacrifice 6% of your maximum health",
     );
@@ -199,7 +200,7 @@ describe("Parasitic Bond (#887)", () => {
     expect(get(match, "e").combatant.statuses.has("parasitic-bond")).toBe(false);
     expect(heals(log)).toEqual([{ kind: "heal", targetId: "n", amount: 102 }]);
     expect(firedBy(log, PARASITIC_BOND)[0]?.sourceId).toBe("n");
-    expect(describeStatus("parasitic-bond")).toBe(
+    expect(describeStatus("parasitic-bond", undefined, EN_WORDS, EN_NAMES)).toBe(
       "−1 Health degeneration, heals its caster for 102 when it ends",
     );
   });

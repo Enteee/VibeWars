@@ -20,6 +20,7 @@ import { landedCritical } from "../skills/weapon-attack.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Assassin's Shadow Arts staples (#1326): Heart of Shadow and Viper's
@@ -414,7 +415,7 @@ describe("the six's descriptions (#1326)", () => {
     if (skill === undefined) {
       throw new Error(`unknown skill ${id}`);
     }
-    return describeSkill(skill).effects.map((line) => line.text);
+    return describeSkill(skill, undefined, EN_WORDS, EN_NAMES).effects.map((line) => line.text);
   };
   const AWAY = "Shadow Step to a nearby location directly away from your target";
 

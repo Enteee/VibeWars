@@ -17,6 +17,7 @@ import { makeCombatant } from "./testing.js";
 import { attackDamageDeltaOf } from "./tick.js";
 import type { Combatant, Magnitude, Skill } from "./types.js";
 import { sourceAttacksOn } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Mechanics (#2502): hexes that favour their source's attacks, recharging
@@ -421,15 +422,17 @@ describe("the tooltips say it (#2502)", () => {
     ["auspicious-incantation", inspiration(12), "takes 6s longer to recharge"],
     ["auspicious-incantation", inspiration(12), "you gain 182% of its Energy cost"],
   ] as const)("%s: %s", (id, ranks, text) => {
-    expect(describeStatus(id, ranks)).toContain(text);
+    expect(describeStatus(id, ranks, EN_WORDS, EN_NAMES)).toContain(text);
   });
 
   it("Reclaim Essence and Lingwah's drop name what they recharge", () => {
     expect(
-      describeSkill(skill(RECLAIM))
+      describeSkill(skill(RECLAIM), undefined, EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" "),
     ).toContain("recharges all your binding rituals");
-    expect(describeStatus("anguished-was-lingwah")).toContain("Ritualist hexes");
+    expect(describeStatus("anguished-was-lingwah", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "Ritualist hexes",
+    );
   });
 });

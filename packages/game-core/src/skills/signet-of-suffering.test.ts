@@ -8,6 +8,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeStatus } from "./describe.js";
 import type { Combatant } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Signet of Suffering (#2333): "You suffer from Bleeding for 6 seconds.
@@ -147,7 +148,7 @@ describe("Signet of Suffering (#2333)", () => {
   });
 
   it("says what it waits for", () => {
-    expect(describeStatus("signet-of-suffering", R12)).toContain(
+    expect(describeStatus("signet-of-suffering", R12, EN_WORDS, EN_NAMES)).toContain(
       "the next time you use a Necromancer skill on a foe",
     );
   });

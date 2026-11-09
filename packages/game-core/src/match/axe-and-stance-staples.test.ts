@@ -16,6 +16,7 @@ import { makeCombatant } from "../skills/testing.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Staples (#1869): three Axe attacks, two Warrior stances, a Ranger
@@ -311,7 +312,9 @@ describe("Flurry (#1869)", () => {
 describe("Heket's Rampage (#1869)", () => {
   it("attacks 33% faster, and says it ends on an attack skill", () => {
     expect(getStatusDefinition("hekets-rampage").attackDurationMultiplier).toBe(0.67);
-    expect(describeStatus("hekets-rampage")).toContain("ends if you use an attack skill");
+    expect(describeStatus("hekets-rampage", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "ends if you use an attack skill",
+    );
   });
 
   it("a plain arrow keeps it", () => {

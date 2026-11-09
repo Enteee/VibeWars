@@ -14,6 +14,7 @@ import { getSkill } from "./catalog.js";
 import { makeCombatant } from "./testing.js";
 import type { FiredTrigger } from "./triggers.js";
 import { attackHitRiders, weaponSnapshotOf } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Four Dervish flash enchantments (#1421): Enchanted Haste, Heart of Holy
@@ -99,9 +100,13 @@ const NEAR = vec2(AREA_NEARBY - 10, 0);
 describe("flash enchantment tooltips (#1421)", () => {
   it("call themselves what GW1 does", () => {
     const skill = getSkill("dervish.enchanted-haste");
-    expect(skill && describeSkill(skill).typeText).toBe("Flash Enchantment Spell.");
+    expect(skill && describeSkill(skill, undefined, EN_WORDS, EN_NAMES).typeText).toBe(
+      "Flash Enchantment Spell.",
+    );
     const dustCloak = getSkill("dervish.dust-cloak");
-    expect(dustCloak && describeSkill(dustCloak).typeText).toBe("Flash Enchantment Spell.");
+    expect(dustCloak && describeSkill(dustCloak, undefined, EN_WORDS, EN_NAMES).typeText).toBe(
+      "Flash Enchantment Spell.",
+    );
   });
 });
 
@@ -130,7 +135,7 @@ describe("Enchanted Haste (#1421)", () => {
   });
 
   it("says so", () => {
-    expect(describeStatus("enchanted-haste")).toBe(
+    expect(describeStatus("enchanted-haste", undefined, EN_WORDS, EN_NAMES)).toBe(
       "moves at 125% speed. When it ends prematurely: removes 1 condition",
     );
   });

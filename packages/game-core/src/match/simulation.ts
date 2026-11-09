@@ -347,6 +347,7 @@ import {
 } from "./ghost.js";
 import { priestId, priestSpec, type Shrine } from "./priest.js";
 import { steerAround } from "./steering.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * One match, steppable, with no transport attached (ADR-0017).
@@ -4857,7 +4858,7 @@ export class MatchSimulation {
             casterId: record.id,
             targetId: skipped.targetId,
             skillId: skill.id,
-            requirement: conditionRequirementText(skipped.condition, ranks),
+            requirement: conditionRequirementText(skipped.condition, ranks, EN_WORDS, EN_NAMES),
           },
         ];
   }
