@@ -296,6 +296,45 @@ describe("parallel", () => {
     expect(distance(at(sim, "dummy"), at(sim, "p"))).toBeLessThanOrEqual(100 + STEP);
     expect(log.some((entry) => entry.cause === "skill" && entry.sourceId === "dummy")).toBe(true);
   });
+
+  const chaser = (): MatchSimulation =>
+    new MatchSimulation({
+      seed: "parallel-hold",
+      participants: [
+        spec("dummy", 1, vec2(0, 0), {
+          kind: "parallel",
+          behaviours: [
+            { kind: "chase", targeting: { kind: "nearest-enemy" }, standOffUnits: 100 },
+            castLoop(),
+          ],
+        }),
+        spec("p", 0, vec2(800, 0)),
+      ],
+    });
+
+  it("never cancels its own cast by walking (#2946)", () => {
+    const log = run(chaser(), 8);
+    expect(log.flatMap((entry) => entry.events).filter(({ kind }) => kind === "cancelled")).toEqual(
+      [],
+    );
+    expect(log.some((entry) => entry.cause === "skill" && entry.sourceId === "dummy")).toBe(true);
+  });
+
+  it("stands still while it casts (#2946)", () => {
+    const sim = chaser();
+    const casting = (): boolean => sim.get("dummy")?.combatant.cast.isCasting === true;
+    let held = 0;
+    for (let i = 0; i < Math.round(8 / DT); i += 1) {
+      const before = at(sim, "dummy");
+      const wasCasting = casting();
+      sim.step(DT);
+      if (wasCasting && casting()) {
+        held += 1;
+        expect(at(sim, "dummy")).toEqual(before);
+      }
+    }
+    expect(held).toBeGreaterThan(0);
+  });
 });
 
 describe("auto-attack", () => {

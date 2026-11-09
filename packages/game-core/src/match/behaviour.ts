@@ -778,7 +778,8 @@ function statusCadence(
  * Every child decides, each with its own cursor. The first child that
  * moves steers; the first that casts picks the skill and its target,
  * and otherwise the first that targets anything does. Every status is
- * applied, and the first maintained enchantment one ends.
+ * applied, and the first maintained enchantment one ends. A body casting
+ * stands still until the cast ends: its own step would cancel it (#2946).
  */
 function parallel(
   behaviour: Extract<Behaviour, { kind: "parallel" }>,
@@ -794,9 +795,10 @@ function parallel(
   const steering = intents.find(
     (intent) => intent.moveDirection !== ZERO || intent.moveTo !== undefined,
   );
+  const holding = context.self.combatant.cast.isCasting;
   return {
-    moveDirection: steering?.moveDirection ?? ZERO,
-    moveTo: steering?.moveTo,
+    moveDirection: holding ? ZERO : (steering?.moveDirection ?? ZERO),
+    moveTo: holding ? undefined : steering?.moveTo,
     targetId: (casting ?? intents.find((intent) => intent.targetId !== undefined))?.targetId,
     useSkillId: casting?.useSkillId,
     attackTargetId: intents.find((intent) => intent.attackTargetId !== undefined)?.attackTargetId,
