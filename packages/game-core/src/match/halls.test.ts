@@ -103,6 +103,21 @@ describe("the Hall of Heroes' rules (#2700)", () => {
     },
   );
 
+  it("is won by the last team in play when every member of the other has left (#2890)", () => {
+    const sim = hall();
+    stepTo(sim, 1);
+    sim.remove("x");
+    sim.step(DT);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
+  });
+
+  it("keeps a team that is dead but present in the match (#2890)", () => {
+    const sim = hall();
+    stepTo(sim, 1);
+    kill(sim, "x");
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
+  });
+
   it.each([5, 59])("returns one who died at %i s at the 60 s wave", (at) => {
     const sim = hall();
     stepTo(sim, at);
@@ -161,6 +176,7 @@ describe("the Hall of Heroes' rules (#2700)", () => {
 
 describe("the Hall of Heroes at time (#2700)", () => {
   const team = {
+    members: 1,
     living: 0,
     morale: 0,
     priestLives: false,
@@ -189,6 +205,26 @@ describe("the Hall of Heroes at time (#2700)", () => {
   const king = HALLS_MATCH_RULES["king-of-the-hill"];
   const relic = HALLS_MATCH_RULES["relic-run"];
   const capture = HALLS_MATCH_RULES["capture-points"];
+
+  it("leaves out a team whose members have all left, however many points it holds (#2890)", () => {
+    const threeTeams = (one: typeof team): MatchStanding => ({
+      ...standing(),
+      byTeam: new Map([
+        [0, team],
+        [1, one],
+        [2, team],
+      ]),
+    });
+    expect(evaluateMatch(score(1, 3, 2), threeTeams({ ...team, members: 0 }), 719, king)).toBe(
+      MATCH_IN_PROGRESS,
+    );
+    expect(
+      evaluateMatch(score(1, 3, 2), threeTeams({ ...team, members: 0 }), 720, relic).winningTeam,
+    ).toBe(2);
+    expect(
+      evaluateMatch(score(1, 3, 2), threeTeams({ ...team, members: 0 }), 720, capture).winningTeam,
+    ).toBe(2);
+  });
 
   it("is still on before time, whoever is dead", () => {
     expect(evaluateMatch(score(1, 0, 0), standing(), 719.9, king)).toBe(MATCH_IN_PROGRESS);

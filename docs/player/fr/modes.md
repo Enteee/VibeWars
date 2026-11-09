@@ -249,7 +249,7 @@ ta base avec toute leur santé et leur énergie, même si un ennemi s'y tient, s
 si leur moral est au plancher. Le tableau des scores décompte jusqu'à la
 prochaine vague. Chaque mort coûte du moral, et un fantôme se relève à la même
 vague, à sa propre place. Prends **20 points d'avance** sur toutes les autres
-équipes pour gagner aussitôt. Éliminer toute une équipe ne termine pas la partie. Après 8 minutes,
+équipes pour gagner aussitôt. Éliminer toute une équipe ne termine pas la partie, mais une équipe dont tous les joueurs sont partis est éliminée. Après 8 minutes,
 l'équipe avec le plus de points gagne ; à égalité, celle qui tient le plus de
 sanctuaires, puis l'équipe qui a été seule en tête en dernier, et si aucune ne
 l'a été, c'est un match nul. Les éliminations ne marquent rien.
@@ -351,7 +351,7 @@ défendre. Perds, ou quitte un match avant sa fin, et ta prochaine Ascension
 recommence à la manche 1 ; pareil si tu quittes la file ou le groupe. Un match
 perdu parce que son hôte est parti garde ta manche.
 
-Le Hall tire au sort un de trois modes pour chaque match : Roi de la colline, Course aux reliques ou Points de capture, pour deux ou trois équipes. À deux, la troisième base reste fermée, et son point de capture avec elle. Un match dans le Hall dure 12 minutes et le plus de points gagne ; les Points de capture se terminent aussi plus tôt sur une avance de 20. La mort ne coûte pas de moral. Les morts reviennent ensemble à leur base à chaque minute pleine de l'horloge du match : une équipe décimée n'est donc pas battue. Au Roi de la colline, l'équipe qui tient l'autel continue de marquer après la mort de son fantôme, jusqu'à ce qu'une autre équipe le prenne, et ses morts reviennent sur l'autel. Une égalité va à l'équipe qui a marqué en dernier ou, aux Points de capture, à celle qui a fait le dernier kill.
+Le Hall tire au sort un de trois modes pour chaque match : Roi de la colline, Course aux reliques ou Points de capture, pour deux ou trois équipes. À deux, la troisième base reste fermée, et son point de capture avec elle. Un match dans le Hall dure 12 minutes et le plus de points gagne ; les Points de capture se terminent aussi plus tôt sur une avance de 20. La mort ne coûte pas de moral. Les morts reviennent ensemble à leur base à chaque minute pleine de l'horloge du match : une équipe décimée n'est donc pas battue, mais une équipe dont tous les joueurs sont partis est éliminée. Au Roi de la colline, l'équipe qui tient l'autel continue de marquer après la mort de son fantôme, jusqu'à ce qu'une autre équipe le prenne, et ses morts reviennent sur l'autel. Une égalité va à l'équipe qui a marqué en dernier ou, aux Points de capture, à celle qui a fait le dernier kill.
 
 Ton moral te suit tout au long de la course : la pénalité de mort ou le bonus
 avec lequel tu termines une carte gagnée est celui avec lequel tu commences la

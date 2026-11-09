@@ -291,6 +291,36 @@ describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
     expect(points(sim)).toEqual([0, 1]);
   });
 
+  it("is won by the last team in play when every member of the other has left (#2890)", () => {
+    const sim = capturePoints();
+    onShrine(sim, "x", 4);
+    onShrine(sim, "y", 4);
+    run(sim, POINT_TICK_SECONDS);
+    expect(points(sim)).toEqual([0, 1]);
+    // Team 1 leads, and it is the one that leaves: team 0 wins all the same.
+    sim.remove("x");
+    sim.step(DT);
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
+    sim.remove("y");
+    sim.step(DT);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
+  });
+
+  it("puts out only the empty team of three: the other two carry on (#2890)", () => {
+    const sim = capturePoints(CAPTURE_POINTS_MATCH_RULES, [
+      fighter("p", 2, vec2(1000, 1900)),
+      fighter("q", 2, vec2(1100, 1900)),
+    ]);
+    sim.remove("p");
+    sim.remove("q");
+    sim.step(DT);
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
+    sim.remove("x");
+    sim.remove("y");
+    sim.step(DT);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
+  });
+
   it("counts no dead player on a shrine", () => {
     const sim = capturePoints();
     onShrine(sim, "a", 2);

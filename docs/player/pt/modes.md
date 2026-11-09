@@ -247,7 +247,7 @@ na bússola como □ na cor do dono.
 
 A cada 30 segundos, cada santuário da sua equipe marca um ponto, e um
 aviso e um som anunciam quanto cada lado marcou. A cada 60 segundos do relógio da partida, os mortos da sua equipe levantam no santuário da sua base com vida e energia cheias, mesmo com um inimigo ali, a menos que a moral deles esteja no piso. O placar faz a contagem até a próxima onda. Cada morte custa moral, e um fantasma levanta na mesma onda, no seu próprio lugar.
-Fique **20 pontos à frente** de todas as outras equipes para vencer na hora. Eliminar uma equipe não encerra a partida. Depois de 8 minutos, vence a equipe com
+Fique **20 pontos à frente** de todas as outras equipes para vencer na hora. Eliminar uma equipe não encerra a partida, mas uma equipe cujos jogadores saíram todos está fora. Depois de 8 minutos, vence a equipe com
 mais pontos; em pontos iguais, a que controla mais santuários, depois a
 equipe que ficou por último à frente sozinha e, se nenhuma ficou, é
 empate. Abates não marcam nada.
@@ -350,7 +350,7 @@ do fim, e sua próxima Ascensão recomeça na rodada 1; o mesmo vale para
 sair da fila ou do grupo. Uma partida perdida porque o host saiu mantém
 sua rodada.
 
-O Hall sorteia um de três modos para cada partida: Rei da Colina, Corrida da Relíquia ou Captura de Pontos, para duas ou três equipes. Com duas, a terceira base fica fechada, e com ela seu ponto de captura. Uma partida no Hall dura 12 minutos e vence quem tiver mais pontos; a Captura de Pontos também termina antes com uma vantagem de 20. Morrer não custa moral. Os mortos voltam juntos à sua base a cada minuto cheio do relógio da partida, então uma equipe eliminada não está derrotada. No Rei da Colina, a equipe que controla o altar continua pontuando depois que seu fantasma morre, até outra equipe tomá-lo, e seus mortos voltam no altar. Um empate vai para a equipe que pontuou por último ou, na Captura de Pontos, para a que fez a eliminação mais recente.
+O Hall sorteia um de três modos para cada partida: Rei da Colina, Corrida da Relíquia ou Captura de Pontos, para duas ou três equipes. Com duas, a terceira base fica fechada, e com ela seu ponto de captura. Uma partida no Hall dura 12 minutos e vence quem tiver mais pontos; a Captura de Pontos também termina antes com uma vantagem de 20. Morrer não custa moral. Os mortos voltam juntos à sua base a cada minuto cheio do relógio da partida, então uma equipe eliminada não está derrotada, mas uma equipe cujos jogadores saíram todos está fora. No Rei da Colina, a equipe que controla o altar continua pontuando depois que seu fantasma morre, até outra equipe tomá-lo, e seus mortos voltam no altar. Um empate vai para a equipe que pontuou por último ou, na Captura de Pontos, para a que fez a eliminação mais recente.
 
 Sua moral acompanha você por toda a campanha: a penalidade de morte ou o
 bônus com que você termina um mapa vencido é o que você leva para o

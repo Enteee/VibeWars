@@ -238,7 +238,7 @@ los muertos de tu equipo se levantan en el santuario de tu base con salud y
 energía completas, aunque haya un enemigo ahí, salvo que su moral esté en el
 mínimo. El marcador cuenta atrás hasta la próxima oleada. Cada muerte cuesta
 moral, y un fantasma se levanta en la misma oleada, en su propio sitio. Saca **20
-puntos de ventaja** a todos los demás equipos para ganar al instante. Eliminar a un equipo no termina la partida. Tras 8 minutos gana el equipo con más puntos; con los mismos
+puntos de ventaja** a todos los demás equipos para ganar al instante. Eliminar a un equipo no termina la partida, pero un equipo cuyos jugadores se han ido todos queda fuera. Tras 8 minutos gana el equipo con más puntos; con los mismos
 puntos, el que controle más santuarios, luego el equipo que estuvo el último por
 delante en solitario, y si ninguno lo estuvo nunca, es un empate. Las bajas no
 puntúan.
@@ -333,7 +333,7 @@ de que termine, tu próximo Ascenso empieza otra vez en la ronda 1; también si 
 de la cola o del grupo. Una partida perdida porque se fue su anfitrión conserva tu
 ronda.
 
-El Hall sortea uno de tres modos en cada partida: Rey de la colina, Carrera de reliquias o Puntos de captura, para dos o tres equipos. Con dos, la tercera base queda cerrada, y con ella su punto de captura. Una partida en el Hall dura 12 minutos y ganan los puntos; Puntos de captura también termina antes con una ventaja de 20. Morir no cuesta moral. Los muertos vuelven juntos a su base en cada minuto completo del reloj de la partida, así que un equipo aniquilado no está vencido. En Rey de la colina, el equipo que tiene el altar sigue puntuando tras morir su fantasma, hasta que otro equipo lo reclame, y sus muertos vuelven en el altar. Un empate es para el equipo que puntuó por última vez o, en Puntos de captura, para el que logró la última baja.
+El Hall sortea uno de tres modos en cada partida: Rey de la colina, Carrera de reliquias o Puntos de captura, para dos o tres equipos. Con dos, la tercera base queda cerrada, y con ella su punto de captura. Una partida en el Hall dura 12 minutos y ganan los puntos; Puntos de captura también termina antes con una ventaja de 20. Morir no cuesta moral. Los muertos vuelven juntos a su base en cada minuto completo del reloj de la partida, así que un equipo aniquilado no está vencido, pero un equipo cuyos jugadores se han ido todos queda fuera. En Rey de la colina, el equipo que tiene el altar sigue puntuando tras morir su fantasma, hasta que otro equipo lo reclame, y sus muertos vuelven en el altar. Un empate es para el equipo que puntuó por última vez o, en Puntos de captura, para el que logró la última baja.
 
 Tu moral se mantiene durante todo el recorrido: la penalización por muerte o la
 bonificación con la que terminas un mapa ganado es con la que empiezas el siguiente,

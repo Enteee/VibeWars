@@ -288,6 +288,8 @@ export function withLatestTeam(recent: readonly number[], team: number): readonl
 }
 
 export interface TeamStanding {
+  /** Members still in the match, dead or alive, or on the way to it (#2890). */
+  readonly members: number;
   /** Members alive. */
   readonly living: number;
   /** The sum of every member's morale, dead or alive, in percent. */
@@ -375,9 +377,13 @@ export function soleLeader(score: MatchScore): number | undefined {
  * Relic Run or King of the Hill; a team that never had a priest has none
  * living. No kill-count, Guild Battle or Capture Points team is beaten so,
  * nor a team whose dead respawn (#2700) or whose rules say `wipeSurvived`
- * (#2695).
+ * (#2695). A Capture Points or Hall of Heroes team whose members have
+ * all left is out (#2890).
  */
 export function teamBeaten(team: TeamStanding, rules: MatchRules): boolean {
+  if ((rules.victory === "capture-points" || rules.respawnOnWave) && team.members === 0) {
+    return true;
+  }
   // Every member comes back on their own (#2700), so none is out for good.
   if (rules.deathRule === "respawn" || rules.wipeSurvived === true) {
     return false;
@@ -573,10 +579,13 @@ function evaluateRelicRun(
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
-  if (rules.respawnOnWave) {
-    return evaluateHallsAtTime(score, standing.recentScoringTeams, elapsedSeconds, rules);
-  }
   const inGame = scoreInPlay(score, standing, rules);
+  if (rules.respawnOnWave) {
+    return (
+      evaluateWipe(standing, rules) ??
+      evaluateHallsAtTime(inGame, standing.recentScoringTeams, elapsedSeconds, rules)
+    );
+  }
   return (
     evaluateWipe(standing, rules) ??
     evaluateRelicLead(inGame, rules) ??
@@ -635,13 +644,18 @@ function evaluateCapturePoints(
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
-  const ranked = [...scoreInPlay(score, standing, rules).byTeam].sort((a, b) => b[1] - a[1]);
+  const abandoned = evaluateWipe(standing, rules);
+  if (abandoned !== undefined) {
+    return abandoned;
+  }
+  const inGame = scoreInPlay(score, standing, rules);
+  const ranked = [...inGame.byTeam].sort((a, b) => b[1] - a[1]);
   const [first, second] = ranked;
   if (first !== undefined && second !== undefined && first[1] - second[1] >= CAPTURE_LEAD_TO_WIN) {
     return { phase: "finished", winningTeam: first[0], reason: "score" };
   }
   if (rules.respawnOnWave) {
-    return evaluateHallsAtTime(score, standing.recentKillTeams, elapsedSeconds, rules);
+    return evaluateHallsAtTime(inGame, standing.recentKillTeams, elapsedSeconds, rules);
   }
   if (elapsedSeconds < rules.timeLimitSeconds || first === undefined) {
     return MATCH_IN_PROGRESS;
