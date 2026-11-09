@@ -673,6 +673,8 @@ export default {
     "Aniquilação de Sacerdotes: derrote todos os inimigos e o sacerdote deles",
   "lobby.modeRelicRun":
     "Corrida da Relíquia: leve sua relíquia ao altar. Mais pontos em 8 minutos vence.",
+  "lobby.modeRelicRunFoe":
+    "Corrida da Relíquia: leve a relíquia inimiga ao seu Herói Fantasmagórico. 3 pontos de vantagem vencem; após 8 minutos, mais pontos vencem.",
   "lobby.notReady": "Não pronto",
   "lobby.playBots": "Jogar contra bots",
   "lobby.ready": "Pronto",
