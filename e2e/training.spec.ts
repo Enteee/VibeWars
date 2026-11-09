@@ -215,6 +215,46 @@ test("picking Heights loads its arena with no console error (#2937)", async ({ p
   expect(errors).toEqual([]);
 });
 
+test("Heights draws its water: the deep pond darker than the floor, a puddle paler (#2985)", async ({
+  page,
+}) => {
+  // A walk and a wait for a still camera (#721).
+  test.setTimeout(60_000);
+  // Water ripples never settle unless motion is reduced (#2984).
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const canvas = await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("heights");
+  await expect(page.locator(".training-log")).toContainText("── Heights ──");
+  await takeControl(page);
+  await wholeMap(page);
+  // The view follows you (#721): near the pond, it and a puddle are on the stage.
+  await walkTo(page, canvas, { x: 400, y: 260 });
+  await page.mouse.move(1, 1);
+  const view = await trainingView(page, canvas);
+  /** The mean of R, G and B in an 8 px square round `world` on the ground. */
+  const brightness = async (world: { readonly x: number; readonly y: number }): Promise<number> => {
+    const at = view.onPage(world);
+    const shot = await page.screenshot({ clip: { x: at.x - 4, y: at.y - 4, width: 8, height: 8 } });
+    return page.evaluate(async (png) => {
+      const image = new Image();
+      image.src = `data:image/png;base64,${png}`;
+      await image.decode();
+      const context = new OffscreenCanvas(image.width, image.height).getContext("2d");
+      if (context === null) throw new Error("no 2d context");
+      context.drawImage(image, 0, 0);
+      const { data } = context.getImageData(0, 0, image.width, image.height);
+      // Every fourth byte is alpha, always opaque on a screenshot.
+      const rgb = Array.from(data).filter((_, at) => at % 4 !== 3);
+      return rgb.reduce((sum, value) => sum + value, 0) / rgb.length;
+    }, shot.toString("base64"));
+  };
+  // Map coordinates from training-heights/map.json: the pond's west end,
+  // clear of the platform drawn over its middle, and the west puddle.
+  const floor = await brightness({ x: 380, y: 110 });
+  expect(await brightness({ x: 500, y: 85 })).toBeLessThan(floor);
+  expect(await brightness({ x: 240, y: 190 })).toBeGreaterThan(floor);
+});
+
 test("(5) the chosen scenario survives a reload", async ({ page }) => {
   await openTraining(page);
   await page.locator("select.training-scenario").selectOption("armor-ladder");
