@@ -5,7 +5,7 @@ Five different ideas for the first screen, each on one sheet: 1920x1080 left,
 from the palette in `art-direction.md`, in DejaVu Sans / Serif (already
 licensed for the repo's art). All original; nothing from Guild Wars 1. The
 name "VibeWars" is not translated; "PRESS ANY KEY TO BEGIN" is English here
-and goes through `t()` when built. Not decided; the operator picks one.
+and goes through `t()` when built. The operator picked proposal 1 (see "Picked" below).
 
 1. **Two-tone wordmark** (pure typography). "Vibe" in `friend` blue, "Wars" in
    `foe` coral over the arena grid, a split rule beneath: the whole game, two
