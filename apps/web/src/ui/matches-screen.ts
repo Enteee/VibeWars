@@ -269,10 +269,6 @@ function filterChip<T>(
   return chip;
 }
 
-/**
- * The two chip groups (#2741): kinds, then sizes. Within a group a match
- * fits any pressed chip; it must fit both groups.
- */
 function hallRow(hold: HallHold, nowSeconds: number): HTMLElement {
   const row = h("li", "matches-hall-row");
   const who = row.appendChild(h("span", "matches-hall-who"));
@@ -293,6 +289,10 @@ function hallRow(hold: HallHold, nowSeconds: number): HTMLElement {
   return row;
 }
 
+/**
+ * The two chip groups (#2741): kinds, then sizes. Within a group a match
+ * fits any pressed chip; it must fit both groups.
+ */
 function filterChips(onChange: () => void): HTMLElement {
   const filters = h("div", "match-filters");
   const kinds = filters.appendChild(h("div", "skill-type-chips match-chip-group"));
