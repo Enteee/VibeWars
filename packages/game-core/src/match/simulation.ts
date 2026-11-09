@@ -345,6 +345,14 @@ import {
   type RelicsState,
 } from "./relics.js";
 import { guardSpec, type BaseGuard } from "./guards.js";
+import {
+  BEACON_STRIKE_RADIUS,
+  beaconStrikeArea,
+  UNOWNED_BEACON,
+  beaconLightning,
+  stepBeacon,
+  type BeaconState,
+} from "./beacon.js";
 import { UNCLAIMED_ALTAR, claimant, mayClaim, stepAltar, type AltarState } from "./altar.js";
 import {
   CLAIM_SKILL_ID,
@@ -1263,6 +1271,8 @@ export class MatchSimulation {
   #flagsState: FlagsState | undefined;
   /** Who reached a flag or the stand this step (#1225), in simulation order. */
   #flagArrivals: CarriedArrival[] = [];
+  /** Whose Storm Beacon strikes, and how far to its next strike (#2694). */
+  #beaconState: BeaconState = UNOWNED_BEACON;
   /** The altar and relic spawns (#1374); `undefined` on a map without them. */
   readonly #relicField: RelicField | undefined;
   /** Where every relic is (#1374); `undefined` without a field. */
@@ -3943,6 +3953,7 @@ export class MatchSimulation {
     this.checkMatchEnd();
     // After the match end: a lord slain as a boost falls due ends it first.
     this.#advanceFlags(dt);
+    this.#advanceBeacon(dt);
 
     const log = this.#log.concat(this.#reaped);
     this.#log = [];
@@ -6547,6 +6558,57 @@ export class MatchSimulation {
     if (boostTeam !== undefined) {
       this.moraleBoost(boostTeam, FLAG_MORALE_BOOST);
     }
+  }
+
+  /**
+   * The Storm Beacon's strike (#2694), once the step's flags are planted:
+   * every `BEACON_STRIKE_SECONDS` its owner holds it, one random living
+   * foe in earshot of it takes Beacon Lightning. A spirit is no target,
+   * as it is none for a trap. With nobody in earshot, nothing is drawn.
+   */
+  #advanceBeacon(dt: number): void {
+    const field = this.#flagField;
+    if (field?.beacon !== true || this.#flagsState === undefined || this.phase !== "active") {
+      return;
+    }
+    const { state, strikes } = stepBeacon(this.#beaconState, this.#flagsState.stand.holder, dt);
+    this.#beaconState = state;
+    if (!strikes) {
+      return;
+    }
+    const foes = [...this.#participants.values()].filter(
+      (body) =>
+        !body.combatant.dead &&
+        body.creature?.kind !== "spirit" &&
+        body.combatant.team !== state.owner &&
+        distance(body.position, field.stand) <= BEACON_STRIKE_RADIUS,
+    );
+    if (foes.length === 0) {
+      return;
+    }
+    const target = foes[this.#rng.nextInt(0, foes.length)];
+    if (target === undefined) {
+      return;
+    }
+    const events = beaconLightning(target.combatant, {
+      rng: this.#rng,
+      rules: this.#ruleset.combat,
+      surroundings: this.#participants,
+    });
+    // From nobody: no player is credited. The cause names the beacon, and the area is where the bolt starts.
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "beacon",
+      sourceId: undefined,
+      skillId: undefined,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: beaconStrikeArea(field.stand),
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
   }
 
   /**

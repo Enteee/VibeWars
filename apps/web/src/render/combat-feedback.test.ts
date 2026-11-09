@@ -10,7 +10,7 @@ import {
   type FloatingText,
 } from "./arena-snapshot.js";
 import type { Impact } from "./body-impacts.js";
-import { showCombatFeedback, swingFlashFor } from "./combat-feedback.js";
+import { beaconBoltFor, showCombatFeedback, swingFlashFor } from "./combat-feedback.js";
 
 function player(sessionId: string): PlayerSnapshot {
   return {
@@ -88,6 +88,7 @@ function floated(
       addFloatingText: (text) => texts.push(text),
       addAreaFlash: () => undefined,
       addSwingFlash: () => undefined,
+      addBeaconBolt: () => undefined,
       addImpacts: () => undefined,
       struckTwice: () => undefined,
     },
@@ -104,6 +105,30 @@ function floated(
   );
   return texts.map((text) => text.text);
 }
+
+describe("beaconBoltFor (#2694)", () => {
+  const snapshot = {
+    selfSessionId: "you",
+    players: [{ sessionId: "foe", x: 40, y: 50 }],
+  } as unknown as MatchSnapshot;
+  const strike = {
+    casterSessionId: "",
+    cause: "beacon",
+    area: { x: 10, y: 20, radius: 300 },
+    events: [{ kind: "damage", targetId: "foe", amount: 27, critical: false }],
+  } as unknown as CombatMessage;
+
+  it("runs from the beacon to the body it struck", () => {
+    expect(beaconBoltFor(strike, snapshot)).toMatchObject({
+      from: { x: 10, y: 20 },
+      to: { x: 40, y: 50 },
+    });
+  });
+
+  it("draws nothing for a skill's area", () => {
+    expect(beaconBoltFor({ ...strike, cause: "skill" }, snapshot)).toBeUndefined();
+  });
+});
 
 describe("showCombatFeedback", () => {
   it("signs damage with a real minus and heals with a plus, so colour is never needed", () => {
@@ -142,6 +167,7 @@ describe("showCombatFeedback", () => {
           addFloatingText: (text) => texts.push(text),
           addAreaFlash: () => undefined,
           addSwingFlash: () => undefined,
+          addBeaconBolt: () => undefined,
           addImpacts: () => undefined,
           struckTwice: () => undefined,
         },
@@ -178,6 +204,7 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
+        addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
         struckTwice: () => undefined,
       },
@@ -238,6 +265,7 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
+        addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
         struckTwice: () => undefined,
       },
@@ -272,6 +300,7 @@ describe("showCombatFeedback and areas", () => {
         addFloatingText: () => undefined,
         addAreaFlash: (flash) => flashes.push(flash),
         addSwingFlash: () => undefined,
+        addBeaconBolt: () => undefined,
         addImpacts: () => undefined,
         struckTwice: () => undefined,
       },
@@ -353,6 +382,7 @@ describe("swingFlashFor (#161)", () => {
         {
           addFloatingText: () => undefined,
           addAreaFlash: () => undefined,
+          addBeaconBolt: () => undefined,
           addSwingFlash: () => {
             arcs += 1;
           },
@@ -374,6 +404,7 @@ describe("swingFlashFor (#161)", () => {
       addFloatingText: () => undefined,
       addAreaFlash: () => undefined,
       addSwingFlash: () => undefined,
+      addBeaconBolt: () => undefined,
       addImpacts: () => undefined,
       struckTwice: (actorId: string) => told.push(actorId),
     };
@@ -389,6 +420,7 @@ describe("swingFlashFor (#161)", () => {
       addFloatingText: () => undefined,
       addAreaFlash: () => undefined,
       addSwingFlash: () => undefined,
+      addBeaconBolt: () => undefined,
       addImpacts: (impacts: readonly Impact[]) => {
         landed.push(...impacts.map((impact) => impact.anchorId));
       },

@@ -16,7 +16,7 @@ import type { CombatEvent } from "../skills/effects.js";
  * something a primary attribute did by itself, with no skill or swing
  * behind it (#633): Soul Reaping's energy.
  */
-export type CombatCause = "skill" | "degeneration" | "weapon" | "attribute";
+export type CombatCause = "skill" | "degeneration" | "weapon" | "attribute" | "beacon";
 
 /** One *resolution*: a cast, one participant's status tick, one swing, or an attribute's gain. */
 export interface CombatLogEntry {
@@ -37,7 +37,7 @@ export interface CombatLogEntry {
   readonly weaponId: WeaponId | undefined;
   /** The attribute, on every `"attribute"` entry; `undefined` on every other (#633). */
   readonly attributeId: string | undefined;
-  /** Where an area skill landed, and how far it reached. */
+  /** Where an area skill landed, and how far it reached; on a `"beacon"` entry, the Storm Beacon. */
   readonly area: { readonly x: number; readonly y: number; readonly radius: number } | undefined;
   /** A weapon swing that struck twice (#561); `false` on every other entry. */
   readonly doubleStrike: boolean;

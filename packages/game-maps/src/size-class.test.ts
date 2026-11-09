@@ -26,6 +26,7 @@ describe("sizeClass (#444, #2547)", () => {
       "cinder-sanctum": "small",
       "the-courtyard": "small",
       "hall-of-heroes": "small",
+      "barrow-field": "small",
       "hollow-deep": "medium",
       "blackwater-ford": "small",
       "mosslit-cairns": "small",

@@ -82,6 +82,7 @@ describe("randomArenaMapPool", () => {
               "cinder-sanctum",
               "the-courtyard",
               "hall-of-heroes",
+              "barrow-field",
               "hollow-deep",
               "blackwater-ford",
               "mosslit-cairns",
@@ -239,6 +240,7 @@ describe("team sizes (#2108)", () => {
       "broken-tower",
       "the-courtyard",
       "hall-of-heroes",
+      "barrow-field",
       "hollow-deep",
       "blackwater-ford",
       "mosslit-cairns",
@@ -253,6 +255,8 @@ describe("the Hall of Heroes (#1995)", () => {
     expect(modeMapIds()["heroes-ascent"]).not.toContain("hall-of-heroes");
     expect(queueMapPool("heroes-ascent", ASCENT_ROUNDS - 1)).toEqual(["hall-of-heroes"]);
     expect(modeMapIds()["team-arena"]).not.toContain("hall-of-heroes");
+    expect(modeMapIds()["team-arena"]).not.toContain("barrow-field");
+    expect(modeMapIds()["hosted-game"]).toContain("barrow-field");
     expect(modeMapIds()["team-arena"]).not.toContain("hollow-deep");
     expect(modeMapIds()["hosted-game"]).toContain("blackwater-ford");
     expect(modeMapIds()["random-arena"]).toContain("hall-of-heroes");
@@ -331,6 +335,7 @@ describe("hostMap (#476)", () => {
         ![
           "ember-pits",
           "jungle-ruins",
+          "barrow-field",
           "blackwater-ford",
           "mosslit-cairns",
           "guild-hall-isle",
@@ -361,12 +366,14 @@ describe("hostMap (#476)", () => {
   it("carries a Guild Battle map's flag stand and flag spawns, and none elsewhere (#1225)", () => {
     expect(hostMap("guild-hall-isle")?.flagField).toEqual({
       stand: { x: 1500, y: 1000 },
+      beacon: false,
       spawns: [
         { team: 0, position: { x: 560, y: 1000 } },
         { team: 1, position: { x: 2440, y: 1000 } },
       ],
     });
     expect(mapFlagField("guild-hall-isle")).toEqual(hostMap("guild-hall-isle")?.flagField);
+    expect(hostMap("barrow-field")?.flagField?.beacon).toBe(true);
     expect(hostMap("jungle-ruins")?.flagField).toBeUndefined();
     expect(mapFlagField("training-hall")).toBeUndefined();
   });
