@@ -152,7 +152,7 @@ export function joinControls(
   const leave = button(t("topbar.leave"), "topbar-leave", onLeave);
   // Join lobby (#2882): a pasted link goes in through the page's own
   // `hashchange`, exactly as one pasted into the address bar does.
-  const joinField = h("div", "lobby-join");
+  const joinField = h("div", "lobby-join-field");
   const joinInput = document.createElement("input");
   joinInput.type = "text";
   joinInput.className = "field-input lobby-join-input";
