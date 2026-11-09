@@ -160,7 +160,7 @@ export interface ActivationRequest {
    */
   readonly skillBar: SkillBar;
   readonly losBlockers: readonly Segment[];
-  /** A deck stands between caster and target (ADR-0051's footprint rule). */
+  /** A deck stands between caster and target (ADR-0051's footprint rule): melee ignores it. */
   readonly deckBlocked?: boolean;
   /** Whether caster and target share a floor (ADR-0051): melee needs it. */
   readonly sharesFloorWithTarget?: boolean;
@@ -434,16 +434,15 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
       skill.attack !== undefined && feelsHeight(weapon.id)
         ? heightRange(skill.range, request.heightStep ?? 0)
         : skill.range;
+    const melee = skill.attack !== undefined && weapon.projectileSpeed === undefined;
     if (
       !distanceWithinRange(request.casterPosition, request.targetPosition, reach) ||
-      (request.sharesFloorWithTarget === false &&
-        skill.attack !== undefined &&
-        weapon.projectileSpeed === undefined)
+      (request.sharesFloorWithTarget === false && melee)
     ) {
       return reject("out-of-range");
     }
     if (
-      request.deckBlocked === true ||
+      (request.deckBlocked === true && !melee) ||
       !hasLineOfSight(request.casterPosition, request.targetPosition, request.losBlockers)
     ) {
       return reject("no-line-of-sight");

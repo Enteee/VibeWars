@@ -4,6 +4,7 @@ import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import type { Polygon, Segment } from "../geometry.js";
 import { createRng } from "../rng.js";
+import { NO_RANKS } from "../skills/status.js";
 import { PLAIN_BLOW, landBlow, weaponSnapshotOf } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import {
@@ -17,6 +18,7 @@ import {
 } from "./bot/rules/test-support.js";
 import {
   MatchSimulation,
+  type Creature,
   type MatchLayers,
   type MatchSimulationOptions,
   type Participant,
@@ -181,6 +183,37 @@ describe("melee across layers (ADR-0051)", () => {
     expect(hurt(sim, "foe", 2.5)).toBe(true);
   });
 
+  it("strikes from a ramp a foe under the deck's footprint: the deck rule is for shots", () => {
+    const sim = arena([
+      spec("a", 0, vec2(510, 400), 1, swordOf()),
+      spec("foe", 1, vec2(530, 400), 0),
+    ]);
+    sim.requestAttack("a", "foe");
+    expect(hurt(sim, "foe", 2.5)).toBe(true);
+    expect(get(sim, "a").position).toEqual(vec2(510, 400));
+  });
+
+  it("lets a melee skill land from there too, where a spell is refused", () => {
+    const sim = arena([
+      spec("a", 0, vec2(510, 400), 1, {
+        ...swordOf(),
+        skillBar: ["warrior.power-attack", null, null, null, null, null, null, null],
+      }),
+      spec("foe", 1, vec2(530, 400), 0),
+    ]);
+    sim.setTarget("a", "foe");
+    sim.requestSkill("a", 0);
+    expect(hurt(sim, "foe", 1.5)).toBe(true);
+    expect(get(sim, "a").position).toEqual(vec2(510, 400));
+    const spell = arena([
+      caster("a", 0, vec2(510, 400), 1, FIREBALL),
+      spec("foe", 1, vec2(530, 400), 0),
+    ]);
+    spell.setTarget("a", "foe");
+    spell.requestSkill("a", 0);
+    expect(get(spell, "a").combatant.cast.activeCast).toBeUndefined();
+  });
+
   it("stops striking when its foe climbs off its floor", () => {
     const sim = arena([
       spec("a", 0, vec2(300, 400), 0, {
@@ -307,6 +340,93 @@ describe("area effects across layers (ADR-0051)", () => {
       "ward-against-melee",
     );
     expect(get(sim, "under").combatant.statuses.active).toHaveLength(0);
+  });
+});
+
+describe("spirits and spreading conditions across layers (ADR-0051)", () => {
+  /** A standing spirit of team 0 on `layer`, its act given by `creature`. */
+  const spirit = (
+    id: string,
+    at: Vec2,
+    layer: number,
+    creature: Partial<Creature>,
+  ): ParticipantSpec =>
+    spec(id, 0, at, layer, {
+      creature: {
+        ownerId: "owner",
+        kind: "spirit",
+        look: "spirit",
+        name: id,
+        expiresInSeconds: Number.POSITIVE_INFINITY,
+        ageSeconds: 0,
+        summonedAtTick: 0,
+        skillId: undefined,
+        aura: undefined,
+        onDeath: "vanish",
+        ownerDisableSeconds: 0,
+        deathBurst: undefined,
+        onDeathInRange: undefined,
+        pulse: undefined,
+        replacedBy: undefined,
+        corpsesLeft: 0,
+        companionSkillId: undefined,
+        leaderId: undefined,
+        bondStatusId: undefined,
+        mode: "guard",
+        ...creature,
+      },
+    });
+
+  it("a spirit's pulse heals on its own layer, not the ally under the deck", () => {
+    const sim = arena([
+      spec("owner", 0, vec2(900, 400), 1),
+      spirit("s", vec2(600, 400), 1, {
+        skillId: "ritualist.restoration-magic",
+        pulse: { everySeconds: 1, heal: 40, radius: 300, pulsed: 0 },
+      }),
+      spec("under", 0, vec2(640, 400), 0, { startHealthFraction: 0.2 }),
+    ]);
+    const before = health(sim, "under");
+    run(sim, 2.5);
+    expect(health(sim, "under")).toBeLessThanOrEqual(before);
+  });
+
+  it("a spirit's pulse still reaches the same layer", () => {
+    const sim = arena([
+      spec("owner", 0, vec2(900, 400), 1),
+      spirit("s", vec2(600, 400), 1, {
+        skillId: "ritualist.restoration-magic",
+        pulse: { everySeconds: 1, heal: 40, radius: 300, pulsed: 0 },
+      }),
+      spec("level", 0, vec2(640, 400), 1, { startHealthFraction: 0.2 }),
+    ]);
+    const before = health(sim, "level");
+    run(sim, 2.5);
+    expect(health(sim, "level")).toBeGreaterThan(before);
+  });
+
+  it("Pestilence spreads to the bodies on the corpse's layer, not those under it", () => {
+    const sim = arena([
+      spec("r", 0, vec2(600, 400), 1, {
+        skillBar: ["ranger.pestilence", null, null, null, null, null, null, null],
+        attributeRanks: new Map([["ranger.wilderness-survival", 12]]),
+        maxEnergy: 100,
+      }),
+      spec("dies", 1, vec2(640, 400), 1),
+      spec("level", 1, vec2(680, 400), 1),
+      spec("under", 1, vec2(680, 430), 0),
+    ]);
+    expect(sim.requestSkill("r", 0)?.check).toEqual({ ok: true });
+    run(sim, 6);
+    get(sim, "dies").combatant.statuses.apply("bleeding", 12, "x", NO_RANKS);
+    get(sim, "level").combatant.statuses.apply("poison", 5, "x", NO_RANKS);
+    get(sim, "under").combatant.statuses.apply("poison", 5, "x", NO_RANKS);
+    get(sim, "dies").combatant.statuses.apply("burning", 10, "x", NO_RANKS);
+    get(sim, "dies").combatant.health = 0.2;
+    run(sim, 0.2);
+    expect(get(sim, "dies").combatant.dead).toBe(true);
+    expect(get(sim, "level").combatant.statuses.has("bleeding")).toBe(true);
+    expect(get(sim, "under").combatant.statuses.has("bleeding")).toBe(false);
   });
 });
 

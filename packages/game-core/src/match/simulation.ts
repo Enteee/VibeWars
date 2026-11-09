@@ -2280,6 +2280,7 @@ export class MatchSimulation {
           body.combatant.dead ||
           body.combatant.team !== record.combatant.team ||
           body.creature?.kind === "spirit" ||
+          !sharesFloor(body.floors, floorOf(record.layer)) ||
           distance(record.position, body.position) > pulse.radius
         ) {
           continue;
@@ -2666,6 +2667,7 @@ export class MatchSimulation {
           (burst.effect === "resurrect" && other.creature !== undefined) ||
           other.creature?.kind === "spirit" ||
           (burst.affects !== "all" && ally !== (burst.affects === "allies")) ||
+          !sharesFloor(other.floors, floorOf(spirit.layer)) ||
           distance(other.position, spirit.position) > burst.radius ||
           (burst.effect === "apply-status" &&
             other.combatant.health >=
@@ -4083,6 +4085,7 @@ export class MatchSimulation {
         // Immune (#1455): not caught, and free to catch it once that ends.
         if (
           outbreak.infected.has(other.id) ||
+          !sharesFloor(other.floors, floorOf(record.layer)) ||
           distance(record.position, other.position) > AREA_ADJACENT ||
           other.combatant.statuses.isImmuneTo(status.id)
         ) {
@@ -5514,6 +5517,7 @@ export class MatchSimulation {
             ? other.combatant.team !== bearer.team
             : other.combatant.team === bearer.team && other.combatant.id !== bearer.id) &&
           !other.combatant.dead &&
+          sharesFloor(other.floors, floorOf(from.layer)) &&
           distance(from.position, other.position) <= effect.radius,
       )
       .flatMap((other) =>
@@ -5659,8 +5663,7 @@ export class MatchSimulation {
   ): "arrived" | "walking" | "unreachable" {
     if (
       distanceWithinRange(record.position, target.position, reach) &&
-      (!melee || sharesFloor(record.floors, target.floors)) &&
-      this.#seesAcross(record.position, record.layer, target.position, target.layer)
+      this.#clearTo(record, target, melee)
     ) {
       faceToward(record, target.position);
       record.route = undefined;
@@ -6285,6 +6288,22 @@ export class MatchSimulation {
     );
   }
 
+  /**
+   * Whether an attack from `record` gets to `target` (ADR-0051): a blow
+   * needs a shared floor and the attacker's walls clear, and no deck
+   * footprint comes into it; a shot is `#seesAcross`.
+   */
+  #clearTo(
+    record: ParticipantRecord,
+    target: Pick<ParticipantRecord, "position" | "layer" | "floors">,
+    melee: boolean,
+  ): boolean {
+    return melee
+      ? sharesFloor(record.floors, target.floors) &&
+          hasLineOfSight(record.position, target.position, this.#wallsOn(record.layer))
+      : this.#seesAcross(record.position, record.layer, target.position, target.layer);
+  }
+
   /** `range` as a bow or spear in `record`'s hands has it at `target`; other weapons keep it. */
   #heightReach(record: ParticipantRecord, target: ParticipantRecord, range: number): number {
     return feelsHeight(record.combatant.equipment.mainHand.weapon.id)
@@ -6561,9 +6580,7 @@ export class MatchSimulation {
           record.position,
           target.position,
           this.#heightReach(record, target, weapon.range),
-        ) &&
-        (weapon.projectileSpeed !== undefined || sharesFloor(record.floors, target.floors)) &&
-        this.#seesAcross(record.position, record.layer, target.position, target.layer)
+        ) && this.#clearTo(record, target, weapon.projectileSpeed === undefined)
       )
     ) {
       record.combatant.attack = undefined;
@@ -7616,6 +7633,7 @@ export class MatchSimulation {
         rule === undefined ||
         skillId === undefined ||
         record.combatant.dead ||
+        !sharesFloor(victim.floors, floorOf(record.layer)) ||
         !distanceWithinRange(record.position, victim.position, RANGE_NATURE_RITUAL)
       ) {
         continue;
@@ -7666,6 +7684,7 @@ export class MatchSimulation {
         other.creature?.kind === "spirit" ||
         bodyType(other) !== type ||
         combatant.health >= rule.belowHealthFraction * effectiveMaxHealth(combatant) ||
+        !sharesFloor(other.floors, floorOf(spirit.layer)) ||
         !distanceWithinRange(spirit.position, other.position, RANGE_NATURE_RITUAL)
       ) {
         continue;
@@ -7698,9 +7717,10 @@ export class MatchSimulation {
       return events;
     }
     const reached = [...this.#participants.values()].filter(
-      ({ combatant, creature, position }) =>
+      ({ combatant, creature, position, floors }) =>
         !combatant.dead &&
         creature?.kind !== "spirit" &&
+        sharesFloor(floors, floorOf(victim.layer)) &&
         distance(position, victim.position) <= radius &&
         combatant.statuses.active.some(
           ({ id }) => getStatusDefinition(id).category === "condition",
@@ -8189,10 +8209,15 @@ export class MatchSimulation {
     rule: CorpseRule,
     target: ParticipantRecord | undefined,
   ): ParticipantRecord | undefined {
-    const centre = rule.near === "target" ? target?.position : record.position;
+    const centre = rule.near === "target" ? target : record;
     return centre === undefined
       ? undefined
-      : nearestFreshCorpse(centre, rule.radius, this.#participants.values());
+      : nearestFreshCorpse(
+          centre.position,
+          floorOf(centre.layer),
+          rule.radius,
+          this.#participants.values(),
+        );
   }
 
   /**
@@ -8209,7 +8234,12 @@ export class MatchSimulation {
   ): ParticipantRecord | undefined {
     const reach =
       rule.pick === "random"
-        ? freshCorpsesWithin(record.position, rule.radius, this.#participants.values())
+        ? freshCorpsesWithin(
+            record.position,
+            floorOf(record.layer),
+            rule.radius,
+            this.#participants.values(),
+          )
         : undefined;
     const corpse =
       reach === undefined
@@ -8228,7 +8258,12 @@ export class MatchSimulation {
    * exploited (#1915), once each, and returns them, nearest first.
    */
   #exploitEveryCorpse(record: ParticipantRecord, rule: CorpseRule): ParticipantRecord[] {
-    const corpses = freshCorpsesWithin(record.position, rule.radius, this.#participants.values());
+    const corpses = freshCorpsesWithin(
+      record.position,
+      floorOf(record.layer),
+      rule.radius,
+      this.#participants.values(),
+    );
     for (const corpse of corpses) {
       this.#markExploited(corpse);
     }

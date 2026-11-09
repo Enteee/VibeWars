@@ -26,6 +26,7 @@ import {
 } from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
 import { sacrificesTooMuch } from "./skill-intent.js";
+import { floorOf } from "../layer-rules.js";
 
 /**
  * Below this share of its health a foe in reach is the team's target
@@ -313,7 +314,15 @@ function think(
     // Out of range or out of sight, the simulation walks it in (#499).
     // Never a well by a sacrifice it cannot afford (#1730).
     mayUse: (skill: Skill, targetId: string | undefined): boolean => {
-      if (sacrificesTooMuch(skill, self.position, healthFraction(self), context.participants)) {
+      if (
+        sacrificesTooMuch(
+          skill,
+          self.position,
+          floorOf(self.layer),
+          healthFraction(self),
+          context.participants,
+        )
+      ) {
         return false;
       }
       const check = context.check(skill.id, targetId);
