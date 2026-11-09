@@ -483,7 +483,7 @@ function compound(words: string): string {
     .replace(/\bprimary\b/g, "primarni atribut")
     .replace(/\belemental\b/g, "elementarni atribut")
     .trim();
-  const match = new RegExp(`^(.*?)\\s*(?:\\b(${HEAD_NOUNS}))$`, "u").exec(said);
+  const match = new RegExp(`^(.*?)\\s*(?:(?<!\\p{L})(${HEAD_NOUNS}))$`, "u").exec(said);
   if (match === null) {
     return said;
   }

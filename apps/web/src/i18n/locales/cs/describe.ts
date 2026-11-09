@@ -1,5 +1,9 @@
 import { EN_WORDS, type DescribeWords } from "@vibewars/game-core";
 
+/** JavaScript's \b only knows ASCII: it fails beside "í" and splits "její" after "jej". */
+const wholeWord = (pattern: string, flags = ""): RegExp =>
+  new RegExp(`(?<!\\p{L})(?:${pattern})(?!\\p{L})`, `u${flags}`);
+
 type Words = DescribeWords;
 type Category = Parameters<Words["categoryNoun"]>[1];
 type Weapon = Parameters<Words["whileWielding"]>[0]["weapon"];
@@ -238,26 +242,25 @@ function pluralNoun(noun: string): string {
 /** A plural after "z", "od" or "počet": the genitive its words take. */
 function genitive(text: string): string {
   return text
-    .replace(/\btvoji\b/g, "tvých")
-    .replace(/\bsvoji\b/g, "svých")
-    .replace(/\bjeho\b/g, "jeho")
-    .replace(/\bostatní\b/g, "ostatních")
-    .replace(/\bnepřátelští\b/g, "nepřátelských")
-    .replace(/\bspojenečtí\b/g, "spojeneckých")
-    .replace(/\bmrtví\b/g, "mrtvých")
-    .replace(/\bsražení\b/g, "sražených")
-    .replace(/\bnepřátelé\b/g, "nepřátel")
-    .replace(/\bspojenci\b/g, "spojenců")
-    .replace(/\bpřisluhovači\b/g, "přisluhovačů")
-    .replace(/\bduchové\b/g, "duchů")
-    .replace(/\btvorové\b/g, "tvorů")
-    .replace(/\bčlenové\b/g, "členů")
-    .replace(/\bstavy\b/g, "stavů")
-    .replace(/\bkouzla\b/g, "kouzel")
-    .replace(/\bútoky\b/g, "útoků")
-    .replace(/\bdovednosti\b/g, "dovedností")
-    .replace(/\bpostoje\b/g, "postojů")
-    .replace(/\bbody\b/g, "bodů");
+    .replace(wholeWord("tvoji", "g"), "tvých")
+    .replace(wholeWord("svoji", "g"), "svých")
+    .replace(wholeWord("ostatní", "g"), "ostatních")
+    .replace(wholeWord("nepřátelští", "g"), "nepřátelských")
+    .replace(wholeWord("spojenečtí", "g"), "spojeneckých")
+    .replace(wholeWord("mrtví", "g"), "mrtvých")
+    .replace(wholeWord("sražení", "g"), "sražených")
+    .replace(wholeWord("nepřátelé", "g"), "nepřátel")
+    .replace(wholeWord("spojenci", "g"), "spojenců")
+    .replace(wholeWord("přisluhovači", "g"), "přisluhovačů")
+    .replace(wholeWord("duchové", "g"), "duchů")
+    .replace(wholeWord("tvorové", "g"), "tvorů")
+    .replace(wholeWord("členové", "g"), "členů")
+    .replace(wholeWord("stavy", "g"), "stavů")
+    .replace(wholeWord("kouzla", "g"), "kouzel")
+    .replace(wholeWord("útoky", "g"), "útoků")
+    .replace(wholeWord("dovednosti", "g"), "dovedností")
+    .replace(wholeWord("postoje", "g"), "postojů")
+    .replace(wholeWord("body", "g"), "bodů");
 }
 
 const DAMAGE_ADJECTIVE: Record<DamageKind, string> = {
@@ -448,10 +451,10 @@ function changeFirstVerb(phrase: string, change: (verb: string) => string): stri
 
 function aboutYou(text: string): string {
   return text
-    .replace(/\bjeho\b/g, "tvoje")
-    .replace(/\bsvé\b/g, "tvoje")
-    .replace(/\bmu\b/g, "ti")
-    .replace(/\bjej\b/g, "tě");
+    .replace(wholeWord("jeho", "g"), "tvoje")
+    .replace(wholeWord("své", "g"), "tvoje")
+    .replace(wholeWord("mu", "g"), "ti")
+    .replace(wholeWord("jej", "g"), "tě");
 }
 
 /** "sešle kouzlo" said to its holder: "sešleš kouzlo". */
@@ -701,17 +704,17 @@ function kindedArmor(text: string): string {
 /** Attacks said after "tvými": "fyzickými útoky", "útočnými dovednostmi". */
 function instrumentalPlural(text: string): string {
   return text
-    .replace(/\bfyzické\b/, "fyzickými")
-    .replace(/\bútočné\b/, "útočnými")
-    .replace(/\bdovednosti\b/, "dovednostmi");
+    .replace(wholeWord("fyzické"), "fyzickými")
+    .replace(wholeWord("útočné"), "útočnými")
+    .replace(wholeWord("dovednosti"), "dovednostmi");
 }
 
 /** Those a line reaches, as its object: "nepřátele", "spojence". */
 function accusativePlural(text: string): string {
   return text
-    .replace(/\bNepřátelé\b/, "nepřátele")
-    .replace(/\bnepřátelé\b/, "nepřátele")
-    .replace(/\bspojenci\b/, "spojence");
+    .replace(wholeWord("Nepřátelé"), "nepřátele")
+    .replace(wholeWord("nepřátelé"), "nepřátele")
+    .replace(wholeWord("spojenci"), "spojence");
 }
 
 /** A count's noun after "za", with its "každý". */
@@ -730,7 +733,7 @@ export default {
   loseWording: (text, fromSource, bearerIsFoe) =>
     text
       .replace(/^Cílový nepřítel ztratí/, fromSource ? "ztratíš" : bearerIsFoe ? "ztratí" : "ztrať")
-      .replace(/který má\b/, "který máš"),
+      .replace(wholeWord("který má"), "který máš"),
   bearerWording: (text, bearerIsCaster) =>
     text
       .replace(/^Cíl získá/, "získá")

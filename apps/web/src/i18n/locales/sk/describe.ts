@@ -1,5 +1,9 @@
 import { EN_WORDS, type DescribeWords } from "@vibewars/game-core";
 
+/** JavaScript's \b only knows ASCII: it fails beside "í" and splits "její" after "jej". */
+const wholeWord = (pattern: string, flags = ""): RegExp =>
+  new RegExp(`(?<!\\p{L})(?:${pattern})(?!\\p{L})`, `u${flags}`);
+
 type Words = DescribeWords;
 type Category = Parameters<Words["categoryNoun"]>[1];
 type Weapon = Parameters<Words["whileWielding"]>[0]["weapon"];
@@ -219,13 +223,13 @@ function pluralNoun(noun: string): string {
 /** A plural after "z" or "od": the genitive plural. */
 function genitive(text: string): string {
   return text
-    .replace(/\bnepriatelia\b/g, "nepriateľov")
-    .replace(/\bspojenci\b/g, "spojencov")
-    .replace(/\bduchovia\b/g, "duchov")
-    .replace(/\bprisluhovači\b/g, "prisluhovačov")
-    .replace(/\btvory\b/g, "tvorov")
+    .replace(wholeWord("nepriatelia", "g"), "nepriateľov")
+    .replace(wholeWord("spojenci", "g"), "spojencov")
+    .replace(wholeWord("duchovia", "g"), "duchov")
+    .replace(wholeWord("prisluhovači", "g"), "prisluhovačov")
+    .replace(wholeWord("tvory", "g"), "tvorov")
     .replace(/členovia skupiny/g, "členov skupiny")
-    .replace(/\btvoji\b/g, "tvojich")
+    .replace(wholeWord("tvoji", "g"), "tvojich")
     .replace(/nepriateľskí/g, "nepriateľských")
     .replace(/spojeneckí/g, "spojeneckých")
     .replace(/nepriateľské/g, "nepriateľských")
@@ -783,7 +787,7 @@ export default {
         /^Nepriateľský cieľ stráca/,
         fromSource ? "strácaš" : bearerIsFoe ? "stráca" : "strať",
       )
-      .replace(/ktorú má\b/, "ktorú máš"),
+      .replace(wholeWord("ktorú má"), "ktorú máš"),
   bearerWording: (text, bearerIsCaster) =>
     text
       .replace(/^Cieľ dostane/, "dostane")

@@ -1,5 +1,9 @@
 import { EN_WORDS, type DescribeWords } from "@vibewars/game-core";
 
+/** JavaScript's \b only knows ASCII: it fails beside "í" and splits "její" after "jej". */
+const wholeWord = (pattern: string, flags = ""): RegExp =>
+  new RegExp(`(?<!\\p{L})(?:${pattern})(?!\\p{L})`, `u${flags}`);
+
 type Words = DescribeWords;
 type Category = Parameters<Words["categoryNoun"]>[1];
 type Weapon = Parameters<Words["whileWielding"]>[0]["weapon"];
@@ -286,15 +290,15 @@ function pluralNoun(noun: string): string {
 }
 
 const NOUN_GENITIVE_PLURAL: readonly (readonly [RegExp, string])[] = [
-  [/^sojusznicy\b/, "sojuszników"],
-  [/^wrogowie\b/, "wrogów"],
-  [/^martwi sojusznicy\b/, "martwych sojuszników"],
-  [/^powaleni wrogowie\b/, "powalonych wrogów"],
-  [/^duchy\b/, "duchów"],
-  [/^sługi\b/, "sług"],
-  [/^twoje duchy\b/, "twoich duchów"],
-  [/^twoje sługi\b/, "twoich sług"],
-  [/^jego\b/, "jego"],
+  [wholeWord("^sojusznicy"), "sojuszników"],
+  [wholeWord("^wrogowie"), "wrogów"],
+  [wholeWord("^martwi sojusznicy"), "martwych sojuszników"],
+  [wholeWord("^powaleni wrogowie"), "powalonych wrogów"],
+  [wholeWord("^duchy"), "duchów"],
+  [wholeWord("^sługi"), "sług"],
+  [wholeWord("^twoje duchy"), "twoich duchów"],
+  [wholeWord("^twoje sługi"), "twoich sług"],
+  [wholeWord("^jego"), "jego"],
 ];
 
 /** A plural after "liczba" or "z": the genitive its head noun takes. */
@@ -493,8 +497,8 @@ function compound(words: string): string {
   }
   const owners = (headed[1] ?? "").trim();
   const head = headed[2] ?? "";
-  const adjectives = owners.match(/\b(elitarna|adrenalinowa)\b/g) ?? [];
-  const rest = owners.replace(/\b(elitarna|adrenalinowa)\b/g, "").trim();
+  const adjectives = owners.match(wholeWord("(elitarna|adrenalinowa)", "g")) ?? [];
+  const rest = owners.replace(wholeWord("(elitarna|adrenalinowa)", "g"), "").trim();
   const before = adjectives.length === 0 ? head : `${adjectives.join(" ")} ${head}`;
   return rest === "" ? before : `${before} (${rest})`;
 }
@@ -551,9 +555,7 @@ function changeFirstVerb(phrase: string, change: (verb: string) => string): stri
 
 /** "rzuca czar" said to its holder: "rzucasz czar". */
 function secondPerson(phrase: string): string {
-  return changeFirstVerb(phrase, verbToYou)
-    .replace(/\bjego\b/g, "twój")
-    .replace(/\bswoje\b/g, "swoje");
+  return changeFirstVerb(phrase, verbToYou).replace(wholeWord("jego", "g"), "twój");
 }
 
 /** A `conditionText` with "cel" made "ty", the verb following. */
@@ -784,7 +786,7 @@ export default {
   loseWording: (text, fromSource, bearerIsFoe) =>
     text
       .replace(/^Wrogi cel traci/, fromSource ? "tracisz" : bearerIsFoe ? "traci" : "trać")
-      .replace(/który ma\b/, "który masz"),
+      .replace(wholeWord("który ma"), "który masz"),
   bearerWording: (text, bearerIsCaster) =>
     text
       .replace(/^Cel zyskuje/, "zyskuje")
@@ -1365,7 +1367,8 @@ export default {
     `blokuje ${p.blocked === "melee" ? "atak wręcz" : p.blocked === "projectile" ? "atak dystansowy" : p.blocked}`,
   losesAEnchantment: (p) => `traci zaczarowanie (${p.name})`,
   hex2: (p) => compound(`${p.scopeAdjective} klątwa`),
-  appliesAnAToAFoe: (p) => `nakłada na wroga ${compound(p.words).replace(/\bklątwa\b/, "klątwę")}`,
+  appliesAnAToAFoe: (p) =>
+    `nakłada na wroga ${compound(p.words).replace(wholeWord("klątwa"), "klątwę")}`,
   spell: (p) => (p.type === undefined ? "czar" : typeName(p.type)),
   onAllyAnAllyAFoe: (p) => ` na ${p.targets === "ally" ? "sojusznika" : "wroga"}`,
   castsAnA: (p) => `rzuca ${compound(p.words)}${p.on}`.trim(),
