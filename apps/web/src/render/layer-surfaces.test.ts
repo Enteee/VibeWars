@@ -200,8 +200,8 @@ describe("liftAt (#2958)", () => {
   it("draws a body whose disc reaches a ramp in front of it (#2965)", () => {
     expect(drawnLayerAt(HEIGHTS, { x: 299, y: 350 }, 0, R)).toBe(1);
     expect(drawnLayerAt(HEIGHTS, { x: 350, y: 455 }, 0, R)).toBe(1);
-    expect(drawnLayerAt(HEIGHTS, { x: 535, y: 200 }, 1, R)).toBe(2);
-    expect(drawnLayerAt(HEIGHTS, { x: 525, y: 200 }, 1, R)).toBe(1);
+    expect(drawnLayerAt(HEIGHTS, { x: 535, y: 260 }, 1, R)).toBe(2);
+    expect(drawnLayerAt(HEIGHTS, { x: 525, y: 260 }, 1, R)).toBe(1);
   });
 
   it("keeps a body under a deck there, in reach of the ramp's high end", () => {
