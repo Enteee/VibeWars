@@ -132,6 +132,33 @@ export function tintOf(sample: LightSample): number {
   return scaleColour(sample.colour, sample.intensity);
 }
 
+/**
+ * A sample as the colour a body is multiplied by: no channel below the
+ * body floor, so a saturated light never blacks out a team colour.
+ */
+export function bodyTintOf(sample: LightSample): number {
+  const tint = tintOf(sample);
+  const floor = Math.round(BODY_LIGHT_FLOOR * 0xff);
+  const channel = (shift: number): number => Math.max(floor, (tint >> shift) & 0xff) << shift;
+  return channel(16) | channel(8) | channel(0);
+}
+
+const steadied = new WeakMap<MapLighting, MapLighting>();
+
+/** `lighting` with every light held at full: what is shown when nothing may flicker. */
+export function steadyLighting(lighting: MapLighting): MapLighting {
+  const known = steadied.get(lighting);
+  if (known !== undefined) {
+    return known;
+  }
+  const steady = {
+    ...lighting,
+    lights: lighting.lights.map((light) => ({ ...light, flicker: 0 })),
+  };
+  steadied.set(lighting, steady);
+  return steady;
+}
+
 /** `colour` with each channel times `amount`, 0 to 1. */
 export function scaleColour(colour: number, amount: number): number {
   return (

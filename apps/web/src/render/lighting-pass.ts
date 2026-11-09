@@ -44,7 +44,16 @@ function degraded(stage: LightingStage): LightingStage {
   return stage === "full" ? "no-flicker" : "flat";
 }
 
-/** Steps down the degrade order when the pass stays over budget. */
+/** What is shown: reduced motion holds every light steady, as the budget's no-flicker does. */
+export function shownStage(budget: LightingStage, reducedMotion: boolean): LightingStage {
+  return reducedMotion && budget === "full" ? "no-flicker" : budget;
+}
+
+/**
+ * Steps down the degrade order when the pass stays over budget. Only a
+ * flicker redraw is timed, so today it stops at no-flicker, which redraws
+ * nothing per frame; flat waits for #2988's shadows, which are timed too.
+ */
 export class LightingBudget {
   public stage: LightingStage = "full";
   private over = 0;
@@ -202,13 +211,15 @@ export class LightingPass {
     structure: MapStructure,
     width: number,
     height: number,
+    reducedMotion: boolean,
   ): void {
+    const stage = shownStage(this.budget.stage, reducedMotion);
     if (
       lighting === this.lighting &&
       structure === this.structure &&
       width === this.width &&
       height === this.height &&
-      this.budget.stage === this.stage
+      stage === this.stage
     ) {
       return;
     }
@@ -216,8 +227,13 @@ export class LightingPass {
     this.structure = structure;
     this.width = width;
     this.height = height;
-    this.stage = this.budget.stage;
+    this.stage = stage;
     this.build();
+  }
+
+  /** Whether the lights shown flicker: bodies are lit the same way as the maps. */
+  public get flickers(): boolean {
+    return this.stage === "full";
   }
 
   /** Redraws what flickers, when it is due. */

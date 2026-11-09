@@ -2,7 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import type { MapLighting } from "@vibewars/game-maps/schema";
 
-import { BODY_LIGHT_FLOOR, SURFACE_LIGHT_FLOOR, lightAt } from "./lighting-model.js";
+import { teamColour } from "./arena-snapshot.js";
+import {
+  BODY_LIGHT_FLOOR,
+  SURFACE_LIGHT_FLOOR,
+  bodyTintOf,
+  flickerAt,
+  lightAt,
+  multiplyColour,
+  steadyLighting,
+} from "./lighting-model.js";
 
 const DARK = { colour: 0xffffff, intensity: 0 };
 const TORCH = {
@@ -94,5 +103,44 @@ describe("lightAt", () => {
   it("fills the sample it is given", () => {
     const into = { colour: 0, intensity: 0 };
     expect(lightAt(undefined, at(0, 0), 0, 0, BODY_LIGHT_FLOOR, into)).toBe(into);
+  });
+});
+
+describe("a body's tint (#2987)", () => {
+  const TEAMS = ["ally", "enemy", "third", "self"] as const;
+  const channels = (colour: number): number[] => [16, 8, 0].map((s) => (colour >> s) & 0xff);
+
+  it.each([0xff0000, 0x00ff00, 0x0000ff])(
+    "keeps every team colour readable under a pure-hue light, %s, in the dark",
+    (hue) => {
+      const lit = { ...BASE, lights: [{ ...TORCH, colour: hue, intensity: 1 }] };
+      const tint = bodyTintOf(lightAt(lit, at(100, 100), 0, 0));
+      for (const team of TEAMS) {
+        const colour = teamColour(team);
+        const shown = channels(multiplyColour(colour, tint));
+        channels(colour).forEach((channel, at) => {
+          expect(shown[at]).toBeGreaterThanOrEqual(Math.floor(channel * BODY_LIGHT_FLOOR));
+        });
+      }
+    },
+  );
+
+  it("is white in full white light", () => {
+    const lit = { ...BASE, ambient: { colour: 0xffffff, intensity: 1 } };
+    expect(bodyTintOf(lightAt(lit, at(0, 0), 0, 0))).toBe(0xffffff);
+  });
+});
+
+describe("steadyLighting", () => {
+  const lit = { ...BASE, lights: [{ ...TORCH, flicker: 0.6 }] };
+
+  it("holds every light at full, at any time", () => {
+    const steady = steadyLighting(lit);
+    expect(steady.lights.map((l) => flickerAt(l.id, l.flicker, 1234))).toEqual([1]);
+    expect(lightAt(steady, at(100, 100), 0, 1234, 0).intensity).toBeCloseTo(0.8, 2);
+  });
+
+  it("is made once per lighting, so a frame allocates nothing", () => {
+    expect(steadyLighting(lit)).toBe(steadyLighting(lit));
   });
 });

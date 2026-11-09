@@ -146,9 +146,10 @@ import { LightingPass, litStructurePalette } from "./lighting-pass.js";
 import { lightingOn } from "./lighting-preference.js";
 import {
   BODY_LIGHT_FLOOR,
+  bodyTintOf,
   lightAt,
   multiplyColour,
-  tintOf,
+  steadyLighting,
   type LightSample,
 } from "./lighting-model.js";
 import { screenPx, screenSized } from "./screen-text.js";
@@ -320,6 +321,8 @@ export class ArenaScene extends Phaser.Scene {
   private drawnActors: readonly RenderableActor[] = [];
   /** Each body's lift now, while it eases to its layer's. */
   private readonly elevations = new Map<string, number>();
+  /** `snapshot.actors` by id, where they stand: what their light is sampled at. */
+  private readonly standing = new Map<string, RenderableActor>();
   /** Every mark on a body, over the body glyphs (#1037). */
   private markGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The off-screen markers, drawn in screen px over everything (#440). */
@@ -389,7 +392,6 @@ export class ArenaScene extends Phaser.Scene {
   private groundDepth = GROUND_DEPTH;
   /** Reused every body, every frame: the lighting allocates nothing per frame. */
   private readonly lightSample: LightSample = { colour: 0xffffff, intensity: 1 };
-  private readonly feet = { x: 0, y: 0 };
   /** Read once a frame: under reduced motion every mark stays at rest. */
   private reducedMotion = false;
 
@@ -596,6 +598,10 @@ export class ArenaScene extends Phaser.Scene {
    */
   private liftActors(dt: number): readonly RenderableActor[] {
     const { actors, structure } = this.snapshot;
+    this.standing.clear();
+    for (const actor of actors) {
+      this.standing.set(actor.id, actor);
+    }
     if (structure.layerCount === 1) {
       this.elevations.clear();
       return actors;
@@ -1573,10 +1579,14 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     const lighting = this.activeLighting();
-    pass.show(lighting, this.snapshot.structure, this.arena.width, this.arena.height);
-    if (!this.reducedMotion) {
-      pass.update(timeMs);
-    }
+    pass.show(
+      lighting,
+      this.snapshot.structure,
+      this.arena.width,
+      this.arena.height,
+      this.reducedMotion,
+    );
+    pass.update(timeMs);
     const depth = lighting === undefined ? GROUND_DEPTH : LIT_GROUND_DEPTH;
     if (depth !== this.groundDepth) {
       this.groundDepth = depth;
@@ -1593,13 +1603,11 @@ export class ArenaScene extends Phaser.Scene {
     if (lighting === undefined) {
       return undefined;
     }
-    // Drawn lifted; the light is where it stands.
-    this.feet.x = actor.position.x;
-    this.feet.y = actor.position.y + elevationOf(actor.layer);
+    // Drawn lifted and eased; the light is where it stands, on its own layer.
+    const { position, layer } = this.standing.get(actor.id) ?? actor;
+    const shown = this.lightingPass?.flickers === true ? lighting : steadyLighting(lighting);
     const timeMs = this.now * 1000;
-    return tintOf(
-      lightAt(lighting, this.feet, actor.layer, timeMs, BODY_LIGHT_FLOOR, this.lightSample),
-    );
+    return bodyTintOf(lightAt(shown, position, layer, timeMs, BODY_LIGHT_FLOOR, this.lightSample));
   }
 
   /** `colour` in the light at `actor`'s feet. */

@@ -14,6 +14,7 @@ import {
   layerSurfaces,
   lightsByStability,
   litStructurePalette,
+  shownStage,
 } from "./lighting-pass.js";
 import { ELEVATION_STEP } from "./render-order.js";
 
@@ -54,6 +55,14 @@ describe("the lighting budget (ADR-0052)", () => {
       budget.record(i % 2 === 0 ? LIGHTING_BUDGET_MS + 1 : LIGHTING_BUDGET_MS);
     }
     expect(budget.stage).toBe("full");
+  });
+});
+
+describe("shownStage", () => {
+  it("holds the lights steady under reduced motion, as no-flicker does", () => {
+    expect(shownStage("full", true)).toBe("no-flicker");
+    expect(shownStage("full", false)).toBe("full");
+    expect(shownStage("flat", true)).toBe("flat");
   });
 });
 
