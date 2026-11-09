@@ -2154,6 +2154,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         // Its vote or seat stands (#2872); it was all the stage waited for.
         returning.ready = hasNothingLeftToDo(teamLobby, side, returning);
         if (everyoneReady()) {
+          // Ahead of the next stage's messages, as a change while it was
+          // away may not have reached it.
+          tellRelayOffers(from);
           endStage(teamLobby);
           return;
         }

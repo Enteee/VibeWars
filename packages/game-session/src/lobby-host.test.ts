@@ -1743,6 +1743,64 @@ describe("a Team Lobby (#1458)", () => {
     expect(readyOf("Bob")).toBe(false);
   });
 
+  /** How many `relay-offers` `who` receives from now on. */
+  function countOffers(who: Member): () => number {
+    let received = 0;
+    who.transport.on("relay-offers", () => {
+      received += 1;
+    });
+    return () => received;
+  }
+
+  /** A Team Lobby where Ann voted and then dropped, and only she is waited for. */
+  async function annAwayInTheVote() {
+    const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 0, 1]);
+    const [host, ann, bob] = members;
+    if (host === undefined || ann === undefined || bob === undefined) {
+      throw new Error("three members");
+    }
+    await begin(lobby);
+    host.connection.propose([WARRIOR, RANGER, MONK, NECRO]);
+    bob.connection.propose([WARRIOR, RANGER, MONK, NECRO]);
+    await settle();
+    ann.connection.vote(idOf(host));
+    bob.connection.vote(idOf(bob));
+    await settle();
+    lobby.network.partition("host", ann.transport.selfId);
+    await settle();
+    host.connection.vote(idOf(host));
+    await settle();
+    return { lobby, host, ann, bob };
+  }
+
+  it("tells a returner the relay offers when its standing vote ends the vote (#2912)", async () => {
+    const { lobby, host, ann } = await annAwayInTheVote();
+    expect(teamOf(host)?.stage).toBe("vote");
+    const offers = countOffers(ann);
+    lobby.network.heal();
+    await until(() => teamOf(host)?.stage === "claim");
+    expect(offers()).toBeGreaterThan(0);
+  });
+
+  it("tells a returner the relay offers when its standing seat ends the claim (#2912)", async () => {
+    const { lobby, host, ann, bob } = await annAwayInTheVote();
+    lobby.network.heal();
+    await until(() => teamOf(host)?.stage === "claim");
+    await settle();
+    ann.connection.claim(1);
+    bob.connection.claim(0);
+    await settle();
+    lobby.network.partition("host", ann.transport.selfId);
+    await settle();
+    host.connection.claim(0);
+    await settle();
+    expect(host.connection.getSnapshot().phase).toBe("team-lobby");
+    const offers = countOffers(ann);
+    lobby.network.heal();
+    await until(() => host.connection.getSnapshot().phase !== "team-lobby");
+    expect(offers()).toBeGreaterThan(0);
+  });
+
   it("seats claims first come first served, the rest of the humans in join order, then bots", async () => {
     const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 0, 0]);
     const [host, ann, bob] = members;
