@@ -257,6 +257,15 @@ body {
     display: none;
   }
 
+  /* Queued, the spinner stands where Find a match was, outside the ⋯ (#2980). */
+  #topbar.has-more .topbar-actions:has(> .topbar-queue:not([hidden])) {
+    display: flex;
+  }
+
+  #topbar.has-more:not(.is-more-open) .topbar-actions > :not(.topbar-queue) {
+    display: none;
+  }
+
   #topbar.has-more .topbar-screen-actions {
     padding-inline-start: 0;
     border-inline-start: 0;

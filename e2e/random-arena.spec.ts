@@ -308,6 +308,11 @@ test("Find a match stands left of the icons, and the spinner takes its place onc
   const group = await icons.boundingBox();
   expect(ring?.x).toBe(group?.x);
   await expect(page.locator(".lobby-leave-queue")).toHaveCount(0);
+  // On a phone the other icons fold into the ⋯, the spinner stays out.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator("#topbar")).toHaveClass(/has-more/);
+  await expect(spinner).toBeVisible();
+  await expect(page.locator("#topbar .topbar-help")).toBeHidden();
 });
 
 test("queued, Team Arena stays browsable with no Find a match, and the flyout's Leave Queue brings it back (#2781, #2980)", async ({
