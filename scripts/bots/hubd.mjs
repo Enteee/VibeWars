@@ -211,6 +211,7 @@ import {
   refuseReleaseRange,
   releaseCiVerdict,
   releaseFloor,
+  releaseGapRefusal,
 } from "./hub-release.mjs";
 import {
   boardNumbers,
@@ -1287,6 +1288,30 @@ async function remoteHead(ref, cfg) {
 }
 
 /**
+ * Why no release may start now (#2891), or null: the newest published one is
+ * under 48 h old. Fails closed when GitHub cannot say; no release yet is fine.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>}
+ */
+async function refuseReleaseGap(cfg) {
+  const unread = "could not read the last release; try again";
+  const result = await gh(["api", `repos/${cfg.repo}/releases/latest`]);
+  if (result.code !== 0) {
+    return result.stderr.includes("HTTP 404") ? null : unread;
+  }
+  try {
+    const row = obj(JSON.parse(result.stdout));
+    if (typeof row.tag_name === "string" && typeof row.published_at === "string") {
+      return releaseGapRefusal({ tag: row.tag_name, publishedAt: row.published_at }, Date.now());
+    }
+  } catch {
+    // falls through to the refusal
+  }
+  return unread;
+}
+
+/**
  * Push a release branch (#2707). The jail's branch is resolved to a sha once;
  * that sha's history is checked against the branch on GitHub and a freshly
  * fetched main (hub-release.mjs); then exactly that sha is pushed, as a
@@ -1320,6 +1345,10 @@ async function pushRelease(ref, cfg) {
   /** @type {string | null} */
   let previous = null;
   if (old === null) {
+    const gap = await refuseReleaseGap(cfg);
+    if (gap !== null) {
+      return { refused: gap };
+    }
     const listed = await git(["ls-remote", remoteUrl(cfg), "refs/heads/release/*", "refs/tags/v*"]);
     if (listed.code !== 0) {
       return { refused: "could not list the earlier releases on GitHub; try again" };
@@ -1441,6 +1470,10 @@ async function pinRelease(argv, cfg) {
   const tag = await remoteHead(`refs/tags/${release.tag}`, cfg);
   if (tag !== null) {
     return { refused: typeof tag === "object" ? tag.error : `${release.tag} exists already` };
+  }
+  const gap = await refuseReleaseGap(cfg);
+  if (gap !== null) {
+    return { refused: gap };
   }
   return {
     sha: head,

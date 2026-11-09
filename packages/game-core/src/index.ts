@@ -17,7 +17,7 @@ export { clampInputDirection, integrateMovement } from "./movement.js";
 
 export { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL } from "./distances.js";
 
-export type { Segment } from "./geometry.js";
+export type { Polygon, Segment } from "./geometry.js";
 export {
   buildNavGraph,
   createPathFinder,
@@ -178,6 +178,7 @@ export type {
   CreatureOrder,
   CreatureLook,
   GroundEffect,
+  MatchLayers,
   MatchSimulationOptions,
   Participant,
   ParticipantSpec,
