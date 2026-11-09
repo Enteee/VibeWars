@@ -262,6 +262,7 @@ export {
   inPartyOrder,
   parseQueueTicket,
   teamQueueModeOf,
+  lobbyModeOfQueue,
   teamSizeOf,
 } from "./queue.js";
 export type { QueueMode, QueueTicket, TeamArenaSize, TicketParty } from "./queue.js";

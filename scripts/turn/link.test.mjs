@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { parseTurnFragment } from "../../apps/web/src/net/transport/turn-config.ts";
-import { encodeTurnFragment, inviteLink, turnUrls } from "./link.mjs";
+import { DEFAULT_BASE, encodeTurnFragment, inviteLink, turnUrls } from "./link.mjs";
 import { parseSettings } from "./settings.mjs";
 
 const settings = parseSettings({
@@ -40,6 +40,11 @@ function decode(link) {
 
 describe("invite links", () => {
   const config = { urls: turnUrls(settings), secret: "ab".repeat(32) };
+
+  // #2871: a friend lands on the release, not on the latest main.
+  it("default to the site root", () => {
+    expect(DEFAULT_BASE).toBe("https://enteee.github.io/VibeWars/");
+  });
 
   it("carry the config as unpadded base64url JSON in the fragment", () => {
     const link = inviteLink("https://enteee.github.io/VibeWars/next/", config);

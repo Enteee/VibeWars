@@ -490,6 +490,14 @@ describe("team modes (ADR-0042)", () => {
       expect(groups[0]?.parties.flat()).not.toContain(hero(3, 7).ticketId);
     });
 
+    it("groups a 1-human side with 7 bots, and every side keeps a human (#2688)", async () => {
+      const tickets = [hero(1, 0), hero(2, 0)];
+      const groups = await formAt(tickets, 0, "broken-tower");
+      expect(groups).toHaveLength(1);
+      expect(groups[0]?.parties.map((members) => members.length)).toEqual([1, 1]);
+      expect(tickets.map(({ bots }) => bots)).toEqual([7, 7]);
+    });
+
     it("never groups sides at different rounds, even the only two queued", async () => {
       const tickets = [hero(1, 0), hero(2, 1)];
       expect(await formAt(tickets, 0, "broken-tower")).toEqual([]);

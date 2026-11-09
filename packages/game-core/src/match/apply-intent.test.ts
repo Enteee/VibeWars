@@ -41,8 +41,11 @@ describe("applyIntent", () => {
     expect(sim.get("a")?.targetId).toBe("b");
     applyIntent(sim, "a", { kind: "target", targetSessionId: null });
     expect(sim.get("a")?.targetId).toBeUndefined();
-    applyIntent(sim, "a", { kind: "walk-to", x: 100, y: 0 });
+    applyIntent(sim, "a", { kind: "walk-to", layer: 0, x: 100, y: 0 });
     expect(sim.get("a")?.walkGoal).toBeDefined();
+    // A map of one layer has no layer 1: the body stands (#2831).
+    applyIntent(sim, "a", { kind: "walk-to", layer: 1, x: 100, y: 0 });
+    expect(sim.get("a")?.walkGoal).toBeUndefined();
     applyIntent(sim, "a", { kind: "cancel" });
   });
 

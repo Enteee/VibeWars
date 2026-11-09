@@ -1063,6 +1063,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "ääniefektien voimakkuus",
 
+  "splash.clickToStart": "Aloita napsauttamalla",
+  "splash.pressAnyKey": "Aloita painamalla mitä tahansa näppäintä",
   "storage.attributeNeedsId": "jokainen ominaisuus tarvitsee attributeId:n",
   "storage.attributeNotObject": "jokaisen ominaisuuden on oltava objekti",
   "storage.attributeRankNotWhole": "ominaisuuden {attribute} tason on oltava kokonaisluku",

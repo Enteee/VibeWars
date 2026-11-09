@@ -959,6 +959,7 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+            { "name": "layer", "optional": false, "type": "number" },
             { "name": "x", "optional": false, "type": "number" },
             { "name": "y", "optional": false, "type": "number" }
           ]
@@ -6390,6 +6391,7 @@
     "WalkToIntent": {
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+        { "name": "layer", "optional": false, "type": "number" },
         { "name": "x", "optional": false, "type": "number" },
         { "name": "y", "optional": false, "type": "number" }
       ]
@@ -6557,6 +6559,7 @@
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         },
+        { "name": "layer", "optional": false, "type": "number" },
         {
           "name": "owner",
           "optional": false,
@@ -6570,6 +6573,7 @@
     "WireCarried": {
       "properties": [
         { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "place", "optional": false, "type": { "typeParameter": "Place" } },
         {
           "name": "team",
@@ -6882,6 +6886,7 @@
     "WireFlag": {
       "properties": [
         { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "place",
           "optional": false,
@@ -7910,6 +7915,7 @@
     "WireRelic": {
       "properties": [
         { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "place",
           "optional": false,
@@ -8005,6 +8011,7 @@
                     "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
                   }
                 },
+                { "name": "layer", "optional": false, "type": "number" },
                 {
                   "name": "owner",
                   "optional": false,
@@ -8042,6 +8049,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,
@@ -8376,6 +8384,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,
@@ -8465,6 +8474,7 @@
                     "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }]
                   }
                 },
+                { "name": "layer", "optional": false, "type": "number" },
                 {
                   "name": "owner",
                   "optional": false,
@@ -8502,6 +8512,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,
@@ -8838,6 +8849,7 @@
             "array": {
               "properties": [
                 { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "layer", "optional": false, "type": { "union": ["null", "number"] } },
                 {
                   "name": "place",
                   "optional": false,

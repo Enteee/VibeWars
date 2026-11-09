@@ -392,13 +392,13 @@ body {
 .topbar-lobby .topbar-leave[hidden],
 .topbar-lobby .lobby-copy[hidden],
 .topbar-lobby .lobby-join-open[hidden],
-.lobby-join[hidden],
+.lobby-join-field[hidden],
 .lobby-join-message[hidden] {
   display: none;
 }
 
 /* Join lobby (#2882): the pasted link, its two buttons, what was wrong. */
-.lobby-join {
+.lobby-join-field {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -415,7 +415,7 @@ body {
 }
 
 #topbar .topbar-lobby button,
-#topbar .lobby-join button {
+#topbar .lobby-join-field button {
   padding: 0.2rem 0.6rem;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -2277,7 +2277,7 @@ body {
 /* A one-word attribute name is never cut under the pips: its column is at
    least that word wide, and the middle column leaves room for it. */
 .team-member-editor .editor-attribute {
-  grid-template-columns: minmax(min-content, 1fr) auto 6ch 10ch;
+  grid-template-columns: minmax(min-content, 1fr) auto 6ch max-content;
 }
 
 /* On a phone, what the next rank does goes on a line of its own. */
@@ -2287,8 +2287,13 @@ body {
   }
 
   .team-member-editor .editor-attribute-next {
+    grid-row: auto;
     grid-column: 1 / -1;
     justify-self: end;
+  }
+
+  .team-member-editor .editor-attribute-next-sizer {
+    display: none;
   }
 }
 
@@ -2676,6 +2681,9 @@ body {
 }
 
 .editor-attribute-name {
+  /* One long compound (German) cannot wrap on its own and would run over the pips. */
+  overflow-wrap: anywhere;
+  hyphens: auto;
   flex: 1 1 auto;
 }
 
@@ -2695,11 +2703,13 @@ body {
  * Each row's colour, shared with its segment of the budget bar (#565). A
  * grid, so every row's pips line up under the one above. The rank column is
  * a fixed width that holds the widest rank, "12 +4" (#1102): a width that
- * followed the content would move that row's pips.
+ * followed the content would move that row's pips. The last column is as
+ * wide as its sizer, the widest "next" text of the language (#2923), for the
+ * same reason: it is the same width in every row, whatever each one shows.
  */
 .editor-attribute {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 6ch 10ch;
+  grid-template-columns: minmax(0, 1fr) auto 6ch max-content;
   column-gap: 0.5rem;
   border-inline-start: 3px solid var(--attribute-colour, var(--line));
 }
@@ -2748,10 +2758,22 @@ body {
 }
 
 .editor-attribute-next,
+.editor-attribute-next-sizer,
 .editor-attribute-needs {
   color: var(--ink-dim);
   font-size: 0.85em;
   white-space: nowrap;
+}
+
+.editor-attribute-next,
+.editor-attribute-next-sizer {
+  grid-row: 1;
+  grid-column: 4;
+}
+
+.editor-attribute-next-sizer {
+  visibility: hidden;
+  height: 0;
 }
 
 .editor-attribute-needs {
@@ -7622,4 +7644,119 @@ body:has(#screens[style*="none"]) .now-playing {
 
 .touch-notice-continue {
   align-self: flex-start;
+}
+
+/* The splash screen (#2884): over everything until it ends. */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  overflow: hidden;
+  background: var(--bg);
+}
+.splash-stage,
+.splash-scrim,
+.splash-flash {
+  position: absolute;
+  inset: 0;
+}
+.splash-stage canvas {
+  display: block;
+}
+.splash-scrim {
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+}
+.splash[data-phase="flying"] .splash-scrim,
+.splash[data-phase="flash"] .splash-scrim,
+.splash[data-phase="prompt"] .splash-scrim {
+  opacity: 1;
+}
+.splash-hint {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 8%;
+  margin: 0;
+  text-align: center;
+  color: var(--ink);
+  text-shadow: 0 1px 3px #000;
+}
+.splash-title {
+  position: absolute;
+  inset-inline: 0;
+  top: 30%;
+  padding-block: 2rem;
+  text-align: center;
+  visibility: hidden;
+}
+.splash[data-phase="flying"] .splash-title,
+.splash[data-phase="flash"] .splash-title,
+.splash[data-phase="prompt"] .splash-title {
+  visibility: visible;
+}
+.splash[data-phase="flash"] .splash-title,
+.splash[data-phase="prompt"] .splash-title {
+  background: rgba(0, 0, 0, 0.5);
+}
+.splash-wordmark {
+  margin: 0;
+  font-size: clamp(3.5rem, 12vw, 9rem);
+  line-height: 1;
+}
+.splash-vibe,
+.splash-wars {
+  display: inline-block;
+}
+.splash-vibe {
+  color: #59c2ff;
+}
+.splash-wars {
+  color: #ff7b72;
+}
+.splash[data-phase="flying"] .splash-vibe {
+  animation: splash-from-left 2s ease-in both;
+}
+.splash[data-phase="flying"] .splash-wars {
+  animation: splash-from-right 2s ease-in both;
+}
+@keyframes splash-from-left {
+  from {
+    transform: translateX(-100vw);
+  }
+}
+@keyframes splash-from-right {
+  from {
+    transform: translateX(100vw);
+  }
+}
+.splash-rule {
+  height: 3px;
+  width: min(60vw, 40rem);
+  margin: 1rem auto;
+  background: linear-gradient(to right, #59c2ff 50%, #ff7b72 50%);
+  visibility: hidden;
+}
+.splash-prompt {
+  margin: 0;
+  color: var(--ink);
+  visibility: hidden;
+}
+.splash[data-phase="flash"] .splash-rule,
+.splash[data-phase="prompt"] .splash-rule,
+.splash[data-phase="prompt"] .splash-prompt {
+  visibility: visible;
+}
+.splash-flash {
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+.splash[data-phase="flash"] .splash-flash {
+  animation: splash-flash 250ms ease-out both;
+}
+@keyframes splash-flash {
+  from {
+    opacity: 1;
+  }
 }

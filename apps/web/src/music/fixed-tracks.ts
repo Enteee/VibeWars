@@ -7,6 +7,9 @@
 /** Every menu screen's song. */
 export const MENU_TRACK = "first-light";
 
+/** The splash screen's song (#2884): the game's own theme. */
+export const SPLASH_TRACK = "vibe-wars";
+
 /** Played on a map this table does not know: wrong data. */
 export const UNKNOWN_MAP_TRACK = "hall-of-champions";
 

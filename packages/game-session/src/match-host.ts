@@ -27,9 +27,9 @@ import {
   type FlagField,
   type RelicField,
   type GhostField,
-  type Vec2,
   type GuildLord,
   type BaseGuard,
+  type CapturePointSite,
   type Shrine,
 } from "@vibewars/game-core";
 import {
@@ -150,7 +150,7 @@ export interface HostMap {
   /** Its ghost spawns and any altar (#1377, #2689), `undefined` on a map without ghosts. */
   readonly ghostField: GhostField | undefined;
   /** Its shrines (#1378), `[]` but on a Capture Points map. */
-  readonly capturePoints: readonly Vec2[];
+  readonly capturePoints: readonly CapturePointSite[];
   /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
   readonly guards: readonly BaseGuard[];
 }
@@ -1058,6 +1058,29 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sim.remove(seat.playerId);
     seats.delete(seat.playerId);
     swapBudget.forget(seat.playerId);
+    if (!seat.bot) {
+      forfeitIfNoHumans(seat.team);
+    }
+  };
+
+  /**
+   * Henchmen never carry a Heroes' Ascent side alone (#2688): a side with
+   * no human seated and none still on the way is out, and its bots go.
+   */
+  const forfeitIfNoHumans = (team: number): void => {
+    const side = [...seats.values()].filter((seat) => seat.team === team);
+    if (
+      options.mode !== "heroes-ascent" ||
+      side.some((seat) => !seat.bot) ||
+      [...awaited].some((peerId) => planned?.get(peerId)?.team === team)
+    ) {
+      return;
+    }
+    for (const bot of side) {
+      free(bot);
+    }
+    const teams = [...(planned?.values() ?? []), ...seats.values()].map((seat) => seat.team);
+    sim.forfeit(team, new Set(teams));
   };
 
   transport.on("bye", (data, from) => {
@@ -1083,7 +1106,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   transport.onPeerLeave((peerId) => {
     budget.forget(peerId);
     departed.delete(peerId);
-    awaited.delete(peerId);
+    const plan = awaited.delete(peerId) ? planned?.get(peerId) : undefined;
+    if (plan !== undefined && !finished) {
+      forfeitIfNoHumans(plan.team);
+    }
     challenges.delete(peerId);
     proving.delete(peerId);
     unobserve(peerId);
@@ -1197,6 +1223,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     capturePoints: sim.capturePoints.map((point) => ({
       x: point.position.x,
       y: point.position.y,
+      layer: point.layer,
       owner: wireTeam(point.owner),
       capturer: wireTeam(point.capturer),
       // Within [0, 1] by construction; rounded as the other floats are.
@@ -1279,6 +1306,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     if (plan.bot) {
       seatNew(plan.build, plan.team, () => plan.name, NO_GUILD, true, null, 0);
     }
+  }
+
+  // A human away when the stage clock ran out left only bots planned (#2688).
+  for (const team of new Set([...(planned?.values() ?? [])].map((plan) => plan.team))) {
+    forfeitIfNoHumans(team);
   }
 
   return {

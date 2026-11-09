@@ -100,13 +100,19 @@ export function spiritUp(context: BehaviourContext, self: Participant, skill: Sk
 }
 
 /** Where `self` walks a relic to score (#2695): the altar, or its team's Ghostly Hero; `undefined` with no relics to run. */
-export function relicGoal(context: BehaviourContext, self: Participant): Vec2 | undefined {
-  const { altar, relics } = context.objectives;
-  if (altar !== undefined || relics.length === 0) {
-    return altar;
+export function relicGoal(
+  context: BehaviourContext,
+  self: Participant,
+): { readonly position: Vec2; readonly layer: number } | undefined {
+  const { altar, altarLayer, relics } = context.objectives;
+  if (altar !== undefined) {
+    return { position: altar, layer: altarLayer };
+  }
+  if (relics.length === 0) {
+    return undefined;
   }
   const id = ghostId(self.combatant.team);
-  return context.participants.find((participant) => participant.id === id)?.position;
+  return context.participants.find((participant) => participant.id === id);
 }
 
 /**
@@ -183,10 +189,10 @@ function fighting(context: BehaviourContext, mate: Participant): boolean {
 }
 
 /** An escort (#2581): to `altar`, then waiting within half spell range of it. */
-export function escort(self: Participant, altar: Vec2): BehaviourIntent {
+export function escort(self: Participant, altar: Vec2, layer: number): BehaviourIntent {
   return distance(self.position, altar) <= RANGE_SPELL / 2
     ? NOTHING
-    : { ...NOTHING, moveTo: altar };
+    : { ...NOTHING, moveTo: altar, moveToLayer: layer };
 }
 
 /** A ranged bot or healer this far from its spot walks back to it (#2545). */

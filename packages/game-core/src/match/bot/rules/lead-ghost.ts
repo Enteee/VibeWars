@@ -1,6 +1,4 @@
-import { distance } from "../../../vec2.js";
-import { ghostId } from "../../ghost.js";
-import { ALTAR_REACH_UNITS } from "../../relics.js";
+import { ghostId, onHill } from "../../ghost.js";
 import { NOTHING } from "./shared.js";
 import type { BotRule } from "./types.js";
 
@@ -14,7 +12,7 @@ const leadGhost: BotRule = {
   order: 37,
   name: "lead-ghost",
   decide: ({ context, self }) => {
-    const { altar } = context.objectives;
+    const { altar, altarLayer } = context.objectives;
     if (altar === undefined) {
       return undefined;
     }
@@ -23,9 +21,9 @@ const leadGhost: BotRule = {
     if (ghost === undefined || ghost.combatant.dead || ghost.creature?.leaderId !== self.id) {
       return undefined;
     }
-    return distance(ghost.position, altar) <= ALTAR_REACH_UNITS
+    return onHill(altar, altarLayer, ghost)
       ? { ...NOTHING, attackTargetId: ghost.id }
-      : { ...NOTHING, moveTo: altar };
+      : { ...NOTHING, moveTo: altar, moveToLayer: altarLayer };
   },
 };
 

@@ -69,7 +69,7 @@ describe("fetch-relic: Relic Run bots fetch their relic and return the foe's (#2
       far(),
     ]);
     const fallen = running(
-      { team: 0, place: { kind: "ground", position: vec2(900, 300) } },
+      { team: 0, place: { kind: "ground", position: vec2(900, 300), layer: 0 } },
       { team: 1, place: AT_SPAWN },
     );
     expect(askBot(sim, "bot", fallen).attackTargetId).toBe(relicId(0));
@@ -80,7 +80,7 @@ describe("fetch-relic: Relic Run bots fetch their relic and return the foe's (#2
     const sim = match([body("bot", 0, vec2(300, 400), { behaviour: BOT }), far()]);
     const dropped = running(
       { team: 0, place: AT_SPAWN },
-      { team: 1, place: { kind: "ground", position: vec2(600, 400) } },
+      { team: 1, place: { kind: "ground", position: vec2(600, 400), layer: 0 } },
     );
     expect(askBot(sim, "bot", dropped).attackTargetId).toBe(relicId(1));
   });
@@ -187,7 +187,7 @@ describe("fetch-relic: the foe's relic, to your ghost (#2695)", () => {
       body(ghostId(0), 0, vec2(150, 400)),
     ]);
     const lying = foeRun(
-      { team: 0, place: { kind: "ground", position: vec2(500, 400) } },
+      { team: 0, place: { kind: "ground", position: vec2(500, 400), layer: 0 } },
       { team: 1, place: AT_SPAWN },
     );
     expect(askBot(sim, "bot", lying).attackTargetId).toBe(relicId(0));

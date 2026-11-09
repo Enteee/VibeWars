@@ -636,6 +636,21 @@ describe("a queued lobby", () => {
     expect(Object.values(await startMorales(GROUP))).toEqual([0, 0, 0, 0]);
   });
 
+  it("starts a queued match in the lobby mode of its queue (#2688)", async () => {
+    const planned = async (group: FormedGroup): Promise<string | undefined> => {
+      const queued = await openQueued({ group });
+      await queued.join(ALLY);
+      await queued.join(FOE);
+      await queued.join(FOE_2);
+      await settle();
+      await queued.step(COUNTDOWN_SECONDS);
+      return queued.plans[0]?.mode;
+    };
+    expect(await planned({ ...GROUP, mode: "heroes-ascent" })).toBe("heroes-ascent");
+    expect(await planned({ ...GROUP, mode: "team-arena-2v2" })).toBe("team-arena");
+    expect(await planned(GROUP)).toBe("random-arena");
+  });
+
   it("falls through at the timeout, naming the tickets that never came", async () => {
     const queued = await openQueued();
     const ally = await queued.join(ALLY);

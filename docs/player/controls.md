@@ -37,6 +37,7 @@ These keys are fixed:
 ## Mouse
 
 - **Left click** the ground to walk there. Without Shift, the left button only walks.
+- On maps with raised platforms, a left click goes to the surface you see, and **Alt + left click** to the ground below it. A ring under the cursor marks a platform, a dashed ring the ground.
 - **Right click** a foe or an ally to target it. Right click the same foe
   again, quickly, to attack it.
 - **Right click** a flag or the flag stand, in a Guild Battle or on Barrow Field, to target

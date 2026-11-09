@@ -237,7 +237,7 @@ describe("the title bar's lobby and invite links (#1526, #2100)", () => {
     const { join, lobby, share, connecting, confirm } = mount();
     expect(
       (join.controls as unknown as FakeElement).children.map((child) => child.className),
-    ).toEqual([lobby.className, share.className, "lobby-join"]);
+    ).toEqual([lobby.className, share.className, "lobby-join-field"]);
     expect(lobby.children.map((child) => child.className)).toEqual([
       "lobby-code-label",
       "lobby-copy",

@@ -27,6 +27,8 @@ interface ImportMetaEnv {
    * `vite.config.ts` refuses anything else.
    */
   readonly VITE_VIBEWARS_LOBBY_SEED?: string;
+  /** `off` skips the splash screen (#2884) unless the URL has `?splash`: e2e only. */
+  readonly VITE_VIBEWARS_SPLASH?: string;
 }
 
 interface ImportMeta {

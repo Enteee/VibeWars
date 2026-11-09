@@ -1,7 +1,7 @@
 import { pointInPolygon, type Polygon } from "../geometry.js";
 import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
 import { HEIGHT_DAMAGE_PERCENT, HEIGHT_RANGE_PERCENT } from "../match-rules.js";
-import type { Vec2 } from "../vec2.js";
+import { distance, type Vec2 } from "../vec2.js";
 
 /**
  * The rule table of ADR-0051, as plain questions about a position and a
@@ -48,6 +48,26 @@ export function floorsAt(
 /** Whether two sets of floors have one in common. */
 export function sharesFloor(a: number, b: number): boolean {
   return (a & b) !== 0;
+}
+
+/** A body as an objective reads it: where it is, and on which floors. */
+export interface BodyOnFloors {
+  readonly position: Vec2;
+  readonly floors: number;
+}
+
+/**
+ * Whether `body` is at an objective at `point` on `layer`: within `reach`
+ * and on that layer, or in a ramp connecting to it. A body on the ground
+ * under a deck is not at what stands on the deck, and vice versa.
+ */
+export function atObjective(
+  point: Vec2,
+  layer: number,
+  body: BodyOnFloors,
+  reach: number,
+): boolean {
+  return sharesFloor(body.floors, floorOf(layer)) && distance(point, body.position) <= reach;
 }
 
 /**
