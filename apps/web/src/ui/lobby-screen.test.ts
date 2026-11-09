@@ -283,10 +283,10 @@ describe("modeLine (#476)", () => {
 describe("a Hall of Heroes map in the lobby (#2700)", () => {
   const map = { id: "hall-of-heroes-king", size: "small", teamSizes: [8] } as const;
 
-  it("states the Hall's 12 minutes", () => {
-    expect(modeLine({ ...map, mode: "king-of-the-hill" })).toContain("in 12 minutes");
+  it("states the Hall's 11 minutes", () => {
+    expect(modeLine({ ...map, mode: "king-of-the-hill" })).toContain("in 11 minutes");
     expect(modeLine({ ...map, id: "hall-of-heroes-relic", mode: "relic-run" })).toContain(
-      "in 12 minutes",
+      "in 11 minutes",
     );
   });
 
