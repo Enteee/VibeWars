@@ -690,6 +690,9 @@ export default {
   "matches.endTime": "Έληξε ο χρόνος",
   "matches.filterKind": "Τύπος",
   "matches.filterSize": "Μέγεθος",
+  "matches.hallReported": "Αναφέρθηκε από τον οικοδεσπότη κάθε αγώνα, χωρίς επαλήθευση.",
+  "matches.hallStreak": { one: "{count} νίκη στη σειρά", other: "{count} νίκες στη σειρά" },
+  "matches.hallTitle": "Αίθουσα των Ηρώων",
   "matches.hostReported": "από οικοδεσπότη",
   "matches.hostReportedTitle":
     "Δημοσιεύτηκε από τον οικοδεσπότη του αγώνα· δεν επαληθεύτηκε από κανέναν άλλον.",

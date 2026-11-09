@@ -1872,6 +1872,92 @@ body {
   color: var(--ink-dim);
 }
 
+/* The Hall of Heroes holders (#2703), above the filter chips. */
+.matches-hall {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.matches-hall[hidden] {
+  display: none;
+}
+
+.matches-hall-title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.matches-hall-reported {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+
+.matches-hall-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.matches-hall-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.6rem;
+  min-width: 0;
+  padding: 0.25rem 0.6rem;
+  background: var(--panel);
+}
+
+.matches-hall-who {
+  display: flex;
+  flex: 1 1 14rem;
+  align-items: baseline;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.matches-hall-meta {
+  display: flex;
+  flex: none;
+  gap: 0.6rem;
+  margin-inline-start: auto;
+}
+
+.matches-hall-holder,
+.matches-hall-people {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.matches-hall-holder {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 40%;
+  font-weight: 600;
+}
+
+.matches-hall-people {
+  flex: 1 1 0;
+  min-width: 0;
+  color: var(--ink-dim);
+}
+
+.matches-hall-streak,
+.matches-hall-when {
+  flex: none;
+  white-space: nowrap;
+}
+
+.matches-hall-when {
+  color: var(--ink-dim);
+}
+
 .match-list {
   display: flex;
   flex-direction: column;

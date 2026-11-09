@@ -727,6 +727,13 @@ export default {
   "matches.endTime": "Se acabó el tiempo",
   "matches.filterKind": "Tipo",
   "matches.filterSize": "Tamaño",
+  "matches.hallReported": "Informado por el anfitrión de cada partida, sin verificar.",
+  "matches.hallStreak": {
+    one: "{count} victoria seguida",
+    many: "{count} de victorias seguidas",
+    other: "{count} victorias seguidas",
+  },
+  "matches.hallTitle": "Salón de los héroes",
   "matches.hostReported": "del anfitrión",
   "matches.hostReportedTitle":
     "Publicado por el anfitrión de la partida; nadie más lo ha verificado.",

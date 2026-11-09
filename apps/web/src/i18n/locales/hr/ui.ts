@@ -720,6 +720,13 @@ export default {
   "matches.endTime": "Vrijeme je isteklo",
   "matches.filterKind": "Vrsta",
   "matches.filterSize": "Veličina",
+  "matches.hallReported": "Prijavio domaćin svakog meča, neprovjereno.",
+  "matches.hallStreak": {
+    one: "{count} pobjeda zaredom",
+    few: "{count} pobjede zaredom",
+    other: "{count} pobjeda zaredom",
+  },
+  "matches.hallTitle": "Dvorana junaka",
   "matches.hostReported": "prijavio domaćin",
   "matches.hostReportedTitle": "Objavio domaćin meča; nitko drugi nije provjerio.",
   "matches.hoursAgo": {

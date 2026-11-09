@@ -341,3 +341,5 @@ Blau Team, Gold Aufstieg, Violett GvG, Grün Gehostet. Über der Liste filtern C
 **Größe** (1v1, 2v2, 4v4, 8v8): Drück beliebig viele, und ein Match erscheint, wenn es zu einer gedrückten Art und einer gedrückten Größe
 passt; eine Gruppe ohne gedrückten Chip lässt alles durch. Die Größe ist das größte Team, Bots eingeschlossen, ein 3v2 Gehostetes Spiel
 passt also zu keiner Größe. Die Chips bleiben, wie du sie gelassen hast, bis die Seite neu lädt.
+
+Über den Chips listet der Streifen **Halle der Helden** die letzten 20 Haltephasen auf, die neueste zuerst: den Halter (ein Gildenkürzel oder den Namen des Anführers), die Spieler des Siegerteams, wann der neueste Sieg endete und ab zwei Siegen, wie viele in Folge. Eine Haltephase ist eine ununterbrochene Reihe von Hallen-Siegen desselben Halters. Der Streifen liest die Berichte auf dieser Seite, ignoriert die Chips und bleibt verborgen, wenn keiner davon ein Hallen-Sieg ist. Wie jeder Bericht zeigt er, was der Host des jeweiligen Matches gemeldet hat, und nichts überprüft das.

@@ -749,6 +749,14 @@ export default {
   "matches.endTime": "Час вийшов",
   "matches.filterKind": "Тип",
   "matches.filterSize": "Розмір",
+  "matches.hallReported": "Повідомлено хостом кожного матчу, не перевірено.",
+  "matches.hallStreak": {
+    one: "{count} перемога поспіль",
+    few: "{count} перемоги поспіль",
+    many: "{count} перемог поспіль",
+    other: "{count} перемоги поспіль",
+  },
+  "matches.hallTitle": "Зал героїв",
   "matches.hostReported": "від хоста",
   "matches.hostReportedTitle": "Опубліковано хостом матчу; ніхто інший не підтверджував.",
   "matches.hoursAgo": {

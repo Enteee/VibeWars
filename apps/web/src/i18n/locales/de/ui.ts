@@ -687,6 +687,9 @@ export default {
   "matches.endTime": "Zeit abgelaufen",
   "matches.filterKind": "Art",
   "matches.filterSize": "Größe",
+  "matches.hallReported": "Vom Host des jeweiligen Matches gemeldet, nicht überprüft.",
+  "matches.hallStreak": { one: "{count} Sieg in Folge", other: "{count} Siege in Folge" },
+  "matches.hallTitle": "Halle der Helden",
   "matches.hostReported": "vom Host gemeldet",
   "matches.hostReportedTitle":
     "Vom Host des Matches veröffentlicht; von niemandem sonst bestätigt.",

@@ -723,6 +723,13 @@ export default {
   "matches.endTime": "Timpul a expirat",
   "matches.filterKind": "Tip",
   "matches.filterSize": "Mărime",
+  "matches.hallReported": "Raportat de gazda fiecărui meci, neverificat.",
+  "matches.hallStreak": {
+    one: "{count} victorie la rând",
+    few: "{count} victorii la rând",
+    other: "{count} de victorii la rând",
+  },
+  "matches.hallTitle": "Sala Eroilor",
   "matches.hostReported": "raportat de gazdă",
   "matches.hostReportedTitle": "Publicat de gazda meciului; neverificat de altcineva.",
   "matches.hoursAgo": { one: "acum {count} h", few: "acum {count} h", other: "acum {count} h" },

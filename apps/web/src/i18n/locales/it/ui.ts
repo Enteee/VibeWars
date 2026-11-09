@@ -725,6 +725,13 @@ export default {
   "matches.endTime": "Tempo scaduto",
   "matches.filterKind": "Tipo",
   "matches.filterSize": "Dimens.",
+  "matches.hallReported": "Segnalato dall'host di ogni partita, non verificato.",
+  "matches.hallStreak": {
+    one: "{count} vittoria di fila",
+    many: "{count} di vittorie di fila",
+    other: "{count} vittorie di fila",
+  },
+  "matches.hallTitle": "Sala degli eroi",
   "matches.hostReported": "dati dell'host",
   "matches.hostReportedTitle": "Pubblicato dall'host della partita; non verificato da altri.",
   "matches.hoursAgo": { one: "{count} h fa", many: "{count} h fa", other: "{count} h fa" },

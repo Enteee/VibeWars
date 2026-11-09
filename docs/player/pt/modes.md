@@ -443,3 +443,5 @@ sem nenhum pressionado deixa tudo passar. O tamanho é o da maior equipe,
 com bots incluídos, então uma Partida Hospedada 3v2 não se encaixa em
 nenhum tamanho. Os chips ficam como você os deixou até a página
 recarregar.
+
+Acima dos filtros, a faixa **Salão dos Heróis** lista os últimos 20 domínios, do mais recente ao mais antigo: quem domina (uma tag de guilda ou o nome do líder), as pessoas da equipe vencedora, quando a vitória mais recente terminou e, a partir de duas vitórias, quantas seguidas. Um domínio é uma sequência ininterrupta de vitórias no Salão de quem domina. A faixa lê os registros desta página, ignora os filtros e fica oculta se nenhum for uma vitória no Salão. Como todo registro, é o que o host de cada partida informou, e nada o verifica.
