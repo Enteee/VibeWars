@@ -737,6 +737,7 @@
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
     "MAX_STROKE_POINTS": { "literal": 16 },
     "MAX_TEAM_LOBBY_SIDE": { "literal": 8 },
+    "MAX_WIRE_CAPTURE_POINTS": { "literal": 7 },
     "MAX_WIRE_CHAT_TEXT": { "literal": 2048 },
     "MAX_WIRE_COMBATS": { "literal": 64 },
     "MAX_WIRE_CREATURES": { "literal": 56 },
