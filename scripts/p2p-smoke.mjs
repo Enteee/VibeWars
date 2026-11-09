@@ -352,18 +352,54 @@ async function openRail(page, label) {
 }
 
 /**
- * Open this page's lobby to friends (#1682), through ⋯ when the title bar
- * folds the toggle there, as `openToFriends` in e2e/helpers/peers.ts.
+ * The top bar's Lobby window (#2385), opened if it is shut, through ⋯ when
+ * the title bar folds its button there, as `lobbyWindow` in
+ * e2e/helpers/menu.ts. A press anywhere else shuts it again, so open it
+ * right before each look.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @returns {Promise<import("@playwright/test").Locator>}
+ */
+async function lobbyWindow(page) {
+  const lobby = page.locator("#topbar .topbar-lobby-button");
+  if ((await lobby.getAttribute("aria-expanded", { timeout: TIMEOUT_MS })) !== "true") {
+    const more = page.locator("#topbar .topbar-more");
+    if (!(await lobby.isVisible()) && (await more.isVisible())) {
+      await more.click({ timeout: TIMEOUT_MS });
+    }
+    await lobby.click({ timeout: TIMEOUT_MS });
+  }
+  const panel = page.locator("#topbar .lobby-window");
+  await expect(panel).toBeVisible({ timeout: TIMEOUT_MS });
+  return panel;
+}
+
+/**
+ * Shut the Lobby window (#2385) if it is open, as `shutLobbyWindow` in
+ * e2e/helpers/menu.ts.
+ *
+ * @param {import("@playwright/test").Page} page
+ */
+async function shutLobbyWindow(page) {
+  const panel = page.locator("#topbar .lobby-window");
+  if (await panel.isVisible()) {
+    await panel.press("Escape");
+  }
+  await expect(panel).toHaveCount(0);
+}
+
+/**
+ * Open this page's lobby to friends (#1682): the toggle is in the Lobby
+ * window (#2385), as `openToFriends` in e2e/helpers/peers.ts.
  *
  * @param {import("@playwright/test").Page} page
  */
 async function openToFriends(page) {
-  const more = page.locator("#topbar .topbar-more");
-  if (await more.isVisible()) {
-    await more.click();
-  }
-  await page.locator("#topbar .topbar-lobby-open").click();
-  await expect(page.locator("#topbar .topbar-lobby-open")).toHaveAttribute("aria-pressed", "true");
+  const toggle = (await lobbyWindow(page)).locator(".topbar-lobby-open");
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await shutLobbyWindow(page);
 }
 
 /**
@@ -387,14 +423,10 @@ async function copyInvite(page) {
       return write(text);
     };
   });
-  const copy = page.locator("#topbar .lobby-copy");
-  const more = page.locator("#topbar .topbar-more");
-  if (!(await copy.isVisible()) && (await more.isVisible())) {
-    await more.click();
-  }
-  await copy.click();
+  await (await lobbyWindow(page)).locator(".lobby-copy").click();
   // Copied, or shown to copy by hand: the link is the same.
   await expect(page.locator(".toast")).toBeVisible();
+  await shutLobbyWindow(page);
   const invite = await page.evaluate(() => String(Reflect.get(window, "p2pSmokeInvite")));
   expect(invite).toMatch(INVITE_PATTERN);
   return invite;
@@ -449,36 +481,40 @@ async function runPair(pair, url) {
   try {
     await namePlayer(host.page, "Host");
     // Every page hosts its own lobby from load (#1526): on Hosted Game,
-    // as `hostLobby` in e2e/helpers/peers.ts does, named in the title bar.
+    // as `hostLobby` in e2e/helpers/peers.ts does, named in the Lobby window.
     await openRail(host.page, "Hosted Game");
-    const lobby = host.page.locator("#topbar .topbar-lobby:not([hidden])");
+    let invite;
+    let reached = "the host never reached its own lobby";
     try {
-      await expect(lobby).toBeAttached({ timeout: TIMEOUT_MS });
+      const lobby = (await lobbyWindow(host.page)).locator(".topbar-lobby");
+      await expect(lobby).toBeVisible({ timeout: TIMEOUT_MS });
+      await shutLobbyWindow(host.page);
+      reached = "the host could not invite anyone to its lobby";
+      // Closed until its host opens it (#1682).
+      await openToFriends(host.page);
+      invite = await copyInvite(host.page);
     } catch {
       await report("host", host.page, host.watch);
       const shown = host.page.locator(".screen-connection-problem");
       if ((await shown.count()) > 0) {
         console.log(`          shown  ${(await shown.first().innerText()).trim()}`);
       }
-      console.log("  joined  no: the host never reached its own lobby");
+      console.log(`  joined  no: ${reached}`);
       return false;
     }
-    // Closed until its host opens it (#1682).
-    await openToFriends(host.page);
-    const invite = await copyInvite(host.page);
 
     await namePlayer(joiner.page, "Joiner");
     // As `joinByCode` in e2e/helpers/menu.ts: the invite link opened.
     const started = Date.now();
     await joiner.page.goto(invite);
-    // The title bar's Leave, a guest's alone, as `joinFriend` in
+    // The Lobby window's Leave (#2385), a guest's alone, as `joinFriend` in
     // e2e/helpers/menu.ts checks: the joiner's own lobby panel shows all
     // along, so a panel is no sign the join is in. Or a notice, whichever
-    // comes first.
+    // comes first. A window that will not open is a join that is not in.
     const notice = joiner.page.locator(".screen-connection-problem");
-    const leave = joiner.page.locator("#topbar .topbar-leave");
+    const leave = joiner.page.locator("#topbar .lobby-window .topbar-leave");
     await Promise.race([
-      leave.waitFor({ timeout: TIMEOUT_MS }),
+      lobbyWindow(joiner.page).then(() => leave.waitFor({ timeout: TIMEOUT_MS })),
       notice.first().waitFor({ timeout: TIMEOUT_MS }),
     ]).catch(() => undefined);
     const joined = await leave.isVisible();
