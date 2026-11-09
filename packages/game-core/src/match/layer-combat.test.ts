@@ -48,6 +48,7 @@ const LAYERS: MatchLayers = {
   walls: [WALL_ON_GROUND, WALL_ON_DECK],
   decks: [{ layer: 1, footprint: rect(500, 300, 600, 200) }],
   transitions: [{ from: 0, to: 1, area: rect(350, 300, 170, 200) }],
+  deepWater: [[], []],
 };
 
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {

@@ -99,6 +99,11 @@ export function matchLayers(map: MapData): MatchLayers {
       to: transition.to,
       area: shapeVertices(transition.area),
     })),
+    deepWater: Array.from({ length: map.layers }, (_, layer) =>
+      (map.water ?? [])
+        .filter((water) => water.layer === layer && water.depth === "deep")
+        .flatMap((water) => wallToSegments(water.area)),
+    ),
   };
 }
 
