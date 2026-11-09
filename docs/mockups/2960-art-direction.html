@@ -43,6 +43,12 @@
   <body>
     <h1>2.5D art direction redo: five textured options</h1>
     <p class="dim">
+      Scale: a body in play is a disc 28 world units wide and the Default zoom is about 1 px per
+      unit at 1080p; a figure here stands for about 42 units. At that scale every deck is 2.0 to 2.1
+      times the current lift of 28 units (one layer, 55 to 60 units): a one-body-wide lift reads as
+      a kerb, not a bridge. The lift per option is under implies.
+    </p>
+    <p class="dim">
       The same arena in each: ground floor, a raised bridge with fighters on top and underneath, a
       ramp, walls, two teams. Blue ring = friend, red triangle = foe in every option. Surfaces are
       textured (grain, relief, masonry, planks); the deck has thickness and a side face, supports
@@ -58,7 +64,8 @@
     <h2>A · Sunlit arena</h2>
     <img src="../art/2960-option-a.png" alt="A · Sunlit arena" />
     <p class="dim">
-      Play-size crop: ramp foot, deck edge and under-deck fighters at about on-screen body size.
+      True-scale crop (1 image px = 1 play px at 1080p, Default zoom): ramp foot, deck edge and
+      under-deck fighters.
     </p>
     <img src="../art/2960-crop-a.png" alt="A · Sunlit arena crop" style="width: 420px" />
     <table>
@@ -72,9 +79,9 @@
       <tr>
         <th>Atmosphere and elevation</th>
         <td>
-          Oblique view, lift 24 px per world unit (deck 2.4 units = 58 px), front face with
-          plank-end beams and a dark underside band; arches and plinthed piers make the space below
-          read as open.
+          Oblique view, deck 58 px in the mockup (about 60 world units), front face with plank-end
+          beams and a dark underside band; arches and plinthed piers make the space below read as
+          open.
         </td>
       </tr>
       <tr>
@@ -101,15 +108,17 @@
       <tr>
         <th>What it implies for asset and rendering work</th>
         <td>
-          Lift 24 px (ELEVATION_STEP 28 units: matches the current renderer). Needs: seamless stone,
-          plank and brick tiles, an arch/pier sprite set, brazier prop. Cheapest to build.
+          Deck lift: about 60 world units, 2.1 times the current ELEVATION_STEP of 28 (presentation
+          only, ADR-0051). Needs: seamless stone, plank and brick tiles, an arch/pier sprite set,
+          brazier prop. Cheapest to build.
         </td>
       </tr>
     </table>
     <h2>B · Diorama</h2>
     <img src="../art/2960-option-b.png" alt="B · Diorama" />
     <p class="dim">
-      Play-size crop: ramp foot, deck edge and under-deck fighters at about on-screen body size.
+      True-scale crop (1 image px = 1 play px at 1080p, Default zoom): ramp foot, deck edge and
+      under-deck fighters.
     </p>
     <img src="../art/2960-crop-b.png" alt="B · Diorama crop" style="width: 420px" />
     <table>
@@ -123,8 +132,8 @@
       <tr>
         <th>Atmosphere and elevation</th>
         <td>
-          Isometric view, lift 22 px; the deck is a thick timber slab, soil layers show on the block
-          sides, a stair-like ramp climbs the left face.
+          Isometric view, deck 53 px (about 55 world units); the deck is a thick timber slab, soil
+          layers show on the block sides, a stair-like ramp climbs the left face.
         </td>
       </tr>
       <tr>
@@ -151,15 +160,17 @@
       <tr>
         <th>What it implies for asset and rendering work</th>
         <td>
-          Implies an isometric projection and a 2:1 ground diamond, i.e. a new renderer transform
-          and picking. Needs turf, wood and stone tiles plus a soil rim.
+          Deck lift: about 55 world units (2.0 times 28). Implies an isometric projection and a 2:1
+          ground diamond, i.e. a new renderer transform and picking. Needs turf, wood and stone
+          tiles plus a soil rim.
         </td>
       </tr>
     </table>
     <h2>C · Torchlit night</h2>
     <img src="../art/2960-option-c.png" alt="C · Torchlit night" />
     <p class="dim">
-      Play-size crop: ramp foot, deck edge and under-deck fighters at about on-screen body size.
+      True-scale crop (1 image px = 1 play px at 1080p, Default zoom): ramp foot, deck edge and
+      under-deck fighters.
     </p>
     <img src="../art/2960-crop-c.png" alt="C · Torchlit night crop" style="width: 420px" />
     <table>
@@ -173,7 +184,7 @@
       <tr>
         <th>Atmosphere and elevation</th>
         <td>
-          Oblique, tall lift of 36 px per unit (deck = 86 px) so the deck stands tall; the underside
+          Oblique, drawn larger than A (deck 86 px) but the same lift against bodies; the underside
           is almost black; light pools highlight the ground fights.
         </td>
       </tr>
@@ -202,15 +213,17 @@
       <tr>
         <th>What it implies for asset and rendering work</th>
         <td>
-          Needs a lift of 36 px (larger than ELEVATION_STEP maps to today), a torch-light overlay
-          pass and a vignette. Static layer cacheable, light pools are cheap radial sprites.
+          Deck lift: about 60 world units (2.1 times 28); the 36 px per unit here only scales the
+          whole picture, not the lift against bodies. Needs a torch-light overlay pass and a
+          vignette. Static layer cacheable, light pools are cheap radial sprites.
         </td>
       </tr>
     </table>
     <h2>D · Ornate keep</h2>
     <img src="../art/2960-option-d.png" alt="D · Ornate keep" />
     <p class="dim">
-      Play-size crop: ramp foot, deck edge and under-deck fighters at about on-screen body size.
+      True-scale crop (1 image px = 1 play px at 1080p, Default zoom): ramp foot, deck edge and
+      under-deck fighters.
     </p>
     <img src="../art/2960-crop-d.png" alt="D · Ornate keep crop" style="width: 420px" />
     <table>
@@ -224,8 +237,9 @@
       <tr>
         <th>Atmosphere and elevation</th>
         <td>
-          Isometric, lift 22 px; deck of polished marble with gold inlay rail, crenellated walls
-          with height, columns with plinth and capital, arches under the deck.
+          Isometric, deck 53 px (about 55 world units); deck of polished marble with gold inlay
+          rail, crenellated walls with height, columns with plinth and capital, arches under the
+          deck.
         </td>
       </tr>
       <tr>
@@ -252,15 +266,17 @@
       <tr>
         <th>What it implies for asset and rendering work</th>
         <td>
-          Isometric projection. Heaviest asset list: marble, cut stone, crenellation, column,
-          banner, inlay. Most to author, highest payoff for variety.
+          Deck lift: about 55 world units (2.0 times 28). Isometric projection. Heaviest asset list:
+          marble, cut stone, crenellation, column, banner, inlay. Most to author, highest payoff for
+          variety.
         </td>
       </tr>
     </table>
     <h2>E · Overgrown ruin</h2>
     <img src="../art/2960-option-e.png" alt="E · Overgrown ruin" />
     <p class="dim">
-      Play-size crop: ramp foot, deck edge and under-deck fighters at about on-screen body size.
+      True-scale crop (1 image px = 1 play px at 1080p, Default zoom): ramp foot, deck edge and
+      under-deck fighters.
     </p>
     <img src="../art/2960-crop-e.png" alt="E · Overgrown ruin crop" style="width: 420px" />
     <table>
@@ -274,7 +290,7 @@
       <tr>
         <th>Atmosphere and elevation</th>
         <td>
-          Oblique, lift 24 px; the deck is a heavy cracked slab on moss-grown piers, an earth ramp
+          Oblique, deck 58 px; the deck is a heavy cracked slab on moss-grown piers, an earth ramp
           climbs to it; walls are broken at the top.
         </td>
       </tr>
@@ -303,8 +319,9 @@
       <tr>
         <th>What it implies for asset and rendering work</th>
         <td>
-          Lift 24 px, oblique like A. Needs earth, cracked stone, moss decal and rubble sets and
-          tree props; random decals must be placed by map data, not randomly, to stay deterministic.
+          Deck lift: about 60 world units (2.1 times 28), oblique like A. Needs earth, cracked
+          stone, moss decal and rubble sets and tree props; random decals must be placed by map
+          data, not randomly, to stay deterministic.
         </td>
       </tr>
     </table>

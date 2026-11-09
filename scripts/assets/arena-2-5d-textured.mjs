@@ -880,18 +880,23 @@ for (const id of Object.keys(STYLES)) {
   writeFileSync(svg, scene(id));
   raster(svg, png, 960);
   pngs.push(png);
-  // play-size crop: the deck edge and the ramp at the pixel size bodies have in the
-  // running game (a character is about 40 px tall at the default zoom, so 1:1 here
-  // is about 1.2x play size), rendered at 1x and cut around the ramp foot
-  const cropPng = join(outDir, `2960-crop-${id}.png`);
-  raster(svg, join(tmp, `${id}-full.png`), 960);
-  const [cx, cy] = [STYLES[id].iso ? 440 : 330, STYLES[id].iso ? 300 : 330];
+  // True-scale crop. In play a body is a disc 28 world units wide (playerRadius 14) and
+  // the Default zoom shows 1100 units over the canvas height, about 1 px per unit at
+  // 1080p. A standing figure here is 1.2 * u = 1.2 * 1.4 * hz mockup px tall and stands
+  // for about 42 units (1.5 body discs), so 25 / hz mockup px is one play px at 1080p.
+  const k = 25 / STYLES[id].hz;
+  const full = join(tmp, `${id}-full.png`);
+  raster(svg, full, Math.round(W * k));
+  const [cw, ch] = [Math.min(480, Math.round(W * k)), Math.min(280, Math.round(H * k))];
+  const [cx, cy] = [STYLES[id].iso ? 510 : 400, STYLES[id].iso ? 290 : 320];
+  const left = Math.max(0, Math.min(Math.round(W * k) - cw, Math.round(cx * k - cw / 2)));
+  const top = Math.max(0, Math.min(Math.round(H * k) - ch, Math.round(cy * k - ch / 2)));
   execFileSync("magick", [
-    join(tmp, `${id}-full.png`),
+    full,
     "-crop",
-    "420x240+" + String(cx - 140) + "+" + String(cy - 130),
+    `${String(cw)}x${String(ch)}+${String(left)}+${String(top)}`,
     "+repage",
-    cropPng,
+    join(outDir, `2960-crop-${id}.png`),
   ]);
 }
 // recolour for size: palette-reduce every committed png
