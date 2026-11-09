@@ -599,6 +599,8 @@ export default {
   "lobby.modePriestAnnihilation": "司祭殲滅: 敵と司祭を全滅させる",
   "lobby.modeRelicRun":
     "レリックラン: レリックを祭壇へ運びます。{minutes}分間で最多得点のチームが勝利します。",
+  "lobby.modeRelicRunFoe":
+    "レリックラン: 敵のレリックを自軍のゴーストヒーローへ運びます。3点差をつけると勝利し、{minutes}分経過時は最多得点のチームが勝利します。",
   "lobby.notReady": "未準備",
   "lobby.playBots": "ボットと対戦",
   "lobby.ready": "準備完了",

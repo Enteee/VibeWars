@@ -13,6 +13,7 @@ import { effectiveMaxHealth } from "../skills/tick.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Nature rituals 4 (#1956): three elite spirits whose auras answer what
@@ -264,7 +265,8 @@ describe("nature rituals 4 (#1956)", () => {
   });
 
   it("says what each does", () => {
-    const lines = (id: string) => describeSkill(skillOf(id), RANKS).effects.map(({ text }) => text);
+    const lines = (id: string) =>
+      describeSkill(skillOf(id), RANKS, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
     expect(lines("ranger.lacerate")).toContain(
       "When it dies, non-spirit creatures in its range under 90% Health begin Bleeding for 21 seconds",
     );

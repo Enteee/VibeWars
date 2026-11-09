@@ -698,6 +698,8 @@ export default {
   "lobby.modePriestAnnihilation": "Anihilácia kňaza: poraz všetkých nepriateľov aj ich kňaza",
   "lobby.modeRelicRun":
     "Beh s relikviou: dones svoju relikviu na oltár. Vyhráva najviac bodov za {minutes} minút.",
+  "lobby.modeRelicRunFoe":
+    "Beh s relikviou: dones nepriateľskú relikviu svojmu Prízračnému hrdinovi. Vyhráva náskok 3 bodov; po {minutes} minútach najviac bodov.",
   "lobby.notReady": "Nepripravený",
   "lobby.playBots": "Hrať proti botom",
   "lobby.ready": "Pripravený",

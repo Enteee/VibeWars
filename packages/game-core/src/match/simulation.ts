@@ -323,6 +323,7 @@ import {
 import {
   carriedRelic,
   initialRelics,
+  ALTAR_REACH_UNITS,
   onAltar,
   relicRefusal,
   relicTargetPosition,
@@ -347,6 +348,7 @@ import {
 } from "./ghost.js";
 import { priestId, priestSpec, type Shrine } from "./priest.js";
 import { steerAround } from "./steering.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * One match, steppable, with no transport attached (ADR-0017).
@@ -4859,7 +4861,7 @@ export class MatchSimulation {
             casterId: record.id,
             targetId: skipped.targetId,
             skillId: skill.id,
-            requirement: conditionRequirementText(skipped.condition, ranks),
+            requirement: conditionRequirementText(skipped.condition, ranks, EN_WORDS, EN_NAMES),
           },
         ];
   }
@@ -5978,8 +5980,8 @@ export class MatchSimulation {
     const scores = state.relics.flatMap(({ place }) => {
       const carrier =
         place.kind === "carried" ? this.#participants.get(place.carrierId) : undefined;
-      return carrier !== undefined && onAltar(field, carrier.position)
-        ? [{ kind: "score" as const, carrierId: carrier.id }]
+      return carrier !== undefined && this.#atRelicTarget(field, carrier)
+        ? [{ kind: "score" as const, carrierId: carrier.id, team: carrier.combatant.team }]
         : [];
     });
     const { state: next, scored } = stepRelics(field, state, [
@@ -5997,6 +5999,19 @@ export class MatchSimulation {
     }
   }
 
+  /** Whether `carrier` is where its relic scores: the altar, or within its reach of its own living ghost (#2695). */
+  #atRelicTarget(field: RelicField, carrier: ParticipantRecord): boolean {
+    if (field.relicTarget === "altar") {
+      return onAltar(field, carrier.position);
+    }
+    const ghost = this.#participants.get(ghostId(carrier.combatant.team));
+    return (
+      ghost !== undefined &&
+      !ghost.combatant.dead &&
+      distance(ghost.position, carrier.position) <= ALTAR_REACH_UNITS
+    );
+  }
+
   /** Whether `targetId` is `record`'s own team's Ghostly Hero (#1377): Space on it is no attack. */
   #isAllyGhost(record: ParticipantRecord, targetId: string): boolean {
     return (
@@ -6012,7 +6027,13 @@ export class MatchSimulation {
   #toggleGhost(record: ParticipantRecord, ghostId: string): void {
     const ghost = this.#participants.get(ghostId);
     const field = this.#ghostField;
-    if (ghost === undefined || ghost.combatant.dead || field === undefined) {
+    // Where relics are carried to it, it keeps its post (#2695): no leading it to the foe's.
+    if (
+      ghost === undefined ||
+      ghost.combatant.dead ||
+      field === undefined ||
+      this.#relicField?.relicTarget === "own-ghost"
+    ) {
       return;
     }
     if (ghost.creature?.leaderId === record.id) {
@@ -6141,6 +6162,7 @@ export class MatchSimulation {
         ...NO_OBJECTIVES,
         relics: this.relics,
         relicSpawns: this.#relicField.spawns,
+        relicCarry: this.#relicField.relicCarry,
         altar: this.#relicField.altar,
       };
     } else if (victory === "king-of-the-hill" && this.#ghostField !== undefined) {
@@ -8426,10 +8448,14 @@ export class MatchSimulation {
     return lord !== undefined && !lord.combatant.dead && !this.#leaving.has(lord.id);
   }
 
-  /** Whether the shrines raise with no priest: a Guild Battle's (#1222), a Capture Points base's (#2845). */
+  /** Whether the shrines raise with no priest: a Guild Battle's (#1222), a Capture Points base's (#2845), a Relic Run's where a ghost takes the relic (#2695). */
   #shrinesRaiseAlone(): boolean {
     const victory = this.#matchRules?.victory;
-    return victory === "guild-battle" || victory === "capture-points";
+    return (
+      victory === "guild-battle" ||
+      victory === "capture-points" ||
+      this.#relicField?.relicTarget === "own-ghost"
+    );
   }
 
   /** Seconds of match clock between the shrines' waves. */

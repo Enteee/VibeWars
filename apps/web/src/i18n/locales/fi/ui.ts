@@ -648,6 +648,8 @@ export default {
   "lobby.modePriestAnnihilation": "Pappituho: kukista kaikki viholliset ja heidän pappinsa",
   "lobby.modeRelicRun":
     "Reliikkijuoksu: kanna reliikkisi alttarille. Eniten pisteitä {minutes} minuutissa voittaa.",
+  "lobby.modeRelicRunFoe":
+    "Reliikkijuoksu: kanna vihollisen reliikki aavesankarillesi. 3 pisteen johto voittaa; {minutes} minuutin jälkeen eniten pisteitä.",
   "lobby.notReady": "Ei valmis",
   "lobby.playBots": "Pelaa botteja vastaan",
   "lobby.ready": "Valmis",

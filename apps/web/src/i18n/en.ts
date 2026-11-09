@@ -640,6 +640,8 @@ export const en = {
   "lobby.modePriestAnnihilation": "Priest Annihilation: defeat every foe and their priest",
   "lobby.modeRelicRun":
     "Relic Run: carry your relic to the altar. Most points in {minutes} minutes wins.",
+  "lobby.modeRelicRunFoe":
+    "Relic Run: carry the foe's relic to your Ghostly Hero. A 3-point lead wins; after {minutes} minutes, most points.",
   "lobby.notReady": "Not ready",
   "lobby.playBots": "Play against bots",
   "lobby.ready": "Ready",

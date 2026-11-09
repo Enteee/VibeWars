@@ -2,6 +2,8 @@
   "id": "hall-of-heroes-relic",
   "name": "Hall of Heroes",
   "mode": "relic-run",
+  "relicTarget": "altar",
+  "relicCarry": "own",
   "teamSizes": [8],
   "teams": 3,
   "halls": true,

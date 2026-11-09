@@ -14,6 +14,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Casting-state hexes and Death Nova (#1931), at rank 12: Spinal Shivers
@@ -216,7 +217,7 @@ describe("Spinal Shivers and Shivers of Dread (#1931)", () => {
   });
 
   it("says so in its tooltip", () => {
-    expect(describeStatus("spinal-shivers")).toContain(
+    expect(describeStatus("spinal-shivers", undefined, EN_WORDS, EN_NAMES)).toContain(
       "is struck for cold damage while using a skill, it is interrupted and you lose 4 Energy or this ends",
     );
   });
@@ -281,9 +282,9 @@ describe("Power Leech and Power Flux (#1931)", () => {
   });
 
   it("Power Flux drains 2 pips of Energy", () => {
-    expect(describeStatus("power-flux")).toContain("−2 Energy");
+    expect(describeStatus("power-flux", undefined, EN_WORDS, EN_NAMES)).toContain("−2 Energy");
     expect(
-      describeSkill(skill("mesmer.power-flux"), new Map())
+      describeSkill(skill("mesmer.power-flux"), new Map(), EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" "),
     ).toContain("If target is casting a spell or chant");

@@ -14,6 +14,7 @@ import {
   type Participant,
   type ParticipantSpec,
 } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Ritualist spirit sacrifice (#1309): Rupture Soul and Spirit to Flesh
@@ -294,7 +295,12 @@ describe("the skill texts (#1309)", () => {
     if (skill === undefined) {
       throw new Error(`no skill ${id}`);
     }
-    const described = describeSkill(skill, new Map([["ritualist.spawning-power", 12]]));
+    const described = describeSkill(
+      skill,
+      new Map([["ritualist.spawning-power", 12]]),
+      EN_WORDS,
+      EN_NAMES,
+    );
     return [described.targetText, ...described.effects.map((effect) => effect.text)];
   };
 

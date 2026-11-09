@@ -15,6 +15,7 @@ import { raisedMaxEnergy } from "./overcast.js";
 import { NO_RANKS } from "./status.js";
 import { effectiveMaxHealth } from "./tick.js";
 import type { Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Ritualist spirits (#2478), their PvP versions: Restoration's death
@@ -190,7 +191,9 @@ describe("Restoration (#2478)", () => {
 
   it("says what its death does", () => {
     expect(
-      describeSkill(skillOf(RESTORATION), new Map()).effects.map(({ text }) => text),
+      describeSkill(skillOf(RESTORATION), new Map(), EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      ),
     ).toContain(
       "When it dies, dead party members in its range are resurrected with 5% Health and zero Energy",
     );
@@ -258,7 +261,9 @@ describe("Empowerment (#2478)", () => {
 
   it("says it needs an item", () => {
     expect(
-      describeSkill(skillOf(EMPOWERMENT), new Map()).effects.map(({ text }) => text),
+      describeSkill(skillOf(EMPOWERMENT), new Map(), EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      ),
     ).toContain(
       "Non-spirit allies in its range holding an item: +15 maximum health, +10 maximum energy",
     );
@@ -303,9 +308,16 @@ describe("Soul Twisting (#2478)", () => {
   });
 
   it("says its count scales", () => {
-    expect(describeStatus("soul-twisting")).toContain("your next 1...3 binding rituals cost");
-    expect(describeStatus("soul-twisting", new Map([["ritualist.spawning-power", 0]]))).toContain(
-      "your next binding ritual costs",
+    expect(describeStatus("soul-twisting", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "your next 1...3 binding rituals cost",
     );
+    expect(
+      describeStatus(
+        "soul-twisting",
+        new Map([["ritualist.spawning-power", 0]]),
+        EN_WORDS,
+        EN_NAMES,
+      ),
+    ).toContain("your next binding ritual costs");
   });
 });

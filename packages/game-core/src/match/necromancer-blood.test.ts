@@ -9,6 +9,7 @@ import { describeSkill } from "../skills/describe.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -227,7 +228,9 @@ describe("Blood Magic texts (#1338)", () => {
     if (found === undefined) {
       throw new Error(`unknown skill ${id}`);
     }
-    return describeSkill(found, new Map([[BLOOD, 12]])).effects.map((effect) => effect.text);
+    return describeSkill(found, new Map([[BLOOD, 12]]), EN_WORDS, EN_NAMES).effects.map(
+      (effect) => effect.text,
+    );
   };
 
   it("says what each does", () => {

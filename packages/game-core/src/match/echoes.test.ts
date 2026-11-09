@@ -14,6 +14,7 @@ import { vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Arcane Echo and Echo (#469, #1126): the next skill used stands in the
@@ -151,7 +152,7 @@ describe("Arcane Echo (#1126)", () => {
     const match = sim();
     echoUp(match, 0);
     expect(get(match, "a").statuses.get("arcane-echo")?.remainingSeconds).toBeGreaterThan(16);
-    expect(describeStatus("arcane-echo")).toBe(
+    expect(describeStatus("arcane-echo", undefined, EN_WORDS, EN_NAMES)).toBe(
       "the next time you use a skill: if a spell, it takes this skill's slot for 20 seconds",
     );
   });

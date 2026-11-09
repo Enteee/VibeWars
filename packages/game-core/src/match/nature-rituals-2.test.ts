@@ -16,6 +16,7 @@ import type { Combatant, Skill } from "../skills/types.js";
 import { landBlow, PLAIN_BLOW, weaponSnapshotOf } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Nature rituals 2 (#1873): six more spirits whose auras reach non-spirits
@@ -305,7 +306,7 @@ describe("nature rituals 2 (#1873)", () => {
 
   it("describes each aura", () => {
     const line = (skillId: string) =>
-      describeSkill(skillOf(skillId), RANKS).effects.map(({ text }) => text)[1];
+      describeSkill(skillOf(skillId), RANKS, EN_WORDS, EN_NAMES).effects.map(({ text }) => text)[1];
     expect(RITUALS.map(([skillId]) => line(skillId))).toEqual([
       "Non-spirit creatures in its range: +125 maximum health per enchantment",
       "Non-spirit creatures in its range: bow attacks deal 6 more damage, arrows move 2× as fast",

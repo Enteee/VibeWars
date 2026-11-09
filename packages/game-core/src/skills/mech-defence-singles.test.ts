@@ -30,6 +30,7 @@ import type {
   Surroundings,
   TransferConditionsToAreaEffect,
 } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Mechanics (#2503), mostly defensive: damage-type conversion both ways,
@@ -530,7 +531,7 @@ describe("tooltips (#2503)", () => {
       ["paragon.leadership", 12],
       ["elementalist.energy-storage", 12],
     ]);
-    expect(describeStatus(id, ranks)).toContain(text);
+    expect(describeStatus(id, ranks, EN_WORDS, EN_NAMES)).toContain(text);
   });
 });
 

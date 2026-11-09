@@ -701,6 +701,8 @@ export default {
   "lobby.modePriestAnnihilation": "Anihilacja kapłana: pokonaj wszystkich wrogów i ich kapłana",
   "lobby.modeRelicRun":
     "Wyścig relikwii: zanieś relikwię na ołtarz. Wygrywa najwięcej punktów w {minutes} minut.",
+  "lobby.modeRelicRunFoe":
+    "Wyścig relikwii: zanieś relikwię wroga do swojego Upiornego Bohatera. Wygrywa 3 punkty przewagi; po {minutes} minutach najwięcej punktów.",
   "lobby.notReady": "Niegotowy",
   "lobby.playBots": "Graj z botami",
   "lobby.ready": "Gotowy",

@@ -643,6 +643,8 @@ export default {
   "lobby.modePriestAnnihilation": "Priestervernichtung: Besiege alle Gegner und ihren Priester",
   "lobby.modeRelicRun":
     "Reliktlauf: Trage dein Relikt zum Altar. Die meisten Punkte in {minutes} Minuten gewinnen.",
+  "lobby.modeRelicRunFoe":
+    "Reliktlauf: Trage das Relikt des Gegners zu deinem Geisterhelden. 3 Punkte Vorsprung gewinnen; nach {minutes} Minuten die meisten Punkte.",
   "lobby.notReady": "Nicht bereit",
   "lobby.playBots": "Gegen Bots spielen",
   "lobby.ready": "Bereit",

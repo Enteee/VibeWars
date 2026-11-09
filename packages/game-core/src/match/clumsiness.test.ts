@@ -10,6 +10,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Clumsiness (#1593): "the next time each foe attacks, the attack is
@@ -226,9 +227,12 @@ describe("Clumsiness (#1593)", () => {
 
   it("says what it does", () => {
     const ranks = new Map([["mesmer.illusion-magic", 12]]);
-    const lines = describeSkill(getSkill(CLUMSINESS) ?? fail(), ranks).effects.map(
-      ({ text }) => text,
-    );
+    const lines = describeSkill(
+      getSkill(CLUMSINESS) ?? fail(),
+      ranks,
+      EN_WORDS,
+      EN_NAMES,
+    ).effects.map(({ text }) => text);
     expect(lines).toEqual([
       "Applies Clumsiness for 4s (the next time it attacks, that attack is interrupted and it takes 66 damage)",
     ]);

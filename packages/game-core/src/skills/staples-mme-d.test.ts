@@ -10,6 +10,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Mesmer, Monk and Elementalist staples (#2414): Sympathetic Visage,
@@ -357,9 +358,9 @@ describe("Resurrection Chant (#2414)", () => {
   });
 
   it("reads as up to the Monk's current Health", () => {
-    expect(describeSkill(skill(CHANT), R12).effects.map((effect) => effect.text)).toContain(
-      "Returns the target to life with up to your current health and 29% energy",
-    );
+    expect(
+      describeSkill(skill(CHANT), R12, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text),
+    ).toContain("Returns the target to life with up to your current health and 29% energy");
   });
 });
 
@@ -483,8 +484,8 @@ describe("Flame Djinn's Haste (#2414)", () => {
   });
 
   it("reads as recharging faster only with a foe adjacent", () => {
-    expect(describeSkill(skill(DJINN), R12).effects.map((effect) => effect.text)).toContainEqual(
-      expect.stringMatching(/^If any foe is adjacent: /),
-    );
+    expect(
+      describeSkill(skill(DJINN), R12, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text),
+    ).toContainEqual(expect.stringMatching(/^If any foe is adjacent: /));
   });
 });

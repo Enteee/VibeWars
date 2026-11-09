@@ -14,6 +14,7 @@ import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, StateCondition, Surroundings } from "./types.js";
 import { landBlow, PLAIN_BLOW, resolveAttackSkill, weaponSnapshotOf } from "./weapon-attack.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * The Dervish earth bar (#1021): Eremite's Attack strikes every adjacent
@@ -206,7 +207,9 @@ describe("Eremite's Attack (#1021)", () => {
 
   it("says both halves on its card", () => {
     expect(
-      describeSkill(skill("dervish.eremites-attack"), RANKS).effects.map(({ text }) => text),
+      describeSkill(skill("dervish.eremites-attack"), RANKS, EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      ),
     ).toEqual([
       "+8 damage",
       "If you have a Dervish enchantment: +8 damage",
@@ -263,13 +266,13 @@ describe("earth attacks (#1021)", () => {
   });
 
   it("the tooltips say what the enchantments do", () => {
-    expect(describeStatus("staggering-force")).toBe(
+    expect(describeStatus("staggering-force", undefined, EN_WORDS, EN_NAMES)).toBe(
       "attacks deal earth damage. When it ends: nearby foes suffer Cracked Armor for 8s (−20 armor (not below 60))",
     );
-    expect(describeStatus("dust-cloak")).toBe(
+    expect(describeStatus("dust-cloak", undefined, EN_WORDS, EN_NAMES)).toBe(
       "attacks deal earth damage. When it ends: nearby foes suffer Blind for 3s (90% of attacks miss)",
     );
-    expect(describeStatus("aura-of-thorns")).toBe(
+    expect(describeStatus("aura-of-thorns", undefined, EN_WORDS, EN_NAMES)).toBe(
       "when it ends: nearby foes suffer Crippled for 7s (moves at 50% speed)",
     );
   });

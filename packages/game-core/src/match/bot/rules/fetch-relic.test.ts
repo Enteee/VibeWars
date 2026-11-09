@@ -4,6 +4,7 @@ import { RANGE_SPELL } from "../../../distances.js";
 import { vec2 } from "../../../vec2.js";
 import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
 import { AT_SPAWN } from "../../carried.js";
+import { ghostId } from "../../ghost.js";
 import { relicId, type RelicState } from "../../relics.js";
 import { REST_FRACTION } from "./shared.js";
 import { askBot, body, BOT, fighter, match, MONK } from "./test-support.js";
@@ -159,5 +160,36 @@ describe("fetch-relic: Relic Run bots fetch their relic and return the foe's (#2
     const intent = askBot(sim, "bot", NO_OBJECTIVES);
     expect(intent.attackTargetId).toBeUndefined();
     expect(intent.moveTo).not.toEqual(ALTAR);
+  });
+});
+
+describe("fetch-relic: the foe's relic, to your ghost (#2695)", () => {
+  const foeRun = (...relics: RelicState[]) => ({
+    ...running(...relics),
+    altar: undefined,
+    relicCarry: "foe" as const,
+  });
+  const home = foeRun({ team: 0, place: AT_SPAWN }, { team: 1, place: AT_SPAWN });
+
+  it("sends the nearest bot for the foe's relic, not its own", () => {
+    const sim = match([
+      body("bot", 0, vec2(300, 400), { behaviour: BOT }),
+      body("foe", 1, vec2(1550, 750)),
+      body(ghostId(0), 0, vec2(150, 400)),
+    ]);
+    expect(askBot(sim, "bot", home).attackTargetId).toBe(relicId(1));
+  });
+
+  it("returns its own relic from the ground before running the foe's", () => {
+    const sim = match([
+      body("bot", 0, vec2(300, 400), { behaviour: BOT }),
+      body("foe", 1, vec2(1550, 750)),
+      body(ghostId(0), 0, vec2(150, 400)),
+    ]);
+    const lying = foeRun(
+      { team: 0, place: { kind: "ground", position: vec2(500, 400) } },
+      { team: 1, place: AT_SPAWN },
+    );
+    expect(askBot(sim, "bot", lying).attackTargetId).toBe(relicId(0));
   });
 });

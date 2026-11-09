@@ -17,6 +17,7 @@ import { distance, normalize, sub, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Spirits (#1064): a ritual plants a creature that projects a status on
@@ -522,7 +523,9 @@ describe("Recuperation (#1064)", () => {
 
   it("says what its spirit does, and to whom", () => {
     const lines = (id: string, attributeId: string) =>
-      describeSkill(skillOf(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
+      describeSkill(skillOf(id), new Map([[attributeId, 12]]), EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      );
     expect(lines(RECUPERATION, "ritualist.restoration-magic")).toEqual([
       "Summons 1 Recuperation (210 Health, lasts 39 seconds)",
       "Non-spirit allies in its range: +3 Health regeneration",
@@ -596,6 +599,8 @@ describe("Spawning Power (#1098)", () => {
           ["ritualist.restoration-magic", 12],
           ["ritualist.spawning-power", spawningPower],
         ]),
+        EN_WORDS,
+        EN_NAMES,
       ).effects[0]?.text;
     expect(line(12)).toBe("Summons 1 Recuperation (311 Health (210), lasts 39 seconds)");
     expect(line(0)).toBe("Summons 1 Recuperation (210 Health, lasts 39 seconds)");

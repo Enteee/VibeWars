@@ -639,6 +639,8 @@ export default {
   "lobby.modePriestAnnihilation": "Rahip İmhası: tüm düşmanları ve rahiplerini yen",
   "lobby.modeRelicRun":
     "Kalıntı Koşusu: kalıntını sunağa taşı. {minutes} dakikada en çok puanı alan kazanır.",
+  "lobby.modeRelicRunFoe":
+    "Kalıntı Koşusu: düşmanın kalıntısını Hayalet Kahramanına taşı. 3 puan öne geçen kazanır; {minutes} dakika sonunda en çok puanı alan kazanır.",
   "lobby.notReady": "Hazır değil",
   "lobby.playBots": "Botlara karşı oyna",
   "lobby.ready": "Hazır",

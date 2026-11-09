@@ -16,6 +16,7 @@ import { NO_RANKS, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { fireChangeTriggers, type SpreadGainedCondition } from "./triggers.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Monk mechanics (#1754): a damage threshold on a trigger, a share of each
@@ -139,7 +140,7 @@ describe("the four are the corpus's (#1754)", () => {
 
   it("names what each does in its text", () => {
     const text = (id: string) =>
-      describeSkill(skill(id), RANKS)
+      describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES)
         .effects.map(({ text: line }) => line)
         .join(" | ");
     expect(text(SPIRIT_BOND)).toContain("takes more than 50 damage from a foe");

@@ -10,6 +10,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Triggers on a skill type used or a heal (#1913): Cacophony and Soul
@@ -113,7 +114,7 @@ describe("Cacophony (#1913)", () => {
     use(match, "n", 0, "a");
     stepFor(match, 1.5);
     expect(get(match, "a").statuses.get("cacophony")?.sourceId).toBe("n");
-    expect(describeStatus("cacophony")).toContain("90");
+    expect(describeStatus("cacophony", undefined, EN_WORDS, EN_NAMES)).toContain("90");
   });
 
   it("a shout costs the foe 90, and so does a chant, through its armor", () => {
@@ -141,7 +142,9 @@ describe("Soul Bind (#1913)", () => {
     use(match, "n", 1, "a");
     stepFor(match, 1.5);
     expect(get(match, "a").statuses.get("soul-bind")?.sourceId).toBe("n");
-    expect(describeStatus("soul-bind")).toContain("the healer takes 68 damage");
+    expect(describeStatus("soul-bind", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "the healer takes 68 damage",
+    );
   });
 
   it("an ally's heal costs the healer 68, not the bearer, at full Health too", () => {
@@ -221,7 +224,7 @@ describe("Scribe's Insight (#1913)", () => {
     use(match, "a", 5, "a");
     stepFor(match, 1);
     expect(get(match, "a").statuses.get("scribes-insight")?.sourceId).toBe("a");
-    expect(describeStatus("scribes-insight")).toContain("3");
+    expect(describeStatus("scribes-insight", undefined, EN_WORDS, EN_NAMES)).toContain("3");
   });
 
   it("a signet gives 3 Energy, a spell none", () => {

@@ -12,6 +12,7 @@ import { describeSkill, describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
 import { NO_RANKS, getStatusDefinition } from "./status.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Unwritten corpus skills (#2500), Ritualist: Lively Was Naomei, Vocal Was
@@ -143,7 +144,9 @@ describe("the six are the corpus's (#2500)", () => {
 describe("the six describe themselves (#2500)", () => {
   it.each([LIVELY, VOCAL, ZEAL, SIGHT, REMEDY, CARETAKER])("%s at rank 12", (id) => {
     const ranks = new Map([RESTORATION, SPAWNING, CHANNELING].map((a) => [a, 12]));
-    const text = describeSkill(skill(id), ranks).effects.map((line) => line.text);
+    const text = describeSkill(skill(id), ranks, EN_WORDS, EN_NAMES).effects.map(
+      (line) => line.text,
+    );
     expect(text.length).toBeGreaterThan(0);
   });
 
@@ -154,7 +157,7 @@ describe("the six describe themselves (#2500)", () => {
     "sight-beyond-sight",
     "wielders-remedy",
   ] as const)("status %s", (id) => {
-    expect(describeStatus(id)).not.toBe("");
+    expect(describeStatus(id, undefined, EN_WORDS, EN_NAMES)).not.toBe("");
   });
 });
 

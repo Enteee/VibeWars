@@ -193,6 +193,7 @@ describe("the arena set (#444)", () => {
         "jungle-ruins",
         "guild-hall-isle",
         "broken-tower",
+        "cinder-sanctum",
         "the-courtyard",
         "hall-of-heroes-king",
         "hall-of-heroes-relic",
@@ -227,6 +228,7 @@ describe("the arena set (#444)", () => {
     ]);
     expect(MAPS.filter((map) => map.mode === "relic-run").map((map) => map.id)).toEqual([
       "broken-tower",
+      "cinder-sanctum",
       "hall-of-heroes-relic",
     ]);
     expect(MAPS.filter((map) => map.mode === "king-of-the-hill").map((map) => map.id)).toEqual([
@@ -238,7 +240,7 @@ describe("the arena set (#444)", () => {
       "mosslit-cairns",
       "scarred-earth",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 11);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 12);
   });
 
   it("puts each team's shrine on Jungle Ruins 150-250 behind its spawns (#1186, #2550)", () => {
@@ -752,6 +754,22 @@ describe.each([
 
   it("keeps its nav graph to 600 nodes", () => {
     expect(layeredFinder(map, RADIUS).nodeCount).toBeLessThanOrEqual(600);
+  });
+});
+
+describe("Cinder Sanctum (#2695)", () => {
+  const sanctum = MAPS.find((each) => each.id === "cinder-sanctum");
+  if (sanctum === undefined) throw new Error("no cinder-sanctum");
+
+  it("carries the foe's relic to its own ghost, with no altar", () => {
+    expect([sanctum.relicTarget, sanctum.relicCarry]).toEqual(["own-ghost", "foe"]);
+    expect(sanctum.objectives.some((each) => each.kind === "altar")).toBe(false);
+  });
+
+  it("keeps its nav graph to 600 nodes", () => {
+    const bounds = { width: sanctum.width, height: sanctum.height };
+    const graph = buildNavGraph(allWallSegments(sanctum.walls), bounds, RADIUS);
+    expect(graph.nodes.length).toBeLessThanOrEqual(600);
   });
 });
 

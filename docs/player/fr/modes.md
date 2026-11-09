@@ -154,6 +154,10 @@ arrive à portée de sort.
 Broken Tower le joue : l'autel se trouve dans une tour en ruine avec une porte
 de chaque côté.
 
+### Cinder Sanctum
+
+Ici, la Course aux reliques de l'Ascension des Héros se joue à l'envers. Chaque base abrite la relique de son équipe et son Héros fantomatique, et il n'y a pas d'autel. **Prenez la relique adverse dans sa base et apportez-la à votre propre Héros fantomatique** pour marquer un point. Le fantôme doit être vivant, et il reste à son poste. Vous ne pouvez pas porter votre propre relique : la ramasser là où elle est tombée la renvoie chez vous. Une équipe qui mène de **3 points gagne aussitôt**. Après 8 minutes, le plus de points l'emporte, et une égalité revient à la dernière équipe à avoir marqué. Chaque base relève ses morts, et son fantôme, toutes les 2 minutes. Les bots vont ensemble chercher la relique adverse et la ramènent.
+
 ## Roi de la colline
 
 **Mène ton Héros fantomatique sur l'autel, et tiens-le.** Chaque équipe a un
@@ -334,7 +338,7 @@ l'attente, ou, pour les gagnants, part sans repartir en file.
 ## Ascension des héros
 
 Une Ascension des héros en file se joue en quatre manches, toujours dans cet
-ordre : Broken Tower (Course aux reliques), Scarred Earth (Points de capture), The
+ordre : Cinder Sanctum (Course aux reliques), Scarred Earth (Points de capture), The
 Courtyard (Roi de la colline), puis le Hall of Heroes. La fenêtre Salon dit où tu
 en es pendant que tu cherches une équipe : `Round 2 of 4 · Scarred Earth`.
 Tu ne rencontres jamais qu'une équipe à la même manche, et tu en attends une aussi

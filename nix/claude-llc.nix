@@ -748,7 +748,7 @@ in
           export VIBEWARS_PEEK_DIR="$root/peek"
           # However the loop ends, Ctrl-C and a killed window included, it is
           # no longer between turns.
-          trap 'rm -f "$between"' EXIT
+          trap 'rm -f "$between" "$state/limit-pause"' EXIT
 
           stopped() {
             echo "claude-llc-agent: stopped $employee."
@@ -759,7 +759,7 @@ in
           pause=0
           limitPause=0
           while true; do
-            rm -f "$between" "$idle"
+            rm -f "$between" "$idle" "$state/limit-pause"
             # A nearly full disk holds the next turn (#358); a turn already
             # running is not stopped.
             ${node} ${llcScripts}/agent-loop.mjs disk || true
@@ -778,7 +778,15 @@ in
               limitPause="$(${node} ${llcScripts}/agent-loop.mjs limited "$employee" "$state" "$limitPause")" || limitPause=300
               echo "claude-llc-agent: Claude usage limit reached; next turn for $employee in ''${limitPause}s."
               echo "claude-llc-agent: messages do not wake it. Ctrl-C now to stop for good."
-              ${node} ${llcScripts}/agent-loop.mjs sleep "$limitPause" || stopped
+              # hubd reads `limit-pause` to hibernate the host (#2794), and a
+              # known reset is waited for by the wall clock, which counts
+              # time hibernated.
+              resumeAt="$(${node} ${llcScripts}/agent-loop.mjs limit-pause "$state" "$limitPause")" || resumeAt=""
+              if [ -n "$resumeAt" ]; then
+                ${node} ${llcScripts}/agent-loop.mjs until "$resumeAt" || stopped
+              else
+                ${node} ${llcScripts}/agent-loop.mjs sleep "$limitPause" || stopped
+              fi
             else
               if [ "$turn" -eq 0 ]; then
                 failures=0

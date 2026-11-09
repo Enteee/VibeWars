@@ -16,6 +16,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Paragon spears (#1486): a faster flight, riders on a critical hit and
@@ -492,9 +493,12 @@ describe("Paragon spears (#1486)", () => {
 
 describe("the #1486 spears read as what they do", () => {
   const text = (id: string): string[] =>
-    describeSkill(skill(id), new Map([["paragon.spear-mastery", 12]])).effects.map(
-      (effect) => effect.text,
-    );
+    describeSkill(
+      skill(id),
+      new Map([["paragon.spear-mastery", 12]]),
+      EN_WORDS,
+      EN_NAMES,
+    ).effects.map((effect) => effect.text);
 
   it("faster flight, a critical-hit rider and a failed-hit rider", () => {
     expect([MIGHTY, SWIFT, VICIOUS, REDEMPTION].map(text)).toEqual([

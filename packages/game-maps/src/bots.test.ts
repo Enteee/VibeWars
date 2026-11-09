@@ -166,6 +166,8 @@ describe("Relic Run bots (#2581)", () => {
       matchRules: RELIC_RUN_MATCH_RULES,
       relicField: {
         altar: altar.position,
+        relicTarget: "altar",
+        relicCarry: "own",
         spawns: map.objectives.flatMap((objective) =>
           objective.kind === "relic-spawn"
             ? [{ team: objective.team, position: objective.position }]

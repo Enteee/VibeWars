@@ -23,6 +23,7 @@ import { resolveAttackSkill, resolveSwing, skillBlow } from "../skills/weapon-at
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -418,7 +419,7 @@ describe("Cruel Spear (#921)", () => {
 
 describe("the Paragon shouts read as what they do (#921)", () => {
   const text = (id: string): string[] =>
-    describeSkill(skill(id)).effects.map((effect) => effect.text);
+    describeSkill(skill(id), undefined, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text);
 
   it("Fall Back!, Stand Your Ground! and Cruel Spear", () => {
     expect(text(FALL_BACK)).toEqual([
@@ -745,7 +746,7 @@ describe("Defensive Anthem (#956)", () => {
 
 describe("the #956 Paragon skills read as what they do", () => {
   const text = (id: string): string[] =>
-    describeSkill(skill(id)).effects.map((effect) => effect.text);
+    describeSkill(skill(id), undefined, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text);
 
   it('"Incoming!", "Make Haste!" and Defensive Anthem', () => {
     expect(text(INCOMING)).toEqual([
@@ -906,7 +907,9 @@ describe("Song of Restoration (#999)", () => {
 
   it("reads as what it does", () => {
     const ranks = new Map([["paragon.motivation", 12]]);
-    expect(describeSkill(skill(SONG), ranks).effects.map((effect) => effect.text)).toEqual([
+    expect(
+      describeSkill(skill(SONG), ranks, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text),
+    ).toEqual([
       "Applies Song of Restoration for 10s (the next time it uses a skill: heals for 97)",
     ]);
   });
@@ -1078,7 +1081,7 @@ describe("spear attacks (#1030)", () => {
 
 describe("the #1030 spear attacks read as what they do", () => {
   const text = (id: string): string[] =>
-    describeSkill(skill(id)).effects.map((effect) => effect.text);
+    describeSkill(skill(id), undefined, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text);
 
   it("Barbed, Maiming and Merciless Spear, Stunning Strike and Harrier's Toss", () => {
     expect(

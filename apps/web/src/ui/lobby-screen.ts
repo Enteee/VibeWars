@@ -1,4 +1,4 @@
-import type { MatchMode } from "@vibewars/game-core";
+import type { MatchMode, RelicCarry } from "@vibewars/game-core";
 import type { SizeClass } from "@vibewars/game-maps/size-class";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
@@ -150,6 +150,8 @@ export interface LobbyMap {
   readonly id: string;
   readonly size: SizeClass;
   readonly mode: MatchMode;
+  /** Whose relic a Relic Run map's teams carry (#2695); no other map has one. */
+  readonly relicCarry?: RelicCarry | undefined;
   /** The team sizes it is made for (#2108): a Hosted Game lists those for its own (#2104). */
   readonly teamSizes: readonly number[];
 }
@@ -178,7 +180,7 @@ const MODE_LINES: Readonly<Record<MatchMode, MessageKey>> = {
 
 /** The mode `map` plays, in a line: "Kill Count: most kills in 3 minutes". */
 export function modeLine(map: LobbyMap): string {
-  return t(MODE_LINES[map.mode], {
+  return t(map.relicCarry === "foe" ? "lobby.modeRelicRunFoe" : MODE_LINES[map.mode], {
     minutes: mapMatchRules(map.id, map.mode).timeLimitSeconds / 60,
   });
 }

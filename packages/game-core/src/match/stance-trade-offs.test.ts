@@ -14,6 +14,7 @@ import type { Combatant, Skill } from "../skills/types.js";
 import { resolveAttackSkill, resolveSwing, swingIntervalSeconds } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -332,13 +333,13 @@ describe("Natural Stride (#919)", () => {
 
 describe("the three stances' tooltips (#919)", () => {
   it("say what each costs you", () => {
-    expect(describeStatus("frenzy", new Map([["warrior.strength", 12]]))).toBe(
+    expect(describeStatus("frenzy", new Map([["warrior.strength", 12]]), EN_WORDS, EN_NAMES)).toBe(
       "attacks 33% faster, takes 160% damage",
     );
-    expect(describeStatus("dark-escape")).toBe(
+    expect(describeStatus("dark-escape", undefined, EN_WORDS, EN_NAMES)).toBe(
       "moves at 125% speed, takes half damage, ends if you hit with an attack",
     );
-    expect(describeStatus("natural-stride")).toBe(
+    expect(describeStatus("natural-stride", undefined, EN_WORDS, EN_NAMES)).toBe(
       "moves at 133% speed, 50% chance to block attacks, " +
         "ends if you become hexed or enchanted",
     );

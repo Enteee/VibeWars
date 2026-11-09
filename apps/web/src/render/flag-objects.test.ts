@@ -79,6 +79,8 @@ describe("renderableStand", () => {
 describe("renderableRelics (#1374)", () => {
   const RELICS: RelicField = {
     altar: vec2(1100, 700),
+    relicTarget: "altar",
+    relicCarry: "own",
     spawns: [
       { team: 0, position: vec2(110, 700) },
       { team: 1, position: vec2(2090, 700) },

@@ -11,6 +11,7 @@ import type { Skill } from "../skills/types.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Touch and trap riders (#1966): Strike as One sends the pet, Trapper's
@@ -257,7 +258,7 @@ describe('"Can\'t Touch This!" (#1966)', () => {
 
 describe("tooltips (#1966)", () => {
   const lines = (id: string): string[] =>
-    describeSkill(skillOf(id), RANKS).effects.map(({ text }) => text);
+    describeSkill(skillOf(id), RANKS, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
 
   it("say what each does", () => {
     expect(lines(STRIKE)).toContain("Your pet moves to your target and attacks it");

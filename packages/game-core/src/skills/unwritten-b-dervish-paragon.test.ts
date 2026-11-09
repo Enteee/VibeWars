@@ -17,6 +17,7 @@ import {
   type TriggerEffect,
 } from "./status.js";
 import type { Combatant, Skill, SkillEffect } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Unwritten corpus skills (#2500): Attacker's Insight, Shield of Force and
@@ -257,7 +258,14 @@ describe("Shield of Force (#2500)", () => {
   });
 
   it("says it blocks one attack, and strikes only the attacking foes beside you", () => {
-    expect(describeStatus("shield-of-force", new Map([["dervish.earth-prayers", 12]]))).toBe(
+    expect(
+      describeStatus(
+        "shield-of-force",
+        new Map([["dervish.earth-prayers", 12]]),
+        EN_WORDS,
+        EN_NAMES,
+      ),
+    ).toBe(
       "blocks the next attack. The next time you block: adjacent foes that are attacking: knocks down for 2s. The next time you block: adjacent foes that are attacking suffer Weakness for 17s (−66% weapon damage, −1 to all attributes)",
     );
   });
@@ -339,7 +347,9 @@ describe("Burning Shield (#2500)", () => {
   });
 
   it("says it ends with its one block, melee or projectile, and burns only a melee attacker", () => {
-    expect(describeStatus("burning-shield", new Map([["paragon.leadership", 12]]))).toBe(
+    expect(
+      describeStatus("burning-shield", new Map([["paragon.leadership", 12]]), EN_WORDS, EN_NAMES),
+    ).toBe(
       "blocks the next attack skill. If it is a melee attack: applies Burning for 5s (−7 Health degeneration)",
     );
   });

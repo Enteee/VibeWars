@@ -698,6 +698,8 @@ export default {
   "lobby.modePriestAnnihilation": "Vyhlazení s knězem: poraz všechny nepřátele i jejich kněze",
   "lobby.modeRelicRun":
     "Běh s relikvií: odnes svou relikvii na oltář. Vyhrává nejvíc bodů za {minutes} minut.",
+  "lobby.modeRelicRunFoe":
+    "Běh s relikvií: odnes nepřátelskou relikvii ke svému Přízračnému hrdinovi. Vyhrává náskok 3 bodů, po {minutes} minutách nejvíc bodů.",
   "lobby.notReady": "Nepřipraven",
   "lobby.playBots": "Hrát proti botům",
   "lobby.ready": "Připraven",

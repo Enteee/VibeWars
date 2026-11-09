@@ -16,6 +16,7 @@ import type { Combatant, Skill } from "../skills/types.js";
 import { landBlow, PLAIN_BLOW, weaponSnapshotOf } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Nature rituals 1 (#1745): seven spirits, as Winnowing's, whose auras
@@ -378,6 +379,8 @@ describe("nature rituals 1 (#1745)", () => {
           ["ranger.beast-mastery", 12],
           ["ranger.wilderness-survival", 12],
         ]),
+        EN_WORDS,
+        EN_NAMES,
       ).effects.map(({ text }) => text)[1];
     expect(RITUALS.map(([skillId]) => line(skillId))).toEqual([
       "Non-spirit creatures in its range: +8 armor, +130 maximum health",

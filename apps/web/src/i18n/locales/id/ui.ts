@@ -596,6 +596,8 @@ export default {
   "lobby.modePriestAnnihilation": "Pemusnahan Pendeta: kalahkan semua musuh dan pendetanya",
   "lobby.modeRelicRun":
     "Lari Relik: bawa relikmu ke altar. Poin terbanyak dalam {minutes} menit menang.",
+  "lobby.modeRelicRunFoe":
+    "Lari Relik: bawa relik musuh ke Pahlawan Hantu-mu. Unggul 3 poin menang; setelah {minutes} menit, poin terbanyak menang.",
   "lobby.notReady": "Belum siap",
   "lobby.playBots": "Lawan bot",
   "lobby.ready": "Siap",

@@ -12,6 +12,7 @@ import type { Skill, StateCondition } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The `not` condition (#1670) and the four skills it, or an existing
@@ -120,7 +121,9 @@ function amounts(events: readonly CombatEvent[], kind: CombatEvent["kind"], targ
 
 /** Each line of `id`'s tooltip at rank 12 of `attributeId`. */
 function lines(id: string, attributeId: string): string[] {
-  return describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
+  return describeSkill(skill(id), new Map([[attributeId, 12]]), EN_WORDS, EN_NAMES).effects.map(
+    ({ text }) => text,
+  );
 }
 
 /** `f` starts Meteor Shower on `c`: 5 s of casting. */

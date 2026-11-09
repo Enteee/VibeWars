@@ -591,6 +591,8 @@ export default {
   "lobby.modeNameRelicRun": "วิ่งส่งเรลิก",
   "lobby.modePriestAnnihilation": "กวาดล้างนักบวช: กำจัดศัตรูทั้งหมดและนักบวชของพวกเขา",
   "lobby.modeRelicRun": "วิ่งส่งเรลิก: นำเรลิกไปที่แท่นบูชา แต้มมากสุดใน {minutes} นาทีชนะ",
+  "lobby.modeRelicRunFoe":
+    "วิ่งส่งเรลิก: นำเรลิกของศัตรูไปให้วีรบุรุษวิญญาณของคุณ นำ 3 แต้มชนะ เมื่อครบ {minutes} นาที แต้มมากสุดชนะ",
   "lobby.notReady": "ไม่พร้อม",
   "lobby.playBots": "เล่นกับบอต",
   "lobby.ready": "พร้อม",

@@ -637,6 +637,8 @@ export default {
   "lobby.modePriestAnnihilation": "Præsteudslettelse: besejr alle fjender og deres præst",
   "lobby.modeRelicRun":
     "Relikvieløb: bær din relikvie til alteret. Flest point på {minutes} minutter vinder.",
+  "lobby.modeRelicRunFoe":
+    "Relikvieløb: bær fjendens relikvie til din Spøgelseshelt. 3 points forspring vinder; efter {minutes} minutter vinder flest point.",
   "lobby.notReady": "Ikke klar",
   "lobby.playBots": "Spil mod bots",
   "lobby.ready": "Klar",

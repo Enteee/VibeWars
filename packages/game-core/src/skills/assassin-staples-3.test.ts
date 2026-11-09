@@ -13,6 +13,7 @@ import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
 import { resolveAttackSkill } from "./weapon-attack.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Assassin staples 3 (#1580): Golden Lotus Strike, Golden Phoenix
@@ -171,15 +172,20 @@ describe("the seven are the corpus's (#1580)", () => {
 
   it("says Mantis Touch and Palm Strike count as off-hand attacks", () => {
     for (const id of ["assassin.mantis-touch", "assassin.palm-strike"]) {
-      const texts = describeSkill(skill(id), RANKS).effects.map(({ text }) => text);
+      const texts = describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      );
       expect(texts, id).toContain("Counts as an off-hand attack");
     }
   });
 
   it("says Exhausting Assault's target suffers 10 overcast", () => {
-    const texts = describeSkill(skill("assassin.exhausting-assault"), RANKS).effects.map(
-      ({ text }) => text,
-    );
+    const texts = describeSkill(
+      skill("assassin.exhausting-assault"),
+      RANKS,
+      EN_WORDS,
+      EN_NAMES,
+    ).effects.map(({ text }) => text);
     expect(texts.join(" ")).toMatch(/target suffers 10 overcast/);
   });
 });

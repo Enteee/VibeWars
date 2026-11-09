@@ -15,6 +15,7 @@ import { NO_RANKS, STATUS_DEFINITIONS, aggregateModifiers, type StatusId } from 
 import { chargeAdrenaline, makeCombatant, strikesOf } from "./testing.js";
 import { attackDurationSeconds, resolveAttackSkill } from "./weapon-attack.js";
 import type { Combatant, Skill, SkillEffect } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * The Dervish's enchantments and the skills that spend one (#845), each
@@ -352,9 +353,12 @@ describe("Dervish catalog (#845)", () => {
   });
 
   it("says the loss and what hangs on it in the tooltip", () => {
-    const lines = describeSkill(skill("dervish.signet-of-pious-light"), new Map()).effects.map(
-      (line) => line.text,
-    );
+    const lines = describeSkill(
+      skill("dervish.signet-of-pious-light"),
+      new Map(),
+      EN_WORDS,
+      EN_NAMES,
+    ).effects.map((line) => line.text);
     expect(lines).toEqual([
       "Lose 1 Dervish enchantment",
       expect.stringMatching(/^Heals for \d+$/),

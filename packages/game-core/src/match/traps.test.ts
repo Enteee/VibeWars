@@ -9,6 +9,7 @@ import { describeSkill } from "../skills/describe.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Traps (#1105): set at the setter's feet, easily interrupted while being
@@ -120,7 +121,9 @@ describe("Barbed Trap (#1105)", () => {
     if (skill === undefined) {
       throw new Error("no Barbed Trap");
     }
-    const lines = describeSkill(skill, new Map([[WILDERNESS, 12]])).effects.map(({ text }) => text);
+    const lines = describeSkill(skill, new Map([[WILDERNESS, 12]]), EN_WORDS, EN_NAMES).effects.map(
+      ({ text }) => text,
+    );
     expect(lines).toEqual([
       "Sets a trap at your location for 90 seconds",
       "When sprung, foes nearby: deals 20 piercing damage",
@@ -321,7 +324,9 @@ describe("Flame Trap (#1113)", () => {
     if (skill === undefined) {
       throw new Error("no Flame Trap");
     }
-    const lines = describeSkill(skill, new Map([[WILDERNESS, 12]])).effects.map(({ text }) => text);
+    const lines = describeSkill(skill, new Map([[WILDERNESS, 12]]), EN_WORDS, EN_NAMES).effects.map(
+      ({ text }) => text,
+    );
     expect(lines).toEqual([
       "Sets a trap at your location for 90 seconds",
       "Springs by itself as its time runs out",
