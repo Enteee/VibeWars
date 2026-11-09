@@ -60,15 +60,16 @@ export function nextStreak(streak: number, result: QueuedResult): number {
 }
 
 /**
- * The Heroes' Ascent round after `result` at `round` (#1996): a win
- * moves on, and in the Hall defends it; a defeat or leaving before the
- * end starts again at the first; a match lost to its host leaving
- * stands.
+ * The Heroes' Ascent round after `result` of a party at `round` that
+ * played round `played` (#1996): a win moves on from the map played,
+ * which a party skipping ahead had not reached (#2687), and in the Hall
+ * defends it; a defeat or leaving before the end starts again at the
+ * first; a match lost to its host leaving stands.
  */
-export function nextAscentRound(round: number, result: QueuedResult): number {
+export function nextAscentRound(round: number, played: number, result: QueuedResult): number {
   switch (result) {
     case "win":
-      return Math.min(round + 1, ASCENT_PROGRESSION.length - 1);
+      return Math.min(played + 1, ASCENT_PROGRESSION.length - 1);
     case "loss":
     case "forfeit":
       return 0;

@@ -160,8 +160,8 @@ async function serve() {
     `--host 127.0.0.1 --port ${String(PORT)} --strictPort`;
   const child = spawn("sh", ["-c", command], {
     stdio: ["ignore", "ignore", "inherit"],
-    // The one build where `?stress=` works.
-    env: { ...process.env, VITE_VIBEWARS_STRESS: "on" },
+    // The one build where `?stress=` works, and with no splash in front of the menu.
+    env: { ...process.env, VITE_VIBEWARS_STRESS: "on", VITE_VIBEWARS_SPLASH: "off" },
     detached: true,
   });
   // `exitCode` stays null while it runs, as a server should.

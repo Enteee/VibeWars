@@ -1195,11 +1195,10 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
         board: board.board(),
         mode: "random-arena-2v2",
         ascentRound: null,
-        teamCount: 2,
         ...(party === undefined ? {} : { party }),
         now: () => now,
         newTicketKey: () => keyOf(String((fresh += 1)).padStart(64, "5")),
-        mapPool: ["other-arena"],
+        round: () => ({ mapPool: ["other-arena"], teamCount: 2, skipping: false }),
         hardNat: false,
       });
     const clients = [

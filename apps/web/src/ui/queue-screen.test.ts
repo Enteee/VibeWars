@@ -123,15 +123,21 @@ describe("nextStreak (#881)", () => {
 
 describe("nextAscentRound (#1996)", () => {
   it("moves on with a win, to the Hall and no further", () => {
-    expect(nextAscentRound(0, "win")).toBe(1);
-    expect(nextAscentRound(6, "win")).toBe(7);
-    expect(nextAscentRound(7, "win")).toBe(7);
+    expect(nextAscentRound(0, 0, "win")).toBe(1);
+    expect(nextAscentRound(6, 6, "win")).toBe(7);
+    expect(nextAscentRound(7, 7, "win")).toBe(7);
+  });
+
+  it("moves on from the map played when it skipped ahead (#2687)", () => {
+    expect(nextAscentRound(2, 4, "win")).toBe(5);
+    expect(nextAscentRound(2, 4, "loss")).toBe(0);
+    expect(nextAscentRound(2, 4, "host-left")).toBe(2);
   });
 
   it("starts again at the first after a defeat or a forfeit, and stands when the host left", () => {
-    expect(nextAscentRound(2, "loss")).toBe(0);
-    expect(nextAscentRound(3, "forfeit")).toBe(0);
-    expect(nextAscentRound(2, "host-left")).toBe(2);
+    expect(nextAscentRound(2, 2, "loss")).toBe(0);
+    expect(nextAscentRound(3, 3, "forfeit")).toBe(0);
+    expect(nextAscentRound(2, 2, "host-left")).toBe(2);
   });
 });
 

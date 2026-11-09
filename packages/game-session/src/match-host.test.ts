@@ -171,8 +171,12 @@ describe("hero rank (#2702)", () => {
   it("shows a hello's rank in the snapshot and the summary", async () => {
     const match = startMatch();
     const { connection } = await match.join(hello({ name: "Ann", heroRank: 7 }));
+    await match.step(1 / RULESET.tickRateHz);
     expect(playerIn(connection.getSnapshot(), connection.selfSessionId)?.heroRank).toBe(7);
-    expect(connection.getSnapshot().summary).toBeUndefined();
+
+    await match.host.close("host-left");
+    await settle();
+    expect(connection.getSnapshot().summary?.map(({ heroRank }) => heroRank)).toEqual([7]);
   });
 });
 
