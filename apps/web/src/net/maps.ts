@@ -102,7 +102,13 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
   {
     "random-arena": undefined,
     "team-arena": ["annihilation", "kill-count", "priest-annihilation"],
-    "heroes-ascent": ["relic-run", "king-of-the-hill", "capture-points"],
+    "heroes-ascent": [
+      "annihilation",
+      "priest-annihilation",
+      "relic-run",
+      "king-of-the-hill",
+      "capture-points",
+    ],
     gvg: ["guild-battle"],
     "hosted-game": undefined,
   };
