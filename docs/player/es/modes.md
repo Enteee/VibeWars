@@ -320,8 +320,8 @@ espera o, para los ganadores, sale sin volver a la cola.
 
 ## Ascenso de los Héroes
 
-Un Ascenso de los Héroes en cola son seis rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Broken
-Tower (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Courtyard (Rey
+Un Ascenso de los Héroes en cola son seis rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Cinder
+Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Courtyard (Rey
 de la colina) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
 buscas un equipo: `Round 2 of 6 · Blackwater Ford`. Solo te enfrentas a un equipo de
 tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. Una ronda en
