@@ -337,10 +337,10 @@ l'attente, ou, pour les gagnants, part sans repartir en file.
 
 ## Ascension des héros
 
-Une Ascension des héros en file se joue en six manches, toujours dans cet
-ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The
+Une Ascension des héros en file se joue en sept manches, toujours dans cet
+ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Barrow Field (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The
 Courtyard (Roi de la colline), puis le Hall of Heroes. La fenêtre Salon dit où tu
-en es pendant que tu cherches une équipe : `Round 2 of 6 · Blackwater Ford`.
+en es pendant que tu cherches une équipe : `Round 2 of 7 · Blackwater Ford`.
 Tu ne rencontres jamais qu'une équipe à la même manche, et tu en attends une aussi
 longtemps qu'il faut : aucun bot ne comble. Une manche sur une carte faite pour
 trois équipes en attend trois ; deux équipes qui ont attendu une troisième pendant
@@ -369,10 +369,9 @@ course. La manche est retenue par l'hôte de ton groupe, et seulement jusqu'à c
 que tu fermes l'onglet. Un salon d'Ascension des héros rejoint par code joue la
 carte de la manche 1.
 
-**Barrow Field** est une arène de l'Ascension construite mais pas encore dans la file : pour l'instant, tu la choisis en Partie hébergée. C'est une Annihilation de prêtre en 8v8 parmi de basses buttes de terre, où le prêtre relève ses morts toutes les 2 minutes. Porte ton drapeau sur le **Storm Beacon** au centre : il frappe un ennemi au hasard à portée d'oreille pour 50 dégâts de foudre toutes les 2,5 secondes, jusqu'à ce que l'autre équipe y plante son drapeau. Chaque frappe est un éclair du phare vers sa victime, visible par les deux équipes.
+**Barrow Field** est une arène de l'Ascension que tu peux aussi choisir en Partie hébergée. C'est une Annihilation de prêtre en 8v8 parmi de basses buttes de terre, où le prêtre relève ses morts toutes les 2 minutes. Porte ton drapeau sur le **Storm Beacon** au centre : il frappe un ennemi au hasard à portée d'oreille pour 50 dégâts de foudre toutes les 2,5 secondes, jusqu'à ce que l'autre équipe y plante son drapeau. Chaque frappe est un éclair du phare vers sa victime, visible par les deux équipes.
 
-Trois arènes d'Ascension sont construites mais pas encore dans la course en file :
-pour l'instant, tu les choisis en Partie hébergée : **The Hollow Deep** (Annihilation
+Trois arènes d'Ascension se choisissent aussi en Partie hébergée : **The Hollow Deep** (Annihilation
 8v8, trois tunnels sinueux autour d'un rocher central), **Blackwater Ford**
 (Annihilation de prêtre 8v8 sur un tout petit gué, les bases presque en vue, le
 prêtre relevant ses morts toutes les 2 minutes) et **Mosslit Cairns** (Points de

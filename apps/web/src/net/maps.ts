@@ -77,7 +77,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   theCourtyard,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
   hallOfHeroes,
-  // The Heroes' Ascent's own (#2694): a Hosted Game's pick until the progression places it.
+  // The Heroes' Ascent's own (#2694), and a Hosted Game's pick.
   barrowField,
   // The Heroes' Ascent's own (#2693): a Hosted Game's pick until the progression places them.
   hollowDeep,
@@ -206,6 +206,7 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
 export const ASCENT_PROGRESSION: readonly string[] = [
   "hollow-deep",
   "blackwater-ford",
+  "barrow-field",
   // Unholy Temples' slot.
   "cinder-sanctum",
   "mosslit-cairns",

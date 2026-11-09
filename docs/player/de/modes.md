@@ -267,9 +267,9 @@ zurück. Ein Knopf unter dem Ergebnis überspringt die Wartezeit oder geht für 
 
 ## Aufstieg der Helden
 
-Ein Aufstieg der Helden aus der Warteschlange hat sechs Runden, immer in dieser Reihenfolge: The Hollow Deep (Vernichtung), Blackwater Ford (Priestervernichtung), Cinder Sanctum (Reliktlauf),
+Ein Aufstieg der Helden aus der Warteschlange hat sieben Runden, immer in dieser Reihenfolge: The Hollow Deep (Vernichtung), Blackwater Ford (Priestervernichtung), Barrow Field (Priestervernichtung), Cinder Sanctum (Reliktlauf),
 Mosslit Cairns (Punkte erobern), The Courtyard (King of the Hill), dann die Hall of Heroes. Das Lobby-Fenster sagt dir,
-wo du bist, während du ein Team suchst: `Runde 2 von 6 · Blackwater Ford`. Du triffst immer nur ein Team in derselben Runde
+wo du bist, während du ein Team suchst: `Runde 2 von 7 · Blackwater Ford`. Du triffst immer nur ein Team in derselben Runde
 und wartest so lange wie nötig: Keine Bots springen ein. Eine Runde auf einer Karte für drei Teams wartet auf drei; zwei
 Teams, die 30 Sekunden auf ein drittes gewartet haben, spielen stattdessen gegeneinander, ebenso zwei, deren drittes nie
 in der Lobby erscheint. Gewinnst du, steigt deine Gruppe nach 20 Sekunden von selbst zur nächsten Karte auf; gewinnst du
@@ -289,10 +289,9 @@ Niederlage beginnt von vorn: Der nächste Lauf stimmt neu ab. Das Gleiche gilt, 
 folgst, deren Host für den alten Lauf nicht bürgen kann. Die Runde merkt sich der Host deiner Gruppe, und nur, bis du den
 Tab schließt. Eine Lobby des Aufstiegs der Helden, der per Code beigetreten wurde, spielt die Karte von Runde 1.
 
-**Barrow Field** ist eine Arena des Aufstiegs, die gebaut, aber noch nicht in der Warteschlange ist. Du wählst sie daher vorerst in einem Gehosteten Spiel: 8v8 Priestervernichtung zwischen niedrigen Erdhügeln, und der Priester erweckt alle 2 Minuten seine Toten. Trage deine Flagge auf das **Storm Beacon** in der Mitte, und es trifft alle 2,5 Sekunden einen zufälligen Gegner in Hörweite mit 50 Blitzschaden, bis das andere Team dort seine Flagge pflanzt. Jeder Einschlag ist ein Blitz vom Beacon zum Getroffenen, für beide Teams sichtbar.
+**Barrow Field** ist eine Arena des Aufstiegs, die du auch in einem Gehosteten Spiel wählen kannst: 8v8 Priestervernichtung zwischen niedrigen Erdhügeln, und der Priester erweckt alle 2 Minuten seine Toten. Trage deine Flagge auf das **Storm Beacon** in der Mitte, und es trifft alle 2,5 Sekunden einen zufälligen Gegner in Hörweite mit 50 Blitzschaden, bis das andere Team dort seine Flagge pflanzt. Jeder Einschlag ist ein Blitz vom Beacon zum Getroffenen, für beide Teams sichtbar.
 
-Drei Aufstiegs-Arenen sind gebaut, aber noch nicht im Lauf aus der Warteschlange, also wählst du sie vorerst in einem
-Gehosteten Spiel: **The Hollow Deep** (8v8 Vernichtung, drei gewundene Tunnel um einen zentralen Felsen), **Blackwater
+Drei Aufstiegs-Arenen kannst du auch in einem Gehosteten Spiel wählen: **The Hollow Deep** (8v8 Vernichtung, drei gewundene Tunnel um einen zentralen Felsen), **Blackwater
 Ford** (8v8 Priestervernichtung an einer winzigen Furt, die Basen fast in Sichtweite, der Priester holt alle 2 Minuten seine
 Toten zurück) und **Mosslit Cairns** (8v8 Punkte erobern, fünf Steinhügel in einem flachen Zickzack zwischen den Basen).
 

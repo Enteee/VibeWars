@@ -133,6 +133,7 @@ describe("team sizes (#2108)", () => {
     expect(modeMapIds()["heroes-ascent"]).toEqual([
       "hollow-deep",
       "blackwater-ford",
+      "barrow-field",
       "cinder-sanctum",
       "mosslit-cairns",
       "the-courtyard",
@@ -296,6 +297,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
     expect(ASCENT_PROGRESSION.map((id) => [id, hostMap(id)?.mode])).toEqual([
       ["hollow-deep", "annihilation"],
       ["blackwater-ford", "priest-annihilation"],
+      ["barrow-field", "priest-annihilation"],
       ["cinder-sanctum", "relic-run"],
       ["mosslit-cairns", "capture-points"],
       ["the-courtyard", "king-of-the-hill"],
@@ -304,6 +306,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
     expect(ASCENT_PROGRESSION.map((_, round) => mapName(ascentMapId(round)))).toEqual([
       "The Hollow Deep",
       "Blackwater Ford",
+      "Barrow Field",
       "Cinder Sanctum",
       "Mosslit Cairns",
       "The Courtyard",
