@@ -135,6 +135,8 @@ export interface MatchOutcome {
   readonly aggression: readonly number[];
   /** This player's morale at the end (#2686), in percent; 0 for a spectator. */
   readonly selfMorale: number;
+  /** Seconds on the Elite Zaishen Battle's clock (#2692); `undefined` in any other match. */
+  readonly clearSeconds: number | undefined;
 }
 
 /**
@@ -968,6 +970,7 @@ export async function startMatchView(
         selfTeam: self?.team,
         aggression: match.aggression,
         selfMorale: self?.morale ?? 0,
+        clearSeconds: match.clearSeconds,
       });
     }
     // The snapshot that says "finished" may land a frame before the `ended` that carries it.

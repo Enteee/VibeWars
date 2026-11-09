@@ -10,6 +10,8 @@ import {
   validatePlayerBuild,
   type PlayerBuild,
   type TeamCount,
+  ELITE_ZAISHEN_MAP,
+  drawZaishen,
 } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
@@ -618,6 +620,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   /** The player keys of members the host removed (#2746): refused for the lobby's life. */
   const removedKeys = new Set<string>();
   let mapId = queued?.group.mapId ?? defaultMap;
+  /** The match on is a run's Elite Zaishen Battle (#2692). */
+  let zaishenFight = false;
+  /** This party won it, and its next queue is the run's first (#2692). */
+  let zaishenBeaten = false;
   /** A Hosted Game's players a side, the host's pick (#2104). */
   let hostedSize: LobbyTeamSize = options.hostedTeamSize;
   /** A Team Arena's players a side, its leader's pick (#2107). */
@@ -908,6 +914,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const start = (
     assigned: ReadonlyMap<string, PlayerBuild> = new Map(),
     rejected: ReadonlySet<WireTeam> = new Set(),
+    playedMap?: string,
   ): void => {
     countdownEndsAt = undefined;
     phase = "starting";
@@ -964,7 +971,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         id,
         host: startMatch({
           matchId: id,
-          mapId,
+          mapId: playedMap ?? mapId,
           mode,
           seats,
           teamCount: queued?.group.teams.length === 3 ? 3 : 2,
@@ -993,7 +1000,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     for (const [peerId, seat] of seats) {
       if (!seat.bot) {
         const message: WireMatchStart = {
-          mapId,
+          mapId: playedMap ?? mapId,
           matchId: id,
           teamPlanRejected: rejected.has(seat.team),
         };
@@ -1231,6 +1238,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         ascentLock = { chosen, claimers: seats.map((seat) => seat.holder) };
       }
       teamLobby = undefined;
+      if (lobby.ascentRound === 0 && !zaishenBeaten) {
+        fightZaishen(seats);
+        return;
+      }
       beginQueueing(seats, lobby.ascentRound);
       return;
     }
@@ -1283,6 +1294,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (matchmaking === undefined) {
       return;
     }
+    zaishenBeaten = false;
     const nonce = matchmaking.newNonce();
     const current: NonNullable<typeof queueing> = {
       nonce,
@@ -1407,6 +1419,33 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
     nameSlotBots(assigned);
     start(assigned);
+  };
+
+  /** A run's first step (#2692): the party's seats against the six Zaishen, no queue. */
+  const fightZaishen = (seats: readonly PartySeat[]): void => {
+    const assigned = new Map<string, PlayerBuild>();
+    for (const seat of seats) {
+      const holder = seat.holder === null ? undefined : peerMember(seat.holder);
+      assigned.set(holder?.team === 0 ? holder.id : addBot(0), seat.build);
+    }
+    const names = new Map<string, string>();
+    for (const zaishen of drawZaishen(random)) {
+      const id = addBot(1);
+      assigned.set(id, zaishen.build);
+      names.set(id, zaishen.name);
+    }
+    nameSlotBots(assigned);
+    for (const [id, name] of names) {
+      const bot = members.get(id);
+      if (bot !== undefined) {
+        bot.name = name;
+      }
+    }
+    zaishenFight = true;
+    start(assigned, new Set(), ELITE_ZAISHEN_MAP);
+    if (match === undefined) {
+      zaishenFight = false;
+    }
   };
 
   /** A party member's key for its consent (#1766): once each, and no key twice. */
@@ -1760,10 +1799,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         ) {
           return false;
         }
-        // Past round 0 a run keeps its Team Build (#2539); round 0, or no
-        // run recorded, picks again.
+        // Past round 0 a run keeps its Team Build (#2539), as does the queue
+        // after its Elite Zaishen Battle (#2692); else it picks again.
         const lock =
-          command.ascentRound !== null && command.ascentRound > 0 ? ascentLock : undefined;
+          command.ascentRound !== null && (command.ascentRound > 0 || zaishenBeaten)
+            ? ascentLock
+            : undefined;
         ascentLock = lock;
         // The party is everyone here, on the one side; its seats nobody
         // claims are bots.
@@ -2906,6 +2947,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         // round, and ready cleared, so nobody is dragged into a match
         // they did not confirm.
         const { winningTeam } = match.host;
+        zaishenBeaten = zaishenFight && winningTeam === 0;
+        zaishenFight = false;
         if (match.host.draining) {
           match.host.retire();
           draining.push(match);

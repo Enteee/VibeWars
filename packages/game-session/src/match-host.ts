@@ -27,6 +27,7 @@ import {
   type FlagField,
   type RelicField,
   type GhostField,
+  type StartLine,
   type Vec2,
   type GuildLord,
   type BaseGuard,
@@ -151,6 +152,8 @@ export interface HostMap {
   readonly ghostField: GhostField | undefined;
   /** Its shrines (#1378), `[]` but on a Capture Points map. */
   readonly capturePoints: readonly Vec2[];
+  /** Its start line (#2692), `undefined` but on the Elite Zaishen Battle. */
+  readonly startLine: StartLine | undefined;
   /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
   readonly guards: readonly BaseGuard[];
 }
@@ -337,6 +340,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     relicField: map.relicField,
     ghostField: map.ghostField,
     capturePoints: map.capturePoints,
+    startLine: map.startLine,
     guards: map.guards,
   });
   const seats = new Map<string, Seat>();
@@ -1262,6 +1266,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         winningTeam: wireTeam(sim.outcome.winningTeam),
         endReason: sim.outcome.reason ?? "time",
         summary: summary(),
+        clearSeconds: sim.clearSeconds,
       };
       transport.send("ended", ended, live);
       options.publishRecord(record(sim.outcome.reason ?? "time"));
@@ -1324,7 +1329,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       finished = true;
       observers.clear();
       delayed = [];
-      const ended: WireEnded = { winningTeam: null, endReason: reason, summary: summary() };
+      const ended: WireEnded = {
+        winningTeam: null,
+        endReason: reason,
+        summary: summary(),
+        clearSeconds: null,
+      };
       transport.send("ended", ended);
       await transport.leave();
     },
