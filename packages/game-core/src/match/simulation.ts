@@ -798,6 +798,15 @@ export interface PendingSkill {
   unreachableSeconds: number;
 }
 
+/** A rect on a layer: the Elite Zaishen Battle's start line (#2692). */
+export interface StartLine {
+  readonly layer: number;
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface MatchSimulationOptions {
   readonly seed: string | number;
   readonly ruleset?: Ruleset;
@@ -856,6 +865,8 @@ export interface MatchSimulationOptions {
    * or `[]`: none.
    */
   readonly capturePoints?: readonly CapturePointSite[];
+  /** The Elite Zaishen Battle's start line (#2692); none if omitted. */
+  readonly startLine?: StartLine | undefined;
   /** The map's gates (#2691); none if omitted. */
   readonly gates?: readonly GateField[];
   /**
@@ -1296,6 +1307,9 @@ export class MatchSimulation {
   #claims: number[] = [];
   /** Capture Points' shrines (#1378), who owns each and how far toward whom; `[]` without them. */
   #capturePoints: readonly CapturePoint[];
+  readonly #startLine: StartLine | undefined;
+  /** When team 0 first entered the start line (#2692); `undefined` until it does. */
+  #startLineCrossedAt: number | undefined;
   /** What bots play for (#2542), rebuilt when the shrines change. */
   #botObjectives: BotObjectives = NO_OBJECTIVES;
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
@@ -1355,6 +1369,7 @@ export class MatchSimulation {
       this.#relicField === undefined ? undefined : initialRelics(this.#relicField);
     this.#ghostField = options.ghostField;
     this.#capturePoints = initialCapturePoints(options.capturePoints ?? []);
+    this.#startLine = options.startLine;
     this.#refreshBotObjectives();
     for (const spec of options.participants ?? []) {
       this.add(spec);
@@ -1451,6 +1466,16 @@ export class MatchSimulation {
 
   public get phase(): MatchPhase {
     return this.#outcome.phase;
+  }
+
+  /**
+   * Seconds on the start line's clock (#2692), `null` on a map without
+   * one. A party that never crossed it is timed from the match's start.
+   */
+  public get clearSeconds(): number | null {
+    return this.#startLine === undefined
+      ? null
+      : this.#elapsedSeconds - (this.#startLineCrossedAt ?? 0);
   }
 
   /** Who won and why, once `phase` is `"finished"`. */
@@ -3977,6 +4002,7 @@ export class MatchSimulation {
     // After every death, before the match end: a point on the last tick counts.
     this.#advanceRelics();
     this.#advanceAltar(dt);
+    this.#watchStartLine();
     this.#advanceCapturePoints(dt);
     this.#advanceGates(dt);
     // After every death this step, so two teams wiped in it both lose.
@@ -6528,6 +6554,29 @@ export class MatchSimulation {
     }
     for (const gate of closing) {
       this.#projectiles = this.#projectiles.map((shot) => cutShotAtGate(shot, gate));
+    }
+  }
+
+  /** The first of team 0 on the start line starts the clock (#2692). */
+  #watchStartLine(): void {
+    const line = this.#startLine;
+    if (line === undefined || this.#startLineCrossedAt !== undefined || this.phase !== "active") {
+      return;
+    }
+    for (const record of this.#participants.values()) {
+      if (
+        countsForTeam(record) &&
+        record.combatant.team === 0 &&
+        !record.combatant.dead &&
+        record.layer === line.layer &&
+        record.position.x >= line.x &&
+        record.position.x <= line.x + line.width &&
+        record.position.y >= line.y &&
+        record.position.y <= line.y + line.height
+      ) {
+        this.#startLineCrossedAt = this.#elapsedSeconds;
+        return;
+      }
     }
   }
 

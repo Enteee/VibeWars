@@ -146,9 +146,9 @@ describe("nextAscentMorale (#2686)", () => {
 });
 
 describe("ascentStartMorale (#2686)", () => {
-  it("sends 0 outside Heroes' Ascent and at a run's first map, and the carried morale past it", () => {
+  it("sends 0 outside Heroes' Ascent and the carried morale in it", () => {
     expect(ascentStartMorale(null, -30)).toBe(0);
-    expect(ascentStartMorale(0, -30)).toBe(0);
+    expect(ascentStartMorale(0, 10)).toBe(10);
     expect(ascentStartMorale(2, -30)).toBe(-30);
   });
 });

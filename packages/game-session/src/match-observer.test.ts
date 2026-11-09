@@ -231,7 +231,12 @@ describe("a match's observers (#480)", () => {
       timeoutMs: 1000,
     });
     // On its way before the observe was heard, as a draining match's end is.
-    const ended: WireEnded = { winningTeam: 0, endReason: "annihilation", summary: [] };
+    const ended: WireEnded = {
+      winningTeam: 0,
+      endReason: "annihilation",
+      summary: [],
+      clearSeconds: null,
+    };
     match.hostTransport.send("ended", ended, "viewer");
     await settle();
     const viewer = await viewing;
