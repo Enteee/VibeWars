@@ -1516,11 +1516,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     return true;
   };
 
-  /**
-   * Apply `command` from `member` in a Team Lobby (#1458); whether
-   * anything changed. Each command counts only in its own stage, and
-   * only from a member on a side; the host's team size in the vote.
-   */
   /** `member` has acted, so is ready (#2872). False when that ended the stage. */
   const markReady = (lobby: TeamLobby, member: Member): boolean => {
     member.ready = true;
@@ -1531,6 +1526,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     return true;
   };
 
+  /**
+   * Apply `command` from `member` in a Team Lobby (#1458); whether
+   * anything changed. Each command counts only in its own stage, and
+   * only from a member on a side; the host's team size in the vote.
+   */
   const applyTeam = (lobby: TeamLobby, member: Member, command: WireLobbyCommand): boolean => {
     if (command.kind === "select-team-size") {
       return pickTeamSize(member, command.size);
