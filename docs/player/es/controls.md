@@ -64,7 +64,7 @@ Estas teclas son fijas:
 ## La barra superior
 
 Fuera de una partida, la barra superior tiene **[?]** (esta Ayuda), **⚙**
-(Opciones), **Sala** (tu enlace de invitación, Abierta/Cerrada, Salir y quién
+(Opciones), **Sala** (tu enlace de invitación, Unirse a una sala, Abierta/Cerrada, Salir y quién
 está en tu sala; su insignia los cuenta), **♪** (música: qué suena y a qué
 volumen), silenciar el sonido y pantalla completa. En una partida, los mismos
 botones, menos Sala, están arriba a la derecha de la pantalla. En una ventana

@@ -102,7 +102,7 @@ de quién está dentro; su insignia los cuenta.
   no entra nadie nuevo. Un invitado ve el candado y "Sala cerrada" en la
   ventana de Sala mientras está cerrada.
 - **Unirse:** abre el enlace de invitación que te enviaron, en una pestaña
-  nueva o pegado en la barra de direcciones de una ya abierta. Tu propia sala
+  nueva o pegado en la barra de direcciones de una ya abierta. **Unirse a una sala**, en la ventana Sala, también acepta el enlace pegado. Tu propia sala
   sigue abierta hasta que entras. Una vez dentro, la ventana dice **Sala**, y
   su **Salir** te devuelve a una sala propia nueva, con un enlace de invitación
   nuevo. Un enlace abierto en la pantalla de una sala o en una partida te pide
