@@ -50,6 +50,8 @@ export interface PlayerSnapshot {
   readonly y: number;
   /** Where the player faces, radians, `atan2` convention, 0 = +x (#187). */
   readonly facing: number;
+  /** The discrete layer it stands on (ADR-0051): how the renderer lifts and orders it. */
+  readonly layer: number;
   /** Who this player is targeting, or `undefined` for no target. */
   readonly targetSessionId: string | undefined;
   /** Who this player is attacking with their weapon, or `undefined` (#160). */
@@ -279,10 +281,17 @@ export type CombatMessage = WireCombatMessage<CombatEvent>;
 /** What one `"combat"` message carries: a tick's entries, in combat-log order (#288). */
 export type CombatBatchMessage = WireCombatBatchMessage<CombatEvent>;
 
+/**
+ * Where a match's link to its host stands. `host-left` is the host saying
+ * it is going; `lost` is it gone without a word, which a guest cannot tell
+ * from its own drop.
+ */
+export type ConnectionState = "online" | "reconnecting" | "lost" | "host-left";
+
 export interface MatchConnection {
   readonly selfSessionId: string;
   /** Notifies when the connection drops and when it comes back. */
-  onConnectionChange(handler: (state: "online" | "reconnecting" | "lost") => void): void;
+  onConnectionChange(handler: (state: ConnectionState) => void): void;
   /** The match's static geometry, received once on join (brief §19). */
   readonly map: MapDescriptor;
   /**

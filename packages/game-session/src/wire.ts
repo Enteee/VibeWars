@@ -733,6 +733,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     x: player.x,
     y: player.y,
     facing: player.facing,
+    layer: player.layer,
     targetSessionId: absent(player.targetId),
     attackTargetSessionId: absent(player.attackTargetId),
     walking: player.walking,

@@ -35,6 +35,7 @@ function actor(
     bot: false,
     position: vec2(x, y),
     facing: 0,
+    layer: 0,
     weaponId: undefined,
     swingElapsed: 0,
     swingTotal: 0,
@@ -269,10 +270,10 @@ describe("compassView (#1056)", () => {
       arena({
         walls: [
           // From 850 east to 2550 east: its inner half is on the compass.
-          { kind: "rect", x: 1850, y: 990, width: 1700, height: 20 },
+          { kind: "rect", layer: 0, x: 1850, y: 990, width: 1700, height: 20 },
           // A small square just north-west of you.
-          { kind: "polygon", points: [vec2(900, 900), vec2(950, 900), vec2(950, 950)] },
-          { kind: "rect", x: 5000, y: 5000, width: 100, height: 100 },
+          { kind: "polygon", layer: 0, points: [vec2(900, 900), vec2(950, 900), vec2(950, 950)] },
+          { kind: "rect", layer: 0, x: 5000, y: 5000, width: 100, height: 100 },
         ],
       }),
       "me",

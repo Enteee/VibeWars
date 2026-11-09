@@ -1,3 +1,4 @@
+import { FLAT_STRUCTURE } from "./arena-snapshot.js";
 import { describe, expect, it } from "vitest";
 
 import { CREATURE_LOOKS, vec2 } from "@vibewars/game-core";
@@ -151,6 +152,7 @@ function actor(
     bot: false,
     position: vec2(x, y),
     facing: 0,
+    layer: 0,
     weaponId: undefined,
     swingElapsed: 0,
     swingTotal: 0,
@@ -214,6 +216,7 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [],
       walls: [],
+      structure: FLAT_STRUCTURE,
       shrines: [],
       flags: [],
       stand: undefined,
@@ -239,6 +242,7 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [self],
       walls: [],
+      structure: FLAT_STRUCTURE,
       shrines: [],
       flags: [],
       stand: undefined,
@@ -264,6 +268,7 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [self],
       walls: [],
+      structure: FLAT_STRUCTURE,
       shrines: [],
       flags: [],
       stand: undefined,
@@ -289,6 +294,7 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [self],
       walls: [],
+      structure: FLAT_STRUCTURE,
       shrines: [],
       flags: [],
       stand: undefined,
@@ -315,6 +321,7 @@ describe("actorAtPoint", () => {
     const snapshot: ArenaSnapshot = {
       actors: [far, near],
       walls: [],
+      structure: FLAT_STRUCTURE,
       shrines: [],
       flags: [],
       stand: undefined,
@@ -343,6 +350,7 @@ describe("actorAtPoint and the dead", () => {
     const snapshot: ArenaSnapshot = {
       actors: [corpse, living],
       walls: [],
+      structure: FLAT_STRUCTURE,
       shrines: [],
       flags: [],
       stand: undefined,
@@ -368,6 +376,7 @@ describe("actorAtPoint and the dead", () => {
     const snapshot: ArenaSnapshot = {
       actors: [corpse],
       walls: [],
+      structure: FLAT_STRUCTURE,
       shrines: [],
       flags: [],
       stand: undefined,

@@ -6,6 +6,7 @@ import type {
   MatchConnection,
   MatchSnapshot,
   ObserverConnection,
+  ConnectionState,
 } from "@vibewars/game-session";
 
 import { attachMatchSounds } from "./audio/match-sounds.js";
@@ -49,6 +50,8 @@ import {
   toRenderableGroundEffect,
   type ArenaSnapshot,
   type RenderableWall,
+  type MapStructure,
+  FLAT_STRUCTURE,
 } from "./render/arena-snapshot.js";
 import { attackCastOf } from "./render/attack-clock.js";
 import { CREATURE_ARMS } from "./render/creature-arms.js";
@@ -80,7 +83,14 @@ import {
   updateRecharges,
 } from "./ui/hud.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
-import { mapFlagField, mapMode, mapRelicField, mapShrines, type MapShrine } from "./net/maps.js";
+import {
+  mapFlagField,
+  mapMode,
+  mapRelicField,
+  mapShrines,
+  mapStructure,
+  type MapShrine,
+} from "./net/maps.js";
 import {
   renderableCapturePoints,
   renderableGatePlates,
@@ -111,7 +121,7 @@ import { button, setToastHost, toast } from "./ui/kit.js";
 export interface MatchViewCallbacks {
   readonly onLeave: () => void;
   /** Surfaces connection trouble so the shell can tell the player. */
-  readonly onConnectionChange?: (state: "online" | "reconnecting" | "lost") => void;
+  readonly onConnectionChange?: (state: ConnectionState) => void;
   /** Once, on the first snapshot of the match finished (#881): how it ended for this player. */
   readonly onFinished?: (outcome: MatchOutcome) => void;
 }
@@ -157,7 +167,7 @@ interface ViewedMatch {
   getSnapshot(): MatchSnapshot | undefined;
   onCombat(handler: (message: CombatMessage) => void): void;
   /** A watcher is never reconnecting: its host gone, it is lost. */
-  onConnectionChange(handler: (state: "online" | "reconnecting" | "lost") => void): void;
+  onConnectionChange(handler: (state: ConnectionState) => void): void;
   disconnect(): Promise<void>;
 }
 
@@ -198,9 +208,7 @@ async function viewedMatch(options: MatchViewOptions): Promise<ViewedMatch> {
       watched.onCombat(handler);
     },
     onConnectionChange: (handler) => {
-      watched.onLost(() => {
-        handler("lost");
-      });
+      watched.onLost(handler);
     },
     disconnect: () => watched.disconnect(),
   };
@@ -221,10 +229,10 @@ export interface MatchView {
   dispose(): Promise<void>;
 }
 
-export function toRenderableWall(wall: WallDescriptor): RenderableWall {
+export function toRenderableWall(wall: WallDescriptor, layer: number): RenderableWall {
   return wall.kind === "rect"
-    ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
-    : { kind: "polygon", points: wall.points };
+    ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height, layer }
+    : { kind: "polygon", points: wall.points, layer };
 }
 
 /**
@@ -250,7 +258,7 @@ function gateWalls(
     if (set === undefined) {
       const shut = gates.filter((_, at) => open[at] !== true).map((gate) => gate.wall);
       set = {
-        walls: [...walls, ...shut.map(toRenderableWall)],
+        walls: [...walls, ...shut.map((wall) => toRenderableWall(wall, 0))],
         segments: [...segments, ...allWallSegments(shut)],
       };
       known.set(closed, set);
@@ -272,6 +280,7 @@ export function toArenaSnapshot(
   flagField: FlagField | undefined,
   relicField: RelicField | undefined,
   gates: readonly GateDescriptor[] = [],
+  structure: MapStructure = FLAT_STRUCTURE,
 ): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
   const names = playerNames(match);
@@ -281,6 +290,7 @@ export function toArenaSnapshot(
 
   return {
     walls,
+    structure,
     flags: [
       ...renderableFlags(match.flags, flagField, match.players, self?.team),
       ...renderableRelics(match.relics, relicField, match.players, self?.team),
@@ -336,6 +346,7 @@ export function toArenaSnapshot(
         cape: player.guildCape === undefined ? undefined : capeLook(player.guildCape),
         bot: player.bot,
         position: { x: player.x, y: player.y },
+        layer: player.layer,
         facing: player.facing,
         // A creature carries what its look is armed with (#2047), or nothing.
         weaponId:
@@ -444,7 +455,8 @@ export async function startMatchView(
   }
   // A watcher has none (#480): nothing below sends an intent without it.
   const { seat } = viewed;
-  const walls = viewed.map.walls.map(toRenderableWall);
+  const { structure, wallLayers } = mapStructure(viewed.map.id);
+  const walls = viewed.map.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
   // Once per match, for the skill bar's line-of-sight hint (#485).
   const wallSegments = allWallSegments(viewed.map.walls);
   const blocking = gateWalls(viewed.map.gates, walls, wallSegments);
@@ -993,6 +1005,7 @@ export async function startMatchView(
         flagField,
         relicField,
         viewed.map.gates,
+        structure,
       ),
       viewport?.pointerWorld(),
       nameReveal.held(),

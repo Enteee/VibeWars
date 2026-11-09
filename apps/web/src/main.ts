@@ -23,6 +23,7 @@ import {
   joinFailureNotice,
   joinLobbyByCode,
   lobbyClosedNotice,
+  matchEndedNotice,
   lobbyRelayStatus,
   lobbyRefusalNotice,
   matchFailureNotice,
@@ -468,6 +469,8 @@ async function main(): Promise<void> {
    * `match === undefined` and pull the player back to the lobby screen.
    */
   let enteringMatch = false;
+  /** The match in view has its result: nothing said over it. */
+  let matchFinished = false;
   let lobbyNotice: string | undefined;
   /** While the lobby is in a Team Lobby (#1460). */
   let teamPicks: TeamPicks | undefined;
@@ -2662,7 +2665,7 @@ async function main(): Promise<void> {
     // A team's match (#1766): back in the party's own lobby, the match's
     // end no news.
     const team = teamQueue?.parked === undefined ? undefined : teamQueue;
-    const said = team?.finished === true ? undefined : notice;
+    const said = matchFinished ? undefined : notice;
     if (team !== undefined) {
       // Left before the end, a Heroes' Ascent run is over, unless it was
       // lost to its host leaving (#1996).
@@ -2767,6 +2770,7 @@ async function main(): Promise<void> {
       return;
     }
     enteringMatch = true;
+    matchFinished = false;
     stopShare();
     lobbyNotice = undefined;
     showViewport(true);
@@ -2776,12 +2780,16 @@ async function main(): Promise<void> {
         viewport,
         {
           onConnectionChange: (state) => {
-            if (state === "lost") {
-              void exitMatch(t("app.lostMatch"));
+            const notice = matchEndedNotice(state);
+            if (notice !== undefined) {
+              void exitMatch(notice);
             }
           },
           onLeave: () => {
             void exitMatch();
+          },
+          onFinished: () => {
+            matchFinished = true;
           },
         },
         {
@@ -2811,6 +2819,7 @@ async function main(): Promise<void> {
       return;
     }
     enteringMatch = true;
+    matchFinished = false;
     stopShare();
     menuNotice = undefined;
     lobbyNotice = undefined;
@@ -2824,17 +2833,19 @@ async function main(): Promise<void> {
           // Reconnecting is the HUD's to say (#181); the top bar is hidden
           // in a match (#454).
           onConnectionChange: (state) => {
-            if (state === "lost") {
+            const notice = matchEndedNotice(state);
+            if (notice !== undefined) {
               // The host is gone: the arena is frozen for good, so there
               // is nothing to stay for.
               setStatus("disconnected", "error");
-              void exitMatch(t("app.lostMatch"));
+              void exitMatch(notice);
             }
           },
           onLeave: () => {
             void exitMatch();
           },
           onFinished: (finished) => {
+            matchFinished = true;
             const team = teamQueue?.parked === undefined ? undefined : teamQueue;
             if (team !== undefined) {
               team.finished = true;

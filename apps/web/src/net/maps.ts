@@ -41,6 +41,7 @@ import {
   type GateDescriptor,
 } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
+import { FLAT_STRUCTURE, type MapStructure } from "../render/arena-snapshot.js";
 import { TRAINING_MAPS } from "../training/maps.js";
 
 /**
@@ -282,6 +283,38 @@ export function mapMode(mapId: string): MatchMode {
 export function mapShrines(mapId: string): readonly MapShrine[] {
   const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
   return shrinesOf(map?.objectives ?? []);
+}
+
+/** A map's floors, and each wall's layer in the order of its `walls` (ADR-0051). */
+export interface LoadedStructure {
+  readonly structure: MapStructure;
+  readonly wallLayers: readonly number[];
+}
+
+/** What the renderer needs of a map's layers, from its file. */
+export function structureOf(map: MapData): LoadedStructure {
+  return {
+    structure:
+      map.layers === 1
+        ? FLAT_STRUCTURE
+        : { layerCount: map.layers, decks: map.decks, transitions: map.transitions },
+    wallLayers: map.walls.map((wall) => wall.layer),
+  };
+}
+
+/** A map the client has no file for has one layer, as the rest of this file assumes. */
+const NO_STRUCTURE: LoadedStructure = { structure: FLAT_STRUCTURE, wallLayers: [] };
+const structures = new Map<string, LoadedStructure>();
+
+/** `structureOf` by map id, one object per map: the scene redraws when it changes. */
+export function mapStructure(mapId: string): LoadedStructure {
+  let known = structures.get(mapId);
+  if (known === undefined) {
+    const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
+    known = map === undefined ? NO_STRUCTURE : structureOf(map);
+    structures.set(mapId, known);
+  }
+  return known;
 }
 
 function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {

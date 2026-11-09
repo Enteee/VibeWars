@@ -19,41 +19,50 @@ runs:
     # root-owned store a multi-user install (cachix/install-nix-action) makes.
     # Third-party actions are pinned to a commit, not a movable tag.
     #
-    # It fetches its Nix tarball from a GitHub release, and now and then the
-    # download arrives corrupt ("zstd: unsupported format", #2800). A step
-    # cannot retry itself, so up to three attempts; the last one is allowed to
-    # fail the job.
-    - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
-      id: nix-install-1
-      continue-on-error: true
+    # It fetches its Nix tarball from a GitHub release with
+    # `curl -sL ... | tar -x -I unzstd`: no `-f`, so an HTTP error page from
+    # the release reaches unzstd, which says "unsupported format" (#2800,
+    # #2909). Fetch the tarball here instead, check it, cache the good file,
+    # and have the action install from that file. The file name is the one the
+    # action builds from the version and system.
+    - name: Cache the Nix archive
+      id: nix-archive
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      with:
+        path: ${{ runner.temp }}/nix-archives
+        key: nix-archive-5bb6a3b3-2.24.12-${{ runner.arch }}
 
-    - name: Wait before Nix install attempt 2
-      if: steps.nix-install-1.outcome == 'failure'
+    - name: Fetch the Nix archive
+      if: steps.nix-archive.outputs.cache-hit != 'true'
       shell: bash
+      env:
+        ARCHIVES: ${{ runner.temp }}/nix-archives
       run: |
-        echo "::warning::Nix install failed (attempt 1 of 3), retrying"
-        sleep 15
-        # A failed extraction can leave files tar would then skip over. Not on
-        # a company runner: there /nix holds the jail's overlaid store.
-        [ -n "${VIBEWARS_NIX_REGISTRATION:-}" ] || rm -rf /nix/* || true
+        case "$(uname -m)" in
+          x86_64) system=x86_64-linux ;;
+          aarch64) system=aarch64-linux ;;
+          *) echo "::error::no Nix archive for $(uname -m)"; exit 1 ;;
+        esac
+        file="nix-2.24.12-$system.tar.zstd"
+        url="https://github.com/nixbuild/nix-quick-install-action/releases/download/v30/$file"
+        mkdir -p "$ARCHIVES"
+        # Shards start together and hit the same release: spread them out.
+        sleep $((RANDOM % 31))
+        if ! curl -fsSL --retry 6 --retry-all-errors --retry-delay 20 --max-time 120 -o "$ARCHIVES/$file" "$url"; then
+          echo "::error::could not download $url"
+          rm -f "$ARCHIVES/$file"
+          exit 1
+        fi
+        if ! zstd -t "$ARCHIVES/$file"; then
+          echo "::error::$url did not download as a zstd file"
+          rm -f "$ARCHIVES/$file"
+          exit 1
+        fi
 
     - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
-      id: nix-install-2
-      if: steps.nix-install-1.outcome == 'failure'
-      continue-on-error: true
-
-    - name: Wait before Nix install attempt 3
-      if: steps.nix-install-2.outcome == 'failure'
-      shell: bash
-      run: |
-        echo "::warning::Nix install failed (attempt 2 of 3), retrying"
-        sleep 15
-        # A failed extraction can leave files tar would then skip over. Not on
-        # a company runner: there /nix holds the jail's overlaid store.
-        [ -n "${VIBEWARS_NIX_REGISTRATION:-}" ] || rm -rf /nix/* || true
-
-    - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
-      if: steps.nix-install-2.outcome == 'failure'
+      with:
+        nix_version: 2.24.12
+        nix_archives_url: file://${{ runner.temp }}/nix-archives
 
     # A company runner pulls the 1.1 GB store cache at ~1 MB/s; the download's
     # token expires partway ("Failed to restore"), and the half-extracted

@@ -226,7 +226,26 @@ describe("connectMatch", () => {
     await expect(joining).rejects.toThrow(HostLeftError);
   });
 
-  it("is lost for every client when the host closes the match", async () => {
+  it("keeps a real result when its host goes after it (#2905)", async () => {
+    const match = startMatch();
+    const { connection, transport } = await match.join();
+    const states: string[] = [];
+    connection.onConnectionChange((state) => states.push(state));
+    match.hostTransport.send(
+      "ended",
+      { winningTeam: 1, endReason: "score", summary: [] },
+      transport.selfId,
+    );
+    match.hostTransport.send(
+      "ended",
+      { winningTeam: null, endReason: "host-left", summary: [] },
+      transport.selfId,
+    );
+    await settle();
+    expect(states).toEqual([]);
+  });
+
+  it("tells every client the host left when it closes the match", async () => {
     const match = startMatch();
     const local = await match.joinLocal();
     const { connection: remote } = await match.join();
@@ -235,7 +254,7 @@ describe("connectMatch", () => {
     remote.onConnectionChange((state) => states.push(`remote:${state}`));
     await match.host.close("host-left");
     await settle();
-    expect(states.sort()).toEqual(["local:lost", "remote:lost"]);
+    expect(states.sort()).toEqual(["local:host-left", "remote:host-left"]);
   });
 
   it("shows the result once the match ends", async () => {
@@ -342,6 +361,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     x: "x",
     y: "y",
     facing: "facing",
+    layer: "layer",
     targetId: "targetSessionId",
     attackTargetId: "attackTargetSessionId",
     walking: "walking",
@@ -474,6 +494,7 @@ const WIRE_PLAYER: WirePlayer = {
   x: 1,
   y: 2,
   facing: 0.5,
+  layer: 0,
   targetId: null,
   attackTargetId: "p2",
   walking: true,

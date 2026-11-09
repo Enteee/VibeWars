@@ -5,6 +5,8 @@ import {
   CAPTURE_REACH_UNITS,
   GATE_PLATE_REACH_UNITS,
   isStatusId,
+  pointInPolygon,
+  type Polygon,
   isWeaponId,
   type CreatureLook,
   type StatusId,
@@ -44,6 +46,14 @@ import {
   type BeaconBolt,
   type SwingFlash,
 } from "./arena-snapshot.js";
+import {
+  CHARACTER_BANDS,
+  characterBand,
+  easeElevation,
+  elevationOf,
+  renderOrder,
+  type RenderItem,
+} from "./render-order.js";
 import {
   ARENA_ATLAS_JSON,
   ARENA_ATLAS_SVG,
@@ -123,6 +133,8 @@ import type {
   FloatingText,
   RenderableActor,
   RenderableWall,
+  RenderableShape,
+  MapStructure,
 } from "./arena-snapshot.js";
 
 /**
@@ -137,6 +149,32 @@ import type {
 const BEACON_BOLT_GLOW = 0x79c0ff;
 const BEACON_BOLT_CORE = 0xf0f6ff;
 const WALL_FILL = 0x202836;
+const DECK_FILL = 0x2c3648;
+const DECK_SIDE_FILL = 0x151b26;
+const RAMP_FILL = 0x262f3f;
+/** How far apart the side face's stacked outlines lie, in world units. */
+const SIDE_FACE_SLICE = 2;
+
+function shapeOutline(shape: RenderableShape): Polygon {
+  return shape.kind === "polygon"
+    ? shape.points
+    : [
+        { x: shape.x, y: shape.y },
+        { x: shape.x + shape.width, y: shape.y },
+        { x: shape.x + shape.width, y: shape.y + shape.height },
+        { x: shape.x, y: shape.y + shape.height },
+      ];
+}
+
+/** Whether `wall`'s middle lies inside `shape`: a wall under a deck is a support. */
+function shapeHoldsCentre(shape: RenderableShape, wall: RenderableShape): boolean {
+  const corners = shapeOutline(wall);
+  const sum = corners.reduce((at, c) => ({ x: at.x + c.x, y: at.y + c.y }), { x: 0, y: 0 });
+  return pointInPolygon(
+    { x: sum.x / corners.length, y: sum.y / corners.length },
+    shapeOutline(shape),
+  );
+}
 const WALL_STROKE = 0x3b4759;
 const TARGET_RING = 0xffd866;
 /** The `condition` orange: your team's called foe wears its chevron (#443). */
@@ -213,14 +251,12 @@ const IMPACT_LINE_WIDTH = 1.5;
  * cover a badge's top edge.
  */
 const GROUND_DEPTH = -1;
-const MAP_DEPTH = -0.5;
-const BODY_DEPTH = 0;
-const BODY_GLYPH_DEPTH = 1;
-const MARK_DEPTH = 2;
-const CAST_BADGE_DEPTH = 2.5;
-const OVERLAY_DEPTH = 3;
+const MAP_DEPTH = renderOrder({ kind: "terrain" });
+const EFFECT_DEPTH = renderOrder({ kind: "effect" });
+const CAST_BADGE_DEPTH = renderOrder({ kind: "cast-badge" });
+const OVERLAY_DEPTH = renderOrder({ kind: "ui" });
 /** Over every world object, names and numbers included. */
-const EDGE_MARKER_DEPTH = 10;
+const EDGE_MARKER_DEPTH = renderOrder({ kind: "edge-marker" });
 /** The arena's icon sheet (#1671) and its frame map, as Phaser keys them. */
 const ATLAS = "arena-atlas";
 const ATLAS_MAP = "arena-atlas-map";
@@ -244,7 +280,16 @@ export class ArenaScene extends Phaser.Scene {
   /** What `mapGraphics` shows; `undefined` until it is first drawn. */
   private drawnMap: MapLayer | undefined;
   /** What moves on the floor, and the bodies, under the body glyphs. */
-  private graphics: Phaser.GameObjects.Graphics | undefined;
+  private bands: readonly {
+    readonly body: Phaser.GameObjects.Graphics;
+    readonly marks: Phaser.GameObjects.Graphics;
+  }[] = [];
+  /** The static structure, one object per place in `renderOrder`. */
+  private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** `snapshot.actors` where they draw this frame: lifted by their layers. */
+  private drawnActors: readonly RenderableActor[] = [];
+  /** Each body's lift now, while it eases to its layer's. */
+  private readonly elevations = new Map<string, number>();
   /** Every mark on a body, over the body glyphs (#1037). */
   private markGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The off-screen markers, drawn in screen px over everything (#440). */
@@ -407,22 +452,30 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
-    this.graphics = this.add.graphics().setDepth(BODY_DEPTH);
-    this.markGraphics = this.add.graphics().setDepth(MARK_DEPTH);
+    this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
+      body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
+      marks: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "marks" })),
+    }));
+    this.markGraphics = this.add.graphics().setDepth(EFFECT_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
     this.nameUnderline = this.add.graphics().setDepth(OVERLAY_DEPTH);
   }
 
   public override update(time: number, deltaMs: number): void {
-    const g = this.graphics;
-    const marks = this.markGraphics;
-    if (g === undefined || marks === undefined) {
+    const effects = this.markGraphics;
+    const floor = this.bandOf(0);
+    if (effects === undefined || floor === undefined) {
       return;
     }
-    g.clear();
-    marks.clear();
+    for (const { body, marks: bandMarks } of this.bands) {
+      body.clear();
+      bandMarks.clear();
+    }
+    effects.clear();
+    const { body: g, marks } = floor;
     this.now = time / 1000;
     this.reducedMotion = prefersReducedMotion();
+    this.drawnActors = this.liftActors(deltaMs / 1000);
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
     this.updateGroundEffects();
@@ -453,25 +506,28 @@ export class ArenaScene extends Phaser.Scene {
       this.drawGatePlate(g, plate);
     }
     this.stepCapes(deltaMs / 1000);
-    for (const actor of this.snapshot.actors) {
-      this.drawActor(g, marks, actor);
+    for (const actor of this.drawnActors) {
+      const band = this.bandOf(actor.layer);
+      if (band !== undefined) {
+        this.drawActor(band.body, band.marks, actor);
+      }
     }
     // Over the bodies: a carried flag stands above its carrier's head.
     for (const flag of this.snapshot.flags) {
-      this.drawFlag(marks, flag);
+      this.drawFlag(effects, flag);
     }
     this.swingFlashes = decaySwingFlashes(this.swingFlashes, deltaMs / 1000);
     for (const flash of this.swingFlashes) {
-      this.drawSwingFlash(marks, flash);
+      this.drawSwingFlash(effects, flash);
     }
     this.beaconBolts = decayBeaconBolts(this.beaconBolts, deltaMs / 1000);
     for (const bolt of this.beaconBolts) {
-      this.drawBeaconBolt(marks, bolt);
+      this.drawBeaconBolt(effects, bolt);
     }
     this.impacts = mergeImpacts(this.impacts, this.addedImpacts, deltaMs / 1000);
     this.addedImpacts = [];
     for (const impact of this.impacts) {
-      this.drawImpact(marks, impact);
+      this.drawImpact(effects, impact);
     }
     this.updateBodyGlyphs();
     this.updateCastBadges();
@@ -482,6 +538,40 @@ export class ArenaScene extends Phaser.Scene {
     this.updateEdgeMarkers();
   }
 
+  /** The graphics pair a body on `layer` draws into. */
+  private bandOf(layer: number): (typeof this.bands)[number] | undefined {
+    return this.bands[characterBand(layer, this.snapshot.structure.layerCount)];
+  }
+
+  /**
+   * Every actor where it draws (ADR-0051): its simulated position lifted
+   * by its layer's height, eased after a change of layer. On a map of one
+   * layer they are the snapshot's own.
+   */
+  private liftActors(dt: number): readonly RenderableActor[] {
+    const { actors, structure } = this.snapshot;
+    if (structure.layerCount === 1) {
+      this.elevations.clear();
+      return actors;
+    }
+    const seen = new Set<string>();
+    const lifted = actors.map((actor) => {
+      seen.add(actor.id);
+      const target = elevationOf(actor.layer);
+      const known = this.elevations.get(actor.id);
+      const lift =
+        known === undefined || this.reducedMotion ? target : easeElevation(known, target, dt);
+      this.elevations.set(actor.id, lift);
+      return { ...actor, position: { x: actor.position.x, y: actor.position.y - lift } };
+    });
+    for (const id of this.elevations.keys()) {
+      if (!seen.has(id)) {
+        this.elevations.delete(id);
+      }
+    }
+    return lifted;
+  }
+
   /**
    * Step the cape of every living caped body (#1699) by its drawn
    * movement since last frame: knocked down it stands still, so it
@@ -490,7 +580,7 @@ export class ArenaScene extends Phaser.Scene {
    */
   private stepCapes(dt: number): void {
     const seen = new Set<string>();
-    for (const actor of this.snapshot.actors) {
+    for (const actor of this.drawnActors) {
       if (actor.cape === undefined || actor.dead) {
         continue;
       }
@@ -657,7 +747,7 @@ export class ArenaScene extends Phaser.Scene {
   /** Hand each attack clock its actor's swing timer; forget those who left. */
   private observeAttacks(): void {
     const present = new Set<string>();
-    for (const actor of this.snapshot.actors) {
+    for (const actor of this.drawnActors) {
       present.add(actor.id);
       if (actor.weaponId === undefined || !isWeaponId(actor.weaponId)) {
         continue;
@@ -697,7 +787,7 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     const screen = { width: this.scale.width, height: this.scale.height };
-    const bodies: EdgeThing[] = this.snapshot.actors.map((actor) => ({
+    const bodies: EdgeThing[] = this.drawnActors.map((actor) => ({
       id: actor.id,
       kind: actor.team === "self" ? "self" : actor.team === "ally" ? "friend" : "foe",
       colour: undefined,
@@ -887,7 +977,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /** A skill's impact on a body (#1139), where that body is now; none once it has left the state. */
   private drawImpact(g: Phaser.GameObjects.Graphics, impact: Impact): void {
-    const actor = this.snapshot.actors.find((a) => a.id === impact.anchorId);
+    const actor = this.drawnActors.find((a) => a.id === impact.anchorId);
     if (actor === undefined) {
       return;
     }
@@ -1197,7 +1287,7 @@ export class ArenaScene extends Phaser.Scene {
   /** One icon per status under every living actor; none under the dead. */
   private updateStatusIcons(): void {
     const seen = new Set<string>();
-    for (const actor of this.snapshot.actors) {
+    for (const actor of this.drawnActors) {
       seen.add(actor.id);
       const statuses = actor.dead ? [] : this.knownStatuses(actor.statuses);
       const row = statusRowLayout(
@@ -1265,7 +1355,7 @@ export class ArenaScene extends Phaser.Scene {
     const zoom = this.cameras.main.zoom;
     const seen = new Set<string>();
     let underlined: { x: number; y: number; width: number } | undefined;
-    for (const actor of this.snapshot.actors) {
+    for (const actor of this.drawnActors) {
       seen.add(actor.id);
       let label = this.nameLabels.get(actor.id);
       if (label === undefined) {
@@ -1471,10 +1561,15 @@ export class ArenaScene extends Phaser.Scene {
    */
   private updateBodyGlyphs(): void {
     const seen = new Set<string>();
-    for (const actor of this.snapshot.actors) {
+    for (const actor of this.drawnActors) {
       seen.add(actor.id);
       const layout = bodyGlyphLayout(actor);
       let glyph = this.bodyGlyphs.get(actor.id);
+      const glyphDepth = renderOrder({
+        kind: "character",
+        band: characterBand(actor.layer, this.snapshot.structure.layerCount),
+        part: "glyph",
+      });
       if (layout === undefined) {
         glyph?.setVisible(false);
         continue;
@@ -1487,8 +1582,11 @@ export class ArenaScene extends Phaser.Scene {
         glyph = this.add
           .image(0, 0, ATLAS, frame)
           .setTintMode(Phaser.TintModes.FILL)
-          .setDepth(BODY_GLYPH_DEPTH);
+          .setDepth(glyphDepth);
         this.bodyGlyphs.set(actor.id, glyph);
+      }
+      if (glyph.depth !== glyphDepth) {
+        glyph.setDepth(glyphDepth);
       }
       if (glyph.frame.name !== frame) {
         glyph.setFrame(frame);
@@ -1520,7 +1618,7 @@ export class ArenaScene extends Phaser.Scene {
    */
   private updateCastBadges(): void {
     const seen = new Set<string>();
-    for (const actor of this.snapshot.actors) {
+    for (const actor of this.drawnActors) {
       seen.add(actor.id);
       let badge = this.castBadges.get(actor.id);
       if (actor.castType === undefined || actor.castProgress === undefined || actor.dead) {
@@ -1639,6 +1737,7 @@ export class ArenaScene extends Phaser.Scene {
     const next: MapLayer = {
       ...this.arena,
       walls: this.snapshot.walls,
+      structure: this.snapshot.structure,
       zoom: this.view?.zoom ?? 1,
     };
     if (g === undefined || !mapLayerChanged(this.drawnMap, next)) {
@@ -1649,18 +1748,78 @@ export class ArenaScene extends Phaser.Scene {
     // flickers as the camera moves (#2393): 1 CSS px, as the edge markers.
     const line = 1 / next.zoom;
     this.drawGrid(g, line);
+    g.fillStyle(RAMP_FILL, 1);
+    for (const transition of next.structure.transitions) {
+      this.fillShape(g, transition.area);
+    }
+    for (const graphics of this.structureGraphics.values()) {
+      graphics.clear();
+    }
     for (const wall of next.walls) {
-      this.drawWall(g, wall, line);
+      const deckLayer = next.structure.decks.find(
+        (deck) => deck.layer > wall.layer && shapeHoldsCentre(deck.footprint, wall),
+      )?.layer;
+      this.drawWall(
+        this.structureAt(
+          deckLayer === undefined
+            ? { kind: "wall", layer: wall.layer }
+            : { kind: "support", deckLayer },
+        ),
+        wall,
+        line,
+      );
+    }
+    for (const deck of next.structure.decks) {
+      this.drawDeck(deck, line);
     }
     this.drawnMap = next;
   }
 
+  /** The static graphics at `item`'s place in the draw order. */
+  private structureAt(item: RenderItem): Phaser.GameObjects.Graphics {
+    const depth = renderOrder(item);
+    let graphics = this.structureGraphics.get(depth);
+    if (graphics === undefined) {
+      graphics = this.add.graphics().setDepth(depth);
+      this.structureGraphics.set(depth, graphics);
+    }
+    return graphics;
+  }
+
+  /** A deck at its layer's height, its side face reaching down one layer. */
+  private drawDeck(deck: MapStructure["decks"][number], line: number): void {
+    const top = elevationOf(deck.layer);
+    const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
+    side.fillStyle(DECK_SIDE_FILL, 1);
+    for (let lift = elevationOf(deck.layer - 1); lift < top; lift += SIDE_FACE_SLICE) {
+      side.save();
+      side.translateCanvas(0, -lift);
+      this.fillShape(side, deck.footprint);
+      side.restore();
+    }
+    const face = this.structureAt({ kind: "deck", deckLayer: deck.layer });
+    face.save();
+    face.translateCanvas(0, -top);
+    face.fillStyle(DECK_FILL, 1);
+    face.lineStyle(line, WALL_STROKE, 1);
+    this.fillShape(face, deck.footprint);
+    this.strokeShape(face, deck.footprint);
+    face.restore();
+  }
+
   private drawWall(g: Phaser.GameObjects.Graphics, wall: RenderableWall, line: number): void {
+    g.save();
+    g.translateCanvas(0, -elevationOf(wall.layer));
     g.fillStyle(WALL_FILL, 1);
     g.lineStyle(line, WALL_STROKE, 1);
+    this.fillShape(g, wall);
+    this.strokeShape(g, wall);
+    g.restore();
+  }
+
+  private fillShape(g: Phaser.GameObjects.Graphics, wall: RenderableShape): void {
     if (wall.kind === "rect") {
       g.fillRect(wall.x, wall.y, wall.width, wall.height);
-      g.strokeRect(wall.x, wall.y, wall.width, wall.height);
       return;
     }
     // Triangulated here, once per map, and filled as triangles: Phaser
@@ -1672,6 +1831,13 @@ export class ArenaScene extends Phaser.Scene {
       if (a !== undefined && b !== undefined && c !== undefined) {
         g.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
       }
+    }
+  }
+
+  private strokeShape(g: Phaser.GameObjects.Graphics, wall: RenderableShape): void {
+    if (wall.kind === "rect") {
+      g.strokeRect(wall.x, wall.y, wall.width, wall.height);
+      return;
     }
     const points = wall.points.map((p) => new Phaser.Math.Vector2(p.x, p.y));
     g.strokePoints(points, true);
