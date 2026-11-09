@@ -405,7 +405,7 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
   );
   await openRail(page, "GvG");
   // No Record or Music in the bar: GvG's button is its party's (#1526, #1766).
-  await expect(page.locator("#topbar .topbar-screen-actions").getByRole("button")).toHaveText([
+  await expect(page.locator("#topbar .topbar-queue-action").getByRole("button")).toHaveText([
     "Find a match",
   ]);
   await page.reload();
