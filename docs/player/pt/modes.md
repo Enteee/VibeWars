@@ -336,10 +336,10 @@ na fila.
 
 ## Ascensão dos Heróis
 
-Uma Ascensão dos Heróis na fila tem sete rodadas, sempre nesta ordem:
-The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), Barrow Field (Aniquilação de Sacerdotes), Cinder Sanctum (Corrida da Relíquia), Mosslit Cairns (Captura de Pontos), The
+Uma Ascensão dos Heróis na fila tem oito rodadas, sempre nesta ordem:
+The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), Barrow Field (Aniquilação de Sacerdotes), Cinder Sanctum (Corrida da Relíquia), Mosslit Cairns (Captura de Pontos), The Brazen Causeway (Aniquilação de Sacerdotes), The
 Courtyard (Rei da Colina) e depois o Hall of Heroes. A janela da Sala diz
-onde você está enquanto procura uma equipe: `Round 2 of 7 · Blackwater Ford`.
+onde você está enquanto procura uma equipe: `Round 2 of 8 · Blackwater Ford`.
 Você só encontra equipes na mesma rodada e espera por uma o tempo que for
 preciso: nenhum bot completa. Uma rodada em um mapa feito para três
 equipes espera três; duas equipes que esperaram 30 segundos pela terceira
@@ -375,7 +375,7 @@ em volta de uma rocha central),
 com as bases quase à vista e o sacerdote trazendo os mortos a cada 2
 minutos) e
 **Mosslit Cairns** (8v8 de Captura de Pontos, cinco montes de pedras em um
-leve zigue-zague entre as bases).
+leve zigue-zague entre as bases). A quarta é **The Brazen Causeway** (8v8 de Aniquilação de Sacerdotes em um anel ao redor de um fosso: uma passagem estreita contorna o portão de cada base, que só fica aberto enquanto alguém da equipe estiver na placa da fechadura).
 
 Um mapa pode ter **portões**: muros que param corpos, disparos e visão
 enquanto fechados. Fique sobre a placa de pressão de um portão para

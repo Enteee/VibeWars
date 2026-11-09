@@ -5,6 +5,7 @@ import {
   KING_OF_THE_HILL_MATCH_RULES,
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
+  PRIEST_ANNIHILATION_MATCH_RULES,
   RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
   getSkill,
@@ -16,7 +17,8 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { allWallSegments } from "./geometry.js";
+import { allWallSegments, wallToSegments } from "./geometry.js";
+import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
 import type { MapData } from "./schema.js";
 
@@ -371,6 +373,55 @@ describe("Capture Points bots (#2580)", () => {
     ) {
       sim.step(DT);
     }
+    expect(sim.phase).toBe("finished");
+  });
+});
+
+describe("The Brazen Causeway (#2697)", () => {
+  const map = loadAllMaps().find((candidate) => candidate.id === "brazen-causeway");
+  if (map === undefined) throw new Error("no map brazen-causeway");
+
+  it("guards each base with its own gate", () => {
+    expect(map.gates.map(({ team }) => team)).toEqual([0, 1]);
+  });
+
+  it("keeps its nav graph to 600 nodes", () => {
+    const closed = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    expect(layeredFinder(closed, RULESET.collision.playerRadius).nodeCount).toBeLessThanOrEqual(
+      600,
+    );
+  });
+
+  it("bots open their gate and finish a match", () => {
+    // One a side: this plays to the 12-minute limit, and a full 8v8 would not fit the test limit.
+    const sim = new MatchSimulation({
+      seed: "causeway",
+      ruleset: RULESET,
+      walls: allWallSegments(map.walls),
+      gates: map.gates.map((gate) => ({
+        segments: wallToSegments(gate.wall),
+        plate: gate.plate,
+        team: gate.team,
+      })),
+      bounds: { width: map.width, height: map.height },
+      matchRules: PRIEST_ANNIHILATION_MATCH_RULES,
+      shrines: map.objectives.flatMap((objective) =>
+        objective.kind === "resurrection-shrine"
+          ? [{ team: objective.team, position: objective.position }]
+          : [],
+      ),
+      participants: casterBots(map, 1),
+    });
+    let opened = false;
+    for (
+      let t = 0;
+      t <= PRIEST_ANNIHILATION_MATCH_RULES.timeLimitSeconds + 1 && sim.phase !== "finished";
+      t += DT
+    ) {
+      sim.step(DT);
+      opened ||= sim.gates.some(({ open }) => open);
+    }
+    expect(opened).toBe(true);
     expect(sim.phase).toBe("finished");
   });
 });

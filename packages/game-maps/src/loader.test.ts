@@ -15,6 +15,7 @@ import emberPits from "../maps/ember-pits/map.json" with { type: "json" };
 import frozenCrossing from "../maps/frozen-crossing/map.json" with { type: "json" };
 import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
 import blackwaterFord from "../maps/blackwater-ford/map.json" with { type: "json" };
+import brazenCauseway from "../maps/brazen-causeway/map.json" with { type: "json" };
 import hallOfHeroes from "../maps/hall-of-heroes/map.json" with { type: "json" };
 import hollowDeep from "../maps/hollow-deep/map.json" with { type: "json" };
 import mosslitCairns from "../maps/mosslit-cairns/map.json" with { type: "json" };
@@ -65,6 +66,7 @@ describe("the maps the browser imports", () => {
       jungleRuins,
       mossVale,
       mosslitCairns,
+      brazenCauseway,
       sandstoneSteps,
       scarredEarth,
       shiverpeakPass,

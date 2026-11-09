@@ -337,10 +337,10 @@ l'attente, ou, pour les gagnants, part sans repartir en file.
 
 ## Ascension des héros
 
-Une Ascension des héros en file se joue en sept manches, toujours dans cet
-ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Barrow Field (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The
+Une Ascension des héros en file se joue en huit manches, toujours dans cet
+ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Barrow Field (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The Brazen Causeway (Annihilation de prêtre), The
 Courtyard (Roi de la colline), puis le Hall of Heroes. La fenêtre Salon dit où tu
-en es pendant que tu cherches une équipe : `Round 2 of 7 · Blackwater Ford`.
+en es pendant que tu cherches une équipe : `Round 2 of 8 · Blackwater Ford`.
 Tu ne rencontres jamais qu'une équipe à la même manche, et tu en attends une aussi
 longtemps qu'il faut : aucun bot ne comble. Une manche sur une carte faite pour
 trois équipes en attend trois ; deux équipes qui ont attendu une troisième pendant
@@ -375,7 +375,7 @@ Trois arènes d'Ascension se choisissent aussi en Partie hébergée : **The Holl
 8v8, trois tunnels sinueux autour d'un rocher central), **Blackwater Ford**
 (Annihilation de prêtre 8v8 sur un tout petit gué, les bases presque en vue, le
 prêtre relevant ses morts toutes les 2 minutes) et **Mosslit Cairns** (Points de
-capture 8v8, cinq cairns en léger zigzag entre les bases).
+capture 8v8, cinq cairns en léger zigzag entre les bases). La quatrième est **The Brazen Causeway** (Annihilation de prêtre 8v8 sur un anneau autour d'une fosse : un passage étroit longe la porte de chaque base, qui ne reste ouverte que tant qu'un membre de son équipe se tient sur la plaque de la serrure).
 
 Une carte peut avoir des **portes** : des murs qui arrêtent les corps, les tirs et
 la vue quand ils sont fermés. Tiens-toi sur la plaque de pression d'une porte pour

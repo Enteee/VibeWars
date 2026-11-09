@@ -267,9 +267,9 @@ zurück. Ein Knopf unter dem Ergebnis überspringt die Wartezeit oder geht für 
 
 ## Aufstieg der Helden
 
-Ein Aufstieg der Helden aus der Warteschlange hat sieben Runden, immer in dieser Reihenfolge: The Hollow Deep (Vernichtung), Blackwater Ford (Priestervernichtung), Barrow Field (Priestervernichtung), Cinder Sanctum (Reliktlauf),
-Mosslit Cairns (Punkte erobern), The Courtyard (King of the Hill), dann die Hall of Heroes. Das Lobby-Fenster sagt dir,
-wo du bist, während du ein Team suchst: `Runde 2 von 7 · Blackwater Ford`. Du triffst immer nur ein Team in derselben Runde
+Ein Aufstieg der Helden aus der Warteschlange hat acht Runden, immer in dieser Reihenfolge: The Hollow Deep (Vernichtung), Blackwater Ford (Priestervernichtung), Barrow Field (Priestervernichtung), Cinder Sanctum (Reliktlauf),
+Mosslit Cairns (Punkte erobern), The Brazen Causeway (Priestervernichtung), The Courtyard (King of the Hill), dann die Hall of Heroes. Das Lobby-Fenster sagt dir,
+wo du bist, während du ein Team suchst: `Runde 2 von 8 · Blackwater Ford`. Du triffst immer nur ein Team in derselben Runde
 und wartest so lange wie nötig: Keine Bots springen ein. Eine Runde auf einer Karte für drei Teams wartet auf drei; zwei
 Teams, die 30 Sekunden auf ein drittes gewartet haben, spielen stattdessen gegeneinander, ebenso zwei, deren drittes nie
 in der Lobby erscheint. Gewinnst du, steigt deine Gruppe nach 20 Sekunden von selbst zur nächsten Karte auf; gewinnst du
@@ -293,7 +293,7 @@ Tab schließt. Eine Lobby des Aufstiegs der Helden, der per Code beigetreten wur
 
 Drei Aufstiegs-Arenen kannst du auch in einem Gehosteten Spiel wählen: **The Hollow Deep** (8v8 Vernichtung, drei gewundene Tunnel um einen zentralen Felsen), **Blackwater
 Ford** (8v8 Priestervernichtung an einer winzigen Furt, die Basen fast in Sichtweite, der Priester holt alle 2 Minuten seine
-Toten zurück) und **Mosslit Cairns** (8v8 Punkte erobern, fünf Steinhügel in einem flachen Zickzack zwischen den Basen).
+Toten zurück) und **Mosslit Cairns** (8v8 Punkte erobern, fünf Steinhügel in einem flachen Zickzack zwischen den Basen). Dazu kommt als vierte **The Brazen Causeway** (8v8 Priestervernichtung auf einem Ring um eine Grube: An jedem Tor einer Basis führt eine schmale Lücke vorbei, und das Tor steht nur offen, solange jemand aus dem Team auf der Torschloss-Platte steht).
 
 Eine Karte kann **Tore** haben: Mauern, die im geschlossenen Zustand Körper, Schüsse und Sicht aufhalten. Stell dich auf die
 Druckplatte eines Tors, um es zu öffnen. Es schließt, wenn niemand mehr auf der Platte steht, schiebt jeden im Durchgang auf

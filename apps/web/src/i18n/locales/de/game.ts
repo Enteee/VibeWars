@@ -2138,6 +2138,7 @@ export default {
     "hollow-deep": "Die Hohle Tiefe",
     "blackwater-ford": "Schwarzwasserfurt",
     "mosslit-cairns": "Moosschein-Steinmale",
+    "brazen-causeway": "Der Eherne Damm",
     "scarred-earth": "Narbige Erde",
     "training-hall": "Trainingshalle",
     "training-pillars": "Trainingssäulen",
