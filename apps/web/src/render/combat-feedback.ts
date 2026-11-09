@@ -18,6 +18,7 @@ import {
   type SwingFlash,
 } from "./arena-snapshot.js";
 import { impactsFor, type Impact } from "./body-impacts.js";
+import { elevationOf } from "./render-order.js";
 
 /**
  * Combat events as floating text. Kept apart from the Phaser scene so it
@@ -177,7 +178,10 @@ export function showCombatFeedback(
       id: nextFloatingId,
       anchorId: subject.sessionId,
       text: cue.text,
-      position: vec2(subject.x + FLOATING_TEXT_OFFSET_X, subject.y + FLOATING_TEXT_OFFSET_Y),
+      position: vec2(
+        subject.x + FLOATING_TEXT_OFFSET_X,
+        subject.y + FLOATING_TEXT_OFFSET_Y - elevationOf(subject.layer),
+      ),
       lift: 0,
       colour: COLOURS[cue.tone],
       remainingSeconds: FLOATING_TEXT_SECONDS,

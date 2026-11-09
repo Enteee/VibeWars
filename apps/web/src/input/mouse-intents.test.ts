@@ -7,6 +7,7 @@ import {
   type ArenaSnapshot,
   type RenderableActor,
 } from "../render/arena-snapshot.js";
+import { ELEVATION_STEP } from "../render/render-order.js";
 import { createDoubleClick } from "./double-click.js";
 import {
   calledTargetIntent,
@@ -302,12 +303,12 @@ describe("clicks with Show names held (#2738)", () => {
     const deck = { kind: "rect", x: 100, y: 100, width: 100, height: 100 } as const;
     const structure = { layerCount: 2, decks: [{ layer: 1, footprint: deck }], transitions: [] };
     const layered = { ...NAMED, actors: [], structure };
-    expect(primaryClickIntents(MATCH, layered, vec2(150, 122), false, false)).toEqual([
-      { kind: "walk-to", layer: 1, x: 150, y: 150 },
-    ]);
-    expect(primaryClickIntents(MATCH, layered, vec2(150, 122), false, true)).toEqual([
-      { kind: "walk-to", layer: 0, x: 150, y: 122 },
-    ]);
+    expect(
+      primaryClickIntents(MATCH, layered, vec2(150, 150 - ELEVATION_STEP), false, false),
+    ).toEqual([{ kind: "walk-to", layer: 1, x: 150, y: 150 }]);
+    expect(
+      primaryClickIntents(MATCH, layered, vec2(150, 150 - ELEVATION_STEP), false, true),
+    ).toEqual([{ kind: "walk-to", layer: 0, x: 150, y: 150 - ELEVATION_STEP }]);
   });
 
   it("calls a foe on a wheel click on its name", () => {
