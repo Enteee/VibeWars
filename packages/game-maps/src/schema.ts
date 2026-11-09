@@ -197,12 +197,15 @@ const SHARED_OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly Sha
   "capture-points": ["capture-point"],
 };
 
+/** The most capture points a map has; a snapshot must be able to carry them all. */
+export const MAX_CAPTURE_POINTS = 7;
+
 /** How many of each shared objective a map of a mode that has it has, at least and at most. */
 const SHARED_COUNTS: Readonly<Record<SharedKind, { readonly min: number; readonly max: number }>> =
   {
     "flag-stand": { min: 1, max: 1 },
     altar: { min: 1, max: 1 },
-    "capture-point": { min: 1, max: 5 },
+    "capture-point": { min: 1, max: MAX_CAPTURE_POINTS },
     "storm-beacon": { min: 0, max: 1 },
     "start-line": { min: 0, max: 1 },
   };

@@ -211,6 +211,7 @@ describe("the arena set (#444)", () => {
         "hollow-deep",
         "blackwater-ford",
         "mosslit-cairns",
+        "wardens-gallery",
         "brazen-causeway",
         "scarred-earth",
         "sandstone-steps",
@@ -252,8 +253,9 @@ describe("the arena set (#444)", () => {
       "hall-of-heroes-capture",
       "mosslit-cairns",
       "scarred-earth",
+      "wardens-gallery",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 14);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 15);
   });
 
   it("puts each team's shrine on Jungle Ruins 150-250 behind its spawns (#1186, #2550)", () => {
@@ -799,4 +801,54 @@ describe("the ramps of every layered map (ADR-0051)", () => {
       expect(withRamps - without).toBeGreaterThanOrEqual(2 * map.transitions.length);
     },
   );
+});
+
+describe("The Warden's Gallery (#2698)", () => {
+  const map = MAPS.find((candidate) => candidate.id === "wardens-gallery");
+  if (map === undefined) throw new Error("no map wardens-gallery");
+  const points = map.objectives.flatMap((objective) =>
+    objective.kind === "capture-point" ? [objective.position] : [],
+  );
+  const shrines = map.objectives.flatMap((objective) =>
+    objective.kind === "resurrection-shrine" ? [objective.position] : [],
+  );
+
+  it("has seven points: five along the gallery and one by each base's shrine", () => {
+    expect(points).toHaveLength(7);
+    for (const shrine of shrines) {
+      expect(
+        points.some((point) => Math.abs(point.x - shrine.x) < 200 && point.y === shrine.y),
+      ).toBe(true);
+    }
+  });
+
+  it("gives each team its own gates, each the other's twin", () => {
+    const turned = map.gates.map((gate) => ({
+      x: map.width - gate.plate.x,
+      y: map.height - gate.plate.y,
+      team: gate.team === null ? null : 1 - gate.team,
+    }));
+    expect(map.gates.filter((gate) => gate.team === 0)).toHaveLength(2);
+    expect(map.gates.filter((gate) => gate.team === 1)).toHaveLength(2);
+    for (const twin of turned) {
+      expect(map.gates).toContainEqual(
+        expect.objectContaining({ plate: { x: twin.x, y: twin.y }, team: twin.team }),
+      );
+    }
+  });
+
+  it("reaches every point from both bases with every gate shut", () => {
+    const finder = createPathFinder(
+      buildNavGraph(
+        allWallSegments([...map.walls, ...map.gates.map((gate) => gate.wall)]),
+        { width: map.width, height: map.height },
+        ROUTE_HALF_GAP,
+      ),
+    );
+    for (const spawn of map.spawnPoints) {
+      for (const point of points) {
+        expect(finder.find(spawn.position, point), String(spawn.team)).toBeDefined();
+      }
+    }
+  });
 });

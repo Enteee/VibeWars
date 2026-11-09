@@ -2141,6 +2141,7 @@ export default {
     "hollow-deep": "La hondonada",
     "blackwater-ford": "Vado de Aguanegra",
     "mosslit-cairns": "Mojones musgosos",
+    "wardens-gallery": "La galería del guardián",
     "brazen-causeway": "La Calzada de Bronce",
     "scarred-earth": "Tierra marcada",
     "training-hall": "Sala de entrenamiento",
