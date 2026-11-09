@@ -65,7 +65,7 @@ describe.each(loadAllMaps().map((map) => [map.id, map] as const))("%s bots", (_,
 });
 
 describe("bots spike on Ashen Courtyard (#2631)", () => {
-  const map = loadAllMaps().find((candidate) => candidate.id === "ashen-keep");
+  const map = loadAllMaps().find((candidate) => candidate.id === "ashen-courtyard");
 
   /**
    * Of 60 s of a 4v4 mirror of the bot bench's builds on Ashen Courtyard,
