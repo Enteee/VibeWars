@@ -539,7 +539,7 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
     !/^[a-z0-9-]{1,64}$/.test(values.id ?? "")
   ) {
     console.error(
-      "usage: runner-jail.mjs --jitconfig <file | -> [--lifeline <fd>] [--cpus 2] [--memory-gib 6] [--tasks-max 2048]",
+      "usage: runner-jail.mjs --jitconfig <file | -> --id <name> [--lifeline <fd>] [--cpus 2] [--memory-gib 6] [--tasks-max 2048]",
     );
     console.error("       (VIBEWARS_RUNNER_JAIL is set by the vibewars-runner-jail wrapper)");
     process.exit(2);
