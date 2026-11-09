@@ -84,11 +84,11 @@ async function formParty(
 async function voteQuad(leader: Page, member: Page): Promise<void> {
   await leader.bringToFront();
   await proposeTeam(leader, "Quad");
-  for (const page of [leader, member]) {
-    const card = page.locator(".team-lobby-proposals .play-card-open").first();
-    await press(page, card);
-    await expect(card).toHaveAttribute("aria-pressed", "true");
-  }
+  const card = leader.locator(".team-lobby-proposals .play-card-open").first();
+  await press(leader, card);
+  await expect(card).toHaveAttribute("aria-pressed", "true");
+  // The last vote ends the stage, so its card is gone at once.
+  await press(member, member.locator(".team-lobby-proposals .play-card-open").first());
 }
 
 /**
