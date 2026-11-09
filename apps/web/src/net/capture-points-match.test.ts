@@ -23,7 +23,7 @@ function side(team: 0 | 1): [string, PlannedSeat][] {
 }
 
 describe("a hosted 4v4 on Scarred Earth (#2735)", () => {
-  it("runs to its end, by a wipe, a 20-point lead or at time, and says which", () => {
+  it("runs to its end, by a 20-point lead or at time, and says which", () => {
     const map = hostMap("scarred-earth");
     if (map === undefined) {
       throw new Error("no Scarred Earth");
@@ -51,6 +51,6 @@ describe("a hosted 4v4 on Scarred Earth (#2735)", () => {
     }
     expect(host.phase).toBe("finished");
     expect(records).toHaveLength(1);
-    expect(["annihilation", "score", "time"]).toContain(records[0]?.endReason);
+    expect(["score", "time"]).toContain(records[0]?.endReason);
   });
 });

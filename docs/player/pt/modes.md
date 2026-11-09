@@ -247,8 +247,7 @@ na bússola como □ na cor do dono.
 
 A cada 30 segundos, cada santuário da sua equipe marca um ponto, e um
 aviso e um som anunciam quanto cada lado marcou. A cada 60 segundos do relógio da partida, os mortos da sua equipe levantam no santuário da sua base com vida e energia cheias, mesmo com um inimigo ali, a menos que a moral deles esteja no piso. O placar faz a contagem até a próxima onda. Cada morte custa moral, e um fantasma levanta na mesma onda, no seu próprio lugar.
-Fique **20 pontos à frente** de todas as outras equipes, ou elimine a
-outra equipe, para vencer na hora. Depois de 8 minutos, vence a equipe com
+Fique **20 pontos à frente** de todas as outras equipes para vencer na hora. Eliminar uma equipe não encerra a partida. Depois de 8 minutos, vence a equipe com
 mais pontos; em pontos iguais, a que controla mais santuários, depois a
 equipe que ficou por último à frente sozinha e, se nenhuma ficou, é
 empate. Abates não marcam nada.
