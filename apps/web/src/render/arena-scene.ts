@@ -54,6 +54,7 @@ import {
   type RenderItem,
 } from "./render-order.js";
 import {
+  altHeld,
   CREATURE_PATH,
   occludersOf,
   pickSurface,
@@ -1818,7 +1819,7 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    const { layer } = pickSurface(structure, world, pointer.event.altKey);
+    const { layer } = pickSurface(structure, world, altHeld(pointer));
     g.lineStyle(1.5, HOVER_RING, 0.8);
     if (layer > 0) {
       g.strokeCircle(world.x, world.y, HOVER_RADIUS);

@@ -6,7 +6,13 @@ import {
   type MapStructure,
   type RenderableActor,
 } from "./arena-snapshot.js";
-import { occludersOf, pickSurface, RING_PATH, traceHiddenOutline } from "./layer-surfaces.js";
+import {
+  altHeld,
+  occludersOf,
+  pickSurface,
+  RING_PATH,
+  traceHiddenOutline,
+} from "./layer-surfaces.js";
 import { ELEVATION_STEP } from "./render-order.js";
 
 const bridge = { kind: "rect", x: 100, y: 100, width: 200, height: 100 } as const;
@@ -39,6 +45,17 @@ describe("the surface a click names (#2831)", () => {
   it("acts as a plain click where there is nothing below", () => {
     const open = { x: 10, y: 10 };
     expect(pickSurface(BRIDGE, open, true)).toEqual({ layer: 0, point: open });
+  });
+});
+
+describe("Alt on the pointer (#2831)", () => {
+  it("is not held before the pointer's first event", () => {
+    expect(altHeld({})).toBe(false);
+  });
+
+  it("follows the pointer's last event", () => {
+    expect(altHeld({ event: { altKey: true } })).toBe(true);
+    expect(altHeld({ event: { altKey: false } })).toBe(false);
   });
 });
 

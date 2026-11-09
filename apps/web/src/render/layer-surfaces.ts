@@ -46,6 +46,11 @@ export function surfacesAt(structure: MapStructure, world: Vec2): readonly Surfa
   return surfaces;
 }
 
+/** Whether Alt is held, as of a pointer's last event: a pointer that has had none has no event. */
+export function altHeld(pointer: { readonly event?: { readonly altKey: boolean } }): boolean {
+  return pointer.event?.altKey === true;
+}
+
 /** Where a click at `world` goes: the visible surface, or with `below` the one under it, if any. */
 export function pickSurface(structure: MapStructure, world: Vec2, below: boolean): Surface {
   const surfaces = surfacesAt(structure, world);
