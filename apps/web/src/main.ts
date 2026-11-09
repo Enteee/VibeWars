@@ -73,7 +73,7 @@ import {
 } from "./storage/repository.js";
 import { cloneCharacter } from "./storage/clone-character.js";
 import { missingSkillsNote } from "./storage/gw1-template.js";
-import { teamFromMatch } from "./storage/match-team.js";
+import { characterFromMatch, teamFromMatch } from "./storage/match-team.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   type StoredCharacter,
@@ -418,6 +418,7 @@ async function main(): Promise<void> {
     id: map.id,
     size: sizeClass(map),
     mode: map.mode,
+    relicCarry: map.relicCarry,
     teamSizes: map.teamSizes,
   }));
 
@@ -890,7 +891,7 @@ async function main(): Promise<void> {
         watch: watchRecords,
         now: () => Date.now(),
         onCloneTeam: (record) => {
-          void cloneMatchTeam(record);
+          void (record.players.length === 1 ? cloneMatchCharacter(record) : cloneMatchTeam(record));
         },
       });
       return;
@@ -1484,6 +1485,25 @@ async function main(): Promise<void> {
 
   /** The open team editor; every way out of it passes through `showMenu`, to the menu. */
   let teamEditor: TeamEditorView | undefined;
+
+  /** A 1v1 side's Clone (#2885): saved as a new character, then opened. */
+  const cloneMatchCharacter = async (record: MatchRecordTeam): Promise<void> => {
+    const result = characterFromMatch(record, () => crypto.randomUUID(), Date.now());
+    if (!result.ok) {
+      return;
+    }
+    const { character, missingSkills } = result;
+    try {
+      await characters.save(character);
+    } catch (error) {
+      console.warn("[web] could not save the clone", error);
+      showMenu();
+      toast(t("app.couldNotSaveCharacter"));
+      return;
+    }
+    showCharacterEditor(character);
+    toast(t("app.cloned", { team: character.name, missing: missingSkillsNote(missingSkills) }));
+  };
 
   /** A Matches team's Clone (#2585): saved as a new Team Build, then opened, as a starter's clone is. */
   const cloneMatchTeam = async (record: MatchRecordTeam): Promise<void> => {

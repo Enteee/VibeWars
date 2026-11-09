@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Rustig aan: je laatste regels zijn niet verzonden.",
   "app.cloned": "{team} gekloond{missing}",
   "app.couldNotImport": "Importeren mislukt",
+  "app.couldNotSaveCharacter": "Het personage kon niet worden opgeslagen",
   "app.couldNotSaveTeam": "Team opslaan mislukt",
   "app.framedRelayLink": "Open de relaylink in een eigen tabblad. Er is niets opgeslagen.",
   "app.inviteInLobby": "Ga terug naar het menu en open de uitnodigingslink opnieuw.",
@@ -634,6 +635,8 @@ export default {
   "lobby.modePriestAnnihilation": "Priest Annihilation: versla alle vijanden en hun priester",
   "lobby.modeRelicRun":
     "Relic Run: breng je relikwie naar het altaar. De meeste punten in 8 minuten wint.",
+  "lobby.modeRelicRunFoe":
+    "Relic Run: breng het relikwie van de vijand naar je Spookheld. 3 punten voorsprong wint; na 8 minuten de meeste punten.",
   "lobby.notReady": "Niet klaar",
   "lobby.playBots": "Tegen bots spelen",
   "lobby.ready": "Klaar",

@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Hidasta vähän: viimeisimpiä viestejäsi ei lähetetty.",
   "app.cloned": "Kloonattu: {team}{missing}",
   "app.couldNotImport": "Tuonti epäonnistui",
+  "app.couldNotSaveCharacter": "Hahmoa ei voitu tallentaa",
   "app.couldNotSaveTeam": "Tiimin tallennus epäonnistui",
   "app.framedRelayLink": "Avaa relay-linkki omassa välilehdessään. Mitään ei tallennettu.",
   "app.inviteInLobby": "Palaa valikkoon ja avaa kutsulinkki uudelleen.",
@@ -645,6 +646,8 @@ export default {
   "lobby.modePriestAnnihilation": "Pappituho: kukista kaikki viholliset ja heidän pappinsa",
   "lobby.modeRelicRun":
     "Reliikkijuoksu: kanna reliikkisi alttarille. Eniten pisteitä 8 minuutissa voittaa.",
+  "lobby.modeRelicRunFoe":
+    "Reliikkijuoksu: kanna vihollisen reliikki aavesankarillesi. 3 pisteen johto voittaa; 8 minuutin jälkeen eniten pisteitä.",
   "lobby.notReady": "Ei valmis",
   "lobby.playBots": "Pelaa botteja vastaan",
   "lobby.ready": "Valmis",

@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Ta det lugnt: dina senaste rader skickades inte.",
   "app.cloned": "Klonade {team}{missing}",
   "app.couldNotImport": "Kunde inte importera",
+  "app.couldNotSaveCharacter": "Karaktären kunde inte sparas",
   "app.couldNotSaveTeam": "Kunde inte spara laget",
   "app.framedRelayLink": "Öppna relälänken i en egen flik. Inget sparades.",
   "app.inviteInLobby": "Gå tillbaka till menyn och öppna inbjudningslänken igen.",
@@ -635,6 +636,8 @@ export default {
   "lobby.modePriestAnnihilation": "Prästförintelse: besegra alla fiender och deras präst",
   "lobby.modeRelicRun":
     "Reliklöpning: bär din relik till altaret. Flest poäng på 8 minuter vinner.",
+  "lobby.modeRelicRunFoe":
+    "Reliklöpning: bär fiendens relik till din spökhjälte. 3 poängs ledning vinner; efter 8 minuter vinner flest poäng.",
   "lobby.notReady": "Ej redo",
   "lobby.playBots": "Spela mot bottar",
   "lobby.ready": "Redo",

@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Spomaľ: tvoje posledné správy sa neodoslali.",
   "app.cloned": "Klonované: {team}{missing}",
   "app.couldNotImport": "Import zlyhal",
+  "app.couldNotSaveCharacter": "Postavu sa nepodarilo uložiť",
   "app.couldNotSaveTeam": "Tím sa nepodarilo uložiť",
   "app.framedRelayLink": "Otvor odkaz na relé vo vlastnej karte. Nič sa neuložilo.",
   "app.inviteInLobby": "Vráť sa do menu a znova otvor pozývací odkaz.",
@@ -695,6 +696,8 @@ export default {
   "lobby.modePriestAnnihilation": "Anihilácia kňaza: poraz všetkých nepriateľov aj ich kňaza",
   "lobby.modeRelicRun":
     "Beh s relikviou: dones svoju relikviu na oltár. Vyhráva najviac bodov za 8 minút.",
+  "lobby.modeRelicRunFoe":
+    "Beh s relikviou: dones nepriateľskú relikviu svojmu Prízračnému hrdinovi. Vyhráva náskok 3 bodov; po 8 minútach najviac bodov.",
   "lobby.notReady": "Nepripravený",
   "lobby.playBots": "Hrať proti botom",
   "lobby.ready": "Pripravený",

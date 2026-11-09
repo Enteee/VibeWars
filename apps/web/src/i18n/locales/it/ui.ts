@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Rallenta: i tuoi ultimi messaggi non sono stati inviati.",
   "app.cloned": "Clonato {team}{missing}",
   "app.couldNotImport": "Importazione non riuscita",
+  "app.couldNotSaveCharacter": "Impossibile salvare il personaggio",
   "app.couldNotSaveTeam": "Impossibile salvare la squadra",
   "app.framedRelayLink":
     "Apri il link del relay in una scheda separata. Non è stato salvato nulla.",
@@ -678,6 +679,8 @@ export default {
     "Annientamento del sacerdote: sconfiggi ogni nemico e il suo sacerdote",
   "lobby.modeRelicRun":
     "Corsa alla reliquia: porta la reliquia all'altare. Vince chi fa più punti in 8 minuti.",
+  "lobby.modeRelicRunFoe":
+    "Corsa alla reliquia: porta la reliquia nemica al tuo Eroe spettrale. Vince chi ha 3 punti di vantaggio; dopo 8 minuti, chi ha più punti.",
   "lobby.notReady": "Non pronto",
   "lobby.playBots": "Gioca contro i bot",
   "lobby.ready": "Pronto",

@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Yavaşla: son satırların gönderilmedi.",
   "app.cloned": "{team} kopyalandı{missing}",
   "app.couldNotImport": "İçe aktarılamadı",
+  "app.couldNotSaveCharacter": "Karakter kaydedilemedi",
   "app.couldNotSaveTeam": "Takım kaydedilemedi",
   "app.framedRelayLink": "Relay bağlantısını kendi sekmesinde aç. Hiçbir şey kaydedilmedi.",
   "app.inviteInLobby": "Menüye dön, sonra davet bağlantısını yeniden aç.",
@@ -636,6 +637,8 @@ export default {
   "lobby.modePriestAnnihilation": "Rahip İmhası: tüm düşmanları ve rahiplerini yen",
   "lobby.modeRelicRun":
     "Kalıntı Koşusu: kalıntını sunağa taşı. 8 dakikada en çok puanı alan kazanır.",
+  "lobby.modeRelicRunFoe":
+    "Kalıntı Koşusu: düşmanın kalıntısını Hayalet Kahramanına taşı. 3 puan öne geçen kazanır; 8 dakika sonunda en çok puanı alan kazanır.",
   "lobby.notReady": "Hazır değil",
   "lobby.playBots": "Botlara karşı oyna",
   "lobby.ready": "Hazır",

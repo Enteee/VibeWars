@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "送信が速すぎます。直近の発言は送信されませんでした。",
   "app.cloned": "{team}を複製しました{missing}",
   "app.couldNotImport": "インポートできませんでした",
+  "app.couldNotSaveCharacter": "キャラクターを保存できませんでした",
   "app.couldNotSaveTeam": "チームを保存できませんでした",
   "app.framedRelayLink": "リレーリンクは別のタブで開いてください。何も保存されていません。",
   "app.inviteInLobby": "メニューに戻ってから、招待リンクをもう一度開いてください。",
@@ -596,6 +597,8 @@ export default {
   "lobby.modePriestAnnihilation": "司祭殲滅: 敵と司祭を全滅させる",
   "lobby.modeRelicRun":
     "レリックラン: レリックを祭壇へ運びます。8分間で最多得点のチームが勝利します。",
+  "lobby.modeRelicRunFoe":
+    "レリックラン: 敵のレリックを自軍のゴーストヒーローへ運びます。3点差をつけると勝利し、8分経過時は最多得点のチームが勝利します。",
   "lobby.notReady": "未準備",
   "lobby.playBots": "ボットと対戦",
   "lobby.ready": "準備完了",

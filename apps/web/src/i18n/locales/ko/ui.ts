@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "천천히요: 마지막 메시지가 전송되지 않았어요.",
   "app.cloned": "{team} 복제됨{missing}",
   "app.couldNotImport": "가져오지 못했어요",
+  "app.couldNotSaveCharacter": "캐릭터를 저장할 수 없어요",
   "app.couldNotSaveTeam": "팀을 저장하지 못했어요",
   "app.framedRelayLink": "릴레이 링크를 별도 탭에서 여세요. 아무것도 저장되지 않았어요.",
   "app.inviteInLobby": "메뉴로 돌아간 뒤 초대 링크를 다시 여세요.",
@@ -592,6 +593,8 @@ export default {
   "lobby.modePriestAnnihilation": "사제 전멸전: 모든 적과 사제를 쓰러뜨리세요",
   "lobby.modeRelicRun":
     "유물 쟁탈: 유물을 제단으로 옮기세요. 8분 동안 가장 많은 점수를 얻은 팀이 이겨요.",
+  "lobby.modeRelicRunFoe":
+    "유물 쟁탈: 적의 유물을 내 유령 영웅에게 옮기세요. 3점 앞서면 승리하고, 8분이 지나면 가장 많은 점수를 얻은 팀이 이겨요.",
   "lobby.notReady": "준비 안 됨",
   "lobby.playBots": "봇과 대전",
   "lobby.ready": "준비 완료",

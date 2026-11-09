@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Pelan-pelan: pesan terakhirmu tidak terkirim.",
   "app.cloned": "Berhasil klon {team}{missing}",
   "app.couldNotImport": "Gagal mengimpor",
+  "app.couldNotSaveCharacter": "Karakter tidak dapat disimpan",
   "app.couldNotSaveTeam": "Gagal menyimpan tim",
   "app.framedRelayLink": "Buka link relay di tab tersendiri. Belum ada yang disimpan.",
   "app.inviteInLobby": "Kembali ke menu, lalu buka lagi link undangannya.",
@@ -592,6 +593,8 @@ export default {
     "Raja Bukit: pimpin Pahlawan Hantu-mu ke altar. Kuasai untuk mencetak poin; poin terbanyak dalam 8 menit menang.",
   "lobby.modePriestAnnihilation": "Pemusnahan Pendeta: kalahkan semua musuh dan pendetanya",
   "lobby.modeRelicRun": "Lari Relik: bawa relikmu ke altar. Poin terbanyak dalam 8 menit menang.",
+  "lobby.modeRelicRunFoe":
+    "Lari Relik: bawa relik musuh ke Pahlawan Hantu-mu. Unggul 3 poin menang; setelah 8 menit, poin terbanyak menang.",
   "lobby.notReady": "Belum siap",
   "lobby.playBots": "Lawan bot",
   "lobby.ready": "Siap",

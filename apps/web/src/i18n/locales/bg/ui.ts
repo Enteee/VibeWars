@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "По-бавно: последните ти редове не бяха изпратени.",
   "app.cloned": "Клониран: {team}{missing}",
   "app.couldNotImport": "Неуспешен импорт",
+  "app.couldNotSaveCharacter": "Героят не можа да се запази",
   "app.couldNotSaveTeam": "Отборът не можа да се запази",
   "app.framedRelayLink": "Отвори линка за релето в отделен раздел. Нищо не е запазено.",
   "app.inviteInLobby": "Върни се в менюто и отвори линка за покана отново.",
@@ -638,6 +639,8 @@ export default {
   "lobby.modePriestAnnihilation": "Унищожение на жреци: победи всички врагове и жреца им",
   "lobby.modeRelicRun":
     "Бяг с реликви: занеси реликвата си до олтара. Печели този с най-много точки за 8 минути.",
+  "lobby.modeRelicRunFoe":
+    "Бяг с реликви: занеси реликвата на врага при Призрачния си герой. 3 точки преднина печелят; след 8 минути – най-много точки.",
   "lobby.notReady": "Не съм готов",
   "lobby.playBots": "Играй срещу ботове",
   "lobby.ready": "Готов",

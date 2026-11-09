@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Lassíts: az utolsó soraid nem mentek el.",
   "app.cloned": "Klónozva: {team}{missing}",
   "app.couldNotImport": "Nem sikerült az importálás",
+  "app.couldNotSaveCharacter": "A karaktert nem sikerült menteni",
   "app.couldNotSaveTeam": "Nem sikerült menteni a csapatot",
   "app.framedRelayLink": "Nyisd meg a relay linket külön lapon. Semmi sem lett mentve.",
   "app.inviteInLobby": "Menj vissza a menübe, majd nyisd meg újra a meghívó linket.",
@@ -637,6 +638,8 @@ export default {
   "lobby.modePriestAnnihilation": "Papirtás: győzz le minden ellenséget és a papjukat",
   "lobby.modeRelicRun":
     "Ereklyefutam: vidd az ereklyédet az oltárhoz. 8 perc után a legtöbb pont nyer.",
+  "lobby.modeRelicRunFoe":
+    "Ereklyefutam: vidd az ellenség ereklyéjét a Kísértethősödhöz. 3 pont előny nyer; 8 perc után a legtöbb pont.",
   "lobby.notReady": "Nem kész",
   "lobby.playBots": "Játék botok ellen",
   "lobby.ready": "Kész",

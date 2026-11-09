@@ -53,6 +53,7 @@ import {
   deliverSystem,
   formatMirror,
   formatProposal,
+  formatSleepPlan,
   formatQuestion,
   inboxesOf,
   skipNudge,
@@ -60,6 +61,7 @@ import {
   mirrorTopic,
   obj,
   parseProposalNotice,
+  parseSleepNotice,
   parseQuestions,
   parseRegistry,
   planSends,
@@ -68,6 +70,7 @@ import {
   routeInbound,
 } from "./protocol.mjs";
 import { parseProposal } from "./reboot.mjs";
+import { parseSleepPlan } from "./hub-sleep.mjs";
 import { roleOf, staffReader } from "./staff.mjs";
 
 /**
@@ -115,7 +118,7 @@ function required(name) {
  * @returns {{
  *   root: string, bus: string, link: string, registry: string, company: string,
  *   questions: string, staff: string, proposal: string, proposalMessage: string,
- *   decision: string, boot: string, reboot: string,
+ *   decision: string, sleepPlan: string, sleepMessage: string, sleepCancel: string, boot: string, reboot: string,
  * }}
  */
 function paths() {
@@ -134,6 +137,11 @@ function paths() {
     proposal: path.join(root, "reboot-proposal.json"),
     proposalMessage: path.join(root, "link", "proposal-message.json"),
     decision: path.join(root, "link", "reboot-decision.json"),
+    // A plan to hibernate the host (#2794): hubd's; the message and the
+    // operator's cancel are this file's, as for a proposal.
+    sleepPlan: path.join(root, "sleep-plan.json"),
+    sleepMessage: path.join(root, "link", "sleep-message.json"),
+    sleepCancel: path.join(root, "link", "sleep-cancel.json"),
     boot: path.join(root, "boot.json"),
     reboot: path.join(root, "reboot.json"),
   };
@@ -322,6 +330,27 @@ function readPostedProposal(file) {
 }
 
 /**
+ * The sleep plan posted in the Operator topic (#2794), kept whole so its
+ * message can be edited once hubd has closed it. One not in the current
+ * shape is no posted plan.
+ *
+ * @typedef {{ plan: import("./hub-sleep.mjs").SleepPlan, messageId: number | null }} PostedSleep
+ */
+
+/**
+ * @param {string} file
+ * @returns {PostedSleep | null}
+ */
+function readPostedSleep(file) {
+  const raw = obj(readJson(file));
+  const plan = parseSleepPlan(raw.plan);
+  if (plan === null || !(typeof raw.messageId === "number" || raw.messageId === null)) {
+    return null;
+  }
+  return { plan, messageId: raw.messageId };
+}
+
+/**
  * @param {string} bus
  * @param {string} employee
  * @returns {{ dir: string, inbox: string, outbox: string, receipts: string, roster: string }}
@@ -494,6 +523,7 @@ class Company {
     this.repo = readRepo(at.company);
     this.questions = readQuestions(at.questions);
     this.posted = readPostedProposal(at.proposalMessage);
+    this.postedSleep = readPostedSleep(at.sleepMessage);
     /** The operator's Telegram user id; set by `findOperator` before serving. */
     this.operatorId = 0;
     /** @type {Map<import("./protocol.mjs").TopicName, number>} when to ask for a topic again */
@@ -521,6 +551,29 @@ class Company {
     } else {
       writeAtomically(this.at.proposalMessage, posted);
     }
+  }
+
+  /**
+   * @param {PostedSleep | null} posted
+   * @returns {void}
+   */
+  setPostedSleep(posted) {
+    this.postedSleep = posted;
+    if (posted === null) {
+      fs.rmSync(this.at.sleepMessage, { force: true });
+    } else {
+      writeAtomically(this.at.sleepMessage, posted);
+    }
+  }
+
+  /**
+   * The posted sleep plan, if hubd still holds it open.
+   *
+   * @returns {import("./protocol.mjs").OpenSleepPlan | null}
+   */
+  openSleepPlan() {
+    const open = parseSleepPlan(readJson(this.at.sleepPlan));
+    return open !== null && this.postedSleep?.plan.id === open.id ? this.postedSleep : null;
   }
 
   /**
@@ -659,6 +712,7 @@ async function pollInbound(company, mirror) {
           operatorTopicId,
           now: Date.now(),
           proposal: company.openProposal(),
+          sleepPlan: company.openSleepPlan(),
         });
         if (answer !== null) {
           await answerOperator(company, mirror, answer);
@@ -748,6 +802,9 @@ async function pollInbound(company, mirror) {
 async function answerOperator(company, mirror, answer) {
   if (answer.decision !== null) {
     writeAtomically(company.at.decision, { ...answer.decision, at: Date.now() });
+  }
+  if (answer.sleepCancel !== undefined) {
+    writeAtomically(company.at.sleepCancel, answer.sleepCancel);
   }
   if (answer.answered !== null) {
     company.questions.questions[String(answer.answered.n)] = answer.answered.question;
@@ -865,6 +922,11 @@ function drainSystem(company, mirror) {
       proposalNotice(company, mirror, notice);
       return;
     }
+    const sleep = parseSleepNotice(payload);
+    if (sleep !== null) {
+      sleepNotice(company, mirror, sleep);
+      return;
+    }
     const delivered = deliverSystem(payload, {
       employees: company.employees(),
       now: Date.now(),
@@ -917,6 +979,39 @@ function proposalNotice(company, mirror, notice) {
   mirror.push({
     operator: { ...formatProposal(posted.proposal, closed), edit: posted.messageId },
   });
+}
+
+/**
+ * hubd's word on a sleep plan (#2794): post it, or edit its message to say
+ * how it closed.
+ *
+ * @param {Company} company
+ * @param {Outgoing[]} mirror
+ * @param {NonNullable<ReturnType<typeof parseSleepNotice>>} notice
+ * @returns {void}
+ */
+function sleepNotice(company, mirror, notice) {
+  if ("sleepPlan" in notice) {
+    const plan = parseSleepPlan(readJson(company.at.sleepPlan));
+    if (plan?.id !== notice.sleepPlan) {
+      console.error("[link] a sleep plan was announced that hubd no longer holds");
+      return;
+    }
+    company.setPostedSleep({ plan, messageId: null });
+    mirror.push({ operator: { ...formatSleepPlan(plan), sleepPlan: plan.id } });
+    return;
+  }
+  const posted = company.postedSleep;
+  if (posted?.plan.id !== notice.sleepClosed) {
+    return;
+  }
+  company.setPostedSleep(null);
+  if (posted.messageId === null) {
+    console.error("[link] a sleep plan closed before its message was posted");
+    return;
+  }
+  const closed = { outcome: notice.outcome, note: notice.note, at: Date.now() };
+  mirror.push({ operator: { ...formatSleepPlan(posted.plan, closed), edit: posted.messageId } });
 }
 
 /**
@@ -1081,6 +1176,14 @@ async function sendBatch(company, batch) {
   ) {
     company.setPosted({ ...posted, messageId: result.message_id });
   }
+  const sleep = company.postedSleep;
+  if (
+    batch.sleepPlan !== undefined &&
+    sleep?.plan.id === batch.sleepPlan &&
+    typeof result.message_id === "number"
+  ) {
+    company.setPostedSleep({ ...sleep, messageId: result.message_id });
+  }
 }
 
 /** @returns {Promise<void>} */
@@ -1148,6 +1251,17 @@ async function serve() {
       });
     } else {
       company.setPosted(null);
+    }
+  }
+  // A sleep plan announced but never posted, likewise.
+  const unpostedSleep = company.postedSleep;
+  if (unpostedSleep !== null && unpostedSleep.messageId === null) {
+    if (parseSleepPlan(readJson(at.sleepPlan))?.id === unpostedSleep.plan.id) {
+      mirror.push({
+        operator: { ...formatSleepPlan(unpostedSleep.plan), sleepPlan: unpostedSleep.plan.id },
+      });
+    } else {
+      company.setPostedSleep(null);
     }
   }
   await Promise.race([

@@ -157,6 +157,10 @@ contra um inimigo que chegue ao alcance de feitiço.
 Broken Tower joga esse modo: o altar fica dentro de uma torre em ruínas
 com uma porta de cada lado.
 
+### Cinder Sanctum
+
+Aqui a Corrida da Relíquia da Ascensão dos Heróis é jogada ao contrário. Cada base tem a relíquia da sua equipe e o seu Herói Fantasmagórico, e não há altar. **Pegue a relíquia inimiga na base dela e leve-a ao seu próprio Herói Fantasmagórico** para marcar um ponto. O fantasma precisa estar vivo e fica no seu posto. Você não pode carregar a própria relíquia: pegá-la onde caiu a manda de volta para casa. Uma equipe com **3 pontos de vantagem vence na hora**. Aos 8 minutos vence quem tiver mais pontos, e um empate fica com a última equipe a marcar. Cada base revive seus mortos, e seu fantasma, a cada 2 minutos. Os bots vão juntos atrás da relíquia inimiga e a trazem para casa.
+
 ## Rei da Colina
 
 **Leve seu Herói Fantasmagórico até o altar e controle-o.** Cada equipe
@@ -333,7 +337,7 @@ na fila.
 ## Ascensão dos Heróis
 
 Uma Ascensão dos Heróis na fila tem quatro rodadas, sempre nesta ordem:
-Broken Tower (Corrida da Relíquia), Scarred Earth (Captura de Pontos), The
+Cinder Sanctum (Corrida da Relíquia), Scarred Earth (Captura de Pontos), The
 Courtyard (Rei da Colina) e depois o Hall of Heroes. A janela da Sala diz
 onde você está enquanto procura uma equipe: `Round 2 of 4 · Scarred Earth`.
 Você só encontra equipes na mesma rodada e espera por uma o tempo que for
@@ -410,8 +414,7 @@ a vencedora sublinhada, e o mapa, a duração e quando. Toda linha é marcada
 como **informado pelo host**. Clique em uma para ver as equipes, uma aba
 cada, a da vencedora primeiro: o cartão da equipe. **Clonar** copia uma
 equipe de uma partida terminada para suas Builds de Equipe, a build de
-cada jogador com o nome dele, e a abre. Um lado de 1v1 não tem Clonar: uma
-Build de Equipe é de 2, 4 ou 8.
+cada jogador com o nome dele, e a abre. Em um lado de 1v1, Clonar salva a build do jogador como um novo personagem e o abre, porque uma Build de Equipe é de 2, 4 ou 8.
 
 Cada linha começa com o ícone do modo, e o ícone e a borda esquerda da
 linha ficam na cor do modo: laranja Aleatória, azul Equipe, dourado

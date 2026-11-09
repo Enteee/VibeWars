@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Zwolnij: twoje ostatnie wiadomości nie zostały wysłane.",
   "app.cloned": "Sklonowano {team}{missing}",
   "app.couldNotImport": "Nie udało się zaimportować",
+  "app.couldNotSaveCharacter": "Nie udało się zapisać postaci",
   "app.couldNotSaveTeam": "Nie udało się zapisać drużyny",
   "app.framedRelayLink": "Otwórz link przekaźnika w osobnej karcie. Nic nie zapisano.",
   "app.inviteInLobby": "Wróć do menu i ponownie otwórz link z zaproszeniem.",
@@ -698,6 +699,8 @@ export default {
   "lobby.modePriestAnnihilation": "Anihilacja kapłana: pokonaj wszystkich wrogów i ich kapłana",
   "lobby.modeRelicRun":
     "Wyścig relikwii: zanieś relikwię na ołtarz. Wygrywa najwięcej punktów w 8 minut.",
+  "lobby.modeRelicRunFoe":
+    "Wyścig relikwii: zanieś relikwię wroga do swojego Upiornego Bohatera. Wygrywa 3 punkty przewagi; po 8 minutach najwięcej punktów.",
   "lobby.notReady": "Niegotowy",
   "lobby.playBots": "Graj z botami",
   "lobby.ready": "Gotowy",

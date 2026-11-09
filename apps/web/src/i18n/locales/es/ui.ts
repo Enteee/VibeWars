@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Más despacio: tus últimas líneas no se enviaron.",
   "app.cloned": "Clonado: {team}{missing}",
   "app.couldNotImport": "No se pudo importar",
+  "app.couldNotSaveCharacter": "No se pudo guardar el personaje",
   "app.couldNotSaveTeam": "No se pudo guardar el equipo",
   "app.framedRelayLink": "Abre el enlace del relay en su propia pestaña. No se guardó nada.",
   "app.inviteInLobby": "Vuelve al menú y abre de nuevo el enlace de invitación.",
@@ -676,6 +677,8 @@ export default {
     "Aniquilación de sacerdote: derrota a todos los enemigos y a su sacerdote",
   "lobby.modeRelicRun":
     "Carrera de reliquias: lleva tu reliquia al altar. Gana quien más puntos tenga en 8 minutos.",
+  "lobby.modeRelicRunFoe":
+    "Carrera de reliquias: lleva la reliquia enemiga a tu Héroe Fantasmal. 3 puntos de ventaja ganan; a los 8 minutos, quien más puntos tenga.",
   "lobby.notReady": "No listo",
   "lobby.playBots": "Jugar contra bots",
   "lobby.ready": "Listo",

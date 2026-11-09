@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Uspori: tvoje zadnje poruke nisu poslane.",
   "app.cloned": "Kloniran je {team}{missing}",
   "app.couldNotImport": "Uvoz nije uspio",
+  "app.couldNotSaveCharacter": "Lik nije moguće spremiti",
   "app.couldNotSaveTeam": "Tim nije spremljen",
   "app.framedRelayLink": "Otvori poveznicu releja u zasebnoj kartici. Ništa nije spremljeno.",
   "app.inviteInLobby": "Vrati se u izbornik pa ponovno otvori pozivnicu.",
@@ -669,6 +670,8 @@ export default {
     "Uništenje sa svećenikom: porazi sve neprijatelje i njihova svećenika",
   "lobby.modeRelicRun":
     "Utrka za relikvijom: odnesi relikviju na oltar. Pobjeđuje najviše bodova u 8 minuta.",
+  "lobby.modeRelicRunFoe":
+    "Utrka za relikvijom: odnesi neprijateljsku relikviju svom Sablasnom heroju. Pobjeđuje vodstvo od 3 boda; nakon 8 minuta najviše bodova.",
   "lobby.notReady": "Nije spreman",
   "lobby.playBots": "Igraj protiv botova",
   "lobby.ready": "Spreman",
