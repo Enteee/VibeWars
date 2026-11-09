@@ -102,14 +102,38 @@ export function liftAt(structure: MapStructure, position: Vec2, layer: number): 
   return rampLift(ramp, progressAlong(boxOf(ramp.area), uphill, position));
 }
 
+/** Whether a disc of `radius` at `position` reaches into `box`. */
+function discReaches(box: Box, position: Vec2, radius: number): boolean {
+  const x = position.x - Math.min(Math.max(position.x, box.left), box.right);
+  const y = position.y - Math.min(Math.max(position.y, box.top), box.bottom);
+  return x * x + y * y < radius * radius;
+}
+
 /**
- * The layer a body draws on: a ramp's upper one while it is on that ramp.
- * A ramp's top overlaps its deck, and a body walking down it has already
- * become the lower layer's, which would put it under that deck.
+ * The layer a body of `radius` draws on: a ramp's upper one while its
+ * disc is on that ramp, so the ramp never cuts into it. A ramp's top
+ * overlaps its deck, and a body walking down it has already become the
+ * lower layer's, which would put it under that deck. A body whose centre
+ * is off the ramp and under a deck stays under it.
  */
-export function drawnLayerAt(structure: MapStructure, position: Vec2, layer: number): number {
-  const ramp = rampAt(structure, position, layer);
-  return ramp === undefined ? layer : Math.max(ramp.from, ramp.to);
+export function drawnLayerAt(
+  structure: MapStructure,
+  position: Vec2,
+  layer: number,
+  radius: number,
+): number {
+  const on = rampAt(structure, position, layer);
+  if (on !== undefined) {
+    return Math.max(on.from, on.to);
+  }
+  const near = structure.transitions.find(
+    ({ from, to, area }) =>
+      (from === layer || to === layer) && discReaches(boxOf(area), position, radius),
+  );
+  const underDeck = structure.decks.some(
+    (deck) => deck.layer > layer && pointInPolygon(position, shapeOutline(deck.footprint)),
+  );
+  return near === undefined || underDeck ? layer : Math.max(near.from, near.to);
 }
 
 /** A ramp as it draws: all points already lifted. */

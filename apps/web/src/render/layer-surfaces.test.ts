@@ -154,6 +154,7 @@ describe("liftAt (#2958)", () => {
     ],
   };
   const STEP = ELEVATION_STEP;
+  const R = 14;
 
   it.each([
     ["west ramp", { x: 300, y: 350 }, { x: 370, y: 350 }, { x: 440, y: 350 }, 0],
@@ -191,9 +192,21 @@ describe("liftAt (#2958)", () => {
   });
 
   it("draws a body on a ramp in the ramp's upper layer, so its deck does not cover it", () => {
-    expect(drawnLayerAt(HEIGHTS, { x: 430, y: 350 }, 0)).toBe(1);
-    expect(drawnLayerAt(HEIGHTS, { x: 600, y: 260 }, 0)).toBe(0);
-    expect(drawnLayerAt(HEIGHTS, { x: 100, y: 100 }, 0)).toBe(0);
+    expect(drawnLayerAt(HEIGHTS, { x: 430, y: 350 }, 0, R)).toBe(1);
+    expect(drawnLayerAt(HEIGHTS, { x: 600, y: 260 }, 0, R)).toBe(0);
+    expect(drawnLayerAt(HEIGHTS, { x: 100, y: 100 }, 0, R)).toBe(0);
+  });
+
+  it("draws a body whose disc reaches a ramp in front of it (#2965)", () => {
+    expect(drawnLayerAt(HEIGHTS, { x: 299, y: 350 }, 0, R)).toBe(1);
+    expect(drawnLayerAt(HEIGHTS, { x: 350, y: 455 }, 0, R)).toBe(1);
+    expect(drawnLayerAt(HEIGHTS, { x: 535, y: 200 }, 1, R)).toBe(2);
+    expect(drawnLayerAt(HEIGHTS, { x: 525, y: 200 }, 1, R)).toBe(1);
+  });
+
+  it("keeps a body under a deck there, in reach of the ramp's high end", () => {
+    expect(drawnLayerAt(HEIGHTS, { x: 446, y: 350 }, 0, R)).toBe(0);
+    expect(drawnLayerAt(HEIGHTS, { x: 530, y: 165 }, 1, R)).toBe(1);
   });
 
   it("slopes the drawing from the lower layer's height to the upper's", () => {

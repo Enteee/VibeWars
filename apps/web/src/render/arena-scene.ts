@@ -570,7 +570,7 @@ export class ArenaScene extends Phaser.Scene {
       this.elevations.set(actor.id, lift);
       return {
         ...actor,
-        layer: drawnLayerAt(structure, actor.position, actor.layer),
+        layer: drawnLayerAt(structure, actor.position, actor.layer, actor.radius),
         position: { x: actor.position.x, y: actor.position.y - lift },
       };
     });
