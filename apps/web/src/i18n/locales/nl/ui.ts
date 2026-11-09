@@ -681,6 +681,9 @@ export default {
   "matches.endTime": "Tijd om",
   "matches.filterKind": "Soort",
   "matches.filterSize": "Grootte",
+  "matches.hallReported": "Gemeld door de host van elke match, niet geverifieerd.",
+  "matches.hallStreak": { one: "{count} zege op rij", other: "{count} zeges op rij" },
+  "matches.hallTitle": "Hal der Helden",
   "matches.hostReported": "door host gemeld",
   "matches.hostReportedTitle":
     "Gepubliceerd door de host van de match; door niemand anders geverifieerd.",

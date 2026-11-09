@@ -26,6 +26,7 @@ import { button, h, screenBar, syncList } from "./kit.js";
 import { MATCH_KINDS, MATCH_SIZES, matchesFilter, sessionFilter } from "./matches-filter.js";
 import { playerLabelText, signetElement } from "./player-label.js";
 import { railIconUrl, railLabel, railScreen, type RailEntry } from "./rail.js";
+import { hallHolds, type HallHold } from "./vault-screen.js";
 
 /** The most records the page holds; the oldest goes first. */
 export const MATCHES_KEPT = 100;
@@ -268,6 +269,26 @@ function filterChip<T>(
   return chip;
 }
 
+function hallRow(hold: HallHold, nowSeconds: number): HTMLElement {
+  const row = h("li", "matches-hall-row");
+  const who = row.appendChild(h("span", "matches-hall-who"));
+  const holder = who.appendChild(h("span", "matches-hall-holder", hold.holder));
+  holder.dir = "auto";
+  holder.title = hold.holder;
+  const names = hold.people.join(" · ");
+  const people = who.appendChild(h("span", "matches-hall-people", names));
+  people.dir = "auto";
+  people.title = names;
+  const meta = row.appendChild(h("span", "matches-hall-meta"));
+  if (hold.wins >= 2) {
+    meta.appendChild(
+      h("span", "matches-hall-streak", t("matches.hallStreak", { count: hold.wins })),
+    );
+  }
+  meta.appendChild(h("span", "matches-hall-when", relativeTime(hold.endedAt, nowSeconds)));
+  return row;
+}
+
 /**
  * The two chip groups (#2741): kinds, then sizes. Within a group a match
  * fits any pressed chip; it must fit both groups.
@@ -347,6 +368,13 @@ export function renderMatchesScreen(
 ): MatchesScreen {
   screenBar({ crumbs: ["VibeWars"], status: [], actions: [], join: true });
   const body = railScreen(root, "matches", options.onSwitch);
+  const hall = body.appendChild(h("section", "matches-hall"));
+  hall.hidden = true;
+  hall.append(
+    h("h2", "matches-hall-title", t("matches.hallTitle")),
+    h("p", "matches-hall-reported", t("matches.hallReported")),
+  );
+  const hallList = hall.appendChild(h("ol", "matches-hall-list"));
   body.appendChild(
     filterChips(() => {
       draw();
@@ -359,6 +387,12 @@ export function renderMatchesScreen(
 
   const draw = (): void => {
     const nowSeconds = Math.floor(options.now() / 1000);
+    const holds = hallHolds(
+      records.map((heard) => heard.record),
+      options.now(),
+    );
+    hall.hidden = holds.length === 0;
+    hallList.replaceChildren(...holds.map((hold) => hallRow(hold, nowSeconds)));
     // A row the filter hides leaves the list, so it comes back closed.
     const shown = records.filter((heard) => matchesFilter(heard.record, sessionFilter));
     note.textContent = t(

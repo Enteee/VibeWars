@@ -746,6 +746,14 @@ export default {
   "matches.endTime": "Время вышло",
   "matches.filterKind": "Тип",
   "matches.filterSize": "Размер",
+  "matches.hallReported": "Сообщено хостом каждого матча, не проверено.",
+  "matches.hallStreak": {
+    one: "{count} победа подряд",
+    few: "{count} победы подряд",
+    many: "{count} побед подряд",
+    other: "{count} победы подряд",
+  },
+  "matches.hallTitle": "Зал героев",
   "matches.hostReported": "от хоста",
   "matches.hostReportedTitle": "Опубликовано хостом матча; никем больше не проверено.",
   "matches.hoursAgo": {

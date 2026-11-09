@@ -747,6 +747,14 @@ export default {
   "matches.endTime": "Vypršal čas",
   "matches.filterKind": "Druh",
   "matches.filterSize": "Veľkosť",
+  "matches.hallReported": "Nahlásil hostiteľ každého zápasu, neoverené.",
+  "matches.hallStreak": {
+    one: "{count} výhra v rade",
+    few: "{count} výhry v rade",
+    many: "{count} výhry v rade",
+    other: "{count} výhier v rade",
+  },
+  "matches.hallTitle": "Sieň hrdinov",
   "matches.hostReported": "od hostiteľa",
   "matches.hostReportedTitle": "Zverejnil hostiteľ zápasu; nikto iný to neoveril.",
   "matches.hoursAgo": {

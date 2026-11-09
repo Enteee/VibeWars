@@ -3,7 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 import type { MatchRecord } from "@vibewars/game-session";
 
 import type { MatchRecordWatchHandlers } from "../net/transport/match-records.js";
-import { hallHolderOf, vaultLines, watchHall, type HallWatch } from "./vault-screen.js";
+import {
+  HALL_CLOCK_SKEW_MS,
+  hallHolderOf,
+  hallHolds,
+  vaultLines,
+  watchHall,
+  type HallWatch,
+} from "./vault-screen.js";
 
 const player = (name: string, guildTag: string | null, bot = false) => ({
   name,
@@ -171,5 +178,55 @@ describe("watchHall", () => {
     hear(record([player("Meanwhile", null)], 2_800));
     expect(hall.holder()).toBe("Meanwhile");
     expect(announce).not.toHaveBeenCalled();
+  });
+});
+
+describe("hallHolds", () => {
+  const NOW = 10_000_000;
+  const by = (name: string, endedAt: number, ...more: string[]) =>
+    record([player(name, null), ...more.map((other) => player(other, null))], endedAt);
+
+  it("lists the newest 20 holds, newest first", () => {
+    const wins = Array.from({ length: 25 }, (_, i) => by(i % 2 === 0 ? "A" : "B", 1_000 + i));
+    const holds = hallHolds(wins, NOW);
+    expect(holds).toHaveLength(20);
+    expect(holds[0]?.endedAt).toBe(1_024);
+    expect(holds[19]?.endedAt).toBe(1_005);
+  });
+
+  it("makes one row of one holder's wins, its people and end from the newest", () => {
+    const holds = hallHolds([by("A", 1_002, "New"), by("A", 1_001, "Old")], NOW);
+    expect(holds).toEqual([{ holder: "A", people: ["A", "New"], endedAt: 1_002, wins: 2 }]);
+  });
+
+  it("starts a new row at another holder's win", () => {
+    const holds = hallHolds([by("A", 1_001), by("B", 1_002), by("A", 1_003)], NOW);
+    expect(holds.map(({ holder, wins }) => [holder, wins])).toEqual([
+      ["A", 1],
+      ["B", 1],
+      ["A", 1],
+    ]);
+  });
+
+  it("neither lists nor splits on a draw or a Hosted Game on a Hall map", () => {
+    const draw = { ...by("B", 1_002), winningTeam: null } as MatchRecord;
+    const hosted = { ...by("C", 1_003), mode: "hosted" } as unknown as MatchRecord;
+    const holds = hallHolds([by("A", 1_001), draw, hosted, by("A", 1_004)], NOW);
+    expect(holds.map(({ holder, wins }) => [holder, wins])).toEqual([["A", 2]]);
+  });
+
+  it("drops a win from the far future and keeps one within the skew", () => {
+    const inSkew = Math.floor((NOW + HALL_CLOCK_SKEW_MS) / 1000);
+    const future = inSkew + 1;
+    expect(hallHolds([by("Far", future), by("Near", inSkew)], NOW).map((h) => h.holder)).toEqual([
+      "Near",
+    ]);
+  });
+
+  it("shows just the holder for a team of bots", () => {
+    const bots = record([player("Bot", null, true)], 1_001);
+    expect(hallHolds([bots], NOW)).toEqual([
+      { holder: "Bot", people: [], endedAt: 1_001, wins: 1 },
+    ]);
   });
 });

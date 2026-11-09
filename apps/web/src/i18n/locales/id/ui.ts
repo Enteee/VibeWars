@@ -640,6 +640,9 @@ export default {
   "matches.endTime": "Waktu habis",
   "matches.filterKind": "Jenis",
   "matches.filterSize": "Ukuran",
+  "matches.hallReported": "Dilaporkan oleh host tiap pertandingan, tidak diverifikasi.",
+  "matches.hallStreak": { other: "{count} kemenangan beruntun" },
+  "matches.hallTitle": "Aula Pahlawan",
   "matches.hostReported": "laporan host",
   "matches.hostReportedTitle":
     "Dipublikasikan oleh host pertandingan; tidak diverifikasi pihak lain.",

@@ -435,3 +435,5 @@ pritisni bilo koliko njih, a meč se prikazuje ako odgovara jednoj pritisnutoj v
 pritisnutoj veličini; skupina bez pritisnutih pušta sve. Veličina je
 najveći tim, s botovima, pa Igra s domaćinom 3v2 ne odgovara nijednoj veličini.
 Oznake ostaju kako si ih ostavio dok se stranica ponovno ne učita.
+
+Iznad filtara traka **Dvorana junaka** prikazuje zadnjih 20 nizova, od najnovijeg: držatelja (oznaka ceha ili ime vođe), ljude iz pobjedničkog tima, kada je završila najnovija pobjeda i, od dvije pobjede, koliko ih je zaredom. Niz je neprekinuti slijed pobjeda u Dvorani jednog držatelja. Traka čita zapise s ove stranice, zanemaruje filtre i skrivena je kada nijedan od njih nije pobjeda u Dvorani. Kao i svaki zapis, to je ono što je prijavio domaćin svakog meča, i ništa to ne provjerava.

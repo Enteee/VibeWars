@@ -750,6 +750,14 @@ export default {
   "matches.endTime": "Koniec czasu",
   "matches.filterKind": "Rodzaj",
   "matches.filterSize": "Rozmiar",
+  "matches.hallReported": "Zgłoszone przez hosta każdego meczu, niezweryfikowane.",
+  "matches.hallStreak": {
+    one: "{count} wygrana z rzędu",
+    few: "{count} wygrane z rzędu",
+    many: "{count} wygranych z rzędu",
+    other: "{count} wygranej z rzędu",
+  },
+  "matches.hallTitle": "Sala Bohaterów",
   "matches.hostReported": "zgłoszone przez hosta",
   "matches.hostReportedTitle": "Opublikowane przez hosta meczu; nikt inny tego nie zweryfikował.",
   "matches.hoursAgo": {

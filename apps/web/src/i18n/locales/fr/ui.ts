@@ -725,6 +725,13 @@ export default {
   "matches.endTime": "Temps écoulé",
   "matches.filterKind": "Type",
   "matches.filterSize": "Taille",
+  "matches.hallReported": "Signalé par l'hôte de chaque match, non vérifié.",
+  "matches.hallStreak": {
+    one: "{count} victoire d'affilée",
+    many: "{count} de victoires d'affilée",
+    other: "{count} victoires d'affilée",
+  },
+  "matches.hallTitle": "Hall des héros",
   "matches.hostReported": "déclaré par l'hôte",
   "matches.hostReportedTitle": "Publié par l'hôte du match ; vérifié par personne d'autre.",
   "matches.hoursAgo": {

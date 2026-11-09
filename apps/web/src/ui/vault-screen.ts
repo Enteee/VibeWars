@@ -69,7 +69,7 @@ const HALL_VERIFY_BURST = 5;
 const HALL_VERIFY_PER_SECOND = 0.1;
 
 /** How far ahead of this clock a Hall win's end may be: a host's clock is a little off, no more. */
-const HALL_CLOCK_SKEW_MS = 30_000;
+export const HALL_CLOCK_SKEW_MS = 30_000;
 
 /** The newest Hall holder heard. */
 export interface HallWatch {
@@ -135,4 +135,43 @@ export function watchHall(
       records ??= open();
     },
   };
+}
+
+/** How many holds the Matches page lists. */
+const HALL_HOLDS_SHOWN = 20;
+
+/** An unbroken run of Hall wins by one holder. */
+export interface HallHold {
+  readonly holder: string;
+  /** The winning team's non-bot names, from the newest win. */
+  readonly people: readonly string[];
+  /** Unix seconds, of the newest win. */
+  readonly endedAt: number;
+  readonly wins: number;
+}
+
+/**
+ * The newest holds among `records`, newest first. A record is forgeable, so
+ * a win from the far future is dropped and cannot pin the top row.
+ */
+export function hallHolds(records: readonly MatchRecord[], nowMs: number): HallHold[] {
+  const holds: HallHold[] = [];
+  const oldestFirst = records
+    .filter((record) => record.endedAt * 1000 <= nowMs + HALL_CLOCK_SKEW_MS)
+    .sort((a, b) => a.endedAt - b.endedAt);
+  for (const record of oldestFirst) {
+    const holder = hallHolderOf(record);
+    if (holder === undefined || record.winningTeam === null) {
+      continue;
+    }
+    const players = record.teams[record.winningTeam]?.players ?? [];
+    const people = players.filter((player) => !player.bot).map((player) => player.name);
+    const running = holds.at(-1);
+    const wins = running?.holder === holder ? running.wins + 1 : 1;
+    if (wins > 1) {
+      holds.pop();
+    }
+    holds.push({ holder, people, endedAt: record.endedAt, wins });
+  }
+  return holds.slice(-HALL_HOLDS_SHOWN).reverse();
 }

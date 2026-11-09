@@ -435,3 +435,5 @@ press any number, and a match shows if it fits one pressed kind and one
 pressed size; a group with none pressed lets all through. Size is the
 largest team, bots included, so a 3v2 Hosted Game fits no size. The
 chips stay as you left them until the page reloads.
+
+Above the chips, the **Hall of Heroes** strip lists the last 20 holds, newest first: the holder (a guild tag or the leader's name), the winning team's people, when the newest win ended and, from two wins on, how many in a row. A hold is an unbroken run of Hall wins by one holder. The strip reads the records on this page, ignores the chips, and is hidden when none of them is a Hall win. Like every record, it is what each match's host reported, and nothing checks it.

@@ -720,6 +720,13 @@ export default {
   "matches.endTime": "O tempo acabou",
   "matches.filterKind": "Tipo",
   "matches.filterSize": "Tamanho",
+  "matches.hallReported": "Informado pelo host de cada partida, não verificado.",
+  "matches.hallStreak": {
+    one: "{count} vitória seguida",
+    many: "{count} de vitórias seguidas",
+    other: "{count} vitórias seguidas",
+  },
+  "matches.hallTitle": "Salão dos Heróis",
   "matches.hostReported": "informado pelo host",
   "matches.hostReportedTitle": "Publicado pelo host da partida; não verificado por mais ninguém.",
   "matches.hoursAgo": { one: "há {count} h", many: "há {count} h", other: "há {count} h" },
