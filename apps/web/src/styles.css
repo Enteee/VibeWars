@@ -392,13 +392,13 @@ body {
 .topbar-lobby .topbar-leave[hidden],
 .topbar-lobby .lobby-copy[hidden],
 .topbar-lobby .lobby-join-open[hidden],
-.lobby-join[hidden],
+.lobby-join-field[hidden],
 .lobby-join-message[hidden] {
   display: none;
 }
 
 /* Join lobby (#2882): the pasted link, its two buttons, what was wrong. */
-.lobby-join {
+.lobby-join-field {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -415,7 +415,7 @@ body {
 }
 
 #topbar .topbar-lobby button,
-#topbar .lobby-join button {
+#topbar .lobby-join-field button {
   padding: 0.2rem 0.6rem;
   background: var(--panel);
   border: 1px solid var(--line);
