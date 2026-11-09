@@ -8,6 +8,15 @@ export interface TrackClock {
 }
 
 /**
+ * `pattern` with its cycle 0 on `origin`, silent before it: a pattern is
+ * endless both ways, and a track placed ahead of the scheduler would
+ * otherwise play its negative cycles while it waits.
+ */
+export function placedAt(pattern: Pattern, origin: number): Pattern {
+  return pattern.filterHaps((hap) => hap.wholeOrPart().begin.valueOf() >= 0).late(origin);
+}
+
+/**
  * The `layer(n, pat)` a source calls: `pat` plays only while the
  * intensity is at least `n`.
  *

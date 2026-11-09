@@ -7,7 +7,7 @@ import {
 import { VOLUME_RAMP_SECONDS } from "../audio/volume-ramp.js";
 import { beatEdits, editStoppedNotice, type BeatEditStore } from "./beat-edits.js";
 import { directMusic, type Intensity, type MusicMode, type MusicState } from "./director.js";
-import { MENU_DEPTH, type MenuScreen } from "./fixed-tracks.js";
+import { MENU_DEPTH, SPLASH_TRACK, type MenuScreen } from "./fixed-tracks.js";
 import {
   intensityOverride,
   playedIntensity,
@@ -54,8 +54,13 @@ export interface MusicFollower {
   follow(state: MusicState, landOn: LandOn): void;
   /** The menus' music, as deep as `screen` is (#1993); the song already playing goes on. */
   menu(screen: MenuScreen): void;
-  /** The splash screen's theme (#2884), under the same rules as any screen's song. */
-  splash(): void;
+  /**
+   * The splash screen's theme (#2884), under the same rules as any screen's
+   * song. With a `startAtEpochMs`, its first beat lands there (#2936), and
+   * `onHeard` says, once, when that really is. `false` when no theme will
+   * be heard, and `onHeard` never runs.
+   */
+  splash(startAtEpochMs: number | null, onHeard: (heardAtEpochMs: number) => void): boolean;
   /**
    * Play `id` once over the music (#2523), in the key of the track
    * playing, an edit's or preview's too: none when none plays.
@@ -151,7 +156,10 @@ export function createMusicFollower(
    * Play the edited track, the preview, or else the director's: at once,
    * or on the next phrase, or the next cycle when a match starts (#2530).
    */
-  const play = (when: "now" | "on-phrase" | "on-cycle"): void => {
+  const play = (
+    when: "now" | "on-phrase" | "on-cycle",
+    startAtEpochMs: number | null = null,
+  ): void => {
     if (sharing !== null) {
       return;
     }
@@ -168,7 +176,7 @@ export function createMusicFollower(
     const edited = edits.get(track.id);
     const heard = edited === undefined ? track : { ...track, source: edited.source };
     if (when === "now") {
-      player.load(heard);
+      player.load(heard, startAtEpochMs);
     } else {
       player.crossfadeTo(heard, when === "on-cycle" ? "cycle" : "phrase");
     }
@@ -207,31 +215,59 @@ export function createMusicFollower(
 
   const mode = (): MusicMode => musicModeOf(preference);
 
-  const splash = (): void => {
-    follow(
-      directMusic(
-        {
-          screen: "splash",
-          menuDepth: null,
-          mapId: null,
-          matchSeed: null,
-          result: null,
-          self: null,
-          hitsDealtLast5s: 0,
-          hitsTakenLast5s: 0,
-          enemyInRange: false,
-          lowestAllyHealthFraction: null,
-          aliveAllies: null,
-          aliveEnemies: null,
-          teamSize: null,
-          nowMs: now(),
-        },
-        null,
-        mode(),
-        tracks,
-      ),
-      "phrase",
+  /** Told once when the timed theme is heard. */
+  let splashHeard: ((heardAtEpochMs: number) => void) | undefined;
+  player.onNowPlaying((trackId, heardAtEpochMs) => {
+    if (trackId === SPLASH_TRACK) {
+      splashHeard?.(heardAtEpochMs);
+      splashHeard = undefined;
+    }
+  });
+
+  const splash = (
+    startAtEpochMs: number | null,
+    onHeard: (heardAtEpochMs: number) => void,
+  ): boolean => {
+    const state = directMusic(
+      {
+        screen: "splash",
+        menuDepth: null,
+        mapId: null,
+        matchSeed: null,
+        result: null,
+        self: null,
+        hitsDealtLast5s: 0,
+        hitsTakenLast5s: 0,
+        enemyInRange: false,
+        lowestAllyHealthFraction: null,
+        aliveAllies: null,
+        aliveEnemies: null,
+        teamSize: null,
+        nowMs: now(),
+      },
+      null,
+      mode(),
+      tracks,
     );
+    const timed =
+      startAtEpochMs !== null &&
+      sharing === null &&
+      volume() > 0 &&
+      state.trackId === SPLASH_TRACK &&
+      tracks.some((track) => track.id === SPLASH_TRACK);
+    if (!timed) {
+      follow(state, "phrase");
+      return false;
+    }
+    directed = state.trackId;
+    splashHeard = onHeard;
+    // Timed even if it is already loaded.
+    playingId = null;
+    play("now", startAtEpochMs);
+    intensity = state.intensity;
+    playIntensity();
+    changed();
+    return true;
   };
 
   const menu = (name: MenuScreen): void => {
@@ -330,7 +366,7 @@ export function createMusicFollower(
       if (share !== null && track !== undefined) {
         sharing = { trackId: share.trackId, source: share.source };
         playingId = track.id;
-        player.load({ ...track, source: share.source });
+        player.load({ ...track, source: share.source }, null);
       } else {
         play("now");
       }

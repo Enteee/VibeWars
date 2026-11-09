@@ -6,6 +6,7 @@ import type { MusicState } from "./director.js";
 import { createIntensityOverride } from "./intensity-override.js";
 import type { MusicPlayer, TeardownReason } from "./music-player.js";
 import { createMusicFollower } from "./play-music.js";
+import { SPLASH_TRACK } from "./fixed-tracks.js";
 
 const tracks = [
   {
@@ -39,9 +40,11 @@ function recording(): {
   player: MusicPlayer;
   calls: [string, unknown][];
   tearDown: (reason: TeardownReason) => void;
+  nowPlaying: (trackId: string, heardAtEpochMs: number) => void;
 } {
   const calls: [string, unknown][] = [];
   const tornDown: ((reason: TeardownReason) => void)[] = [];
+  const playing: ((trackId: string, heardAtEpochMs: number) => void)[] = [];
   const record =
     (name: string) =>
     (...args: unknown[]): void => {
@@ -49,6 +52,11 @@ function recording(): {
     };
   return {
     calls,
+    nowPlaying: (trackId, heardAtEpochMs) => {
+      for (const handler of playing) {
+        handler(trackId, heardAtEpochMs);
+      }
+    },
     tearDown: (reason) => {
       for (const handler of tornDown) {
         handler(reason);
@@ -69,7 +77,9 @@ function recording(): {
       },
       play: record("play"),
       stop: record("stop"),
-      onNowPlaying: record("onNowPlaying"),
+      onNowPlaying: (handler) => {
+        playing.push(handler);
+      },
       onError: record("onError"),
       onStats: record("onStats"),
       onEvaluated: record("onEvaluated"),
@@ -90,6 +100,41 @@ const state = (trackId: string | null, intensity: MusicState["intensity"]): Musi
   intensity,
   intensitySinceMs: 0,
   context: "match:x",
+});
+
+describe("the splash theme (#2936)", () => {
+  const theme = { ...tracks[0], id: SPLASH_TRACK } as (typeof tracks)[number];
+  const follower = (player: MusicPlayer, muted = false) =>
+    createMusicFollower(
+      player,
+      [theme, ...tracks],
+      saved(muted),
+      () => 0,
+      createIntensityOverride(),
+      NO_EDITS,
+    );
+
+  it("loads it for the time asked, and says once when it is heard", () => {
+    const { player, calls, nowPlaying } = recording();
+    const heard: number[] = [];
+    expect(follower(player).splash(9000, (at) => heard.push(at))).toBe(true);
+    expect(calls).toContainEqual(["load", [theme, 9000]]);
+    nowPlaying("first-light", 1);
+    nowPlaying(SPLASH_TRACK, 9050);
+    nowPlaying(SPLASH_TRACK, 9999);
+    expect(heard).toEqual([9050]);
+  });
+
+  it("is untimed when the music is muted, and says so", () => {
+    const { player, calls } = recording();
+    expect(follower(player, true).splash(9000, () => undefined)).toBe(false);
+    expect(calls.filter(([name]) => name === "load")).toEqual([]);
+  });
+
+  it("is untimed without a time, as under reduced motion", () => {
+    const { player } = recording();
+    expect(follower(player).splash(null, () => undefined)).toBe(false);
+  });
 });
 
 describe("createMusicFollower", () => {
@@ -272,7 +317,7 @@ describe("createMusicFollower", () => {
     music.preview(null);
     music.preview("no-such-track");
     expect(calls).toEqual([
-      ["load", tracks[1]],
+      ["load", [tracks[1], null]],
       ["setIntensity", 2],
       ["crossfadeTo", [tracks[0], "phrase"]],
     ]);
@@ -318,7 +363,7 @@ describe("createMusicFollower", () => {
     music.preview(null);
     expect(calls).toEqual([
       ["crossfadeTo", [{ ...tracks[0], source: "edited" }, "phrase"]],
-      ["load", tracks[1]],
+      ["load", [tracks[1], null]],
       ["crossfadeTo", [{ ...tracks[0], source: "edited" }, "phrase"]],
     ]);
   });
@@ -446,7 +491,7 @@ describe("createMusicFollower", () => {
     music.playShared({ trackId: "first-light", source: "shared" });
     expect(calls).toEqual([
       ["renew", undefined],
-      ["load", { ...tracks[0], source: "shared" }],
+      ["load", [{ ...tracks[0], source: "shared" }, null]],
     ]);
     expect(music.sharing).toEqual({ trackId: "first-light", source: "shared" });
 
@@ -459,7 +504,7 @@ describe("createMusicFollower", () => {
     music.playShared(null);
     expect(calls).toEqual([
       ["renew", undefined],
-      ["load", tracks[1]],
+      ["load", [tracks[1], null]],
     ]);
     expect(music.sharing).toBeNull();
   });
@@ -520,7 +565,7 @@ describe("createMusicFollower", () => {
     music.preview("clash-of-banners");
     expect(calls).toEqual([
       ["renew", undefined],
-      ["load", tracks[1]],
+      ["load", [tracks[1], null]],
     ]);
     expect(music.sharing).toBeNull();
   });

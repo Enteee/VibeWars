@@ -25,7 +25,8 @@ const stats = {
 describe("parseGameToHost", () => {
   it("accepts every message the game sends", () => {
     for (const message of [
-      { type: "load", ...track },
+      { type: "load", startAtEpochMs: null, ...track },
+      { type: "load", startAtEpochMs: 1_780_000_000_000, ...track },
       { type: "crossfadeTo", cycles: 2, landOn: "phrase", ...track },
       { type: "crossfadeTo", cycles: 2, landOn: "cycle", ...track },
       { type: "play" },
@@ -53,11 +54,14 @@ describe("parseGameToHost", () => {
       [],
       {},
       { type: "unknown" },
-      { type: "load", ...track, trackId: "" },
-      { type: "load", ...track, phraseCycles: 0 },
-      { type: "load", ...track, phraseCycles: 2.5 },
-      { type: "load", ...track, source: 42 },
-      { type: "load", ...track, source: "x".repeat(MAX_SOURCE_LENGTH + 1) },
+      { type: "load", ...track },
+      { type: "load", startAtEpochMs: Number.NaN, ...track },
+      { type: "load", startAtEpochMs: "soon", ...track },
+      { type: "load", startAtEpochMs: null, ...track, trackId: "" },
+      { type: "load", startAtEpochMs: null, ...track, phraseCycles: 0 },
+      { type: "load", startAtEpochMs: null, ...track, phraseCycles: 2.5 },
+      { type: "load", startAtEpochMs: null, ...track, source: 42 },
+      { type: "load", startAtEpochMs: null, ...track, source: "x".repeat(MAX_SOURCE_LENGTH + 1) },
       { type: "crossfadeTo", landOn: "phrase", ...track },
       { type: "crossfadeTo", cycles: Number.NaN, landOn: "phrase", ...track },
       { type: "crossfadeTo", cycles: 2, ...track },
@@ -105,7 +109,7 @@ describe("parseHostToGame", () => {
   it("accepts every message the host sends", () => {
     for (const message of [
       { type: "ready" },
-      { type: "playing", trackId: "first-light", cycle: 8, cps: 0.3 },
+      { type: "playing", trackId: "first-light", cycle: 8, cps: 0.3, heardAtEpochMs: 5 },
       { type: "evaluated", seq: 2 },
       { type: "error", message: "Unexpected token (3:0)", line: 3 },
       { type: "error", message: "Unexpected token (3:0)", line: 3, seq: 2 },
@@ -123,7 +127,10 @@ describe("parseHostToGame", () => {
   it("refuses anything malformed", () => {
     for (const message of [
       undefined,
-      { type: "playing", trackId: "x", cycle: -1, cps: 0.3 },
+      { type: "playing", trackId: "x", cycle: -1, cps: 0.3, heardAtEpochMs: 5 },
+      { type: "playing", trackId: "x", cycle: 1, cps: 0.3 },
+      { type: "playing", trackId: "x", cycle: 1, cps: 0.3, heardAtEpochMs: null },
+      { type: "playing", trackId: "x", cycle: 1, cps: 0.3, heardAtEpochMs: Number.NaN },
       { type: "playing", trackId: "x", cycle: 0 },
       { type: "error" },
       { type: "error", message: "x".repeat(501) },
@@ -141,7 +148,7 @@ describe("parseHostToGame", () => {
       { ...stats, maxReductionDb: null },
       { type: "stats" },
       // The host never sends a game message back.
-      { type: "load", ...track },
+      { type: "load", startAtEpochMs: null, ...track },
     ]) {
       expect(parseHostToGame(message), JSON.stringify(message)).toBeNull();
     }

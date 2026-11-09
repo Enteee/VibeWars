@@ -1,7 +1,15 @@
 import { t } from "../i18n/index.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { prefersReducedMotion } from "./recharge-overlay.js";
-import { splashPhase, type SplashPhase } from "./splash-timeline.js";
+import {
+  meetFromHeard,
+  SPLASH_CRASH_OFFSET_MS,
+  SPLASH_FLY_MS,
+  SPLASH_MEET_MS,
+  SPLASH_MUSIC_WAIT_MS,
+  splashPhase,
+  type SplashPhase,
+} from "./splash-timeline.js";
 
 /** The game's name, in its two colours: not translated. */
 const NAME_VIBE = "Vibe";
@@ -43,8 +51,15 @@ export interface Splash {
 export interface SplashOptions {
   /** Draws the fight into the element; resolves to what stops it. */
   readonly startFight: (stage: HTMLElement) => Promise<() => void>;
-  /** At the prompt, once. */
-  readonly playTheme: () => void;
+  /**
+   * Once: on the first input, or at the prompt under reduced motion, with
+   * `startAtEpochMs` `null`. `false` when nothing will play; otherwise
+   * `onHeard` says when the theme's first beat is heard.
+   */
+  readonly playTheme: (
+    startAtEpochMs: number | null,
+    onHeard: (heardAtEpochMs: number) => void,
+  ) => boolean;
   readonly onDone: () => void;
 }
 
@@ -85,6 +100,7 @@ export function showSplash(parent: HTMLElement, options: SplashOptions): Splash 
   parent.appendChild(root);
 
   let armedAtMs: number | undefined;
+  let meetAtMs: number | undefined;
   let phase: SplashPhase = "waiting";
   let ended = false;
   let stopFight: (() => void) | undefined;
@@ -95,12 +111,20 @@ export function showSplash(parent: HTMLElement, options: SplashOptions): Splash 
     root.dataset.phase = next;
     hint.hidden = next !== "waiting";
     root.dataset.reducedMotion = String(prefersReducedMotion());
-    if (next === "prompt") {
-      options.playTheme();
+    if (next === "prompt" && prefersReducedMotion()) {
+      options.playTheme(null, () => undefined);
     }
   };
   const tick = (): void => {
-    const next = splashPhase(armedAtMs, performance.now(), prefersReducedMotion());
+    const nowMs = performance.now();
+    if (
+      armedAtMs !== undefined &&
+      meetAtMs === undefined &&
+      nowMs - armedAtMs >= SPLASH_MUSIC_WAIT_MS
+    ) {
+      meetAtMs = nowMs + SPLASH_FLY_MS;
+    }
+    const next = splashPhase(armedAtMs, meetAtMs, nowMs, prefersReducedMotion());
     if (next !== phase) {
       show(next);
     }
@@ -114,8 +138,22 @@ export function showSplash(parent: HTMLElement, options: SplashOptions): Splash 
       return;
     }
     if (phase === "waiting") {
-      armedAtMs = performance.now();
+      const armedAt = performance.now();
+      armedAtMs = armedAt;
       show("armed");
+      if (!prefersReducedMotion()) {
+        const started = options.playTheme(
+          Date.now() + SPLASH_MEET_MS - SPLASH_CRASH_OFFSET_MS,
+          (heardAtEpochMs) => {
+            if (!ended && meetAtMs === undefined) {
+              meetAtMs = meetFromHeard(heardAtEpochMs, Date.now(), performance.now());
+            }
+          },
+        );
+        if (!started) {
+          meetAtMs = armedAt + SPLASH_MEET_MS;
+        }
+      }
     } else if (phase === "prompt") {
       end();
     }

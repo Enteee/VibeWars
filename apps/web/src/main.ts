@@ -3013,9 +3013,7 @@ async function main(): Promise<void> {
   ) {
     splash = showSplash(document.body, {
       startFight: startSplashFight,
-      playTheme: () => {
-        music().splash();
-      },
+      playTheme: (startAtEpochMs, onHeard) => music().splash(startAtEpochMs, onHeard),
       onDone: enterMenu,
     });
   } else {
