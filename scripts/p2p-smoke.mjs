@@ -157,6 +157,8 @@ async function serve() {
   // Every build but e2e's plays over Trystero, with an unseeded lobby.
   delete env.VITE_VIBEWARS_TRANSPORT;
   delete env.VITE_VIBEWARS_LOBBY_SEED;
+  // No splash in front of the menu: this measures joining, not a key press.
+  env.VITE_VIBEWARS_SPLASH = "off";
   const child = spawn("sh", ["-c", command], {
     stdio: ["ignore", "ignore", "inherit"],
     env,
