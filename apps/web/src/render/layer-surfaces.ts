@@ -275,9 +275,6 @@ export interface Surface {
   readonly point: Vec2;
 }
 
-/** Enough fixed-point steps to find where a cursor meets a ramp: its slope is under 1. */
-const RAMP_PICK_STEPS = 8;
-
 /** The point on `ramp` drawn at `world`, with its lift; none if it is not on the ramp. */
 function rampSurface(
   structure: MapStructure,
@@ -289,10 +286,17 @@ function rampSurface(
     return undefined;
   }
   const outline = shapeOutline(ramp.area);
-  let point = world;
-  for (let step = 0; step < RAMP_PICK_STEPS; step += 1) {
-    point = { x: world.x, y: world.y + rampLift(ramp, progressAlong(outline, uphill, point)) };
-  }
+  // The lift rises linearly along the ramp, so the point drawn at `world`
+  // solves y = world.y + lift(y) exactly; its slope is under 1.
+  const along = outline.map((corner) => corner.x * uphill.x + corner.y * uphill.y);
+  const low = Math.min(...along);
+  const rise = (elevationOf(ramp.to) - elevationOf(ramp.from)) / (Math.max(...along) - low);
+  const point = {
+    x: world.x,
+    y:
+      (world.y + elevationOf(ramp.from) + rise * (world.x * uphill.x - low)) /
+      (1 - rise * uphill.y),
+  };
   if (!pointInPolygon(point, outline)) {
     return undefined;
   }
