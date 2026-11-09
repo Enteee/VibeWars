@@ -70,6 +70,48 @@ const transitionSchema = z.object({
   area: shapeSchema,
 });
 
+/** A colour as `0xRRGGBB`. */
+const colourSchema = z.number().int().min(0).max(0xffffff);
+
+/** How much of a colour a source gives: 0 is none, 1 is all of it. */
+const intensitySchema = z.number().min(0).max(1);
+
+const ambientSchema = z.object({ colour: colourSchema, intensity: intensitySchema });
+
+/** The most lights on a map (ADR-0052): the frame budget is sized for this many. */
+export const MAX_LIGHTS = 32;
+
+/** A point light standing on one layer (ADR-0052); its `id` also seeds its flicker. */
+const lightSchema = z.object({
+  id: z.string().min(1),
+  position: vec2Schema,
+  layer: layerSchema,
+  radius: z.number().positive(),
+  colour: colourSchema,
+  intensity: intensitySchema,
+  /** How far it dims at its dimmest: 0 is steady, 1 goes dark. */
+  flicker: z.number().min(0).max(1),
+});
+
+/** How a map is lit (ADR-0052). Only the renderer reads it, never the simulation. */
+const lightingSchema = z.object({
+  ambient: ambientSchema,
+  indoorAmbient: ambientSchema,
+  /** Where the sun does not reach, and `indoorAmbient` replaces `ambient`. */
+  indoor: z.array(shapeSchema),
+  sun: z
+    .object({
+      /** Where the light comes from, clockwise from the top of the map. */
+      directionDeg: z.number().min(0).lt(360),
+      /** How high it stands: 90 is straight overhead. */
+      elevationDeg: z.number().gt(0).max(90),
+      colour: colourSchema,
+      intensity: intensitySchema,
+    })
+    .optional(),
+  lights: z.array(lightSchema).max(MAX_LIGHTS),
+});
+
 /** The most gates on a map (#2691): the match keeps paths for each way they can stand. */
 const MAX_GATES = 6;
 
@@ -354,6 +396,8 @@ export const mapDataSchema = z
     relicTarget: z.enum(["altar", "own-ghost"]).optional(),
     /** Whose relic a team carries (#2695): a Relic Run map says, no other map does. */
     relicCarry: z.enum(["own", "foe"]).optional(),
+    /** How it is lit (ADR-0052); without it the map is lit flat. */
+    lighting: lightingSchema.optional(),
   })
   .superRefine((map, context) => {
     if (map.teams !== 2 && TWO_TEAM_MODES.includes(map.mode)) {
@@ -602,6 +646,26 @@ export const mapDataSchema = z
         });
       }
     });
+
+    const lighting = map.lighting;
+    if (lighting !== undefined) {
+      const lightIds = new Set<string>();
+      lighting.lights.forEach((light, index) => {
+        const onMap =
+          light.position.x >= 0 &&
+          light.position.y >= 0 &&
+          light.position.x <= map.width &&
+          light.position.y <= map.height;
+        if (light.layer >= map.layers || !onMap || lightIds.has(light.id)) {
+          context.addIssue({
+            code: "custom",
+            path: ["lighting", "lights", index],
+            message: `light ${String(index)} must have its own id, on one of the map's layers and on the map`,
+          });
+        }
+        lightIds.add(light.id);
+      });
+    }
   });
 
 export type Vec2Data = z.infer<typeof vec2Schema>;
@@ -613,6 +677,7 @@ export type Deck = z.infer<typeof deckSchema>;
 export type Transition = z.infer<typeof transitionSchema>;
 export type SpawnPoint = z.infer<typeof spawnPointSchema>;
 export type Objective = z.infer<typeof objectiveSchema>;
+export type MapLighting = z.infer<typeof lightingSchema>;
 export type MapData = z.infer<typeof mapDataSchema>;
 
 export class MapValidationError extends Error {
