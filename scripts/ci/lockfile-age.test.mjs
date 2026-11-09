@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { diffPackages, packagesOf, tooYoung } from "./lockfile-age.mjs";
+import { diffPackages, packagesOf, registryUrl, tooYoung } from "./lockfile-age.mjs";
 
 const base = `lockfileVersion: '9.0'
 
@@ -104,5 +104,18 @@ describe("exotic resolutions", () => {
 
   it("fails closed on a key line it cannot parse", () => {
     expect(() => packagesOf(withEntries(base, "  weird key:\n"))).toThrow("cannot parse");
+  });
+});
+
+describe("registryUrl (#2927)", () => {
+  it.each([
+    ["pkg", "pkg"],
+    ["@scope/pkg", "@scope%2Fpkg"],
+    ["a/b/c", "a%2Fb%2Fc"],
+    ["a/b/../c", "a%2Fb%2F..%2Fc"],
+    ["x?y#z%", "x%3Fy%23z%25"],
+    ["a@b", "a%40b"],
+  ])("makes %s one path segment", (name, segment) => {
+    expect(registryUrl(name)).toBe(`https://registry.npmjs.org/${segment}`);
   });
 });
