@@ -16,6 +16,7 @@ Read by Vite when it builds `apps/web`, not at runtime.
 | `VIBEWARS_RELEASE`         | `dev`      | This build's release (#2798), shown with the build at the foot of Help. `pages.yml` passes it per target: the tag without its `v` for `release`, `0.2.0-rc` for `rc`, `next` for `next`.                                                                                               |
 | `VITE_VIBEWARS_STRESS`     | unset      | `on` only in the build `scripts/music-stress.mjs` makes, the one where `?stress=` works (#420).                                                                                                                                                                                        |
 | `VITE_VIBEWARS_LOBBY_SEED` | unset      | A decimal integer that seeds each Team Lobby's random picks (preset foes, tied votes, maps), so every solo match meets the same foe (#2213). Only e2e sets it (`11`). Keys, tokens and matches stay on `crypto`. Anything that is not a decimal integer fails the build.               |
+| `VITE_VIBEWARS_SPLASH`     | unset      | `off` only in the e2e build: no splash screen (#2884) unless the URL has `?splash`.                                                                                                                                                                                                    |
 
 ## Development
 

@@ -1146,6 +1146,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "hlasitosť zvukových efektov",
 
+  "splash.clickToStart": "Klikni pre spustenie",
+  "splash.pressAnyKey": "Začni stlačením ľubovoľného klávesu",
   "storage.attributeNeedsId": "každý atribút potrebuje attributeId",
   "storage.attributeNotObject": "každý atribút musí byť objekt",
   "storage.attributeRankNotWhole": "úroveň pre {attribute} musí byť celé číslo",

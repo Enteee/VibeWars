@@ -1111,6 +1111,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "volum efecte sonore",
 
+  "splash.clickToStart": "Dă clic pentru a porni",
+  "splash.pressAnyKey": "Apasă orice tastă pentru a începe",
   "storage.attributeNeedsId": "fiecare atribut are nevoie de un attributeId",
   "storage.attributeNotObject": "fiecare atribut trebuie să fie un obiect",
   "storage.attributeRankNotWhole": "rangul pentru {attribute} trebuie să fie un număr întreg",

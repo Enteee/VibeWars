@@ -191,6 +191,9 @@ import {
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
+import { startSplashFight } from "./ui/splash-fight.js";
+import { shouldShowSplash } from "./ui/splash-gate.js";
+import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
 import {
   teamQueueModeOf,
   teamSizeOf,
@@ -2994,23 +2997,50 @@ async function main(): Promise<void> {
   };
   const buildWatch = watchServedBuild();
 
-  showMenu();
-  if (lobbyLink.kind === "invite") {
-    topbarView.invite(lobbyLink.code);
-  }
-  if (relayLink.kind === "config" && !framed) {
-    openRelayPrompt(app, relayLink.relay, savedRelay);
+  const enterMenu = (): void => {
+    splash = undefined;
+    showMenu();
+    if (lobbyLink.kind === "invite") {
+      topbarView.invite(lobbyLink.code);
+    }
+    if (relayLink.kind === "config" && !framed) {
+      openRelayPrompt(app, relayLink.relay, savedRelay);
+    }
+  };
+  let splash: Splash | undefined;
+  if (
+    shouldShowSplash({
+      forced: new URLSearchParams(window.location.search).has("splash"),
+      seen: splashSeen(),
+      joining: lobbyLink.kind === "invite" || relayLink.kind === "config",
+      framed,
+      disabled: import.meta.env.VITE_VIBEWARS_SPLASH === "off",
+    })
+  ) {
+    splash = showSplash(document.body, {
+      startFight: startSplashFight,
+      playTheme: () => {
+        music().splash();
+      },
+      onDone: enterMenu,
+    });
+  } else {
+    enterMenu();
   }
   // An invite link pasted into this open tab only changes the fragment:
   // nothing reloads, so it is taken out and asked about here.
   const takeFragmentLinks = (): void => {
     const invited = takeLobbyLink();
+    const pasted = takeRelayLink();
+    // Its prompt goes on the menu, so the splash ends first.
+    if (invited.kind === "invite" || pasted.kind === "config") {
+      splash?.end();
+    }
     if (invited.kind === "malformed") {
       toast(t("session.notAKey"));
     } else if (invited.kind === "invite" && !topbarView.invite(invited.code)) {
       toast(t("app.inviteInLobby"));
     }
-    const pasted = takeRelayLink();
     if (pasted.kind === "malformed") {
       toast(t("app.malformedRelayLink"));
     } else if (pasted.kind === "config" && framed) {

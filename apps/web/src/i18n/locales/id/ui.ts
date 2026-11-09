@@ -989,6 +989,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "volume efek suara",
 
+  "splash.clickToStart": "Klik untuk mulai",
+  "splash.pressAnyKey": "Tekan tombol apa saja untuk memulai",
   "storage.attributeNeedsId": "setiap atribut butuh attributeId",
   "storage.attributeNotObject": "setiap atribut harus berupa objek",
   "storage.attributeRankNotWhole": "peringkat {attribute} harus bilangan bulat",

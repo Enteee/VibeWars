@@ -1144,6 +1144,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "громкость эффектов",
 
+  "splash.clickToStart": "Нажмите, чтобы начать",
+  "splash.pressAnyKey": "Нажмите любую клавишу, чтобы начать",
   "storage.attributeNeedsId": "у каждой характеристики должен быть attributeId",
   "storage.attributeNotObject": "каждая характеристика должна быть объектом",
   "storage.attributeRankNotWhole": "ранг {attribute} должен быть целым числом",

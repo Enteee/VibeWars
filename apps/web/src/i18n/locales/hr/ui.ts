@@ -1108,6 +1108,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "glasnoća zvučnih efekata",
 
+  "splash.clickToStart": "Klikni za početak",
+  "splash.pressAnyKey": "Pritisni bilo koju tipku za početak",
   "storage.attributeNeedsId": "svaki atribut treba attributeId",
   "storage.attributeNotObject": "svaki atribut mora biti objekt",
   "storage.attributeRankNotWhole": "razina za {attribute} mora biti cijeli broj",

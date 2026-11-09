@@ -1052,6 +1052,8 @@ export default {
   "sound.percent": "{percent}%",
   "sound.sfxVolume": "hangeffektek hangereje",
 
+  "splash.clickToStart": "Kattints az indításhoz",
+  "splash.pressAnyKey": "A kezdéshez nyomj meg egy billentyűt",
   "storage.attributeNeedsId": "minden tulajdonsághoz kell attributeId",
   "storage.attributeNotObject": "minden tulajdonságnak objektumnak kell lennie",
   "storage.attributeRankNotWhole": "a szintnek egész számnak kell lennie: {attribute}",

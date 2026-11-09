@@ -1051,6 +1051,8 @@ export default {
   "sound.percent": "%{percent}",
   "sound.sfxVolume": "ses efektleri",
 
+  "splash.clickToStart": "Başlamak için tıkla",
+  "splash.pressAnyKey": "Başlamak için bir tuşa bas",
   "storage.attributeNeedsId": "her niteliğin bir attributeId değeri olmalı",
   "storage.attributeNotObject": "her nitelik bir nesne olmalı",
   "storage.attributeRankNotWhole": "{attribute} seviyesi tam sayı olmalı",

@@ -1048,6 +1048,8 @@ export const en = {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "sound effects volume",
 
+  "splash.clickToStart": "Click to start",
+  "splash.pressAnyKey": "Press any key to begin",
   "storage.attributeNeedsId": "every attribute needs an attributeId",
   "storage.attributeNotObject": "every attribute must be an object",
   "storage.attributeRankNotWhole": "rank for {attribute} must be a whole number",

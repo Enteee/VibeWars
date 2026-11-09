@@ -987,6 +987,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "효과음 음량",
 
+  "splash.clickToStart": "클릭하여 시작",
+  "splash.pressAnyKey": "아무 키나 눌러 시작",
   "storage.attributeNeedsId": "모든 속성에는 attributeId가 필요해요",
   "storage.attributeNotObject": "모든 속성은 객체여야 해요",
   "storage.attributeRankNotWhole": "{attribute}의 랭크는 정수여야 해요",

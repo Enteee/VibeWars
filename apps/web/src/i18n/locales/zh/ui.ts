@@ -972,6 +972,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "音效音量",
 
+  "splash.clickToStart": "点击开始",
+  "splash.pressAnyKey": "按任意键开始",
   "storage.attributeNeedsId": "每个属性都需要 attributeId",
   "storage.attributeNotObject": "每个属性都必须是对象",
   "storage.attributeRankNotWhole": "{attribute} 的等级必须是整数",

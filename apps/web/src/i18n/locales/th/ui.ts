@@ -979,6 +979,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "ระดับเสียงเอฟเฟกต์",
 
+  "splash.clickToStart": "คลิกเพื่อเริ่ม",
+  "splash.pressAnyKey": "กดปุ่มใดก็ได้เพื่อเริ่มต้น",
   "storage.attributeNeedsId": "ค่าสถานะทุกตัวต้องมี attributeId",
   "storage.attributeNotObject": "ค่าสถานะทุกตัวต้องเป็นออบเจกต์",
   "storage.attributeRankNotWhole": "ระดับของ {attribute} ต้องเป็นจำนวนเต็ม",
