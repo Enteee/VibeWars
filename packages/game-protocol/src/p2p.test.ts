@@ -190,6 +190,7 @@ const player: WirePlayer = {
   x: 120.5,
   y: -3,
   facing: -1.57,
+  layer: 1,
   targetId: null,
   attackTargetId: "peer-2",
   walking: false,
@@ -1616,6 +1617,26 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with an infinite health",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, health: Infinity }] },
+  ],
+  [
+    "snapshot with a layer past the highest",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, layer: 3 }] },
+  ],
+  [
+    "snapshot with a negative layer",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, layer: -1 }] },
+  ],
+  [
+    "snapshot with a fractional layer",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, layer: 0.5 }] },
+  ],
+  [
+    "snapshot with no layer",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, layer: undefined }] },
   ],
   [
     "snapshot with an absent target",

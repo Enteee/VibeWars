@@ -15,7 +15,7 @@ import {
 } from "@vibewars/game-core";
 import type { GateDescriptor } from "@vibewars/game-protocol";
 import type { PlayerSnapshot } from "@vibewars/game-session";
-import type { RenderableWall } from "./arena-snapshot.js";
+import type { RenderableShape } from "./arena-snapshot.js";
 
 /**
  * A Guild Battle's flags and flag stand as the arena draws them (#1225),
@@ -195,7 +195,7 @@ export interface RenderableGatePlate {
   readonly side: FlagSide | undefined;
   readonly open: boolean;
   /** The wall it opens: an open gate leaves its outline on the ground. */
-  readonly wall: RenderableWall;
+  readonly wall: RenderableShape;
 }
 
 /** Every gate's plate, from your side's view; `[]` on a map without them. */

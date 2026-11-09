@@ -26,6 +26,7 @@ function player(index: number): WirePlayer {
     x: 1000 / 3,
     y: 1000 / 3,
     facing: -3.14,
+    layer: 0,
     targetId: null,
     attackTargetId: null,
     walking: true,

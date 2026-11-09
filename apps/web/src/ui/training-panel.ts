@@ -51,6 +51,7 @@ import {
   withCalls,
   withNames,
   type ArenaSnapshot,
+  type MapStructure,
   type RenderableWall,
 } from "../render/arena-snapshot.js";
 import {
@@ -198,6 +199,7 @@ interface Session {
   readonly connection: LocalMatchConnection;
   readonly names: ReadonlyMap<string, string>;
   readonly walls: readonly RenderableWall[];
+  readonly structure: MapStructure;
   /** The map's resurrection shrines (#1199), as a match's. */
   readonly shrines: readonly MapShrine[];
   /** The same walls as segments, for the skill bar's line-of-sight hint (#485). */
@@ -229,6 +231,17 @@ export function createTrainingPanel(): TrainingPanel {
     option.value = scenario.id;
     option.textContent = scenario.label;
     picker.appendChild(option);
+  }
+  // A dev build's layered map (#2830); a production bundle holds neither it nor this.
+  let devScenario: TrainingScenario | undefined;
+  if (import.meta.env.DEV) {
+    void import("../training/dev-layer-test.js").then(({ LAYER_TEST_SCENARIO }) => {
+      devScenario = LAYER_TEST_SCENARIO;
+      const option = document.createElement("option");
+      option.value = LAYER_TEST_SCENARIO.id;
+      option.textContent = LAYER_TEST_SCENARIO.label;
+      picker.appendChild(option);
+    });
   }
   const resetButton = document.createElement("button");
   resetButton.type = "button";
@@ -671,7 +684,10 @@ export function createTrainingPanel(): TrainingPanel {
       scenario,
       connection,
       names: setup.names,
-      walls: setup.map.walls.map(toRenderableWall),
+      walls: setup.map.walls.map((wall, at) =>
+        toRenderableWall(wall, setup.structure.wallLayers[at] ?? 0),
+      ),
+      structure: setup.structure.structure,
       shrines: mapShrines(setup.map.id),
       wallSegments: allWallSegments(setup.map.walls),
       // The same sounds as a match (#112), muted by the same M.
@@ -928,7 +944,9 @@ export function createTrainingPanel(): TrainingPanel {
   document.addEventListener("pointerdown", onDocumentPointerDown, { capture: true });
 
   const onPickScenario = (): void => {
-    const scenario = getTrainingScenario(picker.value);
+    const scenario =
+      getTrainingScenario(picker.value) ??
+      (picker.value === devScenario?.id ? devScenario : undefined);
     if (scenario === undefined || character === undefined) {
       return;
     }
@@ -1033,7 +1051,15 @@ export function createTrainingPanel(): TrainingPanel {
       latestArena = withCalls(
         withNames(
           // The Training Ground has no flags (#1225) or relics (#1374).
-          toArenaSnapshot(latestMatch, session.walls, session.shrines, undefined, undefined),
+          toArenaSnapshot(
+            latestMatch,
+            session.walls,
+            session.shrines,
+            undefined,
+            undefined,
+            [],
+            session.structure,
+          ),
           created.pointerWorld(),
           nameReveal.held(),
           created.scene.nameTagBoxes(),

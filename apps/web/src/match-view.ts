@@ -49,6 +49,8 @@ import {
   toRenderableGroundEffect,
   type ArenaSnapshot,
   type RenderableWall,
+  type MapStructure,
+  FLAT_STRUCTURE,
 } from "./render/arena-snapshot.js";
 import { attackCastOf } from "./render/attack-clock.js";
 import { CREATURE_ARMS } from "./render/creature-arms.js";
@@ -80,7 +82,14 @@ import {
   updateRecharges,
 } from "./ui/hud.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
-import { mapFlagField, mapMode, mapRelicField, mapShrines, type MapShrine } from "./net/maps.js";
+import {
+  mapFlagField,
+  mapMode,
+  mapRelicField,
+  mapShrines,
+  mapStructure,
+  type MapShrine,
+} from "./net/maps.js";
 import {
   renderableCapturePoints,
   renderableGatePlates,
@@ -219,10 +228,10 @@ export interface MatchView {
   dispose(): Promise<void>;
 }
 
-export function toRenderableWall(wall: WallDescriptor): RenderableWall {
+export function toRenderableWall(wall: WallDescriptor, layer: number): RenderableWall {
   return wall.kind === "rect"
-    ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
-    : { kind: "polygon", points: wall.points };
+    ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height, layer }
+    : { kind: "polygon", points: wall.points, layer };
 }
 
 /**
@@ -248,7 +257,7 @@ function gateWalls(
     if (set === undefined) {
       const shut = gates.filter((_, at) => open[at] !== true).map((gate) => gate.wall);
       set = {
-        walls: [...walls, ...shut.map(toRenderableWall)],
+        walls: [...walls, ...shut.map((wall) => toRenderableWall(wall, 0))],
         segments: [...segments, ...allWallSegments(shut)],
       };
       known.set(closed, set);
@@ -270,6 +279,7 @@ export function toArenaSnapshot(
   flagField: FlagField | undefined,
   relicField: RelicField | undefined,
   gates: readonly GateDescriptor[] = [],
+  structure: MapStructure = FLAT_STRUCTURE,
 ): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
   const names = playerNames(match);
@@ -279,6 +289,7 @@ export function toArenaSnapshot(
 
   return {
     walls,
+    structure,
     flags: [
       ...renderableFlags(match.flags, flagField, match.players, self?.team),
       ...renderableRelics(match.relics, relicField, match.players, self?.team),
@@ -334,6 +345,7 @@ export function toArenaSnapshot(
         cape: player.guildCape === undefined ? undefined : capeLook(player.guildCape),
         bot: player.bot,
         position: { x: player.x, y: player.y },
+        layer: player.layer,
         facing: player.facing,
         // A creature carries what its look is armed with (#2047), or nothing.
         weaponId:
@@ -442,7 +454,8 @@ export async function startMatchView(
   }
   // A watcher has none (#480): nothing below sends an intent without it.
   const { seat } = viewed;
-  const walls = viewed.map.walls.map(toRenderableWall);
+  const { structure, wallLayers } = mapStructure(viewed.map.id);
+  const walls = viewed.map.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
   // Once per match, for the skill bar's line-of-sight hint (#485).
   const wallSegments = allWallSegments(viewed.map.walls);
   const blocking = gateWalls(viewed.map.gates, walls, wallSegments);
@@ -990,6 +1003,7 @@ export async function startMatchView(
         flagField,
         relicField,
         viewed.map.gates,
+        structure,
       ),
       viewport?.pointerWorld(),
       nameReveal.held(),

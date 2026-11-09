@@ -1109,6 +1109,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       x: participant.position.x,
       y: participant.position.y,
       facing: round(participant.facing, 2),
+      layer: participant.layer,
       targetId: participant.targetId ?? null,
       attackTargetId: combatant.attack?.targetId ?? null,
       walking:
