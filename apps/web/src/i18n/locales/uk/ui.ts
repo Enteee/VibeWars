@@ -910,6 +910,8 @@ export default {
   "player.guildTag": "Тег гільдії",
   "player.guildTagHint": "2–4 літери або цифри",
   "player.guildTagPlaceholder": "ТЕГ",
+  "player.fameAndRank": "Слава {fame} · Ранг героя {rank}",
+  "player.heroRankBadge": "Ранг героя {rank}",
   "player.name": "Ім'я",
   "player.namePlaceholder": "Гравець",
   "player.noCape": "Без плаща",

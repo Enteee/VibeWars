@@ -370,6 +370,8 @@ equipo. Los bots se colocan en la placa de su equipo si no hay enemigos cerca.
 
 Cada recorrido empieza con la **Batalla de los Zaishen de élite**, sin cola: tu grupo contra seis Zaishen controlados por bots (2 Monjes, un Elementalista y 3 más). El reloj arranca cuando uno de vosotros cruza la línea de salida o muere el primer Zaishen, lo que ocurra antes. Si matáis a los seis en menos de 30 segundos, el grupo empieza el recorrido con +10 % de moral; en menos de 60, +8 %; en menos de 80, +6 %; en menos de 100, +4 %; en menos de 120, +2 %; más lento, nada. Si ganáis, el grupo entra solo en la cola de su primer mapa. Si cae todo el grupo, o si queda algún Zaishen vivo al cumplirse el límite de 8 minutos, el recorrido termina.
 
+Cada victoria de un recorrido da **fama**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 las trece primeras y luego 40 cada una, con un máximo de 300 al día (el día cambia a las 15:00 UTC). La Batalla de los Zaishen de élite no da fama. Tu fama total fija tu **rango de héroe**, de 1 con 25 de fama a 15 con 100 000, que se muestra como ★ y un número junto a tu nombre. Puedes ver ambos en Opciones > Jugador. Ambos se guardan en tu dispositivo.
+
 ## Tres equipos
 
 En una partida de tres equipos, el tercero se dibuja en verde lima, junto al azul de

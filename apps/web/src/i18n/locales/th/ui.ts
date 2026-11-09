@@ -776,6 +776,8 @@ export default {
   "player.guildTag": "แท็กกิลด์",
   "player.guildTagHint": "ตัวอักษรหรือตัวเลข 2–4 ตัว",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "ชื่อเสียง {fame} · ยศฮีโร่ {rank}",
+  "player.heroRankBadge": "ยศฮีโร่ {rank}",
   "player.name": "ชื่อ",
   "player.namePlaceholder": "ผู้เล่น",
   "player.noCape": "ไม่มีผ้าคลุม",

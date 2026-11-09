@@ -106,6 +106,9 @@ export const MAX_WIRE_STRING = 64;
 /** The longest sentence a player is shown, such as a refusal's `message`. */
 export const MAX_WIRE_TEXT = 256;
 
+/** The highest hero rank (#2702). */
+export const MAX_HERO_RANK = 15;
+
 /** The most statuses one player carries in a snapshot. */
 export const MAX_WIRE_STATUSES = 32;
 
@@ -338,6 +341,8 @@ export interface PeerHello {
    * `null` for none. The host sanitises it: an invalid one becomes `null`.
    */
   readonly guildTag: string | null;
+  /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
+  readonly heroRank: number;
   /**
    * The guild cape the player designed (#1422); `null` for none, and for
    * anything that is not a cape. The host drops it without a valid tag.
@@ -475,6 +480,8 @@ export interface WirePlayer {
   readonly name: string;
   /** 2–4 letters or digits (#1406), as the host sanitised it; `null` for none and for every bot. */
   readonly guildTag: string | null;
+  /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
+  readonly heroRank: number;
   /** Worn behind the body (#1422); `null` for none, and whenever `guildTag` is. */
   readonly guildCape: WireCape | null;
   /** A match team, or `MASTERLESS_WIRE_TEAM` for a masterless creature (#2092). */
@@ -944,6 +951,8 @@ export interface WireSummaryRow {
   readonly name: string;
   /** The seat's guild tag (#1406); `null` for none. */
   readonly guildTag: string | null;
+  /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
+  readonly heroRank: number;
   readonly team: WireTeam;
   /** The seat's signet bits (#2822); `null` for a bot. */
   readonly signet: number | null;
@@ -975,6 +984,8 @@ export interface PeerLobbyJoin {
   readonly name: string;
   /** As `PeerHello.guildTag` (#1406). */
   readonly guildTag: string | null;
+  /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
+  readonly heroRank: number;
   /** As `PeerHello.guildCape` (#1422). */
   readonly guildCape: WireCape | null;
   /**
@@ -1215,6 +1226,8 @@ export interface WireLobbyPlayer {
   readonly name: string;
   /** As `WirePlayer.guildTag` (#1406). */
   readonly guildTag: string | null;
+  /** Hero rank (#2702), self-reported, 0 to `MAX_HERO_RANK`; 0 for none and for a bot. */
+  readonly heroRank: number;
   /** As `WirePlayer.guildCape` (#1422). */
   readonly guildCape: WireCape | null;
   /** `null` spectates. */
@@ -1630,6 +1643,10 @@ function parseString(value: unknown): string | undefined {
   return isString(value) ? value : undefined;
 }
 
+function isHeroRank(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= MAX_HERO_RANK;
+}
+
 /** A client's guild tag as typed (#1406), cut to `MAX_WIRE_TEXT`: the host sanitises it. */
 function parseRawGuildTag(value: unknown): string | null | undefined {
   if (value === null) {
@@ -1735,12 +1752,16 @@ export function parsePeerHello(value: unknown): PeerHello | undefined {
   const guildTag = parseRawGuildTag(raw.guildTag);
   const build = parseJson(raw.build);
   const rejoin = parseRejoin(raw.rejoin);
-  return guildTag === undefined || build === undefined || rejoin === undefined
+  return guildTag === undefined ||
+    build === undefined ||
+    rejoin === undefined ||
+    !isHeroRank(raw.heroRank)
     ? undefined
     : {
         protocolVersion: raw.protocolVersion,
         name: raw.name.slice(0, MAX_WIRE_TEXT),
         guildTag,
+        heroRank: raw.heroRank,
         // A client's: what is not a cape is no cape, never a refused join.
         guildCape: parseWireCape(raw.guildCape) ?? null,
         build,
@@ -2073,6 +2094,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isString(raw.id) ||
     !isString(raw.name) ||
     !isNullableString(raw.guildTag) ||
+    !isHeroRank(raw.heroRank) ||
     !isBodyTeam(raw.team) ||
     !isNumber(raw.x) ||
     !isNumber(raw.y) ||
@@ -2119,6 +2141,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         id: raw.id,
         name: raw.name,
         guildTag: raw.guildTag,
+        heroRank: raw.heroRank,
         guildCape,
         team: raw.team,
         x: raw.x,
@@ -2589,6 +2612,7 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
     isString(raw.id) &&
     typeof raw.name === "string" &&
     isNullableString(raw.guildTag) &&
+    isHeroRank(raw.heroRank) &&
     isTeam(raw.team) &&
     isNullableSignet(raw.signet) &&
     isCount(raw.damage) &&
@@ -2601,6 +2625,7 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
         id: raw.id,
         name: raw.name.slice(0, MAX_WIRE_TEXT),
         guildTag: raw.guildTag,
+        heroRank: raw.heroRank,
         team: raw.team,
         signet: raw.signet,
         damage: raw.damage,
@@ -2751,6 +2776,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     !isString(raw.protocolVersion) ||
     typeof raw.name !== "string" ||
     guildTag === undefined ||
+    !isHeroRank(raw.heroRank) ||
     admission === undefined ||
     (raw.rejoinToken !== null && !isRejoinToken(raw.rejoinToken)) ||
     (raw.relayPub !== null && !isRelayPub(raw.relayPub)) ||
@@ -2763,6 +2789,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     protocolVersion: raw.protocolVersion,
     name: raw.name.slice(0, MAX_WIRE_TEXT),
     guildTag,
+    heroRank: raw.heroRank,
     // As the hello's.
     guildCape: parseWireCape(raw.guildCape) ?? null,
     admission,
@@ -2989,6 +3016,7 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     isString(raw.id) &&
     isString(raw.name) &&
     isNullableString(raw.guildTag) &&
+    isHeroRank(raw.heroRank) &&
     guildCape !== undefined &&
     team !== undefined &&
     typeof raw.ready === "boolean" &&
@@ -3000,6 +3028,7 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
         id: raw.id,
         name: raw.name,
         guildTag: raw.guildTag,
+        heroRank: raw.heroRank,
         guildCape,
         team,
         ready: raw.ready,

@@ -391,6 +391,8 @@ própria equipe quando não há inimigo por perto.
 
 Cada percurso começa com a **Batalha dos Zaishen de Elite**, sem fila: seu grupo contra seis Zaishen controlados por bots (2 Monges, um Elementalista e mais 3). O relógio começa quando um de vocês cruza a linha de partida ou o primeiro Zaishen morre, o que acontecer primeiro. Matem os seis em menos de 30 segundos e o grupo começa o percurso com +10% de moral; em menos de 60, +8%; em menos de 80, +6%; em menos de 100, +4%; em menos de 120, +2%; mais devagar, nada. Se vencerem, o grupo entra sozinho na fila do primeiro mapa. Se o grupo inteiro cair, ou se algum Zaishen ainda estiver vivo ao fim do limite de 8 minutos, o percurso acaba.
 
+Cada vitória de um percurso dá **fama**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 nas treze primeiras e depois 40 cada, no máximo 300 por dia (o dia vira às 15:00 UTC). A Batalha dos Zaishen de Elite não dá fama. Sua fama total define sua **patente de herói**, de 1 com 25 de fama a 15 com 100.000, mostrada como ★ e um número ao lado do seu nome. Opções > Jogador mostra as duas. As duas ficam no seu dispositivo.
+
 ## Três equipes
 
 Em uma partida de três equipes, a terceira equipe é desenhada em verde-limão, ao lado do azul

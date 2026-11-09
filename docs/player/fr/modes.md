@@ -391,6 +391,8 @@ plaque de leur équipe quand aucun ennemi n'est proche.
 
 Chaque parcours commence par la **Bataille des Zaishen d'élite**, sans file d'attente : votre groupe contre six Zaishen joués par des bots (2 Moines, un Élémentaliste et 3 autres). Le chrono démarre quand l'un de vous franchit la ligne de départ ou quand le premier Zaishen meurt, selon ce qui arrive en premier. Tuez les six en moins de 30 secondes et le groupe commence le parcours à +10 % de moral ; en moins de 60, +8 % ; en moins de 80, +6 % ; en moins de 100, +4 % ; en moins de 120, +2 % ; plus lentement, rien. En cas de victoire, le groupe rejoint seul la file de sa première carte. Si tout le groupe tombe, ou si un Zaishen est encore en vie à la limite de 8 minutes, le parcours est terminé.
 
+Chaque victoire d'un parcours rapporte de la **renommée** : 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 pour les treize premières, puis 40 chacune, au plus 300 par jour (le jour change à 15:00 UTC). La Bataille des Zaishen d'élite n'en rapporte pas. Votre renommée totale fixe votre **rang de héros**, de 1 à 25 de renommée à 15 à 100 000, affiché par ★ et un nombre à côté de votre nom. Options > Joueur montre les deux. Les deux sont conservés sur votre appareil.
+
 ## Trois équipes
 
 Dans un match à trois équipes, la troisième équipe est dessinée en vert citron, à

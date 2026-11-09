@@ -825,6 +825,8 @@ export default {
   "player.guildTag": "Laugsmærke",
   "player.guildTagHint": "2–4 bogstaver eller cifre",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Berømmelse {fame} · Heltegrad {rank}",
+  "player.heroRankBadge": "Heltegrad {rank}",
   "player.name": "Navn",
   "player.namePlaceholder": "Spiller",
   "player.noCape": "Ingen kappe",

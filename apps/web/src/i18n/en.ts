@@ -828,6 +828,8 @@ export const en = {
   "player.guildTag": "Guild tag",
   "player.guildTagHint": "2–4 letters or digits",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Fame {fame} · Hero rank {rank}",
+  "player.heroRankBadge": "Hero rank {rank}",
   "player.name": "Name",
   "player.namePlaceholder": "Player",
   "player.noCape": "No cape",

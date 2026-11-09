@@ -86,6 +86,7 @@ describe("clicking a character on a layered map (#2831)", () => {
   const actor = (id: string, y: number, layer: number): RenderableActor => ({
     name: id,
     guildTag: undefined,
+    heroRank: 0,
     signet: undefined,
     cape: undefined,
     bot: false,

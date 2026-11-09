@@ -148,6 +148,7 @@ export function hello(
   overrides: Partial<{
     name: string;
     guildTag: string | null;
+    heroRank: number;
     guildCape: WireCape | null;
     build: JsonValue;
     rejoin: PeerHello["rejoin"];
@@ -157,6 +158,7 @@ export function hello(
     protocolVersion: PROTOCOL_VERSION,
     name: overrides.name ?? "Tester",
     guildTag: overrides.guildTag ?? null,
+    heroRank: overrides.heroRank ?? 0,
     guildCape: overrides.guildCape ?? null,
     build: overrides.build ?? null,
     rejoin: overrides.rejoin ?? null,

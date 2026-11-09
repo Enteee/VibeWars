@@ -351,6 +351,7 @@ describe("wireIdentity (#1052)", () => {
       {
         name: "Ann",
         guildTag: "VIBE",
+        heroRank: 0,
         guildCape: CAPE,
         team: 1,
         primaryProfession: "necromancer",
@@ -398,6 +399,7 @@ describe("wireIdentity (#1052)", () => {
     ).toEqual({
       name: "Ann",
       guildTag: "VIBE",
+      heroRank: 0,
       guildCape: CAPE,
       team: 1,
       primaryProfession: "necromancer",
@@ -412,6 +414,7 @@ describe("wireIdentity (#1052)", () => {
     expect(wireIdentity(minion("p1"), seats, 0)).toEqual({
       name: "Bone Minion",
       guildTag: null,
+      heroRank: 0,
       guildCape: null,
       team: 1,
       primaryProfession: null,
@@ -494,6 +497,7 @@ describe("wireIdentity (#1052)", () => {
     expect(wireIdentity(priest, seats, 0)).toEqual({
       name: "Priest",
       guildTag: null,
+      heroRank: 0,
       guildCape: null,
       team: 0,
       primaryProfession: null,

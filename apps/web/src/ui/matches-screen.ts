@@ -85,7 +85,7 @@ function teamResult(record: MatchRecord, team: number): string {
 function teamIcons(record: MatchRecord, team: number, players: MatchRecordTeam): HTMLElement {
   const icons = h("span", record.winningTeam === team ? "match-team is-winner" : "match-team");
   for (const player of players.players) {
-    const name = playerLabelText(player.name, player.guildTag);
+    const name = playerLabelText(player.name, player.guildTag, 0);
     const label = player.bot ? t("matches.bot", { name }) : name;
     if (player.pubkey !== null) {
       icons.appendChild(signetElement(keySignet(player.pubkey), 12));
@@ -129,7 +129,7 @@ function resultMark(record: MatchRecord): string {
 
 /** A player as a team card's member row: its name, and the look its template says. */
 function playerMember(player: MatchRecordPlayer): TeamFigureMember {
-  const name = playerLabelText(player.name, player.guildTag);
+  const name = playerLabelText(player.name, player.guildTag, 0);
   const decoded = decodeTemplate(player.template, "", 0);
   const label = player.bot ? t("matches.bot", { name }) : name;
   const heading = h("span", "match-player-heading");

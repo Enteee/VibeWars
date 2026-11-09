@@ -347,6 +347,8 @@ The Hall draws one of three modes for each match: King of the Hill, Relic Run or
 
 Every run starts with the **Elite Zaishen Battle**, with no queue: your party against six Zaishen played by bots (2 Monks, an Elementalist and 3 others). The clock starts when one of you crosses the start line or the first Zaishen dies, whichever comes first. Kill all six in under 30 seconds and the party starts the run at +10% morale; under 60, +8%; under 80, +6%; under 100, +4%; under 120, +2%; slower, nothing. Win and your party queues for its first map on its own. Wipe, or still have a Zaishen alive when the 8-minute limit is reached, and the run is over.
 
+Every win in a run earns **fame**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 for the first thirteen, then 40 each, at most 300 a day (the day turns at 15:00 UTC). The Elite Zaishen Battle earns none. Your total fame sets your **hero rank**, from 1 at 25 fame to 15 at 100,000, shown as ★ and a number beside your name. Options > Player shows both. Both are kept on your device.
+
 Your morale carries through the run: the death penalty or boost you end
 a won map with is what you start the next one with, from −60% to +10%.
 A run that ends, or a player who joins mid-run, starts at 0. Your own

@@ -829,6 +829,8 @@ export default {
   "player.guildTag": "Таг на гилдия",
   "player.guildTagHint": "2–4 букви или цифри",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Слава {fame} · Ранг на герой {rank}",
+  "player.heroRankBadge": "Ранг на герой {rank}",
   "player.name": "Име",
   "player.namePlaceholder": "Играч",
   "player.noCape": "Без наметало",

@@ -44,6 +44,8 @@ export interface PlayerSnapshot {
   readonly name: string;
   /** The player's guild tag (#1406), drawn after the name; `undefined` for none. */
   readonly guildTag: string | undefined;
+  /** The player's hero rank (#2702), 0 for none. */
+  readonly heroRank: number;
   /** Worn behind the body (#1422); `undefined` for none. */
   readonly guildCape: WireCape | undefined;
   readonly x: number;
@@ -222,6 +224,8 @@ export interface MatchSummaryRow {
   readonly name: string;
   /** The seat's guild tag (#1406); `null` for none. */
   readonly guildTag: string | null;
+  /** The seat's hero rank (#2702), 0 for none. */
+  readonly heroRank: number;
   readonly team: number;
   /** The player's signet bits (#2822); `null` for a bot. */
   readonly signet: number | null;

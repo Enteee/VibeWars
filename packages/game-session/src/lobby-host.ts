@@ -396,6 +396,8 @@ interface MemberBase {
   name: string;
   /** Sanitised (#1406); `null` for none, and for a bot. */
   guildTag: string | null;
+  /** Self-reported (#2702); 0 for none, and for a bot. */
+  heroRank: number;
   /** Sanitised (#1422); `null` for none, and whenever `guildTag` is. */
   guildCape: WireCape | null;
   team: WireTeam | null;
@@ -815,6 +817,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       id: member.id,
       name: member.name,
       guildTag: member.guildTag,
+      heroRank: member.heroRank,
       guildCape: member.guildCape,
       team: member.team,
       ready: isReady(member),
@@ -926,6 +929,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         team,
         name: member.name,
         guildTag: member.guildTag,
+        heroRank: member.heroRank,
         guildCape: member.guildCape,
       };
       const build = assigned.get(member.id) ?? null;
@@ -956,6 +960,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         team: member.team,
         name: characterName(build),
         guildTag: null,
+        heroRank: 0,
         guildCape: null,
         bot: true,
         build,
@@ -1869,6 +1874,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       id,
       name: id,
       guildTag: null,
+      heroRank: 0,
       guildCape: null,
       team,
       ready: true,
@@ -2179,6 +2185,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       returning.name = sanitizeName(join.name, returning.name);
       const guild = sanitizeGuild(join);
       returning.guildTag = guild.guildTag;
+      returning.heroRank = guild.heroRank;
       returning.guildCape = guild.guildCape;
       returning.ready = false;
       // The proposals its side lists, and the chosen one, it was told of

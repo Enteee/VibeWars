@@ -42,6 +42,8 @@ export interface RenderableActor {
   readonly name: string;
   /** The player's guild tag (#1406), after the name on its plate; `undefined` for none. */
   readonly guildTag: string | undefined;
+  /** Beside the name on its plate (#2702); 0 for none. */
+  readonly heroRank: number;
   /**
    * The player key's signet bits (#2805), drawn just left of the name
    * wherever the name shows; `undefined` for none, as for a bot.

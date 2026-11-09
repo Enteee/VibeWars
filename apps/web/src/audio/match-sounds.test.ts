@@ -17,6 +17,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     sessionId: ME,
     name: ME,
     guildTag: undefined,
+    heroRank: 0,
     guildCape: undefined,
     x: 0,
     y: 0,

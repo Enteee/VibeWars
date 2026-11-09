@@ -79,6 +79,23 @@ export function nextAscentRound(round: number, played: number, result: QueuedRes
 }
 
 /**
+ * The Heroes' Ascent run's streak of wins after `result` of a party at
+ * `round` (#2702): a win at the first round starts a run, which each
+ * member reads from the host's round, not from what this tab saw.
+ */
+export function nextAscentWins(wins: number, round: number, result: QueuedResult): number {
+  switch (result) {
+    case "win":
+      return round === 0 ? 1 : wins + 1;
+    case "loss":
+    case "forfeit":
+      return 0;
+    case "host-left":
+      return wins;
+  }
+}
+
+/**
  * The morale a player carries into the next Heroes' Ascent map (#2686):
  * a win carries the morale `ended` the map at, a defeat or leaving ends
  * the run back at 0, and a match lost to its host leaving keeps
@@ -288,7 +305,7 @@ function splashRow(player: LobbyPlayerSnapshot): HTMLElement {
   const row = h("div", "versus-player");
   const text = h("span", "versus-player-text");
   const label = text.appendChild(
-    playerLabelElement("versus-player-name", player.name, player.guildTag),
+    playerLabelElement("versus-player-name", player.name, player.guildTag, player.heroRank),
   );
   const signet = signetOf(player);
   if (signet !== undefined) {

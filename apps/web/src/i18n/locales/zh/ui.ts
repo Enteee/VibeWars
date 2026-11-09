@@ -773,6 +773,8 @@ export default {
   "player.guildTag": "公会标签",
   "player.guildTagHint": "2–4 个字母或数字",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "声望 {fame} · 英雄等级 {rank}",
+  "player.heroRankBadge": "英雄等级 {rank}",
   "player.name": "名称",
   "player.namePlaceholder": "玩家",
   "player.noCape": "无披风",

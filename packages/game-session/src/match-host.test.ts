@@ -167,6 +167,19 @@ describe("a P2P match (#375)", () => {
   });
 });
 
+describe("hero rank (#2702)", () => {
+  it("shows a hello's rank in the snapshot and the summary", async () => {
+    const match = startMatch();
+    const { connection } = await match.join(hello({ name: "Ann", heroRank: 7 }));
+    await match.step(1 / RULESET.tickRateHz);
+    expect(playerIn(connection.getSnapshot(), connection.selfSessionId)?.heroRank).toBe(7);
+
+    await match.host.close("host-left");
+    await settle();
+    expect(connection.getSnapshot().summary?.map(({ heroRank }) => heroRank)).toEqual([7]);
+  });
+});
+
 describe("guild tags (#1406)", () => {
   it("seats a hello's tag, sanitised, in every snapshot and the summary; a bad one as none", async () => {
     const match = startMatch();
@@ -192,13 +205,17 @@ describe("guild capes (#1422)", () => {
   it("seats a hello's cape in every snapshot, and none without a valid tag or for a bad one", async () => {
     const match = startMatch();
     const { connection: ann } = await match.join(
-      hello({ name: "Ann", guildTag: "Vb1", guildCape: CAPE }),
+      hello({ name: "Ann", guildTag: "Vb1", heroRank: 0, guildCape: CAPE }),
     );
     const { connection: bob } = await match.join(
-      hello({ name: "Bob", guildTag: "[x]", guildCape: CAPE }),
+      hello({ name: "Bob", guildTag: "[x]", heroRank: 0, guildCape: CAPE }),
     );
     // A modified client's: the parser reads no cape out of it.
-    const odd = { ...hello({ name: "Cy", guildTag: "Cy" }), guildCape: { ...CAPE, main: "red" } };
+    const odd = {
+      ...hello({ name: "Cy", guildTag: "Cy" }),
+      heroRank: 0,
+      guildCape: { ...CAPE, main: "red" },
+    };
     const { connection: cy } = await match.join(odd as unknown as PeerHello);
     await match.step(1 / RULESET.tickRateHz);
 
@@ -222,6 +239,7 @@ describe("the match summary's size (#1057)", () => {
         id: `player-${String(1000 + i)}`,
         name: "\u{1D54E}".repeat(16),
         guildTag: "WWWW",
+        heroRank: 0,
         team: i % 2 === 0 ? 0 : 1,
         signet: MAX_WIRE_SIGNET,
         damage: 9_999_999,
@@ -430,6 +448,7 @@ describe("a Team Lobby's seats (#1458)", () => {
             team: 0,
             name: "Me",
             guildTag: null,
+            heroRank: 0,
             guildCape: null,
             bot: false,
             playerPubkey: "ab".repeat(32),
@@ -452,7 +471,15 @@ describe("a lobby's bots (#1193)", () => {
   const bot = (team: 0 | 1, name: string, build: string) =>
     [
       name,
-      { team, name, guildTag: null, guildCape: null, bot: true, build: starterBuild(build) },
+      {
+        team,
+        name,
+        guildTag: null,
+        heroRank: 0,
+        guildCape: null,
+        bot: true,
+        build: starterBuild(build),
+      },
     ] as const;
   const human = (team: 0 | 1) =>
     [
@@ -461,6 +488,7 @@ describe("a lobby's bots (#1193)", () => {
         team,
         name: "Me",
         guildTag: "VIBE",
+        heroRank: 0,
         guildCape: CAPE,
         bot: false,
         playerPubkey: "ab".repeat(32),

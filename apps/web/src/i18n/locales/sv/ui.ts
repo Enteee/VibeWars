@@ -826,6 +826,8 @@ export default {
   "player.guildTag": "Gilletagg",
   "player.guildTagHint": "2–4 bokstäver eller siffror",
   "player.guildTagPlaceholder": "TAGG",
+  "player.fameAndRank": "Berömmelse {fame} · Hjälterang {rank}",
+  "player.heroRankBadge": "Hjälterang {rank}",
   "player.name": "Namn",
   "player.namePlaceholder": "Spelare",
   "player.noCape": "Ingen mantel",

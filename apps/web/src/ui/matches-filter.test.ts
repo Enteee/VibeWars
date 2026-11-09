@@ -12,6 +12,7 @@ const team = (size: number): MatchRecordTeam => ({
   players: Array.from({ length: size }, (_, i) => ({
     name: `P${String(i)}`,
     guildTag: null,
+    heroRank: 0,
     bot: i > 0,
     pubkey: i > 0 ? null : "a".repeat(64),
     template: "",

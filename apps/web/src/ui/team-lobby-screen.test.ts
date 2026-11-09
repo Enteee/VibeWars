@@ -158,6 +158,7 @@ function player(
     sessionId,
     name,
     guildTag: null,
+    heroRank: 0,
     team,
     ready: false,
     isHost: sessionId === "aria",

@@ -124,6 +124,8 @@ Una mappa può avere delle **porte**: muri che bloccano corpi, tiri e vista finc
 
 Ogni percorso inizia con la **Battaglia degli Zaishen d'élite**, senza coda: il tuo gruppo contro sei Zaishen controllati da bot (2 Monaci, un Elementalista e altri 3). Il cronometro parte quando uno di voi attraversa la linea di partenza o muore il primo Zaishen, a seconda di cosa accade prima. Uccidete tutti e sei in meno di 30 secondi e il gruppo inizia il percorso con +10% di morale; in meno di 60, +8%; in meno di 80, +6%; in meno di 100, +4%; in meno di 120, +2%; più lentamente, niente. Se vincete, il gruppo si mette da solo in coda per la prima mappa. Se cade tutto il gruppo, o se allo scadere degli 8 minuti uno Zaishen è ancora vivo, il percorso è finito.
 
+Ogni vittoria di un percorso dà **fama**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 per le prime tredici, poi 40 ciascuna, al massimo 300 al giorno (il giorno cambia alle 15:00 UTC). La Battaglia degli Zaishen d'élite non ne dà. La fama totale stabilisce il tuo **grado di eroe**, da 1 con 25 di fama a 15 con 100.000, mostrato come ★ e un numero accanto al nome. Opzioni > Giocatore mostra entrambi. Entrambi restano sul tuo dispositivo.
+
 ## Tre squadre
 
 In una partita a tre squadre la terza è disegnata in giallo lime, accanto al blu del tuo schieramento e al rosso dell'altro, e ha un ◆ prima di targhette, righe del punteggio e tabella di fine partita, così non si distingue mai solo dal colore. Il tabellone mostra prima la tua squadra, poi le altre in ordine, e le tabelle di fine partita mettono prima la tua squadra, poi la vincitrice.
