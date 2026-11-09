@@ -282,7 +282,8 @@ export const LOBBY_TEAM_SIZES = [1, 2, 4, 8] as const;
 export type LobbyTeamSize = (typeof LOBBY_TEAM_SIZES)[number];
 
 /** How long each stage of a Team Lobby (#1458) lasts, on the lobby's clock. */
-export const TEAM_LOBBY_STAGE_SECONDS = 60;
+export const TEAM_LOBBY_VOTE_SECONDS = 30;
+export const TEAM_LOBBY_CLAIM_SECONDS = 30;
 
 /**
  * Every message a client is allowed to send during a match.

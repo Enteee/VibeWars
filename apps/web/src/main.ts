@@ -291,8 +291,6 @@ interface TeamPicks {
   soloKey: string | undefined;
   /** The build this side was last proposed at 1v1 (#2141). */
   soloProposed: PlayerBuild | undefined;
-  /** A click picked, so the claim stage readies too. */
-  soloClicked: boolean;
   /** The claim stage this side already claimed its one seat in. */
   soloClaimed: boolean;
 }
@@ -2261,9 +2259,6 @@ async function main(): Promise<void> {
       if (!picks.soloClaimed && (snapshot.teamLobby?.sides[team]?.chosen ?? null) !== null) {
         picks.soloClaimed = true;
         joined.claim(0);
-        if (picks.soloClicked) {
-          joined.setReady(true);
-        }
       }
       return;
     }
@@ -2282,9 +2277,9 @@ async function main(): Promise<void> {
       return;
     }
     teamPicks.soloKey = key;
-    teamPicks.soloClicked = true;
     proposeSolo(lobby, lobby.getSnapshot(), teamPicks);
-    lobby.setReady(true);
+    // A 1v1's click is its vote (#2872): its own proposal, and ready.
+    lobby.vote(lobby.selfSessionId);
     lobbyChanged();
   };
 
@@ -2302,7 +2297,6 @@ async function main(): Promise<void> {
         solo: [],
         soloKey: active === undefined ? undefined : soloCharacterKey(active),
         soloProposed: undefined,
-        soloClicked: false,
         soloClaimed: false,
       };
       teamPicks = picks;
@@ -2337,12 +2331,6 @@ async function main(): Promise<void> {
         onPickSolo: pickSolo,
         onClaim: (slot) => {
           lobby?.claim(slot);
-        },
-        onToggleReady: () => {
-          const self = lobby
-            ?.getSnapshot()
-            .players.find((p) => p.sessionId === lobby?.selfSessionId);
-          lobby?.setReady(!(self?.ready ?? false));
         },
         onLeave: () => {
           void leaveLobby();

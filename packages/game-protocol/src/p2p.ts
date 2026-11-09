@@ -1400,10 +1400,10 @@ export type WireLobbyCommand =
       readonly build: JsonValue;
     }
   | { readonly kind: "propose"; readonly slot: null }
-  /** In a Team Lobby's vote: vote for a proposal on one's own side; `null` withdraws. */
-  | { readonly kind: "vote"; readonly proposerId: string | null }
-  /** In a Team Lobby's claim: take that slot of the chosen build; `null` lets it go. */
-  | { readonly kind: "claim"; readonly slot: number | null }
+  /** In a Team Lobby's vote: vote for a proposal on one's own side. */
+  | { readonly kind: "vote"; readonly proposerId: string }
+  /** In a Team Lobby's claim: take that slot of the chosen build. */
+  | { readonly kind: "claim"; readonly slot: number }
   /**
    * A team mode's party host to its match host (ADR-0042): seat `slot` of
    * its side of `size`, played by the human `memberKey` or, `null`, a
@@ -3184,13 +3184,9 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
         : undefined;
     }
     case "vote":
-      return isNullableString(raw.proposerId)
-        ? { kind: "vote", proposerId: raw.proposerId }
-        : undefined;
+      return isString(raw.proposerId) ? { kind: "vote", proposerId: raw.proposerId } : undefined;
     case "claim":
-      return raw.slot === null || isNumber(raw.slot)
-        ? { kind: "claim", slot: raw.slot }
-        : undefined;
+      return isNumber(raw.slot) ? { kind: "claim", slot: raw.slot } : undefined;
     case "team-plan": {
       const build = parseJson(raw.build);
       return isCount(raw.slot) &&

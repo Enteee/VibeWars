@@ -3817,22 +3817,6 @@ body {
   border-color: var(--accent);
 }
 
-.screen .play-card.is-chosen .play-card-open {
-  border: 2px solid var(--accent);
-  transform: translateY(-4px);
-  box-shadow: 0 6px 14px rgb(0 0 0 / 45%);
-}
-
-.screen .play-card.is-faded {
-  opacity: 0.4;
-}
-
-/* The card fades once: its disabled press does not fade it again. */
-.screen .play-card.is-faded .play-card-open {
-  opacity: 1;
-  cursor: default;
-}
-
 .team-lobby-card-name,
 .team-lobby-seat-holder {
   display: flex;
@@ -3901,12 +3885,6 @@ body {
   border: 1px solid var(--accent);
   color: var(--accent);
   text-align: center;
-}
-
-.team-lobby-reason {
-  padding: 0.4rem 0.7rem;
-  border: 1px solid var(--accent);
-  font-weight: 700;
 }
 
 .team-lobby-seats {
