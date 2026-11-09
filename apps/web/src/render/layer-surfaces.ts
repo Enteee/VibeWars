@@ -418,3 +418,93 @@ export function traceHiddenOutline(
     }
   }
 }
+
+/** A piece of a polyline, in world space. */
+export interface HiddenPiece {
+  readonly ax: number;
+  readonly ay: number;
+  readonly bx: number;
+  readonly by: number;
+}
+
+/** How long a piece of a polyline is tested as one, in world units. */
+const POLYLINE_STEP = 2;
+
+/** Whether a structure covers a body on `layer` at this point. */
+function hiddenAt(occluders: readonly Occluder[], layer: number, x: number, y: number): boolean {
+  return occluders.some((each) => layer <= each.hidesThrough && hides(each, x, y));
+}
+
+/** The pieces of the world-space `points` that a structure covers on a body on `layer`. */
+export function traceHiddenPolyline(
+  points: readonly Vec2[],
+  layer: number,
+  occluders: readonly Occluder[],
+): readonly HiddenPiece[] {
+  const pieces: HiddenPiece[] = [];
+  points.forEach((from, at) => {
+    const to = points[at + 1];
+    if (to === undefined) {
+      return;
+    }
+    const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / POLYLINE_STEP));
+    for (let step = 0; step < steps; step += 1) {
+      const ax = from.x + ((to.x - from.x) * step) / steps;
+      const ay = from.y + ((to.y - from.y) * step) / steps;
+      const bx = from.x + ((to.x - from.x) * (step + 1)) / steps;
+      const by = from.y + ((to.y - from.y) * (step + 1)) / steps;
+      if (hiddenAt(occluders, layer, (ax + bx) / 2, (ay + by) / 2)) {
+        pieces.push({ ax, ay, bx, by });
+      }
+    }
+  });
+  return pieces;
+}
+
+/** A part of a box, each number a fraction of its size. */
+export interface BoxPart {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+const CROP_SAMPLES = 8;
+
+/**
+ * The part of the `size` box centred on (`x`, `y`) a structure covers on a
+ * body on `layer`: the bounding box of its hidden samples, on a grid.
+ * `undefined` with none hidden.
+ */
+export function hiddenCrop(
+  x: number,
+  y: number,
+  size: number,
+  layer: number,
+  occluders: readonly Occluder[],
+): BoxPart | undefined {
+  let left = CROP_SAMPLES;
+  let top = CROP_SAMPLES;
+  let right = -1;
+  let bottom = -1;
+  for (let row = 0; row < CROP_SAMPLES; row += 1) {
+    for (let column = 0; column < CROP_SAMPLES; column += 1) {
+      const sx = x - size / 2 + ((column + 0.5) * size) / CROP_SAMPLES;
+      const sy = y - size / 2 + ((row + 0.5) * size) / CROP_SAMPLES;
+      if (hiddenAt(occluders, layer, sx, sy)) {
+        left = Math.min(left, column);
+        top = Math.min(top, row);
+        right = Math.max(right, column);
+        bottom = Math.max(bottom, row);
+      }
+    }
+  }
+  return right < 0
+    ? undefined
+    : {
+        x: left / CROP_SAMPLES,
+        y: top / CROP_SAMPLES,
+        width: (right - left + 1) / CROP_SAMPLES,
+        height: (bottom - top + 1) / CROP_SAMPLES,
+      };
+}
