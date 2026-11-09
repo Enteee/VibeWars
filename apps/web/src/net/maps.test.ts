@@ -1,4 +1,5 @@
-import { ASCENT_ROUNDS, teamSizeOf } from "@vibewars/game-protocol";
+import { MAX_CAPTURE_POINTS } from "@vibewars/game-maps/schema";
+import { ASCENT_ROUNDS, MAX_WIRE_CAPTURE_POINTS, teamSizeOf } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import { mapName } from "../i18n/game-names.js";
@@ -28,6 +29,12 @@ function sizesOf(id: string): readonly number[] {
   }
   return map.teamSizes;
 }
+
+describe("the wire and the map schema (#2698)", () => {
+  it("carries every capture point a map may have", () => {
+    expect(MAX_WIRE_CAPTURE_POINTS).toBe(MAX_CAPTURE_POINTS);
+  });
+});
 
 describe("randomArenaMapPool", () => {
   it("plays each size only on the arenas that declare it (#2108)", () => {
