@@ -7,6 +7,7 @@
 | Build                  | Le professioni, le otto abilità, gli attributi e l'equipaggiamento di un personaggio        |
 | Nemico segnalato       | Il nemico che la tua squadra deve attaccare; **T** lo bersaglia                             |
 | Condizione             | Un effetto dannoso come Bleeding o Crippled; svanisce da solo o viene rimosso               |
+| Acqua profonda         | Acqua in cui non puoi entrare; colpi e incantesimi la attraversano                          |
 | Facile da interrompere | Qualsiasi colpo che va a segno mentre la usi la interrompe, come quando piazzi una trappola |
 | Élite                  | Un'abilità potente con la cornice dorata; una per barra                                     |
 | Incantamento           | Un effetto positivo lanciato da te o da un alleato                                          |
@@ -22,6 +23,7 @@
 | Ricarica               | Il tempo che deve passare prima di poter riusare un'abilità                                 |
 | Resuscitare            | Riportare in vita un alleato morto                                                          |
 | Runa                   | Un potenziamento dell'armatura: gradi di attributo, Salute, Energia o condizioni più brevi  |
+| Acqua bassa            | Acqua che attraversi come la terraferma                                                     |
 | Sigillo (scudo)        | Il tuo segno, un piccolo scudo ricavato dall'identità del tuo browser, davanti al tuo nome  |
 | Spawn                  | Il punto in cui la tua squadra inizia la partita                                            |
 | Abilità a tocco        | Un'abilità che si usa toccando il bersaglio; alcuni gridi fanno fallire i tocchi dei nemici |

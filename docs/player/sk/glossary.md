@@ -7,6 +7,7 @@
 | Build              | Povolania postavy, osem schopností, atribúty a výbava                         |
 | Určený nepriateľ   | Nepriateľ, na ktorého má tvoj tím zaútočiť; **T** ho zameria                  |
 | Neduh              | Škodlivý efekt ako Bleeding alebo Crippled; vyprší alebo sa odstráni          |
+| Hlboká voda        | Voda, do ktorej nevojdeš; strely a kúzla cez ňu prejdú                        |
 | Ľahko prerušiteľné | Každý zásah počas použitia to preruší, napríklad kladenie pasce               |
 | Elitná             | Silná schopnosť so zlatým rámom; jedna na lištu                               |
 | Očarovanie         | Dobrý efekt zoslaný tebou alebo spojencom                                     |
@@ -22,6 +23,7 @@
 | Dobíjanie          | Čas, kým sa použitá schopnosť dá znova použiť                                 |
 | Oživiť             | Vrátiť mŕtveho spojenca späť                                                  |
 | Runa               | Vylepšenie brnenia: hodnosti atribútov, zdravie, energia alebo kratšie neduhy |
+| Plytká voda        | Voda, cez ktorú prejdeš ako po suchu                                          |
 | Pečať (štít)       | Tvoja značka, malý štít z identity tvojho prehliadača, pred tvojím menom      |
 | Miesto zrodu       | Miesto, kde tvoj tím začína zápas                                             |
 | Dotyková schopnosť | Schopnosť použitá dotykom cieľa; niektoré pokriky rušia dotyky nepriateľov    |

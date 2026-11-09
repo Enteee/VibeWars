@@ -7,6 +7,7 @@
 | Sastav               | Profesije lika, osam vještina, atributi i oprema                                          |
 | Označeni neprijatelj | Neprijatelj kojeg tvoj tim treba napasti; **T** ga cilja                                  |
 | Stanje               | Štetan učinak poput Bleeding ili Crippled; istekne ili se ukloni                          |
+| Duboka voda          | Voda u koju ne možeš ući; hici i čarolije prelaze preko nje                               |
 | Lako prekidiva       | Svaki pogodak dok je koristiš prekida je, kao pri postavljanju zamke                      |
 | Elitna               | Snažna vještina sa zlatnim okvirom; jedna po traci                                        |
 | Začaranje            | Dobar učinak koji baciš ti ili saveznik                                                   |
@@ -22,6 +23,7 @@
 | Obnavljanje          | Vrijeme prije nego što se upotrijebljena vještina može ponovno koristiti                  |
 | Uskrsnuti            | Vratiti mrtvog saveznika                                                                  |
 | Runa                 | Nadogradnja oklopa: razine atributa, zdravlje, energija ili kraća stanja                  |
+| Plitka voda          | Voda kroz koju hodaš kao po suhom                                                         |
 | Pečat (štit)         | Tvoj znak, mali štit iz identiteta tvog preglednika, ispred tvog imena                    |
 | Polazište            | Mjesto na kojem tvoj tim započinje meč                                                    |
 | Vještina dodira      | Vještina koja se koristi dodirom mete; neki povici čine da neprijateljski dodir ne uspije |
