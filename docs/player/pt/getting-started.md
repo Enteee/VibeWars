@@ -103,7 +103,7 @@ uma lista de quem está nela; o selo conta as pessoas.
   entra. Um convidado vê o cadeado e "Sala fechada" na janela da Sala
   enquanto ela estiver fechada.
 - **Entrar:** abra o link de convite que você recebeu, em uma aba nova ou
-  colado na barra de endereço de uma já aberta. Sua própria sala continua
+  colado na barra de endereço de uma já aberta. **Entrar em uma sala**, na janela Sala, também aceita o link colado. Sua própria sala continua
   aberta até você entrar. Lá dentro, a janela diz **Sala**, e **Sair** leva
   você de volta a uma sala nova só sua, com um novo link de convite. Um
   link aberto na tela de uma sala ou em uma partida pede que você volte ao

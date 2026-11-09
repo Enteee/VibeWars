@@ -49,3 +49,36 @@ export function parseLobbyFragment(hash: string): LobbyFragment {
     ? { kind: "invite", code, rest: part.rest }
     : { kind: "malformed", rest: part.rest };
 }
+
+/** The longest pasted invite link read (#2882); any real one is far shorter. */
+export const MAX_PASTED_LINK_LENGTH = 2048;
+
+/** What a pasted invite link turned out to be (#2882). */
+export type PastedLobbyLink =
+  | { readonly kind: "link"; readonly fragment: string }
+  | { readonly kind: "malformed" }
+  | { readonly kind: "other-build" };
+
+/**
+ * Read a link pasted into the Lobby window (#2882). Only this very build's
+ * links count: another path on this origin may speak another protocol.
+ */
+export function readPastedLobbyLink(
+  text: string,
+  here: { readonly origin: string; readonly pathname: string },
+): PastedLobbyLink {
+  const trimmed = text.trim();
+  if (trimmed === "" || trimmed.length > MAX_PASTED_LINK_LENGTH || !URL.canParse(trimmed)) {
+    return { kind: "malformed" };
+  }
+  const url = new URL(trimmed);
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    return { kind: "malformed" };
+  }
+  if (url.origin !== here.origin || url.pathname !== here.pathname) {
+    return { kind: "other-build" };
+  }
+  return parseLobbyFragment(url.hash).kind === "invite"
+    ? { kind: "link", fragment: url.hash }
+    : { kind: "malformed" };
+}

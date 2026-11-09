@@ -100,7 +100,7 @@ Leave, and a list of who is in it; its badge counts them.
   sees the padlock and "Lobby closed" in the Lobby window while it is
   closed.
 - **Join:** open the invite link you were sent, in a new tab or pasted
-  into the address bar of one already open. Your own lobby stays open
+  into the address bar of one already open. **Join lobby** in the Lobby window also takes a pasted link. Your own lobby stays open
   until the join is in. Once in, the Lobby window says **Lobby**, and
   its **Leave** takes you back to a fresh lobby of your own, with a new
   invite link. A link opened on a lobby's screen or in a match asks you

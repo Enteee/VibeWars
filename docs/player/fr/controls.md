@@ -64,7 +64,7 @@ Ces touches sont fixes :
 ## La barre du haut
 
 Hors match, la barre du haut contient **[?]** (cette Aide), **⚙** (Options),
-**Salon** (ton lien d'invitation, Ouvert/Fermé, Quitter, et qui est dans ton
+**Salon** (ton lien d'invitation, Rejoindre un salon, Ouvert/Fermé, Quitter, et qui est dans ton
 salon ; sa pastille les compte), **♪** (la musique : ce qui joue, et à quel
 volume), la coupure du son et le plein écran. En match, les mêmes boutons,
 sauf Salon, sont en haut à droite de l'écran. Dans une fenêtre étroite, ces

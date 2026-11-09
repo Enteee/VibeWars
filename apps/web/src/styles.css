@@ -390,11 +390,32 @@ body {
 .topbar-lobby[hidden],
 .topbar-lobby .topbar-lobby-open[hidden],
 .topbar-lobby .topbar-leave[hidden],
-.topbar-lobby .lobby-copy[hidden] {
+.topbar-lobby .lobby-copy[hidden],
+.topbar-lobby .lobby-join-open[hidden],
+.lobby-join[hidden],
+.lobby-join-message[hidden] {
   display: none;
 }
 
-#topbar .topbar-lobby button {
+/* Join lobby (#2882): the pasted link, its two buttons, what was wrong. */
+.lobby-join {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.lobby-join-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.lobby-join-message {
+  margin: 0;
+  color: var(--damage);
+}
+
+#topbar .topbar-lobby button,
+#topbar .lobby-join button {
   padding: 0.2rem 0.6rem;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -3796,22 +3817,6 @@ body {
   border-color: var(--accent);
 }
 
-.screen .play-card.is-chosen .play-card-open {
-  border: 2px solid var(--accent);
-  transform: translateY(-4px);
-  box-shadow: 0 6px 14px rgb(0 0 0 / 45%);
-}
-
-.screen .play-card.is-faded {
-  opacity: 0.4;
-}
-
-/* The card fades once: its disabled press does not fade it again. */
-.screen .play-card.is-faded .play-card-open {
-  opacity: 1;
-  cursor: default;
-}
-
 .team-lobby-card-name,
 .team-lobby-seat-holder {
   display: flex;
@@ -3880,12 +3885,6 @@ body {
   border: 1px solid var(--accent);
   color: var(--accent);
   text-align: center;
-}
-
-.team-lobby-reason {
-  padding: 0.4rem 0.7rem;
-  border: 1px solid var(--accent);
-  font-weight: 700;
 }
 
 .team-lobby-seats {

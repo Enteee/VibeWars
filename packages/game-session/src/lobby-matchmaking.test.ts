@@ -1,6 +1,6 @@
 import { pickStarterTeam } from "@vibewars/game-core";
 import {
-  TEAM_LOBBY_STAGE_SECONDS,
+  TEAM_LOBBY_VOTE_SECONDS,
   type LobbyMode,
   type WirePartyFormed,
 } from "@vibewars/game-protocol";
@@ -70,7 +70,7 @@ async function queue(lobby: TestLobby, ascentRound: number | null = null): Promi
   lobby.host.connection.findMatch(ascentRound);
   await settle();
   for (let stage = 0; stage < 2; stage += 1) {
-    lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS);
+    lobby.lobby.advance(TEAM_LOBBY_VOTE_SECONDS);
     await settle();
   }
   await landed();
@@ -408,6 +408,32 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
     expect(other.lobby.host.connection.getSnapshot().teamLobby?.stage).toBe("vote");
   });
 
+  it("readies a locked seat from the start of the claim, a newcomer only by taking theirs (#2872)", async () => {
+    const { lobby, party } = await won();
+    const [host, ann] = party as [Member, Member];
+    await ann.connection.disconnect();
+    await settle();
+    const bea = await lobby.join("Bea");
+    await settle();
+    const readiness = () =>
+      host.connection
+        .getSnapshot()
+        .players.map((player) => [player.name === "Bea", player.ready] as const);
+
+    lobby.host.connection.findMatch(1);
+    await settle();
+    expect(host.connection.getSnapshot().teamLobby?.stage).toBe("claim");
+    expect(readiness()).toEqual([
+      [false, true],
+      [true, false],
+    ]);
+
+    // Bea's seat is the last to be taken, so it ends the stage, with no clock.
+    bea.connection.claim(1);
+    await landed();
+    expect(phaseOf(host)).toBe("queued");
+  });
+
   it("gives a newcomer only the vacant seats, each with its locked build, and a bot the rest", async () => {
     const { lobby, party, first } = await won();
     const [host, ann] = party as [Member, Member];
@@ -425,7 +451,7 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
     expect(host.connection.getSnapshot().teamLobby?.stage).toBe("claim");
     // The run's members keep their seats; a newcomer takes no held one.
     host.connection.claim(1);
-    host.connection.vote(null);
+    host.connection.vote(host.transport.selfId);
     host.connection.chooseTeam(1);
     bea.connection.claim(0);
     await settle();
@@ -441,7 +467,7 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
       seats(host.transport.selfId, bea.transport.selfId),
     );
 
-    lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS);
+    lobby.lobby.advance(TEAM_LOBBY_VOTE_SECONDS);
     await landed();
     expect(phaseOf(host)).toBe("queued");
     // Same builds, seat by seat; Cid in the lowest vacant seat, bots in the rest.

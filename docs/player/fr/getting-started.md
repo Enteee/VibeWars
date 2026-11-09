@@ -105,7 +105,7 @@ Quitter, et la liste de qui s'y trouve ; sa pastille les compte.
   restent, et personne de nouveau n'entre. Un invité voit le cadenas et
   « Salon fermé » dans la fenêtre Salon tant qu'il est fermé.
 - **Rejoindre :** ouvre le lien d'invitation reçu, dans un nouvel onglet ou
-  collé dans la barre d'adresse d'un onglet déjà ouvert. Ton salon reste
+  collé dans la barre d'adresse d'un onglet déjà ouvert. **Rejoindre un salon**, dans la fenêtre Salon, accepte aussi le lien collé. Ton salon reste
   ouvert jusqu'à ce que tu sois entré. Une fois dedans, la fenêtre Salon
   indique **Salon**, et son **Quitter** te ramène à un nouveau salon à toi, avec
   un nouveau lien d'invitation. Un lien ouvert sur l'écran d'un salon ou en
