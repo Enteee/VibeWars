@@ -148,7 +148,7 @@ ci_job() {
 
 echo "== 1+2: the runner takes the ci job (this is the slow part)"
 set +e
-timeout 5400 vibewars-runner-jail --jitconfig "$work/jit" 2>&1 | tee "$work/runner.log"
+timeout 5400 vibewars-runner-jail --id spike-1 --jitconfig "$work/jit" 2>&1 | tee "$work/runner.log"
 runner_exit=${PIPESTATUS[0]}
 set -e
 sleep 10
@@ -172,7 +172,7 @@ replayed=$(hgit commit-tree "$tree" -p "$spike" -m "SPIKE #1889: replay")
 hgit push -q "$remote" "$replayed:refs/heads/$branch"
 sleep 20
 set +e
-timeout 180 vibewars-runner-jail --jitconfig "$work/jit.replay" >"$work/replay.log" 2>&1
+timeout 180 vibewars-runner-jail --id spike-replay --jitconfig "$work/jit.replay" >"$work/replay.log" 2>&1
 replay_exit=$?
 set -e
 job=$(ci_job "$replayed")
