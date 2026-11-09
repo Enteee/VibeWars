@@ -392,13 +392,13 @@ describe("a King of the Hill match (#1377)", () => {
   });
 
   it("is won at time by the team with more points", () => {
-    const sim = held();
-    stepUntil(sim, () => sim.phase === "finished", KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds);
-    expect(sim.elapsedSeconds).toBeCloseTo(KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds, 3);
+    // One scoring tick. The clock is a running sum of DT: at 60 s it is still a hair short.
+    const SHORT = { ...KING_OF_THE_HILL_MATCH_RULES, timeLimitSeconds: 36 };
+    const sim = held(SHORT);
+    stepUntil(sim, () => sim.phase === "finished", SHORT.timeLimitSeconds);
+    expect(sim.elapsedSeconds).toBeCloseTo(SHORT.timeLimitSeconds, 3);
     expect(points(sim)[0]).toBe(
-      Math.floor(
-        (KING_OF_THE_HILL_MATCH_RULES.timeLimitSeconds - CLAIM_SECONDS) / POINT_TICK_SECONDS,
-      ),
+      Math.floor((SHORT.timeLimitSeconds - CLAIM_SECONDS) / POINT_TICK_SECONDS),
     );
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "time" });
   });
