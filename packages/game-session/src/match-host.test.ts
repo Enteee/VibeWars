@@ -544,6 +544,31 @@ describe("a lobby's bots (#1193)", () => {
       expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
     });
 
+    /** The local human on team 1 against a side planned all bots. */
+    async function allBotSide(mode: LobbyMode) {
+      const records: MatchRecord[] = [];
+      const match = startMatch({
+        mode,
+        publishRecord: (record) => records.push(record),
+        seats: new Map<string, PlannedSeat>([human(1), bot(0, "Henchman", "Monk/Elementalist")]),
+      });
+      const local = await match.joinLocal();
+      await match.step(TICK);
+      return { records, henchman: named(local.getSnapshot(), "Henchman") };
+    }
+
+    it("forfeits a Heroes' Ascent side that starts with only bots", async () => {
+      const { records, henchman } = await allBotSide("heroes-ascent");
+      expect(henchman).toBeUndefined();
+      expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
+    });
+
+    it("lets a side of only bots play on in other modes", async () => {
+      const { records, henchman } = await allBotSide("team-arena");
+      expect(henchman?.bot).toBe(true);
+      expect(records).toEqual([]);
+    });
+
     it("leaves other modes' bots playing on", async () => {
       const { records, henchman } = await lastHumanLeaves("team-arena");
       expect(henchman?.bot).toBe(true);

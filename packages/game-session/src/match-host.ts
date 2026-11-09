@@ -1307,6 +1307,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
   }
 
+  // A human away when the stage clock ran out left only bots planned (#2688).
+  for (const team of new Set([...(planned?.values() ?? [])].map((plan) => plan.team))) {
+    forfeitIfNoHumans(team);
+  }
+
   return {
     advance(seconds) {
       if (finished && delayed.length === 0) {
