@@ -47,6 +47,7 @@ in
   };
 
   packages = [
+    pkgs.p7zip
     pkgs.jq
     # The supervisor test (#722) runs a tmux server of its own, in CI too.
     pkgs.tmux
