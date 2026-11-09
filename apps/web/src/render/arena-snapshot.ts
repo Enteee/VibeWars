@@ -51,6 +51,8 @@ export interface RenderableActor {
   /** A lobby's bot (#1194): its name plate wears the BOT tag. */
   readonly bot: boolean;
   readonly position: Vec2;
+  /** The discrete layer it stands on (ADR-0051): how high and in what order it draws. */
+  readonly layer: number;
   /** Radians, `atan2` convention, 0 = +x (#187). Not drawn yet. */
   readonly facing: number;
   /** Picks the weapon mark's tip (#188); `undefined` draws none. */
@@ -103,7 +105,27 @@ export interface PolygonRenderableWall {
   readonly points: readonly Vec2[];
 }
 
-export type RenderableWall = RectRenderableWall | PolygonRenderableWall;
+export type RenderableWall = (RectRenderableWall | PolygonRenderableWall) & {
+  /** The layer it stands on (ADR-0051). */
+  readonly layer: number;
+};
+
+/** A deck's or ramp's outline, as a wall's without a layer. */
+export type RenderableShape = RectRenderableWall | PolygonRenderableWall;
+
+/** A map's floors above the ground (ADR-0051), from its file: never per tick. */
+export interface MapStructure {
+  readonly layerCount: number;
+  readonly decks: readonly { readonly layer: number; readonly footprint: RenderableShape }[];
+  readonly transitions: readonly {
+    readonly from: number;
+    readonly to: number;
+    readonly area: RenderableShape;
+  }[];
+}
+
+/** A map with one layer: no deck, no ramp. */
+export const FLAT_STRUCTURE: MapStructure = { layerCount: 1, decks: [], transitions: [] };
 
 /** A short-lived floating number or label above an actor. */
 export interface FloatingText {
@@ -357,6 +379,7 @@ export interface RenderableShrine {
 export interface ArenaSnapshot {
   readonly actors: readonly RenderableActor[];
   readonly walls: readonly RenderableWall[];
+  readonly structure: MapStructure;
   /** The map's resurrection shrines (#1199), their priests alive or not. */
   readonly shrines: readonly RenderableShrine[];
   /**
@@ -408,6 +431,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   walls: [],
   shrines: [],
   flags: [],
+  structure: FLAT_STRUCTURE,
   stand: undefined,
   altar: undefined,
   capturePoints: [],

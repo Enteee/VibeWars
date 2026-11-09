@@ -9,8 +9,10 @@ import {
   type TrainingScenario,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
+import type { MatchLayers } from "@vibewars/game-core";
 import type { MapData } from "@vibewars/game-maps/schema";
 import type { MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
+import { structureOf, type LoadedStructure } from "../net/maps.js";
 
 import { validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
@@ -55,9 +57,23 @@ export function playerArming(character: StoredCharacter): PlayerArming {
   };
 }
 
+/** A dev build's layered map (#2830): never in `TRAINING_MAPS`. */
+export interface DevTrainingMap {
+  readonly map: MapData;
+  readonly layers: MatchLayers;
+  readonly dummyLayers: ReadonlyMap<string, number>;
+}
+
+const devMaps = new Map<string, DevTrainingMap>();
+
+export function addDevTrainingMap(dev: DevTrainingMap): void {
+  devMaps.set(dev.map.id, dev);
+}
+
 export interface TrainingSetup {
   readonly simulation: MatchSimulation;
   readonly map: MapDescriptor;
+  readonly structure: LoadedStructure;
   /** Who is who in the log: the dummies' labels, by participant id. */
   readonly names: ReadonlyMap<string, string>;
   readonly arming: PlayerArming;
@@ -90,7 +106,7 @@ export function playerSpawn(map: MapData): { x: number; y: number } {
 }
 
 export function trainingMap(scenario: TrainingScenario): MapData {
-  const map = TRAINING_MAPS.get(scenario.mapId);
+  const map = TRAINING_MAPS.get(scenario.mapId) ?? devMaps.get(scenario.mapId)?.map;
   if (map === undefined) {
     throw new Error(`scenario ${scenario.id} names unknown map ${scenario.mapId}`);
   }
@@ -105,6 +121,7 @@ export function setupScenario(
   const arming = playerArming(character);
   const spawn = playerSpawn(map);
   const firstDummy = scenario.dummies[0];
+  const dev = devMaps.get(map.id);
   const simulation = new MatchSimulation({
     // A fixed seed: the same build against the same scenario reads the
     // same numbers every time, which is what makes it a measurement.
@@ -112,6 +129,7 @@ export function setupScenario(
     teamCount: map.teams,
     walls: allWallSegments(map.walls),
     bounds: { width: map.width, height: map.height },
+    layers: dev?.layers,
     participants: [
       {
         id: SELF_ID,
@@ -124,12 +142,16 @@ export function setupScenario(
         // the lesson, not the walk back.
         reset: { kind: "on-death", afterSeconds: 3 },
       },
-      ...scenarioParticipants(scenario, spawn),
+      ...scenarioParticipants(scenario, spawn).map((participant) => ({
+        ...participant,
+        layer: dev?.dummyLayers.get(participant.id) ?? 0,
+      })),
     ],
   });
   return {
     simulation,
     map: toMapDescriptor(map),
+    structure: structureOf(map),
     names: new Map(scenario.dummies.map((dummy) => [dummy.id, dummy.label])),
     arming,
   };

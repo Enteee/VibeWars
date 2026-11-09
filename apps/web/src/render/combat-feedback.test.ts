@@ -21,6 +21,7 @@ function player(sessionId: string): PlayerSnapshot {
     x: 100,
     y: 100,
     facing: 0,
+    layer: 0,
     targetSessionId: undefined,
     attackTargetSessionId: undefined,
     walking: false,

@@ -1,4 +1,4 @@
-import type { RenderableWall } from "./arena-snapshot.js";
+import type { MapStructure, RenderableWall } from "./arena-snapshot.js";
 
 /**
  * What the arena's map layer shows (#1353): the grid over the arena's
@@ -9,6 +9,8 @@ export interface MapLayer {
   readonly width: number;
   readonly height: number;
   readonly walls: readonly RenderableWall[];
+  /** Decks and ramps (ADR-0051): one object per map, as the walls are. */
+  readonly structure: MapStructure;
   /** CSS px per world unit: its lines are 1 CSS px wide at any zoom (#2393). */
   readonly zoom: number;
 }
@@ -23,6 +25,7 @@ export function mapLayerChanged(drawn: MapLayer | undefined, next: MapLayer): bo
     drawn?.width !== next.width ||
     drawn.height !== next.height ||
     drawn.walls !== next.walls ||
+    drawn.structure !== next.structure ||
     drawn.zoom !== next.zoom
   );
 }
