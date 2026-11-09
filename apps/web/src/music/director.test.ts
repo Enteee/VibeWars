@@ -155,7 +155,7 @@ describe("directMusic: track choice", () => {
     for (let n = 0; n < 40; n++) {
       for (const result of ["victory", "defeat", null] as const) {
         const step = input({
-          screen: result ? "result" : "match",
+          screen: "result",
           result,
           matchSeed: `seed:${String(n)}`,
         });
