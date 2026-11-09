@@ -17,6 +17,8 @@ import {
   refuseReleaseRange,
   releaseCiVerdict,
   releaseFloor,
+  releaseGapRefusal,
+  RELEASE_MIN_GAP_MS,
 } from "./hub-release.mjs";
 
 const ENV = {
@@ -338,5 +340,32 @@ describe("releaseCiVerdict", () => {
         { status: "completed", conclusion: "failure", name: "Deploy" },
       ]),
     ).toEqual({ pass: false, failed: ["Deploy"] });
+  });
+});
+
+describe("releaseGapRefusal (#2891)", () => {
+  const published = "2026-11-08T23:32:33Z";
+  const last = { tag: "v0.6.0", publishedAt: published };
+  const at = Date.parse(published);
+
+  it("allows the first release", () => {
+    expect(releaseGapRefusal(null, at)).toBeNull();
+  });
+
+  it("names the time the gate opens, in UTC", () => {
+    expect(releaseGapRefusal(last, at + 3_600_000)).toBe(
+      "the last release (v0.6.0) was published at 2026-11-08T23:32:33Z; the next may start at 2026-11-10T23:32:33Z",
+    );
+  });
+
+  it("opens at exactly 48 h", () => {
+    expect(releaseGapRefusal(last, at + RELEASE_MIN_GAP_MS - 1)).not.toBeNull();
+    expect(releaseGapRefusal(last, at + RELEASE_MIN_GAP_MS)).toBeNull();
+  });
+
+  it("refuses a date it cannot read", () => {
+    expect(releaseGapRefusal({ tag: "v0.6.0", publishedAt: "soon" }, at)).toContain(
+      "could not read",
+    );
   });
 });
