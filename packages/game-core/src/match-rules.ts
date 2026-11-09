@@ -569,7 +569,7 @@ function evaluateCapturePoints(
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
-  const ranked = [...score.byTeam].sort((a, b) => b[1] - a[1]);
+  const ranked = [...scoreInPlay(score, standing, rules).byTeam].sort((a, b) => b[1] - a[1]);
   const [first, second] = ranked;
   if (first !== undefined && second !== undefined && first[1] - second[1] >= CAPTURE_LEAD_TO_WIN) {
     return { phase: "finished", winningTeam: first[0], reason: "score" };
