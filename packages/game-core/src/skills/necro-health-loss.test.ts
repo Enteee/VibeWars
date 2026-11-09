@@ -13,6 +13,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Target Health loss (#1648): `lose-health` with `recipient: "target"`,
@@ -192,7 +193,7 @@ describe("Pain of Disenchantment (#1648)", () => {
 
 describe("described (#1648)", () => {
   function lines(id: string): string[] {
-    return describeSkill(skill(id), RANKS).effects.map(({ text }) => text);
+    return describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
   }
 
   it("Enfeebling Touch: Target foe loses 53 Health", () => {

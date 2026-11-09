@@ -16,6 +16,7 @@ import { mitigate, skillDamage } from "./damage.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
 import { attackDamageDeltaOf } from "./tick.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * The PvP Communing pair (#1827): Armor of Unfeeling's damage reduction
@@ -200,7 +201,7 @@ describe("Armor of Unfeeling (#1827)", () => {
   });
 
   it("reads as GW1 words it", () => {
-    expect(describeStatus("armor-of-unfeeling")).toBe(
+    expect(describeStatus("armor-of-unfeeling", undefined, EN_WORDS, EN_NAMES)).toBe(
       "−10 damage taken while casting binding rituals",
     );
   });
@@ -300,14 +301,14 @@ describe("Signet of Ghostly Might (#1827)", () => {
   });
 
   it("reads as GW1 words it", () => {
-    expect(describeStatus("signet-of-ghostly-might")).toBe(
+    expect(describeStatus("signet-of-ghostly-might", undefined, EN_WORDS, EN_NAMES)).toBe(
       "attacks deal 29 more damage, the bearer is destroyed when it expires",
     );
     const signet = getSkill(SIGNET);
     if (signet === undefined) {
       throw new Error(`no skill ${SIGNET}`);
     }
-    expect(JSON.stringify(describeSkill(signet, new Map()))).toContain(
+    expect(JSON.stringify(describeSkill(signet, new Map(), EN_WORDS, EN_NAMES))).toContain(
       "An allied summoned creature",
     );
   });

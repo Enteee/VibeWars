@@ -12,6 +12,7 @@ import type { CombatEvent } from "./effects.js";
 import { aggregateModifiers, NO_RANKS } from "./status.js";
 import { effectiveMaxHealth } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Dervish staples (#2207): Mystic Healing, Imbue Health, Intimidating
@@ -37,7 +38,7 @@ function skill(id: string): Skill {
 
 /** What `id` reads as at rank 12, its lines joined. */
 function text(id: string): string {
-  return describeSkill(skill(id), RANKS)
+  return describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES)
     .effects.map((line) => line.text)
     .join(" | ");
 }
@@ -98,18 +99,18 @@ describe("they read as GW1 words them (#2207)", () => {
   });
 
   it("Intimidating Aura gives +88 maximum Health and −8 from weaker foes", () => {
-    const words = describeStatus("intimidating-aura", RANKS);
+    const words = describeStatus("intimidating-aura", RANKS, EN_WORDS, EN_NAMES);
     expect(words).toMatch(/\+88/);
     expect(words).toMatch(/−8 damage taken from foes with less Health/);
   });
 
   it("Eremite's Zeal gains 3 Energy a foe in earshot, now and as it ends", () => {
     expect(text("dervish.eremites-zeal")).toMatch(/3 energy for each foe/i);
-    expect(describeStatus("eremites-zeal")).toMatch(/ends/i);
+    expect(describeStatus("eremites-zeal", undefined, EN_WORDS, EN_NAMES)).toMatch(/ends/i);
   });
 
   it("Conviction: +10 armor if conditioned, +3 regeneration a condition, cures 2 as it ends", () => {
-    const words = describeStatus("conviction", RANKS);
+    const words = describeStatus("conviction", RANKS, EN_WORDS, EN_NAMES);
     expect(words).toMatch(/\+3 Health regeneration for each condition on you/);
     expect(words).toMatch(/while under a condition: \+10 armor/);
     expect(words).toMatch(/ends/i);
@@ -117,7 +118,7 @@ describe("they read as GW1 words them (#2207)", () => {
   });
 
   it("Vow of Silence: no spell targets you, and you cast none", () => {
-    const words = describeStatus("vow-of-silence");
+    const words = describeStatus("vow-of-silence", undefined, EN_WORDS, EN_NAMES);
     expect(words).toMatch(/cannot be the target of spells/);
     expect(words).toMatch(/cannot cast spells/i);
   });

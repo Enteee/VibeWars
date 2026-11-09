@@ -14,6 +14,7 @@ import { makeCombatant } from "./testing.js";
 import { blockChanceOf } from "./tick.js";
 import type { Skill } from "./types.js";
 import { skillBlow } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Narrower filters (#2432): Blades of Steel counts recharging dagger
@@ -176,7 +177,7 @@ describe("Blades of Steel (#2432)", () => {
 
   it("says what it counts", () => {
     expect(
-      describeSkill(skill(BLADES), new Map([[DAGGER, 12]]))
+      describeSkill(skill(BLADES), new Map([[DAGGER, 12]]), EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" "),
     ).toContain("recharging dagger attacks");
@@ -223,7 +224,7 @@ describe("Release Enchantments (#2432)", () => {
 
   it("says what it counts", () => {
     expect(
-      describeSkill(skill(RELEASE), new Map([[FAVOR, 12]]))
+      describeSkill(skill(RELEASE), new Map([[FAVOR, 12]]), EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" "),
     ).toContain("All party members gain 29 Health for each Monk enchantment lost");
@@ -260,7 +261,7 @@ describe("Pensive Guardian (#2432)", () => {
 
   it("says whom it blocks", () => {
     expect(
-      describeSkill(skill(PENSIVE), new Map([[PROTECTION, 12]]))
+      describeSkill(skill(PENSIVE), new Map([[PROTECTION, 12]]), EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" "),
     ).toContain("from foes under an enchantment");
@@ -308,7 +309,7 @@ describe("Way of the Lotus (#2432)", () => {
 
   it("says what answers it", () => {
     expect(
-      describeSkill(skill(LOTUS), new Map([[SHADOW, 12]]))
+      describeSkill(skill(LOTUS), new Map([[SHADOW, 12]]), EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" "),
     ).toContain("hit with a dual attack");

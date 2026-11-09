@@ -14,6 +14,7 @@ import { NO_RANKS, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { fireChangeTriggers, type SpreadGainedCondition } from "./triggers.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Monk and Ranger staples (#2190): Shield of Absorption, Divine
@@ -347,9 +348,9 @@ describe("Incendiary Arrows (#2190)", () => {
 describe("Marauder's Shot (#2190)", () => {
   it('reads "all of your non-attack skills", not every type by name', () => {
     const ranks = new Map([["ranger.marksmanship", 12]]);
-    expect(describeSkill(skill(MARAUDERS), ranks).effects.map(({ text }) => text)).toContain(
-      "All of your non-attack skills are disabled for 5 seconds",
-    );
+    expect(
+      describeSkill(skill(MARAUDERS), ranks, EN_WORDS, EN_NAMES).effects.map(({ text }) => text),
+    ).toContain("All of your non-attack skills are disabled for 5 seconds");
   });
 
   it("disables every non-attack skill for 5 s on a hit, and nothing on a block", () => {

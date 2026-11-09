@@ -13,6 +13,7 @@ import { NO_RANKS, type StatusId } from "./status.js";
 import { makeCombatant, strikesOf } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveAttackSkillOutcome, resolveSwing } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Unwritten corpus skills, Warrior (#2500): Drunken Blow, Yeti Smash,
@@ -204,13 +205,15 @@ describe("Drunken Blow (#2500)", () => {
   });
 
   it("says its knockdown once, hit or miss", () => {
-    expect(describeSkill(skill(DRUNKEN_BLOW), ranksAt(12)).effects.map(({ text }) => text)).toEqual(
-      [
-        "+34 damage",
-        "Applies one of, at random: Deep Wound (20s), Weakness (20s), Bleeding (25s), Crippled (15s)",
-        "You are knocked down for 2s, hit or miss",
-      ],
-    );
+    expect(
+      describeSkill(skill(DRUNKEN_BLOW), ranksAt(12), EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      ),
+    ).toEqual([
+      "+34 damage",
+      "Applies one of, at random: Deep Wound (20s), Weakness (20s), Bleeding (25s), Crippled (15s)",
+      "You are knocked down for 2s, hit or miss",
+    ]);
   });
 });
 
@@ -323,9 +326,11 @@ describe('"I Meant to Do That!" (#2500)', () => {
   });
 
   it("says its user is the one knocked down", () => {
-    expect(describeSkill(skill(I_MEANT_TO), ranksAt(12)).effects.map(({ text }) => text)).toEqual([
-      "If you are knocked down: gain 5 strikes of adrenaline",
-    ]);
+    expect(
+      describeSkill(skill(I_MEANT_TO), ranksAt(12), EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      ),
+    ).toEqual(["If you are knocked down: gain 5 strikes of adrenaline"]);
   });
 });
 

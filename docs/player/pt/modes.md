@@ -157,6 +157,10 @@ contra um inimigo que chegue ao alcance de feitiço.
 Broken Tower joga esse modo: o altar fica dentro de uma torre em ruínas
 com uma porta de cada lado.
 
+### Cinder Sanctum
+
+Aqui a Corrida da Relíquia da Ascensão dos Heróis é jogada ao contrário. Cada base tem a relíquia da sua equipe e o seu Herói Fantasmagórico, e não há altar. **Pegue a relíquia inimiga na base dela e leve-a ao seu próprio Herói Fantasmagórico** para marcar um ponto. O fantasma precisa estar vivo e fica no seu posto. Você não pode carregar a própria relíquia: pegá-la onde caiu a manda de volta para casa. Uma equipe com **3 pontos de vantagem vence na hora**. Aos 8 minutos vence quem tiver mais pontos, e um empate fica com a última equipe a marcar. Cada base revive seus mortos, e seu fantasma, a cada 2 minutos. Os bots vão juntos atrás da relíquia inimiga e a trazem para casa.
+
 ## Rei da Colina
 
 **Leve seu Herói Fantasmagórico até o altar e controle-o.** Cada equipe
@@ -333,7 +337,7 @@ na fila.
 ## Ascensão dos Heróis
 
 Uma Ascensão dos Heróis na fila tem quatro rodadas, sempre nesta ordem:
-Broken Tower (Corrida da Relíquia), Scarred Earth (Captura de Pontos), The
+Cinder Sanctum (Corrida da Relíquia), Scarred Earth (Captura de Pontos), The
 Courtyard (Rei da Colina) e depois o Hall of Heroes. A janela da Sala diz
 onde você está enquanto procura uma equipe: `Round 2 of 4 · Scarred Earth`.
 Você só encontra equipes na mesma rodada e espera por uma o tempo que for
@@ -357,6 +361,8 @@ para seguir seu host até outro grupo, cujo host não pode garantir a
 campanha antiga. A rodada é lembrada pelo host do seu grupo, e só até você
 fechar a aba. Uma sala de Ascensão dos Heróis por código joga o mapa da
 rodada 1.
+
+**Barrow Field** é uma arena da Ascensão já construída, mas ainda fora da fila; por enquanto você a escolhe em uma Partida Hospedada: Aniquilação de Sacerdotes 8v8 entre montes baixos de terra, com o sacerdote ressuscitando seus mortos a cada 2 minutos. Leve sua bandeira ao **Storm Beacon** no centro e ele atinge um inimigo aleatório ao alcance da voz com 50 de dano de raio a cada 2,5 segundos, até a outra equipe plantar a bandeira dela lá. Cada golpe é um raio do farol até quem ele atingiu, visível para as duas equipes.
 
 Três arenas da Ascensão estão prontas, mas ainda não fazem parte da
 campanha na fila, então por enquanto você as escolhe em uma Partida

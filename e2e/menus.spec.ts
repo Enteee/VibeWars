@@ -419,7 +419,7 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
   // Heroes' Ascent starts on its first map, and Team Arena draws one for
   // each match: neither is picked (#1994).
   await openRail(page, "Heroes' Ascent");
-  await expect(page.locator("#topbar .lobby-map")).toHaveText(/^Map: Broken Tower \(/);
+  await expect(page.locator("#topbar .lobby-map")).toHaveText(/^Map: Cinder Sanctum \(/);
   await expect(page.locator("#topbar .lobby-map select")).toHaveCount(0);
   await openRail(page, "Team Arena");
   await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: random (Team Arena)");

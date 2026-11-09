@@ -4,7 +4,8 @@ import type { Polygon, Segment } from "../geometry.js";
 import { PRIEST_WAVE_SECONDS } from "../match-rules.js";
 import { NO_RANKS } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
-import { BOUNDS, DT, fighter, RANGER, RULESET } from "./bot/rules/test-support.js";
+import type { GateField } from "./gates.js";
+import { BOUNDS, DT, fighter, RANGER, RULESET, WARRIOR } from "./bot/rules/test-support.js";
 import {
   MatchSimulation,
   type MatchLayers,
@@ -20,11 +21,19 @@ const rect = (x: number, y: number, width: number, height: number): Polygon => [
   vec2(x + width, y + height),
   vec2(x, y + height),
 ];
-const WALL_ON_DECK: Segment = { a: vec2(700, 300), b: vec2(700, 500) };
-const WALL_ON_GROUND: Segment = { a: vec2(240, 300), b: vec2(240, 500) };
+/** A wall is a closed outline, as a map's are: a thin rectangle's four sides. */
+const wall = (x: number, y: number, width: number, height: number): Segment[] => {
+  const corners = rect(x, y, width, height);
+  return corners.flatMap((a, at) => {
+    const b = corners[(at + 1) % corners.length];
+    return b === undefined ? [] : [{ a, b }];
+  });
+};
+const WALL_ON_DECK = wall(698, 300, 4, 200);
+const WALL_ON_GROUND = wall(238, 300, 4, 200);
 const LAYERS: MatchLayers = {
   count: 2,
-  walls: [[WALL_ON_GROUND], [WALL_ON_DECK]],
+  walls: [WALL_ON_GROUND, WALL_ON_DECK],
   decks: [{ layer: 1, footprint: rect(500, 300, 600, 200) }],
   transitions: [{ from: 0, to: 1, area: rect(350, 300, 170, 200) }],
 };
@@ -186,10 +195,10 @@ describe("a body's layer (ADR-0051)", () => {
   });
 
   it("steps beside a target on another layer on the stepper's own", () => {
-    const sim = arena([spec("a", 0, vec2(600, 400), 1, [WIRE]), spec("foe", 1, vec2(600, 640), 0)]);
+    const sim = arena([spec("a", 0, vec2(600, 440), 1, [WIRE]), spec("foe", 1, vec2(600, 640), 0)]);
     sim.setTarget("a", "foe");
     expect(sim.requestSkill("a", 0)?.check.ok).toBe(true);
-    run(sim, 1);
+    run(sim, 2);
     get(sim, "foe").position = vec2(600, 760);
     run(sim, 1);
     expect(get(sim, "a").layer).toBe(1);
@@ -225,6 +234,103 @@ describe("a body's layer (ADR-0051)", () => {
     expect(risen.combatant.dead).toBe(false);
     expect(risen.layer).toBe(0);
     expect(risen.position.x).toBeLessThan(240);
+  });
+
+  it("crosses a ramp on the ground when its route stays on the ground", () => {
+    const sim = arena([spec("a", 0, vec2(300, 450), 0)]);
+    sim.walkTo("a", vec2(600, 450), 0);
+    run(sim, 6);
+    expect(get(sim, "a").layer).toBe(0);
+    expect(get(sim, "a").position.x).toBeCloseTo(600, 0);
+  });
+
+  it("does not climb a ramp its route only passes over on the way to another", () => {
+    const sim = arena([spec("a", 0, vec2(100, 400), 0)], {
+      layers: {
+        ...LAYERS,
+        walls: [[], []],
+        decks: [
+          { layer: 1, footprint: rect(400, 300, 100, 200) },
+          { layer: 1, footprint: rect(900, 300, 300, 200) },
+        ],
+        transitions: [
+          { from: 0, to: 1, area: rect(290, 300, 130, 200) },
+          { from: 0, to: 1, area: rect(790, 300, 130, 200) },
+        ],
+      },
+    });
+    sim.walkTo("a", vec2(1050, 400), 1);
+    run(sim, 30);
+    expect(get(sim, "a").layer).toBe(1);
+    expect(get(sim, "a").position.x).toBeCloseTo(1050, 0);
+  });
+
+  it("chases a target onto the deck, up the ramp", () => {
+    const sim = arena([
+      fighter("a", 0, WARRIOR, vec2(300, 400), { layer: 0, behaviour: undefined }),
+      spec("b", 1, vec2(620, 400), 1),
+    ]);
+    expect(sim.requestAttack("a", "b")).toEqual({ ok: true });
+    run(sim, 6);
+    expect(get(sim, "a").layer).toBe(1);
+  });
+
+  it("stands when no ramp leads to the walk's layer or a chase's", () => {
+    const none = { layers: { ...LAYERS, transitions: [] } };
+    const walker = arena([spec("a", 0, vec2(300, 400), 0)], none);
+    walker.walkTo("a", vec2(600, 400), 1);
+    run(walker, 1);
+    expect(get(walker, "a").position).toEqual(vec2(300, 400));
+    const chaser = arena(
+      [
+        fighter("a", 0, WARRIOR, vec2(450, 400), { layer: 0, behaviour: undefined }),
+        spec("b", 1, vec2(620, 400), 1),
+      ],
+      none,
+    );
+    chaser.requestAttack("a", "b");
+    run(chaser, 1);
+    expect(get(chaser, "a").position).toEqual(vec2(450, 400));
+    expect(get(chaser, "a").layer).toBe(0);
+  });
+
+  it("sends a pet after an owner on another layer, up the ramp", () => {
+    const sim = arena([spec("r", 0, vec2(100, 600), 0, ["ranger.charm-animal"])]);
+    const pet = [...sim.participants()].find((other) => other.creature?.ownerId === "r");
+    expect(pet).toBeDefined();
+    sim.walkTo("r", vec2(650, 400), 1);
+    run(sim, 10);
+    expect(get(sim, "r").layer).toBe(1);
+    expect(get(sim, pet?.id ?? "").layer).toBe(1);
+  });
+
+  describe("a closing gate", () => {
+    const SPANS = wall(796, 300, 4, 200);
+    const field = (layer: number): GateField => ({
+      segments: SPANS,
+      plate: vec2(100, 700),
+      team: null,
+      layer,
+    });
+
+    /** A body beside the gate's line on layer 1, the plate held, then let go. */
+    function closed(layer: number): MatchSimulation {
+      const sim = arena(
+        [spec("deck", 0, vec2(800, 400), 1), spec("holder", 0, vec2(100, 700), 0)],
+        { gates: [field(layer)] },
+      );
+      sim.walkTo("holder", vec2(100, 100), 0);
+      run(sim, 3);
+      return sim;
+    }
+
+    it("on the ground leaves a body on the deck above where it is", () => {
+      expect(get(closed(0), "deck").position).toEqual(vec2(800, 400));
+    });
+
+    it("on the deck moves a body on the deck", () => {
+      expect(get(closed(1), "deck").position).not.toEqual(vec2(800, 400));
+    });
   });
 
   it("refuses a participant on a layer the map does not have", () => {

@@ -593,6 +593,8 @@ export default {
   "lobby.modePriestAnnihilation": "Diệt tư tế: hạ gục mọi địch và tư tế của chúng",
   "lobby.modeRelicRun":
     "Vận chuyển thánh tích: mang thánh tích tới tế đàn. Nhiều điểm nhất trong 8 phút sẽ thắng.",
+  "lobby.modeRelicRunFoe":
+    "Vận chuyển thánh tích: mang thánh tích của địch tới Anh hùng Ma của bạn. Dẫn trước 3 điểm sẽ thắng; sau 8 phút, nhiều điểm nhất sẽ thắng.",
   "lobby.notReady": "Chưa sẵn sàng",
   "lobby.playBots": "Đấu với bot",
   "lobby.ready": "Sẵn sàng",

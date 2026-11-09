@@ -680,6 +680,8 @@ export default {
   "lobby.modePriestAnnihilation": "Anihilare cu preot: învinge toți inamicii și preotul lor",
   "lobby.modeRelicRun":
     "Cursa relicvelor: du-ți relicva la altar. Câștigă cine are cele mai multe puncte în 8 minute.",
+  "lobby.modeRelicRunFoe":
+    "Cursa relicvelor: du relicva inamicului la Eroul tău Fantomatic. Câștigă un avans de 3 puncte; după 8 minute, cine are cele mai multe puncte.",
   "lobby.notReady": "Nepregătit",
   "lobby.playBots": "Joacă contra boților",
   "lobby.ready": "Gata",

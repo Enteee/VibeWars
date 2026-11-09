@@ -13,6 +13,7 @@ import { NO_RANKS } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
 import { landBlow, PLAIN_BLOW, weaponSnapshotOf, type BlowRule } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Ritualist staples (#2212): Gaze from Beyond and Ghostmirror Light by a
@@ -135,7 +136,7 @@ function lines(skillId: string): string[] {
     ["ritualist.restoration-magic", 12],
     ["ritualist.communing", 12],
   ]);
-  return describeSkill(skillOf(skillId), ranks).effects.map(({ text }) => text);
+  return describeSkill(skillOf(skillId), ranks, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
 }
 
 describe("Gaze from Beyond (#2212)", () => {

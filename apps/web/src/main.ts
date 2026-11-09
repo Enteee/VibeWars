@@ -418,6 +418,7 @@ async function main(): Promise<void> {
     id: map.id,
     size: sizeClass(map),
     mode: map.mode,
+    relicCarry: map.relicCarry,
     teamSizes: map.teamSizes,
   }));
 

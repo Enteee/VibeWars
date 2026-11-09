@@ -10,6 +10,7 @@ import { weaponSnapshotOf } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Monk smiting staples (#1519), at rank 12 in Smiting Prayers: the "if
@@ -222,7 +223,7 @@ describe("the Monk smiting staples (#1519)", () => {
     expect(ally.statuses.get("judges-insight")?.durationSeconds).toBe(18);
     expect(weaponSnapshotOf(ally)).toMatchObject({ damageType: "holy", armorPenetration: 0.2 });
     expect(weaponSnapshotOf(get(match, "m"))).toMatchObject({ armorPenetration: 0 });
-    expect(describeStatus("judges-insight")).toBe(
+    expect(describeStatus("judges-insight", undefined, EN_WORDS, EN_NAMES)).toBe(
       "attacks deal holy damage, attacks have 20% armor penetration",
     );
   });

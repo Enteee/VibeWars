@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { describeStatus } from "./describe.js";
 import { isSelfOnlyStatus } from "./self-only.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 describe("a status only its caster bears (#2341)", () => {
   it.each([
@@ -29,16 +30,18 @@ describe("a status only its caster bears (#2341)", () => {
       "+7 Health regeneration, +80 armor, ends if you hit with an attack, ends if you use a skill",
     ],
   ])("%s says you", (id, text) => {
-    expect(describeStatus(id)).toBe(text);
+    expect(describeStatus(id, undefined, EN_WORDS, EN_NAMES)).toBe(text);
   });
 
   it("leaves one an ally can bear to the bearer, and a hex to it", () => {
-    expect(describeStatus("restful-breeze")).toBe(
+    expect(describeStatus("restful-breeze", undefined, EN_WORDS, EN_NAMES)).toBe(
       "+10 Health regeneration, ends if the bearer attacks, ends if the bearer uses a skill",
     );
-    expect(describeStatus("vigorous-spirit")).toBe(
+    expect(describeStatus("vigorous-spirit", undefined, EN_WORDS, EN_NAMES)).toBe(
       "whenever it attacks or casts a spell: heals for 5",
     );
-    expect(describeStatus("backfire")).toContain("whenever it casts a spell");
+    expect(describeStatus("backfire", undefined, EN_WORDS, EN_NAMES)).toContain(
+      "whenever it casts a spell",
+    );
   });
 });

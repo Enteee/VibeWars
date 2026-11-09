@@ -638,6 +638,8 @@ export default {
   "lobby.modePriestAnnihilation": "Priest Annihilation: versla alle vijanden en hun priester",
   "lobby.modeRelicRun":
     "Relic Run: breng je relikwie naar het altaar. De meeste punten in 8 minuten wint.",
+  "lobby.modeRelicRunFoe":
+    "Relic Run: breng het relikwie van de vijand naar je Spookheld. 3 punten voorsprong wint; na 8 minuten de meeste punten.",
   "lobby.notReady": "Niet klaar",
   "lobby.playBots": "Tegen bots spelen",
   "lobby.ready": "Klaar",

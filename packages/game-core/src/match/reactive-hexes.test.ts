@@ -9,6 +9,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -123,7 +124,9 @@ describe("Backfire (#469)", () => {
     expect(match.requestSkill("m", 0)?.check).toEqual({ ok: true });
     stepFor(match, 3.5);
     expect(get(match, "a").statuses.get("backfire")?.sourceId).toBe("m");
-    expect(describeStatus("backfire")).toBe("takes 119 damage whenever it casts a spell");
+    expect(describeStatus("backfire", undefined, EN_WORDS, EN_NAMES)).toBe(
+      "takes 119 damage whenever it casts a spell",
+    );
   });
 
   it("a finished spell costs its caster 119, credited to the Mesmer, after the spell", () => {
@@ -226,7 +229,9 @@ describe("Empathy (#469)", () => {
     expect(match.requestSkill("m", 1)?.check).toEqual({ ok: true });
     stepFor(match, 2.5);
     expect(get(match, "a").statuses.get("empathy")?.sourceId).toBe("m");
-    expect(describeStatus("empathy")).toBe("takes 39 damage whenever it attacks");
+    expect(describeStatus("empathy", undefined, EN_WORDS, EN_NAMES)).toBe(
+      "takes 39 damage whenever it attacks",
+    );
   });
 
   it("each melee swing costs 39, armor or not, credited to the Mesmer", () => {
@@ -314,7 +319,7 @@ describe("Diversion (#949)", () => {
     const hex = get(match, "a").statuses.get("diversion");
     expect(hex?.sourceId).toBe("m");
     expect(hex?.remainingSeconds).toBeGreaterThan(5.8);
-    expect(describeStatus("diversion")).toBe(
+    expect(describeStatus("diversion", undefined, EN_WORDS, EN_NAMES)).toBe(
       "the next skill it uses takes 47 seconds longer to recharge",
     );
   });
@@ -516,7 +521,7 @@ describe("Spiteful Spirit (#935)", () => {
     expect(damageTo(entries, "b")).toEqual([39]);
     expect(damageTo(entries, "far")).toEqual([]);
     expect(damageTo(entries, "m2")).toEqual([]);
-    expect(describeStatus("spiteful-spirit")).toBe(
+    expect(describeStatus("spiteful-spirit", undefined, EN_WORDS, EN_NAMES)).toBe(
       "takes 39 shadow damage whenever it uses a skill or attacks, " +
         "its adjacent allies take 39 shadow damage whenever it uses a skill or attacks",
     );
@@ -582,7 +587,7 @@ describe("Mark of Pain (#935)", () => {
     expect(damageTo(entries, "m2")).toEqual(Array.from({ length: hits }, () => 34));
     expect(damageTo(entries, "m")).toEqual([]);
     expect(damageTo(entries, "m3")).toEqual([]);
-    expect(describeStatus("mark-of-pain")).toBe(
+    expect(describeStatus("mark-of-pain", undefined, EN_WORDS, EN_NAMES)).toBe(
       "its adjacent allies take 34 shadow damage whenever it takes physical damage",
     );
   });
@@ -679,7 +684,7 @@ describe("Insidious Parasite (#935)", () => {
       );
       expect(get(match, "n").health).toBe(5000 + 39 * hits);
     }
-    expect(describeStatus("insidious-parasite")).toBe(
+    expect(describeStatus("insidious-parasite", undefined, EN_WORDS, EN_NAMES)).toBe(
       "its caster steals 39 Health whenever it hits with an attack",
     );
   });

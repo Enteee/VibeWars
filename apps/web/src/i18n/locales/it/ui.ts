@@ -682,6 +682,8 @@ export default {
     "Annientamento del sacerdote: sconfiggi ogni nemico e il suo sacerdote",
   "lobby.modeRelicRun":
     "Corsa alla reliquia: porta la reliquia all'altare. Vince chi fa più punti in 8 minuti.",
+  "lobby.modeRelicRunFoe":
+    "Corsa alla reliquia: porta la reliquia nemica al tuo Eroe spettrale. Vince chi ha 3 punti di vantaggio; dopo 8 minuti, chi ha più punti.",
   "lobby.notReady": "Non pronto",
   "lobby.playBots": "Gioca contro i bot",
   "lobby.ready": "Pronto",

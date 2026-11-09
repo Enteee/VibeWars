@@ -143,6 +143,18 @@ relic only to fight a foe that comes within spell range.
 Broken Tower plays it: the altar stands inside a ruined tower with a
 doorway on each side.
 
+### Cinder Sanctum
+
+Heroes' Ascent's Relic Run is played the other way round here. Each base
+holds its team's relic and its Ghostly Hero, and there is no altar. **Take
+the foe's relic from their base and bring it to your own Ghostly Hero**
+for a point. The ghost must be alive, and it stays at its post. You cannot
+carry your own relic: picking it up where it fell sends it home. A team
+**3 points ahead wins at once**. At 8 minutes the most points win, and a
+tie goes to the last team to score. Each base raises its dead, and its
+ghost, every 2 minutes. Bots go for the foe's relic together and bring it
+home.
+
 ## King of the Hill
 
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
@@ -311,8 +323,8 @@ skips the wait, or, for winners, leaves without queueing.
 
 ## Heroes' Ascent
 
-A queued Heroes' Ascent is four rounds, always in this order: Broken
-Tower (Relic Run), Scarred Earth (Capture Points), The Courtyard (King
+A queued Heroes' Ascent is four rounds, always in this order: Cinder
+Sanctum (Relic Run), Scarred Earth (Capture Points), The Courtyard (King
 of the Hill), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 4 · Scarred Earth`.
 You only ever meet a team at the same round, and you wait for one as
@@ -341,7 +353,8 @@ earthen mounds, the priest raising its dead every 2 minutes. Carry your flag
 onto the **Storm Beacon** in the middle and it strikes one random foe within
 earshot of it for 50 lightning damage every 2.5 seconds, until the other team
 plants its flag there. Each strike is a bolt from the beacon to whoever it hit,
-visible to both teams, and the combat log names it as Beacon Lightning.
+visible to both teams.
+
 Three Ascent arenas are built but not yet in the queued run, so for now
 you pick them in a Hosted Game: **The Hollow Deep** (8v8 Annihilation, three
 winding tunnels round a central rock),

@@ -18,8 +18,10 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
+import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps } from "./loader.js";
-import type { MapData } from "./schema.js";
+import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
+import { mapDataSchema, type MapData } from "./schema.js";
 
 /**
  * Every arena, old and new (#444): valid, fair by a half turn about its
@@ -186,6 +188,7 @@ describe("the arena set (#444)", () => {
         "jungle-ruins",
         "guild-hall-isle",
         "broken-tower",
+        "cinder-sanctum",
         "the-courtyard",
         "hall-of-heroes",
         "barrow-field",
@@ -220,6 +223,7 @@ describe("the arena set (#444)", () => {
     ]);
     expect(MAPS.filter((map) => map.mode === "relic-run").map((map) => map.id)).toEqual([
       "broken-tower",
+      "cinder-sanctum",
     ]);
     expect(MAPS.filter((map) => map.mode === "king-of-the-hill").map((map) => map.id)).toEqual([
       "hall-of-heroes",
@@ -706,7 +710,37 @@ describe.each([
   });
 
   it("keeps its nav graph to 600 nodes", () => {
-    const graph = buildNavGraph(allWallSegments(map.walls), bounds, RADIUS);
+    expect(layeredFinder(map, RADIUS).nodeCount).toBeLessThanOrEqual(600);
+  });
+});
+
+describe("Cinder Sanctum (#2695)", () => {
+  const sanctum = MAPS.find((each) => each.id === "cinder-sanctum");
+  if (sanctum === undefined) throw new Error("no cinder-sanctum");
+
+  it("carries the foe's relic to its own ghost, with no altar", () => {
+    expect([sanctum.relicTarget, sanctum.relicCarry]).toEqual(["own-ghost", "foe"]);
+    expect(sanctum.objectives.some((each) => each.kind === "altar")).toBe(false);
+  });
+
+  it("keeps its nav graph to 600 nodes", () => {
+    const bounds = { width: sanctum.width, height: sanctum.height };
+    const graph = buildNavGraph(allWallSegments(sanctum.walls), bounds, RADIUS);
     expect(graph.nodes.length).toBeLessThanOrEqual(600);
   });
+});
+
+describe("the ramps of every layered map (ADR-0051)", () => {
+  const layered = [...loadAllMaps(), mapDataSchema.parse(layerTest)].filter(
+    (map) => map.layers > 1,
+  );
+
+  it.each(layered.map((map) => [map.id, map] as const))(
+    "%s links both layers at every ramp",
+    (_, map) => {
+      const withRamps = layeredFinder(map, RADIUS).nodeCount;
+      const without = layeredFinder({ ...map, transitions: [] }, RADIUS).nodeCount;
+      expect(withRamps - without).toBeGreaterThanOrEqual(2 * map.transitions.length);
+    },
+  );
 });

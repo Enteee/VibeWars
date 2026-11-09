@@ -9,6 +9,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -214,7 +215,7 @@ describe("Disease spreads (#765)", () => {
     const before = x.health;
     stepFor(match, 1);
     expect(before - x.health).toBeCloseTo(8, 6);
-    expect(describeStatus("disease")).toBe(
+    expect(describeStatus("disease", undefined, EN_WORDS, EN_NAMES)).toBe(
       "−4 Health degeneration, spreads to adjacent combatants",
     );
   });

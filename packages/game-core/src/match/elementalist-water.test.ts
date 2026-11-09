@@ -17,6 +17,7 @@ import { resolveSwing } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Elementalist Water Magic staples in a match (#1367): the snares,
@@ -406,7 +407,9 @@ describe("Water Magic texts (#1367)", () => {
     if (found === undefined) {
       throw new Error(`unknown skill ${id}`);
     }
-    return describeSkill(found, new Map([[WATER, 12]])).effects.map((effect) => effect.text);
+    return describeSkill(found, new Map([[WATER, 12]]), EN_WORDS, EN_NAMES).effects.map(
+      (effect) => effect.text,
+    );
   };
 
   it("says what each does", () => {

@@ -9,6 +9,7 @@ import type { CombatEvent } from "../skills/effects.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Spirits as a resource (#1947): Spirit Transfer drains the spirit
@@ -175,7 +176,7 @@ describe("Spirit Transfer (#1947)", () => {
     if (skill === undefined) {
       throw new Error(`no skill ${TRANSFER}`);
     }
-    const described = describeSkill(skill, ranks);
+    const described = describeSkill(skill, ranks, EN_WORDS, EN_NAMES);
     expect(described.effects.map((effect) => effect.text)).toContain(
       "Nearest spirit loses 41 Health; target ally is healed 5 per point",
     );

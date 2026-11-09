@@ -10,6 +10,7 @@ import { resolveSkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import { fireChangeTriggers, type SpreadGainedCondition } from "./triggers.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Balthazar's Spirit (#2302): while maintained, the ally gains 2...5
@@ -115,6 +116,8 @@ describe("Balthazar's Spirit (#2302)", () => {
   });
 
   it("says points, not strikes", () => {
-    expect(describeStatus("balthazars-spirit", new Map([[SMITING, 12]]))).toContain("4 adrenaline");
+    expect(
+      describeStatus("balthazars-spirit", new Map([[SMITING, 12]]), EN_WORDS, EN_NAMES),
+    ).toContain("4 adrenaline");
   });
 });

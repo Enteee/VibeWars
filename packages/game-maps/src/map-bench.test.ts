@@ -1,6 +1,5 @@
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
-  buildNavGraph,
   runTickBench,
   tickStats,
   type BenchField,
@@ -9,6 +8,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
+import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps, loadMap } from "./loader.js";
 import type { MapData } from "./schema.js";
 
@@ -96,12 +96,8 @@ describe("the nav graph on every map (#2544)", () => {
   it.each(loadAllMaps().map((map) => [map.id, map] as const))(
     "%s has at most 600 nav nodes",
     (_, map) => {
-      const graph = buildNavGraph(
-        allWallSegments(map.walls),
-        { width: map.width, height: map.height },
-        MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
-      );
-      expect(graph.nodes.length).toBeLessThanOrEqual(MAX_NODES);
+      const finder = layeredFinder(map, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      expect(finder.nodeCount).toBeLessThanOrEqual(MAX_NODES);
     },
   );
 });

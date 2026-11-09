@@ -673,6 +673,8 @@ export default {
     "Uništenje sa svećenikom: porazi sve neprijatelje i njihova svećenika",
   "lobby.modeRelicRun":
     "Utrka za relikvijom: odnesi relikviju na oltar. Pobjeđuje najviše bodova u 8 minuta.",
+  "lobby.modeRelicRunFoe":
+    "Utrka za relikvijom: odnesi neprijateljsku relikviju svom Sablasnom heroju. Pobjeđuje vodstvo od 3 boda; nakon 8 minuta najviše bodova.",
   "lobby.notReady": "Nije spreman",
   "lobby.playBots": "Igraj protiv botova",
   "lobby.ready": "Spreman",

@@ -15,6 +15,7 @@ import { NO_RANKS, StatusSet } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { maintainedEnchantments, upkeepPips } from "./tick.js";
 import type { AttackWeaponClass, Combatant, Skill, SkillEffect } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Six staples, each on one small primitive (#2321): Rising Bile's
@@ -246,7 +247,7 @@ describe("Rising Bile (#2321)", () => {
 
   it("says what it does", () => {
     expect(
-      describeSkill(skill(BILE), DEATH(12))
+      describeSkill(skill(BILE), DEATH(12), EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" "),
     ).toContain("for each second it was in effect");
@@ -347,7 +348,7 @@ describe("Doom (#2321)", () => {
 
   it("says what it counts", () => {
     expect(
-      describeSkill(skill(DOOM), SPAWNING(12))
+      describeSkill(skill(DOOM), SPAWNING(12), EN_WORDS, EN_NAMES)
         .effects.map(({ text }) => text)
         .join(" "),
     ).toContain("recharging binding rituals");
@@ -451,7 +452,7 @@ describe("Nature's Renewal (#2321)", () => {
   });
 
   it("says what its aura does", () => {
-    expect(describeStatus("natures-renewal", WILDERNESS(12))).toContain(
+    expect(describeStatus("natures-renewal", WILDERNESS(12), EN_WORDS, EN_NAMES)).toContain(
       "enchantments you maintain cost 2× the upkeep",
     );
   });
@@ -603,7 +604,7 @@ describe("Archer's Signet (#2321)", () => {
   });
 
   it("says what it does", () => {
-    expect(describeStatus("archers-signet", NO_RANKS)).toContain(
+    expect(describeStatus("archers-signet", NO_RANKS, EN_WORDS, EN_NAMES)).toContain(
       "conditions you apply last 150% longer while wielding",
     );
   });

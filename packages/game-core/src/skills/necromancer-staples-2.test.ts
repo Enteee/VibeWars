@@ -14,6 +14,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Necromancer staples 2 (#1583): Wither, Life Siphon, Reckless Haste,
@@ -87,7 +88,7 @@ function enchantments(target: Combatant): number {
 const ENCHANTMENTS = ["blood-is-power", "order-of-pain", "judges-insight"] as const;
 
 function described(id: string): string[] {
-  return describeSkill(skill(id), RANKS).effects.map(({ text }) => text);
+  return describeSkill(skill(id), RANKS, EN_WORDS, EN_NAMES).effects.map(({ text }) => text);
 }
 
 describe("the eight are the corpus's (#1583)", () => {
@@ -217,7 +218,9 @@ describe("Wither (#1583)", () => {
   });
 
   it("says when it strikes", () => {
-    expect(describeStatus("wither", RANKS)).toContain("if its energy reaches 0");
+    expect(describeStatus("wither", RANKS, EN_WORDS, EN_NAMES)).toContain(
+      "if its energy reaches 0",
+    );
   });
 });
 

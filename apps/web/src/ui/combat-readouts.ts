@@ -10,6 +10,7 @@ import {
 
 import { attributeName, itemName, skillName, statusName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
+import { describeNames, describeWords } from "../i18n/describe-words.js";
 
 /**
  * The Training Ground's combat log and meter, as pure functions (#2
@@ -118,7 +119,9 @@ function skillLabel(skillId: string | undefined): string | undefined {
  */
 function outOfSequence(skillId: string | undefined): string | undefined {
   const skill = skillId === undefined ? undefined : getSkill(skillId);
-  return skill === undefined ? undefined : chainRequirementText(skill);
+  return skill === undefined
+    ? undefined
+    : chainRequirementText(skill, describeWords(), describeNames());
 }
 
 /**

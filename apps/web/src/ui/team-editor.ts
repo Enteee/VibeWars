@@ -60,6 +60,7 @@ import {
 import { mountPaperDoll } from "./paper-doll.js";
 import { teamSizeStepper } from "./rail.js";
 import { createSkillTooltip } from "./skill-tooltip.js";
+import { describeNames, describeWords } from "../i18n/describe-words.js";
 
 /**
  * The team editor (#573, epic #554), mounted once per ADR-0030.
@@ -806,7 +807,15 @@ export function mountTeamEditor(
         const skill = getSkill(cell.dataset.skillId ?? "");
         const member = team.members[indexOf()];
         if (skill !== undefined && member !== undefined) {
-          tooltip.show(cell, describeSkill(skill, characterRanks(member.character)));
+          tooltip.show(
+            cell,
+            describeSkill(
+              skill,
+              characterRanks(member.character),
+              describeWords(),
+              describeNames(),
+            ),
+          );
         }
       };
       cell.addEventListener("mouseenter", showTip);

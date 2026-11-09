@@ -15,6 +15,7 @@ import { resolveSwing } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -81,7 +82,7 @@ describe("Brutal Weapon (#1916)", () => {
   });
 
   it("says it does nothing while enchanted", () => {
-    expect(describeStatus("brutal-weapon")).toBe(
+    expect(describeStatus("brutal-weapon", undefined, EN_WORDS, EN_NAMES)).toBe(
       "attacks deal 13 more damage, no effect while under an enchantment",
     );
   });
@@ -122,9 +123,9 @@ describe("Natural Healing (#1916)", () => {
   });
 
   it("says when it is faster", () => {
-    expect(describeSkill(healing, new Map()).effects.map(({ text }) => text)).toContain(
-      "If you have no enchantment: activates 50% faster",
-    );
+    expect(
+      describeSkill(healing, new Map(), EN_WORDS, EN_NAMES).effects.map(({ text }) => text),
+    ).toContain("If you have no enchantment: activates 50% faster");
   });
 });
 
@@ -198,7 +199,10 @@ describe("Signet of Strength (#1916)", () => {
   });
 
   it("says it lasts until its attacks are spent", () => {
-    expect(describeSkill(skill("warrior.signet-of-strength"), new Map()).effects[0]?.text).toBe(
+    expect(
+      describeSkill(skill("warrior.signet-of-strength"), new Map(), EN_WORDS, EN_NAMES).effects[0]
+        ?.text,
+    ).toBe(
       "Applies Signet of Strength until it ends (attacks deal 5 more damage, ends after your next 13 attacks, hit, miss or block)",
     );
   });

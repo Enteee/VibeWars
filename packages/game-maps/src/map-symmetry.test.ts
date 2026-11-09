@@ -13,6 +13,7 @@ const SYMMETRIC = [
   "ember-pits",
   "jungle-ruins",
   "broken-tower",
+  "cinder-sanctum",
   "scarred-earth",
   "the-courtyard",
   "hall-of-heroes",

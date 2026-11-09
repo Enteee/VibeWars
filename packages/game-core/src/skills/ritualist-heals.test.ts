@@ -11,6 +11,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, SurroundingBody, Surroundings } from "./types.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * The Ritualist's heals (#955): Mend Body and Soul, Spirit Light and
@@ -147,7 +148,9 @@ describe("Mend Body and Soul (#955)", () => {
 
   it("says so on its card (#1064)", () => {
     expect(
-      describeSkill(skill("ritualist.mend-body-and-soul"), RANKS).effects.map(({ text }) => text),
+      describeSkill(skill("ritualist.mend-body-and-soul"), RANKS, EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      ),
     ).toEqual(["Heals for 96", "Removes 1 condition for each spirit in earshot of it"]);
   });
 });
@@ -176,7 +179,9 @@ describe("Spirit Light (#955)", () => {
     // By the ally, out of the caster's earshot: paid.
     expect(sacrificed(vec2(AREA_EARSHOT + 1, 0))).toBe(85);
     expect(
-      describeSkill(skill("ritualist.spirit-light"), RANKS).effects.map(({ text }) => text),
+      describeSkill(skill("ritualist.spirit-light"), RANKS, EN_WORDS, EN_NAMES).effects.map(
+        ({ text }) => text,
+      ),
     ).toEqual([
       "If no spirit is in earshot of you: you sacrifice 17% of your maximum health",
       "Heals for 156",

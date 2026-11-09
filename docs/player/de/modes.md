@@ -127,6 +127,10 @@ Altar; die anderen verlassen das Relikt nur, um gegen einen Gegner in Zauberreic
 
 Broken Tower spielt es: Der Altar steht in einem zerstörten Turm mit einem Durchgang auf jeder Seite.
 
+### Cinder Sanctum
+
+Hier läuft der Reliktlauf des Aufstiegs der Helden andersherum. Jede Basis hat das Relikt ihres Teams und ihren Geisterhelden, einen Altar gibt es nicht. **Hol das gegnerische Relikt aus dessen Basis und bring es zu deinem eigenen Geisterhelden**, das gibt einen Punkt. Der Geist muss leben und bleibt auf seinem Posten. Dein eigenes Relikt kannst du nicht tragen: Hebst du es dort auf, wo es gefallen ist, geht es nach Hause. Ein Team mit **3 Punkten Vorsprung gewinnt sofort**. Nach 8 Minuten gewinnt das Team mit mehr Punkten, bei Gleichstand das Team, das zuletzt gepunktet hat. Jede Basis belebt alle 2 Minuten ihre Toten und ihren Geist wieder. Bots holen das gegnerische Relikt gemeinsam und bringen es heim.
+
 ## King of the Hill
 
 **Führe deinen Geisterhelden auf den Altar und halte ihn.** Jedes Team hat einen **Geisterhelden** in
@@ -263,7 +267,7 @@ zurück. Ein Knopf unter dem Ergebnis überspringt die Wartezeit oder geht für 
 
 ## Aufstieg der Helden
 
-Ein Aufstieg der Helden aus der Warteschlange hat vier Runden, immer in dieser Reihenfolge: Broken Tower (Reliktlauf),
+Ein Aufstieg der Helden aus der Warteschlange hat vier Runden, immer in dieser Reihenfolge: Cinder Sanctum (Reliktlauf),
 Scarred Earth (Punkte erobern), The Courtyard (King of the Hill), dann die Hall of Heroes. Das Lobby-Fenster sagt dir,
 wo du bist, während du ein Team suchst: `Runde 2 von 4 · Scarred Earth`. Du triffst immer nur ein Team in derselben Runde
 und wartest so lange wie nötig: Keine Bots springen ein. Eine Runde auf einer Karte für drei Teams wartet auf drei; zwei
@@ -280,6 +284,8 @@ Platz frei, aber nicht dessen Build. Wer zwischen den Karten neu zur Gruppe stö
 Niederlage beginnt von vorn: Der nächste Lauf stimmt neu ab. Das Gleiche gilt, wenn du deinem Host in eine andere Gruppe
 folgst, deren Host für den alten Lauf nicht bürgen kann. Die Runde merkt sich der Host deiner Gruppe, und nur, bis du den
 Tab schließt. Eine Lobby des Aufstiegs der Helden, der per Code beigetreten wurde, spielt die Karte von Runde 1.
+
+**Barrow Field** ist eine Arena des Aufstiegs, die gebaut, aber noch nicht in der Warteschlange ist. Du wählst sie daher vorerst in einem Gehosteten Spiel: 8v8 Priestervernichtung zwischen niedrigen Erdhügeln, und der Priester erweckt alle 2 Minuten seine Toten. Trage deine Flagge auf das **Storm Beacon** in der Mitte, und es trifft alle 2,5 Sekunden einen zufälligen Gegner in Hörweite mit 50 Blitzschaden, bis das andere Team dort seine Flagge pflanzt. Jeder Einschlag ist ein Blitz vom Beacon zum Getroffenen, für beide Teams sichtbar.
 
 Drei Aufstiegs-Arenen sind gebaut, aber noch nicht im Lauf aus der Warteschlange, also wählst du sie vorerst in einem
 Gehosteten Spiel: **The Hollow Deep** (8v8 Vernichtung, drei gewundene Tunnel um einen zentralen Felsen), **Blackwater

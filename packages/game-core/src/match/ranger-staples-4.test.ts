@@ -14,6 +14,7 @@ import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Ranger staples 3 (#1676): four bow attacks, four pet attacks, three
@@ -415,7 +416,7 @@ describe("Zojun's Haste (#1676)", () => {
   });
 
   it("says what it does", () => {
-    expect(describeStatus("zojuns-haste", new Map())).toBe(
+    expect(describeStatus("zojuns-haste", new Map(), EN_WORDS, EN_NAMES)).toBe(
       "moves at 133% speed, 65% chance to block projectiles, ends if you attack",
     );
   });

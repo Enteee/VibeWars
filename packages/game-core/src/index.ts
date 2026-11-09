@@ -20,11 +20,18 @@ export { beaconStrikeArea } from "./match/beacon.js";
 
 export type { Polygon, Segment } from "./geometry.js";
 export {
+  buildLayeredNavGraph,
   buildNavGraph,
+  createLayeredPathFinder,
   createPathFinder,
+  navGraphFor,
   nearestStandable,
+  type LayeredPathFinder,
   type NavGraph,
+  type NavLayer,
+  type NavTransition,
   type PathFinder,
+  type RouteWaypoint,
 } from "./pathing.js";
 export {
   circleIntersectsSegment,
@@ -154,6 +161,7 @@ export {
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
   CAPTURE_WAVE_SECONDS,
+  FOE_RELIC_RUN_MATCH_RULES,
   RELIC_RUN_MATCH_RULES,
   TWO_TEAM_MODES,
   addPoint,
@@ -222,7 +230,7 @@ export {
   flagId,
   flagTeamOf,
 } from "./match/flags.js";
-export type { RelicField, RelicState } from "./match/relics.js";
+export type { RelicCarry, RelicField, RelicState, RelicTarget } from "./match/relics.js";
 export type { Gate, GateField } from "./match/gates.js";
 export { GATE_PLATE_REACH_UNITS, GATE_REOPEN_SECONDS } from "./match/gates.js";
 export type { CapturePoint } from "./match/capture-points.js";

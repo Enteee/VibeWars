@@ -14,6 +14,7 @@ import { NO_RANKS } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant } from "./types.js";
 import { attackHitRiders } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Ebon Dust Aura (#2513): nearby foes Blinded as it is cast, +earth on
@@ -155,7 +156,7 @@ describe("Ebon Dust Aura (#2513)", () => {
   });
 
   it("reads 'while you wield an earth weapon' in its tooltip", () => {
-    expect(describeStatus("ebon-dust-aura", earth(12))).toBe(
+    expect(describeStatus("ebon-dust-aura", earth(12), EN_WORDS, EN_NAMES)).toBe(
       "while you wield an earth weapon, foes your melee attacks hit take 25 earth damage. " +
         "When it ends: removes Blind",
     );

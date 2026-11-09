@@ -15,6 +15,7 @@ import { makeCombatant } from "./testing.js";
 import { fireChangeTriggers } from "./triggers.js";
 import type { Skill } from "./types.js";
 import { NO_RANKS } from "./status.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * "If the bearer dies while it has this" (#1762): Reaper's Mark,
@@ -287,7 +288,7 @@ describe("Reaper's Mark (#1762)", () => {
       rechargeSeconds: 10,
       effects: [{ kind: "apply-status", statusId: "reapers-mark", durationSeconds: { flat: 30 } }],
     });
-    expect(describeStatus("reapers-mark", RANKS)).toBe(
+    expect(describeStatus("reapers-mark", RANKS, EN_WORDS, EN_NAMES)).toBe(
       "−4 Health degeneration. If target foe dies while hexed with this, you gain 13 Energy",
     );
   });
@@ -324,7 +325,7 @@ describe("Assassin's Promise (#1762)", () => {
         },
       ],
     });
-    expect(describeStatus("assassins-promise", RANKS)).toBe(
+    expect(describeStatus("assassins-promise", RANKS, EN_WORDS, EN_NAMES)).toBe(
       "if target foe dies while hexed with this, you gain 17 Energy and all your skills are recharged",
     );
   });
@@ -373,7 +374,7 @@ describe("Putrid Bile (#1762)", () => {
         },
       ],
     });
-    expect(describeStatus("putrid-bile", RANKS)).toBe(
+    expect(describeStatus("putrid-bile", RANKS, EN_WORDS, EN_NAMES)).toBe(
       "−3 Health degeneration. If target foe dies while hexed with this, nearby foes take 73 damage",
     );
   });
@@ -388,8 +389,10 @@ describe("Icy Veins (#1762)", () => {
       cost: { kind: "energy", amount: 10 },
       rechargeSeconds: 5,
     });
-    expect(JSON.stringify(describeSkill(skill("necromancer.icy-veins"), RANKS))).toContain("74");
-    expect(describeStatus("icy-veins", RANKS)).toBe(
+    expect(
+      JSON.stringify(describeSkill(skill("necromancer.icy-veins"), RANKS, EN_WORDS, EN_NAMES)),
+    ).toContain("74");
+    expect(describeStatus("icy-veins", RANKS, EN_WORDS, EN_NAMES)).toBe(
       "if target foe dies while hexed with this, nearby foes take 92 cold damage",
     );
   });
@@ -415,7 +418,7 @@ describe("Dwayna's Sorrow (#1762)", () => {
       rechargeSeconds: 5,
       target: "single-ally",
     });
-    expect(describeStatus("dwaynas-sorrow", RANKS)).toBe(
+    expect(describeStatus("dwaynas-sorrow", RANKS, EN_WORDS, EN_NAMES)).toBe(
       "if an ally dies while enchanted with this, your party is healed for 41",
     );
     const sim = arena([SORROW]);

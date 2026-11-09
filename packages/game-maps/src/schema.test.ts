@@ -635,6 +635,8 @@ describe("relic run maps (#1374)", () => {
   const relicMap = {
     ...validMap,
     mode: "relic-run",
+    relicTarget: "altar",
+    relicCarry: "own",
     walls: [],
     spawnPoints: [
       { team: 0, layer: 0, position: { x: 20, y: 50 } },

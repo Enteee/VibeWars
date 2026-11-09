@@ -12,6 +12,7 @@ import { getSkill } from "./catalog.js";
 import { describeStatus } from "./describe.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
 import type { Combatant } from "./types.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Mesmer staples (#2287): Ether Lord, Spirit of Failure, Spirit Shackles,
@@ -251,7 +252,9 @@ describe("Soothing Images (#2287)", () => {
     expect(get(match, "foe").statuses.get("soothing-images")?.durationSeconds).toBe(seconds);
     expect(get(match, "foeAlly").statuses.get("soothing-images")?.durationSeconds).toBe(seconds);
     expect(get(match, "ally").statuses.has("soothing-images")).toBe(false);
-    expect(describeStatus("soothing-images")).toBe("cannot gain adrenaline");
+    expect(describeStatus("soothing-images", undefined, EN_WORDS, EN_NAMES)).toBe(
+      "cannot gain adrenaline",
+    );
   });
 
   it("keeps the adrenaline held, gains none, and gains again once it ends", () => {

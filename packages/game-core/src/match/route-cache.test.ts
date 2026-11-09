@@ -20,12 +20,16 @@ vi.mock("../pathing.js", async (importOriginal) => {
   const original = await importOriginal<typeof Pathing>();
   return {
     ...original,
-    createPathFinder: (graph: Pathing.NavGraph): Pathing.PathFinder => {
-      const paths = original.createPathFinder(graph);
+    createLayeredPathFinder: (
+      graphs: readonly Pathing.NavGraph[],
+      transitions: readonly Pathing.NavTransition[],
+    ): Pathing.LayeredPathFinder => {
+      const paths = original.createLayeredPathFinder(graphs, transitions);
       return {
-        find: (from, to) => {
+        nodeCount: paths.nodeCount,
+        find: (from, fromLayer, to, toLayer) => {
           FINDS.count += 1;
-          return paths.find(from, to);
+          return paths.find(from, fromLayer, to, toLayer);
         },
       };
     },

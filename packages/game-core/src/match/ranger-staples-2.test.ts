@@ -14,6 +14,7 @@ import type { Skill, StateCondition } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * The Ranger staples 2 (#1539): an `any-of` condition, a status that
@@ -366,7 +367,7 @@ describe("Dodge (#1539)", () => {
 describe("the texts (#1539)", () => {
   const ranks = ranger().attributeRanks;
   const text = (id: string): string[] =>
-    describeSkill(skill(id), ranks).effects.map((effect) => effect.text);
+    describeSkill(skill(id), ranks, EN_WORDS, EN_NAMES).effects.map((effect) => effect.text);
 
   it("say what each does", () => {
     expect(text(DUAL_SHOT)).toEqual(["Shoots 2 arrows at once, each dealing 25% less damage"]);
@@ -376,13 +377,13 @@ describe("the texts (#1539)", () => {
       "If target is moving or target is knocked down: applies Crippled for 13s (moves at 50% speed)",
     ]);
     expect(text(ZOJUNS_SHOT)).toEqual(["+34 damage"]);
-    expect(describeStatus("whirling-defense", ranks)).toBe(
+    expect(describeStatus("whirling-defense", ranks, EN_WORDS, EN_NAMES)).toBe(
       "75% chance to block attacks. If you block a projectile attack, adjacent foes: deals 10 damage",
     );
-    expect(describeStatus("serpents-quickness", ranks)).toBe(
+    expect(describeStatus("serpents-quickness", ranks, EN_WORDS, EN_NAMES)).toBe(
       "skills recharge 33% faster. Whenever you take damage or life steal from a foe, if you are below 50% Health: ends the target's stance",
     );
-    expect(describeStatus("dodge", ranks)).toBe(
+    expect(describeStatus("dodge", ranks, EN_WORDS, EN_NAMES)).toBe(
       "moves at 133% speed, 65% chance to block projectiles, ends if you attack",
     );
   });

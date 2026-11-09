@@ -79,6 +79,7 @@ describe("randomArenaMapPool", () => {
             ![
               "guild-hall-isle",
               "broken-tower",
+              "cinder-sanctum",
               "the-courtyard",
               "hall-of-heroes",
               "barrow-field",
@@ -130,6 +131,7 @@ describe("team sizes (#2108)", () => {
       }
     }
     expect(modeMapIds()["heroes-ascent"]).toEqual([
+      "cinder-sanctum",
       "broken-tower",
       "the-courtyard",
       "scarred-earth",
@@ -234,6 +236,7 @@ describe("team sizes (#2108)", () => {
       "moss-vale",
       "elonian-plateau",
       "guild-hall-isle",
+      "cinder-sanctum",
       "broken-tower",
       "the-courtyard",
       "hall-of-heroes",
@@ -288,13 +291,13 @@ describe("the Heroes' Ascent progression (#1996)", () => {
   it("is four rounds: Relic Run, Capture Points, King of the Hill, then the Hall", () => {
     expect(ASCENT_PROGRESSION).toHaveLength(ASCENT_ROUNDS);
     expect(ASCENT_PROGRESSION.map((id) => [id, hostMap(id)?.mode])).toEqual([
-      ["broken-tower", "relic-run"],
+      ["cinder-sanctum", "relic-run"],
       ["scarred-earth", "capture-points"],
       ["the-courtyard", "king-of-the-hill"],
       ["hall-of-heroes", "king-of-the-hill"],
     ]);
     expect(ASCENT_PROGRESSION.map((_, round) => mapName(ascentMapId(round)))).toEqual([
-      "Broken Tower",
+      "Cinder Sanctum",
       "Scarred Earth",
       "The Courtyard",
       "Hall of Heroes",
@@ -337,6 +340,7 @@ describe("hostMap (#476)", () => {
           "mosslit-cairns",
           "guild-hall-isle",
           "broken-tower",
+          "cinder-sanctum",
           "the-courtyard",
           "hall-of-heroes",
           "scarred-earth",
@@ -377,6 +381,8 @@ describe("hostMap (#476)", () => {
   it("carries a Relic Run map's altar and relic spawns, and none elsewhere (#1374)", () => {
     expect(hostMap("broken-tower")?.relicField).toEqual({
       altar: { x: 1600, y: 900 },
+      relicTarget: "altar",
+      relicCarry: "own",
       spawns: [
         { team: 0, position: { x: 120, y: 900 } },
         { team: 1, position: { x: 3080, y: 900 } },

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { vec2 } from "../../../vec2.js";
 import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
+import { ghostId } from "../../ghost.js";
 import { relicId, type RelicState } from "../../relics.js";
 import { askBot, body, BOT, fighter, match, MONK, WARRIOR } from "./test-support.js";
 
@@ -54,5 +55,21 @@ describe("carry-relic: a bot runs its relic to the altar (#2581)", () => {
     );
     expect(intent.moveTo).not.toEqual(ALTAR);
     expect(intent.attackTargetId).not.toBe(relicId(0));
+  });
+});
+
+describe("carry-relic: to its Ghostly Hero where there is no altar (#2695)", () => {
+  it("walks the foe's relic to its own ghost", () => {
+    const post = vec2(150, 400);
+    const sim = match([
+      body("bot", 0, vec2(300, 400), { behaviour: BOT }),
+      body(ghostId(0), 0, post),
+    ]);
+    const carrying = {
+      ...running({ team: 1, place: { kind: "carried", carrierId: "bot" } }),
+      altar: undefined,
+      relicCarry: "foe" as const,
+    };
+    expect(askBot(sim, "bot", carrying).moveTo).toEqual(post);
   });
 });

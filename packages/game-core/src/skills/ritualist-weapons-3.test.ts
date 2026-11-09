@@ -16,6 +16,7 @@ import { NO_RANKS, aggregateModifiers, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveAttackSkill, resolveSwing } from "./weapon-attack.js";
+import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
 /**
  * Ritualist weapon spells 3 (#1654): Resilient, Ghostly, Guided,
@@ -158,11 +159,15 @@ describe("the ten are the corpus's (#1654)", () => {
   );
 
   it("describes the new primitives", () => {
-    expect(describeStatus("resilient-weapon")).toMatch(
+    expect(describeStatus("resilient-weapon", undefined, EN_WORDS, EN_NAMES)).toMatch(
       /while under a condition or hex: \+1\.\.\.5 Health regeneration, \+24 armor/,
     );
-    expect(describeStatus("guided-weapon")).toMatch(/attacks cannot be blocked/);
-    expect(describeStatus("nightmare-weapon")).toMatch(/attacks deal 42 less damage/);
+    expect(describeStatus("guided-weapon", undefined, EN_WORDS, EN_NAMES)).toMatch(
+      /attacks cannot be blocked/,
+    );
+    expect(describeStatus("nightmare-weapon", undefined, EN_WORDS, EN_NAMES)).toMatch(
+      /attacks deal 42 less damage/,
+    );
   });
 });
 

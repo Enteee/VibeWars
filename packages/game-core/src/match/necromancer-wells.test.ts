@@ -10,6 +10,7 @@ import { attackMissChanceOf } from "../skills/tick.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Wells 2 (#1732): Well of the Profane, Silence, Darkness and Ruin, each
@@ -157,9 +158,12 @@ describe("the four wells (#1732)", () => {
 
   it("names what each does in its text", () => {
     const texts = [PROFANE, SILENCE, DARKNESS, RUIN].map((id) =>
-      describeSkill(skill(id), new Map([[skill(id).attributeId ?? "", 12]])).effects.map(
-        ({ text }) => text,
-      ),
+      describeSkill(
+        skill(id),
+        new Map([[skill(id).attributeId ?? "", 12]]),
+        EN_WORDS,
+        EN_NAMES,
+      ).effects.map(({ text }) => text),
     );
     expect(texts).toEqual([
       [
