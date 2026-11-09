@@ -326,14 +326,9 @@ export function soleLeader(score: MatchScore): number | undefined {
 /**
  * Whether `team` is beaten as it stands (#2682, the architect's ruling):
  * every member dead at once and no living priest, in annihilation, a
-<<<<<<< HEAD
- * Relic Run, King of the Hill or Capture Points; a team that never had a
- * priest has none living. No kill-count or Guild Battle team is beaten
- * so, nor one whose rules say `wipeSurvived` (#2695).
-=======
  * Relic Run or King of the Hill; a team that never had a priest has none
- * living. No kill-count, Guild Battle or Capture Points team is beaten so.
->>>>>>> origin/main
+ * living. No kill-count, Guild Battle or Capture Points team is beaten so,
+ * nor one whose rules say `wipeSurvived` (#2695).
  */
 export function teamBeaten(team: TeamStanding, rules: MatchRules): boolean {
   if (rules.wipeSurvived === true) {
