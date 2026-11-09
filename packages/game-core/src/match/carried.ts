@@ -16,13 +16,21 @@ export const FLAG_STAND_ID = "flag-stand";
 export interface CarriedSpawn {
   readonly team: number;
   readonly position: Vec2;
+  /** The layer it starts on (ADR-0051). Omitted: the ground. */
+  readonly layer?: number;
+}
+
+/** Where a bundle lies, or a player walks to for it: a point on a layer. */
+export interface CarriedPoint {
+  readonly position: Vec2;
+  readonly layer: number;
 }
 
 /** Where a bundle is: at its spawn, in someone's hands, or on the ground. */
 export type CarriedPlace =
   | { readonly kind: "spawn" }
   | { readonly kind: "carried"; readonly carrierId: string }
-  | { readonly kind: "ground"; readonly position: Vec2 };
+  | { readonly kind: "ground"; readonly position: Vec2; readonly layer: number };
 
 /** A team's bundle, in a place of `Place`: a flag has one more, the stand. */
 export interface CarriedObject<Place extends { readonly kind: string } = CarriedPlace> {
@@ -35,6 +43,8 @@ export interface CarriedDrop {
   readonly kind: "drop";
   readonly carrierId: string;
   readonly position: Vec2;
+  /** The layer of whoever let go: it lies there, and is taken up from there (ADR-0051). */
+  readonly layer: number;
 }
 
 /** A player who reached a bundle, or the stand, this tick. */
@@ -81,39 +91,52 @@ export function carriedBy<T extends AnyCarried>(
   return objects.find(({ place }) => carrierOf(place) === carrierId);
 }
 
-/** `objects` with the one `carrierId` carries lying at `position`; unchanged if none. */
+/** `objects` with the one `carrierId` carries lying at `position` on `layer`; unchanged if none. */
 export function dropCarried<T extends AnyCarried>(
   objects: readonly T[],
   carrierId: string,
   position: Vec2,
+  layer: number,
 ): (T | CarriedObject)[] {
   return objects.map((object) =>
     carrierOf(object.place) === carrierId
-      ? { team: object.team, place: { kind: "ground", position } }
+      ? { team: object.team, place: { kind: "ground", position, layer } }
       : object,
   );
 }
 
 /**
- * Where a player walks to for `object`: its spawn, or where it lies.
- * `undefined` while carried, or in a mode's own place.
+ * Where a player walks to for `object`, and on which layer: its spawn,
+ * or where it lies. `undefined` while carried, or in a mode's own place.
  */
-export function lyingPosition(
+export function lyingPoint(
   spawns: readonly CarriedSpawn[],
   object: AnyCarried,
-): Vec2 | undefined {
+): CarriedPoint | undefined {
   const place: { readonly kind: string } = object.place;
   if (!isCarried(place)) {
     return undefined;
   }
   switch (place.kind) {
-    case "spawn":
-      return spawns.find(({ team }) => team === object.team)?.position;
+    case "spawn": {
+      const spawn = spawns.find(({ team }) => team === object.team);
+      return spawn === undefined
+        ? undefined
+        : { position: spawn.position, layer: spawn.layer ?? 0 };
+    }
     case "ground":
-      return place.position;
+      return { position: place.position, layer: place.layer };
     case "carried":
       return undefined;
   }
+}
+
+/** `lyingPoint`, without its layer. */
+export function lyingPosition(
+  spawns: readonly CarriedSpawn[],
+  object: AnyCarried,
+): Vec2 | undefined {
+  return lyingPoint(spawns, object)?.position;
 }
 
 /**
@@ -122,14 +145,14 @@ export function lyingPosition(
  */
 export function fallenDrops(
   objects: readonly AnyCarried[],
-  fallen: (carrierId: string) => Vec2 | undefined,
+  fallen: (carrierId: string) => CarriedPoint | undefined,
 ): CarriedDrop[] {
   return objects.flatMap(({ place }) => {
     const carrierId = carrierOf(place);
-    const position = carrierId === undefined ? undefined : fallen(carrierId);
-    return carrierId === undefined || position === undefined
+    const point = carrierId === undefined ? undefined : fallen(carrierId);
+    return carrierId === undefined || point === undefined
       ? []
-      : [{ kind: "drop" as const, carrierId, position }];
+      : [{ kind: "drop" as const, carrierId, ...point }];
   });
 }
 

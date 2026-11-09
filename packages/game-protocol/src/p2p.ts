@@ -642,6 +642,8 @@ export interface WireCarried<Place extends string> {
   /** Where it lies, while `ground`; `null` otherwise. */
   readonly x: number | null;
   readonly y: number | null;
+  /** The discrete layer it lies on (ADR-0051), while `ground`; `null` otherwise. */
+  readonly layer: number | null;
 }
 
 /** A Guild Battle's flag (#1225): one a team, or none on a map without a stand. */
@@ -654,6 +656,8 @@ export type WireRelic = WireCarried<(typeof RELIC_PLACES)[number]>;
 export interface WireCapturePoint {
   readonly x: number;
   readonly y: number;
+  /** The discrete layer it stands on (ADR-0051), 0 to `MAX_WIRE_LAYER`. */
+  readonly layer: number;
   readonly owner: WireTeam | null;
   readonly capturer: WireTeam | null;
   /** From 0 to 1, toward `capturer`. */
@@ -2345,6 +2349,7 @@ function parseCapturePoint(value: unknown): WireCapturePoint | undefined {
   return raw !== undefined &&
     isNumber(raw.x) &&
     isNumber(raw.y) &&
+    isWireLayer(raw.layer) &&
     (raw.owner === null || isTeam(raw.owner)) &&
     (raw.capturer === null || isTeam(raw.capturer)) &&
     isNumber(raw.progress) &&
@@ -2353,6 +2358,7 @@ function parseCapturePoint(value: unknown): WireCapturePoint | undefined {
     ? {
         x: raw.x,
         y: raw.y,
+        layer: raw.layer,
         owner: raw.owner,
         capturer: raw.capturer,
         progress: raw.progress,
@@ -2381,16 +2387,16 @@ function carriedFields<Place extends string>(
   place: Place,
   raw: Fields,
 ): WireCarried<Place> | undefined {
-  const { carrierId, x, y } = raw;
+  const { carrierId, x, y, layer } = raw;
   const kind: string = place;
   const carrier = kind === "carried" ? (isString(carrierId) ? carrierId : undefined) : null;
   const spot =
     kind === "ground"
-      ? isNumber(x) && isNumber(y)
-        ? { x, y }
+      ? isNumber(x) && isNumber(y) && isWireLayer(layer)
+        ? { x, y, layer }
         : undefined
-      : x === null && y === null
-        ? { x: null, y: null }
+      : x === null && y === null && layer === null
+        ? { x: null, y: null, layer: null }
         : undefined;
   return carrier === undefined || (carrier === null && carrierId !== null) || spot === undefined
     ? undefined

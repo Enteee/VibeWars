@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { vec2 } from "../vec2.js";
 import { isCarriedObjectId } from "./carried.js";
 import { flagId } from "./flags.js";
+import { floorOf } from "./layer-rules.js";
 import {
   ALTAR_REACH_UNITS,
   carriedRelic,
@@ -52,6 +53,7 @@ const FOE_LYING = step(BOTH_CARRIED, {
   kind: "drop",
   carrierId: "x",
   position: vec2(1300, 500),
+  layer: 0,
 }).state;
 
 describe("relic ids", () => {
@@ -79,8 +81,12 @@ describe("taking, carrying and scoring", () => {
   });
 
   it("scores on the altar: a point for the team, and the relic goes home", () => {
-    expect(onAltar(FIELD, vec2(1100 - ALTAR_REACH_UNITS, 700))).toBe(true);
-    expect(onAltar(FIELD, vec2(1100 - ALTAR_REACH_UNITS - 1, 700))).toBe(false);
+    expect(
+      onAltar(FIELD, { position: vec2(1100 - ALTAR_REACH_UNITS, 700), floors: floorOf(0) }),
+    ).toBe(true);
+    expect(
+      onAltar(FIELD, { position: vec2(1100 - ALTAR_REACH_UNITS - 1, 700), floors: floorOf(0) }),
+    ).toBe(false);
     const after = step(BOTH_CARRIED, { kind: "score", carrierId: "a", team: 0 });
     expect(after.scored).toEqual([0]);
     expect(after.state.relics[0]).toEqual({ team: 0, place: { kind: "spawn" } });
@@ -98,7 +104,7 @@ describe("taking, carrying and scoring", () => {
     const after = step(
       BOTH_CARRIED,
       { kind: "score", carrierId: "a", team: 0 },
-      { kind: "drop", carrierId: "a", position: vec2(1090, 700) },
+      { kind: "drop", carrierId: "a", position: vec2(1090, 700), layer: 0 },
     );
     expect(after.scored).toEqual([0]);
     expect(after.state.relics[0]?.place.kind).toBe("spawn");
@@ -107,10 +113,15 @@ describe("taking, carrying and scoring", () => {
 
 describe("dropping a relic", () => {
   it("leaves it where its carrier died, for their team to take up again", () => {
-    const after = step(BOTH_CARRIED, { kind: "drop", carrierId: "a", position: vec2(600, 400) });
+    const after = step(BOTH_CARRIED, {
+      kind: "drop",
+      carrierId: "a",
+      position: vec2(600, 400),
+      layer: 0,
+    });
     expect(after.state.relics[0]).toEqual({
       team: 0,
-      place: { kind: "ground", position: vec2(600, 400) },
+      place: { kind: "ground", position: vec2(600, 400), layer: 0 },
     });
     const again = step(after.state, reach("b", 0, relicId(0)));
     expect(carriedRelic(again.state.relics, "b")?.team).toBe(0);
@@ -177,13 +188,21 @@ describe("the foe's relic to your Ghostly Hero (#2695)", () => {
 
   it("sends your own dropped relic home when you pick it up", () => {
     const dropped = stepRelics(GHOST_FIELD, take(HOME, "x", 1, 0), [
-      { kind: "drop", carrierId: "x", position: vec2(600, 700) },
+      { kind: "drop", carrierId: "x", position: vec2(600, 700), layer: 0 },
     ]).state;
     expect(dropped.relics[0]?.place.kind).toBe("ground");
     expect(take(dropped, "a", 0, 0)).toEqual(HOME);
   });
 
+  it("is on an altar on its layer or a ramp to it, not beneath it (ADR-0051)", () => {
+    const deck = { ...FIELD, altarLayer: 1 };
+    const position = vec2(1100, 700);
+    expect(onAltar(deck, { position, floors: floorOf(1) })).toBe(true);
+    expect(onAltar(deck, { position, floors: floorOf(0) })).toBe(false);
+    expect(onAltar(deck, { position, floors: floorOf(0) | floorOf(1) })).toBe(true);
+  });
+
   it("has no altar to stand on", () => {
-    expect(onAltar(GHOST_FIELD, vec2(1100, 700))).toBe(false);
+    expect(onAltar(GHOST_FIELD, { position: vec2(1100, 700), floors: floorOf(0) })).toBe(false);
   });
 });

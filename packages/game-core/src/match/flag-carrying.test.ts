@@ -258,7 +258,7 @@ describe("dropping the flag", () => {
     carrier.health = 0.2;
     sim.step(DT);
     expect(carrier.dead).toBe(true);
-    expect(sim.flags[0]).toEqual({ team: 0, place: { kind: "ground", position: where } });
+    expect(sim.flags[0]).toEqual({ team: 0, place: { kind: "ground", position: where, layer: 0 } });
   });
 
   it("on the Drop button, where they stand", () => {
@@ -266,7 +266,7 @@ describe("dropping the flag", () => {
     pickUp(sim, "a");
     const where = get(sim, "a").position;
     expect(applyIntent(sim, "a", { kind: "drop-bundle" })).toBeNull();
-    expect(sim.flags[0]).toEqual({ team: 0, place: { kind: "ground", position: where } });
+    expect(sim.flags[0]).toEqual({ team: 0, place: { kind: "ground", position: where, layer: 0 } });
     expect(applyIntent(sim, "a", { kind: "attack", targetId: "x" })).toBeNull();
   });
 
@@ -282,7 +282,7 @@ describe("dropping the flag", () => {
     pickUp(sim, "a");
     const where = get(sim, "a").position;
     sim.remove("a");
-    expect(sim.flags[0]).toEqual({ team: 0, place: { kind: "ground", position: where } });
+    expect(sim.flags[0]).toEqual({ team: 0, place: { kind: "ground", position: where, layer: 0 } });
   });
 });
 

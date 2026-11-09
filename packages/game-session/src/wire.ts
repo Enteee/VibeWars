@@ -592,16 +592,20 @@ export function wireCarried<Place extends FlagPlace>({
     carrierId: where.kind === "carried" ? where.carrierId : null,
     x: where.kind === "ground" ? where.position.x : null,
     y: where.kind === "ground" ? where.position.y : null,
+    layer: where.kind === "ground" ? where.layer : null,
   };
 }
 
 /** A validated wire relic as game-core's (#1374): a bundle's three places. */
-function relicState({ team, place, carrierId, x, y }: WireRelic): RelicState {
+function relicState({ team, place, carrierId, x, y, layer }: WireRelic): RelicState {
   switch (place) {
     case "carried":
       return { team, place: { kind: "carried", carrierId: carrierId ?? "" } };
     case "ground":
-      return { team, place: { kind: "ground", position: { x: x ?? 0, y: y ?? 0 } } };
+      return {
+        team,
+        place: { kind: "ground", position: { x: x ?? 0, y: y ?? 0 }, layer: layer ?? 0 },
+      };
     case "spawn":
       return { team, place: { kind: "spawn" } };
   }
@@ -831,8 +835,9 @@ export function observedSnapshot(
     altarHolder: absent(snapshot.altarHolder),
     altarHeldSeconds: snapshot.altarHeldSeconds,
     gates: snapshot.gates,
-    capturePoints: snapshot.capturePoints.map(({ x, y, owner, capturer, progress }) => ({
+    capturePoints: snapshot.capturePoints.map(({ x, y, layer, owner, capturer, progress }) => ({
       position: { x, y },
+      layer,
       owner,
       capturer,
       progress,
