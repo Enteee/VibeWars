@@ -104,7 +104,7 @@ export const tooYoung = async (added, publishedAt, now) => {
 
 /** @type {(name: string, version: string) => Promise<string | undefined>} */
 const registryPublishedAt = async (name, version) => {
-  const response = await fetch(`https://registry.npmjs.org/${name.replace("/", "%2F")}`);
+  const response = await fetch(`https://registry.npmjs.org/${name.replaceAll("/", "%2F")}`);
   if (!response.ok) return undefined;
   /** @type {unknown} */
   const parsed = await response.json();
