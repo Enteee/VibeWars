@@ -258,6 +258,29 @@ describe("modeLine (#476)", () => {
   });
 });
 
+describe("a Hall of Heroes map in the lobby (#2700)", () => {
+  const map = { id: "hall-of-heroes-king", size: "small", teamSizes: [8] } as const;
+
+  it("states the Hall's 12 minutes", () => {
+    expect(modeLine({ ...map, mode: "king-of-the-hill" })).toContain("in 12 minutes");
+    expect(modeLine({ ...map, id: "hall-of-heroes-relic", mode: "relic-run" })).toContain(
+      "in 12 minutes",
+    );
+  });
+
+  it("is told apart in the picker by its mode", () => {
+    expect(mapLabel({ ...map, mode: "king-of-the-hill" })).toBe(
+      "Hall of Heroes (King of the Hill)",
+    );
+    expect(mapLabel({ ...map, id: "hall-of-heroes-relic", mode: "relic-run" })).toBe(
+      "Hall of Heroes (Relic Run)",
+    );
+    expect(mapLabel({ ...map, id: "hall-of-heroes-capture", mode: "capture-points" })).toBe(
+      "Hall of Heroes (Capture Points)",
+    );
+  });
+});
+
 describe("waitingFor (#580)", () => {
   const player = (name: string, team: 0 | 1 | null, ready: boolean) => ({
     sessionId: name,

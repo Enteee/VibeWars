@@ -592,10 +592,13 @@ export default {
   "lobby.modeGuildBattle": "ギルドバトル: 敵のギルドロードを倒す",
   "lobby.modeKillCount": "キルカウント: 3分間で最も多くキルする",
   "lobby.modeKingOfTheHill":
-    "King of the Hill: ゴーストヒーローを祭壇へ導きます。確保し続けると得点し、8分間で最多得点のチームが勝利します。",
+    "King of the Hill: ゴーストヒーローを祭壇へ導きます。確保し続けると得点し、{minutes}分間で最多得点のチームが勝利します。",
+  "lobby.modeNameCapturePoints": "拠点制圧",
+  "lobby.modeNameKingOfTheHill": "King of the Hill",
+  "lobby.modeNameRelicRun": "レリックラン",
   "lobby.modePriestAnnihilation": "司祭殲滅: 敵と司祭を全滅させる",
   "lobby.modeRelicRun":
-    "レリックラン: レリックを祭壇へ運びます。8分間で最多得点のチームが勝利します。",
+    "レリックラン: レリックを祭壇へ運びます。{minutes}分間で最多得点のチームが勝利します。",
   "lobby.notReady": "未準備",
   "lobby.playBots": "ボットと対戦",
   "lobby.ready": "準備完了",

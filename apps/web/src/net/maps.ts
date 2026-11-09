@@ -396,10 +396,14 @@ function seatedObjectives(
   });
 }
 
+/** Whether `mapId` is one of the Hall of Heroes' (#2700). */
+export function isHallsMap(mapId: string): boolean {
+  return ARENA_MAPS.find((candidate) => candidate.id === mapId)?.halls === true;
+}
+
 /** The rules a match on `mapId` of `mode` plays (#2700): the Hall's, or the mode's. */
 export function mapMatchRules(mapId: string, mode: MatchMode): MatchRules {
-  const halls = ARENA_MAPS.find((candidate) => candidate.id === mapId)?.halls === true;
-  return halls && isHallsMode(mode) ? HALLS_MATCH_RULES[mode] : MATCH_MODES[mode];
+  return isHallsMap(mapId) && isHallsMode(mode) ? HALLS_MATCH_RULES[mode] : MATCH_MODES[mode];
 }
 
 /**

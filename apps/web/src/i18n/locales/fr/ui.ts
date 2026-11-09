@@ -669,11 +669,14 @@ export default {
   "lobby.modeGuildBattle": "Bataille de guilde : tue le Seigneur de guilde ennemi",
   "lobby.modeKillCount": "Décompte : le plus d'éliminations en 3 minutes",
   "lobby.modeKingOfTheHill":
-    "Roi de la colline : mène ton Héros fantomatique sur l'autel. Tiens-le pour marquer ; le plus de points en 8 minutes l'emporte.",
+    "Roi de la colline : mène ton Héros fantomatique sur l'autel. Tiens-le pour marquer ; le plus de points en {minutes} minutes l'emporte.",
+  "lobby.modeNameCapturePoints": "Points de capture",
+  "lobby.modeNameKingOfTheHill": "Roi de la colline",
+  "lobby.modeNameRelicRun": "Course aux reliques",
   "lobby.modePriestAnnihilation":
     "Annihilation de prêtre : élimine tous les ennemis et leur prêtre",
   "lobby.modeRelicRun":
-    "Course aux reliques : porte ta relique à l'autel. Le plus de points en 8 minutes l'emporte.",
+    "Course aux reliques : porte ta relique à l'autel. Le plus de points en {minutes} minutes l'emporte.",
   "lobby.notReady": "Pas prêt",
   "lobby.playBots": "Jouer contre des bots",
   "lobby.ready": "Prêt",

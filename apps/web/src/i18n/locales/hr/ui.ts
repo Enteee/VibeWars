@@ -664,11 +664,14 @@ export default {
   "lobby.modeGuildBattle": "Bitka cehova: ubij neprijateljskog Gospodara ceha",
   "lobby.modeKillCount": "Broj ubojstava: najviše ubojstava u 3 minute",
   "lobby.modeKingOfTheHill":
-    "Kralj brda: odvedi svog Sablasnog heroja na oltar. Drži ga za bodove; pobjeđuje najviše bodova u 8 minuta.",
+    "Kralj brda: odvedi svog Sablasnog heroja na oltar. Drži ga za bodove; pobjeđuje najviše bodova u {minutes} minuta.",
+  "lobby.modeNameCapturePoints": "Zauzimanje točaka",
+  "lobby.modeNameKingOfTheHill": "Kralj brda",
+  "lobby.modeNameRelicRun": "Utrka za relikvijom",
   "lobby.modePriestAnnihilation":
     "Uništenje sa svećenikom: porazi sve neprijatelje i njihova svećenika",
   "lobby.modeRelicRun":
-    "Utrka za relikvijom: odnesi relikviju na oltar. Pobjeđuje najviše bodova u 8 minuta.",
+    "Utrka za relikvijom: odnesi relikviju na oltar. Pobjeđuje najviše bodova u {minutes} minuta.",
   "lobby.notReady": "Nije spreman",
   "lobby.playBots": "Igraj protiv botova",
   "lobby.ready": "Spreman",

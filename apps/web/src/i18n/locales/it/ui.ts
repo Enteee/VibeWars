@@ -673,11 +673,14 @@ export default {
   "lobby.modeGuildBattle": "Battaglia di gilda: uccidi il Signore della gilda nemico",
   "lobby.modeKillCount": "Conta uccisioni: più uccisioni in 3 minuti",
   "lobby.modeKingOfTheHill":
-    "Re della collina: guida il tuo Eroe spettrale sull'altare. Tienilo per segnare; vince chi fa più punti in 8 minuti.",
+    "Re della collina: guida il tuo Eroe spettrale sull'altare. Tienilo per segnare; vince chi fa più punti in {minutes} minuti.",
+  "lobby.modeNameCapturePoints": "Conquista",
+  "lobby.modeNameKingOfTheHill": "Re della collina",
+  "lobby.modeNameRelicRun": "Corsa alla reliquia",
   "lobby.modePriestAnnihilation":
     "Annientamento del sacerdote: sconfiggi ogni nemico e il suo sacerdote",
   "lobby.modeRelicRun":
-    "Corsa alla reliquia: porta la reliquia all'altare. Vince chi fa più punti in 8 minuti.",
+    "Corsa alla reliquia: porta la reliquia all'altare. Vince chi fa più punti in {minutes} minuti.",
   "lobby.notReady": "Non pronto",
   "lobby.playBots": "Gioca contro i bot",
   "lobby.ready": "Pronto",

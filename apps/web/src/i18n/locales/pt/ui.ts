@@ -668,11 +668,14 @@ export default {
   "lobby.modeGuildBattle": "Batalha de Guildas: mate o Lorde da Guilda inimigo",
   "lobby.modeKillCount": "Contagem de Abates: mais abates em 3 minutos",
   "lobby.modeKingOfTheHill":
-    "Rei da Colina: leve seu Herói Fantasmagórico até o altar. Controle-o para pontuar; mais pontos em 8 minutos vence.",
+    "Rei da Colina: leve seu Herói Fantasmagórico até o altar. Controle-o para pontuar; mais pontos em {minutes} minutos vence.",
+  "lobby.modeNameCapturePoints": "Captura de Pontos",
+  "lobby.modeNameKingOfTheHill": "Rei da Colina",
+  "lobby.modeNameRelicRun": "Corrida da Relíquia",
   "lobby.modePriestAnnihilation":
     "Aniquilação de Sacerdotes: derrote todos os inimigos e o sacerdote deles",
   "lobby.modeRelicRun":
-    "Corrida da Relíquia: leve sua relíquia ao altar. Mais pontos em 8 minutos vence.",
+    "Corrida da Relíquia: leve sua relíquia ao altar. Mais pontos em {minutes} minutos vence.",
   "lobby.notReady": "Não pronto",
   "lobby.playBots": "Jogar contra bots",
   "lobby.ready": "Pronto",

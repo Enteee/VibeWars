@@ -636,10 +636,13 @@ export default {
   "lobby.modeGuildBattle": "Gildenschlacht: Töte den gegnerischen Gildenlord",
   "lobby.modeKillCount": "Kill-Zähler: Die meisten Kills in 3 Minuten",
   "lobby.modeKingOfTheHill":
-    "King of the Hill: Führe deinen Geisterhelden auf den Altar. Halte ihn, um zu punkten; die meisten Punkte in 8 Minuten gewinnen.",
+    "King of the Hill: Führe deinen Geisterhelden auf den Altar. Halte ihn, um zu punkten; die meisten Punkte in {minutes} Minuten gewinnen.",
+  "lobby.modeNameCapturePoints": "Punkte erobern",
+  "lobby.modeNameKingOfTheHill": "King of the Hill",
+  "lobby.modeNameRelicRun": "Reliktlauf",
   "lobby.modePriestAnnihilation": "Priestervernichtung: Besiege alle Gegner und ihren Priester",
   "lobby.modeRelicRun":
-    "Reliktlauf: Trage dein Relikt zum Altar. Die meisten Punkte in 8 Minuten gewinnen.",
+    "Reliktlauf: Trage dein Relikt zum Altar. Die meisten Punkte in {minutes} Minuten gewinnen.",
   "lobby.notReady": "Nicht bereit",
   "lobby.playBots": "Gegen Bots spielen",
   "lobby.ready": "Bereit",

@@ -691,10 +691,13 @@ export default {
   "lobby.modeGuildBattle": "Cechová bitka: zabi nepriateľského Pána cechu",
   "lobby.modeKillCount": "Počet zabití: najviac zabití za 3 minúty",
   "lobby.modeKingOfTheHill":
-    "Kráľ kopca: doveď svojho Prízračného hrdinu na oltár. Drž ho a získavaj body; po 8 minútach vyhráva ten, kto ich má najviac.",
+    "Kráľ kopca: doveď svojho Prízračného hrdinu na oltár. Drž ho a získavaj body; po {minutes} minútach vyhráva ten, kto ich má najviac.",
+  "lobby.modeNameCapturePoints": "Dobývanie bodov",
+  "lobby.modeNameKingOfTheHill": "Kráľ kopca",
+  "lobby.modeNameRelicRun": "Beh s relikviou",
   "lobby.modePriestAnnihilation": "Anihilácia kňaza: poraz všetkých nepriateľov aj ich kňaza",
   "lobby.modeRelicRun":
-    "Beh s relikviou: dones svoju relikviu na oltár. Vyhráva najviac bodov za 8 minút.",
+    "Beh s relikviou: dones svoju relikviu na oltár. Vyhráva najviac bodov za {minutes} minút.",
   "lobby.notReady": "Nepripravený",
   "lobby.playBots": "Hrať proti botom",
   "lobby.ready": "Pripravený",

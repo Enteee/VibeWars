@@ -631,10 +631,13 @@ export default {
   "lobby.modeGuildBattle": "Gillestrid: dräp fiendens gillesherre",
   "lobby.modeKillCount": "Dödsräkning: flest dödanden på 3 minuter",
   "lobby.modeKingOfTheHill":
-    "King of the Hill: led din spökhjälte till altaret. Håll det för att få poäng; flest poäng på 8 minuter vinner.",
+    "King of the Hill: led din spökhjälte till altaret. Håll det för att få poäng; flest poäng på {minutes} minuter vinner.",
+  "lobby.modeNameCapturePoints": "Erövringspunkter",
+  "lobby.modeNameKingOfTheHill": "King of the Hill",
+  "lobby.modeNameRelicRun": "Reliklöpning",
   "lobby.modePriestAnnihilation": "Prästförintelse: besegra alla fiender och deras präst",
   "lobby.modeRelicRun":
-    "Reliklöpning: bär din relik till altaret. Flest poäng på 8 minuter vinner.",
+    "Reliklöpning: bär din relik till altaret. Flest poäng på {minutes} minuter vinner.",
   "lobby.notReady": "Ej redo",
   "lobby.playBots": "Spela mot bottar",
   "lobby.ready": "Redo",

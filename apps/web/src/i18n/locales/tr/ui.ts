@@ -632,10 +632,13 @@ export default {
   "lobby.modeGuildBattle": "Lonca Savaşı: düşman Lonca Lordu'nu öldür",
   "lobby.modeKillCount": "Leş Sayısı: 3 dakikada en çok leş",
   "lobby.modeKingOfTheHill":
-    "Tepenin Kralı: Hayalet Kahramanını sunağa götür. Sunağı tutarak puan al; 8 dakikada en çok puanı alan kazanır.",
+    "Tepenin Kralı: Hayalet Kahramanını sunağa götür. Sunağı tutarak puan al; {minutes} dakikada en çok puanı alan kazanır.",
+  "lobby.modeNameCapturePoints": "Nokta Ele Geçirme",
+  "lobby.modeNameKingOfTheHill": "Tepenin Kralı",
+  "lobby.modeNameRelicRun": "Kalıntı Koşusu",
   "lobby.modePriestAnnihilation": "Rahip İmhası: tüm düşmanları ve rahiplerini yen",
   "lobby.modeRelicRun":
-    "Kalıntı Koşusu: kalıntını sunağa taşı. 8 dakikada en çok puanı alan kazanır.",
+    "Kalıntı Koşusu: kalıntını sunağa taşı. {minutes} dakikada en çok puanı alan kazanır.",
   "lobby.notReady": "Hazır değil",
   "lobby.playBots": "Botlara karşı oyna",
   "lobby.ready": "Hazır",
