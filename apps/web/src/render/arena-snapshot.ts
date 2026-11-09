@@ -116,7 +116,14 @@ export type RenderableWall = (RectRenderableWall | PolygonRenderableWall) & {
 /** A deck's or ramp's outline, as a wall's without a layer. */
 export type RenderableShape = RectRenderableWall | PolygonRenderableWall;
 
-/** A map's floors above the ground (ADR-0051), from its file: never per tick. */
+/** A body of water on one layer (#2983, #2984): how deep, and its shore. */
+export interface MapWater {
+  readonly layer: number;
+  readonly depth: "deep" | "shallow";
+  readonly area: RenderableShape;
+}
+
+/** A map's floors above the ground (ADR-0051) and its water, from its file: never per tick. */
 export interface MapStructure {
   readonly layerCount: number;
   readonly decks: readonly { readonly layer: number; readonly footprint: RenderableShape }[];
@@ -125,10 +132,16 @@ export interface MapStructure {
     readonly to: number;
     readonly area: RenderableShape;
   }[];
+  readonly water: readonly MapWater[];
 }
 
-/** A map with one layer: no deck, no ramp. */
-export const FLAT_STRUCTURE: MapStructure = { layerCount: 1, decks: [], transitions: [] };
+/** A map with one layer: no deck, no ramp, no water. */
+export const FLAT_STRUCTURE: MapStructure = {
+  layerCount: 1,
+  decks: [],
+  transitions: [],
+  water: [],
+};
 
 /** A short-lived floating number or label above an actor. */
 export interface FloatingText {

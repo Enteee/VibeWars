@@ -79,3 +79,39 @@ describe("the elevation offset (ADR-0051)", () => {
     expect(easeElevation(ELEVATION_STEP, 0, 1)).toBe(0);
   });
 });
+
+describe("water's place in the order (#2984)", () => {
+  const water = (layer: number, part: "surface" | "ripples"): RenderItem => ({
+    kind: "water",
+    layer,
+    part,
+  });
+
+  it("draws ground water over the floor, its ripples over it, both under the ward circles and the terrain", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "floor" },
+      water(0, "surface"),
+      water(0, "ripples"),
+      { kind: "ground-effect" },
+      { kind: "terrain" },
+      character(0),
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
+  });
+
+  it("draws a deck's water on the deck and its ramp, under whoever stands there and the next deck up", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "deck", deckLayer: 1 },
+      { kind: "ramp", upperLayer: 1 },
+      water(1, "surface"),
+      water(1, "ripples"),
+      character(1),
+      { kind: "wall", layer: 1 },
+      { kind: "deck", deckLayer: 2 },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+  });
+});
