@@ -21,7 +21,7 @@ import { pathToFileURL } from "node:url";
  * @typedef {{ IMPLEMENTED_SKILLS: readonly Skill[], decodeTemplateCode: (code: string) => { ok: true, build: TemplateBuild } | { ok: false }, PROFESSIONS: Record<string, { name: string, attributes: readonly { id: string, name: string }[] }>, encodeTemplateCode: (build: TemplateBuild) => { ok: true, code: string } | { ok: false, problem: string } }} GameCore
  * @typedef {{ ok: true, code: string } | { ok: false, reason: string }} Encoded
  * @typedef {{ id: string, name: string, elite: boolean, profession: string }} Skill
- * @typedef {{ name: string, source: string }} Candidate
+ * @typedef {{ name: string, source: string, holes?: number[] }} Candidate
  * @typedef {{ slot: number, skill: string, source: string }} Filling
  * @typedef {{ lookup: (name: string) => Skill | undefined, elites: Set<string>, decode: (code: string) => TemplateBuild | undefined, encode: (build: TemplateBuild) => Encoded, read: (block: Block) => (string | null)[] | undefined }} FillCatalog
  * @typedef {{ professions: string, mode: string, name: string, rating: string, code: string }} SoloEntry
@@ -124,7 +124,7 @@ export function buildBlocks(text) {
       continue;
     }
     const head = match[3];
-    const prof = /(?:^|\s)prof=([A-Za-z]+)\/([A-Za-z]+)/.exec(head);
+    const prof = /(?:^|\s)prof=([A-Za-z]+)(?:\/([A-Za-z?]+))?/.exec(head);
     if (prof === null) {
       continue;
     }
@@ -138,7 +138,7 @@ export function buildBlocks(text) {
       start: match.index,
       end: match.index + match[0].length,
       primary: prof[1],
-      secondary: prof[2],
+      secondary: prof[2] === undefined || prof[2] === "?" ? "any" : prof[2],
       attributes,
       skills,
     });
@@ -352,7 +352,9 @@ export function skillMentions(text) {
 
 /**
  * What the page offers `members[index]`, best source first: a section
- * nested under another member's block is that member's alone.
+ * nested under another member's block is that member's alone. A list
+ * labelled by an ordinal offers only that empty slot; Usage text about
+ * the other side names no filling.
  * @param {string} text
  * @param {Block[]} members
  * @param {number} index
@@ -371,9 +373,59 @@ export function fillingCandidates(text, members, index) {
       }
       const next = headings.slice(at + 1).find((later) => later[1].length <= level);
       const body = text.slice(start + heading[0].length, next?.index ?? text.length);
-      return skillMentions(body).map((name) => ({ name, source: heading[2] }));
+      return lists(heading[2], body);
     }),
   );
+}
+
+const ORDINALS = ["first", "second", "third", "fourth"];
+const FOES = /\b(?:enem|foes?\b|opponent|counter|against|avoid|don'?t|do not)/i;
+const OPTIONAL_LABEL =
+  /^(?:'''|;)?\s*((?:\w+(?:\/\w+)?\s+)?optionals?(?:\s+(?:slots?\s*)?[\d/]+)?)\b[^:\n]{0,20}:?'*\s*$/i;
+
+/**
+ * The empty slots `label` binds a list to, counted from 0; `undefined` for any.
+ * @param {string} label
+ */
+function holesOf(label) {
+  const words = label.toLowerCase().split(/[\s/]+/);
+  const held = [
+    ...words.flatMap((word) => (ORDINALS.includes(word) ? [ORDINALS.indexOf(word)] : [])),
+    ...words.flatMap((word) => (/^\d$/.test(word) ? [Number(word) - 1] : [])),
+  ];
+  return held.length === 0 ? undefined : held;
+}
+
+/**
+ * `body` as candidates under `heading`, a bold-labelled list as its own source.
+ * @param {string} heading
+ * @param {string} body
+ * @returns {Candidate[]}
+ */
+function lists(heading, body) {
+  const usage = /usage$/i.test(heading);
+  /** @type {Candidate[]} */
+  const found = [];
+  let source = heading;
+  for (const line of body.split("\n")) {
+    const label = OPTIONAL_LABEL.exec(line.trim());
+    if (label !== null) {
+      source = label[1];
+      continue;
+    }
+    if (usage && FOES.test(line)) {
+      continue;
+    }
+    const holes = holesOf(source);
+    found.push(
+      ...skillMentions(line).map((name) => ({
+        name,
+        source,
+        ...(holes === undefined ? {} : { holes }),
+      })),
+    );
+  }
+  return found;
 }
 
 /**
@@ -395,14 +447,17 @@ export function fillCode(code, candidates, { lookup, elites, decode, encode }, t
   let current = code;
   /** @type {Filling[]} */
   const fillings = [];
+  let hole = -1;
   for (let slot = 0; slot < bar.length; slot += 1) {
     if (bar[slot] !== null) {
       continue;
     }
-    for (const { name, source } of candidates) {
+    hole += 1;
+    for (const { name, source, holes } of candidates) {
       const skill = lookup(name);
       if (
         skill === undefined ||
+        (holes !== undefined && !holes.includes(hole)) ||
         bar.includes(skill.id) ||
         (skill.elite && bar.some((id) => id !== null && elites.has(id))) ||
         ![build.primaryProfession, build.secondaryProfession, "common"].includes(skill.profession)
@@ -508,7 +563,8 @@ export function fillHoles(pages, { solo, teams }, catalog) {
       if (result === undefined) {
         const zone = page.text.slice(members[index].end, members[index + 1]?.start);
         const own = byTitle.get(/\[\[Build:([^\]|#]+)/i.exec(zone)?.[1]?.trim() ?? "");
-        const ownBlock = own && buildBlocks(own.text).find((each) => fits(code, each));
+        const ownBlock =
+          own && [buildBlocks(own.text)[0]].find((each) => each !== undefined && fits(code, each));
         const candidates = [
           ...fillingCandidates(page.text, members, index),
           ...(own !== undefined && ownBlock !== undefined
@@ -594,7 +650,8 @@ async function fillCatalog() {
     },
     encode,
     read: (block) => {
-      const built = blockToBuild(block, { skills, professions, attributeIdOf });
+      const named = { ...block, skills: block.skills.map((name) => name.toLowerCase()) };
+      const built = blockToBuild(named, { skills: lower, professions, attributeIdOf });
       return built.ok ? built.build.skillBar : undefined;
     },
   };

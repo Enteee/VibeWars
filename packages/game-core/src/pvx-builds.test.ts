@@ -76,8 +76,8 @@ describe("the PvX solo builds (#2554)", () => {
     };
     const sum = (codes: readonly string[]): number =>
       codes.reduce((total, code) => total + empty(code), 0);
-    expect(sum(PVX_SOLO.map((build) => build.code))).toBe(73);
-    expect(sum(PVX_TEAMS.flatMap((team) => team.members))).toBe(20);
+    expect(sum(PVX_SOLO.map((build) => build.code))).toBe(69);
+    expect(sum(PVX_TEAMS.flatMap((team) => team.members))).toBe(21);
   });
 
   it("keeps the first of two codes for one bar, and skips the second", () => {

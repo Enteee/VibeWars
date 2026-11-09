@@ -221,6 +221,22 @@ describe("the PvX dump import (#2876)", () => {
       expect(fillingCandidates(text, members, 1)).toEqual([]);
     });
 
+    it("binds an ordinal list to that empty slot, and reads a bold label as a list", () => {
+      const text = block() + "\n== Skills ==\n" + "'''Second Optional'''\n*[[Gale]]\n";
+      const [read] = buildBlocks(text);
+      expect(fillingCandidates(text.replace("Skills", "Optionals"), [read], 0)).toEqual([
+        { name: "Gale", source: "Second Optional", holes: [1] },
+      ]);
+      const { fillings } = fillCode("bar", [{ ...offer("Gale"), holes: [1] }], catalog);
+      expect(fillings).toEqual([{ slot: 4, skill: "Gale", source: "Optionals" }]);
+    });
+
+    it("reads no skill from a Usage line about the other side", () => {
+      const text = block() + "\n== Usage ==\n*Interrupt enemy [[Rez]]\n*Open with [[Gale]]\n";
+      const [read] = buildBlocks(text);
+      expect(fillingCandidates(text, [read], 0).map((each) => each.name)).toEqual(["Gale"]);
+    });
+
     it("takes the first legal candidate for each empty slot, and skips the illegal", () => {
       const result = fillCode(
         "bar",

@@ -191,7 +191,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "RA",
     name: "Mind Shock",
     rating: "Great",
-    code: "OgBCgMzk3wCI3g4QWV4AtgAA",
+    code: "OgBSgYGTeDLgcDiDAAhD0CCAA",
   },
   {
     professions: "E_D",
@@ -247,7 +247,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "FA",
     name: "Psychic Instability Wastrel's",
     rating: "Meta-Great",
-    code: "OQBTAUBPQqJIESG4mKHAAAFAAA",
+    code: "OQBDAqwDONhQoM4mmDKCoAAA",
   },
   {
     professions: "Me_any",
@@ -261,7 +261,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "HA",
     name: "Panic",
     rating: "Provisional-Good",
-    code: "OQBDAowjKkeGUEewMQDCgLA",
+    code: "OQBDAowjKkeGUEewMQDCAAA",
   },
   {
     professions: "Me_any",
@@ -310,7 +310,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "RA",
     name: "Psychic Distraction",
     rating: "Good",
-    code: "OQBTAQBPQqDyDQD4miIAAAAQAA",
+    code: "OQBDAowDOdQPgG4mSEqAqABA",
   },
   {
     professions: "Me_E",
@@ -338,7 +338,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "GvG",
     name: "Energy Surge",
     rating: "Meta-Great",
-    code: "OQhkAoC8AGKDpDDkBmBngiARI5C",
+    code: "OQhkAoC8AGKDpzDAAmBngiARI5C",
   },
   {
     professions: "Mo_A",
@@ -450,7 +450,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "FA",
     name: "Pain of Disenchantment Healer",
     rating: "Good",
-    code: "OAhjYgHaIPP1GRgQaO5inTsxJ",
+    code: "OAhjYgHaIPP1GRGTaO5inTsxJ",
   },
   {
     professions: "P_any",
@@ -464,7 +464,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "Flesh Wound",
     rating: "Provisional-Great",
-    code: "OQGlUhlrJeGoJ9jZhFk9gxVwT4uBAA",
+    code: "OQGlUhlrJeGo58jtwB5HMXhn4uLy",
   },
   {
     professions: "P_W",
@@ -555,7 +555,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "FA",
     name: "May Toucher",
     rating: "Good",
-    code: "OgQTQ4zc5pGyJAAoGNhwhVmaA",
+    code: "OgQTQ4zc5pGyJ+1oGNhwhVmaA",
   },
   {
     professions: "R_N",
@@ -639,7 +639,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "Rampage as One Axe",
     rating: "Good",
-    code: "OgETIZreRKXLqYviqAAg2YzQAA",
+    code: "OgETIZrexJXHV2rUlaDtZzIAA",
   },
   {
     professions: "W_any",
@@ -667,7 +667,7 @@ export const PVX_SOLO: readonly PvxBuild[] = [
     mode: "PvP",
     name: "May Axe",
     rating: "Meta-Great",
-    code: "OQASEZJPRFAweFAwU0K/EBA",
+    code: "OQASEZJPRFhyeFAwU0K/EBA",
   },
   {
     professions: "W_A",
@@ -792,7 +792,7 @@ export const PVX_TEAMS: readonly PvxTeam[] = [
       "OQgjExTc4QGWjFLFgFGFMF8VJXA",
       "OgpSgYGT0ChDAaeDLgcDgC0XA",
       "OgpjowM5aS0C4C5C/CjVCRlVsXA",
-      "OQhkAoC8AGKDpDDkBmBngiARI5C",
+      "OQhkAoC8AGKDpzDAAmBngiARI5C",
       "OwET8YIWViiQLKgQgYlom4BcuA",
       "OwcU04XCz/QeRNgkECE1NTf3ENQA",
       "OwcT02nCVyLqBULSgouZ67mYCC",
