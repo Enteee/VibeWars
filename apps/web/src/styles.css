@@ -2284,29 +2284,6 @@ body {
   text-transform: uppercase;
 }
 
-/* A one-word attribute name is never cut under the pips: its column is at
-   least that word wide, and the middle column leaves room for it. */
-.team-member-editor .editor-attribute {
-  grid-template-columns: minmax(min-content, 1fr) auto 6ch max-content;
-}
-
-/* On a phone, what the next rank does goes on a line of its own. */
-@container (width < 40rem) {
-  .team-member-editor .editor-attribute {
-    grid-template-columns: minmax(min-content, 1fr) auto 6ch;
-  }
-
-  .team-member-editor .editor-attribute-next {
-    grid-row: auto;
-    grid-column: 1 / -1;
-    justify-self: end;
-  }
-
-  .team-member-editor .editor-attribute-next-sizer {
-    display: none;
-  }
-}
-
 .team-member-editor .editor-professions {
   flex-direction: column;
   align-items: stretch;
@@ -2691,9 +2668,8 @@ body {
 }
 
 .editor-attribute-name {
-  /* One long compound (German) cannot wrap on its own and would run over the pips. */
-  overflow-wrap: anywhere;
-  hyphens: auto;
+  overflow-wrap: break-word;
+  hyphens: manual;
   flex: 1 1 auto;
 }
 
@@ -2716,10 +2692,11 @@ body {
  * followed the content would move that row's pips. The last column is as
  * wide as its sizer, the widest "next" text of the language (#2923), for the
  * same reason: it is the same width in every row, whatever each one shows.
+ * The name's column is at least its longest word wide.
  */
 .editor-attribute {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 6ch max-content;
+  grid-template-columns: minmax(min-content, 1fr) auto 6ch max-content;
   column-gap: 0.5rem;
   border-inline-start: 3px solid var(--attribute-colour, var(--line));
 }
@@ -2779,6 +2756,9 @@ body {
 .editor-attribute-next-sizer {
   grid-row: 1;
   grid-column: 4;
+  /* A cost is digits and a sign: "+16", even in a right-to-left language. */
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .editor-attribute-next-sizer {
@@ -2794,6 +2774,43 @@ body {
 
 .editor-attribute-needs:empty {
   display: none;
+}
+
+.editor-attributes {
+  container-type: inline-size;
+}
+
+.editor-attributes-cost-heading {
+  color: var(--ink-dim);
+  font-size: 0.85em;
+  text-align: end;
+}
+
+/* Too narrow for one line beside the longest word: name and rank, then pips and cost. */
+@container (width < 32rem) {
+  .editor-attribute {
+    grid-template-columns: auto minmax(0, 1fr) minmax(6ch, max-content);
+    grid-template-areas:
+      "name name rank"
+      "pips . next";
+  }
+
+  .editor-attribute-name {
+    grid-area: name;
+  }
+
+  .editor-attribute .attribute-pips {
+    grid-area: pips;
+  }
+
+  .editor-attribute-rank {
+    grid-area: rank;
+  }
+
+  .editor-attribute-next,
+  .editor-attribute-next-sizer {
+    grid-area: next;
+  }
 }
 
 .attribute-budget {
