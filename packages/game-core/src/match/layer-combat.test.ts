@@ -260,6 +260,15 @@ describe("sight across layers (ADR-0051)", () => {
     expect(casts(vec2(200, 400), 0, vec2(530, 400), 1)).toBe(false);
   });
 
+  it("sees across a ground ramp's rim, which stops walking only (#2975)", () => {
+    expect(casts(vec2(430, 250), 0, vec2(430, 550), 0)).toBe(true);
+    expect(casts(vec2(430, 250), 0, vec2(430, 400), 1)).toBe(true);
+    const sim = arena([spec("a", 0, vec2(430, 250), 0, bow()), spec("foe", 1, vec2(430, 400), 1)]);
+    sim.requestAttack("a", "foe");
+    expect(hurt(sim, "foe", 4)).toBe(true);
+    expect(get(sim, "a").position.y).toBeLessThan(300);
+  });
+
   it("does not let a deck shoot a target under its footprint", () => {
     expect(casts(vec2(600, 400), 1, vec2(640, 400), 0)).toBe(false);
   });

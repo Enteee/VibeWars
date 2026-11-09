@@ -15,7 +15,6 @@ import {
   hasLineOfSight,
   closestPointOnPolygon,
   pointInPolygon,
-  polygonCentre,
   progressAlong,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
@@ -68,7 +67,9 @@ import {
   heightDamageMultiplier,
   heightRange,
   heightStep,
+  rampRims,
   sharesFloor,
+  uphillDirections,
 } from "./layer-rules.js";
 import {
   buildLayeredNavGraph,
@@ -1047,23 +1048,6 @@ function walkableAreas(layers: MatchLayers | undefined): readonly (readonly Poly
   );
 }
 
-/** From each ramp towards the nearest edge of a deck it climbs to. */
-function uphillDirections(layers: MatchLayers | undefined): readonly Vec2[] {
-  return (layers?.transitions ?? []).map((transition) => {
-    const foot = polygonCentre(transition.area);
-    let nearest = foot;
-    let least = Number.POSITIVE_INFINITY;
-    for (const deck of layers?.decks ?? []) {
-      const edge = closestPointOnPolygon(foot, deck.footprint);
-      if (deck.layer === transition.to && distance(foot, edge) < least) {
-        least = distance(foot, edge);
-        nearest = edge;
-      }
-    }
-    return normalize(sub(nearest, foot));
-  });
-}
-
 /** How far along a ramp a body must walk before it is on the other layer (#2972). */
 const RAMP_CLIMBS_FROM = 0.85;
 const RAMP_DESCENDS_FROM = 0.15;
@@ -1199,6 +1183,8 @@ export class MatchSimulation {
   readonly #walkable: readonly (readonly Polygon[])[];
   /** Each ramp's way up, as a direction, in `#layers.transitions`' order. */
   readonly #uphill: readonly Vec2[];
+  /** Each layer's ramp rims (#2975): they stop walking, never sight. */
+  readonly #rampRims: readonly (readonly Segment[])[];
   /** `#walls` for each layer: what sight and shots read, swapped as a gate moves. */
   #layerWalls: readonly (readonly Segment[])[];
   /** `#layerWalls` with each layer's deep water (#2983): what collision reads. */
@@ -1363,18 +1349,24 @@ export class MatchSimulation {
     this.#layers = options.layers;
     this.#walkable = walkableAreas(this.#layers);
     this.#mapWalls = options.walls ?? [];
+    this.#rampRims = rampRims(
+      this.#layers?.transitions ?? [],
+      this.#layers?.decks ?? [],
+      this.#layers?.count ?? 1,
+    );
     this.#gatedGraphs = buildLayeredNavGraph(
       this.#layers === undefined
-        ? [{ walls: this.#mapWalls, walkable: [] }]
+        ? [{ walls: this.#mapWalls, walkable: [], open: [] }]
         : this.#layers.walls.map((walls, layer) => ({
             walls: [...walls, ...(this.#layers?.deepWater[layer] ?? [])],
             walkable: this.#walkable[layer] ?? [],
+            open: this.#rampRims[layer] ?? [],
           })),
       this.#gates.map((gate) => ({ layer: gate.layer ?? 0, segments: gate.segments })),
       this.#bounds,
       this.#ruleset.collision.playerRadius,
     );
-    this.#uphill = uphillDirections(this.#layers);
+    this.#uphill = uphillDirections(this.#layers?.transitions ?? [], this.#layers?.decks ?? []);
     const walls = this.#currentWallSet();
     this.#walls = walls.walls;
     this.#graphs = walls.graphs;
@@ -6395,11 +6387,12 @@ export class MatchSimulation {
     ]);
   }
 
-  /** Each layer's walls and its deep water (#2983), indexed by layer. */
+  /** Each layer's walls, its deep water (#2983) and its ramp rims (#2975), indexed by layer. */
   #blockersByLayer(): readonly (readonly Segment[])[] {
     return this.#layerWalls.map((walls, layer) => [
       ...walls,
       ...(this.#layers?.deepWater[layer] ?? []),
+      ...(this.#rampRims[layer] ?? []),
     ]);
   }
 
@@ -6408,7 +6401,7 @@ export class MatchSimulation {
     return this.#layerWalls[layer] ?? this.#walls;
   }
 
-  /** What a body on `layer` collides with: its walls and its deep water (#2983). */
+  /** What a body on `layer` collides with: its walls, deep water (#2983) and ramp rims (#2975). */
   #blockersOn(layer: number): readonly Segment[] {
     return this.#layerBlockers[layer] ?? this.#walls;
   }
