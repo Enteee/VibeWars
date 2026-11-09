@@ -100,7 +100,7 @@ export default {
   "buildEditor.needsAttribute": "{attribute} {rank}が必要",
   "buildEditor.needsMore": { other: "あと{count}ポイント必要" },
   "buildEditor.needsWeapon": "{weapon}が必要",
-  "buildEditor.nextCost": "次: {cost}ポイント",
+  "buildEditor.nextCostHeading": "次のランクのコスト",
   "buildEditor.noProfession": "(なし)",
   "buildEditor.noWeapon": "武器を持っていません",
   "buildEditor.noWeaponInSet": "このセットに武器がありません",

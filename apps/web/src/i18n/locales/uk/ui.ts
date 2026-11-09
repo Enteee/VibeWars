@@ -123,7 +123,7 @@ export default {
     other: "потрібно ще {count} очка",
   },
   "buildEditor.needsWeapon": "Потрібно: {weapon}",
-  "buildEditor.nextCost": "далі: {cost} оч.",
+  "buildEditor.nextCostHeading": "Наступний ранг коштує",
   "buildEditor.noProfession": "(немає)",
   "buildEditor.noWeapon": "у тебе немає зброї",
   "buildEditor.noWeaponInSet": "у цьому наборі немає зброї",

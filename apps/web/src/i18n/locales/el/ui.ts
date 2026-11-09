@@ -114,7 +114,7 @@ export default {
     other: "χρειάζεται {count} πόντους ακόμη",
   },
   "buildEditor.needsWeapon": "Χρειάζεται: {weapon}",
-  "buildEditor.nextCost": "επόμενο: {cost} πόντοι",
+  "buildEditor.nextCostHeading": "Η επόμενη βαθμίδα κοστίζει",
   "buildEditor.noProfession": "(κανένα)",
   "buildEditor.noWeapon": "δεν έχεις όπλο",
   "buildEditor.noWeaponInSet": "κανένα όπλο σε αυτό το σετ",

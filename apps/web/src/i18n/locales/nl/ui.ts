@@ -107,7 +107,7 @@ export default {
   "buildEditor.needsAttribute": "vereist {attribute} {rank}",
   "buildEditor.needsMore": { one: "nog {count} punt nodig", other: "nog {count} punten nodig" },
   "buildEditor.needsWeapon": "Vereist {weapon}",
-  "buildEditor.nextCost": "volgende: {cost} ptn",
+  "buildEditor.nextCostHeading": "Volgende rang kost",
   "buildEditor.noProfession": "(geen)",
   "buildEditor.noWeapon": "je hebt geen wapen",
   "buildEditor.noWeaponInSet": "geen wapen in deze set",

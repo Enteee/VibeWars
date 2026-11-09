@@ -110,7 +110,7 @@ export default {
     other: "braucht noch {count} Punkte",
   },
   "buildEditor.needsWeapon": "Braucht {weapon}",
-  "buildEditor.nextCost": "nächste: {cost} Pkt.",
+  "buildEditor.nextCostHeading": "Nächster Rang kostet",
   "buildEditor.noProfession": "(keine)",
   "buildEditor.noWeapon": "du hast keine Waffe",
   "buildEditor.noWeaponInSet": "keine Waffe in diesem Set",

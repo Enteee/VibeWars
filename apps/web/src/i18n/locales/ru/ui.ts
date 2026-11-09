@@ -121,7 +121,7 @@ export default {
     other: "нужно ещё {count} очка",
   },
   "buildEditor.needsWeapon": "Нужно: {weapon}",
-  "buildEditor.nextCost": "далее: {cost} оч.",
+  "buildEditor.nextCostHeading": "Следующий ранг стоит",
   "buildEditor.noProfession": "(нет)",
   "buildEditor.noWeapon": "у тебя нет оружия",
   "buildEditor.noWeaponInSet": "в этом наборе нет оружия",

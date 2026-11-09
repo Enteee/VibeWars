@@ -107,7 +107,7 @@ export default {
   "buildEditor.needsAttribute": "kell: {attribute} {rank}",
   "buildEditor.needsMore": { one: "még {count} pont kell", other: "még {count} pont kell" },
   "buildEditor.needsWeapon": "Kell: {weapon}",
-  "buildEditor.nextCost": "következő: {cost} pont",
+  "buildEditor.nextCostHeading": "A következő szint ára",
   "buildEditor.noProfession": "(nincs)",
   "buildEditor.noWeapon": "nincs fegyvered",
   "buildEditor.noWeaponInSet": "nincs fegyver ebben a készletben",

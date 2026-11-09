@@ -97,7 +97,7 @@ export default {
   "buildEditor.needsAttribute": "{attribute} {rank} 필요",
   "buildEditor.needsMore": { other: "{count}포인트 더 필요" },
   "buildEditor.needsWeapon": "{weapon} 필요",
-  "buildEditor.nextCost": "다음: {cost}포인트",
+  "buildEditor.nextCostHeading": "다음 등급 비용",
   "buildEditor.noProfession": "(없음)",
   "buildEditor.noWeapon": "무기가 없어요",
   "buildEditor.noWeaponInSet": "이 세트에 무기가 없어요",

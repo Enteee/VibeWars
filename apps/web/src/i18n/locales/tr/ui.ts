@@ -106,7 +106,7 @@ export default {
   "buildEditor.needsAttribute": "{attribute} {rank} gerekli",
   "buildEditor.needsMore": { one: "{count} puan daha gerekli", other: "{count} puan daha gerekli" },
   "buildEditor.needsWeapon": "Gerekli: {weapon}",
-  "buildEditor.nextCost": "sonraki: {cost} puan",
+  "buildEditor.nextCostHeading": "Sonraki seviye bedeli",
   "buildEditor.noProfession": "(yok)",
   "buildEditor.noWeapon": "silahın yok",
   "buildEditor.noWeaponInSet": "bu sette silah yok",

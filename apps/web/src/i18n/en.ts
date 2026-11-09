@@ -111,7 +111,7 @@ export const en = {
   "buildEditor.needsAttribute": "needs {attribute} {rank}",
   "buildEditor.needsMore": { one: "needs {count} more point", other: "needs {count} more points" },
   "buildEditor.needsWeapon": "Needs {weapon}",
-  "buildEditor.nextCost": "next: {cost} pts",
+  "buildEditor.nextCostHeading": "Next rank costs",
   "buildEditor.noProfession": "(none)",
   "buildEditor.noWeapon": "you have no weapon",
   "buildEditor.noWeaponInSet": "no weapon in this set",

@@ -122,7 +122,7 @@ export default {
     other: "brakuje {count} punktu",
   },
   "buildEditor.needsWeapon": "Wymaga: {weapon}",
-  "buildEditor.nextCost": "następny: {cost} pkt",
+  "buildEditor.nextCostHeading": "Następna ranga kosztuje",
   "buildEditor.noProfession": "(brak)",
   "buildEditor.noWeapon": "nie masz broni",
   "buildEditor.noWeaponInSet": "brak broni w tym zestawie",

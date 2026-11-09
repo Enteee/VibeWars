@@ -107,7 +107,7 @@ export default {
   "buildEditor.needsAttribute": "kræver {attribute} {rank}",
   "buildEditor.needsMore": { one: "mangler {count} point", other: "mangler {count} point" },
   "buildEditor.needsWeapon": "Kræver {weapon}",
-  "buildEditor.nextCost": "næste: {cost} point",
+  "buildEditor.nextCostHeading": "Næste rang koster",
   "buildEditor.noProfession": "(ingen)",
   "buildEditor.noWeapon": "du har intet våben",
   "buildEditor.noWeaponInSet": "intet våben i dette sæt",
