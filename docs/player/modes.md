@@ -226,8 +226,8 @@ owner's colour.
 
 Every 30 seconds, each shrine your team owns scores a point, and a toast
 and a sound announce what each side scored. Every 60 seconds of match clock, your team's dead rise at your base's shrine with full Health and Energy, even if a foe stands there, unless their morale is at the floor. The scoreboard counts down to the next wave. Each death costs morale, and a ghost rises on the same wave, at its own spot.
-Get **20 points ahead** of every other team, or wipe the other team, to
-win at once. After 8 minutes the team with more points wins; on equal
+Get **20 points ahead** of every other team to
+win at once. A wipe does not end the match. After 8 minutes the team with more points wins; on equal
 points, the one holding more shrines, then the team that was last ahead
 alone, and if none ever was, it is a draw. Kills score nothing.
 

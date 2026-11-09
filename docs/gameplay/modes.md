@@ -172,9 +172,9 @@ it drains a shrine anyone owns to neutral at min(−net, 4) pips, and it
 stays neutral. Nobody on it, its progress stays, and an owner never
 loses it but to a foe. Every 30 s of match clock each team scores 1 per
 shrine it owns; a shrine taken in that tick counts, since the captures
-come first. The dead stay down and pay the death penalty; a wipe loses
-at once. A team **20 points ahead** of every other team in play wins at
-once. At **8 minutes** the most points win; on equal points the team
+come first. The dead pay the death penalty and rise at their base's shrine on the next
+60 s wave; a wipe does not end the match. A team **20 points ahead** of every
+other team wins at once. At **8 minutes** the most points win; on equal points the team
 holding the most shrines, then the one that last led every other alone;
 tied teams none of which ever led alone draw. Kills score nothing. The scoreboard reads the points as Kill Count
 reads kills. Each shrine draws as the flag stand's ring in its owner's

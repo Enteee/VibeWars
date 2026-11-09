@@ -577,11 +577,9 @@ describe("evaluateMatch: capture points (#2690)", () => {
     );
   });
 
-  it("is lost at once by a wiped team, whatever the points", () => {
-    expect(evaluateMatch(points(15, 0), standing([0, 0, -15], [1, 1, 0]), 100, rules)).toEqual({
-      phase: "finished",
-      winningTeam: 1,
-      reason: "annihilation",
-    });
+  it("is not ended by a wiped team, whatever the points (#2886)", () => {
+    expect(evaluateMatch(points(15, 0), standing([0, 0, -15], [1, 1, 0]), 100, rules)).toBe(
+      MATCH_IN_PROGRESS,
+    );
   });
 });
