@@ -1056,9 +1056,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["withdraw a proposal (#1458)", parseWireLobbyCommand, { kind: "propose", slot: null }],
   ["vote (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: "peer-2" }],
-  ["withdraw a vote (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: null }],
   ["claim (#1458)", parseWireLobbyCommand, { kind: "claim", slot: 1 }],
-  ["let a claim go (#1458)", parseWireLobbyCommand, { kind: "claim", slot: null }],
   [
     "a team plan's human seat (ADR-0042)",
     parseWireLobbyCommand,

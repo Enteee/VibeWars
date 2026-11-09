@@ -169,17 +169,20 @@ export async function saveSoloTeam(page: Page, size: 2 | 4 | 8): Promise<string>
 /** The vote's title: a 1v1 chooses a character, not a Team Build (#2387). */
 export const VOTE_STAGE = /^(Choose a team build|Choose your character)$/;
 
-/**
- * Take seat `seat` of the claim stage, then be ready. A 1v1 has no seats
- * to pick: its one is taken for the player (#2387).
- */
+/** The vote stage's clock, and a margin: with no vote to cast it runs out (#2872). */
+const VOTE_RUNS_OUT = { timeout: 40_000 };
+
+const SOLO_PICK = '.team-lobby-solo .play-card-open[aria-pressed="true"]';
+
+/** Take seat `seat` of the claim stage, which readies the player (#2872). */
 async function takeSeat(page: Page, seat: number): Promise<void> {
-  const stage = page.locator(".team-lobby-stage");
-  await expect(stage).toHaveText(/^(Take a character|Starting…)$/);
-  if ((await stage.textContent()) === "Take a character") {
-    await page.locator(".team-lobby-seat").nth(seat).click();
-  }
-  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character", VOTE_RUNS_OUT);
+  await page.locator(".team-lobby-seat").nth(seat).click();
+}
+
+/** Whether `page` is a 1v1's: its click ends both stages, with no seat to take (#2387). */
+async function isSolo(page: Page): Promise<boolean> {
+  return (await page.locator(SOLO_PICK).count()) > 0;
 }
 
 /**
@@ -224,10 +227,15 @@ export async function playOwnTeams(
       await proposeTeam(page, team);
     }
   }
+  // A vote readies (#2872): the 1v1's pick, or the side's first proposal.
+  const solo = players[0] !== undefined && (await isSolo(players[0].page));
   for (const { page } of players) {
-    await page.getByRole("button", { name: "Ready", exact: true }).click();
+    await page
+      .locator(solo ? SOLO_PICK : ".team-lobby-proposals .play-card-open")
+      .first()
+      .click();
   }
-  for (const { page, seat } of players) {
+  for (const { page, seat } of solo ? [] : players) {
     await takeSeat(page, seat ?? 0);
   }
   for (const { page } of players) {
@@ -249,10 +257,11 @@ export async function playHouseTeams(
   for (const page of pages) {
     await expect(page.locator(".team-lobby-stage")).toHaveText(VOTE_STAGE);
   }
-  for (const page of pages) {
-    await page.getByRole("button", { name: "Ready", exact: true }).click();
+  const solo = pages[0] !== undefined && (await isSolo(pages[0]));
+  for (const page of solo ? pages : []) {
+    await page.locator(SOLO_PICK).click();
   }
-  for (const [index, page] of pages.entries()) {
+  for (const [index, page] of (solo ? [] : pages).entries()) {
     await takeSeat(page, seats[index] ?? 0);
   }
   for (const page of pages) {

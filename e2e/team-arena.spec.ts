@@ -95,21 +95,18 @@ async function runTeamLobby(
     await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
   }
   await vote?.(guest);
+  // Nobody can vote for no proposal: the 30 s run out.
   for (const page of [host, guest]) {
-    await press(page, page.getByRole("button", { name: "Ready", exact: true }));
-  }
-  for (const page of [host, guest]) {
-    await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
+    await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character", {
+      timeout: 40_000,
+    });
     // Team Arena's side is four, unless its leader picked another size.
     await expect(page.locator(".team-lobby-seat")).toHaveCount(seats);
   }
   await press(host, host.locator(".team-lobby-seat").nth(0));
   await expect(guest.locator(".team-lobby-seat").nth(0)).toBeDisabled();
+  // The last seat taken ends the stage.
   await press(guest, guest.locator(".team-lobby-seat").nth(1));
-  await expect(host.locator(".team-lobby-seat").nth(1)).toBeDisabled();
-  for (const page of [host, guest]) {
-    await press(page, page.getByRole("button", { name: "Ready", exact: true }));
-  }
 }
 
 /** `page` plays `build`: its skill bar's first skill is the build's. */

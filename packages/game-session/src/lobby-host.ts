@@ -13,7 +13,8 @@ import {
   MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
   TEAM_ARENA_SIZES,
-  TEAM_LOBBY_STAGE_SECONDS,
+  TEAM_LOBBY_CLAIM_SECONDS,
+  TEAM_LOBBY_VOTE_SECONDS,
   helloProtocolVersion,
   isTeamArenaSize,
   isTeamQueueMode,
@@ -1017,7 +1018,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     phase = "team-lobby";
     teamLobby = {
       stage: "vote",
-      endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
+      endsAt: clockMs() + TEAM_LOBBY_VOTE_SECONDS * 1000,
       sides: [emptySide(size), emptySide(forQueue ? 0 : size)],
       forQueue,
       ascentRound,
@@ -1052,9 +1053,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return false;
     }
     phase = "team-lobby";
-    teamLobby = {
+    const lobby: TeamLobby = {
       stage: "claim",
-      endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
+      endsAt: clockMs() + TEAM_LOBBY_CLAIM_SECONDS * 1000,
       sides: [
         {
           ...emptySide(lock.chosen.builds.length),
@@ -1067,9 +1068,40 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       ascentRound,
       locked: true,
     };
+    teamLobby = lobby;
     clearReady();
+    readyThoseWithNoSeatToPick(lobby);
+    if (everyoneReady()) {
+      endStage(lobby);
+      return false;
+    }
     return true;
   };
+
+  /**
+   * A claim's start (#2872): a lone human on a side of one holds its seat,
+   * and whoever holds a seat already, or has none left to take, is ready.
+   */
+  const readyThoseWithNoSeatToPick = (lobby: TeamLobby): void => {
+    for (const team of [0, 1] as const) {
+      const side = lobby.sides[team];
+      const humans = humansOn(team);
+      const [lone] = humans;
+      if (side.claims.length === 1 && side.claims[0] === null && lone !== undefined) {
+        side.claims[0] = lone.id;
+      }
+      for (const human of humans) {
+        // Nothing starts without one who is away (#2872).
+        human.ready = !away.has(human.id) && hasNothingLeftToDo(lobby, side, human);
+      }
+    }
+  };
+
+  /** Whether `member` has done what `lobby`'s stage asks: voted, or sits (#2872). */
+  const hasNothingLeftToDo = (lobby: TeamLobby, side: TeamSide, member: Member): boolean =>
+    lobby.stage === "vote"
+      ? side.votes.has(member.id)
+      : side.claims.includes(member.id) || !side.claims.includes(null);
 
   /** Whether `team` plays a preset team: nobody proposed, or nobody is there to. */
   const playsPreset = (team: 0 | 1, side: TeamSide): boolean =>
@@ -1155,8 +1187,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         side.claims = Array.from({ length: side.chosen.builds.length }, () => null);
       }
       lobby.stage = "claim";
-      lobby.endsAt = clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000;
+      lobby.endsAt = clockMs() + TEAM_LOBBY_CLAIM_SECONDS * 1000;
       clearReady();
+      readyThoseWithNoSeatToPick(lobby);
+      if (everyoneReady()) {
+        endStage(lobby);
+        return;
+      }
       broadcast();
       return;
     }
@@ -1473,7 +1510,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           }
         }
       }
-      teamLobby.endsAt = clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000;
+      teamLobby.endsAt = clockMs() + TEAM_LOBBY_VOTE_SECONDS * 1000;
     }
     clearReady();
     return true;
@@ -1484,6 +1521,16 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * anything changed. Each command counts only in its own stage, and
    * only from a member on a side; the host's team size in the vote.
    */
+  /** `member` has acted, so is ready (#2872). False when that ended the stage. */
+  const markReady = (lobby: TeamLobby, member: Member): boolean => {
+    member.ready = true;
+    if (everyoneReady()) {
+      endStage(lobby);
+      return false;
+    }
+    return true;
+  };
+
   const applyTeam = (lobby: TeamLobby, member: Member, command: WireLobbyCommand): boolean => {
     if (command.kind === "select-team-size") {
       return pickTeamSize(member, command.size);
@@ -1501,22 +1548,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         command.kind === "vote" ||
         command.kind === "choose-team" ||
         (command.kind === "claim" &&
-          (lock.claimers.includes(member.id) ||
-            (command.slot !== null && (lock.claimers[command.slot] ?? null) !== null))))
+          (lock.claimers.includes(member.id) || (lock.claimers[command.slot] ?? null) !== null)))
     ) {
       refuse(member.id, "ascent-locked");
       return false;
     }
     switch (command.kind) {
-      case "ready": {
-        const changed = member.ready !== command.ready;
-        member.ready = command.ready;
-        if (command.ready && everyoneReady()) {
-          endStage(lobby);
-          return false;
-        }
-        return changed;
-      }
       case "propose": {
         if (lobby.stage !== "vote") {
           return false;
@@ -1559,29 +1596,19 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         if (lobby.stage !== "vote") {
           return false;
         }
-        if (command.proposerId === null) {
-          return side.votes.delete(member.id);
-        }
         if (!side.proposals.has(command.proposerId)) {
           refuse(member.id, "invalid-vote");
           return false;
         }
-        const changed = side.votes.get(member.id) !== command.proposerId;
+        const changed = side.votes.get(member.id) !== command.proposerId || !member.ready;
         side.votes.set(member.id, command.proposerId);
-        return changed;
+        return markReady(lobby, member) && changed;
       }
       case "claim": {
         if (lobby.stage !== "claim") {
           return false;
         }
         const held = side.claims.indexOf(member.id);
-        if (command.slot === null) {
-          if (held < 0) {
-            return false;
-          }
-          side.claims[held] = null;
-          return true;
-        }
         const { slot } = command;
         if (!Number.isInteger(slot) || slot < 0 || slot >= side.claims.length) {
           refuse(member.id, "invalid-slot");
@@ -1598,7 +1625,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           side.claims[held] = null;
         }
         side.claims[slot] = member.id;
-        return true;
+        return markReady(lobby, member);
       }
       default:
         // The lobby's own choices were made before the Team Lobby began.
@@ -2101,6 +2128,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         }
         for (const [proposerId, builds] of shown) {
           tellProposalBuilds(returningSide, proposerId, builds, from);
+        }
+        // Its vote or seat stands (#2872); it was all the stage waited for.
+        returning.ready = hasNothingLeftToDo(teamLobby, side, returning);
+        if (everyoneReady()) {
+          endStage(teamLobby);
+          return;
         }
       }
       beginCountdown();

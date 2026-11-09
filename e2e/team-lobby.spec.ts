@@ -132,14 +132,11 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
       host.getByRole("button", { name: "Host's team build" }).locator(".team-lobby-token"),
     ).toHaveText(["G"]);
 
-    // Everyone ready ends the vote early.
-    await host.getByRole("button", { name: "Ready", exact: true }).click();
-    await guest.getByRole("button", { name: "Ready", exact: true }).click();
+    // The last vote ends the stage early.
+    await host.getByRole("button", { name: "Host's team build" }).click();
     for (const page of [host, guest]) {
       await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
-      await expect(page.locator(".screen-team-lobby")).toContainText("Most votes");
       await expect(page.locator(".team-lobby-seat")).toHaveCount(4);
-      await expect(page.locator(".play-card.is-chosen .play-card-member")).toHaveCount(4);
     }
 
     // A seat is its character held over its skills, not its name (#1863).
@@ -150,12 +147,10 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
     // Seats: the host the first, the guest the second; bots get the other two.
     await host.locator(".team-lobby-seat").nth(0).click();
     await expect(guest.locator(".team-lobby-seat").nth(0)).toBeDisabled();
-    await guest.locator(".team-lobby-seat").nth(1).click();
-    await expect(host.locator(".team-lobby-seat").nth(1)).toContainText("Guest");
-    // The other two seats are nobody's yet: bots are made for them at the end, unmarked here.
+    // The other seats are nobody's yet: bots are made for them at the end, unmarked here.
     await expect(host.locator(".screen-team-lobby .bot-tag")).toHaveCount(0);
-    await host.getByRole("button", { name: "Ready", exact: true }).click();
-    await guest.getByRole("button", { name: "Ready", exact: true }).click();
+    // The last seat taken ends the stage.
+    await guest.locator(".team-lobby-seat").nth(1).click();
 
     await expect(host.locator(".hud-skills .hud-skill").first()).toHaveAttribute(
       "data-skill-id",

@@ -17,9 +17,14 @@ clock so a vote cannot stall the match.
 **The lobby host is authoritative for the vote and the claims**, as it
 is for the lobby. A lobby hosted from Team Play (`teamLobby: true`)
 goes, once everyone is ready, to the `"team-lobby"` phase: a `"vote"`,
-then a `"claim"`, each `TEAM_LOBBY_STAGE_SECONDS` (60) on the lobby's
-clock, both sides on one clock and one stage, each ending early once
-every human on both sides is ready.
+then a `"claim"`, of `TEAM_LOBBY_VOTE_SECONDS` and
+`TEAM_LOBBY_CLAIM_SECONDS` (30 each, #2872) on the lobby's clock, both
+sides on one clock and one stage, each ending early once every human on
+both sides is ready. Ready is not a toggle here: casting a vote readies a
+player for the vote, taking a seat for the claim. A vote or a seat can
+move, never be withdrawn. A lone human on a side of one, and whoever holds
+a locked Heroes' Ascent seat or has no seat left to take, is ready from
+the claim's start.
 
 **A side's size is frozen when the Team Lobby starts**, humans and bots,
 at most `MAX_TEAM_LOBBY_SIDE` (8, a GW1 team). Only proposals of exactly
