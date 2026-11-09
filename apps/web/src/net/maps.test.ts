@@ -88,6 +88,7 @@ describe("randomArenaMapPool", () => {
               "blackwater-ford",
               "mosslit-cairns",
               "wardens-gallery",
+              "brazen-causeway",
               "scarred-earth",
               "moss-vale",
               "elonian-plateau",
@@ -138,6 +139,7 @@ describe("team sizes (#2108)", () => {
       "barrow-field",
       "cinder-sanctum",
       "mosslit-cairns",
+      "brazen-causeway",
       "the-courtyard",
       "wardens-gallery",
     ]);
@@ -252,6 +254,7 @@ describe("team sizes (#2108)", () => {
       "blackwater-ford",
       "mosslit-cairns",
       "wardens-gallery",
+      "brazen-causeway",
       "scarred-earth",
     ]);
   });
@@ -307,6 +310,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       ["barrow-field", "priest-annihilation"],
       ["cinder-sanctum", "relic-run"],
       ["mosslit-cairns", "capture-points"],
+      ["brazen-causeway", "priest-annihilation"],
       ["the-courtyard", "king-of-the-hill"],
       ["wardens-gallery", "capture-points"],
       ["hall-of-heroes", "king-of-the-hill"],
@@ -317,6 +321,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       "Barrow Field",
       "Cinder Sanctum",
       "Mosslit Cairns",
+      "The Brazen Causeway",
       "The Courtyard",
       "The Warden's Gallery",
       "Hall of Heroes",
@@ -358,6 +363,7 @@ describe("hostMap (#476)", () => {
           "blackwater-ford",
           "mosslit-cairns",
           "wardens-gallery",
+          "brazen-causeway",
           "guild-hall-isle",
           "broken-tower",
           "cinder-sanctum",

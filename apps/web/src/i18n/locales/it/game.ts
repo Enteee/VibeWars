@@ -2140,6 +2140,7 @@ export default {
     "blackwater-ford": "Guado dell'acqua nera",
     "mosslit-cairns": "Tumuli muschiosi",
     "wardens-gallery": "La galleria del guardiano",
+    "brazen-causeway": "La Strada di bronzo",
     "scarred-earth": "Terra sfregiata",
     "training-hall": "Sala d'addestramento",
     "training-pillars": "Pilastri d'addestramento",

@@ -205,6 +205,7 @@ describe("the arena set (#444)", () => {
         "blackwater-ford",
         "mosslit-cairns",
         "wardens-gallery",
+        "brazen-causeway",
         "scarred-earth",
         "sandstone-steps",
         "frozen-crossing",
@@ -226,6 +227,7 @@ describe("the arena set (#444)", () => {
     expect(MAPS.filter((map) => map.mode === "priest-annihilation").map((map) => map.id)).toEqual([
       "barrow-field",
       "blackwater-ford",
+      "brazen-causeway",
       "jungle-ruins",
     ]);
     expect(MAPS.filter((map) => map.mode === "guild-battle").map((map) => map.id)).toEqual([

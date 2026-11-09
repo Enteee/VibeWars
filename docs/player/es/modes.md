@@ -320,10 +320,10 @@ espera o, para los ganadores, sale sin volver a la cola.
 
 ## Ascenso de los Héroes
 
-Un Ascenso de los Héroes en cola son ocho rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Barrow Field (Aniquilación de sacerdote), Cinder
-Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Courtyard (Rey
+Un Ascenso de los Héroes en cola son nueve rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Barrow Field (Aniquilación de sacerdote), Cinder
+Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Brazen Causeway (Aniquilación de sacerdote), The Courtyard (Rey
 de la colina), The Warden's Gallery (Puntos de captura) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
-buscas un equipo: `Round 2 of 8 · Blackwater Ford`. Solo te enfrentas a un equipo de
+buscas un equipo: `Round 2 of 9 · Blackwater Ford`. Solo te enfrentas a un equipo de
 tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. Una ronda en
 un mapa hecho para tres equipos espera a tres; dos equipos que hayan esperado 30
 segundos a un tercero juegan entre ellos, y también dos cuyo tercero nunca aparece
@@ -357,7 +357,7 @@ Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow 
 8v8, tres túneles sinuosos alrededor de una roca central), **Blackwater Ford**
 (Aniquilación de sacerdote 8v8 en un vado diminuto, las bases casi a la vista, el
 sacerdote resucitando a sus muertos cada 2 minutos) y **Mosslit Cairns** (Puntos de
-captura 8v8, cinco túmulos en un zigzag poco profundo entre las bases).
+captura 8v8, cinco túmulos en un zigzag poco profundo entre las bases). La cuarta es **The Brazen Causeway** (Aniquilación de sacerdote 8v8 en un anillo alrededor de un foso: junto a la puerta de cada base pasa un hueco estrecho, y la puerta solo está abierta mientras alguien de su equipo pise la placa de la cerradura).
 
 Un mapa puede tener **puertas**: muros que detienen cuerpos, disparos y visión
 mientras están cerradas. Colócate en la placa de presión de una puerta para abrirla.
