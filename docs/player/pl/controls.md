@@ -67,7 +67,7 @@ Poza meczem górny pasek zawiera **[?]** (tę Pomoc), **⚙** (Opcje),
 **♪** (muzyka: co gra i jak głośno), wyciszenie dźwięku oraz pełny ekran. W meczu te same przyciski,
 poza Lobby, są w prawym górnym rogu ekranu. W wąskim oknie te ikony oraz
 pozostałe przyciski ekranu chowają się pod **⋯**; na wierzchu zostaje tylko główny przycisk.
-⚙ otwiera Opcje jako okno pod paskiem, z ekranem wciąż widocznym za nim; zamyka je Esc, × lub kliknięcie poza oknem.
+⚙ otwiera Opcje jako okno pod paskiem, z ekranem wciąż widocznym za nim; zamyka je Esc, × lub kliknięcie poza oknem. W sekcji **Wyświetlanie** przełącznik **Oświetlenie** włącza lub wyłącza światło i cień oświetlonej mapy, od razu, także w meczu.
 Pomoc zamyka × w jej prawym górnym rogu, Esc lub ponowne naciśnięcie [?].
 
 **Podziel się bitem ze swoim lobby.** W edytorze bitów (♪, potem **Edytuj**)

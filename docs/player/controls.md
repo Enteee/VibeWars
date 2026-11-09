@@ -65,7 +65,7 @@ Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),
 **♪** (music: what plays, and how loud), the sound mute and fullscreen. In a match the same buttons,
 but Lobby, sit at the top right of the screen. In a narrow window, these icons and
 the screen's other buttons fold into **⋯**; only its main button stays out.
-⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it.
+⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it. Under **Display**, **Lighting** turns a lit map's light and shade on or off, at once, even in a match.
 Help closes with the × at its top right, Esc, or another press of [?].
 
 **Share a beat with your lobby.** In the beat editor (♪, then **Edit**),

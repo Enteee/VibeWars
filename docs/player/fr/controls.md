@@ -71,7 +71,7 @@ volume), la coupure du son et le plein écran. En match, les mêmes boutons,
 sauf Salon, sont en haut à droite de l'écran. Dans une fenêtre étroite, ces
 icônes et les autres boutons de l'écran se replient dans **⋯** ; seul son
 bouton principal reste visible. ⚙ ouvre les Options dans une fenêtre sous la
-barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme.
+barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme. Sous **Affichage**, **Éclairage** active ou coupe la lumière et l'ombre d'une carte éclairée, aussitôt, même en match.
 L'Aide se ferme avec le × en haut à droite, Esc, ou un nouvel appui sur [?].
 
 **Partage un beat avec ton salon.** Dans l'éditeur de beat (♪, puis
