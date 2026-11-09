@@ -70,9 +70,10 @@ export interface FormGroupsInput {
   readonly ignored: ReadonlySet<string>;
   /**
    * A ticket's `ascentRound` played: Heroes' Ascent's are told apart
-   * (#1996), and every other mode's is `null`.
+   * (#1996), and every other mode's is `null`. `undefined` for a round
+   * this build has no map for: its tickets are wrong data, and dropped.
    */
-  readonly round: (ascentRound: number | null) => QueueRound;
+  readonly round: (ascentRound: number | null) => QueueRound | undefined;
 }
 
 /**
@@ -167,7 +168,12 @@ function unclaimed(live: readonly QueueTicket[]): (ticket: QueueTicket) => boole
 function liveQueue(input: FormGroupsInput): QueueTicket[] {
   const live = liveTickets(input);
   const own = unclaimed(live);
-  return live.filter((ticket) => !input.ignored.has(ticket.ticketId) && own(ticket));
+  return live.filter(
+    (ticket) =>
+      !input.ignored.has(ticket.ticketId) &&
+      own(ticket) &&
+      input.round(ticket.ascentRound) !== undefined,
+  );
 }
 
 /** A ticket and where it stands in the queue. */
@@ -316,7 +322,7 @@ function skipPairs(
   const reaches = (a: QueueTicket, b: QueueTicket): boolean => !a.hardNat || !b.hardNat;
   const alone = waiting.filter(
     (ticket) =>
-      round(ticket.ascentRound).skipping &&
+      round(ticket.ascentRound)?.skipping === true &&
       !waiting.some(
         (other) =>
           other !== ticket && other.ascentRound === ticket.ascentRound && reaches(ticket, other),
@@ -357,7 +363,7 @@ function roundGroups(
     takeGroups(
       queue.filter((ticket) => ticket.ascentRound === ascentRound),
       mode,
-      round(ascentRound).teamCount,
+      round(ascentRound)?.teamCount ?? 2,
       now,
     ).map((group) => ({ group, ascentRound })),
   );
@@ -448,7 +454,7 @@ export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]>
     const ids = group.map((ticket) => ticket.ticketId).sort(compare);
     const groupId = await sha256Hex(ids.join("\n"));
     const hostTicketId = await hostOf(groupId, group);
-    const { mapPool } = input.round(ascentRound);
+    const mapPool = input.round(ascentRound)?.mapPool ?? [];
     const mapId = mapPool[createRng(seedFromString(`${groupId}:map`)).nextInt(0, mapPool.length)];
     if (hostTicketId === undefined || mapId === undefined) {
       throw new Error("formGroups: an empty group or map pool");

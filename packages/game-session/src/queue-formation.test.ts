@@ -478,6 +478,18 @@ describe("team modes (ADR-0042)", () => {
         }),
       });
 
+    it("drops a ticket at a round with no map, and the others still form", async () => {
+      const groups = await formGroups({
+        tickets: [hero(1, 2), hero(2, 2), hero(3, 7)],
+        now: NOW,
+        mode: "heroes-ascent",
+        ignored: new Set(),
+        round: (at) => (at === 7 ? undefined : { mapPool: ["map"], teamCount: 2, skipping: false }),
+      });
+      expect(groups).toHaveLength(1);
+      expect(groups[0]?.parties.flat()).not.toContain(hero(3, 7).ticketId);
+    });
+
     it("never groups sides at different rounds, even the only two queued", async () => {
       const tickets = [hero(1, 0), hero(2, 1)];
       expect(await formAt(tickets, 0, "broken-tower")).toEqual([]);

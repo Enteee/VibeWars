@@ -61,6 +61,7 @@ import {
   hostMap,
   mapTeamSizes,
   modeMapIds,
+  ASCENT_PROGRESSION,
   queueMapPool,
   queueSkipping,
   queueTeamCount,
@@ -745,11 +746,14 @@ export function enterQueue(
       ...(party === undefined ? {} : { party: party.party }),
       now: () => Date.now(),
       newTicketKey: () => queue.newTicketKey(),
-      round: (round) => ({
-        mapPool: queueMapPool(mode, round),
-        teamCount: queueTeamCount(mode, round),
-        skipping: queueSkipping(mode, round),
-      }),
+      round: (round) =>
+        round !== null && round >= ASCENT_PROGRESSION.length
+          ? undefined
+          : {
+              mapPool: queueMapPool(mode, round),
+              teamCount: queueTeamCount(mode, round),
+              skipping: queueSkipping(mode, round),
+            },
       hardNat,
     });
     client = started;
