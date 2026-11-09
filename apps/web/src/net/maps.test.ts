@@ -91,7 +91,7 @@ describe("randomArenaMapPool", () => {
               "guild-hall-isle",
               "broken-tower",
               "cinder-sanctum",
-              "the-courtyard",
+              "threefold-keep",
               "hall-of-heroes-king",
               "hall-of-heroes-relic",
               "hall-of-heroes-capture",
@@ -153,7 +153,7 @@ describe("team sizes (#2108)", () => {
       "cinder-sanctum",
       "mosslit-cairns",
       "brazen-causeway",
-      "the-courtyard",
+      "threefold-keep",
       "wardens-gallery",
     ]);
   });
@@ -259,7 +259,7 @@ describe("team sizes (#2108)", () => {
       "guild-hall-isle",
       "cinder-sanctum",
       "broken-tower",
-      "the-courtyard",
+      "threefold-keep",
       "hall-of-heroes-king",
       "hall-of-heroes-relic",
       "hall-of-heroes-capture",
@@ -352,7 +352,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       ["cinder-sanctum", "relic-run"],
       ["mosslit-cairns", "capture-points"],
       ["brazen-causeway", "priest-annihilation"],
-      ["the-courtyard", "king-of-the-hill"],
+      ["threefold-keep", "king-of-the-hill"],
       ["wardens-gallery", "capture-points"],
       ["hall-of-heroes-king", "king-of-the-hill"],
     ]);
@@ -363,7 +363,7 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       "Cinder Sanctum",
       "Mosslit Cairns",
       "The Brazen Causeway",
-      "The Courtyard",
+      "Threefold Keep",
       "The Warden's Gallery",
       "Hall of Heroes",
     ]);
@@ -392,7 +392,7 @@ describe("hostMap (#476)", () => {
     expect(hostMap("jungle-ruins")?.mode).toBe("priest-annihilation");
     expect(hostMap("guild-hall-isle")?.mode).toBe("guild-battle");
     expect(hostMap("broken-tower")?.mode).toBe("relic-run");
-    expect(hostMap("the-courtyard")?.mode).toBe("king-of-the-hill");
+    expect(hostMap("threefold-keep")?.mode).toBe("king-of-the-hill");
     expect(hostMap("scarred-earth")?.mode).toBe("capture-points");
     expect(hostMap("scarred-earth")?.capturePoints).toHaveLength(5);
     for (const map of ARENA_MAPS.filter(
@@ -408,7 +408,7 @@ describe("hostMap (#476)", () => {
           "guild-hall-isle",
           "broken-tower",
           "cinder-sanctum",
-          "the-courtyard",
+          "threefold-keep",
           "hall-of-heroes-king",
           "hall-of-heroes-relic",
           "hall-of-heroes-capture",
@@ -461,19 +461,20 @@ describe("hostMap (#476)", () => {
     });
     expect(mapRelicField("broken-tower", 2)).toEqual(hostMap("broken-tower")?.relicField);
     expect(hostMap("guild-hall-isle")?.relicField).toBeUndefined();
-    expect(hostMap("the-courtyard")?.relicField).toBeUndefined();
+    expect(hostMap("threefold-keep")?.relicField).toBeUndefined();
     expect(mapRelicField("training-hall", 2)).toBeUndefined();
   });
 
   it("carries a ghost map's level and ghost spawns, King of the Hill's altar, and none elsewhere (#1377, #2689)", () => {
     expect(hostMap("hall-of-heroes-king")?.ghostField?.level).toBe(28);
-    expect(hostMap("the-courtyard")?.ghostField).toEqual({
+    expect(hostMap("threefold-keep")?.ghostField).toEqual({
       level: 24,
-      altar: { x: 1500, y: 900 },
+      altar: { x: 1600, y: 1100 },
       altarLayer: 0,
       spawns: [
-        { team: 0, position: { x: 120, y: 900 }, layer: 0 },
-        { team: 1, position: { x: 2880, y: 900 }, layer: 0 },
+        { team: 0, position: { x: 120, y: 1100 }, layer: 0 },
+        { team: 1, position: { x: 3080, y: 1100 }, layer: 0 },
+        { team: 2, position: { x: 1600, y: 120 }, layer: 0 },
       ],
     });
     expect(hostMap("broken-tower")?.ghostField).toBeUndefined();

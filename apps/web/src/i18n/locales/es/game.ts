@@ -2132,7 +2132,7 @@ export default {
     "guild-hall-isle": "Isla del gremio",
     "cinder-sanctum": "Santuario de ceniza",
     "broken-tower": "Torre rota",
-    "the-courtyard": "El patio",
+    "threefold-keep": "La Fortaleza Triple",
     "hall-of-heroes-capture": "Salón de los héroes",
     "hall-of-heroes-king": "Salón de los héroes",
     "hall-of-heroes-relic": "Salón de los héroes",

@@ -6,6 +6,7 @@ import {
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
   PRIEST_ANNIHILATION_MATCH_RULES,
+  THREEFOLD_KEEP_MATCH_RULES,
   PRIEST_WAVE_SECONDS,
   RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
@@ -195,9 +196,7 @@ describe("Relic Run bots (#2581)", () => {
 });
 
 describe("King of the Hill bots (#2582)", () => {
-  const map = loadAllMaps().find(
-    (candidate) => candidate.mode === "king-of-the-hill" && candidate.teams === 2,
-  );
+  const map = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
 
   const hill = (arena: MapData, seed: string, participants: readonly ParticipantSpec[]) => {
     const altar = arena.objectives.find((objective) => objective.kind === "altar");
@@ -212,7 +211,7 @@ describe("King of the Hill bots (#2582)", () => {
         level: 24,
         altar: altar.position,
         spawns: arena.objectives.flatMap((objective) =>
-          objective.kind === "ghost-spawn"
+          objective.kind === "ghost-spawn" && objective.team < 2
             ? [{ team: objective.team, position: objective.position }]
             : [],
         ),
@@ -274,9 +273,9 @@ describe("King of the Hill bots (#2582)", () => {
    * first point (#2628), its damage dealers spiking (#2631).
    */
   const mirror = (seed: string) => {
-    const courtyard = loadAllMaps().find((candidate) => candidate.id === "the-courtyard");
-    if (courtyard === undefined) throw new Error("no map the-courtyard");
-    const sim = hill(courtyard, seed, casterBots(courtyard, 2));
+    const keep = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
+    if (keep === undefined) throw new Error("no map threefold-keep");
+    const sim = hill(keep, seed, casterBots(keep, 2));
     let ghostDiedAt: number | undefined;
     let decidedAt: number | undefined;
     for (let t = 0; t < 90 && decidedAt === undefined; t += DT) {
@@ -319,9 +318,9 @@ describe("King of the Hill bots (#2582)", () => {
    * team that wiped the other, else the one with more points, else none.
    */
   const winner = (seed: string) => {
-    const courtyard = loadAllMaps().find((candidate) => candidate.id === "the-courtyard");
-    if (courtyard === undefined) throw new Error("no map the-courtyard");
-    const sim = hill(courtyard, seed, casterBots(courtyard, 4));
+    const keep = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
+    if (keep === undefined) throw new Error("no map threefold-keep");
+    const sim = hill(keep, seed, casterBots(keep, 4));
     for (let t = 0; t < 120 && sim.outcome.winningTeam === undefined; t += DT) {
       sim.step(DT);
     }
@@ -399,6 +398,41 @@ describe("Capture Points bots (#2580)", () => {
       t <= CAPTURE_POINTS_MATCH_RULES.timeLimitSeconds + 1 && sim.phase !== "finished";
       t += DT
     ) {
+      sim.step(DT);
+    }
+    expect(sim.phase).toBe("finished");
+  });
+
+  it("three teams of bots play Threefold Keep to time, doors and all (#2699)", () => {
+    const keep = loadAllMaps().find((candidate) => candidate.id === "threefold-keep");
+    if (keep === undefined) throw new Error("no map threefold-keep");
+    const altar = keep.objectives.find((objective) => objective.kind === "altar");
+    if (altar === undefined) throw new Error("no altar");
+    const rules = { ...THREEFOLD_KEEP_MATCH_RULES, timeLimitSeconds: 60 };
+    const sim = new MatchSimulation({
+      seed: "keep",
+      ruleset: RULESET,
+      teamCount: 3,
+      walls: allWallSegments(keep.walls),
+      gates: keep.gates.map((gate) => ({
+        segments: wallToSegments(gate.wall),
+        plate: gate.plate,
+        team: gate.team,
+      })),
+      bounds: { width: keep.width, height: keep.height },
+      matchRules: rules,
+      ghostField: {
+        level: 24,
+        altar: altar.position,
+        spawns: keep.objectives.flatMap((objective) =>
+          objective.kind === "ghost-spawn"
+            ? [{ team: objective.team, position: objective.position }]
+            : [],
+        ),
+      },
+      participants: casterBots(keep, 2, 0, [0, 1, 2]),
+    });
+    for (let t = 0; t <= rules.timeLimitSeconds + 1 && sim.phase !== "finished"; t += DT) {
       sim.step(DT);
     }
     expect(sim.phase).toBe("finished");
@@ -504,8 +538,13 @@ describe("The Brazen Causeway (#2697)", () => {
  * them: one would rightly leave an objective for a hurt ally. Team 1's
  * builds are team 0's moved on by `shift`.
  */
-function casterBots(map: MapData, perTeam: number, shift = 0): ParticipantSpec[] {
-  return [0, 1].flatMap((team) =>
+function casterBots(
+  map: MapData,
+  perTeam: number,
+  shift = 0,
+  teams: readonly number[] = [0, 1],
+): ParticipantSpec[] {
+  return teams.flatMap((team) =>
     map.spawnPoints
       .filter((spawn) => spawn.team === team)
       .slice(0, perTeam)

@@ -46,6 +46,10 @@ export interface MatchRules {
   readonly deathPenalty: boolean;
   /** A Relic Run won at once by this many points ahead (#2695); without it, only at time. */
   readonly leadToWin?: number | undefined;
+  /** King of the Hill stops scoring a team at this many points (#2699); without it, no cap. */
+  readonly pointCap?: number | undefined;
+  /** A team wins at once when every foe stands at `MORALE_FLOOR` (#2699); without it, it plays on. */
+  readonly floorWins?: boolean | undefined;
   /** Of Relic Run teams tied at time, the last to score wins (#2695); without it, a draw. */
   readonly lastScorerBreaksTie?: boolean | undefined;
   /** A team all dead is not beaten: its base raises it on the wave (#2695); without it, a wipe loses. */
@@ -141,6 +145,18 @@ export const KING_OF_THE_HILL_MATCH_RULES: MatchRules = Object.freeze({
   ...ANNIHILATION_MATCH_RULES,
   victory: "king-of-the-hill",
   timeLimitSeconds: 480,
+});
+
+/**
+ * Threefold Keep (#2699, GW1): King of the Hill, at most 12 points a team,
+ * of teams tied at time the last to score wins, and every foe at
+ * `MORALE_FLOOR` is a win at once.
+ */
+export const THREEFOLD_KEEP_MATCH_RULES: MatchRules = Object.freeze({
+  ...KING_OF_THE_HILL_MATCH_RULES,
+  pointCap: 12,
+  lastScorerBreaksTie: true,
+  floorWins: true,
 });
 
 /**
@@ -609,6 +625,7 @@ function evaluateRelicRun(
   }
   return (
     evaluateWipe(standing, rules) ??
+    evaluateFloorWin(standing, rules) ??
     evaluateRelicLead(inGame, rules) ??
     evaluateRelicTie(inGame, elapsedSeconds, rules) ??
     evaluateScoreAtTime(inGame, elapsedSeconds, rules)
@@ -633,6 +650,18 @@ function evaluateHallsAtTime(
   const tied = [...score.byTeam].filter(([, points]) => points === best).map(([team]) => team);
   const winner = tied.length === 1 ? tied[0] : recent.find((team) => tied.includes(team));
   return { phase: "finished", winningTeam: winner, reason: "time" };
+}
+
+/** The one team in play not at `MORALE_FLOOR` to the last member, with every foe that is (#2699). */
+function evaluateFloorWin(standing: MatchStanding, rules: MatchRules): MatchOutcome | undefined {
+  if (rules.floorWins !== true) {
+    return undefined;
+  }
+  const living = inPlay(standing, rules);
+  const above = living.filter(([, team]) => team.morale > MORALE_FLOOR * team.members);
+  return living.length > 1 && above.length === 1
+    ? { phase: "finished", winningTeam: above[0]?.[0], reason: "morale" }
+    : undefined;
 }
 
 /** The last team in play wins once the others are out; `undefined` while two are in. */

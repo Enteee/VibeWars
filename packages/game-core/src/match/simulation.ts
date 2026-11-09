@@ -6325,7 +6325,10 @@ export class MatchSimulation {
     if (taken) {
       this.#refreshBotObjectives();
     }
-    if (scored !== null) {
+    if (
+      scored !== null &&
+      (this.#score.byTeam.get(scored) ?? 0) < (this.#matchRules?.pointCap ?? Infinity)
+    ) {
       this.#score = addPoint(this.#score, scored);
       this.#recentScoringTeams = withLatestTeam(this.#recentScoringTeams, scored);
     }

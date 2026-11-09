@@ -7,6 +7,8 @@ import {
   createPathFinder,
   Vec,
   distancePointToSegment,
+  firstHit,
+  GATE_PLATE_REACH_UNITS,
   hasLineOfSight,
   loadoutOf,
   nearestStandable,
@@ -17,7 +19,7 @@ import {
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { allWallSegments } from "./geometry.js";
+import { allWallSegments, wallToSegments } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps, loadMap } from "./loader.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
@@ -202,7 +204,7 @@ describe("the arena set (#444)", () => {
         "guild-hall-isle",
         "broken-tower",
         "cinder-sanctum",
-        "the-courtyard",
+        "threefold-keep",
         "hall-of-heroes-king",
         "hall-of-heroes-relic",
         "hall-of-heroes-capture",
@@ -247,7 +249,7 @@ describe("the arena set (#444)", () => {
     ]);
     expect(MAPS.filter((map) => map.mode === "king-of-the-hill").map((map) => map.id)).toEqual([
       "hall-of-heroes-king",
-      "the-courtyard",
+      "threefold-keep",
     ]);
     expect(MAPS.filter((map) => map.mode === "capture-points").map((map) => map.id)).toEqual([
       "hall-of-heroes-capture",
@@ -546,7 +548,7 @@ function hill(id: string) {
   const altar = map.objectives.find((objective) => objective.kind === "altar");
   if (altar === undefined) throw new Error(`no altar on ${id}`);
   const ghosts = map.objectives.filter((objective) => objective.kind === "ghost-spawn");
-  const walls = allWallSegments(map.walls);
+  const walls = allWallSegments([...map.walls, ...map.gates.map((gate) => gate.wall)]);
   const finder = createPathFinder(
     buildNavGraph(walls, { width: map.width, height: map.height }, RADIUS),
   );
@@ -624,7 +626,7 @@ function holdsTheHill(id: string, seats: readonly number[]): void {
       };
       const blocked = createPathFinder(
         buildNavGraph(
-          allWallSegments([...map.walls, cut]),
+          allWallSegments([...map.walls, ...map.gates.map((gate) => gate.wall), cut]),
           { width: map.width, height: map.height },
           RADIUS,
         ),
@@ -647,12 +649,29 @@ function holdsTheHill(id: string, seats: readonly number[]): void {
   });
 }
 
-describe("The Courtyard (#2552)", () => {
-  holdsTheHill("the-courtyard", [4, 8]);
-  const { altar, walls } = hill("the-courtyard");
+describe("Threefold Keep (#2699)", () => {
+  holdsTheHill("threefold-keep", [4, 8]);
+  const { map, altar, walls } = hill("threefold-keep");
 
-  it("rings the altar with four pillar clusters, entered from the four diagonals", () => {
-    expect(sightLines(altar, CARDINALS, walls)).toEqual([false, false, false, false]);
+  it("seats three teams, each with a ghost, and plays the Keep's rules", () => {
+    expect(map).toMatchObject({ teams: 3, keep: true });
+    expect(map.spawnPoints.filter((spawn) => spawn.team === 2)).toHaveLength(8);
+  });
+
+  it("opens every door only from inside: its plate is out of reach from the far side", () => {
+    expect(map.gates).toHaveLength(4);
+    for (const gate of map.gates) {
+      expect(gate.oneWay, gate.id).toBe(true);
+      expect(gate.team, gate.id).toBeNull();
+      expect(firstHit(gate.plate, altar, wallToSegments(gate.wall)), gate.id).toBeUndefined();
+      const nearest = Math.min(
+        ...wallToSegments(gate.wall).map((side) => distancePointToSegment(gate.plate, side)),
+      );
+      expect(nearest, gate.id).toBeGreaterThan(GATE_PLATE_REACH_UNITS);
+    }
+  });
+
+  it("leaves the keep's four corners open: with every door shut the altar is reachable", () => {
     expect(sightLines(altar, DIAGONALS, walls)).toEqual([true, true, true, true]);
   });
 });

@@ -157,9 +157,11 @@ Aquí la Carrera de reliquias del Ascenso de los Héroes se juega al revés. Cad
 
 **Lleva a tu Héroe Fantasmal al altar y mantenlo.** Cada equipo tiene un **Héroe
 Fantasmal** en su base, un fantasma que lucha con un hacha y que nadie juega. El
-**altar** está en el centro, a la misma distancia de ambas bases. En **The
-Courtyard** está en un patio abierto rodeado por cuatro grupos de pilares, con
-entrada por las cuatro esquinas. **Hall of Heroes**, el mapa de Rey de la colina
+**altar** está en el centro, a la misma distancia de ambas bases. En **Threefold
+Keep**, tres equipos (dos si no hay un tercero libre) luchan por él dentro de un
+recinto amurallado. Sus puertas solo se abren desde dentro, con una placa: para
+entrar, rodéalo hasta una esquina abierta. Como máximo 12 puntos por equipo, y si
+todos los rivales están a -60 % de moral, ganas al instante. **Hall of Heroes**, el mapa de Rey de la colina
 que cierra el Ascenso de los Héroes, lo eleva sobre un estrado amurallado al
 oeste y al este, con una subida norte y otra sur flanqueadas de pilares.
 Selecciona a tu fantasma con un **clic derecho** y pulsa **Space** para decirle
@@ -171,7 +173,7 @@ cada vez que cambia, y el nombre sobre su cabeza muestra a su líder.
 
 Tu fantasma tiene 640 de salud, y blande su hacha con **Cyclone Axe**,
 **Disrupting Chop** y **Swift Chop**, tanto si sigue como si se queda. Es más
-fuerte cuanto más alto estés en el Ascenso: nivel 24 en The Courtyard, 28 en Hall
+fuerte cuanto más alto estés en el Ascenso: nivel 24 en Threefold Keep, 28 en Hall
 of Heroes. **Mata al fantasma del otro equipo** y cada miembro de tu equipo
 obtiene un **bonus de moral de +10%**, que primero elimina una penalización por
 muerte y nunca pasa de +10%. Mátalo otra vez cuando se levante y lo obtienes de
@@ -213,7 +215,7 @@ tu equipo no controla el altar, cada bot mata primero al Héroe Fantasmal del ot
 equipo en cuanto esté sobre el altar a su alcance: es el único enemigo que impide
 que tu fantasma lo reclame.
 
-Se juega en The Courtyard.
+Se juega en Threefold Keep.
 
 ## Puntos de captura
 
@@ -321,7 +323,7 @@ espera o, para los ganadores, sale sin volver a la cola.
 ## Ascenso de los Héroes
 
 Un Ascenso de los Héroes en cola son nueve rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Barrow Field (Aniquilación de sacerdote), Cinder
-Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Brazen Causeway (Aniquilación de sacerdote), The Courtyard (Rey
+Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Brazen Causeway (Aniquilación de sacerdote), Threefold Keep (Rey
 de la colina), The Warden's Gallery (Puntos de captura) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
 buscas un equipo: `Round 2 of 9 · Blackwater Ford`. Solo te enfrentas a un equipo de
 tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. La única excepción: desde la ronda 2, un equipo solo en su ronda durante 60 segundos puede adelantarse. Se enfrenta a un equipo que espere en cualquier ronda posterior antes de la Hall, ambos juegan el mapa del equipo más avanzado y el ganador sigue desde allí. Una ronda en

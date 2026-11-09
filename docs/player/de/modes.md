@@ -135,8 +135,7 @@ Hier läuft der Reliktlauf des Aufstiegs der Helden andersherum. Jede Basis hat 
 
 **Führe deinen Geisterhelden auf den Altar und halte ihn.** Jedes Team hat einen **Geisterhelden** in
 seiner Basis, einen Geist, der mit einer Axt kämpft und den niemand spielt. Der **Altar** ist in der
-Mitte, von beiden Basen gleich weit. In **The Courtyard** steht er in einem offenen Hof, umringt von vier
-Säulengruppen, und wird von den vier Ecken aus betreten. Die **Hall of Heroes**, die King-of-the-Hill-Karte
+Mitte, von beiden Basen gleich weit. In **Threefold Keep** kämpfen drei Teams (zwei, wenn kein drittes frei ist) in einer ummauerten Feste um ihn. Ihre Tore öffnen sich nur von innen, über eine Platte: Der Weg hinein führt um die Feste zu einer offenen Ecke. Höchstens 12 Punkte pro Team, und stehen alle Gegner bei -60 % Moral, gewinnst du sofort. Die **Hall of Heroes**, die King-of-the-Hill-Karte
 am Ende des Aufstiegs der Helden, hebt ihn auf ein Podest mit Mauern im Westen und Osten, über einen von
 Säulen gesäumten Aufgang im Norden oder Süden. Visiere deinen Geist mit **Rechtsklick** an und drück
 **Space**, damit er dir folgt: Er läuft mit dir und kämpft gegen das, was du bekämpfst. Drück noch einmal
@@ -146,8 +145,8 @@ Einblendung sagt, wem dein Geisterheld folgt, wann immer sich das ändert, und s
 seinen Anführer.
 
 Dein Geist hat 640 Leben und schwingt seine Axt mit **Cyclone Axe**, **Disrupting Chop** und **Swift
-Chop**, ob er folgt oder bleibt. Er wird stärker, je weiter oben im Aufstieg du bist: Stufe 24 in The
-Courtyard, 28 in der Hall of Heroes. **Töte den Geist des anderen Teams**, und jedes Mitglied deines Teams
+Chop**, ob er folgt oder bleibt. Er wird stärker, je weiter oben im Aufstieg du bist: Stufe 24 in Threefold
+Keep, 28 in der Hall of Heroes. **Töte den Geist des anderen Teams**, und jedes Mitglied deines Teams
 bekommt einen **Moralschub von +10 %**, der zuerst eine Todesstrafe aufhebt und nie über +10 % geht. Töte
 ihn noch einmal, nachdem er aufersteht, und du bekommst ihn erneut.
 
@@ -181,7 +180,7 @@ Zauberreichweite zu kämpfen. Solange dein Team den Altar nicht hält, tötet je
 anderen Teams, sobald er auf dem Altar in ihrer Reichweite steht: Er ist der einzige Gegner, der deinen Geist am
 Einnehmen hindert.
 
-The Courtyard spielt es.
+Threefold Keep spielt es.
 
 ## Punkte erobern
 
@@ -268,7 +267,7 @@ zurück. Ein Knopf unter dem Ergebnis überspringt die Wartezeit oder geht für 
 ## Aufstieg der Helden
 
 Ein Aufstieg der Helden aus der Warteschlange hat neun Runden, immer in dieser Reihenfolge: The Hollow Deep (Vernichtung), Blackwater Ford (Priestervernichtung), Barrow Field (Priestervernichtung), Cinder Sanctum (Reliktlauf),
-Mosslit Cairns (Punkte erobern), The Brazen Causeway (Priestervernichtung), The Courtyard (King of the Hill), The Warden's Gallery (Punkte erobern), dann die Hall of Heroes. Das Lobby-Fenster sagt dir,
+Mosslit Cairns (Punkte erobern), The Brazen Causeway (Priestervernichtung), Threefold Keep (King of the Hill), The Warden's Gallery (Punkte erobern), dann die Hall of Heroes. Das Lobby-Fenster sagt dir,
 wo du bist, während du ein Team suchst: `Runde 2 von 9 · Blackwater Ford`. Du triffst immer nur ein Team in derselben Runde
 und wartest so lange wie nötig: Keine Bots springen ein. Die einzige Ausnahme: Ab Runde 2 darf ein Team, das 60 Sekunden allein in seiner Runde wartet, vorrücken. Es trifft auf ein Team, das in einer beliebigen späteren Runde vor der Hall wartet, beide spielen die Karte des weiter fortgeschrittenen Teams, und der Sieger macht von dort aus weiter. Eine Runde auf einer Karte für drei Teams wartet auf drei; zwei
 Teams, die 30 Sekunden auf ein drittes gewartet haben, spielen stattdessen gegeneinander, ebenso zwei, deren drittes nie

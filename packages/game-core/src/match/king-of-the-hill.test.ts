@@ -5,6 +5,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { segment, type Segment } from "../geometry.js";
 import {
   KING_OF_THE_HILL_MATCH_RULES,
+  THREEFOLD_KEEP_MATCH_RULES,
   POINT_TICK_SECONDS,
   PRIEST_WAVE_SECONDS,
   SHRINE_INVULNERABLE_SECONDS,
@@ -20,7 +21,7 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
 
 /**
- * King of the Hill in the simulation (#1377), on The Courtyard (#2552): each
+ * King of the Hill in the simulation (#1377), on a small court: each
  * team's Ghostly Hero follows or stays at Space, claims the altar by
  * itself in 5 s through the cast path, and its team scores for holding
  * it; at 8 minutes the most points win, and a wipe ends it before.
@@ -44,7 +45,7 @@ function polygon(points: readonly Vec2[]): Segment[] {
   return points.map((point, index) => segment(point, points[(index + 1) % points.length] ?? point));
 }
 
-/** The Courtyard's walls (packages/game-maps/maps/the-courtyard). */
+/** A small court's walls: the arena of these tests. */
 const WALLS = [
   ...rect(60, 520, 260, 40),
   ...rect(2680, 1240, 260, 40),
@@ -400,6 +401,14 @@ describe("a King of the Hill match (#1377)", () => {
       Math.floor((SHORT.timeLimitSeconds - CLAIM_SECONDS) / POINT_TICK_SECONDS),
     );
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "time" });
+  });
+
+  it("stops scoring a team at the cap, and the clock runs on (#2699)", () => {
+    const CAPPED = { ...THREEFOLD_KEEP_MATCH_RULES, pointCap: 1, timeLimitSeconds: 70 };
+    const sim = held(CAPPED);
+    stepUntil(sim, () => sim.elapsedSeconds >= 66, 66);
+    expect(points(sim)[0]).toBe(1);
+    expect(sim.phase).toBe("active");
   });
 
   it("is ended at once by a wipe: a living ghost is no player", () => {

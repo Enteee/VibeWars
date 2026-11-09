@@ -2132,7 +2132,7 @@ export default {
     "guild-hall-isle": "Ilha do Salão da Guilda",
     "cinder-sanctum": "Santuário das Cinzas",
     "broken-tower": "Torre Quebrada",
-    "the-courtyard": "O Pátio",
+    "threefold-keep": "A Fortaleza Tripla",
     "hall-of-heroes-capture": "Salão dos Heróis",
     "hall-of-heroes-king": "Salão dos Heróis",
     "hall-of-heroes-relic": "Salão dos Heróis",

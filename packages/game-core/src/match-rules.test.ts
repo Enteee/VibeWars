@@ -20,6 +20,7 @@ import {
   nextHallSlotMs,
   type MatchScore,
   emptyScore,
+  THREEFOLD_KEEP_MATCH_RULES,
   evaluateMatch,
   type MatchRules,
   type MatchStanding,
@@ -87,6 +88,25 @@ describe("emptyScore / addPoint", () => {
 });
 
 describe("evaluateMatch", () => {
+  describe("Threefold Keep (#2699)", () => {
+    const rules = THREEFOLD_KEEP_MATCH_RULES;
+
+    it("is won at once when every foe stands at the morale floor", () => {
+      expect(
+        evaluateMatch(emptyScore([0, 1]), standing([0, 1, 0], [1, 1, -60]), 10, rules),
+      ).toEqual({
+        phase: "finished",
+        winningTeam: 0,
+        reason: "morale",
+      });
+    });
+
+    it("plays on while one foe of two is above the floor", () => {
+      const three = standing([0, 1, 0], [1, 0, -60], [2, 1, -45]);
+      expect(evaluateMatch(emptyScore([0, 1, 2]), three, 10, rules).phase).toBe("active");
+    });
+  });
+
   it("reports an active match before anything decisive happens", () => {
     expect(evaluateMatch(emptyScore([0, 1]), BOTH_ALIVE, 0, RULES).phase).toBe("active");
   });

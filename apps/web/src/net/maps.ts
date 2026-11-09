@@ -27,9 +27,10 @@ import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with 
 import mosslitCairns from "@vibewars/game-maps/maps/mosslit-cairns/map.json" with { type: "json" };
 import wardensGallery from "@vibewars/game-maps/maps/wardens-gallery/map.json" with { type: "json" };
 import hollowDeep from "@vibewars/game-maps/maps/hollow-deep/map.json" with { type: "json" };
-import theCourtyard from "@vibewars/game-maps/maps/the-courtyard/map.json" with { type: "json" };
+import threefoldKeep from "@vibewars/game-maps/maps/threefold-keep/map.json" with { type: "json" };
 import {
   FOE_RELIC_RUN_MATCH_RULES,
+  THREEFOLD_KEEP_MATCH_RULES,
   HALLS_MATCH_RULES,
   MATCH_MODES,
   isHallsMode,
@@ -89,7 +90,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   cinderSanctum,
   brokenTower,
   // King of the Hill's (#1377, #2552).
-  theCourtyard,
+  threefoldKeep,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
   hallOfHeroesKing,
   hallOfHeroesRelic,
@@ -244,7 +245,7 @@ export const ASCENT_PROGRESSION: readonly string[] = [
   "mosslit-cairns",
   // Golden Gates' slot.
   "brazen-causeway",
-  "the-courtyard",
+  "threefold-keep",
   "wardens-gallery",
   "hall-of-heroes-king",
 ];
@@ -543,6 +544,9 @@ export function mapMatchRules(mapId: string, mode: MatchMode): MatchRules {
   const map = ARENA_MAPS.find((candidate) => candidate.id === mapId);
   if (map?.halls === true && isHallsMode(mode)) {
     return HALLS_MATCH_RULES[mode];
+  }
+  if (map?.keep === true) {
+    return THREEFOLD_KEEP_MATCH_RULES;
   }
   return map?.relicCarry === "foe" ? FOE_RELIC_RUN_MATCH_RULES : MATCH_MODES[mode];
 }

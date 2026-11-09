@@ -13,7 +13,7 @@ two. Every map today has two; Heroes' Ascent brings the three-team ones.
 corpses until resurrected, and each death costs morale. Wipe the other
 team to win; after 8 minutes the highest total morale wins, and there is
 no draw. Every arena but Ember Pits, Jungle Ruins, Guild Hall Isle,
-Broken Tower, Cinder Sanctum, The Courtyard and Scarred Earth plays it.
+Broken Tower, Cinder Sanctum, Threefold Keep and Scarred Earth plays it.
 
 **Kill Count** (GW1's The Crag): the most kills in 3 minutes. The dead
 respawn at their team's spawn after 8 seconds, and there is no death
@@ -152,7 +152,7 @@ dead stay down and pay the death penalty, a wipe loses at once, and at
 **8 minutes** the most points win, equal points a draw; kills score
 nothing. The scoreboard reads `2 – 1 · ▲ 0:18 · 6:40`: the points,
 then the altar in the stand's slot, the holder's `▲` and the time to
-its next point, or a grey `▲ —`. The Courtyard plays it, and no
+its next point, or a grey `▲ —`. Threefold Keep plays it, and no
 Random Arena does.
 
 **Capture Points** (GW1's Heroes' Ascent, Forgotten Shrines, #1378):

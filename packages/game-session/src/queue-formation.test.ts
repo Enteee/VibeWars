@@ -533,7 +533,7 @@ describe("team modes (ADR-0042)", () => {
         formAt(
           tickets.map((ticket) => ({ ...ticket, heartbeatAt: now })),
           2,
-          "the-courtyard",
+          "threefold-keep",
           { teamCount: 3, now },
         );
 

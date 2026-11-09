@@ -866,6 +866,16 @@ describe("ghost maps (#2689)", () => {
       team: null,
     };
 
+    it("rejects a one-way gate whose plate is outside, or with no altar to be inside of", () => {
+      const altar = { kind: "altar", layer: 0, position: { x: 50, y: 60 } };
+      const oneWay = { ...gate, oneWay: true };
+      const outside = { ...oneWay, plate: { x: 150, y: 60 } };
+      expect(() => validateMapData({ ...validMap, gates: [oneWay] })).toThrow(/altar/);
+      expect(() => validateMapData({ ...validMap, objectives: [altar], gates: [outside] })).toThrow(
+        /altar/,
+      );
+    });
+
     it("accepts a neutral gate with its plate clear of every wall", () => {
       expect(validateMapData({ ...validMap, gates: [gate] }).gates).toHaveLength(1);
     });
