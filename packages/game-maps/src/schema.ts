@@ -12,6 +12,7 @@ import { z } from "zod";
 import {
   allWallSegments,
   pointInShape,
+  shapeVertices,
   shapeInBounds,
   shapesOverlap,
   wallToSegments,
@@ -68,6 +69,26 @@ const transitionSchema = z.object({
   from: layerSchema,
   to: layerSchema,
   area: shapeSchema,
+});
+
+/** The most points round one body of water (#2983): a curved shore is a polygon with more. */
+export const MAX_WATER_POINTS = 64;
+
+/** The most bodies of water on a map (#2983). */
+export const MAX_WATER_BODIES = 32;
+
+/**
+ * A body of water on one layer (#2983): deep water stops bodies as a wall
+ * does, but not sight, shots or spells; shallow water changes nothing in play.
+ */
+const waterSchema = z.object({
+  id: z.string().min(1),
+  layer: layerSchema,
+  depth: z.enum(["deep", "shallow"]),
+  area: z.discriminatedUnion("kind", [
+    rectWallSchema,
+    polygonWallSchema.extend({ points: z.array(vec2Schema).min(3).max(MAX_WATER_POINTS) }),
+  ]),
 });
 
 /** A colour as `0xRRGGBB`. */
@@ -377,6 +398,8 @@ export const mapDataSchema = z
     /** Required, may be empty, as `gates`. */
     transitions: z.array(transitionSchema),
     walls: z.array(wallSchema),
+    /** Its water (#2983); without it, the map has none. */
+    water: z.array(waterSchema).max(MAX_WATER_BODIES).optional(),
     spawnPoints: z.array(spawnPointSchema).min(1),
     /** Required, may be empty: a map without objectives says so. */
     objectives: z.array(objectiveSchema),
@@ -647,6 +670,94 @@ export const mapDataSchema = z
       }
     });
 
+    const water = map.water ?? [];
+    const waterIds = new Set<string>();
+    /** Whether a body at `point` would stand in any of `area`. */
+    const bodyIn = (point: Vec2Data, area: Shape): boolean =>
+      pointInShape(point, area) ||
+      wallToSegments(area).some((side) => distancePointToSegment(point, side) < BODY_RADIUS);
+    water.forEach((body, index) => {
+      layerInRange(body.layer, ["water", index, "layer"]);
+      if (waterIds.has(body.id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["water", index, "id"],
+          message: `water id ${body.id} is used twice`,
+        });
+      }
+      waterIds.add(body.id);
+      if (!shapeInBounds(body.area, map.width, map.height)) {
+        context.addIssue({
+          code: "custom",
+          path: ["water", index, "area"],
+          message: `water ${body.id} is outside the map`,
+        });
+      }
+      const decks = map.decks.filter((deck) => deck.layer === body.layer);
+      if (
+        body.layer > 0 &&
+        !shapeVertices(body.area).every((point) =>
+          decks.some((deck) => pointInShape(point, deck.footprint)),
+        )
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["water", index, "area"],
+          message: `water ${body.id} on layer ${String(body.layer)} is not on a deck`,
+        });
+      }
+      water.slice(0, index).forEach((other) => {
+        if (other.layer === body.layer && shapesOverlap(other.area, body.area)) {
+          context.addIssue({
+            code: "custom",
+            path: ["water", index, "area"],
+            message: `water ${body.id} overlaps water ${other.id}`,
+          });
+        }
+      });
+      if (body.depth === "shallow") {
+        return;
+      }
+      const blocked = (path: (string | number)[], what: string): void => {
+        context.addIssue({
+          code: "custom",
+          path: ["water", index, "area"],
+          message: `deep water ${body.id} covers ${what} (${path.join(".")})`,
+        });
+      };
+      map.spawnPoints.forEach((spawn, at) => {
+        if (spawn.layer === body.layer && bodyIn(spawn.position, body.area)) {
+          blocked(["spawnPoints", at], "a spawn");
+        }
+      });
+      map.objectives.forEach((objective, at) => {
+        const covered =
+          objective.layer === body.layer &&
+          (objective.kind === "start-line"
+            ? shapesOverlap(objective.area, body.area)
+            : bodyIn(objective.position, body.area));
+        if (covered) {
+          blocked(["objectives", at], `an objective, ${OBJECTIVE_NAMES[objective.kind]}`);
+        }
+      });
+      map.gates.forEach((gate, at) => {
+        if (
+          gate.wall.layer === body.layer &&
+          (shapesOverlap(gate.wall, body.area) || bodyIn(gate.plate, body.area))
+        ) {
+          blocked(["gates", at], "a gate");
+        }
+      });
+      map.transitions.forEach((transition, at) => {
+        if (
+          (transition.from === body.layer || transition.to === body.layer) &&
+          shapesOverlap(transition.area, body.area)
+        ) {
+          blocked(["transitions", at], "a transition");
+        }
+      });
+    });
+
     const lighting = map.lighting;
     if (lighting !== undefined) {
       const lightIds = new Set<string>();
@@ -678,6 +789,7 @@ export type Transition = z.infer<typeof transitionSchema>;
 export type SpawnPoint = z.infer<typeof spawnPointSchema>;
 export type Objective = z.infer<typeof objectiveSchema>;
 export type MapLighting = z.infer<typeof lightingSchema>;
+export type Water = z.infer<typeof waterSchema>;
 export type MapData = z.infer<typeof mapDataSchema>;
 
 export class MapValidationError extends Error {

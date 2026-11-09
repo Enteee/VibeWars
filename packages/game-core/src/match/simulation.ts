@@ -648,6 +648,11 @@ export interface MatchLayers {
     readonly to: number;
     readonly area: Polygon;
   }[];
+  /**
+   * Each layer's deep water (#2983), indexed by layer, as its outline: it
+   * stops bodies and paths as a wall does, but never sight or shots.
+   */
+  readonly deepWater: readonly (readonly Segment[])[];
 }
 
 export interface ParticipantSpec {
@@ -1186,8 +1191,10 @@ export class MatchSimulation {
   readonly #walkable: readonly (readonly Polygon[])[];
   /** Each ramp's way up, as a direction, in `#layers.transitions`' order. */
   readonly #uphill: readonly Vec2[];
-  /** `#walls` for each layer: what collision reads, swapped as a gate moves. */
+  /** `#walls` for each layer: what sight and shots read, swapped as a gate moves. */
   #layerWalls: readonly (readonly Segment[])[];
+  /** `#layerWalls` with each layer's deep water (#2983): what collision reads. */
+  #layerBlockers: readonly (readonly Segment[])[];
   readonly #gatedGraphs: readonly GatedNavGraph[];
   /** The map's walls, without any gate's; what `#walls` builds on. */
   readonly #mapWalls: readonly Segment[];
@@ -1352,7 +1359,7 @@ export class MatchSimulation {
       this.#layers === undefined
         ? [{ walls: this.#mapWalls, walkable: [] }]
         : this.#layers.walls.map((walls, layer) => ({
-            walls,
+            walls: [...walls, ...(this.#layers?.deepWater[layer] ?? [])],
             walkable: this.#walkable[layer] ?? [],
           })),
       this.#gates.map((gate) => ({ layer: gate.layer ?? 0, segments: gate.segments })),
@@ -1365,6 +1372,7 @@ export class MatchSimulation {
     this.#paths = walls.paths;
     this.#uphill = uphillDirections(this.#layers);
     this.#layerWalls = this.#wallsByLayer();
+    this.#layerBlockers = this.#blockersByLayer();
     this.#seed = typeof options.seed === "string" ? seedFromString(options.seed) : options.seed;
     this.#rng = createRng(this.#seed);
     this.#flagField = options.flagField;
@@ -6376,9 +6384,22 @@ export class MatchSimulation {
     ]);
   }
 
-  /** The walls a body on `layer` collides with. */
+  /** Each layer's walls and its deep water (#2983), indexed by layer. */
+  #blockersByLayer(): readonly (readonly Segment[])[] {
+    return this.#layerWalls.map((walls, layer) => [
+      ...walls,
+      ...(this.#layers?.deepWater[layer] ?? []),
+    ]);
+  }
+
+  /** The walls on `layer`: what stops sight and shots there. */
   #wallsOn(layer: number): readonly Segment[] {
     return this.#layerWalls[layer] ?? this.#walls;
+  }
+
+  /** What a body on `layer` collides with: its walls and its deep water (#2983). */
+  #blockersOn(layer: number): readonly Segment[] {
+    return this.#layerBlockers[layer] ?? this.#walls;
   }
 
   /** The floors a body at `position` on `layer` stands on (ADR-0051). */
@@ -6557,6 +6578,7 @@ export class MatchSimulation {
     const set = this.#currentWallSet();
     this.#walls = set.walls;
     this.#layerWalls = this.#wallsByLayer();
+    this.#layerBlockers = this.#blockersByLayer();
     this.#graphs = set.graphs;
     this.#paths = set.paths;
     for (const record of this.#participants.values()) {
@@ -8229,7 +8251,7 @@ export class MatchSimulation {
     const beside = add(target.position, scale(away, 2 * radius));
     this.#placeAt(
       record,
-      hasLineOfSight(target.position, beside, this.#wallsOn(record.layer))
+      hasLineOfSight(target.position, beside, this.#blockersOn(record.layer))
         ? beside
         : target.position,
     );
@@ -8394,7 +8416,7 @@ export class MatchSimulation {
     const from = record.position;
     const away = normalize(sub(from, selection.position));
     const goal = add(from, scale(away, SHADOW_STEP_AWAY_DISTANCE));
-    const impact = firstHit(from, goal, this.#wallsOn(record.layer));
+    const impact = firstHit(from, goal, this.#blockersOn(record.layer));
     const position =
       impact === undefined
         ? goal
@@ -9145,7 +9167,7 @@ export class MatchSimulation {
     // and a wall ends up outside the wall rather than inside it — being
     // pushed through level geometry is far worse than overlapping a
     // teammate for one tick.
-    for (const wallSegment of this.#wallsOn(mover.layer)) {
+    for (const wallSegment of this.#blockersOn(mover.layer)) {
       position = resolveCircleSegmentCollision(position, radius, wallSegment);
     }
 
