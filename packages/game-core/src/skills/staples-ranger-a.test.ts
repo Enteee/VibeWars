@@ -93,14 +93,21 @@ function cast(skillId: string, caster: Combatant) {
 const at = (combatant: Combatant, x: number) =>
   [
     combatant.id,
-    { combatant, position: vec2(x, 0), creature: undefined, corpseExploited: false },
+    {
+      combatant,
+      position: vec2(x, 0),
+      floors: 1,
+      layer: 0,
+      creature: undefined,
+      corpseExploited: false,
+    },
   ] as const;
 
 /** `archer` shoots `target`, at 400, with `others` standing at their x. */
 function shoot(archer: Combatant, target: Combatant, others: readonly [Combatant, number][] = []) {
   return resolveSwing({
     attacker: archer,
-    target: { combatant: target, position: vec2(400, 0), creature: undefined },
+    target: { combatant: target, position: vec2(400, 0), floors: 1, layer: 0, creature: undefined },
     surroundings: new Map([
       at(archer, 0),
       at(target, 400),

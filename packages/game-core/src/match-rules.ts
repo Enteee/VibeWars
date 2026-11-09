@@ -180,6 +180,11 @@ export const MATCH_MODES: Readonly<Record<MatchMode, MatchRules>> = Object.freez
   "capture-points": CAPTURE_POINTS_MATCH_RULES,
 });
 
+/** How much farther a bow or spear reaches at a lower layer, and less at a higher one (ADR-0051). */
+export const HEIGHT_RANGE_PERCENT = 15;
+/** How much more non-critical damage it deals at a lower layer, and less at a higher one (ADR-0051). */
+export const HEIGHT_DAMAGE_PERCENT = 10;
+
 /** Morale a death costs, in percent, with `deathPenalty` (GW1). */
 export const DEATH_PENALTY_PERCENT = 15;
 /** The lowest morale goes, in percent. */

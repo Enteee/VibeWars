@@ -48,6 +48,8 @@ export interface Projectile {
   readonly unblockable: boolean;
   /** The statuses its release used up (#1916): their riders land with it, as Poison Tip Signet's. */
   readonly spent: readonly StatusId[];
+  /** What the layers multiply its non-critical damage by, read at release (ADR-0051). */
+  readonly heightDamage: number;
 }
 
 /**

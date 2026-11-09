@@ -27,8 +27,12 @@ The game cannot show a bridge, a platform or anyone standing on one, and the ope
 | Ranged or spell, same layer  | That layer's walls, as today.                                                                |
 | Ranged or spell, upper→lower | Upper-layer walls. A target under a deck's footprint can't be hit from that deck.            |
 | Ranged or spell, lower→upper | Lower-layer walls. A target on a deck can't be hit by a shooter under that deck's footprint. |
+| Bow or spear, upper→lower    | +15% range and +10% non-critical damage.                                                     |
+| Bow or spear, lower→upper    | −15% range and −10% non-critical damage.                                                     |
 
 Everything else is a plain 2D line-of-sight check. Heights are never computed: no line through a deck's edge, no blind zone along it. Bots and pathing use these same checks, so a bot never targets through a deck.
+
+**The height modifier** (operator, 2026-11-08). A bow or spear attack, plain or from a skill that fires the weapon, aimed at a lower layer has +15% range and +10% non-critical damage; aimed at a higher layer it has −15% range and −10% non-critical damage. Two layers of difference count as one. Layers that overlap, as a body in a transition area counts as on both layers it connects, are no difference. Spells, wands and staffs get none in either direction, and a critical hit ignores the damage part. The range applies at release, with the layers read once like the rest of the shot; an attacker told to shoot a target on another layer closes to the modified range. The numbers are `HEIGHT_RANGE_PERCENT` and `HEIGHT_DAMAGE_PERCENT`.
 
 ### Who owns what on a boundary
 
@@ -50,7 +54,6 @@ Cross-layer combat, from #2811, where the choice was that ranged and spells cros
 
 - **Same layer only.** The simplest rules, but a bridge becomes a separate, safe arena and height means nothing.
 - **Everything crosses, layers ignored.** Nothing to build, but the deck is scenery and people under a bridge are hit through it.
-- **A height bonus** (longer range or more damage from above). Not decided, and out for now: it touches every ranged skill and should be tuned from real play. It can be added later as a single numeric rule.
 
 The model itself, from #2810:
 

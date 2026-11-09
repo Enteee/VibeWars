@@ -1645,11 +1645,25 @@ describe("onAttackBlocked (#1974)", () => {
       new Map([
         [
           "archer",
-          { combatant: archer, position: vec2(0, 0), creature: undefined, corpseExploited: false },
+          {
+            combatant: archer,
+            position: vec2(0, 0),
+            floors: 1,
+            layer: 0,
+            creature: undefined,
+            corpseExploited: false,
+          },
         ],
         [
           "foe",
-          { combatant: foe, position: vec2(600, 0), creature: undefined, corpseExploited: false },
+          {
+            combatant: foe,
+            position: vec2(600, 0),
+            floors: 1,
+            layer: 0,
+            creature: undefined,
+            corpseExploited: false,
+          },
         ],
       ]),
       fired,

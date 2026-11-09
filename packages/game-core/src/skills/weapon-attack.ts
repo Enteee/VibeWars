@@ -45,6 +45,7 @@ import {
   type DamageDealtAs,
   type StatusId,
 } from "./status.js";
+import { floorOf, sharesFloor } from "../match/layer-rules.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import {
   attackDamageDeltaOf,
@@ -223,10 +224,11 @@ export function cleaveVictims(
     return [];
   }
   const adjacent = [...surroundings.values()].filter(
-    ({ combatant, position }) =>
+    ({ combatant, position, floors }) =>
       !combatant.dead &&
       combatant.id !== target.combatant.id &&
       combatant.team !== attacker.team &&
+      sharesFloor(floors, floorOf(target.layer)) &&
       distance(position, target.position) <= AREA_ADJACENT,
   );
   return nearestFirst(adjacent, target.position).slice(0, max);
@@ -735,6 +737,7 @@ export function landBlow(
   rules: CombatRules,
   events: CombatEvent[],
   surroundings: Surroundings,
+  heightDamage = 1,
 ): boolean {
   interruptOnHit(victim, attacker?.id, events);
   const { weapon } = snapshot.mainHand;
@@ -755,7 +758,7 @@ export function landBlow(
   const base =
     critical && !victimModifiers.ignoresCriticalDamage
       ? weapon.damageMax * weapon.criticalMultiplier
-      : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
+      : rng.nextInt(weapon.damageMin, weapon.damageMax + 1) * (critical ? 1 : heightDamage);
   // Sundering (#2009): bonus penetration on its roll, on top of the
   // largest base. Drawn only for a weapon that has it, so no other
   // fight's stream moves.

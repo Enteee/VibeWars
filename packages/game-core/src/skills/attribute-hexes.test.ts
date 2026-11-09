@@ -53,7 +53,7 @@ function foe(id: string, ...hexes: StatusId[]): Combatant {
 }
 
 function at(combatant: Combatant, position: Vec2): SurroundingBody {
-  return { combatant, position, creature: undefined, corpseExploited: false };
+  return { combatant, position, floors: 1, layer: 0, creature: undefined, corpseExploited: false };
 }
 
 /** The target at the origin, `near` just inside `radius`, `far` just past it. */

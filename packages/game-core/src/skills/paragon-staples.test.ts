@@ -262,6 +262,8 @@ describe("in a match (#2222)", () => {
             {
               combatant: paragon,
               position: vec2(0, 0),
+              floors: 1,
+              layer: 0,
               creature: undefined,
               corpseExploited: false,
             },
@@ -326,7 +328,13 @@ describe("a blow on a bearer (#2222)", () => {
   function blow(attacker: Combatant, target: Combatant, rng = floats(0.9)) {
     return resolveSwing({
       attacker,
-      target: { combatant: target, position: vec2(40, 0), creature: undefined },
+      target: {
+        combatant: target,
+        position: vec2(40, 0),
+        floors: 1,
+        layer: 0,
+        creature: undefined,
+      },
       surroundings: new Map(),
       rng,
       rules: RULES.combat,

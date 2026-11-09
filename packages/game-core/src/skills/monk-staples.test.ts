@@ -247,13 +247,22 @@ describe("Smite Hex (#987)", () => {
     const surroundings: Surroundings = new Map([
       [
         "ally",
-        { combatant: target, position: vec2(0, 0), creature: undefined, corpseExploited: false },
+        {
+          combatant: target,
+          position: vec2(0, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ],
       [
         "foe-1",
         {
           combatant: left,
           position: vec2(AREA_ADJACENT, 0),
+          floors: 1,
+          layer: 0,
           creature: undefined,
           corpseExploited: false,
         },
@@ -263,6 +272,8 @@ describe("Smite Hex (#987)", () => {
         {
           combatant: right,
           position: vec2(-AREA_ADJACENT, 0),
+          floors: 1,
+          layer: 0,
           creature: undefined,
           corpseExploited: false,
         },
@@ -272,6 +283,8 @@ describe("Smite Hex (#987)", () => {
         {
           combatant: friend,
           position: vec2(0, AREA_ADJACENT),
+          floors: 1,
+          layer: 0,
           creature: undefined,
           corpseExploited: false,
         },

@@ -105,7 +105,7 @@ export function guard(
   const foes = livingFoes(context).filter(
     (foe) =>
       distance(foe.position, behaviour.post) <= behaviour.aggroUnits &&
-      (!behaviour.rooted || context.sees(foe.position)),
+      (!behaviour.rooted || context.sees(foe.position, foe.layer)),
   );
   const team = self.combatant.team;
   const allies = context.participants

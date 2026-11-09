@@ -25,7 +25,13 @@ function withArea(area: AreaRule | undefined): Skill {
 }
 
 function at(id: string, team: number, position: Vec2, dead = false): TargetCandidate {
-  return { combatant: makeCombatant({ id, team, dead }), position, creature: undefined };
+  return {
+    combatant: makeCombatant({ id, team, dead }),
+    position,
+    floors: 1,
+    layer: 0,
+    creature: undefined,
+  };
 }
 
 const caster = at("caster", 0, vec2(0, 0));
@@ -41,6 +47,7 @@ function select(
     skill: withArea(area),
     caster: caster.combatant,
     casterPosition: caster.position,
+    casterLayer: 0,
     primary,
     candidates: [caster, primary, ...others],
     losBlockers: [],

@@ -219,6 +219,7 @@ describe("groundEffectSnapshot (#1087)", () => {
     ownerId: "ele",
     team: 1,
     position: { x: 120.5, y: 80 },
+    layer: 0,
     act: {
       kind: "aura",
       aura: { statusId: "ward-against-melee", affects: "allies", radius: 109 },

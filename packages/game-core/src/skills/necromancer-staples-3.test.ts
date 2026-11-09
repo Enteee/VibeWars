@@ -51,7 +51,14 @@ function use(user: Combatant, skillId: string, target: Combatant): SkillOutcome 
     surroundings: new Map(
       [user, target].map((combatant, i) => [
         combatant.id,
-        { combatant, position: vec2(i * 200, 0), creature: undefined, corpseExploited: false },
+        {
+          combatant,
+          position: vec2(i * 200, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ]),
     ),
     skill: skill(skillId),

@@ -45,7 +45,7 @@ function foe(id = "foe", overrides: Partial<Combatant> = {}): Combatant {
 }
 
 function at(combatant: Combatant, position: Vec2): TargetCandidate {
-  return { combatant, position, creature: undefined };
+  return { combatant, position, floors: 1, layer: 0, creature: undefined };
 }
 
 /** `user` pays for `skillId` and it lands on `targets`. */
@@ -153,6 +153,7 @@ describe("Aftershock (#985)", () => {
       skill: skill(AFTERSHOCK),
       caster: elementalist,
       casterPosition: vec2(0, 0),
+      casterLayer: 0,
       primary: at(elementalist, vec2(0, 0)),
       candidates: [
         at(elementalist, vec2(0, 0)),
@@ -194,6 +195,7 @@ describe("Meteor (#985)", () => {
       skill: skill(METEOR),
       caster: elementalist,
       casterPosition: vec2(0, 0),
+      casterLayer: 0,
       primary: at(target, vec2(300, 0)),
       candidates: [
         at(adjacent, vec2(300 + AREA_ADJACENT, 0)),

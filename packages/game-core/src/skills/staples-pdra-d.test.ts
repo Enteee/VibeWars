@@ -472,7 +472,7 @@ describe("Radiant Scythe (#2413)", () => {
 function swing(caster: Combatant, target: Combatant, rng = steady()) {
   return resolveSwing({
     attacker: caster,
-    target: { combatant: target, position: vec2(40, 0), creature: undefined },
+    target: { combatant: target, position: vec2(40, 0), floors: 1, layer: 0, creature: undefined },
     surroundings: new Map(),
     rng,
     rules: RULES.combat,
@@ -573,7 +573,14 @@ describe("Offering of Spirit (#2413)", () => {
     return new Map<string, SurroundingBody>([
       [
         caster.id,
-        { combatant: caster, position: vec2(0, 0), creature: undefined, corpseExploited: false },
+        {
+          combatant: caster,
+          position: vec2(0, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ],
       ...spirits.map((position, index): [string, SurroundingBody] => {
         const id = `spirit${String(index)}`;
@@ -582,6 +589,8 @@ describe("Offering of Spirit (#2413)", () => {
           {
             combatant: makeCombatant({ id, team: 1 }),
             position,
+            floors: 1,
+            layer: 0,
             creature: {
               ownerId: "f",
               kind: "spirit",

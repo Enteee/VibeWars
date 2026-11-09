@@ -102,7 +102,7 @@ function plainBlow(caster: Combatant): number {
   const target = body("plain");
   resolveSwing({
     attacker: caster,
-    target: { combatant: target, position: vec2(40, 0), creature: undefined },
+    target: { combatant: target, position: vec2(40, 0), floors: 1, layer: 0, creature: undefined },
     surroundings: new Map(),
     rng: steady(),
     rules: RULES,
@@ -202,7 +202,7 @@ describe('"To the Limit!" (#2315)', () => {
     const surroundings: Surroundings = new Map(
       placed.map(([combatant, position]) => [
         combatant.id,
-        { combatant, position, creature: undefined, corpseExploited: false },
+        { combatant, position, floors: 1, layer: 0, creature: undefined, corpseExploited: false },
       ]),
     );
     resolveSkillEffects({

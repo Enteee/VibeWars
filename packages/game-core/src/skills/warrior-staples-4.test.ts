@@ -100,7 +100,7 @@ function attack(skillId: string, caster: Combatant, target: Combatant, rng = ste
 function swing(caster: Combatant, target: Combatant, rng = steady()) {
   return resolveSwing({
     attacker: caster,
-    target: { combatant: target, position: vec2(40, 0), creature: undefined },
+    target: { combatant: target, position: vec2(40, 0), floors: 1, layer: 0, creature: undefined },
     surroundings: new Map(),
     rng,
     rules: RULES,
