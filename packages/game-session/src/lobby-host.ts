@@ -32,6 +32,7 @@ import {
   parsePeerRelayHolding,
   parsePeerStayTogether,
   parseWireLobbyCommand,
+  lobbyModeOfQueue,
   teamQueueModeOf,
   teamSizeOf,
   type LobbyMode,
@@ -972,7 +973,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         host: startMatch({
           matchId: id,
           mapId: playedMap ?? mapId,
-          mode,
+          mode: queued === undefined ? mode : lobbyModeOfQueue(queued.group.mode),
           seats,
           teamCount: queued?.group.teams.length === 3 ? 3 : 2,
           isSpectator: (peerId) => peerMember(peerId)?.team === null,

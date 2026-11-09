@@ -10,6 +10,7 @@ import {
   TEAM_ARENA_SIZES,
   teamQueueModeOf,
   teamSizeOf,
+  lobbyModeOfQueue,
   type QueueTicket,
 } from "./queue.js";
 
@@ -205,5 +206,20 @@ describe("isTeamQueueMode (ADR-0042)", () => {
     expect(isTeamQueueMode("heroes-ascent")).toBe(true);
     expect(isTeamQueueMode("gvg")).toBe(true);
     expect(isTeamQueueMode("random-arena-4v4")).toBe(false);
+  });
+});
+
+describe("lobbyModeOfQueue (#2688)", () => {
+  it("plays each queue mode as its lobby mode", () => {
+    expect(QUEUE_MODES.map(lobbyModeOfQueue)).toEqual([
+      "random-arena",
+      "random-arena",
+      "random-arena",
+      "team-arena",
+      "team-arena",
+      "team-arena",
+      "heroes-ascent",
+      "gvg",
+    ]);
   });
 });

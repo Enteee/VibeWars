@@ -80,6 +80,7 @@ export {
 export type { AttributeAllocation, AttributeModifier } from "./attributes.js";
 export {
   AttributeRankError,
+  LARGEST_RANK_COST,
   MAX_ATTRIBUTE_RANK,
   MAX_EFFECTIVE_RANK,
   cumulativeCostForRank,

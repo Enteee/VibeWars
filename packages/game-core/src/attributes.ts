@@ -31,6 +31,9 @@ export const MAX_EFFECTIVE_RANK = 16;
  */
 const POINT_COST_OF_RANK: readonly number[] = [1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20];
 
+/** The dearest single rank: the most a "next rank" label can ever name. */
+export const LARGEST_RANK_COST = Math.max(...POINT_COST_OF_RANK);
+
 const CUMULATIVE_COST_BY_RANK: readonly number[] = (() => {
   const costs: number[] = [0];
   for (const cost of POINT_COST_OF_RANK) {
