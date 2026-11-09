@@ -277,7 +277,7 @@ in der Hall, bleibst du, um sie zu verteidigen. Verlierst du oder verlässt ein 
 Aufstieg wieder bei Runde 1; das Gleiche gilt, wenn du die Warteschlange oder die Gruppe verlässt. Ein Match, das verloren
 geht, weil sein Host gegangen ist, behält deine Runde.
 
-Jeder Lauf beginnt mit der **Elite-Zaishen-Schlacht**, ohne Warteschlange: Deine Gruppe gegen sechs von Bots gespielte Zaishen (2 Mönche, ein Elementarmagier und 3 weitere). Die Uhr startet, sobald jemand von euch die Startlinie überquert. Tötet ihr alle sechs in unter 30 Sekunden, startet die Gruppe mit +10 % Moral; unter 60 mit +8 %, unter 80 mit +6 %, unter 100 mit +4 %, unter 120 mit +2 %; langsamer gibt es nichts. Nach einem Sieg stellt sich die Gruppe von selbst für die erste Karte an. Fällt die ganze Gruppe, ist der Lauf vorbei.
+Jeder Lauf beginnt mit der **Elite-Zaishen-Schlacht**, ohne Warteschlange: Deine Gruppe gegen sechs von Bots gespielte Zaishen (2 Mönche, ein Elementarmagier und 3 weitere). Die Uhr startet, sobald jemand von euch die Startlinie überquert oder der erste Zaishen stirbt, je nachdem, was zuerst geschieht. Tötet ihr alle sechs in unter 30 Sekunden, startet die Gruppe mit +10 % Moral; unter 60 mit +8 %, unter 80 mit +6 %, unter 100 mit +4 %, unter 120 mit +2 %; langsamer gibt es nichts. Nach einem Sieg stellt sich die Gruppe von selbst für die erste Karte an. Fällt die ganze Gruppe oder lebt nach Ablauf der 8 Minuten noch ein Zaishen, ist der Lauf vorbei.
 
 Deine Moral bleibt den ganzen Lauf über erhalten: Mit der Todesstrafe oder dem Bonus, mit dem du eine gewonnene Karte
 beendest, beginnst du die nächste, von −60 % bis +10 %. Ein Lauf, der endet, oder ein Spieler, der mitten im Lauf dazustößt,

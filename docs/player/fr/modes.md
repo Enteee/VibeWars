@@ -387,7 +387,7 @@ encore en route, et ne peut plus être ouverte pendant 8 secondes. Une plaque à
 couleur d'une équipe ne répond qu'à cette équipe. Les bots se tiennent sur la
 plaque de leur équipe quand aucun ennemi n'est proche.
 
-Chaque parcours commence par la **Bataille des Zaishen d'élite**, sans file d'attente : votre groupe contre six Zaishen joués par des bots (2 Moines, un Élémentaliste et 3 autres). Le chrono démarre quand l'un de vous franchit la ligne de départ. Tuez les six en moins de 30 secondes et le groupe commence le parcours à +10 % de moral ; en moins de 60, +8 % ; en moins de 80, +6 % ; en moins de 100, +4 % ; en moins de 120, +2 % ; plus lentement, rien. En cas de victoire, le groupe rejoint seul la file de sa première carte. Si tout le groupe tombe, le parcours est terminé.
+Chaque parcours commence par la **Bataille des Zaishen d'élite**, sans file d'attente : votre groupe contre six Zaishen joués par des bots (2 Moines, un Élémentaliste et 3 autres). Le chrono démarre quand l'un de vous franchit la ligne de départ ou quand le premier Zaishen meurt, selon ce qui arrive en premier. Tuez les six en moins de 30 secondes et le groupe commence le parcours à +10 % de moral ; en moins de 60, +8 % ; en moins de 80, +6 % ; en moins de 100, +4 % ; en moins de 120, +2 % ; plus lentement, rien. En cas de victoire, le groupe rejoint seul la file de sa première carte. Si tout le groupe tombe, ou si un Zaishen est encore en vie à la limite de 8 minutes, le parcours est terminé.
 
 ## Trois équipes
 
