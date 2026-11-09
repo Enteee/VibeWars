@@ -115,10 +115,10 @@ export const KING_OF_THE_HILL_MATCH_RULES: MatchRules = Object.freeze({
 /**
  * Heroes' Ascent's Capture Points (#1378, #2690): stand on a shrine to
  * take it, and every `POINT_TICK_SECONDS` each one a team owns scores it
- * a point. `CAPTURE_LEAD_TO_WIN` points ahead wins at once; a wipe loses
- * at once; at 8 minutes the most points win, and of teams tied on them,
- * the one that led last. Each base's shrine raises its team's dead every
- * `CAPTURE_WAVE_SECONDS` (#2845).
+ * a point. `CAPTURE_LEAD_TO_WIN` points ahead wins at once; a wipe ends
+ * nothing (#2886); at 8 minutes the most points win, and of teams tied on
+ * them, the one that led last. Each base's shrine raises its team's dead
+ * every `CAPTURE_WAVE_SECONDS` (#2845).
  */
 export const CAPTURE_POINTS_MATCH_RULES: MatchRules = Object.freeze({
   ...ANNIHILATION_MATCH_RULES,
@@ -301,8 +301,9 @@ export function soleLeader(score: MatchScore): number | undefined {
 /**
  * Whether `team` is beaten as it stands (#2682, the architect's ruling):
  * every member dead at once and no living priest, in annihilation, a
- * Relic Run, King of the Hill or Capture Points; a team that never had a
- * priest has none living. No kill-count or Guild Battle team is beaten so.
+ * Relic Run or King of the Hill; a team that never had a priest has none
+ * living. No kill-count, Guild Battle or Capture Points (#2886) team is
+ * beaten so.
  */
 export function teamBeaten(team: TeamStanding, rules: MatchRules): boolean {
   switch (rules.victory) {
@@ -310,10 +311,10 @@ export function teamBeaten(team: TeamStanding, rules: MatchRules): boolean {
     case "priest-annihilation":
     case "relic-run":
     case "king-of-the-hill":
-    case "capture-points":
       return team.living === 0 && !team.priestLives;
     case "kill-count":
     case "guild-battle":
+    case "capture-points":
       return false;
   }
 }
@@ -481,9 +482,9 @@ function scoreInPlay(score: MatchScore, standing: MatchStanding, rules: MatchRul
 }
 
 /**
- * Capture Points (#1378, #2690, GW1): a wipe is out at once, as in a Relic
- * Run; `CAPTURE_LEAD_TO_WIN` points ahead of every other team in play wins
- * at once; at time the most points win, of teams tied on them the one
+ * Capture Points (#1378, #2690, #2886, GW1): a wipe ends nothing, the dead
+ * rise on the wave; `CAPTURE_LEAD_TO_WIN` points ahead of every other team
+ * wins at once; at time the most points win, of teams tied on them the one
  * holding the most shrines, and of those the one that led last. Tied teams
  * none of which ever led alone draw.
  */
@@ -493,10 +494,6 @@ function evaluateCapturePoints(
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
-  const wipe = evaluateWipe(standing, rules);
-  if (wipe !== undefined) {
-    return wipe;
-  }
   const ranked = [...scoreInPlay(score, standing, rules).byTeam].sort((a, b) => b[1] - a[1]);
   const [first, second] = ranked;
   if (first !== undefined && second !== undefined && first[1] - second[1] >= CAPTURE_LEAD_TO_WIN) {

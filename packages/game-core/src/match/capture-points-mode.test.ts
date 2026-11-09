@@ -5,6 +5,7 @@ import {
   CAPTURE_LEAD_TO_WIN,
   CAPTURE_POINTS_MATCH_RULES,
   CAPTURE_WAVE_SECONDS,
+  MATCH_IN_PROGRESS,
   MORALE_FLOOR,
   POINT_TICK_SECONDS,
   type MatchRules,
@@ -18,7 +19,8 @@ import { NO_RANKS } from "../skills/status.js";
 /**
  * Capture Points in the simulation (#1378, #2690), on Scarred Earth's five
  * shrines: a team's pips on one take it, every 30 s each one owned scores,
- * 20 points ahead or a wipe ends it, else at 8 minutes the most points win.
+ * 20 points ahead ends it, else at 8 minutes the most points win; a wipe
+ * ends nothing (#2886).
  */
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -224,29 +226,27 @@ describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "time" });
   });
 
-  it("goes on a tie to the team in play that led last, an eliminated team's points aside", () => {
-    // Team 2 takes shrine 2 in 16 s and is wiped, out but still scoring
-    // with it: at 30 s team 1 leads alone among the teams in play. Team 1
+  it("goes on a tie to the team that led last, a third team behind them aside", () => {
+    // At 30 s team 1 leads alone. Team 2 comes in after that, and team 1
     // takes a second shrine after 60 s, to hold as many as team 0 at 90 s.
     const sim = capturePoints({ ...CAPTURE_POINTS_MATCH_RULES, timeLimitSeconds: 90 }, [
-      fighter("p", 2, shrine(2)),
-      fighter("q", 2, shrine(2)),
+      fighter("p", 2, vec2(1000, 1900)),
+      fighter("q", 2, vec2(1000, 1900)),
     ]);
     onShrine(sim, "x", 4);
     onShrine(sim, "y", 4);
     onShrine(sim, "a", 0);
     onShrine(sim, "b", 1);
-    run(sim, 20);
-    kill(sim, "p");
-    kill(sim, "q");
-    run(sim, POINT_TICK_SECONDS - 20 + DT);
-    expect([...points(sim), sim.score.byTeam.get(2)]).toEqual([0, 1, 1]);
+    run(sim, POINT_TICK_SECONDS + DT);
+    expect([...points(sim), sim.score.byTeam.get(2)]).toEqual([0, 1, 0]);
+    onShrine(sim, "p", 2);
+    onShrine(sim, "q", 2);
     run(sim, POINT_TICK_SECONDS);
-    expect([...points(sim), sim.score.byTeam.get(2)]).toEqual([2, 2, 2]);
+    expect([...points(sim), sim.score.byTeam.get(2)]).toEqual([2, 2, 1]);
     onShrine(sim, "x", 3);
     onShrine(sim, "y", 3);
     run(sim, POINT_TICK_SECONDS);
-    expect([...points(sim), sim.score.byTeam.get(2)]).toEqual([4, 4, 3]);
+    expect([...points(sim), sim.score.byTeam.get(2)]).toEqual([4, 4, 2]);
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "time" });
   });
 
@@ -276,19 +276,19 @@ describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
     expect(sim.capturePoints[0]).toMatchObject({ owner: null, progress: 0 });
   });
 
-  it("is ended at once by a wipe, whatever the points, and a kill scores none", () => {
+  it("is not ended by a wipe, and a kill scores none", () => {
     const sim = capturePoints();
     onShrine(sim, "x", 4);
     onShrine(sim, "y", 4);
     run(sim, POINT_TICK_SECONDS);
     expect(points(sim)).toEqual([0, 1]);
     kill(sim, "x");
-    sim.step(DT);
-    expect(get(sim, "x").combatant.dead).toBe(true);
-    expect(points(sim)).toEqual([0, 1]);
     kill(sim, "y");
     sim.step(DT);
-    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
+    expect(get(sim, "x").combatant.dead).toBe(true);
+    expect(get(sim, "y").combatant.dead).toBe(true);
+    expect(points(sim)).toEqual([0, 1]);
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
   });
 
   it("counts no dead player on a shrine", () => {
@@ -301,22 +301,28 @@ describe("Capture Points on Scarred Earth (#1378, #2551, #2690)", () => {
 });
 
 describe("a Capture Points base's shrine (#2845)", () => {
-  function based(): MatchSimulation {
+  function based(
+    matchRules: MatchRules = CAPTURE_POINTS_MATCH_RULES,
+    more: ParticipantSpec[] = [],
+  ): MatchSimulation {
     return new MatchSimulation({
       seed: "capture-wave",
-      matchRules: CAPTURE_POINTS_MATCH_RULES,
+      matchRules,
       walls: [],
       bounds: { width: 3200, height: 2000 },
       capturePoints: SHRINES,
+      teamCount: more.length > 0 ? 3 : 2,
       shrines: [
         { team: 0, position: vec2(110, 1000) },
         { team: 1, position: vec2(3090, 1000) },
+        ...(more.length > 0 ? [{ team: 2, position: vec2(1600, 60) }] : []),
       ],
       participants: [
         fighter("a", 0, vec2(280, 620)),
         fighter("b", 0, vec2(280, 760)),
         fighter("x", 1, vec2(2920, 1240)),
         fighter("y", 1, vec2(2920, 1380)),
+        ...more,
       ],
     });
   }
@@ -338,16 +344,81 @@ describe("a Capture Points base's shrine (#2845)", () => {
     kill(sim, "a");
     run(sim, CAPTURE_WAVE_SECONDS + 1);
     expect(get(sim, "a").combatant.dead).toBe(true);
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
   });
 
-  it("does not save a team wiped just before the wave", () => {
+  it("raises a team wiped just before the wave, and the match goes on", () => {
     const sim = based();
     run(sim, CAPTURE_WAVE_SECONDS - 3);
     kill(sim, "a");
     kill(sim, "b");
     sim.step(DT);
-    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "annihilation" });
-    run(sim, 3);
     expect(get(sim, "a").combatant.dead).toBe(true);
+    expect(get(sim, "b").combatant.dead).toBe(true);
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
+    run(sim, 4);
+    expect(get(sim, "a").combatant.dead).toBe(false);
+    expect(get(sim, "b").combatant.dead).toBe(false);
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
+  });
+
+  it("raises both teams when both are wiped at once", () => {
+    const sim = based();
+    for (const id of ["a", "b", "x", "y"]) {
+      kill(sim, id);
+    }
+    sim.step(DT);
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
+    run(sim, CAPTURE_WAVE_SECONDS);
+    for (const id of ["a", "b", "x", "y"]) {
+      expect(get(sim, id).combatant.dead).toBe(false);
+    }
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
+  });
+
+  it("keeps a wiped third team in the match: it rises and its points count", () => {
+    const sim = based(CAPTURE_POINTS_MATCH_RULES, [
+      fighter("p", 2, shrine(2)),
+      fighter("q", 2, shrine(2)),
+    ]);
+    run(sim, ALONE_SECONDS / 2 + 1);
+    expect(sim.capturePoints[2]?.owner).toBe(2);
+    kill(sim, "p");
+    kill(sim, "q");
+    run(sim, POINT_TICK_SECONDS - (ALONE_SECONDS / 2 + 1) + DT);
+    expect(get(sim, "p").combatant.dead).toBe(true);
+    expect(sim.score.byTeam.get(2)).toBe(1);
+    run(sim, POINT_TICK_SECONDS);
+    expect(get(sim, "p").combatant.dead).toBe(false);
+    expect(sim.score.byTeam.get(2)).toBe(2);
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
+  });
+
+  it("is still ended by the lead while a team lies at the morale floor", () => {
+    const sim = based();
+    for (const id of ["a", "b"]) {
+      get(sim, id).combatant.morale = MORALE_FLOOR;
+      kill(sim, id);
+    }
+    for (const i of [0, 1, 2, 3, 4]) {
+      onShrine(sim, "x", i);
+      onShrine(sim, "y", i);
+      run(sim, ALONE_SECONDS / 2 + 1);
+    }
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
+    run(sim, POINT_TICK_SECONDS * 4);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "score" });
+  });
+
+  it("is ended by the clock when everyone lies at the morale floor", () => {
+    const sim = based({ ...CAPTURE_POINTS_MATCH_RULES, timeLimitSeconds: 90 });
+    for (const id of ["a", "b", "x", "y"]) {
+      get(sim, id).combatant.morale = MORALE_FLOOR;
+      kill(sim, id);
+    }
+    run(sim, 89);
+    expect(sim.outcome).toEqual(MATCH_IN_PROGRESS);
+    run(sim, 2);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: undefined, reason: "time" });
   });
 });

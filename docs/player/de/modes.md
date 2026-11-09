@@ -195,7 +195,7 @@ Besitzers.
 
 Alle 30 Sekunden bringt jeder Schrein deines Teams einen Punkt, und eine Einblendung und ein Ton sagen an, was jede
 Seite gepunktet hat. Alle 60 Sekunden Match-Zeit erstehen die Toten deines Teams am Schrein deiner Basis mit vollem Leben und voller Energie auf, auch wenn dort ein Gegner steht, außer ihre Moral ist am Tiefpunkt. Die Anzeigetafel zählt bis zur nächsten Welle herunter. Jeder Tod kostet Moral, und ein Geist ersteht mit derselben Welle auf, an seinem eigenen Platz.
-Liege **20 Punkte vor** jedem anderen Team oder lösche das andere Team aus, um sofort zu gewinnen. Nach 8 Minuten gewinnt
+Liege **20 Punkte vor** jedem anderen Team, um sofort zu gewinnen. Ein ausgelöschtes Team verliert dadurch nicht: Seine Toten erstehen mit der nächsten Welle auf. Nach 8 Minuten gewinnt
 das Team mit mehr Punkten; bei Gleichstand das, das mehr Schreine hält, dann das Team, das zuletzt allein vorn lag, und
 wenn das nie eines war, ist es ein Unentschieden. Kills zählen nichts.
 
