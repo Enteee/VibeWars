@@ -251,7 +251,7 @@ export default {
     "ranger.trappers-speed": "Velocità del trappolaio",
     "ranger.predators-pounce": "Assalto del predatore",
     "ranger.scavenger-strike": "Colpo dello spazzino",
-    "ranger.ferocious-strike": "Colpo brutale",
+    "ranger.ferocious-strike": "Assalto feroce",
     "ranger.melandrus-assault": "Assalto di Melandru",
     "ranger.enraged-lunge": "Balzo furente",
     "ranger.heal-as-one": "Cura all'unisono",
