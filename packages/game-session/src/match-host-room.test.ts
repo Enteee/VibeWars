@@ -229,7 +229,7 @@ describe("a P2P match host, as the match room (#375)", () => {
     const { connection } = await match.join();
     const goal = { x: FIRST_SPAWN.x + 120, y: FIRST_SPAWN.y + 40 };
 
-    connection.sendIntent({ kind: "walk-to", ...goal });
+    connection.sendIntent({ kind: "walk-to", layer: 0, ...goal });
     await match.step(2);
     const arrived = { x: self(connection)?.x ?? 0, y: self(connection)?.y ?? 0 };
     expect(Math.hypot(arrived.x - goal.x, arrived.y - goal.y)).toBeLessThanOrEqual(1);
@@ -244,7 +244,7 @@ describe("a P2P match host, as the match room (#375)", () => {
     const { connection } = await match.join();
     const goal = { x: FIRST_SPAWN.x + 300, y: FIRST_SPAWN.y };
 
-    connection.sendIntent({ kind: "walk-to", ...goal });
+    connection.sendIntent({ kind: "walk-to", layer: 0, ...goal });
     await match.step(0.2);
     expect(self(connection)?.walking).toBe(true);
     expect(self(connection)?.x).toBeGreaterThan(FIRST_SPAWN.x);
@@ -263,7 +263,7 @@ describe("a P2P match host, as the match room (#375)", () => {
     const { connection: a } = await match.join(helloAs("Elementalist/Mesmer"));
     const { connection: b } = await match.join();
     // Back off from the foe across the way, past Fireball range.
-    a.sendIntent({ kind: "walk-to", x: 50, y: FIRST_SPAWN.y });
+    a.sendIntent({ kind: "walk-to", layer: 0, x: 50, y: FIRST_SPAWN.y });
     await settle();
     await match.step(5);
     expect(self(a)?.x).toBeLessThan(100);

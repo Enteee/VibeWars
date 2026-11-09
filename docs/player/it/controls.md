@@ -29,6 +29,7 @@ Questi tasti sono fissi:
 ## Mouse
 
 - **Clic sinistro** sul terreno per camminare fin lì. Senza Shift, il tasto sinistro serve solo a camminare.
+- Nelle mappe con piattaforme rialzate, il clic sinistro porta alla superficie che vedi e **Alt + clic sinistro** al terreno sottostante. Un anello sotto il cursore indica una piattaforma, uno tratteggiato il terreno.
 - **Clic destro** su un nemico o un alleato per bersagliarlo. Clicca di nuovo col destro sullo stesso nemico, rapidamente, per attaccarlo.
 - **Clic destro** su una bandiera o sulla Base bandiera, in una Battaglia di gilda o su Barrow Field, per bersagliarla; **Space** ti ci porta e prende o pianta la bandiera.
 - **Clic con la rotellina** su un nemico per segnalarlo alla tua squadra: il loro **T** lo bersaglia. Sul terreno o su un alleato fa un ping in quel punto. Oppure clicca sulla barra del bersaglio in alto per segnalare il nemico che hai bersagliato.

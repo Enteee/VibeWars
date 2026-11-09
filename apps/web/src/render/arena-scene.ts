@@ -6,7 +6,6 @@ import {
   GATE_PLATE_REACH_UNITS,
   isStatusId,
   pointInPolygon,
-  type Polygon,
   isWeaponId,
   type CreatureLook,
   type StatusId,
@@ -54,6 +53,15 @@ import {
   renderOrder,
   type RenderItem,
 } from "./render-order.js";
+import {
+  CREATURE_PATH,
+  occludersOf,
+  pickSurface,
+  RING_PATH,
+  shapeOutline,
+  traceHiddenOutline,
+  type Occluder,
+} from "./layer-surfaces.js";
 import {
   ARENA_ATLAS_JSON,
   ARENA_ATLAS_SVG,
@@ -154,17 +162,10 @@ const DECK_SIDE_FILL = 0x151b26;
 const RAMP_FILL = 0x262f3f;
 /** How far apart the side face's stacked outlines lie, in world units. */
 const SIDE_FACE_SLICE = 2;
-
-function shapeOutline(shape: RenderableShape): Polygon {
-  return shape.kind === "polygon"
-    ? shape.points
-    : [
-        { x: shape.x, y: shape.y },
-        { x: shape.x + shape.width, y: shape.y },
-        { x: shape.x + shape.width, y: shape.y + shape.height },
-        { x: shape.x, y: shape.y + shape.height },
-      ];
-}
+/** The hover marker on a layered map (#2831), its dashes on the ground. */
+const HOVER_RING = 0xd7dee8;
+const HOVER_RADIUS = 12;
+const HOVER_DASHES = 8;
 
 /** Whether `wall`'s middle lies inside `shape`: a wall under a deck is a support. */
 function shapeHoldsCentre(shape: RenderableShape, wall: RenderableShape): boolean {
@@ -279,6 +280,12 @@ export class ArenaScene extends Phaser.Scene {
   private mapGraphics: Phaser.GameObjects.Graphics | undefined;
   /** What `mapGraphics` shows; `undefined` until it is first drawn. */
   private drawnMap: MapLayer | undefined;
+  /** What hides a body on the drawn map (#2831). */
+  private occluders: readonly Occluder[] = [];
+  private hiddenOutlines: Phaser.GameObjects.Graphics | undefined;
+  private readonly strokeHiddenSegment = (ax: number, ay: number, bx: number, by: number): void => {
+    this.hiddenOutlines?.lineBetween(ax, ay, bx, by);
+  };
   /** What moves on the floor, and the bodies, under the body glyphs. */
   private bands: readonly {
     readonly body: Phaser.GameObjects.Graphics;
@@ -512,6 +519,8 @@ export class ArenaScene extends Phaser.Scene {
         this.drawActor(band.body, band.marks, actor);
       }
     }
+    this.drawHiddenOutlines();
+    this.drawHoverMarker(effects);
     // Over the bodies: a carried flag stands above its carrier's head.
     for (const flag of this.snapshot.flags) {
       this.drawFlag(effects, flag);
@@ -1772,7 +1781,55 @@ export class ArenaScene extends Phaser.Scene {
     for (const deck of next.structure.decks) {
       this.drawDeck(deck, line);
     }
+    this.occluders = occludersOf(next.walls, next.structure);
     this.drawnMap = next;
+  }
+
+  /** What a structure covers of each body (#2831): its team's outline, no fill. */
+  private drawHiddenOutlines(): void {
+    this.hiddenOutlines ??= this.add.graphics().setDepth(renderOrder({ kind: "hidden-outline" }));
+    const g = this.hiddenOutlines;
+    g.clear();
+    if (this.occluders.length === 0) {
+      return;
+    }
+    for (const actor of this.drawnActors) {
+      if (actor.dead) {
+        continue;
+      }
+      g.lineStyle(BODY_EDGE_WIDTH, teamColour(actor.team), 1);
+      traceHiddenOutline(
+        actor.creatureLook === undefined ? RING_PATH : CREATURE_PATH,
+        actor.position.x,
+        actor.position.y,
+        actor.radius,
+        actor.layer,
+        this.occluders,
+        this.strokeHiddenSegment,
+      );
+    }
+  }
+
+  /** Where a click would go, before it does (#2831): a ring on a deck, dashed on the ground. */
+  private drawHoverMarker(g: Phaser.GameObjects.Graphics): void {
+    const { structure } = this.snapshot;
+    const pointer = this.input.activePointer;
+    if (structure.layerCount === 1 || !this.input.isOver) {
+      return;
+    }
+    const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    const { layer } = pickSurface(structure, world, pointer.event.altKey);
+    g.lineStyle(1.5, HOVER_RING, 0.8);
+    if (layer > 0) {
+      g.strokeCircle(world.x, world.y, HOVER_RADIUS);
+      return;
+    }
+    const dash = Math.PI / HOVER_DASHES;
+    for (let k = 0; k < HOVER_DASHES; k += 1) {
+      g.beginPath();
+      g.arc(world.x, world.y, HOVER_RADIUS, 2 * k * dash, (2 * k + 1) * dash);
+      g.strokePath();
+    }
   }
 
   /** The static graphics at `item`'s place in the draw order. */

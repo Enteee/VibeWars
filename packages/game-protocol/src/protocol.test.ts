@@ -155,15 +155,17 @@ describe("parseClientIntent — attack", () => {
 
 describe("parseClientIntent — walk-to (#310)", () => {
   it("accepts any finite point, off the map included: the server pulls it on", () => {
-    expect(parseClientIntent({ kind: "walk-to", x: 120.5, y: 40 })).toEqual({
+    expect(parseClientIntent({ kind: "walk-to", x: 120.5, y: 40, layer: 0 })).toEqual({
       kind: "walk-to",
       x: 120.5,
       y: 40,
+      layer: 0,
     });
-    expect(parseClientIntent({ kind: "walk-to", x: -1e6, y: 1e6 })).toEqual({
+    expect(parseClientIntent({ kind: "walk-to", x: -1e6, y: 1e6, layer: 2 })).toEqual({
       kind: "walk-to",
       x: -1e6,
       y: 1e6,
+      layer: 2,
     });
   });
 
@@ -176,8 +178,14 @@ describe("parseClientIntent — walk-to (#310)", () => {
     expect(parseClientIntent({ kind: "walk-to", x: 1 })).toBeUndefined();
   });
 
+  it("rejects a walk with no layer, or one a map cannot have (#2831)", () => {
+    expect(parseClientIntent({ kind: "walk-to", x: 1, y: 2 })).toBeUndefined();
+    expect(parseClientIntent({ kind: "walk-to", x: 1, y: 2, layer: 3 })).toBeUndefined();
+    expect(parseClientIntent({ kind: "walk-to", x: 1, y: 2, layer: 0.5 })).toBeUndefined();
+  });
+
   it("rejects a field it does not name", () => {
-    expect(parseClientIntent({ kind: "walk-to", x: 1, y: 2, z: 3 })).toBeUndefined();
+    expect(parseClientIntent({ kind: "walk-to", x: 1, y: 2, layer: 0, z: 3 })).toBeUndefined();
   });
 });
 

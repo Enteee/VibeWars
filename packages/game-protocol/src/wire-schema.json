@@ -958,6 +958,7 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+            { "name": "layer", "optional": false, "type": "number" },
             { "name": "x", "optional": false, "type": "number" },
             { "name": "y", "optional": false, "type": "number" }
           ]
@@ -6389,6 +6390,7 @@
     "WalkToIntent": {
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+        { "name": "layer", "optional": false, "type": "number" },
         { "name": "x", "optional": false, "type": "number" },
         { "name": "y", "optional": false, "type": "number" }
       ]
