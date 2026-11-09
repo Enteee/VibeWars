@@ -258,6 +258,8 @@ const IMPACT_LINE_WIDTH = 1.5;
  * cover a badge's top edge.
  */
 const GROUND_DEPTH = -1;
+/** A layered map's opaque floor: under the ward and trap circles on it. */
+const FLOOR_DEPTH = -2;
 const MAP_DEPTH = renderOrder({ kind: "terrain" });
 const EFFECT_DEPTH = renderOrder({ kind: "effect" });
 const CAST_BADGE_DEPTH = renderOrder({ kind: "cast-badge" });
@@ -283,6 +285,7 @@ export class ArenaScene extends Phaser.Scene {
   /** Each ward's icon, by ground effect id (#1087). */
   private groundIcons = new Map<number, Phaser.GameObjects.Image>();
   /** The grid, the arena's edge and the walls (#1353), over the wards; drawn when they change. */
+  private floorGraphics: Phaser.GameObjects.Graphics | undefined;
   private mapGraphics: Phaser.GameObjects.Graphics | undefined;
   /** What `mapGraphics` shows; `undefined` until it is first drawn. */
   private drawnMap: MapLayer | undefined;
@@ -464,6 +467,7 @@ export class ArenaScene extends Phaser.Scene {
       sheet.add(frame, 0, x, y, w, h);
     }
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
+    this.floorGraphics = this.add.graphics().setDepth(FLOOR_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
       body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
@@ -1767,6 +1771,7 @@ export class ArenaScene extends Phaser.Scene {
     // flickers as the camera moves (#2393): 1 CSS px, as the edge markers.
     const line = 1 / next.zoom;
     const palette = arenaPalette(next.structure.layerCount);
+    this.drawFloor(palette);
     this.drawGrid(g, line, palette);
     this.drawDeckShadows(g, next.structure);
     for (const graphics of this.structureGraphics.values()) {
@@ -2023,14 +2028,19 @@ export class ArenaScene extends Phaser.Scene {
     g.strokePoints(points, true);
   }
 
+  private drawFloor(palette: ArenaPalette): void {
+    const g = this.floorGraphics;
+    g?.clear();
+    if (g !== undefined && palette.floor !== undefined) {
+      g.fillStyle(palette.floor, 1);
+      g.fillRect(0, 0, this.arena.width, this.arena.height);
+    }
+  }
+
   /** The grid over the arena's bounds, not the screen, and its edge in `wall-stroke`; outside is `bg`. */
   private drawGrid(g: Phaser.GameObjects.Graphics, line: number, palette: ArenaPalette): void {
     const { width, height } = this.arena;
     const step = 64;
-    if (palette.floor !== undefined) {
-      g.fillStyle(palette.floor, 1);
-      g.fillRect(0, 0, width, height);
-    }
     g.lineStyle(line, palette.grid, 1);
     for (let x = 0; x <= width; x += step) {
       g.lineBetween(x, 0, x, height);
