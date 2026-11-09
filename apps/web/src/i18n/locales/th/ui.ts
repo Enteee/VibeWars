@@ -708,10 +708,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "การควบคุม",
+  "options.display": "การแสดงผล",
   "options.label": "ตั้งค่า",
   "options.language": "ภาษา",
   "options.languageBusy": "ออกจากล็อบบี้หรือแมตช์ก่อน: การเปลี่ยนภาษาจะโหลดหน้าใหม่",
   "options.languageLabel": "ภาษา",
+  "options.lightingLabel": "แสงเงา",
   "options.player": "ผู้เล่น",
   "options.relay": "รีเลย์ (TURN)",
   "options.sections": "หมวดตั้งค่า",

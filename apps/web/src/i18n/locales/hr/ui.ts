@@ -806,10 +806,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "kontrole",
+  "options.display": "prikaz",
   "options.label": "Opcije",
   "options.language": "jezik",
   "options.languageBusy": "Prvo napusti sobu ili meč: promjena jezika ponovno učitava stranicu.",
   "options.languageLabel": "Jezik",
+  "options.lightingLabel": "Osvjetljenje",
   "options.player": "igrač",
   "options.relay": "relej (TURN)",
   "options.sections": "odjeljci opcija",

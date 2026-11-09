@@ -65,7 +65,7 @@ Buiten een match staan in de bovenste balk **[?]** (deze Help), **⚙** (Opties)
 **♪** (muziek: wat er speelt, en hoe hard), geluid dempen en volledig scherm. In een match staan dezelfde knoppen,
 behalve Lobby, rechtsboven in het scherm. In een smal venster klappen deze pictogrammen en
 de andere knoppen van het scherm in tot **⋯**; alleen de hoofdknop blijft staan.
-⚙ opent Opties als venster onder de balk, met het scherm er nog achter; Esc, × of een klik erbuiten sluit het.
+⚙ opent Opties als venster onder de balk, met het scherm er nog achter; Esc, × of een klik erbuiten sluit het. Onder **Weergave** zet **Belichting** het licht en de schaduw van een belichte kaart aan of uit, meteen, ook in een match.
 Help sluit met de × rechtsboven, Esc, of nog een druk op [?].
 
 **Deel een beat met je lobby.** In de beat-editor (♪, dan **Bewerken**)

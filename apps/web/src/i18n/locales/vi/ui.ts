@@ -709,10 +709,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "điều khiển",
+  "options.display": "hiển thị",
   "options.label": "Tùy chọn",
   "options.language": "ngôn ngữ",
   "options.languageBusy": "Hãy rời sảnh hoặc trận trước: đổi ngôn ngữ sẽ tải lại trang.",
   "options.languageLabel": "Ngôn ngữ",
+  "options.lightingLabel": "Ánh sáng",
   "options.player": "người chơi",
   "options.relay": "relay (TURN)",
   "options.sections": "mục tùy chọn",

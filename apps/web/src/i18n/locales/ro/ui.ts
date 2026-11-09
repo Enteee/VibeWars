@@ -805,10 +805,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "comenzi",
+  "options.display": "afișare",
   "options.label": "Opțiuni",
   "options.language": "limbă",
   "options.languageBusy": "Ieși mai întâi din lobby sau meci: schimbarea limbii reîncarcă pagina.",
   "options.languageLabel": "Limbă",
+  "options.lightingLabel": "Iluminare",
   "options.player": "jucător",
   "options.relay": "releu (TURN)",
   "options.sections": "secțiuni de opțiuni",

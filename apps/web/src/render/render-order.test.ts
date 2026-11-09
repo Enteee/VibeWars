@@ -50,6 +50,18 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     expect(marks).toBeLessThan(renderOrder({ kind: "wall", layer: 0 }));
   });
 
+  it("lights a layer over its surfaces and under whoever stands on it (#2987)", () => {
+    const ground = renderOrder({ kind: "lighting", layer: 0 });
+    const groundEffect = renderOrder({ kind: "lit-ground-effect" });
+    expect(renderOrder({ kind: "terrain" })).toBeLessThan(ground);
+    expect(ground).toBeLessThan(groundEffect);
+    expect(groundEffect).toBeLessThan(renderOrder(character(0)));
+    const deck = renderOrder({ kind: "lighting", layer: 1 });
+    expect(renderOrder({ kind: "ramp", upperLayer: 1 })).toBeLessThan(deck);
+    expect(renderOrder({ kind: "deck", deckLayer: 1 })).toBeLessThan(deck);
+    expect(deck).toBeLessThan(renderOrder(character(1)));
+  });
+
   it("leaves everyone in front of the walls on a map of one layer", () => {
     expect(renderOrder(character(characterBand(0, 1)))).toBeGreaterThan(
       renderOrder({ kind: "wall", layer: 0 }),

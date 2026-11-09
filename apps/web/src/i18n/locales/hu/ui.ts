@@ -757,11 +757,13 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "irányítás",
+  "options.display": "megjelenítés",
   "options.label": "Opciók",
   "options.language": "nyelv",
   "options.languageBusy":
     "Előbb hagyd el a lobbit vagy a meccset: a nyelvváltás újratölti az oldalt.",
   "options.languageLabel": "Nyelv",
+  "options.lightingLabel": "Világítás",
   "options.player": "játékos",
   "options.relay": "relay (TURN)",
   "options.sections": "opciók szakaszai",

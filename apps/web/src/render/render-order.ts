@@ -11,6 +11,8 @@ export type CharacterPart = "body" | "glyph" | "marks";
 
 export type RenderItem =
   | { readonly kind: "terrain" }
+  | { readonly kind: "lighting"; readonly layer: number }
+  | { readonly kind: "lit-ground-effect" }
   | { readonly kind: "character"; readonly band: number; readonly part: CharacterPart }
   | { readonly kind: "wall"; readonly layer: number }
   | { readonly kind: "support"; readonly deckLayer: number }
@@ -24,6 +26,11 @@ export type RenderItem =
   | { readonly kind: "edge-marker" };
 
 const LAYER_STACK = 10;
+/** Over the grid and deck shadows, under the first body; the wards draw just over it. */
+const GROUND_LIGHTING = 0.5;
+const LIT_GROUND_EFFECT = 0.6;
+/** A deck layer's lighting: over its side faces, deck and ramp, under whoever stands there. */
+const DECK_LIGHTING = 5.8;
 const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, marks: 1.4 };
 const WALL = 2;
 const SUPPORT = 3;
@@ -39,6 +46,10 @@ const EDGE_MARKER = 120;
 /** Where `item` draws: higher is in front. */
 export function renderOrder(item: RenderItem): number {
   switch (item.kind) {
+    case "lighting":
+      return item.layer === 0 ? GROUND_LIGHTING : (item.layer - 1) * LAYER_STACK + DECK_LIGHTING;
+    case "lit-ground-effect":
+      return LIT_GROUND_EFFECT;
     case "terrain":
       return 0;
     case "character":

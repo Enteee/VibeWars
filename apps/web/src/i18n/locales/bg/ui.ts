@@ -758,10 +758,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "управление",
+  "options.display": "дисплей",
   "options.label": "Настройки",
   "options.language": "език",
   "options.languageBusy": "Първо напусни лобито или мача: смяната на езика презарежда страницата.",
   "options.languageLabel": "Език",
+  "options.lightingLabel": "Осветление",
   "options.player": "играч",
   "options.relay": "реле (TURN)",
   "options.sections": "раздели с настройки",
