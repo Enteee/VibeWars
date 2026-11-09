@@ -1288,6 +1288,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello without a name", parsePeerHello, { ...hello, name: undefined }],
   ["hello without a guild tag (#1406)", parsePeerHello, { ...hello, guildTag: undefined }],
   ["hello with a numeric guild tag (#1406)", parsePeerHello, { ...hello, guildTag: 7 }],
+  ["hello with hero rank 16 (#2702)", parsePeerHello, { ...hello, heroRank: 16 }],
+  ["hello with a fractional hero rank (#2702)", parsePeerHello, { ...hello, heroRank: 1.5 }],
+  ["lobby-join with hero rank 16 (#2702)", parsePeerLobbyJoin, { ...lobbyJoin, heroRank: 16 }],
   [
     "lobby-join without a guild tag (#1406)",
     parsePeerLobbyJoin,
