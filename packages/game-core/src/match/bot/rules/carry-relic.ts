@@ -13,7 +13,7 @@ const carryRelic: BotRule = {
     const goal = relicGoal(context, self);
     return goal === undefined || carriedRelic(context.objectives.relics, self.id) === undefined
       ? undefined
-      : { ...NOTHING, moveTo: goal };
+      : { ...NOTHING, moveTo: goal.position, moveToLayer: goal.layer };
   },
 };
 

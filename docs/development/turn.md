@@ -142,9 +142,9 @@ turnadmin keeps no names. A secret in the database that no file holds, left by a
 remove or link that failed halfway, is revoked by the next `turn-user` or
 `turn-link`. coturn cannot also serve static
 username/password users once secrets are on, so there are none. Links
-point at the game's latest `main` by default. Use `--base <url>` for
-another page, such as a release:
-`--base https://enteee.github.io/VibeWars/`.
+point at the site root, the latest release, by default. Use `--base <url>`
+for another page, such as the latest `main`:
+`--base https://enteee.github.io/VibeWars/next/`.
 
 Whoever holds a link holds the secret, and so do the lobbies they share it
 with, through the logins it mints. Give links only to people you trust.

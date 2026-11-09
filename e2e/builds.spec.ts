@@ -1,6 +1,8 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { codeLabel } from "../apps/web/src/input/keymap.js";
+import deUi from "../apps/web/src/i18n/locales/de/ui.js";
+import idUi from "../apps/web/src/i18n/locales/id/ui.js";
 import { exportBuild } from "../apps/web/src/storage/build-transfer.js";
 import { CHARACTER_SCHEMA_VERSION } from "../apps/web/src/storage/schema.js";
 import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout.js";
@@ -370,6 +372,50 @@ test("a rune's bonus stays clear of max, and the pips stay in line (#1102)", asy
     .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left));
   expect(new Set(pipLefts).size).toBe(1);
 });
+
+for (const { locale, ui } of [
+  { locale: "de-DE", ui: deUi },
+  { locale: "id-ID", ui: idUi },
+]) {
+  test.describe(`the next-rank text in ${locale} (#2923)`, () => {
+    test.use({ locale, viewport: { width: 1280, height: 720 } });
+
+    test("stays inside its row, and the pips stay in line", async ({ page }) => {
+      await page.goto("./");
+      await page
+        .locator(".mode-rail")
+        .getByRole("button", { name: ui["rail.characters"], exact: true })
+        .click();
+      await page.getByRole("button", { name: ui["menu.newCharacter"], exact: true }).click();
+      const rows = page.locator(".editor-attribute");
+      await expect(rows.first()).toBeVisible();
+
+      const check = async (): Promise<void> => {
+        const inRow = await rows.evaluateAll((all) =>
+          all.map((row) => {
+            const next = row.querySelector(".editor-attribute-next");
+            return (
+              next !== null &&
+              next.getBoundingClientRect().right <= row.getBoundingClientRect().right
+            );
+          }),
+        );
+        expect(inRow).not.toContain(false);
+        const pipLefts = await page
+          .locator(".editor-attribute .attribute-pips")
+          .evaluateAll((all) => all.map((pips) => pips.getBoundingClientRect().left));
+        expect(new Set(pipLefts).size).toBe(1);
+      };
+
+      await check();
+      await pip(rows.first(), 12).click();
+      await expect(rows.first().locator(".editor-attribute-next")).toHaveText(
+        ui["buildEditor.rankMax"],
+      );
+      await check();
+    });
+  });
+}
 
 /** Save characters named `names` from the main menu, one after another. */
 async function saveCharacters(page: Page, names: readonly string[]): Promise<void> {

@@ -25,9 +25,7 @@ const shrines: BotRule = {
     const pressed = foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
     if (
       points.some(
-        (point) =>
-          onCapturePoint(point.position, self.position) &&
-          (point.owner !== team || point.progress < 1),
+        (point) => onCapturePoint(point, self) && (point.owner !== team || point.progress < 1),
       )
     ) {
       return pressed ? undefined : NOTHING;
@@ -36,7 +34,7 @@ const shrines: BotRule = {
     if (goal === undefined || (pressed && distance(goal.position, self.position) > RANGE_SPELL)) {
       return undefined;
     }
-    return { ...NOTHING, moveTo: goal.position };
+    return { ...NOTHING, moveTo: goal.position, moveToLayer: goal.layer };
   },
 };
 
@@ -63,7 +61,7 @@ function goalShrine(
       if (ally.id === self.id) {
         return false;
       }
-      if (onCapturePoint(point.position, ally.position)) {
+      if (onCapturePoint(point, ally)) {
         return true;
       }
       const theirs = distance(ally.position, point.position);

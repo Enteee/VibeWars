@@ -259,7 +259,10 @@ describe("a relic carrier", () => {
     const where = get(sim, "a").position;
     kill(sim, "a");
     sim.step(DT);
-    expect(sim.relics[0]).toEqual({ team: 0, place: { kind: "ground", position: where } });
+    expect(sim.relics[0]).toEqual({
+      team: 0,
+      place: { kind: "ground", position: where, layer: 0 },
+    });
     get(sim, "x").position = vec2(1000, 400);
     expect(applyIntent(sim, "x", { kind: "attack", targetId: relicId(0) })).toBeNull();
     stepUntil(sim, () => sim.relics[0]?.place.kind === "spawn", 10);

@@ -27,9 +27,9 @@ import {
   type FlagField,
   type RelicField,
   type GhostField,
-  type Vec2,
   type GuildLord,
   type BaseGuard,
+  type CapturePointSite,
   type Shrine,
 } from "@vibewars/game-core";
 import {
@@ -150,7 +150,7 @@ export interface HostMap {
   /** Its ghost spawns and any altar (#1377, #2689), `undefined` on a map without ghosts. */
   readonly ghostField: GhostField | undefined;
   /** Its shrines (#1378), `[]` but on a Capture Points map. */
-  readonly capturePoints: readonly Vec2[];
+  readonly capturePoints: readonly CapturePointSite[];
   /** Its base guards (#1223), in the map's order, `[]` but on a Guild Battle map. */
   readonly guards: readonly BaseGuard[];
 }
@@ -1223,6 +1223,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     capturePoints: sim.capturePoints.map((point) => ({
       x: point.position.x,
       y: point.position.y,
+      layer: point.layer,
       owner: wireTeam(point.owner),
       capturer: wireTeam(point.capturer),
       // Within [0, 1] by construction; rounded as the other floats are.

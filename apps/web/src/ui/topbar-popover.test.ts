@@ -502,7 +502,7 @@ describe("the Lobby window's Join lobby (#2882)", () => {
     const root = join.controls as unknown as FakeElement;
     join.setLobby({ code: KEY, isHost: true, open: false, party: 1, joining: false });
     const open = find(root, "lobby-join-open");
-    const field = find(root, "lobby-join");
+    const field = find(root, "lobby-join-field");
     const input = find(root, "lobby-join-input");
     const message = find(root, "lobby-join-message");
     open.fire("click");

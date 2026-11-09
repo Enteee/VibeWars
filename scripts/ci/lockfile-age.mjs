@@ -102,9 +102,17 @@ export const tooYoung = async (added, publishedAt, now) => {
   return problems;
 };
 
+/**
+ * The registry URL of a package `name`, always one path segment; a leading
+ * `@` stays literal, as the registry documents.
+ * @type {(name: string) => string}
+ */
+export const registryUrl = (name) =>
+  `https://registry.npmjs.org/${encodeURIComponent(name).replace(/^%40/, "@")}`;
+
 /** @type {(name: string, version: string) => Promise<string | undefined>} */
 const registryPublishedAt = async (name, version) => {
-  const response = await fetch(`https://registry.npmjs.org/${name.replace("/", "%2F")}`);
+  const response = await fetch(registryUrl(name));
   if (!response.ok) return undefined;
   /** @type {unknown} */
   const parsed = await response.json();

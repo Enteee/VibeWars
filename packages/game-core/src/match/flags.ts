@@ -6,10 +6,11 @@ import {
   carriedObjectId,
   carriedObjectTeam,
   dropCarried,
-  lyingPosition,
+  lyingPoint,
   type CarriedArrival,
   type CarriedDrop,
   type CarriedPlace,
+  type CarriedPoint,
   type CarriedSpawn,
 } from "./carried.js";
 
@@ -35,6 +36,8 @@ export const FLAG_CARRIER_SPEED_MULTIPLIER = 1.2;
 /** A Guild Battle map's flag objectives: one stand, one `flag-spawn` per team. */
 export interface FlagField {
   readonly stand: Vec2;
+  /** The layer the stand is on (ADR-0051). Omitted: the ground. */
+  readonly standLayer?: number;
   readonly spawns: readonly CarriedSpawn[];
   /** The stand is a Storm Beacon (#2694): it strikes foes instead of boosting morale. */
   readonly beacon?: boolean | undefined;
@@ -100,20 +103,29 @@ export function carriedFlag(flags: readonly FlagState[], carrierId: string): Fla
 }
 
 /**
- * Where a player walks to for `targetId`: a flag at its spawn or on the
- * ground, or the stand. `undefined` for a flag carried or on the stand,
- * and for an id that is neither.
+ * Where a player walks to for `targetId`, and on which layer: a flag at
+ * its spawn or on the ground, or the stand. `undefined` for a flag
+ * carried or on the stand, and for an id that is neither.
  */
+export function flagTargetPoint(
+  field: FlagField,
+  flags: readonly FlagState[],
+  targetId: string,
+): CarriedPoint | undefined {
+  if (targetId === FLAG_STAND_ID) {
+    return { position: field.stand, layer: field.standLayer ?? 0 };
+  }
+  const flag = flags.find(({ team }) => flagId(team) === targetId);
+  return flag === undefined ? undefined : lyingPoint(field.spawns, flag);
+}
+
+/** `flagTargetPoint`, without its layer. */
 export function flagTargetPosition(
   field: FlagField,
   flags: readonly FlagState[],
   targetId: string,
 ): Vec2 | undefined {
-  if (targetId === FLAG_STAND_ID) {
-    return field.stand;
-  }
-  const flag = flags.find(({ team }) => flagId(team) === targetId);
-  return flag === undefined ? undefined : lyingPosition(field.spawns, flag);
+  return flagTargetPoint(field, flags, targetId)?.position;
 }
 
 /**
@@ -140,9 +152,14 @@ export function flagRefusal(
   return state.stand.holder === team ? "flag-on-stand" : "no-flag-carried";
 }
 
-/** `state` with the flag `carrierId` carries lying at `position`; unchanged if none. */
-export function dropFlag(state: FlagsState, carrierId: string, position: Vec2): FlagsState {
-  return { ...state, flags: dropCarried(state.flags, carrierId, position) };
+/** `state` with the flag `carrierId` carries lying at `position` on `layer`; unchanged if none. */
+export function dropFlag(
+  state: FlagsState,
+  carrierId: string,
+  position: Vec2,
+  layer: number,
+): FlagsState {
+  return { ...state, flags: dropCarried(state.flags, carrierId, position, layer) };
 }
 
 /** One interaction, as `stepFlags` takes it: refused ones change nothing. */
@@ -190,7 +207,7 @@ export function stepFlags(
   for (const action of actions) {
     next =
       action.kind === "drop"
-        ? dropFlag(next, action.carrierId, action.position)
+        ? dropFlag(next, action.carrierId, action.position, action.layer)
         : interact(field, next, action);
   }
   if (
