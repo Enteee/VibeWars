@@ -19,6 +19,6 @@ describe("case changes around non-ASCII letters", () => {
   });
 
   it("changes a Polish word with an inner accented letter", () => {
-    expect(pl.appliesAnAToAFoe({ words: "klątwa" })).toBe("nakłada na wroga klątwę");
+    expect(pl.appliesAnAToAFoe({ test: false, words: "klątwa" })).toBe("nakłada na wroga klątwę");
   });
 });
