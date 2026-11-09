@@ -252,6 +252,7 @@ describe("weapon sets (#489)", () => {
       timeLimitSeconds: 600,
       deathRule: "respawn",
       respawnSeconds: 1,
+      respawnOnWave: false,
       deathPenalty: true,
     };
     for (const deaths of [0, 1]) {
@@ -388,6 +389,7 @@ describe("weapon sets (#489)", () => {
       timeLimitSeconds: 600,
       deathRule: "respawn",
       respawnSeconds: 1,
+      respawnOnWave: false,
       deathPenalty: false,
     };
     const match = sim(rules);

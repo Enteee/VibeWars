@@ -27,6 +27,7 @@ const RULES: MatchRules = {
   timeLimitSeconds: 60,
   deathRule: "respawn",
   respawnSeconds: 5,
+  respawnOnWave: false,
   deathPenalty: false,
 };
 
@@ -49,6 +50,8 @@ function standing(...teams: [number, number, number, boolean?, boolean?][]): Mat
         },
       ]),
     ),
+    recentKillTeams: [],
+    recentScoringTeams: [],
   };
 }
 
@@ -141,6 +144,7 @@ describe("evaluateMatch", () => {
       timeLimitSeconds: 180,
       deathRule: "respawn",
       respawnSeconds: 8,
+      respawnOnWave: false,
       deathPenalty: false,
     });
   });
@@ -341,6 +345,8 @@ describe("evaluateMatch: guild battle (#1222)", () => {
       [0, team(zero)],
       [1, team(one)],
     ]),
+    recentKillTeams: [],
+    recentScoringTeams: [],
   });
 
   it("plays 28 minutes, the dead down until the shrine raises them, with the death penalty", () => {
@@ -528,6 +534,8 @@ describe("evaluateMatch: capture points (#2690)", () => {
         },
       ]),
     ),
+    recentKillTeams: [],
+    recentScoringTeams: [],
   });
 
   it("is won at once by a team 20 points ahead of every other", () => {

@@ -638,12 +638,15 @@ export default {
   "lobby.modeGuildBattle": "Céhcsata: öld meg az ellenséges Céhurat",
   "lobby.modeKillCount": "Ölésverseny: legtöbb ölés 3 perc alatt",
   "lobby.modeKingOfTheHill":
-    "A domb ura: vezesd a Kísértethősödet az oltárra. Tartsd meg a pontokért; 8 perc után a legtöbb pont nyer.",
+    "A domb ura: vezesd a Kísértethősödet az oltárra. Tartsd meg a pontokért; {minutes} perc után a legtöbb pont nyer.",
+  "lobby.modeNameCapturePoints": "Pontfoglalás",
+  "lobby.modeNameKingOfTheHill": "A domb ura",
+  "lobby.modeNameRelicRun": "Ereklyefutam",
   "lobby.modePriestAnnihilation": "Papirtás: győzz le minden ellenséget és a papjukat",
   "lobby.modeRelicRun":
-    "Ereklyefutam: vidd az ereklyédet az oltárhoz. 8 perc után a legtöbb pont nyer.",
+    "Ereklyefutam: vidd az ereklyédet az oltárhoz. {minutes} perc után a legtöbb pont nyer.",
   "lobby.modeRelicRunFoe":
-    "Ereklyefutam: vidd az ellenség ereklyéjét a Kísértethősödhöz. 3 pont előny nyer; 8 perc után a legtöbb pont.",
+    "Ereklyefutam: vidd az ellenség ereklyéjét a Kísértethősödhöz. 3 pont előny nyer; {minutes} perc után a legtöbb pont.",
   "lobby.notReady": "Nem kész",
   "lobby.playBots": "Játék botok ellen",
   "lobby.ready": "Kész",

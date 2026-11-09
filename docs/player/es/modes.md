@@ -333,6 +333,8 @@ de que termine, tu próximo Ascenso empieza otra vez en la ronda 1; también si 
 de la cola o del grupo. Una partida perdida porque se fue su anfitrión conserva tu
 ronda.
 
+El Hall sortea uno de tres modos en cada partida: Rey de la colina, Carrera de reliquias o Puntos de captura, para dos o tres equipos. Con dos, la tercera base queda cerrada, y con ella su punto de captura. Una partida en el Hall dura 12 minutos y ganan los puntos; Puntos de captura también termina antes con una ventaja de 20. Morir no cuesta moral. Los muertos vuelven juntos a su base en cada minuto completo del reloj de la partida, así que un equipo aniquilado no está vencido. En Rey de la colina, el equipo que tiene el altar sigue puntuando tras morir su fantasma, hasta que otro equipo lo reclame, y sus muertos vuelven en el altar. Un empate es para el equipo que puntuó por última vez o, en Puntos de captura, para el que logró la última baja.
+
 Tu moral se mantiene durante todo el recorrido: la penalización por muerte o la
 bonificación con la que terminas un mapa ganado es con la que empiezas el siguiente,
 de −60 % a +10 %. Un recorrido que termina, o un jugador que se une a mitad, empieza

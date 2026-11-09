@@ -29,6 +29,7 @@ const STAY_DEAD: MatchRules = {
   timeLimitSeconds: 600,
   deathRule: "resurrection-only",
   respawnSeconds: 1,
+  respawnOnWave: false,
   deathPenalty: false,
 };
 

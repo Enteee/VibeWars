@@ -46,6 +46,7 @@ import {
   SHRINE_INVULNERABLE_SECONDS,
   soleLeader,
   teamBeaten,
+  withLatestTeam,
   teamIds,
   TWO_TEAM_MODES,
   type MatchOutcome,
@@ -1299,6 +1300,8 @@ export class MatchSimulation {
   #relicsState: RelicsState | undefined;
   /** Who reached a relic this step (#1374), in simulation order. */
   #relicArrivals: CarriedArrival[] = [];
+  #recentKillTeams: readonly number[] = [];
+  #recentScoringTeams: readonly number[] = [];
   /** The map's ghost spawns and any altar (#1377, #2689); `undefined` on a map without ghosts. */
   readonly #ghostField: GhostField | undefined;
   /** Who holds the altar (#1377); nobody on a map without a hill. */
@@ -6162,6 +6165,7 @@ export class MatchSimulation {
     }
     for (const team of scored) {
       this.#score = addPoint(this.#score, team);
+      this.#recentScoringTeams = withLatestTeam(this.#recentScoringTeams, team);
     }
   }
 
@@ -6316,6 +6320,7 @@ export class MatchSimulation {
     }
     if (scored !== null) {
       this.#score = addPoint(this.#score, scored);
+      this.#recentScoringTeams = withLatestTeam(this.#recentScoringTeams, scored);
     }
   }
 
@@ -7755,6 +7760,9 @@ export class MatchSimulation {
           this.#companionDied(victim, victim.creature);
           continue;
         }
+        if (killerTeam !== undefined && this.#teams.has(killerTeam)) {
+          this.#recentKillTeams = withLatestTeam(this.#recentKillTeams, killerTeam);
+        }
         victim.respawnInSeconds = this.#respawnSeconds(victim);
         if (!spared) {
           this.#deathPenalty(victim);
@@ -8490,6 +8498,17 @@ export class MatchSimulation {
     }
   }
 
+  /** Where `record` respawns: its spawn, or the altar its team holds in the Halls' King of the Hill (#2700). */
+  #respawnPlace(record: ParticipantRecord): Vec2 {
+    const altar = this.#ghostField?.altar;
+    return altar !== undefined &&
+      record.creature === undefined &&
+      this.#matchRules?.respawnOnWave === true &&
+      this.#altarState.holder === record.combatant.team
+      ? altar
+      : record.spawn;
+  }
+
   /**
    * How long `record` stays dead: its own `on-death` reset if it has one,
    * else the match rules'. Without match rules, or under
@@ -8503,7 +8522,10 @@ export class MatchSimulation {
     if (this.#matchRules?.deathRule !== "respawn") {
       return Number.POSITIVE_INFINITY;
     }
-    return this.#matchRules.respawnSeconds;
+    const { respawnSeconds, respawnOnWave } = this.#matchRules;
+    return respawnOnWave
+      ? respawnSeconds - (this.#elapsedSeconds % respawnSeconds)
+      : respawnSeconds;
   }
 
   /**
@@ -8753,7 +8775,11 @@ export class MatchSimulation {
         eliminated: this.#eliminated.has(team),
       });
     }
-    return { byTeam };
+    return {
+      byTeam,
+      recentKillTeams: this.#recentKillTeams,
+      recentScoringTeams: this.#recentScoringTeams,
+    };
   }
 
   /**
@@ -9150,6 +9176,7 @@ export class MatchSimulation {
    * morale boost (#474).
    */
   #reset(record: ParticipantRecord, why: "respawn" | "reset"): void {
+    const returnsTo = why === "respawn" ? this.#respawnPlace(record) : record.spawn;
     if (why === "reset") {
       record.combatant.overcast = 0;
       this.#setMorale(record, 0);
@@ -9163,7 +9190,7 @@ export class MatchSimulation {
     emptyAdrenaline(record.combatant);
     record.combatant.lastCombatAt = this.#elapsedSeconds;
     record.combatant.statuses.clear();
-    record.position = record.spawn;
+    record.position = returnsTo;
     record.layer = record.spec.layer ?? 0;
     this.#refreshFloors(record);
     record.facing = record.spec.facing;
@@ -9195,7 +9222,7 @@ export class MatchSimulation {
     record.outOfCombatSeconds = 0;
     record.history.clear();
     record.combatant.moving = false;
-    this.#stepStart.set(record.id, record.spawn);
+    this.#stepStart.set(record.id, returnsTo);
     // A companion comes back with its owner, alive, beside them (#1046),
     // wherever it was summoned.
     const companion = record.creature === undefined ? this.#companionOf(record) : undefined;

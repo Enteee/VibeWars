@@ -699,12 +699,15 @@ export default {
   "lobby.modeGuildBattle": "Bitwa gildii: zabij wrogiego Lorda Gildii",
   "lobby.modeKillCount": "Licznik zabójstw: najwięcej zabójstw w 3 minuty",
   "lobby.modeKingOfTheHill":
-    "Król wzgórza: zaprowadź Upiornego Bohatera na ołtarz. Utrzymaj go, aby punktować; wygrywa najwięcej punktów w 8 minut.",
+    "Król wzgórza: zaprowadź Upiornego Bohatera na ołtarz. Utrzymaj go, aby punktować; wygrywa najwięcej punktów w {minutes} minut.",
+  "lobby.modeNameCapturePoints": "Punkty kontrolne",
+  "lobby.modeNameKingOfTheHill": "Król wzgórza",
+  "lobby.modeNameRelicRun": "Wyścig relikwii",
   "lobby.modePriestAnnihilation": "Anihilacja kapłana: pokonaj wszystkich wrogów i ich kapłana",
   "lobby.modeRelicRun":
-    "Wyścig relikwii: zanieś relikwię na ołtarz. Wygrywa najwięcej punktów w 8 minut.",
+    "Wyścig relikwii: zanieś relikwię na ołtarz. Wygrywa najwięcej punktów w {minutes} minut.",
   "lobby.modeRelicRunFoe":
-    "Wyścig relikwii: zanieś relikwię wroga do swojego Upiornego Bohatera. Wygrywa 3 punkty przewagi; po 8 minutach najwięcej punktów.",
+    "Wyścig relikwii: zanieś relikwię wroga do swojego Upiornego Bohatera. Wygrywa 3 punkty przewagi; po {minutes} minutach najwięcej punktów.",
   "lobby.notReady": "Niegotowy",
   "lobby.playBots": "Graj z botami",
   "lobby.ready": "Gotowy",

@@ -473,9 +473,9 @@ export async function startMatchView(
   const wallSegments = allWallSegments(viewed.map.walls);
   const blocking = gateWalls(viewed.map.gates, walls, wallSegments);
   const mode = mapMode(viewed.map.id);
-  const shrines = mapShrines(viewed.map.id);
+  const shrines = mapShrines(viewed.map.id, viewed.map.teamCount);
   const flagField = mapFlagField(viewed.map.id);
-  const relicField = mapRelicField(viewed.map.id);
+  const relicField = mapRelicField(viewed.map.id, viewed.map.teamCount);
   const camera =
     viewport === undefined
       ? undefined

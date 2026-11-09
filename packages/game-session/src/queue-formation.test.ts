@@ -512,8 +512,8 @@ describe("team modes (ADR-0042)", () => {
     });
 
     it("plays a pair at the last round in the Hall", async () => {
-      const groups = await formAt([hero(1, 3), hero(2, 3)], 3, "hall-of-heroes");
-      expect(groups.map((group) => group.mapId)).toEqual(["hall-of-heroes"]);
+      const groups = await formAt([hero(1, 3), hero(2, 3)], 3, "hall-of-heroes-king");
+      expect(groups.map((group) => group.mapId)).toEqual(["hall-of-heroes-king"]);
     });
 
     describe("of three teams (#2683)", () => {

@@ -646,12 +646,15 @@ export default {
   "lobby.modeGuildBattle": "Kiltataistelu: surmaa vihollisen killanherra",
   "lobby.modeKillCount": "Tappolaskenta: eniten tappoja 3 minuutissa",
   "lobby.modeKingOfTheHill":
-    "Kukkulan kuningas: johda aavesankarisi alttarille. Pidä se hallussasi saadaksesi pisteitä; eniten pisteitä 8 minuutissa voittaa.",
+    "Kukkulan kuningas: johda aavesankarisi alttarille. Pidä se hallussasi saadaksesi pisteitä; eniten pisteitä {minutes} minuutissa voittaa.",
+  "lobby.modeNameCapturePoints": "Valtauspisteet",
+  "lobby.modeNameKingOfTheHill": "Kukkulan kuningas",
+  "lobby.modeNameRelicRun": "Reliikkijuoksu",
   "lobby.modePriestAnnihilation": "Pappituho: kukista kaikki viholliset ja heidän pappinsa",
   "lobby.modeRelicRun":
-    "Reliikkijuoksu: kanna reliikkisi alttarille. Eniten pisteitä 8 minuutissa voittaa.",
+    "Reliikkijuoksu: kanna reliikkisi alttarille. Eniten pisteitä {minutes} minuutissa voittaa.",
   "lobby.modeRelicRunFoe":
-    "Reliikkijuoksu: kanna vihollisen reliikki aavesankarillesi. 3 pisteen johto voittaa; 8 minuutin jälkeen eniten pisteitä.",
+    "Reliikkijuoksu: kanna vihollisen reliikki aavesankarillesi. 3 pisteen johto voittaa; {minutes} minuutin jälkeen eniten pisteitä.",
   "lobby.notReady": "Ei valmis",
   "lobby.playBots": "Pelaa botteja vastaan",
   "lobby.ready": "Valmis",

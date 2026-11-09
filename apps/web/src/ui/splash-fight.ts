@@ -41,6 +41,7 @@ const SPLASH_RULES = {
   timeLimitSeconds: 1_000_000,
   deathRule: "respawn",
   respawnSeconds: 3,
+  respawnOnWave: false,
   deathPenalty: false,
 } as const;
 

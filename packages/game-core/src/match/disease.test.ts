@@ -52,6 +52,7 @@ function melee(): MatchSimulation {
       timeLimitSeconds: 600,
       deathRule: "respawn",
       respawnSeconds: 100,
+      respawnOnWave: false,
       deathPenalty: false,
     },
   });

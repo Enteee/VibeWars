@@ -147,6 +147,8 @@ const objectiveSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("capture-point"),
     layer: layerSchema,
+    /** The team whose base it stands in, if a match without that team goes without it (#2700). */
+    base: z.literal(2).optional(),
     position: vec2Schema,
   }),
   z.object({
@@ -338,6 +340,8 @@ export const mapDataSchema = z
      * team, whatever its mode; without it, none. King of the Hill needs one.
      */
     ghostLevel: z.union([z.literal(20), z.literal(24), z.literal(28)]).optional(),
+    /** One of the Hall of Heroes' (#2700): it plays `HALLS_MATCH_RULES`. */
+    halls: z.literal(true).optional(),
     /** Where a relic scores (#2695): a Relic Run map says, no other map does. */
     relicTarget: z.enum(["altar", "own-ghost"]).optional(),
     /** Whose relic a team carries (#2695): a Relic Run map says, no other map does. */

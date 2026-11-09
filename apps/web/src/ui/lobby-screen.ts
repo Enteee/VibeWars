@@ -6,7 +6,7 @@ import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { keySignet } from "../identity/key-signet.js";
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
-import { ASCENT_PROGRESSION } from "../net/maps.js";
+import { ASCENT_PROGRESSION, isHallsMap, mapMatchRules } from "../net/maps.js";
 import { button, h, readyButton, toast, type ShareLine } from "./kit.js";
 import { relayLine, relaySharedByLine, relaySharingText } from "./relay-section.js";
 import {
@@ -182,7 +182,9 @@ const MODE_LINES: Readonly<Record<MatchMode, MessageKey>> = {
 
 /** The mode `map` plays, in a line: "Kill Count: most kills in 3 minutes". */
 export function modeLine(map: LobbyMap): string {
-  return t(map.relicCarry === "foe" ? "lobby.modeRelicRunFoe" : MODE_LINES[map.mode]);
+  return t(map.relicCarry === "foe" ? "lobby.modeRelicRunFoe" : MODE_LINES[map.mode], {
+    minutes: mapMatchRules(map.id, map.mode).timeLimitSeconds / 60,
+  });
 }
 
 /** Each size class as the picker writes it. */
@@ -192,9 +194,22 @@ const SIZE_NAMES: Readonly<Record<SizeClass, MessageKey>> = {
   large: "lobby.sizeLarge",
 };
 
-/** The arena as the picker names it: its name, then its size class, e.g. "Long Hall (small)". */
+/** What each of the Hall's modes is called in the picker (#2700). */
+const HALLS_MODE_NAMES: Readonly<Partial<Record<MatchMode, MessageKey>>> = {
+  "relic-run": "lobby.modeNameRelicRun",
+  "king-of-the-hill": "lobby.modeNameKingOfTheHill",
+  "capture-points": "lobby.modeNameCapturePoints",
+};
+
+/**
+ * The arena as the picker names it: its name, then its size class, e.g.
+ * "Long Hall (small)"; a Hall of Heroes map by its mode, the three being
+ * one place (#2700).
+ */
 export function mapLabel(map: LobbyMap): string {
-  return t("lobby.mapLabel", { name: mapName(map.id), size: t(SIZE_NAMES[map.size]) });
+  const hallsMode = isHallsMap(map.id) ? HALLS_MODE_NAMES[map.mode] : undefined;
+  const qualifier = hallsMode === undefined ? t(SIZE_NAMES[map.size]) : t(hallsMode);
+  return t("lobby.mapLabel", { name: mapName(map.id), size: qualifier });
 }
 
 /** What the lobby says about relays (#2531), from `lobbyRelayStatus`. */

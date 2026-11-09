@@ -36,6 +36,12 @@ export interface MatchRules {
   readonly deathRule: "respawn" | "resurrection-only";
   /** Seconds a dead player waits before respawning; only for `"respawn"`. */
   readonly respawnSeconds: number;
+  /**
+   * Whether the dead return together on the match clock (#2700, GW1's Hall
+   * of Heroes), at the next multiple of `respawnSeconds`, rather than
+   * `respawnSeconds` after each death.
+   */
+  readonly respawnOnWave: boolean;
   /** Whether a death costs morale, and a foe's death wins some back (#843, GW1). */
   readonly deathPenalty: boolean;
   /** A Relic Run won at once by this many points ahead (#2695); without it, only at time. */
@@ -56,6 +62,7 @@ export const KILL_COUNT_MATCH_RULES: MatchRules = Object.freeze({
   timeLimitSeconds: 180,
   deathRule: "respawn",
   respawnSeconds: 8,
+  respawnOnWave: false,
   deathPenalty: false,
 });
 
@@ -70,6 +77,7 @@ export const ANNIHILATION_MATCH_RULES: MatchRules = Object.freeze({
   timeLimitSeconds: 480,
   deathRule: "resurrection-only",
   respawnSeconds: KILL_COUNT_MATCH_RULES.respawnSeconds,
+  respawnOnWave: false,
   deathPenalty: true,
 });
 
@@ -147,6 +155,30 @@ export const CAPTURE_POINTS_MATCH_RULES: MatchRules = Object.freeze({
   ...ANNIHILATION_MATCH_RULES,
   victory: "capture-points",
   timeLimitSeconds: 480,
+});
+
+/** The modes the Hall of Heroes draws from (#2700). */
+export type HallsMode = "king-of-the-hill" | "relic-run" | "capture-points";
+
+/** Whether the Hall of Heroes plays `mode` (#2700). */
+export function isHallsMode(mode: MatchMode): mode is HallsMode {
+  return mode === "king-of-the-hill" || mode === "relic-run" || mode === "capture-points";
+}
+
+/** A Hall of Heroes match (#2700, GW1): no death penalty, the dead return every full minute, 12 minutes. */
+const HALLS_RULES = {
+  timeLimitSeconds: 720,
+  deathRule: "respawn",
+  respawnSeconds: 60,
+  respawnOnWave: true,
+  deathPenalty: false,
+} as const;
+
+/** The Hall of Heroes' rules (#2700), by the mode its map plays. */
+export const HALLS_MATCH_RULES: Readonly<Record<HallsMode, MatchRules>> = Object.freeze({
+  "king-of-the-hill": Object.freeze({ ...KING_OF_THE_HILL_MATCH_RULES, ...HALLS_RULES }),
+  "relic-run": Object.freeze({ ...RELIC_RUN_MATCH_RULES, ...HALLS_RULES }),
+  "capture-points": Object.freeze({ ...CAPTURE_POINTS_MATCH_RULES, ...HALLS_RULES }),
 });
 
 /**
@@ -244,6 +276,15 @@ export interface MatchScore {
 /** Every team that had members, as it stands, even with all of them gone (#846). */
 export interface MatchStanding {
   readonly byTeam: ReadonlyMap<number, TeamStanding>;
+  /** The teams that have made a kill (#2700), latest first: the Halls' Capture Points tie. */
+  readonly recentKillTeams: readonly number[];
+  /** The teams that have scored a relic or an altar point (#2700), latest first: the Halls' other ties. */
+  readonly recentScoringTeams: readonly number[];
+}
+
+/** `recent` with `team` now the latest (#2700): of two in one step, the one simulated last. */
+export function withLatestTeam(recent: readonly number[], team: number): readonly number[] {
+  return [team, ...recent.filter((each) => each !== team)];
 }
 
 export interface TeamStanding {
@@ -333,10 +374,12 @@ export function soleLeader(score: MatchScore): number | undefined {
  * every member dead at once and no living priest, in annihilation, a
  * Relic Run or King of the Hill; a team that never had a priest has none
  * living. No kill-count, Guild Battle or Capture Points team is beaten so,
- * nor one whose rules say `wipeSurvived` (#2695).
+ * nor a team whose dead respawn (#2700) or whose rules say `wipeSurvived`
+ * (#2695).
  */
 export function teamBeaten(team: TeamStanding, rules: MatchRules): boolean {
-  if (rules.wipeSurvived === true) {
+  // Every member comes back on their own (#2700), so none is out for good.
+  if (rules.deathRule === "respawn" || rules.wipeSurvived === true) {
     return false;
   }
   switch (rules.victory) {
@@ -530,6 +573,9 @@ function evaluateRelicRun(
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
+  if (rules.respawnOnWave) {
+    return evaluateHallsAtTime(score, standing.recentScoringTeams, elapsedSeconds, rules);
+  }
   const inGame = scoreInPlay(score, standing, rules);
   return (
     evaluateWipe(standing, rules) ??
@@ -537,6 +583,26 @@ function evaluateRelicRun(
     evaluateRelicTie(inGame, elapsedSeconds, rules) ??
     evaluateScoreAtTime(inGame, elapsedSeconds, rules)
   );
+}
+
+/**
+ * The Hall of Heroes at time (#2700, GW1): the most points win, of teams
+ * tied on them the one latest in `recent`, whatever a trailing team did
+ * since, and the tie is a draw only if none of them is in it.
+ */
+function evaluateHallsAtTime(
+  score: MatchScore,
+  recent: readonly number[],
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  if (elapsedSeconds < rules.timeLimitSeconds) {
+    return MATCH_IN_PROGRESS;
+  }
+  const best = Math.max(...score.byTeam.values());
+  const tied = [...score.byTeam].filter(([, points]) => points === best).map(([team]) => team);
+  const winner = tied.length === 1 ? tied[0] : recent.find((team) => tied.includes(team));
+  return { phase: "finished", winningTeam: winner, reason: "time" };
 }
 
 /** The last team in play wins once the others are out; `undefined` while two are in. */
@@ -573,6 +639,9 @@ function evaluateCapturePoints(
   const [first, second] = ranked;
   if (first !== undefined && second !== undefined && first[1] - second[1] >= CAPTURE_LEAD_TO_WIN) {
     return { phase: "finished", winningTeam: first[0], reason: "score" };
+  }
+  if (rules.respawnOnWave) {
+    return evaluateHallsAtTime(score, standing.recentKillTeams, elapsedSeconds, rules);
   }
   if (elapsedSeconds < rules.timeLimitSeconds || first === undefined) {
     return MATCH_IN_PROGRESS;

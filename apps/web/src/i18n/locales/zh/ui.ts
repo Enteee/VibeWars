@@ -587,11 +587,14 @@ export default {
   "lobby.modeGuildBattle": "公会战：击杀敌方公会领主",
   "lobby.modeKillCount": "击杀数：3 分钟内击杀最多者获胜",
   "lobby.modeKingOfTheHill":
-    "山丘之王：带领幽灵英雄登上祭坛，占据祭坛得分；8 分钟内得分最多者获胜。",
+    "山丘之王：带领幽灵英雄登上祭坛，占据祭坛得分；{minutes} 分钟内得分最多者获胜。",
+  "lobby.modeNameCapturePoints": "占点",
+  "lobby.modeNameKingOfTheHill": "山丘之王",
+  "lobby.modeNameRelicRun": "圣物竞速",
   "lobby.modePriestAnnihilation": "祭司歼灭战：击败所有敌人及其祭司",
-  "lobby.modeRelicRun": "圣物竞速：将圣物运到祭坛。8 分钟内得分最多者获胜。",
+  "lobby.modeRelicRun": "圣物竞速：将圣物运到祭坛。{minutes} 分钟内得分最多者获胜。",
   "lobby.modeRelicRunFoe":
-    "圣物竞速：将敌方圣物运到你的幽灵英雄处。领先 3 分即获胜；8 分钟后得分最多者获胜。",
+    "圣物竞速：将敌方圣物运到你的幽灵英雄处。领先 3 分即获胜；{minutes} 分钟后得分最多者获胜。",
   "lobby.notReady": "未就绪",
   "lobby.playBots": "对战机器人",
   "lobby.ready": "就绪",
