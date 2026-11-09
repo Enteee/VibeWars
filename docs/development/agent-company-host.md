@@ -211,7 +211,7 @@ The machine must:
 
 hubd has no sudo. It writes the wake time to `/run/vibewars-sleep/request`,
 and a root path unit starts a oneshot that refuses anything but a decimal
-time in the future and within 7 days and 1 hour, then runs `rtcwake -m no`
+time at least 14 minutes ahead and within 7 days and 1 hour, then runs `rtcwake -m no`
 and `systemctl hibernate`. Refusals are in the journal
 (`journalctl -u vibewars-sleep`). Init installs
 `/usr/local/libexec/vibewars-sleep`, `vibewars-sleep.path` and
