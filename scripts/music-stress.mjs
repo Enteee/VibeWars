@@ -161,7 +161,8 @@ async function serve() {
   const child = spawn("sh", ["-c", command], {
     stdio: ["ignore", "ignore", "inherit"],
     // The one build where `?stress=` works.
-    env: { ...process.env, VITE_VIBEWARS_STRESS: "on" },
+    // The splash (#2884) holds the menu behind a key press; this build skips it, as e2e does.
+    env: { ...process.env, VITE_VIBEWARS_STRESS: "on", VITE_VIBEWARS_SPLASH: "off" },
     detached: true,
   });
   // `exitCode` stays null while it runs, as a server should.
