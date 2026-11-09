@@ -37,6 +37,8 @@ export interface LobbyScreenCallbacks {
 export interface LobbyMatchmaking {
   /** How long the party has looked for a team; `null` while it is not queued. */
   readonly queuedMs: number | null;
+  /** The map of the group the queue formed (#2687); `undefined` until it has. */
+  readonly groupMapId: string | undefined;
   readonly onFindMatch: () => void;
   readonly onLeaveQueue: () => void;
   /** `undefined` where bots are not offered: Heroes' Ascent waits for a side (#1996). */
@@ -233,9 +235,11 @@ export function lobbyPanel(
   // else sees it as a label rather than a control they would be refused
   // on clicking. Team Arena draws its own at the start.
   // A party queued in Heroes' Ascent is bound for its round's map, not
-  // the lobby's (#1996). A host's round with no map yet is wrong data: the
-  // lobby's map is shown (#2686).
+  // the lobby's (#1996), until a group is formed: a party that skipped
+  // ahead plays the group's map (#2687). A host's round with no map yet is
+  // wrong data: the lobby's map is shown (#2686).
   const shownMapId =
+    matchmaking?.groupMapId ??
     (snapshot.ascentRound === null ? undefined : ASCENT_PROGRESSION[snapshot.ascentRound]) ??
     snapshot.mapId;
   const current = availableMaps.find((map) => map.id === shownMapId);
