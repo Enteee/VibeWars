@@ -2019,6 +2019,11 @@ async function main(): Promise<void> {
             current.teams = state.teams;
           } else if (state.kind === "unreachable") {
             current.teams = undefined;
+          } else if (state.kind === "fell-through") {
+            // That group is gone: the party is bound for its own round again.
+            current.playedRound = current.ascentRound;
+            current.groupMapId = undefined;
+            redrawRail();
           } else if (state.kind === "in-lobby" && current.ascentRound !== null) {
             current.playedRound = ascentRoundOf(state.group.mapId);
             current.groupMapId = state.group.mapId;
