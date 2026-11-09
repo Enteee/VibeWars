@@ -6204,7 +6204,8 @@ export class MatchSimulation {
   /**
    * A body inside a ramp that walked towards its other layer is on it
    * from this tick (ADR-0051): with a route, only if its next waypoint
-   * is on that layer; steered, uphill or downhill as `direction` points.
+   * is this ramp's, on that layer; steered, uphill or downhill as
+   * `direction` points.
    */
   #climb(record: ParticipantRecord, direction: Vec2): void {
     const transitions = this.#layers?.transitions ?? NO_TRANSITIONS;
@@ -6222,7 +6223,8 @@ export class MatchSimulation {
       const wants =
         next === undefined
           ? (direction.x * uphill.x + direction.y * uphill.y) * (upward ? 1 : -1) > 0
-          : next.layer === (upward ? transition.to : transition.from);
+          : next.layer === (upward ? transition.to : transition.from) &&
+            pointInPolygon(next, transition.area);
       if (wants) {
         record.layer = upward ? transition.to : transition.from;
         return;

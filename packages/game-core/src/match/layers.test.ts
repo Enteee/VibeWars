@@ -244,6 +244,27 @@ describe("a body's layer (ADR-0051)", () => {
     expect(get(sim, "a").position.x).toBeCloseTo(600, 0);
   });
 
+  it("does not climb a ramp its route only passes over on the way to another", () => {
+    const sim = arena([spec("a", 0, vec2(100, 400), 0)], {
+      layers: {
+        ...LAYERS,
+        walls: [[], []],
+        decks: [
+          { layer: 1, footprint: rect(400, 300, 100, 200) },
+          { layer: 1, footprint: rect(900, 300, 300, 200) },
+        ],
+        transitions: [
+          { from: 0, to: 1, area: rect(290, 300, 130, 200) },
+          { from: 0, to: 1, area: rect(790, 300, 130, 200) },
+        ],
+      },
+    });
+    sim.walkTo("a", vec2(1050, 400), 1);
+    run(sim, 30);
+    expect(get(sim, "a").layer).toBe(1);
+    expect(get(sim, "a").position.x).toBeCloseTo(1050, 0);
+  });
+
   it("chases a target onto the deck, up the ramp", () => {
     const sim = arena([
       fighter("a", 0, WARRIOR, vec2(300, 400), { layer: 0, behaviour: undefined }),
