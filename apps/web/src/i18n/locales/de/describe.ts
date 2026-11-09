@@ -1796,7 +1796,7 @@ export default {
     `Verschiebt ${p.count} Zustände${p.lasting} von Gegnern ${AREA_AROUND_TARGET.get(p.foesWithin) ?? `innerhalb von ${p.foesWithin2} um das Ziel`} auf das Ziel`,
   casterMovesOfYourConditionsToThe: (p) =>
     p.from === "caster"
-      ? `Verschiebt ${p.count} deiner Zustände${p.lasting} auf das Ziel${p.copies}`
+      ? `Verschiebt ${p.count === "alle" ? "alle deine" : `${p.count} deiner`} Zustände${p.lasting} auf das Ziel${p.copies}`
       : `Verschiebt ${p.count} Zustände des Ziels${p.lasting} auf dich`,
   youAreHealedForForEach: (p) => `${p.moves}; du wirst je Zustand um ${p.magnitude} geheilt`,
   areDisabledForSeconds: (p) => `sind ${p.seconds} Sekunden lang deaktiviert`,

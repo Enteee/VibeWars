@@ -765,7 +765,7 @@ export default {
     "elementalist.steam": "Dampf",
     "elementalist.enervating-charge": "Entkräftende Ladung",
     "elementalist.lightning-hammer": "Blitzhammer",
-    "elementalist.lightning-javelin": "Blitzspeer",
+    "elementalist.lightning-javelin": "Blitzwurfspeer",
     "elementalist.arc-lightning": "Bogenblitz",
     "elementalist.thunderclap": "Donnerschlag",
     "elementalist.windborne-speed": "Windgetragenes Tempo",

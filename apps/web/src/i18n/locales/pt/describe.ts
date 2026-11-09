@@ -1918,11 +1918,11 @@ export default {
     ` e inimigos ${AREA_AROUND_TARGET.get(p.copyToFoesWithin) ?? `a até ${p.copyToFoesWithin2} dele`}`,
   withOfTheirRemainingDurations: (p) => ` com ${p.durationMultiplier}% das durações restantes`,
   movesConditionsFromFoesWithinOfIt: (p) =>
-    `Move ${p.count} condições${p.lasting} de inimigos ${AREA_AROUND_TARGET.get(p.foesWithin) ?? `a até ${p.foesWithin2} dele`} para o alvo`,
+    `Move ${p.count === "todas" ? "todas as" : p.count} condições${p.lasting} de inimigos ${AREA_AROUND_TARGET.get(p.foesWithin) ?? `a até ${p.foesWithin2} dele`} para o alvo`,
   casterMovesOfYourConditionsToThe: (p) =>
     p.from === "caster"
-      ? `Move ${p.count} das suas condições${p.lasting} para o alvo${p.copies}`
-      : `Move ${p.count} das condições do alvo${p.lasting} para você`,
+      ? `Move ${p.count === "todas" ? "todas as" : `${p.count} das`} suas condições${p.lasting} para o alvo${p.copies}`
+      : `Move ${p.count === "todas" ? "todas as" : `${p.count} das`} condições do alvo${p.lasting} para você`,
   youAreHealedForForEach: (p) => `${p.moves}; você é curado em ${p.magnitude} para cada uma`,
   areDisabledForSeconds: (p) => `ficam desativadas por ${p.seconds} segundos`,
   allOfYourSkills: (p) => `Todas as suas habilidades ${p.time}`,

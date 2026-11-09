@@ -1795,11 +1795,11 @@ export default {
     ` et les ennemis ${AREA_AROUND_TARGET.get(p.copyToFoesWithin) ?? `à moins de ${p.copyToFoesWithin2} d'elle`}`,
   withOfTheirRemainingDurations: (p) => ` avec ${p.durationMultiplier}% de leurs durées restantes`,
   movesConditionsFromFoesWithinOfIt: (p) =>
-    `Transfère ${p.count} altérations${p.lasting} des ennemis ${AREA_AROUND_TARGET.get(p.foesWithin) ?? `à moins de ${p.foesWithin2} d'elle`} à la cible`,
+    `Transfère ${p.count === "toutes" ? "toutes les" : p.count} altérations${p.lasting} des ennemis ${AREA_AROUND_TARGET.get(p.foesWithin) ?? `à moins de ${p.foesWithin2} d'elle`} à la cible`,
   casterMovesOfYourConditionsToThe: (p) =>
     p.from === "caster"
-      ? `Transfère ${p.count} de tes altérations${p.lasting} à la cible${p.copies}`
-      : `Transfère ${p.count} des altérations de la cible${p.lasting} sur toi`,
+      ? `Transfère ${p.count === "toutes" ? "toutes tes" : `${p.count} de tes`} altérations${p.lasting} à la cible${p.copies}`
+      : `Transfère ${p.count === "toutes" ? "toutes les" : `${p.count} des`} altérations de la cible${p.lasting} sur toi`,
   youAreHealedForForEach: (p) => `${p.moves} ; tu es soigné de ${p.magnitude} pour chacune`,
   areDisabledForSeconds: (p) => `sont désactivées pendant ${p.seconds} secondes`,
   allOfYourSkills: (p) => `Toutes tes compétences ${p.time}`,

@@ -1851,11 +1851,11 @@ export default {
     ` y a los enemigos ${aroundIt(p.copyToFoesWithin, p.copyToFoesWithin2)}`,
   withOfTheirRemainingDurations: (p) => ` con el ${p.durationMultiplier} % de su duración restante`,
   movesConditionsFromFoesWithinOfIt: (p) =>
-    `Mueve ${p.count} condiciones${p.lasting} de los enemigos ${aroundIt(p.foesWithin, p.foesWithin2)} al objetivo`,
+    `Mueve ${p.count === "todas" ? "todas las" : p.count} condiciones${p.lasting} de los enemigos ${aroundIt(p.foesWithin, p.foesWithin2)} al objetivo`,
   casterMovesOfYourConditionsToThe: (p) =>
     p.from === "caster"
-      ? `Mueve ${p.count} de tus condiciones${p.lasting} al objetivo${p.copies}`
-      : `Mueve ${p.count} de las condiciones del objetivo${p.lasting} a ti`,
+      ? `Mueve ${p.count === "todas" ? "todas tus" : `${p.count} de tus`} condiciones${p.lasting} al objetivo${p.copies}`
+      : `Mueve ${p.count === "todas" ? "todas las" : `${p.count} de las`} condiciones del objetivo${p.lasting} a ti`,
   youAreHealedForForEach: (p) => `${p.moves}; te curas ${p.magnitude} por cada una`,
   areDisabledForSeconds: (p) => `quedan desactivadas durante ${p.seconds} segundos`,
   allOfYourSkills: (p) => `Todas tus habilidades ${p.time}`,

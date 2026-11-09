@@ -1859,11 +1859,11 @@ export default {
     ` e i nemici ${AREA_AROUND_TARGET.get(p.copyToFoesWithin) ?? `entro ${p.copyToFoesWithin2} da esso`}`,
   withOfTheirRemainingDurations: (p) => ` con il ${p.durationMultiplier}% della durata residua`,
   movesConditionsFromFoesWithinOfIt: (p) =>
-    `Sposta ${p.count} condizioni${p.lasting} dai nemici ${AREA_AROUND_TARGET.get(p.foesWithin) ?? `entro ${p.foesWithin2} da esso`} al bersaglio`,
+    `Sposta ${p.count === "tutte" ? "tutte le" : p.count} condizioni${p.lasting} dai nemici ${AREA_AROUND_TARGET.get(p.foesWithin) ?? `entro ${p.foesWithin2} da esso`} al bersaglio`,
   casterMovesOfYourConditionsToThe: (p) =>
     p.from === "caster"
-      ? `Sposta ${p.count} delle tue condizioni${p.lasting} sul bersaglio${p.copies}`
-      : `Sposta ${p.count} delle condizioni del bersaglio${p.lasting} su di te`,
+      ? `Sposta ${p.count === "tutte" ? "tutte le" : `${p.count} delle`} tue condizioni${p.lasting} sul bersaglio${p.copies}`
+      : `Sposta ${p.count === "tutte" ? "tutte le" : `${p.count} delle`} condizioni del bersaglio${p.lasting} su di te`,
   youAreHealedForForEach: (p) => `${p.moves}; vieni curato di ${p.magnitude} per ciascuna`,
   areDisabledForSeconds: (p) => `vengono disattivate per ${p.seconds} secondi`,
   allOfYourSkills: (p) => `Tutte le tue abilità ${p.time}`,
