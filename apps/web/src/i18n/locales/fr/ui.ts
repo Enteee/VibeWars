@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Doucement : tes derniers messages n'ont pas été envoyés.",
   "app.cloned": "Cloné : {team}{missing}",
   "app.couldNotImport": "Import impossible",
+  "app.couldNotSaveCharacter": "Impossible d'enregistrer le personnage",
   "app.couldNotSaveTeam": "Impossible d'enregistrer l'équipe",
   "app.framedRelayLink": "Ouvre le lien du relais dans son propre onglet. Rien n'a été enregistré.",
   "app.inviteInLobby": "Reviens au menu, puis rouvre le lien d'invitation.",

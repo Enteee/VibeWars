@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "ช้าลงหน่อย: ข้อความล่าสุดของคุณไม่ได้ถูกส่ง",
   "app.cloned": "โคลน {team} แล้ว{missing}",
   "app.couldNotImport": "นำเข้าไม่สำเร็จ",
+  "app.couldNotSaveCharacter": "บันทึกตัวละครไม่ได้",
   "app.couldNotSaveTeam": "บันทึกทีมไม่สำเร็จ",
   "app.framedRelayLink": "เปิดลิงก์รีเลย์ในแท็บของมันเอง ไม่มีการบันทึกใดๆ",
   "app.inviteInLobby": "กลับไปที่เมนู แล้วเปิดลิงก์เชิญอีกครั้ง",

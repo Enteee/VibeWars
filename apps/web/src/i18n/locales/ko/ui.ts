@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "천천히요: 마지막 메시지가 전송되지 않았어요.",
   "app.cloned": "{team} 복제됨{missing}",
   "app.couldNotImport": "가져오지 못했어요",
+  "app.couldNotSaveCharacter": "캐릭터를 저장할 수 없어요",
   "app.couldNotSaveTeam": "팀을 저장하지 못했어요",
   "app.framedRelayLink": "릴레이 링크를 별도 탭에서 여세요. 아무것도 저장되지 않았어요.",
   "app.inviteInLobby": "메뉴로 돌아간 뒤 초대 링크를 다시 여세요.",

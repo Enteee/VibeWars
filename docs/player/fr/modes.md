@@ -413,8 +413,7 @@ leur profession principale (survole pour le nom), deux ou trois équipes, le gag
 souligné, et la carte, la durée et quand. Chaque ligne est marquée **déclaré par
 l'hôte**. Clique sur l'une pour voir les équipes, un onglet chacune, le gagnant
 d'abord : la carte d'équipe. **Cloner** copie une équipe d'un match terminé dans tes
-Builds d'équipe, le build de chaque joueur sous son nom, et l'ouvre. Un camp 1v1 n'a
-pas de Cloner : un Build d'équipe compte 2, 4 ou 8 membres.
+Builds d'équipe, le build de chaque joueur sous son nom, et l'ouvre. Pour un camp 1v1, Cloner enregistre le build du joueur comme nouveau personnage et l'ouvre, car un Build d'équipe compte 2, 4 ou 8 membres.
 
 Chaque ligne commence par l'icône de son mode, et l'icône et le bord gauche de la
 ligne sont à la couleur du mode : orange Aléatoire, bleu Équipe, or Ascension, violet

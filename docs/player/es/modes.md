@@ -391,8 +391,7 @@ ratón para ver el nombre), dos equipos o tres, el ganador subrayado, y el mapa,
 duración y cuándo. Cada fila lleva la marca **del anfitrión**. Haz clic en una para ver
 los equipos, una pestaña por equipo, primero la del ganador: la carta de equipo.
 **Clonar** copia un equipo de una partida terminada a tus builds de equipo, con la
-build de cada jugador bajo su nombre, y lo abre. Un bando de 1v1 no tiene Clonar: una
-build de equipo es de 2, 4 u 8.
+build de cada jugador bajo su nombre, y lo abre. En un bando de 1v1, Clonar guarda la build del jugador como un personaje nuevo y lo abre, porque una build de equipo es de 2, 4 u 8.
 
 Cada fila empieza con el icono de su modo, y el icono y el borde izquierdo de la fila
 van en el color del modo: naranja Aleatoria, azul Equipo, dorado Ascenso, violeta GvG,

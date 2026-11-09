@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Помедленнее: последние сообщения не отправлены.",
   "app.cloned": "Клонировано: {team}{missing}",
   "app.couldNotImport": "Не удалось импортировать",
+  "app.couldNotSaveCharacter": "Не удалось сохранить персонажа",
   "app.couldNotSaveTeam": "Не удалось сохранить команду",
   "app.framedRelayLink": "Открой ссылку на релей в отдельной вкладке. Ничего не сохранено.",
   "app.inviteInLobby": "Вернись в меню и снова открой ссылку-приглашение.",

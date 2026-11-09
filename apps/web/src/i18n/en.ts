@@ -10,6 +10,7 @@ export const en = {
   "app.chatThrottled": "Slow down: your last lines were not sent.",
   "app.cloned": "Cloned {team}{missing}",
   "app.couldNotImport": "Could not import",
+  "app.couldNotSaveCharacter": "Could not save the character",
   "app.couldNotSaveTeam": "Could not save the team",
   "app.framedRelayLink": "Open the relay link in its own tab. Nothing was saved.",
   "app.inviteInLobby": "Go back to the menu, then open the invite link again.",

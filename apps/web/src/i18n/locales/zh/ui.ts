@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "发言过快：你最近的消息未发送。",
   "app.cloned": "已克隆 {team}{missing}",
   "app.couldNotImport": "无法导入",
+  "app.couldNotSaveCharacter": "无法保存角色",
   "app.couldNotSaveTeam": "无法保存队伍",
   "app.framedRelayLink": "请在单独的标签页中打开中继链接。未保存任何内容。",
   "app.inviteInLobby": "请返回菜单，然后重新打开邀请链接。",
