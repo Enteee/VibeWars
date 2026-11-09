@@ -389,7 +389,7 @@ a atravessam, e não pode ser aberto de novo por 8 segundos. Uma placa na
 cor de uma equipe só responde a essa equipe. Os bots ficam na placa da
 própria equipe quando não há inimigo por perto.
 
-Cada percurso começa com a **Batalha dos Zaishen de Elite**, sem fila: seu grupo contra seis Zaishen controlados por bots (2 Monges, um Elementalista e mais 3). O relógio começa quando um de vocês cruza a linha de partida. Matem os seis em menos de 30 segundos e o grupo começa o percurso com +10% de moral; em menos de 60, +8%; em menos de 80, +6%; em menos de 100, +4%; em menos de 120, +2%; mais devagar, nada. Se vencerem, o grupo entra sozinho na fila do primeiro mapa. Se o grupo inteiro cair, o percurso acaba.
+Cada percurso começa com a **Batalha dos Zaishen de Elite**, sem fila: seu grupo contra seis Zaishen controlados por bots (2 Monges, um Elementalista e mais 3). O relógio começa quando um de vocês cruza a linha de partida ou o primeiro Zaishen morre, o que acontecer primeiro. Matem os seis em menos de 30 segundos e o grupo começa o percurso com +10% de moral; em menos de 60, +8%; em menos de 80, +6%; em menos de 100, +4%; em menos de 120, +2%; mais devagar, nada. Se vencerem, o grupo entra sozinho na fila do primeiro mapa. Se o grupo inteiro cair, ou se algum Zaishen ainda estiver vivo ao fim do limite de 8 minutos, o percurso acaba.
 
 ## Três equipes
 

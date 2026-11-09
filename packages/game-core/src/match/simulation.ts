@@ -1311,8 +1311,8 @@ export class MatchSimulation {
   /** Capture Points' shrines (#1378), who owns each and how far toward whom; `[]` without them. */
   #capturePoints: readonly CapturePoint[];
   readonly #startLine: StartLine | undefined;
-  /** When team 0 first entered the start line (#2692); `undefined` until it does. */
-  #startLineCrossedAt: number | undefined;
+  /** When team 0 first entered the start line or a team 1 member first died (#2933); `undefined` until then. */
+  #clearClockStartedAt: number | undefined;
   /** What bots play for (#2542), rebuilt when the shrines change. */
   #botObjectives: BotObjectives = NO_OBJECTIVES;
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
@@ -1473,12 +1473,14 @@ export class MatchSimulation {
 
   /**
    * Seconds on the start line's clock (#2692), `null` on a map without
-   * one. A party that never crossed it is timed from the match's start.
+   * one. It starts when the party crosses the line or the first of team 1
+   * dies, whichever comes first (#2933); until then it runs from the
+   * match's start.
    */
   public get clearSeconds(): number | null {
     return this.#startLine === undefined
       ? null
-      : this.#elapsedSeconds - (this.#startLineCrossedAt ?? 0);
+      : this.#elapsedSeconds - (this.#clearClockStartedAt ?? 0);
   }
 
   /** Who won and why, once `phase` is `"finished"`. */
@@ -6562,24 +6564,31 @@ export class MatchSimulation {
     }
   }
 
-  /** The first of team 0 on the start line starts the clock (#2692). */
+  /**
+   * The first of team 0 on the start line starts the clock (#2692), or the
+   * first death on team 1, so a party cannot let the Zaishen come to it and
+   * step over the line for the last kill (#2933). One removed is not dead.
+   */
   #watchStartLine(): void {
     const line = this.#startLine;
-    if (line === undefined || this.#startLineCrossedAt !== undefined || this.phase !== "active") {
+    if (line === undefined || this.#clearClockStartedAt !== undefined || this.phase !== "active") {
       return;
     }
     for (const record of this.#participants.values()) {
-      if (
-        countsForTeam(record) &&
-        record.combatant.team === 0 &&
-        !record.combatant.dead &&
-        record.layer === line.layer &&
-        record.position.x >= line.x &&
-        record.position.x <= line.x + line.width &&
-        record.position.y >= line.y &&
-        record.position.y <= line.y + line.height
-      ) {
-        this.#startLineCrossedAt = this.#elapsedSeconds;
+      if (!countsForTeam(record)) {
+        continue;
+      }
+      const started =
+        record.combatant.team === 0
+          ? !record.combatant.dead &&
+            record.layer === line.layer &&
+            record.position.x >= line.x &&
+            record.position.x <= line.x + line.width &&
+            record.position.y >= line.y &&
+            record.position.y <= line.y + line.height
+          : record.combatant.team === 1 && record.combatant.dead;
+      if (started) {
+        this.#clearClockStartedAt = this.#elapsedSeconds;
         return;
       }
     }
@@ -8976,7 +8985,12 @@ export class MatchSimulation {
     if (outcome.phase !== "finished") {
       return;
     }
-    this.#outcome = outcome;
+    // Only the Elite Zaishen Battle has a start line, and it is won only by
+    // killing all six (#2933): annihilation's other ending is the time limit.
+    this.#outcome =
+      this.#startLine !== undefined && outcome.reason !== "annihilation"
+        ? { phase: "finished", winningTeam: 1, reason: "time" }
+        : outcome;
   }
 
   private advanceMovement(record: ParticipantRecord, direction: Vec2, dt: number): void {

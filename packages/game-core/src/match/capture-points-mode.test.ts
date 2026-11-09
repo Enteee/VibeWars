@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import {
+  ANNIHILATION_MATCH_RULES,
   CAPTURE_LEAD_TO_WIN,
   CAPTURE_POINTS_MATCH_RULES,
   CAPTURE_WAVE_SECONDS,
@@ -427,5 +428,111 @@ describe("the start line's clock (#2692)", () => {
     run(sim, 1);
     expect(sim.clearSeconds).toBeCloseTo(1, 1);
     expect(get(sim, "x").combatant.team).toBe(1);
+  });
+});
+
+describe("the Elite Zaishen Battle's limits (#2933)", () => {
+  const line = { layer: 0, x: 400, y: 0, width: 40, height: 2000 };
+  // The limit's length is not the point, and a short one keeps 14 fighters quick.
+  const limit = 40;
+  const party = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"];
+  const six = ["z0", "z1", "z2", "z3", "z4", "z5"];
+  const battle = (startLine: typeof line | undefined): MatchSimulation =>
+    new MatchSimulation({
+      seed: "elite-zaishen",
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: limit },
+      walls: [],
+      bounds: { width: 3200, height: 2000 },
+      startLine,
+      participants: [
+        ...party.map((id, n) => fighter(id, 0, vec2(100 + n * 30, 620))),
+        ...six.map((id, n) => fighter(id, 1, vec2(2000 + n * 30, 900))),
+      ],
+    });
+  const killAllBut = (sim: MatchSimulation, survivor: string): void => {
+    for (const id of six.filter((other) => other !== survivor)) {
+      kill(sim, id);
+    }
+  };
+
+  it("is lost at the limit with all six alive, 8 v 6", () => {
+    const sim = battle(line);
+    run(sim, limit + 1);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "time" });
+  });
+
+  it("is lost at the limit with one left and the party at full strength", () => {
+    const sim = battle(line);
+    killAllBut(sim, "z0");
+    run(sim, limit + 1);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "time" });
+  });
+
+  it("is still won by a last kill as the time runs out", () => {
+    const sim = battle(line);
+    killAllBut(sim, "z0");
+    run(sim, limit - 1);
+    expect(sim.phase).toBe("active");
+    kill(sim, "z0");
+    run(sim, 1);
+    expect(sim.outcome).toMatchObject({ winningTeam: 0, reason: "annihilation" });
+  });
+
+  it("is lost by a wipe", () => {
+    const sim = battle(line);
+    for (const id of party) {
+      kill(sim, id);
+    }
+    run(sim, 2);
+    expect(sim.outcome).toMatchObject({ winningTeam: 1, reason: "annihilation" });
+  });
+
+  it("leaves a map without a line to the morale rule at time", () => {
+    const sim = battle(undefined);
+    run(sim, limit + 1);
+    expect(sim.outcome).toMatchObject({ winningTeam: undefined, reason: "morale" });
+  });
+
+  it("runs from a kill made before anyone crosses; crossing later does not reset it", () => {
+    const sim = battle(line);
+    run(sim, 2);
+    kill(sim, "z0");
+    run(sim, 1);
+    expect(get(sim, "z0").combatant.dead).toBe(true);
+    const atKill = sim.clearSeconds ?? Number.NaN;
+    expect(atKill).toBeLessThan(2);
+    get(sim, "p0").position = vec2(420, 620);
+    run(sim, 3);
+    expect(sim.clearSeconds).toBeCloseTo(atKill + 3, 1);
+  });
+
+  it("stays started when the fallen Zaishen stands up again", () => {
+    const sim = battle(line);
+    run(sim, 1);
+    kill(sim, "z0");
+    run(sim, 1);
+    const atKill = sim.clearSeconds ?? Number.NaN;
+    get(sim, "z0").combatant.dead = false;
+    run(sim, 2);
+    expect(sim.clearSeconds).toBeCloseTo(atKill + 2, 1);
+  });
+
+  it("runs from the crossing when the party crosses first", () => {
+    const sim = battle(line);
+    run(sim, 2);
+    get(sim, "p0").position = vec2(420, 620);
+    run(sim, 3);
+    expect(sim.clearSeconds).toBeCloseTo(3, 0);
+    kill(sim, "z0");
+    run(sim, 1);
+    expect(sim.clearSeconds).toBeCloseTo(4, 0);
+  });
+
+  it("is not started by a Zaishen removed rather than dead", () => {
+    const sim = battle(line);
+    run(sim, 1);
+    sim.remove("z0");
+    run(sim, 2);
+    expect(sim.clearSeconds).toBeCloseTo(3, 0);
   });
 });
