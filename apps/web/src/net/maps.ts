@@ -135,9 +135,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
   return {
     "random-arena": of("random-arena"),
     "team-arena": of("team-arena"),
-    "heroes-ascent": of("heroes-ascent", teamSizeOf("heroes-ascent")).filter(
-      (id) => !ASCENT_FINALE_ONLY.includes(id),
-    ),
+    "heroes-ascent": ASCENT_PROGRESSION.filter((id) => !ASCENT_FINALE_ONLY.includes(id)),
     gvg: of("gvg", teamSizeOf("gvg")),
     "hosted-game": of("hosted-game"),
   };
@@ -186,15 +184,15 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
  * GW1's order is Elite Zaishen Battle, The Underworld, Fetid River,
  * Burial Mounds, Unholy Temples, Forgotten Shrines, Golden Gates, The
  * Courtyard, Antechamber, (The Vault,) Hall of Heroes. A map not built
- * yet is absent until its card adds it, and two stand in for theirs:
- * broken-tower for Unholy Temples (#2695), scarred-earth for Forgotten
- * Shrines (#2696). Never longer than `ASCENT_ROUNDS`.
+ * yet is absent until its card adds it, and broken-tower stands in for
+ * Unholy Temples (#2695). Never longer than `ASCENT_ROUNDS`.
  */
 export const ASCENT_PROGRESSION: readonly string[] = [
+  "hollow-deep",
+  "blackwater-ford",
   // Unholy Temples' slot.
   "broken-tower",
-  // Forgotten Shrines' slot.
-  "scarred-earth",
+  "mosslit-cairns",
   "the-courtyard",
   "hall-of-heroes",
 ];

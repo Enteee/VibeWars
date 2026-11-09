@@ -654,8 +654,8 @@ describe("lobbyPanel: the map (#1994)", () => {
         teamSizes: [4, 8],
       },
       {
-        id: "scarred-earth",
-        name: "Scarred Earth",
+        id: "blackwater-ford",
+        name: "Blackwater Ford",
         size: "medium",
         mode: "capture-points",
         teamSizes: [4, 8],
@@ -668,7 +668,7 @@ describe("lobbyPanel: the map (#1994)", () => {
       ascentRound: 1,
     } as const;
     const { status, body } = lobbyPanel(queued, callbacks, undefined, ascent);
-    expect((status[0] as unknown as FakeElement).textContent).toBe("Map: Scarred Earth (medium)");
+    expect((status[0] as unknown as FakeElement).textContent).toBe("Map: Blackwater Ford (medium)");
     expect(
       (body as unknown as FakeElement).all("lobby-mode").map((line) => line.textContent),
     ).toEqual([

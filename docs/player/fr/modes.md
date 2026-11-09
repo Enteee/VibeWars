@@ -333,10 +333,10 @@ l'attente, ou, pour les gagnants, part sans repartir en file.
 
 ## Ascension des héros
 
-Une Ascension des héros en file se joue en quatre manches, toujours dans cet
-ordre : Broken Tower (Course aux reliques), Scarred Earth (Points de capture), The
+Une Ascension des héros en file se joue en six manches, toujours dans cet
+ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Broken Tower (Course aux reliques), Mosslit Cairns (Points de capture), The
 Courtyard (Roi de la colline), puis le Hall of Heroes. La fenêtre Salon dit où tu
-en es pendant que tu cherches une équipe : `Round 2 of 4 · Scarred Earth`.
+en es pendant que tu cherches une équipe : `Round 2 of 6 · Blackwater Ford`.
 Tu ne rencontres jamais qu'une équipe à la même manche, et tu en attends une aussi
 longtemps qu'il faut : aucun bot ne comble. Une manche sur une carte faite pour
 trois équipes en attend trois ; deux équipes qui ont attendu une troisième pendant

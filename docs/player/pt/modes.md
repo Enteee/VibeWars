@@ -332,10 +332,10 @@ na fila.
 
 ## Ascensão dos Heróis
 
-Uma Ascensão dos Heróis na fila tem quatro rodadas, sempre nesta ordem:
-Broken Tower (Corrida da Relíquia), Scarred Earth (Captura de Pontos), The
+Uma Ascensão dos Heróis na fila tem seis rodadas, sempre nesta ordem:
+The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), Broken Tower (Corrida da Relíquia), Mosslit Cairns (Captura de Pontos), The
 Courtyard (Rei da Colina) e depois o Hall of Heroes. A janela da Sala diz
-onde você está enquanto procura uma equipe: `Round 2 of 4 · Scarred Earth`.
+onde você está enquanto procura uma equipe: `Round 2 of 6 · Blackwater Ford`.
 Você só encontra equipes na mesma rodada e espera por uma o tempo que for
 preciso: nenhum bot completa. Uma rodada em um mapa feito para três
 equipes espera três; duas equipes que esperaram 30 segundos pela terceira

@@ -316,10 +316,10 @@ espera o, para los ganadores, sale sin volver a la cola.
 
 ## Ascenso de los Héroes
 
-Un Ascenso de los Héroes en cola son cuatro rondas, siempre en este orden: Broken
-Tower (Carrera de reliquias), Scarred Earth (Puntos de captura), The Courtyard (Rey
+Un Ascenso de los Héroes en cola son seis rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Broken
+Tower (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Courtyard (Rey
 de la colina) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
-buscas un equipo: `Round 2 of 4 · Scarred Earth`. Solo te enfrentas a un equipo de
+buscas un equipo: `Round 2 of 6 · Blackwater Ford`. Solo te enfrentas a un equipo de
 tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. Una ronda en
 un mapa hecho para tres equipos espera a tres; dos equipos que hayan esperado 30
 segundos a un tercero juegan entre ellos, y también dos cuyo tercero nunca aparece

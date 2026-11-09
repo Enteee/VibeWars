@@ -129,9 +129,11 @@ describe("team sizes (#2108)", () => {
       }
     }
     expect(modeMapIds()["heroes-ascent"]).toEqual([
+      "hollow-deep",
+      "blackwater-ford",
       "broken-tower",
+      "mosslit-cairns",
       "the-courtyard",
-      "scarred-earth",
     ]);
   });
 
@@ -286,14 +288,18 @@ describe("the Heroes' Ascent progression (#1996)", () => {
   it("is the maps built so far in GW1's order, the stand-ins in their slots (#2686)", () => {
     expect(ASCENT_PROGRESSION.length).toBeLessThanOrEqual(ASCENT_ROUNDS);
     expect(ASCENT_PROGRESSION.map((id) => [id, hostMap(id)?.mode])).toEqual([
+      ["hollow-deep", "annihilation"],
+      ["blackwater-ford", "priest-annihilation"],
       ["broken-tower", "relic-run"],
-      ["scarred-earth", "capture-points"],
+      ["mosslit-cairns", "capture-points"],
       ["the-courtyard", "king-of-the-hill"],
       ["hall-of-heroes", "king-of-the-hill"],
     ]);
     expect(ASCENT_PROGRESSION.map((_, round) => mapName(ascentMapId(round)))).toEqual([
+      "The Hollow Deep",
+      "Blackwater Ford",
       "Broken Tower",
-      "Scarred Earth",
+      "Mosslit Cairns",
       "The Courtyard",
       "Hall of Heroes",
     ]);

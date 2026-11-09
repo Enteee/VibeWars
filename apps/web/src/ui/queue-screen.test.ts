@@ -207,14 +207,14 @@ describe("teamEndAction and teamEndLine (#1997)", () => {
 
   it("names where a won Heroes' Ascent goes on to, and the Hall held (#1996)", () => {
     expect(teamEndLine("requeue", 20, 0)).toEqual({
-      text: "Ascending to Scarred Earth in 20 s",
+      text: "Ascending to Blackwater Ford in 20 s",
       button: "Leave",
     });
-    expect(teamEndLine("requeue", 20, 2)).toEqual({
+    expect(teamEndLine("requeue", 20, 4)).toEqual({
       text: "Ascending to Hall of Heroes in 20 s",
       button: "Leave",
     });
-    expect(teamEndLine("requeue", 5, 3)).toEqual({
+    expect(teamEndLine("requeue", 5, 5)).toEqual({
       text: "You hold the Hall of Heroes · defending in 5 s",
       button: "Leave",
     });
