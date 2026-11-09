@@ -289,6 +289,8 @@ Niederlage beginnt von vorn: Der nächste Lauf stimmt neu ab. Das Gleiche gilt, 
 folgst, deren Host für den alten Lauf nicht bürgen kann. Die Runde merkt sich der Host deiner Gruppe, und nur, bis du den
 Tab schließt. Eine Lobby des Aufstiegs der Helden, der per Code beigetreten wurde, spielt die Karte von Runde 1.
 
+Eine Gruppe mit weniger als 8 Spielern geht mit Bots auf den freien Plätzen in die Warteschlange und nutzt dabei ihren Team-Build, aber eine Seite hat immer mindestens einen Menschen, und ein reines Bot-Team ist nie ein Gegner. Verlässt der letzte Mensch einer Seite ein Match, gibt diese Seite auf und ihr Lauf endet.
+
 **Barrow Field** ist eine Arena des Aufstiegs, die du auch in einem Gehosteten Spiel wählen kannst: 8v8 Priestervernichtung zwischen niedrigen Erdhügeln, und der Priester erweckt alle 2 Minuten seine Toten. Trage deine Flagge auf das **Storm Beacon** in der Mitte, und es trifft alle 2,5 Sekunden einen zufälligen Gegner in Hörweite mit 50 Blitzschaden, bis das andere Team dort seine Flagge pflanzt. Jeder Einschlag ist ein Blitz vom Beacon zum Getroffenen, für beide Teams sichtbar.
 
 Drei Aufstiegs-Arenen kannst du auch in einem Gehosteten Spiel wählen: **The Hollow Deep** (8v8 Vernichtung, drei gewundene Tunnel um einen zentralen Felsen), **Blackwater

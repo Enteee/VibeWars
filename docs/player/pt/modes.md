@@ -367,6 +367,8 @@ campanha antiga. A rodada é lembrada pelo host do seu grupo, e só até você
 fechar a aba. Uma sala de Ascensão dos Heróis por código joga o mapa da
 rodada 1.
 
+Um grupo com menos de 8 entra na fila com bots nos lugares vazios, usando sua Build de Equipe, mas um lado sempre tem pelo menos um humano, e uma equipe de bots nunca é adversária. Se o último humano de um lado sair de uma partida, esse lado desiste e sua subida termina.
+
 **Barrow Field** é uma arena da Ascensão que você também pode escolher em uma Partida Hospedada: Aniquilação de Sacerdotes 8v8 entre montes baixos de terra, com o sacerdote ressuscitando seus mortos a cada 2 minutos. Leve sua bandeira ao **Storm Beacon** no centro e ele atinge um inimigo aleatório ao alcance da voz com 50 de dano de raio a cada 2,5 segundos, até a outra equipe plantar a bandeira dela lá. Cada golpe é um raio do farol até quem ele atingiu, visível para as duas equipes.
 
 Três arenas da Ascensão também podem ser escolhidas em uma Partida Hospedada: **The Hollow Deep** (8v8 de Aniquilação, três túneis sinuosos
