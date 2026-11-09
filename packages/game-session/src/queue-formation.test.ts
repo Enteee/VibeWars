@@ -10,6 +10,7 @@ import {
 } from "@vibewars/game-protocol";
 
 import {
+  ASCENT_SKIP_WAIT_SECONDS,
   ROOM_PREFIX,
   THIRD_TEAM_WAIT_SECONDS,
   formGroups,
@@ -76,10 +77,8 @@ function form(
     tickets,
     now: NOW,
     mode,
-    ascentRound: roundOf(mode),
     ignored,
-    mapPool: MAPS,
-    teamCount: 2,
+    round: () => ({ mapPool: MAPS, teamCount: 2, skipping: false }),
   });
 }
 
@@ -324,10 +323,8 @@ describe("formGroups (#869)", () => {
     const empty = {
       now: NOW,
       mode: "random-arena-1v1" as const,
-      ascentRound: null,
       ignored: new Set<string>(),
-      mapPool: [],
-      teamCount: 2 as const,
+      round: () => ({ mapPool: [], teamCount: 2 as const, skipping: false }),
     };
     await expect(formGroups({ ...empty, tickets: [] })).resolves.toEqual([]);
     await expect(
@@ -381,6 +378,82 @@ describe("team modes (ADR-0042)", () => {
     expect(await form(tickets, "gvg")).toEqual([]);
   });
 
+  describe("skipping ahead in Heroes' Ascent (#2687)", () => {
+    const WAITED = NOW - ASCENT_SKIP_WAIT_SECONDS * 1000;
+    const hero = (n: number, round: number, enteredAt = NOW, hardNat = false): QueueTicket => ({
+      ...side(n, "heroes-ascent", 1),
+      ascentRound: round,
+      enteredAt,
+      hardNat,
+    });
+    // As `queueSkipping` draws it: not The Underworld (0), not the Hall (7).
+    const form2 = (tickets: readonly QueueTicket[], now = NOW) =>
+      formGroups({
+        tickets,
+        now,
+        mode: "heroes-ascent",
+        ignored: new Set(),
+        round: (at) => ({
+          mapPool: [`map-${String(at)}`],
+          teamCount: 2,
+          skipping: at !== 0 && at !== 7,
+        }),
+      });
+
+    it("matches a side alone 60 s at round 3 with one at round 6, on round 6's map", async () => {
+      const a = hero(1, 3, WAITED);
+      const b = hero(2, 6);
+      const groups = await form2([b, a]);
+      expect(groups.map(members)).toEqual([ids([a, b])]);
+      expect(groups[0]?.mapId).toBe("map-6");
+    });
+
+    it("forms the same group whichever order the tickets came in", async () => {
+      const a = hero(1, 3, WAITED);
+      const b = hero(2, 6);
+      expect(await form2([a, b])).toEqual(await form2([b, a]));
+    });
+
+    it("does not match before the 60 s are up", async () => {
+      expect(await form2([hero(1, 3, WAITED + 1), hero(2, 6)])).toEqual([]);
+    });
+
+    it("waits on the earlier side's time, not the later's", async () => {
+      expect(await form2([hero(1, 3), hero(2, 6, WAITED)])).toEqual([]);
+    });
+
+    it("never skips round 0, The Underworld", async () => {
+      expect(await form2([hero(1, 0, WAITED), hero(2, 6)])).toEqual([]);
+    });
+
+    it("never skips into the Hall", async () => {
+      expect(await form2([hero(1, 3, WAITED), hero(2, 7)])).toEqual([]);
+    });
+
+    it("prefers an opponent at its own round", async () => {
+      const pair = [hero(1, 3, WAITED), hero(2, 3)];
+      const groups = await form2([...pair, hero(3, 6)]);
+      expect(groups.map(members)).toEqual([ids(pair)]);
+      expect(groups[0]?.mapId).toBe("map-3");
+    });
+
+    it("takes no side from a pair at its own round", async () => {
+      const groups = await form2([hero(1, 3, WAITED), hero(2, 6), hero(3, 6)]);
+      expect(groups).toHaveLength(1);
+      expect(groups[0]?.mapId).toBe("map-6");
+      expect(groups.map(members)).toEqual([ids([hero(2, 6), hero(3, 6)])]);
+    });
+
+    it("never pairs two hard NATs across rounds", async () => {
+      expect(await form2([hero(1, 3, WAITED, true), hero(2, 6, NOW, true)])).toEqual([]);
+    });
+
+    it("leaves a lone side queued after 10 minutes: never bots, never a win", async () => {
+      const lone = hero(1, 3, NOW - 600_000);
+      expect(await form2([lone])).toEqual([]);
+    });
+  });
+
   describe("Heroes' Ascent rounds (#1996)", () => {
     /** Heroes' Ascent's sides `n` at `round`, formed at `round` with its one map. */
     const hero = (n: number, round: number): QueueTicket => ({
@@ -397,10 +470,12 @@ describe("team modes (ADR-0042)", () => {
         tickets,
         now,
         mode: "heroes-ascent",
-        ascentRound: round,
         ignored: new Set(),
-        mapPool: [map],
-        teamCount,
+        round: (at) => ({
+          mapPool: [at === round ? map : "elsewhere"],
+          teamCount,
+          skipping: false,
+        }),
       });
 
     it("never groups sides at different rounds, even the only two queued", async () => {

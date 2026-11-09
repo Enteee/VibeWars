@@ -62,6 +62,7 @@ import {
   mapTeamSizes,
   modeMapIds,
   queueMapPool,
+  queueSkipping,
   queueTeamCount,
 } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
@@ -744,8 +745,11 @@ export function enterQueue(
       ...(party === undefined ? {} : { party: party.party }),
       now: () => Date.now(),
       newTicketKey: () => queue.newTicketKey(),
-      mapPool: queueMapPool(mode, ascentRound),
-      teamCount: queueTeamCount(mode, ascentRound),
+      round: (round) => ({
+        mapPool: queueMapPool(mode, round),
+        teamCount: queueTeamCount(mode, round),
+        skipping: queueSkipping(mode, round),
+      }),
       hardNat,
     });
     client = started;

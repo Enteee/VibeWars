@@ -6,6 +6,7 @@ import {
   ARENA_MAPS,
   arenaIds,
   ascentMapId,
+  ascentRoundOf,
   ASCENT_PROGRESSION,
   LOBBY_MODE_MATCH_MODES,
   hostMap,
@@ -16,6 +17,7 @@ import {
   mapsForSize,
   modeMapIds,
   queueMapPool,
+  queueSkipping,
   randomArenaMapPool,
   teamArenaMapIds,
 } from "./maps.js";
@@ -252,6 +254,20 @@ describe("team sizes (#2108)", () => {
 });
 
 describe("the Hall of Heroes (#1995)", () => {
+  it("skips ahead only between The Underworld and the Hall (#2687)", () => {
+    const hall = ASCENT_PROGRESSION.length - 1;
+    expect(queueSkipping("heroes-ascent", 0)).toBe(false);
+    expect(queueSkipping("heroes-ascent", 1)).toBe(true);
+    expect(queueSkipping("heroes-ascent", hall - 1)).toBe(true);
+    expect(queueSkipping("heroes-ascent", hall)).toBe(false);
+    expect(queueSkipping("gvg", null)).toBe(false);
+  });
+
+  it("finds the round a map is played at, and refuses one that is none (#2687)", () => {
+    expect(ascentRoundOf(ascentMapId(3))).toBe(3);
+    expect(() => ascentRoundOf("nowhere")).toThrow(RangeError);
+  });
+
   it("is a Hosted Game's pick, and a queued Ascent's last round alone (#1996)", () => {
     expect(modeMapIds()["hosted-game"]).toContain("hall-of-heroes");
     expect(modeMapIds()["heroes-ascent"]).not.toContain("hall-of-heroes");

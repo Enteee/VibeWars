@@ -341,7 +341,7 @@ The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), 
 Courtyard (Rei da Colina) e depois o Hall of Heroes. A janela da Sala diz
 onde você está enquanto procura uma equipe: `Round 2 of 7 · Blackwater Ford`.
 Você só encontra equipes na mesma rodada e espera por uma o tempo que for
-preciso: nenhum bot completa. Uma rodada em um mapa feito para três
+preciso: nenhum bot completa. A única exceção: a partir da rodada 2, uma equipe sozinha na sua rodada por 60 segundos pode avançar. Ela enfrenta uma equipe que espera em qualquer rodada posterior antes do Hall, as duas jogam o mapa da equipe mais adiantada e a vencedora segue a partir dali. Uma rodada em um mapa feito para três
 equipes espera três; duas equipes que esperaram 30 segundos pela terceira
 jogam entre si, assim como duas cuja terceira nunca aparece na sala. Vença
 e seu grupo sobe sozinho para o próximo mapa depois de 20 segundos; vença

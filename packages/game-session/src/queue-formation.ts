@@ -42,20 +42,9 @@ export interface FormedGroup {
   readonly mode: QueueMode;
 }
 
-export interface FormGroupsInput {
-  /** Every ticket the caller has seen, live or not, in any order. */
-  readonly tickets: readonly QueueTicket[];
-  /** ms since the epoch. */
-  readonly now: number;
-  readonly mode: QueueMode;
-  /**
-   * In Heroes' Ascent, the round being matched: only tickets at it form
-   * groups (#1996). `null` in every other mode.
-   */
-  readonly ascentRound: number | null;
-  /** Ticket ids that never showed up for an earlier group (#854 C7). */
-  readonly ignored: ReadonlySet<string>;
-  /** The maps a group may play on, in the same order on every client. */
+/** How a queue's round is played; every client answers the same for every round. */
+export interface QueueRound {
+  /** The maps a group of this round may play on, in the same order on every client. */
   readonly mapPool: readonly string[];
   /**
    * The most sides a group takes: 3 on a Heroes' Ascent round whose map
@@ -63,6 +52,27 @@ export interface FormGroupsInput {
    * where every ticket is a side.
    */
   readonly teamCount: TeamCount;
+  /**
+   * Whether a side here may skip ahead (#2687), and one from an earlier
+   * round may skip to it. Never The Underworld, which every party
+   * plays, nor the Hall.
+   */
+  readonly skipping: boolean;
+}
+
+export interface FormGroupsInput {
+  /** Every ticket the caller has seen, live or not, in any order. */
+  readonly tickets: readonly QueueTicket[];
+  /** ms since the epoch. */
+  readonly now: number;
+  readonly mode: QueueMode;
+  /** Ticket ids that never showed up for an earlier group (#854 C7). */
+  readonly ignored: ReadonlySet<string>;
+  /**
+   * A ticket's `ascentRound` played: Heroes' Ascent's are told apart
+   * (#1996), and every other mode's is `null`.
+   */
+  readonly round: (ascentRound: number | null) => QueueRound;
 }
 
 /**
@@ -77,6 +87,12 @@ export const ROOM_PREFIX = "ra-";
  * "usually 3, 2 if not enough are free".
  */
 export const THIRD_TEAM_WAIT_SECONDS = 30;
+
+/**
+ * How long a Heroes' Ascent side waits with no opponent at its round
+ * before it may meet one at a later round (#2687), from when it queued.
+ */
+export const ASCENT_SKIP_WAIT_SECONDS = 60;
 
 /** Which of two tickets queued first; a total order, so input order never matters. */
 function queueOrder(a: QueueTicket, b: QueueTicket): number {
@@ -106,15 +122,12 @@ export function isLive(ticket: QueueTicket, now: number): boolean {
  * The live tickets, first queued first: this protocol and mode, `isLive`,
  * each id once. Ignored ones are still here: see `liveQueue`.
  */
-function liveTickets(
-  input: Pick<FormGroupsInput, "tickets" | "now" | "mode" | "ascentRound">,
-): QueueTicket[] {
+function liveTickets(input: Pick<FormGroupsInput, "tickets" | "now" | "mode">): QueueTicket[] {
   const live = input.tickets
     .filter(
       (ticket) =>
         ticket.protocol === PROTOCOL_VERSION &&
         ticket.mode === input.mode &&
-        ticket.ascentRound === input.ascentRound &&
         isLive(ticket, input.now),
     )
     .sort(queueOrder);
@@ -282,6 +295,83 @@ function reachable(front: readonly Queued[], pools: readonly (readonly Queued[])
   });
 }
 
+/** Whether `a` stands at a later Heroes' Ascent round than `b`. */
+function isLater(a: QueueTicket, b: QueueTicket): boolean {
+  return a.ascentRound !== null && b.ascentRound !== null && a.ascentRound > b.ascentRound;
+}
+
+/**
+ * The pairs that skip ahead (#2687), from `waiting`, the tickets no
+ * group took, first queued first. A side alone at its round for
+ * `ASCENT_SKIP_WAIT_SECONDS` meets the first queued side alone at a
+ * later round. Two sides at one round that could play each other are not
+ * alone: they are only waiting for a third (#2683). A pair both `hardNat`
+ * could not connect, so it is passed over, as in `reachable`.
+ */
+function skipPairs(
+  waiting: readonly QueueTicket[],
+  round: FormGroupsInput["round"],
+  now: number,
+): (readonly [QueueTicket, QueueTicket])[] {
+  const reaches = (a: QueueTicket, b: QueueTicket): boolean => !a.hardNat || !b.hardNat;
+  const alone = waiting.filter(
+    (ticket) =>
+      round(ticket.ascentRound).skipping &&
+      !waiting.some(
+        (other) =>
+          other !== ticket && other.ascentRound === ticket.ascentRound && reaches(ticket, other),
+      ),
+  );
+  const pairs: (readonly [QueueTicket, QueueTicket])[] = [];
+  const taken = new Set<QueueTicket>();
+  for (const ticket of alone) {
+    if (taken.has(ticket) || now - ticket.enteredAt < ASCENT_SKIP_WAIT_SECONDS * 1000) {
+      continue;
+    }
+    const later = alone.find(
+      (other) => !taken.has(other) && isLater(other, ticket) && reaches(ticket, other),
+    );
+    if (later !== undefined) {
+      taken.add(ticket).add(later);
+      pairs.push([ticket, later]);
+    }
+  }
+  return pairs;
+}
+
+/**
+ * Every group of `queue`, each with the round it plays: each round's
+ * own (#1996), lowest first, then the sides left over skipping ahead,
+ * which play the later side's round (#2687).
+ */
+function roundGroups(
+  queue: readonly QueueTicket[],
+  mode: QueueMode,
+  round: FormGroupsInput["round"],
+  now: number,
+): { readonly group: readonly QueueTicket[]; readonly ascentRound: number | null }[] {
+  const rounds = [...new Set(queue.map((ticket) => ticket.ascentRound))].sort(
+    (a, b) => (a ?? 0) - (b ?? 0),
+  );
+  const groups = rounds.flatMap((ascentRound) =>
+    takeGroups(
+      queue.filter((ticket) => ticket.ascentRound === ascentRound),
+      mode,
+      round(ascentRound).teamCount,
+      now,
+    ).map((group) => ({ group, ascentRound })),
+  );
+  const grouped = new Set(groups.flatMap(({ group }) => group));
+  const waiting = queue.filter((ticket) => !grouped.has(ticket));
+  return [
+    ...groups,
+    ...skipPairs(waiting, round, now).map((group) => ({
+      group,
+      ascentRound: group[1].ascentRound,
+    })),
+  ];
+}
+
 async function sha256Hex(text: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -346,17 +436,20 @@ function sides(group: readonly QueueTicket[], mode: QueueMode, groupId: string):
  * Every group the live tickets make for `input.mode`, earliest queued
  * first, never sharing a ticket: `[]` when there are not enough. Each
  * fills two sides of `teamSizeOf(mode)`, or three (#2683); a party ticket, or in a team
- * mode any ticket with its bots, fills one side by itself. Throws on an
+ * mode any ticket with its bots, fills one side by itself. A Heroes'
+ * Ascent queue is formed whole, every round of it, whichever round the
+ * caller is at: every client has to agree who skips ahead. Throws on an
  * empty `mapPool` once a group forms.
  */
 export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]> {
   const groups: FormedGroup[] = [];
-  for (const group of takeGroups(liveQueue(input), input.mode, input.teamCount, input.now)) {
+  const formed = roundGroups(liveQueue(input), input.mode, input.round, input.now);
+  for (const { group, ascentRound } of formed) {
     const ids = group.map((ticket) => ticket.ticketId).sort(compare);
     const groupId = await sha256Hex(ids.join("\n"));
     const hostTicketId = await hostOf(groupId, group);
-    const mapId =
-      input.mapPool[createRng(seedFromString(`${groupId}:map`)).nextInt(0, input.mapPool.length)];
+    const { mapPool } = input.round(ascentRound);
+    const mapId = mapPool[createRng(seedFromString(`${groupId}:map`)).nextInt(0, mapPool.length)];
     if (hostTicketId === undefined || mapId === undefined) {
       throw new Error("formGroups: an empty group or map pool");
     }

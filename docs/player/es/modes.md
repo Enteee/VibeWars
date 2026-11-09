@@ -324,7 +324,7 @@ Un Ascenso de los Héroes en cola son siete rondas, siempre en este orden: The H
 Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Courtyard (Rey
 de la colina) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
 buscas un equipo: `Round 2 of 7 · Blackwater Ford`. Solo te enfrentas a un equipo de
-tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. Una ronda en
+tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. La única excepción: desde la ronda 2, un equipo solo en su ronda durante 60 segundos puede adelantarse. Se enfrenta a un equipo que espere en cualquier ronda posterior antes de la Hall, ambos juegan el mapa del equipo más avanzado y el ganador sigue desde allí. Una ronda en
 un mapa hecho para tres equipos espera a tres; dos equipos que hayan esperado 30
 segundos a un tercero juegan entre ellos, y también dos cuyo tercero nunca aparece
 en la sala. Si ganas, tu grupo asciende solo al siguiente mapa tras 20 segundos; si

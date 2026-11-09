@@ -12,7 +12,13 @@ import type { NostrQueue } from "./net/transport/nostr-queue.js";
 import { watchRecords } from "./net/transport/index.js";
 import { loadPlayerKey } from "./net/transport/player-key.js";
 
-import { ARENA_MAPS, ASCENT_PROGRESSION, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
+import {
+  ARENA_MAPS,
+  ASCENT_PROGRESSION,
+  LOBBY_MODE_MATCH_MODES,
+  ascentRoundOf,
+  modeMapIds,
+} from "./net/maps.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -531,6 +537,8 @@ async function main(): Promise<void> {
         finished: boolean;
         /** The Heroes' Ascent round its lobby queued at (#1996); `null` in other modes. */
         readonly ascentRound: number | null;
+        /** The round its match plays: a later one when it skipped ahead (#2687). */
+        playedRound: number | null;
       }
     | undefined;
   /** A team's match found while the tab was hidden (#2743): its title flashing. */
@@ -1956,6 +1964,7 @@ async function main(): Promise<void> {
       teams: undefined,
       finished: false,
       ascentRound: snapshot.ascentRound,
+      playedRound: snapshot.ascentRound,
     };
     teamQueue = started;
     music().menu("queue");
@@ -2003,6 +2012,8 @@ async function main(): Promise<void> {
             current.teams = state.teams;
           } else if (state.kind === "unreachable") {
             current.teams = undefined;
+          } else if (state.kind === "in-lobby" && current.ascentRound !== null) {
+            current.playedRound = ascentRoundOf(state.group.mapId);
           }
           paintQueue();
         },
@@ -2671,7 +2682,7 @@ async function main(): Promise<void> {
       // lost to its host leaving (#1996).
       if (!team.finished && team.ascentRound !== null) {
         const result = notice === undefined ? "forfeit" : "host-left";
-        ascentRound = nextAscentRound(team.ascentRound, result);
+        ascentRound = nextAscentRound(team.ascentRound, team.playedRound ?? 0, result);
         ascentMorale = nextAscentMorale(ascentMorale, ascentMorale, result);
       }
       endTeamQueue();
@@ -2858,7 +2869,11 @@ async function main(): Promise<void> {
               if (team !== undefined) {
                 queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
                 if (team.ascentRound !== null) {
-                  ascentRound = nextAscentRound(team.ascentRound, won ? "win" : "loss");
+                  ascentRound = nextAscentRound(
+                    team.ascentRound,
+                    team.playedRound ?? 0,
+                    won ? "win" : "loss",
+                  );
                   ascentMorale = nextAscentMorale(
                     ascentMorale,
                     finished.selfMorale,
@@ -2869,7 +2884,7 @@ async function main(): Promise<void> {
               startTeamEnd(
                 teamEndAction(won, team !== undefined),
                 team?.party,
-                team?.ascentRound ?? null,
+                team?.playedRound ?? null,
               );
               return;
             }
