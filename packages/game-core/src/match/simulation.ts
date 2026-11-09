@@ -334,6 +334,7 @@ import {
 import { guardSpec, type BaseGuard } from "./guards.js";
 import {
   BEACON_STRIKE_RADIUS,
+  beaconStrikeArea,
   UNOWNED_BEACON,
   beaconLightning,
   stepBeacon,
@@ -6348,7 +6349,7 @@ export class MatchSimulation {
       skillId: undefined,
       weaponId: undefined,
       attributeId: undefined,
-      area: { x: field.stand.x, y: field.stand.y, radius: BEACON_STRIKE_RADIUS },
+      area: beaconStrikeArea(field.stand),
       doubleStrike: false,
       events,
     });

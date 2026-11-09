@@ -22,6 +22,19 @@ export const BEACON_LIGHTNING_DAMAGE = 50;
 /** How far from the beacon a foe can be struck (GW1: earshot). */
 export const BEACON_STRIKE_RADIUS = AREA_EARSHOT;
 
+/**
+ * A strike's `area` in the combat log: the beacon, which is where its
+ * bolt starts. Nothing draws the radius, so it is not the strike's reach,
+ * which is wider than the wire allows an area to be.
+ */
+export function beaconStrikeArea(beacon: { readonly x: number; readonly y: number }): {
+  readonly x: number;
+  readonly y: number;
+  readonly radius: number;
+} {
+  return { x: beacon.x, y: beacon.y, radius: 1 };
+}
+
 /** Whose beacon it is, and how long since it was taken or last struck. */
 export interface BeaconState {
   readonly owner: number | undefined;

@@ -1,4 +1,5 @@
 import {
+  beaconStrikeArea,
   NO_UPGRADES,
   ADRENALINE_PER_STRIKE,
   CHAIN_MARK_SECONDS,
@@ -911,6 +912,16 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     // The host sends a message per slice of these: none, for none.
     expect(wireCombat([entry({ events: [] })])).toEqual([]);
     expect(wireCombat([])).toEqual([]);
+  });
+
+  it("gets a beacon strike through the parser, the whole batch with it", () => {
+    const strike = entry({
+      cause: "beacon",
+      sourceId: undefined,
+      area: beaconStrikeArea({ x: 1200, y: 800 }),
+    });
+    const batch = wireCombat([strike, entry({ sourceId: "a" })]);
+    expect(parseWireCombatBatch(batch)).toEqual(batch);
   });
 
   it("sends a status tick as its bearer's, and a skill with its area", () => {
