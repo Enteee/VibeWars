@@ -789,9 +789,9 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     exercises: ["auto-attacks", "movement", "range"],
     knobs: [],
     dummies: [
-      { ...target("on-bridge", "On the bridge (60 armor)", vec2(600, 350), 60), layer: 1 },
-      target("under-bridge", "Under the bridge (60 armor)", vec2(600, 350), 60),
-      { ...target("on-platform", "On the platform (60 armor)", vec2(600, 110), 60), layer: 2 },
+      { ...target("on-bridge", "On the bridge (60 armor)", vec2(600, 450), 60), layer: 1 },
+      target("under-bridge", "Under the bridge (60 armor)", vec2(600, 450), 60),
+      { ...target("on-platform", "On the platform (60 armor)", vec2(600, 210), 60), layer: 2 },
     ],
   },
 ];

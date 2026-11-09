@@ -1232,6 +1232,22 @@ only has to answer one question: **which layer is this on?** The reference is
 
 The one rule above still holds: layer and team are read by shape first.
 
+This section applies to maps with more than one layer. A map of one layer
+draws as it always has.
+
+### In the game
+
+In world units, with `line` one CSS px at any zoom:
+
+| Part          | Value                                                    |
+| ------------- | -------------------------------------------------------- |
+| Layer height  | 56                                                       |
+| Deck on piers | Slab 12 deep; planks one line every 48; lip 3 lines wide |
+| Ramp          | Panel line every 24 along its length, shaded 15%         |
+| Wall          | 28 high; lit edge 2 lines wide; front face shaded 40%    |
+| Support       | Shaded 30%, from the ground to its deck's underside      |
+| Deck shadow   | Offset (+32, +32); a layer-1 deck only                   |
+
 ### Palette
 
 | Part                   | Hex       | Note                              |
