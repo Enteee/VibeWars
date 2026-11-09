@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CREATURE_LOOKS, MINIMAL_GW_INSPIRED_PVP_V1, type StatusId } from "@vibewars/game-core";
 import type { MatchSnapshot, PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 
-import { toArenaSnapshot } from "./match-view.js";
+import { outcomeArrived, toArenaSnapshot } from "./match-view.js";
 import { ACTOR_RADIUS, CREATURE_RADIUS, actorAtPoint } from "./render/arena-snapshot.js";
 
 function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
@@ -72,6 +72,14 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
     summary: undefined,
   };
 }
+
+describe("outcomeArrived (#2692)", () => {
+  it("waits for the `ended` on the Elite Zaishen Battle only", () => {
+    expect(outcomeArrived("elite-zaishen-battle", { summary: undefined })).toBe(false);
+    expect(outcomeArrived("elite-zaishen-battle", { summary: [] })).toBe(true);
+    expect(outcomeArrived("ember-pits", { summary: undefined })).toBe(true);
+  });
+});
 
 describe("toArenaSnapshot", () => {
   it("draws a watcher's team 1 in the ally colour and team 2 in the enemy one (#480)", () => {

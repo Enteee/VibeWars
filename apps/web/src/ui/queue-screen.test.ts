@@ -121,8 +121,8 @@ describe("nextStreak (#881)", () => {
 describe("nextAscentRound (#1996)", () => {
   it("moves on with a win, to the Hall and no further", () => {
     expect(nextAscentRound(0, 0, "win")).toBe(1);
-    expect(nextAscentRound(5, 5, "win")).toBe(6);
-    expect(nextAscentRound(6, 6, "win")).toBe(6);
+    expect(nextAscentRound(6, 6, "win")).toBe(7);
+    expect(nextAscentRound(7, 7, "win")).toBe(7);
   });
 
   it("moves on from the map played when it skipped ahead (#2687)", () => {
@@ -152,9 +152,9 @@ describe("nextAscentMorale (#2686)", () => {
 });
 
 describe("ascentStartMorale (#2686)", () => {
-  it("sends 0 outside Heroes' Ascent and at a run's first map, and the carried morale past it", () => {
+  it("sends 0 outside Heroes' Ascent and the carried morale in it", () => {
     expect(ascentStartMorale(null, -30)).toBe(0);
-    expect(ascentStartMorale(0, -30)).toBe(0);
+    expect(ascentStartMorale(0, 10)).toBe(10);
     expect(ascentStartMorale(2, -30)).toBe(-30);
   });
 });
@@ -216,11 +216,11 @@ describe("teamEndAction and teamEndLine (#1997)", () => {
       text: "Ascending to Blackwater Ford in 20 s",
       button: "Leave",
     });
-    expect(teamEndLine("requeue", 20, 5)).toEqual({
+    expect(teamEndLine("requeue", 20, 6)).toEqual({
       text: "Ascending to Hall of Heroes in 20 s",
       button: "Leave",
     });
-    expect(teamEndLine("requeue", 5, 6)).toEqual({
+    expect(teamEndLine("requeue", 5, 7)).toEqual({
       text: "You hold the Hall of Heroes · defending in 5 s",
       button: "Leave",
     });

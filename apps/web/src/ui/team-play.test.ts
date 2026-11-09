@@ -66,8 +66,10 @@ function hostMapIds(entry: HostEntry): string[] {
 }
 
 describe("the lobby screens' maps (#1453, #1525, #1526)", () => {
-  it("host on every map from Hosted Game", () => {
-    expect(hostMapIds("hosted-game")).toEqual(ARENA_MAPS.map((map) => map.id));
+  it("host on every map from Hosted Game, but the one only a run starts (#2692)", () => {
+    expect(hostMapIds("hosted-game")).toEqual(
+      ARENA_MAPS.map((map) => map.id).filter((id) => id !== "elite-zaishen-battle"),
+    );
   });
 
   it("host on each team mode's own maps", () => {

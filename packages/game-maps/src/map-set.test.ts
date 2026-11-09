@@ -32,7 +32,11 @@ import { mapDataSchema, type MapData } from "./schema.js";
 const RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
 /** The arenas #444 added: the spawn-distance rule is theirs (the two small mode arenas are small by design). */
 const NEW_ARENAS = new Set(["arena-crossroads", "arena-long-hall", "arena-canyon"]);
-const MAPS = loadAllMaps();
+// A start line (#2692) is an area, where every test here wants a point.
+const MAPS = loadAllMaps().map((map) => ({
+  ...map,
+  objectives: map.objectives.filter((objective) => objective.kind !== "start-line"),
+}));
 const TOLERANCE = 1;
 
 const turned = (map: MapData, point: Vec2): Vec2 => ({
@@ -49,34 +53,38 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
   const walls = allWallSegments(map.walls);
   const bounds = { width: map.width, height: map.height };
 
-  it("is the same map turned half round its centre: walls, spawns and shrines, the teams swapped", () => {
-    for (const wall of walls) {
-      const image = { a: turned(map, wall.a), b: turned(map, wall.b) };
-      expect(
-        walls.some((other) => sameSegment(other, image)),
-        JSON.stringify(wall),
-      ).toBe(true);
-    }
-    for (const spawn of map.spawnPoints) {
-      const image = turned(map, spawn.position);
-      expect(
-        map.spawnPoints.some((other) => other.team !== spawn.team && near(other.position, image)),
-        JSON.stringify(spawn),
-      ).toBe(true);
-    }
-    for (const objective of map.objectives) {
-      const image = turned(map, objective.position);
-      // A shared objective, the flag stand (#1225), the altar (#1374) or a
-      // capture point (#1378), has another of its kind at its image, or is it.
-      const mirrored = map.objectives.some(
-        (other) =>
-          other.kind === objective.kind &&
-          ("team" in other && "team" in objective ? other.team !== objective.team : true) &&
-          near(other.position, image),
-      );
-      expect(mirrored, JSON.stringify(objective)).toBe(true);
-    }
-  });
+  // The Elite Zaishen Battle (#2692) is a party's run at six NPCs, not a fair fight.
+  it.skipIf(map.id === "elite-zaishen-battle")(
+    "is the same map turned half round its centre: walls, spawns and shrines, the teams swapped",
+    () => {
+      for (const wall of walls) {
+        const image = { a: turned(map, wall.a), b: turned(map, wall.b) };
+        expect(
+          walls.some((other) => sameSegment(other, image)),
+          JSON.stringify(wall),
+        ).toBe(true);
+      }
+      for (const spawn of map.spawnPoints) {
+        const image = turned(map, spawn.position);
+        expect(
+          map.spawnPoints.some((other) => other.team !== spawn.team && near(other.position, image)),
+          JSON.stringify(spawn),
+        ).toBe(true);
+      }
+      for (const objective of map.objectives) {
+        const image = turned(map, objective.position);
+        // A shared objective, the flag stand (#1225), the altar (#1374) or a
+        // capture point (#1378), has another of its kind at its image, or is it.
+        const mirrored = map.objectives.some(
+          (other) =>
+            other.kind === objective.kind &&
+            ("team" in other && "team" in objective ? other.team !== objective.team : true) &&
+            near(other.position, image),
+        );
+        expect(mirrored, JSON.stringify(objective)).toBe(true);
+      }
+    },
+  );
 
   it("has at least three spawns a team, each clear of every wall by a body", () => {
     for (const team of [0, 1]) {
@@ -192,9 +200,11 @@ describe("the arena set (#444)", () => {
         "the-courtyard",
         "hall-of-heroes",
         "barrow-field",
+        "elite-zaishen-battle",
         "hollow-deep",
         "blackwater-ford",
         "mosslit-cairns",
+        "brazen-causeway",
         "scarred-earth",
         "sandstone-steps",
         "frozen-crossing",
@@ -216,6 +226,7 @@ describe("the arena set (#444)", () => {
     expect(MAPS.filter((map) => map.mode === "priest-annihilation").map((map) => map.id)).toEqual([
       "barrow-field",
       "blackwater-ford",
+      "brazen-causeway",
       "jungle-ruins",
     ]);
     expect(MAPS.filter((map) => map.mode === "guild-battle").map((map) => map.id)).toEqual([
@@ -233,7 +244,7 @@ describe("the arena set (#444)", () => {
       "mosslit-cairns",
       "scarred-earth",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 11);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 12);
   });
 
   it("puts each team's shrine on Jungle Ruins 150-250 behind its spawns (#1186, #2550)", () => {

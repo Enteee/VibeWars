@@ -21,6 +21,7 @@ const SYMMETRIC = [
   "hollow-deep",
   "blackwater-ford",
   "mosslit-cairns",
+  "brazen-causeway",
   "ashen-courtyard",
   "moss-vale",
   "canthan-terraces",
@@ -87,10 +88,11 @@ describe.each(SYMMETRIC)("%s (#2544)", (id) => {
   });
 
   it("has every objective's 180° twin, of the other team if it has one", () => {
-    for (const objective of map.objectives) {
+    const placed = map.objectives.filter((objective) => objective.kind !== "start-line");
+    for (const objective of placed) {
       const team = "team" in objective ? objective.team : undefined;
       expect(
-        map.objectives.some(
+        placed.some(
           (other) =>
             other.kind === objective.kind &&
             ("team" in other ? other.team : undefined) === otherTeam(team) &&

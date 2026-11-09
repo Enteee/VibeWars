@@ -14,10 +14,12 @@ import canthanTerraces from "@vibewars/game-maps/maps/canthan-terraces/map.json"
 import sunkenBastion from "@vibewars/game-maps/maps/sunken-bastion/map.json" with { type: "json" };
 import shiverpeakPass from "@vibewars/game-maps/maps/shiverpeak-pass/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
+import eliteZaishenBattle from "@vibewars/game-maps/maps/elite-zaishen-battle/map.json" with { type: "json" };
 import barrowField from "@vibewars/game-maps/maps/barrow-field/map.json" with { type: "json" };
 import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
 import cinderSanctum from "@vibewars/game-maps/maps/cinder-sanctum/map.json" with { type: "json" };
 import blackwaterFord from "@vibewars/game-maps/maps/blackwater-ford/map.json" with { type: "json" };
+import brazenCauseway from "@vibewars/game-maps/maps/brazen-causeway/map.json" with { type: "json" };
 import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
 import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
 import mosslitCairns from "@vibewars/game-maps/maps/mosslit-cairns/map.json" with { type: "json" };
@@ -30,8 +32,10 @@ import type {
   GhostField,
   MatchMode,
   RelicField,
+  StartLine,
   Vec2,
 } from "@vibewars/game-core";
+import { ELITE_ZAISHEN_MAP } from "@vibewars/game-core";
 import {
   isTeamArena,
   teamSizeOf,
@@ -80,10 +84,13 @@ export const ARENA_MAPS: readonly MapData[] = [
   hallOfHeroes,
   // The Heroes' Ascent's own (#2694), and a Hosted Game's pick.
   barrowField,
+  eliteZaishenBattle,
   // The Heroes' Ascent's own (#2693): a Hosted Game's pick until the progression places them.
   hollowDeep,
   blackwaterFord,
   mosslitCairns,
+  // The Heroes' Ascent's own, in Golden Gates' slot (#2697).
+  brazenCauseway,
   // Capture Points' (#1378, #2551).
   scarredEarth,
 ].map((raw) => validateMapData(raw));
@@ -131,6 +138,8 @@ const ASCENT_ONLY: readonly string[] = [
   "hollow-deep",
   "blackwater-ford",
   "mosslit-cairns",
+  "brazen-causeway",
+  ELITE_ZAISHEN_MAP,
 ];
 
 /**
@@ -144,6 +153,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
     const modes = LOBBY_MODE_MATCH_MODES[mode];
     return arenaIds().filter(
       (id) =>
+        id !== ELITE_ZAISHEN_MAP &&
         (mode === "hosted-game" || !ASCENT_ONLY.includes(id)) &&
         (modes === undefined || modes.includes(mapMode(id))) &&
         (size === undefined || suits(id, size)),
@@ -211,6 +221,8 @@ export const ASCENT_PROGRESSION: readonly string[] = [
   // Unholy Temples' slot.
   "cinder-sanctum",
   "mosslit-cairns",
+  // Golden Gates' slot.
+  "brazen-causeway",
   "the-courtyard",
   "hall-of-heroes",
 ];
@@ -463,6 +475,16 @@ export interface MapShrine {
   readonly position: Vec2;
 }
 
+function startLineOf(objectives: MapData["objectives"]): StartLine | undefined {
+  for (const objective of objectives) {
+    if (objective.kind === "start-line") {
+      const { x, y, width, height } = objective.area;
+      return { layer: objective.layer, x, y, width, height };
+    }
+  }
+  return undefined;
+}
+
 /** The map `mapId` names, built for a `MatchHost`; `undefined` for no such map. */
 export function hostMap(mapId: string): HostMap | undefined {
   const map = ARENA_MAPS.find((candidate) => candidate.id === mapId);
@@ -500,6 +522,7 @@ export function hostMap(mapId: string): HostMap | undefined {
     capturePoints: map.objectives.flatMap((objective) =>
       objective.kind === "capture-point" ? [{ ...objective.position, layer: objective.layer }] : [],
     ),
+    startLine: startLineOf(map.objectives),
     guards: guardsOf(map.objectives),
   };
 }

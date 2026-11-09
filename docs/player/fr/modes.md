@@ -337,10 +337,10 @@ l'attente, ou, pour les gagnants, part sans repartir en file.
 
 ## Ascension des héros
 
-Une Ascension des héros en file se joue en sept manches, toujours dans cet
-ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Barrow Field (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The
+Une Ascension des héros en file se joue en huit manches, toujours dans cet
+ordre : The Hollow Deep (Annihilation), Blackwater Ford (Annihilation de prêtre), Barrow Field (Annihilation de prêtre), Cinder Sanctum (Course aux reliques), Mosslit Cairns (Points de capture), The Brazen Causeway (Annihilation de prêtre), The
 Courtyard (Roi de la colline), puis le Hall of Heroes. La fenêtre Salon dit où tu
-en es pendant que tu cherches une équipe : `Round 2 of 7 · Blackwater Ford`.
+en es pendant que tu cherches une équipe : `Round 2 of 8 · Blackwater Ford`.
 Tu ne rencontres jamais qu'une équipe à la même manche, et tu en attends une aussi
 longtemps qu'il faut : aucun bot ne comble. Seule exception : à partir de la manche 2, une équipe seule à sa manche pendant 60 secondes peut prendre de l'avance. Elle rencontre une équipe qui attend à n'importe quelle manche ultérieure avant le Hall, les deux jouent la carte de l'équipe la plus avancée, et la gagnante continue à partir de là. Une manche sur une carte faite pour
 trois équipes en attend trois ; deux équipes qui ont attendu une troisième pendant
@@ -377,7 +377,7 @@ Trois arènes d'Ascension se choisissent aussi en Partie hébergée : **The Holl
 8v8, trois tunnels sinueux autour d'un rocher central), **Blackwater Ford**
 (Annihilation de prêtre 8v8 sur un tout petit gué, les bases presque en vue, le
 prêtre relevant ses morts toutes les 2 minutes) et **Mosslit Cairns** (Points de
-capture 8v8, cinq cairns en léger zigzag entre les bases).
+capture 8v8, cinq cairns en léger zigzag entre les bases). La quatrième est **The Brazen Causeway** (Annihilation de prêtre 8v8 sur un anneau autour d'une fosse : un passage étroit longe la porte de chaque base, qui ne reste ouverte que tant qu'un membre de son équipe se tient sur la plaque de la serrure).
 
 Une carte peut avoir des **portes** : des murs qui arrêtent les corps, les tirs et
 la vue quand ils sont fermés. Tiens-toi sur la plaque de pression d'une porte pour
@@ -386,6 +386,8 @@ ceux qui sont dans l'embrasure vers le côté le plus proche et en arrêtant les
 encore en route, et ne peut plus être ouverte pendant 8 secondes. Une plaque à la
 couleur d'une équipe ne répond qu'à cette équipe. Les bots se tiennent sur la
 plaque de leur équipe quand aucun ennemi n'est proche.
+
+Chaque parcours commence par la **Bataille des Zaishen d'élite**, sans file d'attente : votre groupe contre six Zaishen joués par des bots (2 Moines, un Élémentaliste et 3 autres). Le chrono démarre quand l'un de vous franchit la ligne de départ. Tuez les six en moins de 30 secondes et le groupe commence le parcours à +10 % de moral ; en moins de 60, +8 % ; en moins de 80, +6 % ; en moins de 100, +4 % ; en moins de 120, +2 % ; plus lentement, rien. En cas de victoire, le groupe rejoint seul la file de sa première carte. Si tout le groupe tombe, le parcours est terminé.
 
 ## Trois équipes
 

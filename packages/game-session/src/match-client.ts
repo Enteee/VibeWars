@@ -462,6 +462,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
               phase: "finished",
               winningTeam: ended.winningTeam ?? undefined,
               endReason: ended.endReason,
+              clearSeconds: ended.clearSeconds ?? undefined,
             };
       },
       onCombat(handler) {

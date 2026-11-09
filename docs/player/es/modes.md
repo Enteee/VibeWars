@@ -320,10 +320,10 @@ espera o, para los ganadores, sale sin volver a la cola.
 
 ## Ascenso de los Héroes
 
-Un Ascenso de los Héroes en cola son siete rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Barrow Field (Aniquilación de sacerdote), Cinder
-Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Courtyard (Rey
+Un Ascenso de los Héroes en cola son ocho rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Barrow Field (Aniquilación de sacerdote), Cinder
+Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Brazen Causeway (Aniquilación de sacerdote), The Courtyard (Rey
 de la colina) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
-buscas un equipo: `Round 2 of 7 · Blackwater Ford`. Solo te enfrentas a un equipo de
+buscas un equipo: `Round 2 of 8 · Blackwater Ford`. Solo te enfrentas a un equipo de
 tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. La única excepción: desde la ronda 2, un equipo solo en su ronda durante 60 segundos puede adelantarse. Se enfrenta a un equipo que espere en cualquier ronda posterior antes de la Hall, ambos juegan el mapa del equipo más avanzado y el ganador sigue desde allí. Una ronda en
 un mapa hecho para tres equipos espera a tres; dos equipos que hayan esperado 30
 segundos a un tercero juegan entre ellos, y también dos cuyo tercero nunca aparece
@@ -357,7 +357,7 @@ Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow 
 8v8, tres túneles sinuosos alrededor de una roca central), **Blackwater Ford**
 (Aniquilación de sacerdote 8v8 en un vado diminuto, las bases casi a la vista, el
 sacerdote resucitando a sus muertos cada 2 minutos) y **Mosslit Cairns** (Puntos de
-captura 8v8, cinco túmulos en un zigzag poco profundo entre las bases).
+captura 8v8, cinco túmulos en un zigzag poco profundo entre las bases). La cuarta es **The Brazen Causeway** (Aniquilación de sacerdote 8v8 en un anillo alrededor de un foso: junto a la puerta de cada base pasa un hueco estrecho, y la puerta solo está abierta mientras alguien de su equipo pise la placa de la cerradura).
 
 Un mapa puede tener **puertas**: muros que detienen cuerpos, disparos y visión
 mientras están cerradas. Colócate en la placa de presión de una puerta para abrirla.
@@ -365,6 +365,8 @@ Se cierra cuando no queda nadie en la placa, empujando a quien esté en el umbra
 lado más cercano y deteniendo los disparos que aún la atraviesan, y no se puede abrir
 otra vez durante 8 segundos. Una placa del color de un equipo solo responde a ese
 equipo. Los bots se colocan en la placa de su equipo si no hay enemigos cerca.
+
+Cada recorrido empieza con la **Batalla de los Zaishen de élite**, sin cola: tu grupo contra seis Zaishen controlados por bots (2 Monjes, un Elementalista y 3 más). El reloj arranca cuando uno de vosotros cruza la línea de salida. Si matáis a los seis en menos de 30 segundos, el grupo empieza el recorrido con +10 % de moral; en menos de 60, +8 %; en menos de 80, +6 %; en menos de 100, +4 %; en menos de 120, +2 %; más lento, nada. Si ganáis, el grupo entra solo en la cola de su primer mapa. Si cae todo el grupo, el recorrido termina.
 
 ## Tres equipos
 

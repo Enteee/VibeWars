@@ -217,6 +217,7 @@ describe("the match summary's size (#1057)", () => {
     const ended: WireEnded = {
       winningTeam: 0,
       endReason: "annihilation",
+      clearSeconds: null,
       summary: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
         id: `player-${String(1000 + i)}`,
         name: "\u{1D54E}".repeat(16),
@@ -561,6 +562,34 @@ describe("a lobby's bots (#1193)", () => {
       const { records, henchman } = await allBotSide("heroes-ascent");
       expect(henchman).toBeUndefined();
       expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
+    });
+
+    /** A guest alone on team 0 against a bot on team 1, on an Elite Zaishen Battle's map (#2692). */
+    async function zaishenFight() {
+      const match = startMatch({
+        mode: "heroes-ascent",
+        map: { ...ARENA, startLine: { layer: 0, x: 0, y: 0, width: 10, height: 10 } },
+        seats: new Map<string, PlannedSeat>([
+          ["peer-1", { ...human(0)[1], name: "Guest", playerPubkey: "cd".repeat(32) }],
+          bot(1, "Zaishen Monk", "Monk/Elementalist"),
+        ]),
+      });
+      const { transport } = await match.join();
+      await match.step(TICK);
+      return { match, transport };
+    }
+
+    it("keeps the Zaishen in the fight, all bots as they are (#2692)", async () => {
+      const { match } = await zaishenFight();
+      expect(match.host.phase).toBe("active");
+    });
+
+    it("forfeits the party when its last human leaves the Zaishen (#2692)", async () => {
+      const { match, transport } = await zaishenFight();
+      await transport.leave();
+      await match.step(RECONNECT_WINDOW_SECONDS + 1);
+      expect(match.host.phase).toBe("finished");
+      expect(match.host.winningTeam).toBe(1);
     });
 
     it("lets a side of only bots play on in other modes", async () => {

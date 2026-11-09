@@ -206,7 +206,7 @@ import {
   type LobbyMode,
   type QueueMode,
 } from "@vibewars/game-protocol";
-import { type PlayerBuild } from "@vibewars/game-core";
+import { type PlayerBuild, zaishenMoraleBoost } from "@vibewars/game-core";
 
 /**
  * Application shell: owns which screen is showing and the connections
@@ -2882,6 +2882,12 @@ async function main(): Promise<void> {
             const { winningTeam, endReason, selfTeam, aggression } = finished;
             // A draw is no win.
             const won = selfTeam !== undefined && winningTeam === selfTeam;
+            if (finished.clearSeconds !== undefined) {
+              // The Elite Zaishen Battle (#2692): the boost starts the run, or the wipe ends it.
+              ascentMorale = won ? zaishenMoraleBoost(finished.clearSeconds) : 0;
+              startTeamEnd(won ? "requeue" : "lobby", lobby, null);
+              return;
+            }
             if (queue === undefined) {
               // A team match, queued by its party or in a coded lobby (#1997).
               if (team !== undefined) {
