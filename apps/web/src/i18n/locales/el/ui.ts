@@ -6,6 +6,7 @@ export default {
   "app.chatThrottled": "Πιο αργά: οι τελευταίες γραμμές σου δεν στάλθηκαν.",
   "app.cloned": "Κλωνοποιήθηκε: {team}{missing}",
   "app.couldNotImport": "Αποτυχία εισαγωγής",
+  "app.couldNotSaveCharacter": "Δεν ήταν δυνατή η αποθήκευση του χαρακτήρα",
   "app.couldNotSaveTeam": "Η ομάδα δεν αποθηκεύτηκε",
   "app.framedRelayLink":
     "Άνοιξε τον σύνδεσμο αναμεταδότη σε δική του καρτέλα. Δεν αποθηκεύτηκε τίποτα.",

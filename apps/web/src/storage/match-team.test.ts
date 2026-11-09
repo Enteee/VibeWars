@@ -1,10 +1,10 @@
 import { STARTER_BUILDS, encodeTemplateCode } from "@vibewars/game-core";
-import type { MatchRecordPlayer } from "@vibewars/game-session";
+import { sanitizeCharacterName, type MatchRecordPlayer } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import { fromPlayerBuild } from "./build-validation.js";
 import { decodeTemplate } from "./gw1-template.js";
-import { teamFromMatch } from "./match-team.js";
+import { characterFromMatch, teamFromMatch } from "./match-team.js";
 import { TEAM_SCHEMA_VERSION } from "./schema.js";
 
 /** Warrior/none: Swift Chop, then GW1 skill 3000, which VibeWars lacks. */
@@ -109,5 +109,56 @@ describe("a match's team as a Team Build (#2585)", () => {
     const three = [player("Ann", code), player("Bob", code), player("Cy", code)];
     expect(teamFromMatch({ players: three }, ids(), 1)).toEqual({ ok: false });
     expect(teamFromMatch({ players: [player("Ann", code)] }, ids(), 1)).toEqual({ ok: false });
+  });
+});
+
+describe("a 1v1 side as a character (#2885)", () => {
+  it("is the player's decoded build under the player's name", () => {
+    const code = templateOf(0);
+    const result = characterFromMatch({ players: [player("Ann", code)] }, ids(), 42);
+    const decoded = decodeTemplate(code, "id-1", 42);
+    if (!result.ok || !decoded.ok) {
+      throw new Error("refused");
+    }
+    expect(result.character).toEqual({ ...decoded.character, name: "Ann" });
+    expect(result.missingSkills).toEqual([]);
+  });
+
+  it("leaves a skill this game lacks an empty slot, and lists it", () => {
+    const result = characterFromMatch({ players: [player("Ann", MISSING_3000)] }, ids(), 1);
+    expect(result).toMatchObject({ ok: true, missingSkills: [3000] });
+    if (result.ok) {
+      expect(result.character.skillBar.slice(0, 2)).toEqual(["warrior.swift-chop", null]);
+    }
+  });
+
+  it("refuses an unreadable template", () => {
+    expect(characterFromMatch({ players: [player("Ann", "not a code")] }, ids(), 1)).toEqual({
+      ok: false,
+    });
+  });
+
+  it("sanitises a name, and falls back to the build's for one with nothing left", () => {
+    const code = templateOf(0);
+    const decoded = decodeTemplate(code, "x", 1);
+    if (!decoded.ok) {
+      throw new Error("refused");
+    }
+    const named = (name: string): unknown => {
+      const result = characterFromMatch({ players: [player(name, code)] }, ids(), 1);
+      return result.ok ? result.character.name : undefined;
+    };
+    expect(named("  Ann\u0000 ")).toBe(
+      sanitizeCharacterName("  Ann\u0000 ", decoded.character.name),
+    );
+    expect(named("")).toBe(decoded.character.name);
+  });
+
+  it("refuses anything but one player", () => {
+    const code = templateOf(0);
+    expect(characterFromMatch({ players: [] }, ids(), 1)).toEqual({ ok: false });
+    expect(
+      characterFromMatch({ players: [player("Ann", code), player("Bob", code)] }, ids(), 1),
+    ).toEqual({ ok: false });
   });
 });

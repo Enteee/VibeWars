@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Calma: suas últimas mensagens não foram enviadas.",
   "app.cloned": "Clonado: {team}{missing}",
   "app.couldNotImport": "Não foi possível importar",
+  "app.couldNotSaveCharacter": "Não foi possível salvar o personagem",
   "app.couldNotSaveTeam": "Não foi possível salvar a equipe",
   "app.framedRelayLink": "Abra o link do relay em uma aba própria. Nada foi salvo.",
   "app.inviteInLobby": "Volte ao menu e abra o link de convite de novo.",

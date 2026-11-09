@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Lassíts: az utolsó soraid nem mentek el.",
   "app.cloned": "Klónozva: {team}{missing}",
   "app.couldNotImport": "Nem sikerült az importálás",
+  "app.couldNotSaveCharacter": "A karaktert nem sikerült menteni",
   "app.couldNotSaveTeam": "Nem sikerült menteni a csapatot",
   "app.framedRelayLink": "Nyisd meg a relay linket külön lapon. Semmi sem lett mentve.",
   "app.inviteInLobby": "Menj vissza a menübe, majd nyisd meg újra a meghívó linket.",

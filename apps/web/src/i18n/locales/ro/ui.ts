@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Mai încet: ultimele tale mesaje nu au fost trimise.",
   "app.cloned": "{team} clonată{missing}",
   "app.couldNotImport": "Importul a eșuat",
+  "app.couldNotSaveCharacter": "Personajul nu a putut fi salvat",
   "app.couldNotSaveTeam": "Echipa nu a putut fi salvată",
   "app.framedRelayLink": "Deschide linkul de releu într-o filă proprie. Nu s-a salvat nimic.",
   "app.inviteInLobby": "Întoarce-te la meniu, apoi deschide din nou linkul de invitație.",

@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Zwolnij: twoje ostatnie wiadomości nie zostały wysłane.",
   "app.cloned": "Sklonowano {team}{missing}",
   "app.couldNotImport": "Nie udało się zaimportować",
+  "app.couldNotSaveCharacter": "Nie udało się zapisać postaci",
   "app.couldNotSaveTeam": "Nie udało się zapisać drużyny",
   "app.framedRelayLink": "Otwórz link przekaźnika w osobnej karcie. Nic nie zapisano.",
   "app.inviteInLobby": "Wróć do menu i ponownie otwórz link z zaproszeniem.",

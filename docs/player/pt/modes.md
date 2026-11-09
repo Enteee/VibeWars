@@ -414,8 +414,7 @@ a vencedora sublinhada, e o mapa, a duração e quando. Toda linha é marcada
 como **informado pelo host**. Clique em uma para ver as equipes, uma aba
 cada, a da vencedora primeiro: o cartão da equipe. **Clonar** copia uma
 equipe de uma partida terminada para suas Builds de Equipe, a build de
-cada jogador com o nome dele, e a abre. Um lado de 1v1 não tem Clonar: uma
-Build de Equipe é de 2, 4 ou 8.
+cada jogador com o nome dele, e a abre. Em um lado de 1v1, Clonar salva a build do jogador como um novo personagem e o abre, porque uma Build de Equipe é de 2, 4 ou 8.
 
 Cada linha começa com o ícone do modo, e o ícone e a borda esquerda da
 linha ficam na cor do modo: laranja Aleatória, azul Equipe, dourado

@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Sænk farten: dine seneste linjer blev ikke sendt.",
   "app.cloned": "{team} klonet{missing}",
   "app.couldNotImport": "Kunne ikke importere",
+  "app.couldNotSaveCharacter": "Figuren kunne ikke gemmes",
   "app.couldNotSaveTeam": "Kunne ikke gemme holdet",
   "app.framedRelayLink": "Åbn relay-linket i sin egen fane. Intet blev gemt.",
   "app.inviteInLobby": "Gå tilbage til menuen, og åbn invitationslinket igen.",

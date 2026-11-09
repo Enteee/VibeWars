@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Chậm lại nào: mấy dòng vừa rồi chưa được gửi.",
   "app.cloned": "Đã nhân bản {team}{missing}",
   "app.couldNotImport": "Không nhập được",
+  "app.couldNotSaveCharacter": "Không lưu được nhân vật",
   "app.couldNotSaveTeam": "Không lưu được đội",
   "app.framedRelayLink": "Hãy mở link relay trong tab riêng. Chưa có gì được lưu.",
   "app.inviteInLobby": "Hãy về menu rồi mở lại link mời.",

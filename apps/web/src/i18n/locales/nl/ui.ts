@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Rustig aan: je laatste regels zijn niet verzonden.",
   "app.cloned": "{team} gekloond{missing}",
   "app.couldNotImport": "Importeren mislukt",
+  "app.couldNotSaveCharacter": "Het personage kon niet worden opgeslagen",
   "app.couldNotSaveTeam": "Team opslaan mislukt",
   "app.framedRelayLink": "Open de relaylink in een eigen tabblad. Er is niets opgeslagen.",
   "app.inviteInLobby": "Ga terug naar het menu en open de uitnodigingslink opnieuw.",

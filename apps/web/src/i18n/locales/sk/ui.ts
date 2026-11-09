@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Spomaľ: tvoje posledné správy sa neodoslali.",
   "app.cloned": "Klonované: {team}{missing}",
   "app.couldNotImport": "Import zlyhal",
+  "app.couldNotSaveCharacter": "Postavu sa nepodarilo uložiť",
   "app.couldNotSaveTeam": "Tím sa nepodarilo uložiť",
   "app.framedRelayLink": "Otvor odkaz na relé vo vlastnej karte. Nič sa neuložilo.",
   "app.inviteInLobby": "Vráť sa do menu a znova otvor pozývací odkaz.",

@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Ta det lugnt: dina senaste rader skickades inte.",
   "app.cloned": "Klonade {team}{missing}",
   "app.couldNotImport": "Kunde inte importera",
+  "app.couldNotSaveCharacter": "Karaktären kunde inte sparas",
   "app.couldNotSaveTeam": "Kunde inte spara laget",
   "app.framedRelayLink": "Öppna relälänken i en egen flik. Inget sparades.",
   "app.inviteInLobby": "Gå tillbaka till menyn och öppna inbjudningslänken igen.",

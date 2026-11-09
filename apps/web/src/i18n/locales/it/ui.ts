@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Rallenta: i tuoi ultimi messaggi non sono stati inviati.",
   "app.cloned": "Clonato {team}{missing}",
   "app.couldNotImport": "Importazione non riuscita",
+  "app.couldNotSaveCharacter": "Impossibile salvare il personaggio",
   "app.couldNotSaveTeam": "Impossibile salvare la squadra",
   "app.framedRelayLink":
     "Apri il link del relay in una scheda separata. Non è stato salvato nulla.",

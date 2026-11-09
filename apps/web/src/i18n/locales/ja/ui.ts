@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "送信が速すぎます。直近の発言は送信されませんでした。",
   "app.cloned": "{team}を複製しました{missing}",
   "app.couldNotImport": "インポートできませんでした",
+  "app.couldNotSaveCharacter": "キャラクターを保存できませんでした",
   "app.couldNotSaveTeam": "チームを保存できませんでした",
   "app.framedRelayLink": "リレーリンクは別のタブで開いてください。何も保存されていません。",
   "app.inviteInLobby": "メニューに戻ってから、招待リンクをもう一度開いてください。",

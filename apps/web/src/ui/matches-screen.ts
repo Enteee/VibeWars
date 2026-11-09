@@ -146,11 +146,13 @@ function playerMember(player: MatchRecordPlayer): TeamFigureMember {
 }
 
 /**
- * A team's Clone (#2585): none for a size no Team Build has, disabled
- * when a build in it can't be read. One press, one copy.
+ * A team's Clone (#2585): a Team Build, or a character for a 1v1's side
+ * (#2885). None for any other size, disabled when a build in it can't be
+ * read. One press, one copy.
  */
 function cloneButton(players: MatchRecordTeam, onClone: () => void): HTMLElement[] {
-  if (!isTeamBuildSize(players.players.length)) {
+  const size = players.players.length;
+  if (size !== 1 && !isTeamBuildSize(size)) {
     return [];
   }
   const clone = button(t("matches.clone"), "play-card-clone", () => {
@@ -159,7 +161,7 @@ function cloneButton(players: MatchRecordTeam, onClone: () => void): HTMLElement
   });
   if (players.players.some((player) => !decodeTemplateCode(player.template).ok)) {
     clone.disabled = true;
-    clone.title = t("matches.teamUnreadable");
+    clone.title = t(size === 1 ? "matches.buildUnreadable" : "matches.teamUnreadable");
   }
   return [clone];
 }
