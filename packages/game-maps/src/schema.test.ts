@@ -7,7 +7,13 @@ import { describe, expect, it } from "vitest";
 import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/game-core";
 
 import { allWallSegments } from "./geometry.js";
-import { MapValidationError, mapDataSchema, validateMapData, type Wall } from "./schema.js";
+import {
+  MAX_LIGHTS,
+  MapValidationError,
+  mapDataSchema,
+  validateMapData,
+  type Wall,
+} from "./schema.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 
 const validMap = {
@@ -1060,5 +1066,60 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
       spawnPoints: layerTest.spawnPoints,
     });
     refuses({ spawnPoints: spawnAt(1, 782, 420) }, /spawnPoints\.4/);
+  });
+});
+
+describe("lighting (#2986, ADR-0052)", () => {
+  const ambient = { colour: 0x8090a0, intensity: 0.8 };
+  const light = {
+    id: "torch",
+    position: { x: 10, y: 10 },
+    layer: 0,
+    radius: 30,
+    colour: 0xffaa55,
+    intensity: 1,
+    flicker: 0.3,
+  };
+  const lighting = {
+    ambient,
+    indoorAmbient: ambient,
+    indoor: [{ kind: "rect", x: 0, y: 0, width: 20, height: 20 }],
+    sun: { directionDeg: 135, elevationDeg: 45, colour: 0xfff0d0, intensity: 0.5 },
+    lights: [light],
+  };
+  const accepts = (value: unknown): boolean =>
+    mapDataSchema.safeParse({ ...validMap, lighting: value }).success;
+  const withLights = (lights: unknown[]): boolean => accepts({ ...lighting, lights });
+
+  it("is optional", () => {
+    expect(mapDataSchema.safeParse(validMap).success).toBe(true);
+  });
+
+  it("accepts a whole lighting, and one with no sun", () => {
+    expect(accepts(lighting)).toBe(true);
+    expect(accepts({ ...lighting, sun: undefined })).toBe(true);
+  });
+
+  it("refuses a light off the map, or on a layer it does not have", () => {
+    expect(withLights([{ ...light, position: { x: 101, y: 10 } }])).toBe(false);
+    expect(withLights([{ ...light, position: { x: 10, y: -1 } }])).toBe(false);
+    expect(withLights([{ ...light, layer: 1 }])).toBe(false);
+  });
+
+  it("refuses a radius of zero, a flicker over 1 and a colour out of range", () => {
+    expect(withLights([{ ...light, radius: 0 }])).toBe(false);
+    expect(withLights([{ ...light, flicker: 1.1 }])).toBe(false);
+    expect(withLights([{ ...light, colour: 0x1000000 }])).toBe(false);
+  });
+
+  it("refuses two lights with one id", () => {
+    expect(withLights([light, light])).toBe(false);
+  });
+
+  it("holds at most MAX_LIGHTS", () => {
+    const many = (count: number): unknown[] =>
+      Array.from({ length: count }, (_, index) => ({ ...light, id: `torch-${String(index)}` }));
+    expect(withLights(many(MAX_LIGHTS))).toBe(true);
+    expect(withLights(many(MAX_LIGHTS + 1))).toBe(false);
   });
 });
