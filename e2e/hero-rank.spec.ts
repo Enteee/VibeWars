@@ -19,6 +19,8 @@ test("700 fame is rank 5, in Options and beside the name in a lobby", async ({ p
 
   await page.goto("./");
   await hostLobby(page);
+  // A host starts as a spectator; a seat on a team is what gets a row.
+  await page.getByRole("button", { name: "Join team 1" }).click();
   const badge = page.locator(".lobby-player .hero-rank").first();
   await expect(badge).toHaveText("★5");
   await expect(badge).toHaveAttribute("title", "Hero rank 5");

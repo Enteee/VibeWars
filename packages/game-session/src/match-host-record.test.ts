@@ -103,7 +103,6 @@ describe("a finished match's record (#2528)", () => {
           {
             name: "Me",
             guildTag: "VIBE",
-            heroRank: 0,
             bot: false,
             pubkey: "ab".repeat(32),
             template: played(starterBuild("Warrior/Monk")),
@@ -115,7 +114,6 @@ describe("a finished match's record (#2528)", () => {
           {
             name: "Elementalist Bot",
             guildTag: null,
-            heroRank: 0,
             bot: true,
             pubkey: null,
             template: played(starterBuild("Elementalist/Mesmer")),

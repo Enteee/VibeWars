@@ -387,7 +387,14 @@ describe("a P2P host survives hostile peers (#375)", () => {
       const name = typeof value === "string" ? value : "";
       raw.send(
         "hello",
-        { protocolVersion: PROTOCOL_VERSION, name, guildTag: null, build: value, rejoin: null },
+        {
+          protocolVersion: PROTOCOL_VERSION,
+          name,
+          guildTag: null,
+          heroRank: 0,
+          build: value,
+          rejoin: null,
+        },
         "host",
       );
     }
