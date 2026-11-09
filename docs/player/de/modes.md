@@ -277,6 +277,10 @@ in der Hall, bleibst du, um sie zu verteidigen. Verlierst du oder verlässt ein 
 Aufstieg wieder bei Runde 1; das Gleiche gilt, wenn du die Warteschlange oder die Gruppe verlässt. Ein Match, das verloren
 geht, weil sein Host gegangen ist, behält deine Runde.
 
+Deine Moral bleibt den ganzen Lauf über erhalten: Mit der Todesstrafe oder dem Bonus, mit dem du eine gewonnene Karte
+beendest, beginnst du die nächste, von −60 % bis +10 %. Ein Lauf, der endet, oder ein Spieler, der mitten im Lauf dazustößt,
+beginnt bei 0. Dein eigener Tab merkt sie sich, bis du ihn schließt.
+
 Das Team wählt einmal, in der Team-Lobby seiner ersten Karte, und behält seinen Team-Build und seine Plätze für den Rest
 des Laufs: Nach einem Sieg meldet es sich ohne Abstimmung und ohne Nehmen wieder an. Wer mitten im Lauf geht, gibt seinen
 Platz frei, aber nicht dessen Build. Wer zwischen den Karten neu zur Gruppe stößt, kann nur die freien Plätze nehmen

@@ -351,6 +351,12 @@ défendre. Perds, ou quitte un match avant sa fin, et ta prochaine Ascension
 recommence à la manche 1 ; pareil si tu quittes la file ou le groupe. Un match
 perdu parce que son hôte est parti garde ta manche.
 
+Ton moral te suit tout au long de la course : la pénalité de mort ou le bonus
+avec lequel tu termines une carte gagnée est celui avec lequel tu commences la
+suivante, de −60 % à +10 %. Une course qui se termine, ou un joueur qui rejoint en
+cours de route, repart de 0. Ton propre onglet s'en souvient, jusqu'à ce que tu
+le fermes.
+
 L'équipe choisit une fois, dans le Salon d'équipe de sa première carte, et garde
 son Build d'équipe et ses places pour le reste de la course : après une victoire,
 elle repart en file sans vote ni choix de places. Celui qui part en pleine course

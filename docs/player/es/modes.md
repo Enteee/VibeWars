@@ -333,6 +333,11 @@ de que termine, tu próximo Ascenso empieza otra vez en la ronda 1; también si 
 de la cola o del grupo. Una partida perdida porque se fue su anfitrión conserva tu
 ronda.
 
+Tu moral se mantiene durante todo el recorrido: la penalización por muerte o la
+bonificación con la que terminas un mapa ganado es con la que empiezas el siguiente,
+de −60 % a +10 %. Un recorrido que termina, o un jugador que se une a mitad, empieza
+en 0. Tu propia pestaña la recuerda, hasta que la cierres.
+
 El equipo elige una vez, en la Sala de equipo de su primer mapa, y conserva su build
 de equipo y sus asientos el resto del recorrido: tras una victoria vuelve a la cola
 sin votar ni reclamar. Quien se va a mitad libera su asiento pero no su build. Quien
