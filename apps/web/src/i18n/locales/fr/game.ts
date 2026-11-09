@@ -2135,6 +2135,7 @@ export default {
     "the-courtyard": "La Cour",
     "hall-of-heroes": "Hall des héros",
     "barrow-field": "Champ des tumulus",
+    "elite-zaishen-battle": "Bataille des Zaishen d'élite",
     "hollow-deep": "Les Profondeurs creuses",
     "blackwater-ford": "Gué de l'Eau-noire",
     "mosslit-cairns": "Cairns moussus",

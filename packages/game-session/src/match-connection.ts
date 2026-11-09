@@ -165,6 +165,8 @@ export interface MatchSnapshot {
   readonly winningTeam: number | undefined;
   /** "score", "time", "annihilation", "morale", "guild-lord", "aggression", "host-left", or `undefined` while active. */
   readonly endReason: string | undefined;
+  /** Seconds on the Elite Zaishen Battle's clock (#2692), only once it has ended. */
+  readonly clearSeconds?: number | undefined;
   /** Weapon shots and flying spells in flight, oldest first (#160, #535). */
   readonly projectiles: readonly ProjectileSnapshot[];
   /** Wards on the ground, oldest first (#1087). */

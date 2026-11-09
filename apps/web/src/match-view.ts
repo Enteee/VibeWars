@@ -1,4 +1,5 @@
 import type { FlagField, RelicField, Segment } from "@vibewars/game-core";
+import { ELITE_ZAISHEN_MAP } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import type { GateDescriptor, MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
 import type {
@@ -127,6 +128,15 @@ export interface MatchViewCallbacks {
 }
 
 /** How a match ended, as `describeOutcome` reads it; `selfTeam` is undefined for a spectator. */
+/**
+ * Whether a finished match's outcome is all here: the Elite Zaishen
+ * Battle's clock (#2692) comes on the `ended`, which can land a frame
+ * after the snapshot that says "finished".
+ */
+export function outcomeArrived(mapId: string, match: Pick<MatchSnapshot, "summary">): boolean {
+  return mapId !== ELITE_ZAISHEN_MAP || match.summary !== undefined;
+}
+
 export interface MatchOutcome {
   readonly winningTeam: number | undefined;
   readonly endReason: string | undefined;
@@ -135,6 +145,8 @@ export interface MatchOutcome {
   readonly aggression: readonly number[];
   /** This player's morale at the end (#2686), in percent; 0 for a spectator. */
   readonly selfMorale: number;
+  /** Seconds on the Elite Zaishen Battle's clock (#2692); `undefined` in any other match. */
+  readonly clearSeconds: number | undefined;
 }
 
 /**
@@ -960,7 +972,7 @@ export async function startMatchView(
       toast(objective.text);
       sounds.play(objective.side === "ours" ? "objective-ours" : "objective-theirs");
     }
-    if (match.phase === "finished" && !finished) {
+    if (match.phase === "finished" && !finished && outcomeArrived(viewed.map.id, match)) {
       finished = true;
       callbacks.onFinished?.({
         winningTeam: match.winningTeam,
@@ -968,6 +980,8 @@ export async function startMatchView(
         selfTeam: self?.team,
         aggression: match.aggression,
         selfMorale: self?.morale ?? 0,
+        // By the map played, not the wire: a host of any other match cannot claim the boost.
+        clearSeconds: viewed.map.id === ELITE_ZAISHEN_MAP ? match.clearSeconds : undefined,
       });
     }
     // The snapshot that says "finished" may land a frame before the `ended` that carries it.

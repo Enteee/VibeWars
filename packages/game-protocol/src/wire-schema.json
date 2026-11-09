@@ -6836,6 +6836,7 @@
     },
     "WireEnded": {
       "properties": [
+        { "name": "clearSeconds", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "endReason",
           "optional": false,

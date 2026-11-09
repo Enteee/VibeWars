@@ -464,7 +464,12 @@ const summaryRow = {
   interrupts: 3,
 } as const;
 
-const ended: WireEnded = { winningTeam: null, endReason: "host-left", summary: [summaryRow] };
+const ended: WireEnded = {
+  winningTeam: null,
+  endReason: "host-left",
+  summary: [summaryRow],
+  clearSeconds: null,
+};
 
 const refused: CastRefusedMessage = {
   kind: "skill",
@@ -818,7 +823,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "ended by a wipe (#846)",
     parseWireEnded,
-    { winningTeam: 1, endReason: "annihilation", summary: [] },
+    { winningTeam: 1, endReason: "annihilation", summary: [], clearSeconds: null },
   ],
   [
     "a bot's summary row, no signet (#2822)",
@@ -828,7 +833,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "ended at time by morale (#846)",
     parseWireEnded,
-    { winningTeam: null, endReason: "morale", summary: [] },
+    { winningTeam: null, endReason: "morale", summary: [], clearSeconds: null },
   ],
   [
     "ended with a full summary (#1057)",
@@ -1979,7 +1984,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   ["ended by an unknown reason", parseWireEnded, { ...ended, endReason: "forfeit" }],
-  ["ended without a winner", parseWireEnded, { endReason: "score", summary: [] }],
+  [
+    "ended without a winner",
+    parseWireEnded,
+    { endReason: "score", summary: [], clearSeconds: null },
+  ],
   ["ended without a summary", parseWireEnded, { winningTeam: null, endReason: "time" }],
   [
     "ended with a summary past the cap",
