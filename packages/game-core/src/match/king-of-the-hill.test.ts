@@ -538,8 +538,8 @@ describe("King of the Hill with three teams (#2682)", () => {
   });
 
   it("wipes a team out only once its priest is dead too, and an out team's points win nothing", () => {
-    // Five minutes: past the first wave, without eight minutes of steps.
-    const SHORT = { ...KING_OF_THE_HILL_MATCH_RULES, timeLimitSeconds: 300 };
+    // Past the first wave, at 120 s of match clock, and before the second at 240 s.
+    const SHORT = { ...KING_OF_THE_HILL_MATCH_RULES, timeLimitSeconds: 135 };
     const sim = threeWay(
       [
         { team: 0, position: vec2(240, 600) },
