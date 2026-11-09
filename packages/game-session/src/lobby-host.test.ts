@@ -709,7 +709,7 @@ describe("playing more than one match in a lobby", () => {
     // The match ended with its host: nothing more is ticked, nothing throws.
     await lobby.step(2);
     expect(lobby.matches[0]?.host.phase).toBe("finished");
-    expect(lost).toEqual(["lost", "lost"]);
+    expect(lost).toEqual(["host-left", "host-left"]);
   });
 
   it("returns to waiting by itself once everyone has left its match", async () => {
