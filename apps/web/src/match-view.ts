@@ -128,6 +128,15 @@ export interface MatchViewCallbacks {
 }
 
 /** How a match ended, as `describeOutcome` reads it; `selfTeam` is undefined for a spectator. */
+/**
+ * Whether a finished match's outcome is all here: the Elite Zaishen
+ * Battle's clock (#2692) comes on the `ended`, which can land a frame
+ * after the snapshot that says "finished".
+ */
+export function outcomeArrived(mapId: string, match: Pick<MatchSnapshot, "summary">): boolean {
+  return mapId !== ELITE_ZAISHEN_MAP || match.summary !== undefined;
+}
+
 export interface MatchOutcome {
   readonly winningTeam: number | undefined;
   readonly endReason: string | undefined;
@@ -963,7 +972,7 @@ export async function startMatchView(
       toast(objective.text);
       sounds.play(objective.side === "ours" ? "objective-ours" : "objective-theirs");
     }
-    if (match.phase === "finished" && !finished) {
+    if (match.phase === "finished" && !finished && outcomeArrived(viewed.map.id, match)) {
       finished = true;
       callbacks.onFinished?.({
         winningTeam: match.winningTeam,
