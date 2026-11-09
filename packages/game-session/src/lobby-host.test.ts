@@ -2082,6 +2082,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
     rejoinToken,
     relayPub: null,
     playerPubkey: WIRE_PLAYER_KEY.pubkey,
+    ascentMorale: 0,
   });
 
   /** The nonce `got` was challenged with. */

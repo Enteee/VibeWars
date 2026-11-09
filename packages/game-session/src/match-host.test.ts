@@ -429,6 +429,7 @@ describe("a Team Lobby's seats (#1458)", () => {
             guildCape: null,
             bot: false,
             playerPubkey: "ab".repeat(32),
+            startMorale: 0,
             build: assigned,
           },
         ],
@@ -459,6 +460,7 @@ describe("a lobby's bots (#1193)", () => {
         guildCape: CAPE,
         bot: false,
         playerPubkey: "ab".repeat(32),
+        startMorale: 0,
         build: null,
       },
     ] as const;

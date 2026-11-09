@@ -336,10 +336,10 @@ na fila.
 
 ## Ascensão dos Heróis
 
-Uma Ascensão dos Heróis na fila tem quatro rodadas, sempre nesta ordem:
-Cinder Sanctum (Corrida da Relíquia), Scarred Earth (Captura de Pontos), The
+Uma Ascensão dos Heróis na fila tem sete rodadas, sempre nesta ordem:
+The Hollow Deep (Aniquilação), Blackwater Ford (Aniquilação de Sacerdotes), Barrow Field (Aniquilação de Sacerdotes), Cinder Sanctum (Corrida da Relíquia), Mosslit Cairns (Captura de Pontos), The
 Courtyard (Rei da Colina) e depois o Hall of Heroes. A janela da Sala diz
-onde você está enquanto procura uma equipe: `Round 2 of 4 · Scarred Earth`.
+onde você está enquanto procura uma equipe: `Round 2 of 7 · Blackwater Ford`.
 Você só encontra equipes na mesma rodada e espera por uma o tempo que for
 preciso: nenhum bot completa. Uma rodada em um mapa feito para três
 equipes espera três; duas equipes que esperaram 30 segundos pela terceira
@@ -349,6 +349,11 @@ no Hall e você fica para defendê-lo. Perca, ou saia de uma partida antes
 do fim, e sua próxima Ascensão recomeça na rodada 1; o mesmo vale para
 sair da fila ou do grupo. Uma partida perdida porque o host saiu mantém
 sua rodada.
+
+Sua moral acompanha você por toda a campanha: a penalidade de morte ou o
+bônus com que você termina um mapa vencido é o que você leva para o
+próximo, de −60% a +10%. Uma campanha que termina, ou um jogador que entra
+no meio dela, começa em 0. Sua própria aba lembra disso, até você fechá-la.
 
 A equipe escolhe uma vez, na Sala de Equipe do primeiro mapa, e mantém sua
 Build de Equipe e seus assentos no resto da campanha: depois de uma
@@ -362,11 +367,9 @@ campanha antiga. A rodada é lembrada pelo host do seu grupo, e só até você
 fechar a aba. Uma sala de Ascensão dos Heróis por código joga o mapa da
 rodada 1.
 
-**Barrow Field** é uma arena da Ascensão já construída, mas ainda fora da fila; por enquanto você a escolhe em uma Partida Hospedada: Aniquilação de Sacerdotes 8v8 entre montes baixos de terra, com o sacerdote ressuscitando seus mortos a cada 2 minutos. Leve sua bandeira ao **Storm Beacon** no centro e ele atinge um inimigo aleatório ao alcance da voz com 50 de dano de raio a cada 2,5 segundos, até a outra equipe plantar a bandeira dela lá. Cada golpe é um raio do farol até quem ele atingiu, visível para as duas equipes.
+**Barrow Field** é uma arena da Ascensão que você também pode escolher em uma Partida Hospedada: Aniquilação de Sacerdotes 8v8 entre montes baixos de terra, com o sacerdote ressuscitando seus mortos a cada 2 minutos. Leve sua bandeira ao **Storm Beacon** no centro e ele atinge um inimigo aleatório ao alcance da voz com 50 de dano de raio a cada 2,5 segundos, até a outra equipe plantar a bandeira dela lá. Cada golpe é um raio do farol até quem ele atingiu, visível para as duas equipes.
 
-Três arenas da Ascensão estão prontas, mas ainda não fazem parte da
-campanha na fila, então por enquanto você as escolhe em uma Partida
-Hospedada: **The Hollow Deep** (8v8 de Aniquilação, três túneis sinuosos
+Três arenas da Ascensão também podem ser escolhidas em uma Partida Hospedada: **The Hollow Deep** (8v8 de Aniquilação, três túneis sinuosos
 em volta de uma rocha central),
 **Blackwater Ford** (8v8 de Aniquilação de Sacerdotes em um vau minúsculo,
 com as bases quase à vista e o sacerdote trazendo os mortos a cada 2

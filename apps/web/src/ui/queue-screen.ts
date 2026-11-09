@@ -1,9 +1,9 @@
-import { ASCENT_ROUNDS, type QueueMode } from "@vibewars/game-protocol";
+import type { QueueMode } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
 import { mapName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
-import { ascentMapId } from "../net/maps.js";
+import { ASCENT_PROGRESSION, ascentMapId } from "../net/maps.js";
 import { teamColour } from "../render/arena-snapshot.js";
 import { cssColour } from "./character-preview.js";
 import { RANDOM_ARENA_MODES } from "./menu.js";
@@ -68,13 +68,40 @@ export function nextStreak(streak: number, result: QueuedResult): number {
 export function nextAscentRound(round: number, result: QueuedResult): number {
   switch (result) {
     case "win":
-      return Math.min(round + 1, ASCENT_ROUNDS - 1);
+      return Math.min(round + 1, ASCENT_PROGRESSION.length - 1);
     case "loss":
     case "forfeit":
       return 0;
     case "host-left":
       return round;
   }
+}
+
+/**
+ * The morale a player carries into the next Heroes' Ascent map (#2686):
+ * a win carries the morale `ended` the map at, a defeat or leaving ends
+ * the run back at 0, and a match lost to its host leaving keeps
+ * `carried`, the morale it started at.
+ */
+export function nextAscentMorale(carried: number, ended: number, result: QueuedResult): number {
+  switch (result) {
+    case "win":
+      return ended;
+    case "loss":
+    case "forfeit":
+      return 0;
+    case "host-left":
+      return carried;
+  }
+}
+
+/**
+ * The morale a join sends for a ticket at `round` (#2686): `carried`
+ * only past the first map, since round 0 (or no Heroes' Ascent at all)
+ * starts a run, whoever ended the last one.
+ */
+export function ascentStartMorale(round: number | null, carried: number): number {
+  return round === null || round === 0 ? 0 : carried;
 }
 
 /** "3 wins in a row this visit (not a rating)"; nothing at 0. */
@@ -218,7 +245,7 @@ export function teamEndLine(
       if (ascentRound === null) {
         return { text: t("queue.nextMatchIn", { seconds }), button: t("queue.leave") };
       }
-      return ascentRound === ASCENT_ROUNDS - 1
+      return ascentRound === ASCENT_PROGRESSION.length - 1
         ? {
             text: t("queue.defending", { map: mapName(ascentMapId(ascentRound)), seconds }),
             button: t("queue.leave"),

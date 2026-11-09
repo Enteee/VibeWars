@@ -241,3 +241,34 @@ describe("morale and the death penalty (#843)", () => {
     expect(get(sim, "a").combatant.dead).toBe(true);
   });
 });
+
+describe("starting morale (#2686)", () => {
+  function starting(morale: number): MatchSimulation {
+    return new MatchSimulation({
+      seed: "morale",
+      matchRules: DP,
+      participants: [spec("a", 0, vec2(0, 0), { startMorale: morale }), spec("x", 1, vec2(600, 0))],
+    });
+  }
+
+  it("starts at a carried death penalty, full at its lowered maxima", () => {
+    const a = get(starting(-30), "a").combatant;
+    expect(a.morale).toBe(-30);
+    expect(a.maxHealth).toBe(moraleMaximum(BASE_HEALTH, BASE_HEALTH, -30));
+    expect(a.health).toBe(a.maxHealth);
+    expect(a.energy).toBe(a.maxEnergy);
+    expect(get(starting(-30), "x").combatant.morale).toBe(0);
+  });
+
+  it("starts at a carried boost, full at its raised maxima", () => {
+    const a = get(starting(10), "a").combatant;
+    expect(a.maxHealth).toBe(Math.floor(BASE_HEALTH * 1.1));
+    expect(a.health).toBe(a.maxHealth);
+    expect(a.energy).toBe(moraleMaximum(BASE_ENERGY, BASE_ENERGY, 10));
+  });
+
+  it("clamps to the floor and the ceiling", () => {
+    expect(get(starting(-90), "a").combatant.morale).toBe(-60);
+    expect(get(starting(25), "a").combatant.morale).toBe(10);
+  });
+});

@@ -5,8 +5,10 @@ import type { LobbySnapshot } from "@vibewars/game-session";
 import { t } from "../i18n/index.js";
 import { FakeElement } from "./fake-dom.test-support.js";
 import {
+  ascentStartMorale,
   endedLines,
   modeLabel,
+  nextAscentMorale,
   nextAscentRound,
   nextStreak,
   queueTitle,
@@ -119,14 +121,35 @@ describe("nextStreak (#881)", () => {
 describe("nextAscentRound (#1996)", () => {
   it("moves on with a win, to the Hall and no further", () => {
     expect(nextAscentRound(0, "win")).toBe(1);
-    expect(nextAscentRound(2, "win")).toBe(3);
-    expect(nextAscentRound(3, "win")).toBe(3);
+    expect(nextAscentRound(5, "win")).toBe(6);
+    expect(nextAscentRound(6, "win")).toBe(6);
   });
 
   it("starts again at the first after a defeat or a forfeit, and stands when the host left", () => {
     expect(nextAscentRound(2, "loss")).toBe(0);
     expect(nextAscentRound(3, "forfeit")).toBe(0);
     expect(nextAscentRound(2, "host-left")).toBe(2);
+  });
+});
+
+describe("nextAscentMorale (#2686)", () => {
+  it("carries the morale a won map ended at into the next", () => {
+    expect(nextAscentMorale(0, -30, "win")).toBe(-30);
+    expect(nextAscentMorale(-30, 10, "win")).toBe(10);
+  });
+
+  it("ends the run at 0 after a defeat or a forfeit, and keeps the start when the host left", () => {
+    expect(nextAscentMorale(-15, -45, "loss")).toBe(0);
+    expect(nextAscentMorale(-15, -45, "forfeit")).toBe(0);
+    expect(nextAscentMorale(-15, -45, "host-left")).toBe(-15);
+  });
+});
+
+describe("ascentStartMorale (#2686)", () => {
+  it("sends 0 outside Heroes' Ascent and at a run's first map, and the carried morale past it", () => {
+    expect(ascentStartMorale(null, -30)).toBe(0);
+    expect(ascentStartMorale(0, -30)).toBe(0);
+    expect(ascentStartMorale(2, -30)).toBe(-30);
   });
 });
 
@@ -184,14 +207,14 @@ describe("teamEndAction and teamEndLine (#1997)", () => {
 
   it("names where a won Heroes' Ascent goes on to, and the Hall held (#1996)", () => {
     expect(teamEndLine("requeue", 20, 0)).toEqual({
-      text: "Ascending to Scarred Earth in 20 s",
+      text: "Ascending to Blackwater Ford in 20 s",
       button: "Leave",
     });
-    expect(teamEndLine("requeue", 20, 2)).toEqual({
+    expect(teamEndLine("requeue", 20, 5)).toEqual({
       text: "Ascending to Hall of Heroes in 20 s",
       button: "Leave",
     });
-    expect(teamEndLine("requeue", 5, 3)).toEqual({
+    expect(teamEndLine("requeue", 5, 6)).toEqual({
       text: "You hold the Hall of Heroes · defending in 5 s",
       button: "Leave",
     });

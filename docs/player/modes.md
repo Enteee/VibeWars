@@ -323,10 +323,14 @@ skips the wait, or, for winners, leaves without queueing.
 
 ## Heroes' Ascent
 
-A queued Heroes' Ascent is four rounds, always in this order: Cinder
-Sanctum (Relic Run), Scarred Earth (Capture Points), The Courtyard (King
-of the Hill), then the Hall of Heroes. The Lobby window says where
-you are while you look for a team: `Round 2 of 4 · Scarred Earth`.
+A queued Heroes' Ascent is a run up GW1's maps, in their order: Elite
+Zaishen Battle, The Underworld, Fetid River, Burial Mounds, Unholy
+Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
+(The Vault,) then the Hall of Heroes. Only the maps built so far are in
+it, so today it is seven rounds: The Hollow Deep (Annihilation), Blackwater Ford (Priest Annihilation), Barrow Field (Priest Annihilation), Cinder Sanctum (Relic Run, in Unholy
+Temples' place), Mosslit Cairns (Capture Points, in Forgotten Shrines'),
+The Courtyard (King of the Hill), then the Hall of Heroes. The Lobby window says where
+you are while you look for a team: `Round 2 of 7 · Blackwater Ford`.
 You only ever meet a team at the same round, and you wait for one as
 long as it takes: no bots fill in. A round on a map made for three
 teams waits for three; two teams that have waited 30 seconds for a third
@@ -335,6 +339,11 @@ lobby. Win, and your party ascends to the next map on its own after 20
 seconds; win in the Hall, and you stay to defend it. Lose, or leave a match before it ends, and your next Ascent
 starts again at round 1; so does leaving the queue or the party. A match
 lost to its host leaving keeps your round.
+
+Your morale carries through the run: the death penalty or boost you end
+a won map with is what you start the next one with, from −60% to +10%.
+A run that ends, or a player who joins mid-run, starts at 0. Your own
+tab remembers it, until you close it.
 
 The team picks once, in the Team Lobby of its first map, and keeps its
 Team Build and seats for the rest of the run: after a win it queues
@@ -347,16 +356,14 @@ party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
 
-**Barrow Field** is an Ascent arena built but not yet in the queued run, so
-for now you pick it in a Hosted Game: 8v8 Priest Annihilation among low
+**Barrow Field** is an Ascent arena, and a Hosted Game's pick too: 8v8 Priest Annihilation among low
 earthen mounds, the priest raising its dead every 2 minutes. Carry your flag
 onto the **Storm Beacon** in the middle and it strikes one random foe within
 earshot of it for 50 lightning damage every 2.5 seconds, until the other team
 plants its flag there. Each strike is a bolt from the beacon to whoever it hit,
 visible to both teams.
 
-Three Ascent arenas are built but not yet in the queued run, so for now
-you pick them in a Hosted Game: **The Hollow Deep** (8v8 Annihilation, three
+Three Ascent arenas are a Hosted Game's pick too: **The Hollow Deep** (8v8 Annihilation, three
 winding tunnels round a central rock),
 **Blackwater Ford** (8v8 Priest
 Annihilation on a tiny ford, bases nearly in sight, the priest raising

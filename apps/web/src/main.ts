@@ -110,8 +110,10 @@ import { describeOutcome } from "./ui/hud.js";
 import type { SummaryTable } from "./ui/match-summary.js";
 import { renderMatchesScreen, type MatchesScreen } from "./ui/matches-screen.js";
 import {
+  ascentStartMorale,
   flashTitle,
   mountQueueScreen,
+  nextAscentMorale,
   nextAscentRound,
   nextStreak,
   requeuedSince,
@@ -540,6 +542,12 @@ async function main(): Promise<void> {
    * once the run ends.
    */
   let ascentRound = 0;
+  /**
+   * This player's morale in its Heroes' Ascent run (#2686), from the end
+   * of the last map won, which it starts the next at. Page memory like
+   * the round, and 0 whenever the round goes back to the first.
+   */
+  let ascentMorale = 0;
   /** The queued match's result line once it finished, whether this side won, and the timer to its ended view. */
   let queuedEnd:
     { readonly outcome: string; readonly won: boolean; readonly timer: number } | undefined;
@@ -686,6 +694,7 @@ async function main(): Promise<void> {
     if (teamQueue !== undefined && lobby?.getSnapshot().isHost === true) {
       // Out of the queue, its Heroes' Ascent run is over (#1996).
       ascentRound = 0;
+      ascentMorale = 0;
       lobby.leaveQueue();
     }
   };
@@ -1121,6 +1130,7 @@ async function main(): Promise<void> {
     endTeamQueue();
     // Out of the party, its Heroes' Ascent run is over (#1996).
     ascentRound = 0;
+    ascentMorale = 0;
     const leaving = lobby;
     const ending = hosted;
     lobby = undefined;
@@ -1155,6 +1165,7 @@ async function main(): Promise<void> {
     following = move.code;
     // A new host cannot vouch for the old one's Heroes' Ascent run (#2539).
     ascentRound = 0;
+    ascentMorale = 0;
     setRailParty(undefined);
     topbarView.setParty(undefined);
     topbarView.setLobby({ code: move.code, isHost: false, open: false, party: 0, joining: true });
@@ -1324,6 +1335,7 @@ async function main(): Promise<void> {
       onLeaveQueue: () => {
         // Out of the queue, its Heroes' Ascent run is over (#1996).
         ascentRound = 0;
+        ascentMorale = 0;
         lobby?.leaveQueue();
       },
       // Heroes' Ascent waits for a side at its round, never for bots (#1996).
@@ -1636,6 +1648,7 @@ async function main(): Promise<void> {
     const place = enterQueue(
       mode,
       null,
+      0,
       name,
       entrant.guild,
       playerKey,
@@ -1974,6 +1987,7 @@ async function main(): Promise<void> {
     current.place = enterQueue(
       mode,
       current.ascentRound,
+      ascentStartMorale(current.ascentRound, ascentMorale),
       name,
       entrant.guild,
       playerKey,
@@ -2653,10 +2667,9 @@ async function main(): Promise<void> {
       // Left before the end, a Heroes' Ascent run is over, unless it was
       // lost to its host leaving (#1996).
       if (!team.finished && team.ascentRound !== null) {
-        ascentRound = nextAscentRound(
-          team.ascentRound,
-          notice === undefined ? "forfeit" : "host-left",
-        );
+        const result = notice === undefined ? "forfeit" : "host-left";
+        ascentRound = nextAscentRound(team.ascentRound, result);
+        ascentMorale = nextAscentMorale(ascentMorale, ascentMorale, result);
       }
       endTeamQueue();
       // Its host may have left the match first and queued the party
@@ -2835,6 +2848,11 @@ async function main(): Promise<void> {
                 queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
                 if (team.ascentRound !== null) {
                   ascentRound = nextAscentRound(team.ascentRound, won ? "win" : "loss");
+                  ascentMorale = nextAscentMorale(
+                    ascentMorale,
+                    finished.selfMorale,
+                    won ? "win" : "loss",
+                  );
                 }
               }
               startTeamEnd(

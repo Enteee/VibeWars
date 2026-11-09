@@ -44,6 +44,7 @@ describe("a finished match's record (#2528)", () => {
             guildCape: null,
             bot: false,
             playerPubkey: "ab".repeat(32),
+            startMorale: 0,
             build: null,
           },
         ],

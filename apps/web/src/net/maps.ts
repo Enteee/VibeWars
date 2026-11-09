@@ -77,7 +77,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   theCourtyard,
   // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
   hallOfHeroes,
-  // The Heroes' Ascent's own (#2694): a Hosted Game's pick until the progression places it.
+  // The Heroes' Ascent's own (#2694), and a Hosted Game's pick.
   barrowField,
   // The Heroes' Ascent's own (#2693): a Hosted Game's pick until the progression places them.
   hollowDeep,
@@ -107,7 +107,13 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
   {
     "random-arena": undefined,
     "team-arena": ["annihilation", "kill-count", "priest-annihilation"],
-    "heroes-ascent": ["relic-run", "king-of-the-hill", "capture-points"],
+    "heroes-ascent": [
+      "annihilation",
+      "priest-annihilation",
+      "relic-run",
+      "king-of-the-hill",
+      "capture-points",
+    ],
     gvg: ["guild-battle"],
     "hosted-game": undefined,
   };
@@ -145,9 +151,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
   return {
     "random-arena": of("random-arena"),
     "team-arena": of("team-arena"),
-    "heroes-ascent": of("heroes-ascent", teamSizeOf("heroes-ascent")).filter(
-      (id) => !ASCENT_FINALE_ONLY.includes(id),
-    ),
+    "heroes-ascent": ASCENT_PROGRESSION.filter((id) => !ASCENT_FINALE_ONLY.includes(id)),
     gvg: of("gvg", teamSizeOf("gvg")),
     "hosted-game": of("hosted-game"),
   };
@@ -191,12 +195,21 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
 }
 
 /**
- * Heroes' Ascent's rounds in order (#1996), one map each, `ASCENT_ROUNDS`
- * of them: a side that wins moves on to the next, up to the Hall.
+ * Heroes' Ascent's run in order (#1996, #2686), one map each: a side that
+ * wins moves on to the next, up to the Hall, and a loss ends the run.
+ * GW1's order is Elite Zaishen Battle, The Underworld, Fetid River,
+ * Burial Mounds, Unholy Temples, Forgotten Shrines, Golden Gates, The
+ * Courtyard, Antechamber, (The Vault,) Hall of Heroes. A map not built
+ * yet is absent until its card adds it, and cinder-sanctum stands in for
+ * Unholy Temples (#2695). Never longer than `ASCENT_ROUNDS`.
  */
 export const ASCENT_PROGRESSION: readonly string[] = [
+  "hollow-deep",
+  "blackwater-ford",
+  "barrow-field",
+  // Unholy Temples' slot.
   "cinder-sanctum",
-  "scarred-earth",
+  "mosslit-cairns",
   "the-courtyard",
   "hall-of-heroes",
 ];

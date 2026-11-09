@@ -198,8 +198,12 @@ const PARTY_FIELDS = 2;
 /** Longer than any `PROTOCOL_VERSION`, short enough to cost nothing. */
 const MAX_PROTOCOL_LENGTH = 64;
 
-/** Heroes' Ascent's rounds, the Hall of Heroes the last (#1996). */
-export const ASCENT_ROUNDS = 4;
+/**
+ * The bound on a Heroes' Ascent ticket's round (#1996, #2686): GW1's ten
+ * maps, Elite Zaishen Battle to the Hall of Heroes. The run a client plays
+ * is its own progression, the maps built so far, never longer.
+ */
+export const ASCENT_ROUNDS = 10;
 
 /**
  * Whether `round` is a ticket of `mode`'s `ascentRound`: a 0-based round

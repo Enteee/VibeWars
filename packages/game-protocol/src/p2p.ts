@@ -990,6 +990,12 @@ export interface PeerLobbyJoin {
    * `lobby-proof` shows the joiner holds the secret half.
    */
   readonly playerPubkey: string;
+  /**
+   * The morale, in percent, its Heroes' Ascent run carries into the next
+   * map (#2686), as the joiner claims it; 0 in any other lobby. The host
+   * clamps it, and seats it only in a queued Heroes' Ascent.
+   */
+  readonly ascentMorale: number;
 }
 
 /**
@@ -2728,7 +2734,8 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     admission === undefined ||
     (raw.rejoinToken !== null && !isRejoinToken(raw.rejoinToken)) ||
     (raw.relayPub !== null && !isRelayPub(raw.relayPub)) ||
-    !isTicketId(raw.playerPubkey)
+    !isTicketId(raw.playerPubkey) ||
+    typeof raw.ascentMorale !== "number"
   ) {
     return undefined;
   }
@@ -2742,6 +2749,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     rejoinToken: raw.rejoinToken,
     relayPub: raw.relayPub,
     playerPubkey: raw.playerPubkey,
+    ascentMorale: raw.ascentMorale,
   };
 }
 

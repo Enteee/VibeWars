@@ -174,7 +174,11 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     playerPubkey: options.playerKey.pubkey,
   };
   /** A coded lobby's join; a queued one's is made with its proof. */
-  const codedJoin: Omit<PeerLobbyJoin, "rejoinToken"> = { ...base, admission: null };
+  const codedJoin: Omit<PeerLobbyJoin, "rejoinToken"> = {
+    ...base,
+    admission: null,
+    ascentMorale: 0,
+  };
   /** A queued join, and what the planned host's welcome to this peer signs. */
   const proof =
     queued === undefined
@@ -191,6 +195,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           join: {
             ...base,
             admission: { seatKey: queued.key.ticketId, admissionSig: queued.key.sign(admit) },
+            ascentMorale: queued.ascentMorale,
           } satisfies Omit<PeerLobbyJoin, "rejoinToken">,
           hostDigest,
         }));
