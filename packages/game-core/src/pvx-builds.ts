@@ -901,6 +901,30 @@ export const PVX_TEAMS: readonly PvxTeam[] = [
       "Oghiwwh8EWFeTOpZG76NMp2A",
     ],
   },
+  {
+    name: "AB May Ritualist Pressure",
+    rating: "Provisional-Great",
+    members: [
+      "OAejEqiMJSbiGXdTXObMlTSTTQ",
+      "OAejQihqITUOGXdTXObMciSTTQ",
+      "OAejEyiM5MUOj7y8ytxGnTuJI",
+      "OQkiExlMxXBkZGSkpgNk9X1VA",
+    ],
+  },
+  {
+    name: "HA Dual Migraine Hexway",
+    rating: "Provisional-Good",
+    members: [
+      "OgikkqqK7GGD3PALudve7yNCWAA",
+      "OQhkAkC8QGOTOoHcTJCCAagHoIA",
+      "OQZFAYsyNJS0FQGgPARQNgBIHkWF",
+      "OQhlAgBrAOkhBdBkB4DQEUDYAOBwBB",
+      "OAZDY4xpSOCsBMi7BtCIDxCCA",
+      "OAmjEykc5MTs4ZG7DPOHmPzkL",
+      "OwoS8YITAACEUEaR0XPgAA1E",
+      "OwUVIox14nAVqB8uxLikQBwEY67mA",
+    ],
+  },
 ];
 
 /**
