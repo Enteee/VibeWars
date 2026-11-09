@@ -62,6 +62,22 @@ export function teamSizeOf(mode: QueueMode): number {
   return TEAM_SIZES[mode];
 }
 
+const LOBBY_MODES_OF_QUEUE: Readonly<Record<QueueMode, LobbyMode>> = {
+  "random-arena-1v1": "random-arena",
+  "random-arena-2v2": "random-arena",
+  "random-arena-4v4": "random-arena",
+  "team-arena-2v2": "team-arena",
+  "team-arena-4v4": "team-arena",
+  "team-arena-8v8": "team-arena",
+  "heroes-ascent": "heroes-ascent",
+  gvg: "gvg",
+};
+
+/** The lobby mode a match queued for `mode` is played as (#2688). */
+export function lobbyModeOfQueue(mode: QueueMode): LobbyMode {
+  return LOBBY_MODES_OF_QUEUE[mode];
+}
+
 /** Whether `size` is one a Team Arena plays (#2107). */
 export function isTeamArenaSize(size: number): size is TeamArenaSize {
   return TEAM_ARENA_SIZES.some((each) => each === size);
