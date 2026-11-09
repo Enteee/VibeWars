@@ -356,16 +356,18 @@ export interface LoadedStructure {
   readonly wallLayers: readonly number[];
 }
 
-/** What the renderer needs of a map's layers, from its file. */
+/** What the renderer needs of a map's layers and its water, from its file. */
 export function structureOf(map: MapData): LoadedStructure {
+  const water = (map.water ?? []).map(({ layer, depth, area }) => ({ layer, depth, area }));
   return {
     structure:
-      map.layers === 1 && map.lighting === undefined
+      map.layers === 1 && map.lighting === undefined && water.length === 0
         ? FLAT_STRUCTURE
         : {
             layerCount: map.layers,
             decks: map.decks,
             transitions: map.transitions,
+            water,
             ...(map.lighting === undefined ? {} : { lighting: map.lighting }),
           },
     wallLayers: map.walls.map((wall) => wall.layer),

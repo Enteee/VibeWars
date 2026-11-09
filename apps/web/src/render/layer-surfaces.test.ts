@@ -30,6 +30,7 @@ const BRIDGE: MapStructure = {
   layerCount: 2,
   decks: [{ layer: 1, footprint: bridge }],
   transitions: [],
+  water: [],
 };
 
 function hiddenSegments(y: number, layer: number): { x: number; y: number }[] {
@@ -71,6 +72,7 @@ describe("a click on a ramp (#2972)", () => {
       { from: 0, to: 1, area: rect(100, 100, 120, 100) },
       { from: 1, to: 2, area: rect(280, 0, 40, 120) },
     ],
+    water: [],
   };
   const drawnAt = (point: { x: number; y: number }, layer: number) => ({
     x: point.x,
@@ -133,7 +135,7 @@ describe("the hidden part of a body (#2831)", () => {
   });
 
   it("is nothing on a map of one layer", () => {
-    expect(occludersOf([], { layerCount: 1, decks: [], transitions: [] })).toEqual([]);
+    expect(occludersOf([], { layerCount: 1, decks: [], transitions: [], water: [] })).toEqual([]);
   });
 });
 
@@ -258,6 +260,7 @@ describe("liftAt (#2958)", () => {
       ramp(0, 1, 760, 250, 140, 200),
       ramp(1, 2, 540, 150, 120, 120),
     ],
+    water: [],
   };
   const STEP = ELEVATION_STEP;
   const R = 14;
@@ -346,7 +349,7 @@ describe("structures with height", () => {
     footprint: { kind: "rect" as const, x: 420, y: 250, width: 360, height: 200 },
   };
   const pillar = { kind: "rect" as const, layer: 0, x: 450, y: 420, width: 24, height: 24 };
-  const structure: MapStructure = { layerCount: 2, decks: [deck], transitions: [] };
+  const structure: MapStructure = { layerCount: 2, decks: [deck], transitions: [], water: [] };
   const hiddenAt = (y: number): number => {
     let pieces = 0;
     traceHiddenOutline(RING_PATH, 200, y, 10, 0, occludersOf([wall], structure), () => {

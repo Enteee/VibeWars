@@ -1,6 +1,6 @@
 /**
- * The explicit draw order of a layered arena (ADR-0051, #2810): terrain,
- * ground characters, walls, supports, side faces, decks, elevated
+ * The explicit draw order of a layered arena (ADR-0051, #2810): floor,
+ * ground water, ground effects, terrain, ground characters, walls, supports, side faces, decks, elevated
  * characters, effects, UI, as plain numbers. One stack per layer: a deck
  * of layer `n` closes the stack below it, so whoever stands under it
  * draws beneath it and whoever stands on it draws above.
@@ -9,7 +9,13 @@
 /** A body's parts on one character band, in the order they draw. */
 export type CharacterPart = "body" | "glyph" | "marks";
 
+/** A body of water's parts (#2984): its fill and shore, then the ripples on it. */
+export type WaterPart = "surface" | "ripples";
+
 export type RenderItem =
+  | { readonly kind: "floor" }
+  | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
+  | { readonly kind: "ground-effect" }
   | { readonly kind: "terrain" }
   | { readonly kind: "lighting"; readonly layer: number }
   | { readonly kind: "lit-ground-effect" }
@@ -32,6 +38,14 @@ const LIT_GROUND_EFFECT = 0.6;
 /** A deck layer's lighting: over its side faces, deck and ramp, under whoever stands there. */
 const DECK_LIGHTING = 5.8;
 const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, marks: 1.4 };
+/**
+ * Ground water sits on the floor and under the ward and trap circles
+ * (#2984), so they stay readable on it; water on a deck sits on that deck
+ * and its ramp, under whoever stands there. Both are under their layer's
+ * lighting, which lights them as it lights the floor.
+ */
+const GROUND_WATER: Record<WaterPart, number> = { surface: -1.6, ripples: -1.5 };
+const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, ripples: 5.7 };
 const WALL = 2;
 const SUPPORT = 3;
 const SIDE_FACE = 4;
@@ -46,6 +60,14 @@ const EDGE_MARKER = 120;
 /** Where `item` draws: higher is in front. */
 export function renderOrder(item: RenderItem): number {
   switch (item.kind) {
+    case "floor":
+      return -2;
+    case "water":
+      return item.layer === 0
+        ? GROUND_WATER[item.part]
+        : (item.layer - 1) * LAYER_STACK + DECK_WATER[item.part];
+    case "ground-effect":
+      return -1;
     case "lighting":
       return item.layer === 0 ? GROUND_LIGHTING : (item.layer - 1) * LAYER_STACK + DECK_LIGHTING;
     case "lit-ground-effect":

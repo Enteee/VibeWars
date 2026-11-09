@@ -140,6 +140,7 @@ describe("a shot between layers (#2972)", () => {
       },
     ],
     transitions: [],
+    water: [],
   };
   const shot = {
     id: 1,

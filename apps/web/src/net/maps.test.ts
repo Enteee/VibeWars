@@ -3,6 +3,7 @@ import { ASCENT_ROUNDS, MAX_WIRE_CAPTURE_POINTS, teamSizeOf } from "@vibewars/ga
 import { describe, expect, it } from "vitest";
 
 import { mapName } from "../i18n/game-names.js";
+import { TRAINING_MAPS } from "../training/maps.js";
 import {
   ARENA_MAPS,
   arenaIds,
@@ -21,6 +22,7 @@ import {
   modeMapIds,
   queueMapPool,
   queueSkipping,
+  structureOf,
   randomArenaMapPool,
   teamArenaMapIds,
 } from "./maps.js";
@@ -542,5 +544,34 @@ describe("mapShrines (#1199)", () => {
   it("gives none on a map without them or one this build does not have", () => {
     expect(mapShrines("arena-crossroads", 2)).toEqual([]);
     expect(mapShrines("arena-nowhere", 2)).toEqual([]);
+  });
+});
+
+describe("structureOf's water (#2984)", () => {
+  const area = { kind: "rect", x: 10, y: 10, width: 20, height: 20 } as const;
+  const water = [
+    { id: "pond", layer: 0, depth: "deep", area },
+    { id: "ford", layer: 0, depth: "shallow", area: { ...area, x: 50 } },
+  ] as const;
+
+  it("hands the renderer every body of water, deep and shallow, on a map of one layer", () => {
+    const [flat] = ARENA_MAPS.filter((map) => map.layers === 1);
+    if (flat === undefined) throw new Error("no flat arena");
+    expect(structureOf(flat).structure.water).toEqual([]);
+    expect(structureOf({ ...flat, water: [...water] }).structure).toMatchObject({
+      layerCount: 1,
+      water: [
+        { layer: 0, depth: "deep", area },
+        { layer: 0, depth: "shallow", area: { ...area, x: 50 } },
+      ],
+    });
+  });
+
+  it("and on a layered one, next to its decks", () => {
+    const layered = TRAINING_MAPS.get("training-heights");
+    if (layered === undefined) throw new Error("no training-heights");
+    const { structure } = structureOf({ ...layered, water: [...water] });
+    expect(structure.decks).toBe(layered.decks);
+    expect(structure.water).toHaveLength(2);
   });
 });
