@@ -7,6 +7,7 @@ describe("TRAINING_MAPS", () => {
     expect([...TRAINING_MAPS.keys()].sort()).toEqual([
       "training-field",
       "training-hall",
+      "training-heights",
       "training-pillars",
     ]);
     for (const [id, map] of TRAINING_MAPS) {

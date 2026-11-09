@@ -2143,6 +2143,7 @@ export default {
     "scarred-earth": "Narbige Erde",
     "training-hall": "Trainingshalle",
     "training-pillars": "Trainingssäulen",
+    "training-heights": "Trainingshöhen",
     "training-field": "Trainingsfeld",
   },
 } satisfies GameNames;
