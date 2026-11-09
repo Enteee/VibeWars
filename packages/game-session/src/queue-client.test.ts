@@ -48,6 +48,8 @@ class Queue {
   public readonly heard: QueueBoardEvent[] = [];
   /** Keys handed out so far, across every client. */
   public keys = 0;
+  /** Whether its rounds skip ahead (#2687). */
+  public skipping = false;
 
   public readonly mode: QueueMode;
   public readonly round: number | null;
@@ -65,11 +67,10 @@ class Queue {
       board: this.memory.board(),
       mode: this.mode,
       ascentRound: this.round,
-      teamCount: 2,
       ...(party === undefined ? {} : { party }),
       now: () => this.now,
       newTicketKey: () => fakeKey((this.keys += 1)),
-      mapPool: MAPS,
+      round: () => ({ mapPool: MAPS, teamCount: 2, skipping: this.skipping }),
       hardNat,
     });
     this.clients.push(client);
@@ -325,6 +326,26 @@ describe("createQueueClient", () => {
 
     await queue.publish({ ticketId: "0".repeat(63) + "3", bots: 7, ascentRound: 1 });
     await queue.advance();
+    expect(a.state).toMatchObject({ kind: "forming" });
+  });
+
+  it("skips ahead after 60 s, counting only its own round (#2687)", async () => {
+    const low = new Queue("heroes-ascent", 2);
+    low.skipping = true;
+    const a = low.join();
+    await low.publish({ ticketId: EARLY, bots: 7, ascentRound: 5 });
+    await low.advance();
+    expect(a.state).toMatchObject({ kind: "searching", searching: 1, teams: 1 });
+
+    // Short of the 60 s, the peer beating its heart as a live ticket does.
+    while (low.now < START + 56_000) {
+      await low.advance(5_000);
+      await low.publish({ ticketId: EARLY, bots: 7, ascentRound: 5 });
+    }
+    await low.advance(0);
+    expect(a.state).toMatchObject({ kind: "searching" });
+
+    await low.advance(5_000);
     expect(a.state).toMatchObject({ kind: "forming" });
   });
 

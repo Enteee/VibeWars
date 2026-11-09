@@ -17,6 +17,7 @@ import {
   ASCENT_PROGRESSION,
   HALL_OF_HEROES_MAPS,
   LOBBY_MODE_MATCH_MODES,
+  ascentRoundOf,
   modeMapIds,
 } from "./net/maps.js";
 import {
@@ -540,6 +541,10 @@ async function main(): Promise<void> {
         finished: boolean;
         /** The Heroes' Ascent round its lobby queued at (#1996); `null` in other modes. */
         readonly ascentRound: number | null;
+        /** The round its match plays: a later one when it skipped ahead (#2687). */
+        playedRound: number | null;
+        /** The map of the group it was formed into (#2687); `undefined` until then. */
+        groupMapId: string | undefined;
       }
     | undefined;
   /** A team's match found while the tab was hidden (#2743): its title flashing. */
@@ -1342,6 +1347,7 @@ async function main(): Promise<void> {
     startNatCheck();
     return {
       queuedMs: queuedMsOf(lobby.getSnapshot()),
+      groupMapId: teamQueue?.groupMapId,
       onFindMatch: () => {
         lobby?.findMatch(roundFor(entry));
       },
@@ -1966,6 +1972,8 @@ async function main(): Promise<void> {
       teams: undefined,
       finished: false,
       ascentRound: snapshot.ascentRound,
+      playedRound: snapshot.ascentRound,
+      groupMapId: undefined,
     };
     teamQueue = started;
     music().menu("queue");
@@ -2013,6 +2021,15 @@ async function main(): Promise<void> {
             current.teams = state.teams;
           } else if (state.kind === "unreachable") {
             current.teams = undefined;
+          } else if (state.kind === "fell-through") {
+            // That group is gone: the party is bound for its own round again.
+            current.playedRound = current.ascentRound;
+            current.groupMapId = undefined;
+            redrawRail();
+          } else if (state.kind === "in-lobby" && current.ascentRound !== null) {
+            current.playedRound = ascentRoundOf(state.group.mapId);
+            current.groupMapId = state.group.mapId;
+            redrawRail();
           }
           paintQueue();
         },
@@ -2681,7 +2698,11 @@ async function main(): Promise<void> {
       // lost to its host leaving (#1996).
       if (!team.finished && team.ascentRound !== null) {
         const result = notice === undefined ? "forfeit" : "host-left";
-        ascentRound = nextAscentRound(team.ascentRound, result);
+        ascentRound = nextAscentRound(
+          team.ascentRound,
+          team.playedRound ?? team.ascentRound,
+          result,
+        );
         ascentMorale = nextAscentMorale(ascentMorale, ascentMorale, result);
       }
       endTeamQueue();
@@ -2874,7 +2895,11 @@ async function main(): Promise<void> {
               if (team !== undefined) {
                 queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
                 if (team.ascentRound !== null) {
-                  ascentRound = nextAscentRound(team.ascentRound, won ? "win" : "loss");
+                  ascentRound = nextAscentRound(
+                    team.ascentRound,
+                    team.playedRound ?? team.ascentRound,
+                    won ? "win" : "loss",
+                  );
                   ascentMorale = nextAscentMorale(
                     ascentMorale,
                     finished.selfMorale,
@@ -2885,7 +2910,7 @@ async function main(): Promise<void> {
               startTeamEnd(
                 teamEndAction(won, team !== undefined),
                 team?.party,
-                team?.ascentRound ?? null,
+                team?.playedRound ?? null,
               );
               return;
             }

@@ -245,6 +245,15 @@ export const ASCENT_PROGRESSION: readonly string[] = [
   "hall-of-heroes-king",
 ];
 
+/** The round Heroes' Ascent plays `mapId` at (#2687); every map of a drawn pool is that pool's round. */
+export function ascentRoundOf(mapId: string): number {
+  const round = ASCENT_PROGRESSION.findIndex((_, at) => ascentMapPool(at).includes(mapId));
+  if (round < 0) {
+    throw new RangeError(`no Heroes' Ascent round plays ${mapId}`);
+  }
+  return round;
+}
+
 /** The id of the map Heroes' Ascent plays at `round` (#1996). */
 export function ascentMapId(round: number): string {
   const id = ASCENT_PROGRESSION[round];
@@ -289,6 +298,16 @@ export function queueTeamCount(mode: QueueMode, ascentRound: number | null): Wir
     return 2;
   }
   return hostMap(ascentMapId(ascentRound))?.descriptor.teamCount ?? 2;
+}
+
+/**
+ * Whether a side at `round` may skip ahead, or be skipped to (#2687):
+ * every Heroes' Ascent round between The Underworld and the Hall.
+ */
+export function queueSkipping(mode: QueueMode, round: number | null): boolean {
+  return (
+    mode === "heroes-ascent" && round !== null && round > 0 && round < ASCENT_PROGRESSION.length - 1
+  );
 }
 
 /** The modes a Random Arena never plays. */
