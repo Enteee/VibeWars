@@ -356,6 +356,8 @@ party, whose host cannot vouch for the old run. The round is remembered by
 the host of your party, and only until you close the tab. A Heroes'
 Ascent lobby joined by code plays round 1's map.
 
+A party of fewer than 8 queues with bots in its empty seats, using its Team Build, but a side always has at least one human, and no team of bots is ever an opponent. If the last human of a side leaves a match, that side forfeits and its run ends.
+
 **Barrow Field** is an Ascent arena, and a Hosted Game's pick too: 8v8 Priest Annihilation among low
 earthen mounds, the priest raising its dead every 2 minutes. Carry your flag
 onto the **Storm Beacon** in the middle and it strikes one random foe within

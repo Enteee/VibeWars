@@ -349,6 +349,8 @@ anterior. La ronda la recuerda el anfitrión de tu grupo, y solo hasta que cierr
 pestaña. Una sala de Ascenso de los Héroes a la que entras por código juega el mapa
 de la ronda 1.
 
+Un grupo de menos de 8 entra en la cola con bots en los puestos vacíos, usando su build de equipo, pero un bando siempre tiene al menos un humano, y un equipo de bots nunca es rival. Si el último humano de un bando abandona una partida, ese bando se rinde y su recorrido termina.
+
 **Barrow Field** es una arena del Ascenso que también se elige en una Partida alojada: Aniquilación de sacerdote 8v8 entre túmulos bajos de tierra, y el sacerdote resucita a sus muertos cada 2 minutos. Lleva tu bandera al **Storm Beacon** del centro y golpeará a un enemigo al azar a distancia de oído con 50 de daño de rayo cada 2,5 segundos, hasta que el otro equipo plante allí su bandera. Cada golpe es un rayo del faro a quien alcanza, visible para ambos equipos.
 
 Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow Deep** (Aniquilación
