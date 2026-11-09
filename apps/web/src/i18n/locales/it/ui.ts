@@ -803,11 +803,13 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "comandi",
+  "options.display": "schermo",
   "options.label": "Opzioni",
   "options.language": "lingua",
   "options.languageBusy":
     "Prima esci dalla lobby o dalla partita: cambiare lingua ricarica la pagina.",
   "options.languageLabel": "Lingua",
+  "options.lightingLabel": "Illuminazione",
   "options.player": "giocatore",
   "options.relay": "relay (TURN)",
   "options.sections": "sezioni delle opzioni",

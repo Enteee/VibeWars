@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 
+import type { MapLighting } from "@vibewars/game-maps/schema";
+
 import {
   ALTAR_REACH_UNITS,
   CAPTURE_REACH_UNITS,
@@ -149,6 +151,16 @@ import {
 } from "./flag-objects.js";
 import { lyingPose } from "./lying-pose.js";
 import { mapLayerChanged, type MapLayer } from "./map-layer.js";
+import { LightingPass, litStructurePalette } from "./lighting-pass.js";
+import { lightingOn } from "./lighting-preference.js";
+import {
+  BODY_LIGHT_FLOOR,
+  bodyTintOf,
+  lightAt,
+  multiplyColour,
+  steadyLighting,
+  type LightSample,
+} from "./lighting-model.js";
 import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
 import { waterShapeOf, type WaterShape } from "./water-shape.js";
 import { screenPx, screenSized } from "./screen-text.js";
@@ -271,6 +283,8 @@ const IMPACT_LINE_WIDTH = 1.5;
 const GROUND_DEPTH = renderOrder({ kind: "ground-effect" });
 /** A layered map's opaque floor and the grid: under the water and the ward and trap circles on it. */
 const FLOOR_DEPTH = renderOrder({ kind: "floor" });
+/** The wards on a lit map: over its light, which never darkens them (ADR-0052). */
+const LIT_GROUND_DEPTH = renderOrder({ kind: "lit-ground-effect" });
 const MAP_DEPTH = renderOrder({ kind: "terrain" });
 const EFFECT_DEPTH = renderOrder({ kind: "effect" });
 const CAST_BADGE_DEPTH = renderOrder({ kind: "cast-badge" });
@@ -327,6 +341,8 @@ export class ArenaScene extends Phaser.Scene {
   private drawnActors: readonly RenderableActor[] = [];
   /** Each body's lift now, while it eases to its layer's. */
   private readonly elevations = new Map<string, number>();
+  /** `snapshot.actors` by id, where they stand: what their light is sampled at. */
+  private readonly standing = new Map<string, RenderableActor>();
   /** Every mark on a body, over the body glyphs (#1037). */
   private markGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The off-screen markers, drawn in screen px over everything (#440). */
@@ -390,6 +406,12 @@ export class ArenaScene extends Phaser.Scene {
   private readonly attackClocks = new Map<string, AttackClock>();
   /** The scene clock at the last frame, seconds, which the match clock runs on from. */
   private now = 0;
+  /** The light maps (ADR-0052); `undefined` until `create`. */
+  private lightingPass: LightingPass | undefined;
+  /** Where the wards draw: under the grid, or over the light. */
+  private groundDepth = GROUND_DEPTH;
+  /** Reused every body, every frame: the lighting allocates nothing per frame. */
+  private readonly lightSample: LightSample = { colour: 0xffffff, intensity: 1 };
   /** Read once a frame: under reduced motion every mark stays at rest. */
   private reducedMotion = false;
 
@@ -488,6 +510,11 @@ export class ArenaScene extends Phaser.Scene {
       sheet.add(frame, 0, x, y, w, h);
     }
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
+    this.lightingPass = new LightingPass(this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.lightingPass?.destroy();
+      this.lightingPass = undefined;
+    });
     this.floorGraphics = this.add.graphics().setDepth(FLOOR_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
@@ -516,6 +543,7 @@ export class ArenaScene extends Phaser.Scene {
     this.drawnActors = this.liftActors(deltaMs / 1000);
     this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
+    this.updateLighting(time);
     this.updateGroundEffects();
     this.drawMap();
     this.drawRipples();
@@ -591,6 +619,10 @@ export class ArenaScene extends Phaser.Scene {
    */
   private liftActors(dt: number): readonly RenderableActor[] {
     const { actors, structure } = this.snapshot;
+    this.standing.clear();
+    for (const actor of actors) {
+      this.standing.set(actor.id, actor);
+    }
     if (structure.layerCount === 1) {
       this.elevations.clear();
       return actors;
@@ -922,7 +954,7 @@ export class ArenaScene extends Phaser.Scene {
   ): void {
     const { x, y } = actor.position;
     const pose = lyingPose(x, y, actor.radius, actor.facing);
-    g.fillStyle(teamColour(actor.team), 1);
+    g.fillStyle(this.lit(teamColour(actor.team), actor), 1);
     tracePath(g, pose.body);
     g.fillPath();
     g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
@@ -1185,6 +1217,7 @@ export class ArenaScene extends Phaser.Scene {
           offhandId: actor.offhandId,
           frame: this.weaponFrame(actor),
           cape: this.wornCape(actor),
+          tint: this.bodyTint(actor),
         },
         phaserPainter(marks),
       );
@@ -1221,7 +1254,7 @@ export class ArenaScene extends Phaser.Scene {
     look: CreatureLook,
   ): void {
     const { x, y } = actor.position;
-    const team = teamColour(actor.team);
+    const team = this.lit(teamColour(actor.team), actor);
     const colourOf = (colour: OrnamentColour): number =>
       colour === "team" ? team : colour === "ink" ? SELF_RIM : colour;
     for (const ornament of creatureOrnament(look, x, y, actor.radius)) {
@@ -1558,6 +1591,56 @@ export class ArenaScene extends Phaser.Scene {
    * whoever stands in it; a trap (#1105) the same, with no disc. One that
    * ended takes its icon with it.
    */
+  /** The map's lighting, as Options and the frame budget allow (ADR-0052). */
+  private activeLighting(): MapLighting | undefined {
+    const lighting = lightingOn() ? this.snapshot.structure.lighting : undefined;
+    return this.lightingPass?.allowed(lighting);
+  }
+
+  /** The light maps, and the wards moved over them while there are any. */
+  private updateLighting(timeMs: number): void {
+    const pass = this.lightingPass;
+    if (pass === undefined) {
+      return;
+    }
+    const lighting = this.activeLighting();
+    pass.show(
+      lighting,
+      this.snapshot.structure,
+      this.arena.width,
+      this.arena.height,
+      this.reducedMotion,
+    );
+    pass.update(timeMs);
+    const depth = lighting === undefined ? GROUND_DEPTH : LIT_GROUND_DEPTH;
+    if (depth !== this.groundDepth) {
+      this.groundDepth = depth;
+      this.groundGraphics?.setDepth(depth);
+      for (const icon of this.groundIcons.values()) {
+        icon.setDepth(depth);
+      }
+    }
+  }
+
+  /** What the light at a body's feet multiplies it by; `undefined` on a map lit flat. */
+  private bodyTint(actor: RenderableActor): number | undefined {
+    const lighting = this.drawnMap?.lighting;
+    if (lighting === undefined) {
+      return undefined;
+    }
+    // Drawn lifted and eased; the light is where it stands, on its own layer.
+    const { position, layer } = this.standing.get(actor.id) ?? actor;
+    const shown = this.lightingPass?.flickers === true ? lighting : steadyLighting(lighting);
+    const timeMs = this.now * 1000;
+    return bodyTintOf(lightAt(shown, position, layer, timeMs, BODY_LIGHT_FLOOR, this.lightSample));
+  }
+
+  /** `colour` in the light at `actor`'s feet. */
+  private lit(colour: number, actor: RenderableActor): number {
+    const tint = this.bodyTint(actor);
+    return tint === undefined ? colour : multiplyColour(colour, tint);
+  }
+
   private updateGroundEffects(): void {
     const g = this.groundGraphics;
     if (g === undefined) {
@@ -1590,7 +1673,7 @@ export class ArenaScene extends Phaser.Scene {
           .image(x, y, ATLAS, frame)
           .setDisplaySize(GROUND_ICON_SIZE, GROUND_ICON_SIZE)
           .setAlpha(GROUND_ICON_ALPHA)
-          .setDepth(GROUND_DEPTH);
+          .setDepth(this.groundDepth);
         this.groundIcons.set(effect.id, icon);
       }
     }
@@ -1788,6 +1871,7 @@ export class ArenaScene extends Phaser.Scene {
       walls: this.snapshot.walls,
       structure: this.snapshot.structure,
       zoom: this.view?.zoom ?? 1,
+      lighting: this.activeLighting(),
     };
     if (g === undefined || !mapLayerChanged(this.drawnMap, next)) {
       return;
@@ -1813,7 +1897,8 @@ export class ArenaScene extends Phaser.Scene {
       surface.restore();
     }
     for (const transition of next.structure.transitions) {
-      this.drawRamp(next.structure, transition, line, palette);
+      const lit = litStructurePalette(palette, next.lighting, transition.area, transition.from);
+      this.drawRamp(next.structure, transition, line, lit);
     }
     for (const wall of next.walls) {
       const held = deckHeldBy(wall, next.structure);
@@ -1822,17 +1907,23 @@ export class ArenaScene extends Phaser.Scene {
           ? { kind: "wall", layer: wall.layer }
           : { kind: "support", deckLayer: held.layer },
       );
+      const lit = litStructurePalette(palette, next.lighting, wall, wall.layer);
       if (next.structure.layerCount === 1) {
-        this.drawFlatWall(g, wall, line, palette);
+        this.drawFlatWall(g, wall, line, lit);
       } else if (held === undefined) {
-        this.drawWallBox(g, wall, line, palette);
+        this.drawWallBox(g, wall, line, lit);
       } else {
         const low = elevationOf(wall.layer);
-        this.drawColumn(g, wall, low, deckSideLow(held, next.walls), palette.support);
+        this.drawColumn(g, wall, low, deckSideLow(held, next.walls), lit.support);
       }
     }
     for (const deck of next.structure.decks) {
-      this.drawDeck(deck, next.walls, line, palette);
+      this.drawDeck(
+        deck,
+        next.walls,
+        line,
+        litStructurePalette(palette, next.lighting, deck.footprint, deck.layer),
+      );
     }
     this.occluders = occludersOf(next.walls, next.structure);
     this.drawnMap = next;

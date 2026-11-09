@@ -839,10 +839,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "sterowanie",
+  "options.display": "wyświetlanie",
   "options.label": "Opcje",
   "options.language": "język",
   "options.languageBusy": "Najpierw opuść lobby lub mecz: zmiana języka przeładowuje stronę.",
   "options.languageLabel": "Język",
+  "options.lightingLabel": "Oświetlenie",
   "options.player": "gracz",
   "options.relay": "przekaźnik (TURN)",
   "options.sections": "sekcje opcji",

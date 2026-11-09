@@ -6,6 +6,8 @@ import { mapLayerChanged, type MapLayer } from "./map-layer.js";
 const WALLS: readonly RenderableWall[] = [
   { kind: "rect", layer: 0, x: 10, y: 20, width: 30, height: 40 },
 ];
+const DARK = { colour: 0xffffff, intensity: 0 };
+const LIGHTING = { ambient: DARK, indoorAmbient: DARK, indoor: [], lights: [] };
 const LAYER: MapLayer = {
   width: 960,
   height: 640,
@@ -39,6 +41,13 @@ describe("the arena's map layer (#1353)", () => {
 
   it("is drawn again for a new zoom alone, so its lines stay 1 px (#2393)", () => {
     expect(mapLayerChanged(LAYER, { ...LAYER, zoom: 0.7 })).toBe(true);
+  });
+
+  it("is drawn again under new lighting (#2987)", () => {
+    const lit = { ...LAYER, lighting: LIGHTING };
+    expect(mapLayerChanged(LAYER, lit)).toBe(true);
+    expect(mapLayerChanged(lit, { ...lit })).toBe(false);
+    expect(mapLayerChanged(lit, { ...lit, lighting: { ...LIGHTING } })).toBe(true);
   });
 
   it("is drawn again for new bounds", () => {

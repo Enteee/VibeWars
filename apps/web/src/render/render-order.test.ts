@@ -50,6 +50,18 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     expect(marks).toBeLessThan(renderOrder({ kind: "wall", layer: 0 }));
   });
 
+  it("lights a layer over its surfaces and under whoever stands on it (#2987)", () => {
+    const ground = renderOrder({ kind: "lighting", layer: 0 });
+    const groundEffect = renderOrder({ kind: "lit-ground-effect" });
+    expect(renderOrder({ kind: "terrain" })).toBeLessThan(ground);
+    expect(ground).toBeLessThan(groundEffect);
+    expect(groundEffect).toBeLessThan(renderOrder(character(0)));
+    const deck = renderOrder({ kind: "lighting", layer: 1 });
+    expect(renderOrder({ kind: "ramp", upperLayer: 1 })).toBeLessThan(deck);
+    expect(renderOrder({ kind: "deck", deckLayer: 1 })).toBeLessThan(deck);
+    expect(deck).toBeLessThan(renderOrder(character(1)));
+  });
+
   it("leaves everyone in front of the walls on a map of one layer", () => {
     expect(renderOrder(character(characterBand(0, 1)))).toBeGreaterThan(
       renderOrder({ kind: "wall", layer: 0 }),
@@ -87,13 +99,14 @@ describe("water's place in the order (#2984)", () => {
     part,
   });
 
-  it("draws ground water over the floor, its ripples over it, both under the ward circles and the terrain", () => {
+  it("draws ground water over the floor, its ripples over it, both under the ward circles, the terrain and the light", () => {
     const items: readonly RenderItem[] = [
       { kind: "floor" },
       water(0, "surface"),
       water(0, "ripples"),
       { kind: "ground-effect" },
       { kind: "terrain" },
+      { kind: "lighting", layer: 0 },
       character(0),
     ];
     const orders = items.map(renderOrder);
@@ -101,12 +114,13 @@ describe("water's place in the order (#2984)", () => {
     expect(new Set(orders).size).toBe(items.length);
   });
 
-  it("draws a deck's water on the deck and its ramp, under whoever stands there and the next deck up", () => {
+  it("draws a deck's water on the deck and its ramp, under its light, whoever stands there and the next deck up", () => {
     const items: readonly RenderItem[] = [
       { kind: "deck", deckLayer: 1 },
       { kind: "ramp", upperLayer: 1 },
       water(1, "surface"),
       water(1, "ripples"),
+      { kind: "lighting", layer: 1 },
       character(1),
       { kind: "wall", layer: 1 },
       { kind: "deck", deckLayer: 2 },

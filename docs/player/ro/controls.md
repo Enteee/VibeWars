@@ -66,7 +66,7 @@ Aceste taste sunt fixe:
 **♪** (muzică: ce se aude și cât de tare), oprirea sunetului și ecranul complet. Într-un meci aceleași butoane,
 în afară de Lobby, stau în dreapta sus pe ecran. Într-o fereastră îngustă, aceste pictograme și
 celelalte butoane ale ecranului se strâng în **⋯**; doar butonul principal rămâne afară.
-⚙ deschide Opțiunile ca fereastră sub bară, cu ecranul încă în spate; Esc, × sau un clic în afară o închide.
+⚙ deschide Opțiunile ca fereastră sub bară, cu ecranul încă în spate; Esc, × sau un clic în afară o închide. La **Afișare**, **Iluminare** pornește sau oprește lumina și umbra unei hărți luminate, imediat, chiar și în meci.
 Ajutorul se închide cu × din dreapta sus, cu Esc sau apăsând din nou [?].
 
 **Trimite un beat lobby-ului tău.** În editorul de beaturi (♪, apoi **Editează**),

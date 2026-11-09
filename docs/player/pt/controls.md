@@ -69,7 +69,7 @@ Fora de uma partida, a barra superior tem **[?]** (esta Ajuda), **⚙** (Opçõe
 **♪** (música: o que toca e em que volume), o mudo do som e a tela cheia. Em uma partida, os mesmos botões,
 menos Sala, ficam no canto superior direito da tela. Em uma janela estreita, esses ícones e
 os outros botões da tela se recolhem em **⋯**; só o botão principal fica de fora.
-⚙ abre as Opções como uma janela sob a barra, com a tela ainda atrás; Esc, × ou um clique fora a fecha.
+⚙ abre as Opções como uma janela sob a barra, com a tela ainda atrás; Esc, × ou um clique fora a fecha. Em **Tela**, **Iluminação** liga ou desliga a luz e a sombra de um mapa iluminado, na hora, até numa partida.
 A Ajuda fecha com o × no canto superior direito, com Esc ou pressionando [?] de novo.
 
 **Compartilhe uma batida com sua sala.** No editor de batidas (♪, depois **Editar**),

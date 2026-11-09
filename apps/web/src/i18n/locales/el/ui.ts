@@ -764,11 +764,13 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "χειρισμός",
+  "options.display": "οθόνη",
   "options.label": "Επιλογές",
   "options.language": "γλώσσα",
   "options.languageBusy":
     "Βγες πρώτα από το λόμπι ή τον αγώνα: η αλλαγή γλώσσας επαναφορτώνει τη σελίδα.",
   "options.languageLabel": "Γλώσσα",
+  "options.lightingLabel": "Φωτισμός",
   "options.player": "παίκτης",
   "options.relay": "αναμεταδότης (TURN)",
   "options.sections": "ενότητες επιλογών",

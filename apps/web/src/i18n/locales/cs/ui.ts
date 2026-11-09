@@ -835,10 +835,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "ovládání",
+  "options.display": "zobrazení",
   "options.label": "Možnosti",
   "options.language": "jazyk",
   "options.languageBusy": "Nejdřív opusť lobby nebo zápas: změna jazyka znovu načte stránku.",
   "options.languageLabel": "Jazyk",
+  "options.lightingLabel": "Osvětlení",
   "options.player": "hráč",
   "options.relay": "relay (TURN)",
   "options.sections": "sekce možností",

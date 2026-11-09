@@ -17,6 +17,8 @@ export type RenderItem =
   | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
   | { readonly kind: "ground-effect" }
   | { readonly kind: "terrain" }
+  | { readonly kind: "lighting"; readonly layer: number }
+  | { readonly kind: "lit-ground-effect" }
   | { readonly kind: "character"; readonly band: number; readonly part: CharacterPart }
   | { readonly kind: "wall"; readonly layer: number }
   | { readonly kind: "support"; readonly deckLayer: number }
@@ -30,14 +32,20 @@ export type RenderItem =
   | { readonly kind: "edge-marker" };
 
 const LAYER_STACK = 10;
+/** Over the grid and deck shadows, under the first body; the wards draw just over it. */
+const GROUND_LIGHTING = 0.5;
+const LIT_GROUND_EFFECT = 0.6;
+/** A deck layer's lighting: over its side faces, deck and ramp, under whoever stands there. */
+const DECK_LIGHTING = 5.8;
 const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, marks: 1.4 };
 /**
  * Ground water sits on the floor and under the ward and trap circles
- * (#2984), so they stay readable on it; water on a deck sits on that deck,
- * under whoever stands there.
+ * (#2984), so they stay readable on it; water on a deck sits on that deck
+ * and its ramp, under whoever stands there. Both are under their layer's
+ * lighting, which lights them as it lights the floor.
  */
 const GROUND_WATER: Record<WaterPart, number> = { surface: -1.6, ripples: -1.5 };
-const DECK_WATER: Record<WaterPart, number> = { surface: 0.5, ripples: 0.6 };
+const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, ripples: 5.7 };
 const WALL = 2;
 const SUPPORT = 3;
 const SIDE_FACE = 4;
@@ -57,9 +65,13 @@ export function renderOrder(item: RenderItem): number {
     case "water":
       return item.layer === 0
         ? GROUND_WATER[item.part]
-        : item.layer * LAYER_STACK + DECK_WATER[item.part];
+        : (item.layer - 1) * LAYER_STACK + DECK_WATER[item.part];
     case "ground-effect":
       return -1;
+    case "lighting":
+      return item.layer === 0 ? GROUND_LIGHTING : (item.layer - 1) * LAYER_STACK + DECK_LIGHTING;
+    case "lit-ground-effect":
+      return LIT_GROUND_EFFECT;
     case "terrain":
       return 0;
     case "character":

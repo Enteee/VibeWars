@@ -716,11 +716,13 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "操作",
+  "options.display": "表示",
   "options.label": "オプション",
   "options.language": "言語",
   "options.languageBusy":
     "先にロビーまたはマッチを離れてください。言語を変更するとページが再読み込みされます。",
   "options.languageLabel": "言語",
+  "options.lightingLabel": "ライティング",
   "options.player": "プレイヤー",
   "options.relay": "リレー (TURN)",
   "options.sections": "オプションの項目",
