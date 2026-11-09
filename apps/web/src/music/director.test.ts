@@ -11,6 +11,7 @@ import {
   type TrackChoice,
 } from "./director.js";
 import { MAP_TRACKS } from "./fixed-tracks.js";
+import { TRACKS as SHIPPED } from "./tracks/index.js";
 
 /** The epic's example tracks (#366 §3.5), with plausible moods, primary first. */
 const TRACKS: readonly TrackChoice[] = [
@@ -148,6 +149,19 @@ describe("directMusic: track choice", () => {
     expect(run([defeat], AUTO, tracks)[0]?.trackId).toBe("storm");
     expect(run([defeat], AUTO, tracks.slice(1))[0]?.trackId).toBeNull();
     expect(run([defeat], AUTO, [])[0]?.trackId).toBeNull();
+  });
+
+  it("never picks the title theme from Auto: only the splash starts it (#2888)", () => {
+    for (let n = 0; n < 40; n++) {
+      for (const result of ["victory", "defeat", null] as const) {
+        const step = input({
+          screen: "result",
+          result,
+          matchSeed: `seed:${String(n)}`,
+        });
+        expect(directMusic(step, null, AUTO, SHIPPED).trackId).not.toBe("vibe-wars");
+      }
+    }
   });
 
   it("plays a pinned track anywhere, and an unknown pinned id as Auto", () => {
