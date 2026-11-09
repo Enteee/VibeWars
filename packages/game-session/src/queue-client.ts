@@ -15,6 +15,7 @@
  * forms groups as everyone does, and meets the group holding the
  * leader's ticket with its own key.
  */
+import { hallSlotOpen, nextHallSlotMs } from "@vibewars/game-core";
 import {
   FORMATION_SETTLE_MS,
   NO_SHOW_IGNORE_MS,
@@ -95,6 +96,8 @@ export interface QueueClientOptions {
    * `null` in every other mode.
    */
   readonly ascentRound: number | null;
+  /** When this party won the Hall it still holds (#2701), on its ticket; `null` for any other. */
+  readonly holdsHallSince: number | null;
   /** A party that stayed together, as this member of it; alone without. */
   readonly party?: QueueParty;
   /** ms since the epoch. */
@@ -145,7 +148,8 @@ export function startingQueueState(mode: QueueMode): QueueState {
 }
 
 export function createQueueClient(options: QueueClientOptions): QueueClient {
-  const { board, mode, ascentRound, party, now, newTicketKey, round, hardNat } = options;
+  const { board, mode, ascentRound, holdsHallSince, party, now, newTicketKey, round, hardNat } =
+    options;
   const needed = 2 * teamSizeOf(mode);
   // A requeue after a fell-through lobby keeps this, and so its place (#854 C7).
   const enteredAt = now();
@@ -178,6 +182,12 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
   /** Bumped by anything that makes a formation still in flight stale. */
   let generation = 0;
   let left = false;
+  /**
+   * The Hall slot this client has made its first pass of, and whether
+   * that pass left it out (#2701): seated tickets leave the board, so
+   * the leftovers would otherwise form a second Hall on the next pass.
+   */
+  let hallPass: { readonly slot: number; readonly leftOut: boolean } | undefined;
 
   function setState(next: QueueState): void {
     if (same(state, next)) {
@@ -202,6 +212,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       party: party === undefined ? null : { groupId: party.groupId, consents: party.consents },
       ascentRound,
       hardNat,
+      holdsHallSince,
     };
     publishedAt = ticket.heartbeatAt;
     // Counted at once, not when the board echoes it back.
@@ -276,16 +287,30 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
         return Promise.resolve();
       }
     }
+    const slot =
+      round(ascentRound)?.slotted === true && hallSlotOpen(at) ? nextHallSlotMs(at) : undefined;
+    const sitsOut = slot !== undefined && hallPass?.slot === slot && hallPass.leftOut;
     return formGroups({
       tickets: [...tickets.values()],
       now: at,
       mode,
       ignored: stillIgnored(at),
-      round,
+      // Dropping the Hall's round drops its tickets from this pass, and no other round's.
+      round: sitsOut
+        ? (asked) => {
+            const played = round(asked);
+            return played?.slotted === true ? undefined : played;
+          }
+        : round,
     }).then((groups) => {
-      if (!left && ours === generation && state.kind !== "in-lobby") {
-        settle(groups, at);
+      if (left || ours !== generation || state.kind === "in-lobby") {
+        return;
       }
+      if (slot !== undefined && hallPass?.slot !== slot) {
+        const own = party === undefined ? [key.ticketId] : members;
+        hallPass = { slot, leftOut: groupOf(groups, key.ticketId, own) === undefined };
+      }
+      settle(groups, at);
     });
   }
 

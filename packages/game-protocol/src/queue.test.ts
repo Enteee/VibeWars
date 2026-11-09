@@ -25,6 +25,7 @@ const TICKET: QueueTicket = {
   party: null,
   ascentRound: null,
   hardNat: false,
+  holdsHallSince: null,
 };
 
 /** A whole 4v4 team, sorted, led by `TICKET`'s id. */
@@ -116,6 +117,8 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
     ["eight fields: no hardNat at all (#2090)", (({ hardNat: _, ...eight }) => eight)(TICKET)],
     ["a hardNat that is not a boolean (#2090)", { ...TICKET, hardNat: "true" }],
     ["a null hardNat (#2090)", { ...TICKET, hardNat: null }],
+    ["a holdsHallSince that is not a number (#2701)", { ...TICKET, holdsHallSince: "1" }],
+    ["a fractional holdsHallSince (#2701)", { ...TICKET, holdsHallSince: 1.5 }],
     ["bots in Random Arena", { ...TICKET, bots: 1 }],
     ["bots in a Random Arena party", { ...TEAM, mode: "random-arena-2v2", bots: 2 }],
     ["a solo in a team mode", { ...TICKET, mode: "team-arena-4v4" }],

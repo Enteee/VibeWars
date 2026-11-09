@@ -54,6 +54,9 @@ class Queue {
   public readonly mode: QueueMode;
   public readonly round: number | null;
 
+  /** Whether the round forms only in a Hall slot (#2701). */
+  public slotted = false;
+
   /** In Heroes' Ascent at `round`, its first by default (#1996). */
   public constructor(mode: QueueMode, round: number | null = mode === "heroes-ascent" ? 0 : null) {
     this.mode = mode;
@@ -67,10 +70,16 @@ class Queue {
       board: this.memory.board(),
       mode: this.mode,
       ascentRound: this.round,
+      holdsHallSince: null,
       ...(party === undefined ? {} : { party }),
       now: () => this.now,
       newTicketKey: () => fakeKey((this.keys += 1)),
-      round: () => ({ mapPool: MAPS, teamCount: 2, skipping: this.skipping }),
+      round: () => ({
+        mapPool: MAPS,
+        teamCount: 2,
+        skipping: this.skipping,
+        slotted: this.slotted,
+      }),
       hardNat,
     });
     this.clients.push(client);
@@ -89,6 +98,7 @@ class Queue {
       party: null,
       ascentRound: this.round,
       hardNat: false,
+      holdsHallSince: null,
       ...ticket,
     });
     await deliver();
@@ -490,6 +500,42 @@ describe("createQueueClient", () => {
       expect(follow.state.kind).toBe("searching");
       await queue.advance();
       expect(follow.state.kind).toBe("party-gone");
+    });
+  });
+
+  describe("the Hall's one group a slot (#2701)", () => {
+    const SLOT_MS = 720_000;
+    const slotAt = (n: number): number => Math.ceil(START / SLOT_MS) * SLOT_MS + n * SLOT_MS;
+
+    async function waiting(): Promise<[Queue, QueueClient]> {
+      const queue = new Queue("heroes-ascent", 12);
+      queue.slotted = true;
+      const client = queue.join();
+      await deliver();
+      return [queue, client];
+    }
+    const peer = (n: number): string => n.toString(16).padStart(64, "f");
+
+    it("leaves a client out of the first pass's group out for the rest of the window, then forms at the next", async () => {
+      const [queue, client] = await waiting();
+      // A full window later, so the client's own ticket queued before the slot.
+      queue.now = slotAt(1) + 1;
+      await queue.publish({ ticketId: peer(1), enteredAt: START - 2_000, ascentRound: 12 });
+      await queue.publish({ ticketId: peer(2), enteredAt: START - 1_000, ascentRound: 12 });
+      await queue.advance(0);
+      expect(client.state.kind).toBe("searching");
+
+      // The two seated are gone from the board: this client must not form with newcomers.
+      queue.memory.board().withdraw(peer(1));
+      queue.memory.board().withdraw(peer(2));
+      await queue.publish({ ticketId: peer(3), enteredAt: START, ascentRound: 12 });
+      await queue.advance(1_000);
+      expect(client.state.kind).toBe("searching");
+
+      queue.now = slotAt(2) + 1;
+      await queue.publish({ ticketId: peer(3), enteredAt: START, ascentRound: 12 });
+      await queue.advance(0);
+      expect(client.state.kind).toBe("forming");
     });
   });
 });

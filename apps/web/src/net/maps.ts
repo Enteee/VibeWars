@@ -314,6 +314,11 @@ export function queueSkipping(mode: QueueMode, round: number | null): boolean {
   );
 }
 
+/** Whether `round` forms only in a Hall slot (#2701): Heroes' Ascent's last, the Hall. */
+export function queueSlotted(mode: QueueMode, round: number | null): boolean {
+  return mode === "heroes-ascent" && round === ASCENT_PROGRESSION.length - 1;
+}
+
 /** The modes a Random Arena never plays. */
 const NOT_RANDOM: readonly MatchMode[] = [
   "guild-battle",

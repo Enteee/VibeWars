@@ -6288,6 +6288,7 @@
         { "name": "enteredAt", "optional": false, "type": "number" },
         { "name": "hardNat", "optional": false, "type": "boolean" },
         { "name": "heartbeatAt", "optional": false, "type": "number" },
+        { "name": "holdsHallSince", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "members", "optional": false, "type": { "array": "string" } },
         {
           "name": "mode",

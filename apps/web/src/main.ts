@@ -122,6 +122,7 @@ import {
   flashTitle,
   mountQueueScreen,
   nextAscentMorale,
+  nextHallHold,
   nextAscentRound,
   nextAscentWins,
   nextStreak,
@@ -201,6 +202,7 @@ import { toPlayerBuild } from "./storage/build-validation.js";
 import { recordAscentWin } from "./storage/fame.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import { startSplashFight } from "./ui/splash-fight.js";
+import { watchHall } from "./ui/vault-screen.js";
 import { shouldShowSplash } from "./ui/splash-gate.js";
 import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
 import {
@@ -563,6 +565,12 @@ async function main(): Promise<void> {
   let ascentRound = 0;
   /** The Heroes' Ascent run's wins so far, which set each win's fame (#2702). */
   let ascentWins = 0;
+  /** Since when this party holds the Hall of Heroes (#2701), on its next ticket; `null` for not. */
+  let holdsHallSince: number | null = null;
+  /** Who holds the Hall (#2701), for the Vault; a new win is a toast in every open tab. */
+  const hallWatch = watchHall(watchRecords, Date.now(), toast, () => {
+    paintQueue();
+  });
   /**
    * This player's morale in its Heroes' Ascent run (#2686), from the end
    * of the last map won, which it starts the next at. Page memory like
@@ -691,6 +699,7 @@ async function main(): Promise<void> {
       since: team.since,
       teams: team.teams,
       isHost: snapshot.isHost,
+      hallHolder: hallWatch.holder(),
     };
   };
 
@@ -716,6 +725,7 @@ async function main(): Promise<void> {
       // Out of the queue, its Heroes' Ascent run is over (#1996).
       ascentRound = 0;
       ascentWins = 0;
+      holdsHallSince = null;
       ascentMorale = 0;
       lobby.leaveQueue();
     }
@@ -1149,6 +1159,7 @@ async function main(): Promise<void> {
     // Out of the party, its Heroes' Ascent run is over (#1996).
     ascentRound = 0;
     ascentWins = 0;
+    holdsHallSince = null;
     ascentMorale = 0;
     const leaving = lobby;
     const ending = hosted;
@@ -1185,6 +1196,7 @@ async function main(): Promise<void> {
     // A new host cannot vouch for the old one's Heroes' Ascent run (#2539).
     ascentRound = 0;
     ascentWins = 0;
+    holdsHallSince = null;
     ascentMorale = 0;
     setRailParty(undefined);
     topbarView.setParty(undefined);
@@ -1358,6 +1370,7 @@ async function main(): Promise<void> {
         // Out of the queue, its Heroes' Ascent run is over (#1996).
         ascentRound = 0;
         ascentWins = 0;
+        holdsHallSince = null;
         ascentMorale = 0;
         lobby?.leaveQueue();
       },
@@ -1672,6 +1685,7 @@ async function main(): Promise<void> {
       mode,
       null,
       0,
+      null,
       name,
       entrant.guild,
       playerKey,
@@ -2013,6 +2027,7 @@ async function main(): Promise<void> {
       mode,
       current.ascentRound,
       ascentStartMorale(current.ascentRound, ascentMorale),
+      holdsHallSince,
       name,
       entrant.guild,
       playerKey,
@@ -2708,6 +2723,12 @@ async function main(): Promise<void> {
           result,
         );
         ascentWins = nextAscentWins(ascentWins, team.ascentRound, result);
+        holdsHallSince = nextHallHold(
+          holdsHallSince,
+          team.playedRound ?? team.ascentRound,
+          result,
+          Date.now(),
+        );
         ascentMorale = nextAscentMorale(ascentMorale, ascentMorale, result);
       }
       endTeamQueue();
@@ -2906,6 +2927,12 @@ async function main(): Promise<void> {
                     won ? "win" : "loss",
                   );
                   ascentWins = nextAscentWins(ascentWins, team.ascentRound, won ? "win" : "loss");
+                  holdsHallSince = nextHallHold(
+                    holdsHallSince,
+                    team.playedRound ?? team.ascentRound,
+                    won ? "win" : "loss",
+                    Date.now(),
+                  );
                   if (won) {
                     recordAscentWin(ascentWins);
                   }

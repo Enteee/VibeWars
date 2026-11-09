@@ -1198,8 +1198,9 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
         ...(party === undefined ? {} : { party }),
         now: () => now,
         newTicketKey: () => keyOf(String((fresh += 1)).padStart(64, "5")),
-        round: () => ({ mapPool: ["other-arena"], teamCount: 2, skipping: false }),
+        round: () => ({ mapPool: ["other-arena"], teamCount: 2, skipping: false, slotted: false }),
         hardNat: false,
+        holdsHallSince: null,
       });
     const clients = [
       client({ members, key: KEY_H, groupId, consents }),

@@ -90,11 +90,11 @@ function claimAltar(sim: MatchSimulation): void {
 
 describe("the Hall of Heroes' rules (#2700)", () => {
   it.each(["king-of-the-hill", "relic-run", "capture-points"] satisfies HallsMode[])(
-    "plays %s 12 minutes, respawning on the minute, with no death penalty",
+    "plays %s 11 minutes, respawning on the minute, with no death penalty",
     (mode) => {
       expect(HALLS_MATCH_RULES[mode]).toMatchObject({
         victory: mode,
-        timeLimitSeconds: 720,
+        timeLimitSeconds: 660,
         deathRule: "respawn",
         respawnSeconds: 60,
         respawnOnWave: true,
@@ -166,9 +166,9 @@ describe("the Hall of Heroes' rules (#2700)", () => {
 
   it("plays to time", () => {
     const sim = hall();
-    stepTo(sim, 719.5);
+    stepTo(sim, 659.5);
     expect(sim.phase).toBe("active");
-    stepTo(sim, 720.5);
+    stepTo(sim, 660.5);
     expect(sim.phase).toBe("finished");
     expect(sim.outcome.reason).toBe("time");
   });
@@ -215,7 +215,7 @@ describe("the Hall of Heroes at time (#2700)", () => {
         [2, team],
       ]),
     });
-    expect(evaluateMatch(score(1, 3, 2), threeTeams({ ...team, members: 0 }), 719, king)).toBe(
+    expect(evaluateMatch(score(1, 3, 2), threeTeams({ ...team, members: 0 }), 659, king)).toBe(
       MATCH_IN_PROGRESS,
     );
     expect(
@@ -227,7 +227,7 @@ describe("the Hall of Heroes at time (#2700)", () => {
   });
 
   it("is still on before time, whoever is dead", () => {
-    expect(evaluateMatch(score(1, 0, 0), standing(), 719.9, king)).toBe(MATCH_IN_PROGRESS);
+    expect(evaluateMatch(score(1, 0, 0), standing(), 659.9, king)).toBe(MATCH_IN_PROGRESS);
   });
 
   it("goes to the most points", () => {

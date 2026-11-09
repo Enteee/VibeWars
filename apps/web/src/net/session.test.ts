@@ -249,8 +249,9 @@ describe("closing the tab while queued (#1881)", () => {
       mode: "random-arena-4v4",
       now: () => 1_700_000_000_000,
       newTicketKey: () => ({ ticketId, sign: () => "b".repeat(128) }),
-      round: () => ({ mapPool: ["arena-a"], teamCount: 2, skipping: false }),
+      round: () => ({ mapPool: ["arena-a"], teamCount: 2, skipping: false, slotted: false }),
       hardNat: false,
+      holdsHallSince: null,
     });
     await client.tick();
     const page = new EventTarget();

@@ -165,9 +165,30 @@ export function isHallsMode(mode: MatchMode): mode is HallsMode {
   return mode === "king-of-the-hill" || mode === "relic-run" || mode === "capture-points";
 }
 
-/** A Hall of Heroes match (#2700, GW1): no death penalty, the dead return every full minute, 12 minutes. */
+/** How often the Hall of Heroes forms (#2701): every 12 minutes on the UTC clock, :00, :12 and so on. */
+export const HALL_SLOT_SECONDS = 720;
+
+/** How long after its start a Hall slot can still form (#2701): clients' clocks differ by less than this. */
+export const HALL_SLOT_WINDOW_SECONDS = 30;
+
+/** Whether a Hall slot is open at `nowMs` (#2701). On the epoch, so an hour or a day is no special case. */
+export function hallSlotOpen(nowMs: number): boolean {
+  return nowMs % (HALL_SLOT_SECONDS * 1000) < HALL_SLOT_WINDOW_SECONDS * 1000;
+}
+
+/** When the next Hall slot starts, strictly after `nowMs` (#2701). */
+export function nextHallSlotMs(nowMs: number): number {
+  const slot = HALL_SLOT_SECONDS * 1000;
+  return nowMs - (nowMs % slot) + slot;
+}
+
+/**
+ * A Hall of Heroes match (#2700, GW1): no death penalty, the dead return
+ * every full minute, 11 minutes, so that a full-length one is over before
+ * the next 12-minute slot (#2701).
+ */
 const HALLS_RULES = {
-  timeLimitSeconds: 720,
+  timeLimitSeconds: 660,
   deathRule: "respawn",
   respawnSeconds: 60,
   respawnOnWave: true,
