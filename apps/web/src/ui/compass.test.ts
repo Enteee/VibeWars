@@ -30,6 +30,7 @@ function actor(
     id,
     name: id,
     guildTag: undefined,
+    heroRank: 0,
     signet: undefined,
     cape: undefined,
     bot: false,

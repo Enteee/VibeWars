@@ -105,9 +105,9 @@ describe("the cape designer (#1422)", () => {
     expect(loadGuildCape()).toBeNull();
     saveGuildCape(FIRST_CAPE);
     expect(loadGuildCape()).toEqual(FIRST_CAPE);
-    expect(playerGuild()).toEqual({ guildTag: null, guildCape: null });
+    expect(playerGuild()).toEqual({ guildTag: null, heroRank: 0, guildCape: null });
     saveGuildTag("VIBE");
-    expect(playerGuild()).toEqual({ guildTag: "VIBE", guildCape: FIRST_CAPE });
+    expect(playerGuild()).toEqual({ guildTag: "VIBE", heroRank: 0, guildCape: FIRST_CAPE });
     // Cleared, the tag takes the cape off but keeps it for when it is back.
     saveGuildTag("");
     expect(playerGuild().guildCape).toBeNull();

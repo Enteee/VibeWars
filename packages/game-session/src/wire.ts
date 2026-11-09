@@ -622,6 +622,7 @@ export type WireIdentity = Pick<
   WirePlayer,
   | "name"
   | "guildTag"
+  | "heroRank"
   | "guildCape"
   | "team"
   | "primaryProfession"
@@ -636,6 +637,8 @@ export interface SeatIdentity {
   readonly name: string;
   /** `null` for none (#1406). */
   readonly guildTag: string | null;
+  /** 0 for none (#2702). */
+  readonly heroRank: number;
   /** `null` for none (#1422). */
   readonly guildCape: WireCape | null;
   readonly team: WireTeam;
@@ -667,6 +670,7 @@ export function wireIdentity(
     return {
       name: seat.name,
       guildTag: seat.guildTag,
+      heroRank: seat.heroRank,
       guildCape: seat.guildCape,
       team: seat.team,
       primaryProfession: seat.primaryProfession,
@@ -693,6 +697,7 @@ export function wireIdentity(
     : {
         name: creature.name,
         guildTag: null,
+        heroRank: 0,
         guildCape: null,
         team: sentTeam,
         primaryProfession: null,
@@ -733,6 +738,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     sessionId: player.id,
     name: player.name,
     guildTag: absent(player.guildTag),
+    heroRank: player.heroRank,
     guildCape: absent(player.guildCape),
     x: player.x,
     y: player.y,

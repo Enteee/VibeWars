@@ -779,6 +779,8 @@ export default {
   "player.guildTag": "Tag guild",
   "player.guildTagHint": "2–4 huruf atau angka",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Ketenaran {fame} · Peringkat pahlawan {rank}",
+  "player.heroRankBadge": "Peringkat pahlawan {rank}",
   "player.name": "Nama",
   "player.namePlaceholder": "Pemain",
   "player.noCape": "Tanpa jubah",

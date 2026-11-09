@@ -873,6 +873,8 @@ export default {
   "player.guildTag": "Tag gilda",
   "player.guildTagHint": "2–4 lettere o cifre",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Fama {fame} · Grado di eroe {rank}",
+  "player.heroRankBadge": "Grado di eroe {rank}",
   "player.name": "Nome",
   "player.namePlaceholder": "Giocatore",
   "player.noCape": "Nessun mantello",

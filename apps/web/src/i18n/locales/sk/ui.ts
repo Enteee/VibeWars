@@ -906,6 +906,8 @@ export default {
   "player.guildTag": "Značka cechu",
   "player.guildTagHint": "2–4 písmená alebo číslice",
   "player.guildTagPlaceholder": "ZNAČ",
+  "player.fameAndRank": "Sláva {fame} · Hrdinská hodnosť {rank}",
+  "player.heroRankBadge": "Hrdinská hodnosť {rank}",
   "player.name": "Meno",
   "player.namePlaceholder": "Hráč",
   "player.noCape": "Bez plášťa",

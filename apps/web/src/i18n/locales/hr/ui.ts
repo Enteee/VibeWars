@@ -875,6 +875,8 @@ export default {
   "player.guildTag": "Oznaka ceha",
   "player.guildTagHint": "2–4 slova ili znamenke",
   "player.guildTagPlaceholder": "OZN",
+  "player.fameAndRank": "Slava {fame} · Herojski čin {rank}",
+  "player.heroRankBadge": "Herojski čin {rank}",
   "player.name": "Ime",
   "player.namePlaceholder": "Igrač",
   "player.noCape": "Bez plašta",

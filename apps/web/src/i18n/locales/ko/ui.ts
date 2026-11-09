@@ -777,6 +777,8 @@ export default {
   "player.guildTag": "길드 태그",
   "player.guildTagHint": "글자 또는 숫자 2–4자",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "명성 {fame} · 영웅 등급 {rank}",
+  "player.heroRankBadge": "영웅 등급 {rank}",
   "player.name": "이름",
   "player.namePlaceholder": "플레이어",
   "player.noCape": "망토 없음",

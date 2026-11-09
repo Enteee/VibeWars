@@ -32,7 +32,8 @@ function targetDummy(character = pyro()) {
       selfId: SELF_ID,
       map: setup.map,
       nameOf: (id) => (id === SELF_ID ? "Tester" : (setup.names.get(id) ?? id)),
-      guildOf: (id) => (id === SELF_ID ? { guildTag: "VIBE", guildCape: CAPE } : NO_GUILD),
+      guildOf: (id) =>
+        id === SELF_ID ? { guildTag: "VIBE", heroRank: 0, guildCape: CAPE } : NO_GUILD,
       professionsOf: (id) =>
         id === SELF_ID ? { primary: "elementalist", secondary: undefined } : NO_PROFESSIONS,
     }),

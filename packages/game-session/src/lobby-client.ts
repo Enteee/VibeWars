@@ -123,6 +123,8 @@ export interface JoinLobbyOptions {
   readonly name: string;
   /** The guild tag the player set (#1406); `null` for none. */
   readonly guildTag: string | null;
+  /** The player's hero rank (#2702). */
+  readonly heroRank: number;
   /** The guild cape the player designed (#1422); `null` for none. */
   readonly guildCape: WireCape | null;
   /** How long to wait for a state that lists this player. */
@@ -169,6 +171,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     protocolVersion: PROTOCOL_VERSION,
     name: options.name,
     guildTag: options.guildTag,
+    heroRank: options.heroRank,
     guildCape: options.guildCape,
     relayPub: options.relayPub,
     playerPubkey: options.playerKey.pubkey,
@@ -364,6 +367,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       sessionId: player.id,
       name: player.name,
       guildTag: player.guildTag,
+      heroRank: player.heroRank,
       team: player.team,
       ready: player.ready,
       isHost: player.isHost,

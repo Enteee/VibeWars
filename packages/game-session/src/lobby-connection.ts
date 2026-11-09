@@ -37,6 +37,8 @@ export interface LobbyPlayerSnapshot {
   readonly name: string;
   /** The member's guild tag (#1406), after its name; `null` for none. */
   readonly guildTag: string | null;
+  /** The member's hero rank (#2702), 0 for none. */
+  readonly heroRank: number;
   /** `null` spectates. */
   readonly team: 0 | 1 | 2 | null;
   readonly ready: boolean;

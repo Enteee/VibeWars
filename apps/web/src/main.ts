@@ -116,6 +116,7 @@ import {
   mountQueueScreen,
   nextAscentMorale,
   nextAscentRound,
+  nextAscentWins,
   nextStreak,
   requeuedSince,
   teamEndAction,
@@ -190,6 +191,7 @@ import {
   type TeamEditorView,
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
+import { recordAscentWin } from "./storage/fame.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import { startSplashFight } from "./ui/splash-fight.js";
 import { shouldShowSplash } from "./ui/splash-gate.js";
@@ -548,6 +550,8 @@ async function main(): Promise<void> {
    * once the run ends.
    */
   let ascentRound = 0;
+  /** The Heroes' Ascent run's wins so far, which set each win's fame (#2702). */
+  let ascentWins = 0;
   /**
    * This player's morale in its Heroes' Ascent run (#2686), from the end
    * of the last map won, which it starts the next at. Page memory like
@@ -700,6 +704,7 @@ async function main(): Promise<void> {
     if (teamQueue !== undefined && lobby?.getSnapshot().isHost === true) {
       // Out of the queue, its Heroes' Ascent run is over (#1996).
       ascentRound = 0;
+      ascentWins = 0;
       ascentMorale = 0;
       lobby.leaveQueue();
     }
@@ -1136,6 +1141,7 @@ async function main(): Promise<void> {
     endTeamQueue();
     // Out of the party, its Heroes' Ascent run is over (#1996).
     ascentRound = 0;
+    ascentWins = 0;
     ascentMorale = 0;
     const leaving = lobby;
     const ending = hosted;
@@ -1171,6 +1177,7 @@ async function main(): Promise<void> {
     following = move.code;
     // A new host cannot vouch for the old one's Heroes' Ascent run (#2539).
     ascentRound = 0;
+    ascentWins = 0;
     ascentMorale = 0;
     setRailParty(undefined);
     topbarView.setParty(undefined);
@@ -1341,6 +1348,7 @@ async function main(): Promise<void> {
       onLeaveQueue: () => {
         // Out of the queue, its Heroes' Ascent run is over (#1996).
         ascentRound = 0;
+        ascentWins = 0;
         ascentMorale = 0;
         lobby?.leaveQueue();
       },
@@ -2675,6 +2683,7 @@ async function main(): Promise<void> {
       if (!team.finished && team.ascentRound !== null) {
         const result = notice === undefined ? "forfeit" : "host-left";
         ascentRound = nextAscentRound(team.ascentRound, result);
+        ascentWins = nextAscentWins(ascentWins, result);
         ascentMorale = nextAscentMorale(ascentMorale, ascentMorale, result);
       }
       endTeamQueue();
@@ -2868,6 +2877,10 @@ async function main(): Promise<void> {
                 queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
                 if (team.ascentRound !== null) {
                   ascentRound = nextAscentRound(team.ascentRound, won ? "win" : "loss");
+                  ascentWins = nextAscentWins(ascentWins, won ? "win" : "loss");
+                  if (won) {
+                    recordAscentWin(ascentWins);
+                  }
                   ascentMorale = nextAscentMorale(
                     ascentMorale,
                     finished.selfMorale,

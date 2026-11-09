@@ -826,6 +826,8 @@ export default {
   "player.guildTag": "Céhjel",
   "player.guildTagHint": "2–4 betű vagy szám",
   "player.guildTagPlaceholder": "CÉH",
+  "player.fameAndRank": "Hírnév {fame} · Hősi rang {rank}",
+  "player.heroRankBadge": "Hősi rang {rank}",
   "player.name": "Név",
   "player.namePlaceholder": "Játékos",
   "player.noCape": "Nincs köpeny",

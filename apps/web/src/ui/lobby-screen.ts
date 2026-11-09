@@ -417,7 +417,9 @@ export function teamColumn(
 function playerRow(member: LobbyPlayerSnapshot): HTMLElement {
   const row = h("div", "lobby-slot");
   const text = h("span", "lobby-slot-text");
-  const player = text.appendChild(playerLabelElement("lobby-player", member.name, member.guildTag));
+  const player = text.appendChild(
+    playerLabelElement("lobby-player", member.name, member.guildTag, member.heroRank),
+  );
   // A bot has no key, so no signet and no empty slot (#2805).
   if (member.playerPubkey !== null) {
     player.prepend(signetElement(keySignet(member.playerPubkey), SIGNET_ROW_PX));

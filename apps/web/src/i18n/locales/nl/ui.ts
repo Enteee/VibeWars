@@ -824,6 +824,8 @@ export default {
   "player.guildTag": "Gildetag",
   "player.guildTagHint": "2–4 letters of cijfers",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Roem {fame} · Heldenrang {rank}",
+  "player.heroRankBadge": "Heldenrang {rank}",
   "player.name": "Naam",
   "player.namePlaceholder": "Speler",
   "player.noCape": "Geen cape",

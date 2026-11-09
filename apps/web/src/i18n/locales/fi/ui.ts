@@ -835,6 +835,8 @@ export default {
   "player.guildTag": "Kiltatunnus",
   "player.guildTagHint": "2–4 kirjainta tai numeroa",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Maine {fame} · Sankariarvo {rank}",
+  "player.heroRankBadge": "Sankariarvo {rank}",
   "player.name": "Nimi",
   "player.namePlaceholder": "Pelaaja",
   "player.noCape": "Ei viittaa",

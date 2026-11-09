@@ -214,6 +214,7 @@ export type PlannedSeat = {
   readonly team: WireTeam;
   readonly name: string;
   readonly guildTag: string | null;
+  readonly heroRank: number;
   readonly guildCape: WireCape | null;
 } & (
   | { readonly bot: true; readonly build: PlayerBuild }
@@ -269,6 +270,7 @@ interface Seat {
   readonly name: string;
   /** Sanitised (#1406); `null` for none, and for a bot. */
   readonly guildTag: string | null;
+  readonly heroRank: number;
   /** Sanitised (#1422); `null` for none, and whenever `guildTag` is. */
   readonly guildCape: WireCape | null;
   readonly primaryProfession: ProfessionId;
@@ -399,6 +401,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     {
       readonly name: string;
       readonly guildTag: string | null;
+      readonly heroRank: number;
       readonly team: WireTeam;
       readonly bot: boolean;
       readonly pubkey: string | null;
@@ -418,12 +421,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   );
   /** One whole-number line per seat the match ever had. */
   const summary = (): WireSummaryRow[] =>
-    [...everSeated].map(([id, { name, guildTag, team, signet }]) => {
+    [...everSeated].map(([id, { name, guildTag, heroRank, team, signet }]) => {
       const row = tally.row(id);
       return {
         id,
         name,
         guildTag,
+        heroRank,
         team,
         signet,
         damage: Math.round(row.damage),
@@ -787,6 +791,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       team,
       name: nameOf(playerId),
       guildTag: guild.guildTag,
+      heroRank: guild.heroRank,
       guildCape: guild.guildCape,
       primaryProfession: loadout.primaryProfession,
       secondaryProfession: loadout.secondaryProfession,
@@ -805,6 +810,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     everSeated.set(playerId, {
       name: seat.name,
       guildTag: seat.guildTag,
+      heroRank: seat.heroRank,
       team,
       bot,
       pubkey,

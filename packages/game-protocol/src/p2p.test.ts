@@ -115,6 +115,7 @@ const hello: PeerHello = {
   protocolVersion: PROTOCOL_VERSION,
   name: "Mhenlo",
   guildTag: "VIBE",
+  heroRank: 0,
   guildCape: CAPE,
   build: { profession: "monk", skills: ["healing-breeze", null] },
   rejoin: null,
@@ -186,6 +187,7 @@ const player: WirePlayer = {
   id: "peer-1",
   name: "Mhenlo",
   guildTag: "VIBE",
+  heroRank: 0,
   guildCape: CAPE,
   team: 0,
   x: 120.5,
@@ -454,6 +456,7 @@ const summaryRow = {
   id: "player-1",
   name: "Ann",
   guildTag: "Ab1",
+  heroRank: 0,
   team: 0,
   signet: 4242,
   damage: 1200,
@@ -489,6 +492,7 @@ const lobbyJoin: PeerLobbyJoin = {
   protocolVersion: PROTOCOL_VERSION,
   name: "Mhenlo",
   guildTag: "vb",
+  heroRank: 0,
   guildCape: null,
   admission: null,
   rejoinToken: null,
@@ -527,6 +531,7 @@ const lobbyState: WireLobbyState = {
       id: "peer-1/local",
       name: "Host",
       guildTag: "VIBE",
+      heroRank: 0,
       guildCape: CAPE,
       team: 0,
       ready: true,
@@ -539,6 +544,7 @@ const lobbyState: WireLobbyState = {
       id: "peer-3",
       name: "Watcher",
       guildTag: null,
+      heroRank: 0,
       guildCape: null,
       team: null,
       ready: false,
@@ -551,6 +557,7 @@ const lobbyState: WireLobbyState = {
       id: "bot-1",
       name: "Monk Bot",
       guildTag: null,
+      heroRank: 0,
       guildCape: null,
       team: 1,
       ready: true,
@@ -2798,5 +2805,15 @@ describe("the P2P validators (#82)", () => {
       expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
       expect(parsed).not.toHaveProperty("skills");
     });
+  });
+});
+
+describe("heroRank (#2702)", () => {
+  it.each([0, 15])("takes rank %d in a hello", (heroRank) => {
+    expect(parsePeerHello({ ...hello, heroRank })?.heroRank).toBe(heroRank);
+  });
+
+  it.each([16, -1, 1.5, "3", null, undefined])("refuses %s in a hello", (heroRank) => {
+    expect(parsePeerHello({ ...hello, heroRank })).toBeUndefined();
   });
 });

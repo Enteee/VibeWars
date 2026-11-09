@@ -11,6 +11,7 @@ const CALLED: RenderableActor = {
   id: "foe",
   name: "foe",
   guildTag: undefined,
+  heroRank: 0,
   signet: undefined,
   cape: undefined,
   bot: false,

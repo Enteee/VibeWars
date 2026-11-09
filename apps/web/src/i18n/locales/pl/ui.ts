@@ -909,6 +909,8 @@ export default {
   "player.guildTag": "Tag gildii",
   "player.guildTagHint": "2–4 litery lub cyfry",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Sława {fame} · Ranga bohatera {rank}",
+  "player.heroRankBadge": "Ranga bohatera {rank}",
   "player.name": "Nazwa",
   "player.namePlaceholder": "Gracz",
   "player.noCape": "Bez peleryny",

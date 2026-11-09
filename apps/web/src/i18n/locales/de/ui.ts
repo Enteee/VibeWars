@@ -831,6 +831,8 @@ export default {
   "player.guildTag": "Gildenkürzel",
   "player.guildTagHint": "2–4 Buchstaben oder Ziffern",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Ruhm {fame} · Heldenrang {rank}",
+  "player.heroRankBadge": "Heldenrang {rank}",
   "player.name": "Name",
   "player.namePlaceholder": "Spieler",
   "player.noCape": "Kein Umhang",

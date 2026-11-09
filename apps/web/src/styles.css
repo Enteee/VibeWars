@@ -1561,6 +1561,16 @@ body {
   display: none;
 }
 
+/* A player's hero rank beside their name (#2702). */
+.hero-rank {
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.hero-rank[hidden] {
+  display: none;
+}
+
 /* A player's signet just before their name (#2805): a recognition aid. */
 .signet {
   flex-shrink: 0;

@@ -1387,7 +1387,7 @@ export class ArenaScene extends Phaser.Scene {
         markedForTeam(
           actor.team,
           taggedName({
-            name: playerLabelText(nameplateName(actor.name), actor.guildTag),
+            name: playerLabelText(nameplateName(actor.name), actor.guildTag, actor.heroRank),
             bot: actor.bot,
           }),
         ),

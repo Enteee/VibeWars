@@ -279,6 +279,8 @@ geht, weil sein Host gegangen ist, behält deine Runde.
 
 Jeder Lauf beginnt mit der **Elite-Zaishen-Schlacht**, ohne Warteschlange: Deine Gruppe gegen sechs von Bots gespielte Zaishen (2 Mönche, ein Elementarmagier und 3 weitere). Die Uhr startet, sobald jemand von euch die Startlinie überquert oder der erste Zaishen stirbt, je nachdem, was zuerst geschieht. Tötet ihr alle sechs in unter 30 Sekunden, startet die Gruppe mit +10 % Moral; unter 60 mit +8 %, unter 80 mit +6 %, unter 100 mit +4 %, unter 120 mit +2 %; langsamer gibt es nichts. Nach einem Sieg stellt sich die Gruppe von selbst für die erste Karte an. Fällt die ganze Gruppe oder lebt nach Ablauf der 8 Minuten noch ein Zaishen, ist der Lauf vorbei.
 
+Jeder Sieg in einem Lauf bringt **Ruhm**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 für die ersten dreizehn, danach je 40, höchstens 300 pro Tag (der Tag wechselt um 15:00 UTC). Die Elite-Zaishen-Schlacht bringt keinen. Dein Gesamtruhm ergibt deinen **Heldenrang**, von 1 bei 25 Ruhm bis 15 bei 100.000, angezeigt als ★ und Zahl neben deinem Namen. Unter Optionen > Spieler siehst du beides. Beides wird auf deinem Gerät gespeichert.
+
 Deine Moral bleibt den ganzen Lauf über erhalten: Mit der Todesstrafe oder dem Bonus, mit dem du eine gewonnene Karte
 beendest, beginnst du die nächste, von −60 % bis +10 %. Ein Lauf, der endet, oder ein Spieler, der mitten im Lauf dazustößt,
 beginnt bei 0. Dein eigener Tab merkt sie sich, bis du ihn schließt.

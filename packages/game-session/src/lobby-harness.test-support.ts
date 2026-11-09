@@ -178,6 +178,7 @@ export async function openLobby(
         proofKey,
         name,
         guildTag,
+        heroRank: 0,
         guildCape,
         timeoutMs: 1000,
         relayPub,

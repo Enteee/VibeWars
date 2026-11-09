@@ -880,6 +880,8 @@ export default {
   "player.guildTag": "Tag de guilde",
   "player.guildTagHint": "2 à 4 lettres ou chiffres",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Renommée {fame} · Rang de héros {rank}",
+  "player.heroRankBadge": "Rang de héros {rank}",
   "player.name": "Nom",
   "player.namePlaceholder": "Joueur",
   "player.noCape": "Sans cape",

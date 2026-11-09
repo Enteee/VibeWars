@@ -874,6 +874,8 @@ export default {
   "player.guildTag": "Tag de breaslă",
   "player.guildTagHint": "2–4 litere sau cifre",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Faimă {fame} · Rang de erou {rank}",
+  "player.heroRankBadge": "Rang de erou {rank}",
   "player.name": "Nume",
   "player.namePlaceholder": "Jucător",
   "player.noCape": "Fără pelerină",

@@ -31,6 +31,7 @@ const joinOf = (name: string, key: PlayerKey, rejoinToken: string | null = null)
   protocolVersion: PROTOCOL_VERSION,
   name,
   guildTag: null,
+  heroRank: 0,
   guildCape: null,
   admission: null,
   rejoinToken,

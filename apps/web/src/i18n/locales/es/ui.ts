@@ -882,6 +882,8 @@ export default {
   "player.guildTag": "Etiqueta de gremio",
   "player.guildTagHint": "2–4 letras o dígitos",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Fama {fame} · Rango de héroe {rank}",
+  "player.heroRankBadge": "Rango de héroe {rank}",
   "player.name": "Nombre",
   "player.namePlaceholder": "Jugador",
   "player.noCape": "Sin capa",

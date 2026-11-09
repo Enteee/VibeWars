@@ -53,6 +53,7 @@ const joinAs = (name: string, rejoinToken: string | null, relayPub: string | nul
   protocolVersion: PROTOCOL_VERSION,
   name,
   guildTag: null,
+  heroRank: 0,
   guildCape: null,
   admission: null,
   rejoinToken,

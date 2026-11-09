@@ -22,9 +22,14 @@ export function playerLabel(name: string, guildTag: string | null | undefined): 
 }
 
 /** The label as one string, for text that cannot hold an element: the name plate. */
-export function playerLabelText(name: string, guildTag: string | null | undefined): string {
+export function playerLabelText(
+  name: string,
+  guildTag: string | null | undefined,
+  heroRank: number,
+): string {
   const { tag } = playerLabel(name, guildTag);
-  return tag === undefined ? name : `${name} ${tag}`;
+  const rank = heroRankText(heroRank);
+  return [name, tag, rank].filter((part) => part !== undefined).join(" ");
 }
 
 /**
@@ -140,7 +145,7 @@ export function signedNamesLine(
     if (index > 0) {
       line.append(", ");
     }
-    const name = line.appendChild(playerLabelElement("signed-name", player.name, null));
+    const name = line.appendChild(playerLabelElement("signed-name", player.name, null, 0));
     const signet = signetOf(player);
     if (signet !== undefined) {
       name.prepend(signetElement(signet, SIGNET_ROW_PX));
@@ -167,11 +172,32 @@ export function setGuildTag(element: HTMLElement, guildTag: string | null | unde
   element.hidden = tag === undefined;
 }
 
-/** The name, then its tag, each in its own span, inside one of `className`. */
+/** A hero rank as it is drawn (#2702), `★3`; `undefined` for none. */
+export function heroRankText(heroRank: number): string | undefined {
+  return heroRank > 0 ? `★${String(heroRank)}` : undefined;
+}
+
+/** The rank alone, for a row redrawn in place; empty and hidden for none. */
+export function heroRankElement(): HTMLElement {
+  const element = h("span", "hero-rank");
+  element.hidden = true;
+  return element;
+}
+
+/** Show `heroRank` in an element `heroRankElement` made. */
+export function setHeroRank(element: HTMLElement, heroRank: number): void {
+  const text = heroRankText(heroRank);
+  element.textContent = text ?? "";
+  element.title = text === undefined ? "" : t("player.heroRankBadge", { rank: heroRank });
+  element.hidden = text === undefined;
+}
+
+/** The name, then its tag and rank, each in its own span, inside one of `className`. */
 export function playerLabelElement(
   className: string,
   name: string,
   guildTag: string | null | undefined,
+  heroRank: number,
 ): HTMLElement {
   const label = h("span", className);
   const nameElement = h("span", "player-label-name", name);
@@ -182,6 +208,11 @@ export function playerLabelElement(
   if (tag !== undefined) {
     // A space between, so the label reads, and copies, as `Ente [VIBE]`.
     label.append(" ", h("span", "guild-tag", tag));
+  }
+  if (heroRank > 0) {
+    const rank = heroRankElement();
+    setHeroRank(rank, heroRank);
+    label.append(" ", rank);
   }
   return label;
 }

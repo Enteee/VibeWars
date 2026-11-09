@@ -18,7 +18,7 @@ function side(team: 0 | 1): [string, PlannedSeat][] {
   const builds = STARTER_TEAMS.find((starter) => starter.members.length >= 4)?.members ?? [];
   return builds.slice(0, 4).map(({ build }, i) => {
     const name = `Bot ${String(team)}.${String(i)}`;
-    return [name, { team, name, guildTag: null, guildCape: null, bot: true, build }];
+    return [name, { team, name, guildTag: null, heroRank: 0, guildCape: null, bot: true, build }];
   });
 }
 

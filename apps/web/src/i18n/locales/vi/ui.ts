@@ -774,6 +774,8 @@ export default {
   "player.guildTag": "Tag Bang",
   "player.guildTagHint": "2–4 chữ cái hoặc số",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "Danh vọng {fame} · Cấp anh hùng {rank}",
+  "player.heroRankBadge": "Cấp anh hùng {rank}",
   "player.name": "Tên",
   "player.namePlaceholder": "Người chơi",
   "player.noCape": "Không áo choàng",

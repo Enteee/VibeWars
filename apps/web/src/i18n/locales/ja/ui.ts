@@ -782,6 +782,8 @@ export default {
   "player.guildTag": "ギルドタグ",
   "player.guildTagHint": "英数字2〜4文字",
   "player.guildTagPlaceholder": "TAG",
+  "player.fameAndRank": "名声 {fame} · ヒーローランク {rank}",
+  "player.heroRankBadge": "ヒーローランク {rank}",
   "player.name": "名前",
   "player.namePlaceholder": "プレイヤー",
   "player.noCape": "ケープなし",

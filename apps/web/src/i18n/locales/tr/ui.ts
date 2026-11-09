@@ -824,6 +824,8 @@ export default {
   "player.guildTag": "Lonca etiketi",
   "player.guildTagHint": "2–4 harf ya da rakam",
   "player.guildTagPlaceholder": "ETKT",
+  "player.fameAndRank": "Şöhret {fame} · Kahraman rütbesi {rank}",
+  "player.heroRankBadge": "Kahraman rütbesi {rank}",
   "player.name": "Ad",
   "player.namePlaceholder": "Oyuncu",
   "player.noCape": "Pelerin yok",

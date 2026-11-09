@@ -833,6 +833,8 @@ export default {
   "player.guildTag": "Σήμα συντεχνίας",
   "player.guildTagHint": "2–4 γράμματα ή ψηφία",
   "player.guildTagPlaceholder": "ΣΗΜΑ",
+  "player.fameAndRank": "Φήμη {fame} · Βαθμός ήρωα {rank}",
+  "player.heroRankBadge": "Βαθμός ήρωα {rank}",
   "player.name": "Όνομα",
   "player.namePlaceholder": "Παίκτης",
   "player.noCape": "Χωρίς κάπα",

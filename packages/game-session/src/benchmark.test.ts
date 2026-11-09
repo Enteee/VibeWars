@@ -88,6 +88,7 @@ async function runScenario(scenario: Scenario): Promise<Result> {
         team: i % 2 === 0 ? 0 : 1,
         name: `bench-${String(i)}`,
         guildTag: null,
+        heroRank: 0,
         guildCape: null,
         bot: false,
         playerPubkey: "ab".repeat(32),
