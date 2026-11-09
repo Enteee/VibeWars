@@ -91,6 +91,7 @@ async function runScenario(scenario: Scenario): Promise<Result> {
         guildCape: null,
         bot: false,
         playerPubkey: "ab".repeat(32),
+        startMorale: 0,
         build: null,
       } as const,
     ]),

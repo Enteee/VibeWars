@@ -102,6 +102,7 @@ import type {
 import { MAX_LOBBY_PLAYERS, MAX_TEAM_LOBBY_SIDE } from "./protocol.js";
 import type { CastRefusedMessage, RechargeMessage } from "./protocol.js";
 import { PROTOCOL_VERSION } from "./protocol-version.js";
+import { ASCENT_ROUNDS } from "./queue.js";
 
 /** Every match here has two teams but the three-team cases' (#2682). */
 const parseWireSnapshotPart = (value: unknown) => parseWireSnapshotPartOf(value, 2);
@@ -487,6 +488,7 @@ const lobbyJoin: PeerLobbyJoin = {
   rejoinToken: null,
   relayPub: null,
   playerPubkey: "9a".repeat(32),
+  ascentMorale: 0,
 };
 
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
@@ -925,6 +927,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["lobby-challenge (#2706)", parsePeerLobbyChallenge, { nonce: "5c".repeat(32) }],
   ["lobby-proof (#2706)", parsePeerLobbyProof, { sig: "d4".repeat(64) }],
   ["lobby-join with a relay key (#2529)", parsePeerLobbyJoin, { ...lobbyJoin, relayPub: PUB }],
+  [
+    "lobby-join carrying Ascent morale (#2686)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, ascentMorale: -30 },
+  ],
   ["relay-offers (#2529)", parsePeerRelayOffers, relayOffers],
   ["relay-offers of no holder (#2529)", parsePeerRelayOffers, { holders: [], members: [] }],
   ["relay-cred to the host (#2529)", parsePeerRelayCredOut, { to: "p".repeat(64), seal: SEAL }],
@@ -2033,6 +2040,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...lobbyJoin, admission: undefined },
   ],
   [
+    "lobby-join with no Ascent morale (#2686)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, ascentMorale: undefined },
+  ],
+  [
+    "lobby-join with a text Ascent morale (#2686)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, ascentMorale: "-30" },
+  ],
+  [
     "lobby-join with an upper-case ticket id (#871)",
     parsePeerLobbyJoin,
     { ...lobbyJoin, admission: { ...admission, seatKey: "AB".repeat(32) } },
@@ -2275,7 +2292,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireLobbyState,
     { ...lobbyState, ascentRound: undefined },
   ],
-  ["lobby-state past the Hall (#1996)", parseWireLobbyState, { ...lobbyState, ascentRound: 4 }],
+  [
+    "lobby-state past the Hall (#1996)",
+    parseWireLobbyState,
+    { ...lobbyState, ascentRound: ASCENT_ROUNDS },
+  ],
   [
     "lobby-state without an ascent lock (#2539)",
     parseWireLobbyState,

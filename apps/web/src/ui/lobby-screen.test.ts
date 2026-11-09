@@ -671,8 +671,8 @@ describe("lobbyPanel: the map (#1994)", () => {
         teamSizes: [4, 8],
       },
       {
-        id: "scarred-earth",
-        name: "Scarred Earth",
+        id: "blackwater-ford",
+        name: "Blackwater Ford",
         size: "medium",
         mode: "capture-points",
         teamSizes: [4, 8],
@@ -685,12 +685,22 @@ describe("lobbyPanel: the map (#1994)", () => {
       ascentRound: 1,
     } as const;
     const { status, body } = lobbyPanel(queued, callbacks, undefined, ascent);
-    expect((status[0] as unknown as FakeElement).textContent).toBe("Map: Scarred Earth (medium)");
+    expect((status[0] as unknown as FakeElement).textContent).toBe("Map: Blackwater Ford (medium)");
     expect(
       (body as unknown as FakeElement).all("lobby-mode").map((line) => line.textContent),
     ).toEqual([
       "Capture Points: stand on shrines to take them. Each shrine you own scores every 30 s.",
     ]);
+  });
+
+  it("shows the lobby's map for a round a hostile host claims past the maps (#2686)", () => {
+    const queued = {
+      ...snapshot("waiting"),
+      mode: "heroes-ascent",
+      mapId: "broken-tower",
+      ascentRound: 9,
+    } as const;
+    expect(() => lobbyPanel(queued, callbacks, undefined, maps)).not.toThrow();
   });
 });
 

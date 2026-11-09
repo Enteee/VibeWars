@@ -320,9 +320,10 @@ espera o, para los ganadores, sale sin volver a la cola.
 
 ## Ascenso de los Héroes
 
-Un Ascenso de los Héroes en cola son cuatro rondas, siempre en este orden: Cinder Sanctum (Carrera de reliquias), Scarred Earth (Puntos de captura), The Courtyard (Rey
+Un Ascenso de los Héroes en cola son siete rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Barrow Field (Aniquilación de sacerdote), Cinder
+Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Courtyard (Rey
 de la colina) y luego Hall of Heroes. La ventana de Sala dice dónde estás mientras
-buscas un equipo: `Round 2 of 4 · Scarred Earth`. Solo te enfrentas a un equipo de
+buscas un equipo: `Round 2 of 7 · Blackwater Ford`. Solo te enfrentas a un equipo de
 tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. Una ronda en
 un mapa hecho para tres equipos espera a tres; dos equipos que hayan esperado 30
 segundos a un tercero juegan entre ellos, y también dos cuyo tercero nunca aparece
@@ -331,6 +332,11 @@ ganas en el Hall, te quedas a defenderlo. Si pierdes, o sales de una partida ant
 de que termine, tu próximo Ascenso empieza otra vez en la ronda 1; también si sales
 de la cola o del grupo. Una partida perdida porque se fue su anfitrión conserva tu
 ronda.
+
+Tu moral se mantiene durante todo el recorrido: la penalización por muerte o la
+bonificación con la que terminas un mapa ganado es con la que empiezas el siguiente,
+de −60 % a +10 %. Un recorrido que termina, o un jugador que se une a mitad, empieza
+en 0. Tu propia pestaña la recuerda, hasta que la cierres.
 
 El equipo elige una vez, en la Sala de equipo de su primer mapa, y conserva su build
 de equipo y sus asientos el resto del recorrido: tras una victoria vuelve a la cola
@@ -343,10 +349,9 @@ anterior. La ronda la recuerda el anfitrión de tu grupo, y solo hasta que cierr
 pestaña. Una sala de Ascenso de los Héroes a la que entras por código juega el mapa
 de la ronda 1.
 
-**Barrow Field** es una arena del Ascenso ya construida pero que aún no está en la cola, así que por ahora se elige en una Partida alojada: Aniquilación de sacerdote 8v8 entre túmulos bajos de tierra, y el sacerdote resucita a sus muertos cada 2 minutos. Lleva tu bandera al **Storm Beacon** del centro y golpeará a un enemigo al azar a distancia de oído con 50 de daño de rayo cada 2,5 segundos, hasta que el otro equipo plante allí su bandera. Cada golpe es un rayo del faro a quien alcanza, visible para ambos equipos.
+**Barrow Field** es una arena del Ascenso que también se elige en una Partida alojada: Aniquilación de sacerdote 8v8 entre túmulos bajos de tierra, y el sacerdote resucita a sus muertos cada 2 minutos. Lleva tu bandera al **Storm Beacon** del centro y golpeará a un enemigo al azar a distancia de oído con 50 de daño de rayo cada 2,5 segundos, hasta que el otro equipo plante allí su bandera. Cada golpe es un rayo del faro a quien alcanza, visible para ambos equipos.
 
-Tres arenas del Ascenso están construidas pero aún no están en el recorrido en cola,
-así que por ahora se eligen en una Partida alojada: **The Hollow Deep** (Aniquilación
+Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow Deep** (Aniquilación
 8v8, tres túneles sinuosos alrededor de una roca central), **Blackwater Ford**
 (Aniquilación de sacerdote 8v8 en un vado diminuto, las bases casi a la vista, el
 sacerdote resucitando a sus muertos cada 2 minutos) y **Mosslit Cairns** (Puntos de

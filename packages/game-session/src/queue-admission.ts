@@ -33,6 +33,11 @@ export interface QueuedSeat {
   /** This player's own seat key: one of `group`'s teams', the host ticket's for the host. */
   readonly key: TicketKey;
   readonly verifyTicketSig: VerifyTicketSig;
+  /**
+   * The morale this player's Heroes' Ascent run carries into its next map
+   * (#2686), from the last one's end; 0 at a run's start, and in any other mode.
+   */
+  readonly ascentMorale: number;
 }
 
 /**

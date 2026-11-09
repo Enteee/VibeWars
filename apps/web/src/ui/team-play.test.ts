@@ -79,7 +79,13 @@ describe("the lobby screens' maps (#1453, #1525, #1526)", () => {
       ["annihilation", "kill-count", "priest-annihilation"].sort(),
     );
     expect(modesOf("heroes-ascent").sort()).toEqual(
-      ["capture-points", "king-of-the-hill", "relic-run"].sort(),
+      [
+        "annihilation",
+        "capture-points",
+        "king-of-the-hill",
+        "priest-annihilation",
+        "relic-run",
+      ].sort(),
     );
     expect(modesOf("gvg")).toEqual(["guild-battle"]);
   });

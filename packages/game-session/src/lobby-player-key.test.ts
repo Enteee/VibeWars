@@ -36,6 +36,7 @@ const joinOf = (name: string, key: PlayerKey, rejoinToken: string | null = null)
   rejoinToken,
   relayPub: null,
   playerPubkey: key.pubkey,
+  ascentMorale: 0,
 });
 
 interface HandPeer {
