@@ -960,6 +960,8 @@ export interface WireEnded {
   readonly winningTeam: WireTeam | null;
   readonly endReason: EndReason | "host-left";
   readonly summary: readonly WireSummaryRow[];
+  /** Seconds on the Elite Zaishen Battle's clock (#2692); `null` in any other match. */
+  readonly clearSeconds: number | null;
 }
 
 /**
@@ -2618,8 +2620,14 @@ export function parseWireEnded(value: unknown, teamCount: WireTeamCount): WireEn
   return raw !== undefined &&
     (raw.winningTeam === null || (isTeam(raw.winningTeam) && raw.winningTeam < teamCount)) &&
     isOneOf(raw.endReason, [...END_REASONS, "host-left"] as const) &&
-    summary?.every(({ team }) => team < teamCount) === true
-    ? { winningTeam: raw.winningTeam, endReason: raw.endReason, summary }
+    summary?.every(({ team }) => team < teamCount) === true &&
+    (raw.clearSeconds === null || (isNumber(raw.clearSeconds) && raw.clearSeconds >= 0))
+    ? {
+        winningTeam: raw.winningTeam,
+        endReason: raw.endReason,
+        summary,
+        clearSeconds: raw.clearSeconds,
+      }
     : undefined;
 }
 

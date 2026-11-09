@@ -116,6 +116,7 @@ export {
 export type { JoinLoadout, JoinRefusal } from "./join-loadout.js";
 export { loadoutOf, resolveJoinLoadout } from "./join-loadout.js";
 export { STARTER_BUILDS, pickBuildFrom, pickStarterBuild } from "./starter-builds.js";
+export { ELITE_ZAISHEN_MAP, drawZaishen, zaishenMoraleBoost } from "./elite-zaishen.js";
 export {
   ATTRIBUTE_IDS,
   decodeTemplateCode,
@@ -196,6 +197,7 @@ export type {
   SkillRequest,
   StepResult,
   WeaponSetRequest,
+  StartLine,
 } from "./match/simulation.js";
 export {
   countsForTeam,

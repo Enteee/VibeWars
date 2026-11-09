@@ -466,10 +466,15 @@ describe("a P2P host survives hostile peers (#375)", () => {
     const { connection: forger, transport } = await match.join();
     await match.step(TICK);
 
-    const forgedEnd = { winningTeam: 1, endReason: "score", summary: [] };
+    const forgedEnd = { winningTeam: 1, endReason: "score", summary: [], clearSeconds: null };
     transport.send("ended", forgedEnd, "host");
     transport.send("ended", forgedEnd);
-    transport.send("ended", { winningTeam: null, endReason: "host-left", summary: [] });
+    transport.send("ended", {
+      winningTeam: null,
+      endReason: "host-left",
+      summary: [],
+      clearSeconds: null,
+    });
     transport.send("refuse", { reason: "match-full", message: "go away" });
     transport.send("snapshot", { anything: true });
     transport.send("welcome", { anything: true }, "host");

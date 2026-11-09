@@ -1,0 +1,190 @@
+{
+  "id": "elite-zaishen-battle",
+  "name": "The Elite Zaishen Battle",
+  "mode": "annihilation",
+  "teamSizes": [8],
+  "teams": 2,
+  "width": 1600,
+  "height": 1160,
+  "layers": 1,
+  "decks": [],
+  "transitions": [],
+  "walls": [
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 650,
+      "y": 240,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 850,
+      "y": 240,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 650,
+      "y": 820,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 850,
+      "y": 820,
+      "width": 100,
+      "height": 100
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 180,
+        "y": 300
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 180,
+        "y": 380
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 180,
+        "y": 460
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 180,
+        "y": 540
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 180,
+        "y": 620
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 180,
+        "y": 700
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 180,
+        "y": 780
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 180,
+        "y": 860
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1420,
+        "y": 300
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1420,
+        "y": 380
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1420,
+        "y": 460
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1420,
+        "y": 540
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1420,
+        "y": 620
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1420,
+        "y": 700
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1420,
+        "y": 780
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1420,
+        "y": 860
+      }
+    }
+  ],
+  "objectives": [
+    {
+      "kind": "start-line",
+      "layer": 0,
+      "area": {
+        "kind": "rect",
+        "x": 300,
+        "y": 0,
+        "width": 40,
+        "height": 1160
+      }
+    }
+  ],
+  "gates": []
+}

@@ -83,6 +83,7 @@ describe("randomArenaMapPool", () => {
               "the-courtyard",
               "hall-of-heroes",
               "barrow-field",
+              "elite-zaishen-battle",
               "hollow-deep",
               "blackwater-ford",
               "mosslit-cairns",
@@ -154,7 +155,8 @@ describe("team sizes (#2108)", () => {
   });
 
   it("lists every map for a Hosted Game until its host picks a size (#2104)", () => {
-    expect(modeMapIds()["hosted-game"]).toHaveLength(ARENA_MAPS.length);
+    // But the Elite Zaishen Battle, which only a run starts (#2692).
+    expect(modeMapIds()["hosted-game"]).toHaveLength(ARENA_MAPS.length - 1);
   });
 
   it("lists a Team Arena's maps of every size, which its lobby narrows to its own (#2107)", () => {
@@ -245,6 +247,7 @@ describe("team sizes (#2108)", () => {
       "the-courtyard",
       "hall-of-heroes",
       "barrow-field",
+      "elite-zaishen-battle",
       "hollow-deep",
       "blackwater-ford",
       "mosslit-cairns",
@@ -264,6 +267,7 @@ describe("the Hall of Heroes (#1995)", () => {
     expect(modeMapIds()["team-arena"]).not.toContain("hall-of-heroes");
     expect(modeMapIds()["team-arena"]).not.toContain("barrow-field");
     expect(modeMapIds()["hosted-game"]).toContain("barrow-field");
+    expect(modeMapIds()["hosted-game"]).not.toContain("elite-zaishen-battle");
     expect(modeMapIds()["team-arena"]).not.toContain("hollow-deep");
     expect(modeMapIds()["hosted-game"]).toContain("blackwater-ford");
     expect(modeMapIds()["random-arena"]).toContain("hall-of-heroes");

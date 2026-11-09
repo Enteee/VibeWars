@@ -396,3 +396,36 @@ describe("a Capture Points base's shrine (#2845)", () => {
     expect(sim.outcome).toMatchObject({ phase: "finished", reason: "time" });
   });
 });
+
+describe("the start line's clock (#2692)", () => {
+  const line = { layer: 0, x: 400, y: 0, width: 40, height: 2000 };
+  const simulation = (startLine: typeof line | undefined): MatchSimulation =>
+    new MatchSimulation({
+      seed: "start-line",
+      matchRules: CAPTURE_POINTS_MATCH_RULES,
+      walls: [],
+      bounds: { width: 3200, height: 2000 },
+      startLine,
+      participants: [fighter("a", 0, vec2(280, 620)), fighter("x", 1, vec2(420, 900))],
+    });
+
+  it("is null on a map without a line", () => {
+    expect(simulation(undefined).clearSeconds).toBeNull();
+  });
+
+  it("runs from the match's start until the party crosses, then from the crossing", () => {
+    const sim = simulation(line);
+    run(sim, 2);
+    expect(sim.clearSeconds).toBeCloseTo(2, 1);
+    get(sim, "a").position = vec2(420, 620);
+    run(sim, 3);
+    expect(sim.clearSeconds).toBeCloseTo(3, 0);
+  });
+
+  it("is not started by the other team", () => {
+    const sim = simulation(line);
+    run(sim, 1);
+    expect(sim.clearSeconds).toBeCloseTo(1, 1);
+    expect(get(sim, "x").combatant.team).toBe(1);
+  });
+});

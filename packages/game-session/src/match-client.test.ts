@@ -233,12 +233,12 @@ describe("connectMatch", () => {
     connection.onConnectionChange((state) => states.push(state));
     match.hostTransport.send(
       "ended",
-      { winningTeam: 1, endReason: "score", summary: [] },
+      { winningTeam: 1, endReason: "score", summary: [], clearSeconds: null },
       transport.selfId,
     );
     match.hostTransport.send(
       "ended",
-      { winningTeam: null, endReason: "host-left", summary: [] },
+      { winningTeam: null, endReason: "host-left", summary: [], clearSeconds: null },
       transport.selfId,
     );
     await settle();

@@ -2135,6 +2135,7 @@ export default {
     "the-courtyard": "El patio",
     "hall-of-heroes": "Salón de los héroes",
     "barrow-field": "Campo de túmulos",
+    "elite-zaishen-battle": "Batalla de los Zaishen de élite",
     "hollow-deep": "La hondonada",
     "blackwater-ford": "Vado de Aguanegra",
     "mosslit-cairns": "Mojones musgosos",
