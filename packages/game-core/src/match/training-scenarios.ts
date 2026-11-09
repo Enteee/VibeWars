@@ -784,16 +784,14 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     id: "heights",
     label: "Heights",
     teaches:
-      "That height is a place to fight from: decks hide who is under them, ramps are the only way between layers, and a bow shot from above hits harder.",
+      "That height is a place to fight from: decks hide who is under them, ramps are the only way between layers, and your own bow shot from above hits harder.",
     mapId: "training-heights",
     exercises: ["auto-attacks", "movement", "range"],
     knobs: [],
     dummies: [
-      { ...archer("bridge-archer", "Archer on the bridge", vec2(740, 300)), layer: 1 },
       { ...target("on-bridge", "On the bridge (60 armor)", vec2(600, 350), 60), layer: 1 },
       target("under-bridge", "Under the bridge (60 armor)", vec2(600, 350), 60),
       { ...target("on-platform", "On the platform (60 armor)", vec2(600, 110), 60), layer: 2 },
-      { ...hunter("hunter", "Hunter (fireball)", vec2(480, 290)), layer: 1 },
     ],
   },
 ];
