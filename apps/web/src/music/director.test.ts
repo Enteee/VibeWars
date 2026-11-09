@@ -164,6 +164,12 @@ describe("directMusic: track choice", () => {
     }
   });
 
+  it("plays the theme on the splash screen, and nothing with music off (#2884)", () => {
+    const splash = input({ screen: "splash", menuDepth: null });
+    expect(directMusic(splash, null, AUTO, SHIPPED).trackId).toBe("vibe-wars");
+    expect(directMusic(splash, null, { kind: "off" }, SHIPPED).trackId).toBeNull();
+  });
+
   it("plays a pinned track anywhere, and an unknown pinned id as Auto", () => {
     const pinned: MusicMode = { kind: "pinned", trackId: "ember-deep" };
     expect(run([{ screen: "menu" }], pinned)[0]?.trackId).toBe("ember-deep");

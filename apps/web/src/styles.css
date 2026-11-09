@@ -7623,3 +7623,118 @@ body:has(#screens[style*="none"]) .now-playing {
 .touch-notice-continue {
   align-self: flex-start;
 }
+
+/* The splash screen (#2884): over everything until it ends. */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  overflow: hidden;
+  background: var(--bg);
+}
+.splash-stage,
+.splash-scrim,
+.splash-flash {
+  position: absolute;
+  inset: 0;
+}
+.splash-stage canvas {
+  display: block;
+}
+.splash-scrim {
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+}
+.splash[data-phase="flying"] .splash-scrim,
+.splash[data-phase="flash"] .splash-scrim,
+.splash[data-phase="prompt"] .splash-scrim {
+  opacity: 1;
+}
+.splash-hint {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 8%;
+  margin: 0;
+  text-align: center;
+  color: var(--ink);
+  text-shadow: 0 1px 3px #000;
+}
+.splash-title {
+  position: absolute;
+  inset-inline: 0;
+  top: 30%;
+  padding-block: 2rem;
+  text-align: center;
+  visibility: hidden;
+}
+.splash[data-phase="flying"] .splash-title,
+.splash[data-phase="flash"] .splash-title,
+.splash[data-phase="prompt"] .splash-title {
+  visibility: visible;
+}
+.splash[data-phase="flash"] .splash-title,
+.splash[data-phase="prompt"] .splash-title {
+  background: rgba(0, 0, 0, 0.5);
+}
+.splash-wordmark {
+  margin: 0;
+  font-size: clamp(3.5rem, 12vw, 9rem);
+  line-height: 1;
+}
+.splash-vibe,
+.splash-wars {
+  display: inline-block;
+}
+.splash-vibe {
+  color: #59c2ff;
+}
+.splash-wars {
+  color: #ff7b72;
+}
+.splash[data-phase="flying"] .splash-vibe {
+  animation: splash-from-left 2s ease-in both;
+}
+.splash[data-phase="flying"] .splash-wars {
+  animation: splash-from-right 2s ease-in both;
+}
+@keyframes splash-from-left {
+  from {
+    transform: translateX(-100vw);
+  }
+}
+@keyframes splash-from-right {
+  from {
+    transform: translateX(100vw);
+  }
+}
+.splash-rule {
+  height: 3px;
+  width: min(60vw, 40rem);
+  margin: 1rem auto;
+  background: linear-gradient(to right, #59c2ff 50%, #ff7b72 50%);
+  visibility: hidden;
+}
+.splash-prompt {
+  margin: 0;
+  color: var(--ink);
+  visibility: hidden;
+}
+.splash[data-phase="flash"] .splash-rule,
+.splash[data-phase="prompt"] .splash-rule,
+.splash[data-phase="prompt"] .splash-prompt {
+  visibility: visible;
+}
+.splash-flash {
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+.splash[data-phase="flash"] .splash-flash {
+  animation: splash-flash 250ms ease-out both;
+}
+@keyframes splash-flash {
+  from {
+    opacity: 1;
+  }
+}

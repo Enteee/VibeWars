@@ -994,6 +994,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "効果音の音量",
 
+  "splash.clickToStart": "クリックしてスタート",
+  "splash.pressAnyKey": "いずれかのキーを押して開始",
   "storage.attributeNeedsId": "すべての属性にattributeIdが必要です",
   "storage.attributeNotObject": "すべての属性はオブジェクトである必要があります",
   "storage.attributeRankNotWhole": "{attribute}のランクは整数である必要があります",

@@ -1053,6 +1053,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "volume geluidseffecten",
 
+  "splash.clickToStart": "Klik om te starten",
+  "splash.pressAnyKey": "Druk op een toets om te beginnen",
   "storage.attributeNeedsId": "elk attribuut heeft een attributeId nodig",
   "storage.attributeNotObject": "elk attribuut moet een object zijn",
   "storage.attributeRankNotWhole": "rang van {attribute} moet een geheel getal zijn",

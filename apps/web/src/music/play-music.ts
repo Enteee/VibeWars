@@ -54,6 +54,8 @@ export interface MusicFollower {
   follow(state: MusicState, landOn: LandOn): void;
   /** The menus' music, as deep as `screen` is (#1993); the song already playing goes on. */
   menu(screen: MenuScreen): void;
+  /** The splash screen's theme (#2884), under the same rules as any screen's song. */
+  splash(): void;
   /**
    * Play `id` once over the music (#2523), in the key of the track
    * playing, an edit's or preview's too: none when none plays.
@@ -205,6 +207,33 @@ export function createMusicFollower(
 
   const mode = (): MusicMode => musicModeOf(preference);
 
+  const splash = (): void => {
+    follow(
+      directMusic(
+        {
+          screen: "splash",
+          menuDepth: null,
+          mapId: null,
+          matchSeed: null,
+          result: null,
+          self: null,
+          hitsDealtLast5s: 0,
+          hitsTakenLast5s: 0,
+          enemyInRange: false,
+          lowestAllyHealthFraction: null,
+          aliveAllies: null,
+          aliveEnemies: null,
+          teamSize: null,
+          nowMs: now(),
+        },
+        null,
+        mode(),
+        tracks,
+      ),
+      "phrase",
+    );
+  };
+
   const menu = (name: MenuScreen): void => {
     follow(
       directMusic(
@@ -240,6 +269,7 @@ export function createMusicFollower(
       follow(state, landOn);
     },
     menu,
+    splash,
     sting(id) {
       const track = tracks.find((candidate) => candidate.id === playingId);
       if (track !== undefined) {

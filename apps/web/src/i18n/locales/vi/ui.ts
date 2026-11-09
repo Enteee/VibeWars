@@ -982,6 +982,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "âm lượng hiệu ứng",
 
+  "splash.clickToStart": "Nhấp để bắt đầu",
+  "splash.pressAnyKey": "Nhấn phím bất kỳ để bắt đầu",
   "storage.attributeNeedsId": "mỗi thuộc tính cần có attributeId",
   "storage.attributeNotObject": "mỗi thuộc tính phải là một object",
   "storage.attributeRankNotWhole": "cấp của {attribute} phải là số nguyên",

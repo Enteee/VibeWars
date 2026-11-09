@@ -1048,6 +1048,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "lydstyrke for lydeffekter",
 
+  "splash.clickToStart": "Klik for at starte",
+  "splash.pressAnyKey": "Tryk på en vilkårlig tast for at begynde",
   "storage.attributeNeedsId": "hver attribut skal have et attributeId",
   "storage.attributeNotObject": "hver attribut skal være et objekt",
   "storage.attributeRankNotWhole": "rang for {attribute} skal være et helt tal",

@@ -1062,6 +1062,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "ένταση εφέ ήχου",
 
+  "splash.clickToStart": "Κάνε κλικ για έναρξη",
+  "splash.pressAnyKey": "Πάτησε οποιοδήποτε πλήκτρο για να ξεκινήσεις",
   "storage.attributeNeedsId": "κάθε χαρακτηριστικό χρειάζεται attributeId",
   "storage.attributeNotObject": "κάθε χαρακτηριστικό πρέπει να είναι object",
   "storage.attributeRankNotWhole": "το επίπεδο του {attribute} πρέπει να είναι ακέραιος",

@@ -1059,6 +1059,8 @@ export default {
   "sound.percent": "{percent} %",
   "sound.sfxVolume": "Lautstärke der Soundeffekte",
 
+  "splash.clickToStart": "Zum Starten klicken",
+  "splash.pressAnyKey": "Beliebige Taste drücken, um zu beginnen",
   "storage.attributeNeedsId": "jedes Attribut braucht eine attributeId",
   "storage.attributeNotObject": "jedes Attribut muss ein Objekt sein",
   "storage.attributeRankNotWhole": "Rang für {attribute} muss eine ganze Zahl sein",
