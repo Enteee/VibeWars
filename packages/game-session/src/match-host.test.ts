@@ -497,6 +497,53 @@ describe("a lobby's bots (#1193)", () => {
       expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
     });
 
+    /** The local human on team 1; `peer-1`, `peer-2` and a bot against them, none yet seated. */
+    function loadingSide(publishRecord: (record: MatchRecord) => void) {
+      const guest = (name: string, key: string): PlannedSeat => ({
+        ...human(0)[1],
+        name,
+        playerPubkey: key.repeat(32),
+      });
+      return startMatch({
+        mode: "heroes-ascent",
+        publishRecord,
+        seats: new Map<string, PlannedSeat>([
+          human(1),
+          ["peer-1", guest("Guest", "cd")],
+          ["peer-2", guest("Loading", "ef")],
+          bot(0, "Henchman", "Monk/Elementalist"),
+        ]),
+      });
+    }
+
+    it("waits for a teammate still loading, and forfeits once they go too", async () => {
+      const records: MatchRecord[] = [];
+      const match = loadingSide((record) => records.push(record));
+      const local = await match.joinLocal();
+      const { transport } = await match.join();
+      const loading = match.network.join("peer-2");
+      await match.step(TICK);
+      await transport.leave();
+      await match.step(RECONNECT_WINDOW_SECONDS + 1);
+      expect(named(local.getSnapshot(), "Henchman")?.bot).toBe(true);
+      expect(records).toEqual([]);
+
+      await loading.leave();
+      await match.step(1);
+      expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
+    });
+
+    it("forfeits a side whose humans all leave before saying hello", async () => {
+      const records: MatchRecord[] = [];
+      const match = loadingSide((record) => records.push(record));
+      await match.joinLocal();
+      const guests = [match.network.join("peer-1"), match.network.join("peer-2")];
+      await match.step(TICK);
+      await Promise.all(guests.map((guest) => guest.leave()));
+      await match.step(1);
+      expect(records.map(({ winningTeam }) => winningTeam)).toEqual([1]);
+    });
+
     it("leaves other modes' bots playing on", async () => {
       const { records, henchman } = await lastHumanLeaves("team-arena");
       expect(henchman?.bot).toBe(true);

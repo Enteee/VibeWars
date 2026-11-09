@@ -1058,17 +1058,29 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sim.remove(seat.playerId);
     seats.delete(seat.playerId);
     swapBudget.forget(seat.playerId);
-    // Henchmen never carry a Heroes' Ascent side alone (#2688).
-    if (options.mode !== "heroes-ascent" || seat.bot) {
+    if (!seat.bot) {
+      forfeitIfNoHumans(seat.team);
+    }
+  };
+
+  /**
+   * Henchmen never carry a Heroes' Ascent side alone (#2688): a side with
+   * no human seated and none still on the way is out, and its bots go.
+   */
+  const forfeitIfNoHumans = (team: number): void => {
+    const side = [...seats.values()].filter((seat) => seat.team === team);
+    if (
+      options.mode !== "heroes-ascent" ||
+      side.some((seat) => !seat.bot) ||
+      [...awaited].some((peerId) => planned?.get(peerId)?.team === team)
+    ) {
       return;
     }
-    const side = [...seats.values()].filter((other) => other.team === seat.team);
-    if (side.every((other) => other.bot)) {
-      for (const bot of side) {
-        free(bot);
-      }
-      sim.forfeit(seat.team);
+    for (const bot of side) {
+      free(bot);
     }
+    const teams = [...(planned?.values() ?? []), ...seats.values()].map((seat) => seat.team);
+    sim.forfeit(team, new Set(teams));
   };
 
   transport.on("bye", (data, from) => {
@@ -1094,7 +1106,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   transport.onPeerLeave((peerId) => {
     budget.forget(peerId);
     departed.delete(peerId);
-    awaited.delete(peerId);
+    const plan = awaited.delete(peerId) ? planned?.get(peerId) : undefined;
+    if (plan !== undefined && !finished) {
+      forfeitIfNoHumans(plan.team);
+    }
     challenges.delete(peerId);
     proving.delete(peerId);
     unobserve(peerId);

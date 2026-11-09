@@ -1655,14 +1655,14 @@ export class MatchSimulation {
 
   /**
    * Take `team` out for good (#2688), whatever the victory rule: the last
-   * team still in wins at once.
+   * of `teams`, every team in the match, seated yet or not, wins at once.
    */
-  public forfeit(team: number): void {
+  public forfeit(team: number, teams: ReadonlySet<number>): void {
     if (this.#outcome.phase === "finished") {
       return;
     }
     this.#eliminated.add(team);
-    const left = [...this.#teams].filter((other) => !this.#eliminated.has(other));
+    const left = [...teams].filter((other) => !this.#eliminated.has(other));
     if (left.length <= 1) {
       this.#outcome = { phase: "finished", winningTeam: left[0], reason: "annihilation" };
     }
