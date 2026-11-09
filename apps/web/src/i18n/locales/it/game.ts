@@ -2141,6 +2141,7 @@ export default {
     "hollow-deep": "Le cavità profonde",
     "blackwater-ford": "Guado dell'acqua nera",
     "mosslit-cairns": "Tumuli muschiosi",
+    "brazen-causeway": "La Strada di bronzo",
     "scarred-earth": "Terra sfregiata",
     "training-hall": "Sala d'addestramento",
     "training-pillars": "Pilastri d'addestramento",

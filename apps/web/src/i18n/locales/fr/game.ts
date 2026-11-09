@@ -2141,6 +2141,7 @@ export default {
     "hollow-deep": "Les Profondeurs creuses",
     "blackwater-ford": "Gué de l'Eau-noire",
     "mosslit-cairns": "Cairns moussus",
+    "brazen-causeway": "La Chaussée d'airain",
     "scarred-earth": "Terre balafrée",
     "training-hall": "Salle d'entraînement",
     "training-pillars": "Piliers d'entraînement",

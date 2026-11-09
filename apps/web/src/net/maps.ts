@@ -19,6 +19,7 @@ import barrowField from "@vibewars/game-maps/maps/barrow-field/map.json" with { 
 import brokenTower from "@vibewars/game-maps/maps/broken-tower/map.json" with { type: "json" };
 import cinderSanctum from "@vibewars/game-maps/maps/cinder-sanctum/map.json" with { type: "json" };
 import blackwaterFord from "@vibewars/game-maps/maps/blackwater-ford/map.json" with { type: "json" };
+import brazenCauseway from "@vibewars/game-maps/maps/brazen-causeway/map.json" with { type: "json" };
 import hallOfHeroesCapture from "@vibewars/game-maps/maps/hall-of-heroes-capture/map.json" with { type: "json" };
 import hallOfHeroesKing from "@vibewars/game-maps/maps/hall-of-heroes-king/map.json" with { type: "json" };
 import hallOfHeroesRelic from "@vibewars/game-maps/maps/hall-of-heroes-relic/map.json" with { type: "json" };
@@ -99,6 +100,8 @@ export const ARENA_MAPS: readonly MapData[] = [
   hollowDeep,
   blackwaterFord,
   mosslitCairns,
+  // The Heroes' Ascent's own, in Golden Gates' slot (#2697).
+  brazenCauseway,
   // Capture Points' (#1378, #2551).
   scarredEarth,
 ].map((raw) => validateMapData(raw));
@@ -153,6 +156,7 @@ const ASCENT_ONLY: readonly string[] = [
   "hollow-deep",
   "blackwater-ford",
   "mosslit-cairns",
+  "brazen-causeway",
   ELITE_ZAISHEN_MAP,
 ];
 
@@ -235,6 +239,8 @@ export const ASCENT_PROGRESSION: readonly string[] = [
   // Unholy Temples' slot.
   "cinder-sanctum",
   "mosslit-cairns",
+  // Golden Gates' slot.
+  "brazen-causeway",
   "the-courtyard",
   "hall-of-heroes-king",
 ];
