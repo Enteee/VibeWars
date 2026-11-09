@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_SLEEP,
   MIN_SLEEP,
+  MIN_WAKE,
   SLEEP_THRESHOLD,
   SLEEP_WARNING,
   exitedAfterWake,
@@ -197,12 +198,15 @@ describe("the root oneshot's check (#2794)", () => {
     spawnSync("bash", ["-c", 'source "$1"; valid_wake "$2" 1000', "_", script, wake]).status;
 
   it("takes a future time within the cap", () => {
-    expect(check("1001")).toBe(0);
+    expect(check(String(1000 + MIN_WAKE))).toBe(0);
     expect(check(String(1000 + MAX_SLEEP))).toBe(0);
   });
 
   it.each([
-    ["the past", "1000"],
+    ["the past", "999"],
+    ["now", "1000"],
+    ["one second ahead", "1001"],
+    ["just under the floor", String(999 + MIN_WAKE)],
     ["over the cap", String(1001 + MAX_SLEEP)],
     ["empty", ""],
     ["not a number", "abc"],

@@ -22,6 +22,11 @@ export const SLEEP_WARNING = 5 * 60;
  * power-off never wakes it.
  */
 export const MIN_SLEEP = 15 * 60;
+/**
+ * The nearest wake time the root oneshot accepts, in seconds: a little under
+ * `MIN_SLEEP`, as hubd can plan right at it and the oneshot runs moments later.
+ */
+export const MIN_WAKE = MIN_SLEEP - 60;
 /** Wake this long before the reset when `company.json` says no other, in minutes. */
 export const DEFAULT_WAKE_MARGIN = 5;
 /** The furthest ahead the root oneshot accepts a wake time, in seconds. */
