@@ -212,6 +212,8 @@ describe("Order of Pain and Order of the Vampire at their caster's Blood Magic (
       target: {
         combatant: makeCombatant({ id: "foe", team: 1, health: 1e6, maxHealth: 1e6 }),
         position: vec2(40, 0),
+        floors: 1,
+        layer: 0,
         creature: undefined,
       },
       surroundings: new Map(),

@@ -40,7 +40,14 @@ function apply(
     surroundings: new Map(
       [caster, target, ...party].map((combatant, index) => [
         combatant.id,
-        { combatant, position: vec2(index * 50, 0), creature: undefined, corpseExploited: false },
+        {
+          combatant,
+          position: vec2(index * 50, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ]),
     ),
     usedSkill: undefined,
@@ -169,7 +176,14 @@ describe("energy-loss on the caster (#2260)", () => {
       surroundings: new Map(
         [caster, ...allies].map((combatant, index) => [
           combatant.id,
-          { combatant, position: vec2(index * 50, 0), creature: undefined, corpseExploited: false },
+          {
+            combatant,
+            position: vec2(index * 50, 0),
+            floors: 1,
+            layer: 0,
+            creature: undefined,
+            corpseExploited: false,
+          },
         ]),
       ),
     });

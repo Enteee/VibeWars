@@ -279,6 +279,8 @@ describe("a splash's sides and cap (#1316)", () => {
         {
           combatant,
           position: combatant.id === "centre" ? vec2(0, 0) : vec2(10 * i, 0),
+          floors: 1,
+          layer: 0,
           creature: undefined,
           corpseExploited: false,
         },

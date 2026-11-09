@@ -6,11 +6,18 @@ import { isFreshCorpse, nearestFreshCorpse, type CorpseCandidate } from "./corps
 function body(
   id: string,
   position: Vec2,
-  extra: { dead?: boolean; creature?: boolean; corpses?: number; exploited?: boolean } = {},
+  extra: {
+    dead?: boolean;
+    creature?: boolean;
+    corpses?: number;
+    exploited?: boolean;
+    floors?: number;
+  } = {},
 ): CorpseCandidate {
   return {
     id,
     position,
+    floors: extra.floors ?? 1,
     combatant: { dead: extra.dead ?? true },
     creature:
       extra.creature === true
@@ -69,22 +76,29 @@ describe("nearestFreshCorpse (#466)", () => {
       body("far", vec2(200, 0)),
       body("near", vec2(0, 100)),
     ];
-    expect(nearestFreshCorpse(ORIGIN, 420, bodies)?.id).toBe("near");
+    expect(nearestFreshCorpse(ORIGIN, 1, 420, bodies)?.id).toBe("near");
   });
 
   it("breaks a tie by the smaller id, whatever the order", () => {
     const b = body("b", vec2(100, 0));
     const a = body("a", vec2(-100, 0));
-    expect(nearestFreshCorpse(ORIGIN, 420, [b, a])?.id).toBe("a");
-    expect(nearestFreshCorpse(ORIGIN, 420, [a, b])?.id).toBe("a");
+    expect(nearestFreshCorpse(ORIGIN, 1, 420, [b, a])?.id).toBe("a");
+    expect(nearestFreshCorpse(ORIGIN, 1, 420, [a, b])?.id).toBe("a");
   });
 
   it("finds a body at exactly the radius, and not one beyond it", () => {
-    expect(nearestFreshCorpse(ORIGIN, 420, [body("edge", vec2(420, 0))])?.id).toBe("edge");
-    expect(nearestFreshCorpse(ORIGIN, 420, [body("past", vec2(420.01, 0))])).toBeUndefined();
+    expect(nearestFreshCorpse(ORIGIN, 1, 420, [body("edge", vec2(420, 0))])?.id).toBe("edge");
+    expect(nearestFreshCorpse(ORIGIN, 1, 420, [body("past", vec2(420.01, 0))])).toBeUndefined();
   });
 
   it("is undefined when there is none", () => {
-    expect(nearestFreshCorpse(ORIGIN, 420, [])).toBeUndefined();
+    expect(nearestFreshCorpse(ORIGIN, 1, 420, [])).toBeUndefined();
+  });
+
+  it("takes only a corpse on the floor asked for (ADR-0051), a ramp's being on both", () => {
+    const above = body("above", vec2(10, 0), { floors: 2 });
+    const ramp = body("ramp", vec2(20, 0), { floors: 3 });
+    expect(nearestFreshCorpse(ORIGIN, 1, 420, [above])).toBeUndefined();
+    expect(nearestFreshCorpse(ORIGIN, 1, 420, [above, ramp])?.id).toBe("ramp");
   });
 });

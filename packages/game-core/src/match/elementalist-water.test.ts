@@ -281,6 +281,8 @@ describe("Blurred Vision (#1367)", () => {
     const dummy = {
       combatant: makeCombatant({ id: "dummy", team: 1, health: 1e6, maxHealth: 1e6 }),
       position: vec2(40, 0),
+      floors: 1,
+      layer: 0,
       creature: undefined,
       corpseExploited: false,
     };
