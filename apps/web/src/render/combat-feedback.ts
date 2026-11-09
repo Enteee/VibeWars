@@ -178,8 +178,11 @@ export function showCombatFeedback(
       id: nextFloatingId,
       anchorId: subject.sessionId,
       text: cue.text,
-      position: vec2(subject.x + FLOATING_TEXT_OFFSET_X, subject.y + FLOATING_TEXT_OFFSET_Y),
-      lift: elevationOf(subject.layer),
+      position: vec2(
+        subject.x + FLOATING_TEXT_OFFSET_X,
+        subject.y + FLOATING_TEXT_OFFSET_Y - elevationOf(subject.layer),
+      ),
+      lift: 0,
       colour: COLOURS[cue.tone],
       remainingSeconds: FLOATING_TEXT_SECONDS,
       weight: cue.critical ? "critical" : message.cause === "weapon" ? "light" : "normal",

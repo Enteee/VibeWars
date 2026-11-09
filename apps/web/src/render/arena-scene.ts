@@ -284,8 +284,9 @@ export class ArenaScene extends Phaser.Scene {
   private groundGraphics: Phaser.GameObjects.Graphics | undefined;
   /** Each ward's icon, by ground effect id (#1087). */
   private groundIcons = new Map<number, Phaser.GameObjects.Image>();
-  /** The grid, the arena's edge and the walls (#1353), over the wards; drawn when they change. */
+  /** The opaque floor of a layered map, under the wards. */
   private floorGraphics: Phaser.GameObjects.Graphics | undefined;
+  /** The grid, the arena's edge and the walls (#1353), over the wards; drawn when they change. */
   private mapGraphics: Phaser.GameObjects.Graphics | undefined;
   /** What `mapGraphics` shows; `undefined` until it is first drawn. */
   private drawnMap: MapLayer | undefined;

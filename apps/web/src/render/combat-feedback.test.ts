@@ -3,6 +3,7 @@ import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/gam
 
 import { t } from "../i18n/index.js";
 import {
+  FLOATING_TEXT_OFFSET_Y,
   floatingTextY,
   placeFloatingText,
   teamColour,
@@ -314,7 +315,11 @@ describe("a number over a raised body", () => {
       },
       { ...SNAPSHOT, players: raised },
     );
-    expect(texts.map((text) => text.lift)).toEqual([elevationOf(1)]);
+    const subjectY = raised.find((each) => each.sessionId === "them")?.y ?? Number.NaN;
+    const expected = subjectY + FLOATING_TEXT_OFFSET_Y - elevationOf(1);
+    for (const zoom of [0.65, 1.69]) {
+      expect(texts.map((text) => floatingTextY(text, zoom))).toEqual([expected]);
+    }
   });
 });
 
