@@ -1,5 +1,8 @@
 import { isWeaponId, type Vec2, type WeaponId } from "@vibewars/game-core";
 
+import type { MapStructure } from "./arena-snapshot.js";
+import { liftAt } from "./layer-surfaces.js";
+
 /**
  * Ranged weapon shots in flight (#161, docs/art/art-direction.md
  * "Projectiles"). A shot flies in a straight line from where it left to
@@ -92,6 +95,9 @@ export interface RenderableProjectile {
   readonly sprite: ProjectileSprite;
   readonly from: Vec2;
   readonly to: Vec2;
+  /** The shooter's layer at release, and the target's. */
+  readonly fromLayer: number;
+  readonly toLayer: number;
   /** The match clock at release. */
   readonly launchedAt: number;
   readonly flightSeconds: number;
@@ -99,25 +105,47 @@ export interface RenderableProjectile {
   readonly colour: number;
 }
 
+/** Where `shot` leaves from and lands, as drawn: each end lifted to its own layer (#2972). */
+function drawnEnds(
+  shot: RenderableProjectile,
+  structure: MapStructure,
+): { readonly from: Vec2; readonly to: Vec2 } {
+  return {
+    from: {
+      x: shot.from.x,
+      y: shot.from.y - liftAt(structure, shot.from, shot.fromLayer),
+    },
+    to: { x: shot.to.x, y: shot.to.y - liftAt(structure, shot.to, shot.toLayer) },
+  };
+}
+
+/** Where `shot` is drawn when it lands. */
+export function projectileLanding(shot: RenderableProjectile, structure: MapStructure): Vec2 {
+  return drawnEnds(shot, structure).to;
+}
+
 /**
- * Where a shot is at `clock` on the match clock: at `from` until it
- * leaves, at `to` when it lands, and nowhere once it has landed.
+ * Where a shot is drawn at `clock` on the match clock: at its start until
+ * it leaves, at its end when it lands, and nowhere once it has landed.
  */
-export function projectilePosition(shot: RenderableProjectile, clock: number): Vec2 | undefined {
+export function projectilePosition(
+  shot: RenderableProjectile,
+  clock: number,
+  structure: MapStructure,
+): Vec2 | undefined {
   const t =
     shot.flightSeconds > 0 ? Math.max(0, (clock - shot.launchedAt) / shot.flightSeconds) : 1;
   if (t > 1) {
     return undefined;
   }
-  return {
-    x: shot.from.x + (shot.to.x - shot.from.x) * t,
-    y: shot.from.y + (shot.to.y - shot.from.y) * t,
-  };
+  const { from, to } = drawnEnds(shot, structure);
+  return { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
 }
 
 /** The way a shot points, in radians, for the sprite's rotation. */
-export function projectileHeading(shot: RenderableProjectile): number {
-  return Math.atan2(shot.to.y - shot.from.y, shot.to.x - shot.from.x);
+export function projectileHeading(shot: RenderableProjectile, structure: MapStructure): number {
+  const { from, to } = drawnEnds(shot, structure);
+  return Math.atan2(to.y - from.y, to.x - from.x);
 }
 
 /**

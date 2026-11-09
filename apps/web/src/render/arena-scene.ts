@@ -69,12 +69,14 @@ import {
   plankLines,
   southFacingEdges,
   drawnLayerAt,
+  hiddenCrop,
   liftAt,
   occludersOf,
   pickSurface,
   rampDrawing,
   RING_PATH,
   traceHiddenOutline,
+  traceHiddenPolyline,
   type Occluder,
 } from "./layer-surfaces.js";
 import {
@@ -89,7 +91,13 @@ import {
   statusFrame,
   type AtlasMap,
 } from "./arena-atlas.js";
-import { MatchClock, projectileHeading, projectilePosition, shotFadeAlpha } from "./projectiles.js";
+import {
+  MatchClock,
+  projectileHeading,
+  projectileLanding,
+  projectilePosition,
+  shotFadeAlpha,
+} from "./projectiles.js";
 import { NO_COVER, snapView, type CameraView, type Cover } from "./camera-rig.js";
 import { edgeMarkers, type EdgeMarker, type EdgeThing } from "./edge-markers.js";
 import { statusRowLayout } from "./status-icons.js";
@@ -100,6 +108,7 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
+import { weaponMarkLayout } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
@@ -293,6 +302,8 @@ export class ArenaScene extends Phaser.Scene {
   /** What hides a body on the drawn map (#2831). */
   private occluders: readonly Occluder[] = [];
   private hiddenOutlines: Phaser.GameObjects.Graphics | undefined;
+  /** Each body's symbol where a structure covers it (#2972). */
+  private hiddenGlyphs = new Map<string, Phaser.GameObjects.Image>();
   private readonly strokeHiddenSegment = (ax: number, ay: number, bx: number, by: number): void => {
     this.hiddenOutlines?.lineBetween(ax, ay, bx, by);
   };
@@ -1073,7 +1084,7 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
     for (const shot of this.snapshot.projectiles) {
-      const position = projectilePosition(shot, clock);
+      const position = projectilePosition(shot, clock, this.snapshot.structure);
       const shown = this.projectileImages.get(shot.id);
       // An ended shot never flies again, even while its id is still sent.
       if (position === undefined || this.endedShots.has(shot.id)) {
@@ -1084,9 +1095,13 @@ export class ArenaScene extends Phaser.Scene {
         const image = this.add
           .image(position.x, position.y, ATLAS, projectileFrame(shot.sprite))
           .setDepth(OVERLAY_DEPTH);
-        image.setRotation(projectileHeading(shot));
+        image.setRotation(projectileHeading(shot, this.snapshot.structure));
         image.setTint(shot.colour);
-        this.projectileImages.set(shot.id, { image, to: shot.to, endedAt: undefined });
+        this.projectileImages.set(shot.id, {
+          image,
+          to: projectileLanding(shot, this.snapshot.structure),
+          endedAt: undefined,
+        });
       } else {
         shown.image.setPosition(position.x, position.y);
       }
@@ -1804,29 +1819,103 @@ export class ArenaScene extends Phaser.Scene {
     this.drawnMap = next;
   }
 
-  /** What a structure covers of each body (#2831): its team's outline, no fill. */
+  /** What a structure covers of each body (#2831, #2972): its team's outline, weapon and symbol, no fill. */
   private drawHiddenOutlines(): void {
     this.hiddenOutlines ??= this.add.graphics().setDepth(renderOrder({ kind: "hidden-outline" }));
     const g = this.hiddenOutlines;
     g.clear();
-    if (this.occluders.length === 0) {
+    const shownGlyphs = new Set<string>();
+    if (this.occluders.length > 0) {
+      for (const actor of this.drawnActors) {
+        if (!actor.dead) {
+          this.drawHiddenBody(g, actor, shownGlyphs);
+        }
+      }
+    }
+    for (const [id, glyph] of this.hiddenGlyphs) {
+      if (!shownGlyphs.has(id)) {
+        glyph.setVisible(false);
+      }
+      if (!this.drawnActors.some((actor) => actor.id === id)) {
+        glyph.destroy();
+        this.hiddenGlyphs.delete(id);
+      }
+    }
+  }
+
+  private drawHiddenBody(
+    g: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+    shownGlyphs: Set<string>,
+  ): void {
+    g.lineStyle(BODY_EDGE_WIDTH, teamColour(actor.team), 1);
+    traceHiddenOutline(
+      actor.creatureLook === undefined ? RING_PATH : CREATURE_PATH,
+      actor.position.x,
+      actor.position.y,
+      actor.radius,
+      actor.layer,
+      this.occluders,
+      this.strokeHiddenSegment,
+    );
+    if (actor.creatureLook === undefined) {
+      const { x, y } = actor.position;
+      const { strokes, fills, strings, alpha } = weaponMarkLayout(
+        x,
+        y,
+        actor.radius,
+        actor.facing,
+        actor.weaponId,
+        this.weaponFrame(actor),
+      );
+      const outlines = fills.map((fill) => [...fill, ...fill.slice(0, 1)]);
+      for (const line of alpha > 0 ? [...strokes, ...outlines, ...strings] : []) {
+        for (const { ax, ay, bx, by } of traceHiddenPolyline(line, actor.layer, this.occluders)) {
+          this.strokeHiddenSegment(ax, ay, bx, by);
+        }
+      }
+    }
+    this.showHiddenGlyph(actor, shownGlyphs);
+  }
+
+  /** The covered part of `actor`'s symbol, in its team's colour: the atlas image has no line path. */
+  private showHiddenGlyph(actor: RenderableActor, shownGlyphs: Set<string>): void {
+    const layout = bodyGlyphLayout(actor);
+    const crop =
+      layout === undefined
+        ? undefined
+        : hiddenCrop(layout.x, layout.y, layout.size, actor.layer, this.occluders);
+    if (layout === undefined || crop === undefined) {
       return;
     }
-    for (const actor of this.drawnActors) {
-      if (actor.dead) {
-        continue;
-      }
-      g.lineStyle(BODY_EDGE_WIDTH, teamColour(actor.team), 1);
-      traceHiddenOutline(
-        actor.creatureLook === undefined ? RING_PATH : CREATURE_PATH,
-        actor.position.x,
-        actor.position.y,
-        actor.radius,
-        actor.layer,
-        this.occluders,
-        this.strokeHiddenSegment,
-      );
+    const frame =
+      layout.glyph.kind === "creature"
+        ? creatureFrame(layout.glyph.look)
+        : bodyProfessionFrame(layout.glyph.profession);
+    let glyph = this.hiddenGlyphs.get(actor.id);
+    if (glyph === undefined) {
+      glyph = this.add
+        .image(0, 0, ATLAS, frame)
+        .setTintMode(Phaser.TintModes.FILL)
+        .setDepth(renderOrder({ kind: "hidden-outline" }));
+      this.hiddenGlyphs.set(actor.id, glyph);
     }
+    if (glyph.frame.name !== frame) {
+      glyph.setFrame(frame);
+    }
+    const { realWidth, realHeight } = glyph.frame;
+    glyph
+      .setTint(teamColour(actor.team))
+      .setDisplaySize(layout.size, layout.size)
+      .setPosition(layout.x, layout.y)
+      .setCrop(
+        crop.x * realWidth,
+        crop.y * realHeight,
+        crop.width * realWidth,
+        crop.height * realHeight,
+      )
+      .setVisible(true);
+    shownGlyphs.add(actor.id);
   }
 
   /** Where a click would go, before it does (#2831): a ring on a deck, dashed on the ground. */

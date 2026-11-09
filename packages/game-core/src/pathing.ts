@@ -4,6 +4,7 @@ import {
   distancePointToSegment,
   distanceSegmentToSegmentXY,
   pointInPolygon,
+  pointAlong,
   polygonCentre,
   type Polygon,
   type Segment,
@@ -655,7 +656,18 @@ export interface NavTransition {
   readonly from: number;
   readonly to: number;
   readonly area: Polygon;
+  /** The way it climbs, a unit vector; none: its portal waypoint is its centre. */
+  readonly uphill?: Vec2;
 }
+
+/**
+ * How far in from the end a body leaves a ramp by its waypoint sits, as a
+ * share of its length: a body's clearance in, or the walk to it would run
+ * along that end's outline wall and no route would ever be kept (#1157).
+ * At most this much, still inside the band where a body changes layer.
+ */
+const RAMP_WAYPOINT_LEAST_INSET = 0.05;
+const RAMP_WAYPOINT_MOST_INSET = 0.14;
 
 /** Finds paths over a map's layers, reusing its own scratch from one query to the next. */
 export interface LayeredPathFinder {
@@ -664,8 +676,9 @@ export interface LayeredPathFinder {
   /**
    * The shortest way for a body from `from` on `fromLayer` to `to` on
    * `toLayer`: the waypoints after `from`, ending at `to`, or `undefined`
-   * if there is none. A ramp is one waypoint, its centre, carrying the
-   * far layer. A fresh array the caller may keep.
+   * if there is none. A ramp is one waypoint, at the end a body
+   * leaves it by, carrying the far layer; going up, a waypoint at its
+   * foot comes first, so a body does not cut in under the deck it tops. A fresh array the caller may keep.
    */
   find(from: Vec2, fromLayer: number, to: Vec2, toLayer: number): RouteWaypoint[] | undefined;
 }
@@ -749,6 +762,10 @@ class AStar implements LayeredPathFinder {
   readonly #points: Vec2[] = [];
   readonly #layerOf: Uint8Array;
   readonly #isPortal: Uint8Array;
+  /** Where a route crossing a ramp to this portal vertex is sent. */
+  readonly #exits = new Map<number, Vec2>();
+  /** The ramp's area and foot, for a portal vertex a route climbs to. */
+  readonly #climbs = new Map<number, { readonly area: Polygon; readonly foot: Vec2 }>();
   readonly #edges: number[][] = [];
   /** The first vertex of each layer, and one past the last's. */
   readonly #firstOf: Int32Array;
@@ -781,7 +798,7 @@ class AStar implements LayeredPathFinder {
         far !== undefined &&
         isStandable(near, point) &&
         isStandable(far, point)
-        ? [{ point, from: transition.from, to: transition.to, near: -1, far: -1 }]
+        ? [{ ...transition, point, near: -1, far: -1 }]
         : [];
     });
     const layers: number[] = [];
@@ -816,9 +833,21 @@ class AStar implements LayeredPathFinder {
     });
     firsts.push(this.#points.length);
     this.#joinPortals(portalsOn, firsts);
-    for (const { near, far } of links) {
+    const clearance = graphs[0]?.clearance ?? 0;
+    for (const { near, far, area, uphill } of links) {
       this.#edges[near]?.push(far);
       this.#edges[far]?.push(near);
+      if (uphill !== undefined) {
+        const length = distance(pointAlong(area, uphill, 0), pointAlong(area, uphill, 1));
+        const inset = Math.min(
+          Math.max(RAMP_WAYPOINT_LEAST_INSET, (clearance + 1) / length),
+          RAMP_WAYPOINT_MOST_INSET,
+        );
+        const foot = pointAlong(area, uphill, inset);
+        this.#exits.set(near, foot);
+        this.#exits.set(far, pointAlong(area, uphill, 1 - inset));
+        this.#climbs.set(far, { area, foot });
+      }
     }
     this.#layerOf = Uint8Array.from(layers);
     this.#isPortal = Uint8Array.from(portals, Number);
@@ -1024,10 +1053,15 @@ class AStar implements LayeredPathFinder {
     const path: RouteWaypoint[] = [];
     let at = this.#goal;
     while (at !== -1 && at !== this.#start) {
-      const { x, y } = this.#point(at);
-      path.push({ x, y, layer: at === this.#goal ? this.#toLayer : (this.#layerOf[at] ?? 0) });
       const before = this.#cameFrom[at] ?? -1;
-      at = at !== this.#goal && this.#isLink(at, before) ? (this.#cameFrom[before] ?? -1) : before;
+      const crossed = at !== this.#goal && this.#isLink(at, before);
+      const { x, y } = (crossed ? this.#exits.get(at) : undefined) ?? this.#point(at);
+      path.push({ x, y, layer: at === this.#goal ? this.#toLayer : (this.#layerOf[at] ?? 0) });
+      const climb = crossed ? this.#climbs.get(at) : undefined;
+      if (climb !== undefined && !pointInPolygon(from, climb.area)) {
+        path.push({ ...climb.foot, layer: this.#layerOf[before] ?? 0 });
+      }
+      at = crossed ? (this.#cameFrom[before] ?? -1) : before;
     }
     path.reverse();
     const first = path[0];

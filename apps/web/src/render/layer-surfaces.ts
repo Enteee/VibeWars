@@ -1,4 +1,4 @@
-import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
+import { pointInPolygon, progressAlong, type Vec2 } from "@vibewars/game-core";
 
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { creatureOutline } from "./creature-shape.js";
@@ -74,15 +74,6 @@ function uphillOf(structure: MapStructure, ramp: Transition): Vec2 | undefined {
     : { x: 0, y: Math.sign(nearest.y) };
 }
 
-/** How far along `box` `position` is going `uphill`: 0 at the low end, 1 at the high, clamped. */
-function progressAlong(box: Box, uphill: Vec2, position: Vec2): number {
-  const across =
-    uphill.x !== 0
-      ? (uphill.x > 0 ? position.x - box.left : box.right - position.x) / (box.right - box.left)
-      : (uphill.y > 0 ? position.y - box.top : box.bottom - position.y) / (box.bottom - box.top);
-  return Math.min(Math.max(across, 0), 1);
-}
-
 /** The height a ramp draws at `t` of the way up. */
 function rampLift(ramp: Transition, t: number): number {
   return elevationOf(ramp.from) + t * (elevationOf(ramp.to) - elevationOf(ramp.from));
@@ -99,7 +90,7 @@ export function liftAt(structure: MapStructure, position: Vec2, layer: number): 
   if (ramp === undefined || uphill === undefined) {
     return elevationOf(layer);
   }
-  return rampLift(ramp, progressAlong(boxOf(ramp.area), uphill, position));
+  return rampLift(ramp, progressAlong(shapeOutline(ramp.area), uphill, position));
 }
 
 /** Whether a disc of `radius` at `position` reaches into `box`. */
@@ -162,7 +153,7 @@ export function rampDrawing(structure: MapStructure, ramp: Transition): RampDraw
   const box = boxOf(ramp.area);
   const lifted = (point: Vec2): Vec2 => ({
     x: point.x,
-    y: point.y - rampLift(ramp, progressAlong(box, uphill, point)),
+    y: point.y - rampLift(ramp, progressAlong(shapeOutline(ramp.area), uphill, point)),
   });
   const width = box.right - box.left;
   const height = box.bottom - box.top;
@@ -284,23 +275,63 @@ export interface Surface {
   readonly point: Vec2;
 }
 
+/** The point on `ramp` drawn at `world`, with its lift; none if it is not on the ramp. */
+function rampSurface(
+  structure: MapStructure,
+  ramp: Transition,
+  world: Vec2,
+): (Surface & { readonly lift: number }) | undefined {
+  const uphill = uphillOf(structure, ramp);
+  if (uphill === undefined) {
+    return undefined;
+  }
+  const outline = shapeOutline(ramp.area);
+  // The lift rises linearly along the ramp, so the point drawn at `world`
+  // solves y = world.y + lift(y) exactly; its slope is under 1.
+  const along = outline.map((corner) => corner.x * uphill.x + corner.y * uphill.y);
+  const low = Math.min(...along);
+  const rise = (elevationOf(ramp.to) - elevationOf(ramp.from)) / (Math.max(...along) - low);
+  const point = {
+    x: world.x,
+    y:
+      (world.y + elevationOf(ramp.from) + rise * (world.x * uphill.x - low)) /
+      (1 - rise * uphill.y),
+  };
+  if (!pointInPolygon(point, outline)) {
+    return undefined;
+  }
+  const t = progressAlong(outline, uphill, point);
+  return { layer: t >= 0.5 ? ramp.to : ramp.from, point, lift: rampLift(ramp, t) };
+}
+
 /**
  * The surfaces drawn at `world`, the visible one first and the ground
- * last. A deck draws lifted, so the point on it lies below the cursor.
+ * last, one per layer. A deck or ramp draws lifted, so the point on it
+ * lies below the cursor.
  */
 export function surfacesAt(structure: MapStructure, world: Vec2): readonly Surface[] {
-  const surfaces: Surface[] = [];
+  const surfaces: (Surface & { readonly lift: number })[] = [];
   for (let layer = structure.layerCount - 1; layer > 0; layer -= 1) {
     const point = { x: world.x, y: world.y + elevationOf(layer) };
     const here = structure.decks.some(
       (deck) => deck.layer === layer && pointInPolygon(point, shapeOutline(deck.footprint)),
     );
     if (here) {
-      surfaces.push({ layer, point });
+      surfaces.push({ layer, point, lift: elevationOf(layer) });
     }
   }
-  surfaces.push({ layer: 0, point: world });
-  return surfaces;
+  for (const ramp of structure.transitions) {
+    const surface = rampSurface(structure, ramp, world);
+    if (surface !== undefined) {
+      surfaces.push(surface);
+    }
+  }
+  surfaces.push({ layer: 0, point: world, lift: 0 });
+  const seen = new Set<number>();
+  return surfaces
+    .sort((a, b) => b.lift - a.lift)
+    .filter(({ layer }) => !seen.has(layer) && seen.add(layer))
+    .map(({ layer, point }) => ({ layer, point }));
 }
 
 /** Whether Alt is held, as of a pointer's last event: a pointer that has had none has no event. */
@@ -450,4 +481,94 @@ export function traceHiddenOutline(
       }
     }
   }
+}
+
+/** A piece of a polyline, in world space. */
+export interface HiddenPiece {
+  readonly ax: number;
+  readonly ay: number;
+  readonly bx: number;
+  readonly by: number;
+}
+
+/** How long a piece of a polyline is tested as one, in world units. */
+const POLYLINE_STEP = 2;
+
+/** Whether a structure covers a body on `layer` at this point. */
+function hiddenAt(occluders: readonly Occluder[], layer: number, x: number, y: number): boolean {
+  return occluders.some((each) => layer <= each.hidesThrough && hides(each, x, y));
+}
+
+/** The pieces of the world-space `points` that a structure covers on a body on `layer`. */
+export function traceHiddenPolyline(
+  points: readonly Vec2[],
+  layer: number,
+  occluders: readonly Occluder[],
+): readonly HiddenPiece[] {
+  const pieces: HiddenPiece[] = [];
+  points.forEach((from, at) => {
+    const to = points[at + 1];
+    if (to === undefined) {
+      return;
+    }
+    const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / POLYLINE_STEP));
+    for (let step = 0; step < steps; step += 1) {
+      const ax = from.x + ((to.x - from.x) * step) / steps;
+      const ay = from.y + ((to.y - from.y) * step) / steps;
+      const bx = from.x + ((to.x - from.x) * (step + 1)) / steps;
+      const by = from.y + ((to.y - from.y) * (step + 1)) / steps;
+      if (hiddenAt(occluders, layer, (ax + bx) / 2, (ay + by) / 2)) {
+        pieces.push({ ax, ay, bx, by });
+      }
+    }
+  });
+  return pieces;
+}
+
+/** A part of a box, each number a fraction of its size. */
+export interface BoxPart {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+const CROP_SAMPLES = 8;
+
+/**
+ * The part of the `size` box centred on (`x`, `y`) a structure covers on a
+ * body on `layer`: the bounding box of its hidden samples, on a grid.
+ * `undefined` with none hidden.
+ */
+export function hiddenCrop(
+  x: number,
+  y: number,
+  size: number,
+  layer: number,
+  occluders: readonly Occluder[],
+): BoxPart | undefined {
+  let left = CROP_SAMPLES;
+  let top = CROP_SAMPLES;
+  let right = -1;
+  let bottom = -1;
+  for (let row = 0; row < CROP_SAMPLES; row += 1) {
+    for (let column = 0; column < CROP_SAMPLES; column += 1) {
+      const sx = x - size / 2 + ((column + 0.5) * size) / CROP_SAMPLES;
+      const sy = y - size / 2 + ((row + 0.5) * size) / CROP_SAMPLES;
+      if (hiddenAt(occluders, layer, sx, sy)) {
+        left = Math.min(left, column);
+        top = Math.min(top, row);
+        right = Math.max(right, column);
+        bottom = Math.max(bottom, row);
+      }
+    }
+  }
+  return right < 0
+    ? undefined
+    : {
+        x: left / CROP_SAMPLES,
+        y: top / CROP_SAMPLES,
+        width: (right - left + 1) / CROP_SAMPLES,
+        height: (bottom - top + 1) / CROP_SAMPLES,
+      };
 }

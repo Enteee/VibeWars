@@ -272,15 +272,24 @@ describe("sight across layers (ADR-0051)", () => {
     expect(casts(vec2(1200, 400), 0, vec2(1000, 400), 1)).toBe(true);
   });
 
-  it("hits a target that climbs in flight, still within reach of the aim point", () => {
+  it("names the layers a shot is drawn between (#2972)", () => {
     const sim = arena([spec("a", 0, vec2(530, 400), 1, bow()), spec("foe", 1, vec2(430, 400), 0)]);
+    sim.requestAttack("a", "foe");
+    for (let t = 0; t < 4 && sim.projectiles.length === 0; t += DT) {
+      sim.step(DT);
+    }
+    expect(sim.projectiles[0]).toMatchObject({ fromLayer: 1, toLayer: 0 });
+  });
+
+  it("hits a target that climbs in flight, still within reach of the aim point", () => {
+    const sim = arena([spec("a", 0, vec2(530, 400), 1, bow()), spec("foe", 1, vec2(490, 400), 0)]);
     sim.requestAttack("a", "foe");
     for (let t = 0; t < 4 && sim.projectiles.length === 0; t += DT) {
       sim.step(DT);
     }
     expect(sim.projectiles.length).toBeGreaterThan(0);
     const before = health(sim, "foe");
-    sim.walkTo("foe", vec2(440, 400), 1);
+    sim.walkTo("foe", vec2(500, 400), 1);
     run(sim, 1);
     expect(get(sim, "foe").layer).toBe(1);
     expect(health(sim, "foe")).toBeLessThan(before);

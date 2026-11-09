@@ -1,5 +1,6 @@
 import {
   MatchSimulation,
+  applyIntent,
   TRAINING_SCENARIOS,
   baseEnergyPipsFor,
   scenarioParticipants,
@@ -36,7 +37,7 @@ function inside(
 }
 
 /** A chasing fireball dummy at `from`, the player standing at `to`; every step it takes until it stops. */
-function chase(from: Spot, to: Spot): readonly Spot[] {
+function chase(from: Spot, to: Spot, casts = true): readonly Spot[] {
   const [template] = scenarioParticipants(
     { ...scenario, dummies: scenario.dummies.filter(({ id }) => id === "under-bridge") },
     to,
@@ -63,13 +64,17 @@ function chase(from: Spot, to: Spot): readonly Spot[] {
           kind: "parallel",
           behaviours: [
             { kind: "chase", targeting: { kind: "nearest-enemy" }, standOffUnits: 250 },
-            {
-              kind: "cast-loop",
-              skillIds: ["elementalist.fireball"],
-              targeting: { kind: "nearest-enemy" },
-              gapSeconds: 0,
-              firstLegal: true,
-            },
+            ...(casts
+              ? [
+                  {
+                    kind: "cast-loop" as const,
+                    skillIds: ["elementalist.fireball"],
+                    targeting: { kind: "nearest-enemy" as const },
+                    gapSeconds: 0,
+                    firstLegal: true,
+                  },
+                ]
+              : []),
           ],
         },
       },
@@ -107,11 +112,67 @@ function expectClimbed(steps: readonly Spot[], layer: number): void {
 
 describe("the hunter on Training Heights (#2937)", () => {
   it("comes down a ramp after a player on the ground", () => {
-    expectClimbed(chase({ x: 450, y: 450, layer: 1 }, { x: 1180, y: 450, layer: 0 }), 0);
+    expectClimbed(chase({ x: 450, y: 450, layer: 1 }, { x: 1180, y: 450, layer: 0 }, false), 0);
   });
 
   it("goes up a ramp after a player on the bridge", () => {
-    expectClimbed(chase({ x: 1100, y: 450, layer: 0 }, { x: 450, y: 450, layer: 1 }), 1);
+    expectClimbed(chase({ x: 1100, y: 450, layer: 0 }, { x: 450, y: 450, layer: 1 }, false), 1);
+  });
+});
+
+/** A body at `from` ordered to walk to `to`; every step until it arrives. */
+function walk(from: Spot, to: Spot): readonly Spot[] {
+  const [template] = scenarioParticipants(scenario, to);
+  if (template === undefined) throw new Error("no dummies");
+  const simulation = new MatchSimulation({
+    seed: "heights",
+    teamCount: map.teams,
+    walls: allWallSegments(map.walls),
+    bounds: { width: map.width, height: map.height },
+    layers: matchLayers(map),
+    participants: [
+      {
+        ...template,
+        id: "you",
+        team: 0,
+        spawn: { x: from.x, y: from.y },
+        layer: from.layer,
+        behaviour: undefined,
+      },
+    ],
+  });
+  applyIntent(simulation, "you", { kind: "walk-to", x: to.x, y: to.y, layer: to.layer });
+  const steps: Spot[] = [];
+  for (let tick = 0; tick < 1800; tick += 1) {
+    simulation.step(1 / 30);
+    const { position, layer } = loaded(simulation.get("you"), "you");
+    steps.push({ x: position.x, y: position.y, layer });
+    if (Math.hypot(position.x - to.x, position.y - to.y) < 5 && layer === to.layer) break;
+  }
+  return steps;
+}
+
+describe("walking a ramp on Training Heights (#2972)", () => {
+  const bridge = { x: 420, y: 250, width: 360, height: 200 };
+  const onBridge = { x: 600, y: 350, layer: 1 };
+  const south = { x: 430, y: 560, layer: 0 };
+
+  const expectOutFromUnder = (steps: readonly Spot[], end: Spot): void => {
+    for (const step of steps) {
+      if (step.layer === 0) expect(inside(bridge, step)).toBe(false);
+    }
+    const last = loaded(steps.at(-1), "a step");
+    expect(Math.hypot(last.x - end.x, last.y - end.y)).toBeLessThan(5);
+    expect(last.layer).toBe(end.layer);
+    expect(steps.some((step) => step.x <= 321 || step.x >= 879)).toBe(true);
+  };
+
+  it("walks the whole ramp down from the bridge, never under its deck", () => {
+    expectOutFromUnder(walk(onBridge, south), south);
+  });
+
+  it("walks the whole ramp up to the bridge, never under its deck", () => {
+    expectOutFromUnder(walk(south, onBridge), onBridge);
   });
 });
 

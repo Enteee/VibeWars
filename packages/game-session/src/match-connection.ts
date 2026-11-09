@@ -252,6 +252,8 @@ export interface ProjectileSnapshot {
   readonly skillId: string | undefined;
   readonly from: { readonly x: number; readonly y: number };
   readonly to: { readonly x: number; readonly y: number };
+  readonly fromLayer: number;
+  readonly toLayer: number;
   readonly launchedAt: number;
   readonly flightSeconds: number;
 }

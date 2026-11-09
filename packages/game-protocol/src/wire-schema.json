@@ -7890,6 +7890,7 @@
             ]
           }
         },
+        { "name": "fromLayer", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "number" },
         { "name": "launchedAt", "optional": false, "type": "number" },
         { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -7902,7 +7903,8 @@
               { "name": "y", "optional": false, "type": "number" }
             ]
           }
-        }
+        },
+        { "name": "toLayer", "optional": false, "type": "number" }
       ]
     },
     "WireProposalBuild": {
@@ -8371,6 +8373,7 @@
                     ]
                   }
                 },
+                { "name": "fromLayer", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "number" },
                 { "name": "launchedAt", "optional": false, "type": "number" },
                 { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -8383,7 +8386,8 @@
                       { "name": "y", "optional": false, "type": "number" }
                     ]
                   }
-                }
+                },
+                { "name": "toLayer", "optional": false, "type": "number" }
               ]
             }
           }
@@ -8837,6 +8841,7 @@
                     ]
                   }
                 },
+                { "name": "fromLayer", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "number" },
                 { "name": "launchedAt", "optional": false, "type": "number" },
                 { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -8849,7 +8854,8 @@
                       { "name": "y", "optional": false, "type": "number" }
                     ]
                   }
-                }
+                },
+                { "name": "toLayer", "optional": false, "type": "number" }
               ]
             }
           }
