@@ -234,8 +234,7 @@ los muertos de tu equipo se levantan en el santuario de tu base con salud y
 energía completas, aunque haya un enemigo ahí, salvo que su moral esté en el
 mínimo. El marcador cuenta atrás hasta la próxima oleada. Cada muerte cuesta
 moral, y un fantasma se levanta en la misma oleada, en su propio sitio. Saca **20
-puntos de ventaja** a todos los demás equipos, o elimina al otro equipo, para
-ganar al instante. Tras 8 minutos gana el equipo con más puntos; con los mismos
+puntos de ventaja** a todos los demás equipos para ganar al instante. Eliminar a un equipo no termina la partida. Tras 8 minutos gana el equipo con más puntos; con los mismos
 puntos, el que controle más santuarios, luego el equipo que estuvo el último por
 delante en solitario, y si ninguno lo estuvo nunca, es un empate. Las bajas no
 puntúan.
