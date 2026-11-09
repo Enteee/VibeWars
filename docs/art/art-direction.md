@@ -1479,7 +1479,7 @@ slash): Strudel does not derive it from the map's URL.
 | ----------- | --------------------------------------------------------- | ------------------------------ |
 | atmospheric | Open fifths, harp with strings or flute, long reverb      | first-light, jungle-veil       |
 | melancholy  | Low strings, sparse harp, minor, lots of air              | ashen-fields                   |
-| adventurous | Horn call, striding bass, frame drum, tin whistle         | northern-pass                  |
+| adventurous | Horn call, striding bass, frame drum, tin whistle         | northern-pass, vibe-wars       |
 | mysterious  | Odd-length phrases, pizzicato, breathy flute, drones      | jungle-veil, glass-dunes       |
 | epic        | Choir, timpani, brass melody, big open voicings           | hall-of-champions, glass-dunes |
 | action      | Driving drums, string ostinato in sixteenths, short brass | clash-of-banners, ember-deep   |

@@ -50,6 +50,8 @@ export interface PlayerSnapshot {
   readonly y: number;
   /** Where the player faces, radians, `atan2` convention, 0 = +x (#187). */
   readonly facing: number;
+  /** The discrete layer it stands on (ADR-0051): how the renderer lifts and orders it. */
+  readonly layer: number;
   /** Who this player is targeting, or `undefined` for no target. */
   readonly targetSessionId: string | undefined;
   /** Who this player is attacking with their weapon, or `undefined` (#160). */

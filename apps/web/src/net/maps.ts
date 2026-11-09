@@ -50,6 +50,7 @@ import {
   type GateDescriptor,
 } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
+import { FLAT_STRUCTURE, type MapStructure } from "../render/arena-snapshot.js";
 import { TRAINING_MAPS } from "../training/maps.js";
 
 /**
@@ -88,7 +89,7 @@ export const ARENA_MAPS: readonly MapData[] = [
   hallOfHeroesKing,
   hallOfHeroesRelic,
   hallOfHeroesCapture,
-  // The Heroes' Ascent's own (#2694): a Hosted Game's pick until the progression places it.
+  // The Heroes' Ascent's own (#2694), and a Hosted Game's pick.
   barrowField,
   // The Heroes' Ascent's own (#2693): a Hosted Game's pick until the progression places them.
   hollowDeep,
@@ -118,7 +119,13 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
   {
     "random-arena": undefined,
     "team-arena": ["annihilation", "kill-count", "priest-annihilation"],
-    "heroes-ascent": ["relic-run", "king-of-the-hill", "capture-points"],
+    "heroes-ascent": [
+      "annihilation",
+      "priest-annihilation",
+      "relic-run",
+      "king-of-the-hill",
+      "capture-points",
+    ],
     gvg: ["guild-battle"],
     "hosted-game": undefined,
   };
@@ -163,9 +170,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
   return {
     "random-arena": of("random-arena"),
     "team-arena": of("team-arena"),
-    "heroes-ascent": of("heroes-ascent", teamSizeOf("heroes-ascent")).filter(
-      (id) => !ASCENT_FINALE_ONLY.includes(id),
-    ),
+    "heroes-ascent": ASCENT_PROGRESSION.filter((id) => !ASCENT_FINALE_ONLY.includes(id)),
     gvg: of("gvg", teamSizeOf("gvg")),
     "hosted-game": of("hosted-game"),
   };
@@ -209,12 +214,21 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
 }
 
 /**
- * Heroes' Ascent's rounds in order (#1996), one map each, `ASCENT_ROUNDS`
- * of them: a side that wins moves on to the next, up to the Hall.
+ * Heroes' Ascent's run in order (#1996, #2686), one map each: a side that
+ * wins moves on to the next, up to the Hall, and a loss ends the run.
+ * GW1's order is Elite Zaishen Battle, The Underworld, Fetid River,
+ * Burial Mounds, Unholy Temples, Forgotten Shrines, Golden Gates, The
+ * Courtyard, Antechamber, (The Vault,) Hall of Heroes. A map not built
+ * yet is absent until its card adds it, and cinder-sanctum stands in for
+ * Unholy Temples (#2695). Never longer than `ASCENT_ROUNDS`.
  */
 export const ASCENT_PROGRESSION: readonly string[] = [
+  "hollow-deep",
+  "blackwater-ford",
+  "barrow-field",
+  // Unholy Temples' slot.
   "cinder-sanctum",
-  "scarred-earth",
+  "mosslit-cairns",
   "the-courtyard",
   "hall-of-heroes-king",
 ];
@@ -293,6 +307,38 @@ export function mapMode(mapId: string): MatchMode {
 export function mapShrines(mapId: string, teamCount: number): readonly MapShrine[] {
   const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
   return shrinesOf(seatedObjectives(map?.objectives ?? [], teamCount));
+}
+
+/** A map's floors, and each wall's layer in the order of its `walls` (ADR-0051). */
+export interface LoadedStructure {
+  readonly structure: MapStructure;
+  readonly wallLayers: readonly number[];
+}
+
+/** What the renderer needs of a map's layers, from its file. */
+export function structureOf(map: MapData): LoadedStructure {
+  return {
+    structure:
+      map.layers === 1
+        ? FLAT_STRUCTURE
+        : { layerCount: map.layers, decks: map.decks, transitions: map.transitions },
+    wallLayers: map.walls.map((wall) => wall.layer),
+  };
+}
+
+/** A map the client has no file for has one layer, as the rest of this file assumes. */
+const NO_STRUCTURE: LoadedStructure = { structure: FLAT_STRUCTURE, wallLayers: [] };
+const structures = new Map<string, LoadedStructure>();
+
+/** `structureOf` by map id, one object per map: the scene redraws when it changes. */
+export function mapStructure(mapId: string): LoadedStructure {
+  let known = structures.get(mapId);
+  if (known === undefined) {
+    const map = ARENA_MAPS.find((candidate) => candidate.id === mapId) ?? TRAINING_MAPS.get(mapId);
+    known = map === undefined ? NO_STRUCTURE : structureOf(map);
+    structures.set(mapId, known);
+  }
+  return known;
 }
 
 function gateDescriptor(gate: MapData["gates"][number]): GateDescriptor {

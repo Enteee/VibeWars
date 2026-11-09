@@ -16,6 +16,7 @@ const CALLED: RenderableActor = {
   bot: false,
   position: CENTRE,
   facing: 0,
+  layer: 0,
   weaponId: undefined,
   swingElapsed: 0,
   swingTotal: 0,

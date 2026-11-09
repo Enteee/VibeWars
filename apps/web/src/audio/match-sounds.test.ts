@@ -21,6 +21,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     x: 0,
     y: 0,
     facing: 0,
+    layer: 0,
     targetSessionId: undefined,
     attackTargetSessionId: undefined,
     walking: false,

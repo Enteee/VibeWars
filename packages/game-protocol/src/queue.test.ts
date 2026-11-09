@@ -70,7 +70,7 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
   it.each<[string, unknown]>([
     ["a Heroes' Ascent side with no round (#1996)", { ...LONE_HERO, ascentRound: null }],
     ["a Heroes' Ascent side past the Hall", { ...LONE_HERO, ascentRound: ASCENT_ROUNDS }],
-    ["a Heroes' Ascent side at round 7", { ...LONE_HERO, ascentRound: 7 }],
+    ["a Heroes' Ascent side far past the Hall", { ...LONE_HERO, ascentRound: 12 }],
     ["a negative round", { ...LONE_HERO, ascentRound: -1 }],
     ["a fractional round", { ...LONE_HERO, ascentRound: 1.5 }],
     ["a round as text", { ...LONE_HERO, ascentRound: "1" }],

@@ -46,6 +46,7 @@ function self(cast: Partial<PlayerSnapshot>): PlayerSnapshot {
     x: 0,
     y: 0,
     facing: 0,
+    layer: 0,
     targetSessionId: undefined,
     attackTargetSessionId: undefined,
     walking: false,

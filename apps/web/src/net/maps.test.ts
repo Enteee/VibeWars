@@ -135,10 +135,12 @@ describe("team sizes (#2108)", () => {
       }
     }
     expect(modeMapIds()["heroes-ascent"]).toEqual([
+      "hollow-deep",
+      "blackwater-ford",
+      "barrow-field",
       "cinder-sanctum",
-      "broken-tower",
+      "mosslit-cairns",
       "the-courtyard",
-      "scarred-earth",
     ]);
   });
 
@@ -261,7 +263,7 @@ describe("the Hall of Heroes (#1995)", () => {
     for (const id of HALL_OF_HEROES_MAPS) {
       expect(modeMapIds()["heroes-ascent"]).not.toContain(id);
     }
-    expect(queueMapPool("heroes-ascent", ASCENT_ROUNDS - 1)).toEqual([
+    expect(queueMapPool("heroes-ascent", ASCENT_PROGRESSION.length - 1)).toEqual([
       "hall-of-heroes-king",
       "hall-of-heroes-relic",
       "hall-of-heroes-capture",
@@ -297,22 +299,28 @@ describe("queueMapPool (#1766)", () => {
       ),
     );
     expect(() => queueMapPool("heroes-ascent", null)).toThrow();
-    expect(() => queueMapPool("heroes-ascent", ASCENT_ROUNDS)).toThrow();
+    expect(() => queueMapPool("heroes-ascent", ASCENT_PROGRESSION.length)).toThrow();
   });
 });
 
 describe("the Heroes' Ascent progression (#1996)", () => {
-  it("is four rounds: Relic Run, Capture Points, King of the Hill, then the Hall", () => {
-    expect(ASCENT_PROGRESSION).toHaveLength(ASCENT_ROUNDS);
+  it("is the maps built so far in GW1's order, the stand-ins in their slots (#2686)", () => {
+    expect(ASCENT_PROGRESSION.length).toBeLessThanOrEqual(ASCENT_ROUNDS);
     expect(ASCENT_PROGRESSION.map((id) => [id, hostMap(id)?.mode])).toEqual([
+      ["hollow-deep", "annihilation"],
+      ["blackwater-ford", "priest-annihilation"],
+      ["barrow-field", "priest-annihilation"],
       ["cinder-sanctum", "relic-run"],
-      ["scarred-earth", "capture-points"],
+      ["mosslit-cairns", "capture-points"],
       ["the-courtyard", "king-of-the-hill"],
       ["hall-of-heroes-king", "king-of-the-hill"],
     ]);
     expect(ASCENT_PROGRESSION.map((_, round) => mapName(ascentMapId(round)))).toEqual([
+      "The Hollow Deep",
+      "Blackwater Ford",
+      "Barrow Field",
       "Cinder Sanctum",
-      "Scarred Earth",
+      "Mosslit Cairns",
       "The Courtyard",
       "Hall of Heroes",
     ]);

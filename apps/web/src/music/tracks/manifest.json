@@ -98,5 +98,15 @@
     "colour": [],
     "layers": 2,
     "phraseCycles": 4
+  },
+  {
+    "id": "vibe-wars",
+    "title": "VibeWars",
+    "moods": ["adventurous", "epic"],
+    "bpm": 100,
+    "key": "E aeolian",
+    "colour": ["D#"],
+    "layers": 1,
+    "phraseCycles": 4
   }
 ]

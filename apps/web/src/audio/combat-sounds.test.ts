@@ -193,6 +193,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     x: 0,
     y: 0,
     facing: 0,
+    layer: 0,
     targetSessionId: undefined,
     attackTargetSessionId: undefined,
     walking: false,

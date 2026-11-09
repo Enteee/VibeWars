@@ -6,7 +6,7 @@ import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { keySignet } from "../identity/key-signet.js";
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
-import { ascentMapId, isHallsMap, mapMatchRules } from "../net/maps.js";
+import { ASCENT_PROGRESSION, isHallsMap, mapMatchRules } from "../net/maps.js";
 import { button, h, readyButton, toast, type ShareLine } from "./kit.js";
 import { relayLine, relaySharedByLine, relaySharingText } from "./relay-section.js";
 import {
@@ -248,9 +248,11 @@ export function lobbyPanel(
   // else sees it as a label rather than a control they would be refused
   // on clicking. Team Arena draws its own at the start.
   // A party queued in Heroes' Ascent is bound for its round's map, not
-  // the lobby's (#1996).
+  // the lobby's (#1996). A host's round with no map yet is wrong data: the
+  // lobby's map is shown (#2686).
   const shownMapId =
-    snapshot.ascentRound === null ? snapshot.mapId : ascentMapId(snapshot.ascentRound);
+    (snapshot.ascentRound === null ? undefined : ASCENT_PROGRESSION[snapshot.ascentRound]) ??
+    snapshot.mapId;
   const current = availableMaps.find((map) => map.id === shownMapId);
   let mapPart: HTMLElement;
   // The host lists only the maps made for the lobby's team size (#2104).
