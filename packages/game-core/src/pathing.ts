@@ -9,7 +9,7 @@ import {
   type Polygon,
   type Segment,
 } from "./geometry.js";
-import { add, distance, scale, sub, vec2, type Vec2 } from "./vec2.js";
+import { add, distance, normalize, scale, sub, vec2, type Vec2 } from "./vec2.js";
 
 /**
  * Paths around walls, for the weapon attack's approach (#211, ADR-0026).
@@ -667,7 +667,36 @@ export interface NavTransition {
  * At most this much, still inside the band where a body changes layer.
  */
 const RAMP_WAYPOINT_LEAST_INSET = 0.05;
-const RAMP_WAYPOINT_MOST_INSET = 0.14;
+export const RAMP_WAYPOINT_MOST_INSET = 0.14;
+
+/**
+ * The shortest a ramp may be, going uphill, for a body of `clearance` to
+ * route over it: any shorter and `RAMP_WAYPOINT_MOST_INSET` holds its
+ * waypoints on its outline wall (#2995).
+ */
+export function minRampLength(clearance: number): number {
+  return (clearance + 1) / RAMP_WAYPOINT_MOST_INSET;
+}
+
+/** From a ramp's `area` towards the nearest edge of any of `decks`, the ones it climbs to. */
+export function rampUphill(area: Polygon, decks: readonly Polygon[]): Vec2 {
+  const foot = polygonCentre(area);
+  let nearest = foot;
+  let least = Number.POSITIVE_INFINITY;
+  for (const deck of decks) {
+    const edge = closestPointOnPolygon(foot, deck);
+    if (distance(foot, edge) < least) {
+      least = distance(foot, edge);
+      nearest = edge;
+    }
+  }
+  return normalize(sub(nearest, foot));
+}
+
+/** How long a ramp's `area` is, going `uphill`. */
+export function rampLength(area: Polygon, uphill: Vec2): number {
+  return distance(pointAlong(area, uphill, 0), pointAlong(area, uphill, 1));
+}
 
 /** Finds paths over a map's layers, reusing its own scratch from one query to the next. */
 export interface LayeredPathFinder {
@@ -838,7 +867,7 @@ class AStar implements LayeredPathFinder {
       this.#edges[near]?.push(far);
       this.#edges[far]?.push(near);
       if (uphill !== undefined) {
-        const length = distance(pointAlong(area, uphill, 0), pointAlong(area, uphill, 1));
+        const length = rampLength(area, uphill);
         const inset = Math.min(
           Math.max(RAMP_WAYPOINT_LEAST_INSET, (clearance + 1) / length),
           RAMP_WAYPOINT_MOST_INSET,

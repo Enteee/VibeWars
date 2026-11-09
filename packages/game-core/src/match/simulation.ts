@@ -15,7 +15,6 @@ import {
   hasLineOfSight,
   closestPointOnPolygon,
   pointInPolygon,
-  polygonCentre,
   progressAlong,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
@@ -76,6 +75,7 @@ import {
   navGraphFor,
   isStandable,
   nearestStandable,
+  rampUphill,
   type GatedNavGraph,
   type LayeredPathFinder,
   type NavGraph,
@@ -1049,19 +1049,14 @@ function walkableAreas(layers: MatchLayers | undefined): readonly (readonly Poly
 
 /** From each ramp towards the nearest edge of a deck it climbs to. */
 function uphillDirections(layers: MatchLayers | undefined): readonly Vec2[] {
-  return (layers?.transitions ?? []).map((transition) => {
-    const foot = polygonCentre(transition.area);
-    let nearest = foot;
-    let least = Number.POSITIVE_INFINITY;
-    for (const deck of layers?.decks ?? []) {
-      const edge = closestPointOnPolygon(foot, deck.footprint);
-      if (deck.layer === transition.to && distance(foot, edge) < least) {
-        least = distance(foot, edge);
-        nearest = edge;
-      }
-    }
-    return normalize(sub(nearest, foot));
-  });
+  return (layers?.transitions ?? []).map((transition) =>
+    rampUphill(
+      transition.area,
+      (layers?.decks ?? [])
+        .filter((deck) => deck.layer === transition.to)
+        .map((deck) => deck.footprint),
+    ),
+  );
 }
 
 /** How far along a ramp a body must walk before it is on the other layer (#2972). */
