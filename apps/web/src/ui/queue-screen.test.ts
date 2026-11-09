@@ -121,8 +121,8 @@ describe("nextStreak (#881)", () => {
 describe("nextAscentRound (#1996)", () => {
   it("moves on with a win, to the Hall and no further", () => {
     expect(nextAscentRound(0, "win")).toBe(1);
-    expect(nextAscentRound(5, "win")).toBe(6);
-    expect(nextAscentRound(6, "win")).toBe(6);
+    expect(nextAscentRound(6, "win")).toBe(7);
+    expect(nextAscentRound(7, "win")).toBe(7);
   });
 
   it("starts again at the first after a defeat or a forfeit, and stands when the host left", () => {
@@ -210,11 +210,11 @@ describe("teamEndAction and teamEndLine (#1997)", () => {
       text: "Ascending to Blackwater Ford in 20 s",
       button: "Leave",
     });
-    expect(teamEndLine("requeue", 20, 5)).toEqual({
+    expect(teamEndLine("requeue", 20, 6)).toEqual({
       text: "Ascending to Hall of Heroes in 20 s",
       button: "Leave",
     });
-    expect(teamEndLine("requeue", 5, 6)).toEqual({
+    expect(teamEndLine("requeue", 5, 7)).toEqual({
       text: "You hold the Hall of Heroes · defending in 5 s",
       button: "Leave",
     });
