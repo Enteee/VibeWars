@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Langsam: Deine letzten Zeilen wurden nicht gesendet.",
   "app.cloned": "{team} geklont{missing}",
   "app.couldNotImport": "Import fehlgeschlagen",
+  "app.couldNotSaveCharacter": "Der Charakter konnte nicht gespeichert werden",
   "app.couldNotSaveTeam": "Team konnte nicht gespeichert werden",
   "app.framedRelayLink": "Öffne den Relay-Link in einem eigenen Tab. Es wurde nichts gespeichert.",
   "app.inviteInLobby": "Geh zurück ins Menü und öffne den Einladungslink dann noch einmal.",
@@ -640,6 +641,8 @@ export default {
   "lobby.modePriestAnnihilation": "Priestervernichtung: Besiege alle Gegner und ihren Priester",
   "lobby.modeRelicRun":
     "Reliktlauf: Trage dein Relikt zum Altar. Die meisten Punkte in 8 Minuten gewinnen.",
+  "lobby.modeRelicRunFoe":
+    "Reliktlauf: Trage das Relikt des Gegners zu deinem Geisterhelden. 3 Punkte Vorsprung gewinnen; nach 8 Minuten die meisten Punkte.",
   "lobby.notReady": "Nicht bereit",
   "lobby.playBots": "Gegen Bots spielen",
   "lobby.ready": "Bereit",

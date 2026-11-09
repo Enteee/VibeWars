@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Sænk farten: dine seneste linjer blev ikke sendt.",
   "app.cloned": "{team} klonet{missing}",
   "app.couldNotImport": "Kunne ikke importere",
+  "app.couldNotSaveCharacter": "Figuren kunne ikke gemmes",
   "app.couldNotSaveTeam": "Kunne ikke gemme holdet",
   "app.framedRelayLink": "Åbn relay-linket i sin egen fane. Intet blev gemt.",
   "app.inviteInLobby": "Gå tilbage til menuen, og åbn invitationslinket igen.",
@@ -634,6 +635,8 @@ export default {
   "lobby.modePriestAnnihilation": "Præsteudslettelse: besejr alle fjender og deres præst",
   "lobby.modeRelicRun":
     "Relikvieløb: bær din relikvie til alteret. Flest point på 8 minutter vinder.",
+  "lobby.modeRelicRunFoe":
+    "Relikvieløb: bær fjendens relikvie til din Spøgelseshelt. 3 points forspring vinder; efter 8 minutter vinder flest point.",
   "lobby.notReady": "Ikke klar",
   "lobby.playBots": "Spil mod bots",
   "lobby.ready": "Klar",

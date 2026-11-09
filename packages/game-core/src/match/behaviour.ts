@@ -9,7 +9,7 @@ import type { CapturePoint } from "./capture-points.js";
 import type { Gate } from "./gates.js";
 import type { CarriedSpawn } from "./carried.js";
 import { MASTERLESS_TEAM } from "./minions.js";
-import type { RelicState } from "./relics.js";
+import type { RelicCarry, RelicState } from "./relics.js";
 import type { Participant } from "./simulation.js";
 
 /**
@@ -303,6 +303,8 @@ export interface BotObjectives {
   readonly relics: readonly RelicState[];
   /** Where each team's relic lies at rest (#2581); `[]` in any other mode. */
   readonly relicSpawns: readonly CarriedSpawn[];
+  /** Whose relic a team carries (#2695); `"own"` in any other mode. */
+  readonly relicCarry: RelicCarry;
   /**
    * The altar relics are run to (#2581) or Ghostly Heroes claim (#2582);
    * `undefined` in any other mode.
@@ -319,6 +321,7 @@ export const NO_OBJECTIVES: BotObjectives = {
   capturePoints: [],
   relics: [],
   relicSpawns: [],
+  relicCarry: "own",
   altar: undefined,
   altarHolder: null,
   gates: [],

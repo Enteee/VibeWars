@@ -16,7 +16,9 @@ import { FLAG_REACH_UNITS } from "./flags.js";
 /**
  * Heroes' Ascent's Relic Run (#1374, GW1): each team has one relic in
  * its base; a member carries it onto the altar in the centre to score a
- * point. A foe who reaches it lying on the ground sends it home.
+ * point. A foe who reaches it lying on the ground sends it home. On a
+ * map of the other variant (#2695, GW1) a team carries the foe's relic
+ * to its own Ghostly Hero instead, and sends its own home.
  *
  * Pure, as `flags.ts` is: the simulation walks the players and says who
  * arrived, scored, dropped or died; this decides where every relic is
@@ -26,9 +28,16 @@ import { FLAG_REACH_UNITS } from "./flags.js";
 /** How near a carrier comes to the altar to score: as near as a flag is reached. */
 export const ALTAR_REACH_UNITS = FLAG_REACH_UNITS;
 
-/** A Relic Run map's objectives: one altar, one `relic-spawn` per team. */
+/** Where a relic is carried to score, by map (#2695). */
+export type RelicTarget = "altar" | "own-ghost";
+/** Whose relic a team carries, by map (#2695); the other side's it sends home. */
+export type RelicCarry = "own" | "foe";
+
+/** A Relic Run map's objectives: one `relic-spawn` per team, and its altar if it scores there. */
 export interface RelicField {
-  readonly altar: Vec2;
+  readonly altar: Vec2 | undefined;
+  readonly relicTarget: RelicTarget;
+  readonly relicCarry: RelicCarry;
   readonly spawns: readonly CarriedSpawn[];
 }
 
@@ -47,7 +56,9 @@ export type RelicRefusal = "no-target" | "not-your-relic" | "hands-full";
  * on the altar scoring, a carrier dropping it, or a player arriving.
  */
 export type RelicAction =
-  { readonly kind: "score"; readonly carrierId: string } | CarriedDrop | CarriedArrival;
+  | { readonly kind: "score"; readonly carrierId: string; readonly team: number }
+  | CarriedDrop
+  | CarriedArrival;
 
 export interface RelicStep {
   readonly state: RelicsState;
@@ -80,7 +91,12 @@ export function carriedRelic(
 
 /** Whether `position` is on the altar: near enough for a carrier to score. */
 export function onAltar(field: RelicField, position: Vec2): boolean {
-  return distance(position, field.altar) <= ALTAR_REACH_UNITS;
+  return field.altar !== undefined && distance(position, field.altar) <= ALTAR_REACH_UNITS;
+}
+
+/** Whether `team` carries `relicTeam`'s relic where its map's `carry` says so, rather than sending it home. */
+export function carriesRelic(carry: RelicCarry, relicTeam: number, team: number): boolean {
+  return (relicTeam === team) === (carry === "own");
 }
 
 /**
@@ -98,9 +114,9 @@ export function relicTargetPosition(
 
 /**
  * Why a member of `team`, `playerId`, may not walk to `targetId` and
- * take up or return a relic there now, or `undefined` if they may: their
- * own wherever it lies; a foe's only on the ground, never at its spawn,
- * and only with empty hands.
+ * take up or return a relic there now, or `undefined` if they may: one
+ * their team carries wherever it lies, with empty hands; one it sends
+ * home only on the ground, never at its spawn, and with empty hands.
  */
 export function relicRefusal(
   field: RelicField,
@@ -112,11 +128,11 @@ export function relicRefusal(
   if (relicTargetPosition(field, state.relics, targetId) === undefined) {
     return "no-target";
   }
-  if (relicTeamOf(targetId) === team) {
-    return undefined;
-  }
   const relic = state.relics.find((each) => relicId(each.team) === targetId);
-  if (relic?.place.kind !== "ground") {
+  if (
+    relic === undefined ||
+    (!carriesRelic(field.relicCarry, relic.team, team) && relic.place.kind !== "ground")
+  ) {
     return "not-your-relic";
   }
   return carriedRelic(state.relics, playerId) === undefined ? undefined : "hands-full";
@@ -128,21 +144,21 @@ function interact(field: RelicField, state: RelicsState, action: CarriedArrival)
   if (relicRefusal(field, state, playerId, team, targetId) !== undefined) {
     return state;
   }
-  // Your own is taken up; a foe's, lying, goes home at once.
+  // One your team carries is taken up; the other, lying, goes home at once.
   return {
     relics: state.relics.map((relic) => {
       if (relicId(relic.team) !== targetId) {
         return relic;
       }
-      return relic.team === team
-        ? { team, place: { kind: "carried", carrierId: playerId } }
+      return carriesRelic(field.relicCarry, relic.team, team)
+        ? { team: relic.team, place: { kind: "carried", carrierId: playerId } }
         : { team: relic.team, place: AT_SPAWN };
     }),
   };
 }
 
-/** A carrier's score: their relic goes home, and their team has a point. */
-function score(state: RelicsState, carrierId: string): RelicStep {
+/** A carrier's score: the relic goes home, and their `team` has a point. */
+function score(state: RelicsState, carrierId: string, team: number): RelicStep {
   const relic = carriedRelic(state.relics, carrierId);
   if (relic === undefined) {
     return { state, scored: [] };
@@ -153,7 +169,7 @@ function score(state: RelicsState, carrierId: string): RelicStep {
         each === relic ? { team: each.team, place: AT_SPAWN } : each,
       ),
     },
-    scored: [relic.team],
+    scored: [team],
   };
 }
 
@@ -173,7 +189,7 @@ export function stepRelics(
   for (const action of actions) {
     switch (action.kind) {
       case "score": {
-        const step = score(next, action.carrierId);
+        const step = score(next, action.carrierId, action.team);
         next = step.state;
         scored.push(...step.scored);
         break;

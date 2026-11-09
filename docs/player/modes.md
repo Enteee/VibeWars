@@ -143,6 +143,18 @@ relic only to fight a foe that comes within spell range.
 Broken Tower plays it: the altar stands inside a ruined tower with a
 doorway on each side.
 
+### Cinder Sanctum
+
+Heroes' Ascent's Relic Run is played the other way round here. Each base
+holds its team's relic and its Ghostly Hero, and there is no altar. **Take
+the foe's relic from their base and bring it to your own Ghostly Hero**
+for a point. The ghost must be alive, and it stays at its post. You cannot
+carry your own relic: picking it up where it fell sends it home. A team
+**3 points ahead wins at once**. At 8 minutes the most points win, and a
+tie goes to the last team to score. Each base raises its dead, and its
+ghost, every 2 minutes. Bots go for the foe's relic together and bring it
+home.
+
 ## King of the Hill
 
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
@@ -311,8 +323,8 @@ skips the wait, or, for winners, leaves without queueing.
 
 ## Heroes' Ascent
 
-A queued Heroes' Ascent is four rounds, always in this order: Broken
-Tower (Relic Run), Scarred Earth (Capture Points), The Courtyard (King
+A queued Heroes' Ascent is four rounds, always in this order: Cinder
+Sanctum (Relic Run), Scarred Earth (Capture Points), The Courtyard (King
 of the Hill), then the Hall of Heroes. The Lobby window says where
 you are while you look for a team: `Round 2 of 4 · Scarred Earth`.
 You only ever meet a team at the same round, and you wait for one as
@@ -383,8 +395,7 @@ the name), two teams or three, the winner underlined, and the map,
 duration and when. Every row is marked **host-reported**. Click one to
 see the teams, one tab each, the winner's first: the team card. **Clone** copies a team from
 a finished match into your Team Builds, each player's build under
-their name, and opens it. A 1v1 side has no Clone: a Team Build is 2, 4
-or 8.
+their name, and opens it. On a 1v1 side, Clone saves the player's build as a new character and opens that, because a Team Build is 2, 4 or 8.
 
 Each row starts with its mode's icon, and the icon and the row's left
 edge are in the mode's colour: orange Random, blue Team, gold Ascent,

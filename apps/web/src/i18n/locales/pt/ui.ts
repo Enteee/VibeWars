@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Calma: suas últimas mensagens não foram enviadas.",
   "app.cloned": "Clonado: {team}{missing}",
   "app.couldNotImport": "Não foi possível importar",
+  "app.couldNotSaveCharacter": "Não foi possível salvar o personagem",
   "app.couldNotSaveTeam": "Não foi possível salvar a equipe",
   "app.framedRelayLink": "Abra o link do relay em uma aba própria. Nada foi salvo.",
   "app.inviteInLobby": "Volte ao menu e abra o link de convite de novo.",
@@ -673,6 +674,8 @@ export default {
     "Aniquilação de Sacerdotes: derrote todos os inimigos e o sacerdote deles",
   "lobby.modeRelicRun":
     "Corrida da Relíquia: leve sua relíquia ao altar. Mais pontos em 8 minutos vence.",
+  "lobby.modeRelicRunFoe":
+    "Corrida da Relíquia: leve a relíquia inimiga ao seu Herói Fantasmagórico. 3 pontos de vantagem vencem; após 8 minutos, mais pontos vencem.",
   "lobby.notReady": "Não pronto",
   "lobby.playBots": "Jogar contra bots",
   "lobby.ready": "Pronto",

@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Doucement : tes derniers messages n'ont pas été envoyés.",
   "app.cloned": "Cloné : {team}{missing}",
   "app.couldNotImport": "Import impossible",
+  "app.couldNotSaveCharacter": "Impossible d'enregistrer le personnage",
   "app.couldNotSaveTeam": "Impossible d'enregistrer l'équipe",
   "app.framedRelayLink": "Ouvre le lien du relais dans son propre onglet. Rien n'a été enregistré.",
   "app.inviteInLobby": "Reviens au menu, puis rouvre le lien d'invitation.",
@@ -674,6 +675,8 @@ export default {
     "Annihilation de prêtre : élimine tous les ennemis et leur prêtre",
   "lobby.modeRelicRun":
     "Course aux reliques : porte ta relique à l'autel. Le plus de points en 8 minutes l'emporte.",
+  "lobby.modeRelicRunFoe":
+    "Course aux reliques : porte la relique ennemie à ton Héros fantomatique. 3 points d'avance l'emportent ; après 8 minutes, le plus de points.",
   "lobby.notReady": "Pas prêt",
   "lobby.playBots": "Jouer contre des bots",
   "lobby.ready": "Prêt",

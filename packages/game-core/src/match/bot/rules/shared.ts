@@ -11,6 +11,7 @@ import { distance, ZERO, type Vec2 } from "../../../vec2.js";
 import type { BehaviourIntent, Reaction } from "../../behaviour.js";
 import type { BehaviourContext } from "../../behaviour.js";
 import { FLAG_REACH_UNITS } from "../../flags.js";
+import { ghostId } from "../../ghost.js";
 import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
 import { roleOf } from "../role.js";
@@ -96,6 +97,16 @@ export function spiritUp(context: BehaviourContext, self: Participant, skill: Sk
         ? creature.ownerId === self.id
         : combatant.team === self.combatant.team && distance(position, self.position) <= radius),
   );
+}
+
+/** Where `self` walks a relic to score (#2695): the altar, or its team's Ghostly Hero; `undefined` with no relics to run. */
+export function relicGoal(context: BehaviourContext, self: Participant): Vec2 | undefined {
+  const { altar, relics } = context.objectives;
+  if (altar !== undefined || relics.length === 0) {
+    return altar;
+  }
+  const id = ghostId(self.combatant.team);
+  return context.participants.find((participant) => participant.id === id)?.position;
 }
 
 /**

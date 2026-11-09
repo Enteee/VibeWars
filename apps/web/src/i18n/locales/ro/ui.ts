@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Mai încet: ultimele tale mesaje nu au fost trimise.",
   "app.cloned": "{team} clonată{missing}",
   "app.couldNotImport": "Importul a eșuat",
+  "app.couldNotSaveCharacter": "Personajul nu a putut fi salvat",
   "app.couldNotSaveTeam": "Echipa nu a putut fi salvată",
   "app.framedRelayLink": "Deschide linkul de releu într-o filă proprie. Nu s-a salvat nimic.",
   "app.inviteInLobby": "Întoarce-te la meniu, apoi deschide din nou linkul de invitație.",
@@ -676,6 +677,8 @@ export default {
   "lobby.modePriestAnnihilation": "Anihilare cu preot: învinge toți inamicii și preotul lor",
   "lobby.modeRelicRun":
     "Cursa relicvelor: du-ți relicva la altar. Câștigă cine are cele mai multe puncte în 8 minute.",
+  "lobby.modeRelicRunFoe":
+    "Cursa relicvelor: du relicva inamicului la Eroul tău Fantomatic. Câștigă un avans de 3 puncte; după 8 minute, cine are cele mai multe puncte.",
   "lobby.notReady": "Nepregătit",
   "lobby.playBots": "Joacă contra boților",
   "lobby.ready": "Gata",

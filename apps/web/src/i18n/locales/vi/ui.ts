@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Chậm lại nào: mấy dòng vừa rồi chưa được gửi.",
   "app.cloned": "Đã nhân bản {team}{missing}",
   "app.couldNotImport": "Không nhập được",
+  "app.couldNotSaveCharacter": "Không lưu được nhân vật",
   "app.couldNotSaveTeam": "Không lưu được đội",
   "app.framedRelayLink": "Hãy mở link relay trong tab riêng. Chưa có gì được lưu.",
   "app.inviteInLobby": "Hãy về menu rồi mở lại link mời.",
@@ -589,6 +590,8 @@ export default {
   "lobby.modePriestAnnihilation": "Diệt tư tế: hạ gục mọi địch và tư tế của chúng",
   "lobby.modeRelicRun":
     "Vận chuyển thánh tích: mang thánh tích tới tế đàn. Nhiều điểm nhất trong 8 phút sẽ thắng.",
+  "lobby.modeRelicRunFoe":
+    "Vận chuyển thánh tích: mang thánh tích của địch tới Anh hùng Ma của bạn. Dẫn trước 3 điểm sẽ thắng; sau 8 phút, nhiều điểm nhất sẽ thắng.",
   "lobby.notReady": "Chưa sẵn sàng",
   "lobby.playBots": "Đấu với bot",
   "lobby.ready": "Sẵn sàng",

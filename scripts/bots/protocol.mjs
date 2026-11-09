@@ -18,6 +18,7 @@
  */
 
 import { WORKDAY, clock, isProposalId, proposalName } from "./reboot.mjs";
+import { isSleepId } from "./hub-sleep.mjs";
 import { roleOf } from "./staff.mjs";
 
 /**
@@ -1180,6 +1181,71 @@ export function parseProposalNotice(raw) {
   return { proposalClosed, outcome, note };
 }
 
+/* -------------------------------------------------------------------------- */
+/* Hibernating the host: the operator may cancel (#2794)                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * @typedef {{ outcome: "cancelled" | "abandoned" | "slept", note: string, at: number }} SleepClosed
+ */
+
+/**
+ * The plan as it is posted in the Operator topic, or as it is edited once
+ * closed, which takes its button away. Host operations text, in English.
+ *
+ * @param {import("./hub-sleep.mjs").SleepPlan} plan
+ * @param {SleepClosed | null} [closed]
+ * @returns {Pick<Queued, "text" | "entities" | "replyMarkup">}
+ */
+export function formatSleepPlan(plan, closed = null) {
+  const at = (/** @type {number} */ seconds) => clock(seconds * 1000);
+  const text = `💤 Sleeping at ${at(plan.sleepAt)}, waking at ${at(plan.wakeAt)} for the reset at ${at(plan.reset)}`;
+  if (closed === null) {
+    return {
+      text,
+      entities: [],
+      replyMarkup: {
+        inline_keyboard: [[{ text: "Cancel", callback_data: `s:${plan.id}:cancel` }]],
+      },
+    };
+  }
+  const footer =
+    closed.outcome === "cancelled"
+      ? "Sleep cancelled"
+      : closed.outcome === "abandoned"
+        ? `Sleep abandoned: ${closed.note}`
+        : `Slept at ${clock(closed.at)}`;
+  return { text: `${text}\n${footer}`, entities: [] };
+}
+
+/**
+ * A system outbox entry about a sleep plan, or `null` if it is not one:
+ * `{ sleepPlan }` to post it, `{ sleepClosed, outcome, note }` to edit it.
+ *
+ * @param {unknown} raw
+ * @returns {{ sleepPlan: string }
+ *   | { sleepClosed: string, outcome: SleepClosed["outcome"], note: string }
+ *   | null}
+ */
+export function parseSleepNotice(raw) {
+  const entry = obj(raw);
+  if ("sleepPlan" in entry) {
+    return Object.keys(entry).length === 1 && isSleepId(entry.sleepPlan)
+      ? { sleepPlan: entry.sleepPlan }
+      : null;
+  }
+  const { sleepClosed, outcome, note } = entry;
+  return isSleepId(sleepClosed) &&
+    (outcome === "cancelled" || outcome === "abandoned" || outcome === "slept") &&
+    typeof note === "string"
+    ? { sleepClosed, outcome, note }
+    : null;
+}
+
+/**
+ * @typedef {{ plan: import("./hub-sleep.mjs").SleepPlan, messageId: number | null }} OpenSleepPlan
+ */
+
 /**
  * The open proposal as the sidecar knows it (#960): its posted message, and
  * why an approval would no longer apply, `null` if it would.
@@ -1223,6 +1289,7 @@ export function parseProposalNotice(raw) {
  * @param {{
  *   chatId: string, operatorId: number, operatorTopicId: number | null, now: number,
  *   proposal: OpenProposal | null,
+ *   sleepPlan?: OpenSleepPlan | null,
  * }} context `operatorId` is the operator's Telegram user id
  * @returns {{
  *   deliveries: { employee: string, line: InboxLine }[],
@@ -1230,6 +1297,7 @@ export function parseProposalNotice(raw) {
  *   paced: Omit<Queued, "topicId">[],
  *   answered: { n: number, question: Question } | null,
  *   decision: { id: string, decision: "approve" | "reject" } | null,
+ *   sleepCancel?: { id: string, reset: number },
  * } | null} `null` when the update is not for the Operator topic
  */
 export function routeAnswer(raw, store, context) {
@@ -1309,6 +1377,19 @@ export function routeAnswer(raw, store, context) {
           ack(stale === null ? undefined : `${proposalName(id)} no longer applies: ${stale}`),
         ],
         decision: { id, decision: decision === "approve" ? "approve" : "reject" },
+      };
+    }
+    const sleepTap =
+      typeof query.data === "string" ? /^s:([0-9a-f]{32}):cancel$/.exec(query.data) : null;
+    if (sleepTap !== null) {
+      const plan = context.sleepPlan;
+      if (plan?.plan.id !== sleepTap[1] || message.message_id !== plan.messageId) {
+        return { ...none, immediate: [ack("This sleep no longer applies")] };
+      }
+      return {
+        ...none,
+        immediate: [ack(undefined)],
+        sleepCancel: { id: plan.plan.id, reset: plan.plan.reset },
       };
     }
     const data = typeof query.data === "string" ? /^q:(\d+):(\d+)$/.exec(query.data) : null;
@@ -1431,6 +1512,7 @@ export function routeAnswer(raw, store, context) {
  *   buttons under the message
  * @property {number} [question] the Q number, whose message id must be recorded
  * @property {string} [proposal] the reboot proposal's id (#960), whose message id must be recorded
+ * @property {string} [sleepPlan] the sleep plan's id (#2794), whose message id must be recorded
  * @property {number} [edit] edit this message instead of sending a new one
  * @property {number} [replyTo] send as a reply to this message
  */

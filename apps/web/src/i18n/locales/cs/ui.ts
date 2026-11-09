@@ -5,6 +5,7 @@ export default {
   "app.chatThrottled": "Zpomal: poslední zprávy se neodeslaly.",
   "app.cloned": "Klonováno: {team}{missing}",
   "app.couldNotImport": "Import se nezdařil",
+  "app.couldNotSaveCharacter": "Postavu se nepodařilo uložit",
   "app.couldNotSaveTeam": "Tým se nepodařilo uložit",
   "app.framedRelayLink": "Otevři odkaz na relay ve vlastní kartě. Nic se neuložilo.",
   "app.inviteInLobby": "Vrať se do menu a otevři odkaz s pozvánkou znovu.",
@@ -695,6 +696,8 @@ export default {
   "lobby.modePriestAnnihilation": "Vyhlazení s knězem: poraz všechny nepřátele i jejich kněze",
   "lobby.modeRelicRun":
     "Běh s relikvií: odnes svou relikvii na oltář. Vyhrává nejvíc bodů za 8 minut.",
+  "lobby.modeRelicRunFoe":
+    "Běh s relikvií: odnes nepřátelskou relikvii ke svému Přízračnému hrdinovi. Vyhrává náskok 3 bodů, po 8 minutách nejvíc bodů.",
   "lobby.notReady": "Nepřipraven",
   "lobby.playBots": "Hrát proti botům",
   "lobby.ready": "Připraven",

@@ -154,6 +154,10 @@ arrive à portée de sort.
 Broken Tower le joue : l'autel se trouve dans une tour en ruine avec une porte
 de chaque côté.
 
+### Cinder Sanctum
+
+Ici, la Course aux reliques de l'Ascension des Héros se joue à l'envers. Chaque base abrite la relique de son équipe et son Héros fantomatique, et il n'y a pas d'autel. **Prenez la relique adverse dans sa base et apportez-la à votre propre Héros fantomatique** pour marquer un point. Le fantôme doit être vivant, et il reste à son poste. Vous ne pouvez pas porter votre propre relique : la ramasser là où elle est tombée la renvoie chez vous. Une équipe qui mène de **3 points gagne aussitôt**. Après 8 minutes, le plus de points l'emporte, et une égalité revient à la dernière équipe à avoir marqué. Chaque base relève ses morts, et son fantôme, toutes les 2 minutes. Les bots vont ensemble chercher la relique adverse et la ramènent.
+
 ## Roi de la colline
 
 **Mène ton Héros fantomatique sur l'autel, et tiens-le.** Chaque équipe a un
@@ -334,7 +338,7 @@ l'attente, ou, pour les gagnants, part sans repartir en file.
 ## Ascension des héros
 
 Une Ascension des héros en file se joue en quatre manches, toujours dans cet
-ordre : Broken Tower (Course aux reliques), Scarred Earth (Points de capture), The
+ordre : Cinder Sanctum (Course aux reliques), Scarred Earth (Points de capture), The
 Courtyard (Roi de la colline), puis le Hall of Heroes. La fenêtre Salon dit où tu
 en es pendant que tu cherches une équipe : `Round 2 of 4 · Scarred Earth`.
 Tu ne rencontres jamais qu'une équipe à la même manche, et tu en attends une aussi
@@ -407,8 +411,7 @@ leur profession principale (survole pour le nom), deux ou trois équipes, le gag
 souligné, et la carte, la durée et quand. Chaque ligne est marquée **déclaré par
 l'hôte**. Clique sur l'une pour voir les équipes, un onglet chacune, le gagnant
 d'abord : la carte d'équipe. **Cloner** copie une équipe d'un match terminé dans tes
-Builds d'équipe, le build de chaque joueur sous son nom, et l'ouvre. Un camp 1v1 n'a
-pas de Cloner : un Build d'équipe compte 2, 4 ou 8 membres.
+Builds d'équipe, le build de chaque joueur sous son nom, et l'ouvre. Pour un camp 1v1, Cloner enregistre le build du joueur comme nouveau personnage et l'ouvre, car un Build d'équipe compte 2, 4 ou 8 membres.
 
 Chaque ligne commence par l'icône de son mode, et l'icône et le bord gauche de la
 ligne sont à la couleur du mode : orange Aléatoire, bleu Équipe, or Ascension, violet
