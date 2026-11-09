@@ -6,9 +6,13 @@
   "teams": 2,
   "width": 4800,
   "height": 2800,
+  "layers": 1,
+  "decks": [],
+  "transitions": [],
   "walls": [
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 950,
@@ -42,6 +46,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3850,
@@ -75,6 +80,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1393,
@@ -108,6 +114,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3407,
@@ -141,6 +148,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1654,
@@ -174,6 +182,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3146,
@@ -207,6 +216,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 886,
@@ -240,6 +250,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3914,
@@ -273,6 +284,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1276,
@@ -306,6 +318,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3524,
@@ -339,6 +352,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1573,
@@ -372,6 +386,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3227,
@@ -405,6 +420,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2220,
@@ -434,6 +450,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2580,
@@ -463,6 +480,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2296,
@@ -488,6 +506,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2504,
@@ -513,6 +532,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2009,
@@ -538,6 +558,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2791,
@@ -563,6 +584,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1997,
@@ -592,6 +614,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2803,
@@ -621,6 +644,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1156,
@@ -646,6 +670,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3644,
@@ -671,6 +696,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 1805,
@@ -700,6 +726,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 2995,
@@ -729,6 +756,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 974,
@@ -754,6 +782,7 @@
     },
     {
       "kind": "polygon",
+      "layer": 0,
       "points": [
         {
           "x": 3826,
@@ -779,6 +808,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 650,
       "y": 1150,
       "width": 40,
@@ -786,6 +816,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 4110,
       "y": 1470,
       "width": 40,
@@ -793,6 +824,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 650,
       "y": 1470,
       "width": 40,
@@ -800,6 +832,7 @@
     },
     {
       "kind": "rect",
+      "layer": 0,
       "x": 4110,
       "y": 1150,
       "width": 40,
@@ -811,6 +844,7 @@
   "spawnPoints": [
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 160,
         "y": 1130
@@ -818,6 +852,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 160,
         "y": 1270
@@ -825,6 +860,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 160,
         "y": 1530
@@ -832,6 +868,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 160,
         "y": 1670
@@ -839,6 +876,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 300,
         "y": 1060
@@ -846,6 +884,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 300,
         "y": 1200
@@ -853,6 +892,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 300,
         "y": 1600
@@ -860,6 +900,7 @@
     },
     {
       "team": 0,
+      "layer": 0,
       "position": {
         "x": 300,
         "y": 1740
@@ -867,6 +908,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4640,
         "y": 1670
@@ -874,6 +916,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4640,
         "y": 1530
@@ -881,6 +924,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4640,
         "y": 1270
@@ -888,6 +932,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4640,
         "y": 1130
@@ -895,6 +940,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4500,
         "y": 1740
@@ -902,6 +948,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4500,
         "y": 1600
@@ -909,6 +956,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4500,
         "y": 1200
@@ -916,6 +964,7 @@
     },
     {
       "team": 1,
+      "layer": 0,
       "position": {
         "x": 4500,
         "y": 1060

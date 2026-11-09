@@ -99,6 +99,70 @@ export const LOCALES: Readonly<Partial<Record<LanguageCode, () => Promise<Locale
     ui: (await import("./locales/hr/ui.js")).default,
     game: (await import("./locales/hr/game.js")).default,
   }),
+  ja: async () => ({
+    ui: (await import("./locales/ja/ui.js")).default,
+    game: (await import("./locales/ja/game.js")).default,
+  }),
+  zh: async () => ({
+    ui: (await import("./locales/zh/ui.js")).default,
+    game: (await import("./locales/zh/game.js")).default,
+  }),
+  ko: async () => ({
+    ui: (await import("./locales/ko/ui.js")).default,
+    game: (await import("./locales/ko/game.js")).default,
+  }),
+  vi: async () => ({
+    ui: (await import("./locales/vi/ui.js")).default,
+    game: (await import("./locales/vi/game.js")).default,
+  }),
+  th: async () => ({
+    ui: (await import("./locales/th/ui.js")).default,
+    game: (await import("./locales/th/game.js")).default,
+  }),
+  tr: async () => ({
+    ui: (await import("./locales/tr/ui.js")).default,
+    game: (await import("./locales/tr/game.js")).default,
+  }),
+  id: async () => ({
+    ui: (await import("./locales/id/ui.js")).default,
+    game: (await import("./locales/id/game.js")).default,
+  }),
+  hu: async () => ({
+    ui: (await import("./locales/hu/ui.js")).default,
+    game: (await import("./locales/hu/game.js")).default,
+  }),
+  sv: async () => ({
+    ui: (await import("./locales/sv/ui.js")).default,
+    game: (await import("./locales/sv/game.js")).default,
+  }),
+  da: async () => ({
+    ui: (await import("./locales/da/ui.js")).default,
+    game: (await import("./locales/da/game.js")).default,
+  }),
+  fi: async () => ({
+    ui: (await import("./locales/fi/ui.js")).default,
+    game: (await import("./locales/fi/game.js")).default,
+  }),
+  ru: async () => ({
+    ui: (await import("./locales/ru/ui.js")).default,
+    game: (await import("./locales/ru/game.js")).default,
+  }),
+  uk: async () => ({
+    ui: (await import("./locales/uk/ui.js")).default,
+    game: (await import("./locales/uk/game.js")).default,
+  }),
+  el: async () => ({
+    ui: (await import("./locales/el/ui.js")).default,
+    game: (await import("./locales/el/game.js")).default,
+  }),
+  ro: async () => ({
+    ui: (await import("./locales/ro/ui.js")).default,
+    game: (await import("./locales/ro/game.js")).default,
+  }),
+  bg: async () => ({
+    ui: (await import("./locales/bg/ui.js")).default,
+    game: (await import("./locales/bg/game.js")).default,
+  }),
 };
 
 /** The languages the build has, English first, in `LANGUAGES` order. */

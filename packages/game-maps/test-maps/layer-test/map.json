@@ -1,0 +1,41 @@
+{
+  "id": "layer-test",
+  "name": "Layer Test",
+  "mode": "annihilation",
+  "teamSizes": [1],
+  "teams": 2,
+  "width": 1600,
+  "height": 800,
+  "layers": 2,
+  "decks": [
+    {
+      "id": "bridge",
+      "layer": 1,
+      "footprint": { "kind": "rect", "x": 500, "y": 300, "width": 600, "height": 200 }
+    }
+  ],
+  "transitions": [
+    {
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 350, "y": 300, "width": 170, "height": 200 }
+    },
+    {
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 1080, "y": 300, "width": 170, "height": 200 }
+    }
+  ],
+  "walls": [
+    { "kind": "rect", "layer": 0, "x": 780, "y": 120, "width": 40, "height": 40 },
+    { "kind": "rect", "layer": 1, "x": 780, "y": 400, "width": 40, "height": 40 }
+  ],
+  "spawnPoints": [
+    { "team": 0, "layer": 0, "position": { "x": 200, "y": 400 } },
+    { "team": 1, "layer": 0, "position": { "x": 1400, "y": 400 } },
+    { "team": 0, "layer": 1, "position": { "x": 600, "y": 400 } },
+    { "team": 1, "layer": 1, "position": { "x": 1000, "y": 400 } }
+  ],
+  "objectives": [],
+  "gates": []
+}

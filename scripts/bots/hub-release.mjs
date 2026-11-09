@@ -84,6 +84,32 @@ function pickedFrom(message) {
 /** `release/0.N.0` and `v0.N.0`, whole, as `git ls-remote` names them. */
 const RELEASE_REF = /^refs\/(?:heads\/release\/|tags\/v)0\.([1-9][0-9]*)\.0$/;
 
+/** The least time between two published releases (#2891). */
+export const RELEASE_MIN_GAP_MS = 48 * 3_600_000;
+
+/**
+ * Why a new release must not start now, or null: the last one was published
+ * less than RELEASE_MIN_GAP_MS ago.
+ *
+ * @param {{ tag: string, publishedAt: string } | null} last the latest release, null if none
+ * @param {number} nowMs
+ * @returns {string | null}
+ */
+export function releaseGapRefusal(last, nowMs) {
+  if (last === null) {
+    return null;
+  }
+  const published = Date.parse(last.publishedAt);
+  if (Number.isNaN(published)) {
+    return "could not read the last release; try again";
+  }
+  if (nowMs - published >= RELEASE_MIN_GAP_MS) {
+    return null;
+  }
+  const at = (/** @type {number} */ ms) => new Date(ms).toISOString().replace(/\.\d+Z$/, "Z");
+  return `the last release (${last.tag}) was published at ${at(published)}; the next may start at ${at(published + RELEASE_MIN_GAP_MS)}`;
+}
+
 /**
  * Where a new release branch stands among the earlier ones (#2707): its
  * version must be the next after the newest release branch or tag, so none

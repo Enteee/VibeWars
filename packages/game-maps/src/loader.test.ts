@@ -122,6 +122,7 @@ describe("unseatedTeams (#2108)", () => {
     [0, 1].flatMap((team) =>
       Array.from({ length: count }, (_, index) => ({
         team,
+        layer: 0,
         position: { x: 100 + team * 700, y: 100 + index * 50 },
       })),
     );

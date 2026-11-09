@@ -1,6 +1,12 @@
-import { segment, type Segment, type Vec2 } from "@vibewars/game-core";
+import {
+  distancePointToSegment,
+  segment,
+  segmentsIntersect,
+  type Segment,
+  type Vec2,
+} from "@vibewars/game-core";
 
-import type { Wall } from "./schema.js";
+import type { Shape } from "./schema.js";
 
 /**
  * A wall as either side of the wire holds it: a map file's `Wall`, or the
@@ -8,7 +14,7 @@ import type { Wall } from "./schema.js";
  * for its line-of-sight hints (#485).
  */
 export type WallShape =
-  | Readonly<Extract<Wall, { kind: "rect" }>>
+  | Readonly<Extract<Shape, { kind: "rect" }>>
   | { readonly kind: "polygon"; readonly points: readonly Vec2[] };
 
 /**
@@ -49,4 +55,46 @@ export function wallToSegments(wall: WallShape): Segment[] {
 
 export function allWallSegments(walls: readonly WallShape[]): Segment[] {
   return walls.flatMap(wallToSegments);
+}
+
+/** The corners of a shape. */
+function shapeVertices(shape: WallShape): Vec2[] {
+  return wallToSegments(shape).map((side) => side.a);
+}
+
+/** Whether `point` is inside `shape`, its outline included. */
+export function pointInShape(point: Vec2, shape: WallShape): boolean {
+  if (shape.kind === "rect") {
+    return (
+      point.x >= shape.x &&
+      point.y >= shape.y &&
+      point.x <= shape.x + shape.width &&
+      point.y <= shape.y + shape.height
+    );
+  }
+  const sides = wallToSegments(shape);
+  if (sides.some((side) => distancePointToSegment(point, side) === 0)) {
+    return true;
+  }
+  const crossings = sides.filter(
+    ({ a, b }) =>
+      a.y > point.y !== b.y > point.y &&
+      point.x < a.x + ((point.y - a.y) / (b.y - a.y)) * (b.x - a.x),
+  );
+  return crossings.length % 2 === 1;
+}
+
+/** Whether two shapes share any point, a shared edge included. */
+export function shapesOverlap(first: WallShape, second: WallShape): boolean {
+  const sides = wallToSegments(second);
+  return (
+    wallToSegments(first).some((side) => sides.some((other) => segmentsIntersect(side, other))) ||
+    shapeVertices(first).some((point) => pointInShape(point, second)) ||
+    shapeVertices(second).some((point) => pointInShape(point, first))
+  );
+}
+
+/** Whether all of `shape` is inside a map of this size. */
+export function shapeInBounds(shape: WallShape, width: number, height: number): boolean {
+  return shapeVertices(shape).every(({ x, y }) => x >= 0 && y >= 0 && x <= width && y <= height);
 }
