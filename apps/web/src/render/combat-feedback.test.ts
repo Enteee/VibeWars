@@ -3,6 +3,7 @@ import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/gam
 
 import { t } from "../i18n/index.js";
 import {
+  FLOATING_TEXT_OFFSET_Y,
   floatingTextY,
   placeFloatingText,
   teamColour,
@@ -10,6 +11,7 @@ import {
   type FloatingText,
 } from "./arena-snapshot.js";
 import type { Impact } from "./body-impacts.js";
+import { elevationOf } from "./render-order.js";
 import { beaconBoltFor, showCombatFeedback, swingFlashFor } from "./combat-feedback.js";
 
 function player(sessionId: string): PlayerSnapshot {
@@ -286,6 +288,38 @@ describe("showCombatFeedback", () => {
       SNAPSHOT,
     );
     expect(texts.map((text) => text.anchorId)).toEqual(["them", "me"]);
+  });
+});
+
+describe("a number over a raised body", () => {
+  it("starts at the height the body is drawn (#2971)", () => {
+    const raised = SNAPSHOT.players.map((each) => ({ ...each, layer: 1 }));
+    const texts: FloatingText[] = [];
+    showCombatFeedback(
+      {
+        addFloatingText: (text) => texts.push(text),
+        addAreaFlash: () => undefined,
+        addSwingFlash: () => undefined,
+        addBeaconBolt: () => undefined,
+        addImpacts: () => undefined,
+        struckTwice: () => undefined,
+      },
+      {
+        casterSessionId: "me",
+        cause: "skill",
+        skillId: "elementalist.fireball",
+        weaponId: "",
+        attributeId: "",
+        doubleStrike: false,
+        events: [{ kind: "damage", targetId: "them", amount: 10, critical: false }],
+      },
+      { ...SNAPSHOT, players: raised },
+    );
+    const subjectY = raised.find((each) => each.sessionId === "them")?.y ?? Number.NaN;
+    const expected = subjectY + FLOATING_TEXT_OFFSET_Y - elevationOf(1);
+    for (const zoom of [0.65, 1.69]) {
+      expect(texts.map((text) => floatingTextY(text, zoom))).toEqual([expected]);
+    }
   });
 });
 

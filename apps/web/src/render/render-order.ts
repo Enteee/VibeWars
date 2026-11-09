@@ -79,7 +79,7 @@ export function characterBand(layer: number, layerCount: number): number {
 }
 
 /** World units a layer lifts what stands on it: presentation only (ADR-0051). */
-export const ELEVATION_STEP = 28;
+export const ELEVATION_STEP = 56;
 
 /** How long a body takes to settle at a new layer's height, in seconds. */
 export const ELEVATION_EASE_SECONDS = 0.15;
