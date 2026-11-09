@@ -149,6 +149,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
     const modes = LOBBY_MODE_MATCH_MODES[mode];
     return arenaIds().filter(
       (id) =>
+        id !== ELITE_ZAISHEN_MAP &&
         (mode === "hosted-game" || !ASCENT_ONLY.includes(id)) &&
         (modes === undefined || modes.includes(mapMode(id))) &&
         (size === undefined || suits(id, size)),
@@ -437,7 +438,6 @@ export interface MapShrine {
   readonly position: Vec2;
 }
 
-/** The map `mapId` names, built for a `MatchHost`; `undefined` for no such map. */
 function startLineOf(objectives: MapData["objectives"]): StartLine | undefined {
   for (const objective of objectives) {
     if (objective.kind === "start-line") {
@@ -448,6 +448,7 @@ function startLineOf(objectives: MapData["objectives"]): StartLine | undefined {
   return undefined;
 }
 
+/** The map `mapId` names, built for a `MatchHost`; `undefined` for no such map. */
 export function hostMap(mapId: string): HostMap | undefined {
   const map = ARENA_MAPS.find((candidate) => candidate.id === mapId);
   if (map === undefined) {

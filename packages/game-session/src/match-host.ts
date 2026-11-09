@@ -1269,7 +1269,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         clearSeconds: sim.clearSeconds,
       };
       transport.send("ended", ended, live);
-      options.publishRecord(record(sim.outcome.reason ?? "time"));
+      // The Elite Zaishen Battle has no opposing players to record (#2692).
+      if (map.startLine === undefined) {
+        options.publishRecord(record(sim.outcome.reason ?? "time"));
+      }
     }
     // A match nobody watches holds nothing.
     if (observers.size > 0) {

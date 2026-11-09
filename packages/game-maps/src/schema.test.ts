@@ -59,6 +59,22 @@ describe("validateMapData", () => {
     expect(() => validateMapData({ ...validMap, mode: "crag" })).toThrow(MapValidationError);
   });
 
+  it("takes one start line on an annihilation map, on the map (#2692)", () => {
+    const line = (x: number) => ({
+      kind: "start-line",
+      layer: 0,
+      area: { kind: "rect", x, y: 0, width: 10, height: 10 },
+    });
+    const annihilation = { ...validMap, mode: "annihilation" };
+    expect(validateMapData({ ...annihilation, objectives: [line(0)] }).objectives).toHaveLength(1);
+    expect(() => validateMapData({ ...annihilation, objectives: [line(0), line(20)] })).toThrow(
+      MapValidationError,
+    );
+    expect(() => validateMapData({ ...annihilation, objectives: [line(-5)] })).toThrow(
+      /must lie on the map/,
+    );
+  });
+
   it("refuses a map without team sizes, or with none, a repeated one or one no mode plays (#2108)", () => {
     const { teamSizes: _teamSizes, ...sizeless } = validMap;
     expect(() => validateMapData(sizeless)).toThrow(MapValidationError);

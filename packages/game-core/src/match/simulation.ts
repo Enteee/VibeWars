@@ -6523,14 +6523,7 @@ export class MatchSimulation {
     }
   }
 
-  /**
-   * The step's shrines (#1378), once every death is in, so a player killed
-   * this tick is on none: each moves by the pips on it (#2690), a living
-   * player one, a living Ghostly Hero `GHOST_PIPS`, a pet, minion or
-   * spirit none; then, at every `POINT_TICK_SECONDS` of match clock, each
-   * scores its owner a point, and a team then ahead of every other alone
-   * has led last. The capture comes first, so one taken on the scoring tick scores.
-   */
+  /** The first of team 0 on the start line starts the clock (#2692). */
   #watchStartLine(): void {
     const line = this.#startLine;
     if (line === undefined || this.#startLineCrossedAt !== undefined || this.phase !== "active") {
@@ -6553,6 +6546,14 @@ export class MatchSimulation {
     }
   }
 
+  /**
+   * The step's shrines (#1378), once every death is in, so a player killed
+   * this tick is on none: each moves by the pips on it (#2690), a living
+   * player one, a living Ghostly Hero `GHOST_PIPS`, a pet, minion or
+   * spirit none; then, at every `POINT_TICK_SECONDS` of match clock, each
+   * scores its owner a point, and a team then ahead of every other alone
+   * has led last. The capture comes first, so one taken on the scoring tick scores.
+   */
   #advanceCapturePoints(dt: number): void {
     if (this.#capturePoints.length === 0 || this.phase !== "active") {
       return;

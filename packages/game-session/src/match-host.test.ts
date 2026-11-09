@@ -214,6 +214,7 @@ describe("the match summary's size (#1057)", () => {
     const ended: WireEnded = {
       winningTeam: 0,
       endReason: "annihilation",
+      clearSeconds: null,
       summary: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
         id: `player-${String(1000 + i)}`,
         name: "\u{1D54E}".repeat(16),
