@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { MatchRecord } from "@vibewars/game-session";
 
 import type { MatchRecordWatchHandlers } from "../net/transport/match-records.js";
-import { hallHolderOf, vaultLines, watchHall } from "./vault-screen.js";
+import { hallHolderOf, vaultLines, watchHall, type HallWatch } from "./vault-screen.js";
 
 const player = (name: string, guildTag: string | null, bot = false) => ({
   name,
@@ -19,7 +19,7 @@ function record(
 ): MatchRecord {
   return {
     v: 1,
-    mode: "king-of-the-hill",
+    mode: "heroes-ascent",
     map,
     endedAt,
     durationSeconds: 600,
@@ -51,6 +51,10 @@ describe("hallHolderOf", () => {
     expect(hallHolderOf(record(half))).toBe("A");
   });
 
+  it("is nothing for a Hosted Game on a Hall map", () => {
+    expect(hallHolderOf({ ...record([player("Ana", null)]), mode: "hosted-game" })).toBeUndefined();
+  });
+
   it("is nothing for a draw or another map", () => {
     expect(hallHolderOf({ ...record([player("A", null)]), winningTeam: null })).toBeUndefined();
     expect(hallHolderOf(record([player("A", null)], 2_000, "the-courtyard"))).toBeUndefined();
@@ -61,47 +65,111 @@ describe("watchHall", () => {
   function watched(): {
     hear: (one: MatchRecord) => void;
     announce: ReturnType<typeof vi.fn>;
-    holder: () => string | undefined;
+    hall: HallWatch;
+    opened: MatchRecordWatchHandlers[];
+    closed: () => number;
+    setNow: (ms: number) => void;
   } {
-    let on: MatchRecordWatchHandlers | undefined;
+    const opened: MatchRecordWatchHandlers[] = [];
+    let closes = 0;
+    let at = 1_000_000;
     const announce = vi.fn();
     const hall = watchHall(
       (handlers) => {
-        on = handlers;
-        return { close: () => undefined };
+        opened.push(handlers);
+        return {
+          close: () => {
+            closes += 1;
+          },
+        };
       },
-      1_000_000,
+      () => at,
       announce,
       () => undefined,
     );
+    at = 2_500_000;
     return {
       hear: (one) => {
-        on?.record({ id: String(one.endedAt), record: one });
+        opened.at(-1)?.record({ id: String(one.endedAt), record: one });
       },
       announce,
-      holder: hall.holder,
+      hall,
+      opened,
+      closed: () => closes,
+      setNow: (ms) => {
+        at = ms;
+      },
     };
   }
 
   it("toasts a new Hall win once, and takes it as the holder", () => {
-    const { hear, announce, holder } = watched();
+    const { hear, announce, hall } = watched();
     hear(record([player("Ana", null)]));
     expect(announce).toHaveBeenCalledTimes(1);
     expect(announce).toHaveBeenCalledWith("Ana holds the Hall of Heroes");
-    expect(holder()).toBe("Ana");
+    expect(hall.holder()).toBe("Ana");
   });
 
   it("does not toast replayed history, but it still names the holder", () => {
-    const { hear, announce, holder } = watched();
+    const { hear, announce, hall } = watched();
     hear(record([player("Old", null)], 500));
     expect(announce).not.toHaveBeenCalled();
-    expect(holder()).toBe("Old");
+    expect(hall.holder()).toBe("Old");
   });
 
   it("keeps the newest holder, in whatever order records arrive", () => {
-    const { hear, holder } = watched();
+    const { hear, hall } = watched();
     hear(record([player("New", null)], 900));
     hear(record([player("Old", null)], 500));
-    expect(holder()).toBe("New");
+    expect(hall.holder()).toBe("New");
+  });
+
+  it("toasts at most one win a slot, however many are heard", () => {
+    const { hear, announce, hall, setNow } = watched();
+    for (let endedAt = 2_000; endedAt < 2_030; endedAt += 1) {
+      hear(record([player(`Fake${String(endedAt)}`, null)], endedAt));
+    }
+    expect(announce).toHaveBeenCalledTimes(1);
+    expect(hall.holder()).toBe("Fake2029");
+    setNow(2_500_000 + 720_000);
+    hear(record([player("Next", null)], 3_000));
+    expect(announce).toHaveBeenCalledTimes(2);
+  });
+
+  it("takes no holder from a win that ends in the future", () => {
+    const { hear, announce, hall } = watched();
+    hear(record([player("Now", null)], 2_000));
+    hear(record([player("Ahead", null)], 2_500 + 31));
+    expect(hall.holder()).toBe("Now");
+    expect(announce).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves a host's slightly fast clock alone", () => {
+    const { hear, hall } = watched();
+    hear(record([player("Fast", null)], 2_500 + 29));
+    expect(hall.holder()).toBe("Fast");
+  });
+
+  it("verifies only won Halls, on a small budget of its own", () => {
+    const { opened } = watched();
+    const filter = opened[0]?.filter;
+    expect(filter?.wants(record([player("Ana", null)]))).toBe(true);
+    expect(filter?.wants(record([player("Ana", null)], 2_000, "other"))).toBe(false);
+    expect(filter?.verifyBurst).toBeLessThanOrEqual(5);
+    expect(filter?.verifyPerSecond).toBeLessThanOrEqual(0.1);
+  });
+
+  it("is closed during a match, and on reopening treats the replay as history", () => {
+    const { hear, announce, hall, opened, closed, setNow } = watched();
+    hall.pause();
+    hall.pause();
+    expect(closed()).toBe(1);
+    setNow(3_000_000);
+    hall.resume();
+    hall.resume();
+    expect(opened).toHaveLength(2);
+    hear(record([player("Meanwhile", null)], 2_800));
+    expect(hall.holder()).toBe("Meanwhile");
+    expect(announce).not.toHaveBeenCalled();
   });
 });

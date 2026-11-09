@@ -568,9 +568,14 @@ async function main(): Promise<void> {
   /** Since when this party holds the Hall of Heroes (#2701), on its next ticket; `null` for not. */
   let holdsHallSince: number | null = null;
   /** Who holds the Hall (#2701), for the Vault; a new win is a toast in every open tab. */
-  const hallWatch = watchHall(watchRecords, Date.now(), toast, () => {
-    paintQueue();
-  });
+  const hallWatch = watchHall(
+    watchRecords,
+    () => Date.now(),
+    toast,
+    () => {
+      paintQueue();
+    },
+  );
   /**
    * This player's morale in its Heroes' Ascent run (#2686), from the end
    * of the last map won, which it starts the next at. Page memory like
@@ -2642,6 +2647,7 @@ async function main(): Promise<void> {
       return;
     }
     match = undefined;
+    hallWatch.resume();
     // Read before the view goes: the table moves with the player (#1057).
     const summary = leaving.summary();
     await leaving.dispose();
@@ -2705,6 +2711,7 @@ async function main(): Promise<void> {
     }
     const leaving = match;
     match = undefined;
+    hallWatch.resume();
     await leaving.dispose();
     leaveScreen();
     enteringMatch = false;
@@ -2855,6 +2862,7 @@ async function main(): Promise<void> {
           connect: () => observeMatchFor(from, watch),
         },
       );
+      hallWatch.pause();
       setStatus("", "online");
     } catch (error) {
       console.error("[web] could not watch the match", error);
@@ -2966,6 +2974,7 @@ async function main(): Promise<void> {
           connect: () => connectMatchFor(from, start, name, entrant.guild, entrant.build),
         },
       );
+      hallWatch.pause();
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");
       // Said once, on the match screen: the lobby's went with it.

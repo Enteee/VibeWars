@@ -33,10 +33,12 @@ export function vaultLines(
 /**
  * Who `record` says now holds the Hall: its winning party's guild tag when
  * more than half of its people share one, else its leader's name.
- * `undefined` for any record but a won Hall.
+ * `undefined` for any record but a won Hall: a Hosted Game may play the
+ * same maps, and holds nothing.
  */
 export function hallHolderOf(record: MatchRecord): string | undefined {
   if (
+    record.mode !== "heroes-ascent" ||
     !ascentMapPool(ASCENT_PROGRESSION.length - 1).includes(record.map) ||
     record.winningTeam === null
   ) {
@@ -58,44 +60,79 @@ export function hallHolderOf(record: MatchRecord): string | undefined {
   return (people[0] ?? players[0])?.name;
 }
 
+/**
+ * The Hall watch runs on every open page, on the thread that hosts matches,
+ * and records are free to forge: a few checks at once, for the replay's
+ * newest wins, and then one every 10 s. A real Hall ends at most once a slot.
+ */
+const HALL_VERIFY_BURST = 5;
+const HALL_VERIFY_PER_SECOND = 0.1;
+
+/** How far ahead of this clock a Hall win's end may be: a host's clock is a little off, no more. */
+const HALL_CLOCK_SKEW_MS = 30_000;
+
 /** The newest Hall holder heard. */
 export interface HallWatch {
   readonly holder: () => string | undefined;
-  readonly close: () => void;
+  /** Stop listening, and checking signatures, for as long as a match runs. */
+  readonly pause: () => void;
+  /** Listen again; what the relays replay finds a Hall won meanwhile. */
+  readonly resume: () => void;
 }
 
 /**
- * Hear who holds the Hall, from `watch`. `announce` is told of a Hall won
- * after `openedAt` only: the records replayed on connecting are history.
- * `changed` is told of every new holder.
+ * Hear who holds the Hall, from `watch`. `announce` is told of a new holder
+ * who won since the watch last opened, at most once a slot, as one Hall forms
+ * a slot; the records replayed on connecting are history. `changed` is told
+ * of every new holder.
  */
 export function watchHall(
   watch: (on: MatchRecordWatchHandlers) => MatchRecordWatch,
-  openedAt: number,
+  now: () => number,
   announce: (text: string) => void,
   changed: () => void,
 ): HallWatch {
   let newest: { readonly holder: string; readonly endedAt: number } | undefined;
-  const records = watch({
-    record: ({ record }) => {
-      const holder = hallHolderOf(record);
-      if (holder === undefined) {
-        return;
-      }
-      if (record.endedAt * 1000 > openedAt) {
-        announce(t("queue.hallHeldBy", { holder }));
-      }
-      if (newest === undefined || record.endedAt > newest.endedAt) {
+  let announcedSlot: number | undefined;
+  const open = (): MatchRecordWatch => {
+    const openedAt = now();
+    return watch({
+      filter: {
+        wants: (record) => hallHolderOf(record) !== undefined,
+        verifyPerSecond: HALL_VERIFY_PER_SECOND,
+        verifyBurst: HALL_VERIFY_BURST,
+      },
+      record: ({ record }) => {
+        const holder = hallHolderOf(record);
+        const heardAt = now();
+        const endedAt = record.endedAt * 1000;
+        if (
+          holder === undefined ||
+          endedAt > heardAt + HALL_CLOCK_SKEW_MS ||
+          (newest !== undefined && record.endedAt <= newest.endedAt)
+        ) {
+          return;
+        }
         newest = { holder, endedAt: record.endedAt };
         changed();
-      }
-    },
-    noRelay: () => undefined,
-  });
+        const slot = nextHallSlotMs(heardAt);
+        if (endedAt > openedAt && slot !== announcedSlot) {
+          announcedSlot = slot;
+          announce(t("queue.hallHeldBy", { holder }));
+        }
+      },
+      noRelay: () => undefined,
+    });
+  };
+  let records: MatchRecordWatch | undefined = open();
   return {
     holder: () => newest?.holder,
-    close: () => {
-      records.close();
+    pause: () => {
+      records?.close();
+      records = undefined;
+    },
+    resume: () => {
+      records ??= open();
     },
   };
 }
