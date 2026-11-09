@@ -271,10 +271,15 @@ export interface MatchScore {
 /** Every team that had members, as it stands, even with all of them gone (#846). */
 export interface MatchStanding {
   readonly byTeam: ReadonlyMap<number, TeamStanding>;
-  /** The team of the match's most recent kill (#2700): the Halls' Capture Points tie. */
-  readonly lastKillTeam: number | undefined;
-  /** The team that last scored a relic or an altar point (#2700): the Halls' other ties. */
-  readonly lastScoringTeam: number | undefined;
+  /** The teams that have made a kill (#2700), latest first: the Halls' Capture Points tie. */
+  readonly recentKillTeams: readonly number[];
+  /** The teams that have scored a relic or an altar point (#2700), latest first: the Halls' other ties. */
+  readonly recentScoringTeams: readonly number[];
+}
+
+/** `recent` with `team` now the latest (#2700): of two in one step, the one simulated last. */
+export function withLatestTeam(recent: readonly number[], team: number): readonly number[] {
+  return [team, ...recent.filter((each) => each !== team)];
 }
 
 export interface TeamStanding {
@@ -564,7 +569,7 @@ function evaluateRelicRun(
   rules: MatchRules,
 ): MatchOutcome {
   if (rules.respawnOnWave) {
-    return evaluateHallsAtTime(score, standing.lastScoringTeam, elapsedSeconds, rules);
+    return evaluateHallsAtTime(score, standing.recentScoringTeams, elapsedSeconds, rules);
   }
   const inGame = scoreInPlay(score, standing, rules);
   return (
@@ -577,11 +582,12 @@ function evaluateRelicRun(
 
 /**
  * The Hall of Heroes at time (#2700, GW1): the most points win, of teams
- * tied on them `tieBreaker`, and the tie is a draw if it is none of theirs.
+ * tied on them the one latest in `recent`, whatever a trailing team did
+ * since, and the tie is a draw only if none of them is in it.
  */
 function evaluateHallsAtTime(
   score: MatchScore,
-  tieBreaker: number | undefined,
+  recent: readonly number[],
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
@@ -590,7 +596,7 @@ function evaluateHallsAtTime(
   }
   const best = Math.max(...score.byTeam.values());
   const tied = [...score.byTeam].filter(([, points]) => points === best).map(([team]) => team);
-  const winner = tied.length === 1 ? tied[0] : tied.find((team) => team === tieBreaker);
+  const winner = tied.length === 1 ? tied[0] : recent.find((team) => tied.includes(team));
   return { phase: "finished", winningTeam: winner, reason: "time" };
 }
 
@@ -630,7 +636,7 @@ function evaluateCapturePoints(
     return { phase: "finished", winningTeam: first[0], reason: "score" };
   }
   if (rules.respawnOnWave) {
-    return evaluateHallsAtTime(score, standing.lastKillTeam, elapsedSeconds, rules);
+    return evaluateHallsAtTime(score, standing.recentKillTeams, elapsedSeconds, rules);
   }
   if (elapsedSeconds < rules.timeLimitSeconds || first === undefined) {
     return MATCH_IN_PROGRESS;

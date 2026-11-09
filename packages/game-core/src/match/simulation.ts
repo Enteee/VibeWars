@@ -46,6 +46,7 @@ import {
   SHRINE_INVULNERABLE_SECONDS,
   soleLeader,
   teamBeaten,
+  withLatestTeam,
   teamIds,
   TWO_TEAM_MODES,
   type MatchOutcome,
@@ -1249,8 +1250,8 @@ export class MatchSimulation {
   #relicsState: RelicsState | undefined;
   /** Who reached a relic this step (#1374), in simulation order. */
   #relicArrivals: CarriedArrival[] = [];
-  #lastKillTeam: number | undefined;
-  #lastScoringTeam: number | undefined;
+  #recentKillTeams: readonly number[] = [];
+  #recentScoringTeams: readonly number[] = [];
   /** The map's ghost spawns and any altar (#1377, #2689); `undefined` on a map without ghosts. */
   readonly #ghostField: GhostField | undefined;
   /** Who holds the altar (#1377); nobody on a map without a hill. */
@@ -5995,7 +5996,7 @@ export class MatchSimulation {
     }
     for (const team of scored) {
       this.#score = addPoint(this.#score, team);
-      this.#lastScoringTeam = team;
+      this.#recentScoringTeams = withLatestTeam(this.#recentScoringTeams, team);
     }
   }
 
@@ -6145,7 +6146,7 @@ export class MatchSimulation {
     }
     if (scored !== null) {
       this.#score = addPoint(this.#score, scored);
-      this.#lastScoringTeam = scored;
+      this.#recentScoringTeams = withLatestTeam(this.#recentScoringTeams, scored);
     }
   }
 
@@ -7426,7 +7427,7 @@ export class MatchSimulation {
           continue;
         }
         if (killerTeam !== undefined && this.#teams.has(killerTeam)) {
-          this.#lastKillTeam = killerTeam;
+          this.#recentKillTeams = withLatestTeam(this.#recentKillTeams, killerTeam);
         }
         victim.respawnInSeconds = this.#respawnSeconds(victim);
         if (!spared) {
@@ -8420,7 +8421,11 @@ export class MatchSimulation {
         eliminated: this.#eliminated.has(team),
       });
     }
-    return { byTeam, lastKillTeam: this.#lastKillTeam, lastScoringTeam: this.#lastScoringTeam };
+    return {
+      byTeam,
+      recentKillTeams: this.#recentKillTeams,
+      recentScoringTeams: this.#recentScoringTeams,
+    };
   }
 
   /**

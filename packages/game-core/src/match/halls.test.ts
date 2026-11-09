@@ -5,6 +5,7 @@ import {
   HALLS_MATCH_RULES,
   MATCH_IN_PROGRESS,
   evaluateMatch,
+  withLatestTeam,
   type HallsMode,
   type MatchStanding,
 } from "../match-rules.js";
@@ -170,14 +171,17 @@ describe("the Hall of Heroes at time (#2700)", () => {
     pointsHeld: 0,
     eliminated: false,
   };
-  const standing = (lastKillTeam?: number, lastScoringTeam?: number): MatchStanding => ({
+  const standing = (
+    recentKillTeams: readonly number[] = [],
+    recentScoringTeams: readonly number[] = [],
+  ): MatchStanding => ({
     byTeam: new Map([
       [0, team],
       [1, team],
       [2, team],
     ]),
-    lastKillTeam,
-    lastScoringTeam,
+    recentKillTeams,
+    recentScoringTeams,
   });
   const score = (...points: number[]) => ({
     byTeam: new Map(points.map((value, each) => [each, value])),
@@ -191,20 +195,32 @@ describe("the Hall of Heroes at time (#2700)", () => {
   });
 
   it("goes to the most points", () => {
-    expect(evaluateMatch(score(1, 3, 2), standing(0, 0), 720, relic).winningTeam).toBe(1);
+    expect(evaluateMatch(score(1, 3, 2), standing([0], [0]), 720, relic).winningTeam).toBe(1);
   });
 
   it("breaks a King of the Hill or Relic Run tie for the team that scored last", () => {
-    expect(evaluateMatch(score(3, 3, 0), standing(0, 1), 720, king).winningTeam).toBe(1);
-    expect(evaluateMatch(score(3, 3, 0), standing(1, 0), 720, relic).winningTeam).toBe(0);
+    expect(evaluateMatch(score(3, 3, 0), standing([0], [1, 0]), 720, king).winningTeam).toBe(1);
+    expect(evaluateMatch(score(3, 3, 0), standing([1], [0, 1]), 720, relic).winningTeam).toBe(0);
   });
 
   it("breaks a Capture Points tie for the team with the last kill", () => {
-    expect(evaluateMatch(score(4, 4, 0), standing(1, 0), 720, capture).winningTeam).toBe(1);
+    expect(evaluateMatch(score(4, 4, 0), standing([1, 0], [0]), 720, capture).winningTeam).toBe(1);
   });
 
-  it("draws when the tie-breaker is no tied team's", () => {
-    expect(evaluateMatch(score(4, 4, 0), standing(2, 2), 720, capture).winningTeam).toBeUndefined();
+  it("breaks a tie for the latest tied team, even after a trailing team's point or kill", () => {
+    expect(evaluateMatch(score(3, 3, 0), standing([], [2, 1, 0]), 720, king).winningTeam).toBe(1);
+    expect(evaluateMatch(score(4, 4, 0), standing([2, 0, 1]), 720, capture).winningTeam).toBe(0);
+  });
+
+  it("moves a team to the front of the recent teams, once", () => {
+    expect(withLatestTeam([2, 1, 0], 0)).toEqual([0, 2, 1]);
+    expect(withLatestTeam([], 1)).toEqual([1]);
+  });
+
+  it("draws when no tied team has scored or killed", () => {
+    expect(
+      evaluateMatch(score(4, 4, 0), standing([2], [2]), 720, capture).winningTeam,
+    ).toBeUndefined();
     expect(evaluateMatch(score(4, 4, 0), standing(), 720, king).winningTeam).toBeUndefined();
   });
 
