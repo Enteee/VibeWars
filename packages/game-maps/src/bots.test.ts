@@ -392,8 +392,19 @@ describe("The Brazen Causeway (#2697)", () => {
     );
   });
 
-  it("bots open their gate and finish a match", () => {
-    // One a side: this plays to the 12-minute limit, and a full 8v8 would not fit the test limit.
+  it("leaves a way from base to base with both gates closed", () => {
+    const closed = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const finder = layeredFinder(closed, RULESET.collision.playerRadius);
+    const spawnOf = (team: number) => {
+      const spawn = map.spawnPoints.find((candidate) => candidate.team === team);
+      if (spawn === undefined) throw new Error(`no spawn for team ${String(team)}`);
+      return spawn;
+    };
+    expect(finder.find(spawnOf(0).position, 0, spawnOf(1).position, 0)).toBeDefined();
+  });
+
+  it("bots open their gate, then fight it out before the time limit", () => {
+    // Two a side: one to stand on each plate, and one free to go and fight.
     const sim = new MatchSimulation({
       seed: "causeway",
       ruleset: RULESET,
@@ -410,19 +421,24 @@ describe("The Brazen Causeway (#2697)", () => {
           ? [{ team: objective.team, position: objective.position }]
           : [],
       ),
-      participants: casterBots(map, 1),
+      participants: casterBots(map, 2),
     });
     let opened = false;
-    for (
-      let t = 0;
-      t <= PRIEST_ANNIHILATION_MATCH_RULES.timeLimitSeconds + 1 && sim.phase !== "finished";
-      t += DT
+    let died = false;
+    let seconds = 0;
+    while (
+      seconds <= PRIEST_ANNIHILATION_MATCH_RULES.timeLimitSeconds + 1 &&
+      sim.phase !== "finished"
     ) {
       sim.step(DT);
+      seconds += DT;
       opened ||= sim.gates.some(({ open }) => open);
+      died ||= [...sim.participants()].some(({ combatant }) => combatant.dead);
     }
     expect(opened).toBe(true);
+    expect(died).toBe(true);
     expect(sim.phase).toBe("finished");
+    expect(seconds).toBeLessThan(PRIEST_ANNIHILATION_MATCH_RULES.timeLimitSeconds);
   });
 });
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { RANGE_SPELL } from "../../../distances.js";
 import { distance, vec2 } from "../../../vec2.js";
 import { createCursor, decide } from "../../behaviour.js";
+import { initialGates } from "../../gates.js";
 import regroup from "./regroup.js";
 import { NOTHING, REGROUP_SPREAD } from "./shared.js";
 import {
@@ -66,6 +67,20 @@ describe("regroup (#2621)", () => {
     const view = rule(310, 100, 1550, true);
     expect(regroup.decide(view)).toBeUndefined();
     expect(view.cursor.regrouping).toBe(false);
+  });
+
+  it("does not wait for a mate standing on its team's plate (#2697)", () => {
+    const sim = match([
+      fighter("w", 0, WARRIOR, vec2(800, 400)),
+      fighter("a", 0, RANGER, vec2(100, 400)),
+      fighter("foe", 1, WARRIOR, vec2(1550, 400)),
+    ]);
+    const view = ruleFor(sim, "w", { cursor: createCursor() });
+    expect(regroup.decide(view)).not.toBeUndefined();
+    const [gate] = initialGates([{ segments: [], plate: vec2(100, 400), team: 0 }]);
+    if (gate === undefined) throw new Error("no gate");
+    const held = { ...view.context, objectives: { ...view.context.objectives, gates: [gate] } };
+    expect(regroup.decide({ ...view, context: held })).toBeUndefined();
   });
 
   it("never holds the last of its team alive", () => {
