@@ -139,14 +139,23 @@ describe("bots spike on Ashen Courtyard (#2631)", () => {
     return { hits: hits.length, together: together.length };
   };
 
-  it("lands more of the bots' big hits together than bots that don't hold them, the same for the same seed", () => {
-    const runs = (spikeHold: boolean) =>
-      ["a", "b", "c", "d"].map((seed) => spikes(seed, spikeHold));
-    const share = (of: readonly { hits: number; together: number }[]) =>
-      of.reduce((sum, run) => sum + run.together, 0) / of.reduce((sum, run) => sum + run.hits, 0);
-    const holding = runs(true);
-    expect(share(holding) - share(runs(false))).toBeGreaterThanOrEqual(SPIKE_GAIN);
-    expect(spikes("a", true)).toEqual(holding[0]);
+  // The gain check is bot tuning, not a unit: eight 60 s runs, about 55 s, so
+  // it runs nightly (e2e-soak.yml, #2898) and when BOTS_NIGHTLY=1 is set by
+  // hand on this file.
+  it.runIf(process.env.BOTS_NIGHTLY === "1")(
+    "lands more of the bots' big hits together than bots that don't hold them",
+    () => {
+      const runs = (spikeHold: boolean) =>
+        ["a", "b", "c", "d"].map((seed) => spikes(seed, spikeHold));
+      const share = (of: readonly { hits: number; together: number }[]) =>
+        of.reduce((sum, run) => sum + run.together, 0) / of.reduce((sum, run) => sum + run.hits, 0);
+      expect(share(runs(true)) - share(runs(false))).toBeGreaterThanOrEqual(SPIKE_GAIN);
+    },
+    120_000,
+  );
+
+  it("plays the same for the same seed", () => {
+    expect(spikes("a", true)).toEqual(spikes("a", true));
   }, 120_000);
 });
 
