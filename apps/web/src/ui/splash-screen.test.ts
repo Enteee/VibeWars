@@ -123,6 +123,22 @@ describe("the splash's meeting with the music (#2936)", () => {
     expect(root.dataset.phase).toBe("flash");
   });
 
+  it("cannot be held past the deadline by a report from the far future", () => {
+    let heard: ((at: number) => void) | undefined;
+    const { root } = start((_at, onHeard) => {
+      heard = onHeard;
+      return true;
+    });
+    press();
+    heard?.(Number.MAX_SAFE_INTEGER);
+    advance(SPLASH_MUSIC_WAIT_MS - 1);
+    expect(root.dataset.phase).toBe("armed");
+    advance(1);
+    expect(root.dataset.phase).toBe("flying");
+    advance(2000);
+    expect(root.dataset.phase).toBe("flash");
+  });
+
   it("does nothing with a report that comes after the end", () => {
     let heard: ((at: number) => void) | undefined;
     const { onDone, end } = start((_at, onHeard) => {

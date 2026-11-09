@@ -146,7 +146,11 @@ export function showSplash(parent: HTMLElement, options: SplashOptions): Splash 
           Date.now() + SPLASH_MEET_MS - SPLASH_CRASH_OFFSET_MS,
           (heardAtEpochMs) => {
             if (!ended && meetAtMs === undefined) {
-              meetAtMs = meetFromHeard(heardAtEpochMs, Date.now(), performance.now());
+              // An edited track says what it likes: it cannot hold the splash past the deadline.
+              meetAtMs = Math.min(
+                meetFromHeard(heardAtEpochMs, Date.now(), performance.now()),
+                armedAt + SPLASH_MUSIC_WAIT_MS + SPLASH_FLY_MS,
+              );
             }
           },
         );
