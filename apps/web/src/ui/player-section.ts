@@ -137,6 +137,11 @@ export function playerGuild(): Guild {
   });
 }
 
+/** Whether `a` is what the player typed in `b`: a rank is earned, so it is no rename (#2702). */
+export function sameTypedGuild(a: Guild | undefined, b: Guild): boolean {
+  return a?.guildTag === b.guildTag && JSON.stringify(a.guildCape) === JSON.stringify(b.guildCape);
+}
+
 /** Whether the cape designer shows for the tag `typed` (#1422): only a valid tag wears a cape. */
 export function showsCapeDesigner(typed: string): boolean {
   return sanitizeGuildTag(typed) !== null;

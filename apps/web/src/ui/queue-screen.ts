@@ -78,11 +78,15 @@ export function nextAscentRound(round: number, played: number, result: QueuedRes
   }
 }
 
-/** The Heroes' Ascent run's streak of wins after `result` (#2702), as the round moves. */
-export function nextAscentWins(wins: number, result: QueuedResult): number {
+/**
+ * The Heroes' Ascent run's streak of wins after `result` of a party at
+ * `round` (#2702): a win at the first round starts a run, which each
+ * member reads from the host's round, not from what this tab saw.
+ */
+export function nextAscentWins(wins: number, round: number, result: QueuedResult): number {
   switch (result) {
     case "win":
-      return wins + 1;
+      return round === 0 ? 1 : wins + 1;
     case "loss":
     case "forfeit":
       return 0;

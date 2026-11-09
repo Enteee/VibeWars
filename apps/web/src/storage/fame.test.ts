@@ -47,6 +47,11 @@ describe("fame (#2702)", () => {
     });
   });
 
+  it("earns nothing, and loses nothing, over the cap", () => {
+    const fame = { total: 900, today: DAILY_FAME_CAP + 50, day: fameDay(after) };
+    expect(awardFame(fame, 14, after).total).toBe(900);
+  });
+
   it("starts a new day at 15:00 UTC", () => {
     const capped = { total: 300, today: DAILY_FAME_CAP, day: fameDay(before) };
     expect(awardFame(capped, 1, before)).toEqual(capped);

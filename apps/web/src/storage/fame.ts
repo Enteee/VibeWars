@@ -48,7 +48,7 @@ export function fameDay(now: number): number {
 export function awardFame(fame: Fame, streak: number, now: number): Fame {
   const day = fameDay(now);
   const today = fame.day === day ? fame.today : 0;
-  const earned = Math.min(fameForWin(streak), DAILY_FAME_CAP - today);
+  const earned = Math.max(0, Math.min(fameForWin(streak), DAILY_FAME_CAP - today));
   return { total: fame.total + earned, today: today + earned, day };
 }
 

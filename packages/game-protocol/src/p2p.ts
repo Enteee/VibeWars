@@ -1643,11 +1643,11 @@ function parseString(value: unknown): string | undefined {
   return isString(value) ? value : undefined;
 }
 
-/** A client's guild tag as typed (#1406), cut to `MAX_WIRE_TEXT`: the host sanitises it. */
 function isHeroRank(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= MAX_HERO_RANK;
 }
 
+/** A client's guild tag as typed (#1406), cut to `MAX_WIRE_TEXT`: the host sanitises it. */
 function parseRawGuildTag(value: unknown): string | null | undefined {
   if (value === null) {
     return null;

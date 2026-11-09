@@ -162,7 +162,7 @@ import { dismissToast, toast } from "./ui/kit.js";
 import { signetOf } from "./ui/player-label.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
-import { loadPlayerName, playerGuild } from "./ui/player-section.js";
+import { loadPlayerName, playerGuild, sameTypedGuild } from "./ui/player-section.js";
 import { isAlone, partyOf } from "./ui/lobby-window.js";
 import {
   isModeEntry,
@@ -1106,10 +1106,7 @@ async function main(): Promise<void> {
       }
       // Renamed while the key was derived: nobody can be in it yet, so it
       // opens again under the new name and tag.
-      if (
-        name !== loadPlayerName() ||
-        JSON.stringify(entrant.guild) !== JSON.stringify(playerGuild())
-      ) {
+      if (name !== loadPlayerName() || !sameTypedGuild(entrant.guild, playerGuild())) {
         await own.lobby.disconnect();
         await own.close();
         openOwnLobby();
@@ -1140,8 +1137,7 @@ async function main(): Promise<void> {
     hosted !== undefined &&
     lobby === hosted.lobby &&
     isAlone(railParty()) &&
-    (lobbyName !== loadPlayerName() ||
-      JSON.stringify(lobbyEntrant?.guild) !== JSON.stringify(playerGuild()));
+    (lobbyName !== loadPlayerName() || !sameTypedGuild(lobbyEntrant?.guild, playerGuild()));
 
   /**
    * Out of the lobby this tab is in, ending it for everyone if it is this
@@ -2709,7 +2705,7 @@ async function main(): Promise<void> {
           team.playedRound ?? team.ascentRound,
           result,
         );
-        ascentWins = nextAscentWins(ascentWins, result);
+        ascentWins = nextAscentWins(ascentWins, team.ascentRound, result);
         ascentMorale = nextAscentMorale(ascentMorale, ascentMorale, result);
       }
       endTeamQueue();
@@ -2907,7 +2903,7 @@ async function main(): Promise<void> {
                     team.playedRound ?? team.ascentRound,
                     won ? "win" : "loss",
                   );
-                  ascentWins = nextAscentWins(ascentWins, won ? "win" : "loss");
+                  ascentWins = nextAscentWins(ascentWins, team.ascentRound, won ? "win" : "loss");
                   if (won) {
                     recordAscentWin(ascentWins);
                   }

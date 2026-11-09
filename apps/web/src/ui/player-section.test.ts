@@ -11,6 +11,7 @@ import {
   loadPlayerName,
   pickCape,
   playerGuild,
+  sameTypedGuild,
   playerGuildTag,
   playerSection,
   saveGuildCape,
@@ -268,6 +269,20 @@ describe("the Player section of Options (#1513)", () => {
     expect(gold?.attributes.get("aria-pressed")).toBe("true");
     shown.find((node) => node.textContent === "No cape")?.click();
     expect(loadGuildCape()).toBeNull();
+  });
+});
+
+describe("sameTypedGuild (#2702)", () => {
+  const guild = { guildTag: "VIBE", heroRank: 3, guildCape: null };
+
+  it("does not call an earned rank a rename", () => {
+    expect(sameTypedGuild(guild, { ...guild, heroRank: 4 })).toBe(true);
+  });
+
+  it("calls a new tag or cape one, and so no guild at all", () => {
+    expect(sameTypedGuild(guild, { ...guild, guildTag: "NEW" })).toBe(false);
+    expect(sameTypedGuild(guild, { ...guild, guildCape: FIRST_CAPE })).toBe(false);
+    expect(sameTypedGuild(undefined, guild)).toBe(false);
   });
 });
 

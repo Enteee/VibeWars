@@ -10,6 +10,7 @@ import {
   modeLabel,
   nextAscentMorale,
   nextAscentRound,
+  nextAscentWins,
   nextStreak,
   queueTitle,
   stayButton,
@@ -118,6 +119,21 @@ describe("nextStreak (#881)", () => {
     expect(nextStreak(2, "loss")).toBe(0);
     expect(nextStreak(2, "forfeit")).toBe(0);
     expect(nextStreak(2, "host-left")).toBe(2);
+  });
+});
+
+describe("nextAscentWins (#2702)", () => {
+  it("counts a run's wins, and a win at the first round starts a new run", () => {
+    expect(nextAscentWins(0, 0, "win")).toBe(1);
+    expect(nextAscentWins(1, 1, "win")).toBe(2);
+    // A member who stayed while the host left the queue still holds the old streak.
+    expect(nextAscentWins(5, 0, "win")).toBe(1);
+  });
+
+  it("ends with the run, and stands when the host left", () => {
+    expect(nextAscentWins(5, 3, "loss")).toBe(0);
+    expect(nextAscentWins(5, 3, "forfeit")).toBe(0);
+    expect(nextAscentWins(5, 3, "host-left")).toBe(5);
   });
 });
 
