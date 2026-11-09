@@ -102,7 +102,7 @@
   {
     "id": "vibe-wars",
     "title": "VibeWars",
-    "moods": ["epic", "triumphant"],
+    "moods": ["adventurous", "epic"],
     "bpm": 100,
     "key": "E aeolian",
     "colour": ["D#"],

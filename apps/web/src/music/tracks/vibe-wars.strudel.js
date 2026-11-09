@@ -1,4 +1,4 @@
-// vibe-wars - E aeolian, 100 bpm. mood: epic, triumphant.
+// vibe-wars - E aeolian, 100 bpm. mood: adventurous, epic.
 // The title theme. Horns rise a fifth and an octave in the first bar, so the
 // flash lands on a statement; the B7 turns it back to the top without a seam.
 // One level: the splash plays no intensity ramp, so level 0 is the whole theme.
