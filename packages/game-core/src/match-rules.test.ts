@@ -37,6 +37,7 @@ function standing(...teams: [number, number, number, boolean?, boolean?][]): Mat
       teams.map(([team, living, morale, priestLives = false, eliminated = false]) => [
         team,
         {
+          members: 1,
           living,
           morale,
           priestLives,
@@ -325,6 +326,7 @@ describe("evaluateMatch: guild battle (#1222)", () => {
   const rules = GUILD_BATTLE_MATCH_RULES;
   const NO_SCORE = emptyScore([0, 1]);
   const team = (overrides: Partial<TeamStanding> = {}): TeamStanding => ({
+    members: 8,
     living: 8,
     morale: 0,
     priestLives: false,
@@ -516,6 +518,7 @@ describe("evaluateMatch: capture points (#2690)", () => {
       at.map((ledAtSeconds, team) => [
         team,
         {
+          members: 4,
           living: 4,
           morale: 0,
           priestLives: false,

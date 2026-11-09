@@ -247,6 +247,8 @@ export interface MatchStanding {
 }
 
 export interface TeamStanding {
+  /** Members still in the match, dead or alive (#2890). */
+  readonly members: number;
   /** Members alive. */
   readonly living: number;
   /** The sum of every member's morale, dead or alive, in percent. */
@@ -333,9 +335,13 @@ export function soleLeader(score: MatchScore): number | undefined {
  * every member dead at once and no living priest, in annihilation, a
  * Relic Run or King of the Hill; a team that never had a priest has none
  * living. No kill-count, Guild Battle or Capture Points team is beaten so,
- * nor one whose rules say `wipeSurvived` (#2695).
+ * nor one whose rules say `wipeSurvived` (#2695). A Capture Points team
+ * whose members have all left is out (#2890).
  */
 export function teamBeaten(team: TeamStanding, rules: MatchRules): boolean {
+  if (rules.victory === "capture-points" && team.members === 0) {
+    return true;
+  }
   if (rules.wipeSurvived === true) {
     return false;
   }
@@ -569,7 +575,11 @@ function evaluateCapturePoints(
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
-  const ranked = [...score.byTeam].sort((a, b) => b[1] - a[1]);
+  const abandoned = evaluateWipe(standing, rules);
+  if (abandoned !== undefined) {
+    return abandoned;
+  }
+  const ranked = [...scoreInPlay(score, standing, rules).byTeam].sort((a, b) => b[1] - a[1]);
   const [first, second] = ranked;
   if (first !== undefined && second !== undefined && first[1] - second[1] >= CAPTURE_LEAD_TO_WIN) {
     return { phase: "finished", winningTeam: first[0], reason: "score" };

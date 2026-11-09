@@ -8633,23 +8633,26 @@ export class MatchSimulation {
    */
   #standing(): MatchStanding {
     const teams = new Set([...this.#teams, ...this.#guildLordTeams]);
-    const members = new Map<number, { living: number; morale: number; raisable: number }>(
-      [...teams].map((team) => [team, { living: 0, morale: 0, raisable: 0 }]),
-    );
+    const members = new Map<
+      number,
+      { members: number; living: number; morale: number; raisable: number }
+    >([...teams].map((team) => [team, { members: 0, living: 0, morale: 0, raisable: 0 }]));
     for (const record of this.#participants.values()) {
       if (!countsForTeam(record)) {
         continue;
       }
       const { combatant } = record;
-      const team = members.get(combatant.team) ?? { living: 0, morale: 0, raisable: 0 };
+      const team = members.get(combatant.team) ?? { members: 0, living: 0, morale: 0, raisable: 0 };
+      team.members += 1;
       team.living += combatant.dead ? 0 : 1;
       team.morale += combatant.morale;
       team.raisable += combatant.dead && combatant.morale <= MORALE_FLOOR ? 0 : 1;
       members.set(combatant.team, team);
     }
     const byTeam = new Map<number, TeamStanding>();
-    for (const [team, { living, morale, raisable }] of members) {
+    for (const [team, { members: count, living, morale, raisable }] of members) {
       byTeam.set(team, {
+        members: count,
         living,
         morale,
         priestLives: this.#priestLives(team),

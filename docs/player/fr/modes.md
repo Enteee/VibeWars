@@ -249,7 +249,7 @@ ta base avec toute leur santé et leur énergie, même si un ennemi s'y tient, s
 si leur moral est au plancher. Le tableau des scores décompte jusqu'à la
 prochaine vague. Chaque mort coûte du moral, et un fantôme se relève à la même
 vague, à sa propre place. Prends **20 points d'avance** sur toutes les autres
-équipes pour gagner aussitôt. Éliminer toute une équipe ne termine pas la partie. Après 8 minutes,
+équipes pour gagner aussitôt. Éliminer toute une équipe ne termine pas la partie, mais une équipe dont tous les joueurs sont partis est éliminée. Après 8 minutes,
 l'équipe avec le plus de points gagne ; à égalité, celle qui tient le plus de
 sanctuaires, puis l'équipe qui a été seule en tête en dernier, et si aucune ne
 l'a été, c'est un match nul. Les éliminations ne marquent rien.
