@@ -6,6 +6,7 @@
 
 export type {
   MapData,
+  MapLighting,
   TeamSize,
   PolygonWall,
   RectWall,

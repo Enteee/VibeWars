@@ -53,16 +53,27 @@ import {
   type RenderItem,
 } from "./render-order.js";
 import {
+  DECK_LIP,
+  DECK_SHADOW,
+  DECK_TINT,
+  WALL_STROKE,
+  arenaPalette,
+  type ArenaPalette,
+} from "./arena-palette.js";
+import {
   altHeld,
   CREATURE_PATH,
+  WALL_HEIGHT,
+  deckHeldBy,
   deckSideLow,
+  plankLines,
+  southFacingEdges,
   drawnLayerAt,
   hiddenCrop,
   liftAt,
   occludersOf,
   pickSurface,
   rampDrawing,
-  shapeHoldsCentre,
   RING_PATH,
   traceHiddenOutline,
   traceHiddenPolyline,
@@ -169,20 +180,19 @@ import type {
 
 const BEACON_BOLT_GLOW = 0x79c0ff;
 const BEACON_BOLT_CORE = 0xf0f6ff;
-const WALL_FILL = 0x202836;
-const DECK_FILL = 0x2c3648;
-const DECK_SIDE_FILL = 0x151b26;
-const RAMP_FILL = 0x262f3f;
-const RAMP_CHEVRON = 0x4a5a72;
 const RAMP_CHEVRON_WIDTH = 2;
 /** How far apart the side face's stacked outlines lie, in world units. */
 const SIDE_FACE_SLICE = 2;
+/** How far apart a deck's planks are, in world units. */
+const DECK_PLANK = 48;
+/** Line widths, in CSS px: a deck's lip and a wall's lit edge. */
+const DECK_LIP_WIDTH = 3;
+const WALL_LIT_WIDTH = 2;
 /** The hover marker on a layered map (#2831), its dashes on the ground. */
 const HOVER_RING = 0xd7dee8;
 const HOVER_RADIUS = 12;
 const HOVER_DASHES = 8;
 
-const WALL_STROKE = 0x3b4759;
 const TARGET_RING = 0xffd866;
 /** The `condition` orange: your team's called foe wears its chevron (#443). */
 const CALL_CHEVRON = 0xffa657;
@@ -204,7 +214,6 @@ const STAND_NEUTRAL = 0x8b949e;
 /** The altar on an edge marker (#1413): the palette's `altar` gold, as the compass draws it (#1388). */
 const ALTAR_GOLD = 0xc8a45a;
 const FLAG_POLE_COLOUR = 0xd8dee9;
-const GRID = 0x1a212c;
 const HEALTH_BAR_BG = 0x11161d;
 const HEALTH_BAR_FILL = 0x7ee787;
 const HEALTH_BAR_LOW = 0xff7b72;
@@ -258,6 +267,8 @@ const IMPACT_LINE_WIDTH = 1.5;
  * cover a badge's top edge.
  */
 const GROUND_DEPTH = -1;
+/** A layered map's opaque floor: under the ward and trap circles on it. */
+const FLOOR_DEPTH = -2;
 const MAP_DEPTH = renderOrder({ kind: "terrain" });
 const EFFECT_DEPTH = renderOrder({ kind: "effect" });
 const CAST_BADGE_DEPTH = renderOrder({ kind: "cast-badge" });
@@ -282,6 +293,8 @@ export class ArenaScene extends Phaser.Scene {
   private groundGraphics: Phaser.GameObjects.Graphics | undefined;
   /** Each ward's icon, by ground effect id (#1087). */
   private groundIcons = new Map<number, Phaser.GameObjects.Image>();
+  /** The opaque floor of a layered map, under the wards. */
+  private floorGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The grid, the arena's edge and the walls (#1353), over the wards; drawn when they change. */
   private mapGraphics: Phaser.GameObjects.Graphics | undefined;
   /** What `mapGraphics` shows; `undefined` until it is first drawn. */
@@ -466,6 +479,7 @@ export class ArenaScene extends Phaser.Scene {
       sheet.add(frame, 0, x, y, w, h);
     }
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
+    this.floorGraphics = this.add.graphics().setDepth(FLOOR_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
       body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
@@ -1772,29 +1786,34 @@ export class ArenaScene extends Phaser.Scene {
     // A line 1 world unit wide is under a pixel when zoomed out, and
     // flickers as the camera moves (#2393): 1 CSS px, as the edge markers.
     const line = 1 / next.zoom;
-    this.drawGrid(g, line);
+    const palette = arenaPalette(next.structure.layerCount);
+    this.drawFloor(palette);
+    this.drawGrid(g, line, palette);
+    this.drawDeckShadows(g, next.structure);
     for (const graphics of this.structureGraphics.values()) {
       graphics.clear();
     }
     for (const transition of next.structure.transitions) {
-      this.drawRamp(next.structure, transition, line);
+      this.drawRamp(next.structure, transition, line, palette);
     }
     for (const wall of next.walls) {
-      const deckLayer = next.structure.decks.find(
-        (deck) => deck.layer > wall.layer && shapeHoldsCentre(deck.footprint, wall),
-      )?.layer;
-      this.drawWall(
-        this.structureAt(
-          deckLayer === undefined
-            ? { kind: "wall", layer: wall.layer }
-            : { kind: "support", deckLayer },
-        ),
-        wall,
-        line,
+      const held = deckHeldBy(wall, next.structure);
+      const g = this.structureAt(
+        held === undefined
+          ? { kind: "wall", layer: wall.layer }
+          : { kind: "support", deckLayer: held.layer },
       );
+      if (next.structure.layerCount === 1) {
+        this.drawFlatWall(g, wall, line, palette);
+      } else if (held === undefined) {
+        this.drawWallBox(g, wall, line, palette);
+      } else {
+        const low = elevationOf(wall.layer);
+        this.drawColumn(g, wall, low, deckSideLow(held, next.walls), palette.support);
+      }
     }
     for (const deck of next.structure.decks) {
-      this.drawDeck(deck, next.walls, line);
+      this.drawDeck(deck, next.walls, line, palette);
     }
     this.occluders = occludersOf(next.walls, next.structure);
     this.drawnMap = next;
@@ -1937,19 +1956,26 @@ export class ArenaScene extends Phaser.Scene {
     structure: MapStructure,
     ramp: MapStructure["transitions"][number],
     line: number,
+    palette: ArenaPalette,
   ): void {
     const g = this.structureAt({ kind: "ramp", upperLayer: Math.max(ramp.from, ramp.to) });
     const drawing = rampDrawing(structure, ramp);
     if (drawing === undefined) {
-      g.fillStyle(RAMP_FILL, 1);
+      g.fillStyle(palette.rampTop, 1);
       this.fillShape(g, ramp.area);
       return;
     }
-    g.fillStyle(DECK_SIDE_FILL, 1);
+    g.fillStyle(palette.slab, 1);
     this.fillFan(g, drawing.side);
-    g.fillStyle(RAMP_FILL, 1);
+    g.fillStyle(palette.rampTop, 1);
     this.fillFan(g, drawing.slope);
-    g.lineStyle(line * RAMP_CHEVRON_WIDTH, RAMP_CHEVRON, 1);
+    g.lineStyle(line, palette.rampPanel, 1);
+    for (const [from, to] of drawing.panels) {
+      if (from !== undefined && to !== undefined) {
+        g.lineBetween(from.x, from.y, to.x, to.y);
+      }
+    }
+    g.lineStyle(line * RAMP_CHEVRON_WIDTH, palette.rampChevron, 1);
     for (const chevron of drawing.chevrons) {
       g.strokePoints(
         chevron.map(({ x, y }) => new Phaser.Math.Vector2(x, y)),
@@ -1978,33 +2004,91 @@ export class ArenaScene extends Phaser.Scene {
     deck: MapStructure["decks"][number],
     walls: readonly RenderableWall[],
     line: number,
+    palette: ArenaPalette,
   ): void {
     const top = elevationOf(deck.layer);
     const side = this.structureAt({ kind: "side-face", deckLayer: deck.layer });
-    side.fillStyle(DECK_SIDE_FILL, 1);
-    for (let lift = deckSideLow(deck, walls); lift < top; lift += SIDE_FACE_SLICE) {
-      side.save();
-      side.translateCanvas(0, -lift);
-      this.fillShape(side, deck.footprint);
-      side.restore();
-    }
+    this.drawColumn(side, deck.footprint, deckSideLow(deck, walls), top, palette.slab);
     const face = this.structureAt({ kind: "deck", deckLayer: deck.layer });
     face.save();
     face.translateCanvas(0, -top);
-    face.fillStyle(DECK_FILL, 1);
-    face.lineStyle(line, WALL_STROKE, 1);
+    face.fillStyle(palette.deckTop, 1);
     this.fillShape(face, deck.footprint);
+    face.lineStyle(line, palette.plank, 1);
+    for (const { from, to } of plankLines(deck.footprint, DECK_PLANK)) {
+      face.lineBetween(from.x, from.y, to.x, to.y);
+    }
+    face.lineStyle(line, palette.wallStroke, 1);
     this.strokeShape(face, deck.footprint);
+    face.lineStyle(line * DECK_LIP_WIDTH, DECK_LIP, 1);
+    for (const { from, to } of southFacingEdges(deck.footprint)) {
+      face.lineBetween(from.x, from.y, to.x, to.y);
+    }
     face.restore();
   }
 
-  private drawWall(g: Phaser.GameObjects.Graphics, wall: RenderableWall, line: number): void {
-    g.save();
-    g.translateCanvas(0, -elevationOf(wall.layer));
-    g.fillStyle(WALL_FILL, 1);
-    g.lineStyle(line, WALL_STROKE, 1);
+  /** What each bridge throws on the ground: a hard shadow, and the ground under it a step darker. */
+  private drawDeckShadows(g: Phaser.GameObjects.Graphics, structure: MapStructure): void {
+    for (const deck of structure.decks) {
+      if (deck.layer !== 1) {
+        continue;
+      }
+      g.save();
+      g.translateCanvas(DECK_SHADOW.offset, DECK_SHADOW.offset);
+      g.fillStyle(DECK_SHADOW.colour, DECK_SHADOW.alpha);
+      this.fillShape(g, deck.footprint);
+      g.restore();
+      g.fillStyle(DECK_TINT.colour, DECK_TINT.alpha);
+      this.fillShape(g, deck.footprint);
+    }
+  }
+
+  /** `shape` stacked from lift `low` up to `high`: a side face, or a pillar. */
+  private drawColumn(
+    g: Phaser.GameObjects.Graphics,
+    shape: RenderableShape,
+    low: number,
+    high: number,
+    colour: number,
+  ): void {
+    g.fillStyle(colour, 1);
+    for (let lift = low; lift < high; lift += SIDE_FACE_SLICE) {
+      g.save();
+      g.translateCanvas(0, -lift);
+      this.fillShape(g, shape);
+      g.restore();
+    }
+  }
+
+  private drawFlatWall(
+    g: Phaser.GameObjects.Graphics,
+    wall: RenderableWall,
+    line: number,
+    palette: ArenaPalette,
+  ): void {
+    g.fillStyle(palette.wallTop, 1);
+    g.lineStyle(line, palette.wallStroke, 1);
     this.fillShape(g, wall);
     this.strokeShape(g, wall);
+  }
+
+  /** A wall with height: its front face, its top, and a lit edge along the top's front. */
+  private drawWallBox(
+    g: Phaser.GameObjects.Graphics,
+    wall: RenderableWall,
+    line: number,
+    palette: ArenaPalette,
+  ): void {
+    const base = elevationOf(wall.layer);
+    const top = base + WALL_HEIGHT;
+    this.drawColumn(g, wall, base, top, palette.wallFace);
+    g.save();
+    g.translateCanvas(0, -top);
+    this.drawFlatWall(g, wall, line, palette);
+    g.lineStyle(line * WALL_LIT_WIDTH, palette.wallLit, 1);
+    for (const { from, to } of southFacingEdges(wall)) {
+      g.lineBetween(from.x, from.y, to.x, to.y);
+    }
     g.restore();
   }
 
@@ -2034,11 +2118,20 @@ export class ArenaScene extends Phaser.Scene {
     g.strokePoints(points, true);
   }
 
+  private drawFloor(palette: ArenaPalette): void {
+    const g = this.floorGraphics;
+    g?.clear();
+    if (g !== undefined && palette.floor !== undefined) {
+      g.fillStyle(palette.floor, 1);
+      g.fillRect(0, 0, this.arena.width, this.arena.height);
+    }
+  }
+
   /** The grid over the arena's bounds, not the screen, and its edge in `wall-stroke`; outside is `bg`. */
-  private drawGrid(g: Phaser.GameObjects.Graphics, line: number): void {
+  private drawGrid(g: Phaser.GameObjects.Graphics, line: number, palette: ArenaPalette): void {
     const { width, height } = this.arena;
     const step = 64;
-    g.lineStyle(line, GRID, 1);
+    g.lineStyle(line, palette.grid, 1);
     for (let x = 0; x <= width; x += step) {
       g.lineBetween(x, 0, x, height);
     }

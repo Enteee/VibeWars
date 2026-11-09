@@ -132,6 +132,8 @@ export interface RampDrawing {
   readonly slope: readonly Vec2[];
   readonly side: readonly Vec2[];
   readonly chevrons: readonly (readonly Vec2[])[];
+  /** The lines across the slope, each its two ends. */
+  readonly panels: readonly (readonly Vec2[])[];
 }
 
 /** Where the chevrons of a ramp sit, as shares of its length. */
@@ -139,6 +141,8 @@ const CHEVRON_AT = [0.25, 0.5, 0.75];
 /** A chevron's arms: how far back along the ramp, how wide across it, as shares. */
 const CHEVRON_BACK = 0.1;
 const CHEVRON_WIDE = 0.28;
+/** How far apart a ramp's panel lines are, in world units. */
+const RAMP_PANEL = 24;
 
 /** The slope, south side face and uphill chevrons of `ramp`; none if no deck tops it. */
 export function rampDrawing(structure: MapStructure, ramp: Transition): RampDrawing | undefined {
@@ -182,11 +186,54 @@ export function rampDrawing(structure: MapStructure, ramp: Transition): RampDraw
       onRamp(t, 0),
       onRamp(t - CHEVRON_BACK, CHEVRON_WIDE),
     ]),
+    panels: Array.from({ length: Math.ceil(length / RAMP_PANEL) - 1 }, (_, k) => {
+      const t = ((k + 1) * RAMP_PANEL) / length;
+      return [onRamp(t, -0.5), onRamp(t, 0.5)];
+    }),
   };
 }
 
 /** How thick a deck on pillars draws: the rest of its height is open air. */
-export const DECK_SLAB = 10;
+export const DECK_SLAB = 12;
+
+/** How high a wall that is not a support stands above its layer. */
+export const WALL_HEIGHT = 28;
+
+/** A straight line between two points. */
+export interface Segment {
+  readonly from: Vec2;
+  readonly to: Vec2;
+}
+
+/** The edges of `shape` whose outside faces the camera: a wall's lit edge, a deck's lip. */
+export function southFacingEdges(shape: RenderableShape): readonly Segment[] {
+  const outline = shapeOutline(shape);
+  const pairs = outline.map((from, k) => ({ from, to: outline[(k + 1) % outline.length] ?? from }));
+  const winding = pairs.reduce((sum, { from, to }) => sum + from.x * to.y - to.x * from.y, 0);
+  return pairs.filter(({ from, to }) => Math.sign(winding) * (from.x - to.x) > 0);
+}
+
+/** The north-south lines across `shape`, one every `every`, cut to its outline. */
+export function plankLines(shape: RenderableShape, every: number): readonly Segment[] {
+  const box = boxOf(shape);
+  const outline = shapeOutline(shape);
+  const lines: Segment[] = [];
+  for (let x = box.left + every; x < box.right; x += every) {
+    const crossings = outline
+      .flatMap((a, k) => {
+        const b = outline[(k + 1) % outline.length] ?? a;
+        return a.x <= x === b.x <= x ? [] : [a.y + ((x - a.x) * (b.y - a.y)) / (b.x - a.x)];
+      })
+      .sort((a, b) => a - b);
+    for (let i = 0; i + 1 < crossings.length; i += 2) {
+      lines.push({
+        from: { x, y: crossings[i] ?? 0 },
+        to: { x, y: crossings[i + 1] ?? 0 },
+      });
+    }
+  }
+  return lines;
+}
 
 /** Whether `wall`'s middle lies inside `shape`: a wall under a deck is a support. */
 export function shapeHoldsCentre(shape: RenderableShape, wall: RenderableShape): boolean {
@@ -195,6 +242,16 @@ export function shapeHoldsCentre(shape: RenderableShape, wall: RenderableShape):
   return pointInPolygon(
     { x: sum.x / corners.length, y: sum.y / corners.length },
     shapeOutline(shape),
+  );
+}
+
+/** The deck `wall` holds up, if it stands under one. */
+export function deckHeldBy(
+  wall: RenderableWall,
+  structure: MapStructure,
+): MapStructure["decks"][number] | undefined {
+  return structure.decks.find(
+    (deck) => deck.layer > wall.layer && shapeHoldsCentre(deck.footprint, wall),
   );
 }
 
@@ -327,9 +384,12 @@ export function occludersOf(
     return [];
   }
   return [
-    ...walls.map((wall) =>
-      occluder(wall, elevationOf(wall.layer), elevationOf(wall.layer), wall.layer),
-    ),
+    ...walls.map((wall) => {
+      const base = elevationOf(wall.layer);
+      const held = deckHeldBy(wall, structure);
+      const high = held === undefined ? base + WALL_HEIGHT : deckSideLow(held, walls);
+      return occluder(wall, base, high, wall.layer);
+    }),
     ...structure.decks.map((deck) =>
       occluder(deck.footprint, deckSideLow(deck, walls), elevationOf(deck.layer), deck.layer - 1),
     ),

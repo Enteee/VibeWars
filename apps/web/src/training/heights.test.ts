@@ -112,11 +112,11 @@ function expectClimbed(steps: readonly Spot[], layer: number): void {
 
 describe("the hunter on Training Heights (#2937)", () => {
   it("comes down a ramp after a player on the ground", () => {
-    expectClimbed(chase({ x: 450, y: 350, layer: 1 }, { x: 1180, y: 350, layer: 0 }, false), 0);
+    expectClimbed(chase({ x: 450, y: 450, layer: 1 }, { x: 1180, y: 450, layer: 0 }, false), 0);
   });
 
   it("goes up a ramp after a player on the bridge", () => {
-    expectClimbed(chase({ x: 1100, y: 350, layer: 0 }, { x: 350, y: 350, layer: 1 }), 1);
+    expectClimbed(chase({ x: 1100, y: 450, layer: 0 }, { x: 450, y: 450, layer: 1 }, false), 1);
   });
 });
 

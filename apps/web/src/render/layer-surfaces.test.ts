@@ -14,6 +14,9 @@ import {
   drawnLayerAt,
   liftAt,
   occludersOf,
+  plankLines,
+  southFacingEdges,
+  WALL_HEIGHT,
   pickSurface,
   rampDrawing,
   RING_PATH,
@@ -333,5 +336,66 @@ describe("liftAt (#2958)", () => {
     expect(deckSideLow(bridge, [pillar])).toBe(STEP - DECK_SLAB);
     expect(deckSideLow(bridge, [])).toBe(0);
     expect(deckSideLow(platform, [pillar])).toBe(STEP);
+  });
+});
+
+describe("structures with height", () => {
+  const wall = { kind: "rect" as const, layer: 0, x: 150, y: 400, width: 100, height: 40 };
+  const deck = {
+    layer: 1,
+    footprint: { kind: "rect" as const, x: 420, y: 250, width: 360, height: 200 },
+  };
+  const pillar = { kind: "rect" as const, layer: 0, x: 450, y: 420, width: 24, height: 24 };
+  const structure: MapStructure = { layerCount: 2, decks: [deck], transitions: [] };
+  const hiddenAt = (y: number): number => {
+    let pieces = 0;
+    traceHiddenOutline(RING_PATH, 200, y, 10, 0, occludersOf([wall], structure), () => {
+      pieces += 1;
+    });
+    return pieces;
+  };
+
+  it("has a wall cover its own height", () => {
+    const [occluder] = occludersOf([wall], structure);
+    expect([occluder?.lowLift, occluder?.highLift]).toEqual([0, WALL_HEIGHT]);
+  });
+
+  it("has a support cover the ground to its deck's underside", () => {
+    const [occluder] = occludersOf([pillar], structure);
+    expect([occluder?.lowLift, occluder?.highLift]).toEqual([0, ELEVATION_STEP - DECK_SLAB]);
+  });
+
+  it("has a slab deck end where its slab does", () => {
+    expect(occludersOf([pillar], structure)[1]?.bottom).toBe(406);
+  });
+
+  it("hides a body north of a wall within the wall's height, not beyond", () => {
+    expect(hiddenAt(400 - WALL_HEIGHT / 2)).toBeGreaterThan(0);
+    expect(hiddenAt(400 - WALL_HEIGHT - 12)).toBe(0);
+  });
+
+  it("finds the south edges of a shape, whichever way it winds", () => {
+    const south = [{ from: { x: 10, y: 10 }, to: { x: 0, y: 10 } }];
+    expect(southFacingEdges({ kind: "rect", x: 0, y: 0, width: 10, height: 10 })).toEqual(south);
+    const points = [
+      { x: 0, y: 0 },
+      { x: 0, y: 10 },
+      { x: 10, y: 10 },
+      { x: 10, y: 0 },
+    ];
+    expect(southFacingEdges({ kind: "polygon", points })).toEqual([
+      { from: { x: 0, y: 10 }, to: { x: 10, y: 10 } },
+    ]);
+  });
+
+  it("cuts planks to the shape's outline", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 96, y: 0 },
+      { x: 0, y: 96 },
+    ];
+    expect(plankLines({ kind: "polygon", points }, 48)).toEqual([
+      { from: { x: 48, y: 0 }, to: { x: 48, y: 48 } },
+    ]);
   });
 });
