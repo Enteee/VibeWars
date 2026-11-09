@@ -2139,6 +2139,7 @@ export default {
     "hollow-deep": "Profundezas Ocas",
     "blackwater-ford": "Vau das Águas Negras",
     "mosslit-cairns": "Marcos de Musgo",
+    "brazen-causeway": "A Calçada de Bronze",
     "scarred-earth": "Terra Marcada",
     "training-hall": "Salão de Treino",
     "training-pillars": "Pilares de Treino",
