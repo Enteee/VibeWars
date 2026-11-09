@@ -1,4 +1,5 @@
 import type { FlagField, RelicField, Segment } from "@vibewars/game-core";
+import { ELITE_ZAISHEN_MAP } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import type { GateDescriptor, MapDescriptor, WallDescriptor } from "@vibewars/game-protocol";
 import type {
@@ -970,7 +971,8 @@ export async function startMatchView(
         selfTeam: self?.team,
         aggression: match.aggression,
         selfMorale: self?.morale ?? 0,
-        clearSeconds: match.clearSeconds,
+        // By the map played, not the wire: a host of any other match cannot claim the boost.
+        clearSeconds: viewed.map.id === ELITE_ZAISHEN_MAP ? match.clearSeconds : undefined,
       });
     }
     // The snapshot that says "finished" may land a frame before the `ended` that carries it.
