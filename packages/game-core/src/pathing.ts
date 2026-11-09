@@ -1,7 +1,11 @@
 import {
+  closestPointOnPolygon,
   closestPointOnSegment,
   distancePointToSegment,
   distanceSegmentToSegmentXY,
+  pointInPolygon,
+  polygonCentre,
+  type Polygon,
   type Segment,
 } from "./geometry.js";
 import { add, distance, scale, sub, vec2, type Vec2 } from "./vec2.js";
@@ -19,7 +23,12 @@ import { add, distance, scale, sub, vec2, type Vec2 } from "./vec2.js";
 
 /** The corners a body can stand on, and which of them see each other. Built once per map. */
 export interface NavGraph {
+  /** The walkable areas' outline (`outlineWalls` of them) first, then the real walls. */
   readonly walls: readonly Segment[];
+  /** How many of `walls` are outline: they keep a body on its layer, and enclose no wall. */
+  readonly outlineWalls: number;
+  /** Where a body can be (ADR-0051); empty: everywhere, the ground. */
+  readonly walkable: readonly Polygon[];
   /** The map's size; `undefined` for a field with no edge. */
   readonly bounds: { readonly width: number; readonly height: number } | undefined;
   readonly clearance: number;
@@ -265,6 +274,85 @@ export function buildNavGraph(
   return navGraphFor(buildGatedNavGraph(walls, [], bounds, clearance), 0);
 }
 
+/** How far a point must be from another area's side to count as inside it. */
+const OUTLINE_EPSILON = 1e-6;
+
+function insideArea(point: Vec2, area: Polygon): boolean {
+  return (
+    pointInPolygon(point, area) &&
+    distance(point, closestPointOnPolygon(point, area)) > OUTLINE_EPSILON
+  );
+}
+
+/** Where along `edge`, 0 to 1, `side` crosses or ends on it. */
+function cutsAlong(edge: Segment, side: Segment, cuts: number[]): void {
+  const ex = edge.b.x - edge.a.x;
+  const ey = edge.b.y - edge.a.y;
+  const sx = side.b.x - side.a.x;
+  const sy = side.b.y - side.a.y;
+  const denominator = ex * sy - ey * sx;
+  if (denominator !== 0) {
+    const t = ((side.a.x - edge.a.x) * sy - (side.a.y - edge.a.y) * sx) / denominator;
+    const u = ((side.a.x - edge.a.x) * ey - (side.a.y - edge.a.y) * ex) / denominator;
+    if (t > 0 && t < 1 && u >= 0 && u <= 1) {
+      cuts.push(t);
+    }
+    return;
+  }
+  const lengthSquared = ex * ex + ey * ey;
+  for (const end of [side.a, side.b]) {
+    if (distancePointToSegment(end, edge) <= OUTLINE_EPSILON && lengthSquared > 0) {
+      const t = ((end.x - edge.a.x) * ex + (end.y - edge.a.y) * ey) / lengthSquared;
+      if (t > 0 && t < 1) {
+        cuts.push(t);
+      }
+    }
+  }
+}
+
+function sidesOf(area: Polygon): Segment[] {
+  return area.flatMap((corner, at) => {
+    const next = area[(at + 1) % area.length];
+    return next === undefined ? [] : [{ a: corner, b: next }];
+  });
+}
+
+/**
+ * The edge of a layer's walkable `areas`: each area's sides, split where
+ * they meet another area's, keeping the parts not inside another area.
+ * A deck and its ramp overlap, so the opening between them is no edge.
+ */
+export function walkableOutline(areas: readonly Polygon[]): Segment[] {
+  const outline: Segment[] = [];
+  areas.forEach((area, at) => {
+    const others = areas.filter((_, other) => other !== at);
+    for (const edge of sidesOf(area)) {
+      const cuts = [0, 1];
+      for (const other of others) {
+        for (const side of sidesOf(other)) {
+          cutsAlong(edge, side, cuts);
+        }
+      }
+      cuts.sort((a, b) => a - b);
+      const along = sub(edge.b, edge.a);
+      cuts.forEach((from, index) => {
+        const to = cuts[index + 1];
+        if (to === undefined || to - from <= OUTLINE_EPSILON) {
+          return;
+        }
+        const middle = add(edge.a, scale(along, (from + to) / 2));
+        if (!others.some((other) => insideArea(middle, other))) {
+          outline.push({
+            a: add(edge.a, scale(along, from)),
+            b: add(edge.a, scale(along, to)),
+          });
+        }
+      });
+    }
+  });
+  return outline;
+}
+
 /**
  * Every graph a map's gates can make (#2691), built once: the nodes of
  * the map and of every gate, and for each node and edge the gates, as
@@ -272,7 +360,10 @@ export function buildNavGraph(
  * off it, so a gate moving mid-match costs a filter and no line of sight.
  */
 export interface GatedNavGraph {
+  /** As `NavGraph`'s: the outline first, then the walls. */
   readonly walls: readonly Segment[];
+  readonly outlineWalls: number;
+  readonly walkable: readonly Polygon[];
   readonly gates: readonly (readonly Segment[])[];
   readonly bounds: NavGraph["bounds"];
   readonly clearance: number;
@@ -288,18 +379,22 @@ export interface GatedNavGraph {
 
 /** See `GatedNavGraph`; each of `gates` is one gate's segments. */
 export function buildGatedNavGraph(
-  walls: readonly Segment[],
+  mapWalls: readonly Segment[],
   gates: readonly (readonly Segment[])[],
   bounds: NavGraph["bounds"],
   clearance: number,
+  walkable: readonly Polygon[] = [],
 ): GatedNavGraph {
+  const outline = walkableOutline(walkable);
+  const walls = [...outline, ...mapWalls];
   const offset = clearance + 1;
   const inside = (point: Vec2): boolean =>
-    bounds === undefined ||
-    (point.x >= clearance &&
-      point.y >= clearance &&
-      point.x <= bounds.width - clearance &&
-      point.y <= bounds.height - clearance);
+    (walkable.length === 0 || walkable.some((area) => pointInPolygon(point, area))) &&
+    (bounds === undefined ||
+      (point.x >= clearance &&
+        point.y >= clearance &&
+        point.x <= bounds.width - clearance &&
+        point.y <= bounds.height - clearance));
 
   const corners = new Map<string, { readonly at: Vec2; gates: number }>();
   const addCorners = (segments: readonly Segment[], gateBit: number): void => {
@@ -367,7 +462,19 @@ export function buildGatedNavGraph(
     edges.push(seen);
     edgeBlockedBy.push(crossed);
   });
-  return { walls, gates, bounds, clearance, nodes, cornerOf, nodeBlockedBy, edges, edgeBlockedBy };
+  return {
+    walls,
+    outlineWalls: outline.length,
+    walkable,
+    gates,
+    bounds,
+    clearance,
+    nodes,
+    cornerOf,
+    nodeBlockedBy,
+    edges,
+    edgeBlockedBy,
+  };
 }
 
 /** The graph for the gates in `closed`, a bit each, as `buildNavGraph` would build it. */
@@ -401,14 +508,15 @@ export function navGraphFor(gated: GatedNavGraph, closed: number): NavGraph {
     });
     edges.push(kept);
   });
-  const graph: NavGraph = { walls, bounds, clearance, nodes, edges };
+  const { outlineWalls, walkable } = gated;
+  const graph: NavGraph = { walls, outlineWalls, walkable, bounds, clearance, nodes, edges };
   GRIDS.set(graph, buildWallGrid(walls, clearance));
   return graph;
 }
 
 /**
- * Whether a body can stand at `point`: on the map, clear of every wall,
- * and not inside one. Every wall is a closed outline (a map's rectangle
+ * Whether a body can stand at `point`: on the map and its walkable areas,
+ * clear of every wall, and not inside one. Every wall is a closed outline (a map's rectangle
  * or polygon), so a ray to the right that crosses an odd number of sides
  * starts inside one, however far away its sides are.
  *
@@ -418,7 +526,10 @@ export function navGraphFor(gated: GatedNavGraph, closed: number): NavGraph {
  * crossing lies in that side's box. The ray walks that row.
  */
 export function isStandable(graph: NavGraph, point: Vec2): boolean {
-  const { bounds, clearance } = graph;
+  const { bounds, clearance, walkable, outlineWalls } = graph;
+  if (walkable.length > 0 && !walkable.some((area) => pointInPolygon(point, area))) {
+    return false;
+  }
   if (
     bounds !== undefined &&
     (point.x < clearance ||
@@ -462,7 +573,7 @@ export function isStandable(graph: NavGraph, point: Vec2): boolean {
         }
         grid.stamp[index] = ray;
         const wall = grid.walls[index];
-        if (wall === undefined) {
+        if (wall === undefined || index < outlineWalls) {
           continue;
         }
         const { a, b } = wall;
@@ -536,14 +647,85 @@ export interface PathFinder {
   find(from: Vec2, to: Vec2): readonly Vec2[] | undefined;
 }
 
+/** A point of a route, and the layer a body must be on while walking to it (ADR-0051). */
+export type RouteWaypoint = Vec2 & { readonly layer: number };
+
+/** A ramp, as paths read it: inside `area` a body moves between `from` and `to`. */
+export interface NavTransition {
+  readonly from: number;
+  readonly to: number;
+  readonly area: Polygon;
+}
+
+/** Finds paths over a map's layers, reusing its own scratch from one query to the next. */
+export interface LayeredPathFinder {
+  /** Every node of every layer, portals included: what the 600-node budget (#2544) counts. */
+  readonly nodeCount: number;
+  /**
+   * The shortest way for a body from `from` on `fromLayer` to `to` on
+   * `toLayer`: the waypoints after `from`, ending at `to`, or `undefined`
+   * if there is none. A ramp is one waypoint, its centre, carrying the
+   * far layer. A fresh array the caller may keep.
+   */
+  find(from: Vec2, fromLayer: number, to: Vec2, toLayer: number): RouteWaypoint[] | undefined;
+}
+
+/** One layer of a map, as `buildLayeredNavGraph` reads it. */
+export interface NavLayer {
+  readonly walls: readonly Segment[];
+  /** Its decks and ramps; empty: everywhere, the ground. */
+  readonly walkable: readonly Polygon[];
+}
+
+/** A gate, with the layer it stands on. */
+export interface NavGate {
+  readonly layer: number;
+  readonly segments: readonly Segment[];
+}
+
+/**
+ * One `GatedNavGraph` per layer. Each keeps every gate, so a gate's bit
+ * means the same on all of them; a gate on another layer has no segments.
+ */
+export function buildLayeredNavGraph(
+  layers: readonly NavLayer[],
+  gates: readonly NavGate[],
+  bounds: NavGraph["bounds"],
+  clearance: number,
+): readonly GatedNavGraph[] {
+  return layers.map((layer, at) =>
+    buildGatedNavGraph(
+      layer.walls,
+      gates.map((gate) => (gate.layer === at ? gate.segments : [])),
+      bounds,
+      clearance,
+      layer.walkable,
+    ),
+  );
+}
+
 /**
  * A path finder for `graph`: A* with the straight-line distance as its
- * estimate (#211). It runs for every approaching attacker on every tick,
- * so it allocates its state once, here, and only the path it returns per
- * query (#267).
+ * estimate (#211).
  */
 export function createPathFinder(graph: NavGraph): PathFinder {
-  return new AStar(graph);
+  const finder = createLayeredPathFinder([graph], []);
+  return {
+    find: (from, to) => finder.find(from, 0, to, 0)?.map(({ x, y }) => vec2(x, y)),
+  };
+}
+
+/**
+ * A path finder over `graphs`, one a layer, joined at each of
+ * `transitions`' centres where a body fits on both layers. It runs for
+ * every approaching attacker on every tick, so it allocates its state
+ * once, here, and only the path it returns per query (#267).
+ */
+export function createLayeredPathFinder(
+  graphs: readonly NavGraph[],
+  transitions: readonly NavTransition[],
+): LayeredPathFinder {
+  return new AStar(graphs, transitions);
 }
 
 /** Where a vertex stands in one search. */
@@ -558,10 +740,18 @@ const GOAL_BLOCKED = 2;
 
 const NO_EDGES: readonly number[] = [];
 
-class AStar implements PathFinder {
-  readonly #graph: NavGraph;
-  readonly #grid: WallGrid;
-  /** Vertices are the graph's nodes, then `from`, then `to`. */
+const ZERO_POINT: Vec2 = { x: 0, y: 0 };
+
+class AStar implements LayeredPathFinder {
+  readonly #graphs: readonly NavGraph[];
+  readonly #grids: readonly WallGrid[];
+  /** Vertices are every layer's nodes then portals, in layer order, then `from`, then `to`. */
+  readonly #points: Vec2[] = [];
+  readonly #layerOf: Uint8Array;
+  readonly #isPortal: Uint8Array;
+  readonly #edges: number[][] = [];
+  /** The first vertex of each layer, and one past the last's. */
+  readonly #firstOf: Int32Array;
   readonly #start: number;
   readonly #goal: number;
   readonly #cost: Float64Array;
@@ -578,11 +768,62 @@ class AStar implements PathFinder {
   #openCount = 0;
   #from: Vec2 = { x: 0, y: 0 };
   #to: Vec2 = { x: 0, y: 0 };
+  #toLayer = 0;
 
-  public constructor(graph: NavGraph) {
-    this.#graph = graph;
-    this.#grid = gridOf(graph);
-    const count = graph.nodes.length;
+  public constructor(graphs: readonly NavGraph[], transitions: readonly NavTransition[]) {
+    this.#graphs = graphs;
+    this.#grids = graphs.map(gridOf);
+    const links = transitions.flatMap((transition) => {
+      const point = polygonCentre(transition.area);
+      const near = graphs[transition.from];
+      const far = graphs[transition.to];
+      return near !== undefined &&
+        far !== undefined &&
+        isStandable(near, point) &&
+        isStandable(far, point)
+        ? [{ point, from: transition.from, to: transition.to, near: -1, far: -1 }]
+        : [];
+    });
+    const layers: number[] = [];
+    const portals: boolean[] = [];
+    const firsts: number[] = [];
+    const portalsOn = graphs.map(() => [] as number[]);
+    graphs.forEach((graph, layer) => {
+      firsts.push(this.#points.length);
+      const base = this.#points.length;
+      graph.nodes.forEach((node) => {
+        this.#points.push(node);
+        layers.push(layer);
+        portals.push(false);
+      });
+      graph.edges.forEach((seen) => {
+        this.#edges.push(seen.map((j) => base + j));
+      });
+      for (const link of links) {
+        if (link.from === layer || link.to === layer) {
+          if (link.from === layer) {
+            link.near = this.#points.length;
+          } else {
+            link.far = this.#points.length;
+          }
+          portalsOn[layer]?.push(this.#points.length);
+          this.#points.push(link.point);
+          layers.push(layer);
+          portals.push(true);
+          this.#edges.push([]);
+        }
+      }
+    });
+    firsts.push(this.#points.length);
+    this.#joinPortals(portalsOn, firsts);
+    for (const { near, far } of links) {
+      this.#edges[near]?.push(far);
+      this.#edges[far]?.push(near);
+    }
+    this.#layerOf = Uint8Array.from(layers);
+    this.#isPortal = Uint8Array.from(portals, Number);
+    this.#firstOf = Int32Array.from(firsts);
+    const count = this.#points.length;
     this.#start = count;
     this.#goal = count + 1;
     this.#cost = new Float64Array(count + 2);
@@ -592,18 +833,76 @@ class AStar implements PathFinder {
     this.#open = new Int32Array(count + 2);
   }
 
-  public find(from: Vec2, to: Vec2): readonly Vec2[] | undefined {
-    const graph = this.#graph;
+  /** Each portal to the nodes and the other portals it sees on its own layer. */
+  #joinPortals(portalsOn: readonly (readonly number[])[], firsts: readonly number[]): void {
+    portalsOn.forEach((portals, layer) => {
+      const grid = this.#grids[layer];
+      const first = firsts[layer] ?? 0;
+      const last = firsts[layer + 1] ?? first;
+      if (grid === undefined) {
+        return;
+      }
+      for (const portal of portals) {
+        const point = this.#points[portal] ?? ZERO_POINT;
+        for (let vertex = first; vertex < last; vertex += 1) {
+          const other = this.#points[vertex];
+          if (vertex !== portal && other !== undefined && isClear(grid, point, other)) {
+            this.#edges[portal]?.push(vertex);
+            if (!portals.includes(vertex)) {
+              this.#edges[vertex]?.push(portal);
+            }
+          }
+        }
+      }
+    });
+  }
+
+  public get nodeCount(): number {
+    return this.#points.length;
+  }
+
+  public find(
+    from: Vec2,
+    fromLayer: number,
+    to: Vec2,
+    toLayer: number,
+  ): RouteWaypoint[] | undefined {
     // No estimate to a point off every number line is ever the best (#2735).
     if (![from.x, from.y, to.x, to.y].every(Number.isFinite)) {
       return undefined;
     }
-    if (isClear(this.#grid, from, to)) {
-      return [to];
+    const start = this.#graphs[fromLayer];
+    const end = this.#graphs[toLayer];
+    if (start === undefined || end === undefined) {
+      return undefined;
+    }
+    if (end.walkable.length > 0 && !isStandable(end, to)) {
+      return undefined;
+    }
+    if (start.walkable.length > 0 && !isStandable(start, from)) {
+      // At a deck's edge, legal but inside the outline's clearance.
+      const spot = nearestStandable(start, from);
+      if (!isStandable(start, spot)) {
+        return undefined;
+      }
+      const rest = this.#search(spot, fromLayer, to, toLayer);
+      return rest === undefined ? undefined : [{ ...spot, layer: fromLayer }, ...rest];
+    }
+    return this.#search(from, fromLayer, to, toLayer);
+  }
+
+  #search(from: Vec2, fromLayer: number, to: Vec2, toLayer: number): RouteWaypoint[] | undefined {
+    const fromGrid = this.#grids[fromLayer];
+    if (fromGrid === undefined) {
+      return undefined;
+    }
+    if (fromLayer === toLayer && isClear(fromGrid, from, to)) {
+      return [{ x: to.x, y: to.y, layer: toLayer }];
     }
 
     this.#from = from;
     this.#to = to;
+    this.#toLayer = toLayer;
     this.#cost.fill(Number.POSITIVE_INFINITY);
     this.#cameFrom.fill(-1);
     this.#state.fill(UNSEEN);
@@ -632,7 +931,7 @@ class AStar implements PathFinder {
         return undefined;
       }
       if (current === goal) {
-        return this.#path();
+        return this.#path(from, fromLayer);
       }
       // Ordered removal, so the rest keep the order they were opened in.
       this.#open.copyWithin(at, at + 1, this.#openCount);
@@ -641,19 +940,21 @@ class AStar implements PathFinder {
 
       const here = this.#cost[current] ?? Number.POSITIVE_INFINITY;
       if (current === start) {
-        // The nodes `from` sees, in node order, skipping one it stands on.
-        for (let j = 0; j < graph.nodes.length; j += 1) {
-          const node = graph.nodes[j];
+        // The vertices `from` sees on its layer, in order, skipping a
+        // node it stands on. Not a portal: its way up starts there.
+        const last = this.#firstOf[fromLayer + 1] ?? 0;
+        for (let j = this.#firstOf[fromLayer] ?? 0; j < last; j += 1) {
+          const node = this.#points[j];
           if (
             node !== undefined &&
-            distance(node, from) > ARRIVED &&
-            isClear(this.#grid, from, node)
+            (this.#isPortal[j] === 1 || distance(node, from) > ARRIVED) &&
+            isClear(fromGrid, from, node)
           ) {
             this.#relax(current, j, here);
           }
         }
       } else {
-        for (const next of graph.edges[current] ?? NO_EDGES) {
+        for (const next of this.#edges[current] ?? NO_EDGES) {
           this.#relax(current, next, here);
         }
         if (this.#nodeSeesGoal(current)) {
@@ -669,7 +970,7 @@ class AStar implements PathFinder {
       ? this.#from
       : i === this.#goal
         ? this.#to
-        : (this.#graph.nodes[i] ?? this.#to);
+        : (this.#points[i] ?? this.#to);
   }
 
   #opened(i: number): void {
@@ -692,22 +993,47 @@ class AStar implements PathFinder {
     }
   }
 
-  /** Whether node `i` sees the goal: tested the first time `i` is expanded, then remembered. */
+  /** Whether vertex `i` sees the goal, on the goal's layer: tested the first time `i` is expanded, then remembered. */
   #nodeSeesGoal(i: number): boolean {
+    if (this.#layerOf[i] !== this.#toLayer) {
+      return false;
+    }
     if (this.#seesGoal[i] === GOAL_UNKNOWN) {
-      const node = this.#graph.nodes[i];
+      const node = this.#points[i];
+      const grid = this.#grids[this.#toLayer];
       this.#seesGoal[i] =
-        node !== undefined && isClear(this.#grid, node, this.#to) ? GOAL_CLEAR : GOAL_BLOCKED;
+        node !== undefined && grid !== undefined && isClear(grid, node, this.#to)
+          ? GOAL_CLEAR
+          : GOAL_BLOCKED;
     }
     return this.#seesGoal[i] === GOAL_CLEAR;
   }
 
-  /** The waypoints from `from` to the goal, as `cameFrom` records them. */
-  #path(): Vec2[] {
-    const path: Vec2[] = [];
-    for (let at = this.#goal; at !== -1 && at !== this.#start; at = this.#cameFrom[at] ?? -1) {
-      path.push(this.#point(at));
+  /** Whether `a` and `b` are the two sides of one ramp's portal. */
+  #isLink(a: number, b: number): boolean {
+    return (
+      b >= 0 &&
+      this.#isPortal[a] === 1 &&
+      this.#isPortal[b] === 1 &&
+      this.#layerOf[a] !== this.#layerOf[b]
+    );
+  }
+
+  /** The waypoints from `from` to the goal, as `cameFrom` records them; a portal is one, its far side. */
+  #path(from: Vec2, fromLayer: number): RouteWaypoint[] {
+    const path: RouteWaypoint[] = [];
+    let at = this.#goal;
+    while (at !== -1 && at !== this.#start) {
+      const { x, y } = this.#point(at);
+      path.push({ x, y, layer: at === this.#goal ? this.#toLayer : (this.#layerOf[at] ?? 0) });
+      const before = this.#cameFrom[at] ?? -1;
+      at = at !== this.#goal && this.#isLink(at, before) ? (this.#cameFrom[before] ?? -1) : before;
     }
-    return path.reverse();
+    path.reverse();
+    const first = path[0];
+    if (path.length > 1 && first?.layer === fromLayer && distance(first, from) <= ARRIVED) {
+      path.shift();
+    }
+    return path;
   }
 }
