@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { Polygon, Segment } from "../geometry.js";
-import { PRIEST_WAVE_SECONDS } from "../match-rules.js";
+import { CAPTURE_POINTS_MATCH_RULES, PRIEST_WAVE_SECONDS } from "../match-rules.js";
 import { NO_RANKS } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
+import { CAPTURE_SECONDS, MAX_PIPS } from "./capture-points.js";
+import { flagId, FLAG_REACH_UNITS, type FlagField } from "./flags.js";
 import type { GateField } from "./gates.js";
+import { guildLordId } from "./guild-lord.js";
 import { BOUNDS, DT, fighter, RANGER, RULESET, WARRIOR } from "./bot/rules/test-support.js";
 import {
   MatchSimulation,
@@ -40,6 +43,10 @@ const LAYERS: MatchLayers = {
 
 const WIRE = "assassin.scorpion-wire";
 const HEART_OF_SHADOW = "assassin.heart-of-shadow";
+
+const ON_DECK = vec2(800, 400);
+const ON_RAMP = vec2(430, 400);
+const ALONE_SECONDS = CAPTURE_SECONDS * MAX_PIPS;
 
 function spec(
   id: string,
@@ -335,5 +342,62 @@ describe("a body's layer (ADR-0051)", () => {
 
   it("refuses a participant on a layer the map does not have", () => {
     expect(() => arena([spec("a", 0, vec2(600, 400), 2)])).toThrow(/layer 2/);
+  });
+});
+
+describe("an objective on a layer (ADR-0051, #2900)", () => {
+  /** How far one body fills a shrine at `shrine` on the deck, standing at `at` on `layer`. */
+  function filled(shrine: Vec2, at: Vec2, layer: number): number {
+    const sim = arena([spec("a", 0, at, layer), spec("x", 1, vec2(1500, 900), 0)], {
+      matchRules: CAPTURE_POINTS_MATCH_RULES,
+      capturePoints: [{ ...shrine, layer: 1 }],
+    });
+    run(sim, ALONE_SECONDS / 4);
+    return sim.capturePoints[0]?.progress ?? 0;
+  }
+
+  it("a shrine on a deck fills for a body on the deck", () => {
+    expect(filled(ON_DECK, ON_DECK, 1)).toBeGreaterThan(0);
+  });
+
+  it("a shrine on a deck does not fill for a body on the ground beneath it", () => {
+    expect(filled(ON_DECK, ON_DECK, 0)).toBe(0);
+  });
+
+  it("a shrine on a deck fills for a body in a ramp connecting to it", () => {
+    expect(filled(ON_RAMP, ON_RAMP, 0)).toBeGreaterThan(0);
+  });
+
+  const DECK_FLAGS: FlagField = {
+    stand: vec2(1000, 400),
+    spawns: [
+      { team: 0, position: ON_DECK, layer: 1 },
+      { team: 1, position: vec2(1500, 900) },
+    ],
+  };
+
+  it("a flag on a deck is not taken up from beneath it, however near", () => {
+    const sim = arena([spec("a", 0, ON_DECK, 0)], { flagField: DECK_FLAGS });
+    sim.requestAttack("a", flagId(0));
+    sim.step(DT);
+    expect(sim.flags[0]?.place).toEqual({ kind: "spawn" });
+  });
+
+  it("a flag on a deck is taken up from the deck, and lies on its dropper's layer", () => {
+    const within = vec2(ON_DECK.x + FLAG_REACH_UNITS / 2, ON_DECK.y);
+    const sim = arena([spec("a", 0, within, 1)], { flagField: DECK_FLAGS });
+    sim.requestAttack("a", flagId(0));
+    sim.step(DT);
+    sim.step(DT);
+    expect(sim.flags[0]?.place).toEqual({ kind: "carried", carrierId: "a" });
+    sim.dropBundle("a");
+    expect(sim.flags[0]?.place).toEqual({ kind: "ground", position: within, layer: 1 });
+  });
+
+  it("a Guild Lord starts on its objective's layer", () => {
+    const sim = arena([spec("a", 0, vec2(100, 100), 0)], {
+      guildLords: [{ team: 0, position: ON_DECK, layer: 1 }],
+    });
+    expect(get(sim, guildLordId(0)).layer).toBe(1);
   });
 });

@@ -8,6 +8,7 @@ import {
   dropFlag,
   flagId,
   flagRefusal,
+  flagTargetPoint,
   flagTargetPosition,
   flagTeamOf,
   initialFlags,
@@ -95,7 +96,7 @@ describe("taking up a flag", () => {
   });
 
   it("can be a flag lying on the ground", () => {
-    const dropped = dropFlag(BOTH_CARRIED, "a", vec2(900, 950));
+    const dropped = dropFlag(BOTH_CARRIED, "a", vec2(900, 950), 0);
     expect(flagTargetPosition(FIELD, dropped.flags, flagId(0))).toEqual(vec2(900, 950));
     const after = step(dropped, take("b", 0, flagId(0)));
     expect(carriedFlag(after.flags, "b")?.team).toBe(0);
@@ -104,22 +105,35 @@ describe("taking up a flag", () => {
 
 describe("dropping a flag", () => {
   it("leaves it on the ground where the carrier was, until its team takes it up", () => {
-    const after = step(BOTH_CARRIED, { kind: "drop", carrierId: "a", position: vec2(800, 900) });
+    const after = step(BOTH_CARRIED, {
+      kind: "drop",
+      carrierId: "a",
+      position: vec2(800, 900),
+      layer: 0,
+    });
     expect(after.flags[0]).toEqual({
       team: 0,
-      place: { kind: "ground", position: vec2(800, 900) },
+      place: { kind: "ground", position: vec2(800, 900), layer: 0 },
     });
     expect(flagRefusal(FIELD, after, "x", 1, flagId(0))).toBe("not-your-flag");
   });
 
   it("does nothing for a player who carries none", () => {
-    expect(dropFlag(START, "a", vec2(1, 1))).toEqual(START);
+    expect(dropFlag(START, "a", vec2(1, 1), 0)).toEqual(START);
+  });
+
+  it("lies on the layer of whoever dropped it, and is walked to there (ADR-0051)", () => {
+    const dropped = dropFlag(BOTH_CARRIED, "a", vec2(900, 950), 1);
+    expect(flagTargetPoint(FIELD, dropped.flags, flagId(0))).toEqual({
+      position: vec2(900, 950),
+      layer: 1,
+    });
   });
 
   it("comes before a planting in the same tick, so a dead carrier plants nothing", () => {
     const after = step(
       BOTH_CARRIED,
-      { kind: "drop", carrierId: "a", position: vec2(1490, 1000) },
+      { kind: "drop", carrierId: "a", position: vec2(1490, 1000), layer: 0 },
       take("a", 0, FLAG_STAND_ID),
     );
     expect(after.stand.holder).toBeUndefined();
@@ -206,7 +220,12 @@ describe("holding the stand", () => {
   });
 
   it("keeps counting while its carrier drops something else", () => {
-    const dropped = step(planted, { kind: "drop", carrierId: "x", position: vec2(2000, 1000) });
+    const dropped = step(planted, {
+      kind: "drop",
+      carrierId: "x",
+      position: vec2(2000, 1000),
+      layer: 0,
+    });
     expect(dropped.stand).toEqual({ holder: 0, heldSeconds: DT });
   });
 });

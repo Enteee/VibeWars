@@ -105,7 +105,7 @@ function snapshot(
     players: Array.from({ length: players }, (_, i) => player(i)),
     projectiles: Array.from({ length: projectiles }, (_, i) => projectile(i)),
     groundEffects: Array.from({ length: groundEffects }, (_, i) => groundEffect(i)),
-    flags: [{ team: 0, place: "carried", carrierId: "peer-0", x: null, y: null }],
+    flags: [{ team: 0, place: "carried", carrierId: "peer-0", x: null, y: null, layer: null }],
     stand: { holder: 1, heldSeconds: 12 },
     aggression: [],
     relics: [],

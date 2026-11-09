@@ -46,7 +46,7 @@ describe("renderableFlags", () => {
     const flags = renderableFlags(
       [
         { team: 0, place: { kind: "stand" } },
-        { team: 1, place: { kind: "ground", position: vec2(10, 20) } },
+        { team: 1, place: { kind: "ground", position: vec2(10, 20), layer: 0 } },
       ],
       FIELD,
       [],
@@ -90,7 +90,7 @@ describe("renderableRelics (#1374)", () => {
   it("draws each relic as a flag where it is, and a right click picks a lying one", () => {
     const relics = renderableRelics(
       [
-        { team: 0, place: { kind: "ground", position: vec2(600, 400) } },
+        { team: 0, place: { kind: "ground", position: vec2(600, 400), layer: 0 } },
         { team: 1, place: { kind: "carried", carrierId: "x" } },
       ],
       RELICS,
@@ -111,7 +111,7 @@ describe("flagObjectAtPoint", () => {
 
   it("picks a flag lying near the point before the stand", () => {
     const flags = renderableFlags(
-      [{ team: 0, place: { kind: "ground", position: vec2(1500, 1020) } }],
+      [{ team: 0, place: { kind: "ground", position: vec2(1500, 1020), layer: 0 } }],
       FIELD,
       [],
       0,

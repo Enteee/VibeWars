@@ -20,15 +20,16 @@ The game cannot show a bridge, a platform or anyone standing on one, and the ope
 
 ### The rule table
 
-| Attack                       | Rule                                                                                         |
-| ---------------------------- | -------------------------------------------------------------------------------------------- |
-| Melee                        | Same layer only (a body on a transition counts as on both).                                  |
-| Area effect                  | Only the layer it belongs to, see below (a body on a transition counts as on both).          |
-| Ranged or spell, same layer  | That layer's walls, as today.                                                                |
-| Ranged or spell, upper→lower | Upper-layer walls. A target under a deck's footprint can't be hit from that deck.            |
-| Ranged or spell, lower→upper | Lower-layer walls. A target on a deck can't be hit by a shooter under that deck's footprint. |
-| Bow or spear, upper→lower    | +15% range and +10% non-critical damage.                                                     |
-| Bow or spear, lower→upper    | −15% range and −10% non-critical damage.                                                     |
+| Attack                       | Rule                                                                                                                  |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Melee                        | Same layer only (a body on a transition counts as on both).                                                           |
+| Area effect                  | Only the layer it belongs to, see below (a body on a transition counts as on both).                                   |
+| Ranged or spell, same layer  | That layer's walls, as today.                                                                                         |
+| Ranged or spell, upper→lower | Upper-layer walls. A target under a deck's footprint can't be hit from that deck.                                     |
+| Ranged or spell, lower→upper | Lower-layer walls. A target on a deck can't be hit by a shooter under that deck's footprint.                          |
+| Bow or spear, upper→lower    | +15% range and +10% non-critical damage.                                                                              |
+| Bow or spear, lower→upper    | −15% range and −10% non-critical damage.                                                                              |
+| Objective presence           | On the objective's layer only (a body on a transition counts as on both). A dropped bundle takes its dropper's layer. |
 
 Everything else is a plain 2D line-of-sight check. Heights are never computed: no line through a deck's edge, no blind zone along it. Bots and pathing use these same checks, so a bot never targets through a deck.
 
