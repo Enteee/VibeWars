@@ -610,6 +610,9 @@ export interface WireProjectile {
   readonly skillId: string | null;
   readonly from: { readonly x: number; readonly y: number };
   readonly to: { readonly x: number; readonly y: number };
+  /** The shooter's layer at release, and the target's (#2972). */
+  readonly fromLayer: number;
+  readonly toLayer: number;
   /** The match clock (`elapsedSeconds`) at release. */
   readonly launchedAt: number;
   readonly flightSeconds: number;
@@ -2219,6 +2222,8 @@ function parseProjectile(value: unknown): WireProjectile | undefined {
     !isCount(raw.id) ||
     !isString(raw.attackerId) ||
     !isNullableString(raw.skillId) ||
+    !isCount(raw.fromLayer) ||
+    !isCount(raw.toLayer) ||
     !isNumber(raw.launchedAt) ||
     !isNumber(raw.flightSeconds) ||
     raw.flightSeconds <= 0
@@ -2235,6 +2240,8 @@ function parseProjectile(value: unknown): WireProjectile | undefined {
         skillId: raw.skillId,
         from,
         to,
+        fromLayer: raw.fromLayer,
+        toLayer: raw.toLayer,
         launchedAt: raw.launchedAt,
         flightSeconds: raw.flightSeconds,
       };

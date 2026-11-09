@@ -78,7 +78,13 @@ import {
   statusFrame,
   type AtlasMap,
 } from "./arena-atlas.js";
-import { MatchClock, projectileHeading, projectilePosition, shotFadeAlpha } from "./projectiles.js";
+import {
+  MatchClock,
+  projectileHeading,
+  projectileLanding,
+  projectilePosition,
+  shotFadeAlpha,
+} from "./projectiles.js";
 import { NO_COVER, snapView, type CameraView, type Cover } from "./camera-rig.js";
 import { edgeMarkers, type EdgeMarker, type EdgeThing } from "./edge-markers.js";
 import { statusRowLayout } from "./status-icons.js";
@@ -1059,7 +1065,7 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
     for (const shot of this.snapshot.projectiles) {
-      const position = projectilePosition(shot, clock);
+      const position = projectilePosition(shot, clock, this.snapshot.structure);
       const shown = this.projectileImages.get(shot.id);
       // An ended shot never flies again, even while its id is still sent.
       if (position === undefined || this.endedShots.has(shot.id)) {
@@ -1070,9 +1076,13 @@ export class ArenaScene extends Phaser.Scene {
         const image = this.add
           .image(position.x, position.y, ATLAS, projectileFrame(shot.sprite))
           .setDepth(OVERLAY_DEPTH);
-        image.setRotation(projectileHeading(shot));
+        image.setRotation(projectileHeading(shot, this.snapshot.structure));
         image.setTint(shot.colour);
-        this.projectileImages.set(shot.id, { image, to: shot.to, endedAt: undefined });
+        this.projectileImages.set(shot.id, {
+          image,
+          to: projectileLanding(shot, this.snapshot.structure),
+          endedAt: undefined,
+        });
       } else {
         shown.image.setPosition(position.x, position.y);
       }

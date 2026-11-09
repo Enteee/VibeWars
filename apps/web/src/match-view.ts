@@ -323,6 +323,8 @@ export function toArenaSnapshot(
         sprite: projectileSprite(shooter?.weaponId, shot.skillId),
         from: shot.from,
         to: shot.to,
+        fromLayer: shot.fromLayer,
+        toLayer: shot.toLayer,
         launchedAt: shot.launchedAt,
         flightSeconds: shot.flightSeconds,
         // Tinted by side; a shooter who has left counts as the other side.

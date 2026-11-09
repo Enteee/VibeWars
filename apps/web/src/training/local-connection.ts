@@ -294,6 +294,8 @@ export function createLocalConnection(options: {
           skillId: shot.skillHit?.kind === "spell" ? shot.skillHit.skill.id : undefined,
           from: shot.from,
           to: shot.aimPoint,
+          fromLayer: shot.fromLayer,
+          toLayer: shot.toLayer,
           launchedAt: simulation.elapsedSeconds - shot.elapsed,
           flightSeconds: shot.flightSeconds,
         })),
