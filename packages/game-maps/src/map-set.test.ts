@@ -18,8 +18,10 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { allWallSegments } from "./geometry.js";
+import { layeredFinder } from "./layered-finder.test-support.js";
 import { loadAllMaps, loadMap } from "./loader.js";
-import type { MapData } from "./schema.js";
+import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
+import { mapDataSchema, type MapData } from "./schema.js";
 
 /**
  * Every arena, old and new (#444): valid, fair by a half turn about its
@@ -749,7 +751,21 @@ describe.each([
   });
 
   it("keeps its nav graph to 600 nodes", () => {
-    const graph = buildNavGraph(allWallSegments(map.walls), bounds, RADIUS);
-    expect(graph.nodes.length).toBeLessThanOrEqual(600);
+    expect(layeredFinder(map, RADIUS).nodeCount).toBeLessThanOrEqual(600);
   });
+});
+
+describe("the ramps of every layered map (ADR-0051)", () => {
+  const layered = [...loadAllMaps(), mapDataSchema.parse(layerTest)].filter(
+    (map) => map.layers > 1,
+  );
+
+  it.each(layered.map((map) => [map.id, map] as const))(
+    "%s links both layers at every ramp",
+    (_, map) => {
+      const withRamps = layeredFinder(map, RADIUS).nodeCount;
+      const without = layeredFinder({ ...map, transitions: [] }, RADIUS).nodeCount;
+      expect(withRamps - without).toBeGreaterThanOrEqual(2 * map.transitions.length);
+    },
+  );
 });
