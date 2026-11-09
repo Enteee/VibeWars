@@ -14,7 +14,7 @@ export type MatchIntent =
   | { readonly kind: "use-skill"; readonly slot: number }
   | { readonly kind: "attack"; readonly targetId: string }
   | { readonly kind: "cancel" }
-  | { readonly kind: "walk-to"; readonly x: number; readonly y: number }
+  | { readonly kind: "walk-to"; readonly x: number; readonly y: number; readonly layer: number }
   | { readonly kind: "end-upkeep"; readonly targetId: string; readonly status: string }
   | { readonly kind: "weapon-set"; readonly set: 0 | 1 | 2 | 3 }
   | { readonly kind: "drop-bundle" }
@@ -77,7 +77,7 @@ export function applyIntent(
       sim.cancelAction(playerId);
       return null;
     case "walk-to":
-      sim.walkTo(playerId, vec2(intent.x, intent.y));
+      sim.walkTo(playerId, vec2(intent.x, intent.y), intent.layer);
       return null;
     case "end-upkeep":
       sim.endUpkeep(playerId, intent.targetId, intent.status);

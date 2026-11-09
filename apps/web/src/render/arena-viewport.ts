@@ -12,6 +12,8 @@ export interface ButtonEvent {
   readonly phase: "down" | "up" | "move";
   /** Where, in world units. */
   readonly world: Vec2;
+  /** Whether Alt was held: a click goes to the layer below (#2831). */
+  readonly altKey: boolean;
   /** Where, in CSS pixels from the canvas's top-left corner. */
   readonly screen: Vec2;
 }
@@ -134,7 +136,11 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
       // a release over the HUD only arrives through pointer capture.
       const canvas = game.canvas;
       let held = 0;
-      let last: { world: Vec2; screen: Vec2 } = { world: vec2(0, 0), screen: vec2(0, 0) };
+      let last: { world: Vec2; altKey: boolean; screen: Vec2 } = {
+        world: vec2(0, 0),
+        altKey: false,
+        screen: vec2(0, 0),
+      };
       const emit = (
         pressed: readonly MouseButton[],
         released: readonly MouseButton[],
@@ -162,6 +168,7 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
         );
         last = {
           world: vec2(world.x, world.y),
+          altKey: event.altKey,
           screen: vec2(event.clientX - bounds.left, event.clientY - bounds.top),
         };
         const { pressed, released } = buttonChanges(held, event.buttons);

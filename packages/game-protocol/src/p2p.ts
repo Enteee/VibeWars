@@ -29,6 +29,7 @@ import {
   LOBBY_MODES,
   MAX_LOBBY_PLAYERS,
   isLobbyCode,
+  isWireLayer,
   MAX_TEAM_LOBBY_SIDE,
   LOBBY_TEAM_SIZES,
   type LobbyTeamSize,
@@ -282,12 +283,6 @@ export const MAX_WIRE_SIGNET = 0x1fff;
 /** The most walls a map holds, and points a polygon wall holds. */
 export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
-/** A body's highest layer: a map has at most three (ADR-0051). */
-const MAX_WIRE_LAYER = 2;
-
-function isWireLayer(value: unknown): value is number {
-  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= MAX_WIRE_LAYER;
-}
 
 /** The most gates a map holds (#2691), as `MAX_GATES` in game-maps; a peer keeps walls per combination. */
 export const MAX_WIRE_GATES = 6;

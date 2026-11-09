@@ -1079,13 +1079,14 @@ export async function startMatchView(
   const offPointer =
     seat === undefined
       ? undefined
-      : viewport?.onButton(({ button, phase, world }) => {
+      : viewport?.onButton(({ button, phase, world, altKey }) => {
           if (button === "left" && phase === "down") {
             const intents = primaryClickIntents(
               seat.getSnapshot(),
               latestArena ?? EMPTY_SNAPSHOT,
               world,
               nameReveal.held(),
+              altKey,
             );
             for (const intent of intents) {
               seat.sendIntent(intent);

@@ -1116,7 +1116,7 @@ export function createTrainingPanel(): TrainingPanel {
         session.connection.sendIntent(intent);
       }
     });
-    offPointer = created.onButton(({ button, phase, world }) => {
+    offPointer = created.onButton(({ button, phase, world, altKey }) => {
       if (session === undefined) {
         return;
       }
@@ -1144,6 +1144,7 @@ export function createTrainingPanel(): TrainingPanel {
         latestArena,
         world,
         nameReveal.held(),
+        altKey,
       );
       for (const intent of intents) {
         session.connection.sendIntent(intent);
