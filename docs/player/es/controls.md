@@ -42,7 +42,7 @@ Estas teclas son fijas:
 - **Clic derecho** en un enemigo o un aliado para seleccionarlo. Otro clic
   derecho rápido en el mismo enemigo lo ataca.
 - **Clic derecho** en una bandera o en la base de bandera, en una Batalla
-  de gremios, para seleccionarla; **Space** camina hasta allí y coge la
+  de gremios o en Barrow Field, para seleccionarla; **Space** camina hasta allí y coge la
   bandera o la planta.
 - **Clic con la rueda** en un enemigo para marcarlo para tu equipo: su **T**
   lo selecciona. En el suelo o en un aliado, señala ese punto. O haz clic en

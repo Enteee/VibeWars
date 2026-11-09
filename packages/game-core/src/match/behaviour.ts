@@ -276,9 +276,9 @@ export interface BehaviourContext {
   /** The foe `self`'s team called (#443), if any: a bot's target while it lives (#1193). */
   readonly calledTargetId: string | undefined;
   /** Whether nothing blocks the line of sight from `self` to `point` (#1222). */
-  sees(point: Vec2): boolean;
-  /** Whether nothing blocks the line of sight from `from` to `to` (#2545). */
-  seesBetween(from: Vec2, to: Vec2): boolean;
+  sees(point: Vec2, layer?: number): boolean;
+  /** Whether nothing blocks the line of sight from `from` to `to`, each on its layer (#2545, ADR-0051). */
+  seesBetween(from: Vec2, to: Vec2, fromLayer: number, toLayer: number): boolean;
   /** Whether `self` could walk straight to `point` and stand there (#2545). */
   walkable(point: Vec2): boolean;
   /** Where the living players of every other team stand on average (#2545). */
@@ -448,7 +448,7 @@ export function decide(
           ? undefined
           : (other) =>
               distance(other.position, context.self.position) <= reach &&
-              context.sees(other.position),
+              context.sees(other.position, other.layer),
       );
       return {
         ...STAND_STILL,

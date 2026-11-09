@@ -80,3 +80,49 @@ test("Clone saves a finished match's team as a Team Build and opens it (#2585)",
     page.locator(".screen-teams .play-card-name", { hasText: /^Ann's team$/ }),
   ).toBeVisible();
 });
+
+test("Clone saves a finished 1v1's side as a character and opens it (#2885)", async ({ page }) => {
+  const now = Date.now();
+  const record: MatchRecord = {
+    v: MATCH_RECORD_VERSION,
+    mode: "team-arena",
+    map: "arena-crossroads",
+    endedAt: Math.floor(now / 1000) - 60,
+    durationSeconds: 245,
+    winningTeam: 0,
+    endReason: "annihilation",
+    teams: [
+      {
+        players: [
+          { name: "Ann", guildTag: null, bot: false, pubkey: "a".repeat(64), template: played(0) },
+        ],
+      },
+      {
+        players: [{ name: "Bot A", guildTag: null, bot: true, pubkey: null, template: played(2) }],
+      },
+    ],
+  };
+  const event = matchRecordEvent(record, now);
+  if (event === undefined) {
+    throw new Error("record too big");
+  }
+
+  await page.goto("./");
+  await openRail(page, "Matches");
+  await page.evaluate(
+    ([channel, message]) => {
+      const post = new BroadcastChannel(channel);
+      post.postMessage(message);
+      post.close();
+    },
+    [RECORDS_CHANNEL, recordMessage(event)] as const,
+  );
+  await page.locator(".match-row-head").click();
+  await page
+    .locator(".match-detail .play-card")
+    .getByRole("button", { name: "Clone", exact: true })
+    .click();
+
+  await expect(page.getByLabel("character name")).toHaveValue("Ann");
+  await expect(page.getByText("Cloned Ann")).toBeVisible();
+});

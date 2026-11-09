@@ -39,7 +39,7 @@ These keys are fixed:
 - **Left click** the ground to walk there. Without Shift, the left button only walks.
 - **Right click** a foe or an ally to target it. Right click the same foe
   again, quickly, to attack it.
-- **Right click** a flag or the flag stand, in a Guild Battle, to target
+- **Right click** a flag or the flag stand, in a Guild Battle or on Barrow Field, to target
   it; **Space** walks there and takes the flag up or plants it.
 - **Wheel click** a foe to call it for your team: their **T** targets it.
   On the ground or an ally, it pings that spot. Or click the target bar

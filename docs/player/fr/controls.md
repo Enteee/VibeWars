@@ -43,7 +43,7 @@ Ces touches sont fixes :
   que marcher.
 - **Clic droit** sur un ennemi ou un allié pour le cibler. Clic droit sur le
   même ennemi à nouveau, rapidement, pour l'attaquer.
-- **Clic droit** sur un drapeau ou le Socle du drapeau, en Bataille de guilde,
+- **Clic droit** sur un drapeau ou le Socle du drapeau, en Bataille de guilde ou sur Barrow Field,
   pour le cibler ; **Space** y marche et prend le drapeau ou le plante.
 - **Clic molette** sur un ennemi pour l'annoncer à ton équipe : leur **T** le
   cible. Au sol ou sur un allié, il signale cet endroit. Ou clique sur la

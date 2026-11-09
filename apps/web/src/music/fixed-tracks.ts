@@ -36,6 +36,7 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["hall-of-heroes-king", "hall-of-champions"],
   ["hall-of-heroes-relic", "hall-of-champions"],
   ["hall-of-heroes-capture", "hall-of-champions"],
+  ["barrow-field", "jungle-veil"],
   ["hollow-deep", "ember-deep"],
   ["blackwater-ford", "jungle-veil"],
   ["mosslit-cairns", "jungle-veil"],

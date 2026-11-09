@@ -93,7 +93,8 @@ const spawnPointSchema = z.object({
  * (#1223), or its flag stand and where each team's flag starts (#1225);
  * a Relic Run's altar and where each team's relic starts (#1374);
  * King of the Hill's altar and where each team's Ghostly Hero starts
- * (#1377); or one of Capture Points' shrines (#1378).
+ * (#1377); one of Capture Points' shrines (#1378); or a Storm Beacon
+ * (#2694), a flag stand that strikes its owner's foes.
  */
 const objectiveSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -150,10 +151,18 @@ const objectiveSchema = z.discriminatedUnion("kind", [
     base: z.literal(2).optional(),
     position: vec2Schema,
   }),
+  z.object({
+    kind: z.literal("storm-beacon"),
+    layer: layerSchema,
+    position: vec2Schema,
+  }),
 ]);
 
 /** An objective that belongs to no team. */
-type SharedKind = Extract<Objective, { kind: "flag-stand" | "altar" | "capture-point" }>["kind"];
+type SharedKind = Extract<
+  Objective,
+  { kind: "flag-stand" | "altar" | "capture-point" | "storm-beacon" }
+>["kind"];
 type TeamKind = Exclude<Objective["kind"], SharedKind>;
 
 /** Which team objectives each mode may have; none for a mode not here. A map with a `ghostLevel` may have `ghost-spawn`s too. */
@@ -174,6 +183,7 @@ const OWN_GHOST_RELIC_OBJECTIVES: readonly TeamKind[] = [
 
 /** Which shared objectives each mode has; none for a mode not here. */
 const SHARED_OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly SharedKind[]>>> = {
+  "priest-annihilation": ["storm-beacon"],
   "guild-battle": ["flag-stand"],
   "relic-run": ["altar"],
   "king-of-the-hill": ["altar"],
@@ -186,6 +196,7 @@ const SHARED_COUNTS: Readonly<Record<SharedKind, { readonly min: number; readonl
     "flag-stand": { min: 1, max: 1 },
     altar: { min: 1, max: 1 },
     "capture-point": { min: 1, max: 5 },
+    "storm-beacon": { min: 0, max: 1 },
   };
 
 /** The kinds a map of a mode that has them has exactly one of per spawning team. */
@@ -208,6 +219,7 @@ const OBJECTIVE_NAMES: Readonly<Record<Objective["kind"], string>> = {
   "ghost-spawn": "ghost spawn",
   altar: "altar",
   "capture-point": "capture point",
+  "storm-beacon": "Storm Beacon",
 };
 
 /**
@@ -356,10 +368,16 @@ export const mapDataSchema = z
     }
     const ownGhost = map.relicTarget === "own-ghost";
     const byMode = ownGhost ? OWN_GHOST_RELIC_OBJECTIVES : (OBJECTIVES_BY_MODE[map.mode] ?? []);
-    const kinds: readonly TeamKind[] =
-      map.ghostLevel !== undefined && !byMode.includes("ghost-spawn")
-        ? [...byMode, "ghost-spawn"]
-        : byMode;
+    const kinds: readonly TeamKind[] = [
+      ...byMode,
+      ...(map.ghostLevel !== undefined && !byMode.includes("ghost-spawn")
+        ? (["ghost-spawn"] as const)
+        : []),
+      // A Storm Beacon is captured with a flag (#2694): one per team with it, none without.
+      ...(map.objectives.some((objective) => objective.kind === "storm-beacon")
+        ? (["flag-spawn"] as const)
+        : []),
+    ];
     if (byMode.includes("ghost-spawn") && map.ghostLevel === undefined) {
       context.addIssue({
         code: "custom",

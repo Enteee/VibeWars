@@ -1024,6 +1024,7 @@ export async function startMatchView(
         blocking(match.gates).segments,
         viewed.timeLimitSeconds,
         mode,
+        flagField?.beacon === true,
         match,
       );
       updateFollowed(hud, viewed.selfSessionId, followed, match);
@@ -1046,6 +1047,7 @@ export async function startMatchView(
       blocking(match.gates).segments,
       seat.timeLimitSeconds,
       mode,
+      flagField?.beacon === true,
       match,
     );
     updateRecharges(hud, seat.skillBar, seat.getRecharges(), seat.getQueuedSlot());

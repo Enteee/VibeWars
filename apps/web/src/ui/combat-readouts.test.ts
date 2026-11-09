@@ -118,6 +118,14 @@ describe("logToneOf", () => {
 });
 
 describe("describeCombatEvent", () => {
+  it("names the Storm Beacon as the source of its strike (#2694)", () => {
+    const event = { kind: "damage", targetId: "bob", amount: 27, critical: false } as const;
+    const strike = { ...entry([event]), cause: "beacon", sourceId: undefined } as const;
+    expect(describeCombatEvent(strike, event, nameOf, isCreature)).toBe(
+      t("combat.hit", { by: t("combat.sourceBeacon"), target: nameOf("bob"), amount: "27" }),
+    );
+  });
+
   it("names the skill, the caster, the target and the amount", () => {
     const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 63.6, critical: false };
     expect(describeCombatEvent(entry([event]), event, nameOf, isCreature)).toBe(

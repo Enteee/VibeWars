@@ -37,6 +37,7 @@ import {
 } from "./status.js";
 import {
   nearestFirst,
+  inArea,
   nearestSpiritWithin,
   ownCreaturesWithin,
   spiritsWithin,
@@ -55,6 +56,7 @@ import {
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange } from "../geometry.js";
 import { isFreshCorpse } from "../match/corpses.js";
+import { floorOf, sharesFloor } from "../match/layer-rules.js";
 import { MASTERLESS_TEAM } from "../match/minions.js";
 import { distance, type Vec2 } from "../vec2.js";
 import type { Creature } from "../match/simulation.js";
@@ -621,15 +623,15 @@ function healAmount(
   if (perAlly === undefined) {
     return base;
   }
-  const at = context.surroundings.get(caster.id)?.position;
+  const at = context.surroundings.get(caster.id);
   const allies =
     at === undefined
       ? 1
       : [...context.surroundings.values()].filter(
-          ({ combatant, position }) =>
+          ({ combatant, position, floors }) =>
             !combatant.dead &&
             combatant.team === caster.team &&
-            distance(position, at) <= perAlly.radius,
+            inArea(position, floors, at, perAlly.radius),
         ).length;
   return Math.min(perAlly.max, base + allies * resolveMagnitude(perAlly.amount, caster));
 }
@@ -822,16 +824,16 @@ function partyShares(
   surroundings: Surroundings,
 ): number {
   const radius = effect.perPartyMemberWithin;
-  const at = surroundings.get(caster.id)?.position;
+  const at = surroundings.get(caster.id);
   if (radius === undefined || at === undefined) {
     return 1;
   }
   return [...surroundings.values()].filter(
-    ({ combatant, position, creature }) =>
+    ({ combatant, position, floors, creature }) =>
       creature === undefined &&
       !combatant.dead &&
       combatant.team === caster.team &&
-      distance(position, at) <= radius,
+      inArea(position, floors, at, radius),
   ).length;
 }
 
@@ -910,7 +912,7 @@ function perOwnCreature(
   if (per === undefined) {
     return amount;
   }
-  const at = surroundings.get(caster.id)?.position;
+  const at = surroundings.get(caster.id);
   const creatures =
     at === undefined ? 0 : ownCreaturesWithin(surroundings.values(), caster, at, per.radius);
   return Math.min(amount * creatures, resolveMagnitude(per.max, caster));
@@ -966,12 +968,12 @@ function countOf(
     }
     case "foes-within":
     case "allies-within": {
-      const at = surroundings.get(caster.id)?.position;
+      const at = surroundings.get(caster.id);
       const allies = rule.kind === "allies-within";
       return at === undefined
         ? 0
         : [...surroundings.values()].filter(
-            ({ combatant, position }) =>
+            ({ combatant, position, floors }) =>
               !combatant.dead &&
               (combatant.team === caster.team) === allies &&
               !(
@@ -984,19 +986,20 @@ function countOf(
                 rule.knockedDown === true &&
                 combatant.knockdownRemaining <= 0
               ) &&
-              distance(position, at) <= rule.radius,
+              inArea(position, floors, at, rule.radius),
           ).length;
     }
     case "dead-allies-within": {
-      const at = surroundings.get(caster.id)?.position;
+      const at = surroundings.get(caster.id);
       return at === undefined
         ? 0
         : [...surroundings.values()].filter(
-            ({ combatant, position }) =>
+            ({ combatant, position, floors }) =>
               combatant.dead &&
               combatant.id !== caster.id &&
               combatant.team === caster.team &&
-              distanceWithinRange(at, position, rule.radius),
+              sharesFloor(floors, floorOf(at.layer)) &&
+              distanceWithinRange(at.position, position, rule.radius),
           ).length;
     }
     case "knocked-down":
@@ -1657,20 +1660,18 @@ function splashTargets(
   const at =
     centre === undefined
       ? undefined
-      : context.surroundings.get(stepped?.kind === "shadow-stepped" ? stepped.toId : centre.id)
-          ?.position;
+      : context.surroundings.get(stepped?.kind === "shadow-stepped" ? stepped.toId : centre.id);
   if (target === undefined || at === undefined) {
     return { centre, reached: [] };
   }
-  const casterAt =
-    effect.alsoAround === "caster" ? context.surroundings.get(caster.id)?.position : undefined;
+  const casterAt = effect.alsoAround === "caster" ? context.surroundings.get(caster.id) : undefined;
   const reached = [...context.surroundings.values()].filter(
-    ({ combatant, position, creature }) =>
+    ({ combatant, position, floors, creature }) =>
       combatant.dead === (effect.dead === true) &&
       (combatant.id !== target.id || effect.includesCentre === true) &&
       splashReaches(effect.hits, caster, combatant, creature) &&
-      (distance(position, at) <= effect.radius ||
-        (casterAt !== undefined && distance(position, casterAt) <= effect.radius)) &&
+      (inArea(position, floors, at, effect.radius) ||
+        (casterAt !== undefined && inArea(position, floors, casterAt, effect.radius))) &&
       (effect.onlyBearing === undefined ||
         combatant.statuses.countByCategory(effect.onlyBearing) > 0) &&
       (effect.onlyUsing === undefined || usingSkillOf(combatant, effect.onlyUsing)) &&
@@ -1681,7 +1682,7 @@ function splashTargets(
     effect.maxTargets === undefined || typeof effect.maxTargets === "number"
       ? effect.maxTargets
       : resolveMagnitude(effect.maxTargets, caster);
-  return { centre, reached: nearestFirst(reached, at).slice(0, maxTargets) };
+  return { centre, reached: nearestFirst(reached, at.position).slice(0, maxTargets) };
 }
 
 /** Whether `combatant` is activating a skill of `type` (#2282). */
@@ -1756,19 +1757,19 @@ function gatherConditions(
   events: CombatEvent[],
 ): void {
   const { caster, target } = context;
-  const at = target === undefined ? undefined : context.surroundings.get(target.id)?.position;
+  const at = target === undefined ? undefined : context.surroundings.get(target.id);
   if (target === undefined || at === undefined) {
     return;
   }
   const givers = nearestFirst(
     [...context.surroundings.values()].filter(
-      ({ combatant, position }) =>
+      ({ combatant, position, floors }) =>
         !combatant.dead &&
         combatant.id !== target.id &&
         combatant.team !== caster.team &&
-        distance(position, at) <= radius,
+        inArea(position, floors, at, radius),
     ),
-    at,
+    at.position,
   );
   const count = resolveMagnitude(effect.count, context.ranksFrom ?? caster);
   for (const giver of givers) {
@@ -2459,19 +2460,19 @@ export function applyEffect(
       );
       // Plague Sending's foes adjacent to the target (#2259), found before any lands.
       const radius = effect.copyToFoesWithin;
-      const at = context.surroundings.get(target.id)?.position;
+      const at = context.surroundings.get(target.id);
       const copiedTo =
         radius === undefined || at === undefined
           ? []
           : nearestFirst(
               [...context.surroundings.values()].filter(
-                ({ combatant, position }) =>
+                ({ combatant, position, floors }) =>
                   !combatant.dead &&
                   combatant.id !== target.id &&
                   combatant.team !== caster.team &&
-                  distance(position, at) <= radius,
+                  inArea(position, floors, at, radius),
               ),
-              at,
+              at.position,
             );
       // The caster becomes every moved condition's source: a Bleeding Draw
       // Conditions takes from an ally counts as the Monk's own from then on.
@@ -2507,18 +2508,18 @@ export function applyEffect(
     }
 
     case "transfer-conditions-to-area": {
-      const at = context.surroundings.get(caster.id)?.position;
+      const at = context.surroundings.get(caster.id);
       if (caster.dead || at === undefined) {
         return events;
       }
       const foes = nearestFirst(
         [...context.surroundings.values()].filter(
-          ({ combatant, position }) =>
+          ({ combatant, position, floors }) =>
             !combatant.dead &&
             combatant.team !== caster.team &&
-            distance(position, at) <= effect.radius,
+            inArea(position, floors, at, effect.radius),
         ),
-        at,
+        at.position,
       );
       if (foes.length === 0) {
         return events;
@@ -2546,7 +2547,7 @@ export function applyEffect(
     }
 
     case "spread-conditions": {
-      const at = target === undefined ? undefined : context.surroundings.get(target.id)?.position;
+      const at = target === undefined ? undefined : context.surroundings.get(target.id);
       if (target === undefined || target.dead || at === undefined) {
         return events;
       }
@@ -2555,17 +2556,17 @@ export function applyEffect(
         ({ id }) => getStatusDefinition(id).category === "condition",
       );
       const reached = [...context.surroundings.values()].filter(
-        ({ combatant, position }) =>
+        ({ combatant, position, floors }) =>
           !combatant.dead &&
           combatant.id !== target.id &&
           combatant.team !== caster.team &&
-          distance(position, at) <= effect.radius,
+          inArea(position, floors, at, effect.radius),
       );
       const extend =
         effect.extendPercent === undefined
           ? 1
           : 1 + resolveMagnitude(effect.extendPercent, caster) / 100;
-      for (const combatant of nearestFirst(reached, at)) {
+      for (const combatant of nearestFirst(reached, at.position)) {
         for (const { id, remainingSeconds, ranks } of conditions) {
           landOnTaker(
             combatant,
@@ -2777,17 +2778,17 @@ export function applyEffect(
 
     // Revive Animal (#1108): every dead allied companion near the caster.
     case "resurrect-companions": {
-      const at = context.surroundings.get(caster.id)?.position;
+      const at = context.surroundings.get(caster.id);
       if (at === undefined) {
         return events;
       }
       const percent = resolveMagnitude(effect.healthPercent, caster);
-      for (const { combatant, position, creature } of context.surroundings.values()) {
+      for (const { combatant, position, floors, creature } of context.surroundings.values()) {
         if (
           creature?.companionSkillId !== undefined &&
           combatant.dead &&
           combatant.team === caster.team &&
-          distance(position, at) <= effect.radius
+          inArea(position, floors, at, effect.radius)
         ) {
           resurrect(combatant, (combatant.maxHealth * percent) / 100, 0, events);
         }
@@ -2890,9 +2891,9 @@ export function applyEffect(
     }
 
     case "drain-nearest-spirit": {
-      const at = castSpot(context, caster);
+      const at = context.surroundings.get(caster.id);
       const spirit =
-        at === null
+        at === undefined
           ? undefined
           : nearestSpiritWithin(context.surroundings.values(), at, AREA_EARSHOT);
       if (spirit === undefined || target === undefined) {
@@ -2909,7 +2910,7 @@ export function applyEffect(
     }
 
     case "drain-nearest-spirit-energy": {
-      const at = context.surroundings.get(caster.id)?.position;
+      const at = context.surroundings.get(caster.id);
       const spirit =
         at === undefined
           ? undefined
@@ -2936,12 +2937,12 @@ export function applyEffect(
       return events;
 
     case "destroy-allied-spirits": {
-      const at = context.surroundings.get(caster.id)?.position;
+      const at = context.surroundings.get(caster.id);
       if (at === undefined) {
         return events;
       }
-      const near = [...context.surroundings.values()].filter(
-        ({ position }) => distance(position, at) <= effect.radius,
+      const near = [...context.surroundings.values()].filter(({ position, floors }) =>
+        inArea(position, floors, at, effect.radius),
       );
       for (const spirit of near) {
         destroyCreature(spirit, "spirit", caster, events);
@@ -3273,28 +3274,28 @@ export function stateHolds(
         return id !== firing && category === "hex" && profession === condition.profession;
       });
     case "target-alone": {
-      const at = surroundings.get(target.id)?.position;
+      const at = surroundings.get(target.id);
       return (
         at !== undefined &&
         ![...surroundings.values()].some(
-          ({ combatant, position }) =>
+          ({ combatant, position, floors }) =>
             !combatant.dead &&
             combatant.id !== target.id &&
             combatant.team === target.team &&
-            distance(position, at) <= condition.radius,
+            inArea(position, floors, at, condition.radius),
         )
       );
     }
     case "target-near-caster-ally": {
-      const at = surroundings.get(target.id)?.position;
+      const at = surroundings.get(target.id);
       return (
         at !== undefined &&
         [...surroundings.values()].some(
-          ({ combatant, position }) =>
+          ({ combatant, position, floors }) =>
             !combatant.dead &&
             combatant.id !== caster.id &&
             combatant.team === caster.team &&
-            distance(position, at) <= condition.radius,
+            inArea(position, floors, at, condition.radius),
         )
       );
     }
@@ -3368,46 +3369,50 @@ export function stateHolds(
     case "target-is-summoned":
       return isSummoned(surroundings.get(target.id)?.creature);
     case "caster-no-spirit-within": {
-      const at = surroundings.get(caster.id)?.position;
+      const at = surroundings.get(caster.id);
       return at === undefined || spiritsWithin(surroundings.values(), at, condition.radius) === 0;
     }
     case "caster-spirit-within": {
-      const at = surroundings.get(caster.id)?.position;
+      const at = surroundings.get(caster.id);
       return at !== undefined && spiritsWithin(surroundings.values(), at, condition.radius) > 0;
     }
     case "caster-controls-at-most":
       return caster.controlled[condition.creature] <= condition.count;
     case "caster-spirit-or-corpse-within": {
-      const at = surroundings.get(caster.id)?.position;
+      const at = surroundings.get(caster.id);
       return (
         at !== undefined &&
         (spiritsWithin(surroundings.values(), at, condition.radius) > 0 ||
           [...surroundings.values()].some(
             (body) =>
-              isFreshCorpse(body) && distanceWithinRange(at, body.position, condition.radius),
+              isFreshCorpse(body) &&
+              sharesFloor(body.floors, floorOf(at.layer)) &&
+              distanceWithinRange(at.position, body.position, condition.radius),
           ))
       );
     }
     case "caster-dead-ally-within": {
-      const at = surroundings.get(caster.id)?.position;
+      const at = surroundings.get(caster.id);
       return (
         at !== undefined &&
         [...surroundings.values()].some(
-          ({ combatant, position }) =>
+          ({ combatant, position, floors }) =>
             combatant.dead &&
             combatant.id !== caster.id &&
             combatant.team === caster.team &&
-            distanceWithinRange(at, position, condition.radius),
+            sharesFloor(floors, floorOf(at.layer)) &&
+            distanceWithinRange(at.position, position, condition.radius),
         )
       );
     }
     case "target-near-corpse-or-dead-pet": {
-      const at = surroundings.get(target.id)?.position;
+      const at = surroundings.get(target.id);
       return [...surroundings.values()].some(
         (body) =>
           (at !== undefined &&
             isFreshCorpse(body) &&
-            distanceWithinRange(at, body.position, condition.radius)) ||
+            sharesFloor(body.floors, floorOf(at.layer)) &&
+            distanceWithinRange(at.position, body.position, condition.radius)) ||
           (body.combatant.dead &&
             body.creature?.ownerId === target.id &&
             body.creature.companionSkillId !== undefined),
@@ -3452,7 +3457,7 @@ function removeCount(
   if (effect.perSpiritNear === undefined) {
     return count;
   }
-  const at = surroundings.get(bearer.id)?.position;
+  const at = surroundings.get(bearer.id);
   return at === undefined
     ? 0
     : count * spiritsWithin(surroundings.values(), at, effect.perSpiritNear);

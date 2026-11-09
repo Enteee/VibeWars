@@ -56,11 +56,25 @@ function use(user: Combatant, skillId: string, target: Combatant): CombatEvent[]
     surroundings: new Map([
       [
         user.id,
-        { combatant: user, position: vec2(0, 0), creature: undefined, corpseExploited: false },
+        {
+          combatant: user,
+          position: vec2(0, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ],
       [
         target.id,
-        { combatant: target, position: vec2(50, 0), creature: undefined, corpseExploited: false },
+        {
+          combatant: target,
+          position: vec2(50, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+          corpseExploited: false,
+        },
       ],
     ]),
     skill: skill(skillId),

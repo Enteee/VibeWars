@@ -24,6 +24,9 @@ import {
   areaFlashAlpha,
   bodyGlyphLayout,
   decayAreaFlashes,
+  decayBeaconBolts,
+  beaconBoltAlpha,
+  beaconBoltPoints,
   decaySwingFlashes,
   floatingTextY,
   healthFraction,
@@ -38,6 +41,7 @@ import {
   type AreaFlash,
   type NameplateLayout,
   type Rect,
+  type BeaconBolt,
   type SwingFlash,
 } from "./arena-snapshot.js";
 import {
@@ -130,6 +134,8 @@ import type {
  * dependency — see that file for why that split exists.
  */
 
+const BEACON_BOLT_GLOW = 0x79c0ff;
+const BEACON_BOLT_CORE = 0xf0f6ff;
 const WALL_FILL = 0x202836;
 const WALL_STROKE = 0x3b4759;
 const TARGET_RING = 0xffd866;
@@ -254,6 +260,7 @@ export class ArenaScene extends Phaser.Scene {
   private floatingTexts: FloatingText[] = [];
   private areaFlashes: AreaFlash[] = [];
   private swingFlashes: SwingFlash[] = [];
+  private beaconBolts: BeaconBolt[] = [];
   /** Skills landing on bodies (#1139), newest last; merged in on the next frame. */
   private impacts: Impact[] = [];
   private addedImpacts: Impact[] = [];
@@ -372,6 +379,11 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
+  /** Not behind reduced motion, unlike a swing: it is how you learn what hit you. */
+  public addBeaconBolt(bolt: BeaconBolt): void {
+    this.beaconBolts.push(bolt);
+  }
+
   public addImpacts(impacts: readonly Impact[]): void {
     this.addedImpacts.push(...impacts);
   }
@@ -451,6 +463,10 @@ export class ArenaScene extends Phaser.Scene {
     this.swingFlashes = decaySwingFlashes(this.swingFlashes, deltaMs / 1000);
     for (const flash of this.swingFlashes) {
       this.drawSwingFlash(marks, flash);
+    }
+    this.beaconBolts = decayBeaconBolts(this.beaconBolts, deltaMs / 1000);
+    for (const bolt of this.beaconBolts) {
+      this.drawBeaconBolt(marks, bolt);
     }
     this.impacts = mergeImpacts(this.impacts, this.addedImpacts, deltaMs / 1000);
     this.addedImpacts = [];
@@ -887,6 +903,24 @@ export class ArenaScene extends Phaser.Scene {
         g.lineStyle(IMPACT_LINE_WIDTH, impact.colour, mark.alpha);
         g.strokeCircle(x, y, mark.radius);
       }
+    }
+  }
+
+  private drawBeaconBolt(g: Phaser.GameObjects.Graphics, bolt: BeaconBolt): void {
+    const alpha = beaconBoltAlpha(bolt);
+    const points = beaconBoltPoints(bolt);
+    // A wide glow under a thin bright core.
+    for (const [width, colour, opacity] of [
+      [7, BEACON_BOLT_GLOW, 0.45 * alpha],
+      [2.5, BEACON_BOLT_CORE, alpha],
+    ] as const) {
+      g.lineStyle(width, colour, opacity);
+      g.beginPath();
+      g.moveTo(bolt.from.x, bolt.from.y);
+      for (const point of points.slice(1)) {
+        g.lineTo(point.x, point.y);
+      }
+      g.strokePath();
     }
   }
 

@@ -208,6 +208,8 @@ describe('"Go for the Eyes!" (#1677)', () => {
       target: {
         combatant: makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 }),
         position: vec2(40, 0),
+        floors: 1,
+        layer: 0,
         creature: undefined,
       },
       surroundings: new Map(),

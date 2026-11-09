@@ -42,7 +42,7 @@ Estas teclas são fixas:
 - **Clique direito** em um inimigo ou aliado para mirar nele. Clique
   direito de novo no mesmo inimigo, rápido, para atacá-lo.
 - **Clique direito** em uma bandeira ou no suporte da bandeira, em uma
-  Batalha de Guildas, para mirar nela; **Space** anda até lá e pega ou
+  Batalha de Guildas ou em Barrow Field, para mirar nela; **Space** anda até lá e pega ou
   finca a bandeira.
 - **Clique na roda** em um inimigo para anunciá-lo à sua equipe: a tecla
   **T** deles mira nele. No chão ou em um aliado, marca aquele ponto com

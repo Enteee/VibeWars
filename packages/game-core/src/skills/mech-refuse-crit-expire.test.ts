@@ -313,7 +313,13 @@ describe("Stone Sheath (#2373)", () => {
       }
       resolveSwing({
         attacker,
-        target: { combatant: victim, position: vec2(40, 0), creature: undefined },
+        target: {
+          combatant: victim,
+          position: vec2(40, 0),
+          floors: 1,
+          layer: 0,
+          creature: undefined,
+        },
         surroundings: new Map(),
         rng: stream(10, 0),
         rules: RULES.combat,

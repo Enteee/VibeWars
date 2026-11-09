@@ -1,4 +1,5 @@
 import { distance } from "../../../vec2.js";
+import { feelsHeight, heightRange, heightStep } from "../../layer-rules.js";
 import type { Participant } from "../../simulation.js";
 import {
   botUses,
@@ -9,6 +10,14 @@ import {
 } from "../skill-intent.js";
 import { healthFraction } from "./shared.js";
 import type { BotRule } from "./types.js";
+
+/** How far `body`'s weapon reaches `foe`, height included. */
+function reachOf(body: Participant, foe: Participant): number {
+  const { weapon } = body.combatant.equipment.mainHand;
+  return feelsHeight(weapon.id)
+    ? heightRange(weapon.range, heightStep(body.floors, body.layer, foe.floors, foe.layer))
+    : weapon.range;
+}
 
 /**
  * Boost the side's attacks (#2000), never one already up, as the fight
@@ -21,10 +30,7 @@ const boost: BotRule = {
   name: "boost",
   decide: ({ self, bar, foes, allies, mayUse, use }) => {
     const swinging = (body: Participant): boolean =>
-      foes.some(
-        (foe) =>
-          distance(foe.position, body.position) <= body.combatant.equipment.mainHand.weapon.range,
-      );
+      foes.some((foe) => distance(foe.position, body.position) <= reachOf(body, foe));
     const skill = bar.find((held) => {
       if (
         !botUses(held).includes("boost") ||
