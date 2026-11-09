@@ -127,6 +127,10 @@ Altar; die anderen verlassen das Relikt nur, um gegen einen Gegner in Zauberreic
 
 Broken Tower spielt es: Der Altar steht in einem zerstörten Turm mit einem Durchgang auf jeder Seite.
 
+### Cinder Sanctum
+
+Hier läuft der Reliktlauf des Aufstiegs der Helden andersherum. Jede Basis hat das Relikt ihres Teams und ihren Geisterhelden, einen Altar gibt es nicht. **Hol das gegnerische Relikt aus dessen Basis und bring es zu deinem eigenen Geisterhelden**, das gibt einen Punkt. Der Geist muss leben und bleibt auf seinem Posten. Dein eigenes Relikt kannst du nicht tragen: Hebst du es dort auf, wo es gefallen ist, geht es nach Hause. Ein Team mit **3 Punkten Vorsprung gewinnt sofort**. Nach 8 Minuten gewinnt das Team mit mehr Punkten, bei Gleichstand das Team, das zuletzt gepunktet hat. Jede Basis belebt alle 2 Minuten ihre Toten und ihren Geist wieder. Bots holen das gegnerische Relikt gemeinsam und bringen es heim.
+
 ## King of the Hill
 
 **Führe deinen Geisterhelden auf den Altar und halte ihn.** Jedes Team hat einen **Geisterhelden** in
@@ -263,7 +267,7 @@ zurück. Ein Knopf unter dem Ergebnis überspringt die Wartezeit oder geht für 
 
 ## Aufstieg der Helden
 
-Ein Aufstieg der Helden aus der Warteschlange hat vier Runden, immer in dieser Reihenfolge: Broken Tower (Reliktlauf),
+Ein Aufstieg der Helden aus der Warteschlange hat vier Runden, immer in dieser Reihenfolge: Cinder Sanctum (Reliktlauf),
 Scarred Earth (Punkte erobern), The Courtyard (King of the Hill), dann die Hall of Heroes. Das Lobby-Fenster sagt dir,
 wo du bist, während du ein Team suchst: `Runde 2 von 4 · Scarred Earth`. Du triffst immer nur ein Team in derselben Runde
 und wartest so lange wie nötig: Keine Bots springen ein. Eine Runde auf einer Karte für drei Teams wartet auf drei; zwei

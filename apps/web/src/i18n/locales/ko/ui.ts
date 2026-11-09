@@ -592,6 +592,8 @@ export default {
   "lobby.modePriestAnnihilation": "사제 전멸전: 모든 적과 사제를 쓰러뜨리세요",
   "lobby.modeRelicRun":
     "유물 쟁탈: 유물을 제단으로 옮기세요. 8분 동안 가장 많은 점수를 얻은 팀이 이겨요.",
+  "lobby.modeRelicRunFoe":
+    "유물 쟁탈: 적의 유물을 내 유령 영웅에게 옮기세요. 3점 앞서면 승리하고, 8분이 지나면 가장 많은 점수를 얻은 팀이 이겨요.",
   "lobby.notReady": "준비 안 됨",
   "lobby.playBots": "봇과 대전",
   "lobby.ready": "준비 완료",

@@ -25,6 +25,8 @@ import {
 
 const FIELD: RelicField = {
   altar: vec2(1100, 700),
+  relicTarget: "altar",
+  relicCarry: "own",
   spawns: [
     { team: 0, position: vec2(100, 700) },
     { team: 1, position: vec2(2100, 700) },
@@ -79,20 +81,23 @@ describe("taking, carrying and scoring", () => {
   it("scores on the altar: a point for the team, and the relic goes home", () => {
     expect(onAltar(FIELD, vec2(1100 - ALTAR_REACH_UNITS, 700))).toBe(true);
     expect(onAltar(FIELD, vec2(1100 - ALTAR_REACH_UNITS - 1, 700))).toBe(false);
-    const after = step(BOTH_CARRIED, { kind: "score", carrierId: "a" });
+    const after = step(BOTH_CARRIED, { kind: "score", carrierId: "a", team: 0 });
     expect(after.scored).toEqual([0]);
     expect(after.state.relics[0]).toEqual({ team: 0, place: { kind: "spawn" } });
     expect(after.state.relics[1]).toEqual(BOTH_CARRIED.relics[1]);
   });
 
   it("scores nothing for a player with no relic", () => {
-    expect(step(START, { kind: "score", carrierId: "a" })).toEqual({ state: START, scored: [] });
+    expect(step(START, { kind: "score", carrierId: "a", team: 0 })).toEqual({
+      state: START,
+      scored: [],
+    });
   });
 
   it("scores before a death drop in the same tick", () => {
     const after = step(
       BOTH_CARRIED,
-      { kind: "score", carrierId: "a" },
+      { kind: "score", carrierId: "a", team: 0 },
       { kind: "drop", carrierId: "a", position: vec2(1090, 700) },
     );
     expect(after.scored).toEqual([0]);
@@ -114,7 +119,7 @@ describe("dropping a relic", () => {
 
 describe("a foe's relic", () => {
   it("lying on the ground, goes home when a foe reaches it, and is never carried", () => {
-    const empty = step(FOE_LYING, { kind: "score", carrierId: "a" }).state;
+    const empty = step(FOE_LYING, { kind: "score", carrierId: "a", team: 0 }).state;
     expect(relicRefusal(FIELD, empty, "a", 0, relicId(1))).toBeUndefined();
     const after = step(empty, reach("a", 0, relicId(1)));
     expect(after.state.relics[1]).toEqual({ team: 1, place: { kind: "spawn" } });
@@ -127,7 +132,7 @@ describe("a foe's relic", () => {
   });
 
   it("is returned once when two foes reach it in one tick", () => {
-    const empty = step(FOE_LYING, { kind: "score", carrierId: "a" }).state;
+    const empty = step(FOE_LYING, { kind: "score", carrierId: "a", team: 0 }).state;
     const after = step(empty, reach("a", 0, relicId(1)), reach("b", 0, relicId(1)));
     expect(after.state.relics[1]).toEqual({ team: 1, place: { kind: "spawn" } });
     expect(after.scored).toEqual([]);
@@ -137,5 +142,48 @@ describe("a foe's relic", () => {
     expect(relicRefusal(FIELD, FOE_LYING, "a", 0, relicId(1))).toBe("hands-full");
     const after = step(FOE_LYING, reach("a", 0, relicId(1)));
     expect(after.state).toEqual(FOE_LYING);
+  });
+});
+
+describe("the foe's relic to your Ghostly Hero (#2695)", () => {
+  const GHOST_FIELD: RelicField = {
+    altar: undefined,
+    relicTarget: "own-ghost",
+    relicCarry: "foe",
+    spawns: FIELD.spawns,
+  };
+  const HOME = initialRelics(GHOST_FIELD);
+  const take = (state: RelicsState, playerId: string, team: number, target: number): RelicsState =>
+    stepRelics(GHOST_FIELD, state, [
+      { kind: "interact", playerId, team, targetId: relicId(target) },
+    ]).state;
+
+  it("takes up the foe's relic at its base, never your own there", () => {
+    expect(relicRefusal(GHOST_FIELD, HOME, "a", 0, relicId(0))).toBe("not-your-relic");
+    expect(relicRefusal(GHOST_FIELD, HOME, "a", 0, relicId(1))).toBeUndefined();
+    expect(take(HOME, "a", 0, 1).relics[1]).toEqual({
+      team: 1,
+      place: { kind: "carried", carrierId: "a" },
+    });
+  });
+
+  it("scores for the carrier's team, and the foe's relic goes home", () => {
+    const { state, scored } = stepRelics(GHOST_FIELD, take(HOME, "a", 0, 1), [
+      { kind: "score", carrierId: "a", team: 0 },
+    ]);
+    expect(scored).toEqual([0]);
+    expect(state).toEqual(HOME);
+  });
+
+  it("sends your own dropped relic home when you pick it up", () => {
+    const dropped = stepRelics(GHOST_FIELD, take(HOME, "x", 1, 0), [
+      { kind: "drop", carrierId: "x", position: vec2(600, 700) },
+    ]).state;
+    expect(dropped.relics[0]?.place.kind).toBe("ground");
+    expect(take(dropped, "a", 0, 0)).toEqual(HOME);
+  });
+
+  it("has no altar to stand on", () => {
+    expect(onAltar(GHOST_FIELD, vec2(1100, 700))).toBe(false);
   });
 });

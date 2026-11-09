@@ -2,6 +2,7 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
+import { ARENA_MAPS } from "../net/maps.js";
 import {
   PLAY_BOTS_AFTER_MS,
   hostMaps,
@@ -254,6 +255,22 @@ describe("modeLine (#476)", () => {
     );
     expect(modeLine({ ...map, mode: "king-of-the-hill" })).toBe(
       "King of the Hill: lead your Ghostly Hero onto the altar. Hold it to score; most points in 8 minutes wins.",
+    );
+  });
+
+  it("tells Cinder Sanctum's foe-relic rules, not the altar's (#2695)", () => {
+    const relicCarry = ARENA_MAPS.find((map) => map.id === "cinder-sanctum")?.relicCarry;
+    expect(relicCarry).toBe("foe");
+    expect(
+      modeLine({
+        id: "cinder-sanctum",
+        size: "small",
+        teamSizes: [8],
+        mode: "relic-run",
+        relicCarry,
+      }),
+    ).toBe(
+      "Relic Run: carry the foe's relic to your Ghostly Hero. A 3-point lead wins; after 8 minutes, most points.",
     );
   });
 });

@@ -163,6 +163,13 @@ const OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly TeamKind[]
   "capture-points": ["resurrection-shrine"],
 };
 
+/** A Relic Run's team objectives where a ghost takes the relic (#2695): it has no altar, and its bases raise the dead. */
+const OWN_GHOST_RELIC_OBJECTIVES: readonly TeamKind[] = [
+  "relic-spawn",
+  "ghost-spawn",
+  "resurrection-shrine",
+];
+
 /** Which shared objectives each mode has; none for a mode not here. */
 const SHARED_OBJECTIVES_BY_MODE: Readonly<Partial<Record<MatchMode, readonly SharedKind[]>>> = {
   "guild-battle": ["flag-stand"],
@@ -310,6 +317,10 @@ export const mapDataSchema = z
      * team, whatever its mode; without it, none. King of the Hill needs one.
      */
     ghostLevel: z.union([z.literal(20), z.literal(24), z.literal(28)]).optional(),
+    /** Where a relic scores (#2695): a Relic Run map says, no other map does. */
+    relicTarget: z.enum(["altar", "own-ghost"]).optional(),
+    /** Whose relic a team carries (#2695): a Relic Run map says, no other map does. */
+    relicCarry: z.enum(["own", "foe"]).optional(),
   })
   .superRefine((map, context) => {
     if (map.teams !== 2 && TWO_TEAM_MODES.includes(map.mode)) {
@@ -328,7 +339,19 @@ export const mapDataSchema = z
         });
       }
     });
-    const byMode = OBJECTIVES_BY_MODE[map.mode] ?? [];
+    const relicRun = map.mode === "relic-run";
+    if (
+      relicRun !== (map.relicTarget !== undefined) ||
+      relicRun !== (map.relicCarry !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["relicTarget"],
+        message: "a relic-run map has a relicTarget and a relicCarry, and no other map does",
+      });
+    }
+    const ownGhost = map.relicTarget === "own-ghost";
+    const byMode = ownGhost ? OWN_GHOST_RELIC_OBJECTIVES : (OBJECTIVES_BY_MODE[map.mode] ?? []);
     const kinds: readonly TeamKind[] =
       map.ghostLevel !== undefined && !byMode.includes("ghost-spawn")
         ? [...byMode, "ghost-spawn"]
@@ -340,7 +363,7 @@ export const mapDataSchema = z
         message: `a ${map.mode} map has ghosts, so a ghostLevel`,
       });
     }
-    const shared = SHARED_OBJECTIVES_BY_MODE[map.mode] ?? [];
+    const shared = ownGhost ? [] : (SHARED_OBJECTIVES_BY_MODE[map.mode] ?? []);
     const allowed: readonly Objective["kind"][] = [...kinds, ...shared];
     for (const kind of new Set(map.objectives.map((objective) => objective.kind))) {
       if (!allowed.includes(kind)) {

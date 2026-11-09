@@ -1,4 +1,9 @@
-import { MATCH_MODES, createRng, type PlayerBuild } from "@vibewars/game-core";
+import {
+  FOE_RELIC_RUN_MATCH_RULES,
+  MATCH_MODES,
+  createRng,
+  type PlayerBuild,
+} from "@vibewars/game-core";
 import {
   FORMATION_TIMEOUT_MS,
   MAX_LOBBY_PLAYERS,
@@ -180,7 +185,8 @@ function startMatch(plan: MatchPlan) {
     // A match is reproducible from its seed; the lobby's match id is
     // unique only within the lobby, so the code goes in too.
     seed: `${plan.transport.selfId}:${plan.matchId}`,
-    matchRules: MATCH_MODES[map.mode],
+    matchRules:
+      map.relicField?.relicCarry === "foe" ? FOE_RELIC_RUN_MATCH_RULES : MATCH_MODES[map.mode],
     random: secureRandom,
     maxPlayers: MAX_LOBBY_PLAYERS,
     seats: plan.seats,
