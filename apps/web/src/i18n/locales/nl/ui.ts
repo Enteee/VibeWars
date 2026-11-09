@@ -621,7 +621,6 @@ export default {
   "lobby.hostStartsMatchmaking": "De host start het matchmaken",
   "lobby.joinTeam": "Meedoen",
   "lobby.joinTeamLabel": "Team {team} joinen",
-  "lobby.leaveQueue": "Wachtrij verlaten",
   "lobby.leaveTeam": "Weg",
   "lobby.leaveTeamLabel": "Team {team} verlaten",
   "lobby.map": "Map",

@@ -681,7 +681,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Подбор запускает хост",
   "lobby.joinTeam": "Войти",
   "lobby.joinTeamLabel": "Войти в команду {team}",
-  "lobby.leaveQueue": "Покинуть очередь",
   "lobby.leaveTeam": "Выйти",
   "lobby.leaveTeamLabel": "Выйти из команды {team}",
   "lobby.map": "Карта",

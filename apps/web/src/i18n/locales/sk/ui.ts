@@ -682,7 +682,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Hľadanie zápasu spúšťa hostiteľ",
   "lobby.joinTeam": "Pridať sa",
   "lobby.joinTeamLabel": "Pridať sa k tímu {team}",
-  "lobby.leaveQueue": "Opustiť frontu",
   "lobby.leaveTeam": "Odísť",
   "lobby.leaveTeamLabel": "Opustiť tím {team}",
   "lobby.map": "Mapa",

@@ -660,7 +660,6 @@ export default {
   "lobby.hostStartsMatchmaking": "L'hôte lance la recherche",
   "lobby.joinTeam": "Entrer",
   "lobby.joinTeamLabel": "Rejoindre l'équipe {team}",
-  "lobby.leaveQueue": "Quitter la file",
   "lobby.leaveTeam": "Quitter",
   "lobby.leaveTeamLabel": "Quitter l'équipe {team}",
   "lobby.map": "Carte",

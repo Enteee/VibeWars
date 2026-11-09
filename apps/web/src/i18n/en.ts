@@ -624,7 +624,6 @@ export const en = {
   "lobby.hostStartsMatchmaking": "The host starts matchmaking",
   "lobby.joinTeam": "Join",
   "lobby.joinTeamLabel": "Join team {team}",
-  "lobby.leaveQueue": "Leave the queue",
   "lobby.leaveTeam": "Leave",
   "lobby.leaveTeamLabel": "Leave team {team}",
   "lobby.map": "Map",

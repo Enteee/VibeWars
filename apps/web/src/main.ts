@@ -1371,14 +1371,6 @@ async function main(): Promise<void> {
       onFindMatch: () => {
         lobby?.findMatch(roundFor(entry));
       },
-      onLeaveQueue: () => {
-        // Out of the queue, its Heroes' Ascent run is over (#1996).
-        ascentRound = 0;
-        ascentWins = 0;
-        holdsHallSince = null;
-        ascentMorale = 0;
-        lobby?.leaveQueue();
-      },
       // Heroes' Ascent waits for a side at its round, never for bots (#1996).
       onPlayBots:
         entry === "heroes-ascent"
@@ -1419,9 +1411,6 @@ async function main(): Promise<void> {
             showTeamEditor(openedTeam(team, true), characterList.characters);
           }
         })();
-      },
-      onLeaveQueue: () => {
-        leaveAnyQueue();
       },
       onPasteTeam: (text) => {
         const result = importTeam(text, () => crypto.randomUUID(), Date.now());

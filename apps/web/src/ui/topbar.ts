@@ -485,6 +485,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   const actions = part(bar, ".topbar-actions");
   const tools = part(bar, ".topbar-tools");
   const screenActions = part(bar, ".topbar-screen-actions");
+  const queueAction = part(bar, ".topbar-queue-action");
 
   const help = iconButton("topbar-help", t("topbar.help"), helpIcon());
   help.setAttribute("aria-haspopup", "dialog");
@@ -550,7 +551,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   attachFullscreenButton(fullscreen, fullscreenTarget());
 
   actions.append(queue.element, help, options, lobby.element, music, mute, fullscreen);
-  actions.before(join.element);
+  queueAction.before(join.element);
   // An invite link the page opened with (#2100) waits for the first
   // screen with the bar's lobby on it: until then nothing could join.
   let joinShown = false;
@@ -597,6 +598,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
     back: part(bar, ".topbar-back"),
     status: part(bar, ".topbar-status"),
     actions: screenActions,
+    queueAction,
     onShow: (shown) => {
       paintOwnIcons(help, music, shown.own);
       if (shown.own === "help") {
@@ -611,7 +613,9 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
         }
       }
       const hasMore = barHasMore(
-        Array.from(screenActions.children, (node) => node.classList.contains("primary")),
+        Array.from([...screenActions.children, ...queueAction.children], (node) =>
+          node.classList.contains("primary"),
+        ),
         shown.join,
       );
       bar.classList.toggle("has-more", hasMore);

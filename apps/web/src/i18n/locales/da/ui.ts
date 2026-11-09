@@ -621,7 +621,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Værten starter matchmaking",
   "lobby.joinTeam": "Deltag",
   "lobby.joinTeamLabel": "Deltag på hold {team}",
-  "lobby.leaveQueue": "Forlad køen",
   "lobby.leaveTeam": "Forlad",
   "lobby.leaveTeamLabel": "Forlad hold {team}",
   "lobby.map": "Bane",

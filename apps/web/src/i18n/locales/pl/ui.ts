@@ -685,7 +685,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Host rozpoczyna szukanie meczu",
   "lobby.joinTeam": "Dołącz",
   "lobby.joinTeamLabel": "Dołącz do drużyny {team}",
-  "lobby.leaveQueue": "Opuść kolejkę",
   "lobby.leaveTeam": "Opuść",
   "lobby.leaveTeamLabel": "Opuść drużynę {team}",
   "lobby.map": "Mapa",

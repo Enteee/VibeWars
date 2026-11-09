@@ -68,14 +68,13 @@ l'ouvre, à modifier comme tu veux.
 Le moyen le plus rapide d'entrer dans un combat. Sur **Arène aléatoire**,
 clique sur la carte du personnage que tu joues, choisis une taille d'équipe,
 **1v1**, **2v2** ou **4v4**, avec les flèches de la **Taille d'équipe** de la
-colonne, puis appuie sur **Prêt** dans la barre de titre, et attends : tu es
+colonne, puis appuie sur **Trouver un match** dans la barre de titre, et attends : tu es
 placé dans une équipe avec d'autres joueurs, contre une autre équipe, sur une
 carte aléatoire. La file attend en arrière-plan : tu restes sur Arène aléatoire
 et peux aller partout entre-temps, tes builds, ton équipement, les Options,
 l'Aide ou l'éditeur de musique, mais pas changer de personnage, héberger ou
 rejoindre un salon, ni changer la taille d'équipe d'un mode. Arène d'équipe et
-les autres écrans de salon indiquent que tu es dans une file et listent leurs
-cartes, leur **Trouver un match** désactivé, à côté d'un **Quitter la file** ;
+les autres écrans de salon indiquent que tu es dans une file et listent leurs cartes ;
 la taille d'équipe affiche celle de ta file, sur chaque mode. Un anneau qui
 tourne à gauche d'**Aide** dans la barre du haut montre que tu es dans une
 file ; clique dessus pour voir la file, le temps d'attente, combien de joueurs
@@ -170,8 +169,7 @@ Arène d'équipe combien d'équipes cherchent, la tienne comprise :
 `2 équipes en recherche`. Seul l'hôte y a **Quitter la file**. Fermer l'onglet
 de l'hôte retire aussitôt le groupe de la file. Quand une autre équipe en file
 du même mode arrive, vous jouez sur l'une des cartes du mode, chaque camp avec
-ses propres builds, puis vous revenez à votre salon. L'hôte peut appuyer sur
-**Quitter la file** à tout moment ; un invité qui part retire tout le groupe de
+ses propres builds, puis vous revenez à votre salon. L'hôte peut quitter la file depuis la fenêtre de l'anneau à tout moment ; un invité qui part retire tout le groupe de
 la file. Sans autre équipe au bout d'une minute, l'hôte peut aussi appuyer sur
 **Jouer contre des bots** : un match dans ton propre salon contre une équipe
 préréglée de bots au hasard, sauf en

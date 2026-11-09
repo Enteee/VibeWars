@@ -7,7 +7,7 @@ import type { StoredCharacter } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
 import { characterFigureCard, lookOfCharacter } from "./character-card.js";
 import { equippedCount, professionLabel } from "./character-preview.js";
-import { button, emptyState, h, playCard, readyButton, screenBar } from "./kit.js";
+import { button, emptyState, findMatchButton, h, playCard, screenBar } from "./kit.js";
 import { loadPlayerName, playerGuild } from "./player-section.js";
 import { isAlone } from "./lobby-window.js";
 import { loadTeamSize, railParty, railScreen, type RailEntry, type TeamSize } from "./rail.js";
@@ -225,18 +225,25 @@ export function renderRandomArena(
   characters: readonly StoredCharacter[] = [],
   characterProblems: readonly string[] = [],
   connectionNotice?: string,
-  /** In a queue (#2743): its character stays, and Ready cannot queue again. */
+  /** In a queue (#2743): its character stays, and the spinner stands for Find a match (#2980). */
   queued = false,
 ): void {
   // No way back from here, so Esc has nothing to do but cancel (#578).
   // Options is the top bar's ⚙ (#1272), Music its ♪ (#1453).
-  const ready = readyButton(false, () => {
-    const queue = RANDOM_ARENA_MODES.find(({ size }) => size === loadTeamSize("random-arena"));
-    if (queue !== undefined) {
-      callbacks.onRandomArena(queue.mode, loadPlayerName());
-    }
+  const find = queued
+    ? undefined
+    : findMatchButton(() => {
+        const queue = RANDOM_ARENA_MODES.find(({ size }) => size === loadTeamSize("random-arena"));
+        if (queue !== undefined) {
+          callbacks.onRandomArena(queue.mode, loadPlayerName());
+        }
+      });
+  screenBar({
+    crumbs: ["VibeWars"],
+    actions: [],
+    ...(find === undefined ? {} : { queueAction: find }),
+    join: true,
   });
-  screenBar({ crumbs: ["VibeWars"], actions: [ready], join: true });
   const body = railScreen(root, "random-arena", callbacks.onSwitch);
 
   // Why the last try failed, under the bar it was tried from.
@@ -298,9 +305,11 @@ export function renderRandomArena(
   // Only alone (#1526): queueing closes the lobby, and a party does not queue yet.
   const alone = isAlone(railParty());
   body.appendChild(hint);
-  const problem = queued ? t("queue.busy") : randomArenaProblem(activeExists, alone);
-  ready.disabled = problem !== undefined;
-  ready.title = problem ?? "";
+  const problem = randomArenaProblem(activeExists, alone);
+  if (find !== undefined) {
+    find.disabled = problem !== undefined;
+    find.title = problem ?? "";
+  }
   hint.textContent = problem ?? "";
   hint.hidden = problem === undefined;
 }

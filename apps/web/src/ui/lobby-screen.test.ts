@@ -551,16 +551,15 @@ describe("matchmakingButtons (#1766)", () => {
     queuedMs,
     groupMapId: undefined,
     onFindMatch: () => pressed.push("find"),
-    onLeaveQueue: () => pressed.push("leave"),
     onPlayBots: () => pressed.push("bots"),
   });
-  const labels = (queuedMs: number | null, phase: LobbySnapshot["phase"] = "waiting") =>
-    (
-      matchmakingButtons(
-        matchmaking(queuedMs),
-        lobbyControls(snapshot(phase)),
-      ) as unknown as FakeElement[]
-    ).map((shown) => [shown.textContent, shown.disabled]);
+  const buttons = (queuedMs: number | null, phase: LobbySnapshot["phase"] = "waiting") => {
+    const shown = matchmakingButtons(matchmaking(queuedMs), lobbyControls(snapshot(phase)));
+    return {
+      queueAction: shown.queueAction as unknown as FakeElement | undefined,
+      actions: shown.actions as unknown as FakeElement[],
+    };
+  };
 
   beforeEach(() => {
     pressed.length = 0;
@@ -571,32 +570,32 @@ describe("matchmakingButtons (#1766)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("offers Find a match until queued, and only while the lobby waits", () => {
-    expect(labels(null)).toEqual([["Find a match", false]]);
-    expect(labels(null, "team-lobby")).toEqual([["Find a match", true]]);
+  it("offers Find a match as the queue action until queued, and only while the lobby waits (#2980)", () => {
+    const waiting = buttons(null);
+    expect(waiting.queueAction?.textContent).toBe("Find a match");
+    expect(waiting.queueAction?.disabled).toBe(false);
+    expect(waiting.actions).toEqual([]);
+    expect(buttons(null, "team-lobby").queueAction?.disabled).toBe(true);
+    waiting.queueAction?.click();
+    expect(pressed).toEqual(["find"]);
   });
 
-  it("offers Leave the queue once queued, and Play against bots only after a minute alone (Q191)", () => {
-    expect(labels(0)).toEqual([["Leave the queue", false]]);
-    expect(labels(PLAY_BOTS_AFTER_MS - 1)).toEqual([["Leave the queue", false]]);
-    expect(labels(PLAY_BOTS_AFTER_MS)).toEqual([
-      ["Play against bots", false],
-      ["Leave the queue", false],
-    ]);
-    const [bots, leave] = matchmakingButtons(
-      matchmaking(PLAY_BOTS_AFTER_MS),
-      lobbyControls(snapshot("waiting")),
-    ) as unknown as FakeElement[];
-    bots?.click();
-    leave?.click();
-    expect(pressed).toEqual(["bots", "leave"]);
+  it("offers no Find a match and no way out once queued, and Play against bots only after a minute alone (Q191, #2980)", () => {
+    for (const queuedMs of [0, PLAY_BOTS_AFTER_MS - 1]) {
+      expect(buttons(queuedMs)).toEqual({ queueAction: undefined, actions: [] });
+    }
+    const late = buttons(PLAY_BOTS_AFTER_MS);
+    expect(late.queueAction).toBeUndefined();
+    expect(late.actions.map((shown) => shown.textContent)).toEqual(["Play against bots"]);
+    late.actions[0]?.click();
+    expect(pressed).toEqual(["bots"]);
   });
   it("never offers Heroes' Ascent bots: it waits for a side (#1996)", () => {
     const shown = matchmakingButtons(
       { ...matchmaking(10 * PLAY_BOTS_AFTER_MS), onPlayBots: undefined },
       lobbyControls(snapshot("waiting")),
-    ) as unknown as FakeElement[];
-    expect(shown.map((button) => button.textContent)).toEqual(["Leave the queue"]);
+    );
+    expect(shown.actions).toEqual([]);
   });
 });
 
@@ -740,7 +739,6 @@ describe("lobbyPanel: the map (#1994)", () => {
     const matchmaking = {
       queuedMs: 70_000,
       onFindMatch: () => undefined,
-      onLeaveQueue: () => undefined,
       onPlayBots: undefined,
     };
     const shown = (groupMapId: string | undefined): string | null | undefined =>

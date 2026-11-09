@@ -662,7 +662,6 @@ export default {
   "lobby.hostStartsMatchmaking": "El anfitrión inicia la búsqueda",
   "lobby.joinTeam": "Unirse",
   "lobby.joinTeamLabel": "Unirse al equipo {team}",
-  "lobby.leaveQueue": "Salir de la cola",
   "lobby.leaveTeam": "Salir",
   "lobby.leaveTeamLabel": "Salir del equipo {team}",
   "lobby.map": "Mapa",

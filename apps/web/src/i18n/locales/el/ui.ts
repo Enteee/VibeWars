@@ -630,7 +630,6 @@ export default {
   "lobby.hostStartsMatchmaking": "Ο οικοδεσπότης ξεκινά την αναζήτηση",
   "lobby.joinTeam": "Είσοδος",
   "lobby.joinTeamLabel": "Είσοδος στην ομάδα {team}",
-  "lobby.leaveQueue": "Έξοδος από την ουρά",
   "lobby.leaveTeam": "Έξοδος",
   "lobby.leaveTeamLabel": "Έξοδος από την ομάδα {team}",
   "lobby.map": "Χάρτης",

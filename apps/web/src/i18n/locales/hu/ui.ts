@@ -624,7 +624,6 @@ export default {
   "lobby.hostStartsMatchmaking": "A házigazda indítja a meccskeresést",
   "lobby.joinTeam": "Belép",
   "lobby.joinTeamLabel": "Belépés a csapatba: {team}",
-  "lobby.leaveQueue": "Sor elhagyása",
   "lobby.leaveTeam": "Kilép",
   "lobby.leaveTeamLabel": "Kilépés a csapatból: {team}",
   "lobby.map": "Pálya",
