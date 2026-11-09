@@ -57,6 +57,8 @@ export interface TrainingDummy {
   readonly label: string;
   readonly team: number;
   readonly position: Vec2;
+  /** The layer it starts, and is reset, on (ADR-0051); 0 is the ground. */
+  readonly layer: number;
   /** Base armor, before any status. */
   readonly armor: number;
   /** 10000 is "immortal": there is no invulnerable flag. */
@@ -114,6 +116,7 @@ function target(id: string, label: string, position: Vec2, armor: number): Train
     label,
     team: 1,
     position,
+    layer: 0,
     armor,
     maxHealth: IMMORTAL,
     skillBar: [],
@@ -444,6 +447,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         label: "Troll Unguent dummy",
         team: 1,
         position: vec2(380, 150),
+        layer: 0,
         armor: 60,
         maxHealth: IMMORTAL,
         skillBar: ["ranger.troll-unguent"],
@@ -576,6 +580,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         label: "Longbow dummy",
         team: 1,
         position: vec2(500, 210),
+        layer: 0,
         armor: 60,
         maxHealth: IMMORTAL,
         skillBar: [],
@@ -618,6 +623,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         label: "Fireball dummy",
         team: 1,
         position: vec2(480, 210),
+        layer: 0,
         armor: 60,
         maxHealth: IMMORTAL,
         skillBar: ["elementalist.fireball"],
@@ -648,6 +654,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         label: "Guardian dummy (60 armor)",
         team: 1,
         position: vec2(136, 210),
+        layer: 0,
         armor: 60,
         maxHealth: IMMORTAL,
         skillBar: ["monk.guardian"],
@@ -773,6 +780,22 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
       },
     ],
   },
+  {
+    id: "heights",
+    label: "Heights",
+    teaches:
+      "That height is a place to fight from: decks hide who is under them, ramps are the only way between layers, and a bow shot from above hits harder.",
+    mapId: "training-heights",
+    exercises: ["auto-attacks", "movement", "range"],
+    knobs: [],
+    dummies: [
+      { ...archer("bridge-archer", "Archer on the bridge", vec2(740, 300)), layer: 1 },
+      { ...target("on-bridge", "On the bridge (60 armor)", vec2(600, 350), 60), layer: 1 },
+      target("under-bridge", "Under the bridge (60 armor)", vec2(600, 350), 60),
+      { ...target("on-platform", "On the platform (60 armor)", vec2(600, 110), 60), layer: 2 },
+      { ...hunter("hunter", "Hunter (fireball)", vec2(480, 290)), layer: 1 },
+    ],
+  },
 ];
 
 export function getTrainingScenario(id: string): TrainingScenario | undefined {
@@ -791,6 +814,7 @@ export function scenarioParticipants(
     attributeRanks: new Map(Object.entries(dummy.attributeRanks)),
     equipment: dummyEquipment(dummy),
     spawn: dummy.position,
+    layer: dummy.layer,
     facing: facingToward(dummy.position, playerSpawn),
     maxHealth: dummy.maxHealth,
     startHealthFraction: dummy.startHealthFraction,

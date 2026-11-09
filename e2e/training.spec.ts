@@ -203,6 +203,18 @@ test("(4) a cast lands in the log and the meter", async ({ page }) => {
   await expect(meter(page, "damage")).not.toHaveText("0");
 });
 
+test("picking Heights loads its arena with no console error (#2937)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+  await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("heights");
+  await expect(page.locator(".training-log")).toContainText("── Heights ──");
+  expect(errors).toEqual([]);
+});
+
 test("(5) the chosen scenario survives a reload", async ({ page }) => {
   await openTraining(page);
   await page.locator("select.training-scenario").selectOption("armor-ladder");

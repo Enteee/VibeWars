@@ -1,0 +1,51 @@
+{
+  "id": "training-heights",
+  "name": "Training Heights",
+  "mode": "annihilation",
+  "teamSizes": [1],
+  "teams": 2,
+  "width": 1200,
+  "height": 700,
+  "layers": 3,
+  "decks": [
+    {
+      "id": "bridge",
+      "layer": 1,
+      "footprint": { "kind": "rect", "x": 420, "y": 250, "width": 360, "height": 200 }
+    },
+    {
+      "id": "platform",
+      "layer": 2,
+      "footprint": { "kind": "rect", "x": 520, "y": 60, "width": 160, "height": 110 }
+    }
+  ],
+  "transitions": [
+    {
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 300, "y": 250, "width": 140, "height": 200 }
+    },
+    {
+      "from": 0,
+      "to": 1,
+      "area": { "kind": "rect", "x": 760, "y": 250, "width": 140, "height": 200 }
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 540, "y": 150, "width": 120, "height": 120 }
+    }
+  ],
+  "walls": [
+    { "kind": "rect", "layer": 0, "x": 480, "y": 330, "width": 40, "height": 40 },
+    { "kind": "rect", "layer": 1, "x": 700, "y": 370, "width": 40, "height": 40 }
+  ],
+  "spawnPoints": [
+    { "team": 0, "layer": 0, "position": { "x": 120, "y": 350 } },
+    { "team": 1, "layer": 0, "position": { "x": 1080, "y": 350 } },
+    { "team": 1, "layer": 1, "position": { "x": 640, "y": 400 } },
+    { "team": 1, "layer": 2, "position": { "x": 600, "y": 110 } }
+  ],
+  "objectives": [],
+  "gates": []
+}

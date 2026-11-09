@@ -2143,6 +2143,7 @@ export default {
     "scarred-earth": "Terra sfregiata",
     "training-hall": "Sala d'addestramento",
     "training-pillars": "Pilastri d'addestramento",
+    "training-heights": "Alture di addestramento",
     "training-field": "Campo d'addestramento",
   },
 } satisfies GameNames;

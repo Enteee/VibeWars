@@ -2143,6 +2143,7 @@ export default {
     "scarred-earth": "Terra Marcada",
     "training-hall": "Salão de Treino",
     "training-pillars": "Pilares de Treino",
+    "training-heights": "Alturas de treino",
     "training-field": "Campo de Treino",
   },
 } satisfies GameNames;

@@ -2143,6 +2143,7 @@ export default {
     "scarred-earth": "Terre balafrée",
     "training-hall": "Salle d'entraînement",
     "training-pillars": "Piliers d'entraînement",
+    "training-heights": "Hauteurs d'entraînement",
     "training-field": "Terrain d'entraînement",
   },
 } satisfies GameNames;
