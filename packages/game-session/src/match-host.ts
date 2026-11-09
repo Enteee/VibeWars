@@ -1058,6 +1058,17 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sim.remove(seat.playerId);
     seats.delete(seat.playerId);
     swapBudget.forget(seat.playerId);
+    // Henchmen never carry a Heroes' Ascent side alone (#2688).
+    if (options.mode !== "heroes-ascent" || seat.bot) {
+      return;
+    }
+    const side = [...seats.values()].filter((other) => other.team === seat.team);
+    if (side.every((other) => other.bot)) {
+      for (const bot of side) {
+        free(bot);
+      }
+      sim.forfeit(seat.team);
+    }
   };
 
   transport.on("bye", (data, from) => {
