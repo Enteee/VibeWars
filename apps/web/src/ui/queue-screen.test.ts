@@ -121,8 +121,8 @@ describe("nextStreak (#881)", () => {
 describe("nextAscentRound (#1996)", () => {
   it("moves on with a win, to the Hall and no further", () => {
     expect(nextAscentRound(0, "win")).toBe(1);
-    expect(nextAscentRound(2, "win")).toBe(3);
-    expect(nextAscentRound(3, "win")).toBe(3);
+    expect(nextAscentRound(4, "win")).toBe(5);
+    expect(nextAscentRound(5, "win")).toBe(5);
   });
 
   it("starts again at the first after a defeat or a forfeit, and stands when the host left", () => {
