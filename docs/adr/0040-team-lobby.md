@@ -55,7 +55,7 @@ their own `team-proposal-builds` message (#1811), never in the state.
 
 ## Consequences
 
-- No counter-picking within the 60 s: a side never sees the other's
+- No counter-picking within the two 30 s stages: a side never sees the other's
   build before the match.
 - A Team Lobby side cannot exceed 8; the host is told why its start was
   turned down.
