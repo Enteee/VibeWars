@@ -18,8 +18,8 @@ import {
 } from "./menu.js";
 
 /** The title bar's actions and queue action, as the last screen drawn put them there. */
-const bar = vi.hoisted(() => ({
-  actions: [] as readonly unknown[],
+const bar = vi.hoisted((): { actions: readonly unknown[]; queueAction: unknown } => ({
+  actions: [],
   queueAction: undefined,
 }));
 
