@@ -660,9 +660,14 @@ export interface NavTransition {
   readonly uphill?: Vec2;
 }
 
-/** How far along a ramp its waypoints sit: inset from the end a body leaves it by. */
-const RAMP_TOP_WAYPOINT = 0.95;
-const RAMP_FOOT_WAYPOINT = 0.05;
+/**
+ * How far in from the end a body leaves a ramp by its waypoint sits, as a
+ * share of its length: a body's clearance in, or the walk to it would run
+ * along that end's outline wall and no route would ever be kept (#1157).
+ * At most this much, still inside the band where a body changes layer.
+ */
+const RAMP_WAYPOINT_LEAST_INSET = 0.05;
+const RAMP_WAYPOINT_MOST_INSET = 0.14;
 
 /** Finds paths over a map's layers, reusing its own scratch from one query to the next. */
 export interface LayeredPathFinder {
@@ -828,13 +833,19 @@ class AStar implements LayeredPathFinder {
     });
     firsts.push(this.#points.length);
     this.#joinPortals(portalsOn, firsts);
+    const clearance = graphs[0]?.clearance ?? 0;
     for (const { near, far, area, uphill } of links) {
       this.#edges[near]?.push(far);
       this.#edges[far]?.push(near);
       if (uphill !== undefined) {
-        const foot = pointAlong(area, uphill, RAMP_FOOT_WAYPOINT);
+        const length = distance(pointAlong(area, uphill, 0), pointAlong(area, uphill, 1));
+        const inset = Math.min(
+          Math.max(RAMP_WAYPOINT_LEAST_INSET, (clearance + 1) / length),
+          RAMP_WAYPOINT_MOST_INSET,
+        );
+        const foot = pointAlong(area, uphill, inset);
         this.#exits.set(near, foot);
-        this.#exits.set(far, pointAlong(area, uphill, RAMP_TOP_WAYPOINT));
+        this.#exits.set(far, pointAlong(area, uphill, 1 - inset));
         this.#climbs.set(far, { area, foot });
       }
     }

@@ -7150,7 +7150,6 @@ export class MatchSimulation {
     // stops at the wall, a unit short of it so it lands on the near side.
     const impact = firstHit(from, leadPoint, this.#wallsOn(record.layer));
     const aimPoint =
-      /** The shooter's layer at release, and the target's: what the shot is drawn from and to (#2972). */
       impact === undefined
         ? leadPoint
         : distance(from, impact) <= 1
