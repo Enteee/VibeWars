@@ -1,1 +1,0 @@
-{"version":3,"file":"describe-F8Q4PuFN.js","names":["EN_WORDS","describe_default"],"sources":["../../src/i18n/locales/th/describe.ts"],"sourcesContent":["import { EN_WORDS } from \"@vibewars/game-core\";\n\nexport default EN_WORDS;\n"],"mappings":"A,uCAEA,IAAAC,EAAeD,E"}
