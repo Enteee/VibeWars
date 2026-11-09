@@ -147,6 +147,7 @@ function player(index: number): WirePlayer {
     x: FLOAT + index,
     y: FLOAT + index,
     facing: -3.14,
+    layer: 0,
     targetId: `${PEER_ID}9`,
     attackTargetId: `${PEER_ID}9`,
     walking: true,

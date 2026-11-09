@@ -94,6 +94,7 @@ function toPlayerSnapshot(
     x: participant.position.x,
     y: participant.position.y,
     facing: participant.facing,
+    layer: participant.layer,
     targetSessionId: participant.targetId,
     attackTargetSessionId: combatant.attack?.targetId,
     walking:
