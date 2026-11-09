@@ -7,7 +7,7 @@
  *
  * Builds the static client with the Trystero transport, serves it on
  * 127.0.0.1 (or measures `--url`), and for each pair opens its lobby in one
- * browser context and reads the key in the title bar, then joins that key
+ * browser context and copies its invite link, then opens that link
  * from another, as a second window or a private window does. Prints, for
  * each side of each pair:
  *
@@ -18,8 +18,8 @@
  *            gathered (`host`, `host(mdns)` for a `.local` name, `srflx`)
  *   error    what the page logged: Trystero's onJoinError text, and the
  *            notice the joiner was shown
- *   joined   the seconds until the joiner's title bar shows the host's
- *            key, or "no"
+ *   joined   the seconds until the joiner's Lobby window offers Leave,
+ *            or "no"
  *
  * Exit code 0 only if every pair joined.
  *
