@@ -463,6 +463,13 @@ export const mapDataSchema = z
         });
       }
       deckIds.add(deck.id);
+      if (!shapeInBounds(deck.footprint, map.width, map.height)) {
+        context.addIssue({
+          code: "custom",
+          path: ["decks", index, "footprint"],
+          message: `deck ${deck.id}'s footprint is outside the map`,
+        });
+      }
       const reached = map.transitions.some(
         (transition) => transition.to === deck.layer && touches(transition, deck),
       );
