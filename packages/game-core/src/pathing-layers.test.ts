@@ -55,28 +55,37 @@ function finder(groundWalls: readonly Segment[] = []) {
 }
 
 describe("a ramp's waypoints (#2972)", () => {
-  // A ramp with a way up: 140 long, Training Heights' length.
-  const RAMP = rect(360, 300, 140, 200);
+  // A ramp with a way up, reaching onto the deck: 140 long, Training Heights' length.
+  const RAMP = rect(380, 300, 140, 200);
   const CLIMBS: readonly NavTransition[] = [{ from: 0, to: 1, area: RAMP, uphill: vec2(1, 0) }];
-  const nav = buildLayeredNavGraph(
-    [
-      { walls: [], walkable: [] },
-      { walls: [], walkable: [DECK, RAMP] },
-    ],
-    [],
-    BOUNDS,
-    RADIUS,
-  ).map((gated) => navGraphFor(gated, 0));
-  const paths = createLayeredPathFinder(nav, CLIMBS);
+
+  // A second storey: its ramp ends past the deck, so the deck's outline runs across its top.
+  const UPPER_RAMP = rect(1000, 300, 140, 200);
+  const UPPER_DECK = rect(1120, 300, 400, 200);
+  const UPPER_CLIMBS: readonly NavTransition[] = [
+    { from: 1, to: 2, area: UPPER_RAMP, uphill: vec2(1, 0) },
+  ];
+
+  const navOf = (walkable: readonly (readonly Polygon[])[]): readonly NavGraph[] =>
+    buildLayeredNavGraph(
+      walkable.map((areas) => ({ walls: [], walkable: areas })),
+      [],
+      BOUNDS,
+      RADIUS,
+    ).map((gated) => navGraphFor(gated, 0));
+  const ramp = navOf([[], [DECK, RAMP]]);
+  const storeys = navOf([[], [DECK, UPPER_RAMP], [UPPER_DECK, UPPER_RAMP]]);
 
   /** Every leg of a route is walkable on the layer its body is on, so the route cache keeps it. */
   const expectEveryLegClear = (
+    nav: readonly NavGraph[],
+    transitions: readonly NavTransition[],
     from: ReturnType<typeof vec2>,
     fromLayer: number,
     to: ReturnType<typeof vec2>,
     toLayer: number,
   ): void => {
-    const route = paths.find(from, fromLayer, to, toLayer);
+    const route = createLayeredPathFinder(nav, transitions).find(from, fromLayer, to, toLayer);
     expect(route).toBeDefined();
     let at = from;
     let layer = fromLayer;
@@ -89,11 +98,15 @@ describe("a ramp's waypoints (#2972)", () => {
   };
 
   it("keeps its waypoints in sight of a body coming down from the deck", () => {
-    expectEveryLegClear(vec2(800, 400), 1, vec2(200, 400), 0);
+    expectEveryLegClear(ramp, CLIMBS, vec2(800, 400), 1, vec2(200, 400), 0);
   });
 
   it("keeps its waypoints in sight of a body going up from the ground", () => {
-    expectEveryLegClear(vec2(200, 400), 0, vec2(800, 400), 1);
+    expectEveryLegClear(ramp, CLIMBS, vec2(200, 400), 0, vec2(800, 400), 1);
+  });
+
+  it("keeps its waypoints in sight of a body climbing from the deck to the next storey", () => {
+    expectEveryLegClear(storeys, UPPER_CLIMBS, vec2(700, 400), 1, vec2(1400, 400), 2);
   });
 });
 
