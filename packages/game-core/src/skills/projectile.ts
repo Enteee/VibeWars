@@ -30,6 +30,9 @@ export interface Projectile {
    * in the way, just short of the wall.
    */
   readonly aimPoint: Vec2;
+  /** The shooter's layer at release, and the target's: what the shot is drawn from and to (#2972). */
+  readonly fromLayer: number;
+  readonly toLayer: number;
   /** Cut short by a wall: it lands as `attack-obstructed`, whoever is where. */
   readonly obstructed: boolean;
   /** World units per second. */

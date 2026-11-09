@@ -189,6 +189,8 @@ function projectile(index: number): WireProjectile {
     skillId: FLYING_SKILL_ID,
     from: { x: FLOAT, y: FLOAT },
     to: { x: FLOAT, y: FLOAT },
+    fromLayer: 0,
+    toLayer: 0,
     launchedAt: FLOAT,
     flightSeconds: FLOAT,
   };

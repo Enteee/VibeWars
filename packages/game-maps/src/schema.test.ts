@@ -9,6 +9,8 @@ import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/
 import { allWallSegments } from "./geometry.js";
 import {
   MAX_LIGHTS,
+  MAX_WATER_BODIES,
+  MAX_WATER_POINTS,
   MapValidationError,
   mapDataSchema,
   validateMapData,
@@ -1121,5 +1123,99 @@ describe("lighting (#2986, ADR-0052)", () => {
       Array.from({ length: count }, (_, index) => ({ ...light, id: `torch-${String(index)}` }));
     expect(withLights(many(MAX_LIGHTS))).toBe(true);
     expect(withLights(many(MAX_LIGHTS + 1))).toBe(false);
+  });
+});
+
+describe("water (#2983)", () => {
+  const pond = (overrides: object = {}) => ({
+    id: "pond",
+    layer: 0,
+    depth: "deep",
+    area: { kind: "rect", x: 200, y: 600, width: 200, height: 100 },
+    ...overrides,
+  });
+  const accepts = (water: unknown[], overrides: object = {}): void => {
+    expect(() => validateMapData({ ...layerTest, ...overrides, water })).not.toThrow();
+  };
+  const refuses = (water: unknown[], message: RegExp, overrides: object = {}): void => {
+    expect(() => validateMapData({ ...layerTest, ...overrides, water })).toThrow(message);
+  };
+  /** A polygon of `count` points round a circle at (800, 650). */
+  const round = (count: number) => ({
+    kind: "polygon",
+    points: Array.from({ length: count }, (_, at) => ({
+      x: 800 + 60 * Math.cos((at / count) * 2 * Math.PI),
+      y: 650 + 60 * Math.sin((at / count) * 2 * Math.PI),
+    })),
+  });
+
+  it("is optional, and may be deep or shallow, a rectangle or a polygon", () => {
+    expect(validateMapData(layerTest).water).toBeUndefined();
+    accepts([pond(), pond({ id: "ford", depth: "shallow", area: round(MAX_WATER_POINTS) })]);
+  });
+
+  it("refuses more points than a curved shore needs, and more bodies than a map draws", () => {
+    refuses([pond({ area: round(MAX_WATER_POINTS + 1) })], /water\.0\.area\.points/);
+    const many = Array.from({ length: MAX_WATER_BODIES + 1 }, (_, at) =>
+      pond({
+        id: `pool-${String(at)}`,
+        area: { kind: "rect", x: at * 40, y: 750, width: 30, height: 30 },
+      }),
+    );
+    refuses(many, /water: /);
+  });
+
+  it("refuses a layer the map has not, and a used id", () => {
+    refuses([pond({ layer: 2 })], /water\.0\.layer: layer 2/);
+    refuses(
+      [pond(), pond({ area: { kind: "rect", x: 900, y: 600, width: 50, height: 50 } })],
+      /water\.1\.id: water id pond is used twice/,
+    );
+  });
+
+  it("puts water above the ground on a deck of its layer", () => {
+    accepts([pond({ layer: 1, area: { kind: "rect", x: 700, y: 320, width: 60, height: 60 } })]);
+    refuses([pond({ layer: 1 })], /water pond on layer 1 is not on a deck/);
+  });
+
+  it("refuses two bodies of water overlapping on one layer, not on two", () => {
+    const under = { kind: "rect", x: 700, y: 320, width: 60, height: 60 };
+    refuses(
+      [pond(), pond({ id: "other", depth: "shallow", area: { ...pond().area, x: 300 } })],
+      /water other overlaps water pond/,
+    );
+    accepts([pond({ area: under }), pond({ id: "above", layer: 1, area: under })]);
+  });
+
+  it("keeps deep water off a spawn, an objective, a gate and a ramp", () => {
+    const onSpawn = { kind: "rect", x: 150, y: 350, width: 100, height: 100 };
+    refuses([pond({ area: onSpawn })], /deep water pond covers a spawn \(spawnPoints\.0\)/);
+    refuses([pond()], /deep water pond covers an objective, start line \(objectives\.0\)/, {
+      objectives: [
+        {
+          kind: "start-line",
+          layer: 0,
+          area: { kind: "rect", x: 350, y: 650, width: 100, height: 20 },
+        },
+      ],
+    });
+    const gate = {
+      id: "sluice",
+      wall: { kind: "rect", layer: 0, x: 250, y: 580, width: 8, height: 30 },
+      plate: { x: 300, y: 500 },
+      team: null,
+    };
+    refuses([pond()], /deep water pond covers a gate \(gates\.0\)/, { gates: [gate] });
+    const atRamp = { kind: "rect", x: 300, y: 450, width: 100, height: 100 };
+    refuses([pond({ area: atRamp })], /deep water pond covers a transition \(transitions\.0\)/);
+  });
+
+  it("lets shallow water run into a ramp, and under a spawn", () => {
+    const atRamp = { kind: "rect", x: 300, y: 450, width: 100, height: 100 };
+    const onSpawn = { kind: "rect", x: 150, y: 350, width: 100, height: 40 };
+    accepts([
+      pond({ depth: "shallow", area: atRamp }),
+      pond({ id: "puddle", depth: "shallow", area: onSpawn }),
+    ]);
   });
 });

@@ -1218,6 +1218,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       skillId: shot.skillHit?.kind === "spell" ? shot.skillHit.skill.id : null,
       from: shot.from,
       to: shot.aimPoint,
+      fromLayer: shot.fromLayer,
+      toLayer: shot.toLayer,
       launchedAt: sim.elapsedSeconds - shot.elapsed,
       flightSeconds: shot.flightSeconds,
     })),

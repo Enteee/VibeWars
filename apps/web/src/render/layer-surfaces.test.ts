@@ -9,6 +9,7 @@ import {
 import {
   altHeld,
   deckSideLow,
+  hiddenCrop,
   DECK_SLAB,
   drawnLayerAt,
   liftAt,
@@ -20,6 +21,7 @@ import {
   rampDrawing,
   RING_PATH,
   traceHiddenOutline,
+  traceHiddenPolyline,
 } from "./layer-surfaces.js";
 import { ELEVATION_STEP } from "./render-order.js";
 
@@ -56,6 +58,51 @@ describe("the surface a click names (#2831)", () => {
   });
 });
 
+describe("a click on a ramp (#2972)", () => {
+  const rect = (x: number, y: number, width: number, height: number) =>
+    ({ kind: "rect", x, y, width, height }) as const;
+  const STAIRS: MapStructure = {
+    layerCount: 3,
+    decks: [
+      { layer: 1, footprint: rect(200, 100, 200, 100) },
+      { layer: 2, footprint: rect(260, -100, 80, 100) },
+    ],
+    transitions: [
+      { from: 0, to: 1, area: rect(100, 100, 120, 100) },
+      { from: 1, to: 2, area: rect(280, 0, 40, 120) },
+    ],
+  };
+  const drawnAt = (point: { x: number; y: number }, layer: number) => ({
+    x: point.x,
+    y: point.y - liftAt(STAIRS, point, layer),
+  });
+
+  it("lands where the 0→1 ramp is drawn, its upper half on the upper layer", () => {
+    const point = { x: 180, y: 150 };
+    const picked = pickSurface(STAIRS, drawnAt(point, 1), false);
+    expect(picked.layer).toBe(1);
+    expect(picked.point.x).toBeCloseTo(180, 5);
+    expect(picked.point.y).toBeCloseTo(150, 5);
+  });
+
+  it("is the lower layer in the lower half", () => {
+    expect(pickSurface(STAIRS, drawnAt({ x: 130, y: 150 }, 0), false).layer).toBe(0);
+  });
+
+  it("lands where the 1→2 ramp is drawn, a slope along y", () => {
+    const point = { x: 300, y: 30 };
+    const picked = pickSurface(STAIRS, drawnAt(point, 2), false);
+    expect(picked.layer).toBe(2);
+    expect(picked.point.x).toBeCloseTo(300, 5);
+    expect(picked.point.y).toBeCloseTo(30, 3);
+  });
+
+  it("gives the surface beneath with Alt", () => {
+    const at = drawnAt({ x: 180, y: 150 }, 1);
+    expect(pickSurface(STAIRS, at, true)).toEqual({ layer: 0, point: at });
+  });
+});
+
 describe("Alt on the pointer (#2831)", () => {
   it("is not held before the pointer's first event", () => {
     expect(altHeld({})).toBe(false);
@@ -87,6 +134,62 @@ describe("the hidden part of a body (#2831)", () => {
 
   it("is nothing on a map of one layer", () => {
     expect(occludersOf([], { layerCount: 1, decks: [], transitions: [] })).toEqual([]);
+  });
+});
+
+describe("the hidden part of a weapon and symbol (#2972)", () => {
+  // The deck draws ELEVATION_STEP above its footprint.
+  const under = 150 - ELEVATION_STEP;
+  const occluders = occludersOf([], BRIDGE);
+  const span = (pieces: readonly { ax: number; bx: number }[]) => ({
+    left: Math.min(...pieces.map(({ ax, bx }) => Math.min(ax, bx))),
+    right: Math.max(...pieces.map(({ ax, bx }) => Math.max(ax, bx))),
+  });
+
+  it("covers only the part of a polyline under a deck", () => {
+    const line = [
+      { x: 60, y: under },
+      { x: 140, y: under },
+    ];
+    const { left, right } = span(traceHiddenPolyline(line, 0, occluders));
+    expect(left).toBeCloseTo(100, 0);
+    expect(right).toBeCloseTo(140, 0);
+  });
+
+  it("covers a polyline wholly under a deck", () => {
+    const line = [
+      { x: 150, y: under },
+      { x: 190, y: under },
+    ];
+    const { left, right } = span(traceHiddenPolyline(line, 0, occluders));
+    expect(left).toBeCloseTo(150, 0);
+    expect(right).toBeCloseTo(190, 0);
+  });
+
+  it("covers nothing clear of a deck, or on a layer it does not hide", () => {
+    const clear = [
+      { x: 20, y: under },
+      { x: 60, y: under },
+    ];
+    const above = [
+      { x: 150, y: under },
+      { x: 190, y: under },
+    ];
+    expect(traceHiddenPolyline(clear, 0, occluders)).toEqual([]);
+    expect(traceHiddenPolyline(above, 1, occluders)).toEqual([]);
+  });
+
+  it("crops a symbol half under the deck to its hidden half", () => {
+    expect(hiddenCrop(100, under, 16, 0, occluders)).toEqual({
+      x: 0.5,
+      y: 0,
+      width: 0.5,
+      height: 1,
+    });
+  });
+
+  it("has no crop for a symbol in the clear", () => {
+    expect(hiddenCrop(40, under, 16, 0, occluders)).toBeUndefined();
   });
 });
 
