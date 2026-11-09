@@ -43,6 +43,7 @@ import {
   NO_CALLS,
   type CallsSnapshot,
   type CombatMessage,
+  type ConnectionState,
   type MatchConnection,
   type MatchSnapshot,
   type PlayerSnapshot,
@@ -190,7 +191,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let onLostWhileJoining: () => void = () => undefined;
   const combatHandlers: ((message: CombatMessage) => void)[] = [];
   const refusalHandlers: ((message: CastRefusedMessage) => void)[] = [];
-  const connectionHandlers: ((state: "online" | "reconnecting" | "lost") => void)[] = [];
+  const connectionHandlers: ((state: ConnectionState) => void)[] = [];
 
   /** Messages on `channel` from the host, through `parse`; the rest is dropped. */
   const fromHost = <T>(
@@ -201,13 +202,13 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     unsubscribe.push(onFromHost(transport, hostId, channel, parse, handle));
   };
 
-  const tell = (state: "online" | "reconnecting" | "lost"): void => {
+  const tell = (state: ConnectionState): void => {
     for (const handler of [...connectionHandlers]) {
       handler(state);
     }
   };
 
-  const loseHost = (): void => {
+  const loseHost = (state: "lost" | "host-left" = "lost"): void => {
     if (lost) {
       return;
     }
@@ -218,7 +219,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
       onLostWhileJoining();
       return;
     }
-    tell("lost");
+    tell(state);
   };
 
   /**
@@ -324,9 +325,15 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
       if (message.endReason !== "host-left" && welcomed === undefined) {
         return;
       }
+      if (message.endReason === "host-left" && ended !== undefined) {
+        // The match was over before its host went: the result stands.
+        lost = true;
+        clearTimeout(reconnectTimer);
+        return;
+      }
       summary = message.summary;
       if (message.endReason === "host-left") {
-        loseHost();
+        loseHost("host-left");
       } else {
         ended = message;
       }

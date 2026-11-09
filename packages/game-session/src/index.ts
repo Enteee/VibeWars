@@ -16,6 +16,7 @@ export type {
   CallsSnapshot,
   CombatBatchMessage,
   CombatMessage,
+  ConnectionState,
   MatchConnection,
   MatchSnapshot,
   ObservedSnapshot,

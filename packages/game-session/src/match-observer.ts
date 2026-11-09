@@ -44,7 +44,7 @@ export interface ObserverConnection {
   getSnapshot(): ObservedSnapshot | undefined;
   onCombat(handler: (message: CombatMessage) => void): void;
   /** The host is gone, or said it left: there is nothing more to watch. */
-  onLost(handler: () => void): void;
+  onLost(handler: (state: "lost" | "host-left") => void): void;
   disconnect(): Promise<void>;
 }
 
@@ -75,7 +75,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
   let observeTimer: unknown;
   let onLostWhileJoining: () => void = () => undefined;
   const combatHandlers: ((message: CombatMessage) => void)[] = [];
-  const lostHandlers: (() => void)[] = [];
+  const lostHandlers: ((state: "lost" | "host-left") => void)[] = [];
 
   const fromHost = <T>(
     channel: Channel,
@@ -85,7 +85,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
     unsubscribe.push(onFromHost(transport, hostId, channel, parse, handle));
   };
 
-  const loseHost = (): void => {
+  const loseHost = (state: "lost" | "host-left" = "lost"): void => {
     if (lost) {
       return;
     }
@@ -95,7 +95,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
       return;
     }
     for (const handler of [...lostHandlers]) {
-      handler();
+      handler(state);
     }
   };
 
@@ -138,7 +138,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
     (value) => parseWireEnded(value, teamCount),
     (message) => {
       if (message.endReason === "host-left") {
-        loseHost();
+        loseHost("host-left");
       } else if (settled) {
         ended = message;
       }
