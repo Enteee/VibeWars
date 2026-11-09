@@ -360,9 +360,14 @@ export interface LoadedStructure {
 export function structureOf(map: MapData): LoadedStructure {
   return {
     structure:
-      map.layers === 1
+      map.layers === 1 && map.lighting === undefined
         ? FLAT_STRUCTURE
-        : { layerCount: map.layers, decks: map.decks, transitions: map.transitions },
+        : {
+            layerCount: map.layers,
+            decks: map.decks,
+            transitions: map.transitions,
+            ...(map.lighting === undefined ? {} : { lighting: map.lighting }),
+          },
     wallLayers: map.walls.map((wall) => wall.layer),
   };
 }

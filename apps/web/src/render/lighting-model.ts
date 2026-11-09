@@ -1,5 +1,4 @@
-import type { Vec2 } from "@vibewars/game-core";
-import { pointInShape } from "@vibewars/game-maps/geometry";
+import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
 import type { MapLighting } from "@vibewars/game-maps/schema";
 
 /** The darkest a body is drawn (ADR-0052): a fighter stays readable in any corner. */
@@ -30,7 +29,7 @@ function flickerPhase(id: string): number {
 }
 
 /** What is left of a light at `timeMs`: 1 at its brightest, `1 - flicker` at its dimmest. */
-function flickerAt(id: string, flicker: number, timeMs: number): number {
+export function flickerAt(id: string, flicker: number, timeMs: number): number {
   if (flicker === 0) {
     return 1;
   }
@@ -57,9 +56,17 @@ function add(colour: number, amount: number): void {
   blue += (colour & 0xff) * amount;
 }
 
+/** Whether `point` is in an indoor shape; allocates nothing, polygons included. */
 function isIndoors(lighting: MapLighting, point: Vec2): boolean {
   for (const shape of lighting.indoor) {
-    if (pointInShape(point, shape)) {
+    const inside =
+      shape.kind === "rect"
+        ? point.x >= shape.x &&
+          point.y >= shape.y &&
+          point.x <= shape.x + shape.width &&
+          point.y <= shape.y + shape.height
+        : pointInPolygon(point, shape.points);
+    if (inside) {
       return true;
     }
   }
@@ -118,4 +125,25 @@ export function lightAt(
     (Math.round(red * scale) << 16) | (Math.round(green * scale) << 8) | Math.round(blue * scale);
   into.intensity = Math.min(1, Math.max(floor, brightest / 255));
   return into;
+}
+
+/** A sample as one colour to multiply by. */
+export function tintOf(sample: LightSample): number {
+  return scaleColour(sample.colour, sample.intensity);
+}
+
+/** `colour` with each channel times `amount`, 0 to 1. */
+export function scaleColour(colour: number, amount: number): number {
+  return (
+    (Math.round(((colour >> 16) & 0xff) * amount) << 16) |
+    (Math.round(((colour >> 8) & 0xff) * amount) << 8) |
+    Math.round((colour & 0xff) * amount)
+  );
+}
+
+/** `colour` multiplied, channel by channel, by `tint`. */
+export function multiplyColour(colour: number, tint: number): number {
+  const channel = (shift: number): number =>
+    Math.round((((colour >> shift) & 0xff) * ((tint >> shift) & 0xff)) / 255) << shift;
+  return channel(16) | channel(8) | channel(0);
 }

@@ -837,10 +837,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "керування",
+  "options.display": "екран",
   "options.label": "Опції",
   "options.language": "мова",
   "options.languageBusy": "Спершу вийди з лобі чи матчу: зміна мови перезавантажує сторінку.",
   "options.languageLabel": "Мова",
+  "options.lightingLabel": "Освітлення",
   "options.player": "гравець",
   "options.relay": "ретранслятор (TURN)",
   "options.sections": "розділи опцій",

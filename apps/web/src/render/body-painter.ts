@@ -7,6 +7,7 @@ import {
 } from "./arena-snapshot.js";
 import { capeMotionShape, type CapeBand, type CapeMotion, type CapeShape } from "./cape-motion.js";
 import type { CapeLook, EmblemPart } from "./cape-shape.js";
+import { multiplyColour } from "./lighting-model.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
@@ -52,6 +53,8 @@ export interface StandingBody {
   readonly frame: AttackFrame;
   /** The guild cape behind it (#1422) and how it moves (#1699); `undefined` wears none. */
   readonly cape: WornCape | undefined;
+  /** What the light where it stands multiplies its disc by (ADR-0052). */
+  readonly tint?: number | undefined;
 }
 
 /** A cape on a body: its look and its motion, which the caller steps. */
@@ -89,7 +92,8 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   if (cape !== undefined && shape !== undefined) {
     paintCape(painter, shape, cape.look);
   }
-  painter.fillStyle(teamColour(body.team), 1);
+  const team = teamColour(body.team);
+  painter.fillStyle(body.tint === undefined ? team : multiplyColour(team, body.tint), 1);
   painter.fillCircle(x, y, r);
   // Centred half its width in, so the edge stays inside the collision
   // radius (#166) and only touches the self rim inside it.

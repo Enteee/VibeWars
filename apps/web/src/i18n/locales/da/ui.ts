@@ -754,10 +754,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "styring",
+  "options.display": "visning",
   "options.label": "Valg",
   "options.language": "sprog",
   "options.languageBusy": "Forlad først lobbyen eller kampen: skift af sprog genindlæser siden.",
   "options.languageLabel": "Sprog",
+  "options.lightingLabel": "Belysning",
   "options.player": "spiller",
   "options.relay": "relay (TURN)",
   "options.sections": "afsnit i valg",

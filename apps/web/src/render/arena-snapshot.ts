@@ -8,6 +8,7 @@ import {
 } from "@vibewars/game-core";
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
+import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import type { AttackCast } from "./attack-clock.js";
@@ -119,6 +120,8 @@ export type RenderableShape = RectRenderableWall | PolygonRenderableWall;
 /** A map's floors above the ground (ADR-0051), from its file: never per tick. */
 export interface MapStructure {
   readonly layerCount: number;
+  /** How it is lit (ADR-0052); a map without it is lit flat. */
+  readonly lighting?: MapLighting;
   readonly decks: readonly { readonly layer: number; readonly footprint: RenderableShape }[];
   readonly transitions: readonly {
     readonly from: number;

@@ -813,10 +813,12 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "controles",
+  "options.display": "pantalla",
   "options.label": "Opciones",
   "options.language": "idioma",
   "options.languageBusy": "Sal antes de la sala o la partida: cambiar el idioma recarga la página.",
   "options.languageLabel": "Idioma",
+  "options.lightingLabel": "Iluminación",
   "options.player": "jugador",
   "options.relay": "relay (TURN)",
   "options.sections": "secciones de opciones",
