@@ -5,6 +5,7 @@ import { t } from "../i18n/index.js";
 import { button, h } from "./kit.js";
 import { modeLabel, waitedLabel } from "./queue-screen.js";
 import { attachTopbarPopover, closeTopbarPopover } from "./topbar-popover.js";
+import { isVaultRound, vaultLines } from "./vault-screen.js";
 
 /**
  * The queue icon in the top bar and its flyout (#2743): any queue, Random
@@ -33,13 +34,15 @@ export type QueueStatusInput =
       /** Teams the queue last heard searching; `undefined` until it says. */
       readonly teams: number | undefined;
       readonly isHost: boolean;
+      /** Who holds the Hall of Heroes (#2701), as the Vault says; `undefined` for nobody. */
+      readonly hallHolder: string | undefined;
     };
 
 /** What the flyout says. */
 export interface QueueStatus {
   /** "Random Arena 4v4", "Heroes' Ascent · round 3". */
   readonly title: string;
-  /** m:ss. */
+  /** m:ss, or in the Vault how long until the Hall opens. */
   readonly waited: string;
   readonly detail?: string;
   /** Leave Queue, or a guest's word that only the host can. */
@@ -65,6 +68,10 @@ export function queueStatus(
     };
   }
   const leave = input.isHost ? "button" : "host-only";
+  if (input.mode === "heroes-ascent" && isVaultRound(input.ascentRound)) {
+    const vault = vaultLines(now, input.hallHolder);
+    return { title: vault.title, waited: vault.countdown, detail: vault.holder, leave };
+  }
   switch (input.mode) {
     case "team-arena": {
       const title = t("queue.teamArena", {

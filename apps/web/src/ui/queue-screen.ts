@@ -122,6 +122,28 @@ export function ascentStartMorale(round: number | null, carried: number): number
   return round === null ? 0 : carried;
 }
 
+/**
+ * Since when a party holds the Hall after `result` of a match it played
+ * at round `played` (#2701): from `now` on a win in the Hall; a defeat or
+ * leaving before the end loses it; a match lost to its host leaving keeps it.
+ */
+export function nextHallHold(
+  held: number | null,
+  played: number,
+  result: QueuedResult,
+  now: number,
+): number | null {
+  switch (result) {
+    case "win":
+      return played === ASCENT_PROGRESSION.length - 1 ? now : held;
+    case "loss":
+    case "forfeit":
+      return null;
+    case "host-left":
+      return held;
+  }
+}
+
 /** "3 wins in a row this visit (not a rating)"; nothing at 0. */
 export function streakLine(streak: number): string | undefined {
   if (streak <= 0) {

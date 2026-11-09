@@ -60,6 +60,7 @@ import {
   ASCENT_PROGRESSION,
   queueMapPool,
   queueSkipping,
+  queueSlotted,
   queueTeamCount,
 } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
@@ -607,11 +608,13 @@ export function leaveOnPageHide(target: EventTarget, leave: () => void): () => v
  * once in the match's lobby (ADR-0042). A Heroes' Ascent queues at
  * `ascentRound` (#1996), every other mode at `null`, and its player
  * brings `ascentMorale` (#2686), the run's from the last map; 0 elsewhere.
+ * A party still holding the Hall says since when, in `holdsHallSince` (#2701).
  */
 export function enterQueue(
   mode: QueueMode,
   ascentRound: number | null,
   ascentMorale: number,
+  holdsHallSince: number | null,
   name: string,
   guild: Guild,
   playerKey: PlayerKey,
@@ -739,6 +742,7 @@ export function enterQueue(
       board: queue.board,
       mode,
       ascentRound,
+      holdsHallSince,
       ...(party === undefined ? {} : { party: party.party }),
       now: () => Date.now(),
       newTicketKey: () => queue.newTicketKey(),
@@ -749,6 +753,7 @@ export function enterQueue(
               mapPool: queueMapPool(mode, round),
               teamCount: queueTeamCount(mode, round),
               skipping: queueSkipping(mode, round),
+              slotted: queueSlotted(mode, round),
             },
       hardNat,
     });

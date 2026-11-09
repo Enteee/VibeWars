@@ -12,7 +12,12 @@ import {
   KING_OF_THE_HILL_MATCH_RULES,
   FOE_RELIC_RUN_MATCH_RULES,
   RELIC_RUN_MATCH_RULES,
+  HALLS_MATCH_RULES,
+  HALL_SLOT_SECONDS,
+  HALL_SLOT_WINDOW_SECONDS,
   addPoint,
+  hallSlotOpen,
+  nextHallSlotMs,
   type MatchScore,
   emptyScore,
   evaluateMatch,
@@ -615,5 +620,36 @@ describe("evaluateMatch: the foe's relic run (#2695)", () => {
 
   it("is a draw at time with nobody having scored", () => {
     expect(evaluateMatch(after(), BOTH_ALIVE, 480, rules).winningTeam).toBeUndefined();
+  });
+});
+
+describe("the Hall's slots (#2701)", () => {
+  const AT = (iso: string): number => Date.parse(iso);
+
+  it.each([
+    ["2026-11-09T15:00:00Z", true],
+    ["2026-11-09T15:00:29.999Z", true],
+    ["2026-11-09T15:00:30Z", false],
+    ["2026-11-09T15:11:59.999Z", false],
+    ["2026-11-09T15:12:00Z", true],
+    ["2026-11-09T15:48:10Z", true],
+    ["2026-11-10T00:00:00Z", true],
+  ])("at %s open is %s", (iso, open) => {
+    expect(hallSlotOpen(AT(iso))).toBe(open);
+  });
+
+  it.each([
+    ["2026-11-09T15:00:00Z", "2026-11-09T15:12:00Z"],
+    ["2026-11-09T15:47:59Z", "2026-11-09T15:48:00Z"],
+    ["2026-11-09T15:48:00Z", "2026-11-09T16:00:00Z"],
+    ["2026-11-09T23:59:00Z", "2026-11-10T00:00:00Z"],
+  ])("after %s the next is %s", (now, next) => {
+    expect(nextHallSlotMs(AT(now))).toBe(AT(next));
+  });
+
+  it("ends a full-length Hall before the next slot", () => {
+    expect(HALLS_MATCH_RULES["relic-run"].timeLimitSeconds + HALL_SLOT_WINDOW_SECONDS).toBeLessThan(
+      HALL_SLOT_SECONDS,
+    );
   });
 });

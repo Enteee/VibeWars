@@ -177,11 +177,21 @@ export interface HeardMatchRecord {
   readonly record: MatchRecord;
 }
 
+/** A feed of only some records (#2701): the others are dropped before any signature check. */
+export interface MatchRecordFilter {
+  readonly wants: (record: MatchRecord) => boolean;
+  /** The feed's own budget of signature checks, spent on wanted records alone. */
+  readonly verifyPerSecond: number;
+  readonly verifyBurst: number;
+}
+
 export interface MatchRecordWatchHandlers {
   /** A valid, verified record, each `d` once. */
   readonly record: (heard: HeardMatchRecord) => void;
   /** Every relay is down. */
   readonly noRelay: () => void;
+  /** Hear only these; every record for none. */
+  readonly filter?: MatchRecordFilter;
 }
 
 export interface MatchRecordWatch {
@@ -226,7 +236,11 @@ export function recordHearer(
   on: MatchRecordWatchHandlers,
   deps: Pick<MatchRecordWatchDeps, "now" | "verifyTicketSig">,
 ): (data: unknown) => void {
-  const mayVerify = verifyBudget(deps.now, VERIFY_PER_SECOND, MATCH_RECORD_VERIFY_BURST);
+  const mayVerify = verifyBudget(
+    deps.now,
+    on.filter?.verifyPerSecond ?? VERIFY_PER_SECOND,
+    on.filter?.verifyBurst ?? MATCH_RECORD_VERIFY_BURST,
+  );
   const mapIds = new Set(arenaIds());
   const seen = new Set<string>();
 
@@ -265,7 +279,7 @@ export function recordHearer(
     }
     const record = validateMatchRecord(content, mapIds, Math.floor(deps.now() / 1000));
     // Over budget, a record is dropped unmarked: another relay's copy may yet be checked.
-    if (record === undefined || !mayVerify()) {
+    if (record === undefined || on.filter?.wants(record) === false || !mayVerify()) {
       return;
     }
     if (!deps.verifyTicketSig(event.pubkey, digest, event.sig)) {

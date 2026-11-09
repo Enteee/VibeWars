@@ -43,6 +43,7 @@ function ticket(n: number, fields: Partial<QueueTicket> = {}): QueueTicket {
     party: null,
     ascentRound: roundOf(fields.mode ?? "random-arena-4v4"),
     hardNat: false,
+    holdsHallSince: null,
     ...fields,
   };
 }
@@ -78,7 +79,7 @@ function form(
     now: NOW,
     mode,
     ignored,
-    round: () => ({ mapPool: MAPS, teamCount: 2, skipping: false }),
+    round: () => ({ mapPool: MAPS, teamCount: 2, skipping: false, slotted: false }),
   });
 }
 
@@ -324,7 +325,7 @@ describe("formGroups (#869)", () => {
       now: NOW,
       mode: "random-arena-1v1" as const,
       ignored: new Set<string>(),
-      round: () => ({ mapPool: [], teamCount: 2 as const, skipping: false }),
+      round: () => ({ mapPool: [], teamCount: 2 as const, skipping: false, slotted: false }),
     };
     await expect(formGroups({ ...empty, tickets: [] })).resolves.toEqual([]);
     await expect(
@@ -397,6 +398,7 @@ describe("team modes (ADR-0042)", () => {
           mapPool: [`map-${String(at)}`],
           teamCount: 2,
           skipping: at !== 0 && at !== 7,
+          slotted: false,
         }),
       });
 
@@ -475,6 +477,7 @@ describe("team modes (ADR-0042)", () => {
           mapPool: [at === round ? map : "elsewhere"],
           teamCount,
           skipping: false,
+          slotted: false,
         }),
       });
 
@@ -484,7 +487,10 @@ describe("team modes (ADR-0042)", () => {
         now: NOW,
         mode: "heroes-ascent",
         ignored: new Set(),
-        round: (at) => (at === 7 ? undefined : { mapPool: ["map"], teamCount: 2, skipping: false }),
+        round: (at) =>
+          at === 7
+            ? undefined
+            : { mapPool: ["map"], teamCount: 2, skipping: false, slotted: false },
       });
       expect(groups).toHaveLength(1);
       expect(groups[0]?.parties.flat()).not.toContain(hero(3, 7).ticketId);
@@ -694,5 +700,73 @@ describe("hard NAT (#2090)", () => {
     for (const step of [2, 4, 5]) {
       expect(await form(reordered(queued, step), mode)).toEqual(expected);
     }
+  });
+});
+
+describe("the Hall in its slots (#2701)", () => {
+  const SLOT_MS = 720_000;
+  const OPEN = Math.ceil(NOW / SLOT_MS) * SLOT_MS + SLOT_MS;
+  const QUEUED = OPEN - 60_000;
+  const LAST = 12;
+
+  const hall = (n: number, fields: Partial<QueueTicket> = {}): QueueTicket =>
+    ticket(n, {
+      mode: "heroes-ascent",
+      bots: 7,
+      ascentRound: LAST,
+      enteredAt: QUEUED + n,
+      heartbeatAt: OPEN,
+      ...fields,
+    });
+  const formAt = (now: number, tickets: readonly QueueTicket[]): Promise<FormedGroup[]> =>
+    formGroups({
+      tickets: tickets.map((one) => ({ ...one, heartbeatAt: now })),
+      now,
+      mode: "heroes-ascent",
+      ignored: new Set(),
+      round: () => ({ mapPool: MAPS, teamCount: 3, skipping: false, slotted: true }),
+    });
+  const seated = (groups: readonly FormedGroup[]): string[] =>
+    groups.flatMap((group) => group.parties.flat()).sort();
+  const idOf = (n: number): string => hall(n).ticketId;
+
+  it("forms nothing with the window shut", async () => {
+    expect(await formAt(OPEN + 30_000, [hall(1), hall(2), hall(3)])).toEqual([]);
+    expect(await formAt(OPEN - 1, [hall(1), hall(2), hall(3)])).toEqual([]);
+  });
+
+  it("seats the holder and two challengers, one group, whoever queued first", async () => {
+    const groups = await formAt(OPEN, [
+      hall(1),
+      hall(2),
+      hall(3),
+      hall(4, { holdsHallSince: 5_000 }),
+    ]);
+    expect(groups).toHaveLength(1);
+    expect(seated(groups)).toEqual([idOf(1), idOf(2), idOf(4)].sort());
+  });
+
+  it("of two claims, seats the greatest as the holder and the other as a challenger", async () => {
+    const groups = await formAt(OPEN, [
+      hall(1),
+      hall(2, { holdsHallSince: 5_000 }),
+      hall(3),
+      hall(4, { holdsHallSince: 9_000 }),
+    ]);
+    expect(seated(groups)).toEqual([idOf(1), idOf(2), idOf(4)].sort());
+  });
+
+  it("seats two with no wait for a third side", async () => {
+    expect(seated(await formAt(OPEN, [hall(1), hall(2)]))).toEqual([idOf(1), idOf(2)].sort());
+  });
+
+  it("forms nothing for a holder alone or a lone challenger", async () => {
+    expect(await formAt(OPEN, [hall(1, { holdsHallSince: 5_000 })])).toEqual([]);
+    expect(await formAt(OPEN, [hall(1)])).toEqual([]);
+  });
+
+  it("leaves out a side that queued at or after the slot's start", async () => {
+    const groups = await formAt(OPEN + 1_000, [hall(1), hall(2), hall(3, { enteredAt: OPEN })]);
+    expect(seated(groups)).toEqual([idOf(1), idOf(2)].sort());
   });
 });
