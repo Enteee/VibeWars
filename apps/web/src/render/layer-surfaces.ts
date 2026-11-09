@@ -218,23 +218,59 @@ export interface Surface {
   readonly point: Vec2;
 }
 
+/** Enough fixed-point steps to find where a cursor meets a ramp: its slope is under 1. */
+const RAMP_PICK_STEPS = 8;
+
+/** The point on `ramp` drawn at `world`, with its lift; none if it is not on the ramp. */
+function rampSurface(
+  structure: MapStructure,
+  ramp: Transition,
+  world: Vec2,
+): (Surface & { readonly lift: number }) | undefined {
+  const uphill = uphillOf(structure, ramp);
+  if (uphill === undefined) {
+    return undefined;
+  }
+  const outline = shapeOutline(ramp.area);
+  let point = world;
+  for (let step = 0; step < RAMP_PICK_STEPS; step += 1) {
+    point = { x: world.x, y: world.y + rampLift(ramp, progressAlong(outline, uphill, point)) };
+  }
+  if (!pointInPolygon(point, outline)) {
+    return undefined;
+  }
+  const t = progressAlong(outline, uphill, point);
+  return { layer: t >= 0.5 ? ramp.to : ramp.from, point, lift: rampLift(ramp, t) };
+}
+
 /**
  * The surfaces drawn at `world`, the visible one first and the ground
- * last. A deck draws lifted, so the point on it lies below the cursor.
+ * last, one per layer. A deck or ramp draws lifted, so the point on it
+ * lies below the cursor.
  */
 export function surfacesAt(structure: MapStructure, world: Vec2): readonly Surface[] {
-  const surfaces: Surface[] = [];
+  const surfaces: (Surface & { readonly lift: number })[] = [];
   for (let layer = structure.layerCount - 1; layer > 0; layer -= 1) {
     const point = { x: world.x, y: world.y + elevationOf(layer) };
     const here = structure.decks.some(
       (deck) => deck.layer === layer && pointInPolygon(point, shapeOutline(deck.footprint)),
     );
     if (here) {
-      surfaces.push({ layer, point });
+      surfaces.push({ layer, point, lift: elevationOf(layer) });
     }
   }
-  surfaces.push({ layer: 0, point: world });
-  return surfaces;
+  for (const ramp of structure.transitions) {
+    const surface = rampSurface(structure, ramp, world);
+    if (surface !== undefined) {
+      surfaces.push(surface);
+    }
+  }
+  surfaces.push({ layer: 0, point: world, lift: 0 });
+  const seen = new Set<number>();
+  return surfaces
+    .sort((a, b) => b.lift - a.lift)
+    .filter(({ layer }) => !seen.has(layer) && seen.add(layer))
+    .map(({ layer, point }) => ({ layer, point }));
 }
 
 /** Whether Alt is held, as of a pointer's last event: a pointer that has had none has no event. */
