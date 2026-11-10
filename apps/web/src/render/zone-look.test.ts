@@ -26,6 +26,26 @@ describe("ZONE_LOOK (ADR-0053, #3024)", () => {
     expect(new Set(fills).size).toBe(fills.length);
   });
 
+  it("paints every lasting kind as its own real thing, and leaves the timed ones flat (#3052)", () => {
+    const painters = ZONE_KINDS.filter((kind) => ZONE_RULES[kind].trigger === "while-inside").map(
+      (kind) => ZONE_LOOK[kind].painter,
+    );
+    expect(painters).not.toContain("flat");
+    expect(new Set(painters).size).toBe(painters.length);
+    for (const kind of ZONE_KINDS.filter((each) => ZONE_RULES[each].trigger === "strike")) {
+      expect(ZONE_LOOK[kind].painter).toBe("flat");
+    }
+  });
+
+  it("lights only fire, the spring and the spire (#3052)", () => {
+    const lit = ZONE_KINDS.filter((kind) => ZONE_LOOK[kind].light !== undefined);
+    expect(lit.sort()).toEqual(["draining-spire", "molten", "scorched", "spring"]);
+    // Warm is fire and flickers; water and magic hold steady.
+    expect(ZONE_LOOK.molten.light?.flicker).toBeGreaterThan(0);
+    expect(ZONE_LOOK.spring.light?.flicker).toBe(0);
+    expect(ZONE_LOOK["draining-spire"].light?.flicker).toBe(0);
+  });
+
   it("holds still when the player asks for less motion", () => {
     const look = ZONE_LOOK.scorched;
     expect(zoneFillAlpha(look, 0.4, true)).toBe(look.alpha);

@@ -2,7 +2,13 @@ import type { Vec2 } from "@vibewars/game-core";
 
 import { WATER_LOOK } from "./arena-palette.js";
 import type { MapWater } from "./arena-snapshot.js";
-import { RIPPLE_HALF_LENGTH, rippleDrift, rippleSwell, type WaterShape } from "./water-shape.js";
+import {
+  RIPPLE_HALF_LENGTH,
+  rippleDrift,
+  rippleSwell,
+  type Ripple,
+  type WaterShape,
+} from "./water-shape.js";
 
 /**
  * Water drawn through one lookup keyed by its depth (#2984): today each
@@ -54,18 +60,30 @@ function proceduralWater(depth: MapWater["depth"]): WaterArt {
       painter.strokeOutline(shape.outline);
     },
     ripples(painter, shape, line, seconds, still) {
-      for (const ripple of shape.ripples) {
-        const drift = rippleDrift(ripple, seconds, still);
-        const { x, y } = ripple.at;
-        painter.lineStyle(
-          1.5 * line,
-          look.ripple,
-          look.rippleAlpha * rippleSwell(ripple, seconds, still),
-        );
-        painter.lineBetween(x - RIPPLE_HALF_LENGTH + drift, y, x + RIPPLE_HALF_LENGTH + drift, y);
-      }
+      paintRipples(painter, shape.ripples, line, seconds, still, look.ripple, look.rippleAlpha);
     },
   };
+}
+
+/**
+ * Level ripple strokes, each swelling and drifting on its own beat at
+ * render time `seconds`: water's, and a watery zone's (#3052).
+ */
+export function paintRipples(
+  painter: Pick<WaterPainter, "lineStyle" | "lineBetween">,
+  ripples: readonly Ripple[],
+  line: number,
+  seconds: number,
+  still: boolean,
+  colour: number,
+  alpha: number,
+): void {
+  for (const ripple of ripples) {
+    const drift = rippleDrift(ripple, seconds, still);
+    const { x, y } = ripple.at;
+    painter.lineStyle(1.5 * line, colour, alpha * rippleSwell(ripple, seconds, still));
+    painter.lineBetween(x - RIPPLE_HALF_LENGTH + drift, y, x + RIPPLE_HALF_LENGTH + drift, y);
+  }
 }
 
 export const WATER_ART: Record<WaterArtKey, WaterArt> = {

@@ -13,6 +13,39 @@ export interface ZoneLook {
   readonly edge: number;
   readonly alpha: number;
   readonly pulse: number;
+  /** What paints its ground (#3052): see `zone-painter.ts`. */
+  readonly painter: ZonePainterId;
+  /** The light it casts on what is round it (#3052), if any. */
+  readonly light?: ZoneLight;
+}
+
+/**
+ * How a zone's ground is painted (#3052): each a real thing, lava, embers,
+ * fog, mud, three waters, grass, the spire's wash; `flat` is the tinted
+ * polygon a timed hazard keeps until #3053.
+ */
+export type ZonePainterId =
+  | "lava"
+  | "embers"
+  | "fog"
+  | "mud"
+  | "foul-water"
+  | "tainted-water"
+  | "spring"
+  | "grass"
+  | "spire"
+  | "flat";
+
+/**
+ * A zone's own light (#3052), at its centroid: `radiusScale` times its
+ * outline's half-diagonal is where it reaches nothing. Fire flickers,
+ * water and magic do not (visual-style.md §2).
+ */
+export interface ZoneLight {
+  readonly colour: number;
+  readonly intensity: number;
+  readonly radiusScale: number;
+  readonly flicker: number;
 }
 
 /**
@@ -22,30 +55,64 @@ export interface ZoneLook {
  */
 export const ZONE_LOOK: Record<ZoneKind, ZoneLook> = {
   // Scorched ground: an ember fill under a bright rim, warm against the cool floor.
-  scorched: { fill: 0xb8401a, edge: 0xff8a3d, alpha: 0.38, pulse: 0.1 },
+  scorched: {
+    fill: 0xb8401a,
+    edge: 0xff8a3d,
+    alpha: 0.38,
+    pulse: 0.1,
+    painter: "embers",
+    light: { colour: 0xff7a30, intensity: 0.35, radiusScale: 1.2, flicker: 0.35 },
+  },
   // Molten: brighter and thicker than scorched, it glows hard.
-  molten: { fill: 0xff5a1f, edge: 0xffd23d, alpha: 0.55, pulse: 0.12 },
+  molten: {
+    fill: 0xff5a1f,
+    edge: 0xffd23d,
+    alpha: 0.55,
+    pulse: 0.12,
+    painter: "lava",
+    light: { colour: 0xff9040, intensity: 0.9, radiusScale: 1.6, flicker: 0.35 },
+  },
   // Toxic fog drifts: a sickly green that breathes the most.
-  "toxic-fog": { fill: 0x7fbf2a, edge: 0xc8f05a, alpha: 0.32, pulse: 0.14 },
+  "toxic-fog": { fill: 0x7fbf2a, edge: 0xc8f05a, alpha: 0.32, pulse: 0.14, painter: "fog" },
   // Mire is thick mud: it hardly stirs, under a dull rim.
-  mire: { fill: 0x6b4a26, edge: 0x9c7a46, alpha: 0.5, pulse: 0.03 },
+  mire: { fill: 0x6b4a26, edge: 0x9c7a46, alpha: 0.5, pulse: 0.03, painter: "mud" },
   // Foul water: a dark murky teal, barely moving.
-  "foul-water": { fill: 0x3d5a3a, edge: 0x6f8f5a, alpha: 0.45, pulse: 0.04 },
+  "foul-water": { fill: 0x3d5a3a, edge: 0x6f8f5a, alpha: 0.45, pulse: 0.04, painter: "foul-water" },
   // A spring: clear blue water, gently stirring.
-  spring: { fill: 0x3f9fe8, edge: 0x9fdcff, alpha: 0.34, pulse: 0.06 },
+  spring: {
+    fill: 0x3f9fe8,
+    edge: 0x9fdcff,
+    alpha: 0.34,
+    pulse: 0.06,
+    painter: "spring",
+    light: { colour: 0x8fd0ff, intensity: 0.45, radiusScale: 1.3, flicker: 0 },
+  },
   // A grove: leafy green, darker and calmer than the fog.
-  grove: { fill: 0x2f8a3c, edge: 0x76c96f, alpha: 0.34, pulse: 0.05 },
+  grove: { fill: 0x2f8a3c, edge: 0x76c96f, alpha: 0.34, pulse: 0.05, painter: "grass" },
   // Tainted water: murky olive, barely moving.
-  "tainted-water": { fill: 0x66662a, edge: 0x9a9a4c, alpha: 0.45, pulse: 0.04 },
+  "tainted-water": {
+    fill: 0x66662a,
+    edge: 0x9a9a4c,
+    alpha: 0.45,
+    pulse: 0.04,
+    painter: "tainted-water",
+  },
   // A draining spire: a faint violet wash under a violet rim; the obelisk is drawn apart.
-  "draining-spire": { fill: 0x6a4a9c, edge: 0xa77bff, alpha: 0.18, pulse: 0.05 },
+  "draining-spire": {
+    fill: 0x6a4a9c,
+    edge: 0xa77bff,
+    alpha: 0.18,
+    pulse: 0.05,
+    painter: "spire",
+    light: { colour: 0xa77bff, intensity: 0.7, radiusScale: 1.4, flicker: 0 },
+  },
   // Timed and moving hazards (#3029): drawn by their phase, see `strikeZoneLook`.
   // A fire vent: hot orange-red, a flame jet.
-  vent: { fill: 0xff4a12, edge: 0xffb03d, alpha: 0.6, pulse: 0 },
+  vent: { fill: 0xff4a12, edge: 0xffb03d, alpha: 0.6, pulse: 0, painter: "flat" },
   // A gas spout: a poison green puff, yellower than the fog.
-  "gas-spout": { fill: 0x9ad62a, edge: 0xe6ff6a, alpha: 0.55, pulse: 0 },
+  "gas-spout": { fill: 0x9ad62a, edge: 0xe6ff6a, alpha: 0.55, pulse: 0, painter: "flat" },
   // Rockfall and rolling rocks: grey stone under a pale rim.
-  rockfall: { fill: 0x8a8378, edge: 0xd8d0c0, alpha: 0.65, pulse: 0 },
+  rockfall: { fill: 0x8a8378, edge: 0xd8d0c0, alpha: 0.65, pulse: 0, painter: "flat" },
 };
 
 /** How a strike zone is drawn in a phase: its fill's alpha, and its edge's width as a multiple of `ZONE_EDGE_WIDTH`. */
@@ -125,7 +192,7 @@ export function obeliskOutline(foot: Vec2): readonly Vec2[] {
 }
 
 /** Seconds a zone's fill takes to breathe out and in again. */
-const PULSE_SECONDS = 1.6;
+export const PULSE_SECONDS = 1.6;
 
 /** World units of a zone's edge, at a zoom of 1. */
 export const ZONE_EDGE_WIDTH = 2;
