@@ -315,6 +315,46 @@ export class LightingPass {
     if (stageShadows(this.stage)) {
       this.budget.record(performance.now() - started);
     }
+    this.__bench();
+  }
+
+  private __benching = false;
+  private __bench(): void {
+    const g = globalThis as any;
+    if (this.__benching || g.__lightBench !== undefined || this.lighting === undefined) return;
+    this.__benching = true;
+    const gl = (this.scene.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer).gl;
+    const budget = this.budget as any;
+    const savedBudget = { stage: budget.stage, over: budget.over };
+    const savedStage = this.stage;
+    const out: any = { renderer: "", runs: {} };
+    const ext = gl.getExtension("WEBGL_debug_renderer_info");
+    out.renderer = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : String(gl.getParameter(gl.RENDERER));
+    const N = 40;
+    for (const stage of ["full", "no-shadows"] as LightingStage[]) {
+      this.stage = stage;
+      // warm up
+      this.build(); gl.finish();
+      const finish: number[] = [];
+      const cpu: number[] = [];
+      for (let i = 0; i < N; i += 1) {
+        gl.finish();
+        let t0 = performance.now();
+        this.build();
+        cpu.push(performance.now() - t0);
+        gl.finish();
+        finish.push(performance.now() - t0);
+      }
+      let shadowedCount = 0;
+      for (const m of this.layers) shadowedCount += m.shadowed.size;
+      out.runs[stage] = { finish, cpu, shadowedCount, layers: this.layers.length };
+    }
+    this.stage = savedStage;
+    this.build();
+    budget.stage = savedBudget.stage;
+    budget.over = savedBudget.over;
+    g.__lightBench = out;
+    this.__benching = false;
   }
 
   private ensureFalloff(): void {

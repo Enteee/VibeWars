@@ -2,7 +2,9 @@
   "id": "training-heights",
   "name": "Training Heights",
   "mode": "annihilation",
-  "teamSizes": [1],
+  "teamSizes": [
+    1
+  ],
   "teams": 2,
   "width": 1200,
   "height": 800,
@@ -11,44 +13,540 @@
     {
       "id": "bridge",
       "layer": 1,
-      "footprint": { "kind": "rect", "x": 420, "y": 350, "width": 360, "height": 200 }
+      "footprint": {
+        "kind": "rect",
+        "x": 420,
+        "y": 350,
+        "width": 360,
+        "height": 200
+      }
     },
     {
       "id": "platform",
       "layer": 2,
-      "footprint": { "kind": "rect", "x": 520, "y": 160, "width": 160, "height": 110 }
+      "footprint": {
+        "kind": "rect",
+        "x": 520,
+        "y": 160,
+        "width": 160,
+        "height": 110
+      }
     }
   ],
   "transitions": [
     {
       "from": 0,
       "to": 1,
-      "area": { "kind": "rect", "x": 300, "y": 350, "width": 140, "height": 200 }
+      "area": {
+        "kind": "rect",
+        "x": 300,
+        "y": 350,
+        "width": 140,
+        "height": 200
+      }
     },
     {
       "from": 0,
       "to": 1,
-      "area": { "kind": "rect", "x": 760, "y": 350, "width": 140, "height": 200 }
+      "area": {
+        "kind": "rect",
+        "x": 760,
+        "y": 350,
+        "width": 140,
+        "height": 200
+      }
     },
     {
       "from": 1,
       "to": 2,
-      "area": { "kind": "rect", "x": 540, "y": 250, "width": 120, "height": 120 }
+      "area": {
+        "kind": "rect",
+        "x": 540,
+        "y": 250,
+        "width": 120,
+        "height": 120
+      }
     }
   ],
   "walls": [
-    { "kind": "rect", "layer": 0, "x": 450, "y": 370, "width": 24, "height": 24 },
-    { "kind": "rect", "layer": 0, "x": 726, "y": 370, "width": 24, "height": 24 },
-    { "kind": "rect", "layer": 0, "x": 450, "y": 520, "width": 24, "height": 24 },
-    { "kind": "rect", "layer": 0, "x": 726, "y": 520, "width": 24, "height": 24 },
-    { "kind": "rect", "layer": 1, "x": 700, "y": 470, "width": 40, "height": 40 }
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 450,
+      "y": 370,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 726,
+      "y": 370,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 450,
+      "y": 520,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 726,
+      "y": 520,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "rect",
+      "layer": 1,
+      "x": 700,
+      "y": 470,
+      "width": 40,
+      "height": 40
+    }
   ],
   "spawnPoints": [
-    { "team": 0, "layer": 0, "position": { "x": 120, "y": 450 } },
-    { "team": 1, "layer": 0, "position": { "x": 1080, "y": 450 } },
-    { "team": 1, "layer": 1, "position": { "x": 640, "y": 500 } },
-    { "team": 1, "layer": 2, "position": { "x": 600, "y": 210 } }
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 120,
+        "y": 450
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 1080,
+        "y": 450
+      }
+    },
+    {
+      "team": 1,
+      "layer": 1,
+      "position": {
+        "x": 640,
+        "y": 500
+      }
+    },
+    {
+      "team": 1,
+      "layer": 2,
+      "position": {
+        "x": 600,
+        "y": 210
+      }
+    }
   ],
   "objectives": [],
-  "gates": []
+  "gates": [],
+  "lighting": {
+    "ambient": {
+      "colour": 8425632,
+      "intensity": 0.6
+    },
+    "indoorAmbient": {
+      "colour": 4210768,
+      "intensity": 0.4
+    },
+    "indoor": [],
+    "sun": {
+      "directionDeg": 135,
+      "elevationDeg": 25,
+      "colour": 16773328,
+      "intensity": 0.7
+    },
+    "lights": [
+      {
+        "id": "b0",
+        "position": {
+          "x": 820,
+          "y": 455
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b1",
+        "position": {
+          "x": 803,
+          "y": 509
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b2",
+        "position": {
+          "x": 756,
+          "y": 554
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b3",
+        "position": {
+          "x": 684,
+          "y": 584
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b4",
+        "position": {
+          "x": 600,
+          "y": 595
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b5",
+        "position": {
+          "x": 516,
+          "y": 584
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b6",
+        "position": {
+          "x": 444,
+          "y": 554
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b7",
+        "position": {
+          "x": 397,
+          "y": 509
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b8",
+        "position": {
+          "x": 380,
+          "y": 455
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b9",
+        "position": {
+          "x": 397,
+          "y": 401
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b10",
+        "position": {
+          "x": 444,
+          "y": 356
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b11",
+        "position": {
+          "x": 516,
+          "y": 326
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b12",
+        "position": {
+          "x": 600,
+          "y": 315
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b13",
+        "position": {
+          "x": 684,
+          "y": 326
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b14",
+        "position": {
+          "x": 756,
+          "y": 356
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b15",
+        "position": {
+          "x": 803,
+          "y": 401
+        },
+        "layer": 0,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b16",
+        "position": {
+          "x": 790,
+          "y": 490
+        },
+        "layer": 1,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b17",
+        "position": {
+          "x": 777,
+          "y": 519
+        },
+        "layer": 1,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b18",
+        "position": {
+          "x": 742,
+          "y": 538
+        },
+        "layer": 1,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b19",
+        "position": {
+          "x": 698,
+          "y": 538
+        },
+        "layer": 1,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b20",
+        "position": {
+          "x": 663,
+          "y": 519
+        },
+        "layer": 1,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b21",
+        "position": {
+          "x": 650,
+          "y": 490
+        },
+        "layer": 1,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b22",
+        "position": {
+          "x": 663,
+          "y": 461
+        },
+        "layer": 1,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b23",
+        "position": {
+          "x": 698,
+          "y": 442
+        },
+        "layer": 1,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b24",
+        "position": {
+          "x": 742,
+          "y": 442
+        },
+        "layer": 1,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b25",
+        "position": {
+          "x": 777,
+          "y": 461
+        },
+        "layer": 1,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b26",
+        "position": {
+          "x": 670,
+          "y": 215
+        },
+        "layer": 2,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b27",
+        "position": {
+          "x": 635,
+          "y": 254
+        },
+        "layer": 2,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b28",
+        "position": {
+          "x": 565,
+          "y": 254
+        },
+        "layer": 2,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b29",
+        "position": {
+          "x": 530,
+          "y": 215
+        },
+        "layer": 2,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      },
+      {
+        "id": "b30",
+        "position": {
+          "x": 565,
+          "y": 176
+        },
+        "layer": 2,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0
+      },
+      {
+        "id": "b31",
+        "position": {
+          "x": 635,
+          "y": 176
+        },
+        "layer": 2,
+        "radius": 300,
+        "colour": 16764040,
+        "intensity": 0.8,
+        "flicker": 0.4
+      }
+    ]
+  }
 }
