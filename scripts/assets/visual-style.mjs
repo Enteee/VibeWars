@@ -119,14 +119,14 @@ files["door.svg"] = svg(
   `${floor()}
 <rect x="40" y="40" width="130" height="140" fill="#10151c" fill-opacity="0.4"/>
 <rect x="85" y="40" width="40" height="140" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
-<rect x="93" y="62" width="24" height="96" rx="3" fill="#c98a3a" stroke="#0b0f14" stroke-width="2.5"/>
-<path d="M97,110 h16" stroke="#0b0f14" stroke-width="3"/>
+<rect x="93" y="62" width="24" height="96" rx="3" fill="#7a4e26" stroke="#0b0f14" stroke-width="2.5"/>
+<path d="M93,84 h24 M93,136 h24" stroke="#2a2a30" stroke-width="5"/><circle cx="111" cy="110" r="3" fill="#e8c27a"/>
 <rect x="190" y="40" width="130" height="140" fill="#10151c" fill-opacity="0.4"/>
 <rect x="235" y="40" width="40" height="52" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
 <rect x="235" y="128" width="40" height="52" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
-<rect x="243" y="92" width="24" height="36" fill="#c98a3a" fill-opacity="0.18" stroke="#c98a3a" stroke-width="2" stroke-dasharray="5 4"/>
+<rect x="243" y="92" width="24" height="36" fill="#7a4e26" fill-opacity="0.18" stroke="#7a4e26" stroke-width="2" stroke-dasharray="5 4"/>
 ${body(255, 110)}
-<g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="60" y="30">shut: solid, amber</text><text x="210" y="30">open: a gap, ghost</text></g>`,
+<g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="60" y="30">shut: solid, oak</text><text x="210" y="30">open: a gap, ghost</text></g>`,
 );
 
 // ---- lever: up and down differ by shape (handle leans), not by colour alone ----
@@ -134,13 +134,12 @@ files["lever.svg"] = svg(
   "",
   `${floor()}
 <g stroke="#0b0f14" stroke-width="2.5">
-<rect x="70" y="120" width="60" height="26" rx="4" fill="#4b5a70"/>
-<path d="M100,124 L84,76" stroke="#e8c27a" stroke-width="9" stroke-linecap="round" fill="none"/>
+<rect x="70" y="120" width="60" height="26" rx="4" fill="#827b70"/>
+<path d="M100,124 L84,76" stroke="#8a5a2a" stroke-width="9" stroke-linecap="round" fill="none"/>
 <circle cx="84" cy="74" r="9" fill="#e8c27a"/>
-<rect x="230" y="120" width="60" height="26" rx="4" fill="#4b5a70"/>
-<path d="M260,124 L304,108" stroke="#e8c27a" stroke-width="9" stroke-linecap="round" fill="none"/>
-<circle cx="306" cy="107" r="9" fill="#e8c27a"/></g>
-<circle cx="100" cy="133" r="4" fill="#fff" fill-opacity="0.35"/><circle cx="260" cy="133" r="4" fill="#fff" fill-opacity="0.9"/>
+<rect x="230" y="120" width="60" height="26" rx="4" fill="#827b70"/>
+<path d="M260,124 L304,108" stroke="#8a5a2a" stroke-width="9" stroke-linecap="round" fill="none"/>
+<circle cx="306" cy="107" r="9" fill="#6a6560"/></g>
 ${body(190, 170)}
 <g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="62" y="40">up: handle stands</text><text x="215" y="40">down: handle lies</text></g>`,
 );
@@ -253,7 +252,7 @@ files["walls.svg"] = sheet(
 <g stroke="#3a2a14" stroke-width="2"><path d="M552,110V160M584,110V160M616,110V160M648,110V160"/></g>
 <rect x="520" y="160" width="160" height="22" fill="#3d2a14"/><path d="M520,110H680" stroke="#c9a46a" stroke-width="3"/>
 <rect x="520" y="110" width="160" height="72" fill="none" stroke="#0b0f14" stroke-width="2"/>
-<rect x="584" y="120" width="32" height="62" rx="3" fill="#c98a3a" stroke="#0b0f14" stroke-width="2.5"/>
+<rect x="584" y="120" width="32" height="62" rx="3" fill="#7a4e26" stroke="#0b0f14" stroke-width="2.5"/>
 <g fill="#59c2ff" stroke="#fff" stroke-width="2"><circle cx="170" cy="310" r="15"/></g>
 ${label(40, 240, "stone: blocks")}${label(300, 240, "rock: irregular, cracked")}${label(520, 240, "wood: planks, a door")}
 ${label(14, 24, "every wall: lit top edge, darker face, outline, a shadow to the SE")}`,

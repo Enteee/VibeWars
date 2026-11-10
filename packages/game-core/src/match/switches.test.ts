@@ -115,13 +115,46 @@ describe("switches in a match (#3025)", () => {
     expect(open(sim)).toEqual([false, false]);
   });
 
-  it("ignores an arrival in its cooldown, silently", () => {
+  it("ignores an arrival in its rest, silently", () => {
+    const sim = arena([body("puller", 0, vec2(100, 300)), foe]);
+    sim.requestAttack("puller", LEVER_ID);
+    for (let tick = 0; tick < 2 / DT && open(sim)[0] !== true; tick++) {
+      sim.step(DT);
+    }
+    expect(open(sim)).toEqual([true, false]);
+    // Standing at it the tick after the flip: the order lands in the rest.
+    expect(sim.requestAttack("puller", LEVER_ID)).toEqual({ ok: true });
+    run(sim, DT * 3);
+    expect(open(sim)).toEqual([true, false]);
+    expect(sim.switches[0]?.up).toBe(false);
+  });
+
+  it("flips again 0.5 s after its last flip, not before (#3054)", () => {
+    expect(SWITCH_COOLDOWN_SECONDS).toBe(0.5);
+    const down = flipSwitch(lever(), 1);
+    expect(flipSwitch(down, 1.5 - DT)).toBe(down);
+    expect(flipSwitch(down, 1.5).up).toBe(true);
+  });
+
+  it("closes its gate with no walk when one standing at it orders again after the rest (#3054)", () => {
     const sim = arena([body("puller", 0, vec2(100, 300)), foe]);
     sim.requestAttack("puller", LEVER_ID);
     run(sim, 2);
     expect(open(sim)).toEqual([true, false]);
-    expect(sim.requestAttack("puller", LEVER_ID)).toEqual({ ok: true });
-    run(sim, DT * 3);
+    const at = sim.get("puller")?.position;
+    run(sim, SWITCH_COOLDOWN_SECONDS);
+    sim.requestAttack("puller", LEVER_ID);
+    sim.step(DT);
+    expect(open(sim)).toEqual([false, false]);
+    expect(sim.switches[0]?.up).toBe(true);
+    expect(sim.get("puller")?.position).toEqual(at);
+  });
+
+  it("flips once when two arrive on one tick (#3054)", () => {
+    const sim = arena([body("one", 0, vec2(190, 400)), body("two", 0, vec2(210, 400)), foe]);
+    sim.requestAttack("one", LEVER_ID);
+    sim.requestAttack("two", LEVER_ID);
+    sim.step(DT);
     expect(open(sim)).toEqual([true, false]);
     expect(sim.switches[0]?.up).toBe(false);
   });

@@ -16,7 +16,7 @@
 <g stroke="#3a2a14" stroke-width="2"><path d="M552,110V160M584,110V160M616,110V160M648,110V160"/></g>
 <rect x="520" y="160" width="160" height="22" fill="#3d2a14"/><path d="M520,110H680" stroke="#c9a46a" stroke-width="3"/>
 <rect x="520" y="110" width="160" height="72" fill="none" stroke="#0b0f14" stroke-width="2"/>
-<rect x="584" y="120" width="32" height="62" rx="3" fill="#c98a3a" stroke="#0b0f14" stroke-width="2.5"/>
+<rect x="584" y="120" width="32" height="62" rx="3" fill="#7a4e26" stroke="#0b0f14" stroke-width="2.5"/>
 <g fill="#59c2ff" stroke="#fff" stroke-width="2"><circle cx="170" cy="310" r="15"/></g>
 <text x="40" y="240" font-family="DejaVu Sans, sans-serif" font-size="12" fill="#d7dee8">stone: blocks</text><text x="300" y="240" font-family="DejaVu Sans, sans-serif" font-size="12" fill="#d7dee8">rock: irregular, cracked</text><text x="520" y="240" font-family="DejaVu Sans, sans-serif" font-size="12" fill="#d7dee8">wood: planks, a door</text>
 <text x="14" y="24" font-family="DejaVu Sans, sans-serif" font-size="12" fill="#d7dee8">every wall: lit top edge, darker face, outline, a shadow to the SE</text></svg>
