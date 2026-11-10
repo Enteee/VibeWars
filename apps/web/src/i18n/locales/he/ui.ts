@@ -1389,13 +1389,13 @@ export default {
     "מה הטלה אחת עושה באמת: בשריון 60, בדיוק המספר שבחלונית.",
   "training.scenario.time-to-kill.label": "זמן להריגה",
   "training.scenario.time-to-kill.teaches":
-    "התפוקה המתמשכת שלך: כמה זמן מטיל עם 500 בריאות שורד, שוב ושוב.",
+    "התפוקה המתמשכת שלך: כמה זמן מטיל עם 500 חיים שורד, שוב ושוב.",
   "training.scenario.physical-vs-elemental.label": "פיזי מול יסודי",
   "training.scenario.physical-vs-elemental.teaches":
     "ששריון עונה לסוג נזק: Warrior ו-Stalwart מקהים חרב ולא Fireball, Ranger מקהה Fireball ולא חרב.",
   "training.scenario.condition-pressure.label": "לחץ פגעים",
   "training.scenario.condition-pressure.teaches":
-    "שפגעים הם שעון מוות: דימום, רעל ובעירה מנקזים יחד 20 בריאות בשנייה, המקסימום שיש, והוספת עוד מרעננת אותם ולא נערמת.",
+    "שפגעים הם שעון מוות: דימום, רעל ובעירה מנקזים יחד 20 חיים בשנייה, המקסימום שיש, והוספת עוד מרעננת אותם ולא נערמת.",
   "training.scenario.condition-removal.label": "הסרת פגעים",
   "training.scenario.condition-removal.teaches":
     "שהסרת פגע מסירה רק את מה שכתוב בה: בן ברית ב-200 מתוך 500 נושא חמישה פגעים, ופצע עמוק ביניהם לוקח 100 כשהוא נוחת ומגביל את הריפויים שלך ל-400.",

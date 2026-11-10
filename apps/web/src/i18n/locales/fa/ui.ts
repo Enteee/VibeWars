@@ -1320,13 +1320,13 @@ export default {
     "یک اجرا واقعاً چه می‌کند: در زره 60، دقیقاً همان عدد راهنما.",
   "training.scenario.time-to-kill.label": "زمان کشتن",
   "training.scenario.time-to-kill.teaches":
-    "خروجی پایدارت: یک جادوگر با 500 سلامت چقدر دوام می‌آورد، بارها و بارها.",
+    "خروجی پایدارت: یک جادوگر با 500 سلامتی چقدر دوام می‌آورد، بارها و بارها.",
   "training.scenario.physical-vs-elemental.label": "فیزیکی در برابر عنصری",
   "training.scenario.physical-vs-elemental.teaches":
     "اینکه زره به نوع آسیب پاسخ می‌دهد: Warrior و Stalwart شمشیر را کند می‌کنند نه Fireball را، Ranger Fireball را کند می‌کند نه شمشیر را.",
   "training.scenario.condition-pressure.label": "فشار عارضه‌ها",
   "training.scenario.condition-pressure.teaches":
-    "اینکه عارضه‌ها ساعت مرگ‌اند: خونریزی، مسمومیت و سوختن با هم 20 سلامت در ثانیه می‌کاهند، بیشترین مقدار ممکن، و افزودن بیشتر تازه‌شان می‌کند نه انباشته.",
+    "اینکه عارضه‌ها ساعت مرگ‌اند: خونریزی، مسمومیت و سوختن با هم 20 سلامتی در ثانیه می‌کاهند، بیشترین مقدار ممکن، و افزودن بیشتر تازه‌شان می‌کند نه انباشته.",
   "training.scenario.condition-removal.label": "برداشتن عارضه",
   "training.scenario.condition-removal.teaches":
     "اینکه برداشتن عارضه فقط همان را برمی‌دارد که می‌گوید: هم‌تیمی‌ای با 200 از 500 پنج عارضه دارد، و زخم عمیق میانشان هنگام نشستن 100 می‌گیرد و درمان‌هایت را در 400 سقف می‌زند.",

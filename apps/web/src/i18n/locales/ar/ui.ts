@@ -1546,7 +1546,7 @@ export default {
   "training.scenario.dodge-drill.teaches": "أن السهم يقع حيث كنت ستكون: استدر بعد أن يغادر القوس.",
   "training.scenario.obstacles-and-los.label": "الرؤية والمدى",
   "training.scenario.obstacles-and-los.teaches":
-    "أن رؤية الخصم ليست بلوغه: مهارة على من خلف العمود تدور حوله، وعلى من هو خارج المدى تتقدم إليه.",
+    "أن رؤية العدو ليست بلوغه: مهارة على من خلف العمود تدور حوله، وعلى من هو خارج المدى تتقدم إليه.",
   "training.scenario.fireball-dodge.label": "تفادَ Fireball",
   "training.scenario.fireball-dodge.teaches":
     "أن Fireball تطير كالسهم: تنحَّ جانبًا لحظة انطلاقها ولن يحترق شيء (#535).",
