@@ -7,6 +7,7 @@ import {
   rampLength,
   TWO_TEAM_MODES,
   UPHILL,
+  ZONE_KINDS,
   type MatchMode,
   type Segment,
 } from "@vibewars/game-core";
@@ -105,6 +106,21 @@ const waterSchema = z.object({
     rectWallSchema,
     polygonWallSchema.extend({ points: z.array(vec2Schema).min(3).max(MAX_WATER_POINTS) }),
   ]),
+});
+
+/** The most effect zones on a map (#3024). */
+export const MAX_ZONES = 32;
+
+/**
+ * An effect zone on one layer (ADR-0053, #3024): ground that puts its
+ * kind's status on whoever stands in it. The map names the kind only; what
+ * it does is game-core's `ZONE_RULES`.
+ */
+const zoneSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(ZONE_KINDS),
+  layer: layerSchema,
+  area: waterSchema.shape.area,
 });
 
 /** A colour as `0xRRGGBB`. */
@@ -450,6 +466,8 @@ export const mapDataSchema = z
     walls: z.array(wallSchema),
     /** Its water (#2983); without it, the map has none. */
     water: z.array(waterSchema).max(MAX_WATER_BODIES).optional(),
+    /** Its effect zones (ADR-0053); without it, the map has none. */
+    zones: z.array(zoneSchema).max(MAX_ZONES).optional(),
     spawnPoints: z.array(spawnPointSchema).min(1),
     /** Required, may be empty: a map without objectives says so. */
     objectives: z.array(objectiveSchema),
@@ -880,6 +898,26 @@ export const mapDataSchema = z
       });
     });
 
+    const zoneIds = new Set<string>();
+    (map.zones ?? []).forEach((zone, index) => {
+      layerInRange(zone.layer, ["zones", index, "layer"]);
+      if (zoneIds.has(zone.id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["zones", index, "id"],
+          message: `zone id ${zone.id} is used twice`,
+        });
+      }
+      zoneIds.add(zone.id);
+      if (!shapeInBounds(zone.area, map.width, map.height)) {
+        context.addIssue({
+          code: "custom",
+          path: ["zones", index, "area"],
+          message: `zone ${zone.id} is outside the map`,
+        });
+      }
+    });
+
     const lighting = map.lighting;
     if (lighting !== undefined) {
       const lightIds = new Set<string>();
@@ -913,6 +951,7 @@ export type SpawnPoint = z.infer<typeof spawnPointSchema>;
 export type Objective = z.infer<typeof objectiveSchema>;
 export type MapLighting = z.infer<typeof lightingSchema>;
 export type Water = z.infer<typeof waterSchema>;
+export type Zone = z.infer<typeof zoneSchema>;
 export type MapData = z.infer<typeof mapDataSchema>;
 
 export class MapValidationError extends Error {

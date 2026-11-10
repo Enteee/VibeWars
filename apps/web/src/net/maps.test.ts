@@ -594,4 +594,14 @@ describe("structureOf's water (#2984)", () => {
       layered.transitions.map(({ uphill }) => uphill),
     );
   });
+  it("hands it a flat map's effect zones, so a map of one layer with a zone is not flat (#3024)", () => {
+    const wilds = TRAINING_MAPS.get("training-wilds");
+    if (wilds === undefined) throw new Error("no training-wilds");
+    const { structure } = structureOf(wilds);
+    expect(structure.layerCount).toBe(1);
+    expect(structure.zones).toEqual(
+      (wilds.zones ?? []).map(({ kind, layer, area }) => ({ kind, layer, area })),
+    );
+    expect(structure.zones).toHaveLength(1);
+  });
 });

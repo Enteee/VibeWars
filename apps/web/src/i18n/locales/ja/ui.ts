@@ -245,6 +245,7 @@ export default {
   "combat.sourceShrine": "祠",
   "combat.sourceSkill": "スキル",
   "combat.sourceWeapon": "武器",
+  "combat.sourceZone": "危険地帯",
   "combat.spellFailed": "{target}の{skill}は失敗",
   "combat.statusApplied": "{target}に{status} ({seconds}秒)",
   "combat.statusAppliedMaintained": "{target}に{status} (維持)",

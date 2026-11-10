@@ -1,0 +1,33 @@
+{
+  "id": "training-wilds",
+  "name": "Training Wilds",
+  "mode": "annihilation",
+  "teamSizes": [1],
+  "teams": 2,
+  "width": 1200,
+  "height": 800,
+  "layers": 1,
+  "groundLayer": 0,
+  "pits": [],
+  "tunnels": [],
+  "decks": [],
+  "transitions": [],
+  "walls": [
+    { "kind": "rect", "x": 420, "y": 220, "width": 360, "height": 30, "layer": 0 },
+    { "kind": "rect", "x": 420, "y": 550, "width": 360, "height": 30, "layer": 0 }
+  ],
+  "zones": [
+    {
+      "id": "lane-embers",
+      "kind": "scorched",
+      "layer": 0,
+      "area": { "kind": "rect", "x": 560, "y": 250, "width": 80, "height": 300 }
+    }
+  ],
+  "gates": [],
+  "objectives": [],
+  "spawnPoints": [
+    { "team": 0, "layer": 0, "position": { "x": 200, "y": 400 } },
+    { "team": 1, "layer": 0, "position": { "x": 1000, "y": 400 } }
+  ]
+}

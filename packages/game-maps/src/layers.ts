@@ -1,4 +1,4 @@
-import { UPHILL, type MatchLayers } from "@vibewars/game-core";
+import { UPHILL, type MatchLayers, type MatchZone } from "@vibewars/game-core";
 
 import { shapeVertices, wallToSegments } from "./geometry.js";
 import type { MapData } from "./schema.js";
@@ -35,4 +35,14 @@ export function matchLayers(map: MapData): MatchLayers {
         .flatMap((water) => wallToSegments(water.area)),
     ),
   };
+}
+
+/** `map`'s effect zones, as the simulation takes them (ADR-0053): each area as one polygon. */
+export function matchZones(map: MapData): MatchZone[] {
+  return (map.zones ?? []).map(({ id, kind, layer, area }) => ({
+    id,
+    kind,
+    layer,
+    polygon: shapeVertices(area),
+  }));
 }

@@ -2147,6 +2147,7 @@ export default {
     "training-hall": "Trainingshal",
     "training-pillars": "Trainingspilaren",
     "training-heights": "Trainingshoogten",
+    "training-wilds": "Trainingswildernis",
     "training-field": "Trainingsveld",
   },
 } satisfies GameNames;

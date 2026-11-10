@@ -243,6 +243,7 @@ export default {
   "combat.sourceShrine": "성소",
   "combat.sourceSkill": "스킬",
   "combat.sourceWeapon": "무기",
+  "combat.sourceZone": "위험 지대",
   "combat.spellFailed": "{target}의 {skill} 실패",
   "combat.statusApplied": "{target}에게 {status} 적용 ({seconds}초)",
   "combat.statusAppliedMaintained": "{target}에게 {status} 적용 (유지)",

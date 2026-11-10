@@ -269,6 +269,7 @@ export default {
   "combat.sourceShrine": "A szentély",
   "combat.sourceSkill": "egy készség",
   "combat.sourceWeapon": "egy fegyver",
+  "combat.sourceZone": "Veszély",
   "combat.spellFailed": "{target}, {skill}: sikertelen",
   "combat.statusApplied": "{target} hatás alá került: {status} ({seconds} mp)",
   "combat.statusAppliedMaintained": "{target} hatás alá került: {status} (fenntartott)",

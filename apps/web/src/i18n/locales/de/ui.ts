@@ -272,6 +272,7 @@ export default {
   "combat.sourceShrine": "Der Schrein",
   "combat.sourceSkill": "ein Skill",
   "combat.sourceWeapon": "eine Waffe",
+  "combat.sourceZone": "Gefahr",
   "combat.spellFailed": "{skill} von {target} schlägt fehl",
   "combat.statusApplied": "{target} erhält {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} erhält {status} (aufrechterhalten)",

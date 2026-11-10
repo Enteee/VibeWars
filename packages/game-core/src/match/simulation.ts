@@ -359,6 +359,7 @@ import {
   stepBeacon,
   type BeaconState,
 } from "./beacon.js";
+import { ZONE_RULES, zoneSourceId, zonesHolding, type MatchZone } from "./zones.js";
 import { UNCLAIMED_ALTAR, claimant, mayClaim, stepAltar, type AltarState } from "./altar.js";
 import {
   CLAIM_SKILL_ID,
@@ -880,6 +881,8 @@ export interface MatchSimulationOptions {
   readonly startLine?: StartLine | undefined;
   /** The map's gates (#2691); none if omitted. */
   readonly gates?: readonly GateField[];
+  /** The map's effect zones (ADR-0053, #3024), in its order; none if omitted. */
+  readonly zones?: readonly MatchZone[];
   /**
    * The Guild Battle's base guards (#1223), each at its post from the
    * start; a team's Bodyguard cuts the damage to its Guild Lord while it
@@ -1189,6 +1192,7 @@ export class MatchSimulation {
   #walls: readonly Segment[];
   /** Omitted on a map of one layer. */
   readonly #layers: MatchLayers | undefined;
+  readonly #zones: readonly MatchZone[];
   /** Where a body may stand on each layer above the ground: its decks and ramps. */
   readonly #walkable: readonly (readonly Polygon[])[];
   /** Each ramp's way up, as a direction, in `#layers.transitions`' order. */
@@ -1358,6 +1362,7 @@ export class MatchSimulation {
     this.#bounds = options.bounds;
     this.#gates = initialGates(options.gates ?? []);
     this.#layers = options.layers;
+    this.#zones = options.zones ?? [];
     this.#ground = this.#layers?.ground ?? 0;
     this.#walkable = walkableAreas(this.#layers);
     this.#mapWalls = options.walls ?? [];
@@ -3871,6 +3876,8 @@ export class MatchSimulation {
         this.#advanceWalk(record, dt);
         this.#advanceFollow(record, dt);
       }
+      // Where it stands now, before its statuses run (ADR-0053).
+      this.#applyZones(record);
 
       // Degeneration its statuses' own regeneration does not cancel is
       // health lost, so natural regeneration stops before it would.
@@ -7733,6 +7740,22 @@ export class MatchSimulation {
    * respawn; a creature's does neither, and it leaves (#1052). Read from the emitted events so every death routes through
    * one place, whether a skill, a swing or degeneration caused it.
    */
+  /**
+   * Each zone `record` stands in, on its layer, puts its kind's status on
+   * it again for the kind's linger (ADR-0053), in the map's order. A spirit
+   * stands where it was raised and is spared; the dead were skipped already.
+   * The source is the zone: no player is credited with what it does.
+   */
+  #applyZones(record: ParticipantRecord): void {
+    if (this.#zones.length === 0 || record.creature?.kind === "spirit") {
+      return;
+    }
+    for (const zone of zonesHolding(this.#zones, record.position, record.layer)) {
+      const rule = ZONE_RULES[zone.kind];
+      applyStatus(record.combatant, rule.status, rule.lingerSeconds, zoneSourceId(zone), NO_RANKS);
+    }
+  }
+
   #recordDeaths(events: readonly CombatEvent[]): void {
     const fallen: { victim: ParticipantRecord; conditions: ActiveStatus[] }[] = [];
     const pacts: { sourceId: string; skillId: string | undefined }[] = [];

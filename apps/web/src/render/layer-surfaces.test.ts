@@ -43,6 +43,7 @@ const BRIDGE: MapStructure = {
   decks: [{ layer: 1, footprint: bridge }],
   transitions: [],
   water: [],
+  zones: [],
 };
 
 function hiddenPieces(x: number, y: number): HiddenPiece[] {
@@ -96,6 +97,7 @@ describe("a click on a ramp (#2972)", () => {
       { from: 1, to: 2, area: rect(280, 0, 40, 120), uphill: "n" },
     ],
     water: [],
+    zones: [],
   };
   const drawnAt = (point: { x: number; y: number }, layer: number) => ({
     x: point.x,
@@ -221,6 +223,7 @@ describe("a body under a raised ramp (#2975)", () => {
     ],
     transitions: [lower, upper],
     water: [],
+    zones: [],
   };
   const occluders = occludersOf([], HEIGHTS);
   const slope = rampDrawing(HEIGHTS, upper).slope;
@@ -426,6 +429,7 @@ describe("liftAt (#2958)", () => {
       ramp(1, 2, [540, 150, 120, 120], "n"),
     ],
     water: [],
+    zones: [],
   };
   const STEP = ELEVATION_STEP;
   const R = 14;

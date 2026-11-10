@@ -2147,6 +2147,7 @@ export default {
     "training-hall": "Sala d'addestramento",
     "training-pillars": "Pilastri d'addestramento",
     "training-heights": "Alture di addestramento",
+    "training-wilds": "Terre selvagge di addestramento",
     "training-field": "Campo d'addestramento",
   },
 } satisfies GameNames;

@@ -239,6 +239,7 @@ export default {
   "combat.sourceShrine": "Đền",
   "combat.sourceSkill": "một kỹ năng",
   "combat.sourceWeapon": "một vũ khí",
+  "combat.sourceZone": "Hiểm họa",
   "combat.spellFailed": "{skill} của {target} thất bại",
   "combat.statusApplied": "{target} nhận {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} nhận {status} (duy trì)",

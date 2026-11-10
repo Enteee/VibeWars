@@ -277,6 +277,7 @@ export default {
   "combat.sourceShrine": "Pyhäkkö",
   "combat.sourceSkill": "taito",
   "combat.sourceWeapon": "ase",
+  "combat.sourceZone": "Vaara",
   "combat.spellFailed": "Kohteen {target} taito {skill} epäonnistuu",
   "combat.statusApplied": "{target} saa tilan {status} ({seconds} s)",
   "combat.statusAppliedMaintained": "{target} saa tilan {status} (ylläpidetty)",

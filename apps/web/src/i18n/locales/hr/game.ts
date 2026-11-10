@@ -2147,6 +2147,7 @@ export default {
     "training-hall": "Dvorana za vježbu",
     "training-pillars": "Stupovi za vježbu",
     "training-heights": "Visine za vježbu",
+    "training-wilds": "Divljina za vježbu",
     "training-field": "Polje za vježbu",
   },
 } satisfies GameNames;

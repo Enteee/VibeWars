@@ -309,6 +309,7 @@ describe("clicks with Show names held (#2738)", () => {
       decks: [{ layer: 1, footprint: deck }],
       transitions: [],
       water: [],
+      zones: [],
     };
     const layered = { ...NAMED, actors: [], structure };
     expect(

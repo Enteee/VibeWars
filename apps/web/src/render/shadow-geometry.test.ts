@@ -156,6 +156,7 @@ const STRUCTURE: MapStructure = {
   decks: [{ layer: 1, footprint: BRIDGE }],
   transitions: [],
   water: [],
+  zones: [],
 };
 
 /** STRUCTURE with a pit under its ground (#2973): the bridge a step over it. */
