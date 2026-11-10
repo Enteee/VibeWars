@@ -34,10 +34,10 @@ const P = {
   mire: { base: "#4a3418", mid: "#6b4a26", acc: "#2a1c0c", edge: "#9c7a46", light: null },
   "foul-water": { base: "#2c4430", mid: "#3d5a3a", acc: "#8a9a4a", edge: "#6f8f5a", light: null },
   "tainted-water": {
-    base: "#1a1226",
-    mid: "#2c1f40",
-    acc: "#9a7ad0",
-    edge: "#a77bff",
+    base: "#23230f",
+    mid: "#4a4a1e",
+    acc: "#c8b84a",
+    edge: "#9a9a4c",
     light: null,
   },
   spring: {
@@ -159,9 +159,9 @@ function texture(k, i, p) {
       break;
     case "tainted-water":
       defs =
-        noise(0, "0.015 0.04", 3, "0 0 0 0 0.6  0 0 0 0 0.3  0 0 0 0 0.9  0 0 0 1.5 -0.75") +
-        noise(1, "0.01 0.03", 2, "0 0 0 0 0.2  0 0 0 0 0.9  0 0 0 0 0.8  0 0 0 1.2 -0.7");
-      body = `<rect width="${W}" height="${H}" fill="${p.base}"/><rect width="${W}" height="${H}" fill="${p.mid}" opacity=".5"/>${rect(0, 0.6)}${rect(1, 0.3)}${ripples("#b09ae0", 0.3)}`;
+        noise(0, "0.015 0.04", 3, "0 0 0 0 0.55  0 0 0 0 0.55  0 0 0 0 0.2  0 0 0 1.5 -0.75") +
+        noise(1, "0.01 0.03", 2, "0 0 0 0 0.9  0 0 0 0 0.7  0 0 0 0 0.2  0 0 0 1.2 -0.7");
+      body = `<rect width="${W}" height="${H}" fill="${p.base}"/><rect width="${W}" height="${H}" fill="${p.mid}" opacity=".5"/>${rect(0, 0.6)}${rect(1, 0.3)}${ripples("#d8c860", 0.3)}`;
       break;
     case "spring":
       defs = noise(0, "0.02 0.05", 3, "0 0 0 0 0.85  0 0 0 0 0.97  0 0 0 0 1  0 0 0 1.6 -0.65");
