@@ -46,6 +46,8 @@ This holds until 1.0. The day there is a tagged release with real
 players, it is reconsidered in a new ADR. Until then, do not erode it
 quietly, one `?? default` at a time.
 
+Any map or world art follows `docs/art/visual-style.md`.
+
 ## Player-facing text
 
 Every player-facing string goes through `t()`: add the key to
