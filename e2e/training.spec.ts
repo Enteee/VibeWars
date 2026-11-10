@@ -227,13 +227,9 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
   await expect(page.locator(".training-log")).toContainText("── Heights ──");
   await takeControl(page);
   await wholeMap(page);
-  // The view follows you (#721): from here, the pond and the east puddle are on the stage.
-  await walkTo(page, canvas, { x: 940, y: 400 });
-  await page.mouse.move(1, 1);
-  const view = await trainingView(page, canvas);
   /** The mean of R, G and B in an 8 px square round `world` on the ground. */
   const brightness = async (world: { readonly x: number; readonly y: number }): Promise<number> => {
-    const at = view.onPage(world);
+    const at = (await trainingView(page, canvas)).onPage(world);
     const shot = await page.screenshot({ clip: { x: at.x - 4, y: at.y - 4, width: 8, height: 8 } });
     return page.evaluate(async (png) => {
       const image = new Image();
@@ -248,10 +244,22 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
       return rgb.reduce((sum, value) => sum + value, 0) / rgb.length;
     }, shot.toString("base64"));
   };
-  // Map coordinates from training-heights/map.json: the pond's middle and the east puddle.
-  const floor = await brightness({ x: 1060, y: 300 });
-  expect(await brightness({ x: 910, y: 200 })).toBeLessThan(floor);
-  expect(await brightness({ x: 970, y: 640 })).toBeGreaterThan(floor);
+  /**
+   * Standing at `x, y`: the water `off` units south of you (north when
+   * negative) and the floor as far the other way. The view follows you
+   * (#721) and darkens towards its edges, so only samples as far from its
+   * centre compare.
+   */
+  const waterAndFloor = async (x: number, y: number, off: number): Promise<[number, number]> => {
+    await walkTo(page, canvas, { x, y });
+    await page.mouse.move(1, 1);
+    return [await brightness({ x, y: y + off }), await brightness({ x, y: y - off })];
+  };
+  // Map coordinates from training-heights/map.json: the pond's middle, the east puddle's.
+  const [pond, northFloor] = await waterAndFloor(930, 330, -130);
+  expect(pond).toBeLessThan(northFloor);
+  const [puddle, southFloor] = await waterAndFloor(970, 560, 80);
+  expect(puddle).toBeGreaterThan(southFloor);
 });
 
 test("(5) the chosen scenario survives a reload", async ({ page }) => {
