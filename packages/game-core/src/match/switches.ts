@@ -4,15 +4,17 @@ import type { Vec2 } from "../vec2.js";
  * Switches (#3025): a lever on the map. A player walks to it as to a
  * bundle, and arriving flips it: every gate it names toggles, the open
  * ones closing and the closed ones opening. Then it rests for
- * `SWITCH_COOLDOWN_SECONDS`, so two players cannot make a gate flicker;
- * an arrival in that time does nothing, and says nothing, as in GW1.
+ * `SWITCH_COOLDOWN_SECONDS`, half a second (#3054): short enough that
+ * flipping it back feels immediate, long enough that a script cannot
+ * strobe a gate every tick. An arrival in that time does nothing, and
+ * says nothing.
  *
  * Pure: the simulation says who arrived when; this decides whether the
  * lever moves.
  */
 
 /** Seconds after a flip before the lever moves again. */
-export const SWITCH_COOLDOWN_SECONDS = 3;
+export const SWITCH_COOLDOWN_SECONDS = 0.5;
 
 /** A switch as the map lays it out. */
 export interface SwitchField {
