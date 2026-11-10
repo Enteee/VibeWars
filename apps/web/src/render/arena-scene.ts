@@ -181,11 +181,18 @@ import {
   SPIRE_LOOK,
   ZONE_EDGE_WIDTH,
   ZONE_LOOK,
-  obeliskOutline,
   strikeZoneLook,
-  zoneCentroid,
   zoneFillAlpha,
 } from "./zone-look.js";
+import { withZoneLights } from "./zone-light.js";
+import {
+  paintZoneGround,
+  paintZoneMotion,
+  zoneArtOf,
+  zoneGroundAlpha,
+  type ZoneArt,
+  type ZoneMotionPainter,
+} from "./zone-painter.js";
 import { screenPx, screenSized } from "./screen-text.js";
 import {
   BODY_EDGE_WIDTH,
@@ -204,6 +211,7 @@ import type {
   RenderableWall,
   RenderableShape,
   MapStructure,
+  MapZone,
 } from "./arena-snapshot.js";
 
 /**
@@ -225,6 +233,19 @@ const DECK_PLANK = 48;
 /** Line widths, in CSS px: a deck's lip and a wall's lit edge. */
 const DECK_LIP_WIDTH = 3;
 const WALL_LIT_WIDTH = 2;
+/** Pixels per world unit of a zone's painted ground (#3052): sharp at a close zoom. */
+const ZONE_TEXTURE_SCALE = 2;
+/** The longest side of a zone's ground texture, in pixels, however large the zone. */
+const ZONE_TEXTURE_MAX_SIDE = 2048;
+/** Zone grounds made so far: each texture gets a key of its own, across maps and restarts. */
+let zoneGroundTextures = 0;
+
+/** A painted zone's ground (#3052): its art, its image and the texture the image shows. */
+interface ZoneGround {
+  readonly art: ZoneArt;
+  readonly image: Phaser.GameObjects.Image;
+  readonly key: string;
+}
 /** The hover marker on a layered map (#2831), its dashes on the ground. */
 const HOVER_RING = 0xd7dee8;
 const HOVER_RADIUS = 12;
@@ -368,6 +389,18 @@ export class ArenaScene extends Phaser.Scene {
   >();
   /** Each layer's effect zones (ADR-0053), drawn every frame as they breathe. */
   private readonly zoneGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** Each painted zone's ground (#3052), one canvas texture per zone, made when the map changes. */
+  private zoneGrounds:
+    | { readonly zones: readonly MapZone[]; readonly grounds: readonly (ZoneGround | undefined)[] }
+    | undefined;
+  /** The map's lighting with its zones' lights (#3052), made when either changes. */
+  private zoneLit:
+    | {
+        readonly lighting: MapLighting;
+        readonly zones: readonly MapZone[];
+        readonly lit: MapLighting;
+      }
+    | undefined;
   /** `snapshot.actors` where they draw this frame: lifted by their layers. */
   private drawnActors: readonly RenderableActor[] = [];
   /** Each body's lift now, while it eases to its layer's. */
@@ -548,6 +581,7 @@ export class ArenaScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.lightingPass?.destroy();
       this.lightingPass = undefined;
+      this.dropZoneGrounds();
       this.alt?.dispose();
       this.alt = undefined;
     });
@@ -1664,8 +1698,14 @@ export class ArenaScene extends Phaser.Scene {
    */
   /** The map's lighting, as Options and the frame budget allow (ADR-0052). */
   private activeLighting(): MapLighting | undefined {
-    const lighting = lightingOn() ? this.snapshot.structure.lighting : undefined;
-    return this.lightingPass?.allowed(lighting);
+    const { lighting, zones } = this.snapshot.structure;
+    if (lighting === undefined || !lightingOn()) {
+      return this.lightingPass?.allowed(undefined);
+    }
+    if (this.zoneLit?.lighting !== lighting || this.zoneLit.zones !== zones) {
+      this.zoneLit = { lighting, zones, lit: withZoneLights(lighting, zones) };
+    }
+    return this.lightingPass?.allowed(this.zoneLit.lit);
   }
 
   /** The light maps, and the wards moved over them while there are any. */
@@ -2450,10 +2490,13 @@ export class ArenaScene extends Phaser.Scene {
     }
     const line = 1 / (this.view?.zoom ?? 1);
     const { zones, ground } = this.snapshot.structure;
-    for (const zone of zones) {
+    const grounds = this.zoneGroundsOf(zones);
+    for (const [index, zone] of zones.entries()) {
       let g = this.zoneGraphics.get(zone.layer);
       if (g === undefined) {
-        g = this.add.graphics().setDepth(renderOrder({ kind: "zone", layer: zone.layer }));
+        g = this.add
+          .graphics()
+          .setDepth(renderOrder({ kind: "zone", layer: zone.layer, part: "marks" }));
         this.zoneGraphics.set(zone.layer, g);
       }
       const look = ZONE_LOOK[zone.kind];
@@ -2464,13 +2507,23 @@ export class ArenaScene extends Phaser.Scene {
           ? strikeZoneLook(look, zonePhaseAt(zone, this.snapshot.clock))
           : undefined;
       const moved = zoneOffsetAt(zone.path, this.snapshot.clock);
+      const lift = elevationOf(zone.layer, ground);
       g.save();
-      g.translateCanvas(moved.x, moved.y - elevationOf(zone.layer, ground));
-      g.fillStyle(
-        look.fill,
-        strike?.fillAlpha ?? zoneFillAlpha(look, this.now, this.reducedMotion),
-      );
-      this.fillShape(g, zone.area);
+      g.translateCanvas(moved.x, moved.y - lift);
+      const painted = grounds[index];
+      if (painted === undefined) {
+        g.fillStyle(
+          look.fill,
+          strike?.fillAlpha ?? zoneFillAlpha(look, this.now, this.reducedMotion),
+        );
+        this.fillShape(g, zone.area);
+      } else {
+        const { left, top } = painted.art.bounds;
+        painted.image
+          .setPosition(left + moved.x, top + moved.y - lift)
+          .setAlpha(zoneGroundAlpha(painted.art, look, this.now, this.reducedMotion));
+        paintZoneMotion(this.zoneMotionPainter(g), painted.art, line, this.now, this.reducedMotion);
+      }
       g.lineStyle(ZONE_EDGE_WIDTH * (strike?.edgeScale ?? 1) * line, look.edge, 1);
       this.strokeShape(g, zone.area);
       if (zone.kind === "draining-spire") {
@@ -2480,24 +2533,81 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  /** A draining spire (#3028): a faint violet ring on its edge, an obelisk on its centroid. */
+  /** A draining spire (#3028): a faint violet ring on its edge; its obelisk stands in its painted ground. */
   private drawSpire(g: Phaser.GameObjects.Graphics, area: RenderableShape, line: number): void {
     g.lineStyle(ZONE_EDGE_WIDTH * 3 * line, SPIRE_LOOK.ring, SPIRE_LOOK.ringAlpha);
     this.strokeShape(g, area);
-    const foot = zoneCentroid(area);
-    const outline = obeliskOutline(foot);
-    g.fillStyle(SPIRE_LOOK.stone, 1);
-    this.fillShape(g, { kind: "polygon", points: outline });
-    g.lineStyle(line, SPIRE_LOOK.outline, 1);
-    this.strokeShape(g, { kind: "polygon", points: outline });
-    // A rune down the shaft, the violet the spire drains into.
-    g.lineStyle(1.5 * line, SPIRE_LOOK.rune, 0.9);
-    g.lineBetween(
-      foot.x,
-      foot.y - SPIRE_LOOK.height * 0.25,
-      foot.x,
-      foot.y - SPIRE_LOOK.height * 0.65,
-    );
+  }
+
+  /**
+   * `zones`' painted grounds (#3052), one canvas texture each, painted
+   * once: a kind still drawn flat has none. Made again only when the map's
+   * zones change.
+   */
+  private zoneGroundsOf(zones: readonly MapZone[]): readonly (ZoneGround | undefined)[] {
+    if (this.zoneGrounds?.zones === zones) {
+      return this.zoneGrounds.grounds;
+    }
+    this.dropZoneGrounds();
+    const grounds = zones.map((zone, index) => {
+      const art = zoneArtOf(zone, index);
+      if (art === undefined) {
+        return undefined;
+      }
+      const { width, height } = art.bounds;
+      const scale = Math.min(
+        ZONE_TEXTURE_SCALE,
+        ZONE_TEXTURE_MAX_SIDE / Math.max(1, width, height),
+      );
+      const key = `zone-ground-${String(zoneGroundTextures)}`;
+      zoneGroundTextures += 1;
+      const texture = this.textures.createCanvas(
+        key,
+        Math.max(1, Math.ceil(width * scale)),
+        Math.max(1, Math.ceil(height * scale)),
+      );
+      if (texture === null) {
+        throw new Error("zones: could not create a zone's ground");
+      }
+      paintZoneGround(texture.context, art, scale);
+      texture.refresh();
+      const image = this.add
+        .image(art.bounds.left, art.bounds.top, key)
+        .setOrigin(0, 0)
+        .setScale(1 / scale)
+        .setDepth(renderOrder({ kind: "zone", layer: zone.layer, part: "ground" }));
+      return { art, image, key };
+    });
+    this.zoneGrounds = { zones, grounds };
+    return grounds;
+  }
+
+  /** Drops the painted grounds of the zones drawn last, and their textures. */
+  private dropZoneGrounds(): void {
+    for (const painted of this.zoneGrounds?.grounds ?? []) {
+      if (painted !== undefined) {
+        painted.image.destroy();
+        this.textures.remove(painted.key);
+      }
+    }
+    this.zoneGrounds = undefined;
+  }
+
+  /** `g` as a zone's moving marks draw through it. */
+  private zoneMotionPainter(g: Phaser.GameObjects.Graphics): ZoneMotionPainter {
+    return {
+      fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
+      lineStyle: (width, colour, alpha) => g.lineStyle(width, colour, alpha),
+      fillCircle: (x, y, radius) => g.fillCircle(x, y, radius),
+      strokeCircle: (x, y, radius) => g.strokeCircle(x, y, radius),
+      lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
+      fillOutline: (outline) => {
+        this.fillShape(g, { kind: "polygon", points: outline });
+      },
+      strokeOutline: (outline) => {
+        this.strokeShape(g, { kind: "polygon", points: outline });
+      },
+    };
   }
 
   private ripplesAt(layer: number): {

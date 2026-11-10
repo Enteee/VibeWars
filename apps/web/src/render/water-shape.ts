@@ -61,23 +61,26 @@ export function waterShapeOf(water: MapWater): WaterShape {
       width: right - left,
       height: bottom - top,
     },
-    ripples: ripplesIn(outline, left, top, right, bottom),
+    ripples: ripplesIn(outline, RIPPLE_SPACING),
   };
 }
 
-/** Ripples on a staggered lattice over `outline`, each clear of the shore. */
-function ripplesIn(
-  outline: readonly Vec2[],
-  left: number,
-  top: number,
-  right: number,
-  bottom: number,
-): readonly Ripple[] {
+/**
+ * Ripples on a staggered lattice `spacing` apart over `outline`, each
+ * clear of the shore: water's, and a watery zone's, closer (#3052).
+ */
+export function ripplesIn(outline: readonly Vec2[], spacing: number): readonly Ripple[] {
+  const xs = outline.map((corner) => corner.x);
+  const ys = outline.map((corner) => corner.y);
+  const left = Math.min(...xs);
+  const right = Math.max(...xs);
+  const top = Math.min(...ys);
+  const bottom = Math.max(...ys);
   const ripples: Ripple[] = [];
   let row = 0;
-  for (let y = top + RIPPLE_SPACING / 2; y < bottom; y += RIPPLE_SPACING, row += 1) {
-    const stagger = row % 2 === 0 ? 0 : RIPPLE_SPACING / 2;
-    for (let x = left + RIPPLE_SPACING / 2 + stagger; x < right; x += RIPPLE_SPACING) {
+  for (let y = top + spacing / 2; y < bottom; y += spacing, row += 1) {
+    const stagger = row % 2 === 0 ? 0 : spacing / 2;
+    for (let x = left + spacing / 2 + stagger; x < right; x += spacing) {
       const at = { x, y };
       if (pointInPolygon(at, outline) && shoreDistance(at, outline) >= RIPPLE_SHORE_CLEARANCE) {
         ripples.push({ at, seed: (ripples.length * GOLDEN_ANGLE) % (Math.PI * 2) });

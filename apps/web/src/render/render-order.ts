@@ -16,11 +16,14 @@ export type CharacterPart = "body" | "glyph" | "marks";
 /** A body of water's parts (#2984): its fill and shore, then the ripples on it. */
 export type WaterPart = "surface" | "ripples";
 
+/** An effect zone's parts (#3052): its painted ground, then its moving marks and edge. */
+export type ZonePart = "ground" | "marks";
+
 export type RenderItem =
   | { readonly kind: "floor" }
   | { readonly kind: "pit" }
   | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
-  | { readonly kind: "zone"; readonly layer: number }
+  | { readonly kind: "zone"; readonly layer: number; readonly part: ZonePart }
   | { readonly kind: "ground-effect"; readonly layer: number }
   | { readonly kind: "terrain" }
   | { readonly kind: "lighting"; readonly layer: number }
@@ -73,8 +76,8 @@ const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, ripples: 5.7 };
  * never darkens it (ADR-0052: what matters to the fight is drawn unlit),
  * and under its torches and whoever stands in it.
  */
-const GROUND_ZONE = 0.55;
-const DECK_ZONE = 5.85;
+const GROUND_ZONE: Record<ZonePart, number> = { ground: 0.53, marks: 0.55 };
+const DECK_ZONE: Record<ZonePart, number> = { ground: 5.83, marks: 5.85 };
 const WALL = 2;
 const SUPPORT = 3;
 const SIDE_FACE = 4;
@@ -98,7 +101,9 @@ export function renderOrder(item: RenderItem): number {
         ? GROUND_WATER[item.part]
         : (item.layer - 1) * LAYER_STACK + DECK_WATER[item.part];
     case "zone":
-      return item.layer === 0 ? GROUND_ZONE : (item.layer - 1) * LAYER_STACK + DECK_ZONE;
+      return item.layer === 0
+        ? GROUND_ZONE[item.part]
+        : (item.layer - 1) * LAYER_STACK + DECK_ZONE[item.part];
     case "ground-effect":
       return item.layer === 0 ? -1 : item.layer * LAYER_STACK + DECK_GROUND_EFFECT;
     case "lighting":

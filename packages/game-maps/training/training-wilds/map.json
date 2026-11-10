@@ -652,30 +652,6 @@
     },
     "lights": [
       {
-        "id": "fire-lava-1",
-        "position": {
-          "x": 340,
-          "y": 120
-        },
-        "layer": 1,
-        "radius": 170,
-        "colour": 16748608,
-        "intensity": 1,
-        "flicker": 0.35
-      },
-      {
-        "id": "fire-lava-2",
-        "position": {
-          "x": 385,
-          "y": 170
-        },
-        "layer": 1,
-        "radius": 150,
-        "colour": 16748608,
-        "intensity": 0.8,
-        "flicker": 0.35
-      },
-      {
         "id": "fire-camp",
         "position": {
           "x": 235,
@@ -734,18 +710,6 @@
         "colour": 16756832,
         "intensity": 0.6,
         "flicker": 0.2
-      },
-      {
-        "id": "spire-cold",
-        "position": {
-          "x": 700,
-          "y": 200
-        },
-        "layer": 2,
-        "radius": 150,
-        "colour": 7317759,
-        "intensity": 0.65,
-        "flicker": 0
       }
     ]
   }

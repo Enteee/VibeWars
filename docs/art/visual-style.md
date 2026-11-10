@@ -116,7 +116,7 @@ shaded 40 %, lit edge `#a9bbd0`, stroke `#3b4759`. **Target**: the noise fill
 - **A body** has a 1.5 to 2.5 px dark outline (`#0b0f14`) so it parts from any
   floor. **A wall** and a prop have a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
-- **No fill is flat** (target: the renderer has no noise fill yet; #3052 builds it). Use noise: fractal noise, 3 octaves, at a scale of
+- **No fill is flat** (a zone's is not: `zone-painter.ts`, #3052; walls and floors still are). Use noise: fractal noise, 3 octaves, at a scale of
   about **one feature per body** (30 units): grain finer than that is lost at
   zoom 1, coarser reads as a blotch. Keep it at 50 to 80 % opacity over the
   base tone, so the base still names the material.
@@ -126,13 +126,14 @@ shaded 40 %, lit edge `#a9bbd0`, stroke `#3b4759`. **Target**: the noise fill
 - **Small things stay legible at 16 px.** A prop under 16 px across is a
   mark, not a drawing: one shape, one colour, one outline.
 
-Worked example, mire (`mire.svg`; the noise and bubbles are target): dull earth, noise, bubble rings, a lumpy
+Worked example, mire (`mire.svg`): dull earth, noise, bubble rings, a lumpy
 rim in a lighter tone.
 
 ![mire](visual-style/mire.svg)
 
-Recipe (now): `ZONE_LOOK.mire` = `{ fill: 0x6b4a26, edge: 0x9c7a46, alpha: 0.5,
-pulse: 0.03 }`; noise and bubbles are **target** decoration.
+Recipe (now): `ZONE_LOOK.mire` (edge `0x9c7a46`, `painter: "mud"`):
+`zone-painter.ts` paints mottled mud with dark pools once per map, and
+bubbles swell and pop every frame.
 
 ## 5. Animation timing
 
@@ -185,9 +186,9 @@ hard dashed edge, so the cloud can move and the boundary cannot.
 
 ![toxic fog](visual-style/toxic-fog.svg)
 
-Recipe (now): `ZONE_LOOK["toxic-fog"]` = `{ fill: 0x7fbf2a, edge: 0xc8f05a,
-alpha: 0.32, pulse: 0.14 }`. The puffs (radial gradients, alpha 0.55 to 0) are
-**target**.
+Recipe (now): `ZONE_LOOK["toxic-fog"]` (edge `0xc8f05a`, pulse 0.14,
+`painter: "fog"`): overlapping radial-gradient puffs over a 22 % green
+wash, and soft puffs that drift inside the edge, never over it.
 
 ## 7. Worked examples
 
@@ -234,9 +235,10 @@ the room.
 
 ![lava](visual-style/lava.svg)
 
-Recipe (now): `ZONE_LOOK.molten` = `{ fill: 0xff5a1f, edge: 0xffd23d,
-alpha: 0.55, pulse: 0.12 }`, plus a `fire-` light, colour `0xff9040`, radius
-170, flicker 0.35 on the zone's centroid (**target**: automatic zone glow).
+Recipe (now): `ZONE_LOOK.molten` (edge `0xffd23d`, `painter: "lava"`): a
+mottled crust split by glowing cracks, beads of lava running down them. Its
+`light` (`0xff9040`, 0.9, flicker 0.35) stands on the centroid, reaching 1.6
+times the zone's half-diagonal: `zone-light.ts` adds it, the map has none.
 
 ### Water, deep and shallow
 

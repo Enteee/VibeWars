@@ -199,12 +199,13 @@ describe("a ground over pits (#2973)", () => {
 });
 
 describe("an effect zone's place in the order (ADR-0053, #3024)", () => {
-  it("draws a ground zone over the ground's water and light, under its torches and bodies", () => {
+  it("draws a ground zone, its painted ground then its marks, over the ground's water and light, under its torches and bodies", () => {
     const items: readonly RenderItem[] = [
       { kind: "floor" },
       { kind: "water", layer: 0, part: "ripples" },
       { kind: "lighting", layer: 0 },
-      { kind: "zone", layer: 0 },
+      { kind: "zone", layer: 0, part: "ground" },
+      { kind: "zone", layer: 0, part: "marks" },
       { kind: "lit-ground-effect" },
       { kind: "light-mark", layer: 0 },
       { kind: "character", band: characterBand(0, 1), part: "body" },
@@ -219,7 +220,8 @@ describe("an effect zone's place in the order (ADR-0053, #3024)", () => {
       { kind: "deck", deckLayer: 1 },
       { kind: "water", layer: 1, part: "ripples" },
       { kind: "lighting", layer: 1 },
-      { kind: "zone", layer: 1 },
+      { kind: "zone", layer: 1, part: "ground" },
+      { kind: "zone", layer: 1, part: "marks" },
       { kind: "ground-effect", layer: 1 },
       { kind: "light-mark", layer: 1 },
       { kind: "character", band: 1, part: "body" },
