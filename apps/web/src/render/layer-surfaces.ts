@@ -310,6 +310,19 @@ export function pitDrawing(structure: MapStructure, pit: MapStructure["pits"][nu
   };
 }
 
+/**
+ * The ground drawn over `tunnel` (#2973): its footprint, and a step south
+ * of it, where whoever is in the tunnel draws, sunk a step down.
+ */
+export function tunnelCover(
+  structure: MapStructure,
+  tunnel: MapStructure["tunnels"][number],
+): readonly Vec2[] {
+  const step = -liftOf(structure, structure.ground - 1);
+  const box = boxOf(tunnel.footprint);
+  return boxOutline(box.left, box.top, box.right, box.bottom + step);
+}
+
 /** A place a click can name: the layer, and the point on it in the simulation's terms. */
 export interface Surface {
   readonly layer: number;

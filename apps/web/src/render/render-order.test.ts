@@ -161,3 +161,26 @@ describe("water's place in the order (#2984)", () => {
     expect(orders).toEqual([...orders].sort((a, b) => a - b));
   });
 });
+
+describe("a ground over pits (#2973)", () => {
+  it("draws the pit, then the ground's cover, water, light and wards, then whoever stands on it and its marks", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "floor" },
+      { kind: "pit" },
+      { kind: "character", band: characterBand(0, 3), part: "marks" },
+      { kind: "deck", deckLayer: 1 },
+      { kind: "ramp", upperLayer: 1 },
+      { kind: "water", layer: 1, part: "surface" },
+      { kind: "water", layer: 1, part: "ripples" },
+      { kind: "lighting", layer: 1 },
+      { kind: "ground-effect", layer: 1 },
+      { kind: "character", band: characterBand(1, 3), part: "body" },
+      { kind: "character", band: characterBand(1, 3), part: "marks" },
+      { kind: "wall", layer: 1 },
+      { kind: "deck", deckLayer: 2 },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
+  });
+});

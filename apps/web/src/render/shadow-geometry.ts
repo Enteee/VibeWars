@@ -109,7 +109,9 @@ export function shadowCasters(
 ): readonly Outline[] {
   return [
     ...walls.filter((wall) => wall.layer === layer).map(shapeOutline),
-    ...(layer === 0 ? structure.decks.map((deck) => shapeOutline(deck.footprint)) : []),
+    ...(layer === structure.ground
+      ? structure.decks.map((deck) => shapeOutline(deck.footprint))
+      : []),
   ];
 }
 
@@ -183,7 +185,7 @@ export function paintDeckShadows(
   lightShadows: boolean,
 ): void {
   for (const deck of structure.decks) {
-    if (deck.layer !== 1) {
+    if (deck.layer !== structure.ground + 1) {
       continue;
     }
     if (!lightShadows) {

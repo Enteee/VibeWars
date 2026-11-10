@@ -26,6 +26,7 @@ import {
   WALL_HEIGHT,
   pickSurface,
   pitDrawing,
+  tunnelCover,
   rampDrawing,
   RING_PATH,
   traceHiddenOutline,
@@ -629,6 +630,14 @@ describe("a level under the ground (#2973)", () => {
     expect(drawn.mouths).toHaveLength(1);
     expect(drawn.mouths[0]?.[1]).toEqual({ x: 700, y: 550 + STEP });
     expect(drawn.mouths[0]?.[2]).toEqual({ x: 700, y: 620 + STEP });
+  });
+
+  it("covers the tunnel and the step south of it, where whoever is in it draws", () => {
+    const [tunnel] = SUNK.tunnels;
+    if (tunnel === undefined) throw new Error("no tunnel");
+    const cover = tunnelCover(SUNK, tunnel);
+    expect(cover[0]).toEqual({ x: 700, y: 550 });
+    expect(cover[2]).toEqual({ x: 980, y: 620 + STEP });
   });
 
   it("lifts a ramp out of the pit from its floor to the ground", () => {

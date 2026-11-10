@@ -15,6 +15,7 @@ import {
   OVER_BUDGET_LIMIT,
   baseTint,
   flickerRedrawDue,
+  groundHoles,
   layerSurfaces,
   lightsByStability,
   litStructurePalette,
@@ -208,6 +209,17 @@ describe("layerSurfaces", () => {
         { x: 500, y: 650 },
       ],
     ]);
+  });
+
+  it("leaves each pit's hole out of the ground's light, which lights it once from below (#2973)", () => {
+    const pit = { kind: "rect" as const, x: 500, y: 520, width: 200, height: 130 };
+    expect(groundHoles(HEIGHTS)).toEqual([]);
+    expect(groundHoles({ ...HEIGHTS, ground: 1, pits: [{ footprint: pit }] })).toEqual(
+      layerSurfaces(
+        { ...HEIGHTS, ground: 1, decks: [], pits: [{ footprint: pit }], transitions: [] },
+        0,
+      ),
+    );
   });
 
   it("outlines a deck by its footprint", () => {

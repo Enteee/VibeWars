@@ -80,8 +80,8 @@ import {
   pitDrawing,
   rampDrawing,
   RING_PATH,
-  shapeOutline,
   traceHiddenOutline,
+  tunnelCover,
   traceHiddenPolyline,
   type Occluder,
 } from "./layer-surfaces.js";
@@ -539,7 +539,7 @@ export class ArenaScene extends Phaser.Scene {
 
   public override update(time: number, deltaMs: number): void {
     const effects = this.markGraphics;
-    const floor = this.bandOf(0);
+    const floor = this.bandOf(this.snapshot.structure.ground);
     if (effects === undefined || floor === undefined) {
       return;
     }
@@ -2222,7 +2222,7 @@ export class ArenaScene extends Phaser.Scene {
       this.strokeShape(cover, each.footprint);
     }
     for (const tunnel of structure.tunnels) {
-      this.drawGroundPatch(cover, shapeOutline(tunnel.footprint), line, palette);
+      this.drawGroundPatch(cover, tunnelCover(structure, tunnel), line, palette);
       cover.lineStyle(line, TUNNEL_INLAY.colour, TUNNEL_INLAY.alpha);
       this.strokeShape(cover, tunnel.footprint);
     }

@@ -158,6 +158,14 @@ const STRUCTURE: MapStructure = {
   water: [],
 };
 
+/** STRUCTURE with a pit under its ground (#2973): the bridge a step over it. */
+const SUNK: MapStructure = {
+  ...STRUCTURE,
+  layerCount: 3,
+  ground: 1,
+  decks: [{ layer: 2, footprint: BRIDGE }],
+};
+
 describe("what casts a shadow on a layer (#2988)", () => {
   const walls = [
     { kind: "rect", layer: 0, x: 0, y: 0, width: 10, height: 10 },
@@ -173,10 +181,16 @@ describe("what casts a shadow on a layer (#2988)", () => {
     expect(casters).toHaveLength(1);
     expect(casters[0]?.[0]).toEqual({ x: 150, y: 150 });
   });
+
+  it("is the ground's walls and every deck where the ground is over a pit (#2973)", () => {
+    const raised = walls.map((wall) => ({ ...wall, layer: wall.layer + 1 }));
+    expect(shadowCasters(raised, SUNK, 1)).toHaveLength(2);
+    expect(shadowCasters(raised, SUNK, 0)).toEqual([]);
+  });
 });
 
 describe("the fixed deck shadow (#2988)", () => {
-  function paint(lightShadows: boolean): string[] {
+  function paint(lightShadows: boolean, structure: MapStructure = STRUCTURE): string[] {
     const calls: string[] = [];
     paintDeckShadows(
       {
@@ -186,7 +200,7 @@ describe("the fixed deck shadow (#2988)", () => {
         fillStyle: (colour) => calls.push(`fill ${colour.toString(16)}`),
         fillShape: () => calls.push("shape"),
       },
-      STRUCTURE,
+      structure,
       lightShadows,
     );
     return calls;
@@ -206,5 +220,9 @@ describe("the fixed deck shadow (#2988)", () => {
 
   it("gives way to the light maps' shadows, keeping the ground under the deck darker", () => {
     expect(paint(true)).toEqual([`fill ${DECK_TINT.colour.toString(16)}`, "shape"]);
+  });
+
+  it("falls from a deck one step over the ground, wherever the ground is (#2973)", () => {
+    expect(paint(false, SUNK)).toEqual(paint(false));
   });
 });
