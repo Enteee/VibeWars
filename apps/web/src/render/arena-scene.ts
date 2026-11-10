@@ -1962,7 +1962,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const light of next.structure.lighting?.lights ?? []) {
       const key = lightMarkKey(light.id);
       if (key !== undefined) {
-        const g = this.structureAt({ kind: "wall", layer: light.layer });
+        const g = this.structureAt({ kind: "light-mark", layer: light.layer });
         g.save();
         g.translateCanvas(0, -elevationOf(light.layer));
         LIGHT_MARK_ART[key](g, light.position);
