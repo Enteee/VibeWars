@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { vec2 } from "../../../vec2.js";
+import { NO_OBJECTIVES } from "../../behaviour.js";
+import type { MatchZone } from "../../zones.js";
 import rest from "./rest.js";
 import { NOTHING } from "./shared.js";
 import { WARRIOR, fighter, match, ruleFor } from "./test-support.js";
@@ -31,5 +33,17 @@ describe("rest (#2549)", () => {
 
   it("leaves a guard to its post", () => {
     expect(rest.decide({ ...rule(0.5, 1000), role: undefined })).toBeUndefined();
+  });
+
+  it("does not rest in harmful ground (#3026)", () => {
+    const hurt = rule(0.5, 1000);
+    const zone: MatchZone = {
+      id: "fire",
+      kind: "scorched",
+      layer: 0,
+      polygon: [vec2(50, 350), vec2(150, 350), vec2(150, 450), vec2(50, 450)],
+    };
+    const objectives = { ...NO_OBJECTIVES, harmfulZones: [zone] };
+    expect(rest.decide({ ...hurt, context: { ...hurt.context, objectives } })).toBeUndefined();
   });
 });

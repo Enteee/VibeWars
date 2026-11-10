@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import { pointInPolygon } from "../../../geometry.js";
 import { vec2 } from "../../../vec2.js";
 import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
+import type { CapturePoint } from "../../capture-points.js";
 import { MatchSimulation } from "../../simulation.js";
 import type { MatchZone } from "../../zones.js";
 import leaveZone, { EXIT_MARGIN } from "./leave-zone.js";
-import { BOT, BOUNDS, DT, RULESET, body, match, ruleFor } from "./test-support.js";
+import { BOT, BOUNDS, DT, RULESET, askBot, body, match, ruleFor } from "./test-support.js";
 
 /** Scorched ground across the field, x 250..350. */
 const STRIP: MatchZone = {
@@ -67,5 +68,36 @@ describe("leave-zone: a bot steps out of harmful ground (#3026)", () => {
     const rule = ruleFor(sim, "bot", {}, { objectives: burning });
     rule.cursor.heldMove = { moveDirection: vec2(1, 0), moveTo: vec2(900, 400) };
     expect(leaveZone.decide(rule)).toBeUndefined();
+  });
+
+  it("keeps on a walk to a spot inside the strip, such as a shrine there", () => {
+    const sim = match([body("bot", 0, vec2(330, 400), { behaviour: BOT })]);
+    const rule = ruleFor(sim, "bot", {}, { objectives: burning });
+    rule.cursor.heldMove = { moveDirection: vec2(-1, 0), moveTo: vec2(300, 400) };
+    expect(leaveZone.decide(rule)).toBeUndefined();
+  });
+
+  it("keeps on its own way out, once it has turned to it", () => {
+    const sim = match([body("bot", 0, vec2(340, 400), { behaviour: BOT })]);
+    const rule = ruleFor(sim, "bot", {}, { objectives: burning });
+    const exit = vec2(350 + EXIT_MARGIN, 400);
+    rule.cursor.heldMove = { moveDirection: vec2(1, 0), moveTo: exit };
+    expect(leaveZone.decide(rule)?.moveTo).toEqual(exit);
+  });
+
+  it("holds a shrine in the strip rather than step off it", () => {
+    const sim = match([
+      body("bot", 0, vec2(300, 400), { behaviour: BOT }),
+      body("foe", 1, vec2(1500, 700)),
+    ]);
+    const shrine: CapturePoint = {
+      position: vec2(300, 400),
+      layer: 0,
+      owner: null,
+      capturer: null,
+      progress: 0,
+    };
+    const intent = askBot(sim, "bot", { ...burning, capturePoints: [shrine] });
+    expect(intent.moveTo).toBeUndefined();
   });
 });

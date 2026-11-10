@@ -17,6 +17,7 @@ import {
   minRampLength,
   nearestStandable,
   RAMP_WAYPOINT_MOST_INSET,
+  costZone,
   walkCost,
   walkIsClear,
   type NavGraph,
@@ -769,7 +770,9 @@ describe("harmful zones (#3026)", () => {
     expect(lengthInPolygon(from, to, strip(0, 1000))).toBeCloseTo(100);
     expect(lengthInPolygon(vec2(300, 500), to, strip(0, 1000))).toBeCloseTo(50);
     expect(lengthInPolygon(from, vec2(200, 500), strip(0, 1000))).toBe(0);
-    expect(walkCost([strip(0, 1000)], from, to)).toBeCloseTo(400 + (HARMFUL_ZONE_COST - 1) * 100);
+    expect(walkCost([costZone(strip(0, 1000))], from, to)).toBeCloseTo(
+      400 + (HARMFUL_ZONE_COST - 1) * 100,
+    );
   });
 
   it("goes round a strip when the way round is not much longer", () => {

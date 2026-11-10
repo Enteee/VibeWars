@@ -14,11 +14,14 @@ export const EXIT_MARGIN = 20;
  * Harmful ground (#3026): a bot standing in it with nothing better to do
  * steps out to the nearest spot outside, as a player would. A foe in
  * reach, a cast, a relic or a ghost it leads keeps it where it is; so
- * does a walk to somewhere beyond the zone, as its path crosses it on
- * purpose when going round would be longer.
+ * does any walk but this rule's own, as a path crosses a zone on purpose
+ * when going round is longer, and an objective may lie inside one. It
+ * comes after every objective rule, so a bot on a shrine or a plate in
+ * harmful ground holds it, rather than step out and walk back in on the
+ * next think. `rest` yields to it.
  */
 const leaveZone: BotRule = {
-  order: 36.5,
+  order: 117,
   name: "leave-zone",
   decide: ({ context, self, targetId, cursor }) => {
     const zones = context.objectives.harmfulZones;
@@ -37,7 +40,7 @@ const leaveZone: BotRule = {
     }
     const onLayer = zones.filter((zone) => zone.layer === self.layer);
     const walkingTo = cursor.heldMove.moveTo;
-    if (walkingTo !== undefined && passingThrough(walkingTo, holding, onLayer)) {
+    if (walkingTo !== undefined && !isExit(walkingTo, onLayer)) {
       return undefined;
     }
     const exit = nearestExit(self.position, holding, onLayer, (point) => context.walkable(point));
@@ -54,18 +57,14 @@ function leadsGhost(participants: readonly Participant[], leaderId: string, team
 }
 
 /**
- * Whether a walk to `goal` is one through `holding` to somewhere else: out
- * of every harmful zone, and not just past the edge, where a step out goes.
+ * Whether `goal` is a spot `nearestExit` gives: out of every zone in
+ * `onLayer`, and no farther than `EXIT_MARGIN` past one's edge.
  */
-function passingThrough(
-  goal: Vec2,
-  holding: readonly MatchZone[],
-  onLayer: readonly MatchZone[],
-): boolean {
+function isExit(goal: Vec2, onLayer: readonly MatchZone[]): boolean {
   return (
     !onLayer.some((zone) => pointInPolygon(goal, zone.polygon)) &&
-    holding.every(
-      (zone) => distance(goal, closestPointOnPolygon(goal, zone.polygon)) > 2 * EXIT_MARGIN,
+    onLayer.some(
+      (zone) => distance(goal, closestPointOnPolygon(goal, zone.polygon)) <= EXIT_MARGIN + 1e-6,
     )
   );
 }

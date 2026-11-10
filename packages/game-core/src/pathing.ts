@@ -43,7 +43,7 @@ export interface NavGraph {
   /** Beside `edges`: what each walk costs, its length with harmful ground counted `HARMFUL_ZONE_COST` times. */
   readonly costs: readonly (readonly number[])[];
   /** The harmful ground on this layer (#3026): walks through it cost more. */
-  readonly zones: readonly Polygon[];
+  readonly zones: readonly CostZone[];
 }
 
 /** Harmful ground on a layer, as paths read it (#3026). */
@@ -59,28 +59,42 @@ export interface NavZone {
  */
 export const HARMFUL_ZONE_COST = 3;
 
+/** Harmful ground as `walkCost` reads it: its polygon and the box round it. */
+export interface CostZone {
+  readonly polygon: Polygon;
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+  readonly bottom: number;
+}
+
+/** `polygon` with its box, worked out once rather than on every walk. */
+export function costZone(polygon: Polygon): CostZone {
+  let left = Number.POSITIVE_INFINITY;
+  let right = Number.NEGATIVE_INFINITY;
+  let top = Number.POSITIVE_INFINITY;
+  let bottom = Number.NEGATIVE_INFINITY;
+  for (const corner of polygon) {
+    left = Math.min(left, corner.x);
+    right = Math.max(right, corner.x);
+    top = Math.min(top, corner.y);
+    bottom = Math.max(bottom, corner.y);
+  }
+  return { polygon, left, right, top, bottom };
+}
+
 /** What the walk from `a` to `b` costs a route: its length, and twice more for each unit of it in `zones`. */
-export function walkCost(zones: readonly Polygon[], a: Vec2, b: Vec2): number {
+export function walkCost(zones: readonly CostZone[], a: Vec2, b: Vec2): number {
   let inside = 0;
   for (const zone of zones) {
     // Nowhere near: the box test settles most walks.
-    let left = Number.POSITIVE_INFINITY;
-    let right = Number.NEGATIVE_INFINITY;
-    let top = Number.POSITIVE_INFINITY;
-    let bottom = Number.NEGATIVE_INFINITY;
-    for (const corner of zone) {
-      left = Math.min(left, corner.x);
-      right = Math.max(right, corner.x);
-      top = Math.min(top, corner.y);
-      bottom = Math.max(bottom, corner.y);
-    }
     if (
-      Math.max(a.x, b.x) > left &&
-      Math.min(a.x, b.x) < right &&
-      Math.max(a.y, b.y) > top &&
-      Math.min(a.y, b.y) < bottom
+      Math.max(a.x, b.x) > zone.left &&
+      Math.min(a.x, b.x) < zone.right &&
+      Math.max(a.y, b.y) > zone.top &&
+      Math.min(a.y, b.y) < zone.bottom
     ) {
-      inside += lengthInPolygon(a, b, zone);
+      inside += lengthInPolygon(a, b, zone.polygon);
     }
   }
   return distance(a, b) + (HARMFUL_ZONE_COST - 1) * inside;
@@ -440,7 +454,7 @@ export interface GatedNavGraph {
   readonly edgeBlockedBy: readonly (readonly number[])[];
   /** Beside `edges`: what each walk costs, as `NavGraph`'s. */
   readonly costs: readonly (readonly number[])[];
-  readonly zones: readonly Polygon[];
+  readonly zones: readonly CostZone[];
 }
 
 /** See `GatedNavGraph`; each of `gates` is one gate's segments. */
@@ -522,6 +536,7 @@ export function buildGatedNavGraph(
 
   const grid = buildWallGrid(walls, clearance);
   const gateGrids = gates.map((segments) => buildWallGrid(segments, clearance));
+  const costZones = zones.map(costZone);
   const edges: number[][] = [];
   const edgeBlockedBy: number[][] = [];
   const costs: number[][] = [];
@@ -539,7 +554,7 @@ export function buildGatedNavGraph(
         });
         seen.push(j);
         crossed.push(blockedBy);
-        cost.push(walkCost(zones, node, other));
+        cost.push(walkCost(costZones, node, other));
       }
     });
     edges.push(seen);
@@ -559,7 +574,7 @@ export function buildGatedNavGraph(
     edges,
     edgeBlockedBy,
     costs,
-    zones,
+    zones: costZones,
   };
 }
 
