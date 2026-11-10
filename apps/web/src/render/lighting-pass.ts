@@ -5,7 +5,7 @@ import type { MapLighting } from "@vibewars/game-maps/schema";
 
 import type { ArenaPalette } from "./arena-palette.js";
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
-import { rampDrawing } from "./layer-surfaces.js";
+import { rampDrawing, shapeOutline } from "./layer-surfaces.js";
 import {
   SURFACE_LIGHT_FLOOR,
   flickerAt,
@@ -162,7 +162,7 @@ export function litStructurePalette(
   };
 }
 
-/** The outlines a layer above the ground has to light, in that layer's own coordinates. */
+/** The outlines a layer other than the ground has to light, in that layer's own coordinates. */
 export function layerSurfaces(
   structure: MapStructure,
   layer: number,
@@ -179,16 +179,27 @@ export function layerSurfaces(
   const decks = structure.decks
     .filter((deck) => deck.layer === layer)
     .map((deck) => outline(deck.footprint));
+  // A pit's floor is the layer under the ground's, seen through its hole (#2973).
+  const pits =
+    layer === structure.ground - 1 ? structure.pits.map((pit) => outline(pit.footprint)) : [];
   // A ramp's drawn slope is already lifted; the light map is lifted whole.
   const ramps = structure.transitions
     .filter((ramp) => ramp.to === layer)
-    .flatMap((ramp) => {
-      const drawing = rampDrawing(structure, ramp);
-      return drawing === undefined
-        ? []
-        : [drawing.slope.map((p) => ({ x: p.x, y: p.y + elevationOf(layer) }))];
-    });
-  return [...decks, ...ramps];
+    .map((ramp) =>
+      rampDrawing(structure, ramp).slope.map((p) => ({
+        x: p.x,
+        y: p.y + elevationOf(layer, structure.ground),
+      })),
+    );
+  return [...decks, ...pits, ...ramps];
+}
+
+/**
+ * Where the ground's light never falls (#2973): each pit's hole, lit by
+ * the layer under it, so a body in a pit is not lit twice.
+ */
+export function groundHoles(structure: MapStructure): readonly (readonly Vec2[])[] {
+  return structure.pits.map((pit) => shapeOutline(pit.footprint));
 }
 
 interface LayerMap {
@@ -349,16 +360,13 @@ export class LightingPass {
     if (base === null || shown === null) {
       throw new Error("lighting: could not create a light map");
     }
-    const outsideKey =
-      layer === 0
-        ? undefined
-        : this.buildOutside(
-            `lighting-${String(nextLightingId)}-outside`,
-            structure,
-            layer,
-            width,
-            height,
-          );
+    const outsideKey = this.buildOutside(
+      `lighting-${String(nextLightingId)}-outside`,
+      structure,
+      layer,
+      width,
+      height,
+    );
     const { steady, flickering } = lightsByStability(lighting, layer, this.stage);
     const casters = stageShadows(this.stage) ? shadowCasters(this.walls, structure, layer) : [];
 
@@ -407,7 +415,7 @@ export class LightingPass {
     }
 
     const image = this.scene.add
-      .image(0, -elevationOf(layer), shownKey)
+      .image(0, -elevationOf(layer, structure.ground), shownKey)
       .setOrigin(0, 0)
       .setScale(1 / LIGHT_MAP_SCALE)
       .setBlendMode(Phaser.BlendModes.MULTIPLY)
@@ -428,23 +436,34 @@ export class LightingPass {
     return map;
   }
 
-  /** A texture opaque everywhere but on the layer's surfaces: erasing it leaves only those lit. */
+  /**
+   * A texture opaque where `layer`'s light does not fall: everywhere but
+   * its surfaces, or, on the ground, its pits' holes. Erasing it leaves
+   * only the rest lit; none on a ground with no pits.
+   */
   private buildOutside(
     key: string,
     structure: MapStructure,
     layer: number,
     width: number,
     height: number,
-  ): string {
+  ): string | undefined {
+    const ground = layer === structure.ground;
+    const outlines = ground ? groundHoles(structure) : layerSurfaces(structure, layer);
+    if (ground && outlines.length === 0) {
+      return undefined;
+    }
     const canvas = this.scene.textures.createCanvas(key, width, height);
     if (canvas === null) {
       throw new Error("lighting: could not create a layer mask");
     }
     const context = canvas.context;
     context.fillStyle = "#fff";
-    context.fillRect(0, 0, width, height);
-    context.globalCompositeOperation = "destination-out";
-    for (const outline of layerSurfaces(structure, layer)) {
+    if (!ground) {
+      context.fillRect(0, 0, width, height);
+      context.globalCompositeOperation = "destination-out";
+    }
+    for (const outline of outlines) {
       context.beginPath();
       outline.forEach((point, index) => {
         const x = point.x * LIGHT_MAP_SCALE;

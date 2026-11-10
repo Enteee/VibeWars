@@ -428,8 +428,8 @@ function isWeaponSetNumber(value: unknown): value is 0 | 1 | 2 | 3 {
   return value === 0 || value === 1 || value === 2 || value === 3;
 }
 
-/** A body's highest layer: a map has at most three (ADR-0051). */
-const MAX_WIRE_LAYER = 2;
+/** A body's highest layer: a map has at most four (ADR-0051, #2973). */
+const MAX_WIRE_LAYER = 3;
 
 export function isWireLayer(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= MAX_WIRE_LAYER;

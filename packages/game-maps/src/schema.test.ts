@@ -17,6 +17,7 @@ import {
   type Wall,
 } from "./schema.js";
 import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
+import heights from "../training/training-heights/map.json" with { type: "json" };
 
 const validMap = {
   id: "arena-test",
@@ -27,6 +28,9 @@ const validMap = {
   width: 100,
   height: 100,
   layers: 1,
+  groundLayer: 0,
+  pits: [],
+  tunnels: [],
   decks: [],
   transitions: [],
   walls: [
@@ -228,16 +232,31 @@ describe("every training map", () => {
     }
   });
 
-  it("training-heights has decks on layers 1 and 2, and a ramp joining each pair (#2937)", () => {
+  it("training-heights has decks on layers 2 and 3 over its ground on 1, and a ramp joining each pair (#2937, #2973)", () => {
     const heights = maps.find(({ map }) => map.id === "training-heights")?.map;
     if (heights === undefined) throw new Error("no training-heights");
-    expect(heights.decks.map(({ layer }) => layer).sort()).toEqual([1, 2]);
+    expect(heights.groundLayer).toBe(1);
+    expect(heights.decks.map(({ layer }) => layer).sort()).toEqual([2, 3]);
     expect(heights.transitions.map(({ from, to }) => [from, to])).toEqual(
       expect.arrayContaining([
         [0, 1],
         [1, 2],
+        [2, 3],
       ]),
     );
+  });
+
+  it("training-heights' pit ramps are each at least 110 long, climbing, for their route cache (#2972, #2973)", () => {
+    const heights = maps.find(({ map }) => map.id === "training-heights")?.map;
+    if (heights === undefined) throw new Error("no training-heights");
+    const pitRamps = heights.transitions.filter(({ to }) => to === heights.groundLayer);
+    expect(pitRamps).toHaveLength(2);
+    for (const { area, uphill } of pitRamps) {
+      if (area.kind !== "rect") throw new Error("a pit ramp is a rect");
+      expect(uphill === "e" || uphill === "w" ? area.width : area.height).toBeGreaterThanOrEqual(
+        110,
+      );
+    }
   });
 
   it("keeps every spawn inside the bounds and out of the walls", () => {
@@ -904,6 +923,7 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     from,
     to,
     area: { kind: "rect", x, y: 300, width: 170, height: 200 },
+    uphill: "e",
   });
   const deck = (id: string, layer: number) => ({
     id,
@@ -932,6 +952,11 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     const [first, ...rest] = layerTest.spawnPoints;
     const { layer: _layer, ...unlayered } = first ?? { layer: 0 };
     refuses({ spawnPoints: [unlayered, ...rest] }, /spawnPoints\.0\.layer/);
+    const { groundLayer: _ground, ...noGround } = layerTest;
+    expect(() => validateMapData(noGround)).toThrow(/groundLayer/);
+    const [ramp0, ...ramps] = layerTest.transitions;
+    const { uphill: _uphill, ...noUphill } = ramp0 ?? { uphill: "e" };
+    refuses({ transitions: [noUphill, ...ramps] }, /transitions\.0\.uphill/);
   });
 
   it("refuses a layer outside the map's, naming the field", () => {
@@ -988,7 +1013,12 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     const [, far] = layerTest.transitions;
     const uphillBy = (width: number) => ({
       transitions: [
-        { from: 0, to: 1, area: { kind: "rect", x: 520 - width, y: 300, width, height: 200 } },
+        {
+          from: 0,
+          to: 1,
+          area: { kind: "rect", x: 520 - width, y: 300, width, height: 200 },
+          uphill: "e",
+        },
         ...(far === undefined ? [] : [far]),
       ],
     });
@@ -1003,7 +1033,12 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
         decks: [...layerTest.decks, deck("upper", 2)],
         transitions: [
           ...layerTest.transitions,
-          { from: 1, to: 2, area: { kind: "rect", x: 100, y: 100, width: 50, height: 50 } },
+          {
+            from: 1,
+            to: 2,
+            area: { kind: "rect", x: 100, y: 100, width: 50, height: 50 },
+            uphill: "n",
+          },
         ],
       },
       /transitions\.2\.from: transition 2 touches no deck on layer 1/,
@@ -1017,7 +1052,12 @@ describe("layers, decks and transitions (#2826, ADR-0051)", () => {
     refuses(
       {
         transitions: [
-          { from: 0, to: 1, area: { kind: "rect", x: 10, y: 10, width: 50, height: 50 } },
+          {
+            from: 0,
+            to: 1,
+            area: { kind: "rect", x: 10, y: 10, width: 50, height: 50 },
+            uphill: "e",
+          },
         ],
       },
       /decks\.0: deck bridge has no transition/,
@@ -1229,5 +1269,64 @@ describe("water (#2983)", () => {
       pond({ depth: "shallow", area: atRamp }),
       pond({ id: "puddle", depth: "shallow", area: onSpawn }),
     ]);
+  });
+});
+
+describe("below the ground: pits and tunnels (#2973)", () => {
+  const accepts = (overrides: object): void => {
+    expect(() => validateMapData({ ...heights, ...overrides })).not.toThrow();
+  };
+  const refuses = (overrides: object, message: RegExp): void => {
+    expect(() => validateMapData({ ...heights, ...overrides })).toThrow(message);
+  };
+  const [westPit, eastPit] = heights.pits;
+  const tunnel = {
+    id: "tunnel",
+    footprint: { kind: "rect", x: 700, y: 550, width: 280, height: 70 },
+  };
+
+  it("validates Heights, whose layer 0 is its pits and tunnel under the ground on 1", () => {
+    accepts({});
+  });
+
+  it("refuses a ground on 1 with no pit, and pits under a ground on 0", () => {
+    refuses({ pits: [], tunnels: [] }, /groundLayer: the ground is layer 1/);
+    refuses({ groundLayer: 0 }, /groundLayer: pits and tunnels are below the ground/);
+  });
+
+  it("refuses a tunnel that touches no pit", () => {
+    refuses(
+      { pits: [westPit], tunnels: [{ ...tunnel, footprint: { ...tunnel.footprint, x: 720 } }] },
+      /tunnels\.0: tunnel tunnel touches no pit/,
+    );
+    accepts({ pits: [westPit, eastPit], tunnels: [tunnel] });
+  });
+
+  it("refuses a pit ramp whose high edge is off its pit's edge, or that climbs the wrong way", () => {
+    const pitRamp = (x: number, uphill: string) => ({
+      transitions: heights.transitions.map((transition) =>
+        transition.to === 1 &&
+        transition.from === 0 &&
+        transition.area.kind === "rect" &&
+        transition.area.x === 500
+          ? { ...transition, area: { ...transition.area, x }, uphill }
+          : transition,
+      ),
+    });
+    refuses(pitRamp(510, "w"), /transitions\.3\.area: transition 3 goes up to the ground/);
+    refuses(pitRamp(500, "e"), /transitions\.3\.area: transition 3 goes up to the ground/);
+  });
+
+  it("refuses a ramp too narrow for a body", () => {
+    refuses(
+      {
+        transitions: heights.transitions.map((transition, index) =>
+          index === 3 && transition.area.kind === "rect"
+            ? { ...transition, area: { ...transition.area, height: 30 } }
+            : transition,
+        ),
+      },
+      /transitions\.3\.area: transition 3 is 30\.0 wide/,
+    );
   });
 });

@@ -238,4 +238,25 @@ describe("a layer's walkable areas (ADR-0051)", () => {
     );
     expect(crosses).toEqual([]);
   });
+
+  it("leaves no edge where two areas meet end to end, a pit and its tunnel (#2973)", () => {
+    const pit = rect(500, 520, 200, 130);
+    const tunnel = rect(700, 550, 280, 70);
+    const outline = walkableOutline([pit, tunnel]);
+    const shared = outline.filter(({ a, b }) => a.x === 700 && b.x === 700);
+    // The pit's east side above and below the tunnel's mouth, and nothing across it.
+    expect(shared.map(({ a, b }) => [Math.min(a.y, b.y), Math.max(a.y, b.y)]).sort()).toEqual([
+      [520, 550],
+      [620, 650],
+    ]);
+  });
+
+  it("keeps an outer side two overlapping areas share", () => {
+    const outline = walkableOutline([DECK, WEST]);
+    const south = outline.filter(({ a, b }) => a.y === 500 && b.y === 500);
+    const uncovered = Array.from({ length: 76 }, (_, at) => 350 + at * 10).filter(
+      (x) => !south.some(({ a, b }) => Math.min(a.x, b.x) <= x && x <= Math.max(a.x, b.x)),
+    );
+    expect(uncovered).toEqual([]);
+  });
 });

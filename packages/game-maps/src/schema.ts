@@ -5,8 +5,8 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   minRampLength,
   rampLength,
-  rampUphill,
   TWO_TEAM_MODES,
+  UPHILL,
   type MatchMode,
   type Segment,
 } from "@vibewars/game-core";
@@ -51,7 +51,7 @@ const polygonWallSchema = z.object({
 /** An area: a wall's outline, a deck's footprint or a transition's area (ADR-0051). */
 const shapeSchema = z.discriminatedUnion("kind", [rectWallSchema, polygonWallSchema]);
 
-/** A discrete layer (ADR-0051): 0 is the ground; the map's `layers` bounds it. */
+/** A discrete layer (ADR-0051): the map's `groundLayer` is the ground; its `layers` bounds it. */
 const layerSchema = z.number().int().nonnegative();
 
 /** A shape standing on one layer: walls on other layers do not count (ADR-0051). */
@@ -67,11 +67,24 @@ const deckSchema = z.object({
   footprint: shapeSchema,
 });
 
-/** A ramp or stairs (ADR-0051): inside `area`, a body moves between `from` and `to`, one above. */
+/**
+ * A ramp or stairs (ADR-0051): inside `area`, a body moves between `from`
+ * and `to`, one above, climbing towards `uphill` (#2973).
+ */
 const transitionSchema = z.object({
   from: layerSchema,
   to: layerSchema,
   area: shapeSchema,
+  uphill: z.enum(["n", "e", "s", "w"]),
+});
+
+/**
+ * A hole in the ground down to the layer under it (#2973): open to the sky,
+ * entered only by a ramp. A tunnel is a floor of that layer under the ground.
+ */
+const belowGroundSchema = z.object({
+  id: z.string().min(1),
+  footprint: rectWallSchema,
 });
 
 /** The most points round one body of water (#2983): a curved shore is a polygon with more. */
@@ -315,6 +328,22 @@ export type TeamSize = (typeof TEAM_SIZES_ALL)[number];
 /** A body's radius: an objective stands clear of every wall and edge by one. */
 const BODY_RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
 
+/** The narrowest a ramp may be across (#2973): a body, and room either side. */
+const MIN_RAMP_WIDTH = 2 * BODY_RADIUS + 4;
+
+/** Whether a ramp lies in one of `pits`, its high edge on that pit's edge (#2973). */
+function inPitUpToItsEdge(transition: Transition, pits: readonly BelowGround[]): boolean {
+  const corners = shapeVertices(transition.area);
+  const uphill = UPHILL[transition.uphill];
+  const along = (point: Vec2Data): number => point.x * uphill.x + point.y * uphill.y;
+  const high = Math.max(...corners.map(along));
+  return pits.some(
+    (pit) =>
+      corners.every((corner) => pointInShape(corner, pit.footprint)) &&
+      Math.max(...shapeVertices(pit.footprint).map(along)) === high,
+  );
+}
+
 /** Points round a body's rim tested against a deck's walkable area. */
 const RIM_SAMPLES = 32;
 
@@ -323,31 +352,43 @@ interface LayeredMap {
   readonly width: number;
   readonly height: number;
   readonly walls: readonly Wall[];
+  readonly groundLayer: number;
   readonly decks: readonly Deck[];
   readonly transitions: readonly Transition[];
+  readonly pits: readonly BelowGround[];
+  readonly tunnels: readonly BelowGround[];
 }
 
 /** Whether a body's whole circle at `position` is on `layer`'s walkable area (ADR-0051). */
 function onWalkableArea(map: LayeredMap, position: Vec2Data, layer: number): boolean {
   const { x, y } = position;
-  if (layer === 0) {
-    return (
-      x >= BODY_RADIUS &&
-      y >= BODY_RADIUS &&
-      x <= map.width - BODY_RADIUS &&
-      y <= map.height - BODY_RADIUS
-    );
-  }
-  const areas = [
-    ...map.decks.filter((deck) => deck.layer === layer).map((deck) => deck.footprint),
-    ...map.transitions
-      .filter((transition) => transition.from === layer || transition.to === layer)
-      .map((transition) => transition.area),
-  ];
+  const ramps = map.transitions
+    .filter((transition) => transition.from === layer || transition.to === layer)
+    .map((transition) => transition.area);
   const rim = Array.from({ length: RIM_SAMPLES }, (_, index) => {
     const angle = (index / RIM_SAMPLES) * 2 * Math.PI;
     return { x: x + BODY_RADIUS * Math.cos(angle), y: y + BODY_RADIUS * Math.sin(angle) };
   });
+  if (layer === map.groundLayer) {
+    // Everywhere but a pit, unless on a ramp down into it (#2973).
+    return (
+      x >= BODY_RADIUS &&
+      y >= BODY_RADIUS &&
+      x <= map.width - BODY_RADIUS &&
+      y <= map.height - BODY_RADIUS &&
+      [position, ...rim].every(
+        (point) =>
+          !map.pits.some((pit) => pointInShape(point, pit.footprint)) ||
+          ramps.some((area) => pointInShape(point, area)),
+      )
+    );
+  }
+  const areas = [
+    ...(layer < map.groundLayer
+      ? [...map.pits, ...map.tunnels].map((below) => below.footprint)
+      : map.decks.filter((deck) => deck.layer === layer).map((deck) => deck.footprint)),
+    ...ramps,
+  ];
   return [position, ...rim].every((point) => areas.some((area) => pointInShape(point, area)));
 }
 
@@ -394,8 +435,14 @@ export const mapDataSchema = z
     teams: z.union([z.literal(2), z.literal(3)]),
     width: z.number().positive(),
     height: z.number().positive(),
-    /** How many layers it has (ADR-0051); layer 0 is the ground. */
-    layers: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+    /** How many layers it has (ADR-0051), the ground and what is below and above it. */
+    layers: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+    /** Which layer is the ground (#2973): 1 only on a map with a pit, the layer under it. */
+    groundLayer: z.union([z.literal(0), z.literal(1)]),
+    /** Required, may be empty, as `gates`: holes in the ground, on `groundLayer - 1` (#2973). */
+    pits: z.array(belowGroundSchema),
+    /** Required, may be empty: floors under the ground, on `groundLayer - 1` (#2973). */
+    tunnels: z.array(belowGroundSchema),
     /** Required, may be empty, as `gates`. */
     decks: z.array(deckSchema),
     /** Required, may be empty, as `gates`. */
@@ -557,11 +604,11 @@ export const mapDataSchema = z
       shapesOverlap(transition.area, deck.footprint);
     map.decks.forEach((deck, index) => {
       layerInRange(deck.layer, ["decks", index, "layer"]);
-      if (deck.layer === 0) {
+      if (deck.layer <= map.groundLayer) {
         context.addIssue({
           code: "custom",
           path: ["decks", index, "layer"],
-          message: `deck ${deck.id} is on layer 0, the ground`,
+          message: `deck ${deck.id} is on layer ${String(deck.layer)}, not above the ground`,
         });
       }
       if (deckIds.has(deck.id)) {
@@ -608,7 +655,7 @@ export const mapDataSchema = z
         });
       }
       if (
-        transition.from >= 1 &&
+        transition.from > map.groundLayer &&
         !map.decks.some((deck) => deck.layer === transition.from && touches(transition, deck))
       ) {
         context.addIssue({
@@ -617,23 +664,35 @@ export const mapDataSchema = z
           message: `transition ${String(index)} touches no deck on layer ${String(transition.from)}`,
         });
       }
-      // Measured as pathing measures it (#2995); a ramp with no deck to climb
-      // to has no uphill, and the layers' own checks already say so.
-      const above = map.decks
-        .filter((deck) => deck.layer === transition.to)
-        .map((deck) => shapeVertices(deck.footprint));
+      // Measured as pathing measures it (#2995).
       const area = shapeVertices(transition.area);
-      const length = rampLength(area, rampUphill(area, above));
-      const least = minRampLength(MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
-      if (above.length > 0 && length < least) {
+      const uphill = UPHILL[transition.uphill];
+      const length = rampLength(area, uphill);
+      const least = minRampLength(BODY_RADIUS);
+      if (length < least) {
         context.addIssue({
           code: "custom",
           path: ["transitions", index],
           message: `transition ${String(index)} is ${length.toFixed(1)} long uphill, shorter than the ${least.toFixed(1)} a body needs to route over it`,
         });
       }
+      const width = rampLength(area, { x: uphill.y, y: -uphill.x });
+      if (width < MIN_RAMP_WIDTH) {
+        context.addIssue({
+          code: "custom",
+          path: ["transitions", index, "area"],
+          message: `transition ${String(index)} is ${width.toFixed(1)} wide, narrower than the ${String(MIN_RAMP_WIDTH)} a body needs`,
+        });
+      }
+      if (transition.to === map.groundLayer && !inPitUpToItsEdge(transition, map.pits)) {
+        context.addIssue({
+          code: "custom",
+          path: ["transitions", index, "area"],
+          message: `transition ${String(index)} goes up to the ground, so lies in a pit with its high edge on the pit's`,
+        });
+      }
     });
-    for (let layer = 1; layer < map.layers; layer += 1) {
+    for (let layer = map.groundLayer + 1; layer < map.layers; layer += 1) {
       if (!map.decks.some((deck) => deck.layer === layer)) {
         context.addIssue({
           code: "custom",
@@ -642,6 +701,51 @@ export const mapDataSchema = z
         });
       }
     }
+    if (map.groundLayer === 0 && map.pits.length + map.tunnels.length > 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["groundLayer"],
+        message: "pits and tunnels are below the ground, and layer 0 has nothing below it",
+      });
+    }
+    if (map.groundLayer === 1 && map.pits.length === 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["groundLayer"],
+        message: "the ground is layer 1, so layer 0 under it needs a pit",
+      });
+    }
+    const belowIds = new Set<string>();
+    const belowGround = (kind: "pits" | "tunnels", below: BelowGround, index: number): void => {
+      if (belowIds.has(below.id)) {
+        context.addIssue({
+          code: "custom",
+          path: [kind, index, "id"],
+          message: `id ${below.id} is used twice`,
+        });
+      }
+      belowIds.add(below.id);
+      if (!shapeInBounds(below.footprint, map.width, map.height)) {
+        context.addIssue({
+          code: "custom",
+          path: [kind, index, "footprint"],
+          message: `${below.id}'s footprint is outside the map`,
+        });
+      }
+    };
+    map.pits.forEach((pit, index) => {
+      belowGround("pits", pit, index);
+    });
+    map.tunnels.forEach((tunnel, index) => {
+      belowGround("tunnels", tunnel, index);
+      if (!map.pits.some((pit) => shapesOverlap(tunnel.footprint, pit.footprint))) {
+        context.addIssue({
+          code: "custom",
+          path: ["tunnels", index],
+          message: `tunnel ${tunnel.id} touches no pit`,
+        });
+      }
+    });
     const altar = map.objectives.find((objective) => objective.kind === "altar")?.position;
     map.gates.forEach((gate, index) => {
       if (
@@ -713,7 +817,7 @@ export const mapDataSchema = z
       }
       const decks = map.decks.filter((deck) => deck.layer === body.layer);
       if (
-        body.layer > 0 &&
+        body.layer > map.groundLayer &&
         !shapeVertices(body.area).every((point) =>
           decks.some((deck) => pointInShape(point, deck.footprint)),
         )
@@ -804,6 +908,7 @@ export type Shape = z.infer<typeof shapeSchema>;
 export type Wall = z.infer<typeof wallSchema>;
 export type Deck = z.infer<typeof deckSchema>;
 export type Transition = z.infer<typeof transitionSchema>;
+export type BelowGround = z.infer<typeof belowGroundSchema>;
 export type SpawnPoint = z.infer<typeof spawnPointSchema>;
 export type Objective = z.infer<typeof objectiveSchema>;
 export type MapLighting = z.infer<typeof lightingSchema>;

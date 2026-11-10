@@ -57,7 +57,7 @@ export interface TrainingDummy {
   readonly label: string;
   readonly team: number;
   readonly position: Vec2;
-  /** The layer it starts, and is reset, on (ADR-0051); 0 is the ground. */
+  /** The layer it starts, and is reset, on (ADR-0051); its map says which is the ground. */
   readonly layer: number;
   /** Base armor, before any status. */
   readonly armor: number;
@@ -789,9 +789,12 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     exercises: ["auto-attacks", "movement", "range"],
     knobs: [],
     dummies: [
-      { ...target("on-bridge", "On the bridge (60 armor)", vec2(600, 450), 60), layer: 1 },
-      target("under-bridge", "Under the bridge (60 armor)", vec2(600, 450), 60),
-      { ...target("on-platform", "On the platform (60 armor)", vec2(600, 210), 60), layer: 2 },
+      // The ground is layer 1 (#2973): the pit and the tunnel are under it.
+      { ...target("on-bridge", "On the bridge (60 armor)", vec2(600, 450), 60), layer: 2 },
+      { ...target("under-bridge", "Under the bridge (60 armor)", vec2(600, 450), 60), layer: 1 },
+      { ...target("on-platform", "On the platform (60 armor)", vec2(600, 210), 60), layer: 3 },
+      { ...target("in-pit", "In the pit (60 armor)", vec2(640, 590), 60), layer: 0 },
+      { ...target("in-tunnel", "In the tunnel (60 armor)", vec2(840, 585), 60), layer: 0 },
     ],
   },
 ];

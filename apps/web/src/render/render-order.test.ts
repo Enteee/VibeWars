@@ -95,7 +95,30 @@ describe("renderOrder (#2810, section 8: 12)", () => {
 
 describe("the elevation offset (ADR-0051)", () => {
   it("is a step per layer, and none on the ground", () => {
-    expect([0, 1, 2].map(elevationOf)).toEqual([0, ELEVATION_STEP, 2 * ELEVATION_STEP]);
+    expect([0, 1, 2].map((layer) => elevationOf(layer, 0))).toEqual([
+      0,
+      ELEVATION_STEP,
+      2 * ELEVATION_STEP,
+    ]);
+  });
+
+  it("is negative below the ground (#2973)", () => {
+    expect([0, 1, 2].map((layer) => elevationOf(layer, 1))).toEqual([
+      -ELEVATION_STEP,
+      0,
+      ELEVATION_STEP,
+    ]);
+  });
+
+  it("draws a pit's floor over the floor and under whoever is in it (#2973)", () => {
+    expect(renderOrder({ kind: "pit" })).toBeGreaterThan(renderOrder({ kind: "floor" }));
+    expect(renderOrder({ kind: "pit" })).toBeLessThan(
+      renderOrder({ kind: "character", band: 0, part: "body" }),
+    );
+    // The ground over a tunnel or a pit's lip covers the pit's bodies.
+    expect(renderOrder({ kind: "deck", deckLayer: 1 })).toBeGreaterThan(
+      renderOrder({ kind: "character", band: 0, part: "marks" }),
+    );
   });
 
   it("eases a change of layer over about 150 ms, either way", () => {
@@ -149,5 +172,28 @@ describe("water's place in the order (#2984)", () => {
     ];
     const orders = items.map(renderOrder);
     expect(orders).toEqual([...orders].sort((a, b) => a - b));
+  });
+});
+
+describe("a ground over pits (#2973)", () => {
+  it("draws the pit, then the ground's cover, water, light and wards, then whoever stands on it and its marks", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "floor" },
+      { kind: "pit" },
+      { kind: "character", band: characterBand(0, 3), part: "marks" },
+      { kind: "deck", deckLayer: 1 },
+      { kind: "ramp", upperLayer: 1 },
+      { kind: "water", layer: 1, part: "surface" },
+      { kind: "water", layer: 1, part: "ripples" },
+      { kind: "lighting", layer: 1 },
+      { kind: "ground-effect", layer: 1 },
+      { kind: "character", band: characterBand(1, 3), part: "body" },
+      { kind: "character", band: characterBand(1, 3), part: "marks" },
+      { kind: "wall", layer: 1 },
+      { kind: "deck", deckLayer: 2 },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
   });
 });

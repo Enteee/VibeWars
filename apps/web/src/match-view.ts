@@ -902,7 +902,7 @@ export async function startMatchView(
       return;
     }
     if (viewport !== undefined) {
-      showCombatFeedback(viewport.scene, message, latestMatch);
+      showCombatFeedback(viewport.scene, message, latestMatch, structure.ground);
     }
     // A cast of ours that never went off flashes its slot (#300).
     const buttons = hud.skillBar.querySelectorAll("button");

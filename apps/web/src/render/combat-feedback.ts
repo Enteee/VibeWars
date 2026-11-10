@@ -115,6 +115,7 @@ export function showCombatFeedback(
   scene: FloatingTextSink,
   message: CombatMessage,
   snapshot: MatchSnapshot,
+  ground: number,
 ): void {
   const swing = swingFlashFor(message, snapshot);
   if (swing !== undefined) {
@@ -180,7 +181,7 @@ export function showCombatFeedback(
       text: cue.text,
       position: vec2(
         subject.x + FLOATING_TEXT_OFFSET_X,
-        subject.y + FLOATING_TEXT_OFFSET_Y - elevationOf(subject.layer),
+        subject.y + FLOATING_TEXT_OFFSET_Y - elevationOf(subject.layer, ground),
       ),
       lift: 0,
       colour: COLOURS[cue.tone],
