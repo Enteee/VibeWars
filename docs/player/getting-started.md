@@ -114,9 +114,10 @@ Leave, and a list of who is in it; its badge counts them.
   are in, not only ones you host. A player who cannot reach the host
   directly then joins through it after a few seconds, with nothing to set
   up. Each player gets their own login, good for 1 hour and renewed while
-  they stay, at most 8 players a lobby. A player relayed this way sees
-  **Relay shared by** and the sharer's name in the lobby; while you share,
-  the lobby says **Sharing your relay with** how many players. To stop,
+  they stay, at most 8 players a lobby. **Options → Relay (TURN)** shows
+  it: a player relayed this way reads **Relay shared by** and the sharer's
+  name there; while you share, it says **Sharing your relay with** how
+  many players. To stop,
   untick **Share my relay with my lobbies** in **Options → Relay (TURN)**. A relay you type in
   there by hand is only ever yours.
 - **Your party comes along:** if you had friends in your lobby, the top

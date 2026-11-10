@@ -139,9 +139,9 @@ import {
   lobbyPanel,
   type LobbyMap,
   type LobbyMatchmaking,
-  type LobbyRelay,
   type LobbyPanel,
 } from "./ui/lobby-screen.js";
+import { setRelayStatus } from "./ui/relay-status.js";
 import {
   renderTeamLobbyScreen,
   soloCharacterKey,
@@ -1169,6 +1169,7 @@ async function main(): Promise<void> {
     const leaving = lobby;
     const ending = hosted;
     lobby = undefined;
+    publishRelayStatus();
     syncShares();
     hosted = undefined;
     lobbyEntrant = undefined;
@@ -1300,12 +1301,24 @@ async function main(): Promise<void> {
     })();
   };
 
-  /** What `joined`'s screen says about relays (#2531), if anything. */
-  const relayFor = (joined: LobbyConnection): LobbyRelay | undefined => {
-    const status = lobbyRelayStatus(joined);
-    return status === undefined
-      ? undefined
-      : { relayedVia: status.relayedVia(), sharingWith: status.sharingWith() };
+  /**
+   * What Options → Relay says of the current lobby's relays (#2531, #2981).
+   * A holder no longer seated has no lobby name to show.
+   */
+  const publishRelayStatus = (): void => {
+    const status = lobby === undefined ? undefined : lobbyRelayStatus(lobby);
+    if (lobby === undefined || status === undefined) {
+      setRelayStatus({ sharedBy: undefined, sharingWith: 0 });
+      return;
+    }
+    const via = status.relayedVia();
+    setRelayStatus({
+      sharedBy:
+        via === undefined
+          ? undefined
+          : lobby.getSnapshot().players.find((p) => p.sessionId === via),
+      sharingWith: status.sharingWith(),
+    });
   };
 
   /**
@@ -1350,7 +1363,6 @@ async function main(): Promise<void> {
       lobbyNotice,
       mapsFor(entry),
       matchmakingFor(entry),
-      relayFor(lobby),
     );
   };
 
@@ -2054,6 +2066,7 @@ async function main(): Promise<void> {
           }
           current.parked = { hosted, entrant, name };
           lobby = undefined;
+          publishRelayStatus();
           closeChat();
           hosted = host;
           seatLobby(name, joined, entrant, true);
@@ -2103,6 +2116,7 @@ async function main(): Promise<void> {
     const matchRoom = lobby;
     const matchHost = hosted;
     lobby = undefined;
+    publishRelayStatus();
     syncShares();
     hosted = undefined;
     closeChat();
@@ -2119,6 +2133,7 @@ async function main(): Promise<void> {
       return;
     }
     lobby = current.party;
+    publishRelayStatus();
     hosted = parked.hosted;
     lobbyEntrant = parked.entrant;
     lobbyName = parked.name;
@@ -2462,6 +2477,7 @@ async function main(): Promise<void> {
     matchmade: boolean,
   ): void => {
     lobby = joined;
+    publishRelayStatus();
     lobbyEntrant = entrant;
     lobbyName = name;
     lobbyNotice = undefined;
@@ -2507,10 +2523,10 @@ async function main(): Promise<void> {
         chat?.notice(t("app.chatThrottled"));
       }
     });
-    // Whose relay it goes through, and how many it shares with, redraw it (#2531).
+    // Whose relay it goes through, and how many it shares with, for Options (#2531, #2981).
     lobbyRelayStatus(joined)?.onChange(() => {
       if (lobby === joined) {
-        lobbyChanged();
+        publishRelayStatus();
       }
     });
     // A lobby this tab has left says nothing more to it; a party lobby
@@ -2518,6 +2534,7 @@ async function main(): Promise<void> {
     joined.onChange(() => {
       if (lobby === joined) {
         syncShares();
+        publishRelayStatus();
       }
       if (lobby === joined || teamQueue?.party === joined) {
         syncTeamQueue(joined);
@@ -2584,6 +2601,7 @@ async function main(): Promise<void> {
       }
       // From the lobby or from its match: either way, it is over.
       lobby = undefined;
+      publishRelayStatus();
       syncShares();
       hosted = undefined;
       lobbyEntrant = undefined;
@@ -2644,6 +2662,7 @@ async function main(): Promise<void> {
     const leavingLobby = lobby;
     const ending = hosted;
     lobby = undefined;
+    publishRelayStatus();
     syncShares();
     hosted = undefined;
     closeChat();

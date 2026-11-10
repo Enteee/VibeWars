@@ -107,9 +107,10 @@ ich liczy.
   oferowany w każdym lobby, w którym jesteś, nie tylko hostowanym przez ciebie. Gracz,
   który nie może połączyć się z hostem bezpośrednio, dołącza przez niego po kilku
   sekundach, bez żadnej konfiguracji. Każdy gracz dostaje własny login, ważny przez
-  1 godzinę i odnawiany, dopóki zostaje, maksymalnie 8 graczy na lobby. Gracz połączony w ten
-  sposób widzi w lobby **Przekaźnik udostępnia:** i nazwę udostępniającego; gdy ty
-  udostępniasz, lobby mówi **Udostępniasz przekaźnik** i ilu graczom. Aby przestać,
+  1 godzinę i odnawiany, dopóki zostaje, maksymalnie 8 graczy na lobby. Pokazuje to
+  **Opcje → przekaźnik (TURN)**: gracz połączony w ten sposób czyta tam **Przekaźnik
+  udostępnia:** i nazwę udostępniającego; gdy ty udostępniasz, widnieje tam
+  **Udostępniasz przekaźnik** i ilu graczom. Aby przestać,
   odznacz **Udostępniaj mój przekaźnik w moich lobby** w **Opcje → przekaźnik (TURN)**. Przekaźnik wpisany
   tam ręcznie zawsze pozostaje tylko twój.
 - **Twoja grupa idzie z tobą:** jeśli miałeś znajomych w lobby, górny pasek najpierw

@@ -10,7 +10,6 @@ import { RANDOM_ARENA_MODES } from "./menu.js";
 import { button, h, screenBar } from "./kit.js";
 import { SIGNET_ROW_PX, playerLabelElement, signetElement, signetOf } from "./player-label.js";
 import { renderSummary, type SummaryTable } from "./match-summary.js";
-import { relayLine } from "./relay-section.js";
 
 /**
  * The Random Arena queue screen (#880, #854 B3–B4): mounted once a match
@@ -417,10 +416,6 @@ export function mountQueueScreen(
   const summaryHost = h("div", "queue-summary");
   const body = h("div", "queue-body");
   body.append(status, problem, streak, summaryHost);
-  const relay = relayLine();
-  if (relay !== undefined) {
-    body.append(relay);
-  }
   const splashHost = h("div", "queue-splash");
   const stay = button(t("queue.stayTogether"), "primary", callbacks.onStayTogether);
   const again = button(t("queue.queueAgain"), "primary", callbacks.onQueueAgain);

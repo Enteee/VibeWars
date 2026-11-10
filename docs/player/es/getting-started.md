@@ -116,10 +116,10 @@ de quién está dentro; su insignia los cuenta.
   la que estés, no solo en las que alojas. Un jugador que no pueda llegar
   directamente al anfitrión entrará a través de él tras unos segundos, sin
   configurar nada. Cada jugador recibe su propio acceso, válido 1 hora y
-  renovado mientras siga, con 8 jugadores por sala como mucho. Un jugador que
-  use así el relay ve **Relay compartido por** y el nombre de quien lo comparte
-  en la sala; mientras compartes, la sala dice **Compartiendo tu relay con** y
-  cuántos jugadores. Para dejar de hacerlo, desmarca **Compartir mi relay con
+  renovado mientras siga, con 8 jugadores por sala como mucho. **Opciones → relay
+  (TURN)** lo muestra: un jugador que use así el relay lee ahí **Relay
+  compartido por** y el nombre de quien lo comparte; mientras compartes, ahí
+  dice **Compartiendo tu relay con** y cuántos jugadores. Para dejar de hacerlo, desmarca **Compartir mi relay con
   mis salas** en **Opciones → relay (TURN)**. Un relay que escribas ahí a mano
   solo es tuyo.
 - **Tu grupo te acompaña:** si tenías amigos en tu sala, la barra superior
