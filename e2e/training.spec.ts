@@ -276,6 +276,8 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
   const [pond, northFloor] = await waterAndFloor(930, 330, 0, -130);
   expect(pond).toBeLessThan(northFloor);
   // West of the puddle: south of it is the east pit, sunk and darker (#2973).
+  // West of the pit first: the puddle is further than the stage shows.
+  await walkTo(page, canvas, { x: 930, y: 560 });
   const [puddle, westFloor] = await waterAndFloor(990, 715, 80, 0);
   expect(puddle).toBeGreaterThan(westFloor);
 });

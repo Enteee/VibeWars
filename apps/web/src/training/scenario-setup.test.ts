@@ -59,7 +59,7 @@ describe("the heights scenario (#2937)", () => {
     for (const dummy of scenario.dummies) {
       expect(layerOf(dummy.id), dummy.id).toBe(dummy.layer);
     }
-    expect(new Set(scenario.dummies.map(({ layer }) => layer))).toEqual(new Set([0, 1, 2]));
+    expect(new Set(scenario.dummies.map(({ layer }) => layer))).toEqual(new Set([0, 1, 2, 3]));
   });
 });
 

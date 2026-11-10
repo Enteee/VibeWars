@@ -180,7 +180,7 @@ describe("parseClientIntent — walk-to (#310)", () => {
 
   it("rejects a walk with no layer, or one a map cannot have (#2831)", () => {
     expect(parseClientIntent({ kind: "walk-to", x: 1, y: 2 })).toBeUndefined();
-    expect(parseClientIntent({ kind: "walk-to", x: 1, y: 2, layer: 3 })).toBeUndefined();
+    expect(parseClientIntent({ kind: "walk-to", x: 1, y: 2, layer: 4 })).toBeUndefined();
     expect(parseClientIntent({ kind: "walk-to", x: 1, y: 2, layer: 0.5 })).toBeUndefined();
   });
 

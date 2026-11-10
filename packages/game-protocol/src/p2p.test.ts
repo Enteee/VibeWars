@@ -1664,7 +1664,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a layer past the highest",
     parseWireSnapshotPart,
-    { ...snapshot, players: [{ ...player, layer: 3 }] },
+    { ...snapshot, players: [{ ...player, layer: 4 }] },
   ],
   [
     "snapshot with a negative layer",
@@ -1872,7 +1872,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with a ground effect above the highest layer (#2979)",
     parseWireSnapshotPart,
-    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], layer: 3 }] },
+    { ...snapshot, groundEffects: [{ ...snapshot.groundEffects[0], layer: 4 }] },
   ],
   ["combat that is one entry, not a batch", parseWireCombatBatch, combat],
   [
