@@ -3,13 +3,13 @@
 How a map looks, and how to tell that it looks right. This page covers the
 **world**: ground, walls, height, light, water, effects and things a player
 walks up to. UI, HUD, icons and characters stay in
-[`art-direction.md`](art-direction.md). Where the two disagree about the world,
-this page wins.
+[`art-direction.md`](art-direction.md).
 
-The [2.5D layers section](art-direction.md#25d-graphic-layers-direction-d) of
-`art-direction.md` owns the deck, ramp and occlusion drawing (direction D). It
-is not restated here: read it for planes and the x-ray outline, read this for
-everything that sits on or lights them.
+One owner per topic. [`art-direction.md`](art-direction.md#25d-graphic-layers-direction-d)
+owns the planes: deck, ramp, wall, support, deck shadow and the x-ray
+outline, with their numbers. This page owns the world palette, light,
+texture, animation, readability and the element recipes, and links the
+planes rather than copying them.
 
 The brief's language still holds (circles, lines, polygons, no painted art),
 and so does the one rule: **a player reads a threat in a fraction of a second,
@@ -23,7 +23,8 @@ it.
 ## 1. Palette
 
 A map uses a **biome**: a small set of base tones for ground and rock. Biomes
-may vary the ground, never the signals.
+may vary the ground, never the signals. **Target**: no code or map field
+selects a biome yet; today these are a palette for map authors.
 
 | Biome   | Ground    | Rock      | Plant / earth                   |
 | ------- | --------- | --------- | ------------------------------- |
@@ -91,16 +92,13 @@ Recipe (now): `{ colour: 0xffb060, radius: 150, intensity: 0.6, flicker: 0.2 }`,
 - **The sun's shadow** is the footprint of what casts it, moved by the sun's
   offset (`sunShadowOffset`; at 50° and one layer of 56 units that is about
   47 units, south-east). Hard edge, no blur, 55 % `#080b10` on the ground.
-- **A contact shadow**: every body, pillar and prop has a small offset shadow
-  at 35 % black, 5 right and 6 down at body size.
-- **A wall** is a shaded front face (28 units, 40 % darker) under a **lit top
-  edge**, 2 lines wide, in the wall's lightest tone.
+- **A contact shadow** (target): every body, pillar and prop has a small offset
+  shadow at 35 % black, 5 right and 6 down at body size.
 - **Height is told in this order:** the top is the lightest plane; its edge
   carries a bright lip; its front face is darker; its shadow lands on the
   ground. A **pit** is the reverse: the floor goes 45 % darker (`PIT_FLOOR`),
-  and its rim carries the lip. A **ramp** shades
-  15 % and carries a panel line every 24 units along its length, chevrons
-  pointing up.
+  and its rim carries the lip. Ramp, wall and deck numbers are in
+  [`art-direction.md`](art-direction.md#25d-graphic-layers-direction-d).
 - **One step is 56 units** (`ELEVATION_STEP`). There is no in-between height
   except on a ramp.
 
@@ -109,15 +107,16 @@ a lit top edge, a darker front face, a shadow thrown south-east.
 
 ![rock wall](visual-style/rock-wall.svg)
 
-Recipe (now): top `#2d3748`, front face `#1a212c`, lit edge `#a9bbd0` 2 lines
-wide, outline `#0b0f14`; texture `noise` at about 0.06 cycles per unit, at 50 %.
+Recipe (now): the palette in `arena-palette.ts`: top `#4b5a70`, face that
+shaded 40 %, lit edge `#a9bbd0`, stroke `#3b4759`. **Target**: the noise fill
+(fractal, about 0.06 cycles per unit, 50 % opacity) and irregular outlines.
 
 ## 4. Outline and texture
 
 - **A body** has a 1.5 to 2.5 px dark outline (`#0b0f14`) so it parts from any
   floor. **A wall** and a prop have a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
-- **No fill is flat.** Use noise: fractal noise, 3 octaves, at a scale of
+- **No fill is flat** (target: the renderer has no noise fill yet; #3052 builds it). Use noise: fractal noise, 3 octaves, at a scale of
   about **one feature per body** (30 units): grain finer than that is lost at
   zoom 1, coarser reads as a blotch. Keep it at 50 to 80 % opacity over the
   base tone, so the base still names the material.
@@ -126,7 +125,7 @@ wide, outline `#0b0f14`; texture `noise` at about 0.06 cycles per unit, at 50 %.
 - **Small things stay legible at 16 px.** A prop under 16 px across is a
   mark, not a drawing: one shape, one colour, one outline.
 
-Worked example, mire (`mire.svg`): dull earth, noise, bubble rings, a lumpy
+Worked example, mire (`mire.svg`; the noise and bubbles are target): dull earth, noise, bubble rings, a lumpy
 rim in a lighter tone.
 
 ![mire](visual-style/mire.svg)
@@ -168,8 +167,8 @@ Every rule below can be checked from one screenshot.
 3. **Art never hides a body, a projectile or a telegraph.** Decoration sits
    under bodies, and tall props are drawn beside, not on, a lane.
 4. **Zone tint stays above water and light** in render order.
-5. **Each kind of zone has its own shape language**, so two kinds that share
-   a hue still differ: harmful ground has a **dashed** edge, help a **solid**
+5. **Each kind of zone has its own shape language** (target: today every
+   edge is a solid line), so two kinds that share a hue still differ: harmful ground has a **dashed** edge, help a **solid**
    one, strike zones a **dashed edge that goes solid** when they fire.
 6. **A dark corner is lit enough to fight in**: bodies at 0.7 or more.
 7. **Hidden bodies show their x-ray outline** under every cover.
@@ -236,7 +235,9 @@ so a player sees where it will close. Shape differs, not only colour.
 
 ![door](visual-style/door.svg)
 
-Recipe (now): `drawGate` strokes an open gate's wall as a faint outline (`WALL_STROKE`, 50 %), which is the ghost. The amber door body and its door-knob line are **target**.
+Recipe (now): `drawGate` strokes an open gate's wall as a faint outline
+(`WALL_STROKE`, 50 %), which is the ghost. **Target**: the amber door body
+(`#c98a3a`) and its knob line, replacing the plain wall in #3053.
 
 ### Lever, up and down
 
@@ -245,7 +246,10 @@ shape; a pip on the base is dim then bright. Handle `#e8c27a`, base `#4b5a70`.
 
 ![lever](visual-style/lever.svg)
 
-Recipe (now): `switch-mark.ts` draws a base and a handle, upright when up and thrown to the right when down. The amber handle colour and the pip are **target**.
+Recipe (now): `switch-mark.ts` draws a base and a handle, upright when up and
+thrown to the right when down, in `SWITCH_MARK_LOOK` (base `0x3a3a40`, handle
+`0x8a6a42`, knob `0xe8dcc0`). **Target**: the colours shown here (handle
+`#e8c27a`, base `#4b5a70`) and the pip replace those in #3053.
 
 Every SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
 `node scripts/assets/visual-style.mjs`.

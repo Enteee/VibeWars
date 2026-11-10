@@ -105,9 +105,9 @@ files["rock-wall.svg"] = svg(
   `${noise("n", 0.06, 5, "0 0 0 0 0.6  0 0 0 0 0.65  0 0 0 0 0.72  0 0 0 0.9 -0.3")}
 <clipPath id="c"><path d="M40,150 L60,70 L150,50 L250,62 L320,90 L330,150Z"/></clipPath>`,
   `${floor()}<path d="M60,70 L150,50 L250,62 L320,90 L360,128 L330,150 L40,150Z" fill="#000" fill-opacity="0.35" transform="translate(14,22)"/>
-<path d="M40,150 L60,70 L150,50 L250,62 L320,90 L330,150Z" fill="#2d3748" stroke="#0b0f14" stroke-width="2"/>
+<path d="M40,150 L60,70 L150,50 L250,62 L320,90 L330,150Z" fill="#4b5a70" stroke="#0b0f14" stroke-width="2"/>
 <g clip-path="url(#c)"><rect width="${String(W)}" height="${String(H)}" filter="url(#n)" opacity="0.5"/></g>
-<path d="M40,150 H330 V178 H40Z" fill="#1a212c" stroke="#0b0f14" stroke-width="2"/>
+<path d="M40,150 H330 V178 H40Z" fill="#2d3642" stroke="#3b4759" stroke-width="2"/>
 <path d="M60,70 L150,50 L250,62 L320,90" fill="none" stroke="#a9bbd0" stroke-width="4" stroke-linejoin="round"/>
 <path d="M110,90 L128,118 L120,140 M220,86 L205,112 M270,100 L286,128" fill="none" stroke="#10151c" stroke-width="2.5" stroke-linecap="round"/>
 ${body(85, 186)}`,
