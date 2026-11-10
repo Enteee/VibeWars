@@ -29,6 +29,7 @@ describe("BOT_RULES (#2042)", () => {
       "flee",
       "dodge",
       "lead-ghost",
+      "clear-ground",
       "ward-touch",
       "cleanse",
       "raise",

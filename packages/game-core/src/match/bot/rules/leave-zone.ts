@@ -1,21 +1,23 @@
 import { closestPointOnPolygon, closestPointOnSegment, pointInPolygon } from "../../../geometry.js";
 import { distance, vec2, type Vec2 } from "../../../vec2.js";
+import type { BehaviourIntent } from "../../behaviour.js";
 import { ghostId } from "../../ghost.js";
 import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
 import { harmfulZonesHolding, type MatchZone } from "../../zones.js";
 import { NOTHING } from "./shared.js";
-import type { BotRule } from "./types.js";
+import type { BotRule, RuleContext } from "./types.js";
 
 /** How far past a zone's edge a bot steps to be out of it: clear of the edge, not far. */
 export const EXIT_MARGIN = 20;
 
 /**
  * Harmful ground (#3026): a bot standing in it with nothing better to do
- * steps out to the nearest spot outside, as a player would. A foe in
- * reach, a cast, a relic or a ghost it leads keeps it where it is; so
- * does any walk but this rule's own, as a path crosses a zone on purpose
- * when going round is longer, and an objective may lie inside one. It
+ * steps out to the nearest spot outside, as a player would; with a foe in
+ * reach, `clear-ground` decides that. A cast, a relic or a ghost it leads
+ * keeps it where it is; so does any walk but this rule's own, as a path
+ * crosses a zone on purpose when going round is longer, and an objective
+ * may lie inside one. It
  * comes after every objective rule, so a bot on a shrine or a plate in
  * harmful ground holds it, rather than step out and walk back in on the
  * next think. `rest` yields to it.
@@ -23,30 +25,44 @@ export const EXIT_MARGIN = 20;
 const leaveZone: BotRule = {
   order: 117,
   name: "leave-zone",
-  decide: ({ context, self, targetId, cursor }) => {
-    const zones = context.objectives.harmfulZones;
-    if (
-      zones.length === 0 ||
-      targetId !== undefined ||
-      self.combatant.cast.isCasting ||
-      carriedRelic(context.objectives.relics, self.id) !== undefined ||
-      leadsGhost(context.participants, self.id, self.combatant.team)
-    ) {
-      return undefined;
-    }
-    const holding = harmfulZonesHolding(zones, self.position, self.layer);
-    if (holding.length === 0) {
-      return undefined;
-    }
-    const onLayer = zones.filter((zone) => zone.layer === self.layer);
-    const walkingTo = cursor.heldMove.moveTo;
-    if (walkingTo !== undefined && !isExit(walkingTo, onLayer)) {
-      return undefined;
-    }
-    const exit = nearestExit(self.position, holding, onLayer, (point) => context.walkable(point));
-    return exit === undefined ? undefined : { ...NOTHING, moveTo: exit, moveToLayer: self.layer };
-  },
+  decide: (rule) => (rule.targetId === undefined ? zoneExit(rule) : undefined),
 };
+
+/**
+ * The step out of harmful ground `self` takes now, if any: none mid-cast,
+ * carrying a relic, leading a ghost, out of every zone, or on a walk of
+ * its own that is not this step. The way out ends where `fits` allows.
+ */
+export function zoneExit(
+  { context, self, cursor }: RuleContext,
+  fits: (exit: Vec2) => boolean = () => true,
+): BehaviourIntent | undefined {
+  const zones = context.objectives.harmfulZones;
+  if (
+    zones.length === 0 ||
+    self.combatant.cast.isCasting ||
+    carriedRelic(context.objectives.relics, self.id) !== undefined ||
+    leadsGhost(context.participants, self.id, self.combatant.team)
+  ) {
+    return undefined;
+  }
+  const holding = harmfulZonesHolding(zones, self.position, self.layer);
+  if (holding.length === 0) {
+    return undefined;
+  }
+  const onLayer = zones.filter((zone) => zone.layer === self.layer);
+  const walkingTo = cursor.heldMove.moveTo;
+  if (walkingTo !== undefined && !isExit(walkingTo, onLayer)) {
+    return undefined;
+  }
+  const exit = nearestExit(
+    self.position,
+    holding,
+    onLayer,
+    (point) => context.walkable(point) && fits(point),
+  );
+  return exit === undefined ? undefined : { ...NOTHING, moveTo: exit, moveToLayer: self.layer };
+}
 
 /** Whether `ghostId(team)` follows `leaderId`. */
 function leadsGhost(participants: readonly Participant[], leaderId: string, team: number): boolean {

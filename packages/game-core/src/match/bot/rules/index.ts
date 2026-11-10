@@ -2,6 +2,7 @@ import bindSpirit from "./bind-spirit.js";
 import boost from "./boost.js";
 import carryRelic from "./carry-relic.js";
 import cleanse from "./cleanse.js";
+import clearGround from "./clear-ground.js";
 import closeIn from "./close-in.js";
 import dodge from "./dodge.js";
 import dropUpkeep from "./drop-upkeep.js";
@@ -41,6 +42,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   boost,
   carryRelic,
   cleanse,
+  clearGround,
   closeIn,
   dodge,
   dropUpkeep,
