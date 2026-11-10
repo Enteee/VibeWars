@@ -1,0 +1,2 @@
+import{K as e}from"./main-DGHnjUV1.js";var t=e;export{t as default};
+//# sourceMappingURL=game-Dz8osNu0.js.map
